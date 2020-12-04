@@ -52,7 +52,7 @@ class LogProb(nn.Cell):
     """
     def __init__(self):
         super(LogProb, self).__init__()
-        self.p = msd.Poisson(0.5, dtype=dtype.float32)
+        self.p = msd.Poisson([0.5], dtype=dtype.float32)
 
     def construct(self, x_):
         return self.p.log_prob(x_)
@@ -169,7 +169,7 @@ class SF(nn.Cell):
     """
     def __init__(self):
         super(SF, self).__init__()
-        self.p = msd.Poisson(0.5, dtype=dtype.float32)
+        self.p = msd.Poisson([0.5], dtype=dtype.float32)
 
     def construct(self, x_):
         return self.p.survival_function(x_)
@@ -192,7 +192,7 @@ class LogSF(nn.Cell):
     """
     def __init__(self):
         super(LogSF, self).__init__()
-        self.p = msd.Poisson(0.5, dtype=dtype.float32)
+        self.p = msd.Poisson([0.5], dtype=dtype.float32)
 
     def construct(self, x_):
         return self.p.log_survival(x_)

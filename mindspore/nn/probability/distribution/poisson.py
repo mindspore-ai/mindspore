@@ -29,13 +29,13 @@ class Poisson(Distribution):
     Poisson Distribution.
 
     Args:
-        rate (float, list, numpy.ndarray, Tensor, Parameter): The rate of the Poisson distribution..
+        rate (list, numpy.ndarray, Tensor, Parameter): The rate of the Poisson distribution..
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Poisson'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend``
 
     Note:
         `rate` must be strictly greater than 0.
@@ -47,7 +47,7 @@ class Poisson(Distribution):
         >>> import mindspore.nn.probability.distribution as msd
         >>> from mindspore import Tensor
         >>> # To initialize an Poisson distribution of the rate 0.5.
-        >>> p1 = msd.Poisson(0.5, dtype=mindspore.float32)
+        >>> p1 = msd.Poisson([0.5], dtype=mindspore.float32)
         >>> # An Poisson distribution can be initilized without arguments.
         >>> # In this case, `rate` must be passed in through `args` during function calls.
         >>> p2 = msd.Poisson(dtype=mindspore.float32)
@@ -79,7 +79,7 @@ class Poisson(Distribution):
         >>> # Functions `mean`, `mode`, `sd`, and 'var' have the same arguments as follows.
         >>> # Args:
         >>> #     rate (Tensor): the rate of the distribution. Default: self.rate.
-        >>> # Examples of `mean`, `sd`, `mode`, `var`, and `entropy` are similar.
+        >>> # Examples of `mean`, `sd`, `mode`, and `var` are similar.
         >>> ans = p1.mean() # return 2
         >>> print(ans)
         0.5
@@ -96,10 +96,10 @@ class Poisson(Distribution):
         >>> #     probs1 (Tensor): the rate of the distribution. Default: self.rate.
         >>> ans = p1.sample()
         >>> print(ans.shape)
-        ()
+        (1, )
         >>> ans = p1.sample((2,3))
         >>> print(ans.shape)
-        (2, 3)
+        (2, 3, 1)
         >>> ans = p1.sample((2,3), rate_b)
         >>> print(ans.shape)
         (2, 3, 3)
@@ -120,6 +120,11 @@ class Poisson(Distribution):
         param['param_dict'] = {'rate': rate}
         valid_dtype = mstype.int_type + mstype.uint_type + mstype.float_type
         Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+
+        # As some operators can't accept scalar input, check the type here
+        if isinstance(rate, (int, float)):
+            raise TypeError("Parameter rate can't be scalar")
+
         super(Poisson, self).__init__(seed, dtype, name, param)
 
         self._rate = self._add_parameter(rate, 'rate')

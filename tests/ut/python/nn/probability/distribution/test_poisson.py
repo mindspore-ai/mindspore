@@ -53,6 +53,10 @@ def test_rate():
     with pytest.raises(ValueError):
         msd.Poisson([0.0], dtype=dtype.float32)
 
+def test_scalar():
+    with pytest.raises(TypeError):
+        msd.Poisson(0.1, seed='seed')
+
 class PoissonProb(nn.Cell):
     """
     Poisson distribution: initialize with rate.

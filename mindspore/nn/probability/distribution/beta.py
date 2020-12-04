@@ -29,16 +29,16 @@ class Beta(Distribution):
     Beta distribution.
 
     Args:
-        concentration1 (int, float, list, numpy.ndarray, Tensor, Parameter): The concentration1,
+        concentration1 (list, numpy.ndarray, Tensor, Parameter): The concentration1,
           also know as alpha of the Beta distribution.
-        concentration0 (int, float, list, numpy.ndarray, Tensor, Parameter): The concentration0, also know as
+        concentration0 (list, numpy.ndarray, Tensor, Parameter): The concentration0, also know as
           beta of the Beta distribution.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Beta'.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend``
 
     Note:
         `concentration1` and `concentration0` must be greater than zero.
@@ -148,8 +148,16 @@ class Beta(Distribution):
         """
         param = dict(locals())
         param['param_dict'] = {'concentration1': concentration1, 'concentration0': concentration0}
+
         valid_dtype = mstype.float_type
         Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+
+        # As some operators can't accept scalar input, check the type here
+        if isinstance(concentration0, float):
+            raise TypeError("Parameter concentration0 can't be scalar")
+        if isinstance(concentration1, float):
+            raise TypeError("Parameter concentration1 can't be scalar")
+
         super(Beta, self).__init__(seed, dtype, name, param)
 
         self._concentration1 = self._add_parameter(concentration1, 'concentration1')
@@ -251,7 +259,7 @@ class Beta(Distribution):
                - (concentration0 - 1.) * self.digamma(concentration0) \
                + (total_concentration - 2.) * self.digamma(total_concentration)
 
-    def _cross_entropy(self, dist, concentration1_b, concentration0_b, concentration1=None, concentration0=None):
+    def _cross_entropy(self, dist, concentration1_b, concentration0_b, concentration1_a=None, concentration0_a=None):
         r"""
         Evaluate cross entropy between Beta distributions.
 
@@ -263,8 +271,8 @@ class Beta(Distribution):
             concentration0_a (Tensor): concentration0 of distribution a. Default: self._concentration0.
         """
         check_distribution_name(dist, 'Beta')
-        return self._entropy(concentration1, concentration0) \
-               + self._kl_loss(dist, concentration1_b, concentration0_b, concentration1, concentration0)
+        return self._entropy(concentration1_a, concentration0_a) \
+               + self._kl_loss(dist, concentration1_b, concentration0_b, concentration1_a, concentration0_a)
 
     def _log_prob(self, value, concentration1=None, concentration0=None):
         r"""
@@ -285,7 +293,7 @@ class Beta(Distribution):
                                 + (concentration0 - 1.) * self.log1p(self.neg(value))
         return log_unnormalized_prob - self.lbeta(concentration1, concentration0)
 
-    def _kl_loss(self, dist, concentration1_b, concentration0_b, concentration1=None, concentration0=None):
+    def _kl_loss(self, dist, concentration1_b, concentration0_b, concentration1_a=None, concentration0_a=None):
         r"""
         Evaluate Beta-Beta KL divergence, i.e. KL(a||b).
 
@@ -307,7 +315,7 @@ class Beta(Distribution):
         concentration0_b = self._check_value(concentration0_b, 'concentration0_b')
         concentration1_b = self.cast(concentration1_b, self.parameter_type)
         concentration0_b = self.cast(concentration0_b, self.parameter_type)
-        concentration1_a, concentration0_a = self._check_param_type(concentration1, concentration0)
+        concentration1_a, concentration0_a = self._check_param_type(concentration1_a, concentration0_a)
         total_concentration_a = concentration1_a + concentration0_a
         total_concentration_b = concentration1_b + concentration0_b
         log_normalization_a = self.lbeta(concentration1_a, concentration0_a)
