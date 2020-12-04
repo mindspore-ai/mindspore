@@ -669,8 +669,6 @@ class Dataset:
             >>> repeat_and_shuffle = data.repeat(50)
             >>> repeat_and_shuffle = repeat_and_shuffle.shuffle(10)
         """
-        if count == 1:
-            return self
         return RepeatDataset(self, count)
 
     @check_skip
@@ -717,8 +715,6 @@ class Dataset:
             >>> # Create a dataset where the dataset includes 50 elements.
             >>> data = data.take(50)
         """
-        if count == -1:
-            return self
         return TakeDataset(self, count)
 
     def _get_absolute_split_sizes(self, sizes):

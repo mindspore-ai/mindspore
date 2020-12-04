@@ -38,123 +38,123 @@ class CacheErrorPass : public NodePass {
   /// \brief Identifies the subtree below this node as being cached
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
 
   /// \brief Returns an error if ZipOp exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status PreRunOnNode(std::shared_ptr<ZipOp> node, bool *modified) override;
 
   /// \brief Returns an error if MapOp with non-deterministic TensorOps exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status PreRunOnNode(std::shared_ptr<MapOp> node, bool *modified) override;
 
   /// \brief Returns an error if ConcatOp exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modified) override;
 
   /// \brief Returns an error if TakeOp exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status PreRunOnNode(std::shared_ptr<TakeOp> node, bool *modified) override;
 
   /// \brief Returns an error if SkipOp exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status PreRunOnNode(std::shared_ptr<SkipOp> node, bool *modified) override;
 
   /// \brief Returns an error if SkipOp exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status PreRunOnNode(std::shared_ptr<BatchOp> node, bool *modified) override;
 
 #ifdef ENABLE_PYTHON
   /// \brief Returns an error if FilterOp exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status PreRunOnNode(std::shared_ptr<FilterOp> node, bool *modified) override;
 #endif
 
   /// \brief Identifies the leaf dataset as being mappable
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) override;
 
   /// \brief Identifies the leaf dataset as being mappable
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) override;
 
   /// \brief Identifies the leaf dataset as being mappable
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<MnistOp> node, bool *modified) override;
 
   /// \brief Identifies the leaf dataset as being mappable
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<CifarOp> node, bool *modified) override;
 
   /// \brief Identifies the leaf dataset as being mappable
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<CocoOp> node, bool *modified) override;
 
   /// \brief Identifies the leaf dataset as being mappable
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<CelebAOp> node, bool *modified) override;
 
   /// \brief Identifies the leaf dataset as being mappable
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) override;
 
   /// \brief Identifies the leaf dataset as being mappable
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) override;
 
   /// \brief Identifies the leaf dataset as being mappable
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) override;
 
   /// \brief Identifies the leaf dataset as being mappable
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) override;
 
   /// \brief Identifies the subtree above this node as not being cached
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
 
   /// \brief Identifies and block repeat under cache scenarios
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) override;
 
  private:

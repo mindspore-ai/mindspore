@@ -146,14 +146,14 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// DatasetOps operate by launching a thread (see ExecutionTree).
   /// This pure virtual version makes the requirement that derived classes must provide a functor
   /// that will execute their main runtime loop code.
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   virtual Status operator()() = 0;
 
   /// \brief Gets the next buffer from the given child
   /// \notes See GetNextInput for similar function that has built-in message handling
   /// \param p_buffer - The shared pointer for the fetched buffer to return (by reference)
   /// \param worker_id - The worker id
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   virtual Status GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id) {
     return GetNextBuffer(p_buffer, worker_id, false);
   }
@@ -161,7 +161,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \brief Gets the next buffer from the given child
   /// \notes See GetNextInput for similar function that has built-in message handling
   /// \param p_buffer - The shared pointer for the fetched buffer to return (by reference)
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   virtual Status GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer) { return GetNextBuffer(p_buffer, 0, false); }
 
   /// \brief Gets the next buffer from the given child
@@ -169,7 +169,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \param p_buffer - The shared pointer for the fetched buffer to return (by reference)
   /// \param worker_id - The worker id
   /// \param retry_if_eoe Set this flag to true to allow calling pop() again after the first pop() returns EOE.
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   virtual Status GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe);
 
   /// \brief Gets the next buffer from the given child .  This function also has built-in eoe and eof
@@ -177,7 +177,7 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// those messages are received.
   /// \param p_buffer - The shared pointer for the fetched buffer to return (by reference)
   /// \param worker_id - The worker id
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status GetNextInput(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id = 0, int32_t child_index = 0);
 
   /// \brief Gets the batch size
@@ -200,19 +200,19 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// The base class implementation simply flows the eoe message to output. Derived classes
   /// may override if they need to perform special eoe handling.
   /// \param worker_id - The worker id
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   virtual Status EoeReceived(int32_t worker_id);
 
   /// \brief Performs handling for when an eof message is received.
   /// The base class implementation simply flows the eof message to output. Derived classes
   /// may override if they need to perform special eof handling.
   /// \param worker_id - The worker id
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   virtual Status EofReceived(int32_t worker_id);
 
   /// \brief Derived classes may implement the reset function if the operator is stateful and needs
   /// specific reset handling that is not contained in this common code version of the reset
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   virtual Status Reset();
 
   /// \brief During tree prepare phase, operators may have specific pre-operations to perform depending on

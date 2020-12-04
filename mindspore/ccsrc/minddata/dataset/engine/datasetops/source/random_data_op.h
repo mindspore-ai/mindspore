@@ -63,7 +63,7 @@ class RandomDataOp : public ParallelOp {
     /**
      * The build method that produces the instantiated RandomDataOp as a shared pointer
      * @param out_op - The output RandomDataOperator that was constructed
-     * @return Status - The error code return
+     * @return Status The status code returned
      */
     Status Build(std::shared_ptr<RandomDataOp> *out_op);
 
@@ -128,7 +128,7 @@ class RandomDataOp : public ParallelOp {
    private:
     /**
      * Check if the required parameters are set by the builder.
-     * @return Status - The error code return
+     * @return Status The status code returned
      */
     Status SanityCheck() const;
 
@@ -182,7 +182,7 @@ class RandomDataOp : public ParallelOp {
    * Class functor operator () override.
    * All DatasetOps operate by launching a thread (see ExecutionTree). This class functor will
    * provide the master loop that drives the logic for performing the work.
-   * @return Status - The error code return
+   * @return Status The status code returned
    */
   Status operator()() override;
 
@@ -190,7 +190,7 @@ class RandomDataOp : public ParallelOp {
    * Overrides base class reset method.  When an operator does a reset, it cleans up any state
    * info from it's previous execution and then initializes itself so that it can be executed
    * again.
-   * @return Status - The error code return
+   * @return Status The status code returned
    */
   Status Reset() override;
 
@@ -207,7 +207,7 @@ class RandomDataOp : public ParallelOp {
   /**
    * The entry point code for when workers are launched
    * @param worker_id - The worker id
-   * @return Status - The error code return
+   * @return Status The status code returned
    */
   Status WorkerEntry(int32_t worker_id) override;
 
@@ -219,7 +219,7 @@ class RandomDataOp : public ParallelOp {
   /**
    * Performs a synchronization between workers at the end of an epoch
    * @param worker_id - The worker id
-   * @return Status - The error code return
+   * @return Status The status code returned
    */
   Status EpochSync(int32_t worker_id, bool *quitting);
 
@@ -227,7 +227,7 @@ class RandomDataOp : public ParallelOp {
    * A helper function to stuff the tensor table into a buffer and send it to output connector
    * @param worker_id - The worker id
    * @param in_table - The tensor table to pack and send
-   * @return Status - The error code return
+   * @return Status The status code returned
    */
   Status PackAndSend(int32_t worker_id, std::unique_ptr<TensorQTable> in_table);
 
@@ -235,7 +235,7 @@ class RandomDataOp : public ParallelOp {
    * A helper function to create random data for the row
    * @param worker_id - The worker id
    * @param new_row - The output row to produce
-   * @return Status - The error code return
+   * @return Status The status code returned
    */
   Status CreateRandomRow(int32_t worker_id, TensorRow *new_row);
 

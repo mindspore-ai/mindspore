@@ -79,7 +79,7 @@ class FilterOp : public ParallelOp {
 
    private:
     // Sanity check for builder class args.
-    // @return Status - The error code return.
+    // @return Status The status code returned.
     Status SanityCheck();
     std::vector<std::string> build_in_col_names_;
     std::shared_ptr<TensorOp> builder_predicate_func_;
@@ -105,15 +105,15 @@ class FilterOp : public ParallelOp {
   // Class functor operator () override.
   // All dataset ops operate by launching a thread (see ExecutionTree),This class functor will
   // provide the master loop that drives the logic for performing the work.
-  // @return Status The error code return
+  // @return Status The status code returned
   Status operator()() override;
 
   // @param int32_t workerId.
-  // @return Status - The error code return.
+  // @return Status The status code returned.
   Status EofReceived(int32_t) override;
 
   // @param int32_t workerId.
-  // @return Status - The error code return.
+  // @return Status The status code returned.
   Status EoeReceived(int32_t) override;
 
   // A print method typically used for debugging.
@@ -151,34 +151,34 @@ class FilterOp : public ParallelOp {
   // logic of FilterOp, getting the data from previous Op, validating user specified column names,
   // applying predicate to each of the data, filter the data when predicate result is false.
   // @param worker_id The id assigned to this thread/worker upon creation.
-  // @return Status The error code return.
+  // @return Status The status code returned
   Status WorkerEntry(int32_t worker_id) override;  //  In: workerId assigned by tree_
 
   // Filter the data by  predicate function .
   // @param in_buffer input data buffer.
   // @param to_proess_indices Indices of columns to be processed.
   // @param out data buffer that are filtered by predicate.
-  // @return Status The error code return.
+  // @return Status The status code returned
   Status WorkerCompute(DataBuffer *in_buffer, std::unique_ptr<TensorQTable> *out);
 
   // Collector databuffer.
-  // @return Status The error code return.
+  // @return Status The status code returned
   Status Collector();
 
   // @param input tensor vector.
-  // @return Status - The error code return.
+  // @return Status The status code returned.
   Status CheckInput(const TensorRow &input) const;
 
   // Invoke python func.
   // @param input tensor vector.
   // @param the result of predicate.
-  // @return Status - The error code return.
+  // @return Status The status code returned.
   Status InvokePredicateFunc(const TensorRow &input, bool *out_predicate);
 
   // Private function for validating if each of the user specified input column names
   // exist in the DataBuffer.
   // @param input_columns The vector of input column names used in the current thread.
-  // @return Status The error code return.
+  // @return Status The status code returned
   Status ValidateInColumns(const std::vector<std::string> *input_columns);
 
   // Private function for checking the column legality

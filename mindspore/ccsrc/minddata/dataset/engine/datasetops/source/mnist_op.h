@@ -99,12 +99,12 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
       return *this;
     }
     // Check validity of input args
-    // @return - The error code return
+    // @return Status The status code returned
     Status SanityCheck();
 
     // The builder "Build" method creates the final object.
     // @param std::shared_ptr<MnistOp> *op - DatasetOp
-    // @return - The error code return
+    // @return Status The status code returned
     Status Build(std::shared_ptr<MnistOp> *op);
 
    private:
@@ -133,18 +133,18 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
 
   // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
   // @param int32_t worker_id - id of each worker
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status WorkerEntry(int32_t worker_id) override;
 
   // Main Loop of MnistOp
   // Master thread: Fill IOBlockQueue, then goes to sleep
   // Worker thread: pulls IOBlock from IOBlockQueue, work on it then put buffer to mOutConnector
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status operator()() override;
 
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
   // @param (std::map<uint64_t, std::vector<uint64_t >> * map - key label, val all ids for this class
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const override;
 
   // A print method typically used for debugging
@@ -170,39 +170,39 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
 
  private:
   // Initialize Sampler, calls sampler->Init() within
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status InitSampler();
 
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row
   // @param ImageLabelPair pair - <imagefile,label>
   // @param TensorRow row - image & label read into this tensor row
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status LoadTensorRow(row_id_type row_id, const MnistLabelPair &mnist_pair, TensorRow *row);
 
   // @param const std::vector<int64_t> &keys - keys in ioblock
   // @param std::unique_ptr<DataBuffer> db
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
 
   // Iterate through all members in sampleIds and fill them into IOBlock.
   // @param std::shared_ptr<Tensor> sample_ids -
   // @param std::vector<int64_t> *keys - keys in ioblock
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status TraversalSampleIds(const std::shared_ptr<Tensor> &sample_ids, std::vector<int64_t> *keys);
 
   // Check image file stream.
   // @param const std::string *file_name - image file name
   // @param std::ifstream *image_reader - image file stream
   // @param uint32_t num_images - returns the number of images
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status CheckImage(const std::string &file_name, std::ifstream *image_reader, uint32_t *num_images);
 
   // Check label stream.
   // @param const std::string &file_name - label file name
   // @param std::ifstream *label_reader - label file stream
   // @param uint32_t num_labels - returns the number of labels
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status CheckLabel(const std::string &file_name, std::ifstream *label_reader, uint32_t *num_labels);
 
   // Read 4 bytes of data from a file stream.
@@ -219,23 +219,23 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   // @param std::ifstream *image_reader - image file stream
   // @param std::ifstream *label_reader - label file stream
   // @param int64_t read_num - number of image to read
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *label_reader, size_t index);
 
   // Parse all mnist dataset files
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status ParseMnistData();
 
   // Read all files in the directory
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status WalkAllFiles();
 
   // Called first when function is called
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status LaunchThreadsAndInitOp();
 
   // reset Op
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Reset() override;
 
   // Private function for computing the assignment of the column name map.

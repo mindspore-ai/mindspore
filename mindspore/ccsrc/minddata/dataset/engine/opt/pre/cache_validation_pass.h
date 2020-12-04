@@ -38,61 +38,61 @@ class CacheValidationPass : public IRNodePass {
   /// \brief Returns an error if BatchNode exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status Visit(std::shared_ptr<BatchNode> node, bool *modified) override;
 
   /// \brief Returns an error if ConcatNode exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status Visit(std::shared_ptr<ConcatNode> node, bool *modified) override;
 
   /// \brief Returns an error if FilterNode exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status Visit(std::shared_ptr<FilterNode> node, bool *modified) override;
 
   /// \brief Returns an error if SkipNode exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status Visit(std::shared_ptr<SkipNode> node, bool *modified) override;
 
   /// \brief Returns an error if TakeNode exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status Visit(std::shared_ptr<TakeNode> node, bool *modified) override;
 
   /// \brief Returns an error if ZipNode exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status Visit(std::shared_ptr<ZipNode> node, bool *modified) override;
 
   /// \brief Returns an error if MapNode with non-deterministic tensor operations exists under a cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status Visit(std::shared_ptr<MapNode> node, bool *modified) override;
 
   /// \brief Returns an error if there is a cache over another cache
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status Visit(std::shared_ptr<DatasetNode> node, bool *modified) override;
 
   /// \brief Identifies and block repeat under cache scenarios
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status VisitAfter(std::shared_ptr<RepeatNode> node, bool *modified) override;
 
   /// \brief Identifies the subtree above this node as not being cached
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status VisitAfter(std::shared_ptr<DatasetNode> node, bool *modified) override;
 
  private:

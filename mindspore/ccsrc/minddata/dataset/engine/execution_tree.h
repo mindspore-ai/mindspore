@@ -115,16 +115,16 @@ class ExecutionTree {
   // provides it with a link to the tree. A node cannot form any relationships (parent/child) with
   // other nodes unless they are associated with the same tree.
   // @param op - The operator to associate
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status AssociateNode(const std::shared_ptr<DatasetOp> &op);
 
   // Sets the root node of the tree
   // @param op - The operator to assign as root
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status AssignRoot(const std::shared_ptr<DatasetOp> &op);
 
   // Start the execution of the tree
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Launch();
 
   /// A print method typically used for debugging
@@ -155,7 +155,7 @@ class ExecutionTree {
   // wrapper for the TaskGroup handling that is stored inside the execution tree.
   // @param num_workers - The number of workers to launch
   // @param func - The function entry point that workers will execute
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status LaunchWorkers(int32_t num_workers, std::function<Status(uint32_t)> func, std::string name = "");
 
   // Getter method
@@ -181,32 +181,32 @@ class ExecutionTree {
   //    Compulsory transformation/action post optimization.
   //    For example, repeatOp inlining
   //
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Prepare(int num_epochs = -1, bool partial = false);
 
   // Compulsory transformation/action pre optimization.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status PreAction();
 
   // Compulsory transformation/action post optimization.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status PostAction();
 
   // Optimization transformation/action, optional.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Optimize();
 
   // The DEPRECATED driver of the prepare phase of the execution tree. The prepare phase will recursively
   // walk the tree to perform modifications to the tree or specific nodes within the tree to get
   // it ready for execution.
   // @param Total number of epochs that will be run on this tree
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status PrepareDeprecated();
 
   // Recursive function used during prepare phase to visit a node and drive any pre- and post-
   // node actions during a tree walk.
   // @param op - The dataset op to work on
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status PrepareNode(const std::shared_ptr<DatasetOp> &dataset_op);
 
   // Return the pointer to the TaskGroup

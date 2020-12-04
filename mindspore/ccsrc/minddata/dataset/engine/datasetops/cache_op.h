@@ -99,7 +99,7 @@ class CacheOp : public CacheBase, public RandomAccessOp {
     std::shared_ptr<SamplerRT> build_sampler_;
 
     /// \brief Check if the required parameters are set by the builder.
-    /// \return Status The error code return
+    /// \return Status The status code returned
     Status SanityCheck() const;
   };
 
@@ -119,7 +119,7 @@ class CacheOp : public CacheBase, public RandomAccessOp {
   /// \brief Base-class override for special eoe handler.
   /// CacheOp must override this because it shall not perform default handling of eoe. Instead
   /// the CacheOp manages actions related to the end of the epoch.
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status EoeReceived(int32_t worker_id) override;
   /// \brief Base-class override for NodePass pre-visit acceptor
   /// \param[in] p The node to visit
@@ -133,7 +133,7 @@ class CacheOp : public CacheBase, public RandomAccessOp {
   Status Accept(NodePass *p, bool *modified) override;
   /// \brief Base-class override for handling cases when an eof is received.
   /// \param worker_id - The worker id
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status EofReceived(int32_t worker_id) override;
   Status operator()() override;
   Status WorkerEntry(int32_t worker_id) override;
@@ -159,7 +159,7 @@ class CacheOp : public CacheBase, public RandomAccessOp {
   Status CacheAllRows(int32_t worker_id);
   Status RegisterResources() override;
   /// \brief Private function for cache setup/init work just after construction
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status InitCache();
 };
 }  // namespace dataset

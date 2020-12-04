@@ -133,7 +133,7 @@ class MapOp : public ParallelOp {
     int32_t build_op_connector_size_;
 
     // Check if the required parameters are set by the builder.
-    // @return Status The error code return
+    // @return Status The status code returned
     Status sanityCheck() const;
   };
 
@@ -170,7 +170,7 @@ class MapOp : public ParallelOp {
   // provide the master loop that drives the logic for performing the work
   // This main thread creates local queues, pulls databuffers from the previous
   // op's Connector and distributes them to the local queues. Workers pull from the local queues.
-  // @return Status The error code return
+  // @return Status The status code returned
   Status operator()() override;
 
   // Getter
@@ -239,7 +239,7 @@ class MapOp : public ParallelOp {
   // applying a list of TensorOps to each of the data, process the results and then
   // pushing them back to MapOp's output Connector to be fetched by the next Op.
   // @param worker_id The id assigned to this thread/worker upon creation.
-  // @return Status The error code return
+  // @return Status The status code returned
   Status WorkerEntry(int32_t worker_id) override;  //  In: workerId assigned by tree_
 
   // Private function for worker thread to perform TensorOp's compute function and get the result.

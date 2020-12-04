@@ -107,7 +107,7 @@ class RenameOp : public PipelineOp {
   // Class functor operator () override.
   // All dataset ops operate by launching a thread (see ExecutionTree). This class functor will
   // provide the master loop that drives the logic for performing the work
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status operator()() override;
 
   // Base-class override for NodePass visitor acceptor.

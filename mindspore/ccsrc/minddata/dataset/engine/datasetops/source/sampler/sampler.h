@@ -35,12 +35,12 @@ class RandomAccessOp {
  public:
   // Sampler get number of rows in the dataset
   // @param int64_t num - return number of rows for this dataset
-  // @return - The error code return
+  // @return Status The status code returned
   Status GetNumRowsInDataset(int64_t *num_rows) const;
 
   // sampler gets label , imageIds from corresponding Dataset Op, this function is unique to PK
   // @param std::map<int64_t, std::vector<int64_t>> * map
-  // @return - The error code return
+  // @return Status The status code returned
   virtual Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *map) const {
     RETURN_STATUS_UNEXPECTED("GetClassIds needs to be override to support PK");
   }
@@ -71,7 +71,7 @@ class SamplerRT {
   // @note It is Sampler responsibility to make sure that the id is not out of bound.
   // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to StorageOp
   // @param int32_t workerId - not meant to be used
-  // @return - The error code return
+  // @return Status The status code returned
   virtual Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) = 0;
 
 // This function only called by python layer. Not needed by Android.
@@ -81,7 +81,7 @@ class SamplerRT {
 #endif
 
   // for next epoch of sampleIds
-  // @return - The error code return
+  // @return Status The status code returned
   virtual Status ResetSampler() = 0;
 
   // first handshake between leaf source op and Sampler. This func will determine the amount of data
@@ -114,13 +114,13 @@ class SamplerRT {
 
   // Adds a sampler to become our child.
   // @param std::shared_ptr<DatasetOp> - The sampler to add as a child.
-  // @return - The error code returned.
+  // @return Status The status code returned
   Status AddChild(std::shared_ptr<SamplerRT> child);
 
   // A helper function to create a int64_t 1-D Tensor specifically used to hold sampleIds for Sampler
   // @param std::shared_ptr<Tensor>* sampleIds
   // @param int64_t numElements - must be a non 0 number
-  // @return - The error code returned.
+  // @return Status The status code returned
   Status CreateSamplerTensor(std::shared_ptr<Tensor> *sample_ids, int64_t num_elements);
 
   // A print method typically used for debugging
@@ -146,7 +146,7 @@ class SamplerRT {
   // associated id.
   // @param int64_t* out_associated_id - Out parameter, contains the associated id.
   // @param int64_t id - The id used as an index to get the associated child id.
-  // @return - The error code returned.
+  // @return Status The status code returned
   Status GetAssociatedChildId(int64_t *out_associated_id, int64_t id);
 
  protected:

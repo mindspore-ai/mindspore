@@ -442,7 +442,7 @@ class SchemaObj {
   Status parse_column(nlohmann::json columns);
 
   /// \brief Get schema file from JSON file
-  /// \param[in] json_obj Object of JSON parsed.
+  /// \param[in] json_obj parsed JSON object
   /// \return Status code
   Status from_json(nlohmann::json json_obj);
 

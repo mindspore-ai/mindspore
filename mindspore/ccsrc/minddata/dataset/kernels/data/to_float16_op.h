@@ -36,7 +36,7 @@ class ToFloat16Op : public TensorOp {
   // Overrides the base class compute function
   // Calls the ToFloat16 function in ImageUtils, this function takes an input tensor
   // and transforms its data to float16, the output memory is manipulated to contain the result
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) override;

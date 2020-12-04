@@ -49,13 +49,13 @@ class Node {
   // Get the feature of a node
   // @param FeatureType feature_type - type of feature
   // @param std::shared_ptr<Feature> *out_feature - Returned feature
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetFeatures(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) = 0;
 
   // Get the all neighbors of a node
   // @param NodeType neighbor_type - type of neighbor
   // @param std::vector<NodeIdType> *out_neighbors - Returned neighbors id
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType> *out_neighbors,
                                  bool exclude_itself = false) = 0;
 
@@ -63,18 +63,18 @@ class Node {
   // @param NodeType neighbor_type - type of neighbor
   // @param int32_t samples_num - Number of neighbors to be acquired
   // @param std::vector<NodeIdType> *out_neighbors - Returned neighbors id
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetSampledNeighbors(NodeType neighbor_type, int32_t samples_num,
                                      std::vector<NodeIdType> *out_neighbors) = 0;
 
   // Add neighbor of node
   // @param std::shared_ptr<Node> node -
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status AddNeighbor(const std::shared_ptr<Node> &node) = 0;
 
   // Update feature of node
   // @param std::shared_ptr<Feature> feature -
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status UpdateFeature(const std::shared_ptr<Feature> &feature) = 0;
 
  protected:

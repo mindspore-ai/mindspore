@@ -58,12 +58,12 @@ class IOBlock {
   // Fetches the first key from the block.
   // @note Only useful if you know the block only has 1 key.
   // @return  A copy of the first key from the block
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetKey(int64_t *out_key) const;
 
   // Fetches the list of keys from this block.
   // @param out_keys - A copy of the vector of keys from the block.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetKeys(std::vector<int64_t> *out_keys) const;
 
   // Does this block have the eoe flag turned on?
@@ -110,7 +110,7 @@ class FilenameBlock : public IOBlock {
   // Gets the filename from the block using the provided index container
   // @param out_filename - The filename to add to the block
   // @param index - The index to perform lookup against
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetFilename(std::string *out_filename, const AutoIndexObj<std::string> &index) const;
 
   // Get the start offset of file

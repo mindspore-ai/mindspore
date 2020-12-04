@@ -47,19 +47,19 @@ class GraphData {
   // Get all nodes from the graph.
   // @param NodeType node_type - type of node
   // @param std::shared_ptr<Tensor> *out - Returned nodes id
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetAllNodes(NodeType node_type, std::shared_ptr<Tensor> *out) = 0;
 
   // Get all edges from the graph.
   // @param NodeType edge_type - type of edge
   // @param std::shared_ptr<Tensor> *out - Returned edge ids
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetAllEdges(EdgeType edge_type, std::shared_ptr<Tensor> *out) = 0;
 
   // Get the node id from the edge.
   // @param std::vector<EdgeIdType> edge_list - List of edges
   // @param std::shared_ptr<Tensor> *out - Returned node ids
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetNodesFromEdges(const std::vector<EdgeIdType> &edge_list, std::shared_ptr<Tensor> *out) = 0;
 
   // All neighbors of the acquisition node.
@@ -68,7 +68,7 @@ class GraphData {
   // @param std::shared_ptr<Tensor> *out - Returned neighbor's id. Because the number of neighbors at different nodes is
   // different, the returned tensor is output according to the maximum number of neighbors. If the number of neighbors
   // is not enough, fill in tensor as -1.
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type,
                                  std::shared_ptr<Tensor> *out) = 0;
 
@@ -77,7 +77,7 @@ class GraphData {
   // @param std::vector<NodeIdType> neighbor_nums - Number of neighbors sampled per hop
   // @param std::vector<NodeType> neighbor_types - Neighbor type sampled per hop
   // @param std::shared_ptr<Tensor> *out - Returned neighbor's id.
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetSampledNeighbors(const std::vector<NodeIdType> &node_list,
                                      const std::vector<NodeIdType> &neighbor_nums,
                                      const std::vector<NodeType> &neighbor_types, std::shared_ptr<Tensor> *out) = 0;
@@ -87,7 +87,7 @@ class GraphData {
   // @param NodeIdType samples_num - Number of neighbors sampled
   // @param NodeType neg_neighbor_type - The type of negative neighbor.
   // @param std::shared_ptr<Tensor> *out - Returned negative neighbor's id.
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetNegSampledNeighbors(const std::vector<NodeIdType> &node_list, NodeIdType samples_num,
                                         NodeType neg_neighbor_type, std::shared_ptr<Tensor> *out) = 0;
 
@@ -98,7 +98,7 @@ class GraphData {
   // @param float step_away_param - inout hyper parameter in node2vec algorithm
   // @param NodeIdType default_node - default node id
   // @param std::shared_ptr<Tensor> *out - Returned nodes id in walk path
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status RandomWalk(const std::vector<NodeIdType> &node_list, const std::vector<NodeType> &meta_path,
                             float step_home_param, float step_away_param, NodeIdType default_node,
                             std::shared_ptr<Tensor> *out) = 0;
@@ -108,7 +108,7 @@ class GraphData {
   // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
   // does not exist.
   // @param TensorRow *out - Returned features
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetNodeFeature(const std::shared_ptr<Tensor> &nodes, const std::vector<FeatureType> &feature_types,
                                 TensorRow *out) = 0;
 
@@ -117,7 +117,7 @@ class GraphData {
   // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
   // does not exist.
   // @param Tensor *out - Returned features
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetEdgeFeature(const std::shared_ptr<Tensor> &edges, const std::vector<FeatureType> &feature_types,
                                 TensorRow *out) = 0;
 

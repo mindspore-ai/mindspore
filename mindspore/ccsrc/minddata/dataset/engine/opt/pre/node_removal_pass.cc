@@ -17,7 +17,10 @@
 #include <vector>
 #include <algorithm>
 #include "minddata/dataset/engine/opt/pre/node_removal_pass.h"
+#include "minddata/dataset/engine/ir/datasetops/repeat_node.h"
 #include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
+#include "minddata/dataset/engine/ir/datasetops/skip_node.h"
+#include "minddata/dataset/engine/ir/datasetops/take_node.h"
 
 namespace mindspore {
 namespace dataset {
@@ -47,7 +50,16 @@ Status NodeRemovalPass::RemovalNodes::VisitAfter(std::shared_ptr<DatasetNode> no
   return Status::OK();
 }
 
-// Perform ShuffleOp removal check.
+// Perform RepeatNode removal check.
+Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<RepeatNode> node, bool *modified) {
+  *modified = false;
+  if (node->Count() == 1) {
+    nodes_to_remove_.push_back(std::static_pointer_cast<DatasetNode>(node));
+  }
+  return Status::OK();
+}
+
+// Perform ShuffleNode removal check.
 Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<ShuffleNode> node, bool *modified) {
   *modified = false;
 #if 0
@@ -57,6 +69,24 @@ Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<ShuffleNode> node, b
     nodes_to_remove_.push_back(std::static_pointer_cast<DatasetNode>(node));
   }
 #endif
+  return Status::OK();
+}
+
+// Perform SkipNode removal check.
+Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<SkipNode> node, bool *modified) {
+  *modified = false;
+  if (node->Count() == 0) {
+    nodes_to_remove_.push_back(std::static_pointer_cast<DatasetNode>(node));
+  }
+  return Status::OK();
+}
+
+// Perform TakeNode removal check.
+Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<TakeNode> node, bool *modified) {
+  *modified = false;
+  if (node->Count() == -1) {
+    nodes_to_remove_.push_back(std::static_pointer_cast<DatasetNode>(node));
+  }
   return Status::OK();
 }
 

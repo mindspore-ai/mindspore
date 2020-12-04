@@ -13,7 +13,7 @@
 # limitations under the License.
 # ==============================================================================
 import numpy as np
-
+import pytest
 import mindspore.dataset as ds
 from mindspore import log as logger
 
@@ -163,7 +163,7 @@ def test_take_08():
 
 def test_take_09():
     """
-    Test take: repeat count is -1, and read the whole dataset, take after repeat
+    Test take: take count is -1, and read the whole dataset, take after repeat
     """
     logger.info("test_take_09")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -180,7 +180,7 @@ def test_take_09():
 
 def test_take_10():
     """
-    Test take: repeat count is -1, and read the whole dataset, take before repeat
+    Test take: take count is -1, and read the whole dataset, take before repeat
     """
     logger.info("test_take_10")
     data1 = ds.GeneratorDataset(generator, ["data"])
@@ -341,6 +341,18 @@ def test_take_18():
     assert sum([1 for _ in data1]) == 2
 
 
+def test_take_19():
+    """
+    Test take: take is after batch, that mean take(N), N refer to batches num
+    """
+    logger.info("test_take_19")
+    with pytest.raises(ValueError) as info:
+        data1 = ds.GeneratorDataset(generator, ["data"])
+
+        data1 = data1.batch(2)
+        data1 = data1.take(0)
+    assert "positive integer" in str(info.value)
+
 if __name__ == '__main__':
     test_take_01()
     test_take_02()
@@ -360,4 +372,5 @@ if __name__ == '__main__':
     test_take_16()
     test_take_17()
     test_take_18()
+    test_take_19()
     logger.info('== test take operation finished ==')

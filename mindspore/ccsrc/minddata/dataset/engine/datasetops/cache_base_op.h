@@ -53,7 +53,7 @@ class CacheBase : public ParallelOp {
   /// \brief Overrides base class reset method.  When an operator does a reset, it cleans up any state
   /// info from it's previous execution and then initializes itself so that it can be executed
   /// again.
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status Reset() override;
 
   /// \brief A print method typically used for debugging

@@ -87,19 +87,19 @@ class ProfilingManager {
   Status Initialize();
 
   // Save profile data to file
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status SaveProfilingData();
 
   // Sampling node getter
   // @param name - The name of the requested node
   // @param node - Pointer to the shared pointer for the Sampling node
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetSamplingNode(const std::string &name, std::shared_ptr<Sampling> *node);
 
   // Tracing node getter
   // @param name - The name of the requested node
   // @param node - Pointer to the shared pointer for the Tracing node
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetTracingNode(const std::string &name, std::shared_ptr<Tracing> *node);
 
   // If profiling is enabled.
@@ -120,12 +120,12 @@ class ProfilingManager {
 
   // Register profile node to tree
   // @param node - Profiling node
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status RegisterTracingNode(std::shared_ptr<Tracing> node);
 
   // Register profile node to tree
   // @param node - Profiling node
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status RegisterSamplingNode(std::shared_ptr<Sampling> node);
 
   ExecutionTree *tree_ = nullptr;  // ExecutionTree pointer

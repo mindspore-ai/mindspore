@@ -146,13 +146,13 @@ class ShuffleOp : public PipelineOp {
   // Class functor operator () override.
   // All dataset ops operate by launching a thread (see ExecutionTree). This class functor will
   // provide the master loop that drives the logic for performing the work
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status operator()() override;
 
   // Base-class override for special eoe handler.
   // ShuffleOp must override this because it shall not perform default handling of eoe. Instead
   // the ShuffleOp needs to manage actions related to the end of the epoch itself.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status EoeReceived(int32_t worker_id) override;
 
   // Base-class override for NodePass visitor acceptor.
@@ -167,17 +167,17 @@ class ShuffleOp : public PipelineOp {
 
  private:
   // Private function to add a new row to the shuffle buffer.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status AddRowToShuffleBuffer(TensorRow new_shuffle_row);
 
   // Private function to populate the shuffle buffer initially by fetching from the child output
   // connector until the shuffle buffer is full (or there is no more data coming).
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status InitShuffleBuffer();
 
   // Private function to re-init the shuffle op for another epoch.  Shuffle op calls this by
   // itself rather than waiting for the reset driven from operators above it in the pipeline.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status SelfReset();
 
   int32_t shuffle_size_;  // User config for the size of the shuffle buffer (number of rows)

@@ -51,7 +51,7 @@ class Edge {
   // Get the feature of a edge
   // @param FeatureType feature_type - type of feature
   // @param std::shared_ptr<Feature> *out_feature - Returned feature
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status GetFeatures(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) = 0;
 
   // Get nodes on the edge
@@ -71,7 +71,7 @@ class Edge {
 
   // Update feature of edge
   // @param std::shared_ptr<Feature> feature -
-  // @return Status - The error code return
+  // @return Status The status code returned
   virtual Status UpdateFeature(const std::shared_ptr<Feature> &feature) = 0;
 
  protected:

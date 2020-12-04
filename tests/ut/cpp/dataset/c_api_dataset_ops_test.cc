@@ -1311,6 +1311,51 @@ TEST_F(MindDataTestPipeline, TestSkipDataset) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestSkipTakeRepeat) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSkipTakeRepeat.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 6));
+
+  // Create a Skip operation on ds
+  int32_t count = 0;
+  ds = ds->Skip(count);
+
+  // Create a Project operation on ds
+  std::vector<std::string> column_project = {"image"};
+  ds = ds->Project(column_project);
+
+  // Add a Take(-1)
+  ds = ds->Take(-1);
+
+  // Add a Repeat(1)
+  ds = ds->Repeat(1);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+
+  // iterate over the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+  MS_LOG(INFO) << "Number of rows: " << i;
+
+  // Expect 6 rows
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestSkipGetDatasetSize) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSkipGetDatasetSize.";
 

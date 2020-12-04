@@ -66,7 +66,7 @@ class ColDescriptor {
   ///     an unknown dimension, then the output shape returned shall resolve dimensions as needed.
   /// \param[in] num_elements - The number of elements in the data for a Tensor
   /// \param[inout] out_shape - The materialized output Tensor shape
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status MaterializeTensorShape(int32_t num_elements, TensorShape *out_shape) const;
 
   /// \brief << Stream output operator overload
@@ -124,13 +124,13 @@ class DataSchema {
   /// \brief Parses a schema json file and populates the columns and meta info.
   /// \param[in] schema_file_path - the schema file that has the column's info to load
   /// \param[in] columns_to_load - list of strings for columns to load. if empty, assumes all columns.
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status LoadSchemaFile(const std::string &schema_file_path, const std::vector<std::string> &columns_to_load);
 
   /// \brief Parses a schema JSON string and populates the columns and meta info.
   /// \param[in] schema_json_string - the schema file that has the column's info to load
   /// \param[in] columns_to_load - list of strings for columns to load. if empty, assumes all columns.
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status LoadSchemaString(const std::string &schema_json_string, const std::vector<std::string> &columns_to_load);
 
   /// \brief A print method typically used for debugging
@@ -148,7 +148,7 @@ class DataSchema {
 
   /// \brief Adds a column descriptor to the schema
   /// \param[in] cd - The ColDescriptor to add
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status AddColumn(const ColDescriptor &cd);
 
   /// \brief getter
@@ -169,7 +169,7 @@ class DataSchema {
 
   /// \brief Loops through all columns in the schema and returns a map with the column name to column index number.
   /// \param[inout] out_column_name_map - The output map of columns names to column index
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status GetColumnNameMap(std::unordered_map<std::string, int32_t> *out_column_name_map);
 
  private:
@@ -177,7 +177,7 @@ class DataSchema {
   ///     does not follow any particular order (json standard does not enforce any ordering protocol).
   ///     This one produces a schema that contains all of the columns from the schema file.
   /// \param[in] column_tree - The nlohmann tree from the json file to parse
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status AnyOrderLoad(nlohmann::json column_tree);
 
   /// \brief Internal helper function. For each input column name, perform a lookup to the json document to
@@ -185,18 +185,18 @@ class DataSchema {
   ///     descriptor and add to the schema in the order in which the input column names are given.
   /// \param[in] column_tree - The nlohmann tree from the json file to parse
   /// \param[in] columns_to_load - list of strings for the columns to add to the schema
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status ColumnOrderLoad(nlohmann::json column_tree, const std::vector<std::string> &columns_to_load);
 
   /// \brief Internal helper function. Given the json tree for a given column, load it into our schema.
   /// \param[in] columnTree - The nlohmann child tree for a given column to load.
   /// \param[in] col_name - The string name of the column for that subtree.
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status ColumnLoad(nlohmann::json column_child_tree, const std::string &col_name);
 
   /// \brief Internal helper function. Performs sanity checks on the json file setup.
   /// \param[in] js - The nlohmann tree for the schema file
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status PreLoadExceptionCheck(const nlohmann::json &js);
 
   std::vector<ColDescriptor> col_descs_;  // Vector of column descriptors
