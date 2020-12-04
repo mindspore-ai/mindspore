@@ -71,7 +71,7 @@ class Gamma(Distribution):
         >>> # Examples of `prob`.
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing 'prob' by the name of the function
-        >>> # ans = g1.prob(value)
+        >>> ans = g1.prob(value)
         >>> print(ans)
         [0.58610016 0.0429392  0.00176953]
         >>> # Evaluate with respect to the distribution b.

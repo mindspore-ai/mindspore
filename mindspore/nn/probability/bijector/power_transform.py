@@ -81,10 +81,14 @@ class PowerTransform(Bijector):
         self.pow = P.Pow()
         self.dtypeop = P.DType()
         self.cast = P.Cast()
+        self.equal_base = P.Equal()
         self.exp = exp_generic
         self.expm1 = P.Expm1()
+        self.fill = P.Fill()
         self.log = log_generic
         self.log1p = P.Log1p()
+        self.select_base = P.Select()
+        self.shape = P.Shape()
 
     @property
     def power(self):
@@ -99,21 +103,44 @@ class PowerTransform(Bijector):
 
 
     def _forward(self, x):
+        """
+        Evaluate the forward mapping.
+        """
         x = self._check_value_dtype(x)
         power_local = self.cast_param_by_value(x, self.power)
-        if power_local == 0:
-            forward_v = self.exp(x)
-        else:
-            forward_v = self.exp(self.log1p(x * power_local) / power_local)
+
+        # broad cast the value of x and power
+        ones = self.fill(self.dtypeop(power_local), self.shape(x + power_local), 1.)
+        power_local = power_local * ones
+        x = x * ones
+        safe_power = self.select_base(self.equal_base(power_local, 0.),
+                                      ones,
+                                      power_local)
+
+        forward_v = self.select_base(self.equal_base(power_local, 0.),
+                                     self.exp(x),
+                                     self.exp(self.log1p(x * safe_power) / safe_power))
         return forward_v
 
     def _inverse(self, y):
+        """
+        Evaluate the inverse mapping.
+        """
         y = self._check_value_dtype(y)
         power_local = self.cast_param_by_value(y, self.power)
-        if power_local == 0:
-            inverse_v = self.log(y)
-        else:
-            inverse_v = self.expm1(self.log(y) * power_local) / power_local
+
+        # broad cast the value of x and power
+        ones = self.fill(self.dtypeop(power_local), self.shape(y + power_local), 1.)
+        power_local = power_local * ones
+        y = y * ones
+        safe_power = self.select_base(self.equal_base(power_local, 0.),
+                                      ones,
+                                      power_local)
+
+        inverse_v = self.select_base(self.equal_base(power_local, 0.),
+                                     self.log(y),
+                                     self.expm1(self.log(y) * safe_power) / safe_power)
+
         return inverse_v
 
     def _forward_log_jacobian(self, x):
@@ -130,10 +157,16 @@ class PowerTransform(Bijector):
         """
         x = self._check_value_dtype(x)
         power_local = self.cast_param_by_value(x, self.power)
-        if power_local == 0:
-            forward_log_j = x
-        else:
-            forward_log_j = (1. / power_local - 1) * self.log1p(x * power_local)
+
+        # broad cast the value of x and power
+        ones = self.fill(self.dtypeop(power_local), self.shape(x + power_local), 1.)
+        power_local = power_local * ones
+        x = x * ones
+
+        forward_log_j = self.select_base(self.equal_base(power_local, 0.),
+                                         x,
+                                         (1. / power_local - 1) * self.log1p(x * power_local))
+
         return forward_log_j
 
     def _inverse_log_jacobian(self, y):

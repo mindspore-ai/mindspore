@@ -56,7 +56,7 @@ class Beta(Distribution):
         >>> # In this case, `concentration1` and `concentration0` must be passed in through arguments.
         >>> b2 = msd.Beta(dtype=mindspore.float32)
         >>> # Here are some tensors used below for testing
-        >>> value = Tensor([0.1, 0.5, 1.5], dtype=mindspore.float32)
+        >>> value = Tensor([0.1, 0.5, 0.8], dtype=mindspore.float32)
         >>> concentration1_a = Tensor([2.0], dtype=mindspore.float32)
         >>> concentration0_a = Tensor([2.0, 2.0, 2.0], dtype=mindspore.float32)
         >>> concentration1_b = Tensor([1.0], dtype=mindspore.float32)
@@ -72,15 +72,15 @@ class Beta(Distribution):
         >>> # by replacing 'prob' by the name of the function
         >>> ans = b1.prob(value)
         >>> print(ans)
-        [0.43740022 1.8750011         nan]
+        [0.43740022 1.8750011  0.30720013]
         >>> # Evaluate with respect to the distribution b.
         >>> ans = b1.prob(value, concentration1_b, concentration0_b)
         >>> print(ans)
-        [0.99999964 1.0606599         nan]
+        [0.99999964 1.0606599  0.39999983]
         >>> # `concentration1` and `concentration0` must be passed in during function calls
         >>> ans = b2.prob(value, concentration1_a, concentration0_a)
         >>> print(ans)
-        [0.5400001 1.5000001       nan]
+        [0.5400001  1.5000001  0.96000004]
         >>> # Functions `mean`, `sd`, `mode`, `var`, and `entropy` have the same arguments.
         >>> # Args:
         >>> #     concentration1 (Tensor): the concentration1 of the distribution. Default: self._concentration1.
