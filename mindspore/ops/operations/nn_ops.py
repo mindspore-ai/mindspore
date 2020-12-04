@@ -3424,6 +3424,71 @@ class MirrorPad(PrimitiveWithInfer):
                 'value': None}
 
 
+class ComputeAccidentalHits(PrimitiveWithInfer):
+    """
+    Compute accidental hits of sampled classes which happen to match target classes.
+
+    When a target class matches the sample class, we call it "accidental hit".
+    The result of calculating accidental hit contains three parts (index, id, weight),
+    where index represents the row number in true_classes, and id represents the position in sampled_candidates,
+    the weight is -FLOAT_MAX.
+
+    Args:
+        num_true (int): The number of target classes per training example.
+
+    Inputs:
+        - **true_classes** (Tensor) - The target classes. With data type of int32 or int64
+          and shape [batch_size, num_true].
+        - **sampled_candidates** (Tensor) - The sampled_candidates output of CandidateSampler,
+          with shape [num_sampled] and the same type as true_classes.
+
+    Outputs:
+        Tuple of 3 Tensors.
+
+        - **indices** (Tensor) - A Tensor with shape (num_accidental_hits,), with the same type as `true_classes`.
+        - **ids** (Tensor) - A Tensor with shape (num_accidental_hits,), with the same type as `true_classes`.
+        - **weights** (Tensor) - A Tensor with shape (num_accidental_hits,), with the type float32.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> x = np.array([[1, 2], [0, 4], [3, 3]])
+        >>> y = np.array([0, 1, 2, 3, 4])
+        >>> sampler = ops.ComputeAccidentalHits(2)
+        >>> output1, output2, output3 = sampler(Tensor(x), Tensor(y))
+        >>> print(output1, output2, output3)
+        [0, 0, 1, 1, 2, 2], [1, 2, 0, 4, 3, 3],
+        [-3.4028235+38, -3.4028235+38, -3.4028235+38, -3.4028235+38, -3.4028235+38, -3.4028235+38]
+
+    """
+
+    @prim_attr_register
+    def __init__(self, num_true=1):
+        """Initialize ComputeAccidentalHits"""
+        self.init_prim_io_names(inputs=['true_classes', 'sampled_candidates'],
+                                outputs=['indices', 'ids', 'weights'])
+        validator.check_value_type("num_true", num_true, [int], self.name)
+        self.num_true = num_true
+
+    def infer_shape(self, true_classes_shape, sampled_candidates_shape):
+        validator.check("true_classes shape rank", len(true_classes_shape), "expect", 2, Rel.EQ, self.name)
+        validator.check("sampled_candidates shape rank", len(sampled_candidates_shape), "expect", 1, Rel.EQ, self.name)
+        validator.check_int(true_classes_shape[1], self.num_true, Rel.EQ, 'true_classes_shape', self.name)
+
+        indices_len = -1
+        return (indices_len,), (indices_len,), (indices_len,)
+
+    def infer_dtype(self, true_classes_type, sampled_candidates_type):
+        validator.check_subclass("true_classes_type", true_classes_type, mstype.tensor, self.name)
+        validator.check_subclass("sampled_candidates_type", sampled_candidates_type, mstype.tensor, self.name)
+        valid_types = (mstype.int32, mstype.int64)
+        validator.check_tensor_dtype_valid("true_classes_type", true_classes_type, valid_types, self.name)
+        validator.check_tensor_dtype_valid("sampled_candidates_type", sampled_candidates_type, valid_types, self.name)
+        weights_type = mstype.float32
+        return true_classes_type, true_classes_type, weights_type
+
+
 class ROIAlign(PrimitiveWithInfer):
     """
     Computes the Region of Interest (RoI) Align operator.
