@@ -167,6 +167,12 @@ class Status {
   StatusCode code_;
   std::string err_msg_;
 };
+
+#if !defined(_WIN32) && !defined(_WIN64)
+const float MAX_MEMORY_USAGE_THRESHOLD = 0.95;
+
+float GetMemoryUsage();
+#endif
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_STATUS_H_
