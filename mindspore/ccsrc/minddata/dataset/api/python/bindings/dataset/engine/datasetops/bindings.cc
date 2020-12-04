@@ -24,7 +24,18 @@ PYBIND_REGISTER(CBatchInfo, 0, ([](const py::module *m) {
                   (void)py::class_<BatchOp::CBatchInfo>(*m, "CBatchInfo")
                     .def(py::init<int64_t, int64_t, int64_t>())
                     .def("get_epoch_num", &BatchOp::CBatchInfo::get_epoch_num)
-                    .def("get_batch_num", &BatchOp::CBatchInfo::get_batch_num);
+                    .def("get_batch_num", &BatchOp::CBatchInfo::get_batch_num)
+                    .def(py::pickle(
+                      [](const BatchOp::CBatchInfo &p) {  // __getstate__
+                        /* Return a tuple that fully encodes the state of the object */
+                        return py::make_tuple(p.epoch_num_, p.batch_num_, p.total_batch_num_);
+                      },
+                      [](py::tuple t) {  // __setstate__
+                        if (t.size() != 3) throw std::runtime_error("Invalid state!");
+                        /* Create a new C++ instance */
+                        BatchOp::CBatchInfo p(t[0].cast<int64_t>(), t[1].cast<int64_t>(), t[2].cast<int64_t>());
+                        return p;
+                      }));
                 }));
 
 PYBIND_REGISTER(DatasetOp, 0, ([](const py::module *m) {
