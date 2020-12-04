@@ -36,7 +36,6 @@ PrimitiveC *TfliteMatMulParser::ParseLitePrimitive(const std::unique_ptr<tflite:
   const auto &tflite_attr = tflite_op->builtin_options.AsBatchMatMulOptions();
   attr->transposeA = tflite_attr->adj_x;
   attr->transposeB = tflite_attr->adj_y;
-  attr->broadcast = false;
   primitive->value.type = schema::PrimitiveType_MatMul;
   primitive->value.value = attr.release();
 

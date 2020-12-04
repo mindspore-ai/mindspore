@@ -128,7 +128,7 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
   attr->channelMultiplier = channel_multiplier;
 
   MS_ASSERT(inputs.size() == kAnfPopulaterInputNumTwo);
-  auto inputNode = inputs[kAnfPopulaterInputNumOne];
+  auto inputNode = inputs.at(kAnfPopulaterInputNumOne);
   MS_ASSERT(inputNode != nullptr);
   if (inputNode->isa<Parameter>()) {
     auto paramNode = inputNode->cast<ParameterPtr>();
@@ -139,7 +139,7 @@ int DepthwiseConv2D::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
       MS_ASSERT(abstractTensor != nullptr);
       if (utils::isa<abstract::ShapePtr>(abstractTensor->BuildShape())) {
         auto dims = utils::cast<abstract::ShapePtr>(abstractTensor->BuildShape())->shape();
-        attr->channelIn = dims[kAnfPopulaterInputNumOne];
+        attr->channelIn = dims.at(kAnfPopulaterInputNumOne);
       }
     }
   }

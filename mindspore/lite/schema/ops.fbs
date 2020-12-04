@@ -660,7 +660,7 @@ table NetOutput {
 }
 
 table MatMul {
-    broadcast : bool = false;
+    broadcast : bool = false;  // DEPRECATED
     transposeA : bool = false;
     transposeB : bool = false;
 }
