@@ -25,10 +25,17 @@
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore {
 namespace lite {
 namespace {
+static const std::vector<schema::PrimitiveType> tensorListOutputOpList = {
+  schema::PrimitiveType_TensorListFromTensor,
+  schema::PrimitiveType_TensorListSetItem,
+  schema::PrimitiveType_TensorListReserve,
+};
+
 // subgraph node input may be a:output:0/a:z:0
 std::string GetFlattenNodeName(std::string input_name) {
   std::regex re("\\:+");
@@ -107,7 +114,7 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::AttrValue &attr_value
     }
     tensor_size = shape_size * sizeof(float);
     param_value->SetTensorData(tensor_data, tensor_size);
-  } else if (type == kNumberTypeInt32) {
+  } else if (type == kNumberTypeInt32 || type == kNumberTypeInt) {
     auto tensor_data = new (std::nothrow) int[shape_size];
     if (tensor_proto.int_val_size() == 1) {
       int value = tensor_proto.int_val(0);
@@ -445,9 +452,19 @@ STATUS TFModelParser::ConvertOutputTensor(const tensorflow::NodeDef &op, const C
   MS_ASSERT(op != nullptr);
   MS_ASSERT(anf_node != nullptr);
   MS_ASSERT(anf_graph != nullptr);
-  if (output_size == 1) {
+  if (IsContain(tensorListOutputOpList, opt::GetCNodeType(anf_node)) && output_size != 1) {
+    MS_LOG(ERROR) << "tensorlist output op output_size !=1";
+    return RET_ERROR;
+  }
+  if (output_size == 0) {
+    return RET_OK;
+  } else if (output_size == 1) {
+    auto type = kFloat32;
     std::vector<int64_t> shape_vector;
-    anf_node->set_abstract(std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector));
+    if (IsContain(tensorListOutputOpList, opt::GetCNodeType(anf_node))) {
+      type = TypeIdToType(kObjectTypeTensorType);
+    }
+    anf_node->set_abstract(std::make_shared<abstract::AbstractTensor>(type, shape_vector));
     anf_node_map->insert(std::pair(op.name(), anf_node));
   } else {
     AbstractBasePtrList abstractList;

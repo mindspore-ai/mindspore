@@ -52,6 +52,7 @@ STATUS TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
     attr->type = schema::ActivationType_TANH;
   } else {
     MS_LOG(ERROR) << "unsupported activation type:" << tf_op.op();
+    return RET_ERROR;
   }
 
   primitive->value.type = schema::PrimitiveType_Activation;

@@ -150,6 +150,11 @@
 #include "src/ops/unsorted_segment_sum.h"
 #include "src/ops/reciprocal.h"
 #include "src/ops/constant.h"
+#include "src/ops/tensorlistfromtensor.h"
+#include "src/ops/tensorlistgetitem.h"
+#include "src/ops/tensorlistsetitem.h"
+#include "src/ops/tensorlistreserve.h"
+#include "src/ops/tensorliststack.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -906,6 +911,16 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) Reciprocal(primitive);
     case schema::PrimitiveType_Constant:
       return new (std::nothrow) Constant(primitive);
+    case schema::PrimitiveType_TensorListFromTensor:
+      return new (std::nothrow) TensorListFromTensor(primitive);
+    case schema::PrimitiveType_TensorListGetItem:
+      return new (std::nothrow) TensorListGetItem(primitive);
+    case schema::PrimitiveType_TensorListSetItem:
+      return new (std::nothrow) TensorListSetItem(primitive);
+    case schema::PrimitiveType_TensorListReserve:
+      return new (std::nothrow) TensorListReserve(primitive);
+    case schema::PrimitiveType_TensorListStack:
+      return new (std::nothrow) TensorListStack(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:

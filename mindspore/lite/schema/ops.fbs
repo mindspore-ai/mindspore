@@ -1194,6 +1194,7 @@ table TensorListSetItem {
 
 table TensorListReserve {
     elementDType : int;
+    shapeType : int;
 }
 
 table All {
