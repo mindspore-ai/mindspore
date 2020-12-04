@@ -71,6 +71,7 @@ class MatMulGpuKernel : public GpuKernel {
 
     try {
       CHECK_CUBLAS_RET_WITH_EXCEPT(
+        kernel_node_,
         cublasGemmStridedBatchedEx(handle_, transpose_x2_, transpose_x1_, SizeToInt(n_), SizeToInt(m_), SizeToInt(k_),
                                    &alpha, input2_addr, dtype_b_, ldb, stride_b, input1_addr, dtype_a_, lda, stride_a,
                                    &beta, output_addr, dtype_c_, ldc, stride_c, batch_, CUDA_R_32F, algo_),
@@ -81,6 +82,7 @@ class MatMulGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     dtype_a_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     dtype_b_ = GetCudaDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 1)));

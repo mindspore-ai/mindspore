@@ -41,7 +41,8 @@ class GpuConvertToDynamicShapeGpuKernel : public GpuKernel {
     T *output_device_address = GetDeviceAddress<T>(outputs, 0);
     cuda_stream_ptr_ = stream_ptr;
 
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(output_device_address, input_device_address, input_size_ * sizeof(T),
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                              cudaMemcpyAsync(output_device_address, input_device_address, input_size_ * sizeof(T),
                                               cudaMemcpyDeviceToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "Failed to copy gpu memory.");
 
@@ -49,7 +50,7 @@ class GpuConvertToDynamicShapeGpuKernel : public GpuKernel {
   }
 
   void PostExecute() override {
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_ptr_)),
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(cuda_stream_ptr_)),
                                "cudaStreamSynchronized failed");
 
     std::vector<TypeId> output_types = {AnfAlgo::GetOutputInferDataType(c_node_ptr_, 0)};
@@ -58,6 +59,7 @@ class GpuConvertToDynamicShapeGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     size_t input_count = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_count != 1) {
       MS_LOG(ERROR) << input_count << "inputs were provided, but GpuConvertToDynamicShapeGpuKernel exepects 1.";

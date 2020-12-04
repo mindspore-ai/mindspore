@@ -43,10 +43,12 @@ class GatherV2GpuFwdKernel : public GpuKernel {
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
     if (is_dynamic_shape_) {
       int64_t *axis_device_address = GetDeviceAddress<int64_t>(inputs, 2);  // only get this if in dynamic mode
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(&axis_, axis_device_address, sizeof(int64_t), cudaMemcpyDeviceToHost,
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(&axis_, axis_device_address, sizeof(int64_t), cudaMemcpyDeviceToHost,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync axis_ failed");
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaDeviceSynchronize(), "cudaDeviceSyncFailed - GatherV2 - in dynamic mode");
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaDeviceSynchronize(),
+                                 "cudaDeviceSyncFailed - GatherV2 - in dynamic mode");
       Reshape();
     }
     auto input_dim1 = input_shapes_[IntToSize(axis_)];
@@ -55,6 +57,7 @@ class GatherV2GpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     InitResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num == 3) {

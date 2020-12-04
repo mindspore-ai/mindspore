@@ -57,7 +57,8 @@ class BiasAddGpuKernel : public GpuKernel {
     try {
       const float alpha = 1;
       const float beta = 0;
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnOpTensor(cudnn_handle_, op_desc_, &alpha, x_desc_, x_addr, &alpha, b_desc_,
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnOpTensor(cudnn_handle_, op_desc_, &alpha, x_desc_, x_addr, &alpha, b_desc_,
                                                 b_addr, &beta, x_desc_, output_addr),
                                   "cudnnOpTensor failed");
     } catch (const std::exception &e) {
@@ -66,6 +67,7 @@ class BiasAddGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     auto x_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -99,12 +101,15 @@ class BiasAddGpuKernel : public GpuKernel {
     auto input_device_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     auto cudnn_cal_format = (input_device_format == kOpFormat_NHWC) ? CUDNN_TENSOR_NHWC : CUDNN_TENSOR_NCHW;
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSetTensorNdDescriptorEx(x_desc_, cudnn_cal_format, cudnn_data_type_, SizeToInt(cudnn_dims), x_dims.get()),
       "cudnnSetTensorNdDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSetTensorNdDescriptorEx(b_desc_, cudnn_cal_format, cudnn_data_type_, SizeToInt(cudnn_dims), b_dims.get()),
       "cudnnSetTensorNdDescriptor failed");
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSetOpTensorDescriptor(op_desc_, CUDNN_OP_TENSOR_ADD, CUDNN_DATA_FLOAT, CUDNN_NOT_PROPAGATE_NAN),
       "cudnnSetOpTensorDescriptor failed");
 
@@ -113,22 +118,30 @@ class BiasAddGpuKernel : public GpuKernel {
   }
 
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyOpTensorDescriptor(op_desc_), "cudnnDestroyTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(b_desc_), "cudnnDestroyTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(x_desc_), "cudnnDestroyOpTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyOpTensorDescriptor(op_desc_),
+                               "cudnnDestroyTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(b_desc_),
+                               "cudnnDestroyTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(x_desc_),
+                               "cudnnDestroyOpTensorDescriptor failed");
   }
 
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&x_desc_), "cudnnCreateTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&b_desc_), "cudnnCreateTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateOpTensorDescriptor(&op_desc_), "cudnnCreateOpTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&x_desc_),
+                                "cudnnCreateTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&b_desc_),
+                                "cudnnCreateTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateOpTensorDescriptor(&op_desc_),
+                                "cudnnCreateOpTensorDescriptor failed");
   }
   void InitSizeLists() override {
     size_t x_size, b_size;
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(x_desc_, &x_size), "cudnnGetTensorSizeInBytes failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(b_desc_, &b_size), "cudnnGetTensorSizeInBytes failed.");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(x_desc_, &x_size),
+                                "cudnnGetTensorSizeInBytes failed.");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(b_desc_, &b_size),
+                                "cudnnGetTensorSizeInBytes failed.");
     input_size_list_.push_back(x_size);
     input_size_list_.push_back(b_size);
     output_size_list_.push_back(x_size);

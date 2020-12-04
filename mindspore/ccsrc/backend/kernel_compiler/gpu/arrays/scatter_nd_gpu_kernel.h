@@ -61,16 +61,19 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
     if (!memcpy_flag_) {
       const size_t indices_len = sizeof(S) * vec_indices_stride_.size();
       const size_t vec_work_len = sizeof(S) * vec_work_shape_.size();
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(indices_stride_, &vec_indices_stride_[0], indices_len,
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(indices_stride_, &vec_indices_stride_[0], indices_len,
                                                  cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpy failed in ScatterNdGpuFwdKernel::Launch.");
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(work_shape_, &vec_work_shape_[0], vec_work_len, cudaMemcpyHostToDevice,
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(work_shape_, &vec_work_shape_[0], vec_work_len, cudaMemcpyHostToDevice,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpy failed in ScatterNdGpuFwdKernel::Launch.");
       memcpy_flag_ = true;
     }
 
     CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_,
       cudaMemsetAsync(output, static_cast<T>(0.0), output_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemSet failed in ScatterNdGpuFwdKernel::Launch.");
 
@@ -83,6 +86,7 @@ class ScatterNdGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     memcpy_flag_ = false;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {

@@ -64,6 +64,7 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     const float alpha = 1;
     const float beta = 0;
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSoftmaxForward(cudnn_handle_, algo_, mode_, &alpha, logits_descriptor_, logits_addr, &beta,
                           softmax_output_descriptor_, softmax_output_logits),
       "cudnnSoftmaxForward failed.");
@@ -75,6 +76,7 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     InitResource();
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 2) {
@@ -92,10 +94,12 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
 
     InferInputOutputSize(kernel_node);
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensor4dDescriptor(logits_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                cudnnSetTensor4dDescriptor(logits_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
                                                            batch_size_, channel_size_, height_, width_),
                                 "cudnnSetTensor4dDescriptor failed.");
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSetTensor4dDescriptor(softmax_output_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, batch_size_,
                                  channel_size_, height_, width_),
       "cudnnSetTensor4dDescriptor failed.");
@@ -104,18 +108,18 @@ class SparseSoftmaxCrossEntropyWithLogitsGpuKernel : public GpuKernel {
   }
 
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(softmax_output_descriptor_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(softmax_output_descriptor_),
                                "cudnnDestroyTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(logits_descriptor_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(logits_descriptor_),
                                "cudnnDestroyTensorDescriptor failed.");
   }
 
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&logits_descriptor_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&logits_descriptor_),
                                 "cudnnCreateTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&softmax_output_descriptor_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&softmax_output_descriptor_),
                                 "cudnnCreateTensorDescriptor failed.");
   }
   void InitSizeLists() override {

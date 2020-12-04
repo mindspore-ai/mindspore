@@ -44,7 +44,7 @@ class UnsortedSegmentSumGpuKernel : public GpuKernel {
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
     CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemsetAsync(output_addr, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+      kernel_node_, cudaMemsetAsync(output_addr, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
       "cudaMemSet Failed");
     UnsortedSegmentSum(input_dim0_, input_dim1_, output_dim0_, output_dim1_, input_addr, indices_addr, output_addr,
                        reinterpret_cast<cudaStream_t>(stream_ptr));
@@ -52,6 +52,7 @@ class UnsortedSegmentSumGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     auto input_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shapes);
     if (is_null_input_) {

@@ -51,6 +51,7 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCusolverDnHandle();
     blas_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCublasHandle();
     auto in_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
@@ -113,21 +114,25 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
       h_array[i] = input1_addr + i * lda_ * m_;
       h_identity[i] = output_addr + i * ldb_ * m_;
       CHECK_CUDA_RET_WITH_ERROR(
+        kernel_node_,
         cudaMemcpyAsync(output_addr + i * ldb_ * m_, h_identity_data.data(), sizeof(T) * ldb_ * m_,
                         cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
         "cuda memcopy Fail");
     }
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(d_array_addr, h_array.data(), sizeof(T *) * batch_,
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                              cudaMemcpyAsync(d_array_addr, h_array.data(), sizeof(T *) * batch_,
                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "cuda memcopy Fail");
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(d_identity_addr, h_identity.data(), sizeof(T *) * batch_,
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                              cudaMemcpyAsync(d_identity_addr, h_identity.data(), sizeof(T *) * batch_,
                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "cuda memcopy Fail");
     CHECK_CUSOLVER_RET_WITH_EXCEPT(
-      cusolverDnSpotrfBatched(handle_, uplo, m_, d_array_addr, lda_, d_info_array_addr, batch_),
+      kernel_node_, cusolverDnSpotrfBatched(handle_, uplo, m_, d_array_addr, lda_, d_info_array_addr, batch_),
       "cusolver cholesky batched Fail");
     float alpha = 1;
     CHECK_CUBLAS_RET_WITH_EXCEPT(
+      kernel_node_,
       cublasStrsmBatched(blas_handle_, CUBLAS_SIDE_LEFT, uplo, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, m_, m_, &alpha,
                          d_array_addr, lda_, d_identity_addr, ldb_, batch_),
       "cublas trsm batched Fail");
@@ -147,17 +152,20 @@ class CholeskyTrsmGpuKernel : public GpuKernel {
     Identity(batch_ * split_dim * split_dim, split_dim, output_addr, reinterpret_cast<cudaStream_t>(stream_ptr));
     MatrixSplit(batch_ * split_dim * split_dim, split_dim, width, input1_addr, d_batch_input_addr,
                 reinterpret_cast<cudaStream_t>(stream_ptr));
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(d_array_addr, h_array.data(), sizeof(T *) * batch_,
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                              cudaMemcpyAsync(d_array_addr, h_array.data(), sizeof(T *) * batch_,
                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "cuda memcopy Fail");
-    CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(d_identity_addr, h_identity.data(), sizeof(T *) * batch_,
+    CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                              cudaMemcpyAsync(d_identity_addr, h_identity.data(), sizeof(T *) * batch_,
                                               cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                               "cuda memcopy Fail");
     CHECK_CUSOLVER_RET_WITH_EXCEPT(
-      cusolverDnSpotrfBatched(handle_, uplo, m_, d_array_addr, lda_, d_info_array_addr, batch_),
+      kernel_node_, cusolverDnSpotrfBatched(handle_, uplo, m_, d_array_addr, lda_, d_info_array_addr, batch_),
       "cusolver cholesky batched Fail");
     float alpha = 1;
     CHECK_CUBLAS_RET_WITH_EXCEPT(
+      kernel_node_,
       cublasStrsmBatched(blas_handle_, CUBLAS_SIDE_LEFT, uplo, CUBLAS_OP_N, CUBLAS_DIAG_NON_UNIT, m_, m_, &alpha,
                          d_array_addr, lda_, d_identity_addr, ldb_, batch_),
       "cublas trsm batched Fail");

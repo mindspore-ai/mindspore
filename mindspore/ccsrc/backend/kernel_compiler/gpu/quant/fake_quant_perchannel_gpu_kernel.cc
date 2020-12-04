@@ -42,6 +42,7 @@ const std::vector<size_t> &FakeQuantPerChannelGpuKernel::GetOutputSizeList() con
 const std::vector<size_t> &FakeQuantPerChannelGpuKernel::GetWorkspaceSizeList() const { return workspace_size_list_; }
 
 bool FakeQuantPerChannelGpuKernel::Init(const CNodePtr &kernel_node) {
+  kernel_node_ = kernel_node;
   size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
   if (input_num != 3) {
     MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but FakeQuant GpuKernel OP needs 3 input.";
@@ -130,7 +131,8 @@ bool FakeQuantPerChannelGpuKernel::Launch(const std::vector<AddressPtr> &inputs,
     if (global_step_ >= quant_delay_) {
       CalFakeQuantize(input, output, input_min, input_max, nudge_min, nudge_max, scale, stream_ptr);
     } else {
-      CHECK_CUDA_RET_WITH_ERROR(cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice,
+      CHECK_CUDA_RET_WITH_ERROR(kernel_node_,
+                                cudaMemcpyAsync(output, input, input_size_, cudaMemcpyDeviceToDevice,
                                                 reinterpret_cast<cudaStream_t>(stream_ptr)),
                                 "Copy gpu memory failed.");
     }

@@ -50,6 +50,7 @@ class CtcLossGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     InitResource();
     auto probs_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     if (probs_shape.size() != 3) {
@@ -116,9 +117,9 @@ class CtcLossGpuKernel : public GpuKernel {
     cudaStream_t stream = reinterpret_cast<cudaStream_t>(stream_ptr);
     CalculateMaxSequence(sequence_length, max_labels_length, batch, stream);
     CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemcpyAsync(&max_sequence, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
+      kernel_node_, cudaMemcpyAsync(&max_sequence, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
       "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     if (max_time < max_sequence) {
       MS_LOG(EXCEPTION) << "max_time should be greater than sequence length.";
     }
@@ -128,9 +129,9 @@ class CtcLossGpuKernel : public GpuKernel {
     CalculatePreLength(label_squence_length, precum_labels_length, cum_labels_length, max_labels_length, label_indices,
                        batch, label_size_ / sizeof(int), stream);
     CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemcpyAsync(&batch_label, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
+      kernel_node_, cudaMemcpyAsync(&batch_label, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
       "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     if (batch != batch_label + 1) {
       MS_LOG(EXCEPTION) << "label batch should be equal to input batch.";
     }
@@ -141,9 +142,10 @@ class CtcLossGpuKernel : public GpuKernel {
                        batch, stream);
     }
     CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_,
       cudaMemcpyAsync(&max_labels_length_host, max_labels_length, sizeof(int), cudaMemcpyDeviceToHost, stream),
       "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
   }
 
   void LaunchSecondHalf(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
@@ -175,7 +177,7 @@ class CtcLossGpuKernel : public GpuKernel {
     CTCLoss(log_alpha_b, log_beta_b, softmax_probs, label_value_with_blank, batch, SOffSet, max_time, numclass,
             sequence_length, label_squence_length, cum_labels_length, costs, grads, prob_num,
             ignore_longer_outputs_than_inputs_, stream);
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     FreeMem(label_value_with_blank, log_alpha_b, log_beta_b);
   }
 
@@ -197,39 +199,45 @@ class CtcLossGpuKernel : public GpuKernel {
   }
   void MemsetForWS(int *label_value_pcr, int *cum_labels_length, int *label_squence_length, T *costs, T *grads,
                    cudaStream_t stream) {
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemsetAsync(label_value_pcr, static_cast<int>(0), label_size_, stream),
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaMemsetAsync(label_value_pcr, static_cast<int>(0), label_size_, stream),
                                "cudaMemSet failed in CtcLossGpuKernel::Launch.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemsetAsync(cum_labels_length, static_cast<int>(0), squence_lengths_size_, stream),
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemsetAsync(cum_labels_length, static_cast<int>(0), squence_lengths_size_, stream),
                                "cudaMemSet failed in CtcLossGpuKernel::Launch.");
     CHECK_CUDA_RET_WITH_EXCEPT(
-      cudaMemsetAsync(label_squence_length, static_cast<int>(0), squence_lengths_size_, stream),
+      kernel_node_, cudaMemsetAsync(label_squence_length, static_cast<int>(0), squence_lengths_size_, stream),
       "cudaMemSet failed in CtcLossGpuKernel::Launch.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemsetAsync(costs, static_cast<T>(0), probs_dims_[1] * sizeof(T), stream),
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemsetAsync(costs, static_cast<T>(0), probs_dims_[1] * sizeof(T), stream),
                                "cudaMemSet failed in CtcLossGpuKernel::Launch.");
     CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_,
       cudaMemsetAsync(grads, static_cast<T>(0), probs_dims_[0] * probs_dims_[1] * probs_dims_[2] * sizeof(T), stream),
       "cudaMemSet failed in CtcLossGpuKernel::Launch.");
   }
   void MemManageForCus(T **log_alpha_b, T **log_beta_b, int **label_value_with_blank, int *cum_labels_length,
                        int log_prob_size, int batch, cudaStream_t stream) {
     int total_labels_size_host = 0;
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMalloc(reinterpret_cast<void **>(log_alpha_b), sizeof(T) * log_prob_size),
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMalloc(reinterpret_cast<void **>(log_alpha_b), sizeof(T) * log_prob_size),
                                "cudaMalloc failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMalloc(reinterpret_cast<void **>(log_beta_b), sizeof(T) * log_prob_size),
-                               "cudaMalloc failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(&total_labels_size_host, cum_labels_length + batch - 1, sizeof(int),
+    CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_, cudaMalloc(reinterpret_cast<void **>(log_beta_b), sizeof(T) * log_prob_size), "cudaMalloc failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(&total_labels_size_host, cum_labels_length + batch - 1, sizeof(int),
                                                cudaMemcpyDeviceToHost, stream),
                                "cudaMemcpyAsync failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaStreamSynchronize(stream), "cudaStreamSynchronize failed.");
     CHECK_CUDA_RET_WITH_EXCEPT(
+      kernel_node_,
       cudaMalloc(reinterpret_cast<void **>(label_value_with_blank), sizeof(int) * (2 * total_labels_size_host + batch)),
       "cudaMalloc failed.");
   }
 
   void FreeMem(int *label_value_with_blank, T *log_alpha_b, T *log_beta_b) {
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaFree(label_value_with_blank), "cudaFree failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaFree(log_alpha_b), "cudaFree failed.");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaFree(log_beta_b), "cudaFree failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaFree(label_value_with_blank), "cudaFree failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaFree(log_alpha_b), "cudaFree failed.");
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_, cudaFree(log_beta_b), "cudaFree failed.");
   }
 
   std::vector<size_t> input_size_list_;

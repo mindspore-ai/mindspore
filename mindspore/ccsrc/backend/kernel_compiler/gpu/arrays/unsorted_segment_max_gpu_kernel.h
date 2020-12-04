@@ -44,7 +44,8 @@ class UnsortedSegmentMaxGpuKernel : public GpuKernel {
     int *indices_addr = GetDeviceAddress<int>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemsetAsync(output_addr, std::numeric_limits<T>::min(), outputs[0]->size,
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemsetAsync(output_addr, std::numeric_limits<T>::min(), outputs[0]->size,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemSet Failed");
     CalUnsortedSegmentMax(input_addr, indices_addr, num_segments_, outer_size_, inner_size_, output_addr,
@@ -53,6 +54,7 @@ class UnsortedSegmentMaxGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     auto input_shapes = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
     is_null_input_ = CHECK_NULL_INPUT(input_shapes);
     if (is_null_input_) {

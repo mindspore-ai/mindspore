@@ -82,6 +82,7 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
     const float alpha = 1;
     const float beta = 0;
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnBatchNormalizationForwardTrainingEx(handle_, mode_, bn_ops_, &alpha, &beta, x_desc_, x, z_desc_, z, y_desc_,
                                                y, scale_bias_mean_var_desc_, scale, bias, exp_avg_factor_, runing_mean,
                                                runnig_variance, epsilon_, save_mean, save_variance, activation_desc_,
@@ -91,6 +92,7 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     MS_EXCEPTION_IF_NULL(kernel_node);
     std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == kFusedBatchNormEx) {
@@ -141,15 +143,16 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
   }
 
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(y_desc_), "Destroy y desc failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(scale_bias_mean_var_desc_), "Destroy para desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(x_desc_), "Destroy x desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(y_desc_), "Destroy y desc failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(scale_bias_mean_var_desc_),
+                               "Destroy para desc failed");
     if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(z_desc_), "Destroy z desc failed");
+      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(z_desc_), "Destroy z desc failed");
     }
 
     if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-      CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyActivationDescriptor(activation_desc_),
+      CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyActivationDescriptor(activation_desc_),
                                  "Destroy activation descriptor failed");
     }
   }
@@ -157,35 +160,41 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
  protected:
   void InitResource() override {
     handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&x_desc_), "Create x desc failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&y_desc_), "Create y desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&x_desc_), "Create x desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&y_desc_), "Create y desc failed");
     if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&z_desc_), "Create z desc failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&z_desc_), "Create z desc failed");
     }
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&scale_bias_mean_var_desc_), "Create para desc failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&scale_bias_mean_var_desc_),
+                                "Create para desc failed");
 
     if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateActivationDescriptor(&activation_desc_),
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateActivationDescriptor(&activation_desc_),
                                   "Create activation descriptor failed");
     }
   }
 
   void InitSizeLists() override {
     if (!is_null_input_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(x_desc_, &input_x_size_), "Get input x size failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(scale_bias_mean_var_desc_, &para_size_),
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(x_desc_, &input_x_size_),
+                                  "Get input x size failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(scale_bias_mean_var_desc_, &para_size_),
                                   "Get para size failed");
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(y_desc_, &output_size_), "Get output size failed");
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(y_desc_, &output_size_),
+                                  "Get output size failed");
       if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
-        CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(z_desc_, &input_z_size_), "Get input z size failed");
+        CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(z_desc_, &input_z_size_),
+                                    "Get input z size failed");
       }
 
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetBatchNormalizationForwardTrainingExWorkspaceSize(
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnGetBatchNormalizationForwardTrainingExWorkspaceSize(
                                     handle_, mode_, bn_ops_, x_desc_, z_desc_, y_desc_, scale_bias_mean_var_desc_,
                                     activation_desc_, &workspace_size_),
                                   "cudnnGetBatchNormalizationForwardTrainingExWorkspaceSize failed");
 
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetBatchNormalizationTrainingExReserveSpaceSize(
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnGetBatchNormalizationTrainingExReserveSpaceSize(
                                     handle_, mode_, bn_ops_, activation_desc_, x_desc_, &reserve_size_),
                                   "Get reserve size failed");
     }
@@ -228,25 +237,28 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
     }
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensor4dDescriptor(x_desc_, cudnn_format, cudnn_data_type_, batch, channel, height, width),
+      kernel_node_, cudnnSetTensor4dDescriptor(x_desc_, cudnn_format, cudnn_data_type_, batch, channel, height, width),
       "Set x desc failed");
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
-      cudnnSetTensor4dDescriptor(y_desc_, cudnn_format, cudnn_data_type_, batch, channel, height, width),
+      kernel_node_, cudnnSetTensor4dDescriptor(y_desc_, cudnn_format, cudnn_data_type_, batch, channel, height, width),
       "Set y desc failed");
 
     if (bn_ops_ == CUDNN_BATCHNORM_OPS_BN_ADD_ACTIVATION) {
       CHECK_CUDNN_RET_WITH_EXCEPT(
+        kernel_node_,
         cudnnSetTensor4dDescriptor(z_desc_, cudnn_format, cudnn_data_type_, batch, channel, height, width),
         "Set z desc failed");
     }
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSetTensor4dDescriptor(scale_bias_mean_var_desc_, CUDNN_TENSOR_NCHW, CUDNN_DATA_FLOAT, 1, channel, 1, 1),
       "Set para desc failed");
 
     if (bn_ops_ != CUDNN_BATCHNORM_OPS_BN) {
       CHECK_CUDNN_RET_WITH_EXCEPT(
+        kernel_node_,
         cudnnSetActivationDescriptor(activation_desc_, CUDNN_ACTIVATION_RELU, CUDNN_NOT_PROPAGATE_NAN, 0.0),
         "cudnnSetActivationDescriptor failed");
     }

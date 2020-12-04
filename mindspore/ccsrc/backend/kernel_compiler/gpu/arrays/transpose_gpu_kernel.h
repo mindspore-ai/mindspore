@@ -40,10 +40,12 @@ class TransposeGpuFwdKernel : public GpuKernel {
     T *output = GetDeviceAddress<T>(outputs, 0);
     size_t *input_shape = GetDeviceAddress<size_t>(workspace, 0);
     size_t *input_axis = GetDeviceAddress<size_t>(workspace, 1);
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(input_shape, &input_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(input_shape, &input_shape_[0], workspace_size_, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync input_shape failed");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(input_axis, &input_axis_[0], workspace_size_, cudaMemcpyHostToDevice,
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(input_axis, &input_axis_[0], workspace_size_, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemcpyAsync input_axis failed");
     size_t size = input_size_ / sizeof(T);
@@ -52,6 +54,7 @@ class TransposeGpuFwdKernel : public GpuKernel {
   }
 
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but transpose needs 1 input.";

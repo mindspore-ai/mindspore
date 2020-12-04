@@ -45,9 +45,11 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
     T *dx1 = GetDeviceAddress<T>(outputs, 0);
     T *dx2 = GetDeviceAddress<T>(outputs, 1);
 
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemsetAsync(dx1, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemsetAsync(dx1, 0, outputs[0]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemSet Failed");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemsetAsync(dx2, 0, outputs[1]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemsetAsync(dx2, 0, outputs[1]->size, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemSet Failed");
     if (need_broadcast_) {
       BroadcastGrad(x1_shape_[0], x1_shape_[1], x1_shape_[2], x1_shape_[3], x2_shape_[0], x2_shape_[1], x2_shape_[2],
@@ -61,6 +63,7 @@ class BroadcastOpGradGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     GetOpType(kernel_node);
     auto shape1 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto shape2 = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);

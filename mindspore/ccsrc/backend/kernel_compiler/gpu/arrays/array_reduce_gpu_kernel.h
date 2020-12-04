@@ -56,11 +56,13 @@ class ArrayReduceGpuKernel : public GpuKernel {
     if (all_match_) {
       MS_LOG(DEBUG)
         << "The corresponding dimensions of the input and output tensors all match. No need to call cuDNN kernel.";
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(output_addr, input_addr, inputs[0]->size, cudaMemcpyDeviceToDevice,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "cudaMemcpyAsync failed in ArrayReduceGpuKernel::Launch.");
     } else {
       CHECK_CUDNN_RET_WITH_EXCEPT(
+        kernel_node_,
         cudnnReduceTensor(cudnn_handle_, reduce_tensor_descriptor_, nullptr, 0, workspace_addr, workspace_size_, &alpha,
                           inputA_descriptor_, input_addr, &beta, outputC_descriptor_, output_addr),
         "cudnnReduceTensor failed.");
@@ -68,6 +70,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     InitResource();
     data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -140,34 +143,35 @@ class ArrayReduceGpuKernel : public GpuKernel {
   }
 
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyReduceTensorDescriptor(reduce_tensor_descriptor_),
                                "cudnnDestroyReduceTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(inputA_descriptor_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(inputA_descriptor_),
                                "cudnnDestroyTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(outputC_descriptor_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(outputC_descriptor_),
                                "cudnnDestroyTensorDescriptor failed.");
   }
 
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateReduceTensorDescriptor(&reduce_tensor_descriptor_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateReduceTensorDescriptor(&reduce_tensor_descriptor_),
                                 "cudnnCreateReduceTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&inputA_descriptor_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&inputA_descriptor_),
                                 "cudnnCreateTensorDescriptor failed.");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&outputC_descriptor_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&outputC_descriptor_),
                                 "cudnnCreateTensorDescriptor failed.");
   }
   void InitSizeLists() override {
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(inputA_descriptor_, &input_size_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(inputA_descriptor_, &input_size_),
                                 "cudnnGetTensorSizeInBytes failed.");
     input_size_list_.push_back(input_size_);
 
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(outputC_descriptor_, &output_size_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(outputC_descriptor_, &output_size_),
                                 "cudnnGetTensorSizeInBytes failed.");
     output_size_list_.push_back(output_size_);
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnGetReductionWorkspaceSize(cudnn_handle_, reduce_tensor_descriptor_, inputA_descriptor_, outputC_descriptor_,
                                      &workspace_size_),
       "cudnnGetReductionWorkspaceSize failed.");
@@ -186,6 +190,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
     }
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
+      kernel_node_,
       cudnnSetReduceTensorDescriptor(reduce_tensor_descriptor_, reduce_tensor_op_, CUDNN_DATA_FLOAT, nan_prop_,
                                      reduce_indices_, CUDNN_32BIT_INDICES),
       "cudnnSetReduceTensorDescriptor failed");
@@ -199,11 +204,12 @@ class ArrayReduceGpuKernel : public GpuKernel {
     if (input_shape.size() <= split_dim) {
       ShapeNdTo4d(input_shape, &inputA);
       CHECK_CUDNN_RET_WITH_EXCEPT(
+        kernel_node_,
         cudnnSetTensor4dDescriptor(inputA_descriptor_, CUDNN_TENSOR_NCHW, data_type_, SizeToInt(inputA[0]),
                                    SizeToInt(inputA[1]), SizeToInt(inputA[2]), SizeToInt(inputA[3])),
         "cudnnSetTensor4dDescriptor failed");
     } else {
-      CudnnSetTensorNdDescriptor(input_shape, inputA_descriptor_, data_type_);
+      CudnnSetTensorNdDescriptor(input_shape, inputA_descriptor_, data_type_, kernel_node_);
       for (auto dim : input_shape) {
         inputA.emplace_back(SizeToInt(dim));
       }
@@ -213,10 +219,10 @@ class ArrayReduceGpuKernel : public GpuKernel {
       outputC_shape.resize(input_shape.size(), 1);
       if (outputC_shape.size() <= split_dim) {
         CHECK_CUDNN_RET_WITH_EXCEPT(
-          cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, 1, 1, 1, 1),
+          kernel_node_, cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, 1, 1, 1, 1),
           "cudnnSetTensor4dDescriptor failed");
       } else {
-        CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_);
+        CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_, kernel_node_);
       }
 
       for (auto dim : inputA) {
@@ -239,11 +245,12 @@ class ArrayReduceGpuKernel : public GpuKernel {
     if (outputC_shape.size() <= split_dim) {
       ShapeNdTo4d(outputC_shape, &outputC);
       CHECK_CUDNN_RET_WITH_EXCEPT(
+        kernel_node_,
         cudnnSetTensor4dDescriptor(outputC_descriptor_, CUDNN_TENSOR_NCHW, data_type_, SizeToInt(outputC[0]),
                                    SizeToInt(outputC[1]), SizeToInt(outputC[2]), SizeToInt(outputC[3])),
         "cudnnSetTensor4dDescriptor failed");
     } else {
-      CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_);
+      CudnnSetTensorNdDescriptor(outputC_shape, outputC_descriptor_, data_type_, kernel_node_);
       for (auto dim : outputC_shape) {
         outputC.emplace_back(SizeToInt(dim));
       }

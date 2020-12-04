@@ -50,7 +50,8 @@ class ActivationGpuFwdKernel : public GpuKernel {
     } else {
       const float alpha = 1;
       const float beta = 0;
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnActivationForward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_,
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnActivationForward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_,
                                                          input, &beta, data_descriptor_, output),
                                   "cudnnActivationForward failed");
     }
@@ -58,6 +59,7 @@ class ActivationGpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     auto node_name = AnfAlgo::GetCNodeName(kernel_node);
     auto iter = kernel_map.find(node_name);
     if (iter == kernel_map.end()) {
@@ -85,7 +87,8 @@ class ActivationGpuFwdKernel : public GpuKernel {
       float alpha = GetAttr<float>(kernel_node, "alpha");
       coef = static_cast<double>(alpha);
     }
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_NOT_PROPAGATE_NAN, coef),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                cudnnSetActivationDescriptor(activation_desc_, mode_, CUDNN_NOT_PROPAGATE_NAN, coef),
                                 "cudnnSetActivationDescriptor failed");
 
     const int split_dim = 4;
@@ -93,17 +96,19 @@ class ActivationGpuFwdKernel : public GpuKernel {
       ShapeNdTo4d(input_shape, &shape);
       if (AnfAlgo::GetInputFormat(kernel_node, 0) == kOpFormat_NHWC) {
         CHECK_CUDNN_RET_WITH_EXCEPT(
+          kernel_node_,
           cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_, SizeToInt(shape[0]),
                                      SizeToInt(shape[3]), SizeToInt(shape[1]), SizeToInt(shape[2])),
           "cudnnSetTensor4dDescriptor failed");
       } else {
         CHECK_CUDNN_RET_WITH_EXCEPT(
+          kernel_node_,
           cudnnSetTensor4dDescriptor(data_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_, SizeToInt(shape[0]),
                                      SizeToInt(shape[1]), SizeToInt(shape[2]), SizeToInt(shape[3])),
           "cudnnSetTensor4dDescriptor failed");
       }
     } else {
-      CudnnSetTensorNdDescriptor(input_shape, data_descriptor_, cudnn_data_type_);
+      CudnnSetTensorNdDescriptor(input_shape, data_descriptor_, cudnn_data_type_, kernel_node_);
     }
 
     InitSizeLists();
@@ -111,9 +116,10 @@ class ActivationGpuFwdKernel : public GpuKernel {
   }
 
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyActivationDescriptor(activation_desc_),
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyActivationDescriptor(activation_desc_),
                                "cudnnDestroyActivationDescriptor failed");
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(data_descriptor_), "cudnnDestroyTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(data_descriptor_),
+                               "cudnnDestroyTensorDescriptor failed");
   }
 
   void ResetResource() noexcept override {
@@ -134,14 +140,15 @@ class ActivationGpuFwdKernel : public GpuKernel {
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&data_descriptor_), "cudnnCreateTensorDescriptor failed");
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateActivationDescriptor(&activation_desc_),
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&data_descriptor_),
+                                "cudnnCreateTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateActivationDescriptor(&activation_desc_),
                                 "cudnnCreateActivationDescriptor failed");
   }
 
   void InitSizeLists() override {
     if (!is_null_input_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(data_descriptor_, &input_size_),
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(data_descriptor_, &input_size_),
                                   "cudnnGetTensorSizeInBytes failed");
       output_size_ = input_size_;
     }

@@ -49,10 +49,12 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
     for (size_t i = 0; i < inputs.size(); i++) {
       inputs_host_[i] = GetDeviceAddress<T>(inputs, i);
     }
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(inputs_device, inputs_host_.get(), sizeof(T *) * input_num_,
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(inputs_device, inputs_host_.get(), sizeof(T *) * input_num_,
                                                cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "ConcatV2 opt cudaMemcpyAsync inputs failed");
-    CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(len_axis_device, len_axis_.get(), sizeof(int) * input_num_,
+    CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                               cudaMemcpyAsync(len_axis_device, len_axis_.get(), sizeof(int) * input_num_,
                                                cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "ConcatV2 opt cudaMemcpyAsync length on axis failed");
     ConcatKernel(output_size_, input_num_, all_size_before_axis_, all_size_axis_, len_axis_device, inputs_device,
@@ -60,6 +62,7 @@ class ConcatV2GpuFwdKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     if (!CheckParam(kernel_node)) {
       return false;
     }

@@ -69,19 +69,22 @@ class AddNGpuFwdKernel : public GpuKernel {
         ElewiseArith(outputs[0]->size / sizeof(T), BROADCAST_TYPE_ADD, input_addr, work_addr, work_addr,
                      reinterpret_cast<cudaStream_t>(stream_ptr));
       } else {
-        CHECK_CUDNN_RET_WITH_EXCEPT(cudnnAddTensor(cudnn_handle_, &alpha, input_descriptor_, input_addr,
+        CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                    cudnnAddTensor(cudnn_handle_, &alpha, input_descriptor_, input_addr,
                                                    &(i > 0 ? alpha : beta), input_descriptor_, work_addr),
                                     "cudnnAddTensor failed");
       }
     }
     if (work_addr != output_addr) {
-      CHECK_CUDA_RET_WITH_EXCEPT(cudaMemcpyAsync(output_addr, work_addr, outputs[0]->size, cudaMemcpyDeviceToDevice,
+      CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
+                                 cudaMemcpyAsync(output_addr, work_addr, outputs[0]->size, cudaMemcpyDeviceToDevice,
                                                  reinterpret_cast<cudaStream_t>(stream_ptr)),
                                  "Addn cudaMemcpyAsync outputs failed");
     }
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
+    kernel_node_ = kernel_node;
     InitResource();
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
@@ -111,11 +114,13 @@ class AddNGpuFwdKernel : public GpuKernel {
     }
     auto input_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     if (input_format == kOpFormat_NHWC) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptorEx(input_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_,
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnSetTensorNdDescriptorEx(input_descriptor_, CUDNN_TENSOR_NHWC, cudnn_data_type_,
                                                                SizeToInt(input_shape.size()), dimA),
                                   "cudnnSetTensorNdDescriptor failed");
     } else {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetTensorNdDescriptorEx(input_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                  cudnnSetTensorNdDescriptorEx(input_descriptor_, CUDNN_TENSOR_NCHW, cudnn_data_type_,
                                                                SizeToInt(input_shape.size()), dimA),
                                   "cudnnSetTensorNdDescriptor failed");
     }
@@ -124,17 +129,19 @@ class AddNGpuFwdKernel : public GpuKernel {
   }
 
   void DestroyResource() noexcept override {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroyTensorDescriptor(input_descriptor_), "cudnnDestroyTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyTensorDescriptor(input_descriptor_),
+                               "cudnnDestroyTensorDescriptor failed");
   }
 
  protected:
   void InitResource() override {
     cudnn_handle_ = device::gpu::GPUDeviceManager::GetInstance().GetCudnnHandle();
-    CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreateTensorDescriptor(&input_descriptor_), "cudnnCreateTensorDescriptor failed");
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateTensorDescriptor(&input_descriptor_),
+                                "cudnnCreateTensorDescriptor failed");
   }
   void InitSizeLists() override {
     if (!is_null_input_) {
-      CHECK_CUDNN_RET_WITH_EXCEPT(cudnnGetTensorSizeInBytes(input_descriptor_, &input_size_),
+      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(input_descriptor_, &input_size_),
                                   "cudnnGetTensorSizeInBytes failed");
     }
     for (size_t i = 0; i < num_input_; i++) {

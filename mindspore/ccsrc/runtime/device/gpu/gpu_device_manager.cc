@@ -26,14 +26,16 @@ namespace gpu {
 void GPUDeviceManager::InitDevice() {
   CHECK_OP_RET_WITH_EXCEPT(CudaDriver::set_current_device(SizeToInt(cur_dev_id_)), "Failed to set current device id");
   CHECK_OP_RET_WITH_EXCEPT(CreateStream(&default_stream_), "Failed to create CUDA stream.");
-  CHECK_CUDNN_RET_WITH_EXCEPT(cudnnCreate(&cudnn_handle_), "Failed to create cuDNN handle");
-  CHECK_CUDNN_RET_WITH_EXCEPT(cudnnSetStream(cudnn_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
-                              "Failed to set stream for cuDNN handle.");
-  CHECK_CUBLAS_RET_WITH_EXCEPT(cublasCreate(&cublas_handle_), "Failed to create cuBLAS handle.");
-  CHECK_CUBLAS_RET_WITH_EXCEPT(cublasSetStream(cublas_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
-                               "Failed to set stream for cuBLAS handle.");
-  CHECK_CUSOLVER_RET_WITH_EXCEPT(cusolverDnCreate(&cusolver_dn_handle_), "Failed to create cusolver dn handle.");
-  CHECK_CUSOLVER_RET_WITH_EXCEPT(
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnCreate(&cudnn_handle_), "Failed to create cuDNN handle");
+  CHECK_CUDNN_RET_WITH_EXCEPT_NOTRACE(cudnnSetStream(cudnn_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
+                                      "Failed to set stream for cuDNN handle.");
+  CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(cublasCreate(&cublas_handle_), "Failed to create cuBLAS handle.");
+  CHECK_CUBLAS_RET_WITH_EXCEPT_NOTRACE(
+    cublasSetStream(cublas_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
+    "Failed to set stream for cuBLAS handle.");
+  CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(cusolverDnCreate(&cusolver_dn_handle_),
+                                         "Failed to create cusolver dn handle.");
+  CHECK_CUSOLVER_RET_WITH_EXCEPT_NOTRACE(
     cusolverDnSetStream(cusolver_dn_handle_, reinterpret_cast<cudaStream_t>(default_stream())),
     "Failed to set stream for cusolver dn handle");
   CHECK_OP_RET_WITH_EXCEPT(GPUMemoryAllocator::GetInstance().Init(), "Failed to Init gpu memory allocator")
@@ -46,7 +48,7 @@ void GPUDeviceManager::ReleaseDevice() {
     }
   }
   if (cudnn_handle_ != nullptr) {
-    CHECK_CUDNN_RET_WITH_ERROR(cudnnDestroy(cudnn_handle_), "Failed to destroy cuDNN handle");
+    CHECK_CUDNN_RET_WITH_ERROR_NOTRACE(cudnnDestroy(cudnn_handle_), "Failed to destroy cuDNN handle");
   }
   if (cublas_handle_ != nullptr) {
     CHECK_CUBLAS_RET_WITH_ERROR(cublasDestroy(cublas_handle_), "Failed to destroy cuBLAS handle.");
