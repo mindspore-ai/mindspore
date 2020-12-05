@@ -58,7 +58,7 @@ class CutOutOp : public TensorOp {
   // Overrides the base class compute function
   // Calls the erase function in ImageUtils, this function takes an input tensor
   // and overwrites some of its data using openCV, the output memory is manipulated to contain the result
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) override;
 
   std::string Name() const override { return kCutOutOp; }

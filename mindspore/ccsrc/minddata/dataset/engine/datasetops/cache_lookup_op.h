@@ -80,7 +80,7 @@ class CacheLookupOp : public CacheBase, public SamplerRT {
     std::shared_ptr<SamplerRT> build_sampler_;
 
     // Check if the required parameters are set by the builder.
-    // \return Status The error code return
+    // \return Status The status code returned
     Status SanityCheck() const;
   };
   /// \brief Constructor

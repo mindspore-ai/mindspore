@@ -40,7 +40,7 @@ class PKSamplerRT : public SamplerRT {  // NOT YET FINISHED
 
   // @param std::unique_ptr<DataBuffer pBuffer
   // @param int32_t workerId
-  // @return - The error code return
+  // @return Status The status code returned
   Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
   // first handshake between leaf source op and Sampler. This func will determine the amount of data
@@ -53,7 +53,7 @@ class PKSamplerRT : public SamplerRT {  // NOT YET FINISHED
   Status InitSampler() override;
 
   // for next epoch of sampleIds
-  // @return - The error code return
+  // @return Status The status code returned
   Status ResetSampler() override;
 
   // Printer for debugging purposes.

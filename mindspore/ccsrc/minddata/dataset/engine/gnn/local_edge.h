@@ -43,12 +43,12 @@ class LocalEdge : public Edge {
   // Get the feature of a edge
   // @param FeatureType feature_type - type of feature
   // @param std::shared_ptr<Feature> *out_feature - Returned feature
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetFeatures(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) override;
 
   // Update feature of edge
   // @param std::shared_ptr<Feature> feature -
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status UpdateFeature(const std::shared_ptr<Feature> &feature) override;
 
  private:

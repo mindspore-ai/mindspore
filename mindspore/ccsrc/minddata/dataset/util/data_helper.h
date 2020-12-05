@@ -53,7 +53,7 @@ class DataHelper {
   /// \param key Key of field to write to
   /// \param value Value array to write to file
   /// \param out_file Optional input for output file path, will write to input file if not specified
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status UpdateArray(const std::string &in_file, const std::string &key, const std::vector<std::string> &value,
                      const std::string &out_file = "");
 
@@ -62,7 +62,7 @@ class DataHelper {
   /// \param key Key of field to write to
   /// \param value Value array to write to file
   /// \param out_file Optional parameter for output file path, will write to input file if not specified
-  /// \return Status The error code return
+  /// \return Status The status code returned
   template <typename T>
   Status UpdateArray(const std::string &in_file, const std::string &key, const std::vector<T> &value,
                      const std::string &out_file = "") {
@@ -99,7 +99,7 @@ class DataHelper {
   /// \param key Key of field to write to
   /// \param value Value to write to file
   /// \param out_file Optional parameter for output file path, will write to input file if not specified
-  /// \return Status The error code return
+  /// \return Status The status code returned
   template <typename T>
   Status UpdateValue(const std::string &in_file, const std::string &key, const T &value,
                      const std::string &out_file = "") {
@@ -134,7 +134,7 @@ class DataHelper {
   /// \brief Template function to write tensor to file
   /// \param[in] in_file File to write to
   /// \param[in] data Array of type T values
-  /// \return Status The error code return
+  /// \return Status The status code returned
   template <typename T>
   Status WriteBinFile(const std::string &in_file, const std::vector<T> &data) {
     try {
@@ -157,7 +157,7 @@ class DataHelper {
   /// \param[in] in_file File name to write to
   /// \param[in] data Pointer to data
   /// \param[in] length Length of values to write from pointer
-  /// \return Status The error code return
+  /// \return Status The status code returned
   template <typename T>
   Status WriteBinFile(const std::string &in_file, T *data, size_t length) {
     try {
@@ -188,7 +188,7 @@ class DataHelper {
   /// note This function will return okay even if key not found
   /// \param[in] in_file Json file to remove key from
   /// \param[in] key The key to remove
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RemoveKey(const std::string &in_file, const std::string &key, const std::string &out_file = "");
 
   /// \brief A print method typically used for debugging

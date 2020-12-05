@@ -46,20 +46,20 @@ class EpochInjectionPass : public TreePass {
     /// \brief Performs finder work for BuildVocabOp that has special rules about epoch control injection.
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
-    /// \return Status The error code return
+    /// \return Status The status code returned
     Status PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *modified) override;
 
     /// \brief Performs finder work for BuildSentencePieceVocabOp that has special rules about epoch control injection.
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
-    /// \return Status The error code return
+    /// \return Status The status code returned
     Status PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *modified) override;
 #endif
 
     /// \brief Register the DeviceQueueOp for further action.
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
-    /// \return Status The error code return
+    /// \return Status The status code returned
     Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) override;
 
     /// \brief Getter
@@ -79,7 +79,7 @@ class EpochInjectionPass : public TreePass {
   /// \brief Runs an injection pass to inject in operators needed at the pre pass stage
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate of the tree was modified.
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnTree(ExecutionTree *tree, bool *modified) override;
 };
 }  // namespace dataset

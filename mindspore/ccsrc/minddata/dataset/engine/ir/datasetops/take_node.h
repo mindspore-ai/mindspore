@@ -55,6 +55,10 @@ class TakeNode : public DatasetNode {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
+  /// \brief Getter
+  /// \return Number of rows to output
+  const int32_t Count() const { return take_count_; }
+
   /// \brief Base-class override for GetDatasetSize
   /// \param[in] size_getter Shared pointer to DatasetSizeGetter
   /// \param[in] estimate This is only supported by some of the ops and it's used to speed up the process of getting

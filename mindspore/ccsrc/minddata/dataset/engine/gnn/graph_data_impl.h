@@ -51,19 +51,19 @@ class GraphDataImpl : public GraphData {
   // Get all nodes from the graph.
   // @param NodeType node_type - type of node
   // @param std::shared_ptr<Tensor> *out - Returned nodes id
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetAllNodes(NodeType node_type, std::shared_ptr<Tensor> *out) override;
 
   // Get all edges from the graph.
   // @param NodeType edge_type - type of edge
   // @param std::shared_ptr<Tensor> *out - Returned edge ids
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetAllEdges(EdgeType edge_type, std::shared_ptr<Tensor> *out) override;
 
   // Get the node id from the edge.
   // @param std::vector<EdgeIdType> edge_list - List of edges
   // @param std::shared_ptr<Tensor> *out - Returned node ids
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetNodesFromEdges(const std::vector<EdgeIdType> &edge_list, std::shared_ptr<Tensor> *out) override;
 
   // All neighbors of the acquisition node.
@@ -72,7 +72,7 @@ class GraphDataImpl : public GraphData {
   // @param std::shared_ptr<Tensor> *out - Returned neighbor's id. Because the number of neighbors at different nodes is
   // different, the returned tensor is output according to the maximum number of neighbors. If the number of neighbors
   // is not enough, fill in tensor as -1.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetAllNeighbors(const std::vector<NodeIdType> &node_list, NodeType neighbor_type,
                          std::shared_ptr<Tensor> *out) override;
 
@@ -81,7 +81,7 @@ class GraphDataImpl : public GraphData {
   // @param std::vector<NodeIdType> neighbor_nums - Number of neighbors sampled per hop
   // @param std::vector<NodeType> neighbor_types - Neighbor type sampled per hop
   // @param std::shared_ptr<Tensor> *out - Returned neighbor's id.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetSampledNeighbors(const std::vector<NodeIdType> &node_list, const std::vector<NodeIdType> &neighbor_nums,
                              const std::vector<NodeType> &neighbor_types, std::shared_ptr<Tensor> *out) override;
 
@@ -90,7 +90,7 @@ class GraphDataImpl : public GraphData {
   // @param NodeIdType samples_num - Number of neighbors sampled
   // @param NodeType neg_neighbor_type - The type of negative neighbor.
   // @param std::shared_ptr<Tensor> *out - Returned negative neighbor's id.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetNegSampledNeighbors(const std::vector<NodeIdType> &node_list, NodeIdType samples_num,
                                 NodeType neg_neighbor_type, std::shared_ptr<Tensor> *out) override;
 
@@ -101,7 +101,7 @@ class GraphDataImpl : public GraphData {
   // @param float step_away_param - inout hyper parameter in node2vec algorithm
   // @param NodeIdType default_node - default node id
   // @param std::shared_ptr<Tensor> *out - Returned nodes id in walk path
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status RandomWalk(const std::vector<NodeIdType> &node_list, const std::vector<NodeType> &meta_path,
                     float step_home_param, float step_away_param, NodeIdType default_node,
                     std::shared_ptr<Tensor> *out) override;
@@ -111,7 +111,7 @@ class GraphDataImpl : public GraphData {
   // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
   // does not exist.
   // @param TensorRow *out - Returned features
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetNodeFeature(const std::shared_ptr<Tensor> &nodes, const std::vector<FeatureType> &feature_types,
                         TensorRow *out) override;
 
@@ -123,7 +123,7 @@ class GraphDataImpl : public GraphData {
   // @param std::vector<FeatureType> feature_types - Types of features, An error will be reported if the feature type
   // does not exist.
   // @param Tensor *out - Returned features
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetEdgeFeature(const std::shared_ptr<Tensor> &edges, const std::vector<FeatureType> &feature_types,
                         TensorRow *out) override;
 
@@ -132,7 +132,7 @@ class GraphDataImpl : public GraphData {
 
   // Get meta information of graph
   // @param MetaInfo *meta_info - Returned meta information
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetMetaInfo(MetaInfo *meta_info);
 
 #ifdef ENABLE_PYTHON
@@ -202,14 +202,14 @@ class GraphDataImpl : public GraphData {
   };
 
   // Load graph data from mindrecord file
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status LoadNodeAndEdge();
 
   // Create Tensor By Vector
   // @param std::vector<std::vector<T>> &data -
   // @param DataType type -
   // @param std::shared_ptr<Tensor> *out -
-  // @return Status - The error code return
+  // @return Status The status code returned
   template <typename T>
   Status CreateTensorByVector(const std::vector<std::vector<T>> &data, DataType type, std::shared_ptr<Tensor> *out);
 
@@ -217,32 +217,32 @@ class GraphDataImpl : public GraphData {
   // @param std::vector<std::vector<T>> *data - To be completed vector
   // @param size_t max_size - The size of the completed vector
   // @param T default_value - Filled default
-  // @return Status - The error code return
+  // @return Status The status code returned
   template <typename T>
   Status ComplementVector(std::vector<std::vector<T>> *data, size_t max_size, T default_value);
 
   // Get the default feature of a node
   // @param FeatureType feature_type -
   // @param std::shared_ptr<Feature> *out_feature - Returned feature
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetNodeDefaultFeature(FeatureType feature_type, std::shared_ptr<Feature> *out_feature);
 
   // Get the default feature of a edge
   // @param FeatureType feature_type -
   // @param std::shared_ptr<Feature> *out_feature - Returned feature
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetEdgeDefaultFeature(FeatureType feature_type, std::shared_ptr<Feature> *out_feature);
 
   // Find node object using node id
   // @param NodeIdType id -
   // @param std::shared_ptr<Node> *node - Returned node object
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetNodeByNodeId(NodeIdType id, std::shared_ptr<Node> *node);
 
   // Find edge object using edge id
   // @param EdgeIdType id -
   // @param std::shared_ptr<Node> *edge - Returned edge object
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetEdgeByEdgeId(EdgeIdType id, std::shared_ptr<Edge> *edge);
 
   // Negative sampling
@@ -250,7 +250,7 @@ class GraphDataImpl : public GraphData {
   // @param std::unordered_set<NodeIdType> &exclude_data - Data to be excluded
   // @param int32_t samples_num -
   // @param std::vector<NodeIdType> *out_samples - Sampling results returned
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status NegativeSample(const std::vector<NodeIdType> &data, const std::vector<NodeIdType> shuffled_ids,
                         size_t *start_index, const std::unordered_set<NodeIdType> &exclude_data, int32_t samples_num,
                         std::vector<NodeIdType> *out_samples);

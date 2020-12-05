@@ -53,7 +53,7 @@ class IteratorBase {
   // functionality exists in the derived versions of this function.
   // @param out_row - A TensorRow (vector of shared pointers to Tensors).  If any of the of data
   // messages are encountered (such as eoe or eof), then an empty TensorRow is returned back.
-  // @return Status - The error code return
+  // @return Status The status code returned
   // @note The position of a Tensor/column might be different from the initial column order
   // in corresponding Dataset Op. User must be aware that MapOp, ZipOps, and others might change
   // the column ordering.
@@ -97,17 +97,17 @@ class DatasetIterator : public IteratorBase {
   // from the tree root node directly.
   // @param out_row - A TensorRow (vector of shared pointers to Tensors).  If any of the of data
   // messages are encountered (such as eoe or eof), then an empty TensorRow is returned back.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status FetchNextTensorRow(TensorRow *out_row) override;
 
   // Fetches the next tensor row into device row, and returns it's shape.
   // @param out_shapes - A vector of tensor shapes (one shape per column)
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetOutputShapes(std::vector<TensorShape> *out_shapes);
 
   // Fetches the next tensor row into device row, and returns it's shape.
   // @param outShapes - A vector of tensor shapes (one shape per column)
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetOutputTypes(std::vector<DataType> *out_types);
 
   // Getter
@@ -140,12 +140,12 @@ class ChildIterator : public IteratorBase {
   // only from the child/worker id as given from the constructor.
   // @param out_row - A TensorRow (vector of shared pointers to Tensors).  If any of the of data
   // messages are encountered (such as eoe or eof), then an empty TensorRow is returned back.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status FetchNextTensorRow(TensorRow *out_row) override;
 
   // This function drains buffer until next eoe has been received.
   // It will be a no-op if the previous row returned is empty.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Drain();
 
   // Getter

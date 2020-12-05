@@ -110,12 +110,12 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
     }
 
     // Check validity of input args
-    // @return Status - The error code return
+    // @return Status The status code returned
     Status SanityCheck();
 
     // The builder "build" method creates the final object.
     // @param std::shared_ptr<ManifestOp> *op - DatasetOp
-    // @return - The error code return
+    // @return Status The status code returned
     Status Build(std::shared_ptr<ManifestOp> *op);
 
    private:
@@ -145,18 +145,18 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
 
   // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
   // @param int32_t worker_id - id of each worker
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status WorkerEntry(int32_t worker_id) override;
 
   // Main Loop of ManifestOp
   // Master thread: Fill IOBlockQueue, then goes to sleep
   // Worker thread: pulls IOBlock from IOBlockQueue, work on it then put buffer to mOutConnector
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status operator()() override;
 
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
   // @param (std::map<int64_t, std::vector<int64_t >> * map - key label, val all ids for this class
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const override;
 
   // A print method typically used for debugging
@@ -201,37 +201,37 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
 
  private:
   // Initialize Sampler, calls sampler->Init() within
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status InitSampler();
 
   // Method in operator(), to fill IOBlockQueue
   // @param std::unique_ptr<DataBuffer> sampler_buffer - to fill IOBlockQueue
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status AddIoBlock(std::unique_ptr<DataBuffer> *sampler_buffer);
 
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row
   // @param std::pair<std::string, std::vector<std::string>> - <imagefile, <label1, label2...>>
   // @param TensorRow row - image & label read into this tensor row
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status LoadTensorRow(row_id_type row_id, const std::pair<std::string, std::vector<std::string>> &data,
                        TensorRow *row);
 
   // @param const std::vector<int64_t> &keys - keys in ioblock
   // @param std::unique_ptr<DataBuffer> db
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
 
   // Parse manifest file to get image path and label and so on.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status ParseManifestFile();
 
   // Called first when function is called
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status LaunchThreadsAndInitOp();
 
   // reset Op
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Reset() override;
 
   // Check if image ia valid.Only support JPEG/PNG/GIF/BMP
@@ -239,7 +239,7 @@ class ManifestOp : public ParallelOp, public RandomAccessOp {
   Status CheckImageType(const std::string &file_name, bool *valid);
 
   // Count label index,num rows and num samples
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status CountDatasetInfo();
 
   // Private function for computing the assignment of the column name map.

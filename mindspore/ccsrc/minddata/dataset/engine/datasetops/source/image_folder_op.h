@@ -135,12 +135,12 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
     }
 
     // Check validity of input args
-    // @return - The error code return
+    // @return Status The status code returned
     Status SanityCheck();
 
     // The builder "build" method creates the final object.
     // @param std::shared_ptr<ImageFolderOp> *op - DatasetOp
-    // @return - The error code return
+    // @return Status The status code returned
     Status Build(std::shared_ptr<ImageFolderOp> *op);
 
    private:
@@ -172,28 +172,28 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
 
   // Initialize ImageFOlderOp related var, calls the function to walk all files
   // @param - std::string dir file directory to  ImageNetFolder
-  // @return - The error code return
+  // @return Status The status code returned
   Status PrescanMasterEntry(const std::string &dir);
 
   // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
   // @param int32_t workerId - id of each worker
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status WorkerEntry(int32_t worker_id) override;
 
   // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
   // @param int32_t workerId - id of each worker
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status PrescanWorkerEntry(int32_t worker_id);
 
   // Main Loop of ImageFolderOp
   // Master thread: Fill IOBlockQueue, then goes to sleep
   // Worker thread: pulls IOBlock from IOBlockQueue, work on it then put buffer to mOutConnector
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status operator()() override;
 
   // Method derived from RandomAccess Op, enable Sampler to get all ids for each class
   // @param (std::map<int64_t, std::vector<int64_t >> * map - key label, val all ids for this class
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetClassIds(std::map<int32_t, std::vector<int64_t>> *cls_ids) const override;
 
   // A print method typically used for debugging
@@ -224,19 +224,19 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
 
  private:
   // Initialize Sampler, calls sampler->Init() within
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status InitSampler();
 
   // Load a tensor row according to a pair
   // @param row_id_type row_id - id for this tensor row
   // @param ImageLabelPair pair - <imagefile,label>
   // @param TensorRow row - image & label read into this tensor row
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status LoadTensorRow(row_id_type row_id, ImageLabelPair pair, TensorRow *row);
 
   // @param const std::vector<int64_t> &keys - keys in ioblock
   // @param std::unique_ptr<DataBuffer> db
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status LoadBuffer(const std::vector<int64_t> &keys, std::unique_ptr<DataBuffer> *db);
 
   // @param std::string & dir - dir to walk all images
@@ -253,7 +253,7 @@ class ImageFolderOp : public ParallelOp, public RandomAccessOp {
   Status LaunchThreadsAndInitOp();
 
   // reset Op
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Reset() override;
 
   // Private function for computing the assignment of the column name map.

@@ -41,13 +41,13 @@ class PythonSamplerRT : public SamplerRT {
   Status InitSampler() override;
 
   // for next epoch of sampleIds
-  // @return - The error code return
+  // @return Status The status code returned
   Status ResetSampler() override;
 
   // Op calls this to get next Buffer that contains all the sampleIds
   // @param std::unique_ptr<DataBuffer> pBuffer - Buffer to be returned to corresponding Dataset Op
   // @param int32_t workerId - not meant to be used
-  // @return - The error code return
+  // @return Status The status code returned
   Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
   // Printer for debugging purposes.

@@ -226,7 +226,7 @@ Status ExecutionTree::LaunchWorkers(int32_t num_workers, std::function<Status(ui
 //    Compulsory transformation/action post optimization.
 //    For example, repeatOp inlining
 //
-// @return Status - The error code return
+// @return Status The status code returned
 Status ExecutionTree::Prepare(int32_t num_epochs, bool partial) {
   num_epochs_ = num_epochs;
   partially_prepare_ = partial;

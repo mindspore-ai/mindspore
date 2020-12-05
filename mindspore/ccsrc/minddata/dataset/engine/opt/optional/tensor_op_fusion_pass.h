@@ -29,7 +29,7 @@ class TensorOpFusionPass : public NodePass {
   /// \brief Identifies and fuses tensor ops within MapOp
   /// \param[in] node The node being visited
   /// \param[inout] *modified indicates whether the node has been visited
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnNode(std::shared_ptr<MapOp> node, bool *modified) override;
 };
 }  // namespace dataset

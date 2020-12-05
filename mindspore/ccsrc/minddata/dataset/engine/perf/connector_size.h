@@ -53,7 +53,7 @@ class ConnectorSize : public Sampling {
   std::string Name() const override { return kConnectorSizeSamplingName; }
 
   // Save sampling data to file
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status SaveToFile() override;
 
   Status Init(const std::string &dir_path, const std::string &device_id) override;

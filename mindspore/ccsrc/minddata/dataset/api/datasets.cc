@@ -490,12 +490,6 @@ RenameDataset::RenameDataset(std::shared_ptr<Dataset> input, const std::vector<s
 #endif
 
 RepeatDataset::RepeatDataset(std::shared_ptr<Dataset> input, int32_t count) {
-  // Workaround for repeat == 1, do not inject repeat.
-  if (count == 1) {
-    ir_node_ = input->IRNode();
-    return;
-  }
-
   auto ds = std::make_shared<RepeatNode>(input->IRNode(), count);
 
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);
@@ -516,13 +510,6 @@ SkipDataset::SkipDataset(std::shared_ptr<Dataset> input, int32_t count) {
 }
 
 TakeDataset::TakeDataset(std::shared_ptr<Dataset> input, int32_t count) {
-  // If count is greater than the number of element in dataset or equal to -1,
-  // all the element in dataset will be taken
-  if (count == -1) {
-    ir_node_ = input->IRNode();
-    return;
-  }
-
   auto ds = std::make_shared<TakeNode>(input->IRNode(), count);
 
   ir_node_ = std::static_pointer_cast<DatasetNode>(ds);

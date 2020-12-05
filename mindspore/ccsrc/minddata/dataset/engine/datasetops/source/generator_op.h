@@ -115,13 +115,13 @@ class GeneratorOp : public PipelineOp {
   // Class functor operator () override.
   // All DatasetOps operate by launching a thread (see ExecutionTree). This class functor will
   // provide the master loop that drives the logic for performing the work.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status operator()() override;
 
   // Overrides base class reset method.  When an operator does a reset, it cleans up any state
   // info from it's previous execution and then initializes itself so that it can be executed
   // again.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Reset() override;
 
   // Base-class override for NodePass visitor acceptor.

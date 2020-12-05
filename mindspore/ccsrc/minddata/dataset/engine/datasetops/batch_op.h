@@ -112,12 +112,12 @@ class BatchOp : public ParallelOp {
 #endif
 
     // @param std::shared_ptr<BatchOp>  *ptr pointer to shared_ptr, actual return arg
-    // @return Status - The error code return
+    // @return Status The status code returned
     Status Build(std::shared_ptr<BatchOp> *);
 
    private:
     // Sanity check for builder class args
-    // @return Status - The error code return
+    // @return Status The status code returned
     Status SanityCheck();
 
     bool builder_drop_;
@@ -167,11 +167,11 @@ class BatchOp : public ParallelOp {
   ~BatchOp() {}
 
   // @param int32_t workerId
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status EofReceived(int32_t) override;
 
   // @param int32_t workerId
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status EoeReceived(int32_t) override;
 
   // A print method typically used for debugging
@@ -190,7 +190,7 @@ class BatchOp : public ParallelOp {
   }
 
   // Main loop of batch
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status operator()() override;
 
   // Base-class override for NodePass visitor acceptor.
@@ -214,14 +214,14 @@ class BatchOp : public ParallelOp {
   // @param const std::unique_ptr<TensorQTable> *dest - dest_table to hold batched rows
   // @param int32_t size - batch_size
   // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
-  // @return Status - The error code return
+  // @return Status The status code returned
   static Status BatchRows(const std::unique_ptr<TensorQTable> *src, const std::unique_ptr<TensorQTable> *dest,
                           dsize_t batch_size);
 
   // @param table
   // @param const PadInfo &pad_info pad info
   // @param const std::unordered_map<std::string, int32_t>& column_name_id_map - column names to index mapping
-  // @return Status - The error code return
+  // @return Status The status code returned
   static Status PadColumns(std::unique_ptr<TensorQTable> *table, const PadInfo &pad_info,
                            const std::unordered_map<std::string, int32_t> &column_name_id_map);
 
@@ -233,18 +233,18 @@ class BatchOp : public ParallelOp {
  private:
   // Worker thread for doing the memcpy of batch
   // @param int32_t param workerId
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status WorkerEntry(int32_t worker_id) override;
 
   // Generate buffer with batched tensors
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> table_pair,
                            std::unique_ptr<DataBuffer> *db);
 
 #ifdef ENABLE_PYTHON
   // Function that calls pyfunc to perform map on batch
   // @param (std::pair<std::unique_ptr<TensorQTable>, batch_stats> *table_pair - contains un-batched tensor
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> *table_pair);
 #endif
 
@@ -253,7 +253,7 @@ class BatchOp : public ParallelOp {
   // @param std::set<int32_t> *cols, col ids to perform pad on
   // @param std::vector<float> *vals, default padding value for each column
   // @param std::vector<std::vector<dsize_t>> *shapes, padding shape specified by user
-  // @return Status - The error code return
+  // @return Status The status code returned
   static Status UnpackPadInfo(const PadInfo &pad_info,
                               const std::unordered_map<std::string, int32_t> &column_name_id_map,
                               std::set<int32_t> *pad_cols, std::vector<std::shared_ptr<Tensor>> *pad_vals,
@@ -264,20 +264,20 @@ class BatchOp : public ParallelOp {
   int32_t num_consumers() const override { return 1; }
 
   // get the batch size for next batch
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status GetBatchSize(int32_t *batch_size, CBatchInfo info);
 
   // Do the initialization of all queues then start all worker threads
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status LaunchThreadsAndInitOp();
 
 #ifdef ENABLE_PYTHON
   // Invoke batch size function with current BatchInfo to generate batch size.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info);
 
   // Invoke batch map function with current BatchInfo to generate tensors to batch.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info);
 #endif
 

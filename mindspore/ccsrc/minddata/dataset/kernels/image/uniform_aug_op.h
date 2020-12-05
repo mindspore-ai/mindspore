@@ -43,7 +43,7 @@ class UniformAugOp : public TensorOp {
   void Print(std::ostream &out) const override { out << Name() << ":: number of ops " << num_ops_; }
 
   // Overrides the base class compute function
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Compute(const TensorRow &input, TensorRow *output) override;
 
   std::string Name() const override { return kUniformAugOp; }

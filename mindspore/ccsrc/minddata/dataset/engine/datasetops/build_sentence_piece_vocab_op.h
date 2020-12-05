@@ -104,7 +104,7 @@ class BuildSentencePieceVocabOp : public PipelineOp {
 
     // The builder "build" method creates the final object.
     // @param std::shared_ptr<BuildVocabOp> *op - DatasetOp
-    // @return - The error code return
+    // @return Status The status code returned
     Status Build(std::shared_ptr<BuildSentencePieceVocabOp> *op);
 
    private:

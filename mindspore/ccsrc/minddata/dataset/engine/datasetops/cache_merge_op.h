@@ -136,7 +136,7 @@ class CacheMergeOp : public ParallelOp {
     std::shared_ptr<SamplerRT> build_sampler_;
 
     /// Check if the required parameters are set by the builder.
-    /// \return Status The error code return
+    /// \return Status The status code returned
     Status SanityCheck() const;
   };
 
@@ -189,7 +189,7 @@ class CacheMergeOp : public ParallelOp {
 
   /// \brief Base-class override for handling cases when an eof is received.
   /// \param worker_id - The worker id
-  /// \return Status - The error code return
+  /// \return Status The status code returned
   Status EofReceived(int32_t worker_id) override;
 
  protected:

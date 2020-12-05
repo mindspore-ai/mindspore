@@ -164,13 +164,13 @@ class MindRecordOp : public ParallelOp {
 
   // Worker thread pulls a number of IOBlock from IOBlock Queue, make a buffer and push it to Connector
   // @param int32_t workerId - id of each worker
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status WorkerEntry(int32_t worker_id) override;
 
   // Class functor operator () override.
   // All DatasetOps operate by launching a thread (see ExecutionTree). This class functor will
   // provide the master loop that drives the logic for performing the work.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status operator()() override;
 
   // Called first when function is called
@@ -180,7 +180,7 @@ class MindRecordOp : public ParallelOp {
   // Overrides base class reset method.  When an operator does a reset, it cleans up any state
   // info from it's previous execution and then initializes itself so that it can be executed
   // again.
-  // @return Status - The error code return
+  // @return Status The status code returned
   Status Reset() override;
 
   // Getter method

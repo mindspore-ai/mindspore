@@ -46,20 +46,20 @@ class RemovalPass : public TreePass {
     /// \brief Identifies the subtree below this node as a cached descendant tree.
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
-    /// \return Status The error code return
+    /// \return Status The status code returned
     Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
 
     /// \brief Resets the tracking of the cache within the tree
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
-    /// \return Status The error code return
+    /// \return Status The status code returned
     Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
 #endif
 
     /// \brief Perform ShuffleOp removal check
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
-    /// \return Status The error code return
+    /// \return Status The status code returned
     Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) override;
 
     /// \brief Getter
@@ -81,7 +81,7 @@ class RemovalPass : public TreePass {
   /// \brief Runs a removal_nodes pass first to find out which nodes to remove, then removes them.
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate of the tree was modified.
-  /// \return Status The error code return
+  /// \return Status The status code returned
   Status RunOnTree(ExecutionTree *tree, bool *modified) override;
 };
 }  // namespace dataset
