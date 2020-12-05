@@ -1828,9 +1828,7 @@ def test_cache_map_cifar3():
 
        cache
          |
-     Map(resize)
-         |
-      Cifar100
+      Cifar10
     """
 
     logger.info("Test cache map cifar3")
@@ -1841,9 +1839,7 @@ def test_cache_map_cifar3():
 
     some_cache = ds.DatasetCache(session_id=session_id, size=1, spilling=False)
 
-    ds1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR)
-    resize_op = c_vision.Resize((224, 224))
-    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+    ds1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, cache=some_cache)
 
     num_epoch = 2
     iter1 = ds1.create_dict_iterator(num_epochs=num_epoch)
