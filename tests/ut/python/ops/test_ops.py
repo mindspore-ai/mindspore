@@ -822,7 +822,7 @@ class DynamicGRUV2Net(nn.Cell):
 
     def __init__(self):
         super(DynamicGRUV2Net, self).__init__()
-        self.dynamic_gru = inner.DynamicGRUV2()
+        self.dynamic_gru = P.DynamicGRUV2()
 
     def construct(self, x, w_i, w_h, b_i, b_h, init_h):
         return self.dynamic_gru(x, w_i, w_h, b_i, b_h, None, init_h)

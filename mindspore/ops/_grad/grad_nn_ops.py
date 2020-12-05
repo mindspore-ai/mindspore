@@ -892,7 +892,7 @@ def get_bprop_dynamic_rnn(self):
     return bprop
 
 
-@bprop_getters.register(inner.DynamicGRUV2)
+@bprop_getters.register(P.DynamicGRUV2)
 def get_bprop_dynamic_gru_v2(self):
     """Grad definition for `DynamicGRUV2` operation."""
     dynamic_gru_v2_grad = G.DynamicGRUV2Grad(self.direction, self.cell_depth, self.keep_prob, self.cell_clip,
