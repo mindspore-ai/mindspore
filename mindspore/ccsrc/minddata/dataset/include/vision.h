@@ -23,10 +23,10 @@
 #include <utility>
 #include <vector>
 
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/vision_lite.h"
-#include "minddata/dataset/util/status.h"
+#include "minddata/dataset/include/status.h"
 namespace mindspore {
 namespace dataset {
 

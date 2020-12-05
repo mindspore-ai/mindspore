@@ -58,14 +58,28 @@ if (APPLE)
             vision.cc
             )
 else()
-    add_library(cpp-API OBJECT
-            config.cc
-            datasets.cc
-            execute.cc
-            iterator.cc
-            transforms.cc
-            samplers.cc
-            text.cc
-            vision.cc
-            )
+    if (ENABLE_ACL)
+        add_library(cpp-API OBJECT
+                config.cc
+                datasets.cc
+                execute.cc
+                iterator.cc
+                minddata_eager.cc
+                transforms.cc
+                samplers.cc
+                text.cc
+                vision.cc
+                )
+    else()
+        add_library(cpp-API OBJECT
+                config.cc
+                datasets.cc
+                execute.cc
+                iterator.cc
+                transforms.cc
+                samplers.cc
+                text.cc
+                vision.cc
+                )
+    endif()
 endif()
