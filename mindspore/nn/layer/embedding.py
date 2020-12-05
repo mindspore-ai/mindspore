@@ -167,7 +167,7 @@ class EmbeddingLookup(Cell):
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)

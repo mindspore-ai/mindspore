@@ -833,6 +833,10 @@ class SparseGatherV2(GatherV2):
         >>> input_indices = Tensor(np.array([1, 2]), mindspore.int32)
         >>> axis = 1
         >>> out = ops.SparseGatherV2()(input_params, input_indices, axis)
+        >>> print(out)
+        [[2. 7.]
+         [4. 54.]
+         [2. 55.]]
     """
 
 
@@ -1642,6 +1646,8 @@ class ArgMaxWithValue(PrimitiveWithInfer):
     Examples:
         >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
         >>> index, output = ops.ArgMaxWithValue()(input_x)
+        >>> print(index, output)
+        2 0.87173676
     """
 
     @prim_attr_register

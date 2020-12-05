@@ -151,6 +151,9 @@ class ELU(Cell):
     Outputs:
         Tensor, with the same type and shape as the `input_data`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([-1, -2, 0, 2, 1]), mindspore.float32)
         >>> elu = nn.ELU()

@@ -205,7 +205,7 @@ class TrainOneStepCell(Cell):
         >>> train_net = nn.TrainOneStepCell(loss_net, optim)
         >>>
         >>> #2) Using user-defined WithLossCell
-        >>>class MyWithLossCell(nn.Cell):
+        >>> class MyWithLossCell(nn.cell):
         >>>    def __init__(self, backbone, loss_fn):
         >>>        super(MyWithLossCell, self).__init__(auto_prefix=False)
         >>>        self._backbone = backbone
