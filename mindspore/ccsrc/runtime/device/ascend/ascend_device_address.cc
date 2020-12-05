@@ -575,7 +575,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
     host_shape.emplace_back(1);
   }
   std::vector<size_t> device_shape;
-  if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NCDHW) {
+  if (format_ == kOpFormat_FRAC_NZ || format_ == kOpFormat_NCDHW || kOpFormat_NDC1HWC0) {
     device_shape = trans::TransShapeToDevice(host_shape, format_);
   } else {
     host_shape = trans::PaddingShapeTo4d(host_shape);
