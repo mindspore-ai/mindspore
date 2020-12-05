@@ -691,6 +691,215 @@ TEST_F(MindDataTestPipeline, TestNormalizeUTF8Success3) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess) {
+  // Testing the parameter of RegexReplace interface when the replace_all is true.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRegexReplaceSuccess.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/regex_replace.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create regex_replace operation on ds
+  std::shared_ptr<TensorOperation> regex_replace = text::RegexReplace("\\s+", "_", true);
+  EXPECT_NE(regex_replace, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({regex_replace}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"Hello_World", "Let's_Go",          "1:hello",        "2:world",
+                                       "31:beijing",  "Welcome_to_China!", "_我_不想_长大_", "Welcome_to_Shenzhen!"};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateScalar(expected[i], &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 8);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRegexReplaceSuccess1) {
+  // Testing the parameter of RegexReplace interface when the replace_all is false.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRegexReplaceSuccess1.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/regex_replace.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create regex_replace operation on ds
+  std::shared_ptr<TensorOperation> regex_replace = text::RegexReplace("\\s+", "_", false);
+  EXPECT_NE(regex_replace, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({regex_replace}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"Hello_World", "Let's_Go",          "1:hello",          "2:world",
+                                       "31:beijing",  "Welcome_to China!", "_我	不想  长大	", "Welcome_to Shenzhen!"};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateScalar(expected[i], &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 8);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess) {
+  // Testing the parameter of RegexTokenizer interface when the with_offsets is false.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRegexTokenizerSuccess.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/regex_replace.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create regex_tokenizer operation on ds
+  std::shared_ptr<TensorOperation> regex_tokenizer = text::RegexTokenizer("\\s+", "\\s+", false);
+  EXPECT_NE(regex_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({regex_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::string>> expected = {{"Hello", " ", "World"},
+                                                    {"Let's", " ", "Go"},
+                                                    {"1:hello"},
+                                                    {"2:world"},
+                                                    {"31:beijing"},
+                                                    {"Welcome", " ", "to", " ", "China!"},
+                                                    {"  ", "我", "	", "不想", "  ", "长大", "	"},
+                                                    {"Welcome", " ", "to", " ", "Shenzhen!"}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    int x = expected[i].size();
+    Tensor::CreateFromVector(expected[i], TensorShape({x}), &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 8);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestRegexTokenizerSuccess1) {
+  // Testing the parameter of RegexTokenizer interface when the with_offsets is true.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRegexTokenizerSuccess1.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/regex_replace.txt";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create regex_tokenizer operation on ds
+  std::shared_ptr<TensorOperation> regex_tokenizer = text::RegexTokenizer("\\s+", "\\s+", true);
+  EXPECT_NE(regex_tokenizer, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({regex_tokenizer}, {"text"}, {"token", "offsets_start", "offsets_limit"},
+               {"token", "offsets_start", "offsets_limit"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<std::string>> expected = {{"Hello", " ", "World"},
+                                                    {"Let's", " ", "Go"},
+                                                    {"1:hello"},
+                                                    {"2:world"},
+                                                    {"31:beijing"},
+                                                    {"Welcome", " ", "to", " ", "China!"},
+                                                    {"  ", "我", "	", "不想", "  ", "长大", "	"},
+                                                    {"Welcome", " ", "to", " ", "Shenzhen!"}};
+
+  std::vector<std::vector<uint32_t>> expected_offsets_start = {
+    {0, 5, 6}, {0, 5, 6}, {0}, {0}, {0}, {0, 7, 8, 10, 11}, {0, 2, 5, 6, 12, 14, 20}, {0, 7, 8, 10, 11}};
+  std::vector<std::vector<uint32_t>> expected_offsets_limit = {
+    {5, 6, 11}, {5, 6, 8}, {7}, {7}, {10}, {7, 8, 10, 11, 17}, {2, 5, 6, 12, 14, 20, 21}, {7, 8, 10, 11, 20}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["offsets_start"];
+    auto ind1 = row["offsets_limit"];
+    auto token = row["token"];
+    std::shared_ptr<Tensor> expected_tensor;
+    std::shared_ptr<Tensor> expected_tensor_offsets_start;
+    std::shared_ptr<Tensor> expected_tensor_offsets_limit;
+    int x = expected[i].size();
+    Tensor::CreateFromVector(expected[i], TensorShape({x}), &expected_tensor);
+    Tensor::CreateFromVector(expected_offsets_start[i], TensorShape({x}), &expected_tensor_offsets_start);
+    Tensor::CreateFromVector(expected_offsets_limit[i], TensorShape({x}), &expected_tensor_offsets_limit);
+    EXPECT_EQ(*ind, *expected_tensor_offsets_start);
+    EXPECT_EQ(*ind1, *expected_tensor_offsets_limit);
+    EXPECT_EQ(*token, *expected_tensor);
+
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 8);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestUnicodeCharTokenizerSuccess) {
   // Testing the parameter of UnicodeCharTokenizer interface when the with_offsets is default.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestUnicodeCharTokenizerSuccess.";

@@ -43,6 +43,8 @@ constexpr char kJiebaTokenizerOperation[] = "JiebaTokenizer";
 constexpr char kLookupOperation[] = "Lookup";
 constexpr char kNgramOperation[] = "Ngram";
 constexpr char kNormalizeUTF8Operation[] = "NormalizeUTF8";
+constexpr char kRegexReplaceOperation[] = "RegexReplace";
+constexpr char kRegexTokenizerOperation[] = "RegexTokenizer";
 constexpr char kSentencepieceTokenizerOperation[] = "SentencepieceTokenizer";
 constexpr char kSlidingWindowOperation[] = "SlidingWindow";
 constexpr char kUnicodeCharTokenizerOperation[] = "UnicodeCharTokenizer";
@@ -58,6 +60,8 @@ class LookupOperation;
 class NgramOperation;
 #ifndef _WIN32
 class NormalizeUTF8Operation;
+class RegexReplaceOperation;
+class RegexTokenizerOperation;
 #endif
 class SentencePieceTokenizerOperation;
 class SlidingWindowOperation;
@@ -125,6 +129,24 @@ std::shared_ptr<NgramOperation> Ngram(const std::vector<int32_t> &ngrams,
 ///   - NormalizeForm.NFKD, normalize with Normalization Form KD.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<NormalizeUTF8Operation> NormalizeUTF8(NormalizeForm normalize_form = NormalizeForm::kNfkc);
+
+/// \brief Replace UTF-8 string tensor with 'replace' according to regular expression 'pattern'.
+/// \param[in] pattern The regex expression patterns.
+/// \param[in] replace The string to replace matched element.
+/// \param[in] replace_all Confirm whether to replace all. If false, only replace first matched element;
+///   if true, replace all matched elements (default=true).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RegexReplaceOperation> RegexReplace(std::string pattern, std::string replace, bool replace_all = true);
+
+/// \brief Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
+/// \param[in] delim_pattern The pattern of regex delimiters.
+/// \param[in] keep_delim_pattern The string matched by 'delim_pattern' can be kept as a token if it can be
+///   matched by 'keep_delim_pattern'. The default value is an empty string ("")
+///   which means that delimiters will not be kept as an output token (default="").
+/// \param[in] with_offsets If or not output offsets of tokens (default=false).
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<RegexTokenizerOperation> RegexTokenizer(std::string delim_pattern, std::string keep_delim_pattern = "",
+                                                        bool with_offsets = false);
 #endif
 
 /// \brief Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
@@ -260,6 +282,42 @@ class NormalizeUTF8Operation : public TensorOperation {
 
  private:
   NormalizeForm normalize_form_;
+};
+
+class RegexReplaceOperation : public TensorOperation {
+ public:
+  RegexReplaceOperation(std::string pattern, std::string replace, bool replace_all);
+
+  ~RegexReplaceOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kRegexReplaceOperation; }
+
+ private:
+  std::string pattern_;
+  std::string replace_;
+  bool replace_all_;
+};
+
+class RegexTokenizerOperation : public TensorOperation {
+ public:
+  explicit RegexTokenizerOperation(std::string delim_pattern, std::string keep_delim_pattern, bool with_offsets);
+
+  ~RegexTokenizerOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kRegexTokenizerOperation; }
+
+ private:
+  std::string delim_pattern_;
+  std::string keep_delim_pattern_;
+  bool with_offsets_;
 };
 #endif
 

@@ -479,7 +479,7 @@ if platform.system().lower() != 'windows':
 
     class CaseFold(cde.CaseFoldOp):
         """
-        Apply case fold operation on utf-8 string tensor.
+        Apply case fold operation on UTF-8 string tensor.
 
         Note:
             CaseFold is not supported on Windows platform yet.
@@ -502,7 +502,7 @@ if platform.system().lower() != 'windows':
 
     class NormalizeUTF8(cde.NormalizeUTF8Op):
         """
-        Apply normalize operation on utf-8 string tensor.
+        Apply normalize operation on UTF-8 string tensor.
 
         Note:
             NormalizeUTF8 is not supported on Windows platform yet.
@@ -536,7 +536,7 @@ if platform.system().lower() != 'windows':
 
     class RegexReplace(cde.RegexReplaceOp):
         """
-        Replace utf-8 string tensor with 'replace' according to regular expression 'pattern'.
+        Replace UTF-8 string tensor with 'replace' according to regular expression 'pattern'.
 
         See http://userguide.icu-project.org/strings/regexp for support regex pattern.
 
