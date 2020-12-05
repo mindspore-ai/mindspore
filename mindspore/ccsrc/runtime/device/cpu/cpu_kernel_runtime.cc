@@ -21,6 +21,7 @@
 #include <utility>
 #include <algorithm>
 #include <functional>
+#include <exception>
 #include "backend/kernel_compiler/kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "utils/ms_context.h"
@@ -371,11 +372,16 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
       MS_EXCEPTION_IF_NULL(device_address);
       AddRuntimeAddress(device_address, &kernel_workspaces);
     }
-    auto ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, 0);
-    resource_manager_.DecreaseAddressRefCount(kernel);
+    bool ret = true;
+    try {
+      ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, 0);
+    } catch (std::exception &e) {
+      MS_LOG(EXCEPTION) << e.what() << "\nTrace:" << trace::DumpSourceLines(kernel);
+    }
     if (!ret) {
       MS_LOG(EXCEPTION) << "Launch kernel failed. Trace:" << trace::DumpSourceLines(kernel);
     }
+    resource_manager_.DecreaseAddressRefCount(kernel);
 #ifdef ENABLE_PROFILE
     double cost_time = GetTime() - start_time;
     MS_LOG(INFO) << "cpu kernel: " << kernel->fullname_with_scope() << "  costs " << cost_time * 1e6 << " us";

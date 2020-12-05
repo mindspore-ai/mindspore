@@ -17,6 +17,7 @@
 #include "backend/session/cpu_session.h"
 #include <algorithm>
 #include <sstream>
+#include <exception>
 #include "ir/anf.h"
 #include "utils/ms_utils.h"
 #include "utils/trace_base.h"
@@ -262,7 +263,11 @@ void CPUSession::BuildKernel(const KernelGraph *kernel_graph) {
     if (cpu_kernel == nullptr) {
       KernelNotSupportException(kernel_node);
     }
-    cpu_kernel->Init(kernel_node);
+    try {
+      cpu_kernel->Init(kernel_node);
+    } catch (std::exception &e) {
+      MS_LOG(EXCEPTION) << e.what() << "\nTrace: " << trace::DumpSourceLines(kernel_node);
+    }
     AnfAlgo::SetKernelMod(cpu_kernel, kernel_node.get());
     MS_LOG(INFO) << "Cpu build success operator[" << kernel_name << "].";
   }
