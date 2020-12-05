@@ -82,6 +82,5 @@ endif ()
 if (ENABLE_D)
     find_library(adump_server libadump_server.a ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     target_link_libraries(mindspore_shared_lib PRIVATE ${adump_server})
-    target_link_libraries(mindspore_shared_lib PRIVATE mindspore_core hccl_adapter)
 endif ()
 
