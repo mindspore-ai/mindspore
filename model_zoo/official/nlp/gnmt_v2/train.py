@@ -169,9 +169,7 @@ def _get_optimizer(config, network, lr):
     if config.optimizer.lower() == "adam":
         optimizer = Adam(network.trainable_params(), lr, beta1=0.9, beta2=0.98)
     elif config.optimizer.lower() == "lamb":
-        optimizer = Lamb(network.trainable_params(), decay_steps=12000,
-                         start_learning_rate=config.lr, end_learning_rate=config.min_lr,
-                         power=10.0, warmup_steps=config.warmup_steps, weight_decay=0.01,
+        optimizer = Lamb(network.trainable_params(), learning_rate=lr,
                          eps=1e-6)
     elif config.optimizer.lower() == "momentum":
         optimizer = Momentum(network.trainable_params(), lr, momentum=0.9)
@@ -277,25 +275,21 @@ def train_parallel(config: GNMTConfig):
         data_files=config.pre_train_dataset,
         schema=config.dataset_schema,
         batch_size=config.batch_size,
-        epoch_count=config.epochs,
         sink_mode=config.dataset_sink_mode,
-        sink_step=config.dataset_sink_step,
         rank_size=MultiAscend.get_group_size(),
         rank_id=MultiAscend.get_rank()
     ) if config.pre_train_dataset else None
     fine_tune_dataset = load_dataset(
         data_files=config.fine_tune_dataset, schema=config.dataset_schema,
-        batch_size=config.batch_size, epoch_count=config.epochs,
+        batch_size=config.batch_size,
         sink_mode=config.dataset_sink_mode,
-        sink_step=config.dataset_sink_step,
         rank_size=MultiAscend.get_group_size(),
         rank_id=MultiAscend.get_rank()
     ) if config.fine_tune_dataset else None
     test_dataset = load_dataset(
         data_files=config.test_dataset, schema=config.dataset_schema,
-        batch_size=config.batch_size, epoch_count=config.epochs,
+        batch_size=config.batch_size,
         sink_mode=config.dataset_sink_mode,
-        sink_step=config.dataset_sink_step,
         rank_size=MultiAscend.get_group_size(),
         rank_id=MultiAscend.get_rank()
     ) if config.test_dataset else None
@@ -318,21 +312,15 @@ def train_single(config: GNMTConfig):
     pre_train_dataset = load_dataset(data_files=config.pre_train_dataset,
                                      schema=config.dataset_schema,
                                      batch_size=config.batch_size,
-                                     epoch_count=config.epochs,
-                                     sink_mode=config.dataset_sink_mode,
-                                     sink_step=config.dataset_sink_step) if config.pre_train_dataset else None
+                                     sink_mode=config.dataset_sink_mode) if config.pre_train_dataset else None
     fine_tune_dataset = load_dataset(data_files=config.fine_tune_dataset,
                                      schema=config.dataset_schema,
                                      batch_size=config.batch_size,
-                                     epoch_count=config.epochs,
-                                     sink_mode=config.dataset_sink_mode,
-                                     sink_step=config.dataset_sink_step) if config.fine_tune_dataset else None
+                                     sink_mode=config.dataset_sink_mode) if config.fine_tune_dataset else None
     test_dataset = load_dataset(data_files=config.test_dataset,
                                 schema=config.dataset_schema,
                                 batch_size=config.batch_size,
-                                epoch_count=config.epochs,
-                                sink_mode=config.dataset_sink_mode,
-                                sink_step=config.dataset_sink_step) if config.test_dataset else None
+                                sink_mode=config.dataset_sink_mode) if config.test_dataset else None
 
     _build_training_pipeline(config=config,
                              pre_training_dataset=pre_train_dataset,

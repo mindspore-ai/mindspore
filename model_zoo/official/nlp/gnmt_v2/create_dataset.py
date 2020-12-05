@@ -49,11 +49,12 @@ if __name__ == '__main__':
         schema_address=args.output_folder + "/" + test_src_file + ".json"
     )
     print(f" | It's writing, please wait a moment.")
-    test.write_to_tfrecord(
+    test.write_to_mindrecord(
         path=os.path.join(
             args.output_folder,
-            os.path.basename(test_src_file) + ".tfrecord"
-        )
+            os.path.basename(test_src_file) + ".mindrecord"
+        ),
+        train_mode=False
     )
 
     train = BiLingualDataLoader(
@@ -65,11 +66,12 @@ if __name__ == '__main__':
         schema_address=args.output_folder + "/" + train_src_file + ".json"
     )
     print(f" | It's writing, please wait a moment.")
-    train.write_to_tfrecord(
+    train.write_to_mindrecord(
         path=os.path.join(
             args.output_folder,
-            os.path.basename(train_src_file) + ".tfrecord"
-        )
+            os.path.basename(train_src_file) + ".mindrecord"
+        ),
+        train_mode=True
     )
 
     print(f" | Vocabulary size: {tokenizer.vocab_size}.")

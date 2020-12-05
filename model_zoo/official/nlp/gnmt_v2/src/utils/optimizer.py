@@ -87,10 +87,7 @@ def _check_param_value(beta1, beta2, eps, weight_decay, prim_name):
     validator.check_value_type("beta2", beta2, [float], prim_name)
     validator.check_value_type("eps", eps, [float], prim_name)
     validator.check_value_type("weight_dacay", weight_decay, [float], prim_name)
-    # validator.check_number_range("beta1", beta1, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
-    # validator.check_number_range("beta2", beta2, 0.0, 1.0, Rel.INC_NEITHER, prim_name)
-    # validator.check_number_range("eps", eps, 0.0, float("inf"), Rel.INC_NEITHER, prim_name)
-    # validator.check_number_range("weight_decay", weight_decay, 0.0, float("inf"), Rel.INC_LEFT, prim_name)
+
 
 
 def _check_learning_rate_value(learning_rate, end_learning_rate, decay_steps, power, prim_name):

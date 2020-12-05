@@ -1,7 +1,4 @@
 {
-  "training_platform": {
-    "modelarts": false
-  },
   "dataset_config": {
     "random_seed": 50,
     "epochs": 6,
@@ -11,8 +8,7 @@
     "fine_tune_dataset": null,
     "test_dataset":  "/home/workspace/dataset_menu/newstest2014.en.tfrecord-001-of-001",
     "valid_dataset": null,
-    "dataset_sink_mode": true,
-    "dataset_sink_step": 2
+    "dataset_sink_mode": true
   },
   "model_config": {
     "seq_length": 107,
@@ -29,9 +25,9 @@
     "max_decode_length": 80
   },
   "loss_scale_config": {
-    "init_loss_scale": 8192,
+    "init_loss_scale": 65536,
     "loss_scale_factor": 2,
-    "scale_window": 128
+    "scale_window": 1000
   },
   "learn_rate_config": {
     "optimizer": "adam",

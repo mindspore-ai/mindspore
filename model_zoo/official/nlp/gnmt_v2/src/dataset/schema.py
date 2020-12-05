@@ -21,3 +21,8 @@ SCHEMA = {
     "target": {"type": "int64", "shape": [-1]},
     "tgt_padding": {"type": "int64", "shape": [-1]},
 }
+
+TEST_SCHEMA = {
+    "src": {"type": "int64", "shape": [-1]},
+    "src_padding": {"type": "int64", "shape": [-1]},
+}

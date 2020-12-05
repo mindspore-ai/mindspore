@@ -1,6 +1,7 @@
 ![](https://www.mindspore.cn/static/img/logo.a3e472c9.png)
 
 <!-- TOC -->
+
 - [GNMT v2 For MindSpore](#gnmt-v2-for-mindspore)
 - [Model Structure](#model-structure)
 - [Dataset](#dataset)
@@ -15,41 +16,46 @@
     - [Inference Process](#inference-process)
 - [Model Description](#model-description)
     - [Performance](#performance)
-        - [Result](#result)
-            - [Training Performance](#training-performance)
-            - [Inference Performance](#inference-performance)
+        - [Training Performance](#training-performance)
+        - [Inference Performance](#inference-performance)
 - [Random Situation Description](#random-situation-description)
 - [Others](#others)
-- [ModelZoo](#modelzoo)
+- [ModelZoo HomePage](#modelzoo-homepage)
+
 <!-- /TOC -->
 
+# [GNMT v2 For MindSpore](#contents)
 
-# GNMT v2 For MindSpore
 The GNMT v2 model is similar to the model described in [Google's Neural Machine Translation System: Bridging the Gap between Human and Machine Translation](https://arxiv.org/abs/1609.08144), which is mainly used for corpus translation.
 
-# Model Structure
+# [Model Structure](#contents)
+
 The GNMTv2 model mainly consists of an encoder, a decoder, and an attention mechanism, where the encoder and the decoder use a shared word embedding vector.
 Encoder: consists of four long short-term memory (LSTM) layers. The first LSTM layer is bidirectional, while the other three layers are unidirectional.
 Decoder: consists of four unidirectional LSTM layers and a fully connected classifier. The output embedding dimension of LSTM is 1024.
 Attention mechanism: uses the standardized Bahdanau attention mechanism. First, the first layer output of the decoder is used as the input of the attention mechanism. Then, the computing result of the attention mechanism is connected to the input of the decoder LSTM, which is used as the input of the subsequent LSTM layer.
 
-# Dataset
+# [Dataset](#contents)
+
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
-- *WMT Englis-German* for training.
-- *WMT newstest2014* for evaluation. 
+- WMT Englis-German for training.
+- WMT newstest2014 for evaluation.
 
-# Environment Requirements
+# [Environment Requirements](#contents)
+
 ## Platform
+
 - Hardware (Ascend)
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you could get the resources for trial. 
+    - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you could get the resources for trial.
 - Framework
-  - Install [MindSpore](https://www.mindspore.cn/install/en).
+    - Install [MindSpore](https://www.mindspore.cn/install/en).
 - For more information, please check the resources below:
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html) 
-  - [MindSpore API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 ## Software
+
 ```txt
 numpy
 sacrebleu==1.2.10
@@ -58,13 +64,16 @@ subword_nmt==0.3.7
 ```
 
 # [Quick Start](#contents)
+
 The process of GNMTv2 performing the text translation task is as follows:
+
 1. Download the wmt16 data corpus and extract the dataset. For details, see the chapter "_Dataset_" above.
 2. Dataset preparation and configuration.
 3. Training.
 4. Inference.
 
-After dataset preparation, you can start training and evaluation as follows: 
+After dataset preparation, you can start training and evaluation as follows:
+
 ```bash
 # run training example
 cd ./scripts
@@ -80,8 +89,10 @@ sh run_standalone_eval_ascend.sh DATASET_SCHEMA_TEST TEST_DATASET EXISTED_CKPT_P
   VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
 ```
 
-# Script Description
+# [Script Description](#contents)
+
 The GNMT network script and code result are as follows:
+
 ```text
 ├── gnmt
   ├── README.md                              // Introduction of GNMTv2 model.
@@ -92,9 +103,9 @@ The GNMT network script and code result are as follows:
   │   ├──config_test.json                    // Configuration file for test.
   ├── src
   │   ├──__init__.py                         // User interface.  
-  │   ├──dataset   
-  │      ├──__init__.py                      // User interface.   
-  │      ├──base.py                          // Base class of data loader.                       
+  │   ├──dataset
+  │      ├──__init__.py                      // User interface.
+  │      ├──base.py                          // Base class of data loader.
   │      ├──bi_data_loader.py                // Bilingual data loader.
   │      ├──load_dataset.py                  // Dataset loader to feed into model.
   │      ├──schema.py                        // Define schema of mindrecord.
@@ -134,24 +145,29 @@ The GNMT network script and code result are as follows:
 ```
 
 ## Dataset Preparation
-You may use this [shell script](https://github.com/NVIDIA/DeepLearningExamples/blob/master/TensorFlow/Translation/GNMT/scripts/wmt16_en_de.sh) to download and preprocess WMT English-German dataset. Assuming you get the following files:
-  - train.tok.clean.bpe.32000.en
-  - train.tok.clean.bpe.32000.de
-  - vocab.bpe.32000
-  - bpe.32000
-  - newstest2014.en
-  - newstest2014.de
 
-- Convert the original data to tfrecord for training and evaluation:
+You may use this [shell script](https://github.com/NVIDIA/DeepLearningExamples/blob/master/TensorFlow/Translation/GNMT/scripts/wmt16_en_de.sh) to download and preprocess WMT English-German dataset. Assuming you get the following files:
+
+- train.tok.clean.bpe.32000.en
+- train.tok.clean.bpe.32000.de
+- vocab.bpe.32000
+- bpe.32000
+- newstest2014.en
+- newstest2014.de
+
+- Convert the original data to mindrecord for training and evaluation:
 
     ``` bash
     python create_dataset.py --src_folder /home/workspace/wmt16_de_en --output_folder /home/workspace/dataset_menu
     ```
 
 ## Configuration File
+
 The JSON file in the `config/` directory is the template configuration file.
 Almost all required options and parameters can be easily assigned, including the training platform, model configuration, and optimizer parameters.
+
 - config for GNMTv2
+
   ```python
   'random_seed': 50         # global random seed
   'epochs':6                # total training epochs
@@ -159,63 +175,74 @@ Almost all required options and parameters can be easily assigned, including the
   'dataset_sink_mode': true # whether use dataset sink mode
   'seq_length': 51          # max length of source sentences
   'vocab_size': 32320       # vocabulary size
-  'hidden_size': 125        # the output's last dimension of dynamicRNN
+  'hidden_size': 1024        # the output's last dimension of dynamicRNN
   'initializer_range': 0.1  # initializer range
-  'max_decode_length': 125  # max length of decoder
-  'lr': 0.1                 # initial learning rate
+  'max_decode_length': 50  # max length of decoder
+  'lr': 2e-1                 # initial learning rate
   'lr_scheduler': 'WarmupMultiStepLR'  # learning rate scheduler
-  'existed_ckpt': ''        # the absolute full path to save the checkpoint file
+  'existed_ckpt': ""        # the absolute full path to save the checkpoint file
   ```
+
 For more configuration details, please refer the script `config/config.py` file.
 
 ## Training Process
+
 For a pre-trained model, configure the following options in the `scripts/run_standalone_train_ascend.json` file:
+
 - Select an optimizer ('momentum/adam/lamb' is available).
 - Specify `ckpt_prefix` and `ckpt_path` in `checkpoint_path` to save the model file.
 - Set other parameters, including dataset configuration and network configuration.
 - If a pre-trained model exists, assign `existed_ckpt` to the path of the existing model during fine-tuning.
 
 Start task training on a single device and run the shell script `scripts/run_standalone_train_ascend.sh`:
+
 ```bash
 cd ./scripts
 sh run_standalone_train_ascend.sh DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET
 ```
+
 In this script, the `DATASET_SCHEMA_TRAIN` and `PRE_TRAIN_DATASET` are the dataset schema and dataset address.
 
 Run `scripts/run_distributed_train_ascend.sh` for distributed training of GNMTv2 model.
 Task training on multiple devices and run the following command in bash to be executed in `scripts/`.:
+
 ```bash
 cd ./scripts
 sh run_distributed_train_ascend.sh RANK_TABLE_ADDR DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET
 ```
-Note: the `RANK_TABLE_ADDR` is the hccl_json file assigned when distributed training is running. 
+
+Note: the `RANK_TABLE_ADDR` is the hccl_json file assigned when distributed training is running.
 Currently, inconsecutive device IDs are not supported in `scripts/run_distributed_train_ascend.sh`. The device ID must start from 0 in the `RANK_TABLE_ADDR` file.
 
 ## Inference Process
+
 For inference using a trained model on multiple hardware platforms, such as Ascend 910.
 Set options in `config/config_test.json`.
- 
+
 Run the shell script `scripts/run_standalone_eval_ascend.sh` to process the output token ids to get the BLEU scores.
+
 ```bash
 cd ./scripts
 sh run_standalone_eval_ascend.sh
 sh run_standalone_eval_ascend.sh DATASET_SCHEMA_TEST TEST_DATASET EXISTED_CKPT_PATH \
   VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
 ```
+
 The `DATASET_SCHEMA_TEST` and the `TEST_DATASET` are the schema and address of inference dataset respectively, and `EXISTED_CKPT_PATH` is the path of the model file generated during training process.
 The `VOCAB_ADDR` is the vocabulary address, `BPE_CODE_ADDR` is the bpe code address and the `TEST_TARGET` are the path of answers.
 
-# Model Description
+# [Model Description](#contents)
+
 ## Performance
-### Result
-#### Training Performance
+
+### Training Performance
 
 | Parameters                 | Ascend                                                         |
 | -------------------------- | -------------------------------------------------------------- |
 | Resource                   | Ascend 910                                                     |
 | uploaded Date              | 11/06/2020 (month/day/year)                                    |
 | MindSpore Version          | 1.0.0                                                          |
-| Dataset                    | WMT Englis-German                                              |
+| Dataset                    | WMT Englis-German for training                                              |
 | Training Parameters        | epoch=6, batch_size=128                                        |
 | Optimizer                  | Adam                                                           |
 | Loss Function              | Softmax Cross Entropy                                          |
@@ -227,7 +254,7 @@ The `VOCAB_ADDR` is the vocabulary address, `BPE_CODE_ADDR` is the bpe code addr
 | Checkpoint for inference   | 1.8G (.ckpt file)                                              |
 | Scripts                    | [gnmt_v2](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/gnmt_v2) |
 
-#### Inference Performance
+### Inference Performance
 
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
@@ -241,15 +268,20 @@ The `VOCAB_ADDR` is the vocabulary address, `BPE_CODE_ADDR` is the bpe code addr
 | Accuracy            | BLEU Score= 24.05           |
 | Model for inference | 1.8G (.ckpt file)           |
 
-# Random Situation Description
+# [Random Situation Description](#contents)
+
 There are three random situations:
+
 - Shuffle of the dataset.
 - Initialization of some model weights.
 - Dropout operations.
+
 Some seeds have already been set in train.py to avoid the randomness of dataset shuffle and weight initialization. If you want to disable dropout, please set the corresponding dropout_prob parameter to 0 in config/config.json.
 
-# Others
+# [Others](#contents)
+
 This model has been validated in the Ascend environment and is not validated on the CPU and GPU.
 
-# ModelZoo 主页
- [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)
+# [ModelZoo HomePage](#contents)
+
+ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)

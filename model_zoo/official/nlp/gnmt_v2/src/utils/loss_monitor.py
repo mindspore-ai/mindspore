@@ -16,8 +16,6 @@
 import time
 
 from mindspore.train.callback import Callback
-from mindspore.communication.management import get_rank
-
 from config import GNMTConfig
 
 
@@ -51,9 +49,6 @@ class LossCallBack(Callback):
         """step end."""
         cb_params = run_context.original_args()
         file_name = "./loss.log"
-        if self.config.modelarts:
-            import os
-            file_name = "/home/work/workspace/loss/loss_{}.log".format(os.getenv('DEVICE_ID'))
         with open(file_name, "a+") as f:
             time_stamp_current = self._get_ms_timestamp()
             f.write("time: {}, epoch: {}, step: {}, outputs: [loss: {}, overflow: {}, loss scale value: {} ].\n".format(
@@ -64,14 +59,6 @@ class LossCallBack(Callback):
                 str(cb_params.net_outputs[1].asnumpy()),
                 str(cb_params.net_outputs[2].asnumpy())
             ))
-
-        if self.config.modelarts:
-            from modelarts.data_util import upload_output
-            rank_id = get_rank()
-            if cb_params.cur_step_num % self.config.save_step == 1 \
-                    and cb_params.cur_step_num != 1 and rank_id in [0, 8]:
-                upload_output("/home/work/workspace/loss", self.config.train_url)
-                upload_output("/cache/ckpt_0", self.config.train_url)
 
     @staticmethod
     def _get_ms_timestamp():
