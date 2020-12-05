@@ -164,6 +164,7 @@ void CPUSession::SetOutputFlags(const VectorRef &base_ref, std::vector<tensor::T
     } else if (utils::isa<tensor::TensorPtr>(base_ref[i])) {
       auto tensor_ptr = utils::cast<std::shared_ptr<tensor::Tensor>>(base_ref[i]);
       tensor_ptr->SetNeedWait(false);
+      tensor_ptr->data_sync(false);
       outputs_tensors->push_back(tensor_ptr);
     }
   }
