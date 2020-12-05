@@ -53,6 +53,7 @@
 #include "backend/optimizer/ascend/ir_fission/transdata_split.h"
 #include "backend/optimizer/ascend/ir_fission/topk_split.h"
 #include "backend/optimizer/ascend/ir_fission/lin_space_fission.h"
+#include "backend/optimizer/ascend/ir_fission/space_to_depth_split.h"
 #include "backend/optimizer/ascend/ir_fusion/momentum_lossscale_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/mul_add_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/mul_addn_fusion.h"
@@ -180,6 +181,7 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   ir_fusion_pm->AddPass(std::make_shared<SplitFission>());
   ir_fusion_pm->AddPass(std::make_shared<SplitVFission>());
+  ir_fusion_pm->AddPass(std::make_shared<SpaceToDepthSplit>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
   ir_fusion_pm->AddPass(std::make_shared<GetitemTuple>());
   ir_fusion_pm->AddPass(std::make_shared<PackFission>());
@@ -324,6 +326,7 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<TopKSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LinSpaceFission>());
+  ir_fusion_pm->AddPass(std::make_shared<SpaceToDepthSplit>());
   ir_fusion_pm->AddPass(std::make_shared<AddnFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
