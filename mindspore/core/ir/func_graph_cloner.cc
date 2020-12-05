@@ -91,6 +91,9 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   new_node->set_inputs_value(old_node->inputs_value());
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_node->set_scope(scope);
+  if (IsPrimitiveCNode(old_node, nullptr) && new_node->scope() == kDefaultScope) {
+    new_node->set_fullname_with_scope(old_node->fullname_with_scope());
+  }
   new_node->set_kernel_info(old_node->kernel_info_ptr());
   repl_node_[old_node] = new_node;
   nodes_.emplace_back(old_node, new_node);

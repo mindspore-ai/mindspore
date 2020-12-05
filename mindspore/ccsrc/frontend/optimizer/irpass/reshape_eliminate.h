@@ -95,6 +95,9 @@ class TwoReshapeEliminater : public AnfVisitor {
     if (fg != nullptr && x_ != nullptr && shape_ != nullptr) {
       auto new_node = fg->NewCNode({NewValueNode(prim_), x_, shape_});
       new_node->set_abstract(node->abstract());
+      if (node->scope() != kDefaultScope) {
+        new_node->set_scope(node->scope());
+      }
       new_node->set_fullname_with_scope(node->fullname_with_scope());
       return new_node;
     }
