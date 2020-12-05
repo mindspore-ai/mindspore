@@ -192,7 +192,7 @@ class EliminateGetitemForControlDepend : public Pass {
     MS_EXCEPTION_IF_NULL(maketuple);
     std::vector<size_t> result;
     for (auto i : indexes_) {
-      auto real_output = maketuple->input(i);
+      auto real_output = maketuple->input(i + 1);
       if (users[real_output].size() > 1) {
         result.push_back(i);
       }

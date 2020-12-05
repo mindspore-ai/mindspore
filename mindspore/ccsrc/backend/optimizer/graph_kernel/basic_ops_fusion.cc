@@ -158,7 +158,7 @@ bool FuseBasicOps(const FuncGraphPtr &kernel_graph, const std::vector<AnfNodePtr
     }
 
     auto fuse_nodes = FindFuseCNodes(node, depend_prior);
-    if (fuse_nodes.size() <= 1) {
+    if (fuse_nodes.empty() || (fuse_nodes.size() == 1 && AnfAlgo::IsGraphKernel(fuse_nodes[0]))) {
       continue;
     }
     changed = true;
@@ -173,17 +173,11 @@ bool FuseBasicOps(const FuncGraphPtr &kernel_graph, const std::vector<AnfNodePtr
 }
 }  // namespace
 
-bool FuseBasicOps(const FuncGraphPtr &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto mng = kernel_graph->manager();
-  if (mng == nullptr) {
-    mng = Manage(kernel_graph, true);
-    kernel_graph->set_manager(mng);
-  }
+bool FuseBasicOps(const FuncGraphPtr &func_graph) {
   std::unordered_set<AnfNodePtr> fused_ops;
-  auto todos = TopoSort(kernel_graph->get_return());
+  auto todos = TopoSort(func_graph->get_return());
   std::reverse(todos.begin(), todos.end());
-  return FuseBasicOps(kernel_graph, todos, &fused_ops);
+  return FuseBasicOps(func_graph, todos, &fused_ops);
 }
 
 void EliminateGetitem(const FuncGraphPtr &func_graph) {
@@ -197,9 +191,16 @@ void EliminateGetitem(const FuncGraphPtr &func_graph) {
 }
 
 bool BasicOpsFusion::Run(const FuncGraphPtr &func_graph) {
+  auto mng = func_graph->manager();
+  if (mng == nullptr) {
+    mng = Manage(func_graph, true);
+    func_graph->set_manager(mng);
+  }
   bool changed = FuseBasicOps(func_graph);
   if (changed) {
     EliminateGetitem(func_graph);
+    mng->RemoveRoots();
+    mng->KeepRoots({func_graph});
   }
   return changed;
 }
