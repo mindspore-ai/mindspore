@@ -169,7 +169,7 @@ static const char *GetSubModuleName(SubModuleId module_id) {
     "KERNEL",     // SM_KERNEL
     "MD",         // SM_MD
     "ME",         // SM_ME
-    "ONNX",       // SM_ONNX
+    "EXPRESS",    // SM_EXPRESS
     "OPTIMIZER",  // SM_OPTIMIZER
     "PARALLEL",   // SM_PARALLEL
     "PARSER",     // SM_PARSER
