@@ -4,7 +4,7 @@
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)    
+- [Quick Start](#quick-start)
 - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
@@ -18,7 +18,6 @@
 
 # [NASNet Description](#contents)
 
-
 [Paper](https://arxiv.org/abs/1707.07012): Barret Zoph, Vijay Vasudevan, Jonathon Shlens, Quoc V. Le. Learning Transferable Architectures for Scalable Image Recognition. 2017.
 
 # [Model architecture](#contents)
@@ -27,27 +26,25 @@ The overall network architecture of NASNet is show below:
 
 [Link](https://arxiv.org/abs/1707.07012)
 
-
 # [Dataset](#contents)
 
 Dataset used: [imagenet](http://www.image-net.org/)
 
 - Dataset size: ~125G, 1.2W colorful images in 1000 classes
-  - Train: 120G, 1.2W images
-  - Test: 5G, 50000 images
+    - Train: 120G, 1.2W images
+    - Test: 5G, 50000 images
 - Data format: RGB images.
-  - Note: Data will be processed in src/dataset.py 
-
+    - Note: Data will be processed in src/dataset.py
 
 # [Environment Requirements](#contents)
 
 - Hardware GPU
-  - Prepare hardware environment with GPU processor. 
+    - Prepare hardware environment with GPU processor.
 - Framework
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Script description](#contents)
 
@@ -77,7 +74,7 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 Parameters for both training and evaluating can be set in config.py.
 
-```       
+```python
 'random_seed': 1,                # fix random seed
 'rank': 0,                       # local rank of distributed
 'group_size': 1,                 # world size of distributed
@@ -102,9 +99,9 @@ Parameters for both training and evaluating can be set in config.py.
 
 ## [Training Process](#contents)
 
-#### Usage
+### Usage
 
-```
+```bash
 GPU:
     # distribute training example(8p)
     sh run_distribute_train_for_gpu.sh DATA_DIR
@@ -112,7 +109,7 @@ GPU:
     sh run_standalone_train_for_gpu.sh DEVICE_ID DATA_DIR
 ```
 
-#### Launch
+### Launch
 
 ```bash
 # distributed training example(8p) for GPU
@@ -127,25 +124,23 @@ You can find checkpoint file together with result in log.
 
 ### Usage
 
-```
+```bash
 # Evaluation
 sh run_eval_for_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
 ```
 
-#### Launch
+### Launch
 
 ```bash
 # Evaluation with checkpoint
 sh scripts/run_eval_for_gpu.sh 0 /dataset/val ./checkpoint/nasnet-a-mobile-rank0-248_10009.ckpt
 ```
 
-#### Result
+### Result
 
 Evaluation result will be stored in the scripts path. Under this, you can find result like the followings in log.
- 
-```
+
 acc=73.5%(TOP1)
-```
 
 # [Model description](#contents)
 
@@ -163,7 +158,6 @@ acc=73.5%(TOP1)
 | Optimizer                  | Momentum                  |
 | Loss Function              | SoftmaxCrossEntropyWithLogits       |
 | Loss                       | 1.8965                    |
-| Accuracy                   | 73.5%(TOP1)               |
 | Total time                 | 144 h 8ps                 |
 | Checkpoint for Fine tuning | 89 M(.ckpt file)         |
 
@@ -173,13 +167,12 @@ acc=73.5%(TOP1)
 | -------------------------- | ------------------------- |
 | Resource                   | NV SMX2 V100-32G          |
 | uploaded Date              | 09/24/2020                |
-| MindSpore Version          | 1.0.0                     | 
-| Dataset                    | ImageNet, 1.2W            | 
+| MindSpore Version          | 1.0.0                     |
+| Dataset                    | ImageNet, 1.2W            |
 | batch_size                 | 32                        |
 | outputs                    | probability               |
 | Accuracy                   | acc=73.5%(TOP1)           |
 
-
 # [ModelZoo Homepage](#contents)
- 
-Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo). 
+
+Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
