@@ -730,7 +730,7 @@ class TruncateSequencePair(cde.TruncateSequencePairOp):
     """
     Truncate a pair of rank-1 tensors such that the total length is less than max_length.
 
-    This operation takes two input tensors and returns two output Tenors.
+    This operation takes two input tensors and returns two output Tensors.
 
     Args:
         max_length (int): Maximum length required.

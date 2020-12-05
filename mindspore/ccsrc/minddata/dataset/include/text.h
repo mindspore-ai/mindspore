@@ -49,6 +49,8 @@ constexpr char kRegexReplaceOperation[] = "RegexReplace";
 constexpr char kRegexTokenizerOperation[] = "RegexTokenizer";
 constexpr char kSentencepieceTokenizerOperation[] = "SentencepieceTokenizer";
 constexpr char kSlidingWindowOperation[] = "SlidingWindow";
+constexpr char kToNumberOperation[] = "ToNumber";
+constexpr char kTruncateSequencePairOperation[] = "TruncateSequencePair";
 constexpr char kUnicodeCharTokenizerOperation[] = "UnicodeCharTokenizer";
 constexpr char kUnicodeScriptTokenizerOperation[] = "UnicodeScriptTokenizer";
 constexpr char kWhitespaceTokenizerOperation[] = "WhitespaceTokenizer";
@@ -69,6 +71,8 @@ class RegexTokenizerOperation;
 #endif
 class SentencePieceTokenizerOperation;
 class SlidingWindowOperation;
+class ToNumberOperation;
+class TruncateSequencePairOperation;
 class UnicodeCharTokenizerOperation;
 #ifndef _WIN32
 class UnicodeScriptTokenizerOperation;
@@ -215,6 +219,20 @@ std::shared_ptr<SentencePieceTokenizerOperation> SentencePieceTokenizer(
 ///   for now.
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<SlidingWindowOperation> SlidingWindow(const int32_t width, const int32_t axis = 0);
+
+/// \brief Tensor operation to convert every element of a string tensor to a number.
+///   Strings are casted according to the rules specified in the following links:
+///   https://en.cppreference.com/w/cpp/string/basic_string/stof,
+///   https://en.cppreference.com/w/cpp/string/basic_string/stoul,
+///   except that any strings which represent negative numbers cannot be cast to an unsigned integer type.
+/// \param[in] data_type DataType of the tensor to be casted to. Must be a numeric type.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<ToNumberOperation> ToNumber(const DataType data_type);
+
+/// \brief Truncate a pair of rank-1 tensors such that the total length is less than max_length.
+/// \param[in] max_length Maximum length required.
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<TruncateSequencePairOperation> TruncateSequencePair(int32_t max_length);
 
 /// \brief Tokenize a scalar tensor of UTF-8 string to Unicode characters.
 /// \param[in] with_offsets If or not output offsets of tokens (default=false).
@@ -450,6 +468,38 @@ class SlidingWindowOperation : public TensorOperation {
  private:
   int32_t width_;
   int32_t axis_;
+};
+
+class ToNumberOperation : public TensorOperation {
+ public:
+  explicit ToNumberOperation(DataType data_type);
+
+  ~ToNumberOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kToNumberOperation; }
+
+ private:
+  DataType data_type_;
+};
+
+class TruncateSequencePairOperation : public TensorOperation {
+ public:
+  explicit TruncateSequencePairOperation(int32_t max_length);
+
+  ~TruncateSequencePairOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kTruncateSequencePairOperation; }
+
+ private:
+  int32_t max_length_;
 };
 
 class UnicodeCharTokenizerOperation : public TensorOperation {
