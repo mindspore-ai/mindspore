@@ -591,95 +591,6 @@ build_opencl() {
     fi
 }
 
-build_opencv() {
-    # check what platform we are building opencv on
-    cd ${BASEPATH}
-    if [[ "${LITE_PLATFORM}" == "x86_64" ]]; then
-        OPENCV_BIN="${BASEPATH}"/third_party/opencv/build/lib/libopencv_core.so.4.2.0
-    elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
-        OPENCV_BIN="${BASEPATH}"/third_party/opencv/build/lib/armeabi-v7a/libopencv_core.so
-    else
-        OPENCV_BIN="${BASEPATH}"/third_party/opencv/build/lib/arm64-v8a/libopencv_core.so
-
-    fi
-    if [[ ! -f "${OPENCV_BIN}" ]]; then
-        if [[ "${MSLIBS_SERVER}" ]]; then
-	    cd "${BASEPATH}"/third_party/
-	    rm -rf 4.2.0.tar.gz ./opencv
-	    wget http://${MSLIBS_SERVER}:8081/libs/opencv/4.2.0.tar.gz
-            tar -zxvf ./4.2.0.tar.gz
-	    mv ./opencv-4.2.0 ./opencv
-            rm -rf 4.2.0.tar.gz
-	else
-            git submodule update --init --recursive third_party/opencv
-        fi
-        cd ${BASEPATH}/third_party/opencv
-        rm -rf build && mkdir -p build && cd build && cmake ${CMAKE_MINDDATA_ARGS} -DBUILD_SHARED_LIBS=ON -DBUILD_ANDROID_PROJECTS=OFF \
-          -DBUILD_LIST=core,imgcodecs,imgproc -DBUILD_ZLIB=ON .. && make -j$THREAD_NUM
-    fi
-}
-
-build_jpeg_turbo() {
-    if [ -d  "${BASEPATH}"/third_party/libjpeg-turbo/lib ];then
-        rm -rf "${BASEPATH}"/third_party/libjpeg-turbo/lib
-    fi
-    cd ${BASEPATH}
-    if [[ "${LITE_PLATFORM}" == "x86_64" ]]; then
-        JPEG_TURBO="${BASEPATH}"/third_party/libjpeg-turbo/lib/libjpeg.so.62.3.0
-    else
-        JPEG_TURBO="${BASEPATH}"/third_party/libjpeg-turbo/lib/libjpeg.so
-    fi
-
-    if [[ ! -f "${JPEG_TURBO}" ]]; then
-        if [[ "${MSLIBS_SERVER}" ]]; then
-            cd "${BASEPATH}"/third_party/
-	    rm -rf 2.0.4.tar.gz ./libjpeg-turbo
-	    wget http://${MSLIBS_SERVER}:8081/libs/jpeg_turbo/2.0.4.tar.gz
-	    tar -zxvf ./2.0.4.tar.gz
-	    mv ./libjpeg-turbo-2.0.4 ./libjpeg-turbo
-	    rm -rf ./2.0.4.tar.gz
-        else
-            git submodule update --init --recursive third_party/libjpeg-turbo
-        fi
-
-        cd ${BASEPATH}/third_party/libjpeg-turbo
-        rm -rf build && mkdir -p build && cd build && cmake ${CMAKE_MINDDATA_ARGS} -DCMAKE_BUILD_TYPE=Release \
-          -DCMAKE_INSTALL_PREFIX="${BASEPATH}/third_party/libjpeg-turbo" .. && make -j$THREAD_NUM && make install
-    fi
-}
-
-build_eigen() {
-    cd ${BASEPATH}
-    if [[ "${MSLIBS_SERVER}" ]]; then
-        cd "${BASEPATH}"/third_party/
-	rm -rf ./eigen-3.*.tar.gz ./eigen
-        wget http://${MSLIBS_SERVER}:8081/libs/eigen3/eigen-3.3.7.tar.gz
-        tar -zxvf ./eigen-3.3.7.tar.gz
-        mv ./eigen-3.3.7 ./eigen
-	rm -rf ./eigen-3.*.tar.gz
-    else
-        git submodule update --init --recursive third_party/eigen
-
-    fi
-}
-
-build_minddata_lite_deps()
-{
-  echo "start build minddata lite project"
-  if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
-      CMAKE_MINDDATA_ARGS="-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=19    \
-            -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=arm64-v8a -DANDROID_TOOLCHAIN_NAME=aarch64-linux-android-clang                 \
-            -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
-  elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
-      CMAKE_MINDDATA_ARGS="-DCMAKE_TOOLCHAIN_FILE=${ANDROID_NDK}/build/cmake/android.toolchain.cmake -DANDROID_NATIVE_API_LEVEL=19    \
-            -DANDROID_NDK=${ANDROID_NDK} -DANDROID_ABI=armeabi-v7a -DANDROID_TOOLCHAIN_NAME=clang                                     \
-            -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
-  else
-      CMAKE_MINDDATA_ARGS="-DCMAKE_BUILD_TYPE=${BUILD_TYPE}"
-  fi
-  build_eigen
-  build_jpeg_turbo
-}
 
 get_version() {
     VERSION_MAJOR=$(grep "const int ms_version_major =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]")
@@ -701,10 +612,6 @@ build_lite()
     fi
     if [ "${RUN_TESTCASES}" == "on" ]; then
         build_gtest
-    fi
-
-    if [[ "${COMPILE_MINDDATA_LITE}" == "lite" || "${COMPILE_MINDDATA_LITE}" == "full" ||  "${COMPILE_MINDDATA_LITE}" == "wrapper" ]]; then
-        build_minddata_lite_deps
     fi
 
     cd "${BASEPATH}/mindspore/lite"
