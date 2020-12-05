@@ -1775,6 +1775,7 @@ def test_cache_nomap_textfile2():
          |
      TextFile
     """
+
     def my_tokenizer(line):
         words = line.split()
         if not words:
@@ -1883,6 +1884,34 @@ def test_cache_nomap_get_repeat_count():
         logger.info("get data from dataset")
         num_iter += 1
     assert num_iter == 12
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_long_file_list():
+    """
+    Test cache after TFRecord with a long list of files as arguments
+
+        Cache
+          |
+      TFRecord
+    """
+
+    logger.info("Test cache nomap long file list")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=1, spilling=False)
+
+    ds1 = ds.TFRecordDataset([DATA_DIR[0] for _ in range(0, 1000)], SCHEMA_DIR, columns_list=["image"],
+                             cache=some_cache)
+
+    with pytest.raises(RuntimeError) as e:
+        sum([1 for _ in ds1])
+    assert "Out of memory" in str(e.value)
+    logger.info("test_cache_nomap_long_file_list Ended.\n")
+
 
 if __name__ == '__main__':
     test_cache_nomap_basic1()
