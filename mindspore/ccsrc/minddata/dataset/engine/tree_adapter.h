@@ -33,7 +33,7 @@ class DatasetNode;
 
 class TreeAdapter {
  public:
-  TreeAdapter() = default;
+  TreeAdapter();
 
   ~TreeAdapter() = default;
 
@@ -68,28 +68,40 @@ class TreeAdapter {
   bool OptimizationEnabled() const { return optimize_; }
 
  private:
-  // This function runs a mandatory pass checking the syntax and semantics of the IR tree.
+  // Run the mandatory pass checking the syntax and semantics of the IR tree
   Status PrePass(std::shared_ptr<DatasetNode> ir);
 
-  // This function runs an optional optimization pass on the IR tree.
+  // Run the optional optimization pass on the IR tree
   Status Optimize(std::shared_ptr<DatasetNode> ir);
 
-  // This function runs a mandatory pass augmenting the IR tree before the execution.
+  // Run the mandatory pass augmenting the IR tree
   Status PostPass(std::shared_ptr<DatasetNode> ir);
 
+  // Build an Execution tree
+  Status Build(std::shared_ptr<DatasetNode> root_ir, int32_t num_epochs);
+
   // This RECURSIVE function walks the (optimized) IR tree in DFS to build its corresponding Execution tree.
-  Status BuildExecutionTree(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op);
+  Status BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op);
 
   std::unique_ptr<DataBuffer> cur_db_;
   std::unordered_map<std::string, int32_t> column_name_map_;
-  std::unique_ptr<ExecutionTree> tree_;  // current connector capacity of root op, used for profiling
-  int32_t num_epochs_;
+  std::unique_ptr<ExecutionTree> tree_;                // current connector capacity of root op, used for profiling
   bool optimize_;                                      // Flag to enable optional optimization pass
   std::shared_ptr<DatasetIteratorTracing> tracing_;    // trace profiling data
   int32_t cur_batch_num_;                              // current batch number, used for profiling
   int32_t cur_connector_size_;                         // current connector size of root op, used for profiling
   int32_t cur_connector_capacity_;                     // current connector capacity of root op, used for profiling
   std::function<OptPass(OptPass)> pre_pass_override_;  // function ptr that overrides pre pass, called in PrePrepare()
+
+  // State flags for the lifecycle of the tree
+  enum CompileState {
+    kCompileStateInit = 0,      // The freshly initialized state
+    kCompileStateIRGraphBuilt,  // User code has been parsed and its IR graph built
+    kCompileStateIRTreeCloned,  // IR tree has been cloned from the IR graph
+    kCompileStateOptimized,     // IR tree has been optimized
+    kCompileStateReady          // Execution tree is generated from the optimized IR
+  };
+  CompileState tree_state_;
 };
 }  // namespace dataset
 }  // namespace mindspore

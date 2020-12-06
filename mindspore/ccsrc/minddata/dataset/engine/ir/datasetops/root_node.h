@@ -29,7 +29,10 @@ namespace dataset {
 class RootNode : public DatasetNode {
  public:
   /// \brief Constructor
-  RootNode(std::shared_ptr<DatasetNode> child, int32_t num_epochs);
+  RootNode() : DatasetNode() {}
+
+  /// \brief Constructor
+  explicit RootNode(std::shared_ptr<DatasetNode> child);
 
   /// \brief Destructor
   ~RootNode() = default;
@@ -53,6 +56,9 @@ class RootNode : public DatasetNode {
 
   /// \brief Getter of number of epochs
   int32_t num_epochs() { return num_epochs_; }
+
+  /// \brief Setter of number of epochs
+  void SetNumEpochs(int32_t num_epochs) { num_epochs_ = num_epochs; }
 
   /// \brief Parameters validation
   /// \return Status Status::OK() if all the parameters are valid

@@ -27,13 +27,14 @@ namespace mindspore {
 namespace dataset {
 
 // Constructor for RootNode
-RootNode::RootNode(std::shared_ptr<DatasetNode> child, int32_t num_epochs) : DatasetNode(), num_epochs_(num_epochs) {
-  // The root node's parent must remain nullptr. (which is set in the constructor of DatasetNode)
+RootNode::RootNode(std::shared_ptr<DatasetNode> child) : DatasetNode() {
+  // The root node's parent must remain nullptr, which is set in the constructor of DatasetNode.
   AddChild(child);
 }
 
 std::shared_ptr<DatasetNode> RootNode::Copy() {
-  auto node = std::make_shared<RootNode>(nullptr, num_epochs_);
+  auto node = std::make_shared<RootNode>(nullptr);
+  node->SetNumEpochs(num_epochs_);
   return node;
 }
 
@@ -54,7 +55,7 @@ Status RootNode::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-  if (parent_.size() != 0) {
+  if (parent_ != nullptr) {
     std::string err_msg = "Internal error: root node should not have a parent";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);

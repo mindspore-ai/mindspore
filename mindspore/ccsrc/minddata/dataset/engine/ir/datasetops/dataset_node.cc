@@ -233,40 +233,14 @@ std::shared_ptr<DatasetNode> DatasetNode::SetNumWorkers(int32_t num_workers) {
   return shared_from_this();
 }
 
-DatasetNode::DatasetNode() : cache_(nullptr), parent_({}), children_({}) {
+DatasetNode::DatasetNode() : cache_(nullptr), parent_(nullptr), children_({}) {
   // Fetch some default value from config manager
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   num_workers_ = cfg->num_parallel_workers();
   rows_per_buffer_ = cfg->rows_per_buffer();
   connector_que_size_ = cfg->op_connector_size();
   worker_connector_size_ = cfg->worker_connector_size();
-}
-
-const bool DatasetNode::IsTree() const {
-  bool is_tree = true;
-  if (this->parent_.size() > 1) {
-    MS_LOG(WARNING) << Name() << " has more than one parent.";
-    return false;
-  }
-  for (const auto &child : children_) {
-    is_tree = child->IsTree();
-    if (!is_tree) {
-      MS_LOG(WARNING) << Name() << " has more than one parent.";
-      break;
-    }
-  }
-  return is_tree;
-}
-
-// this function will preform a deep copy of current node (and its descendants), the parent* pointer will not be copied
-std::shared_ptr<DatasetNode> DatasetNode::DeepCopy() {
-  std::shared_ptr<DatasetNode> new_node = this->Copy();
-  // temporary fix to set the num_workers to the new node.
-  new_node->SetNumWorkers(this->num_workers_);
-  for (const auto &child : children_) {
-    new_node->AddChild(child->DeepCopy());
-  }
-  return new_node;
+  mappable_ = kNotADataSource;
 }
 
 std::string DatasetNode::PrintColumns(const std::vector<std::string> &columns) const {
@@ -310,54 +284,105 @@ void DatasetNode::PrintNode(std::ostream &out, int *level) const {
 }
 
 // Add a node as a child, node's parent needs to be empty
-// this function will allow child to be a nullptr, in which case it will simply skip
+// This function will allow child to be a nullptr, in which case it will simply skip.
+// This function is used only when building IR node one by one from parsing the user code.
+// During the parsing, we allow a node to have more than one parent, possibly forming a graph.
+// It does not maintain the parent_ attribute of the node, which enforces a single parent and a tree structure.
 void DatasetNode::AddChild(std::shared_ptr<DatasetNode> child) {
-  if (child != nullptr && child->parent_.empty()) {
+  if (child != nullptr) {
     children_.push_back(child);
-    child->parent_.push_back(this);
-  } else if (child != nullptr) {
-    MS_LOG(WARNING) << "Adding " + child->Name() + " to " + Name() + " but it already has a parent";
-    children_.push_back(child);
-    child->parent_.push_back(this);
   }
 }
 
-// Insert a node as a child of this node. This node's children becomes the children of the inserted node.
+// Add the input node to be the next child of this node
+// This function is used in doing a deep copy of the IR tree built by parsing the user code.
+// This function assumes we walk the tree in DFS left-to-right.
+// This is a temporary function to be replaced later by a set of better tree operations.
+void DatasetNode::AppendChild(std::shared_ptr<DatasetNode> child) {
+  if (child != nullptr) {
+    if (child->parent_ != nullptr) {
+      MS_LOG(WARNING) << "Adding " + child->Name() + " to " + Name() + " but it already has a parent";
+    }
+    children_.push_back(child);
+    child->parent_ = this;
+  }
+}
+
+// Add a node as a parent, node's parent needs to be empty (future use)
+Status DatasetNode::InsertAbove(std::shared_ptr<DatasetNode> node) {
+  CHECK_FAIL_RETURN_UNEXPECTED(node != nullptr, "Inserted node must not be a null pointer.");
+
+  if (node->parent_ != nullptr) {
+    DatasetNode *parent = node->parent_;
+    for (auto i = parent->children_.size() - 1; i >= 0; --i) {
+      if (parent->children_[i] == node) {
+        parent->children_[i] = static_cast<std::shared_ptr<DatasetNode>>(this);
+      }
+    }
+  }
+  children_.push_back(node);
+  node->parent_ = this;
+
+  return Status::OK();
+}
+
+// Insert a node as a child of this node
+// This node's children become the children of the inserted node.
 Status DatasetNode::InsertBelow(std::shared_ptr<DatasetNode> node) {
   CHECK_FAIL_RETURN_UNEXPECTED(node != nullptr, "Inserted node must not be a null pointer.");
   CHECK_FAIL_RETURN_UNEXPECTED(node->children_.empty(), "Inserted node must not have any children.");
-  CHECK_FAIL_RETURN_UNEXPECTED(node->parent_.empty(), "Inserted node must not have a parent.");
+  CHECK_FAIL_RETURN_UNEXPECTED(node->parent_ == nullptr, "Inserted node must not have a parent.");
 
   for (auto child : children_) {
     node->children_.push_back(child);
-    child->parent_.clear();
-    child->parent_.push_back(node.get());
+    child->parent_ = node.get();
   }
   // Then establish the new parent-child relationship with the new parent.
   children_.clear();
   children_.push_back(node);
-  node->parent_.clear();
-  node->parent_.push_back(this);
+  node->parent_ = this;
+  return Status::OK();
+}
+
+// Insert a node as a child next to this node (future use)
+Status DatasetNode::InsertAfter(std::shared_ptr<DatasetNode> node) {
+  CHECK_FAIL_RETURN_UNEXPECTED(parent_ != nullptr, "This node must have a parent.");
+  CHECK_FAIL_RETURN_UNEXPECTED(node->parent_ == nullptr, "Inserted node must not have a parent.");
+  auto size = parent_->children_.size();
+  // Duplicate the last child to increase the size by 1
+  parent_->children_.push_back(parent_->children_[size - 1]);
+  // Shift each child to its right until we found the insertion point, then insert the input node
+  bool found = false;
+  for (auto i = parent_->children_.size() - 2; i >= 0; --i) {
+    if (parent_->children_[i].get() != this) {
+      parent_->children_[i + 1] = parent_->children_[i];
+    } else {
+      parent_->children_[i + 1] = node;
+      node->parent_ = parent_;
+      found = true;
+      break;
+    }
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!found, "Insertion point not found.");
   return Status::OK();
 }
 
 // Remove this node from its parent. Add the child of this node to its parent.
 // for now, this remove is limited to node with a single child or no child
 Status DatasetNode::Remove() {
-  CHECK_FAIL_RETURN_UNEXPECTED(parent_.size() != 0, "Cannot remove root or a node without parent.");
+  CHECK_FAIL_RETURN_UNEXPECTED(parent_ != nullptr, "Cannot remove root or a node without parent.");
   CHECK_FAIL_RETURN_UNEXPECTED(children_.size() < 2, "Cannot remove node with more than 1 child.");
   if (children_.empty()) {  // I am a leaf node, remove me from my parent's children list
-    parent_[0]->children_.erase(
-      std::remove(parent_[0]->children_.begin(), parent_[0]->children_.end(), shared_from_this()),
-      parent_[0]->children_.end());  // removal using "erase remove idiom"
-  } else {                           // replace my position in my parent's children list with my single child
-    auto itr = std::find(parent_[0]->children_.begin(), parent_[0]->children_.end(), shared_from_this());
-    CHECK_FAIL_RETURN_UNEXPECTED(itr != parent_[0]->children_.end(), "I am not in my parent's children list.");
+    parent_->children_.erase(std::remove(parent_->children_.begin(), parent_->children_.end(), shared_from_this()),
+                             parent_->children_.end());  // removal using "erase remove idiom"
+  } else {  // replace my position in my parent's children list with my single child
+    auto itr = std::find(parent_->children_.begin(), parent_->children_.end(), shared_from_this());
+    CHECK_FAIL_RETURN_UNEXPECTED(itr != parent_->children_.end(), "I am not in my parent's children list.");
     children_[0]->parent_ = parent_;  // set my single child's parent ptr to my parent
     *itr = std::move(children_[0]);   // replace me in my parent's children list with my single child
-    children_.clear();                //  release my single child from my children list
+    children_.clear();                // release my single child from my children list
   }
-  parent_[0] = nullptr;
+  parent_ = nullptr;
   return Status::OK();
 }
 

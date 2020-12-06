@@ -65,7 +65,6 @@ SET(DE_UT_SRCS
         image_folder_op_test.cc
         image_process_test.cc
         interrupt_test.cc
-        ir_node_test.cc
         jieba_tokenizer_op_test.cc
         main_test.cc
         map_op_test.cc

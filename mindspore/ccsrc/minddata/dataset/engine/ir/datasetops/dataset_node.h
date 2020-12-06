@@ -146,10 +146,6 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
     return out;
   }
 
-  /// \brief Make a new copy of the tree from the current node
-  /// \return The new copy of the tree
-  std::shared_ptr<DatasetNode> DeepCopy();
-
   /// \brief Pure virtual function to convert a DatasetNode class into a runtime dataset object
   /// \param node_ops - A vector containing shared pointer to the Dataset Ops that this object will create
   /// \return Status Status::OK() if build successfully
@@ -175,42 +171,60 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \return Child nodes
   const std::vector<std::shared_ptr<DatasetNode>> Children() const { return children_; }
 
-  /// \brief Getter function for parents nodes
-  /// \return Parent nodes
-  const std::vector<DatasetNode *> Parent() const { return parent_; }
+  /// \brief Getter function for the parent node
+  /// \return The parent node (of a node from a cloned IR tree)
+  DatasetNode *Parent() const { return parent_; }
 
-  /// \brief Establish the parent-child relationship between this node and its child.
+  /// \brief Establish a parent-child relationship between this node and the input node.
+  ///    Used when building the IR tree.
   void AddChild(std::shared_ptr<DatasetNode> child);
+
+  /// \brief Establish a parent-child relationship between this node and the input node.
+  ///    Used during the cloning of the user-input IR tree (temporary use)
+  void AppendChild(std::shared_ptr<DatasetNode> child);
+
+  /// \brief Establish the child-parent relationship between this node and the input node (future use)
+  Status InsertAbove(std::shared_ptr<DatasetNode> node);
 
   /// \brief Insert the input node below this node. This node's children becomes the children of the inserted node.
   Status InsertBelow(std::shared_ptr<DatasetNode> node);
+
+  /// \brief Add the input node as the next sibling (future use)
+  Status InsertAfter(std::shared_ptr<DatasetNode> node);
 
   /// \brief detach this node from its parent, add its child (if any) to its parent
   /// \return error code, return error if node has more than 1 children
   Status Remove();
 
-  /// \brief  Check if this node has cache
+  /// \brief Check if this node has cache
   /// \return True if the data of this node will be cached
   const bool IsCached() const { return (cache_ != nullptr); }
 
-  /// \brief  Check if this node is a tree
-  /// \return True if the structure is indeed a tree, i.e., no node has more than one parent
-  const bool IsTree() const;
-
-  /// \brief  Check if this node is a leaf node.
+  /// \brief Check if this node is a leaf node.
   /// \return True if this is a leaf node.
   const bool IsLeaf() const { return children_.empty(); }
 
-  /// \brief  Check if this node is a mappable dataset. Only applicable to leaf nodes
-  /// \return True if the dataset represented by this node is a mappable dataset
-  const bool IsMappable() const { return mappable_; }
+  /// \brief Check if this node is a mappable dataset. Only applicable to leaf nodes
+  /// \return True if this node is a mappable dataset
+  const bool IsMappable() const { return (mappable_ == kMappableSource); }
 
-  /// \brief  Check if this node is a descendant of an operator with cache. Currently used in leaf nodes
+  /// \brief Check if this node is a non-mappable dataset. Only applicable to leaf nodes
+  /// \return True if this node is a non-mappable dataset
+  const bool IsNonMappable() const { return (mappable_ == kNonMappableSource); }
+
+  /// \brief Check if this node is not a data source node.
+  /// \return True if this node is not a data source node
+  const bool IsNotADataSource() const { return (mappable_ == kNotADataSource); }
+
+  /// \brief Check if this node is a descendant of an operator with cache. Currently used in leaf nodes
   /// \return True if a cache-enabled operator is an ancestor of this node
   const bool IsDescendantOfCache() const { return descendant_of_cache_; }
 
-  /// \brief  Mark to indicate this node is a descendant of an operator with cache. Currently used in leaf nodes
+  /// \brief Mark to indicate this node is a descendant of an operator with cache. Currently used in leaf nodes
   void HasCacheAbove() { descendant_of_cache_ = true; }
+
+  /// \brief Getter of the number of workers
+  int32_t num_workers() { return num_workers_; }
 
   /// \brief Setter function for runtime number of workers
   /// \param[in] num_workers The number of threads in this operator
@@ -247,7 +261,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
 
  protected:
   std::vector<std::shared_ptr<DatasetNode>> children_;
-  std::vector<DatasetNode *> parent_;
+  DatasetNode *parent_;  // used to record the only one parent of an IR node after parsing phase
   std::shared_ptr<DatasetCache> cache_;
   int64_t dataset_size_ = -1;
   int32_t num_workers_;
@@ -257,7 +271,8 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   std::string PrintColumns(const std::vector<std::string> &columns) const;
   Status AddCacheOp(std::vector<std::shared_ptr<DatasetOp>> *node_ops);
   void PrintNode(std::ostream &out, int *level) const;
-  bool mappable_;
+  enum DataSource { kNotADataSource = 0, kNonMappableSource = 1, kMappableSource = 2 };
+  enum DataSource mappable_;
   bool descendant_of_cache_;
 };
 
@@ -265,12 +280,12 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
 class MappableSourceNode : public DatasetNode {
  public:
   /// \brief Constructor
-  MappableSourceNode() : DatasetNode() { mappable_ = true; }
+  MappableSourceNode() : DatasetNode() { mappable_ = kMappableSource; }
 
   /// \brief Constructor that initializes the cache
   /// \param dataset_cache DatasetCache
   explicit MappableSourceNode(const std::shared_ptr<DatasetCache> &dataset_cache) : DatasetNode(dataset_cache) {
-    mappable_ = true;
+    mappable_ = kMappableSource;
     // Initially set to false, and set to true by the optimizer when conditions are met.
     descendant_of_cache_ = false;
   }
@@ -287,12 +302,12 @@ class MappableSourceNode : public DatasetNode {
 class NonMappableSourceNode : public DatasetNode {
  public:
   /// \brief Constructor
-  NonMappableSourceNode() : DatasetNode() { mappable_ = false; }
+  NonMappableSourceNode() : DatasetNode() { mappable_ = kNonMappableSource; }
 
   /// \brief Constructor that initializes the cache
   /// \param dataset_cache DatasetCache
   explicit NonMappableSourceNode(const std::shared_ptr<DatasetCache> &dataset_cache) : DatasetNode(dataset_cache) {
-    mappable_ = false;
+    mappable_ = kNonMappableSource;
     // Initially set to false, and set to true by the optimizer when conditions are met.
     descendant_of_cache_ = false;
   }
