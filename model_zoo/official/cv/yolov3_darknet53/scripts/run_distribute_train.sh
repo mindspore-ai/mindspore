@@ -72,7 +72,9 @@ do
         --data_dir=$DATASET_PATH \
         --pretrained_backbone=$PRETRAINED_BACKBONE \
         --is_distributed=1 \
-        --lr=0.1 \
+        --lr=0.001 \
+        --loss_scale=1024 \
+        --weight_decay=0.016 \
         --T_max=320 \
         --max_epoch=320 \
         --warmup_epochs=4 \
