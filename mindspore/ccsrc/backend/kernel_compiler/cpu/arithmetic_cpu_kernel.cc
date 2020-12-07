@@ -57,11 +57,21 @@ void ArithmeticCPUKernel::RealDiv(const T *input1, const T *input2, T *out, size
   for (size_t i = start; i < end; i++) {
     std::vector<size_t> idx;
     GenIndex(i, &idx);
-    auto div_number = input2[idx[1]];
-    if (div_number == 0) {
-      MS_LOG(EXCEPTION) << "Cannot divided by 0!";
+    auto dividend = input1[idx[0]];
+    auto divisor = input2[idx[1]];
+    if (divisor == 0) {
+      if (dividend == 0) {
+        out[i] = std::numeric_limits<T>::quiet_NaN();
+        continue;
+      }
+      if (std::numeric_limits<T>::has_infinity) {
+        out[i] = dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+      } else {
+        out[i] = dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+      }
+      continue;
     }
-    out[i] = input1[idx[0]] / div_number;
+    out[i] = dividend / divisor;
   }
 }
 
