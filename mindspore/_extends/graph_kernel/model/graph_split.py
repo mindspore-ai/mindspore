@@ -31,7 +31,8 @@ class GraphSplitByPattern:
             self.in_relations = dict()  # {area1: relation1, area2: relation2, ...}
             self.out_relations = dict()  # {area1: relation1, area2: relation2, ...}
             self.mode = self.MODE_BASIC
-            if self.pattern == PrimLib.TRANSFORM or (use_poly_reduce and self.pattern == PrimLib.REDUCE):
+            if self.pattern == PrimLib.TRANSFORM or self.pattern == PrimLib.BROADCAST or \
+                (use_poly_reduce and self.pattern == PrimLib.REDUCE):
                 self.mode = self.MODE_COMPOSITE
             self.is_output = is_output
             self.output_excluded = set()

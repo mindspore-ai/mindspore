@@ -73,6 +73,7 @@ class OpInfer:
         # add special infer func here
         'InplaceAssign': lambda inputs, attrs: inputs[2].shape,
         'Reshape': lambda inputs, attrs: attrs["shape"],
+        'BroadcastTo': lambda inputs, attrs: attrs["shape"],
     }
     infer_dtype_func = {
         # add special infer func here
