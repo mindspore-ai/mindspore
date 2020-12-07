@@ -71,7 +71,7 @@ class Logistic(Distribution):
         >>> # by replacing 'prob' by the name of the function
         >>> ans = l1.prob(value)
         >>> print(ans)
-        [0.05875093 0.06153353 0.0625    ]
+        [0.05875093 0.06153352 0.0625    ]
         >>> # Evaluate with respect to distribution b.
         >>> ans = l1.prob(value, loc_b, scale_b)
         >>> print(ans)

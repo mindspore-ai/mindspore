@@ -59,7 +59,7 @@ class GumbelCDF(Bijector):
         >>> y = Tensor([0.1, 0.2, 0.3], dtype=mindspore.float32)
         >>> ans1 = gumbel_cdf.forward(x)
         >>> print(ans1)
-        [0.36787945 0.54523915 0.6922006 ]
+        [0.36787945 0.5452392  0.69220066]
         >>> ans2 = gumbel_cdf.inverse(y)
         >>> print(ans2)
         [-0.66806495  0.04822993  0.62874645]

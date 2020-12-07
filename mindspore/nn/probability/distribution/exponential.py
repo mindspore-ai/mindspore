@@ -71,7 +71,7 @@ class Exponential(Distribution):
         >>> # Evaluate with respect to distribution b.
         >>> ans = e1.prob(value, rate_b)
         >>> print(ans)
-        [0.16374613 0.18393973 0.12047768]
+        [0.16374615 0.18393973 0.12047768]
         >>> # `rate` must be passed in during function calls.
         >>> ans = e2.prob(value, rate_a)
         >>> print(ans)

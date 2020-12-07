@@ -69,7 +69,7 @@ class Bernoulli(Distribution):
         >>> # Evaluate `prob` with respect to distribution b.
         >>> ans = b1.prob(value, probs_b)
         >>> print(ans)
-        [0.2 0.5 0.4]
+        [0.2 0.7 0.4]
         >>> # `probs` must be passed in during function calls.
         >>> ans = b2.prob(value, probs_a)
         >>> print(ans)
