@@ -875,7 +875,7 @@ void KernelRuntime::GenAddrCleanLaunchArgs(const CNodePtr &cnode, AddressPtrList
 }
 
 bool KernelRuntime::LaunchKernelMod(const session::KernelGraph &graph) {
-  auto &kernels = graph.execution_order();
+  const auto &kernels = graph.execution_order();
   std::vector<DynamicKernelPtr> dynamic_kernel_list;
   auto iter = graph_dynamic_kernel_map_.find(graph.graph_id());
   if (iter != graph_dynamic_kernel_map_.end()) {

@@ -170,11 +170,12 @@ void CPUSession::SetOutputFlags(const VectorRef &base_ref, std::vector<tensor::T
   }
 }
 
-void CPUSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                            std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                            const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
-  BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
 
   auto kernel_graph = run_op_graphs_[graph_info];

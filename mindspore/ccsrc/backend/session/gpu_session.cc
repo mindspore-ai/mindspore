@@ -403,13 +403,14 @@ void GPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &grap
   run_op_graphs_[graph_info] = kernel_graph;
 }
 
-void GPUSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
                            std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
                            const std::vector<int64_t> &tensors_mask) {
   MS_EXCEPTION_IF_NULL(input_tensors);
-  BuildOpImpl(op_run_info, graph_info, *input_tensors, tensors_mask);
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  BuildOpImpl(*op_run_info, graph_info, *input_tensors, tensors_mask);
   EraseValueNodeTensor(tensors_mask, input_tensors);
-
+  // run op
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // Remove NopOp from execution graph
@@ -420,6 +421,10 @@ void GPUSession::RunOpImpl(const OpRunInfo &op_run_info, const GraphInfo &graph_
   Execute(kernel_graph);
   // Fetch outputs
   UpdateOutputs(kernel_graph, outputs, *input_tensors);
+  // update output abstract of dynamic op to op_run_info
+  if (op_run_info->is_dynamic_shape) {
+    UpdateOutputAbstract(kernel_graph, op_run_info);
+  }
   RunOpClearMemory(kernel_graph.get());
 }
 

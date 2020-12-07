@@ -130,7 +130,7 @@ void RunGraphTask::Run() {
 
 void RunOpTask::Run() {
   MS_EXCEPTION_IF_NULL(session_);
-  session_->RunOpImpl(*op_run_info_, graph_info_, input_tensors_, &outputs_, tensors_mask_);
+  session_->RunOpImpl(graph_info_, op_run_info_, input_tensors_, &outputs_, tensors_mask_);
 }
 
 void RunOpsInGraphTask::Run() {

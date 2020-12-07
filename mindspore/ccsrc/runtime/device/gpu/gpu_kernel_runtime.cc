@@ -336,6 +336,7 @@ void GPUKernelRuntime::AssignMemory(session::KernelGraph *graph) {
 }
 
 bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
+  MS_EXCEPTION_IF_NULL(graph);
   struct timeval start_time, end_time;
   (void)gettimeofday(&start_time, nullptr);
   bool ret = true;
@@ -360,7 +361,12 @@ bool GPUKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
 
     ret = RunOneStep(graph);
   } else {
-    ret = LaunchKernel(graph);
+    if (graph->is_dynamic_shape()) {
+      // run dynamic shape graph in pynative
+      ret = RunOpLaunchKernelDynamic(graph);
+    } else {
+      ret = LaunchKernel(graph);
+    }
   }
   (void)gettimeofday(&end_time, nullptr);
   const uint64_t kUSecondInSecond = 1000000;
@@ -671,6 +677,42 @@ bool GPUKernelRuntime::LaunchKernelDynamic(const session::KernelGraph *graph, bo
     CHECK_OP_RET_WITH_EXCEPT(SyncStream(), "SyncStream failed.");
   }
   ClearSwapInfo(mock);
+  return true;
+}
+
+bool GPUKernelRuntime::RunOpLaunchKernelDynamic(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  const auto &kernels = graph->execution_order();
+  for (const auto &kernel : kernels) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    auto kernel_mod = AnfAlgo::GetKernelMod(kernel);
+    MS_EXCEPTION_IF_NULL(kernel_mod);
+    // akg kernel do not support dynamic shape by now.
+    device::DynamicKernelPtr dynamic_kernel = nullptr;
+    kernel::GpuKernel *gpu_kernel = nullptr;
+    if (session::AnfRuntimeAlgorithm::GetKernelType(kernel) != KernelType::AKG_KERNEL) {
+      gpu_kernel = dynamic_cast<kernel::GpuKernel *>(kernel_mod);
+      dynamic_kernel = gpu_kernel->DynamicKernel();
+    }
+    // pre-processing for dynamic shape kernel
+    if (dynamic_kernel && dynamic_kernel->is_dynamic_shape()) {
+      dynamic_kernel->InferShape();
+      dynamic_kernel->UpdateArgs();
+    }
+    // alloc kernel res
+    AddressPtrList kernel_inputs;
+    AddressPtrList kernel_workspaces;
+    AddressPtrList kernel_outputs;
+    GenLaunchArgs(*kernel_mod, kernel, &kernel_inputs, &kernel_workspaces, &kernel_outputs);
+    auto ret = kernel_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
+    if (!ret) {
+      MS_LOG(ERROR) << "Launch kernel failed.";
+      return false;
+    }
+    if (gpu_kernel && dynamic_kernel && dynamic_kernel->is_dynamic_shape()) {
+      gpu_kernel->PostExecute();
+    }
+  }
   return true;
 }
 

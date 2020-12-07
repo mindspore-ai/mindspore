@@ -70,10 +70,12 @@ const std::set<std::string> ignore_infer_prim = {"make_ref", "mixed_precision_ca
 const std::set<std::string> force_infer_prim = {"TopK", "DropoutGenMask"};
 const std::set<std::string> ignore_judge_dynamic_cell = {
   "Cell mindspore.nn.layer.basic.Dense", "Cell mindspore.nn.probability.distribution.normal.Normal",
-  "Cell src.transformer.create_attn_mask.CreateAttentionMaskFromInputMask"};
+  "Cell src.transformer.create_attn_mask.CreateAttentionMaskFromInputMask", "Cell mindspore.nn.layer.math.MatMul"};
 const std::set<std::string> unchanged_named_primitive = {parse::NAMED_PRIMITIVE_ATTRIBUTE,
                                                          parse::NAMED_PRIMITIVE_NAMECONSTANT,
                                                          parse::NAMED_PRIMITIVE_NUM, parse::NAMED_PRIMITIVE_STR};
+const std::set<std::string> dynamic_shape_const_input_to_attr = {"Cast", "ExpandDims", "Reshape", "EmbeddingLookup",
+                                                                 "Transpose"};
 }  // namespace pynative
 }  // namespace mindspore
 

@@ -73,6 +73,7 @@ class GPUKernelRuntime : public KernelRuntime {
   bool SearchMemSwapScheme(const session::KernelGraph *graph);
   bool RefineMemSwapScheme(const session::KernelGraph *graph);
   bool LaunchKernelDynamic(const session::KernelGraph *graph, bool mock = false, bool profiling = false);
+  bool RunOpLaunchKernelDynamic(const session::KernelGraph *graph);
   void LaunchKernelWithTimeProfiling(const AnfNodePtr &kernel, const AddressPtrList &inputs,
                                      const AddressPtrList &workspace, const AddressPtrList &outputs);
   bool AttemptMallocMem(const DeviceAddressPtr &device_address, size_t size, bool mock);
