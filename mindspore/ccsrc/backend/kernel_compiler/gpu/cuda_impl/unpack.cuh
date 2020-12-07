@@ -19,7 +19,7 @@
 
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T>
-void UnpackKernel(const int size, const int output_num,
-                  const int dims_after_axis, T** outputs, const T* input,
+void UnpackKernel(const size_t size, const size_t output_num,
+                  const size_t dims_after_axis, T** outputs, const T* input,
                   cudaStream_t cuda_stream);
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UNPACKIMPL_H_

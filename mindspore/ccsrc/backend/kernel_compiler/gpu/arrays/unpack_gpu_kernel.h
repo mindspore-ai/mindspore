@@ -46,7 +46,7 @@ class UnpackGpuFwdKernel : public GpuKernel {
                                                outputs_host_.get(), sizeof(T *) * output_num_, cudaMemcpyHostToDevice,
                                                reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "Unpack opt cudaMemcpyAsync outputs failed");
-    UnpackKernel(SizeToInt(input_size_), output_num_, dims_after_axis_, outputs_array, input,
+    UnpackKernel(input_size_, output_num_, dims_after_axis_, outputs_array, input,
                  reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -64,9 +64,9 @@ class UnpackGpuFwdKernel : public GpuKernel {
     auto input_format = AnfAlgo::GetInputFormat(kernel_node, 0);
     axis_ = AxisTransform(origin_data_format, input_format, axis_);
 
-    output_num_ = static_cast<int32_t>(GetAttr<int64_t>(kernel_node, "num"));
+    output_num_ = LongToSize(GetAttr<int64_t>(kernel_node, "num"));
     outputs_host_ = std::make_unique<T *[]>(output_num_);
-    for (int i = 0; i < output_num_; i++) {
+    for (size_t i = 0; i < output_num_; i++) {
       size_t _size = 1;
       auto _shape = AnfAlgo::GetOutputDeviceShape(kernel_node, i);
       for (size_t j = 0; j < _shape.size(); j++) {
@@ -77,9 +77,9 @@ class UnpackGpuFwdKernel : public GpuKernel {
     workspace_size_list_.push_back(sizeof(T *) * output_num_);
 
     auto input_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    for (int i = 0; i < SizeToInt(input_shape.size()); i++) {
+    for (size_t i = 0; i < input_shape.size(); i++) {
       input_size_ *= input_shape[i];
-      if (i > axis_) {
+      if (i > IntToSize(axis_)) {
         dims_after_axis_ *= input_shape[i];
       }
     }
@@ -101,9 +101,9 @@ class UnpackGpuFwdKernel : public GpuKernel {
     return true;
   }
   int axis_;
-  int output_num_;
+  size_t output_num_;
   size_t input_size_;
-  int dims_after_axis_;
+  size_t dims_after_axis_;
   std::unique_ptr<T *[]> outputs_host_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

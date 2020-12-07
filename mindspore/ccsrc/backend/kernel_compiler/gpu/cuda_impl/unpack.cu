@@ -19,41 +19,56 @@
 #include <cuda_runtime.h>
 #include "backend/kernel_compiler/gpu/cuda_impl/unpack.cuh"
 template <typename T>
-__global__ void Unpack(const int size, const int output_num,
-                       const int dims_after_axis, T** outputs, const T* input) {
-  for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
-    int cycle = pos / (output_num * dims_after_axis);
-    int cur_output_index = pos % (output_num * dims_after_axis) / dims_after_axis;
-    int local_index = pos % (output_num * dims_after_axis) % dims_after_axis;
-    outputs[cur_output_index][cycle * dims_after_axis + local_index] = input[pos];
+__global__ void Unpack(const size_t size, const size_t output_num,
+                       const size_t dims_after_axis, T** outputs, const T* input) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
+      size_t cur_input_index = pos / dims_after_axis % output_num;
+      size_t cycle_len = output_num * dims_after_axis;
+      size_t local_index = pos / cycle_len * dims_after_axis + pos % cycle_len % dims_after_axis;
+      outputs[cur_input_index][local_index] = input[pos];
   }
   return;
 }
 
 template <typename T>
-void UnpackKernel(const int size, const int output_num,
-                  const int dims_after_axis, T** outputs, const T* input,
+void UnpackKernel(const size_t size, const size_t output_num,
+                  const size_t dims_after_axis, T** outputs, const T* input,
                   cudaStream_t cuda_stream) {
   Unpack<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, output_num,
                                                             dims_after_axis, outputs, input);
   return;
 }
 
-template void UnpackKernel(const int size, const int output_num,
-                           const int dims_after_axis, float** outputs, const float* input,
+template void UnpackKernel(const size_t size, const size_t output_num,
+                           const size_t dims_after_axis, int8_t** outputs, const int8_t* input,
                            cudaStream_t cuda_stream);
-template void UnpackKernel(const int size, const int output_num,
-                           const int dims_after_axis, half** outputs, const half* input,
+template void UnpackKernel(const size_t size, const size_t output_num,
+                           const size_t dims_after_axis, int16_t** outputs, const int16_t* input,
                            cudaStream_t cuda_stream);
-template void UnpackKernel(const int size, const int output_num,
-                           const int dims_after_axis, int** outputs, const int* input,
+template void UnpackKernel(const size_t size, const size_t output_num,
+                           const size_t dims_after_axis, int** outputs, const int* input,
                            cudaStream_t cuda_stream);
-template void UnpackKernel(const int size, const int output_num,
-                           const int dims_after_axis, int16_t** outputs, const int16_t* input,
+template void UnpackKernel(const size_t size, const size_t output_num,
+                           const size_t dims_after_axis, int64_t** outputs, const int64_t* input,
                            cudaStream_t cuda_stream);
-template void UnpackKernel(const int size, const int output_num,
-                           const int dims_after_axis, unsigned char** outputs, const unsigned char* input,
+template void UnpackKernel(const size_t size, const size_t output_num,
+                           const size_t dims_after_axis, uint8_t** outputs, const uint8_t* input,
                            cudaStream_t cuda_stream);
-template void UnpackKernel(const int size, const int output_num,
-                           const int dims_after_axis, bool** outputs, const bool* input,
+template void UnpackKernel(const size_t size, const size_t output_num,
+                           const size_t dims_after_axis, uint16_t** outputs, const uint16_t* input,
+                           cudaStream_t cuda_stream);
+template void UnpackKernel(const size_t size, const size_t output_num,
+                           const size_t dims_after_axis, uint32_t** outputs, const uint32_t* input,
+                           cudaStream_t cuda_stream);
+template void UnpackKernel(const size_t size, const size_t output_num,
+                           const size_t dims_after_axis, uint64_t** outputs, const uint64_t* input,
+                           cudaStream_t cuda_stream);
+template void UnpackKernel(const size_t size, const size_t output_num,
+                           const size_t dims_after_axis, half** outputs, const half* input,
+                           cudaStream_t cuda_stream);
+template void UnpackKernel(const size_t size, const size_t output_num,
+                           const size_t dims_after_axis, float** outputs, const float* input,
+                           cudaStream_t cuda_stream);
+template void UnpackKernel(const size_t size, const size_t output_num,
+                           const size_t dims_after_axis, bool** outputs, const bool* input,
                            cudaStream_t cuda_stream);
