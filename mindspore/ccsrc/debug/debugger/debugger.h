@@ -194,6 +194,9 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // Check if the port is valid
   bool CheckPort(const char *port);
 
+  // Check if the IP is valid
+  bool CheckIp(const char *host);
+
   void LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output_index);
 
   // class members
