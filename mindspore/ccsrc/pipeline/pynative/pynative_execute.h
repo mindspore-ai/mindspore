@@ -141,6 +141,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   // Update the abstract and device address info of value node and tensors in bprop graph
   void UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
   void SaveTensorsInValueNode(const ResourcePtr &resource);
+  void CleanTensorsInValueNode();
 
   // construct grad graph
   void PushCurrentGraphToStack();

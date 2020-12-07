@@ -381,6 +381,9 @@ class ValueNode : public ANode {
   void set_has_new_value(bool flag) { has_new_value_ = flag; }
   bool has_new_value() const { return has_new_value_; }
 
+  size_t used_graph_count() const { return used_graph_count_; }
+  void set_used_graph_count(size_t used_graph_count) { used_graph_count_ = used_graph_count; }
+
   std::string ToString() const override;
   std::string DebugString(int recursive_level = 1) const override;
   std::string DebugString(bool recursive) const override { return DebugString(recursive ? 1 : 0); }
@@ -401,6 +404,7 @@ class ValueNode : public ANode {
  private:
   ValuePtr value_;
   bool has_new_value_ = false;
+  size_t used_graph_count_{0};
 };
 
 template <typename T>

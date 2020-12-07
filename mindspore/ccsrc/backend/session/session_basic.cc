@@ -1656,6 +1656,11 @@ void SessionBasic::RunOpsInGraph(const GraphId &graph_id, const std::vector<tens
   executor_->RunOpsInGraph(shared_from_this(), graph_id, inputs, outputs);
 }
 
+void SessionBasic::CleanUselessTensors(const std::shared_ptr<std::vector<tensor::TensorPtr>> &useless_tensors) {
+  MS_EXCEPTION_IF_NULL(executor_);
+  executor_->CleanUselessTensors(shared_from_this(), useless_tensors);
+}
+
 void SessionBasic::RunGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs) {
   MS_EXCEPTION_IF_NULL(executor_);
   executor_->RunGraph(shared_from_this(), graph_id, inputs, outputs);
@@ -1702,6 +1707,12 @@ void SessionBasic::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &ro
     }
   }
   root_graph->UpdateGraphDynamicAttr();
+}
+
+void SessionBasic::CleanUselessTensorsImpl(const std::shared_ptr<std::vector<tensor::TensorPtr>> &useless_tensors) {
+  for (const auto &tensor : *useless_tensors) {
+    tensor->set_device_address(nullptr);
+  }
 }
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))

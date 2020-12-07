@@ -319,6 +319,7 @@ void HandleOpInputs(const std::set<KernelWithIndex> &input_kernel, std::map<Kern
       MS_LOG(EXCEPTION) << "Can not find input KernelWithIndex in cnode reference count map, input cnode = "
                         << kernel_with_index.first->DebugString() << ", index = " << kernel_with_index.second;
     }
+    // Reduce reference count number, when it was reduced to zero, release the useless output of pre node.
     ref_iter->second -= 1;
     if (ref_iter->second != 0) {
       continue;

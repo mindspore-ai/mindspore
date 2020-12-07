@@ -47,7 +47,8 @@ enum TaskType {
   kRunOp,
   kCreateCommGroup,
   kDestroyCommGroup,
-  kRunOpsInGraph
+  kRunOpsInGraph,
+  kCleanUselessTensors
 };
 
 class Task {
@@ -110,6 +111,14 @@ class RunOpsInGraphTask : public Task {
   GraphId graph_id_{0};
 };
 
+class CleanUselessTensorsTask : public Task {
+ public:
+  CleanUselessTensorsTask() { type_ = kCleanUselessTensors; }
+  ~CleanUselessTensorsTask() override = default;
+  void Run() override;
+  std::shared_ptr<std::vector<tensor::TensorPtr>> useless_tensors_{nullptr};
+};
+
 class RunOpTask : public Task {
  public:
   RunOpTask() { type_ = kRunOp; }
@@ -165,6 +174,8 @@ class Executor {
              const std::vector<int64_t> &tensors_mask);
   void RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                      VectorRef *outputs);
+  void CleanUselessTensors(const SessionPtr &session,
+                           const std::shared_ptr<std::vector<tensor::TensorPtr>> &useless_tensors);
   void OnRunGraphFinished();
   bool CreateCommGroup(const std::string &group_name, std::vector<uint32_t> ranks);
   bool DestroyCommGroup(const std::string &group_name);

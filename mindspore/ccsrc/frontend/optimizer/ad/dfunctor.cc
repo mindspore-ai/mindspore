@@ -355,6 +355,7 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
       MS_LOG(DEBUG) << "Replace: " << paras[i]->ToString() << " with " << input_value.first;
       auto input_value_node = NewValueNode(input_value.first);
       input_value_node->set_has_new_value(true);
+      input_value_node->set_used_graph_count(para_ref_size);
       manager->Replace(paras[i], input_value_node);
     }
   }

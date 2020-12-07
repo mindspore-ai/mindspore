@@ -78,6 +78,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   void RunOp(OpRunInfo *, const GraphInfo &, std::vector<tensor::TensorPtr> *input_tensors, VectorRef *outputs,
              const std::vector<int64_t> &tensors_mask);
   void RunOpsInGraph(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs, VectorRef *outputs);
+  void CleanUselessTensors(const std::shared_ptr<std::vector<tensor::TensorPtr>> &useless_tensors);
 
   virtual void RegisterSummaryCallBackFunc(const CallBackFunc &callback);
 
@@ -137,6 +138,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   friend class RunGraphTask;
   friend class RunOpTask;
   friend class RunOpsInGraphTask;
+  friend class CleanUselessTensorsTask;
   virtual bool IsSupportSummary() { return true; }
   virtual void CreateOutputTensors(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &input_tensors,
                                    VectorRef *outputs,
@@ -157,6 +159,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                          const std::vector<int64_t> &tensors_mask) {}
   virtual void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
                                  VectorRef *outputs) {}
+  void CleanUselessTensorsImpl(const std::shared_ptr<std::vector<tensor::TensorPtr>> &useless_tensors);
   void RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs);
 
   virtual void SetSummaryNodes(KernelGraph *graph);
