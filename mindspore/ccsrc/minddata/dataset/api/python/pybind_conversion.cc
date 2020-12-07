@@ -28,10 +28,10 @@ bool toBool(const py::handle &handle) { return py::reinterpret_borrow<py::bool_>
 
 std::string toString(const py::handle &handle) { return py::reinterpret_borrow<py::str>(handle); }
 
-std::set<std::string> toStringSet(const std::optional<py::list> list) {
+std::set<std::string> toStringSet(const py::list list) {
   std::set<std::string> set;
-  if (list) {
-    for (auto l : *list) {
+  if (!list.empty()) {
+    for (auto l : list) {
       if (!l.is_none()) {
         (void)set.insert(py::str(l));
       }
@@ -40,20 +40,20 @@ std::set<std::string> toStringSet(const std::optional<py::list> list) {
   return set;
 }
 
-std::map<std::string, int32_t> toStringMap(const std::optional<py::dict> dict) {
+std::map<std::string, int32_t> toStringMap(const py::dict dict) {
   std::map<std::string, int32_t> map;
-  if (dict) {
-    for (auto p : *dict) {
+  if (!dict.empty()) {
+    for (auto p : dict) {
       (void)map.emplace(toString(p.first), toInt(p.second));
     }
   }
   return map;
 }
 
-std::vector<std::string> toStringVector(const std::optional<py::list> list) {
+std::vector<std::string> toStringVector(const py::list list) {
   std::vector<std::string> vector;
-  if (list) {
-    for (auto l : *list) {
+  if (!list.empty()) {
+    for (auto l : list) {
       if (l.is_none())
         vector.emplace_back("");
       else
@@ -63,10 +63,10 @@ std::vector<std::string> toStringVector(const std::optional<py::list> list) {
   return vector;
 }
 
-std::pair<int64_t, int64_t> toIntPair(const std::optional<py::tuple> tuple) {
+std::pair<int64_t, int64_t> toIntPair(const py::tuple tuple) {
   std::pair<int64_t, int64_t> pair;
-  if (tuple) {
-    pair = std::make_pair(toInt64((*tuple)[0]), toInt64((*tuple)[1]));
+  if (!tuple.empty()) {
+    pair = std::make_pair(toInt64((tuple)[0]), toInt64((tuple)[1]));
   }
   return pair;
 }
@@ -85,10 +85,10 @@ std::vector<std::pair<int, int>> toPairVector(const py::list list) {
   return vector;
 }
 
-std::vector<std::shared_ptr<TensorOperation>> toTensorOperations(std::optional<py::list> operations) {
+std::vector<std::shared_ptr<TensorOperation>> toTensorOperations(py::list operations) {
   std::vector<std::shared_ptr<TensorOperation>> vector;
-  if (operations) {
-    for (auto op : *operations) {
+  if (!operations.empty()) {
+    for (auto op : operations) {
       std::shared_ptr<TensorOp> tensor_op;
       if (py::isinstance<TensorOp>(op)) {
         tensor_op = op.cast<std::shared_ptr<TensorOp>>();
@@ -132,19 +132,19 @@ std::vector<std::shared_ptr<DatasetNode>> toDatasetNode(std::shared_ptr<DatasetN
   return vector;
 }
 
-std::shared_ptr<SamplerObj> toSamplerObj(std::optional<py::handle> py_sampler, bool isMindDataset) {
+std::shared_ptr<SamplerObj> toSamplerObj(py::handle py_sampler, bool isMindDataset) {
   if (py_sampler) {
     std::shared_ptr<SamplerObj> sampler_obj;
     if (!isMindDataset) {
       // Common Sampler
       std::shared_ptr<SamplerRT> sampler;
-      auto create = py::reinterpret_borrow<py::object>(py_sampler.value()).attr("create");
+      auto create = py::reinterpret_borrow<py::object>(py_sampler).attr("create");
       sampler = create().cast<std::shared_ptr<SamplerRT>>();
       sampler_obj = std::make_shared<PreBuiltSamplerObj>(std::move(sampler));
     } else {
       // Mindrecord Sampler
       std::shared_ptr<mindrecord::ShardOperator> sampler;
-      auto create = py::reinterpret_borrow<py::object>(py_sampler.value()).attr("create_for_minddataset");
+      auto create = py::reinterpret_borrow<py::object>(py_sampler).attr("create_for_minddataset");
       sampler = create().cast<std::shared_ptr<mindrecord::ShardOperator>>();
       sampler_obj = std::make_shared<PreBuiltSamplerObj>(std::move(sampler));
     }
@@ -156,10 +156,10 @@ std::shared_ptr<SamplerObj> toSamplerObj(std::optional<py::handle> py_sampler, b
 }
 
 // Here we take in a python object, that holds a reference to a C++ object
-std::shared_ptr<DatasetCache> toDatasetCache(std::optional<std::shared_ptr<CacheClient>> cc) {
+std::shared_ptr<DatasetCache> toDatasetCache(std::shared_ptr<CacheClient> cc) {
   if (cc) {
     std::shared_ptr<DatasetCache> built_cache;
-    built_cache = std::make_shared<PreBuiltDatasetCache>(std::move(cc.value()));
+    built_cache = std::make_shared<PreBuiltDatasetCache>(std::move(cc));
     return built_cache;
   } else {
     // don't need to check here as cache is not enabled.
