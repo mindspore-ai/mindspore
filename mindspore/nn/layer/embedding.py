@@ -224,7 +224,7 @@ class EmbeddingLookup(Cell):
         elif slice_mode == "table_row_slice" and is_auto_parallel:
             if target == 'DEVICE':
                 indices_shape_size = 1
-                self.gather_revert.shard(((1, 1), (1,)))
+                self.gather_revert.shard(((1, 1), (get_group_size(),)))
                 self.forward_unique = True
             indices_strategy = (1,)*indices_shape_size
             self.gatherv2.shard(((get_group_size(), 1), indices_strategy))
