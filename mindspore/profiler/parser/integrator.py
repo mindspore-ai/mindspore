@@ -21,7 +21,7 @@ from decimal import Decimal
 
 from mindspore import log as logger
 from mindspore.profiler.common.exceptions.exceptions import ProfilerIOException, \
-    ProfilerFileNotFoundException, ProfilerRawFileException
+    ProfilerFileNotFoundException, ProfilerRawFileException, ProfilerParamValueErrorException
 from mindspore.profiler.common.util import query_latest_trace_time_file, to_int, to_millisecond
 from mindspore.profiler.common.validator.validate_path import validate_and_normalize_path
 from mindspore.profiler.parser.container import TimelineContainer
@@ -775,6 +775,24 @@ class GpuTimelineGenerator(BaseTimelineGenerator):
 
         # Update timeline summary info
         self._timeline_summary['num_of_streams'] += len(stream_count_dict.keys())
+
+    def check_op_name(self, op_name):
+        """
+        Check whether the operator name exists.
+
+        Args:
+            op_name (str): The operator name or operator name prefix.
+
+        Returns:
+            bool, `True` if the operator name does exist, else `False`.
+        """
+        if not op_name:
+            raise ProfilerParamValueErrorException('The op_name should exist.')
+        for op_time_info in self._timeline_meta:
+            full_op_name = op_time_info['name']
+            if full_op_name and full_op_name.startswith(op_name):
+                return True
+        return False
 
 class AscendTimelineGenerator(BaseTimelineGenerator):
     """Generate ascend Timeline data from file."""

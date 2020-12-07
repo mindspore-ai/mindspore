@@ -42,9 +42,10 @@ class BaseStepTraceParser:
         output_file_path (str): The output file path.
         job_id (int): The job id used to define the start of new step. Default: 0.
         skip_first_step (bool): Whether skip the first step or not.
+        is_training_mode (bool): Whether in training mode or not.
     """
 
-    def __init__(self, input_dir, output_file_path, job_id=0, skip_first_step=False):
+    def __init__(self, input_dir, output_file_path, job_id=0, skip_first_step=False, is_training_mode=True):
         self._input_dir = input_dir
         self._output_path = output_file_path
         self._job_id = job_id
@@ -53,6 +54,7 @@ class BaseStepTraceParser:
         self._header = []
         self._step_num = 0
         self._tag_map = {}
+        self._is_training_mode = is_training_mode
 
     @property
     def output_file(self):
@@ -64,7 +66,7 @@ class BaseStepTraceParser:
         """The property of step trace info."""
         summary_info = {}
         if self._result:
-            summary_info = get_summary_for_step_trace(self._result[-1], self._header)
+            summary_info = get_summary_for_step_trace(self._result[-1], self._header, self._is_training_mode)
             summary_info['total_steps'] = len(self._result) - 1
         print('\nStep trace summary info (unit: syscnt):')
         print(summary_info)
@@ -321,15 +323,27 @@ class BaseStepTraceParser:
         log.info("Finish add average info for step trace.")
 
     def _save(self):
+        """save step trace file."""
+        BP_POINT, TAIL, FP_DURATION = 5, -1, -2
         log.info("Start to save step trace file.")
         if not self._header:
             return
-        with open(self._output_path, 'w') as file_handle:
-            csv_writer = csv.writer(file_handle)
-            csv_writer.writerow(self._header)
-            for row_data in self._result:
-                csv_writer.writerow(row_data)
-        os.chmod(self._output_path, stat.S_IRUSR)
+        try:
+            with open(self._output_path, 'w') as file_handle:
+                csv_writer = csv.writer(file_handle)
+                if not self._is_training_mode:
+                    self._header[FP_DURATION] = 'fp'
+                    self._header = self._header[:BP_POINT] + self._header[BP_POINT+1:TAIL]
+                csv_writer.writerow(self._header)
+                for row_data in self._result:
+                    if not self._is_training_mode:
+                        row_data[FP_DURATION] += row_data[TAIL]
+                        row_data = row_data[:BP_POINT] + row_data[BP_POINT+1:TAIL]
+                    csv_writer.writerow(row_data)
+            os.chmod(self._output_path, stat.S_IRUSR)
+        except (IOError, OSError) as err:
+            log.warning('Failed to save step trace raw info. %s', err)
+            raise ProfilerIOException
 
 
 class GpuStepTraceParser(BaseStepTraceParser):
@@ -356,10 +370,16 @@ class GpuStepTraceParser(BaseStepTraceParser):
             log.warning(f'Failed to read {source_file}', err)
             raise ProfilerIOException
 
-        points = {
-            'fp_start': fp_start_name,
-            'bp_end': bp_end_name
-        }
+        if self._is_training_mode:
+            points = {
+                'fp_start': fp_start_name,
+                'bp_end': bp_end_name
+            }
+        else:
+            points = {
+                'fp_start': fp_start_name,
+            }
+
         try:
             with open(output_path, 'w') as json_file:
                 json.dump(points, json_file)
@@ -456,10 +476,16 @@ class AscendStepTraceParser(BaseStepTraceParser):
         Returns:
             dict, parsed point info.
         """
-        points = {
-            'fp_start': point_info.get(self._fp_tag, ''),
-            'bp_end': point_info.get(self._bp_tag, '')
-        }
+        if self._is_training_mode:
+            points = {
+                'fp_start': point_info.get(self._fp_tag, ''),
+                'bp_end': point_info.get(self._bp_tag, '')
+            }
+        else:
+            points = {
+                'fp_start': point_info.get(self._fp_tag, ''),
+            }
+
         try:
             with open(output_path, 'w') as json_file:
                 json.dump(points, json_file)

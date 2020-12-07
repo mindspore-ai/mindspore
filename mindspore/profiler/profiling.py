@@ -151,7 +151,7 @@ class Profiler:
                 logger.error('Please check the Profiler object initialized after set_auto_parallel_context() '
                              'and init(). Profiler should be initialized after these code. ')
             self._gpu_profiler.stop()
-            self._generate_timeline()
+            timeline_generator = self._generate_timeline()
 
             # parse minddata pipeline operator and queue for GPU
             try:
@@ -162,7 +162,7 @@ class Profiler:
 
             # analyse step trace info
             try:
-                self._analyse_step_trace()
+                self._analyse_step_trace(is_training_mode_flag=timeline_generator.check_op_name('Gradients'))
             except ProfilerException as err:
                 logger.warning(err.message)
 
@@ -239,13 +239,14 @@ class Profiler:
             os.environ['PROFILING_MODE'] = str("false")
             context.set_context(enable_profiling=False)
 
-    def _analyse_step_trace(self, source_path=None, framework_parser=None):
+    def _analyse_step_trace(self, source_path=None, framework_parser=None, is_training_mode_flag=True):
         """
         Analyse step trace data and save the result.
 
         Args:
             source_path (str): The directory that contains the step trace original data.
             framework_parser (FrameworkParser): The framework parse instance.
+            is_training_mode_flag (bool): Whether in training mode or not.
         """
         logger.info("Begin to parse step trace.")
         # construct output path
@@ -266,19 +267,23 @@ class Profiler:
                 f'step_trace_profiling_{self._dev_id}.txt'
             )
             parser = GpuStepTraceParser(input_dir=input_file_path,
-                                        output_file_path=step_trace_intermediate_file_path)
+                                        output_file_path=step_trace_intermediate_file_path,
+                                        is_training_mode=is_training_mode_flag)
             parser.parse_and_save()
             point_info = parser.record_point_info(input_file_path, point_info_file_path)
         else:
             # whether keep the first step
             skip_first_step_flag = framework_parser.check_op_name(INIT_OP_NAME)
             point_info = framework_parser.point_info
+            # recognize inference or traning mode
+            is_traning_mode_flag = framework_parser.check_op_name("Gradients")
             # parser the step trace files and save the result to disk
             source_path = validate_and_normalize_path(source_path)
             parser = AscendStepTraceParser(input_dir=source_path,
                                            output_file_path=step_trace_intermediate_file_path,
                                            job_id=self._job_id_env,
-                                           skip_first_step=skip_first_step_flag)
+                                           skip_first_step=skip_first_step_flag,
+                                           is_training_mode=is_traning_mode_flag)
             parser.update_tag_op_type_map(point_info)
             parser.parse_and_save()
             point_info = parser.record_point_info(point_info, point_info_file_path)
@@ -332,6 +337,7 @@ class Profiler:
             timeline_generator.init_timeline()
             timeline_generator.write_timeline(size_limit)
             timeline_generator.write_timeline_summary()
+            return timeline_generator
         except (ProfilerIOException, ProfilerFileNotFoundException, RuntimeError) as err:
             logger.warning('Fail to write timeline data: %s', err)
             raise RuntimeError('Fail to write timeline data.')
