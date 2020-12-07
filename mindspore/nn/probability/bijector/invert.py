@@ -44,7 +44,7 @@ class Invert(Bijector):
         [0.        0.6931472 1.0986123]
         >>> ans2 = inv_exp.inverse(value)
         >>> print(ans2)
-        [ 2.7182817  7.389056  20.085537 ]
+        [ 2.718282  7.389056 20.085537]
         >>> ans3 = inv_exp.forward_log_jacobian(value)
         >>> print(ans3)
         [-0.        -0.6931472 -1.0986123]

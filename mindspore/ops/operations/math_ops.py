@@ -3216,7 +3216,7 @@ class Cos(PrimitiveWithInfer):
         >>> input_x = Tensor(np.array([0.24, 0.83, 0.31, 0.09]), mindspore.float32)
         >>> output = cos(input_x)
         >>> print(output)
-        [0.971338	0.67487574	0.95233357	0.9959527 ]
+        [0.971338 0.67487574 0.95233357 0.9959527 ]
     """
 
     @prim_attr_register
