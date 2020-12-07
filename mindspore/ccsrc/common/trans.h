@@ -76,6 +76,13 @@ bool Nc1hwc0ToNchw(const FormatArgs &args, void *result);
 bool Nc1hwc04ToNchw(const FormatArgs &args, void *result);
 bool C1hwncoc0ToNchw(const FormatArgs &args, void *result);
 bool Ndc1hwc0ToNcdhw(const FormatArgs &args, void *result);
+using FormatTransfer = std::function<bool(const FormatArgs &, void *)>;
+const std::map<std::string, FormatTransfer> kTransFormatMapOfHostToDevice{
+  {kOpFormat_FRAC_Z, NchwToFracZ},           {kOpFormat_FRAC_NZ, NchwToFracNz},
+  {kOpFormat_NC1HWC0, NchwToNc1hwc0},        {kOpFormat_C1HWNCoC0, NchwToC1hwncoc0},
+  {kOpFormat_FRACTAL_Z_C04, NchwToFracZc04}, {kOpFormat_NC1HWC0_C04, NchwToNc1hwc04},
+  {kOpFormat_NDC1HWC0, NcdhwToNdc1hwc0}};
+
 }  // namespace trans
 }  // namespace mindspore
 

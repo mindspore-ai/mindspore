@@ -195,6 +195,7 @@ void RunOpAscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_g
   auto data_layout_pm = std::make_shared<PassManager>("pynative_transop_pm");
   data_layout_pm->AddPass(std::make_shared<ChangeAxisOfReduceKernel>());
   data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
+  data_layout_pm->AddPass(std::make_shared<DynamicRNNGradReformat>());
   data_layout_pm->AddPass(std::make_shared<RunOpInsertTransData>());
   data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
@@ -338,7 +339,9 @@ void RunOpAscendBackendIRFusionOptimization(const std::shared_ptr<session::Kerne
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<TensorScatterUpdateFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicRNN>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicGRUV2GradFission>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());
+  ir_fusion_pm->AddPass(std::make_shared<DynamicRnnGradFissionV2>());
   ir_fusion_pm->AddPass(std::make_shared<EraseVisitAttr>());
 
   optimizer->AddPassManager(ir_fusion_pm);
