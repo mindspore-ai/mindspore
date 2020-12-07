@@ -709,3 +709,22 @@ class DetTriangle(PrimitiveWithInfer):
     def infer_dtype(self, x1_dtype):
         validator.check_tensor_dtype_valid('x1', x1_dtype, [mstype.float32], self.name)
         return x1_dtype
+
+
+class ProdForceSeA(PrimitiveWithInfer):
+    """
+    ProdForceSeA.
+    """
+
+    @prim_attr_register
+    def __init__(self, natoms=192):
+        self.init_prim_io_names(inputs=['net_deriv_tensor', "in_deriv_tensor", "nlist_tensor"], outputs=['y'])
+        self.natoms = natoms
+        self.add_prim_attr('natoms', self.natoms)
+
+    def infer_shape(self, x1_shape, x2_shape, x3_shape):
+        out_shape = [x3_shape[0], x3_shape[1], 3]
+        return out_shape
+
+    def infer_dtype(self, x1_dtype, x2_dtype, x3_dtype):
+        return x1_dtype
