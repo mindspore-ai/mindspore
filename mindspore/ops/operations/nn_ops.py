@@ -3265,8 +3265,8 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
         >>> sigmoid = ops.SigmoidCrossEntropyWithLogits()
         >>> output = sigmoid(logits, labels)
         >>> print(output)
-        [[0.6111007   0.5032824   0.26318604]
-         [0.58439666  0.5530153  -0.4368139 ]]
+        [[ 0.6111007   0.5032824   0.26318604]
+         [ 0.58439666  0.5530153  -0.4368139 ]]
     """
 
     @prim_attr_register
@@ -3308,10 +3308,10 @@ class Pad(PrimitiveWithInfer):
         >>> pad_op = ops.Pad(((1, 2), (2, 1)))
         >>> output = pad_op(input_tensor)
         >>> print(output)
-        [[ 0.   0.   0.   0.   0.   0. ],
-         [ 0.   0.  -0.1  0.3  3.6  0. ],
-         [ 0.   0.   0.4  0.5 -3.2  0. ],
-         [ 0.   0.   0.   0.   0.   0. ],
+        [[ 0.   0.   0.   0.   0.   0. ]
+         [ 0.   0.  -0.1  0.3  3.6  0. ]
+         [ 0.   0.   0.4  0.5 -3.2  0. ]
+         [ 0.   0.   0.   0.   0.   0. ]
          [ 0.   0.   0.   0.   0.   0. ]]
     """
 

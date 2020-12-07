@@ -756,8 +756,8 @@ class Triu(Cell):
         >>> triu = nn.Triu()
         >>> result = triu(x)
         >>> print(result)
-        [[1 0]
-         [3 4]]
+        [[1 2]
+         [0 4]]
     """
     def __init__(self):
         super(Triu, self).__init__()
