@@ -48,10 +48,16 @@ typedef struct {
   bool enable_float16_ = false; /**< prior enable float16 inference */
 } GpuDeviceInfo;
 
+/// \brief NpuDeviceInfo defined for NPU's configuration information.
+typedef struct {
+  int frequency_ = 3; /**< npu frequency inference */
+} NpuDeviceInfo;
+
 /// \brief DeviceInfo defined for backend's configuration information.
 union DeviceInfo {
   CpuDeviceInfo cpu_device_info_;
   GpuDeviceInfo gpu_device_info_;
+  NpuDeviceInfo npu_device_info_;
 };
 
 /// \brief DeviceContext defined for holding backend's configuration information.

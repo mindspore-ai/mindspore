@@ -497,6 +497,12 @@ int Benchmark::RunBenchmark() {
     context->device_list_.push_back(gpu_device_ctx);
   }
 
+  if (flags_->device_ == "NPU") {
+    DeviceContext npu_device_ctx{DT_NPU};
+    npu_device_ctx.device_info_.npu_device_info_.frequency_ = 3;
+    context->device_list_.push_back(npu_device_ctx);
+  }
+
   context->thread_num_ = flags_->num_threads_;
 
   session_ = session::LiteSession::CreateSession(context.get());
@@ -702,7 +708,7 @@ int Benchmark::Init() {
     return RET_ERROR;
   }
 
-  if (flags_->device_ != "CPU" && flags_->device_ != "GPU") {
+  if (flags_->device_ != "CPU" && flags_->device_ != "GPU" && flags_->device_ != "NPU") {
     MS_LOG(ERROR) << "Device type:" << flags_->device_ << " is not supported.";
     std::cerr << "Device type:" << flags_->device_ << " is not supported." << std::endl;
     return RET_ERROR;

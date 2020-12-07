@@ -23,7 +23,7 @@ usage()
 {
   echo "Usage:"
   echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
-  echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu] \\"
+  echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu|npu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1|310|910] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] \\"
   echo "              [-A [cpp|java|object-c] [-C on|off] [-o on|off] [-S on|off] [-k on|off] [-W sse|neon|avx|off] \\"
@@ -45,7 +45,7 @@ usage()
   echo "    -i Enable increment building, default off"
   echo "    -L Enable load ANF-IR as input of 'infer', default off"
   echo "    -j[n] Set the threads when building (Default: -j8)"
-  echo "    -e Use cpu, gpu, ascend"
+  echo "    -e Use cpu, gpu, npu or ascend"
   echo "    -P Enable dump anf graph to file in ProtoBuffer format, default on"
   echo "    -D Enable dumping of function graph ir, default on"
   echo "    -z Compile dataset & mindrecord, default on"
@@ -121,7 +121,7 @@ checkopts()
   X86_64_SIMD="off"
   DEVICE_VERSION=""
   DEVICE=""
-
+  ENABLE_NPU="off"
   # Process the options
   while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:A:C:o:S:k:W:' opt
   do
@@ -379,6 +379,9 @@ parse_device()
       usage
       exit 1
     fi
+  elif [[ "X$DEVICE" == "Xnpu" ]]; then
+    ENABLE_NPU="on"
+    ENABLE_CPU="on"
   elif [[ "X$DEVICE" == "Xcpu" ]]; then
     ENABLE_CPU="on"
   elif [[ "X$DEVICE" == "X" ]]; then
@@ -493,6 +496,15 @@ checkndk() {
         echo -e "\e[31mANDROID_NDK_PATH=$ANDROID_NDK  \e[0m"
     else
         echo -e "\e[31mplease set ANDROID_NDK in environment variable for example: export ANDROID_NDK=/root/usr/android-ndk-r20b/ \e[0m"
+        exit 1
+    fi
+}
+
+checkddk() {
+    if [ "${HWHIAI_DDK}" ]; then
+        echo -e "\e[31mHWHIAI_DDK=$HWHIAI_DDK  \e[0m"
+    else
+        echo -e "\e[31mplease set HWHIAI_DDK in environment variable for example: export HWHIAI_DDK=/root/usr/hwhiai-ddk-100.500.010.010/ \e[0m"
         exit 1
     fi
 }
@@ -612,6 +624,9 @@ build_lite()
       echo "start build opencl"
       build_opencl
     fi
+    if [ "${ENABLE_NPU}" == "on" ]; then
+      checkddk
+    fi
     if [ "${RUN_TESTCASES}" == "on" ]; then
         build_gtest
     fi
@@ -634,7 +649,8 @@ build_lite()
               -DANDROID_STL=${ANDROID_STL} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}                     \
               -DPLATFORM_ARM64=on -DENABLE_NEON=on -DENABLE_FP16="off"      \
               -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
-              -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
+              -DSUPPORT_GPU=${ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} \
+              -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
               "${BASEPATH}/mindspore/lite"
@@ -645,14 +661,16 @@ build_lite()
               -DANDROID_STL=${ANDROID_STL}  -DCMAKE_BUILD_TYPE=${BUILD_TYPE}                                                      \
               -DPLATFORM_ARM32=on -DENABLE_NEON=on -DSUPPORT_TRAIN=${SUPPORT_TRAIN}  \
               -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
-              -DSUPPORT_GPU=${ENABLE_GPU} -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
+              -DSUPPORT_GPU=${ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} \
+              -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
                "${BASEPATH}/mindspore/lite"
     else
         cmake -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
         -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
-        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} \
+        -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
         -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp  \
         -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
         -DENABLE_VERBOSE=${ENABLE_VERBOSE} -DX86_64_SIMD=${X86_64_SIMD} "${BASEPATH}/mindspore/lite"

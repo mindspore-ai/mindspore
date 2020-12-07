@@ -28,10 +28,14 @@
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/opencl/opencl_runtime.h"
 #endif
-
+#if SUPPORT_NPU
+#include "src/runtime/agent/npu/subgraph_npu_kernel.h"
+#include "src/runtime/agent/npu/npu_manager.h"
+#endif
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
 using kernel::KERNEL_ARCH::kGPU;
+using kernel::KERNEL_ARCH::kNPU;
 
 int Scheduler::Schedule(const lite::Model *model, std::vector<Tensor *> *tensors,
                         std::vector<kernel::LiteKernel *> *kernels) {
@@ -227,13 +231,13 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels) {
       break;
     }
     auto head_kernel = *head_kernel_iter;
-    if (head_kernel->desc().arch == mindspore::kernel::kNPU || head_kernel->desc().arch == mindspore::kernel::kAPU) {
-      MS_LOG(ERROR) << "Not support NPU and APU now";
+    if (head_kernel->desc().arch == mindspore::kernel::kAPU) {
+      MS_LOG(ERROR) << "Not support APU now";
       return RET_NOT_SUPPORT;
     }
     auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernel);
     auto sub_kernels = FindAllSubGraphKernels(head_kernel, &is_kernel_sinked);
-    auto subgraph = CreateSubGraphKernel(sub_kernels, cur_sub_graph_type);
+    auto subgraph = CreateSubGraphKernel(sub_kernels, cur_sub_graph_type, kernels->size());
     if (subgraph == nullptr) {
       MS_LOG(ERROR) << "Create SubGraphKernel failed";
       return RET_ERROR;
@@ -244,8 +248,8 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels) {
 }
 
 kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
-                                                        kernel::SubGraphType type) {
-  if (type == kernel::kApuSubGraph || type == kernel::kNpuSubGraph) {
+                                                        kernel::SubGraphType type, int index) {
+  if (type == kernel::kApuSubGraph) {
     return nullptr;
   }
   std::vector<Tensor *> input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
@@ -256,6 +260,17 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
 #if SUPPORT_GPU
     auto sub_kernel = new (std::nothrow)
       kernel::OpenCLSubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+    return sub_kernel;
+#else
+    return nullptr;
+#endif
+  }
+  if (type == kernel::kNpuSubGraph) {
+#if SUPPORT_NPU
+    auto sub_kernel =
+      new kernel::SubGraphNpuKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+    sub_kernel->SetIndex(index);
+    sub_kernel->Init();
     return sub_kernel;
 #else
     return nullptr;
@@ -280,6 +295,19 @@ kernel::LiteKernel *Scheduler::ScheduleNode(const std::vector<Tensor *> &in_tens
   MS_ASSERT(primitive != nullptr);
   TypeId data_type = GetFirstFp32Fp16OrInt8Type(in_tensors);
   kernel::KernelKey desc{kCPU, data_type, static_cast<schema::PrimitiveType>(primitive->Type())};
+#if SUPPORT_NPU
+  if (context_->IsNpuEnabled()) {
+    kernel::KernelKey npu_desc{kNPU, desc.data_type, desc.type};
+    auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, npu_desc);
+    if (kernel != nullptr) {
+      MS_LOG(DEBUG) << "Get npu op success: " << schema::EnumNamePrimitiveType(npu_desc.type) << " " << node->name_;
+      return kernel;
+    } else {
+      MS_LOG(DEBUG) << "Get npu op failed, scheduler to cpu: " << schema::EnumNamePrimitiveType(npu_desc.type) << " "
+                    << node->name_;
+    }
+  }
+#endif
 #if SUPPORT_GPU
   if (context_->IsGpuEnabled()) {
     kernel::KernelKey gpu_desc{kGPU, desc.data_type, desc.type};

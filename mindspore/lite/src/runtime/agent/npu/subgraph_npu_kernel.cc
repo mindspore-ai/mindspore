@@ -1,0 +1,187 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "src/runtime/agent/npu/subgraph_npu_kernel.h"
+#include "include/errorcode.h"
+#include "src/runtime/agent/npu/npu_executor.h"
+#include "include/graph/operator.h"
+#include "include/graph/graph.h"
+#include "src/tensor.h"
+#include "include/graph/model.h"
+#include "include/hiai_ir_build.h"
+#include "include/HiAiModelManagerService.h"
+#include "include/HiAiModelManagerType.h"
+#include "include/context.h"
+#include "include/version.h"
+#include "include/graph/op/array_defs.h"
+#include "src/common/file_utils.h"
+#include "src/common/common.h"
+#include "src/common/utils.h"
+#include "src/runtime/agent/npu/npu_converter_utils.h"
+#include "mindspore/lite/src/runtime/kernel/npu/npu_kernel.h"
+#include "src/runtime/agent/npu/npu_manager.h"
+namespace mindspore::kernel {
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
+
+domi::ModelBufferData *SubGraphNpuKernel::BuildIRModel() {
+  ge::Graph graph("NPUGraph");
+
+  auto ret = BuildNPUInputOp();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build NPU input operator failed.";
+    return nullptr;
+  }
+  ret = BuildNPUOutputOp();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Build NPU output operator failed.";
+    return nullptr;
+  }
+  graph.SetInputs(subgraph_input_op_).SetOutputs(subgraph_output_op_);
+  ge::Model model(GetOMModelName(), mindspore::lite::Version());
+  model.SetGraph(graph);
+  domi::HiaiIrBuild ir_build;
+  auto om_model_buff = new (std::nothrow) domi::ModelBufferData;
+  if (om_model_buff == nullptr) {
+    MS_LOG(ERROR) << "om model buffer is nullptr.";
+    return nullptr;
+  }
+  if (!ir_build.CreateModelBuff(model, *om_model_buff)) {
+    MS_LOG(ERROR) << "Create model buffer failed.";
+    delete om_model_buff;
+    return nullptr;
+  }
+  if (!ir_build.BuildIRModel(model, *om_model_buff)) {
+    MS_LOG(ERROR) << "Build IR model failed.";
+    ir_build.ReleaseModelBuff(*om_model_buff);
+    delete om_model_buff;
+    return nullptr;
+  }
+  return om_model_buff;
+}
+
+int SubGraphNpuKernel::Run() { return this->executor_->Run(in_tensors_, out_tensors_, nodes_, nullptr); }
+
+int SubGraphNpuKernel::BuildNPUInputOp() {
+  int count = 0;
+  subgraph_input_op_.clear();
+  for (auto node : this->nodes_) {
+    std::vector<ge::Operator *> node_input_op;
+    for (auto in_tensor : node->in_tensors()) {
+      if (IsSubGraphInputTensor(in_tensor)) {
+        auto tensor_name = node->name() + "_" + std::to_string(count++);
+        auto data = mindspore::lite::ConverterToNPUData(in_tensor, tensor_name);
+        subgraph_input_op_.push_back(*data);
+        node_input_op.push_back(data);
+        continue;
+      }
+
+      bool is_weight_tensor = true;
+      for (auto in_kernel : node->in_kernels()) {
+        if (IsContain(in_kernel->out_tensors(), in_tensor)) {
+          if (in_kernel->desc().arch == mindspore::kernel::kNPU) {
+            // input come from npu
+            auto npu_op = reinterpret_cast<NPUKernel *>(in_kernel)->GetNPUOp();
+            if (npu_op != nullptr) {
+              npu_op->GetOutputDesc(0).GetName();
+              node_input_op.push_back(npu_op);
+              is_weight_tensor = false;
+              break;
+            } else {
+              MS_LOG(ERROR) << in_kernel->type_str() << "NPU Operator is nullptr.";
+              return RET_ERROR;
+            }
+          } else {
+            MS_LOG(ERROR) << "The input of the intermediate node comes from the CPU";
+            return RET_ERROR;
+          }
+        }
+      }
+
+      // weight tensor
+      if (is_weight_tensor) {
+        if (!(node->Type() == schema::PrimitiveType_Conv2D || node->Type() == schema::PrimitiveType_DeConv2D ||
+              node->Type() == schema::PrimitiveType_DepthwiseConv2D ||
+              node->Type() == schema::PrimitiveType_DeDepthwiseConv2D)) {
+          auto name = node->name() + "_" + std::to_string(count++);
+          auto weight_const = new (std::nothrow) hiai::op::Const(node->name() + "_" + std::to_string(count++));
+          if (weight_const == nullptr) {
+            MS_LOG(ERROR) << "new weight const failed.";
+            return RET_ERROR;
+          }
+          auto weight_tensor = mindspore::lite::ConverterToNPUTensor(in_tensor);
+          weight_const->set_attr_value(weight_tensor);
+          node_input_op.push_back(weight_const);
+        }
+      }
+    }
+    // set input to NPU
+    reinterpret_cast<NPUKernel *>(node)->SetNPUInputs(node->in_tensors(), node->out_tensors(), node_input_op);
+  }
+  return RET_OK;
+}
+
+bool SubGraphNpuKernel::IsSubGraphInputTensor(lite::Tensor *inputs) { return IsContain(this->in_tensors(), inputs); }
+
+std::vector<ge::Operator> SubGraphNpuKernel::GetNPUNodes(const vector<kernel::LiteKernel *> &nodes) {
+  std::vector<ge::Operator> ops;
+  ops.reserve(nodes.size());
+  for (int i = 0; i < nodes.size(); i++) {
+    ops.push_back(*reinterpret_cast<NPUKernel *>(nodes[i])->GetNPUOp());
+  }
+  return ops;
+}
+
+int SubGraphNpuKernel::BuildNPUOutputOp() {
+  subgraph_output_op_ = GetNPUNodes(out_nodes_);
+  if (subgraph_output_op_.empty()) {
+    MS_LOG(ERROR) << "NPU subgraph output op is empty.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+void SubGraphNpuKernel::SetIndex(int index) { this->index_ = index; }
+
+std::string SubGraphNpuKernel::GetOMModelName() { return this->name_ + std::to_string(index_) + ".om"; }
+int SubGraphNpuKernel::Init() {
+  model_buffer_data_ = BuildIRModel();
+  if (model_buffer_data_ == nullptr) {
+    MS_LOG(ERROR) << "Build IR model failed.";
+    return RET_ERROR;
+  }
+
+  mindspore::lite::NPUManager::GetInstance()->AddModel(model_buffer_data_->data, model_buffer_data_->length,
+                                                       GetOMModelName(), context_->GetNpuInfo().frequency_);
+
+  executor_ = new (std::nothrow) mindspore::lite::NPUExecutor(GetOMModelName());
+
+  if (executor_ == nullptr) {
+    MS_LOG(ERROR) << "Create NPUExecutor failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int SubGraphNpuKernel::Prepare() {
+  if (executor_->Prepare(nodes_) != RET_OK) {
+    MS_LOG(ERROR) << "NPU executor prepare failed.";
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+}  // namespace mindspore::kernel

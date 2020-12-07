@@ -47,6 +47,8 @@ struct InnerContext : public Context {
 
   GpuDeviceInfo GetGpuInfo();
 
+  NpuDeviceInfo GetNpuInfo() const;
+
   int IsValid();
 
   virtual ~InnerContext();

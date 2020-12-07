@@ -41,7 +41,6 @@ file(GLOB KERNEL_OP_TRAIN_SRC
 if (SUPPORT_TRAIN)
         list(APPEND KERNEL_OP_SRC ${KERNEL_OP_TRAIN_SRC})
 endif()
-
 if (PLATFORM_ARM64)
     # assembly
     file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/assembly/arm64/*.s
@@ -304,6 +303,10 @@ endif()
 	    #minddata-lite
 	    #           )
 	    #endif()
+if (SUPPORT_NPU)
+    include_directories(${DDK_PATH})
+    target_link_libraries(lite-test npu_kernel_mid)
+endif ()
 if (ENABLE_CONVERTER)
     target_link_libraries(lite-test
             anf_importer_mid
