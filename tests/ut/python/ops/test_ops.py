@@ -444,8 +444,8 @@ class Conv3DBackpropInput(nn.Cell):
     def __init__(self, input_shape, out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group,
                  data_format):
         super(Conv3DBackpropInput, self).__init__()
-        self.conv = nps.Conv3DBackpropInput(out_channel, kernel_size, pad_mode=pad_mode,
-                                            pad=pad, mode=mode, stride=stride, dilation=dilation,
+        self.conv = nps.Conv3DBackpropInput(out_channel=out_channel, kernel_size=kernel_size, mode=mode,
+                                            pad_mode=pad_mode, pad=pad, stride=stride, dilation=dilation,
                                             group=group, data_format=data_format)
         self.x_size = input_shape
 
@@ -459,13 +459,27 @@ class Conv3DBackpropFilter(nn.Cell):
 
     def __init__(self, w_shape, out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group, data_format):
         super(Conv3DBackpropFilter, self).__init__()
-        self.conv = G.Conv3DBackpropFilter(out_channel, kernel_size, pad_mode=pad_mode,
-                                           pad=pad, mode=mode, stride=stride, dilation=dilation,
+        self.conv = G.Conv3DBackpropFilter(out_channel=out_channel, kernel_size=kernel_size, mode=mode,
+                                           pad_mode=pad_mode, pad=pad, stride=stride, dilation=dilation,
                                            group=group, data_format=data_format)
         self.w_size = w_shape
 
     def construct(self, x, doutput):
         ms_out = self.conv(x, doutput, self.w_size)
+        return ms_out
+
+
+class Conv3DTranspose(nn.Cell):
+    """Conv3DTranspose net definition"""
+
+    def __init__(self, out_channel, kernel_size, input_size, mode, pad_mode, pad, stride, dilation, group, data_format):
+        super(Conv3DTranspose, self).__init__()
+        self.conv = nps.Conv3DTranspose(out_channel=out_channel, kernel_size=kernel_size, input_size=input_size,
+                                        mode=mode, pad_mode=pad_mode, pad=pad, stride=stride, dilation=dilation,
+                                        group=group, data_format=data_format)
+
+    def construct(self, x, w):
+        ms_out = self.conv(x, w)
         return ms_out
 
 
@@ -1243,6 +1257,12 @@ test_case_math_ops = [
                                       pad_mode='valid', pad=0, stride=1, dilation=1, group=1, data_format="NCDHW"),
         'desc_inputs': [Tensor(np.random.random((16, 32, 13, 37, 33)).astype(np.float16)),
                         Tensor(np.random.random((16, 32, 10, 32, 32)).astype(np.float16))],
+        'skip': ['backward']}),
+    ('Conv3DTranspose', {
+        'block': Conv3DTranspose(out_channel=3, kernel_size=(4, 6, 2), input_size=(0, 0, 0, 0, 0), mode=1,
+                                 pad_mode='valid', pad=0, stride=1, dilation=1, group=1, data_format="NCDHW"),
+        'desc_inputs': [Tensor(np.random.random((32, 3, 10, 32, 32)).astype(np.float16)),
+                        Tensor(np.random.random((3, 3, 4, 6, 2)).astype(np.float16))],
         'skip': ['backward']}),
     ('CountNonZero', {
         'block': CountNonZero(axis=(), keep_dims=False, dtype=mstype.int32),
