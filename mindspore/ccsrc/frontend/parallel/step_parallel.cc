@@ -292,22 +292,6 @@ TensorLayout GetTensorInLayout(const CNodePtr &middle_node, const PrimitivePtr &
   return tensorinfo_in.tensor_layout();
 }
 
-bool AnfNodeIsPrimitive(const AnfNodePtr &anf_node, const std::string &prim_name) {
-  MS_EXCEPTION_IF_NULL(anf_node);
-  auto cnode = anf_node->cast<CNodePtr>();
-  if ((cnode == nullptr) || !IsValueNode<Primitive>(cnode->input(0))) {
-    return false;
-  }
-
-  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
-  auto prim = GetValueNode<PrimitivePtr>(value_node);
-  MS_EXCEPTION_IF_NULL(prim);
-  if (prim->name() == prim_name) {
-    return true;
-  }
-  return false;
-}
-
 std::string GetPrimName(const CNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!IsValueNode<Primitive>(node->input(0))) {
@@ -1217,42 +1201,6 @@ Shapes GetNodeShape(const AnfNodePtr &node) {
     shapes.push_back(shape_ptr->shape());
   }
   return shapes;
-}
-
-std::vector<AnfNodePtr> FindParameterByRefKeyNode(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
-  MS_EXCEPTION_IF_NULL(node);
-  MS_EXCEPTION_IF_NULL(func_graph);
-  std::vector<AnfNodePtr> parameters;
-  if (!IsValueNode<RefKey>(node)) {
-    MS_LOG(ERROR) << "The node is not a ref key";
-    return parameters;
-  }
-
-  auto ref_key = GetValueNode<RefKeyPtr>(node);
-  MS_EXCEPTION_IF_NULL(ref_key);
-  auto name = ref_key->tag();
-
-  auto manager = func_graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
-  auto roots = manager->roots();
-  if (roots.size() != 1) {
-    MS_LOG(ERROR) << "The size of roots ( " << roots.size() << " ) is not 1";
-    return parameters;
-  }
-
-  FuncGraphPtr root_g = roots.back();
-  MS_EXCEPTION_IF_NULL(root_g);
-  for (auto &param_node : root_g->parameters()) {
-    auto param = param_node->cast<ParameterPtr>();
-    if (param && (name == param->name())) {
-      parameters.push_back(param_node);
-      MS_LOG(INFO) << "The name of ref key is: " << name;
-      return parameters;
-    }
-  }
-
-  MS_LOG(ERROR) << "The name of ref key is: " << name << ", but have not found the parameter";
-  return parameters;
 }
 
 Shapes GetRefKeyNodeShape(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
