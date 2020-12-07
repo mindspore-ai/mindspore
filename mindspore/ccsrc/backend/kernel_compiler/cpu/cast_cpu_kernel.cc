@@ -82,6 +82,31 @@ bool CastCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   mode_map[kNumberTypeBool][kNumberTypeFloat32] = LaunchCast<bool, float>;
   mode_map[kNumberTypeBool][kNumberTypeBool] = LaunchCast<bool, bool>;
   mode_map[kNumberTypeBool][kNumberTypeInt32] = LaunchCast<bool, int>;
+
+  mode_map[kNumberTypeInt8][kNumberTypeInt16] = LaunchCast<int8_t, int16_t>;
+  mode_map[kNumberTypeInt8][kNumberTypeInt32] = LaunchCast<int8_t, int32_t>;
+  mode_map[kNumberTypeInt8][kNumberTypeInt64] = LaunchCast<int8_t, int64_t>;
+  mode_map[kNumberTypeUInt8][kNumberTypeInt16] = LaunchCast<uint8_t, int16_t>;
+  mode_map[kNumberTypeUInt8][kNumberTypeInt32] = LaunchCast<uint8_t, int32_t>;
+  mode_map[kNumberTypeUInt8][kNumberTypeInt64] = LaunchCast<uint8_t, int64_t>;
+  mode_map[kNumberTypeUInt8][kNumberTypeUInt16] = LaunchCast<uint8_t, uint16_t>;
+  mode_map[kNumberTypeUInt8][kNumberTypeUInt32] = LaunchCast<uint8_t, uint32_t>;
+  mode_map[kNumberTypeUInt8][kNumberTypeUInt64] = LaunchCast<uint8_t, uint64_t>;
+
+  mode_map[kNumberTypeInt16][kNumberTypeInt32] = LaunchCast<int16_t, int32_t>;
+  mode_map[kNumberTypeInt16][kNumberTypeInt64] = LaunchCast<int16_t, int64_t>;
+  mode_map[kNumberTypeUInt16][kNumberTypeInt32] = LaunchCast<uint16_t, int32_t>;
+  mode_map[kNumberTypeUInt16][kNumberTypeInt64] = LaunchCast<uint16_t, int64_t>;
+  mode_map[kNumberTypeUInt16][kNumberTypeUInt32] = LaunchCast<uint16_t, uint32_t>;
+  mode_map[kNumberTypeUInt16][kNumberTypeUInt64] = LaunchCast<uint16_t, uint64_t>;
+
+  mode_map[kNumberTypeInt32][kNumberTypeInt64] = LaunchCast<int32_t, int64_t>;
+  mode_map[kNumberTypeUInt32][kNumberTypeInt64] = LaunchCast<uint32_t, int64_t>;
+  mode_map[kNumberTypeUInt32][kNumberTypeUInt64] = LaunchCast<uint32_t, uint64_t>;
+
+  mode_map[kNumberTypeFloat16][kNumberTypeFloat32] = LaunchCast<float16, float>;
+  mode_map[kNumberTypeFloat16][kNumberTypeFloat64] = LaunchCast<float16, double>;
+  mode_map[kNumberTypeFloat32][kNumberTypeFloat64] = LaunchCast<float, double>;
   mode_map[source_dtype][target_dtype](inputs, outputs);
   return true;
 }
