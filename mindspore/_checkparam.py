@@ -428,6 +428,16 @@ class Validator:
         return True
 
     @staticmethod
+    def check_file_name_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
+        if reg is None:
+            reg = r"^[0-9a-zA-Z\_\.\/\\]*$"
+        if re.match(reg, target, flag) is None:
+            prim_name = f'in `{prim_name}`' if prim_name else ""
+            raise ValueError("'{}' {} is illegal, it should be match regular'{}' by flags'{}'".format(
+                target, prim_name, reg, flag))
+        return True
+
+    @staticmethod
     def check_pad_value_by_mode(pad_mode, padding, prim_name):
         """Validates value of padding according to pad_mode"""
         if pad_mode != 'pad' and padding != 0:
