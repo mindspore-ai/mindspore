@@ -754,7 +754,11 @@ AbstractBasePtr InferImplDynamicShape(const AnalysisEnginePtr &, const Primitive
   ShapeVector tensor_shp({static_cast<int64_t>(shape.size())});
   if (has_dyn_shape) {
     auto elem = std::make_shared<AbstractScalar>(std::make_shared<AnyValue>(), std::make_shared<Int>(64));
-    return std::make_shared<AbstractTensor>(elem, std::make_shared<Shape>(tensor_shp));
+    auto min_value = MakeValue(input->shape()->min_shape());
+    auto max_value = MakeValue(input->shape()->max_shape());
+    auto tensor = std::make_shared<AbstractTensor>(elem, std::make_shared<Shape>(tensor_shp));
+    tensor->set_value_range(min_value, max_value);
+    return tensor;
   }
   auto shp_buf_size = sizeof(int64_t) * shape.size();
   auto tensor = std::make_shared<tensor::Tensor>(kNumberTypeInt64, tensor_shp, shape.data(), shp_buf_size);

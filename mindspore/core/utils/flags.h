@@ -33,6 +33,8 @@ extern const char ATTR_DTYPE[];
 extern const char ATTR_SHAPE[];
 extern const char ATTR_MIN_SHAPE[];
 extern const char ATTR_MAX_SHAPE[];
+extern const char ATTR_MIN_VALUE[];
+extern const char ATTR_MAX_VALUE[];
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_UTILS_FLAGS_H
