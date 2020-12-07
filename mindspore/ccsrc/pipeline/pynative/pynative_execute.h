@@ -53,8 +53,6 @@ struct PrimAbsInfo {
 using AbstractListMap = std::unordered_map<abstract::AbstractBasePtrList, PrimAbsInfo,
                                            abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
 
-py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
-
 py::tuple RunOp(const py::args &args);
 
 void ClearPyNativeSession();
@@ -124,6 +122,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   MsBackendPolicy InitEnv(const OpExecInfoPtr &op_exec_info);
   py::tuple RunOpWithInitBackendPolicy(const OpExecInfoPtr &op_exec_info);
   void RunParameterAutoMixPrecisionCast(const OpExecInfoPtr &op_exec_info);
+  py::object RunOpInVM(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
   py::object RunOpInMs(const OpExecInfoPtr &op_exec_info, PynativeStatusCode *status);
   py::object RunOpWithBackendPolicy(MsBackendPolicy backend_policy, const OpExecInfoPtr &op_exec_info,
                                     PynativeStatusCode *const status);
