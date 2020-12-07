@@ -109,7 +109,7 @@ def build_dependencies():
 build_dependencies()
 
 required_package = [
-    'numpy >= 1.17.0',
+    'numpy >= 1.17.0, <= 1.17.5',
     'protobuf >= 3.8.0',
     'asttokens >= 1.1.13',
     'pillow >= 6.2.0',
@@ -117,7 +117,9 @@ required_package = [
     'easydict >= 1.9',
     'sympy >= 1.4',
     'cffi >= 1.13.2',
+    'wheel >= 0.32.0',
     'decorator >= 4.4.0',
+    'setuptools >= 40.8.0',
     'astunparse >= 1.6.3',
     'packaging >= 20.0'
 ]
