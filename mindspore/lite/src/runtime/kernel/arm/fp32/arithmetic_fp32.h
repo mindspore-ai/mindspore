@@ -75,13 +75,11 @@ class ArithmeticCPUKernel : public LiteKernel {
   int InitBroadCastCase();
   void InitParamInRunTime();
 
- private:
+ protected:
   bool input0_broadcast_ = false;
   bool input1_broadcast_ = false;
   void *input0_ptr_ = nullptr;
   void *input1_ptr_ = nullptr;
-
- protected:
   int break_pos_ = 0;
   int outside_ = 0;
   int thread_count_ = 1;

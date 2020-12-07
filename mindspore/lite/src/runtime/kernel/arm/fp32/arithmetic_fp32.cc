@@ -51,8 +51,7 @@ int ArithmeticCPUKernel::InitBroadCastCase() {
     return RET_OK;
   }
 
-  int broadcast_size = out_tensors_[0]->Size();
-  if (broadcast_size < 0) {
+  if (out_tensors_[0]->Size() < 0) {
     return RET_OK;
   }
 
@@ -69,7 +68,7 @@ int ArithmeticCPUKernel::InitBroadCastCase() {
 
   if (in_tensors_[0]->data_c() != nullptr &&
       arithmeticParameter_->in_elements_num1_ == arithmeticParameter_->out_elements_num_) {
-    input0_ptr_ = malloc(broadcast_size);
+    input0_ptr_ = malloc(arithmeticParameter_->out_elements_num_ * sizeof(float));
     if (input0_ptr_ == nullptr) {
       return RET_ERROR;
     }
@@ -81,7 +80,7 @@ int ArithmeticCPUKernel::InitBroadCastCase() {
   }
   if (in_tensors_[1]->data_c() != nullptr &&
       arithmeticParameter_->in_elements_num0_ == arithmeticParameter_->out_elements_num_) {
-    input1_ptr_ = malloc(broadcast_size);
+    input1_ptr_ = malloc(arithmeticParameter_->out_elements_num_ * sizeof(float));
     if (input1_ptr_ == nullptr) {
       FreeTmpPtr();
       return RET_ERROR;
@@ -211,6 +210,15 @@ void ArithmeticCPUKernel::InitRunFunction() {
       break;
     case PrimitiveType_SquaredDifference:
       arithmetic_run_ = ElementSquaredDifference;
+      break;
+    case PrimitiveType_Equal:
+    case PrimitiveType_Less:
+    case PrimitiveType_Greater:
+    case PrimitiveType_NotEqual:
+    case PrimitiveType_LessEqual:
+    case PrimitiveType_GreaterEqual:
+      arithmetic_run_ = nullptr;
+      arithmetic_run_int_ = nullptr;
       break;
     default:
       MS_LOG(ERROR) << "Error Operator type " << op_parameter_->type_;
