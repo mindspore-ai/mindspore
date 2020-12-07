@@ -363,6 +363,45 @@ void Conv2DOpenCLKernel::SetGlobalLocal() {
   }
 }
 
+std::vector<BaseTuningParameter> Conv2DOpenCLKernel::GenerateTuningParam() {
+  // don't need to tune local_c
+  std::vector<BaseTuningParameter> tuning_params = {};
+  if (use_winograd_) {
+    return tuning_params;
+  }
+  BaseTuningParameter default_tuning_param = BaseTuningParameter();
+  default_tuning_param.local_size = local_size_;
+  tuning_params.push_back(default_tuning_param);
+
+  std::vector<size_t> max_work_items = ocl_runtime_->GetWorkItemSize();
+  size_t max_workgroup_size = ocl_runtime_->GetMaxWorkGroupSize(kernel_);
+  std::set<size_t> candidate_x = GenerateLocalByGlobal(global_size_[0]);
+  std::set<size_t> candidate_y = GenerateLocalByGlobal(global_size_[1]);
+  for (auto x : candidate_x) {
+    if (x <= max_work_items[0]) {
+      for (auto y : candidate_y) {
+        if (y <= max_work_items[1]) {
+          auto group_size = x * y * local_size_[2];
+          if (group_size <= max_workgroup_size) {
+            BaseTuningParameter tuning_param = BaseTuningParameter();
+            tuning_param.local_size = {x, y, local_size_[2]};
+            tuning_params.push_back(tuning_param);
+          }
+        }
+      }
+    }
+  }
+  return tuning_params;
+}
+
+std::string Conv2DOpenCLKernel::Key() {
+  auto key = OpenCLKernel::Key();
+  key += "_" + std::to_string(KH_) + "_" + std::to_string(KW_) + "_" + std::to_string(param_->stride_h_) + "_" +
+         std::to_string(param_->stride_w_) + "_" + std::to_string(param_->dilation_h_) + "_" +
+         std::to_string(param_->dilation_w_);
+  return key;
+}
+
 void Conv2DOpenCLKernel::SetConstArgs() {
   cl_int4 input_shape = {batch_size_, IH_, IW_, CI_SLICES_};
   cl_int4 output_shape = {batch_size_, OH_, OW_, CO_SLICES_};

@@ -20,6 +20,8 @@
 
 #include <vector>
 #include <set>
+#include <map>
+#include <string>
 #include "src/lite_kernel.h"
 #include "include/errorcode.h"
 #include "src/runtime/opencl/opencl_runtime.h"
@@ -287,6 +289,13 @@ class OpenCLKernel : public LiteKernel {
     if (mode == lite::opencl::TuningMode::FAST && FAST_MODE_OPS.find(op_parameter_->type_) == FAST_MODE_OPS.end()) {
       return RET_OK;
     }
+    auto key = Key();
+    auto finded = tuned_param_cache_.find(key);
+    if (finded != tuned_param_cache_.end()) {
+      auto cache_param = finded->second;
+      MS_LOG(INFO) << "Tuning " << name() << ", found cached param(" << cache_param << ")";
+      return RET_OK;
+    }
     auto tuning_params = GenerateTuningParam();
     if (tuning_params.empty()) {
       MS_LOG(WARNING) << "Tuning param size is 0.";
@@ -312,6 +321,7 @@ class OpenCLKernel : public LiteKernel {
       MS_LOG(INFO) << "Tuning " << name() << " result: param (" << tuning_params[index] << ") exectime " << min_time
                    << "ms";
       AssignTuningParam(tuning_params[index]);
+      tuned_param_cache_[key] = tuning_params[index];
     } else {
       MS_LOG(WARNING) << "Cannot find suitable param.";
     }
@@ -328,6 +338,15 @@ class OpenCLKernel : public LiteKernel {
     event_.getProfilingInfo(CL_PROFILING_COMMAND_END, &time_end);
     cl_ulong time_ns = time_end - time_start;
     return static_cast<double>(time_ns) * 1e-6;
+  }
+
+  virtual std::string Key() {
+    std::string key = type_str();
+    key += "_global";
+    for (auto i : global_size_) {
+      key += "_" + std::to_string(i);
+    }
+    return key;
   }
 
  protected:
@@ -356,6 +375,7 @@ class OpenCLKernel : public LiteKernel {
 
  private:
   lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
+  static inline std::map<std::string, BaseTuningParameter> tuned_param_cache_;
 };
 template <class T>
 kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inputs,
