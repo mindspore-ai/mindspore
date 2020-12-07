@@ -51,15 +51,42 @@ static std::shared_ptr<std::map<ValuePtr, ParameterPtr>> python_paras;
 void ClearPythonParasMap() { python_paras = nullptr; }
 namespace {
 const int kSummaryGetItem = 2;
+const size_t max_depth = 128;
+bool RecursiveCheck(const FuncGraphManagerPtr &manager, const AnfNodePtr &node, size_t *idx, bool *check_dynamic) {
+  MS_EXCEPTION_IF_NULL(manager);
+  MS_EXCEPTION_IF_NULL(node);
+  if (*check_dynamic) {
+    if (node->isa<CNode>() && AnfAlgo::IsNodeDynamicShape(node->cast<CNodePtr>())) {
+      return true;
+    }
+  } else if (AnfAlgo::IsRealKernel(node)) {
+    return true;
+  }
+  (*idx) += 1;
+  // max recursion depth
+  if (*idx <= max_depth) {
+    auto users = manager->node_users()[node];
+    if (std::any_of(users.begin(), users.end(), [&](const std::pair<AnfNodePtr, int64_t> &kernel) {
+          return RecursiveCheck(manager, kernel.first, idx, check_dynamic);
+        })) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool IsUsedByRealKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
   auto node_users = manager->node_users()[node];
-  for (auto item : node_users) {
-    if (AnfAlgo::IsRealKernel(item.first)) {
-      return true;
-    }
+  size_t idx = 0;
+  bool check_dynamic = false;
+  if (std::any_of(node_users.begin(), node_users.end(), [&](const std::pair<AnfNodePtr, int64_t> &kernel) {
+        return RecursiveCheck(manager, kernel.first, &idx, &check_dynamic);
+      })) {
+    return true;
   }
+
   return false;
 }
 
@@ -67,10 +94,12 @@ bool IsUsedByDynamicKernel(const FuncGraphManagerPtr &manager, const AnfNodePtr 
   MS_EXCEPTION_IF_NULL(manager);
   MS_EXCEPTION_IF_NULL(node);
   auto node_users = manager->node_users()[node];
-  for (auto item : node_users) {
-    if (item.first->isa<CNode>() && AnfAlgo::IsNodeDynamicShape(item.first->cast<CNodePtr>())) {
-      return true;
-    }
+  size_t idx = 0;
+  bool check_dynamic = true;
+  if (std::any_of(node_users.begin(), node_users.end(), [&](const std::pair<AnfNodePtr, int64_t> &kernel) {
+        return RecursiveCheck(manager, kernel.first, &idx, &check_dynamic);
+      })) {
+    return true;
   }
   return false;
 }

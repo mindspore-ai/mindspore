@@ -40,7 +40,7 @@ class AiCpuDynamicKernel : public DynamicKernel {
         ext_info_size_(0),
         input_num_(0),
         output_num_(0),
-        unknow_type_(DEPEND_COMPUTE) {}
+        unknow_type_(DEPEND_IN_SHAPE) {}
 
   ~AiCpuDynamicKernel() override;
 

@@ -17,6 +17,7 @@
 #include "runtime/device/ascend/executor/ai_cpu_dynamic_kernel.h"
 #include <vector>
 #include <memory>
+#include <set>
 #include <algorithm>
 #include "runtime/mem.h"
 #include "runtime/kernel.h"
@@ -27,6 +28,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+std::set<std::string> kComputeDepend = {"Unique"};
 AiCpuDynamicKernel::~AiCpuDynamicKernel() {
   // free dev ptr
   if (ext_info_addr_dev_ == nullptr) {
@@ -67,9 +69,11 @@ void AiCpuDynamicKernel::Initialize() {
   output_num_ = AnfAlgo::GetOutputTensorNum(cnode_ptr_);
 
   UnknowShapeOpType shape_type = UnknowShapeOpType::DEPEND_IN_SHAPE;
-  if (AnfAlgo::GetCNodeName(cnode_ptr_) == "Unique") {
+  auto op_name = AnfAlgo::GetCNodeName(cnode_ptr_);
+  if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
     shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
   }
+  unknow_type_ = shape_type;
   // Parse aicpu ext info
   if (is_dynamic_shape_) {
     MS_EXCEPTION_IF_NULL(cnode_ptr_);
@@ -141,7 +145,7 @@ bool AiCpuDynamicKernel::UpdateExtInfo() {
     ext_info_handler_->UpdateInputShapeAndType(i, NOT_NULL(cnode_ptr_));
   }
 
-  if (unknow_type_ != DEPEND_COMPUTE) {
+  if (AnfAlgo::IsDynamicShape(cnode_ptr_) && unknow_type_ != DEPEND_COMPUTE) {
     for (size_t i = 0; i < output_num_; ++i) {
       ext_info_handler_->UpdateOutputShapeAndType(i, NOT_NULL(cnode_ptr_));
     }
@@ -198,6 +202,9 @@ bool AiCpuDynamicKernel::UpdateOutputShapeFromExtInfo() {
 
 void AiCpuDynamicKernel::PostExecute() {
   MS_LOG(INFO) << "Aicpu " << cnode_ptr_->fullname_with_scope() << " PostExecute";
+  if (unknow_type_ != DEPEND_COMPUTE) {
+    return;
+  }
   if (RT_ERROR_NONE != rtStreamSynchronize(stream_)) {
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return;
