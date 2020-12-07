@@ -926,7 +926,7 @@ def test_gather2():
                          [4., 2., 8., 2., 9.,]]
                         ).astype(np.float32))
 
-    indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int32))
+    indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int64))
     expect = np.array([[[0., 0., 0., 0., 0.],
                         [4., 9., 5., 6., 4.],
                         [0., 0., 0., 0., 0.]]])
@@ -1010,7 +1010,7 @@ def test_gatherV2_dyn_a():
                          [3., 7., 2., 7., 4.,],
                          [4., 2., 8., 2., 9.,]]
                         ).astype(np.float32))
-    indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int32))
+    indices = Tensor(np.array([[4000, 1, 300000]]).astype(np.int64))
     expect = np.array([[[0., 5., 0.]],
                        [[0., 9., 0.]],
                        [[0., 8., 0.]],
