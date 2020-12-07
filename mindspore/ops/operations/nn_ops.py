@@ -4700,7 +4700,7 @@ class ApplyAdagrad(PrimitiveWithInfer):
         - **accum** (Tensor) - The same shape and data type as `accum`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU`` ``GPU``
 
     Examples:
         >>> import numpy as np

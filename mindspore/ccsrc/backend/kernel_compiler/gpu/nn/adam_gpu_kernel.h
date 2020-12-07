@@ -64,7 +64,7 @@ class AdamGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 10) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but ftrl needs 10 inputs.";
+      MS_LOG(ERROR) << "Input number is " << input_num << ", but adam needs 10 inputs.";
       return false;
     }
 
