@@ -340,7 +340,58 @@ checkopts()
     esac
   done
 }
+
+parse_device()
+{
+  # Process build option
+  if [[ "X$DEVICE" == "Xgpu" ]]; then
+    ENABLE_GPU="on"
+    ENABLE_CPU="on"
+    ENABLE_MPI="on"
+    # version default 10.1
+    if [[ "X$DEVICE_VERSION" == "X" ]]; then
+      DEVICE_VERSION=10.1
+    fi
+    if [[ "X$DEVICE_VERSION" != "X9.2" && "X$DEVICE_VERSION" != "X10.1" ]]; then
+      echo "Invalid value ${DEVICE_VERSION} for option -V"
+      usage
+      exit 1
+    fi
+    if [[ "X$DEVICE_VERSION" == "X9.2" ]]; then
+      echo "Unsupported CUDA version 9.2"
+      exit 1
+    fi
+    CUDA_VERSION="$DEVICE_VERSION"
+  elif [[ "X$DEVICE" == "Xd" || "X$DEVICE" == "Xascend" ]]; then
+    # version default 910
+    if [[ "X$DEVICE_VERSION" == "X" ]]; then
+      DEVICE_VERSION=910
+    fi
+    if [[ "X$DEVICE_VERSION" == "X310" ]]; then
+      ENABLE_SERVING="on"
+      ENABLE_ACL="on"
+    elif [[ "X$DEVICE_VERSION" == "X910" ]]; then
+      ENABLE_D="on"
+      ENABLE_CPU="on"
+      ENABLE_SERVING="on"
+    else
+      echo "Invalid value ${DEVICE_VERSION} for option -V"
+      usage
+      exit 1
+    fi
+  elif [[ "X$DEVICE" == "Xcpu" ]]; then
+    ENABLE_CPU="on"
+  elif [[ "X$DEVICE" == "X" ]]; then
+    :
+  else
+    echo "Invalid value ${DEVICE} for option -e"
+    usage
+    exit 1
+  fi
+}
+
 checkopts "$@"
+parse_device
 echo "---------------- MindSpore: build start ----------------"
 mkdir -pv "${BUILD_PATH}/package/mindspore/lib"
 git submodule update --init graphengine
@@ -358,52 +409,6 @@ build_exit()
 # Create building path
 build_mindspore()
 {
-    # Process build option
-    if [[ "X$DEVICE" == "Xgpu" ]]; then
-      ENABLE_GPU="on"
-      ENABLE_CPU="on"
-      ENABLE_MPI="on"
-      # version default 10.1
-      if [[ "X$DEVICE_VERSION" == "X" ]]; then
-        DEVICE_VERSION=10.1
-      fi
-      if [[ "X$DEVICE_VERSION" != "X9.2" && "X$DEVICE_VERSION" != "X10.1" ]]; then
-        echo "Invalid value ${DEVICE_VERSION} for option -V"
-        usage
-        exit 1
-      fi
-      if [[ "X$DEVICE_VERSION" == "X9.2" ]]; then
-        echo "Unsupported CUDA version 9.2"
-        exit 1
-      fi
-      CUDA_VERSION="$DEVICE_VERSION"
-    elif [[ "X$DEVICE" == "Xd" || "X$DEVICE" == "Xascend" ]]; then
-      # version default 910
-      if [[ "X$DEVICE_VERSION" == "X" ]]; then
-        DEVICE_VERSION=910
-      fi
-      if [[ "X$DEVICE_VERSION" == "X310" ]]; then
-        ENABLE_SERVING="on"
-        ENABLE_ACL="on"
-      elif [[ "X$DEVICE_VERSION" == "X910" ]]; then
-        ENABLE_D="on"
-        ENABLE_CPU="on"
-        ENABLE_SERVING="on"
-      else
-        echo "Invalid value ${DEVICE_VERSION} for option -V"
-        usage
-        exit 1
-      fi
-    elif [[ "X$DEVICE" == "Xcpu" ]]; then
-      ENABLE_CPU="on"
-    elif [[ "X$DEVICE" == "X" ]]; then
-      :
-    else
-      echo "Invalid value ${DEVICE} for option -e"
-      usage
-      exit 1
-    fi
-
     echo "start build mindspore project."
     mkdir -pv "${BUILD_PATH}/mindspore"
     cd "${BUILD_PATH}/mindspore"
@@ -692,9 +697,6 @@ build_lite()
 {
     get_version
     echo "============ Start building MindSpore Lite ${VERSION_STR} ============"
-    if [[ "X$DEVICE" == "Xgpu" ]]; then
-      ENABLE_GPU="on"
-    fi
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ]; then
       echo "start build opencl"
       build_opencl
