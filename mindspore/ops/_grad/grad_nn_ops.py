@@ -18,6 +18,7 @@ import numpy as np
 from mindspore.ops import _selected_grad_ops as SG
 from mindspore.ops.primitive import constexpr
 from mindspore.common.tensor import Tensor
+from mindspore.ops.operations import nn_ops as nps
 from .grad_base import bprop_getters
 from .. import functional as F
 from .. import operations as P
@@ -55,6 +56,27 @@ def get_bprop_conv2d(self):
     def bprop(x, w, out, dout):
         dx = input_grad(dout, w, get_shape(x))
         dw = filter_grad(dout, x, get_shape(w))
+        return dx, dw
+
+    return bprop
+
+
+@bprop_getters.register(nps.Conv3D)
+def get_bprop_conv3d(self):
+    """Grad definition for `Conv3D` operation."""
+    input_grad = nps.Conv3DBackpropInput(
+        self.out_channel, self.kernel_size, self.pad_mode, self.pad, mode=self.mode,
+        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
+    )
+    filter_grad = G.Conv3DBackpropFilter(
+        self.out_channel, self.kernel_size, self.pad_mode, self.pad, mode=self.mode,
+        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
+    )
+    get_shape = P.Shape()
+
+    def bprop(x, w, out, dout):
+        dx = input_grad(w, dout, get_shape(x))
+        dw = filter_grad(x, dout, get_shape(w))
         return dx, dw
 
     return bprop

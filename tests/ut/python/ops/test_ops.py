@@ -27,6 +27,7 @@ from mindspore.ops import operations as P
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
+from mindspore.ops.operations import nn_ops as nps
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -288,6 +289,7 @@ class CountNonZero(nn.Cell):
         self.axis = axis
         self.keep_dims = keep_dims
         self.dtype = dtype
+
     def construct(self, input_x):
         nonzero_num = C.count_nonzero(input_x, self.axis, self.keep_dims, self.dtype)
         return nonzero_num
@@ -421,6 +423,50 @@ class ScatterDiv(nn.Cell):
     def construct(self, indices, updates):
         out = self.scatter_div(self.ref, indices, updates)
         return out
+
+
+class Conv3D(nn.Cell):
+    """Conv3D net definition"""
+
+    def __init__(self, out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group, data_format):
+        super(Conv3D, self).__init__()
+        self.conv = nps.Conv3D(out_channel=out_channel, kernel_size=kernel_size, mode=mode, pad_mode=pad_mode,
+                               pad=pad, stride=stride, dilation=dilation, group=group, data_format=data_format)
+
+    def construct(self, x, w):
+        out = self.conv(x, w)
+        return out
+
+
+class Conv3DBackpropInput(nn.Cell):
+    """Conv3DBackpropInput net definition"""
+
+    def __init__(self, input_shape, out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group,
+                 data_format):
+        super(Conv3DBackpropInput, self).__init__()
+        self.conv = nps.Conv3DBackpropInput(out_channel, kernel_size, pad_mode=pad_mode,
+                                            pad=pad, mode=mode, stride=stride, dilation=dilation,
+                                            group=group, data_format=data_format)
+        self.x_size = input_shape
+
+    def construct(self, w, doutput):
+        ms_out = self.conv(w, doutput, self.x_size)
+        return ms_out
+
+
+class Conv3DBackpropFilter(nn.Cell):
+    """Conv3DBackpropFilter net definition"""
+
+    def __init__(self, w_shape, out_channel, kernel_size, mode, pad_mode, pad, stride, dilation, group, data_format):
+        super(Conv3DBackpropFilter, self).__init__()
+        self.conv = G.Conv3DBackpropFilter(out_channel, kernel_size, pad_mode=pad_mode,
+                                           pad=pad, mode=mode, stride=stride, dilation=dilation,
+                                           group=group, data_format=data_format)
+        self.w_size = w_shape
+
+    def construct(self, x, doutput):
+        ms_out = self.conv(x, doutput, self.w_size)
+        return ms_out
 
 
 class ApplyFtrlNet(nn.Cell):
@@ -1179,6 +1225,24 @@ test_case_math_ops = [
     ('Moments', {
         'block': Moments(axis=(), keep_dims=False),
         'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 4).astype(np.float32))],
+        'skip': ['backward']}),
+    ('Conv3D', {
+        'block': Conv3D(out_channel=32, kernel_size=(4, 3, 3), mode=1, pad_mode='valid', pad=0,
+                        stride=1, dilation=1, group=1, data_format="NCDHW"),
+        'desc_inputs': [Tensor(np.random.random((16, 3, 10, 32, 32)).astype(np.float16)),
+                        Tensor(np.random.random((32, 3, 4, 3, 3)).astype(np.float16))],
+        'skip': ['backward']}),
+    ('Conv3DBackpropInput', {
+        'block': Conv3DBackpropInput(input_shape=(16, 32, 13, 37, 33), out_channel=32, kernel_size=(4, 6, 2), mode=1,
+                                     pad_mode='valid', pad=0, stride=1, dilation=1, group=1, data_format="NCDHW"),
+        'desc_inputs': [Tensor(np.random.random((32, 32, 4, 6, 2)).astype(np.float16)),
+                        Tensor(np.random.random((16, 32, 10, 32, 32)).astype(np.float16))],
+        'skip': ['backward']}),
+    ('Conv3DBackpropFilter', {
+        'block': Conv3DBackpropFilter(w_shape=(32, 32, 4, 6, 2), out_channel=32, kernel_size=(4, 6, 2), mode=1,
+                                      pad_mode='valid', pad=0, stride=1, dilation=1, group=1, data_format="NCDHW"),
+        'desc_inputs': [Tensor(np.random.random((16, 32, 13, 37, 33)).astype(np.float16)),
+                        Tensor(np.random.random((16, 32, 10, 32, 32)).astype(np.float16))],
         'skip': ['backward']}),
     ('CountNonZero', {
         'block': CountNonZero(axis=(), keep_dims=False, dtype=mstype.int32),

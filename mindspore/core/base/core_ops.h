@@ -149,6 +149,8 @@ inline const PrimitivePtr kPrimReluGrad = std::make_shared<Primitive>("ReluGrad"
 inline const PrimitivePtr kPrimRelu6Grad = std::make_shared<Primitive>("ReLU6Grad");
 inline const PrimitivePtr kPrimConv2DBackpropInput = std::make_shared<Primitive>("Conv2DBackpropInput");
 inline const PrimitivePtr kPrimConv2DBackpropFilter = std::make_shared<Primitive>("Conv2DBackpropFilter");
+inline const PrimitivePtr kPrimConv3DBackpropInput = std::make_shared<Primitive>("Conv3DBackpropInput");
+inline const PrimitivePtr kPrimConv3DBackpropFilter = std::make_shared<Primitive>("Conv3DBackpropFilter");
 inline const PrimitivePtr kPrimDepthwiseConv2dNative = std::make_shared<Primitive>("DepthwiseConv2dNative");
 inline const PrimitivePtr kPrimDepthwiseConv2dNativeBackpropFilter =
   std::make_shared<Primitive>("DepthwiseConv2dNativeBackpropFilter");
