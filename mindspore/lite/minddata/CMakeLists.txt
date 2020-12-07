@@ -1,8 +1,17 @@
+find_package(Patch)
+if (NOT Patch_FOUND)
+  message(FATAL_ERROR "Patch not found, please set environment variable MS_PATCH_PATH to path where Patch is located, "
+  "usually found in GIT_PATH/usr/bin on Windows")
+endif ()
+
+include(${TOP_DIR}/cmake/external_libs/jpeg_turbo.cmake)
+
 set(MINDDATA_DIR ${CCSRC_DIR}/minddata/dataset)
 set(CMAKE_CXX_STANDARD 17)
 
 set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -O0 -g2 -ggdb -fno-inline-functions -fno-omit-frame-pointer -D_LIBCPP_INLINE_VISIBILITY='' -D_LIBCPP_DISABLE_EXTERN_TEMPLATE=1 -DHALF_ENABLE_CPP11_USER_LITERALS=0 -D_FORTIFY_SOURCE=2 -Wno-cpp")
 set(CMAKE_CXX_FLAGS_DEBUG "$ENV{CXXFLAGS} -Werror -Wno-return-std-move -Wno-unused-private-field -Wno-unused-lambda-capture -Wno-sign-compare -Wno-overloaded-virtual -Wno-unneeded-internal-declaration -Wno-unused-variable -Wno-pessimizing-move -Wno-inconsistent-missing-override")
+
 
 set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -I/usr/local/include -std=c++17 -Wall -fPIC")
 
@@ -281,8 +290,8 @@ if (BUILD_MINDDATA STREQUAL "full")
     find_package(Threads REQUIRED)
     target_link_libraries(minddata-lite
             securec
-            jpeg-turbo
-            jpeg
+            mindspore::jpeg_turbo
+            mindspore::turbojpeg
             mindspore::json
             Threads::Threads
             )
@@ -349,8 +358,8 @@ elseif (BUILD_MINDDATA STREQUAL "wrapper")
     find_package(Threads REQUIRED)
     target_link_libraries(minddata-lite
             securec
-            jpeg-turbo
-            jpeg
+            mindspore::jpeg_turbo
+            mindspore::turbojpeg
             mindspore::json
             Threads::Threads
             )
@@ -428,7 +437,7 @@ elseif (BUILD_MINDDATA STREQUAL "lite")
     add_library(minddata-lite SHARED
         ${MINDDATA_CORE_SRC_FILES}
         ${MINDDATA_KERNELS_SRC_FILES}
-	${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
+	    ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
         ${MINDDATA_KERNELS_IMAGE_SRC_FILES}
         ${MINDDATA_KERNELS_DATA_SRC_FILES}
         ${MINDDATA_DIR}/util/status.cc

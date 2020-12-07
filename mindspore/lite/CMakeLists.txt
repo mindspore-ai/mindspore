@@ -33,7 +33,13 @@ set(BUILD_LITE "on")
 set(PLATFORM_ARM "off")
 if (PLATFORM_ARM64 OR PLATFORM_ARM32)
     set(PLATFORM_ARM "on")
+    #set for cross-compiling toolchain
+    set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY BOTH)
+    set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE BOTH)
+    set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE BOTH)
 endif()
+
+
 
 if (SUPPORT_GPU)
     set(PROCESS_UNIT gpu)
@@ -93,6 +99,10 @@ include(${TOP_DIR}/cmake/dependency_utils.cmake)
 include(${TOP_DIR}/cmake/dependency_securec.cmake)
 include(${TOP_DIR}/cmake/external_libs/flatbuffers.cmake)
 
+if (ENABLE_CONVERTER OR BUILD_MINDDATA STREQUAL "full")
+include(${TOP_DIR}/cmake/external_libs/json.cmake)
+endif()
+
 file(GLOB FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/schema/*.fbs)
 ms_build_flatbuffers_lite(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/schema/ fbs_src ${CMAKE_BINARY_DIR}/schema "")
 ms_build_flatbuffers_lite(FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/schema/ fbs_inner_src ${CMAKE_BINARY_DIR}/schema/inner "inner")
@@ -147,7 +157,6 @@ if (ENABLE_CONVERTER)
         MESSAGE(FATAL_ERROR "Cannot build converter in arm platform")
     endif()
     include_directories(${PYTHON_INCLUDE_DIRS})
-    include(${TOP_DIR}/cmake/external_libs/json.cmake)
     include(${TOP_DIR}/cmake/external_libs/eigen.cmake)
     include(${TOP_DIR}/cmake/external_libs/protobuf.cmake)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/converter)
@@ -183,25 +192,6 @@ if (NOT PLATFORM_ARM32 AND NOT PLATFORM_ARM64)
 endif ()
 
 if (BUILD_MINDDATA STREQUAL "lite" OR BUILD_MINDDATA STREQUAL "full" OR BUILD_MINDDATA STREQUAL "wrapper")
-    # add sentencepiece dependency
-    # include(${TOP_DIR}/cmake/external_libs/sentencepiece.cmake)
-    # json
-    if (NOT ENABLE_CONVERTER)
-        include(${TOP_DIR}/cmake/external_libs/json.cmake)
-    endif ()
-    # eigen
-    include_directories(${TOP_DIR}/third_party/eigen/)
-    # jpeg-turbo
-    add_library(jpeg-turbo SHARED IMPORTED)
-    set_target_properties(jpeg-turbo PROPERTIES
-        IMPORTED_LOCATION ${TOP_DIR}/third_party/libjpeg-turbo/lib/libturbojpeg.so
-    )
-    add_library(jpeg SHARED IMPORTED)
-    set_target_properties(jpeg PROPERTIES
-        IMPORTED_LOCATION ${TOP_DIR}/third_party/libjpeg-turbo/lib/libjpeg.so
-    )
-    include_directories(${TOP_DIR}/third_party/libjpeg-turbo/include)
-
     add_compile_definitions(ENABLE_ANDROID)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/minddata)
 endif ()
