@@ -112,7 +112,7 @@ enum SubModuleId : int {
   SM_KERNEL,       // kernel
   SM_MD,           // MindData
   SM_ME,           // MindExpression
-  SM_ONNX,         // ONNX
+  SM_EXPRESS,      // EXPRESS_IR
   SM_OPTIMIZER,    // optimzer
   SM_PARALLEL,     // parallel
   SM_PARSER,       // parser
