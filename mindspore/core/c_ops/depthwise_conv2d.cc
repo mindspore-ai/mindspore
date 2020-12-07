@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,11 +24,11 @@
 #include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
-void DepthWiseConv2D::Init(int channel_multiplier, const std::vector<int64_t> &kernel_size, int mode,
+void DepthWiseConv2D::Init(int64_t channel_multiplier, const std::vector<int64_t> &kernel_size, int64_t mode,
                            const std::string &pad_mode, const std::vector<int64_t> &pad,
-                           const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int group) {
+                           const std::vector<int64_t> &stride, const std::vector<int64_t> &dilation, int64_t group) {
   auto prim_name = this->name();
-  this->AddAttr("data_format", MakeValue("NCHW"));
+  this->set_format(NCHW);
   this->AddAttr("offset_a", MakeValue(0));
   this->set_mode(CheckAndConvertUtils::CheckInteger("mode", mode, kEqual, 3, prim_name));
 
@@ -88,18 +88,18 @@ std::vector<int64_t> DepthWiseConv2D::get_pads() const {
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-int DepthWiseConv2D::get_mode() const {
+int64_t DepthWiseConv2D::get_mode() const {
   auto value_ptr = this->GetAttr(kMode);
-  return GetValue<int>(value_ptr);
+  return GetValue<int64_t>(value_ptr);
 }
 
-int DepthWiseConv2D::get_group() const {
+int64_t DepthWiseConv2D::get_group() const {
   auto value_ptr = this->GetAttr(kGroup);
-  return GetValue<int>(value_ptr);
+  return GetValue<int64_t>(value_ptr);
 }
-int DepthWiseConv2D::get_output_channel() const {
-  auto value_ptr = this->GetAttr(kOutputChannel);
-  return GetValue<int>(value_ptr);
+int64_t DepthWiseConv2D::get_out_channel() const {
+  auto value_ptr = this->GetAttr(kOutChannel);
+  return GetValue<int64_t>(value_ptr);
 }
 
 void DepthWiseConv2D::set_kernel_size(const std::vector<int64_t> &kernel_size) {
@@ -112,11 +112,20 @@ void DepthWiseConv2D::set_dilation(const std::vector<int64_t> &dilation) {
 }
 void DepthWiseConv2D::set_pad_mode(const std::string &pad_mode) { this->AddAttr(kPadMode, MakeValue(pad_mode)); }
 void DepthWiseConv2D::set_pad(const std::vector<int64_t> &pad) { this->AddAttr(kPad, MakeValue(pad)); }
-void DepthWiseConv2D::set_mode(int mode) { this->AddAttr(kMode, MakeValue(mode)); }
-void DepthWiseConv2D::set_group(int group) { this->AddAttr(kGroup, MakeValue(group)); }
-void DepthWiseConv2D::set_out_channel(int output_channel) { this->AddAttr(kOutputChannel, MakeValue(output_channel)); }
+void DepthWiseConv2D::set_mode(int64_t mode) { this->AddAttr(kMode, MakeValue(mode)); }
+void DepthWiseConv2D::set_group(int64_t group) { this->AddAttr(kGroup, MakeValue(group)); }
+void DepthWiseConv2D::set_out_channel(int64_t out_channel) { this->AddAttr(kOutChannel, MakeValue(out_channel)); }
 void DepthWiseConv2D::set_pads(const std::vector<int64_t> &pad_list) { this->AddAttr(kPads, MakeValue(pad_list)); }
 
+void DepthWiseConv2D::set_format(const Format &format) {
+  int64_t f = format;
+  this->AddAttr(kFormat, MakeValue(f));
+}
+
+Format DepthWiseConv2D::get_format() const {
+  auto value_ptr = GetAttr(kFormat);
+  return Format(GetValue<int64_t>(value_ptr));
+}
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto conv_prim = primitive->cast<PrimDepthWiseConv2DPtr>();
@@ -129,7 +138,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   CheckAndConvertUtils::CheckInteger("weight_rank", w_shape.size(), kEqual, 4, prim_name);
   CheckAndConvertUtils::CheckInteger("x_rank", x_shape.size(), kEqual, 4, prim_name);
   CheckAndConvertUtils::Check("x_shape[1]", x_shape[1], kEqual, "w_shape[1]", w_shape[1], conv_prim->name());
-  auto out_channel = conv_prim->get_output_channel();
+  auto out_channel = conv_prim->get_out_channel();
 
   std::vector<int64_t> temp_w;
   std::copy(w_shape.begin() + 2, w_shape.end(), std::back_inserter(temp_w));
@@ -148,8 +157,8 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto stride_w = stride[3];
   auto dilation_h = dilation[2];
   auto dilation_w = dilation[3];
-  int h_out = -1;
-  int w_out = -1;
+  int64_t h_out = -1;
+  int64_t w_out = -1;
   std::vector<int64_t> pad_list(4, 0);
   auto pad_mode = conv_prim->get_pad_mode();
   if (pad_mode == "valid") {

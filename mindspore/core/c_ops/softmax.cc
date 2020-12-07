@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,16 +25,16 @@
 #include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
-void Softmax::set_axis(const std::vector<int> &axis) { this->set_attr(kAxis, MakeValue(axis)); }
+void SoftMax::set_axis(const std::vector<int64_t> &axis) { this->AddAttr(kAxis, MakeValue(axis)); }
 
-std::vector<int> Softmax::get_axis() const {
+std::vector<int64_t> SoftMax::get_axis() const {
   auto value_ptr = GetAttr(kAxis);
-  return GetValue<std::vector<int>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
-void Softmax::Init(int axis) {
+void SoftMax::Init(int64_t axis) {
   auto op_name = this->name();
-  std::vector<int> axis_vec = {axis};
+  std::vector<int64_t> axis_vec = {axis};
   CheckAndConvertUtils::CheckInteger("axis_len", axis_vec.size(), kEqual, 1, op_name);
   auto rank = axis_vec.size();
   for (auto &item : axis_vec) {
@@ -45,7 +45,7 @@ void Softmax::Init(int axis) {
 
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto softmax_prim = primitive->cast<PrimSoftmaxPtr>();
+  auto softmax_prim = primitive->cast<PrimSoftMaxPtr>();
   MS_EXCEPTION_IF_NULL(softmax_prim);
   auto op_name = softmax_prim->name();
   auto axis = softmax_prim->get_axis();
@@ -68,12 +68,12 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   return TypeIdToType(infer_type);
 }
 
-AbstractBasePtr SoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr SoftMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
                                                     InferShape(primitive, input_args)->shape());
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Softmax, prim::kPrimSoftmax, SoftmaxInfer);
-REGISTER_PRIMITIVE_C(kNameSoftmax, Softmax);
+REGISTER_PRIMITIVE_EVAL_IMPL(SoftMax, prim::kPrimSoftMax, SoftMaxInfer);
+REGISTER_PRIMITIVE_C(kNameSoftMax, SoftMax);
 }  // namespace mindspore

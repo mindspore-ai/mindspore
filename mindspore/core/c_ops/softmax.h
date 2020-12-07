@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,20 +26,20 @@
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
-constexpr auto kNameSoftmax = "Softmax";
-class Softmax : public PrimitiveC {
+constexpr auto kNameSoftMax = "SoftMax";
+class SoftMax : public PrimitiveC {
  public:
-  Softmax() : PrimitiveC(kNameSoftmax) { InitIOName({"x"}, {"output"}); }
-  ~Softmax() = default;
-  MS_DECLARE_PARENT(Softmax, PrimitiveC);
-  void Init(int axis = -1);
-  void set_axis(const std::vector<int> &axis);
-  std::vector<int> get_axis() const;
+  SoftMax() : PrimitiveC(kNameSoftMax) { InitIOName({"x"}, {"output"}); }
+  ~SoftMax() = default;
+  MS_DECLARE_PARENT(SoftMax, PrimitiveC);
+  void Init(int64_t axis = -1);
+  void set_axis(const std::vector<int64_t> &axis);
+  std::vector<int64_t> get_axis() const;
 };
 
-AbstractBasePtr SoftmaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr SoftMaxInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args);
-using PrimSoftmaxPtr = std::shared_ptr<Softmax>;
+using PrimSoftMaxPtr = std::shared_ptr<SoftMax>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_C_OPS_SOFTMAX_H_

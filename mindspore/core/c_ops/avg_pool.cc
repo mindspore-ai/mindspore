@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "c_ops/avg_pool.h"
 #include <string>
 #include <algorithm>
@@ -24,36 +25,73 @@
 #include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
-void AvgPool::set_padding(const std::string &pad) { this->AddAttr("padding", MakeValue(pad)); }
+void AvgPool::set_padding(const std::string &padding) {
+  CheckAndConvertUtils::CheckString(kPadding, padding, {kValid, kSame}, this->name());
+  this->AddAttr(kPadding, MakeValue(padding));
+}
 
 std::string AvgPool::get_padding() const {
-  auto value_ptr = GetAttr("padding");
+  auto value_ptr = GetAttr(kPadding);
   return GetValue<std::string>(value_ptr);
 }
 void AvgPool::set_kernel_size(const std::vector<int64_t> &kernel_size) {
-  this->AddAttr("k_size", MakeValue(kernel_size));
+  this->AddAttr(kKernelSize, MakeValue(CheckAndConvertUtils::CheckPositiveVector(kKernelSize, kernel_size, this->name(),
+                                                                                 false, true)));
 }
 
 std::vector<int64_t> AvgPool::get_kernel_size() const {
-  auto value_ptr = GetAttr("k_size");
+  auto value_ptr = GetAttr(kKernelSize);
   return GetValue<std::vector<int64_t>>(value_ptr);
 }
-void AvgPool::set_strides(const std::vector<int64_t> &strides) { this->AddAttr("strides", MakeValue(strides)); }
+void AvgPool::set_strides(const std::vector<int64_t> &strides) {
+  this->AddAttr(kStride,
+                MakeValue(CheckAndConvertUtils::CheckPositiveVector(kStride, strides, this->name(), false, true)));
+}
 
 std::vector<int64_t> AvgPool::get_strides() const {
-  auto value_ptr = GetAttr("strides");
+  auto value_ptr = GetAttr(kStride);
   return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+void AvgPool::set_format(const Format &format) {
+  int64_t f = format;
+  this->AddAttr(kFormat, MakeValue(f));
+}
+
+Format AvgPool::get_format() const {
+  auto value_ptr = GetAttr(kFormat);
+  return Format(GetValue<int64_t>(value_ptr));
+}
+
+void AvgPool::set_pad(const std::vector<int64_t> &pad) { this->AddAttr(kPad, MakeValue(pad)); }
+
+std::vector<int64_t> AvgPool::get_pad() const {
+  auto value_ptr = GetAttr(kPad);
+  return GetValue<std::vector<int64_t>>(value_ptr);
+}
+
+void AvgPool::set_round_mode(const int64_t &round_mode) {
+  CheckAndConvertUtils::CheckInRange(kRoundMode, round_mode, kIncludeBoth, {0, 1}, this->name());
+  this->AddAttr(kRoundMode, MakeValue(round_mode));
+}
+
+int64_t AvgPool::get_round_mode() const {
+  auto value_ptr = GetAttr(kRoundMode);
+  return GetValue<int64_t>(value_ptr);
 }
 
 void AvgPool::Init(const std::vector<int64_t> &kernel_size, const std::vector<int64_t> &stride,
-                   const std::string &padding) {
-  auto prim_name = this->name();
-  this->AddAttr("data_format", MakeValue("NCHW"));
-  this->set_padding(CheckAndConvertUtils::CheckString("padding", padding, {"valid", "same"}, prim_name));
-  this->set_kernel_size(CheckAndConvertUtils::CheckPositiveVector("k_size", kernel_size, prim_name, false, true));
-  this->set_strides(CheckAndConvertUtils::CheckPositiveVector("strides", stride, this->name(), false, true));
+                   const std::string &padding, const Format &format, const std::vector<int64_t> &pad,
+                   const int64_t &round_mode) {
+  this->set_padding(padding);
+  this->set_kernel_size(kernel_size);
+  this->set_strides(stride);
+  this->set_format(format);
+  this->set_pad(pad);
+  this->set_round_mode(round_mode);
 }
 
+namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto pool_prim = primitive->cast<PrimAvgPoolPtr>();
@@ -83,7 +121,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
     out_w = ceil(in_w / stride_w);
   }
   std::vector<int64_t> out_shape = {batch, channel, out_h, out_w};
-  if (std::any_of(out_shape.begin(), out_shape.end(), [](int a) { return a <= 0; })) {
+  if (std::any_of(out_shape.begin(), out_shape.end(), [](int64_t a) { return a <= 0; })) {
     MS_LOG(EXCEPTION) << "Kernel size is not valid.";
   }
   return std::make_shared<abstract::Shape>(out_shape);
@@ -95,6 +133,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   }
   return input_args[0]->BuildType();
 }
+}  // namespace
 
 AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
