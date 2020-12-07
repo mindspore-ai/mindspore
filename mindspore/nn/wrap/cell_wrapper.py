@@ -403,12 +403,12 @@ class ParameterUpdate(Cell):
         ``Ascend``
 
     Examples:
-        >>> network = Net()
-        >>> param = network.parameters_dict()['learning_rate']
+        >>> network = nn.Dense(3, 4)
+        >>> param = network.parameters_dict()['weight']
         >>> update = nn.ParameterUpdate(param)
         >>> update.phase = "update_param"
-        >>> lr = Tensor(0.001, mindspore.float32)
-        >>> update(lr)
+        >>> weight = Tensor(0.001, mindspore.float32)
+        >>> update(weight)
     """
 
     def __init__(self, param):
