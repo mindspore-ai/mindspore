@@ -1876,7 +1876,7 @@ class Maximum(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 5.0, 3.0]), mindspore.float32)
