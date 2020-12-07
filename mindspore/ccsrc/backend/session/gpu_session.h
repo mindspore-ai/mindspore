@@ -32,6 +32,7 @@ class GPUSession : public SessionBasic {
   GPUSession() = default;
   ~GPUSession() override = default;
   void Init(uint32_t device_id) override;
+  void SyncStream() override;
 
  protected:
   GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;

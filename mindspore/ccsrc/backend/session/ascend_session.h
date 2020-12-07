@@ -48,6 +48,7 @@ class AscendSession : public SessionBasic {
   void Init(uint32_t device_id) override;
   // get graph id of final graph
   GraphId GetFinalRunGraph() const override { return final_graph_id_; }
+  void SyncStream() override;
 
  protected:
   GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;

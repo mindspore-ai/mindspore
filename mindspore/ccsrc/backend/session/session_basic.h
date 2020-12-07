@@ -66,9 +66,8 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   }
 
   virtual void Init(uint32_t device_id) { device_id_ = device_id; }
-
   void InitExecutor(const std::string &device_name, uint32_t device_id);
-
+  virtual void SyncStream() {}
   virtual ~SessionBasic() { summary_callback_ = nullptr; }
 
   GraphId CompileGraph(const GraphSegmentPtr &segment, const AnfNodePtrList &outputs);

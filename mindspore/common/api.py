@@ -314,6 +314,9 @@ class _PynativeExecutor:
     def clear(self, flag=""):
         self._executor.clear(flag)
 
+    def sync(self):
+        self._executor.sync()
+
     def set_grad_flag(self, flag):
         self._executor.set_grad_flag(flag)
 
