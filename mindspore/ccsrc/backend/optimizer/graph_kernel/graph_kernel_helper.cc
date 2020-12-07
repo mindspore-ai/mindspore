@@ -705,6 +705,7 @@ std::unordered_set<PrimitivePtr> GetExpandOps() {
 #if ENABLE_D
     prim::kPrimTile,
     prim::kPrimSqrtGrad,
+    prim::kPrimClipByNormNoDivSum,
 #elif ENABLE_GPU
     prim::kPrimBiasAdd,
     prim::kPrimBiasAddGrad,
