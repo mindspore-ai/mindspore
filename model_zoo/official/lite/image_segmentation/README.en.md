@@ -1,6 +1,6 @@
 ## Demo of Image Segmentation
 
-The following describes how to use the MindSpore Lite C++ APIs (Android JNIs) and MindSpore Lite image segmentation models to perform on-device inference, classify the content captured by a device camera, and display the most possible segmentation result on the application's image preview screen.
+The following describes how to use the MindSpore Lite JAVA APIs and MindSpore Lite image segmentation models to perform on-device inference, classify the content captured by a device camera, and display the most possible segmentation result on the application's image preview screen.
 
 ### Running Dependencies
 
@@ -34,8 +34,6 @@ The following describes how to use the MindSpore Lite C++ APIs (Android JNIs) an
 
 3. Continue the installation on the Android device. After the installation is complete, you can view the content captured by a camera and the inference result.
 
-    ![result](images/app_result.jpg)
-
 4. The solutions of Android Studio configuration problems:
 
     |      | Warning                                                         | Solution                                                     |
@@ -49,28 +47,26 @@ The following describes how to use the MindSpore Lite C++ APIs (Android JNIs) an
 
 ## Detailed Description of the Sample Program  
 
-This image segmentation sample program on the Android device includes a Java layer and a JNI layer. At the Java layer, the Android Camera 2 API is used to enable a camera to obtain image frames and process images. At the JNI layer, the model inference process is completed in [Runtime](https://www.mindspore.cn/tutorial/lite/en/master/use/runtime.html).
+This image segmentation sample program on the Android device is implemented through Java. At the Java layer, the Android Camera 2 API is used to enable a camera to obtain image frames and process images. Then Java API is called to infer.[Runtime](https://www.mindspore.cn/tutorial/lite/en/master/use/runtime.html).
 
 ### Sample Program Structure
 
 ```text
 app
-│
 ├── src/main
 │   ├── assets # resource files
 |   |   └── deeplabv3.ms # model file
 │   |
-│   ├── cpp # main logic encapsulation classes for model loading and prediction
-|   |   |
-|   |   ├── MindSporeNetnative.cpp # JNI methods related to MindSpore calling
-│   |   └── MindSporeNetnative.h # header file
-│   |
 │   ├── java # application code at the Java layer
-│   │   └── com.mindspore.himindsporedemo
-│   │       ├── gallery.classify # implementation related to image processing and MindSpore JNI calling
-│   │       │   └── ...
-│   │       └── widget # implementation related to camera enabling and drawing
-│   │           └── ...
+│   │   └── com.mindspore.imagesegmentation
+│   │       ├── help # pre-process of image and inference of model
+│   │       │   └── ImageUtils # image pre-process
+│   │       │   └── ModelTrackingResult # post-process of result of inference
+│   │       │   └── TrackingMobile # load model, compile graph and perform
+│   │       └── BitmapUtils # image process
+│   │       └── MainActivity # interactive page
+│   │       └── OnBackgroundImageListener # get images from the photo album
+│   │       └── StyleRecycleViewAdapter # get images from the photo album
 │   │
 │   ├── res # resource files related to Android
 │   └── AndroidManifest.xml # Android configuration file
@@ -84,7 +80,7 @@ app
 
 ### Configuring MindSpore Lite Dependencies
 
-When MindSpore C++ APIs are called at the Android JNI layer, related library files are required. You can use MindSpore Lite [source code compilation](https://www.mindspore.cn/tutorial/lite/en/master/use/build.html) to generate the MindSpore Lite version. In this case, you need to use the compile command of generate with image preprocessing module.
+When MindSpore Java APIs are called, related library files are required. You can use MindSpore Lite [source code compilation](https://www.mindspore.cn/tutorial/lite/en/master/use/build.html) to generate the MindSpore Lite version. In this case, you need to use the compile command of generate with image preprocessing module.
 
 In this example, the build process automatically downloads the `mindspore-lite-1.0.1-runtime-arm64-cpu` by the `app/download.gradle` file and saves in the `app/src/main/cpp` directory.
 
