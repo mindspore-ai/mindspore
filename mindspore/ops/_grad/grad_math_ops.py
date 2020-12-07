@@ -1191,7 +1191,7 @@ def get_bprop_inv(self):
 def get_bprop_lin_space(self):
     """Grad definition for `LinSpace` operation."""
 
-    def bprop(assist, start, stop, num, out, dout):
-        return zeros_like(assist), zeros_like(start), zeros_like(stop), zeros_like(num)
+    def bprop(start, stop, num, out, dout):
+        return zeros_like(start), zeros_like(stop), zeros_like(num)
 
     return bprop
