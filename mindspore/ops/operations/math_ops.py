@@ -3016,7 +3016,7 @@ class IsFinite(PrimitiveWithInfer):
         Tensor, has the same shape of input, and the dtype is bool.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> is_finite = ops.IsFinite()
