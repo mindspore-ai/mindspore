@@ -791,12 +791,11 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
 #ifdef ENABLE_D
   overflow_ops = CheckOpOverflow();
 #endif
-  auto tensor_loader = debug_services_->tensor_loader();
   std::vector<std::shared_ptr<TensorData>> tensor_list;
   if (watchnode.empty()) {
-    tensor_list = tensor_loader->GetTensor();
+    tensor_list = debug_services_->GetTensor();
   } else {
-    tensor_list = tensor_loader->GetNodeTensorMap(watchnode);
+    tensor_list = debug_services_->GetNodeTensorMap(watchnode);
     debug_services_->AddWeightsBiasInputs(&tensor_list, kernel);
   }
   debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
@@ -838,7 +837,28 @@ void Debugger::SendWatchpoints(const std::list<WatchpointHit> &points) {
   }
 }
 
-DebugServices *Debugger::debug_services() const { return debug_services_.get(); }
+bool Debugger::DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
+                                const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
+                                TypeId addr_type_id, const std::string &addr_format, size_t slot) const {
+  return debug_services_.get()->DumpTensorToFile(tensor_name, trans_flag, filepath, host_fmt, host_shape, host_type,
+                                                 addr_type_id, addr_format, slot);
+}
+
+bool Debugger::DebugServicesIsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel) const {
+  return debug_services_.get()->IsWatchPoint(kernel_name, kernel);
+}
+
+void Debugger::EmptyTensor() { debug_services_.get()->EmptyTensor(); }
+
+void Debugger::SetTensorLoaderIterNum(uint32_t iter_num) { debug_services_.get()->SetTensorLoaderIterNum(iter_num); }
+
+void Debugger::EmptyPrevTensor() { debug_services_.get()->EmptyTensor(); }
+
+uint32_t Debugger::GetTensorLoaderIterNum() const { return debug_services_.get()->GetTensorLoaderIterNum(); }
+
+bool Debugger::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev) {
+  return debug_services_.get()->LoadNewTensor(tensor, keep_prev);
+}
 
 bool Debugger::debugger_enabled() const { return debugger_enabled_; }
 
@@ -1177,7 +1197,7 @@ void Debugger::UpdateStepNum(const session::KernelGraph *graph) {
 
 void Debugger::ClearCurrentData() {
   if (device_target_ == kGPUDevice && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration()))
-    debug_services_->tensor_loader()->EmptyCurrentTensor();
+    debug_services_->EmptyCurrentTensor();
 }
 
 }  // namespace mindspore

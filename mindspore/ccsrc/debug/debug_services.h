@@ -177,13 +177,31 @@ class DebugServices {
                         std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
                         std::vector<TypePtr> *dtype, std::vector<std::vector<int64_t>> *shape);
 
-  bool IsWatchPoint(std::string kernel_name, const CNodePtr &kernel = nullptr);
+  bool IsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel = nullptr) const;
 
-  bool IsWatchPointNodeInput(std::string w_name, const CNodePtr &kernel);
+  bool IsWatchPointNodeInput(const std::string &w_name, const CNodePtr &kernel) const;
 
   void AddWeightsBiasInputs(std::vector<std::shared_ptr<TensorData>> *tensor_list, const CNodePtr &kernel);
 
-  TensorLoader *tensor_loader() const;
+  void EmptyTensor();
+
+  std::vector<std::shared_ptr<TensorData>> GetTensor() const;
+
+  std::vector<std::shared_ptr<TensorData>> GetNodeTensorMap(const std::string &node_name) const;
+
+  uint32_t GetTensorLoaderIterNum() const;
+
+  void SetTensorLoaderIterNum(uint32_t iter_num);
+
+  void EmptyPrevTensor();
+
+  void EmptyCurrentTensor();
+
+  bool DumpTensorToFile(const std::string &tensor_name, bool trans_flag, const std::string &filepath,
+                        const std::string &host_fmt, const std::vector<int64_t> &host_shape, TypeId host_type,
+                        TypeId addr_type_id, const std::string &addr_format, size_t slot) const;
+
+  bool LoadNewTensor(const std::shared_ptr<TensorData> &tensor, bool keep_prev);
 
   std::unordered_map<unsigned int, watchpoint_t> GetWatchpointTable();
 

@@ -67,16 +67,13 @@ void E2eDumpUtil::DumpMemToFile(const std::string &file_path, NotNull<const devi
 
 void E2eDumpUtil::DumpGPUMemToFile(const std::string &file_path, const std::string &original_kernel_name,
                                    NotNull<const device::DeviceAddress *> addr, bool trans_flag,
-                                   const ShapeVector &int_shapes, const TypeId &type, size_t slot, Debugger *debugger) {
+                                   const ShapeVector &int_shapes, const TypeId &type, size_t slot,
+                                   const Debugger *debugger) {
 #ifdef ENABLE_DEBUGGER
   auto format = kOpFormat_DEFAULT;
   MS_EXCEPTION_IF_NULL(debugger);
-  DebugServices *debug_services = debugger->debug_services();
-  MS_EXCEPTION_IF_NULL(debug_services);
-  TensorLoader *tensor_loader = debug_services->tensor_loader();
-  MS_EXCEPTION_IF_NULL(tensor_loader);
-  auto ret = tensor_loader->DumpTensorToFile(original_kernel_name, trans_flag, file_path, format, int_shapes, type,
-                                             addr->type_id(), addr->format(), slot);
+  auto ret = debugger->DumpTensorToFile(original_kernel_name, trans_flag, file_path, format, int_shapes, type,
+                                        addr->type_id(), addr->format(), slot);
   if (!ret) {
     MS_LOG(ERROR) << "DumpTensorToFile Failed: flag:" << std::to_string(trans_flag) << ", path:" << file_path
                   << ", host_format:" << format;
