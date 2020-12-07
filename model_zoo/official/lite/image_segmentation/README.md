@@ -1,6 +1,6 @@
 ## MindSpore Lite 端侧图像分割demo（Android）
 
-本示例程序演示了如何在端侧利用MindSpore Lite C++ API（Android JNI）以及MindSpore Lite 图像分割模型完成端侧推理，实现对设备摄像头捕获的内容进行分割，并在App图像预览界面中显示出最可能的分割结果。
+本示例程序演示了如何在端侧利用MindSpore Lite Java API 以及MindSpore Lite 图像分割模型完成端侧推理，实现对设备摄像头捕获的内容进行分割，并在App图像预览界面中显示出最可能的分割结果。
 
 ### 运行依赖
 
@@ -38,10 +38,6 @@
 
     ![install](images/install.jpg)
 
-    如下图所示，识别出的概率最高的物体是植物。
-
-    ![result](images/app_result.jpg)
-
 4. Android Studio 配置问题解决方案可参考下表：
 
     |      | 报错                                                         | 解决方案                                                     |
@@ -55,9 +51,9 @@
 
 ## 示例程序详细说明  
 
-本端侧图像分割Android示例程序分为JAVA层和JNI层，其中，JAVA层主要通过Android Camera 2 API实现摄像头获取图像帧，以及相应的图像处理等功能；JNI层完成模型推理的过程。
+本端侧图像分割Android示例程序使用Java实现，Java层主要通过Android Camera 2 API实现摄像头获取图像帧，进行相应的图像处理，之后调用Java API 完成模型推理。
 
-> 此处详细说明示例程序的JNI层实现，JAVA层运用Android Camera 2 API实现开启设备摄像头以及图像帧处理等功能，需读者具备一定的Android开发基础知识。
+> 此处详细说明示例程序的Java层图像处理及模型推理实现，Java层运用Android Camera 2 API实现开启设备摄像头以及图像帧处理等功能，需读者具备一定的Android开发基础知识。
 
 ### 示例程序结构
 
@@ -67,19 +63,16 @@ app
 │   ├── assets # 资源文件
 |   |   └── deeplabv3.ms # 存放模型文件
 │   |
-│   ├── cpp # 模型加载和预测主要逻辑封装类
-|   |   ├── ..
-|   |   ├── mindspore_lite_x.x.x-minddata-arm64-cpu #MindSpore Lite版本
-|   |   ├── MindSporeNetnative.cpp # MindSpore调用相关的JNI方法
-│   |   └── MindSporeNetnative.h # 头文件
-|   |   └── MsNetWork.cpp # MindSpre接口封装
-│   |
 │   ├── java # java层应用代码
-│   │   └── com.mindspore.himindsporedemo
-│   │       ├── gallery.classify # 图像处理及MindSpore JNI调用相关实现
-│   │       │   └── ...
-│   │       └── widget # 开启摄像头及绘制相关实现
-│   │           └── ...
+│   │   └── com.mindspore.imagesegmentation
+│   │       ├── help # 图像处理及MindSpore Java调用相关实现
+│   │       │   └── ImageUtils # 图像预处理
+│   │       │   └── ModelTrackingResult # 推理数据后处理
+│   │       │   └── TrackingMobile # 模型加载、构建计算图和推理
+│   │       └── BitmapUtils # 图像处理
+│   │       └── MainActivity # 交互主页面
+│   │       └── OnBackgroundImageListener # 获取相册图像
+│   │       └── StyleRecycleViewAdapter # 获取相册图像
 │   │
 │   ├── res # 存放Android相关的资源文件
 │   └── AndroidManifest.xml # Android配置文件
@@ -93,7 +86,7 @@ app
 
 ### 配置MindSpore Lite依赖项
 
-Android JNI层调用MindSpore C++ API时，需要相关库文件支持。可通过MindSpore Lite[源码编译](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/build.html)生成`mindspore-lite-{version}-minddata-{os}-{device}.tar.gz`库文件包并解压缩（包含`libmindspore-lite.so`库文件和相关头文件），在本例中需使用生成带图像预处理模块的编译命令。
+Android 调用MindSpore Java API时，需要相关库文件支持。可通过MindSpore Lite[源码编译](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/build.html)生成`mindspore-lite-{version}-minddata-{os}-{device}.tar.gz`库文件包并解压缩（包含`libmindspore-lite.so`库文件和相关头文件），在本例中需使用生成带图像预处理模块的编译命令。
 
 > version：输出件版本号，与所编译的分支代码对应的版本一致。
 >
