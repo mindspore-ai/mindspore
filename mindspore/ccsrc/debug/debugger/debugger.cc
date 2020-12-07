@@ -852,7 +852,7 @@ void Debugger::EmptyTensor() { debug_services_.get()->EmptyTensor(); }
 
 void Debugger::SetTensorLoaderIterNum(uint32_t iter_num) { debug_services_.get()->SetTensorLoaderIterNum(iter_num); }
 
-void Debugger::EmptyPrevTensor() { debug_services_.get()->EmptyTensor(); }
+void Debugger::EmptyPrevTensor() { debug_services_.get()->EmptyPrevTensor(); }
 
 uint32_t Debugger::GetTensorLoaderIterNum() const { return debug_services_.get()->GetTensorLoaderIterNum(); }
 
