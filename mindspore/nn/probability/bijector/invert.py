@@ -23,7 +23,7 @@ class Invert(Bijector):
 
     Args:
         bijector (Bijector): Base Bijector.
-        name (str): The name of the Bijector. Default: Invert.
+        name (str): The name of the Bijector. Default: 'Invert' + bijector.name.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -55,10 +55,10 @@ class Invert(Bijector):
 
     def __init__(self,
                  bijector,
-                 name='Invert'):
+                 name=""):
         param = dict(locals())
         validator.check_value_type('bijector', bijector, [Bijector], "Invert")
-        name = (name + bijector.name) if name == 'Invert' else name
+        name = name or ('Invert' + bijector.name)
         super(Invert, self).__init__(is_constant_jacobian=bijector.is_constant_jacobian,
                                      is_injective=bijector.is_injective,
                                      name=name,

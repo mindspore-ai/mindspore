@@ -27,7 +27,7 @@ class Bernoulli(Distribution):
     Bernoulli Distribution.
 
     Args:
-        probs (float, list, numpy.ndarray, Tensor, Parameter): The probability of that the outcome is 1.
+        probs (float, list, numpy.ndarray, Tensor): The probability of that the outcome is 1.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.int32.
         name (str): The name of the distribution. Default: 'Bernoulli'.

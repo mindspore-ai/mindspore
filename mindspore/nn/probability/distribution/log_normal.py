@@ -28,8 +28,8 @@ class LogNormal(msd.TransformedDistribution):
     logarithm is normally distributed. It is constructed as the exponential transformation of a Normal distribution.
 
     Args:
-        loc (int, float, list, numpy.ndarray, Tensor, Parameter): The mean of the underlying Normal distribution.
-        scale (int, float, list, numpy.ndarray, Tensor, Parameter): The standard deviation of the underlying
+        loc (int, float, list, numpy.ndarray, Tensor): The mean of the underlying Normal distribution.
+        scale (int, float, list, numpy.ndarray, Tensor): The standard deviation of the underlying
           Normal distribution.
         seed (int): the seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
