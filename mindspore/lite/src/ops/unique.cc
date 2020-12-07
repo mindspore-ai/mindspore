@@ -22,14 +22,7 @@
 
 namespace mindspore {
 namespace lite {
-#ifdef PRIMITIVE_WRITEABLE
-int Unique::GetOutType() const { return this->primitive_->value.AsUnique()->outType; }
-
-void Unique::SetOutType(int out_type) { this->primitive_->value.AsUnique()->outType = out_type; }
-
-#else
-
-int Unique::GetOutType() const { return this->primitive_->value_as_Unique()->outType(); }
+#ifndef PRIMITIVE_WRITEABLE
 int Unique::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);

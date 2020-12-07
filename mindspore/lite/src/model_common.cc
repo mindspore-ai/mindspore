@@ -176,7 +176,7 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
   }
   flatbuffers::Verifier verify((const uint8_t *)model_buf, size);
   int schema_version = VersionVerify(&verify);
-  if (schema_version == -1) {
+  if (schema_version == SCHEMA_INVALID) {
     MS_LOG(ERROR) << "The buffer is invalid and fail to create graph.";
     return nullptr;
   }

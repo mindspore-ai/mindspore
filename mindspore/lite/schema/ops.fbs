@@ -936,7 +936,7 @@ table ScatterND {
 }
 
 table Unique {
-    outType: int;
+    outType: int;  // DEPRECATED
 }
 
 table Unstack {
