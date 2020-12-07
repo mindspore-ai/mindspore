@@ -73,7 +73,7 @@ class Dropout(Cell):
         Tensor, output tensor with the same shape as the input.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
@@ -102,14 +102,14 @@ class Dropout(Cell):
         self.dropout_gen_mask = P.DropoutGenMask(Seed0=self.seed0, Seed1=self.seed1)
         self.dropout_do_mask = P.DropoutDoMask()
         self.cast = P.Cast()
-        self.is_gpu = context.get_context('device_target') in ["GPU"]
+        self.is_ascend = context.get_context('device_target') in ["Ascend"]
         self.dropout = P.Dropout(keep_prob)
 
     def construct(self, x):
         if not self.training:
             return x
 
-        if self.is_gpu:
+        if not self.is_ascend:
             out, _ = self.dropout(x)
             return out
 
