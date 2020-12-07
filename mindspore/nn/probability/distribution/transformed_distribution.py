@@ -63,8 +63,7 @@ class TransformedDistribution(Distribution):
         >>> # To initialize a transformed distribution
         >>> # using a Normal distribution as the base distribution,
         >>> # and an Exp bijector as the bijector function.
-        >>> trans_dist = msd.TransformedDistribution(msb.Exp(),
-        >>>                                          msd.Normal(0.0, 1.0))
+        >>> trans_dist = msd.TransformedDistribution(msb.Exp(), msd.Normal(0.0, 1.0))
         >>>
         >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
         >>> prob = trans_dist.prob(value)

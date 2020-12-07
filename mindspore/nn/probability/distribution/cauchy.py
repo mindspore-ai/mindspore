@@ -168,6 +168,8 @@ class Cauchy(Distribution):
         self.tan = P.Tan()
         self.uniform = C.uniform
 
+        self.entropy_const = np.log(4 * np.pi)
+
 
     def extend_repr(self):
         if self.is_scalar_batch:
@@ -228,7 +230,7 @@ class Cauchy(Distribution):
             H(X) = \log(4 * \Pi * scale)
         """
         loc, scale = self._check_param_type(loc, scale)
-        return self.log(4 * np.pi * scale)
+        return self.log(scale) + self.entropy_const
 
     def _log_prob(self, value, loc=None, scale=None):
         r"""
