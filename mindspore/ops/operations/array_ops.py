@@ -2308,7 +2308,7 @@ class Unpack(PrimitiveWithInfer):
         ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> unpack = ops.Unpack()
