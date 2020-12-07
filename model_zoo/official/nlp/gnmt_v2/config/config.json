@@ -4,7 +4,7 @@
     "epochs": 6,
     "batch_size": 128,
     "dataset_schema": "/home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.json",
-    "pre_train_dataset": "/home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.tfrecord-001-of-001",
+    "pre_train_dataset": "/home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.mindrecord",
     "fine_tune_dataset": null,
     "valid_dataset": null,
     "dataset_sink_mode": true

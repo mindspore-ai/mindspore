@@ -93,7 +93,7 @@ class GNMTConfig:
         init_loss_scale (int): Initialized loss scale.
         loss_scale_factor (int): Loss scale factor.
         scale_window (int): Window size of loss scale.
-        lr_scheduler (str): Whether use lr_scheduler, only support "ISR" now.
+        lr_scheduler (str): Learning rate scheduler. Please see the Note as follow.
         optimizer (str): Optimizer for training, e.g. Adam, Lamb, momentum. Default: Adam.
         lr (float): Initial learning rate.
         min_lr (float): Minimum learning rate.

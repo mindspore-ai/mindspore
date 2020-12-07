@@ -39,7 +39,7 @@ Attention mechanism: uses the standardized Bahdanau attention mechanism. First, 
 
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
-- WMT Englis-German for training.
+- WMT English-German for training.
 - WMT newstest2014 for evaluation.
 
 # [Environment Requirements](#contents)
@@ -178,7 +178,7 @@ Almost all required options and parameters can be easily assigned, including the
   'hidden_size': 1024        # the output's last dimension of dynamicRNN
   'initializer_range': 0.1  # initializer range
   'max_decode_length': 50  # max length of decoder
-  'lr': 2e-1                 # initial learning rate
+  'lr': 2e-3                 # initial learning rate
   'lr_scheduler': 'WarmupMultiStepLR'  # learning rate scheduler
   'existed_ckpt': ""        # the absolute full path to save the checkpoint file
   ```
@@ -242,7 +242,7 @@ The `VOCAB_ADDR` is the vocabulary address, `BPE_CODE_ADDR` is the bpe code addr
 | Resource                   | Ascend 910                                                     |
 | uploaded Date              | 11/06/2020 (month/day/year)                                    |
 | MindSpore Version          | 1.0.0                                                          |
-| Dataset                    | WMT Englis-German for training                                              |
+| Dataset                    | WMT English-German for training                                |
 | Training Parameters        | epoch=6, batch_size=128                                        |
 | Optimizer                  | Adam                                                           |
 | Loss Function              | Softmax Cross Entropy                                          |
