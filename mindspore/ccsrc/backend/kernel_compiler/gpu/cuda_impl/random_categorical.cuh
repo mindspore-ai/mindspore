@@ -19,11 +19,11 @@
 
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T>
-void GetCdfKernel(const T *logits_addr, double** dev_cdf, const int batch_size, const int num_classes,
+void GetCdfKernel(const T *logits_addr, double** dev_cdf, const size_t batch_size, const size_t num_classes,
                   cudaStream_t cuda_stream);
 template <typename S>
-void RandomCategoricalKernel(int num_samples, double** dev_rand, double** dev_cdf,
-                             int batch_size, int num_classes, S *output_addr,
+void RandomCategoricalKernel(const size_t num_samples, double** dev_rand, double** dev_cdf,
+                             const size_t batch_size, const size_t num_classes, S *output_addr,
                              cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RANDOM_CATEGORICAL_IMPL_H_

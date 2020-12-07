@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T, typename S>
+template <typename T, typename G, typename S>
 class RandomCategoricalGpuKernel : public GpuKernel {
  public:
   RandomCategoricalGpuKernel() : batch_size_(0), num_classes_(0), num_samples_(0), seed_(0) {}
@@ -43,7 +43,7 @@ class RandomCategoricalGpuKernel : public GpuKernel {
 
     std::unique_ptr<double *[]> host_cdf;
     host_cdf = std::make_unique<double *[]>(batch_size_);
-    for (int i = 0; i < batch_size_; i++) {
+    for (size_t i = 0; i < batch_size_; i++) {
       host_cdf[i] = GetDeviceAddress<double>(workspaces, i);
     }
     double **dev_cdf = GetDeviceAddress<double *>(workspaces, batch_size_);
@@ -55,18 +55,18 @@ class RandomCategoricalGpuKernel : public GpuKernel {
 
     std::unique_ptr<double *[]> host_rand;
     host_rand = std::make_unique<double *[]>(batch_size_);
-    for (int i = 0; i < batch_size_; i++) {
+    for (size_t i = 0; i < batch_size_; i++) {
       host_rand[i] = GetDeviceAddress<double>(workspaces, batch_size_ + 1 + i);
     }
 
     double **dev_rand = GetDeviceAddress<double *>(workspaces, batch_size_ * 2 + 1);
-    for (int i = 0; i < batch_size_; i++) {
+    for (size_t i = 0; i < batch_size_; i++) {
       std::unique_ptr<double[]> host_1d_rand;
       host_1d_rand = std::make_unique<double[]>(num_samples_);
 
-      std::default_random_engine rng(seed_);
+      std::default_random_engine rng(static_cast<G>(seed_));
       std::uniform_real_distribution<> dist(0, 1);
-      for (int j = 0; j < num_samples_; j++) {
+      for (size_t j = 0; j < num_samples_; j++) {
         host_1d_rand[j] = dist(rng);
       }
       CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,
@@ -105,11 +105,11 @@ class RandomCategoricalGpuKernel : public GpuKernel {
       MS_LOG(ERROR) << "logits's dims is " << logits_shape.size() << ", but it should be only 2-D.";
       return false;
     }
-    batch_size_ = SizeToInt(logits_shape[0]);
-    num_classes_ = SizeToInt(logits_shape[1]);
+    batch_size_ = logits_shape[0];
+    num_classes_ = logits_shape[1];
 
-    num_samples_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "num_samples"));
-    seed_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "seed"));
+    num_samples_ = LongToSize(GetAttr<int64_t>(kernel_node, "num_samples"));
+    seed_ = GetAttr<int64_t>(kernel_node, "seed");
 
     InitSizeLists();
     return true;
@@ -120,26 +120,26 @@ class RandomCategoricalGpuKernel : public GpuKernel {
   void InitSizeLists() override {
     // init memory
     input_size_list_.push_back(sizeof(T) * batch_size_ * num_classes_);
-    input_size_list_.push_back(sizeof(int) * 2);
-
+    input_size_list_.push_back(sizeof(G));
+    input_size_list_.push_back(sizeof(G));
     output_size_list_.push_back(sizeof(S) * batch_size_ * num_samples_);
 
-    for (int i = 0; i < batch_size_; i++) {
+    for (size_t i = 0; i < batch_size_; i++) {
       workspace_size_list_.push_back(sizeof(double) * num_classes_);
     }
     workspace_size_list_.push_back(sizeof(double *) * batch_size_);
 
-    for (int i = 0; i < batch_size_; i++) {
+    for (size_t i = 0; i < batch_size_; i++) {
       workspace_size_list_.push_back(sizeof(double) * num_samples_);
     }
     workspace_size_list_.push_back(sizeof(double *) * batch_size_);
   }
 
  private:
-  int batch_size_;
-  int num_classes_;
-  int num_samples_;
-  int seed_;
+  size_t batch_size_;
+  size_t num_classes_;
+  size_t num_samples_;
+  int64_t seed_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
