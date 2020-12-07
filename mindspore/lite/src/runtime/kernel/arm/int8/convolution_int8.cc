@@ -60,9 +60,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = filter_tensor->Channel();
   auto output_channel = filter_tensor->Batch();
-  int kernel_h = filter_tensor->Height();
-  int kernel_w = filter_tensor->Width();
-  int kernel_plane = kernel_h * kernel_w;
+  int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
   conv_param_->input_channel_ = input_channel;
   conv_param_->output_channel_ = output_channel;
   int up_round_deep;
@@ -84,7 +82,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   int32_t input_zp = conv_param_->conv_quant_arg_.input_quant_args_[0].zp_;
 
   // init weight
-  auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->MutableData());
+  auto origin_weight = reinterpret_cast<int8_t *>(in_tensors_.at(kWeightIndex)->data_c());
   packed_weight_ = reinterpret_cast<int8_t *>(malloc(pack_weight_size));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "malloc packed_weight_ failed.";
@@ -109,7 +107,7 @@ int ConvolutionInt8CPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, bias_size);
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->MutableData());
+    auto ori_bias = reinterpret_cast<int32_t *>(in_tensors_.at(kBiasIndex)->data_c());
     memcpy(bias_data_, ori_bias, output_channel * sizeof(int32_t));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
@@ -210,9 +208,8 @@ int ConvolutionInt8CPUKernel::ReSize() {
 }
 
 int ConvolutionInt8CPUKernel::RunImpl(int task_id) {
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto ori_input_data = reinterpret_cast<int8_t *>(input_tensor->MutableData());
-  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->MutableData());
+  auto ori_input_data = reinterpret_cast<int8_t *>(in_tensors_.at(kInputIndex)->data_c());
+  auto output_addr = reinterpret_cast<int8_t *>(out_tensors_.at(kOutputIndex)->data_c());
   ConvInt8(ori_input_data, packed_input_, matmul_packed_input_, packed_weight_, reinterpret_cast<int32_t *>(bias_data_),
            output_addr, filter_zp_ptr_, input_sum_, task_id, conv_param_, matmul_func_, support_optimize_);
   return RET_OK;
@@ -325,9 +322,11 @@ kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor
   } else {
     new_out_channel = inputs.at(kWeightIndex)->Batch() / group;
   }
+  int batch = inputs.front()->Batch();
+  conv_param->input_batch_ = batch;
+  conv_param->output_batch_ = batch;
   bool infered_flag = primitive != nullptr && primitive->infer_flag();
   if (infered_flag) {
-    int batch = inputs.front()->Batch();
     int in_h = inputs.front()->Height();
     int in_w = inputs.front()->Width();
     conv_param->input_channel_ = new_in_channel;
