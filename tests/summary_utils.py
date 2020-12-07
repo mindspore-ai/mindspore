@@ -54,6 +54,8 @@ class SummaryReader:
         """Read next event."""
         file_handler = self._file_handler
         header = file_handler.read(_HEADER_SIZE)
+        if not header:
+            return None
         data_len = struct.unpack('Q', header)[0]
         # Ignore crc check.
         file_handler.read(_HEADER_CRC_SIZE)
