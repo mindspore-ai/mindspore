@@ -46,6 +46,7 @@
 #include "utils/config_manager.h"
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/tensor_load.h"
+#include "debug/anf_ir_utils.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
 #include "backend/optimizer/graph_kernel/tensor_promotion.h"
@@ -1041,6 +1042,7 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
     std::string file_name = "graph_build_" + std::to_string(graph->graph_id()) + ".ir";
     DumpIR(file_name, graph, true);
     DumpIRProto(graph, "vm_build_" + std::to_string(graph->graph_id()));
+    DumpIR("trace_code_graph", graph, true, kWholeStack);
   }
 #endif
 }
