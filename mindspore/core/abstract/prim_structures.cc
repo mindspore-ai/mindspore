@@ -163,18 +163,14 @@ AbstractBasePtr InferTupleOrListSetItem(const std::string &op_name, const Abstra
                              << index_value->ToString();
   }
   int64_t idx_v = GetValue<int64_t>(index_value);
-  if (idx_v < 0) {
-    MS_EXCEPTION(IndexError) << "The index of " << typeid(T).name() << " should be positive number, but got " << idx_v
-                             << ".";
-  }
-
-  size_t uidx_v = LongToSize(idx_v);
   AbstractBasePtrList elements = queue->elements();
   std::size_t nelems = elements.size();
-  if (uidx_v >= nelems) {
-    MS_EXCEPTION(IndexError) << op_name << " evaluator the index: " << uidx_v << " to set out of range: " << nelems - 1
-                             << ".";
+  int64_t idx_t = idx_v >= 0 ? idx_v : idx_v + SizeToLong(nelems);
+  if (idx_t < 0 || idx_t >= SizeToLong(nelems)) {
+    MS_EXCEPTION(IndexError) << op_name << " evaluator the index: " << idx_v << " to set out of range: [-" << nelems
+                             << "," << nelems - 1 << "].";
   }
+  size_t uidx_v = LongToSize(idx_t);
   elements[uidx_v] = args_spec_list[2];
   return std::make_shared<T>(elements);
 }

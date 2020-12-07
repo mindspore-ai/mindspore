@@ -330,7 +330,7 @@ AnfNodePtr EraseExtractKeywordArg(const CNodePtr &node) {
 ValueTuplePtr ConvertValueListToValueTuple(const ValueListPtr &value_list, int64_t depth) {
   const int64_t DEPTH_MAX = 5;
   if (depth > DEPTH_MAX) {
-    MS_LOG(EXCEPTION) << "List nesting is not allowed more than 5 levels.";
+    MS_LOG(EXCEPTION) << "List nesting is not allowed more than 6 levels.";
   }
   std::vector<ValuePtr> elements;
   for (const auto &it : value_list->value()) {
