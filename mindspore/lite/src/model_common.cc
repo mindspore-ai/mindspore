@@ -138,14 +138,7 @@ int SubGraphVerify(const Model &model) {
   return RET_OK;
 }
 
-int ModelVerify(const Model &model, const int &schema_version) {
-  if (schema_version == SCHEMA_VERSION::SCHEMA_CUR) {
-    return NodeVerify(model) == RET_OK && SubGraphVerify(model) == RET_OK;
-  } else if (schema_version == SCHEMA_VERSION::SCHEMA_V0) {
-    return NodeVerify(model) == RET_OK;
-  }
-  return RET_ERROR;
-}
+bool ModelVerify(const Model &model) { return NodeVerify(model) == RET_OK && SubGraphVerify(model) == RET_OK; }
 
 const void *GetMetaGraphByVerison(const char *buf, const int &schema_version) {
   if (buf == nullptr) {
@@ -230,6 +223,6 @@ Model *ImportFromBuffer(const char *model_buf, size_t size, bool take_buf) {
     return nullptr;
   }
 
-  return ModelVerify(*model, schema_version) ? model : nullptr;
+  return ModelVerify(*model) ? model : nullptr;
 }
 }  // namespace mindspore::lite

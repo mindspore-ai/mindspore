@@ -181,7 +181,7 @@ int NodeVerify(const Model &model);
 
 int SubGraphVerify(const Model &model);
 
-int ModelVerify(const Model &model, const int &schema_version);
+bool ModelVerify(const Model &model);
 
 const void *GetMetaGraphByVerison(const char *buf, const int &schema_version);
 
