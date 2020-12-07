@@ -63,13 +63,13 @@ int SpaceToDepth::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   MS_ASSERT(this->primitive_ != nullptr);
   if (outputs.size() != kSpaceToDepthOutputNum || inputs.size() != kSpaceToDepthInputNum) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs.size() << ",input size: " << inputs.size();
-    return 1;
+    return RET_ERROR;
   }
 
   auto input = inputs.at(0);
   if (input->format() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "space_to_depth only support NHWC now!";
-    return 1;
+    return RET_ERROR;
   }
   outputs.at(0)->set_format(input->format());
   outputs.at(0)->set_data_type(input->data_type());
@@ -79,14 +79,18 @@ int SpaceToDepth::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   auto input_shape = input->shape();
   if (input_shape.size() != kDimension_4d) {
     MS_LOG(ERROR) << "input shape dimension size should == " << kDimension_4d;
-    return 1;
+    return RET_ERROR;
   }
 
   int32_t block_size = GetBlockSize();
+  if (block_size == 0) {
+    MS_LOG(ERROR) << "block_size is zero";
+    return RET_ERROR;
+  }
   if (input_shape.at(NHWC_H) % block_size != 0 || input_shape.at(NHWC_H) == 0 ||
       input_shape.at(NHWC_W) % block_size != 0 || input_shape.at(NHWC_W) == 0) {
     MS_LOG(ERROR) << "input dimension h or w size error!";
-    return 1;
+    return RET_ERROR;
   }
   std::vector<int32_t> output_shape(input_shape.size());
   output_shape.at(NHWC_N) = input_shape.at(NHWC_N);
