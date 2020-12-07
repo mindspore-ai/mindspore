@@ -7,6 +7,7 @@ add_library(engine-opt OBJECT
           pre/cache_error_pass.cc
           pre/cache_transform_pass.cc
           pre/cache_validation_pass.cc
+          pre/deep_copy_pass.cc
           pre/epoch_ctrl_pass.cc
           pre/epoch_injection_pass.cc
           pre/getter_pass.cc

@@ -206,9 +206,6 @@ void DatasetOp::Parent(DatasetOp **parent, int32_t parent_index) const {
   }
 }
 
-// Getter function to get all of our children.
-std::vector<std::shared_ptr<DatasetOp>> DatasetOp::children() const { return child_; }
-
 // Getter function to get all of our parents.
 std::vector<DatasetOp *> DatasetOp::parents() const { return parent_; }
 

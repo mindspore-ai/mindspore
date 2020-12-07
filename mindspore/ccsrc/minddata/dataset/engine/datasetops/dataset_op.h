@@ -111,9 +111,6 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \param[in] parent_index An operator can have n parents. Indicates which parent to return.
   void Parent(DatasetOp **parent, int32_t parent_index) const;
 
-  // Getter function to get all of our children.
-  std::vector<std::shared_ptr<DatasetOp>> children() const;
-
   // Getter function to get all of our parents.
   std::vector<DatasetOp *> parents() const;
 

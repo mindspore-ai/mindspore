@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <string>
 #include <vector>
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/engine/opt/pre/input_validation_pass.h"
@@ -24,6 +25,19 @@ namespace dataset {
 Status InputValidationPass::Visit(std::shared_ptr<DatasetNode> node, bool *modified) {
   *modified = false;
   RETURN_IF_NOT_OK(node->ValidateParams());
+
+  // A data source node must be a leaf node
+  if ((node->IsMappable() || node->IsNonMappable()) && !node->IsLeaf()) {
+    std::string err_msg = node->Name() + " is a data source and must be a leaf node.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
+  // A non-leaf node must not be a data source node
+  if (node->IsNotADataSource() && node->IsLeaf()) {
+    std::string err_msg = node->Name() + " is a dataset operator and must not be a leaf node.";
+    RETURN_STATUS_UNEXPECTED(err_msg);
+  }
+
   return Status::OK();
 }
 }  // namespace dataset

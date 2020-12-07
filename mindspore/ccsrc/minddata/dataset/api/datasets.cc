@@ -556,8 +556,8 @@ std::shared_ptr<SentencePieceVocab> Dataset::BuildSentencePieceVocab(
   const std::vector<std::string> &col_names, uint32_t vocab_size, float character_coverage,
   SentencePieceModel model_type, const std::unordered_map<std::string, std::string> &params) {
   auto vocab = std::make_shared<SentencePieceVocab>();
-  auto ds = std::make_shared<BuildSentenceVocabNode>(IRNode()->DeepCopy(), vocab, col_names, vocab_size,
-                                                     character_coverage, model_type, params);
+  auto ds = std::make_shared<BuildSentenceVocabNode>(IRNode(), vocab, col_names, vocab_size, character_coverage,
+                                                     model_type, params);
 
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   Status rc = runtime_context->Init();
@@ -588,8 +588,8 @@ std::shared_ptr<Vocab> Dataset::BuildVocab(const std::vector<std::string> &colum
                                            const std::pair<int64_t, int64_t> &freq_range, int64_t top_k,
                                            const std::vector<std::string> &special_tokens, bool special_first) {
   auto vocab = std::make_shared<Vocab>();
-  auto ds = std::make_shared<BuildVocabNode>(IRNode()->DeepCopy(), vocab, columns, freq_range, top_k, special_tokens,
-                                             special_first);
+  auto ds =
+    std::make_shared<BuildVocabNode>(IRNode(), vocab, columns, freq_range, top_k, special_tokens, special_first);
 
   std::unique_ptr<NativeRuntimeContext> runtime_context = std::make_unique<NativeRuntimeContext>();
   Status rc = runtime_context->Init();

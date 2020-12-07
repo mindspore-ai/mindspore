@@ -20,12 +20,18 @@
 #include "minddata/dataset/engine/ir/datasetops/root_node.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/opt/pre/cache_validation_pass.h"
+#include "minddata/dataset/engine/opt/pre/deep_copy_pass.h"
 #include "minddata/dataset/engine/opt/pre/epoch_ctrl_pass.h"
 #include "minddata/dataset/engine/opt/pre/input_validation_pass.h"
 #include "minddata/dataset/engine/opt/pre/node_removal_pass.h"
 
 namespace mindspore {
 namespace dataset {
+
+TreeAdapter::TreeAdapter() {
+  tree_state_ = kCompileStateInit;
+  optimize_ = common::GetEnv("OPTIMIZE") == "true" ? true : false;
+}
 
 Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
   // Vector of actions in pre-pass phase
@@ -86,7 +92,7 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
   return Status::OK();
 }
 
-Status TreeAdapter::BuildExecutionTree(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op) {
+Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op) {
   // Build the DatasetOp ExecutionTree from the optimized IR tree
   std::vector<std::shared_ptr<DatasetOp>> ops;
   RETURN_IF_NOT_OK(ir->Build(&ops));
@@ -104,47 +110,20 @@ Status TreeAdapter::BuildExecutionTree(std::shared_ptr<DatasetNode> ir, std::sha
   // Build the children of IR, once they return, add the return value to *op
   for (std::shared_ptr<DatasetNode> child_ir : ir->Children()) {
     std::shared_ptr<DatasetOp> child_op;
-    RETURN_IF_NOT_OK(BuildExecutionTree(child_ir, &child_op));
+    RETURN_IF_NOT_OK(BuildExecutionTreeRecur(child_ir, &child_op));
     RETURN_IF_NOT_OK(ops.back()->AddChild(child_op));  // append children to the last of ops
   }
 
   return Status::OK();
 }
 
-Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_epochs) {
-  optimize_ = true;  // Always ON (temporary)
-
-  RETURN_UNEXPECTED_IF_NULL(input_ir);
-  MS_LOG(INFO) << "Input plan:" << '\n' << *input_ir << '\n';
-
-  // We will first walk the input tree to sanity check this is not a graph
-  // Flag an error when it is not a tree
-  CHECK_FAIL_RETURN_UNEXPECTED(input_ir->IsTree(), "The data pipeline is not a tree (i.e. one node has two consumers)");
-
-  // Copy the input IR tree and insert under the root node
-  // Create a root node to host the new copy of the input IR tree to pass to the optimizer
-  auto root_ir = std::make_shared<RootNode>(input_ir->DeepCopy(), num_epochs);
-  MS_LOG(INFO) << "Plan before PrePass:" << '\n' << *root_ir << '\n';
-
-  // Pre-pass of the IR tree
-  RETURN_IF_NOT_OK(PrePass(root_ir));
-
-  // Optional phase of optimization
-  if (optimize_) {
-    RETURN_IF_NOT_OK(Optimize(root_ir));
-  }
-
-  // Post-pass of the IR tree
-  RETURN_IF_NOT_OK(PostPass(root_ir));
-
-  MS_LOG(INFO) << "Plan after PostPass:" << '\n' << *root_ir << '\n';
-
+Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir, int32_t num_epochs) {
   // This will evolve in the long run
   tree_ = std::make_unique<ExecutionTree>();
 
   // Build the Execution tree from the child of the IR root node, which represent the root of the input IR tree
   std::shared_ptr<DatasetOp> root_op;
-  RETURN_IF_NOT_OK(BuildExecutionTree(root_ir->Children()[0], &root_op));
+  RETURN_IF_NOT_OK(BuildExecutionTreeRecur(root_ir->Children()[0], &root_op));
   RETURN_IF_NOT_OK(tree_->AssignRoot(root_op));
 
   if (pre_pass_override_) tree_->SetPrePassOverride(pre_pass_override_);
@@ -161,6 +140,48 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_e
   cur_batch_num_ = 0;
   cur_connector_size_ = 0;
   cur_connector_capacity_ = 0;
+
+  return Status::OK();
+}
+
+Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_epochs) {
+  RETURN_UNEXPECTED_IF_NULL(input_ir);
+
+  tree_state_ = kCompileStateIRGraphBuilt;
+  MS_LOG(INFO) << "Input plan:" << '\n' << *input_ir << '\n';
+
+  // Clone the input IR tree and insert under the root node
+  // Create a root node to host the new copy of the input IR tree
+  // This is done so that the compilation will process and modify the tree
+  // without changing the tree associated with the user code.
+  // The tree from the user code is permitted to form a graph where any node
+  // is consumed by more than one parent. However, this cloning process here
+  // will break the graph into a tree by copying each consumption of a node into a new copy.
+  bool m = false;
+  DeepCopyPass cloning_tree;
+  RETURN_IF_NOT_OK(cloning_tree.Run(input_ir, &m));
+  std::shared_ptr<RootNode> root_ir = cloning_tree.Root();
+  root_ir->SetNumEpochs(num_epochs);
+
+  tree_state_ = kCompileStateIRTreeCloned;
+  MS_LOG(INFO) << "Plan before optimization:" << '\n' << *root_ir << '\n';
+
+  // Pre-pass of the IR tree
+  RETURN_IF_NOT_OK(PrePass(root_ir));
+
+  // Optional phase of optimization
+  if (optimize_) {
+    RETURN_IF_NOT_OK(Optimize(root_ir));
+  }
+
+  // Post-pass of the IR tree
+  RETURN_IF_NOT_OK(PostPass(root_ir));
+
+  tree_state_ = kCompileStateOptimized;
+  MS_LOG(INFO) << "Plan after optimization:" << '\n' << *root_ir << '\n';
+
+  RETURN_IF_NOT_OK(Build(root_ir, num_epochs));
+  tree_state_ = kCompileStateReady;
 
   return Status::OK();
 }
