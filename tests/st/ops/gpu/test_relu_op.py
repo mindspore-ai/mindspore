@@ -68,6 +68,28 @@ def test_relu_float32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_relu_int8():
+    x = Tensor(np.array([[[[-1, 1, 10],
+                           [1, -1, 1],
+                           [10, 1, -1]]]]).astype(np.int8))
+    expect = np.array([[[[0, 1, 10,],
+                         [1, 0, 1,],
+                         [10, 1, 0.]]]]).astype(np.int8)
+
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    relu = NetRelu()
+    output = relu(x)
+    assert (output.asnumpy() == expect).all()
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    relu = NetRelu()
+    output = relu(x)
+    assert (output.asnumpy() == expect).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_relu_int32():
     x = Tensor(np.array([[[[-1, 1, 10],
                            [1, -1, 1],

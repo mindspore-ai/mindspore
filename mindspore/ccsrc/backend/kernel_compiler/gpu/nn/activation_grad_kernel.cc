@@ -26,6 +26,12 @@ MS_REG_GPU_KERNEL_ONE(
   ReluGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   ActivationGradGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  ReluGrad, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  ActivationGradGpuKernel, int32_t)
+MS_REG_GPU_KERNEL_ONE(
+  ReluGrad, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+  ActivationGradGpuKernel, int8_t)
 
 MS_REG_GPU_KERNEL_ONE(
   ReLU6Grad,

@@ -33,6 +33,7 @@ void CalReLU(int size, T *input_addr, T *output_addr, cudaStream_t cuda_stream) 
 
 template void CalReLU(int size, float *input_addr, float *output_addr, cudaStream_t cuda_stream);
 template void CalReLU(int size, half *input_addr, half *output_addr, cudaStream_t cuda_stream);
+template void CalReLU(int size, int8_t *input_addr, int8_t *output_addr, cudaStream_t cuda_stream);
 template void CalReLU(int size, int32_t *input_addr, int32_t *output_addr, cudaStream_t cuda_stream);
 template void CalReLU(int size, int64_t *input_addr, int64_t *output_addr, cudaStream_t cuda_stream);
 
