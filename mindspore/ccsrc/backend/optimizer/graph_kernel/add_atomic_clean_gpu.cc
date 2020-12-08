@@ -374,13 +374,10 @@ CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphP
 
   // Create composite op's sub-graph.
   auto new_sub_graph = std::make_shared<FuncGraph>();
-  auto parameter = new_sub_graph->add_parameter();
-  parameter->set_abstract(value_node->abstract());
-  parameter->set_kernel_info(value_node->kernel_info_ptr());
 
-  AnfNodePtr broadcast_input_node = parameter;
+  AnfNodePtr broadcast_input_node = value_node;
   if (dst_type == kNumberTypeFloat16) {
-    AnfNodePtrList cast_inputs = {NewValueNode(prim::kPrimCast), parameter};
+    AnfNodePtrList cast_inputs = {NewValueNode(prim::kPrimCast), value_node};
     auto cast_node_inner =
       CreateCNode(cast_inputs, new_sub_graph, {.format = format, .shape = {1}, .type = TypeIdToType(dst_type)});
     AnfAlgo::SetNodeAttr("dst_type", MakeValue("float32"), cast_node_inner);
@@ -400,12 +397,13 @@ CNodePtr AtomicCleanInsertter::CreateAtomicCleanCompositeNode(const KernelGraphP
 
   // Makeup sub-graph.
   new_sub_graph->set_output(broadcast_to_node_inner);
-  auto broadcast_to_composite_node = main_graph->NewCNode({NewValueNode(new_sub_graph), value_node});
+  auto broadcast_to_composite_node = main_graph->NewCNode({NewValueNode(new_sub_graph)});
   broadcast_to_composite_node->set_abstract(broadcast_to_node_inner->abstract());
-  SetNewKernelInfo(broadcast_to_composite_node, new_sub_graph, {value_node}, {broadcast_to_node_inner},
-                   kernel::Processor::CUDA);
+  SetNewKernelInfo(broadcast_to_composite_node, new_sub_graph, {}, {broadcast_to_node_inner},
+                   AnfAlgo::GetProcessor(atomic_add_node_));
   auto graph_attr = ExtractGraphKernelName(TopoSort(new_sub_graph->get_return()), "", "atomic_clean");
   new_sub_graph->set_attr(FUNC_GRAPH_ATTR_GRAPH_KERNEL, MakeValue(graph_attr));
+  new_sub_graph->set_attr("composite_type", MakeValue("atomic_clean"));
 
   return broadcast_to_composite_node;
 }
