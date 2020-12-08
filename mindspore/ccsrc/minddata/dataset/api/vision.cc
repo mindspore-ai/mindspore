@@ -355,6 +355,15 @@ std::shared_ptr<ResizeOperation> Resize(std::vector<int32_t> size, Interpolation
   return op->ValidateParams() ? op : nullptr;
 }
 
+#ifdef ENABLE_ANDROID
+// Function to create RotateOperation.
+std::shared_ptr<RotateOperation> Rotate() {
+  auto op = std::make_shared<RotateOperation>();
+  // Input validation
+  return op->ValidateParams() ? op : nullptr;
+}
+#endif
+
 #ifndef ENABLE_ANDROID
 // Function to create ResizeWithBBoxOperation.
 std::shared_ptr<ResizeWithBBoxOperation> ResizeWithBBox(std::vector<int32_t> size, InterpolationMode interpolation) {
@@ -1817,6 +1826,17 @@ std::shared_ptr<TensorOp> ResizeOperation::Build() {
 
   return std::make_shared<ResizeOp>(height, width, interpolation_);
 }
+
+#ifdef ENABLE_ANDROID
+// RotateOperation
+RotateOperation::RotateOperation() { rotate_op = std::make_shared<RotateOp>(0); }
+
+Status RotateOperation::ValidateParams() { return Status::OK(); }
+
+std::shared_ptr<TensorOp> RotateOperation::Build() { return rotate_op; }
+
+void RotateOperation::setAngle(uint64_t angle_id) { rotate_op->setAngle(angle_id); }
+#endif
 
 #ifndef ENABLE_ANDROID
 // ResizeWithBBoxOperation
