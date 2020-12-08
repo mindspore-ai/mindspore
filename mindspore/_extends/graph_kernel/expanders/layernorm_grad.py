@@ -66,8 +66,6 @@ def expand_layernormgrad(expand_info):
         mean_cof = graph_builder.value(x.dtype, (1.0 / reduce_size), x.data_format)
 
         # cal dg db
-        # dg = np.sum(dy * np.power(var + epsilon, -0.5) * (x - mean), axis=tuple(param_axis), keepdims=True)
-        # db = np.sum(dy, axis=tuple(param_axis), keepdims=True)
         var_eps = graph_builder.emit('TensorAdd', [variance, eps])
         sqrt_var_eps = graph_builder.emit('Sqrt', [var_eps])
         rsqrt_var_eps = graph_builder.emit('RealDiv', [const_one, sqrt_var_eps])
@@ -78,8 +76,6 @@ def expand_layernormgrad(expand_info):
         db = graph_builder.emit('ReduceSum', [dy], attrs={'reduce_axis': param_axis, 'keep_dims': False})
 
         # cal sum_1
-        # sum1 = np.sum((-0.5) * dy * gamma * (x - mean) * np.power(var + epsilon, -1.5), axis=tuple(norm_axis),
-        #          keepdims=True)
         tmp_var_eps = graph_builder.emit('Mul', [sqrt_var_eps, var_eps])
         r_tmp_var_eps = graph_builder.emit('RealDiv', [const_one, tmp_var_eps])
         x_sub_mean_mul_r_tmp_var_eps = graph_builder.emit('Mul', [x_sub_mean, r_tmp_var_eps])
@@ -89,18 +85,13 @@ def expand_layernormgrad(expand_info):
         sum_1 = graph_builder.emit('ReduceSum', [sum_1_mul], attrs={'reduce_axis': norm_axis, 'keep_dims': True})
 
         # cal sum_2
-        # sum2 = np.sum(dy * gamma, axis=tuple(norm_axis), keepdims=True)
         sum_2 = graph_builder.emit('ReduceSum', [dy_mul_gamma], attrs={'reduce_axis': norm_axis, 'keep_dims': True})
 
         # cal sum_3
-        # sum3 = np.sum(-2.0 * (x - mean), axis=tuple(norm_axis), keepdims=True)
         sum_3_mul = graph_builder.emit('Mul', [const_neg_two, x_sub_mean])
         sum_3 = graph_builder.emit('ReduceSum', [sum_3_mul], attrs={'reduce_axis': norm_axis, 'keep_dims': True})
 
         # cal dx = dx1 + dx2 + dx3
-        # dx1 = dy * gamma * rsqrt_var_eps
-        # dx2 = sum1 * 2.0 / mean_cof * x_sub_mean
-        # dx3 = (1.0 / mean_cof) * (-1.0 * rsqrt_var_eps * sum2 + 1.0 / mean_cof * sum1 * sum3)
         dx_1 = graph_builder.emit('Mul', [dy_mul_gamma, rsqrt_var_eps])
         sum_1_mul_two = graph_builder.emit('Mul', [sum_1, const_two])
         sum_1_mul_two_tmp = graph_builder.emit('Mul', [sum_1_mul_two, mean_cof])

@@ -19,7 +19,7 @@ from mindspore._extends.graph_kernel.model import model_builder as builder
 def expand_sqrtgrad(expand_info):
     """SqrtGrad expander"""
     # cal formula are:
-    # sqrt_grad(x, dout) = dout / (2 * x)
+    # sqrt_grad(x, dout) is dout / (2 * x)
 
     # get op info.
     input_desc_0 = expand_info['input_desc'][0]

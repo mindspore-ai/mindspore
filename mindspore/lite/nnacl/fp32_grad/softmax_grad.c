@@ -57,8 +57,6 @@ void SoftmaxGrad(const float *input_ptr, const float *yt_ptr, float *output_ptr,
         *(output_ptr + outter_offset + k * N + j) += a * sum_data[j];
       }
     }
-
-    // gemm(0, 0, M, N, K, -1, sum_mul, K, sum_data, N, 1, &output_ptr[outter_offset], N);
   }
 
   for (int i = 0; i < ele_size; i++) {

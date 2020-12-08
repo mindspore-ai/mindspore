@@ -743,9 +743,7 @@ class MatMul(PrimitiveWithInfer):
         # validate whether last two dims satisfying matrix multiply
         x1_last = x1[-2:]
         x2_last = x2[-2:]
-        # x1_col = x1_last[1] if (not transpose_a) else x1_last[0]
         x1_col = x1_last[not self.transpose_a]
-        # x2_row = x2_last[0] if (not transpose_b) else x2_last[1]
         x2_row = x2_last[self.transpose_b]
         if x1_col != x2_row:
             raise ValueError(f'For \'{cls_name}\' evaluator shapes of inputs can not do this operator,'

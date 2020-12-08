@@ -326,7 +326,6 @@ AbstractBasePtr InferImplUnsortedSegmentMax(const AnalysisEnginePtr &, const Pri
     } else {
       num_segments_value = *static_cast<int32_t *>(num_segments_tensor->data_c());
     }
-    // num_segments_value = *static_cast<int64_t *>(num_segments_tensor->data_c());
   } else if (args_spec_list[2]->isa<AbstractScalar>()) {  // num_segments is Scalar
     auto num_segments = CheckArg<AbstractScalar>(op_name, args_spec_list, 2);
     if (num_segments->GetTypeTrack()->type_id() == TypeId::kNumberTypeInt64) {

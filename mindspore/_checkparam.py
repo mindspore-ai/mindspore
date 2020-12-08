@@ -131,7 +131,7 @@ def check_number(arg_value, value, rel, arg_type=int, arg_name=None, prim_name=N
     """
     Check argument integer.
 
-    Usage:
+    Example:
     - number = check_int(number, 0, Rel.GE, "number", None) # number >= 0
     """
     rel_fn = Rel.get_fns(rel)

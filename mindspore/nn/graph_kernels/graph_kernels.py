@@ -901,7 +901,8 @@ class Gelu(GraphKernel):
 
         def _math_four_compute(data_x):
             """
-            return: math_four equal 2*(np(sqrt(2 / np.pi)*(x + 0.044715*tf.pow(x, 3)))
+            Return:
+                math_four equal 2*(np(sqrt(2 / np.pi)*(x + 0.044715*tf.pow(x, 3)))
             """
             datax_pow = data_x * data_x * data_x
             datax_muls_c = self.mul(datax_pow, self.CSVALUE)

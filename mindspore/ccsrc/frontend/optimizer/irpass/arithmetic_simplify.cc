@@ -156,7 +156,6 @@ AnfNodePtr AdjustAllReduceMulAdd::operator()(const OptimizerPtr &, const AnfNode
     if (x_shape != z_shape) {
       // AddN requires x_ and z_ have the same shape.
       // If broadcasting TensorAdd is supported then can use this
-      // AnfNodePtr add = NewCNode({NewValueNode(prim::kPrimTensorAdd), z_, x_}, fg);
       return nullptr;
     }
     AnfNodePtr tuple = NewCNode({make_tuple_op_node, z_, x_}, fg);

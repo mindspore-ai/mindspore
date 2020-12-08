@@ -308,7 +308,6 @@ class Categorical(Distribution):
 
         broadcast_shape_tensor = logits * value
         broadcast_shape = self.shape(broadcast_shape_tensor)
-        # broadcast_shape (N, C)
         num_classes = broadcast_shape[-1]
         label_shape = broadcast_shape[:-1]
 
@@ -373,7 +372,6 @@ class Categorical(Distribution):
 
         broadcast_shape_tensor = probs * value
         broadcast_shape = self.shape(broadcast_shape_tensor)
-        # broadcast_shape (N, C)
         num_classes = broadcast_shape[-1]
         label_shape = broadcast_shape[:-1]
 

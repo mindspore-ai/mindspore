@@ -91,7 +91,6 @@ int OneHot::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outpu
 
   int axis = GetAxis();
   // indices, depth, on_value, off_value
-  // indices, depth, on_off_value(contain 2 values);
   if (inputs.size() != kOneHotInputNum && inputs.size() != kOneHotInputNumOpt) {
     MS_LOG(ERROR) << "OneHot got inputs num " << inputs.size() << ", should be " << kOneHotInputNum << " or "
                   << kOneHotInputNumOpt;
