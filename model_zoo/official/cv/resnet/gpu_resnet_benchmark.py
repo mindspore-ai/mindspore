@@ -39,6 +39,7 @@ parser.add_argument('--epoch_size', type=str, default="2", help='Epoch_size: def
 parser.add_argument('--print_per_steps', type=str, default="20", help='Print loss and time per steps: default 20')
 parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, help='Run distribute')
 parser.add_argument('--dataset_path', type=str, default=None, help='Imagenet dataset path')
+parser.add_argument('--mode', type=str, default="GRAPH", choices=["GRAPH", "PYNATIVE"], help='Execute mode')
 parser.add_argument('--dtype', type=str, choices=["fp32", "fp16", "FP16", "FP32"], default="fp16",\
      help='Compute data type fp32 or fp16: default fp16')
 args_opt = parser.parse_args()
@@ -119,7 +120,11 @@ if __name__ == '__main__':
     compute_type = str(args_opt.dtype).lower()
 
     # init context
-    context.set_context(mode=context.GRAPH_MODE, device_target=dev, save_graphs=False)
+    if args_opt.mode == "GRAPH":
+        mode = context.GRAPH_MODE
+    else:
+        mode = context.PYNATIVE_MODE
+    context.set_context(mode=mode, device_target=dev, save_graphs=False)
     if args_opt.run_distribute:
         init()
         context.set_auto_parallel_context(device_num=get_group_size(), parallel_mode=ParallelMode.DATA_PARALLEL,
@@ -174,10 +179,15 @@ if __name__ == '__main__':
         model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
                       amp_level="O2", keep_batchnorm_fp32=False)
     # define callbacks
+    if mode == context.PYNATIVE_MODE:
+        print_per_steps = 1
     time_cb = MyTimeMonitor(total_batch, print_per_steps)
     loss_cb = LossMonitor()
     cb = [time_cb, loss_cb]
 
     # train model
     print("========START RESNET50 GPU BENCHMARK========")
-    model.train(int(epoch_size * step_size / print_per_steps), dataset, callbacks=cb, sink_size=print_per_steps)
+    if mode == context.GRAPH_MODE:
+        model.train(int(epoch_size * step_size / print_per_steps), dataset, callbacks=cb, sink_size=print_per_steps)
+    else:
+        model.train(epoch_size, dataset, callbacks=cb)
