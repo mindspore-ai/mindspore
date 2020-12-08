@@ -1295,7 +1295,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
     Examples:
         >>> input = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
         >>> weight = Tensor(np.ones([1, 32, 3, 3]), mindspore.float32)
-        >>> depthwise_conv2d = ops.DepthwiseConv2dNative(channel_multiplier = 3, kernel_size = (3, 3))
+        >>> depthwise_conv2d = ops.DepthwiseConv2dNative(channel_multiplier=3, kernel_size=(3, 3))
         >>> output = depthwise_conv2d(input, weight)
         >>> print(output.shape)
         (10, 96, 30, 30)
@@ -2417,7 +2417,7 @@ class ApplyRMSProp(PrimitiveWithInfer):
         >>> input_x = Tensor(1., mindspore.float32)
         >>> mean_square = Tensor(2., mindspore.float32)
         >>> moment = Tensor(1., mindspore.float32)
-        >>> grad = Tensor(2., mindspore.float32 )
+        >>> grad = Tensor(2., mindspore.float32)
         >>> learning_rate = Tensor(0.9, mindspore.float32)
         >>> decay = 0.0
         >>> momentum = 1e-10
@@ -4611,7 +4611,7 @@ class ApplyAdadelta(PrimitiveWithInfer):
         >>> lr = Tensor(0.001, mstype.float32)
         >>> rho = Tensor(0.0, mstype.float32)
         >>> epsilon = Tensor(1e-6, mstype.float32)
-        >>> grad = Tensor(np.random.rand(1, 2).astype(np.float32))
+        >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(lr, rho, epsilon, grad)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
@@ -5863,7 +5863,7 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         - **linear** (Tensor) - Tensor, has the same shape and data type as `linear`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> import mindspore

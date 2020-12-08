@@ -101,7 +101,7 @@ class LSTM(Cell):
           (num_directions * `num_layers`, batch_size, `hidden_size`).
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = nn.LSTM(10, 12, 2, has_bias=True, batch_first=True, bidirectional=False)

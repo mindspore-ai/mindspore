@@ -303,9 +303,9 @@ class SampledSoftmaxLoss(_Loss):
         - **weights** (Tensor) - Tensor of shape (C, dim).
         - **bias** (Tensor) - Tensor of shape (C).  The class biases.
         - **labels** (Tensor) - Tensor of shape (N, num_true), type `int64, int32`. The
-            target classes.
-        - **inputs** (Tensor) - Tensor of shape (N, dim).  The forward activations of
-            the input network.
+          target classes.
+        - **inputs** (Tensor) - Tensor of shape (N, dim). The forward activations of
+          the input network.
 
     Outputs:
         Tensor, a tensor of shape (N) with the per-example sampled softmax losses.
