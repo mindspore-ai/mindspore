@@ -16,6 +16,7 @@
 
 package com.mindspore.imageobject.imageclassification.ui;
 
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -24,6 +25,7 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.UiThread;
@@ -37,6 +39,8 @@ import com.mindspore.imageobject.camera.CameraPreview;
 import com.mindspore.imageobject.imageclassification.bean.RecognitionImageBean;
 import com.mindspore.imageobject.imageclassification.help.GarbageTrackingMobile;
 import com.mindspore.imageobject.imageclassification.help.ImageTrackingMobile;
+import com.mindspore.imageobject.imageclassification.help.SceneTrackingMobile;
+import com.mindspore.imageobject.util.DisplayUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,9 +54,12 @@ import java.util.List;
 @Route(path = "/imageobject/ImageCameraActivity")
 public class ImageCameraActivity extends AppCompatActivity implements CameraPreview.RecognitionDataCallBack {
     private static final String TAG = "ImageCameraActivity";
-    public static final int TYPE_DEMO = 1;
-    public static final int TYPE_CUSTOM = 2;
+    public static final int TYPE_IMAGE = 1;
+    public static final int TYPE_GARBAGE = 2;
+    public static final int TYPE_SCENE = 3;
 
+    private static final String IMAGE_SCENE_MS = "model/mobilenetv2.ms";
+    private static final String GARBAGE_MS = "model/garbage_mobilenetv2.ms";
     @Autowired(name = "OPEN_TYPE")
     int enterType;
 
@@ -62,9 +69,9 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
 
     private CameraPreview cameraPreview;
 
-    private ImageTrackingMobile mTrackingMobile;
-
+    private ImageTrackingMobile imageTrackingMobile;
     private GarbageTrackingMobile garbageTrackingMobile;
+    private SceneTrackingMobile sceneTrackingMobile;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,17 +88,25 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     }
 
     private void init() {
-        if (enterType == TYPE_DEMO) {
-            mTrackingMobile = new ImageTrackingMobile(this);
-            String modelPath = "model/mobilenetv2.ms";
-            boolean ret = mTrackingMobile.loadModelFromBuf(modelPath);
-            Log.d(TAG, "Loading model return value: " + ret);
-        } else {
+        boolean ret = false;
+        RelativeLayout.LayoutParams linearParams = (RelativeLayout.LayoutParams) bottomLayout.getLayoutParams();
+        if (TYPE_IMAGE == enterType) {
+            linearParams.height = DisplayUtil.dip2px(this, 200);
+            bottomLayout.setLayoutParams(linearParams);
+            imageTrackingMobile = new ImageTrackingMobile(this);
+            ret = imageTrackingMobile.loadModelFromBuf(IMAGE_SCENE_MS);
+        } else if (TYPE_GARBAGE == enterType) {
+            linearParams.height = DisplayUtil.dip2px(this, 100);
+            bottomLayout.setLayoutParams(linearParams);
             garbageTrackingMobile = new GarbageTrackingMobile(this);
-            String garbageModelPath = "model/garbage_mobilenetv2.ms";
-            boolean garbageRet = garbageTrackingMobile.loadModelFromBuf(garbageModelPath);
-            Log.d(TAG, "Garbage Loading model return value: " + garbageRet);
+            ret = garbageTrackingMobile.loadModelFromBuf(GARBAGE_MS);
+        } else if (TYPE_SCENE == enterType) {
+            linearParams.height = DisplayUtil.dip2px(this, 100);
+            bottomLayout.setLayoutParams(linearParams);
+            sceneTrackingMobile = new SceneTrackingMobile(this);
+            ret = sceneTrackingMobile.loadModelFromBuf(IMAGE_SCENE_MS);
         }
+        Log.d(TAG, "Loading model return value: " + ret);
         cameraPreview.addImageRecognitionDataCallBack(this);
     }
 
@@ -99,11 +114,7 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     @Override
     protected void onResume() {
         super.onResume();
-        if (enterType == TYPE_DEMO) {
-            cameraPreview.onResume(this, CameraPreview.OPEN_TYPE_IMAGE, mTrackingMobile);
-        } else {
-            cameraPreview.onResume(this, CameraPreview.OPEN_TYPE_IMAGE_CUSTOM, garbageTrackingMobile);
-        }
+        cameraPreview.onResume(this);
     }
 
     @Override
@@ -115,20 +126,42 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     @Override
     protected void onStop() {
         super.onStop();
-        if (mTrackingMobile != null) {
-            boolean ret = mTrackingMobile.unloadModel();
+        if (imageTrackingMobile != null) {
+            boolean ret = imageTrackingMobile.unloadModel();
             Log.d(TAG, "Unload model return value: " + ret);
         }
         if (garbageTrackingMobile != null) {
             boolean ret = garbageTrackingMobile.unloadModel();
             Log.d(TAG, "garbageTrackingMobile Unload model return value: " + ret);
         }
+        if (sceneTrackingMobile != null) {
+            boolean ret = sceneTrackingMobile.unloadModel();
+            Log.d(TAG, "garbageTrackingMobile Unload model return value: " + ret);
+        }
+    }
+
+    @Override
+    public void onRecognitionBitmapCallBack(Bitmap bitmap) {
+        String result = null;
+        long startTime = System.currentTimeMillis();
+        if (TYPE_IMAGE == enterType) {
+            result = imageTrackingMobile.MindSpore_runnet(bitmap);
+        } else if (TYPE_GARBAGE == enterType) {
+            result = garbageTrackingMobile.MindSpore_runnet(bitmap);
+        } else if (TYPE_SCENE == enterType) {
+            result = sceneTrackingMobile.MindSpore_runnet(bitmap);
+        }
+        long endTime = System.currentTimeMillis();
+
+        onRecognitionDataCallBack(result, (endTime - startTime) + "ms ");
+        if (!bitmap.isRecycled()) {
+            bitmap.recycle();
+        }
     }
 
 
-    @Override
     public void onRecognitionDataCallBack(final String result, final String time) {
-        if (enterType == TYPE_DEMO) {
+        if (TYPE_IMAGE == enterType) {
             if (recognitionObjectBeanList != null) {
                 recognitionObjectBeanList.clear();
             } else {
@@ -152,21 +185,20 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
                 });
             }
 
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    showResultsInBottomSheet(recognitionObjectBeanList, time);
-                }
-            });
-        } else {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    showResultsInBottomSheetGarbage(result, time);
-                }
-            });
+            runOnUiThread(() -> showResultsInBottomSheet(recognitionObjectBeanList, time));
+        } else if (TYPE_GARBAGE == enterType) {
+            runOnUiThread(() -> showResultsInBottomSheetGarbage(result, time));
+        } else if (TYPE_SCENE == enterType) {
+            if (!result.equals("") && result.contains(":")) {
+                String[] resultArray = result.split(":");
+                bean = new RecognitionImageBean(resultArray[0], Float.valueOf(resultArray[1]));
+            }
+            runOnUiThread(() -> showResultsInBottomSheetScene(bean, time));
         }
     }
+
+
+    RecognitionImageBean bean;
 
     @UiThread
     protected void showResultsInBottomSheet(List<RecognitionImageBean> list, String time) {
@@ -216,6 +248,32 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
         }
     }
 
+    @UiThread
+    protected void showResultsInBottomSheetScene(RecognitionImageBean recognitionObjectBean, String time) {
+        bottomLayout.removeAllViews();
+        if (recognitionObjectBean != null) {
+            HorTextView horTextView = new HorTextView(this);
+            horTextView.setLeftTitle(recognitionObjectBean.getName() + ":");
+            horTextView.setRightContent(String.format("%.2f", (100 * recognitionObjectBean.getScore())) + "%");
+            horTextView.setBottomLineVisible(View.VISIBLE);
+            bottomLayout.addView(horTextView);
+
+            HorTextView horTimeView = new HorTextView(this);
+            horTimeView.setLeftTitle("Inference Time：");
+            horTimeView.setRightContent(time);
+            horTimeView.setBottomLineVisible(View.INVISIBLE);
+            bottomLayout.addView(horTimeView);
+        } else {
+            TextView textView = new TextView(this);
+            textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            textView.setText("Keep moving.");
+            textView.setGravity(Gravity.CENTER);
+            textView.setTextColor(Color.BLACK);
+            textView.setTextSize(30);
+            bottomLayout.addView(textView);
+        }
+    }
+
     private void showLoadView() {
         TextView textView = new TextView(this);
         textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
@@ -225,4 +283,6 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
         textView.setTextSize(30);
         bottomLayout.addView(textView);
     }
+
+
 }

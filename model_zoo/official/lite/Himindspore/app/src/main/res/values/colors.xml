@@ -10,6 +10,7 @@
     <color name="black">#000000</color>
     <color name="gray">#A69D9D</color>
     <color name="gray_btn">#424242</color>
+    <color name="gray_light_btn">#6C6B6B</color>
 
     <color name="text_blue">#6DA7FF</color>
     <color name="text_yellow">#F8E71C</color>

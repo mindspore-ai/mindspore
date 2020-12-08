@@ -20,15 +20,13 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.util.Log;
 
-import com.mindspore.imageobject.track.TrackListener;
-
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 /**
  * Call the MindSpore interface API in the Java layer.
  */
-public class ImageTrackingMobile implements TrackListener {
+public class ImageTrackingMobile  {
     private final static String TAG = "ImageTrackingMobile";
 
     static {

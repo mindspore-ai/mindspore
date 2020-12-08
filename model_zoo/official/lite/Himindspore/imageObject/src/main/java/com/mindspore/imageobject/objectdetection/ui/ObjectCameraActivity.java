@@ -15,6 +15,7 @@
  */
 package com.mindspore.imageobject.objectdetection.ui;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
@@ -79,7 +80,7 @@ public class ObjectCameraActivity extends AppCompatActivity implements CameraPre
     @Override
     protected void onResume() {
         super.onResume();
-        cameraPreview.onResume(this, CameraPreview.OPEN_TYPE_OBJECT, mTrackingMobile);
+        cameraPreview.onResume(this);
 
     }
 
@@ -89,8 +90,7 @@ public class ObjectCameraActivity extends AppCompatActivity implements CameraPre
         cameraPreview.onPause();
     }
 
-    @Override
-    public void onRecognitionDataCallBack(String result, String time) {
+    public void onRecognitionDataCallBack(String result) {
         if (TextUtils.isEmpty(result)) {
             mObjectRectView.clearCanvas();
             return;
@@ -98,5 +98,17 @@ public class ObjectCameraActivity extends AppCompatActivity implements CameraPre
         Log.d(TAG, result);
         recognitionObjectBeanList = getRecognitionList(result);
         mObjectRectView.setInfo(recognitionObjectBeanList);
+    }
+
+    @Override
+    public void onRecognitionBitmapCallBack(Bitmap bitmap) {
+        long startTime = System.currentTimeMillis();
+        String result = mTrackingMobile.MindSpore_runnet(bitmap);
+        long endTime = System.currentTimeMillis();
+        Log.d(TAG,"TrackingMobile inferenceTime:"+(endTime - startTime) + "ms ");
+        onRecognitionDataCallBack(result);
+        if (!bitmap.isRecycled()) {
+            bitmap.recycle();
+        }
     }
 }

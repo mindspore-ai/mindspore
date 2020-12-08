@@ -9,8 +9,10 @@
     <string name="title_object_camera">Camera Detection</string>
     <string name="title_pose_net">PoseNet</string>
     <string name="title_style_transfer">Style Transfer</string>
-    <string name="title_source">Source Code</string>
-    <string name="title_help">Help And FeedBack</string>
+    <string name="title_source">Code</string>
+    <string name="title_scene">Scene Detection</string>
+    <string name="title_help">FeedBack</string>
+    <string name="title_star">Star</string>
     <string name="title_segmentation">Image Segmentation</string>
 
     <string name="title_photo">Photo</string>

@@ -26,7 +26,7 @@ import android.view.View;
 
 import com.mindspore.imageobject.R;
 import com.mindspore.imageobject.objectdetection.bean.RecognitionObjectBean;
-import com.mindspore.imageobject.objectdetection.help.DisplayUtil;
+import com.mindspore.imageobject.util.DisplayUtil;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -16,6 +16,7 @@
 package com.mindspore.imageobject.camera;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
@@ -52,11 +53,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.app.ActivityCompat;
 
-import com.mindspore.imageobject.imageclassification.help.GarbageTrackingMobile;
-import com.mindspore.imageobject.imageclassification.help.ImageTrackingMobile;
-import com.mindspore.imageobject.objectdetection.help.ObjectTrackingMobile;
-import com.mindspore.imageobject.track.TrackListener;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -82,12 +78,6 @@ public class CameraPreview extends TextureView {
     private static final int STATE_WAITING_NON_PRE_CAPTURE = 3;//Other states
     private static final int STATE_PICTURE_TAKEN = 4;//Photo finished
 
-    public static final int OPEN_TYPE_IMAGE = 1;
-    public static final int OPEN_TYPE_IMAGE_CUSTOM = 11;
-    public static final int OPEN_TYPE_OBJECT = 2;
-
-    private int openType;
-
     private int mState = STATE_PREVIEW;
     private int mRatioWidth = 0, mRatioHeight = 0;
     private int mSensorOrientation;
@@ -109,10 +99,6 @@ public class CameraPreview extends TextureView {
     private CameraCaptureSession mCaptureSession;
     private ImageReader mImageReader;
     private ICameraDataCallBack iCameraDataCallBack;
-
-    private ImageTrackingMobile imageTrackingMobile;
-    private GarbageTrackingMobile garbageTrackingMobile;
-    private ObjectTrackingMobile objectTrackingMobile;
 
     private boolean isPreBackgroundThreadPause;
     private boolean isAlive;
@@ -150,7 +136,7 @@ public class CameraPreview extends TextureView {
         if (0 == mRatioWidth || 0 == mRatioHeight) {
             setMeasuredDimension(width, height);
         } else {
-            if (width < height * mRatioWidth / mRatioHeight) {
+            if (width > height * mRatioWidth / mRatioHeight) {
                 setMeasuredDimension(width, width * mRatioHeight / mRatioWidth);
             } else {
                 setMeasuredDimension(height * mRatioWidth / mRatioHeight, height);
@@ -286,23 +272,9 @@ public class CameraPreview extends TextureView {
     };
 
 
-    public void onResume(Activity activity, int openType, TrackListener track) {
+    public void onResume(Activity activity) {
         isAlive = true;
         this.activity = activity;
-        this.openType = openType;
-        if (OPEN_TYPE_IMAGE == openType) {
-            if (null != track) {
-                imageTrackingMobile = (ImageTrackingMobile) track;
-            }
-        } else if (OPEN_TYPE_IMAGE_CUSTOM == openType) {
-            if (null != track) {
-                garbageTrackingMobile = (GarbageTrackingMobile) track;
-            }
-        } else if (OPEN_TYPE_OBJECT == openType) {
-            if (null != track) {
-                objectTrackingMobile = (ObjectTrackingMobile) track;
-            }
-        }
         startBackgroundThread();
         //When activity or fragment onresume(), you can open a camera and start previewing, otherwise, the surface is ready
         if (this.isAvailable()) {
@@ -323,12 +295,10 @@ public class CameraPreview extends TextureView {
         mBackgroundThread.start();
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
 
-        if (OPEN_TYPE_IMAGE == openType || OPEN_TYPE_OBJECT == openType || OPEN_TYPE_IMAGE_CUSTOM == openType) {
-            mImageBackgroundThread = new HandlerThread("MINDSPORE");
-            mImageBackgroundThread.start();
-            mImageBackgroundHandler = new Handler(mImageBackgroundThread.getLooper());
-            mImageBackgroundHandler.post(classifyRunnable);
-        }
+        mImageBackgroundThread = new HandlerThread("MINDSPORE");
+        mImageBackgroundThread.start();
+        mImageBackgroundHandler = new Handler(mImageBackgroundThread.getLooper());
+        mImageBackgroundHandler.post(classifyRunnable);
     }
 
     public boolean isAlive() {
@@ -342,25 +312,8 @@ public class CameraPreview extends TextureView {
         public void run() {
             synchronized (this) {
                 Bitmap bitmap = getBitmap();
-                if (bitmap != null) {
-                    long startTime = System.currentTimeMillis();
-                    // The current bitmap performs the sending request identification operation
-                    String ret = "";
-                    if (OPEN_TYPE_IMAGE == openType) {
-                        ret = null == imageTrackingMobile ? "" : imageTrackingMobile.MindSpore_runnet(bitmap);
-                    } else if (OPEN_TYPE_IMAGE_CUSTOM == openType) {
-                        ret = null == garbageTrackingMobile ? "" : garbageTrackingMobile.MindSpore_runnet(bitmap);
-                    } else if (OPEN_TYPE_OBJECT == openType) {
-                        ret = null == objectTrackingMobile ? "" : objectTrackingMobile.MindSpore_runnet(bitmap);
-                    }
-                    long endTime = System.currentTimeMillis();
-                    if (mRecognitionDataCallBack != null) {
-                        // Interface returns data。
-                        mRecognitionDataCallBack.onRecognitionDataCallBack(ret, (endTime - startTime) + "ms ");
-                    }
-                    if (!bitmap.isRecycled()) {
-                        bitmap.recycle();
-                    }
+                if (getBitmap() != null && mRecognitionDataCallBack != null) {
+                    mRecognitionDataCallBack.onRecognitionBitmapCallBack(bitmap);
                 }
                 if (mImageBackgroundHandler != null && !isPreBackgroundThreadPause) {
                     mImageBackgroundHandler.postDelayed(classifyRunnable, 1000);
@@ -377,13 +330,10 @@ public class CameraPreview extends TextureView {
             mBackgroundThread = null;
             mBackgroundHandler = null;
 
-            if (OPEN_TYPE_IMAGE == openType || OPEN_TYPE_IMAGE_CUSTOM == openType || OPEN_TYPE_OBJECT == openType) {
-                mImageBackgroundThread.quitSafely();
-                mImageBackgroundThread.join();
-                mImageBackgroundThread = null;
-                mImageBackgroundHandler = null;
-            }
-
+            mImageBackgroundThread.quitSafely();
+            mImageBackgroundThread.join();
+            mImageBackgroundThread = null;
+            mImageBackgroundHandler = null;
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -397,12 +347,10 @@ public class CameraPreview extends TextureView {
         /**
          * Data interface returned after identification.
          *
-         * @param result Recognition result
-         * @param time   Response time
+         * @param bitmap Recognition bitmap
          */
-        void onRecognitionDataCallBack(String result, String time);
+        void onRecognitionBitmapCallBack(Bitmap bitmap);
     }
-
 
     private RecognitionDataCallBack mRecognitionDataCallBack;
 
@@ -413,6 +361,7 @@ public class CameraPreview extends TextureView {
     /**
      * Turn on the camera according to the mcameraid
      */
+    @SuppressLint("MissingPermission")
     private void openCamera(int width, int height) {
         setUpCameraOutputs(width, height);
         configureTransform(width, height);
@@ -730,8 +679,6 @@ public class CameraPreview extends TextureView {
     }
 
     public void takePicture() {
-//        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-//        String date = simpleDateFormat.format(new Date());
         mFile = new File(getContext().getExternalFilesDir(null), "temp.jpg");
         if (mFile.length() > 0) {
             mFile.delete();
