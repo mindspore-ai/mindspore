@@ -23,9 +23,9 @@
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateSpaceToBatchNDParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto *space_batch_param_nd = new (std::nothrow) SpaceToBatchParameter();
+  auto *space_batch_param_nd = reinterpret_cast<SpaceToBatchParameter *>(malloc(sizeof(SpaceToBatchParameter)));
   if (space_batch_param_nd == nullptr) {
-    MS_LOG(ERROR) << "new SpaceToBatchParameter failed.";
+    MS_LOG(ERROR) << "malloc SpaceToBatchParameter failed.";
     return nullptr;
   }
 
