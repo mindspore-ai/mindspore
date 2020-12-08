@@ -28,7 +28,7 @@ class Exponential(Distribution):
     Example class: Exponential Distribution.
 
     Args:
-        rate (float, list, numpy.ndarray, Tensor, Parameter): The inverse scale.
+        rate (float, list, numpy.ndarray, Tensor): The inverse scale.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Exponential'.

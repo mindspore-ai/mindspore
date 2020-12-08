@@ -28,8 +28,8 @@ class Normal(Distribution):
     Normal distribution.
 
     Args:
-        mean (int, float, list, numpy.ndarray, Tensor, Parameter): The mean of the Normal distribution.
-        sd (int, float, list, numpy.ndarray, Tensor, Parameter): The standard deviation of the Normal distribution.
+        mean (int, float, list, numpy.ndarray, Tensor): The mean of the Normal distribution.
+        sd (int, float, list, numpy.ndarray, Tensor): The standard deviation of the Normal distribution.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Normal'.

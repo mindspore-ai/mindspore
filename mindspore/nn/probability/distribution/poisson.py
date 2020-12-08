@@ -29,7 +29,7 @@ class Poisson(Distribution):
     Poisson Distribution.
 
     Args:
-        rate (list, numpy.ndarray, Tensor, Parameter): The rate of the Poisson distribution..
+        rate (list, numpy.ndarray, Tensor): The rate of the Poisson distribution..
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Poisson'.
@@ -123,7 +123,7 @@ class Poisson(Distribution):
 
         # As some operators can't accept scalar input, check the type here
         if isinstance(rate, (int, float)):
-            raise TypeError("Parameter rate can't be scalar")
+            raise TypeError("Input rate can't be scalar")
 
         super(Poisson, self).__init__(seed, dtype, name, param)
 

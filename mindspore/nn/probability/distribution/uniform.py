@@ -28,8 +28,8 @@ class Uniform(Distribution):
     Example class: Uniform Distribution.
 
     Args:
-        low (int, float, list, numpy.ndarray, Tensor, Parameter): The lower bound of the distribution.
-        high (int, float, list, numpy.ndarray, Tensor, Parameter): The upper bound of the distribution.
+        low (int, float, list, numpy.ndarray, Tensor): The lower bound of the distribution.
+        high (int, float, list, numpy.ndarray, Tensor): The upper bound of the distribution.
         seed (int): The seed uses in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Uniform'.

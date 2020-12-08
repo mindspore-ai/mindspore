@@ -29,9 +29,9 @@ class Beta(Distribution):
     Beta distribution.
 
     Args:
-        concentration1 (list, numpy.ndarray, Tensor, Parameter): The concentration1,
+        concentration1 (list, numpy.ndarray, Tensor): The concentration1,
           also know as alpha of the Beta distribution.
-        concentration0 (list, numpy.ndarray, Tensor, Parameter): The concentration0, also know as
+        concentration0 (list, numpy.ndarray, Tensor): The concentration0, also know as
           beta of the Beta distribution.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
@@ -154,9 +154,9 @@ class Beta(Distribution):
 
         # As some operators can't accept scalar input, check the type here
         if isinstance(concentration0, float):
-            raise TypeError("Parameter concentration0 can't be scalar")
+            raise TypeError("Input concentration0 can't be scalar")
         if isinstance(concentration1, float):
-            raise TypeError("Parameter concentration1 can't be scalar")
+            raise TypeError("Input concentration1 can't be scalar")
 
         super(Beta, self).__init__(seed, dtype, name, param)
 

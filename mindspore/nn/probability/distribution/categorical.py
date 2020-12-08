@@ -31,7 +31,7 @@ class Categorical(Distribution):
     Create a categorical distribution parameterized by event probabilities.
 
     Args:
-        probs (Tensor, list, numpy.ndarray, Parameter): Event probabilities.
+        probs (Tensor, list, numpy.ndarray): Event probabilities.
         seed (int): The global seed is used in sampling. Global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.int32.
         name (str): The name of the distribution. Default: Categorical.

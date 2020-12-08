@@ -29,9 +29,9 @@ class Gamma(Distribution):
     Gamma distribution.
 
     Args:
-        concentration (list, numpy.ndarray, Tensor, Parameter): The concentration,
+        concentration (list, numpy.ndarray, Tensor): The concentration,
           also know as alpha of the Gamma distribution.
-        rate (list, numpy.ndarray, Tensor, Parameter): The rate, also know as
+        rate (list, numpy.ndarray, Tensor): The rate, also know as
           beta of the Gamma distribution.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
@@ -150,9 +150,9 @@ class Gamma(Distribution):
 
         # As some operators can't accept scalar input, check the type here
         if isinstance(concentration, (int, float)):
-            raise TypeError("Parameter concentration can't be scalar")
+            raise TypeError("Input concentration can't be scalar")
         if isinstance(rate, (int, float)):
-            raise TypeError("Parameter rate can't be scalar")
+            raise TypeError("Input rate can't be scalar")
 
         super(Gamma, self).__init__(seed, dtype, name, param)
 

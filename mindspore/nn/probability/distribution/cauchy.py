@@ -28,8 +28,8 @@ class Cauchy(Distribution):
     Cauchy distribution.
 
     Args:
-        loc (int, float, list, numpy.ndarray, Tensor, Parameter): The location of the Cauchy distribution.
-        scale (int, float, list, numpy.ndarray, Tensor, Parameter): The scale of the Cauchy distribution.
+        loc (int, float, list, numpy.ndarray, Tensor): The location of the Cauchy distribution.
+        scale (int, float, list, numpy.ndarray, Tensor): The scale of the Cauchy distribution.
         seed (int): The seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.float32.
         name (str): The name of the distribution. Default: 'Cauchy'.

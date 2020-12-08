@@ -30,7 +30,7 @@ class Geometric(Distribution):
     when the first success is achieved.
 
     Args:
-        probs (float, list, numpy.ndarray, Tensor, Parameter): The probability of success.
+        probs (float, list, numpy.ndarray, Tensor): The probability of success.
         seed (int): The seed used in sampling. Global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): The type of the event samples. Default: mstype.int32.
         name (str): The name of the distribution. Default: 'Geometric'.
