@@ -771,6 +771,8 @@ void AscendSession::SelectKernel(const KernelGraph &kernel_graph) const {
   size_t reduce_precision_count = 0;
   for (const auto &cnode : kernel_graph.execution_order()) {
     auto status = device::ascend::SelectKernelInfo(cnode);
+    AnfAlgo::EraseNodeAttr(kAttrPynativeNextOpName, cnode);
+    AnfAlgo::EraseNodeAttr(kAttrPynativeNextIndex, cnode);
     if (status == device::ascend::kStatusRaisePrecision) {
       raise_precision_count++;
     } else if (status == device::ascend::kStatusReducePrecision) {
