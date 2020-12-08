@@ -483,7 +483,6 @@ AbstractBasePtr InferImplCast(const AnalysisEnginePtr &, const PrimitivePtr &pri
                               const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
   // GPU has 2 inputs while tbe has 1 only. Skip CheckArgsSize.
-  // CheckArgsSize(op_name, args_spec_list, 1);
   auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(input_x);
   MS_EXCEPTION_IF_NULL(input_x->shape());

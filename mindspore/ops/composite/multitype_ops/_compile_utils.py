@@ -276,7 +276,6 @@ def tensor_expand_dims(data, tuple_index):
 
 def tensor_index_by_tuple(data, tuple_index):
     """Tensor getitem by tuple of various types with None"""
-    # data, tuple_index_without_none = tensor_expand_dims(data, tuple_index)
     tuple_index_without_none = tuple_index
     if len(tuple_index) == 1:
         return data[tuple_index_without_none[0]]

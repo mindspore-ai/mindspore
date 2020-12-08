@@ -25,10 +25,10 @@ HALF = 0.5
 def expand_gelugrad(expand_info):
     """GeluGrad expander"""
     # cal formula are:
-    # gelu_grad(dy, x) = dy * y'
-    # y' = 0.5 * (1.0 + tanh(tanh_para)) + 0.5 * x * (1.0 - tanh(tanh_para) * tanh(para)) * mul_right
-    # tanh_para = sqrt(2.0 / pi) * (x + 0.044715 * x * x * x)
-    # mul_right = sqrt(2.0 / pi) * (1 + 3 * 0.044715 * x * x)
+    # gelu_grad(dy, x) is dy * y'
+    # y' is 0.5 * (1.0 + tanh(tanh_para)) + 0.5 * x * (1.0 - tanh(tanh_para) * tanh(para)) * mul_right
+    # tanh_para is sqrt(2.0 / pi) * (x + 0.044715 * x * x * x)
+    # mul_right is sqrt(2.0 / pi) * (1 + 3 * 0.044715 * x * x)
 
     # get op info.
     input_desc_0 = expand_info['input_desc'][0]

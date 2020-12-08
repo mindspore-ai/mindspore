@@ -38,8 +38,7 @@ def expand_reducemean(expand_info):
         x_shape = input_x.shape
         graph_scope.set_input(input_x)
 
-        # cal reduce_mean
-        # when axis = None, reduce axis are all
+        # cal reduce_mean, when axis = None, reduce axis are all
         all_shape = 1.0
         real_axis = []
         if not axis:

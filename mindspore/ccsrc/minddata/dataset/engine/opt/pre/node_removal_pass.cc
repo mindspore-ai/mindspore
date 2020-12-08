@@ -62,13 +62,6 @@ Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<RepeatNode> node, bo
 // Perform ShuffleNode removal check.
 Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<ShuffleNode> node, bool *modified) {
   *modified = false;
-#if 0
-  // If we are in a cache descendant tree, then this shuffle op needs to be removed
-  if (is_caching_) {
-    MS_LOG(INFO) << "Shuffle under an operation with cache is identified for removal.";
-    nodes_to_remove_.push_back(std::static_pointer_cast<DatasetNode>(node));
-  }
-#endif
   return Status::OK();
 }
 

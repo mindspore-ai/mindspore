@@ -431,8 +431,8 @@ class SampledSoftmaxLoss(_Loss):
 
         # Sample the negative labels.
         #   sampled shape: [num_sampled] tensor
-        #   true_expected_count shape = [batch_size, 1] tensor
-        #   sampled_expected_count shape = [num_sampled] tensor
+        #   true_expected_count shape is [batch_size, 1] tensor
+        #   sampled_expected_count shape is [num_sampled] tensor
         if sampled_values is None:
             sampled_values = self.sampler(labels)
 

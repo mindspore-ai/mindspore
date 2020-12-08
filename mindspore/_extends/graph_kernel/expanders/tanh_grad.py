@@ -21,7 +21,6 @@ ONE = 1.0
 def expand_tanhgrad(expand_info):
     """TanhGrad expander"""
 
-    # tanh_grad(y, dy) = dy * (1- y * y)
     # get op info.
     input_desc_0 = expand_info['input_desc'][0]
     input_desc_1 = expand_info['input_desc'][1]

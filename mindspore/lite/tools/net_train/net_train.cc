@@ -337,7 +337,6 @@ int NetTrain::RunExportedNet() {
   }
 
   context->thread_num_ = flags_->num_threads_;
-  // context->enable_float16_ = flags_->enable_fp16_;
   session_ = session::TrainSession::CreateSession(flags_->export_file_.c_str(), context.get());
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "CreateSession failed while running ", model_name.c_str();
@@ -406,7 +405,6 @@ int NetTrain::RunNetTrain() {
     context->device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = NO_BIND;
   }
   context->thread_num_ = flags_->num_threads_;
-  // context->enable_float16_ = flags_->enable_fp16_;
   session_ = session::TrainSession::CreateSession(flags_->model_file_.c_str(), context.get());
   if (session_ == nullptr) {
     MS_LOG(ERROR) << "CreateSession failed while running ", model_name.c_str();
