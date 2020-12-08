@@ -154,8 +154,7 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     std::vector<int> real_outputs;
     real_outputs = CheckRealOutput(node_name, output_size);
 
-    for (std::vector<int>::iterator it = real_outputs.begin(); it != real_outputs.end(); ++it) {
-      auto j = *it;
+    for (int j : real_outputs) {
       auto addr = kernel_outputs[j];
       auto type = AnfAlgo::GetOutputInferDataType(kernel, j);
       auto format = kOpFormat_DEFAULT;

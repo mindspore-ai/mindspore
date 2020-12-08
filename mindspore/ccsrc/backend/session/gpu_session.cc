@@ -360,7 +360,9 @@ void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
   SyncValueNodeDeviceAddr(kernel_graph);
   // Load input data from user input
   LoadInputData(kernel_graph, inputs);
-  PreIterationDbg(kernel_graph);
+  if (debugger_) {
+    debugger_->PreExecute(kernel_graph, graph_sum_);
+  }
 #if ENABLE_CPU && ENABLE_GPU
   // Initialize parameter server
   InitPSParamAndOptim(kernel_graph, inputs);
@@ -372,7 +374,6 @@ void GPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
   for (int64_t i = 0; i < loopsize; i++) {
     Execute(kernel_graph);
   }
-  PostLoadTensor(kernel_graph);
   // In pynative mode, device addresses of tensors in value nodes need be clean.
   CleanValueNodeDeviceAddr(kernel_graph);
   // Summary
@@ -443,13 +444,6 @@ bool GPUSession::DumpDataEnabledIteration() const {
   return runtime_instance->DumpDataEnabledIteration();
 }
 
-void GPUSession::PreIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  if (debugger_) {
-    debugger_->PreExecute(kernel_graph, graph_sum_);
-  }
-  PreLoadTensor(kernel_graph);
-}
-
 void GPUSession::PostIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   bool dump_enabled = DumpDataEnabledIteration();
   // debug used for dump
@@ -461,30 +455,6 @@ void GPUSession::PostIterationDbg(const std::shared_ptr<KernelGraph> &kernel_gra
   if (debugger_) {
     debugger_->PostExecute();
   }
-}
-
-void GPUSession::PreLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  bool dump_enabled = DumpDataEnabledIteration();
-  if (!(debugger_ && (debugger_->debugger_enabled() || dump_enabled))) {
-    return;
-  }
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  debugger_->EmptyTensor();
-  uint32_t iter_num = debugger_->GetTensorLoaderIterNum();
-  debugger_->SetTensorLoaderIterNum(++iter_num);
-}
-
-void GPUSession::PostLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const {
-  bool dump_enabled = DumpDataEnabledIteration();
-  if (!(debugger_ && (debugger_->debugger_enabled() || dump_enabled))) {
-    return;
-  }
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetSingleKernelRuntime(kGPUDevice, device_id_);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  debugger_->EmptyPrevTensor();
 }
 
 void GPUSession::SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) const {

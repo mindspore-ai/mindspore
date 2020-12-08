@@ -75,13 +75,7 @@ class GPUSession : public SessionBasic {
 
   bool DumpDataEnabledIteration() const;
 
-  void PreIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-
   void PostIterationDbg(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-
-  void PreLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const;
-
-  void PostLoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 
   void SyncValueNodeDeviceAddr(const std::shared_ptr<KernelGraph> &kernel_graph) const;
 

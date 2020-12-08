@@ -145,6 +145,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   std::list<KernelGraphPtr> GetGraphPtrList() { return graph_ptr_list_; }
 
+  bool TensorExistsInCurrent(std::string tensor_name);
+
  private:
   // private constructor for singleton
   Debugger();
@@ -197,7 +199,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // analyze tensors and check watchpoint conditions
   // return names of tensors and what condition they hit
   std::list<WatchpointHit> CheckWatchpoints(const std::string &watchnode = std::string(),
-                                            const CNodePtr &kernel = NULL);
+                                            const CNodePtr &kernel = nullptr, bool recheck = false);
 
   // send watchpoints that hit
   void SendWatchpoints(const std::list<WatchpointHit> &points);

@@ -296,8 +296,6 @@ bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
 #ifdef ENABLE_DEBUGGER
   MS_LOG(INFO) << "Start load step";
-  uint32_t cur_iter = 0;
-  MS_LOG(INFO) << "Cur iter is " << cur_iter;
   for (auto graph_ptr : debugger_->GetGraphPtrList()) {
     debugger_->SetGraphPtr(graph_ptr);
     // load output
