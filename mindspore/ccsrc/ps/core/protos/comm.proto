@@ -39,6 +39,10 @@ message MessageMeta {
   NodeCommand cmd = 1;
   // the request id of this message
   uint64 request_id = 2;
+  // the role of the current node: worker,server,scheduler
+  NodeRole role = 3;
+  // the current Node rank id,the worker node range is:[0,numOfWorker-1], the server node range is:[0, numOfServer-1]
+  int32 rank_id = 4;
 }
 
 message RegisterMessage {

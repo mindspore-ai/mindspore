@@ -15,6 +15,7 @@ if (NOT (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU)))
     list(REMOVE_ITEM _PS_SRC_FILES "core/node.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "core/node_manager.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "ps_cache/ps_cache_manager.cc")
+    list(REMOVE_ITEM _PS_SRC_FILES "core/worker_node.cc")
 endif ()
 
 if (NOT ENABLE_D)
