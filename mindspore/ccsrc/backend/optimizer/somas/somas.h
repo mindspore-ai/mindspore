@@ -51,6 +51,9 @@ class Somas {
   void DumpSomasBasicIR(const string filename);
   void DumpSomasMemoryIR(const string filename);
 
+  static bool NodeSort(SomasNodePtr, SomasNodePtr);
+  std::vector<DynamicBitSet> tensor_relation;
+
  private:
   // Maps
   std::unordered_map<size_t, SomasTensorPtr> tensors_map_;
@@ -67,9 +70,6 @@ class Somas {
   // Solver
   std::unordered_map<size_t, SomasSolverTensorDescPtr> solver_tensor_desc_list_;
   SomasSolverPrePtr somas_solver_;
-
-  // Constraints
-  std::shared_ptr<Array> cannot_reuse_;
 
   // Contiguous list
   std::vector<vector<size_t>> contiguous_tensors_list_;

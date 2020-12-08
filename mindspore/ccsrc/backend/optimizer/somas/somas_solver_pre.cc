@@ -27,25 +27,15 @@ namespace mindspore {
 namespace somas {
 Status SomasSolverPre::Solving(const session::KernelGraph *graph,
                                std::unordered_map<size_t, SomasSolverTensorDescPtr> *ptensors,
-                               std::shared_ptr<Array> pConstraints, const vector<vector<size_t>> &continuous_v,
+                               std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v,
                                bool bVerifySolution, bool ball, SortingType sorting, FittingType fitting,
                                AlgorithmType algorithm) {
   Status retval = SUCCESS;
 
   try {
     std::unordered_map<size_t, SomasSolverTensorDescPtr> &tensors = *ptensors;
-    std::unordered_map<size_t, SomasSolverTensorDescPtr>::iterator max =
-      std::max_element(tensors.begin(), tensors.end(),
-                       [](const std::pair<size_t, SomasSolverTensorDescPtr> &a,
-                          const std::pair<size_t, SomasSolverTensorDescPtr> &b) { return a.first < b.first; });
-    size_t maxIndex = max->first;
-    if (maxIndex > pConstraints->Rows() - 1) {
-      MS_LOG(WARNING) << "ERROR: MaxIndex invalid, MaxIndex " << maxIndex << ", Rows " << pConstraints->Rows();
-      return FAILED;
-    }
     MS_LOG(INFO) << "Filling in constraints matrix..";
     uint32_t continuous_cnt = 0;
-
     // creating S Lists
     for (auto &aux : continuous_v) {
       for (uint32_t i = 0; i < aux.size() - 1; i++) {
@@ -60,8 +50,6 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph,
           return FAILED;
         }
 
-        const size_t continuous = 2;
-        (*pConstraints)(index2, index1) = continuous;
         if (tensors[index1]->right_)
           MS_LOG(WARNING) << "Warning:tensor " << index1
                           << " already has a right tensor (id: " << tensors[index1]->right_->index_;
@@ -104,7 +92,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph,
 
 void SomasSolverPre::Log(const session::KernelGraph *graph,
                          const unordered_map<size_t, SomasSolverTensorDescPtr> &tensors,
-                         const std::shared_ptr<Array> &pConstraints, const vector<vector<size_t>> &continuous_v) {
+                         std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v) {
   MS_LOG(INFO) << "SomasSolver::Log Writing somas-input.txt..";
 
   auto context_ptr = MsContext::GetInstance();
@@ -143,7 +131,7 @@ void SomasSolverPre::Log(const session::KernelGraph *graph,
     for (auto &t2 : tensors) {
       size_t idx1 = t1.first;
       size_t idx2 = t2.first;
-      if ((idx1 != idx2) && (*pConstraints)(idx1, idx2) == 1) {
+      if ((idx1 != idx2) && (*pConstraints)[idx1].IsBitTrue(idx2) == false) {
         ofs_1 << "C " << idx1 << " " << idx2 << std::endl;
       }
     }
