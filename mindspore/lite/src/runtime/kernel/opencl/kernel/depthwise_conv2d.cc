@@ -92,6 +92,10 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     MS_LOG(ERROR) << "DepthwiseConv2d don't support non-constant filter yet.";
     return RET_ERROR;
   }
+  auto ret = DequantWeight();
+  if (ret != RET_OK) {
+    return ret;
+  }
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto allocator = ocl_runtime_->GetAllocator();
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
@@ -111,9 +115,10 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat32) {
       std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
       PackNCHWToNC4HW4<float, float16_t>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
-    } else {
-      MS_LOG(ERROR) << "Only support float16/float32, actual data type " << in_tensors_.at(kWeightIndex)->data_type();
-      return mindspore::lite::RET_ERROR;
+    } else {  // int8 or int16
+      std::function<int16_t(int16_t)> to_dtype = [](int16_t x) -> int16_t { return x; };
+      PackNCHWToNC4HW4<int16_t, int16_t>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
+      FreeDequantedWeight();
     }
   } else {
     packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(float));
@@ -124,9 +129,10 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16) {
       std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
       PackNCHWToNC4HW4<float16_t, float>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
-    } else {
-      MS_LOG(ERROR) << "Only support float16/float32, actual data type " << in_tensors_.at(kWeightIndex)->data_type();
-      return mindspore::lite::RET_ERROR;
+    } else {  // int8 or int16
+      std::function<float(float)> to_dtype = [](float x) -> float { return x; };
+      PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane, out_tensors_[0]->Channel(), to_dtype);
+      FreeDequantedWeight();
     }
   }
 

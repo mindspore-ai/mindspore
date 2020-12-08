@@ -31,14 +31,14 @@ class DequantUtil {
 
   static void UnPackToInt(const schema::Tensor *input_tensor, void *weight_unpack_data);
 
-  template <typename T>
-  static float *DequantData(lite::Tensor *input_tensor) {
-    const auto *quant_datas = static_cast<const T *>(input_tensor->MutableData());
+  template <typename ST, typename DT = float>
+  static DT *DequantData(lite::Tensor *input_tensor) {
+    const auto *quant_datas = static_cast<const ST *>(input_tensor->MutableData());
     if (quant_datas == nullptr) {
       MS_LOG(ERROR) << "Get quant tensor failed.";
       return nullptr;
     }
-    auto *dequant_datas = static_cast<float *>(malloc(input_tensor->ElementsNum() * sizeof(float)));
+    DT *dequant_datas = static_cast<DT *>(malloc(input_tensor->ElementsNum() * sizeof(DT)));
     if (dequant_datas == nullptr) {
       MS_LOG(ERROR) << "Malloc failed.";
       return nullptr;
@@ -53,8 +53,7 @@ class DequantUtil {
         auto zero_point = param.zeroPoint;
         auto matrix_size = input_tensor->ElementsNum() / per_batch_size;
         for (int64_t j = 0; j < matrix_size; j++) {
-          dequant_datas[i * matrix_size + j] =
-            static_cast<float>((quant_datas[i * matrix_size + j] - zero_point) * scale);
+          dequant_datas[i * matrix_size + j] = static_cast<DT>((quant_datas[i * matrix_size + j] - zero_point) * scale);
         }
       }
     } else if (input_tensor->quant_params().size() != kPerTensor) {
@@ -78,7 +77,7 @@ class DequantUtil {
         }
         for (size_t j = 0; j < per_channel_size; j++) {
           auto dequant_data = (quant_datas[per_channel_size * i + j] - zero_point) * scale;
-          dequant_datas[per_channel_size * i + j] = static_cast<float>(dequant_data * var_corr + mean_corr);
+          dequant_datas[per_channel_size * i + j] = static_cast<DT>(dequant_data * var_corr + mean_corr);
         }
       }
     } else {
@@ -95,9 +94,9 @@ class DequantUtil {
             free(dequant_datas);
             return nullptr;
           }
-          dequant_datas[j] = static_cast<float>(param.clusters[index - INT8_MIN]);
+          dequant_datas[j] = static_cast<DT>(param.clusters[index - INT8_MIN]);
         } else {
-          dequant_datas[j] = static_cast<float>((quant_datas[j] - zero_point) * scale);
+          dequant_datas[j] = static_cast<DT>((quant_datas[j] - zero_point) * scale);
         }
       }
     }

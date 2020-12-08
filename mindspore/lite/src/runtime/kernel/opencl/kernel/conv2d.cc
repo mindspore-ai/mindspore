@@ -200,6 +200,10 @@ int Conv2DOpenCLKernel::GenerateWinogradFilter() {
 
 int Conv2DOpenCLKernel::InitFilter() {
   auto allocator = ocl_runtime_->GetAllocator();
+  auto ret = DequantWeight();
+  if (ret != RET_OK) {
+    return ret;
+  }
 
   // allocate memory
   size_t packed_weight_size;
@@ -225,7 +229,7 @@ int Conv2DOpenCLKernel::InitFilter() {
         ConvertConvWeight4DTo7D<float16_t, float>(weight_tensor->data_c(), packed_weight_, CO_, KH_, KW_, CI_,
                                                   block_size_.C);
       }
-    } else {
+    } else if (weight_tensor->data_type() == kNumberTypeFloat32) {
       if (use_fp16_) {
         ConvertConvWeight4DTo7D<float, float16_t>(weight_tensor->data_c(), packed_weight_, CO_, KH_, KW_, CI_,
                                                   block_size_.C);
@@ -233,6 +237,15 @@ int Conv2DOpenCLKernel::InitFilter() {
         ConvertConvWeight4DTo7D<float, float>(weight_tensor->data_c(), packed_weight_, CO_, KH_, KW_, CI_,
                                               block_size_.C);
       }
+    } else {  // int8 or int16
+      if (use_fp16_) {
+        ConvertConvWeight4DTo7D<float16_t, float16_t>(weight_tensor->data_c(), packed_weight_, CO_, KH_, KW_, CI_,
+                                                      block_size_.C);
+      } else {
+        ConvertConvWeight4DTo7D<float, float>(weight_tensor->data_c(), packed_weight_, CO_, KH_, KW_, CI_,
+                                              block_size_.C);
+      }
+      FreeDequantedWeight();
     }
   }
 
