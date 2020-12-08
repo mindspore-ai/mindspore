@@ -57,36 +57,52 @@ enum FittingType {
   kNumFittingTypes
 };
 
-class Array {
+class DynamicBitSet {
+  const size_t bit_width_ = 64;
+  size_t bit_size_;
+  std::vector<uint64_t> bit_;
+
+  inline size_t GetIndex(size_t index) { return index / bit_width_; }
+
+  inline uint64_t GetBitMask(size_t index) { return (((uint64_t)0x1) << (bit_width_ - 1 - (index % bit_width_))); }
+
+  inline void Reset(uint64_t val) {
+    bit_.clear();
+    for (size_t i = 0; i < bit_size_; i++) {
+      bit_.push_back(val);
+    }
+  }
+
  public:
-  Array(const size_t &rows, const size_t &cols) : rows_(rows), cols_(cols) {
-    conflicts_array_ = std::make_unique<int[]>(rows * cols);
-    for (uint32_t i = 0; i < rows * cols; i++) {
-      conflicts_array_[i] = 1;
+  explicit DynamicBitSet(size_t count) {
+    bit_size_ = (count + bit_width_ - 1) / bit_width_;
+    Reset(0x0);
+  }
+
+  void SetBitTrue(size_t index, bool log = false) {
+    if (log) {
+      MS_LOG(INFO) << GetIndex(index) << " " << GetBitMask(index);
+    }
+    bit_[GetIndex(index)] |= GetBitMask(index);
+  }
+
+  void SetBitFalse(size_t index) { bit_[GetIndex(index)] &= (~GetBitMask(index)); }
+
+  bool IsBitTrue(size_t index) { return (bit_[GetIndex(index)] & GetBitMask(index)) != 0x0; }
+
+  void Log() {
+    std::cout << "Start Print Bitset ";
+    for (size_t i = 0; i < bit_size_; i++) {
+      std::cout << " bit [" << std::dec << i << "] = " << std::hex << bit_[i] << std::dec;
+    }
+    std::cout << std::endl;
+  }
+
+  friend void Union(DynamicBitSet *a, DynamicBitSet *b) {
+    for (size_t i = 0; i < (*a).bit_size_; i++) {
+      (*a).bit_[i] |= (*b).bit_[i];
     }
   }
-
-  Array(const Array &array) : rows_(array.rows_), cols_(array.cols_) {
-    conflicts_array_ = std::make_unique<int[]>(array.rows_ * array.cols_);
-    for (uint32_t i = 0; i < array.rows_ * array.cols_; i++) {
-      conflicts_array_[i] = array.conflicts_array_[i];
-    }
-  }
-
-  Array &operator=(const Array &array) { return *this; }
-
-  int &operator()(const size_t &i, const size_t &j) {
-    assert((i * cols_ + j) < (rows_ * cols_));
-    return conflicts_array_[i * cols_ + j];
-  }
-
-  const size_t &Rows() { return rows_; }
-  const size_t &Cols() { return cols_; }
-
- private:
-  const size_t rows_;
-  const size_t cols_;
-  std::unique_ptr<int[]> conflicts_array_;
 };
 
 struct SomasSolverTensorDesc {
@@ -140,14 +156,14 @@ class SomasSolverPre {
   size_t GetMaxOffset() { return max_offset_; }
 
   Status Solving(const session::KernelGraph *graph, std::unordered_map<size_t, SomasSolverTensorDescPtr> *tensors,
-                 std::shared_ptr<Array> pConstraints, const vector<vector<size_t>> &continuous_v,
+                 std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v,
                  bool bVerifySolution,  // true -> Check continuous and non overlapping constraints solution
                  bool ball = true,      // true -> run full set of heuristics, false -> run single heuristic specified
                  SortingType sorting = kGreaterSizeSmallerIndex, FittingType fitting = kBest,
                  AlgorithmType algorithm = kManyObjects);
 
   void Log(const session::KernelGraph *graph, const unordered_map<size_t, SomasSolverTensorDescPtr> &tensors,
-           const std::shared_ptr<Array> &pConstraints_v, const vector<vector<size_t>> &continuous_v);
+           std::vector<DynamicBitSet> *pConstraints_v, const vector<vector<size_t>> &continuous_v);
 
  private:
   size_t max_offset_;

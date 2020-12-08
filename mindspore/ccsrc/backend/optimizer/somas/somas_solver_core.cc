@@ -169,16 +169,14 @@ bool SomasSolverCore::Verify(const size_t &upperbound) {
       t2 = t2_.second;
       if (t1->index_ == t2->index_) continue;
       bool blifelong = (t1->lifelong_ || t2->lifelong_) && (t1->index_ != t2->index_);
-      const size_t continuous = 2;
-      const size_t conflict = 1;
-      if ((*constraints_)(t1->index_, t2->index_) == continuous) {  // continuous constraint
-        // t1 must be continous to t2
+      if (t2->right_ == t1) {  // continuous constraint
+        // t1 must be continuous to t2
         bool bcontinuous = t1->offset_ == (t2->offset_ + t2->size_);
         if (!bcontinuous) {
           MS_LOG(WARNING) << "Continuous constraint violation in tensors " << t1->index_ << " and" << t2->index_;
           retval = false;
         }
-      } else if (blifelong || (*constraints_)(t1->index_, t2->index_) == conflict) {  // conflict constraint
+      } else if (blifelong || constraints_[t1->index_].IsBitTrue(t2->index_) == false) {  // conflict constraint
         size_t t1_ub = t1->offset_ + t1->size_;
         size_t t2_ub = t2->offset_ + t2->size_;
         bool b_overlap_lb = ((t2->offset_ >= t1->offset_) && (t2->offset_ < t1_ub));
@@ -336,7 +334,7 @@ size_t SomasSolverCore::Search(const std::shared_ptr<FootPrint> &pFootprint) {
   FastHeuristic fh;
   MS_LOG(INFO) << "Calling FastSolver Search for " << block_tensors_.size() << " tensors ";
   auto start = std::chrono::system_clock::now();
-  if (fh.Eval(&block_tensors_, pFootprint, constraints_)) {
+  if (fh.Eval(&block_tensors_, pFootprint, &constraints_)) {
     result = pFootprint->Result();
     auto end = std::chrono::system_clock::now();
     timing_ = std::chrono::duration_cast<std::chrono::milliseconds>((end - start)).count();

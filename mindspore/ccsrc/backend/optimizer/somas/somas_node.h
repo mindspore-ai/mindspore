@@ -42,8 +42,8 @@ class SomasNode {
   // Public attributes (mutated in code)
   std::string scope_full_name_;
 
-  std::set<SomasNodePtr>
-    ancestor_nodes_;  // keeping only distance *one* ancestor nodes; enough to ComputeAncestorNodes()
+  // node's dependency including data dependency and time dependency
+  std::set<SomasNodePtr> ancestor_nodes_;
   std::set<SomasTensorPtr> tensors_;
 
   std::vector<SomasTensorPtr> input_tensors_;

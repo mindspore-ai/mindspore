@@ -34,11 +34,13 @@ using SomasTensorPtr = std::shared_ptr<SomasTensor>;
 class SomasStream {
  public:
   using SomasStreamPtr = std::shared_ptr<SomasStream>;
+  using SomasNodePtr = std::shared_ptr<SomasNode>;
 
   // Attributes mutated in code
   std::vector<SomasTensorPtr> tensors_;  // vector needed for same-stream loop in ConflictComputing()
   std::set<SomasStreamPtr> ancestor_streams_;
   std::set<SomasStreamPtr> ancestor_streams_group_;
+  std::vector<SomasNodePtr> nodes_;
 
   // Constructors/Destructors
   explicit SomasStream(int64_t id) : id_(id) {}
