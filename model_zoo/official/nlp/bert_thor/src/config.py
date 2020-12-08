@@ -20,28 +20,6 @@ from easydict import EasyDict as edict
 cfg = edict({
     'bert_network': 'large',
     'optimizer': 'Thor',
-    'AdamWeightDecay': edict({
-        'learning_rate': 3e-5,
-        'end_learning_rate': 1e-10,
-        'power': 5.0,
-        'weight_decay': 1e-5,
-        'decay_filter': lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
-        'eps': 1e-6,
-        'warmup_steps': 10000,
-    }),
-    'Lamb': edict({
-        'learning_rate': 3e-5,
-        'end_learning_rate': 1e-10,
-        'power': 10.0,
-        'warmup_steps': 10000,
-        'weight_decay': 0.01,
-        'decay_filter': lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower(),
-        'eps': 1e-6,
-    }),
-    'Momentum': edict({
-        'learning_rate': 2e-5,
-        'momentum': 0.9,
-    }),
     'Thor': edict({
         'momentum': 0.9,
         'weight_decay': 5e-4,
