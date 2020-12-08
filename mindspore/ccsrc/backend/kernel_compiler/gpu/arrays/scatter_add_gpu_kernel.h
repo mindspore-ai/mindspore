@@ -96,10 +96,10 @@ class ScatterAddKernel : public GpuKernel {
   }
 
  private:
-  int input_size_;
-  int inner_size_;
-  int indices_size_;
-  int updates_size_;
+  size_t input_size_;
+  size_t inner_size_;
+  size_t indices_size_;
+  size_t updates_size_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
