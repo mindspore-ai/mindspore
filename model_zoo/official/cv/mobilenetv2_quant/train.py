@@ -101,7 +101,8 @@ def train_on_ascend():
     # convert fusion network to quantization aware network
     quantizer = QuantizationAwareTraining(bn_fold=True,
                                           per_channel=[True, False],
-                                          symmetric=[True, False])
+                                          symmetric=[True, False],
+                                          one_conv_fold=False)
     network = quantizer.quantize(network)
 
     # get learning rate
