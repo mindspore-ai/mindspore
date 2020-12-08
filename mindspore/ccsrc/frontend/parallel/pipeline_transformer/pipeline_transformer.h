@@ -64,6 +64,7 @@ class PipelineTransformer {
                      int user_node_stage, int node_stage);
   void CutBorder(const FuncGraphPtr &graph);
   bool IsStageNode(const CNodePtr &node);
+  AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, TensorInfoPtr> GetOpInfo(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, TensorInfoPtr> GetParameterPair(const AnfNodePtr &node);
   OperatorInfoPtr CreateOpInfo(const CNodePtr &cnode);
