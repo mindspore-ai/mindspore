@@ -755,6 +755,9 @@ class PConstant : public PBase<PConstant<T> > {
       ShapeVector tensor_shape = tensor_abstract->shape()->shape();
       auto new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
       size_t mem_size = GetTypeByte(tensor_type_ptr) * IntToSize(new_tensor_ptr->ElementsNum());
+      if (new_tensor_ptr->DataSize() < tensor_ptr->DataSize()) {
+        MS_EXCEPTION(ValueError) << "DataSize of new_tensor_ptr is smaller than DataSize of tensor_ptr";
+      }
       if ((tensor_type == TypeId::kNumberTypeFloat32) || (tensor_type == TypeId::kNumberTypeFloat) ||
           (tensor_type == TypeId::kNumberTypeFloat64)) {
         float *data = reinterpret_cast<float *>(tensor_ptr->data_c());

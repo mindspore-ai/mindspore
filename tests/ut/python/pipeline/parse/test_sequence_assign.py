@@ -37,6 +37,23 @@ def test_list_index_1D():
     assert out[2] == [3, 3, 3]
 
 
+def test_list_neg_index_1D():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        def construct(self):
+            list_ = [[1], [2, 2], [3, 3, 3]]
+            list_[-3] = [100]
+            return list_
+
+    net = Net()
+    out = net()
+    assert out[0] == [100]
+    assert out[1] == [2, 2]
+    assert out[2] == [3, 3, 3]
+
+
 def test_list_index_2D():
     class Net(nn.Cell):
         def __init__(self):
@@ -46,6 +63,24 @@ def test_list_index_2D():
             list_ = [[1], [2, 2], [3, 3, 3]]
             list_[1][0] = 200
             list_[1][1] = 201
+            return list_
+
+    net = Net()
+    out = net()
+    assert out[0] == [1]
+    assert out[1] == [200, 201]
+    assert out[2] == [3, 3, 3]
+
+
+def test_list_neg_index_2D():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        def construct(self):
+            list_ = [[1], [2, 2], [3, 3, 3]]
+            list_[1][-2] = 200
+            list_[1][-1] = 201
             return list_
 
     net = Net()
@@ -65,6 +100,25 @@ def test_list_index_3D():
             list_[2][0][0] = 300
             list_[2][0][1] = 301
             list_[2][0][2] = 302
+            return list_
+
+    net = Net()
+    out = net()
+    assert out[0] == [1]
+    assert out[1] == [2, 2]
+    assert out[2] == [[300, 301, 302]]
+
+
+def test_list_neg_index_3D():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+
+        def construct(self):
+            list_ = [[1], [2, 2], [[3, 3, 3]]]
+            list_[2][0][-3] = 300
+            list_[2][0][-2] = 301
+            list_[2][0][-1] = 302
             return list_
 
     net = Net()
