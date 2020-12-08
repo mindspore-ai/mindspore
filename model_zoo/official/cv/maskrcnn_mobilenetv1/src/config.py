@@ -22,7 +22,6 @@ config = ed({
     "img_height": 768,
     "keep_ratio": True,
     "flip_ratio": 0.5,
-    "photo_ratio": 0.5,
     "expand_ratio": 1.0,
 
     "max_instance_count": 128,
@@ -109,7 +108,6 @@ config = ed({
     "test_max_per_img": 100,
     "test_batch_size": 2,
 
-    "rpn_head_loss_type": "CrossEntropyLoss",
     "rpn_head_use_sigmoid": True,
     "rpn_head_weight": 1.0,
     "mask_thr_binary": 0.5,
@@ -119,7 +117,6 @@ config = ed({
     "base_step": 58633,
     "total_epoch": 13,
     "warmup_step": 500,
-    "warmup_mode": "linear",
     "warmup_ratio": 1/3.0,
     "sgd_momentum": 0.9,
 
@@ -131,7 +128,7 @@ config = ed({
     "pretrain_epoch_size": 0,
     "epoch_size": 12,
     "save_checkpoint": True,
-    "save_checkpoint_epochs": 1,
+    "save_checkpoint_epochs": 12,
     "keep_checkpoint_max": 12,
     "save_checkpoint_path": "./",
 
