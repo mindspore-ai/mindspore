@@ -42,8 +42,14 @@ class Split : public PrimitiveC {
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   int GetNumberSplit() const;
-  std::vector<int> GetSizeSplits() const;
+  std::vector<int> GetSizeSplit() const;
   int GetSplitDim() const;
+  int num_split() const { return num_split_; }
+  std::vector<int> size_splits() const { return size_splits_; }
+
+ protected:
+  int num_split_ = 0;
+  std::vector<int> size_splits_;
 };
 }  // namespace lite
 }  // namespace mindspore

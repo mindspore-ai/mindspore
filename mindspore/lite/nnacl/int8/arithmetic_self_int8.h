@@ -50,6 +50,8 @@ int Int8ElementSquare(int8_t *input, int8_t *output, int element_size, ArithSelf
 
 int Int8ElementLogicalNot(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
 
+int Int8ElementReciprocal(int8_t *input, int8_t *output, int element_size, ArithSelfQuantArg para);
+
 #ifdef __cplusplus
 }
 #endif

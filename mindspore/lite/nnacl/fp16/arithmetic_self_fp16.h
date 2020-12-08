@@ -48,6 +48,8 @@ int ElementFloorFp16(float16_t *input, float16_t *output, int element_size);
 int ElementCeilFp16(float16_t *input, float16_t *output, int number);
 
 int ElementNegativeFp16(float16_t *input, float16_t *output, int element_size);
+
+int ElementReciprocalFp16(float16_t *input, float16_t *output, int element_size);
 #ifdef __cplusplus
 }
 #endif

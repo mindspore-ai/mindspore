@@ -31,7 +31,7 @@ OpParameter *PopulateSplitParameter(const mindspore::lite::PrimitiveC *primitive
   memset(split_param, 0, sizeof(SplitParameter));
   auto param = reinterpret_cast<mindspore::lite::Split *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   split_param->op_parameter_.type_ = primitive->Type();
-  split_param->num_split_ = param->GetNumberSplit();
+  split_param->num_split_ = param->num_split();
   if (split_param->num_split_ > std::numeric_limits<int>::max() / static_cast<int>(sizeof(int))) {
     MS_LOG(ERROR) << "The value of split_param->num_split_ is too big";
     return nullptr;
@@ -44,7 +44,7 @@ OpParameter *PopulateSplitParameter(const mindspore::lite::PrimitiveC *primitive
   }
   memset(split_sizes, 0, split_param->num_split_ * sizeof(int));
   split_param->split_sizes_ = split_sizes;
-  auto split_sizes_vector_ = param->GetSizeSplits();
+  auto split_sizes_vector_ = param->size_splits();
   int i = 0;
   for (int &iter : split_sizes_vector_) {
     split_param->split_sizes_[i++] = iter;

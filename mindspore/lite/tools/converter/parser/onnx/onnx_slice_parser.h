@@ -32,6 +32,7 @@ class OnnxSliceParser : public OnnxNodeParser {
 
   STATUS InsertTensor(const std::vector<int> &onnx_val, const std::string &name, onnx::NodeProto *onnx_node);
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
+  STATUS GetInputTensor(std::vector<int> *onnx_val, const std::string &name);
 };
 }  // namespace lite
 }  // namespace mindspore

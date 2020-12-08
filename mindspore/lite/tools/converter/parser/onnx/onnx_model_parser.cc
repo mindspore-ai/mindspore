@@ -105,7 +105,7 @@ STATUS OnnxModelParser::AddValueInfo(const onnx::ValueInfoProto &proto, const st
     MS_LOG(ERROR) << "new tensor failed";
     return RET_ERROR;
   }
-  tensor->dataType = data_type;
+  tensor->dataType = data_type == kNumberTypeInt64 ? kNumberTypeInt32 : data_type;
   tensor->dims = GetDimsFromOnnxValue(proto);
   tensor->format = schema::Format::Format_NCHW;
   tensor->nodeType = schema::NodeType::NodeType_ValueNode;
@@ -370,7 +370,6 @@ void OnnxModelParser::SetOpQuantParams(const onnx::GraphProto &onnx_graph, const
       MS_LOG(ERROR) << "new QuantParamT failed, node: " << dst_op->name;
       return;
     }
-    quant_param->inited = true;
     int argNum = 0;
     for (const auto &onnx_node_attr : node.attribute()) {
       if (onnx_node_attr.name() == "Y_scale") {
@@ -382,11 +381,7 @@ void OnnxModelParser::SetOpQuantParams(const onnx::GraphProto &onnx_graph, const
       }
     }
     if (argNum != 2) {
-      quant_param->scale = FLT_MAX;
-      quant_param->zeroPoint = 0;
-      quant_param->min = FLT_MAX;
-      quant_param->max = FLT_MAX;
-      quant_param->inited = false;
+      continue;
     }
     dst_tensor->quantParams.emplace_back(std::move(quant_param));
     if (argNum == 2) {

@@ -41,8 +41,11 @@ STATUS OnnxCastParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "to") {
-      attr->dstT = static_cast<int32_t>(
-        OnnxModelParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_node_attr.i())));
+      auto dst_type = OnnxModelParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_node_attr.i()));
+      if (dst_type == kNumberTypeInt64) {
+        dst_type = kNumberTypeInt32;
+      }
+      attr->dstT = static_cast<int>(dst_type);
     }
   }
 

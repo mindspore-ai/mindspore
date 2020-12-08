@@ -31,6 +31,7 @@ using mindspore::schema::PrimitiveType_Cos;
 using mindspore::schema::PrimitiveType_Floor;
 using mindspore::schema::PrimitiveType_Log;
 using mindspore::schema::PrimitiveType_LogicalNot;
+using mindspore::schema::PrimitiveType_Reciprocal;
 using mindspore::schema::PrimitiveType_Round;
 using mindspore::schema::PrimitiveType_Rsqrt;
 using mindspore::schema::PrimitiveType_Sin;
@@ -80,6 +81,8 @@ class ArithmeticSelfInt8CPUKernel : public LiteKernel {
       case PrimitiveType_LogicalNot:
         arithmeticSelf_run_ = Int8ElementLogicalNot;
         break;
+      case PrimitiveType_Reciprocal:
+        arithmeticSelf_run_ = Int8ElementReciprocal;
       default:
         break;
     }

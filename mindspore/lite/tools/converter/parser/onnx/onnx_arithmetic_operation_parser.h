@@ -217,6 +217,13 @@ class OnnxRoundParser : public OnnxNodeParser {
   ~OnnxRoundParser() override = default;
   STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
 };
+
+class OnnxReciprocalParser : public OnnxNodeParser {
+ public:
+  OnnxReciprocalParser() : OnnxNodeParser("Reciprocal") {}
+  ~OnnxReciprocalParser() override = default;
+  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
+};
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_ARITHMETIC_OPREATION_PARSER_H
