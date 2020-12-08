@@ -32,6 +32,9 @@ SubsetRandomSamplerRT::SubsetRandomSamplerRT(int64_t num_samples, const std::vec
 
 // Initialized this Sampler.
 Status SubsetRandomSamplerRT::InitSampler() {
+  if (is_initialized) {
+    return Status::OK();
+  }
   CHECK_FAIL_RETURN_UNEXPECTED(
     num_rows_ > 0, "Invalid parameter, num_rows must be greater than 0, but got " + std::to_string(num_rows_) + ".\n");
 
@@ -51,6 +54,7 @@ Status SubsetRandomSamplerRT::InitSampler() {
   // We will shuffle the full set of id's, but only select the first num_samples_ of them later.
   std::shuffle(indices_.begin(), indices_.end(), rand_gen_);
 
+  is_initialized = true;
   return Status::OK();
 }
 

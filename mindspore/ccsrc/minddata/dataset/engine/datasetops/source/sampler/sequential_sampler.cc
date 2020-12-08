@@ -63,6 +63,9 @@ Status SequentialSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffe
 }
 
 Status SequentialSamplerRT::InitSampler() {
+  if (is_initialized) {
+    return Status::OK();
+  }
   CHECK_FAIL_RETURN_UNEXPECTED(start_index_ >= 0,
                                "Invalid parameter, start_index must be greater than or equal to 0, but got " +
                                  std::to_string(start_index_) + ".\n");
@@ -82,6 +85,8 @@ Status SequentialSamplerRT::InitSampler() {
     num_samples_ > 0 && samples_per_buffer_ > 0,
     "Invalid parameter, samples_per_buffer must be greater than 0, but got " + std::to_string(samples_per_buffer_));
   samples_per_buffer_ = samples_per_buffer_ > num_samples_ ? num_samples_ : samples_per_buffer_;
+
+  is_initialized = true;
   return Status::OK();
 }
 

@@ -28,6 +28,9 @@ PKSamplerRT::PKSamplerRT(int64_t num_samples, int64_t val, bool shuffle, int64_t
       samples_per_class_(val) {}
 
 Status PKSamplerRT::InitSampler() {
+  if (is_initialized) {
+    return Status::OK();
+  }
   labels_.reserve(label_to_ids_.size());
   for (const auto &pair : label_to_ids_) {
     if (!pair.second.empty()) {
@@ -58,6 +61,7 @@ Status PKSamplerRT::InitSampler() {
   CHECK_FAIL_RETURN_UNEXPECTED(
     num_samples_ > 0, "Invalid parameter, num_class or K (num samples per class) must be greater than 0, but got " +
                         std::to_string(num_samples_));
+  is_initialized = true;
   return Status::OK();
 }
 

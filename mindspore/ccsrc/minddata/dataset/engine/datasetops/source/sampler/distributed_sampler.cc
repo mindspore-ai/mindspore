@@ -37,6 +37,9 @@ DistributedSamplerRT::DistributedSamplerRT(int64_t num_samples, int64_t num_dev,
       non_empty_(true) {}
 
 Status DistributedSamplerRT::InitSampler() {
+  if (is_initialized) {
+    return Status::OK();
+  }
   // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
   // If the user asked to sample more rows than exists in the dataset, adjust the num_samples accordingly.
   if (num_samples_ == 0 || num_samples_ > num_rows_) {
@@ -72,6 +75,7 @@ Status DistributedSamplerRT::InitSampler() {
   }
   if (!samples_per_buffer_) non_empty_ = false;
 
+  is_initialized = true;
   return Status::OK();
 }
 
