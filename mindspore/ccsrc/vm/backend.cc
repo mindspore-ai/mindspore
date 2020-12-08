@@ -56,14 +56,13 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
   result.inputs = inputs;
   result.outputs = outputs;
   result.graph_id = kInvalidGraphId;
-  GraphId graph_id = kInvalidGraphId;
   auto current_session = target_sess_;
   if (target != target_device_ && !target.empty()) {
     CreateOtherSession(target);
     current_session = other_sess_;
   }
   MS_EXCEPTION_IF_NULL(current_session);
-  graph_id = current_session->CompileGraph(segment, outputs);
+  GraphId graph_id = current_session->CompileGraph(segment, outputs);
   segment->graph_id_ = graph_id;
   auto graph = current_session->GetGraph(graph_id);
   MS_EXCEPTION_IF_NULL(graph);
