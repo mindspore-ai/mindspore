@@ -122,8 +122,8 @@ class Robustness(LabelSensitiveMetric):
                 perturbations.append(perturbation_on_single_sample)
             perturbations = np.vstack(perturbations)
             perturbations_saliency = explainer(ms.Tensor(perturbations, ms.float32), targets).asnumpy()
-            sensitivity = np.sum((perturbations_saliency - saliency_np) ** 2,
-                                 axis=tuple(range(1, len(saliency_np.shape))))
+            sensitivity = np.sqrt(np.sum((perturbations_saliency - saliency_np) ** 2,
+                                         axis=tuple(range(1, len(saliency_np.shape)))))
             sensitivities.append(sensitivity)
         sensitivities = np.stack(sensitivities, axis=-1)
         max_sensitivity = np.max(sensitivities, axis=1) / norm

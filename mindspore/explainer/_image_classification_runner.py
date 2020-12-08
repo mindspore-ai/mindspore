@@ -418,29 +418,24 @@ class ImageClassificationRunner:
         inputs, labels, _ = self._unpack_next_element(next_element)
         for idx, inp in enumerate(inputs):
             inp = _EXPAND_DIMS(inp, 0)
-            saliency_dict = saliency_dict_lst[idx]
-            for label, saliency in saliency_dict.items():
-                if isinstance(benchmarker, Localization):
-                    _, _, bboxes = self._unpack_next_element(next_element, True)
-                    if label in labels[idx]:
-                        res = benchmarker.evaluate(explainer, inp, targets=label, mask=bboxes[idx][label],
-                                                   saliency=saliency)
-                        if np.any(res == np.nan):
-                            res = np.zeros_like(res)
+            if isinstance(benchmarker, LabelAgnosticMetric):
+                res = benchmarker.evaluate(explainer, inp)
+                benchmarker.aggregate(res)
+            else:
+                saliency_dict = saliency_dict_lst[idx]
+                for label, saliency in saliency_dict.items():
+                    if isinstance(benchmarker, Localization):
+                        _, _, bboxes = self._unpack_next_element(next_element, True)
+                        if label in labels[idx]:
+                            res = benchmarker.evaluate(explainer, inp, targets=label, mask=bboxes[idx][label],
+                                                       saliency=saliency)
+                            benchmarker.aggregate(res, label)
+                    elif isinstance(benchmarker, LabelSensitiveMetric):
+                        res = benchmarker.evaluate(explainer, inp, targets=label, saliency=saliency)
                         benchmarker.aggregate(res, label)
-                elif isinstance(benchmarker, LabelSensitiveMetric):
-                    res = benchmarker.evaluate(explainer, inp, targets=label, saliency=saliency)
-                    if np.any(res == np.nan):
-                        res = np.zeros_like(res)
-                    benchmarker.aggregate(res, label)
-                elif isinstance(benchmarker, LabelAgnosticMetric):
-                    res = benchmarker.evaluate(explainer, inp)
-                    if np.any(res == np.nan):
-                        res = np.zeros_like(res)
-                    benchmarker.aggregate(res)
-                else:
-                    raise TypeError('Benchmarker must be one of LabelSensitiveMetric or LabelAgnosticMetric, but'
-                                    'receive {}'.format(type(benchmarker)))
+                    else:
+                        raise TypeError('Benchmarker must be one of LabelSensitiveMetric or LabelAgnosticMetric, but'
+                                        'receive {}'.format(type(benchmarker)))
 
     def _verify_data(self):
         """Verify dataset and labels."""

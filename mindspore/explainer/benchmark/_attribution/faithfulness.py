@@ -382,8 +382,6 @@ class Faithfulness(LabelSensitiveMetric):
 
         perturb_percent = 0.5  # ratio of pixels to be perturbed, future argument
         perturb_method = "Constant"  # perturbation method, all the perturbed pixels will be set to constant
-        num_perturb_pixel_per_step = None  # number of pixels for each perturbation step
-        num_perturb_steps = 100  # separate the perturbation progress in to 100 steps.
         base_value = 0.0  # the pixel value set for the perturbed pixels
 
         check_value_type("activation_fn", activation_fn, nn.Cell)
@@ -395,8 +393,6 @@ class Faithfulness(LabelSensitiveMetric):
                 self._faithfulness_helper = method(
                     perturb_percent=perturb_percent,
                     perturb_method=perturb_method,
-                    perturb_pixel_per_step=num_perturb_pixel_per_step,
-                    num_perturbations=num_perturb_steps,
                     base_value=base_value
                 )
 
