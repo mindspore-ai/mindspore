@@ -208,7 +208,7 @@ class CompositeGraph:
             def _get_axis_while_none(input_shape, output_shape):
                 red_axis = []
                 if len(output_shape) == len(input_shape):
-                    for s, i in enumerate(output_shape):
+                    for i, s in enumerate(output_shape):
                         if s == 1 and input_shape[i] > 1:
                             red_axis.append(i)
                 else:

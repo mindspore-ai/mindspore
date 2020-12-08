@@ -711,11 +711,11 @@ std::unordered_set<PrimitivePtr> GetExpandOps() {
     prim::kPrimGelu,
     prim::kPrimFusedAdam,
     prim::kPrimFusedAdamWeightDecay,
-    prim::kPrimTanhGrad,
     prim::kPrimReduceMean,
     prim::kPrimMaximumGrad,
     prim::kPrimMinimumGrad,
-    prim::kPrimGkDropout
+    prim::kPrimGkDropout,
+    prim::kPrimDropoutGrad,
 #endif
   };
   return expand_ops;
