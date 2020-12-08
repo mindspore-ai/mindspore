@@ -15,23 +15,24 @@
 import mindspore
 import mindspore.nn as nn
 import mindspore.context as context
+from mindspore import Tensor
 from mindspore.ops import operations as P
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
 
 class Net(nn.Cell):
-    def __init__(self, n=1, dtype=mindspore.int32):
+    def __init__(self, max_length, pad, dtype=mindspore.int32):
         super(Net, self).__init__()
-        self.randperm = P.Randperm(n, dtype)
+        self.randperm = P.Randperm(max_length, pad, dtype)
 
-    def construct(self):
-        return self.randperm()
+    def construct(self, n):
+        return self.randperm(n)
 
 
 def test_net():
-    net = Net()
-    output = net()
+    net = Net(max_length=1, pad=-1)
+    output = net(Tensor([1], mindspore.int32))
 
     print(output)
     print(output.shape)
@@ -42,15 +43,18 @@ def test_net():
 
 
 def test_net_n20():
-    net = Net(20, mindspore.uint64)
-    output = net()
+    net = Net(max_length=30, pad=-1, dtype=mindspore.int32)
+    output = net(Tensor([20], dtype=mindspore.int32))
 
     print(output)
-    assert output.shape == (20,)
-    assert output.dtype == mindspore.uint64
+    assert output.shape == (30,)
+    assert output.dtype == mindspore.int32
 
     sample_set = set()
-    for i in output.asnumpy():
-        assert i not in sample_set
-        assert 0 <= i < 20
-        sample_set.add(i)
+    for index, i in enumerate(output.asnumpy()):
+        if index < 20:
+            assert i not in sample_set
+            assert 0 <= i < 20
+            sample_set.add(i)
+        else:
+            assert i == -1

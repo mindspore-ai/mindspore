@@ -13,26 +13,22 @@
 # limitations under the License.
 # ============================================================================
 
-"""Randperm op"""
+"""NoRepeatNGram op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
 
-randperm_op_info = AiCPURegOp("Randperm") \
+no_repeat_ngram_op_info = AiCPURegOp("NoRepeatNGram") \
     .fusion_type("OPAQUE") \
-    .input(0, "n", "required") \
-    .output(0, "y", "required") \
-    .attr("max_length", "int") \
-    .attr("pad", "int") \
-    .dtype_format(DataType.I32_Default, DataType.I8_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I16_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I32_Default, DataType.I64_Default) \
-    .dtype_format(DataType.I32_Default, DataType.U8_Default) \
-    .dtype_format(DataType.I32_Default, DataType.U16_Default) \
-    .dtype_format(DataType.I32_Default, DataType.U32_Default) \
-    .dtype_format(DataType.I32_Default, DataType.U64_Default) \
+    .input(0, "state_seq", "required") \
+    .input(1, "log_probs", "required") \
+    .output(0, "out", "required") \
+    .attr("ngram_size", "int") \
+    .dtype_format(DataType.I32_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.F32_Default) \
+    .dtype_format(DataType.I32_Default, DataType.F64_Default, DataType.F64_Default) \
     .get_op_info()
 
-@op_info_register(randperm_op_info)
-def _randperm_aicpu():
-    """Randperm AiCPU register"""
+
+@op_info_register(no_repeat_ngram_op_info)
+def _no_repeat_ngram_aicpu():
+    """NoRepeatNGram AiCPU register"""
     return
