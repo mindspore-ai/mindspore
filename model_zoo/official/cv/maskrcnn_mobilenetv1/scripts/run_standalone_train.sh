@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ]
+if [ $# != 1 ] && [ $# != 0 ]
 then 
-    echo "Usage: sh run_standalone_train.sh [PRETRAINED_PATH]"
+	echo "Usage: sh run_standalone_train.sh [PRETRAINED_PATH](optional)"
 exit 1
 fi
 
@@ -27,13 +27,11 @@ get_real_path(){
     echo "$(realpath -m $PWD/$1)"
   fi
 }
-PATH1=$(get_real_path $1)
-echo $PATH1
 
-if [ ! -f $PATH1 ]
-then 
-    echo "error: PRETRAINED_PATH=$PATH1 is not a file"
-exit 1
+if [ $# == 1 ]
+then
+    PATH1=$(get_real_path $1)
+    echo $PATH1
 fi
 
 ulimit -u unlimited
@@ -53,5 +51,14 @@ cp -r ../src ./train
 cd ./train || exit
 echo "start training for device $DEVICE_ID"
 env > env.log
-python train.py --do_train=True --device_id=$DEVICE_ID --pre_trained=$PATH1 &> log &
+if [ $# == 1 ]
+then
+    python train.py --do_train=True --device_id=$DEVICE_ID --pre_trained=$PATH1 &> log &
+fi
+
+if [ $# == 0 ]
+then
+    python train.py --do_train=True --device_id=$DEVICE_ID &> log &
+fi
+
 cd ..

@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 2 ]
+if [ $# != 2 ] && [ $# != 1 ]
 then 
-    echo "Usage: sh run_train.sh [RANK_TABLE_FILE] [PRETRAINED_PATH]"
+	echo "Usage: sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_PATH](optional)"
 exit 1
 fi
 
@@ -31,7 +31,11 @@ PATH1=$(get_real_path $1)
 PATH2=$2
 
 echo $PATH1
-echo $PATH2
+
+if [ $# == 2 ]
+then
+    echo $PATH2
+fi
 
 if [ ! -f $PATH1 ]
 then 
@@ -67,7 +71,16 @@ do
     cd ./train_parallel$i || exit
     echo "start training for rank $RANK_ID, device $DEVICE_ID"
     env > env.log
-    taskset -c $cmdopt python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM \
-                    --pre_trained=$PATH2 &> log &
+    if [ $# == 2 ]
+    then
+        taskset -c $cmdopt python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM \
+                        --pre_trained=$PATH2 &> log &
+    fi
+
+    if [ $# == 1 ]
+    then
+        taskset -c $cmdopt python train.py --do_train=True  --device_id=$i --rank_id=$i --run_distribute=True --device_num=$DEVICE_NUM &> log &
+    fi
+
     cd ..
 done

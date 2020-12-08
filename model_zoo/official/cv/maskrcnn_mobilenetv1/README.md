@@ -178,7 +178,6 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 # random threshold in data augmentation
 "keep_ratio": True,
 "flip_ratio": 0.5,
-"photo_ratio": 0.5,
 "expand_ratio": 1.0,
 
 "max_instance_count": 128, # max number of bbox for each image
@@ -265,7 +264,6 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 "test_max_per_img": 100,                                                       # max number of instance
 "test_batch_size": 2,                                                          # batch size
 
-"rpn_head_loss_type": "CrossEntropyLoss",                                      # loss type in rpn
 "rpn_head_use_sigmoid": True,                                                  # whether use sigmoid or not in rpn
 "rpn_head_weight": 1.0,                                                        # rpn head weight in loss
 "mask_thr_binary": 0.5,                                                        # mask threshold for in rcnn
@@ -275,7 +273,6 @@ Usage: sh run_standalone_train.sh [PRETRAINED_MODEL]
 "base_step": 58633,                                                            # bsae step in lr generator
 "total_epoch": 13,                                                             # total epoch in lr generator
 "warmup_step": 500,                                                            # warmp up step in lr generator
-"warmup_mode": "linear",                                                       # warmp up mode
 "warmup_ratio": 1/3.0,                                                         # warpm up ratio
 "sgd_momentum": 0.9,                                                           # momentum in optimizer
 
