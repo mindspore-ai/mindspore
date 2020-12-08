@@ -176,6 +176,8 @@ class Tensor(Tensor_):
         return out
 
     def __getitem__(self, index):
+        if isinstance(index, int) and index >= self.shape[0]:
+            raise IndexError("index {} is out of bounds for axis 0 with size {}".format(index, self.shape[0]))
         out = tensor_operator_registry.get('__getitem__')(self, index)
         return out
 
@@ -319,7 +321,7 @@ class Tensor(Tensor_):
 
         Args:
             shape (Tensor): The input tensor. The shape of input tensor must obey
-            the broadcasting rule.
+                the broadcasting rule.
 
         Returns:
             Tensor, has the same dimension as input tensor.
