@@ -88,6 +88,7 @@ class L1Regularizer(Cell):
         l1_regularization = self.scale * self.reduce_sum(self.abs(weights))
         return l1_regularization
 
+
 class Dropout(Cell):
     r"""
     Dropout layer for the input.
@@ -210,12 +211,14 @@ class Flatten(Cell):
     def construct(self, x):
         return F.reshape(x, (F.shape(x)[0], -1))
 
+
 @constexpr
 def get_broadcast_weight_bias_shape(x_shape, out_channel, in_channel):
     """get broadcast_weight_bias shape"""
     broad_weight_shape = x_shape[:-2] + (out_channel, in_channel)
     broad_bias_shape = x_shape[:-1] + (out_channel,)
     return broad_weight_shape, broad_bias_shape
+
 
 class Dense(Cell):
     r"""
@@ -262,6 +265,7 @@ class Dense(Cell):
         [[ 2.5246444   2.2738023   0.5711005  -3.9399147 ]
          [ 1.0739875   4.0155234   0.94188046 -5.459526  ]]
     """
+
     @cell_attr_register(attrs=['has_bias', 'activation', 'in_channels', 'out_channels'])
     def __init__(self,
                  in_channels,
@@ -323,7 +327,6 @@ class Dense(Cell):
             x = self.activation(x)
         return x
 
-
     def extend_repr(self):
         s = 'input_channels={}, output_channels={}'.format(self.in_channels, self.out_channels)
         if self.has_bias:
@@ -339,10 +342,12 @@ def _is_equal_one(x):
         return False
     return bool(x.asnumpy().mean() == 1.0)
 
+
 @constexpr
 def _dtype_check(x_dtype):
     if x_dtype not in [mstype.float32, mstype.float16]:
-        raise  TypeError("The input type must be float32 or float16.")
+        raise TypeError("The input type must be float32 or float16.")
+
 
 @constexpr
 def _is_float_dtype(dtype):
@@ -539,7 +544,6 @@ class OneHot(Cell):
         return self.onehot(indices, self.depth, F.cast(self.on_value, self.dtype), F.cast(self.off_value, self.dtype))
 
 
-
 class Pad(Cell):
     """
     Pads the input tensor according to the paddings and mode.
@@ -672,6 +676,7 @@ class Interpolate(Cell):
         >>> print(result.shape)
         (1, 1, 5, 5)
     """
+
     def __init__(self):
         super(Interpolate, self).__init__()
 
@@ -767,6 +772,7 @@ class Tril(Cell):
         [[1   0]
          [3   4]]
     """
+
     def __init__(self):
         super(Tril, self).__init__()
         self.dtype = P.DType()
@@ -809,6 +815,7 @@ class Triu(Cell):
         [[1 2]
          [0 4]]
     """
+
     def __init__(self):
         super(Triu, self).__init__()
         self.dtype = P.DType()
@@ -859,6 +866,7 @@ class MatrixDiag(Cell):
         [[ 1.  0.]
          [ 0. -1.]]
     """
+
     def __init__(self):
         super(MatrixDiag, self).__init__()
         self.matrix_diag = inner.MatrixDiag()
@@ -895,6 +903,7 @@ class MatrixDiagPart(Cell):
          [-1.  1.]
          [-1.  1.]]
     """
+
     def __init__(self):
         super(MatrixDiagPart, self).__init__()
         self.matrix_diag_part = inner.MatrixDiagPart()
@@ -936,6 +945,7 @@ class MatrixSetDiag(Cell):
          [[-1.  0.]
           [ 0.  1.]]]
     """
+
     def __init__(self):
         super(MatrixSetDiag, self).__init__()
         self.matrix_set_diag = inner.MatrixSetDiag()

@@ -75,7 +75,7 @@ AnfNodePtr CreateInt32Tensor(int64_t value) {
   if (it != int_tensor_map.end()) {
     return it->second;
   }
-  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<tensor::Tensor>(py::int_(value), kInt32);
+  mindspore::tensor::TensorPtr tensor_ptr = std::make_shared<tensor::Tensor>(value, kInt32);
   ValuePtr value_ptr = MakeValue(tensor_ptr);
   auto anf_node_ptr = ValuePtrToAnfNodePtr(value_ptr);
   int_tensor_map[value] = anf_node_ptr;
