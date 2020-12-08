@@ -67,7 +67,6 @@
 #include "src/ops/slice.h"
 #include "src/ops/squeeze.h"
 #include "src/ops/flatten.h"
-#include "src/ops/mean.h"
 #include "src/ops/nhwc2nchw.h"
 #include "src/ops/stack.h"
 #include "src/ops/crop.h"
@@ -710,8 +709,6 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) Squeeze(primitive);
     case schema::PrimitiveType_Flatten:
       return new (std::nothrow) Flatten(primitive);
-    case schema::PrimitiveType_Mean:
-      return new (std::nothrow) Mean(primitive);
     case schema::PrimitiveType_Stack:
       return new (std::nothrow) Stack(primitive);
     case schema::PrimitiveType_Crop:

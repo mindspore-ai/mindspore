@@ -457,7 +457,7 @@ table FullConnection {
 }
 
 // Mean(input_tensor, axis, keep_dims)
-table Mean {
+table Mean {  // DEPRECATED
     axis: [int];
     keepDims: bool = false;
 }

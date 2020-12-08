@@ -103,7 +103,6 @@ static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveT
                                                               schema::PrimitiveType_BatchToSpace,
                                                               schema::PrimitiveType_BatchToSpaceND,
                                                               schema::PrimitiveType_Reduce,
-                                                              schema::PrimitiveType_Mean,
                                                               schema::PrimitiveType_Round,
                                                               schema::PrimitiveType_Floor,
                                                               schema::PrimitiveType_Ceil,

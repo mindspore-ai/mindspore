@@ -35,7 +35,6 @@ using mindspore::schema::ReduceMode_ReduceSum;
 using mindspore::schema::ReduceMode_ReduceSumSquare;
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::schema::PrimitiveType_Mean;
 using mindspore::schema::PrimitiveType_Reduce;
 
 namespace mindspore::kernel {
@@ -536,17 +535,6 @@ kernel::LiteKernel *CpuReduceInt8KernelCreator(const std::vector<lite::Tensor *>
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Reduce);
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Reduce opParameter nullptr";
-    return nullptr;
-  }
-  if (desc.type != schema::PrimitiveType_Reduce) {
-    MS_LOG(ERROR) << "Reduce op desc.type should be PrimitiveType_Reduce, got " << desc.type;
-    free(opParameter);
-    return nullptr;
-  }
   auto *kernel = new (std::nothrow) ReduceInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Reduce new ReduceCPUKernel failed.";
@@ -563,6 +551,4 @@ kernel::LiteKernel *CpuReduceInt8KernelCreator(const std::vector<lite::Tensor *>
   return kernel;
 }
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Reduce, CpuReduceInt8KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Mean, CpuReduceInt8KernelCreator)
-
 }  // namespace mindspore::kernel

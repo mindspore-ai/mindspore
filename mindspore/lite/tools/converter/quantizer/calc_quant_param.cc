@@ -520,7 +520,6 @@ QuantParamCalcRegister::QuantParamCalcRegister() {
     _registerMap[schema::PrimitiveType_RealDiv] = std::make_shared<CalcRealDiv>();
     _registerMap[schema::PrimitiveType_Reduce] = commonCalcer;
     _registerMap[schema::PrimitiveType_BiasAdd] = std::make_shared<BiasAddCalcer>();
-    _registerMap[schema::PrimitiveType_Mean] = linearCalcer;
     _registerMap[schema::PrimitiveType_Transpose] = linearCalcer;
     _registerMap[schema::PrimitiveType_MatMul] = std::make_shared<ConvCalcer>();
     _registerMap[schema::PrimitiveType_FullConnection] = std::make_shared<ConvCalcer>();
