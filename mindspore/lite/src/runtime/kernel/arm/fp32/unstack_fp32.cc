@@ -42,6 +42,7 @@ int UnstackCPUKernel::ReSize() {
   if (para->axis_ < 0) {
     para->axis_ += shape_size;
   }
+
   for (size_t i = 0; i < shape_size; i++) {
     if (static_cast<int>(i) < para->axis_) {
       para->pre_dims_ *= input->DimensionSize(i);
@@ -71,7 +72,9 @@ int UnstackCPUKernel::Run() {
     output_addr_array_[i] = reinterpret_cast<float *>(out_tensors_.at(i)->MutableData());
   }
   MS_ASSERT(output_addr_array_);
-  Unistack(input, output_addr_array_, reinterpret_cast<UnstackParameter *>(op_parameter_));
+  auto para = reinterpret_cast<UnstackParameter *>(op_parameter_);
+  para->num_ = out_num;
+  Unistack(input, output_addr_array_, para);
   return RET_OK;
 }
 

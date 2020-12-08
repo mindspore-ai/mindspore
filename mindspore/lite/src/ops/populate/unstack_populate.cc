@@ -31,7 +31,6 @@ OpParameter *PopulateUnstackParameter(const mindspore::lite::PrimitiveC *primiti
   memset(unstack_param, 0, sizeof(UnstackParameter));
   auto param = reinterpret_cast<mindspore::lite::Unstack *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   unstack_param->op_parameter_.type_ = primitive->Type();
-  unstack_param->num_ = param->GetNum();
   unstack_param->axis_ = param->GetAxis();
   return reinterpret_cast<OpParameter *>(unstack_param);
 }

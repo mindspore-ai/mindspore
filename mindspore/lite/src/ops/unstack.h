@@ -32,13 +32,11 @@ class Unstack : public PrimitiveC {
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Unstack, PrimitiveC);
   explicit Unstack(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  void SetNum(int num);
   void SetAxis(int axis);
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
-  int GetNum() const;
   int GetAxis() const;
 };
 }  // namespace lite
