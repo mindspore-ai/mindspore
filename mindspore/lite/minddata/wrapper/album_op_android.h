@@ -48,8 +48,8 @@ class AlbumOp {
   /// \param[in] file_dir - directory of Album
   /// \param[in] do_decode - decode image files
   /// \param[in] schema_file - schema file
+  /// \param[in] column_names - column name
   /// \param[in] exts - set of file extensions to read, if empty, read everything under the dir
-  /// \param[in] rotate - rotate image exif orientation
   AlbumOp(const std::string &file_dir, bool do_decode, const std::string &schema_file,
           const std::vector<std::string> &column_names, const std::set<std::string> &exts);
 
@@ -57,9 +57,9 @@ class AlbumOp {
   /// \param[in] file_dir - directory of Album
   /// \param[in] do_decode - decode image files
   /// \param[in] schema_file - schema file
+  /// \param[in] column_names - column name
   /// \param[in] exts - set of file extensions to read, if empty, read everything under the dir
   /// \param[in] index - the specific file index
-  /// \param[in] rotate - rotate image exif orientation
   AlbumOp(const std::string &file_dir, bool do_decode, const std::string &schema_file,
           const std::vector<std::string> &column_names, const std::set<std::string> &exts, uint32_t index);
 
@@ -79,11 +79,11 @@ class AlbumOp {
   /// \return bool - if file is bad then return false
   bool CheckImageType(const std::string &file_name, bool *valid);
 
-  // Op name getter
-  // @return Name of the current Op
+  /// \brief Name of the current Op
+  /// @return op name
   std::string Name() const { return "AlbumOp"; }
 
-  // Op name DisableRotate
+  /// \brief disable rotate
   // @return
   void DisableRotate() { this->rotate_ = false; }
 
@@ -162,7 +162,10 @@ class AlbumOp {
   /// \param[in] file file path
   int GetOrientation(const std::string &file);
 
+  /// \brief is read column name
+  /// \param[in] column_name
   bool IsReadColumn(const std::string &column_name);
+
   std::string folder_path_;  // directory of image folder
   bool decode_;
   std::vector<std::string> columns_to_load_;

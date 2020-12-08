@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <set>
 
 #include "album_op_android.h"  //NOLINT
 #include "minddata/dataset/include/execute.h"
@@ -115,13 +116,13 @@ extern "C" MDToDApi *MDToDApi_createPipeLine(MDToDConf_t MDConf) {
     MS_LOG(WARNING) << "MEAN: { " << MDConf.MEAN[0] << ", " << MDConf.MEAN[1] << ", " << MDConf.MEAN[2] << " }";
     MS_LOG(WARNING) << "STD: { " << MDConf.STD[0] << ", " << MDConf.STD[1] << ", " << MDConf.STD[2] << " }";
 
-    MDConf.ResizeSizeWH[0] = 224;
-    MDConf.ResizeSizeWH[1] = 224;
     if ((MDConf.ResizeSizeWH[0] != 0) && (MDConf.ResizeSizeWH[1] != 0)) {
       std::shared_ptr<TensorOperation> resize_op =
         mindspore::dataset::vision::Resize({MDConf.ResizeSizeWH[0], MDConf.ResizeSizeWH[1]});
       MS_LOG(WARNING) << "Push back resize";
       mapOperations.push_back(resize_op);
+    }
+    if (1 == MDConf.fixOrientation) {
       std::shared_ptr<TensorOperation> rotate_op = mindspore::dataset::vision::Rotate();
       MS_LOG(WARNING) << "Push back rotate";
       mapOperations.push_back(rotate_op);
@@ -166,7 +167,7 @@ extern "C" MDToDApi *MDToDApi_createPipeLine(MDToDConf_t MDConf) {
 }
 
 template <typename T>
-void MDBuffToVector(const MDToDBuff_t MDBuff, std::vector<T> *vec) {
+void MDBuffToVector(const MDToDBuff_t &MDBuff, std::vector<T> *vec) {
   vec->clear();
   if (MDBuff.DataSize > 0) {
     int nofElements = MDBuff.DataSize / sizeof(T);
@@ -270,12 +271,13 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
   // create Execute functions, this replaces Map in Pipeline
 
   bool ret = pMDToDApi->_iter->GetNextRow(&row);
+  uint32_t orientation = 0;
   if (row.size() != 0 && ret) {
+    GetValue<uint32_t>(row, "orientation", &orientation);
+    MS_LOG(WARNING) << "get orientation from row = " << orientation;
     if ((pMDToDApi->_augs).size() > 0) {
       // String and Tensors
-      uint32_t orientation;
-      row["orientation"]->GetItemAt(&orientation, {});
-      MS_LOG(WARNING) << "get orientation from row = " << orientation;
+
       // for each operation, run eager mode, single threaded operation, will have to memcpy
       // regardless
       for (int i = 0; i < (pMDToDApi->_augs).size(); i++) {
@@ -285,6 +287,7 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
           if (orientation > 1) {
             RotateOperation *p = static_cast<RotateOperation *>(pMDToDApi->_augs[i].get());
             p->setAngle(orientation);
+            orientation = 0;  // clear oriation filed if allready preformed
           } else {
             continue;
           }
@@ -302,6 +305,7 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
     // IS FOR TRAIN
     GetValue<int32_t>(row, "_isForTrain", &results->isForTrain);
     GetValue<int32_t>(row, "_noOfFaces", &results->noOfFaces);
+    results->orientation = (int32_t)orientation;
     // String and Tensors
     GetTensorToBuff(row, "image_filename", pMDToDApi->_hasBatch, &results->fileNameBuff);
     GetTensorToBuff(row, "image", pMDToDApi->_hasBatch, &results->imageBuff);
