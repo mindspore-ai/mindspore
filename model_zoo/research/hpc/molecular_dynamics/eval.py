@@ -32,11 +32,12 @@ context.set_context(mode=context.GRAPH_MODE, save_graphs=False, device_target="A
 if __name__ == '__main__':
     # get input data
     r = np.load(args_opt.dataset_path)
-    d_coord, d_nlist, avg, std, atype = r['d_coord'], r['d_nlist'], r['avg'], r['std'], r['atype']
+    d_coord, d_nlist, avg, std, atype, nlist = r['d_coord'], r['d_nlist'], r['avg'], r['std'], r['atype'], r['nlist']
     batch_size = 1
     atype_tensor = Tensor(atype)
     avg_tensor = Tensor(avg)
     std_tensor = Tensor(std)
+    nlist_tensor = Tensor(nlist)
     d_coord_tensor = Tensor(np.reshape(d_coord, (1, -1, 3)))
     d_nlist_tensor = Tensor(d_nlist)
     frames = []
@@ -48,8 +49,9 @@ if __name__ == '__main__':
     param_dict = load_checkpoint(args_opt.checkpoint_path)
     load_param_into_net(net, param_dict)
     net.to_float(mstype.float32)
-    energy, atom_ener, virial = \
-        net(d_coord_tensor, d_nlist_tensor, frames, avg_tensor, std_tensor, atype_tensor)
-    print(energy)
-    print(atom_ener)
-    print(virial)
+    energy, atom_ener, force, virial = \
+        net(d_coord_tensor, d_nlist_tensor, frames, avg_tensor, std_tensor, atype_tensor, nlist_tensor)
+    print('energy:', energy)
+    print('atom_energy:', atom_ener)
+    print('force:', force)
+    print('virial:', virial)
