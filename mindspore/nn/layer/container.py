@@ -84,17 +84,16 @@ class SequentialCell(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid')
-        >>> bn = nn.BatchNorm2d(2)
+        >>> conv = nn.Conv2d(3, 2, 3, pad_mode='valid', weight_init="ones")
         >>> relu = nn.ReLU()
-        >>> seq = nn.SequentialCell([conv, bn, relu])
-        >>> x = Tensor(np.random.random((1, 3, 4, 4)), dtype=mindspore.float32)
+        >>> seq = nn.SequentialCell([conv, relu])
+        >>> x = Tensor(np.ones([1, 3, 4, 4]), dtype=mindspore.float32)
         >>> output = seq(x)
         >>> print(output)
-        [[[[0.02531557 0.        ]
-           [0.04933941 0.04880078]]
-          [[0.         0.        ]
-           [0.         0.        ]]]]
+        [[[[27. 27.]
+           [27. 27.]]
+          [[27. 27.]
+           [27. 27.]]]]
     """
     def __init__(self, *args):
         super(SequentialCell, self).__init__()
