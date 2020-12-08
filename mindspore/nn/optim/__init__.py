@@ -28,6 +28,7 @@ from .ftrl import FTRL
 from .rmsprop import RMSProp
 from .proximal_ada_grad import ProximalAdagrad
 from .lazyadam import LazyAdam
+from .ada_grad import Adagrad
 
 __all__ = ['Optimizer', 'Momentum', 'LARS', 'Adam', 'AdamWeightDecay', 'LazyAdam', 'AdamOffload',
-           'Lamb', 'SGD', 'FTRL', 'RMSProp', 'ProximalAdagrad']
+           'Lamb', 'SGD', 'FTRL', 'RMSProp', 'ProximalAdagrad', 'Adagrad']
