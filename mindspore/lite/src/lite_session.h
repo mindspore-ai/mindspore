@@ -30,6 +30,7 @@
 #include "schema/model_generated.h"
 #include "src/executor.h"
 #include "src/tensor.h"
+#include "src/tensorlist.h"
 #if SUPPORT_GPU
 #include "src/runtime/opencl/opencl_runtime.h"
 #endif
@@ -70,6 +71,8 @@ class LiteSession : public session::LiteSession {
 
   int ConvertTensorsData(const lite::Model *model, size_t tensor_index, const schema::Tensor *src_tensor,
                          lite::Tensor *dst_tensor);
+
+  lite::Tensor *ConvertTensor(const schema::Tensor &src_tensor);
 
   int ConvertTensors(const lite::Model *model);
 
