@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ abstract::ShapePtr BroadCastInferShape(const std::string &op_name, const std::ve
   } else {
     std::copy(x_shape.begin(), x_shape.end() - length, std::back_inserter(broadcast_shape));
   }
-  for (int i = -length; i < 0; i++) {
+  for (int64_t i = -length; i < 0; i++) {
     if (x_shape[x_length + i] == 1) {
       broadcast_shape.push_back(y_shape[y_length + i]);
     } else if (y_shape[y_length + i] == 1) {

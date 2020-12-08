@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,18 +25,18 @@
 #include "utils/check_convert_utils.h"
 
 namespace mindspore {
-constexpr auto kNameTensorAdd = "TensorAdd";
-class TensorAdd : public PrimitiveC {
+constexpr auto kNameAdd = "Add";
+class Add : public PrimitiveC {
  public:
-  TensorAdd() : PrimitiveC(kNameTensorAdd) { InitIOName({"x", "y"}, {"output"}); }
-  ~TensorAdd() = default;
-  MS_DECLARE_PARENT(TensorAdd, PrimitiveC);
+  Add() : PrimitiveC(kNameAdd) { InitIOName({"x", "y"}, {"output"}); }
+  ~Add() = default;
+  MS_DECLARE_PARENT(Add, PrimitiveC);
   void Init() {}
 };
 
-AbstractBasePtr TensorAddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                               const std::vector<AbstractBasePtr> &input_args);
-using PrimTensorAddPtr = std::shared_ptr<TensorAdd>;
+AbstractBasePtr AddInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                         const std::vector<AbstractBasePtr> &input_args);
+using PrimAddPtr = std::shared_ptr<Add>;
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CORE_C_OPS_ADD_H_

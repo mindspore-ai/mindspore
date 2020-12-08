@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@
 #include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
-abstract::ShapePtr Relu6InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+namespace {
+abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto x = input_args[0]->GetShapeTrack();
   auto shape_element = x->cast<abstract::ShapePtr>();
@@ -32,7 +33,7 @@ abstract::ShapePtr Relu6InferShape(const PrimitivePtr &primitive, const std::vec
   return shape_element;
 }
 
-TypePtr Relu6InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   const std::set<TypeId> valid_types = {kNumberTypeFloat16, kNumberTypeFloat32};
   if (std::any_of(input_args.begin(), input_args.end(), [](AbstractBasePtr a) { return a == nullptr; })) {
     MS_LOG(EXCEPTION) << "nullptr";
@@ -42,11 +43,11 @@ TypePtr Relu6InferType(const PrimitivePtr &prim, const std::vector<AbstractBaseP
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   return TypeIdToType(infer_type);
 }
-
+}  // namespace
 AbstractBasePtr Relu6Infer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                            const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(Relu6InferType(primitive, input_args),
-                                                    Relu6InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
+                                                    InferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_EVAL_IMPL(Relu6, prim::kPrimRelu6, Relu6Infer);
 REGISTER_PRIMITIVE_C(kNameRelu6, Relu6);

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,16 @@
  */
 
 #include "c_ops/squeeze.h"
-#include <algorithm>
-#include <memory>
-#include <vector>
-#include "c_ops/op_utils.h"
-#include "utils/check_convert_utils.h"
-#include "abstract/primitive_infer_map.h"
 
 namespace mindspore {
-void Squeeze::set_axis(const std::vector<int> &axis) { this->set_attr(kAxis, MakeValue(axis)); }
-void Squeeze::Init(const std::vector<int> &axis) { this->set_axis(axis); }
-std::vector<int> Squeeze::get_axis() const {
+void Squeeze::Init(const std::vector<int64_t> &axis) { set_axis(axis); }
+void Squeeze::set_axis(const std::vector<int64_t> &axis) { AddAttr(kAxis, MakeValue(axis)); }
+std::vector<int64_t> Squeeze::get_axis() const {
   auto value_ptr = this->GetAttr(kAxis);
-  return GetValue<std::vector<int>>(value_ptr);
+  return GetValue<std::vector<int64_t>>(value_ptr);
 }
 
+namespace {
 abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto squeeze_prim = primitive->cast<PrimSqueezePtr>();
@@ -42,7 +37,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto len = in_shape.size();
   if (axis.empty()) {
     std::copy_if(in_shape.begin(), in_shape.end(), std::back_inserter(infer_shape),
-                 [](int value) { return value != 1; });
+                 [](int64_t value) { return value != 1; });
   } else {
     for (auto &item : axis) {
       CheckAndConvertUtils::CheckInRange("axis_or_elememt", item, kIncludeBoth, {-len, len + 1}, op_name);
@@ -68,7 +63,7 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
   }
   return input_args[0]->BuildType();
 }
-
+}  // namespace
 AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const std::vector<AbstractBasePtr> &input_args) {
   return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),

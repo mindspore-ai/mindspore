@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,10 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <algorithm>
+#include "c_ops/op_utils.h"
 #include "c_ops/primitive_c.h"
+#include "abstract/primitive_infer_map.h"
 #include "abstract/abstract_value.h"
 #include "utils/check_convert_utils.h"
 
@@ -32,9 +35,9 @@ class Squeeze : public PrimitiveC {
   Squeeze() : PrimitiveC(kNameSqueeze) { InitIOName({"x"}, {"output"}); }
   ~Squeeze() = default;
   MS_DECLARE_PARENT(Squeeze, PrimitiveC);
-  void Init(const std::vector<int> &axis = {});
-  void set_axis(const std::vector<int> &axis);
-  std::vector<int> get_axis() const;
+  void Init(const std::vector<int64_t> &axis = {});
+  void set_axis(const std::vector<int64_t> &axis);
+  std::vector<int64_t> get_axis() const;
 };
 
 AbstractBasePtr SqueezeInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

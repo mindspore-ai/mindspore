@@ -42,6 +42,47 @@ enum CompareRange {
   kIncludeBoth = 4,     // [a,b]
 };
 
+enum ActivationType : int64_t {
+  NO_ACTIVATION = 0,
+  RELU = 1,
+  SIGMOID = 2,
+  RELU6 = 3,
+  ELU = 4,
+  LEAKY_RELU = 5,
+  ABS = 6,
+  RELU1 = 7,
+  SOFTSIGN = 8,
+  SOFTPLUS = 9,
+  TANH = 10,
+  SELU = 11,
+  HSWISH = 12,
+  HSIGMOID = 13,
+  THRESHOLDRELU = 14,
+  LINEAR = 15,
+  HARD_TANH = 16,
+  SIGN = 17,
+  SWISH = 18,
+  UNKNOW = 19,
+};
+enum Format : int64_t {
+  NCHW = 0,
+  NHWC = 1,
+  NHWC4 = 2,
+  HWKC = 3,
+  HWCK = 4,
+  KCHW = 5,
+  CKHW = 6,
+  KHWC = 7,
+  CHWK = 8,
+  HW = 9,
+  HW4 = 10,
+  NC = 11,
+  NC4 = 12,
+  NC4HW4 = 13,
+  NUM_OF_FORMAT = 14
+};
+enum EltwiseMode : int64_t { PROD = 0, SUM = 1, MAXIMUM = 2, ELTWISEMODE_UNKNOW = 3 };
+
 class CheckAndConvertUtils {
  public:
   static std::vector<int64_t> CheckPositiveVector(const std::string &arg_name, const std::vector<int64_t> &arg_value,

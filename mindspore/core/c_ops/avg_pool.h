@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,13 +33,21 @@ class AvgPool : public PrimitiveC {
   ~AvgPool() = default;
   MS_DECLARE_PARENT(AvgPool, PrimitiveC);
   void Init(const std::vector<int64_t> &kernel_size = {1}, const std::vector<int64_t> &stride = {1},
-            const std::string &padding = "valid");
-  void set_padding(const std::string &pad);
+            const std::string &padding = "valid", const Format &format = NCHW,
+            const std::vector<int64_t> &pad = {0, 0, 0, 0}, const int64_t &round_mode = 0);
+  void set_padding(const std::string &padding);
   void set_kernel_size(const std::vector<int64_t> &kernel_size);
   void set_strides(const std::vector<int64_t> &strides);
+  void set_format(const Format &format);
+  void set_pad(const std::vector<int64_t> &pad);
+  void set_round_mode(const int64_t &round_mode);
+
   std::vector<int64_t> get_kernel_size() const;
   std::vector<int64_t> get_strides() const;
   std::string get_padding() const;
+  Format get_format() const;
+  std::vector<int64_t> get_pad() const;
+  int64_t get_round_mode() const;
 };
 
 AbstractBasePtr AvgPoolInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
