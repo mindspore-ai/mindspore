@@ -36,6 +36,7 @@ typedef struct MDToDConf {
   float MEAN[3];
   float STD[3];
   int ResizeSizeWH[2];
+  int fixOrientation;
   int CropSizeWH[2];
   int64_t fileid;  // -1 All files, otherwise get a single specifc file
 } MDToDConf_t;
@@ -44,6 +45,7 @@ typedef struct MDToDResult {
   int64_t fileid;
   int32_t isForTrain;
   int32_t noOfFaces;
+  int32_t orientation;
   MDToDBuff_t fileNameBuff;
   MDToDBuff_t labelBuff;
   MDToDBuff_t imageBuff;
