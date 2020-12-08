@@ -273,7 +273,7 @@ class Adam(Optimizer):
         Tensor[bool], the value is True.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = Net()

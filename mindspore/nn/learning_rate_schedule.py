@@ -87,7 +87,7 @@ class ExponentialDecayLR(LearningRateSchedule):
         >>> decay_rate = 0.9
         >>> decay_steps = 4
         >>> global_step = Tensor(2, mstype.int32)
-        >>> exponential_decay_lr = ExponentialDecayLR(learning_rate, decay_rate, decay_steps)
+        >>> exponential_decay_lr = nn.ExponentialDecayLR(learning_rate, decay_rate, decay_steps)
         >>> result = exponential_decay_lr(global_step)
         >>> print(result)
         0.09486833
@@ -145,7 +145,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
         >>> decay_rate = 0.9
         >>> decay_steps = 4
         >>> global_step = Tensor(2, mstype.int32)
-        >>> natural_exp_decay_lr = NaturalExpDecayLR(learning_rate, decay_rate, decay_steps, True)
+        >>> natural_exp_decay_lr = nn.NaturalExpDecayLR(learning_rate, decay_rate, decay_steps, True)
         >>> result = natural_exp_decay_lr(global_step)
         >>> print(result)
         0.1
@@ -204,10 +204,10 @@ class InverseDecayLR(LearningRateSchedule):
         >>> decay_rate = 0.9
         >>> decay_steps = 4
         >>> global_step = Tensor(2, mstype.int32)
-        >>> inverse_decay_lr = InverseDecayLR(learning_rate, decay_rate, decay_steps, True)
+        >>> inverse_decay_lr = nn.InverseDecayLR(learning_rate, decay_rate, decay_steps, True)
         >>> result = inverse_decay_lr(global_step)
         >>> print(result)
-        0.06896552
+        0.1
     """
     def __init__(self, learning_rate, decay_rate, decay_steps, is_stair=False):
         super(InverseDecayLR, self).__init__()
@@ -252,7 +252,7 @@ class CosineDecayLR(LearningRateSchedule):
         >>> max_lr = 0.1
         >>> decay_steps = 4
         >>> global_steps = Tensor(2, mstype.int32)
-        >>> cosine_decay_lr = CosineDecayLR(min_lr, max_lr, decay_steps)
+        >>> cosine_decay_lr = nn.CosineDecayLR(min_lr, max_lr, decay_steps)
         >>> result = cosine_decay_lr(global_steps)
         >>> print(result)
         0.055
@@ -320,7 +320,7 @@ class PolynomialDecayLR(LearningRateSchedule):
         >>> decay_steps = 4
         >>> power = 0.5
         >>> global_step = Tensor(2, mstype.int32)
-        >>> polynomial_decay_lr = PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
+        >>> polynomial_decay_lr = nn.PolynomialDecayLR(learning_rate, end_learning_rate, decay_steps, power)
         >>> result = polynomial_decay_lr(global_step)
         >>> print(result)
         0.07363961
@@ -388,7 +388,7 @@ class WarmUpLR(LearningRateSchedule):
         >>> learning_rate = 0.1
         >>> warmup_steps = 2
         >>> global_step = Tensor(2, mstype.int32)
-        >>> warmup_lr = WarmUpLR(learning_rate, warmup_steps)
+        >>> warmup_lr = nn.WarmUpLR(learning_rate, warmup_steps)
         >>> result = warmup_lr(global_step)
         >>> print(result)
         0.1
