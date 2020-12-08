@@ -46,6 +46,7 @@ constexpr auto kTopKV2 = "TopKV2";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
 constexpr auto kIdentity = "Identity";
+constexpr auto kUpdateCache = "UpdateCache";
 constexpr auto kCustRunApi = "RunCpuKernel";
 const std::set<std::string> kCustAiCpuKernelOps{kEditDistance, kIdentity};
 
