@@ -53,12 +53,30 @@ namespace gpu {
     }                                                                                                                  \
   }
 
+#define CHECK_CUDA_RET_WITH_ERROR_NOTRACE(expression, message)                           \
+  {                                                                                      \
+    cudaError_t status = (expression);                                                   \
+    if (status != cudaSuccess) {                                                         \
+      MS_LOG(ERROR) << "CUDA Error: " << message << " | Error Number: " << status << " " \
+                    << cudaGetErrorString(status);                                       \
+    }                                                                                    \
+  }
+
 #define CHECK_CUDA_RET_WITH_EXCEPT(node, expression, message)                                \
   {                                                                                          \
     cudaError_t status = (expression);                                                       \
     if (status != cudaSuccess) {                                                             \
       MS_LOG(EXCEPTION) << "CUDA Error: " << message << " | Error Number: " << status << " " \
                         << cudaGetErrorString(status) << trace::DumpSourceLines(node);       \
+    }                                                                                        \
+  }
+
+#define CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(expression, message)                              \
+  {                                                                                          \
+    cudaError_t status = (expression);                                                       \
+    if (status != cudaSuccess) {                                                             \
+      MS_LOG(EXCEPTION) << "CUDA Error: " << message << " | Error Number: " << status << " " \
+                        << cudaGetErrorString(status);                                       \
     }                                                                                        \
   }
 

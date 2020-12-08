@@ -16,5 +16,16 @@ if (NOT (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU)))
     list(REMOVE_ITEM _PS_SRC_FILES "core/node_manager.cc")
 endif ()
 
+if (NOT ENABLE_D)
+    list(REMOVE_ITEM _PS_SRC_FILES "ps_cache/ascend/ascend_ps_cache.cc")
+endif()
+
+if (NOT ENABLE_GPU)
+    list(REMOVE_ITEM _PS_SRC_FILES "ps_cache/gpu/gpu_ps_cache.cc")
+endif()
+
+list(REMOVE_ITEM _PS_SRC_FILES "ps_cache/ps_data/ps_data_channel.cc")
+add_subdirectory(ps_cache)
+
 set_property(SOURCE ${_PS_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PS)
 add_library(_mindspore_ps_obj OBJECT ${_PS_SRC_FILES})
