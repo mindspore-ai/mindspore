@@ -170,7 +170,8 @@ def train():
     if config.quantization_aware:
         quantizer = QuantizationAwareTraining(bn_fold=True,
                                               per_channel=[True, False],
-                                              symmetric=[True, False])
+                                              symmetric=[True, False],
+                                              one_conv_fold=False)
         network = quantizer.quantize(network)
 
     network = YoloWithLossCell(network)

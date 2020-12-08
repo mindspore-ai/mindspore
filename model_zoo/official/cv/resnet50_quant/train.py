@@ -115,7 +115,8 @@ if __name__ == '__main__':
     # convert fusion network to quantization aware network
     quantizer = QuantizationAwareTraining(bn_fold=True,
                                           per_channel=[True, False],
-                                          symmetric=[True, False])
+                                          symmetric=[True, False],
+                                          one_conv_fold=False)
     net = quantizer.quantize(net)
 
     # get learning rate
