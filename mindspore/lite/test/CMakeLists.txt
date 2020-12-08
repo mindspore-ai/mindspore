@@ -205,6 +205,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/infershape_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/slice_prepose_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/mindir_adjust_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/onnx_inputs_adjust_pass.cc
             )
 endif()
 ### train

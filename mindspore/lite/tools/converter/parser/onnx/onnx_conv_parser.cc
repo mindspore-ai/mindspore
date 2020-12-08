@@ -21,9 +21,14 @@
 
 namespace mindspore::lite {
 constexpr int32_t kSingleGroup = 1;
-bool OnnxConvParser::ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT> &attr, schema::CNodeT *op) {
+bool OnnxConvParser::ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT> &attr,
+                                           schema::PrimitiveT *primitive) {
   MS_LOG(DEBUG) << "onnx DepthwiseConvParser";
-  std::unique_ptr<schema::DepthwiseConv2DT> depthwiseConv2DParam = std::make_unique<schema::DepthwiseConv2DT>();
+  if (attr == nullptr || primitive == nullptr) {
+    MS_LOG(ERROR) << "input parameter is nullptr";
+    return false;
+  }
+  auto depthwiseConv2DParam = std::make_unique<schema::DepthwiseConv2DT>();
   if (depthwiseConv2DParam == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return false;
@@ -45,27 +50,18 @@ bool OnnxConvParser::ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT
   depthwiseConv2DParam->hasBias = attr->hasBias;
   depthwiseConv2DParam->activationType = attr->activationType;
 
-  op->primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
-  op->primitive->value.value = depthwiseConv2DParam.release();
+  primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
+  primitive->value.value = depthwiseConv2DParam.release();
   return true;
 }
 
-STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxConvParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                     const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx ConvParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::Conv2DT> attr = std::make_unique<schema::Conv2DT>();
+  auto attr = std::make_unique<schema::Conv2DT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   attr->strideH = 1;
@@ -83,21 +79,21 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     } else if (onnx_node_attr.name() == "dilations") {
       if (onnx_node_attr.ints().size() != 2) {
         MS_LOG(ERROR) << "dilations size " << onnx_node_attr.ints().size() << " is not 2";
-        return RET_ERROR;
+        return nullptr;
       }
       attr->dilateH = static_cast<int32_t>(onnx_node_attr.ints(0));
       attr->dilateW = static_cast<int32_t>(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "kernels") {
       if (onnx_node_attr.ints().size() != 2) {
         MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 2";
-        return RET_ERROR;
+        return nullptr;
       }
       attr->kernelH = static_cast<int32_t>(onnx_node_attr.ints(0));
       attr->kernelW = static_cast<int32_t>(onnx_node_attr.ints(1));
     } else if (onnx_node_attr.name() == "kernel_shape") {
       if (onnx_node_attr.ints().size() != 2) {
         MS_LOG(ERROR) << "kernel_shape size " << onnx_node_attr.ints().size() << " is not 2";
-        return RET_ERROR;
+        return nullptr;
       }
       attr->kernelH = static_cast<int32_t>(onnx_node_attr.ints(0));
       attr->kernelW = static_cast<int32_t>(onnx_node_attr.ints(1));
@@ -106,7 +102,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     } else if (onnx_node_attr.name() == "pads") {
       if (onnx_node_attr.ints().size() != 4) {
         MS_LOG(ERROR) << "pads size " << onnx_node_attr.ints().size() << " is not 4";
-        return RET_ERROR;
+        return nullptr;
       }
       attr->padUp = static_cast<int32_t>(onnx_node_attr.ints(0));
       attr->padLeft = static_cast<int32_t>(onnx_node_attr.ints(1));
@@ -115,7 +111,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     } else if (onnx_node_attr.name() == "strides") {
       if (onnx_node_attr.ints().size() != 2) {
         MS_LOG(ERROR) << "strides size " << onnx_node_attr.ints().size() << " is not 2";
-        return RET_ERROR;
+        return nullptr;
       }
       attr->strideH = static_cast<int32_t>(onnx_node_attr.ints(0));
       attr->strideW = static_cast<int32_t>(onnx_node_attr.ints(1));
@@ -124,7 +120,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
         attr->format = schema::Format::Format_NHWC;
       } else {
         MS_LOG(ERROR) << "Unsupported format: " << onnx_node_attr.s();
-        return RET_ERROR;
+        return nullptr;
       }
     }
   }
@@ -152,7 +148,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
                    [onnx_conv_weight](const onnx::NodeProto &proto) { return proto.output(0) == onnx_conv_weight; });
     if (node_iter == onnx_graph.node().end()) {
       MS_LOG(ERROR) << "can not find node: " << onnx_conv_weight;
-      return RET_ERROR;
+      return nullptr;
     }
     std::vector<int> dims;
     auto iter = std::find_if((*node_iter).attribute().begin(), (*node_iter).attribute().end(),
@@ -160,7 +156,7 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     if (iter != (*node_iter).attribute().end()) {
       if (iter->ints().begin() == nullptr || iter->ints().end() == nullptr) {
         MS_LOG(ERROR) << "dims insert failed";
-        return RET_ERROR;
+        return nullptr;
       }
       dims.insert(dims.begin(), iter->ints().begin(), iter->ints().end());
     }
@@ -174,16 +170,21 @@ STATUS OnnxConvParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     attr->activationType = schema::ActivationType_NO_ACTIVATION;
   }
 
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
   if (attr->group > kSingleGroup && attr->group == attr->channelIn) {
-    if (!ParseGroupConvolution(attr, op)) {
+    if (!ParseGroupConvolution(attr, primitive.get())) {
       MS_LOG(ERROR) << "Convert Convolution to Depthwise failed";
-      return RET_ERROR;
+      return nullptr;
     }
   } else {
-    op->primitive->value.type = schema::PrimitiveType_Conv2D;
-    op->primitive->value.value = attr.release();
+    primitive->value.type = schema::PrimitiveType_Conv2D;
+    primitive->value.value = attr.release();
   }
-  return RET_OK;
+  return PrimitiveC::Create(primitive.release());
 }
 
 OnnxNodeRegistrar g_onnxConvParser("Conv", new OnnxConvParser());

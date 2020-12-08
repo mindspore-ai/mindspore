@@ -21,7 +21,6 @@
 #include <string>
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
-#include "tools/converter/parser/onnx/onnx_tensor_parser.h"
 
 namespace mindspore {
 namespace lite {
@@ -30,9 +29,7 @@ class OnnxSliceParser : public OnnxNodeParser {
   OnnxSliceParser() : OnnxNodeParser("Slice") {}
   ~OnnxSliceParser() override = default;
 
-  STATUS InsertTensor(const std::vector<int> &onnx_val, const std::string &name, onnx::NodeProto *onnx_node);
-  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
-  STATUS GetInputTensor(std::vector<int> *onnx_val, const std::string &name);
+  lite::PrimitiveC *ParseLitePrimitive(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore

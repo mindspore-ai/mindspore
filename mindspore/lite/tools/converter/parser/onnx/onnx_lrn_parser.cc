@@ -18,22 +18,13 @@
 #include <memory>
 
 namespace mindspore::lite {
-STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxLrnParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx LrnParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::LocalResponseNormalizationT> attr = std::make_unique<schema::LocalResponseNormalizationT>();
+  auto attr = std::make_unique<schema::LocalResponseNormalizationT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   int32_t size = 0;
@@ -53,13 +44,18 @@ STATUS OnnxLrnParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Node
 
   if (size == 0) {
     MS_LOG(ERROR) << "Divide-by-zero error.";
-    return RET_ERROR;
+    return nullptr;
   }
   attr->alpha /= size;
 
-  op->primitive->value.type = schema::PrimitiveType_LocalResponseNormalization;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_LocalResponseNormalization;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 OnnxNodeRegistrar g_onnxLrnxParser("Lrn", new OnnxLrnParser());

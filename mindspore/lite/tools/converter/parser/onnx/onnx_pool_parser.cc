@@ -19,22 +19,13 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxPoolParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                     const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx PoolParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::PoolingT> attr = std::make_unique<schema::PoolingT>();
+  auto attr = std::make_unique<schema::PoolingT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   attr->format = schema::Format::Format_NCHW;
@@ -56,7 +47,7 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     attr->global = false;
   } else {
     MS_LOG(ERROR) << "Pooling param`s PoolingMode is not MAX either AVE. MindSpore support MAX and AVE only.";
-    return RET_ERROR;
+    return nullptr;
   }
 
   attr->roundMode = schema::RoundMode_FLOOR;
@@ -101,13 +92,18 @@ STATUS OnnxPoolParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::Nod
     }
     if (attribute_name == "dilations") {
       MS_LOG(ERROR) << "pooling op not support dilations now";
-      return RET_ERROR;
+      return nullptr;
     }
   }
 
-  op->primitive->value.type = schema::PrimitiveType_Pooling;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Pooling;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 OnnxNodeRegistrar g_onnxMaxPoolParser("MaxPool", new OnnxPoolParser());

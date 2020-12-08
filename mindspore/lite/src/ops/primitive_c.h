@@ -57,7 +57,7 @@ static std::map<std::string, schema::ActivationType> kActivationTypeMap{
   {"LeakyRelu", schema::ActivationType_LEAKY_RELU},
   {"Tanh", schema::ActivationType_TANH},
   {"Logistic", schema::ActivationType_SIGMOID}};
-std::vector<int> CastToInt(const ValuePtr value);
+std::vector<int> CastToInt(const ValuePtr &value);
 class PrimitiveC : public mindspore::Primitive {
  public:
   // Argument primitive is deliverd into PrimitiveC and will be deleted in ~PrimitiveC().

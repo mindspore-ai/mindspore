@@ -19,23 +19,13 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                               schema::CNodeT *op) {
+lite::PrimitiveC *OnnxReduceParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                       const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx ReduceParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::ReduceT> attr = std::make_unique<schema::ReduceT>();
+  auto attr = std::make_unique<schema::ReduceT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   attr->keepDims = 1;
@@ -65,12 +55,17 @@ STATUS OnnxReduceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
     attr->mode = schema::ReduceMode_ReduceSumSquare;
   } else {
     MS_LOG(ERROR) << "unsupported type";
-    return RET_ERROR;
+    return nullptr;
   }
 
-  op->primitive->value.type = schema::PrimitiveType_Reduce;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Reduce;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 OnnxNodeRegistrar g_onnxReduceMeanParser("ReduceMean", new OnnxReduceParser());

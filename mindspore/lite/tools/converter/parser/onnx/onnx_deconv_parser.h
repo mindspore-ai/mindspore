@@ -28,10 +28,10 @@ class OnnxDeConvParser : public OnnxNodeParser {
   OnnxDeConvParser() : OnnxNodeParser("DeConv") {}
   ~OnnxDeConvParser() override = default;
 
-  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
+  lite::PrimitiveC *ParseLitePrimitive(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 
  private:
-  static bool ParseGroupDeConvolution(const std::unique_ptr<schema::DeConv2DT> &attr, schema::CNodeT *op);
+  bool ParseGroupDeConvolution(const std::unique_ptr<schema::DeConv2DT> &attr, schema::PrimitiveT *primitive);
 };
 }  // namespace lite
 }  // namespace mindspore

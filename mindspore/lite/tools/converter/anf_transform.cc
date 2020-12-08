@@ -36,6 +36,7 @@
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/graph/group_depthwise_op_convert_pass.h"
 #include "tools/optimizer/graph/tflite_inputs_order_exchange_pass.h"
+#include "tools/optimizer/graph/onnx_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
 #include "tools/optimizer/graph/unused_transpose_node_remove_pass.h"
@@ -69,6 +70,16 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
     mindir_adjust_pass->SetQuantType(config->quantType);
     if (!mindir_adjust_pass->Run(old_graph)) {
       MS_LOG(ERROR) << "mindir adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return nullptr;
+    }
+  }
+
+  // onnx pre adjustment
+  if (config->fmk == converter::FmkType_ONNX) {
+    auto onnx_adjust_pass = std::make_shared<opt::OnnxInputAdjustOpPass>();
+    if (!onnx_adjust_pass->Run(old_graph)) {
+      MS_LOG(ERROR) << "onnx adjust failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return nullptr;
     }

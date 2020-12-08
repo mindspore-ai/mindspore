@@ -23,77 +23,13 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxSliceParser::InsertTensor(const std::vector<int> &onnx_val, const std::string &name,
-                                     onnx::NodeProto *onnx_node) {
-  std::unique_ptr<schema::TensorT> tensor = std::make_unique<schema::TensorT>();
-  if (tensor == nullptr) {
-    MS_LOG(ERROR) << "new tensor failed";
-    return RET_ERROR;
-  }
-  tensor->dataType = mindspore::kNumberTypeInt32;
-  tensor->dims.push_back(onnx_val.size());
-  tensor->format = schema::Format::Format_NCHW;
-  tensor->nodeType = schema::NodeType::NodeType_ValueNode;
-  int data_size = sizeof(int32_t) * onnx_val.size();
-  tensor->data.resize(data_size);
-  if (data_size != 0 &&
-      memcpy_s(static_cast<void *>(tensor->data.data()), data_size, onnx_val.data(), data_size) != EOK) {
-    MS_LOG(ERROR) << "memcpy_s failed";
-    return RET_ERROR;
-  }
-  int tensor_num = OnnxTensorParser::GetInstance()->GetTensorCache()->GetCachedTensor().size();
-  std::string tensor_name = name + std::to_string(tensor_num);
-  OnnxTensorParser::GetInstance()->GetTensorCache()->AddTensor(tensor_name, tensor.release(), GRAPH_INPUT);
-  onnx_node->add_input(tensor_name);
-  return RET_OK;
-}
-
-STATUS OnnxSliceParser::GetInputTensor(std::vector<int> *onnx_val, const std::string &name) {
-  if (onnx_val == nullptr) {
-    MS_LOG(ERROR) << "input vector is nullptr.";
-    return RET_ERROR;
-  }
-  if (OnnxTensorParser::GetInstance() == nullptr || OnnxTensorParser::GetInstance()->GetTensorCache() == nullptr) {
-    MS_LOG(ERROR) << "cannot get tensorcache.";
-    return RET_ERROR;
-  }
-  int index = OnnxTensorParser::GetInstance()->GetTensorCache()->FindTensor(name);
-  if (index == -1) {
-    MS_LOG(ERROR) << "can not find node: " << name;
-    return RET_ERROR;
-  }
-  auto input_tensor = OnnxTensorParser::GetInstance()->GetTensorCache()->GetCachedTensor()[index];
-  if (input_tensor->data.empty()) {
-    MS_LOG(DEBUG) << "data is empty.";
-    return RET_NO_CHANGE;
-  }
-  int data_num = std::accumulate(input_tensor->dims.begin(), input_tensor->dims.end(), 1, std::multiplies<int>());
-  onnx_val->resize(data_num);
-  if (memcpy_s(onnx_val->data(), data_num * sizeof(int32_t), input_tensor->data.data(), data_num * sizeof(int32_t)) !=
-      EOK) {
-    MS_LOG(ERROR) << "memcpy_s failed";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                              schema::CNodeT *op) {
+lite::PrimitiveC *OnnxSliceParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                      const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx SliceParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::StridedSliceT> attr = std::make_unique<schema::StridedSliceT>();
+  auto attr = std::make_unique<schema::StridedSliceT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   std::vector<int> starts;
@@ -128,36 +64,17 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
       }
     }
   }
-  int status = RET_OK;
-  switch (onnx_node.input_size()) {
-    case 5: {
-      if (steps.empty()) {
-        status = GetInputTensor(&steps, onnx_node.input(4));
-      }
-    }
-    case 4: {
-      if (status != RET_ERROR && axes.empty()) {
-        status = GetInputTensor(&axes, onnx_node.input(3));
-      }
-    }
-    case 3: {
-      if (status != RET_ERROR && ends.empty()) {
-        status = GetInputTensor(&ends, onnx_node.input(2));
-      }
-    }
-    case 2: {
-      if (status != RET_ERROR && starts.empty()) {
-        status = GetInputTensor(&starts, onnx_node.input(1));
-      }
-    }
-    default: {
-      if (status == RET_ERROR) {
-        MS_LOG(ERROR) << "onnx slice inputs are invalid.";
-        return RET_INPUT_TENSOR_ERROR;
-      }
-    }
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
   }
-
+  primitive->value.type = schema::PrimitiveType_StridedSlice;
+  primitive->value.value = attr.release();
+  auto primitive_c = PrimitiveC::Create(primitive.release());
+  if (starts.empty()) {
+    return primitive_c;
+  }
   if (axes.empty()) {
     for (size_t i = 0; i < starts.size(); ++i) {
       axes.push_back(i);
@@ -166,42 +83,11 @@ STATUS OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::No
   if (steps.empty()) {
     steps.assign(starts.size(), 1);
   }
-  onnx::NodeProto *slice_node = nullptr;
-  for (auto &node : onnx_graph.node()) {
-    if (&node == &onnx_node) {
-      slice_node = const_cast<onnx::NodeProto *>(&node);
-    }
-  }
-  int insert_num = 5 - onnx_node.input_size();
-  switch (insert_num) {
-    case 4: {
-      std::string name = "slice/starts/";
-      status = InsertTensor(starts, name, slice_node);
-    }
-    case 3:
-      if (status == RET_OK) {
-        std::string name = "slice/ends/";
-        status = InsertTensor(ends, name, slice_node);
-      }
-    case 2:
-      if (status == RET_OK) {
-        std::string name = "slice/axes/";
-        status = InsertTensor(axes, name, slice_node);
-      }
-    case 1:
-      if (status == RET_OK) {
-        std::string name = "slice/steps/";
-        status = InsertTensor(steps, name, slice_node);
-      }
-    default:
-      if (status != RET_OK) {
-        MS_LOG(ERROR) << "onnx slice insert tensor failed";
-        return RET_ERROR;
-      }
-  }
-  op->primitive->value.type = schema::PrimitiveType_StridedSlice;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  primitive_c->set_attr("starts", MakeValue<std::vector<int>>(starts));
+  primitive_c->set_attr("ends", MakeValue<std::vector<int>>(ends));
+  primitive_c->set_attr("axes", MakeValue<std::vector<int>>(axes));
+  primitive_c->set_attr("steps", MakeValue<std::vector<int>>(steps));
+  return primitive_c;
 }
 
 OnnxNodeRegistrar g_onnxSliceParser("Slice", new OnnxSliceParser());
