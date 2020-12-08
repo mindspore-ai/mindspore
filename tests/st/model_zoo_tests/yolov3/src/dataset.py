@@ -294,7 +294,7 @@ def data_to_mindrecord_byte_image(image_dir, anno_path, mindrecord_dir, prefix="
 
 def create_yolo_dataset(mindrecord_dir, batch_size=32, repeat_num=10, device_num=1, rank=0,
                         is_training=True, num_parallel_workers=8):
-    """Creatr YOLOv3 dataset with MindDataset."""
+    """Create YOLOv3 dataset with MindDataset."""
     ds = de.MindDataset(mindrecord_dir, columns_list=["image", "annotation"], num_shards=device_num, shard_id=rank,
                         num_parallel_workers=num_parallel_workers, shuffle=False)
     decode = C.Decode()
