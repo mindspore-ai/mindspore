@@ -1,0 +1,15 @@
+{
+  "common_dump_settings": {
+    "dump_mode": 0,
+    "path": "/test",
+    "net_name": "Net",
+    "iteration": 0,
+    "input_output": 2,
+    "kernels": ["Default/TensorAdd-op3"],
+    "support_device": [0,1,2,3,4,5,6,7]
+  },
+  "async_dump_settings": {
+    "enable": true,
+    "op_debug_mode": 0
+  }
+}
