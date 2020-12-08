@@ -57,11 +57,12 @@ class PipelineTransformer {
   void ElimParameter();
 
  private:
-  std::pair<bool, int> IsSharedNode(const AnfNodePtr &node, const AnfNodeIndexSet &node_users);
+  std::pair<bool, int64_t> IsSharedNode(const AnfNodePtr &node, const AnfNodeIndexSet &node_users);
   void DoBroadCast(const FuncGraphPtr &func);
-  SendAttr InsertSend(const FuncGraphPtr &graph, const AnfNodePtr &parameter, int user_node_stage, int node_stage);
+  SendAttr InsertSend(const FuncGraphPtr &graph, const AnfNodePtr &parameter, int64_t user_node_stage,
+                      int64_t node_stage);
   void InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, int index,
-                     int user_node_stage, int node_stage);
+                     int64_t user_node_stage, int64_t node_stage);
   void CutBorder(const FuncGraphPtr &graph);
   bool IsStageNode(const CNodePtr &node);
   AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node);
