@@ -352,7 +352,7 @@ table FakeQuantWithMinMaxVars {
 }
 
 table BiasAdd {
-    axis: [int];
+    axis: [int];  // DEPRECATED
 }
 
 table ROIPooling {
