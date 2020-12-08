@@ -15,6 +15,7 @@
  */
 #include "common/common.h"
 #include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/include/vision.h"
 
 #include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
 
@@ -47,6 +48,34 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCApiSamplerNull) {
   // Create an iterator over the result of the above dataset
   // This will trigger the creation of the Execution Tree and launch it.
   // Now the parameter check for ImageFolderNode would fail and we would end up with a nullptr iter.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestCacheOp, DISABLED_TestCacheCApiNestedCache) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create an ImageFolder Dataset, this folder_path only has 2 images in it
+  std::string folder_path = datasets_root_path_ + "/testImageNetData/train/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, RandomSampler(), {}, {}, some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> decode_op = vision::Decode();
+  EXPECT_NE(decode_op, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({decode_op}, {}, {}, {"image"}, some_cache);
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  // Now in the cache_error_pass would fail and we would end up with a nullptr iter.
   std::shared_ptr<Iterator> iter = ds->CreateIterator();
   EXPECT_EQ(iter, nullptr);
 }
@@ -736,7 +765,7 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCacheClueCApi) {
   iter->Stop();
 }
 
-TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare) {
+TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare1) {
   session_id_type env_session;
   Status s = GetSessionFromEnv(&env_session);
   EXPECT_EQ(s, Status::OK());
@@ -780,6 +809,58 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare) {
     i++;
     auto image = row["image"];
     MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter2->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+
+  // Manually terminate the pipeline
+  iter2->Stop();
+}
+
+TEST_F(MindDataTestCacheOp, DISABLED_TestCApiCacheShare2) {
+  session_id_type env_session;
+  Status s = GetSessionFromEnv(&env_session);
+  EXPECT_EQ(s, Status::OK());
+
+  std::shared_ptr<DatasetCache> some_cache = CreateDatasetCache(env_session, 0, true);
+  EXPECT_NE(some_cache, nullptr);
+
+  // Create an ImageFolder Dataset, this folder_path only has 2 images in it
+  std::string folder_path = datasets_root_path_ + "/testImageNetData/train/";
+  // The first pipeline is ImageFolder with RandomSampler, the second pipeline is ImageFolder with SequentialSampler
+  // Since sampler does not influence the data in the source, these two pipelines can share a common cache.
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, true, RandomSampler(), {}, {}, some_cache);
+  EXPECT_NE(ds1, nullptr);
+  std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, true, SequentialSampler(), {}, {}, some_cache);
+  EXPECT_NE(ds2, nullptr);
+
+  // Create and launch the Execution Tree for ds1
+  std::shared_ptr<Iterator> iter1 = ds1->CreateIterator();
+  EXPECT_NE(iter1, nullptr);
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter1->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    iter1->GetNextRow(&row);
+  }
+  EXPECT_EQ(i, 2);
+  // Manually terminate the pipeline
+  iter1->Stop();
+
+  // Create and launch the Execution Tree for ds2
+  std::shared_ptr<Iterator> iter2 = ds2->CreateIterator();
+  EXPECT_NE(iter2, nullptr);
+  // Iterate the dataset and get each row
+  iter2->GetNextRow(&row);
+
+  i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
     iter2->GetNextRow(&row);
   }
   EXPECT_EQ(i, 2);
