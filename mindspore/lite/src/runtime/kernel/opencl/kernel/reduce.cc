@@ -28,7 +28,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_PARAM_INVALID;
-using mindspore::schema::PrimitiveType_Mean;
 using mindspore::schema::PrimitiveType_Reduce;
 using mindspore::schema::ReduceMode;
 using mindspore::schema::ReduceMode_ReduceMax;
@@ -183,8 +182,6 @@ int ReduceOpenCLKernel::Run() {
   return mindspore::lite::RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Mean, OpenCLKernelCreator<ReduceOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Mean, OpenCLKernelCreator<ReduceOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Reduce, OpenCLKernelCreator<ReduceOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Reduce, OpenCLKernelCreator<ReduceOpenCLKernel>)
 }  // namespace mindspore::kernel

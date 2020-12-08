@@ -28,7 +28,6 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Mean;
 using mindspore::schema::PrimitiveType_Reduce;
 using mindspore::schema::ReduceMode;
 using mindspore::schema::ReduceMode_ReduceAll;

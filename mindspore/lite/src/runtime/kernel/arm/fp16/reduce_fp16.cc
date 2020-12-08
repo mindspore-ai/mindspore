@@ -28,7 +28,6 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Mean;
 using mindspore::schema::PrimitiveType_Reduce;
 using mindspore::schema::ReduceMode;
 using mindspore::schema::ReduceMode_ReduceMax;
@@ -191,17 +190,6 @@ kernel::LiteKernel *CpuMeanFp16KernelCreator(const std::vector<lite::Tensor *> &
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                              const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                              const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Mean);
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Reduce opParameter nullptr";
-    return nullptr;
-  }
-  if (desc.type != schema::PrimitiveType_Mean) {
-    MS_LOG(ERROR) << "Reduce op desc.type should be PrimitiveType_Mean, got " << desc.type;
-    free(opParameter);
-    return nullptr;
-  }
   auto *kernel = new (std::nothrow) ReduceFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "Reduce new ReduceCPUKernel failed.";
@@ -219,5 +207,4 @@ kernel::LiteKernel *CpuMeanFp16KernelCreator(const std::vector<lite::Tensor *> &
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reduce, CpuReduceFp16KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Mean, CpuMeanFp16KernelCreator)
 }  // namespace mindspore::kernel
