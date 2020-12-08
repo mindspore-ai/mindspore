@@ -27,10 +27,9 @@
 namespace mindspore {
 namespace kernel {
 const std::map<std::string, cudnnReduceTensorOp_t> kReduceTypeMap = {
-  {"ReduceMax", CUDNN_REDUCE_TENSOR_MAX},
-  {"ReduceMean", CUDNN_REDUCE_TENSOR_AVG},
-  {"ReduceSum", CUDNN_REDUCE_TENSOR_ADD},
-  {"ReduceMin", CUDNN_REDUCE_TENSOR_MIN},
+  {"ReduceMax", CUDNN_REDUCE_TENSOR_MAX}, {"ReduceMean", CUDNN_REDUCE_TENSOR_AVG},
+  {"ReduceSum", CUDNN_REDUCE_TENSOR_ADD}, {"ReduceMin", CUDNN_REDUCE_TENSOR_MIN},
+  {"ReduceAny", CUDNN_REDUCE_TENSOR_MAX}, {"ReduceAll", CUDNN_REDUCE_TENSOR_MUL},
 };
 template <typename T>
 class ArrayReduceGpuKernel : public GpuKernel {
@@ -72,7 +71,14 @@ class ArrayReduceGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     kernel_node_ = kernel_node;
     InitResource();
-    data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
+    auto type_id = TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
+    auto node_name = AnfAlgo::GetCNodeName(kernel_node);
+    if ((node_name == kReduceAnyOpName || node_name == kReduceAllOpName) &&
+        std::strncmp(type_id, "kNumberTypeBool", std::strlen(type_id)) != 0) {
+      MS_LOG(ERROR) << "Input data type of ReduceAny or ReduceAll should be bool, but got " << type_id;
+      return false;
+    }
+    data_type_ = GetCudnnDataType(type_id);
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
     if (input_num != 1) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but reduce op needs 1 inputs.";
@@ -185,9 +191,8 @@ class ArrayReduceGpuKernel : public GpuKernel {
     auto iter = kReduceTypeMap.find(kernel_name);
     if (iter == kReduceTypeMap.end()) {
       MS_LOG(EXCEPTION) << "Array reduce kernel type " << kernel_name << " is not supported.";
-    } else {
-      reduce_tensor_op_ = iter->second;
     }
+    reduce_tensor_op_ = iter->second;
 
     CHECK_CUDNN_RET_WITH_EXCEPT(
       kernel_node_,
