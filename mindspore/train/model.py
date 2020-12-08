@@ -26,7 +26,7 @@ from .._checkparam import check_input_data, check_output_data, Validator
 from .callback import _InternalCallbackParam, RunContext, _CallbackManager, Callback
 from .. import context
 from ..parallel._utils import _get_parallel_mode, _get_device_num, _get_global_rank, \
-    _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check
+    _get_parameter_broadcast, _device_number_check, _parameter_broadcast_check, _parallel_predict_check
 from ..parallel._ps_context import _is_role_pserver, _is_role_sched
 from ..nn.metrics import Loss
 from .. import nn
@@ -736,10 +736,46 @@ class Model:
         """
         self._predict_network.set_train(False)
         check_input_data(*predict_data, data_class=Tensor)
+        _parallel_predict_check()
         result = self._predict_network(*predict_data)
 
         check_output_data(result)
         return result
+
+    def infer_predict_layout(self, *predict_data):
+        """
+        Generate parameter layout for the predict network in auto or semi auto parallel mode.
+
+        Data could be a single tensor, a list of tensor, or a tuple of tensor.
+
+        Note:
+            Batch data should be put together in one tensor.
+
+        Args:
+            predict_data (Tensor): Tensor of predict data. can be array, list or tuple.
+
+        Returns:
+            parameter_layout_dict (dict): Parameter layout dictionary used for load distributed checkpoint
+
+        Examples:
+            >>> input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
+            >>> model = Model(Net())
+            >>> model.infer_predict_layout(input_data)
+        """
+        if context.get_context("mode") != context.GRAPH_MODE:
+            raise RuntimeError('infer predict layout only supports GRAPH MODE currently.')
+        # remove this restriction after support inferring repeated strategy
+        if _get_parallel_mode() not in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+            raise RuntimeError('infer predict layout only supports semi auto parallel and auto parallel mode.')
+        _parallel_predict_check()
+        check_input_data(*predict_data, data_class=Tensor)
+
+        predict_net = self._predict_network
+        # Unlike the cases in build_train_network() and build_eval_network(), 'multi_subgraphs' is not set
+        predict_net.set_auto_parallel()
+        predict_net.set_train(False)
+        predict_net.compile(*predict_data)
+        return predict_net.parameter_layout_dict
 
 
 __all__ = ["Model"]

@@ -26,7 +26,7 @@ init()
 
 def test_train_32k_8p(batch_size=32, num_classes=32768):
     dev_num = 8
-    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num)
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL, device_num=dev_num, full_batch=True)
     set_algo_parameters(elementwise_op_strategy_follow=True)
     np.random.seed(6)
     input_np = Tensor(np.ones([batch_size, 3, 224, 224]).astype(np.float32))

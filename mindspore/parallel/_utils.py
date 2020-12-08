@@ -15,7 +15,8 @@
 """Utils of auto parallel"""
 
 import numpy as np
-from mindspore import log as logger
+from mindspore import context, log as logger
+from mindspore.context import ParallelMode
 from mindspore._c_expression import reset_op_id
 from mindspore.common.tensor import Tensor
 from mindspore.common.dtype import dtype_to_nptype
@@ -193,3 +194,70 @@ def _get_python_op(op_name, op_path, instance_name, arglist):
 def _reset_op_id():
     """Reset op id."""
     reset_op_id()
+
+
+def _parallel_predict_check():
+    """validate parallel model prediction"""
+    if _get_parallel_mode() in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL):
+        if not context.get_auto_parallel_context("full_batch"):
+            raise RuntimeError('Model prediction only supports full batch dataset. Please set "full_batch" with True.')
+        if context.get_auto_parallel_context("enable_parallel_optimizer"):
+            raise RuntimeError('Model prediction does not support parallel optimizer. Please set'
+                               '"enable_parallel_optimizer" with False.')
+
+
+def _check_similar_layout(tensor_layout1, tensor_layout2):
+    """check if two tensor layouts are same"""
+    if tensor_layout1[1] != tensor_layout2[1]:
+        return False
+    for i in tensor_layout1[1]:
+        if i == -1:
+            continue
+        if tensor_layout1[0][-1-i] != tensor_layout2[0][-1-i]:
+            return False
+    return True
+
+
+def _remove_repeated_slices(tensor_layout):
+    """generate unrepeated tensor layout"""
+    import copy
+    new_tensor_layout = copy.deepcopy(tensor_layout)
+    dev_mat = tensor_layout[0][:]
+    tensor_map = tensor_layout[1]
+    for dim in range(len(dev_mat)):
+        if dim not in tensor_map:
+            dev_mat[-1-dim] = 1
+    new_tensor_layout[0] = dev_mat
+    return new_tensor_layout
+
+
+def _infer_rank_list(train_map, predict_map=None):
+    """infer checkpoint slices to be loaded"""
+    ret = {}
+    for param_name in train_map:
+        train_layout = train_map[param_name]
+        new_train_layout = _remove_repeated_slices(train_layout)
+        train_dev_mat = train_layout[0]
+        dev_num = np.array(train_dev_mat).prod()
+        array = np.arange(dev_num).reshape(train_dev_mat)
+        index = ()
+        for i in new_train_layout[0]:
+            if i == 1:
+                index = index + (0,)
+            else:
+                index = index + (slice(None),)
+        rank_list = array[index].flatten()
+        if not predict_map:
+            ret[param_name] = rank_list
+            continue
+        if param_name not in predict_map:
+            logger.warning("predict_map does not contain %s", param_name)
+            continue
+        predict_layout = predict_map[param_name]
+        # optimization pass
+        if _check_similar_layout(train_layout, predict_layout):
+            dev_rank = _get_global_rank()
+            ret[param_name] = [rank_list[dev_rank]]
+        else:
+            ret[param_name] = rank_list
+    return ret
