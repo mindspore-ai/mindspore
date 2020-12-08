@@ -219,7 +219,6 @@ Status AclGraphImpl::Load() {
 
 Status AclGraphImpl::ConvertToOM() {
   MS_LOG(INFO) << "Start convert to om model.";
-  RegAllOpFromPython();
   if (graph_ == nullptr) {
     MS_LOG(ERROR) << "Invalid graph_ is null.";
     return FAILED;

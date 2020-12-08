@@ -15,6 +15,7 @@
  */
 #include "cxx_api/model/acl/acl_model_options.h"
 #include <memory>
+#include "utils/log_adapter.h"
 #include "external/ge/ge_api_types.h"
 
 namespace mindspore::api {
@@ -27,40 +28,45 @@ static std::string ParseOption(const std::map<std::string, std::string> &options
 }
 
 AclModelOptions::AclModelOptions(const std::map<std::string, std::string> &options) {
-  dump_cfg_path = ParseOption(options, kModelOptionDumpCfgPath);
-  dvpp_cfg_path = ParseOption(options, kModelOptionDvppCfgPath);
-  output_node = ParseOption(options, kModelOptionOutputNode);
   // to acl
   insert_op_cfg_path = ParseOption(options, kModelOptionInsertOpCfgPath);
   input_format = ParseOption(options, kModelOptionInputFormat);
   input_shape = ParseOption(options, kModelOptionInputShape);
-  dynamic_batch_size = ParseOption(options, kModelOptionInputShape);
-  dynamic_image_size = ParseOption(options, kModelOptionInputShape);
-  dynamic_dims = ParseOption(options, kModelOptionInputShape);
-  serial_nodes_name = ParseOption(options, kModelOptionSerialInput);
   output_type = ParseOption(options, kModelOptionOutputType);
+  precision_mode = ParseOption(options, kModelOptionPrecisionMode);
+  op_select_impl_mode = ParseOption(options, kModelOptionOpSelectImplMode);
 }
 
-std::map<std::string, std::string> AclModelOptions::GenAclOptions() const {
-  const std::map<std::string const *, std::string> acl_options_map = {
-    {&insert_op_cfg_path, ge::ir_option::INSERT_OP_FILE},
-    {&input_format, ge::ir_option::INPUT_FORMAT},
-    {&input_shape, ge::ir_option::INPUT_SHAPE},
-    {&dynamic_batch_size, ge::ir_option::DYNAMIC_BATCH_SIZE},
-    {&dynamic_image_size, ge::ir_option::DYNAMIC_IMAGE_SIZE},
-    {&dynamic_dims, ge::ir_option::DYNAMIC_DIMS},
-    {&serial_nodes_name, ge::ir_option::INPUT_FP16_NODES},
-    {&output_type, ge::ir_option::OUTPUT_TYPE},
+std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string>> AclModelOptions::GenAclOptions()
+  const {
+  const std::map<std::string const *, std::string> init_options_map = {
+    {&op_select_impl_mode, ge::ir_option::OP_SELECT_IMPL_MODE},
+    {&soc_version, ge::ir_option::SOC_VERSION},
   };
 
-  std::map<std::string, std::string> acl_options;
-  for (auto [ms_option, acl_option_key] : acl_options_map) {
+  const std::map<std::string const *, std::string> build_options_map = {
+    {&insert_op_cfg_path, ge::ir_option::INSERT_OP_FILE}, {&input_format, ge::ir_option::INPUT_FORMAT},
+    {&input_shape, ge::ir_option::INPUT_SHAPE},           {&output_type, ge::ir_option::OUTPUT_TYPE},
+    {&precision_mode, ge::ir_option::PRECISION_MODE},
+  };
+
+  std::map<std::string, std::string> init_options;
+  std::map<std::string, std::string> build_options;
+  for (auto [ms_option, acl_option_key] : init_options_map) {
     if (ms_option == nullptr || ms_option->empty()) {
       continue;
     }
-    acl_options.emplace(acl_option_key, *ms_option);
+    MS_LOG(INFO) << "Option " << acl_option_key << " : " << *ms_option;
+    init_options.emplace(acl_option_key, *ms_option);
   }
-  return acl_options;
-}
 
+  for (auto [ms_option, acl_option_key] : build_options_map) {
+    if (ms_option == nullptr || ms_option->empty()) {
+      continue;
+    }
+    MS_LOG(INFO) << "Option " << acl_option_key << " : " << *ms_option;
+    build_options.emplace(acl_option_key, *ms_option);
+  }
+  return {init_options, build_options};
+}
 }  // namespace mindspore::api

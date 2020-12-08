@@ -17,10 +17,8 @@
 #ifndef MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H
 #define MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H
 
-#include "pybind11/pybind11.h"
-
 namespace mindspore::api {
-void RegAllOpFromPython();
+void RegAllOp();
 bool PythonIsInited();
 }  // namespace mindspore::api
 

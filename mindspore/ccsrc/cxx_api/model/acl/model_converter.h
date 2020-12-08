@@ -39,7 +39,8 @@ class ModelConverter {
 
  private:
   transform::DfGraphPtr ConvertFuncGraphToAIR(const FuncGraphPtr &anf_graph);
-  Buffer BuildAirModel(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &acl_options);
+  Buffer BuildAirModel(const transform::DfGraphPtr &graph, const std::map<std::string, std::string> &init_options,
+                       const std::map<std::string, std::string> &build_options);
   AclModelOptions *options_;
 
   Buffer LoadMindIRInner(const FuncGraphPtr &func_graph);
