@@ -15,13 +15,13 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh run_standalone_eval_ascend.sh DATASET_SCHEMA_TEST TEST_DATASET EXISTED_CKPT_PATH \
   VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET"
 echo "for example:"
 echo "sh run_standalone_eval_ascend.sh \
   /home/workspace/dataset_menu/newstest2014.en.json \
-  /home/workspace/dataset_menu/newstest2014.en.tfrecord-001-of-001 \
+  /home/workspace/dataset_menu/newstest2014.en.mindrecord \
   /home/workspace/gnmt_v2/gnmt-6_3452.ckpt \
   /home/workspace/wmt16_de_en/vocab.bpe.32000 \
   /home/workspace/wmt16_de_en/bpe.32000 \
@@ -53,7 +53,7 @@ cp ../*.py ./eval
 cp -r ../src ./eval
 cp -r ../config ./eval
 cd ./eval || exit
-echo "start eval for device $DEVICE_ID"
+echo "start for evaluation"
 env > env.log
 python eval.py \
   --config=${current_exec_path}/eval/config/config_test.json \

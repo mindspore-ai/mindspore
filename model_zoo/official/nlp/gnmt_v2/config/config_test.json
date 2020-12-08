@@ -6,7 +6,7 @@
     "dataset_schema": "/home/workspace/dataset_menu/newstest2014.en.json",
     "pre_train_dataset": null,
     "fine_tune_dataset": null,
-    "test_dataset":  "/home/workspace/dataset_menu/newstest2014.en.tfrecord-001-of-001",
+    "test_dataset":  "/home/workspace/dataset_menu/newstest2014.en.mindrecord",
     "valid_dataset": null,
     "dataset_sink_mode": true
   },

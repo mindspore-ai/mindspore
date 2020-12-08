@@ -23,7 +23,7 @@ def _compute_fans(shape):
     Computes the number of input and output units for a weight shape.
 
     Args:
-        shape (tuple): Integer shape tuple or TF tensor shape.
+        shape (tuple): Integer shape tuple or MS tensor shape.
 
     Returns:
         tuple, integer scalars (fan_in, fan_out).

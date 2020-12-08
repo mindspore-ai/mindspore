@@ -15,12 +15,12 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh run_standalone_train_ascend.sh DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET"
 echo "for example:"
 echo "sh run_standalone_train_ascend.sh \
   /home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.json \
-  /home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.tfrecord-001-of-001"
+  /home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.mindrecord"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
@@ -42,10 +42,10 @@ cp ../*.py ./train
 cp -r ../src ./train
 cp -r ../config ./train
 cd ./train || exit
-echo "start training for device $DEVICE_ID"
+echo "start for training"
 env > env.log
 python train.py \
 	--config=${current_exec_path}/train/config/config.json \
 	--dataset_schema_train=$DATASET_SCHEMA_TRAIN \
-	--pre_train_dataset=$PRE_TRAIN_DATASET > log_gnmt_network${i}.log 2>&1 &
+	--pre_train_dataset=$PRE_TRAIN_DATASET > log_gnmt_network.log 2>&1 &
 cd ..

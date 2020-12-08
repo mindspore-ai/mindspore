@@ -15,13 +15,13 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "sh run_distributed_train_ascend.sh RANK_TABLE_ADDR DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET"
 echo "for example:"
 echo "sh run_distributed_train_ascend.sh \
   /home/workspace/rank_table_8p.json \
   /home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.json \
-  /home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.tfrecord-001-of-001"
+  /home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.mindrecord"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 

@@ -136,7 +136,7 @@ class BiLingualDataLoader(DataLoader):
                     columns = ["src", "src_padding", "prev_opt", "target", "tgt_padding"]
                     with open(self.schema_address, "w", encoding="utf-8") as  f:
                         f.write("{\n")
-                        f.write('  "datasetType":"TF",\n')
+                        f.write('  "datasetType":"MS",\n')
                         f.write('  "numRows":%s,\n' % provlist[0])
                         f.write('  "columns":{\n')
                         t = 1
@@ -211,7 +211,7 @@ class TextDataLoader(DataLoader):
                 columns = ["src", "src_padding"]
                 with open(self.schema_address, "w", encoding="utf-8") as  f:
                     f.write("{\n")
-                    f.write('  "datasetType":"TF",\n')
+                    f.write('  "datasetType":"MS",\n')
                     f.write('  "numRows":%s,\n' % provlist[0])
                     f.write('  "columns":{\n')
                     t = 1
