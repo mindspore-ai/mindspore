@@ -115,21 +115,22 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
   ReplaceOutTensorAndKernelToNull(in_tensors, in_kernels, mem_type);
 
   for (size_t i = 0; i < in_tensors.size(); ++i) {
+    auto *in_tensor = in_tensors.at(i);
     auto dst_format = (mem_type == MemType::IMG) ? schema::Format::Format_NHWC4 : schema::Format::Format_NHWC;
     auto src_format = (mem_type == MemType::IMG) ? schema::Format::Format_NHWC : schema::Format::Format_NHWC4;
-    auto *new_tensor = new (std::nothrow) lite::Tensor();
+    auto *new_tensor = new (std::nothrow)
+      lite::Tensor(in_tensor->data_type(), in_tensor->shape(), in_tensor->format(), lite::Tensor::VAR);
     MS_ASSERT(new_tensor);
     if (new_tensor == nullptr) {
       MS_LOG(ERROR) << "OpenCLSubGraph new tensor failed!";
       return RET_ERROR;
     }
-    new_tensor->CopyTensor(*in_tensors[i]);
     if (mem_type == MemType::IMG) {
       new_tensor->set_format(dst_format);
-      in_tensors[i]->set_format(src_format);
+      in_tensor->set_format(src_format);
     } else {
       new_tensor->set_format(src_format);
-      in_tensors[i]->set_format(dst_format);
+      in_tensor->set_format(dst_format);
     }
 
     out_tensors->emplace_back(new_tensor);
@@ -153,11 +154,11 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
     out_parameters->emplace_back(parameter);
     LiteKernel *in_convert_op = nullptr;
     if (mem_type == MemType::IMG) {
-      in_convert_op = lite::GetOpenCLKernel({in_tensors[i]}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter),
-                                            context_, desc);
+      in_convert_op =
+        lite::GetOpenCLKernel({in_tensor}, {new_tensor}, reinterpret_cast<OpParameter *>(parameter), context_, desc);
     } else {
-      in_convert_op = lite::GetOpenCLKernel({new_tensor}, {in_tensors[i]}, reinterpret_cast<OpParameter *>(parameter),
-                                            context_, desc);
+      in_convert_op =
+        lite::GetOpenCLKernel({new_tensor}, {in_tensor}, reinterpret_cast<OpParameter *>(parameter), context_, desc);
     }
     MS_ASSERT(in_convert_op);
     if (in_convert_op == nullptr) {
@@ -169,7 +170,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
       return RET_ERROR;
     }
 
-    ReplaceOutTensorAndKernelToConvert(in_tensors.at(i), in_kernels.at(i), new_tensor, in_convert_op, mem_type);
+    ReplaceOutTensorAndKernelToConvert(in_tensor, in_kernels.at(i), new_tensor, in_convert_op, mem_type);
 
     // replace in_tensor of inner kernel which use out tensor
     if (mem_type == MemType::BUF) {

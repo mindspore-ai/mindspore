@@ -54,7 +54,7 @@ int ArgMinMaxOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Invalid axis " << param->axis_;
     return RET_ERROR;
   }
-  param->get_max_ = (op_parameter_->type_ == PrimitiveType_ArgMax);
+  param->get_max_ = (Type() == PrimitiveType_ArgMax);
   return RET_OK;
 }
 

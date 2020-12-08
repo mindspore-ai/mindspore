@@ -45,6 +45,32 @@ kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, con
 
 namespace mindspore::kernel {
 
+const std::set<schema::PrimitiveType> ArithmeticPrimitives = {schema::PrimitiveType_Mul,
+                                                              schema::PrimitiveType_Add,
+                                                              schema::PrimitiveType_Sub,
+                                                              schema::PrimitiveType_Div,
+                                                              schema::PrimitiveType_LogicalAnd,
+                                                              schema::PrimitiveType_LogicalOr,
+                                                              schema::PrimitiveType_Maximum,
+                                                              schema::PrimitiveType_Minimum,
+                                                              schema::PrimitiveType_FloorDiv,
+                                                              schema::PrimitiveType_FloorMod,
+                                                              schema::PrimitiveType_SquaredDifference,
+                                                              schema::PrimitiveType_Equal,
+                                                              schema::PrimitiveType_NotEqual,
+                                                              schema::PrimitiveType_Less,
+                                                              schema::PrimitiveType_LessEqual,
+                                                              schema::PrimitiveType_Greater,
+                                                              schema::PrimitiveType_GreaterEqual,
+                                                              schema::PrimitiveType_Eltwise};
+
+const std::set<schema::PrimitiveType> ArithmeticSelfPrimitives = {
+  schema::PrimitiveType_Abs,        schema::PrimitiveType_Ceil,  schema::PrimitiveType_Cos,
+  schema::PrimitiveType_Exp,        schema::PrimitiveType_Floor, schema::PrimitiveType_Log,
+  schema::PrimitiveType_LogicalNot, schema::PrimitiveType_Round, schema::PrimitiveType_Rsqrt,
+  schema::PrimitiveType_Sin,        schema::PrimitiveType_Neg,   schema::PrimitiveType_Sqrt,
+  schema::PrimitiveType_Square};
+
 std::string GetActDefines() {
   static std::string act_defines = "#define ActivationType_RELU " + std::to_string(ActivationType_RELU) +
                                    "\n#define ActivationType_RELU6 " + std::to_string(ActivationType_RELU6) +

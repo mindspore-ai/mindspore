@@ -51,6 +51,7 @@ void *OpenCLAllocator::MinimumFit(size_t size, const std::vector<size_t> &img_si
     bool is_match{mem_buf->img_size.size() == img_size.size()};
     for (int i = 0; i < img_size.size() && is_match; ++i) {
       is_match &= img_size[i] == mem_buf->img_size[i];
+      is_match &= mem_buf->device_ptr_ != nullptr;
     }
     if (is_match) {
       free_list_.erase(iter);

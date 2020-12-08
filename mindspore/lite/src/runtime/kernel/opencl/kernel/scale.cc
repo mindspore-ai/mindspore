@@ -149,7 +149,7 @@ int ScaleOpenCLKernel::InitWeights() {
   return RET_OK;
 }
 
-int ScaleOpenCLKernel::Init() {
+int ScaleOpenCLKernel::Prepare() {
   std::string kernel_name;
   auto *scale_param = reinterpret_cast<const ScaleParameter *>(op_parameter_);
   auto in_tensor = in_tensors_.at(0);
@@ -250,25 +250,6 @@ int ScaleOpenCLKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *OpenCLScaleKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                             const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) ScaleOpenCLKernel(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Create OpenCL Scale kernel failed!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: Scale";
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Scale, OpenCLScaleKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Scale, OpenCLScaleKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Scale, OpenCLKernelCreator<ScaleOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Scale, OpenCLKernelCreator<ScaleOpenCLKernel>)
 }  // namespace mindspore::kernel

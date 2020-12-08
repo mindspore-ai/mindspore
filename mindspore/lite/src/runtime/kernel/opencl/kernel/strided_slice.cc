@@ -34,11 +34,21 @@ using mindspore::schema::PrimitiveType_StridedSlice;
 namespace mindspore::kernel {
 
 int StridedSliceOpenCLKernel::CheckSpecs() {
-  const std::string kernel_name = op_parameter_->type_ == PrimitiveType_Slice ? "Slice" : "StridedSlice";
-  if (in_tensors_.size() != 1) {
-    MS_LOG(ERROR) << kernel_name + " only supports 1 input Tensor.";
+  if (Type() == PrimitiveType_Slice) {
+    if (in_tensors_.size() != 3) {
+      MS_LOG(ERROR) << "Slice only supports 3 input Tensor.";
+      return RET_ERROR;
+    }
+  } else if (Type() == PrimitiveType_StridedSlice) {
+    if (in_tensors_.size() != 4) {
+      MS_LOG(ERROR) << "StridedSlice only supports 4 input Tensor.";
+      return RET_ERROR;
+    }
+  } else {
+    MS_LOG(ERROR) << "Type error.";
     return RET_ERROR;
   }
+  const std::string kernel_name = Type() == PrimitiveType_Slice ? "Slice" : "StridedSlice";
   if (out_tensors_.size() != 1) {
     MS_LOG(ERROR) << kernel_name + " only supports 1 output Tensor.";
     return RET_ERROR;
@@ -78,8 +88,9 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
                    static_cast<cl_int>(output_info.W), static_cast<cl_int>(output_info.C)};
   io_slices_ = {static_cast<cl_int>(input_info.Slice), static_cast<cl_int>(output_info.Slice)};
 
-  if (op_parameter_->type_ == PrimitiveType_Slice) {
+  if (Type() == PrimitiveType_Slice) {
     auto param = reinterpret_cast<SliceParameter *>(op_parameter_);
+    MS_ASSERT(param);
     Broadcast2GpuShape(begin_.s, param->begin_, param->param_length_, 0);
     Broadcast2GpuShape(size_.s, param->size_, param->param_length_, -1);
     for (int i = 0; i < 4; ++i) {
@@ -101,6 +112,7 @@ int StridedSliceOpenCLKernel::InitConstArgs() {
     }
   } else {
     auto param = reinterpret_cast<StridedSliceParameter *>(op_parameter_);
+    MS_ASSERT(param);
     cl_int4 end = input_shape_;
     Broadcast2GpuShape(begin_.s, param->begins_, param->num_axes_, 0);
     Broadcast2GpuShape(stride_.s, param->strides_, param->num_axes_, 1);
@@ -179,8 +191,8 @@ void StridedSliceOpenCLKernel::SetGlobalLocal() {
 
 int StridedSliceOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running! ";
-  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_[0]->data_c());
-  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_[0]->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, 0, in_tensors_.front()->data_c());
+  ocl_runtime_->SetKernelArg(kernel_, 1, out_tensors_.front()->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
