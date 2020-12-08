@@ -813,6 +813,7 @@ class NASNetAMobile(nn.Cell):
         self.classifier = nn.Dense(in_channels=24*filters, out_channels=num_classes)
         self.shape = P.Shape()
         self.reshape = P.Reshape()
+        self.avg_pool = nn.AvgPool2d(kernel_size=7, stride=1)
         self._initialize_weights()
 
     def _initialize_weights(self):
@@ -867,7 +868,7 @@ class NASNetAMobile(nn.Cell):
         x_cell_15 = self.cell_15(x_cell_14, x_cell_13)
 
         x_cell_15 = self.relu(x_cell_15)
-        x_cell_15 = nn.AvgPool2d(F.shape(x_cell_15)[2:])(x_cell_15)  # global average pool
+        x_cell_15 = self.avg_pool(x_cell_15)  # global average pool
         x_cell_15 = self.reshape(x_cell_15, (self.shape(x_cell_15)[0], -1,))
         x_cell_15 = self.dropout(x_cell_15)
         logits = self.classifier(x_cell_15)
