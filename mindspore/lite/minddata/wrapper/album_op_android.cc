@@ -202,7 +202,6 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col
     // load empty tensor since image is not jpg
     MS_LOG(INFO) << "Bin file found" << image_file_path << ".";
     RETURN_IF_NOT_OK(Tensor::CreateFromFile(image_file_path, tensor));
-    //    row->push_back(std::move(image));
     return Status::OK();
   }
 
@@ -263,7 +262,6 @@ Status AlbumOp::LoadStringArrayTensor(const nlohmann::json &json_obj, uint32_t c
   MS_LOG(INFO) << "String array label found: " << data << ".";
   //  TensorPtr label;
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(data, tensor));
-  //  row->push_back(std::move(label));
   return Status::OK();
 }
 
@@ -274,7 +272,6 @@ Status AlbumOp::LoadStringTensor(const nlohmann::json &json_obj, uint32_t col_nu
   MS_LOG(INFO) << "String label found: " << data << ".";
   TensorPtr label;
   RETURN_IF_NOT_OK(Tensor::CreateScalar<std::string>(data, tensor));
-  //  row->push_back(std::move(label));
   return Status::OK();
 }
 
@@ -303,7 +300,6 @@ Status AlbumOp::LoadIntArrayTensor(const nlohmann::json &json_obj, uint32_t col_
     RETURN_STATUS_UNEXPECTED("Invalid data, column type is neither int32 nor int64, it is " +
                              data_schema_->column(col_num).type().ToString());
   }
-  //  row->push_back(std::move(label));
   return Status::OK();
 }
 
@@ -332,7 +328,6 @@ Status AlbumOp::LoadFloatArrayTensor(const nlohmann::json &json_obj, uint32_t co
     RETURN_STATUS_UNEXPECTED("Invalid data, column type is neither float32 nor float64, it is " +
                              data_schema_->column(col_num).type().ToString());
   }
-  //  row->push_back(std::move(float_array));
   return Status::OK();
 }
 
@@ -340,7 +335,6 @@ Status AlbumOp::LoadIDTensor(const std::string &file, uint32_t col_num, TensorPt
   if (data_schema_->column(col_num).type() == DataType::DE_STRING) {
     //    TensorPtr id;
     RETURN_IF_NOT_OK(Tensor::CreateScalar<std::string>(file, tensor));
-    //    row->push_back(std::move(id));
     return Status::OK();
   }
   // hack to get the file name without extension, the 1 is to get rid of the backslash character
@@ -348,7 +342,6 @@ Status AlbumOp::LoadIDTensor(const std::string &file, uint32_t col_num, TensorPt
   //  TensorPtr id;
   RETURN_IF_NOT_OK(Tensor::CreateScalar<int64_t>(image_id, tensor));
   MS_LOG(INFO) << "File ID " << image_id << ".";
-  //  row->push_back(std::move(id));
   return Status::OK();
 }
 
@@ -356,7 +349,6 @@ Status AlbumOp::LoadEmptyTensor(uint32_t col_num, TensorPtr *tensor) {
   // hack to get the file name without extension, the 1 is to get rid of the backslash character
   //  TensorPtr empty_tensor;
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape({0}), data_schema_->column(col_num).type(), tensor));
-  //  row->push_back(std::move(empty_tensor));
   return Status::OK();
 }
 
@@ -375,7 +367,6 @@ Status AlbumOp::LoadFloatTensor(const nlohmann::json &json_obj, uint32_t col_num
     RETURN_IF_NOT_OK(Tensor::CreateScalar<float>(data, tensor));
     MS_LOG(INFO) << "float found: " << json_obj << ".";
   }
-  //  row->push_back(std::move(float_tensor));
   return Status::OK();
 }
 
@@ -391,7 +382,6 @@ Status AlbumOp::LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, 
     RETURN_IF_NOT_OK(Tensor::CreateScalar<int32_t>(data, tensor));
     MS_LOG(INFO) << "int32 found: " << json_obj << ".";
   }
-  //  row->push_back(std::move(int_tensor));
   return Status::OK();
 }
 
@@ -403,7 +393,6 @@ Status AlbumOp::LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, 
 Status AlbumOp::LoadTensorRow(row_id_type row_id, const std::string &file,
                               std::unordered_map<std::string, std::shared_ptr<Tensor>> *map_row) {
   // testing here is to just print out file path
-  //  (*row) = TensorRow(row_id, {});
   MS_LOG(INFO) << "Image row file: " << file << ".";
 
   std::ifstream file_handle(folder_path_ + file);
