@@ -43,7 +43,7 @@ void PostConvFuncComm(const float *src_ptr_, float *out_ptr, const float *bias_p
 
 void PostConvFuncFp32C8(const float *c8_out_ptr, float *out_ptr, const float *bias_ptr, size_t output_channel,
                         size_t plane_size, size_t stride, size_t relu_type) {
-#if !defined(ENABLE_ARM) && !defined(ENABLE_X86_64_SSE)
+#if !defined(ENABLE_ARM) && !defined(ENABLE_SSE)
   PostConvFuncComm(c8_out_ptr, out_ptr, bias_ptr, output_channel, plane_size, plane_size, stride, relu_type, C8NUM);
 #else
   size_t oc8mod = output_channel % C8NUM;
@@ -68,7 +68,7 @@ void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bi
   return;
 }
 
-#if !defined(ENABLE_ARM) && !defined(ENABLE_X86_64_SSE)
+#if !defined(ENABLE_ARM) && !defined(ENABLE_SSE)
 void WinogradTransLeft(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length) {
   const int unitStep = 4 * length;
   for (int y = 0; y < h; ++y) {

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_X86_64_SSE
-#include <nmmintrin.h>
+#ifdef ENABLE_SSE
+#include <x86intrin.h>
 #include "nnacl/fp32/common_func_fp32.h"
 
 void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div, size_t oc8mod,

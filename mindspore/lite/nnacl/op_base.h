@@ -21,8 +21,8 @@
 #include <arm_neon.h>
 #endif
 
-#ifdef ENABLE_X86_64_SSE
-#include <nmmintrin.h>
+#ifdef ENABLE_SSE
+#include <x86intrin.h>
 #endif
 
 #include <stdint.h>
@@ -31,6 +31,7 @@
 
 #define C2NUM 2
 #define C4NUM 4
+#define C6NUM 6
 #define C8NUM 8
 #define C12NUM 12
 #define C16NUM 16
@@ -91,7 +92,7 @@ typedef enum ActType { ActType_No, ActType_Relu, ActType_Sigmod, ActType_Relu6, 
 #define MS_MAXQ_F32 vmaxq_f32
 #define MS_MINQ_F32 vminq_f32
 #define MS_MULQ_F32(src1, src2) vmulq_n_f32(src1, src2)
-#elif defined(ENABLE_X86_64_SSE)
+#elif defined(ENABLE_SSE)
 #define MS_FLOAT32X4 __m128
 #define MS_LDQ_F32 _mm_loadu_ps
 #define MS_ADDQ_F32 _mm_add_ps

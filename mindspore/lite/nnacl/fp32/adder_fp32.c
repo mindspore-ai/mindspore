@@ -56,7 +56,7 @@ void AdderFp32(const float *input_data, float *packed_input, const float *packed
   int out_channel = conv_param->output_channel_;
   int deep = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_;
   int output_count = conv_param->output_h_ * conv_param->output_w_;
-#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
+#if defined(ENABLE_ARM32) || defined(ENABLE_SSE)
   const int cal_num = C4NUM;
 #else
   const int cal_num = C12NUM;
@@ -78,7 +78,7 @@ void AdderFp32(const float *input_data, float *packed_input, const float *packed
 
       int out_offset = thread_id * cal_num * out_channel + out_batch_offset;
       float *gemm_output = output_data + out_offset;
-#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
+#if defined(ENABLE_ARM32) || defined(ENABLE_SSE)
       RowMajor2Col4Major(gemm_input, col_major_gemm_input, cal_num, deep);
 #else
       RowMajor2Col12Major(gemm_input, col_major_gemm_input, cal_num, deep);

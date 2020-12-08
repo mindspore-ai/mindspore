@@ -31,11 +31,15 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
 void MatVecMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int col);
 void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row4Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row6Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row8Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col);
+void RowMajor2Row16Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
+void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
 void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
 void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
+void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
 #ifdef ENABLE_ARM
 void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col);
 #endif
@@ -49,11 +53,16 @@ void MatmulFloatNeon32(const float *a, const float *b, float *c, const float *bi
                        int col, int stride, size_t writeNhwc, size_t WriteWino);
 void MatmulFloatNeon32Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                           int col, int stride, int write_mode);
-#elif ENABLE_X86_64_SSE
+#elif ENABLE_SSE
+#include <x86intrin.h>
 void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                       int col, int stride, size_t writeNhwc, size_t WriteWino);
 void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                          int col, int stride, int write_mode);
+#ifdef ENABLE_AVX
+void MatmulFloatAvxOpt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
+                       int col, int stride, int write_mode);
+#endif
 #endif
 
 #ifdef ENABLE_NNACL_INFER_SHAPE

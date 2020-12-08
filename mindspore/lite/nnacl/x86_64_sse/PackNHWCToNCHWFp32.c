@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_X86_64_SSE
-#include <nmmintrin.h>
+#ifdef ENABLE_SSE
+#include <x86intrin.h>
 #include "nnacl/pack.h"
 #include "nnacl/int8/conv_int8.h"
 

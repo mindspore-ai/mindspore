@@ -39,7 +39,7 @@ float ShortToFloat32(uint16_t src_value);
 
 uint16_t Float32ToShort(float src_value);
 
-#if defined(ENABLE_ARM) || defined(ENABLE_X86_64_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
 void ConvDwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
                       size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,
                       size_t in_sw_step, size_t in_kh_step, size_t in_kw_step, size_t relu, size_t relu6);

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_X86_64_SSE
-#include <nmmintrin.h>
+#ifdef ENABLE_SSE
+#include <x86intrin.h>
 #include "nnacl/minimal_filtering_generator.h"
 #include "nnacl/op_base.h"
 

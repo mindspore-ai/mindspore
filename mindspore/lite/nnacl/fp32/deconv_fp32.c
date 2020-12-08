@@ -41,7 +41,7 @@ void DeConvPostFp32C8(const float *src, float *tmp, const float *bias, float *ds
   size_t kernel_plane = conv_param->kernel_w_ * conv_param->kernel_h_;
   size_t output_plane = conv_param->output_w_ * conv_param->output_h_;
   int oc8 = UP_ROUND(output_channel, C8NUM);
-#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
+#if defined(ENABLE_ARM32) || defined(ENABLE_SSE)
   const int tile_num = 4;
 #else
   const int tile_num = 12;

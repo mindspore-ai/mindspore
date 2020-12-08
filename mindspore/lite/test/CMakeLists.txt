@@ -75,6 +75,16 @@ if ("${X86_64_SIMD}" STREQUAL "sse")
             )
 endif()
 
+if ("${X86_64_SIMD}" STREQUAL "avx")
+    file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/x86_64_sse/*.c
+             ${LITE_DIR}/nnacl/assembly/avx/*.S)
+    set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
+    set(KERNEL_OP_SRC
+            ${KERNEL_OP_SRC}
+            ${TEST_ASSEMBLY_SRC}
+            )
+endif()
+
 ### gpu kernel
 if (SUPPORT_GPU)
     file(GLOB GPU_KERNEL_OP_SRC

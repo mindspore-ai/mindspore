@@ -125,7 +125,7 @@ int B(const float *poly_array, float *matrix_b, int in_unit) {
   return NNACL_OK;
 }
 
-#if !defined(ENABLE_ARM) && !defined(ENABLE_X86_64_SSE)
+#if !defined(ENABLE_ARM) && !defined(ENABLE_SSE)
 void MatrixMultiplyWinograd(const float *matix_a, const float *matrix_b, float *matrix_c, int m, int k, int n,
                             int in_channel, int c4_channel) {
   int cnt = 0;
@@ -228,7 +228,7 @@ int CookToomFilter(float *matrix_a, float *matrix_at, float *matrix_b, float *ma
   return NNACL_OK;
 }
 
-#if defined(ENABLE_ARM) || defined(ENABLE_X86_64_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
 void MatrixMultiplyVec(const MS_FLOAT32X4 *matrix_a, const MS_FLOAT32X4 *matrix_b, MS_FLOAT32X4 *matrix_c,
                        const float *bias, int m, int k, int n) {
   int count = 0;

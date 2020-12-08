@@ -202,7 +202,7 @@ void ConvDwBorder(float *dst, const float *src, const float *weight, const float
       const float *src_kernel = src_w + start_kh * sliding->in_kh_step_ + start_kw * sliding->in_kw_step_;
       const float *weight_kernel = weight + (start_kh * conv_param->kernel_w_ + start_kw) * C4NUM;
 
-#if defined(ENABLE_ARM) || defined(ENABLE_X86_64_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
       ConvDwFp32Border(dst_kernel, src_kernel, weight_kernel, bias, end_kh - start_kh, end_kw - start_kw,
                        sliding->in_kh_step_ * sizeof(float), sliding->in_kw_step_ * sizeof(float),
                        conv_param->kernel_w_ * C4NUM * sizeof(float), relu, relu6);
@@ -285,7 +285,7 @@ void ConvDwSWFp32(float *output_data, const float *input_data, const float *weig
         int in_w_start = sliding->left_ * conv_param->stride_w_ - conv_param->pad_l_;
         const float *in_t = src_data + in_h_start * sliding->in_h_step_ + in_w_start * sliding->block_channel_;
         float *out_t = dst_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
-#if defined(ENABLE_ARM) || defined(ENABLE_X86_64_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
         ConvDwFp32Center(out_t, in_t, weight, bias, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
                          conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_ * sizeof(float),
                          sliding->block_channel_ * sizeof(float), sliding->in_sh_step_ * sizeof(float),
@@ -839,7 +839,7 @@ void DeconvDwSWFp32(float *output_data, const float *input_data, const float *we
         float *out_t = dst_data + oh_h_start * sliding->in_h_step_ + oh_w_start * sliding->block_channel_;
         const float *in_t = src_data + sliding->top_ * sliding->out_h_step_ + sliding->left_ * sliding->block_channel_;
 
-#if defined(ENABLE_ARM) || defined(ENABLE_X86_64_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
         DeconvDwFp32Center(out_t, in_t, weight, sliding->bottom_ - sliding->top_, sliding->right_ - sliding->left_,
                            conv_param->kernel_h_, conv_param->kernel_w_, sliding->out_h_step_ * sizeof(float),
                            sliding->block_channel_ * sizeof(float), sliding->in_sh_step_ * sizeof(float),

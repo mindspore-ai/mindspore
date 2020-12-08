@@ -42,7 +42,12 @@ int ConvolutionCPUKernel::InitWeightBias() {
   conv_param_->input_channel_ = in_channel;
   conv_param_->output_channel_ = out_channel;
   int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
-  int oc_block_num = UP_ROUND(out_channel, C8NUM);
+#ifdef ENABLE_AVX
+  const int oc_block = C16NUM;
+#else
+  const int oc_block = C8NUM;
+#endif
+  int oc_block_num = UP_ROUND(out_channel, oc_block);
   int pack_weight_size = oc_block_num * in_channel * kernel_plane;
 
   auto origin_weight = reinterpret_cast<float *>(filter_tensor->data_c());
@@ -52,7 +57,11 @@ int ConvolutionCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(packed_weight_, 0, pack_weight_size * sizeof(float));
+#ifdef ENABLE_AVX
+  RowMajor2Col16Major(origin_weight, packed_weight_, out_channel, in_channel * kernel_plane);
+#else
   RowMajor2Col8Major(origin_weight, packed_weight_, out_channel, in_channel * kernel_plane);
+#endif
 
   bias_data_ = reinterpret_cast<float *>(malloc(oc_block_num * sizeof(float)));
   if (bias_data_ == nullptr) {
@@ -72,7 +81,10 @@ int ConvolutionCPUKernel::InitWeightBias() {
 
 int ConvolutionCPUKernel::InitTmpBuffer() {
   MS_ASSERT(ctx_->allocator != nullptr);
-#ifdef ENABLE_ARM32
+
+#ifdef ENABLE_AVX
+  int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * C6NUM * thread_count_;
+#elif ENABLE_ARM32 || ENABLE_SSE
   int unit_size = conv_param_->kernel_h_ * conv_param_->kernel_w_ * conv_param_->input_channel_ * C4NUM * thread_count_;
 #else
   int unit_size =
