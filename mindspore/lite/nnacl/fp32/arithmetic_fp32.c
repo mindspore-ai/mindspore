@@ -509,6 +509,23 @@ int ElementOptDivRelu6(const float *input0, const float *input1, float *output, 
   return NNACL_OK;
 }
 
+int ElementOptDivInt(const int *input0, const int *input1, int *output, const int element_size,
+                     const ArithmeticParameter *param) {
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < element_size; index++) {
+      output[index] = input0[0] / input1[index];
+    }
+  } else {
+    if (input1[0] == 0) {
+      return NNACL_ERRCODE_DIVISOR_ZERO;
+    }
+    for (int index = 0; index < element_size; index++) {
+      output[index] = input0[index] / input1[0];
+    }
+  }
+  return NNACL_OK;
+}
+
 int ElementMul(const float *input0, const float *input1, float *output, const int element_size) {
   int index = 0;
 #ifdef ENABLE_NEON

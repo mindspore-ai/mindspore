@@ -32,6 +32,7 @@ class Div : public Arithmetic {
   MS_DECLARE_PARENT(Div, Arithmetic);
   explicit Div(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   void SetActivationType(int activation_type);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;

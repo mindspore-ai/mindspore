@@ -297,6 +297,7 @@ void ArithmeticCPUKernel::InitOptRunFunction() {
           default:
             arithmeticParameter_->broadcasting_ = false;
             arithmetic_opt_run_ = ElementOptDiv;
+            arithmetic_opt_run_int_ = ElementOptDivInt;
             break;
         }
         break;
@@ -554,4 +555,5 @@ REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_FloorDiv, CpuArithmeticFp32Kern
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_FloorMod, CpuArithmeticFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SquaredDifference, CpuArithmeticFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Eltwise, CpuArithmeticFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Div, CpuArithmeticFp32KernelCreator)
 }  // namespace mindspore::kernel

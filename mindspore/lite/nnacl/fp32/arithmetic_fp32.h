@@ -58,6 +58,8 @@ int ElementOptDivRelu(const float *input0, const float *input1, float *output, c
                       const ArithmeticParameter *param);
 int ElementOptDivRelu6(const float *input0, const float *input1, float *output, const int element_size,
                        const ArithmeticParameter *param);
+int ElementOptDivInt(const int *input0, const int *input1, int *output, const int element_size,
+                     const ArithmeticParameter *param);
 int ElementMul(const float *input0, const float *input1, float *output, const int element_size);
 int ElementMulRelu(const float *input0, const float *input1, float *output, const int element_size);
 int ElementMulRelu6(const float *input0, const float *input1, float *output, const int element_size);

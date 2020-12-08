@@ -445,7 +445,8 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
     auto valueAbstract = valueNode->abstract();
     auto abstractScalar = utils::cast<abstract::AbstractScalarPtr>(valueAbstract);
     auto typePtr = abstractScalar->GetTypeTrack();
-    paramTensor->dataType = typePtr->type_id();
+    // data of int64 is converted to int32 here.
+    paramTensor->dataType = kNumberTypeInt32;
     paramTensor->dims = {1};
     paramTensor->nodeType = schema::NodeType::NodeType_ValueNode;
     int real_data = CastToInt(value).front();
