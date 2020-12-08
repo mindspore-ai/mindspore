@@ -18,7 +18,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_TENSORLISTSTACK_H_
 
 #include <vector>
+
 #include "src/lite_kernel.h"
+#include "src/tensorlist.h"
 #include "schema/model_generated.h"
 #include "nnacl/tensorlist_parameter.h"
 
@@ -37,11 +39,17 @@ class TensorListStackCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int CheckParam();
+  int MergeElementShape();
+  int MergeSubShape(const std::vector<int> &shape);
+  bool IsFullyDefined(const std::vector<int> &shape) const;
 
  private:
+  size_t TypeUnknownSize = 0;
   int num_element_ = -1;
   TypeId dtype_ = kTypeUnknown;
+  lite::TensorList *input0_ = nullptr;
   lite::Tensor *output0_ = nullptr;
+  std::vector<int> output_shape_;
 };
 }  // namespace mindspore::kernel
 

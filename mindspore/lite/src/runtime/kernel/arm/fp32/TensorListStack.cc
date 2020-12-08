@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#include <functional>
 #include <vector>
 #include "include/errorcode.h"
 #include "ir/dtype/type_id.h"
@@ -29,58 +31,139 @@ using mindspore::schema::PrimitiveType_TensorListStack;
 namespace mindspore::kernel {
 
 int TensorListStackCPUKernel::CheckParam() {
-  auto in0_dtype = in_tensors_.at(0)->data_type();
-  if (in0_dtype != kNumberTypeInt) {
-    MS_LOG(ERROR) << "in_tensors_[0]->data_type():" << in0_dtype
-                  << " must be equal \"kNumberTypeInt\":" << kNumberTypeInt;
-  }
-  auto in0_ptr = reinterpret_cast<int *>(in_tensors_.at(0)->data_c());
-  if (in0_ptr[1] != dtype_) {
-    MS_LOG(ERROR) << "in_tensors_[0].data_type:[" << in0_ptr[1] << "] must be equal "
+  if (input0_->tensors_data_type() != dtype_) {
+    MS_LOG(ERROR) << "in_tensors_[0].tensors_data_type:[" << input0_->tensors_data_type() << "] must be equal "
                   << "param.data_type:[" << dtype_ << "]";
     return RET_ERROR;
   }
-  if (num_element_ != -1 && in0_ptr[0] != num_element_) {
-    MS_LOG(ERROR) << "in_tensors_[0].dim0:[" << in0_ptr[0] << "] must be equal "
+  if (num_element_ != -1 && input0_->ElementsNum() != num_element_) {
+    MS_LOG(ERROR) << "in_tensors_[0].ElementsNum():[" << input0_->ElementsNum() << "] must be equal "
                   << "param.elements_num:[" << num_element_ << "]";
     return RET_ERROR;
   }
-  num_element_ = in0_ptr[0];
+  num_element_ = input0_->ElementsNum();
   return RET_OK;
 }
 
 int TensorListStackCPUKernel::Init() {
-  output0_ = out_tensors_.at(0);
-  if (output0_->format() != schema::Format_NC) {  // shape().size() = 2
-    MS_LOG(ERROR) << "out_tensor_[0] format must be \"Format:NC\", but now is:" << output0_->format();
+  input0_ = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
+  MS_ASSERT(input0_ != nullptr);
+  output0_ = out_tensors_[0];
+  MS_ASSERT(output0_ != nullptr);
+  if (output0_->shape().size() != 2) {
+    MS_LOG(ERROR) << "out_tensors_[0].shape().size():" << output0_->shape().size() << " must be equal to 2!";
     return RET_ERROR;
   }
-  int dim0 = output0_->shape().at(0);
+  int dim0 = output0_->shape()[0];
   if (dim0 != 1) {  // dim0 must be 1
-    MS_LOG(ERROR) << "out_tensor_[0] dim0 must be 1, but now is:" << dim0;
+    MS_LOG(ERROR) << "out_tensors_[0].shape()[0] must be 1, but now is:" << dim0;
     return RET_ERROR;
   }
   return CheckParam();
 }
 
-int TensorListStackCPUKernel::Run() {
-  size_t in_ele_num = 0;
-  for (int i = 0; i < num_element_; ++i) {
-    in_ele_num += in_tensors_.at(i + 2)->ElementsNum();
+bool TensorListStackCPUKernel::IsFullyDefined(const std::vector<int> &shape) const {
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if (shape[i] < 0) {
+      return false;
+    }
   }
-  size_t out_ele_num = out_tensors_.at(0)->ElementsNum();
-  if (in_ele_num > out_ele_num) {
-    MS_LOG(ERROR) << "out_tensors_[0]->ElementsNum():" << out_ele_num << "must greater than or equal to in_ele_num"
-                  << in_ele_num;
+  return true;
+}
+
+int TensorListStackCPUKernel::MergeElementShape() {
+  MS_ASSERT(in_tensors_[1]);
+  if (in_tensors_[1]->data_type() != kNumberTypeInt) {
+    MS_LOG(ERROR) << "in_tensors_[1]->data_type():" << in_tensors_[1]->data_type()
+                  << " must be \"kNumberTypeInt\":" << kNumberTypeInt;
     return RET_ERROR;
   }
-  size_t index = 0;
-  auto out_ptr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto ele_shape_data = reinterpret_cast<int *>(in_tensors_[1]->data_c());
+  for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
+    output_shape_.push_back(ele_shape_data[i]);
+  }
+  auto status = MergeSubShape(input0_->element_shape());
+  if (status == RET_ERROR) {
+    MS_LOG(ERROR) << "Merge element_shape is error!";
+    return RET_ERROR;
+  }
+
+  if (!IsFullyDefined(output_shape_)) {
+    MS_LOG(ERROR) << "output_shape_ Is Not FullyDefined!";
+    return RET_ERROR;
+  }
+  if (!IsFullyDefined(input0_->element_shape())) {
+    for (int i = 0; i < input0_->ElementsNum(); ++i) {  // get tensorlist every tensor
+      auto tensor_ele = input0_->GetTensorIndex(i);
+      MS_ASSERT(tensor_ele != nullptr);
+      if (tensor_ele->data_type() != kTypeUnknown) {
+        status = MergeSubShape(tensor_ele->shape());
+        if (status == RET_ERROR) {
+          MS_LOG(ERROR) << "Merge tensors_[" << i << "] is error!";
+          return RET_ERROR;
+        }
+      }
+    }
+  }
+  TypeUnknownSize = std::accumulate(output_shape_.begin(), output_shape_.end(), 1LL, std::multiplies<int>());
+  return RET_OK;
+}
+
+int TensorListStackCPUKernel::MergeSubShape(const std::vector<int> &shape) {
+  size_t dim0 = shape.size();
+  size_t dim1 = output_shape_.size();
+  if (dim1 != dim0) {
+    MS_LOG(ERROR) << "shape.size():" << dim1 << " must be equal output_shape_.size():" << dim0;
+    return RET_ERROR;
+  }
+  for (size_t i = 0; i < dim0; ++i) {
+    int dim0_size = shape[i];
+    int dim1_size = output_shape_[i];
+    if (dim0_size >= 0 && dim1_size >= 0 && dim0_size != dim1_size) {
+      MS_LOG(ERROR) << "shape[" << i << "]:" << dim0_size << " is incompatible with output_shape_[" << i
+                    << "]:" << dim1_size;
+      return RET_ERROR;
+    }
+    output_shape_[i] = dim1_size >= 0 ? dim1_size : dim0_size;
+  }
+  return RET_OK;
+}
+
+int TensorListStackCPUKernel::Run() {
+  if (output0_->ElementsNum() == 0) {
+    return RET_OK;
+  }
+  size_t in_ele_num = 0;
   for (int i = 0; i < num_element_; ++i) {
-    auto in_ptr = reinterpret_cast<float *>(in_tensors_.at(i + 2)->data_c());
-    size_t in_size = in_tensors_.at(i + 2)->ElementsNum();
-    memcpy(out_ptr + index, in_ptr, in_size * sizeof(float));
-    index += in_size;
+    auto tensor = input0_->GetTensorIndex(i);
+    MS_ASSERT(tensor != nullptr);
+    if (tensor->data_type() == kTypeUnknown) {
+      if (TypeUnknownSize == 0) {
+        TypeUnknownSize = MergeElementShape();
+      }
+      in_ele_num += TypeUnknownSize;
+    } else {
+      in_ele_num += std::accumulate(tensor->shape().begin(), tensor->shape().end(), 1LL, std::multiplies<int>());
+    }
+  }
+  size_t out_ele_num = output0_->ElementsNum();
+  if (in_ele_num > out_ele_num) {
+    MS_LOG(ERROR) << "out_tensors_[0]->ElementsNum():" << out_ele_num
+                  << "must be greater than or equal to in_ele_num:" << in_ele_num;
+    return RET_ERROR;
+  }
+  auto out_ptr = reinterpret_cast<float *>(output0_->MutableData());
+  for (int i = 0; i < num_element_; ++i) {
+    auto in_ptr = input0_->GetTensorIndex(i);
+    MS_ASSERT(in_ptr != nullptr);
+    if (in_ptr->data_type() != kTypeUnknown) {
+      int in_size = in_ptr->ElementsNum();
+      memcpy(out_ptr, in_ptr->data_c(), in_size * sizeof(float));
+      out_ptr += in_size;
+    } else {
+      memset(out_ptr, 0, TypeUnknownSize * sizeof(float));
+      out_ptr += TypeUnknownSize;
+    }
   }
   return RET_OK;
 }

@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-#include "src/ops/tensorlistgetitem.h"
+#include "src/ops/tensorlistsetitem.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/tensorlist_parameter.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateTensorListGetItemParameter(const mindspore::lite::PrimitiveC *primitive) {
-  TensorListParameter *getItem_param = reinterpret_cast<TensorListParameter *>(malloc(sizeof(TensorListParameter)));
-  if (getItem_param == nullptr) {
+OpParameter *PopulateTensorListSetItemParameter(const mindspore::lite::PrimitiveC *primitive) {
+  TensorListParameter *setItem_param = reinterpret_cast<TensorListParameter *>(malloc(sizeof(TensorListParameter)));
+  if (setItem_param == nullptr) {
     MS_LOG(ERROR) << "malloc TensorListParameter failed.";
     return nullptr;
   }
-  memset(getItem_param, 0, sizeof(TensorListParameter));
-  getItem_param->op_parameter_.type_ = primitive->Type();
-  auto getItem =
-    reinterpret_cast<mindspore::lite::TensorListGetItem *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  getItem_param->element_dtype_ = getItem->GetElementDType();
-  return reinterpret_cast<OpParameter *>(getItem_param);
+  memset(setItem_param, 0, sizeof(TensorListParameter));
+  setItem_param->op_parameter_.type_ = primitive->Type();
+  auto setItem =
+    reinterpret_cast<mindspore::lite::TensorListSetItem *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+  setItem_param->element_dtype_ = setItem->GetElementDType();
+  return reinterpret_cast<OpParameter *>(setItem_param);
 }
-Registry TensorListGetItemParameterRegistry(schema::PrimitiveType_TensorListGetItem,
-                                            PopulateTensorListGetItemParameter);
+Registry TensorListSetItemParameterRegistry(schema::PrimitiveType_TensorListSetItem,
+                                            PopulateTensorListSetItemParameter);
 
 }  // namespace lite
 }  // namespace mindspore

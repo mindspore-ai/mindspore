@@ -17,7 +17,7 @@
 #include "nnacl/tensorlist_parameter.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "src/ops/tensor_list.h"
+#include "src/ops/tensorlistfromtensor.h"
 
 namespace mindspore {
 namespace lite {
@@ -31,8 +31,8 @@ OpParameter *PopulateTensorListFromTensorParameter(const mindspore::lite::Primit
   TensorList_param->op_parameter_.type_ = primitive->Type();
   auto tensorList =
     reinterpret_cast<mindspore::lite::TensorListFromTensor *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  TensorList_param->shape_type_ = tensorList->GetShapeType();
-  TensorList_param->element_dtype_ = tensorList->GetElementDType();
+  TensorList_param->shape_type_ = (TypeId)(tensorList->GetShapeType());
+  TensorList_param->element_dtype_ = (TypeId)(tensorList->GetElementDType());
   return reinterpret_cast<OpParameter *>(TensorList_param);
 }
 Registry TensorListFromTensorParameterRegistry(schema::PrimitiveType_TensorListFromTensor,

@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
+#include "src/tensorlist.h"
 #include "schema/model_generated.h"
 #include "nnacl/tensorlist_parameter.h"
 
@@ -37,7 +38,7 @@ class TensorListReserveCPUKernel : public LiteKernel {
   int Run() override;
 
  private:
-  int element_dtype_ = 0;
+  TypeId element_dtype_ = kTypeUnknown;
 };
 }  // namespace mindspore::kernel
 
