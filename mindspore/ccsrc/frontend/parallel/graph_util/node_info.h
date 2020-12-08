@@ -18,13 +18,37 @@
 #define MINDSPORE_CCSRC_FRONTEND_PARALLEL_GRAPH_UTIL_NODE_INFO_H_
 
 #include <string>
+#include <vector>
+#include <memory>
+#include <unordered_set>
 #include "base/base.h"
+#include "ir/anf.h"
+#include "frontend/parallel/ops_info/operator_info.h"
 
 namespace mindspore {
 namespace parallel {
+using OperatorInfoPtr = std::shared_ptr<mindspore::parallel::OperatorInfo>;
 std::string ParameterName(const AnfNodePtr &node_ptr);
 
 bool ParameterRequireGrad(const AnfNodePtr &node_ptr);
+
+size_t GetLengthOfDataType(const TypePtr &type);
+
+std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node);
+
+std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node);
+
+std::vector<TypePtr> ExtractOutputTypeByNode(const CNodePtr &node);
+
+std::vector<AnfNodePtr> FindParameterByRefKeyNode(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
+
+bool AnfNodeIsPrimitive(const AnfNodePtr &anf_node, const std::string &prim_name);
+
+bool FindReshape(const CNodePtr &cnode, std::unordered_set<std::string> *op_cache);
+
+bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_operator_info, int64_t *out_index);
+
+bool FindReshapeNextNodeStraCosts(const CNodePtr &cnode, OperatorInfoPtr *next_operator_info, int64_t *in_index);
 }  // namespace parallel
 }  // namespace mindspore
 

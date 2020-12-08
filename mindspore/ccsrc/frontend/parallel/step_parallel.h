@@ -100,8 +100,6 @@ StrategyPtr ExtractStrategy(std::unordered_map<std::string, ValuePtr> attrs);
 
 Shapes GetNodeShape(const AnfNodePtr &node);
 
-std::vector<AnfNodePtr> FindParameterByRefKeyNode(const AnfNodePtr &node, const FuncGraphPtr &func_graph);
-
 // Extract shape from anfnode
 std::vector<Shapes> ExtractShape(const CNodePtr &node);
 
@@ -153,8 +151,6 @@ Status ParallelInit();
 std::set<FuncGraphPtr> ForwardGraph(const FuncGraphPtr &root);
 
 std::vector<std::string> ExtractInputsTensorName(const CNodePtr &node);
-
-bool AnfNodeIsPrimitive(const AnfNodePtr &anf_node, const std::string &prim_name);
 
 using RefKeyPair = std::pair<AnfNodePtr, std::vector<AnfNodePtr>>;
 using ParameterUsersInfo = std::pair<std::string, std::pair<AnfNodePtr, AnfNodeIndexSet>>;
