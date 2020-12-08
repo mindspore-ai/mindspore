@@ -15,5 +15,4 @@
 # ============================================================================
 
 # an simple tutorial as follows, more parameters can be setting
-DATA_PATH=$1
 LD_LIBRARY_PATH=./lib/ bin/net_runner -f model/lenet_tod_trained_3000.ms -e 0 -d dataset 

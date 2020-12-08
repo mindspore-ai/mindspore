@@ -1204,5 +1204,21 @@ table Assert {
     summarize : int;
 }
 
+table SmoothL1Loss {
+    beta : float;
+}
+
+table SmoothL1LossGrad {
+    beta : float;
+}
+
+table SigmoidCrossEntropyWithLogits {
+    beta : float;
+}
+
+table SigmoidCrossEntropyWithLogitsGrad {
+    beta : float;
+}
+
 table Reciprocal {
 }

@@ -22,13 +22,13 @@ def TrainWrap(net, loss_fn=None, optimizer=None, weights=None):
     TrainWrap
     """
     if loss_fn is None:
-        loss_fn = nn.SoftmaxCrossEntropyWithLogits()
+        loss_fn = nn.SoftmaxCrossEntropyWithLogits(reduction='mean')
     loss_net = nn.WithLossCell(net, loss_fn)
     loss_net.set_train()
     if weights is None:
         weights = ParameterTuple(net.trainable_params())
     if optimizer is None:
-        optimizer = nn.Adam(weights, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8, use_locking=False,
-                            use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
+        optimizer = nn.Adam(weights, learning_rate=1e-3, beta1=0.9, beta2=0.999, eps=1e-8,
+                            use_locking=False, use_nesterov=False, weight_decay=0.0, loss_scale=1.0)
     train_net = nn.TrainOneStepCell(loss_net, optimizer)
     return train_net

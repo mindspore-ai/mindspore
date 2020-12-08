@@ -88,11 +88,23 @@ int AddN::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs
   if (!infer_flag()) {
     return RET_INFER_INVALID;
   }
-  output->set_shape(input->shape());
+
+  size_t max_dims = inputs.at(0)->shape().size();
+  size_t max_dims_idx = 0;
+
+  // determine max_dims
+  for (size_t i = 1; i < inputs.size(); ++i) {
+    if (inputs.at(i)->shape().size() > max_dims) {
+      max_dims = inputs.at(i)->shape().size();
+      max_dims_idx = 0;
+    }
+  }
+  output->set_shape(inputs.at(max_dims_idx)->shape());
 
   // make sure all elements have the same size or 1 (broadcasting) in all dimensions
   for (size_t i = 1; i < inputs.size(); ++i) {
-    if (inputs.at(i)->shape().size() != inputs.at(0)->shape().size()) {
+    if ((inputs.at(i)->shape().size() != max_dims) &&
+        (inputs.at(i)->ElementsNum() != inputs.at(max_dims_idx)->ElementsNum())) {
       MS_LOG(ERROR) << "AddN inputs shape is not equal!";
       return RET_INPUT_TENSOR_ERROR;
     }
@@ -103,18 +115,24 @@ int AddN::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs
   }
 
   for (size_t d = 0; d < input->shape().size(); ++d) {
-    int max_dim = input->shape().at(d);
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      if (inputs.at(i)->shape().at(d) > max_dim) {
-        max_dim = inputs.at(i)->shape().at(d);
+    size_t max_dim = 0;
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      size_t shift = max_dims - inputs.at(i)->shape().size();
+      size_t dim = (i < shift) ? 1 : inputs.at(i)->shape().at(d);
+      if (dim > max_dim) {
+        max_dim = dim;
       }
     }
-    for (size_t i = 1; i < inputs.size(); ++i) {
-      if ((inputs.at(0)->shape().at(d) != max_dim) && (inputs.at(0)->shape().at(d) != 1)) {
+#ifndef SUPPORT_TRAIN
+    for (size_t i = 0; i < inputs.size(); ++i) {
+      size_t shift = max_dims - inputs.at(i)->shape().size();
+      size_t dim = (i < shift) ? 1 : inputs.at(i)->shape().at(d);
+      if ((dim != max_dim) && (dim != 1)) {
         MS_LOG(ERROR) << "AddN inputs shape is not equal!";
         return RET_INPUT_TENSOR_ERROR;
       }
     }
+#endif
     output->shape()[d] = max_dim;  // set the biggest dimension in the output tensor
   }
 

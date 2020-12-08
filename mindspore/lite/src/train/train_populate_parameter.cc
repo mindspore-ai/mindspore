@@ -44,7 +44,10 @@
 #include "src/ops/oneslike.h"
 #include "src/ops/binary_cross_entropy.h"
 #include "src/ops/binary_cross_entropy_grad.h"
-
+#include "src/ops/smooth_l1_loss.h"
+#include "src/ops/smooth_l1_loss_grad.h"
+#include "nnacl/fp32_grad/smooth_l1_loss.h"
+#include "src/ops/arithmetic_grad.h"
 namespace mindspore::kernel {
 
 OpParameter *DefaultPopulateParameter(const mindspore::lite::PrimitiveC *primitive) {
@@ -61,6 +64,44 @@ OpParameter *DefaultPopulateParameter(const mindspore::lite::PrimitiveC *primiti
 
   param->type_ = primitive->Type();
   return param;
+}
+
+OpParameter *PopulateSmoothL1LossParameter(const mindspore::lite::PrimitiveC *primitive) {
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+    return nullptr;
+  }
+  SmoothL1LossParameter *p = reinterpret_cast<SmoothL1LossParameter *>(malloc(sizeof(SmoothL1LossParameter)));
+  if (p == nullptr) {
+    MS_LOG(ERROR) << "malloc SmoothL1LossParameter failed.";
+    return nullptr;
+  }
+  p->op_parameter_.type_ = primitive->Type();
+
+  auto smooth_l1_primitive =
+    reinterpret_cast<mindspore::lite::SmoothL1Loss *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+
+  p->beta_ = smooth_l1_primitive->GetBeta();
+  return reinterpret_cast<OpParameter *>(p);
+}
+
+OpParameter *PopulateSmoothL1LossGradParameter(const mindspore::lite::PrimitiveC *primitive) {
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "Primitive is nullptr when populating parameter for op.";
+    return nullptr;
+  }
+  SmoothL1LossParameter *p = reinterpret_cast<SmoothL1LossParameter *>(malloc(sizeof(SmoothL1LossParameter)));
+  if (p == nullptr) {
+    MS_LOG(ERROR) << "malloc SmoothL1LossParameter failed.";
+    return nullptr;
+  }
+  p->op_parameter_.type_ = primitive->Type();
+
+  auto smooth_l1_primitive =
+    reinterpret_cast<mindspore::lite::SmoothL1LossGrad *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+
+  p->beta_ = smooth_l1_primitive->GetBeta();
+  return reinterpret_cast<OpParameter *>(p);
 }
 
 OpParameter *PopulateApplyMomentumParameter(const mindspore::lite::PrimitiveC *primitive) {
@@ -473,14 +514,14 @@ OpParameter *PopulateArithmeticGradParameter(const mindspore::lite::PrimitiveC *
   }
   memset(arithmetic_param, 0, sizeof(ArithmeticParameter));
   arithmetic_param->op_parameter_.type_ = primitive->Type();
-  arithmetic_param->broadcasting_ = ((lite::Arithmetic *)primitive)->Broadcasting();
-  arithmetic_param->ndim_ = ((lite::Arithmetic *)primitive)->NDims();
+  arithmetic_param->broadcasting_ = ((lite::ArithmeticGrad *)primitive)->Broadcasting();
+  arithmetic_param->ndim_ = ((lite::ArithmeticGrad *)primitive)->NDims();
 
-  auto tmp_shape = ((lite::Arithmetic *)primitive)->InShape0();
+  auto tmp_shape = ((lite::ArithmeticGrad *)primitive)->x1Shape();
   memcpy(arithmetic_param->in_shape0_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  tmp_shape = ((lite::Arithmetic *)primitive)->InShape1();
+  tmp_shape = ((lite::ArithmeticGrad *)primitive)->x2Shape();
   memcpy(arithmetic_param->in_shape1_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  tmp_shape = ((lite::Arithmetic *)primitive)->OutputShape();
+  tmp_shape = ((lite::ArithmeticGrad *)primitive)->dyShape();
   memcpy(arithmetic_param->out_shape_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
@@ -518,6 +559,12 @@ void PopulateTrainParameters() {
   lite::Registry DropGradParameterRegistry(schema::PrimitiveType_DropoutGrad, PopulateDropoutGradParameter);
   lite::Registry MaximumGradParameterRegistry(schema::PrimitiveType_MaximumGrad, PopulateArithmeticGradParameter);
   lite::Registry MinimumGradParameterRegistry(schema::PrimitiveType_MinimumGrad, PopulateArithmeticGradParameter);
+  lite::Registry SmoothL1LossRegistry(schema::PrimitiveType_SmoothL1Loss, PopulateSmoothL1LossParameter);
+  lite::Registry SmoothL1LossGradRegistry(schema::PrimitiveType_SmoothL1LossGrad, PopulateSmoothL1LossGradParameter);
+  lite::Registry SigmoidCrossEntropyWithLogitsRegistry(schema::PrimitiveType_SigmoidCrossEntropyWithLogits,
+                                                       DefaultPopulateParameter);
+  lite::Registry SigmoidCrossEntropyWithLogitsGradRegistry(schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad,
+                                                           DefaultPopulateParameter);
 }
 
 }  // namespace mindspore::kernel

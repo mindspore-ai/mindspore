@@ -183,7 +183,6 @@ void ArithmeticGradCPUKernel::ArithmeticGradDiv2L(float *dy, int dy_size, float 
 
 void ArithmeticGradCPUKernel::ArithmeticGradMaximum(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                     int dx2_size) {
-  // For some reason, input order is x0, x1, dy
   auto x1 = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto x2 = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
   dy = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
@@ -194,13 +193,12 @@ void ArithmeticGradCPUKernel::ArithmeticGradMaximum(float *dy, int dy_size, floa
 
 void ArithmeticGradCPUKernel::ArithmeticGradMinimum(float *dy, int dy_size, float *dx1, int dx1_size, float *dx2,
                                                     int dx2_size) {
-  // For some reason, input order is x0, x1, dy
   auto x1 = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
   auto x2 = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
   dy = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
 
-  MinimumByAxes(x1, x2, dy, arithmeticParameter_->out_shape_, arithmeticParameter_->in_shape0_,
-                arithmeticParameter_->in_shape1_, dx1, dx2, arithmeticParameter_->ndim_);
+  MinimumByAxes(x1, x2, dy, arithmeticParameter_->in_shape0_, arithmeticParameter_->in_shape1_,
+                arithmeticParameter_->out_shape_, dx1, dx2, arithmeticParameter_->ndim_);
 }
 
 int ArithmeticGradCPUKernel::ReSize() { return RET_OK; }
@@ -212,7 +210,7 @@ int ArithmeticGradCPUKernel::Execute(int task_id) {
 
   size_t dy_size = in_tensors_.at(0)->ElementsNum();
   size_t dx1_size = out_tensors_.at(0)->ElementsNum();
-  size_t dx2_size = out_tensors_[1]->ElementsNum();
+  size_t dx2_size = out_tensors_.at(1)->ElementsNum();
   (this->*arithmetic_grad_)(dy, dy_size, dx1, dx1_size, dx2, dx2_size);
   return RET_OK;
 }

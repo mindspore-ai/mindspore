@@ -14,8 +14,4 @@
 # limitations under the License.
 # ============================================================================
 
-# an simple tutorial as follows, more parameters can be setting
-script_self=$(readlink -f "$0")
-self_path=$(dirname "${script_self}")
-DATA_PATH=$1
-LD_LIBRARY_PATH=./lib/ bin/net_runner -f model/lenet_tod.ms -e 3000 -d dataset 
+LD_LIBRARY_PATH=./lib/ bin/net_runner -f model/transfer_learning_tod_trained.ms -e 0 -d dataset 

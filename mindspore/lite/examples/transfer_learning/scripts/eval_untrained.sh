@@ -1,3 +1,4 @@
+#!/bin/bash
 # Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,26 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""lenet_export."""
 
-import sys
-from mindspore import context, Tensor
-import mindspore.common.dtype as mstype
-from mindspore.train.serialization import export
-from lenet import LeNet5
-import numpy as np
-from train_utils import TrainWrap
-
-sys.path.append('../../../cv/lenet/src/')
-
-n = LeNet5()
-n.set_train()
-context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU", save_graphs=False)
-
-batch_size = 32
-x = Tensor(np.ones((batch_size, 1, 32, 32)), mstype.float32)
-label = Tensor(np.zeros([batch_size, 10]).astype(np.float32))
-net = TrainWrap(n)
-export(net, x, label, file_name="lenet_tod.mindir", file_format='MINDIR')
-
-print("finished exporting")
+LD_LIBRARY_PATH=./lib/ bin/net_runner -f model/transfer_learning_tod.ms -e 0 -d dataset 

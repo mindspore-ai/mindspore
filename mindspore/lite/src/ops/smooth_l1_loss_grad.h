@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,32 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_OPS_MINIMUM_GRAD_H_
-#define MINDSPORE_LITE_SRC_OPS_MINIMUM_GRAD_H_
+#ifndef MINDSPORE_LITE_SRC_OPS_SMOOTH_L1_LOSS_GRAD_H_
+#define MINDSPORE_LITE_SRC_OPS_SMOOTH_L1_LOSS_GRAD_H_
 
 #include <vector>
 #include <set>
 #include <cmath>
+#include <memory>
 
-#include "src/ops/arithmetic_grad.h"
 #include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
-class MinimumGrad : public ArithmeticGrad {
+class SmoothL1LossGrad : public PrimitiveC {
  public:
+  SmoothL1LossGrad() = default;
+  ~SmoothL1LossGrad() = default;
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(MinimumGrad, ArithmeticGrad);
-  MinimumGrad() = default;
-  explicit MinimumGrad(schema::PrimitiveT *primitive) : ArithmeticGrad(primitive) {}
+  MS_DECLARE_PARENT(SmoothL1LossGrad, PrimitiveC);
+  explicit SmoothL1LossGrad(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
-  MinimumGrad() = default;
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
+  float GetBeta() const;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_SRC_OPS_MINIMUM_GRAD_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_SMOOTH_L1_LOSS_GRAD_H_
