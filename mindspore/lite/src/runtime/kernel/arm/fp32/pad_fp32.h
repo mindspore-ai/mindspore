@@ -17,9 +17,14 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_PAD_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
-
+#include <string>
+#include <cmath>
+#include <utility>
+#include "include/errorcode.h"
 #include "nnacl/fp32/pad_fp32.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/common_func.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 
 namespace mindspore::kernel {
@@ -46,12 +51,14 @@ class PadCPUKernel : public LiteKernel {
   void CalculateStrides();
   int ExtendShape(int *shape, int length, const int *ori_shape, int rank);
   int ExtendPaddings(int *paddings, int length, const int *ori_paddings, int ori_length);
+  void InitMirrorPadBlock();
 
  protected:
   int HandleMirrorPad();
   PadParameter *pad_param_ = nullptr;
   int in_[4] = {0};
   int out_[4] = {0};
+  std::vector<MirrorPadBlock> mirror_pad_block_;
 };
 
 int PadImpl(void *cdata, int task_id);

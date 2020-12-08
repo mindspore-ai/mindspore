@@ -44,6 +44,19 @@ static inline bool isMulOverflow(int32_t x, int32_t y) {
   int32_t p = x * y;
   return (x != 0) && (p / x != y);
 }
+
+static inline int GetStride(int *strides, const int *shape, int length) {
+  if (length <= 0) {
+    return 1;
+  }
+  int stride = 1;
+  for (int i = length - 1; i >= 0; --i) {
+    strides[i] = stride;
+    stride *= shape[i];
+  }
+  return stride;
+}
+
 #ifdef ENABLE_ARM64
 void BiasAdd(const float *bias, float *data, size_t oc4, size_t plan_size);
 void BiasAddRelu6(const float *bias, float *data, size_t oc4, size_t plan_size);

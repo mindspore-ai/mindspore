@@ -15,12 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/pad_fp32.h"
-#include <string>
-#include <cmath>
 #include "src/kernel_registry.h"
 #include "schema/model_generated.h"
-#include "include/errorcode.h"
-#include "nnacl/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -71,6 +67,131 @@ int PadCPUKernel::ReSize() {
     }
   }
   return RET_OK;
+}
+
+void PadCPUKernel::InitMirrorPadBlock() {
+  mirror_pad_block_.clear();
+
+  auto input = in_tensors_.at(0);
+
+  std::vector<int> left_pads(input->shape().size());
+  for (size_t i = 0; i < input->shape().size(); ++i) {
+    left_pads[i] = pad_param_->paddings_[2 * i];
+  }
+
+  std::vector<int> input_seperate_dims;
+  std::vector<int> output_seperate_dims;
+  std::vector<int> seperate_offset;
+
+  /* init seperate dims */
+  int cur_input = 1;
+  int cur_output = 1;
+  for (size_t i = 0; i < input->shape().size(); ++i) {
+    if (in_[i] != out_[i]) {
+      if (1 < cur_input) {
+        input_seperate_dims.emplace_back(cur_input);
+        output_seperate_dims.emplace_back(cur_output);
+        seperate_offset.emplace_back(0);
+      }
+      input_seperate_dims.emplace_back(in_[i]);
+      output_seperate_dims.emplace_back(out_[i]);
+      seperate_offset.emplace_back(left_pads[i]);
+      cur_input = 1;
+      cur_output = 1;
+    } else {
+      cur_input *= in_[i];
+      cur_output *= out_[i];
+    }
+  }
+  if (cur_input != 1 || cur_output != 1) {
+    input_seperate_dims.emplace_back(cur_input);
+    output_seperate_dims.emplace_back(cur_output);
+    seperate_offset.emplace_back(0);
+  }
+
+  /* init seperate stride */
+  std::vector<int> output_seperate_stride;
+  output_seperate_stride.resize(output_seperate_dims.size());
+  GetStride(output_seperate_stride.data(), output_seperate_dims.data(), output_seperate_dims.size());
+
+  /* init seperate stride */
+  std::vector<int> remain_stride;
+  int remain_stride_size = seperate_offset.size() > 3 ? static_cast<int>(seperate_offset.size()) - 3 : 0;
+  remain_stride.resize(remain_stride_size);
+  int remain_size = GetStride(remain_stride.data(), output_seperate_dims.data(), remain_stride.size());
+
+  std::vector<int> right_pads(seperate_offset.size());
+  for (size_t i = 0; i < right_pads.size(); ++i) {
+    right_pads[i] = output_seperate_dims[i] - input_seperate_dims[i] - seperate_offset[i];
+  }
+
+  /* init pad region */
+  std::vector<int> pad_region;
+  for (size_t i = remain_stride.size(); i < output_seperate_stride.size(); ++i) {
+    // 0: center, 1: left, 2: right
+    int r = 1;
+    if (seperate_offset[i] > 0) {
+      r++;
+    }
+    if (right_pads[i] > 0) {
+      r++;
+    }
+    pad_region.emplace_back(r);
+  }
+
+  std::vector<int> pad_region_stride(pad_region.size());
+  int region_size = GetStride(pad_region_stride.data(), pad_region.data(), pad_region.size());
+  int remain_dim_offset = remain_stride.size();
+
+  std::vector<int> pad_cord(pad_region.size());
+
+  for (int pos = 0; pos < remain_size; ++pos) {
+    int dst_basic_offset = 0;
+
+    for (int index = 1; index < region_size; ++index) {
+      int dst_offset = dst_basic_offset;
+
+      int value = index;
+      for (size_t i = 0; i < pad_region.size(); ++i) {
+        pad_cord[i] = value / pad_region_stride[i];
+        value = value % pad_region_stride[i];
+      }
+
+      MirrorPadBlock block;
+      int size_offset = 3 - static_cast<int>(pad_region.size());
+      for (size_t i = 0; i < pad_region.size(); ++i) {
+        int di = size_offset + i;
+        int si = remain_dim_offset + i;
+        switch (pad_cord[i]) {
+          case 0:
+            dst_offset += seperate_offset[si] * output_seperate_stride[si];
+            block.size_[di] = input_seperate_dims[si];
+            block.out_stride_[di] = output_seperate_stride[si];
+            break;
+          case 2:
+            dst_offset += (seperate_offset[si] + input_seperate_dims[si]) * output_seperate_stride[si];
+            block.size_[di] = right_pads[si];
+            block.out_stride_[di] = output_seperate_stride[si];
+            break;
+          case 1:
+            if (seperate_offset[si] > 0) {
+              block.size_[di] = seperate_offset[si];
+              block.out_stride_[di] = output_seperate_stride[si];
+            } else {
+              dst_offset += (seperate_offset[si] + input_seperate_dims[si]) * output_seperate_stride[si];
+              block.size_[di] = right_pads[si];
+              block.out_stride_[di] = output_seperate_stride[si];
+            }
+            break;
+          default:
+            break;
+        }
+      }
+      block.out_offset_ = dst_offset;
+      mirror_pad_block_.push_back(std::move(block));
+    }
+  }
+  return;
 }
 
 int PadCPUKernel::ExtendShape(int *shape, int length, const int *ori_shape, int rank) {
@@ -139,6 +260,27 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
   auto input_data = reinterpret_cast<float *>(input->MutableData());
   auto output_data = reinterpret_cast<float *>(output->MutableData());
 
+  /* Fast Mirror pad */
+  if (mirror_pad_block_.size() != 0) {
+    /* copy center part */
+    Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
+
+    /* calculate region part */
+    for (size_t i = task_id; i < mirror_pad_block_.size(); i += context_->thread_num_) {
+      auto block = mirror_pad_block_[i];
+
+      for (int a = 0; a < block.size_[0]; a++) {
+        int out_a_index = block.out_offset_ + a * block.out_stride_[0];
+        for (int b = 0; b < block.size_[1]; b++) {
+          int output_index = out_a_index + b * block.out_stride_[1];
+          MirrorPad(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[2]);
+        }
+      }
+    }
+    return RET_OK;
+  }
+
+  /* Common Mirror pad */
   int unit = UP_DIV(output->ElementsNum(), context_->thread_num_);
   int begin = unit * task_id;
   int end = MSMIN(begin + unit, output->ElementsNum());
@@ -235,6 +377,8 @@ int PadCPUKernel::HandleMirrorPad() {
   }
   CalculateStrides();
   pad_param_->mirror_offset_ = pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_REFLECT) ? 1 : 0;
+
+  InitMirrorPadBlock();
   return RET_OK;
 }
 
