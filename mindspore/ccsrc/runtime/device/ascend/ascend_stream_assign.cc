@@ -827,6 +827,7 @@ void AscendStreamAssign::InsertEventHcomDependCommonBak(const NotNull<KernelGrap
     // get the input which located in the lastr exe orders
     vector<CNodePtr> inputs_cnode = GetLastInputCnode(graph_ptr, cur_cnode_ptr);
     if (inputs_cnode.empty()) {
+      cnodes.emplace_back(cur_cnode_ptr);
       MS_LOG(WARNING) << "Hcom op:" << AnfAlgo::GetCNodeName(cur_cnode_ptr) << " can't find inputs nodes";
       continue;
     }
