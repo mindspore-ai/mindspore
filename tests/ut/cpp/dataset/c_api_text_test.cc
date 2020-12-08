@@ -18,6 +18,7 @@
 #include <string>
 
 #include "common/common.h"
+#include "minddata/dataset/include/config.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/status.h"
 #include "minddata/dataset/include/transforms.h"
@@ -993,6 +994,428 @@ TEST_F(MindDataTestPipeline, TestSlidingWindowFail) {
   // The parameter axis support 0 or -1 only for now
   std::shared_ptr<TensorOperation> sliding_window1 = text::SlidingWindow(-2, 0);
   EXPECT_EQ(sliding_window1, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestToNumberSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberSuccess1.";
+  // Test ToNumber with integer numbers
+
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/to_number.txt";
+
+  // Create a TextFile dataset
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Take operation on ds
+  ds = ds->Take(8);
+  EXPECT_NE(ds, nullptr);
+
+  // Create ToNumber operation on ds
+  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("int64"));
+  EXPECT_NE(to_number, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({to_number}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<int64_t> expected = {-121, 14, -2219, 7623, -8162536, 162371864, -1726483716, 98921728421};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateScalar(expected[i], &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 8);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestToNumberSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberSuccess2.";
+  // Test ToNumber with float numbers
+
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/to_number.txt";
+
+  // Create a TextFile dataset
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Skip operation on ds
+  ds = ds->Skip(8);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Take operation on ds
+  ds = ds->Take(6);
+  EXPECT_NE(ds, nullptr);
+
+  // Create ToNumber operation on ds
+  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("float64"));
+  EXPECT_NE(to_number, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({to_number}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<double_t> expected = {-1.1, 1.4, -2219.321, 7623.453, -816256.234282, 162371864.243243};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateScalar(expected[i], &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 6);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestToNumberFail1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberFail1.";
+  // Test ToNumber with overflow integer numbers
+
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/to_number.txt";
+
+  // Create a TextFile dataset
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Skip operation on ds
+  ds = ds->Skip(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Take operation on ds
+  ds = ds->Take(6);
+  EXPECT_NE(ds, nullptr);
+
+  // Create ToNumber operation on ds
+  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("int8"));
+  EXPECT_NE(to_number, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({to_number}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+
+  // Expect error: input out of bounds of int8
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  // Expect failure: GetNextRow fail and return nothing
+  EXPECT_EQ(i, 0);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestToNumberFail2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberFail2.";
+  // Test ToNumber with overflow float numbers
+
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/to_number.txt";
+
+  // Create a TextFile dataset
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Skip operation on ds
+  ds = ds->Skip(12);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Take operation on ds
+  ds = ds->Take(2);
+  EXPECT_NE(ds, nullptr);
+
+  // Create ToNumber operation on ds
+  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("float16"));
+  EXPECT_NE(to_number, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({to_number}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+
+  // Expect error: input out of bounds of float16
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  // Expect failure: GetNextRow fail and return nothing
+  EXPECT_EQ(i, 0);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestToNumberFail3) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberFail3.";
+  // Test ToNumber with non numerical input
+
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/to_number.txt";
+
+  // Create a TextFile dataset
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Skip operation on ds
+  ds = ds->Skip(14);
+  EXPECT_NE(ds, nullptr);
+
+  // Create ToNumber operation on ds
+  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("int64"));
+  EXPECT_NE(to_number, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({to_number}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+
+  // Expect error: invalid input which is non numerical
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  // Expect failure: GetNextRow fail and return nothing
+  EXPECT_EQ(i, 0);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestToNumberFail4) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberFail4.";
+  // Test ToNumber with non numerical DataType
+
+  std::string data_file = datasets_root_path_ + "/testTokenizerData/to_number.txt";
+
+  // Create a TextFile dataset
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Create ToNumber operation on ds
+  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("string"));
+
+  // Expect failure: invalid parameter with non numerical DataType
+  EXPECT_EQ(to_number, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTruncateSequencePairSuccess1.";
+  // Testing basic TruncateSequencePair
+
+  // Set seed for RandomDataset
+  auto original_seed = config::get_seed();
+  bool status_set_seed = config::set_seed(0);
+  EXPECT_EQ(status_set_seed, true);
+
+  // Set num_parallel_workers for RandomDataset
+  auto original_worker = config::get_num_parallel_workers();
+  bool status_set_worker = config::set_num_parallel_workers(1);
+  EXPECT_EQ(status_set_worker, true);
+
+  // Create a RandomDataset which has column names "col1" and "col2"
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::TypeId::kNumberTypeInt16, {5});
+  schema->add_column("col2", mindspore::TypeId::kNumberTypeInt32, {3});
+  std::shared_ptr<Dataset> ds = RandomData(3, schema);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a truncate_sequence_pair operation on ds
+  std::shared_ptr<TensorOperation> truncate_sequence_pair = text::TruncateSequencePair(4);
+  EXPECT_NE(truncate_sequence_pair, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({truncate_sequence_pair}, {"col1", "col2"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<int16_t>> expected1 = {{-29556, -29556}, {-18505, -18505}, {-25958, -25958}};
+  std::vector<std::vector<int32_t>> expected2 = {
+    {-1751672937, -1751672937}, {-656877352, -656877352}, {-606348325, -606348325}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind1 = row["col1"];
+    auto ind2 = row["col2"];
+    std::shared_ptr<Tensor> expected_tensor1;
+    std::shared_ptr<Tensor> expected_tensor2;
+    Tensor::CreateFromVector(expected1[i], &expected_tensor1);
+    Tensor::CreateFromVector(expected2[i], &expected_tensor2);
+    EXPECT_EQ(*ind1, *expected_tensor1);
+    EXPECT_EQ(*ind2, *expected_tensor2);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 3);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+
+  // Restore original seed and num_parallel_workers
+  status_set_seed = config::set_seed(original_seed);
+  EXPECT_EQ(status_set_seed, true);
+  status_set_worker = config::set_num_parallel_workers(original_worker);
+  EXPECT_EQ(status_set_worker, true);
+}
+
+TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTruncateSequencePairSuccess2.";
+  // Testing basic TruncateSequencePair with odd max_length
+
+  // Set seed for RandomDataset
+  auto original_seed = config::get_seed();
+  bool status_set_seed = config::set_seed(1);
+  EXPECT_EQ(status_set_seed, true);
+
+  // Set num_parallel_workers for RandomDataset
+  auto original_worker = config::get_num_parallel_workers();
+  bool status_set_worker = config::set_num_parallel_workers(1);
+  EXPECT_EQ(status_set_worker, true);
+
+  // Create a RandomDataset which has column names "col1" and "col2"
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::TypeId::kNumberTypeInt32, {4});
+  schema->add_column("col2", mindspore::TypeId::kNumberTypeInt64, {4});
+  std::shared_ptr<Dataset> ds = RandomData(4, schema);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a truncate_sequence_pair operation on ds
+  std::shared_ptr<TensorOperation> truncate_sequence_pair = text::TruncateSequencePair(5);
+  EXPECT_NE(truncate_sequence_pair, nullptr);
+
+  // Create Map operation on ds
+  ds = ds->Map({truncate_sequence_pair}, {"col1", "col2"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::vector<int32_t>> expected1 = {{1785358954, 1785358954, 1785358954},
+                                                 {-1195853640, -1195853640, -1195853640},
+                                                 {0, 0, 0},
+                                                 {1296911693, 1296911693, 1296911693}};
+  std::vector<std::vector<int64_t>> expected2 = {
+    {-1, -1}, {-1229782938247303442, -1229782938247303442}, {2314885530818453536, 2314885530818453536}, {-1, -1}};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind1 = row["col1"];
+    auto ind2 = row["col2"];
+    std::shared_ptr<Tensor> expected_tensor1;
+    std::shared_ptr<Tensor> expected_tensor2;
+    Tensor::CreateFromVector(expected1[i], &expected_tensor1);
+    Tensor::CreateFromVector(expected2[i], &expected_tensor2);
+    EXPECT_EQ(*ind1, *expected_tensor1);
+    EXPECT_EQ(*ind2, *expected_tensor2);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 4);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+
+  // Restore original seed and num_parallel_workers
+  status_set_seed = config::set_seed(original_seed);
+  EXPECT_EQ(status_set_seed, true);
+  status_set_worker = config::set_num_parallel_workers(original_worker);
+  EXPECT_EQ(status_set_worker, true);
+}
+
+TEST_F(MindDataTestPipeline, TestTruncateSequencePairFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestTruncateSequencePairFail.";
+  // Testing TruncateSequencePair with negative max_length
+
+  // Create a RandomDataset which has column names "col1" and "col2"
+  std::shared_ptr<SchemaObj> schema = Schema();
+  schema->add_column("col1", mindspore::TypeId::kNumberTypeInt8, {3});
+  schema->add_column("col2", mindspore::TypeId::kNumberTypeInt8, {3});
+  std::shared_ptr<Dataset> ds = RandomData(3, schema);
+  EXPECT_NE(ds, nullptr);
+
+  // Create a truncate_sequence_pair operation on ds
+  std::shared_ptr<TensorOperation> truncate_sequence_pair = text::TruncateSequencePair(-1);
+
+  // Expect failure: invalid parameter with negative max_length
+  EXPECT_EQ(truncate_sequence_pair, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestNgramSuccess) {

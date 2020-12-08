@@ -32,6 +32,8 @@
 #endif
 #include "minddata/dataset/text/kernels/sentence_piece_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/sliding_window_op.h"
+#include "minddata/dataset/text/kernels/to_number_op.h"
+#include "minddata/dataset/text/kernels/truncate_sequence_pair_op.h"
 #include "minddata/dataset/text/kernels/unicode_char_tokenizer_op.h"
 #ifndef _WIN32
 #include "minddata/dataset/text/kernels/unicode_script_tokenizer_op.h"
@@ -136,6 +138,18 @@ std::shared_ptr<SentencePieceTokenizerOperation> SentencePieceTokenizer(const st
 
 std::shared_ptr<SlidingWindowOperation> SlidingWindow(const int32_t width, const int32_t axis) {
   auto op = std::make_shared<SlidingWindowOperation>(width, axis);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+
+std::shared_ptr<ToNumberOperation> ToNumber(const DataType data_type) {
+  auto op = std::make_shared<ToNumberOperation>(data_type);
+
+  return op->ValidateParams() ? op : nullptr;
+}
+
+std::shared_ptr<TruncateSequencePairOperation> TruncateSequencePair(int32_t max_length) {
+  auto op = std::make_shared<TruncateSequencePairOperation>(max_length);
 
   return op->ValidateParams() ? op : nullptr;
 }
@@ -458,6 +472,43 @@ Status SlidingWindowOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> SlidingWindowOperation::Build() {
   std::shared_ptr<SlidingWindowOp> tensor_op = std::make_shared<SlidingWindowOp>(static_cast<uint32_t>(width_), axis_);
+  return tensor_op;
+}
+
+// ToNumberOperation
+ToNumberOperation::ToNumberOperation(DataType data_type) : data_type_(data_type) {}
+
+Status ToNumberOperation::ValidateParams() {
+  if (!data_type_.IsNumeric()) {
+    std::string err_msg =
+      "ToNumber : The parameter data_type must be a numeric type: " + std::to_string(data_type_.value());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> ToNumberOperation::Build() {
+  std::shared_ptr<ToNumberOp> tensor_op = std::make_shared<ToNumberOp>(data_type_);
+  return tensor_op;
+}
+
+TruncateSequencePairOperation::TruncateSequencePairOperation(int32_t max_length) : max_length_(max_length) {}
+
+Status TruncateSequencePairOperation::ValidateParams() {
+  if (max_length_ < 0) {
+    std::string err_msg = "TruncateSequencePair : The parameter max_length must be greater than or equal to 0: " +
+                          std::to_string(max_length_);
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> TruncateSequencePairOperation::Build() {
+  std::shared_ptr<TruncateSequencePairOp> tensor_op = std::make_shared<TruncateSequencePairOp>(max_length_);
   return tensor_op;
 }
 

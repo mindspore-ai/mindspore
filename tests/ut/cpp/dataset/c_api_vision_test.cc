@@ -514,7 +514,7 @@ TEST_F(MindDataTestPipeline, TestCutOutFail1) {
   EXPECT_EQ(cutout_op, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, DISABLED_TestCutOutFail2) {
+TEST_F(MindDataTestPipeline, TestCutOutFail2) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestCutOutFail2 with invalid params, boundary cases.";
 
   // Create object for the tensor op
@@ -1407,12 +1407,12 @@ TEST_F(MindDataTestPipeline, TestRandomCropWithBboxFail) {
   EXPECT_EQ(random_crop7, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, DISABLED_TestRandomHorizontalFlipFail) {
+TEST_F(MindDataTestPipeline, TestRandomHorizontalFlipFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomHorizontalFlipFail with invalid parameters.";
 
   // Create object for the tensor op
-  // Invalid zero input
-  std::shared_ptr<TensorOperation> random_horizontal_flip_op = vision::RandomHorizontalFlip(0);
+  // Invalid negative input
+  std::shared_ptr<TensorOperation> random_horizontal_flip_op = vision::RandomHorizontalFlip(-0.5);
   EXPECT_EQ(random_horizontal_flip_op, nullptr);
   // Invalid >1 input
   random_horizontal_flip_op = vision::RandomHorizontalFlip(2);
@@ -2423,12 +2423,12 @@ TEST_F(MindDataTestPipeline, TestRandomSolarizeFail) {
   EXPECT_EQ(random_solarize, nullptr);
 }
 
-TEST_F(MindDataTestPipeline, DISABLED_TestRandomVerticalFlipFail) {
+TEST_F(MindDataTestPipeline, TestRandomVerticalFlipFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomVerticalFlipFail with invalid parameters.";
 
   // Create object for the tensor op
-  // Invalid zero input
-  std::shared_ptr<TensorOperation> random_vertical_flip_op = vision::RandomVerticalFlip(0);
+  // Invalid negative input
+  std::shared_ptr<TensorOperation> random_vertical_flip_op = vision::RandomVerticalFlip(-0.5);
   EXPECT_EQ(random_vertical_flip_op, nullptr);
   // Invalid >1 input
   random_vertical_flip_op = vision::RandomVerticalFlip(1.1);
