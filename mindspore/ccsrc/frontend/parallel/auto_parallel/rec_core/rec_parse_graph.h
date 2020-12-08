@@ -144,7 +144,8 @@ const std::map<std::string, OperatorType> DictOpType{
   {ASSIGN_ADD, OperatorType::kRecElmWiseOp},
   {ASSIGN_SUB, OperatorType::kRecElmWiseOp},
   {"AssignAdd", OperatorType::kRecElmWiseOp},
-  {DROPOUT_DO_MASK, OperatorType::kRecElmWiseOp}};
+  {DROPOUT_DO_MASK, OperatorType::kRecElmWiseOp},
+  {PACK, OperatorType::kRecElmWiseOp}};
 
 const TensorParam MakeTensor(int64_t n, int64_t c, int64_t h, int64_t w);
 

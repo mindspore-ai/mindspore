@@ -82,12 +82,15 @@ Graph::NodeType MakeNewOperator(const std::vector<std::shared_ptr<OperatorInfo>>
 
 OperatorRec CompleteOperatorInputs(const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_ops,
                                    Graph::NodeType NewTensor) {
-  if (ops[iter_ops]->inputs_tensor_info().size() > MAX_INPUT_NUM) {
+  size_t input_tensor_size = ops[iter_ops]->inputs_tensor_info().size();
+  if (ops[iter_ops]->type() == PACK) {
+    input_tensor_size = 1;
+  }
+  if (input_tensor_size > MAX_INPUT_NUM) {
     MS_LOG(EXCEPTION) << ops[iter_ops]->name() << " input tensor num exceeds limit.";
   }
 
-  for (size_t iter_input_tensors = 0; iter_input_tensors < ops[iter_ops]->inputs_tensor_info().size();
-       iter_input_tensors++) {
+  for (size_t iter_input_tensors = 0; iter_input_tensors < input_tensor_size; iter_input_tensors++) {
     if (ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape().size() == 4) {
       NewTensor.apply.arguments[iter_input_tensors] =
         MakeTensor(ops[iter_ops]->inputs_tensor_info()[iter_input_tensors].shape()[0],
