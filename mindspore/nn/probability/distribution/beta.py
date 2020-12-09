@@ -238,7 +238,8 @@ class Beta(Distribution):
         comp1 = self.greater(concentration1, 1.)
         comp2 = self.greater(concentration0, 1.)
         cond = self.logicaland(comp1, comp2)
-        nan = self.fill(self.dtype, self.broadcast_shape, np.nan)
+        batch_shape = self.shape(concentration1 + concentration0)
+        nan = self.fill(self.dtype, batch_shape, np.nan)
         mode = (concentration1 - 1.) / (concentration1 + concentration0 - 2.)
         return self.select(cond, mode, nan)
 
