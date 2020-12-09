@@ -14,11 +14,9 @@
 # ============================================================================
 """RISE."""
 import math
-import random
 
 import numpy as np
 
-from mindspore.ops.operations import Concat
 from mindspore import Tensor
 from mindspore.train._utils import check_value_type
 
@@ -107,18 +105,13 @@ class RISE(PerturbationAttribution):
         up_size = (height + mask_size[0], width + mask_size[1])
         mask = np.random.random((batch_size, 1) + mask_size) < self._mask_probability
         upsample = resize(op.Tensor(mask, data.dtype), up_size,
-                          self._resize_mode)
+                          self._resize_mode).asnumpy()
+        shift_x = np.random.randint(0, mask_size[0] + 1, size=batch_size)
+        shift_y = np.random.randint(0, mask_size[1] + 1, size=batch_size)
 
-        # Pack operator not available for GPU, thus transfer to numpy first
-        masks_lst = []
-        for sample in upsample:
-            shift_x = random.randint(0, mask_size[0])
-            shift_y = random.randint(0, mask_size[1])
-            masks_lst.append(sample[:, shift_x: shift_x + height, shift_y:shift_y + width])
-
-        concat = Concat()
-        masks = concat(tuple(masks_lst))
-        masks = op.reshape(masks, (batch_size, -1, height, width))
+        masks = [sample[:, x_i: x_i + height, y_i: y_i + width] for sample, x_i, y_i
+                 in zip(upsample, shift_x, shift_y)]
+        masks = Tensor(np.array(masks), data.dtype)
         return masks
 
     def __call__(self, inputs, targets):
@@ -157,11 +150,8 @@ class RISE(PerturbationAttribution):
 
         attr_np = attr_np / self._num_masks
         targets = self._unify_targets(inputs, targets)
-        attr_classes = []
-        for idx, target in enumerate(targets):
-            attr_np_idx = attr_np[idx]
-            attr_idx = attr_np_idx[target]
-            attr_classes.append(attr_idx)
+
+        attr_classes = [att_i[target] for att_i, target in zip(attr_np, targets)]
 
         return op.Tensor(attr_classes, dtype=inputs.dtype)
 

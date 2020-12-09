@@ -77,16 +77,16 @@ class ImageClassificationRunner:
         >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
         >>> # Prepare the dataset for explaining and evaluation, e.g., Cifar10
         >>> dataset = get_dataset('/path/to/Cifar10_dataset')
-        >>> labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'turck']
+        >>> labels = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck']
         >>> # load checkpoint to a network, e.g. checkpoint of resnet50 trained on Cifar10
         >>> param_dict = load_checkpoint("checkpoint.ckpt")
-        >>> net = resnet50(len(classes))
+        >>> net = resnet50(len(labels))
         >>> activation_fn = Softmax()
         >>> load_param_into_net(net, param_dict)
         >>> gbp = GuidedBackprop(net)
         >>> gradient = Gradient(net)
         >>> explainers = [gbp, gradient]
-        >>> faithfulness = Faithfulness(len(labels), "NaiveFaithfulness", activation_fn)
+        >>> faithfulness = Faithfulness(len(labels), activation_fn, "NaiveFaithfulness")
         >>> benchmarkers = [faithfulness]
         >>> runner = ImageClassificationRunner("./summary_dir", (dataset, labels), net, activation_fn)
         >>> runner.register_saliency(explainers=explainers, benchmarkers=benchmarkers)
