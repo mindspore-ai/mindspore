@@ -41,6 +41,7 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/runtime/device/ascend/pl
 
 include_directories(${CMAKE_BINARY_DIR}) # for protobuf generated .h
 
+include_directories(${CMAKE_SOURCE_DIR}/mindspore)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/mindrecord/include)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include)
 include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image)
@@ -203,6 +204,16 @@ else ()
         endif ()
     endif ()
 endif ()
+
+add_dependencies(_c_dataengine mindspore_shared_lib)
+if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    set(MINDSPORE_LINK_OBJECT ${CMAKE_BINARY_DIR}/mindspore/ccsrc/cxx_api/CMakeFiles/mindspore_shared_lib.dir/objects.a)
+    target_link_libraries(_c_dataengine PRIVATE mindspore_shared_lib ${MINDSPORE_LINK_OBJECT})
+else()
+    if (ENABLE_ACL)
+        target_link_libraries(_c_dataengine PRIVATE mindspore_shared_lib)
+    endif ()
+endif()
 
 if (USE_GLOG)
     target_link_libraries(_c_dataengine PRIVATE mindspore::glog)
