@@ -234,6 +234,10 @@ def test_cache_map_failure1():
     ds1 = ds1.repeat(4)
 
     with pytest.raises(RuntimeError) as e:
+        ds1.get_batch_size()
+    assert "Nested cache operations" in str(e.value)
+
+    with pytest.raises(RuntimeError) as e:
         num_iter = 0
         for _ in ds1.create_dict_iterator(num_epochs=1):
             num_iter += 1

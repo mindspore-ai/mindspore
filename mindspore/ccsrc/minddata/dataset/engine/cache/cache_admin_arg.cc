@@ -355,7 +355,7 @@ Status CacheAdminArgHandler::RunCommand() {
       // The server will send a message back and remove the queue and we will then wake up. But on the safe
       // side, we will also set up an alarm and kill this process if we hang on
       // the message queue.
-      alarm(30);
+      alarm(60);
       Status dummy_rc;
       (void)msg.ReceiveStatus(&dummy_rc);
       std::cout << "Cache server on port " << std::to_string(port_) << " has been stopped successfully." << std::endl;
@@ -533,24 +533,16 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
 
 void CacheAdminArgHandler::Help() {
   std::cerr << "Syntax:\n";
-  std::cerr << "   cache_admin [--start | --stop]\n";
-  std::cerr << "               [ [-h | --hostname] <hostname> ]\n";
-  std::cerr << "                     Default is " << kCfgDefaultCacheHost << ".\n";
-  std::cerr << "               [ [-p | --port] <port number> ]\n";
-  std::cerr << "                     Possible values are in range [1025..65535].\n";
-  std::cerr << "                     Default is " << kCfgDefaultCachePort << ".\n";
-  std::cerr << "               [ [-g | --generate_session] ]\n";
-  std::cerr << "               [ [-d | --destroy_session] <session id> ]\n";
-  std::cerr << "               [ [-w | --workers] <number of workers> ]\n";
-  std::cerr << "                     Possible values are in range [1...max(100, Number of CPU)].\n";
-  std::cerr << "                     Default is " << kDefaultNumWorkers << ".\n";
-  std::cerr << "               [ [-s | --spilldir] <spilling directory> ]\n";
-  std::cerr << "                     Default is " << DefaultSpillDir() << ".\n";
-  std::cerr << "               [ [-l | --loglevel] <log level> ]\n";
-  std::cerr << "                     Possible values are 0, 1, 2 and 3.\n";
-  std::cerr << "                     Default is 1 (info level).\n";
-  std::cerr << "               [--list_sessions]\n";
-  std::cerr << "               [--help]" << std::endl;
+  std::cerr << "cache_admin [--start | --stop]\n";
+  std::cerr << "                [[-h | --hostname] <hostname>]            Default is " << kCfgDefaultCacheHost << ".\n";
+  std::cerr << "                [[-p | --port] <port number>]             Default is " << kCfgDefaultCachePort << ".\n";
+  std::cerr << "                [[-w | --workers] <number of workers>]    Default is " << kDefaultNumWorkers << ".\n";
+  std::cerr << "                [[-s | --spilldir] <spilling directory>]  Default is " << DefaultSpillDir() << ".\n";
+  std::cerr << "                [[-l | --loglevel] <log level>]           Default is 1 (warning level).\n";
+  std::cerr << "            [--destroy_session  | -d] <session id>\n";
+  std::cerr << "            [--generate_session | -g]\n";
+  std::cerr << "            [--list_sessions]\n";
+  std::cerr << "            [--help]" << std::endl;
   // Do not expose these option to the user via help or documentation, but the options do exist to aid with
   // development and tuning.
   // [ [-m | --shared_memory_size] <shared memory size> ]

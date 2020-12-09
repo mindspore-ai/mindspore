@@ -635,7 +635,7 @@ Status CacheServer::GetCacheMissKeys(CacheRequest *rq, CacheReply *reply) {
 
 inline Status GenerateClientSessionID(session_id_type session_id, CacheReply *reply) {
   reply->set_result(std::to_string(session_id));
-  MS_LOG(INFO) << "Server generated new session id " << session_id;
+  MS_LOG(WARNING) << "Server generated new session id " << session_id;
   return Status::OK();
 }
 

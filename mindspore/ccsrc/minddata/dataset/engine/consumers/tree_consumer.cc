@@ -36,7 +36,10 @@ namespace dataset {
 TreeConsumer::TreeConsumer() { tree_adapter_ = std::make_unique<TreeAdapter>(); }
 
 Status TreeConsumer::Init(std::shared_ptr<DatasetNode> d) { return tree_adapter_->Compile(std::move(d)); }
-Status TreeConsumer::Terminate() { return tree_adapter_->AllTasks()->ServiceStop(); }
+Status TreeConsumer::Terminate() {
+  CHECK_FAIL_RETURN_UNEXPECTED(tree_adapter_->AllTasks() != nullptr, " Execution tree has not been built");
+  return tree_adapter_->AllTasks()->ServiceStop();
+}
 
 // IteratorConsumer
 Status IteratorConsumer::Init(std::shared_ptr<DatasetNode> d) {
