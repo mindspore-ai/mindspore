@@ -746,7 +746,7 @@ Status TFReaderOp::LoadBytesList(const ColDescriptor &current_col, const dataeng
 
   uint64_t max_size = 0;
   for (uint32_t i = 0; i < bytes_list.value_size(); ++i) {
-#ifdef __APPLE__
+#if defined(__APPLE__)
     max_size = fmax(max_size, bytes_list.value(i).size());
 #else
     max_size = std::max(max_size, bytes_list.value(i).size());
