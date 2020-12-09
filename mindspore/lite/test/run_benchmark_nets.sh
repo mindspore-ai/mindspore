@@ -525,12 +525,11 @@ function Run_x86() {
         model_name_len=${#model_name}
         input_params=${line:model_name_len+1}
         input_num=${input_params%%;*}
-        input_shape=${input_params##*;}
         input_files=''
         output_file=''
         if [[ -z "$input_files" || $input_files == 1 ]] && [ -e ${ms_models_path}/${model_name}'.ms.bin' ]; then
           input_files=$model_name'.ms.bin'
-        elif [[ ! -z "$input_files" && $input_files > 1 ]]; then
+        elif [[ ! -z "$input_files" && $input_files -gt 1 ]]; then
           for i in $(seq 1 $input_num)
           do
             input_files=$input_files$model_name'.ms.bin_'$i','
@@ -788,12 +787,11 @@ function Run_x86_sse() {
         model_name_len=${#model_name}
         input_params=${line:model_name_len+1}
         input_num=${input_params%%;*}
-        input_shape=${input_params##*;}
         input_files=''
         output_file=''
         if [[ -z "$input_files" || $input_files == 1 ]] && [ -e ${ms_models_path}/${model_name}'.ms.bin' ]; then
           input_files=$model_name'.ms.bin'
-        elif [[ ! -z "$input_files" && $input_files > 1 ]]; then
+        elif [[ ! -z "$input_files" && $input_files -gt 1 ]]; then
           for i in $(seq 1 $input_num)
           do
             input_files=$input_files$model_name'.ms.bin_'$i','
@@ -1147,18 +1145,7 @@ function Run_arm64() {
         else
             run_result='arm64_gpu: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-        # run benchmark test without clib data
-        #echo ${model_name}
-        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
-        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
-        if [ $? = 0 ]; then
-            run_result='arm64_gpu: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
-        else
-            run_result='arm64_gpu: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
-        fi
-    done < ${models_tflite_gpu_config}
+    done < ${models_gpu_fp32_config}
 
     # Run GPU fp16 converted models:
     while read line; do
@@ -1176,19 +1163,27 @@ function Run_arm64() {
         else
             run_result='arm64_gpu_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
-        # run benchmark test without clib data
+	#sleep 1
+    done < ${models_gpu_fp16_config}
+
+    # Run GPU weightquant converted models:
+    while read line; do
+        model_name=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
         echo ${model_name} >> "${run_arm64_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --enableFp16=true' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2 --enableFp16=true' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=GPU --modelFile='${model_name}'_weightquant.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --enableFp16=true --accuracyThreshold=5' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
         if [ $? = 0 ]; then
-            run_result='arm64_gpu_fp16: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+            run_result='arm64_gpu_weightquant: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
-            run_result='arm64_gpu_fp16: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+            run_result='arm64_gpu_weightquant: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
 	#sleep 1
-    done < ${models_fp16_gpu_config}
+    done < ${models_gpu_weightquant_config}
 
     # Run mindir converted models:
     while read line; do
@@ -1274,12 +1269,11 @@ function Run_arm64() {
         model_name_len=${#model_name}
         input_params=${line:model_name_len+1}
         input_num=${input_params%%;*}
-        input_shape=${input_params##*;}
         input_files=''
         output_file=''
         if [[ -z "$input_files" || $input_files == 1 ]] && [ -e ${ms_models_path}/${model_name}'.ms.bin' ]; then
           input_files=$model_name'.ms.bin'
-        elif [[ ! -z "$input_files" && $input_files > 1 ]]; then
+        elif [[ ! -z "$input_files" && $input_files -gt 1 ]]; then
           for i in $(seq 1 $input_num)
           do
             input_files=$input_files$model_name'.ms.bin_'$i','
@@ -1445,9 +1439,10 @@ models_tflite_fp16_config=${basepath}/models_tflite_fp16.cfg
 models_mindspore_config=${basepath}/models_mindspore.cfg
 models_mindspore_train_config=${basepath}/models_mindspore_train.cfg
 models_mindspore_mixbit_config=${basepath}/models_mindspore_mixbit.cfg
-models_tflite_gpu_config=${basepath}/models_fp32_gpu.cfg
+models_gpu_fp32_config=${basepath}/models_gpu_fp32.cfg
+models_gpu_fp16_config=${basepath}/models_gpu_fp16.cfg
+models_gpu_weightquant_config=${basepath}/models_gpu_weightquant.cfg
 models_mindspore_weightquant_config=${basepath}/models_mindspore_weightquant.cfg
-models_fp16_gpu_config=${basepath}/models_fp16_gpu.cfg
 models_arm32_config=${basepath}/models_arm32.cfg
 models_compatibility_config=${basepath}/models_compatibility.cfg
 models_only_for_process_config=${basepath}/models_with_several_inputs_or_without_outputs.cfg

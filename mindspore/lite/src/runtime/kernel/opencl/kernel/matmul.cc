@@ -84,6 +84,10 @@ int MatMulOpenCLKernel::InitWeights() {
     MS_LOG(ERROR) << "Matmul don't support non-constant filter yet.";
     return RET_ERROR;
   }
+  auto ret = DequantWeight();
+  if (ret != RET_OK) {
+    return ret;
+  }
   auto allocator = ocl_runtime_->GetAllocator();
   int ci = inShape[3];
   int ci4 = UP_DIV(ci, C4NUM);
@@ -143,6 +147,7 @@ int MatMulOpenCLKernel::InitWeights() {
     }
   }
   allocator->UnmapBuffer(padWeight_);
+  FreeDequantedWeight();
   return RET_OK;
 }
 

@@ -135,6 +135,10 @@ int FullConnectionOpenCLKernel::InitWeights() {
 }  // namespace mindspore::kernel
 
 int FullConnectionOpenCLKernel::InitFilter() {
+  auto ret = DequantWeight();
+  if (ret != RET_OK) {
+    return ret;
+  }
   auto allocator = ocl_runtime_->GetAllocator();
   auto intensor_shape = GpuTensorInfo(in_tensors_[0]);
   int co4 = UP_DIV(CO_, C4NUM);
@@ -187,6 +191,7 @@ int FullConnectionOpenCLKernel::InitFilter() {
     }
   }
   allocator->UnmapBuffer(padWeight_);
+  FreeDequantedWeight();
   return RET_OK;
 }
 
