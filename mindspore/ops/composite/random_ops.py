@@ -46,13 +46,13 @@ def normal(shape, mean, stddev, seed=None):
         The dtype is float32.
 
     Examples:
-        >>> shape = (2, 4)
-        >>> mean = Tensor(1.0, mstype.float32)
+        >>> shape = (3, 1, 2)
+        >>> mean = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
         >>> stddev = Tensor(1.0, mstype.float32)
         >>> output = C.normal(shape, mean, stddev, seed=5)
-        >>> print(output)
-        [[ 1.0996436   0.44371283 0.11127508 -0.48055804]
-         [ 0.31989878 -1.0644426  1.5076542   1.2290289 ]]
+        >>> result = output.shape
+        >>> print(result)
+        (3, 2, 2)
     """
     mean_dtype = F.dtype(mean)
     stddev_dtype = F.dtype(stddev)
@@ -135,10 +135,13 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         >>> output = C.uniform(shape, minval, maxval, seed=5, dtype=mstype.int32)
         >>>
         >>> # For continuous uniform distribution, minval and maxval can be multi-dimentional:
-        >>> shape = (4, 2)
-        >>> minval = Tensor([1.0, 2.0], mstype.float32)
-        >>> maxval = Tensor([4.0, 5.0], mstype.float32)
+        >>> shape = (3, 1, 2)
+        >>> minval = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
+        >>> maxval = Tensor([8.0, 10.0], mstype.float32)
         >>> output = C.uniform(shape, minval, maxval, seed=5)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 2, 2)
     """
     minval_dtype = F.dtype(minval)
     maxval_dtype = F.dtype(maxval)
@@ -172,10 +175,13 @@ def gamma(shape, alpha, beta, seed=None):
         The dtype is float32.
 
     Examples:
-        >>> shape = (4, 16)
-        >>> alpha = Tensor(1.0, mstype.float32)
-        >>> beta = Tensor(1.0, mstype.float32)
+        >>> shape = (3, 1, 2)
+        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
+        >>> beta = Tensor(np.array([1.0]), mstype.float32)
         >>> output = C.gamma(shape, alpha, beta, seed=5)
+        >>> result = output.shape
+        >>> print(result)
+        (3, 2, 2)
     """
     seed1, seed2 = _get_seed(seed, "gamma")
     random_gamma = P.Gamma(seed1, seed2)
@@ -197,9 +203,12 @@ def poisson(shape, mean, seed=None):
         The dtype is float32.
 
     Examples:
-        >>> shape = (4, 16)
-        >>> mean = Tensor(1.0, mstype.float32)
+        >>> shape = (4, 1)
+        >>> mean = Tensor(np.array([5.0, 10.0]), mstype.float32)
         >>> output = C.poisson(shape, mean, seed=5)
+        >>> result = output.shape
+        >>> print(result)
+        (4, 2)
     """
     seed1, seed2 = _get_seed(seed, "poisson")
     random_poisson = P.Poisson(seed1, seed2)
