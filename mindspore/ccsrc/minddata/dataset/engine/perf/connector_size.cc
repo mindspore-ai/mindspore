@@ -68,8 +68,13 @@ Status ConnectorSize::SaveToFile() {
   json output;
   if (path.Exists()) {
     MS_LOG(DEBUG) << file_path_ << " exists";
-    std::ifstream file(file_path_);
-    file >> output;
+    try {
+      std::ifstream file(file_path_);
+      file >> output;
+    } catch (const std::exception &err) {
+      RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + file_path_ +
+                               ", please delete it and try again!");
+    }
   } else {
     output["sampling_interval"] = GlobalContext::config_manager()->monitor_sampling_interval();
   }
