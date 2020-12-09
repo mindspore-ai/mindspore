@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_ASSERT_PARSER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_ASSERT_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_TENSOR_LIST_GET_ITEM_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_TENSOR_LIST_GET_ITEM_PARSER_H_
+
 #include <string>
 #include <memory>
 #include <map>
@@ -23,14 +24,15 @@
 
 namespace mindspore {
 namespace lite {
-class TFAssertParser : public TFNodeParser {
+class TFTensorListGetItemParser : public TFNodeParser {
  public:
-  TFAssertParser() = default;
-  ~TFAssertParser() override = default;
+  TFTensorListGetItemParser() = default;
+  ~TFTensorListGetItemParser() override = default;
 
   STATUS Parse(const tensorflow::NodeDef &tf_op, const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_ASSERT_PARSER_H_
+
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_TENSOR_LIST_GET_ITEM_PARSER_H_

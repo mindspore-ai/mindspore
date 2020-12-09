@@ -23,17 +23,24 @@
 namespace mindspore {
 namespace lite {
 static const std::unordered_map<int, mindspore::TypeId> TF_TYPE_MAP = {
-  {tensorflow::DT_INT8, mindspore::kNumberTypeInt8},      {tensorflow::DT_UINT8, mindspore::kNumberTypeUInt8},
-  {tensorflow::DT_INT16, mindspore::kNumberTypeInt16},    {tensorflow::DT_UINT16, mindspore::kNumberTypeUInt16},
-  {tensorflow::DT_INT32, mindspore::kNumberTypeInt32},    {tensorflow::DT_INT64, mindspore::kNumberTypeInt64},
-  {tensorflow::DT_HALF, mindspore::kNumberTypeFloat16},   {tensorflow::DT_FLOAT, mindspore::kNumberTypeFloat32},
-  {tensorflow::DT_DOUBLE, mindspore::kNumberTypeFloat64}, {tensorflow::DT_COMPLEX64, mindspore::kNumberTypeComplex64},
-  {tensorflow::DT_BOOL, mindspore::kNumberTypeBool},      {tensorflow::DT_STRING, mindspore::kObjectTypeString}};
+  {tensorflow::DT_INT8, mindspore::kNumberTypeInt8},
+  {tensorflow::DT_UINT8, mindspore::kNumberTypeUInt8},
+  {tensorflow::DT_INT16, mindspore::kNumberTypeInt16},
+  {tensorflow::DT_UINT16, mindspore::kNumberTypeUInt16},
+  {tensorflow::DT_INT32, mindspore::kNumberTypeInt32},
+  {tensorflow::DT_INT64, mindspore::kNumberTypeInt64},
+  {tensorflow::DT_HALF, mindspore::kNumberTypeFloat16},
+  {tensorflow::DT_FLOAT, mindspore::kNumberTypeFloat32},
+  {tensorflow::DT_DOUBLE, mindspore::kNumberTypeFloat64},
+  {tensorflow::DT_COMPLEX64, mindspore::kNumberTypeComplex64},
+  {tensorflow::DT_BOOL, mindspore::kNumberTypeBool},
+  {tensorflow::DT_STRING, mindspore::kObjectTypeString},
+  {tensorflow::DT_VARIANT, mindspore::kObjectTypeTensorType}};
 
 TypeId TensorFlowUtils::GetTFDataType(const tensorflow::DataType &tf_data_type) {
   auto iter = TF_TYPE_MAP.find(tf_data_type);
   if (iter == TF_TYPE_MAP.end()) {
-    MS_LOG(ERROR) << "unsupported TF data type: " << tf_data_type;
+    MS_LOG(WARNING) << "unsupported TF data type: " << tf_data_type;
     return kTypeUnknown;
   }
   return iter->second;

@@ -117,6 +117,22 @@ STATUS TFArithmeticParser::Parse(const tensorflow::NodeDef &tf_op,
     }
     primitive->value.type = schema::PrimitiveType_LessEqual;
     primitive->value.value = attr.release();
+  } else if (tf_op.op() == "Equal") {
+    auto attr = std::make_unique<schema::EqualT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_Equal;
+    primitive->value.value = attr.release();
+  } else if (tf_op.op() == "NotEqual") {
+    auto attr = std::make_unique<schema::NotEqualT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_NotEqual;
+    primitive->value.value = attr.release();
   }
 
   *primitiveC = PrimitiveC::Create(primitive.release());
@@ -144,5 +160,7 @@ TFNodeRegistrar g_tfGreaterParser("Greater", new TFArithmeticParser());
 TFNodeRegistrar g_tfGreaterEqualParser("GreaterEqual", new TFArithmeticParser());
 TFNodeRegistrar g_tfLessParser("Less", new TFArithmeticParser());
 TFNodeRegistrar g_tfLessEqualParser("LessEqual", new TFArithmeticParser());
+TFNodeRegistrar g_tfEqualParser("Equal", new TFArithmeticParser());
+TFNodeRegistrar g_tfNotEqualParser("NotEqual", new TFArithmeticParser());
 }  // namespace lite
 }  // namespace mindspore
