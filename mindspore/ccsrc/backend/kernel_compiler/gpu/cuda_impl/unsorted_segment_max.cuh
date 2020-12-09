@@ -22,8 +22,8 @@
 
 // Setting warp size to sync data across threads
 #define KWARPSIZE 32
-template <typename T>
-void CalUnsortedSegmentMax(const T *input, const int *segment_ids, const int64_t num_segments, size_t outer_size,
+template <typename T, typename S>
+void CalUnsortedSegmentMax(const T *input, const S *segment_ids, const int64_t num_segments, size_t outer_size,
                            size_t inner_size, T *output, cudaStream_t stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UNSORT_SEGMENT_MAX_H_
