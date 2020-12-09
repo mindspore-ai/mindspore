@@ -331,7 +331,7 @@ class MobileNetV2Combine(nn.Cell):
         Tensor, output tensor.
 
     Examples:
-        >>> MobileNetV2(num_classes=1000)
+        >>> MobileNetV2Combine(backbone, head)
     """
 
     def __init__(self, backbone, head):

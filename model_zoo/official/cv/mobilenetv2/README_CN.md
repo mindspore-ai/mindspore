@@ -100,6 +100,12 @@ MobileNetV2总体网络架构如下：
 - GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
 - CPU: sh run_trian.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
 
+> RANK_TABLE_FILE 是在Ascned上运行分布式任务时HCCL的配置文件
+> 我们列出使用分布式服务常见的使用限制，详细的可以查看HCCL对应的使用文档。
+>
+> - 单机场景下支持1、2、4、8卡设备集群，多机场景下支持8*n卡设备集群。
+> - 每台机器的0-3卡和4-7卡各为1个组网，2卡和4卡训练时卡必须相连且不支持跨组网创建集群。
+
 ### 启动
 
 ```shell

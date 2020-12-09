@@ -29,6 +29,13 @@ run_ascend()
     fi
 
     BASEPATH=$(cd "`dirname $0`" || exit; pwd)
+    VISIABLE_DEVICES=$3
+    IFS="," read -r -a CANDIDATE_DEVICE <<< "$VISIABLE_DEVICES"
+    if [ ${#CANDIDATE_DEVICE[@]} -ne $2 ]
+    then
+        echo "error: DEVICE_NUM=$2 is not equal to the length of VISIABLE_DEVICES=$3"
+    exit 1
+    fi
     export PYTHONPATH=${BASEPATH}:$PYTHONPATH
     export RANK_TABLE_FILE=$4
     export RANK_SIZE=$2
@@ -40,7 +47,7 @@ run_ascend()
     cd ../train || exit
     for((i=0; i<${RANK_SIZE}; i++))
     do
-        export DEVICE_ID=$i
+        export DEVICE_ID=${CANDIDATE_DEVICE[i]}
         export RANK_ID=$i
         rm -rf ./rank$i
         mkdir ./rank$i
