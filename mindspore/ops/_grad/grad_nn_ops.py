@@ -85,12 +85,12 @@ def get_bprop_conv3d(self):
 @bprop_getters.register(nps.Conv3DTranspose)
 def get_bprop_conv3d_transpose(self):
     """Grad definition for `Conv3DTranspose` operation."""
-    filter_grad = G.Conv3DBackpropFilter(
-        out_channel=self.out_channel, kernel_size=self.kernel_size, mode=self.mode, pad_mode=self.pad_mode,
+    input_grad = nps.Conv3D(
+        out_channel=self.in_channel, kernel_size=self.kernel_size, mode=self.mode, pad_mode="pad",
         pad=self.pad, stride=self.stride, dilation=self.dilation, group=self.group, data_format=self.data_format
     )
-    input_grad = nps.Conv3D(
-        out_channel=self.out_channel, kernel_size=self.kernel_size, mode=self.mode, pad_mode=self.pad_mode,
+    filter_grad = G.Conv3DBackpropFilter(
+        out_channel=self.in_channel, kernel_size=self.kernel_size, mode=self.mode, pad_mode="pad",
         pad=self.pad, stride=self.stride, dilation=self.dilation, group=self.group, data_format=self.data_format
     )
     input_size = self.input_size
