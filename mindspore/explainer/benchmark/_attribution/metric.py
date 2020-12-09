@@ -15,6 +15,7 @@
 """Base class for XAI metrics."""
 
 import copy
+import math
 from typing import Callable
 
 import numpy as np
@@ -88,11 +89,12 @@ class LabelAgnosticMetric(AttributionMetric):
         Return:
             float, averaged result. If no result is aggregate in the global_results, 0.0 will be returned.
         """
-        if not self._global_results:
-            return 0.0
-        results_sum = sum(self._global_results)
-        count = len(self._global_results)
-        return results_sum / count
+        result_sum, count = 0, 0
+        for res in self._global_results:
+            if math.isfinite(res):
+                result_sum += res
+                count += 1
+        return 0. if count == 0 else result_sum / count
 
     def aggregate(self, result):
         """Aggregate single evaluation result to global results."""
@@ -100,7 +102,7 @@ class LabelAgnosticMetric(AttributionMetric):
             self._global_results.append(result)
         elif isinstance(result, (ms.Tensor, np.ndarray)):
             result = format_tensor_to_ndarray(result)
-            self._global_results.append(float(result))
+            self._global_results.extend([float(res) for res in result.reshape(-1)])
         else:
             raise TypeError('result should have type of float, ms.Tensor or np.ndarray, but receive %s' % type(result))
 
@@ -130,10 +132,12 @@ class LabelSensitiveMetric(AttributionMetric):
 
     @property
     def num_labels(self):
+        """Number of labels used in evaluation."""
         return self._num_labels
 
     @staticmethod
     def _verify_params(num_labels):
+        """Checks whether num_labels is valid."""
         check_value_type("num_labels", num_labels, int)
         if num_labels < 1:
             raise ValueError("Argument num_labels must be parsed with a integer > 0.")
@@ -147,17 +151,19 @@ class LabelSensitiveMetric(AttributionMetric):
                 target_np = format_tensor_to_ndarray(targets)
                 if len(target_np) > 1:
                     raise ValueError("One result can not be aggreated to multiple targets.")
-        else:
-            result_np = format_tensor_to_ndarray(result)
+        elif isinstance(result, (ms.Tensor, np.ndarray)):
+            result_np = format_tensor_to_ndarray(result).reshape(-1)
             if isinstance(targets, int):
                 for res in result_np:
                     self._global_results[targets].append(float(res))
             else:
-                target_np = format_tensor_to_ndarray(targets)
+                target_np = format_tensor_to_ndarray(targets).reshape(-1)
                 if len(target_np) != len(result_np):
                     raise ValueError("Length of result does not match with length of targets.")
                 for tar, res in zip(target_np, result_np):
                     self._global_results[int(tar)].append(float(res))
+        else:
+            raise TypeError('Result should have type of float, ms.Tensor or np.ndarray, but receive %s' % type(result))
 
     def reset(self):
         """Resets global_result."""
@@ -168,16 +174,18 @@ class LabelSensitiveMetric(AttributionMetric):
         """
         Get the class performances by global result.
 
-
         Returns:
-            (:class:`np.ndarray`): :attr:`num_labels`-dimensional vector
-                containing per-class performance.
+            (:class:`list`): a list of performances where each value is the average score of specific class.
         """
-        count = np.array(
-            [len(self._global_results[i]) for i in range(self._num_labels)])
-        result_sum = np.array(
-            [sum(self._global_results[i]) for i in range(self._num_labels)])
-        return result_sum / count.clip(min=1)
+        results_on_labels = []
+        for label_id in range(self._num_labels):
+            sum_of_label, count_of_label = 0, 0
+            for res in self._global_results[label_id]:
+                if math.isfinite(res):
+                    sum_of_label += res
+                    count_of_label += 1
+            results_on_labels.append(0. if count_of_label == 0 else sum_of_label / count_of_label)
+        return results_on_labels
 
     @property
     def performance(self):
@@ -187,13 +195,13 @@ class LabelSensitiveMetric(AttributionMetric):
         Returns:
             (:class:`float`): mean performance.
         """
-        count = sum(
-            [len(self._global_results[i]) for i in range(self._num_labels)])
-        result_sum = sum(
-            [sum(self._global_results[i]) for i in range(self._num_labels)])
-        if count == 0:
-            return 0
-        return result_sum / count
+        result_sum, count = 0, 0
+        for label_id in range(self._num_labels):
+            for res in self._global_results[label_id]:
+                if math.isfinite(res):
+                    result_sum += res
+                    count += 1
+        return 0. if count == 0 else result_sum / count
 
     def get_results(self):
         """Global result of the metric can be return"""

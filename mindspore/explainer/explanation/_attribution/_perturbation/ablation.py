@@ -89,7 +89,7 @@ class Ablation:
 
 class AblationWithSaliency(Ablation):
     """
-    Perturbation generator to generate perturbations for a given array.
+    Perturbation generator to generate perturbations w.r.t a given saliency map.
 
     Args:
         perturb_percent (float): percentage of pixels to perturb
@@ -143,28 +143,20 @@ class AblationWithSaliency(Ablation):
         """
 
         batch_size = saliency.shape[0]
-        expected_num_dim = len(saliency.shape) + 1
         has_channel = num_channels is not None
         num_channels = 1 if num_channels is None else num_channels
 
         if has_channel:
             saliency = saliency.mean(axis=1)
         saliency_rank = rank_pixels(saliency, descending=True)
-
         num_pixels = reduce(lambda x, y: x * y, saliency.shape[1:])
 
-        if self._pixel_per_step:
-            pixel_per_step = self._pixel_per_step
-            num_perturbations = math.floor(num_pixels * self._perturb_percent / self._pixel_per_step)
-        elif self._num_perturbations:
-            pixel_per_step = math.floor(num_pixels * self._perturb_percent / self._num_perturbations)
-            num_perturbations = self._num_perturbations
-        else:
-            raise ValueError("Must provide either pixel_per_step or num_perturbations.")
+        pixel_per_step, num_perturbations = self._check_and_format_perturb_param(num_pixels)
 
         masks = np.zeros((batch_size, num_perturbations, num_channels, saliency_rank.shape[1], saliency_rank.shape[2]),
                          dtype=np.bool)
 
+        # If the perturbation is added accumulately, the factor should be 0 to preserve the low bound of indexing.
         factor = 0 if self._is_accumulate else 1
 
         for i in range(batch_size):
@@ -176,7 +168,23 @@ class AblationWithSaliency(Ablation):
                 up_bound += pixel_per_step
 
         masks = masks if has_channel else np.squeeze(masks, axis=2)
+        return masks
 
-        if len(masks.shape) == expected_num_dim:
-            return masks
-        raise ValueError(f'Invalid masks shape {len(masks.shape)}, expect {expected_num_dim}-dim.')
+    def _check_and_format_perturb_param(self, num_pixels):
+        """
+        Check whether the self._pixel_per_step and self._num_perturbation is valid. If the parameters are unreasonable,
+        this function will try to reassign the parameters and raise ValueError when reassignment is failed.
+        """
+        if self._pixel_per_step:
+            pixel_per_step = self._pixel_per_step
+            num_perturbations = math.floor(num_pixels * self._perturb_percent / self._pixel_per_step)
+        elif self._num_perturbations:
+            pixel_per_step = math.floor(num_pixels * self._perturb_percent / self._num_perturbations)
+            num_perturbations = self._num_perturbations
+        else:
+            # If neither pixel_per_step or num_perturbations is provided, num_perturbations is determined by the square
+            # root of product from the spatial size of saliency map.
+            num_perturbations = math.floor(np.sqrt(num_pixels))
+            pixel_per_step = math.floor(num_pixels * self._perturb_percent / num_perturbations)
+
+        return pixel_per_step, num_perturbations

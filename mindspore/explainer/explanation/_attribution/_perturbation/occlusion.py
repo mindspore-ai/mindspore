@@ -14,8 +14,9 @@
 # ============================================================================
 """Occlusion explainer."""
 
+from typing import Tuple
+
 import numpy as np
-from numpy.lib.stride_tricks import as_strided
 
 import mindspore as ms
 import mindspore.nn as nn
@@ -25,24 +26,17 @@ from .replacement import Constant
 from ...._utils import abs_max
 
 
-def _generate_patches(array, window_size, stride):
-    """View as windows."""
-    if not isinstance(array, np.ndarray):
-        raise TypeError("`array` must be a numpy ndarray")
-
-    arr_shape = np.array(array.shape)
-    window_size = np.array(window_size, dtype=arr_shape.dtype)
-
-    slices = tuple(slice(None, None, st) for st in stride)
-    window_strides = np.array(array.strides)
-
+def _generate_patches(array, window_size: Tuple, strides: Tuple):
+    """Generate patches from image w.r.t given window_size and strides."""
+    window_strides = array.strides
+    slices = tuple(slice(None, None, stride) for stride in strides)
     indexing_strides = array[slices].strides
-    win_indices_shape = (((np.array(array.shape) - np.array(window_size)) // np.array(stride)) + 1)
+    win_indices_shape = (np.array(array.shape) - np.array(window_size)) // np.array(strides) + 1
 
-    new_shape = tuple(list(win_indices_shape) + list(window_size))
-    strides = tuple(list(indexing_strides) + list(window_strides))
-
-    patches = as_strided(array, shape=new_shape, strides=strides)
+    patches_shape = tuple(win_indices_shape) + window_size
+    strides_in_memory = indexing_strides + window_strides
+    patches = np.lib.stride_tricks.as_strided(array, shape=patches_shape, strides=strides_in_memory, writeable=False)
+    patches = patches.reshape((-1,) + window_size)
     return patches
 
 
@@ -159,7 +153,7 @@ class Occlusion(PerturbationAttribution):
         total_dim = np.prod(inputs.shape[1:]).item()
         template = np.arange(total_dim).reshape(inputs.shape[1:])
         indices = _generate_patches(template, window_size, strides)
-        num_perturbations = indices.reshape((-1,) + window_size).shape[0]
+        num_perturbations = indices.shape[0]
         indices = indices.reshape(num_perturbations, -1)
 
         mask = np.zeros((num_perturbations, total_dim), dtype=np.bool)
