@@ -491,6 +491,16 @@ Tensor::Tensor(double input, const TypePtr &data_type)
       data_(MakeTensorData(data_type_, {}, input)),
       id_(MakeId()) {}
 
+Tensor::Tensor(uint64_t input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeUInt64), {}),
+      data_(MakeTensorData(data_type_, {}, input)),
+      id_(MakeId()) {}
+
+Tensor::Tensor(bool input, const TypePtr &data_type)
+    : MetaTensor(TypeIdOf(data_type, kNumberTypeBool), {}),
+      data_(MakeTensorData(data_type_, {}, input)),
+      id_(MakeId()) {}
+
 bool Tensor::operator==(const Tensor &tensor) const {
   return (&tensor == this || (MetaTensor::operator==(tensor) && data_ == tensor.data_));
 }

@@ -172,6 +172,18 @@ class Tensor : public MetaTensor {
   // param data_type [TypeId] data type
   explicit Tensor(double input, const TypePtr &data_type = nullptr);
 
+  // brief Create 0 dimension tensor from a uint scalar.
+  //
+  // param input [uint] the data for tensor
+  // param data_type [TypeId] data type
+  explicit Tensor(uint64_t input, const TypePtr &data_type = nullptr);
+
+  // brief Create 0 dimension tensor from a bool scalar.
+  //
+  // param input [bool] the data for tensor
+  // param data_type [TypeId] data type
+  explicit Tensor(bool input, const TypePtr &data_type = nullptr);
+
   ~Tensor() override = default;
 
   MS_DECLARE_PARENT(Tensor, MetaTensor);

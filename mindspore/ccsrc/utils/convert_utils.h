@@ -57,7 +57,8 @@ enum EquivState { kNotEquiv = 0, kEquiv = 1, kPending = 2 };
 using FuncGraphPairMapEquiv = std::unordered_map<std::pair<FuncGraphPtr, FuncGraphPtr>, EquivState, PairHasher>;
 using NodeMapEquiv = std::unordered_map<AnfNodePtr, AnfNodePtr>;
 
-bool Isomorphic(FuncGraphPtr g1, FuncGraphPtr g2, FuncGraphPairMapEquiv *equiv_func_graph, NodeMapEquiv *equiv_node);
+bool Isomorphic(const FuncGraphPtr &g1, const FuncGraphPtr &g2, FuncGraphPairMapEquiv *equiv_func_graph,
+                NodeMapEquiv *equiv_node);
 
 tensor::TensorPtr ScalarToTensor(const ScalarPtr &scalar);
 
