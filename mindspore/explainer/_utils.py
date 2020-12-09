@@ -226,7 +226,7 @@ def calc_correlation(x: Union[ms.Tensor, np.ndarray],
 
     if np.all(x == 0) or np.all(y == 0):
         return np.float(0)
-    faithfulness = -np.corrcoef(x, y)[0, 1]
+    faithfulness = np.corrcoef(x, y)[0, 1]
     return faithfulness
 
 

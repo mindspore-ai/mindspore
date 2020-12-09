@@ -39,7 +39,7 @@ def compute_gradients(model, inputs, targets=None, weights=None):
         raise ValueError('Must provide one of targets or weights')
     if weights is None:
         targets = unify_targets(targets)
-        output = model(*inputs).asnumpy()
+        output = model(*inputs)
         num_categories = output.shape[-1]
         weights = generate_one_hot(targets, num_categories)
 

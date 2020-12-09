@@ -64,16 +64,30 @@ class GradCAM(IntermediateLayerAttribution):
             layer for better practice. If it is '', the explantion will be generated at the input layer.
             Default: ''.
 
+    Inputs:
+        - **inputs** (Tensor) - The input data to be explained, a 4D tensor of shape :math:`(N, C, H, W)`.
+        - **targets** (Tensor, int) - The label of interest. It should be a 1D or 0D tensor, or an integer.
+          If it is a 1D tensor, its length should be the same as `inputs`.
+
+    Outputs:
+        Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.
+
     Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
         >>> from mindspore.explainer.explanation import GradCAM
         >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
-        >>> network = resnet50(10)  # please refer to model_zoo
+        >>> # load a trained network
+        >>> net = resnet50(10)
         >>> param_dict = load_checkpoint("resnet50.ckpt")
         >>> load_param_into_net(net, param_dict)
         >>> # specify a layer name to generate explanation, usually the layer can be set as the last conv layer.
         >>> layer_name = 'layer4'
         >>> # init GradCAM with a trained network and specify the layer to obtain attribution
         >>> gradcam = GradCAM(net, layer=layer_name)
+        >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
+        >>> label = 5
+        >>> saliency = gradcam(inputs, label)
     """
 
     def __init__(self, network, layer=""):
@@ -100,25 +114,7 @@ class GradCAM(IntermediateLayerAttribution):
         self._intermediate_grad = grad_input
 
     def __call__(self, inputs, targets):
-        """
-        Call function for `GradCAM`.
-
-        Args:
-            inputs (Tensor): The input data to be explained, a 4D tensor of shape :math:`(N, C, H, W)`.
-            targets (Tensor, int): The label of interest. It should be a 1D or 0D tensor, or an integer.
-                If it is a 1D tensor, its length should be the same as `inputs`.
-
-        Returns:
-            Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.
-
-        Examples:
-            >>> import mindspore as ms
-            >>> import numpy as np
-            >>> inputs = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
-            >>> label = 5
-            >>> # gradcam is a GradCAM object, parse data and the target label to be explained and get the attribution
-            >>> saliency = gradcam(inputs, label)
-        """
+        """Call function for `GradCAM`."""
         self._verify_data(inputs, targets)
         self._hook_cell()
 

@@ -204,9 +204,9 @@ class LabelSensitiveMetric(AttributionMetric):
         check_value_type('explainer', explainer, Attribution)
         self._record_explainer(explainer)
         verify_argument(inputs, 'inputs')
-        output = explainer.model(inputs)
+        output = explainer.network(inputs)
         check_value_type("output of explainer model", output, Tensor)
-        output_dim = explainer.model(inputs).shape[1]
+        output_dim = explainer.network(inputs).shape[1]
         if output_dim != self._num_labels:
             raise ValueError("The output dimension of of black-box model in explainer does not match the dimension "
                              "of num_labels set in the __init__, please check explainer and num_labels again.")

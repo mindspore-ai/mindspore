@@ -19,7 +19,6 @@ from mindspore.train._utils import check_value_type
 from mindspore.nn import Cell
 
 from ..attribution import Attribution
-from ...._operators import softmax
 
 
 class PerturbationAttribution(Attribution):
@@ -31,8 +30,13 @@ class PerturbationAttribution(Attribution):
 
     def __init__(self,
                  network,
-                 activation_fn=softmax(),
+                 activation_fn,
+                 perturbation_per_eval,
                  ):
         super(PerturbationAttribution, self).__init__(network)
         check_value_type("activation_fn", activation_fn, Cell)
         self._activation_fn = activation_fn
+        check_value_type('perturbation_per_eval', perturbation_per_eval, int)
+        if perturbation_per_eval <= 0:
+            raise ValueError('Argument perturbation_per_eval should be a positive integer.')
+        self._perturbation_per_eval = perturbation_per_eval

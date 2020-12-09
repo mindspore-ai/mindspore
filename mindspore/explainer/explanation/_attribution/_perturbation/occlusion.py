@@ -47,7 +47,7 @@ def _generate_patches(array, window_size, stride):
 
 
 class Occlusion(PerturbationAttribution):
-    r"""
+    """
     Occlusion uses a sliding window to replace the pixels with a reference value (e.g. constant value), and computes
     the output difference w.r.t the original output. The output difference caused by perturbed pixels are assigned as
     feature importance to those pixels. For pixels involved in multiple sliding windows, the feature importance is the
@@ -56,7 +56,14 @@ class Occlusion(PerturbationAttribution):
     For more details, please refer to the original paper via: `<https://arxiv.org/abs/1311.2901>`_.
 
     Args:
-        network (Cell): Specify the black-box model to be explained.
+        network (Cell): The black-box model to be explained.
+        activation_fn (Cell): The activation layer that transforms logits to prediction probabilities. For
+            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification tasks,
+            `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long as
+            when combining this function with network, the final output is the probability of the input.
+        perturbation_per_eval (int, optional): Number of perturbations for each inference during inferring the
+            perturbed samples. Within the memory capacity, usually the larger this number is, the faster the
+            explanation is obtained. Default: 32.
 
     Inputs:
         - **inputs** (Tensor) - The input data to be explained, a 4D tensor of shape :math:`(N, C, H, W)`.
@@ -67,27 +74,29 @@ class Occlusion(PerturbationAttribution):
         Tensor, a 4D tensor of shape :math:`(N, 1, H, W)`.
 
     Example:
+        >>> import numpy as np
+        >>> import mindspore as ms
         >>> from mindspore.explainer.explanation import Occlusion
         >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
         >>> # prepare your network and load the trained checkpoint file, e.g., resnet50.
         >>> network = resnet50(10)
         >>> param_dict = load_checkpoint("resnet50.ckpt")
         >>> load_param_into_net(network, param_dict)
-        >>> # initialize Occlusion explainer and pass the pretrained model
-        >>> occlusion = Occlusion(network)
+        >>> # initialize Occlusion explainer with the pretrained model and activation function
+        >>> activation_fn = ms.nn.Softmax() # softmax layer is applied to transform logits to probabilities
+        >>> occlusion = Occlusion(network, activation_fn=activation_fn)
         >>> input_x = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
         >>> label = ms.Tensor([1], ms.int32)
         >>> saliency = occlusion(input_x, label)
     """
 
-    def __init__(self, network, activation_fn=nn.Softmax()):
-        super().__init__(network, activation_fn)
+    def __init__(self, network, activation_fn, perturbation_per_eval=32):
+        super().__init__(network, activation_fn, perturbation_per_eval)
 
         self._ablation = Ablation(perturb_mode='Deletion')
         self._aggregation_fn = abs_max
         self._get_replacement = Constant(base_value=0.0)
         self._num_sample_per_dim = 32  # specify the number of perturbations each dimension.
-        self._num_per_eval = 2  # number of perturbations generate for each sample per evaluation step.
 
     def __call__(self, inputs, targets):
         """Call function for 'Occlusion'."""
@@ -99,9 +108,9 @@ class Occlusion(PerturbationAttribution):
         batch_size = inputs_np.shape[0]
         window_size, strides = self._get_window_size_and_strides(inputs_np)
 
-        model = nn.SequentialCell([self._model, self._activation_fn])
+        full_network = nn.SequentialCell([self._network, self._activation_fn])
 
-        original_outputs = model(ms.Tensor(inputs, ms.float32)).asnumpy()[np.arange(batch_size), targets_np]
+        original_outputs = full_network(ms.Tensor(inputs, ms.float32)).asnumpy()[np.arange(batch_size), targets_np]
 
         total_attribution = np.zeros_like(inputs_np)
         weights = np.ones_like(inputs_np)
@@ -111,13 +120,13 @@ class Occlusion(PerturbationAttribution):
 
         count = 0
         while count < num_perturbations:
-            ith_masks = masks[:, count:min(count+self._num_per_eval, num_perturbations)]
+            ith_masks = masks[:, count:min(count+self._perturbation_per_eval, num_perturbations)]
             actual_num_eval = ith_masks.shape[1]
             num_samples = batch_size * actual_num_eval
             occluded_inputs = self._ablation(inputs_np, reference, ith_masks)
             occluded_inputs = occluded_inputs.reshape((-1, *inputs_np.shape[1:]))
             targets_repeat = np.repeat(targets_np, repeats=actual_num_eval, axis=0)
-            occluded_outputs = model(
+            occluded_outputs = full_network(
                 ms.Tensor(occluded_inputs, ms.float32)).asnumpy()[np.arange(num_samples), targets_repeat]
             original_outputs_repeat = np.repeat(original_outputs, repeats=actual_num_eval, axis=0)
             outputs_diff = original_outputs_repeat - occluded_outputs

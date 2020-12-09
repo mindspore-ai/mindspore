@@ -14,11 +14,12 @@
 # ============================================================================
 """RISE."""
 import math
+import random
 
 import numpy as np
 
+from mindspore.ops.operations import Concat
 from mindspore import Tensor
-from mindspore import nn
 from mindspore.train._utils import check_value_type
 
 from .perturbation import PerturbationAttribution
@@ -36,41 +37,57 @@ class RISE(PerturbationAttribution):
     node of interest:
 
     .. math::
-        E_{RISE}(I, f)_c = \sum_{i}f_c(I\odot M_i)  M_i
+        attribution = \sum_{i}f_c(I\odot M_i)  M_i
 
     For more details, please refer to the original paper via: `RISE <https://arxiv.org/abs/1806.07421>`_.
 
     Args:
         network (Cell): The black-box model to be explained.
-        activation_fn (Cell, optional): The activation layer that transforms logits to prediction probabilities. For
+        activation_fn (Cell): The activation layer that transforms logits to prediction probabilities. For
             single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification tasks,
             `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long as
             when combining this function with network, the final output is the probability of the input.
-            Default: `nn.Softmax`.
         perturbation_per_eval (int, optional): Number of perturbations for each inference during inferring the
-            perturbed samples. Default: 32.
+            perturbed samples. Within the memory capacity, usually the larger this number is, the faster the
+            explanation is obtained. Default: 32.
+
+    Inputs:
+        - **inputs** (Tensor) - The input data to be explained, a 4D tensor of shape :math:`(N, C, H, W)`.
+        - **targets** (Tensor, int) - The labels of interest to be explained. When `targets` is an integer,
+          all of the inputs will generates attribution map w.r.t this integer. When `targets` is a tensor, it
+          should be of shape :math:`(N, l)` (l being the number of labels for each sample) or :math:`(N,)` :math:`()`.
+
+    Outputs:
+        Tensor, a 4D tensor of shape :math:`(N, ?, H, W)`.
 
     Examples:
+        >>> import numpy as np
+        >>> import mindspore as ms
         >>> from mindspore.explainer.explanation import RISE
         >>> from mindspore.nn import Sigmoid
         >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
-        >>> # init RISE with a trained network
-        >>> net = resnet50(10)  # please refer to model_zoo
+        >>> # prepare your network and load the trained checkpoint file, e.g., resnet50.
+        >>> network = resnet50(10)
         >>> param_dict = load_checkpoint("resnet50.ckpt")
-        >>> load_param_into_net(net, param_dict)
-        >>> # init RISE with specified activation function
-        >>> rise = RISE(net, activation_fn=Sigmoid())
-    """
+        >>> load_param_into_net(network, param_dict)
+        >>> # initialize RISE explainer with the pretrained model and activation function
+        >>> activation_fn = ms.nn.Softmax() # softmax layer is applied to transform logits to probabilities
+        >>> rise = RISE(network, activation_fn=activation_fn)
+        >>> # given an instance of RISE, saliency map can be generate
+        >>> inputs = ms.Tensor(np.random.rand(2, 3, 224, 224), ms.float32)
+        >>> # when `targets` is an integer
+        >>> targets = 5
+        >>> saliency = rise(inputs, targets)
+        >>> # `targets` can also be a 2D tensor
+        >>> targets = ms.Tensor([[5], [1]])
+        >>> saliency = rise(inputs, targets)
+"""
 
     def __init__(self,
                  network,
-                 activation_fn=nn.Softmax(),
+                 activation_fn,
                  perturbation_per_eval=32):
-        super(RISE, self).__init__(network, activation_fn)
-        check_value_type('perturbation_per-eval', perturbation_per_eval, int)
-        if perturbation_per_eval <= 0:
-            raise ValueError('perturbation_per_eval should be postive integer.')
-        self._perturbation_per_eval = perturbation_per_eval
+        super(RISE, self).__init__(network, activation_fn, perturbation_per_eval)
 
         self._num_masks = 6000  # number of masks to be sampled
         self._mask_probability = 0.2  # ratio of inputs to be masked
@@ -93,47 +110,26 @@ class RISE(PerturbationAttribution):
                           self._resize_mode)
 
         # Pack operator not available for GPU, thus transfer to numpy first
-        upsample_np = upsample.asnumpy()
         masks_lst = []
-        for sample in upsample_np:
-            shift_x = np.random.randint(0, mask_size[0] + 1)
-            shift_y = np.random.randint(0, mask_size[1] + 1)
+        for sample in upsample:
+            shift_x = random.randint(0, mask_size[0])
+            shift_y = random.randint(0, mask_size[1])
             masks_lst.append(sample[:, shift_x: shift_x + height, shift_y:shift_y + width])
-        masks = op.Tensor(np.array(masks_lst), data.dtype)
+
+        concat = Concat()
+        masks = concat(tuple(masks_lst))
+        masks = op.reshape(masks, (batch_size, -1, height, width))
         return masks
 
     def __call__(self, inputs, targets):
-        """
-        Generates attribution maps for inputs.
-
-        Args:
-            inputs (Tensor): Input data to be explained, a 4D tensor of shape :math:`(N, C, H, W)`.
-            targets (int, Tensor): The labels of interest to be explained. When `targets` is an integer,
-                all of the inputs will generates attribution map w.r.t this integer. When `targets` is a tensor, it
-                should be of shape :math:`(N, ?)` or :math:`(N,)` :math:`()`.
-
-        Returns:
-            Tensor, a 4D tensor of shape :math:`(N, ?, H, W)` or :math:`(N, 1, H, W)`.
-
-        Examples:
-            >>> import mindspore as ms
-            >>> import numpy as np
-            >>> # given an instance of RISE, saliency map can be generate
-            >>> inputs = ms.Tensor(np.random.rand(2, 3, 224, 224), ms.float32)
-            >>> # when `targets` is an integer
-            >>> targets = 5
-            >>> saliency = rise(inputs, targets)
-            >>> # `targets` can also be a tensor
-            >>> targets = ms.Tensor([[5], [1]])
-            >>> saliency = rise(inputs, targets)
-        """
+        """Generates attribution maps for inputs."""
         self._verify_data(inputs, targets)
         height, width = inputs.shape[2], inputs.shape[3]
 
         batch_size = inputs.shape[0]
 
         if self._num_classes is None:
-            logits = self.model(inputs)
+            logits = self.network(inputs)
             num_classes = logits.shape[1]
             self._num_classes = num_classes
 
@@ -151,7 +147,7 @@ class RISE(PerturbationAttribution):
                 masks = self._generate_masks(data, bs)
 
                 masked_input = masks * data + (1 - masks) * bg_data
-                weights = self._activation_fn(self.model(masked_input))
+                weights = self._activation_fn(self.network(masked_input))
                 while len(weights.shape) > 2:
                     weights = op.mean(weights, axis=2)
                 weights = op.reshape(weights,

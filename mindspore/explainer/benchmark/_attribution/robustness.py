@@ -18,6 +18,7 @@ import numpy as np
 
 import mindspore as ms
 import mindspore.nn as nn
+from mindspore.train._utils import check_value_type
 from mindspore import log
 from .metric import LabelSensitiveMetric
 from ...explanation._attribution._perturbation.replacement import RandomPerturb
@@ -30,17 +31,24 @@ class Robustness(LabelSensitiveMetric):
 
     Args:
         num_labels (int): Number of classes in the dataset.
+        activation_fn (Cell): The activation layer that transforms logits to prediction probabilities. For
+            single label classification tasks, `nn.Softmax` is usually applied. As for multi-label classification tasks,
+            `nn.Sigmoid` is usually be applied. Users can also pass their own customized `activation_fn` as long as
+            when combining this function with network, the final output is the probability of the input.
+
 
     Examples:
-        >>> # Initialize a Robustness benchmarker passing num_labels of the dataset.
+        >>> from mindspore import nn
         >>> from mindspore.explainer.benchmark import Robustness
-        >>> num_labels = 100
-        >>> robustness = Robustness(num_labels)
+        >>> # Initialize a Robustness benchmarker passing num_labels of the dataset.
+        >>> num_labels = 10
+        >>> activation_fn = nn.Softmax()
+        >>> robustness = Robustness(num_labels, activation_fn)
     """
 
-    def __init__(self, num_labels, activation_fn=nn.Softmax()):
+    def __init__(self, num_labels, activation_fn):
         super().__init__(num_labels)
-
+        check_value_type("activation_fn", activation_fn, nn.Cell)
         self._perturb = RandomPerturb()
         self._num_perturbations = 10  # number of perturbations used in evaluation
         self._threshold = 0.1  # threshold to generate perturbation
@@ -69,6 +77,8 @@ class Robustness(LabelSensitiveMetric):
             ValueError: If batch_size is larger than 1.
 
         Examples:
+            >>> import numpy as np
+            >>> import mindspore as ms
             >>> from mindspore.explainer.explanation import Gradient
             >>> from mindspore.explainer.benchmark import Robustness
             >>> from mindspore.train.serialization import load_checkpoint, load_param_into_net
@@ -80,7 +90,7 @@ class Robustness(LabelSensitiveMetric):
             >>> gradient = Gradient(network)
             >>> input_x = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
             >>> target_label = ms.Tensor([0], ms.int32)
-            >>> robustness = Robustness(num_labels=10)
+            >>> # robustness is a Robustness instance
             >>> res = robustness.evaluate(gradient, input_x, target_label)
         """
 
@@ -100,13 +110,13 @@ class Robustness(LabelSensitiveMetric):
             log.warning('Get saliency norm equals 0, robustness return NaN for zero-norm saliency currently.')
             norm[norm == 0] = np.nan
 
-        model = nn.SequentialCell([explainer.model, self._activation_fn])
-        original_outputs = model(inputs).asnumpy()
+        full_network = nn.SequentialCell([explainer.network, self._activation_fn])
+        original_outputs = full_network(inputs).asnumpy()
         sensitivities = []
         for _ in range(self._num_perturbations):
             perturbations = []
             for j, sample in enumerate(inputs_np):
-                perturbation_on_single_sample = self._perturb_with_threshold(model,
+                perturbation_on_single_sample = self._perturb_with_threshold(full_network,
                                                                              np.expand_dims(sample, axis=0),
                                                                              original_outputs[j])
                 perturbations.append(perturbation_on_single_sample)
@@ -120,7 +130,7 @@ class Robustness(LabelSensitiveMetric):
         robustness_res = 1 / np.exp(max_sensitivity)
         return robustness_res
 
-    def _perturb_with_threshold(self, model: nn.Cell, sample: np.ndarray, original_output: np.ndarray) -> np.ndarray:
+    def _perturb_with_threshold(self, network: nn.Cell, sample: np.ndarray, original_output: np.ndarray) -> np.ndarray:
         """
         Generate the perturbation until the L2-distance between original_output and perturbation_output is lower than
         the given self._threshold or until the attempt reaches the max_attempt_time.
@@ -130,7 +140,7 @@ class Robustness(LabelSensitiveMetric):
         perturbation = None
         for _ in range(max_attempt_time):
             perturbation = self._perturb(sample)
-            perturbation_output = self._activation_fn(model(ms.Tensor(sample, ms.float32))).asnumpy()
+            perturbation_output = self._activation_fn(network(ms.Tensor(sample, ms.float32))).asnumpy()
             perturb_error = np.linalg.norm(original_output - perturbation_output)
             if perturb_error <= self._threshold:
                 return perturbation
