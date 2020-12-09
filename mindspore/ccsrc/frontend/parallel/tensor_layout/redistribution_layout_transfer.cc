@@ -25,7 +25,11 @@ Status RedistributionLayoutTransfer::CheckValidTransfer() {
   Shape from_shape = from_in_.tensor_shape().array();
   if (std::find(from_shape.begin(), from_shape.end(), -1) != from_shape.end()) {
     is_dynamic_shape_ = true;
-    if (from_in_ != to_in_) {
+    bool not_all_repeat = std::any_of(from_in_.tensor_map().array().begin(), from_in_.tensor_map().array().end(),
+                                      [](int64_t i) { return i != -1; }) ||
+                          std::any_of(to_in_.tensor_map().array().begin(), to_in_.tensor_map().array().end(),
+                                      [](int64_t i) { return i != -1; });
+    if (from_in_ != to_in_ && not_all_repeat) {
       MS_LOG(ERROR) << "In dynamic shape scene, the from_tensor_shape should be equal to to_tensor_shape";
       MS_LOG(ERROR) << "from_in layout" << from_in_.ToString();
       MS_LOG(ERROR) << "to_in layout" << to_in_.ToString();
