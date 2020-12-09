@@ -335,9 +335,9 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
     def __init__(self,
                  out_channel,
                  kernel_size,
+                 mode=1,
                  pad_mode="valid",
                  pad=0,
-                 mode=1,
                  stride=(1, 1, 1, 1, 1),
                  dilation=(1, 1, 1, 1, 1),
                  group=1,
@@ -366,6 +366,7 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
         self.add_prim_attr('pad_mode', self.pad_mode)
 
         self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
+        self.add_prim_attr('mode', self.mode)
         self.group = validator.check_positive_int(group, 'group', self.name)
         self.add_prim_attr('groups', self.group)
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)

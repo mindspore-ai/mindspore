@@ -65,12 +65,12 @@ def get_bprop_conv2d(self):
 def get_bprop_conv3d(self):
     """Grad definition for `Conv3D` operation."""
     input_grad = nps.Conv3DBackpropInput(
-        self.out_channel, self.kernel_size, self.pad_mode, self.pad, mode=self.mode,
-        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
+        self.out_channel, self.kernel_size, self.mode, pad_mode=self.pad_mode,
+        pad=self.pad, stride=self.stride, dilation=self.dilation, group=self.group, data_format=self.data_format
     )
     filter_grad = G.Conv3DBackpropFilter(
-        self.out_channel, self.kernel_size, self.pad_mode, self.pad, mode=self.mode,
-        dilation=self.dilation, stride=self.stride, group=self.group, data_format=self.format
+        self.out_channel, self.kernel_size, self.mode, pad_mode=self.pad_mode,
+        pad=self.pad, stride=self.stride, dilation=self.dilation, group=self.group, data_format=self.data_format
     )
     get_shape = P.Shape()
 
@@ -78,6 +78,27 @@ def get_bprop_conv3d(self):
         dx = input_grad(w, dout, get_shape(x))
         dw = filter_grad(x, dout, get_shape(w))
         return dx, dw
+
+    return bprop
+
+
+@bprop_getters.register(nps.Conv3DTranspose)
+def get_bprop_conv3d_transpose(self):
+    """Grad definition for `Conv3DTranspose` operation."""
+    filter_grad = G.Conv3DBackpropFilter(
+        out_channel=self.out_channel, kernel_size=self.kernel_size, mode=self.mode, pad_mode=self.pad_mode,
+        pad=self.pad, stride=self.stride, dilation=self.dilation, group=self.group, data_format=self.data_format
+    )
+    input_grad = nps.Conv3D(
+        out_channel=self.out_channel, kernel_size=self.kernel_size, mode=self.mode, pad_mode=self.pad_mode,
+        pad=self.pad, stride=self.stride, dilation=self.dilation, group=self.group, data_format=self.data_format
+    )
+    input_size = self.input_size
+
+    def bprop(x, w, out, dout):
+        dx = input_grad(dout, w)
+        dw = filter_grad(dout, x, F.shape(w))
+        return dx, dw, zeros_like(input_size)
 
     return bprop
 

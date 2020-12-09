@@ -31,9 +31,9 @@ conv3d_transpose_op_info = TBERegOp("Conv3DTranspose") \
     .attr("data_format", "optional", "str", "all") \
     .attr("output_padding", "optional", "listInt", "all") \
     .input(0, "x", False, "required", "all") \
-    .input(0, "filter", False, "required", "all") \
-    .input(0, "bias", False, "optional", "all") \
-    .input(1, "offset_w", False, "optional", "all") \
+    .input(1, "filter", False, "required", "all") \
+    .input(2, "bias", False, "optional", "all") \
+    .input(3, "offset_w", False, "optional", "all") \
     .output(0, "y", True, "required", "all") \
     .dtype_format(DataType.F16_NDC1HWC0, DataType.F16_FRACTAL_Z_3D, DataType.F16_Default, DataType.I8_Default,
                   DataType.F16_NDC1HWC0) \
