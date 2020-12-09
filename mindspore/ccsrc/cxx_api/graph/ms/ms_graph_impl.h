@@ -59,6 +59,7 @@ class MsGraphImpl : public GraphCell::GraphImpl {
   std::vector<tensor::TensorPtr> outputs_;
   std::vector<std::string> input_names_;
   std::vector<std::string> output_names_;
+  bool init_flag_;
   bool load_flag_;
 };
 }  // namespace mindspore::api

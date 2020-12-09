@@ -25,7 +25,6 @@ API_FACTORY_REG(ModelImpl, Ascend310, AclModel);
 Status AclModel::Build(const std::map<std::string, std::string> &options_map) {
   MS_LOG(INFO) << "Start build model.";
   MS_EXCEPTION_IF_NULL(graph_);
-  RegAllOpFromPython();
   std::unique_ptr<AclModelOptions> options = std::make_unique<AclModelOptions>(options_map);
   std::string options_str = GenerateOptionsStr(options_map);
   MS_EXCEPTION_IF_NULL(options);

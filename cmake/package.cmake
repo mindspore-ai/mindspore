@@ -37,6 +37,7 @@ set(INSTALL_LIB_DIR ${CMAKE_INSTALL_LIBDIR} CACHE PATH "Installation directory f
 set(INSTALL_PY_DIR ".")
 set(INSTALL_BASE_DIR ".")
 set(INSTALL_BIN_DIR "bin")
+set(INSTALL_CFG_DIR "config")
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(INSTALL_LIB_DIR ".")
@@ -305,6 +306,13 @@ endif ()
 install(
     DIRECTORY ${CMAKE_SOURCE_DIR}/include
     DESTINATION ${INSTALL_BASE_DIR}
+    COMPONENT mindspore
+)
+
+## config files
+install(
+    FILES ${CMAKE_SOURCE_DIR}/config/op_info.config
+    DESTINATION ${INSTALL_CFG_DIR}
     COMPONENT mindspore
 )
 

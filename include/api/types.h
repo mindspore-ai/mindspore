@@ -106,17 +106,15 @@ extern MS_API const char *kDeviceTypeAscend310;
 extern MS_API const char *kDeviceTypeAscend910;
 
 constexpr auto kModelOptionDumpCfgPath = "mindspore.option.dump_config_file_path";
-constexpr auto kModelOptionDvppCfgPath = "mindspore.option.dvpp_config_file_path";
 constexpr auto kModelOptionInsertOpCfgPath = "mindspore.option.insert_op_config_file_path";  // aipp config file
 constexpr auto kModelOptionInputFormat = "mindspore.option.input_format";                    // nchw or nhwc
 // Mandatory while dynamic batch: e.g. "input_op_name1: n1,c2,h3,w4;input_op_name2: n4,c3,h2,w1"
 constexpr auto kModelOptionInputShape = "mindspore.option.input_shape";
-constexpr auto kModelOptionDynamicBatchSize = "mindspore.option.dynamic_batch_size";
-constexpr auto kModelOptionDynamicImageSize = "mindspore.option.dynamic_image_size";
-constexpr auto kModelOptionDynamicDims = "mindspore.option.dynamic_dims";
-constexpr auto kModelOptionSerialInput = "mindspore.option.serial_inputs_name";  // separated by ';'
-constexpr auto kModelOptionOutputNode = "mindspore.option.output_node";          // e.g. "node_name1:0;node_name2:1"
 constexpr auto kModelOptionOutputType = "mindspore.option.output_type";  // "FP32", "UINT8" or "FP16", default as "FP32"
+constexpr auto kModelOptionPrecisionMode = "mindspore.option.precision_mode";
+// "force_fp16", "allow_fp32_to_fp16", "must_keep_origin_dtype" or "allow_mix_precision", default as "force_fp16"
+constexpr auto kModelOptionOpSelectImplMode = "mindspore.option.op_select_impl_mode";
+// "high_precision" or "high_performance", default as "high_performance"
 }  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_TYPES_H

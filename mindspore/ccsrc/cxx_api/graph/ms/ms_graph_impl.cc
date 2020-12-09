@@ -72,12 +72,16 @@ MsGraphImpl::MsGraphImpl()
       outputs_(),
       input_names_(),
       output_names_(),
+      init_flag_(false),
       load_flag_(false) {}
 
 MsGraphImpl::~MsGraphImpl() { (void)FinalizeEnv(); }
 
 Status MsGraphImpl::InitEnv() {
-  RegAllOpFromPython();
+  if (init_flag_) {
+    return SUCCESS;
+  }
+  RegAllOp();
   auto ms_context = MsContext::GetInstance();
   if (ms_context == nullptr) {
     MS_LOG(ERROR) << "Get Context failed!";
@@ -100,12 +104,16 @@ Status MsGraphImpl::InitEnv() {
   }
   session_impl_->Init(device_id_);
 
+  init_flag_ = true;
   return SUCCESS;
 }
 
 Status MsGraphImpl::FinalizeEnv() {
+  if (!init_flag_) {
+    return SUCCESS;
+  }
+
   MS_LOG_INFO << "Start finalize env";
-  pybind11::gil_scoped_acquire acquire;
   session::ExecutorManager::Instance().Clear();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
   auto ms_context = MsContext::GetInstance();
@@ -117,6 +125,8 @@ Status MsGraphImpl::FinalizeEnv() {
     MS_LOG(ERROR) << "CloseTsd failed!";
     return FAILED;
   }
+
+  init_flag_ = false;
   MS_LOG(INFO) << "End finalize env";
   return SUCCESS;
 }
@@ -125,7 +135,6 @@ Status MsGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr)
   MS_ASSERT(session_impl_ != nullptr);
   try {
     graph_id_ = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
-    pybind11::gil_scoped_release gil_release;
     return SUCCESS;
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "CompileGraph failed: " << e.what();

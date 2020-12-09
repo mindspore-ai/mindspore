@@ -15,6 +15,7 @@
  */
 
 #include "cxx_api/graph/acl/model_process.h"
+#include <sys/time.h>
 #include <algorithm>
 #include <map>
 #include "utils/utils.h"
@@ -345,7 +346,18 @@ Status ModelProcess::PredictFromHost(const std::vector<Buffer> &inputs, std::vec
     DestroyInputsDataset();
     return ret;  // forward status error
   }
+
+  struct timeval start_time;
+  struct timeval end_time;
+  (void)gettimeofday(&start_time, nullptr);
   acl_ret = aclmdlExecute(model_id_, inputs_, outputs_);
+  (void)gettimeofday(&end_time, nullptr);
+  constexpr uint64_t kUSecondInSecond = 1000000;
+  uint64_t cost =
+    (kUSecondInSecond * static_cast<uint64_t>(end_time.tv_sec) + static_cast<uint64_t>(end_time.tv_usec)) -
+    (kUSecondInSecond * static_cast<uint64_t>(start_time.tv_sec) + static_cast<uint64_t>(start_time.tv_usec));
+  MS_LOG(INFO) << "Model execute in " << cost << " us";
+
   DestroyInputsDataset();
   if (acl_ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Execute Model Failed";

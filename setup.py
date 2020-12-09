@@ -133,6 +133,7 @@ package_data = {
         'lib/*.a',
         '.commit_id',
         'ms_serving',
+        'config/*'
         'include/*',
         'include/*/*',
         'include/*/*/*',

@@ -131,17 +131,16 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
 }
 
 Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
-                                     const std::map<std::string, std::string> &acl_options) {
+                                     const std::map<std::string, std::string> &init_options,
+                                     const std::map<std::string, std::string> &build_options) {
   ge::ModelBufferData model;
-  auto ge_options = acl_options;
-  ge_options.emplace(ge::ir_option::SOC_VERSION, "Ascend310");
-  auto ret = ge::aclgrphBuildInitialize(ge_options);
+  auto ret = ge::aclgrphBuildInitialize(init_options);
   if (ret != ge::SUCCESS) {
     MS_LOG(ERROR) << "Call aclgrphBuildInitialize fail.";
     return Buffer();
   }
 
-  ret = ge::aclgrphBuildModel(*graph, acl_options, model);
+  ret = ge::aclgrphBuildModel(*graph, build_options, model);
   if (ret != ge::SUCCESS) {
     MS_LOG(ERROR) << "Call aclgrphBuildModel fail.";
     return Buffer();
@@ -290,7 +289,6 @@ Buffer ModelConverter::LoadAscendIR(const Buffer &model_data) {
 }
 
 Buffer ModelConverter::LoadMindIRInner(const FuncGraphPtr &func_graph) {
-  RegAllOpFromPython();
   if (func_graph == nullptr) {
     MS_LOG(ERROR) << "Convert MindIR to FuncGraph failed.";
     return Buffer();
@@ -302,17 +300,17 @@ Buffer ModelConverter::LoadMindIRInner(const FuncGraphPtr &func_graph) {
     return Buffer();
   }
 
-  std::map<std::string, std::string> acl_options;
+  std::map<std::string, std::string> init_options;
+  std::map<std::string, std::string> build_options;
   if (options_ != nullptr) {
-    acl_options = options_->GenAclOptions();
+    std::tie(init_options, build_options) = options_->GenAclOptions();
   }
 
-  auto om_data = BuildAirModel(df_graph, acl_options);
+  auto om_data = BuildAirModel(df_graph, init_options, build_options);
   return om_data;
 }
 
 Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
-  RegAllOpFromPython();
   ge::Model load_model = ge::Model("loadmodel", "version2");
   ge::Status ret =
     ge::Model::Load(reinterpret_cast<const uint8_t *>(model_data.Data()), model_data.DataSize(), load_model);
@@ -327,12 +325,13 @@ Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
     return Buffer();
   }
 
-  std::map<std::string, std::string> acl_options;
+  std::map<std::string, std::string> init_options;
+  std::map<std::string, std::string> build_options;
   if (options_ != nullptr) {
-    acl_options = options_->GenAclOptions();
+    std::tie(init_options, build_options) = options_->GenAclOptions();
   }
 
-  auto om_data = BuildAirModel(df_graph, acl_options);
+  auto om_data = BuildAirModel(df_graph, init_options, build_options);
   return om_data;
 }
 }  // namespace mindspore::api

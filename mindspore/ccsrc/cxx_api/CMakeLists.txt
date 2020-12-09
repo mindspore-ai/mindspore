@@ -10,6 +10,7 @@ if (ENABLE_ACL)
     include_directories(${CMAKE_SOURCE_DIR}/graphengine/src/ge)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
     file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR}
+            "python_utils.cc"
             "model/acl/*.cc"
             "model/model_converter_utils/*.cc"
             "graph/acl/*.cc"
@@ -17,14 +18,13 @@ if (ENABLE_ACL)
 
 endif ()
 if (ENABLE_D)
-    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR} "model/ms/*.cc" "graph/ms/*.cc")
+    file(GLOB_RECURSE API_MS_INFER_SRC ${CMAKE_CURRENT_SOURCE_DIR} "python_utils.cc" "model/ms/*.cc" "graph/ms/*.cc")
 endif ()
 
 set(MSLIB_SRC ${CMAKE_CURRENT_SOURCE_DIR}/types.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/context.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/cell.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/serialization.cc
-              ${CMAKE_CURRENT_SOURCE_DIR}/python_utils.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/graph/graph_data.cc
               ${CMAKE_CURRENT_SOURCE_DIR}/model/model.cc
