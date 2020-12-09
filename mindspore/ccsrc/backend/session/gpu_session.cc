@@ -35,6 +35,9 @@
 #include "backend/optimizer/gpu/remove_format_transform_pair.h"
 #include "backend/optimizer/gpu/remove_redundant_format_transform.h"
 #include "backend/optimizer/gpu/reduce_precision_fusion.h"
+#include "backend/optimizer/gpu/relu_v2_pass.h"
+#include "backend/optimizer/gpu/add_relu_v2_fusion.h"
+#include "backend/optimizer/gpu/add_relu_grad_v2_fusion.h"
 #include "backend/optimizer/graph_kernel/add_atomic_clean_gpu.h"
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
@@ -142,6 +145,9 @@ void GPUSession::HardwareOptimize(const std::shared_ptr<KernelGraph> &kernel_gra
   pm->AddPass(std::make_shared<opt::RemoveFormatTransformPair>());
   pm->AddPass(std::make_shared<opt::RemoveRedundantFormatTransform>());
   pm->AddPass(std::make_shared<opt::CudnnInplaceAggregate>());
+  pm->AddPass(std::make_shared<opt::ReluV2Pass>());
+  pm->AddPass(std::make_shared<opt::AddReluV2Fusion>());
+  pm->AddPass(std::make_shared<opt::AddReluGradV2Fusion>());
   pm->AddPass(std::make_shared<opt::AllReduceFusion>());
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
   pm->AddPass(std::make_shared<opt::ReducePrecisionFusion>("reduce_precision"));

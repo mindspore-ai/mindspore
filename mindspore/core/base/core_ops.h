@@ -146,6 +146,7 @@ inline const PrimitivePtr kPrimFusedBatchNormGradEx = std::make_shared<Primitive
 inline const PrimitivePtr kPrimBatchNorm = std::make_shared<Primitive>("BatchNorm");
 inline const PrimitivePtr kPrimBatchNormGrad = std::make_shared<Primitive>("BatchNormGrad");
 inline const PrimitivePtr kPrimReluGrad = std::make_shared<Primitive>("ReluGrad");
+inline const PrimitivePtr kPrimReluGradV2 = std::make_shared<Primitive>("ReluGradV2");
 inline const PrimitivePtr kPrimRelu6Grad = std::make_shared<Primitive>("ReLU6Grad");
 inline const PrimitivePtr kPrimConv2DBackpropInput = std::make_shared<Primitive>("Conv2DBackpropInput");
 inline const PrimitivePtr kPrimConv2DBackpropFilter = std::make_shared<Primitive>("Conv2DBackpropFilter");

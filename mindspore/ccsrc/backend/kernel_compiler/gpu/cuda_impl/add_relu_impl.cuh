@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RELU_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RELU_H_
+#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ADD_RELU_V2_IMPL_H_
+#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ADD_RELU_V2_IMPL_H_
 
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T>
-void CalReLU(int input_size, T *input_addr, T *output_addr, cudaStream_t cuda_stream);
+void AddReluV2(const size_t num, const T *x1, const T *x2, T *y, uint32_t *mask, cudaStream_t cuda_stream);
 
 template <typename T>
-void ReluV2(const size_t num, const T *x, T *y, uint32_t *mask, cudaStream_t cuda_stream);
-template <typename T>
-void ReluGradV2(const size_t num, const T *dy, const uint32_t *mask, T *dx, cudaStream_t cuda_stream);
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_RELU_H_
+void AddReluGradV2(const size_t size, const T *x1, const T *x2, const uint32_t *mask, T *dx, cudaStream_t cuda_stream);
+
+#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ADD_RELU_IMPL_H_

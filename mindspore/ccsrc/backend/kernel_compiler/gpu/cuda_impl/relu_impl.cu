@@ -15,6 +15,7 @@
  */
 
 #include "backend/kernel_compiler/gpu/cuda_impl/relu_impl.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/util.cuh"
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T>
@@ -34,3 +35,47 @@ template void CalReLU(int size, float *input_addr, float *output_addr, cudaStrea
 template void CalReLU(int size, half *input_addr, half *output_addr, cudaStream_t cuda_stream);
 template void CalReLU(int size, int32_t *input_addr, int32_t *output_addr, cudaStream_t cuda_stream);
 template void CalReLU(int size, int64_t *input_addr, int64_t *output_addr, cudaStream_t cuda_stream);
+
+template <typename T>
+__global__ void ReluV2Kernel(const size_t num, const T *x, T *y, uint32_t *mask) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num; i += blockDim.x * gridDim.x) {
+    T v = x[i];
+    bool p = v > static_cast<T>(0);
+    y[i] = p ? v : static_cast<T>(0);
+
+    auto warp_predict = BallotSync(p, __activemask());
+    if (LaneId() == 0) {
+      mask[WarpId(i)] = warp_predict;
+    }
+  }
+}
+
+template <typename T>
+void ReluV2(const size_t num, const T *x, T *y, uint32_t *mask, cudaStream_t cuda_stream) {
+  ReluV2Kernel<<<kBlocksPerGrid(num), kThreadsPerBlock, 0, cuda_stream>>>(num, x, y, mask);
+}
+
+template <typename T>
+__global__ void ReluGradV2Kernel(const size_t num, const T *dy, const uint32_t *mask, T *dx) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < num; i += blockDim.x * gridDim.x) {
+    bool p = mask[WarpId(i)] & (1 << LaneId());
+    dx[i] = p ? dy[i] : static_cast<T>(0);
+  }
+}
+
+template <typename T>
+void ReluGradV2(const size_t num, const T *dy, const uint32_t *mask, T *dx, cudaStream_t cuda_stream) {
+  ReluGradV2Kernel<<<kBlocksPerGrid(num), kThreadsPerBlock, 0, cuda_stream>>>(num, dy, mask, dx);
+}
+
+template void ReluV2(const size_t num, const float *x, float *y, uint32_t *mask, cudaStream_t cuda_stream);
+template void ReluV2(const size_t num, const half *x, half *y, uint32_t *mask, cudaStream_t cuda_stream);
+template void ReluV2(const size_t num, const int32_t *x, int32_t *y, uint32_t *mask, cudaStream_t cuda_stream);
+template void ReluV2(const size_t num, const int64_t *x, int64_t *y, uint32_t *mask, cudaStream_t cuda_stream);
+
+template void ReluGradV2(const size_t num, const float *dy, const uint32_t *mask, float *dx, cudaStream_t cuda_stream);
+template void ReluGradV2(const size_t num, const half *dy, const uint32_t *mask, half *dx, cudaStream_t cuda_stream);
+template void ReluGradV2(const size_t num, const int32_t *dy, const uint32_t *mask, int32_t *dx,
+                         cudaStream_t cuda_stream);
+template void ReluGradV2(const size_t num, const int64_t *dy, const uint32_t *mask, int64_t *dx,
+                         cudaStream_t cuda_stream);
