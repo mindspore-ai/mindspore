@@ -20,6 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 
 context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
@@ -74,3 +75,96 @@ def test_ZerosLike():
     error1 = np.ones(shape=expect1.shape) * 1.0e-5
     assert np.all(diff1 < error1)
     assert output1.shape == expect1.shape
+
+
+class ZerosLikeDynamicNet(nn.Cell):
+    def __init__(self):
+        super(ZerosLikeDynamicNet, self).__init__()
+        self.gpu_convert_to_dynamic_shape = inner.GpuConvertToDynamicShape()
+        self.zeros_like = P.ZerosLike()
+
+    def construct(self, x):
+        converted_to_dynamic = self.gpu_convert_to_dynamic_shape(x)
+        return self.zeros_like(converted_to_dynamic)
+
+
+def zeros_like_dynamic(x):
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = ZerosLikeDynamicNet()
+    return net(x)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_zeros_like_dynamic_bool():
+    x = Tensor(np.arange(120).reshape(3, 4, 1, 2, 5).astype(np.bool))
+    output = zeros_like_dynamic(x)
+    expected = np.zeros([3, 4, 1, 2, 5])
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_zeros_like_dynamic_int8():
+    x = Tensor(np.arange(24).reshape(1, 4, 1, 6).astype(np.int8))
+    output = zeros_like_dynamic(x)
+    expected = np.zeros([1, 4, 1, 6])
+    print(output)
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_zeros_like_dynamic_uint8():
+    x = Tensor(np.arange(30).reshape(3, 2, 5).astype(np.uint8))
+    output = zeros_like_dynamic(x)
+    expected = np.zeros([3, 2, 5])
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_zeros_like_dynamic_int32():
+    x = Tensor(np.arange(16).reshape(2, 2, 2, 2).astype(np.int32))
+    output = zeros_like_dynamic(x)
+    expected = np.zeros([2, 2, 2, 2])
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_zeros_like_dynamic_float16():
+    x = Tensor(np.arange(120).reshape(3, 4, 1, 2, 5).astype(np.float16))
+    output = zeros_like_dynamic(x)
+    expected = np.zeros([3, 4, 1, 2, 5])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_zeros_like_dynamic_float32():
+    x = Tensor(np.arange(63).reshape(3, 7, 3).astype(np.float32))
+    output = zeros_like_dynamic(x)
+    expected = np.zeros([3, 7, 3])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_zeros_like_dynamic_multiple_inputs():
+    net = ZerosLikeDynamicNet()
+
+    x = Tensor(np.arange(4).reshape(4).astype(np.float32))
+    output = net(x)
+    expected = np.zeros([4])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+    x = Tensor(np.arange(8).reshape(2, 1, 2, 2).astype(np.uint8))
+    output = net(x)
+    expected = np.zeros([2, 1, 2, 2])
+    np.testing.assert_array_equal(output.asnumpy(), expected)
+
+    x = Tensor(np.arange(1).reshape(1).astype(np.float16))
+    output = net(x)
+    expected = np.zeros([1])
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
