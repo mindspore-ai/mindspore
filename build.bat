@@ -29,8 +29,29 @@ del version.txt
 echo "======Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%======"
 
 SET threads=6
-IF NOT "%2%" == "" (
+SET X86_64_SIMD=off
+
+ECHO %2%|FINDSTR "^[0-9][0-9]*$"
+IF %errorlevel% == 0 (
     SET threads=%2%
+) ELSE (
+    IF NOT "%2%" == "" (
+        IF "%2%" == "avx" (
+            SET X86_64_SIMD=avx
+        ) ELSE IF "%2%" == "sse" (
+            SET X86_64_SIMD=sse
+        ) ELSE IF "%2%" == "off" (
+            SET X86_64_SIMD=off
+        ) ELSE IF "%2%" == "avx512" (
+            SET X86_64_SIMD=avx512
+        ) ELSE (
+            echo "MindSpore_lite the second parameter must in [avx, avx512, sse, off], but now is [%2%]"
+            call :run_fail
+        )
+        IF NOT "%3%" == "" (
+            SET threads=%3%
+        )
+    )
 )
 
 SET BASE_PATH=%CD%
@@ -49,6 +70,7 @@ IF "%1%" == "lite" (
     -DENABLE_TOOLS=on -DENABLE_CONVERTER=on -DBUILD_TESTCASES=off ^
     -DCMAKE_BUILD_TYPE=Release -DSUPPORT_GPU=off -DBUILD_MINDDATA=off -DOFFLINE_COMPILE=off ^
     -DMS_VERSION_MAJOR=%VERSION_MAJOR% -DMS_VERSION_MINOR=%VERSION_MINOR% -DMS_VERSION_REVISION=%VERSION_REVISION% ^
+    -DX86_64_SIMD=%X86_64_SIMD% ^
     -G "CodeBlocks - MinGW Makefiles" "%BASE_PATH%/mindspore/lite"
 ) ELSE (
     cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON ^

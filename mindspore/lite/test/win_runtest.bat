@@ -44,7 +44,18 @@ IF NOT %errorlevel% == 0 (
     SET RET_CODE=1
     goto run_eof
 )
-7z x -r "%TOOL_PATH%/mindspore-lite-*-win-runtime-x86-cpu.zip" -o"%BENCHMARK_BASE%"
+
+SET SO_PATH=mindspore-lite-*-win-runtime-x86-cpu
+IF "%3%" == "sse" (
+    SET SO_PATH=mindspore-lite-*-win-runtime-x86-sse-cpu
+)
+IF "%3%" == "avx" (
+    SET SO_PATH=mindspore-lite-*-win-runtime-x86-avx-cpu
+)
+IF "%3%" == "avx512" (
+    SET SO_PATH=mindspore-lite-*-win-runtime-x86-avx512-cpu
+)
+7z x -r "%TOOL_PATH%/%SO_PATH%.zip" -o"%BENCHMARK_BASE%"
 IF NOT %errorlevel% == 0 (
     echo "Decompression of runtime tool fail!"
     SET RET_CODE=1
@@ -87,7 +98,7 @@ for /f "tokens=1-2 delims= " %%i in (%MODEL_CONFIG%) do (
 )
 
 echo "Run converted models"
-cd /d %BENCHMARK_BASE%/mindspore-lite-*-win-runtime-x86-cpu/benchmark
+cd /d %BENCHMARK_BASE%/%SO_PATH%/benchmark
 SET INPUT_BASE=%MODEL_PATH%/input_output/input
 SET OUTPUT_BASE=%MODEL_PATH%/input_output/output
 
