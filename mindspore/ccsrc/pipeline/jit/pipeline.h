@@ -97,6 +97,9 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   void DelNetRes(const std::string &id);
   void ReleaseResource(const py::object &phase);
   static void ClearRes();
+  static bool GetDebugTerminate() { return debugger_terminate_; }
+  static void DebugTerminate(bool val) { debugger_terminate_ = val; }
+  void TerminateDebugger();
 
   std::map<std::string, std::pair<PrimitivePyPtr, std::string>> FetchInfoForQuantExport(const std::string &phase_s);
 
@@ -111,6 +114,7 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   std::map<std::string, ExecutorInfoPtr> info_;
   static std::shared_ptr<ExecutorPy> executor_;
   static std::mutex instance_lock_;
+  static bool debugger_terminate_;
 };
 using ExecutorPyPtr = std::shared_ptr<ExecutorPy>;
 
