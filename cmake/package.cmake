@@ -210,7 +210,7 @@ if (NOT ENABLE_GE)
         set(ASCEND_DRIVER_PATH ${ASCEND_PATH}/driver/lib64/common)
 
         install(
-            FILES ${CMAKE_SOURCE_DIR}/build/graphengine/libc_sec.so
+            FILES ${CMAKE_SOURCE_DIR}/build/graphengine/c_sec/lib/libc_sec.so
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore
         )
@@ -223,9 +223,9 @@ if (NOT ENABLE_GE)
             )
             install(
                 FILES
-                    ${CMAKE_BINARY_DIR}/graphengine/src/common/graph/libgraph.so
-                    ${CMAKE_BINARY_DIR}/graphengine/src/ge/common/libge_common.so
-                    ${CMAKE_BINARY_DIR}/graphengine/src/ge/ge_runtime/libge_runtime.so
+                    ${CMAKE_BINARY_DIR}/graphengine/metadef/graph/libgraph.so
+                    ${CMAKE_BINARY_DIR}/graphengine/ge/common/libge_common.so
+                    ${CMAKE_BINARY_DIR}/graphengine/ge/ge_runtime/libge_runtime.so
                 DESTINATION ${INSTALL_LIB_DIR}
                 COMPONENT mindspore
             )
@@ -233,8 +233,8 @@ if (NOT ENABLE_GE)
     elseif (ENABLE_TESTCASES)
         install(
             FILES
-                ${CMAKE_BINARY_DIR}/graphengine/src/common/graph/libgraph.so
-                ${CMAKE_SOURCE_DIR}/build/graphengine/libc_sec.so
+                ${CMAKE_BINARY_DIR}/graphengine/metadef/graph/libgraph.so
+                ${CMAKE_SOURCE_DIR}/build/graphengine/c_sec/lib/libc_sec.so
                 ${LIBEVENT_LIB_LIST}
             DESTINATION ${INSTALL_LIB_DIR}
             COMPONENT mindspore

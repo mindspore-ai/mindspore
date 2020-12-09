@@ -21,7 +21,7 @@
 #include <vector>
 #include <memory>
 #include "mindspore/core/ir/anf.h"
-#include "external/hccl/hccl_types.h"
+#include "hccl/hccl_types.h"
 
 #define MS_API __attribute__((visibility("default")))
 
