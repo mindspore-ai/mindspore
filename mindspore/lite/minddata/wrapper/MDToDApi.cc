@@ -60,10 +60,10 @@ class MDToDApi {
 
  public:
   MDToDApi() : _iter(nullptr), _augs({}), _storage_folder(""), _file_id(-1), _hasBatch(false) {
-    MS_LOG(WARNING) << "MDToDAPI Call constractor";
+    MS_LOG(INFO) << "MDToDAPI Call constractor";
   }
   ~MDToDApi() {
-    MS_LOG(WARNING) << "MDToDAPI Call destractor";
+    MS_LOG(INFO) << "MDToDAPI Call destractor";
     // derefernce dataset and iterator
     _augs.clear();
   }
@@ -85,14 +85,14 @@ extern "C"
 
 int MDToDApi_pathTest(const char* path) {
   Path f(path);
-  MS_LOG(WARNING) << f.Exists() << f.IsDirectory() << f.ParentPath();
+  MS_LOG(INFO) << f.Exists() << f.IsDirectory() << f.ParentPath();
   // Print out the first few items in the directory
   auto dir_it = Path::DirIterator::OpenDirectory(&f);
-  MS_LOG(WARNING) << dir_it.get();
+  MS_LOG(INFO) << dir_it.get();
   int i = 0;
   while (dir_it->hasNext()) {
     Path v = dir_it->next();
-    MS_LOG(WARNING) << v.toString() << "\n";
+    MS_LOG(INFO) << v.toString() << "\n";
     i++;
     if (i > 5) break;
   }
@@ -100,38 +100,38 @@ int MDToDApi_pathTest(const char* path) {
 }
 
 extern "C" MDToDApi *MDToDApi_createPipeLine(MDToDConf_t MDConf) {
-  MS_LOG(WARNING) << "Start createPipeLine";
+  MS_LOG(INFO) << "Start createPipeLine";
   std::string folder_path(MDConf.pFolderPath);
   std::string schema_file(MDConf.pSchemFile);
   std::vector<std::string> column_names = MDToDBuffToVector(MDConf.columnsToReadBuff);
   if (std::find(column_names.begin(), column_names.end(), "id") == column_names.end()) {
-    MS_LOG(WARNING) << "Column id not foud adding it ";
+    MS_LOG(INFO) << "Column id not foud adding it ";
     column_names.push_back("id");
   }
   std::vector<std::shared_ptr<TensorOperation>> mapOperations;
   if (std::find(column_names.begin(), column_names.end(), "image") != column_names.end()) {
-    MS_LOG(WARNING) << "Found column image create map with:";
-    MS_LOG(WARNING) << "resize: { " << MDConf.ResizeSizeWH[0] << ", " << MDConf.ResizeSizeWH[1] << " }";
-    MS_LOG(WARNING) << "crop: { " << MDConf.CropSizeWH[0] << ", " << MDConf.CropSizeWH[1] << " }";
-    MS_LOG(WARNING) << "MEAN: { " << MDConf.MEAN[0] << ", " << MDConf.MEAN[1] << ", " << MDConf.MEAN[2] << " }";
-    MS_LOG(WARNING) << "STD: { " << MDConf.STD[0] << ", " << MDConf.STD[1] << ", " << MDConf.STD[2] << " }";
+    MS_LOG(INFO) << "Found column image create map with:";
+    MS_LOG(INFO) << "resize: { " << MDConf.ResizeSizeWH[0] << ", " << MDConf.ResizeSizeWH[1] << " }";
+    MS_LOG(INFO) << "crop: { " << MDConf.CropSizeWH[0] << ", " << MDConf.CropSizeWH[1] << " }";
+    MS_LOG(INFO) << "MEAN: { " << MDConf.MEAN[0] << ", " << MDConf.MEAN[1] << ", " << MDConf.MEAN[2] << " }";
+    MS_LOG(INFO) << "STD: { " << MDConf.STD[0] << ", " << MDConf.STD[1] << ", " << MDConf.STD[2] << " }";
 
     if ((MDConf.ResizeSizeWH[0] != 0) && (MDConf.ResizeSizeWH[1] != 0)) {
       std::shared_ptr<TensorOperation> resize_op =
         mindspore::dataset::vision::Resize({MDConf.ResizeSizeWH[0], MDConf.ResizeSizeWH[1]});
-      MS_LOG(WARNING) << "Push back resize";
+      MS_LOG(INFO) << "Push back resize";
       mapOperations.push_back(resize_op);
     }
     if (1 == MDConf.fixOrientation) {
       std::shared_ptr<TensorOperation> rotate_op = mindspore::dataset::vision::Rotate();
-      MS_LOG(WARNING) << "Push back rotate";
+      MS_LOG(INFO) << "Push back rotate";
       mapOperations.push_back(rotate_op);
       // hasBatch = true;  Batch not currently supported inMInddata-Lite
     }
     if ((MDConf.CropSizeWH[0] != 0) && (MDConf.CropSizeWH[1] != 0)) {
       std::vector<int> Crop(MDConf.CropSizeWH, MDConf.CropSizeWH + 2);
       std::shared_ptr<TensorOperation> center_crop_op = mindspore::dataset::vision::CenterCrop(Crop);
-      MS_LOG(WARNING) << "Push back crop";
+      MS_LOG(INFO) << "Push back crop";
       mapOperations.push_back(center_crop_op);
       // hasBatch = true;  Batch not currently supported inMInddata-Lite
     }
@@ -274,7 +274,7 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
   uint32_t orientation = 0;
   if (row.size() != 0 && ret) {
     GetValue<uint32_t>(row, "orientation", &orientation);
-    MS_LOG(WARNING) << "get orientation from row = " << orientation;
+    MS_LOG(INFO) << "get orientation from row = " << orientation;
     if ((pMDToDApi->_augs).size() > 0) {
       // String and Tensors
 
@@ -324,14 +324,14 @@ extern "C" int MDToDApi_GetNext(MDToDApi *pMDToDApi, MDToDResult_t *results) {
 
 extern "C" int MDToDApi_Stop(MDToDApi *pMDToDApi) {
   // Manually terminate the pipeline
-  MS_LOG(WARNING) << "pipline stoped";
+  MS_LOG(INFO) << "pipline stoped";
   return 0;
 }
 
 extern "C" int MDToDApi_Destroy(MDToDApi *pMDToDApi) {
-  MS_LOG(WARNING) << "pipline deleted start";
+  MS_LOG(INFO) << "pipline deleted start";
   delete pMDToDApi;
-  MS_LOG(WARNING) << "pipline deleted end";
+  MS_LOG(INFO) << "pipline deleted end";
   return 0;
 }
 

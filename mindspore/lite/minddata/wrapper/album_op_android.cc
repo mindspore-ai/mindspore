@@ -76,7 +76,7 @@ Status AlbumOp::PrescanEntry() {
   if (schema_file_ == "" || !schema_file.Exists()) {
     RETURN_STATUS_UNEXPECTED("Invalid file, schema_file is invalid or not set: " + schema_file_);
   } else {
-    MS_LOG(WARNING) << "Schema file provided: " << schema_file_ << ".";
+    MS_LOG(INFO) << "Schema file provided: " << schema_file_ << ".";
     data_schema_->LoadSchemaFile(schema_file_, columns_to_load_);
   }
 
@@ -86,7 +86,7 @@ Status AlbumOp::PrescanEntry() {
   if (folder.Exists() == false || dirItr == nullptr) {
     RETURN_STATUS_UNEXPECTED("Invalid file, failed to open folder: " + folder_path_);
   }
-  MS_LOG(WARNING) << "Album folder Path found: " << folder_path_ << ".";
+  MS_LOG(INFO) << "Album folder Path found: " << folder_path_ << ".";
 
   while (dirItr->hasNext()) {
     Path file = dirItr->next();
@@ -122,7 +122,7 @@ Status AlbumOp::PrescanEntry() {
 // IMPORTANT: 1 IOBlock produces 1 DataBuffer
 bool AlbumOp::GetNextRow(std::unordered_map<std::string, std::shared_ptr<Tensor>> *map_row) {
   if (map_row == nullptr) {
-    MS_LOG(WARNING) << "GetNextRow in AlbumOp: the point of map_row is nullptr";
+    MS_LOG(ERROR) << "GetNextRow in AlbumOp: the point of map_row is nullptr";
     return false;
   }
 
@@ -192,7 +192,7 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col
   std::set<std::string> png_ext = {".png", ".PNG"};
   if (png_ext.find(file.Extension()) != png_ext.end()) {
     // load empty tensor since image is not jpg
-    MS_LOG(INFO) << "PNG!" << image_file_path << ".";
+    MS_LOG(INFO) << "load empty tensor since image is PNG" << image_file_path << ".";
     RETURN_IF_NOT_OK(LoadEmptyTensor(col_num, tensor));
     return Status::OK();
   }
@@ -229,7 +229,7 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col
 int AlbumOp::GetOrientation(const std::string &folder_path) {
   FILE *fp = fopen(folder_path.c_str(), "rb");
   if (!fp) {
-    MS_LOG(WARNING) << "Can't read file for EXIF:  file = " << folder_path;
+    MS_LOG(ERROR) << "Can't read file for EXIF:  file = " << folder_path;
     return 0;
   }
   fseek(fp, 0, SEEK_END);
@@ -241,7 +241,7 @@ int AlbumOp::GetOrientation(const std::string &folder_path) {
   }
   unsigned char *buf = new unsigned char[fsize];
   if (fread(buf, 1, fsize, fp) != fsize) {
-    MS_LOG(WARNING) << "read file size error for EXIF:  file = " << folder_path;
+    MS_LOG(ERROR) << "read file size error for EXIF:  file = " << folder_path;
     delete[] buf;
     fclose(fp);
     return 0;
@@ -252,7 +252,7 @@ int AlbumOp::GetOrientation(const std::string &folder_path) {
   mindspore::dataset::ExifInfo result;
   int code = result.parseOrientation(buf, fsize);
   delete[] buf;
-  MS_LOG(WARNING) << "AlbumOp::GetOrientation:  orientation= " << code << ".";
+  MS_LOG(INFO) << "AlbumOp::GetOrientation:  orientation= " << code << ".";
   return code;
 }
 
