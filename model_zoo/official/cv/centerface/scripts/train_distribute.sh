@@ -111,7 +111,8 @@ export PYTHONPATH=${dirname_path}:$PYTHONPATH
 export RANK_TABLE_FILE=$rank_table
 export RANK_SIZE=8
 
-task_set_core=24 # for taskset, task_set_core=total cpu number/RANK_SIZE
+cpus=`cat /proc/cpuinfo | grep "processor" | wc -l`
+task_set_core=`expr $cpus \/ $RANK_SIZE` # for taskset, task_set_core=total cpu number/RANK_SIZE
 echo 'start training'
 for((i=0;i<=$RANK_SIZE-1;i++));
 do

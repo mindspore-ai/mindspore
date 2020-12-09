@@ -52,14 +52,14 @@ Dataset used: [ImageNet2012](http://www.image-net.org/)
     └─validation_preprocess # evaluate dataset
 ```
 
-## [Features]
+## Features
 
-### [Mixed Precision(Ascend)]
+### Mixed Precision(Ascend)
 
 The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
 
-## [Environment Requirements]
+## Environment Requirements
 
 - Hardware（Ascend）
     - Prepare hardware environment with Ascend. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
@@ -69,9 +69,9 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
-## [Script description]
+## Script description
 
-### [Script and sample code]
+### Script and sample code
 
 ```python
 ├── MobileNetV1
@@ -153,7 +153,7 @@ Inference result will be stored in the example path, you can find result like th
 result: {'top_5_accuracy': 0.9010016025641026, 'top_1_accuracy': 0.7128004807692307} ckpt=./train_parallel0/ckpt_0/mobilenetv1-90_1251.ckpt
 ```
 
-## [Model description]
+## Model description
 
 ### [Performance](#contents)
 

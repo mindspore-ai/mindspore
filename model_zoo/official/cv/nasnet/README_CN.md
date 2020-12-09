@@ -148,7 +148,6 @@ sh scripts/run_eval_for_gpu.sh 0 /dataset/val ./checkpoint/nasnet-a-mobile-rank0
 ### 结果
 
 评估结果保存在脚本路径下。路径下的日志中，可以找到如下结果：
-
 acc=73.5%(TOP1)
 
 # 模型描述
