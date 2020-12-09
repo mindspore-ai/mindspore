@@ -74,17 +74,14 @@ void AiCoreDynamicKernel::ParseCompileJson() {
   std::replace(compile_info_attr.begin(), compile_info_attr.end(), '\'', '\"');
   compile_info_attr = ReplaceInvalidJsonStr(compile_info_attr);
   MS_LOG(INFO) << "Get compile_info:" << compile_info_attr;
-
-  try {
-    compile_info_json_ = std::make_shared<nlohmann::json>(nlohmann::json::parse(compile_info_attr));
-  } catch (nlohmann::json::parse_error &e) {
-    MS_LOG(EXCEPTION) << "parse json failed, error:" << e.what();
-  }
+  op_compile_info_.str = compile_info_attr;
+  op_compile_info_.key = "";
 
   if (AnfAlgo::HasNodeAttr(kAttrFusionType, cnode_ptr_)) {
     auto fusion_type = AnfAlgo::GetNodeAttr<std::string>(cnode_ptr_, kAttrFusionType);
     MS_LOG(INFO) << "Get fusion_type:" << fusion_type;
     (*compile_info_json_)["_pattern"] = fusion_type;
+    op_compile_info_.key = std::hash<std::string>{}(fusion_type);
   }
 }
 
@@ -132,8 +129,8 @@ void AiCoreDynamicKernel::ComputeTiling() {
   MS_LOG(INFO) << "Start compute tiling of:" << cnode_ptr_->fullname_with_scope();
   optiling::OpRunInfo op_run_info;
 
-  OpTilingCalculater::GetInstance().CalculateTiling(NOT_NULL(cnode_ptr_), NOT_NULL(compile_info_json_),
-                                                    depend_tensor_map_, NOT_NULL(&op_run_info));
+  OpTilingCalculater::GetInstance().CalculateTiling(NOT_NULL(cnode_ptr_), op_compile_info_, depend_tensor_map_,
+                                                    NOT_NULL(&op_run_info));
   block_dim_ = op_run_info.block_dim;
   workspaces_size_ = op_run_info.workspaces;
   tiling_data_ = op_run_info.tiling_data.str();

@@ -53,10 +53,9 @@ bool HcclExecutorManager::Initialize() { return true; }
 bool HcclExecutorManager::Finalize() { return true; }
 
 void OpTilingCalculater::Init() {}
-void OpTilingCalculater::CalculateTiling(const NotNull<CNodePtr> &cnode,
-                                         const NotNull<std::shared_ptr<nlohmann::json>> &compile_info_json,
-                                         const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
-                                         NotNull<optiling::OpRunInfo *> op_run_info) {}
+void OpTilingCalculater::CalculateTiling(const NotNull<CNodePtr> &cnode, const optiling::OpCompileInfo &op_compile_info,
+                     const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
+                     NotNull<optiling::OpRunInfo *> op_run_info) {}
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

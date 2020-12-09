@@ -25,6 +25,7 @@
 #include "runtime/device/ascend/ge_types_convert.h"
 #include "utils/utils.h"
 #include "external/graph/tensor.h"
+#include "external/register/op_tiling_registry.h"
 
 namespace mindspore {
 namespace device {
@@ -136,7 +137,7 @@ void FeedTeOpConstTensor(const NotNull<CNodePtr> &cnode, const std::map<uint32_t
 
 void OpTilingCalculater::Init() {
   MS_LOG(INFO) << "Start init OpTilingCalculater";
-  tiling_func_map_ = optiling::OpTilingInterf::RegisteredOpInterf();
+  tiling_func_map_ = optiling::OpTilingRegistryInterf::RegisteredOpInterf();
   MS_LOG(INFO) << "tiling_func_map_ size:" << tiling_func_map_.size();
   for (const auto &iter : tiling_func_map_) {
     MS_LOG(INFO) << "Regist tiling func:" << iter.first;
@@ -157,8 +158,7 @@ std::string GetRealOpType(const std::string &op_type) {
   return iter->second;
 }
 
-void OpTilingCalculater::CalculateTiling(const NotNull<CNodePtr> &cnode,
-                                         const NotNull<std::shared_ptr<nlohmann::json>> &compile_info_json,
+void OpTilingCalculater::CalculateTiling(const NotNull<CNodePtr> &cnode, const optiling::OpCompileInfo &op_compile_info,
                                          const std::map<uint32_t, tensor::TensorPtr> &depend_tensor_map,
                                          NotNull<optiling::OpRunInfo *> op_run_info) {
   optiling::TeOpParas op_param;
@@ -181,7 +181,7 @@ void OpTilingCalculater::CalculateTiling(const NotNull<CNodePtr> &cnode,
   MS_LOG(INFO) << "Get tiling func:" << iter->first;
 
   if (iter != tiling_func_map_.end()) {
-    bool ret = (iter->second)(op_type, op_param, *compile_info_json.get(), *op_run_info);
+    bool ret = (iter->second)(op_param, op_compile_info, *op_run_info);
     if (!ret) {
       MS_LOG(EXCEPTION) << "Calculate tiling failed";
     }

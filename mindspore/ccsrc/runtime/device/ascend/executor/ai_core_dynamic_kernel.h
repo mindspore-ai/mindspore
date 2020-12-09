@@ -24,6 +24,7 @@
 #include "nlohmann/json.hpp"
 #include "ir/tensor.h"
 #include "runtime/device/device_address.h"
+#include "register/op_tiling.h"
 #include "mindspore/ccsrc/runtime/device/executor/dynamic_kernel.h"
 
 namespace mindspore {
@@ -60,6 +61,7 @@ class AiCoreDynamicKernel : public DynamicKernel {
   std::vector<int64_t> workspaces_size_;
   std::vector<DeviceAddressPtr> workspace_addr_;
   std::shared_ptr<nlohmann::json> compile_info_json_;
+  optiling::OpCompileInfo op_compile_info_{};
 
   void ComputeTiling();
   bool CopyTilingToDevice();
