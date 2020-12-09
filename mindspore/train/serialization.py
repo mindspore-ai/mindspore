@@ -950,11 +950,12 @@ def load_distributed_checkpoint(network, checkpoint_filenames, predict_strategy=
         sliced_params = []
         if param.name not in rank_list.keys():
             continue
-        param_rank = rank_list[param.name]
+        param_rank = rank_list[param.name][0]
+        skip_merge_split = rank_list[param.name][1]
         for rank in param_rank:
             sliced_param = _load_single_param(checkpoint_filenames[rank], param.name)
             sliced_params.append(sliced_param)
-        if len(sliced_params) == 1:
+        if skip_merge_split:
             split_param = sliced_params[0]
         else:
             param_unique_strategy = _remove_repeated_slices(train_strategy[param.name])
