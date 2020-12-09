@@ -1003,18 +1003,9 @@ void AscendSession::DumpAllGraphs(const std::vector<KernelGraphPtr> &all_graphs)
 void AscendSession::LoadTensor(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
   MS_EXCEPTION_IF_NULL(kernel_graph);
-#ifdef ENABLE_DEBUGGER
-  if (debugger_->DebuggerBackendEnabled()) {
-    auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
-    MS_EXCEPTION_IF_NULL(runtime_instance);
-    // TensorData will be freed up here
-    debugger_->EmptyTensor();
-    uint32_t iter_num = debugger_->GetTensorLoaderIterNum();
-    debugger_->SetTensorLoaderIterNum(++iter_num);
-    (void)runtime_instance->LoadData(kernel_graph.get());
-    debugger_->EmptyPrevTensor();
-  }
-#endif
+  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+  MS_EXCEPTION_IF_NULL(runtime_instance);
+  (void)runtime_instance->LoadData(kernel_graph.get());
   MS_LOG(INFO) << "Finish!";
 }
 

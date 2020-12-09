@@ -313,20 +313,16 @@ void Debugger::PostExecute() {
   }
   if (debugger_->DebuggerBackendEnabled()) {
     // analyze tensor data and send the watchpoints been hit
-    if (run_level_ == "node") {
-      MS_LOG(INFO) << "Debugger is in node level mode ";
-      return;
-    }
     if (debugger_enabled_ && !is_dataset_graph_) {
       if (device_target_ != kGPUDevice) {
         num_step_++;
-        MS_LOG(INFO) << "Debugger suspend at end of step; number of steps executed: " << num_step_;
-        SendWatchpoints(CheckWatchpoints());
-        CommandLoop();
-      } else {
-        CommandLoop();
       }
+      MS_LOG(INFO) << "Debugger suspend at end of step; number of steps executed: " << num_step_;
+      SendWatchpoints(CheckWatchpoints());
+      CommandLoop();
     }
+    // Only keep parameters in the current map
+    debug_services_->ResetLoadedTensors();
   }
 }
 
@@ -596,7 +592,7 @@ void Debugger::CommandLoop() {
         MS_LOG(INFO) << "RunCMD";
         if (GetRunLevel(reply) == "recheck") {
           MS_LOG(INFO) << "rechecking all watchpoints";
-          SendWatchpoints(CheckWatchpoints());
+          SendWatchpoints(CheckWatchpoints("", nullptr, true));
         } else {
           // no longer the initial suspension.
           initial_suspend_ = false;
@@ -705,9 +701,6 @@ void Debugger::SetWatchpoint(const ProtoVector<WatchNode> &nodes, const WatchCon
       return DebugServices::parameter_t{parameter.name(), parameter.disabled(), parameter.value(), parameter.hit()};
     });
   debug_services_->AddWatchpoint(id, condition.condition(), condition.value(), check_node_list, parameter_list);
-  if (initial_suspend_ &&
-      static_cast<DebugServices::CONDITION_TYPE>(condition.condition()) == DebugServices::CONDITION_TYPE::INIT)
-    SendWatchpoints(CheckWatchpoints());
 }
 
 void Debugger::RemoveWatchpoint(const int32_t id) { debug_services_->RemoveWatchpoint(id); }
@@ -780,7 +773,8 @@ void Debugger::Exit() {
   }
 }
 
-std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode, const CNodePtr &kernel) {
+std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode, const CNodePtr &kernel,
+                                                    bool recheck) {
   std::vector<std::string> name;
   std::vector<std::string> slot;
   std::vector<int> condition;
@@ -795,11 +789,10 @@ std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode
   if (watchnode.empty()) {
     tensor_list = debug_services_->GetTensor();
   } else {
-    tensor_list = debug_services_->GetNodeTensorMap(watchnode);
-    debug_services_->AddWeightsBiasInputs(&tensor_list, kernel);
+    tensor_list = debug_services_->GetNodeTensor(kernel);
   }
   debug_services_->CheckWatchpoints(&name, &slot, &condition, &watchpoint_id, &parameters, &error_codes, overflow_ops,
-                                    tensor_list, initial_suspend_);
+                                    tensor_list, initial_suspend_, watchnode.empty(), recheck);
   std::list<WatchpointHit> hits;
   for (unsigned int i = 0; i < name.size(); i++) {
     WatchpointHit hit;
@@ -1045,7 +1038,7 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
   }
   closedir(d);
 
-  if (op_names.size()) {
+  if (!op_names.empty()) {
     MS_LOG(ERROR) << "These operation overflows are detected " << op_names;
   }
 
@@ -1091,12 +1084,6 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   if (!anf_node->isa<Parameter>() && !anf_node->isa<ValueNode>()) {
     return;
   }
-  bool keep_prev;
-  if (anf_node->isa<Parameter>()) {
-    keep_prev = true;
-  } else {
-    keep_prev = false;
-  }
   // for parameters and value nodes, set its execution order to be 0;
   int exec_order = 0;
   std::string node_name = anf_node->fullname_with_scope();
@@ -1114,6 +1101,13 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
   auto shape = AnfAlgo::GetOutputDeviceShape(anf_node, output_index);
   (void)std::transform(shape.begin(), shape.end(), std::back_inserter(int_shapes),
                        [](size_t inner_item) { return SizeToInt(inner_item); });
+  bool keep_prev;
+  if (anf_node->isa<Parameter>()) {
+    keep_prev = true;
+    debug_services_->MoveTensorCurrentToPrev(tensor_name);
+  } else {
+    keep_prev = false;
+  }
   bool ret = addr->LoadMemToHost(tensor_name, exec_order, format, int_shapes, type, 0, keep_prev);
   if (!ret) {
     MS_LOG(ERROR) << "LoadMemToHost:"
@@ -1123,9 +1117,6 @@ void Debugger::LoadSingleAnfnode(const AnfNodePtr &anf_node, const size_t output
 
 void Debugger::LoadParametersAndConst() {
   if (!(debugger_enabled_ || CheckDebuggerDumpEnabled())) return;
-  if (!(num_step_ == 0 || device_target_ == kAscendDevice ||
-        (device_target_ == kGPUDevice && device::KernelRuntime::DumpDataEnabledIteration())))
-    return;
   MS_EXCEPTION_IF_NULL(graph_ptr_);
   // load parameters
   MS_LOG(INFO) << "Start to load Parameters!";
@@ -1198,6 +1189,9 @@ void Debugger::UpdateStepNum(const session::KernelGraph *graph) {
 void Debugger::ClearCurrentData() {
   if (device_target_ == kGPUDevice && (debugger_enabled_ || device::KernelRuntime::DumpDataEnabledIteration()))
     debug_services_->EmptyCurrentTensor();
+}
+bool Debugger::TensorExistsInCurrent(std::string tensor_name) {
+  return debug_services_->TensorExistsInCurrent(tensor_name);
 }
 
 }  // namespace mindspore

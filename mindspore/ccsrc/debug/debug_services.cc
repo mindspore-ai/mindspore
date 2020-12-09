@@ -66,7 +66,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
                                      std::vector<std::vector<parameter_t>> *parameters,
                                      std::vector<int32_t> *error_codes, const std::vector<std::string> &op_overflows,
                                      const std::vector<std::shared_ptr<TensorData>> &tensor_list,
-                                     const bool init_dbg_suspend) {
+                                     const bool init_dbg_suspend, const bool step_end, const bool recheck) {
   std::lock_guard<std::mutex> lg(lock_);
   if (watchpoint_table.empty()) return;
 
@@ -75,13 +75,26 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
     const auto tensor_name_no_slot = tensor_name.substr(0, tensor_name.find_first_of(':'));
     const auto tensor_slot = std::to_string(tensor->GetSlot());
     mindspore::tensor::TensorPtr tensor_ptr = tensor->GetTensor();
+    // no elements to analyze
+    if (tensor_ptr->DataSize() == 0) continue;
     int tensor_dtype = tensor_ptr->data_type_c();
     std::vector<watchpoint_t> watchpoints_to_check;
     std::string qualified_tensor_name;
     for (auto w_table_item : watchpoint_table) {
       auto wp = std::get<1>(w_table_item);
-      if (wp.condition.type == INIT && !init_dbg_suspend) continue;
+      // check ONLY init conditions on intial suspended state.
+      // skip other conditions on intial suspended state
+      // skip init condition on all the other states
+      if ((wp.condition.type == INIT) ^ init_dbg_suspend) continue;
+
       if (wp.condition.type != IS_OVERFLOW && tensor_dtype == kNumberTypeBool) continue;
+
+      // check change conditions only on step end.
+      if (wp.change_condition() && !step_end) continue;
+
+      // if recheck, ignore the cache results and reanalyze everything.
+      // if not a recheck, check only unanalyzed tensors
+      if (!recheck && wp_id_cache[tensor_name].count(wp.id)) continue;
       std::string found = wp.FindQualifiedTensorName(tensor_name_no_slot);
       if (!found.empty()) {
         qualified_tensor_name = found;
@@ -174,6 +187,10 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
         error_code = std::get<1>(item);
         parameter_list = std::get<2>(item);
       }
+      // add analyzed tensor to cache
+      if (!recheck) {
+        wp_id_cache[tensor_name].insert(wp.id);
+      }
 
       if (is_hit || error_code) {
         name->push_back(qualified_tensor_name);
@@ -238,28 +255,6 @@ bool DebugServices::IsWatchPointNodeInput(const std::string &w_name, const CNode
   }
 }
 
-void DebugServices::AddWeightsBiasInputs(std::vector<std::shared_ptr<TensorData>> *tensor_list,
-                                         const CNodePtr &kernel) {
-  if (kernel) {
-    auto input_size = AnfAlgo::GetInputTensorNum(kernel);
-    for (size_t j = 0; j < input_size; ++j) {
-      auto input_kernel = kernel->input(j + 1);
-      std::string input_kernel_name = input_kernel->fullname_with_scope();
-      auto found_dot = input_kernel_name.find_last_of('.');
-      if (found_dot != std::string::npos &&
-          (input_kernel_name.substr(found_dot + 1) == "weight" || input_kernel_name.substr(found_dot + 1) == "bias")) {
-        std::string locate_tensor = input_kernel_name + ":0";
-        std::map<std::string, std::shared_ptr<TensorData>> tensor_map = tensor_loader_->GetTensorMap();
-        std::map<std::string, std::shared_ptr<TensorData>>::iterator iter;
-        iter = tensor_map.find(locate_tensor);
-        if (iter != tensor_map.end()) {
-          tensor_list->push_back(iter->second);
-        }
-      }
-    }
-  }
-}
-
 void DebugServices::EmptyTensor() { tensor_loader_->EmptyTensor(); }
 
 std::vector<std::shared_ptr<TensorData>> DebugServices::GetTensor() const { return tensor_loader_->GetTensor(); }
@@ -290,6 +285,34 @@ bool DebugServices::LoadNewTensor(const std::shared_ptr<TensorData> &tensor, boo
 
 std::unordered_map<unsigned int, DebugServices::watchpoint_t> DebugServices::GetWatchpointTable() {
   return watchpoint_table;
+}
+
+void DebugServices::ResetLoadedTensors() {
+  wp_id_cache.clear();
+  MS_LOG(INFO) << "Resetting loaded tensors";
+  tensor_loader_->MoveParametersCurrentToPrev();
+  tensor_loader_->EmptyCurrentTensor();
+  // will move parameters from previous to current map
+  tensor_loader_->SwapCurrentPrev();
+}
+
+std::vector<std::shared_ptr<TensorData>> DebugServices::GetNodeTensor(const CNodePtr &kernel) {
+  MS_EXCEPTION_IF_NULL(kernel);
+  std::vector<std::shared_ptr<TensorData>> result;
+  auto output_size = AnfAlgo::GetOutputTensorNum(kernel);
+  auto kernel_name = kernel->fullname_with_scope();
+  for (size_t j = 0; j < output_size; ++j) {
+    auto tensor_name_with_slot = kernel_name + ":" + std::to_string(j);
+    auto tensor = tensor_loader_->GetTensor(tensor_name_with_slot);
+    if (tensor) result.push_back(tensor);
+  }
+  return result;
+}
+bool DebugServices::TensorExistsInCurrent(std::string tensor_name) {
+  return tensor_loader_->TensorExistsInCurrent(tensor_name);
+}
+void DebugServices::MoveTensorCurrentToPrev(std::string tensor_name) {
+  tensor_loader_->MoveTensorCurrentToPrev(tensor_name);
 }
 
 }  // namespace mindspore

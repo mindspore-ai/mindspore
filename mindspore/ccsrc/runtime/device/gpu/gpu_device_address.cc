@@ -87,6 +87,11 @@ bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int executi
     return true;
   }
 
+  if (Debugger::GetInstance()->TensorExistsInCurrent(tensor_name)) {
+    MS_LOG(INFO) << tensor_name << " already loaded for this step so not loading it again.";
+    return true;
+  }
+
   mindspore::tensor::TensorPtr out_tensor = std::make_shared<tensor::Tensor>(type_id_, host_shape);
   size_t host_size = out_tensor->data().nbytes();
   auto ret_rt_memcpy = SyncDeviceToHost(host_shape, host_size, host_type, out_tensor->data_c());

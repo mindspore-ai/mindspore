@@ -22,6 +22,7 @@
 #include <memory>
 #include <tuple>
 #include <unordered_map>
+#include <set>
 #include <mutex>
 #include <map>
 #include <limits>
@@ -160,6 +161,10 @@ class DebugServices {
     bool range_enabled() const {
       return condition.type == RANGE && (!parameter_list[0].disabled || !parameter_list[1].disabled);
     }
+
+    bool change_condition() const {
+      return condition.type == CHANGE_TOO_LARGE || condition.type == CHANGE_TOO_SMALL || condition.type == NOT_CHANGED;
+    }
   } watchpoint_t;
 
   void AddWatchpoint(unsigned int id, unsigned int watch_condition, float parameter,
@@ -171,7 +176,8 @@ class DebugServices {
   void CheckWatchpoints(std::vector<std::string> *name, std::vector<std::string> *slot, std::vector<int> *condition,
                         std::vector<unsigned int> *watchpoint_id, std::vector<std::vector<parameter_t>> *parameters,
                         std::vector<int32_t> *error_code, const std::vector<std::string> &op_overflows,
-                        const std::vector<std::shared_ptr<TensorData>> &tensor_list, bool init_dbg_suspend);
+                        const std::vector<std::shared_ptr<TensorData>> &tensor_list, bool init_dbg_suspend,
+                        const bool step_end, const bool recheck);
 
   void ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
                         std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
@@ -180,8 +186,6 @@ class DebugServices {
   bool IsWatchPoint(const std::string &kernel_name, const CNodePtr &kernel = nullptr) const;
 
   bool IsWatchPointNodeInput(const std::string &w_name, const CNodePtr &kernel) const;
-
-  void AddWeightsBiasInputs(std::vector<std::shared_ptr<TensorData>> *tensor_list, const CNodePtr &kernel);
 
   void EmptyTensor();
 
@@ -205,9 +209,19 @@ class DebugServices {
 
   std::unordered_map<unsigned int, watchpoint_t> GetWatchpointTable();
 
+  void ResetLoadedTensors();
+
+  std::vector<std::shared_ptr<TensorData>> GetNodeTensor(const CNodePtr &kernel);
+
+  bool TensorExistsInCurrent(std::string tensor_name);
+
+  void MoveTensorCurrentToPrev(std::string tensor_name);
+
  private:
   std::mutex lock_;
 
+  // to keep track of watchpoints that have been checked already for a tensor in current step
+  std::unordered_map<std::string, std::set<int32_t>> wp_id_cache;
   std::unordered_map<unsigned int, watchpoint_t> watchpoint_table;
 
   TensorLoader *tensor_loader_;
