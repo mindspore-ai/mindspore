@@ -60,6 +60,10 @@ int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   }
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
+  if (input->format() != schema::Format::Format_NHWC) {
+    MS_LOG(ERROR) << "topk only support NHWC now!";
+    return RET_FORMAT_ERR;
+  }
   auto output0 = outputs_.front();
   MS_ASSERT(output0 != nullptr);
   auto output1 = outputs_.at(1);
