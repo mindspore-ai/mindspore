@@ -22,7 +22,7 @@ import mindspore._c_dataengine as cde
 
 __all__ = ['set_seed', 'get_seed', 'set_prefetch_size', 'get_prefetch_size', 'set_num_parallel_workers',
            'get_num_parallel_workers', 'set_monitor_sampling_interval', 'get_monitor_sampling_interval', 'load',
-           'get_callback_timeout']
+           'get_callback_timeout', 'set_auto_num_workers', 'get_auto_num_workers']
 
 INT32_MAX = 2147483647
 UINT32_MAX = 4294967295
@@ -163,6 +163,65 @@ def get_monitor_sampling_interval():
         Int, interval (in milliseconds) for performance monitor sampling.
     """
     return _config.get_monitor_sampling_interval()
+
+
+def set_auto_num_workers(enable):
+    """
+    Set the default automatic number of workers. (This feature is turned off by default)
+    This will adjust the number of workers in each op automatically, overriding the preset user value.
+    For now, this function is only optimized for Yolo3 dataset with per_batch_map (running map in batch).
+    It aims to provide a baseline for optimized num_workers assignment. The adjusted value will be logged.
+
+    Args:
+        enable (bool): Whether to enable auto num_workers.
+
+    Raises:
+        ValueError: If enable is not of boolean type.
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>>
+        >>> # Enable the auto_num_worker, will override user's preset num_worker values
+        >>> ds.config.set_auto_num_workers(True)
+    """
+    if not isinstance(enable, bool):
+        raise ValueError("enable isn't of type bool.")
+    _config.set_auto_num_workers(enable)
+
+
+def _set_auto_workers_config(option):
+    """
+    INTERNAL USE ONLY!
+    Select the weight profile of auto_num_workers. currently these 7 options are supported.
+    Option #0 leaf_num_workers:batch_num_workers:map_num_workers=1:1:1
+    Option #1 leaf_num_workers:batch_num_workers:map_num_workers=2:1:1
+    Option #2 leaf_num_workers:batch_num_workers:map_num_workers=1:2:1
+    Option #3 leaf_num_workers:batch_num_workers:map_num_workers=1:1:2
+    Option #4 leaf_num_workers:batch_num_workers:map_num_workers=2:2:1
+    Option #5 leaf_num_workers:batch_num_workers:map_num_workers=2:1:2
+    Option #6 leaf_num_workers:batch_num_workers:map_num_workers=1:2:2
+    Args:
+        option (int): The id of the profile to use.
+    Raises:
+        ValueError: If option is not int or not within the range of [0, 6]
+    """
+    if not isinstance(option, int):
+        raise ValueError("option isn't of type int.")
+    if option < 0 or option > 6:
+        raise ValueError("option isn't within the required range of [0, 6].")
+    _config.set_auto_worker_config(option)
+
+
+def get_auto_num_workers():
+    """
+    Get the setting (turned on or off) automatic number of workers.
+
+    Returns:
+        Bool, whether auto num worker feature is turned on
+    Examples:
+        >>> ds.config.get_auto_num_workers()
+    """
+    return _config.get_auto_num_workers()
 
 
 def set_callback_timeout(timeout):

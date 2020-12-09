@@ -24,6 +24,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
+#include "minddata/dataset/engine/opt/pass.h"
 
 namespace mindspore {
 namespace dataset {

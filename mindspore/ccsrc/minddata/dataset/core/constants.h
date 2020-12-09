@@ -91,6 +91,7 @@ constexpr int32_t kCfgDefaultCachePort = 50052;
 constexpr char kCfgDefaultCacheHost[] = "127.0.0.1";
 constexpr int32_t kDftPrefetchSize = 20;
 constexpr int32_t kDftNumConnections = 12;
+constexpr int32_t kDftAutoNumWorkers = false;
 
 // Invalid OpenCV type should not be from 0 to 7 (opencv4/opencv2/core/hal/interface.h)
 constexpr uint8_t kCVInvalidType = 255;

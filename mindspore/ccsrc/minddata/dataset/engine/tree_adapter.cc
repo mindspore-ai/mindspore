@@ -19,6 +19,7 @@
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/ir/datasetops/root_node.h"
 #include "minddata/dataset/engine/opt/pass.h"
+#include "minddata/dataset/engine/opt/post/auto_worker_pass.h"
 #include "minddata/dataset/engine/opt/pre/cache_validation_pass.h"
 #include "minddata/dataset/engine/opt/pre/deep_copy_pass.h"
 #include "minddata/dataset/engine/opt/pre/epoch_ctrl_pass.h"
@@ -30,7 +31,7 @@ namespace dataset {
 
 TreeAdapter::TreeAdapter() {
   tree_state_ = kCompileStateInit;
-  optimize_ = common::GetEnv("OPTIMIZE") == "true" ? true : false;
+  optimize_ = common::GetEnv("OPTIMIZE") == "true";
 }
 
 Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
@@ -78,6 +79,11 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
   // Vector of actions in post-pass phase
   std::vector<std::unique_ptr<IRPass>> actions;
   MS_LOG(INFO) << "Running post pass loops.";
+
+  // AutoWorkerPass should ideally precede CacheTransForm Pass to avoid complications of the setting
+  if (GlobalContext::config_manager()->auto_num_workers()) {
+    actions.emplace_back(std::make_unique<AutoWorkerPass>());
+  }
 
   // We will gradually move RepeatPass from ExecutionTree::PrepareTreePostAction to here.
 
@@ -235,7 +241,7 @@ Status TreeAdapter::GetNext(TensorRow *row) {
   // Record profiling info
   if (tracing_ != nullptr) {
     cur_batch_num_++;
-    tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_);
+    RETURN_IF_NOT_OK(tracing_->Record(CONNECTOR_DEPTH, cur_connector_capacity_, cur_batch_num_, cur_connector_size_));
   }
   return Status::OK();
 }

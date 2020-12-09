@@ -385,10 +385,11 @@ Status ImageFolderOp::LaunchThreadsAndInitOp() {
   // 2) Workers that pull foldername from folder_name_queue_, walk it and return the sorted images to image_name_queue
   // 3) Launch main workers that load DataBuffers by reading all images
   RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("walk dir", std::bind(&ImageFolderOp::StartAsyncWalk, this)));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&ImageFolderOp::PrescanWorkerEntry, this, std::placeholders::_1)));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&ImageFolderOp::WorkerEntry, this, std::placeholders::_1)));
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_,
+                                        std::bind(&ImageFolderOp::PrescanWorkerEntry, this, std::placeholders::_1),
+                                        Name() + "::PrescanWorkerEntry"));
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(
+    num_workers_, std::bind(&ImageFolderOp::WorkerEntry, this, std::placeholders::_1), Name() + "::WorkerEntry"));
   TaskManager::FindMe()->Post();
   // The order of the following 2 functions must not be changed!
   RETURN_IF_NOT_OK(this->PrescanMasterEntry(folder_path_));  // Master thread of pre-scan workers, blocking

@@ -357,6 +357,35 @@ def test_deterministic_python_seed_multi_thread():
     ds.config.set_seed(seed_original)
 
 
+def test_auto_num_workers_error():
+    """
+    Test auto_num_workers error
+    """
+    err_msg = ""
+    try:
+        ds.config.set_auto_num_workers([1, 2])
+    except ValueError as e:
+        err_msg = str(e)
+
+    assert "isn't of type bool" in err_msg
+
+
+def test_auto_num_workers():
+    """
+    Test auto_num_workers can be set.
+    """
+
+    saved_config = ds.config.get_auto_num_workers()
+    assert isinstance(saved_config, bool)
+    # change to a different config
+    flipped_config = not saved_config
+    ds.config.set_auto_num_workers(flipped_config)
+    assert flipped_config == ds.config.get_auto_num_workers()
+    # now flip this back
+    ds.config.set_auto_num_workers(saved_config)
+    assert saved_config == ds.config.get_auto_num_workers()
+
+
 if __name__ == '__main__':
     test_basic()
     test_get_seed()
@@ -367,3 +396,5 @@ if __name__ == '__main__':
     test_deterministic_run_distribution()
     test_deterministic_python_seed()
     test_deterministic_python_seed_multi_thread()
+    test_auto_num_workers_error()
+    test_auto_num_workers()

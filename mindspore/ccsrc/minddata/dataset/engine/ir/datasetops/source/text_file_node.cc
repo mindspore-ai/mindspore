@@ -36,7 +36,13 @@ TextFileNode::TextFileNode(std::vector<std::string> dataset_files, int32_t num_s
       num_samples_(num_samples),
       shuffle_(shuffle),
       num_shards_(num_shards),
-      shard_id_(shard_id) {}
+      shard_id_(shard_id) {
+  // Update the num_shards_ in global context. this number is only used for now by auto_num_worker_pass. User discretion
+  // is advised. Auto_num_worker_pass is currently an experimental feature which can still work if the num_shards_ isn't
+  // 100% correct. The reason behind is for now, PreBuildSampler doesn't offer a way to return num_shards. Once
+  // PreBuildSampler is phased out, this can be cleaned up.
+  GlobalContext::config_manager()->set_num_shards_for_auto_num_workers(num_shards_);
+}
 
 std::shared_ptr<DatasetNode> TextFileNode::Copy() {
   auto node = std::make_shared<TextFileNode>(dataset_files_, num_samples_, shuffle_, num_shards_, shard_id_, cache_);

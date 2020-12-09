@@ -3,6 +3,7 @@ set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE
 add_library(engine-opt OBJECT
           optional/tensor_op_fusion_pass.cc
           pass.cc
+          post/auto_worker_pass.cc
           post/repeat_pass.cc
           pre/cache_error_pass.cc
           pre/cache_transform_pass.cc

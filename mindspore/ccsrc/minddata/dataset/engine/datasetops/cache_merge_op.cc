@@ -59,10 +59,11 @@ Status CacheMergeOp::operator()() {
   static const int32_t queue_sz = 512;
   io_que_ = std::make_unique<Queue<row_id_type>>(queue_sz);
   RETURN_IF_NOT_OK(io_que_->Register(tree_->AllTasks()));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&CacheMergeOp::WorkerEntry, this, std::placeholders::_1)));
-  RETURN_IF_NOT_OK(
-    tree_->LaunchWorkers(num_workers_, std::bind(&CacheMergeOp::CacheMissWorkerEntry, this, std::placeholders::_1)));
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(
+    num_workers_, std::bind(&CacheMergeOp::WorkerEntry, this, std::placeholders::_1), Name() + "::WorkerEntry"));
+  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_,
+                                        std::bind(&CacheMergeOp::CacheMissWorkerEntry, this, std::placeholders::_1),
+                                        Name() + "::CacheMissWorkerEntry"));
   // One dedicated thread to move TensorRow from the pool to the cache server
   for (auto i = 0; i < num_cleaners_; ++i) {
     RETURN_IF_NOT_OK(tree_->AllTasks()->CreateAsyncTask("Cleaner", std::bind(&CacheMergeOp::Cleaner, this)));

@@ -83,7 +83,8 @@ Status CacheOp::operator()() {
   }
   RETURN_IF_NOT_OK(RegisterResources());
   // Kick off the workers
-  RETURN_IF_NOT_OK(tree_->LaunchWorkers(num_workers_, std::bind(&CacheOp::WorkerEntry, this, std::placeholders::_1)));
+  RETURN_IF_NOT_OK(
+    tree_->LaunchWorkers(num_workers_, std::bind(&CacheOp::WorkerEntry, this, std::placeholders::_1), Name()));
   // required task group sync after launching workers
   TaskManager::FindMe()->Post();
   // Wait for the workers to finish caching the rows.

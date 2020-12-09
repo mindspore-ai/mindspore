@@ -89,6 +89,8 @@ class ConfigManager {
   // @return The internal worker-to-master connector queue size
   int32_t worker_connector_size() const { return worker_connector_size_; }
 
+  int32_t num_cpu_threads() const { return num_cpu_threads_; }
+
   // getter function
   // @return The hostname of cache server
   std::string cache_host() const { return cache_host_; }
@@ -104,6 +106,10 @@ class ConfigManager {
   /// getter function
   /// \return Prefetch size
   int32_t prefetch_size() const { return prefetch_size_; }
+
+  /// getter function
+  /// \return auto_num_workers_
+  bool auto_num_workers() const { return auto_num_workers_; }
 
   // setter function
   // @param rows_per_buffer - The setting to apply to the config
@@ -152,12 +158,38 @@ class ConfigManager {
   int32_t monitor_sampling_interval() const { return monitor_sampling_interval_; }
 
   // setter function
+  // @param auto_num_workers - whether assign threads to each op automatically
+  void set_auto_num_workers(bool auto_num_workers) { auto_num_workers_ = auto_num_workers; }
+
+  // setter function
+  // this function will be called when a distributed sampler (RT and Obj) is created and will be used by AutoWorkerPass
+  // This is to get around the limitation of PreBuildSampler (which doesn't have a getter for sharding params)
+  // @param num_shards
+  void set_num_shards_for_auto_num_workers(int32_t num_shards) { auto_num_workers_num_shards_ = num_shards; }
+
+  // getter function, will be called by AutoNumWorker, user discretion above AutoNumWorker is advised
+  // @param num_shards_
+  int32_t get_num_shards_for_auto_num_workers() const { return auto_num_workers_num_shards_; }
+
+  // setter function
   // @param timeout - The setting to apply to the config
   void set_callback_timeout(uint32_t timeout);
 
   // getter function
   // @return The timeout DSWaitedCallback would wait for before raising an error
   int32_t callback_timeout() const { return callback_timout_; }
+
+  // getter function
+  // E.g. 0 would corresponds to a 1:1:1 ratio of num_worker among leaf batch and map.
+  // please refer to AutoWorkerPass for detail on what each option is.
+  // @return The experimental config used by AutoNumWorker, each 1 refers to a different setup configuration
+  uint8_t get_auto_worker_config_() { return auto_worker_config_; }
+
+  // setter function
+  // E.g. set the value of 0 would corresponds to a 1:1:1 ratio of num_worker among leaf batch and map.
+  // please refer to AutoWorkerPass for detail on what each option is.
+  // @return The experimental config used by AutoNumWorker, each 1 refers to a different setup configuration
+  void set_auto_worker_config_(uint8_t cfg) { auto_worker_config_ = cfg; }
 
  private:
   int32_t rows_per_buffer_;
@@ -171,7 +203,10 @@ class ConfigManager {
   int32_t cache_port_;
   int32_t num_connections_;
   int32_t prefetch_size_;
-
+  bool auto_num_workers_;
+  const int32_t num_cpu_threads_;
+  int32_t auto_num_workers_num_shards_;
+  uint8_t auto_worker_config_;
   // Private helper function that takes a nlohmann json format and populates the settings
   // @param j - The json nlohmann json info
   Status FromJson(const nlohmann::json &j);
