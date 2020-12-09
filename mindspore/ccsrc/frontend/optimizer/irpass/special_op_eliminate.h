@@ -195,6 +195,13 @@ class ZeroLikeFillZero : public AnfVisitor {
     TypePtr tensor_type_ptr = tensor_abstract->element()->BuildType();
     std::vector<int64_t> tensor_shape = tensor_abstract->shape()->shape();
 
+    // if shape is unknown, don't optimize this operator away
+    for (const int64_t &dimension : tensor_shape) {
+      if (dimension < 0) {
+        return node;
+      }
+    }
+
     tensor::TensorPtr new_tensor_ptr = std::make_shared<tensor::Tensor>(tensor_type_ptr->type_id(), tensor_shape);
     size_t mem_size = GetTypeByte(tensor_type_ptr) * LongToSize(new_tensor_ptr->ElementsNum());
     char *data = reinterpret_cast<char *>(new_tensor_ptr->data_c());

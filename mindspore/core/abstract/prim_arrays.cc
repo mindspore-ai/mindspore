@@ -767,9 +767,21 @@ AbstractBasePtr InferImplDynamicShape(const AnalysisEnginePtr &, const Primitive
 
 AbstractBasePtr InferImplZerosLike(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                    const AbstractBasePtrList &args_spec_list) {
-  // Inputs: a tensor.
-  CheckArgsSize(primitive->name(), args_spec_list, 1);
-  return args_spec_list[0]->Broaden();
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  ShapeVector x_shape = input_x->shape()->shape();
+  ShapeVector x_shape_min = input_x->shape()->min_shape();
+  if (x_shape_min.empty()) {
+    x_shape_min = x_shape;
+  }
+  ShapeVector x_shape_max = input_x->shape()->max_shape();
+  if (x_shape_max.empty()) {
+    x_shape_max = x_shape;
+  }
+
+  ShapePtr output_shape = std::make_shared<Shape>(x_shape, x_shape_min, x_shape_max);
+  return std::make_shared<AbstractTensor>(input_x->element(), output_shape);
 }
 
 AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
