@@ -638,7 +638,6 @@ Status SchemaObj::Init() {
                                    "\"columns\" node is required in the schema json file.");
     } catch (const std::exception &err) {
       std::string err_msg = "Schema file failed to load: ";
-      err_msg += err.what();
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
     return from_json(js);

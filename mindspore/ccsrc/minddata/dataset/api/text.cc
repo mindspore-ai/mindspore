@@ -315,7 +315,7 @@ Status LookupOperation::ValidateParams() {
 
   default_id_ = vocab_->Lookup(unknown_token_);
   if (default_id_ == Vocab::kNoTokenExists) {
-    std::string err_msg = "Lookup: " + unknown_token_ + " doesn't exist in vocab.";
+    std::string err_msg = "Lookup: \"" + unknown_token_ + "\" doesn't exist in vocab.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
