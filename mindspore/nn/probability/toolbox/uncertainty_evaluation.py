@@ -61,6 +61,7 @@ class UncertaintyEvaluation:
         >>> param_dict = load_checkpoint('checkpoint_lenet.ckpt')
         >>> load_param_into_net(network, param_dict)
         >>> ds_train = create_dataset('workspace/mnist/train')
+        >>> ds_eval = create_dataset('workspace/mnist/test')
         >>> evaluation = UncertaintyEvaluation(model=network,
         ...                                    train_dataset=ds_train,
         ...                                    task_type='classification',
@@ -69,8 +70,10 @@ class UncertaintyEvaluation:
         ...                                    epi_uncer_model_path=None,
         ...                                    ale_uncer_model_path=None,
         ...                                    save_model=False)
-        >>> epistemic_uncertainty = evaluation.eval_epistemic_uncertainty(eval_data)
-        >>> aleatoric_uncertainty = evaluation.eval_aleatoric_uncertainty(eval_data)
+        >>> for eval_data in ds_eval.create_dict_iterator(output_numpy=True, num_epochs=1):
+        ...    eval_data = Tensor(eval_data['image'], mstype.float32)
+        ...    epistemic_uncertainty = evaluation.eval_epistemic_uncertainty(eval_data)
+        ...    aleatoric_uncertainty = evaluation.eval_aleatoric_uncertainty(eval_data)
         >>> output = epistemic_uncertainty.shape
         >>> print(output)
         (32, 10)
@@ -128,9 +131,11 @@ class UncertaintyEvaluation:
                     ckpoint_cb = ModelCheckpoint(prefix='checkpoint_epi_uncer_model',
                                                  directory=self.epi_uncer_model_path,
                                                  config=config_ck)
-                    model.train(self.epochs, self.epi_train_dataset, callbacks=[ckpoint_cb, LossMonitor()])
+                    model.train(self.epochs, self.epi_train_dataset, dataset_sink_mode=False,
+                                callbacks=[ckpoint_cb, LossMonitor()])
                 elif self.epi_uncer_model_path is None:
-                    model.train(self.epochs, self.epi_train_dataset, callbacks=[LossMonitor()])
+                    model.train(self.epochs, self.epi_train_dataset, dataset_sink_mode=False,
+                                callbacks=[LossMonitor()])
                 else:
                     uncer_param_dict = load_checkpoint(self.epi_uncer_model_path)
                     load_param_into_net(self.epi_uncer_model, uncer_param_dict)
@@ -173,9 +178,11 @@ class UncertaintyEvaluation:
                 ckpoint_cb = ModelCheckpoint(prefix='checkpoint_ale_uncer_model',
                                              directory=self.ale_uncer_model_path,
                                              config=config_ck)
-                model.train(self.epochs, self.ale_train_dataset, callbacks=[ckpoint_cb, LossMonitor()])
+                model.train(self.epochs, self.ale_train_dataset, dataset_sink_mode=False,
+                            callbacks=[ckpoint_cb, LossMonitor()])
             elif self.ale_uncer_model_path is None:
-                model.train(self.epochs, self.ale_train_dataset, callbacks=[LossMonitor()])
+                model.train(self.epochs, self.ale_train_dataset, dataset_sink_mode=False,
+                            callbacks=[LossMonitor()])
             else:
                 uncer_param_dict = load_checkpoint(self.ale_uncer_model_path)
                 load_param_into_net(self.ale_uncer_model, uncer_param_dict)
