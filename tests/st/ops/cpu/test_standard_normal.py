@@ -17,7 +17,6 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore.ops import operations as P
-from scipy.stats import kstest
 
 context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
@@ -35,7 +34,7 @@ class Net(nn.Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net():
     seed = 10
@@ -45,10 +44,6 @@ def test_net():
     output = net()
     assert output.shape == (5, 6, 8)
     outnumpyflatten_1 = output.asnumpy().flatten()
-    _, p_value = kstest(outnumpyflatten_1, "norm")
-    # p-value is greater than the  significance level, cannot reject the hypothesis that the data come from
-    # the standard norm distribution.
-    assert p_value >= 0.05
 
     seed = 0
     seed2 = 10
@@ -57,8 +52,6 @@ def test_net():
     output = net()
     assert output.shape == (5, 6, 8)
     outnumpyflatten_2 = output.asnumpy().flatten()
-    _, p_value = kstest(outnumpyflatten_2, "norm")
-    assert p_value >= 0.05
     # same seed should generate same random number
     assert (outnumpyflatten_1 == outnumpyflatten_2).all()
 
@@ -68,18 +61,3 @@ def test_net():
     net = Net(shape, seed, seed2)
     output = net()
     assert output.shape == (130, 120, 141)
-    outnumpyflatten_1 = output.asnumpy().flatten()
-    _, p_value = kstest(outnumpyflatten_1, "norm")
-    assert p_value >= 0.05
-
-    seed = 0
-    seed2 = 0
-    shape = (130, 120, 141)
-    net = Net(shape, seed, seed2)
-    output = net()
-    assert output.shape == (130, 120, 141)
-    outnumpyflatten_2 = output.asnumpy().flatten()
-    _, p_value = kstest(outnumpyflatten_2, "norm")
-    assert p_value >= 0.05
-    # different seed(seed = 0) should generate different random number
-    assert ~(outnumpyflatten_1 == outnumpyflatten_2).all()
