@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARGMAXGPUKERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARGMAXGPUKERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ARGMAX_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ARGMAX_GPU_KERNEL_H_
 
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -60,13 +60,13 @@ class ArgmaxGpuKernel : public GpuKernel {
     }
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     if (input_shape.size() > ARGMAX_MAX_DIMENSION) {
-      MS_LOG(EXCEPTION) << "Input is " << input_shape.size() << "-D, but argmax supports max " << ARGMAX_MAX_DIMENSION
+      MS_LOG(EXCEPTION) << "Input is " << input_shape.size() << "-D, but Argmax supports max " << ARGMAX_MAX_DIMENSION
                         << "-D inputs.";
     }
 
-    axis_ = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
+    axis_ = GetAttr<int64_t>(kernel_node, "axis");
     if (axis_ < 0) {
-      axis_ += SizeToInt(input_shape.size());
+      axis_ += static_cast<int64_t>(input_shape.size());
     }
     if (input_shape.size() == 1) {
       batch_size_ = 0;
@@ -98,9 +98,9 @@ class ArgmaxGpuKernel : public GpuKernel {
   std::vector<size_t> workspace_size_list_;
   size_t batch_size_;
   size_t channel_size_;
-  int axis_;
+  int64_t axis_;
 };
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARGMAXGPUKERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_ARGMAX_GPU_KERNEL_H_
