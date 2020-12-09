@@ -31,7 +31,7 @@ class ScaleOpenCLKernel : public OpenCLKernel {
   ~ScaleOpenCLKernel() override;
 
   int CheckSpecs() override;
-  int Init() override;
+  int Prepare() override;
   int Run() override;
   int InitWeights() override;
 

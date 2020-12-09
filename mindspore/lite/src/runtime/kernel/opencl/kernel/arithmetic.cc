@@ -38,25 +38,6 @@ using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
 
-std::set<schema::PrimitiveType> SupportedOpenCLArithmetics = {PrimitiveType_Mul,
-                                                              PrimitiveType_Add,
-                                                              PrimitiveType_Sub,
-                                                              PrimitiveType_Div,
-                                                              PrimitiveType_LogicalAnd,
-                                                              PrimitiveType_LogicalOr,
-                                                              PrimitiveType_Maximum,
-                                                              PrimitiveType_Minimum,
-                                                              PrimitiveType_FloorDiv,
-                                                              PrimitiveType_FloorMod,
-                                                              PrimitiveType_SquaredDifference,
-                                                              PrimitiveType_Equal,
-                                                              PrimitiveType_NotEqual,
-                                                              PrimitiveType_Less,
-                                                              PrimitiveType_LessEqual,
-                                                              PrimitiveType_Greater,
-                                                              PrimitiveType_GreaterEqual,
-                                                              PrimitiveType_Eltwise};
-
 int ArithmeticOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
@@ -67,8 +48,8 @@ int ArithmeticOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Broadcasting don't support  N > 1";
     return RET_ERROR;
   }
-  if (SupportedOpenCLArithmetics.count(static_cast<schema::PrimitiveType>(op_parameter_->type_)) == 0) {
-    MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamesPrimitiveType()[op_parameter_->type_];
+  if (!IsArithmetic(Type())) {
+    MS_LOG(ERROR) << "UnSupported Operator: " << schema::EnumNamePrimitiveType(Type());
     return RET_ERROR;
   }
   if (!(param->activation_type_ == ActivationType_NO_ACTIVATION || param->activation_type_ == ActivationType_RELU ||
@@ -201,7 +182,7 @@ int ArithmeticOpenCLKernel::Prepare() {
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
   element_flag_ = !param->broadcasting_;
   kernel_name_ = param->broadcasting_ ? "BroadcastNHWC4" : "Element";
-  kernel_name_ += schema::EnumNamesPrimitiveType()[op_parameter_->type_];
+  kernel_name_ += schema::EnumNamePrimitiveType(Type());
   if (param->activation_type_ == ActivationType_RELU) {
     activation_min_ = 0.f;
   } else if (param->activation_type_ == ActivationType_RELU6) {

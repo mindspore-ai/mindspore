@@ -35,6 +35,7 @@ namespace mindspore::kernel {
 
 int PadOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<PadParameter *>(op_parameter_);
+  MS_ASSERT(param);
   if (in_tensors_.size() != 1) {
     MS_LOG(ERROR) << "Pad only support 1 input Tensor.";
     return RET_ERROR;

@@ -19,6 +19,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include "CL/cl2.hpp"
 #include "src/common/log_adapter.h"
 #include "nnacl/op_base.h"
@@ -33,6 +34,12 @@ kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, con
 }
 
 namespace mindspore::kernel {
+
+// for fusion
+extern const std::set<schema::PrimitiveType> ArithmeticPrimitives;
+extern const std::set<schema::PrimitiveType> ArithmeticSelfPrimitives;
+inline bool IsArithmetic(schema::PrimitiveType type) { return ArithmeticPrimitives.count(type); }
+inline bool IsArithmeticSelf(schema::PrimitiveType type) { return ArithmeticSelfPrimitives.count(type); }
 
 std::string GetActDefines();
 

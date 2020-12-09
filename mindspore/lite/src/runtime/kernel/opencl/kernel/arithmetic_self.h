@@ -22,6 +22,21 @@
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "nnacl/arithmetic_self_parameter.h"
 
+using mindspore::schema::PrimitiveType_Abs;
+using mindspore::schema::PrimitiveType_Ceil;
+using mindspore::schema::PrimitiveType_Cos;
+using mindspore::schema::PrimitiveType_Eltwise;
+using mindspore::schema::PrimitiveType_Exp;
+using mindspore::schema::PrimitiveType_Floor;
+using mindspore::schema::PrimitiveType_Log;
+using mindspore::schema::PrimitiveType_LogicalNot;
+using mindspore::schema::PrimitiveType_Neg;
+using mindspore::schema::PrimitiveType_Round;
+using mindspore::schema::PrimitiveType_Rsqrt;
+using mindspore::schema::PrimitiveType_Sin;
+using mindspore::schema::PrimitiveType_Sqrt;
+using mindspore::schema::PrimitiveType_Square;
+
 namespace mindspore::kernel {
 
 class ArithmeticSelfOpenCLKernel : public OpenCLKernel {
@@ -35,13 +50,12 @@ class ArithmeticSelfOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
 
   int CheckSpecs() override;
-  void SetConstArgs() override;
+  void SetConstArgs() override { ocl_runtime_->SetKernelArg(kernel_, 2, output_shape_); }
   void SetGlobalLocal() override;
 
   int Run() override;
 
  private:
-  void GetKernelName(std::string *kernel_name, ArithmeticSelfParameter *param);
   cl_int4 output_shape_ = {};
 };
 

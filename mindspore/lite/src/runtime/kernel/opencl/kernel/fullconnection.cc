@@ -51,9 +51,23 @@ int FullConnectionOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "fullconnection only support 2d output shape or 4d output but H=W=1";
     return RET_ERROR;
   }
-  if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6) {
+  // for fusion: ActivationType_TANH
+  if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6 &&
+      static_cast<schema::ActivationType>(param->act_type_) != ActivationType_TANH) {
     MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
     return RET_ERROR;
+  }
+  // for fusion: ActivationType_TANH
+  switch (static_cast<int>(param->act_type_)) {
+    case ActType_No:
+    case ActType_Relu:
+    case ActType_Relu6:
+    case ActivationType_TANH:
+      break;
+    default: {
+      MS_LOG(ERROR) << "Unsupported activation type " << param->act_type_;
+      return RET_ERROR;
+    }
   }
   N_ = out_gpu_info.N;
   CO_ = out_gpu_info.C;

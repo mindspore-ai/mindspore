@@ -57,17 +57,26 @@ int Conv2DOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Conv2D only supports 4D input Tensor but get " << in_tensors_.front()->shape().size() << "D.";
     return RET_ERROR;
   }
-  if (in_tensors_[1]->shape().size() != 4) {
-    MS_LOG(ERROR) << "Conv2D only supports 4D filter Tensor but get " << in_tensors_[1]->shape().size() << "D.";
+  if (in_tensors_.at(1)->shape().size() != 4) {
+    MS_LOG(ERROR) << "Conv2D only supports 4D filter Tensor but get " << in_tensors_.at(1)->shape().size() << "D.";
     return RET_ERROR;
   }
   if (out_tensors_.front()->shape().size() != 4) {
     MS_LOG(ERROR) << "Conv2D only supports 4D output Tensor but get " << out_tensors_.front()->shape().size() << "D.";
     return RET_ERROR;
   }
-  if (param_->act_type_ != ActType_No && param_->act_type_ != ActType_Relu && param_->act_type_ != ActType_Relu6) {
-    MS_LOG(ERROR) << "Unsupported activation type " << param_->act_type_;
-    return RET_ERROR;
+  // for fusion: ActivationType_LEAKY_RELU ActivationType_TANH
+  switch (static_cast<int>(param_->act_type_)) {
+    case ActType_No:
+    case ActType_Relu:
+    case ActType_Relu6:
+    case ActivationType_LEAKY_RELU:
+    case ActivationType_TANH:
+      break;
+    default: {
+      MS_LOG(ERROR) << "Unsupported activation type " << param_->act_type_;
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -154,9 +163,11 @@ int Conv2DOpenCLKernel::GenerateWinogradFilter() {
                          1.0000000000, -0.7071067691, 0.4999999702, 1.0000000000, 1.4142135382, 1.9999998808,
                          1.0000000000, -1.4142135382, 1.9999998808, 0.0000000000, 0.0000000000, 1.0000000000};
 
-  auto weight_tensor = in_tensors_[1];
+  auto weight_tensor = in_tensors_.at(1);
   auto origin_weight_fp32 = reinterpret_cast<float *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight_fp32);
   auto origin_weight_fp16 = reinterpret_cast<float16_t *>(weight_tensor->data_c());
+  MS_ASSERT(origin_weight_fp16);
   std::function<float(int)> access_func;
   if (weight_tensor->data_type() == kNumberTypeFloat32) {
     access_func = [=](int idx) { return origin_weight_fp32[idx]; };
@@ -216,7 +227,7 @@ int Conv2DOpenCLKernel::InitFilter() {
   if (use_winograd_) {
     GenerateWinogradFilter();
   } else {
-    auto weight_tensor = in_tensors_[1];
+    auto weight_tensor = in_tensors_.at(1);
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
       if (use_fp16_) {
         ConvertConvWeight4DTo7D<float16_t, float16_t>(weight_tensor->data_c(), packed_weight_, CO_, KH_, KW_, CI_,
@@ -244,7 +255,7 @@ int Conv2DOpenCLKernel::InitBias() {
   auto allocator = ocl_runtime_->GetAllocator();
 
   // align bias from C to C4
-  auto bias_tensor = in_tensors_[2];
+  auto bias_tensor = in_tensors_.at(2);
   size_t packed_bias_size = UP_ROUND(CO_SLICES_, block_size_.C) * CO_TILE * sizeof_FLT_;
   packed_bias_ = allocator->Malloc(packed_bias_size);
 
@@ -256,6 +267,7 @@ int Conv2DOpenCLKernel::InitBias() {
     } else {
       auto packed_bias_fp32 = reinterpret_cast<float *>(packed_bias_);
       auto origin_bias_fp16 = reinterpret_cast<float16_t *>(bias_tensor->data_c());
+      MS_ASSERT(origin_bias_fp16);
       for (int i = 0; i < CO_; ++i) {
         packed_bias_fp32[i] = static_cast<float>(origin_bias_fp16[i]);
       }
@@ -264,6 +276,7 @@ int Conv2DOpenCLKernel::InitBias() {
     if (use_fp16_) {
       auto packed_bias_fp16 = reinterpret_cast<float16_t *>(packed_bias_);
       auto origin_bias_fp32 = reinterpret_cast<float *>(bias_tensor->data_c());
+      MS_ASSERT(origin_bias_fp32);
       for (int i = 0; i < CO_; ++i) {
         packed_bias_fp16[i] = static_cast<float16_t>(origin_bias_fp32[i]);
       }
@@ -456,6 +469,7 @@ int Conv2DOpenCLKernel::Tune() {
 }
 
 int Conv2DOpenCLKernel::Run() {
+  MS_LOG(DEBUG) << this->name() << " Running!";
   if (use_winograd_) {
     ocl_runtime_->SetKernelArg(kernel_4x4to36_, 0, in_tensors_.front()->data_c());
     ocl_runtime_->RunKernel(kernel_4x4to36_, global_4x4to36_, local_4x4to36_);
@@ -474,6 +488,9 @@ int Conv2DOpenCLKernel::Run() {
 
 bool UseFcReplaceConv(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                       ConvParameter *param) {
+  MS_ASSERT(param);
+  MS_ASSERT(!inputs.empty());
+  MS_ASSERT(!outputs.empty());
   auto input_shape = inputs.front()->shape();
   auto output_shape = inputs.front()->shape();
   // IH=1 IW=1 OH=1 OW=1
