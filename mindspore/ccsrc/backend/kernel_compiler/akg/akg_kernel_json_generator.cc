@@ -558,7 +558,7 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
 bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
                                               const std::vector<AnfNodePtr> &input_list,
                                               const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json) {
-  if (anf_nodes.empty() || input_list.empty()) {
+  if (anf_nodes.empty()) {
     MS_LOG(ERROR) << "Invalid input size, anf_nodes [" << anf_nodes.size() << "], input_list [" << input_list.size()
                   << "].";
     return false;
