@@ -42,8 +42,10 @@ class FixedLossScaleManager(LossScaleManager):
         drop_overflow_update (bool): whether to execute optimizer if there is an overflow. Default: True.
 
     Examples:
+        >>> net = Net()
         >>> loss_scale_manager = FixedLossScaleManager()
-        >>> model = Model(net, loss_scale_manager=loss_scale_manager)
+        >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
     """
     def __init__(self, loss_scale=128.0, drop_overflow_update=True):
         if loss_scale < 1:
@@ -85,8 +87,10 @@ class DynamicLossScaleManager(LossScaleManager):
         scale_window (int): Maximum continuous normal steps when there is no overflow. Default: 2000.
 
     Examples:
+        >>> net = Net()
         >>> loss_scale_manager = DynamicLossScaleManager()
-        >>> model = Model(net, loss_scale_manager=loss_scale_manager)
+        >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
+        >>> model = Model(net, loss_scale_manager=loss_scale_manager, optimizer=optim)
     """
     def __init__(self,
                  init_loss_scale=2 ** 24,
