@@ -76,7 +76,7 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
   TDT_StatusT status = TsdOpen(device_id, rank_size);
   if (status != TDT_OK) {
-    MS_LOG(EXCEPTION) << "Device " << device_id << " is occupied, open tsd failed, status = " << status << ".";
+    MS_LOG(EXCEPTION) << "Device " << device_id << " open tsd failed, status = " << status << ".";
     return false;
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
