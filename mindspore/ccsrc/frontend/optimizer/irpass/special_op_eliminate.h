@@ -305,18 +305,6 @@ class PynativeEliminater : public OptimizerCaller {
     return out;
   }
 
-  void OnlySaveAbstractInfo(const ValueNodePtr &value_node) {
-    MS_EXCEPTION_IF_NULL(value_node);
-    auto &value = value_node->value();
-    MS_EXCEPTION_IF_NULL(value);
-    if (value->isa<tensor::Tensor>()) {
-      auto tensor = value->cast<tensor::TensorPtr>();
-      MS_EXCEPTION_IF_NULL(tensor);
-      auto new_tensor = std::make_shared<tensor::Tensor>(tensor->Dtype()->type_id(), tensor->shape());
-      value_node->set_value(MakeValue(new_tensor));
-    }
-  }
-
  public:
   AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
     MS_LOG(DEBUG) << "Start replace node " << node->DebugString(4);
@@ -363,11 +351,31 @@ class PynativeEliminater : public OptimizerCaller {
     // {prim:getattr, {prim::resolve, SymbolStr, binop_grad_common}, x, y, out, dout} -> {shape(x), shape(y), out, dout}
     PatternNode<AnfNodePtr> binop_grad_common;
     PatternNode<AnfNodePtr> getitem_vnode;
-    PatternNode<AnfNodePtr> arg1;
-    PatternNode<AnfNodePtr> arg2;
-    PatternNode<AnfNodePtr> arg3;
-    PatternNode<AnfNodePtr> arg4;
+    std::vector<PatternNode<AnfNodePtr>> args(4);
+    auto resolve_binop = PPrimitive(prim::kPrimResolve, symbol_str_vnode, binop_grad_common);
+    auto pattern_binop = PCNode(resolve_binop, args[0], args[1], args[2], args[3]);
+    if ((pattern_binop).TryCapture(node) && (CheckNameSpaceVNode(symbol_str_vnode.GetNode(node), "SymbolStr") &&
+                                             CheckSymbolVNode(binop_grad_common.GetNode(node), "binop_grad_common"))) {
+      for (size_t i = 0; i < 2; i++) {
+        auto rep = (args[i]).GetNode(node);
+        if (rep != nullptr && rep->isa<ValueNode>()) {
+          auto value_node = rep->cast<ValueNodePtr>();
+          MS_EXCEPTION_IF_NULL(value_node);
+          auto &value = value_node->value();
+          MS_EXCEPTION_IF_NULL(value);
+          // when the use count of value node equals to one, it only used in binop_grad_common function
+          if (value->isa<tensor::Tensor>() && value_node->used_graph_count() == 1) {
+            auto tensor = value->cast<tensor::TensorPtr>();
+            MS_EXCEPTION_IF_NULL(tensor);
+            auto new_tensor = std::make_shared<tensor::Tensor>(tensor->Dtype()->type_id(), tensor->shape());
+            value_node->set_value(new_tensor);
+          }
+        }
+      }
+      return nullptr;
+    }
     // resolve(CommonOPS, getitem)((tensors), 3)
+    PatternNode<AnfNodePtr> arg1;
     auto resolve2 = PPrimitive(prim::kPrimResolve, symbol_str_vnode, getitem_vnode);
     auto pattern2 = PCNode(resolve2, arg, arg1);
     if ((pattern2).TryCapture(node) && (CheckNameSpaceVNode(symbol_str_vnode.GetNode(node), "CommonOPS") &&

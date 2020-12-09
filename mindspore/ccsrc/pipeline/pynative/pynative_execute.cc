@@ -1039,6 +1039,18 @@ void PynativeExecutor::SaveTensorsInValueNode(const ResourcePtr &resource) {
   }
 }
 
+void PynativeExecutor::CleanTensorsInValueNode() {
+  // Only need clean in ms backend policy and session should not be nullptr in ms backend.
+  if (session == nullptr) {
+    return;
+  }
+  auto useless_tensors = std::make_shared<std::vector<tensor::TensorPtr>>();
+  for (const auto &id_tensor_pair : tensor_id_with_tensor_) {
+    std::copy(id_tensor_pair.second.begin(), id_tensor_pair.second.end(), std::back_inserter(*useless_tensors));
+  }
+  session->CleanUselessTensors(useless_tensors);
+}
+
 AnfNodePtr PynativeExecutor::GetObjNode(const py::object &obj, const std::string &obj_id) {
   auto &out = graph_info_map_[curr_g_].node_map[obj_id];
   if (out.second.size() == 1 && out.second[0] == -1) {
@@ -2039,6 +2051,7 @@ py::object PynativeExecutor::Run(const py::tuple &args, const py::object &phase)
   MS_LOG(DEBUG) << "Eval run " << backend;
   grad_is_running = true;
   BaseRef value = (*run)(arg_list);
+  CleanTensorsInValueNode();
   grad_is_running = false;
   MS_LOG(DEBUG) << "Run end " << value.ToString();
   return BaseRefToPyData(value);
