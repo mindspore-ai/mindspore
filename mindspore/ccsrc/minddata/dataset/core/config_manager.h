@@ -183,7 +183,7 @@ class ConfigManager {
   // E.g. 0 would corresponds to a 1:1:1 ratio of num_worker among leaf batch and map.
   // please refer to AutoWorkerPass for detail on what each option is.
   // @return The experimental config used by AutoNumWorker, each 1 refers to a different setup configuration
-  uint8_t get_auto_worker_config_() { return auto_worker_config_; }
+  uint8_t get_auto_worker_config() { return auto_worker_config_; }
 
   // setter function
   // E.g. set the value of 0 would corresponds to a 1:1:1 ratio of num_worker among leaf batch and map.

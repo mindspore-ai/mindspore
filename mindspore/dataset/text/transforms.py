@@ -500,6 +500,7 @@ if platform.system().lower() != 'windows':
         NormalizeForm.NFKD: cde.NormalizeForm.DE_NORMALIZE_NFKD
     }
 
+
     class NormalizeUTF8(cde.NormalizeUTF8Op):
         """
         Apply normalize operation on UTF-8 string tensor.

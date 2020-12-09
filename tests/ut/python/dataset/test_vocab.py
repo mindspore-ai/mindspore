@@ -166,6 +166,7 @@ def test_lookup_cast_type():
     assert test_config("unk") == np.dtype("int32")
     # test exception, data_type isn't the correct type
     assert "tldr is not of type (<class 'mindspore._c_expression.typing.Type'>,)" in test_config("unk", "tldr")
+    assert "Lookup doesn't support string to string lookup" in test_config("w1", mstype.string)
 
 
 if __name__ == '__main__':
