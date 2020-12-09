@@ -144,14 +144,14 @@ class Gamma(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> shape = (2, 2)
-        >>> alpha = Tensor(1.0, mstype.float32)
-        >>> beta = Tensor(1.0, mstype.float32)
+        >>> shape = (3, 1, 2)
+        >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
+        >>> beta = Tensor(np.array([1.0]), mstype.float32)
         >>> gamma = ops.Gamma(seed=3)
         >>> output = gamma(shape, alpha, beta)
-        >>> print(output)
-        [[0.21962446 0.33740655]
-         [1.0859369  0.25875127]]
+        >>> result = output.shape
+        >>> print(result)
+        (3, 2, 2)
     """
 
     @prim_attr_register
@@ -203,10 +203,13 @@ class Poisson(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> shape = (4, 16)
-        >>> mean = Tensor(5.0, mstype.float32)
+        >>> shape = (4, 1)
+        >>> mean = Tensor(np.array([5.0, 10.0]), mstype.float32)
         >>> poisson = ops.Poisson(seed=5)
         >>> output = poisson(shape, mean)
+        >>> result = output.shape
+        >>> print(result)
+        (4, 2)
     """
 
     @prim_attr_register
@@ -266,9 +269,9 @@ class UniformInt(PrimitiveWithInfer):
         >>> maxval = Tensor(5, mstype.int32)
         >>> uniform_int = ops.UniformInt(seed=10)
         >>> output = uniform_int(shape, minval, maxval)
-        >>> print(output)
-        [[4 2 1 3]
-         [4 3 4 5]]
+        >>> result = output.shape
+        >>> print(result)
+        (2, 4)
     """
 
     @prim_attr_register
@@ -319,9 +322,9 @@ class UniformReal(PrimitiveWithInfer):
         >>> shape = (2, 2)
         >>> uniformreal = ops.UniformReal(seed=2)
         >>> output = uniformreal(shape)
-        >>> print(output)
-        [[0.4359949 0.18508208]
-         [0.02592623 0.93154085]]
+        >>> result = output.shape
+        >>> print(result)
+        (2, 2)
     """
 
     @prim_attr_register
@@ -433,17 +436,9 @@ class RandomCategorical(PrimitiveWithInfer):
         >>> x = np.random.random((10, 5)).astype(np.float32)
         >>> net = Net(8)
         >>> output = net(Tensor(x))
-        >>> print(output)
-        [[0 2 0 3 4 2 0 2]
-         [0 2 1 3 4 2 0 2]
-         [0 2 0 3 4 2 0 2]
-         [0 2 1 3 4 2 0 2]
-         [0 2 1 3 4 2 0 2]
-         [0 2 1 3 4 2 0 2]
-         [0 2 0 3 4 2 0 2]
-         [0 2 0 3 4 2 0 2]
-         [0 2 1 3 4 3 0 3]
-         [0 2 1 3 4 2 0 2]]
+        >>> result = output.shape
+        >>> print(result)
+        (10, 8)
     """
 
     @prim_attr_register
