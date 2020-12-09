@@ -1262,7 +1262,7 @@ class OnesLike(PrimitiveWithInfer):
         Tensor, has the same shape and type as `input_x` but filled with ones.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> oneslike = ops.OnesLike()

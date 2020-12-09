@@ -35,6 +35,20 @@ void Neg(const T *in, T *out, size_t start, size_t end) {
     out[i] = -in[i];
   }
 }
+
+template <typename T>
+void OnesLike(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = static_cast<T>(1);
+  }
+}
+
+template <typename T>
+void ZerosLike(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = static_cast<T>(0);
+  }
+}
 }  // namespace
 
 void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -42,6 +56,10 @@ void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
   if (kernel_name == prim::kPrimSquare->name()) {
     operate_type_ = SQUARE;
+  } else if (kernel_name == prim::kPrimOnesLike->name()) {
+    operate_type_ = ONESLIKE;
+  } else if (kernel_name == prim::kPrimZerosLike->name()) {
+    operate_type_ = ZEROSLIKE;
   } else if (kernel_name == prim::kPrimNeg->name()) {
     operate_type_ = NEG;
   }
@@ -89,6 +107,10 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
       threads.emplace_back(std::thread(Square<T>, input, output, start, end));
     } else if (operate_type_ == NEG) {
       threads.emplace_back(std::thread(Neg<T>, input, output, start, end));
+    } else if (operate_type_ == ONESLIKE) {
+      threads.emplace_back(std::thread(OnesLike<T>, input, output, start, end));
+    } else if (operate_type_ == ZEROSLIKE) {
+      threads.emplace_back(std::thread(ZerosLike<T>, input, output, start, end));
     }
     start += once_compute_size;
   }
