@@ -125,6 +125,10 @@ int TensorListStack::InferShape(std::vector<lite::Tensor *> inputs_, std::vector
   }
   auto ele_shape = inputs_[1];  // element shape
   MS_ASSERT(ele_shape != nullptr);
+  if (ele_shape->data_c() == nullptr) {
+    MS_LOG(ERROR) << "ele_shape->data_c() is nullptr";
+    return RET_NULL_PTR;
+  }
   auto ele_shape_ptr = reinterpret_cast<int *>(ele_shape->data_c());
   for (int i = 0; ele_shape->ElementsNum(); ++i) {
     output_shape_.push_back(ele_shape_ptr[i]);

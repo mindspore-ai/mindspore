@@ -124,6 +124,10 @@ int TensorListGetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
     MS_LOG(ERROR) << "get_index->ElementsNum():" << get_index->ElementsNum() << " must be equal to 1!";
     return RET_ERROR;
   }
+  if (get_index->data_c() == nullptr) {
+    MS_LOG(ERROR) << "get_index->data_c() is nullptr";
+    return RET_NULL_PTR;
+  }
   index_ = reinterpret_cast<int *>(get_index->data_c())[0];
   if (index_ < 0 || index_ > (input0->ElementsNum() - 1)) {
     MS_LOG(ERROR) << "index_:" << index_ << "must in [0, " << input0->ElementsNum() - 1 << "]";
@@ -138,6 +142,10 @@ int TensorListGetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
     output->set_shape(tensor_index->shape());
   } else {
     auto input2 = inputs_[2];
+    if (input2->data_c() == nullptr) {
+      MS_LOG(ERROR) << "input2->data_c() is nullptr";
+      return RET_NULL_PTR;
+    }
     auto ele_shape_data = reinterpret_cast<int *>(input2->data_c());
     for (int i = 0; i < input2->ElementsNum(); ++i) {
       element_shape_.push_back(ele_shape_data[i]);

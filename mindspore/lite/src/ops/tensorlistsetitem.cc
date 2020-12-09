@@ -106,6 +106,10 @@ int TensorListSetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
     MS_LOG(ERROR) << "inputs_[1].ElementsNum():" << get_index->ElementsNum() << " must be equal to 1!";
     return RET_ERROR;
   }
+  if (get_index->data_c() == nullptr) {
+    MS_LOG(ERROR) << "get_index->data_c() is nullptr";
+    return RET_NULL_PTR;
+  }
   int index = reinterpret_cast<int *>(get_index->data_c())[0];
   if (index < 0 || index > (input0->ElementsNum() - 1)) {
     MS_LOG(ERROR) << "index_:" << index << "must in [0, " << input0->ElementsNum() - 1 << "]";
