@@ -27,7 +27,10 @@
 #include "src/common/graph_util.h"
 #include "src/kernel_registry.h"
 #include "src/model_common.h"
-#include "mindspore/lite/src/runtime/kernel/arm/base/dequant.h"
+#include "src/runtime/kernel/arm/base/dequant.h"
+#if SUPPORT_NPU
+#include "src/runtime/agent/npu/npu_manager.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -330,6 +333,14 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
+#if SUPPORT_NPU
+  if (this->context_->IsNpuEnabled()) {
+    if (mindspore::lite::NPUManager::GetInstance()->LoadOMModel() != RET_OK) {
+      MS_LOG(ERROR) << "NPU client load model failed.";
+      return RET_ERROR;
+    }
+  }
+#endif
   ret = executor_->Prepare(this->kernels_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare executor failed: " << ret;
@@ -410,19 +421,18 @@ int LiteSession::Init(const Context *context) {
     is_running_.store(false);
     return ret;
   }
-#if SUPPORT_GPU
-  if (this->context_->IsGpuEnabled()) {
-    auto gpu_device_info = this->context_->GetGpuInfo();
-    auto opencl_runtime = ocl_runtime_wrap_.GetInstance();
-    opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
-    if (opencl_runtime->Init() != RET_OK) {
-      this->context_->device_list_ = {{DT_CPU, {gpu_device_info.enable_float16_, MID_CPU}}};
-      MS_LOG(WARNING) << "Init OpenCL runtime failed, change to CPU mode.";
-    } else {
-      MS_LOG(INFO) << "Init OpenCL runtime success.";
-    }
+  ret = InitGPURuntime();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init GPU runtime failed.";
+    is_running_.store(false);
+    return ret;
   }
-#endif
+  ret = InitNPURuntime();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init NPU runtime failed.";
+    is_running_.store(false);
+    return ret;
+  }
   executor_ = new (std::nothrow) Executor();
   if (nullptr == executor_) {
     MS_LOG(ERROR) << "New Executor failed";
@@ -571,6 +581,35 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
     return ret;
   }
   is_running_.store(false);
+  return RET_OK;
+}
+
+int LiteSession::InitNPURuntime() {
+#if SUPPORT_NPU
+  if (this->context_->IsNpuEnabled()) {
+    if (mindspore::lite::NPUManager::GetInstance()->InitClient() != RET_OK) {
+      MS_LOG(ERROR) << "NPU client init error.";
+      return RET_ERROR;
+    }
+  }
+#endif
+  return RET_OK;
+}
+
+int LiteSession::InitGPURuntime() {
+#if SUPPORT_GPU
+  if (this->context_->IsGpuEnabled()) {
+    auto gpu_device_info = this->context_->GetGpuInfo();
+    auto opencl_runtime = ocl_runtime_wrap_.GetInstance();
+    opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
+    if (opencl_runtime->Init() != RET_OK) {
+      this->context_->device_list_ = {{DT_CPU, {gpu_device_info.enable_float16_, MID_CPU}}};
+      MS_LOG(WARNING) << "Init OpenCL runtime failed, change to CPU mode.";
+    } else {
+      MS_LOG(INFO) << "Init OpenCL runtime success.";
+    }
+  }
+#endif
   return RET_OK;
 }
 }  // namespace lite
