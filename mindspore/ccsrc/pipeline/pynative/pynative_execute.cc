@@ -1384,12 +1384,14 @@ std::string PynativeExecutor::GetCellId(const py::object &cell, const py::args &
     std::string arg_id = GetId(args[i]);
     auto it = node_abs_map_.find(arg_id);
     if (it != node_abs_map_.end()) {
-      cell_id += it->second->ToString();
+      cell_id += "_" + it->second->BuildShape()->ToString();
+      cell_id += "_" + it->second->BuildType()->ToString();
     } else {
       auto abs = PyAttrValue(args[i])->ToAbstract();
       auto config = abstract::AbstractBase::kBroadenTensorOnly;
       abs = abs->Broaden(config);
-      cell_id += abs->ToString();
+      cell_id += "_" + abs->BuildShape()->ToString();
+      cell_id += "_" + abs->BuildType()->ToString();
       node_abs_map_[arg_id] = abs;
     }
   }
