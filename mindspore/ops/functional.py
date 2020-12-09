@@ -22,6 +22,12 @@ from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
 
+
+def arange(start, limit=None, delta=1):
+    from mindspore.nn import Range
+    return Range(start, limit, delta)()
+
+
 typeof = Primitive('typeof')
 hastype = Primitive('hastype')
 cast = P.Cast()

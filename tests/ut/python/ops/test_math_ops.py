@@ -24,6 +24,7 @@ from mindspore import Tensor
 from mindspore.common import dtype as mstype
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
 from mindspore.ops import prim_attr_register, PrimitiveWithInfer
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
@@ -40,6 +41,7 @@ context.set_context(mode=context.GRAPH_MODE)
 # W0231: super-init-not-called
 
 grad = C.GradOperation()
+
 
 def test_multiply():
     """ test_multiply """
@@ -136,6 +138,13 @@ def test_eye():
     eye = P.Eye()
     eye_output = eye(3, 3, ms.float32)
     assert np.all(eye_output.asnumpy() == expect)
+
+
+def test_arange():
+    """ test_arange """
+    F.arange(10)
+    F.arange(1, 5)
+    F.arange(1, 10, 2)
 
 
 class VirtualLossGrad(PrimitiveWithInfer):
