@@ -445,7 +445,7 @@ class ReduceAll(_Reduce):
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[True, False], [True, True]]))
@@ -487,7 +487,7 @@ class ReduceAny(_Reduce):
           the shape of output is :math:`(x_1, x_4, ..., x_R)`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([[True, False], [True, True]]))
