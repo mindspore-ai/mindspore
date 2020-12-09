@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MODEL_ZOO_OFFICIAL_TOD_TRAIN_LENET_SRC_DATASET_H_
-#define MODEL_ZOO_OFFICIAL_TOD_TRAIN_LENET_SRC_DATASET_H_
+#ifndef MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_DATASET_H_
+#define MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_DATASET_H_
 
 #include <tuple>
 #include <string>
@@ -42,8 +42,6 @@ class DataSet {
   unsigned int expected_data_size() { return expected_data_size_; }
 
  private:
-  std::vector<FileTuple> ReadFileList(std::string dpath);
-  std::vector<FileTuple> ReadDir(const std::string dpath);
   int ReadMNISTFile(const std::string &ifile, const std::string &lfile, std::vector<DataLabelTuple> *dataset);
   void InitializeMNISTDatabase(std::string dpath);
 
@@ -53,4 +51,4 @@ class DataSet {
   unsigned int expected_data_size_ = 0;
 };
 
-#endif  // MODEL_ZOO_OFFICIAL_TOD_TRAIN_LENET_SRC_DATASET_H_
+#endif  // MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_DATASET_H_

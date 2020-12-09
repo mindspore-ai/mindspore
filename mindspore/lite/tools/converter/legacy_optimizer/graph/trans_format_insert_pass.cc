@@ -171,6 +171,13 @@ STATUS TransOpInsertPass::Run(schema::MetaGraphT *graph) {
       STATUS status = RET_OK;
       auto input_tensor_size = (*iter)->inputIndex.size();
       for (size_t i = 0; i < input_tensor_size; i++) {
+#ifdef SUPPORT_TRAIN
+        auto &tensor = graph->allTensors.at((*iter)->inputIndex[i]);
+        MS_ASSERT(tensor != nullptr);
+        if (tensor->nodeType == schema::NodeType_ValueNode) {
+          continue;
+        }
+#endif
         iter = InsertFormatTransNode(graph, iter, kBefore, i, pre_insert_trans_type_, &status);
         if (status != RET_OK) {
           MS_LOG(ERROR) << "Insert" << pre_insert_trans_type_ << "before " << (*iter)->name << " failed";

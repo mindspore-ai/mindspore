@@ -21,7 +21,7 @@ LeNet is a very simple network which is composed of only 5 layers, 2 of which ar
 
 # Dataset
 
-In this example we use the MNIST dataset of handwritten digits as published in [THE MNIST DATABASE](<http://yann.lecun.com/exdb/mnist/>)
+In this example we use the MNIST dataset of handwritten digits as published in [THE MNIST DATABASE](http://yann.lecun.com/exdb/mnist/)
 
 - Dataset size：52.4M，60,000 28*28 in 10 classes
     - Test：10,000 images
@@ -31,7 +31,7 @@ In this example we use the MNIST dataset of handwritten digits as published in [
 
 - The dataset directory structure is as follows:
 
-```python
+```text
 mnist/
 ├── test
 │   ├── t10k-images-idx3-ubyte
@@ -54,15 +54,16 @@ mnist/
 
 After installing all the above mentioned, the script in the home directory could be run with the following arguments:
 
-```python
-sh ./prepare_and_run.sh DATASET_PATH [MINDSPORE_DOCKER] [RELEASE.tar.gz]
+```bash
+sh ./prepare_and_run.sh -D DATASET_PATH [-d MINDSPORE_DOCKER] [-r RELEASE.tar.gz] [-t arm64|x86]
 ```
 
 where:
 
 - DATASET_PATH is the path to the [dataset](#dataset),
 - MINDSPORE_DOCKER is the image name of the docker that runs [MindSpore](#environment-requirements). If not provided MindSpore will be run locally
-- and REALEASE.tar.gz is a pointer to the MindSpore ToD release tar ball. If not provided, the script will attempt to find MindSpore ToD compilation output.
+- REALEASE.tar.gz is a pointer to the MindSpore ToD release tar ball. If not provided, the script will attempt to find MindSpore ToD compilation output
+- target is defaulted to arm64, i.e., on-device. If x86 is provided, the demo will be run locally. Note that infrastructure is not optimized for device
 
 # Script Detailed Description
 

@@ -254,7 +254,11 @@ union PrimitiveType {
     Assert,
     Adder,
     SparseSoftmaxCrossEntropy,
-    Reciprocal,
+    SmoothL1Loss,
+    SmoothL1LossGrad,
+    SigmoidCrossEntropyWithLogits,
+    SigmoidCrossEntropyWithLogitsGrad,
+    Reciprocal
 }
 
 enum QuantType: int {

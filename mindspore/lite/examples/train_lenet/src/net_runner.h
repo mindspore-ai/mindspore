@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MODEL_ZOO_OFFICIAL_TOD_TRAIN_LENET_SRC_NET_RUNNER_H_
-#define MODEL_ZOO_OFFICIAL_TOD_TRAIN_LENET_SRC_NET_RUNNER_H_
+#ifndef MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_NET_RUNNER_H_
+#define MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_NET_RUNNER_H_
 
 #include <tuple>
 #include <filesystem>
@@ -58,4 +58,4 @@ class NetRunner {
   static unsigned int seed_;
 };
 
-#endif  // MODEL_ZOO_OFFICIAL_TOD_TRAIN_LENET_SRC_NET_RUNNER_H_
+#endif  // MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_NET_RUNNER_H_

@@ -118,6 +118,8 @@ int MaximumGrad::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *>
   dx2->set_shape(x2->shape());
   dx1->set_data_type(dy->data_type());
   dx2->set_data_type(dy->data_type());
+  dx1->set_format(dy->format());
+  dx2->set_format(dy->format());
   return RET_OK;
 }
 }  // namespace lite

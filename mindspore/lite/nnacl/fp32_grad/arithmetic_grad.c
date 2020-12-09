@@ -34,12 +34,12 @@ void MaximumByAxes(const float *input0, const float *input1, const float *dy, co
                    const int *input1_dims, const int *dy_dims, float *output0, float *output1, int num_dims) {
   int num_output0 = 1;
   int num_output1 = 1;
-  int same_shape = 1;
+  bool same_shape = true;
   for (int idx = 0; idx < num_dims; ++idx) {
     num_output0 *= input0_dims[idx];
     num_output1 *= input1_dims[idx];
     if (input0_dims[idx] != input1_dims[idx]) {
-      same_shape = 0;
+      same_shape = false;
     }
   }
 
@@ -84,12 +84,12 @@ void MinimumByAxes(const float *input0, const float *input1, const float *dy, co
                    const int *input1_dims, const int *dy_dims, float *output0, float *output1, int num_dims) {
   int num_output0 = 1;
   int num_output1 = 1;
-  int same_shape = 1;
+  bool same_shape = true;
   for (int idx = 0; idx < num_dims; ++idx) {
     num_output0 *= input0_dims[idx];
     num_output1 *= input1_dims[idx];
     if (input0_dims[idx] != input1_dims[idx]) {
-      same_shape = 0;
+      same_shape = false;
     }
   }
 

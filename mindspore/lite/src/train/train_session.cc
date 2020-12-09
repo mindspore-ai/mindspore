@@ -304,7 +304,11 @@ void TrainSession::CompileOptimizedKernels() {
 
 bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
   return (kernel->Type() == schema::PrimitiveType_SoftmaxCrossEntropy ||
-          kernel->Type() == schema::PrimitiveType_SparseSoftmaxCrossEntropy);
+          kernel->Type() == schema::PrimitiveType_SparseSoftmaxCrossEntropy ||
+          kernel->Type() == schema::PrimitiveType_SmoothL1Loss ||
+          kernel->Type() == schema::PrimitiveType_SmoothL1LossGrad ||
+          kernel->Type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogits ||
+          kernel->Type() == schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad);
 }
 
 bool TrainSession::IsOptimizer(kernel::LiteKernel *kernel) const {

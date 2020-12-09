@@ -177,6 +177,10 @@
 #include "src/ops/assign_add.h"
 #include "src/ops/binary_cross_entropy.h"
 #include "src/ops/binary_cross_entropy_grad.h"
+#include "src/ops/smooth_l1_loss.h"
+#include "src/ops/smooth_l1_loss_grad.h"
+#include "src/ops/sigmoid_cross_entropy_with_logits.h"
+#include "src/ops/sigmoid_cross_entropy_with_logits_grad.h"
 #endif
 #endif
 namespace mindspore {
@@ -626,6 +630,14 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<BinaryCrossEntropy>(prim, inputs, quantType);
   } else if (op_type == "BinaryCrossEntropyGrad") {
     return NewPrimitiveC<BinaryCrossEntropyGrad>(prim, inputs, quantType);
+  } else if (op_type == "SmoothL1Loss") {
+    return NewPrimitiveC<SmoothL1Loss>(prim, inputs, quantType);
+  } else if (op_type == "SmoothL1LossGrad") {
+    return NewPrimitiveC<SmoothL1LossGrad>(prim, inputs, quantType);
+  } else if (op_type == "SigmoidCrossEntropyWithLogits") {
+    return NewPrimitiveC<SigmoidCrossEntropyWithLogits>(prim, inputs, quantType);
+  } else if (op_type == "SigmoidCrossEntropyWithLogitsGrad") {
+    return NewPrimitiveC<SigmoidCrossEntropyWithLogitsGrad>(prim, inputs, quantType);
 #else
   } else if (op_type == "Conv2DBackpropInput") {
     return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);
@@ -955,6 +967,14 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) MaximumGrad(primitive);
     case schema::PrimitiveType_MinimumGrad:
       return new (std::nothrow) MinimumGrad(primitive);
+    case schema::PrimitiveType_SmoothL1Loss:
+      return new (std::nothrow) SmoothL1Loss(primitive);
+    case schema::PrimitiveType_SmoothL1LossGrad:
+      return new (std::nothrow) SmoothL1LossGrad(primitive);
+    case schema::PrimitiveType_SigmoidCrossEntropyWithLogits:
+      return new (std::nothrow) SigmoidCrossEntropyWithLogits(primitive);
+    case schema::PrimitiveType_SigmoidCrossEntropyWithLogitsGrad:
+      return new (std::nothrow) SigmoidCrossEntropyWithLogitsGrad(primitive);
 #endif
     default:
       MS_LOG(ERROR) << "Unsupported primitive type in Create : " << schema::EnumNamePrimitiveType(op_type);

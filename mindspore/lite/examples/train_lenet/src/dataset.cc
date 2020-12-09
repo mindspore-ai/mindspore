@@ -72,11 +72,8 @@ int DataSet::Init(const std::string &data_base_directory, database_type type) {
 }
 
 void DataSet::InitializeMNISTDatabase(std::string dpath) {
-  //  int total_data = 0;
   num_of_classes_ = 10;
-  //  total_data +=
   ReadMNISTFile(dpath + "/train/train-images-idx3-ubyte", dpath + "/train/train-labels-idx1-ubyte", &train_data_);
-  //  total_data +=
   ReadMNISTFile(dpath + "/test/t10k-images-idx3-ubyte", dpath + "/test/t10k-labels-idx1-ubyte", &test_data_);
 }
 
@@ -151,50 +148,4 @@ int DataSet::ReadMNISTFile(const std::string &ifile_name, const std::string &lfi
     dataset->push_back(data_entry);
   }
   return number_of_labels;
-}
-
-std::vector<FileTuple> DataSet::ReadFileList(std::string dpath) {
-  std::vector<FileTuple> vec;
-  std::ifstream ifs(dpath + "/file_list.txt");
-  std::string file_name;
-  if (ifs.is_open()) {
-    int label;
-    while (!ifs.eof()) {
-      ifs >> label >> file_name;
-      vec.push_back(make_tuple(label, file_name));
-    }
-  }
-  return vec;
-}
-
-std::vector<FileTuple> DataSet::ReadDir(const std::string dpath) {
-  std::filesystem::directory_iterator dir(dpath);
-  std::vector<FileTuple> vec;
-  LabelId label_id;
-  int class_id = 0;
-  int class_label;
-  for (const auto p : dir) {
-    if (p.is_directory()) {
-      std::string path = p.path().stem().string();
-      auto label = label_id.find(path);
-      if (label == label_id.end()) {
-        label_id[path] = class_id;
-        class_label = class_id;
-        class_id++;
-        num_of_classes_ = class_id;
-      } else {
-        class_label = label->second;
-      }
-      std::filesystem::directory_iterator ndir(dpath + "/" + path);
-      for (const auto np : ndir) {
-        if (np.path().extension().string() == ".bin") {
-          std::string entry =
-            dpath + "/" + np.path().parent_path().stem().string() + "/" + np.path().filename().string();
-          FileTuple ft = make_tuple(class_label, entry);
-          vec.push_back(ft);
-        }
-      }
-    }
-  }
-  return vec;
 }
