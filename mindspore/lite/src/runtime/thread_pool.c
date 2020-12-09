@@ -464,7 +464,7 @@ int SetAffinity(pthread_t thread_id, cpu_set_t *cpuSet) {
   }
 #endif
 #else
-#ifdef __APPLE__
+#if defined(__APPLE__)
   LOG_ERROR("not bind thread to apple's cpu.");
   return RET_TP_ERROR;
 #else

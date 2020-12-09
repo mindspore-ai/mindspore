@@ -472,7 +472,7 @@ void KernelGraph::SetKernelInfoForNode(const AnfNodePtr &node) const {
     if (kOpAssignKernelNameList.find(AnfAlgo::GetCNodeName(node)) != kOpAssignKernelNameList.end()) {
       ResetAssignInputFeaatureMapFlag(node->cast<CNodePtr>());
     }
-#ifdef __APPLE__
+#if defined(__APPLE__)
     std::vector<int> feature_map_input_indexs;
 #else
     std::vector<size_t> feature_map_input_indexs;

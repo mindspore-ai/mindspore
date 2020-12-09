@@ -1337,7 +1337,7 @@ py::object PynativeExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynati
   ConstructInputTensor(op_exec_info, &tensors_mask, &input_tensors);
   // get graph info for checking it whether existing in the cache
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info, input_tensors);
-#ifdef __APPLE__
+#if defined(__APPLE__)
   session::OpRunInfo op_run_info = {op_exec_info->op_name,
                                     op_exec_info->py_primitive,
                                     op_exec_info->abstract,

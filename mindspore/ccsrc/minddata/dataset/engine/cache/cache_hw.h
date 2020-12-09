@@ -32,7 +32,7 @@
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task.h"
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #define SYSCTL_CORE_COUNT "machdep.cpu.core_count"
 #include <sys/sysctl.h>
 #include <mach/thread_policy.h>

@@ -53,7 +53,7 @@ struct OpRunInfo {
   bool is_dynamic_shape = false;
   bool is_auto_mixed_precision = false;
   std::string next_op_name = "";
-#ifdef __APPLE__
+#if defined(__APPLE__)
   int next_input_index = 0;
 #else
   size_t next_input_index = 0;

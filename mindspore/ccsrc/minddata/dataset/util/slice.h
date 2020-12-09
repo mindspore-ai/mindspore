@@ -23,7 +23,7 @@
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/status.h"
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
 #define off64_t off_t
 #endif
 

@@ -697,7 +697,7 @@ Status Tensor::GetDataAsNumpyStrings(py::array *data) {
   auto itr = begin<std::string_view>();
   uint64_t max_value = 0;
   for (; itr != end<std::string_view>(); itr++) {
-#ifdef __APPLE__
+#if defined(__APPLE__)
     max_value = fmax((*itr).length(), max_value);
 #else
     max_value = std::max((*itr).length(), max_value);
