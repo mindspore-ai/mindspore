@@ -19,23 +19,13 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxQuantizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                                 schema::CNodeT *op) {
+lite::PrimitiveC *OnnxQuantizeParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                         const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx QuantizeDequantizeParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::QuantDTypeCastT> attr = std::make_unique<schema::QuantDTypeCastT>();
+  auto attr = std::make_unique<schema::QuantDTypeCastT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed.";
-    return RET_NULL_PTR;
+    return nullptr;
   }
   if (onnx_node.op_type() == "Int8Quantize") {
     attr->srcT = kNumberTypeFloat32;
@@ -45,11 +35,16 @@ STATUS OnnxQuantizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx:
     attr->dstT = kNumberTypeFloat32;
   } else {
     MS_LOG(ERROR) << "Unsupported nodeType: " << onnx_node.op_type().c_str();
-    return RET_ERROR;
+    return nullptr;
   }
-  op->primitive->value.type = schema::PrimitiveType_QuantDTypeCast;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_QuantDTypeCast;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 OnnxNodeRegistrar g_onnxInt8QuantizeParser("Int8Quantize", new OnnxQuantizeParser());

@@ -20,23 +20,13 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                               schema::CNodeT *op) {
+lite::PrimitiveC *OnnxExpandParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                       const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx ExpandParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::BroadcastToT> attr = std::make_unique<schema::BroadcastToT>();
+  auto attr = std::make_unique<schema::BroadcastToT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   std::vector<int> dst_shape;
@@ -46,7 +36,7 @@ STATUS OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
                  [onnx_expand_power](const onnx::NodeProto &proto) { return proto.output(0) == onnx_expand_power; });
   if (node_iter == onnx_graph.node().end()) {
     MS_LOG(ERROR) << "can not find node: " << onnx_expand_power;
-    return RET_ERROR;
+    return nullptr;
   }
   for (const auto &attrPower : node_iter->attribute()) {
     if (attrPower.name() == "value") {
@@ -58,9 +48,14 @@ STATUS OnnxExpandParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::N
     }
   }
   attr->dst_shape = dst_shape;
-  op->primitive->value.type = schema::PrimitiveType_BroadcastTo;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_BroadcastTo;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 OnnxNodeRegistrar g_onnxExpandSpaceParser("Expand", new OnnxExpandParser());

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,21 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_BIASADD_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_BIASADD_PARSER_H
+#ifdef PRIMITIVE_WRITEABLE
+#ifndef LITE_MINDSPORE_LITE_C_OPS_CONSTANT_H_
+#define LITE_MINDSPORE_LITE_C_OPS_CONSTANT_H_
 
-#include "tools/converter/parser/onnx/onnx_node_parser.h"
-#include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
+#include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
-class OnnxBiasAddParser : public OnnxNodeParser {
+class Constant : public PrimitiveC {
  public:
-  OnnxBiasAddParser() : OnnxNodeParser("BiasAdd") {}
-  ~OnnxBiasAddParser() override = default;
-
-  lite::PrimitiveC *ParseLitePrimitive(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  Constant() = default;
+  ~Constant() = default;
+  MS_DECLARE_PARENT(Constant, PrimitiveC);
+  explicit Constant(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_BIASADD_PARSER_H
+
+#endif  // LITE_MINDSPORE_LITE_C_OPS_CONSTANT_H_
+#endif

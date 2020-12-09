@@ -15,256 +15,183 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_arithmetic_operation_parser.h"
-#include "tools/converter/parser/onnx/onnx_tensor_parser.h"
 #include <memory>
 #include <numeric>
 #include <functional>
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxAddParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxAddParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx AddParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::AddT> attr = std::make_unique<schema::AddT>();
+  auto attr = std::make_unique<schema::AddT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Add;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Add;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxSubParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxSubParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx SubParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::SubT> attr = std::make_unique<schema::SubT>();
+  auto attr = std::make_unique<schema::SubT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Sub;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Sub;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxMulParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxMulParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx MulParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::MulT> attr = std::make_unique<schema::MulT>();
+  auto attr = std::make_unique<schema::MulT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Mul;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Mul;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxDivParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxDivParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx DivParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::DivT> attr = std::make_unique<schema::DivT>();
+  auto attr = std::make_unique<schema::DivT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Div;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Div;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxPowParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxPowParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx PowParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::PowerT> attr(new schema::PowerT());
+  auto attr = std::make_unique<schema::PowerT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  const auto &onnx_pow_power = onnx_node.input(1);
-  int index = OnnxTensorParser::GetInstance()->GetTensorCache()->FindTensor(onnx_pow_power);
-  if (index == -1) {
-    MS_LOG(ERROR) << "can not find node: " << onnx_pow_power;
-    return RET_ERROR;
-  }
-  auto pow_attr = OnnxTensorParser::GetInstance()->GetTensorCache()->GetCachedTensor()[index];
-  if (std::accumulate(pow_attr->dims.begin(), pow_attr->dims.end(), 1, std::multiplies<int>()) != 1) {
-    MS_LOG(ERROR) << "the exponent element num is bigger than 1, which don't support now.";
-    return RET_NOT_SUPPORT;
-  }
-  if (pow_attr->data.data() == nullptr) {
-    MS_LOG(ERROR) << "power's attr pow can't be obtained.";
-    return RET_INVALID_OP_ATTR;
-  }
-  attr->power = *reinterpret_cast<float *>(pow_attr->data.data());
   attr->scale = 1.0f;
   attr->shift = 0.0f;
-  op->primitive->value.type = schema::PrimitiveType_Power;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Power;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxEqualParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                              schema::CNodeT *op) {
+lite::PrimitiveC *OnnxEqualParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                      const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx EqualParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::EqualT> attr = std::make_unique<schema::EqualT>();
+  auto attr = std::make_unique<schema::EqualT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Equal;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Equal;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxLessParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxLessParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                     const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx LessParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::LessT> attr = std::make_unique<schema::LessT>();
+  auto attr = std::make_unique<schema::LessT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Less;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Less;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
-STATUS OnnxGreaterParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                                schema::CNodeT *op) {
+
+lite::PrimitiveC *OnnxGreaterParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                        const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx GreaterParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::GreaterT> attr = std::make_unique<schema::GreaterT>();
+  auto attr = std::make_unique<schema::GreaterT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Greater;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Greater;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxMinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxMinParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx MinParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::MinimumT> attr = std::make_unique<schema::MinimumT>();
+  auto attr = std::make_unique<schema::MinimumT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Minimum;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Minimum;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxEltwiseParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                                schema::CNodeT *op) {
+lite::PrimitiveC *OnnxEltwiseParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                        const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx EltwiseParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::EltwiseT> attr = std::make_unique<schema::EltwiseT>();
+  auto attr = std::make_unique<schema::EltwiseT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   if (onnx_node.op_type() == "Sum") {
@@ -272,446 +199,357 @@ STATUS OnnxEltwiseParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::
   } else if (onnx_node.op_type() == "Max") {
     attr->mode = schema::EltwiseMode_MAXIMUM;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Eltwise;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Eltwise;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxFloorParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                              schema::CNodeT *op) {
+lite::PrimitiveC *OnnxFloorParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                      const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx FloorParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::FloorT> attr = std::make_unique<schema::FloorT>();
+  auto attr = std::make_unique<schema::FloorT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Floor;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Floor;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxAbsParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxAbsParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx AbsParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::AbsT> attr = std::make_unique<schema::AbsT>();
+  auto attr = std::make_unique<schema::AbsT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Abs;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Abs;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxNegParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxNegParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx NegParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::NegT> attr = std::make_unique<schema::NegT>();
+  auto attr = std::make_unique<schema::NegT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Neg;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Neg;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxExpParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxExpParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx ExpParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::ExpT> attr = std::make_unique<schema::ExpT>();
+  auto attr = std::make_unique<schema::ExpT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Exp;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Exp;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxCosParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxCosParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx CosParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::CosT> attr = std::make_unique<schema::CosT>();
+  auto attr = std::make_unique<schema::CosT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Cos;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Cos;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxSinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxSinParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx SinParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::SinT> attr = std::make_unique<schema::SinT>();
+  auto attr = std::make_unique<schema::SinT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Sin;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Sin;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxSqrtParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxSqrtParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                     const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx SqrtParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::SqrtT> attr = std::make_unique<schema::SqrtT>();
+  auto attr = std::make_unique<schema::SqrtT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Sqrt;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Sqrt;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxCeilParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxCeilParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                     const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx CeilParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::CeilT> attr = std::make_unique<schema::CeilT>();
+  auto attr = std::make_unique<schema::CeilT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Ceil;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Ceil;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxLogParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxLogParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx LogParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::LogT> attr = std::make_unique<schema::LogT>();
+  auto attr = std::make_unique<schema::LogT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Log;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Log;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxTanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxTanParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx TanParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::TanT> attr = std::make_unique<schema::TanT>();
-
+  auto attr = std::make_unique<schema::TanT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Tan;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Tan;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxAtanParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxAtanParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                     const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx AtanParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::AtanT> attr = std::make_unique<schema::AtanT>();
+  auto attr = std::make_unique<schema::AtanT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Atan;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Atan;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxAsinParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "onnx AsinParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::AsinT> attr = std::make_unique<schema::AsinT>();
+lite::PrimitiveC *OnnxAsinParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                     const onnx::NodeProto &onnx_node) {
+  auto attr = std::make_unique<schema::AsinT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Asin;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Asin;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxTanhParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxTanhParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                     const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx TanhParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
+  auto attr = std::make_unique<schema::ActivationT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
   attr->type = schema::ActivationType_TANH;
-  op->primitive->value.type = schema::PrimitiveType_Activation;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Activation;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxSignParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxSignParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                     const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx TanhParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::ActivationT> attr = std::make_unique<schema::ActivationT>();
+  auto attr = std::make_unique<schema::ActivationT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
   attr->type = schema::ActivationType_SIGN;
-  op->primitive->value.type = schema::PrimitiveType_Activation;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Activation;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxAndParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxAndParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx AndParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::LogicalAndT> attr = std::make_unique<schema::LogicalAndT>();
+  auto attr = std::make_unique<schema::LogicalAndT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-  op->primitive->value.type = schema::PrimitiveType_LogicalAnd;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_LogicalAnd;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxOrParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxOrParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                   const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx OrParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::LogicalOrT> attr = std::make_unique<schema::LogicalOrT>();
+  auto attr = std::make_unique<schema::LogicalOrT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-  op->primitive->value.type = schema::PrimitiveType_LogicalOr;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_LogicalOr;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxNotParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) {
+lite::PrimitiveC *OnnxNotParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                    const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx NotParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::LogicalNotT> attr = std::make_unique<schema::LogicalNotT>();
+  auto attr = std::make_unique<schema::LogicalNotT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-  op->primitive->value.type = schema::PrimitiveType_LogicalNot;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_LogicalNot;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxRoundParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                              schema::CNodeT *op) {
+lite::PrimitiveC *OnnxRoundParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                      const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx RoundParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::RoundT> attr = std::make_unique<schema::RoundT>();
+  auto attr = std::make_unique<schema::RoundT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-  op->primitive->value.type = schema::PrimitiveType_Round;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Round;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
-STATUS OnnxReciprocalParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                                   schema::CNodeT *op) {
+lite::PrimitiveC *OnnxReciprocalParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                           const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx ReciprocalParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
   auto attr = std::make_unique<schema::ReciprocalT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
-  op->primitive->value.type = schema::PrimitiveType_Reciprocal;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Reciprocal;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 OnnxNodeRegistrar g_onnxAddParser("Add", new OnnxAddParser());
 OnnxNodeRegistrar g_onnxInt8AddParser("Int8Add", new OnnxAddParser());

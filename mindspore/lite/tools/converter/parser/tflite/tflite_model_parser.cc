@@ -110,7 +110,7 @@ STATUS TfliteModelParser::ConvertOps() {
     status = ConvertOpQuantParams(op.get(), primitiveC);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "convert " << op_name << " quant param failed.";
-      return status;
+      continue;
     }
 
     std::vector<AnfNodePtr> op_inputs = {NewValueNode(std::shared_ptr<lite::PrimitiveC>(primitiveC))};
@@ -132,7 +132,7 @@ STATUS TfliteModelParser::ConvertOps() {
       status = ConvertConstTensor(input_tensor.get(), parameter.get());
       if (status != RET_OK) {
         MS_LOG(ERROR) << "convert " << op_name << " node: " << input_idx << " const node failed.";
-        return status;
+        continue;
       }
       op_inputs.emplace_back(parameter);
       nodes_.insert(std::pair(input_idx, parameter));
@@ -144,8 +144,7 @@ STATUS TfliteModelParser::ConvertOps() {
     status = ConvertOutputTensor(op.get(), new_cnode);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Convert output tensors for " << new_cnode->fullname_with_scope() << " failed.";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return status;
+      continue;
     }
   }
   return status;
@@ -404,6 +403,7 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
   }
   return RET_OK;
 }
+
 MetaGraphT *TfliteModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,
                                          const QuantType &quant_type) {
   return nullptr;

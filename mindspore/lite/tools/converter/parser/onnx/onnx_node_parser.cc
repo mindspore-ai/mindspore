@@ -15,7 +15,9 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
+#include <algorithm>
 #include <vector>
+#include <memory>
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
 
 namespace mindspore {

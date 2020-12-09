@@ -90,6 +90,7 @@ STATUS CaffeModelParser::ConvertLayers() {
     auto primitive_c = node_parser->ParseLitePrimitive(layer, weight);
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "parse node " << layer.name() << " failed.";
+      status = RET_ERROR;
       continue;
     }
 
@@ -98,8 +99,7 @@ STATUS CaffeModelParser::ConvertLayers() {
     status = ConvertBottom(layer, &input_nodes);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Convert layer bottom for " << layer.name() << " failed.";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return status;
+      continue;
     }
 
     // build weights
@@ -107,8 +107,7 @@ STATUS CaffeModelParser::ConvertLayers() {
     status = ConvertBlobs(weight, &const_parameters);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Convert blobs for " << layer.name() << " failed.";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return status;
+      continue;
     }
 
     // build cnode
@@ -122,15 +121,13 @@ STATUS CaffeModelParser::ConvertLayers() {
     status = ConvertTop(layer, new_cnode);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Convert outputs for " << layer.name() << " failed.";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return status;
+      continue;
     }
 
     status = ConvertLayerQuantParams(layer, weight, primitive_c);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Convert quant params for " << layer.name() << " failed.";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
-      return status;
+      continue;
     }
   }
   return status;

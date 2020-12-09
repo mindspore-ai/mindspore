@@ -14,26 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_TENSOR_PARSER_H
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_TENSOR_PARSER_H
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_GEMM_PARSER_H
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_GEMM_PARSER_H
 
-#include "tools/common/tensor_util.h"
+#include "tools/converter/parser/onnx/onnx_node_parser.h"
+#include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
 
 namespace mindspore {
 namespace lite {
-class OnnxTensorParser {
+class OnnxGemmParser : public OnnxNodeParser {
  public:
-  ~OnnxTensorParser() = default;
-  static OnnxTensorParser *GetInstance() {
-    static OnnxTensorParser onnxTensorParser;
-    return &onnxTensorParser;
-  }
-  TensorCache *GetTensorCache() { return &tensor_cache_; }
+  OnnxGemmParser() : OnnxNodeParser("Gemm") {}
+  ~OnnxGemmParser() override = default;
 
- private:
-  OnnxTensorParser() = default;
-  TensorCache tensor_cache_;
+  lite::PrimitiveC *ParseLitePrimitive(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_TESNOR_PARSER_H
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_ONNX_GEMM_PARSER_H

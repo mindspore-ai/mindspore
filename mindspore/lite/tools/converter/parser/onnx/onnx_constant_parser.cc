@@ -16,31 +16,73 @@
 
 #include "tools/converter/parser/onnx/onnx_constant_parser.h"
 #include <memory>
+#include <vector>
+#include <algorithm>
+#include "tools/converter/parser/onnx/onnx_model_parser.h"
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxConstantParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                                 schema::CNodeT *op) {
-  MS_LOG(DEBUG) << "onnx ConstantParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
+STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, lite::PrimitiveC *primitive_c) {
+  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
+  if (param_value == nullptr) {
+    MS_LOG(ERROR) << "new a paramValueLite failed.";
+    return RET_ERROR;
   }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
+  auto data_type =
+    OnnxModelParser::GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type()));
+  if (data_type == kTypeUnknown) {
+    MS_LOG(ERROR) << "not support onnx data type "
+                  << static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type());
+    return RET_ERROR;
   }
-
-  std::unique_ptr<schema::ConstantT> attr = std::make_unique<schema::ConstantT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+  std::vector<int64_t> shape_vector(onnx_const_tensor.dims().begin(), onnx_const_tensor.dims().end());
+  std::vector<int> shape;
+  std::transform(shape_vector.begin(), shape_vector.end(), std::back_inserter(shape),
+                 [](const int64_t &val) { return static_cast<int32_t>(val); });
+  param_value->set_tensor_type(data_type);
+  param_value->set_tensor_shape(shape);
+  param_value->set_format(schema::Format_NCHW);
+  if (OnnxModelParser::CopyOnnxTensorData(onnx_const_tensor, param_value) != RET_OK) {
+    MS_LOG(ERROR) << "get value failed.";
+    return RET_ERROR;
   }
-
-  op->primitive->value.type = schema::PrimitiveType_Constant;
-  op->primitive->value.value = attr.release();
+  primitive_c->set_attr("const_data", param_value);
   return RET_OK;
+}
+
+lite::PrimitiveC *OnnxConstantParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                         const onnx::NodeProto &onnx_node) {
+  MS_LOG(DEBUG) << "onnx ConstantParser";
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Constant;
+  auto primitive_c = PrimitiveC::Create(primitive.release());
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "create primitiveC failed.";
+    return nullptr;
+  }
+  for (const auto &attr : onnx_node.attribute()) {
+    if (attr.name() == "sparse_value") {
+      MS_LOG(WARNING) << "sparse_value";
+      continue;
+    }
+    if (attr.name() == "value") {
+      const auto &const_tensor = attr.t();
+      if (AddDataInfoAttr(const_tensor, primitive_c) != RET_OK) {
+        MS_LOG(ERROR) << "add basic attr failed.";
+        delete primitive_c;
+        return nullptr;
+      }
+    } else {
+      MS_LOG(ERROR) << "processing Constant op attr " << attr.name() << " not implemented";
+      delete primitive_c;
+      return nullptr;
+    }
+  }
+  return primitive_c;
 }
 
 OnnxNodeRegistrar g_onnxConstantParser("Constant", new OnnxConstantParser());

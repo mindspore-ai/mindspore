@@ -26,75 +26,57 @@
 #include <vector>
 #include <memory>
 #include <set>
-#include <map>
+#include <unordered_map>
 #include "securec/include/securec.h"
 #include "tools/converter/model_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
-#include "tools/converter/parser/onnx/onnx_tensor_parser.h"
 #include "proto/onnx.pb.h"
+#include "src/param_value_lite.h"
 
 namespace mindspore {
 namespace lite {
 class OnnxModelParser : public ModelParser {
  public:
-  OnnxModelParser();
+  OnnxModelParser() = default;
 
-  virtual ~OnnxModelParser();
+  ~OnnxModelParser() override = default;
 
-  //  schema::MetaGraphT *ParseGraph(const onnx::GraphProto &graph, const QuantType &quantType = QuantType_QUANT_NONE);
-  int ParseGraph(schema::MetaGraphT *dst_graph, schema::SubGraphT *dst_sub_graph, const onnx::GraphProto &onnx_graph,
-                 const QuantType &quantType);
+  MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
+                        const QuantType &quant_type) override {
+    return nullptr;
+  }
 
+  FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file,
+                     const QuantType &quant_type) override;
   static TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
+  static STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_const_value,
+                                   const ParamValueLitePtr &param_value_lite);
 
  private:
-  schema::MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
-                                const QuantType &quant_type = QuantType_QUANT_NONE) override;
+  STATUS InitOriginModel(const std::string &model_file);
+  STATUS ConvertNodes();
+  STATUS ConvertConstTensors();
+  STATUS ConvertGraphInputs();
+  STATUS ConvertGraphOutputs();
+  STATUS BuildReturnNode(const std::vector<AnfNodePtr> &return_inputs);
+  STATUS BuildParameterNode(const ParameterPtr &parameter_node, const onnx::TensorProto &tensor);
+  STATUS BuildParameterNodeForQuantParam(void *data, const std::string &name, TypeId type);
+  STATUS BuildCNode(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c);
+  STATUS BuildOpOutputs(const onnx::NodeProto &onnx_node, const CNodePtr &cnode);
+  STATUS ConvertSpecialOnnxNode(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c);
+  STATUS ConvertOnnxGemmNode(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c);
+  STATUS BuildCNodeForGemm(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c, const std::string &name);
+  STATUS ConvertOpQuantParams(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c);
+  STATUS ParseQuantParam(const onnx::NodeProto &onnx_node);
+  STATUS SetTensorQuantParam(const std::string &tensor_name, std::vector<QuantParamT> *quant_params);
+  STATUS SetTensorQuantParamFromNode(const std::string &tensor_name, std::vector<QuantParamT> *quant_params);
+  STATUS CopyTensorQuantParam(const std::string &tensor_name, QuantParamT *quant_param, bool scale_or_not);
+  bool IsSpecialOnnxNode(const onnx::NodeProto &onnx_node);
 
-  std::vector<int32_t> GetDimsFromOnnxValue(const onnx::ValueInfoProto &onnx_value);
-
-  STATUS SetGraphConstTensor(const onnx::GraphProto &onnx_graph);
-
-  STATUS SetGraphInputTensor(const onnx::GraphProto &onnx_graph, schema::SubGraphT *graph);
-
-  STATUS SetGraphOutputTensor(const onnx::GraphProto &onnx_graph, schema::SubGraphT *graph);
-
-  STATUS AddValueInfo(const onnx::ValueInfoProto &proto, const std::string &name, const Category &type, int *index);
-
-  STATUS AddTensorProto(const onnx::TensorProto &proto, const std::string &name, const Category &type, int *index);
-
-  STATUS ParseOnnxNodeToDstOp(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                              schema::CNodeT *dst_op, const QuantType &quantType, schema::MetaGraphT *dst_graph);
-
-  void ParseOnnxGemmNode(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                         schema::SubGraphT *sub_graph, schema::MetaGraphT *graph, const QuantType &quant_type);
-
-  STATUS ParseOnnxGivenFillNode(const onnx::NodeProto &onnx_node);
-
-  STATUS ParseOnnxNodeAttr(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                           const string &onnx_op_type, schema::CNodeT *dst_op);
-
-  void SetOpQuantParams(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *dst_op,
-                        schema::TensorT *dst_tensor);
-
-  STATUS SetOpInputIndex(const std::vector<string> &node_inputs, schema::CNodeT *dst_op,
-                         const onnx::NodeProto &onnx_node);
-
-  STATUS SetOpOutputIndex(const std::vector<string> &node_outputs, schema::CNodeT *dst_op);
-
-  STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_init_value, schema::TensorT *tensor);
-
-  STATUS SetAllTensors(schema::MetaGraphT *graphDef);
-
-  void FindGraphInputAndConst(const onnx::GraphProto &onnx_graph);
-
-  STATUS ParseSubgraph(schema::CNodeT *dst_op, const onnx::NodeProto &onnx_node, const QuantType &quantType,
-                       schema::MetaGraphT *dst_graph);
-
- private:
-  std::vector<std::string> graphInputNames;
-  std::vector<std::string> graphConstNames;
-  int subGraphNum = 0;
+  onnx::ModelProto onnx_model_;
+  onnx::GraphProto onnx_graph_;
+  std::unordered_map<std::string, AnfNodePtr> nodes_;
+  FuncGraphPtr func_graph_ptr_ = nullptr;
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -27,7 +27,7 @@ class OnnxDepthToSpaceParser : public OnnxNodeParser {
   OnnxDepthToSpaceParser() : OnnxNodeParser("DepthToSpace") {}
   ~OnnxDepthToSpaceParser() override = default;
 
-  STATUS Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node, schema::CNodeT *op) override;
+  lite::PrimitiveC *ParseLitePrimitive(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore

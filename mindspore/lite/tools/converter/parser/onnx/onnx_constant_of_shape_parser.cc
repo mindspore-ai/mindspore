@@ -20,23 +20,13 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                                        schema::CNodeT *op) {
+lite::PrimitiveC *OnnxConstantOfShapeParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                                const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx ConstantOfShapeParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::ConstantOfShapeT> attr = std::make_unique<schema::ConstantOfShapeT>();
+  auto attr = std::make_unique<schema::ConstantOfShapeT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
@@ -55,19 +45,24 @@ STATUS OnnxConstantOfShapeParser::Parse(const onnx::GraphProto &onnx_graph, cons
           const auto &tensor = onnx_node_attr.t();
           auto ret = GetTensorDataFromOnnx(tensor, &attr->value, &attr->dataType);
           if (ret != RET_OK) {
-            return ret;
+            MS_LOG(ERROR) << "get data from tensor failed";
+            return nullptr;
           }
         } break;
         default:
           MS_LOG(ERROR) << "The data type is not supported.";
-          return RET_ERROR;
+          return nullptr;
       }
     }
   }
-
-  op->primitive->value.type = schema::PrimitiveType_ConstantOfShape;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_ConstantOfShape;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 OnnxNodeRegistrar g_onnxConstantOfShapeParser("ConstantOfShape", new OnnxConstantOfShapeParser());

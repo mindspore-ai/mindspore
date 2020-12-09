@@ -20,23 +20,13 @@
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node,
-                                schema::CNodeT *op) {
+lite::PrimitiveC *OnnxReshapeParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
+                                                        const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx ReshapeParser";
-  if (op == nullptr) {
-    MS_LOG(ERROR) << "op is null";
-    return RET_NULL_PTR;
-  }
-  op->primitive = std::make_unique<schema::PrimitiveT>();
-  if (op->primitive == nullptr) {
-    MS_LOG(ERROR) << "op->primitive is null";
-    return RET_NULL_PTR;
-  }
-
-  std::unique_ptr<schema::ReshapeT> attr = std::make_unique<schema::ReshapeT>();
+  auto attr = std::make_unique<schema::ReshapeT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   attr->format = schema::Format_NCHW;
@@ -51,28 +41,17 @@ STATUS OnnxReshapeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::
         }
       }
     }
-  } else {
-    onnx::TensorProto input_shape;
-    const auto &shape_name = onnx_node.input(1);
-    for (const auto &it : onnx_graph.initializer()) {
-      if (it.name() == shape_name) {
-        input_shape = it;
-        break;
-      }
-    }
-    if (input_shape.int64_data_size() == 0) {
-      MS_LOG(INFO) << "shape maybe from another op other than const initializer";
-    } else {
-      for (int i = 0; i < input_shape.int64_data_size(); ++i) {
-        shape.push_back(input_shape.int64_data(i));
-      }
-    }
   }
   attr->shape = shape;
 
-  op->primitive->value.type = schema::PrimitiveType_Reshape;
-  op->primitive->value.value = attr.release();
-  return RET_OK;
+  auto primitive = std::make_unique<schema::PrimitiveT>();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "new primitive failed";
+    return nullptr;
+  }
+  primitive->value.type = schema::PrimitiveType_Reshape;
+  primitive->value.value = attr.release();
+  return PrimitiveC::Create(primitive.release());
 }
 
 OnnxNodeRegistrar g_onnxReshapeParser("Reshape", new OnnxReshapeParser());

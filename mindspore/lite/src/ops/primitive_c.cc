@@ -149,6 +149,7 @@
 #include "src/ops/oneslike.h"
 #include "src/ops/unsorted_segment_sum.h"
 #include "src/ops/reciprocal.h"
+#include "src/ops/constant.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -186,7 +187,7 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-std::vector<int> CastToInt(const ValuePtr value) {
+std::vector<int> CastToInt(const ValuePtr &value) {
   if (value == nullptr) {
     MS_LOG(WARNING) << "valueptr is nullptr.";
     return {};
@@ -903,6 +904,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) Dequant(primitive);
     case schema::PrimitiveType_Reciprocal:
       return new (std::nothrow) Reciprocal(primitive);
+    case schema::PrimitiveType_Constant:
+      return new (std::nothrow) Constant(primitive);
 
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
