@@ -625,7 +625,7 @@ bool PopTaskFromQueue(Thread *thread, Task **task) {
     LOG_ERROR("thread is nullptr");
     return false;
   }
-  if (thread->task_size == 0) {
+  if (atomic_load_explicit(&thread->task_size, memory_order_relaxed) == 0) {
     return false;
   }
   const int head_index = atomic_load_explicit(&thread->head, memory_order_relaxed);
@@ -651,7 +651,7 @@ void WaitAllThread(struct ThreadPool *thread_pool) {
         LOG_ERROR("get thread failed, thread_id: %d", i);
         return;
       }
-      if (thread->task_size != 0) {
+      if (atomic_load_explicit(&thread->task_size, memory_order_acquire) != 0) {
         k_success_flag = false;
         break;
       }
@@ -731,7 +731,7 @@ void ThreadRun(Thread *thread) {
           return;
         }
         task->func(task->content, thread_id);
-        atomic_fetch_sub_explicit(&thread->task_size, 1, memory_order_relaxed);
+        atomic_fetch_sub_explicit(&thread->task_size, 1, memory_order_release);
         spin_count = 0;
         sem_trywait(&thread->sem);
       } else {
