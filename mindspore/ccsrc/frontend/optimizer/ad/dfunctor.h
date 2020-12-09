@@ -99,9 +99,13 @@ class DFunctor : public std::enable_shared_from_this<DFunctor> {
   // Update k hole with adjoint_definition, only applied in recursive case.
   void UpdateAdjoint(const AdjointPtr &adjoint_definition);
   void CallDoutHoleOnTape();
-  void ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_morph);
   // Replace the primal graph with k graph
   void EliminatePrimalGraph();
+  // Pynative specialize
+  void ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_morph);
+  ValuePtr GenNewTensorInner(const ValuePtr &value);
+  ValuePtr GenNewTensor(const FuncGraphManagerPtr &mng, const AnfNodePtr &node, const ValuePtr &value,
+                        bool need_replace_forward);
 
   std::unordered_map<AnfNodePtr, AdjointPtr> anfnode_to_adjoin_;
   // Cache for indirect fv backpropagation, K o K can only do backprop layer by layer.

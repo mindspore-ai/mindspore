@@ -311,8 +311,8 @@ class _PynativeExecutor:
     def grad(self, grad, obj, weights, *args, **kwargs):
         self._executor.grad_net(grad, obj, weights, *args, *(kwargs.values()))
 
-    def clear(self, flag=""):
-        self._executor.clear(flag)
+    def clear(self, cell_id=""):
+        self._executor.clear(cell_id)
 
     def sync(self):
         self._executor.sync()
@@ -320,9 +320,9 @@ class _PynativeExecutor:
     def set_grad_flag(self, flag):
         self._executor.set_grad_flag(flag)
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, obj, *args, **kwargs):
         args = args + tuple(kwargs.values())
-        return self._executor(args, "")
+        return self._executor(obj, args, "")
 
 
 class _Executor:

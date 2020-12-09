@@ -276,7 +276,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
   return node_adjoint;
 }
 
-ValuePtr GenNewTensorInner(const ValuePtr &value) {
+ValuePtr DFunctor::GenNewTensorInner(const ValuePtr &value) {
   std::vector<ValuePtr> value_list;
   if (value->isa<tensor::Tensor>()) {
     auto tensor = value->cast<tensor::TensorPtr>();
@@ -294,11 +294,18 @@ ValuePtr GenNewTensorInner(const ValuePtr &value) {
   return value;
 }
 
-ValuePtr GenNewTensor(const FuncGraphManagerPtr &mng, const AnfNodePtr &node, const ValuePtr &value) {
+ValuePtr DFunctor::GenNewTensor(const FuncGraphManagerPtr &mng, const AnfNodePtr &node, const ValuePtr &value,
+                                bool need_replace_forward) {
   ValuePtr out = value;
   auto ref_size = mng->node_users()[node].size();
   if (ref_size < 2) {
-    out = GenNewTensorInner(value);
+    if (need_replace_forward) {
+      out = GenNewTensorInner(value);
+    } else {
+      auto tensor = value->cast<tensor::TensorPtr>();
+      tensor->set_device_address(nullptr);
+      return tensor;
+    }
   }
   return out;
 }
@@ -333,8 +340,13 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
   auto func_graph = GetValueNode<FuncGraphPtr>(input_fg);
   MS_EXCEPTION_IF_NULL(func_graph);
   auto manager = Manage({fg, func_graph}, false);
-
-  auto forward_value = GenNewTensor(manager, equivdout, forward);
+  auto need_replace_forward = pynative::PynativeExecutor::GetInstance()->need_replace_forward();
+  auto forward_value = GenNewTensor(manager, equivdout, forward, need_replace_forward);
+  if (!need_replace_forward) {
+    cnode_morph->clear_inputs_value();
+    MS_LOG(DEBUG) << "No need replace forward result";
+    return;
+  }
   MS_LOG(DEBUG) << "Replace: " << equivdout->ToString() << " with " << forward;
   auto value_node = NewValueNode(forward_value);
   value_node->set_has_new_value(true);
@@ -373,7 +385,7 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
   }
   auto out_node = c_input->cast<ValueNodePtr>();
   MS_EXCEPTION_IF_NULL(out_node);
-  out_node->set_value(GenNewTensor(manager, out_node, out_node->value()));
+  out_node->set_value(GenNewTensor(manager, out_node, out_node->value(), need_replace_forward));
   // clear resource
   cnode_morph->clear_inputs_value();
   fg->ClearAllManagerInfo();
