@@ -22,7 +22,7 @@ namespace kernel {
 
 template <typename T>
 void MaximumCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
-  MS_EXCEPTION_IF_NULL(kernel_node);
+  CheckParam(kernel_node);
   input_x_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   input_y_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
   output_shape_ = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
@@ -40,6 +40,18 @@ void MaximumCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
     InitInputTensors(input_x_dtype, input_y_dtype);
   } else {
     MS_LOG(EXCEPTION) << "Only support input two tensors or one tensor and one scalar";
+  }
+}
+
+template <typename T>
+void MaximumCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+  if (input_num != 2) {
+    MS_LOG(EXCEPTION) << "Input number is " << input_num << ", but MaximumCPUKernel needs 2 input.";
+  }
+  size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
+  if (output_num != 1) {
+    MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but MaximumCPUKernel needs 1 output.";
   }
 }
 
@@ -70,7 +82,6 @@ bool MaximumCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
   T *input_x_ = reinterpret_cast<T *>(inputs[0]->addr);
   T *input_y_ = reinterpret_cast<T *>(inputs[1]->addr);
   T *output_ = reinterpret_cast<T *>(outputs[0]->addr);
-
   BroadcastArith(input_x_, input_y_, output_);
   return true;
 }

@@ -34,6 +34,8 @@ class MaximumCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
+  void CheckParam(const CNodePtr &kernel_node);
+
   bool IsBroadcast();
 
   size_t Index(const size_t &index, const size_t &dim);
@@ -86,22 +88,6 @@ MS_REG_CPU_KERNEL_T(
   Maximum,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   MaximumCPUKernel, float);
-
-MS_REG_CPU_KERNEL_T(
-  Maximum, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  MaximumCPUKernel, int32_t);
-
-MS_REG_CPU_KERNEL_T(
-  Maximum, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt32),
-  MaximumCPUKernel, int32_t);
-
-MS_REG_CPU_KERNEL_T(
-  Maximum, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
-  MaximumCPUKernel, int64_t);
-
-MS_REG_CPU_KERNEL_T(
-  Maximum, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeInt64),
-  MaximumCPUKernel, int64_t);
 
 MS_REG_CPU_KERNEL_T(
   Maximum, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),

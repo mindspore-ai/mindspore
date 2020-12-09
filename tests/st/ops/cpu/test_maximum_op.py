@@ -128,40 +128,6 @@ def test_maximum_two_tensors_notBroadcast_all_oneDimension_int():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu_training
 @pytest.mark.env_onecard
-def test_maximum_two_tensors_Broadcast_bool():
-    x = Tensor(np.array([[2, 2]]).astype(np.int32))
-    y = Tensor(np.array([[True, False], [False, False]]).astype(np.bool_))
-    expect = [[2, 2], [2, 2]]
-    error = np.ones(shape=[2, 2]) * 1.0e-5
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    max_op = TwoTensorsMaximum()
-    output = max_op(x, y)
-    diff = output.asnumpy() - expect
-    assert np.all(diff < error)
-    assert np.all(-diff < error)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
-def test_maximum_two_tensors_notBroadcast_bool():
-    x = Tensor(np.array([[2, 2], [-1, 100]]).astype(np.int32))
-    y = Tensor(np.array([[True, False], [False, False]]).astype(np.bool_))
-    expect = [[2, 2], [0, 100]]
-    error = np.ones(shape=[2, 2]) * 1.0e-5
-
-    context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
-    max_op = TwoTensorsMaximum()
-    output = max_op(x, y)
-    diff = output.asnumpy() - expect
-    assert np.all(diff < error)
-    assert np.all(-diff < error)
-
-
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu_training
-@pytest.mark.env_onecard
 def test_maximum_two_tensors_notBroadcast_float32():
     x = Tensor(np.array([[2.0, 2.0], [-1, 100]]).astype(np.float32))
     y = Tensor(np.array([[1.0, 2.1], [-0.8, 100.5]]).astype(np.float32))
