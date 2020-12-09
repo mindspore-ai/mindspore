@@ -199,7 +199,7 @@ Status ReduceMethod::InferForwardCommunication() {
   return SUCCESS;
 }
 
-ForwardOp CreatReduceMeanForwardOp(const std::vector<Group> &forward_group, const TypePtr &dtype) {
+ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, const TypePtr &dtype) {
   // Creat AllReduceSum op
   Operator op0 = CreateAllReduceOp(REDUCE_OP_SUM, forward_group[0].name());
   std::string group_name = forward_group[0].name();
@@ -275,7 +275,7 @@ Status ReduceMeanInfo::InferForwardCommunication() {
     }
 
     auto element_type = outputs_dtype_->cast<mindspore::TensorTypePtr>()->element();
-    forward_op_ = CreatReduceMeanForwardOp(forward_group, element_type);
+    forward_op_ = CreateReduceMeanForwardOp(forward_group, element_type);
   }
 
   return SUCCESS;

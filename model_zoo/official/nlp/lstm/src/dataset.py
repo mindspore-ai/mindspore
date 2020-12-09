@@ -43,7 +43,7 @@ def lstm_create_dataset(data_home, batch_size, repeat_num=1, training=True):
 
 def _convert_to_mindrecord(data_home, features, labels, weight_np=None, training=True):
     """
-    convert imdb dataset to mindrecoed dataset
+    convert imdb dataset to mindrecord dataset
     """
     if weight_np is not None:
         np.savetxt(os.path.join(data_home, 'weight.txt'), weight_np)
@@ -76,7 +76,7 @@ def _convert_to_mindrecord(data_home, features, labels, weight_np=None, training
 
 def convert_to_mindrecord(embed_size, aclimdb_path, preprocess_path, glove_path):
     """
-    convert imdb dataset to mindrecoed dataset
+    convert imdb dataset to mindrecord dataset
     """
     parser = ImdbParser(aclimdb_path, glove_path, embed_size)
     parser.parse()
