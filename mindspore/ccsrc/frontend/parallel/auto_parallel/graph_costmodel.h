@@ -61,6 +61,7 @@ class CostGraph {
     costmodel_beta_ = DEFAULT_COST_MODEL_BETA_ASCEND;
   }
   ~CostGraph() = default;
+  void Init();
   void AddOperator(const OperatorInfoPtr &op) { ops_.push_back(op); }
   OperatorInfoPtr FindOperatorByIndex(size_t index) {
     if (index >= ops_.size()) {

@@ -37,7 +37,7 @@ bool IsInParallelBlackList(const PrimitivePtr &prim) {
   return (PARALLEL_BLACK_LIST_.find(prim->name()) != PARALLEL_BLACK_LIST_.end());
 }
 
-bool IsParallelCareCNode(const CNodePtr &cnode) {
+bool IsParallelConsiderCNode(const CNodePtr &cnode) {
   if (cnode == nullptr || cnode->size() == 0) {
     return false;
   }
