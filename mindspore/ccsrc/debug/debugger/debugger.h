@@ -156,6 +156,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // read env variable for grpc client
   void EnableDebugger();
 
+  void SetOpOverflowBinPath(uint32_t graph_id);
+
   // check if dump using debugger backend is enabled
   bool CheckDebuggerDumpEnabled();
 
@@ -232,7 +234,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   std::mutex access_lock_;
   std::map<std::pair<uint32_t, uint32_t>, std::string> stream_task_to_opname_;
   double last_overflow_bin_;
-  std::string overflow_bin_path_;
+  std::map<uint32_t, std::string> overflow_bin_path_;
   // flag to keep track of the very first suspension of debugger
   bool initial_suspend_;
   std::list<GraphProto> graph_proto_list_;

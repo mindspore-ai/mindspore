@@ -364,6 +364,7 @@ void DumpJsonParser::PrintUnusedKernel() {
 std::string DumpJsonParser::GetOpOverflowBinPath(uint32_t graph_id, uint32_t device_id) const {
   std::string bin_path;
   bin_path.append(path_);
+  bin_path.append("/");
   bin_path.append("device_");
   bin_path.append(std::to_string(device_id));
   bin_path.append("/");
