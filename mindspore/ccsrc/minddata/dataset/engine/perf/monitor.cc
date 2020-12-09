@@ -37,7 +37,7 @@ Status Monitor::operator()() {
   // 2) Iterator has not received EOF
   while (!this_thread::is_interrupted() && !(tree_->isFinished())) {
     if (tree_->IsEpochEnd()) {
-      tree_->GetProfilingManager()->SaveProfilingData();
+      RETURN_IF_NOT_OK(tree_->GetProfilingManager()->SaveProfilingData());
       tree_->SetExecuting();
     }
     for (auto &node : tree_->GetProfilingManager()->GetSamplingNodes()) {
@@ -47,8 +47,8 @@ Status Monitor::operator()() {
   }
 
   // Output all profiling data upon request.
-  tree_->GetProfilingManager()->SaveProfilingData();
-  tree_->GetProfilingManager()->ChangeFileMode();
+  RETURN_IF_NOT_OK(tree_->GetProfilingManager()->SaveProfilingData());
+  RETURN_IF_NOT_OK(tree_->GetProfilingManager()->ChangeFileMode());
   return Status::OK();
 }
 
