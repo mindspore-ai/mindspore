@@ -109,13 +109,11 @@ class Beta(Distribution):
         >>> ans = b1.kl_loss('Beta', concentration1_b, concentration0_b)
         >>> print(ans)
         [0.34434414 0.24721336 0.26786423]
-        >>> ans = b1.kl_loss('Beta', concentration1_b, concentration0_b,
-        >>>                       concentration1_a, concentration0_a)
+        >>> ans = b1.kl_loss('Beta', concentration1_b, concentration0_b, concentration1_a, concentration0_a)
         >>> print(ans)
         [0.12509346 0.13629508 0.26527953]
         >>> # Additional `concentration1` and `concentration0` must be passed in.
-        >>> ans = b2.kl_loss('Beta', concentration1_b, concentration0_b,
-        >>>                       concentration1_a, concentration0_a)
+        >>> ans = b2.kl_loss('Beta', concentration1_b, concentration0_b, concentration1_a, concentration0_a)
         >>> print(ans)
         [0.12509346 0.13629508 0.26527953]
         >>> # Examples of `sample`.
