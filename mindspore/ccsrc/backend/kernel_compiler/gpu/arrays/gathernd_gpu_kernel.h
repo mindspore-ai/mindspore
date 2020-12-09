@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_GATHERND_GPU_KERNEL_H
-#define MINDSPORE_GATHERND_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_GATHERND_GPU_KERNEL_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_GATHERND_GPU_KERNEL_H
 
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
@@ -171,4 +171,4 @@ class GatherNdGpuFwdKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_GATHERND_GPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_ARRAYS_GATHERND_GPU_KERNEL_H
