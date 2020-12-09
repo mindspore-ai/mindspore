@@ -24,8 +24,8 @@ else ()
         set(sqlite_CFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -fPIC -D_FORTIFY_SOURCE=2 -O2")
     else()
         set(sqlite_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -D_FORTIFY_SOURCE=2 -O2")
+        set(sqlite_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
     endif()
-    set(sqlite_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
     mindspore_add_pkg(sqlite
         VER 3.32.2
         LIBS sqlite3

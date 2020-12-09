@@ -257,7 +257,7 @@ GraphId Executor::CompileGraph(const SessionPtr &session, const GraphSegmentPtr 
 GraphId Executor::CompileGraph(const SessionPtr &session, NotNull<FuncGraphPtr> func_graph) {
   auto task = std::make_shared<CompileGraphTask>();
   task->session_ = session;
-  task->func_graph_ = func_graph;
+  task->func_graph_ = func_graph.get();
   SyncRunTask(task);
   return task->graph_id_;
 }

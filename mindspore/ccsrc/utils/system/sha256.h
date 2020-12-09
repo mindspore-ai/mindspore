@@ -21,6 +21,7 @@
 #include <iomanip>
 #include <fstream>
 #include <memory>
+#include <vector>
 
 namespace mindspore {
 namespace system {
@@ -100,9 +101,9 @@ bool ProcessInner(const std::string &message, const int &bias, uint32_t *digest,
     w[i] = sigma3(w[i - 2]) + w[i - 7] + sigma2(w[i - 15]) + w[i - 16];
   }
 
-  std::shared_ptr<uint32_t[]> hash(new uint32_t[digest_size]());
+  std::vector<uint32_t> hash(digest_size);
   size_t mem_size = digest_size * sizeof(uint32_t);
-  auto ret = memcpy_s(hash.get(), mem_size, digest, mem_size);
+  auto ret = memcpy_s(hash.data(), mem_size, digest, mem_size);
   if (ret != EOK) {
     return false;
   }

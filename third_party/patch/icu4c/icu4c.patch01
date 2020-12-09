@@ -5,8 +5,8 @@
          THE_OS="Linux"
          THE_COMP="the clang or else GNU C++"
 -        RELEASE_CFLAGS='-O3'
-+        RELEASE_CFLAGS='-fstack-protector -Wl,-z,now -D_FORTIFY_SOURCE=2 -O3'
++        RELEASE_CFLAGS='-fstack-protector -D_FORTIFY_SOURCE=2 -O3'
 -        RELEASE_CXXFLAGS='-O3'
-+        RELEASE_CXXFLAGS='-fstack-protector -Wl,-z,now -D_FORTIFY_SOURCE=2 -O3'
++        RELEASE_CXXFLAGS='-fstack-protector -D_FORTIFY_SOURCE=2 -O3'
          DEBUG_CFLAGS='-g'
          DEBUG_CXXFLAGS='-g'

@@ -18,7 +18,7 @@
 
 #ifdef NUMA_ENABLED
 #include <numa.h>
-#endif
+#endif  // NUMA_ENABLED
 #include <sched.h>
 #include <stdlib.h>
 #include <map>
@@ -31,6 +31,23 @@
 #include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
 #include "minddata/dataset/util/task.h"
+
+#ifdef __APPLE__
+#define SYSCTL_CORE_COUNT "machdep.cpu.core_count"
+#include <sys/sysctl.h>
+#include <mach/thread_policy.h>
+
+typedef struct cpu_set {
+  uint32_t count;
+} cpu_set_t;
+
+static inline void CPU_ZERO(cpu_set_t *cs) { cs->count = 0; }
+
+static inline void CPU_SET(int num, cpu_set_t *cs) { cs->count |= (1 << num); }
+
+static inline int CPU_ISSET(int num, cpu_set_t *cs) { return (cs->count & (1 << num)); }
+
+#endif  // __APPLE__
 
 namespace mindspore {
 namespace dataset {

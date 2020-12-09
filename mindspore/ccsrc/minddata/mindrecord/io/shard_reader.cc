@@ -1173,7 +1173,7 @@ TASK_RETURN_CONTENT ShardReader::ConsumerOneTask(int task_id, uint32_t consumer_
 
 MSRStatus ShardReader::ConsumerByRow(int consumer_id) {
   // Set thread name
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
   auto thread_id = kThreadName + std::to_string(consumer_id);
   prctl(PR_SET_NAME, common::SafeCStr(thread_id), 0, 0, 0);
 #endif

@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 #ifndef ENABLE_ANDROID
-#if !defined(_WIN32) && !defined(_WIN64)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
 #include <sys/sysinfo.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #endif

@@ -21,5 +21,9 @@ if (ENABLE_GPU)
     list(APPEND _PREACTIVATE_SRC_LIST ${_GPU_SRC_LIST})
 endif ()
 
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    set(CMAKE_CXX_FLAGS_RELEASE "$ENV{CXXFLAGS} -Wno-user-defined-warnings -Wno-inconsistent-missing-override -Wno-overloaded-virtual -Wno-unused-const-variable -Wno-pessimizing-move")
+endif ()
+
 set_property(SOURCE ${_PREACTIVATE_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_PRE_ACT)
 add_library(_mindspore_backend_optimizer_obj OBJECT ${_PREACTIVATE_SRC_LIST})

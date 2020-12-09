@@ -22,6 +22,11 @@
 #include "./securec.h"
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/status.h"
+
+#ifdef __APPLE__
+#define off64_t off_t
+#endif
+
 namespace mindspore {
 namespace dataset {
 /// \brief A ReadableSlice wraps a const pointer in memory and its size.

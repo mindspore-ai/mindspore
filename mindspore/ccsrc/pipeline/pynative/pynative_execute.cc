@@ -1337,6 +1337,15 @@ py::object PynativeExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynati
   ConstructInputTensor(op_exec_info, &tensors_mask, &input_tensors);
   // get graph info for checking it whether existing in the cache
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info, input_tensors);
+#ifdef __APPLE__
+  session::OpRunInfo op_run_info = {op_exec_info->op_name,
+                                    op_exec_info->py_primitive,
+                                    op_exec_info->abstract,
+                                    op_exec_info->is_dynamic_shape,
+                                    op_exec_info->is_mixed_precision_cast,
+                                    op_exec_info->next_op_name,
+                                    static_cast<int>(op_exec_info->next_input_index)};
+#else
   session::OpRunInfo op_run_info = {op_exec_info->op_name,
                                     op_exec_info->py_primitive,
                                     op_exec_info->abstract,
@@ -1344,6 +1353,7 @@ py::object PynativeExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynati
                                     op_exec_info->is_mixed_precision_cast,
                                     op_exec_info->next_op_name,
                                     op_exec_info->next_input_index};
+#endif
   VectorRef outputs;
   session->RunOp(&op_run_info, graph_info, &input_tensors, &outputs, tensors_mask);
   if (op_exec_info->is_dynamic_shape) {

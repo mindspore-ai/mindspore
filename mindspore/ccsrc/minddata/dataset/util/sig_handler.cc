@@ -16,7 +16,7 @@
 #include "minddata/dataset/util/sig_handler.h"
 #include <signal.h>
 #include <sys/types.h>
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <ucontext.h>
 #endif
 #include <unistd.h>

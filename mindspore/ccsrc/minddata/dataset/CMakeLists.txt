@@ -3,7 +3,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-uninitialized")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-uninitialized -Wno-deprecated-declarations -Wno-delete-non-abstract-non-virtual-dtor -Wno-constant-conversion")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
 endif()
@@ -49,8 +49,13 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels
 
 ####################### Flags ########################################
 # compile flags
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN:$ORIGIN/lib")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default")
+
+if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-delete-abstract-non-virtual-dtor")
+else ()
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN:$ORIGIN/lib")
+endif()
 
 ################## Include sub-modules ###############################
 add_subdirectory(util)
@@ -58,7 +63,6 @@ add_subdirectory(core)
 add_subdirectory(kernels)
 add_subdirectory(engine)
 add_subdirectory(api)
-add_subdirectory(text)
 add_subdirectory(callback)
 ######################################################################
 add_dependencies(utils core)
@@ -75,16 +79,20 @@ add_dependencies(engine-perf core)
 add_dependencies(engine-gnn core)
 add_dependencies(engine core)
 add_dependencies(callback core)
-add_dependencies(text core)
-add_dependencies(text-kernels core)
 add_dependencies(cpp-API core)
 add_dependencies(engine-ir-datasetops core)
 add_dependencies(engine-ir-datasetops-source core)
 add_dependencies(engine-ir-cache core)
 
+if (NOT(${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+    add_subdirectory(text)
+    add_dependencies(text core)
+    add_dependencies(text-kernels core)
+endif ()
+
 if (ENABLE_PYTHON)
     add_dependencies(APItoPython core)
-endif()
+endif ()
 if (ENABLE_TDTQUE)
     add_dependencies(engine-tdt core)
 endif ()
@@ -100,37 +108,42 @@ if (ENABLE_CACHE)
 endif ()
 ################### Create _c_dataengine Library ######################
 set(submodules
-    $<TARGET_OBJECTS:core>
-    $<TARGET_OBJECTS:callback>
-    $<TARGET_OBJECTS:utils>
-    $<TARGET_OBJECTS:kernels>
-    $<TARGET_OBJECTS:kernels-image>
-    $<TARGET_OBJECTS:lite-cv>
-    $<TARGET_OBJECTS:kernels-data>
-    $<TARGET_OBJECTS:cpp-API>
-    $<TARGET_OBJECTS:engine-ir-datasetops>
+        $<TARGET_OBJECTS:core>
+        $<TARGET_OBJECTS:callback>
+        $<TARGET_OBJECTS:utils>
+        $<TARGET_OBJECTS:kernels>
+        $<TARGET_OBJECTS:kernels-image>
+        $<TARGET_OBJECTS:lite-cv>
+        $<TARGET_OBJECTS:kernels-data>
+        $<TARGET_OBJECTS:cpp-API>
+        $<TARGET_OBJECTS:engine-ir-datasetops>
         $<TARGET_OBJECTS:engine-ir-datasetops-source>
         $<TARGET_OBJECTS:engine-ir-cache>
         $<TARGET_OBJECTS:kernels-soft-dvpp-image>
-    $<TARGET_OBJECTS:soft-dvpp-utils>
-    $<TARGET_OBJECTS:engine-datasetops-source>
-    $<TARGET_OBJECTS:engine-datasetops-source-sampler>
-    $<TARGET_OBJECTS:engine-datasetops-mapop>
-    $<TARGET_OBJECTS:engine-gnn>
-    $<TARGET_OBJECTS:engine-perf>
-    $<TARGET_OBJECTS:engine-datasetops>
-    $<TARGET_OBJECTS:engine-opt>
-    $<TARGET_OBJECTS:engine-cache-client>
-    $<TARGET_OBJECTS:engine>
-    $<TARGET_OBJECTS:text>
-    $<TARGET_OBJECTS:text-kernels>
-    )
+        $<TARGET_OBJECTS:soft-dvpp-utils>
+        $<TARGET_OBJECTS:engine-datasetops-source>
+        $<TARGET_OBJECTS:engine-datasetops-source-sampler>
+        $<TARGET_OBJECTS:engine-datasetops-mapop>
+        $<TARGET_OBJECTS:engine-gnn>
+        $<TARGET_OBJECTS:engine-perf>
+        $<TARGET_OBJECTS:engine-datasetops>
+        $<TARGET_OBJECTS:engine-opt>
+        $<TARGET_OBJECTS:engine-cache-client>
+        $<TARGET_OBJECTS:engine>
+        )
+if (NOT(${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+    set(submodules
+            ${submodules}
+            $<TARGET_OBJECTS:text>
+            $<TARGET_OBJECTS:text-kernels>
+            )
+endif ()
 
 if (ENABLE_PYTHON)
     set(submodules
         ${submodules}
         $<TARGET_OBJECTS:APItoPython>)
-endif()
+endif ()
 
 if (ENABLE_TDTQUE)
     add_library(_c_dataengine SHARED ${submodules} $<TARGET_OBJECTS:engine-tdt>)
@@ -143,7 +156,7 @@ set_target_properties(_c_dataengine PROPERTIES
     PREFIX "${PYTHON_MODULE_PREFIX}"
     SUFFIX "${PYTHON_MODULE_EXTENSION}"
     )
-endif()
+endif ()
 
 ######################################################################
 
@@ -152,18 +165,18 @@ target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     if (ENABLE_PYTHON)
         target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY})
-    else()
+    else ()
         target_link_libraries(_c_dataengine PRIVATE ${SECUREC_LIBRARY})
-    endif()
-else()
+    endif ()
+else ()
     set(ICU_LIB mindspore::icuuc mindspore::icudata mindspore::icui18n)
     if (ENABLE_PYTHON)
         target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module -ldl ${SECUREC_LIBRARY})
-    else()
+    else ()
         target_link_libraries(_c_dataengine PRIVATE -ldl ${SECUREC_LIBRARY})
-    endif()
+    endif ()
     target_link_libraries(_c_dataengine PUBLIC mindspore::sentencepiece)
-endif()
+endif ()
 target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turbojpeg mindspore::opencv_core mindspore::opencv_imgcodecs
                        mindspore::opencv_imgproc mindspore::tinyxml2 mindspore::sentencepiece_train ${ICU_LIB})
 if (ENABLE_GPUQUE)
@@ -181,26 +194,26 @@ add_dependencies(_c_dataengine _c_mindrecord)
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(MINDRECORD_LINK_OBJECT ${CMAKE_BINARY_DIR}/mindspore/ccsrc/minddata/mindrecord/CMakeFiles/_c_mindrecord.dir/objects.a)
     target_link_libraries(_c_dataengine PRIVATE _c_mindrecord ${MINDRECORD_LINK_OBJECT} mindspore::sqlite)
-else()
+else ()
     target_link_libraries(_c_dataengine PRIVATE _c_mindrecord)
     if (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
         target_link_libraries(_c_dataengine PRIVATE mindspore::pslite ${zeromq_DIRPATH}/zmq_install/lib/libzmq.a)
         if (${ENABLE_IBVERBS} STREQUAL "ON")
             target_link_libraries(_c_dataengine PRIVATE ibverbs rdmacm)
-        endif()
-    endif()
-endif()
+        endif ()
+    endif ()
+endif ()
 
 if (USE_GLOG)
     target_link_libraries(_c_dataengine PRIVATE mindspore::glog)
-else()
+else ()
     if (CMAKE_SYSTEM_NAME MATCHES "Linux")
         target_link_options(_c_dataengine PRIVATE -Wl,-init,mindspore_log_init)
     elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
         set_target_properties(_c_dataengine PROPERTIES MACOSX_RPATH ON)
     endif ()
-endif()
+endif ()
 
 if (MS_BUILD_GRPC)
     target_link_libraries(_c_dataengine PRIVATE mindspore::grpc++)
-endif()
+endif ()
