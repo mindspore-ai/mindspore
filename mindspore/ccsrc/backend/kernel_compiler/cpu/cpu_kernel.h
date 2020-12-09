@@ -69,7 +69,9 @@ enum OperateType {
   ABSGRAD,
   TANHGRAD,
   SQRTGRAD,
-  SIGMOIDGRAD
+  SIGMOIDGRAD,
+  ONESLIKE,
+  ZEROSLIKE
 };
 
 class CPUKernel : public kernel::KernelMod {

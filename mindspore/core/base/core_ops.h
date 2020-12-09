@@ -183,6 +183,7 @@ inline const PrimitivePtr kPrimRelu = std::make_shared<Primitive>("ReLU");
 inline const PrimitivePtr kPrimRelu6 = std::make_shared<Primitive>("ReLU6");
 inline const PrimitivePtr kPrimReluV2 = std::make_shared<Primitive>("ReLUV2");
 inline const PrimitivePtr kPrimZerosLike = std::make_shared<Primitive>("ZerosLike");
+inline const PrimitivePtr kPrimOnesLike = std::make_shared<Primitive>("OnesLike");
 inline const PrimitivePtr kPrimBpropCut = std::make_shared<Primitive>("bprop_cut");
 inline const PrimitivePtr kPrimFakeQuantPerLayer = std::make_shared<Primitive>("FakeQuantPerLayer");
 inline const PrimitivePtr kPrimFakeQuantPerChannel = std::make_shared<Primitive>("FakeQuantPerChannel");
