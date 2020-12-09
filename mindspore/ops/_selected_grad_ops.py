@@ -17,7 +17,7 @@
 from mindspore.ops.op_selector import new_ops_selector
 
 op_selector = new_ops_selector(
-    "mindspore.ops.operations._grad_ops", "mindspore.nn.graph_kernels")
+    "mindspore.ops.operations._grad_ops", "mindspore.nn._graph_kernels")
 
 
 @op_selector

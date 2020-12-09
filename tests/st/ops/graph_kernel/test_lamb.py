@@ -18,7 +18,7 @@ import numpy as np
 import mindspore.context as context
 from mindspore import Tensor, Parameter
 from mindspore.nn import Cell
-from mindspore.nn.graph_kernels import LambUpdateWithLR, LambNextMV
+from mindspore.nn._graph_kernels import LambUpdateWithLR, LambNextMV
 
 
 class LambNet(Cell):
