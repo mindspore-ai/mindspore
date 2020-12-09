@@ -222,18 +222,26 @@ bool ResizeBilinear(const LiteMat &src, LiteMat &dst, int dst_w, int dst_h) {
   if (src.data_type_ != LDataType::UINT8) {
     return false;
   }
+  if (src.channel_ != 3 && src.channel_ != 1) {
+    return false;
+  }
+  if (dst.IsEmpty()) {
+    (void)dst.Init(dst_w, dst_h, src.channel_, LDataType::UINT8);
+  } else if (dst.height_ != dst_h || dst.width_ != dst_w || dst.channel_ != src.channel_) {
+    return false;
+  } else if (dst.data_type_ != LDataType::UINT8) {
+    return false;
+  } else {
+  }
+
   if (src.channel_ == 3) {
-    (void)dst.Init(dst_w, dst_h, 3, LDataType::UINT8);
     const unsigned char *src_start_p = src;
     unsigned char *dst_start_p = dst;
     (void)ResizeBilinear3C(src_start_p, src.width_, src.height_, dst_start_p, dst_w, dst_h);
-  } else if (src.channel_ == 1) {
-    (void)dst.Init(dst_w, dst_h, 1, LDataType::UINT8);
+  } else {  // channel == 1
     const unsigned char *src_start_p = src;
     unsigned char *dst_start_p = dst;
     (void)ResizeBilinear1C(src_start_p, src.width_, src.height_, dst_start_p, dst_w, dst_h);
-  } else {
-    return false;
   }
   return true;
 }
@@ -418,7 +426,13 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
   if (scale < 0.0 || scale > 100) {
     return false;
   }
-  (void)dst.Init(src.width_, src.height_, src.channel_, LDataType::FLOAT32);
+  if (dst.IsEmpty()) {
+    (void)dst.Init(src.width_, src.height_, src.channel_, LDataType::FLOAT32);
+  } else if (dst.height_ != src.height_ || dst.width_ != src.width_ || dst.channel_ != src.channel_) {
+    return false;
+  } else if (dst.data_type_ != LDataType::FLOAT32) {
+    return false;
+  }
   const unsigned char *src_start_p = src;
   float *dst_start_p = dst;
   for (int h = 0; h < src.height_; h++) {
@@ -433,11 +447,17 @@ bool ConvertTo(const LiteMat &src, LiteMat &dst, double scale) {
 }
 
 template <typename T>
-static void CropInternal(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
+static bool CropInternal(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
   int dst_h = h;
   int dst_w = w;
   int dst_c = src.channel_;
-  dst.Init(dst_w, dst_h, dst_c, src.data_type_);
+  if (dst.IsEmpty()) {
+    dst.Init(dst_w, dst_h, dst_c, src.data_type_);
+  } else if (dst.height_ != h || dst.width_ != w || dst.channel_ != src.channel_) {
+    return false;
+  } else if (dst.data_type_ != src.data_type_) {
+    return false;
+  }
   const T *src_start_p = src;
   T *dst_start_p = dst;
   for (int i_h = 0; i_h < dst_h; i_h++) {
@@ -445,6 +465,7 @@ static void CropInternal(const LiteMat &src, LiteMat &dst, int x, int y, int w, 
     T *dst_index_p = dst_start_p + i_h * dst_w * dst_c;
     (void)memcpy(dst_index_p, src_index_p, dst_w * dst_c * sizeof(T));
   }
+  return true;
 }
 
 bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
@@ -456,9 +477,9 @@ bool Crop(const LiteMat &src, LiteMat &dst, int x, int y, int w, int h) {
   }
 
   if (src.data_type_ == LDataType::UINT8) {
-    CropInternal<uint8_t>(src, dst, x, y, w, h);
+    return CropInternal<uint8_t>(src, dst, x, y, w, h);
   } else if (src.data_type_ == LDataType::FLOAT32) {
-    CropInternal<float>(src, dst, x, y, w, h);
+    return CropInternal<float>(src, dst, x, y, w, h);
   } else {
     return false;
   }
@@ -511,8 +532,13 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<
   if (!CheckMeanAndStd(src.channel_, mean, std)) {
     return false;
   }
-
-  dst.Init(src.width_, src.height_, src.channel_, LDataType::FLOAT32);
+  if (dst.IsEmpty()) {
+    dst.Init(src.width_, src.height_, src.channel_, LDataType::FLOAT32);
+  } else if (dst.height_ != src.height_ || dst.width_ != src.width_ || dst.channel_ != src.channel_) {
+    return false;
+  } else if (dst.data_type_ != LDataType::FLOAT32) {
+    return false;
+  }
 
   const float *src_start_p = src;
   float *dst_start_p = dst;
@@ -880,8 +906,14 @@ bool ImplementAffine(LiteMat &src, LiteMat &out_img, const double M[6], std::vec
   double b2 = -IM[3] * IM[2] - IM[4] * IM[5];
   IM[2] = b1;
   IM[5] = b2;
+  if (out_img.IsEmpty()) {
+    out_img.Init(dsize[0], dsize[1], sizeof(Pixel_Type), src.data_type_);
+  } else if (out_img.height_ != dsize[1] || out_img.width_ != dsize[0] || out_img.channel_ != src.channel_) {
+    return false;
+  } else if (out_img.data_type_ != src.data_type_) {
+    return false;
+  }
 
-  out_img.Init(dsize[0], dsize[1], sizeof(Pixel_Type));
   for (int y = 0; y < out_img.height_; y++) {
     for (int x = 0; x < out_img.width_; x++) {
       int src_x = IM[0] * x + IM[1] * y + IM[2];
@@ -899,11 +931,35 @@ bool ImplementAffine(LiteMat &src, LiteMat &out_img, const double M[6], std::vec
 }
 
 bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, UINT8_C1 borderValue) {
-  return ImplementAffine(src, out_img, M, dsize, borderValue);
+  if (src.channel_ == 1 && src.data_type_ == LDataType::UINT8) {
+    return ImplementAffine(src, out_img, M, dsize, borderValue);
+  } else {
+    return false;
+  }
 }
 
 bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, UINT8_C3 borderValue) {
-  return ImplementAffine(src, out_img, M, dsize, borderValue);
+  if (src.channel_ == 3 && src.data_type_ == LDataType::UINT8) {
+    return ImplementAffine(src, out_img, M, dsize, borderValue);
+  } else {
+    return false;
+  }
+}
+
+bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, FLOAT32_C1 borderValue) {
+  if (src.channel_ == 1 && src.data_type_ == LDataType::FLOAT32) {
+    return ImplementAffine(src, out_img, M, dsize, borderValue);
+  } else {
+    return false;
+  }
+}
+
+bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_t> dsize, FLOAT32_C3 borderValue) {
+  if (src.channel_ == 3 && src.data_type_ == LDataType::FLOAT32) {
+    return ImplementAffine(src, out_img, M, dsize, borderValue);
+  } else {
+    return false;
+  }
 }
 
 }  // namespace dataset

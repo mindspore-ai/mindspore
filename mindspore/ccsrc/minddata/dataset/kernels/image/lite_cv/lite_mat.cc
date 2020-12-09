@@ -229,7 +229,7 @@ void LiteMat::Init(int width, int height, int channel, void *p_data, LDataType d
   ref_count_ = nullptr;
 }
 
-bool LiteMat::IsEmpty() const { return data_ptr_ == 0 || data_ptr_ == nullptr || c_step_ * channel_ == 0; }
+bool LiteMat::IsEmpty() const { return data_ptr_ == nullptr || c_step_ * channel_ == 0; }
 
 void LiteMat::Release() {
   if (ref_count_ && (addRef(ref_count_, -1) == 1)) {
@@ -240,7 +240,7 @@ void LiteMat::Release() {
       delete[] ref_count_;
     }
   }
-  data_ptr_ = 0;
+  data_ptr_ = nullptr;
   elem_size_ = 0;
   width_ = 0;
   height_ = 0;
