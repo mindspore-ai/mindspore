@@ -61,7 +61,7 @@ bool IsAtomicCleanNode(const AnfNodePtr &node) {
 
 std::vector<AnfNodePtrList> SplitVectorByWidth(const AnfNodePtrList &nodes, int width) {
   std::vector<AnfNodePtrList> splitted_nodes;
-  if (!nodes.empty()) {
+  if (nodes.empty()) {
     return splitted_nodes;
   }
 
