@@ -14,20 +14,13 @@
  * limitations under the License.
  */
 
-#include "frontend/parallel/node_check.h"
+#ifndef MINDSPORE_CORE_UTILS_PARALLEL_NODE_CHECK_H_
+#define MINDSPORE_CORE_UTILS_PARALLEL_NODE_CHECK_H_
 
-#include <set>
-#include <string>
-
-#include "frontend/parallel/ops_info/ops_utils.h"
+#include "ir/primitive.h"
 
 namespace mindspore {
-namespace parallel {
-const std::set<std::string> BATCH_PARALLEL_BLACK_LIST = {PACK, TENSOR_SCATTER_UPDATE, MIN_MAX_UPDATE_PER_LAYER};
-
-bool IsInBatchParallelBlackList(const PrimitivePtr &prim) {
-  MS_EXCEPTION_IF_NULL(prim);
-  return (BATCH_PARALLEL_BLACK_LIST.find(prim->name()) != BATCH_PARALLEL_BLACK_LIST.end());
-}
-}  // namespace parallel
+bool IsInParallelBlackList(const PrimitivePtr &);
+bool IsParallelCareCNode(const CNodePtr &);
 }  // namespace mindspore
+#endif  // MINDSPORE_CORE_UTILS_PARALLEL_NODE_CHECK_H_

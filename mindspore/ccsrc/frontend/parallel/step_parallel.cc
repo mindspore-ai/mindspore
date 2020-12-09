@@ -44,6 +44,7 @@
 #include "utils/comm_manager.h"
 #include "utils/ms_context.h"
 #include "utils/symbolic.h"
+#include "mindspore/core/utils/parallel_node_check.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/util.h"
 #endif
@@ -439,7 +440,7 @@ bool IsParallelCareNode(const CNodePtr &cnode) {
   if (prim == nullptr) {
     return false;
   }
-  if (IsInBlackList(prim)) {
+  if (IsInParallelBlackList(prim)) {
     MS_LOG(DEBUG) << "Parallel don't care node: " << prim->name();
     return false;
   }
