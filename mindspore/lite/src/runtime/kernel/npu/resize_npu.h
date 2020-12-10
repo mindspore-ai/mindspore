@@ -14,32 +14,44 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SCALE_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SCALE_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESIZE_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESIZE_NPU_H_
 #include <vector>
-#include "nnacl/scale.h"
+#include "nnacl/resize_parameter.h"
+#include "src/ops/resize.h"
+#include "nnacl/arithmetic_common.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
-#include "include/graph/op/nn_defs.h"
+#include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
-class ScaleNPUKernel : public NPUKernel {
+class ResizeNPUKernel : public NPUKernel {
  public:
-  ScaleNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                 const mindspore::lite::PrimitiveC *primitive)
+  ResizeNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                  const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    axis_ = reinterpret_cast<ScaleParameter *>(parameter)->axis_;
+    auto resize_parameter = reinterpret_cast<ResizeParameter *>(parameter);
+    method_ = resize_parameter->method_;
+    new_height_ = resize_parameter->new_height_;
+    new_width_ = resize_parameter->new_width_;
+    align_corners_ = resize_parameter->align_corners_;
+    preserve_aspect_ratio_ = resize_parameter->preserve_aspect_ratio_;
   }
-  ~ScaleNPUKernel() override;
+  ~ResizeNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
   int SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                    const std::vector<ge::Operator *> &npu_inputs) override;
+
   ge::Operator *GetNPUOp() override;
 
  private:
-  hiai::op::Scale *op_ = nullptr;
-  int axis_;
+  ge::Operator *op_ = nullptr;
+  int method_;
+  int64_t new_height_;
+  int64_t new_width_;
+  bool align_corners_;
+  bool preserve_aspect_ratio_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_Scale_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESIZE_NPU_H_

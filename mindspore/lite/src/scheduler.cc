@@ -270,7 +270,9 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
     auto sub_kernel =
       new kernel::SubGraphNpuKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
     sub_kernel->SetIndex(index);
-    sub_kernel->Init();
+    if (sub_kernel->Init() != RET_OK) {
+      return nullptr;
+    }
     return sub_kernel;
 #else
     return nullptr;

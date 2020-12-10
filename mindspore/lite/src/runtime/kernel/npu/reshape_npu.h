@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_RESHAPE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_RESHAPE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESHAPE_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESHAPE_NPU_H_
 #include <vector>
 #include "nnacl/conv_parameter.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
@@ -24,18 +24,19 @@ namespace mindspore::kernel {
 class ReshapeNPUKernel : public NPUKernel {
  public:
   ReshapeNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                   const std::vector<lite::Tensor *> &outputs)
-      : NPUKernel(parameter, inputs, outputs) {}
+                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                   const mindspore::lite::PrimitiveC *primitive)
+      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ReshapeNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
-  void SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                    const std::vector<ge::Operator *> &npu_inputs) override;
+  int SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                   const std::vector<ge::Operator *> &npu_inputs) override;
   ge::Operator *GetNPUOp() override;
 
  private:
-  hiai::op::Reshape *op_;
+  hiai::op::Reshape *op_ = nullptr;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_RESHAPE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESHAPE_NPU_H_

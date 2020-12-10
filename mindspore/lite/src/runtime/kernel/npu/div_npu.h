@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_DIV_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_DIV_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_DIV_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_DIV_NPU_H_
 #include <vector>
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/math_defs.h"
@@ -23,18 +23,19 @@ namespace mindspore::kernel {
 class DivNPUKernel : public NPUKernel {
  public:
   DivNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-               const std::vector<lite::Tensor *> &outputs)
-      : NPUKernel(parameter, inputs, outputs) {}
+               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+               const mindspore::lite::PrimitiveC *primitive)
+      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~DivNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
-  void SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                    const std::vector<ge::Operator *> &npu_inputs) override;
+  int SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                   const std::vector<ge::Operator *> &npu_inputs) override;
   ge::Operator *GetNPUOp() override;
 
  private:
-  hiai::op::RealDiv *op_;
+  hiai::op::RealDiv *op_ = nullptr;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_DIV_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_DIV_NPU_H_

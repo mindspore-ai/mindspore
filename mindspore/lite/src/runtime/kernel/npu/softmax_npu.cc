@@ -26,19 +26,25 @@ int SoftmaxNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const
                                 OpParameter *opParameter) {
   return RET_OK;
 }
-void SoftmaxNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
-                                    const std::vector<lite::Tensor *> &outputs,
-                                    const std::vector<ge::Operator *> &npu_inputs) {
-  op_ = new hiai::op::Softmax(name_);
 
+int SoftmaxNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
+                                   const std::vector<lite::Tensor *> &outputs,
+                                   const std::vector<ge::Operator *> &npu_inputs) {
+  op_ = new (std::nothrow) hiai::op::Softmax(name_);
+  if (op_ == nullptr) {
+    return RET_ERROR;
+  }
   if (axis_ == -1) {
     op_->set_attr_axis(inputs[0]->shape().size() - 1);
   } else {
     op_->set_attr_axis(axis_);
   }
   op_->set_input_x(*npu_inputs[0]);
+  return RET_OK;
 }
+
 ge::Operator *mindspore::kernel::SoftmaxNPUKernel::GetNPUOp() { return this->op_; }
+
 SoftmaxNPUKernel::~SoftmaxNPUKernel() {
   if (op_ != nullptr) {
     delete op_;

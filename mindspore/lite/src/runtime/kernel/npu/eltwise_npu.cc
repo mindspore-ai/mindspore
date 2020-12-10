@@ -14,40 +14,45 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/npu/reshape_npu.h"
-#include "src/kernel_registry.h"
+#include "src/runtime/kernel/npu/eltwise_npu.h"
 #include "include/graph/op/all_ops.h"
+#include "src/kernel_registry.h"
 #include "src/runtime/agent/npu/npu_converter_utils.h"
+
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Reshape;
+using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
-int ReshapeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+int EltwiseNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                 OpParameter *opParameter) {
   return RET_OK;
 }
 
-int ReshapeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
+int EltwiseNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs,
                                    const std::vector<ge::Operator *> &npu_inputs) {
-  op_ = new (std::nothrow) hiai::op::Reshape(name_);
+  op_ = new (std::nothrow) hiai::op::Eltwise(name_);
   if (op_ == nullptr) {
     return RET_ERROR;
   }
-  op_->set_input_x(*npu_inputs[0]);
-  op_->set_input_shape(*npu_inputs[1]);
+  op_->set_attr_mode(lite::ConverterToNPUEltwiseMode(mode_));
+  int size = npu_inputs.size();
+  op_->create_dynamic_input_x(size);
+  op_->set_attr_N(size);
+  for (int i = 0; i < size; ++i) {
+    op_->set_dynamic_input_x(i + 1, *npu_inputs[i]);
+  }
   return RET_OK;
 }
 
-ge::Operator *mindspore::kernel::ReshapeNPUKernel::GetNPUOp() { return this->op_; }
+ge::Operator *mindspore::kernel::EltwiseNPUKernel::GetNPUOp() { return this->op_; }
 
-ReshapeNPUKernel::~ReshapeNPUKernel() {
+EltwiseNPUKernel::~EltwiseNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
     op_ = nullptr;
   }
 }
-
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Reshape, NPUKernelCreator<ReshapeNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Eltwise, NPUKernelCreator<EltwiseNPUKernel>)
 }  // namespace mindspore::kernel

@@ -14,32 +14,35 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SCALE_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SCALE_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ELTWISE_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ELTWISE_NPU_H_
 #include <vector>
-#include "nnacl/scale.h"
+#include "src/ops/eltwise.h"
+#include "nnacl/arithmetic_common.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
-#include "include/graph/op/nn_defs.h"
+#include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
-class ScaleNPUKernel : public NPUKernel {
+class EltwiseNPUKernel : public NPUKernel {
  public:
-  ScaleNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                 const mindspore::lite::PrimitiveC *primitive)
+  EltwiseNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                   const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    axis_ = reinterpret_cast<ScaleParameter *>(parameter)->axis_;
+    auto eltwise = reinterpret_cast<const mindspore::lite::Eltwise *>(primitive);
+    mode_ = static_cast<schema::EltwiseMode>(eltwise->GetMode());
   }
-  ~ScaleNPUKernel() override;
+  ~EltwiseNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
   int SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                    const std::vector<ge::Operator *> &npu_inputs) override;
+
   ge::Operator *GetNPUOp() override;
 
  private:
-  hiai::op::Scale *op_ = nullptr;
-  int axis_;
+  hiai::op::Eltwise *op_ = nullptr;
+  schema::EltwiseMode mode_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_Scale_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ELTWISE_NPU_H_

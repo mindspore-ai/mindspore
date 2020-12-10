@@ -38,5 +38,7 @@ ge::Shape ConverterToNPUShape(const std::vector<int> &src_shape);
 
 int ConverterToNPUActMode(schema::ActivationType type);
 
+int ConverterToNPUEltwiseMode(schema::EltwiseMode mode);
+
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_CONVERTER_UITLS_H_

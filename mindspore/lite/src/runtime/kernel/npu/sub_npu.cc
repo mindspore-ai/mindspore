@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/npu/div_npu.h"
+#include "src/runtime/kernel/npu/sub_npu.h"
 #include "include/graph/op/all_ops.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Div;
+using mindspore::schema::PrimitiveType_Sub;
 
 namespace mindspore::kernel {
-int DivNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+int SubNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                             OpParameter *opParameter) {
-  if (inputs[0]->shape() != inputs[1]->shape()) {
-    MS_LOG(ERROR) << "For the two inputs, the corresponding dimensions must have the same value, or one of them is 1."
+  if (inputs[0]->shape().size() != inputs[1]->shape().size()) {
+    MS_LOG(ERROR) << "For the two inputs, the corresponding dimensions must have the same value."
                   << " shape 1 is:" << inputs[0]->shape() << " shape 2 is:" << inputs[1]->shape();
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int DivNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+int SubNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                const std::vector<ge::Operator *> &npu_inputs) {
-  op_ = new (std::nothrow) hiai::op::RealDiv(name_);
+  op_ = new (std::nothrow) hiai::op::Sub(name_);
   if (op_ == nullptr) {
     return RET_ERROR;
   }
@@ -44,14 +44,14 @@ int DivNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const 
   return RET_OK;
 }
 
-ge::Operator *mindspore::kernel::DivNPUKernel::GetNPUOp() { return this->op_; }
+ge::Operator *mindspore::kernel::SubNPUKernel::GetNPUOp() { return this->op_; }
 
-DivNPUKernel::~DivNPUKernel() {
+SubNPUKernel::~SubNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
     op_ = nullptr;
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Div, NPUKernelCreator<DivNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Sub, NPUKernelCreator<SubNPUKernel>)
 }  // namespace mindspore::kernel

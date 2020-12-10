@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_CONCAT_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_CONCAT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_CONCAT_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_CONCAT_NPU_H_
 #include <vector>
 #include "nnacl/concat_parameter.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
@@ -24,21 +24,23 @@ namespace mindspore::kernel {
 class ConcatNPUKernel : public NPUKernel {
  public:
   ConcatNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                  const std::vector<lite::Tensor *> &outputs)
-      : NPUKernel(parameter, inputs, outputs) {
-    concat_parameter_ = reinterpret_cast<ConcatParameter *>(parameter);
+                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                  const mindspore::lite::PrimitiveC *primitive)
+      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
+    auto concat_parameter = reinterpret_cast<ConcatParameter *>(parameter);
+    axis_ = concat_parameter->axis_;
   }
   ~ConcatNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
-  void SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                    const std::vector<ge::Operator *> &npu_inputs) override;
+  int SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                   const std::vector<ge::Operator *> &npu_inputs) override;
   ge::Operator *GetNPUOp() override;
 
  private:
-  hiai::op::ConcatD *op_;
-  ConcatParameter *concat_parameter_;
+  hiai::op::ConcatD *op_ = nullptr;
+  int axis_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_CONCAT_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_CONCAT_NPU_H_

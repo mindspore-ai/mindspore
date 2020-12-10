@@ -26,13 +26,19 @@ int FloorNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const s
                               OpParameter *opParameter) {
   return RET_OK;
 }
-void FloorNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                                  const std::vector<ge::Operator *> &npu_inputs) {
-  op_ = new hiai::op::Floor(name_);
 
+int FloorNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                                 const std::vector<ge::Operator *> &npu_inputs) {
+  op_ = new (std::nothrow) hiai::op::Floor(name_);
+  if (op_ == nullptr) {
+    return RET_ERROR;
+  }
   op_->set_input_x(*npu_inputs[0]);
+  return REK_OK;
 }
+
 ge::Operator *mindspore::kernel::FloorNPUKernel::GetNPUOp() { return this->op_; }
+
 FloorNPUKernel::~FloorNPUKernel() {
   if (op_ != nullptr) {
     delete op_;

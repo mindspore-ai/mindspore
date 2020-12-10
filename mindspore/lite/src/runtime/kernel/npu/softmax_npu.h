@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_SOFTMAX_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_SOFTMAX_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SOFTMAX_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SOFTMAX_NPU_H_
 #include <vector>
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "nnacl/softmax_parameter.h"
@@ -24,8 +24,9 @@ namespace mindspore::kernel {
 class SoftmaxNPUKernel : public NPUKernel {
  public:
   SoftmaxNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                   const std::vector<lite::Tensor *> &outputs)
-      : NPUKernel(parameter, inputs, outputs) {
+                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                   const mindspore::lite::PrimitiveC *primitive)
+      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
     auto softmax_parameter = reinterpret_cast<SoftmaxParameter *>(parameter);
     axis_ = softmax_parameter->axis_;
   }
@@ -33,13 +34,13 @@ class SoftmaxNPUKernel : public NPUKernel {
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
-  void SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                    const std::vector<ge::Operator *> &npu_inputs) override;
+  int SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                   const std::vector<ge::Operator *> &npu_inputs) override;
   ge::Operator *GetNPUOp() override;
 
  private:
-  hiai::op::Softmax *op_;
+  hiai::op::Softmax *op_ = nullptr;
   int axis_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_SOFTMAX_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SOFTMAX_NPU_H_

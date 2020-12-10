@@ -26,18 +26,24 @@ int ConcatNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const 
                                OpParameter *opParameter) {
   return RET_OK;
 }
-void ConcatNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
-                                   const std::vector<lite::Tensor *> &outputs,
-                                   const std::vector<ge::Operator *> &npu_inputs) {
-  op_ = new hiai::op::ConcatD(name_);
-  op_->set_attr_concat_dim(concat_parameter_->axis_);
+
+int ConcatNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                                  const std::vector<ge::Operator *> &npu_inputs) {
+  op_ = new (std::nothrow) hiai::op::ConcatD(name_);
+  if (op_ == nullptr) {
+    return RET_ERROR;
+  }
+  op_->set_attr_concat_dim(axis_);
   op_->set_attr_N(npu_inputs.size());
   op_->create_dynamic_input_x(npu_inputs.size());
   for (int i = 0; i < npu_inputs.size(); ++i) {
     op_->set_dynamic_input_x(i + 1, *npu_inputs[i]);
   }
+  return RET_OK;
 }
+
 ge::Operator *mindspore::kernel::ConcatNPUKernel::GetNPUOp() { return this->op_; }
+
 ConcatNPUKernel::~ConcatNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
