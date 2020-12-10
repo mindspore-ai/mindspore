@@ -51,11 +51,11 @@ def change_current_dump_json(file_name, dump_path):
 def test_async_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     pwd = os.getcwd()
-    dump_path = pwd + "/dump"
+    dump_path = pwd + "/async_dump"
     change_current_dump_json('async_dump.json', dump_path)
     os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + "/async_dump.json"
     device_id = context.get_context("device_id")
-    dump_file_path = pwd + '/dump/device_{}/Net_graph_0/0/0/'.format(device_id)
+    dump_file_path = pwd + '/async_dump/device_{}/Net_graph_0/0/0/'.format(device_id)
     if os.path.isdir(dump_path):
         shutil.rmtree(dump_path)
     add = Net()
@@ -70,11 +70,11 @@ def test_async_dump():
 def test_e2e_dump():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     pwd = os.getcwd()
-    dump_path = pwd + "/dump"
+    dump_path = pwd + "/e2e_dump"
     change_current_dump_json('e2e_dump.json', dump_path)
     os.environ['MINDSPORE_DUMP_CONFIG'] = pwd + "/e2e_dump.json"
     device_id = context.get_context("device_id")
-    dump_file_path = pwd + '/dump/Net/device_{}/iteration_1/'.format(device_id)
+    dump_file_path = pwd + '/e2e_dump/Net/device_{}/iteration_1/'.format(device_id)
     if os.path.isdir(dump_path):
         shutil.rmtree(dump_path)
     add = Net()
