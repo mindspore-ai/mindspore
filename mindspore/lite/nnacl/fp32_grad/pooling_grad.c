@@ -34,21 +34,21 @@ void AvgPoolingGrad(const float *input_ptr, float *output_ptr, PoolingParameter 
 
   memset(output_ptr, 0, in_h * in_w * channel * output_batch * sizeof(float));
   float kk = (float)(win_h * win_w);
-  for (uint16_t ib = 0; ib < output_batch; ib++) {
+  for (int ib = 0; ib < output_batch; ib++) {
     float *out = &output_ptr[(ib * in_h * in_w * channel)];
     const float *inPtr = &input_ptr[(ib * output_h * output_w * channel)];
     // iterate over yt
-    for (uint16_t yh = 0; yh < output_h; yh++) {
-      for (uint16_t yw = 0; yw < output_w; yw++) {
-        for (uint16_t ic = 0; ic < channel; ic++) {
+    for (int yh = 0; yh < output_h; yh++) {
+      for (int yw = 0; yw < output_w; yw++) {
+        for (int ic = 0; ic < channel; ic++) {
           int idx = (yw + yh * output_w) * channel + ic;
           float delta = inPtr[idx] / kk;
-          for (int32_t kh = 0; kh < win_h; kh++) {
+          for (int kh = 0; kh < win_h; kh++) {
             int xh = yh * stride_h + kh - pad_h;
             if ((xh < 0) || (xh >= in_h)) {
               continue;
             }
-            for (int32_t kw = 0; kw < win_w; kw++) {
+            for (int kw = 0; kw < win_w; kw++) {
               int xw = yw * stride_w + kw - pad_w;
               if ((xw < 0) || (xw >= in_w)) {
                 continue;
@@ -78,25 +78,25 @@ void MaxPoolingGrad(const float *input_ptr, const float *dx_ptr, const float *dy
   int output_batch = pooling_param->output_batch_;
 
   memset(output_ptr, 0, in_h * in_w * channel * output_batch * sizeof(float));
-  for (uint16_t ib = 0; ib < output_batch; ib++) {
+  for (int ib = 0; ib < output_batch; ib++) {
     float *out = &output_ptr[(ib * in_h * in_w * channel)];
     const float *inPtr = (const float *)(&input_ptr[(ib * in_h * in_w * channel)]);
     const float *dyPtr = (const float *)(&dy_ptr[(ib * output_h * output_w * channel)]);
 
-    for (uint16_t yh = 0; yh < output_h; yh++) {
-      for (uint16_t yw = 0; yw < output_w; yw++) {
-        for (uint16_t ic = 0; ic < channel; ic++) {
+    for (int yh = 0; yh < output_h; yh++) {
+      for (int yw = 0; yw < output_w; yw++) {
+        for (int ic = 0; ic < channel; ic++) {
           int idx = (yw + yh * output_w) * channel + ic;
 
           float delta = dyPtr[idx];
           float max_val = -FLT_MAX;
           int max_idx = 0;
-          for (int32_t kh = 0; kh < win_h; kh++) {
+          for (int kh = 0; kh < win_h; kh++) {
             int xh = yh * stride_h + kh - pad_h;
             if ((xh < 0) || (xh >= in_h)) {
               continue;
             }
-            for (int32_t kw = 0; kw < win_w; kw++) {
+            for (int kw = 0; kw < win_w; kw++) {
               int xw = yw * stride_w + kw - pad_w;
               if ((xw < 0) || (xw >= in_w)) {
                 continue;

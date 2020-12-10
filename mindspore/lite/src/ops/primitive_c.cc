@@ -609,7 +609,7 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
   } else if ((op_type == "ReluGrad" || op_type == "ReLU6Grad" || op_type == "SigmoidGrad" ||
               op_type == "HSigmoidGrad" || op_type == "HSwishGrad")) {
     return NewPrimitiveC<ActivationGrad>(prim, inputs, quantType);
-  } else if ((op_type == "MaxPoolGrad") || (op_type == "MeanPoolGrad") || (op_type == "AvgPoolGradGpu")) {
+  } else if ((op_type == "MaxPoolGrad") || (op_type == "AvgPoolGrad") || (op_type == "AvgPoolGradGpu")) {
     return NewPrimitiveC<PoolingGrad>(prim, inputs, quantType);
   } else if (op_type == "Conv2DBackpropFilter") {
     return NewPrimitiveC<Conv2DGradFilter>(prim, inputs, quantType);

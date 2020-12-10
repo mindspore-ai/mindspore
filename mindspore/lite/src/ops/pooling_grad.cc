@@ -84,10 +84,15 @@ int PoolingGrad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr>
     } else {
       attr->format = schema::Format_NUM_OF_FORMAT;
     }
+
     if (prim.instance_name() == "MaxPoolGrad") {
       attr->poolingMode = schema::PoolMode_MAX_POOLING;
-    } else if (prim.instance_name() == "MeanPoolGrad") {
+    } else if (prim.instance_name() == "AvgPoolGrad") {
       attr->poolingMode = schema::PoolMode_MEAN_POOLING;
+    } else if (prim.instance_name() == "AvgPoolGradGpu") {
+      attr->poolingMode = schema::PoolMode_MEAN_POOLING;
+    } else {
+      attr->poolingMode = schema::PoolMode_MAX_POOLING;
     }
 
     auto pad_mode = GetValue<std::string>(prim.GetAttr("padding"));

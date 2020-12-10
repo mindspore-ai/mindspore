@@ -30,7 +30,7 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   flatbuffers::Verifier verify((const uint8_t *)model_buf, size);
   int schema_version = VersionVerify(&verify);
   if (schema_version == -1) {
-    MS_LOG(ERROR) << "The buffer is invalid and fail to create graph.";
+    MS_LOG(ERROR) << "The model buffer is invalid, cannot get schema version";
     return nullptr;
   }
   TrainModel *model = new (std::nothrow) TrainModel();

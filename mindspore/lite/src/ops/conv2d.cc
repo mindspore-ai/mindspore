@@ -160,7 +160,7 @@ void Conv2D::PopulaterConv2DMultiGroup(const Primitive &prim, schema::PrimitiveT
 #endif
   auto kernel_size = CastToInt(prim.GetAttr("kernel_size"));
   attr->kernelH = kernel_size.at(0);
-  attr->kernelW = kernel_size.at(1);
+  attr->kernelW = (kernel_size.size() > 1) ? kernel_size.at(1) : kernel_size.at(0);
 
   auto stride = CastToInt(prim.GetAttr("stride"));
   attr->strideH = stride.at(2);
@@ -240,7 +240,7 @@ void Conv2D::PopulaterConv2DSingleGroup(const Primitive &prim, schema::Primitive
 
   auto kernel_size = CastToInt(prim.GetAttr("kernel_size"));
   attr->kernelH = kernel_size.at(0);
-  attr->kernelW = kernel_size.at(1);
+  attr->kernelW = (kernel_size.size() > 1) ? kernel_size.at(1) : kernel_size.at(0);
 
   auto stride = CastToInt(prim.GetAttr("stride"));
   attr->strideH = stride.at(2);
