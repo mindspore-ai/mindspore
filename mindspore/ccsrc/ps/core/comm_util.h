@@ -48,6 +48,7 @@
 
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
+#include "ps/core/cluster_config.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
@@ -66,6 +67,7 @@ class CommUtil {
   static void GetAvailableInterfaceAndIP(std::string *interface, std::string *ip);
   static std::string GenerateUUID();
   static std::string NodeRoleToString(const NodeRole &role);
+  static bool ValidateRankId(const enum NodeRole &node_role, const uint32_t &rank_id);
 
  private:
   static std::random_device rd;

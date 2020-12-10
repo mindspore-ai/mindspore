@@ -31,6 +31,7 @@ namespace mindspore {
 namespace ps {
 namespace core {
 using messageReceive = std::function<void(const CommMessage &message)>;
+constexpr int kHeaderLen = 8;
 
 class TcpMessageHandler {
  public:
@@ -51,10 +52,10 @@ class TcpMessageHandler {
   bool is_parsed_;
   std::unique_ptr<unsigned char> message_buffer_;
   size_t message_length_;
-  uint32_t remaining_length_;
-  char header_[4];
+  size_t remaining_length_;
+  char header_[8];
   int header_index_;
-  uint32_t last_copy_len_;
+  size_t last_copy_len_;
 };
 }  // namespace core
 }  // namespace ps

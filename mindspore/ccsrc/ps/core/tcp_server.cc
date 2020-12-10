@@ -55,7 +55,7 @@ const evutil_socket_t &TcpConnection::GetFd() const { return fd_; }
 
 void TcpConnection::SendMessage(const CommMessage &message) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
-  uint32_t buf_size = message.ByteSizeLong();
+  size_t buf_size = message.ByteSizeLong();
   std::vector<unsigned char> serialized(buf_size);
   message.SerializeToArray(serialized.data(), static_cast<int>(buf_size));
   if (evbuffer_add(bufferevent_get_output(const_cast<struct bufferevent *>(buffer_event_)), &buf_size,

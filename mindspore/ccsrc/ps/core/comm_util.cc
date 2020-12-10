@@ -94,16 +94,16 @@ std::string CommUtil::GenerateUUID() {
     ss << dis(gen);
   }
   ss << "-4";
-  for (i = 0; i < kGroup2RandomLength - 1; i++) {
-    ss << dis(gen);
-  }
-  ss << "-";
-  ss << dis2(gen);
   for (i = 0; i < kGroup3RandomLength - 1; i++) {
     ss << dis(gen);
   }
   ss << "-";
-  for (i = 0; i < kGroup4RandomLength; i++) {
+  ss << dis2(gen);
+  for (i = 0; i < kGroup4RandomLength - 1; i++) {
+    ss << dis(gen);
+  }
+  ss << "-";
+  for (i = 0; i < kGroup5RandomLength; i++) {
     ss << dis(gen);
   }
   return ss.str();
@@ -121,7 +121,14 @@ std::string CommUtil::NodeRoleToString(const NodeRole &role) {
       MS_LOG(EXCEPTION) << "The node role:" << role << " is illegal!";
   }
 }
-
+bool CommUtil::ValidateRankId(const enum NodeRole &node_role, const uint32_t &rank_id) {
+  if (node_role == NodeRole::SERVER && (rank_id > ClusterConfig::server_num() - 1)) {
+    return false;
+  } else if (node_role == NodeRole::WORKER && (rank_id > ClusterConfig::worker_num() - 1)) {
+    return false;
+  }
+  return true;
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

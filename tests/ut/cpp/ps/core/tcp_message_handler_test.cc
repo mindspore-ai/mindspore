@@ -33,117 +33,118 @@ class TestTcpMessageHandler : public UT::Common {
   void TearDown() override {}
 };
 
-TEST_F(TestTcpMessageHandler, 4_Header_1003_Data) {
+TEST_F(TestTcpMessageHandler, 8_Header_1003_Data) {
   TcpMessageHandler handler;
   handler.SetCallback([this](const CommMessage &message) { EXPECT_EQ(message.data().size(), 1000); });
 
   std::string data(1000, 'a');
   CommMessage message;
   message.set_data(data);
-  uint32_t buf_size = message.ByteSizeLong();
-  char result[1007];
-  int ret = memcpy_s(result, 4, &buf_size, 4);
+  size_t buf_size = message.ByteSizeLong();
+  char result[1011];
+  int ret = memcpy_s(result, kHeaderLen, &buf_size, kHeaderLen);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
 
   std::vector<char> serialized(buf_size);
   message.SerializeToArray(serialized.data(), static_cast<int>(buf_size));
-  memcpy_s(result + 4, buf_size, serialized.data(), buf_size);
-  handler.ReceiveMessage(result, buf_size + 4);
+  memcpy_s(result + kHeaderLen, buf_size, serialized.data(), buf_size);
+  handler.ReceiveMessage(result, buf_size + kHeaderLen);
 }
 
-TEST_F(TestTcpMessageHandler, 4_Header_1003_Data_4_Header_1003_Data) {
+TEST_F(TestTcpMessageHandler, 8_Header_1003_Data_8_Header_1003_Data) {
   TcpMessageHandler handler;
   handler.SetCallback([this](const CommMessage &message) { EXPECT_EQ(message.data().size(), 1000); });
 
   std::string data(1000, 'a');
   CommMessage message;
   message.set_data(data);
-  uint32_t buf_size = message.ByteSizeLong();
-  char result[2014];
-  int ret = memcpy_s(result, 4, &buf_size, 4);
+  size_t buf_size = message.ByteSizeLong();
+  char result[2022] = {0};
+  int ret = memcpy_s(result, kHeaderLen, &buf_size, kHeaderLen);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
   std::vector<char> serialized(buf_size);
   message.SerializeToArray(serialized.data(), static_cast<int>(buf_size));
-  ret = memcpy_s(result + 4, buf_size, serialized.data(), buf_size);
+  ret = memcpy_s(result + kHeaderLen, buf_size, serialized.data(), buf_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
-  ret = memcpy_s(result + 4 + buf_size, 4, &buf_size, 4);
+  ret = memcpy_s(result + kHeaderLen + buf_size, kHeaderLen, &buf_size, kHeaderLen);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
-  ret = memcpy_s(result + 4 + buf_size + 4, buf_size, serialized.data(), buf_size);
+  ret = memcpy_s(result + kHeaderLen + buf_size + kHeaderLen, buf_size, serialized.data(), buf_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
 
-  handler.ReceiveMessage(result, 2 * buf_size + 4 * 2);
+  handler.ReceiveMessage(result, 2 * buf_size + kHeaderLen * 2);
 }
 
-TEST_F(TestTcpMessageHandler, 4_Header_4090_Data_2_Header_2_header_4090_data) {
+TEST_F(TestTcpMessageHandler, 8_Header_4084_Data_4_Header_4_header_4084_data) {
   TcpMessageHandler handler;
-  handler.SetCallback([this](const CommMessage &message) { EXPECT_EQ(message.data().size(), 4087); });
+  handler.SetCallback([this](const CommMessage &message) { EXPECT_EQ(message.data().size(), 4081); });
 
-  std::string data(4087, 'a');
+  std::string data(4081, 'a');
   CommMessage message;
   message.set_data(data);
-  uint32_t buf_size = message.ByteSizeLong();
-  char result[4096];
-  int ret = memcpy_s(result, 4, &buf_size, 4);
+  size_t buf_size = message.ByteSizeLong();
+  char result[4096] = {0};
+  int ret = memcpy_s(result, kHeaderLen, &buf_size, kHeaderLen);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
   std::vector<char> serialized(buf_size);
   message.SerializeToArray(serialized.data(), static_cast<int>(buf_size));
-  ret = memcpy_s(result + 4, buf_size, serialized.data(), buf_size);
+  ret = memcpy_s(result + kHeaderLen, buf_size, serialized.data(), buf_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
 
-  ret = memcpy_s(result + 4 + buf_size, 2, &buf_size, 2);
+  ret = memcpy_s(result + kHeaderLen + buf_size, 4, &buf_size, 4);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
 
   handler.ReceiveMessage(result, 4096);
 
-  ret = memcpy_s(result, 2, &buf_size + 2, 2);
+  auto temp = reinterpret_cast<char *>(&buf_size);
+  ret = memcpy_s(result, 4, temp + 4, 4);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
-  ret = memcpy_s(result + 2, buf_size, serialized.data(), buf_size);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
-  }
-
-  handler.ReceiveMessage(result, 4092);
-}
-
-TEST_F(TestTcpMessageHandler, 4_Header_4088_Data_4_Header_4088_data) {
-  TcpMessageHandler handler;
-  handler.SetCallback([this](const CommMessage &message) { EXPECT_EQ(message.data().size(), 4085); });
-
-  std::string data(4085, 'a');
-  CommMessage message;
-  message.set_data(data);
-  uint32_t buf_size = message.ByteSizeLong();
-  char result[4096];
-  int ret = memcpy_s(result, 4, &buf_size, 4);
-  if (ret != 0) {
-    MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
-  }
-  std::vector<char> serialized(buf_size);
-  message.SerializeToArray(serialized.data(), static_cast<int>(buf_size));
   ret = memcpy_s(result + 4, buf_size, serialized.data(), buf_size);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
 
-  ret = memcpy_s(result + 4 + buf_size, 4, &buf_size, 4);
+  handler.ReceiveMessage(result, 4088);
+}
+
+TEST_F(TestTcpMessageHandler, 8_Header_4080_Data_8_Header_4080_data) {
+  TcpMessageHandler handler;
+  handler.SetCallback([this](const CommMessage &message) { EXPECT_EQ(message.data().size(), 4077); });
+
+  std::string data(4077, 'a');
+  CommMessage message;
+  message.set_data(data);
+  size_t buf_size = message.ByteSizeLong();
+  char result[4096] = {0};
+  int ret = memcpy_s(result, kHeaderLen, &buf_size, kHeaderLen);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+  }
+  std::vector<char> serialized(buf_size);
+  message.SerializeToArray(serialized.data(), static_cast<int>(buf_size));
+  ret = memcpy_s(result + kHeaderLen, buf_size, serialized.data(), buf_size);
+  if (ret != 0) {
+    MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
+  }
+
+  ret = memcpy_s(result + kHeaderLen + buf_size, kHeaderLen, &buf_size, kHeaderLen);
   if (ret != 0) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
@@ -155,9 +156,8 @@ TEST_F(TestTcpMessageHandler, 4_Header_4088_Data_4_Header_4088_data) {
     MS_LOG(EXCEPTION) << "The memcpy_s error, errorno(" << ret << ")";
   }
 
-  handler.ReceiveMessage(result, 4088);
+  handler.ReceiveMessage(result, 4080);
 }
-
-}  // namespace comm
+}  // namespace core
 }  // namespace ps
 }  // namespace mindspore

@@ -249,7 +249,7 @@ void TcpClient::SetMessageCallback(const OnMessage &cb) { message_callback_ = cb
 
 void TcpClient::SendMessage(const CommMessage &message) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
-  uint32_t buf_size = message.ByteSizeLong();
+  size_t buf_size = message.ByteSizeLong();
   std::vector<unsigned char> serialized(buf_size);
   message.SerializeToArray(serialized.data(), static_cast<int>(buf_size));
   if (evbuffer_add(bufferevent_get_output(buffer_event_), &buf_size, sizeof(buf_size)) == -1) {
