@@ -18,7 +18,11 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
+import mindspore.common.dtype as mstype
+from mindspore.common.seed import _get_graph_seed
 from mindspore.common.api import _executor
+from mindspore._checkparam import Validator
+from mindspore.ops.primitive import constexpr
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from tests.ut.python.ops.test_math_ops import VirtualLoss
@@ -47,13 +51,61 @@ class GradWrap(nn.Cell):
         return grad_all(self.network)(x, y, b)
 
 
+@constexpr
+def _is_float_dtype(dtype):
+    if dtype in [mstype.float32, mstype.float16]:
+        return True
+    return False
+
+class Dropout(nn.Cell):
+    def __init__(self, keep_prob=0.5, dtype=mstype.float32):
+        super(Dropout, self).__init__()
+        if keep_prob <= 0 or keep_prob > 1:
+            raise ValueError("dropout probability should be a number in range (0, 1], but got {}".format(keep_prob))
+        Validator.check_subclass("dtype", dtype, mstype.number_type, self.cls_name)
+        Validator.check_value_type('keep_prob', keep_prob, [float], self.cls_name)
+        self.keep_prob = keep_prob
+        seed0, seed1 = _get_graph_seed(0, "dropout")
+        self.seed0 = seed0
+        self.seed1 = seed1
+        self.dtype = dtype
+        self.get_shape = P.Shape()
+        self.dropout_gen_mask = P.DropoutGenMask(Seed0=self.seed0, Seed1=self.seed1)
+        self.dropout_do_mask = P.DropoutDoMask()
+        self.cast = P.Cast()
+        self.is_gpu = context.get_context('device_target') in ["GPU"]
+        self.dropout = P.Dropout(keep_prob)
+
+    def construct(self, x):
+        if not self.training:
+            return x
+
+        if self.is_gpu:
+            out, _ = self.dropout(x)
+            return out
+
+        if self.keep_prob == 1:
+            return x
+
+        shape = self.get_shape(x)
+        dtype = P.DType()(x)
+        if _is_float_dtype(dtype):
+            keep_prob = self.cast(self.keep_prob, dtype)
+        else:
+            keep_prob = self.cast(self.keep_prob, mstype.float16)
+        output = self.dropout_gen_mask(shape, keep_prob)
+        return self.dropout_do_mask(x, output, keep_prob)
+
+    def extend_repr(self):
+        return 'keep_prob={}, dtype={}'.format(self.keep_prob, self.dtype)
+
 # model_parallel test
 def test_two_matmul_dropout():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2, strategy3):
             super().__init__()
             self.matmul1 = P.MatMul().shard(strategy1)
-            self.dropout = nn.Dropout()
+            self.dropout = Dropout()
             self.dropout.dropout_do_mask.shard(strategy2)
             self.dropout.dropout_gen_mask.shard(strategy2)
             self.matmul2 = P.MatMul().shard(strategy3)

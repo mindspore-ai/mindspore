@@ -1085,7 +1085,7 @@ std::string TbeKernelBuild::GetNodeFusionType(const mindspore::CNodePtr &cnode) 
                                                                {kTensorAddOpName, "ElemWise"},
                                                                {kConv2DBackpropInputOpName, "Conv2d_backprop_input"},
                                                                {kConv2DBackpropFilterOpName, "Conv2d_backprop_filter"},
-                                                               {kDepthwiseConv2dNativeName, "DepthwiseConvolution"},
+                                                               {kDepthwiseConv2dNativeOpName, "DepthwiseConvolution"},
                                                                {kAddNOpName, "ElemWise"},
                                                                {kReluGradV2OpName, "ElemWise"},
                                                                {kRealDivOpName, "ElemWise"}};

@@ -19,7 +19,7 @@ from mindspore import context
 from mindspore.ops import operations as P
 from mindspore.ops.primitive import constexpr
 from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer, Initializer
+from mindspore.common.initializer import initializer
 from mindspore.common.tensor import Tensor
 from mindspore._checkparam import Validator, Rel, twice
 from mindspore._extends import cell_attr_register
@@ -247,27 +247,7 @@ class Conv2d(_Conv):
                                dilation=self.dilation,
                                group=self.group,
                                data_format=self.format)
-        self._init_depthwise_conv2d()
         self.bias_add = P.BiasAdd()
-
-    def _init_depthwise_conv2d(self):
-        """Initialize depthwise conv2d op"""
-        if context.get_context("device_target") == "Ascend" and self.group > 1:
-            self.dilation = self._dilation
-            Validator.check_equal_int(self.group, self.in_channels, 'group')
-            Validator.check_equal_int(self.group, self.out_channels, 'group')
-            self.conv2d = P.DepthwiseConv2dNative(channel_multiplier=1,
-                                                  kernel_size=self.kernel_size,
-                                                  pad_mode=self.pad_mode,
-                                                  pad=self.padding,
-                                                  stride=self.stride,
-                                                  dilation=self.dilation)
-            weight_shape = [1, self.in_channels, *self.kernel_size]
-            if isinstance(self.weight_init, Tensor):
-                self.weight_init = Tensor(self.weight_init.asnumpy().swapaxes(0, 1), self.weight_init.dtype)
-            if isinstance(self.weight_init, Initializer):
-                self.weight_init.shape = weight_shape
-            self.weight = Parameter(initializer(self.weight_init, weight_shape), name='weight')
 
     def construct(self, x):
         output = self.conv2d(x, self.weight)

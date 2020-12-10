@@ -32,6 +32,10 @@
 #include "runtime/device/ascend/ascend_kernel_runtime.h"
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
+#include "backend/optimizer/ascend/mindir/dropout_unify_mindir.h"
+#include "backend/optimizer/ascend/mindir/maxpool_to_maxpool_with_argmax.h"
+#include "backend/optimizer/ascend/mindir/maxpool_with_argmax_unify_mindir.h"
+#include "backend/optimizer/ascend/mindir/conv2d_unify_mindir.h"
 #include "runtime/device/kernel_adjust.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -423,6 +427,35 @@ void AscendSession::Init(uint32_t device_id) {
   runtime_instance->CreateContext();
 }
 
+void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_before_unify_mindir_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph);
+    DumpIRProto(graph, "before_unify_mindir_hwopt_" + std::to_string(graph->graph_id()));
+  }
+  auto optimizer = std::make_shared<opt::GraphOptimizer>();
+  auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
+  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropInputUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropFilterUnifyMindIR>());
+
+  optimizer->AddPassManager(unify_mindir_pm);
+  (void)optimizer->Optimize(graph);
+  graph->SetExecOrderByDefault();
+  if (save_graphs) {
+    std::string file_name = "hwopt_d_after_unify_mindir_graph_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpIR(file_name, graph);
+  }
+}
+
 GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) {
   MS_LOG(INFO) << "Start";
   // construct graph, if successfully, graph_sum_ + 1
@@ -438,6 +471,9 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   auto root_graph = ConstructKernelGraph(func_graph, &all_graphs);
   // Update Graph Dynamic Shape Attr
   UpdateAllGraphDynamicShapeAttr(all_graphs);
+  for (const auto &graph : all_graphs) {
+    UnifyMindIR(graph);
+  }
   BackendOptimization(all_graphs);
   // empty graph dont entry to backend
   if (root_graph->execution_order().empty()) {
@@ -1219,7 +1255,6 @@ void AscendSession::IrFusionPass(const NotNull<KernelGraphPtr> graph, NotNull<st
     return;
   }
   memo->insert(graph.get());
-
   opt::AscendBackendIRFusionOptimization(graph);
   graph->SetExecOrderByDefault();
 

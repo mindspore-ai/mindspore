@@ -1615,7 +1615,7 @@ test_case_nn_ops = [
     ('MaxPoolWithArgmax', {
         'block': P.MaxPoolWithArgmax(ksize=2, strides=2),
         'desc_inputs': [[128, 32, 32, 64]],
-        'desc_bprop': [[128, 32, 16, 32], ([128, 32, 4, 33], {'dtype': np.uint16})]}),
+        'desc_bprop': [[128, 32, 16, 32], ([128, 32, 16, 32], {'dtype': np.int32})]}),
     ('SoftmaxCrossEntropyWithLogits', {
         'block': P.SoftmaxCrossEntropyWithLogits(),
         'desc_inputs': [[1, 10], [1, 10]],

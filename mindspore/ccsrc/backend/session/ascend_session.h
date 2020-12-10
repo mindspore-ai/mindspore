@@ -51,6 +51,7 @@ class AscendSession : public SessionBasic {
   void SyncStream() override;
 
  protected:
+  void UnifyMindIR(const KernelGraphPtr &graph) override;
   GraphId CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtrList &outputs) override;
   GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) override;
   GraphId CompileGraphImpl(NotNull<FuncGraphPtr> func_graph, const std::vector<tensor::TensorPtr> &inputs) override;
