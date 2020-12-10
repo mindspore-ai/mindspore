@@ -85,16 +85,16 @@ class DynamicLossScaleUpdateCell(Cell):
         >>> from mindspore.nn.wrap.cell_wrapper import WithLossCell
         >>>
         >>> class Net(nn.Cell):
-        >>>     def __init__(self, in_features, out_features):
-        >>>         super(Net, self).__init__()
-        >>>         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
-        >>>                                 name='weight')
-        >>>         self.matmul = P.MatMul()
-        >>>
-        >>>     def construct(self, x):
-        >>>         output = self.matmul(x, self.weight)
-        >>>         return output
-        >>>
+        ...     def __init__(self, in_features, out_features):
+        ...         super(Net, self).__init__()
+        ...         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
+        ...                                 name='weight')
+        ...         self.matmul = P.MatMul()
+        ...
+        ...     def construct(self, x):
+        ...         output = self.matmul(x, self.weight)
+        ...         return output
+        ...
         >>> in_features, out_features = 16, 10
         >>> net = Net(in_features, out_features)
         >>> loss = nn.MSELoss()
@@ -168,16 +168,16 @@ class FixedLossScaleUpdateCell(Cell):
         >>> from mindspore.nn.wrap.cell_wrapper import WithLossCell
         >>>
         >>> class Net(nn.Cell):
-        >>>     def __init__(self, in_features, out_features):
-        >>>         super(Net, self).__init__()
-        >>>         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
-        >>>                                 name='weight')
-        >>>         self.matmul = P.MatMul()
-        >>>
-        >>>     def construct(self, x):
-        >>>         output = self.matmul(x, self.weight)
-        >>>         return output
-        >>>
+        ...     def __init__(self, in_features, out_features):
+        ...         super(Net, self).__init__()
+        ...         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
+        ...                                 name='weight')
+        ...         self.matmul = P.MatMul()
+        ...
+        ...     def construct(self, x):
+        ...         output = self.matmul(x, self.weight)
+        ...         return output
+        ...
         >>> in_features, out_features = 16, 10
         >>> net = Net(in_features, out_features)
         >>> loss = nn.MSELoss()
@@ -237,16 +237,16 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         >>> from mindspore.common import dtype as mstype
         >>>
         >>> class Net(nn.Cell):
-        >>>     def __init__(self, in_features, out_features):
-        >>>         super(Net, self).__init__()
-        >>>         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
-        >>>                                 name='weight')
-        >>>         self.matmul = P.MatMul()
-        >>>
-        >>>     def construct(self, x):
-        >>>         output = self.matmul(x, self.weight)
-        >>>         return output
-        >>>
+        ...     def __init__(self, in_features, out_features):
+        ...         super(Net, self).__init__()
+        ...         self.weight = Parameter(Tensor(np.ones([in_features, out_features]).astype(np.float32)),
+        ...                                 name='weight')
+        ...         self.matmul = P.MatMul()
+        ...
+        ...     def construct(self, x):
+        ...         output = self.matmul(x, self.weight)
+        ...         return output
+        ...
         >>> size, in_features, out_features = 16, 16, 10
         >>> #1) when the type of scale_sense is Cell:
         >>> net = Net(in_features, out_features)

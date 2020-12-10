@@ -87,10 +87,10 @@ class WithLossCell(Cell):
         >>> net_with_criterion = nn.WithLossCell(net, loss_fn)
         >>>
         >>> batch_size = 2
-        >>> data = Tensor(np.ones([batch_size, 3, 64, 64]).astype(np.float32) * 0.01)
-        >>> label = Tensor(np.ones([batch_size, 1, 1, 1]).astype(np.int32))
+        >>> data = Tensor(np.ones([batch_size, 1, 32, 32]).astype(np.float32) * 0.01)
+        >>> label = Tensor(np.ones([batch_size, 10]).astype(np.float32))
         >>>
-        >>> net_with_criterion(data, label)
+        >>> output_data = net_with_criterion(data, label)
     """
 
     def __init__(self, backbone, loss_fn):
@@ -205,20 +205,20 @@ class TrainOneStepCell(Cell):
         >>> train_net = nn.TrainOneStepCell(loss_net, optim)
         >>>
         >>> #2) Using user-defined WithLossCell
-        >>> class MyWithLossCell(nn.cell):
-        >>>    def __init__(self, backbone, loss_fn):
-        >>>        super(MyWithLossCell, self).__init__(auto_prefix=False)
-        >>>        self._backbone = backbone
-        >>>        self._loss_fn = loss_fn
-        >>>
-        >>>    def construct(self, x, y, label):
-        >>>        out = self._backbone(x, y)
-        >>>        return self._loss_fn(out, label)
-        >>>
-        >>>    @property
-        >>>    def backbone_network(self):
-        >>>        return self._backbone
-        >>>
+        >>> class MyWithLossCell(Cell):
+        ...    def __init__(self, backbone, loss_fn):
+        ...        super(MyWithLossCell, self).__init__(auto_prefix=False)
+        ...        self._backbone = backbone
+        ...        self._loss_fn = loss_fn
+        ...
+        ...    def construct(self, x, y, label):
+        ...        out = self._backbone(x, y)
+        ...        return self._loss_fn(out, label)
+        ...
+        ...    @property
+        ...    def backbone_network(self):
+        ...        return self._backbone
+        ...
         >>> loss_net = MyWithLossCell(net, loss_fn)
         >>> train_net = nn.TrainOneStepCell(loss_net, optim)
     """
@@ -408,7 +408,7 @@ class ParameterUpdate(Cell):
         >>> update = nn.ParameterUpdate(param)
         >>> update.phase = "update_param"
         >>> weight = Tensor(np.arrange(12).reshape((4, 3)), mindspore.float32)
-        >>> update(weight)
+        >>> network_updata = update(weight)
     """
 
     def __init__(self, param):
