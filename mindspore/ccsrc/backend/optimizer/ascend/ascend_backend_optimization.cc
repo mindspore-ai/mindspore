@@ -72,6 +72,7 @@
 #include "backend/optimizer/ascend/format_type/chang_axis_of_reduce_kernel.h"
 #include "backend/optimizer/ascend/format_type/split_unsupported_transdata.h"
 #include "backend/optimizer/ascend/format_type/insert_reshape_for_extract_image_patches_op.h"
+#include "backend/optimizer/ascend/format_type/convert_cast_format.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/pass/optimize_dependence.h"
 #include "backend/optimizer/pass/erase_visit_attr.h"
@@ -188,27 +189,6 @@ void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   ir_fusion_pm->AddPass(std::make_shared<GatherV2DsFission>());
 }
 }  // namespace
-
-void RunOpAscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
-  MS_EXCEPTION_IF_NULL(kernel_graph);
-  auto optimizer = std::make_shared<GraphOptimizer>();
-  auto data_layout_pm = std::make_shared<PassManager>("pynative_transop_pm");
-  data_layout_pm->AddPass(std::make_shared<ChangeAxisOfReduceKernel>());
-  data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
-  data_layout_pm->AddPass(std::make_shared<DynamicRNNGradReformat>());
-  data_layout_pm->AddPass(std::make_shared<RunOpInsertTransData>());
-  data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
-  data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
-  data_layout_pm->AddPass(std::make_shared<EliminateRedundantOp>());
-  data_layout_pm->AddPass(std::make_shared<InsertTransposeForDynamicGRUV2>());
-  data_layout_pm->AddPass(std::make_shared<OptimizeDependence>());
-  data_layout_pm->AddPass(std::make_shared<TransDataSplit>());
-  data_layout_pm->AddPass(std::make_shared<EraseVisitAttr>());
-  optimizer->AddPassManager(data_layout_pm);
-  (void)optimizer->Optimize(kernel_graph);
-  kernel_graph->SetExecOrderByDefault();
-}
-
 void AscendGraphKernelCommonProcess(const std::shared_ptr<session::KernelGraph> &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   auto optimizer = std::make_shared<GraphOptimizer>();
@@ -228,8 +208,17 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   auto data_layout_pm = std::make_shared<PassManager>("transop_pm");
   data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
   data_layout_pm->AddPass(std::make_shared<DynamicRNNGradReformat>());
+  data_layout_pm->AddPass(std::make_shared<ChangeAxisOfReduceKernel>());
   data_layout_pm->AddPass(std::make_shared<AddIoFormatAttrFor3DGraph>());
-  data_layout_pm->AddPass(std::make_shared<InsertTransOp>());
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    data_layout_pm->AddPass(std::make_shared<RunOpInsertTransData>());
+  } else {
+    data_layout_pm->AddPass(std::make_shared<MergeCastToOp>());
+    data_layout_pm->AddPass(std::make_shared<ConvertCastFormat>());
+    data_layout_pm->AddPass(std::make_shared<InsertTransOp>());
+  }
   data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   data_layout_pm->AddPass(std::make_shared<RemoveReshapePair>());

@@ -39,8 +39,9 @@ namespace mindspore {
 namespace device {
 namespace ascend {
 namespace {
-const float kWegihtBaseScore = 1;
-const float kFeatureMapBaseScore = 10;
+const int kWeightUnInitScore = 1;
+const int kWeightInitScore = 2;
+const int kFeatureMapBaseScore = 10;
 constexpr auto kPriChoosenFormat = "pri_format";
 enum MatchCountPriority : int {
   MATCH_COUNT_PRIORITY_BEGIN = 0,
@@ -140,18 +141,17 @@ void UpdateCurMatchCounts(const kernel::KernelBuildInfo &kernel_build_info, cons
   MS_EXCEPTION_IF_NULL(kernel_node);
   MS_EXCEPTION_IF_NULL(cur_kernelinfo_match_counts);
   if (cur_kernelinfo_match_counts->size() < MATCH_COUNT_PRIORITY_END) {
-    MS_LOG(EXCEPTION) << "Out of range cur_kernelinfo_match_counts " << MATCH_COUNT_PRIORITY_END;
+    MS_LOG(EXCEPTION) << "Out of range cur_kernel info_match_counts " << MATCH_COUNT_PRIORITY_END;
   }
   auto pri_match_format = GetPriorityMatchFormat(kernel_node);
   for (size_t input_index = 0; input_index < AnfAlgo::GetInputTensorNum(kernel_node); ++input_index) {
-    auto input_anf_node = kernel_node->input(input_index + 1);
+    auto input_anf_node = AnfAlgo::VisitKernelWithReturnType(AnfAlgo::GetInputNode(kernel_node, input_index), 0).first;
+    MS_EXCEPTION_IF_NULL(input_anf_node);
     // we do not take ValueNode into consideration in graph kernel.
-    if (kernel_build_info.kernel_type() == KernelType::AKG_KERNEL) {
-      if (input_anf_node->isa<ValueNode>() && AnfAlgo::GetOutputDeviceDataType(input_anf_node, 0) == kTypeUnknown) {
-        continue;
-      }
+    auto base_score = AnfAlgo::IsFeatureMapInput(kernel_node, input_index) ? kFeatureMapBaseScore : kWeightInitScore;
+    if (AnfAlgo::GetOutputDeviceDataType(input_anf_node, 0) == kTypeUnknown) {
+      base_score = kWeightUnInitScore;
     }
-    auto base_score = AnfAlgo::IsFeatureMapInput(kernel_node, input_index) ? kFeatureMapBaseScore : kWegihtBaseScore;
     if (kernel_build_info.GetInputFormat(input_index) == AnfAlgo::GetPrevNodeOutputFormat(kernel_node, input_index)) {
       (*cur_kernelinfo_match_counts)[MATCH_FORMAT_COUNT] += base_score;
     }
@@ -356,6 +356,54 @@ void SetCastAndWeightFormat(const CNodePtr &kernel_node) {
   info_builder->SetOutputsFormat({format});
   AnfAlgo::SetSelectKernelBuildInfo(info_builder->Build(), kernel_node.get());
 }
+
+void SetWeightFormat(const AnfNodePtr &real_input_node, const std::vector<string> &output_format,
+                     const CNodePtr &kernel_node, size_t input_index) {
+  auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
+  // we set special device info of a input tensor.
+  bool is_ref = false;
+  auto op_info = kernel::tbe::TbeDynamicShapeUtil::FindOp(AnfAlgo::GetCNodeName(kernel_node), kernel_node);
+  if (op_info != nullptr) {
+    is_ref = op_info->is_ref();
+  }
+  auto selected_kernel_info = AnfAlgo::GetSelectKernelBuildInfo(kernel_node);
+  if (IsValueNode<tensor::Tensor>(real_input_node) &&
+      AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown) {
+    builder->SetOutputsFormat(output_format);
+    std::vector<TypeId> output_type = {selected_kernel_info->GetInputDeviceType(input_index)};
+    builder->SetOutputsDeviceType(output_type);
+    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
+    return;
+  }
+  if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || is_ref) {
+    builder->SetOutputsFormat(output_format);
+    std::vector<TypeId> output_type = {selected_kernel_info->GetInputDeviceType(input_index)};
+    builder->SetOutputsDeviceType(output_type);
+    AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
+  }
+}
+
+bool RefreshCastAndParamWeightFormat(const AnfNodePtr &input_node, const string &format) {
+  MS_EXCEPTION_IF_NULL(input_node);
+  if (!input_node->isa<CNode>()) {
+    return false;
+  }
+  auto cast_node = input_node->cast<CNodePtr>();
+  if (AnfAlgo::GetCNodeName(cast_node) != prim::kPrimCast->name()) {
+    return true;
+  }
+  if (AnfAlgo::IsFeatureMapOutput(cast_node)) {
+    return true;
+  }
+  auto info_builder =
+    std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(AnfAlgo::GetSelectKernelBuildInfo(input_node));
+  info_builder->SetInputsFormat({format});
+  info_builder->SetOutputsFormat({format});
+  AnfAlgo::SetSelectKernelBuildInfo(info_builder->Build(), cast_node.get());
+  auto cast_input_node = AnfAlgo::VisitKernel(AnfAlgo::GetInputNode(cast_node, 0), 0);
+  SetWeightFormat(cast_input_node.first, {format}, cast_node, 0);
+  return true;
+}
 }  // namespace
 void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
@@ -367,22 +415,15 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
     auto input_with_index = AnfAlgo::VisitKernel(input_kernel_node, 0);
     MS_EXCEPTION_IF_NULL(input_with_index.first);
     auto real_input_node = input_with_index.first;
-    if (real_input_node->isa<CNode>()) {
+    if (RefreshCastAndParamWeightFormat(real_input_node, selected_kernel_info->GetInputFormat(input_index))) {
       continue;
     }
     if (real_input_node->isa<Parameter>() && !AnfAlgo::IsParameterWeight(real_input_node->cast<ParameterPtr>())) {
       continue;
     }
-    // we set special device info of a input tensor.
-    bool is_ref = false;
-    auto op_info = kernel::tbe::TbeDynamicShapeUtil::FindOp(AnfAlgo::GetCNodeName(kernel_node), kernel_node);
-    if (op_info != nullptr) {
-      is_ref = op_info->is_ref();
-    }
     if (AnfAlgo::OutputAddrExist(real_input_node, 0)) {
       continue;
     }
-    auto builder = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>();
     auto refresh_format = selected_kernel_info->GetInputFormat(input_index);
     std::vector<std::string> output_format = {refresh_format};
     // if not find in host convert format map means the host has not registered the convert function of this format
@@ -390,20 +431,7 @@ void SetTensorDeviceInfo(const CNodePtr &kernel_node) {
         refresh_format != kOpFormat_DEFAULT) {
       output_format = {AnfAlgo::GetOutputFormat(real_input_node, 0)};
     }
-    if (IsValueNode<tensor::Tensor>(input_kernel_node) &&
-        AnfAlgo::GetOutputDeviceDataType(input_kernel_node, 0) == kTypeUnknown) {
-      builder->SetOutputsFormat(output_format);
-      std::vector<TypeId> output_type = {selected_kernel_info->GetInputDeviceType(input_index)};
-      builder->SetOutputsDeviceType(output_type);
-      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), input_kernel_node.get());
-      continue;
-    }
-    if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || is_ref) {
-      builder->SetOutputsFormat(output_format);
-      std::vector<TypeId> output_type = {selected_kernel_info->GetInputDeviceType(input_index)};
-      builder->SetOutputsDeviceType(output_type);
-      AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
-    }
+    SetWeightFormat(real_input_node, output_format, kernel_node, input_index);
   }
 }
 
