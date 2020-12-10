@@ -22,7 +22,7 @@ from mindspore import Tensor, context, load_checkpoint, load_param_into_net, exp
 from mindspore.compression.quant import QuantizationAwareTraining
 
 from src.mobilenetV2 import mobilenetV2
-from src.config import config_ascend_quant
+from src.config import config_quant
 
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
@@ -30,13 +30,8 @@ parser.add_argument('--device_target', type=str, default=None, help='Run device 
 args_opt = parser.parse_args()
 
 if __name__ == '__main__':
-    cfg = None
-    if args_opt.device_target == "Ascend":
-        cfg = config_ascend_quant
-        context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=False)
-    else:
-        raise ValueError("Unsupported device target: {}.".format(args_opt.device_target))
-
+    cfg = config_quant(args_opt.device_target)
+    context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target, save_graphs=False)
     # define fusion network
     network = mobilenetV2(num_classes=cfg.num_classes)
     # convert fusion network to quantization aware network
