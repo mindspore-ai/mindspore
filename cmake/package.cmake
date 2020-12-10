@@ -202,7 +202,7 @@ if (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
     )
 endif()
 
-if (ENABLE_SERVING OR ENABLE_TESTCASES)
+if (ENABLE_TESTCASES)
     file(GLOB_RECURSE LIBEVENT_LIB_LIST
             ${libevent_LIBPATH}/libevent*
             ${libevent_LIBPATH}/libevent_pthreads*
@@ -324,29 +324,3 @@ install(
     COMPONENT mindspore
 )
 
-if (ENABLE_SERVING)
-    install(
-        TARGETS ms_serving
-        DESTINATION ${INSTALL_BASE_DIR}
-        COMPONENT mindspore
-    )
-
-    install(
-        FILES ${CMAKE_SOURCE_DIR}/build/mindspore/serving/ms_service_pb2.py
-              ${CMAKE_SOURCE_DIR}/build/mindspore/serving/ms_service_pb2_grpc.py
-        DESTINATION ${INSTALL_PY_DIR}
-        COMPONENT mindspore
-    )
-
-    install(
-        TARGETS inference
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
-
-    install(
-        FILES ${LIBEVENT_LIB_LIST}
-        DESTINATION ${INSTALL_LIB_DIR}
-        COMPONENT mindspore
-    )
-endif ()

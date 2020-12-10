@@ -132,7 +132,6 @@ package_data = {
         'lib/*.so*',
         'lib/*.a',
         '.commit_id',
-        'ms_serving',
         'config/*'
         'include/*',
         'include/*/*',
@@ -160,8 +159,6 @@ def update_permissions(path):
         for filename in filenames:
             file_fullpath = os.path.join(dirpath, filename)
             os.chmod(file_fullpath, stat.S_IREAD)
-            if filename == "ms_serving":
-                os.chmod(file_fullpath, stat.S_IREAD | stat.S_IEXEC)
 
 def bin_files():
     """
