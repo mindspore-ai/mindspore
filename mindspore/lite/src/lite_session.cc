@@ -295,6 +295,21 @@ void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
   }
 }
 
+void LiteSession::AdjustModelOutputTensorInitRefCount(const lite::Model *model) {
+  MS_ASSERT(model != nullptr);
+  auto graph_out_size = model->sub_graphs_.front()->output_indices_.size();
+  for (size_t i = 0; i < graph_out_size; ++i) {
+    size_t graph_out_index = model->sub_graphs_.front()->output_indices_[i];
+    MS_ASSERT(graph_out_index < this->tensors_.size());
+    auto *out_tensor = this->tensors_.at(graph_out_index);
+    if (out_tensor == nullptr) {
+      MS_LOG(ERROR) << "out_tensor is null!";
+      return;
+    }
+    out_tensor->set_init_ref_count(out_tensor->init_ref_count() + 1);
+  }
+}
+
 void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
   InitGraphInputTensors(model);
   InitGraphInputMSTensors();
@@ -303,6 +318,7 @@ void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
   InitGraphOutputNodeMap(model);
   InitGraphOutputTensorNames(model);
   InitGraphOutputTensorMap(model);
+  AdjustModelOutputTensorInitRefCount(model);
 }
 
 int LiteSession::CompileGraph(Model *model) {
@@ -334,12 +350,9 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-
-  InitGraphInOutTensors(model);
-
   // scheduler kernels
-  Scheduler scheduler(context_);
-  ret = scheduler.Schedule(model, &tensors_, &kernels_);
+  Scheduler scheduler(context_, model, tensors_);
+  ret = scheduler.Schedule(&kernels_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule kernels failed: " << ret;
     is_running_.store(false);
@@ -353,6 +366,7 @@ int LiteSession::CompileGraph(Model *model) {
     }
   }
 #endif
+  InitGraphInOutTensors(model);
   ret = executor_->Prepare(this->kernels_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare executor failed: " << ret;
@@ -563,6 +577,32 @@ void LiteSession::ResetInputsShape(const std::vector<std::vector<int>> &dims) {
   }
 }
 
+int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels) {
+  bool infer_shape_interrupt = false;
+  for (auto kernel : kernels) {
+    if (kernel == nullptr) {
+      MS_LOG(ERROR) << "input kernel is nullptr!";
+      return RET_ERROR;
+    }
+    if (kernel->subgraph_type() == kernel::kNotSubGraph) {
+      MS_LOG(ERROR) << "All node in graph should be sub_graph";
+      return RET_ERROR;
+    }
+    auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+    auto ret = sub_graph->ReSize(infer_shape_interrupt);
+    if (ret == RET_INFER_INVALID) {
+      MS_LOG(INFO) << "InferShape is interrupted";
+      infer_shape_interrupt = true;
+      continue;
+    }
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ReSize node " << kernel->name() << " failed";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs,
                         const std::vector<std::vector<int>> &dims) {
   bool expected = false;
@@ -581,11 +621,10 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
     return ret;
   }
 
-  Scheduler scheduler(context_);
-  ret = scheduler.ReSizeKernels(kernels_);
+  ret = ReSizeKernels(kernels_);
   if (ret != RET_OK) {
     ResetInputsShape(old_dims);
-    auto resize_ret = scheduler.ReSizeKernels(kernels_);
+    auto resize_ret = ReSizeKernels(kernels_);
     if (resize_ret != RET_OK) {
       MS_LOG(ERROR) << "restore kernel size fail!ret: " << resize_ret;
     }

@@ -40,9 +40,9 @@ static int RunKernel(void *data, int index) {
     return 0;
   }
 
-  ret = kernel->FreeWorkTensor();
+  ret = kernel->FreeInWorkTensor();
   if (RET_OK != ret) {
-    MS_LOG(ERROR) << "FreeWorkTensor failed, name: " << kernel->name();
+    MS_LOG(ERROR) << "FreeInWorkTensor failed, name: " << kernel->name();
     return ret;
   }
   return 0;
@@ -62,7 +62,7 @@ int ParallelExecutor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor 
       return RET_ERROR;
     }
   }
-  kernel::LiteKernelUtil::InitTensorRefCount(kernels);
+  kernel::LiteKernelUtil::InitTensorInitRefCount(kernels);
 
   for (auto kernel : kernels) {
     if (kernel->in_kernels().empty()) {
@@ -96,9 +96,9 @@ int ParallelExecutor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor 
         }
       }
 
-      auto ret = completed->FreeWorkTensor();
+      auto ret = completed->FreeInWorkTensor();
       if (RET_OK != ret) {
-        MS_LOG(ERROR) << "FreeWorkTensor failed, name: " << completed->name();
+        MS_LOG(ERROR) << "FreeInWorkTensor failed, name: " << completed->name();
         return ret;
       }
     }

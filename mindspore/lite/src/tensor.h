@@ -110,7 +110,13 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   size_t ref_count() const { return this->ref_count_; }
 
+  size_t init_ref_count() const { return this->init_ref_count_; }
+
   void set_ref_count(size_t ref_count) { this->ref_count_ = ref_count; }
+
+  void set_init_ref_count(size_t ref_count) { this->init_ref_count_ = ref_count; }
+
+  void ResetRefCount() { this->ref_count_ = this->init_ref_count_; }
 
   void DecRefCount() { this->ref_count_--; }
 
@@ -156,6 +162,8 @@ class Tensor : public mindspore::tensor::MSTensor {
   schema::Format format_;
   Category category_;
   size_t ref_count_ = 0;
+  size_t init_ref_count_ = 0;
+  size_t ready_count_ = 0;
   std::vector<QuantArg> quant_params_;
   std::vector<float> quant_clusters_;
   mindspore::lite::Allocator *allocator_ = nullptr;

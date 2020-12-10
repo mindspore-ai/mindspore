@@ -92,9 +92,13 @@ class LiteSession : public session::LiteSession {
 
   void InitGraphOutputTensorMap(const lite::Model *model);
 
+  void AdjustModelOutputTensorInitRefCount(const lite::Model *model);
+
   int ResizeInputs(const std::vector<mindspore::tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims);
 
   int PrepareKernels();
+
+  static int ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels);
 
  private:
   void ResetInputsShape(const std::vector<std::vector<int>> &dims);

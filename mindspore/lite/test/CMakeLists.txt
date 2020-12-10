@@ -261,6 +261,8 @@ if (ENABLE_CONVERTER)
     set(TEST_SRC
             ${TEST_SRC}
             ${TEST_DIR}/st/converter_test.cc
+            ${TEST_DIR}/st/control_flow_test.cc
+            ${TEST_DIR}/st/sub_graph_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_bn_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_scale_fusion_test.cc
@@ -300,7 +302,7 @@ endif ()
 
 
 add_executable(lite-test ${TEST_SRC})
-
+add_dependencies(lite-test fbs_src)
 target_link_libraries(lite-test dl ${GTEST_LIBRARY})
 if (PLATFORM_ARM64)
     target_link_libraries(lite-test nnacl_fp16_mid nnacl_optimize_mid)
@@ -321,6 +323,7 @@ if (SUPPORT_NPU)
     target_link_libraries(lite-test npu_kernel_mid)
 endif ()
 if (ENABLE_CONVERTER)
+    add_dependencies(lite-test fbs_inner_src)
     target_link_libraries(lite-test
             anf_importer_mid
             anf_exporter_mid

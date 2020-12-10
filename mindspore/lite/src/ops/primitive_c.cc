@@ -155,6 +155,9 @@
 #include "src/ops/tensorlistsetitem.h"
 #include "src/ops/tensorlistreserve.h"
 #include "src/ops/tensorliststack.h"
+#include "src/ops/merge.h"
+#include "src/ops/switch.h"
+#include "src/ops/partial.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -925,7 +928,12 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) TensorListReserve(primitive);
     case schema::PrimitiveType_TensorListStack:
       return new (std::nothrow) TensorListStack(primitive);
-
+    case schema::PrimitiveType_Switch:
+      return new (std::nothrow) Switch(primitive);
+    case schema::PrimitiveType_Merge:
+      return new (std::nothrow) Merge(primitive);
+    case schema::PrimitiveType_Partial:
+      return new (std::nothrow) Partial(primitive);
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
       return new (std::nothrow) ActivationGrad(primitive);

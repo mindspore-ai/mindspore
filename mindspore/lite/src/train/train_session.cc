@@ -128,7 +128,7 @@ int TrainSession::RunGraph(const KernelCallBack &before, const KernelCallBack &a
     return lite::RET_NULL_PTR;
   }
   auto run_kernel = (train_mode_) ? train_kernels_ : inference_kernels_;
-  lite::Executor executor;
+  lite::CpuExecutor executor;
   if (before == nullptr && after == nullptr) {
     return executor.Run(this->inputs_, this->outputs_, run_kernel, this->context_->allocator.get());
   } else {

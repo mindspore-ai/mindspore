@@ -142,7 +142,6 @@ add_executable(converter_lite
         ${KERNEL_SRC}
         ${LITE_SRC}
         )
-add_dependencies(converter_lite tflite_fbs_src)
 add_dependencies(converter_lite fbs_src)
 add_dependencies(converter_lite fbs_inner_src)
 

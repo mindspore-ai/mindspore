@@ -62,7 +62,7 @@ InnerContext::~InnerContext() {
   }
 }
 
-int InnerContext::IsValid() {
+int InnerContext::IsValid() const {
   if (this->device_list_.empty()) {
     MS_LOG(ERROR) << "Device list is empty.";
     return RET_NOT_SUPPORT;
@@ -86,33 +86,33 @@ int InnerContext::IsValid() {
   return RET_OK;
 }
 
-bool InnerContext::IsCpuFloat16Enabled() {
+bool InnerContext::IsCpuFloat16Enabled() const {
   if (!IsCpuEnabled()) {
     return false;
   }
   return GetCpuInfo().enable_float16_;
 }
 
-bool InnerContext::IsGpuFloat16Enabled() {
+bool InnerContext::IsGpuFloat16Enabled() const {
   if (!IsGpuEnabled()) {
     return false;
   }
   return GetGpuInfo().enable_float16_;
 }
 
-bool InnerContext::IsCpuEnabled() {
+bool InnerContext::IsCpuEnabled() const {
   return this->device_list_.end() !=
          std::find_if(this->device_list_.begin(), this->device_list_.end(),
                       [](const DeviceContext &device) { return device.device_type_ == DT_CPU; });
 }
 
-bool InnerContext::IsGpuEnabled() {
+bool InnerContext::IsGpuEnabled() const {
   return this->device_list_.end() !=
          std::find_if(this->device_list_.begin(), this->device_list_.end(),
                       [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
 }
 
-bool InnerContext::IsNpuEnabled() {
+bool InnerContext::IsNpuEnabled() const {
 #ifdef SUPPORT_NPU
   return this->device_list_.end() !=
            std::find_if(this->device_list_.begin(), this->device_list_.end(),
@@ -123,7 +123,7 @@ bool InnerContext::IsNpuEnabled() {
 #endif
 }
 
-CpuDeviceInfo InnerContext::GetCpuInfo() {
+CpuDeviceInfo InnerContext::GetCpuInfo() const {
   auto iter = std::find_if(this->device_list_.begin(), this->device_list_.end(),
                            [](const DeviceContext &device) { return device.device_type_ == DT_CPU; });
   if (iter == this->device_list_.end()) {
@@ -133,7 +133,7 @@ CpuDeviceInfo InnerContext::GetCpuInfo() {
   }
 }
 
-GpuDeviceInfo InnerContext::GetGpuInfo() {
+GpuDeviceInfo InnerContext::GetGpuInfo() const {
   auto iter = std::find_if(this->device_list_.begin(), this->device_list_.end(),
                            [](const DeviceContext &device) { return device.device_type_ == DT_GPU; });
   if (iter == this->device_list_.end()) {

@@ -87,9 +87,11 @@ class LiteKernel {
 
   virtual int Run(const KernelCallBack &before, const KernelCallBack &after);
   // called after Run
-  virtual int PostProcess() { return FreeWorkTensor(); }
+  virtual int PostProcess();
 
   virtual int ReSize() { return mindspore::lite::RET_ERROR; }
+
+  virtual void FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope_kernels);
 
   virtual int Init() { return mindspore::lite::RET_ERROR; }
 
@@ -154,11 +156,13 @@ class LiteKernel {
 
   const std::vector<LiteKernel *> &out_kernels() const { return this->out_kernels_; }
 
-  void InitOutTensorRefCount();
+  virtual bool IsReady();
+
+  virtual void InitOutTensorInitRefCount();
 
   int DecOutTensorRefCount();
 
-  int FreeWorkTensor() const;
+  virtual int FreeInWorkTensor() const;
 
   KernelKey desc() const { return desc_; }
 
@@ -203,8 +207,6 @@ typedef LiteKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
 
 class LiteKernelUtil {
  public:
-  static void InitIOKernels(std::vector<kernel::LiteKernel *> &kernels);
-
   static std::vector<kernel::LiteKernel *> SubgraphInputKernels(const std::vector<kernel::LiteKernel *> &kernels);
 
   static std::vector<kernel::LiteKernel *> SubgraphOutputKernels(const std::vector<kernel::LiteKernel *> &kernels);
@@ -215,7 +217,7 @@ class LiteKernelUtil {
 
   static int TopologicalSortKernels(std::vector<kernel::LiteKernel *> *kernels);
 
-  static void InitTensorRefCount(std::vector<kernel::LiteKernel *> &kernels);
+  static void InitTensorInitRefCount(std::vector<kernel::LiteKernel *> &kernels);
 
   static int SetInput(LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs);
 };
