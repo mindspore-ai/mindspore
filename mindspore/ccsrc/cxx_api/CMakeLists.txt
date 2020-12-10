@@ -7,7 +7,7 @@ file(GLOB_RECURSE API_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR} "ops/*.cc")
 
 if (ENABLE_ACL)
     add_compile_definitions(ENABLE_ACL)
-    include_directories(${CMAKE_SOURCE_DIR}/graphengine/src/ge)
+    include_directories(${CMAKE_SOURCE_DIR}/graphengine/ge)
     include_directories(${CMAKE_BINARY_DIR}/proto/ge)
     file(GLOB_RECURSE API_ACL_SRC ${CMAKE_CURRENT_SOURCE_DIR}
             "python_utils.cc"
