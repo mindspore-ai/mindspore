@@ -87,8 +87,6 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
       // skip init condition on all the other states
       if ((wp.condition.type == INIT) ^ init_dbg_suspend) continue;
 
-      if (wp.condition.type != IS_OVERFLOW && tensor_dtype == kNumberTypeBool) continue;
-
       // check change conditions only on step end.
       if (wp.change_condition() && !step_end) continue;
 
@@ -166,6 +164,11 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
         case kNumberTypeFloat64: {
           base_summary_ptr =
             std::make_unique<TensorSummary<double>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
+          break;
+        }
+        case kNumberTypeBool: {
+          base_summary_ptr =
+            std::make_unique<TensorSummary<bool>>(tensor_ptr->data_c(), previous_tensor_ptr, num_elements);
           break;
         }
         default:
