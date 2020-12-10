@@ -17,11 +17,11 @@ import numpy as np
 
 from mindspore import log as logger
 from mindspore.communication.management import get_rank, get_group_size
-from .._c_expression import Tensor as Tensor_
-from .._c_expression import MetaTensor as MetaTensor_
-from .._checkparam import Validator as validator
 from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
+from .._c_expression import MetaTensor as MetaTensor_
+from .._c_expression import Tensor as Tensor_
+from .._checkparam import Validator as validator
 
 __all__ = ['Tensor', 'MetaTensor', 'RowTensor', 'SparseTensor']
 np_types = (np.int8, np.int16, np.int32, np.int64,
@@ -177,7 +177,7 @@ class Tensor(Tensor_):
         return out
 
     def __getitem__(self, index):
-        if isinstance(index, int) and index >= self.shape[0]:
+        if isinstance(index, int) and self.shape and index >= self.shape[0]:
             raise IndexError("index {} is out of bounds for axis 0 with size {}".format(index, self.shape[0]))
         out = tensor_operator_registry.get('__getitem__')(self, index)
         return out
