@@ -67,3 +67,20 @@ def test_train_and_eval():
     _executor.compile(eval_net, _x, _b, phase='eval', auto_parallel_mode=True)
 
     context.reset_auto_parallel_context()
+
+def test_train_and_eval_auto():
+    context.set_context(save_graphs=True, mode=0)
+    context.set_auto_parallel_context(parallel_mode="auto_parallel", device_num=16)
+    strategy1 = ((4, 4), (4, 4))
+    strategy2 = ((4, 4),)
+    net = Net(_w1, strategy1, strategy2)
+    eval_net = EvalNet(net, strategy2=strategy2)
+    net.set_auto_parallel()
+    net.set_train()
+    _executor.compile(net, _x, _b, phase='train', auto_parallel_mode=True)
+
+    eval_net.set_train(mode=False)
+    eval_net.set_auto_parallel()
+    _executor.compile(eval_net, _x, _b, phase='eval', auto_parallel_mode=True)
+
+    context.reset_auto_parallel_context()

@@ -1638,7 +1638,7 @@ bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids) {
   return find;
 }
 
-void FindLastNodesUniqueId(const std::vector<AnfNodePtr> &all_nodes, vector<std::string> *unique_ids) {
+void FindLastNodesUniqueId(const std::vector<AnfNodePtr> &all_nodes, std::vector<std::string> *unique_ids) {
   MS_EXCEPTION_IF_NULL(unique_ids);
   for (auto &node : all_nodes) {
     auto cnode = node->cast<CNodePtr>();
@@ -1754,10 +1754,10 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_traini
         MS_LOG(INFO) << "ExtractInformation: the strategy of node " << node->ToString() << " prim " << prim->name()
                      << " is empty, using batch parallel";
         strategyPtr = GenerateBatchParallelStrategy(operator_, prim);
-      } else if (load_strategy_from_ckpt) {
-        strategyPtr = stra_map[strategy_key_name];
-      } else {
+      } else if (StrategyFound(attrs)) {
         strategyPtr = ExtractStrategy(attrs);
+      } else {
+        strategyPtr = stra_map[strategy_key_name];
       }
       if (strategyPtr != nullptr) {
         if (is_last_nodes && full_batch) {
