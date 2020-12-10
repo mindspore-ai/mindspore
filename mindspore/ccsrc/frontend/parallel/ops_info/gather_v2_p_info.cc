@@ -24,6 +24,9 @@
 
 #include "frontend/parallel/device_matrix.h"
 #include "frontend/parallel/graph_util/generate_graph.h"
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#endif
 
 namespace mindspore {
 namespace parallel {
@@ -514,6 +517,12 @@ Status GatherV2PInfo::InferBias() {
     if (repeated_calc_num_ > 1) {
       rank = rank / repeated_calc_num_;
     }
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+    if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
+      bias_ = 0;
+      return SUCCESS;
+    }
+#endif
     bias_ = rank / params_strategy.at(1) * slice_size_;
     return SUCCESS;
   }

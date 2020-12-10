@@ -49,6 +49,7 @@ struct HashTableInfo {
   size_t vocab_size{0};
   Address device_address{nullptr, 0};
   std::shared_ptr<int[]> host_address{nullptr};
+  ParamInitInfo param_init_info_;
 };
 
 struct EmbeddingDeviceCache {
@@ -158,6 +159,8 @@ class PsCacheManager {
   void UpdataEmbeddingTable(const ::ps::SArray<float> &swap_out_data, int *swap_out_ids, size_t key);
   void LookUpTableTask(size_t indices_lens, size_t outer_dim_size, size_t first_dim_size, const float *input_addr,
                        const int *indices_addr, float *output_addr);
+  bool CheckFinishInsertInitInfo() const;
+  void AddEmbeddingTable() const;
 
   bool initialized_ps_cache_{false};
   std::string channel_name_;
@@ -167,6 +170,7 @@ class PsCacheManager {
   size_t data_step_{0};
   std::mutex data_mutex_;
   std::condition_variable data_prase_;
+  std::condition_variable insert_init_info_;
 
   std::map<std::string, HashTableInfo> hash_tables_;
   std::shared_ptr<EmbeddingDeviceCache> embedding_device_cache_;
@@ -178,6 +182,8 @@ class PsCacheManager {
   size_t batch_elements_{0};
   PsCacheStatisticsInfo statistics_info_;
   std::pair<size_t, size_t> range_bound_;
+  std::atomic_bool finish_insert_init_info_{false};
+  std::atomic_bool finish_init_parameter_server_{false};
 };
 
 static PsCacheManager &ps_cache_instance = PsCacheManager::GetInstance();

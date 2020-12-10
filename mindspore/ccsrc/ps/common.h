@@ -64,6 +64,7 @@ constexpr int64_t kInitWeightToOptimIdCmd = 11;
 constexpr int64_t kInitOptimInputsShapeCmd = 12;
 constexpr int64_t kInitKeyToPushNodeIdCmd = 13;
 constexpr int64_t kInitEmbeddingsCmd = 20;
+constexpr int64_t kUpdateEmbeddingsCmd = 21;
 constexpr int64_t kCheckReadyForPushCmd = 25;
 constexpr int64_t kCheckReadyForPullCmd = 26;
 constexpr int64_t kEmbeddingLookupCmd = 30;

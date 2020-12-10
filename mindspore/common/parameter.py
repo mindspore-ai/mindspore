@@ -15,6 +15,7 @@
 
 """Parameter for cell."""
 from copy import copy
+import numbers
 from .._c_expression import ParamInfo
 from .._c_expression import MetaTensor as MetaTensor_
 from . import dtype as mstype
@@ -23,7 +24,10 @@ from .tensor import Tensor, MetaTensor
 from .._checkparam import Validator
 from ..parallel._tensor import _get_slice_index
 from ..parallel._auto_parallel_context import auto_parallel_context
-from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched
+from ..parallel._ps_context import _is_role_worker, _is_role_pserver, _is_role_sched, _clone_hash_table
+from ..parallel._ps_context import _reinsert_hash_table_size
+from ..parallel._ps_context import _insert_weight_init_info, _insert_accumu_init_info
+from .seed import _get_global_and_op_seed
 
 __all__ = ['Parameter', 'ParameterTuple']
 
@@ -34,6 +38,18 @@ PARAMETER_NAME_PREFIX_MAX_LEN = 1024
 def _is_in_parallel_mode():
     """Get parallel mode."""
     return auto_parallel_context().get_parallel_mode() in ["semi_auto_parallel", "auto_parallel"]
+
+def init_to_value(init):
+    """Get value of initializer."""
+    if isinstance(init, str):
+        if init == 'zeros':
+            return 0.0
+        if init == 'ones':
+            return 1.0
+        raise ValueError("init should be one of values in 'zeros', 'ones'.")
+    if isinstance(init, numbers.Number):
+        return float(init)
+    raise ValueError("init should be number or string")
 
 
 class Parameter(MetaTensor_):
@@ -118,6 +134,8 @@ class Parameter(MetaTensor_):
 
     def __init__(self, default_input, name=None, requires_grad=True, layerwise_parallel=False):
         self._param_info = ParamInfo()
+        self.init_in_server = False
+        self.cache_enable = False
         self.name = name
         self.requires_grad = requires_grad
         self.layerwise_parallel = layerwise_parallel
@@ -129,7 +147,6 @@ class Parameter(MetaTensor_):
         self._sliced = False
         self.is_param_ps = False
         self._cast_type = None
-        self.init_in_server = False
         self._unique = False
         self.is_in_parallel = _is_in_parallel_mode()
         if isinstance(default_input, (MetaTensor, Tensor)):
@@ -155,7 +172,7 @@ class Parameter(MetaTensor_):
         if isinstance(data, bool):
             raise ValueError('Parameter data can not be `bool`')
         if isinstance(data, MetaTensor):
-            if _is_in_parallel_mode() or _is_role_worker():
+            if _is_in_parallel_mode() or _is_role_worker() or _is_role_sched():
                 # do not init data while in auto parallel.
                 return (MetaTensor_, data.dtype, data.shape)
             data = data.to_tensor()
@@ -189,17 +206,17 @@ class Parameter(MetaTensor_):
             init_in_server (bool): Whether trainable parameter updated by parameter server is
                 initialized on server. Default: False.
         """
-        if _is_role_worker() or _is_role_pserver() or _is_role_sched():
-            if init_in_server and (not self.name.endswith("embedding_table")):
-                raise RuntimeError("Can not initialize parameter '{}' in server, only parameters of "
-                                   "sparse operator support initialization in server.".format(self.name))
-            self.is_param_ps = True
-            self.init_in_server = init_in_server
-            self._param_info.init_in_server = init_in_server
-        else:
+        if not(_is_role_worker() or _is_role_pserver() or _is_role_sched()):
             raise RuntimeError("Must complete following two steps before calling set_param_ps: \
                                1. set_ps_context(enable_ps=True) \
                                2. export MS_ROLE environment variable.")
+
+        if init_in_server and (not self.name.endswith("embedding_table")):
+            raise RuntimeError("Can not initialize parameter '{}' in server, only parameters of "
+                               "sparse operator support initialization in server.".format(self.name))
+        self.is_param_ps = True
+        self.init_in_server = init_in_server
+        self._param_info.init_in_server = init_in_server
 
 
     @property
@@ -238,6 +255,13 @@ class Parameter(MetaTensor_):
                                  format(name_, PARAMETER_NAME_PREFIX_MAX_LEN))
         else:
             raise ValueError("The type of the name should be `str` or `None`.")
+
+        if _is_role_worker() and self.cache_enable:
+            if len(self.shape) != 2:
+                raise RuntimeError("The dims of parameter '{}' must be 2, but got {}."
+                                   .format(self.name, len(self.shape)))
+            _reinsert_hash_table_size(name_, self._param_info.name, self.shape[0], self.shape[1])
+
         self._param_info.name = name_
 
     @property
@@ -297,6 +321,7 @@ class Parameter(MetaTensor_):
         x.is_init = False
         x.is_param_ps = self.is_param_ps
         x.init_in_server = self.init_in_server
+        x.cache_enable = self.cache_enable
         if init != 'same':
             shape = self.shape
             dtype = self.dtype
@@ -431,15 +456,18 @@ class Parameter(MetaTensor_):
                 raise ValueError("The length of layout must be larger than 3! layout is {}.".format(layout))
             slice_index = int(_get_slice_index(layout[0], layout[1]))
             if (self.init_in_server and self.is_param_ps and isinstance(self.init_mode, MetaTensor)):
-                if _is_role_worker():
+                if _is_role_worker() or _is_role_sched():
                     data = self.init_mode.to_tensor(0, [1])
                 else:
                     data = self.init_mode.to_tensor(slice_index, layout[2], layout[5])
             else:
                 data = self.init_mode.to_tensor(slice_index, layout[2], layout[5])
         else:
+            if _is_role_worker() and self.cache_enable:
+                global_seed, op_seed = _get_global_and_op_seed()
+                _insert_weight_init_info(self.name, global_seed, op_seed)
             if (self.init_in_server and self.is_param_ps and isinstance(self.init_mode, MetaTensor)):
-                if _is_role_worker():
+                if _is_role_worker() or _is_role_sched():
                     data = self.init_mode.to_tensor(0, [1])
                 else:
                     data = self.init_mode.to_tensor()
@@ -502,6 +530,16 @@ class ParameterTuple(tuple):
             x1 = x.clone(init)
             x1.name = prefix + "." + x1.name
             new.append(x1)
+
+            if not x1.cache_enable:
+                continue
+            if not x1.name.endswith("embedding_table"):
+                raise RuntimeError("Can not enable cache for parameter '{}', Only parameters of "
+                                   "sparse operator support enable cache.".format(x1.name))
+
+            if _is_role_worker():
+                _clone_hash_table(x.name, x1.name)
+                _insert_accumu_init_info(x1.name, init_to_value(init))
         return ParameterTuple(new)
 
     def __parameter_tuple__(self):

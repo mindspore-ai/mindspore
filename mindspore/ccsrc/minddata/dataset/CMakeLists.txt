@@ -202,6 +202,7 @@ else ()
         if (${ENABLE_IBVERBS} STREQUAL "ON")
             target_link_libraries(_c_dataengine PRIVATE ibverbs rdmacm)
         endif ()
+        target_link_libraries(_c_dataengine PRIVATE ps_cache)
     endif ()
 endif ()
 

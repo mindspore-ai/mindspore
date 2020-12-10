@@ -322,6 +322,7 @@ Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, con
                                        bool profiling, int32_t *push_time) {
   std::vector<device::DataItemGpu> items;
   double start_time;
+  bool ps_data_prefetch = false;
   for (int i = 0; i < data_size.size(); i++) {
     device::DataItemGpu data_item;
     data_item.data_len_ = data_size[i];
@@ -333,6 +334,11 @@ Status DeviceQueueOp::RetryPushGPUData(const std::vector<size_t> &data_size, con
     RETURN_IF_NOT_OK(MallocForGPUData(&items, curr_row));
     if (profiling) {
       start_time = ProfilingTime::GetCurMilliSecond();
+    }
+    // Data prefetch only when PS mode enables cache.
+    if ((!ps_data_prefetch) && (items.size() > 0)) {
+      ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_);
+      ps_data_prefetch = true;
     }
     BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
     if (profiling) {

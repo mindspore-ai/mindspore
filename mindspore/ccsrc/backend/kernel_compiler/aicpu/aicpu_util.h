@@ -49,6 +49,7 @@ constexpr auto kIdentity = "Identity";
 constexpr auto kUpdateCache = "UpdateCache";
 constexpr auto kCustRunApi = "RunCpuKernel";
 const std::set<std::string> kCustAiCpuKernelOps{kEditDistance, kIdentity};
+const std::set<std::string> kCacheKernelOps{kUpdateCache};
 
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message

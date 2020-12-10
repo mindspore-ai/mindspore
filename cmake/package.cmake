@@ -194,6 +194,14 @@ if (ENABLE_GPU)
     )
 endif ()
 
+if (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU))
+    install(
+        TARGETS ps_cache
+        DESTINATION ${INSTALL_LIB_DIR}
+        COMPONENT mindspore
+    )
+endif()
+
 if (ENABLE_SERVING OR ENABLE_TESTCASES)
     file(GLOB_RECURSE LIBEVENT_LIB_LIST
             ${libevent_LIBPATH}/libevent*

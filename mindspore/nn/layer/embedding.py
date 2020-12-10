@@ -22,6 +22,7 @@ from mindspore.common.initializer import initializer
 from mindspore.communication.management import get_group_size
 from mindspore.context import ParallelMode
 from mindspore.parallel._utils import _get_parallel_mode
+from mindspore.parallel._ps_context import _insert_hash_table_size, _set_cache_enable, _is_role_worker
 from mindspore._checkparam import Rel
 from mindspore._checkparam import Validator as validator
 from mindspore.ops.primitive import constexpr
@@ -156,6 +157,7 @@ class EmbeddingLookup(Cell):
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
                                        or None. Default: None
         sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: True.
+        vocab_cache_size (int): Cache size of the dictionary of embeddings.
 
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
@@ -185,7 +187,7 @@ class EmbeddingLookup(Cell):
 
     def __init__(self, vocab_size, embedding_size, param_init='normal',
                  target='CPU', slice_mode='batch_slice', manual_shapes=None,
-                 max_norm=None, sparse=True):
+                 max_norm=None, sparse=True, vocab_cache_size=0):
         super(EmbeddingLookup, self).__init__()
         self.target = target
         if target not in ('CPU', 'DEVICE'):
@@ -199,11 +201,23 @@ class EmbeddingLookup(Cell):
             self.gatherv2 = P.GatherV2()
         self.embeddinglookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
         self.vocab_size = validator.check_value_type('vocab_size', vocab_size, [int], self.cls_name)
+        self.vocab_cache_size = validator.check_value_type('vocab_cache_size', vocab_cache_size, [int], self.cls_name)
         self.embedding_size = validator.check_value_type('embedding_size', embedding_size, [int], self.cls_name)
-        self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size]),
-                                         name='embedding_table')
         parallel_mode = _get_parallel_mode()
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
+        self.cache_enable = self.vocab_cache_size > 0
+        if self.cache_enable:
+            if is_auto_parallel:
+                self.vocab_cache_size = self.vocab_cache_size * get_group_size()
+            self.vocab_size = self.vocab_cache_size
+
+        self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size]),
+                                         name='embedding_table')
+        if self.cache_enable:
+            self.embedding_table.cache_enable = True
+            _set_cache_enable(True)
+            if _is_role_worker():
+                _insert_hash_table_size(self.embedding_table.name, vocab_cache_size, embedding_size, vocab_size)
         self.forward_unique = False
         self.gather_revert = P.GatherV2()
         self.unique = P.Unique().shard(((1,),))
@@ -222,7 +236,7 @@ class EmbeddingLookup(Cell):
             self.gatherv2.shard(((get_group_size(), 1), (1, get_group_size())))
             self.embeddinglookup.shard(((get_group_size(), 1), (1, get_group_size())))
         elif slice_mode == "table_row_slice" and is_auto_parallel:
-            if target == 'DEVICE':
+            if target == 'DEVICE' and not self.cache_enable:
                 indices_shape_size = 1
                 self.gather_revert.shard(((1, 1), (get_group_size(),)))
                 self.forward_unique = True

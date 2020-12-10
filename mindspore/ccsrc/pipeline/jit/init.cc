@@ -308,7 +308,14 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("is_role_worker", &PSContext::is_role_worker, "Get whether the role of this process is Worker.")
     .def("is_role_pserver", &PSContext::is_role_pserver, "Get whether the role of this process is PServer.")
     .def("is_role_sched", &PSContext::is_role_sched, "Get whether the role of this process is Scheduler.")
-    .def("ps_rank_id", &PSContext::ps_rank_id, "Get Worker and PServer rank id.");
+    .def("ps_rank_id", &PSContext::ps_rank_id, "Get Worker and PServer rank id.")
+    .def("insert_hash_table_size", &PSContext::InsertHashTableSize, "Insert hash table size.")
+    .def("reinsert_hash_table_size", &PSContext::ReInsertHashTableSize,
+         "Insert hash table size with new parameter name.")
+    .def("insert_weight_init_info", &PSContext::InsertWeightInitInfo, "Insert embedding table initialization seed.")
+    .def("insert_accumu_init_info", &PSContext::InsertAccumuInitInfo, "Insert accumulation initialization value.")
+    .def("clone_hash_table", &PSContext::CloneHashTable, "Clone a hash table.")
+    .def("set_cache_enable", &PSContext::set_cache_enable, "Set ps mode cache enable or not.");
 
   (void)py::class_<OpInfoLoaderPy, std::shared_ptr<OpInfoLoaderPy>>(m, "OpInfoLoaderPy")
     .def(py::init())

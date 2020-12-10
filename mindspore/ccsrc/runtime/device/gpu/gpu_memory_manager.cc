@@ -18,6 +18,7 @@
 #include "runtime/device/gpu/gpu_memory_allocator.h"
 #include "utils/ms_context.h"
 #include "utils/convert_utils.h"
+#include "ps/ps_cache/ps_cache_manager.h"
 namespace mindspore {
 namespace device {
 namespace gpu {
@@ -38,6 +39,9 @@ void GPUMemoryManager::MallocDeviceMemory() {
   MS_EXCEPTION_IF_NULL(context_ptr);
   // If use the dynamic memory pool, then alloc the first memory block to init.
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL)) {
+    if (ps::ps_cache_instance.initialized_ps_cache()) {
+      return;
+    }
     auto device_addr = MallocMemFromMemPool(1);
     if (!device_addr) {
       MS_LOG(EXCEPTION) << "Dynamic memory pool init error.";

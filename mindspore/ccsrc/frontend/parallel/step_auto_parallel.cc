@@ -46,10 +46,18 @@
 #include "ir/anf.h"
 #include "ir/param_info.h"
 #include "ir/tensor.h"
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#include "ps/util.h"
+#endif
 
 namespace mindspore {
 namespace parallel {
 bool StepAutoParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &) {
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  if (ps::Util::IsRoleOfPServer() || ps::Util::IsRoleOfScheduler()) {
+    return false;
+  }
+#endif
   MS_EXCEPTION_IF_NULL(root);
   MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
   std::string parallel_mode = ParallelContext::GetInstance()->parallel_mode();

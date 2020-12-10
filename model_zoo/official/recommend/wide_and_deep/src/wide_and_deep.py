@@ -147,6 +147,7 @@ class WideDeepModel(nn.Cell):
         sparse = config.sparse
         self.field_size = config.field_size
         self.vocab_size = config.vocab_size
+        self.vocab_cache_size = config.vocab_cache_size
         self.emb_dim = config.emb_dim
         self.deep_layer_dims_list = config.deep_layer_dim
         self.deep_layer_act = config.deep_layer_act
@@ -237,8 +238,20 @@ class WideDeepModel(nn.Cell):
             self.dense_layer_1.matmul.shard(((1, get_group_size()), (get_group_size(), 1)))
             self.embedding_table = self.deep_embeddinglookup.embedding_table
         elif parameter_server:
-            self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim)
-            self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1)
+            cache_enable = self.vocab_cache_size > 0
+            target = 'DEVICE' if cache_enable else 'CPU'
+            if is_auto_parallel and config.full_batch and cache_enable:
+                self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target=target,
+                                                               slice_mode=nn.EmbeddingLookup.TABLE_ROW_SLICE,
+                                                               sparse=sparse, vocab_cache_size=self.vocab_cache_size)
+                self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1, target=target,
+                                                               slice_mode=nn.EmbeddingLookup.TABLE_ROW_SLICE,
+                                                               sparse=sparse, vocab_cache_size=self.vocab_cache_size)
+            else:
+                self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target=target,
+                                                               sparse=sparse, vocab_cache_size=self.vocab_cache_size)
+                self.wide_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, 1, target=target, sparse=sparse,
+                                                               vocab_cache_size=self.vocab_cache_size)
             self.embedding_table = self.deep_embeddinglookup.embedding_table
             self.deep_embeddinglookup.embedding_table.set_param_ps()
             self.wide_embeddinglookup.embedding_table.set_param_ps()
@@ -344,7 +357,7 @@ class TrainStepWrap(nn.Cell):
     """
 
     def __init__(self, network, sens=1024.0, host_device_mix=False, parameter_server=False,
-                 sparse=False):
+                 sparse=False, cache_enable=False):
         super(TrainStepWrap, self).__init__()
         parallel_mode = context.get_auto_parallel_context("parallel_mode")
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
@@ -361,7 +374,7 @@ class TrainStepWrap(nn.Cell):
         self.weights_w = ParameterTuple(weights_w)
         self.weights_d = ParameterTuple(weights_d)
 
-        if (sparse and is_auto_parallel) or parameter_server:
+        if (sparse and is_auto_parallel) or (parameter_server and not cache_enable):
             self.optimizer_d = LazyAdam(
                 self.weights_d, learning_rate=3.5e-4, eps=1e-8, loss_scale=sens)
             self.optimizer_w = FTRL(learning_rate=5e-2, params=self.weights_w,
@@ -417,10 +430,17 @@ class TrainStepWrap(nn.Cell):
 
 
 class PredictWithSigmoid(nn.Cell):
+    """
+    Predict definition
+    """
     def __init__(self, network):
         super(PredictWithSigmoid, self).__init__()
         self.network = network
         self.sigmoid = P.Sigmoid()
+        parallel_mode = context.get_auto_parallel_context("parallel_mode")
+        is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
+        if is_auto_parallel:
+            self.sigmoid.shard(((1, 1),))
 
     def construct(self, batch_ids, batch_wts, labels):
         logits, _, = self.network(batch_ids, batch_wts)

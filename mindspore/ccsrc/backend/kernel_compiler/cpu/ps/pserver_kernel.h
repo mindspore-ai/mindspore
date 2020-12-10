@@ -38,7 +38,8 @@ class PServerKernel {
   virtual void ReInit(const std::vector<std::vector<size_t>> &) {}
   virtual bool Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                        const std::vector<AddressPtr> &outputs) = 0;
-
+  virtual void UpdateEmbeddings(float *embedding_table, const size_t *lookup_ids, const float *update_vals,
+                                size_t ids_size) {}
   virtual const std::vector<size_t> &input_sizes() const = 0;
   virtual const std::vector<size_t> &output_sizes() const = 0;
   virtual const std::vector<size_t> &workspace_sizes() const = 0;

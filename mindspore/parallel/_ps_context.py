@@ -117,3 +117,21 @@ def _is_role_pserver():
 
 def _is_role_sched():
     return ps_context().is_role_sched()
+
+def _insert_hash_table_size(name, cache_vocab_size, embedding_size, vocab_size):
+    ps_context().insert_hash_table_size(name, cache_vocab_size, embedding_size, vocab_size)
+
+def _reinsert_hash_table_size(new_name, cur_name, cache_vocab_size, embedding_size):
+    ps_context().reinsert_hash_table_size(new_name, cur_name, cache_vocab_size, embedding_size)
+
+def _insert_weight_init_info(name, global_seed, op_seed):
+    ps_context().insert_weight_init_info(name, global_seed, op_seed)
+
+def _insert_accumu_init_info(name, init_val):
+    ps_context().insert_accumu_init_info(name, init_val)
+
+def _clone_hash_table(dest_param_name, src_param_name):
+    ps_context().clone_hash_table(dest_param_name, src_param_name)
+
+def _set_cache_enable(cache_enable):
+    ps_context().set_cache_enable(cache_enable)

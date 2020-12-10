@@ -52,6 +52,7 @@
 #include "ps/common.h"
 #include "ps/util.h"
 #include "ps/worker.h"
+#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #endif
 
 #if (ENABLE_GE || ENABLE_D)
@@ -921,6 +922,11 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
 bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batch_size,
                        const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                        const std::vector<int64_t> &input_indexes, bool need_run) {
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  if ((ps::Util::IsParamServerMode()) && (!ps::Util::IsRoleOfWorker())) {
+    return true;
+  }
+#endif
   MS_LOG(INFO) << "Start InitDataSet Entry";
   ShapeVector int_input_indexes;
   (void)std::transform(input_indexes.begin(), input_indexes.end(), std::back_inserter(int_input_indexes),
@@ -966,7 +972,17 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
     backend->Link(runner.graph_id);
   }
-  ConfigManager::GetInstance().set_iter_num(size);
+  // PS mode does not support loop sink.
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  if (ps::Util::IsRoleOfWorker()) {
+    ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
+    ConfigManager::GetInstance().set_iter_num(1);
+  } else {
+#endif
+    ConfigManager::GetInstance().set_iter_num(size);
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  }
+#endif
 
   if (!(*runner.run)) {
     // empty function
@@ -981,7 +997,7 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   }
   MS_LOG(DEBUG) << "InitDataSetVm End.";
   return true;
-}
+}  // namespace pipeline
 
 void ResetOpId() { mindspore::id_generator::reset_id(); }
 

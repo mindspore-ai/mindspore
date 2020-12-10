@@ -39,7 +39,8 @@ def get_WideDeep_net(config):
     """
     WideDeep_net = WideDeepModel(config)
     loss_net = NetWithLossClass(WideDeep_net, config)
-    train_net = TrainStepWrap(loss_net, parameter_server=bool(config.parameter_server))
+    train_net = TrainStepWrap(loss_net, parameter_server=bool(config.parameter_server),
+                              cache_enable=bool(config.vocab_cache_size > 0))
     eval_net = PredictWithSigmoid(WideDeep_net)
     return train_net, eval_net
 
@@ -81,6 +82,7 @@ def train_and_eval(config):
     else:
         dataset_type = DataType.H5
     parameter_server = bool(config.parameter_server)
+    cache_enable = bool(config.vocab_cache_size > 0)
     print("epochs is {}".format(epochs))
     ds_train = create_dataset(data_path, train_mode=True, epochs=1,
                               batch_size=batch_size, rank_id=get_rank(),
@@ -111,7 +113,7 @@ def train_and_eval(config):
         callback_list.append(ckpoint_cb)
     model.train(epochs, ds_train,
                 callbacks=callback_list,
-                dataset_sink_mode=(not parameter_server))
+                dataset_sink_mode=(parameter_server and cache_enable))
 
 
 if __name__ == "__main__":

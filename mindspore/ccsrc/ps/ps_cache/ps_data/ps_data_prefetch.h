@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace ps {
-class PsDataPrefetch {
+class EXPORT PsDataPrefetch {
  public:
   EXPORT static PsDataPrefetch &GetInstance() {
     static PsDataPrefetch instance;
