@@ -1,0 +1,2 @@
+DEVICE_ID=7 python train.py
+DEVICE_ID=7 python eval.py --ckpt_path ./ckpt/lstm-1_149.ckpt
