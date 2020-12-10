@@ -940,7 +940,7 @@ table Unique {
 }
 
 table Unstack {
-    num: int;
+    num: int;   // deprecated
     axis: int;
 }
 

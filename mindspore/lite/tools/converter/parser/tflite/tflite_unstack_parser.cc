@@ -40,7 +40,6 @@ PrimitiveC *TfliteUnstackParser::ParseLitePrimitive(const std::unique_ptr<tflite
     MS_LOG(ERROR) << "get op unstack attr failed";
     return nullptr;
   }
-  attr->num = tflite_attr->num;
   attr->axis = tflite_attr->axis;
 
   primitive->value.type = schema::PrimitiveType_Unstack;
