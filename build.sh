@@ -625,7 +625,6 @@ build_lite()
     echo "============ Start building MindSpore Lite ${VERSION_STR} ============"
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ]; then
       echo "start build opencl"
-      build_opencl
     fi
     if [ "${ENABLE_NPU}" == "on" ]; then
       checkddk
