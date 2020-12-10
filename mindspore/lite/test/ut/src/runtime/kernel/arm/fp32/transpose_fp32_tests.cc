@@ -43,7 +43,6 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes4) {
                        1.2791597,   -1.02032341, 0.17405411,  -0.66358529, 1.20223761,  -1.65733338,
                        -0.36793608, 1.91074871,  0.42663834,  1.8033383,   0.30183748,  0.3952082};
 
-  int input_shape[4] = {1, 2, 3, 4};
   int output_shape[4] = {4, 3, 2, 1};
   int perm[8] = {3, 2, 1, 0, 0, 0, 0, 0};
   int strides[8] = {24, 12, 4, 1, 1, 1, 1, 1};
@@ -64,7 +63,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes4) {
     param->out_strides_[i] = out_strides[i];
   }
 
-  auto ret = DoTransposeFp32(in, out, input_shape, output_shape, param, 0, 3, nullptr, nullptr);
+  auto ret = DoTransposeFp32(in, out, output_shape, param, nullptr, nullptr);
   ASSERT_EQ(ret, 0);
   delete param;
   ASSERT_EQ(0, CompareOutputData(out, correct, 24, 0.000001));
@@ -83,7 +82,6 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes3) {
                        -0.52817175, 1.13376944,  1.74481176, 0.04221375,  1.46210794,  0.90159072,
                        -1.07296862, -1.09989127, -0.7612069, 0.58281521,  -2.06014071, 0.50249434};
 
-  int input_shape[3] = {2, 3, 4};
   int output_shape[3] = {4, 3, 2};
   int perm[8] = {2, 1, 0, 0, 0, 0, 0, 0};
   int strides[8] = {12, 4, 1, 1, 1, 1, 1, 1};
@@ -104,7 +102,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes3) {
     param->out_strides_[i] = out_strides[i];
   }
 
-  auto ret = DoTransposeFp32(in, out, input_shape, output_shape, param, 0, 3, nullptr, nullptr);
+  auto ret = DoTransposeFp32(in, out, output_shape, param, nullptr, nullptr);
   ASSERT_EQ(ret, 0);
   delete param;
   ASSERT_EQ(0, CompareOutputData(out, correct, 24, 0.000001));
@@ -123,7 +121,6 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes2) {
                        -0.52817175, 1.74481176, 1.46210794,  1.13376944,  0.04221375,  0.90159072,
                        -1.07296862, -0.7612069, -2.06014071, -1.09989127, 0.58281521,  0.50249434};
 
-  int input_shape[2] = {6, 4};
   int output_shape[2] = {4, 6};
   int perm[8] = {1, 0, 0, 0, 0, 0, 0, 0};
   int strides[8] = {4, 1, 1, 1, 1, 1, 1, 1};
@@ -145,7 +142,7 @@ TEST_F(TestTransposeFp32, TransposeFp32_axes2) {
     param->out_strides_[i] = out_strides[i];
   }
 
-  auto ret = DoTransposeFp32(in, out, input_shape, output_shape, param, 0, 6, nullptr, nullptr);
+  auto ret = DoTransposeFp32(in, out, output_shape, param, nullptr, nullptr);
   ASSERT_EQ(ret, 0);
   delete param;
   ASSERT_EQ(0, CompareOutputData(out, correct, 24, 0.000001));
