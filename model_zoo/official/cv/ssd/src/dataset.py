@@ -105,6 +105,7 @@ def random_sample_crop(image, boxes):
 
 def preprocess_fn(img_id, image, box, is_training):
     """Preprocess function for dataset."""
+    cv2.setNumThreads(2)
 
     def _infer_data(image, input_shape):
         img_h, img_w, _ = image.shape
