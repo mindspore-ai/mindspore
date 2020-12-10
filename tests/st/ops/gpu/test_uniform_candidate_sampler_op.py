@@ -39,6 +39,14 @@ def uniform_candidate_sampler(x, num_true, num_sampled, unique, range_max):
     out1, out2, out3 = uniform_candidate_sampler_net(Tensor(x.astype(np.int32)))
     return out1.shape, out2.shape, out3.shape
 
+def uniform_candidate_sampler_int64(x, num_true, num_sampled, unique, range_max):
+    uniform_candidate_sampler_net = UniformCandidateSamplerNet(num_true,
+                                                               num_sampled,
+                                                               unique,
+                                                               range_max)
+    out1, out2, out3 = uniform_candidate_sampler_net(Tensor(x.astype(np.int64)))
+    return out1.shape, out2.shape, out3.shape
+
 
 class UniformCandidateSamplerHitNet(nn.Cell):
     def __init__(self, num_true, num_sampled, unique, range_max, seed, remove_accidental_hits):
@@ -155,6 +163,19 @@ def test_uniform_candidate_sampler_large_random():
     np.testing.assert_array_equal(ms2, expected_2)
     np.testing.assert_array_equal(ms3, expected_3)
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_uniform_candidate_sampler_large_random_int64_input():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    ms1, ms2, ms3 = uniform_candidate_sampler_int64(np.arange(2142).reshape(34, 63),
+                                                    63, 10, False, 12)
+    expected_1 = (10,)
+    expected_2 = (34, 63)
+    expected_3 = (10,)
+    np.testing.assert_array_equal(ms1, expected_1)
+    np.testing.assert_array_equal(ms2, expected_2)
+    np.testing.assert_array_equal(ms3, expected_3)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training

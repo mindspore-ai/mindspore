@@ -583,7 +583,9 @@ class UniformCandidateSampler(PrimitiveWithInfer):
         self.num_sampled = num_sampled
 
     def infer_dtype(self, true_classes_type):
-        Validator.check_tensor_dtype_valid("true_classes_type", true_classes_type, (mstype.int32), self.name)
+        Validator.check_subclass("true_classes_type", true_classes_type, mstype.tensor, self.name)
+        Validator.check_tensor_dtype_valid("true_classes_type", true_classes_type,
+                                           (mstype.int32, mstype.int64), self.name)
         return (true_classes_type, mstype.float32, mstype.float32)
 
     def infer_shape(self, true_classes_shape):

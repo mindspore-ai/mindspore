@@ -17,20 +17,20 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/uniform_candidate_sampler_impl.cuh"
 
 template <typename S>
-__global__ void AssignToOutput(const int size, const S prob_val, S *output_array) {
+__global__ void AssignToOutput(const int64_t size, const S prob_val, S *output_array) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     output_array[pos] = prob_val;
   }
 }
 
 template <typename S>
-void CalUniformCandidateSampler(const int true_size, const int num_sampled, const S prob_val, S *true_expected_count,
-                                S *sampled_expected_count, cudaStream_t cuda_stream) {
+void CalUniformCandidateSampler(const int64_t true_size, const int64_t num_sampled, const S prob_val,
+                                S *true_expected_count, S *sampled_expected_count, cudaStream_t cuda_stream) {
   AssignToOutput<<<GET_BLOCKS(true_size), GET_THREADS, 0, cuda_stream>>>(true_size, prob_val, true_expected_count);
   AssignToOutput<<<GET_BLOCKS(num_sampled), GET_THREADS, 0, cuda_stream>>>(num_sampled, prob_val,
                                                                            sampled_expected_count);
 }
 
-template void CalUniformCandidateSampler<float>(const int true_size, const int num_sampled, const float prob_val,
-                                                float *true_expected_count, float *sampled_expected_count,
-                                                cudaStream_t cuda_stream);
+template void CalUniformCandidateSampler<float>(const int64_t true_size, const int64_t num_sampled,
+                                                const float prob_val, float *true_expected_count,
+                                                float *sampled_expected_count, cudaStream_t cuda_stream);
