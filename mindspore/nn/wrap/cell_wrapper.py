@@ -263,17 +263,20 @@ class GetNextSingleOp(Cell):
     For detailed information, refer to `ops.operations.GetNext`.
 
     Supported Platforms:
-        ``GPU``
+        ``Ascend`` ``GPU``
 
     Examples:
-        >>> # Refer to dataset_helper.py for detail usage.
-        >>> data_set = get_dataset()
-        >>> dataset_shapes = data_set.output_shapes()
-        >>> np_types = data_set.output_types()
-        >>> dataset_types = convert_type(dataset_shapes, np_types)
-        >>> queue_name = data_set.__TRANSFER_DATASET__.queue_name
-        >>> getnext_op = GetNextSingleOp(dataset_types, dataset_shapes, queue_name)
-        >>> getnext_op()
+        >>> train_dataset = create_custom_dataset()
+        >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
+        >>> dataset = dataset_helper.iter.dataset
+        >>> dataset_types, dataset_shapes = dataset_helper.types_shapes()
+        >>> queue_name = dataset.__transfer_dataset__.queue_name
+        >>> get_next_single_op_net = nn.GetNextSingleOp(dataset_types, dataset_shapes, queue_name)
+        >>> data, label = get_next_single_op_net()
+        >>> relu = P.ReLU()
+        >>> result = relu(data).asnumpy()
+        >>> print(result.shape)
+        >>> (32, 1, 32, 32)
     """
 
     def __init__(self, dataset_types, dataset_shapes, queue_name):
