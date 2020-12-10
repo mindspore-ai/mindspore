@@ -181,6 +181,9 @@ std::pair<MSRStatus, uint64_t> GetDiskSize(const std::string &str_dir, const Dis
 /// \brief get the max hardware concurrency
 /// \return max concurrency
 uint32_t GetMaxThreadNum();
+
+/// \brief the max number of samples to enable lazy load
+const uint32_t LAZY_LOAD_THRESHOLD = 5000000;
 }  // namespace mindrecord
 }  // namespace mindspore
 
