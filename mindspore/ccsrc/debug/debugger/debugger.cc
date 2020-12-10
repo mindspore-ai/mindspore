@@ -763,18 +763,8 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
 
 void Debugger::Exit() {
   // clear resource before exit
-  // For node level, debugger has to exit itself because main thread can only exit in step bundary;
-  // For step level, debugger will notify main thread to exit;
-  if (run_level_ == "node") {
-    pipeline::ClearResAtexit();
-    exit(1);
-  } else if (run_level_ == "step" || device_target_ == kAscendDevice) {
-    // Notify main thread to terminate
-    pipeline::ExecutorPy::DebugTerminate(true);
-  } else {
-    pipeline::ClearResAtexit();
-    exit(1);
-  }
+  // debugger will notify main thread to exit because main thread can only exit at step boundary
+  pipeline::ExecutorPy::DebugTerminate(true);
 }
 
 std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode, const CNodePtr &kernel,
