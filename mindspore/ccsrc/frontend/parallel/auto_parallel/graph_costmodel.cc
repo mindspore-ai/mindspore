@@ -198,6 +198,16 @@ void CostGraph::SetDeviceMemoryAndCostParameter() {
   }
 }
 
+void CostGraph::Init() {
+  inputs_tensor_name_list_.clear();
+  tuple_getitem_list_.clear();
+  ops_.clear();
+  edges_.clear();
+  connected_compoents_.clear();
+  out_edges_.clear();
+  in_edges_.clear();
+}
+
 void CostGraph::RemoveOperator(const OperatorInfoPtr &op) {
   for (auto it = ops_.begin(); it != ops_.end();) {
     if ((*it) == op) {
