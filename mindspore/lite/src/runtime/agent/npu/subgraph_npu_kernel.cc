@@ -52,7 +52,7 @@ domi::ModelBufferData *SubGraphNpuKernel::BuildIRModel() {
   domi::HiaiIrBuild ir_build;
   auto om_model_buff = new (std::nothrow) domi::ModelBufferData;
   if (om_model_buff == nullptr) {
-    MS_LOG(ERROR) << "om model buffer is nullptr.";
+    MS_LOG(ERROR) << "OM model buffer is nullptr.";
     return nullptr;
   }
   if (!ir_build.CreateModelBuff(model, *om_model_buff)) {
@@ -155,9 +155,8 @@ int SubGraphNpuKernel::BuildNPUOutputOp() {
   return RET_OK;
 }
 
-void SubGraphNpuKernel::SetIndex(int index) { this->index_ = index; }
+std::string SubGraphNpuKernel::GetOMModelName() { return this->name_ + ".om"; }
 
-std::string SubGraphNpuKernel::GetOMModelName() { return this->name_ + std::to_string(index_) + ".om"; }
 int SubGraphNpuKernel::Init() {
   model_buffer_data_ = BuildIRModel();
   if (model_buffer_data_ == nullptr) {

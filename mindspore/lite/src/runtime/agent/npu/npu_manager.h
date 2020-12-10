@@ -43,6 +43,8 @@ class NPUManager {
   // provide to executor.
   std::shared_ptr<hiai::AiModelMngerClient> GetClient();
 
+  int index();
+
  private:
   void CheckSupportNPU();
 
@@ -53,6 +55,8 @@ class NPUManager {
   std::string GetExecutorPath();
 
  private:
+  int index_ = 0;
+
   bool is_npu_check_executor = false;
 
   bool is_support_npu = false;

@@ -188,6 +188,7 @@ int NPUManager::AddModel(void *model_buf, uint32_t size, const std::string &mode
   model_desc_.push_back(desc);
   mc_builder_->MemBufferDestroy(buffer);
 
+  index_++;
   return RET_OK;
 }
 
@@ -214,4 +215,6 @@ int NPUManager::LoadOMModel() {
 }
 
 std::shared_ptr<hiai::AiModelMngerClient> NPUManager::GetClient() { return client_; }
+
+int NPUManager::index() { return index_; }
 }  // namespace mindspore::lite
