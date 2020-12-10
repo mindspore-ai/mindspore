@@ -220,7 +220,7 @@ Status MsGraphImpl::GetInputsInfo(std::vector<std::string> *names, std::vector<s
     PushbackIfNotNull(names, input_names_[i]);
     PushbackIfNotNull(shapes, tensor->shape());
     PushbackIfNotNull(data_types, TransTypeId2InferDataType(tensor->data_type()));
-    PushbackIfNotNull(mem_sizes, tensor->DataSize());
+    PushbackIfNotNull(mem_sizes, tensor->Size());
   }
   return SUCCESS;
 }
@@ -244,7 +244,7 @@ Status MsGraphImpl::GetOutputsInfo(std::vector<std::string> *names, std::vector<
     PushbackIfNotNull(names, output_names_[i]);
     PushbackIfNotNull(shapes, tensor->shape());
     PushbackIfNotNull(data_types, TransTypeId2InferDataType(tensor->data_type()));
-    PushbackIfNotNull(mem_sizes, tensor->DataSize());
+    PushbackIfNotNull(mem_sizes, tensor->Size());
   }
 
   return SUCCESS;
