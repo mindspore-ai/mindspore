@@ -18,7 +18,7 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/scatter_add_impl.cuh"
 
 template <typename T>
-__global__ void ScatterAdd(const int inner_size, const int updates_size, const int *indices, const T *updates,
+__global__ void ScatterAdd(const size_t inner_size, const size_t updates_size, const int *indices, const T *updates,
                            T *input) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < updates_size; pos += blockDim.x * gridDim.x) {
     const size_t index = pos / inner_size;
@@ -29,16 +29,16 @@ __global__ void ScatterAdd(const int inner_size, const int updates_size, const i
 }
 
 template <typename T>
-void CalScatterAdd(const int &inner_size, const int &indices_size, const int *indices, const T *updates, T *input,
+void CalScatterAdd(const size_t &inner_size, const size_t &indices_size, const int *indices, const T *updates, T *input,
                    cudaStream_t cuda_stream) {
-  const int updates_size = inner_size * indices_size;
+  const size_t updates_size = inner_size * indices_size;
   ScatterAdd<<<GET_BLOCKS(updates_size), GET_THREADS, 0, cuda_stream>>>(inner_size, updates_size, indices, updates,
                                                                         input);
 }
 
-template void CalScatterAdd<float>(const int &inner_size, const int &indices_size, const int *indices,
+template void CalScatterAdd<float>(const size_t &inner_size, const size_t &indices_size, const int *indices,
                                    const float *updates, float *input, cudaStream_t cuda_stream);
-template void CalScatterAdd<half>(const int &inner_size, const int &indices_size, const int *indices,
+template void CalScatterAdd<half>(const size_t &inner_size, const size_t &indices_size, const int *indices,
                                   const half *updates, half *input, cudaStream_t cuda_stream);
-template void CalScatterAdd<int>(const int &inner_size, const int &indices_size, const int *indices, const int *updates,
-                                 int *input, cudaStream_t cuda_stream);
+template void CalScatterAdd<int>(const size_t &inner_size, const size_t &indices_size, const int *indices,
+                                 const int *updates, int *input, cudaStream_t cuda_stream);
