@@ -62,7 +62,7 @@ class GpuKernel : public KernelMod {
   virtual ~GpuKernel() = default;
   virtual bool Init(const CNodePtr &kernel_node) = 0;
   virtual void ResetResource() noexcept {
-    MS_LOG(EXCEPTION) << "kernel must override the `ResetResource()` method when dynamic shape";
+    MS_LOG(ERROR) << "kernel must override the `ResetResource()` method when dynamic shape";
   }
   virtual void DestroyResource() noexcept {}
   virtual void PostExecute() {}
