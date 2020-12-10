@@ -16,6 +16,7 @@
 
 import numpy as np
 
+from mindspore.explainer.explanation import RISE
 from .metric import LabelAgnosticMetric
 from ... import _operators as ops
 from ..._utils import calc_correlation
@@ -55,7 +56,7 @@ class ClassSensitivity(LabelAgnosticMetric):
             >>> # prepare your explainer to be evaluated, e.g., Gradient.
             >>> gradient = Gradient(network)
             >>> input_x = ms.Tensor(np.random.rand(1, 3, 224, 224), ms.float32)
-            >>> # class_sensitivity is a ClassSensitivity instance
+            >>> class_sensitivity = ClassSensitivity()
             >>> res = class_sensitivity.evaluate(gradient, input_x)
         """
         self._check_evaluate_param(explainer, inputs)
@@ -64,9 +65,14 @@ class ClassSensitivity(LabelAgnosticMetric):
 
         max_confidence_label = ops.argmax(outputs)
         min_confidence_label = ops.argmin(outputs)
-
-        max_confidence_saliency = explainer(inputs, max_confidence_label).asnumpy()
-        min_confidence_saliency = explainer(inputs, min_confidence_label).asnumpy()
+        if isinstance(explainer, RISE):
+            labels = ops.stack([max_confidence_label, min_confidence_label], axis=1)
+            full_saliency = explainer(inputs, labels)
+            max_confidence_saliency = full_saliency[:, max_confidence_label].asnumpy()
+            min_confidence_saliency = full_saliency[:, min_confidence_label].asnumpy()
+        else:
+            max_confidence_saliency = explainer(inputs, max_confidence_label).asnumpy()
+            min_confidence_saliency = explainer(inputs, min_confidence_label).asnumpy()
 
         correlations = []
         for i in range(inputs.shape[0]):
