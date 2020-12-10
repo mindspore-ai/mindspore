@@ -143,6 +143,7 @@ class MindDataTestCallback : public UT::DatasetOpTesting {
 };
 
 TEST_F(MindDataTestCallback, TestBasicCallback) {
+  MS_LOG(INFO) << "Doing: MindDataTestCallback-TestBasicCallback";
   // config callback
   Status rc;
   std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(64);
@@ -189,7 +190,8 @@ TEST_F(MindDataTestCallback, TestBasicCallback) {
   EXPECT_EQ(tst_cb->all_ep_nums(len), all_epochs);
 }
 
-TEST_F(MindDataTestCallback, TestMutiEpochCallback) {
+TEST_F(MindDataTestCallback, TestMultiEpochCallback) {
+  MS_LOG(INFO) << "Doing: MindDataTestCallback-TestMultiEpochCallback";
   // config callback
   Status rc;
   std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(4);
@@ -200,7 +202,7 @@ TEST_F(MindDataTestCallback, TestMutiEpochCallback) {
   ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
   ASSERT_OK(schema->AddColumn(col));
   std::shared_ptr<RandomDataOp> leaf;
-  rc = RandomDataOp::Builder().SetRowsPerBuffer(1).SetDataSchema(std::move(schema)).SetTotalRows(4).Build(&leaf);
+  rc = RandomDataOp::Builder().SetRowsPerBuffer(1).SetDataSchema(std::move(schema)).SetTotalRows(4).SetNumWorkers(4).Build(&leaf);
   EXPECT_TRUE(rc.IsOk());
   // config mapOp
   std::shared_ptr<MapOp> map_op;
@@ -243,6 +245,7 @@ TEST_F(MindDataTestCallback, TestMutiEpochCallback) {
 }
 
 TEST_F(MindDataTestCallback, TestSelectedCallback) {
+  MS_LOG(INFO) << "Doing: MindDataTestCallback-TestSelectedCallback";
   // config callback
   Status rc;
   std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(4);
@@ -257,7 +260,7 @@ TEST_F(MindDataTestCallback, TestSelectedCallback) {
   ColDescriptor col("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &shape);
   ASSERT_OK(schema->AddColumn(col));
   std::shared_ptr<RandomDataOp> leaf;
-  rc = RandomDataOp::Builder().SetRowsPerBuffer(1).SetDataSchema(std::move(schema)).SetTotalRows(4).Build(&leaf);
+  rc = RandomDataOp::Builder().SetRowsPerBuffer(1).SetDataSchema(std::move(schema)).SetTotalRows(4).SetNumWorkers(4).Build(&leaf);
   EXPECT_TRUE(rc.IsOk());
   // config mapOp
   std::shared_ptr<MapOp> map_op;
@@ -304,12 +307,15 @@ TEST_F(MindDataTestCallback, TestCAPICallback) {
   // config callback
   std::shared_ptr<test::TestCallback> tst_cb = std::make_shared<test::TestCallback>(64);
   std::shared_ptr<DSCallback> cb1 = tst_cb;
-  // config leaf_op, use random_data to avoid I/O
-  std::shared_ptr<SchemaObj> schema = std::make_shared<SchemaObj>();
-  ASSERT_TRUE(schema->add_column("label", "uint32", {}));
+  // Create a RandomDataset.  Use random_data to avoid I/O
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("label", mindspore::TypeId::kNumberTypeUInt32, {}));
   std::shared_ptr<Dataset> ds = RandomData(44, schema);
+  ASSERT_NE(ds, nullptr);
   ds = ds->Map({transforms::TypeCast("uint64")}, {"label"}, {}, {}, nullptr, {cb1});
+  ASSERT_NE(ds, nullptr);
   ds = ds->Repeat(2);
+  ASSERT_NE(ds, nullptr);
 
   TreeAdapter tree_adapter;
   // using tree_adapter to set num_epoch = 1

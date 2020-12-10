@@ -28,12 +28,13 @@ SET(DE_UT_SRCS
         c_api_dataset_tfrecord_test.cc
         c_api_dataset_voc_test.cc
         c_api_datasets_test.cc
+        c_api_epoch_ctrl_test.cc
+        c_api_repeat_test.cc
         c_api_samplers_test.cc
         c_api_text_sentence_piece_vocab_test.cc
         c_api_text_vocab_test.cc
         c_api_transforms_test.cc
         c_api_vision_test.cc
-        callback_test.cc
         celeba_op_test.cc
         center_crop_op_test.cc
         channel_swap_test.cc
@@ -56,7 +57,6 @@ SET(DE_UT_SRCS
         datatype_test.cc
         decode_op_test.cc
         distributed_sampler_test.cc
-        epoch_ctrl_op_test.cc
         equalize_op_test.cc
         execution_tree_test.cc
         fill_op_test.cc
@@ -65,6 +65,9 @@ SET(DE_UT_SRCS
         image_folder_op_test.cc
         image_process_test.cc
         interrupt_test.cc
+        ir_callback_test.cc
+        ir_tensor_op_fusion_pass_test.cc
+        ir_tree_adapter_test.cc
         jieba_tokenizer_op_test.cc
         main_test.cc
         map_op_test.cc
@@ -100,7 +103,6 @@ SET(DE_UT_SRCS
         random_vertical_flip_op_test.cc
         random_vertical_flip_with_bbox_op_test.cc
         rename_op_test.cc
-        repeat_op_test.cc
         rescale_op_test.cc
         resize_op_test.cc
         resize_with_bbox_op_test.cc
@@ -120,7 +122,6 @@ SET(DE_UT_SRCS
         swap_red_blue_test.cc
         take_op_test.cc
         task_manager_test.cc
-        tensor_op_fusion_pass_test.cc
         tensor_row_test.cc
         tensor_string_test.cc
         tensor_test.cc
@@ -130,7 +131,6 @@ SET(DE_UT_SRCS
         to_float16_op_test.cc
         tokenizer_op_test.cc
         treap_test.cc
-        tree_adapter_test.cc
         trucate_pair_test.cc
         type_cast_op_test.cc
         weighted_random_sampler_test.cc
