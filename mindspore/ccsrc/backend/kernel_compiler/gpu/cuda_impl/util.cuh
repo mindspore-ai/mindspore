@@ -20,16 +20,18 @@
 #include <cuda_fp16.h>
 #include "runtime/device/gpu/cuda_common.h"
 
+#define kThreadsPerBlock (256)
+#define kBlocksPerGrid(n) ((n + kThreadsPerBlock - 1) / kThreadsPerBlock)
+
 __device__ static inline double MsAtomicAdd(double *address, const double val) {
-    unsigned long long int* address_as_ull = (unsigned long long int*)address; // NOLINT
-    unsigned long long int old = *address_as_ull; // NOLINT
-    unsigned long long int assumed; // NOLINT
-    do {
-        assumed = old;
-        old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
-    }
-    while (assumed != old); // NOLINT
-    return __longlong_as_double(old);
+  unsigned long long int *address_as_ull = (unsigned long long int *)address;  // NOLINT
+  unsigned long long int old = *address_as_ull;                                // NOLINT
+  unsigned long long int assumed;                                              // NOLINT
+  do {
+    assumed = old;
+    old = atomicCAS(address_as_ull, assumed, __double_as_longlong(val + __longlong_as_double(assumed)));
+  } while (assumed != old);  // NOLINT
+  return __longlong_as_double(old);
 }
 
 __device__ static inline float MsAtomicAdd(float *address, const float val) { return atomicAdd(address, val); }
@@ -42,7 +44,7 @@ __device__ static inline unsigned int MsAtomicAdd(unsigned int *address, unsigne
 
 __device__ static inline int8_t MsAtomicAdd(int8_t *address, int8_t val) {
   size_t offset = (size_t)address & 3;
-  uint32_t * address_as_ui = (uint32_t *)((char *)address - offset); // NOLINT
+  uint32_t *address_as_ui = (uint32_t *)((char *)address - offset);  // NOLINT
   uint32_t old = *address_as_ui;
   uint32_t shift = offset * 8;
   uint32_t old_byte;
@@ -60,27 +62,27 @@ __device__ static inline int8_t MsAtomicAdd(int8_t *address, int8_t val) {
 }
 
 __device__ static inline int64_t MsAtomicAdd(int64_t *address, int64_t val) {
-  unsigned long long * address_as_ui = (unsigned long long *) (address); // NOLINT
-  unsigned long long old = *address_as_ui; // NOLINT
-  unsigned long long newval; // NOLINT
-  unsigned long long assumed; // NOLINT
+  unsigned long long *address_as_ui = (unsigned long long *)(address);  // NOLINT
+  unsigned long long old = *address_as_ui;                              // NOLINT
+  unsigned long long newval;                                            // NOLINT
+  unsigned long long assumed;                                           // NOLINT
 
   do {
     assumed = old;
-    newval = val +  (int64_t)old;
+    newval = val + (int64_t)old;
     old = atomicCAS(address_as_ui, assumed, newval);
   } while (assumed != old);
   return (int64_t)old;
 }
 
 __device__ static inline bool MsAtomicAdd(bool *address, bool val) {
-    *address = address && val;
-    return address[0];
+  *address = address && val;
+  return address[0];
 }
 
 __device__ static inline unsigned char MsAtomicAdd(short *address, short val) {  // NOLINT
-  bool is_4_byte_aligned = ((size_t) address & 2) == 0;
-  unsigned int *aligned = (unsigned int *) ((size_t) address & ~2);
+  bool is_4_byte_aligned = ((size_t)address & 2) == 0;
+  unsigned int *aligned = (unsigned int *)((size_t)address & ~2);
   unsigned int old = *aligned;
   unsigned int assumed;
 
@@ -91,16 +93,16 @@ __device__ static inline unsigned char MsAtomicAdd(short *address, short val) { 
     if (is_4_byte_aligned) {
       replacement = (old & 0xffff0000) | (((old & 0xffff) + val) & 0xffff);
     } else {
-      replacement = old + ((unsigned int) val << 16);
+      replacement = old + ((unsigned int)val << 16);
     }
 
     old = atomicCAS(aligned, assumed, replacement);
   } while (assumed != old);
 
   if (is_4_byte_aligned) {
-    return (short) (old & 0xffff);  // NOLINT
+    return (short)(old & 0xffff);  // NOLINT
   } else {
-    return (short) (old >> 16);  // NOLINT
+    return (short)(old >> 16);  // NOLINT
   }
 }
 
@@ -112,7 +114,8 @@ __device__ static inline half MsAtomicAdd(half *address, half val) {
   unsigned short old_as_us;  // NOLINT
   do {
     assumed = old;
-    old_as_us = static_cast<unsigned short>(reinterpret_cast<size_t>(address) & 2 ? old >> 16 : old & 0xffff);  // NOLINT
+    old_as_us =
+      static_cast<unsigned short>(reinterpret_cast<size_t>(address) & 2 ? old >> 16 : old & 0xffff);  // NOLINT
     half sum = __float2half_rn(__half2float(__ushort_as_half(old_as_us)) + static_cast<float>(val));
     unsigned short sum_as_us = __half_as_ushort(sum);  // NOLINT
     unsigned int sum_as_ui =
@@ -123,16 +126,16 @@ __device__ static inline half MsAtomicAdd(half *address, half val) {
   return half(raw);
 }
 
-__device__ static inline unsigned char MsAtomicAdd(unsigned char* address, unsigned char val) {
+__device__ static inline unsigned char MsAtomicAdd(unsigned char *address, unsigned char val) {
   // We use cuda's atomicCAS(unsigned int*, unsigned int, unsigned int) to
   // implement MsAtomicAdd. An unsigned char may not be 4 byte aligned, but
   // unsigned int* must be 4 byte aligned. This variable contains the offset,
   // in bytes, of the beginning of address, within the 4 byte aligned space that
   // contains it.
-  size_t address_offset = (size_t) address & 3;
+  size_t address_offset = (size_t)address & 3;
 
   // Address of the 4 byte aligned space that contains address.
-  unsigned int* aligned = (unsigned int*) ((unsigned char*) address - address_offset);
+  unsigned int *aligned = (unsigned int *)((unsigned char *)address - address_offset);
 
   // Constants which will be used later with __byte_perm. __byte_perm is a cuda
   // function which takes 3 unsigned int's (x, y, selector) as parameters and
@@ -166,9 +169,9 @@ __device__ static inline unsigned char MsAtomicAdd(unsigned char* address, unsig
   return __byte_perm(old, 0, address_offset);
 }
 
-__device__ static inline char MsAtomicAdd(char* address, char val) {
-  size_t address_offset = (size_t) address & 3;
-  unsigned int* aligned = reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(address) - address_offset);
+__device__ static inline char MsAtomicAdd(char *address, char val) {
+  size_t address_offset = (size_t)address & 3;
+  unsigned int *aligned = reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(address) - address_offset);
   unsigned int selectors[] = {0x3214, 0x3240, 0x3410, 0x4210};
   unsigned int selector = selectors[address_offset];
   unsigned int old = *aligned;
@@ -184,5 +187,13 @@ __device__ static inline char MsAtomicAdd(char* address, char val) {
   } while (old != assumed);
   return __byte_perm(old, 0, address_offset);
 }
+
+__device__ __forceinline__ unsigned BallotSync(int predicate, unsigned mask = 0xffffffff) {
+  return __ballot_sync(mask, predicate);
+}
+
+enum : unsigned { warp_size = 32, log_wap_size = 5 };
+__device__ __forceinline__ unsigned LaneId() { return threadIdx.x & (warp_size - 1); }
+__device__ __forceinline__ unsigned WarpId(const unsigned &tid) { return tid >> log_wap_size; }
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UTIL_H_

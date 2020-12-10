@@ -248,6 +248,8 @@ constexpr auto kBasicLSTMCellCStateGradOpName = "BasicLSTMCellCStateGrad";
 constexpr auto kBasicLSTMCellCStateGradV2OpName = "BasicLSTMCellCStateGradV2";
 constexpr auto kMatMulV2OpName = "MatMulV2";
 constexpr auto kBroadcastToOpName = "BroadcastTo";
+constexpr auto kFusedAddReluV2Name = "FusedAddReluV2";
+constexpr auto kFusedAddReluGradV2Name = "FusedAddReluGradV2";
 
 // Hcom Op Type
 constexpr auto kHcomOpTypeAllReduce = "HcomAllReduce";
