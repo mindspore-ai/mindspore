@@ -34,7 +34,6 @@ class SubGraphNpuKernel : public SubGraphKernel {
                     const lite::InnerContext *ctx = nullptr)
       : SubGraphKernel(inputs, outputs, inKernels, outKernels, nodes, ctx) {
     subgraph_type_ = kNpuSubGraph;
-    this->name_ = "NpuSubGraph";
   }
 
   ~SubGraphNpuKernel() override = default;
@@ -56,8 +55,6 @@ class SubGraphNpuKernel : public SubGraphKernel {
     return RET_ERROR;
   }
 
-  void SetIndex(int index);
-
  private:
   domi::ModelBufferData *BuildIRModel();
 
@@ -72,8 +69,6 @@ class SubGraphNpuKernel : public SubGraphKernel {
   std::string GetOMModelName();
 
  private:
-  int index_;
-
   domi::ModelBufferData *model_buffer_data_;
 
   std::vector<ge::Operator> subgraph_input_op_;

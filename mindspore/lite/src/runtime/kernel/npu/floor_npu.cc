@@ -34,7 +34,7 @@ int FloorNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, cons
     return RET_ERROR;
   }
   op_->set_input_x(*npu_inputs[0]);
-  return REK_OK;
+  return RET_OK;
 }
 
 ge::Operator *mindspore::kernel::FloorNPUKernel::GetNPUOp() { return this->op_; }

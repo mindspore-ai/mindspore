@@ -237,7 +237,7 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels) {
     }
     auto cur_sub_graph_type = mindspore::lite::Scheduler::GetKernelSubGraphType(head_kernel);
     auto sub_kernels = FindAllSubGraphKernels(head_kernel, &is_kernel_sinked);
-    auto subgraph = CreateSubGraphKernel(sub_kernels, cur_sub_graph_type, kernels->size());
+    auto subgraph = CreateSubGraphKernel(sub_kernels, cur_sub_graph_type);
     if (subgraph == nullptr) {
       MS_LOG(ERROR) << "Create SubGraphKernel failed";
       return RET_ERROR;
@@ -248,7 +248,7 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels) {
 }
 
 kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
-                                                        kernel::SubGraphType type, int index) {
+                                                        kernel::SubGraphType type) {
   if (type == kernel::kApuSubGraph) {
     return nullptr;
   }
@@ -267,10 +267,15 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
   }
   if (type == kernel::kNpuSubGraph) {
 #if SUPPORT_NPU
-    auto sub_kernel =
-      new kernel::SubGraphNpuKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
-    sub_kernel->SetIndex(index);
+    auto sub_kernel = new (std::nothrow)
+      kernel::SubGraphNpuKernel(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+    if (sub_kernel == nullptr) {
+      MS_LOG(ERROR) << "NPU subgraph new failed.";
+      return nullptr;
+    }
+    sub_kernel->set_name("NPUSubgraph" + std::to_string(NPUManager::GetInstance()->index()));
     if (sub_kernel->Init() != RET_OK) {
+      MS_LOG(ERROR) << "NPU subgraph init failed.";
       return nullptr;
     }
     return sub_kernel;
