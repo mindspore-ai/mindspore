@@ -100,7 +100,6 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetBasicWithPipeline) {
   ds1 = ds1->Concat({ds2});
   EXPECT_NE(ds1, nullptr);
 
-
   // Create an iterator over the result of the above dataset
   // This will trigger the creation of the Execution Tree and launch it.
   std::shared_ptr<Iterator> iter = ds1->CreateIterator();
@@ -472,5 +471,12 @@ TEST_F(MindDataTestPipeline, TestRandomDatasetDuplicateColumnName) {
   schema->add_column("label", mindspore::TypeId::kNumberTypeUInt8, {1});
   std::shared_ptr<Dataset> ds = RandomData(50, schema, {"image", "image"});
   // Expect failure: duplicate column names
+  EXPECT_EQ(ds->CreateIterator(), nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestRandomDatasetFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestRandomDatasetFail.";
+  // this will fail because num_workers is greater than num_rows
+  std::shared_ptr<Dataset> ds = RandomData(3)->SetNumWorkers(5);
   EXPECT_EQ(ds->CreateIterator(), nullptr);
 }

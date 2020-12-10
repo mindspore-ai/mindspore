@@ -27,7 +27,7 @@ namespace dataset {
 
 // this will become the RootNode:DatasetNode when it is turned on
 Status AutoWorkerPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *modified) {
-  uint8_t config = GlobalContext::config_manager()->get_auto_worker_config_();
+  uint8_t config = GlobalContext::config_manager()->get_auto_worker_config();
 
   OpWeightPass pass(kOpWeightConfigs[config < kOpWeightConfigs.size() ? config : 0]);
 

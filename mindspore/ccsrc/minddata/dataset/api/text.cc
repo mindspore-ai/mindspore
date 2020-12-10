@@ -320,6 +320,12 @@ Status LookupOperation::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
+  if (!data_type_.IsNumeric()) {
+    std::string err_msg = "Lookup does not support a string to string mapping, data_type can only be numeric.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+
   return Status::OK();
 }
 

@@ -52,6 +52,11 @@ Status RandomNode::ValidateParams() {
     RETURN_IF_NOT_OK(ValidateDatasetColumnParam("RandomNode", "columns_list", columns_list_));
   }
 
+  // allow total_rows == 0 for now because RandomOp would generate a random row when it gets a 0
+  CHECK_FAIL_RETURN_UNEXPECTED(total_rows_ == 0 || total_rows_ >= num_workers_,
+                               "RandomNode needs total_rows < num_workers. total_rows=" + std::to_string(total_rows_) +
+                                 ", num_workers=" + std::to_string(num_workers_) + ".");
+
   return Status::OK();
 }
 
