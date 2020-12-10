@@ -26,15 +26,22 @@ int ScaleNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const s
                               OpParameter *opParameter) {
   return RET_OK;
 }
-void ScaleNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                                  const std::vector<ge::Operator *> &npu_inputs) {
-  op_ = new hiai::op::Scale(name_);
+
+int ScaleNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                                 const std::vector<ge::Operator *> &npu_inputs) {
+  op_ = new (std::nothrow) hiai::op::Scale(name_);
+  if (op_ == nullptr) {
+    return RET_ERROR;
+  }
   op_->set_attr_axis(this->axis_);
   op_->set_input_x(*npu_inputs[0]);
   op_->set_input_scale(*npu_inputs[1]);
   op_->set_input_bias(*npu_inputs[2]);
+  return RET_OK;
 }
+
 ge::Operator *mindspore::kernel::ScaleNPUKernel::GetNPUOp() { return this->op_; }
+
 ScaleNPUKernel::~ScaleNPUKernel() {
   if (op_ != nullptr) {
     delete op_;

@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_KERNEL_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPU_KERNEL_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_KERNEL_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_KERNEL_NPU_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -30,8 +30,9 @@ namespace mindspore::kernel {
 class NPUKernel : public LiteKernel {
  public:
   NPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-            const std::vector<lite::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {}
+            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+            const mindspore::lite::PrimitiveC *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~NPUKernel() override = default;
 
   int Run() override { return RET_ERROR; }
@@ -43,16 +44,16 @@ class NPUKernel : public LiteKernel {
 
   virtual ge::Operator *GetNPUOp() = 0;
 
-  virtual void SetNPUInputs(const std::vector<mindspore::lite::Tensor *> &inputs,
-                            const std::vector<lite::Tensor *> &outputs,
-                            const std::vector<ge::Operator *> &npu_inputs) = 0;
+  virtual int SetNPUInputs(const std::vector<mindspore::lite::Tensor *> &inputs,
+                           const std::vector<lite::Tensor *> &outputs,
+                           const std::vector<ge::Operator *> &npu_inputs) = 0;
 };
 template <class T>
 kernel::LiteKernel *NPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                      const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                      const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) T(opParameter, inputs, outputs);
+  auto *kernel = new (std::nothrow) T(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
     free(opParameter);
@@ -66,4 +67,4 @@ kernel::LiteKernel *NPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
   return kernel;
 }
 }  // namespace mindspore::kernel
-#endif  // LITE_MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_KERNEL_NPUKERNEL_H_
+#endif  // LITE_MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPUKERNEL_NPU_H_

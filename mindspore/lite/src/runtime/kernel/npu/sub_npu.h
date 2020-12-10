@@ -14,22 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SCALE_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SCALE_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SUB_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SUB_NPU_H_
 #include <vector>
-#include "nnacl/scale.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
-#include "include/graph/op/nn_defs.h"
+#include "include/graph/op/math_defs.h"
 namespace mindspore::kernel {
-class ScaleNPUKernel : public NPUKernel {
+class SubNPUKernel : public NPUKernel {
  public:
-  ScaleNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                 const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    axis_ = reinterpret_cast<ScaleParameter *>(parameter)->axis_;
-  }
-  ~ScaleNPUKernel() override;
+  SubNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+               const mindspore::lite::PrimitiveC *primitive)
+      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~SubNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
@@ -38,8 +35,7 @@ class ScaleNPUKernel : public NPUKernel {
   ge::Operator *GetNPUOp() override;
 
  private:
-  hiai::op::Scale *op_ = nullptr;
-  int axis_;
+  hiai::op::Sub *op_ = nullptr;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_Scale_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SUB_NPU_H_

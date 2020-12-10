@@ -157,4 +157,22 @@ int ConverterToNPUActMode(schema::ActivationType type) {
       return -1;
   }
 }
+// mode  : Either 0 (product), 1 (sum), 2 (max), 3 (mean). Defaults to 1 (sum).
+int ConverterToNPUEltwiseMode(schema::EltwiseMode mode) {
+  int mode_num = 1;
+  switch (mode) {
+    case schema::EltwiseMode_PROD:
+      mode_num = 0;
+      break;
+    case schema::EltwiseMode_SUM:
+      mode_num = 1;
+      break;
+    case schema::EltwiseMode_MAXIMUM:
+      mode_num = 2;
+      break;
+    default:
+      MS_LOG(ERROR) << "Unsupport Eltwise mode.";
+  }
+  return mode_num;
+}
 }  // namespace mindspore::lite

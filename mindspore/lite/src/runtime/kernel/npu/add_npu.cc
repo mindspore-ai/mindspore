@@ -25,20 +25,27 @@ using mindspore::schema::PrimitiveType_Add;
 namespace mindspore::kernel {
 int AddNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                             OpParameter *opParameter) {
-  if (inputs[0]->shape() != inputs[1]->shape()) {
-    MS_LOG(INFO) << "ddk 500 does not support broadcast."
-                 << " shape 1 is:" << inputs[0]->shape() << " shape 2 is:" << inputs[1]->shape();
+  if (inputs[0]->shape().size() != inputs[1]->shape().size()) {
+    MS_LOG(ERROR) << "For the two inputs, the corresponding dimensions must have the same value, or one of them is 1."
+                  << " shape 1 is:" << inputs[0]->shape() << " shape 2 is:" << inputs[1]->shape();
     return RET_ERROR;
   }
   return RET_OK;
 }
-void AddNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                                const std::vector<ge::Operator *> &npu_inputs) {
-  op_ = new hiai::op::Add(name_);
+
+int AddNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                               const std::vector<ge::Operator *> &npu_inputs) {
+  op_ = new (std::nothrow) hiai::op::Add(name_);
+  if (op_ == nullptr) {
+    return RET_ERROR;
+  }
   op_->set_input_x1(*npu_inputs[0]);
   op_->set_input_x2(*npu_inputs[1]);
+  return RET_OK;
 }
+
 ge::Operator *mindspore::kernel::AddNPUKernel::GetNPUOp() { return this->op_; }
+
 AddNPUKernel::~AddNPUKernel() {
   if (op_ != nullptr) {
     delete op_;

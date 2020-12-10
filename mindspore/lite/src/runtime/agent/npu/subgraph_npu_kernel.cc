@@ -22,13 +22,9 @@
 #include "src/tensor.h"
 #include "include/graph/model.h"
 #include "include/hiai_ir_build.h"
-#include "include/HiAiModelManagerService.h"
 #include "include/HiAiModelManagerType.h"
 #include "include/context.h"
 #include "include/version.h"
-#include "include/graph/op/array_defs.h"
-#include "src/common/file_utils.h"
-#include "src/common/common.h"
 #include "src/common/utils.h"
 #include "src/runtime/agent/npu/npu_converter_utils.h"
 #include "mindspore/lite/src/runtime/kernel/npu/npu_kernel.h"
@@ -129,7 +125,11 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
       }
     }
     // set input to NPU
-    reinterpret_cast<NPUKernel *>(node)->SetNPUInputs(node->in_tensors(), node->out_tensors(), node_input_op);
+    int ret = reinterpret_cast<NPUKernel *>(node)->SetNPUInputs(node->in_tensors(), node->out_tensors(), node_input_op);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << node->name() << " set npu inputs failed.";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -146,6 +146,7 @@ std::vector<ge::Operator> SubGraphNpuKernel::GetNPUNodes(const vector<kernel::Li
 }
 
 int SubGraphNpuKernel::BuildNPUOutputOp() {
+  subgraph_output_op_.clear();
   subgraph_output_op_ = GetNPUNodes(out_nodes_);
   if (subgraph_output_op_.empty()) {
     MS_LOG(ERROR) << "NPU subgraph output op is empty.";

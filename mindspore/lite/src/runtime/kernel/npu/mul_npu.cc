@@ -26,20 +26,26 @@ namespace mindspore::kernel {
 int MulNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                             OpParameter *opParameter) {
   if (inputs[0]->shape() != inputs[1]->shape()) {
-    MS_LOG(INFO) << "ddk 500 does not support broadcast."
-                 << " shape 1 is:" << inputs[0]->shape() << " shape 2 is:" << inputs[1]->shape();
+    MS_LOG(ERROR) << "For the two inputs, the corresponding dimensions must have the same value."
+                  << " shape 1 is:" << inputs[0]->shape() << " shape 2 is:" << inputs[1]->shape();
     return RET_ERROR;
   }
   return RET_OK;
 }
-void MulNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                                const std::vector<ge::Operator *> &npu_inputs) {
-  op_ = new hiai::op::Mul(name_);
 
+int MulNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                               const std::vector<ge::Operator *> &npu_inputs) {
+  op_ = new (std::nothrow) hiai::op::Mul(name_);
+  if (op_ == nullptr) {
+    return RET_ERROR;
+  }
   op_->set_input_x1(*npu_inputs[0]);
   op_->set_input_x2(*npu_inputs[1]);
+  return RET_OK;
 }
+
 ge::Operator *mindspore::kernel::MulNPUKernel::GetNPUOp() { return this->op_; }
+
 MulNPUKernel::~MulNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
