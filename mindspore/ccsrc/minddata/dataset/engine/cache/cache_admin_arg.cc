@@ -298,6 +298,7 @@ Status CacheAdminArgHandler::Validate() {
   // Any unhandled arguments at this point is an error.
   if (!trailing_args_.empty()) {
     std::string err_msg = "Invalid arguments provided: " + trailing_args_;
+    err_msg += "\nPlease try `cache_admin --help` for more information";
     return Status(StatusCode::kSyntaxError, err_msg);
   }
 
@@ -540,8 +541,11 @@ void CacheAdminArgHandler::Help() {
   std::cerr << "                [[-s | --spilldir] <spilling directory>]  Default is " << DefaultSpillDir() << ".\n";
   std::cerr << "                [[-l | --loglevel] <log level>]           Default is 1 (warning level).\n";
   std::cerr << "            [--destroy_session  | -d] <session id>\n";
+  std::cerr << "                [[-p | --port] <port number>]\n";
   std::cerr << "            [--generate_session | -g]\n";
+  std::cerr << "                [[-p | --port] <port number>]\n";
   std::cerr << "            [--list_sessions]\n";
+  std::cerr << "                [[-p | --port] <port number>]\n";
   std::cerr << "            [--help]" << std::endl;
   // Do not expose these option to the user via help or documentation, but the options do exist to aid with
   // development and tuning.
