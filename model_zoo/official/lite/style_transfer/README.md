@@ -1,4 +1,4 @@
-# MindSpore Lite 端侧骨骼检测demo（Android）
+# MindSpore Lite 端侧风格迁移demo（Android）
 
 本示例程序演示了如何在端侧利用MindSpore Lite API以及MindSpore Lite风格迁移模型完成端侧推理，根据demo内置的标准图片更换目标图片的艺术风格，并在App图像预览界面中显示出来。
 
