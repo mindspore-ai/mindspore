@@ -1,5 +1,4 @@
 # 目录
-<!-- TOC -->
 
 - [目录](#目录)
 - [Faster R-CNN描述](#faster-r-cnn描述)
@@ -40,11 +39,11 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
 使用的数据集：[COCO 2017](<https://cocodataset.org/>)
 
 - 数据集大小：19G
-  - 训练集：18G，118,000个图像  
-  - 验证集：1G，5000个图像
-  - 标注集：241M，实例，字幕，person_keypoints等
+    - 训练集：18G，118,000个图像  
+    - 验证集：1G，5000个图像
+    - 标注集：241M，实例，字幕，person_keypoints等
 - 数据格式：图像和json文件
-  - 注意：数据在dataset.py中处理。
+    - 注意：数据在dataset.py中处理。
 
 # 环境要求
 
@@ -57,17 +56,17 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
     1. 若使用COCO数据集，**执行脚本时选择数据集COCO。**
         安装Cython和pycocotool，也可以安装mmcv进行数据处理。
 
-        ```
+        ```python
         pip install Cython
 
         pip install pycocotools
 
         pip install mmcv==0.2.14
         ```
+
         在`config.py`中更改COCO_ROOT和其他您需要的设置。目录结构如下：
 
-
-        ```
+        ```path
         .
         └─cocodataset
           ├─annotations
@@ -75,13 +74,13 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
             └─instance_val2017.json
           ├─val2017
           └─train2017
-    
+
         ```
 
     2. 若使用自己的数据集，**执行脚本时选择数据集为other。**
         将数据集信息整理成TXT文件，每行内容如下：
 
-        ```
+        ```txt
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
         ```
 
@@ -89,13 +88,15 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
 
 # 快速入门
 
-通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估： 
+通过官方网站安装MindSpore后，您可以按照如下步骤进行训练和评估：
 
-注意：1. 第一次运行生成MindRecord文件，耗时较长。
-      2. 预训练模型是在ImageNet2012上训练的ResNet-50检查点。
-      3. VALIDATION_JSON_FILE为标签文件。CHECKPOINT_PATH是训练后的检查点文件。
+注意：
 
-```
+1. 第一次运行生成MindRecord文件，耗时较长。
+2. 预训练模型是在ImageNet2012上训练的ResNet-50检查点。
+3. VALIDATION_JSON_FILE为标签文件。CHECKPOINT_PATH是训练后的检查点文件。
+
+```shell
 # 单机训练
 sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
 
@@ -112,7 +113,7 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 ```shell
 .
-└─faster_rcnn      
+└─faster_rcnn
   ├─README.md    // Faster R-CNN相关说明
   ├─scripts
     ├─run_standalone_train_ascend.sh    // Ascend单机shell脚本
@@ -144,14 +145,14 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 ### 用法
 
-```
+```shell
 # Ascend单机训练
 sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
 
 # Ascend分布式训练
 sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 ```
- 
+
 > 运行分布式任务时需要用到RANK_TABLE_FILE指定的rank_table.json。您可以使用[hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)生成该文件。
 > PRETRAINED_MODEL应该是在ImageNet 2012上训练的ResNet-50检查点。现成的pretrained_models目前不可用。敬请期待。
 > config.py中包含原数据集路径，可以选择“coco_root”或“image_dir”。
@@ -160,8 +161,7 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 训练结果保存在示例路径中，文件夹名称以“train”或“train_parallel”开头。您可以在loss_rankid.log中找到检查点文件以及结果，如下所示。
 
-
-```
+```log
 # 分布式训练结果（8P）
 epoch: 1 step: 7393, rpn_loss: 0.12054, rcnn_loss: 0.40601, rpn_cls_loss: 0.04025, rpn_reg_loss: 0.08032, rcnn_cls_loss: 0.25854, rcnn_reg_loss: 0.14746, total_loss: 0.52655
 epoch: 2 step: 7393, rpn_loss: 0.06561, rcnn_loss: 0.50293, rpn_cls_loss: 0.02587, rpn_reg_loss: 0.03967, rcnn_cls_loss: 0.35669, rcnn_reg_loss: 0.14624, total_loss: 0.56854
@@ -176,7 +176,7 @@ epoch: 12 step: 7393, rpn_loss: 0.00691, rcnn_loss: 0.10168, rpn_cls_loss: 0.005
 
 ### 用法
 
-```
+```shell
 # Ascend评估
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
@@ -187,7 +187,7 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 评估结果将保存在示例路径中，文件夹名为“eval”。在此文件夹下，您可以在日志中找到类似以下的结果。
 
-```
+```log
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.360
  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.586
  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.385
@@ -208,7 +208,7 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 ### 训练性能
 
-| 参数 | Faster R-CNN |
+| 参数 |Ascend |
 | -------------------------- | ----------------------------------------------------------- |
 | 模型版本 | V1 |
 | 资源 | Ascend 910；CPU 2.60GHz，192核；内存：755G |
@@ -221,11 +221,11 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 | 速度 | 1卡：190毫秒/步；8卡：200毫秒/步 |
 | 总时间 | 1卡：37.17小时；8卡：4.89小时 |
 | 参数(M) | 250 |
-| 脚本 | [Faster R-CNN脚本](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/office/cv/faster_rcnn) |
+| 脚本 | [Faster R-CNN脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/office/cv/faster_rcnn) |
 
 ### 评估性能
 
-| 参数 | Faster R-CNN |
+| 参数 | Ascend |
 | ------------------- | --------------------------- |
 | 模型版本 | V1 |
 | 资源 | Ascend 910 |
@@ -238,4 +238,5 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 | 推理模型 | 250M（.ckpt文件） |
 
 # ModelZoo主页
+
  请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。

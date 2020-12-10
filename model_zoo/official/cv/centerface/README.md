@@ -22,7 +22,6 @@
         - [Inference Performance](#inference-performance)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-
 # [CenterFace Description](#contents)
 
 CenterFace is a practical anchor-free face detection and alignment method for edge devices, we support training and evaluation on Ascend910.
@@ -47,7 +46,8 @@ Dataset support: [WiderFace] or datasetd with the same format as WiderFace
 Annotation support: [WiderFace] or annotation as the same format as WiderFace
 
 - The directory structure is as follows, the name of directory and file is user define:
-    ```
+
+    ```path
         ├── dataset
             ├── centerface
                 ├── annotations
@@ -69,24 +69,26 @@ Annotation support: [WiderFace] or annotation as the same format as WiderFace
                    ├─ ...
                    └─xxx.mat
     ```
+
 we suggest user to use WiderFace dataset to experience our model,
 other datasets need to use the same format as WiderFace.
 
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend）
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
-  - [MindSpore](https://cmc-szv.clouddragon.huawei.com/cmcversion/index/search?searchKey=Do-MindSpore%20V100R001C00B622)
+    - [MindSpore](https://cmc-szv.clouddragon.huawei.com/cmcversion/index/search?searchKey=Do-MindSpore%20V100R001C00B622)
 - For more information, please check the resources below：
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
-  - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
+    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
+    - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
 
 # [Quick Start](#contents)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
 step1: prepare pretrained model: train a mobilenet_v2 model by mindspore or use the script below:
+
 ```python
 #CenterFace need a pretrained mobilenet_v2 model:
 #        mobilenet_v2_key.ckpt is a model with all value zero, we need the key/cell/module name for this model.
@@ -96,14 +98,18 @@ step1: prepare pretrained model: train a mobilenet_v2 model by mindspore or use 
 #            --pytorch: same as official pytorch model(e.g., official mobilenet_v2-b0353104.pth)
 python torch_to_ms_mobilenetv2.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
 ```
+
 step2: prepare user rank_table
+
 ```python
 # user can use your own rank table file
 # or use the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools) to generate rank table file
 # e.g., python hccl_tools.py --device_num "[0,8)"
 python hccl_tools.py --device_num "[0,8)"
 ```
+
 step3: train
+
 ```python
 cd scripts;
 # prepare data_path, use symbolic link
@@ -113,6 +119,7 @@ ls ./dataset/centerface # data path
 ls ./dataset/centerface/annotations/train.json # annot_path
 ls ./dataset/centerface/images/train/images # img_dir
 ```
+
 ```python
 # enter script dir, train CenterFace
 sh train_distribute.sh
@@ -120,7 +127,9 @@ sh train_distribute.sh
 mkdir ./model
 cp device0/outputs/*/*.ckpt ./model # cp model to [MODEL_PATH]
 ```
+
 step4: test
+
 ```python
 # test CenterFace preparing
 cd ../dependency/centernet/src/lib/external;
@@ -136,11 +145,14 @@ mkdir ./output/centerface
 ls ./dataset/images/val/images/ # data path
 ls ./dataset/centerface/ground_truth/val.mat # annot_path
 ```
+
 ```python
 # test CenterFace
 sh test_distribute.sh
 ```
+
 step5: eval
+
 ```python
 # after test, eval CenterFace, get MAP
 # cd ../dependency/evaluate;
@@ -153,7 +165,7 @@ sh eval_all.sh
 
 ## [Script and Sample Code](#contents)
 
-```
+```path
 ├── cv
     ├── centerface
         ├── train.py                     // training scripts
@@ -208,9 +220,12 @@ sh eval_all.sh
 ```
 
 ## [Script Parameters](#contents)
+
 1. train scripts parameters
+
 the command is: python train.py [train parameters]
 Major parameters train.py as follows:
+
 ```python
 --lr: learning rate
 --per_batch_size: batch size on each device
@@ -228,11 +243,14 @@ Major parameters train.py as follows:
 --annot_path: annotations path
 --img_dir: img dir in data_dir
 ```
+
 2. centerface unique configs: in config.py; not recommend user to change
 
 3. test scripts parameters:
+
 the command is: python test.py [test parameters]
 Major parameters test.py as follows:
+
 ```python
 test_script_path: test.py path;
 --is_distributed: multi-device or not
@@ -254,8 +272,10 @@ test_script_path: test.py path;
 ```
 
 4. eval scripts parameters:
+
 the command is: python eval.py [pred] [gt]
 Major parameters eval.py as follows:
+
 ```python
 --pred: pred path, test output test.py->[--save_dir]
 --gt: ground truth path
@@ -270,18 +290,24 @@ Major parameters eval.py as follows:
 --task_set_core: task_set core number, most time = cpu number/nproc_per_node
 
 step1: user need train a mobilenet_v2 model by mindspore or use the script below:
+
 ```python
 python torch_to_ms_mobilenetv2.py --ckpt_fn=./mobilenet_v2_key.ckpt --pt_fn=./mobilenet_v2-b0353104.pth --out_ckpt_fn=./mobilenet_v2.ckpt
 ```
+
 step2: prepare user rank_table
+
 ```python
 # user can use your own rank table file
 # or use the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools) to generate rank table file
 # e.g., python hccl_tools.py --device_num "[0,8)"
 python hccl_tools.py --device_num "[0,8)"
 ```
+
 step3: train
+
 - Single device
+
 ```python
 # enter script dir, train CenterFace
 cd scripts
@@ -297,7 +323,9 @@ sh train_standalone.sh [USE_DEVICE_ID] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATI
 # after training
 cp device0/outputs/*/*.ckpt [MODEL_PATH]
 ```
+
 - multi-device (recommended)
+
 ```python
 # enter script dir, train CenterFace
 cd scripts;
@@ -309,7 +337,9 @@ sh train_distribute.sh [RANK_TABLE] [PRETRAINED_BACKBONE] [DATASET] [ANNOTATIONS
 # after training
 cp device0/outputs/*/*.ckpt [MODEL_PATH]
 ```
+
 After training with 8 device, the loss value will be achieved as follows:
+
 ```python
 # grep "loss is " device0/xxx.log
 # epoch: 1 step: 1, loss is greater than 500 and less than 5000
@@ -329,6 +359,7 @@ After training with 8 device, the loss value will be achieved as follows:
 2020-09-24 20:19:16,748:INFO:==========end epoch===============
 2020-09-24 20:19:16,748:INFO:==========end training===============
 ```
+
 The model checkpoint will be saved in the scripts/device0/output/xxx/xxx.ckpt
 
 ## [Testing Process](#contents)
@@ -344,7 +375,9 @@ make;
 cd ../../../scripts;
 mkdir [SAVE_PATH]
 ```
+
 1. test a single ckpt file
+
 ```python
 # you need to change the parameter in test.sh
 # or use symbolic link as quick start
@@ -357,7 +390,9 @@ mkdir [SAVE_PATH]
 #   CKPT: test model name
 sh test.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CKPT]
 ```
+
 2. test many out ckpt for user to choose the best one
+
 ```python
 # you need to change the parameter in test.sh
 # or use symbolic link as quick start
@@ -368,14 +403,17 @@ sh test.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_ID] [CK
 #   END: end loop number, used to calculate last epoch number
 sh test_distribute.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [DEVICE_NUM] [STEPS_PER_EPOCH] [START] [END]
 ```
+
 After testing, you can find many txt file save the box information and scores,
 open it you can see:
+
 ```python
 646.3 189.1 42.1 51.8 0.747 # left top hight weight score
 157.4 408.6 43.1 54.1 0.667
 120.3 212.4 38.7 42.8 0.650
 ...
 ```
+
 ## [Evaluation Process](#contents)
 
 ### Evaluation
@@ -386,19 +424,25 @@ cd ../dependency/evaluate;
 python setup.py install;
 cd ../../../scripts;
 ```
+
 1. eval a single testing output
+
 ```python
 # you need to change the parameter in eval.sh
 # default eval the ckpt saved in ./scripts/output/centerface/999
 sh eval.sh
 ```
+
 2. eval many testing output for user to choose the best one
+
 ```python
 # you need to change the parameter in eval_all.sh
 # default eval the ckpt saved in ./scripts/output/centerface/[89-140]
 sh eval_all.sh
 ```
+
 3. test+eval
+
 ```python
 # you need to change the parameter in test_and_eval.sh
 # or use symbolic link as quick start, default eval the ckpt saved in ./scripts/output/centerface/999
@@ -406,8 +450,10 @@ sh eval_all.sh
 #   GROUND_TRUTH_PATH: ground truth path
 sh test_and_eval.sh [MODEL_PATH] [DATASET] [GROUND_TRUTH_MAT] [SAVE_PATH] [CKPT] [GROUND_TRUTH_PATH]
 ```
+
 you can see the MAP below by eval.sh
-```
+
+```log
 (ci3.7) [root@bms-aiserver scripts]# ./eval.sh
 start eval
 ==================== Results = ==================== ./scripts/output/centerface/999
@@ -419,7 +465,8 @@ end eval
 ```
 
 you can see the MAP below by eval_all.sh
-```
+
+```log
 (ci3.7) [root@bms-aiserver scripts]# ./eval_all.sh
 ==================== Results = ==================== ./scripts/output/centerface/89
 Easy   Val AP: 0.8884892849068273
@@ -447,9 +494,11 @@ Medium Val AP: 0.9170429723233877
 Hard   Val AP: 0.7822182013830674
 =================================================
 ```
+
 ## [Convert Process](#contents)
 
 ### Convert
+
 If you want to infer the network on Ascend 310, you should convert the model to AIR:
 
 ```python
@@ -461,6 +510,7 @@ python export.py [BATCH_SIZE] [PRETRAINED_BACKBONE]
 ## [Performance](#contents)
 
 ### Evaluation Performance
+
 CenterFace on 13K images(The annotation and data format must be the same as widerFace)
 
 | Parameters                 | CenterFace                                                  |
@@ -477,9 +527,10 @@ CenterFace on 13K images(The annotation and data format must be the same as wide
 | Speed                      | 1p 65 img/s, 8p 475 img/s                                   |
 | Total time                 | train(8p) 1.1h, test 50min, eval 5-10min                    |
 | Checkpoint for Fine tuning | 22M (.ckpt file)                                            |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/centerface |
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/centerface> |
 
 ### Inference Performance
+
 CenterFace on 3.2K images(The annotation and data format must be the same as widerFace)
 
 | Parameters                 | CenterFace                                                  |
@@ -499,4 +550,5 @@ In dataset.py, we set the seed inside ```create_dataset``` function.
 In var_init.py, we set seed for weight initilization
 
 # [ModelZoo Homepage](#contents)
+
  Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).

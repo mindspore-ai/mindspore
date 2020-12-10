@@ -4,7 +4,7 @@
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
-- [Quick Start](#quick-start)    
+- [Quick Start](#quick-start)
 - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
     - [Training Process](#training-process)
@@ -16,11 +16,11 @@
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Evaluation Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
 # FasterRcnn Description
- 
+
 Before FasterRcnn, the target detection networks rely on the region proposal algorithm to assume the location of targets, such as SPPnet and Fast R-CNN. Progress has reduced the running time of these detection networks, but it also reveals that the calculation of the region proposal is a bottleneck.
 
 FasterRcnn proposed that convolution feature maps based on region detectors (such as Fast R-CNN) can also be used to generate region proposals. At the top of these convolution features, a Region Proposal Network (RPN) is constructed by adding some additional convolution layers (which share the convolution characteristics of the entire image with the detection network, thus making it possible to make regions almost costlessProposal), outputting both region bounds and objectness score for each location.Therefore, RPN is a full convolutional network (FCN), which can be trained end-to-end, generate high-quality region proposals, and then fed into Fast R-CNN for detection.
@@ -35,14 +35,14 @@ FasterRcnn is a two-stage target detection network,This network uses a region pr
 
 Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
-Dataset used: [COCO2017](<https://cocodataset.org/>) 
+Dataset used: [COCO2017](<https://cocodataset.org/>)
 
 - Dataset size：19G
-  - Train：18G，118000 images  
-  - Val：1G，5000 images 
-  - Annotations：241M，instances，captions，person_keypoints etc
+    - Train：18G，118000 images  
+    - Val：1G，5000 images
+    - Annotations：241M，instances，captions，person_keypoints etc
 - Data format：image and json files
-  - Note：Data will be processed in dataset.py
+    - Note：Data will be processed in dataset.py
 
 # Environment Requirements
 
@@ -55,17 +55,17 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
     1. If coco dataset is used. **Select dataset to coco when run script.**
         Install Cython and pycocotool, and you can also install mmcv to process data.
 
-        ```
+        ```pip
         pip install Cython
 
         pip install pycocotools
 
         pip install mmcv==0.2.14
         ```
+
         And change the COCO_ROOT and other settings you need in `config.py`. The directory structure is as follows:
 
-
-        ```
+        ```path
         .
         └─cocodataset
           ├─annotations
@@ -73,27 +73,27 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
             └─instance_val2017.json
           ├─val2017
           └─train2017
-    
+
         ```
 
     2. If your own dataset is used. **Select dataset to other when run script.**
         Organize the dataset infomation into a TXT file, each row in the file is as follows:
 
-        ```
+        ```log
         train2017/0000001.jpg 0,259,401,459,7 35,28,324,201,2 0,30,59,80,2
         ```
 
-        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), `IMAGE_DIR` and `ANNO_PATH` are setting in `config.py`. 
+        Each row is an image annotation which split by space, the first column is a relative path of image, the others are box and class infomations of the format [xmin,ymin,xmax,ymax,class]. We read image from an image path joined by the `IMAGE_DIR`(dataset directory) and the relative path in `ANNO_PATH`(the TXT file path), `IMAGE_DIR` and `ANNO_PATH` are setting in `config.py`.
 
 # Quick Start
 
-After installing MindSpore via the official website, you can start training and evaluation as follows: 
+After installing MindSpore via the official website, you can start training and evaluation as follows:
 
 Note: 1.the first run will generate the mindeocrd file, which will take a long time.
       2.pretrained model is a resnet50 checkpoint that trained over ImageNet2012.
-      3.VALIDATION_JSON_FILE is label file. CHECKPOINT_PATH is a checkpoint file after trained. 
+      3.VALIDATION_JSON_FILE is label file. CHECKPOINT_PATH is a checkpoint file after trained.
 
-```
+```shell
 # standalone training
 sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
 
@@ -110,7 +110,7 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 ```shell
 .
-└─faster_rcnn      
+└─faster_rcnn
   ├─README.md    // descriptions about fasterrcnn
   ├─scripts
     ├─run_standalone_train_ascend.sh    // shell script for standalone on ascend
@@ -139,27 +139,26 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
 
 ## Training Process
- 
+
 ### Usage
 
-```
+```shell
 # standalone training on ascend
 sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
 
 # distributed training on ascend
 sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 ```
- 
+
 > Rank_table.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 > As for PRETRAINED_MODEL，it should be a ResNet50 checkpoint that trained over ImageNet2012. Ready-made pretrained_models are not available now. Stay tuned.
 > The original dataset path needs to be in the config.py,you can select "coco_root" or "image_dir".
 
 ### Result
- 
+
 Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the followings in loss_rankid.log.
 
- 
-```
+```log
 # distribute training result(8p)
 epoch: 1 step: 7393, rpn_loss: 0.12054, rcnn_loss: 0.40601, rpn_cls_loss: 0.04025, rpn_reg_loss: 0.08032, rcnn_cls_loss: 0.25854, rcnn_reg_loss: 0.14746, total_loss: 0.52655
 epoch: 2 step: 7393, rpn_loss: 0.06561, rcnn_loss: 0.50293, rpn_cls_loss: 0.02587, rpn_reg_loss: 0.03967, rcnn_cls_loss: 0.35669, rcnn_reg_loss: 0.14624, total_loss: 0.56854
@@ -173,19 +172,19 @@ epoch: 12 step: 7393, rpn_loss: 0.00691, rcnn_loss: 0.10168, rpn_cls_loss: 0.005
 ## Evaluation Process
 
 ### Usage
- 
-```
+
+```shell
 # eval on ascend
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
- 
+
 > checkpoint can be produced in training process.
 
 ### Result
- 
+
 Eval result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
- 
-```
+
+```log
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.360
  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.586
  Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.385
@@ -200,13 +199,13 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.631
 ```
 
-
 # Model Description
+
 ## Performance
 
-### Training Performance 
+### Evaluation Performance
 
-| Parameters                 | FasterRcnn                                                   |
+| Parameters                 | Ascend                                                   |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | V1                                                |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
@@ -219,12 +218,11 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 | Speed                      | 1pc: 190 ms/step;  8pcs: 200 ms/step                          |
 | Total time                 | 1pc: 37.17 hours;  8pcs: 4.89 hours                          |
 | Parameters (M)             | 250                                                         |
-| Scripts                    | [fasterrcnn script](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/faster_rcnn) |
+| Scripts                    | [fasterrcnn script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn) |
 
+### Inference Performance
 
-### Evaluation Performance
-
-| Parameters          | FasterRcnn                   |
+| Parameters          | Ascend                |
 | ------------------- | --------------------------- |
 | Model Version       | V1                |
 | Resource            | Ascend 910                  |
@@ -237,5 +235,5 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
 | Model for inference | 250M (.ckpt file)         |
 
 # [ModelZoo Homepage](#contents)  
- Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo). 
- 
+
+ Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
