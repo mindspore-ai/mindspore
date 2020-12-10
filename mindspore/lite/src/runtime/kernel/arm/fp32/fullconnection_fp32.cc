@@ -51,12 +51,18 @@ int FullconnectionCPUKernel::ReSize() {
   fc_param_->col_ = out_tensors_.at(0)->shape().back();
   fc_param_->deep_ = (in_tensors_.at(1)->shape()).at(1);
 
+#ifdef ENABLE_AVX
+  int col_tile = C16NUM;
+#else
+  int col_tile = C8NUM;
+#endif
   fc_param_->row_12_ = UP_ROUND(fc_param_->row_, C12NUM);
-  fc_param_->col_8_ = UP_ROUND(fc_param_->col_, C8NUM);
+  fc_param_->col_8_ = UP_ROUND(fc_param_->col_, col_tile);
+  fc_param_->row_6_ = UP_ROUND(fc_param_->col_, C6NUM);
   fc_param_->row_4_ = UP_ROUND(fc_param_->row_, C4NUM);
 
-  thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_8_, 8));
-  thread_stride_ = UP_DIV(UP_DIV(fc_param_->col_8_, 8), thread_count_);
+  thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_8_, col_tile));
+  thread_stride_ = UP_DIV(UP_DIV(fc_param_->col_8_, col_tile), thread_count_);
 
 #ifdef ENABLE_ARM
   if (fc_param_->row_ == 1) {
@@ -75,7 +81,9 @@ int FullconnectionCPUKernel::ReSize() {
     memcpy(bias_ptr_, in_tensors_[2]->MutableData(), fc_param_->col_ * sizeof(float));
   }
 
-#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
+#ifdef ENABLE_AVX
+  int row_tmp = is_vector_input_ ? 1 : fc_param_->row_6_;
+#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
   int row_tmp = is_vector_input_ ? 1 : fc_param_->row_4_;
 #else
   int row_tmp = is_vector_input_ ? 1 : fc_param_->row_12_;
@@ -120,7 +128,9 @@ void FullconnectionCPUKernel::InitMatrixA(const float *src_ptr, float *dst_ptr) 
     return;
   }
 
-#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
+#ifdef ENABLE_AVX
+  RowMajor2Col6Major(src_ptr, a_pack_ptr_, fc_param_->row_, fc_param_->deep_);
+#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
   RowMajor2Col4Major(src_ptr, a_pack_ptr_, fc_param_->row_, fc_param_->deep_);
 #else
   RowMajor2Col12Major(src_ptr, a_pack_ptr_, fc_param_->row_, fc_param_->deep_);
@@ -132,8 +142,11 @@ void FullconnectionCPUKernel::InitMatrixB(const float *src_ptr, float *dst_ptr) 
     memcpy(dst_ptr, src_ptr, fc_param_->col_ * fc_param_->deep_ * sizeof(float));
     return;
   }
-
+#ifdef ENABLE_AVX
+  RowMajor2Col16Major(src_ptr, dst_ptr, fc_param_->col_, fc_param_->deep_);
+#else
   RowMajor2Col8Major(src_ptr, dst_ptr, fc_param_->col_, fc_param_->deep_);
+#endif
 }
 
 int FcFp32MatmulRun(void *cdata, int task_id) {
@@ -147,14 +160,19 @@ int FcFp32MatmulRun(void *cdata, int task_id) {
 }
 
 int FullconnectionCPUKernel::DoMatmul(int task_id) {
-  int cur_oc = MSMIN(thread_stride_ * C8NUM, fc_param_->col_ - task_id * thread_stride_ * C8NUM);
+#ifdef ENABLE_AVX
+  int col_tile = C16NUM;
+#else
+  int col_tile = C8NUM;
+#endif
+  int cur_oc = MSMIN(thread_stride_ * col_tile, fc_param_->col_ - task_id * thread_stride_ * col_tile);
   if (cur_oc <= 0) {
     return RET_OK;
   }
 
-  auto b = b_ptr_ + task_id * thread_stride_ * C8NUM * fc_param_->deep_;
-  auto bias = (bias_ptr_ == nullptr) ? nullptr : bias_ptr_ + task_id * thread_stride_ * C8NUM;
-  auto c = c_ptr_ + task_id * thread_stride_ * C8NUM;
+  auto b = b_ptr_ + task_id * thread_stride_ * col_tile * fc_param_->deep_;
+  auto bias = (bias_ptr_ == nullptr) ? nullptr : bias_ptr_ + task_id * thread_stride_ * col_tile;
+  auto c = c_ptr_ + task_id * thread_stride_ * col_tile;
   if (is_vector_input_) {
     MatVecMul(a_ptr_, b, c, bias, fc_param_->act_type_, fc_param_->deep_, cur_oc);
   } else {

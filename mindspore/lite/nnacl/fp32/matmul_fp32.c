@@ -28,9 +28,21 @@ void RowMajor2Row4Major(const float *src_ptr, float *dst_ptr, int row, int col) 
   for (int r = 0; r < row; r++) {
     const float *src = src_ptr + r * col;
     for (int c = 0; c < col; c++) {
-      int cd8 = c / 4;
-      int cm8 = c % 4;
-      dst_ptr[cd8 * 4 * row + r * 4 + cm8] = src[c];
+      int cd4 = c / C4NUM;
+      int cm4 = c % C4NUM;
+      dst_ptr[cd4 * C4NUM * row + r * C4NUM + cm4] = src[c];
+    }
+  }
+  return;
+}
+
+void RowMajor2Row6Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  for (int r = 0; r < row; r++) {
+    const float *src = src_ptr + r * col;
+    for (int c = 0; c < col; c++) {
+      int cd6 = c / C6NUM;
+      int cm6 = c % C6NUM;
+      dst_ptr[cd6 * C6NUM * row + r * C6NUM + cm6] = src[c];
     }
   }
   return;
@@ -40,9 +52,9 @@ void RowMajor2Row8Major(const float *src_ptr, float *dst_ptr, int row, int col) 
   for (int r = 0; r < row; r++) {
     const float *src = src_ptr + r * col;
     for (int c = 0; c < col; c++) {
-      int cd8 = c / 8;
-      int cm8 = c % 8;
-      dst_ptr[cd8 * 8 * row + r * 8 + cm8] = src[c];
+      int cd8 = c / C8NUM;
+      int cm8 = c % C8NUM;
+      dst_ptr[cd8 * C8NUM * row + r * C8NUM + cm8] = src[c];
     }
   }
   return;
@@ -52,9 +64,21 @@ void RowMajor2Row12Major(const float *src_ptr, float *dst_ptr, int row, int col)
   for (int r = 0; r < row; r++) {
     const float *src = src_ptr + r * col;
     for (int c = 0; c < col; c++) {
-      int cd8 = c / C12NUM;
-      int cm8 = c % C12NUM;
-      dst_ptr[cd8 * C12NUM * row + r * C12NUM + cm8] = src[c];
+      int cd12 = c / C12NUM;
+      int cm12 = c % C12NUM;
+      dst_ptr[cd12 * C12NUM * row + r * C12NUM + cm12] = src[c];
+    }
+  }
+  return;
+}
+
+void RowMajor2Row16Major(const float *src_ptr, float *dst_ptr, int row, int col) {
+  for (int r = 0; r < row; r++) {
+    const float *src = src_ptr + r * col;
+    for (int c = 0; c < col; c++) {
+      int cd16 = c / C16NUM;
+      int cm16 = c % C16NUM;
+      dst_ptr[cd16 * C16NUM * row + r * C16NUM + cm16] = src[c];
     }
   }
   return;
@@ -190,7 +214,7 @@ void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, size_t row, size_
         :
         : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ stride ] "r"(stride)
         : "r10", "r12", "q0", "q1", "q2", "q3", "q8", "q9", "q10", "q11", "q12", "q13", "q14", "q15");
-#elif ENABLE_X86_64_SSE
+#elif ENABLE_SSE
       __m128 src1 = _mm_loadu_ps(src_c);
       __m128 src2 = _mm_loadu_ps(src_c + col);
       __m128 src3 = _mm_loadu_ps(src_c + 2 * col);
@@ -421,7 +445,7 @@ void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, size_t row, size_t
         :
         : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ stride ] "r"(stride)
         : "r10", "r11", "q0", "q1", "q2", "q3", "q4", "q5", "q6", "q7");
-#elif ENABLE_X86_64_SSE
+#elif ENABLE_SSE
       /* 8x4 row-major to col-major */
       __m128 src1 = _mm_loadu_ps(src_c);
       __m128 src2 = _mm_loadu_ps(src_c + col);
@@ -478,6 +502,145 @@ void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, size_t row, size_t
   return;
 }
 
+void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col) {
+  size_t row16 = row / C16NUM * C16NUM;
+  size_t col_skip = col / C4NUM * C4NUM;
+  int skip_size = C4NUM;
+  const float *src_r = src_ptr;
+  float *dst_r = dst_ptr;
+
+  size_t ri = 0;
+  for (; ri < row16; ri += C16NUM) {
+    size_t ci = 0;
+    for (; ci < col_skip; ci += skip_size) {
+      const float *src_c = src_r + ci;
+      float *dst_c = dst_r + ci * C16NUM;
+      for (int tr = 0; tr < C16NUM; tr++) {
+        for (int tc = 0; tc < C4NUM; tc++) {
+          dst_c[tc * C16NUM + tr] = src_c[tr * col + tc];
+        }
+      }
+    }
+    for (; ci < col; ci++) {
+      const float *src_c = src_r + ci;
+      float *dst_c = dst_r + ci * C16NUM;
+      for (size_t i = 0; i < C16NUM; i++) {
+        dst_c[i] = src_c[i * col];
+      }
+    }
+    src_r += C16NUM * col;
+    dst_r += C16NUM * col;
+  }
+  for (; ri < row; ri++) {
+    for (size_t i = 0; i < col; i++) {
+      dst_r[i * C16NUM] = src_r[i];
+    }
+    src_r += col;
+    dst_r += 1;
+  }
+  return;
+}
+
+void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col) {
+  size_t totalRow = UP_ROUND(row, C6NUM);
+  size_t row6 = row / C6NUM * C6NUM;
+  size_t col8 = col / C8NUM * C8NUM;
+  const float *src_r = src_ptr;
+  float *dst_r = dst_ptr;
+
+  size_t ri = 0;
+  for (; ri < row6; ri += C6NUM) {
+    size_t ci = 0;
+    for (; ci < col8; ci += C8NUM) {
+      const float *src_c = src_r + ci;
+      float *dst_c = dst_r + ci * C6NUM;
+
+      /* 6x8 row-major to col-major */
+#ifdef ENABLE_AVX
+      __m256 src0 = _mm256_loadu_ps(src_c);
+      __m256 src1 = _mm256_loadu_ps(src_c + col);
+      __m256 src2 = _mm256_loadu_ps(src_c + 2 * col);
+      __m256 src3 = _mm256_loadu_ps(src_c + 3 * col);
+      __m256 src4 = _mm256_loadu_ps(src_c + 4 * col);
+      __m256 src5 = _mm256_loadu_ps(src_c + 5 * col);
+      __m256 trans0 = _mm256_unpacklo_ps(src0, src1);
+      __m256 trans1 = _mm256_unpacklo_ps(src2, src3);
+      __m256 trans2 = _mm256_unpacklo_ps(src4, src5);
+      __m256 trans3 = _mm256_unpackhi_ps(src0, src1);
+      __m256 trans4 = _mm256_unpackhi_ps(src2, src3);
+      __m256 trans5 = _mm256_unpackhi_ps(src4, src5);
+      __m128 lo0 = _mm256_castps256_ps128(trans0);
+      __m128 lo1 = _mm256_castps256_ps128(trans1);
+      __m128 lo2 = _mm256_castps256_ps128(trans2);
+      __m128 lo3 = _mm256_castps256_ps128(trans3);
+      __m128 lo4 = _mm256_castps256_ps128(trans4);
+      __m128 lo5 = _mm256_castps256_ps128(trans5);
+      __m128 hi0 = _mm256_extractf128_ps(trans0, 1);
+      __m128 hi1 = _mm256_extractf128_ps(trans1, 1);
+      __m128 hi2 = _mm256_extractf128_ps(trans2, 1);
+      __m128 hi3 = _mm256_extractf128_ps(trans3, 1);
+      __m128 hi4 = _mm256_extractf128_ps(trans4, 1);
+      __m128 hi5 = _mm256_extractf128_ps(trans5, 1);
+      __m128 res0 = _mm_shuffle_ps(lo0, lo1, _MM_SHUFFLE(1, 0, 1, 0));
+      __m128 res1 = _mm_shuffle_ps(lo2, lo0, _MM_SHUFFLE(3, 2, 1, 0));
+      __m128 res2 = _mm_shuffle_ps(lo1, lo2, _MM_SHUFFLE(3, 2, 3, 2));
+      __m128 res3 = _mm_shuffle_ps(lo3, lo4, _MM_SHUFFLE(1, 0, 1, 0));
+      __m128 res4 = _mm_shuffle_ps(lo5, lo3, _MM_SHUFFLE(3, 2, 1, 0));
+      __m128 res5 = _mm_shuffle_ps(lo4, lo5, _MM_SHUFFLE(3, 2, 3, 2));
+      __m128 res6 = _mm_shuffle_ps(hi0, hi1, _MM_SHUFFLE(1, 0, 1, 0));
+      __m128 res7 = _mm_shuffle_ps(hi2, hi0, _MM_SHUFFLE(3, 2, 1, 0));
+      __m128 res8 = _mm_shuffle_ps(hi1, hi2, _MM_SHUFFLE(3, 2, 3, 2));
+      __m128 res9 = _mm_shuffle_ps(hi3, hi4, _MM_SHUFFLE(1, 0, 1, 0));
+      __m128 res10 = _mm_shuffle_ps(hi5, hi3, _MM_SHUFFLE(3, 2, 1, 0));
+      __m128 res11 = _mm_shuffle_ps(hi4, hi5, _MM_SHUFFLE(3, 2, 3, 2));
+      _mm_storeu_ps(dst_c, res0);
+      _mm_storeu_ps(dst_c + 4, res1);
+      _mm_storeu_ps(dst_c + 8, res2);
+      _mm_storeu_ps(dst_c + 12, res3);
+      _mm_storeu_ps(dst_c + 16, res4);
+      _mm_storeu_ps(dst_c + 20, res5);
+      _mm_storeu_ps(dst_c + 24, res6);
+      _mm_storeu_ps(dst_c + 28, res7);
+      _mm_storeu_ps(dst_c + 32, res8);
+      _mm_storeu_ps(dst_c + 36, res9);
+      _mm_storeu_ps(dst_c + 40, res10);
+      _mm_storeu_ps(dst_c + 44, res11);
+#else
+      for (int tr = 0; tr < C6NUM; tr++) {
+        for (int tc = 0; tc < C8NUM; tc++) {
+          dst_c[tc * C6NUM + tr] = src_c[tr * col + tc];
+        }
+      }
+#endif
+    }
+    for (; ci < col; ci++) {
+      const float *src_c = src_r + ci;
+      float *dst_c = dst_r + ci * C6NUM;
+      for (size_t i = 0; i < C6NUM; i++) {
+        dst_c[i] = src_c[i * col];
+      }
+    }
+    src_r += C6NUM * col;
+    dst_r += C6NUM * col;
+  }
+
+  for (; ri < row; ri++) {
+    for (size_t i = 0; i < col; i++) {
+      dst_r[i * C6NUM] = src_r[i];
+    }
+    src_r += col;
+    dst_r += 1;
+  }
+
+  for (; ri < totalRow; ri++) {
+    for (size_t i = 0; i < col; i++) {
+      dst_r[i * C6NUM] = 0;
+    }
+    dst_r += 1;
+  }
+  return;
+}
+
 void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col) {
   size_t row8 = row / C4NUM * C4NUM;
   size_t col4 = col / C4NUM * C4NUM;
@@ -519,7 +682,7 @@ void RowMajor2Col4Major(const float *src_ptr, float *dst_ptr, size_t row, size_t
         :
         : [ dst_c ] "r"(dst_c), [ src_c ] "r"(src_c), [ stride ] "r"(stride)
         : "r10", "r12", "q0", "q1", "q2", "q3");
-#elif ENABLE_X86_64_SSE
+#elif ENABLE_SSE
       __m128 src1 = _mm_loadu_ps(src_c);
       __m128 src2 = _mm_loadu_ps(src_c + col);
       __m128 src3 = _mm_loadu_ps(src_c + 2 * col);
@@ -630,6 +793,34 @@ void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, A
   return;
 }
 
+#ifdef ENABLE_AVX
+#ifdef WIN32
+void MatMul6x16(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
+                int col, int stride, int out_type) {
+  if (out_type == OutType_Nhwc) {
+    for (int r = 0; r < row; r++) {
+      for (int c = 0; c < col; c++) {
+        int r6div = r / C6NUM, r6mod = r % C6NUM;
+        int c16div = c / C16NUM, c16mod = c % C16NUM;
+        size_t ci = r * stride + c;
+        float value = 0;
+        for (int d = 0; d < deep; d++) {
+          size_t ai = r6div * deep * C6NUM + d * C6NUM + r6mod;
+          size_t bi = c16div * deep * C16NUM + d * C16NUM + c16mod;
+          value = value + a[ai] * b[bi];
+        }
+        if (bias != NULL) value += bias[c];
+        if (act_type == ActType_Relu6) value = MSMIN(6.0f, value);
+        if (act_type != ActType_No) value = MSMAX(0.0f, value);
+        dst[ci] = value;
+      }
+    }
+  }
+  return;
+}
+#endif
+#endif
+
 void MatMul4x8(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
                int col, int stride, int out_type) {
   if (out_type == OutType_C8) {
@@ -670,7 +861,19 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
   } else {
     MatmulFloatNeon32Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
   }
-#elif ENABLE_X86_64_SSE
+#elif ENABLE_AVX
+  if (out_type == OutType_Nhwc) {
+#ifdef WIN32
+    MatMul6x16(a, b, c, bias, act_type, deep, row, col, stride, out_type);
+#else
+    MatmulFloatAvxOpt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
+#endif
+  } else if (out_type == OutType_C8) {
+    MatmulFloatSse64(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
+  } else {
+    MatmulFloatSse64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
+  }
+#elif ENABLE_SSE
   if (out_type == OutType_C8) {
     MatmulFloatSse64(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
   } else {

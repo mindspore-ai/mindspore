@@ -75,9 +75,12 @@ int MatmulCPUKernel::MallocMatrixABuffer() {
 #endif
   params_->deep_ = params_->a_transpose_ ? a_shape[a_shape.size() - 2] : a_shape[a_shape.size() - 1];
   params_->row_4_ = UP_ROUND(params_->row_, C4NUM);
+  params_->row_6_ = UP_ROUND(params_->row_, C6NUM);
   params_->row_12_ = UP_ROUND(params_->row_, C12NUM);
 
-#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
+#ifdef ENABLE_AVX
+  int row_tmp = is_vector_a_ ? 1 : params_->row_6_;
+#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
   int row_tmp = is_vector_a_ ? 1 : params_->row_4_;
 #else
   int row_tmp = is_vector_a_ ? 1 : params_->row_12_;
@@ -106,9 +109,14 @@ int MatmulCPUKernel::MallocMatrixBBuffer() {
   for (size_t i = 0; i < b_shape.size() - 2; ++i) {
     batch *= b_shape[i];
   }
+#ifdef ENABLE_AVX
+  int col_tile = C16NUM;
+#else
+  int col_tile = C8NUM;
+#endif
   params_->batch = batch;
   params_->col_ = params_->b_transpose_ ? b_shape[b_shape.size() - 2] : b_shape[b_shape.size() - 1];
-  params_->col_8_ = UP_ROUND(params_->col_, 8);
+  params_->col_8_ = UP_ROUND(params_->col_, col_tile);
   params_->deep_ = params_->b_transpose_ ? b_shape[b_shape.size() - 1] : b_shape[b_shape.size() - 2];
 
   int col_tmp = is_vector_a_ ? params_->col_ : params_->col_8_;
@@ -123,8 +131,8 @@ int MatmulCPUKernel::MallocMatrixBBuffer() {
     return RET_MEMORY_FAILED;
   }
 
-  thread_count_ = MSMIN(thread_count_, UP_DIV(params_->col_8_, 8));
-  thread_stride_ = UP_DIV(UP_DIV(params_->col_8_, 8), thread_count_);
+  thread_count_ = MSMIN(thread_count_, UP_DIV(params_->col_8_, col_tile));
+  thread_stride_ = UP_DIV(UP_DIV(params_->col_8_, col_tile), thread_count_);
   return RET_OK;
 }
 
@@ -134,7 +142,12 @@ int MatmulCPUKernel::InitBias() {
   params_->col_ = params_->b_const_
                     ? (params_->b_transpose_ ? b_shape.at(b_shape.size() - 2) : b_shape.at(b_shape.size() - 1))
                     : (c_shape.at(c_shape.size() - 1));
-  params_->col_8_ = UP_ROUND(params_->col_, 8);
+#ifdef ENABLE_AVX
+  int col_tile = C16NUM;
+#else
+  int col_tile = C8NUM;
+#endif
+  params_->col_8_ = UP_ROUND(params_->col_, col_tile);
   auto col_tmp = is_vector_a_ ? params_->col_ : params_->col_8_;
   if (bias_ptr_ == nullptr) {
     bias_ptr_ = reinterpret_cast<float *>(malloc(col_tmp * sizeof(float)));
@@ -171,7 +184,14 @@ void MatmulCPUKernel::InitMatrixA(const float *src_ptr, float *dst_ptr) {
 
   for (int i = 0; i < params_->batch; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->row_;
-#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
+#ifdef ENABLE_AVX
+    float *dst = dst_ptr + i * params_->deep_ * params_->row_6_;
+    if (params_->a_transpose_) {
+      RowMajor2Row6Major(src, dst, params_->deep_, params_->row_);
+    } else {
+      RowMajor2Col6Major(src, dst, params_->row_, params_->deep_);
+    }
+#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
     float *dst = dst_ptr + i * params_->deep_ * params_->row_4_;
     if (params_->a_transpose_) {
       RowMajor2Row4Major(src, dst, params_->deep_, params_->row_);
@@ -207,11 +227,19 @@ void MatmulCPUKernel::InitMatrixB(const float *src_ptr, float *dst_ptr) {
   for (int i = 0; i < params_->batch; i++) {
     const float *src = src_ptr + i * params_->deep_ * params_->col_;
     float *dst = dst_ptr + i * params_->deep_ * params_->col_8_;
+#ifdef ENABLE_AVX
+    if (params_->b_transpose_) {
+      RowMajor2Col16Major(src, dst, params_->col_, params_->deep_);
+    } else {
+      RowMajor2Row16Major(src, dst, params_->deep_, params_->col_);
+    }
+#else
     if (params_->b_transpose_) {
       RowMajor2Col8Major(src, dst, params_->col_, params_->deep_);
     } else {
       RowMajor2Row8Major(src, dst, params_->deep_, params_->col_);
     }
+#endif
   }
   return;
 }
@@ -247,13 +275,18 @@ int MatmulCPUKernel::Init() {
 }
 
 int MatmulCPUKernel::RunImpl(int task_id) {
-  int cur_oc = MSMIN(thread_stride_ * C8NUM, params_->col_ - task_id * thread_stride_ * C8NUM);
+#ifdef ENABLE_AVX
+  int col_tile = C16NUM;
+#else
+  int col_tile = C8NUM;
+#endif
+  int cur_oc = MSMIN(thread_stride_ * col_tile, params_->col_ - task_id * thread_stride_ * col_tile);
   if (cur_oc <= 0) {
     return RET_OK;
   }
-  auto b = cur_b_ptr_ + task_id * thread_stride_ * C8NUM * params_->deep_;
-  auto c = cur_c_ptr_ + task_id * thread_stride_ * C8NUM;
-  auto bias = bias_ptr_ ? bias_ptr_ + task_id * thread_stride_ * C8NUM : NULL;
+  auto b = cur_b_ptr_ + task_id * thread_stride_ * col_tile * params_->deep_;
+  auto c = cur_c_ptr_ + task_id * thread_stride_ * col_tile;
+  auto bias = bias_ptr_ ? bias_ptr_ + task_id * thread_stride_ * col_tile : NULL;
   MS_ASSERT(cur_a_ptr_);
   MS_ASSERT(b);
   MS_ASSERT(c);
@@ -323,7 +356,9 @@ int MatmulCPUKernel::Run() {
       cur_b_ptr_ = b_ptr_ + i * params_->deep_ * params_->col_;
       cur_c_ptr_ = c_src + i * params_->row_ * params_->col_;
     } else {
-#if defined(ENABLE_ARM32) || defined(ENABLE_X86_64_SSE)
+#ifdef ENABLE_AVX
+      cur_a_ptr_ = a_ptr_ + i * params_->row_6_ * params_->deep_;
+#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
       cur_a_ptr_ = a_ptr_ + i * params_->row_4_ * params_->deep_;
 #else
       cur_a_ptr_ = a_ptr_ + i * params_->row_12_ * params_->deep_;

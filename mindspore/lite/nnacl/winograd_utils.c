@@ -79,7 +79,7 @@ void GeneralInputTransformUnit(const float *src_data, float *dst_data, const flo
                                int src_step, int dst_step, int in_unit) {
   int len = in_unit * in_unit;
   if (len > MAX_LEN) return;
-#if defined(ENABLE_ARM) || defined(ENABLE_X86_64_SSE)
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   MS_FLOAT32X4 src[MAX_LEN];
   MS_FLOAT32X4 t[MAX_LEN];
   MS_FLOAT32X4 m[MAX_LEN];

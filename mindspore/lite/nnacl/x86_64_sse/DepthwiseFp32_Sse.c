@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifdef ENABLE_X86_64_SSE
-#include <nmmintrin.h>
+#ifdef ENABLE_SSE
+#include <x86intrin.h>
 #include "nnacl/fp32/conv_depthwise_fp32.h"
 
 void ConvDwFp32Border(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
