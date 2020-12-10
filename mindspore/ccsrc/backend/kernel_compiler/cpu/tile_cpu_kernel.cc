@@ -27,7 +27,10 @@ void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   std::vector<int64_t> multiples_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, "multiples");
   (void)std::transform(multiples_me.begin(), multiples_me.end(), std::back_inserter(multiples_),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  dtype_ = AnfAlgo ::GetPrevNodeOutputDeviceDataType(kernel_node, 0);
+  if (dtype_ == kTypeUnknown) {
+    dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  }
 }
 
 bool TileCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
