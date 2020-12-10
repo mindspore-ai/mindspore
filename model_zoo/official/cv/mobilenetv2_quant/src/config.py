@@ -38,6 +38,8 @@ config_ascend_quant = ed({
 
 config_gpu_quant = ed({
     "num_classes": 1000,
+    "image_height": 224,
+    "image_width": 224,
     "batch_size": 300,
     "epoch_size": 60,
     "start_epoch": 200,
@@ -52,3 +54,14 @@ config_gpu_quant = ed({
     "keep_checkpoint_max": 300,
     "save_checkpoint_path": "./checkpoint",
 })
+
+def config_quant(device_target):
+    if device_target not in ["Ascend", "GPU"]:
+        raise ValueError("Unsupported device target: {}.".format(device_target))
+    configs = ed({
+        "Ascend": config_ascend_quant,
+        "GPU": config_gpu_quant
+    })
+    config = configs.Ascend if device_target == "Ascend" else configs.GPU
+    config["device_target"] = device_target
+    return config
