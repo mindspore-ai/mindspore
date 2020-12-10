@@ -34,7 +34,7 @@ from ..cell import Cell
 from .activation import get_activation
 
 __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad', 'Unfold',
-           'Tril', 'Triu', 'Interpolate', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer']
+           'Tril', 'Triu', 'ResizeBilinear', 'MatrixDiag', 'MatrixDiagPart', 'MatrixSetDiag', 'L1Regularizer']
 
 
 class L1Regularizer(Cell):
@@ -621,7 +621,7 @@ class Pad(Cell):
 
 
 @constexpr
-def interpolate(shape, size, scale, align_corners):
+def bilinear(shape, size, scale, align_corners):
     """Check input and calculate shape"""
     if not isinstance(align_corners, bool):
         raise TypeError("align_corners should be type boolean")
@@ -632,19 +632,18 @@ def interpolate(shape, size, scale, align_corners):
     if size is not None:
         if not isinstance(size, (tuple, list)):
             raise ValueError("size must be tuple or list")
-        Validator.check_int(len(size), 2, Rel.EQ, "size", "interpolate")
-        Validator.check_int(size[0], 1, Rel.GE, "size[0]", "interpolate")
-        Validator.check_int(size[1], 1, Rel.GE, "size[1]", "interpolate")
+        Validator.check_int(len(size), 2, Rel.EQ, "size", "bilinear")
+        Validator.check_int(size[0], 1, Rel.GE, "size[0]", "bilinear")
+        Validator.check_int(size[1], 1, Rel.GE, "size[1]", "bilinear")
         return size
-    Validator.check_int(scale, 1, Rel.GE, "scale factor", "interpolate")
+    Validator.check_int(scale, 1, Rel.GE, "scale factor", "bilinear")
     ret = (scale * shape[2], scale * shape[3])
     return ret
 
 
-class Interpolate(Cell):
+class ResizeBilinear(Cell):
     r"""
-    Samples the input tensor to the given size or scale_factor. Now, only support
-    bilinear interpolation.
+    Samples the input tensor to the given size or scale_factor by using bilinear interpolate.
 
     Inputs:
         - **x** (Tensor) - Tensor to be resized. Input tensor must be a 4-D tensor with shape:
@@ -668,17 +667,17 @@ class Interpolate(Cell):
 
     Examples:
         >>> tensor = Tensor([[[[1, 2, 3, 4], [5, 6, 7, 8]]]], mindspore.float32)
-        >>> interpolate = nn.Interpolate()
-        >>> result = interpolate(tensor, size=(5,5))
+        >>> resize_bilinear = nn.ResizeBilinear()
+        >>> result = resize_bilinear(tensor, size=(5,5))
         >>> print(result.shape)
         (1, 1, 5, 5)
     """
 
     def __init__(self):
-        super(Interpolate, self).__init__()
+        super(ResizeBilinear, self).__init__()
 
     def construct(self, x, size=None, scale_factor=None, align_corners=False):
-        shape = interpolate(x.shape, size, scale_factor, align_corners)
+        shape = bilinear(x.shape, size, scale_factor, align_corners)
         resize_bilinear = P.ResizeBilinear(shape, align_corners)
         return resize_bilinear(x)
 
