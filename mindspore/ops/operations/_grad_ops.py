@@ -1085,6 +1085,33 @@ class LayerNormGrad(Primitive):
         raise NotImplementedError
 
 
+class LayerNormGradGrad(PrimitiveWithInfer):
+    """
+    Gets the gradient of LayerNormGrad operation.
+
+    Args:
+        begin_norm_axis (int): The begin axis for the input to apply layernorm. Default: 1.
+        begin_params_axis (int): The begin axis for the parameter input to apply layernorm. Default: 1.
+
+    Returns:
+        tuple[int], tuple of 3 values (the gradients of layernormgrad input, dy, gamma).
+    """
+
+    @prim_attr_register
+    def __init__(self, begin_norm_axis=1, begin_params_axis=1):
+        """init"""
+        self.begin_norm_axis = validator.check_value_type('begin_norm_axis', begin_norm_axis, [int], self.name)
+        self.begin_params_axis = validator.check_value_type('begin_params_axis', begin_params_axis, [int], self.name)
+
+    def __call__(self, x, dy, variance, mean, gamma, grad_dx, grad_dg, grad_db):
+        raise NotImplementedError
+    def infer_shape(self, x, dy, variance, mean, gamma, grad_dx, grad_dg, grad_db):
+        return x, dy, gamma
+
+    def infer_dtype(self, x, dy, variance, mean, gamma, grad_dx, grad_dg, grad_db):
+        return x, dy, gamma
+
+
 class LogSoftmaxGrad(PrimitiveWithInfer):
     """Computes gradient for the Log Softmax activation."""
 
