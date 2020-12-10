@@ -23,6 +23,7 @@
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/kernel_constants.h"
+#include "backend/kernel_compiler/gpu/cuda_impl/relu_grad_impl.cuh"
 
 namespace mindspore {
 namespace kernel {
@@ -36,7 +37,7 @@ class ActivationGradGpuKernel : public GpuKernel {
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
-              const std::vector<AddressPtr> &outputs, void *) override {
+              const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     if (is_null_input_) {
       return true;
     }
@@ -51,13 +52,18 @@ class ActivationGradGpuKernel : public GpuKernel {
     }
     T *dx = GetDeviceAddress<T>(outputs, 0);
 
-    const float alpha = 1;
-    const float beta = 0;
-    CHECK_CUDNN_RET_WITH_EXCEPT(
-      kernel_node_,
-      cudnnActivationBackward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, y, data_descriptor_, dy,
-                              data_descriptor_, y, &beta, data_descriptor_, dx),
-      "cudnnActivationBackward failed");
+    if (mode_ == CUDNN_ACTIVATION_RELU) {
+      const int size = input_size_ / sizeof(T);
+      CalReLUGrad(size, dy, y, dx, reinterpret_cast<cudaStream_t>(stream_ptr));
+    } else {
+      const float alpha = 1;
+      const float beta = 0;
+      CHECK_CUDNN_RET_WITH_EXCEPT(
+        kernel_node_,
+        cudnnActivationBackward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, y, data_descriptor_, dy,
+                                data_descriptor_, y, &beta, data_descriptor_, dx),
+        "cudnnActivationBackward failed");
+    }
 
     return true;
   }
