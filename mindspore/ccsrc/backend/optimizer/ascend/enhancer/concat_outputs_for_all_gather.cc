@@ -69,7 +69,7 @@ const AnfNodePtr ConcatOutputsForAllGather::Process(const FuncGraphPtr &func_gra
   if (fusion <= 0) {
     return nullptr;
   }
-  if (AnfAlgo::HasNodeAttr("fused", cnode)) {
+  if (AnfAlgo::HasNodeAttr("fused", cnode) || AnfAlgo::GetInputTensorNum(node) == 1) {
     return nullptr;
   }
   AnfAlgo::SetNodeAttr("fused", MakeValue(true), node);
