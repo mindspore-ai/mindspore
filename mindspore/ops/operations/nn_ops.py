@@ -3017,14 +3017,23 @@ class GetNext(PrimitiveWithInfer):
 
     Outputs:
         tuple[Tensor], the output of Dataset. The shape is described in `shapes`
-        and the type is described is `types`.
+        and the type is described in `types`.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> get_next = ops.GetNext([mindspore.float32, mindspore.int32], [[32, 1, 28, 28], [10]], 2, 'shared_name')
-        >>> feature, label = get_next()
+        >>> train_dataset = create_custom_dataset()
+        >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
+        >>> dataset = dataset_helper.iter.dataset
+        >>> dataset_types, dataset_shapes = dataset_helper.types_shapes()
+        >>> queue_name = dataset.__transfer_dataset__.queue_name
+        >>> get_next = P.GetNext(dataset_types, dataset_shapes, len(dataset_types), queue_name)
+        >>> data, label = get_next()
+        >>> relu = P.ReLU()
+        >>> result = relu(data).asnumpy()
+        >>> print(result.shape)
+        >>> (32, 1, 32, 32)
     """
 
     @prim_attr_register
