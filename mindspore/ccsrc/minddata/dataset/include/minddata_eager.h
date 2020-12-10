@@ -45,7 +45,7 @@ class MindDataEager {
   /// \brief Function to read images from local directory
   /// \param[inout] image_dir Target directory which contains images
   /// \param[output] images Vector of image Tensor
-  /// \return Return error status if encounters exception
+  /// \return Status The status code returned
   static Status LoadImageFromDir(const std::string &image_dir, std::vector<std::shared_ptr<Tensor>> *images);
 
   /// \brief Callable function to execute the TensorOperation in eager mode

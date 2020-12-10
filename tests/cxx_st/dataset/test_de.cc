@@ -29,9 +29,9 @@ class TestDE : public ST::Common {
   TestDE() {}
 };
 
-TEST_F(TestDE, Test1) {
+TEST_F(TestDE, ResNetPreprocess) {
   std::vector<std::shared_ptr<Tensor>> images;
-  MindDataEager::LoadImageFromDir("/home/eager/apple", &images);
+  MindDataEager::LoadImageFromDir("/home/workspace/mindspore_dataset/imagenet/imagenet_original/val/n01440764", &images);
 
   MindDataEager Compose({Decode(),
                          Resize({224, 224}),
