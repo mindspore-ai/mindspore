@@ -104,11 +104,13 @@ class LSTM(Cell):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> net = nn.LSTM(10, 12, 2, has_bias=True, batch_first=True, bidirectional=False)
+        >>> net = nn.LSTM(10, 16, 2, has_bias=True, batch_first=True, bidirectional=False)
         >>> input = Tensor(np.ones([3, 5, 10]).astype(np.float32))
-        >>> h0 = Tensor(np.ones([1 * 2, 3, 12]).astype(np.float32))
-        >>> c0 = Tensor(np.ones([1 * 2, 3, 12]).astype(np.float32))
+        >>> h0 = Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
+        >>> c0 = Tensor(np.ones([1 * 2, 3, 16]).astype(np.float32))
         >>> output, (hn, cn) = net(input, (h0, c0))
+        >>> print(output.shape)
+        (3, 5, 16)
     """
 
     def __init__(self,

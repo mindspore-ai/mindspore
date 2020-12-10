@@ -120,6 +120,9 @@ def clip_by_global_norm(x, clip_norm=1.0, use_norm=None):
     Returns:
           tuple[Tensor], a clipped Tensor.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> x1 = np.array([[2., 3.],[1., 2.]]).astype(np.float32)
         >>> x2 = np.array([[1., 4.],[3., 1.]]).astype(np.float32)
