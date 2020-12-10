@@ -126,6 +126,10 @@ int TensorListFromTensor::InferShape(std::vector<lite::Tensor *> inputs_, std::v
   }
   auto input1 = inputs_[1];
   MS_ASSERT(input1 != nullptr);
+  if (input1->data_c() == nullptr) {
+    MS_LOG(ERROR) << "input1->data_c() is nullptr";
+    return RET_NULL_PTR;
+  }
   auto ele_shape_ptr = reinterpret_cast<int *>(input1->data_c());
   auto output = reinterpret_cast<TensorList *>(outputs_[0]);
   MS_ASSERT(output != nullptr);
