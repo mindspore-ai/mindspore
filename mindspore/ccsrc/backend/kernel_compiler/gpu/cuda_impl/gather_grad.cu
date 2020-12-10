@@ -30,8 +30,12 @@ __global__ void GatherGradKernel(const size_t num, const T *index, const S *grad
     i = id / (dim_at_axis_index * dim_after_axis);
     k = id % dim_after_axis;
 
-    CUDA_KERNEL_ASSERT(index[id] >= 0);
-    size_t j_read = static_cast<size_t>(index[id]);
+    T j = index[id];
+    if (j < 0) {
+        j += static_cast<T>(dim_at_axis_output);
+    }
+    CUDA_KERNEL_ASSERT(j >= 0);
+    size_t j_read = static_cast<size_t>(j);
     CUDA_KERNEL_ASSERT(j_read < dim_at_axis_output);
     size_t read_id = i * dim_at_axis_output * dim_after_axis + j_read * dim_after_axis + k;
     MsAtomicAdd(output + read_id, grad[id]);
