@@ -272,6 +272,38 @@ def test_scatter_add_disordered_dynamic_int32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_scatter_add_disordered_dynamic_int8():
+    inputx = Tensor(np.flip(np.arange(34, 46).reshape(3, 4).astype(np.int8)))
+    indices = Tensor(np.array([[[0, 1, 2],
+                                [2, 1, 0]],
+                               [[0, 0, 0],
+                                [2, 2, 2]]]).astype(np.int32))
+    updates = Tensor(np.arange(63, 111).reshape((2, 2, 3, 4)).astype(np.int8))
+    output = scatter_add_d_net(inputx, indices, updates)
+    expected = np.array([[464., 468., 472., 476.],
+                         [187., 188., 189., 190.],
+                         [492., 496., 500., 504.]]).astype(np.int8)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_scatter_add_disordered_dynamic_uint8():
+    inputx = Tensor(np.flip(np.arange(34, 46).reshape(3, 4).astype(np.uint8)))
+    indices = Tensor(np.array([[[0, 1, 2],
+                                [2, 1, 0]],
+                               [[0, 0, 0],
+                                [2, 2, 2]]]).astype(np.int32))
+    updates = Tensor(np.arange(63, 111).reshape((2, 2, 3, 4)).astype(np.uint8))
+    output = scatter_add_d_net(inputx, indices, updates)
+    expected = np.array([[464., 468., 472., 476.],
+                         [187., 188., 189., 190.],
+                         [492., 496., 500., 504.]]).astype(np.uint8)
+    np.testing.assert_array_almost_equal(output.asnumpy(), expected)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_scatter_add_input_less_than_1_dynamic_float32():
     inputx = Tensor(np.array([[0.214141, 0.415151, 0.51516],
                               [0.876542, 0.451611, 0.55112],
