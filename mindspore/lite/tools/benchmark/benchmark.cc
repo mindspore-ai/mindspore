@@ -443,6 +443,8 @@ int Benchmark::PrintInputData() {
         std::cout << static_cast<const uint8_t *>(in_data)[j] << " ";
       } else if (tensor_data_type == TypeId::kNumberTypeInt32) {
         std::cout << static_cast<const int32_t *>(in_data)[j] << " ";
+      } else if (tensor_data_type == TypeId::kNumberTypeInt64) {
+        std::cout << static_cast<const int64_t *>(in_data)[j] << " ";
       } else {
         MS_LOG(ERROR) << "Datatype: " << tensor_data_type << " is not supported.";
         return RET_ERROR;
