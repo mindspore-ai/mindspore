@@ -26,6 +26,7 @@
 #include "utils/profile.h"
 #include "utils/ms_context.h"
 #include "ir/graph_utils.h"
+#include "utils/parallel_node_check.h"
 
 // namespace to support intermediate representation definition
 namespace mindspore {
@@ -91,7 +92,7 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   new_node->set_inputs_value(old_node->inputs_value());
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_node->set_scope(scope);
-  if (IsPrimitiveCNode(old_node, nullptr) && new_node->scope() == kDefaultScope) {
+  if (IsParallelCareCNode(old_node) && new_node->scope() == kDefaultScope) {
     new_node->set_fullname_with_scope(old_node->fullname_with_scope());
   }
   new_node->set_kernel_info(old_node->kernel_info_ptr());

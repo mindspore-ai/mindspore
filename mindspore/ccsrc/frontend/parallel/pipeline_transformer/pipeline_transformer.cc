@@ -32,6 +32,7 @@
 #include "base/core_ops.h"
 #include "utils/comm_manager.h"
 #include "utils/ms_context.h"
+#include "mindspore/core/utils/parallel_node_check.h"
 
 namespace mindspore {
 namespace parallel {
@@ -99,7 +100,7 @@ bool PipelineTransformer::IsPipelineCareNode(const CNodePtr &cnode) {
   if (IsInWhiteList(cnode)) {
     return false;
   }
-  if (IsInBlackList(prim)) {
+  if (IsInParallelBlackList(prim)) {
     MS_LOG(INFO) << "PipelineSplit don't care node:" << prim->name();
     return false;
   }
