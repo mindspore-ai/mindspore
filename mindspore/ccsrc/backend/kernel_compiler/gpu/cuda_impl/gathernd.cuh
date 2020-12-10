@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_GATHERND_GPU_CU_H
-#define MINDSPORE_GATHERND_GPU_CU_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_GATHERND_GPU_CU_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_GATHERND_GPU_CU_H
 
 #include "runtime/device/gpu/cuda_common.h"
 
@@ -23,4 +23,4 @@ template <typename T, typename S>
 void GatherNd(T *input, S *indices, T *output, const size_t &output_dim0, const size_t &output_dim1,
               const size_t &indices_dim1, S *batch_indices, S *batch_strides, cudaStream_t stream);
 
-#endif  // MINDSPORE_GATHERND_GPU_CU_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_GATHERND_GPU_CU_H

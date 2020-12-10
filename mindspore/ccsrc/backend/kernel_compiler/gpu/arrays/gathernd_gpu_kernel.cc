@@ -38,5 +38,25 @@ MS_REG_GPU_KERNEL_TWO(
 MS_REG_GPU_KERNEL_TWO(
   GatherNd, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
   GatherNdGpuFwdKernel, bool, int)
+MS_REG_GPU_KERNEL_TWO(
+  GatherNd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+  GatherNdGpuFwdKernel, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  GatherNd,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+  GatherNdGpuFwdKernel, half, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  GatherNd, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+  GatherNdGpuFwdKernel, int, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  GatherNd, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt16),
+  GatherNdGpuFwdKernel, short, int64_t)  // NOLINT
+MS_REG_GPU_KERNEL_TWO(
+  GatherNd, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeUInt8),
+  GatherNdGpuFwdKernel, uchar, int64_t)
+MS_REG_GPU_KERNEL_TWO(
+  GatherNd, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+  GatherNdGpuFwdKernel, bool, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

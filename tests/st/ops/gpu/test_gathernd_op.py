@@ -206,3 +206,17 @@ def test_gathernd_bool():
     output = gathernd(x, indices)
 
     assert np.array_equal(output.asnumpy(), expect)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_gathernd_indices_int64():
+    x = Tensor(np.array([[True, False], [False, False]]).astype(np.bool))
+    indices = Tensor(np.array([[0, 0], [0, 1], [1, 0], [1, 1]]).astype(np.int64))
+    expect = np.array([True, False, False, False]).astype(np.bool)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    gathernd = GatherNdNet()
+    output = gathernd(x, indices)
+
+    assert np.array_equal(output.asnumpy(), expect)
