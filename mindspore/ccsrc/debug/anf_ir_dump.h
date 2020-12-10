@@ -23,7 +23,8 @@
 
 namespace mindspore {
 constexpr char PARALLEL_STRATEGY[] = "strategy";
-void DumpIR(const std::string &filename, const FuncGraphPtr &func_graph, bool dump_full_name = false);
+void DumpIR(const std::string &filename, const FuncGraphPtr &func_graph, bool dump_full_name = false,
+            bool dump_location = false);
 void PrintInputAndOutputInferType(std::ostringstream &buffer, const AnfNodePtr &nd);
 const std::string ToShortString(const TypeId &typeId);
 }  // namespace mindspore
