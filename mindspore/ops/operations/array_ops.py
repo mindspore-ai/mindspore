@@ -1888,7 +1888,7 @@ class UnsortedSegmentSum(PrimitiveWithInfer):
             output_min_shape = list(num_segments['min_value'])
         else:
             if isinstance(num_segments_type, type(mstype.tensor)):
-                raise ValueError("In dynamic shape scene, the num_segments should contains max_value and min_value")
+                raise ValueError("Num_segments only support int type when it is not a dynamic value")
             output_max_shape = [num_segments_v]
             output_min_shape = [num_segments_v]
         if 'max_shape' in x and 'min_shape' in x:
