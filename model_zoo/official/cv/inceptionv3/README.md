@@ -13,8 +13,8 @@
         - [Evaluation](#evaluation)
 - [Model Description](#model-description)
     - [Performance](#performance)  
-        - [Training Performance](#evaluation-performance)
-        - [Inference Performance](#evaluation-performance)
+        - [Evaluation Performance](#evaluation-performance)
+        - [Inference Performance](#inference-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
@@ -50,8 +50,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend/GPU）
-- Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+- Hardware（Ascend）
+- Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -68,11 +68,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
   ├─README.md
   ├─scripts
     ├─run_standalone_train.sh                 # launch standalone training with ascend platform(1p)
-    ├─run_standalone_train_gpu.sh             # launch standalone training with gpu platform(1p)
     ├─run_distribute_train.sh                 # launch distributed training with ascend platform(8p)
-    ├─run_distribute_train_gpu.sh             # launch distributed training with gpu platform(8p)
-    ├─run_eval.sh                             # launch evaluating with ascend platform
-    └─run_eval_gpu.sh                         # launch evaluating with gpu platform
+    └─run_eval.sh                             # launch evaluating with ascend platform
   ├─src
     ├─config.py                       # parameter configuration
     ├─dataset.py                      # data preprocessing
@@ -124,7 +121,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 - Ascend:
 
 ```shell
-# distribute training example(8p)
+# distribute training(8p)
 sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
 # standalone training
 sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
@@ -134,34 +131,19 @@ sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 >
 > This is processor cores binding operation regarding the `device_num` and total processor numbers. If you are not expect to do it, remove the operations `taskset` in `scripts/run_distribute_train.sh`
 
-- GPU:
-
-```python
-# distribute training example(8p)
-sh scripts/run_distribute_train_gpu.sh DATA_DIR
-# standalone training
-sh scripts/run_standalone_train_gpu.sh DEVICE_ID DATA_DIR
-```
-
 ### Launch
 
 ```python
 # training example
   python:
-      Ascend: python train.py --dataset_path /dataset/train --platform Ascend
-      GPU: python train.py --dataset_path /dataset/train --platform GPU
+      Ascend: python train.py --dataset_path DATA_PATH --platform Ascend
 
   shell:
       Ascend:
       # distribute training example(8p)
       sh scripts/run_distribute_train.sh RANK_TABLE_FILE DATA_PATH
-      # standalone training
-      sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
-      GPU:
-      # distributed training example(8p)
-      sh scripts/run_distribute_train_gpu.sh /dataset/train
       # standalone training example
-      sh scripts/run_standalone_train_gpu.sh 0 /dataset/train
+      sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 ```
 
 ### Result
@@ -184,13 +166,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 - Ascend:
 
 ```python
-    sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
-```
-
-- GPU:
-
-```python
-    sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+    sh scripts/run_eval.sh DEVICE_ID DATA_PATH PATH_CHECKPOINT
 ```
 
 ### Launch
@@ -198,12 +174,10 @@ You can start training using python or shell scripts. The usage of shell scripts
 ```python
 # eval example
   python:
-      Ascend: python eval.py --dataset_path DATA_DIR --checkpoint PATH_CHECKPOINT --platform Ascend
-      GPU: python eval.py --dataset_path DATA_DIR --checkpoint PATH_CHECKPOINT --platform GPU
+      Ascend: python eval.py --dataset_path DATA_PATH --checkpoint PATH_CHECKPOINT --platform Ascend
 
   shell:
-      Ascend: sh scripts/run_eval.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
-      GPU: sh scripts/run_eval_gpu.sh DEVICE_ID DATA_DIR PATH_CHECKPOINT
+      Ascend: sh scripts/run_eval.sh DEVICE_ID DATA_PATH PATH_CHECKPOINT
 ```
 
 > checkpoint can be produced in training process.
@@ -220,28 +194,29 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 
 ## [Performance](#contents)
 
-### Training Performance
+### Evaluation Performance
 
-| Parameters                 | Ascend                                    |      GPU                     |
-| -------------------------- | ---------------------------------------------- | ------------------------- |
-| Model Version              | InceptionV3                                    | InceptionV3                           |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G   | NV SMI V100-16G(PCIE),cpu:2.10GHz 96cores, memory:250G           |
-| uploaded Date              | 08/21/2020                                     | 08/21/2020                |
-| MindSpore Version          | 0.6.0-beta                                     | 0.6.0-beta                |
-| Dataset                    | 1200k images                                   | 1200k images              |
-| Batch_size                 | 128                                            | 128                       |
-| Training Parameters        | src/config.py                                  | src/config.py             |
-| Optimizer                  | RMSProp                                        | RMSProp                   |
-| Loss Function              | SoftmaxCrossEntropy                            | SoftmaxCrossEntropy       |
-| Outputs                    | probability                                    | probability               |
-| Loss                       | 1.98                                           | 1.98                      |
-| Accuracy (8p)              | ACC1[78.8%] ACC5[94.2%]                        | ACC1[78.7%] ACC5[94.1%]   |
-| Total time (8p)            | 11h                                            | 72h                       |
-| Params (M)                 | 103M                                           | 103M                      |
-| Checkpoint for Fine tuning | 313M                                           | 312M                      |
-| Scripts                    | [inceptionv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) | [inceptionv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) |
+| Parameters                 | Ascend                                    |
+| -------------------------- | ---------------------------------------------- |
+| Model Version              | InceptionV3                                    |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G   |
+| uploaded Date              | 08/21/2020                                     |
+| MindSpore Version          | 0.6.0-beta                                     |
+| Dataset                    | 1200k images                                   |
+| Batch_size                 | 128                                            |
+| Training Parameters        | src/config.py                                  |
+| Optimizer                  | RMSProp                                        |
+| Loss Function              | SoftmaxCrossEntropy                            |
+| Outputs                    | probability                                    |
+| Loss                       | 1.98                                           |
+| Total time (8p)            | 11h                                            |
+| Params (M)                 | 103M                                           |
+| Checkpoint for Fine tuning | 313M                                           |
+| Model for inference        | 92M (.onnx file)                               |
+| Speed                      | 1pc:1050 img/s;8pc:8000 img/s                  |
+| Scripts                    | [inceptionv3 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3) |
 
-#### Inference Performance
+### Inference Performance
 
 | Parameters          | Ascend                 |
 | ------------------- | --------------------------- |
@@ -254,7 +229,6 @@ metric: {'Loss': 1.778, 'Top1-Acc':0.788, 'Top5-Acc':0.942}
 | Outputs             | probability                 |
 | Accuracy            | ACC1[78.8%] ACC5[94.2%]     |
 | Total time          | 2mins                       |
-| Model for inference | 92M (.onnx file)            |
 
 # [Description of Random Situation](#contents)
 
