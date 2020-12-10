@@ -305,6 +305,9 @@ Status BatchOp::MapColumns(std::pair<std::unique_ptr<TensorQTable>, CBatchInfo> 
   for (size_t i = 0; i < out_cols.size(); i++) {
     size_t col_id = column_name_id_map_[out_col_names_[i]];
     size_t row_id = 0;
+    CHECK_FAIL_RETURN_UNEXPECTED(num_rows == out_cols[i].size(),
+                                 "column: " + out_col_names_[i] + " expects: " + std::to_string(num_rows) +
+                                   " rows returned from per_batch_map, gets: " + std::to_string(out_cols[i].size()));
     for (auto &t_row : *out_q_table) {
       t_row[col_id] = out_cols[i][row_id++];
     }
@@ -334,7 +337,7 @@ Status BatchOp::InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info) {
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
+      return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized.");
     }
     try {
       py::object size = batch_size_func_(info);
@@ -350,7 +353,7 @@ Status BatchOp::InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info) {
                     "Invalid parameter, batch size function should return an integer greater than 0.");
     }
   }
-  return Status(StatusCode::kOK, "Batch size func call succeed");
+  return Status(StatusCode::kOK, "Batch size func call succeed.");
 }
 
 Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info) {
@@ -358,7 +361,7 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
+      return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized.");
     }
     try {
       // Prepare batch map call back parameters
@@ -377,11 +380,24 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
       py::object ret_py_obj = batch_map_func_(*input_args);
       // Parse batch map return value
       py::tuple ret_tuple = py::cast<py::tuple>(ret_py_obj);
-      CHECK_FAIL_RETURN_UNEXPECTED(py::isinstance<py::tuple>(ret_tuple), "Batch map function should return a tuple");
-      CHECK_FAIL_RETURN_UNEXPECTED(ret_tuple.size() == out_col_names_.size(), "Incorrect number of columns returned.");
+      CHECK_FAIL_RETURN_UNEXPECTED(py::isinstance<py::tuple>(ret_tuple), "Batch map function should return a tuple.");
+      CHECK_FAIL_RETURN_UNEXPECTED(
+        ret_tuple.size() == out_col_names_.size(),
+        "Incorrect number of columns returned. expects: " + std::to_string(out_col_names_.size()) +
+          " gets: " + std::to_string(ret_tuple.size()));
       for (size_t i = 0; i < ret_tuple.size(); i++) {
         TensorRow output_batch;
+        // If user returns a type that is neither a list nor an array, issue a error msg.
+        if (py::isinstance<py::array>(ret_tuple[i])) {
+          MS_LOG(WARNING) << "column: " << out_col_names_[i]
+                          << " returned by per_batch_map is a np.array. Please use list instead.";
+        } else if (!py::isinstance<py::list>(ret_tuple[i])) {
+          MS_LOG(ERROR) << "column: " << out_col_names_[i]
+                        << " returned by per_batch_map is not a list, this could lead to conversion failure.";
+        }
+
         py::list output_list = py::cast<py::list>(ret_tuple[i]);
+
         for (size_t j = 0; j < output_list.size(); j++) {
           std::shared_ptr<Tensor> out;
           RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(py::cast<py::array>(output_list[j]), &out));

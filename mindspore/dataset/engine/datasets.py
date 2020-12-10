@@ -287,7 +287,9 @@ class Dataset:
             per_batch_map (callable, optional): Per batch map callable. A callable which takes
                 (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represents a batch
                 of Tensors on a given column. The number of lists should match with number of entries in input_columns.
-                The last parameter of the callable should always be a BatchInfo object.
+                The last parameter of the callable should always be a BatchInfo object. Per_batch_map should return
+                (list[Tensor], list[Tensor], ...). The length of each list in output should be same as the input.
+                output_columns is required if the number of output lists is different from input.
             input_columns (list[str], optional): List of names of the input columns. The size of the list should
                 match with signature of per_batch_map callable.
             output_columns (list[str], optional): List of names assigned to the columns
@@ -1462,7 +1464,7 @@ class Dataset:
             data (Any): The data passed to the callback, user defined (default=None).
         """
         if (not isinstance(num_batch, int) and num_batch is not None) or \
-            (isinstance(num_batch, int) and num_batch <= 0):
+                (isinstance(num_batch, int) and num_batch <= 0):
             # throwing exception, disable all sync_wait in pipeline
             self.disable_sync()
             raise RuntimeError("Sync_update batch size can only be positive, got : {}.".format(num_batch))

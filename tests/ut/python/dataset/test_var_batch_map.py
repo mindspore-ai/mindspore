@@ -382,9 +382,17 @@ def test_exceptions_2():
     def simple_copy(colList, batchInfo):
         return ([np.copy(arr) for arr in colList],)
 
-    def test_wrong_col_name(gen_num, batch_size):
-        data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).batch(batch_size, input_columns=["num1"],
-                                                                           per_batch_map=simple_copy)
+    def concat_copy(colList, batchInfo):
+        # this will duplicate the number of rows returned, which would be wrong!
+        return ([np.copy(arr) for arr in colList] * 2,)
+
+    def shrink_copy(colList, batchInfo):
+        # this will duplicate the number of rows returned, which would be wrong!
+        return ([np.copy(arr) for arr in colList][0:int(len(colList) / 2)],)
+
+    def test_exceptions_config(gen_num, batch_size, in_cols, per_batch_map):
+        data1 = ds.GeneratorDataset((lambda: gen(gen_num)), ["num"]).batch(batch_size, input_columns=in_cols,
+                                                                           per_batch_map=per_batch_map)
         try:
             for _ in data1.create_dict_iterator(num_epochs=1, output_numpy=True):
                 pass
@@ -393,7 +401,9 @@ def test_exceptions_2():
             return str(e)
 
     # test exception where column name is incorrect
-    assert "error. col:num1 doesn't exist" in test_wrong_col_name(4, 2)
+    assert "error. col:num1 doesn't exist" in test_exceptions_config(4, 2, ["num1"], simple_copy)
+    assert "expects: 2 rows returned from per_batch_map, gets: 4" in test_exceptions_config(4, 2, ["num"], concat_copy)
+    assert "expects: 4 rows returned from per_batch_map, gets: 2" in test_exceptions_config(4, 4, ["num"], shrink_copy)
 
 
 if __name__ == '__main__':
