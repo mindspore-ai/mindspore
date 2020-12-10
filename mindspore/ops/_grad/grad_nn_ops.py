@@ -673,6 +673,19 @@ def get_bprop_layer_norm(self):
     return bprop
 
 
+@bprop_getters.register(G.LayerNormGrad)
+def get_bprop_layer_norm_grad(self):
+    """Grad definition for `LayerNorm` operation."""
+    layer_norm_grad_grad = G.LayerNormGradGrad(self.begin_norm_axis, self.begin_params_axis)
+
+    def bprop(x, dy, variance, mean, gamma, out, dout):
+        d_x, d_dy, d_gamma = layer_norm_grad_grad(
+            x, dy, variance, mean, gamma, dout[0], dout[1], dout[2])
+        return d_x, d_dy, d_gamma, zeros_like(variance), zeros_like(mean)
+
+    return bprop
+
+
 @bprop_getters.register(P.L2Normalize)
 def get_bprop_l2normalize(self):
     """Grad definition for `L2Normalize` operation."""
