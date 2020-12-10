@@ -45,6 +45,7 @@ class Monitor(Callback):
         self.lr_init = lr_init
         self.lr_init_len = len(lr_init)
         self.step_threshold = step_threshold
+        self.step_mseconds = 0
 
     def epoch_begin(self, run_context):
         self.losses = []
@@ -65,7 +66,7 @@ class Monitor(Callback):
 
     def step_end(self, run_context):
         cb_params = run_context.original_args()
-        step_mseconds = (time.time() - self.step_time) * 1000
+        self.step_mseconds = (time.time() - self.step_time) * 1000
         step_loss = cb_params.net_outputs
 
         if isinstance(step_loss, (tuple, list)) and isinstance(step_loss[0], Tensor):
@@ -79,7 +80,7 @@ class Monitor(Callback):
         print("epoch: [{:3d}/{:3d}], step:[{:5d}/{:5d}], loss:[{:8.6f}/{:5.3f}], time:[{:5.3f}], lr:[{:5.5f}]".format(
             cb_params.cur_epoch_num, cb_params.epoch_num, cur_step_in_epoch +
             1, cb_params.batch_num, step_loss,
-            np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]))
+            np.mean(self.losses), self.step_mseconds, self.lr_init[cb_params.cur_step_num - 1]))
 
         if cb_params.cur_step_num == self.step_threshold:
             run_context.request_stop()
