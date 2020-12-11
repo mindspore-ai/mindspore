@@ -165,6 +165,10 @@ bool IsUsedParameter(const FuncGraphPtr &graph, const AnfNodePtr &parameter);
 
 void ApplyParallelOptOnParam(TensorLayout *tensor_layout, const OperatorInfoPtr &distribute_operator,
                              const CNodePtr &cnode, const AnfNodePtr &parameter, size_t index);
+
+void SetLastNodeStrategy(const StrategyPtr strategyPtr);
+
+void FindLastNodesUniqueId(const std::vector<AnfNodePtr> &all_nodes, std::vector<std::string> *unique_ids);
 }  // namespace parallel
 }  // namespace mindspore
 
