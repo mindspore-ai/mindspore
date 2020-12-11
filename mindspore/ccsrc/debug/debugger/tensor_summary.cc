@@ -280,4 +280,5 @@ template class TensorSummary<int64_t>;
 template class TensorSummary<float16>;
 template class TensorSummary<float>;
 template class TensorSummary<double>;
+template class TensorSummary<bool>;
 }  // namespace mindspore
