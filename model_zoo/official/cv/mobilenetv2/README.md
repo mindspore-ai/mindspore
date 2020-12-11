@@ -91,6 +91,12 @@ You can start training using python or shell scripts. The usage of shell scripts
 - GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
 - CPU: sh run_trian.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
 
+> RANK_TABLE_FILE is HCCL configuration file when running on Ascend.
+> The common restrictions on using the distributed service are as follows. For details, see the HCCL documentation.
+>
+> - In a single-node system, a cluster of 1, 2, 4, or 8 devices is supported. In a multi-node system, a cluster of 8 x N devices is supported.
+> - Each host has four devices numbered 0 to 3 and four devices numbered 4 to 7 deployed on two different networks. During training of 2 or 4 devices, the devices must be connected and clusters cannot be created across networks.
+
 ### Launch
 
 ```shell

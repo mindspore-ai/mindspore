@@ -40,6 +40,7 @@ def set_config(args):
         "keep_checkpoint_max": 20,
         "save_checkpoint_path": "./",
         "platform": args.platform,
+        "run_distribute": args.run_distribute,
         "activation": "Softmax",
         "export_format": "MINDIR",
         "export_file": "mobilenetv2"

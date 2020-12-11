@@ -53,21 +53,14 @@ if __name__ == '__main__':
 
     # define network
     backbone_net, head_net, net = define_net(config, args_opt.is_training)
-
-    if args_opt.pretrain_ckpt != "" and args_opt.freeze_layer == "backbone":
-        load_ckpt(backbone_net, args_opt.pretrain_ckpt, trainable=False)
-        step_size = extract_features(backbone_net, args_opt.dataset_path, config)
-
-    else:
-        if args_opt.platform == "CPU":
-            raise ValueError("CPU only support fine tune the head net, doesn't support fine tune the all net")
-
-        if args_opt.pretrain_ckpt:
-            load_ckpt(backbone_net, args_opt.pretrain_ckpt)
-
-        dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, config=config)
-        step_size = dataset.get_dataset_size()
-
+    dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, config=config)
+    step_size = dataset.get_dataset_size()
+    if args_opt.pretrain_ckpt:
+        if args_opt.freeze_layer == "backbone":
+            load_ckpt(backbone_net, args_opt.pretrain_ckpt, trainable=False)
+            step_size = extract_features(backbone_net, args_opt.dataset_path, config)
+        else:
+            load_ckpt(net, args_opt.pretrain_ckpt)
     if step_size == 0:
         raise ValueError("The step_size of dataset is zero. Check if the images' count of train dataset is more \
             than batch_size in config.py")
@@ -93,7 +86,7 @@ if __name__ == '__main__':
                        total_epochs=epoch_size,
                        steps_per_epoch=step_size))
 
-    if args_opt.pretrain_ckpt == "" or args_opt.freeze_layer == "none":
+    if args_opt.pretrain_ckpt == "" or args_opt.freeze_layer != "backbone":
         loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, \
             config.weight_decay, config.loss_scale)

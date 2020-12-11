@@ -16,26 +16,6 @@
 import argparse
 import ast
 
-def launch_parse_args():
-
-    launch_parser = argparse.ArgumentParser(description="mindspore distributed training launch helper utilty \
-        that will spawn up multiple distributed processes")
-    launch_parser.add_argument('--platform', type=str, default="Ascend", choices=("Ascend", "GPU", "CPU"), \
-        help='run platform, only support GPU, CPU and Ascend')
-    launch_parser.add_argument("--nproc_per_node", type=int, default=1, choices=(1, 2, 3, 4, 5, 6, 7, 8), \
-        help="The number of processes to launch on each node, for D training, this is recommended to be set \
-            to the number of D in your system so that each process can be bound to a single D.")
-    launch_parser.add_argument("--visible_devices", type=str, default="0,1,2,3,4,5,6,7", help="will use the \
-        visible devices sequentially")
-    launch_parser.add_argument("--training_script", type=str, default="./train.py", help="The full path to \
-        the single D training program/script to be launched in parallel, followed by all the arguments for \
-            the training script")
-
-    launch_args, unknown = launch_parser.parse_known_args()
-    launch_args.training_script_args = unknown
-    launch_args.training_script_args += ["--platform", launch_args.platform]
-    return launch_args
-
 def train_parse_args():
     train_parser = argparse.ArgumentParser(description='Image classification trian')
     train_parser.add_argument('--platform', type=str, default="Ascend", choices=("CPU", "GPU", "Ascend"), \
@@ -48,6 +28,8 @@ def train_parse_args():
     train_parser.add_argument('--run_distribute', type=ast.literal_eval, default=True, help='Run distribute')
     train_args = train_parser.parse_args()
     train_args.is_training = True
+    if train_args.platform == "CPU":
+        train_args.run_distribute = False
     return train_args
 
 def eval_parse_args():
