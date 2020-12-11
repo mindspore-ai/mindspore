@@ -449,6 +449,9 @@ class Parameter(MetaTensor_):
             return self
         if self.inited_param is not None:
             return self.inited_param
+        if _is_role_worker() and self.cache_enable:
+            global_seed, op_seed = _get_global_and_op_seed()
+            _insert_weight_init_info(self.name, global_seed, op_seed)
         if layout is not None:
             if not isinstance(layout, tuple):
                 raise TypeError("The layout should be tuple! layout is {}.".format(layout))
@@ -463,9 +466,6 @@ class Parameter(MetaTensor_):
             else:
                 data = self.init_mode.to_tensor(slice_index, layout[2], layout[5])
         else:
-            if _is_role_worker() and self.cache_enable:
-                global_seed, op_seed = _get_global_and_op_seed()
-                _insert_weight_init_info(self.name, global_seed, op_seed)
             if (self.init_in_server and self.is_param_ps and isinstance(self.init_mode, MetaTensor)):
                 if _is_role_worker() or _is_role_sched():
                     data = self.init_mode.to_tensor(0, [1])

@@ -203,6 +203,8 @@ def _get_global_and_op_seed():
         global_seed = DEFAULT_GRAPH_SEED
     elif global_seed is None:
         global_seed = 0
+    if op_seed is None:
+        op_seed = 0
     Validator.check_non_negative_int(op_seed, "seed", "init")
     temp_seed = _get_op_seed(op_seed, "init")
     seeds = _truncate_seed(global_seed), _truncate_seed(temp_seed)
