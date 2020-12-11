@@ -14,6 +14,8 @@
 # ============================================================================
 """embedding"""
 import mindspore.common.dtype as mstype
+import mindspore.context as context
+from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
@@ -195,6 +197,11 @@ class EmbeddingLookup(Cell):
                              + str(target) + ', should be one of values in \'CPU\', \'DEVICE\'.')
         if not sparse and target == 'CPU':
             raise ValueError('When target is CPU, embedding_lookup must be sparse.')
+        enable_ps = context.get_ps_context("enable_ps")
+        if not enable_ps and vocab_cache_size > 0:
+            logger.warning("The configuration of 'vocab_cache_size' is valid only in parameter server trainning mode, "
+                           "current mode is not parameter server trainning mode, so it will be ignored.")
+            vocab_cache_size = 0
         if sparse:
             self.gatherv2 = P.SparseGatherV2()
         else:
