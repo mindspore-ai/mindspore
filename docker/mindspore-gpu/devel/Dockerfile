@@ -37,6 +37,10 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     automake \
     flex
 
+# Install the rest dependent tools
+RUN DEBIAN_FRONTEND=noninteractive apt install -y \
+    libnuma-dev
+
 # Configure cuDNN (v7.6.5)
 RUN ln -s /usr/lib/x86_64-linux-gnu/libcudnn.so.7.6.5 /usr/local/cuda/lib64/libcudnn.so
 
