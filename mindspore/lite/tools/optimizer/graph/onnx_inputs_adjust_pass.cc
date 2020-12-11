@@ -471,7 +471,7 @@ STATUS OnnxInputAdjustOpPass::ReplaceTransposeWithGraphInput(const FuncGraphPtr 
   auto anf_node = cnode->input(1);
   MS_ASSERT(anf_node != nullptr);
   auto param_node = anf_node->cast<ParameterPtr>();
-  if (param_node == nullptr || !param_node->has_default()) {
+  if (param_node == nullptr || param_node->has_default()) {
     MS_LOG(DEBUG) << "input is not graph input";
     return lite::RET_OK;
   }
@@ -547,8 +547,6 @@ bool OnnxInputAdjustOpPass::Run(const FuncGraphPtr &func_graph) {
       status = ReplaceConstant(func_graph, cnode);
     } else if (type == schema::PrimitiveType_Cast) {
       status = AdjustCast(cnode);
-    } else if (type == schema::PrimitiveType_Transpose) {
-      status = ReplaceTransposeWithGraphInput(func_graph, cnode);
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "adjust input pass is failed.";
