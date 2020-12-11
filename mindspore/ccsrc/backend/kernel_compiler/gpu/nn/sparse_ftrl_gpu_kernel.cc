@@ -31,6 +31,17 @@ MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
                       SparseFtrlGpuKernel, float, int)
 MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
                       KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      SparseFtrlGpuKernel, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
+                      KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)
@@ -40,5 +51,16 @@ MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
                         .AddOutputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
                       SparseFtrlGpuKernel, half, int)
+MS_REG_GPU_KERNEL_TWO(SparseApplyFtrl,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      SparseFtrlGpuKernel, half, int64_t)
 }  // namespace kernel
 }  // namespace mindspore
