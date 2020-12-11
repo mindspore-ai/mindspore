@@ -41,6 +41,7 @@ class OnnxInputAdjustOpPass : public Pass {
   STATUS AdjustTile(const CNodePtr &cnode);
   STATUS AdjustCast(const CNodePtr &cnode);
   STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
+  STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   bool Run(const FuncGraphPtr &func_graph) override;
 
  private:
