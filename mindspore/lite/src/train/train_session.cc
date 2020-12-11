@@ -378,7 +378,7 @@ session::TrainSession *session::TrainSession::CreateSession(const std::string &f
 
   ifs.seekg(0, std::ios::end);
   auto size = ifs.tellg();
-  if (size == 0) {
+  if (size <= 0) {
     MS_LOG(ERROR) << "Could not read file " << filename;
     return nullptr;
   }
@@ -391,8 +391,12 @@ session::TrainSession *session::TrainSession::CreateSession(const std::string &f
 
   ifs.seekg(0, std::ios::beg);
   ifs.read(buf.get(), size);
+  if (!ifs) {
+    MS_LOG(ERROR) << "only read " << ifs.gcount() << "bytes in " << filename;
+    ifs.close();
+    return nullptr;
+  }
   ifs.close();
-
   return session::TrainSession::CreateSession(buf.get(), size, context, train_mode);
 }
 

@@ -105,22 +105,22 @@ int Conv2DGradInput::UnPackAttr(const Primitive &prim, const std::vector<AnfNode
       attr->format = schema::Format_NUM_OF_FORMAT;
     }
     auto pad_list = CastToInt(prim.GetAttr("pad_list"));
-    attr->padUp = pad_list[0];
-    attr->padDown = pad_list[1];
-    attr->padLeft = pad_list[2];
-    attr->padRight = pad_list[3];
+    attr->padUp = pad_list.at(0);
+    attr->padDown = pad_list.at(1);
+    attr->padLeft = pad_list.at(2);
+    attr->padRight = pad_list.at(3);
 
     auto dilation = CastToInt(prim.GetAttr("dilation"));
-    attr->dilateH = dilation[2];
-    attr->dilateW = dilation[3];
+    attr->dilateH = dilation.at(2);
+    attr->dilateW = dilation.at(3);
 
     auto kernel_size = CastToInt(prim.GetAttr("kernel_size"));
-    attr->kernelH = kernel_size[0];
-    attr->kernelW = kernel_size[1];
+    attr->kernelH = kernel_size.at(0);
+    attr->kernelW = (kernel_size.size() > 1) ? kernel_size.at(1) : kernel_size.at(0);
 
     auto stride = CastToInt(prim.GetAttr("stride"));
-    attr->strideH = stride[0];
-    attr->strideW = stride[1];
+    attr->strideH = stride.at(0);
+    attr->strideW = stride.at(1);
 
     attr->channelOut = CastToInt(prim.GetAttr("out_channel")).front();
 

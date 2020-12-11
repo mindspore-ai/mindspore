@@ -30,13 +30,13 @@ typedef struct ActivationGradParameter {
 extern "C" {
 #endif
 
-int ReluGrad(float *src0, float *src1, int length, float *dst);
-int Relu6Grad(float *src0, float *src1, int length, float *dst);
-int LReluGrad(float *src0, float *src1, int length, float *dst, float alpha);
-int SigmoidGrad(float *src0, float *src1, int length, float *dst);
-int TanhGrad(float *src0, float *src1, int length, float *dst);
-int HSwishGrad(float *src0, float *src1, int length, float *dst);
-int HSigmoidGrad(float *src0, float *src1, int length, float *dst);
+int ReluGrad(float *src0, float *src1, size_t length, float *dst);
+int Relu6Grad(float *src0, float *src1, size_t length, float *dst);
+int LReluGrad(float *src0, float *src1, size_t length, float *dst, float alpha);
+int SigmoidGrad(float *src0, float *src1, size_t length, float *dst);
+int TanhGrad(float *src0, float *src1, size_t length, float *dst);
+int HSwishGrad(float *src0, float *src1, size_t length, float *dst);
+int HSigmoidGrad(float *src0, float *src1, size_t length, float *dst);
 
 #ifdef __cplusplus
 }
