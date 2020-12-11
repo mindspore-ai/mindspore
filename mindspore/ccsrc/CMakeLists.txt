@@ -3,6 +3,13 @@ include_directories(${CMAKE_SOURCE_DIR}/mindspore/core)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${CMAKE_BINARY_DIR})
 
+if (ENABLE_ACL)
+    set(ASCEND_PATH /usr/local/Ascend)
+    include_directories(${ASCEND_PATH}/acllib/include)
+    link_directories(${ASCEND_PATH}/acllib/lib64/)
+    find_library(ascendcl acl_dvpp ${ASCEND_PATH}/acllib/lib64)
+endif ()
+
 if (NOT(CMAKE_SYSTEM_NAME MATCHES "Darwin"))
     link_directories(${CMAKE_SOURCE_DIR}/build/mindspore/graphengine)
 endif ()

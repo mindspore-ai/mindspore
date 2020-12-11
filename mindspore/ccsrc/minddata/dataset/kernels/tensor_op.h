@@ -57,6 +57,7 @@ constexpr char kCenterCropOp[] = "CenterCropOp";
 constexpr char kCutMixBatchOp[] = "CutMixBatchOp";
 constexpr char kCutOutOp[] = "CutOutOp";
 constexpr char kCropOp[] = "CropOp";
+constexpr char kDvppDecodeResizeCropJpegOp[] = "DvppDecodeResizeCropJpegOp";
 constexpr char kEqualizeOp[] = "EqualizeOp";
 constexpr char kHwcToChwOp[] = "HwcToChwOp";
 constexpr char kInvertOp[] = "InvertOp";

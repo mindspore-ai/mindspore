@@ -31,10 +31,10 @@ class TestDE : public ST::Common {
 
 TEST_F(TestDE, ResNetPreprocess) {
   std::vector<std::shared_ptr<Tensor>> images;
-  MindDataEager::LoadImageFromDir("/home/workspace/mindspore_dataset/imagenet/imagenet_original/val/n01440764", &images);
+  MindDataEager::LoadImageFromDir("/home/workspace/mindspore_dataset/imagenet/imagenet_original/val/n01440764",
+                                  &images);
 
-  MindDataEager Compose({Decode(),
-                         Resize({224, 224}),
+  MindDataEager Compose({Decode(), Resize({224, 224}),
                          Normalize({0.485 * 255, 0.456 * 255, 0.406 * 255}, {0.229 * 255, 0.224 * 255, 0.225 * 255}),
                          HWC2CHW()});
 
@@ -46,4 +46,20 @@ TEST_F(TestDE, ResNetPreprocess) {
   ASSERT_EQ(images[0]->Shape()[0], 3);
   ASSERT_EQ(images[0]->Shape()[1], 224);
   ASSERT_EQ(images[0]->Shape()[2], 224);
+}
+
+TEST_F(TestDE, TestDvpp) {
+  std::vector<std::shared_ptr<Tensor>> images;
+  MindDataEager::LoadImageFromDir("/root/Dvpp_Unit_Dev/val2014_test/", &images);
+
+  MindDataEager Solo({DvppDecodeResizeCropJpeg({224, 224}, {256, 256})});
+
+  for (auto &img : images) {
+    img = Solo(img);
+  }
+
+  ASSERT_EQ(images[0]->Shape().size(), 3);
+  ASSERT_EQ(images[0]->Shape()[0], 224 * 224 * 1.5);
+  ASSERT_EQ(images[0]->Shape()[1], 1);
+  ASSERT_EQ(images[0]->Shape()[2], 1);
 }
