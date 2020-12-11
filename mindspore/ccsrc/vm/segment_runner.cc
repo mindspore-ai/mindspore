@@ -115,8 +115,12 @@ std::tuple<FuncGraphPtr, AnfNodePtrList, AnfNodePtrList> TransformSegmentToAnfGr
   if (lst.empty()) {
     MS_LOG(EXCEPTION) << "Input anf node list is empty";
   }
-  TraceGuard guard(std::make_shared<TraceSegmentTransform>(lst[0]->cast<CNodePtr>()->func_graph()->debug_info()));
-  auto fg = std::make_shared<FuncGraph>();
+  FuncGraphPtr fg = nullptr;
+  {
+    // limit the lifetime of guard.
+    TraceGuard guard(std::make_shared<TraceSegmentTransform>(lst[0]->cast<CNodePtr>()->func_graph()->debug_info()));
+    fg = std::make_shared<FuncGraph>();
+  }
   AnfNodePtrList inputs;
   AnfNodePtrToAnfNodePtrMap eqv;
   // Merge CNodes into a AnfGraph that represents a linear instruction segment
