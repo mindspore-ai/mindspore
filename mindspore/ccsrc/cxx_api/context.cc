@@ -20,6 +20,7 @@ namespace mindspore::api {
 class Context::ContextImpl {
  public:
   ContextImpl() : device_target_("NotSet"), device_id_(0) {}
+  ~ContextImpl() = default;
   const std::string &GetDeviceTarget() const { return device_target_; }
   void SetDeviceTarget(std::string_view device_target) { device_target_ = device_target; }
   uint32_t GetDeviceID() const { return device_id_; }

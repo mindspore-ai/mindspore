@@ -53,6 +53,8 @@ Graph::GraphData::GraphData(Buffer om_data, enum ModelType model_type)
 #endif
 }
 
+Graph::GraphData::~GraphData() {}
+
 FuncGraphPtr Graph::GraphData::GetFuncGraph() const {
   if (model_type_ != ModelType::kMindIR) {
     MS_LOG(ERROR) << "Invalid ModelType " << model_type_;
