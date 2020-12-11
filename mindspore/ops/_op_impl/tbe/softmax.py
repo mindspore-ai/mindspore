@@ -26,11 +26,8 @@ softmax_op_info = TBERegOp("Softmax") \
     .attr("axis", "optional", "listInt", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F32_FracNZ, DataType.F32_FracNZ) \
+    .op_pattern("dynamicFormat") \
+    .dtype_format(DataType.None_None, DataType.None_None) \
     .get_op_info()
 
 
