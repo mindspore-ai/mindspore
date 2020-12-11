@@ -267,13 +267,18 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
       int num_channels = input->shape()[2];
       shape = shape.AppendDim(num_channels);
     }
+
+    std::shared_ptr<Tensor> output_tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, input->type(), &output_tensor));
+
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
     LiteMat lite_mat_cut;
+
+    lite_mat_cut.Init(w, h, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer), GetLiteCVDataType(input->type()));
+
     bool ret = Crop(lite_mat_rgb, lite_mat_cut, x, y, w, h);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Crop failed in lite cv");
-    // create output Tensor based off of lite_mat_cut
-    std::shared_ptr<Tensor> output_tensor;
-    RETURN_IF_NOT_OK(
-      Tensor::CreateFromMemory(shape, input->type(), static_cast<uchar *>(lite_mat_cut.data_ptr_), &output_tensor));
+
     *output = output_tensor;
     return Status::OK();
   } catch (std::runtime_error &e) {
@@ -340,6 +345,14 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
 
+    std::shared_ptr<Tensor> output_tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_FLOAT32), &output_tensor));
+
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+
+    lite_mat_norm.Init(lite_mat_rgb.width_, lite_mat_rgb.height_, lite_mat_rgb.channel_,
+                       reinterpret_cast<void *>(buffer), GetLiteCVDataType(input->type()));
+
     if (input->type() == DataType::DE_UINT8) {
       LiteMat lite_mat_float;
       // change input to float
@@ -351,10 +364,6 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     }
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Normalize in lite cv failed");
 
-    // create output Tensor based off of lite_mat_cut
-    std::shared_ptr<Tensor> output_tensor;
-    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(input->shape(), DataType(DataType::DE_FLOAT32),
-                                              static_cast<uchar *>(lite_mat_norm.data_ptr_), &output_tensor));
     *output = output_tensor;
   } catch (std::runtime_error &e) {
     RETURN_STATUS_UNEXPECTED("Unexpected error in normalize.");
@@ -394,11 +403,17 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     }
 
     LiteMat lite_mat_resize;
+    std::shared_ptr<Tensor> output_tensor;
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, input->type(), &output_tensor));
+
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+
+    lite_mat_resize.Init(output_width, output_height, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer),
+                         GetLiteCVDataType(input->type()));
+
     bool ret = ResizeBilinear(lite_mat_rgb, lite_mat_resize, output_width, output_height);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Resize failed in lite cv");
-    std::shared_ptr<Tensor> output_tensor;
-    RETURN_IF_NOT_OK(
-      Tensor::CreateFromMemory(shape, input->type(), static_cast<uchar *>(lite_mat_resize.data_ptr_), &output_tensor));
+
     *output = output_tensor;
   } catch (std::runtime_error &e) {
     RETURN_STATUS_UNEXPECTED("Error in image resize.");
@@ -426,14 +441,23 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
     LiteMat lite_mat_pad;
+
+    std::shared_ptr<Tensor> output_tensor;
+
+    int pad_width = lite_mat_rgb.width_ + pad_left + pad_right;
+    int pad_height = lite_mat_rgb.height_ + pad_top + pad_bottom;
+    TensorShape new_shape = TensorShape({pad_height, pad_width, input->shape()[2]});
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
+
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+
+    lite_mat_pad.Init(pad_width, pad_height, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer),
+                      GetLiteCVDataType(input->type()));
+
     bool ret = Pad(lite_mat_rgb, lite_mat_pad, pad_top, pad_bottom, pad_left, pad_right,
                    PaddBorderType::PADD_BORDER_CONSTANT, fill_r, fill_g, fill_b);
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Pad failed in lite cv");
-    // new shape for output tensor
-    TensorShape new_shape = TensorShape({lite_mat_pad.height_, lite_mat_pad.width_, input->shape()[2]});
-    std::shared_ptr<Tensor> output_tensor;
-    RETURN_IF_NOT_OK(
-      Tensor::CreateFromMemory(new_shape, input->type(), static_cast<uchar *>(lite_mat_pad.data_ptr_), &output_tensor));
+
     *output = output_tensor;
   } catch (std::runtime_error &e) {
     RETURN_STATUS_UNEXPECTED("Error in image Pad.");
@@ -451,7 +475,6 @@ static Status RotateAngleWithOutMirror(const std::shared_ptr<Tensor> &input, std
     LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
-    LiteMat lite_mat_affine;
 
     if (orientation == 3) {
       height = lite_mat_rgb.height_;
@@ -486,14 +509,17 @@ static Status RotateAngleWithOutMirror(const std::shared_ptr<Tensor> &input, std
     std::vector<size_t> dsize;
     dsize.push_back(width);
     dsize.push_back(height);
+    LiteMat lite_mat_affine;
+    std::shared_ptr<Tensor> output_tensor;
+    TensorShape new_shape = TensorShape({height, width, input->shape()[2]});
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+    lite_mat_affine.Init(width, height, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer),
+                         GetLiteCVDataType(input->type()));
+
     bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize, UINT8_C3(0, 0, 0));
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate failed in lite cv");
 
-    // new shape for output tensor
-    TensorShape new_shape = TensorShape({lite_mat_affine.height_, lite_mat_affine.width_, input->shape()[2]});
-    std::shared_ptr<Tensor> output_tensor;
-    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(new_shape, input->type(), static_cast<uchar *>(lite_mat_affine.data_ptr_),
-                                              &output_tensor));
     *output = output_tensor;
   } catch (std::runtime_error &e) {
     RETURN_STATUS_UNEXPECTED("Error in image Rotate.");
@@ -511,7 +537,7 @@ static Status RotateAngleWithMirror(const std::shared_ptr<Tensor> &input, std::s
     LiteMat lite_mat_rgb(input->shape()[1], input->shape()[0], input->shape()[2],
                          const_cast<void *>(reinterpret_cast<const void *>(input->GetBuffer())),
                          GetLiteCVDataType(input->type()));
-    LiteMat lite_mat_affine;
+
     if (orientation == 2) {
       height = lite_mat_rgb.height_;
       width = lite_mat_rgb.width_;
@@ -553,14 +579,17 @@ static Status RotateAngleWithMirror(const std::shared_ptr<Tensor> &input, std::s
     std::vector<size_t> dsize;
     dsize.push_back(width);
     dsize.push_back(height);
+    LiteMat lite_mat_affine;
+    std::shared_ptr<Tensor> output_tensor;
+    TensorShape new_shape = TensorShape({height, width, input->shape()[2]});
+    RETURN_IF_NOT_OK(Tensor::CreateEmpty(new_shape, input->type(), &output_tensor));
+    uint8_t *buffer = reinterpret_cast<uint8_t *>(&(*output_tensor->begin<uint8_t>()));
+    lite_mat_affine.Init(width, height, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer),
+                         GetLiteCVDataType(input->type()));
+
     bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize, UINT8_C3(0, 0, 0));
     CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate failed in lite cv");
 
-    // new shape for output tensor
-    TensorShape new_shape = TensorShape({lite_mat_affine.height_, lite_mat_affine.width_, input->shape()[2]});
-    std::shared_ptr<Tensor> output_tensor;
-    RETURN_IF_NOT_OK(Tensor::CreateFromMemory(new_shape, input->type(), static_cast<uchar *>(lite_mat_affine.data_ptr_),
-                                              &output_tensor));
     *output = output_tensor;
   } catch (std::runtime_error &e) {
     RETURN_STATUS_UNEXPECTED("Error in image Rotate.");
