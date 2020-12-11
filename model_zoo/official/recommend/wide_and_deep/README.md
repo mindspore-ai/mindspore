@@ -1,35 +1,38 @@
 # Contents
+
+- [Contents](#contents)
 - [Wide&Deep Description](#widedeep-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
 - [Quick Start](#quick-start)
 - [Script Description](#script-description)
-  - [Script and Sample Code](#script-and-sample-code)
-  - [Script Parameters](#script-parameters)
+    - [Script and Sample Code](#script-and-sample-code)
+    - [Script Parameters](#script-parameters)
     - [Training Script Parameters](#training-script-parameters)
     - [Preprocess Script Parameters](#preprocess-script-parameters)
-  - [Dataset Preparation](#dataset-preparation)
+    - [Dataset Preparation](#dataset-preparation)
     - [Process the Real World Data](#process-the-real-world-data)
     - [Generate and Process the Synthetic Data](#generate-and-process-the-synthetic-data)
-  - [Training Process](#training-process)
+    - [Training Process](#training-process)
     - [SingleDevice](#singledevice)
     - [Distribute Training](#distribute-training)
     - [Parameter Server](#parameter-server)
-  - [Evaluation Process](#evaluation-process)
+    - [Evaluation Process](#evaluation-process)
 - [Model Description](#model-description)
-  - [Performance](#performance)
+    - [Performance](#performance)
     - [Training Performance](#training-performance)
     - [Evaluation Performance](#evaluation-performance)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-
 # [Wide&Deep Description](#contents)
+
 Wide&Deep model is a classical model in Recommendation and Click Prediction area.  This is an implementation of Wide&Deep as described in the [Wide & Deep Learning for Recommender System](https://arxiv.org/pdf/1606.07792.pdf) paper.
 
 # [Model Architecture](#contents)
-Wide&Deep model jointly trained wide linear models and deep neural network, which combined the benefits of memorization and generalization for recommender systems. 
+
+Wide&Deep model jointly trained wide linear models and deep neural network, which combined the benefits of memorization and generalization for recommender systems.
 
 Currently we support host-device mode with column partition and  parameter server mode.
 
@@ -38,50 +41,59 @@ Currently we support host-device mode with column partition and  parameter serve
 - [1] A dataset used in  Guo H , Tang R , Ye Y , et al. DeepFM: A Factorization-Machine based Neural Network for CTR Prediction[J]. 2017.
 
 # [Environment Requirements](#contents)
+
 - Hardware（Ascend or GPU）
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+    - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
-  - [MindSpore](https://gitee.com/mindspore/mindspore)
+    - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
-
-
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Quick Start](#contents)
 
 1. Clone the Code
-```
+
+```bash
 git clone https://gitee.com/mindspore/mindspore.git
 cd mindspore/model_zoo/official/recommend/wide_and_deep
 ```
+
 2. Download the Dataset
 
   > Please refer to [1] to obtain the download link
+
 ```bash
 mkdir -p data/origin_data && cd data/origin_data
 wget DATA_LINK
-tar -zxvf dac.tar.gz 
+tar -zxvf dac.tar.gz
 ```
+
 3. Use this script to preprocess the data. This may take about one hour and the generated mindrecord data is under data/mindrecord.
+
 ```bash
 python src/preprocess_data.py  --data_path=./data/ --dense_dim=13 --slot_dim=26 --threshold=100 --train_line_count=45840617 --skip_id_convert=0
 ```
 
 4. Start Training
+
 Once the dataset is ready, the model can be trained and evaluated on the single device(Ascend) by the command as follows:
+
 ```bash
-python train_and_eval.py --data_path=./data/mindrecord --data_type=mindrecord
-```
-To evaluate the model, command as follows:
-```bash
-python eval.py  --data_path=./data/mindrecord --data_type=mindrecord
+python train_and_eval.py --data_path=./data/mindrecord --dataset_type=mindrecord
 ```
 
+To evaluate the model, command as follows:
+
+```bash
+python eval.py  --data_path=./data/mindrecord --dataset_type=mindrecord
+```
 
 # [Script Description](#contents)
+
 ## [Script and Sample Code](#contents)
-```
+
+```bash
 └── wide_and_deep
     ├── eval.py
     ├── README.md
@@ -119,10 +131,9 @@ python eval.py  --data_path=./data/mindrecord --data_type=mindrecord
 
 ### [Training Script Parameters](#contents)
 
-The parameters is same for ``train.py``,``train_and_eval.py`` ,``train_and_eval_distribute.py`` and ``train_and_eval_auto_parallel.py`` 
+The parameters is same for ``train.py``,``train_and_eval.py`` ,``train_and_eval_distribute.py`` and ``train_and_eval_auto_parallel.py``
 
-
-```
+```python
 usage: train.py [-h] [--device_target {Ascend,GPU}] [--data_path DATA_PATH]
                 [--epochs EPOCHS] [--full_batch FULL_BATCH]
                 [--batch_size BATCH_SIZE] [--eval_batch_size EVAL_BATCH_SIZE]
@@ -153,8 +164,8 @@ optional arguments:
   --keep_prob                         The keep rate in dropout layer.(Default:1.0)
   --dropout_flag                      Enable dropout.(Default:0)
   --output_path                       Deprecated
-  --ckpt_path                         The location of the checkpoint file. If the checkpoint file 
-                                      is a slice of weight, multiple checkpoint files need to be 
+  --ckpt_path                         The location of the checkpoint file. If the checkpoint file
+                                      is a slice of weight, multiple checkpoint files need to be
                                       transferred. Use ';' to separate them and sort them in sequence
                                       like "./checkpoints/0.ckpt;./checkpoints/1.ckpt".
                                       (Defalut:./checkpoints/)
@@ -164,8 +175,10 @@ optional arguments:
   --dataset_type                      The data type of the training files, chosen from tfrecord/mindrecord/hd5.(Default:tfrecord)
   --parameter_server                  Open parameter server of not.(Default:0)
 ```
+
 ### [Preprocess Script Parameters](#contents)
-```
+
+```python
 usage: generate_synthetic_data.py [-h] [--output_file OUTPUT_FILE]
                                   [--label_dim LABEL_DIM]
                                   [--number_examples NUMBER_EXAMPLES]
@@ -180,11 +193,11 @@ optional arguments:
   --dense_dim                          The number of the continue feature.(Default:13)
   --slot_dim                           The number of the category features.(Default:26)
   --vocabulary_size                    The vocabulary size of the total dataset.(Default:400000000)
-  --random_slot_values                 0 or 1. If 1, the id is generated by the random. If 0, the id is set by the row_index mod 										part_size, where part_size is the vocab size for each slot
+  --random_slot_values                 0 or 1. If 1, the id is generated by the random. If 0, the id is set by the row_index mod           part_size, where part_size is the vocab size for each slot
 ```
 
-```
-usage: preprocess_data.py [-h] 
+```python
+usage: preprocess_data.py [-h]
                           [--data_path DATA_PATH] [--dense_dim DENSE_DIM]
                           [--slot_dim SLOT_DIM] [--threshold THRESHOLD]
                           [--train_line_count TRAIN_LINE_COUNT]
@@ -193,7 +206,7 @@ usage: preprocess_data.py [-h]
   --data_path                         The path of the data file.
   --dense_dim                         The number of your continues fields.(default: 13)
   --slot_dim                          The number of your sparse fields, it can also be called category features.(default: 26)
-  --threshold                         Word frequency below this value will be regarded as OOV. It aims to reduce the vocab size.									  (default: 100)
+  --threshold                         Word frequency below this value will be regarded as OOV. It aims to reduce the vocab size.           (default: 100)
   --train_line_count                  The number of examples in your dataset.
   --skip_id_convert                   0 or 1. If set 1, the code will skip the id convert, regarding the original id as the final id.(default: 0)
 ```
@@ -203,28 +216,35 @@ usage: preprocess_data.py [-h]
 ### [Process the Real World Data](#content)
 
 1. Download the Dataset and place the raw dataset under a certain path, such as: ./data/origin_data
+
 ```bash
 mkdir -p data/origin_data && cd data/origin_data
 wget DATA_LINK
-tar -zxvf dac.tar.gz 
+tar -zxvf dac.tar.gz
 ```
+
 > Please refer to [1] to obtain the download link
 
 2. Use this script to preprocess the data
+
 ```bash
 python src/preprocess_data.py  --data_path=./data/ --dense_dim=13 --slot_dim=26 --threshold=100 --train_line_count=45840617 --skip_id_convert=0
 ```
 
 ### [Generate and Process the Synthetic Data](#content)
-1. The following command will generate 40 million lines of click data, in the format of 
-> "label\tdense_feature[0]\tdense_feature[1]...\tsparse_feature[0]\tsparse_feature[1]...". 
-```
+
+1. The following command will generate 40 million lines of click data, in the format of
+
+> "label\tdense_feature[0]\tdense_feature[1]...\tsparse_feature[0]\tsparse_feature[1]...".
+
+```bash
 mkdir -p syn_data/origin_data
 python src/generate_synthetic_data.py --output_file=syn_data/origin_data/train.txt --number_examples=40000000 --dense_dim=13 --slot_dim=51 --vocabulary_size=2000000000 --random_slot_values=0
 ```
 
 2. Preprocess the generated data
-```
+
+```python
 python src/preprocess_data.py --data_path=./syn_data/  --dense_dim=13 --slot_dim=51 --threshold=0 --train_line_count=40000000 --skip_id_convert=1
 ```
 
@@ -233,25 +253,30 @@ python src/preprocess_data.py --data_path=./syn_data/  --dense_dim=13 --slot_dim
 ### [SingleDevice](#contents)
 
 To train and evaluate the model, command as follows:
-```
+
+```python
 python train_and_eval.py
 ```
 
-
 ### [Distribute Training](#contents)
+
 To train the model in data distributed training, command as follows:
-```
+
+```bash
 # configure environment path before training
-bash run_multinpu_train.sh RANK_SIZE EPOCHS DATASET RANK_TABLE_FILE 
+bash run_multinpu_train.sh RANK_SIZE EPOCHS DATASET RANK_TABLE_FILE
 ```
+
 To train the model in model parallel training, commands as follows:
-```
+
+```bash
 # configure environment path before training
-bash run_auto_parallel_train.sh RANK_SIZE EPOCHS DATASET RANK_TABLE_FILE 
+bash run_auto_parallel_train.sh RANK_SIZE EPOCHS DATASET RANK_TABLE_FILE
 ```
 
 To train the model in clusters, command as follows:'''
-```
+
+```bash
 # deploy wide&deep script in clusters
 # CLUSTER_CONFIG is a json file, the sample is in script/.
 # EXECUTE_PATH is the scripts path after the deploy.
@@ -262,9 +287,12 @@ bash deploy_cluster.sh CLUSTER_CONFIG_PATH EXECUTE_PATH
 bash start_cluster.sh CLUSTER_CONFIG_PATH EPOCH_SIZE VOCAB_SIZE EMB_DIM
                       DATASET ENV_SH RANK_TABLE_FILE MODE
 ```
+
 ### [Parameter Server](#contents)
+
 To train and evaluate the model in parameter server mode, command as follows:'''
-```
+
+```bash
 # SERVER_NUM is the number of parameter servers for this task.
 # SCHED_HOST is the IP address of scheduler.
 # SCHED_PORT is the port of scheduler.
@@ -272,11 +300,11 @@ To train and evaluate the model in parameter server mode, command as follows:'''
 bash run_parameter_server_train.sh RANK_SIZE EPOCHS DATASET RANK_TABLE_FILE SERVER_NUM SCHED_HOST SCHED_PORT
 ```
 
-
-
 ## [Evaluation Process](#contents)
+
 To evaluate the model, command as follows:
-```
+
+```python
 python eval.py
 ```
 
@@ -284,7 +312,7 @@ python eval.py
 
 ## [Performance](#contents)
 
-### Training Performance 
+### Training Performance
 
 | Parameters               | Single <br />Ascend             | Single<br />GPU                 | Data-Parallel-8P                | Host-Device-mode-8P             |
 | ------------------------ | ------------------------------- | ------------------------------- | ------------------------------- | ------------------------------- |
@@ -300,8 +328,6 @@ python eval.py
 | Loss                     | wide:0.433,deep:0.444           | wide:0.444, deep:0.456          | wide:0.437, deep: 0.448         | wide:0.444, deep:0.444          |
 | Parms(M)                 | 75.84                           | 75.84                           | 75.84                           | 75.84                           |
 | Checkpoint for inference | 233MB(.ckpt file)               | 230MB(.ckpt)                    | 233MB(.ckpt file)               | 233MB(.ckpt file)               |
-
-
 
 All executable scripts can be found in [here](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/recommend/wide_and_deep/script)
 
@@ -322,10 +348,10 @@ Note: The result of GPU is tested under the master version. The parameter server
 # [Description of Random Situation](#contents)
 
 There are three random situations:
+
 - Shuffle of the dataset.
 - Initialization of some model weights.
 - Dropout operations.
-
 
 # [ModelZoo Homepage](#contents)
 
