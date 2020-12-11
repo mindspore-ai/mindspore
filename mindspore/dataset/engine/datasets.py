@@ -2027,7 +2027,8 @@ class BlockReleasePair:
                                             timeout=get_callback_timeout())
             # time_out will be False if time out occurs
             if not not_time_out:
-                logger.warning("Timeout happened in sync_wait, disabling lock.")
+                logger.warning("Timeout happened in sync_wait, maybe dataset.sync_update(condition=...) "
+                               "is not added after dataset.create_dict_iterator(...), now disabling lock.")
                 self.disable = True
             self.row_count += 1
         return True
@@ -2072,8 +2073,9 @@ class SyncWaitDataset(Dataset):
         self._pair = BlockReleasePair(num_batch, callback)
         if self._condition_name in self.children[0].get_sync_notifiers():
             raise RuntimeError("Condition name is already in use.")
-        logger.warning("Please remember to add dataset.sync_update(condition=%s), otherwise hanging will result.",
-                       condition_name)
+        logger.info("Please remember to add dataset.sync_update(condition=%s), otherwise hanging will result. "
+                    "If dataset.sync_update(condition=%s) has already been added, you can ignore the info.",
+                    condition_name, condition_name)
 
     def parse(self, children=None):
         return cde.SyncWaitNode(children[0], self._condition_name, self._pair.block_func)
