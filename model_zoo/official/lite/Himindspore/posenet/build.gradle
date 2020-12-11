@@ -13,7 +13,7 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
-                arguments = [moduleName: project.getName()]
+                arguments = [AROUTER_MODULE_NAME: project.getName()]
             }
         }
     }
@@ -59,13 +59,13 @@ apply from: 'download.gradle'
 
 dependencies {
     implementation project(':mindsporelibrary')
-    implementation fileTree(dir: 'libs', include: ['*.jar', '*.aar'])
+
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'com.google.android.material:material:1.2.1'
     implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
     androidTestImplementation 'androidx.test.ext:junit:1.1.2'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
 
-    implementation 'com.alibaba:arouter-api:1.2.1'
-    annotationProcessor 'com.alibaba:arouter-compiler:1.1.2'
+    implementation 'com.alibaba:arouter-api:1.5.1'
+    annotationProcessor 'com.alibaba:arouter-compiler:1.5.1'
 }

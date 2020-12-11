@@ -8,16 +8,15 @@ android {
         applicationId "com.mindspore.himindspore"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 3
-        versionName "1.1.1"
+        versionCode 4
+        versionName "1.1.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         javaCompileOptions {
             annotationProcessorOptions {
-                arguments = [moduleName: project.getName()]
+                arguments = [AROUTER_MODULE_NAME: project.getName()]
             }
         }
-
     }
 
     buildTypes {
@@ -69,10 +68,11 @@ dependencies {
     implementation 'com.squareup.okhttp3:logging-interceptor:4.9.0'
     implementation 'org.greenrobot:eventbus:3.0.0'
 
-    implementation 'com.alibaba:arouter-api:1.2.1'
-    annotationProcessor 'com.alibaba:arouter-compiler:1.1.2'
+    implementation 'com.alibaba:arouter-api:1.5.1'
+    annotationProcessor 'com.alibaba:arouter-compiler:1.5.1'
 
     implementation project(':posenet')
     implementation project(':imageObject')
     implementation project(':styletransfer')
+    implementation project(':segmentation')
 }
