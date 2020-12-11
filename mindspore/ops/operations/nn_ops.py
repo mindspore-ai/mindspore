@@ -5697,8 +5697,8 @@ class LARSUpdate(PrimitiveWithInfer):
         ...         self.lars = ops.LARSUpdate()
         ...         self.reduce = ops.ReduceSum()
         ...     def construct(self, weight, gradient):
-        ...         w_square_sum = self.reduce(ops.square(weight))
-        ...         grad_square_sum = self.reduce(ops.square(gradient))
+        ...         w_square_sum = self.reduce(ops.Square(weight))
+        ...         grad_square_sum = self.reduce(ops.Square(gradient))
         ...         grad_t = self.lars(weight, gradient, w_square_sum, grad_square_sum, 0.0, 1.0)
         ...         return grad_t
         ...

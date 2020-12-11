@@ -129,12 +129,10 @@ class Dropout(Cell):
         >>> x = Tensor(np.ones([2, 2, 3]), mindspore.float32)
         >>> net = nn.Dropout(keep_prob=0.8)
         >>> net.set_train()
+        Dropout<keep_prob=0.8, dtype=Float32>
         >>> output = net(x)
-        >>> print(output)
-        [[[0.   1.25 0.  ]
-          [1.25 1.25 1.25]]
-         [[1.25 1.25 1.25]
-          [1.25 1.25 1.25]]]
+        >>> print(output.shape)
+        (2, 2, 3)
     """
 
     def __init__(self, keep_prob=0.5, dtype=mstype.float32):
@@ -257,12 +255,12 @@ class Dense(Cell):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input = Tensor(np.random.randint(0, 255, [2, 3]), mindspore.float32)
+        >>> input = Tensor(np.array([[180, 234, 154], [244, 48, 247]]), mindspore.float32)
         >>> net = nn.Dense(3, 4)
         >>> output = net(input)
         >>> print(output)
-        [[ 2.5246444   2.2738023   0.5711005  -3.9399147 ]
-         [ 1.0739875   4.0155234   0.94188046 -5.459526  ]]
+        [[ 1.1199665   1.6730378   -1.383349  -1.5148697 ]
+         [ 3.0728707   0.0124917   -1.4012015 0.04354739 ]]
     """
 
     @cell_attr_register(attrs=['has_bias', 'activation', 'in_channels', 'out_channels'])
@@ -456,10 +454,10 @@ class Norm(Cell):
 
     Examples:
         >>> net = nn.Norm(axis=0)
-        >>> input = Tensor(np.random.randint(0, 10, [2, 4]), mindspore.float32)
+        >>> input = Tensor(np.array([[4, 4, 9, 1], [2, 1, 3, 6]]), mindspore.float32)
         >>> output = net(input)
         >>> print(output)
-        [7.81025  6.708204 0.      8.602325]
+        [4.472136 4.1231055 9.486833 6.0827627]
     """
 
     def __init__(self, axis=(), keep_dims=False):
@@ -584,14 +582,14 @@ class Pad(Cell):
         ...         self.pad = nn.Pad(paddings=((1, 1), (2, 2)), mode="CONSTANT")
         ...     def construct(self, x):
         ...         return self.pad(x)
-        >>> x = np.random.random(size=(2, 3)).astype(np.float32)
+        >>> x = np.array([[0.3, 0.5, 0.2], [0.5, 0.7, 0.3]], dtype=np.float32)
         >>> pad = Net()
         >>> output = pad(Tensor(x))
         >>> print(output)
-        [[0.         0.         0.         0.         0.         0.        ]
-         [0.         0.         0.82691735 0.36147234 0.70918983 0.        ]
-         [0.         0.         0.7842975  0.44726616 0.4353459  0.        ]
-         [0.         0.         0.         0.         0.         0.        ]]
+        [[0.         0.         0.         0.         0.         0.        0.         ]
+         [0.         0.         0.3        0.5        0.2        0.        0.         ]
+         [0.         0.         0.5        0.7        0.3        0.        0.         ]
+         [0.         0.         0.         0.         0.         0.        0.         ]]
     """
 
     def __init__(self, paddings, mode="CONSTANT"):
@@ -694,8 +692,8 @@ class Unfold(Cell):
             must be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
         rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
             pixel positions, must be a tuple or a list of integers, and the format is [1, rate_row, rate_col, 1].
-        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
-            not case sensitive. Default: "valid".
+        padding (str): The type of padding algorithm, is a string whose value is "same" or "valid", not case sensitive.
+            Default: "valid".
 
             - same: Means that the patch can take the part beyond the original image, and this part is filled with 0.
 

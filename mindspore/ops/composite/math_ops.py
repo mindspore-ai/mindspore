@@ -53,6 +53,9 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     Returns:
           Tensor, number of nonzero element. The data type is dtype.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
     Examples:
         >>> input_x = Tensor(np.array([[0, 1, 0], [1, 1, 0]]).astype(np.float32))
         >>> nonzero_num = count_nonzero(x=input_x, axis=[0, 1], keep_dims=True, dtype=mstype.int32)
@@ -180,6 +183,9 @@ def tensor_dot(x1, x2, axes):
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N + M)`. Where :math:`N` and :math:`M` are the free axes not
         contracted in both inputs
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x1 = Tensor(np.ones(shape=[1, 2, 3]), mindspore.float32)

@@ -749,14 +749,14 @@ class Unique(Primitive):
         >>>
         >>> # note that for GPU, this operator must be wrapped inside a model, and executed in graph mode.
         >>> class UniqueNet(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(UniqueNet, self).__init__()
-        >>>         self.unique_op = P.Unique()
-        >>>
-        >>>     def construct(self, x):
-        >>>         output, indices = self.unique_op(x)
-        >>>         return output, indices
-        >>>
+        ...     def __init__(self):
+        ...         super(UniqueNet, self).__init__()
+        ...         self.unique_op = P.Unique()
+        ...
+        ...     def construct(self, x):
+        ...         output, indices = self.unique_op(x)
+        ...         return output, indices
+        ...
         >>> x = Tensor(np.array([1, 2, 5, 2]), mindspore.int32)
         >>> context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
         >>> net = UniqueNet()
@@ -1644,10 +1644,10 @@ class ArgMaxWithValue(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
+        >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
         >>> index, output = ops.ArgMaxWithValue()(input_x)
         >>> print(index, output)
-        2 0.87173676
+        3 0.7
     """
 
     @prim_attr_register
@@ -1701,10 +1701,10 @@ class ArgMinWithValue(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> input_x = Tensor(np.random.rand(5), mindspore.float32)
+        >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
         >>> output = ops.ArgMinWithValue()(input_x)
         >>> print(output)
-        (Tensor(shape=[], dtype=Int32, value= 2), Tensor(shape=[], dtype=Float32, value= 0.0595638))
+        (Tensor(shape=[], dtype=Int32, value= 0), Tensor(shape=[], dtype=Float32, value= 0.0))
     """
 
     @prim_attr_register
@@ -3629,7 +3629,7 @@ class SpaceToDepth(PrimitiveWithInfer):
         >>> block_size = 2
         >>> space_to_depth = ops.SpaceToDepth(block_size)
         >>> output = space_to_depth(x)
-        >>> print(output)
+        >>> print(output.shape)
         (1, 12, 1, 1)
     """
 

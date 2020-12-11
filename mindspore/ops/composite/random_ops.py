@@ -45,6 +45,9 @@ def normal(shape, mean, stddev, seed=None):
         of `mean` and `stddev`.
         The dtype is float32.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> shape = (3, 1, 2)
         >>> mean = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
@@ -84,6 +87,9 @@ def laplace(shape, mean, lambda_param, seed=None):
     Returns:
         Tensor. The shape should be the broadcasted shape of Input "shape" and shapes of mean and lambda_param.
         The dtype is float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> shape = (4, 16)
@@ -126,6 +132,9 @@ def uniform(shape, minval, maxval, seed=None, dtype=mstype.float32):
         Tensor. The shape should be equal to the broadcasted shape between the input `shape` and shapes
         of `minval` and `maxval`.
         The dtype is designated as the input `dtype`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> # For discrete uniform distribution, only one number is allowed for both minval and maxval:
@@ -174,6 +183,9 @@ def gamma(shape, alpha, beta, seed=None):
         of `alpha` and `beta`.
         The dtype is float32.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> shape = (3, 1, 2)
         >>> alpha = Tensor(np.array([[3, 4], [5, 6]]), mstype.float32)
@@ -201,6 +213,9 @@ def poisson(shape, mean, seed=None):
     Returns:
         Tensor. The shape should be equal to the broadcasted shape between the input "shape" and shapes of `mean`.
         The dtype is float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> shape = (4, 1)
@@ -235,6 +250,9 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
     Outputs:
         Tensor, has the same rows with input. The number of sampled indices of each row is `num_samples`.
         The dtype is float32.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> input = Tensor([0, 9, 4, 0], mstype.float32)

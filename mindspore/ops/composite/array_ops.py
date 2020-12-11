@@ -67,6 +67,9 @@ def repeat_elements(x, rep, axis=0):
         One tensor with values repeated along the specified axis. If x has shape
         (s1, s2, ..., sn) and axis is i, the output will have shape (s1, s2, ..., si * rep, ..., sn)
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> x = Tensor(np.array([[0, 1, 2], [3, 4, 5]]), mindspore.int32)
         >>> output = C.repeat_elements(x, rep = 2, axis = 0)
