@@ -68,7 +68,7 @@ Status MindDataEager::LoadImageFromDir(const std::string &image_dir, std::vector
   // Check target directory
   dataset::Path image_dir_(image_dir);
   if (!image_dir_.Exists() || !image_dir_.IsDirectory()) {
-    std::string err_msg = "Target directory: " + image_dir + " does not exist or not a dir.";
+    std::string err_msg = "Target directory: " + image_dir + " does not exist or not a directory.";
     MS_LOG(ERROR) << err_msg;
     return Status(StatusCode::FAILED, err_msg);
   }

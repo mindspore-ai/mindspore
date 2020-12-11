@@ -24,7 +24,7 @@ else
 	echo "BUILD_PATH = $BUILD_PATH"
 fi
 
-cd ${BUILD_PATH}/mindspore/tests/cxx_st2
+cd ${BUILD_PATH}/mindspore/tests/cxx_st
 
 export LD_LIBRARY_PATH=${BUILD_PATH}/mindspore/googletest/googlemock/gtest:${PROJECT_PATH}/mindspore:${PROJECT_PATH}/mindspore/lib:$LD_LIBRARY_PATH
 export PYTHONPATH=${PROJECT_PATH}/tests/ut/cpp/python_input:$PYTHONPATH:${PROJECT_PATH}
