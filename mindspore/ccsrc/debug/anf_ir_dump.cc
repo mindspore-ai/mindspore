@@ -217,6 +217,10 @@ void DumpOperator(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &g
   } else if (op->isa<CNode>()) {
     if (gsub->local_var_map.find(op) != gsub->local_var_map.end()) {
       gsub->buffer << "%" << gsub->local_var_map[op];
+    } else {
+      auto node = op->cast<CNodePtr>();
+      auto fg = node->func_graph();
+      gsub->buffer << "$(" << fg->ToString() << "." << fg->debug_info()->get_id() << ":" << node->ToString() << ")";
     }
   } else if (op->isa<ValueNode>()) {
     gsub->buffer << GetValueNode(op)->ToString();
@@ -249,7 +253,13 @@ void DumpOperands(const AnfNodePtr &nd, OrderedMap<AnfNodePtr, int32_t> *para_ma
           gsub->buffer << "%para" << (*para_map)[in];
         }
       } else if (in->isa<CNode>()) {
-        gsub->buffer << "%" << gsub->local_var_map[in];
+        if (gsub->local_var_map.find(in) != gsub->local_var_map.end()) {
+          gsub->buffer << "%" << gsub->local_var_map[in];
+        } else {
+          auto node = in->cast<CNodePtr>();
+          auto fg = node->func_graph();
+          gsub->buffer << "$(" << fg->ToString() << "." << fg->debug_info()->get_id() << ":" << node->ToString() << ")";
+        }
       } else if (in->isa<ValueNode>() && !IsValueNode<FuncGraph>(in)) {
         // non Primitive valuenode
         gsub->buffer << GetValueNode(in)->ToString();
