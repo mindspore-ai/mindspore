@@ -30,6 +30,7 @@
 #include "pipeline/jit/base.h"
 #include "debug/common.h"
 #include "debug/trace.h"
+#include "utils/trace_base.h"
 
 namespace mindspore {
 const std::string ToShortString(const TypeId &typeId) {
@@ -344,7 +345,8 @@ void DumpShape(const AnfNodePtr &nd, const FuncGraphPtr &sub_graph, const std::s
 }
 
 void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<AnfNodePtr, int32_t> *const para_map,
-               const std::shared_ptr<SubGraphIRInfo> &gsub, bool dump_full_name = false, bool dump_location = false) {
+               const std::shared_ptr<SubGraphIRInfo> &gsub, bool dump_full_name = false,
+               LocDumpMode dump_location = kOff) {
   if (nd == nullptr || sub_graph == nullptr || para_map == nullptr || gsub == nullptr) {
     return;
   }
@@ -383,19 +385,24 @@ void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<Anf
   if (dump_full_name) {
     gsub->buffer << "      : (" << nd->fullname_with_scope() << ")" << std::endl;
   }
-  if (dump_location) {
+  if (dump_location == kTopStack) {
     if (label_manage::GetGlobalTraceLabelType() == label_manage::TraceLabelType::kWithUniqueId) {
       gsub->buffer << trace::GetDebugInfo(nd->debug_info(), "      # ", kSourceLineTipDiscard) << "#"
                    << label_manage::Label(nd->debug_info()) << "\n";
     } else {
       gsub->buffer << trace::GetDebugInfo(nd->debug_info(), "      # ", kSourceLineTipDiscard) << "\n";
     }
+  } else if (dump_location == kWholeStack) {
+    auto traces = mindspore::trace::GetSourceLineList(nd);
+    for (auto &trace : traces) {
+      gsub->buffer << "      # " << trace;
+    }
   }
 }
 
 void DumpIRInSubgraph(const std::vector<AnfNodePtr> &nodes, OrderedMap<AnfNodePtr, int32_t> *para_map,
                       OrderedMap<FuncGraphPtr, std::shared_ptr<SubGraphIRInfo>> *const sub_graphs,
-                      bool dump_full_name = false, bool dump_location = false) {
+                      bool dump_full_name = false, LocDumpMode dump_location = kOff) {
   if (para_map == nullptr || sub_graphs == nullptr) {
     return;
   }
@@ -489,7 +496,7 @@ std::string AddGlobalId(const std::string &filename) {
 }
 
 #ifdef ENABLE_DUMP_IR
-void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name, bool dump_location) {
+void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_full_name, LocDumpMode dump_location) {
   if (graph == nullptr) {
     return;
   }
@@ -529,7 +536,7 @@ void DumpIR(const std::string &filename, const FuncGraphPtr &graph, bool dump_fu
   ChangeFileMode(realpath.value(), S_IRUSR);
 }
 #else
-void DumpIR(const std::string &, const FuncGraphPtr &, bool, bool) {
+void DumpIR(const std::string &, const FuncGraphPtr &, bool, LocDumpMode) {
   static bool already_printed = false;
   if (already_printed) {
     return;
