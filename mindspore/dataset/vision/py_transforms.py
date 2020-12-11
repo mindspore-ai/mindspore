@@ -199,7 +199,7 @@ class Normalize:
 
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
-            The mean values must be in the range (0.0, 1.0].
+            The mean values must be in the range [0.0, 1.0].
         std (sequence): List or tuple of standard deviations for each channel, w.r.t. channel order.
             The standard deviation values must be in the range (0.0, 1.0].
 
@@ -783,8 +783,9 @@ class Pad:
             with the first value and the right and bottom with the second value.
             If 4 values are provided as a list or tuple,
             pad the left, top, right and bottom respectively.
-        fill_value (Union[int, tuple], optional): Filling value for the pixel intensity
-            of the borders if the padding_mode is Border.CONSTANT (Default=0).
+        fill_value (Union[int, tuple], optional): The pixel intensity of the borders, only valid for
+            padding_mode Border.CONSTANT (default=0).
+            If it is an integer, it is used for all RGB channels.
             If it is a 3-tuple, it is used to fill R, G, B channels respectively.
         padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT).
             It can be any of [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].

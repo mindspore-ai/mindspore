@@ -263,7 +263,7 @@ class Normalize(cde.NormalizeOp):
 
     Args:
         mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
-            The mean values must be in range (0.0, 255.0].
+            The mean values must be in range [0.0, 255.0].
         std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
             The standard deviation values must be in range (0.0, 255.0].
 
@@ -278,6 +278,10 @@ class Normalize(cde.NormalizeOp):
 
     @check_normalize_c
     def __init__(self, mean, std):
+        if len(mean) == 1:
+            mean = [mean[0]] * 3
+        if len(std) == 1:
+            std = [std[0]] * 3
         self.mean = mean
         self.std = std
         super().__init__(*mean, *std)
@@ -1193,9 +1197,11 @@ class Pad(cde.PadOp):
             with the first value and (right and bottom) with the second value.
             If 4 values are provided as a list or tuple,
             it pads the left, top, right and bottom respectively.
-        fill_value (Union[int, tuple], optional): The pixel intensity of the borders if
-            the padding_mode is Border.CONSTANT (default=0). If it is a 3-tuple, it is used to
-            fill R, G, B channels respectively.
+        fill_value (Union[int, tuple], optional): The pixel intensity of the borders, only valid for
+            padding_mode Border.CONSTANT (default=0).
+            If it is an integer, it is used for all RGB channels.
+            If it is a 3-tuple, it is used to fill R, G, B channels respectively.
+            The fill_value values must be in range [0, 255].
         padding_mode (Border mode, optional): The method of padding (default=Border.CONSTANT). Can be any of
             [Border.CONSTANT, Border.EDGE, Border.REFLECT, Border.SYMMETRIC].
 

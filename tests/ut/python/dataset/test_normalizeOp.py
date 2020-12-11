@@ -245,6 +245,24 @@ def test_normalize_exception_unequal_size_c():
         assert str(e) == "Length of mean and std must be equal."
 
 
+def test_normalize_exception_out_of_range_c():
+    """
+    Test Normalize in c transformation: mean, std out of range
+    expected to raise ValueError
+    """
+    logger.info("test_normalize_exception_out_of_range_c")
+    try:
+        _ = c_vision.Normalize([256, 250, 125], [50, 75, 75])
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "not within the required interval" in str(e)
+    try:
+        _ = c_vision.Normalize([255, 250, 125], [0, 75, 75])
+    except ValueError as e:
+        logger.info("Got an exception in DE: {}".format(str(e)))
+        assert "not within the required interval" in str(e)
+
+
 def test_normalize_exception_unequal_size_py():
     """
     Test Normalize in python transformation: len(mean) != len(std)

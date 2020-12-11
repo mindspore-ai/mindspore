@@ -112,6 +112,14 @@ def check_pos_int64(value, arg_name=""):
     check_value(value, [UINT64_MIN, INT64_MAX])
 
 
+def check_float32(value, arg_name=""):
+    check_value(value, [FLOAT_MIN_INTEGER, FLOAT_MAX_INTEGER], arg_name)
+
+
+def check_float64(value, arg_name=""):
+    check_value(value, [DOUBLE_MIN_INTEGER, DOUBLE_MAX_INTEGER], arg_name)
+
+
 def check_pos_float32(value, arg_name=""):
     check_value(value, [UINT32_MIN, FLOAT_MAX_INTEGER], arg_name)
 

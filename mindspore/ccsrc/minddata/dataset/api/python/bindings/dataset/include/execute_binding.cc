@@ -30,6 +30,11 @@ PYBIND_REGISTER(Execute, 0, ([](const py::module *m) {
                     }))
                     .def("__call__", [](Execute &self, std::shared_ptr<Tensor> in) {
                       std::shared_ptr<Tensor> out = self(in);
+                      if (out == nullptr) {
+                        THROW_IF_ERROR([]() {
+                          RETURN_STATUS_UNEXPECTED("Failed to execute op in eager mode, please check ERROR log above.");
+                        }());
+                      }
                       return out;
                     });
                 }));
