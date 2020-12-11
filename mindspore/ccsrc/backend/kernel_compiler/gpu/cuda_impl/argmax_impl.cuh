@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ARGMAX_H_
-#define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ARGMAX_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_ARGMAX_IMPL_CUH_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_ARGMAX_IMPL_CUH_
 template <typename T>
-void CalArgmax(const T* input, const int batch_size, const int channel_size, const int axis, int* output,
+void CalArgmax(const T *input, const int batch_size, const int channel_size, const int64_t axis, int *output,
                cudaStream_t cuda_stream);
 
-#endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMP_ARGMAX_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_ARGMAX_IMPL_CUH_
