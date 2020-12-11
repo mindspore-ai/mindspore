@@ -1171,7 +1171,8 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
     MS_EXCEPTION_IF_NULL(tensor);
     tensor->set_device_address(address);
     tensor->SetNeedWait(false);
-
+    MS_LOG(DEBUG) << "Debug address: Output tensor obj " << tensor.get() << ", tensor id " << tensor->id()
+                  << ", device address " << tensor->device_address().get();
     if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
       tensor->data_sync(false);
       tensor->set_sync_status(kNeedSyncHostToDevice);
@@ -1719,7 +1720,12 @@ void SessionBasic::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &ro
 
 void SessionBasic::CleanUselessTensorsImpl(const std::shared_ptr<std::vector<tensor::TensorPtr>> &useless_tensors) {
   for (const auto &tensor : *useless_tensors) {
-    tensor->set_device_address(nullptr);
+    MS_EXCEPTION_IF_NULL(tensor);
+    const auto &shape = tensor->shape();
+    if (!shape.empty()) {
+      // The address of scalar value node does not need to be deleted
+      tensor->set_device_address(nullptr);
+    }
   }
 }
 
