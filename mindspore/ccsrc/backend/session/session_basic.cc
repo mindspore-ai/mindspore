@@ -1718,6 +1718,11 @@ void SessionBasic::UpdateGraphDynamicShapeAttr(const NotNull<KernelGraphPtr> &ro
 }
 
 void SessionBasic::CleanUselessTensorsImpl(const std::shared_ptr<std::vector<tensor::TensorPtr>> &useless_tensors) {
+  auto ms_context = MsContext::GetInstance();
+  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_target == "CPU") {
+    return;
+  }
   for (const auto &tensor : *useless_tensors) {
     tensor->set_device_address(nullptr);
   }
