@@ -112,8 +112,8 @@ python preprocess_dataset.py -d /data/save_data_path
 
 ## 环境要求
 
-- 硬件（Ascend）
-    - 准备Ascend处理器搭建硬件环境。
+- 硬件（Ascend/GPU）
+    - 准备Ascend处理器或GPU处理器搭建硬件环境。
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
@@ -198,6 +198,25 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
 # (7) 开始模型的推理。
 ```
 
+- GPU处理器环境运行
+
+  ```python
+  # 训练示例
+  python train.py --data_path=/path/to/data/ --config_path=/path/to/config/ --output ./output > train.log  2>&1 &
+  OR
+  bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH]
+
+  # 分布式训练示例
+  bash scripts/run_distribute_train_gpu.sh [RANKSIZE] [DATASET] [CONFIG_PATH]
+
+  # 评估示例
+  python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/config/ > eval.log  2>&1 &
+  OR
+  bash scripts/run_standalone_eval_gpu.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
+  ```
+
+# 脚本说明
+
 ## 脚本说明
 
 ### 脚本及样例代码
@@ -214,6 +233,9 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
         │   ├──run_infer_310.sh             // Ascend 310 推理脚本
         │   ├──run_standalone_train.sh      // Ascend 上单卡训练脚本
         │   ├──run_standalone_eval.sh       // Ascend 上推理脚本
+        │   ├──run_standalone_train_gpu.sh  // GPU 上训练脚本
+        │   ├──run_standalone_eval_gpu.sh   // GPU 上评估脚本
+        │   ├──run_distribute_train_gpu.sh  // GPU 上分布式训练脚本
         ├── src
         │   ├──config.py                    // 参数配置
         │   ├──data_loader.py               // 数据处理
@@ -268,6 +290,8 @@ bash scripts/docker_start.sh unet:20.1.0 [DATA_DIR] [MODEL_DIR]
   'weight_decay': 0.0005,             # 权重衰减值
   'loss_scale': 1024.0,               # 损失放大
   'FixedLossScaleManager': 1024.0,    # 固定损失放大
+  'is_save_on_master': 1,             # 在master或all rank上保存检查点
+  'rank': 0,                          # 分布式local rank（默认为0）
   'resume': False,                    # 是否使用预训练模型训练
   'resume_ckpt': './',                # 预训练模型路径
   ```
@@ -332,8 +356,21 @@ python train.py --data_path=/path/to/data/ --config_path=/path/to/yaml > train.l
   ```
 
   模型检查点储存在当前路径中。
+- GPU处理器环境运行
+
+  ```shell
+  python train.py --data_path=/path/to/data/ --config_path=/path/to/config/ --output ./output > train.log  2>&1 &
+  OR
+  bash scripts/run_standalone_train_gpu.sh [DATASET] [CONFIG_PATH]
+  ```
+
+  上述python命令在后台运行，可通过`train.log`文件查看结果。
+
+  训练结束后，您可以在默认脚本文件夹中找到检查点文件。
 
 ### 分布式训练
+
+- Ascend处理器环境运行
 
 ```shell
 bash scripts/run_distribute_train.sh [RANK_TABLE_FILE] [DATASET]
@@ -349,6 +386,14 @@ step: 2, loss is 0.6925452, fps is 56.43668656967454
 step: 299, loss is 0.20551169, fps is 58.4039329983891
 step: 300, loss is 0.18949677, fps is 57.63118508760329
 ```
+
+- GPU处理器环境运行
+
+```shell
+bash scripts/run_distribute_train_gpu.sh [RANKSIZE] [DATASET] [CONFIG_PATH]
+```
+
+上述shell脚本在后台运行分布式训练。可通过`train.log`文件查看结果。
 
 #### 训练时推理
 
@@ -375,29 +420,46 @@ python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkp
   ============== Cross valid dice coeff is: {'dice_coeff': 0.9111}
   ```
 
-## 模型描述
+- GPU处理器环境运行评估ISBI数据集
 
-### 性能
+  在运行以下命令之前，请检查用于评估的检查点路径。将检查点路径设置为绝对全路径，如"username/unet/ckpt_unet_medical_adam-2_400.ckpt"。
 
-#### 评估性能
+  ```shell
+  python eval.py --data_path=/path/to/data/ --checkpoint_file_path=/path/to/checkpoint/ --config_path=/path/to/config/ > eval.log  2>&1 &
+  OR
+  bash scripts/run_standalone_eval_gpu.sh [DATASET] [CHECKPOINT] [CONFIG_PATH]
+  ```
 
-| 参数                 | Ascend     |
-| -------------------------- | ------------------------------------------------------------ |
-| 模型版本 | U-Net |
-| 资源 | Ascend 910；CPU 2.60GHz，192核；内存 755GB；系统 Euler2.8  |
-| 上传日期 | 2020-9-15 |
-| MindSpore版本 | 1.2.0 |
-| 数据集             | ISBI                                                         |
-| 训练参数   | 1pc: epoch=400, total steps=600, batch_size = 16, lr=0.0001  |
-| 优化器 | Adam |
-| 损失函数              | Softmax交叉熵                                         |
-| 输出 | 概率 |
-| 损失 | 0.22070312                                                   |
-| 速度 | 1卡：267毫秒/步；8卡：280毫秒/步 |
-| 总时长 | 1卡：2.67分钟；8卡：1.40分钟 |
-| 参数(M)  | 93M                                                       |
-| 微调检查点 | 355.11M (.ckpt文件)                                         |
-| 脚本                    | [U-Net脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) |
+  上述python命令在后台运行。可通过"eval.log"文件查看结果。测试数据集的准确率如下：
+
+  ```shell
+  # grep "Cross valid dice coeff is:" eval.log
+  ============== Cross valid dice coeff is: {'dice_coeff': 0.9089390969777261}
+  ```
+
+# 模型描述
+
+## 性能
+
+### 评估性能
+
+| 参数                 | Ascend     | GPU |
+| -------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 模型版本 | U-Net | U-Net |
+| 资源 | Ascend 910；CPU：2.60GHz，192核；内存：755 GB；系统 Euler2.8  | NV SMX2 V100，内存：32G |
+| 上传日期 | 2020-9-15 | 2020-12-29 |
+| MindSpore版本 | 1.2.0 | 1.1.0 |
+| 数据集             | ISBI                                                         | ISBI                                                     |
+| 训练参数   | 1pc: epoch=400, total steps=600, batch_size = 16, lr=0.0001  | 1pc: epoch=400, total steps=800,batch_size = 12, lr=0.0001 |
+| 优化器 | ADAM | ADAM |
+| 损失函数              | Softmax交叉熵                                         | Softmax交叉熵                               |
+| 输出 | 概率 | 概率 |
+| 损失 | 0.22070312                                                   | 0.21425568                                         |
+| 速度 | 1卡：267毫秒/步；8卡：280毫秒/步 | 1卡：423毫秒/步；8卡：128毫秒/步 |
+| 总时长 | 1卡：2.67分钟；8卡：1.40分钟 | 1卡：5.64分钟；8卡：3.41分钟 |
+| 参数(M)  | 93M                                                       | 93M                                                    |
+| 微调检查点 | 355.11M (.ckpt文件)                                         | 355.11M (.ckpt文件)                        |
+| 脚本                    | [U-Net脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) | [U-Net脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/unet) |
 
 ### 用法
 
