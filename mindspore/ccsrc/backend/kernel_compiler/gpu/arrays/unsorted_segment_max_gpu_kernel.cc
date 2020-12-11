@@ -18,60 +18,131 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(
+MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentMax,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat32),
-  UnsortedSegmentMaxGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(
+  UnsortedSegmentMaxGpuKernel, float, int)
+
+MS_REG_GPU_KERNEL_TWO(
+  UnsortedSegmentMax,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat32),
+  UnsortedSegmentMaxGpuKernel, float, int64_t)
+
+MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentMax,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeFloat16),
-  UnsortedSegmentMaxGpuKernel, half)
-MS_REG_GPU_KERNEL_ONE(
+  UnsortedSegmentMaxGpuKernel, half, int)
+
+MS_REG_GPU_KERNEL_TWO(
+  UnsortedSegmentMax,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeFloat16),
+  UnsortedSegmentMaxGpuKernel, half, int64_t)
+
+MS_REG_GPU_KERNEL_TWO(
   UnsortedSegmentMax,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
-  UnsortedSegmentMaxGpuKernel, int)
+  UnsortedSegmentMaxGpuKernel, int, int)
+
+MS_REG_GPU_KERNEL_TWO(
+  UnsortedSegmentMax,
+  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt32),
+  UnsortedSegmentMaxGpuKernel, int, int64_t)
+
 // Dynamic Mode - registered for int32/int64 3rd input
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      UnsortedSegmentMaxGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
+                      UnsortedSegmentMaxGpuKernel, float, int)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      UnsortedSegmentMaxGpuKernel, float, int64_t)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat32),
-                      UnsortedSegmentMaxGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
+                      UnsortedSegmentMaxGpuKernel, float, int)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      UnsortedSegmentMaxGpuKernel, float, int64_t)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      UnsortedSegmentMaxGpuKernel, half)
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
+                      UnsortedSegmentMaxGpuKernel, half, int)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      UnsortedSegmentMaxGpuKernel, half, int64_t)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeFloat16),
-                      UnsortedSegmentMaxGpuKernel, half)
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
+                      UnsortedSegmentMaxGpuKernel, half, int)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      UnsortedSegmentMaxGpuKernel, half, int64_t)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddOutputAttr(kNumberTypeInt32),
-                      UnsortedSegmentMaxGpuKernel, int)
-MS_REG_GPU_KERNEL_ONE(UnsortedSegmentMax,
+                      UnsortedSegmentMaxGpuKernel, int, int)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      UnsortedSegmentMaxGpuKernel, int, int64_t)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt32)
                         .AddInputAttr(kNumberTypeInt64)
                         .AddOutputAttr(kNumberTypeInt32),
-                      UnsortedSegmentMaxGpuKernel, int)
+                      UnsortedSegmentMaxGpuKernel, int, int)
+
+MS_REG_GPU_KERNEL_TWO(UnsortedSegmentMax,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt32)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeInt32),
+                      UnsortedSegmentMaxGpuKernel, int, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

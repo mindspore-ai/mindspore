@@ -2001,7 +2001,8 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
         segment_ids_shape = segment_ids['shape']
         valid_type = [mstype.float16, mstype.float32, mstype.int32]
         validator.check_tensor_dtype_valid("x", x['dtype'], valid_type, self.name)
-        validator.check_tensors_dtypes_same_and_valid({"segment_ids": segment_ids['dtype']}, [mstype.int32], self.name)
+        validator.check_tensors_dtypes_same_and_valid({"segment_ids": segment_ids['dtype']},
+                                                      [mstype.int32, mstype.int64], self.name)
         validator.check_equal_int(len(segment_ids_shape), 1, "rank of segment_ids_shape", self.name)
         num_segments_type = num_segments['dtype']
         validator.check_subclass("num_segments", num_segments_type, [mstype.tensor, mstype.number], self.name)

@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
+template <typename T, typename S>
 class UnsortedSegmentMaxGpuKernel : public GpuKernel {
  public:
   UnsortedSegmentMaxGpuKernel() { ResetResource(); }
@@ -41,7 +41,7 @@ class UnsortedSegmentMaxGpuKernel : public GpuKernel {
       return true;
     }
     T *input_addr = GetDeviceAddress<T>(inputs, 0);
-    int *indices_addr = GetDeviceAddress<int>(inputs, 1);
+    S *indices_addr = GetDeviceAddress<S>(inputs, 1);
     T *output_addr = GetDeviceAddress<T>(outputs, 0);
 
     CHECK_CUDA_RET_WITH_EXCEPT(kernel_node_,

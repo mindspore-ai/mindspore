@@ -71,12 +71,12 @@ def test_2d_int32():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_3d_float16():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target='GPU')
+def test_3d_float16_int64():
+    context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_x = Tensor(np.arange(
         4 * 5 * 3, dtype=np.float16).reshape(4, 5, 3), dtype=mindspore.float16)
-    segment_ids = Tensor([2, 1, 1, -1], mstype.int32)
-    num_segments = 5
+    segment_ids = Tensor([2, 1, 1, -1], mstype.int64)
+    num_segments = Tensor(5, dtype=mstype.int64)
     net = UnsortedSegmentMaxNet(num_segments)
     output = net(input_x, segment_ids).asnumpy()
     expect = np.array([[[-6.55e+04, -6.55e+04, -6.55e+04],
@@ -110,12 +110,12 @@ def test_3d_float16():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_3d_float32():
+def test_3d_float32_int64():
     context.set_context(mode=context.GRAPH_MODE, device_target='GPU')
     input_x = Tensor(np.arange(
         4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3), dtype=mindspore.float32)
-    segment_ids = Tensor([2, 1, 1, -1], mstype.int32)
-    num_segments = 3
+    segment_ids = Tensor([2, 1, 1, -1], mstype.int64)
+    num_segments = Tensor(3, dtype=mstype.int64)
     net = UnsortedSegmentMaxNet(num_segments)
     output = net(input_x, segment_ids).asnumpy()
     expect = np.array([[[-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
