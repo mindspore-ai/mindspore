@@ -233,6 +233,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   bool partial_memory_;
   std::mutex access_lock_;
   std::map<std::pair<uint32_t, uint32_t>, std::string> stream_task_to_opname_;
+  std::map<uint32_t, std::vector<std::string>> overflow_ops_;
   double last_overflow_bin_;
   std::map<uint32_t, std::string> overflow_bin_path_;
   // flag to keep track of the very first suspension of debugger
