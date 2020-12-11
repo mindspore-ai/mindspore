@@ -22,6 +22,8 @@ Graph::Graph(const std::shared_ptr<GraphData> &graph_data) : graph_data_(graph_d
 
 Graph::Graph(std::shared_ptr<GraphData> &&graph_data) : graph_data_(graph_data) {}
 
+Graph::~Graph() {}
+
 ModelType Graph::ModelType() const {
   MS_EXCEPTION_IF_NULL(graph_data_);
   return graph_data_->ModelType();

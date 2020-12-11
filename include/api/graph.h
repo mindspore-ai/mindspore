@@ -30,6 +30,7 @@ class MS_API Graph {
   class GraphData;
   explicit Graph(const std::shared_ptr<GraphData> &graph_data);
   explicit Graph(std::shared_ptr<GraphData> &&graph_data);
+  ~Graph();
 
   enum ModelType ModelType() const;
 

@@ -190,15 +190,21 @@ class AscendEnvChecker(EnvChecker):
                            "match, reference to the match info on: https://www.mindspore.cn/install")
 
     def check_deps_version(self):
-        # in order to update the change of 'LD_LIBRARY_PATH' env, run a sub process
+        """
+            te, topi, hccl wheel package version check
+            in order to update the change of 'LD_LIBRARY_PATH' env, run a sub process
+        """
         input_args = ["--mindspore_version=" + __version__]
         for v in self.version:
             input_args.append("--supported_version=" + v)
         deps_version_checker = os.path.join(os.path.split(os.path.realpath(__file__))[0], "_check_deps_version.py")
         call_cmd = [sys.executable, deps_version_checker] + input_args
-        process = subprocess.run(call_cmd, timeout=300, text=True, capture_output=True, check=False)
-        if process.stdout.strip() != "":
-            logger.warning(process.stdout.strip())
+        try:
+            process = subprocess.run(call_cmd, timeout=3, text=True, capture_output=True, check=False)
+            if process.stdout.strip() != "":
+                logger.warning(process.stdout.strip())
+        except subprocess.TimeoutExpired:
+            logger.warning("Package te, topi, hccl version check timed out, skip.")
 
     def set_env(self):
         if not self.tbe_path:

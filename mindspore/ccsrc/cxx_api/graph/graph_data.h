@@ -33,6 +33,8 @@ class Graph::GraphData {
 
   GraphData(Buffer om_data, enum ModelType model_type);
 
+  ~GraphData();
+
   enum ModelType ModelType() const { return model_type_; }
 
   FuncGraphPtr GetFuncGraph() const;
