@@ -15,6 +15,16 @@
 @echo off
 @title mindspore_build
 
+SET BASE_PATH=%CD%
+SET BUILD_PATH=%BASE_PATH%/build
+
+SET threads=6
+SET X86_64_SIMD=off
+
+set VERSION_MAJOR=''
+set VERSION_MINOR=''
+set ERSION_REVISION=''
+
 find "const int ms_version_major =" mindspore\lite\include\version.h > version.txt
 for /f "delims=\= tokens=2" %%a in ('findstr "const int ms_version_major = " version.txt') do (set x=%%a)
 set VERSION_MAJOR=%x:~1,1%
@@ -46,7 +56,7 @@ IF %errorlevel% == 0 (
             SET X86_64_SIMD=avx512
         ) ELSE (
             echo "MindSpore_lite the second parameter must in [avx, avx512, sse, off], but now is [%2%]"
-            call :run_fail
+            call :clean
         )
         IF NOT "%3%" == "" (
             SET threads=%3%
@@ -54,8 +64,6 @@ IF %errorlevel% == 0 (
     )
 )
 
-SET BASE_PATH=%CD%
-SET BUILD_PATH=%BASE_PATH%/build
 IF NOT EXIST "%BUILD_PATH%" (
     md "build"
 )
@@ -78,13 +86,13 @@ IF "%1%" == "lite" (
 )
 IF NOT %errorlevel% == 0 (
     echo "cmake fail."
-    call :run_fail
+    call :clean
 )
 
 cmake --build . --target package -- -j%threads%
 IF NOT %errorlevel% == 0 (
     echo "build fail."
-    call :run_fail
+    call :clean
 )
 
 IF EXIST "%BASE_PATH%/output" (
@@ -92,12 +100,11 @@ IF EXIST "%BASE_PATH%/output" (
     rd /s /q _CPack_Packages
 )
 
-goto run_eof
+cd %BASE_PATH%
+set errorlevel=0
+EXIT /b %errorlevel%
 
-:run_fail
+:clean
     cd %BASE_PATH%
     set errorlevel=1
     EXIT /b %errorlevel%
-
-:run_eof
-    cd %BASE_PATH%
