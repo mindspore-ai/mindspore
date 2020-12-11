@@ -30,19 +30,19 @@
 #include <thread>
 #include <mutex>
 #include <atomic>
+#include <condition_variable>
 
+#include "ps/core/cluster_config.h"
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
-#include "ps/core/cluster_config.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
-
 class TcpClient {
  public:
-  using OnConnected = std::function<void(const TcpClient &)>;
-  using OnDisconnected = std::function<void(const TcpClient &, int)>;
+  using OnConnected = std::function<void()>;
+  using OnDisconnected = std::function<void()>;
   using OnRead = std::function<void(const TcpClient &, const void *, size_t)>;
   using OnTimeout = std::function<void(const TcpClient &)>;
   using OnMessage = std::function<void(const TcpClient &, const CommMessage &)>;
@@ -52,8 +52,9 @@ class TcpClient {
   virtual ~TcpClient();
 
   std::string GetServerAddress() const;
-  void SetCallback(const OnConnected &conn, const OnDisconnected &disconn, const OnRead &read,
-                   const OnTimeout &timeout);
+  void set_disconnected_callback(const OnDisconnected &disconnected);
+  void set_connected_callback(const OnConnected &connected);
+  bool WaitConnected(const uint32_t &connected_timeout = ClusterConfig::cluster_available_timeout());
   void Init();
   void StartWithDelay(int seconds);
   void Stop();
@@ -73,6 +74,7 @@ class TcpClient {
   static void EventCallback(struct bufferevent *bev, std::int16_t events, void *ptr);
   virtual void OnReadHandler(const void *buf, size_t num);
   static void TimerCallback(evutil_socket_t fd, int16_t event, void *arg);
+  void NotifyConnected();
 
  private:
   OnMessage message_callback_;
@@ -86,12 +88,14 @@ class TcpClient {
 
   static event_base *event_base_;
   std::mutex connection_mutex_;
+  std::condition_variable connection_cond_;
   event *event_timeout_;
   bufferevent *buffer_event_;
 
   std::string server_address_;
   std::uint16_t server_port_;
   std::atomic<bool> is_stop_;
+  std::atomic<bool> is_connected_;
 };
 
 }  // namespace core

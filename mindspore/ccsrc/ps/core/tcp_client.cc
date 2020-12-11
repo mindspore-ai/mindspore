@@ -35,7 +35,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 event_base *TcpClient::event_base_ = nullptr;
 
 TcpClient::TcpClient(const std::string &address, std::uint16_t port)
@@ -43,7 +42,8 @@ TcpClient::TcpClient(const std::string &address, std::uint16_t port)
       buffer_event_(nullptr),
       server_address_(std::move(address)),
       server_port_(port),
-      is_stop_(true) {
+      is_stop_(true),
+      is_connected_(false) {
   message_handler_.SetCallback([this](const CommMessage &message) {
     if (message_callback_) {
       message_callback_(*this, message);
@@ -55,12 +55,15 @@ TcpClient::~TcpClient() { Stop(); }
 
 std::string TcpClient::GetServerAddress() const { return server_address_; }
 
-void TcpClient::SetCallback(const OnConnected &conn, const OnDisconnected &disconn, const OnRead &read,
-                            const OnTimeout &timeout) {
-  connected_callback_ = conn;
-  disconnected_callback_ = disconn;
-  read_callback_ = read;
-  timeout_callback_ = timeout;
+void TcpClient::set_disconnected_callback(const OnDisconnected &disconnected) { disconnected_callback_ = disconnected; }
+
+void TcpClient::set_connected_callback(const OnConnected &connected) { connected_callback_ = connected; }
+
+bool TcpClient::WaitConnected(const uint32_t &connected_timeout) {
+  std::unique_lock<std::mutex> lock(connection_mutex_);
+  bool res =
+    connection_cond_.wait_for(lock, std::chrono::seconds(connected_timeout), [&] { return is_connected_.load(); });
+  return res;
 }
 
 void TcpClient::Init() {
@@ -68,6 +71,7 @@ void TcpClient::Init() {
   if (buffer_event_) {
     return;
   }
+  is_stop_ = false;
   if (!CommUtil::CheckIp(server_address_)) {
     MS_LOG(EXCEPTION) << "The tcp client ip:" << server_address_ << " is illegal!";
   }
@@ -198,6 +202,12 @@ void TcpClient::TimerCallback(evutil_socket_t, int16_t, void *arg) {
   }
 }
 
+void TcpClient::NotifyConnected() {
+  MS_LOG(INFO) << "Client connected to the server!";
+  is_connected_ = true;
+  connection_cond_.notify_all();
+}
+
 void TcpClient::EventCallback(struct bufferevent *bev, std::int16_t events, void *ptr) {
   MS_EXCEPTION_IF_NULL(bev);
   MS_EXCEPTION_IF_NULL(ptr);
@@ -205,27 +215,24 @@ void TcpClient::EventCallback(struct bufferevent *bev, std::int16_t events, void
   if (events & BEV_EVENT_CONNECTED) {
     // Connected
     if (tcp_client->connected_callback_) {
-      tcp_client->connected_callback_(*tcp_client);
+      tcp_client->connected_callback_();
     }
-    evutil_socket_t fd = bufferevent_getfd(const_cast<struct bufferevent *>(bev));
+    tcp_client->NotifyConnected();
+    evutil_socket_t fd = bufferevent_getfd(bev);
     SetTcpNoDelay(fd);
     MS_LOG(INFO) << "Client connected!";
   } else if (events & BEV_EVENT_ERROR) {
     MS_LOG(ERROR) << "Client connected error!";
     if (tcp_client->disconnected_callback_) {
-      tcp_client->disconnected_callback_(*tcp_client, errno);
+      tcp_client->disconnected_callback_();
     }
   } else if (events & BEV_EVENT_EOF) {
     MS_LOG(ERROR) << "Client connected end of file";
-    if (tcp_client->disconnected_callback_) {
-      tcp_client->disconnected_callback_(*tcp_client, 0);
-    }
   }
 }
 
 void TcpClient::Start() {
   MS_EXCEPTION_IF_NULL(event_base_);
-  is_stop_ = false;
   int ret = event_base_dispatch(event_base_);
   MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base dispatch success!";
   MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType)
