@@ -35,6 +35,10 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
     automake \
     flex
 
+# Install the rest dependent tools
+RUN DEBIAN_FRONTEND=noninteractive apt install -y \
+    libnuma-dev
+
 # Set bash
 RUN echo "dash dash/sh boolean false" | debconf-set-selections
 RUN DEBIAN_FRONTEND=noninteractive dpkg-reconfigure dash
