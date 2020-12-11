@@ -46,7 +46,10 @@ def add_flags(fn=None, **flags):
         Function, the function with added flags.
 
     Examples:
-        >>> add_flags(net, predit=True)
+        >>> net = Net();
+        >>> net = add_flags(net, predit=True)
+        >>> print(hasattr(net, '_mindspore_flags'))
+        True
     """
     def deco(fn):
         # need set the attr and access on c++
@@ -184,110 +187,111 @@ class GradOperation(GradOperation_):
         The higher-order function which takes a function as argument and returns gradient function for it.
 
     Examples:
+        >>> from mindspore.common import ParameterTuple
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.matmul = P.MatMul()
-        >>>         self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
-        >>>     def construct(self, x, y):
-        >>>         x = x * self.z
-        >>>         out = self.matmul(x, y)
-        >>>         return out
-        >>>
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.matmul = P.MatMul()
+        ...         self.z = Parameter(Tensor(np.array([1.0], np.float32)), name='z')
+        ...     def construct(self, x, y):
+        ...         x = x * self.z
+        ...         out = self.matmul(x, y)
+        ...         return out
+        ...
         >>> class GradNetWrtX(nn.Cell):
-        >>>     def __init__(self, net):
-        >>>         super(GradNetWrtX, self).__init__()
-        >>>         self.net = net
-        >>>         self.grad_op = GradOperation()
-        >>>     def construct(self, x, y):
-        >>>         gradient_function = self.grad_op(self.net)
-        >>>         return gradient_function(x, y)
-        >>>
+        ...     def __init__(self, net):
+        ...         super(GradNetWrtX, self).__init__()
+        ...         self.net = net
+        ...         self.grad_op = GradOperation()
+        ...     def construct(self, x, y):
+        ...         gradient_function = self.grad_op(self.net)
+        ...         return gradient_function(x, y)
+        ...
         >>> x = Tensor([[0.5, 0.6, 0.4], [1.2, 1.3, 1.1]], dtype=mstype.float32)
         >>> y = Tensor([[0.01, 0.3, 1.1], [0.1, 0.2, 1.3], [2.1, 1.2, 3.3]], dtype=mstype.float32)
         >>> output = GradNetWrtX(Net())(x, y)
         >>> print(output)
-        Tensor(shape=[2, 3], dtype=Float32,
         [[1.4100001 1.5999999 6.6      ]
-         [1.4100001 1.5999999 6.6      ]])
+         [1.4100001 1.5999999 6.6      ]]
         >>>
         >>> class GradNetWrtXY(nn.Cell):
-        >>>     def __init__(self, net):
-        >>>         super(GradNetWrtXY, self).__init__()
-        >>>         self.net = net
-        >>>         self.grad_op = GradOperation(get_all=True)
-        >>>     def construct(self, x, y):
-        >>>         gradient_function = self.grad_op(self.net)
-        >>>         return gradient_function(x, y)
+        ...     def __init__(self, net):
+        ...         super(GradNetWrtXY, self).__init__()
+        ...         self.net = net
+        ...         self.grad_op = GradOperation(get_all=True)
+        ...     def construct(self, x, y):
+        ...         gradient_function = self.grad_op(self.net)
+        ...         return gradient_function(x, y)
         >>>
         >>> x = Tensor([[0.8, 0.6, 0.2], [1.8, 1.3, 1.1]], dtype=mstype.float32)
         >>> y = Tensor([[0.11, 3.3, 1.1], [1.1, 0.2, 1.4], [1.1, 2.2, 0.3]], dtype=mstype.float32)
         >>> output = GradNetWrtXY(Net())(x, y)
         >>> print(output)
-        (Tensor(shape=[2, 3], dtype=Float32,
-        [[4.5099998 2.7       3.6000001]
-         [4.5099998 2.7       3.6000001]]), Tensor(shape=[3, 3], dtype=Float32,
-        [[2.6       2.6       2.6      ]
-         [1.9       1.9       1.9      ]
-         [1.3000001 1.3000001 1.3000001]]))
+        (Tensor(shape=[2, 3], dtype=Float32, value=
+        [[ 4.50999975e+00,  2.70000005e+00,  3.60000014e+00],
+         [ 4.50999975e+00,  2.70000005e+00,  3.60000014e+00]]), Tensor(shape=[3, 3], dtype=Float32, value=
+        [[ 2.59999990e+00,  2.59999990e+00,  2.59999990e+00],
+         [ 1.89999998e+00,  1.89999998e+00,  1.89999998e+00],
+         [ 1.30000007e+00,  1.30000007e+00,  1.30000007e+00]]))
         >>>
         >>> class GradNetWrtXYWithSensParam(nn.Cell):
-        >>>     def __init__(self, net):
-        >>>         super(GradNetWrtXYWithSensParam, self).__init__()
-        >>>         self.net = net
-        >>>         self.grad_op = GradOperation(get_all=True, sens_param=True)
-        >>>         self.grad_wrt_output = Tensor([[0.1, 0.6, 0.2], [0.8, 1.3, 1.1]], dtype=mstype.float32)
-        >>>     def construct(self, x, y):
-        >>>         gradient_function = self.grad_op(self.net)
-        >>>         return gradient_function(x, y, self.grad_wrt_output)
+        ...     def __init__(self, net):
+        ...         super(GradNetWrtXYWithSensParam, self).__init__()
+        ...         self.net = net
+        ...         self.grad_op = GradOperation(get_all=True, sens_param=True)
+        ...         self.grad_wrt_output = Tensor([[0.1, 0.6, 0.2], [0.8, 1.3, 1.1]], dtype=mstype.float32)
+        ...     def construct(self, x, y):
+        ...         gradient_function = self.grad_op(self.net)
+        ...         return gradient_function(x, y, self.grad_wrt_output)
         >>>
         >>> x = Tensor([[0.8, 0.6, 0.2], [1.8, 1.3, 1.1]], dtype=mstype.float32)
         >>> y = Tensor([[0.11, 3.3, 1.1], [1.1, 0.2, 1.4], [1.1, 2.2, 0.3]], dtype=mstype.float32)
         >>> output = GradNetWrtXYWithSensParam(Net())(x, y)
         >>> print(output)
-        (Tensor(shape=[2, 3], dtype=Float32,
-        [[2.211     0.51      1.4900001]
-         [5.588     2.68      4.07     ]]), Tensor(shape=[3, 3], dtype=Float32,
-        [[1.52       2.82       2.14      ]
-         [1.1        2.05       1.55      ]
-         [0.90000004 1.55       1.25      ]]))
+        (Tensor(shape=[2, 3], dtype=Float32, value=
+        [[ 2.21099997e+00,  5.09999990e-01,  1.49000001e+00],
+         [ 5.58799982e+00,  2.68000007e+00,  4.07000017e+00]]), Tensor(shape=[3, 3], dtype=Float32, value=
+        [[ 1.51999998e+00,  2.81999993e+00,  2.14000010e+00],
+         [ 1.09999990e+00,  2.04999971e+00,  1.54999995e+00],
+         [ 9.00000036e-01,  1.54999995e+00,  1.25000000e+00]]))
         >>>
         >>> class GradNetWithWrtParams(nn.Cell):
-        >>>     def __init__(self, net):
-        >>>         super(GradNetWithWrtParams, self).__init__()
-        >>>         self.net = net
-        >>>         self.params = ParameterTuple(net.trainable_params())
-        >>>         self.grad_op = GradOperation(get_by_list=True)
-        >>>     def construct(self, x, y):
-        >>>         gradient_function = self.grad_op(self.net, self.params)
-        >>>         return gradient_function(x, y)
+        ...     def __init__(self, net):
+        ...         super(GradNetWithWrtParams, self).__init__()
+        ...         self.net = net
+        ...         self.params = ParameterTuple(net.trainable_params())
+        ...         self.grad_op = GradOperation(get_by_list=True)
+        ...     def construct(self, x, y):
+        ...         gradient_function = self.grad_op(self.net, self.params)
+        ...         return gradient_function(x, y)
         >>>
         >>> x = Tensor([[0.8, 0.6, 0.2], [1.8, 1.3, 1.1]], dtype=mstype.float32)
         >>> y = Tensor([[0.11, 3.3, 1.1], [1.1, 0.2, 1.4], [1.1, 2.2, 0.3]], dtype=mstype.float32)
         >>> output = GradNetWithWrtParams(Net())(x, y)
         >>> print(output)
-        (Tensor(shape=[1], dtype=Float32, [21.536]),)
+        (Tensor(shape=[1], dtype=Float32, value= [ 2.15359993e+01]),)
         >>>
         >>> class GradNetWrtInputsAndParams(nn.Cell):
-        >>>     def __init__(self, net):
-        >>>         super(GradNetWrtInputsAndParams, self).__init__()
-        >>>         self.net = net
-        >>>         self.params = ParameterTuple(net.trainable_params())
-        >>>         self.grad_op = GradOperation(get_all=True, get_by_list=True)
-        >>>     def construct(self, x, y):
-        >>>         gradient_function = self.grad_op(self.net, self.params)
-        >>>         return gradient_function(x, y)
+        ...     def __init__(self, net):
+        ...         super(GradNetWrtInputsAndParams, self).__init__()
+        ...         self.net = net
+        ...         self.params = ParameterTuple(net.trainable_params())
+        ...         self.grad_op = GradOperation(get_all=True, get_by_list=True)
+        ...     def construct(self, x, y):
+        ...         gradient_function = self.grad_op(self.net, self.params)
+        ...         return gradient_function(x, y)
         >>>
         >>> x = Tensor([[0.1, 0.6, 1.2], [0.5, 1.3, 0.1]], dtype=mstype.float32)
         >>> y = Tensor([[0.12, 2.3, 1.1], [1.3, 0.2, 2.4], [0.1, 2.2, 0.3]], dtype=mstype.float32)
         >>> output = GradNetWrtInputsAndParams(Net())(x, y)
         >>> print(output)
-        ((Tensor(shape=[2, 3], dtype=Float32,
-        [[3.52 3.9  2.6 ]
-         [3.52 3.9  2.6 ]]), Tensor(shape=[3, 3], dtype=Float32,
-        [[0.6       0.6       0.6      ]
-         [1.9       1.9       1.9      ]
-         [1.3000001 1.3000001 1.3000001]])), (Tensor(shape=[1], dtype=Float32, [12.902]),))
+        ((Tensor(shape=[2, 3], dtype=Float32, value=
+        [[ 3.51999998e+00,  3.90000010e+00,  2.59999990e+00],
+         [ 3.51999998e+00,  3.90000010e+00,  2.59999990e+00]]), Tensor(shape=[3, 3], dtype=Float32, value=
+        [[ 6.00000024e-01,  6.00000024e-01,  6.00000024e-01],
+         [ 1.89999998e+00,  1.89999998e+00,  1.89999998e+00],
+         [ 1.30000007e+00,  1.30000007e+00,  1.30000007e+00]])), (Tensor(shape=[1], dtype=Float32, value=
+         [ 1.29020004e+01]),))
     """
 
     def __init__(self, get_all=False, get_by_list=False, sens_param=False):
@@ -379,22 +383,20 @@ class MultitypeFuncGraph(MultitypeFuncGraph_):
         >>> from mindspore.ops import Primitive, operations as P
         >>> from mindspore import dtype as mstype
         >>>
-        >>> scala_add = Primitive('scala_add')
         >>> tensor_add = P.TensorAdd()
-        >>>
         >>> add = MultitypeFuncGraph('add')
         >>> @add.register("Number", "Number")
         ... def add_scala(x, y):
-        ...     return scala_add(x, y)
+        ...     return x + y
         >>> @add.register("Tensor", "Tensor")
         ... def add_tensor(x, y):
         ...     return tensor_add(x, y)
-        >>> ourput = add(1, 2)
+        >>> output = add(1, 2)
         >>> print(output)
         3
-        >>> output = add(Tensor(1, mstype.float32), Tensor(2, mstype.float32))
+        >>> output = add(Tensor([0.1, 0.6, 1.2], dtype=mstype.float32), Tensor([0.1, 0.6, 1.2], dtype=mstype.float32))
         >>> print(output)
-        Tensor(shape=[], dtype=Float32, 3)
+        [0.2 1.2 2.4]
     """
 
     def __init__(self, name, read_value=False):
@@ -479,13 +481,13 @@ class HyperMap(HyperMap_):
         >>> common_map = HyperMap()
         >>> output = common_map(square, nest_tensor_list)
         >>> print(output)
-        ((Tensor(shape=[], dtype=Float32, 1), Tensor(shape=[], dtype=Float32, 4)),
-        (Tensor(shape=[], dtype=Float32, 9), Tensor(shape=[], dtype=Float32, 16))
+        ((Tensor(shape=[], dtype=Float32, value= 1), Tensor(shape=[], dtype=Float32, value= 4)),
+        (Tensor(shape=[], dtype=Float32, value= 9), Tensor(shape=[], dtype=Float32, value= 16)))
         >>> square_map = HyperMap(square)
         >>> output = square_map(nest_tensor_list)
         >>> print(output)
-        ((Tensor(shape=[], dtype=Float32, 1), Tensor(shape=[], dtype=Float32, 4)),
-        (Tensor(shape=[], dtype=Float32, 9), Tensor(shape=[], dtype=Float32, 16))
+        ((Tensor(shape=[], dtype=Float32, value= 1), Tensor(shape=[], dtype=Float32, value= 4)),
+        (Tensor(shape=[], dtype=Float32, value= 9), Tensor(shape=[], dtype=Float32, value= 16)))
     """
 
     def __init__(self, ops=None):
@@ -536,17 +538,19 @@ class Map(Map_):
         >>>
         >>> square = MultitypeFuncGraph('square')
         >>> @square.register("Tensor")
-        >>> def square_tensor(x):
+        ... def square_tensor(x):
         ...     return F.square(x)
         >>>
         >>> common_map = Map()
         >>> output = common_map(square, tensor_list)
         >>> print(output)
-        (Tensor(shape=[], dtype=Float32, 1), Tensor(shape=[], dtype=Float32, 4), Tensor(shape=[], dtype=Float32, 9))
+        (Tensor(shape=[], dtype=Float32, value= 1), Tensor(shape=[], dtype=Float32, value= 4),
+        Tensor(shape=[], dtype=Float32, value= 9))
         >>> square_map = Map(square)
         >>> output = square_map(tensor_list)
         >>> print(output)
-        (Tensor(shape=[], dtype=Float32, 1), Tensor(shape=[], dtype=Float32, 4), Tensor(shape=[], dtype=Float32, 9))
+        (Tensor(shape=[], dtype=Float32, value= 1), Tensor(shape=[], dtype=Float32, value= 4),
+        Tensor(shape=[], dtype=Float32, value= 9))
     """
 
     def __init__(self, ops=None):
