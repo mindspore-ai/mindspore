@@ -99,7 +99,7 @@ class ReduceLogSumExp(Cell):
 
 class Range(Cell):
     r"""
-    Creates a sequence of numbers.
+    Creates a sequence of numbers in range [start, limit) with step size delta.
 
     Args:
         start (Union[int, float]): If `limit` is `None`, the value acts as limit in the range and first entry
