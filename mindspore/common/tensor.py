@@ -341,7 +341,7 @@ class Tensor(Tensor_):
         Reduce a dimension of a tensor by averaging all elements in the dimension.
 
         Args:
-            axis (Union[None, int, tuple(int)]): Dimensions of reduction,
+            axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,
                 when axis is None or empty tuple, reduce all dimensions.
                 Default: (), reduce all dimensions.
             keep_dims (bool): Whether to keep the reduced dimensions.
