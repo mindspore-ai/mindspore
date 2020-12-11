@@ -74,8 +74,6 @@ class OpenCLSubGraph : public SubGraphKernel {
   std::vector<OpenCLToFormatParameter *> out_parameters_;
   std::vector<LiteKernel *> in_convert_ops_;
   std::vector<LiteKernel *> out_convert_ops_;
-  std::vector<LiteKernel *> in_nodes_;
-  std::vector<LiteKernel *> out_nodes_;
   std::set<LiteKernel *> nodes_set_;
   lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
   lite::opencl::OpenCLRuntime *ocl_runtime_{nullptr};

@@ -318,7 +318,6 @@ void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
   InitGraphOutputNodeMap(model);
   InitGraphOutputTensorNames(model);
   InitGraphOutputTensorMap(model);
-  AdjustModelOutputTensorInitRefCount(model);
 }
 
 int LiteSession::CompileGraph(Model *model) {
@@ -373,7 +372,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return ret;
   }
-  ret = PrepareKernels();
+  ret = PrepareKernels(model);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Prepare kernels failed: " << ret;
     is_running_.store(false);
@@ -383,14 +382,30 @@ int LiteSession::CompileGraph(Model *model) {
   return RET_OK;
 }
 
-int LiteSession::PrepareKernels() {
+int LiteSession::PrepareKernels(Model *model) {
+  std::vector<kernel::LiteKernel *> all_kernels;
+  // find in_kernels and out_kernels for subgraphs
   for (auto kernel : this->kernels_) {
+    kernel->FindInoutKernels(this->kernels_);
     auto ret = kernel->Prepare();
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "Prepare kernel " << kernel->name() << " failed: " << ret;
       return ret;
     }
+    auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+    MS_ASSERT(sub_graph != nullptr);
+    auto kernel_in_subgraph = sub_graph->nodes();
+    all_kernels.insert(all_kernels.end(), kernel_in_subgraph.begin(), kernel_in_subgraph.end());
   }
+  // find in_kernels and out_kernels for kernels
+  for (auto *kernel : all_kernels) {
+    kernel->FindInoutKernels(all_kernels);
+  }
+  // init init_ref_count for subgraphs and kernels
+  for (auto *kernel : this->kernels_) {
+    kernel->InitOutTensorInitRefCount();
+  }
+  AdjustModelOutputTensorInitRefCount(model);
   return RET_OK;
 }
 

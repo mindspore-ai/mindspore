@@ -53,11 +53,11 @@ std::string SubGraphKernel::ToString() const {
   for (auto tensor : out_tensors_) {
     oss << " " << tensor;
   }
-  oss << std::endl << "Subgraph input kernels :" << std::endl;
+  oss << std::endl << "Subgraph input nodes :" << std::endl;
   for (auto kernel : this->in_nodes_) {
     oss << " " << kernel->ToString() << std::endl;
   }
-  oss << std::endl << "Subgraph output kernels :" << std::endl;
+  oss << std::endl << "Subgraph output nodes :" << std::endl;
   for (auto kernel : this->out_nodes_) {
     oss << " " << kernel->ToString() << std::endl;
   }

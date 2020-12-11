@@ -67,10 +67,10 @@ Registry MergeRegistry(schema::PrimitiveType_Merge, MergeCreator);
 #endif
 
 int Merge::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  MS_ASSERT(outputs_.size() == 1);
-  MS_ASSERT(inputs_.size() == 2);
-  outputs_[0]->set_data_type(inputs_[0]->data_type());
-
+  MS_ASSERT(inputs_.size() == 2 * outputs_.size());
+  for (size_t i = 0; i < inputs_.size() / 2; i++) {
+    outputs_[i]->set_data_type(inputs_[i]->data_type());
+  }
   return RET_OK;
 }
 

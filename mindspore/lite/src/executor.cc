@@ -51,7 +51,7 @@ int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_
   }
   std::queue<kernel::LiteKernel *> kernel_queue;
   for (auto kernel : kernels) {
-    if (kernel->IsReady()) {
+    if (kernel->IsReady(kernel->in_tensors())) {
       kernel_queue.push(kernel);
     }
   }
@@ -75,7 +75,7 @@ int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_
       return ret;
     }
     for (auto &out_kernel : cur_kernel->out_kernels()) {
-      if (out_kernel->IsReady()) {
+      if (out_kernel->IsReady(out_kernel->in_tensors())) {
         kernel_queue.push(out_kernel);
       }
     }
