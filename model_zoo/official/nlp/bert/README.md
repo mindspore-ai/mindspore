@@ -17,8 +17,10 @@
     - [Training Process](#training-process)
         - [Training](#training)
             - [Running on Ascend](#running-on-ascend)
+            - [running on GPU](#running-on-gpu)
         - [Distributed Training](#distributed-training)
             - [Running on Ascend](#running-on-ascend-1)
+            - [running on GPU](#running-on-gpu-1)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
             - [evaluation on cola dataset when running on Ascend](#evaluation-on-cola-dataset-when-running-on-ascend)
@@ -50,8 +52,8 @@ The backbone structure of BERT is transformer. For BERT_base, the transformer co
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get access to the resources.
+- Hardware（Ascend/GPU）
+    - Prepare hardware environment with Ascend/GPU processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get access to the resources.
 - Framework
     - [MindSpore](https://gitee.com/mindspore/mindspore)
 - For more information, please check the resources below：
@@ -61,6 +63,8 @@ The backbone structure of BERT is transformer. For BERT_base, the transformer co
 # [Quick Start](#contents)
 
 After installing MindSpore via the official website, you can start pre-training, fine-tuning and evaluation as follows:
+
+- Running on Ascend
 
 ```bash
 # run standalone pre-training example
@@ -89,7 +93,36 @@ bash scripts/run_distributed_pretrain_ascend.sh /path/cn-wiki-128 /path/hccl.jso
   bash scripts/run_squad.sh
 ```
 
-For distributed training, an hccl configuration file with JSON format needs to be created in advance.
+- Running on GPU
+
+```bash
+# run standalone pre-training example
+bash run_standalone_pretrain_for_gpu.sh 0 1 /path/cn-wiki-128
+
+# run distributed pre-training example
+bash scripts/run_distributed_pretrain_for_gpu.sh 8 40 /path/cn-wiki-128
+
+# run fine-tuning and evaluation example
+- If you are going to run a fine-tuning task, please prepare a checkpoint generated from pre-training.
+- Set bert network config and optimizer hyperparameters in `finetune_eval_config.py`.
+
+- Classification task: Set task related hyperparameters in scripts/run_classifier.sh.
+- Run `bash scripts/run_classifier.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+
+  bash scripts/run_classifier.sh
+
+- NER task: Set task related hyperparameters in scripts/run_ner.sh.
+- Run `bash scripts/run_ner.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+
+  bash scripts/run_ner.sh
+
+- SQuAD task: Set task related hyperparameters in scripts/run_squad.sh.
+- Run `bash scripts/run_squad.py` for fine-tuning of BERT-base and BERT-NEZHA model.
+
+  bash scripts/run_squad.sh
+```
+
+For distributed training on Ascend, an hccl configuration file with JSON format needs to be created in advance.
 
 For distributed training on single machine, [here](https://gitee.com/mindspore/mindspore/tree/master/config/hccl_single_machine_multi_rank.json) is an example hccl.json.
 
@@ -402,7 +435,22 @@ epoch: 0.0, current epoch percent: 0.000, step: 2, outpus are (Tensor(shape=[1],
 ...
 ```
 
-> **Attention** If you are running with a huge dataset, it's better to add an external environ variable to make sure the hccl won't timeout.
+#### running on GPU
+
+```bash
+bash scripts/run_standalone_pretrain_for_gpu.sh 0 1 /path/cn-wiki-128
+```
+
+The command above will run in the background, you can view the results the file pretraining_log.txt. After training, you will get some checkpoint files under the script folder by default. The loss value will be achieved as follows:
+
+```bash
+# grep "epoch" pretraining_log.txt
+epoch: 0.0, current epoch percent: 0.000, step: 1, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.0856101e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.000, step: 2, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.0821701e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+...
+```
+
+> **Attention** If you are running with a huge dataset on Ascend, it's better to add an external environ variable to make sure the hccl won't timeout.
 >
 > ```bash
 > export HCCL_CONNECT_TIMEOUT=600
@@ -424,6 +472,24 @@ bash scripts/run_distributed_pretrain_ascend.sh /path/cn-wiki-128 /path/hccl.jso
 ```
 
 The command above will run in the background, you can view training logs in pretraining_log.txt. After training finished, you will get some checkpoint files under the LOG* folder by default. The loss value will be displayed as follows:
+
+```bash
+# grep "epoch" LOG*/pretraining_log.txt
+epoch: 0.0, current epoch percent: 0.001, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.08209e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.002, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.07566e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+...
+epoch: 0.0, current epoch percent: 0.001, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.08218e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.002, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.07770e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+...
+```
+
+#### running on GPU
+
+```bash
+bash scripts/run_distributed_pretrain_for_gpu.sh /path/cn-wiki-128
+```
+
+The command above will run in the background, you can view the results the file pretraining_log.txt. After training, you will get some checkpoint files under the LOG* folder by default. The loss value will be achieved as follows:
 
 ```bash
 # grep "epoch" LOG*/pretraining_log.txt
@@ -495,57 +561,57 @@ The result will be as follows:
 | Parameters                 | Ascend                                                     | GPU                       |
 | -------------------------- | ---------------------------------------------------------- | ------------------------- |
 | Model Version              | BERT_base                                                  | BERT_base                 |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G              | NV SMX2 V100-32G          |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G              | NV SMX2 V100-16G, cpu: Intel(R) Xeon(R) Platinum 8160 CPU @2.10GHz, memory: 256G         |
 | uploaded Date              | 08/22/2020                                                 | 05/06/2020                |
 | MindSpore Version          | 1.0.0                                                      | 1.0.0                     |
-| Dataset                    | cn-wiki-128(4000w)                                         | ImageNet                  |
+| Dataset                    | cn-wiki-128(4000w)                                         | cn-wiki-128(4000w)        |
 | Training Parameters        | src/config.py                                              | src/config.py             |
-| Optimizer                  | Lamb                                                       | Momentum                  |
+| Optimizer                  | Lamb                                                       | AdamWeightDecay           |
 | Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
-| outputs                    | probability                                                |                           |
-| Epoch                      | 40                                                         |                           |                      |
-| Batch_size                 | 256*8                                                      | 130(8P)                   |                      |
-| Loss                       | 1.7                                                        | 1.913                     |
-| Speed                      | 340ms/step                                                 | 1.913                     |
-| Total time                 | 73h                                                        |                           |
-| Params (M)                 | 110M                                                       |                           |
-| Checkpoint for Fine tuning | 1.2G(.ckpt file)                                           |                           |
-| Scripts                    | [BERT_base](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert)  |                           |
+| outputs                    | probability                                                | probability               |
+| Epoch                      | 40                                                         | 40                        |
+| Batch_size                 | 256*8                                                      | 32*8                      |
+| Loss                       | 1.7                                                        | 1.7                       |
+| Speed                      | 340ms/step                                                 | 290ms/step                |
+| Total time                 | 73h                                                        | 610H                      |
+| Params (M)                 | 110M                                                       | 110M                      |
+| Checkpoint for Fine tuning | 1.2G(.ckpt file)                                           | 1.2G(.ckpt file)          |
+| Scripts                    | [BERT_base](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert)  | [BERT_base](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert)     |
 
-| Parameters                 | Ascend                                                     | GPU                       |
-| -------------------------- | ---------------------------------------------------------- | ------------------------- |
-| Model Version              | BERT_NEZHA                                                 | BERT_NEZHA                |
-| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G              | NV SMX2 V100-32G          |
-| uploaded Date              | 08/20/2020                                                 | 05/06/2020                |
-| MindSpore Version          | 1.0.0                                                      | 1.0.0                     |
-| Dataset                    | cn-wiki-128(4000w)                                         | ImageNet                  |
-| Training Parameters        | src/config.py                                              | src/config.py             |
-| Optimizer                  | Lamb                                                       | Momentum                  |
-| Loss Function              | SoftmaxCrossEntropy                                        | SoftmaxCrossEntropy       |
-| outputs                    | probability                                                |                           |
-| Epoch                      | 40                                                         |                           |                      |
-| Batch_size                 | 96*8                                                       | 130(8P)                   |
-| Loss                       | 1.7                                                        | 1.913                     |
-| Speed                      | 360ms/step                                                 | 1.913                     |
-| Total time                 | 200h                                                       |                           |
-| Params (M)                 | 340M                                                       |                           |
-| Checkpoint for Fine tuning | 3.2G(.ckpt file)                                           |                           |
-| Scripts                    | [BERT_NEZHA](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert)  |                           |
+| Parameters                 | Ascend                                                     |
+| -------------------------- | ---------------------------------------------------------- |
+| Model Version              | BERT_NEZHA                                                 |
+| Resource                   | Ascend 910, cpu:2.60GHz 192cores, memory:755G              |
+| uploaded Date              | 08/20/2020                                                 |
+| MindSpore Version          | 1.0.0                                                      |
+| Dataset                    | cn-wiki-128(4000w)                                         |
+| Training Parameters        | src/config.py                                              |
+| Optimizer                  | Lamb                                                       |
+| Loss Function              | SoftmaxCrossEntropy                                        |
+| outputs                    | probability                                                |
+| Epoch                      | 40                                                         |
+| Batch_size                 | 96*8                                                       |
+| Loss                       | 1.7                                                        |
+| Speed                      | 360ms/step                                                 |
+| Total time                 | 200h                                                       |
+| Params (M)                 | 340M                                                       |
+| Checkpoint for Fine tuning | 3.2G(.ckpt file)                                           |
+| Scripts                    | [BERT_NEZHA](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/bert)  |
 
 #### Inference Performance
 
-| Parameters                 | Ascend                        | GPU                       |
-| -------------------------- | ----------------------------- | ------------------------- |
-| Model Version              |                               |                           |
-| Resource                   | Ascend 910                    | NV SMX2 V100-32G          |
-| uploaded Date              | 08/22/2020                    | 05/22/2020                |
-| MindSpore Version          | 1.0.0                         | 1.0.0                     |
-| Dataset                    | cola, 1.2W                    | ImageNet, 1.2W            |
-| batch_size                 | 32(1P)                        | 130(8P)                   |
-| Accuracy                   | 0.588986                      | ACC1[72.07%] ACC5[90.90%] |
-| Speed                      | 59.25ms/step                  |                           |
-| Total time                 | 15min                         |                           |
-| Model for inference        | 1.2G(.ckpt file)              |                           |
+| Parameters                 | Ascend                        |
+| -------------------------- | ----------------------------- |
+| Model Version              |                               |
+| Resource                   | Ascend 910                    |
+| uploaded Date              | 08/22/2020                    |
+| MindSpore Version          | 1.0.0                         |
+| Dataset                    | cola, 1.2W                    |
+| batch_size                 | 32(1P)                        |
+| Accuracy                   | 0.588986                      |
+| Speed                      | 59.25ms/step                  |
+| Total time                 | 15min                         |
+| Model for inference        | 1.2G(.ckpt file)              |
 
 # [Description of Random Situation](#contents)
 
