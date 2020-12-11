@@ -48,6 +48,5 @@ bool SelectCPUKernel<T>::Launch(const std::vector<AddressPtr> &inputs, const std
   }
   return true;
 }
-
 }  // namespace kernel
 }  // namespace mindspore
