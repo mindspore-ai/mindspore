@@ -24,7 +24,6 @@
 #include "minddata/dataset/engine/datasetops/pipeline_op.h"
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
 #include "minddata/dataset/util/status.h"
-#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 
 #ifdef ENABLE_TDTQUE
 #include "minddata/dataset/util/queue.h"
@@ -34,6 +33,7 @@
 #ifdef ENABLE_GPUQUE
 #include "minddata/dataset/util/circular_pool.h"
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
+#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 using mindspore::device::BlockQueueStatus_T;
 using mindspore::device::GpuBufferMgr;
 #endif

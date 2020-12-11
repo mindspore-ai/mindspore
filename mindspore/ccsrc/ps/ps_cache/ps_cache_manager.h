@@ -125,7 +125,7 @@ class PsCacheManager {
   bool initialized_ps_cache() const { return initialized_ps_cache_; }
   void DoProcessData(uint32_t device_id, void *context);
   void IncreaseGraphStep(const std::string &channel_name);
-  void DumpHashTables() const;
+  void DumpHashTables(bool dump_device_tables = false) const;
 
  private:
   PsCacheManager() = default;

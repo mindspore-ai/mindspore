@@ -17,7 +17,9 @@
 #include "utils/ms_utils.h"
 #include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/util/log_adapter.h"
+#if ENABLE_D
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -50,10 +52,12 @@ TdtStatus TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channe
   if (profiling) {
     start_time = ProfilingTime::GetCurMilliSecond();
   }
+#if ENABLE_D
   // Data prefetch only when PS mode enables cache.
   if (items.size() > 0) {
     ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name, items[0].dataPtr_.get(), items[0].dataLen_);
   }
+#endif
   if (tdt::TdtHostPushData(channel_name, items) != 0) {
     return FAILED;
   }
