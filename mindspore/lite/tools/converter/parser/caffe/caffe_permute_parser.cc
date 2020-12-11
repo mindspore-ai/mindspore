@@ -33,7 +33,6 @@ PrimitiveC *CaffePermuteParser::ParseLitePrimitive(const caffe::LayerParameter &
   for (int i = 0; i < num_order_dims; ++i) {
     attr->perm[i] = (int32_t)permuteParam.order()[i];
   }
-  attr->conjugate = false;
   auto primitive = std::make_unique<schema::PrimitiveT>();
   primitive->value.type = schema::PrimitiveType_Transpose;
   primitive->value.value = attr.release();

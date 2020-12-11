@@ -42,7 +42,6 @@ STATUS TFTransposeParser::Parse(const tensorflow::NodeDef &tf_op,
     return RET_NULL_PTR;
   }
 
-  attr->conjugate = false;
   if (tf_node_map.find(tf_op.input(1)) == tf_node_map.end()) {
     MS_LOG(ERROR) << "Find Transpose input perm failed";
     return RET_ERROR;

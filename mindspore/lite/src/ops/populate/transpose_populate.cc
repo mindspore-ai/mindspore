@@ -39,7 +39,6 @@ OpParameter *PopulateTransposeParameter(const mindspore::lite::PrimitiveC *primi
     transpose_param->perm_[i++] = *iter;
   }
   transpose_param->num_axes_ = i;
-  transpose_param->conjugate_ = param->GetConjugate();
   return reinterpret_cast<OpParameter *>(transpose_param);
 }
 

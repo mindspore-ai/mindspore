@@ -781,7 +781,7 @@ table Reduce {
 
 table Transpose {
     perm: [int];
-    conjugate: bool = false;
+    conjugate: bool = false;  // DEPRECATED
 }
 
 table Squeeze {

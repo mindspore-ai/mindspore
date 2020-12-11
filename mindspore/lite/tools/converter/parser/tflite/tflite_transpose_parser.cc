@@ -40,7 +40,6 @@ PrimitiveC *TfliteTransposeParser::ParseLitePrimitive(const std::unique_ptr<tfli
     return nullptr;
   }
 
-  attr->conjugate = false;
   primitive->value.type = schema::PrimitiveType_Transpose;
   primitive->value.value = attr.release();
   return PrimitiveC::Create(primitive.release());

@@ -203,7 +203,7 @@ int Benchmark::ReadTensorData(std::ifstream &in_file_stream, const std::string &
   }
   auto *check_tensor = new (std::nothrow) CheckTensor(dims, data, strings_data);
   if (check_tensor == nullptr) {
-    MS_LOG(ERROR) << "Now CheckTensor failed, tensor name: " << tensor_name;
+    MS_LOG(ERROR) << "New CheckTensor failed, tensor name: " << tensor_name;
     return RET_ERROR;
   }
   this->benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));

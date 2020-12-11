@@ -27,10 +27,7 @@ namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 std::vector<int> Transpose::GetPerm() const { return this->primitive_->value.AsTranspose()->perm; }
-bool Transpose::GetConjugate() const { return this->primitive_->value.AsTranspose()->conjugate; }
-
 void Transpose::SetPerm(const std::vector<int> &perm) { this->primitive_->value.AsTranspose()->perm = perm; }
-void Transpose::SetConjugate(bool conjugate) { this->primitive_->value.AsTranspose()->conjugate = conjugate; }
 
 int Transpose::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {
@@ -83,7 +80,6 @@ std::vector<int> Transpose::GetPerm() const {
   auto fb_vector = this->primitive_->value_as_Transpose()->perm();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
 }
-bool Transpose::GetConjugate() const { return this->primitive_->value_as_Transpose()->conjugate(); }
 
 int Transpose::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
@@ -127,11 +123,6 @@ int Transpose::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> o
   MS_ASSERT(inputs_.size() == kSingleNum || inputs_.size() == kDoubleNum);
   MS_ASSERT(outputs_.size() == kSingleNum);
 
-  int conjugate = GetConjugate();
-  if (conjugate) {
-    MS_LOG(ERROR) << "Transpose conjugate is not support currently";
-    return RET_ERROR;
-  }
   std::vector<int> perm;
   for (size_t i = 0; i < GetPerm().size(); i++) {
     perm.push_back(GetPerm().at(i));
