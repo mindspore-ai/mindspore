@@ -36,10 +36,14 @@ int DoQuantizeFp32ToInt8(const float *real_values, int8_t *quant_values, float s
 
   const float inverse_scale = 1.0f / scale;
   for (int i = 0; i < size; ++i) {
-    int temp = round(real_values[i] * inverse_scale + zp);
-    temp = temp < 127 ? temp : 127;
-    temp = temp > -128 ? temp : -128;
-    quant_values[i] = (int8_t)temp;
+    if (isinf(real_values[i])) {
+      quant_values[i] = 127;
+    } else {
+      int temp = round(real_values[i] * inverse_scale + zp);
+      temp = temp < 127 ? temp : 127;
+      temp = temp > -128 ? temp : -128;
+      quant_values[i] = (int8_t)temp;
+    }
   }
   return NNACL_OK;
 }
@@ -61,13 +65,17 @@ int DoQuantizeFp32ToUInt8(const float *real_values, uint8_t *quant_values, float
   }
 
   for (int i = 0; i < size; ++i) {
-    float temp = (float)round(real_values[i] * 1.0 / scale + zp);
-    if (temp > 255) {
+    if (isinf(real_values[i])) {
       quant_values[i] = 255;
-    } else if (temp < 0) {
-      quant_values[i] = 0;
     } else {
-      quant_values[i] = (uint8_t)temp;
+      float temp = (float)round(real_values[i] * 1.0 / scale + zp);
+      if (temp > 255) {
+        quant_values[i] = 255;
+      } else if (temp < 0) {
+        quant_values[i] = 0;
+      } else {
+        quant_values[i] = (uint8_t)temp;
+      }
     }
   }
   return NNACL_OK;

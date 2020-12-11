@@ -33,8 +33,7 @@ PrimitiveC *TfliteDequantizeParser::ParseLitePrimitive(const std::unique_ptr<tfl
     MS_LOG(ERROR) << "output tensor is null";
     return nullptr;
   }
-  if (GetTfliteDataType(in_tensor->type) != GetTfliteDataType(out_tensor->type) &&
-      (GetTfliteDataType(in_tensor->type) == kNumberTypeInt8 ||
+  if ((GetTfliteDataType(in_tensor->type) == kNumberTypeInt8 ||
        GetTfliteDataType(in_tensor->type) == kNumberTypeUInt8)) {
     std::unique_ptr<schema::QuantDTypeCastT> attr = std::make_unique<schema::QuantDTypeCastT>();
     if (attr == nullptr) {

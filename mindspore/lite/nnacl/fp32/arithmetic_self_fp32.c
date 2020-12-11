@@ -68,8 +68,8 @@ int ElementSqrt(const float *input, float *output, const int element_size) {
 // rsqrt
 int ElementRsqrt(const float *input, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
-    if (input[i] <= 0) {
-      return NNACL_ERRCODE_RSQRT_NEGATIVE_OR_ZERO;
+    if (input[i] < 0) {
+      return NNACL_ERRCODE_RSQRT_NEGATIVE;
     }
     output[i] = 1.f / sqrtf(input[i]);
   }
