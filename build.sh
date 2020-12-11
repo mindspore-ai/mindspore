@@ -339,10 +339,8 @@ checkopts()
         exit 1
     esac
   done
-}
 
-parse_device()
-{
+  # Parse device
   # Process build option
   if [[ "X$DEVICE" == "Xgpu" ]]; then
     ENABLE_GPU="on"
@@ -394,7 +392,6 @@ parse_device()
 }
 
 checkopts "$@"
-parse_device
 echo "---------------- MindSpore: build start ----------------"
 mkdir -pv "${BUILD_PATH}/package/mindspore/lib"
 git submodule update --init graphengine
@@ -623,7 +620,7 @@ build_lite()
 {
     get_version
     echo "============ Start building MindSpore Lite ${VERSION_STR} ============"
-    if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ]; then
+    if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ] || [ $1 == "arm64" ]; then
       echo "start build opencl"
     fi
     if [ "${ENABLE_NPU}" == "on" ]; then
@@ -634,7 +631,7 @@ build_lite()
     fi
 
     cd "${BASEPATH}/mindspore/lite"
-    if [[ "${INC_BUILD}" == "off" ]]; then
+    if [[ "${INC_BUILD}" == "off" || $2 == "off" ]]; then
         rm -rf build
     fi
     mkdir -pv build
@@ -644,7 +641,7 @@ build_lite()
       BUILD_TYPE="Debug"
     fi
 
-    if [[ "${LITE_PLATFORM}" == "arm64" ]]; then
+    if [[ "${LITE_PLATFORM}" == "arm64" || $1 == "arm64" ]]; then
         checkndk
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
@@ -656,7 +653,7 @@ build_lite()
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
               "${BASEPATH}/mindspore/lite"
-    elif [[ "${LITE_PLATFORM}" == "arm32" ]]; then
+    elif [[ "${LITE_PLATFORM}" == "arm32" || $1 == "arm32" ]]; then
         checkndk
         cmake -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK}/build/cmake/android.toolchain.cmake" -DANDROID_NATIVE_API_LEVEL="19"      \
               -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="clang"                      \
@@ -678,9 +675,8 @@ build_lite()
         -DENABLE_VERBOSE=${ENABLE_VERBOSE} -DX86_64_SIMD=${X86_64_SIMD} "${BASEPATH}/mindspore/lite"
     fi
     make -j$THREAD_NUM && make install && make package
-    COMPILE_RET=$?
 
-    if [[ "${COMPILE_RET}" -ne 0 ]]; then
+    if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build failed ----------------"
         exit 1
     else
@@ -696,11 +692,7 @@ build_lite()
 build_lite_java_arm64() {
     # build mindspore-lite arm64
     if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu.tar.gz" ]]; then
-      LITE_PLATFORM="arm64"
-      INC_BUILD_COPY=${INC_BUILD}
-      INC_BUILD="off"
-      build_lite
-      INC_BUILD=${INC_BUILD_COPY}
+      build_lite "arm64" "off"
     fi
     # copy arm64 so
     cd ${BASEPATH}/output/
@@ -716,11 +708,7 @@ build_lite_java_arm64() {
 build_lite_java_arm32() {
     # build mindspore-lite arm32
     if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm32-cpu.tar.gz" ]]; then
-      LITE_PLATFORM="arm32"
-      INC_BUILD_COPY=${INC_BUILD}
-      INC_BUILD="off"
-      build_lite
-      INC_BUILD=${INC_BUILD_COPY}
+      build_lite  "arm32" "off"
     fi
     # copy arm32 so
     cd ${BASEPATH}/output/
@@ -744,8 +732,7 @@ build_jni_arm64() {
           -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
           -DPLATFORM_ARM64=on "${JAVA_PATH}/java/app/src/main/native"
     make -j$THREAD_NUM
-    COMPILE_RET=$?
-    if [[ "${COMPILE_RET}" -ne 0 ]]; then
+    if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build jni arm64 failed----------------"
         exit 1
     fi
@@ -765,8 +752,7 @@ build_jni_arm32() {
           -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
           -DPLATFORM_ARM32=on "${JAVA_PATH}/java/app/src/main/native"
     make -j$THREAD_NUM
-    COMPILE_RET=$?
-    if [[ "${COMPILE_RET}" -ne 0 ]]; then
+    if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build jni arm32 failed----------------"
         exit 1
     fi
