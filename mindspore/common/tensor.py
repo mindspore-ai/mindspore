@@ -301,7 +301,7 @@ class Tensor(Tensor_):
         Reshape the tensor according to the input shape.
 
         Args:
-            shape (Union(list[int], \*int)): Dimension of the output tensor.
+            shape (Union(tuple[int], \*int)): Dimension of the output tensor.
 
         Returns:
             Tensor, has the same dimension as the input shape.
