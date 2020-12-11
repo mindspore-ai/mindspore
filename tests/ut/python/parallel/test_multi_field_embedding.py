@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ from mindspore.ops import composite as C
 from mindspore import Tensor, context
 from mindspore.nn import TrainOneStepCell, Adam
 from tests.ut.python.ops.test_math_ops import VirtualLoss
-
 
 grad_all = C.GradOperation(get_all=True)
 
@@ -48,10 +47,11 @@ class NetWithLoss(nn.Cell):
 
 
 class Net(nn.Cell):
-    def __init__(self, shape, slice_mode=nn.EmbeddingLookup.BATCH_SLICE, target="Device", operator='SUM'):
+    def __init__(self, shape, field_size=10, slice_mode=nn.EmbeddingLookup.BATCH_SLICE, target="Device",
+                 operator='SUM'):
         super().__init__()
         self.embedding = nn.MultiFieldEmbeddingLookup(vocab_size=32, embedding_size=64, target=target,
-                                                      field_size=shape[1], slice_mode=slice_mode, operator=operator)
+                                                      field_size=field_size, slice_mode=slice_mode, operator=operator)
         self.reshape = P.Reshape().shard(((8, 1, 1),))
         self.batch_size = shape[0]
 
@@ -77,28 +77,28 @@ def compile_net(net, shape):
 def test_embeddinglookup_batch_parallel_sum():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     shape = [64, 64]
-    net = NetWithLoss(Net(shape, target='DEVICE'))
+    net = NetWithLoss(Net(shape, field_size=10, target='DEVICE'))
     compile_net(net, shape)
 
 
 def test_embeddinglookup_row_parallel_sum():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     shape = [64, 64]
-    net = NetWithLoss(Net(shape, slice_mode=nn.EmbeddingLookup.TABLE_ROW_SLICE, target='DEVICE'))
+    net = NetWithLoss(Net(shape, field_size=9, slice_mode=nn.EmbeddingLookup.TABLE_ROW_SLICE, target='DEVICE'))
     compile_net(net, shape)
 
 
 def test_embeddinglookup_column_parallel_sum():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     shape = [64, 64]
-    net = NetWithLoss(Net(shape, slice_mode=nn.EmbeddingLookup.TABLE_COLUMN_SLICE, target='DEVICE'))
+    net = NetWithLoss(Net(shape, field_size=10, slice_mode=nn.EmbeddingLookup.TABLE_COLUMN_SLICE, target='DEVICE'))
     compile_net(net, shape)
 
 
 def test_embeddinglookup_batch_parallel_mean():
     context.set_auto_parallel_context(device_num=8, global_rank=0, parallel_mode="semi_auto_parallel")
     shape = [64, 64]
-    net = NetWithLoss(Net(shape, target='DEVICE', operator='MEAN'))
+    net = NetWithLoss(Net(shape, field_size=1, target='DEVICE', operator='MEAN'))
     compile_net(net, shape)
 
 
