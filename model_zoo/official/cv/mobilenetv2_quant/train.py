@@ -102,7 +102,7 @@ def train_on_ascend():
     quantizer = QuantizationAwareTraining(bn_fold=True,
                                           per_channel=[True, False],
                                           symmetric=[True, False],
-                                          one_conv_fold=False)
+                                          one_conv_fold=True)
     network = quantizer.quantize(network)
 
     # get learning rate
