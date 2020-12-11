@@ -180,6 +180,18 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     }
   }
 
+  // tensor name
+  {
+    Optimizer nameOptimizer;
+    nameOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
+    nameOptimizer.AddPass(new (std::nothrow) TensorNamePass());
+    status = nameOptimizer.Run(graphDefT);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Run nameOptimizer graphPasses Failed";
+      return status;
+    }
+  }
+
   // topological sorting
   {
     Optimizer topologicalOptimizer;
@@ -187,17 +199,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     status = topologicalOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run topologicalOptimizer graphPasses Failed";
-      return status;
-    }
-  }
-
-  // tensor name
-  {
-    Optimizer nameOptimizer;
-    nameOptimizer.AddPass(new (std::nothrow) TensorNamePass());
-    status = nameOptimizer.Run(graphDefT);
-    if (status != RET_OK && status != RET_NO_CHANGE) {
-      MS_LOG(ERROR) << "Run nameOptimizer graphPasses Failed";
       return status;
     }
   }
