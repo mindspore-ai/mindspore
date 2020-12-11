@@ -59,18 +59,27 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
       MS_LOG(DEBUG) << "the tensor's shape is dynamic.";
       return true;
     }
-    auto conv_attr = std::make_unique<schema::Conv2DT>();
-    if (conv_attr == nullptr) {
-      MS_LOG(ERROR) << "conv_attr is null";
+    auto weight_data_node = depthwise_cnode->input(kConvWeightIndex)->abstract();
+    if (weight_data_node == nullptr) {
+      MS_LOG(ERROR) << "the weight node input is invalid.";
       return false;
     }
-
-    if (data_shape[3] == 1) {
+    auto weight_shape = utils::cast<abstract::ShapePtr>(weight_data_node->GetShapeTrack())->shape();
+    if (weight_shape.empty()) {
+      MS_LOG(DEBUG) << "the weight's shape is dynamic.";
+      return true;
+    }
+    if ((data_shape[3] == 1) || (data_shape[3] != weight_shape[3])) {
+      auto conv_attr = std::make_unique<schema::Conv2DT>();
+      if (conv_attr == nullptr) {
+        MS_LOG(ERROR) << "conv_attr is null";
+        return false;
+      }
       conv_attr->channelIn = data_shape[3];
-      conv_attr->channelOut = conv_attr->channelIn * attr->channelMultiplier;
+      conv_attr->channelOut = weight_shape[3];
 
       // update attr
-      conv_attr->group = 1;
+      conv_attr->group = data_shape[3];
       conv_attr->format = attr->format;
       conv_attr->kernelH = attr->kernelH;
       conv_attr->kernelW = attr->kernelW;

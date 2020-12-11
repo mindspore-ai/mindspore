@@ -307,6 +307,12 @@ kernel::LiteKernel *CpuConvInt8KernelSelect(const std::vector<lite::Tensor *> &i
   return kernel;
 }
 
+void CopyTensorQuantParam(lite::Tensor *dst, lite::Tensor *src) {
+  for (size_t i = 0; i < src->quant_params().size(); i++) {
+    dst->AddQuantParam(src->quant_params().at(i));
+  }
+}
+
 kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                                   const InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
@@ -359,6 +365,7 @@ kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor
       MS_LOG(ERROR) << "create input tensor failed.";
       return nullptr;
     }
+    CopyTensorQuantParam(in_tensor, inputs[kInputIndex]);
     new_inputs.emplace_back(in_tensor);
 
     // create new weight
@@ -371,6 +378,7 @@ kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor
       MS_LOG(ERROR) << "create filter tensor failed.";
       return nullptr;
     }
+    CopyTensorQuantParam(filter_tensor, inputs[kWeightIndex]);
     new_inputs.emplace_back(filter_tensor);
 
     // if has bias, create new bias
@@ -383,6 +391,7 @@ kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor
         MS_LOG(ERROR) << "create bias_tensor failed.";
         return nullptr;
       }
+      CopyTensorQuantParam(bias_tensor, inputs[kBiasIndex]);
       new_inputs.emplace_back(bias_tensor);
     }
 
@@ -395,6 +404,7 @@ kernel::LiteKernel *CpuGroupConvInt8KernelCreator(const std::vector<lite::Tensor
         MS_LOG(ERROR) << "new out_tensor failed.";
         return nullptr;
       }
+      CopyTensorQuantParam(out_tensor, outputs[j]);
       new_outputs.emplace_back(out_tensor);
     }
     group_convs.emplace_back(CpuConvInt8KernelSelect(
@@ -412,6 +422,15 @@ kernel::LiteKernel *CpuConvInt8KernelCreator(const std::vector<lite::Tensor *> &
   MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
   auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   kernel::LiteKernel *kernel = nullptr;
+  if (primitive != nullptr && primitive->infer_flag()) {
+    conv_param->input_h_ = inputs.front()->Height();
+    conv_param->input_w_ = inputs.front()->Width();
+    conv_param->input_channel_ = inputs.front()->Channel();
+    conv_param->output_h_ = outputs.front()->Height();
+    conv_param->output_w_ = outputs.front()->Width();
+    conv_param->output_channel_ = outputs.front()->Channel();
+    conv_param->op_parameter_.thread_num_ = ctx->thread_num_;
+  }
   if (conv_param->group_ == 1) {
     kernel = CpuConvInt8KernelSelect(inputs, outputs, opParameter, ctx, primitive);
   } else {
