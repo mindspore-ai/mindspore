@@ -46,6 +46,18 @@ OpParameter *PopulateConvDwParameter(const mindspore::lite::PrimitiveC *primitiv
   conv_param->input_channel_ = convdw_lite_primitive->GetInputChannel();
   conv_param->dilation_h_ = conv_primitive->GetDilateH();
   conv_param->dilation_w_ = conv_primitive->GetDilateW();
+  auto pad_mode = conv_primitive->GetPadMode();
+  switch (pad_mode) {
+    case schema::PadMode_SAME_UPPER:
+      conv_param->pad_mode_ = Pad_Same;
+      break;
+    case schema::PadMode_VALID:
+      conv_param->pad_mode_ = Pad_Valid;
+      break;
+    default:
+      conv_param->pad_mode_ = Pad_No;
+      break;
+  }
   auto act_type = conv_primitive->GetActivationType();
   switch (act_type) {
     case schema::ActivationType_RELU:

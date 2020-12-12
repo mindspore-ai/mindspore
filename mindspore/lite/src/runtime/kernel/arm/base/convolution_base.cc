@@ -26,7 +26,6 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
 using mindspore::schema::ActivationType;
-using mindspore::schema::PadMode;
 
 namespace mindspore::kernel {
 ConvolutionBaseCPUKernel::~ConvolutionBaseCPUKernel() {

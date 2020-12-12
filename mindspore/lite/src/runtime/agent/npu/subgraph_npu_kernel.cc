@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/agent/npu/subgraph_npu_kernel.h"
+#include <set>
 #include "include/errorcode.h"
 #include "src/runtime/agent/npu/npu_executor.h"
 #include "include/graph/operator.h"
@@ -72,6 +73,9 @@ domi::ModelBufferData *SubGraphNpuKernel::BuildIRModel() {
 int SubGraphNpuKernel::Run() { return this->executor_->Run(in_tensors_, out_tensors_, nodes_, nullptr); }
 
 int SubGraphNpuKernel::BuildNPUInputOp() {
+  std::set<schema::PrimitiveType> trans_nodes = {schema::PrimitiveType_Conv2D, schema::PrimitiveType_DeConv2D,
+                                                 schema::PrimitiveType_DepthwiseConv2D,
+                                                 schema::PrimitiveType_DeDepthwiseConv2D};
   int count = 0;
   subgraph_input_op_.clear();
   for (auto node : this->nodes_) {
@@ -79,9 +83,16 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
     for (auto in_tensor : node->in_tensors()) {
       if (IsSubGraphInputTensor(in_tensor)) {
         auto tensor_name = node->name() + "_" + std::to_string(count++);
+        auto shape = in_tensor->shape();
+        if (trans_nodes.find(node->Type()) != trans_nodes.end()) {
+          in_tensor->set_shape({shape[0], shape[3], shape[1], shape[2]});
+        }
         auto data = mindspore::lite::ConverterToNPUData(in_tensor, tensor_name);
         subgraph_input_op_.push_back(*data);
         node_input_op.push_back(data);
+        if (trans_nodes.find(node->Type()) != trans_nodes.end()) {
+          in_tensor->set_shape(shape);
+        }
         continue;
       }
 
@@ -183,5 +194,4 @@ int SubGraphNpuKernel::Prepare() {
   }
   return RET_OK;
 }
-
 }  // namespace mindspore::kernel

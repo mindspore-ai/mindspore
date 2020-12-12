@@ -31,6 +31,7 @@ ge::Format ConverterToNPUFormat(schema::Format format) {
       ge_format = ge::FORMAT_NCHW;
       break;
     case schema::Format_NHWC:
+    case schema::Format_KHWC:
       ge_format = ge::FORMAT_NHWC;
       break;
     default:
@@ -79,7 +80,7 @@ hiai::op::Data *ConverterToNPUData(Tensor *src, const std::string &name) {
     MS_LOG(ERROR) << "new data failed.";
     return data;
   }
-  ge::TensorDesc tensor_desc(ConverterToNPUShape(src->shape()), ConverterToNPUFormat(src->format()),
+  ge::TensorDesc tensor_desc(ConverterToNPUShape(src->shape()), ge::FORMAT_NCHW,
                              ConverterToNPUDataType(src->data_type()));
   data->update_input_desc_x(tensor_desc);
   return data;
@@ -91,7 +92,7 @@ std::shared_ptr<ge::Tensor> ConverterToNPUTensor(Tensor *src) {
     MS_LOG(ERROR) << "new ge_tensor failed.";
     return ge_tensor;
   }
-  ge::TensorDesc tensor_desc(ConverterToNPUShape(src->shape()), ConverterToNPUFormat(src->format()),
+  ge::TensorDesc tensor_desc(ConverterToNPUShape(src->shape()), ge::FORMAT_NCHW,
                              ConverterToNPUDataType(src->data_type()));
 
   ge_tensor->SetTensorDesc(tensor_desc);

@@ -48,6 +48,18 @@ OpParameter *PopulateConvParameter(const mindspore::lite::PrimitiveC *primitive)
   conv_param->input_channel_ = conv_primitive->GetChannelIn();
   conv_param->output_channel_ = conv_primitive->GetChannelOut();
   conv_param->group_ = conv_primitive->GetGroup();
+  auto pad_mode = conv_primitive->GetPadMode();
+  switch (pad_mode) {
+    case schema::PadMode_SAME_UPPER:
+      conv_param->pad_mode_ = Pad_Same;
+      break;
+    case schema::PadMode_VALID:
+      conv_param->pad_mode_ = Pad_Valid;
+      break;
+    default:
+      conv_param->pad_mode_ = Pad_No;
+      break;
+  }
   auto act_type = conv_primitive->GetActivationType();
   switch (act_type) {
     case schema::ActivationType_RELU:

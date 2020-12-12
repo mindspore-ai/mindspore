@@ -79,6 +79,7 @@ typedef struct OpParameter {
 } OpParameter;
 
 typedef enum ActType { ActType_No, ActType_Relu, ActType_Sigmod, ActType_Relu6, ActType_Prelu } ActType;
+typedef enum PadMode { Pad_No, Pad_Same, Pad_Valid } PadMode;
 
 #ifdef ENABLE_ARM
 #define MS_FLOAT32X4 float32x4_t
