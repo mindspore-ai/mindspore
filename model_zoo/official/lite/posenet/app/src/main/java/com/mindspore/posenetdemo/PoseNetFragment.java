@@ -15,10 +15,9 @@
  */
 package com.mindspore.posenetdemo;
 
-import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.pm.PackageManager;
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
@@ -40,11 +39,9 @@ import android.view.Surface;
 import android.view.SurfaceView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.Fragment;
 
 import java.util.Arrays;
@@ -57,7 +54,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class PoseNetFragment extends Fragment {
 
-    private final static int REQUEST_CAMERA_PERMISSION = 1;
+    private static final String TAG = "PoseNetFragment";
+
     private String cameraId = "1";
     private SurfaceView surfaceView;
     private CameraCaptureSession captureSession;
@@ -74,9 +72,6 @@ public class PoseNetFragment extends Fragment {
     private CaptureRequest previewRequest;
     private Semaphore cameraOpenCloseLock = new Semaphore(1);//使用信号量 Semaphore 进行多线程任务调度
     private boolean flashSupported;
-
-
-    private static final String TAG = "PoseNetFragment";
 
     private final CameraDevice.StateCallback mStateCallback = new CameraDevice.StateCallback() {
 
@@ -104,7 +99,6 @@ public class PoseNetFragment extends Fragment {
             }
         }
     };
-
 
     private CameraCaptureSession.CaptureCallback captureCallback = new CameraCaptureSession.CaptureCallback() {
         @Override
@@ -164,35 +158,7 @@ public class PoseNetFragment extends Fragment {
         super.onDestroy();
     }
 
-    private void requestCameraPermission() {
-        if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
-            Toast.makeText(getContext(), "This app needs camera permission.", Toast.LENGTH_LONG).show();
-        } else {
-            requestPermissions(new String[]{Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE,
-                    Manifest.permission.READ_PHONE_STATE, Manifest.permission.CAMERA}, REQUEST_CAMERA_PERMISSION);
-        }
-    }
 
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == REQUEST_CAMERA_PERMISSION) {
-            if (allPermissionsGranted(grantResults)) {
-                Toast.makeText(getContext(), "This app needs camera permission.", Toast.LENGTH_LONG).show();
-            }
-        } else {
-            super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        }
-    }
-
-    private boolean allPermissionsGranted(int[] grantResults) {
-        for (int grantResult : grantResults) {
-            if (grantResult == PackageManager.PERMISSION_DENIED) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     /**
      * Sets up member variables related to camera.
@@ -227,7 +193,6 @@ public class PoseNetFragment extends Fragment {
 
                 // We've found a viable camera and finished setting up member variables,
                 // so we don't need to iterate through other available cameras.
-                return;
             }
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -239,10 +204,8 @@ public class PoseNetFragment extends Fragment {
     /**
      * Opens the camera specified by [PosenetActivity.cameraId].
      */
+    @SuppressLint("MissingPermission")
     private void openCamera() {
-        if (ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-            this.requestCameraPermission();
-        }
         setUpCameraOutputs();
         CameraManager manager = (CameraManager) getContext().getSystemService(Context.CAMERA_SERVICE);
         try {
