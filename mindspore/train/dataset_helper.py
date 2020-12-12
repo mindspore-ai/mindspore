@@ -62,7 +62,7 @@ def connect_network_with_dataset(network, dataset_helper):
 
     Examples:
         >>> # call create_dataset function to create a regular dataset, refer to mindspore.dataset
-        >>> train_dataset = create_dataset()
+        >>> train_dataset = create_custom_dataset()
         >>> dataset_helper = mindspore.DatasetHelper(train_dataset, dataset_sink_mode=True)
         >>> net = Net()
         >>> net_with_get_next = connect_network_with_dataset(net, dataset_helper)
@@ -152,9 +152,13 @@ class DatasetHelper:
         epoch_num (int): Control the number of epoch data to send. Default: 1.
 
     Examples:
-        >>> dataset_helper = DatasetHelper(dataset)
-        >>> for inputs in dataset_helper:
-        >>>     outputs = network(*inputs)
+        >>> network = Net()
+        >>> net_loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
+        >>> network = nn.WithLossCell(network, net_loss)
+        >>> train_dataset = create_custom_dataset()
+        >>> dataset_helper = DatasetHelper(train_dataset, dataset_sink_mode=False)
+        >>> for next_element in dataset_helper:
+        ...     outputs = network(*next_element)
     """
 
     def __init__(self, dataset, dataset_sink_mode=True, sink_size=-1, epoch_num=1):
