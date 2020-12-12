@@ -1051,7 +1051,15 @@ std::vector<std::string> Debugger::CheckOpOverflow() {
     }
   }
 
-  return op_names;
+  auto iter_op_names = overflow_ops_.find(num_step_);
+  if (iter_op_names == overflow_ops_.end()) {
+    overflow_ops_.insert(std::pair<uint32_t, std::vector<std::string>>(num_step_, op_names));
+
+    return op_names;
+  }
+  iter_op_names->second.insert(std::end(iter_op_names->second), std::begin(op_names), std::end(op_names));
+
+  return iter_op_names->second;
 }
 
 void Debugger::SetTrainingDone(bool training_done) { training_done_ = training_done; }
