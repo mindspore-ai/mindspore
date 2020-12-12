@@ -17,7 +17,7 @@ Neural Networks Cells.
 
 Pre-defined building blocks or computing units to construct Neural Networks.
 """
-from . import layer, loss, optim, metrics, wrap, probability, sparse
+from . import layer, loss, optim, metrics, wrap, probability, sparse, dynamic_lr
 from .learning_rate_schedule import *
 from .dynamic_lr import *
 from .cell import Cell, GraphKernel
