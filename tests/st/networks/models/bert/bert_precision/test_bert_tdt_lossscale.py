@@ -35,7 +35,6 @@ from model_zoo.official.nlp.bert.src.bert_for_pre_training import BertNetworkWit
 from model_zoo.official.nlp.bert.src.bert_for_pre_training import BertTrainOneStepWithLossScaleCell
 from model_zoo.official.nlp.bert.src.bert_model import BertConfig
 
-
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]
 SCHEMA_DIR = "/home/workspace/mindspore_dataset/bert/example/datasetSchema.json"
@@ -155,13 +154,16 @@ class ModelCallback(Callback):
         self.lossscale_list.append(cb_params.net_outputs[2].asnumpy())
         print("epoch: {}, outputs are: {}".format(cb_params.cur_epoch_num, str(cb_params.net_outputs)))
 
+
 class TimeMonitor(Callback):
     """Time Monitor."""
+
     def __init__(self, data_size):
         super(TimeMonitor, self).__init__()
         self.data_size = data_size
         self.epoch_mseconds_list = []
         self.per_step_mseconds_list = []
+
     def epoch_begin(self, run_context):
         self.epoch_time = time.time()
 
@@ -170,18 +172,17 @@ class TimeMonitor(Callback):
         self.epoch_mseconds_list.append(epoch_mseconds)
         self.per_step_mseconds_list.append(epoch_mseconds / self.data_size)
 
-@pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
-@pytest.mark.env_onecard
-def test_bert_percision():
+
+def test_bert_percision(enable_graph_kernel=False):
     """test bert percision"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
+    if enable_graph_kernel:
+        context.set_context(enable_graph_kernel=True)
     ds, new_repeat_count, _ = me_de_train_dataset()
     version = os.getenv('VERSION', 'large')
     config = get_config(version=version)
     netwithloss = BertNetworkWithLoss(config, True)
-    lr = BertLearningRate(decay_steps=ds.get_dataset_size()*new_repeat_count,
+    lr = BertLearningRate(decay_steps=ds.get_dataset_size() * new_repeat_count,
                           learning_rate=5e-5, end_learning_rate=1e-9,
                           power=10.0, warmup_steps=0)
     decay_filter = lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()
@@ -239,5 +240,22 @@ def test_bert_percision():
     assert np.allclose(loss_scale, expect_loss_scale, 0, 0)
 
 
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_bert_percision_graph_kernel_off():
+    test_bert_percision(enable_graph_kernel=False)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_bert_percision_graph_kernel_on():
+    test_bert_percision(enable_graph_kernel=True)
+
+
 if __name__ == '__main__':
-    test_bert_percision()
+    test_bert_percision(enable_graph_kernel=False)
+    test_bert_percision(enable_graph_kernel=True)

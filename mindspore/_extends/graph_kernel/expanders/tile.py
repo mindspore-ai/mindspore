@@ -65,8 +65,7 @@ def expand_tile(expand_info):
     for item in attrs:
         if 'multiples' in item:
             multiples = item['multiples']
-    output_shape, input_reshape, output_reshape, shape_compatible = _get_tile_output_shape(input_desc['shape'],
-                                                                                           multiples)
+    output_shape, _, _, shape_compatible = _get_tile_output_shape(input_desc['shape'], multiples)
     graph_builder = builder.GraphBuilder()
 
     # generate a graph.
@@ -77,9 +76,7 @@ def expand_tile(expand_info):
         if shape_compatible:
             result = graph_builder.emit('BroadcastTo', [input_x], attrs={'shape': output_shape})
         else:
-            input_x_reshape = graph_builder.emit('Reshape', [input_x], attrs={'shape': input_reshape})
-            reshape_broadcast = graph_builder.emit('BroadcastTo', [input_x_reshape], attrs={'shape': output_reshape})
-            result = graph_builder.emit('Reshape', [reshape_broadcast], attrs={'shape': output_shape})
+            result = graph_builder.emit('Tile', [input_x], attrs={'multiples': multiples})
         # set graph output.
         graph_scope.set_output(result)
 
