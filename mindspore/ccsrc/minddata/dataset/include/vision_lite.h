@@ -81,7 +81,7 @@ std::shared_ptr<DecodeOperation> Decode(bool rgb = true);
 /// \brief Function to create a Normalize TensorOperation.
 /// \notes Normalize the input image with respect to mean and standard deviation.
 /// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
-///     The mean values must be in range (0.0, 255.0].
+///     The mean values must be in range [0.0, 255.0].
 /// \param[in] std A vector of standard deviations for each channel, w.r.t. channel order.
 ///     The standard deviation values must be in range (0.0, 255.0]
 /// \return Shared pointer to the current TensorOperation.

@@ -62,6 +62,7 @@ constexpr char kHwcToChwOp[] = "HwcToChwOp";
 constexpr char kInvertOp[] = "InvertOp";
 constexpr char kMixUpBatchOp[] = "MixUpBatchOp";
 constexpr char kNormalizeOp[] = "NormalizeOp";
+constexpr char kNormalizePadOp[] = "NormalizePadOp";
 constexpr char kPadOp[] = "PadOp";
 constexpr char kRandomColorAdjustOp[] = "RandomColorAdjustOp";
 constexpr char kRandomCropAndResizeOp[] = "RandomCropAndResizeOp";

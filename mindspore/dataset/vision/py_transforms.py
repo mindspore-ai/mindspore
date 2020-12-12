@@ -28,7 +28,7 @@ from PIL import Image
 from . import py_transforms_util as util
 from .c_transforms import parse_padding
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
-    check_normalize_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
+    check_normalize_py, check_normalizepad_py, check_random_crop, check_random_color_adjust, check_random_rotation, \
     check_ten_crop, check_num_channels, check_pad, \
     check_random_perspective, check_random_erasing, check_cutout, check_linear_transform, check_random_affine, \
     check_mix_up, check_positive_degrees, check_uniform_augment_py, check_auto_contrast
@@ -229,6 +229,49 @@ class Normalize:
             img (numpy.ndarray), Normalized Image array.
         """
         return util.normalize(img, self.mean, self.std)
+
+
+class NormalizePad:
+    """
+    Normalize the input NumPy image array of shape (C, H, W) with the given mean and standard deviation
+        then pad an extra channel with value zero.
+
+    The values of the array need to be in the range (0.0, 1.0].
+
+    Args:
+        mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
+            The mean values must be in the range (0.0, 1.0].
+        std (sequence): List or tuple of standard deviations for each channel, w.r.t. channel order.
+            The standard deviation values must be in the range (0.0, 1.0].
+        dtype (str): Set the output data type of image (default is "float32").
+
+    Examples:
+        >>> import mindspore.dataset.vision.py_transforms as py_vision
+        >>> from mindspore.dataset.transforms.py_transforms import Compose
+        >>>
+        >>> Compose([py_vision.Decode(),
+        >>>          py_vision.RandomHorizontalFlip(0.5),
+        >>>          py_vision.ToTensor(),
+        >>>          py_vision.NormalizePad((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), "float32")])
+    """
+
+    @check_normalizepad_py
+    def __init__(self, mean, std, dtype="float32"):
+        self.mean = mean
+        self.std = std
+        self.dtype = dtype
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (numpy.ndarray): Image array to be normalizepad.
+
+        Returns:
+            img (numpy.ndarray), NormalizePaded Image array.
+        """
+        return util.normalize(img, self.mean, self.std, pad_channel=True, dtype=self.dtype)
 
 
 class RandomCrop:

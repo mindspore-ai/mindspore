@@ -42,6 +42,7 @@ constexpr char kEqualizeOperation[] = "Equalize";
 constexpr char kHwcToChwOperation[] = "HwcToChw";
 constexpr char kInvertOperation[] = "Invert";
 constexpr char kMixUpBatchOperation[] = "MixUpBatch";
+constexpr char kNormalizePadOperation[] = "NormalizePad";
 constexpr char kPadOperation[] = "Pad";
 constexpr char kRandomAffineOperation[] = "RandomAffine";
 constexpr char kRandomColorAdjustOperation[] = "RandomColorAdjust";
@@ -79,6 +80,7 @@ class EqualizeOperation;
 class HwcToChwOperation;
 class InvertOperation;
 class MixUpBatchOperation;
+class NormalizePadOperation;
 class PadOperation;
 class RandomAffineOperation;
 class RandomColorOperation;
@@ -161,6 +163,19 @@ std::shared_ptr<InvertOperation> Invert();
 /// \param[in] alpha hyperparameter of beta distribution (default = 1.0)
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<MixUpBatchOperation> MixUpBatch(float alpha = 1);
+
+/// \brief Function to create a NormalizePad TensorOperation.
+/// \notes Normalize the input image with respect to mean and standard deviation and pad an extra
+///     channel with value zero.
+/// \param[in] mean A vector of mean values for each channel, w.r.t channel order.
+///     The mean values must be in range [0.0, 255.0].
+/// \param[in] std A vector of standard deviations for each channel, w.r.t. channel order.
+///     The standard deviation values must be in range (0.0, 255.0]
+/// \param[in] dtype The output datatype of Tensor.
+///     The standard deviation values must be "float32" or "float16"（default = "float32"）
+/// \return Shared pointer to the current TensorOperation.
+std::shared_ptr<NormalizePadOperation> NormalizePad(const std::vector<float> &mean, const std::vector<float> &std,
+                                                    const std::string &dtype = "float32");
 
 /// \brief Function to create a Pad TensorOp
 /// \notes Pads the image according to padding parameters
@@ -585,6 +600,25 @@ class MixUpBatchOperation : public TensorOperation {
 
  private:
   float alpha_;
+};
+
+class NormalizePadOperation : public TensorOperation {
+ public:
+  NormalizePadOperation(const std::vector<float> &mean, const std::vector<float> &std,
+                        const std::string &dtype = "float32");
+
+  ~NormalizePadOperation() = default;
+
+  std::shared_ptr<TensorOp> Build() override;
+
+  Status ValidateParams() override;
+
+  std::string Name() const override { return kNormalizePadOperation; }
+
+ private:
+  std::vector<float> mean_;
+  std::vector<float> std_;
+  std::string dtype_;
 };
 
 class PadOperation : public TensorOperation {

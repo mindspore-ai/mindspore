@@ -18,6 +18,7 @@ add_library(kernels-image OBJECT
     math_utils.cc
     mixup_batch_op.cc
     normalize_op.cc
+    normalize_pad_op.cc
     pad_op.cc
     posterize_op.cc
     random_affine_op.cc

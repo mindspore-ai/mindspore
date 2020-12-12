@@ -50,8 +50,8 @@ import mindspore._c_dataengine as cde
 
 from .utils import Inter, Border, ImageBatchFormat
 from .validators import check_prob, check_crop, check_resize_interpolation, check_random_resize_crop, \
-    check_mix_up_batch_c, check_normalize_c, check_random_crop, check_random_color_adjust, check_random_rotation, \
-    check_range, check_resize, check_rescale, check_pad, check_cutout, \
+    check_mix_up_batch_c, check_normalize_c, check_normalizepad_c, check_random_crop, check_random_color_adjust, \
+    check_random_rotation, check_range, check_resize, check_rescale, check_pad, check_cutout, \
     check_uniform_augment_cpp, \
     check_bounding_box_augment_cpp, check_random_select_subpolicy_op, check_auto_contrast, check_random_affine, \
     check_random_solarize, check_soft_dvpp_decode_random_crop_resize_jpeg, check_positive_degrees, FLOAT_MAX_INTEGER, \
@@ -296,6 +296,50 @@ class Normalize(cde.NormalizeOp):
             raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
         normalize = cde.Execute(cde.NormalizeOp(*self.mean, *self.std))
         img = normalize(cde.Tensor(np.asarray(img)))
+        return img.as_array()
+
+
+class NormalizePad(cde.NormalizePadOp):
+    """
+    Normalize the input image with respect to mean and standard deviation then pad an extra channel with value zero.
+
+    Args:
+        mean (sequence): List or tuple of mean values for each channel, with respect to channel order.
+            The mean values must be in range (0.0, 255.0].
+        std (sequence): List or tuple of standard deviations for each channel, with respect to channel order.
+            The standard deviation values must be in range (0.0, 255.0].
+        dtype (str): Set the output data type of normalized image (default is "float32").
+
+    Examples:
+        >>> import mindspore.dataset.vision.c_transforms as c_vision
+        >>>
+        >>> decode_op = c_vision.Decode()
+        >>> normalize_op = c_vision.NormalizePad(mean=[121.0, 115.0, 100.0], std=[70.0, 68.0, 71.0], dtype="float32")
+        >>> transforms_list = [decode_op, normalize_pad_op]
+        >>> data1 = data1.map(operations=transforms_list, input_columns=["image"])
+    """
+
+    @check_normalizepad_c
+    def __init__(self, mean, std, dtype="float32"):
+        self.mean = mean
+        self.std = std
+        self.dtype = dtype
+        super().__init__(*mean, *std, dtype)
+
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (NumPy or PIL image): Image array to be normalizepad.
+
+        Returns:
+            img (NumPy), NormalizePaded Image array.
+        """
+        if not isinstance(img, (np.ndarray, Image.Image)):
+            raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
+        normalize_pad = cde.Execute(cde.NormalizePadOp(*self.mean, *self.std, self.dtype))
+        img = normalize_pad(cde.Tensor(np.asarray(img)))
         return img.as_array()
 
 

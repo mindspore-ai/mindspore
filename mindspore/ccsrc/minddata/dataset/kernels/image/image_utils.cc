@@ -630,6 +630,57 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   }
 }
 
+Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                    const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std, const std::string &dtype) {
+  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+  if (!(input_cv->mat().data && input_cv->Rank() == 3)) {
+    RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
+  }
+  DataType tensor_type = DataType(DataType::DE_FLOAT32);
+  int compute_type = CV_32F;
+  int channel_type = CV_32FC1;
+  if (dtype == "float16") {
+    compute_type = CV_16F;
+    channel_type = CV_16FC1;
+    tensor_type = DataType(DataType::DE_FLOAT16);
+  }
+  cv::Mat in_image = input_cv->mat();
+  std::shared_ptr<CVTensor> output_cv;
+  TensorShape new_shape({input_cv->shape()[0], input_cv->shape()[1], input_cv->shape()[2] + 1});
+  RETURN_IF_NOT_OK(CVTensor::CreateEmpty(new_shape, tensor_type, &output_cv));
+  mean->Squeeze();
+  if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != 3) {
+    std::string err_msg = "Mean tensor should be of size 3 and type float.";
+    return Status(StatusCode::kShapeMisMatch, err_msg);
+  }
+  std->Squeeze();
+  if (std->type() != DataType::DE_FLOAT32 || std->Rank() != 1 || std->shape()[0] != 3) {
+    std::string err_msg = "Std tensor should be of size 3 and type float.";
+    return Status(StatusCode::kShapeMisMatch, err_msg);
+  }
+  try {
+    // NOTE: We are assuming the input image is in RGB and the mean
+    // and std are in RGB
+    std::vector<cv::Mat> rgb;
+    cv::split(in_image, rgb);
+    if (rgb.size() != 3) {
+      RETURN_STATUS_UNEXPECTED("Input image is not in RGB.");
+    }
+    for (uint8_t i = 0; i < 3; i++) {
+      float mean_c, std_c;
+      RETURN_IF_NOT_OK(mean->GetItemAt<float>(&mean_c, {i}));
+      RETURN_IF_NOT_OK(std->GetItemAt<float>(&std_c, {i}));
+      rgb[i].convertTo(rgb[i], compute_type, 1.0 / std_c, (-mean_c / std_c));
+    }
+    rgb.push_back(cv::Mat::zeros(in_image.rows, in_image.cols, channel_type));
+    cv::merge(rgb, output_cv->mat());
+    *output = std::static_pointer_cast<Tensor>(output_cv);
+    return Status::OK();
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Unexpected error in NormalizePad");
+  }
+}
+
 Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const float &alpha) {
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);

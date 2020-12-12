@@ -42,7 +42,7 @@ def is_pil(img):
     return isinstance(img, Image.Image)
 
 
-def normalize(img, mean, std):
+def normalize(img, mean, std, pad_channel=False, dtype="float32"):
     """
     Normalize the image between [0, 1] with respect to mean and standard deviation.
 
@@ -50,6 +50,8 @@ def normalize(img, mean, std):
         img (numpy.ndarray): Image array of shape CHW to be normalized.
         mean (list): List of mean values for each channel, w.r.t channel order.
         std (list): List of standard deviations for each channel, w.r.t. channel order.
+        pad_channel (bool): Whether to pad a extra channel with value zero.
+        dtype (str): Output datatype of normalize, only worked when pad_channel is True. (default is "float32")
 
     Returns:
         img (numpy.ndarray), Normalized image.
@@ -72,7 +74,13 @@ def normalize(img, mean, std):
 
     mean = np.array(mean, dtype=img.dtype)
     std = np.array(std, dtype=img.dtype)
-    return (img - mean[:, None, None]) / std[:, None, None]
+    image = (img - mean[:, None, None]) / std[:, None, None]
+    if pad_channel:
+        zeros = np.zeros([1, image.shape[1], image.shape[2]], dtype=np.float32)
+        image = np.concatenate((image, zeros), axis=0)
+        if dtype == "float16":
+            image = image.astype(np.float16)
+    return image
 
 
 def decode(img):
