@@ -4,7 +4,7 @@ set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 set(CCSRC_DIR ${TOP_DIR}/mindspore/ccsrc)
 include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
-include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/dependency_gtest.cmake)
+include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/external_libs/gtest.cmake)
 
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
@@ -103,22 +103,6 @@ if (PLATFORM_ARM32 OR PLATFORM_ARM64)
   if (ENABLE_CONVERTER)
     set(BUILD_MINDDATA "off")
   endif()
-endif()
-### minddata lite
-if (BUILD_MINDDATA STREQUAL "lite")
-#    include_directories(${CCSRC_DIR}/minddata)
-#    set(DATASET_TEST_DIR ${TEST_DIR}/ut/src/dataset)
-#    set(TEST_MINDDATA_SRC
-#                ${DATASET_TEST_DIR}/de_tensor_test.cc
-#                ${DATASET_TEST_DIR}/eager_test.cc
-#            )
-elseif (BUILD_MINDDATA STREQUAL "full")
-    #include_directories(${CCSRC_DIR}/minddata)
-    #set(DATASET_TEST_DIR ${TEST_DIR}/ut/src/dataset)
-    #set(TEST_MINDDATA_SRC
-    #            ${DATASET_TEST_DIR}/de_tensor_test.cc
-    #            ${DATASET_TEST_DIR}/eager_test.cc
-    #        )
 endif()
 ### runtime framework
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc ${LITE_DIR}/src/ops/populate/*.cc)
@@ -300,10 +284,9 @@ if (ENABLE_FP16)
             ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16/convolution_fp16_tests.cc)
 endif ()
 
-
 add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src)
-target_link_libraries(lite-test dl ${GTEST_LIBRARY})
+target_link_libraries(lite-test dl mindspore::gtest)
 if (PLATFORM_ARM64)
     target_link_libraries(lite-test nnacl_fp16_mid nnacl_optimize_mid)
 endif()
@@ -312,12 +295,6 @@ if (PLATFORM_ARM)
     target_link_libraries(lite-test log)
 endif()
 
-#if (BUILD_MINDDATA STREQUAL "lite")
-#    target_link_libraries(lite-test
-	    # minddata_eager_mid
-	    #minddata-lite
-	    #           )
-	    #endif()
 if (SUPPORT_NPU)
     include_directories(${DDK_PATH})
     target_link_libraries(lite-test npu_kernel_mid)
