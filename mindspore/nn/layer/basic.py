@@ -98,7 +98,7 @@ class Dropout(Cell):
     Note:
         Each channel will be zeroed out independently on every construct call.
 
-        The outputs are scaled by a factor of :math:`\frac{1}{keep\_prob}` during training so
+        The outputs are scaled by a factor of :math:`\frac{1}{keep\_prob}`    during training so
         that the output layer remains at a similar scale. During inference, this
         layer returns the same tensor as the input.
 
