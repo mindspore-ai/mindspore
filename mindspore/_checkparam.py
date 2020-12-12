@@ -429,8 +429,9 @@ class Validator:
 
     @staticmethod
     def check_file_name_by_regular(target, reg=None, flag=re.ASCII, prim_name=None):
+        """Check whether file name is legitimate."""
         if reg is None:
-            reg = r"^[0-9a-zA-Z\_\-\.\/\\]*$"
+            reg = r"^[0-9a-zA-Z\_\-\.\/\\]+$"
         if re.match(reg, target, flag) is None:
             prim_name = f'in `{prim_name}`' if prim_name else ""
             raise ValueError("'{}' {} is illegal, it should be match regular'{}' by flags'{}'".format(

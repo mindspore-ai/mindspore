@@ -596,8 +596,10 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
   // Trace value node
   if (node->isa<ValueNode>()) {
     auto op = Convert(anf_out);
-    graph_outputs_.emplace_back(std::make_pair(*op, ""));
-    AddGraphConstInput(op);
+    if (op != nullptr) {
+      graph_outputs_.emplace_back(std::make_pair(*op, ""));
+      AddGraphConstInput(op);
+    }
     return;
   }
 
