@@ -62,8 +62,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend）
-    - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. Squeezenet training on GPU performs badly now, and it is still in research. See [squeezenet in research](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/squeezenet) to get up-to-date details.
+- Hardware（Ascend/GPU）
+    - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. Squeezenet training on GPU performs badly now, and it is still in research.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -87,6 +87,19 @@ After installing MindSpore via the official website, you can start training and 
   Usage: sh scripts/run_eval.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
   ```
 
+- running on GPU
+
+  ```bash
+  # distributed training example
+  sh scripts/run_distribute_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+
+  # standalone training example
+  sh scripts/run_standalone_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+
+  # run evaluation example
+  sh scripts/run_eval_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
+  ```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -98,7 +111,10 @@ After installing MindSpore via the official website, you can start training and 
   ├── scripts
     ├── run_distribute_train.sh            # launch ascend distributed training(8 pcs)
     ├── run_standalone_train.sh            # launch ascend standalone training(1 pcs)
+    ├── run_distribute_train_gpu.sh        # launch gpu distributed training(8 pcs)
+    ├── run_standalone_train_gpu.sh        # launch gpu standalone training(1 pcs)
     ├── run_eval.sh                        # launch ascend evaluation
+    └── run_eval_gpu.sh                    # launch gpu evaluation
   ├── src
     ├── config.py                          # parameter configuration
     ├── dataset.py                         # data preprocessing
@@ -210,7 +226,7 @@ For more configuration details, please refer the script `config.py`.
 
 #### Running on Ascend
 
-  ```shell
+  ```bash
   # distributed training
   Usage: sh scripts/run_distribute_train.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
@@ -223,6 +239,16 @@ For distributed training, a hccl configuration file with JSON format needs to be
 Please follow the instructions in the link [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
 
 Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". Under this, you can find checkpoint file together with result like the followings in log.
+
+#### Running on GPU
+
+```bash
+# distributed training example
+sh scripts/run_distribute_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+
+# standalone training example
+sh scripts/run_standalone_train_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
+```
 
 ### Result
 
@@ -292,6 +318,12 @@ sh scripts/run_eval.sh squeezenet cifar10 0 ~/cifar-10-verify-bin train/squeezen
 
 checkpoint can be produced in training process.
 
+#### Running on GPU
+
+```shell
+sh scripts/run_eval_gpu.sh [squeezenet|squeezenet_residual] [cifar10|imagenet] [DEVICE_ID] [DATASET_PATH] [CHECKPOINT_PATH]
+```
+
 ### Result
 
 Evaluation result will be stored in the example path, whose folder name is "eval". Under this, you can find result like the followings in log.
@@ -328,94 +360,93 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 
 #### SqueezeNet on CIFAR-10
 
-| Parameters                 | Ascend                                                      |
+| Parameters                 | Contents                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | SqueezeNet                                                  |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
 | uploaded Date              | 11/06/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
+| MindSpore Version          | 1.0.1                                                      |
 | Dataset                    | CIFAR-10                                                    |
 | Training Parameters        | epoch=120, steps=195, batch_size=32, lr=0.01                |
 | Optimizer                  | Momentum                                                    |
 | Loss Function              | Softmax Cross Entropy                                       |
 | outputs                    | probability                                                 |
 | Loss                       | 0.0496                                                      |
-| Speed                      | 1pc: 16.7 ms/step;  8pcs: 17.0 ms/step                      |
-| Total time                 | 1pc: 55.5 mins;  8pcs: 15.0 mins                            |
+| Speed(Ascend)              | 1pc: 16.7 ms/step;  8pcs: 17.0 ms/step                      |
+| Speed(GPU)                 | 1pc: 44.27 ms/step;                                         |
+| Total time(Ascend)         | 1pc: 55.5 mins;  8pcs: 15.0 mins                            |
 | Parameters (M)             | 4.8                                                         |
 | Checkpoint for Fine tuning | 6.4M (.ckpt file)                                           |
-| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
 
 #### SqueezeNet on ImageNet
 
-| Parameters                 | Ascend                                                      |
+| Parameters                 | Contents                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | SqueezeNet                                                  |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
 | uploaded Date              | 11/06/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
+| MindSpore Version          | 1.0.1                                                       |
 | Dataset                    | ImageNet                                                    |
 | Training Parameters        | epoch=200, steps=5004, batch_size=32, lr=0.01               |
 | Optimizer                  | Momentum                                                    |
 | Loss Function              | Softmax Cross Entropy                                       |
 | outputs                    | probability                                                 |
 | Loss                       | 2.9150                                                      |
-| Speed                      | 8pcs: 19.9 ms/step                                          |
-| Total time                 | 8pcs: 5.2 hours                                             |
+| Speed(Ascend)              | 8pcs: 19.9 ms/step                                          |
+| Speed(GPU)                 | 1pcs: 47.59 ms/step                                          |
+| Total time(Ascend)         | 8pcs: 5.2 hours                                             |
 | Parameters (M)             | 4.8                                                         |
 | Checkpoint for Fine tuning | 13.3M (.ckpt file)                                          |
-| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
 
 #### SqueezeNet_Residual on CIFAR-10
 
-| Parameters                 | Ascend                                                      |
+| Parameters                 | Contents                                                    |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | SqueezeNet_Residual                                         |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
 | uploaded Date              | 11/06/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
+| MindSpore Version          | 1.0.1                                                       |
 | Dataset                    | CIFAR-10                                                    |
 | Training Parameters        | epoch=150, steps=195, batch_size=32, lr=0.01                |
 | Optimizer                  | Momentum                                                    |
 | Loss Function              | Softmax Cross Entropy                                       |
 | outputs                    | probability                                                 |
 | Loss                       | 0.0641                                                      |
-| Speed                      | 1pc: 16.9 ms/step;  8pcs: 17.3 ms/step                      |
-| Total time                 | 1pc: 68.6 mins;  8pcs: 20.9 mins                            |
+| Speed(Ascend)              | 1pc: 16.9 ms/step;  8pcs: 17.3 ms/step                      |
+| Speed(GPU)                 | 1pc: 45.23 ms/step;                                         |
+| Total time(Ascend)         | 1pc: 68.6 mins;  8pcs: 20.9 mins                            |
 | Parameters (M)             | 4.8                                                         |
 | Checkpoint for Fine tuning | 6.5M (.ckpt file)                                           |
-| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
 
 #### SqueezeNet_Residual on ImageNet
 
-| Parameters                 | Ascend                                                      |
+| Parameters                 | Contents                                                      |
 | -------------------------- | ----------------------------------------------------------- |
 | Model Version              | SqueezeNet_Residual                                         |
 | Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             |
 | uploaded Date              | 11/06/2020 (month/day/year)                                 |
-| MindSpore Version          | 1.0.0                                                       |
+| MindSpore Version          | 1.0.1                                                       |
 | Dataset                    | ImageNet                                                    |
 | Training Parameters        | epoch=300, steps=5004, batch_size=32, lr=0.01               |
 | Optimizer                  | Momentum                                                    |
 | Loss Function              | Softmax Cross Entropy                                       |
 | outputs                    | probability                                                 |
 | Loss                       | 2.9040                                                      |
-| Speed                      | 8pcs: 20.2 ms/step                                          |
-| Total time                 | 8pcs: 8.0 hours                                             |
+| Speed(Ascend)              | 8pcs: 20.2 ms/step                                          |
+| Total time(Ascend)         | 8pcs: 8.0 hours                                             |
 | Parameters (M)             | 4.8                                                         |
 | Checkpoint for Fine tuning | 15.3M (.ckpt file)                                          |
-| Scripts                    | [squeezenet script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/squeezenet) |
 
 ### Inference Performance
 
 #### SqueezeNet on CIFAR-10
 
-| Parameters          | Ascend                      |
+| Parameters          | Contents                      |
 | ------------------- | --------------------------- |
 | Model Version       | SqueezeNet                  |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 11/06/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
+| MindSpore Version   | 1.0.1                       |
 | Dataset             | CIFAR-10                    |
 | batch_size          | 32                          |
 | outputs             | probability                 |
@@ -423,12 +454,12 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 
 #### SqueezeNet on ImageNet
 
-| Parameters          | Ascend                      |
+| Parameters          | Contents                      |
 | ------------------- | --------------------------- |
 | Model Version       | SqueezeNet                  |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 11/06/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
+| MindSpore Version   | 1.0.1                       |
 | Dataset             | ImageNet                    |
 | batch_size          | 32                          |
 | outputs             | probability                 |
@@ -436,12 +467,12 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 
 #### SqueezeNet_Residual on CIFAR-10
 
-| Parameters          | Ascend                      |
+| Parameters          | Contents                      |
 | ------------------- | --------------------------- |
 | Model Version       | SqueezeNet_Residual         |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 11/06/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
+| MindSpore Version   | 1.0.1                       |
 | Dataset             | CIFAR-10                    |
 | batch_size          | 32                          |
 | outputs             | probability                 |
@@ -449,12 +480,12 @@ result: {'top_1_accuracy': 0.6094950384122919, 'top_5_accuracy': 0.8263244238156
 
 #### SqueezeNet_Residual on ImageNet
 
-| Parameters          | Ascend                      |
+| Parameters          | Contents                      |
 | ------------------- | --------------------------- |
 | Model Version       | SqueezeNet_Residual         |
 | Resource            | Ascend 910                  |
 | Uploaded Date       | 11/06/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       |
+| MindSpore Version   | 1.0.1                       |
 | Dataset             | ImageNet                    |
 | batch_size          | 32                          |
 | outputs             | probability                 |
@@ -480,6 +511,38 @@ If you need to use the trained model to perform inference on multiple hardware p
                            do_train=False,
                            batch_size=config.batch_size,
                            target='Ascend')
+
+  # Define model
+  net = squeezenet(num_classes=config.class_num)
+  loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+  model = Model(net,
+                loss_fn=loss,
+                metrics={'top_1_accuracy', 'top_5_accuracy'})
+
+  # Load pre-trained model
+  param_dict = load_checkpoint(args_opt.checkpoint_path)
+  load_param_into_net(net, param_dict)
+  net.set_train(False)
+
+  # Make predictions on the unseen dataset
+  acc = model.eval(dataset)
+  print("accuracy: ", acc)
+  ```
+
+- Running on GPU:
+
+  ```py
+  # Set context
+  device_id = int(os.getenv('DEVICE_ID'))
+  context.set_context(mode=context.GRAPH_MODE,
+                      device_target='GPU',
+                      device_id=device_id)
+
+  # Load unseen dataset for inference
+  dataset = create_dataset(dataset_path=args_opt.dataset_path,
+                           do_train=False,
+                           batch_size=config.batch_size,
+                           target='GPU')
 
   # Define model
   net = squeezenet(num_classes=config.class_num)
@@ -545,6 +608,59 @@ If you need to use the trained model to perform inference on multiple hardware p
                 metrics={'acc'},
                 amp_level="O2",
                 keep_batchnorm_fp32=False)
+
+  # Set callbacks
+  config_ck = CheckpointConfig(
+      save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
+      keep_checkpoint_max=config.keep_checkpoint_max)
+  time_cb = TimeMonitor(data_size=step_size)
+  ckpt_cb = ModelCheckpoint(prefix=args_opt.net + '_' + args_opt.dataset,
+                            directory=ckpt_save_dir,
+                            config=config_ck)
+  loss_cb = LossMonitor()
+
+  # Start training
+  model.train(config.epoch_size - config.pretrain_epoch_size, dataset,
+              callbacks=[time_cb, ckpt_cb, loss_cb])
+  print("train success")
+  ```
+
+- running on GPU
+
+  ```py
+  # Load dataset
+  dataset = create_dataset(dataset_path=args_opt.dataset_path,
+                           do_train=True,
+                           repeat_num=1,
+                           batch_size=config.batch_size,
+                           target='Ascend')
+  step_size = dataset.get_dataset_size()
+
+  # define net
+  net = squeezenet(num_classes=config.class_num)
+
+  # load checkpoint
+  if args_opt.pre_trained:
+      param_dict = load_checkpoint(args_opt.pre_trained)
+      load_param_into_net(net, param_dict)
+
+  # init lr
+  lr = get_lr(lr_init=config.lr_init,
+              lr_end=config.lr_end,
+              lr_max=config.lr_max,
+              total_epochs=config.epoch_size,
+              warmup_epochs=config.warmup_epochs,
+              pretrain_epochs=config.pretrain_epoch_size,
+              steps_per_epoch=step_size,
+              lr_decay_mode=config.lr_decay_mode)
+  lr = Tensor(lr)
+  loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
+  opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()),
+                 lr,
+                 config.momentum,
+                 config.weight_decay,
+                 use_nesterov=True)
+  model = Model(net, loss_fn=loss, optimizer=opt, metrics={'acc'})
 
   # Set callbacks
   config_ck = CheckpointConfig(
