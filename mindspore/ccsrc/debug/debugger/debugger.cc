@@ -289,6 +289,12 @@ void Debugger::PreExecute(const KernelGraphPtr &graph_ptr, uint32_t graph_sum) {
       if (debugger_enabled_) {
         if (graph_proto_list_.size()) {
           // only send compiled graphs once.
+          auto dbg_graph_ptr = graph_ptr_;
+          // use current graph ptr to load parameters
+          graph_ptr_ = graph_ptr;
+          LoadParametersAndConst();
+          // revert graph ptr to original value
+          graph_ptr_ = dbg_graph_ptr;
           SendMultiGraphsAndSuspend(graph_proto_list_, graph_sum);
           graph_proto_list_.clear();
         } else if (graph_id == rungraph_id_list_.front() && device_target_ == kGPUDevice) {
