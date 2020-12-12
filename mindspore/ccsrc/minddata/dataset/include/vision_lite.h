@@ -22,9 +22,9 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/util/status.h"
+#include "minddata/dataset/include/status.h"
 
 #ifdef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/rotate_op.h"
