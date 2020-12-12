@@ -24,7 +24,11 @@
 namespace mindspore {
 namespace kernel {
 constexpr size_t kAdamDeltaInputSize = 9;
+#ifdef ENABLE_D
 constexpr size_t kUsedThreadNum = 23;
+#else
+constexpr size_t kUsedThreadNum = 8;
+#endif
 namespace {
 struct ComputeParam {
   float *delta_{nullptr};

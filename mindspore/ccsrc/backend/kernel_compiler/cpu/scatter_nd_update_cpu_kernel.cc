@@ -22,6 +22,11 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+#ifdef ENABLE_D
+constexpr size_t kUsedThreadNum = 23;
+#else
+constexpr size_t kUsedThreadNum = 8;
+#endif
 template <typename T>
 void Compute(const ComputeParams<T> *params, const size_t start, const size_t end) {
   MS_EXCEPTION_IF_NULL(params);
@@ -115,10 +120,9 @@ void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &input
   params.indices_unit_rank_ = indices_unit_rank_;
   params.out_strides_ = &out_strides_;
 
-  const size_t thread_num = 24;
   std::vector<Task> tasks;
   size_t start = 0;
-  size_t once_compute_size = (num_units_ + thread_num - 1) / thread_num;
+  size_t once_compute_size = (num_units_ + kUsedThreadNum - 1) / kUsedThreadNum;
   while (start < num_units_) {
     size_t end = (start + once_compute_size) > num_units_ ? num_units_ : (start + once_compute_size);
     auto task = [&params, start, end]() -> int {

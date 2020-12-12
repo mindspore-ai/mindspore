@@ -27,6 +27,11 @@
 
 namespace mindspore {
 namespace kernel {
+#ifdef ENABLE_D
+constexpr size_t kUsedThreadNum = 23;
+#else
+constexpr size_t kUsedThreadNum = 8;
+#endif
 template <typename T>
 struct SparseGradient {
   float *value_{nullptr};
@@ -95,7 +100,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
   static void BucketReduceSparseGradient(const ReduceSparseGradientParam<T> &param) {
     MS_LOG(DEBUG) << "Start";
     MS_EXCEPTION_IF_NULL(param.input_grad_);
-    size_t thread_num = 23;
+    size_t thread_num = kUsedThreadNum;
     if (param.input_grad_->indices_size_ < thread_num) {
       thread_num = param.input_grad_->indices_size_;
     }
@@ -120,11 +125,10 @@ class SparseOptimizerCPUKernel : public CPUKernel {
   template <typename T>
   void MultiThreadCompute(const MultiThreadComputeFunc<T> &func, MultiThreadComputeParams<T> *params,
                           size_t total_compute_size) const {
-    const size_t kThreadNum = 24;
     std::vector<std::thread> threads;
-    threads.reserve(kThreadNum);
+    threads.reserve(kUsedThreadNum);
     size_t start = 0;
-    size_t once_compute_size = (total_compute_size + kThreadNum - 1) / kThreadNum;
+    size_t once_compute_size = (total_compute_size + kUsedThreadNum - 1) / kUsedThreadNum;
     while (start < total_compute_size) {
       size_t end = (start + once_compute_size) > total_compute_size ? total_compute_size : (start + once_compute_size);
       threads.emplace_back(std::thread(func, params, start, end));
