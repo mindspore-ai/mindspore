@@ -44,6 +44,10 @@ constexpr auto kSeed2 = "seed2";
 constexpr auto kTopK = "TopK";
 constexpr auto kTopKV2 = "TopKV2";
 constexpr auto kStack = "Stack";
+constexpr auto kStackInit = "StackInit";
+constexpr auto kStackPush = "StackPush";
+constexpr auto kStackPop = "StackPop";
+constexpr auto kStackDestroy = "StackDestroy";
 constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
 constexpr auto kIdentity = "Identity";
@@ -55,8 +59,8 @@ constexpr auto kCustRunApi = "RunCpuKernel";
 constexpr auto kDropout2D = "Dropout2D";
 constexpr auto kDropout3D = "Dropout3D";
 const std::set<std::string> kCustAiCpuKernelOps{kIdentity};
-const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter,
-                                            kPadAndShift, kDropout3D,      kDropout2D};
+const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter, kPadAndShift, kDropout3D,
+                                            kDropout2D,   kStackInit,      kStackPush,    kStackPop,    kStackDestroy};
 
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message

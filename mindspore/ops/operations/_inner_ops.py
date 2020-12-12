@@ -15,6 +15,7 @@
 
 """Inner operators."""
 
+import numpy as np
 from ..._checkparam import Rel
 from ..._checkparam import Validator as validator
 from ... import context
@@ -882,3 +883,129 @@ class Centralization(PrimitiveWithInfer):
                'dtype': x_dtype,
                'value': None}
         return out
+
+
+class StackInit(PrimitiveWithInfer):
+    """
+    Create a stack that produces tensors in first-in last-out order.
+
+    After `StackInit`, a tensor can be pushed onto the stack using `StackPush`, and popped
+    at the top of the stack using `StackPop`. Finally, the stack should be destroyed with `StackDestroy`.
+
+    Args:
+        index (int): The index of the stack.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 3], [2, 0]]))
+        >>> index = 0
+        >>> stack = ops.StackInit(index)
+        >>> push = ops.StackPush(index)
+        >>> pop = ops.StackPop(index, x.shape, x.dtype)
+        >>> destroy = ops.StackDestroy(index)
+        >>> stack()
+        >>> push(x)
+        >>> y = pop()
+        >>> destroy()
+        >>> print(y)
+        [[1 3]
+         [2 0]]
+    """
+    @prim_attr_register
+    def __init__(self, index=1):
+        """StackInit"""
+        validator.check_value_type("index", index, [int], self.name)
+
+
+class StackPush(PrimitiveWithInfer):
+    """
+    Push a tensor onto the stack.
+
+    Before `StackPush`, the stack should be created using `StackInit`.
+    Please refer to the usage in source code of `StackInit`.
+
+    Args:
+        index (int): The index of the stack.
+
+    Inputs:
+        - **input** (Tensor) - A tensor to be pushed onto the stack.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        Please refer to the usage of `StackInit`.
+    """
+    @prim_attr_register
+    def __init__(self, index=1):
+        """StackPush"""
+        validator.check_value_type("index", index, [int], self.name)
+        self.init_prim_io_names(inputs=['input'], outputs=[])
+
+
+class StackPop(PrimitiveWithInfer):
+    """
+    Pop the tensor at the top of the stack.
+
+     Before `StackPop`, the stack should be created using `StackInit`.
+     Please refer to the usage in source code of `StackInit`.
+
+    Args:
+        index (int): The index of the stack.
+        shape (tuple): The shape of the tensor at the top of the stack.
+        dtype (mindspore.dtype): The type of the tensor at the top of the stack.
+
+    Outputs:
+        - **output** (Tensor) - The tensor at the top of the stack.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        Please refer to the usage of `StackInit`.
+    """
+    @prim_attr_register
+    def __init__(self, index=1, shape=(1,), dtype=mstype.float32):
+        """StackPop"""
+        validator.check_value_type("index", index, [int], self.name)
+
+        validator.check_value_type('shape type', shape, [list, tuple], self.name)
+        validator.check_int(len(np.array(shape).shape), 1, Rel.EQ, "dim of shape", self.name)
+        for elem in shape:
+            validator.check_int(elem, 1, Rel.GE, 'shape element', self.name)
+            validator.check_value_type('type of shape element', elem, [int], self.name)
+
+        validator.check_type_name("dtype", dtype, (mstype.bool_,) + mstype.number_type, self.name)
+        self.shape = shape
+        self.dtype = dtype
+
+        self.init_prim_io_names(inputs=[], outputs=['output'])
+
+    def __infer__(self):
+        return {'shape': (list(self.shape)),
+                'dtype': (self.dtype),
+                'value': None}
+
+
+class StackDestroy(PrimitiveWithInfer):
+    """
+    Destroy the stack.
+
+     Before `StackDestroy`, the stack should be created using `StackInit`.
+     Please refer to the usage in source code of `StackInit`.
+
+    Args:
+        index (int): The index of the stack.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        Please refer to the usage of `StackInit`.
+    """
+    @prim_attr_register
+    def __init__(self, index=1):
+        """StackDestroy"""
+        validator.check_value_type("index", index, [int], self.name)
