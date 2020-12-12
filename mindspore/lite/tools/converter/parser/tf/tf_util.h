@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_UTIL_H
 
 #include <string>
+#include <string_view>
 #include "proto/node_def.pb.h"
 #include "ir/dtype/type_id.h"
 #include "include/errorcode.h"
@@ -32,6 +33,7 @@ class TensorFlowUtils {
                             tensorflow::AttrValue *attr_value);
   static TypeId ParseAttrDataType(const tensorflow::NodeDef &node_def, const std::string &attr_name);
   static schema::Format ParseNodeFormat(const tensorflow::NodeDef &node_def);
+  static bool DecodeInt64(std::string_view *str_view, uint64_t *value);
 };
 }  // namespace lite
 }  // namespace mindspore

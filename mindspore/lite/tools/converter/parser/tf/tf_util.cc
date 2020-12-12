@@ -16,6 +16,7 @@
 
 #include "tools/converter/parser/tf/tf_util.h"
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"
@@ -27,7 +28,7 @@ static const std::unordered_map<int, mindspore::TypeId> TF_TYPE_MAP = {
   {tensorflow::DT_UINT8, mindspore::kNumberTypeUInt8},
   {tensorflow::DT_INT16, mindspore::kNumberTypeInt16},
   {tensorflow::DT_UINT16, mindspore::kNumberTypeUInt16},
-  {tensorflow::DT_INT32, mindspore::kNumberTypeInt32},
+  {tensorflow::DT_INT32, mindspore::kNumberTypeInt},
   {tensorflow::DT_INT64, mindspore::kNumberTypeInt64},
   {tensorflow::DT_HALF, mindspore::kNumberTypeFloat16},
   {tensorflow::DT_FLOAT, mindspore::kNumberTypeFloat32},
@@ -65,6 +66,7 @@ TypeId TensorFlowUtils::ParseAttrDataType(const tensorflow::NodeDef &node_def, c
   }
   return GetTFDataType(attr_value.type());
 }
+
 schema::Format TensorFlowUtils::ParseNodeFormat(const tensorflow::NodeDef &node_def) {
   tensorflow::AttrValue attr_value;
   if (!FindAttrValue(node_def, "data_format", &attr_value)) {
@@ -77,6 +79,38 @@ schema::Format TensorFlowUtils::ParseNodeFormat(const tensorflow::NodeDef &node_
     return schema::Format_NCHW;
   }
   return schema::Format_NUM_OF_FORMAT;
+}
+
+bool TensorFlowUtils::DecodeInt64(std::string_view *str_view, uint64_t *value) {
+  if (str_view == nullptr || value == nullptr) {
+    *value = 0;
+    MS_LOG(ERROR) << "str_view or value is nullptr";
+    return false;
+  }
+  auto data = str_view->data();
+  const auto end = data + str_view->size();
+
+  const char *next = nullptr;
+  uint64_t result = 0;
+  for (uint32_t shift = 0; shift <= 63 && data < end; shift += 7) {
+    uint64_t byte = *(reinterpret_cast<const unsigned char *>(data));
+    data++;
+    if (byte & 128) {
+      result |= ((byte & 127) << shift);
+    } else {
+      result |= (byte << shift);
+      *value = result;
+      next = reinterpret_cast<const char *>(data);
+      break;
+    }
+  }
+
+  if (next == nullptr) {
+    return false;
+  } else {
+    *str_view = std::string_view(next, end - next);
+    return true;
+  }
 }
 }  // namespace lite
 }  // namespace mindspore

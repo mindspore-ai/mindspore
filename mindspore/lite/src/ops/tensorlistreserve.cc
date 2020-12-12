@@ -99,9 +99,8 @@ int TensorListReserve::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
   auto input0 = inputs_.front();
   MS_ASSERT(input0 != nullptr);
   auto ele_shape_type = input0->data_type();
-  if (ele_shape_type != kNumberTypeInt) {
-    MS_LOG(ERROR) << "ele_shape_tensor.data_type():" << ele_shape_type
-                  << " must be \"kNumberTypeInt\":" << kNumberTypeInt;
+  if (ele_shape_type != kNumberTypeInt && ele_shape_type != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "ele_shape_tensor.data_type():" << ele_shape_type << " is not int";
     return RET_ERROR;
   }
   if (input0->data_c() == nullptr) {
@@ -113,8 +112,8 @@ int TensorListReserve::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
   auto input1 = inputs_[1];
   MS_ASSERT(input1 != nullptr);
   auto num_ele_type = input1->data_type();
-  if (num_ele_type != kNumberTypeInt) {
-    MS_LOG(ERROR) << "num_ele_tensor.data_type():" << num_ele_type << " must be \"kNumberTypeInt\":" << kNumberTypeInt;
+  if (num_ele_type != kNumberTypeInt && ele_shape_type != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "num_ele_tensor.data_type():" << num_ele_type << " is not int";
     return RET_ERROR;
   }
   if (input1->ElementsNum() != 1) {

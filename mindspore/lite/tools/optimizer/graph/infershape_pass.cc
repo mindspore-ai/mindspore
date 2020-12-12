@@ -119,11 +119,6 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
       MS_LOG(ERROR) << "input is nullptr";
       return RET_ERROR;
     }
-    auto tensor = std::make_unique<lite::Tensor>();
-    if (tensor == nullptr) {
-      MS_LOG(ERROR) << "new input tensor failed";
-      return RET_ERROR;
-    }
 
     if (utils::isa<ValueNodePtr>(cnode->input(i))) {
       MS_LOG(ERROR) << "input is value node";
@@ -149,23 +144,47 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
       MS_LOG(ERROR) << "ParamValueLite of abstract is nullptr";
       return RET_ERROR;
     }
-    tensor->set_shape(param_value_lite->tensor_shape());
-    tensor->set_data_type(param_value_lite->tensor_type());
-    tensor->set_format(schema::Format(param_value_lite->format()));
+
+    std::unique_ptr<lite::Tensor> tensor = nullptr;
+    if (param_value_lite->tensor_type() != kObjectTypeTensorType) {
+      tensor = std::make_unique<lite::Tensor>();
+    } else {
+      tensor = std::make_unique<lite::TensorList>();
+    }
+    if (tensor == nullptr) {
+      MS_LOG(ERROR) << "new input tensor failed";
+      return RET_ERROR;
+    }
+    if (param_value_lite->tensor_type() != kObjectTypeTensorType) {
+      tensor->set_shape(param_value_lite->tensor_shape());
+      tensor->set_data_type(param_value_lite->tensor_type());
+      tensor->set_format(schema::Format(param_value_lite->format()));
+    }
 
     if (utils::isa<ParameterPtr>(input)) {
       auto parameter = input->cast<ParameterPtr>();
       if (parameter->has_default()) {
         auto param_value = std::dynamic_pointer_cast<ParamValueLite>(parameter->default_param());
-        auto ret = tensor->MallocData();
-        if (ret != 0) {
-          MS_LOG(ERROR) << "Malloc tensor data failed";
-          return RET_ERROR;
-        }
-        ret = memcpy_s(tensor->MutableData(), tensor->Size(), param_value->tensor_addr(), param_value->tensor_size());
-        if (tensor->Size() != 0 && ret != EOK) {
-          MS_LOG(ERROR) << "memcpy error: " << ret;
-          return RET_ERROR;
+        if (param_value_lite->tensor_type() != kObjectTypeTensorType) {
+          auto ret = tensor->MallocData();
+          if (ret != 0) {
+            MS_LOG(ERROR) << "Malloc tensor data failed";
+            return RET_ERROR;
+          }
+          ret = memcpy_s(tensor->MutableData(), tensor->Size(), param_value->tensor_addr(), param_value->tensor_size());
+          if (tensor->Size() != 0 && ret != EOK) {
+            MS_LOG(ERROR) << "memcpy error: " << ret;
+            return RET_ERROR;
+          }
+        } else {
+          int *data = reinterpret_cast<int *>(param_value->tensor_addr());
+          auto tensor_list = dynamic_cast<lite::TensorList *>(tensor.get());
+          tensor_list->set_tensors_data_type(TypeId(data[0]));
+          std::vector<int> shape;
+          for (int j = 0; j < data[1]; ++j) {
+            shape.push_back(data[2 + j]);
+          }
+          tensor_list->set_element_shape(shape);
         }
       }
     }
@@ -181,13 +200,35 @@ STATUS InferShapePass::GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<
     MS_LOG(ERROR) << "abstract is nullptr";
     return RET_ERROR;
   }
-  size_t num_outputs = 1;
+  std::vector<TypeId> types;
   if (utils::isa<abstract::AbstractTuple>(abstract)) {
     auto abstract_tuple = abstract->cast<abstract::AbstractTuplePtr>();
-    num_outputs = abstract_tuple->size();
+    auto elements = abstract_tuple->elements();
+    for (auto &element : elements) {
+      if (!utils::isa<abstract::AbstractTensorPtr>(element)) {
+        MS_LOG(ERROR) << "abstract is not AbstractTensor";
+        return RET_ERROR;
+      }
+      auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(element);
+      auto typePtr = abstract_tensor->element()->GetTypeTrack();
+      types.push_back(typePtr->type_id());
+    }
+  } else {
+    if (!utils::isa<abstract::AbstractTensorPtr>(abstract)) {
+      MS_LOG(ERROR) << "abstract is not AbstractTensor";
+      return RET_ERROR;
+    }
+    auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
+    auto typePtr = abstract_tensor->element()->GetTypeTrack();
+    types.push_back(typePtr->type_id());
   }
-  for (size_t i = 0; i < num_outputs; ++i) {
-    auto output_tensor = std::make_unique<lite::Tensor>();
+  for (auto &type : types) {
+    std::unique_ptr<lite::Tensor> output_tensor = nullptr;
+    if (type == kObjectTypeTensorType) {
+      output_tensor = std::make_unique<lite::TensorList>();
+    } else {
+      output_tensor = std::make_unique<lite::Tensor>();
+    }
     if (output_tensor == nullptr) {
       MS_LOG(ERROR) << "new output tensor failed";
       return RET_ERROR;

@@ -97,9 +97,8 @@ int TensorListSetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
   MS_ASSERT(input0 != nullptr);
   auto get_index = inputs_[1];
   MS_ASSERT(get_index != nullptr);
-  if (get_index->data_type() != kNumberTypeInt) {
-    MS_LOG(ERROR) << "inputs_[1]->data_type():" << get_index->data_type()
-                  << " must be equal to \"kNumberTypeInt\":" << kNumberTypeInt;
+  if (get_index->data_type() != kNumberTypeInt && get_index->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "inputs_[1]->data_type():" << get_index->data_type() << " is not int";
     return RET_ERROR;
   }
   if (get_index->ElementsNum() != 1) {

@@ -22,6 +22,7 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include "backend/optimizer/common/pass.h"
 #include "mindspore/lite/src/tensor.h"
+#include "mindspore/lite/src/tensorlist.h"
 #include "mindspore/lite/include/errorcode.h"
 using mindspore::lite::STATUS;
 using mindspore::lite::converter::FmkType;

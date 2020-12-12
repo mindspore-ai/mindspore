@@ -28,6 +28,7 @@
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/model_parser.h"
+#include "mindspore/lite/src/param_value_lite.h"
 
 namespace mindspore {
 namespace lite {
@@ -43,6 +44,7 @@ class TFModelParser : public ModelParser {
                                 const QuantType &quantType = QuantType_QUANT_NONE) override;
 
  private:
+  STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, const ParamValueLitePtr &param_value);
   STATUS ConvertConstTensor(const tensorflow::AttrValue &attr_value, const TypeId &type, const ParameterPtr &parameter,
                             std::vector<int64_t> *shape_vector);
   STATUS ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,

@@ -228,9 +228,8 @@ bool TensorList::IsCompatibleShape(const Tensor *src) {
   if (static_cast<size_t>(src->ElementsNum()) != this->element_shape_.size()) {
     return false;
   }
-  if (src->data_type() != kNumberTypeInt) {
-    MS_LOG(ERROR) << "src tensor data_type:" << src->data_type()
-                  << " must be equal to \"kNumberTypeInt\":" << kNumberTypeInt;
+  if (src->data_type() != kNumberTypeInt && src->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "src tensor data_type:" << src->data_type() << " is not int";
     return false;
   }
   auto src_ptr = reinterpret_cast<int *>(src->data_c());
