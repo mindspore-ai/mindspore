@@ -78,7 +78,7 @@ def set_seed(seed):
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W3
         >>> w1 = Parameter(initializer("uniform", [2, 2], ms.float32), name="w1") # W4
         >>>
-        >>> 2. If global seed is set, numpy.random and initializer will use it:
+        >>> # 2. If global seed is set, numpy.random and initializer will use it:
         >>> set_seed(1234)
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A2
@@ -95,7 +95,7 @@ def set_seed(seed):
         >>> # mindspore.nn.probability.distribution will choose a random seed:
         >>> c1 = C.uniform((1, 4), minval, maxval) # C1
         >>> c2 = C.uniform((1, 4), minval, maxval) # C2
-        >>> Rerun the program will get different results:
+        >>> # Rerun the program will get different results:
         >>> c1 = C.uniform((1, 4), minval, maxval) # C3
         >>> c2 = C.uniform((1, 4), minval, maxval) # C4
         >>>
@@ -118,7 +118,7 @@ def set_seed(seed):
         >>> set_seed(1234)
         >>> c1 = C.uniform((1, 4), minval, maxval, seed=2) # C1
         >>> c2 = C.uniform((1, 4), minval, maxval, seed=2) # C2
-        >>> Rerun the program will get the same results:
+        >>> # Rerun the program will get the same results:
         >>> set_seed(1234)
         >>> c1 = C.uniform((1, 4), minval, maxval, seed=2) # C1
         >>> c2 = C.uniform((1, 4), minval, maxval, seed=2) # C2
@@ -235,7 +235,8 @@ def _get_graph_seed(op_seed, kernel_name):
         Interger. The current graph-level seed.
 
     Examples:
-        >>> _get_graph_seed(seed, 'normal')
+        >>> print(_get_graph_seed(0, 'normal'))
+        (0, 0)
     """
     global_seed = get_seed()
     if global_seed == 0:
