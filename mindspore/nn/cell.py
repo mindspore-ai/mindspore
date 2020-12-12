@@ -127,8 +127,12 @@ class Cell(Cell_):
     @property
     def support_non_tensor_inputs(self):
         """
-        Whether support non tensor inputs in cell `construct` method.
-        This property only used in forward net, is not supported in grad net.
+        Whether support non tensor inputs in outermost net in GRAPH MODE.
+        This property only used in forward net, and is not supported in grad net.
+        The default value of the property is the `False`, that is,
+        it does not support passing non tensor inputs to the outermost net.
+        If you want to support, set the property to the `True`.
+
         """
         return self._support_non_tensor_inputs
 
@@ -670,8 +674,9 @@ class Cell(Cell_):
         Defines the computation to be performed. This method must be overridden by all subclasses.
 
         Note:
-            The inputs of the top cell only allow Tensor.
-            Other types (tuple, list, int etc.) are forbidden.
+            The outermost net only supports tensor inputs by default.
+            If want to support non tensor inputs, set the property `support_non_tensor_inputs` to the `True`.
+            Refer to the property `support_non_tensor_inputs` description.
 
         Returns:
             Tensor, returns the computed result.

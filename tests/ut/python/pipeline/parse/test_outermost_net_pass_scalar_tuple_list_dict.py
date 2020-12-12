@@ -61,3 +61,9 @@ def test_outermost_net_pass_scalar_tuple_list_dict():
     with pytest.raises(TypeError) as err:
         grad_net(arg_t0, z, arg_l0, w, 6, args_d0)
     assert "For 'graph mode', the 0th arg" in str(err.value)
+
+    grad_net.support_non_tensor_inputs = True
+    with pytest.raises(ValueError) as err:
+        grad_net(arg_t0, z, arg_l0, w, 6, args_d0)
+    assert  "Not support set 'support_non_tensor_inputs' to the 'True' for grad net, only support forward net." \
+            in str(err.value)
