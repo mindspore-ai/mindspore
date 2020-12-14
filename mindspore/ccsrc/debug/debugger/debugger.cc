@@ -412,6 +412,7 @@ void Debugger::CommandLoop() {
         MS_LOG(ERROR) << "Failed to connect to MindInsight debugger server. Please check the config "
                          "of debugger host and port.";
         Exit();
+        run = true;
       }
       MS_LOG(ERROR) << "Number of consecutive WaitForCommand fail:" << num_wait_fail << "; Retry after "
                     << num_wait_fail << "s";
@@ -434,6 +435,8 @@ void Debugger::CommandLoop() {
       case DebuggerCommand::kExitCMD:
         MS_LOG(INFO) << "ExitCMD";
         Exit();
+        // Used for debugger termination
+        run = true;
         break;
       case DebuggerCommand::kRunCMD:
         MS_LOG(INFO) << "RunCMD";
@@ -583,9 +586,9 @@ std::list<TensorProto> Debugger::LoadTensors(const ProtoVector<TensorProto> &ten
 }
 
 void Debugger::Exit() {
-  // clear resource before exit
-  pipeline::ClearResAtexit();
-  std::exit(EXIT_FAILURE);
+  // Notify main thread to terminate after clearing resources
+  pipeline::ExecutorPy::DebugTerminate(true);
+  debugger_enabled_ = false;
 }
 
 std::list<WatchpointHit> Debugger::CheckWatchpoints(const std::string &watchnode) {

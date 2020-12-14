@@ -76,6 +76,7 @@ const char IR_TYPE_MINDIR[] = "mind_ir";
 
 ExecutorPyPtr ExecutorPy::executor_ = nullptr;
 std::mutex ExecutorPy::instance_lock_;
+bool ExecutorPy::debugger_terminate_ = false;
 
 std::unordered_map<abstract::AbstractBasePtrList, int, abstract::AbstractBasePtrListHasher,
                    abstract::AbstractBasePtrListEqual>
@@ -748,7 +749,17 @@ void ExecutorPy::ProcessVmArg(const py::tuple &args, const std::string &phase, V
   ProcessVmArgInner(args, GetResource(phase), arg_list);
 }
 
+void ExecutorPy::TerminateDebugger() {
+  if (debugger_terminate_) {
+    MS_LOG(INFO) << "Terminate debugger and clear resources!";
+    ClearResAtexit();
+    exit(1);
+  }
+}
+
 py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
+  // Mindspore debugger notify main thread to exit after one step, and will not run next step
+  TerminateDebugger();
   std::size_t size = args.size();
   if (!py::isinstance<py::str>(phase)) {
     MS_LOG(EXCEPTION) << "Run failed, phase input is not a str";
