@@ -14,19 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SUB_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SUB_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_GATHER_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_GATHER_NPU_H_
 #include <vector>
 #include "src/runtime/kernel/npu/npu_kernel.h"
-#include "include/graph/op/math_defs.h"
+#include "include/graph/op/all_ops.h"
+#include "nnacl/gather_parameter.h"
 namespace mindspore::kernel {
-class SubNPUKernel : public NPUKernel {
+class GatherNPUKernel : public NPUKernel {
  public:
-  SubNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-               const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~SubNPUKernel() override;
+  GatherNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                  const mindspore::lite::PrimitiveC *primitive)
+      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
+    auto gather_parameter = reinterpret_cast<GatherParameter *>(parameter);
+    axis_ = gather_parameter->axis_;
+  }
+  ~GatherNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
@@ -35,7 +39,8 @@ class SubNPUKernel : public NPUKernel {
   ge::Operator *GetNPUOp() override;
 
  private:
-  hiai::op::Sub *op_ = nullptr;
+  hiai::op::GatherV2D *op_ = nullptr;
+  int axis_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SUB_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_GATHER_NPU_H_

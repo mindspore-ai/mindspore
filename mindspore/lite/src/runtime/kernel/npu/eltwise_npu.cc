@@ -32,8 +32,10 @@ int EltwiseNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const
 int EltwiseNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs,
                                    const std::vector<ge::Operator *> &npu_inputs) {
+  MS_LOG(ERROR) << name_;
   op_ = new (std::nothrow) hiai::op::Eltwise(name_);
   if (op_ == nullptr) {
+    MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
   op_->set_attr_mode(lite::ConverterToNPUEltwiseMode(mode_));

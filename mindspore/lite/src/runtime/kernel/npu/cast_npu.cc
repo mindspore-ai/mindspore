@@ -14,41 +14,40 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/npu/reshape_npu.h"
+#include "src/runtime/kernel/npu/cast_npu.h"
 #include "src/kernel_registry.h"
-#include "include/graph/op/all_ops.h"
 #include "src/runtime/agent/npu/npu_converter_utils.h"
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Reshape;
+using mindspore::schema::PrimitiveType_Cast;
 
 namespace mindspore::kernel {
-int ReshapeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                                OpParameter *opParameter) {
+int CastNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                             OpParameter *opParameter) {
   return RET_OK;
 }
 
-int ReshapeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
-                                   const std::vector<lite::Tensor *> &outputs,
-                                   const std::vector<ge::Operator *> &npu_inputs) {
-  op_ = new (std::nothrow) hiai::op::Reshape(name_);
+int CastNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                                const std::vector<ge::Operator *> &npu_inputs) {
+  op_ = new (std::nothrow) hiai::op::CastT(name_);
   if (op_ == nullptr) {
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
   op_->set_input_x(*npu_inputs[0]);
-  op_->set_input_shape(*npu_inputs[1]);
+  op_->set_attr_dst_dtype(lite::ConverterToNPUDataType(dst_type_));
+  op_->set_attr_src_dtype(lite::ConverterToNPUDataType(src_type_));
   return RET_OK;
 }
 
-ge::Operator *mindspore::kernel::ReshapeNPUKernel::GetNPUOp() { return this->op_; }
+ge::Operator *mindspore::kernel::CastNPUKernel::GetNPUOp() { return this->op_; }
 
-ReshapeNPUKernel::~ReshapeNPUKernel() {
+CastNPUKernel::~CastNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
     op_ = nullptr;
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Reshape, NPUKernelCreator<ReshapeNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Cast, NPUKernelCreator<CastNPUKernel>)
 }  // namespace mindspore::kernel

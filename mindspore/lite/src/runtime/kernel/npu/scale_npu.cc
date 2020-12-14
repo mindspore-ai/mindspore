@@ -31,6 +31,7 @@ int ScaleNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, cons
                                  const std::vector<ge::Operator *> &npu_inputs) {
   op_ = new (std::nothrow) hiai::op::Scale(name_);
   if (op_ == nullptr) {
+    MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
   op_->set_attr_axis(this->axis_);

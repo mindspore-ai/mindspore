@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_MUL_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_MUL_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SHAPE_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SHAPE_NPU_H_
 #include <vector>
 #include "src/runtime/kernel/npu/npu_kernel.h"
-#include "include/graph/op/math_defs.h"
+#include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
-class MulNPUKernel : public NPUKernel {
+class ShapeNPUKernel : public NPUKernel {
  public:
-  MulNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-               const mindspore::lite::PrimitiveC *primitive)
+  ShapeNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                 const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~MulNPUKernel() override;
+  ~ShapeNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
@@ -35,7 +35,7 @@ class MulNPUKernel : public NPUKernel {
   ge::Operator *GetNPUOp() override;
 
  private:
-  hiai::op::Mul *op_ = nullptr;
+  hiai::op::Shape *op_ = nullptr;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_Mul_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SHAPE_NPU_H_

@@ -32,6 +32,7 @@ int SoftmaxNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<ge::Operator *> &npu_inputs) {
   op_ = new (std::nothrow) hiai::op::Softmax(name_);
   if (op_ == nullptr) {
+    MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
   if (axis_ == -1) {
