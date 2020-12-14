@@ -75,7 +75,6 @@ python train.py \
     --is_distributed=0 \
     --lr=0.001 \
     --loss_scale=1024 \
-    --sens=1024 \
     --weight_decay=0.016 \
     --T_max=320 \
     --max_epoch=320 \
@@ -175,8 +174,6 @@ optional arguments:
                         Whether to use label smooth in CE. Default:0
   --label_smooth_factor LABEL_SMOOTH_FACTOR
                         Smooth strength of original one-hot. Default: 0.1
-  --sens SENS
-                        Static sens. Default: 1024
   --log_interval LOG_INTERVAL
                         Logging interval steps. Default: 100
   --ckpt_path CKPT_PATH
@@ -211,7 +208,6 @@ python train.py \
     --is_distributed=0 \
     --lr=0.001 \
     --loss_scale=1024 \
-    --sens=1024 \
     --weight_decay=0.016 \
     --T_max=320 \
     --max_epoch=320 \

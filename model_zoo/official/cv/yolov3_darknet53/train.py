@@ -124,20 +124,6 @@ def parse_args():
     args.data_root = os.path.join(args.data_dir, 'train2014')
     args.annFile = os.path.join(args.data_dir, 'annotations/instances_train2014.json')
 
-    # select for master rank save ckpt or all rank save, compatiable for model parallel
-    args.rank_save_ckpt_flag = 0
-    if args.is_save_on_master:
-        if args.rank == 0:
-            args.rank_save_ckpt_flag = 1
-    else:
-        args.rank_save_ckpt_flag = 1
-
-    # logger
-    args.outputs_dir = os.path.join(args.ckpt_path,
-                                    datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
-    args.logger = get_logger(args.outputs_dir, args.rank)
-    args.logger.save_args(args)
-
     return args
 
 
@@ -160,6 +146,20 @@ def train():
             init("nccl")
         args.rank = get_rank()
         args.group_size = get_group_size()
+    # select for master rank save ckpt or all rank save, compatiable for model parallel
+    args.rank_save_ckpt_flag = 0
+    if args.is_save_on_master:
+        if args.rank == 0:
+            args.rank_save_ckpt_flag = 1
+    else:
+        args.rank_save_ckpt_flag = 1
+
+    # logger
+    args.outputs_dir = os.path.join(args.ckpt_path,
+                                    datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
+    args.logger = get_logger(args.outputs_dir, args.rank)
+    args.logger.save_args(args)
+
     if args.need_profiler:
         from mindspore.profiler.profiling import Profiler
         profiler = Profiler(output_path=args.outputs_dir, is_detail=True, is_show_op_path=True)
