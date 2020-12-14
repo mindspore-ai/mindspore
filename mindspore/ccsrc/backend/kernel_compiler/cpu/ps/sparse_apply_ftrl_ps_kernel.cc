@@ -89,6 +89,9 @@ void SparseApplyFtrlPSKernel::ReInit(const std::vector<AddressPtr> &inputs) {
 bool SparseApplyFtrlPSKernel::Execute(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
                                       const std::vector<AddressPtr> &outputs) {
   ReInit(inputs);
+  if (indices_size_ == 0) {
+    return true;
+  }
   return Launch(inputs, workspace, outputs);
 }
 
