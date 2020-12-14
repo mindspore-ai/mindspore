@@ -38,22 +38,22 @@ md benchmark
 
 SET RET_CODE=0
 
-7z x -r "%TOOL_PATH%/mindspore-lite-*-converter-win-cpu.zip" -o"%BENCHMARK_BASE%"
+7z x -r "%TOOL_PATH%/mindspore-lite-*-converter-win-x64.zip" -o"%BENCHMARK_BASE%"
 IF NOT %errorlevel% == 0 (
     echo "Decompression of converter tool fail!"
     SET RET_CODE=1
     goto run_eof
 )
 
-SET SO_PATH=mindspore-lite-*-win-runtime-x86-cpu
+SET SO_PATH=mindspore-lite-*-inference-win-x64
 IF "%3%" == "sse" (
-    SET SO_PATH=mindspore-lite-*-win-runtime-x86-sse-cpu
+    SET SO_PATH=mindspore-lite-*-inference-win-x64-sse
 )
 IF "%3%" == "avx" (
-    SET SO_PATH=mindspore-lite-*-win-runtime-x86-avx-cpu
+    SET SO_PATH=mindspore-lite-*-inference-win-x64-avx
 )
 IF "%3%" == "avx512" (
-    SET SO_PATH=mindspore-lite-*-win-runtime-x86-avx512-cpu
+    SET SO_PATH=mindspore-lite-*-inference-win-x64-avx512
 )
 7z x -r "%TOOL_PATH%/%SO_PATH%.zip" -o"%BENCHMARK_BASE%"
 IF NOT %errorlevel% == 0 (
@@ -70,7 +70,7 @@ SET MODEL_NAME=''
 SET SUFFIX=''
 
 echo "Convert models"
-cd mindspore-lite-*-converter-win-cpu/converter
+cd mindspore-lite-*-converter-win-x64/converter
 
 for /f "tokens=1-2 delims= " %%i in (%MODEL_CONFIG%) do (
     for /f "tokens=1-2 delims=." %%k in ("%%j") do (

@@ -29,15 +29,15 @@ function Run_Export(){
 function Run_Converter() {
     # Unzip x86 runtime and convertor
     cd ${x86_path} || exit 1
-    tar -zxf mindspore-lite-${version}-runtime-x86-${process_unit_x86}-train.tar.gz || exit 1
+    tar -zxf mindspore-lite-${version}-train-linux-x64.tar.gz || exit 1
 
-    tar -zxf mindspore-lite-${version}-converter-ubuntu-train.tar.gz || exit 1
-    cd ${x86_path}/mindspore-lite-${version}-converter-ubuntu-train || exit 1
+    tar -zxf mindspore-lite-${version}-train-converter-linux-x64.tar.gz || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-train-converter-linux-x64 || exit 1
     cp converter/converter_lite ./ || exit 1
     
 
     # Convert the models
-    cd ${x86_path}/mindspore-lite-${version}-converter-ubuntu-train || exit 1
+    cd ${x86_path}/mindspore-lite-${version}-train-converter-linux-x64 || exit 1
 
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
@@ -72,8 +72,8 @@ function Run_x86() {
         fi
         
         echo ${model_name}'_train' >> "${run_x86_log_file}"
-        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-runtime-x86-'${process_unit_x86}-train >> "${run_x86_log_file}"
-        cd ${x86_path}/mindspore-lite-${version}-runtime-x86-${process_unit_x86}-train || return 1
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-train-linux-x64' >> "${run_x86_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-train-linux-x64 || return 1
         echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./net_train/net_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_outputs.bin --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms'  >> "${run_x86_log_file}"
         echo '-------------------------------------------------------------------------------' >> "${run_x86_log_file}"
         LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib \
@@ -97,7 +97,7 @@ function Run_arm() {
     tmp_dir=/data/local/tmp/net_train_test
     if [ "$1" == arm64 ]; then
         arm_path=${arm64_path}
-        process_unit=${process_unit_arm64}
+        process_unit="aarch64"
         version_arm=${version_arm64}
         run_arm_log_file=${run_arm64_log_file} 
         adb_cmd_run_file=${adb_cmd_arm64_run_file} 
@@ -105,7 +105,7 @@ function Run_arm() {
         adb_cmd_file=${adb_cmd_arm64_file}
     elif [ "$1" == arm32 ]; then
         arm_path=${arm32_path}
-        process_unit=${process_unit_arm32}
+        process_unit="aarch32"
         version_arm=${version_arm32}
         run_arm_log_file=${run_arm32_log_file} 
         adb_cmd_run_file=${adb_cmd_arm32_run_file} 
@@ -114,30 +114,29 @@ function Run_arm() {
     else
         echo 'type ' $1 'is not supported'
         exit 1
-    fi   
-    arm_type=$1
+    fi
 
     # Unzip
     cd ${arm_path} || exit 1
-    tar -zxf mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train.tar.gz || exit 1
+    tar -zxf mindspore-lite-${version_arm}-train-android-${process_unit}.tar.gz || exit 1
 
     # If build with minddata, copy the minddata related libs
     cd ${net_train_test_path} || exit 1
-    if [ -f ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libminddata-lite.so ]; then
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/third_party/libjpeg-turbo/lib/libjpeg.so ${net_train_test_path}/libjpeg.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/third_party/libjpeg-turbo/lib/libturbojpeg.so ${net_train_test_path}/libturbojpeg.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/third_party/opencv/lib/libopencv_core.so ${net_train_test_path}/libopencv_core.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/third_party/opencv/lib/libopencv_imgcodecs.so ${net_train_test_path}/libopencv_imgcodecs.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/third_party/opencv/lib/libopencv_imgproc.so ${net_train_test_path}/libopencv_imgproc.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libminddata-lite.so ${net_train_test_path}/libminddata-lite.so || exit 1
+    if [ -f ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libminddata-lite.so ]; then
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/libjpeg-turbo/lib/libjpeg.so ${net_train_test_path}/libjpeg.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${net_train_test_path}/libturbojpeg.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_core.so ${net_train_test_path}/libopencv_core.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_imgcodecs.so ${net_train_test_path}/libopencv_imgcodecs.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_imgproc.so ${net_train_test_path}/libopencv_imgproc.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libminddata-lite.so ${net_train_test_path}/libminddata-lite.so || exit 1
     fi
 
-    cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite.so ${net_train_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libmindspore-lite.so ${net_train_test_path}/libmindspore-lite.so || exit 1
 #    if [ "$1" == arm64 ]; then
 #        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-fp16.so ${net_train_test_path}/libmindspore-lite-fp16.so || exit 1
 #        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-optimize.so ${net_train_test_path}/libmindspore-lite-optimize.so || exit 1
 #    fi
-    cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/net_train/net_train ${net_train_test_path}/net_train || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/net_train/net_train ${net_train_test_path}/net_train || exit 1
 
     # adb push all needed files to the phone
     adb -s ${device_id} push ${net_train_test_path} /data/local/tmp/ > ${adb_push_log_file}
@@ -260,25 +259,22 @@ then
 fi
 
 arm64_path=${release_path}/android_aarch64
-file=$(ls ${arm64_path}/*runtime-arm64*train.tar.gz)
+file=$(ls ${arm64_path}/*train-android-aarch64.tar.gz)
 file_name="${file##*/}"
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version_arm64=${file_name_array[2]}
-process_unit_arm64=${file_name_array[5]}
 
 arm32_path=${release_path}/android_aarch32
-file=$(ls ${arm32_path}/*runtime-arm32*train.tar.gz)
+file=$(ls ${arm32_path}/*train-android-aarch32.tar.gz)
 file_name="${file##*/}"
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version_arm32=${file_name_array[2]}
-process_unit_arm32=${file_name_array[5]}
 
 x86_path=${release_path}/ubuntu_x86
-file=$(ls ${x86_path}/*runtime-x86*train.tar.gz)
+file=$(ls ${x86_path}/*train-linux-x64.tar.gz)
 file_name="${file##*/}"
 IFS="-" read -r -a file_name_array <<< "$file_name"
 version=${file_name_array[2]}
-process_unit_x86=${file_name_array[5]}
 
 # Set models config filepath
 models_mindspore_train_config=${basepath}/models_ms_train.cfg
