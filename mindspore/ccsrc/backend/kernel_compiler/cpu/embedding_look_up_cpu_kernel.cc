@@ -22,6 +22,11 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+#ifdef ENABLE_D
+constexpr size_t kUsedThreadNum = 23;
+#else
+constexpr size_t kUsedThreadNum = 8;
+#endif
 template <typename T>
 void LookUpTableTask(const float *input_addr, const T *indices_addr, float *output_addr, size_t indices_lens,
                      size_t outer_dim_size, T offset, size_t first_dim_size) {
@@ -92,10 +97,9 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
   auto input_addr = reinterpret_cast<float *>(inputs[0]->addr);
   auto indices_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
-  const size_t kMaxThreadNum = 16;
   size_t thread_num = indices_lens_ / 10000 + 1;
-  thread_num = thread_num > kMaxThreadNum ? kMaxThreadNum : thread_num;
-  std::thread threads[kMaxThreadNum];
+  thread_num = thread_num > kUsedThreadNum ? kUsedThreadNum : thread_num;
+  std::thread threads[kUsedThreadNum];
   size_t task_proc_lens = (indices_lens_ + thread_num - 1) / thread_num;
   size_t i;
   size_t task_offset = 0;

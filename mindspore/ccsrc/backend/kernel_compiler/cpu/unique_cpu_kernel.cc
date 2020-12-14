@@ -20,7 +20,11 @@
 namespace mindspore {
 namespace kernel {
 const size_t kUseBucketUniqueSize = 100000;
-const size_t kUniqueThreadNum = 23;
+#ifdef ENABLE_D
+constexpr size_t kUniqueThreadNum = 23;
+#else
+constexpr size_t kUniqueThreadNum = 8;
+#endif
 void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   node_ = kernel_node;
   CheckParam(kernel_node);
