@@ -264,8 +264,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     // init old node indecies
     auto old_nodes = GetGraphNodes();
     Optimizer selectOptimizer;
-    selectOptimizer.AddPass(new (std::nothrow) SelectPass());
-    selectOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+    selectOptimizer.AddPass(new (std::nothrow) SelectPass(graphDefT));
     status = selectOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run switch graphPasses Failed";

@@ -987,6 +987,22 @@ int ElementMaximumInt(const int *in0, const int *in1, int *out, int size) {
   return NNACL_OK;
 }
 
+int ElementMinimumInt(const int *input0, const int *input1, int *output, const int element_size) {
+  int index = 0;
+#ifdef ENABLE_NEON
+  for (; index <= element_size - 4; index += C4NUM) {
+    int32x4_t vin0 = vld1q_s32(input0 + index);
+    int32x4_t vin1 = vld1q_s32(input1 + index);
+    int32x4_t vout = vminq_s32(vin0, vin1);
+    vst1q_s32(output + index, vout);
+  }
+#endif
+  for (; index < element_size; index++) {
+    output[index] = input0[index] > input1[index] ? input1[index] : input0[index];
+  }
+  return NNACL_OK;
+}
+
 int BroadcastMaximum(const float *in0, const float *in1, float *tile_in0, float *tile_in1, float *out, int size,
                      ArithmeticParameter *param) {
   TileDimensionsFp32(in0, in1, tile_in0, tile_in1, param);

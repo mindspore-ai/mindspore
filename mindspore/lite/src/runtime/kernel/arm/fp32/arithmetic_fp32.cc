@@ -169,6 +169,7 @@ void ArithmeticCPUKernel::InitRunFunction() {
       break;
     case PrimitiveType_Minimum:
       arithmetic_run_ = ElementMinimum;
+      arithmetic_run_int_ = ElementMinimumInt;
       break;
     case PrimitiveType_FloorDiv:
       arithmetic_run_ = ElementFloorDiv;

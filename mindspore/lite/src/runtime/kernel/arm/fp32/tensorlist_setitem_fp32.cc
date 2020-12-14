@@ -83,7 +83,14 @@ int TensorListSetItemCPUKernel::Run() {
       auto src = input0_->GetTensor(i);
       auto dst = output0_->GetTensor(i);
       MS_ASSERT(src != nullptr);
-      MS_ASSERT(dst != nullptr);
+      // merge move data will delete tensors
+      if (dst == nullptr) {
+        dst = lite::Tensor::CopyTensor(*src, src->data_c() != nullptr);
+        auto &tensors = output0_->tensors();
+        tensors.emplace_back(dst);
+        continue;
+      }
+
       if (src->data_type() != kTypeUnknown) {
         if (src->Size() != dst->Size()) {
           MS_LOG(ERROR) << "src->Size():" << src->Size() << " must be equal to dst->Size():" << dst->Size();

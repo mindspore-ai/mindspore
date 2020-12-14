@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <map>
+#include <algorithm>
 #include "tools/converter/legacy_optimizer/graph/select_pass.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
@@ -39,6 +40,52 @@ STATUS SelectPass::Run(mindspore::schema::MetaGraphT *graph) {
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "node: " << node->name << "'s select pass failed: " << ret;
       return ret;
+    }
+    select_indices_.emplace_back(i);
+  }
+  int ret = RemoveSelectNodes();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "remove select nodes failed";
+    return ret;
+  }
+  return RET_OK;
+}
+
+STATUS SelectPass::RemoveSelectNodes() {
+  std::sort(select_indices_.begin(), select_indices_.end(), std::greater<int>());
+  for (auto select_indice : select_indices_) {
+    auto &node = graph_->nodes.at(select_indice);
+    if (node->primitive->value.type != PrimitiveType_Select) {
+      MS_LOG(ERROR) << "node " << node->name << " is not a select node";
+      return RET_ERROR;
+    }
+    int subgraph_idx = -1;
+    for (size_t i = 0; i < graph_->subGraph.size(); i++) {
+      if (IsContain(graph_->subGraph.at(i)->nodeIndices, select_indice)) {
+        subgraph_idx = i;
+        break;
+      }
+    }
+
+    if (subgraph_idx == -1) {
+      MS_LOG(ERROR) << "select node " << node->name << " is not belong to any subgraph";
+      return RET_ERROR;
+    }
+    graph_->nodes.erase(graph_->nodes.begin() + select_indice);
+    std::vector<uint32_t> new_node_indices;
+    std::copy_if(graph_->subGraph.at(subgraph_idx)->nodeIndices.begin(),
+                 graph_->subGraph.at(subgraph_idx)->nodeIndices.end(),
+                 std::inserter(new_node_indices, new_node_indices.begin()),
+                 [&select_indice](int indice) { return (uint32_t)indice != select_indice; });
+    graph_->subGraph.at(subgraph_idx)->nodeIndices = new_node_indices;
+    for (auto &subgraph : graph_->subGraph) {
+      std::transform(subgraph->nodeIndices.begin(), subgraph->nodeIndices.end(), subgraph->nodeIndices.begin(),
+                     [&select_indice](uint32_t idx) {
+                       if (idx > select_indice) {
+                         return --idx;
+                       }
+                       return idx;
+                     });
     }
   }
   return RET_OK;
