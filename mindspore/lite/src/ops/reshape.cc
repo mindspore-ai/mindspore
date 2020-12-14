@@ -179,8 +179,8 @@ int Reshape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   std::vector<int> out_shape;
   if (inputs_.size() == kDoubleNum) {
     auto shape_tensor = inputs_.at(1);
-    if (input->ElementsNum() == 1) {
-      if (shape_tensor->shape().empty()) {
+    if (shape_tensor->IsConst()) {
+      if (shape_tensor->data_c() == nullptr || (shape_tensor->shape().size() == 1 && shape_tensor->shape()[0] == 0)) {
         MS_LOG(DEBUG) << "reshape to a scalar.";
         output->set_shape(out_shape);
         return RET_OK;
