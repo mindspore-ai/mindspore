@@ -122,7 +122,6 @@ class CpuSubGraph : public SubGraphKernel {
                        const std::vector<LiteKernel *> &nodes, const lite::InnerContext *ctx)
       : SubGraphKernel(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
     subgraph_type_ = kCpuFP32SubGraph;
-    this->executor_ = new (std::nothrow) mindspore::lite::CpuExecutor;
   }
 
   ~CpuSubGraph() override { delete this->executor_; }

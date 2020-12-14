@@ -166,6 +166,16 @@ int CpuSubGraph::Prepare() {
       tensor->set_allocator(this->context_->allocator.get());
     }
   }
+  this->executor_ = new (std::nothrow) mindspore::lite::CpuExecutor;
+  if (this->executor_ == nullptr) {
+    MS_LOG(ERROR) << "new CpuExecutor failed";
+    return RET_ERROR;
+  }
+  ret = this->executor_->Prepare(this->nodes_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Prepare CpuExecutor failed";
+    return ret;
+  }
   return RET_OK;
 }
 

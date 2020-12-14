@@ -163,7 +163,6 @@ class Tensor : public mindspore::tensor::MSTensor {
   Category category_;
   size_t ref_count_ = 0;
   size_t init_ref_count_ = 0;
-  size_t ready_count_ = 0;
   std::vector<QuantArg> quant_params_;
   std::vector<float> quant_clusters_;
   mindspore::lite::Allocator *allocator_ = nullptr;
