@@ -390,7 +390,7 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> &input_ano
                        [](const int64_t &value) { return static_cast<int32_t>(value); });
   paramTensor->dims = dims;
   auto paramValue = std::dynamic_pointer_cast<ParamValueLite>(paramNode->default_param());
-  if (paramValue != nullptr) {
+  if (paramValue != nullptr && paramValue->tensor_size() != 0) {
     paramTensor->data.resize(paramValue->tensor_size());
     paramTensor->format = schema::Format(paramValue->format());
     if (EOK != memcpy_s(paramTensor->data.data(), paramTensor->data.size(), paramValue->tensor_addr(),
