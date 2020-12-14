@@ -15,6 +15,7 @@
 """Toolbox for anomaly detection by using VAE."""
 import numpy as np
 
+from mindspore._checkparam import Validator
 from ..dpn import VAE
 from ..infer import ELBO, SVI
 from ...optim import Adam
@@ -26,7 +27,7 @@ class VAEAnomalyDetection:
     Toolbox for anomaly detection by using VAE.
 
     Variational Auto-Encoder(VAE) can be used for Unsupervised Anomaly Detection. The anomaly score is the error
-    between the X and the reconstruction. If the score is high, the X is mostly outlier.
+    between the X and the reconstruction of X. If the score is high, the X is mostly outlier.
 
     Args:
         encoder(Cell): The Deep Neural Network (DNN) model defined as encoder.
@@ -84,6 +85,7 @@ class VAEAnomalyDetection:
         Returns:
             Bool, whether the sample is an outlier.
         """
+        threshold = Validator.check_positive_float(threshold)
         score = self.predict_outlier_score(sample_x)
         return score >= threshold
 
