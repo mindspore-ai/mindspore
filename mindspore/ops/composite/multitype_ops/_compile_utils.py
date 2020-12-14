@@ -618,8 +618,8 @@ def tensor_setitem_by_ellipsis_with_tensor(data, index, value):
 
 def tensor_in_sequence(x, y):
     """Assigns whether a sequence contains the given tensor"""
+    result = const_utils.scalar_to_tensor(False)
     for i in y:
         if isinstance(i, mstype.tensor) and x.shape == i.shape and x.dtype == i.dtype:
-            if F.equal(x, i).all():
-                return const_utils.scalar_to_tensor(True)
-    return const_utils.scalar_to_tensor(False)
+            result = F.logical_or(F.equal(x, i).all(), result)
+    return result
