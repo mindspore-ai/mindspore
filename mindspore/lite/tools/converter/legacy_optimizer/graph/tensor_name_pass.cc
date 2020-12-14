@@ -21,18 +21,24 @@
 
 namespace mindspore::lite {
 STATUS TensorNamePass::Run(schema::MetaGraphT *graph) {
-  MS_ASSERT(graph != nullptr);
-
-  for (int i = 0; i < static_cast<int>(graph->inputIndex.size()); i++) {
-    auto tensor_id = graph->inputIndex.at(i);
-    auto &tensor = graph->allTensors.at(tensor_id);
-    tensor->name = "graph_input-" + std::to_string(i);
+  if (graph == nullptr) {
+    MS_LOG(ERROR) << "graph is nullptr";
+    return RET_NULL_PTR;
   }
 
   for (auto &node : graph->nodes) {
     if (node == nullptr || node->primitive == nullptr) {
-      MS_LOG(ERROR) << " node or node->primitive is nullptr";
-      return RET_ERROR;
+      MS_LOG(ERROR) << "node or node->primitive is nullptr";
+      return RET_NULL_PTR;
+    }
+
+    for (int i = 0; i < static_cast<int>(node->inputIndex.size()); i++) {
+      auto tensor_id = node->inputIndex.at(i);
+      auto &tensor = graph->allTensors.at(tensor_id);
+      if (tensor->name.empty()) {
+        MS_LOG(WARNING) << "input tensor (id = " << tensor_id << ") name is null";
+        tensor->name = node->name + "/input-" + std::to_string(i);
+      }
     }
 
     for (int i = 0; i < static_cast<int>(node->outputIndex.size()); i++) {
@@ -40,35 +46,6 @@ STATUS TensorNamePass::Run(schema::MetaGraphT *graph) {
       auto &tensor = graph->allTensors.at(tensor_id);
       if (tensor->name.empty()) {
         tensor->name = node->name + "/output-" + std::to_string(i);
-      }
-    }
-
-    auto type = node->primitive->value.type;
-    if (type == PrimitiveType_Conv2D || type == PrimitiveType_DeConv2D || type == PrimitiveType_DepthwiseConv2D ||
-        type == PrimitiveType_DeDepthwiseConv2D || type == PrimitiveType_FullConnection) {
-      auto input_size = node->inputIndex.size();
-      if (input_size > 1) {
-        auto weight_tensor_id = node->inputIndex.at(1);
-        auto &weight_tensor = graph->allTensors.at(weight_tensor_id);
-        if (weight_tensor->name.empty()) {
-          weight_tensor->name = node->name + "/weight";
-        }
-
-        if (input_size > 2) {
-          auto bias_tensor_id = node->inputIndex.at(2);
-          auto &bias_tensor = graph->allTensors.at(bias_tensor_id);
-          if (bias_tensor->name.empty()) {
-            bias_tensor->name = node->name + "/bias";
-          }
-        }
-      }
-    } else {
-      for (int i = 0; i < static_cast<int>(node->inputIndex.size()); i++) {
-        auto tensor_id = node->inputIndex.at(i);
-        auto &tensor = graph->allTensors.at(tensor_id);
-        if (tensor->name.empty()) {
-          tensor->name = node->name + "/input-" + std::to_string(i);
-        }
       }
     }
   }

@@ -322,11 +322,6 @@ void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
 }
 
 int LiteSession::CompileGraph(Model *model) {
-  if (!ModelVerify(*model)) {
-    MS_LOG(ERROR) << "wrong model input, please check";
-    return RET_ERROR;
-  }
-
   bool expected = false;
   if (!is_running_.compare_exchange_strong(expected, true)) {
     MS_LOG(ERROR) << "Not support multi-threading";
@@ -342,6 +337,11 @@ int LiteSession::CompileGraph(Model *model) {
     MS_LOG(ERROR) << "The input model buf is nullptr.";
     is_running_.store(false);
     return RET_PARAM_INVALID;
+  }
+  if (!ModelVerify(*model)) {
+    MS_LOG(ERROR) << "wrong model input, please check";
+    is_running_.store(false);
+    return RET_ERROR;
   }
 
   auto ret = ConvertTensors(model);

@@ -74,6 +74,7 @@ class TensorCache {
     } else {
       tensor->nodeType = schema::NodeType_Parameter;
     }
+    tensor->name = name;
     tensors.push_back(tensor);
 
     if (Category == GRAPH_INPUT) {

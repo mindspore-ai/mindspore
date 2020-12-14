@@ -44,7 +44,11 @@ int AnfImporterFromMetaGraphT::ConverterConstTensor() {
     auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
     MS_ASSERT(nullptr != abstract_tensor);
     parameter->set_abstract(abstract_tensor);
-    parameter->set_name("const_" + std::to_string(i) + "_parameter");
+    if (!tensor->name.empty()) {
+      parameter->set_name(tensor->name);
+    } else {
+      parameter->set_name("const-" + std::to_string(i));
+    }
 
     ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
     MS_ASSERT(nullptr != param_value);

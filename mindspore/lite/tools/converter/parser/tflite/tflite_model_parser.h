@@ -42,13 +42,13 @@ class TfliteModelParser : public ModelParser {
   FuncGraphPtr func_graph_;
   char *tflite_model_buf_ = nullptr;
   std::unique_ptr<tflite::ModelT> ReadTfliteModel(const char *model_path);
-  STATUS ConvertConstTensor(const tflite::TensorT *tensor, Parameter *parameter);
+  STATUS ConvertConstTensor(const tflite::TensorT *tensor, Parameter *parameter, const std::string &tensor_name);
   STATUS ConvertOutputTensor(const tflite::OperatorT *op, const CNodePtr &dst_cnode);
   STATUS ConvertOpQuantParams(const tflite::OperatorT *op, lite::PrimitiveC *primitive_c);
   STATUS ConvertOps();
   STATUS ConvertGraphInputs();
   STATUS ConvertGraphOutputs();
-  STATUS SetTensorQuantParam(const tflite::TensorT *tflite_tensor, std::vector<QuantParamT> *quant_params);
+  static STATUS SetTensorQuantParam(const tflite::TensorT *tflite_tensor, std::vector<QuantParamT> *quant_params);
 };
 }  // namespace mindspore::lite
 #endif  // LITE_TFLITE_MODEL_PARSER_H
