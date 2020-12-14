@@ -13,9 +13,21 @@
 # limitations under the License.
 # ==============================================================================
 import cv2
+import numpy as np
 from PIL import Image
 import mindspore.dataset.vision.c_transforms as C
 from mindspore import log as logger
+
+
+def test_eager_decode():
+    img = np.fromfile("../data/dataset/apple.jpg", dtype=np.uint8)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    img = C.Decode()(img)
+    logger.info("Image.type: {}, Image.shape: {}".format(type(img), img.shape))
+
+    assert img.shape == (2268, 4032, 3)
+
 
 def test_eager_resize():
     img = cv2.imread("../data/dataset/apple.jpg")
@@ -79,6 +91,20 @@ def test_eager_pad():
 
 def test_eager_exceptions():
     try:
+        img = "../data/dataset/apple.jpg"
+        img = C.Decode()(img)
+        assert False
+    except TypeError as e:
+        assert "Input should be a 1-D NumPy with integer type" in str(e)
+
+    try:
+        img = np.array(["a", "b", "c"])
+        img = C.Decode()(img)
+        assert False
+    except TypeError as e:
+        assert "Input should be a 1-D NumPy with integer type" in str(e)
+
+    try:
         img = cv2.imread("../data/dataset/apple.jpg")
         img = C.Resize(size=(-32, 32))(img)
         assert False
@@ -94,6 +120,7 @@ def test_eager_exceptions():
 
 
 if __name__ == '__main__':
+    test_eager_decode()
     test_eager_resize()
     test_eager_rescale()
     test_eager_normalize()

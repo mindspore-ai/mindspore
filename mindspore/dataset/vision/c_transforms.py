@@ -175,6 +175,22 @@ class Decode(cde.DecodeOp):
         self.rgb = rgb
         super().__init__(self.rgb)
 
+    def __call__(self, img):
+        """
+        Call method.
+
+        Args:
+            img (NumPy): Image to be decoded.
+
+        Returns:
+            img (NumPy), Decoded image.
+        """
+        if not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
+            raise TypeError("Input should be a 1-D NumPy with integer type, got {}.".format(type(img)))
+        decode = cde.Execute(cde.DecodeOp(self.rgb))
+        img = decode(cde.Tensor(np.asarray(img)))
+        return img.as_array()
+
 
 class CutMixBatch(cde.CutMixBatchOp):
     """
