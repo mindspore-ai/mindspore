@@ -7,6 +7,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
 endif()
+
+# fix for GCC8.0
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-class-memaccess  -Wno-stringop-truncation")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-format")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
 
