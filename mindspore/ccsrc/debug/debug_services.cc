@@ -84,12 +84,11 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
       auto wp = std::get<1>(w_table_item);
       // check ONLY init conditions on intial suspended state.
       // skip other conditions on intial suspended state
-      // skip init condition on all the other states
-      if ((wp.condition.type == INIT) ^ init_dbg_suspend) continue;
-
+      if (init_dbg_suspend && (wp.condition.type != INIT)) continue;
+      // skip init condition if not init suspend
+      if ((wp.condition.type == INIT) && !init_dbg_suspend) continue;
       // check change conditions only on step end.
       if (wp.change_condition() && !step_end) continue;
-
       // if recheck, ignore the cache results and reanalyze everything.
       // if not a recheck, check only unanalyzed tensors
       if (!recheck && wp_id_cache[tensor_name].count(wp.id)) continue;
