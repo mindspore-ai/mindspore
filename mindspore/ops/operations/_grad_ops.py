@@ -371,7 +371,7 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
         self.add_prim_attr('groups', self.group)
         self.format = validator.check_string(data_format, ['NCDHW'], 'format', self.name)
         self.add_prim_attr('data_format', self.format)
-        self.add_prim_attr('io_format', "NCDHW")
+        self.add_prim_attr('io_format', self.format)
 
     def __infer__(self, x, doutput, w_size):
         w_size_v = w_size['value']
