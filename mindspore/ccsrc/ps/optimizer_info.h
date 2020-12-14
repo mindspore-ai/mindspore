@@ -82,6 +82,7 @@ class SparseOptimInfo : public OptimizerInfo {
  protected:
   size_t grads_offset_{0};
   size_t indices_offset_{0};
+  bool sharded_{true};
 };
 
 class MomentumOptimInfo : public DenseOptimInfo {
@@ -101,7 +102,7 @@ class SparseAdamOptimInfo : public SparseOptimInfo {
   SparseAdamOptimInfo(const AddressPtr &weight, const AddressPtr &m, const AddressPtr &v, const AddressPtr &beta1_power,
                       const AddressPtr &beta2_power, const AddressPtr &learning_rate, const AddressPtr &beta1,
                       const AddressPtr &beta2, const AddressPtr &epsilon, const AddressPtr &grad,
-                      const AddressPtr &indices);
+                      const AddressPtr &indices, bool sharded);
   ~SparseAdamOptimInfo() override = default;
 
   void Update(const Values &values, const Lengths &lens) override;
@@ -115,7 +116,7 @@ class SparseAdamOptimInfo : public SparseOptimInfo {
 class SparseFtrlOptimInfo : public SparseOptimInfo {
  public:
   SparseFtrlOptimInfo(const AddressPtr &weight, const AddressPtr &accum, const AddressPtr &linear,
-                      const AddressPtr &grad, const AddressPtr &indices);
+                      const AddressPtr &grad, const AddressPtr &indices, bool sharded);
   ~SparseFtrlOptimInfo() override = default;
 
   const AddressPtr &gradient();

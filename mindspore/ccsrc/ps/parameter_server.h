@@ -619,8 +619,8 @@ void ParameterServer<T>::AccumGrad(const Keys &keys, const Values &values, const
         MS_LOG(EXCEPTION) << "no optimizer found for key " << key << " optim name " << weight_key_to_optims_[key];
       }
       MS_EXCEPTION_IF_NULL(pserver_kernel);
-      OptimizerInfo *optim =
-        builder->Build(pserver_kernel, weights_[key], keys, values, lengths, optim_inputs_shape_[key], worker_num_);
+      OptimizerInfo *optim = builder->Build(pserver_kernel, weights_[key], keys, values, lengths,
+                                            optim_inputs_shape_[key], worker_num_, is_embedding_[key]);
       optim_info.reset(optim);
       optim_infos_[key] = optim_info;
     } else {
