@@ -19,11 +19,12 @@
 #include "nnacl/op_base.h"
 #include "nnacl/quantization/quantize.h"
 
+enum ElementwiseMode { ELEMENTWISE_NOT = 0, ELEMENTWISE_PER_CHANNEL = 1, ELEMENTWISE_PER_NUM = 2 };
 typedef struct LayerNormParameter {
   // Primitive parameter
   OpParameter op_parameter_;
   float epsilon_;
-  bool elementwise_affine_;
+  enum ElementwiseMode elementwise_mode_;
   // shape correlative
   int *normalized_shape_;
   int normalized_dims_;

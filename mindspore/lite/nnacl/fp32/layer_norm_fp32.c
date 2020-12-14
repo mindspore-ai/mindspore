@@ -19,11 +19,12 @@
 #include "nnacl/op_base.h"
 
 int LayerNorm(size_t outer_size, size_t inner_size, const float *src_data, const float *gamma_data,
-              const float *beta_data, bool affine, float epsilon, float *dst_data, size_t task_id, size_t thread_num) {
+              const float *beta_data, enum ElementwiseMode elementwise_mode, float epsilon, float *dst_data,
+              size_t task_id, size_t thread_num) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
-  if (affine && (gamma_data == NULL || beta_data == NULL)) {
+  if (elementwise_mode != 0 && (gamma_data == NULL || beta_data == NULL)) {
     return NNACL_NULL_PTR;
   }
 
@@ -63,7 +64,7 @@ int LayerNorm(size_t outer_size, size_t inner_size, const float *src_data, const
 #ifdef ENABLE_NEON
     float32x4_t meanv = vdupq_n_f32(mean);
     float32x4_t denov = vdupq_n_f32(deno);
-    if (affine) {
+    if (elementwise_mode != 0) {
       for (; index < inner_size - C8NUM; index += C8NUM) {
         float32x4_t srcv1 = vld1q_f32(src + index);
         float32x4_t srcv2 = vld1q_f32(src + index + 4);
@@ -71,14 +72,23 @@ int LayerNorm(size_t outer_size, size_t inner_size, const float *src_data, const
         float32x4_t outv2 = vsubq_f32(srcv2, meanv);
         outv1 = vmulq_f32(outv1, denov);
         outv2 = vmulq_f32(outv2, denov);
-        float32x4_t gammav1 = vld1q_f32(gamma_data + index);
-        float32x4_t gammav2 = vld1q_f32(gamma_data + index + 4);
-        float32x4_t betav1 = vld1q_f32(beta_data + index);
-        float32x4_t betav2 = vld1q_f32(beta_data + index + 4);
-        outv1 = vmulq_f32(outv1, gammav1);
-        outv2 = vmulq_f32(outv2, gammav2);
-        outv1 = vaddq_f32(outv1, betav1);
-        outv2 = vaddq_f32(outv2, betav2);
+        if (elementwise_mode == 1) {
+          float32x4_t gammav1 = vdupq_n_f32(gamma_data[j]);
+          float32x4_t betav1 = vdupq_n_f32(beta_data[j]);
+          outv1 = vmulq_f32(outv1, gammav1);
+          outv2 = vmulq_f32(outv2, gammav1);
+          outv1 = vaddq_f32(outv1, betav1);
+          outv2 = vaddq_f32(outv2, betav1);
+        } else {
+          float32x4_t gammav1 = vld1q_f32(gamma_data + index);
+          float32x4_t gammav2 = vld1q_f32(gamma_data + index + 4);
+          float32x4_t betav1 = vld1q_f32(beta_data + index);
+          float32x4_t betav2 = vld1q_f32(beta_data + index + 4);
+          outv1 = vmulq_f32(outv1, gammav1);
+          outv2 = vmulq_f32(outv2, gammav2);
+          outv1 = vaddq_f32(outv1, betav1);
+          outv2 = vaddq_f32(outv2, betav2);
+        }
         vst1q_f32(dst + index, outv1);
         vst1q_f32(dst + index + 4, outv2);
       }
@@ -97,7 +107,9 @@ int LayerNorm(size_t outer_size, size_t inner_size, const float *src_data, const
 #endif
     for (; index < inner_size; index++) {
       dst[index] = (src[index] - mean) * deno;
-      if (affine) {
+      if (elementwise_mode == 1) {
+        dst[index] = dst[index] * gamma_data[j] + beta_data[j];
+      } else if (elementwise_mode == 2) {
         dst[index] = dst[index] * gamma_data[index] + beta_data[index];
       }
     }
