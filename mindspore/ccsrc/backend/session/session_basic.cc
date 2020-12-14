@@ -943,6 +943,7 @@ KernelGraphPtr SessionBasic::ConstructKernelGraph(const AnfNodePtrList &lst, con
 
   // Update Graph Dynamic Shape Attr
   UpdateGraphDynamicShapeAttr(NOT_NULL(graph));
+  UnifyMindIR(graph);
   opt::BackendCommonOptimization(graph);
   graph->SetInputNodes();
   auto input_nodes = graph->input_nodes();
@@ -1610,6 +1611,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   // set output
   CreateOutputNode(cnode, graph);
   graph->SetInputNodes();
+  UnifyMindIR(graph);
   return graph;
 }
 

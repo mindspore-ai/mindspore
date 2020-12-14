@@ -101,6 +101,10 @@ constexpr size_t kFusedMulApplyMomentumOutputNum = 2;
 constexpr size_t kSplitInputNum = 2;
 constexpr size_t kGatherV2DynInputNum = 3;
 constexpr size_t kUnsortedSegmentSumInputNum = 2;
+constexpr size_t kSoftmaxCrossEntropyWithLogitsOutputNum = 2;
+constexpr size_t kSparseSoftmaxCrossEntropyWithLogitsInputNum = 3;
+constexpr size_t kOneHotOutputNum = 1;
+constexpr size_t kOneHotInputNum = 5;
 
 enum FusedBatchNormInput {
   kX = 1,

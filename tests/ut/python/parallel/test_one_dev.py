@@ -19,11 +19,14 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
+import mindspore.common.dtype as mstype
 from mindspore.common.api import _executor
 from mindspore.common.parameter import Parameter
-from mindspore.nn.loss import SoftmaxCrossEntropyWithLogits
+from mindspore.nn.loss.loss import _Loss
 from mindspore.nn.optim.momentum import Momentum
 from mindspore.ops import operations as P
+from mindspore.ops import functional as F
+from mindspore.ops import _selected_ops
 from mindspore.parallel._utils import _reset_op_id
 from mindspore.train import Model
 from mindspore.context import ParallelMode
@@ -64,6 +67,33 @@ class AllToAllNet(nn.Cell):
         x = self.matmul(x, self.matmul_weight)
         x = self.transpose1(x, (1, 0))
         return x
+
+
+class SoftmaxCrossEntropyWithLogits(_Loss):
+    def __init__(self,
+                 sparse=False,
+                 reduction='none'):
+        super(SoftmaxCrossEntropyWithLogits, self).__init__(reduction)
+        self.sparse = sparse
+        self.reduction = reduction
+        self.softmax_cross_entropy = _selected_ops.SoftmaxCrossEntropyWithLogits()
+        self.one_hot = P.OneHot()
+        self.on_value = Tensor(1.0, mstype.float32)
+        self.off_value = Tensor(0., mstype.float32)
+        self.is_cpugpu = context.get_context('device_target') in ["CPU", "GPU"]
+
+        if self.is_cpugpu:
+            self.sparse_softmax_cross_entropy = P.SparseSoftmaxCrossEntropyWithLogits()
+
+    def construct(self, logits, labels):
+        if self.is_cpugpu and self.sparse and self.reduction == 'mean':
+            x = self.sparse_softmax_cross_entropy(logits, labels)
+            return x
+
+        if self.sparse:
+            labels = self.one_hot(labels, F.shape(logits)[-1], self.on_value, self.off_value)
+        x = self.softmax_cross_entropy(logits, labels)[0]
+        return self.get_loss(x)
 
 
 def all_to_all_net():

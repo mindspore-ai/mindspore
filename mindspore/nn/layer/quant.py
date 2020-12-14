@@ -433,27 +433,15 @@ class Conv2dBnFoldQuantOneConv(Cell):
                                     (self.is_ge_backend or self.is_ascend)
 
         # initialize convolution op and Parameter
-        if context.get_context('device_target') == "Ascend" and group > 1:
-            Validator.check_equal_int(group, in_channels, 'group')
-            Validator.check_equal_int(group, out_channels, 'group')
-            self.conv = P.DepthwiseConv2dNative(channel_multiplier=1,
-                                                kernel_size=self.kernel_size,
-                                                pad_mode=pad_mode,
-                                                pad=padding,
-                                                stride=self.stride,
-                                                dilation=self.dilation)
-            weight_shape = [1, in_channels, *self.kernel_size]
-            channel_axis = 1
-        else:
-            self.conv = P.Conv2D(out_channel=out_channels,
-                                 kernel_size=self.kernel_size,
-                                 pad_mode=pad_mode,
-                                 pad=padding,
-                                 stride=self.stride,
-                                 dilation=self.dilation,
-                                 group=group)
-            weight_shape = [out_channels, in_channels // group, *self.kernel_size]
-            channel_axis = 0
+        self.conv = P.Conv2D(out_channel=out_channels,
+                             kernel_size=self.kernel_size,
+                             pad_mode=pad_mode,
+                             pad=padding,
+                             stride=self.stride,
+                             dilation=self.dilation,
+                             group=group)
+        weight_shape = [out_channels, in_channels // group, *self.kernel_size]
+        channel_axis = 0
         self.channel_axis = channel_axis
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
         self.bias_add = P.BiasAdd()
@@ -651,27 +639,15 @@ class Conv2dBnFoldQuant(Cell):
         self.is_gpu = context.get_context('device_target') == "GPU"
 
         # initialize convolution op and Parameter
-        if context.get_context('device_target') == "Ascend" and group > 1:
-            Validator.check_equal_int(group, in_channels, 'group')
-            Validator.check_equal_int(group, out_channels, 'group')
-            self.conv = P.DepthwiseConv2dNative(channel_multiplier=1,
-                                                kernel_size=self.kernel_size,
-                                                pad_mode=pad_mode,
-                                                pad=padding,
-                                                stride=self.stride,
-                                                dilation=self.dilation)
-            weight_shape = [1, in_channels, *self.kernel_size]
-            channel_axis = 1
-        else:
-            self.conv = P.Conv2D(out_channel=out_channels,
-                                 kernel_size=self.kernel_size,
-                                 pad_mode=pad_mode,
-                                 pad=padding,
-                                 stride=self.stride,
-                                 dilation=self.dilation,
-                                 group=group)
-            weight_shape = [out_channels, in_channels // group, *self.kernel_size]
-            channel_axis = 0
+        self.conv = P.Conv2D(out_channel=out_channels,
+                             kernel_size=self.kernel_size,
+                             pad_mode=pad_mode,
+                             pad=padding,
+                             stride=self.stride,
+                             dilation=self.dilation,
+                             group=group)
+        weight_shape = [out_channels, in_channels // group, *self.kernel_size]
+        channel_axis = 0
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
         self.bias_add = P.BiasAdd()
         if Validator.check_bool(has_bias):
@@ -830,28 +806,16 @@ class Conv2dBnWithoutFoldQuant(Cell):
         else:
             self.bias = None
         # initialize convolution op and Parameter
-        if context.get_context('device_target') == "Ascend" and group > 1:
-            Validator.check_equal_int(group, in_channels, 'group')
-            Validator.check_equal_int(group, out_channels, 'group')
-            self.conv = P.DepthwiseConv2dNative(channel_multiplier=1,
-                                                kernel_size=self.kernel_size,
-                                                pad_mode=pad_mode,
-                                                pad=padding,
-                                                stride=self.stride,
-                                                dilation=self.dilation)
-            weight_shape = [1, in_channels, *self.kernel_size]
-            channel_axis = 1
-        else:
-            self.conv = P.Conv2D(out_channel=self.out_channels,
-                                 kernel_size=self.kernel_size,
-                                 mode=1,
-                                 pad_mode=self.pad_mode,
-                                 pad=self.padding,
-                                 stride=self.stride,
-                                 dilation=self.dilation,
-                                 group=self.group)
-            weight_shape = [out_channels, in_channels // group, *self.kernel_size]
-            channel_axis = 0
+        self.conv = P.Conv2D(out_channel=self.out_channels,
+                             kernel_size=self.kernel_size,
+                             mode=1,
+                             pad_mode=self.pad_mode,
+                             pad=self.padding,
+                             stride=self.stride,
+                             dilation=self.dilation,
+                             group=self.group)
+        weight_shape = [out_channels, in_channels // group, *self.kernel_size]
+        channel_axis = 0
         self.weight = Parameter(initializer(weight_init, weight_shape), name='weight')
         self.fake_quant_weight = quant_config.weight(min_init=-6,
                                                      max_init=6,
@@ -963,10 +927,11 @@ class Conv2dQuant(Cell):
                              stride=self.stride,
                              dilation=self.dilation,
                              group=self.group)
+        channel_axis = 0
         self.fake_quant_weight = quant_config.weight(min_init=-6,
                                                      max_init=6,
                                                      ema=False,
-                                                     channel_axis=0,
+                                                     channel_axis=channel_axis,
                                                      num_channels=out_channels,
                                                      quant_dtype=quant_dtype)
 

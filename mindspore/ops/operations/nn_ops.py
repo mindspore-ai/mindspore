@@ -1574,32 +1574,12 @@ class MaxPoolWithArgmax(_Pool):
 
     def infer_shape(self, x_shape):
         out_shape = _Pool.infer_shape(self, x_shape)
-        _, _, out_h, out_w = out_shape
-        _, kernel_h, kernel_w, _ = self.ksize
-
-        argmax_shape = []
-        if self.is_tbe:
-            for i in range(4):
-                if i == 2:
-                    dim = kernel_h * kernel_w
-                    argmax_shape.append(dim)
-                elif i == 3:
-                    dim = math.ceil(out_h * out_w / 16) + 1
-                    argmax_shape.append(dim)
-                else:
-                    argmax_shape.append(x_shape[i])
-        else:
-            argmax_shape = out_shape
-
-        return out_shape, argmax_shape
+        return out_shape, out_shape
 
     def infer_dtype(self, x_dtype):
-        out_dtype = x_dtype
         validator.check_tensor_dtype_valid("x", x_dtype, (mstype.float16, mstype.float32), self.name)
-        argmax_dtype = mstype.uint16
-        if self.is_gpu:
-            argmax_dtype = mstype.int32
-        return out_dtype, argmax_dtype
+        argmax_dtype = mstype.int32
+        return x_dtype, argmax_dtype
 
 
 class AvgPool(_Pool):
@@ -6070,7 +6050,9 @@ class Dropout(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, keep_prob=0.5):
+    def __init__(self, keep_prob=0.5, Seed0=0, Seed1=0):
+        self.seed0 = validator.check_value_type("Seed0", Seed0, [int], self.name)
+        self.seed1 = validator.check_value_type("Seed1", Seed1, [int], self.name)
         self.keep_prob = validator.check_float_range(keep_prob, 0, 1, Rel.INC_RIGHT, "keep_prob", self.name)
 
     def infer_shape(self, x_shape):
