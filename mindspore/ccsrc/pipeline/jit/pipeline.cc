@@ -644,7 +644,7 @@ void Pipeline::Run() {
   FuncGraphPtr user_graph = nullptr;
 
   WITH(MsProfile::GetProfile())[&user_graph, this]() {
-    int64_t i = 0;
+    size_t i = 0;
     for (auto &action : actions_) {
 #ifdef ENABLE_TIMELINE
       DumpTime &dump_time = DumpTime::GetInstance();
@@ -687,7 +687,11 @@ void Pipeline::Run() {
           // generate IR file in dot format, which can be converted to svg file using graphviz dot command
           draw::Draw(base_name + ".dot", graph);
           // generate IR file in human readable format
-          DumpIR(base_name + ".ir", graph);
+          if (i == actions_.size() - 1) {
+            DumpIR(base_name + ".ir", graph, false, kWholeStack);
+          } else {
+            DumpIR(base_name + ".ir", graph, false, kTopStack);
+          }
           // generate IR file in a heavily commented format, which can also be reloaded
           ExportIR(base_name + ".dat", std::to_string(i), graph);
         }
