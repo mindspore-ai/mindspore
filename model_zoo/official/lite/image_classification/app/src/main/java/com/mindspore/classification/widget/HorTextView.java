@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mindspore.himindsporedemo.widget;
+package com.mindspore.classification.widget;
 
 import android.content.Context;
 import android.util.AttributeSet;
@@ -25,7 +25,7 @@ import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
-import com.mindspore.himindsporedemo.R;
+import com.mindspore.classification.R;
 
 public class HorTextView extends LinearLayout {
     private TextView tvLeftTitle, tvRightContent;

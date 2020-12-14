@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.mindspore.himindsporedemo.gallery.classify;
+package com.mindspore.classification.gallery.classify;
 
 import android.content.Context;
-import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.util.Log;
 

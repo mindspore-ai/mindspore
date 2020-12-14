@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mindspore.himindsporedemo.gallery.classify;
+package com.mindspore.classification.gallery.classify;
 
 public class RecognitionObjectBean {
 

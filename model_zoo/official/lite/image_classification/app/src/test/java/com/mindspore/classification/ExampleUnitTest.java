@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mindspore.himindsporedemo;
+package com.mindspore.classification;
 
 import org.junit.Test;
 

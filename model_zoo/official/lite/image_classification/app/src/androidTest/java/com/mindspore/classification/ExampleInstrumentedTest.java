@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mindspore.himindsporedemo;
+package com.mindspore.classification;
 
 import android.content.Context;
 
@@ -37,6 +37,6 @@ public class ExampleInstrumentedTest {
     public void useAppContext() {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        assertEquals("com.mindspore.himindsporedemo", appContext.getPackageName());
+        assertEquals("com.mindspore.classification", appContext.getPackageName());
     }
 }

@@ -75,7 +75,7 @@ app
 |   |   └── MsNetWork.cpp # MindSpre接口封装
 │   |
 │   ├── java # java层应用代码
-│   │   └── com.mindspore.himindsporedemo
+│   │   └── com.mindspore.classification
 │   │       ├── gallery.classify # 图像处理及MindSpore JNI调用相关实现
 │   │       │   └── ...
 │   │       └── widget # 开启摄像头及绘制相关实现

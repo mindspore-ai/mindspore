@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mindspore.himindsporedemo.widget;
+package com.mindspore.classification.widget;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -49,16 +49,15 @@ import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
-import com.mindspore.himindsporedemo.R;
-import com.mindspore.himindsporedemo.gallery.classify.CompareSizesByArea;
-import com.mindspore.himindsporedemo.gallery.classify.TrackingMobile;
+import com.mindspore.classification.R;
+import com.mindspore.classification.gallery.classify.CompareSizesByArea;
+import com.mindspore.classification.gallery.classify.TrackingMobile;
 
 import java.io.File;
 import java.util.ArrayList;
