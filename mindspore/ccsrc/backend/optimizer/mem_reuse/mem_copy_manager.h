@@ -70,7 +70,7 @@ struct MemSwapInfo {
 };
 
 struct SwapInfoComp {
-  bool operator()(const MemSwapInfo &a, const MemSwapInfo &b) {
+  bool operator()(const MemSwapInfo &a, const MemSwapInfo &b) const {
     int swap_kind_a = static_cast<int>(a.swap_kind_);
     int swap_kind_b = static_cast<int>(b.swap_kind_);
     if (swap_kind_a < swap_kind_b) {
