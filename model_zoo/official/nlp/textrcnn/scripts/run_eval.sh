@@ -17,4 +17,4 @@ ulimit -u unlimited
 
 BASEPATH=$(cd "`dirname $0`" || exit; pwd)
 export PYTHONPATH=${BASEPATH}:$PYTHONPATH
-python ${BASEPATH}/../eval.py > --ckpt_path $1 ./eval.log 2>&1 &
+python ${BASEPATH}/../eval.py --ckpt_path $1 > ./eval.log 2>&1 &
