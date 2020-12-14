@@ -350,44 +350,9 @@ if (ENABLE_MINDDATA)
     add_subdirectory(minddata/dataset)
 endif ()
 
-# build inference
-set(LOAD_MINDIR_SRC
-        ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/load_model.cc
-        ${CMAKE_SOURCE_DIR}/mindspore/core/load_mindir/anf_model_parser.cc
-        )
-add_library(inference SHARED
-        ${CMAKE_CURRENT_SOURCE_DIR}/backend/session/infer_session.cc
-        ${LOAD_MINDIR_SRC}
-        )
-
-set_target_properties(inference PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
-
-if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-            -Wl,-force_load mindspore proto_input -Wl,-noall_load mindspore_gvar)
-else()
-    target_link_libraries(inference PRIVATE ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY}
-            -Wl,--whole-archive mindspore proto_input -Wl,--no-whole-archive mindspore_gvar)
-endif()
-
 if (ENABLE_D)
     find_library(adump_server libadump_server.a ${ASCEND_RUNTIME_PATH} ${ASCEND_TOOLKIT_RUNTIME_PATH})
     target_link_libraries(_c_expression PRIVATE ${adump_server})
-    target_link_libraries(inference PRIVATE ${adump_server} ms_profile)
 endif()
-
-if (ENABLE_CPU)
-    target_link_libraries(inference PRIVATE mindspore::dnnl mindspore::mkldnn)
-endif ()
-
-if (USE_GLOG)
-    target_link_libraries(inference PRIVATE mindspore::glog)
-endif()
-
-if (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    target_link_options(inference PRIVATE -Wl,-init,common_log_init)
-elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    set_target_properties(inference PROPERTIES MACOSX_RPATH ON)
-endif ()
 
 add_subdirectory(cxx_api)

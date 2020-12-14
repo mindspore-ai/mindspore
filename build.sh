@@ -54,7 +54,6 @@ usage()
   echo "    -V Specify the device version, if -e gpu, default CUDA 10.1, if -e ascend, default Ascend 910"
   echo "    -I Enable compiling mindspore lite for arm64, arm32 or x86_64, default disable mindspore lite compilation"
   echo "    -K Compile with AKG, default on"
-  echo "    -s Enable serving module, default off"
   echo "    -B Enable debugger, default on"
   echo "    -E Enable IBVERBS for parameter server, default off"
   echo "    -l Compile with python dependency, default on"
@@ -105,7 +104,6 @@ checkopts()
   SUPPORT_TRAIN="off"
   USE_GLOG="on"
   ENABLE_AKG="on"
-  ENABLE_SERVING="off"
   ENABLE_ACL="off"
   ENABLE_DEBUGGER="on"
   ENABLE_IBVERBS="off"
@@ -123,7 +121,7 @@ checkopts()
   DEVICE=""
   ENABLE_NPU="off"
   # Process the options
-  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:swB:En:T:A:C:o:S:k:W:' opt
+  while getopts 'drvj:c:t:hsb:a:g:p:ie:m:l:I:LRP:D:zM:V:K:B:En:T:A:C:o:S:k:W:' opt
   do
     OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
@@ -273,16 +271,6 @@ checkopts()
         ENABLE_AKG="on"
         echo "enable compile with akg"
         ;;
-      s)
-        ENABLE_SERVING="on"
-        echo "enable serving"
-        ;;
-      w)
-        ENABLE_SERVING="on"
-        echo "enable serving"
-        ENABLE_ACL="on"
-        echo "enable acl"
-        ;;
       B)
         check_on_off $OPTARG B
         ENABLE_DEBUGGER="$OPTARG"
@@ -366,12 +354,10 @@ checkopts()
       DEVICE_VERSION=910
     fi
     if [[ "X$DEVICE_VERSION" == "X310" ]]; then
-      ENABLE_SERVING="on"
       ENABLE_ACL="on"
     elif [[ "X$DEVICE_VERSION" == "X910" ]]; then
       ENABLE_D="on"
       ENABLE_CPU="on"
-      ENABLE_SERVING="on"
     else
       echo "Invalid value ${DEVICE_VERSION} for option -V"
       usage
@@ -466,9 +452,6 @@ build_mindspore()
     fi
     if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" || "X$ENABLE_GPU" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_AKG=ON"
-    fi
-    if [[ "X$ENABLE_SERVING" = "Xon" ]]; then
-        CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_SERVING=ON"
     fi
     if [[ "X$ENABLE_ACL" = "Xon" ]]; then
         CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_ACL=ON"

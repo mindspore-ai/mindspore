@@ -76,8 +76,6 @@ else()
         endif()
     endforeach ()
 endif()
-# serving ut
-add_subdirectory(serving)
 
 file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/pybind_api/*.cc"
@@ -151,8 +149,7 @@ add_library(_ut_mindspore_obj OBJECT ${MINDSPORE_SRC_LIST})
 add_library(_ut_ut_obj OBJECT ${UT_SRCS})
 add_dependencies(_ut_ut_obj engine-cache-server)
 add_executable(ut_tests $<TARGET_OBJECTS:_ut_ut_obj>
-                        $<TARGET_OBJECTS:_ut_mindspore_obj>
-                        $<TARGET_OBJECTS:_ut_serving_obj>)
+                        $<TARGET_OBJECTS:_ut_mindspore_obj>)
 
 if (ENABLE_GE)
     if(ENABLE_TRAIN)
@@ -182,14 +179,3 @@ if (USE_GLOG)
 endif()
 
 target_link_libraries(ut_tests PRIVATE mindspore mindspore_shared_lib securec graph)
-
-# link grpc
-if (EXISTS ${grpc_ROOT}/lib64)
-    set(gRPC_DIR "${grpc_ROOT}/lib64/cmake/grpc")
-else ()
-    set(gRPC_DIR "${grpc_ROOT}/lib/cmake/grpc")
-endif ()
-find_package(gRPC CONFIG REQUIRED)
-target_link_libraries(ut_tests PRIVATE gRPC::grpc++)
-target_link_libraries(ut_tests PRIVATE gRPC::grpc++_reflection)
-target_link_libraries(ut_tests PRIVATE protobuf::libprotobuf)

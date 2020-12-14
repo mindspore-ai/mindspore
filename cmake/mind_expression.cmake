@@ -88,7 +88,7 @@ if (ENABLE_MINDDATA)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/sentencepiece.cmake)
 endif()
 
-if (ENABLE_MINDDATA OR ENABLE_SERVING)
+if (ENABLE_MINDDATA)
     include(${CMAKE_SOURCE_DIR}/cmake/external_libs/jpeg_turbo.cmake)
 endif()
 

@@ -81,9 +81,4 @@ if (ENABLE_TESTCASES)
     add_subdirectory(tests)
 endif()
 
-if (ENABLE_SERVING)
-    add_subdirectory(serving)
-    add_subdirectory(serving/example/cpp_client)
-endif()
-
 include(cmake/package.cmake)
