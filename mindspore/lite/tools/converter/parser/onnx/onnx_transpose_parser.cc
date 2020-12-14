@@ -28,7 +28,6 @@ lite::PrimitiveC *OnnxTransposeParser::ParseLitePrimitive(const onnx::GraphProto
     return nullptr;
   }
 
-  attr->conjugate = false;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axes" || attribute_name == "perm") {

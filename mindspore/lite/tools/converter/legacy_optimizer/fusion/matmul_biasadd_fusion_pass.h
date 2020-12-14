@@ -53,13 +53,18 @@ class MatMulBiasAddFusionPass : public FusionPass {
   size_t id = 0;
 
   OpDefCopyer TransposeOpCopyer = [](CNodeT *inOpDef) -> std::unique_ptr<CNodeT> {
-    std::unique_ptr<CNodeT> newOpDef(new (std::nothrow) CNodeT);
+    auto newOpDef = std::make_unique<schema::CNodeT>();
     if (newOpDef == nullptr) {
-      MS_LOG(ERROR) << "new OpDefT failed";
+      MS_LOG(ERROR) << "new CNodeT failed";
       return nullptr;
     }
     newOpDef->name = inOpDef->name;
     newOpDef->quantType = inOpDef->quantType;
+    newOpDef->primitive = std::make_unique<schema::PrimitiveT>();
+    if (newOpDef->primitive == nullptr) {
+      MS_LOG(ERROR) << "new PrimitiveT failed";
+      return nullptr;
+    }
     newOpDef->primitive->value.type = schema::PrimitiveType_Transpose;
     auto transposeParam = new (std::nothrow) TransposeT;
     if (transposeParam == nullptr) {
@@ -68,7 +73,6 @@ class MatMulBiasAddFusionPass : public FusionPass {
     }
     auto inParam = inOpDef->primitive->value.AsTranspose();
     MS_ASSERT(inParam != nullptr);
-    transposeParam->conjugate = inParam->conjugate;
     transposeParam->perm.resize(inParam->perm.size());
     std::transform(inParam->perm.begin(), inParam->perm.end(), transposeParam->perm.begin(),
                    [](const int32_t ele) { return ele; });

@@ -35,7 +35,6 @@ TEST_F(TestTfliteParserTranspose, OpType) {
 TEST_F(TestTfliteParserTranspose, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsTranspose(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsTranspose();
-  ASSERT_EQ(val->conjugate, false);
   std::vector<int32_t> perm = {1, 0};
   ASSERT_EQ(val->perm, perm);
 }

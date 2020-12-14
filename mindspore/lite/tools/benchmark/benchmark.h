@@ -193,7 +193,7 @@ class MS_API Benchmark {
         auto tolerance = absoluteTolerance + relativeTolerance * fabs(calibTensor->data.at(j));
         auto absoluteError = std::fabs(msTensorData[j] - calibTensor->data.at(j));
         if (absoluteError > tolerance) {
-          if (fabs(calibTensor->data.at(j)) == 0) {
+          if (fabs(calibTensor->data.at(j) - 0.0f) < FLT_EPSILON) {
             if (absoluteError > 1e-5) {
               meanError += absoluteError;
               errorCount++;

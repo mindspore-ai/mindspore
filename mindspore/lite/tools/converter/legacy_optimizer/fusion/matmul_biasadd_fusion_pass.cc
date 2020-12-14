@@ -155,7 +155,6 @@ STATUS MatMulBiasAddFusionPass::InsertTransposeNode(MetaGraphT *graph, const std
       MS_LOG(ERROR) << "new transposeParam failed";
       return RET_ERROR;
     }
-    transposeParam->conjugate = false;
     transposeParam->perm = {1, 0};
     transNode->primitive->value.value = transposeParam.release();
     matmulOpIter =
