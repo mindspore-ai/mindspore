@@ -793,8 +793,6 @@ void MatMul12x8(const float *a, const float *b, float *dst, const float *bias, A
   return;
 }
 
-#ifdef ENABLE_AVX
-#ifdef WIN32
 void MatMul6x16(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
                 int col, int stride, int out_type) {
   if (out_type == OutType_Nhwc) {
@@ -815,11 +813,29 @@ void MatMul6x16(const float *a, const float *b, float *dst, const float *bias, A
         dst[ci] = value;
       }
     }
+  } else {
+    for (int i = 0; i < row; ++i) {
+      int dst_r_offset = i * col * stride;
+      int r6div = i / C6NUM, r6mod = i % C6NUM;
+      for (int j = 0; j < col; ++j) {
+        int b16div = j / C16NUM, b16mod = j % C16NUM;
+        int c8div = j / C8NUM, c8mod = j % C8NUM;
+        size_t ci = dst_r_offset + c8div * C8NUM * stride + c8mod;
+        float value = 0;
+        for (int d = 0; d < deep; ++d) {
+          size_t ai = r6div * deep * C6NUM + d * C6NUM + r6mod;
+          size_t bi = b16div * deep * C16NUM + d * C16NUM + b16mod;
+          value = value + a[ai] * b[bi];
+        }
+        if (bias != NULL) value += bias[j];
+        if (act_type == ActType_Relu6) value = MSMIN(6.0f, value);
+        if (act_type != ActType_No) value = MSMAX(0.0f, value);
+        dst[ci] = value;
+      }
+    }
   }
   return;
 }
-#endif
-#endif
 
 void MatMul4x8(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,
                int col, int stride, int out_type) {
@@ -862,16 +878,14 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
     MatmulFloatNeon32Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
   }
 #elif ENABLE_AVX
-  if (out_type == OutType_Nhwc) {
+  if (out_type == OutType_C8) {
+    MatmulFloatSse64(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
+  } else {
 #ifdef WIN32
     MatMul6x16(a, b, c, bias, act_type, deep, row, col, stride, out_type);
 #else
     MatmulFloatAvxOpt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
 #endif
-  } else if (out_type == OutType_C8) {
-    MatmulFloatSse64(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
-  } else {
-    MatmulFloatSse64Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
   }
 #elif ENABLE_SSE
   if (out_type == OutType_C8) {

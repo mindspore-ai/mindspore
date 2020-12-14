@@ -49,8 +49,12 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   conv_param_->output_channel_ = out_channel;
 
   int oc4 = UP_DIV(out_channel, C4NUM);
+#ifdef ENABLE_AVX
+  const int oc_block = C16NUM;
+#else
   const int oc_block = C8NUM;
-  int oc_block_num = UP_DIV(out_channel, C8NUM);
+#endif
+  int oc_block_num = UP_DIV(out_channel, oc_block);
 
   // set data
   auto trans_matrix_data_size = input_unit_ * input_unit_ * in_channel * oc_block_num * oc_block * sizeof(float);

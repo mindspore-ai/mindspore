@@ -73,6 +73,12 @@ void ConvWinogardFp32(const float *input_data, const float *trans_weight, const 
   int output_count = out_w_block * out_h_block;
   const int tile_num = C12NUM;
   int output_tile_count = UP_DIV(output_count, tile_num);
+#ifdef ENABLE_AVX
+  const int col_tile = C16NUM;
+#else
+  const int col_tile = C8NUM;
+#endif
+  int oc_tile = UP_DIV(conv_param->output_channel_, col_tile);
   int oc8 = UP_DIV(conv_param->output_channel_, C8NUM);
   int input_unit_square = conv_param->input_unit_ * conv_param->input_unit_;
 
@@ -101,13 +107,15 @@ void ConvWinogardFp32(const float *input_data, const float *trans_weight, const 
       float *dst_ptr = gemm_out + task_id * gemm_out_offset;
       float *tmp_col_ptr = col_buffer + task_id * col_buffer_offset;
       for (int i = 0; i < input_unit_square; ++i) {
-#if defined(ENABLE_ARM32) || defined(ENABLE_SSE)
+#ifdef ENABLE_AVX
+        RowMajor2Col6Major(src_ptr + i * C12NUM * in_channel, tmp_col_ptr, C12NUM, in_channel);
+#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
         RowMajor2Col4Major(src_ptr + i * C12NUM * in_channel, tmp_col_ptr, C12NUM, in_channel);
 #else
         RowMajor2Col12Major(src_ptr + i * C12NUM * in_channel, tmp_col_ptr, C12NUM, in_channel);
 #endif
-        MatMulOpt(tmp_col_ptr, trans_weight + i * in_channel * oc8 * C8NUM, dst_ptr + i * C8NUM, NULL, 0, in_channel,
-                  cal_num, oc8 * C8NUM, input_unit_square, 2);
+        MatMulOpt(tmp_col_ptr, trans_weight + i * in_channel * oc_tile * col_tile, dst_ptr + i * C8NUM, NULL, 0,
+                  in_channel, cal_num, oc8 * C8NUM, input_unit_square, 2);
       }
 
       // step 4 : output transform

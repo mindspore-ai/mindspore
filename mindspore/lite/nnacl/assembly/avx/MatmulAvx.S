@@ -53,7 +53,7 @@ NoC8Steps:
     movq $4, %r12
     imul %r10, %r12
     imul %rbx, %r12
-    movq $48, %r13
+    movq $32, %r13
     imul %r10, %r13
 NoWinoSteps:
     movq $4, %rax
@@ -827,32 +827,35 @@ LoopRow:
             jmp WriteEnd
         WriteWino:
             movq %rdx, %rax
-            addq %r13, %rdx
-            movq %rdx, %r15
-            addq %r13, %rdx
-            movq %rdx, -80(%rsp)
-            vmovups %ymm4, (%rax)
-            vmovups %ymm5, (%r15)
-            addq %r12, %rax
-            addq %r12, %r15
-            vmovups %ymm6, (%rax)
-            vmovups %ymm7, (%r15)
-            addq %r12, %rax
-            addq %r12, %r15
-            vmovups %ymm8, (%rax)
-            vmovups %ymm9, (%r15)
-            addq %r12, %rax
-            addq %r12, %r15
-            vmovups %ymm10, (%rax)
-            vmovups %ymm11, (%r15)
-            addq %r12, %rax
-            addq %r12, %r15
-            vmovups %ymm12, (%rax)
-            vmovups %ymm13, (%r15)
-            addq %r12, %rax
-            addq %r12, %r15
-            vmovups %ymm14, (%rax)
-            vmovups %ymm15, (%r15)
+            addq %r13, %rax
+            movq %rax, -80(%rsp)
+            vmovups %ymm4, (%rdx)
+            addq %r12, %rdx
+            vmovups %ymm6, (%rdx)
+            addq %r12, %rdx
+            vmovups %ymm8, (%rdx)
+            addq %r12, %rdx
+            vmovups %ymm10, (%rdx)
+            addq %r12, %rdx
+            vmovups %ymm12, (%rdx)
+            addq %r12, %rdx
+            vmovups %ymm14, (%rdx)
+            cmpq $-8, %rbx
+            je WriteEnd
+            movq %rax, %rdx
+            addq %r13, %rax
+            movq %rax, -80(%rsp)
+            vmovups %ymm5, (%rdx)
+            addq %r12, %rdx
+            vmovups %ymm7, (%rdx)
+            addq %r12, %rdx
+            vmovups %ymm9, (%rdx)
+            addq %r12, %rdx
+            vmovups %ymm11, (%rdx)
+            addq %r12, %rdx
+            vmovups %ymm13, (%rdx)
+            addq %r12, %rdx
+            vmovups %ymm15, (%rdx)
             jmp WriteEnd
         Write16:
             movq %rdx, %rax
