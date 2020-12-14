@@ -116,7 +116,6 @@ void DepthWiseConv2D::set_mode(int64_t mode) { this->AddAttr(kMode, MakeValue(mo
 void DepthWiseConv2D::set_group(int64_t group) { this->AddAttr(kGroup, MakeValue(group)); }
 void DepthWiseConv2D::set_out_channel(int64_t out_channel) { this->AddAttr(kOutChannel, MakeValue(out_channel)); }
 void DepthWiseConv2D::set_pads(const std::vector<int64_t> &pad_list) { this->AddAttr(kPads, MakeValue(pad_list)); }
-
 void DepthWiseConv2D::set_format(const Format &format) {
   int64_t f = format;
   this->AddAttr(kFormat, MakeValue(f));
@@ -126,7 +125,9 @@ Format DepthWiseConv2D::get_format() const {
   auto value_ptr = GetAttr(kFormat);
   return Format(GetValue<int64_t>(value_ptr));
 }
-abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+
+abstract::ShapePtr DepthWiseConv2DInferShape(const PrimitivePtr &primitive,
+                                             const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
   auto conv_prim = primitive->cast<PrimDepthWiseConv2DPtr>();
   MS_EXCEPTION_IF_NULL(conv_prim);
@@ -194,7 +195,7 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   return std::make_shared<abstract::Shape>(out_shape);
 }
 
-TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr DepthWiseConv2DInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   CheckAndConvertUtils::CheckInRange("", input_args.size(), kIncludeBoth, {2, 3}, prim->name());
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
@@ -212,8 +213,8 @@ TypePtr InferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &
 
 AbstractBasePtr DepthWiseConv2DInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                      const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(InferType(primitive, input_args),
-                                                    InferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(DepthWiseConv2DInferType(primitive, input_args),
+                                                    DepthWiseConv2DInferShape(primitive, input_args)->shape());
 }
 REGISTER_PRIMITIVE_C(kNameDepthWiseConv2D, DepthWiseConv2D);
 }  // namespace mindspore
