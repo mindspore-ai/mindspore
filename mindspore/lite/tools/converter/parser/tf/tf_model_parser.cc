@@ -76,6 +76,80 @@ std::string GetOriginInputName(const tensorflow::NodeDef &node,
 }
 }  // namespace
 
+STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_proto,
+                                          const ParamValueLitePtr &param_value) {
+  MS_ASSERT(param_value != nullptr);
+  auto variant_size = tensor_proto.variant_val_size();
+  if (variant_size != 1) {
+    MS_LOG(ERROR) << "only support variant_val_size == 1 now";
+    return RET_ERROR;
+  }
+  auto &variant = tensor_proto.variant_val(0);
+  if (variant.type_name() != "tensorflow::TensorList") {
+    MS_LOG(ERROR) << "Only TensorList type is supported now";
+    return RET_NOT_SUPPORT;
+  }
+  auto descriptor = variant.GetMetadata().descriptor;
+  auto reflection = variant.GetMetadata().reflection;
+  if (descriptor == nullptr || reflection == nullptr) {
+    MS_LOG(ERROR) << "descriptor or reflection is nullptr";
+    return RET_ERROR;
+  }
+  auto field_descriptor = descriptor->field(1);
+  if (field_descriptor == nullptr) {
+    MS_LOG(ERROR) << "field_descriptor is nullptr";
+    return RET_ERROR;
+  }
+  auto type = field_descriptor->type();
+  if (type != google::protobuf::FieldDescriptor::TYPE_BYTES) {
+    MS_LOG(ERROR) << "metadata type is not TYPE_BYTES";
+    return RET_ERROR;
+  }
+  auto str = reflection->GetString(variant, field_descriptor);
+  std::string_view str_view(str);
+  uint64_t scratch;
+  if (!TensorFlowUtils::DecodeInt64(&str_view, &scratch)) {
+    return RET_ERROR;
+  }
+  size_t num_invalid_tensors = static_cast<size_t>(scratch);
+  for (size_t i = 0; i < num_invalid_tensors; ++i) {
+    if (!TensorFlowUtils::DecodeInt64(&str_view, &scratch)) {
+      return RET_ERROR;
+    }
+  }
+  if (!TensorFlowUtils::DecodeInt64(&str_view, &scratch)) {
+    return RET_ERROR;
+  }
+  size_t element_dtype = static_cast<size_t>(scratch);
+  if (!TensorFlowUtils::DecodeInt64(&str_view, &scratch)) {
+    return RET_ERROR;
+  }
+  std::string element_shape_str = std::string(str_view.data(), str_view.size());
+  tensorflow::TensorShapeProto element_shape_proto;
+  element_shape_proto.ParseFromString(element_shape_str);
+  auto dim_size = element_shape_proto.dim_size();
+  // we encode element_dtype,shape.size,shape[i]... into data
+  auto tensor_data = new (std::nothrow) int[dim_size + 2];
+  if (tensor_data == nullptr) {
+    MS_LOG(ERROR) << "tensor_data is nullptr";
+    return RET_ERROR;
+  }
+  tensor_data[0] = TensorFlowUtils::GetTFDataType(tensorflow::DataType(element_dtype));
+  tensor_data[1] = element_shape_proto.dim_size();
+  for (int i = 0; i < dim_size; ++i) {
+    auto dim = element_shape_proto.dim(i).size();
+    if (dim > static_cast<int64_t>(INT32_MAX) || dim < static_cast<int64_t>(INT32_MIN)) {
+      MS_LOG(ERROR) << "int64 data " << dim << " too big to fit into int32";
+      delete[] tensor_data;
+      return RET_ERROR;
+    } else {
+      tensor_data[i + 2] = static_cast<int>(dim);
+    }
+  }
+  param_value->SetTensorData(tensor_data, (dim_size + 2) * sizeof(int));
+  return RET_OK;
+}
+
 STATUS TFModelParser::ConvertConstTensor(const tensorflow::AttrValue &attr_value, const TypeId &type,
                                          const ParameterPtr &parameter, std::vector<int64_t> *shape_vector) {
   MS_ASSERT(parameter != nullptr);
@@ -143,6 +217,11 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::AttrValue &attr_value
     }
     tensor_size = shape_size * sizeof(int);
     param_value->SetTensorData(tensor_data, tensor_size);
+  } else if (type == kObjectTypeTensorType) {
+    auto status = ConvertConstVariant(tensor_proto, param_value);
+    if (status != RET_OK) {
+      return status;
+    }
   } else {
     MS_LOG(ERROR) << "Unsupport dataType: " << type;
     return RET_ERROR;
