@@ -204,7 +204,7 @@ int TensorList::CheckTensorListParam() {
 
 Tensor *TensorList::GetTensorIndex(int index) {
   // return tensor[index] ptr. With this function, you can modify tensors_[index] at will.
-  if (index < 0 || index > (this->ElementsNum() - 1)) {
+  if (index < 0 || index >= static_cast<int>(tensors_.size())) {
     MS_LOG(ERROR) << "index:" << index << " must in [0, " << this->ElementsNum() - 1 << "]!";
     return nullptr;
   }
@@ -239,6 +239,18 @@ bool TensorList::IsCompatibleShape(const Tensor *src) {
     }
   }
   return true;
+}
+
+STATUS TensorList::Decode(const int *data) {
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "data is nullptr";
+    return RET_ERROR;
+  }
+  tensors_data_type_ = TypeId(data[0]);
+  for (int j = 0; j < data[1]; ++j) {
+    element_shape_.push_back(data[2 + j]);
+  }
+  return RET_OK;
 }
 }  // namespace lite
 }  // namespace mindspore

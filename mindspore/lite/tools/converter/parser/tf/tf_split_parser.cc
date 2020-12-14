@@ -58,11 +58,11 @@ STATUS TFSplitParser::Parse(const tensorflow::NodeDef &tf_op,
     input_index = 0;
   }
 
-  if (tf_node_map.find(tf_op.input(split_dim_index)) == tf_node_map.end()) {
+  auto split_dim_node = GetConstInputNode(tf_node_map, tf_op.input(split_dim_index));
+  if (split_dim_node == nullptr) {
     MS_LOG(ERROR) << "Find Split input split_dim node failed";
     return RET_ERROR;
   }
-  const auto &split_dim_node = tf_node_map.at(tf_op.input(split_dim_index));
   if (!TensorFlowUtils::FindAttrValue(*split_dim_node, "value", &attr_value)) {
     MS_LOG(ERROR) << "The attribute splitDim should be specified";
     return RET_PARAM_INVALID;
@@ -72,11 +72,11 @@ STATUS TFSplitParser::Parse(const tensorflow::NodeDef &tf_op,
   *output_size = attr->numberSplit;
 
   if (tf_op.op() == "SplitV") {
-    if (tf_node_map.find(tf_op.input(1)) == tf_node_map.end()) {
+    auto size_splits_node = GetConstInputNode(tf_node_map, tf_op.input(1));
+    if (size_splits_node == nullptr) {
       MS_LOG(ERROR) << "Find Split input size_splits failed";
       return RET_ERROR;
     }
-    auto size_splits_node = tf_node_map.at(tf_op.input(1));
     if (!TensorFlowUtils::FindAttrValue(*size_splits_node, "value", &attr_value)) {
       MS_LOG(ERROR) << "The attribute size splits should be specified";
       return RET_PARAM_INVALID;

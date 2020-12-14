@@ -17,6 +17,8 @@
 #include <string>
 #include <vector>
 
+using tensorflow::NodeDef;
+
 namespace mindspore {
 namespace lite {
 STATUS TFNodeParser::AddOpInput(const tensorflow::NodeDef &tf_op, const int idx, std::vector<std::string> *inputs) {
@@ -26,6 +28,20 @@ STATUS TFNodeParser::AddOpInput(const tensorflow::NodeDef &tf_op, const int idx,
   }
   inputs->push_back(tf_op.input(idx));
   return RET_OK;
+}
+
+const NodeDef *TFNodeParser::GetConstInputNode(const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                               const std::string &input_name) {
+  auto flatten_input_name = TensorFlowUtils::GetFlattenNodeName(input_name);
+  if (tf_node_map.find(flatten_input_name) == tf_node_map.end()) {
+    return nullptr;
+  }
+  auto node = tf_node_map.at(flatten_input_name);
+  if (node->op() != "Const") {
+    MS_LOG(ERROR) << "Attr node is not Const";
+    return nullptr;
+  }
+  return node;
 }
 }  // namespace lite
 }  // namespace mindspore

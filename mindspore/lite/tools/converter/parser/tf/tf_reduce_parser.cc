@@ -69,11 +69,11 @@ STATUS TFReduceParser::Parse(const tensorflow::NodeDef &tf_op,
   }
   attr->keepDims = attr_value.b();
 
-  if (tf_node_map.find(tf_op.input(1)) == tf_node_map.end()) {
+  auto axis_node = GetConstInputNode(tf_node_map, tf_op.input(1));
+  if (axis_node == nullptr) {
     MS_LOG(ERROR) << "Find Reduce input axis failed";
     return RET_ERROR;
   }
-  auto axis_node = tf_node_map.at(tf_op.input(1));
   if (!TensorFlowUtils::FindAttrValue(*axis_node, "value", &attr_value)) {
     MS_LOG(ERROR) << "The value attr should be specified";
     return RET_ERROR;

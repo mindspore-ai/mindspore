@@ -28,8 +28,8 @@ using mindspore::schema::PrimitiveType_TensorListFromTensor;
 namespace mindspore::kernel {
 
 int TensorListFromTensorCPUKernel::IsCompatibleShape() {
-  if (input1_->data_type() != kNumberTypeInt) {  // element_shape
-    MS_LOG(ERROR) << "in_tensors_[1] data type is must be \"kNumberTypeInt\", but now is:" << input1_->data_type();
+  if (input1_->data_type() != kNumberTypeInt && input1_->data_type() != kNumberTypeInt32) {  // element_shape
+    MS_LOG(ERROR) << "in_tensors_[1] data type is must be int";
     return RET_ERROR;
   }
   int in1_ele_num = input1_->ElementsNum();

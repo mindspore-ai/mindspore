@@ -73,9 +73,8 @@ bool TensorListStackCPUKernel::IsFullyDefined(const std::vector<int> &shape) con
 
 int TensorListStackCPUKernel::MergeElementShape() {
   MS_ASSERT(in_tensors_[1]);
-  if (in_tensors_[1]->data_type() != kNumberTypeInt) {
-    MS_LOG(ERROR) << "in_tensors_[1]->data_type():" << in_tensors_[1]->data_type()
-                  << " must be \"kNumberTypeInt\":" << kNumberTypeInt;
+  if (in_tensors_[1]->data_type() != kNumberTypeInt && in_tensors_[1]->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "in_tensors_[1]->data_type():" << in_tensors_[1]->data_type() << " must be int";
     return RET_ERROR;
   }
   auto ele_shape_data = reinterpret_cast<int *>(in_tensors_[1]->data_c());

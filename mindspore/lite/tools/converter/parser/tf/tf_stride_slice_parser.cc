@@ -74,11 +74,11 @@ STATUS TFStrideSliceParser::Parse(const tensorflow::NodeDef &tf_op,
   attr->shrinkAxisMask = attr_value.i();
 
   // begin
-  if (tf_node_map.find(tf_op.input(1)) == tf_node_map.end()) {
+  auto begin_node = GetConstInputNode(tf_node_map, tf_op.input(1));
+  if (begin_node == nullptr) {
     MS_LOG(ERROR) << "Find StridedSlice input begin failed";
     return RET_ERROR;
   }
-  auto begin_node = tf_node_map.at(tf_op.input(1));
   if (!TensorFlowUtils::FindAttrValue(*begin_node, "value", &attr_value)) {
     MS_LOG(ERROR) << "The value attr should be specified";
     return RET_ERROR;
@@ -97,11 +97,11 @@ STATUS TFStrideSliceParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   // end
-  if (tf_node_map.find(tf_op.input(2)) == tf_node_map.end()) {
+  auto end_node = GetConstInputNode(tf_node_map, tf_op.input(2));
+  if (end_node == nullptr) {
     MS_LOG(ERROR) << "Find StridedSlice input end failed";
     return RET_ERROR;
   }
-  auto end_node = tf_node_map.at(tf_op.input(2));
   if (!TensorFlowUtils::FindAttrValue(*end_node, "value", &attr_value)) {
     MS_LOG(ERROR) << "The value attr should be specified";
     return RET_ERROR;
@@ -120,11 +120,11 @@ STATUS TFStrideSliceParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   // strides
-  if (tf_node_map.find(tf_op.input(3)) == tf_node_map.end()) {
+  auto stride_node = GetConstInputNode(tf_node_map, tf_op.input(3));
+  if (stride_node == nullptr) {
     MS_LOG(ERROR) << "Find StridedSlice input strides failed";
     return RET_ERROR;
   }
-  auto stride_node = tf_node_map.at(tf_op.input(3));
   if (!TensorFlowUtils::FindAttrValue(*stride_node, "value", &attr_value)) {
     MS_LOG(ERROR) << "The value attr should be specified";
     return RET_ERROR;

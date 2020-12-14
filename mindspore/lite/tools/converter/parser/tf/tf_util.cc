@@ -16,8 +16,10 @@
 
 #include "tools/converter/parser/tf/tf_util.h"
 #include <string>
+#include <vector>
 #include <string_view>
 #include <unordered_map>
+#include <regex>
 #include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"
 
@@ -111,6 +113,33 @@ bool TensorFlowUtils::DecodeInt64(std::string_view *str_view, uint64_t *value) {
     *str_view = std::string_view(next, end - next);
     return true;
   }
+}
+
+// convert input_arg in subgraph to node_name[:index] format
+std::string TensorFlowUtils::GetFlattenNodeName(const std::string &input_name) {
+  std::regex re("\\:+");
+  std::vector<std::string> input_splits(std::sregex_token_iterator(input_name.begin(), input_name.end(), re, -1),
+                                        std::sregex_token_iterator());
+  std::string ret = input_name;
+  if (input_splits.size() == 3) {
+    if (input_splits[2] == "0") {
+      ret = input_splits[0];
+    } else {
+      ret = input_splits[0] + input_splits[2];  // multi output node
+    }
+  }
+  return ret;
+}
+
+// get referenced node name from input name
+std::string TensorFlowUtils::GetNodeName(const std::string &input_name) {
+  std::regex re("\\:+");
+  std::vector<std::string> input_splits(std::sregex_token_iterator(input_name.begin(), input_name.end(), re, -1),
+                                        std::sregex_token_iterator());
+  if (input_splits.size() > 1) {
+    return input_splits[0];
+  }
+  return input_name;
 }
 }  // namespace lite
 }  // namespace mindspore

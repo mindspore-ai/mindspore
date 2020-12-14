@@ -40,6 +40,9 @@ class TFNodeParser {
   }
 
   STATUS AddOpInput(const tensorflow::NodeDef &tf_op, const int idx, std::vector<std::string> *inputs);
+
+  const tensorflow::NodeDef *GetConstInputNode(const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                               const std::string &input_name);
 };
 }  // namespace lite
 }  // namespace mindspore

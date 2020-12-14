@@ -60,6 +60,8 @@ class TensorList : public Tensor {
  public:
   TensorList() = default;
 
+  TensorList(std::vector<int> shape, std::vector<int> element_shape);
+
   ~TensorList() override;
 
   // **Note**: This is a shallow copy, src and dst tensorlist share one memory space of each tensor in tensors_
@@ -73,8 +75,6 @@ class TensorList : public Tensor {
 
   // tensorlist deep copy memory
   TensorList &operator=(const TensorList &tl);
-
-  TensorList(std::vector<int> shape, std::vector<int> element_shape);
 
   void set_element_shape(const std::vector<int> &shape) { element_shape_ = shape; }
 
@@ -111,6 +111,8 @@ class TensorList : public Tensor {
   bool IsCompatibleShape(const std::vector<int> &shape);
 
   bool IsCompatibleShape(const Tensor *src);
+
+  STATUS Decode(const int *data);
 
  protected:
   // The following functions must be masked.

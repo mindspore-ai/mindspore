@@ -34,6 +34,8 @@ class TensorFlowUtils {
   static TypeId ParseAttrDataType(const tensorflow::NodeDef &node_def, const std::string &attr_name);
   static schema::Format ParseNodeFormat(const tensorflow::NodeDef &node_def);
   static bool DecodeInt64(std::string_view *str_view, uint64_t *value);
+  static std::string GetFlattenNodeName(const std::string &input_name);
+  static std::string GetNodeName(const std::string &input_name);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -42,11 +42,12 @@ STATUS TFTransposeParser::Parse(const tensorflow::NodeDef &tf_op,
     return RET_NULL_PTR;
   }
 
-  if (tf_node_map.find(tf_op.input(1)) == tf_node_map.end()) {
+  attr->conjugate = false;
+  auto perm_node = GetConstInputNode(tf_node_map, tf_op.input(1));
+  if (perm_node == nullptr) {
     MS_LOG(ERROR) << "Find Transpose input perm failed";
     return RET_ERROR;
   }
-  auto perm_node = tf_node_map.at(tf_op.input(1));
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(*perm_node, "value", &attr_value)) {
     MS_LOG(ERROR) << "The value attr should be specified";

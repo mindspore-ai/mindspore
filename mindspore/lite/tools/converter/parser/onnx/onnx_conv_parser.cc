@@ -20,7 +20,6 @@
 #include <vector>
 
 namespace mindspore::lite {
-constexpr int32_t kSingleGroup = 1;
 bool OnnxConvParser::ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT> &attr,
                                            schema::PrimitiveT *primitive) {
   MS_LOG(DEBUG) << "onnx DepthwiseConvParser";
@@ -175,7 +174,7 @@ lite::PrimitiveC *OnnxConvParser::ParseLitePrimitive(const onnx::GraphProto &onn
     MS_LOG(ERROR) << "new primitive failed";
     return nullptr;
   }
-  if (attr->group > kSingleGroup && attr->group == attr->channelIn) {
+  if (attr->group == attr->channelIn && attr->channelIn == attr->channelOut) {
     if (!ParseGroupConvolution(attr, primitive.get())) {
       MS_LOG(ERROR) << "Convert Convolution to Depthwise failed";
       return nullptr;

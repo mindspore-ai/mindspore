@@ -28,16 +28,17 @@ using mindspore::schema::PrimitiveType_TensorListSetItem;
 
 namespace mindspore::kernel {
 
-int TensorListSetItemCPUKernel::Init() {
+int TensorListSetItemCPUKernel::Init() { return RET_OK; }
+
+int TensorListSetItemCPUKernel::Run() {
   input0_ = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
   if (dtype_ != input0_->data_type()) {
     MS_LOG(ERROR) << "op dtype:" << dtype_ << " is not equal in_tensors[0] dtype:" << input0_->data_type();
     return RET_ERROR;
   }
   int dim0 = input0_->ElementsNum() - 1;
-  if (in_tensors_[1]->data_type() != kNumberTypeInt) {
-    MS_LOG(ERROR) << "in_tensors_[1]->data_type():" << in_tensors_[1]->data_type()
-                  << " must be equal to \"kNumberTypeInt\":" << kNumberTypeInt;
+  if (in_tensors_[1]->data_type() != kNumberTypeInt && in_tensors_[1]->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "in_tensors_[1]->data_type():" << in_tensors_[1]->data_type() << " must be int";
     return RET_ERROR;
   }
   if (in_tensors_[1]->ElementsNum() != 1) {
@@ -54,10 +55,6 @@ int TensorListSetItemCPUKernel::Init() {
   if (!input0_->IsCompatibleShape(input2_->shape())) {
     return RET_ERROR;
   }
-  return RET_OK;
-}
-
-int TensorListSetItemCPUKernel::Run() {
   output0_ = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
   MS_ASSERT(output0_ != nullptr);
   // copy each tensor in tensors_

@@ -19,6 +19,7 @@
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/tensor.h"
+#include "src/tensorlist.h"
 #include "src/ops/primitive_c.h"
 
 using mindspore::lite::PrimitiveC;
@@ -50,32 +51,58 @@ std::vector<Tensor *> ConvertTensorToLiteTensor(MetaGraphT *graph, const std::ve
   std::vector<Tensor *> lite_tensors;
   bool convert_succ = true;
   for (size_t i = 0; i < tensor_indexs.size(); i++) {
+    std::unique_ptr<Tensor> lite_tensor = nullptr;
     auto &tensorT = graph->allTensors.at(tensor_indexs[i]);
-    auto tensor_shape = tensorT->dims;
-    auto lite_tensor = std::make_unique<Tensor>(
-      TypeId(tensorT->dataType), tensor_shape, tensorT->format,
-      TensorCategory(tensorT->nodeType, tensorT->dims.size(), TypeId(tensorT->dataType), tensorT->data.size()));
-    if (lite_tensor == nullptr) {
-      MS_LOG(ERROR) << "lite tensor is nullptr";
-      convert_succ = false;
-      break;
-    }
-    auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
-    // when tensorT as param input
-    if (lite_tensor_size == 0) {
-      lite_tensors.emplace_back(lite_tensor.release());
-      continue;
-    }
-    auto ret = lite_tensor->MallocData();
-    if (ret != 0) {
-      MS_LOG(ERROR) << "Malloc tensor data failed";
-      convert_succ = false;
-      break;
-    }
-    if (memcpy_s(lite_tensor->MutableData(), lite_tensor->Size(), tensorT->data.data(), lite_tensor_size) != EOK) {
-      MS_LOG(ERROR) << "memcpy_s failed";
-      convert_succ = false;
-      break;
+    if (tensorT->dataType != kObjectTypeTensorType) {  // convert to lite::Tensor
+      auto tensor_shape = tensorT->dims;
+      lite_tensor = std::make_unique<Tensor>(
+        TypeId(tensorT->dataType), tensor_shape, tensorT->format,
+        TensorCategory(tensorT->nodeType, tensorT->dims.size(), TypeId(tensorT->dataType), tensorT->data.size()));
+      if (lite_tensor == nullptr) {
+        MS_LOG(ERROR) << "lite tensor is nullptr";
+        convert_succ = false;
+        break;
+      }
+      auto lite_tensor_size = tensorT->data.size() * sizeof(uint8_t);
+      // when tensorT as param input
+      if (lite_tensor_size == 0) {
+        lite_tensors.emplace_back(lite_tensor.release());
+        continue;
+      }
+      auto ret = lite_tensor->MallocData();
+      if (ret != 0) {
+        MS_LOG(ERROR) << "Malloc tensor data failed";
+        convert_succ = false;
+        break;
+      }
+      if (memcpy_s(lite_tensor->MutableData(), lite_tensor->Size(), tensorT->data.data(), lite_tensor_size) != EOK) {
+        MS_LOG(ERROR) << "memcpy_s failed";
+        convert_succ = false;
+        break;
+      }
+    } else {  // convert to lite::TensorList
+      auto tensor_shape = tensorT->dims;
+      TypeId type = kTypeUnknown;
+      std::vector<int> element_shape;
+      if (!tensorT->data.empty()) {
+        int *data = reinterpret_cast<int *>(tensorT->data.data());
+        type = TypeId(data[0]);
+        if (tensorT->data.size() < 8 || (data[1] + 2) * 4 != static_cast<int>(tensorT->data.size())) {
+          MS_LOG(ERROR) << "tensorlist data length illegal";
+          convert_succ = false;
+          break;
+        }
+        for (int j = 0; j < data[1]; ++j) {
+          element_shape.push_back(data[j + 2]);
+        }
+      }
+      lite_tensor = std::make_unique<TensorList>(tensor_shape, element_shape);
+      if (lite_tensor == nullptr) {
+        MS_LOG(ERROR) << "lite tensorlist is nullptr";
+        convert_succ = false;
+        break;
+      }
+      reinterpret_cast<TensorList *>(lite_tensor.get())->set_tensors_data_type(type);
     }
     lite_tensors.emplace_back(lite_tensor.release());
   }

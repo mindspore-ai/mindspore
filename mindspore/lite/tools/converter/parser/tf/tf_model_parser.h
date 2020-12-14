@@ -71,13 +71,13 @@ class TFModelParser : public ModelParser {
 
   STATUS MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph);
 
-  FuncGraphPtr anf_root_graph_;
-  std::unique_ptr<tensorflow::GraphDef> tf_root_graph_;                     // tf root graph def
-  std::map<std::string, const tensorflow::NodeDef *> tf_root_graph_nodes_;  // tf root graph node map
-  std::unordered_map<std::string, AnfNodePtr> anf_root_node_map_;
-  std::vector<std::string> graph_input_names_;
-  std::vector<std::string> graph_output_names_;
-  std::map<std::string, AnfNodePtr> function_while_map_;  // tf function name->while_node_name
+  FuncGraphPtr anf_root_graph;
+  std::unique_ptr<tensorflow::GraphDef> tf_root_graph;                     // tf root graph def
+  std::map<std::string, const tensorflow::NodeDef *> tf_root_graph_nodes;  // tf root graph node map
+  std::unordered_map<std::string, AnfNodePtr> anf_root_node_map;
+  std::vector<std::string> graph_input_names;
+  std::vector<std::string> graph_output_names;
+  std::map<std::string, AnfNodePtr> function_while_map;  // tf function name->while_node_name
 };
 }  // namespace lite
 }  // namespace mindspore
