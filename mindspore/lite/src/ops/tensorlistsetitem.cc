@@ -97,6 +97,21 @@ int TensorListSetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
   MS_ASSERT(input0 != nullptr);
   auto get_index = inputs_[1];
   MS_ASSERT(get_index != nullptr);
+  auto value_tensor = inputs_[2];
+  MS_ASSERT(value_tensor != nullptr);
+  auto output0 = reinterpret_cast<TensorList *>(outputs_[0]);
+  MS_ASSERT(output0 != nullptr);
+
+  output0->set_data_type(input0->data_type());
+  output0->set_format(input0->format());
+
+  if (!infer_flag()) {
+    return RET_INFER_INVALID;
+  }
+  if (get_index->data_c() == nullptr || value_tensor->data_c() == nullptr) {
+    return RET_INFER_INVALID;
+  }
+
   if (get_index->data_type() != kNumberTypeInt && get_index->data_type() != kNumberTypeInt32) {
     MS_LOG(ERROR) << "inputs_[1]->data_type():" << get_index->data_type() << " is not int";
     return RET_ERROR;
@@ -110,31 +125,34 @@ int TensorListSetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
     return RET_NULL_PTR;
   }
   int index = reinterpret_cast<int *>(get_index->data_c())[0];
-  if (index < 0 || index > (input0->ElementsNum() - 1)) {
-    MS_LOG(ERROR) << "index_:" << index << "must in [0, " << input0->ElementsNum() - 1 << "]";
+  if (index < 0 || (index >= static_cast<int>(input0->tensors().size()) && index != 0)) {
+    MS_LOG(ERROR) << "index_:" << index << "must in [0, " << input0->tensors().size() << "]";
     return RET_ERROR;
   }
-  auto value_tensor = inputs_[2];
-  MS_ASSERT(value_tensor != nullptr);
-  auto output0 = reinterpret_cast<TensorList *>(outputs_[0]);
-  MS_ASSERT(output0 != nullptr);
-  output0->set_element_shape(input0->element_shape());
+
   output0->set_max_elements_num(input0->max_elements_num());
-  output0->set_shape(input0->shape());
-  output0->set_data_type(input0->data_type());
+  output0->set_element_shape(input0->element_shape());
+
   std::vector<std::vector<int> > out_shape;
-  for (int i = 0; i < input0->ElementsNum(); ++i) {
-    auto src_ptr = input0->GetTensorIndex(i);
-    if (src_ptr == nullptr) {
-      MS_LOG(ERROR) << "input0->tensors_[" << i << "] is nullptr!";
-      return RET_ERROR;
-    }
-    if (src_ptr->data_type() != kTypeUnknown) {
-      out_shape.push_back(src_ptr->shape());
-    } else {
-      out_shape.push_back(std::vector<int>());
+  if (index == 0 && input0->tensors().size() == 0) {  // uninitialized tensorlist
+    out_shape.push_back(value_tensor->shape());
+    output0->set_shape(std::vector<int>{1});
+  } else {
+    output0->set_shape(input0->shape());
+    for (int i = 0; i < input0->ElementsNum(); ++i) {
+      auto src_ptr = input0->GetTensorIndex(i);
+      if (src_ptr == nullptr) {
+        MS_LOG(ERROR) << "input0->tensors_[" << i << "] is nullptr!";
+        return RET_ERROR;
+      }
+      if (src_ptr->data_type() != kTypeUnknown) {
+        out_shape.push_back(src_ptr->shape());
+      } else {
+        out_shape.push_back(std::vector<int>());
+      }
     }
   }
+
   out_shape[index] = value_tensor->shape();
   output0->MallocTensorListData(input0->tensors_data_type(), out_shape);
   return RET_OK;

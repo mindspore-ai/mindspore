@@ -66,11 +66,11 @@ STATUS TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
   attr->strideH = strides[0];
   attr->strideW = strides[1];
 
-  if (tf_node_map.find(tf_op.input(1)) == tf_node_map.end()) {
+  auto weight_node = GetConstInputNode(tf_node_map, tf_op.input(1));
+  if (weight_node == nullptr) {
     MS_LOG(ERROR) << "Find Conv2D input weights failed";
     return RET_ERROR;
   }
-  auto weight_node = tf_node_map.at(tf_op.input(1));
   std::vector<int64_t> kernels(4);
   status = ParseKernels(*weight_node, attr->format, &kernels);
   if (status != RET_OK) {

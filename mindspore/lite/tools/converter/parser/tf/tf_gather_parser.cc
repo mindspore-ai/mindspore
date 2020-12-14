@@ -50,11 +50,11 @@ STATUS TFGatherParser::Parse(const tensorflow::NodeDef &tf_op,
   bool axis_is_set = false;
   if (tf_op.input_size() == 3) {
     axis_is_set = true;
-    if (tf_node_map.find(tf_op.input(2)) == tf_node_map.end()) {
+    auto axis_node = GetConstInputNode(tf_node_map, tf_op.input(2));
+    if (axis_node == nullptr) {
       MS_LOG(ERROR) << "Find Gather input axis failed";
       return RET_ERROR;
     }
-    auto axis_node = tf_node_map.at(tf_op.input(2));
     if (!TensorFlowUtils::FindAttrValue(*axis_node, "value", &attr_value)) {
       MS_LOG(ERROR) << "The value attr should be specified";
       return RET_ERROR;

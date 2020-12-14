@@ -42,11 +42,11 @@ STATUS TFTileParser::Parse(const tensorflow::NodeDef &tf_op,
     return RET_NULL_PTR;
   }
 
-  if (tf_node_map.find(tf_op.input(1)) == tf_node_map.end()) {
+  auto multiplies_node = GetConstInputNode(tf_node_map, tf_op.input(1));
+  if (multiplies_node == nullptr) {
     MS_LOG(ERROR) << "Find Tile input multiplies failed";
     return RET_ERROR;
   }
-  auto multiplies_node = tf_node_map.at(tf_op.input(1));
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(*multiplies_node, "value", &attr_value)) {
     MS_LOG(ERROR) << "The value attr should be specified";

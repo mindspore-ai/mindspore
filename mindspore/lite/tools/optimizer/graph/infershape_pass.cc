@@ -121,7 +121,7 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
     }
 
     if (utils::isa<ValueNodePtr>(cnode->input(i))) {
-      MS_LOG(ERROR) << "input is value node";
+      MS_LOG(WARNING) << "input is value node";
       continue;
     }
 
@@ -178,13 +178,10 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
           }
         } else {
           int *data = reinterpret_cast<int *>(param_value->tensor_addr());
-          auto tensor_list = dynamic_cast<lite::TensorList *>(tensor.get());
-          tensor_list->set_tensors_data_type(TypeId(data[0]));
-          std::vector<int> shape;
-          for (int j = 0; j < data[1]; ++j) {
-            shape.push_back(data[2 + j]);
+          auto tensor_list = reinterpret_cast<lite::TensorList *>(tensor.get());
+          if (tensor_list->Decode(data) != RET_OK) {
+            return RET_ERROR;
           }
-          tensor_list->set_element_shape(shape);
         }
       }
     }
@@ -210,8 +207,8 @@ STATUS InferShapePass::GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<
         return RET_ERROR;
       }
       auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(element);
-      auto typePtr = abstract_tensor->element()->GetTypeTrack();
-      types.push_back(typePtr->type_id());
+      auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+      types.push_back(type_ptr->type_id());
     }
   } else {
     if (!utils::isa<abstract::AbstractTensorPtr>(abstract)) {
@@ -219,8 +216,8 @@ STATUS InferShapePass::GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<
       return RET_ERROR;
     }
     auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
-    auto typePtr = abstract_tensor->element()->GetTypeTrack();
-    types.push_back(typePtr->type_id());
+    auto type_ptr = abstract_tensor->element()->GetTypeTrack();
+    types.push_back(type_ptr->type_id());
   }
   for (auto &type : types) {
     std::unique_ptr<lite::Tensor> output_tensor = nullptr;

@@ -19,6 +19,7 @@
 #include <queue>
 #include <string>
 #include <vector>
+#include "src/tensorlist.h"
 #include "src/ops/partial.h"
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
@@ -425,6 +426,10 @@ TypeId Scheduler::GetFirstFp32Fp16OrInt8Type(const std::vector<Tensor *> &in_ten
     auto dtype = tensor->data_type();
     if (dtype == kObjectTypeString) {
       return kNumberTypeFloat32;
+    }
+    if (dtype == kObjectTypeTensorType) {
+      auto tensor_list = reinterpret_cast<TensorList *>(tensor);
+      return tensor_list->tensors_data_type();
     }
     if (dtype == kNumberTypeFloat32 || dtype == kNumberTypeFloat16 || dtype == kNumberTypeInt8 ||
         dtype == kNumberTypeInt32 || dtype == kNumberTypeBool) {

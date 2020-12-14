@@ -89,27 +89,38 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
   auto data_type = src_tensor->dataType();
   if ((src_category == Tensor::Category::CONST_TENSOR || src_category == Tensor::Category::CONST_SCALAR) &&
       src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
-    MS_ASSERT(dst_tensor->Size() == src_tensor->data()->size());
-    if (WeightTensorNeedCopy(model, tensor_index)) {
-      auto dst_data = dst_tensor->MutableData();
-      if (dst_data == nullptr) {
-        MS_LOG(ERROR) << "Data from tensor is nullptr";
-        return RET_NULL_PTR;
+    if (src_tensor->dataType() == kObjectTypeTensorType) {
+      auto tensor_list = reinterpret_cast<TensorList *>(dst_tensor);
+      if (src_tensor->data() == nullptr) {
+        MS_LOG(ERROR) << "src_tensor->data() is nullptr";
+        return RET_ERROR;
       }
-      memcpy(dst_data, src_tensor->data()->data(), dst_tensor->Size());
-      copyed_tensor_idxes_.emplace_back(tensor_index);
+      if (tensor_list->Decode(reinterpret_cast<const int *>(src_tensor->data()->data())) != RET_OK) {
+        return RET_ERROR;
+      }
     } else {
-      int pack_size = src_tensor->data()->size();
-      int org_size = dst_tensor->Size();
-      if (pack_size != org_size && (data_type == kNumberTypeInt8 || data_type == kNumberTypeInt16)) {
-        auto ret = dst_tensor->MallocData();
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "Malloc data for tensor failed ";
-          return RET_ERROR;
+      MS_ASSERT(dst_tensor->Size() == src_tensor->data()->size());
+      if (WeightTensorNeedCopy(model, tensor_index)) {
+        auto dst_data = dst_tensor->MutableData();
+        if (dst_data == nullptr) {
+          MS_LOG(ERROR) << "Data from tensor is nullptr";
+          return RET_NULL_PTR;
         }
-        kernel::DequantUtil::UnPackToInt(src_tensor, dst_tensor->MutableData());
+        memcpy(dst_data, src_tensor->data()->data(), dst_tensor->Size());
+        copyed_tensor_idxes_.emplace_back(tensor_index);
       } else {
-        dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
+        int pack_size = src_tensor->data()->size();
+        int org_size = dst_tensor->Size();
+        if (pack_size != org_size && (data_type == kNumberTypeInt8 || data_type == kNumberTypeInt16)) {
+          auto ret = dst_tensor->MallocData();
+          if (ret != RET_OK) {
+            MS_LOG(ERROR) << "Malloc data for tensor failed ";
+            return RET_ERROR;
+          }
+          kernel::DequantUtil::UnPackToInt(src_tensor, dst_tensor->MutableData());
+        } else {
+          dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
+        }
       }
     }
   }

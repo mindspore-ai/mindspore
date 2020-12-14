@@ -54,6 +54,10 @@ STATUS TFBiasAddParser::Parse(const tensorflow::NodeDef &tf_op,
 
   *output_size = 1;
   auto status = AddOpInput(tf_op, 0, inputs);
+  if (status != RET_OK) {
+    return status;
+  }
+  status = AddOpInput(tf_op, 1, inputs);
   return status;
 }
 TFNodeRegistrar g_tfBiasAddParser("BiasAdd", new TFBiasAddParser());

@@ -9,11 +9,11 @@
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * WITHOUT WRRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/parser/tf/tf_concat_parser.h"
+#include "tools/converter/parser/tf/tf_reverse_sequence_parser.h"
 #include <string>
 #include <memory>
 #include <map>
@@ -22,10 +22,10 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TFConcatParser::Parse(const tensorflow::NodeDef &tf_op,
-                             const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                             std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF ConcatParser";
+STATUS TFReverseSequenceParser::Parse(const tensorflow::NodeDef &tf_op,
+                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                      PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
+  MS_LOG(INFO) << "TF ReverseSequenceParser";
   if (primitiveC == nullptr || output_size == nullptr) {
     MS_LOG(ERROR) << "primitiveC is nullptr";
     return RET_NULL_PTR;
@@ -36,32 +36,25 @@ STATUS TFConcatParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "New PrimitiveT failed";
     return RET_NULL_PTR;
   }
-  auto attr = std::make_unique<schema::ConcatT>();
+  auto attr = std::make_unique<schema::ReverseSequenceT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new attr failed";
     return RET_NULL_PTR;
   }
 
-  auto axis_node = GetConstInputNode(tf_node_map, tf_op.input(tf_op.input_size() - 1));
-  if (axis_node == nullptr) {
-    MS_LOG(ERROR) << "get concat axis attr node failed";
-    return RET_ERROR;
-  }
   tensorflow::AttrValue attr_value;
-  if (!TensorFlowUtils::FindAttrValue(*axis_node, "value", &attr_value)) {
-    MS_LOG(ERROR) << "The value attr should be specified";
+  if (!TensorFlowUtils::FindAttrValue(tf_op, "batch_dim", &attr_value)) {
+    MS_LOG(ERROR) << "The batch_dim attr should be specified";
     return RET_ERROR;
   }
-  auto tensor_proto = attr_value.tensor();
-  attr->axis = tensor_proto.int_val(0);
-
-  if (!TensorFlowUtils::FindAttrValue(tf_op, "N", &attr_value)) {
-    MS_LOG(ERROR) << "The N attr should be specified";
+  attr->batchAxis = attr_value.i();
+  if (!TensorFlowUtils::FindAttrValue(tf_op, "seq_dim", &attr_value)) {
+    MS_LOG(ERROR) << "The seq_dim attr should be specified";
     return RET_ERROR;
   }
-  attr->n = (int32_t)attr_value.i();
+  attr->seqAxis = attr_value.i();
 
-  primitive->value.type = schema::PrimitiveType_Concat;
+  primitive->value.type = schema::PrimitiveType_ReverseSequence;
   primitive->value.value = attr.release();
   *primitiveC = PrimitiveC::Create(primitive.release());
   if (*primitiveC == nullptr) {
@@ -70,14 +63,8 @@ STATUS TFConcatParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   *output_size = 1;
-  for (int i = 0; i < tf_op.input_size() - 1; ++i) {
-    auto status = AddOpInput(tf_op, i, inputs);
-    if (status != RET_OK) {
-      return status;
-    }
-  }
-  return RET_OK;
+  return AddOpInput(tf_op, 0, inputs);
 }
-TFNodeRegistrar g_tfConcatV2Parser("ConcatV2", new TFConcatParser());
+TFNodeRegistrar g_tfReverseSequenceParser("ReverseSequence", new TFReverseSequenceParser());
 }  // namespace lite
 }  // namespace mindspore

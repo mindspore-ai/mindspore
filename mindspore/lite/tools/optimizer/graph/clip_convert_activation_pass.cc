@@ -101,6 +101,7 @@ bool ClipConvertActivationPass::Run(const FuncGraphPtr &graph) {
     op_inputs.push_back(clip_cnode->input(1));
     auto new_cnode = graph->NewCNode(op_inputs);
     new_cnode->set_fullname_with_scope(node->fullname_with_scope());
+    new_cnode->set_abstract(clip_cnode->abstract()->Clone());
     manager->Replace(node, new_cnode);
   }
   return false;

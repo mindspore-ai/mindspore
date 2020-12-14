@@ -572,7 +572,12 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
 
   if (utils::isa<abstract::AbstractTuple>(cnode->abstract())) {
     auto tuple = std::reinterpret_pointer_cast<abstract::AbstractTuple>(cnode->abstract());
-    for (size_t i = 0; i < tuple->size(); i++) {
+    if (tuple == nullptr) {
+      MS_LOG(ERROR) << "tuple is nullptr";
+      return;
+    }
+    auto elements = tuple->elements();
+    for (size_t i = 0; i < elements.size(); i++) {
       auto msTensor = new (std::nothrow) schema::TensorT();
       if (msTensor == nullptr) {
         MS_LOG(ERROR) << "new msTensor failed";
@@ -589,7 +594,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
           IsPrimitiveCNode(cnode, schema::PrimitiveType_Adam))
         break;
 #else
-      if (tuple->size() == 1) {
+      if (elements.size() == 1) {
         node_id_map_[cnode_name] = meta_graphT->allTensors.size();
         msTensor->name = cnode_name;
       } else {
@@ -597,6 +602,18 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
         node_id_map_[name] = meta_graphT->allTensors.size();
         msTensor->name = name;
       }
+
+      if (!utils::isa<abstract::AbstractTensorPtr>(elements[i])) {
+        MS_LOG(ERROR) << "abstract is not AbstractTensor";
+        return;
+      }
+      auto type = kNumberTypeFloat32;
+      if (utils::isa<abstract::AbstractTensorPtr>(elements[i])) {
+        auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(elements[i]);
+        auto typePtr = abstract_tensor->element()->GetTypeTrack();
+        type = typePtr->type_id();
+      }
+      msTensor->dataType = type;
       meta_graphT->allTensors.emplace_back(msTensor);
       if (IsPrimitiveCNode(cnode, schema::PrimitiveType_Conv2D) ||
           IsPrimitiveCNode(cnode, schema::PrimitiveType_DepthwiseConv2D) ||
@@ -611,8 +628,14 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
       MS_LOG(ERROR) << "new tensor failed";
       return;
     }
+    auto type = kNumberTypeFloat32;
+    if (utils::isa<abstract::AbstractTensorPtr>(cnode->abstract())) {
+      auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(cnode->abstract());
+      auto typePtr = abstract_tensor->element()->GetTypeTrack();
+      type = typePtr->type_id();
+    }
+    ms_tensor->dataType = type;
     ms_tensor->nodeType = schema::NodeType_CNode;
-    ms_tensor->dataType = TypeId::kNumberTypeFloat32;
     ms_tensor->name = cnode_name;
     fb_node->outputIndex.emplace_back(meta_graphT->allTensors.size());
     node_id_map_[cnode_name] = meta_graphT->allTensors.size();

@@ -37,7 +37,7 @@ STATUS TFArithmeticParser::Parse(const tensorflow::NodeDef &tf_op,
     return RET_NULL_PTR;
   }
 
-  if (tf_op.op() == "Add") {
+  if (tf_op.op() == "Add" || tf_op.op() == "AddV2") {
     auto attr = std::make_unique<schema::AddT>();
     if (attr == nullptr) {
       MS_LOG(ERROR) << "new attr failed";
