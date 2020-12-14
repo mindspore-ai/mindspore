@@ -245,10 +245,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
-  auto ret = rtSetDevice(context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID));
-  if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "Call rtSetDevice, ret[" << static_cast<int>(ret) << "]";
-  }
+  uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 
   if (mem_manager_ != nullptr) {
     mem_manager_->FreeDeviceMemory();
@@ -256,7 +253,7 @@ void AscendKernelRuntime::ReleaseDeviceRes() {
 
   (void)DestroySingleOpHccl();
   (void)DestroyHccl();
-  (void)ResetDevice();
+  (void)ResetDevice(device_id);
   (void)ProfilingManager::GetInstance().StopProfiling();
   MS_LOG(INFO) << "Ascend finalize end";
 }
@@ -729,7 +726,7 @@ bool AscendKernelRuntime::InitDevice() {
   return true;
 }
 
-bool AscendKernelRuntime::ResetDevice() {
+bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
   InnerSetContext();
   if (stream_ != nullptr) {
     auto ret = rtStreamDestroy(stream_);
@@ -747,6 +744,10 @@ bool AscendKernelRuntime::ResetDevice() {
     rt_context_ = nullptr;
   }
 
+  auto ret = rtDeviceReset(device_id);
+  if (ret != RT_ERROR_NONE) {
+    MS_EXCEPTION(DeviceProcessError) << "Call rtDeviceReset, ret[" << ret << "]";
+  }
   // set to nullptr as its not created, only bounded to existing context
   rt_context_hccl_ = nullptr;
 

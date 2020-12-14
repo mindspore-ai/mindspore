@@ -116,15 +116,6 @@ Status MsGraphImpl::FinalizeEnv() {
   MS_LOG_INFO << "Start finalize env";
   session::ExecutorManager::Instance().Clear();
   device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-  auto ms_context = MsContext::GetInstance();
-  if (ms_context == nullptr) {
-    MS_LOG(ERROR) << "Get Context failed!";
-    return FAILED;
-  }
-  if (!context::CloseTsd(ms_context)) {
-    MS_LOG(ERROR) << "CloseTsd failed!";
-    return FAILED;
-  }
 
   init_flag_ = false;
   MS_LOG(INFO) << "End finalize env";
