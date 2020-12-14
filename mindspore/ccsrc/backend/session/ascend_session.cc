@@ -36,6 +36,7 @@
 #include "backend/optimizer/ascend/mindir/maxpool_to_maxpool_with_argmax.h"
 #include "backend/optimizer/ascend/mindir/maxpool_with_argmax_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/conv2d_unify_mindir.h"
+#include "backend/optimizer/ascend/mindir/sparse_softmax_cross_entropy_with_logits_unify_mindir.h"
 #include "runtime/device/kernel_adjust.h"
 #include "runtime/device/ascend/ascend_stream_assign.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -446,6 +447,9 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropInputUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropFilterUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
 
   optimizer->AddPassManager(unify_mindir_pm);
   (void)optimizer->Optimize(graph);
