@@ -6,3 +6,6 @@ add_library(anf_importer_mid OBJECT
         ${ANF_IMPORTER_SRC_LIST}
         )
 add_dependencies(anf_importer_mid proto_mid)
+
+add_dependencies(anf_importer_mid fbs_src)
+add_dependencies(anf_importer_mid fbs_inner_src)

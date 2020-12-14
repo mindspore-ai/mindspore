@@ -18,3 +18,6 @@ file(GLOB GRAPH_PASS
         )
 set_property(SOURCE ${GRAPH_PASS} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_library(graph_pass_mid OBJECT ${GRAPH_PASS})
+
+add_dependencies(graph_pass_mid fbs_src)
+add_dependencies(graph_pass_mid fbs_inner_src)
