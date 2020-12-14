@@ -63,6 +63,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
 
     private static final String CODE_URL = "https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/lite";
     private static final String HELP_URL = "https://github.com/mindspore-ai/mindspore/issues";
+    private static final String STAR_URL = "https://gitee.com/mindspore/mindspore";
 
 
     @Override
@@ -174,6 +175,16 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
         }
     }
 
+    public void onClickSceneDetection(View view) {
+        if (isAllGranted) {
+            ARouter.getInstance().build("/imageobject/ImageCameraActivity")
+                    .withInt("OPEN_TYPE", 3).navigation();
+        } else {
+            requestPermissions();
+        }
+    }
+
+
     public void onClickPhotoDetection(View view) {
         if (isAllGranted) {
             ARouter.getInstance().build("/imageobject/ObjectPhotoActivity").navigation();
@@ -222,6 +233,10 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
         openBrowser(HELP_URL);
     }
 
+
+    public void onClickStar(View view) {
+        openBrowser(STAR_URL);
+    }
 
     public void openBrowser(String url) {
         Intent intent = new Intent();

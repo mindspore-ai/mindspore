@@ -13,7 +13,6 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="68dp"
-        android:drawableTop="@drawable/logo"
         android:drawablePadding="20dp"
         android:gravity="center_horizontal"
         android:maxLines="1"
@@ -23,32 +22,35 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        android:drawableTop="@drawable/logo"
+        />
 
     <Button
         android:id="@+id/btn_image"
         android:layout_width="0dp"
         android:layout_height="48dp"
-        android:layout_marginLeft="20dp"
+        android:layout_marginStart="20dp"
         android:layout_marginTop="30dp"
         android:background="@color/gray_btn"
         android:drawableStart="@drawable/btn_image"
         android:drawablePadding="5dp"
         android:gravity="left|center_vertical"
         android:onClick="onClickImage"
-        android:paddingLeft="4dp"
+        android:paddingStart="4dp"
         android:text="@string/title_image"
         android:textAllCaps="false"
         android:textSize="12sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/title"
-        app:layout_constraintWidth_percent="0.43" />
+        app:layout_constraintWidth_percent="0.43"
+        tools:ignore="RtlHardcoded,RtlSymmetry" />
 
     <Button
         android:id="@+id/btn_image_garbage"
         android:layout_width="0dp"
         android:layout_height="48dp"
-        android:layout_marginRight="20dp"
+        android:layout_marginEnd="20dp"
         android:background="@color/gray_btn"
         android:drawableStart="@drawable/btn_other"
         android:drawablePadding="5dp"
@@ -152,16 +154,16 @@
         app:layout_constraintWidth_percent="0.43" />
 
     <Button
-        android:id="@+id/btn_source"
+        android:id="@+id/btn_scene"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:background="@color/gray_btn"
         android:drawableStart="@drawable/btn_code"
         android:drawablePadding="5dp"
         android:gravity="left|center_vertical"
-        android:onClick="onClickSouceCode"
+        android:onClick="onClickSceneDetection"
         android:paddingLeft="4dp"
-        android:text="@string/title_source"
+        android:text="@string/title_scene"
         android:textAllCaps="false"
         android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="@+id/btn_segmentation"
@@ -169,22 +171,59 @@
         app:layout_constraintWidth_percent="0.43" />
 
     <Button
-        android:id="@+id/btn_help"
+        android:layout_marginTop="16dp"
+        android:id="@+id/btn_source"
         android:layout_width="0dp"
         android:layout_height="48dp"
-        android:layout_marginTop="16dp"
-        android:background="@color/gray_btn"
-        android:drawableStart="@drawable/btn_help"
-        android:drawablePadding="5dp"
+        android:background="@color/gray_light_btn"
+        android:drawableStart="@drawable/btn_code"
+        android:drawablePadding="8dp"
         android:gravity="left|center_vertical"
-        android:onClick="onClickHelp"
-        android:paddingLeft="4dp"
-        android:text="@string/title_help"
+        android:onClick="onClickSouceCode"
+        android:paddingStart="10dp"
+        android:text="@string/title_source"
         android:textAllCaps="false"
         android:textSize="12sp"
         app:layout_constraintStart_toStartOf="@+id/btn_segmentation"
         app:layout_constraintTop_toBottomOf="@+id/btn_segmentation"
-        app:layout_constraintWidth_percent="0.43" />
+        app:layout_constraintWidth_percent="0.28" />
+
+    <Button
+        android:layout_marginStart="10dp"
+        android:id="@+id/btn_star"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:background="@color/gray_light_btn"
+        android:drawableStart="@drawable/btn_commend"
+        android:drawablePadding="8dp"
+        android:gravity="left|center_vertical"
+        android:onClick="onClickStar"
+        android:paddingStart="10dp"
+        android:text="@string/title_star"
+        android:textAllCaps="false"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="@+id/btn_scene"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_source"
+        app:layout_constraintWidth_percent="0.28" />
+
+    <Button
+        android:id="@+id/btn_help"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="16dp"
+        android:background="@color/gray_light_btn"
+        android:drawableStart="@drawable/btn_help"
+        android:drawablePadding="8dp"
+        android:gravity="left|center_vertical"
+        android:onClick="onClickHelp"
+        android:paddingStart="10dp"
+        android:text="@string/title_help"
+        android:textAllCaps="false"
+        android:textSize="12sp"
+        app:layout_constraintStart_toEndOf="@+id/btn_source"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_source"
+        app:layout_constraintEnd_toStartOf="@+id/btn_star"
+        app:layout_constraintWidth_percent="0.28" />
 
     <TextView
         android:id="@+id/tv_vision"

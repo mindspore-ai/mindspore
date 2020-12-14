@@ -36,8 +36,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.alibaba.android.arouter.facade.annotation.Route;
 import com.mindspore.imageobject.R;
 import com.mindspore.imageobject.objectdetection.bean.RecognitionObjectBean;
-import com.mindspore.imageobject.objectdetection.help.BitmapUtils;
-import com.mindspore.imageobject.objectdetection.help.DisplayUtil;
+import com.mindspore.imageobject.util.BitmapUtils;
+import com.mindspore.imageobject.util.DisplayUtil;
 import com.mindspore.imageobject.objectdetection.help.ObjectTrackingMobile;
 
 import java.io.FileNotFoundException;
