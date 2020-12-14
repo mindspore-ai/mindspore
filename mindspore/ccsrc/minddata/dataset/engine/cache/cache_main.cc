@@ -99,7 +99,6 @@ ds::Status StartServer(int argc, char **argv) {
       std::cout << "\nRecommendation:\nSince the server is detached into its own daemon process, monitor the server "
                    "logs (under "
                 << ds::DefaultLogDir() << ") for any issues that may happen after startup\n";
-      MS_LOG(INFO) << "Cache server has started successfully and is listening on port " << port << std::endl;
       signal(SIGCHLD, SIG_IGN);  // ignore sig child signal.
       return ds::Status::OK();
     } else {
@@ -119,6 +118,7 @@ ds::Status StartServer(int argc, char **argv) {
   }
 
   // Dump the summary
+  MS_LOG(INFO) << "Cache server has started successfully and is listening on port " << port << std::endl;
   MS_LOG(WARNING) << "Logging services started with log level: " << argv[5];
   MS_LOG(WARNING) << builder << std::endl;
   // Create the instance with some sanity checks built in
