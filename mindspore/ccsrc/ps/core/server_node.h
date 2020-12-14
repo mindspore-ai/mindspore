@@ -14,15 +14,15 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_CORE_CLIENT_NODE_H_
-#define MINDSPORE_CCSRC_PS_CORE_CLIENT_NODE_H_
+#ifndef MINDSPORE_CCSRC_PS_CORE_SERVER_NODE_H_
+#define MINDSPORE_CCSRC_PS_CORE_SERVER_NODE_H_
 
 #include <cstdlib>
 #include <iostream>
 #include <memory>
 #include <string>
+#include <thread>
 #include <utility>
-#include <algorithm>
 
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
@@ -35,20 +35,33 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-class WorkerNode : public AbstractNode {
+class ServerNode : public AbstractNode {
  public:
-  WorkerNode() = default;
-  ~WorkerNode() override;
+  ServerNode() : server_(nullptr), server_thread_(nullptr) {}
+  ~ServerNode() override;
 
   bool Start(const uint32_t &timeout = kTimeoutInSeconds) override;
   bool Stop() override;
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
 
+  using RequestHandler = std::function<void(const TcpServer &server, const TcpConnection &conn,
+                                            const MessageMeta message_meta, const std::string &message)>;
+
+  void set_handler(const RequestHandler &handler);
+  void Response(const TcpServer &server, const TcpConnection &conn, const MessageMeta &message_meta,
+                const std::string &message);
+
  private:
+  void CreateTcpServer();
   void Initialize();
+  void ProcessSendData(const TcpServer &server, const TcpConnection &conn, const CommMessage &message);
+
+  std::shared_ptr<TcpServer> server_;
+  std::unique_ptr<std::thread> server_thread_;
+  RequestHandler request_handler_;
 };
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_PS_CORE_CLIENT_NODE_H_
+#endif  // MINDSPORE_CCSRC_PS_CORE_SERVER_NODE_H_

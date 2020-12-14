@@ -42,6 +42,8 @@ class ClusterConfig {
   static void set_heartbeat_timeout(const uint32_t &heartbeat_timeout);
   static uint32_t cluster_available_timeout();
   static void set_cluster_available_timeout(const uint32_t &cluster_available_timeout);
+  static uint32_t connect_interval();
+  static void set_connect_interval(const uint32_t &connect_interval);
 
  private:
   static uint32_t worker_num_;
@@ -51,6 +53,7 @@ class ClusterConfig {
   static uint16_t scheduler_port_;
   static uint32_t heartbeat_timeout_;
   static uint32_t cluster_available_timeout_;
+  static uint32_t connect_interval_;
 };
 }  // namespace core
 }  // namespace ps

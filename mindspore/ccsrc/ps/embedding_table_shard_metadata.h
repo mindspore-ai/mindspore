@@ -14,41 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_PS_CORE_CLIENT_NODE_H_
-#define MINDSPORE_CCSRC_PS_CORE_CLIENT_NODE_H_
+#ifndef MINDSPORE_CCSRC_PS_EMBEDDING_TABLE_SHARD_METADATA_H_
+#define MINDSPORE_CCSRC_PS_EMBEDDING_TABLE_SHARD_METADATA_H_
 
-#include <cstdlib>
 #include <iostream>
-#include <memory>
-#include <string>
-#include <utility>
-#include <algorithm>
-
-#include "proto/comm.pb.h"
-#include "proto/ps.pb.h"
-#include "ps/core/cluster_config.h"
-#include "ps/core/tcp_client.h"
-#include "ps/core/tcp_server.h"
-#include "ps/core/abstract_node.h"
 #include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ps {
-namespace core {
-class WorkerNode : public AbstractNode {
+class EmbeddingTableShardMetadata {
  public:
-  WorkerNode() = default;
-  ~WorkerNode() override;
+  explicit EmbeddingTableShardMetadata(uint64_t begin, uint64_t end) : begin_(begin), end_(end) {}
+  virtual ~EmbeddingTableShardMetadata() = default;
 
-  bool Start(const uint32_t &timeout = kTimeoutInSeconds) override;
-  bool Stop() override;
-  bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
+  uint64_t begin() const;
+  uint64_t end() const;
+  uint64_t size() const;
 
  private:
-  void Initialize();
+  uint64_t begin_;
+  uint64_t end_;
 };
-}  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-
-#endif  // MINDSPORE_CCSRC_PS_CORE_CLIENT_NODE_H_
+#endif  // MINDSPORE_CCSRC_PS_EMBEDDING_TABLE_SHARD_METADATA_H_

@@ -95,6 +95,7 @@ void TcpServer::Init() {
     MS_LOG(EXCEPTION) << "Use event pthread failed!";
   }
 
+  is_stop_ = false;
   base_ = event_base_new();
   MS_EXCEPTION_IF_NULL(base_);
   if (!CommUtil::CheckIp(server_address_)) {
@@ -138,7 +139,6 @@ void TcpServer::Start() {
   std::unique_lock<std::recursive_mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Start tcp server!";
   MS_EXCEPTION_IF_NULL(base_);
-  is_stop_ = false;
   int ret = event_base_dispatch(base_);
   MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base dispatch success!";
   MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType)
@@ -368,6 +368,7 @@ int TcpServer::ConnectionNum() const { return connections_.size(); }
 const std::map<evutil_socket_t, const TcpConnection *> &TcpServer::Connections() const { return connections_; }
 
 void TcpServer::SetMessageCallback(const OnServerReceiveMessage &cb) { message_callback_ = cb; }
+
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

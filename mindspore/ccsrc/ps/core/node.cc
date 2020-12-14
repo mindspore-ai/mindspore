@@ -19,78 +19,11 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-void Node::Heartbeat(const std::shared_ptr<TcpClient> &client) {
-  MS_LOG(INFO) << "The node role: " << CommUtil::NodeRoleToString(node_info_.node_role_)
-               << ", the node id:" << node_info_.node_id_ << ", the node rank id:" << node_info_.rank_id_
-               << " begin send heartbeat to the scheduler!";
-  heart_beat_thread_ = std::make_unique<std::thread>([&]() {
-    while (!is_finish_.load()) {
-      std::this_thread::sleep_for(std::chrono::seconds(ClusterConfig::heartbeat_interval()));
-      MessageMeta meta;
-      meta.set_cmd(NodeCommand::HEARTBEAT);
-
-      HeartbeatMessage heartbeat_message;
-      heartbeat_message.set_node_id(node_info_.node_id_);
-
-      CommMessage message;
-      *message.mutable_pb_meta() = {meta};
-      message.set_data(heartbeat_message.SerializeAsString());
-      SendMessageAsync(client, message);
-    }
-  });
-  heart_beat_thread_->detach();
-}
-
-void Node::ProcessHeartbeatResp(const CommMessage &message) {
-  HeartbeatRespMessage heartbeat_resp_message;
-  heartbeat_resp_message.ParseFromString(message.data());
-  is_ready_ = heartbeat_resp_message.is_cluster_ready();
-  if (is_ready_.load()) {
-    wait_start_cond_.notify_all();
-    MS_LOG(DEBUG) << "The node id:" << node_info_.node_id_ << " is ready!";
-  }
-  is_finish_ = heartbeat_resp_message.is_cluster_finish();
-  if (is_finish_.load()) {
-    wait_finish_cond_.notify_all();
-    MS_LOG(DEBUG) << "The node id:" << node_info_.node_id_ << " is finish!";
-  }
-  is_timeout_ = heartbeat_resp_message.is_cluster_timeout();
-  if (is_timeout_ && on_node_event_message_) {
-    is_ready_ = true;
-    wait_start_cond_.notify_all();
-    on_node_event_message_(NodeEvent::NODE_TIMEOUT);
-  }
-}
-
-void Node::FetchServers(const std::shared_ptr<TcpClient> &client) {
-  MessageMeta meta;
-  meta.set_cmd(NodeCommand::FETCH_SERVER);
-
-  CommMessage message;
-  *message.mutable_pb_meta() = {meta};
-  if (!SendMessageSync(client, message)) {
-    MS_LOG(EXCEPTION) << "Fetch servers address timeout!";
-  }
-}
-
-void Node::ProcessFetchServersResp(const CommMessage &message) {
-  FetchServersRespMessage fetch_servers_resp_message;
-  fetch_servers_resp_message.ParseFromString(message.data());
-
-  for (const auto &it : fetch_servers_resp_message.servers_meta()) {
-    nodes_address_[std::make_pair(NodeRole::SERVER, it.rank_id())] = std::make_pair(it.ip(), it.port());
-  }
-
-  MS_LOG(DEBUG) << "The all server host size is:" << nodes_address_.size();
-}
-
 std::string Node::node_id() const { return node_info_.node_id_; }
 
 uint32_t Node::rank_id() const { return node_info_.rank_id_; }
 
-void Node::set_callback(const OnNodeEventMessage &on_node_event_message) {
-  on_node_event_message_ = on_node_event_message;
-}
+NodeRole Node::role() const { return node_info_.node_role_; }
 
 bool Node::Wait(uint64_t request_id, const uint32_t &timeout) {
   std::unique_lock<std::mutex> lock(message_tracker_mutex_);
@@ -147,6 +80,7 @@ bool Node::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids
 
 bool Node::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const std::string &message,
                 CommMessage *comm_message_resp, const uint32_t &timeout) {
+  MS_EXCEPTION_IF_NULL(comm_message_resp);
   if (!CommUtil::ValidateRankId(node_role, rank_id)) {
     MS_LOG(EXCEPTION) << "The node role or rank_id is illegal!";
   }
@@ -156,7 +90,7 @@ bool Node::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const s
   set_message_callback(request_id, [&]() {
     receive_messages_mutex_.lock();
     auto res = receive_messages_[request_id];
-    comm_message_resp = &res[rank_id];
+    *comm_message_resp = res[rank_id];
     receive_messages_.erase(request_id);
     receive_messages_mutex_.unlock();
   });
@@ -164,6 +98,8 @@ bool Node::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const s
   MessageMeta message_meta;
   message_meta.set_cmd(NodeCommand::SEND_DATA);
   message_meta.set_request_id(request_id);
+  message_meta.set_rank_id(node_info_.rank_id_);
+  message_meta.set_role(node_info_.node_role_);
 
   CommMessage comm_message;
   *comm_message.mutable_pb_meta() = {message_meta};
@@ -175,6 +111,7 @@ bool Node::Send(const enum NodeRole &node_role, const uint32_t &rank_id, const s
 
 bool Node::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<std::string> &data,
                 std::vector<CommMessage *> *comm_message_resp, const uint32_t &timeout) {
+  MS_EXCEPTION_IF_NULL(comm_message_resp);
   uint64_t request_id = ++next_request_id_;
   message_tracker_[request_id] = std::make_pair(data.size(), 0);
 
@@ -213,23 +150,6 @@ bool Node::Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids
   return Wait(request_id, timeout);
 }
 
-bool Node::Disconnect(const std::shared_ptr<TcpClient> &client, const uint32_t &timeout) {
-  MessageMeta meta;
-  meta.set_cmd(NodeCommand::FINISH);
-
-  FinishMessage finish_message;
-  finish_message.set_node_id(node_info_.node_id_);
-
-  CommMessage message;
-  *message.mutable_pb_meta() = {meta};
-  message.set_data(finish_message.SerializeAsString());
-  if (!SendMessageSync(client, message)) {
-    MS_LOG(EXCEPTION) << "Disconnect timeout!";
-  }
-  MS_LOG(INFO) << "The node id:" << node_info_.node_id_ << " send finish message!";
-  return WaitForDisconnect(timeout);
-}
-
 bool Node::WaitForStart(const uint32_t &timeout) {
   std::unique_lock<std::mutex> lock(wait_start_mutex_);
   bool res = wait_start_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] {
@@ -238,17 +158,6 @@ bool Node::WaitForStart(const uint32_t &timeout) {
       MS_LOG(INFO) << "The node id:" << node_info_.node_id_ << " is success start!";
     }
     return res;
-  });
-  return res;
-}
-
-bool Node::WaitForDisconnect(const uint32_t &timeout) {
-  std::unique_lock<std::mutex> lock(wait_finish_mutex_);
-  bool res = wait_finish_cond_.wait_for(lock, std::chrono::seconds(timeout), [&] {
-    if (is_finish_.load()) {
-      MS_LOG(INFO) << "The node id:" << node_info_.node_id_ << " is success finish!";
-    }
-    return is_finish_.load();
   });
   return res;
 }
@@ -268,15 +177,6 @@ void Node::SendMessageAsync(const std::shared_ptr<TcpClient> &client, const Comm
   client->SendMessage(message);
 }
 
-void Node::NotifyMessageArrival(const CommMessage &message) {
-  std::lock_guard<std::mutex> lock(message_tracker_mutex_);
-  const MessageMeta &message_meta = message.pb_meta();
-  uint64_t request_id = message_meta.request_id();
-
-  message_tracker_[request_id].second++;
-  message_tracker_cond_.notify_all();
-}
-
 const std::shared_ptr<TcpClient> &Node::GetOrCreateTcpClient(const int &rank_id) {
   std::lock_guard<std::mutex> lock(client_mutex_);
   if (connected_nodes_.find(rank_id) != connected_nodes_.end()) {
@@ -292,6 +192,7 @@ const std::shared_ptr<TcpClient> &Node::GetOrCreateTcpClient(const int &rank_id)
       switch (message.pb_meta().cmd()) {
         case NodeCommand::SEND_DATA:
           ProcessSendDataResp(message);
+          RunMessageCallback(message.pb_meta().request_id());
           break;
         default:
           MS_LOG(EXCEPTION) << "The cmd:" << message.pb_meta().cmd() << " is not supported!";
@@ -317,13 +218,13 @@ void Node::ProcessSendDataResp(const CommMessage &message) {
     res.insert(std::make_pair(rank_id, message));
     receive_messages_[request_id] = res;
   }
-
-  RunMessageCallback(request_id);
 }
 
 void Node::RunMessageCallback(const uint64_t &request_id) {
   message_callbacks_mutex_.lock();
-  if (message_tracker_[request_id].first == message_tracker_[request_id].second - 1) {
+  // When receiving a message's response, Then compare with the desired number of responses,
+  // If they are equal, then call the callback function
+  if (message_tracker_[request_id].first == message_tracker_[request_id].second + 1) {
     auto it = message_callbacks_.find(request_id);
     if (it != message_callbacks_.end()) {
       message_callbacks_mutex_.unlock();
@@ -345,6 +246,15 @@ void Node::set_message_callback(const uint64_t &request_id, const MessageCallbac
   }
   std::lock_guard<std::mutex> lock(message_callbacks_mutex_);
   message_callbacks_[request_id] = message_callback;
+}
+
+void Node::NotifyMessageArrival(const CommMessage &message) {
+  std::lock_guard<std::mutex> lock(message_tracker_mutex_);
+  const MessageMeta &message_meta = message.pb_meta();
+  uint64_t request_id = message_meta.request_id();
+
+  message_tracker_[request_id].second++;
+  message_tracker_cond_.notify_all();
 }
 }  // namespace core
 }  // namespace ps
