@@ -66,8 +66,8 @@ def _generate_indices_from_tuple_of_mixed_tensors(data, tuple_index, op_name):
     tuple_len = len(tuple_index)
     for i in range(tuple_len):
         if i in int_positions:
-            tuple_index_new += (F.scalar_to_tensor(tuple_index[i] if tuple_index[i] >= 0 else tuple_index[i] + \
-                data_shape[i], mstype.int32),)
+            tuple_index_new += (F.scalar_to_tensor(tuple_index[i] if tuple_index[i] >= 0 else tuple_index[i] +
+                                                   data_shape[i], mstype.int32),)
         else:
             tuple_index_new += (tuple_index[i],)
     indexes_types = hyper_map(F.typeof, tuple_index_new)
@@ -95,24 +95,16 @@ def _generate_indices_from_tuple_of_mixed_tensors(data, tuple_index, op_name):
     index_tensor_new_shape = const_utils.compute_new_shape(broadcast_shape, indexes_shapes_info)
     for i in range(tuple_index_size):
         if i in tensor_positions:
-            transform_tensor = _transform_indexing_tensor(broadcast_shape,
-                                                          final_shape,
-                                                          index_tensor_new_shape,
-                                                          tuple_index_new[i])
+            transform_tensor = _transform_indexing_tensor(
+                broadcast_shape, final_shape, index_tensor_new_shape, tuple_index_new[i])
             final_index_tensors.append(transform_tensor)
         if i in slice_positions:
-            slice_tensor = const_utils.convert_slice_to_tensor(slice_number,
-                                                               final_shape,
-                                                               indexes_shapes_info,
-                                                               op_name)
+            slice_tensor = const_utils.convert_slice_to_tensor(slice_number, final_shape, indexes_shapes_info, op_name)
             final_index_tensors.append(slice_tensor)
             slice_number += 1
         if i == ellipsis_position:
-            ellipsis_tensors = const_utils.convert_ellipsis_to_tensors(slice_number,
-                                                                       ellipsis_occupied_dims,
-                                                                       final_shape,
-                                                                       indexes_shapes_info,
-                                                                       op_name)
+            ellipsis_tensors = const_utils.convert_ellipsis_to_tensors(
+                slice_number, ellipsis_occupied_dims, final_shape, indexes_shapes_info, op_name)
             for ele in ellipsis_tensors:
                 final_index_tensors.append(ele)
             slice_number += ellipsis_occupied_dims
@@ -266,12 +258,13 @@ def _tensor_index_by_tuple_slice(data, tuple_index):
     return P.StridedSlice(0, 0, 0, 0, shrink_axis_mask)(data, begin_strides, end_strides, step_strides)
 
 
-def tensor_expand_dims(data, tuple_index):
-    """Expand tensor dims by tuple contains None and replace the None by slice in tuple_index """
-    none_positions, tuple_index_without_none = const_utils.split_tuple_index_for_none(tuple_index)
-    for position in none_positions:
-        data = F.expand_dims(data, position)
-    return data, tuple_index_without_none
+def tensor_index_by_list(data, list_index):
+    """Tensor getitem by list of int and bool"""
+    data_shape = F.shape(data)
+    const_utils.check_list_index_type(list_index)
+    list_index = const_utils.transform_list(list_index, data_shape[0])
+    tensor_index = const_utils.convert_list_to_tensor(list_index)
+    return F.gather(data, tensor_index, 0)
 
 
 def tensor_index_by_tuple(data, tuple_index):
