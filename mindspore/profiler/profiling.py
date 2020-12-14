@@ -16,6 +16,7 @@
 import os
 import stat
 import time
+import json
 from enum import Enum
 
 from mindspore import log as logger, context
@@ -37,7 +38,6 @@ from mindspore.profiler.parser.optime_parser import OPComputeTimeParser
 from mindspore.profiler.parser.step_trace_parser import GpuStepTraceParser, AscendStepTraceParser
 from mindspore.nn.cell import Cell
 
-PROFILING_LOG_BASE_PATH = "/var/log/npu/profiling"
 INIT_OP_NAME = 'Default/InitDataSetQueue'
 
 class ProfileOption(Enum):
@@ -72,7 +72,6 @@ class Profiler:
         >>> profiler.analyse()
     """
 
-    _base_profiling_container_path = "/var/log/npu/profiling/container"
     _hwts_output_filename_target = "output_format_data_hwts_"
     _opcompute_output_filename_target = "output_op_compute_time_"
     _aicpu_op_output_filename_target = "output_data_preprocess_aicpu_"
@@ -80,9 +79,11 @@ class Profiler:
     def __init__(self, **kwargs):
         # get device_id and device_target
         self._get_devid_and_devtarget()
-        output_path = kwargs.pop("output_path", "./data")
+        format_time = int(time.time())
+        output_path = kwargs.pop("output_path", f"data-{format_time}")
         self._output_path = validate_and_normalize_path(output_path)
-        self._output_path = os.path.join(self._output_path, "profiler")
+        self._output_path = os.path.join(self._output_path, f"profiler-{format_time}")
+        self._base_profiling_container_path = os.path.join(self._output_path, "container")
         if not os.path.exists(self._output_path):
             os.makedirs(self._output_path, exist_ok=True)
             os.chmod(self._output_path, stat.S_IRUSR | stat.S_IWUSR | stat.S_IXUSR)
@@ -113,10 +114,25 @@ class Profiler:
                 logger.warning("There are invalid params which don't work.")
 
             os.environ['DEVICE_ID'] = self._dev_id
-            os.environ['AICPU_PROFILING_MODE'] = 'true'
+            fp_point = os.environ.get("PROFILING_FP_START", "")
+            bp_point = os.environ.get("PROFILING_BP_END", "")
 
+            profiling_options = {
+                "result_path": self._output_path,
+                "fp_point": fp_point,
+                "bp_point": bp_point,
+                "training_trace": "on",
+                "task_trace": "on",
+                "ai_core_metrics": "PipeUtilization",
+                "aicpu_trace": "on"
+            }
+
+            profiling_options = json.dumps(profiling_options)
+            # Characters longer than 2048 are ignored, resulting in profiling option resolution errors
+            if len(profiling_options) > 2048:
+                raise ValueError("The parameter length exceeds the limit (2048)")
             # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
-            context.set_context(enable_profiling=True, profiling_options="training_trace:task_trace")
+            context.set_context(enable_profiling=True, profiling_options=profiling_options)
 
             self._container_path = os.path.join(self._base_profiling_container_path, self._dev_id)
             data_path = os.path.join(self._container_path, "data")
@@ -174,7 +190,7 @@ class Profiler:
             job_id = self._get_profiling_job_id()
             logger.info("Profiling: job id is %s ", job_id)
 
-            source_path = os.path.join(PROFILING_LOG_BASE_PATH, job_id)
+            source_path = os.path.join(self._output_path, job_id)
             # parse hwts.log.data.45.dev file, and get task profiling data
             hwts_output_filename = self._hwts_output_filename_target + self._dev_id + ".txt"
             hwts_output_filename = os.path.join(self._output_path, hwts_output_filename)
@@ -347,12 +363,12 @@ class Profiler:
             return self._profiling_job_id
 
         job_id = ""
-        cmd = "ls -t " + PROFILING_LOG_BASE_PATH + "|grep JOB|awk '{print $1}'"
+        cmd = "ls -t " + self._output_path + "|grep JOB|awk '{print $1}'"
         r = os.popen(cmd)
         profiling_job_dirs = r.readlines()
         r.close()
         for item in profiling_job_dirs:
-            path = os.path.join(PROFILING_LOG_BASE_PATH, item.strip())
+            path = os.path.join(self._output_path, item.strip())
             log_file = get_file_names(path, "host_start.log")
             if not log_file:
                 logger.error("Profiling: job path %s, host_start.log not exist.", path)
