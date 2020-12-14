@@ -746,18 +746,20 @@ class Model:
         """
         Generate parameter layout for the predict network in auto or semi auto parallel mode.
 
-        Data could be a single tensor, a list of tensor, or a tuple of tensor.
+        Data could be a single tensor or multiple tensors.
 
         Note:
             Batch data should be put together in one tensor.
 
         Args:
-            predict_data (Tensor): Tensor of predict data. can be array, list or tuple.
+            predict_data (Tensor): One tensor or multiple tensors of predict data.
 
         Returns:
             parameter_layout_dict (dict): Parameter layout dictionary used for load distributed checkpoint
 
         Examples:
+            >>> context.set_context(mode=context.GRAPH_MODE)
+            >>> context.set_auto_parallel_context(full_batch=True, parallel_mode=ParallelMode.SEMI_AUTO_PARALLEL)
             >>> input_data = Tensor(np.random.randint(0, 255, [1, 3, 224, 224]), mindspore.float32)
             >>> model = Model(Net())
             >>> model.infer_predict_layout(input_data)
