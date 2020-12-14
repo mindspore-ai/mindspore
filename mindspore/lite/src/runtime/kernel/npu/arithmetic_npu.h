@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ADD_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ADD_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETIC_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETIC_NPU_H_
 #include <vector>
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/math_defs.h"
 namespace mindspore::kernel {
-class AddNPUKernel : public NPUKernel {
+class ArithmeticNPUKernel : public NPUKernel {
  public:
-  AddNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-               const mindspore::lite::PrimitiveC *primitive)
+  ArithmeticNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                      const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~AddNPUKernel() override;
+  ~ArithmeticNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
@@ -36,7 +36,7 @@ class AddNPUKernel : public NPUKernel {
   ge::Operator *GetNPUOp() override;
 
  private:
-  hiai::op::Add *op_ = nullptr;
+  ge::Operator *op_ = nullptr;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ADD_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETIC_NPU_H_

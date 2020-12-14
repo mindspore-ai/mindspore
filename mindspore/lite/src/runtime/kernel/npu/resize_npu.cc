@@ -28,10 +28,10 @@ namespace mindspore::kernel {
 int ResizeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                OpParameter *opParameter) {
   if (method_ != schema::ResizeMethod_LINEAR || method_ == schema::ResizeMethod_NEAREST) {
-    MS_LOG(ERROR) << "Unsupported resize method type:" << method_;
+    MS_LOG(WARNING) << "Unsupported resize method type:" << method_;
     return RET_ERROR;
   }
-  return RET_OK;
+  return RET_ERROR;
 }
 
 int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -42,20 +42,21 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
   sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), 2 * sizeof(int32_t));
   auto out_size = new (std::nothrow) hiai::op::Const(name_ + "size");
   out_size->set_attr_value(sizeTensor);
-
   if (method_ == schema::ResizeMethod_LINEAR) {
     auto op = new (std::nothrow) hiai::op::ResizeBilinearV2(name_);
-    if (op_ == nullptr) {
+    if (op == nullptr) {
+      MS_LOG(ERROR) << " op is nullptr.";
       return RET_ERROR;
     }
-    op->set_attr_align_corners(false);
+    op->set_attr_align_corners(align_corners_);
     op->set_input_x(*npu_inputs[0]);
     op->set_input_size(*out_size);
-    op->set_attr_half_pixel_centers(true);
+    op->set_attr_half_pixel_centers(preserve_aspect_ratio_);
     op_ = op;
   } else {
     auto op = new (std::nothrow) hiai::op::ResizeNearestNeighborV2(name_);
-    if (op_ == nullptr) {
+    if (op == nullptr) {
+      MS_LOG(ERROR) << " op is nullptr.";
       return RET_ERROR;
     }
     op->set_attr_align_corners(align_corners_);

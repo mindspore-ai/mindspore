@@ -14,37 +14,38 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/npu/floor_npu.h"
+#include "src/runtime/kernel/npu/shape_npu.h"
 #include "src/kernel_registry.h"
-
+#include "src/runtime/agent/npu/npu_converter_utils.h"
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Floor;
+using mindspore::schema::PrimitiveType_Shape;
 
 namespace mindspore::kernel {
-int FloorNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+int ShapeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                               OpParameter *opParameter) {
   return RET_OK;
 }
 
-int FloorNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+int ShapeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                  const std::vector<ge::Operator *> &npu_inputs) {
-  op_ = new (std::nothrow) hiai::op::Floor(name_);
+  op_ = new (std::nothrow) hiai::op::Shape(name_);
   if (op_ == nullptr) {
+    MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
   op_->set_input_x(*npu_inputs[0]);
   return RET_OK;
 }
 
-ge::Operator *mindspore::kernel::FloorNPUKernel::GetNPUOp() { return this->op_; }
+ge::Operator *mindspore::kernel::ShapeNPUKernel::GetNPUOp() { return this->op_; }
 
-FloorNPUKernel::~FloorNPUKernel() {
+ShapeNPUKernel::~ShapeNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
     op_ = nullptr;
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Floor, NPUKernelCreator<FloorNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Shape, NPUKernelCreator<ShapeNPUKernel>)
 }  // namespace mindspore::kernel
