@@ -109,18 +109,10 @@ class Monitor(Callback):
             1, cb_params.epoch_num, cur_step_in_epoch, cb_params.batch_num, step_loss,
             np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]))
 
+
 def load_ckpt(network, pretrain_ckpt_path, trainable=True):
-    """
-    incremental_learning or not
-    """
+    """load checkpoint into network."""
     param_dict = load_checkpoint(pretrain_ckpt_path)
-    if hasattr(network, "head"):
-        head_param = network.head.parameters_dict()
-        for k, v in head_param.items():
-            if param_dict[k].shape != v.shape:
-                param_dict.pop(k)
-                param_dict.pop(f"moments.{k}")
-                print(f"Filter {k} don't load weights from checkpoint.")
     load_param_into_net(network, param_dict)
     if not trainable:
         for param in network.get_parameters():
