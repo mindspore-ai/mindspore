@@ -41,9 +41,13 @@ void LiteKernel::FreeWorkspace() {
   workspace_ = nullptr;
 }
 
-bool LiteKernel::IsReady() {
+bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
   return std::all_of(this->in_tensors().begin(), this->in_tensors().end(), [&](lite::Tensor *kernel_in_tensor) {
-    return kernel_in_tensor->IsConst() || kernel_in_tensor->ref_count() >= 1;
+    if (IsContain(scope_tensors, kernel_in_tensor)) {
+      return (kernel_in_tensor->IsConst() || kernel_in_tensor->ref_count() >= 1);
+    } else {
+      return true;
+    }
   });
 }
 
@@ -200,12 +204,16 @@ void LiteKernel::FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope
     }
     for (auto *tensor : this->in_tensors_) {
       if (lite::IsContain(scope_kernel->out_tensors(), tensor)) {
-        this->AddInKernel(scope_kernel);
+        if (!lite::IsContain(this->in_kernels(), scope_kernel)) {
+          this->AddInKernel(scope_kernel);
+        }
       }
     }
     for (auto *tensor : this->out_tensors_) {
       if (lite::IsContain(scope_kernel->in_tensors(), tensor)) {
-        this->AddOutKernel(scope_kernel);
+        if (!lite::IsContain(this->out_kernels(), scope_kernel)) {
+          this->AddOutKernel(scope_kernel);
+        }
       }
     }
   }

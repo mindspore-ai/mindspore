@@ -34,7 +34,8 @@ class MergeCPUKernel : public LiteKernel {
     merge_param_ = reinterpret_cast<MergeParameter *>(op_parameter_);
   }
   ~MergeCPUKernel() override {}
-  bool IsReady() override;
+  int FreeInWorkTensor() const override;
+  bool IsReady(const std::vector<lite::Tensor *> &scope_tensors) override;
   int Init() override;
   int ReSize() override;
   int Run() override;

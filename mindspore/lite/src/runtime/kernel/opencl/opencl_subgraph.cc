@@ -221,7 +221,7 @@ int OpenCLSubGraph::Init() {
     return ret;
   }
   nodes_.insert(nodes_.end(), out_convert_ops_.begin(), out_convert_ops_.end());
-
+  GetInOutNodes();
   UpdateTensorDataType();
 
   ret = SubGraphKernel::Prepare();
@@ -283,6 +283,8 @@ void OpenCLSubGraph::GetKernelFromToTensor(const std::vector<lite::Tensor *> &in
 }
 
 void OpenCLSubGraph::GetInOutNodes() {
+  this->in_nodes_.clear();
+  this->out_nodes_.clear();
   for (auto *node : nodes_) {
     for (auto *tensor : node->in_tensors()) {
       if (std::find(in_tensors_.begin(), in_tensors_.end(), tensor) != in_tensors_.end()) {

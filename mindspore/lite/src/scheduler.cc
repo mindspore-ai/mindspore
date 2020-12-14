@@ -67,8 +67,6 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "ConstructSubGraphs failed.";
     return ret;
   }
-  FindAllInoutKernels(*dst_kernels);
-  kernel::LiteKernelUtil::InitTensorInitRefCount(*dst_kernels);
   MS_LOG(DEBUG) << "schedule kernels success.";
   return RET_OK;
 }

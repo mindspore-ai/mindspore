@@ -53,7 +53,6 @@ int SwitchCPUKernel::ReSize() { return RET_ERROR; }
 // output: true-data*n, false-data*n
 int SwitchCPUKernel::Run() {
   MS_ASSERT(in_tensors_.size() >= 2);
-  MS_ASSERT(out_tensors_.size() == 2 * in_tensors_.size());
   auto bool_tensor = in_tensors_.front();
   MS_ASSERT(bool_tensor != nullptr);
   MS_ASSERT(bool_tensor->data_type() == kNumberTypeBool);
@@ -71,8 +70,8 @@ int SwitchCPUKernel::Run() {
     auto out_tensor = out_tensors_.at(out_index++);
     MS_ASSERT(in_tensor != nullptr);
     MS_ASSERT(out_tensor != nullptr);
-    auto input = reinterpret_cast<float *>(in_tensor->data_c());
-    auto output = reinterpret_cast<float *>(out_tensor->data_c());
+    auto input = in_tensor->data_c();
+    auto output = out_tensor->data_c();
     MS_ASSERT(in_tensor->Size() == out_tensor->Size());
     if (input == nullptr || output == nullptr) {
       MS_LOG(ERROR) << "input tensor or output tensor have not been malloced";
