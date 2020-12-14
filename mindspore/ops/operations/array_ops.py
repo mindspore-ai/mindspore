@@ -4585,7 +4585,7 @@ class GatherD(PrimitiveWithInfer):
         - **x** (Tensor) - The source tensor.
         - **dim** (int) - The axis along which to index. It must be int32. Only constant value is allowed.
         - **index** (Tensor) - The indices of elements to gather. It can be one of the following data types:
-          int32, int64.
+          int32, int64. The value range of each index element is [-x_rank[dim], x_rank[dim]).
 
     Outputs:
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
