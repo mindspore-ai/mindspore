@@ -560,6 +560,7 @@ bool MSANFModelParser::ObtainValueNodeInNoneForm(const std::string &value_node_n
                                                  const mind_ir::AttributeProto &attr_proto) {
   auto new_value_node = NewValueNode(kNone);
   MS_EXCEPTION_IF_NULL(new_value_node);
+  new_value_node->set_abstract(kNone->ToAbstract());
   anfnode_build_map_[value_node_name] = new_value_node;
   return true;
 }
