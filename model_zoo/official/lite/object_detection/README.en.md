@@ -20,7 +20,7 @@ The following section describes how to build and execute an on-device object det
 
    ![start_home](images/home.png)
 
-    If you have any Android Studio configuration problem when trying this demo, please refer to item 5 to resolve it.
+    If you have any Android Studio configuration problem when trying this demo, please refer to item 4 to resolve it.
 
 2. Connect to an Android device and runs the object detection application.
 

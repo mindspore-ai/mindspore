@@ -19,7 +19,7 @@
 
     ![start_sdk](images/sdk_management.png)
 
-    使用过程中若出现Android Studio配置问题，可参考第5项解决。
+    使用过程中若出现Android Studio配置问题，可参考第4项解决。
 
 2. 连接Android设备，运行目标检测示例应用程序。
 
