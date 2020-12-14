@@ -833,22 +833,35 @@ void AnfRuntimeAlgorithm::SetOutputInferTypeAndShape(const std::vector<TypeId> &
   } else if (shapes.size() == 1) {
     // single output handle
     ShapeVector shape_int;
-    auto max_shape = GetOutputMaxShape(node_ptr, 0);
-    auto min_shape = GetOutputMinShape(node_ptr, 0);
-    std::transform(shapes[0].begin(), shapes[0].end(), std::back_inserter(shape_int), SizeToLong);
-    auto abstract = std::make_shared<AbstractTensor>(
-      TypeIdToType(types[0]), std::make_shared<abstract::Shape>(shape_int, min_shape, max_shape));
+    auto abstract_ptr = node_ptr->abstract();
+    abstract::AbstractTensorPtr abstract = nullptr;
+    if (abstract_ptr != nullptr) {
+      auto max_shape = GetOutputMaxShape(node_ptr, 0);
+      auto min_shape = GetOutputMinShape(node_ptr, 0);
+      std::transform(shapes[0].begin(), shapes[0].end(), std::back_inserter(shape_int), SizeToLong);
+      abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]),
+                                                  std::make_shared<abstract::Shape>(shape_int, min_shape, max_shape));
+    } else {
+      abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[0]), shape_int);
+    }
     node->set_abstract(abstract);
   } else {
     // multiple output handle
     std::vector<AbstractBasePtr> abstract_list;
     for (size_t i = 0; i < types.size(); ++i) {
       ShapeVector shape_int;
-      auto max_shape = GetOutputMaxShape(node_ptr, i);
-      auto min_shape = GetOutputMinShape(node_ptr, i);
-      std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(shape_int), SizeToLong);
-      auto abstract = std::make_shared<AbstractTensor>(
-        TypeIdToType(types[i]), std::make_shared<abstract::Shape>(shape_int, min_shape, max_shape));
+      auto abstract_ptr = node_ptr->abstract();
+      abstract::AbstractTensorPtr abstract = nullptr;
+      if (abstract_ptr != nullptr) {
+        auto max_shape = GetOutputMaxShape(node_ptr, i);
+        auto min_shape = GetOutputMinShape(node_ptr, i);
+        std::transform(shapes[i].begin(), shapes[i].end(), std::back_inserter(shape_int), SizeToLong);
+        abstract = std::make_shared<AbstractTensor>(TypeIdToType(types[i]),
+                                                    std::make_shared<abstract::Shape>(shape_int, min_shape, max_shape));
+      } else {
+        abstract =
+          std::make_shared<AbstractTensor>(TypeIdToType(types[i]), std::make_shared<abstract::Shape>(shape_int));
+      }
       abstract_list.emplace_back(abstract);
     }
     auto abstract_tuple = std::make_shared<AbstractTuple>(abstract_list);
