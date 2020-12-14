@@ -78,18 +78,19 @@ class TensorData {
 
 using TensorDataPtr = std::shared_ptr<TensorData>;
 
-struct WaitEvent {
-  bool need_wait_{false};
-  mutable std::mutex mutex_;
-  mutable std::condition_variable cond_var_;
+class WaitEvent : public ExceptionListener {
+ public:
+  void OnException() override { set_need_wait(false); }
 
   void Wait() const {
     std::unique_lock<std::mutex> lock(mutex_);
     if (!need_wait_) {
       return;
     }
+    MsException::GetInstance().AddExceptionListener(const_cast<WaitEvent *>(this));
     cond_var_.wait(lock, [this] { return !need_wait_; });
     MsException::GetInstance().CheckException();
+    MsException::GetInstance().RemoveExceptionListener(const_cast<WaitEvent *>(this));
   }
 
   void set_need_wait(bool need_wait) {
@@ -101,6 +102,11 @@ struct WaitEvent {
   }
 
   bool need_wait() const { return need_wait_; }
+
+ private:
+  bool need_wait_{false};
+  mutable std::mutex mutex_;
+  mutable std::condition_variable cond_var_;
 };
 
 // Tensor entity class
