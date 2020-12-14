@@ -97,6 +97,18 @@ class SparseFtrlGpuKernel : public GpuKernel {
     return true;
   }
 
+ protected:
+  void InitSizeLists() override {
+    input_size_list_.push_back(variable_size_);
+    input_size_list_.push_back(accumulation_size_);
+    input_size_list_.push_back(linear_size_);
+    input_size_list_.push_back(gradient_size_);
+    input_size_list_.push_back(indices_size_);
+    output_size_list_.push_back(0);
+    output_size_list_.push_back(0);
+    output_size_list_.push_back(0);
+  }
+
   void ResetResource() noexcept override {
     variable_size_ = 0;
     accumulation_size_ = 0;
@@ -113,18 +125,6 @@ class SparseFtrlGpuKernel : public GpuKernel {
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
-  }
-
- protected:
-  void InitSizeLists() override {
-    input_size_list_.push_back(variable_size_);
-    input_size_list_.push_back(accumulation_size_);
-    input_size_list_.push_back(linear_size_);
-    input_size_list_.push_back(gradient_size_);
-    input_size_list_.push_back(indices_size_);
-    output_size_list_.push_back(0);
-    output_size_list_.push_back(0);
-    output_size_list_.push_back(0);
   }
 
  private:

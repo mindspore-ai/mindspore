@@ -65,6 +65,28 @@ def test_small_shape():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_small_shape_input_update():
+    var = Tensor(np.arange(9).reshape(3, 3).astype(np.float32))
+    accum = Tensor(np.zeros(9).reshape(3, 3).astype(np.float32))
+    lr = 1.0
+    l1 = 1.0
+    l2 = 0.0
+    grad = Tensor(np.ones(9).reshape(3, 3).astype(np.float32) * 8)
+    indices = Tensor(np.array([1, 0, 2], np.int32))
+    net = Net(var, accum, lr, l1, l2)
+    net(grad, indices)
+    expect1 = np.array([[-0.875, 0., 0.875],
+                        [1.875, 2.875, 3.875],
+                        [4.875, 5.875, 6.875]])
+    expect2 = np.array([[64., 64., 64.],
+                        [64., 64., 64.],
+                        [64., 64., 64.]])
+    np.testing.assert_array_almost_equal(net.var.data.asnumpy(), expect1)
+    np.testing.assert_array_almost_equal(net.accum.data.asnumpy(), expect2)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_parameter_lr_l1_l2():
     var = Tensor(np.arange(9).reshape(3, 3).astype(np.float32))
     accum = Tensor(np.zeros(9).reshape(3, 3).astype(np.float32))
