@@ -51,6 +51,8 @@ class GPUDeviceManager {
 
   bool CopyDeviceMemToHostAsync(const HostMemPtr &dst, const DeviceMemPtr &src, size_t size, DeviceStream stream) const;
   bool CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const void *src, size_t size, DeviceStream stream) const;
+  bool CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const DeviceMemPtr &src, size_t size,
+                                  DeviceStream stream) const;
 
   static GPUDeviceManager &GetInstance() {
     static GPUDeviceManager instance;
