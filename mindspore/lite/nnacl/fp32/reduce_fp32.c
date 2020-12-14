@@ -102,6 +102,27 @@ int ReduceMax(int outer_size, int inner_size, int axis_size, const float *src_da
   }
   return NNACL_OK;
 }
+int IntReduceMax(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
+                 int thread_num) {
+  if (src_data == NULL || dst_data == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  int i, j, k;
+  for (j = tid; j < outer_size; j += thread_num) {
+    const int *outer_src = src_data + j * axis_size * inner_size;
+    int *outer_dst = dst_data + j * inner_size;
+    for (k = 0; k < inner_size; k++) {
+      const int *inner_src = outer_src + k;
+      int *inner_dst = outer_dst + k;
+      int tmp = -INT_MAX;
+      for (i = 0; i < axis_size; i++) {
+        tmp = tmp > inner_src[i * inner_size] ? tmp : inner_src[i * inner_size];
+      }
+      *inner_dst = tmp;
+    }
+  }
+  return NNACL_OK;
+}
 int ReduceMin(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
               int thread_num) {
   if (src_data == NULL || dst_data == NULL) {

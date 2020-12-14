@@ -39,6 +39,7 @@
 #include "tools/converter/legacy_optimizer/graph/infer_quant_param_pass.h"
 #include "tools/converter/legacy_optimizer/graph/set_unused_quant_param_to_default_pass.h"
 #include "tools/converter/legacy_optimizer/graph/switch_pass.h"
+#include "tools/converter/legacy_optimizer/graph/select_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_node_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_tensor_pass.h"
 
@@ -252,6 +253,20 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     switchOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     switchOptimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
     status = switchOptimizer.Run(graphDefT);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Run switch graphPasses Failed";
+      return status;
+    }
+  }
+
+  // select pass
+  {
+    // init old node indecies
+    auto old_nodes = GetGraphNodes();
+    Optimizer selectOptimizer;
+    selectOptimizer.AddPass(new (std::nothrow) SelectPass());
+    selectOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
+    status = selectOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run switch graphPasses Failed";
       return status;

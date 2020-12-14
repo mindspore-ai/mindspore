@@ -58,6 +58,7 @@ int ReduceCPUKernel::Init() {
     }
     case static_cast<int>(ReduceMode_ReduceMax): {
       reducer_ = ReduceMax;
+      int_reducer_ = IntReduceMax;
       break;
     }
     case static_cast<int>(ReduceMode_ReduceMin): {

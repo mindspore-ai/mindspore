@@ -105,7 +105,7 @@ int TensorListReserve::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
   }
   if (input0->data_c() == nullptr) {
     MS_LOG(ERROR) << "input0->data_c() is nullptr";
-    return RET_NULL_PTR;
+    return RET_INFER_INVALID;
   }
   auto ele_shape_ptr = reinterpret_cast<int *>(input0->data_c());
 
@@ -122,7 +122,7 @@ int TensorListReserve::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
   }
   if (input1->data_c() == nullptr) {
     MS_LOG(ERROR) << "input1->data_c() is nullptr";
-    return RET_NULL_PTR;
+    return RET_INFER_INVALID;
   }
   int num_elements = reinterpret_cast<int *>(input1->data_c())[0];
   auto output = reinterpret_cast<TensorList *>(outputs_[0]);

@@ -37,5 +37,6 @@ int TensorListReserveCPUKernel::Run() {
 
 int TensorListReserveCPUKernel::ReSize() { return RET_OK; }
 
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TensorListReserve, LiteKernelCreator<TensorListReserveCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListReserve, LiteKernelCreator<TensorListReserveCPUKernel>)
 }  // namespace mindspore::kernel

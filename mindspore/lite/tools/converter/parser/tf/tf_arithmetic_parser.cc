@@ -133,6 +133,22 @@ STATUS TFArithmeticParser::Parse(const tensorflow::NodeDef &tf_op,
     }
     primitive->value.type = schema::PrimitiveType_NotEqual;
     primitive->value.value = attr.release();
+  } else if (tf_op.op() == "FloorMod") {
+    auto attr = std::make_unique<schema::FloorModT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_FloorMod;
+    primitive->value.value = attr.release();
+  } else if (tf_op.op() == "FloorDiv") {
+    auto attr = std::make_unique<schema::FloorDivT>();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new attr failed";
+      return RET_NULL_PTR;
+    }
+    primitive->value.type = schema::PrimitiveType_FloorDiv;
+    primitive->value.value = attr.release();
   }
 
   *primitiveC = PrimitiveC::Create(primitive.release());
@@ -154,6 +170,8 @@ TFNodeRegistrar g_tfAddV2Parser("AddV2", new TFArithmeticParser());
 TFNodeRegistrar g_tfSubParser("Sub", new TFArithmeticParser());
 TFNodeRegistrar g_tfMulParser("Mul", new TFArithmeticParser());
 TFNodeRegistrar g_tfDivParser("Div", new TFArithmeticParser());
+TFNodeRegistrar g_tfFloorModParser("FloorMod", new TFArithmeticParser());
+TFNodeRegistrar g_tfFloorDivParser("FloorDiv", new TFArithmeticParser());
 TFNodeRegistrar g_tfRealDivParser("RealDiv", new TFArithmeticParser());
 TFNodeRegistrar g_tfMaximumParser("Maximum", new TFArithmeticParser());
 TFNodeRegistrar g_tfMinimumParser("Minimum", new TFArithmeticParser());

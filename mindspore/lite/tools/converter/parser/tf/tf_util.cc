@@ -30,7 +30,7 @@ static const std::unordered_map<int, mindspore::TypeId> TF_TYPE_MAP = {
   {tensorflow::DT_UINT8, mindspore::kNumberTypeUInt8},
   {tensorflow::DT_INT16, mindspore::kNumberTypeInt16},
   {tensorflow::DT_UINT16, mindspore::kNumberTypeUInt16},
-  {tensorflow::DT_INT32, mindspore::kNumberTypeInt},
+  {tensorflow::DT_INT32, mindspore::kNumberTypeInt32},
   {tensorflow::DT_INT64, mindspore::kNumberTypeInt64},
   {tensorflow::DT_HALF, mindspore::kNumberTypeFloat16},
   {tensorflow::DT_FLOAT, mindspore::kNumberTypeFloat32},

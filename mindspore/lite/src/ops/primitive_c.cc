@@ -160,6 +160,8 @@
 #include "src/ops/merge.h"
 #include "src/ops/switch.h"
 #include "src/ops/partial.h"
+#include "src/ops/if.h"
+#include "src/ops/select.h"
 #include "src/ops/gelu.h"
 #include "src/ops/gru.h"
 
@@ -996,6 +998,10 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) AssertOP(primitive);
     case schema::PrimitiveType_GeLU:
       return new (std::nothrow) GeLU(primitive);
+    case schema::PrimitiveType_If:
+      return new (std::nothrow) If(primitive);
+    case schema::PrimitiveType_Select:
+      return new (std::nothrow) Select(primitive);
     case schema::PrimitiveType_Gru:
       return new (std::nothrow) Gru(primitive);
 #ifdef SUPPORT_TRAIN
