@@ -49,6 +49,7 @@ typedef struct ConvParameter {
   int thread_num_;
   int input_unit_;
   int output_unit_;
+  PadMode pad_mode_;
   ActType act_type_;
 } ConvParameter;
 

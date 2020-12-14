@@ -28,6 +28,7 @@ typedef struct PoolingParameter {
   OpParameter op_parameter_;
   PoolMode pool_mode_;
   RoundMode round_mode_;
+  PadMode pad_mode_;
   ActType act_type_;
   int avg_mode_;
   bool global_;
