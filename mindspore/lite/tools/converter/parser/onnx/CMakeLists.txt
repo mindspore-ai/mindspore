@@ -4,3 +4,5 @@ add_library(onnx_parser_mid OBJECT
         ${ONNX_SRC_LIST}
         )
 add_dependencies(onnx_parser_mid proto_mid)
+add_dependencies(onnx_parser_mid fbs_src)
+add_dependencies(onnx_parser_mid fbs_inner_src)

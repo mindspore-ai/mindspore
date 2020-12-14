@@ -5,3 +5,6 @@ set_property(SOURCE ${ANF_EXPORTER_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMOD
 add_library(anf_exporter_mid OBJECT
         ${ANF_EXPORTER_SRC_LIST}
         )
+
+add_dependencies(anf_exporter_mid fbs_src)
+add_dependencies(anf_exporter_mid fbs_inner_src)

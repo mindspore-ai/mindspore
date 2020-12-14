@@ -5,3 +5,5 @@ set_property(SOURCE ${TF_SRC_LIST} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=min
 add_library(tf_parser_mid OBJECT ${TF_SRC_LIST})
 
 add_dependencies(tf_parser_mid proto_mid)
+add_dependencies(tf_parser_mid fbs_src)
+add_dependencies(tf_parser_mid fbs_inner_src)
