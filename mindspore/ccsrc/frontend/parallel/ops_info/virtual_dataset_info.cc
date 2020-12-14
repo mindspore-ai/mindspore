@@ -71,6 +71,9 @@ Status VirtualDatasetInfo::InferDevMatrixShape() {
   if (stage_device_size_ > batch_split_num) {
     dev_matrix_shape_.push_back(stage_device_size_ / batch_split_num);
   }
+  // Because 'VirtualDataSet' uses 'InitWithManualRepeatCalc' which does not calculates 'used_devices_',
+  // we calculate it here.
+  used_devices_ = batch_split_num;
 
   return SUCCESS;
 }
