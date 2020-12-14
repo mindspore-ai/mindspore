@@ -186,8 +186,10 @@ class AscendEnvChecker(EnvChecker):
 
         v = self._read_version(self.fwk_version)
         if v not in self.version:
+            v_list = str([x for x in self.version])
             logger.warning(f"MindSpore version {__version__} and Ascend 910 AI software package version {v} does not "
-                           "match, reference to the match info on: https://www.mindspore.cn/install")
+                           f"match, the version of software package expect one of {v_list}, "
+                           "please reference to the match info on: https://www.mindspore.cn/install")
 
     def check_deps_version(self):
         """
