@@ -509,44 +509,6 @@ checkddk() {
     fi
 }
 
-gene_flatbuffer() {
-    FLAT_DIR="${BASEPATH}/mindspore/lite/schema"
-    cd ${FLAT_DIR} && rm -rf "${FLAT_DIR}/inner" && mkdir -p "${FLAT_DIR}/inner"
-    find . -name "*.fbs" -print0 | xargs -0 "${FLATC}" -c -b
-    find . -name "*.fbs" -print0 | xargs -0 "${FLATC}" -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o "${FLAT_DIR}/inner"
-
-    FLAT_DIR="${BASEPATH}/mindspore/lite/tools/converter/parser/tflite"
-    cd ${FLAT_DIR}
-    find . -name "*.fbs" -print0 | xargs -0 "${FLATC}" -c -b --reflect-types --gen-mutable --reflect-names --gen-object-api -o "${FLAT_DIR}/"
-}
-
-build_flatbuffer() {
-    cd ${BASEPATH}
-    FLATC="${BASEPATH}"/third_party/flatbuffers/build/flatc
-    if [[ ! -f "${FLATC}" ]]; then
-        if [[ "${MSLIBS_SERVER}" ]]; then
-            cd "${BASEPATH}"/third_party/
-            rm -rf ./v1.11.0.tar.gz ./flatbuffers
-            wget http://${MSLIBS_SERVER}:8081/libs/flatbuffers/v1.11.0.tar.gz
-            tar -zxvf ./v1.11.0.tar.gz
-            mv ./flatbuffers-1.11.0 ./flatbuffers
-        else
-            git submodule update --init --recursive third_party/flatbuffers
-        fi
-        cd ${BASEPATH}/third_party/flatbuffers
-        rm -rf build && mkdir -pv build && cd build && cmake -DFLATBUFFERS_BUILD_SHAREDLIB=ON .. && make -j$THREAD_NUM
-        gene_flatbuffer
-    fi
-    if [[ "${INC_BUILD}" == "off" ]]; then
-        gene_flatbuffer
-    fi
-}
-
-build_gtest() {
-    cd ${BASEPATH}
-    git submodule update --init --recursive third_party/googletest
-}
-
 gene_clhpp() {
     CL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
     if [ ! -d "${CL_SRC_DIR}" ]; then
@@ -625,9 +587,6 @@ build_lite()
     fi
     if [ "${ENABLE_NPU}" == "on" ]; then
       checkddk
-    fi
-    if [ "${RUN_TESTCASES}" == "on" ]; then
-        build_gtest
     fi
 
     cd "${BASEPATH}/mindspore/lite"
