@@ -147,7 +147,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void PopGraphStack();
   FuncGraphPtr GetDfbuilder(const std::string &cell_id = "");
   ResourcePtr GetResource(const std::string &cell_id = "");
-  void AddNestedGradCount() { ++grad_count_; }
+  void AddNestedGradCount() { ++grad_order_; }
   void SubNestedGradCount();
   bool IsNotNestedGrad() const;
   bool IsTopGraph(const std::string &cell_id);
@@ -204,7 +204,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   static std::shared_ptr<PynativeExecutor> executor_;
   static std::mutex instance_lock_;
   static int64_t graph_id_;
-  int64_t grad_count_{0};
+  int64_t grad_order_{0};
   bool grad_flag_{false};
   bool dynamic_cell_{false};
   bool grad_is_running_{false};
