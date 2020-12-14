@@ -114,3 +114,15 @@ def test_imagenet_to_mindrecord_illegal_filename(fixture_file):
                                             IMAGENET_IMAGE_DIR, filename,
                                             PARTITION_NUMBER)
         imagenet_transformer.transform()
+
+def test_imagenet_to_mindrecord_illegal_1_filename(fixture_file):
+    """
+    test transform imagenet dataset to mindrecord
+    when file name end with '/'.
+    """
+    filename = "test/path/"
+    with pytest.raises(Exception, match="File path can not end with '/'"):
+        imagenet_transformer = ImageNetToMR(IMAGENET_MAP_FILE,
+                                            IMAGENET_IMAGE_DIR, filename,
+                                            PARTITION_NUMBER)
+        imagenet_transformer.transform()

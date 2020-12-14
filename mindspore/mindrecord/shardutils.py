@@ -81,6 +81,8 @@ def check_filename(path):
         raise ParamValueError('File path is not allowed None or empty!')
     if not isinstance(path, str):
         raise ParamValueError("File path: {} is not string.".format(path))
+    if path.endswith("/"):
+        raise ParamValueError("File path can not end with '/'")
     file_name = os.path.basename(path)
 
     # '#', ':', '|', ' ', '}', '"', '+', '!', ']', '[', '\\', '`',
