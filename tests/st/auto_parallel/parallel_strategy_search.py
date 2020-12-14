@@ -295,12 +295,13 @@ class ParallelStrategySearchFactory:
         newest_ckpt_file = find_newest_ckpt_file(ckpt_path)
         return load_checkpoint(newest_ckpt_file)
 
-    def mindspore_auto_parallel_impl(self, dataset, epoch, device_num):
+    def mindspore_auto_parallel_impl(self, dataset, epoch, device_num, auto_parallel_search_mode="dynamic_programming"):
         parallel_mode_net = self.parallel_mode_net
         set_algo_parameters(fully_use_devices=False)
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL,
-                                          device_num=device_num)
+                                          device_num=device_num,
+                                          auto_parallel_search_mode=auto_parallel_search_mode)
         self.parallel_ckpt = self._model_train_and_save_ckpt(net=parallel_mode_net,
                                                              dataset=dataset, epoch=epoch)
         context.reset_auto_parallel_context()
@@ -351,4 +352,31 @@ def test_auto_parallel_strategy_search_axis_1_basic():
                                 num_classes=12)
     fact.mindspore_auto_parallel_impl(dataset=parallel_dataset,
                                       epoch=2, device_num=8)
+    fact.checkpoint_cmp(inputs_np=inputs_np)
+
+
+def test_auto_parallel_recursive_strategy_search_axis_1_basic():
+    inputs_np = np.random.randn(32, 3, 224, 224).astype(np.float32)
+    standalone_mode_net = ParallelStrategySearchNet(in_channel=3,
+                                                    out_channel=8, axis=1, input_shape=(32, 4, 110, -1),
+                                                    mul_size=(32, 1, 220, 220), test_size=(32, 4, 110, 880),
+                                                    prelu_size=(1,), transpose_b=True, matmul_size=(1, 12),
+                                                    num_class=12)
+    context.reset_auto_parallel_context()
+    context.set_auto_parallel_context(parallel_mode=ParallelMode.AUTO_PARALLEL)
+    parallel_mode_net = ParallelStrategySearchNet(in_channel=3,
+                                                  out_channel=8, axis=1, input_shape=(32, 4, 110, -1),
+                                                  mul_size=(32, 1, 220, 220), test_size=(32, 4, 110, 880),
+                                                  prelu_size=(1,), transpose_b=True, matmul_size=(1, 12),
+                                                  num_class=12)
+    standalone_dataset = FakeData(size=128, batch_size=32,
+                                  image_size=(3, 224, 224), num_classes=12)
+    fact = ParallelStrategySearchFactory(standalone_mode_net=standalone_mode_net,
+                                         parallel_mode_net=parallel_mode_net)
+    fact.mindspore_standalone_impl(dataset=standalone_dataset, epoch=2)
+    parallel_dataset = FakeData(size=128, batch_size=4,
+                                image_size=(3, 224, 224), use_parallel=True,
+                                num_classes=12)
+    fact.mindspore_auto_parallel_impl(dataset=parallel_dataset,
+                                      epoch=2, device_num=8, auto_parallel_search_mode="recursive_programming")
     fact.checkpoint_cmp(inputs_np=inputs_np)
