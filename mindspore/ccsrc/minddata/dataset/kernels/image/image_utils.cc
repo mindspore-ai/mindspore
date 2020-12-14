@@ -73,7 +73,7 @@ Status Flip(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output, int 
       *output = std::static_pointer_cast<Tensor>(output_cv);
       return Status::OK();
     } catch (const cv::Exception &e) {
-      RETURN_STATUS_UNEXPECTED("Error in flip op.");
+      RETURN_STATUS_UNEXPECTED("Error in flip op: " + std::string(e.what()));
     }
   } else {
     RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor, the input data is null");
@@ -118,7 +118,7 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in image resize.");
+    RETURN_STATUS_UNEXPECTED("Error in image resize: " + std::string(e.what()));
   }
 }
 
@@ -153,7 +153,7 @@ Status DecodeCv(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in image Decode");
+    RETURN_STATUS_UNEXPECTED("Error in image Decode: " + std::string(e.what()));
   }
 }
 
@@ -350,7 +350,7 @@ Status Rescale(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *ou
     input_image.convertTo(output_cv->mat(), CV_32F, rescale, shift);
     *output = std::static_pointer_cast<Tensor>(output_cv);
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in image rescale");
+    RETURN_STATUS_UNEXPECTED("Error in image rescale: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -382,7 +382,7 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Unexpected error in crop.");
+    RETURN_STATUS_UNEXPECTED("Unexpected error in crop: " + std::string(e.what()));
   }
 }
 
@@ -417,7 +417,7 @@ Status HwcToChw(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output) 
     *output = std::move(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Unexpected error in ChannelSwap.");
+    RETURN_STATUS_UNEXPECTED("Unexpected error in ChannelSwap: " + std::string(e.what()));
   }
 }
 
@@ -503,7 +503,7 @@ Status SwapRedAndBlue(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *ou
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Unexpected error in ChangeMode.");
+    RETURN_STATUS_UNEXPECTED("Unexpected error in ChangeMode: " + std::string(e.what()));
   }
 }
 
@@ -537,7 +537,7 @@ Status CropAndResize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tenso
     *output = std::static_pointer_cast<Tensor>(cvt_out);
     return Status::OK();
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Unexpected error in CropAndResize.");
+    RETURN_STATUS_UNEXPECTED("Unexpected error in CropAndResize: " + std::string(e.what()));
   }
 }
 
@@ -584,7 +584,7 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     }
     *output = std::static_pointer_cast<Tensor>(output_cv);
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in image rotation");
+    RETURN_STATUS_UNEXPECTED("Error in image rotation: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -626,7 +626,7 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Unexpected error in Normalize");
+    RETURN_STATUS_UNEXPECTED("Unexpected error in Normalize: " + std::string(e.what()));
   }
 }
 
@@ -646,7 +646,7 @@ Status AdjustBrightness(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     output_cv->mat() = input_img * alpha;
     *output = std::static_pointer_cast<Tensor>(output_cv);
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in adjust brightness");
+    RETURN_STATUS_UNEXPECTED("Error in adjust brightness: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -673,7 +673,7 @@ Status AdjustContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tens
     output_cv->mat() = output_img * (1.0 - alpha) + input_img * alpha;
     *output = std::static_pointer_cast<Tensor>(output_cv);
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in adjust contrast");
+    RETURN_STATUS_UNEXPECTED("Error in adjust contrast: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -751,7 +751,7 @@ Status AutoContrast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
     (*output)->Reshape(input->shape());
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in auto contrast");
+    RETURN_STATUS_UNEXPECTED("Error in auto contrast: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -776,7 +776,7 @@ Status AdjustSaturation(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
     output_cv->mat() = output_img * (1.0 - alpha) + input_img * alpha;
     *output = std::static_pointer_cast<Tensor>(output_cv);
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in adjust saturation");
+    RETURN_STATUS_UNEXPECTED("Error in adjust saturation: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -812,7 +812,7 @@ Status AdjustHue(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     cv::cvtColor(output_img, output_cv->mat(), CV_HSV2RGB_FULL);
     *output = std::static_pointer_cast<Tensor>(output_cv);
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in adjust hue");
+    RETURN_STATUS_UNEXPECTED("Error in adjust hue: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -853,7 +853,7 @@ Status Equalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
     (*output) = std::static_pointer_cast<Tensor>(output_cv);
     (*output)->Reshape(input->shape());
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in equalize.");
+    RETURN_STATUS_UNEXPECTED("Error in equalize: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -915,7 +915,7 @@ Status Erase(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outp
     *output = std::static_pointer_cast<Tensor>(input);
     return Status::OK();
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Error in erasing");
+    RETURN_STATUS_UNEXPECTED("Error in erasing: " + std::string(e.what()));
   }
 }
 
@@ -943,7 +943,7 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Unexpected error in pad");
+    RETURN_STATUS_UNEXPECTED("Unexpected error in pad: " + std::string(e.what()));
   }
 }
 
@@ -962,7 +962,7 @@ Status RgbaToRgb(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Unexpected error in RgbaToRgb.");
+    RETURN_STATUS_UNEXPECTED("Unexpected error in RgbaToRgb: " + std::string(e.what()));
   }
 }
 
@@ -981,7 +981,7 @@ Status RgbaToBgr(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     *output = std::static_pointer_cast<Tensor>(output_cv);
     return Status::OK();
   } catch (const cv::Exception &e) {
-    RETURN_STATUS_UNEXPECTED("Unexpected error in RgbaToBgr.");
+    RETURN_STATUS_UNEXPECTED("Unexpected error in RgbaToBgr: " + std::string(e.what()));
   }
 }
 

@@ -20,7 +20,7 @@ import numpy as np
 from mindspore._c_dataengine import TensorOp
 
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
-    check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
+    check_float32, check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
     check_tensor_op, UINT8_MAX, check_value_normalize_std
 from .utils import Inter, Border, ImageBatchFormat
 
@@ -78,12 +78,14 @@ def check_mix_up_batch_c(method):
 
 
 def check_normalize_c_param(mean, std):
+    type_check(mean, (list, tuple), "mean")
+    type_check(std, (list, tuple), "std")
     if len(mean) != len(std):
         raise ValueError("Length of mean and std must be equal.")
     for mean_value in mean:
-        check_pos_float32(mean_value)
+        check_value(mean_value, [0, 255], "mean_value")
     for std_value in std:
-        check_pos_float32(std_value)
+        check_value_normalize_std(std_value, [0, 255], "std_value")
 
 
 def check_normalize_py_param(mean, std):
@@ -548,8 +550,10 @@ def check_rescale(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [rescale, shift], _ = parse_user_args(method, *args, **kwargs)
-        check_pos_float32(rescale)
+        type_check(rescale, (numbers.Number,), "rescale")
         type_check(shift, (numbers.Number,), "shift")
+        check_float32(rescale)
+        check_float32(shift)
 
         return method(self, *args, **kwargs)
 

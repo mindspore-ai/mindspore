@@ -92,6 +92,7 @@ def test_eager_exceptions():
     except TypeError as e:
         assert "Input should be NumPy or PIL image" in str(e)
 
+
 if __name__ == '__main__':
     test_eager_resize()
     test_eager_rescale()
