@@ -219,11 +219,12 @@ class SSIM(Cell):
 
     Examples:
         >>> net = nn.SSIM()
+        >>> np.random.seed(0)
         >>> img1 = Tensor(np.random.random((1, 3, 16, 16)), mindspore.float32)
         >>> img2 = Tensor(np.random.random((1, 3, 16, 16)), mindspore.float32)
         >>> output = net(img1, img2)
         >>> print(output)
-        [0.12174469]
+        [-0.15189075]
     """
     def __init__(self, max_val=1.0, filter_size=11, filter_sigma=1.5, k1=0.01, k2=0.03):
         super(SSIM, self).__init__()

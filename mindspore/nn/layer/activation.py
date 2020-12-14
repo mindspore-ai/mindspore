@@ -408,7 +408,7 @@ class Sigmoid(Cell):
     Applies sigmoid-type activation element-wise.
 
     Sigmoid function is defined as:
-    :math:`\text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}`, where :math:`x_i` is the element of the input.
+    :math:`\text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}`,    where :math:`x_i` is the element of the input.
 
     Inputs:
         - **input_data** (Tensor) - The input of Tanh.

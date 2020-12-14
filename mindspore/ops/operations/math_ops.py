@@ -716,6 +716,8 @@ class MatMul(PrimitiveWithInfer):
         >>> input_x2 = Tensor(np.ones(shape=[3, 4]), mindspore.float32)
         >>> matmul = ops.MatMul()
         >>> output = matmul(input_x1, input_x2)
+        >>> print(output)
+        [[3. 3. 3. 3.]]
     """
 
     @prim_attr_register
@@ -2368,6 +2370,8 @@ class Acosh(PrimitiveWithInfer):
         >>> acosh = ops.Acosh()
         >>> input_x = Tensor(np.array([1.0, 1.5, 3.0, 100.0]), mindspore.float32)
         >>> output = acosh(input_x)
+        >>> print(output)
+        [0. 0.9624236 1.7627472 5.298292]
     """
 
     @prim_attr_register
@@ -2522,7 +2526,7 @@ class Equal(_LogicBinaryOp):
         >>> equal = ops.Equal()
         >>> output = equal(input_x, 2.0)
         >>> print(output)
-        Tensor(shape=[3], dtype=Bool, value= [False, True, False])
+        [False True False]
         >>>
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
         >>> input_y = Tensor(np.array([1, 2, 4]), mindspore.int32)
@@ -3246,6 +3250,8 @@ class ACos(PrimitiveWithInfer):
         >>> acos = ops.ACos()
         >>> input_x = Tensor(np.array([0.74, 0.04, 0.30, 0.56]), mindspore.float32)
         >>> output = acos(input_x)
+        >>> print(output)
+        [0.7377037 1.5307858 1.2661037 0.97641146]
     """
 
     @prim_attr_register
@@ -3360,12 +3366,15 @@ class NMSWithMask(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> bbox = np.random.rand(128, 5)
+        >>> bbox = np.array([[0.4, 0.2, 0.4, 0.3, 0.1], [0.4, 0.3, 0.6, 0.8, 0.7]])
         >>> bbox[:, 2] += bbox[:, 0]
         >>> bbox[:, 3] += bbox[:, 1]
         >>> inputs = Tensor(bbox, mindspore.float32)
         >>> nms = ops.NMSWithMask(0.5)
         >>> output_boxes, indices, mask = nms(inputs)
+        >>> print(output_boxes)
+        [[0.39990234 0.19995117 0.7998047  0.5        0.09997559]
+         [0.39990234 0.30004883 1.         1.0996094  0.7001953 ]]
     """
 
     @prim_attr_register
@@ -3520,6 +3529,7 @@ class Tan(PrimitiveWithInfer):
         >>> tan = ops.Tan()
         >>> input_x = Tensor(np.array([-1.0, 0.0, 1.0]), mindspore.float32)
         >>> output = tan(input_x)
+        >>> print(output)
         [-1.5574081 0. 1.5574081]
     """
 
@@ -3733,7 +3743,7 @@ class BitwiseOr(_BitwiseBinaryOp):
         >>> input_x1 = Tensor(np.array([0, 0, 1, -1, 1, 1, 1]), mindspore.int16)
         >>> input_x2 = Tensor(np.array([0, 1, 1, -1, -1, 2, 3]), mindspore.int16)
         >>> bitwise_or = ops.BitwiseOr()
-        >>> boutput = itwise_or(input_x1, input_x2)
+        >>> output = bitwise_or(input_x1, input_x2)
         >>> print(output)
         [ 0  1  1 -1 -1  3  3]
     """

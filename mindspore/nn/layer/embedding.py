@@ -176,11 +176,8 @@ class EmbeddingLookup(Cell):
     Examples:
         >>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)
         >>> result = nn.EmbeddingLookup(4,2)(input_indices)
-        >>> print(result)
-        [[[ 0.00856617  0.01039034]
-          [ 0.00196276 -0.00094072]]
-         [[ 0.01279703  0.00078912]
-          [ 0.00084863 -0.00742412]]]
+        >>> print(result.shape)
+        (2, 2, 2)
     """
     BATCH_SLICE = "batch_slice"
     FIELD_SLICE = "field_slice"
@@ -350,11 +347,8 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         >>> field_ids = Tensor([[0, 1, 1, 0, 0], [0, 0, 1, 0, 0]], mindspore.int32)
         >>> net = nn.MultiFieldEmbeddingLookup(10, 2, field_size=2, operator='SUM')
         >>> out = net(input_indices, input_values, field_ids)
-        >>> print(out)
-        [[[-0.00478983 -0.00772568]
-          [-0.00968955 -0.00064902]]
-         [[-0.01251151 -0.01251151]
-          [-0.00196387 -0.00196387]
+        >>> print(out.shape)
+        (2, 2, 2)
     """
     OPERATOR_SUM = 'SUM'
     OPERATOR_MEAN = 'MEAN'

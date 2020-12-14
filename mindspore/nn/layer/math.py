@@ -315,6 +315,7 @@ class DiGamma(Cell):
         >>> input_x = Tensor(np.array([2, 3, 4]).astype(np.float32))
         >>> op = nn.DiGamma()
         >>> output = op(input_x)
+        >>> print(output)
         [0.42278463  0.92278427 1.2561178]
     """
 
@@ -661,7 +662,7 @@ class LBeta(Cell):
         >>> input_y = Tensor(np.array([2.0, 3.0, 14.0, 15.0]).astype(np.float32))
         >>> lbeta = nn.LBeta()
         >>> output = lbeta(input_y, input_x)
-        >>> print (output)
+        >>> print(output)
         [-1.7917596  -4.094345  -12.000229  -14.754799]
     """
 
