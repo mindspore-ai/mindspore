@@ -59,13 +59,15 @@ def repeat_elements(x, rep, axis=0):
     Repeat elements of a tensor along an axis, like np.repeat.
 
     Args:
-        - **x** (Tensor) - The tensor to repeat values for.
+        - **x** (Tensor) - The tensor to repeat values for. Must be of type: float16,
+          float32, int8, uint8, int16, int32, or int64.
         - **rep** (int) - The number of times to repeat, must be positive, required.
         - **axis** (int) - The axis along which to repeat, default 0.
 
     Outputs:
         One tensor with values repeated along the specified axis. If x has shape
-        (s1, s2, ..., sn) and axis is i, the output will have shape (s1, s2, ..., si * rep, ..., sn)
+        (s1, s2, ..., sn) and axis is i, the output will have shape (s1, s2, ...,
+        si * rep, ..., sn). The output type will be the same as the type of `x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
