@@ -238,6 +238,8 @@ class WideDeepModel(nn.Cell):
         elif parameter_server:
             cache_enable = self.vocab_cache_size > 0
             target = 'DEVICE' if cache_enable else 'CPU'
+            if not cache_enable:
+                sparse = True
             if is_auto_parallel and config.full_batch and cache_enable:
                 self.deep_embeddinglookup = nn.EmbeddingLookup(self.vocab_size, self.emb_dim, target=target,
                                                                slice_mode=nn.EmbeddingLookup.TABLE_ROW_SLICE,
