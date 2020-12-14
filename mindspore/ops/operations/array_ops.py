@@ -965,9 +965,9 @@ class Ones(PrimitiveWithInfer):
         for i, item in enumerate(shape):
             validator.check_integer(item, shape[i], 0, Rel.GE, self.name)
         valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
-                       mstype.uint8, mstype.uint32, mstype.uint64,
+                       mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64,
                        mstype.float16, mstype.float32, mstype.float64]
-        validator.check_tensor_type_same({"value": dtype['value']}, valid_types, self.name)
+        validator.check_type_same({"value": dtype['value']}, valid_types, self.name)
         x_nptype = mstype.dtype_to_nptype(dtype['value'])
         ret = np.ones(shape, x_nptype)
         out = {
@@ -1016,9 +1016,9 @@ class Zeros(PrimitiveWithInfer):
         for i, item in enumerate(shape):
             validator.check_integer(item, shape[i], 0, Rel.GE, self.name)
         valid_types = [mstype.bool_, mstype.int8, mstype.int16, mstype.int32, mstype.int64,
-                       mstype.uint8, mstype.uint32, mstype.uint64,
+                       mstype.uint8, mstype.uint16, mstype.uint32, mstype.uint64,
                        mstype.float16, mstype.float32, mstype.float64]
-        validator.check_tensor_type_same({"value": dtype['value']}, valid_types, self.name)
+        validator.check_type_same({"value": dtype['value']}, valid_types, self.name)
         x_nptype = mstype.dtype_to_nptype(dtype['value'])
         ret = np.zeros(shape, x_nptype)
         out = {

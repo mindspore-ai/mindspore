@@ -39,7 +39,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr adjust_all_reduce_mul_add_;
 
   //  ops eliminate
-  SubstitutionPtr item_tuple_eliminate_;
+  SubstitutionPtr item_tuple_or_list_eliminate_;
   SubstitutionPtr tile_eliminate_;
   SubstitutionPtr cast_eliminate_;
   SubstitutionPtr reshape_eliminate_;

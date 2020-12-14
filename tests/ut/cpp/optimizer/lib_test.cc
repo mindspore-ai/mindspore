@@ -360,7 +360,7 @@ TEST_F(TestOptLib, test_tuple_getitem) {
   FuncGraphPtr after_2 = std::make_shared<FuncGraph>();
   after_2->set_output(value_node_2);
 
-  auto patterns = std::vector<SubstitutionPtr>({irpass.item_tuple_eliminate_});
+  auto patterns = std::vector<SubstitutionPtr>({irpass.item_tuple_or_list_eliminate_});
   ASSERT_TRUE(CheckOpt(make_get_0, after_0, patterns));
   ASSERT_TRUE(CheckOpt(make_get_1, after_1, patterns));
   ASSERT_TRUE(CheckOpt(make_get_const, after_2, patterns));
@@ -372,7 +372,7 @@ TEST_F(TestOptLib, test_tuple_setitem) {
   FuncGraphPtr after_0 = getPyFun.CallAndParseRet("test_tuple_setitem", "after_0");
   FuncGraphPtr after_1 = getPyFun.CallAndParseRet("test_tuple_setitem", "after_1");
 
-  auto patterns = std::vector<SubstitutionPtr>({irpass.item_tuple_eliminate_});
+  auto patterns = std::vector<SubstitutionPtr>({irpass.item_tuple_or_list_eliminate_});
 
   ASSERT_TRUE(CheckOpt(before_0, after_0, patterns));
   ASSERT_TRUE(CheckOpt(before_1, after_1, patterns));
@@ -384,7 +384,7 @@ TEST_F(TestOptLib, test_tuple_get_set_item) {
   FuncGraphPtr before_1 = getPyFun.CallAndParseRet("test_tuple_get_set_item", "before_0");
   FuncGraphPtr after_1 = getPyFun.CallAndParseRet("test_tuple_get_set_item", "after_0");
 
-  auto patterns = std::vector<SubstitutionPtr>({irpass.item_tuple_eliminate_});
+  auto patterns = std::vector<SubstitutionPtr>({irpass.item_tuple_or_list_eliminate_});
 
   ASSERT_TRUE(CheckOpt(before_0, after_0, patterns));
   ASSERT_TRUE(CheckOpt(before_1, after_1, patterns));

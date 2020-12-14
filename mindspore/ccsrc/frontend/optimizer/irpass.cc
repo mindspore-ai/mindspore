@@ -25,7 +25,7 @@
 #include "frontend/optimizer/irpass/inline.h"
 #include "frontend/optimizer/irpass/incorporate_call.h"
 #include "frontend/optimizer/irpass/incorporate_getitem.h"
-#include "frontend/optimizer/irpass/item_tuple_eliminate.h"
+#include "frontend/optimizer/irpass/item_tuple_or_list_eliminate.h"
 #include "frontend/optimizer/irpass/mark_interface_fusion.h"
 #include "frontend/optimizer/irpass/merge_addn.h"
 #include "frontend/optimizer/irpass/minmax_grad.h"
@@ -66,8 +66,9 @@ OptimizeIRPassLib::OptimizeIRPassLib() {
     MakeSubstitution(std::make_shared<AdjustAllReduceMulAdd>(), "adjust_all_reduce_mul_add", prim::kPrimAddN);
 
   // ops eliminate
-  item_tuple_eliminate_ = MakeSubstitution(std::make_shared<ItemTupleEliminater>(), "item_tuple_eliminate",
-                                           {prim::kPrimTupleGetItem, prim::kPrimTupleSetItem, prim::kPrimListGetItem});
+  item_tuple_or_list_eliminate_ = MakeSubstitution(
+    std::make_shared<ItemTupleOrListEliminater>(), "item_tuple_or_list_eliminate",
+    {prim::kPrimTupleGetItem, prim::kPrimTupleSetItem, prim::kPrimListGetItem, prim::kPrimListSetItem});
   tile_eliminate_ = MakeSubstitution(std::make_shared<TileMultiplyByOne>(), "tile_eliminate", prim::kPrimTile);
   cast_eliminate_ = MakeSubstitution(std::make_shared<CastEliminater>(), "cast_eliminate", prim::kPrimCast);
   reshape_eliminate_ = MakeSubstitution(std::make_shared<ReshapeEliminater>(), "reshape_eliminate", prim::kPrimReshape);
