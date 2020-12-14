@@ -78,8 +78,6 @@ if __name__ == '__main__':
             init()
         # GPU target
         else:
-            print("Squeezenet training on GPU performs badly now, and it is still in research..."
-                  "See model_zoo/research/cv/squeezenet to get up-to-date details.")
             init()
             context.set_auto_parallel_context(
                 device_num=get_group_size(),
@@ -145,8 +143,6 @@ if __name__ == '__main__':
                       keep_batchnorm_fp32=False)
     else:
         # GPU target
-        print("Squeezenet training on GPU performs badly now, and it is still in research..."
-              "See model_zoo/research/cv/squeezenet to get up-to-date details.")
         opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()),
                        lr,
                        config.momentum,
