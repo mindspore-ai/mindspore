@@ -15,7 +15,7 @@
 """
 Neural Networks Cells.
 
-Pre-defined building blocks or computing units to construct Neural Networks.
+Pre-defined building blocks or computing units to construct neural networks.
 """
 from . import layer, loss, optim, metrics, wrap, probability, sparse
 from .learning_rate_schedule import *

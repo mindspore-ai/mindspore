@@ -4306,7 +4306,7 @@ class KLDivLoss(PrimitiveWithInfer):
 
 class BinaryCrossEntropy(PrimitiveWithInfer):
     r"""
-    Computes the Binary Cross Entropy between the target and the output.
+    Computes the binary cross entropy between the target and the output.
 
     Note:
         Sets input as :math:`x`, input label as :math:`y`, output as :math:`\ell(x, y)`.

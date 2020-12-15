@@ -51,7 +51,7 @@ def _check_param_value(accum, l1, l2, use_locking, prim_name=None):
 
 class ProximalAdagrad(Optimizer):
     """
-    Implement the ProximalAdagrad algorithm with ApplyProximalAdagrad Operator.
+    Implements the ProximalAdagrad algorithm with ApplyProximalAdagrad Operator.
 
     ProximalAdagrad is an online Learning and Stochastic Optimization.
     Refer to paper `Efficient Learning using Forward-Backward Splitting

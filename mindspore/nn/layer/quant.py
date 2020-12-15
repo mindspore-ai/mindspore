@@ -210,7 +210,7 @@ class UniformQuantObserver(_Observer):
 
 class FakeQuantWithMinMaxObserver(UniformQuantObserver):
     r"""
-    Quantization aware op. This OP provides the fake quantization observer function on data with min and max.
+    Quantization aware operation which provides the fake quantization observer function on data with min and max.
 
     Args:
         min_init (int, float): The initialized min value. Default: -6.
@@ -273,7 +273,7 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
         self.narrow_range = narrow_range
         self.is_ascend = context.get_context('device_target') == "Ascend"
 
-        # init tensor min and max for fake quant op
+        # init tensor min and max for fake quantized operation
         if self.per_channel:
             min_array = np.array([self.min_init] * self.num_channels).astype(np.float32)
             max_array = np.array([self.max_init] * self.num_channels).astype(np.float32)
@@ -335,9 +335,9 @@ quant_config_default = QuantConfig(weight=FakeQuantWithMinMaxObserver, activatio
 
 class Conv2dBnFoldQuantOneConv(Cell):
     r"""
-    2D convolution with BatchNormal op folded construct.
+    2D convolution which use the convolution layer statistics once to calculate BatchNormal operation folded construct.
 
-    This part is a more detailed overview of Conv2d op.
+    This part is a more detailed overview of Conv2d operation.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -546,9 +546,9 @@ class Conv2dBnFoldQuantOneConv(Cell):
 
 class Conv2dBnFoldQuant(Cell):
     r"""
-    2D convolution with BatchNormal op folded construct.
+    2D convolution with BatchNormal operation folded construct.
 
-    This part is a more detailed overview of Conv2d op.
+    This part is a more detailed overview of Conv2d operation.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -730,9 +730,9 @@ class Conv2dBnFoldQuant(Cell):
 
 class Conv2dBnWithoutFoldQuant(Cell):
     r"""
-    2D convolution + batchnorm without fold with fake quant construct.
+    2D convolution and batchnorm without fold with fake quantized construct.
 
-    This part is a more detailed overview of Conv2d op.
+    This part is a more detailed overview of Conv2d operation.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -844,9 +844,9 @@ class Conv2dBnWithoutFoldQuant(Cell):
 
 class Conv2dQuant(Cell):
     r"""
-    2D convolution with fake quant op layer.
+    2D convolution with fake quantized operation layer.
 
-    This part is a more detailed overview of Conv2d op.
+    This part is a more detailed overview of Conv2d operation.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -953,9 +953,9 @@ class Conv2dQuant(Cell):
 
 class DenseQuant(Cell):
     r"""
-    The fully connected layer with fake quant op.
+    The fully connected layer with fake quantized operation.
 
-    This part is a more detailed overview of Dense op.
+    This part is a more detailed overview of Dense operation.
 
     Args:
         in_channels (int): The dimension of the input space.
@@ -1057,7 +1057,8 @@ class DenseQuant(Cell):
 
 class _QuantActivation(Cell):
     r"""
-    Base class for quantization aware training activation function. Add Fake Quant OP after activation OP.
+    Base class for quantization aware training activation function. Add fake quantized operation
+    after activation operation.
     """
 
     def get_origin(self):
@@ -1068,14 +1069,14 @@ class ActQuant(_QuantActivation):
     r"""
     Quantization aware training activation function.
 
-    Add the fake quant op to the end of activation op, by which the output of activation op will be truncated.
-    Please check `FakeQuantWithMinMaxObserver` or other observer for more details.
+    Add the fake quantized operation to the end of activation operation, by which the output of activation operation
+    will be truncated. Please check `FakeQuantWithMinMaxObserver` or other observer for more details.
 
     Args:
         activation (Cell): Activation cell.
         ema (bool): The exponential Moving Average algorithm updates min and max. Default: False.
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
-        fake_before (bool): Whether add fake quant operation before activation. Default: False.
+        fake_before (bool): Whether add fake quantized operation before activation. Default: False.
         quant_config (QuantConfig): Configs the oberser types and quant configs of weight and activation. Default:
             both set to default FakeQuantWithMinMaxObserver.
         quant_dtype (QuantDtype): Specifies the FakeQuant datatype. Default: QuantDtype.INT8.
@@ -1134,9 +1135,9 @@ class ActQuant(_QuantActivation):
 
 class TensorAddQuant(Cell):
     r"""
-    Add Fake Quant OP after TensorAdd OP.
+    Add fake quantized operation after TensorAdd operation.
 
-    This part is a more detailed overview of TensorAdd op.
+    This part is a more detailed overview of TensorAdd operation.
 
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
@@ -1185,9 +1186,9 @@ class TensorAddQuant(Cell):
 
 class MulQuant(Cell):
     r"""
-    Add Fake Quant OP after Mul OP.
+    Add fake quantized operation after `Mul` operation.
 
-    This part is a more detailed overview of Mul op.
+    This part is a more detailed overview of `Mul` operation.
 
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.

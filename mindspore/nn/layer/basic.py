@@ -897,7 +897,7 @@ class MatrixDiagPart(Cell):
 
 class MatrixSetDiag(Cell):
     r"""
-    Modify the batched diagonal part of a batched tensor.
+    Modifies the batched diagonal part of a batched tensor.
 
     Inputs:
         - **x** (Tensor) - The batched tensor. Rank k+1, where k >= 1. It can be one of the following data types:
