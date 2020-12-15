@@ -70,6 +70,20 @@ PrimitiveC *SwitchCreator(const schema::Primitive *primitive) { return Primitive
 Registry SwitchRegistry(schema::PrimitiveType_Switch, SwitchCreator);
 #endif
 
-int Switch::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) { return RET_OK; }
+int Switch::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
+  MS_ASSERT(2 * (inputs_.size() - 1) == outputs_.size());
+  if (!infer_flag()) {
+    return RET_INFER_INVALID;
+  }
+  for (size_t i = 0; i < outputs_.size() / 2; i++) {
+    outputs_[i]->set_data_type(inputs_[i + 1]->data_type());
+    outputs_[i + outputs_.size() / 2]->set_data_type(inputs_[i + 1]->data_type());
+    outputs_[i]->set_shape(inputs_[i + 1]->shape());
+    outputs_[i + outputs_.size() / 2]->set_shape(inputs_[i + 1]->shape());
+    outputs_[i]->set_format(inputs_[i + 1]->format());
+    outputs_[i + outputs_.size() / 2]->set_format(inputs_[i + 1]->format());
+  }
+  return RET_OK;
+}
 }  // namespace lite
 }  // namespace mindspore

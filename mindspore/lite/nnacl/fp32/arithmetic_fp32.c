@@ -890,6 +890,14 @@ int ElementLogicalAnd(const float *input0, const float *input1, float *output, c
   return NNACL_OK;
 }
 
+int ElementLogicalAndInt(const int *input0, const int *input1, int *output, const int element_size) {
+  int index = 0;
+  for (; index < element_size; index++) {
+    output[index] = (int)((int)(input0[index]) & (int)(input1[index]));
+  }
+  return NNACL_OK;
+}
+
 int ElementSquaredDifference(const float *input0, const float *input1, float *output, const int element_size) {
   ElementSub(input0, input1, output, element_size);
   return ElementMul(output, output, output, element_size);
