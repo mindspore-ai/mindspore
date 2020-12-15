@@ -172,7 +172,8 @@ class Geometric(Distribution):
     @property
     def probs(self):
         """
-        Return the probability of success of the Bernoulli trail.
+        Return the probability of success of the Bernoulli trail,
+        after casting to self.dtype.
         """
         return self._probs
 

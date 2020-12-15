@@ -165,27 +165,35 @@ class LogNormal(msd.TransformedDistribution):
         self.log_2pi = np.log(2 * np.pi)
 
         #ops needed for the class
+        self.dtypeop = P.DType()
         self.exp = exp_generic
         self.expm1 = P.Expm1()
         self.log = log_generic
         self.const = P.ScalarToArray()
         self.erf = P.Erf()
         self.fill = P.Fill()
+        self.greater = P.Greater()
+        self.select = P.Select()
         self.shape = P.Shape()
         self.sq = P.Square()
         self.sqrt = P.Sqrt()
         self.cast = P.Cast()
         self.squeeze = P.Squeeze(0)
-        self.zeroslike = P.ZerosLike()
 
     @property
     def loc(self):
-        """Distribution parameter for the pre-transformed mean."""
+        """
+        Distribution parameter for the pre-transformed mean
+        after casting to self.dtype.
+        """
         return self._loc
 
     @property
     def scale(self):
-        """Distribution parameter for the pre-transformed standard deviation."""
+        """
+        Distribution parameter for the pre-transformed standard deviation
+        after casting to self.dtype.
+        """
         return self._scale
 
     def _get_dist_type(self):
@@ -254,7 +262,12 @@ class LogNormal(msd.TransformedDistribution):
         """
         mean, sd = self._check_param_type(loc, scale)
         inverse_value = self.bijector("inverse", value)
-        return self.distribution("cdf", inverse_value, mean, sd)
+        cdf = self.distribution("cdf", inverse_value, mean, sd)
+
+        # to increase numerical stability, set cdf = 0 when value <= 0
+        zeros = self.fill(self.dtypeop(cdf), self.shape(cdf), 0.0)
+
+        return self.select(self.greater(value, 0.), cdf, zeros)
 
     def _log_prob(self, value, loc=None, scale=None):
         r"""

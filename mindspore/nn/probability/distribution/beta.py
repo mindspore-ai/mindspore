@@ -190,14 +190,16 @@ class Beta(Distribution):
     @property
     def concentration1(self):
         """
-        Return the concentration1, also know as the alpha of the Beta distribution.
+        Return the concentration1, also know as the alpha of the Beta distribution,
+        after casting to self.dtype.
         """
         return self._concentration1
 
     @property
     def concentration0(self):
         """
-        Return the concentration0, also know as the beta of the Beta distribution.
+        Return the concentration0, also know as the beta of the Beta distribution,
+        after casting to self.dtype.
         """
         return self._concentration0
 

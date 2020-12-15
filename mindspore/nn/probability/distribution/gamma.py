@@ -188,14 +188,16 @@ class Gamma(Distribution):
     @property
     def concentration(self):
         """
-        Return the concentration, also know as the alpha of the Gamma distribution.
+        Return the concentration, also know as the alpha of the Gamma distribution,
+        after casting to self.dtype.
         """
         return self._concentration
 
     @property
     def rate(self):
         """
-        Return the rate, also know as the beta of the Gamma distribution.
+        Return the rate, also know as the beta of the Gamma distribution,
+        after casting to self.dtype.
         """
         return self._rate
 

@@ -181,14 +181,14 @@ class Uniform(Distribution):
     @property
     def low(self):
         """
-        Return the lower bound of the distribution.
+        Return the lower bound of the distribution after casting to self.dtype.
         """
         return self._low
 
     @property
     def high(self):
         """
-        Return the upper bound of the distribution.
+        Return the upper bound of the distribution after casting to self.dtype..
         """
         return self._high
 
