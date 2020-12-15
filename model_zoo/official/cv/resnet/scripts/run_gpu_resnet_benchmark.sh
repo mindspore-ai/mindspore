@@ -14,11 +14,11 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 1 ] && [ $# != 2 ] && [ $# != 3 ] && [ $# != 4 ]
+if [ $# != 1 ] && [ $# != 2 ] && [ $# != 3 ] && [ $# != 4 ] && [ $# != 5 ]
 then 
 	echo "Usage: sh run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional) [DTYPE](optional)\
-   [DEVICE_NUM](optional)"
-  echo "Example: sh run_gpu_resnet_benchmark.sh /path/imagenet/train 256 FP16 8"
+   [DEVICE_NUM](optional) [SAVE_CKPT](optional) [SAVE_PATH](optional)"
+  echo "Example: sh run_gpu_resnet_benchmark.sh /path/imagenet/train 256 FP16 8 true /path/ckpt"
 exit 1
 fi
 
@@ -45,12 +45,23 @@ fi
 
 if [ $# == 3 ]
 then
-    python ${self_path}/../gpu_resnet_benchmark.py --run_distribute=True --dtype=$3 \
-    --dataset_path=$DATAPATH --batch_size=$2 
+    python ${self_path}/../gpu_resnet_benchmark.py --dataset_path=$DATAPATH --batch_size=$2 --dtype=$3
 fi
 
 if [ $# == 4 ]
 then
     mpirun --allow-run-as-root -n $4 python ${self_path}/../gpu_resnet_benchmark.py --run_distribute=True \
     --dataset_path=$DATAPATH --batch_size=$2 --dtype=$3
+fi
+
+if [ $# == 5 ]
+then
+    mpirun --allow-run-as-root -n $4 python ${self_path}/../gpu_resnet_benchmark.py --run_distribute=True \
+    --dataset_path=$DATAPATH --batch_size=$2 --dtype=$3 --save_ckpt=$5
+fi
+
+if [ $# == 6 ]
+then
+    mpirun --allow-run-as-root -n $4 python ${self_path}/../gpu_resnet_benchmark.py --run_distribute=True \
+    --dataset_path=$DATAPATH --batch_size=$2 --dtype=$3 --save_ckpt=$5 --ckpt_path=$6
 fi
