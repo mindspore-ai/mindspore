@@ -28,7 +28,7 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
   int output_count = conv_param->output_h_ * conv_param->output_w_;
 #ifdef ENABLE_AVX
   const int cal_num = C6NUM;
-#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
+#elif defined(ENABLE_SSE)
   const int cal_num = C4NUM;
 #else
   const int cal_num = C12NUM;
@@ -52,7 +52,7 @@ void ConvFp32(const float *input_data, float *packed_input, const float *packed_
       float *gemm_output = output_data + out_offset;
 #ifdef ENABLE_AVX
       RowMajor2Col6Major(gemm_input, col_major_gemm_input, cal_num, deep);
-#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
+#elif defined(ENABLE_SSE)
       RowMajor2Col4Major(gemm_input, col_major_gemm_input, cal_num, deep);
 #else
       RowMajor2Col12Major(gemm_input, col_major_gemm_input, cal_num, deep);

@@ -544,7 +544,11 @@ void GemmMatmulPlus(int ta, int tb, int M, int N, int K, float alpha, const floa
     }
   }
   if (incremental) output = fworkspace;
+#ifdef ENABLE_ARM32
+  MatmulFloatNeon32Opt(mat_a_input, mat_b_input, output, gcb->bias, (int)gcb->atype, K, M, N, ldc, 1);
+#else
   MatMulOpt(mat_a_input, mat_b_input, output, gcb->bias, gcb->atype, K, M, N, ldc, OutType_Nhwc);
+#endif
   if (incremental) addv(output, mat_c, beta, M, N, ldc);
   gcb->mat_a = mat_a_input;
   gcb->mat_b = mat_b_input;

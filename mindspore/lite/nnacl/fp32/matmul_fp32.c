@@ -858,6 +858,8 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
 #elif ENABLE_ARM32
   if (out_type == OutType_C8) {
     MatmulFloatNeon32(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
+  } else if (out_type == OutType_Nhwc) {
+    MatmulFloatNeon32Opt12x4(a, b, c, bias, (int)act_type, deep, row, col, stride, 1);
   } else {
     MatmulFloatNeon32Opt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
   }

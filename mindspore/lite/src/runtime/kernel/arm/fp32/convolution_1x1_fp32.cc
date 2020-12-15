@@ -74,6 +74,8 @@ int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
 
 #ifdef ENABLE_AVX
   int col_tile = C16NUM;
+#elif defined(ENABLE_ARM32)
+  int col_tile = C4NUM;
 #else
   int col_tile = C8NUM;
 #endif
@@ -100,6 +102,9 @@ int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
 #ifdef ENABLE_AVX
   RowMajor2Col16Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
                       input_channel);
+#elif defined(ENABLE_ARM32)
+  RowMajor2Col4Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
+                     input_channel);
 #else
   RowMajor2Col8Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
                      input_channel);
@@ -111,7 +116,7 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
   int hw_tile = C12NUM;
 #ifdef ENABLE_AVX
   hw_tile = C6NUM;
-#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
+#elif defined(ENABLE_SSE)
   hw_tile = C4NUM;
 #endif
   if ((matmul_param_->row_ > (hw_tile * op_parameter_->thread_num_)) && (matmul_param_->row_ > matmul_param_->col_)) {
@@ -121,6 +126,8 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
   } else {
 #ifdef ENABLE_AVX
     int col_tile = C16NUM;
+#elif defined(ENABLE_ARM32)
+    int col_tile = C4NUM;
 #else
     int col_tile = C8NUM;
 #endif
@@ -195,7 +202,7 @@ int Convolution1x1CPUKernel::DoConv1x1Hw(int task_id) {
 
 #if ENABLE_AVX
   RowMajor2Col6Major(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
-#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
+#elif defined(ENABLE_SSE)
   RowMajor2Col4Major(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
 #else
   RowMajor2Col12Major(thread_input_ptr, thread_pack_input, cur_hw_, matmul_param_->deep_);
@@ -225,7 +232,7 @@ int Convolution1x1CPUKernel::Run() {
 #ifdef ENABLE_AVX
   pack_input_ =
     reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_6_ * matmul_param_->deep_ * sizeof(float)));
-#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
+#elif defined(ENABLE_SSE)
   pack_input_ =
     reinterpret_cast<float *>(ctx_->allocator->Malloc(matmul_param_->row_4_ * matmul_param_->deep_ * sizeof(float)));
 #else
@@ -251,7 +258,7 @@ int Convolution1x1CPUKernel::Run() {
     } else {
 #ifdef ENABLE_AVX
       RowMajor2Col6Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
-#elif defined(ENABLE_ARM32) || defined(ENABLE_SSE)
+#elif defined(ENABLE_SSE)
       RowMajor2Col4Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
 #else
       RowMajor2Col12Major(input_ptr_, pack_input_, matmul_param_->row_, matmul_param_->deep_);
