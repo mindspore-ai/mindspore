@@ -47,7 +47,13 @@ def test_sqrt_grad(shape_x, shape_dout, dtype):
     expect_np = expect.asnumpy().copy()
     output_np = output.asnumpy().copy()
 
-    assert np.allclose(expect_np, output_np, 0.0001, 0.0001)
+    rtol = 0.0001
+    atol = 0.0001
+    if dtype == np.float16:
+        rtol = 0.001
+        atol = 0.001
+
+    assert np.allclose(expect_np, output_np, rtol, atol)
 
 
 @pytest.mark.level0
