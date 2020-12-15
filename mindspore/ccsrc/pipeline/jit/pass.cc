@@ -99,7 +99,7 @@ OptPassGroupMap GetOptPassesA(const opt::irpass::OptimizeIRPassLib &irpass) {
     irpass.specialize_transform_,
 
     // Miscellaneous
-    irpass.item_tuple_eliminate_,
+    irpass.item_tuple_or_list_eliminate_,
     irpass.env_get_item_eliminate_,
     irpass.cast_eliminate_,
     irpass.reshape_eliminate_,
@@ -186,8 +186,9 @@ OptPassGroupMap GetOptPassesAfterCconv(const opt::irpass::OptimizeIRPassLib &irp
 }
 
 OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib &irpass) {
-  opt::OptPassConfig d_1 = opt::OptPassConfig({// Safe inlining
-                                               irpass.call_graph_tuple_transform_, irpass.item_tuple_eliminate_});
+  opt::OptPassConfig d_1 =
+    opt::OptPassConfig({// Safe inlining
+                        irpass.call_graph_tuple_transform_, irpass.item_tuple_or_list_eliminate_});
 
   OptPassGroupMap map_a({{"d_1", d_1}, {"renormalize", opt::OptPassConfig::Renormalize()}});
 
@@ -196,7 +197,7 @@ OptPassGroupMap GetOptPassesTransformGraph(const opt::irpass::OptimizeIRPassLib 
 
 OptPassGroupMap GetOptPassesB(const opt::irpass::OptimizeIRPassLib &irpass) {
   opt::OptPassConfig b_1 = opt::OptPassConfig(
-    {irpass.zero_like_fill_zero_, irpass.item_tuple_eliminate_, irpass.float_tuple_getitem_switch_,
+    {irpass.zero_like_fill_zero_, irpass.item_tuple_or_list_eliminate_, irpass.float_tuple_getitem_switch_,
      irpass.reset_defer_inline_, irpass.inline_, irpass.special_op_eliminate_, irpass.get_make_ref_eliminate_,
      irpass.incorporate_env_getitem_, irpass.incorporate_env_getitem_switch_, irpass.env_get_item_eliminate_,
      irpass.incorporate_env_getitem_switch_layer_, irpass.value_based_eliminate_});

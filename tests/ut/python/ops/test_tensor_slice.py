@@ -672,15 +672,15 @@ def test_tensor_assign_bool_index():
     with pytest.raises(ValueError):
         net2(Ta, u_tensor_error)
     net3 = TensorAssignWithBoolTensorIndexError()
-    with pytest.raises(AttributeError):
+    with pytest.raises(IndexError):
         net3(Ta, Tb, Tc, u_tensor)
-    with pytest.raises(AttributeError):
-        net3(Ta, Tb, Tc, u_scalar)
+    with pytest.raises(IndexError):
+        net3(Ta, Tb, Tc, Tensor(u_scalar, mstype.int32))
     net4 = TensorAssignWithBoolTensorIndex2Error()
-    with pytest.raises(AttributeError):
+    with pytest.raises(IndexError):
         net4(Ta, u_tensor)
-    with pytest.raises(AttributeError):
-        net4(Ta, u_scalar)
+    with pytest.raises(IndexError):
+        net4(Ta, Tensor(u_scalar, mstype.int32))
 
 
 test_cases = [
