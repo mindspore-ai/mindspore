@@ -25,6 +25,10 @@ elseif (ENABLE_CPU)
     set(CPACK_MS_BACKEND "ms")
     set(CPACK_MS_TARGET "cpu")
     set(CPACK_MS_PACKAGE_NAME "mindspore")
+elseif (ENABLE_ACL)
+    set(CPACK_MS_BACKEND "debug")
+    set(CPACK_MS_TARGET "ascend-gpu-cpu")
+    set(CPACK_MS_PACKAGE_NAME "mindspore-ascend")
 else ()
     set(CPACK_MS_BACKEND "debug")
     set(CPACK_MS_TARGET "ascend-gpu-cpu")
@@ -115,11 +119,9 @@ if (ENABLE_MINDDATA)
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )
-    file(GLOB_RECURSE TINYXML2_LIB_LIST
-	    ${tinyxml2_LIBPATH}/libtinyxml2*
-    )
+    file(GLOB_RECURSE TINYXML2_LIB_LIST ${tinyxml2_LIBPATH}/libtinyxml2*)
     install(
-	FILES ${TINYXML2_LIB_LIST}
+        FILES ${TINYXML2_LIB_LIST}
         DESTINATION ${INSTALL_LIB_DIR}
         COMPONENT mindspore
     )

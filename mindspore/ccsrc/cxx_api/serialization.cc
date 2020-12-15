@@ -70,12 +70,15 @@ static Buffer ReadFile(const std::string &file) {
 
 Graph Serialization::LoadModel(const std::string &file, ModelType model_type) {
   Buffer data = ReadFile(file);
+  if (data.Data() == nullptr) {
+    MS_LOG(EXCEPTION) << "Read file " << file << " failed.";
+  }
   if (model_type == kMindIR) {
     FuncGraphPtr anf_graph = nullptr;
     try {
       anf_graph = ConvertStreamToFuncGraph(reinterpret_cast<const char *>(data.Data()), data.DataSize());
     } catch (std::exception &e) {
-      MS_LOG(ERROR) << "Load MindIR failed.";
+      MS_LOG(EXCEPTION) << "Load MindIR failed.";
     }
 
     return Graph(std::make_shared<Graph::GraphData>(anf_graph, kMindIR));
