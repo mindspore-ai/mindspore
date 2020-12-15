@@ -6836,6 +6836,18 @@ class Conv3D(PrimitiveWithInfer):
             pad = (pad,) * 6
         validator.check_equal_int(len(pad), 6, 'pad size', self.name)
         self.padding = pad
+        validator.check_int_range(self.padding[0], 0, kernel_size[0], Rel.INC_LEFT,
+                                  'pad_d belonging [0, kernel_size_d)', self.name)
+        validator.check_int_range(self.padding[1], 0, kernel_size[0], Rel.INC_LEFT,
+                                  'pad_d belonging [0, kernel_size_d)', self.name)
+        validator.check_int_range(self.padding[2], 0, kernel_size[1], Rel.INC_LEFT,
+                                  'pad_h belonging [0, kernel_size_h)', self.name)
+        validator.check_int_range(self.padding[3], 0, kernel_size[1], Rel.INC_LEFT,
+                                  'pad_h belonging [0, kernel_size_h)', self.name)
+        validator.check_int_range(self.padding[4], 0, kernel_size[2], Rel.INC_LEFT,
+                                  'pad_w belonging [0, kernel_size_w)', self.name)
+        validator.check_int_range(self.padding[5], 0, kernel_size[2], Rel.INC_LEFT,
+                                  'pad_w belonging [0, kernel_size_w)', self.name)
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         self.add_prim_attr('pad_mode', self.pad_mode)
 
@@ -7129,6 +7141,18 @@ class Conv3DTranspose(PrimitiveWithInfer):
         self.pad_list = pad
         for item in self.pad_list:
             validator.check_non_negative_int(item, 'pad item', self.name)
+        validator.check_int_range(self.pad_list[0], 0, kernel_size[0], Rel.INC_LEFT,
+                                  'pad_d belonging [0, kernel_size_d)', self.name)
+        validator.check_int_range(self.pad_list[1], 0, kernel_size[0], Rel.INC_LEFT,
+                                  'pad_d belonging [0, kernel_size_d)', self.name)
+        validator.check_int_range(self.pad_list[2], 0, kernel_size[1], Rel.INC_LEFT,
+                                  'pad_h belonging [0, kernel_size_h)', self.name)
+        validator.check_int_range(self.pad_list[3], 0, kernel_size[1], Rel.INC_LEFT,
+                                  'pad_h belonging [0, kernel_size_h)', self.name)
+        validator.check_int_range(self.pad_list[4], 0, kernel_size[2], Rel.INC_LEFT,
+                                  'pad_w belonging [0, kernel_size_w)', self.name)
+        validator.check_int_range(self.pad_list[5], 0, kernel_size[2], Rel.INC_LEFT,
+                                  'pad_w belonging [0, kernel_size_w)', self.name)
         self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
         self.add_prim_attr('mode', self.mode)
         self.group = validator.check_positive_int(group, 'group', self.name)
@@ -7139,18 +7163,12 @@ class Conv3DTranspose(PrimitiveWithInfer):
 
         self.output_padding = _check_3d_int_or_tuple('output_padding', output_padding, self.name,
                                                      allow_five=True, ret_five=True, greater_zero=False)
-        if self.output_padding[2] < 0 or (self.output_padding[2] >= self.dilation[2]
-                                          and self.output_padding[2] >= self.stride[2]):
-            raise ValueError("In op, the value of [output_padding D] should be [[0, max(stride D,dilation D))], "
-                             "but it is  {}.".format(self.output_padding[2]))
-        if self.output_padding[3] < 0 or (self.output_padding[3] >= self.dilation[3]
-                                          and self.output_padding[3] >= self.stride[3]):
-            raise ValueError("In op, the value of [output_padding H] should be [[0, max(stride H,dilation H))], "
-                             "but it is  {}.".format(self.output_padding[3]))
-        if self.output_padding[4] < 0 or (self.output_padding[4] >= self.dilation[4]
-                                          and self.output_padding[4] >= self.stride[4]):
-            raise ValueError("In op, the value of [output_padding W] should be [[0, max(stride W,dilation W))], "
-                             "but it is  {}.".format(self.output_padding[4]))
+        validator.check_int_range(self.output_padding[2], 0, max(self.dilation[2], self.stride[2]), Rel.INC_LEFT,
+                                  'output_padding_d belonging [0, max(stride_d, dilation_d))', self.name)
+        validator.check_int_range(self.output_padding[3], 0, max(self.dilation[3], self.stride[3]), Rel.INC_LEFT,
+                                  'output_padding_h belonging [0, max(stride_h,dilation_h))', self.name)
+        validator.check_int_range(self.output_padding[4], 0, max(self.dilation[4], self.stride[4]), Rel.INC_LEFT,
+                                  'output_padding_w belonging [0, max(stride_w,dilation_w))', self.name)
         self.add_prim_attr('output_padding', self.output_padding)
 
     def __infer__(self, x, w, b=None):
