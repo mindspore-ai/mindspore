@@ -42,6 +42,12 @@ class LayerNorm : public PrimitiveC {
   std::vector<int> GetNormalizedShape() const;
   float GetEpsilon() const;
   bool GetElementwiseAffine() const;
+  std::vector<int> normlized_shape() const { return normlized_shape_; }
+  int elementwise_mode() const { return elementwise_mode_; }
+
+ protected:
+  std::vector<int> normlized_shape_;
+  int elementwise_mode_ = 0;
 };
 }  // namespace lite
 }  // namespace mindspore

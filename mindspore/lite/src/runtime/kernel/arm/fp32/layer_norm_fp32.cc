@@ -18,6 +18,7 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "src/ops/populate/layer_norm_populate.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -34,6 +35,13 @@ int LayerNormCPUKernel::Init() {
 }
 
 int LayerNormCPUKernel::ReSize() {
+  if (op_parameter_ != nullptr) {
+    free(op_parameter_);
+    op_parameter_ = nullptr;
+  }
+  op_parameter_ = PopulateLayerNormParameter(primitive_);
+  op_parameter_->thread_num_ = context_->thread_num_;
+  param_ = reinterpret_cast<LayerNormParameter *>(op_parameter_);
   auto shape = in_tensors_.front()->shape();
   outer_size_ = 1;
   inner_size_ = 1;
@@ -48,7 +56,7 @@ int LayerNormCPUKernel::ReSize() {
 }
 
 int LayerNormCPUKernel::DoLayerNorm(int thread_id) {
-  int ret = LayerNorm(outer_size_, inner_size_, src_data_, gamma_data_, beta_data_, param_->elementwise_affine_,
+  int ret = LayerNorm(outer_size_, inner_size_, src_data_, gamma_data_, beta_data_, param_->elementwise_mode_,
                       param_->epsilon_, dst_data_, thread_id, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoLayerNorm error error_code[" << ret << "]";
@@ -69,7 +77,7 @@ int LayerNormRun(void *cdata, int task_id) {
 
 int LayerNormCPUKernel::Run() {
   src_data_ = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  if (param_->elementwise_affine_) {
+  if (param_->elementwise_mode_ != 0) {
     gamma_data_ = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
     beta_data_ = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
   }

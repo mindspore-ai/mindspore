@@ -15,6 +15,7 @@
  */
 #include "src/runtime/kernel/arm/int8/layer_norm_int8.h"
 #include "src/runtime/runtime_api.h"
+#include "src/ops/populate/layer_norm_populate.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -23,11 +24,11 @@ using mindspore::schema::PrimitiveType_LayerNorm;
 
 namespace mindspore::kernel {
 LayerNormInt8CPUKernel::~LayerNormInt8CPUKernel() {
-  if (param_->elementwise_affine_ && gamma_ptr_ != nullptr) {
+  if (param_->elementwise_mode_ != 0 && gamma_ptr_ != nullptr) {
     free(gamma_ptr_);
     gamma_ptr_ = nullptr;
   }
-  if (param_->elementwise_affine_ && beta_ptr_ != nullptr) {
+  if (param_->elementwise_mode_ != 0 && beta_ptr_ != nullptr) {
     free(beta_ptr_);
     beta_ptr_ = nullptr;
   }
@@ -43,7 +44,7 @@ int LayerNormInt8CPUKernel::SetQuantArgs() {
   quant_param_.out_zp_ = output->quant_params().front().zeroPoint;
   quant_param_.out_scale_ = output->quant_params().front().scale;
 
-  if (param_->elementwise_affine_) {
+  if (param_->elementwise_mode_ != 0) {
     lite::Tensor *gamma_tensor = in_tensors_.at(1);
     lite::Tensor *beta_tensor = in_tensors_.at(2);
 
@@ -84,6 +85,13 @@ int LayerNormInt8CPUKernel::Init() {
 }
 
 int LayerNormInt8CPUKernel::ReSize() {
+  if (op_parameter_ != nullptr) {
+    free(op_parameter_);
+    op_parameter_ = nullptr;
+  }
+  op_parameter_ = PopulateLayerNormParameter(primitive_);
+  op_parameter_->thread_num_ = context_->thread_num_;
+  param_ = reinterpret_cast<LayerNormParameter *>(op_parameter_);
   auto shape = in_tensors_.front()->shape();
   outer_size_ = 1;
   inner_size_ = 1;
@@ -116,8 +124,8 @@ int LayerNormInt8CPUKernel::DoExecute(int task_id) {
   const int8_t *thread_src = src_ptr_ + task_id * param_->thread_outsize_ * inner_size_;
   int8_t *thread_dst = dst_ptr_ + task_id * param_->thread_outsize_ * inner_size_;
 
-  LayerNormInt8(thread_src, gamma_ptr_, beta_ptr_, thread_dst, param_->elementwise_affine_, current_out_size,
-                inner_size_, &quant_param_, param_->epsilon_);
+  LayerNormInt8(thread_src, gamma_ptr_, beta_ptr_, thread_dst, param_->elementwise_mode_, current_out_size, inner_size_,
+                &quant_param_, param_->epsilon_);
   return RET_OK;
 }
 

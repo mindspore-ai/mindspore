@@ -89,21 +89,32 @@ int LayerNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite:
     MS_LOG(INFO) << "input tensor amount error";
     return RET_INPUT_TENSOR_ERROR;
   }
+  if (!infer_flag()) {
+    return RET_INFER_INVALID;
+  }
   auto input_shape = input->shape();
-  auto normalized_shape = GetNormalizedShape();
-  if (normalized_shape.size() > input_shape.size() || normalized_shape.size() == 0) {
+  normlized_shape_ = GetNormalizedShape();
+  elementwise_mode_ = GetElementwiseAffine() ? 2 : 0;
+  if (normlized_shape_.size() > input_shape.size()) {
     MS_LOG(INFO) << "normalized_shape attr invalid";
     return RET_PARAM_INVALID;
   }
-  size_t first_index = input_shape.size() - normalized_shape.size();
-  for (size_t i = first_index; i < input_shape.size(); ++i) {
-    if (input_shape.at(i) != normalized_shape.at(i - first_index)) {
+  if (normlized_shape_.empty()) {
+    // instance norm -> layernorm
+    if (input->format() == schema::Format_NCHW) {
+      normlized_shape_.insert(normlized_shape_.begin(), input_shape.begin() + 2, input_shape.end());
+      elementwise_mode_ = 1;
+    } else {
       MS_LOG(INFO) << "normalized_shape attr invalid";
       return RET_PARAM_INVALID;
     }
   }
-  if (!infer_flag()) {
-    return RET_INFER_INVALID;
+  size_t first_index = input_shape.size() - normlized_shape_.size();
+  for (size_t i = first_index; i < input_shape.size(); ++i) {
+    if (input_shape.at(i) != normlized_shape_.at(i - first_index)) {
+      MS_LOG(INFO) << "normalized_shape attr invalid";
+      return RET_PARAM_INVALID;
+    }
   }
 
   output->set_shape(input_shape);

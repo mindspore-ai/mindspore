@@ -22,12 +22,13 @@
  *
  * */
 int LayerNormInt8(const int8_t *src_data, const float *gamma_data, const float *beta_data, int8_t *dst_data,
-                  bool affine, int outer_size, int inner_size, LayerNormQuantArg *quant, float epsilon) {
+                  enum ElementwiseMode elementwise_mode, int outer_size, int inner_size, LayerNormQuantArg *quant,
+                  float epsilon) {
   if (src_data == NULL || dst_data == NULL) {
     return NNACL_NULL_PTR;
   }
 
-  if (affine && (gamma_data == NULL || beta_data == NULL)) {
+  if (elementwise_mode != 0 && (gamma_data == NULL || beta_data == NULL)) {
     return NNACL_NULL_PTR;
   }
 
@@ -47,7 +48,9 @@ int LayerNormInt8(const int8_t *src_data, const float *gamma_data, const float *
     for (int i = 0; i < inner_size; i++) {
       float fp32_src = (src[i] - quant->in_zp_) * quant->in_scale_;
       float fp32_dst = (fp32_src - mean) * deno;
-      if (affine) {
+      if (elementwise_mode == 1) {
+        fp32_dst = fp32_dst * gamma_data[out_index] + beta_data[out_index];
+      } else if (elementwise_mode == 2) {
         fp32_dst = fp32_dst * gamma_data[i] + beta_data[i];
       }
       int32_t int32_dst = (int32_t)round(fp32_dst * 1.0 / quant->out_scale_ + quant->out_zp_);

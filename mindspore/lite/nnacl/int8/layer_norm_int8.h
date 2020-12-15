@@ -25,7 +25,8 @@ extern "C" {
 #endif
 
 int LayerNormInt8(const int8_t *src_data, const float *gamma_data, const float *beta_data, int8_t *dst_data,
-                  bool affine, int outer_size, int inner_size, LayerNormQuantArg *quant, float epsilon);
+                  enum ElementwiseMode elementwise_mode, int outer_size, int inner_size, LayerNormQuantArg *quant,
+                  float epsilon);
 
 #ifdef __cplusplus
 }

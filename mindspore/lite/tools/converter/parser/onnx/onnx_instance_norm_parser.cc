@@ -22,7 +22,7 @@ namespace lite {
 lite::PrimitiveC *OnnxInstanceNormParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
                                                              const onnx::NodeProto &onnx_node) {
   MS_LOG(DEBUG) << "onnx InstanceNormParser";
-  auto attr = std::make_unique<schema::InstanceNormT>();
+  auto attr = std::make_unique<schema::LayerNormT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return nullptr;
@@ -39,7 +39,8 @@ lite::PrimitiveC *OnnxInstanceNormParser::ParseLitePrimitive(const onnx::GraphPr
     MS_LOG(ERROR) << "new primitive failed";
     return nullptr;
   }
-  primitive->value.type = schema::PrimitiveType_InstanceNorm;
+  attr->elementwiseAffine = true;
+  primitive->value.type = schema::PrimitiveType_LayerNorm;
   primitive->value.value = attr.release();
   return PrimitiveC::Create(primitive.release());
 }
