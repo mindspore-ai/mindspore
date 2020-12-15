@@ -58,11 +58,6 @@ class MyTimeMonitor(Callback):
         fps = self.batch_size / step_mseconds *1000 * self.size
         print("Epoch time: {:5.3f} ms, fps: {:d} img/sec.".format(step_mseconds, int(fps)), flush=True, end=" ")
 
-def pad(image):
-    zeros = np.zeros([224, 224, 1], dtype=np.uint8)
-    output = np.concatenate((image, zeros), axis=2)
-    return output
-
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="GPU", dtype="fp16"):
     ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=4, shuffle=True)
 
@@ -71,24 +66,25 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
     std = [0.229 * 255, 0.224 * 255, 0.225 * 255]
 
     # define map operations
+    normalize_op = C.Normalize(mean=mean, std=std)
+    if dtype == "float16":
+        normalize_op = C.NormalizePad(mean=mean, std=std, dtype="float16")
     if do_train:
         trans = [
             C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
             C.RandomHorizontalFlip(prob=0.5),
-            C.Normalize(mean=mean, std=std),
+            normalize_op,
         ]
     else:
         trans = [
             C.Decode(),
             C.Resize(256),
             C.CenterCrop(image_size),
-            C.Normalize(mean=mean, std=std),
+            normalize_op,
         ]
     if dtype == "fp32":
         trans.append(C.HWC2CHW())
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=4)
-    if dtype == "fp16":
-        ds = ds.map(operations=pad, input_columns="image", num_parallel_workers=4)
+    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
     # apply batch operations
     ds = ds.batch(batch_size, drop_remainder=True)
     # apply dataset repeat operation

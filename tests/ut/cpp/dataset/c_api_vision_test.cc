@@ -932,6 +932,70 @@ TEST_F(MindDataTestPipeline, TestNormalizeFail) {
   EXPECT_EQ(normalize, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestNormalizePad) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePad.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, RandomSampler(false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // Create a Repeat operation on ds
+  int32_t repeat_num = 2;
+  ds = ds->Repeat(repeat_num);
+  EXPECT_NE(ds, nullptr);
+
+  // Create objects for the tensor ops
+  std::shared_ptr<TensorOperation> normalizepad = vision::NormalizePad({121.0, 115.0, 100.0}, {70.0, 68.0, 71.0},
+                                                                       "float32");
+  EXPECT_NE(normalizepad, nullptr);
+
+  // Create a Map operation on ds
+  ds = ds->Map({normalizepad});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    auto image = row["image"];
+    EXPECT_EQ(image->shape()[2], 4);
+    MS_LOG(INFO) << "Tensor image shape: " << image->shape();
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(i, 20);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestNormalizePadFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNormalizePadFail with invalid parameters.";
+
+  // std value at 0.0
+  std::shared_ptr<TensorOperation> normalizepad =
+    mindspore::dataset::vision::NormalizePad({121.0, 115.0, 100.0}, {0.0, 68.0, 71.0});
+  EXPECT_EQ(normalizepad, nullptr);
+  // normalizepad with 2 values (not 3 values) for mean
+  normalizepad = mindspore::dataset::vision::NormalizePad({121.0, 115.0}, {70.0, 68.0, 71.0});
+  EXPECT_EQ(normalizepad, nullptr);
+  // normalizepad with 2 values (not 3 values) for standard deviation
+  normalizepad = mindspore::dataset::vision::NormalizePad({121.0, 115.0, 100.0}, {68.0, 71.0});
+  EXPECT_EQ(normalizepad, nullptr);
+  // normalizepad with invalid dtype
+  normalizepad = mindspore::dataset::vision::NormalizePad({121.0, 115.0, 100.0}, {68.0, 71.0, 71.0}, "123");
+  EXPECT_EQ(normalizepad, nullptr);
+}
+
 TEST_F(MindDataTestPipeline, TestPad) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestPad.";
 

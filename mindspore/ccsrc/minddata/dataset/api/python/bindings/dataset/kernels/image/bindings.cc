@@ -31,6 +31,7 @@
 #include "minddata/dataset/kernels/image/invert_op.h"
 #include "minddata/dataset/kernels/image/mixup_batch_op.h"
 #include "minddata/dataset/kernels/image/normalize_op.h"
+#include "minddata/dataset/kernels/image/normalize_pad_op.h"
 #include "minddata/dataset/kernels/image/pad_op.h"
 #include "minddata/dataset/kernels/image/random_affine_op.h"
 #include "minddata/dataset/kernels/image/random_color_op.h"
@@ -69,6 +70,11 @@ PYBIND_REGISTER(AutoContrastOp, 1, ([](const py::module *m) {
 PYBIND_REGISTER(NormalizeOp, 1, ([](const py::module *m) {
                   (void)py::class_<NormalizeOp, TensorOp, std::shared_ptr<NormalizeOp>>(*m, "NormalizeOp")
                     .def(py::init<float, float, float, float, float, float>());
+                }));
+
+PYBIND_REGISTER(NormalizePadOp, 1, ([](const py::module *m) {
+                  (void)py::class_<NormalizePadOp, TensorOp, std::shared_ptr<NormalizePadOp>>(*m, "NormalizePadOp")
+                    .def(py::init<float, float, float, float, float, float, std::string>());
                 }));
 
 PYBIND_REGISTER(

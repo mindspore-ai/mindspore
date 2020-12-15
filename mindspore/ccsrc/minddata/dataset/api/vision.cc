@@ -38,6 +38,7 @@
 #include "minddata/dataset/kernels/image/mixup_batch_op.h"
 #endif
 #include "minddata/dataset/kernels/image/normalize_op.h"
+#include "minddata/dataset/kernels/image/normalize_pad_op.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/pad_op.h"
 #include "minddata/dataset/kernels/image/random_affine_op.h"
@@ -169,6 +170,14 @@ std::shared_ptr<NormalizeOperation> Normalize(std::vector<float> mean, std::vect
 }
 
 #ifndef ENABLE_ANDROID
+// Function to create NormalizePadOperation.
+std::shared_ptr<NormalizePadOperation> NormalizePad(const std::vector<float> &mean, const std::vector<float> &std,
+                                                    const std::string &dtype) {
+  auto op = std::make_shared<NormalizePadOperation>(mean, std, dtype);
+  // Input validation
+  return op->ValidateParams() ? op : nullptr;
+}
+
 // Function to create PadOperation.
 std::shared_ptr<PadOperation> Pad(std::vector<int32_t> padding, std::vector<uint8_t> fill_value,
                                   BorderType padding_mode) {
@@ -668,7 +677,7 @@ Status NormalizeOperation::ValidateParams() {
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
-    if (mean_[i] < 0.0f || mean_[i] > 255.0f || CmpFloat(mean_[i], 0.0f)) {
+    if (mean_[i] < 0.0f || mean_[i] > 255.0f) {
       std::string err_msg = "Normalize: mean vector has incorrect value: " + std::to_string(mean_[i]);
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -682,6 +691,47 @@ std::shared_ptr<TensorOp> NormalizeOperation::Build() {
 }
 
 #ifndef ENABLE_ANDROID
+// NormalizePadOperation
+NormalizePadOperation::NormalizePadOperation(const std::vector<float> &mean, const std::vector<float> &std,
+                                             const std::string &dtype)
+    : mean_(mean), std_(std), dtype_(dtype) {}
+
+Status NormalizePadOperation::ValidateParams() {
+  if (mean_.size() != 3) {
+    std::string err_msg = "NormalizePad: mean vector has incorrect size: " + std::to_string(mean_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (std_.size() != 3) {
+    std::string err_msg = "NormalizePad: std vector has incorrect size: " + std::to_string(std_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  // check std/mean value
+  for (int32_t i = 0; i < std_.size(); ++i) {
+    if (std_[i] < 0.0f || std_[i] > 255.0f || CmpFloat(std_[i], 0.0f)) {
+      std::string err_msg = "NormalizePad: std vector has incorrect value: " + std::to_string(std_[i]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+    if (mean_[i] < 0.0f || mean_[i] > 255.0f) {
+      std::string err_msg = "NormalizePad: mean vector has incorrect value: " + std::to_string(mean_[i]);
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+  if (dtype_ != "float32" && dtype_ != "float16") {
+    std::string err_msg = "NormalizePad: dtype must be float32 or float16, but got: " + dtype_;
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> NormalizePadOperation::Build() {
+  return std::make_shared<NormalizePadOp>(mean_[0], mean_[1], mean_[2], std_[0], std_[1], std_[2], dtype_);
+}
+
 // PadOperation
 PadOperation::PadOperation(std::vector<int32_t> padding, std::vector<uint8_t> fill_value, BorderType padding_mode)
     : padding_(padding), fill_value_(fill_value), padding_mode_(padding_mode) {}

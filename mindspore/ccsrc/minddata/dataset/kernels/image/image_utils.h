@@ -185,6 +185,15 @@ Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
 Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
                  const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std);
 
+/// \brief Returns Normalized and paded image
+/// \param input: Tensor of shape <H,W,C> in RGB order and any OpenCv compatible type, see CVTensor.
+/// \param mean: Tensor of shape <3> and type DE_FLOAT32 which are mean of each channel in RGB order
+/// \param std:  Tensor of shape <3> and type DE_FLOAT32 which are std of each channel in RGB order
+/// \param dtype: output dtype
+/// \param output: Normalized image Tensor and pad an extra channel, return a dtype Tensor
+Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
+                    const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std, const std::string &dtype);
+
 /// \brief Returns image with adjusted brightness.
 /// \param input: Tensor of shape <H,W,3> in RGB order and any OpenCv compatible type, see CVTensor.
 /// \param alpha: Alpha value to adjust brightness by. Should be a positive number.

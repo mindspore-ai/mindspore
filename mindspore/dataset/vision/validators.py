@@ -294,6 +294,40 @@ def check_normalize_py(method):
     return new_method
 
 
+def check_normalizepad_c(method):
+    """A wrapper that wraps a parameter checker around the original function(normalizepad operation written in C++)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [mean, std, dtype], _ = parse_user_args(method, *args, **kwargs)
+        check_normalize_c_param(mean, std)
+        if not isinstance(dtype, str):
+            raise TypeError("dtype should be string.")
+        if dtype not in ["float32", "float16"]:
+            raise ValueError("dtype only support float32 or float16.")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
+def check_normalizepad_py(method):
+    """A wrapper that wraps a parameter checker around the original function(normalizepad operation written in Python)."""
+
+    @wraps(method)
+    def new_method(self, *args, **kwargs):
+        [mean, std, dtype], _ = parse_user_args(method, *args, **kwargs)
+        check_normalize_py_param(mean, std)
+        if not isinstance(dtype, str):
+            raise TypeError("dtype should be string.")
+        if dtype not in ["float32", "float16"]:
+            raise ValueError("dtype only support float32 or float16.")
+
+        return method(self, *args, **kwargs)
+
+    return new_method
+
+
 def check_random_crop(method):
     """Wrapper method to check the parameters of random crop."""
 
