@@ -378,11 +378,10 @@ class GradWrap(Cell):
 
 
 @pytest.mark.level0
-@pytest.mark.platform_arm_ascend_training
-@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pynative_resnet50():
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
     batch_size = 32
     num_classes = 10
@@ -413,6 +412,6 @@ def test_pynative_resnet50():
         end_time = time.time()
         cost_time = end_time - start_time
         print("======step: ", step, " loss: ", loss_output.asnumpy(), " cost time: ", cost_time)
-        if step > 1 and cost_time > 0.25:
+        if step > 1 and cost_time > 0.15:
             exceed_num = exceed_num + 1
-    assert exceed_num < 20
+    assert exceed_num < 18
