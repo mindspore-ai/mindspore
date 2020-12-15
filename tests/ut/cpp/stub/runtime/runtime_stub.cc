@@ -37,6 +37,8 @@ rtError_t rtGetDeviceCount(int32_t *count) { return RT_ERROR_NONE; }
 
 rtError_t rtSetDevice(int32_t device) { return RT_ERROR_NONE; }
 
+rtError_t rtDeviceReset(int32_t device) { return RT_ERROR_NONE; }
+
 rtError_t rtCtxCreate(rtContext_t *ctx, uint32_t flags, int32_t device) { return RT_ERROR_NONE; }
 
 rtError_t rtCtxSetCurrent(rtContext_t ctx) { return RT_ERROR_NONE; }
