@@ -1813,6 +1813,11 @@ void SessionBasic::CheckPSModeConsistence(const KernelGraphPtr &kernel_graph) co
 
 void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
+  // PS embeddingLookup cache check.
+  if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
+    MS_LOG(EXCEPTION) << "The other parameter cann't set ps mode when the embeddingLookup cache is enabled in "
+                         "parameter server training mode.";
+  }
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph->get_return());
   for (auto &node : node_list) {
     if (node != nullptr && node->isa<CNode>()) {

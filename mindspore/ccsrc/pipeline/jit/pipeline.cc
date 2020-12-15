@@ -976,15 +976,12 @@ bool InitExecDatasetVm(const std::string &queue_name, int64_t size, int64_t batc
   if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
     backend->Link(runner.graph_id);
   }
-  // PS mode does not support loop sink.
+  ConfigManager::GetInstance().set_iter_num(size);
+  // PS cache does not support loop sink.
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (ps::Util::IsRoleOfWorker()) {
+  if (ps::Util::IsRoleOfWorker() && ps::PsDataPrefetch::GetInstance().cache_enable()) {
     ps::PsDataPrefetch::GetInstance().CreateDataChannel(queue_name, LongToSize(size));
     ConfigManager::GetInstance().set_iter_num(1);
-  } else {
-#endif
-    ConfigManager::GetInstance().set_iter_num(size);
-#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   }
 #endif
 

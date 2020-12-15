@@ -120,6 +120,7 @@ class PsCacheManager {
                              size_t cache_vocab_size, size_t embedding_size);
   void CloneHashTable(const std::string &dest_param_name, const std::string &src_param_name);
   const Address &QueryHashTableAddr(const std::string &param_name) const;
+  const size_t &QueryHashTableSize(const std::string &param_name) const;
   bool IsHashTable(const std::string &param_name) { return hash_tables_.count(param_name) != 0; }
   void set_batch_elements(size_t batch_elements) { batch_elements_ = batch_elements; }
   bool initialized_ps_cache() const { return initialized_ps_cache_; }

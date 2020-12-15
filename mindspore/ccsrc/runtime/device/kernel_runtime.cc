@@ -325,7 +325,9 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
     }
     need_alloc_nodes.push_back(item);
   }
-
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  bool ps_cache_check = false;
+#endif
   for (auto &item : need_alloc_nodes) {
     auto output_size = AnfAlgo::GetOutputTensorNum(item);
     for (size_t index = 0; index < output_size; index++) {
@@ -339,6 +341,13 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
       const std::string &param_name = item->fullname_with_scope();
       if (ps::ps_cache_instance.IsHashTable(param_name)) {
+        MS_LOG(INFO) << "Parameter(" << param_name << ")"
+                     << " enables the embeddingLookup cache in parameter server training mode.";
+        // PS embeddingLookup cache check.
+        if (!ps_cache_check) {
+          CheckIfSupportPSEmbeddingCache(graph);
+          ps_cache_check = true;
+        }
         const auto &address = ps::ps_cache_instance.QueryHashTableAddr(param_name);
         MS_EXCEPTION_IF_NULL(address.addr);
         device_address =
@@ -1024,5 +1033,83 @@ DeviceAddressPtr KernelRuntime::AssignSingleOpLaunchMemory(size_t size, const st
   MS_EXCEPTION_IF_NULL(base_ptr);
   return device_address;
 }
+
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+void KernelRuntime::GetFirstPSEmbeddingCache(const session::KernelGraph *graph, AnfNodePtr *first_cache_input_index,
+                                             size_t *first_cache_size) {
+  MS_EXCEPTION_IF_NULL(graph);
+  for (const auto &kernel : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (AnfAlgo::GetCNodeName(kernel) != "GatherV2") {
+      continue;
+    }
+    auto input_param = AnfAlgo::GetPrevNodeOutput(kernel, 0);
+    auto input_index = AnfAlgo::GetPrevNodeOutput(kernel, 1);
+    MS_EXCEPTION_IF_NULL(input_param.first);
+    MS_EXCEPTION_IF_NULL(input_index.first);
+    auto param_name = input_param.first->fullname_with_scope();
+    if (!ps::ps_cache_instance.IsHashTable(param_name)) {
+      continue;
+    }
+    auto size = ps::ps_cache_instance.QueryHashTableSize(param_name);
+    while ((AnfAlgo::GetCNodeName(input_index.first) == "Cast") || opt::IsNopNode(input_index.first)) {
+      input_index = AnfAlgo::GetPrevNodeOutput(input_index.first, input_index.second);
+      MS_EXCEPTION_IF_NULL(input_index.first);
+    }
+    if ((!input_index.first->isa<Parameter>()) && (AnfAlgo::GetCNodeName(input_index.first) != "GetNext")) {
+      MS_LOG(ERROR) << "The input index of the embeddingLookup(" << kernel->fullname_with_scope() << ") cache is from "
+                    << input_index.first->fullname_with_scope();
+      MS_LOG(EXCEPTION) << "The embeddingLookup whose input index isn't from dataset doesn't support cache in "
+                           "parameter server training mode.";
+    }
+    *first_cache_input_index = input_index.first;
+    *first_cache_size = size;
+    MS_LOG(INFO) << "The input index of the first embeddingLookup cache is from "
+                 << input_index.first->fullname_with_scope() << ", the cache size is " << size;
+    return;
+  }
+}
+
+void KernelRuntime::CheckIfSupportPSEmbeddingCache(const session::KernelGraph *graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  AnfNodePtr first_cache_input_index = nullptr;
+  size_t first_cache_size = 0;
+  GetFirstPSEmbeddingCache(graph, &first_cache_input_index, &first_cache_size);
+  MS_EXCEPTION_IF_NULL(first_cache_input_index);
+  for (const auto &kernel : graph->execution_order()) {
+    MS_EXCEPTION_IF_NULL(kernel);
+    if (AnfAlgo::GetCNodeName(kernel) != "GatherV2") {
+      continue;
+    }
+    auto input_param = AnfAlgo::GetPrevNodeOutput(kernel, 0);
+    auto input_index = AnfAlgo::GetPrevNodeOutput(kernel, 1);
+    MS_EXCEPTION_IF_NULL(input_param.first);
+    MS_EXCEPTION_IF_NULL(input_index.first);
+    auto param_name = input_param.first->fullname_with_scope();
+    while ((AnfAlgo::GetCNodeName(input_index.first) == "Cast") || opt::IsNopNode(input_index.first)) {
+      input_index = AnfAlgo::GetPrevNodeOutput(input_index.first, input_index.second);
+      MS_EXCEPTION_IF_NULL(input_index.first);
+    }
+    if (input_index.first == first_cache_input_index) {
+      if (!ps::ps_cache_instance.IsHashTable(param_name)) {
+        MS_LOG(ERROR) << "The embeddingLookup(" << kernel->fullname_with_scope() << ") doesn't enable cache.";
+        MS_LOG(EXCEPTION) << "All the embeddingLookups whose input indices are from dataset must enable cache at the "
+                             "same time when one of them enables cache in parameter server training mode.";
+      }
+      auto size = ps::ps_cache_instance.QueryHashTableSize(param_name);
+      if (size != first_cache_size) {
+        MS_LOG(ERROR) << "The cache size(" << size << ") of embeddingLookup(" << kernel->fullname_with_scope()
+                      << ") is not the same as other embeddingLookup cache size.";
+        MS_LOG(EXCEPTION) << "The cache sizes of embeddingLookups are not the same in parameter server training mode.";
+      }
+    } else if (ps::ps_cache_instance.IsHashTable(param_name)) {
+      MS_LOG(ERROR) << "The input index of the embeddingLookup(" << kernel->fullname_with_scope() << ") cache is from "
+                    << input_index.first->fullname_with_scope();
+      MS_LOG(EXCEPTION) << "The embeddingLookup whose input index isn't from dataset doesn't support cache in "
+                           "parameter server training mode.";
+    }
+  }
+}
+#endif
 }  // namespace device
 }  // namespace mindspore

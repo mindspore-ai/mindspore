@@ -131,6 +131,11 @@ class KernelRuntime {
   void RunOpAssignOutputNodeMemory(const ValuePtr &pre_output_value, session::KernelGraph *graph);
   void AssignValueNodeTensor(const ValueNodePtr &value_node, const ValuePtr &node_value, size_t output_idx);
   DeviceAddressPtr PreAssignCNodeMemory(const AnfNodePtr &anf_node, size_t index);
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  void GetFirstPSEmbeddingCache(const session::KernelGraph *graph, AnfNodePtr *first_cache_input_index,
+                                size_t *first_cache_size);
+  void CheckIfSupportPSEmbeddingCache(const session::KernelGraph *graph);
+#endif
 
  protected:
   uint32_t device_id_{0};
