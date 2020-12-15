@@ -1053,21 +1053,11 @@ void GPUKernelRuntime::AllocCommunicationOpOutputDynamicRes(const mindspore::Anf
   AllocCommunicationOpMemory(is_need_alloc_memory, is_need_free_memory, addr_list, total_size, size_list);
 }
 
-void GPUKernelRuntime::AllocCommunicationOpMemory(bool is_need_alloc_memory, bool is_need_free_memory,
-                                                  const DeviceAddressPtrList addr_list, size_t total_size,
-                                                  std::vector<size_t> size_list) {
+void GPUKernelRuntime::AllocCommunicationOpMemory(bool is_need_alloc_memory, bool, const DeviceAddressPtrList addr_list,
+                                                  size_t total_size, std::vector<size_t> size_list) {
   MS_EXCEPTION_IF_NULL(mem_manager_);
   if (!is_need_alloc_memory) {
     return;
-  }
-  if (is_need_free_memory) {
-    for (const auto &iter : addr_list) {
-      MS_EXCEPTION_IF_NULL(iter);
-      // Free the inputs/outputs of communication kernel which are not released.
-      if (iter->ptr_ != nullptr) {
-        mem_manager_->FreeMemFromMemPool(iter);
-      }
-    }
   }
   auto ret = mem_manager_->MallocContinuousMemFromMemPool(addr_list, total_size, size_list);
   if (!ret) {

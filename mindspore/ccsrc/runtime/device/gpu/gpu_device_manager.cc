@@ -108,6 +108,12 @@ bool GPUDeviceManager::CopyHostMemToDeviceAsync(const DeviceMemPtr &dst, const v
                                                 DeviceStream stream) const {
   return CudaDriver::CopyHostMemToDeviceAsync(dst, src, size, stream);
 }
+
+bool GPUDeviceManager::CopyDeviceMemToDeviceAsync(const DeviceMemPtr &dst, const DeviceMemPtr &src, size_t size,
+                                                  DeviceStream stream) const {
+  return CudaDriver::CopyDeviceMemToDeviceAsync(dst, src, size, stream);
+}
+
 }  // namespace gpu
 }  // namespace device
 }  // namespace mindspore
