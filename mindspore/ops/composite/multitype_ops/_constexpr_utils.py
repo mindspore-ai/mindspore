@@ -128,11 +128,13 @@ def is_same_type(inst, type_):
     """
     return inst == type_
 
+
 @constexpr
 def check_valid_dim(dim, name):
     if dim not in (1, 2):
         raise ValueError(
             f"For {name}, inputs dim must be 1d or 2d")
+
 
 @constexpr
 def check_valid_type(data_type, value_type, name):
@@ -420,6 +422,42 @@ def compute_new_shape(origin_shape, indexes_shapes_info):
         else:
             new_shape.append(1)
     return tuple(new_shape)
+
+
+@constexpr
+def check_list_index_type(list_index):
+    """check if the item's type of list_index is bool or int"""
+    if not all([isinstance(index, (int, bool)) for index in list_index]):
+        raise IndexError(
+            f"Tensor only support 'integer' or 'boolean' array(list/tuple), but got {type(index)} in array")
+
+
+@constexpr
+def transform_list(list_index, shape):
+    """transfor list_index from int or bool to int"""
+    bool_count = len(list(filter(lambda index: isinstance(index, bool), list_index)))
+    int_count = len(list(filter(lambda index: isinstance(index, int), list_index)))-bool_count
+    if int_count == 0:
+        if bool_count == shape:
+            list_index = list(filter(lambda i: list_index[i], range(bool_count)))
+        else:
+            raise IndexError("The boolean array should have the same length with the corresponding dimensiton")
+    else:
+        list_index = [int(index) for index in list_index]
+    for i, index in enumerate(list_index):
+        if index < -shape or index >= shape:
+            raise IndexError(f"The index should in the range [-{shape}, {shape-1}] to fit the corresponding dim "
+                             f"length, but get {index}.")
+        if index < 0:
+            index += shape
+        list_index[i] = index
+    return list_index
+
+
+@constexpr
+def convert_list_to_tensor(list_index):
+    """convert the list_index to tensor_index with mstype.int64 dtype"""
+    return Tensor(list_index, mstype.int64)
 
 
 @constexpr

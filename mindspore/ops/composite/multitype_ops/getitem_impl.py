@@ -234,3 +234,18 @@ def _tensor_getitem_by_ellipsis(data, ellipsis_index):
         Tensor, same as data.
     """
     return data
+
+
+@getitem.register("Tensor", "List")
+def _tensor_getitem_by_list(data, list_index):
+    """
+    Getting item of tensor by list.
+
+    Inputs:
+        data (Tensor): A tensor
+        list_index (List): A list object.
+
+    Outputs:
+        Tensor ,same as data.
+    """
+    return compile_utils.tensor_index_by_list(data, list_index)
