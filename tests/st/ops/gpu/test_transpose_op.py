@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -252,6 +252,24 @@ def test_transpose_float16():
 @pytest.mark.env_onecard
 def test_transpose_int32():
     transpose1(np.int32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_transpose_int64():
+    transpose1(np.int64)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_transpose_dynamic_int64():
+    transpose_d(np.int64)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_transpose_dynamic_two_inputs_int64():
+    transpose_d2(np.int64)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
