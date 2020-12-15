@@ -54,6 +54,7 @@ class MatmulCPUKernel : public MatmulBaseCPUKernel {
   float *cur_b_ptr_ = nullptr;
   float *cur_c_ptr_ = nullptr;
   bool is_vector_a_ = false;
+  int col_tile_ = 0;
 };
 }  // namespace mindspore::kernel
 
