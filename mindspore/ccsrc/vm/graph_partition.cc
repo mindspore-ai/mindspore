@@ -214,7 +214,9 @@ std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &
     auto cnode = node->cast<CNodePtr>();
     MS_EXCEPTION_IF_NULL(cnode);
     auto node_inputs = cnode->inputs();
-    std::reverse(node_inputs.begin(), node_inputs.end());
+    if (!IsPrimitiveCNode(cnode, prim::kPrimSwitch)) {
+      std::reverse(node_inputs.begin(), node_inputs.end());
+    }
     auto ctrl_inputs = control_edges.find(node);
     if (ctrl_inputs != control_edges.end()) {
       node_inputs.insert(node_inputs.end(), ctrl_inputs->second.begin(), ctrl_inputs->second.end());
