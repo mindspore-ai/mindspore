@@ -31,6 +31,7 @@ class Square : public ArithmeticSelf {
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Square, ArithmeticSelf);
   explicit Square(schema::PrimitiveT *primitive) : ArithmeticSelf(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif

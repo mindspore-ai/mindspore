@@ -32,6 +32,7 @@ class GatherNd : public PrimitiveC {
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(GatherNd, PrimitiveC);
   explicit GatherNd(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif

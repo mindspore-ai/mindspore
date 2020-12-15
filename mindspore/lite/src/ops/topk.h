@@ -34,6 +34,7 @@ class TopK : public PrimitiveC {
   explicit TopK(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetK(int k);
   void SetSorted(bool sorted);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif

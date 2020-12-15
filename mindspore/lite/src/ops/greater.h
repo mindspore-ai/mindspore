@@ -31,6 +31,7 @@ class Greater : public ArithmeticCompare {
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Greater, ArithmeticCompare);
   explicit Greater(schema::PrimitiveT *primitive) : ArithmeticCompare(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
