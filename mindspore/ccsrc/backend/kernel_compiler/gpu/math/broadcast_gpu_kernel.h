@@ -132,6 +132,7 @@ class BroadcastOpGpuKernel : public GpuKernel {
     static std::map<std::string, BroadcastOpType> kBroadcastCmpTypeMap = {
       {"Greater", BROADCAST_TYPE_GREATER},
       {"Less", BROADCAST_TYPE_LESS},
+      {"Equal", BROADCAST_TYPE_EQUAL},
     };
 
     auto iter = kBroadcastCmpTypeMap.find(kernel_name);

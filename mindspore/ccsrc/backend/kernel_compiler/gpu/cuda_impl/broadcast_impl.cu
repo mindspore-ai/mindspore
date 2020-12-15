@@ -32,6 +32,25 @@ struct LessFunc {
 };
 
 template <typename T>
+struct EqualFunc {
+  __device__ __host__ __forceinline__ bool operator()(const T &lhs, const T &rhs) { return lhs == rhs ? true : false; }
+};
+
+template <>
+struct EqualFunc <half> {
+  __device__ __host__ __forceinline__ bool operator()(const half &lhs, const half &rhs) {
+    return std::abs(__half2float(lhs) - __half2float(rhs)) < 1e-9 ? true : false;
+  }
+};
+
+template <>
+struct EqualFunc <float>  {
+  __device__ __host__ __forceinline__ bool operator()(const float &lhs, const float &rhs) {
+    return std::abs(lhs - rhs) < 1e-9 ? true : false;
+  }
+};
+
+template <typename T>
 struct MinimumFunc {
   __device__ __host__ __forceinline__ T operator()(const T &lhs, const T &rhs) { return lhs < rhs ? lhs : rhs; }
 };
@@ -188,6 +207,8 @@ void ElewiseCmp(const int &nums, enum BroadcastOpType op, const T *x0, const T *
       return ElewiseCmpKernel<T, GreaterFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     case BROADCAST_TYPE_LESS:
       return ElewiseCmpKernel<T, LessFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
+    case BROADCAST_TYPE_EQUAL:
+      return ElewiseCmpKernel<T, EqualFunc<T>><<<(nums + 255) / 256, 256, 0, stream>>>(nums, x0, x1, y);
     default:
       break;
   }
@@ -328,6 +349,11 @@ void BroadcastCmp(const std::vector<size_t> &x0_dims, const std::vector<size_t> 
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
     case BROADCAST_TYPE_LESS:
       return BroadcastCmpKernel<T, LessFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
+        x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
+        x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
+        y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
+    case BROADCAST_TYPE_EQUAL:
+      return BroadcastCmpKernel<T, EqualFunc<T>><<<(size + 255) / 256, 256, 0, stream>>>(
         x0_dims[0], x0_dims[1], x0_dims[2], x0_dims[3], x0_dims[4], x0_dims[5], x0_dims[6], x1_dims[0], x1_dims[1],
         x1_dims[2], x1_dims[3], x1_dims[4], x1_dims[5], x1_dims[6], y_dims[0], y_dims[1], y_dims[2], y_dims[3],
         y_dims[4], y_dims[5], y_dims[6], x0, x1, y);
