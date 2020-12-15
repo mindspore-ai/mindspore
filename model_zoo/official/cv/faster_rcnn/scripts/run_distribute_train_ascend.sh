@@ -46,6 +46,7 @@ exit 1
 fi
 
 ulimit -u unlimited
+export HCCL_CONNECT_TIMEOUT=600
 export DEVICE_NUM=8
 export RANK_SIZE=8
 export RANK_TABLE_FILE=$PATH1

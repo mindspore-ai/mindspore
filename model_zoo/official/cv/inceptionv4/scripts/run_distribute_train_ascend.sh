@@ -14,6 +14,7 @@
 # limitations under the License.
 # ============================================================================
 
+export HCCL_CONNECT_TIMEOUT=600
 export RANK_TABLE_FILE=$1
 DATA_DIR=$2
 export RANK_SIZE=8

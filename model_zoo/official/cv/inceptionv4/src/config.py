@@ -41,7 +41,4 @@ config_ascend = edict({
     'lr_max': 0.4,
     'warmup_epochs': 1,
     'start_epoch': 1,
-
-    'onnx_filename': 'inceptionv4.onnx',
-    'air_filename': 'inceptionv4.air'
 })

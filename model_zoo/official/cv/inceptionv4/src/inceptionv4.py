@@ -15,40 +15,15 @@
 """InceptionV4"""
 import mindspore.nn as nn
 from mindspore.ops import operations as P
-from mindspore.common.initializer import Initializer
-
-
-
-class Avginitializer(Initializer):
-    """
-    Initialize the weight to 1/m*n,  (m, n) is the shape of kernel.
-    """
-
-
-    def _initialize(self, arr):
-        arr[:] = 0
-        for i in range(arr.shape[0]):
-            for j in range(arr.shape[2]):
-                for k in range(arr.shape[3]):
-                    arr[i][i][j][k] = 1/(arr.shape[2]*arr.shape[3])
-
 
 class Avgpool(nn.Cell):
-    """
-    Average pooling for temporal data.
-
-    Using a custom initializer to turn conv2d into avgpool2d. The weights won't be trained.
-
-    """
-    def __init__(self, channel, kernel_size, stride=1, pad_mode='same'):
+    """Avgpool"""
+    def __init__(self, kernel_size, stride=1, pad_mode='same'):
         super(Avgpool, self).__init__()
-        self.init = Avginitializer()
-        self.conv = nn.Conv2d(channel, channel, kernel_size,
-                              stride=stride, pad_mode=pad_mode, weight_init=self.init)
-        self.conv.set_train(False)
+        self.avg_pool = nn.AvgPool2d(kernel_size=kernel_size, stride=stride, pad_mode=pad_mode)
 
     def construct(self, x):
-        x = self.conv(x)
+        x = self.avg_pool(x)
         return x
 
 
@@ -141,7 +116,7 @@ class InceptionA(nn.Cell):
             Conv2d(96, 96, 3, stride=1, pad_mode='pad', padding=1, has_bias=False)])
 
         self.branch_3 = nn.SequentialCell([
-            Avgpool(384, kernel_size=3, stride=1, pad_mode='same'),
+            Avgpool(kernel_size=3, stride=1, pad_mode='same'),
             Conv2d(384, 96, 1, stride=1, padding=0, has_bias=False)])
 
         self.concat = P.Concat(1)
@@ -178,7 +153,7 @@ class InceptionB(nn.Cell):
             Conv2d(224, 256, (1, 7), pad_mode='same', stride=1, has_bias=False)
         ])
         self.branch_3 = nn.SequentialCell([
-            Avgpool(in_channels, kernel_size=3, stride=1, pad_mode='same'),
+            Avgpool(kernel_size=3, stride=1, pad_mode='same'),
             Conv2d(in_channels, 128, 1, stride=1, padding=0, has_bias=False)
         ])
         self.concat = P.Concat(1)
@@ -265,7 +240,7 @@ class InceptionC(nn.Cell):
             512, 256, (3, 1), pad_mode='same', stride=1, has_bias=False)
 
         self.branch_3 = nn.SequentialCell([
-            Avgpool(in_channels, kernel_size=3, stride=1, pad_mode='same'),
+            Avgpool(kernel_size=3, stride=1, pad_mode='same'),
             Conv2d(in_channels, 256, 1, stride=1, padding=0, has_bias=False)
         ])
         self.concat0 = P.Concat(1)

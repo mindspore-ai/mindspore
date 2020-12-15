@@ -142,12 +142,12 @@ sh scripts/run_standalone_train_ascend.sh DEVICE_ID DATA_DIR
 Training result will be stored in the example path. Checkpoints will be stored at `ckpt_path` by default, and training log  will be redirected to `./log.txt` like followings.
 
 ```python
-epoch: 1 step: 1251, loss is 5.861846
-Epoch time: 701416.649, per step time: 560.685
-epoch: 2 step: 1251, loss is 4.295785
-Epoch time: 472524.154, per step time: 377.717
-epoch: 3 step: 1251, loss is 3.691987
-Epoch time: 472505.767, per step time: 377.702
+epoch: 1 step: 1251, loss is 5.4833196
+Epoch time: 520274.060, per step time: 415.887
+epoch: 2 step: 1251, loss is 4.093194
+Epoch time: 288520.628, per step time: 230.632
+epoch: 3 step: 1251, loss is 3.6242008
+Epoch time: 288507.506, per step time: 230.622
 ```
 
 ## [Eval process](#contents)
@@ -201,7 +201,7 @@ metric: {'Loss': 0.9849, 'Top1-Acc':0.7985, 'Top5-Acc':0.9460}
 | Outputs                    | probability                                                  |
 | Loss                       | 0.98486                                                      |
 | Accuracy (8p)              | ACC1[79.85%] ACC5[94.60%]                                    |
-| Total time (8p)            | 33h                                                          |
+| Total time (8p)            | 20h                                                          |
 | Params (M)                 | 153M                                                         |
 | Checkpoint for Fine tuning | 2135M                                                        |
 | Scripts                    | [inceptionv4 script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv4) |
@@ -225,11 +225,11 @@ metric: {'Loss': 0.9849, 'Top1-Acc':0.7985, 'Top5-Acc':0.9460}
 
 | **Ascend** | train performance |
 | :--------: | :---------------: |
-|     1p     |     345 img/s     |
+|     1p     |     556 img/s     |
 
 | **Ascend** | train performance |
 | :--------: | :---------------: |
-|     8p     |     2708img/s     |
+|     8p     |     4430 img/s     |
 
 # [Description of Random Situation](#contents)
 
