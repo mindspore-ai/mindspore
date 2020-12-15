@@ -33,7 +33,7 @@ const std::string kPageTypeRaw = "RAW_DATA";
 const std::string kPageTypeBlob = "BLOB_DATA";
 const std::string kPageTypeNewColumn = "NEW_COLUMN_DATA";
 
-class Page {
+class __attribute__((visibility("default"))) Page {
  public:
   Page(const int &page_id, const int &shard_id, const std::string &page_type, const int &page_type_id,
        const uint64_t &start_row_id, const uint64_t end_row_id,

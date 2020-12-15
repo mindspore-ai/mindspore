@@ -31,7 +31,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class ShardHeader {
+class __attribute__((visibility("default"))) ShardHeader {
  public:
   ShardHeader();
 

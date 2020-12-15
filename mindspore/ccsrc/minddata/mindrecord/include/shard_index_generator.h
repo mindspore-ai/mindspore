@@ -32,7 +32,7 @@ namespace mindspore {
 namespace mindrecord {
 using INDEX_FIELDS = std::pair<MSRStatus, std::vector<std::tuple<std::string, std::string, std::string>>>;
 using ROW_DATA = std::pair<MSRStatus, std::vector<std::vector<std::tuple<std::string, std::string, std::string>>>>;
-class ShardIndexGenerator {
+class __attribute__((visibility("default"))) ShardIndexGenerator {
  public:
   explicit ShardIndexGenerator(const std::string &file_path, bool append = false);
 

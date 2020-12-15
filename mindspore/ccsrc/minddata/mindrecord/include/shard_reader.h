@@ -65,7 +65,7 @@ using TASK_RETURN_CONTENT =
   std::pair<MSRStatus, std::pair<TaskType, std::vector<std::tuple<std::vector<uint8_t>, json>>>>;
 const int kNumBatchInMap = 1000;  // iterator buffer size in row-reader mode
 
-class ShardReader {
+class __attribute__((visibility("default"))) ShardReader {
  public:
   ShardReader();
 

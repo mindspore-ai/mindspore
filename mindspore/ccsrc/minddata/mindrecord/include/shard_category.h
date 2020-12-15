@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class ShardCategory : public ShardOperator {
+class __attribute__((visibility("default"))) ShardCategory : public ShardOperator {
  public:
   explicit ShardCategory(const std::vector<std::pair<std::string, std::string>> &categories,
                          int64_t num_elements = std::numeric_limits<int64_t>::max(), bool replacement = false);

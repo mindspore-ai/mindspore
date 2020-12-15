@@ -32,7 +32,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class Statistics {
+class __attribute__((visibility("default"))) Statistics {
  public:
   /// \brief save the statistic and its description
   /// \param[in] desc the statistic's description

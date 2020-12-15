@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class ShardTask {
+class __attribute__((visibility("default"))) ShardTask {
  public:
   ShardTask();
 

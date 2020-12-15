@@ -37,7 +37,7 @@ using std::pair;
 using std::string;
 using std::vector;
 
-class Index {
+class __attribute__((visibility("default"))) Index {
  public:
   Index();
 

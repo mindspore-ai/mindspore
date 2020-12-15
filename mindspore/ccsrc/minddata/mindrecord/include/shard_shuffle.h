@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class ShardShuffle : public ShardOperator {
+class __attribute__((visibility("default"))) ShardShuffle : public ShardOperator {
  public:
   explicit ShardShuffle(uint32_t seed = 0, ShuffleType shuffle_type = kShuffleCategory);
 
