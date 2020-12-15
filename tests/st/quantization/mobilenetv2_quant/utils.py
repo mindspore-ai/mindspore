@@ -45,7 +45,7 @@ class Monitor(Callback):
         self.lr_init = lr_init
         self.lr_init_len = len(lr_init)
         self.step_threshold = step_threshold
-        self.step_mseconds = 0
+        self.step_mseconds = 50000
 
     def epoch_begin(self, run_context):
         self.losses = []
@@ -66,7 +66,8 @@ class Monitor(Callback):
 
     def step_end(self, run_context):
         cb_params = run_context.original_args()
-        self.step_mseconds = (time.time() - self.step_time) * 1000
+        step_mseconds = (time.time() - self.step_time) * 1000
+        self.step_mseconds = min(self.step_mseconds, step_mseconds)
         step_loss = cb_params.net_outputs
 
         if isinstance(step_loss, (tuple, list)) and isinstance(step_loss[0], Tensor):
