@@ -99,8 +99,6 @@ int Pooling::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &in
       attr->format = schema::Format::Format_NUM_OF_FORMAT;
     }
 
-    attr->avgMode = 1;
-
     auto pad_mode = GetValue<std::string>(prim.GetAttr("padding"));
     if (pad_mode == "VALID") {
       attr->padMode = schema::PadMode_VALID;

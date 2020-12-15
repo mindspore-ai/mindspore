@@ -31,7 +31,6 @@ int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
   int output_h = pooling_param->output_h_;
   int out_plane = output_w * output_h;
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
-  int window = win_w * win_h;
 
 #if defined(ENABLE_NEON) || defined(ENABLE_SSE)
   MS_FLOAT32X4 min_value = MS_MOVQ_F32(minf);
@@ -85,9 +84,6 @@ int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
               ++real_count;
             }  // win_w loop
           }    // win_h loop
-          if (pooling_param->avg_mode_ == 1) {
-            real_count = window;
-          }
           if (real_count == 0) {
             return NNACL_ERR;
           }
@@ -128,9 +124,6 @@ int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
               ++real_count;
             }  // win_w loop
           }    // win_h loop
-          if (pooling_param->avg_mode_ == 1) {
-            real_count = window;
-          }
           if (real_count == 0) {
             return NNACL_ERR;
           }
