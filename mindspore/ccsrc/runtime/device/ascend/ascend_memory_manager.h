@@ -31,9 +31,11 @@ class AscendMemoryManager : public MemoryManager {
   void ResetDynamicMemory() override;
   void ClearGlobalIdleMem() override;
   void *MallocMemFromMemPool(size_t size) override;
+  uint64_t GetDeviceMemSize();
+  void MallocSomasDynamicMem(const session::KernelGraph *graph);
 
  protected:
-  uint8_t *MallocStaticMem(size_t size, bool communication_mem) override;
+  uint8_t *MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id = kInvalidGraphId) override;
   uint8_t *MallocDynamicMem(size_t size, bool communication_mem) override;
 
  private:

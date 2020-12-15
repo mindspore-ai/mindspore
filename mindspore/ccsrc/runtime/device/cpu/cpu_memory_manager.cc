@@ -22,7 +22,7 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 
-uint8_t *CPUMemoryManager::MallocStaticMem(size_t size, bool) {
+uint8_t *CPUMemoryManager::MallocStaticMem(size_t size, bool, uint32_t) {
   void *ptr = malloc(size);
   if (ptr != nullptr) {
     memset_s(ptr, size, 0, size);

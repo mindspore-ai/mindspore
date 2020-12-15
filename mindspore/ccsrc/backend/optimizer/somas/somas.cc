@@ -35,6 +35,11 @@
 #include "utils/ms_context.h"
 #include "debug/common.h"
 #include "common/thread_pool.h"
+#include "profiler/device/common/memory_profiling.h"
+
+using mindspore::profiler::MemoryProfiling;
+using mindspore::profiler::NodeMemory;
+using mindspore::profiler::TensorMemory;
 
 namespace mindspore {
 namespace somas {
@@ -48,6 +53,11 @@ std::map<TensorType, std::string> tensor_type_name_map = {{kCommon, "Common"},
                                                           {kRefNodeInput, "RefNodeInput"},
                                                           {kRefNodeOutput, "RefNodeOutput"},
                                                           {kUnknown, "Unknown"}};
+
+std::map<LifeLongType, std::string> life_long_name_map = {{kLifeLongNone, "LifeLongNone"},
+                                                          {kLifeLongGraphAll, "LifeLongGraphAll"},
+                                                          {kLifeLongGraphStart, "LifeLongGraphStart"},
+                                                          {kLifeLongGraphEnd, "LifeLongGraphEnd"}};
 
 bool Somas::Allocate(const session::KernelGraph *graph) {
   auto ret = InitSomasTensors(graph);
@@ -1412,6 +1422,44 @@ uint8_t *Somas::GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const 
     ptr = mem_base_addr_ + workspace_tensor->offset_;
   }
   return ptr;
+}
+
+void Somas::ConvertToProfilingNode(uint32_t graph_id) {
+#ifdef ENABLE_D
+  auto graph_node = MemoryProfiling::GetInstance().GetGraphMemoryNode(graph_id);
+  if (graph_node == nullptr) {
+    graph_node = MemoryProfiling::GetInstance().AddGraphMemoryNode(graph_id);
+    MS_LOG(INFO) << "Add graph memory node for dynamic memory profiling, graph id is " << graph_id;
+  }
+
+  for (const auto &tensor : tensors_list_) {
+    TensorMemory tensor_memory;
+    tensor_memory.SetTensorId(tensor->GetId());
+    tensor_memory.SetAlignedSize(tensor->GetAlignedSize());
+    tensor_memory.SetType(tensor_type_name_map[tensor->type_]);
+    tensor_memory.SetLifeStart(tensor->lifetime_.start_);
+    tensor_memory.SetLifeEnd(tensor->lifetime_.end_);
+    tensor_memory.SetLifeLong(life_long_name_map[tensor->lifelong_value_]);
+    graph_node->AddTensorMemory(tensor_memory);
+  }
+
+  for (const auto &node : nodes_list_) {
+    NodeMemory node_memory;
+    std::string name = GetSplitName(node->scope_full_name_);
+    node_memory.SetNodeName(name);
+    node_memory.SetNodeId(node->GetId());
+    for (const auto &tensor : node->input_tensors_) {
+      node_memory.AddInputTensorId(tensor->GetId());
+    }
+    for (const auto &tensor : node->output_tensors_) {
+      node_memory.AddOutputTensorId(tensor->GetId());
+    }
+    for (const auto &tensor : node->workspace_tensors_) {
+      node_memory.AddWorkSpaceTensorId(tensor->GetId());
+    }
+    graph_node->AddNodeMemory(node_memory);
+  }
+#endif
 }
 }  // namespace somas
 }  // namespace mindspore

@@ -895,4 +895,9 @@ void AscendKernelRuntime::KernelLaunchProfiling(const std::string &kernel_name) 
     MS_LOG(EXCEPTION) << "Too many profiling data";
   }
 }
+
+uint64_t AscendKernelRuntime::GetAvailableMemMaxSize() const {
+  auto ascend_mem_manager = dynamic_pointer_cast<AscendMemoryManager>(mem_manager_);
+  return ascend_mem_manager->GetDeviceMemSize();
+}
 }  // namespace mindspore::device::ascend

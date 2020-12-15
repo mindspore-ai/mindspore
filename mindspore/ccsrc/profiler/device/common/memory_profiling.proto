@@ -1,0 +1,50 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+syntax = "proto3";
+
+package mindspore.profiler;
+
+message MemoryProto {
+  repeated GraphMemProto graph_mem = 1; // memory usage of multiple graphs
+  int64 total_mem = 2; // total allocated device memory
+}
+
+message GraphMemProto {
+  int64 graph_id = 1;  // graph id
+  int64 static_mem = 2; // size of allocated static memory for current graph
+  repeated NodeMemProto node_mems = 3;  // execution nodes
+  repeated TensorMemProto tensor_mems = 4;  // all tensors
+  string fp_start = 5; // node name of fp start
+  string bp_end = 6; // node name of bp end
+}
+
+message NodeMemProto {
+  string node_name = 1;  // node name
+  int64 node_id = 2;  // node id with respect to the execution order
+  repeated int64 input_tensor_id = 3;  // input tensor id
+  repeated int64 output_tensor_id = 4;  // output tensor id
+  repeated int64 workspace_tensor_id = 5;  // workspace tensor id
+}
+
+message TensorMemProto {
+  int64 tensor_id = 1;  // tensor id
+  int64 size = 2;  // aligned tensor size
+  string type = 3;  // tensor type, e.g. Common, OutputOnly
+  int64 life_start = 4;  // the exe node id at which tensor memory allocated
+  int64 life_end = 5;  // the exe node id at which tensor memory deallocated
+  string life_long = 6; // see LifeLongType enum
+}

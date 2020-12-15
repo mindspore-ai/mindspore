@@ -4,12 +4,12 @@ message("build ut testcases...")
 project(ut)
 
 set(PROJECT_DIR "${PROJECT_SOURCE_DIR}/../../..")
-if (ENABLE_DUMP_IR)
+if(ENABLE_DUMP_IR)
     add_compile_definitions(ENABLE_DUMP_IR)
-endif (ENABLE_DUMP_IR)
-if (ENABLE_D)
+endif()
+if(ENABLE_D)
     add_compile_definitions(ENABLE_D)
-endif ()
+endif()
 
 #add python lib and include for all ut executables;
 message("PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
@@ -25,13 +25,13 @@ MESSAGE("check  ut_test ${CMAKE_BINARY_DIR}")
 
 link_directories(${MS_CCSRC_BUILD_PATH})
 
-if (ENABLE_MINDDATA)
+if(ENABLE_MINDDATA)
     add_definitions(-D ENABLE_MINDDATA)
     link_directories(${MS_CCSRC_BUILD_PATH}/minddata/dataset)
     link_directories(${MS_CCSRC_BUILD_PATH}/minddata/mindrecord)
-endif ()
+endif()
 # fetch ut test files
-if (ENABLE_MINDDATA)
+if(ENABLE_MINDDATA)
     include_directories(${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/kernels/image)
     file(GLOB_RECURSE UT_SRCS RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
             ./stub/*.cc
@@ -61,7 +61,7 @@ if (ENABLE_MINDDATA)
             ./cxx_api/*.cc
             )
 
-    if (NOT ENABLE_PYTHON)
+    if(NOT ENABLE_PYTHON)
         set(PYTHON_RELATED_SRCS
                 dataset/filter_op_test.cc
                 dataset/voc_op_test.cc
@@ -69,15 +69,15 @@ if (ENABLE_MINDDATA)
                 dataset/sentence_piece_vocab_op_test.cc
                 )
         list(REMOVE_ITEM UT_SRCS ${PYTHON_RELATED_SRCS})
-    endif ()
-else ()
+    endif()
+else()
     file(GLOB_RECURSE TEMP_UT_SRCS ./*.cc)
-    foreach (OBJ ${TEMP_UT_SRCS})
-        if (NOT ${OBJ} MATCHES "./dataset/" AND NOT ${OBJ} MATCHES "./mindrecord/")
+    foreach(OBJ ${TEMP_UT_SRCS})
+        if(NOT ${OBJ} MATCHES "./dataset/" AND NOT ${OBJ} MATCHES "./mindrecord/")
             list(APPEND UT_SRCS ${OBJ})
-        endif ()
-    endforeach ()
-endif ()
+        endif()
+    endforeach()
+endif()
 
 file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/pybind_api/*.cc"
@@ -133,9 +133,11 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "../../../mindspore/ccsrc/transform/graph_ir/*.cc"
         "../../../mindspore/ccsrc/transform/graph_ir/op_declare/*.cc"
         "../../../mindspore/ccsrc/ps/*.cc"
+        "../../../mindspore/ccsrc/profiler/device/common/*.cc"
         )
 
-list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
+list(REMOVE_ITEM MINDSPORE_SRC_LIST
+  "../../../mindspore/ccsrc/frontend/parallel/strategy_checkpoint/parallel_strategy_checkpoint.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ps/util.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ps/scheduler.cc")
 list(REMOVE_ITEM MINDSPORE_SRC_LIST "../../../mindspore/ccsrc/ps/optimizer_info.cc")
@@ -154,31 +156,32 @@ add_dependencies(_ut_ut_obj engine-cache-server)
 add_executable(ut_tests $<TARGET_OBJECTS:_ut_ut_obj>
         $<TARGET_OBJECTS:_ut_mindspore_obj>)
 
-if (ENABLE_GE)
-    if (ENABLE_TRAIN)
+if(ENABLE_GE)
+    if(ENABLE_TRAIN)
         target_link_libraries(ut_tests PRIVATE graph ge_runner)
-    else ()
+    else()
         target_link_libraries(ut_tests PRIVATE graph ge_client)
-    endif ()
+    endif()
 
     target_link_libraries(mindspore PRIVATE tsdclient)
-endif ()
+endif()
 
-if (CMAKE_SYSTEM_NAME MATCHES "Linux")
-    target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore::event mindspore::event_pthreads mindspore_gvar ${PYTHON_LIBRARIES} pthread util dl)
-    if (ENABLE_MINDDATA)
+if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore::event mindspore::event_pthreads
+                          mindspore_gvar ${PYTHON_LIBRARIES} pthread util dl)
+    if(ENABLE_MINDDATA)
 
         # AUX_SOURCE_DIRECTORY(LITE_CV_FILES)
         # message(STATUS "xxxxxxxxxxxxxxxxx"${LITE_CV_FILES} )
         # add_library(_live_cv OBJECT ${LITE_CV_FILES})
 
         target_link_libraries(ut_tests PRIVATE _c_dataengine _c_mindrecord)
-    endif ()
-else ()
+    endif()
+else()
     target_link_libraries(ut_tests PRIVATE mindspore::gtest mindspore_gvar ${PYTHON_LIBRARIES})
-endif ()
-if (USE_GLOG)
+endif()
+if(USE_GLOG)
     target_link_libraries(ut_tests PRIVATE mindspore::glog)
-endif ()
+endif()
 
 target_link_libraries(ut_tests PRIVATE mindspore mindspore_shared_lib securec graph)

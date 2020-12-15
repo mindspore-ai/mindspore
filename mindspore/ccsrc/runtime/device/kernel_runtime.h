@@ -100,6 +100,7 @@ class KernelRuntime {
   }
 
   virtual void PreInit() {}
+  virtual uint64_t GetAvailableMemMaxSize() const { return 0; }
 
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,

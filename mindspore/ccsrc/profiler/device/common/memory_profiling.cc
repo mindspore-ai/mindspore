@@ -1,0 +1,97 @@
+/**
+ * Copyright 2021 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "profiler/device/common/memory_profiling.h"
+#include <fstream>
+#include <memory>
+#include "utils/log_adapter.h"
+#include "utils/ms_context.h"
+
+namespace mindspore {
+namespace profiler {
+
+std::shared_ptr<GraphMemory> MemoryProfiling::AddGraphMemoryNode(uint32_t graph_id) {
+  std::shared_ptr<GraphMemory> node = std::make_shared<GraphMemory>(graph_id);
+  graph_memory_[graph_id] = node;
+  return node;
+}
+
+std::shared_ptr<GraphMemory> MemoryProfiling::GetGraphMemoryNode(uint32_t graph_id) {
+  auto node = graph_memory_.find(graph_id);
+  if (node != graph_memory_.end()) {
+    return node->second;
+  }
+
+  return nullptr;
+}
+
+void MemoryProfiling::MemoryToPB() {
+  memory_proto_.set_total_mem(device_mem_size_);
+  for (const auto &graph : graph_memory_) {
+    GraphMemProto *graph_proto = memory_proto_.add_graph_mem();
+    graph_proto->set_graph_id(graph.second->GetGraphId());
+    graph_proto->set_static_mem(graph.second->GetStaticMemSize());
+    // node memory to PB
+    for (const auto &node : graph.second->GetNodeMemory()) {
+      NodeMemProto *node_mem = graph_proto->add_node_mems();
+      node_mem->set_node_name(node.GetNodeName());
+      node_mem->set_node_id(node.GetNodeId());
+      for (const auto &id : node.GetInputTensorId()) {
+        node_mem->add_input_tensor_id(id);
+      }
+      for (const auto &id : node.GetOutputTensorId()) {
+        node_mem->add_output_tensor_id(id);
+      }
+      for (const auto &id : node.GetOutputTensorId()) {
+        node_mem->add_workspace_tensor_id(id);
+      }
+    }
+    // tensor memory to PB
+    for (const auto &node : graph.second->GetTensorMemory()) {
+      TensorMemProto *tensor_mem = graph_proto->add_tensor_mems();
+      tensor_mem->set_tensor_id(node.GetTensorId());
+      tensor_mem->set_size(node.GetAlignedSize());
+      std::string type = node.GetType();
+      tensor_mem->set_type(type);
+      tensor_mem->set_life_start(node.GetLifeStart());
+      tensor_mem->set_life_end(node.GetLifeEnd());
+      std::string life_long = node.GetLifeLong();
+      tensor_mem->set_life_long(life_long);
+    }
+  }
+  MS_LOG(INFO) << "Memory profiling data to PB end";
+  return;
+}
+
+void MemoryProfiling::SaveMemoryProfiling() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  std::string dir_path = context->get_param<std::string>(MS_CTX_PROFILING_DIR_PATH);
+  auto device_id = context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  std::string file = dir_path + std::string("/memory_usage_") + std::to_string(device_id) + std::string(".pb");
+
+  MemoryToPB();
+
+  std::fstream handle(file, std::ios::out | std::ios::trunc | std::ios::binary);
+  if (!memory_proto_.SerializeToOstream(&handle)) {
+    MS_LOG(ERROR) << "Save memory profiling data to file failed";
+  }
+  handle.close();
+  MS_LOG(INFO) << "Start save memory profiling data to " << file << " end";
+  return;
+}
+}  // namespace profiler
+}  // namespace mindspore

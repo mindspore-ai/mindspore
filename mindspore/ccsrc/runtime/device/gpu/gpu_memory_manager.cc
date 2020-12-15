@@ -101,7 +101,7 @@ void GPUMemoryManager::FreeDeviceMemory() {
   GPUMemoryAllocator::GetInstance().ReleaseDeviceRes();
 }
 
-uint8_t *GPUMemoryManager::MallocStaticMem(size_t size, bool) {
+uint8_t *GPUMemoryManager::MallocStaticMem(size_t size, bool, uint32_t) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   if (context_ptr->get_param<bool>(MS_CTX_ENABLE_DYNAMIC_MEM_POOL)) {
