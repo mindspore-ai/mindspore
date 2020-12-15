@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/winograd_transform.h"
+#include "nnacl/op_base.h"
 
 // fp32 conv winograd
 void WinogradInputTransform(const float *input_data, float *trans_input, float *tmp_data, int cal_num,
@@ -61,8 +62,8 @@ void WinogradInputTransform(const float *input_data, float *trans_input, float *
             int dst_x_offset = dst_y_offset + j * C4NUM;
             float *src_addr = (float *)(input_data) + src_x_offset;
             float *dst_addr = tmp_data + dst_x_offset;
-#ifdef ENABLE_NEON
-            vst1q_f32(dst_addr, vld1q_f32(src_addr));
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+            MS_STQ_F32(dst_addr, MS_LDQ_F32(src_addr));
 #else
             for (int k = 0; k < C4NUM; k++) {
               dst_addr[k] = src_addr[k];

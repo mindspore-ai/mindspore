@@ -118,21 +118,21 @@ void GeneralOutputTransformUnit(const float *src_data, float *dst_data, const fl
   if (src_len > MAX_LEN) {
     return;
   }
-#ifdef ENABLE_ARM
-  float32x4_t src[MAX_LEN];
-  float32x4_t t[MAX_LEN];
-  float32x4_t m[MAX_LEN];
-  float32x4_t vec_a[MAX_LEN];
-  float32x4_t vec_at[MAX_LEN];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[MAX_LEN];
+  MS_FLOAT32X4 t[MAX_LEN];
+  MS_FLOAT32X4 m[MAX_LEN];
+  MS_FLOAT32X4 vec_a[MAX_LEN];
+  MS_FLOAT32X4 vec_at[MAX_LEN];
   int tmp_len = in_unit * out_unit;
   if (tmp_len > MAX_LEN) return;
 
   for (int i = 0; i < tmp_len; i++) {
-    vec_a[i] = vdupq_n_f32(matrix_a[i]);
-    vec_at[i] = vdupq_n_f32(matrix_at[i]);
+    vec_a[i] = MS_MOVQ_F32(matrix_a[i]);
+    vec_at[i] = MS_MOVQ_F32(matrix_at[i]);
   }
   for (int i = 0; i < src_len; i++) {
-    src[i] = vld1q_f32(src_data + i * src_step);
+    src[i] = MS_LDQ_F32(src_data + i * src_step);
   }
   MatrixMultiplyVec(vec_at, src, t, NULL, out_unit, in_unit, in_unit);
   MatrixMultiplyVec(t, vec_a, m, bias_data, out_unit, in_unit, out_unit);
@@ -141,7 +141,7 @@ void GeneralOutputTransformUnit(const float *src_data, float *dst_data, const fl
     int dst_k_offset = i * dst_step * C4NUM;
     int m_k_offset = i * out_unit;
     for (int j = 0; j < out_unit; j++) {
-      vst1q_f32(dst_data + dst_k_offset + j * C4NUM, m[m_k_offset + j]);
+      MS_STQ_F32(dst_data + dst_k_offset + j * C4NUM, m[m_k_offset + j]);
     }
   }
 #else
@@ -172,28 +172,28 @@ void GeneralOutputTransformUnit(const float *src_data, float *dst_data, const fl
 InputTransFunc GetInputTransFunc(int input_unit) { return InputTransFuncList[input_unit]; }
 
 void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c) {
-#ifdef ENABLE_ARM
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   if (real_c == 4) {
-    float32x4_t src[16];
-    float32x4_t t[16];
-    float32x4_t m[16];
+    MS_FLOAT32X4 src[16];
+    MS_FLOAT32X4 t[16];
+    MS_FLOAT32X4 m[16];
     Load16Data;
     for (int l = 0; l < 4; ++l) {
       int offset = l * 4;
-      t[l] = vsubq_f32(src[offset], src[2 + offset]);
-      t[4 + l] = vaddq_f32(src[1 + offset], src[2 + offset]);
-      t[8 + l] = vsubq_f32(src[2 + offset], src[1 + offset]);
-      t[12 + l] = vsubq_f32(src[3 + offset], src[1 + offset]);
+      t[l] = MS_SUBQ_F32(src[offset], src[2 + offset]);
+      t[4 + l] = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+      t[8 + l] = MS_SUBQ_F32(src[2 + offset], src[1 + offset]);
+      t[12 + l] = MS_SUBQ_F32(src[3 + offset], src[1 + offset]);
     }
     for (int l = 0; l < 4; ++l) {
       int offset = l * 4;
-      m[l] = vsubq_f32(t[offset], t[2 + offset]);
-      m[4 + l] = vaddq_f32(t[1 + offset], t[2 + offset]);
-      m[8 + l] = vsubq_f32(t[2 + offset], t[1 + offset]);
-      m[12 + l] = vsubq_f32(t[3 + offset], t[1 + offset]);
+      m[l] = MS_SUBQ_F32(t[offset], t[2 + offset]);
+      m[4 + l] = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+      m[8 + l] = MS_SUBQ_F32(t[2 + offset], t[1 + offset]);
+      m[12 + l] = MS_SUBQ_F32(t[3 + offset], t[1 + offset]);
     }
     for (int i = 0; i < 16; i++) {
-      vst1q_f32(dst_data + i * dst_step, m[i]);
+      MS_STQ_F32(dst_data + i * dst_step, m[i]);
     }
   } else {
 #endif
@@ -222,47 +222,47 @@ void InputTransform4x4Unit(const float *src_data, float *dst_data, int src_step,
         dst_data[i + k * dst_step] = m[k];
       }
     }
-#ifdef ENABLE_ARM
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   }
 #endif
 }
 
 void InputTransform6x6Unit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c) {
-#ifdef ENABLE_ARM
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   if (real_c == 4) {
-    float32x4_t src[36];
-    float32x4_t t[36];
-    float32x4_t m[36];
+    MS_FLOAT32X4 src[36];
+    MS_FLOAT32X4 t[36];
+    MS_FLOAT32X4 m[36];
     Load36Data;
     for (int l = 0; l < 6; ++l) {
       int offset = l * 6;
-      float32x4_t tmp1 = vsubq_f32(src[3 + offset], src[1 + offset]);
-      float32x4_t tmp2 = vsubq_f32(src[4 + offset], src[2 + offset]);
-      t[l] = vaddq_f32(vsubq_f32(vmulq_n_f32(src[offset], 4), vmulq_n_f32(src[2 + offset], 5)), src[4 + offset]);
-      t[6 + l] = vaddq_f32(vmulq_n_f32(vaddq_f32(src[1 + offset], src[2 + offset]), -4),
-                           vaddq_f32(src[3 + offset], src[4 + offset]));
-      t[12 + l] = vaddq_f32(vmulq_n_f32(vsubq_f32(src[1 + offset], src[2 + offset]), 4),
-                            vsubq_f32(src[4 + offset], src[3 + offset]));
-      t[18 + l] = vaddq_f32(vmulq_n_f32(tmp1, 2), tmp2);
-      t[24 + l] = vaddq_f32(vmulq_n_f32(tmp1, -2), tmp2);
+      MS_FLOAT32X4 tmp1 = MS_SUBQ_F32(src[3 + offset], src[1 + offset]);
+      MS_FLOAT32X4 tmp2 = MS_SUBQ_F32(src[4 + offset], src[2 + offset]);
+      t[l] = MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_F32(src[offset], 4), MS_MULQ_F32(src[2 + offset], 5)), src[4 + offset]);
+      t[6 + l] = MS_ADDQ_F32(MS_MULQ_F32(MS_ADDQ_F32(src[1 + offset], src[2 + offset]), -4),
+                             MS_ADDQ_F32(src[3 + offset], src[4 + offset]));
+      t[12 + l] = MS_ADDQ_F32(MS_MULQ_F32(MS_SUBQ_F32(src[1 + offset], src[2 + offset]), 4),
+                              MS_SUBQ_F32(src[4 + offset], src[3 + offset]));
+      t[18 + l] = MS_ADDQ_F32(MS_MULQ_F32(tmp1, 2), tmp2);
+      t[24 + l] = MS_ADDQ_F32(MS_MULQ_F32(tmp1, -2), tmp2);
       t[30 + l] =
-        vaddq_f32(vsubq_f32(vmulq_n_f32(src[1 + offset], 4), vmulq_n_f32(src[3 + offset], 5)), src[5 + offset]);
+        MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_F32(src[1 + offset], 4), MS_MULQ_F32(src[3 + offset], 5)), src[5 + offset]);
     }
     for (int l = 0; l < 6; ++l) {
       int offset = l * 6;
-      float32x4_t tmp1 = vsubq_f32(t[3 + offset], t[1 + offset]);
-      float32x4_t tmp2 = vsubq_f32(t[4 + offset], t[2 + offset]);
-      m[l] = vaddq_f32(vsubq_f32(vmulq_n_f32(t[offset], 4), vmulq_n_f32(t[2 + offset], 5)), t[4 + offset]);
-      m[6 + l] =
-        vaddq_f32(vmulq_n_f32(vaddq_f32(t[1 + offset], t[2 + offset]), -4), vaddq_f32(t[3 + offset], t[4 + offset]));
-      m[12 + l] =
-        vaddq_f32(vmulq_n_f32(vsubq_f32(t[1 + offset], t[2 + offset]), 4), vsubq_f32(t[4 + offset], t[3 + offset]));
-      m[18 + l] = vaddq_f32(vmulq_n_f32(tmp1, 2), tmp2);
-      m[24 + l] = vaddq_f32(vmulq_n_f32(tmp1, -2), tmp2);
-      m[30 + l] = vaddq_f32(vsubq_f32(vmulq_n_f32(t[1 + offset], 4), vmulq_n_f32(t[3 + offset], 5)), t[5 + offset]);
+      MS_FLOAT32X4 tmp1 = MS_SUBQ_F32(t[3 + offset], t[1 + offset]);
+      MS_FLOAT32X4 tmp2 = MS_SUBQ_F32(t[4 + offset], t[2 + offset]);
+      m[l] = MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_F32(t[offset], 4), MS_MULQ_F32(t[2 + offset], 5)), t[4 + offset]);
+      m[6 + l] = MS_ADDQ_F32(MS_MULQ_F32(MS_ADDQ_F32(t[1 + offset], t[2 + offset]), -4),
+                             MS_ADDQ_F32(t[3 + offset], t[4 + offset]));
+      m[12 + l] = MS_ADDQ_F32(MS_MULQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]), 4),
+                              MS_SUBQ_F32(t[4 + offset], t[3 + offset]));
+      m[18 + l] = MS_ADDQ_F32(MS_MULQ_F32(tmp1, 2), tmp2);
+      m[24 + l] = MS_ADDQ_F32(MS_MULQ_F32(tmp1, -2), tmp2);
+      m[30 + l] = MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_F32(t[1 + offset], 4), MS_MULQ_F32(t[3 + offset], 5)), t[5 + offset]);
     }
     for (int i = 0; i < 36; i++) {
-      vst1q_f32(dst_data + i * dst_step, m[i]);
+      MS_STQ_F32(dst_data + i * dst_step, m[i]);
     }
   } else {
 #endif
@@ -299,64 +299,69 @@ void InputTransform6x6Unit(const float *src_data, float *dst_data, int src_step,
         dst_data[i + k * dst_step] = m[k];
       }
     }
-#ifdef ENABLE_ARM
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   }
 #endif
 }
 
 void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step, int dst_step, int real_c) {
-#ifdef ENABLE_ARM
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   if (real_c == 4) {
-    float32x4_t src[64];
-    float32x4_t t[64];
-    float32x4_t m[64];
+    MS_FLOAT32X4 src[64];
+    MS_FLOAT32X4 t[64];
+    MS_FLOAT32X4 m[64];
     Load64Data;
     for (int l = 0; l < 8; ++l) {
       int offset = l * 8;
-      t[l] = vsubq_f32(vaddq_f32(vsubq_f32(vmulq_n_f32(src[offset], 0.5625), vmulq_n_f32(src[2 + offset], 3.0625)),
-                                 vmulq_n_f32(src[4 + offset], 3.5)),
-                       src[6 + offset]);
-      float32x4_t tmp1 = vaddq_f32(vmulq_n_f32(src[1 + offset], 1.125), vmulq_n_f32(src[5 + offset], 0.5));
-      float32x4_t tmp2 = vsubq_f32(vmulq_n_f32(src[2 + offset], 2.25), vmulq_n_f32(src[4 + offset], 3.25));
-      t[8 + l] = vaddq_f32(vsubq_f32(vaddq_f32(tmp1, tmp2), vmulq_n_f32(src[3 + offset], 1.625)), src[6 + offset]);
-      t[16 + l] = vaddq_f32(vaddq_f32(vsubq_f32(tmp2, tmp1), vmulq_n_f32(src[3 + offset], 1.625)), src[6 + offset]);
-      tmp1 = vaddq_f32(vmulq_n_f32(src[1 + offset], 0.5625), src[5 + offset]);
-      tmp2 = vsubq_f32(vmulq_n_f32(src[2 + offset], 0.5625), vmulq_n_f32(src[4 + offset], 2.5));
-      t[24 + l] = vaddq_f32(vsubq_f32(vaddq_f32(tmp1, tmp2), vmulq_n_f32(src[3 + offset], 2.5)), src[6 + offset]);
-      t[32 + l] = vaddq_f32(vaddq_f32(vsubq_f32(tmp2, tmp1), vmulq_n_f32(src[3 + offset], 2.5)), src[6 + offset]);
-      tmp1 = vaddq_f32(vmulq_n_f32(src[1 + offset], 0.375), vmulq_n_f32(src[5 + offset], 1.5));
-      tmp2 = vsubq_f32(vmulq_n_f32(src[2 + offset], 0.25), vmulq_n_f32(src[4 + offset], 1.25));
-      t[40 + l] = vaddq_f32(vsubq_f32(vaddq_f32(tmp1, tmp2), vmulq_n_f32(src[3 + offset], 1.875)), src[6 + offset]);
-      t[48 + l] = vaddq_f32(vaddq_f32(vsubq_f32(tmp2, tmp1), vmulq_n_f32(src[3 + offset], 1.875)), src[6 + offset]);
-      t[56 + l] =
-        vaddq_f32(vsubq_f32(vaddq_f32(vmulq_n_f32(src[1 + offset], -0.5625), vmulq_n_f32(src[3 + offset], 3.0625)),
-                            vmulq_n_f32(src[5 + offset], 3.5)),
-                  src[7 + offset]);
+      t[l] =
+        MS_SUBQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_F32(src[offset], 0.5625), MS_MULQ_F32(src[2 + offset], 3.0625)),
+                                MS_MULQ_F32(src[4 + offset], 3.5)),
+                    src[6 + offset]);
+      MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(MS_MULQ_F32(src[1 + offset], 1.125), MS_MULQ_F32(src[5 + offset], 0.5));
+      MS_FLOAT32X4 tmp2 = MS_SUBQ_F32(MS_MULQ_F32(src[2 + offset], 2.25), MS_MULQ_F32(src[4 + offset], 3.25));
+      t[8 + l] =
+        MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp1, tmp2), MS_MULQ_F32(src[3 + offset], 1.625)), src[6 + offset]);
+      t[16 + l] =
+        MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp2, tmp1), MS_MULQ_F32(src[3 + offset], 1.625)), src[6 + offset]);
+      tmp1 = MS_ADDQ_F32(MS_MULQ_F32(src[1 + offset], 0.5625), src[5 + offset]);
+      tmp2 = MS_SUBQ_F32(MS_MULQ_F32(src[2 + offset], 0.5625), MS_MULQ_F32(src[4 + offset], 2.5));
+      t[24 + l] = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp1, tmp2), MS_MULQ_F32(src[3 + offset], 2.5)), src[6 + offset]);
+      t[32 + l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp2, tmp1), MS_MULQ_F32(src[3 + offset], 2.5)), src[6 + offset]);
+      tmp1 = MS_ADDQ_F32(MS_MULQ_F32(src[1 + offset], 0.375), MS_MULQ_F32(src[5 + offset], 1.5));
+      tmp2 = MS_SUBQ_F32(MS_MULQ_F32(src[2 + offset], 0.25), MS_MULQ_F32(src[4 + offset], 1.25));
+      t[40 + l] =
+        MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp1, tmp2), MS_MULQ_F32(src[3 + offset], 1.875)), src[6 + offset]);
+      t[48 + l] =
+        MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp2, tmp1), MS_MULQ_F32(src[3 + offset], 1.875)), src[6 + offset]);
+      t[56 + l] = MS_ADDQ_F32(
+        MS_SUBQ_F32(MS_ADDQ_F32(MS_MULQ_F32(src[1 + offset], -0.5625), MS_MULQ_F32(src[3 + offset], 3.0625)),
+                    MS_MULQ_F32(src[5 + offset], 3.5)),
+        src[7 + offset]);
     }
     for (int l = 0; l < 8; ++l) {
       int offset = l * 8;
-      m[l] = vsubq_f32(vaddq_f32(vsubq_f32(vmulq_n_f32(t[offset], 0.5625), vmulq_n_f32(t[2 + offset], 3.0625)),
-                                 vmulq_n_f32(t[4 + offset], 3.5)),
-                       t[6 + offset]);
-      float32x4_t tmp1 = vaddq_f32(vmulq_n_f32(t[1 + offset], 1.125), vmulq_n_f32(t[5 + offset], 0.5));
-      float32x4_t tmp2 = vsubq_f32(vmulq_n_f32(t[2 + offset], 2.25), vmulq_n_f32(t[4 + offset], 3.25));
-      m[8 + l] = vaddq_f32(vsubq_f32(vaddq_f32(tmp1, tmp2), vmulq_n_f32(t[3 + offset], 1.625)), t[6 + offset]);
-      m[16 + l] = vaddq_f32(vaddq_f32(vsubq_f32(tmp2, tmp1), vmulq_n_f32(t[3 + offset], 1.625)), t[6 + offset]);
-      tmp1 = vaddq_f32(vmulq_n_f32(t[1 + offset], 0.5625), t[5 + offset]);
-      tmp2 = vsubq_f32(vmulq_n_f32(t[2 + offset], 0.5625), vmulq_n_f32(t[4 + offset], 2.5));
-      m[24 + l] = vaddq_f32(vsubq_f32(vaddq_f32(tmp1, tmp2), vmulq_n_f32(t[3 + offset], 2.5)), t[6 + offset]);
-      m[32 + l] = vaddq_f32(vaddq_f32(vsubq_f32(tmp2, tmp1), vmulq_n_f32(t[3 + offset], 2.5)), t[6 + offset]);
-      tmp1 = vaddq_f32(vmulq_n_f32(t[1 + offset], 0.375), vmulq_n_f32(t[5 + offset], 1.5));
-      tmp2 = vsubq_f32(vmulq_n_f32(t[2 + offset], 0.25), vmulq_n_f32(t[4 + offset], 1.25));
-      m[40 + l] = vaddq_f32(vsubq_f32(vaddq_f32(tmp1, tmp2), vmulq_n_f32(t[3 + offset], 1.875)), t[6 + offset]);
-      m[48 + l] = vaddq_f32(vaddq_f32(vsubq_f32(tmp2, tmp1), vmulq_n_f32(t[3 + offset], 1.875)), t[6 + offset]);
+      m[l] = MS_SUBQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(MS_MULQ_F32(t[offset], 0.5625), MS_MULQ_F32(t[2 + offset], 3.0625)),
+                                     MS_MULQ_F32(t[4 + offset], 3.5)),
+                         t[6 + offset]);
+      MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(MS_MULQ_F32(t[1 + offset], 1.125), MS_MULQ_F32(t[5 + offset], 0.5));
+      MS_FLOAT32X4 tmp2 = MS_SUBQ_F32(MS_MULQ_F32(t[2 + offset], 2.25), MS_MULQ_F32(t[4 + offset], 3.25));
+      m[8 + l] = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp1, tmp2), MS_MULQ_F32(t[3 + offset], 1.625)), t[6 + offset]);
+      m[16 + l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp2, tmp1), MS_MULQ_F32(t[3 + offset], 1.625)), t[6 + offset]);
+      tmp1 = MS_ADDQ_F32(MS_MULQ_F32(t[1 + offset], 0.5625), t[5 + offset]);
+      tmp2 = MS_SUBQ_F32(MS_MULQ_F32(t[2 + offset], 0.5625), MS_MULQ_F32(t[4 + offset], 2.5));
+      m[24 + l] = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp1, tmp2), MS_MULQ_F32(t[3 + offset], 2.5)), t[6 + offset]);
+      m[32 + l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp2, tmp1), MS_MULQ_F32(t[3 + offset], 2.5)), t[6 + offset]);
+      tmp1 = MS_ADDQ_F32(MS_MULQ_F32(t[1 + offset], 0.375), MS_MULQ_F32(t[5 + offset], 1.5));
+      tmp2 = MS_SUBQ_F32(MS_MULQ_F32(t[2 + offset], 0.25), MS_MULQ_F32(t[4 + offset], 1.25));
+      m[40 + l] = MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(tmp1, tmp2), MS_MULQ_F32(t[3 + offset], 1.875)), t[6 + offset]);
+      m[48 + l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(tmp2, tmp1), MS_MULQ_F32(t[3 + offset], 1.875)), t[6 + offset]);
       m[56 + l] =
-        vaddq_f32(vsubq_f32(vaddq_f32(vmulq_n_f32(t[1 + offset], -0.5625), vmulq_n_f32(t[3 + offset], 3.0625)),
-                            vmulq_n_f32(t[5 + offset], 3.5)),
-                  t[7 + offset]);
+        MS_ADDQ_F32(MS_SUBQ_F32(MS_ADDQ_F32(MS_MULQ_F32(t[1 + offset], -0.5625), MS_MULQ_F32(t[3 + offset], 3.0625)),
+                                MS_MULQ_F32(t[5 + offset], 3.5)),
+                    t[7 + offset]);
     }
     for (int i = 0; i < 64; i++) {
-      vst1q_f32(dst_data + i * dst_step, m[i]);
+      MS_STQ_F32(dst_data + i * dst_step, m[i]);
     }
   } else {
 #endif
@@ -405,7 +410,7 @@ void InputTransform8x8Unit(const float *src_data, float *dst_data, int src_step,
         dst_data[i + k * dst_step] = m[k];
       }
     }
-#ifdef ENABLE_ARM
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
   }
 #endif
 }
@@ -442,21 +447,21 @@ OutputTransFunc GetOutputTransFunc(int input_unit, int output_unit, ActType act_
 
 void OutputTransform4x2Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[16];
-  float32x4_t t[8];
-  float32x4_t m[4];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[16];
+  MS_FLOAT32X4 t[8];
+  MS_FLOAT32X4 m[4];
   Load16Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 4; ++l) {
     int offset = l * 4;
-    t[l] = vaddq_f32(vaddq_f32(src[offset], src[1 + offset]), src[2 + offset]);
-    t[l + 4] = vaddq_f32(vsubq_f32(src[1 + offset], src[2 + offset]), src[3 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], src[1 + offset]), src[2 + offset]);
+    t[l + 4] = MS_ADDQ_F32(MS_SUBQ_F32(src[1 + offset], src[2 + offset]), src[3 + offset]);
   }
   for (int l = 0; l < 2; ++l) {
     int offset = l * 4;
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], t[1 + offset]), t[2 + offset]), bias_ptr);
-    m[l + 2] = vaddq_f32(vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]), t[3 + offset]), bias_ptr);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], t[1 + offset]), t[2 + offset]), bias_ptr);
+    m[l + 2] = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]), t[3 + offset]), bias_ptr);
   }
   if (r_c == C4NUM && r_h == 2 && r_w == 2) {
     Store4Data;
@@ -504,24 +509,24 @@ void OutputTransform4x2Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform4x2ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[16];
-  float32x4_t t[8];
-  float32x4_t m[4];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[16];
+  MS_FLOAT32X4 t[8];
+  MS_FLOAT32X4 m[4];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load16Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 4; ++l) {
     int offset = l * 4;
-    t[l] = vaddq_f32(vaddq_f32(src[offset], src[1 + offset]), src[2 + offset]);
-    t[l + 4] = vaddq_f32(vsubq_f32(src[1 + offset], src[2 + offset]), src[3 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], src[1 + offset]), src[2 + offset]);
+    t[l + 4] = MS_ADDQ_F32(MS_SUBQ_F32(src[1 + offset], src[2 + offset]), src[3 + offset]);
   }
   for (int l = 0; l < 2; ++l) {
     int offset = l * 4;
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], t[1 + offset]), t[2 + offset]), bias_ptr);
-    m[l + 2] = vaddq_f32(vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]), t[3 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 2] = vmaxq_f32(zero, m[l + 2]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], t[1 + offset]), t[2 + offset]), bias_ptr);
+    m[l + 2] = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]), t[3 + offset]), bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 2] = MS_MAXQ_F32(zero, m[l + 2]);
   }
   if (r_c == C4NUM && r_h == 2 && r_w == 2) {
     Store4Data;
@@ -571,27 +576,27 @@ void OutputTransform4x2ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform4x2Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[16];
-  float32x4_t t[8];
-  float32x4_t m[4];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[16];
+  MS_FLOAT32X4 t[8];
+  MS_FLOAT32X4 m[4];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load16Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 4; ++l) {
     int offset = l * 4;
-    t[l] = vaddq_f32(vaddq_f32(src[offset], src[1 + offset]), src[2 + offset]);
-    t[l + 4] = vaddq_f32(vsubq_f32(src[1 + offset], src[2 + offset]), src[3 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], src[1 + offset]), src[2 + offset]);
+    t[l + 4] = MS_ADDQ_F32(MS_SUBQ_F32(src[1 + offset], src[2 + offset]), src[3 + offset]);
   }
   for (int l = 0; l < 2; ++l) {
     int offset = l * 4;
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], t[1 + offset]), t[2 + offset]), bias_ptr);
-    m[l + 2] = vaddq_f32(vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]), t[3 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 2] = vmaxq_f32(zero, m[l + 2]);
-    m[l + 2] = vminq_f32(six, m[l + 2]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], t[1 + offset]), t[2 + offset]), bias_ptr);
+    m[l + 2] = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]), t[3 + offset]), bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 2] = MS_MAXQ_F32(zero, m[l + 2]);
+    m[l + 2] = MS_MINQ_F32(six, m[l + 2]);
   }
   if (r_c == C4NUM && r_h == 2 && r_w == 2) {
     Store4Data;
@@ -642,25 +647,25 @@ void OutputTransform4x2Relu6Unit(const float *src_data, float *dst_data, const f
 
 void OutputTransform4x3Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[16];
-  float32x4_t t[12];
-  float32x4_t m[9];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[16];
+  MS_FLOAT32X4 t[12];
+  MS_FLOAT32X4 m[9];
   Load16Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 4; ++l) {
     int offset = l * 4;
-    float32x4_t tmp = vaddq_f32(src[1 + offset], src[2 + offset]);
-    t[l] = vaddq_f32(src[offset], tmp);
-    t[l + 4] = vsubq_f32(src[1 + offset], src[2 + offset]);
-    t[l + 8] = vaddq_f32(tmp, src[3 + offset]);
+    MS_FLOAT32X4 tmp = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    t[l] = MS_ADDQ_F32(src[offset], tmp);
+    t[l + 4] = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    t[l + 8] = MS_ADDQ_F32(tmp, src[3 + offset]);
   }
   for (int l = 0; l < 3; ++l) {
     int offset = l * 4;
-    float32x4_t tmp = vaddq_f32(t[1 + offset], t[2 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(t[offset], tmp), bias_ptr);
-    m[l + 3] = vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]), bias_ptr);
-    m[l + 6] = vaddq_f32(vaddq_f32(tmp, t[3 + offset]), bias_ptr);
+    MS_FLOAT32X4 tmp = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp), bias_ptr);
+    m[l + 3] = MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]), bias_ptr);
+    m[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(tmp, t[3 + offset]), bias_ptr);
   }
   if (r_c == C4NUM && r_h == 3 && r_w == 3) {
     Store9Data;
@@ -710,29 +715,29 @@ void OutputTransform4x3Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform4x3ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[16];
-  float32x4_t t[12];
-  float32x4_t m[9];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[16];
+  MS_FLOAT32X4 t[12];
+  MS_FLOAT32X4 m[9];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load16Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 4; ++l) {
     int offset = l * 4;
-    float32x4_t tmp = vaddq_f32(src[1 + offset], src[2 + offset]);
-    t[l] = vaddq_f32(src[offset], tmp);
-    t[l + 4] = vsubq_f32(src[1 + offset], src[2 + offset]);
-    t[l + 8] = vaddq_f32(tmp, src[3 + offset]);
+    MS_FLOAT32X4 tmp = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    t[l] = MS_ADDQ_F32(src[offset], tmp);
+    t[l + 4] = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    t[l + 8] = MS_ADDQ_F32(tmp, src[3 + offset]);
   }
   for (int l = 0; l < 3; ++l) {
     int offset = l * 4;
-    float32x4_t tmp = vaddq_f32(t[1 + offset], t[2 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(t[offset], tmp), bias_ptr);
-    m[l + 3] = vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]), bias_ptr);
-    m[l + 6] = vaddq_f32(vaddq_f32(tmp, t[3 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 3] = vmaxq_f32(zero, m[l + 3]);
-    m[l + 6] = vmaxq_f32(zero, m[l + 6]);
+    MS_FLOAT32X4 tmp = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp), bias_ptr);
+    m[l + 3] = MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]), bias_ptr);
+    m[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(tmp, t[3 + offset]), bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 3] = MS_MAXQ_F32(zero, m[l + 3]);
+    m[l + 6] = MS_MAXQ_F32(zero, m[l + 6]);
   }
   if (r_c == C4NUM && r_h == 3 && r_w == 3) {
     Store9Data;
@@ -784,33 +789,33 @@ void OutputTransform4x3ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform4x3Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[16];
-  float32x4_t t[12];
-  float32x4_t m[9];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[16];
+  MS_FLOAT32X4 t[12];
+  MS_FLOAT32X4 m[9];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load16Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 4; ++l) {
     int offset = l * 4;
-    float32x4_t tmp = vaddq_f32(src[1 + offset], src[2 + offset]);
-    t[l] = vaddq_f32(src[offset], tmp);
-    t[l + 4] = vsubq_f32(src[1 + offset], src[2 + offset]);
-    t[l + 8] = vaddq_f32(tmp, src[3 + offset]);
+    MS_FLOAT32X4 tmp = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    t[l] = MS_ADDQ_F32(src[offset], tmp);
+    t[l + 4] = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    t[l + 8] = MS_ADDQ_F32(tmp, src[3 + offset]);
   }
   for (int l = 0; l < 3; ++l) {
     int offset = l * 4;
-    float32x4_t tmp = vaddq_f32(t[1 + offset], t[2 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(t[offset], tmp), bias_ptr);
-    m[l + 3] = vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]), bias_ptr);
-    m[l + 6] = vaddq_f32(vaddq_f32(tmp, t[3 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 3] = vmaxq_f32(zero, m[l + 3]);
-    m[l + 3] = vminq_f32(six, m[l + 3]);
-    m[l + 6] = vmaxq_f32(zero, m[l + 6]);
-    m[l + 6] = vminq_f32(six, m[l + 6]);
+    MS_FLOAT32X4 tmp = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp), bias_ptr);
+    m[l + 3] = MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]), bias_ptr);
+    m[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(tmp, t[3 + offset]), bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 3] = MS_MAXQ_F32(zero, m[l + 3]);
+    m[l + 3] = MS_MINQ_F32(six, m[l + 3]);
+    m[l + 6] = MS_MAXQ_F32(zero, m[l + 6]);
+    m[l + 6] = MS_MINQ_F32(six, m[l + 6]);
   }
   if (r_c == C4NUM && r_h == 3 && r_w == 3) {
     Store9Data;
@@ -863,29 +868,31 @@ void OutputTransform4x3Relu6Unit(const float *src_data, float *dst_data, const f
 
 void OutputTransform6x2Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[12];
-  float32x4_t m[4];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[12];
+  MS_FLOAT32X4 m[4];
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src[offset], src[1 + offset]), src[2 + offset]), src[3 + offset]),
-                     src[4 + offset]);
-    t[l + 6] = vaddq_f32(vaddq_f32(vsubq_f32(src[1 + offset], src[2 + offset]),
-                                   vmulq_n_f32(vsubq_f32(src[3 + offset], src[4 + offset]), 2)),
-                         src[5 + offset]);
+    t[l] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], src[1 + offset]), src[2 + offset]), src[3 + offset]),
+                  src[4 + offset]);
+    t[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(src[1 + offset], src[2 + offset]),
+                                       MS_MULQ_F32(MS_SUBQ_F32(src[3 + offset], src[4 + offset]), 2)),
+                           src[5 + offset]);
   }
   for (int l = 0; l < 2; ++l) {
     int offset = l * 6;
-    m[l] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], t[1 + offset]), t[2 + offset]), t[3 + offset]), t[4 + offset]),
+    m[l] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], t[1 + offset]), t[2 + offset]), t[3 + offset]),
+                  t[4 + offset]),
       bias_ptr);
-    m[l + 2] = vaddq_f32(vaddq_f32(vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]),
-                                             vmulq_n_f32(vsubq_f32(t[3 + offset], t[4 + offset]), 2)),
-                                   t[5 + offset]),
-                         bias_ptr);
+    m[l + 2] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]),
+                                                   MS_MULQ_F32(MS_SUBQ_F32(t[3 + offset], t[4 + offset]), 2)),
+                                       t[5 + offset]),
+                           bias_ptr);
   }
   if (r_c == C4NUM && r_h == 2 && r_w == 2) {
     Store4Data;
@@ -933,32 +940,34 @@ void OutputTransform6x2Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform6x2ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[12];
-  float32x4_t m[4];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[12];
+  MS_FLOAT32X4 m[4];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src[offset], src[1 + offset]), src[2 + offset]), src[3 + offset]),
-                     src[4 + offset]);
-    t[l + 6] = vaddq_f32(vaddq_f32(vsubq_f32(src[1 + offset], src[2 + offset]),
-                                   vmulq_n_f32(vsubq_f32(src[3 + offset], src[4 + offset]), 2)),
-                         src[5 + offset]);
+    t[l] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], src[1 + offset]), src[2 + offset]), src[3 + offset]),
+                  src[4 + offset]);
+    t[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(src[1 + offset], src[2 + offset]),
+                                       MS_MULQ_F32(MS_SUBQ_F32(src[3 + offset], src[4 + offset]), 2)),
+                           src[5 + offset]);
   }
   for (int l = 0; l < 2; ++l) {
     int offset = l * 6;
-    m[l] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], t[1 + offset]), t[2 + offset]), t[3 + offset]), t[4 + offset]),
+    m[l] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], t[1 + offset]), t[2 + offset]), t[3 + offset]),
+                  t[4 + offset]),
       bias_ptr);
-    m[l + 2] = vaddq_f32(vaddq_f32(vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]),
-                                             vmulq_n_f32(vsubq_f32(t[3 + offset], t[4 + offset]), 2)),
-                                   t[5 + offset]),
-                         bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 2] = vmaxq_f32(zero, m[l + 2]);
+    m[l + 2] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]),
+                                                   MS_MULQ_F32(MS_SUBQ_F32(t[3 + offset], t[4 + offset]), 2)),
+                                       t[5 + offset]),
+                           bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 2] = MS_MAXQ_F32(zero, m[l + 2]);
   }
   if (r_c == C4NUM && r_h == 2 && r_w == 2) {
     Store4Data;
@@ -1008,35 +1017,37 @@ void OutputTransform6x2ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform6x2Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[12];
-  float32x4_t m[4];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[12];
+  MS_FLOAT32X4 m[4];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(src[offset], src[1 + offset]), src[2 + offset]), src[3 + offset]),
-                     src[4 + offset]);
-    t[l + 6] = vaddq_f32(vaddq_f32(vsubq_f32(src[1 + offset], src[2 + offset]),
-                                   vmulq_n_f32(vsubq_f32(src[3 + offset], src[4 + offset]), 2)),
-                         src[5 + offset]);
+    t[l] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], src[1 + offset]), src[2 + offset]), src[3 + offset]),
+                  src[4 + offset]);
+    t[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(src[1 + offset], src[2 + offset]),
+                                       MS_MULQ_F32(MS_SUBQ_F32(src[3 + offset], src[4 + offset]), 2)),
+                           src[5 + offset]);
   }
   for (int l = 0; l < 2; ++l) {
     int offset = l * 6;
-    m[l] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], t[1 + offset]), t[2 + offset]), t[3 + offset]), t[4 + offset]),
+    m[l] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], t[1 + offset]), t[2 + offset]), t[3 + offset]),
+                  t[4 + offset]),
       bias_ptr);
-    m[l + 2] = vaddq_f32(vaddq_f32(vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]),
-                                             vmulq_n_f32(vsubq_f32(t[3 + offset], t[4 + offset]), 2)),
-                                   t[5 + offset]),
-                         bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 2] = vmaxq_f32(zero, m[l + 2]);
-    m[l + 2] = vminq_f32(six, m[l + 2]);
+    m[l + 2] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]),
+                                                   MS_MULQ_F32(MS_SUBQ_F32(t[3 + offset], t[4 + offset]), 2)),
+                                       t[5 + offset]),
+                           bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 2] = MS_MAXQ_F32(zero, m[l + 2]);
+    m[l + 2] = MS_MINQ_F32(six, m[l + 2]);
   }
   if (r_c == C4NUM && r_h == 2 && r_w == 2) {
     Store4Data;
@@ -1087,30 +1098,30 @@ void OutputTransform6x2Relu6Unit(const float *src_data, float *dst_data, const f
 
 void OutputTransform6x3Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[18];
-  float32x4_t m[9];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[18];
+  MS_FLOAT32X4 m[9];
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2);
-    t[l + 6] = vaddq_f32(vsubq_f32(src[1 + offset], src[2 + offset]),
-                         vmulq_n_f32(vsubq_f32(src[3 + offset], src[4 + offset]), 2));
-    t[l + 12] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), src[5 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2);
+    t[l + 6] = MS_ADDQ_F32(MS_SUBQ_F32(src[1 + offset], src[2 + offset]),
+                           MS_MULQ_F32(MS_SUBQ_F32(src[3 + offset], src[4 + offset]), 2));
+    t[l + 12] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), src[5 + offset]);
   }
   for (int l = 0; l < 3; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), bias_ptr);
-    m[l + 3] = vaddq_f32(
-      vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]), vmulq_n_f32(vsubq_f32(t[3 + offset], t[4 + offset]), 2)),
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), bias_ptr);
+    m[l + 3] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]), MS_MULQ_F32(MS_SUBQ_F32(t[3 + offset], t[4 + offset]), 2)),
       bias_ptr);
-    m[l + 6] = vaddq_f32(vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), t[5 + offset]), bias_ptr);
+    m[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), t[5 + offset]), bias_ptr);
   }
   if (r_c == C4NUM && r_h == 3 && r_w == 3) {
     Store9Data;
@@ -1160,34 +1171,34 @@ void OutputTransform6x3Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform6x3ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[18];
-  float32x4_t m[9];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[18];
+  MS_FLOAT32X4 m[9];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2);
-    t[l + 6] = vaddq_f32(vsubq_f32(src[1 + offset], src[2 + offset]),
-                         vmulq_n_f32(vsubq_f32(src[3 + offset], src[4 + offset]), 2));
-    t[l + 12] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), src[5 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2);
+    t[l + 6] = MS_ADDQ_F32(MS_SUBQ_F32(src[1 + offset], src[2 + offset]),
+                           MS_MULQ_F32(MS_SUBQ_F32(src[3 + offset], src[4 + offset]), 2));
+    t[l + 12] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), src[5 + offset]);
   }
   for (int l = 0; l < 3; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), bias_ptr);
-    m[l + 3] = vaddq_f32(
-      vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]), vmulq_n_f32(vsubq_f32(t[3 + offset], t[4 + offset]), 2)),
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), bias_ptr);
+    m[l + 3] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]), MS_MULQ_F32(MS_SUBQ_F32(t[3 + offset], t[4 + offset]), 2)),
       bias_ptr);
-    m[l + 6] = vaddq_f32(vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), t[5 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 3] = vmaxq_f32(zero, m[l + 3]);
-    m[l + 6] = vmaxq_f32(zero, m[l + 6]);
+    m[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), t[5 + offset]), bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 3] = MS_MAXQ_F32(zero, m[l + 3]);
+    m[l + 6] = MS_MAXQ_F32(zero, m[l + 6]);
   }
   if (r_c == C4NUM && r_h == 3 && r_w == 3) {
     Store9Data;
@@ -1239,38 +1250,38 @@ void OutputTransform6x3ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform6x3Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[18];
-  float32x4_t m[9];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[18];
+  MS_FLOAT32X4 m[9];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2);
-    t[l + 6] = vaddq_f32(vsubq_f32(src[1 + offset], src[2 + offset]),
-                         vmulq_n_f32(vsubq_f32(src[3 + offset], src[4 + offset]), 2));
-    t[l + 12] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), src[5 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2);
+    t[l + 6] = MS_ADDQ_F32(MS_SUBQ_F32(src[1 + offset], src[2 + offset]),
+                           MS_MULQ_F32(MS_SUBQ_F32(src[3 + offset], src[4 + offset]), 2));
+    t[l + 12] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), src[5 + offset]);
   }
   for (int l = 0; l < 3; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), bias_ptr);
-    m[l + 3] = vaddq_f32(
-      vaddq_f32(vsubq_f32(t[1 + offset], t[2 + offset]), vmulq_n_f32(vsubq_f32(t[3 + offset], t[4 + offset]), 2)),
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), bias_ptr);
+    m[l + 3] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_SUBQ_F32(t[1 + offset], t[2 + offset]), MS_MULQ_F32(MS_SUBQ_F32(t[3 + offset], t[4 + offset]), 2)),
       bias_ptr);
-    m[l + 6] = vaddq_f32(vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), t[5 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 3] = vmaxq_f32(zero, m[l + 3]);
-    m[l + 3] = vminq_f32(six, m[l + 3]);
-    m[l + 6] = vmaxq_f32(zero, m[l + 6]);
-    m[l + 6] = vminq_f32(six, m[l + 6]);
+    m[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), t[5 + offset]), bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 3] = MS_MAXQ_F32(zero, m[l + 3]);
+    m[l + 3] = MS_MINQ_F32(six, m[l + 3]);
+    m[l + 6] = MS_MAXQ_F32(zero, m[l + 6]);
+    m[l + 6] = MS_MINQ_F32(six, m[l + 6]);
   }
   if (r_c == C4NUM && r_h == 3 && r_w == 3) {
     Store9Data;
@@ -1323,33 +1334,33 @@ void OutputTransform6x3Relu6Unit(const float *src_data, float *dst_data, const f
 
 void OutputTransform6x4Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[24];
-  float32x4_t m[16];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[24];
+  MS_FLOAT32X4 m[16];
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2);
-    t[l + 6] = vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2));
-    t[l + 12] = vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4));
-    t[l + 18] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8)), src[5 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2);
+    t[l + 6] = MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2));
+    t[l + 12] = MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4));
+    t[l + 18] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8)), src[5 + offset]);
   }
   for (int l = 0; l < 4; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), bias_ptr);
-    m[l + 4] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2)), bias_ptr);
-    m[l + 8] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), bias_ptr);
-    m[l + 12] = vaddq_f32(vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8)), t[5 + offset]), bias_ptr);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), bias_ptr);
+    m[l + 4] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2)), bias_ptr);
+    m[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), bias_ptr);
+    m[l + 12] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8)), t[5 + offset]), bias_ptr);
   }
   if (r_c == C4NUM && r_h == 4 && r_w == 4) {
     Store16Data;
@@ -1401,38 +1412,38 @@ void OutputTransform6x4Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform6x4ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[24];
-  float32x4_t m[16];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[24];
+  MS_FLOAT32X4 m[16];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2);
-    t[l + 6] = vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2));
-    t[l + 12] = vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4));
-    t[l + 18] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8)), src[5 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2);
+    t[l + 6] = MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2));
+    t[l + 12] = MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4));
+    t[l + 18] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8)), src[5 + offset]);
   }
   for (int l = 0; l < 4; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), bias_ptr);
-    m[l + 4] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2)), bias_ptr);
-    m[l + 8] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), bias_ptr);
-    m[l + 12] = vaddq_f32(vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8)), t[5 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 4] = vmaxq_f32(zero, m[l + 4]);
-    m[l + 8] = vmaxq_f32(zero, m[l + 8]);
-    m[l + 12] = vmaxq_f32(zero, m[l + 12]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), bias_ptr);
+    m[l + 4] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2)), bias_ptr);
+    m[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), bias_ptr);
+    m[l + 12] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8)), t[5 + offset]), bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 4] = MS_MAXQ_F32(zero, m[l + 4]);
+    m[l + 8] = MS_MAXQ_F32(zero, m[l + 8]);
+    m[l + 12] = MS_MAXQ_F32(zero, m[l + 12]);
   }
   if (r_c == C4NUM && r_h == 4 && r_w == 4) {
     Store16Data;
@@ -1486,43 +1497,43 @@ void OutputTransform6x4ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform6x4Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[24];
-  float32x4_t m[16];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[24];
+  MS_FLOAT32X4 m[16];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2);
-    t[l + 6] = vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2));
-    t[l + 12] = vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4));
-    t[l + 18] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8)), src[5 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2);
+    t[l + 6] = MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2));
+    t[l + 12] = MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4));
+    t[l + 18] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8)), src[5 + offset]);
   }
   for (int l = 0; l < 4; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), bias_ptr);
-    m[l + 4] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2)), bias_ptr);
-    m[l + 8] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), bias_ptr);
-    m[l + 12] = vaddq_f32(vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8)), t[5 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 4] = vmaxq_f32(zero, m[l + 4]);
-    m[l + 4] = vminq_f32(six, m[l + 4]);
-    m[l + 8] = vmaxq_f32(zero, m[l + 8]);
-    m[l + 8] = vminq_f32(six, m[l + 8]);
-    m[l + 12] = vmaxq_f32(zero, m[l + 12]);
-    m[l + 12] = vminq_f32(six, m[l + 12]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), bias_ptr);
+    m[l + 4] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2)), bias_ptr);
+    m[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), bias_ptr);
+    m[l + 12] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8)), t[5 + offset]), bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 4] = MS_MAXQ_F32(zero, m[l + 4]);
+    m[l + 4] = MS_MINQ_F32(six, m[l + 4]);
+    m[l + 8] = MS_MAXQ_F32(zero, m[l + 8]);
+    m[l + 8] = MS_MINQ_F32(six, m[l + 8]);
+    m[l + 12] = MS_MAXQ_F32(zero, m[l + 12]);
+    m[l + 12] = MS_MINQ_F32(six, m[l + 12]);
   }
   if (r_c == C4NUM && r_h == 4 && r_w == 4) {
     Store16Data;
@@ -1577,35 +1588,35 @@ void OutputTransform6x4Relu6Unit(const float *src_data, float *dst_data, const f
 
 void OutputTransform6x5Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[30];
-  float32x4_t m[25];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[30];
+  MS_FLOAT32X4 m[25];
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2);
-    t[l + 6] = vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2));
-    t[l + 12] = vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4));
-    t[l + 18] = vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8));
-    t[l + 24] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 16)), src[5 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2);
+    t[l + 6] = MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2));
+    t[l + 12] = MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4));
+    t[l + 18] = MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 16)), src[5 + offset]);
   }
   for (int l = 0; l < 5; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), bias_ptr);
-    m[l + 5] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2)), bias_ptr);
-    m[l + 10] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), bias_ptr);
-    m[l + 15] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8)), bias_ptr);
-    m[l + 20] = vaddq_f32(vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 16)), t[5 + offset]), bias_ptr);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), bias_ptr);
+    m[l + 5] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2)), bias_ptr);
+    m[l + 10] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), bias_ptr);
+    m[l + 15] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8)), bias_ptr);
+    m[l + 20] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 16)), t[5 + offset]), bias_ptr);
   }
   if (r_c == C4NUM && r_h == 5 && r_w == 5) {
     Store25Data;
@@ -1659,41 +1670,41 @@ void OutputTransform6x5Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform6x5ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[30];
-  float32x4_t m[25];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[30];
+  MS_FLOAT32X4 m[25];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2);
-    t[l + 6] = vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2));
-    t[l + 12] = vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4));
-    t[l + 18] = vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8));
-    t[l + 24] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 16)), src[5 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2);
+    t[l + 6] = MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2));
+    t[l + 12] = MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4));
+    t[l + 18] = MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 16)), src[5 + offset]);
   }
   for (int l = 0; l < 5; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), bias_ptr);
-    m[l + 5] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2)), bias_ptr);
-    m[l + 10] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), bias_ptr);
-    m[l + 15] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8)), bias_ptr);
-    m[l + 20] = vaddq_f32(vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 16)), t[5 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 5] = vmaxq_f32(zero, m[l + 5]);
-    m[l + 10] = vmaxq_f32(zero, m[l + 10]);
-    m[l + 15] = vmaxq_f32(zero, m[l + 15]);
-    m[l + 20] = vmaxq_f32(zero, m[l + 20]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), bias_ptr);
+    m[l + 5] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2)), bias_ptr);
+    m[l + 10] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), bias_ptr);
+    m[l + 15] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8)), bias_ptr);
+    m[l + 20] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 16)), t[5 + offset]), bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 5] = MS_MAXQ_F32(zero, m[l + 5]);
+    m[l + 10] = MS_MAXQ_F32(zero, m[l + 10]);
+    m[l + 15] = MS_MAXQ_F32(zero, m[l + 15]);
+    m[l + 20] = MS_MAXQ_F32(zero, m[l + 20]);
   }
   if (r_c == C4NUM && r_h == 5 && r_w == 5) {
     Store25Data;
@@ -1749,47 +1760,47 @@ void OutputTransform6x5ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform6x5Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[36];
-  float32x4_t t[30];
-  float32x4_t m[25];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[36];
+  MS_FLOAT32X4 t[30];
+  MS_FLOAT32X4 m[25];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load36Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 6; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2);
-    t[l + 6] = vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2));
-    t[l + 12] = vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4));
-    t[l + 18] = vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8));
-    t[l + 24] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 16)), src[5 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2);
+    t[l + 6] = MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2));
+    t[l + 12] = MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4));
+    t[l + 18] = MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 16)), src[5 + offset]);
   }
   for (int l = 0; l < 5; ++l) {
     int offset = l * 6;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), bias_ptr);
-    m[l + 5] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 2)), bias_ptr);
-    m[l + 10] = vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 4)), bias_ptr);
-    m[l + 15] = vaddq_f32(vaddq_f32(tmp3, vmulq_n_f32(tmp4, 8)), bias_ptr);
-    m[l + 20] = vaddq_f32(vaddq_f32(vaddq_f32(tmp1, vmulq_n_f32(tmp2, 16)), t[5 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 5] = vmaxq_f32(zero, m[l + 5]);
-    m[l + 5] = vminq_f32(six, m[l + 5]);
-    m[l + 10] = vmaxq_f32(zero, m[l + 10]);
-    m[l + 10] = vminq_f32(six, m[l + 10]);
-    m[l + 15] = vmaxq_f32(zero, m[l + 15]);
-    m[l + 15] = vminq_f32(six, m[l + 15]);
-    m[l + 20] = vmaxq_f32(zero, m[l + 20]);
-    m[l + 20] = vminq_f32(six, m[l + 20]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), bias_ptr);
+    m[l + 5] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 2)), bias_ptr);
+    m[l + 10] = MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 4)), bias_ptr);
+    m[l + 15] = MS_ADDQ_F32(MS_ADDQ_F32(tmp3, MS_MULQ_F32(tmp4, 8)), bias_ptr);
+    m[l + 20] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(tmp1, MS_MULQ_F32(tmp2, 16)), t[5 + offset]), bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 5] = MS_MAXQ_F32(zero, m[l + 5]);
+    m[l + 5] = MS_MINQ_F32(six, m[l + 5]);
+    m[l + 10] = MS_MAXQ_F32(zero, m[l + 10]);
+    m[l + 10] = MS_MINQ_F32(six, m[l + 10]);
+    m[l + 15] = MS_MAXQ_F32(zero, m[l + 15]);
+    m[l + 15] = MS_MINQ_F32(six, m[l + 15]);
+    m[l + 20] = MS_MAXQ_F32(zero, m[l + 20]);
+    m[l + 20] = MS_MINQ_F32(six, m[l + 20]);
   }
   if (r_c == C4NUM && r_h == 5 && r_w == 5) {
     Store25Data;
@@ -1846,34 +1857,36 @@ void OutputTransform6x5Relu6Unit(const float *src_data, float *dst_data, const f
 
 void OutputTransform8x2Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[16];
-  float32x4_t m[4];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[16];
+  MS_FLOAT32X4 m[4];
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), src[7 + offset]);
   }
   for (int l = 0; l < 2; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 2] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), t[7 + offset]), bias_ptr);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 2] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), t[7 + offset]),
+      bias_ptr);
   }
   if (r_c == C4NUM && r_h == 2 && r_w == 2) {
     Store4Data;
@@ -1924,37 +1937,39 @@ void OutputTransform8x2Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform8x2ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[16];
-  float32x4_t m[4];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[16];
+  MS_FLOAT32X4 m[4];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), src[7 + offset]);
   }
   for (int l = 0; l < 2; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 2] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), t[7 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 2] = vmaxq_f32(zero, m[l + 2]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 2] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), t[7 + offset]),
+      bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 2] = MS_MAXQ_F32(zero, m[l + 2]);
   }
   if (r_c == C4NUM && r_h == 2 && r_w == 2) {
     Store4Data;
@@ -2007,40 +2022,42 @@ void OutputTransform8x2ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform8x2Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[16];
-  float32x4_t m[4];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[16];
+  MS_FLOAT32X4 m[4];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), src[7 + offset]);
   }
   for (int l = 0; l < 2; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 2] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), t[7 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 2] = vmaxq_f32(zero, m[l + 2]);
-    m[l + 2] = vminq_f32(six, m[l + 2]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 2] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), t[7 + offset]),
+      bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 2] = MS_MAXQ_F32(zero, m[l + 2]);
+    m[l + 2] = MS_MINQ_F32(six, m[l + 2]);
   }
   if (r_c == C4NUM && r_h == 2 && r_w == 2) {
     Store4Data;
@@ -2094,37 +2111,38 @@ void OutputTransform8x2Relu6Unit(const float *src_data, float *dst_data, const f
 
 void OutputTransform8x3Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[24];
-  float32x4_t m[9];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[24];
+  MS_FLOAT32X4 m[9];
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
     t[l + 16] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), src[7 + offset]);
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), src[7 + offset]);
   }
   for (int l = 0; l < 3; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 3] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 6] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), t[7 + offset]), bias_ptr);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 3] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 6] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), t[7 + offset]),
+      bias_ptr);
   }
   if (r_c == C4NUM && r_h == 3 && r_w == 3) {
     Store9Data;
@@ -2179,41 +2197,42 @@ void OutputTransform8x3Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform8x3ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[24];
-  float32x4_t m[9];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[24];
+  MS_FLOAT32X4 m[9];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
     t[l + 16] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), src[7 + offset]);
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), src[7 + offset]);
   }
   for (int l = 0; l < 3; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 3] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 6] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), t[7 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 3] = vmaxq_f32(zero, m[l + 3]);
-    m[l + 6] = vmaxq_f32(zero, m[l + 6]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 3] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 6] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), t[7 + offset]),
+      bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 3] = MS_MAXQ_F32(zero, m[l + 3]);
+    m[l + 6] = MS_MAXQ_F32(zero, m[l + 6]);
   }
   if (r_c == C4NUM && r_h == 3 && r_w == 3) {
     Store9Data;
@@ -2270,45 +2289,46 @@ void OutputTransform8x3ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform8x3Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[24];
-  float32x4_t m[9];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[24];
+  MS_FLOAT32X4 m[9];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
     t[l + 16] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), src[7 + offset]);
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), src[7 + offset]);
   }
   for (int l = 0; l < 3; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 3] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 6] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), t[7 + offset]), bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 3] = vmaxq_f32(zero, m[l + 3]);
-    m[l + 3] = vminq_f32(six, m[l + 3]);
-    m[l + 6] = vmaxq_f32(zero, m[l + 6]);
-    m[l + 6] = vminq_f32(six, m[l + 6]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 3] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 6] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), t[7 + offset]),
+      bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 3] = MS_MAXQ_F32(zero, m[l + 3]);
+    m[l + 3] = MS_MINQ_F32(six, m[l + 3]);
+    m[l + 6] = MS_MAXQ_F32(zero, m[l + 6]);
+    m[l + 6] = MS_MINQ_F32(six, m[l + 6]);
   }
   if (r_c == C4NUM && r_h == 3 && r_w == 3) {
     Store9Data;
@@ -2366,39 +2386,39 @@ void OutputTransform8x3Relu6Unit(const float *src_data, float *dst_data, const f
 
 void OutputTransform8x4Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[32];
-  float32x4_t m[16];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[32];
+  MS_FLOAT32X4 m[16];
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
     t[l + 24] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), src[7 + offset]);
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), src[7 + offset]);
   }
   for (int l = 0; l < 4; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 4] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 8] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 12] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), t[7 + offset]),
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 4] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 12] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), t[7 + offset]),
       bias_ptr);
   }
   if (r_c == C4NUM && r_h == 4 && r_w == 4) {
@@ -2458,45 +2478,45 @@ void OutputTransform8x4Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform8x4ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[32];
-  float32x4_t m[16];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[32];
+  MS_FLOAT32X4 m[16];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
     t[l + 24] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), src[7 + offset]);
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), src[7 + offset]);
   }
   for (int l = 0; l < 4; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 4] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 8] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 12] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), t[7 + offset]),
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 4] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 12] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), t[7 + offset]),
       bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 4] = vmaxq_f32(zero, m[l + 4]);
-    m[l + 8] = vmaxq_f32(zero, m[l + 8]);
-    m[l + 12] = vmaxq_f32(zero, m[l + 12]);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 4] = MS_MAXQ_F32(zero, m[l + 4]);
+    m[l + 8] = MS_MAXQ_F32(zero, m[l + 8]);
+    m[l + 12] = MS_MAXQ_F32(zero, m[l + 12]);
   }
   if (r_c == C4NUM && r_h == 4 && r_w == 4) {
     Store16Data;
@@ -2557,50 +2577,50 @@ void OutputTransform8x4ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform8x4Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[32];
-  float32x4_t m[16];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[32];
+  MS_FLOAT32X4 m[16];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
     t[l + 24] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), src[7 + offset]);
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), src[7 + offset]);
   }
   for (int l = 0; l < 4; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 4] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 8] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 12] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), t[7 + offset]),
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 4] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 12] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), t[7 + offset]),
       bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 4] = vmaxq_f32(zero, m[l + 4]);
-    m[l + 4] = vminq_f32(six, m[l + 4]);
-    m[l + 8] = vmaxq_f32(zero, m[l + 8]);
-    m[l + 8] = vminq_f32(six, m[l + 8]);
-    m[l + 12] = vmaxq_f32(zero, m[l + 12]);
-    m[l + 12] = vminq_f32(six, m[l + 12]);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 4] = MS_MAXQ_F32(zero, m[l + 4]);
+    m[l + 4] = MS_MINQ_F32(six, m[l + 4]);
+    m[l + 8] = MS_MAXQ_F32(zero, m[l + 8]);
+    m[l + 8] = MS_MINQ_F32(six, m[l + 8]);
+    m[l + 12] = MS_MAXQ_F32(zero, m[l + 12]);
+    m[l + 12] = MS_MINQ_F32(six, m[l + 12]);
   }
   if (r_c == C4NUM && r_h == 4 && r_w == 4) {
     Store16Data;
@@ -2662,41 +2682,42 @@ void OutputTransform8x4Relu6Unit(const float *src_data, float *dst_data, const f
 
 void OutputTransform8x5Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[40];
-  float32x4_t m[25];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[40];
+  MS_FLOAT32X4 m[25];
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
-    t[l + 24] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375));
-    t[l + 32] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375));
+    t[l + 32] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)),
+                            src[7 + offset]);
   }
   for (int l = 0; l < 5; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 5] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 10] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 15] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), bias_ptr);
-    m[l + 20] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), t[7 + offset]),
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 5] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 10] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 15] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), bias_ptr);
+    m[l + 20] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)), t[7 + offset]),
       bias_ptr);
   }
   if (r_c == C4NUM && r_h == 5 && r_w == 5) {
@@ -2760,48 +2781,49 @@ void OutputTransform8x5Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform8x5ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[40];
-  float32x4_t m[25];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[40];
+  MS_FLOAT32X4 m[25];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
-    t[l + 24] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375));
-    t[l + 32] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375));
+    t[l + 32] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)),
+                            src[7 + offset]);
   }
   for (int l = 0; l < 5; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 5] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 10] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 15] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), bias_ptr);
-    m[l + 20] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), t[7 + offset]),
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 5] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 10] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 15] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), bias_ptr);
+    m[l + 20] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)), t[7 + offset]),
       bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 5] = vmaxq_f32(zero, m[l + 5]);
-    m[l + 10] = vmaxq_f32(zero, m[l + 10]);
-    m[l + 15] = vmaxq_f32(zero, m[l + 15]);
-    m[l + 20] = vmaxq_f32(zero, m[l + 20]);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 5] = MS_MAXQ_F32(zero, m[l + 5]);
+    m[l + 10] = MS_MAXQ_F32(zero, m[l + 10]);
+    m[l + 15] = MS_MAXQ_F32(zero, m[l + 15]);
+    m[l + 20] = MS_MAXQ_F32(zero, m[l + 20]);
   }
   if (r_c == C4NUM && r_h == 5 && r_w == 5) {
     Store25Data;
@@ -2866,54 +2888,55 @@ void OutputTransform8x5ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform8x5Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[40];
-  float32x4_t m[25];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[40];
+  MS_FLOAT32X4 m[25];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
-    t[l + 24] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375));
-    t[l + 32] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375));
+    t[l + 32] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)),
+                            src[7 + offset]);
   }
   for (int l = 0; l < 5; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 5] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 10] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 15] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), bias_ptr);
-    m[l + 20] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), t[7 + offset]),
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 5] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 10] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 15] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), bias_ptr);
+    m[l + 20] = MS_ADDQ_F32(
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)), t[7 + offset]),
       bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 5] = vmaxq_f32(zero, m[l + 5]);
-    m[l + 5] = vminq_f32(six, m[l + 5]);
-    m[l + 10] = vmaxq_f32(zero, m[l + 10]);
-    m[l + 10] = vminq_f32(six, m[l + 10]);
-    m[l + 15] = vmaxq_f32(zero, m[l + 15]);
-    m[l + 15] = vminq_f32(six, m[l + 15]);
-    m[l + 20] = vmaxq_f32(zero, m[l + 20]);
-    m[l + 20] = vminq_f32(six, m[l + 20]);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 5] = MS_MAXQ_F32(zero, m[l + 5]);
+    m[l + 5] = MS_MINQ_F32(six, m[l + 5]);
+    m[l + 10] = MS_MAXQ_F32(zero, m[l + 10]);
+    m[l + 10] = MS_MINQ_F32(six, m[l + 10]);
+    m[l + 15] = MS_MAXQ_F32(zero, m[l + 15]);
+    m[l + 15] = MS_MINQ_F32(six, m[l + 15]);
+    m[l + 20] = MS_MAXQ_F32(zero, m[l + 20]);
+    m[l + 20] = MS_MINQ_F32(six, m[l + 20]);
   }
   if (r_c == C4NUM && r_h == 5 && r_w == 5) {
     Store25Data;
@@ -2979,55 +3002,58 @@ void OutputTransform8x5Relu6Unit(const float *src_data, float *dst_data, const f
 
 void OutputTransform8x6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[48];
-  float32x4_t m[36];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[48];
+  MS_FLOAT32X4 m[36];
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
-    t[l + 24] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375));
-    t[l + 32] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625));
-    t[l + 40] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375));
+    t[l + 32] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625));
+    t[l + 40] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375)),
+                            src[7 + offset]);
   }
   for (int l = 0; l < 6; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 6] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 12] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 18] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), bias_ptr);
-    m[l + 24] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), bias_ptr);
-    m[l + 30] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375)), t[7 + offset]),
-      bias_ptr);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 12] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 18] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), bias_ptr);
+    m[l + 24] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)), bias_ptr);
+    m[l + 30] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375)),
+                              t[7 + offset]),
+                  bias_ptr);
   }
   if (r_c == C4NUM && r_h == 6 && r_w == 6) {
     for (int i = 0; i < 6; i++) {
       int dst_k_offset = i * dst_step * out_c;
       int m_k_offset = i * 6;
-      vst1q_f32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
-      vst1q_f32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
-      vst1q_f32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
-      vst1q_f32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
-      vst1q_f32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
-      vst1q_f32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
+      MS_STQ_F32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
+      MS_STQ_F32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
+      MS_STQ_F32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
+      MS_STQ_F32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
+      MS_STQ_F32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
+      MS_STQ_F32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
     }
   } else {
     for (int i = 0; i < r_c; i++) {
@@ -3092,62 +3118,65 @@ void OutputTransform8x6Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform8x6ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[48];
-  float32x4_t m[36];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[48];
+  MS_FLOAT32X4 m[36];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
-    t[l + 24] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375));
-    t[l + 32] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625));
-    t[l + 40] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375));
+    t[l + 32] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625));
+    t[l + 40] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375)),
+                            src[7 + offset]);
   }
   for (int l = 0; l < 6; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 6] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 12] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 18] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), bias_ptr);
-    m[l + 24] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), bias_ptr);
-    m[l + 30] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375)), t[7 + offset]),
-      bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 6] = vmaxq_f32(zero, m[l + 6]);
-    m[l + 12] = vmaxq_f32(zero, m[l + 12]);
-    m[l + 18] = vmaxq_f32(zero, m[l + 18]);
-    m[l + 24] = vmaxq_f32(zero, m[l + 24]);
-    m[l + 30] = vmaxq_f32(zero, m[l + 30]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 12] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 18] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), bias_ptr);
+    m[l + 24] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)), bias_ptr);
+    m[l + 30] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375)),
+                              t[7 + offset]),
+                  bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 6] = MS_MAXQ_F32(zero, m[l + 6]);
+    m[l + 12] = MS_MAXQ_F32(zero, m[l + 12]);
+    m[l + 18] = MS_MAXQ_F32(zero, m[l + 18]);
+    m[l + 24] = MS_MAXQ_F32(zero, m[l + 24]);
+    m[l + 30] = MS_MAXQ_F32(zero, m[l + 30]);
   }
   if (r_c == C4NUM && r_h == 6 && r_w == 6) {
     for (int i = 0; i < 6; i++) {
       int dst_k_offset = i * dst_step * out_c;
       int m_k_offset = i * 6;
-      vst1q_f32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
-      vst1q_f32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
-      vst1q_f32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
-      vst1q_f32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
-      vst1q_f32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
-      vst1q_f32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
+      MS_STQ_F32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
+      MS_STQ_F32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
+      MS_STQ_F32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
+      MS_STQ_F32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
+      MS_STQ_F32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
+      MS_STQ_F32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
     }
   } else {
     for (int i = 0; i < r_c; i++) {
@@ -3214,69 +3243,72 @@ void OutputTransform8x6ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform8x6Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[48];
-  float32x4_t m[36];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[48];
+  MS_FLOAT32X4 m[36];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
-    t[l + 24] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375));
-    t[l + 32] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625));
-    t[l + 40] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375));
+    t[l + 32] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625));
+    t[l + 40] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375)),
+                            src[7 + offset]);
   }
   for (int l = 0; l < 6; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 6] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 12] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 18] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), bias_ptr);
-    m[l + 24] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), bias_ptr);
-    m[l + 30] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375)), t[7 + offset]),
-      bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 6] = vmaxq_f32(zero, m[l + 6]);
-    m[l + 6] = vminq_f32(six, m[l + 6]);
-    m[l + 12] = vmaxq_f32(zero, m[l + 12]);
-    m[l + 12] = vminq_f32(six, m[l + 12]);
-    m[l + 18] = vmaxq_f32(zero, m[l + 18]);
-    m[l + 18] = vminq_f32(six, m[l + 18]);
-    m[l + 24] = vmaxq_f32(zero, m[l + 24]);
-    m[l + 24] = vminq_f32(six, m[l + 24]);
-    m[l + 30] = vmaxq_f32(zero, m[l + 30]);
-    m[l + 30] = vminq_f32(six, m[l + 30]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 6] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 12] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 18] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), bias_ptr);
+    m[l + 24] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)), bias_ptr);
+    m[l + 30] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375)),
+                              t[7 + offset]),
+                  bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 6] = MS_MAXQ_F32(zero, m[l + 6]);
+    m[l + 6] = MS_MINQ_F32(six, m[l + 6]);
+    m[l + 12] = MS_MAXQ_F32(zero, m[l + 12]);
+    m[l + 12] = MS_MINQ_F32(six, m[l + 12]);
+    m[l + 18] = MS_MAXQ_F32(zero, m[l + 18]);
+    m[l + 18] = MS_MINQ_F32(six, m[l + 18]);
+    m[l + 24] = MS_MAXQ_F32(zero, m[l + 24]);
+    m[l + 24] = MS_MINQ_F32(six, m[l + 24]);
+    m[l + 30] = MS_MAXQ_F32(zero, m[l + 30]);
+    m[l + 30] = MS_MINQ_F32(six, m[l + 30]);
   }
   if (r_c == C4NUM && r_h == 6 && r_w == 6) {
     for (int i = 0; i < 6; i++) {
       int dst_k_offset = i * dst_step * out_c;
       int m_k_offset = i * 6;
-      vst1q_f32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
-      vst1q_f32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
-      vst1q_f32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
-      vst1q_f32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
-      vst1q_f32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
-      vst1q_f32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
+      MS_STQ_F32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
+      MS_STQ_F32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
+      MS_STQ_F32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
+      MS_STQ_F32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
+      MS_STQ_F32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
+      MS_STQ_F32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
     }
   } else {
     for (int i = 0; i < r_c; i++) {
@@ -3344,58 +3376,62 @@ void OutputTransform8x6Relu6Unit(const float *src_data, float *dst_data, const f
 
 void OutputTransform8x7Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step, int dst_step,
                             int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[56];
-  float32x4_t m[49];
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[56];
+  MS_FLOAT32X4 m[49];
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
-    t[l + 24] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375));
-    t[l + 32] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625));
-    t[l + 40] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375));
-    t[l + 48] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.015625), tmp2), vmulq_n_f32(tmp3, 11.390625)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375));
+    t[l + 32] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625));
+    t[l + 40] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375));
+    t[l + 48] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.015625), tmp2), MS_MULQ_F32(tmp3, 11.390625)),
+                            src[7 + offset]);
   }
   for (int l = 0; l < 7; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 7] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 14] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 21] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), bias_ptr);
-    m[l + 28] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), bias_ptr);
-    m[l + 35] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375)), bias_ptr);
-    m[l + 42] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.015625), tmp2), vmulq_n_f32(tmp3, 11.390625)), t[7 + offset]),
-      bias_ptr);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 7] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 14] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 21] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), bias_ptr);
+    m[l + 28] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)), bias_ptr);
+    m[l + 35] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375)), bias_ptr);
+    m[l + 42] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.015625), tmp2), MS_MULQ_F32(tmp3, 11.390625)),
+                              t[7 + offset]),
+                  bias_ptr);
   }
   if (r_c == C4NUM && r_h == 7 && r_w == 7) {
     for (int i = 0; i < 7; i++) {
       int dst_k_offset = i * dst_step * out_c;
       int m_k_offset = i * 7;
-      vst1q_f32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
-      vst1q_f32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
-      vst1q_f32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
-      vst1q_f32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
-      vst1q_f32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
-      vst1q_f32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
-      vst1q_f32(dst_data + dst_k_offset + 6 * out_c, m[m_k_offset + 6]);
+      MS_STQ_F32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
+      MS_STQ_F32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
+      MS_STQ_F32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
+      MS_STQ_F32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
+      MS_STQ_F32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
+      MS_STQ_F32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
+      MS_STQ_F32(dst_data + dst_k_offset + 6 * out_c, m[m_k_offset + 6]);
     }
   } else {
     for (int i = 0; i < r_c; i++) {
@@ -3464,66 +3500,70 @@ void OutputTransform8x7Unit(const float *src_data, float *dst_data, const float 
 
 void OutputTransform8x7ReluUnit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                 int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[56];
-  float32x4_t m[49];
-  float32x4_t zero = vdupq_n_f32(0);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[56];
+  MS_FLOAT32X4 m[49];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
-    t[l + 24] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375));
-    t[l + 32] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625));
-    t[l + 40] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375));
-    t[l + 48] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.015625), tmp2), vmulq_n_f32(tmp3, 11.390625)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375));
+    t[l + 32] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625));
+    t[l + 40] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375));
+    t[l + 48] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.015625), tmp2), MS_MULQ_F32(tmp3, 11.390625)),
+                            src[7 + offset]);
   }
   for (int l = 0; l < 7; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 7] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 14] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 21] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), bias_ptr);
-    m[l + 28] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), bias_ptr);
-    m[l + 35] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375)), bias_ptr);
-    m[l + 42] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.015625), tmp2), vmulq_n_f32(tmp3, 11.390625)), t[7 + offset]),
-      bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l + 7] = vmaxq_f32(zero, m[l + 7]);
-    m[l + 14] = vmaxq_f32(zero, m[l + 14]);
-    m[l + 21] = vmaxq_f32(zero, m[l + 21]);
-    m[l + 28] = vmaxq_f32(zero, m[l + 28]);
-    m[l + 35] = vmaxq_f32(zero, m[l + 35]);
-    m[l + 42] = vmaxq_f32(zero, m[l + 42]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 7] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 14] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 21] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), bias_ptr);
+    m[l + 28] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)), bias_ptr);
+    m[l + 35] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375)), bias_ptr);
+    m[l + 42] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.015625), tmp2), MS_MULQ_F32(tmp3, 11.390625)),
+                              t[7 + offset]),
+                  bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l + 7] = MS_MAXQ_F32(zero, m[l + 7]);
+    m[l + 14] = MS_MAXQ_F32(zero, m[l + 14]);
+    m[l + 21] = MS_MAXQ_F32(zero, m[l + 21]);
+    m[l + 28] = MS_MAXQ_F32(zero, m[l + 28]);
+    m[l + 35] = MS_MAXQ_F32(zero, m[l + 35]);
+    m[l + 42] = MS_MAXQ_F32(zero, m[l + 42]);
   }
   if (r_c == C4NUM && r_h == 7 && r_w == 7) {
     for (int i = 0; i < 7; i++) {
       int dst_k_offset = i * dst_step * out_c;
       int m_k_offset = i * 7;
-      vst1q_f32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
-      vst1q_f32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
-      vst1q_f32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
-      vst1q_f32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
-      vst1q_f32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
-      vst1q_f32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
-      vst1q_f32(dst_data + dst_k_offset + 6 * out_c, m[m_k_offset + 6]);
+      MS_STQ_F32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
+      MS_STQ_F32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
+      MS_STQ_F32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
+      MS_STQ_F32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
+      MS_STQ_F32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
+      MS_STQ_F32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
+      MS_STQ_F32(dst_data + dst_k_offset + 6 * out_c, m[m_k_offset + 6]);
     }
   } else {
     for (int i = 0; i < r_c; i++) {
@@ -3594,74 +3634,78 @@ void OutputTransform8x7ReluUnit(const float *src_data, float *dst_data, const fl
 
 void OutputTransform8x7Relu6Unit(const float *src_data, float *dst_data, const float *bias_data, int src_step,
                                  int dst_step, int out_c, int r_w, int r_h, int r_c) {
-#ifdef ENABLE_ARM
-  float32x4_t src[64];
-  float32x4_t t[56];
-  float32x4_t m[49];
-  float32x4_t zero = vdupq_n_f32(0);
-  float32x4_t six = vdupq_n_f32(6);
+#if defined(ENABLE_ARM) || defined(ENABLE_SSE)
+  MS_FLOAT32X4 src[64];
+  MS_FLOAT32X4 t[56];
+  MS_FLOAT32X4 m[49];
+  MS_FLOAT32X4 zero = MS_MOVQ_F32(0);
+  MS_FLOAT32X4 six = MS_MOVQ_F32(6);
   Load64Data;
-  float32x4_t bias_ptr = vld1q_f32(bias_data);
+  MS_FLOAT32X4 bias_ptr = MS_LDQ_F32(bias_data);
   for (int l = 0; l < 8; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(src[5 + offset], src[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(src[1 + offset], src[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(src[3 + offset], src[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(src[5 + offset], src[6 + offset]);
-    t[l] = vaddq_f32(vaddq_f32(vaddq_f32(src[offset], tmp1), tmp2), tmp3);
-    t[l + 8] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5));
-    t[l + 16] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25));
-    t[l + 24] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375));
-    t[l + 32] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625));
-    t[l + 40] = vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375));
-    t[l + 48] =
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.015625), tmp2), vmulq_n_f32(tmp3, 11.390625)), src[7 + offset]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(src[5 + offset], src[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(src[1 + offset], src[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(src[3 + offset], src[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(src[5 + offset], src[6 + offset]);
+    t[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(src[offset], tmp1), tmp2), tmp3);
+    t[l + 8] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5));
+    t[l + 16] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25));
+    t[l + 24] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375));
+    t[l + 32] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625));
+    t[l + 40] = MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375));
+    t[l + 48] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.015625), tmp2), MS_MULQ_F32(tmp3, 11.390625)),
+                            src[7 + offset]);
   }
   for (int l = 0; l < 7; ++l) {
     int offset = l * 8;
-    float32x4_t tmp1 = vaddq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp2 = vaddq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp3 = vaddq_f32(t[5 + offset], t[6 + offset]);
-    float32x4_t tmp4 = vsubq_f32(t[1 + offset], t[2 + offset]);
-    float32x4_t tmp5 = vsubq_f32(t[3 + offset], t[4 + offset]);
-    float32x4_t tmp6 = vsubq_f32(t[5 + offset], t[6 + offset]);
-    m[l] = vaddq_f32(vaddq_f32(vaddq_f32(vaddq_f32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
-    m[l + 7] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.5), tmp5), vmulq_n_f32(tmp6, 1.5)), bias_ptr);
-    m[l + 14] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.25), tmp2), vmulq_n_f32(tmp3, 2.25)), bias_ptr);
-    m[l + 21] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.125), tmp5), vmulq_n_f32(tmp6, 3.375)), bias_ptr);
-    m[l + 28] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.0625), tmp2), vmulq_n_f32(tmp3, 5.0625)), bias_ptr);
-    m[l + 35] = vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp4, 0.03125), tmp5), vmulq_n_f32(tmp6, 7.59375)), bias_ptr);
-    m[l + 42] = vaddq_f32(
-      vaddq_f32(vaddq_f32(vaddq_f32(vmulq_n_f32(tmp1, 0.015625), tmp2), vmulq_n_f32(tmp3, 11.390625)), t[7 + offset]),
-      bias_ptr);
-    m[l] = vmaxq_f32(zero, m[l]);
-    m[l] = vminq_f32(six, m[l]);
-    m[l + 7] = vmaxq_f32(zero, m[l + 7]);
-    m[l + 7] = vminq_f32(six, m[l + 7]);
-    m[l + 14] = vmaxq_f32(zero, m[l + 14]);
-    m[l + 14] = vminq_f32(six, m[l + 14]);
-    m[l + 21] = vmaxq_f32(zero, m[l + 21]);
-    m[l + 21] = vminq_f32(six, m[l + 21]);
-    m[l + 28] = vmaxq_f32(zero, m[l + 28]);
-    m[l + 28] = vminq_f32(six, m[l + 28]);
-    m[l + 35] = vmaxq_f32(zero, m[l + 35]);
-    m[l + 35] = vminq_f32(six, m[l + 35]);
-    m[l + 42] = vmaxq_f32(zero, m[l + 42]);
-    m[l + 42] = vminq_f32(six, m[l + 42]);
+    MS_FLOAT32X4 tmp1 = MS_ADDQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp2 = MS_ADDQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp3 = MS_ADDQ_F32(t[5 + offset], t[6 + offset]);
+    MS_FLOAT32X4 tmp4 = MS_SUBQ_F32(t[1 + offset], t[2 + offset]);
+    MS_FLOAT32X4 tmp5 = MS_SUBQ_F32(t[3 + offset], t[4 + offset]);
+    MS_FLOAT32X4 tmp6 = MS_SUBQ_F32(t[5 + offset], t[6 + offset]);
+    m[l] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(t[offset], tmp1), tmp2), tmp3), bias_ptr);
+    m[l + 7] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.5), tmp5), MS_MULQ_F32(tmp6, 1.5)), bias_ptr);
+    m[l + 14] = MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.25), tmp2), MS_MULQ_F32(tmp3, 2.25)), bias_ptr);
+    m[l + 21] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.125), tmp5), MS_MULQ_F32(tmp6, 3.375)), bias_ptr);
+    m[l + 28] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.0625), tmp2), MS_MULQ_F32(tmp3, 5.0625)), bias_ptr);
+    m[l + 35] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp4, 0.03125), tmp5), MS_MULQ_F32(tmp6, 7.59375)), bias_ptr);
+    m[l + 42] =
+      MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_ADDQ_F32(MS_MULQ_F32(tmp1, 0.015625), tmp2), MS_MULQ_F32(tmp3, 11.390625)),
+                              t[7 + offset]),
+                  bias_ptr);
+    m[l] = MS_MAXQ_F32(zero, m[l]);
+    m[l] = MS_MINQ_F32(six, m[l]);
+    m[l + 7] = MS_MAXQ_F32(zero, m[l + 7]);
+    m[l + 7] = MS_MINQ_F32(six, m[l + 7]);
+    m[l + 14] = MS_MAXQ_F32(zero, m[l + 14]);
+    m[l + 14] = MS_MINQ_F32(six, m[l + 14]);
+    m[l + 21] = MS_MAXQ_F32(zero, m[l + 21]);
+    m[l + 21] = MS_MINQ_F32(six, m[l + 21]);
+    m[l + 28] = MS_MAXQ_F32(zero, m[l + 28]);
+    m[l + 28] = MS_MINQ_F32(six, m[l + 28]);
+    m[l + 35] = MS_MAXQ_F32(zero, m[l + 35]);
+    m[l + 35] = MS_MINQ_F32(six, m[l + 35]);
+    m[l + 42] = MS_MAXQ_F32(zero, m[l + 42]);
+    m[l + 42] = MS_MINQ_F32(six, m[l + 42]);
   }
   if (r_c == C4NUM && r_h == 7 && r_w == 7) {
     for (int i = 0; i < 7; i++) {
       int dst_k_offset = i * dst_step * out_c;
       int m_k_offset = i * 7;
-      vst1q_f32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
-      vst1q_f32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
-      vst1q_f32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
-      vst1q_f32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
-      vst1q_f32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
-      vst1q_f32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
-      vst1q_f32(dst_data + dst_k_offset + 6 * out_c, m[m_k_offset + 6]);
+      MS_STQ_F32(dst_data + dst_k_offset + 0 * out_c, m[m_k_offset]);
+      MS_STQ_F32(dst_data + dst_k_offset + 1 * out_c, m[m_k_offset + 1]);
+      MS_STQ_F32(dst_data + dst_k_offset + 2 * out_c, m[m_k_offset + 2]);
+      MS_STQ_F32(dst_data + dst_k_offset + 3 * out_c, m[m_k_offset + 3]);
+      MS_STQ_F32(dst_data + dst_k_offset + 4 * out_c, m[m_k_offset + 4]);
+      MS_STQ_F32(dst_data + dst_k_offset + 5 * out_c, m[m_k_offset + 5]);
+      MS_STQ_F32(dst_data + dst_k_offset + 6 * out_c, m[m_k_offset + 6]);
     }
   } else {
     for (int i = 0; i < r_c; i++) {
