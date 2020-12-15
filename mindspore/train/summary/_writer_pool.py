@@ -31,6 +31,16 @@ except ValueError:
     import multiprocessing as ctx
 
 
+# Environment variables are used to specify a maximum number of OpenBLAS threads:
+# In ubuntu(GPU) environment, numpy will use too many threads for computing,
+# it may affect the start of the summary process.
+# Notice: At present, the performance of setting the thread to 2 has been tested to be more suitable.
+# If it is to be adjusted, it is recommended to test according to the scenario first
+os.environ['OPENBLAS_NUM_THREADS'] = '2'
+os.environ['GOTO_NUM_THREADS'] = '2'
+os.environ['OMP_NUM_THREADS'] = '2'
+
+
 def _pack_data(datadict, wall_time):
     """Pack data according to which plugin."""
     result, summaries, step = [], [], None
