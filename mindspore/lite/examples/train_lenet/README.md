@@ -45,7 +45,9 @@ mnist/
 
 - Server side
     - [MindSpore Framework](https://www.mindspore.cn/install/en): it is recommended to install a docker image
-    - [MindSpore ToD Framework](https://www.mindspore.cn/tutorial/tod/en/use/prparation.html)
+    - MindSpore ToD Framework
+        - [Downloads](https://www.mindspore.cn/tutorial/lite/en/master/use/downloads.html)
+        - [Build](https://www.mindspore.cn/tutorial/lite/en/master/use/build.html)
     - [Android NDK r20b](https://dl.google.com/android/repository/android-ndk-r20b-linux-x86_64.zip)
     - [Android SDK](https://developer.android.com/studio?hl=zh-cn#cmdline-tools)
 - A connected Android device

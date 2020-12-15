@@ -10,9 +10,9 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
 ### MindSpore Lite features
 
-1.  Cooperative work with MindSpore training
-    - Provides training, optimization, and deployment.
-	- The unified IR realizes the device-cloud AI application integration.
+1. Cooperative work with MindSpore training
+   - Provides training, optimization, and deployment.
+   - The unified IR realizes the device-cloud AI application integration.
 
 2. Lightweight
    - Provides model compress, which could help to improve performance as well.
@@ -37,11 +37,11 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
    The pre-trained model provided by MindSpore: [Image Classification](https://download.mindspore.cn/model_zoo/official/lite/). More models will be provided in the feature.
 
-   MindSpore allows you to retrain pre-trained models to perform other tasks. 
+   MindSpore allows you to retrain pre-trained models to perform other tasks.
 
 2. Model converter and optimization
 
-   If you use MindSpore or a third-party model, you need to use [MindSpore Lite Model Converter Tool](https://www.mindspore.cn/tutorial/lite/en/master/use/convert_model.html) to convert the model into MindSpore Lite model. The MindSpore Lite model converter tool provides the converter of TensorFlow Lite, Caffe, ONNX to MindSpore Lite model, fusion and quantization could be introduced during convert procedure.
+   If you use MindSpore or a third-party model, you need to use [MindSpore Lite Model Converter Tool](https://www.mindspore.cn/tutorial/lite/en/master/use/converter_tool.html) to convert the model into MindSpore Lite model. The MindSpore Lite model converter tool provides the converter of TensorFlow Lite, Caffe, ONNX to MindSpore Lite model, fusion and quantization could be introduced during convert procedure.
 
    MindSpore also provides a tool to convert models running on IoT devices .
 
@@ -49,13 +49,14 @@ For more details please check out our [MindSpore Lite Architecture Guide](https:
 
    This stage mainly realizes model deployment, including model management, deployment, operation and maintenance monitoring, etc.
 
-4. Inference 
+4. Inference
 
    Load the model and perform inference. [Inference](https://www.mindspore.cn/tutorial/lite/en/master/use/runtime.html) is the process of running input data through the model to get output.
 
    MindSpore provides pre-trained model that can be deployed on mobile device [example](https://www.mindspore.cn/lite/examples/en).
-   
+
 ## MindSpore Lite benchmark test result
+
 Base on MindSpore r0.7, we test a couple of networks on HUAWEI Mate30 (Hisilicon Kirin990) mobile phone, and get the test results below for your reference.
 
 | NetWork             | Thread Number | Average Run Time(ms) |
