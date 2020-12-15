@@ -1226,3 +1226,7 @@ table Reciprocal {
 
 table Merge {
 }
+
+table GeLU {
+    approximate : bool = false;
+}
