@@ -64,6 +64,7 @@ message RegisterRespMessage {
 message HeartbeatMessage {
   // the current Node unique id:0,1,2...
   string node_id = 1;
+  bool is_node_finish = 2;
 }
 
 message HeartbeatRespMessage {
@@ -71,6 +72,7 @@ message HeartbeatRespMessage {
   bool is_cluster_ready = 1;
   bool is_cluster_finish = 2;
   bool is_cluster_timeout = 3;
+  bool is_node_timeout = 4;
 }
 
 message FetchServersRespMessage {
