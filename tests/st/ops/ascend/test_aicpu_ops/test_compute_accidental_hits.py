@@ -40,8 +40,8 @@ def test_net():
 
     output1_expect = np.array([0, 0, 1, 1, 2, 2])
     output2_expect = np.array([1, 2, 0, 4, 3, 3])
-    output3_expect = np.array([-3.4028235+38, -3.4028235+38, -3.4028235+38,
-                               -3.4028235+38, -3.4028235+38, -3.4028235+38]).astype(np.float32)
+    output3_expect = np.array([-3.4028235e+38, -3.4028235e+38, -3.4028235e+38,
+                               -3.4028235e+38, -3.4028235e+38, -3.4028235e+38]).astype(np.float32)
     assert np.array_equal(output1.asnumpy(), output1_expect)
     assert np.array_equal(output2.asnumpy(), output2_expect)
     assert np.array_equal(output3.asnumpy(), output3_expect)

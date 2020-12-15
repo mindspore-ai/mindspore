@@ -28,7 +28,7 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-std::set<std::string> kComputeDepend = {"Unique"};
+std::set<std::string> kComputeDepend = {"Unique", "ComputeAccidentalHits"};
 AiCpuDynamicKernel::~AiCpuDynamicKernel() {
   // free dev ptr
   if (ext_info_addr_dev_ == nullptr) {
