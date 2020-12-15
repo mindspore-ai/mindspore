@@ -105,6 +105,9 @@ MS_REG_CPU_KERNEL(
 MS_REG_CPU_KERNEL(
   AssignAdd, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
   ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Mul, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+  ArithmeticCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 
