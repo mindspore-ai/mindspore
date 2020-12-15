@@ -19,14 +19,16 @@
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-
 # [ResNet Description](#contents)
+
 ## Description
+
 ResNet (residual neural network) was proposed by Kaiming He and other four Chinese of Microsoft Research Institute. Through the use of ResNet unit, it successfully trained 152 layers of neural network, and won the championship in ilsvrc2015. The error rate on top 5 was 3.57%, and the parameter quantity was lower than vggnet, so the effect was very outstanding. Traditional convolution network or full connection network will have more or less information loss. At the same time, it will lead to the disappearance or explosion of gradient, which leads to the failure of deep network training. ResNet solves this problem to a certain extent. By passing the input information to the output, the integrity of the information is protected. The whole network only needs to learn the part of the difference between input and output, which simplifies the learning objectives and difficulties.The structure of ResNet can accelerate the training of neural network very quickly, and the accuracy of the model is also greatly improved. At the same time, ResNet is very popular, even can be directly used in the concept net network.
 
 These are examples of training ResNet50/ResNet101/SE-ResNet50 with CIFAR-10/ImageNet2012 dataset in MindSpore.ResNet50 and ResNet101 can reference [paper 1](https://arxiv.org/pdf/1512.03385.pdf) below, and SE-ResNet50 is a variant of ResNet50 which reference  [paper 2](https://arxiv.org/abs/1709.01507) and [paper 3](https://arxiv.org/abs/1812.01187) below, Training SE-ResNet50 for just 24 epochs using 8 Ascend 910, we can reach top-1 accuracy of 75.9%.(Training ResNet101 with dataset CIFAR-10 and SE-ResNet50 with CIFAR-10 is not supported yet.)
 
 ## Paper
+
 1.[paper](https://arxiv.org/pdf/1512.03385.pdf):Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun. "Deep Residual Learning for Image Recognition"
 
 2.[paper](https://arxiv.org/abs/1709.01507):Jie Hu, Li Shen, Samuel Albanie, Gang Sun, Enhua Wu. "Squeeze-and-Excitation Networks"
@@ -41,14 +43,15 @@ The overall network architecture of ResNet is show below:
 # [Dataset](#contents)
 
 Dataset used: [CIFAR-10](<http://www.cs.toronto.edu/~kriz/cifar.html>)
+
 - Dataset size：60,000 32*32 colorful images in 10 classes
-  - Train：50,000 images
-  - Test： 10,000 images
+    - Train：50,000 images
+    - Test： 10,000 images
 - Data format：binary files
-  - Note：Data will be processed in dataset.py
+    - Note：Data will be processed in dataset.py
 - Download the dataset, the directory structure is as follows:
 
-```
+```bash
 ├─cifar-10-batches-bin
 │
 └─cifar-10-verify-bin
@@ -57,13 +60,13 @@ Dataset used: [CIFAR-10](<http://www.cs.toronto.edu/~kriz/cifar.html>)
 Dataset used: [ImageNet2012](http://www.image-net.org/)
 
 - Dataset size 224*224 colorful images in 1000 classes
-  - Train：1,281,167 images  
-  - Test： 50,000 images   
+    - Train：1,281,167 images  
+    - Test： 50,000 images
 - Data format：jpeg
-  - Note：Data will be processed in dataset.py
+    - Note：Data will be processed in dataset.py
 - Download the dataset, the directory structure is as follows:
 
- ```
+ ```bash
 └─dataset
     ├─ilsvrc                # train dataset
     └─validation_preprocess # evaluate dataset
@@ -79,21 +82,20 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend/GPU）
-  - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
-
-
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Quick Start](#contents)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
 - Running on Ascend
-```
+
+```bash
 # distributed training
 Usage: sh run_distribute_train.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
@@ -106,7 +108,8 @@ Usage: sh run_eval.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [D
 ```
 
 - Running on GPU
-```
+
+```bash
 # distributed training example
 sh run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
@@ -115,6 +118,9 @@ sh run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATA
 
 # infer example
 sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
+
+# gpu benchmark example
+sh run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional) [DTYPE](optional) [DEVICE_NUM](optional) [SAVE_CKPT](optional) [SAVE_PATH](optional)
 ```
 
 # [Script Description](#contents)
@@ -134,7 +140,8 @@ sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [C
     ├── run_parameter_server_train_gpu.sh  # launch gpu parameter server training(8 pcs)
     ├── run_eval_gpu.sh                    # launch gpu evaluation
     ├── run_standalone_train_gpu.sh        # launch gpu standalone training(1 pcs)
-    └── run_gpu_resnet_benchmark.sh        # GPU benchmark for resnet50 with imagenet2012(1 pcs)
+    ├── run_gpu_resnet_benchmark.sh        # launch gpu benchmark train for resnet50 with imagenet2012
+    └── run_eval_gpu_resnet_benckmark.sh   # launch gpu benchmark eval for resnet50 with imagenet2012
   ├── src
     ├── config.py                          # parameter configuration
     ├── dataset.py                         # data preprocessing
@@ -155,13 +162,13 @@ Parameters for both training and evaluation can be set in config.py.
 
 - Config for ResNet50, CIFAR-10 dataset
 
-```
+```bash
 "class_num": 10,                  # dataset class num
 "batch_size": 32,                 # batch size of input tensor
 "loss_scale": 1024,               # loss scale
 "momentum": 0.9,                  # momentum
-"weight_decay": 1e-4,             # weight decay 
-"epoch_size": 90,                 # only valid for taining, which is always 1 for inference 
+"weight_decay": 1e-4,             # weight decay
+"epoch_size": 90,                 # only valid for taining, which is always 1 for inference
 "pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 5,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last step
@@ -176,13 +183,13 @@ Parameters for both training and evaluation can be set in config.py.
 
 - Config for ResNet50, ImageNet2012 dataset
 
-```
+```bash
 "class_num": 1001,                # dataset class number
 "batch_size": 256,                 # batch size of input tensor
 "loss_scale": 1024,               # loss scale
 "momentum": 0.9,                  # momentum optimizer
-"weight_decay": 1e-4,             # weight decay 
-"epoch_size": 90,                 # only valid for taining, which is always 1 for inference 
+"weight_decay": 1e-4,             # weight decay
+"epoch_size": 90,                 # only valid for taining, which is always 1 for inference
 "pretrain_epoch_size": 0,         # epoch size that model has been trained before loading pretrained checkpoint, actual training epoch size is equal to epoch_size minus pretrain_epoch_size
 "save_checkpoint": True,          # whether save checkpoint or not
 "save_checkpoint_epochs": 5,      # the epoch interval between two checkpoints. By default, the last checkpoint will be saved after the last epoch
@@ -199,7 +206,7 @@ Parameters for both training and evaluation can be set in config.py.
 
 - Config for ResNet101, ImageNet2012 dataset
 
-```
+```bash
 "class_num": 1001,                # dataset class number
 "batch_size": 32,                 # batch size of input tensor
 "loss_scale": 1024,               # loss scale
@@ -220,7 +227,7 @@ Parameters for both training and evaluation can be set in config.py.
 
 - Config for SE-ResNet50, ImageNet2012 dataset
 
-```
+```bash
 "class_num": 1001,                # dataset class number
 "batch_size": 32,                 # batch size of input tensor
 "loss_scale": 1024,               # loss scale
@@ -245,8 +252,10 @@ Parameters for both training and evaluation can be set in config.py.
 ## [Training Process](#contents)
 
 ### Usage
+
 #### Running on Ascend
-```
+
+```bash
 # distributed training
 Usage: sh run_distribute_train.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
@@ -258,6 +267,7 @@ Usage: sh run_standalone_train.sh [resnet50|resnet101|se-resnet50] [cifar10|imag
 Usage: sh run_eval.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 
 ```
+
 For distributed training, a hccl configuration file with JSON format needs to be created in advance.
 
 Please follow the instructions in the link [hccn_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
@@ -266,7 +276,7 @@ Training result will be stored in the example path, whose folder name begins wit
 
 #### Running on GPU
 
-```
+```bash
 # distributed training example
 sh run_distribute_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]  [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 
@@ -276,20 +286,28 @@ sh run_standalone_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATA
 # infer example
 sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 
-# gpu benchmark example
-sh run_gpu_resnet_benchmark.sh [IMAGENET_DATASET_PATH] [BATCH_SIZE](optional) [DTYPE](optional) [DEVICE_NUM](optional)
+# gpu benchmark training example
+sh run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional) [DTYPE](optional) [DEVICE_NUM](optional) [SAVE_CKPT](optional) [SAVE_PATH](optional)
+
+# gpu benckmark infer example
+sh run_eval_gpu_resnet_benchmark.sh [DATASET_PATH] [CKPT_PATH] [BATCH_SIZE](optional) [DTYPE](optional)
 ```
+
+For distributed training, a hostfile configuration needs to be created in advance.
+
+Please follow the instructions in the link [GPU-Multi-Host](https://www.mindspore.cn/tutorial/training/zh-CN/r1.0/advanced_use/distributed_training_gpu.html).
 
 #### Running parameter server mode training
 
 - Parameter server training Ascend example
 
-```
+```bash
 sh run_parameter_server_train.sh [resnet50|resnet101] [cifar10|imagenet2012] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
 - Parameter server training GPU example
-```
+
+```bash
 sh run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [PRETRAINED_CKPT_PATH](optional)
 ```
 
@@ -297,7 +315,7 @@ sh run_parameter_server_train_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012]
 
 - Training ResNet50 with CIFAR-10 dataset
 
-```
+```bash
 # distribute training result(8 pcs)
 epoch: 1 step: 195, loss is 1.9601055
 epoch: 2 step: 195, loss is 1.8555021
@@ -309,7 +327,7 @@ epoch: 5 step: 195, loss is 1.393667
 
 - Training ResNet50 with ImageNet2012 dataset
 
-```
+```bash
 # distribute training result(8 pcs)
 epoch: 1 step: 5004, loss is 4.8995576
 epoch: 2 step: 5004, loss is 3.9235563
@@ -321,7 +339,7 @@ epoch: 5 step: 5004, loss is 3.1978393
 
 - Training ResNet101 with ImageNet2012 dataset
 
-```
+```bash
 # distribute training result(8 pcs)
 epoch: 1 step: 5004, loss is 4.805483
 epoch: 2 step: 5004, loss is 3.2121816
@@ -330,9 +348,10 @@ epoch: 4 step: 5004, loss is 3.3667371
 epoch: 5 step: 5004, loss is 3.1718972
 ...
 ```
+
 - Training SE-ResNet50 with ImageNet2012 dataset
 
-```
+```bash
 # distribute training result(8 pcs)
 epoch: 1 step: 5004, loss is 5.1779146
 epoch: 2 step: 5004, loss is 4.139395
@@ -341,9 +360,10 @@ epoch: 4 step: 5004, loss is 3.5011306
 epoch: 5 step: 5004, loss is 3.3501816
 ...
 ```
+
 - GPU Benchmark of ResNet50 with ImageNet2012 dataset
 
-```
+```bash
 # ========START RESNET50 GPU BENCHMARK========
 Epoch time: 12416.098 ms, fps: 412 img/sec. epoch: 1 step: 20, loss is 6.940182
 Epoch time: 3472.037 ms, fps: 1474 img/sec. epoch: 2 step: 20, loss is 7.078993
@@ -352,17 +372,19 @@ Epoch time: 3460.311 ms, fps: 1479 img/sec. epoch: 4 step: 20, loss is 6.920937
 Epoch time: 3460.543 ms, fps: 1479 img/sec. epoch: 5 step: 20, loss is 6.814013
 ...
 ```
+
 ## [Evaluation Process](#contents)
 
 ### Usage
 
 #### Running on Ascend
-```
+
+```bash
 # evaluation
 Usage: sh run_eval.sh [resnet50|resnet101|se-resnet50] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
-```
+```bash
 # evaluation example
 sh run_eval.sh resnet50 cifar10 ~/cifar10-10-verify-bin ~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
 ```
@@ -370,7 +392,8 @@ sh run_eval.sh resnet50 cifar10 ~/cifar10-10-verify-bin ~/resnet50_cifar10/train
 > checkpoint can be produced in training process.
 
 #### Running on GPU
-```
+
+```bash
 sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [CHECKPOINT_PATH]
 ```
 
@@ -380,35 +403,37 @@ Evaluation result will be stored in the example path, whose folder name is "eval
 
 - Evaluating ResNet50 with CIFAR-10 dataset
 
-```
+```bash
 result: {'acc': 0.91446314102564111} ckpt=~/resnet50_cifar10/train_parallel0/resnet-90_195.ckpt
 ```
 
 - Evaluating ResNet50 with ImageNet2012 dataset
 
-```
+```bash
 result: {'acc': 0.7671054737516005} ckpt=train_parallel0/resnet-90_5004.ckpt
 ```
 
 - Evaluating ResNet101 with ImageNet2012 dataset
 
-```
+```bash
 result: {'top_5_accuracy': 0.9429417413572343, 'top_1_accuracy': 0.7853513124199744} ckpt=train_parallel0/resnet-120_5004.ckpt
 ```
 
 - Evaluating SE-ResNet50 with ImageNet2012 dataset
 
-```
+```bash
 result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.768065781049936} ckpt=train_parallel0/resnet-24_5004.ckpt
 
 ```
 
 # [Model Description](#contents)
+
 ## [Performance](#contents)
 
-### Evaluation Performance 
+### Evaluation Performance
 
 #### ResNet50 on CIFAR-10
+
 | Parameters                 | Ascend 910                                                   |   GPU |
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                                |ResNet50-v1.5|
@@ -428,6 +453,7 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
 
 #### ResNet50 on ImageNet2012
+
 | Parameters                 | Ascend 910                                                   |   GPU |
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet50-v1.5                                                |ResNet50-v1.5|
@@ -447,6 +473,7 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Scripts                    | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) | [Link](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet) |
 
 #### ResNet101 on ImageNet2012
+
 | Parameters                 | Ascend 910                                                   |   GPU |
 | -------------------------- | -------------------------------------- |---------------------------------- |
 | Model Version              | ResNet101                                                |ResNet101|
@@ -488,6 +515,7 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 ### Inference Performance
 
 #### ResNet50 on CIFAR-10
+
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | ResNet50-v1.5               | ResNet50-v1.5               |
@@ -501,6 +529,7 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Model for inference | 91M (.air file)         |  |
 
 #### ResNet50 on ImageNet2012
+
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | ResNet50-v1.5               | ResNet50-v1.5               |
@@ -514,6 +543,7 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Model for inference | 98M (.air file)         |  |
 
 #### ResNet101 on ImageNet2012
+
 | Parameters          | Ascend                      | GPU                         |
 | ------------------- | --------------------------- | --------------------------- |
 | Model Version       | ResNet101                   | ResNet101                    |
@@ -527,6 +557,7 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Model for inference | 171M (.air file)         |  |
 
 #### SE-ResNet50 on ImageNet2012
+
 | Parameters          | Ascend                      |
 | ------------------- | --------------------------- |
 | Model Version       | SE-ResNet50                 |
@@ -539,11 +570,10 @@ result: {'top_5_accuracy': 0.9342589628681178, 'top_1_accuracy': 0.7680657810499
 | Accuracy            | 76.80%                      |
 | Model for inference | 109M (.air file)            |
 
-
 # [Description of Random Situation](#contents)
 
 In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py.
 
-
 # [ModelZoo Homepage](#contents)
+
  Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
