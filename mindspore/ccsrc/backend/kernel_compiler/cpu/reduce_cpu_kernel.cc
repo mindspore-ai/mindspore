@@ -92,7 +92,7 @@ bool ReduceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
 
 void ReduceCPUKernel::CheckAxis(const CNodePtr &kernel_node) {
   auto axis_addr = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(AXIS);
-  if (axis_addr->isa<ValueTuple>()) {
+  if (axis_addr->isa<ValueTuple>() || axis_addr->isa<ValueList>()) {
     std::vector<int> attr_axis;
     std::vector<int64_t> attr_axis_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, AXIS);
     (void)std::transform(attr_axis_me.begin(), attr_axis_me.end(), std::back_inserter(attr_axis),

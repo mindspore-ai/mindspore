@@ -272,8 +272,8 @@ bool SelectKernel(const CNodePtr &kernel_node, KernelAttr *selected_kernel_attr,
       }
     }
     // All formats and data types matched
-    if (max_type_matched_num == SizeToInt(input_types.size()) &&
-        max_format_matched_num == SizeToInt(input_types.size())) {
+    if (input_type_format_matched_num.first == SizeToInt(input_types.size()) &&
+        input_type_format_matched_num.second == SizeToInt(input_types.size())) {
       matched->first = true;
       if (output_type_format_matched_num.first == SizeToInt(infer_output_types.size()) &&
           output_type_format_matched_num.second == SizeToInt(infer_output_types.size())) {
