@@ -123,9 +123,9 @@ class TensorAddV2(PrimitiveWithInfer):
         self.init_prim_io_names(inputs=["x1","x2"],outputs=["y"])
 
     def infer_shape(self, x1_shape, x2_shape):
-        validator.check_integer("input dims", len(x1_shape), len(x2_shape), Rel.EQ, self.name)
+        validator.check_int(len(x1_shape), len(x2_shape), Rel.EQ, "input dims", self.name)
         for i in range(len(x1_shape)):
-            validator.check_integer("input_shape", x1_shape[i], x2_shape[i], Rel.EQ, self.name)
+            validator.check_int(x1_shape[i], x2_shape[i], Rel.EQ, "input_shape", self.name)
         return x1_shape
 
     def infer_dtype(self, x1_dtype, x2_dtype):
