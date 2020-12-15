@@ -75,6 +75,7 @@ def test_imagenet_tf_file_dataset_size():
         count += 1
     assert ds_shard_4_0.get_dataset_size() == count
 
+
 def test_mnist_dataset_size():
     ds_total = ds.MnistDataset(MNIST_DATA_DIR)
     assert ds_total.get_dataset_size() == 10000
@@ -247,6 +248,26 @@ def test_pipeline_get_dataset_size():
     assert tf2.concat(tf1).get_dataset_size() == 24
 
 
+def test_distributed_get_dataset_size():
+    # Test get dataset size when num_samples is less than num_per_shard (10000/4 = 2500)
+    dataset1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=2000, num_shards=4, shard_id=0)
+    assert dataset1.get_dataset_size() == 2000
+
+    count1 = 0
+    for _ in dataset1.create_dict_iterator():
+        count1 += 1
+    assert count1 == 2000
+
+    # Test get dataset size when num_samples is more than num_per_shard (10000/4 = 2500)
+    dataset2 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=3000, num_shards=4, shard_id=0)
+    assert dataset2.get_dataset_size() == 2500
+
+    count2 = 0
+    for _ in dataset2.create_dict_iterator():
+        count2 += 1
+    assert count2 == 2500
+
+
 if __name__ == '__main__':
     test_imagenet_rawdata_dataset_size()
     test_imagenet_tf_file_dataset_size()
@@ -263,3 +284,4 @@ if __name__ == '__main__':
     test_text_file_dataset_size()
     test_padded_dataset_size()
     test_pipeline_get_dataset_size()
+    test_distributed_get_dataset_size()

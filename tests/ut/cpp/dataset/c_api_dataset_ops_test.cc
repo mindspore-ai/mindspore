@@ -811,6 +811,68 @@ TEST_F(MindDataTestPipeline, TestPipelineGetDatasetSize) {
   EXPECT_EQ(ds->GetDatasetSize(), 10);
 }
 
+TEST_F(MindDataTestPipeline, TestDistributedGetDatasetSize1) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedGetDatasetSize1.";
+  // Test get dataset size in distributed scenario when num_per_shard is more than num_samples
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, DistributedSampler(4, 0, false, 10));
+  EXPECT_NE(ds, nullptr);
+
+  // num_per_shard is equal to 44/4 = 11 which is more than num_samples = 10, so the output is 10
+  EXPECT_EQ(ds->GetDatasetSize(), 10);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // iterate over the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  // The value of i should be equal to the result of get dataset size
+  EXPECT_EQ(i, 10);
+}
+
+TEST_F(MindDataTestPipeline, TestDistributedGetDatasetSize2) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedGetDatasetSize2.";
+  // Test get dataset size in distributed scenario when num_per_shard is less than num_samples
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, true, DistributedSampler(4, 0, false, 15));
+  EXPECT_NE(ds, nullptr);
+
+  // num_per_shard is equal to 44/4 = 11 which is less than num_samples = 15, so the output is 11
+  EXPECT_EQ(ds->GetDatasetSize(), 11);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // iterate over the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  // The value of i should be equal to the result of get dataset size
+  EXPECT_EQ(i, 11);
+}
+
 TEST_F(MindDataTestPipeline, TestProjectMap) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestProjectMap.";
 
