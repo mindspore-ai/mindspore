@@ -17,21 +17,29 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARGMINMAX_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/base/arg_min_max_base.h"
+#include "include/errorcode.h"
+#include "nnacl/fp32/arg_min_max_fp32.h"
+#include "nnacl/arithmetic_common.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class ArgMinMaxCPUKernel : public ArgMinMaxBaseCPUKernel {
+class ArgMinMaxCPUKernel : public LiteKernel {
  public:
   ArgMinMaxCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
-      : ArgMinMaxBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    arg_param_ = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
+  }
 
   ~ArgMinMaxCPUKernel() = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
+
+ private:
+  ArgMinMaxParameter *arg_param_;
 };
 }  // namespace mindspore::kernel
 

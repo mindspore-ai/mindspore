@@ -17,16 +17,19 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_ARGMINMAX_INT8_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/base/arg_min_max_base.h"
 #include "nnacl/quantization/quantize.h"
+#include "nnacl/int8/arg_min_max_int8.h"
+#include "nnacl/arithmetic_common.h"
+#include "include/errorcode.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class ArgMinMaxInt8CPUKernel : public ArgMinMaxBaseCPUKernel {
+class ArgMinMaxInt8CPUKernel : public LiteKernel {
  public:
   ArgMinMaxInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
-      : ArgMinMaxBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~ArgMinMaxInt8CPUKernel() = default;
 

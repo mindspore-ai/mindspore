@@ -18,21 +18,13 @@
 
 #include "nnacl/arg_min_max_parameter.h"
 
+typedef int (*COMPARE_FUNCTION)(const void *a, const void *b);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-void ArgMax(const float *input, float *output, const ArgMinMaxParameter *param, int pre_axis_count, int axis_count,
-            int after_axis_count);
-void ArgMin(const float *input, float *output, const ArgMinMaxParameter *param, int pre_axis_count, int axis_count,
-            int after_axis_count);
-void ArgMaxDim0(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param);
-void ArgMinDim0(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param);
-void ArgMaxDim1(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param);
-void ArgMinDim1(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param);
-void ArgMaxDim2(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param);
-void ArgMinDim2(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param);
-void ArgMaxDim3(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param);
-void ArgMinDim3(const float *input, float *output, const int *in_shape, const ArgMinMaxParameter *param);
+void ArgMinMaxFp32(const float *input, float *output, float *output_value, const int *in_shape,
+                   const ArgMinMaxParameter *param);
 #ifdef __cplusplus
 }
 #endif
