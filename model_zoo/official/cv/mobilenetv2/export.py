@@ -13,22 +13,35 @@
 # limitations under the License.
 # ============================================================================
 """
-mobilenetv2 export mindir.
+mobilenetv2 export file.
 """
+import argparse
 import numpy as np
-from mindspore import Tensor, export
+from mindspore import Tensor, export, context
 from src.config import set_config
-from src.args import export_parse_args
 from src.models import define_net, load_ckpt
 from src.utils import set_context
 
-if __name__ == '__main__':
-    args_opt = export_parse_args()
-    cfg = set_config(args_opt)
-    set_context(cfg)
-    _, _, net = define_net(cfg, args_opt.is_training)
+parser = argparse.ArgumentParser(description="mobilenetv2 export")
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
+parser.add_argument("--file_name", type=str, default="mobilenetv2", help="output file name.")
+parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+parser.add_argument('--platform', type=str, default="Ascend", choices=("Ascend", "GPU", "CPU"),
+                    help='run platform, only support GPU, CPU and Ascend')
+args = parser.parse_args()
+args.is_training = False
+args.run_distribute = False
 
-    load_ckpt(net, args_opt.pretrain_ckpt)
-    input_shp = [1, 3, cfg.image_height, cfg.image_width]
+context.set_context(mode=context.GRAPH_MODE, device_target=args.platform, device_id=args.device_id)
+
+if __name__ == '__main__':
+    cfg = set_config(args)
+    set_context(cfg)
+    _, _, net = define_net(cfg, args.is_training)
+
+    load_ckpt(net, args.ckpt_file)
+    input_shp = [args.batch_size, 3, cfg.image_height, cfg.image_width]
     input_array = Tensor(np.random.uniform(-1.0, 1.0, size=input_shp).astype(np.float32))
-    export(net, input_array, file_name=cfg.export_file, file_format=cfg.export_format)
+    export(net, input_array, file_name=args.file_name, file_format=args.file_format)

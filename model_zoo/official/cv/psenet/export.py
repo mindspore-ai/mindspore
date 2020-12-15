@@ -19,20 +19,27 @@ import argparse
 import numpy as np
 
 import mindspore as ms
-from mindspore import Tensor, load_checkpoint, load_param_into_net, export
+from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 
 from src.config import config
 from src.ETSNET.etsnet import ETSNet
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='checkpoint export to air')
-    parser.add_argument('--checkpoint', type=str, default='', help='checkpoint of psenet (Default: None)')
-    args_opt = parser.parse_args()
+parser = argparse.ArgumentParser(description="psenet export")
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
+parser.add_argument("--file_name", type=str, default="psenet", help="output file name.")
+parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+parser.add_argument("--device_target", type=str, default="Ascend",
+                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
+args = parser.parse_args()
 
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+
+if __name__ == '__main__':
     net = ETSNet(config)
-    param_dict = load_checkpoint(args_opt.checkpoint)
+    param_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(net, param_dict)
 
-    input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[1, 3, config.INFER_LONG_SIZE, config.INFER_LONG_SIZE]),
-                       ms.float32)
-    export(net, input_arr, file_name=config.air_filename)
+    input_arr = Tensor(np.ones([args.batch_size, 3, config.INFER_LONG_SIZE, config.INFER_LONG_SIZE]), ms.float32)
+    export(net, input_arr, file_name=args.file_name, file_format=args.file_format)

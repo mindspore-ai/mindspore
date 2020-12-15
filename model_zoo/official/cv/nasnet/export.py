@@ -19,20 +19,27 @@ import argparse
 import numpy as np
 
 import mindspore as ms
-from mindspore import Tensor, load_checkpoint, load_param_into_net, export
+from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 
 from src.config import nasnet_a_mobile_config_gpu as cfg
 from src.nasnet_a_mobile import NASNetAMobile
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='checkpoint export')
-    parser.add_argument('--checkpoint', type=str, default='', help='checkpoint of nasnet_a_mobile (Default: None)')
-    args_opt = parser.parse_args()
+parser = argparse.ArgumentParser(description='nasnet export')
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
+parser.add_argument("--file_name", type=str, default="nasnet", help="output file name.")
+parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
+                    help="device target")
+args = parser.parse_args()
 
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+
+if __name__ == '__main__':
     net = NASNetAMobile(num_classes=cfg.num_classes, is_training=False)
-    param_dict = load_checkpoint(args_opt.checkpoint)
+    param_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(net, param_dict)
 
-    input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[1, 3, cfg.image_size, cfg.image_size]), ms.float32)
-    export(net, input_arr, file_name=cfg.onnx_filename, file_format="ONNX")
-    export(net, input_arr, file_name=cfg.geir_filename, file_format="GEIR")
+    input_arr = Tensor(np.ones([args.batch_size, 3, cfg.image_size, cfg.image_size]), ms.float32)
+    export(net, input_arr, file_name=args.file_name, file_format=args.file_format)
