@@ -210,6 +210,7 @@ int OpenCLKernel::DequantWeight() {
     void *dequant_weight{nullptr};
     bool set_flag{true};
     if (is_fp16) {
+#ifdef ENABLE_ARM64
       if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeInt8) {
         dequant_weight = kernel::DequantUtil::DequantData<int8_t, float16_t>(weight_tensor);
       } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeInt16) {
@@ -217,6 +218,9 @@ int OpenCLKernel::DequantWeight() {
       } else {
         set_flag = false;
       }
+#else
+      set_flag = false;
+#endif
     } else {
       if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeInt8) {
         dequant_weight = kernel::DequantUtil::DequantData<int8_t, float>(weight_tensor);

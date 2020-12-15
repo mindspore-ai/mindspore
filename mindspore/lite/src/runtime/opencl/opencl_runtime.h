@@ -61,6 +61,7 @@ class OpenCLRuntime {
   uint32_t DeviceMaxFreq() const;
   uint64_t GetMaxWorkGroupSize(const cl::Kernel &kernel);
   uint32_t GetSubGroupSize(const cl::Kernel &kernel, const cl::NDRange &range = cl::NullRange);
+  uint64_t GetGlobalMemSize() { return global_memery_size_; }
   GpuInfo GetGpuInfo();
   bool GetFp16Enable() const;
   bool SetFp16Enable(bool enable);
@@ -168,6 +169,7 @@ class OpenCLRuntime {
   std::map<std::string, cl::Program> program_map_;
   cl::Program binary_program_{0};
   uint64_t global_memery_cachesize_{0};
+  uint64_t global_memery_size_{0};
   int max_work_group_size_{1};
   uint32_t compute_units_{0};
   uint32_t max_freq_{0};
