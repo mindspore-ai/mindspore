@@ -232,7 +232,7 @@ def ms_function(fn=None, obj=None, input_signature=None):
         equal to the case when `fn` is not None.
 
     Examples:
-        >>> from mindspore.ops import  functional as F
+        >>> from mindspore.ops import functional as F
         ...
         >>> def tensor_add(x, y):
         ...     z = x + y
