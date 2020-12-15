@@ -31,6 +31,9 @@
 #include "minddata/dataset/kernels/image/cut_out_op.h"
 #endif
 #include "minddata/dataset/kernels/image/decode_op.h"
+#ifdef ENABLE_ACL
+#include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
+#endif
 #ifndef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/equalize_op.h"
 #include "minddata/dataset/kernels/image/hwc_to_chw_op.h"
@@ -132,6 +135,16 @@ std::shared_ptr<DecodeOperation> Decode(bool rgb) {
   // Input validation
   return op->ValidateParams() ? op : nullptr;
 }
+
+#ifdef ENABLE_ACL
+// Function to create DvppDecodeResizeCropOperation.
+std::shared_ptr<DvppDecodeResizeCropOperation> DvppDecodeResizeCropJpeg(std::vector<uint32_t> crop,
+                                                                        std::vector<uint32_t> resize) {
+  auto op = std::make_shared<DvppDecodeResizeCropOperation>(crop, resize);
+  // Input validation
+  return op->ValidateParams() ? op : nullptr;
+}
+#endif
 
 // Function to create EqualizeOperation.
 std::shared_ptr<EqualizeOperation> Equalize() {
@@ -656,6 +669,78 @@ Status MixUpBatchOperation::ValidateParams() {
 std::shared_ptr<TensorOp> MixUpBatchOperation::Build() { return std::make_shared<MixUpBatchOp>(alpha_); }
 
 #endif
+
+#ifdef ENABLE_ACL
+// DvppDecodeResizeCropOperation
+DvppDecodeResizeCropOperation::DvppDecodeResizeCropOperation(const std::vector<uint32_t> &crop,
+                                                             const std::vector<uint32_t> &resize)
+    : crop_(crop), resize_(resize) {}
+
+Status DvppDecodeResizeCropOperation::ValidateParams() {
+  // size
+  if (crop_.empty() || crop_.size() > 2) {
+    std::string err_msg = "DvppDecodeResizeCropJpeg: crop size must be a vector of one or two elements, got: " +
+                          std::to_string(crop_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (resize_.empty() || resize_.size() > 2) {
+    std::string err_msg = "DvppDecodeResizeCropJpeg: resize size must be a vector of one or two elements, got: " +
+                          std::to_string(resize_.size());
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (crop_.size() < resize_.size()) {
+    if (crop_[0] >= MIN(resize_[0], resize_[1])) {
+      std::string err_msg = "crop size must be smaller than resize size";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+  if (crop_.size() > resize_.size()) {
+    if (MAX(crop_[0], crop_[1]) >= resize_[0]) {
+      std::string err_msg = "crop size must be smaller than resize size";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
+  }
+  if (crop_.size() == resize_.size()) {
+    for (int32_t i = 0; i < crop_.size(); ++i) {
+      if (crop_[i] >= resize_[i]) {
+        std::string err_msg = "crop size must be smaller than resize size";
+        MS_LOG(ERROR) << err_msg;
+        RETURN_STATUS_SYNTAX_ERROR(err_msg);
+      }
+    }
+  }
+  return Status::OK();
+}
+
+std::shared_ptr<TensorOp> DvppDecodeResizeCropOperation::Build() {
+  // If size is a single value, the smaller edge of the image will be
+  // resized to this value with the same image aspect ratio.
+  uint32_t cropHeight, cropWidth, resizeHeight, resizeWidth;
+  if (crop_.size() == 1) {
+    cropHeight = crop_[0];
+    cropWidth = crop_[0];
+  } else {
+    cropHeight = crop_[0];
+    cropWidth = crop_[1];
+  }
+  // User specified the width value.
+  if (resize_.size() == 1) {
+    resizeHeight = resize_[0];
+    resizeWidth = resize_[0];
+  } else {
+    resizeHeight = resize_[0];
+    resizeWidth = resize_[1];
+  }
+  std::shared_ptr<DvppDecodeResizeCropJpegOp> tensor_op =
+    std::make_shared<DvppDecodeResizeCropJpegOp>(cropHeight, cropWidth, resizeHeight, resizeWidth);
+  return tensor_op;
+}
+#endif
+
 // NormalizeOperation
 NormalizeOperation::NormalizeOperation(std::vector<float> mean, std::vector<float> std) : mean_(mean), std_(std) {}
 

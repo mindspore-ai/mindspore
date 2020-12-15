@@ -17,6 +17,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes")
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     add_definitions(-D _CRT_RAND_S)
 endif ()
+if (ENABLE_ACL)
+    add_definitions(-D ENABLE_ACL)
+    message(STATUS "ACL module is enabled")
+endif ()
 if (ENABLE_GPUQUE)
     add_definitions(-D ENABLE_GPUQUE)
     message(STATUS "GPU queue is enabled")
@@ -114,6 +118,10 @@ if (NOT(${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
     add_dependencies(text-kernels core)
 endif ()
 
+if (ENABLE_ACL)
+    add_dependencies(kernels-dvpp-image core dvpp-utils)
+endif ()
+
 if (ENABLE_PYTHON)
     add_dependencies(APItoPython core)
 endif ()
@@ -163,6 +171,13 @@ if (NOT(${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
             )
 endif ()
 
+if (ENABLE_ACL)
+    set(submodules
+            ${submodules}
+            $<TARGET_OBJECTS:kernels-dvpp-image>
+            $<TARGET_OBJECTS:dvpp-utils>)
+endif ()
+
 if (ENABLE_PYTHON)
     set(submodules
         ${submodules}
@@ -186,6 +201,11 @@ endif ()
 
 ################# Link with external libraries ########################
 target_link_libraries(_c_dataengine PRIVATE mindspore mindspore_gvar)
+
+if (ENABLE_ACL)
+    target_link_libraries(_c_dataengine PRIVATE ascendcl acl_dvpp)
+endif ()
+
 if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     if (ENABLE_PYTHON)
         target_link_libraries(_c_dataengine PRIVATE mindspore::pybind11_module ${PYTHON_LIBRARIES} ${SECUREC_LIBRARY})
