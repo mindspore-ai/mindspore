@@ -17,7 +17,7 @@
 #include "nnacl/fp32/transpose_fp32.h"
 
 void TransposeDim2Fp32(const float *in_data, float *out_data, const int *strides, int *out_strides, const int *perm,
-                       const int *output_shape, int h_start, int h_end) {
+                       const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int output0 = output_shape[0];
@@ -32,7 +32,7 @@ void TransposeDim2Fp32(const float *in_data, float *out_data, const int *strides
 }
 
 void TransposeDim3Fp32(const float *in_data, float *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape, int h_start, int h_end) {
+                       const int *perm, const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -55,7 +55,7 @@ void TransposeDim3Fp32(const float *in_data, float *out_data, const int *strides
 }
 
 void TransposeDim4Fp32(const float *in_data, float *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape, int h_start, int h_end) {
+                       const int *perm, const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -87,7 +87,7 @@ void TransposeDim4Fp32(const float *in_data, float *out_data, const int *strides
 }
 
 void TransposeDim5Fp32(const float *in_data, float *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape, int h_start, int h_end) {
+                       const int *perm, const int *output_shape) {
   const int stride0 = strides[perm[0]];
   const int stride1 = strides[perm[1]];
   const int stride2 = strides[perm[2]];
@@ -126,8 +126,7 @@ void TransposeDim5Fp32(const float *in_data, float *out_data, const int *strides
 }
 
 void TransposeDimsFp32(const float *in_data, float *out_data, const int *strides, const int *out_strides,
-                       const int *perm, const int *output_shape, int h_start, int h_end, int dims, int *size,
-                       int *position) {
+                       const int *perm, const int *output_shape, int dims, int *size, int *position) {
   *(size + dims - 1) = 1;
   for (int i = dims - 1; i > 0; --i) {
     *(size + i - 1) = *(size + i) * output_shape[i];
@@ -148,8 +147,8 @@ void TransposeDimsFp32(const float *in_data, float *out_data, const int *strides
   }
 }
 
-int DoTransposeFp32(const float *in_data, float *out_data, int *input_shape, const int *output_shape,
-                    TransposeParameter *transpose_param, int h_start, int h_end, int *size, int *position) {
+int DoTransposeFp32(const float *in_data, float *out_data, const int *output_shape, TransposeParameter *transpose_param,
+                    int *size, int *position) {
   if (in_data == NULL || out_data == NULL) {
     return NNACL_ERR;
   }
@@ -182,16 +181,15 @@ int DoTransposeFp32(const float *in_data, float *out_data, int *input_shape, con
     }
   }
   if (num_axes == 2) {
-    TransposeDim2Fp32(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+    TransposeDim2Fp32(in_data, out_data, strides, out_strides, perm, output_shape);
   } else if (num_axes == 3) {
-    TransposeDim3Fp32(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+    TransposeDim3Fp32(in_data, out_data, strides, out_strides, perm, output_shape);
   } else if (num_axes == 4) {
-    TransposeDim4Fp32(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+    TransposeDim4Fp32(in_data, out_data, strides, out_strides, perm, output_shape);
   } else if (num_axes == 5) {
-    TransposeDim5Fp32(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end);
+    TransposeDim5Fp32(in_data, out_data, strides, out_strides, perm, output_shape);
   } else {
-    TransposeDimsFp32(in_data, out_data, strides, out_strides, perm, output_shape, h_start, h_end, num_axes, size,
-                      position);
+    TransposeDimsFp32(in_data, out_data, strides, out_strides, perm, output_shape, num_axes, size, position);
   }
   return NNACL_OK;
 }

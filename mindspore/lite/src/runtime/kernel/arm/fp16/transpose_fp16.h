@@ -21,35 +21,24 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/kernel_registry.h"
+#include "src/runtime/kernel/arm/fp32/transpose_fp32.h"
 
 namespace mindspore::kernel {
 
-class TransposeFp16CPUKernel : public LiteKernel {
+class TransposeFp16CPUKernel : public TransposeCPUKernel {
  public:
   explicit TransposeFp16CPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                   const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(param, inputs, outputs, ctx, primitive), thread_num_(ctx->thread_num_) {}
+      : TransposeCPUKernel(param, inputs, outputs, ctx, primitive) {}
   ~TransposeFp16CPUKernel() = default;
 
   int Init() override;
-  int ReSize() override;
   int Run() override;
-  int TransposeParallel(int task_id);
-  void FreeFp16Buffer();
-  int MallocFp16Buffer();
 
  private:
-  int thread_num_;
-  int thread_h_stride_;
-  int thread_h_num_;
-  int num_unit_;
-  float *in_data_;
-  float *out_data_;
-  float16_t *fp16_in_data_ = nullptr;
-  float16_t *fp16_out_data_ = nullptr;
-  int in_shape_[8];
-  int out_shape_[8];
+  float16_t *in_data_fp16_ = nullptr;
+  float16_t *out_data_fp16_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

@@ -34,96 +34,7 @@ int TransposeFp16CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
-  return ReSize();
-}
-
-int TransposeFp16CPUKernel::ReSize() {
-  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
-  num_unit_ = static_cast<int>(in_tensors_.at(kInputIndex)->shape().at(param->perm_[kNHWC_H]));
-  thread_h_num_ = MSMIN(thread_num_, num_unit_);
-  thread_h_stride_ = UP_DIV(num_unit_, thread_h_num_);
-  auto &in_tensor = in_tensors_.front();
-  auto &out_tensor = out_tensors_.front();
-  auto in_shape = in_tensor->shape();
-  auto out_shape = out_tensor->shape();
-  param->strides_[param->num_axes_ - 1] = 1;
-  param->out_strides_[param->num_axes_ - 1] = 1;
-  param->data_size_ = in_tensor->Size();
-  for (int i = param->num_axes_ - 2; i >= 0; i--) {
-    param->strides_[i] = in_shape.at(i + 1) * param->strides_[i + 1];
-    param->out_strides_[i] = out_shape.at(i + 1) * param->out_strides_[i + 1];
-  }
-
-  return RET_OK;
-}
-
-int TransposeFp16CPUKernel::MallocFp16Buffer() {
-  auto &in_tensor = in_tensors_.front();
-  auto &out_tensor = out_tensors_.front();
-
-  if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
-    fp16_in_data_ =
-      reinterpret_cast<float16_t *>(context_->allocator->Malloc(sizeof(float16_t) * in_tensor->ElementsNum()));
-    if (fp16_in_data_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc data failed";
-      return RET_ERROR;
-    }
-  }
-  if (out_tensor->data_type() == kNumberTypeFloat || out_tensor->data_type() == kNumberTypeFloat32) {
-    fp16_out_data_ =
-      reinterpret_cast<float16_t *>(context_->allocator->Malloc(sizeof(float16_t) * out_tensor->ElementsNum()));
-    if (fp16_out_data_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc data failed";
-      return RET_ERROR;
-    }
-  }
-  return RET_OK;
-}
-
-void TransposeFp16CPUKernel::FreeFp16Buffer() {
-  auto &in_tensor = in_tensors_.front();
-  auto &out_tensor = out_tensors_.front();
-
-  if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
-    if (fp16_in_data_ != nullptr) {
-      context_->allocator->Free(fp16_in_data_);
-      fp16_in_data_ = nullptr;
-    }
-  }
-  if (out_tensor->data_type() == kNumberTypeFloat || out_tensor->data_type() == kNumberTypeFloat32) {
-    if (fp16_out_data_ != nullptr) {
-      context_->allocator->Free(fp16_out_data_);
-      fp16_out_data_ = nullptr;
-    }
-  }
-}
-
-int TransposeFp16CPUKernel::TransposeParallel(int task_id) {
-  int num_unit_thread = MSMIN(thread_h_stride_, num_unit_ - task_id * thread_h_stride_);
-  if (num_unit_thread <= 0) {
-    return RET_OK;
-  }
-  int thread_offset = task_id * thread_h_stride_;
-  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
-
-  auto ret = Fp16DoTranspose(fp16_in_data_, fp16_out_data_, in_shape_, out_shape_, param, thread_offset,
-                             thread_offset + num_unit_thread);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Transpose error task_id[" << task_id << "] error_code[" << ret << "]";
-    return RET_ERROR;
-  }
-
-  return RET_OK;
-}
-
-static int TransposeFp16Run(void *cdata, int task_id) {
-  auto g_kernel = reinterpret_cast<TransposeFp16CPUKernel *>(cdata);
-  auto ret = g_kernel->TransposeParallel(task_id);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "TransposeRun error task_id[" << task_id << "] error_code[" << ret << "]";
-    return RET_OP_EXECUTE_FAILURE;
-  }
-  return RET_OK;
+  return TransposeCPUKernel::ReSize();
 }
 
 int TransposeFp16CPUKernel::Run() {
@@ -135,39 +46,39 @@ int TransposeFp16CPUKernel::Run() {
     MS_LOG(ERROR) << "null pointer referencing.";
     return RET_ERROR;
   }
-
-  // malloc when Run
-  auto ret = MallocFp16Buffer();
+  in_data_fp16_ = reinterpret_cast<float16_t *>(in_tensor->MutableData());
+  out_data_fp16_ = reinterpret_cast<float16_t *>(out_tensor->MutableData());
+  int dims = out_tensor->shape().size();
+  if (dims > MAX_TRANSPOSE_DIM_SIZE) {
+    dim_size_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * sizeof(int)));
+    if (dim_size_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc data failed";
+      return RET_ERROR;
+    }
+    position_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * sizeof(int)));
+    if (position_ == nullptr) {
+      MS_LOG(ERROR) << "Malloc data failed";
+      context_->allocator->Free(dim_size_);
+      dim_size_ = nullptr;
+      return RET_ERROR;
+    }
+  }
+  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
+  MS_ASSERT(param);
+  MS_ASSERT(in_data_fp16_);
+  MS_ASSERT(out_data_fp16_);
+  MS_ASSERT(out_shape_);
+  auto ret = Fp16DoTranspose(in_data_fp16_, out_data_fp16_, out_shape_, param, dim_size_, position_);
+  if (dims > MAX_TRANSPOSE_DIM_SIZE) {
+    context_->allocator->Free(dim_size_);
+    context_->allocator->Free(position_);
+    dim_size_ = nullptr;
+    position_ = nullptr;
+  }
   if (ret != RET_OK) {
-    FreeFp16Buffer();
-    return ret;
+    MS_LOG(ERROR) << "Transpose run failed";
+    return RET_ERROR;
   }
-
-  if (in_tensor->data_type() == kNumberTypeFloat || in_tensor->data_type() == kNumberTypeFloat32) {
-    in_data_ = reinterpret_cast<float *>(in_tensor->MutableData());
-    Float32ToFloat16(in_data_, fp16_in_data_, in_tensor->ElementsNum());
-  } else {
-    fp16_in_data_ = reinterpret_cast<float16_t *>(in_tensor->MutableData());
-  }
-  if (out_tensor->data_type() == kNumberTypeFloat16) {
-    fp16_out_data_ = reinterpret_cast<float16_t *>(out_tensor->MutableData());
-  }
-
-  memcpy(in_shape_, in_tensor->shape().data(), in_tensor->shape().size() * sizeof(int));
-  memcpy(out_shape_, out_tensor->shape().data(), out_tensor->shape().size() * sizeof(int));
-
-  ret = ParallelLaunch(this->context_->thread_pool_, TransposeFp16Run, this, thread_h_num_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Tranpose error error_code[" << ret << "]";
-    FreeFp16Buffer();
-    return ret;
-  }
-
-  if (out_tensor->data_type() == kNumberTypeFloat || out_tensor->data_type() == kNumberTypeFloat32) {
-    out_data_ = reinterpret_cast<float *>(out_tensor->MutableData());
-    Float16ToFloat32(fp16_out_data_, out_data_, out_tensor->ElementsNum());
-  }
-  FreeFp16Buffer();
 
   return ret;
 }
