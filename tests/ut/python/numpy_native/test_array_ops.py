@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""unit tests for array operations"""
+"""unit tests for numpy array operations"""
 
 import functools
 

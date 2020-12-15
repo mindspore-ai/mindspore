@@ -13,8 +13,8 @@
 # limitations under the License.
 # ============================================================================
 """math operations, the function docs are adapted from Numpy API."""
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
+from ..ops import operations as P
+from ..ops import functional as F
 from .array_ops import squeeze
 from .utils import _infer_out_shape, _is_scalar, _check_axis_valid, _get_device_compile, \
     _check_shape_aligned
@@ -22,7 +22,7 @@ from .utils import _infer_out_shape, _is_scalar, _check_axis_valid, _get_device_
 
 def mean(a, axis=None, keepdims=False):
     """
-    Compute the arithmetic mean along the specified axis.
+    Computes the arithmetic mean along the specified axis.
 
     Returns the average of the array elements. The average is taken
     over the flattened array by default, otherwise over the specified
@@ -30,8 +30,8 @@ def mean(a, axis=None, keepdims=False):
 
     Note:
         Numpy arguments dtype and out are not supported.
-        On GPU, the supported dtypes are np.float16, and np.float32.
-        On CPU, the supported dtypes are np.float16, and np.float32.
+        On GPU, the supported dtypes are mstype.float16, and mstype.float32.
+        On CPU, the supported dtypes are mstype.float16, and mstype.float32.
 
     Args:
         a (Tensor): input tensor containing numbers whose mean is desired.
@@ -56,6 +56,7 @@ def mean(a, axis=None, keepdims=False):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.arange(6, dtype='float32')
         >>> output = np.mean(a, 0)
         >>> print(output)
@@ -83,8 +84,8 @@ def inner(a, b):
 
     Note:
         Numpy argument out is not supported.
-        On GPU, the supported dtypes are np.float16, and np.float32.
-        On CPU, the supported dtype is np.float32.
+        On GPU, the supported dtypes are mstype.float16, and mstype.float32.
+        On CPU, the supported dtype is mstype.float32.
 
     Args:
         a (Tensor): input tensor. If a and b are nonscalar, their last
@@ -103,6 +104,7 @@ def inner(a, b):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
+        >>> import mindspore.numpy as np
         >>> a = np.ones((5, 3))
         >>> b = np.ones((2, 7, 3))
         >>> output = np.inner(a, b)
