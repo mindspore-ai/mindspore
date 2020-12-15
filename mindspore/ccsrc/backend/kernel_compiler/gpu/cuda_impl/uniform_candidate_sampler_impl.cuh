@@ -20,7 +20,7 @@
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename S>
-void CalUniformCandidateSampler(const int true_size, const int num_sampled, const S prob_val, S *true_expected_count,
-                                S *sampled_expected_count, cudaStream_t cuda_stream);
+void CalUniformCandidateSampler(const int64_t true_size, const int64_t num_sampled, const S prob_val,
+                                S *true_expected_count, S *sampled_expected_count, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_UNIFORM_CANDIDATE_SAMPLER_IMPL_CUH_

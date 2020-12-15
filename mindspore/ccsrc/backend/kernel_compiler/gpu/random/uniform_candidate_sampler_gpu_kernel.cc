@@ -25,5 +25,12 @@ MS_REG_GPU_KERNEL_TWO(UniformCandidateSampler,
                         .AddOutputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       UniformCandidateSamplerGpuKernel, int, float)
+MS_REG_GPU_KERNEL_TWO(UniformCandidateSampler,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeInt64)
+                        .AddOutputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      UniformCandidateSamplerGpuKernel, int64_t, float)
 }  // namespace kernel
 }  // namespace mindspore
