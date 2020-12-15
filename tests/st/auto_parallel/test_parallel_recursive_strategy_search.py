@@ -20,8 +20,10 @@ import pytest
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_single
-def test_sit_parallel_strategy_search():
+def test_sit_parallel_recursive_strategy_search():
     sh_path = os.path.split(os.path.realpath(__file__))[0]
-    ret = os.system(f"sh {sh_path}/run_parallel_strategy_search.sh")
-    os.system(f"grep -E 'ERROR|error' {sh_path}/parallel_strategy_search*/parallel_strategy_search*log -C 3")
+    ret = os.system(f"sh {sh_path}/run_parallel_recursive_strategy_search.sh")
+    os.system(
+        f"grep -E 'ERROR|error' "
+        f"{sh_path}/parallel_recursive_strategy_search*/parallel_recursive_strategy_search*log -C 3")
     assert ret == 0

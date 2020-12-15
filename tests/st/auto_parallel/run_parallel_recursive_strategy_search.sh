@@ -26,15 +26,15 @@ export ASCEND_OPP_PATH=/usr/local/Ascend/opp/
 
 process_pid=()
 for((i=0; i<$DEVICE_NUM; i++)); do
-    rm -rf ${BASE_PATH}/parallel_strategy_search${i}
-    mkdir ${BASE_PATH}/parallel_strategy_search${i}
-    cp -r ${BASE_PATH}/parallel_strategy_search.py  ${BASE_PATH}/parallel_strategy_search${i}/
-    cd ${BASE_PATH}/parallel_strategy_search${i}
+    rm -rf ${BASE_PATH}/parallel_recursive_strategy_search${i}
+    mkdir ${BASE_PATH}/parallel_recursive_strategy_search${i}
+    cp -r ${BASE_PATH}/parallel_strategy_search.py  ${BASE_PATH}/parallel_recursive_strategy_search${i}/
+    cd ${BASE_PATH}/parallel_recursive_strategy_search${i}
     export RANK_ID=${i}
     export DEVICE_ID=${i}
     echo "start training for device $i"
     env > env$i.log
-    pytest -s -v parallel_strategy_search.py::test_auto_parallel_strategy_search_axis_1_basic > parallel_strategy_search$i.log 2>&1 &
+    pytest -s -v parallel_strategy_search.py::test_auto_parallel_recursive_strategy_search_axis_1_basic > parallel_recursive_strategy_search$i.log 2>&1 &
     process_pid[${i}]=`echo $!`
 done
 
@@ -42,10 +42,10 @@ for((i=0; i<${DEVICE_NUM}; i++)); do
     wait ${process_pid[i]}
     status=`echo $?`
     if [ "${status}" != "0" ]; then
-        echo "[ERROR] test_parallel_strategy_search failed. status: ${status}"
+        echo "[ERROR] test_parallel_recursive_strategy_search failed. status: ${status}"
         exit 1
     else
-        echo "[INFO] test_parallel_strategy_search success."
+        echo "[INFO] test_parallel_recursive_strategy_search success."
     fi
 done
 
