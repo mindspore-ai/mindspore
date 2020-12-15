@@ -83,16 +83,22 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
     for (auto in_tensor : node->in_tensors()) {
       if (IsSubGraphInputTensor(in_tensor)) {
         auto tensor_name = node->name() + "_" + std::to_string(count++);
-        auto shape = in_tensor->shape();
+        hiai::op::Data *data;
         if (trans_nodes.find(node->Type()) != trans_nodes.end()) {
-          in_tensor->set_shape({shape[0], shape[3], shape[1], shape[2]});
+          auto shape = in_tensor->shape();
+          data = new (std::nothrow) hiai::op::Data(tensor_name);
+          if (data == nullptr) {
+            MS_LOG(ERROR) << "New data failed.";
+            return RET_ERROR;
+          }
+          ge::TensorDesc tensor_desc(lite::ConverterToNPUShape({shape[0], shape[3], shape[1], shape[2]}),
+                                     ge::FORMAT_NCHW, lite::ConverterToNPUDataType(in_tensor->data_type()));
+          data->update_input_desc_x(tensor_desc);
+        } else {
+          data = mindspore::lite::ConverterToNPUData(in_tensor, tensor_name);
         }
-        auto data = mindspore::lite::ConverterToNPUData(in_tensor, tensor_name);
         subgraph_input_op_.push_back(*data);
         node_input_op.push_back(data);
-        if (trans_nodes.find(node->Type()) != trans_nodes.end()) {
-          in_tensor->set_shape(shape);
-        }
         continue;
       }
 
@@ -120,13 +126,11 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
 
       // weight tensor
       if (is_weight_tensor) {
-        if (!(node->Type() == schema::PrimitiveType_Conv2D || node->Type() == schema::PrimitiveType_DeConv2D ||
-              node->Type() == schema::PrimitiveType_DepthwiseConv2D ||
-              node->Type() == schema::PrimitiveType_DeDepthwiseConv2D)) {
+        if (trans_nodes.find(node->Type()) == trans_nodes.end()) {
           auto name = node->name() + "_" + std::to_string(count++);
           auto weight_const = new (std::nothrow) hiai::op::Const(node->name() + "_" + std::to_string(count++));
           if (weight_const == nullptr) {
-            MS_LOG(ERROR) << "new weight const failed.";
+            MS_LOG(ERROR) << "New weight const failed.";
             return RET_ERROR;
           }
           auto weight_tensor = mindspore::lite::ConverterToNPUTensor(in_tensor);

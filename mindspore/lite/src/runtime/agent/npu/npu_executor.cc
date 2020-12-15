@@ -53,6 +53,7 @@ int NPUExecutor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &o
 
   for (int i = 0; i < npu_output_tensors_.size(); ++i) {
     memcpy(out_tensors[i]->MutableData(), npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
+    out_tensors[i]->ResetRefCount();
   }
 
   return RET_OK;

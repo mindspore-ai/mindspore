@@ -24,6 +24,7 @@ ge::Shape ConverterToNPUShape(const std::vector<int> &src_shape) {
   }
   return ge::Shape({shapes});
 }
+
 ge::Format ConverterToNPUFormat(schema::Format format) {
   ge::Format ge_format;
   switch (format) {
@@ -74,13 +75,14 @@ ge::DataType ConverterToNPUDataType(TypeId type_id) {
   }
   return data_type;
 }
+
 hiai::op::Data *ConverterToNPUData(Tensor *src, const std::string &name) {
   auto data = new (std::nothrow) hiai::op::Data(name);
   if (data == nullptr) {
     MS_LOG(ERROR) << "new data failed.";
     return data;
   }
-  ge::TensorDesc tensor_desc(ConverterToNPUShape(src->shape()), ge::FORMAT_NCHW,
+  ge::TensorDesc tensor_desc(ConverterToNPUShape(src->shape()), ConverterToNPUFormat(src->format()),
                              ConverterToNPUDataType(src->data_type()));
   data->update_input_desc_x(tensor_desc);
   return data;
@@ -92,7 +94,7 @@ std::shared_ptr<ge::Tensor> ConverterToNPUTensor(Tensor *src) {
     MS_LOG(ERROR) << "new ge_tensor failed.";
     return ge_tensor;
   }
-  ge::TensorDesc tensor_desc(ConverterToNPUShape(src->shape()), ge::FORMAT_NCHW,
+  ge::TensorDesc tensor_desc(ConverterToNPUShape(src->shape()), ConverterToNPUFormat(src->format()),
                              ConverterToNPUDataType(src->data_type()));
 
   ge_tensor->SetTensorDesc(tensor_desc);
@@ -102,62 +104,7 @@ std::shared_ptr<ge::Tensor> ConverterToNPUTensor(Tensor *src) {
   }
   return ge_tensor;
 }
-/*
- *    mode  : Activation mode, with options as follows:
- *            0 : Sigmoid
- *            1 : ReLU
- *            2 : Tanh
- *            3 : Clipped ReLU
- *            4 : ELU
- *            5 : PReLU
- *            6 : Abs
- *            7 : Relu1
- *            8 : Softsign
- *            9 : Softplus
- *            10 : Hardsigmoid
- *            11 : Threshold ReLU
- *            12 : Selu
- *            13 : Linear
- *            14 : Relu6
- *            15 : GeLU.
- */
-int ConverterToNPUActMode(schema::ActivationType type) {
-  switch (type) {
-    case schema::ActivationType_NO_ACTIVATION:
-      return -1;
-    case schema::ActivationType_SIGMOID:
-      return 0;
-    case schema::ActivationType_RELU:
-      return 1;
-    case schema::ActivationType_TANH:
-      return 2;
-    case schema::ActivationType_ELU:
-      return 4;
-    case schema::ActivationType_LEAKY_RELU:
-      return 5;
-    case schema::ActivationType_ABS:
-      return 6;
-    case schema::ActivationType_RELU1:
-      return 7;
-    case schema::ActivationType_SOFTSIGN:
-      return 8;
-    case schema::ActivationType_SOFTPLUS:
-      return 9;
-    case schema::ActivationType_HSIGMOID:
-      return 10;
-    case schema::ActivationType_THRESHOLDRELU:
-      return 11;
-    case schema::ActivationType_SELU:
-      return 12;
-    case schema::ActivationType_LINEAR:
-      return 13;
-    case schema::ActivationType_RELU6:
-      return 14;
-    default:
-      MS_LOG(ERROR) << "Unsupport activation type to NPU." << type;
-      return -1;
-  }
-}
+
 // mode  : Either 0 (product), 1 (sum), 2 (max), 3 (mean). Defaults to 1 (sum).
 int ConverterToNPUEltwiseMode(schema::EltwiseMode mode) {
   int mode_num = 1;

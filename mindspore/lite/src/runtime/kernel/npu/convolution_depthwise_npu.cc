@@ -25,7 +25,7 @@ using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 namespace mindspore::kernel {
 int ConvolutionDepthwiseNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
-  return RET_OK;
+  return RET_ERROR;
 }
 
 int ConvolutionDepthwiseNPUKernel::SetConvDwParam() {
