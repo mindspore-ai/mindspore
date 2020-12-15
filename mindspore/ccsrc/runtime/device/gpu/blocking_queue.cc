@@ -72,7 +72,7 @@ BlockQueueStatus_T GpuQueue::Front(void **addr, size_t *len) const {
   *len = len_;
 
   for (auto item : node_info_[head_].data_) {
-    host_release_(item.data_ptr_);
+    host_release_(item.data_ptr_, item.worker_id_);
   }
   return SUCCESS;
 }
@@ -105,7 +105,7 @@ BlockQueueStatus_T BlockingQueue::Create(void *addr, const std::vector<size_t> &
   return SUCCESS;
 }
 
-void BlockingQueue::RegisterRelease(const std::function<void(void *)> &func) { queue_->RegisterRelease(func); }
+void BlockingQueue::RegisterRelease(const std::function<void(void *, int32_t)> &func) { queue_->RegisterRelease(func); }
 
 BlockQueueStatus_T BlockingQueue::Push(const std::vector<DataItemGpu> &data, unsigned int) {
   std::unique_lock<std::mutex> locker(mutex_);

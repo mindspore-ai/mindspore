@@ -85,7 +85,7 @@ class GpuBufferMgr {
 
   // call for Push thread
   EXPORT unsigned int Open(unsigned int device_id, const std::string &channel_name, const std::vector<size_t> &shape,
-                           std::function<void(void *)> func);
+                           std::function<void(void *, int32_t)> func);
 
   // call for Front/Pop thread
   EXPORT unsigned int Open(unsigned int device_id, const std::string &channel_name, const std::vector<size_t> &shape);

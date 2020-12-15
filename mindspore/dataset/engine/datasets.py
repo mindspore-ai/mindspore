@@ -52,7 +52,7 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
     check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, \
     check_paddeddataset, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, replace_none
-from ..core.config import get_callback_timeout
+from ..core.config import get_callback_timeout, _init_device_info
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
 
 try:
@@ -141,11 +141,19 @@ class Dataset:
         self._sync = False
 
     def create_ir_tree(self):
+        """
+        Internal method to create an IR tree.
+
+        Returns:
+            ir_tree, The onject of the IR tree.
+            dataset, the root dataset of the IR tree.
+        """
         parent = self.parent
         self.parent = []
         dataset = copy.deepcopy(self)
         ir_tree = dataset.parse_tree()
         self.parent = parent
+        _init_device_info()
         return ir_tree, dataset
 
     def parse_tree(self):

@@ -66,7 +66,7 @@ BlockQueueStatus_T GpuBufferMgr::Create(unsigned int device_id, const std::strin
 }
 
 unsigned int GpuBufferMgr::Open(unsigned int device_id, const std::string &channel_name,
-                                const std::vector<size_t> &shape, const std::function<void(void *)> func) {
+                                const std::vector<size_t> &shape, const std::function<void(void *, int32_t)> func) {
   set_device();
   std::string name = std::to_string(device_id) + std::string("_") + channel_name;
   if (!name_queue_map_.count(name)) {

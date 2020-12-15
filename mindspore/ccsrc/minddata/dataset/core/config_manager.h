@@ -143,6 +143,17 @@ class ConfigManager {
   /// \param prefetch_size
   void set_prefetch_size(int32_t prefetch_size);
 
+  // getter function
+  // This rank_id is for numa and device_queue, one process work with only one rank_id
+  // for standalone scenario, this rank_id may come from env 'CUDA_VISIBLE_DEVICES',
+  // but for distribute scenario, this rank_id come from _get_global_rank() in python
+  // @return Get the current device id, for one process, it's only with one rank_id.
+  uint32_t rank_id() const { return rank_id_; }
+
+  // setter function
+  // @param rank_id - Set the current device id
+  void set_rank_id(uint32_t rank_id);
+
   uint32_t seed() const;
 
   // setter function
@@ -196,6 +207,10 @@ class ConfigManager {
   int32_t num_parallel_workers_;
   int32_t worker_connector_size_;
   int32_t op_connector_size_;
+  // This rank_id is for numa and device_queue, one process work with only one rank_id,
+  // for standalone scenario, this rank_id may come from env 'CUDA_VISIBLE_DEVICES',
+  // but for distribute scenario, this rank_id come from _get_global_rank() in python
+  uint32_t rank_id_;
   uint32_t seed_;
   uint32_t monitor_sampling_interval_;
   uint32_t callback_timout_;

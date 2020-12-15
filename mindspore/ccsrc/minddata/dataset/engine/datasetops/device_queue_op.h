@@ -31,6 +31,7 @@
 #endif
 
 #ifdef ENABLE_GPUQUE
+#include "minddata/dataset/engine/gpu_item_connector.h"
 #include "minddata/dataset/util/circular_pool.h"
 #include "runtime/device/gpu/gpu_buffer_mgr.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
@@ -189,12 +190,21 @@ class DeviceQueueOp : public PipelineOp {
 
 #ifdef ENABLE_GPUQUE
   Status SendDataToGPU();
-  Status RetryPushGPUData(const std::vector<size_t> &data_size, const TensorRow &curr_row, uint32_t handle,
-                          bool profiling, int32_t *push_time);
-  Status MallocForGPUData(std::vector<device::DataItemGpu> *items, const TensorRow &curr_row);
-  void ReleaseData(void *addr);
+  Status MallocForGPUData(std::vector<device::DataItemGpu> *items, const TensorRow &curr_row, const int32_t &worker_id);
+  void ReleaseData(void *addr, int32_t worker_id);
+  Status LaunchParallelCopyThread();
+  Status PushDataToGPU();
+  Status WorkerEntry(int32_t worker_id);
 
-  std::shared_ptr<MemoryPool> pool_;
+  QueueList<std::unique_ptr<DataBuffer>> receive_queues_;
+  std::vector<std::shared_ptr<MemoryPool>> pool_;
+  std::unique_ptr<GpuItemConnector> gpu_item_connector_;
+  uint32_t num_workers_;
+  uint32_t queue_capacity_;
+  // This rank_id is for device_queue, one process work with only one rank_id,
+  // for standalone scenario, this rank_id may come from env 'CUDA_VISIBLE_DEVICES',
+  // but for distribute scenario, this rank_id come from _get_global_rank() in python
+  uint32_t rank_id_;
 #endif
 
   Status SendDataToCPU();
