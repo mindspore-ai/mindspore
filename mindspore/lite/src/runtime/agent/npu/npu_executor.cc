@@ -17,7 +17,7 @@
 #include "src/runtime/agent/npu/npu_executor.h"
 #include "include/errorcode.h"
 #include "src/runtime/agent/npu/npu_manager.h"
-
+#include "nnacl/pack.h"
 namespace mindspore::lite {
 int NPUExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
   this->client_ = mindspore::lite::NPUManager::GetInstance()->GetClient();
@@ -32,12 +32,23 @@ int NPUExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
   return RET_OK;
 }
 
-int NPUExecutor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_tensors,
-                     std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator, const KernelCallBack &before,
+int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                     const std::vector<kernel::LiteKernel *> &kernels, const std::vector<bool> &inputs_nhwc2nchw,
+                     const std::vector<bool> &outputs_nchw2nhwc, Allocator *allocator, const KernelCallBack &before,
                      const KernelCallBack &after) {
   hiai::AiContext context;
   for (int i = 0; i < npu_input_tensors_.size(); ++i) {
-    memcpy(npu_input_tensors_[i]->GetBuffer(), in_tensors[i]->data_c(), in_tensors[i]->Size());
+    void *data = in_tensors[i]->data_c();
+    if (data == nullptr) {
+      MS_LOG(ERROR) << model_name_ << " inputs data is nullptr";
+      return RET_ERROR;
+    }
+    if (inputs_nhwc2nchw[i]) {
+      PackNHWCToNCHWFp32(data, npu_input_tensors_[i]->GetBuffer(), in_tensors[i]->Batch(),
+                         in_tensors[i]->Width() * in_tensors[i]->Height(), in_tensors[i]->Channel());
+    } else {
+      memcpy(npu_input_tensors_[i]->GetBuffer(), data, in_tensors[i]->Size());
+    }
   }
   context.AddPara("model_name", model_name_);
   if (this->client_ == nullptr) {
@@ -52,10 +63,19 @@ int NPUExecutor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &o
   }
 
   for (int i = 0; i < npu_output_tensors_.size(); ++i) {
-    memcpy(out_tensors[i]->MutableData(), npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
+    void *data = out_tensors[i]->MutableData();
+    if (data == nullptr) {
+      MS_LOG(ERROR) << "Malloc buffer failed.";
+      return RET_ERROR;
+    }
+    if (outputs_nchw2nhwc[i]) {
+      PackNCHWToNHWCFp32(npu_output_tensors_[i]->GetBuffer(), data, out_tensors[i]->Batch(),
+                         out_tensors[i]->Width() * out_tensors[i]->Height(), out_tensors[i]->Channel());
+    } else {
+      memcpy(data, npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
+    }
     out_tensors[i]->ResetRefCount();
   }
-
   return RET_OK;
 }
 
