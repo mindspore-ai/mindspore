@@ -77,8 +77,6 @@ def set_seed(seed):
         ValueError: If seed is invalid (< 0 or > MAX_UINT_32).
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
         >>> # Set a new global configuration value for the seed value.
         >>> # Operations with randomness will use the seed value to generate random values.
         >>> ds.config.set_seed(1000)
@@ -112,8 +110,6 @@ def set_prefetch_size(size):
         ValueError: If prefetch_size is invalid (<= 0 or > MAX_INT_32).
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
         >>> # Set a new global configuration value for the prefetch size.
         >>> ds.config.set_prefetch_size(1000)
     """
@@ -143,8 +139,6 @@ def set_num_parallel_workers(num):
         ValueError: If num_parallel_workers is invalid (<= 0 or > MAX_INT_32).
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
         >>> # Set a new global configuration value for the number of parallel workers.
         >>> # Now parallel dataset operators will run with 8 workers.
         >>> ds.config.set_num_parallel_workers(8)
@@ -176,8 +170,6 @@ def set_monitor_sampling_interval(interval):
         ValueError: If interval is invalid (<= 0 or > MAX_INT_32).
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
         >>> # Set a new global configuration value for the monitor sampling interval.
         >>> ds.config.set_monitor_sampling_interval(100)
     """
@@ -213,8 +205,6 @@ def set_auto_num_workers(enable):
         TypeError: If enable is not of boolean type.
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
         >>> # Enable auto_num_worker feature, this might override the num_parallel_workers passed in by user
         >>> ds.config.set_auto_num_workers(True)
     """
@@ -253,7 +243,7 @@ def get_auto_num_workers():
     Returns:
         Bool, whether auto num worker feature is turned on
     Examples:
-        >>> ds.config.get_auto_num_workers()
+        >>> num_workers = ds.config.get_auto_num_workers()
     """
     return _config.get_auto_num_workers()
 
@@ -270,8 +260,6 @@ def set_callback_timeout(timeout):
         ValueError: If timeout is invalid (<= 0 or > MAX_INT_32).
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
         >>> # Set a new global configuration value for the timeout value.
         >>> ds.config.set_callback_timeout(100)
     """
@@ -312,10 +300,8 @@ def load(file):
         RuntimeError: If file is invalid and parsing fails.
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
         >>> # Set new default configuration values according to values in the configuration file.
-        >>> ds.config.load("path/to/config/file")
+        >>> ds.config.load("/path/to/config_directory/config.cfg")
         >>> # example config file:
         >>> # {
         >>> #     "logFilePath": "/tmp",
