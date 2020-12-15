@@ -197,18 +197,20 @@ void SparseOptimInfo::ComputeMean(const std::vector<std::vector<size_t>> &shapes
   float *grad_data = reinterpret_cast<float *>(gradient()->addr);
   int *indices_data = reinterpret_cast<int *>(indices()->addr);
 
-  size_t original_row_count = input_shapes.front();
-  if (original_row_count > 0) {
-    size_t offset = 0;
-    std::map<int64_t, int64_t> rank_dims = Util::AllRankLocalShard(original_row_count, rank_id, server_num);
-    for (size_t i = 0; i < rank_id; i++) {
-      if (rank_dims.count(i) == 0) {
-        MS_LOG(EXCEPTION) << "No local shard number for rank " << i;
+  if (sharded_) {
+    size_t original_row_count = input_shapes.front();
+    if (original_row_count > 0) {
+      size_t offset = 0;
+      std::map<int64_t, int64_t> rank_dims = Util::AllRankLocalShard(original_row_count, rank_id, server_num);
+      for (size_t i = 0; i < rank_id; i++) {
+        if (rank_dims.count(i) == 0) {
+          MS_LOG(EXCEPTION) << "No local shard number for rank " << i;
+        }
+        offset += rank_dims[i];
       }
-      offset += rank_dims[i];
-    }
-    for (size_t i = 0; i < indices_size; i++) {
-      indices_data[i] -= offset;
+      for (size_t i = 0; i < indices_size; i++) {
+        indices_data[i] -= offset;
+      }
     }
   }
 
@@ -283,7 +285,7 @@ SparseAdamOptimInfo::SparseAdamOptimInfo(const AddressPtr &weight, const Address
                                          const AddressPtr &beta1_power, const AddressPtr &beta2_power,
                                          const AddressPtr &learning_rate, const AddressPtr &beta1,
                                          const AddressPtr &beta2, const AddressPtr &epsilon, const AddressPtr &grad,
-                                         const AddressPtr &indices) {
+                                         const AddressPtr &indices, bool sharded) {
   inputs_.push_back(weight);
   inputs_.push_back(m);
   inputs_.push_back(v);
@@ -297,6 +299,7 @@ SparseAdamOptimInfo::SparseAdamOptimInfo(const AddressPtr &weight, const Address
   inputs_.push_back(indices);
   grads_offset_ = grad->size / sizeof(float);
   indices_offset_ = indices->size / sizeof(int);
+  sharded_ = sharded;
 }
 
 void SparseAdamOptimInfo::Update(const Values &values, const Lengths &lens) {
@@ -333,7 +336,7 @@ size_t SparseAdamOptimInfo::indices_index() {
 }
 
 SparseFtrlOptimInfo::SparseFtrlOptimInfo(const AddressPtr &weight, const AddressPtr &accum, const AddressPtr &linear,
-                                         const AddressPtr &grad, const AddressPtr &indices) {
+                                         const AddressPtr &grad, const AddressPtr &indices, bool sharded) {
   inputs_.push_back(weight);
   inputs_.push_back(accum);
   inputs_.push_back(linear);
@@ -341,6 +344,7 @@ SparseFtrlOptimInfo::SparseFtrlOptimInfo(const AddressPtr &weight, const Address
   inputs_.push_back(indices);
   grads_offset_ = grad->size / sizeof(float);
   indices_offset_ = indices->size / sizeof(int);
+  sharded_ = sharded;
 }
 
 const AddressPtr &SparseFtrlOptimInfo::gradient() {

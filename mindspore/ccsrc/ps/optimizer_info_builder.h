@@ -34,12 +34,12 @@ class OptimizerInfoBuilder {
   virtual ~OptimizerInfoBuilder() = default;
 
   OptimizerInfo *Build(const std::shared_ptr<PServerKernel> &pserver_kernel, const WeightPtr &weight, const Keys &keys,
-                       const Values &values, const Lengths &lens, const InputsShapePtr &inputs_shape,
-                       size_t worker_num);
+                       const Values &values, const Lengths &lens, const InputsShapePtr &inputs_shape, size_t worker_num,
+                       bool sharded);
 
   virtual OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
                                      const Lengths &lens, const InputsShapePtr &inputs_shape, size_t worker_num,
-                                     const std::shared_ptr<PServerKernel> &pserver_kernel) = 0;
+                                     const std::shared_ptr<PServerKernel> &pserver_kernel, bool sharded) = 0;
 
   virtual void BuildWorkspaces(OptimizerInfo *info, const std::vector<size_t> &ws_sizes, size_t worker_num);
   virtual void BuildOutputs(OptimizerInfo *info, size_t worker_num) {}
@@ -57,7 +57,7 @@ class MomentumOptimInfoBuilder : public OptimizerInfoBuilder {
   ~MomentumOptimInfoBuilder() = default;
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
                              const InputsShapePtr &inputs_shape, size_t worker_num,
-                             const std::shared_ptr<PServerKernel> &pserver_kernel) override;
+                             const std::shared_ptr<PServerKernel> &pserver_kernel, bool sharded) override;
 };
 
 class SparseAdamOptimInfoBuilder : public OptimizerInfoBuilder {
@@ -66,7 +66,7 @@ class SparseAdamOptimInfoBuilder : public OptimizerInfoBuilder {
   ~SparseAdamOptimInfoBuilder() = default;
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
                              const InputsShapePtr &inputs_shape, size_t worker_num,
-                             const std::shared_ptr<PServerKernel> &pserver_kernel) override;
+                             const std::shared_ptr<PServerKernel> &pserver_kernel, bool sharded) override;
 };
 
 class SparseFtrlOptimInfoBuilder : public OptimizerInfoBuilder {
@@ -75,7 +75,7 @@ class SparseFtrlOptimInfoBuilder : public OptimizerInfoBuilder {
   ~SparseFtrlOptimInfoBuilder() = default;
   OptimizerInfo *BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values, const Lengths &lens,
                              const InputsShapePtr &inputs_shape, size_t worker_num,
-                             const std::shared_ptr<PServerKernel> &pserver_kernel) override;
+                             const std::shared_ptr<PServerKernel> &pserver_kernel, bool sharded) override;
 };
 }  // namespace ps
 }  // namespace mindspore

@@ -25,10 +25,12 @@ namespace ps {
 using mindspore::kernel::ps::SparseApplyFtrlPSKernel;
 OptimizerInfo *OptimizerInfoBuilder::Build(const std::shared_ptr<PServerKernel> &pserver_kernel,
                                            const WeightPtr &weight, const Keys &keys, const Values &values,
-                                           const Lengths &lens, const InputsShapePtr &inputs_shape, size_t worker_num) {
+                                           const Lengths &lens, const InputsShapePtr &inputs_shape, size_t worker_num,
+                                           bool sharded) {
   MS_EXCEPTION_IF_NULL(pserver_kernel);
   MS_EXCEPTION_IF_NULL(inputs_shape);
-  OptimizerInfo *optim_info = BuildInputs(weight, keys, values, lens, inputs_shape, worker_num, pserver_kernel);
+  OptimizerInfo *optim_info =
+    BuildInputs(weight, keys, values, lens, inputs_shape, worker_num, pserver_kernel, sharded);
   MS_EXCEPTION_IF_NULL(optim_info);
   std::vector<size_t> ws_sizes = pserver_kernel->workspace_sizes();
   BuildWorkspaces(optim_info, ws_sizes, worker_num);
@@ -108,7 +110,7 @@ AddressPtr OptimizerInfoBuilder::GenInputAddrPtr(const std::string &optim_type, 
 
 OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
                                                      const Lengths &lens, const InputsShapePtr &inputs_shape,
-                                                     size_t worker_num, const std::shared_ptr<PServerKernel> &) {
+                                                     size_t worker_num, const std::shared_ptr<PServerKernel> &, bool) {
   AddressPtr weight_addr = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(weight_addr);
   weight_addr->addr = weight->data();
@@ -135,7 +137,8 @@ OptimizerInfo *MomentumOptimInfoBuilder::BuildInputs(const WeightPtr &weight, co
 
 OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
                                                        const Lengths &lens, const InputsShapePtr &inputs_shape,
-                                                       size_t worker_num, const std::shared_ptr<PServerKernel> &) {
+                                                       size_t worker_num, const std::shared_ptr<PServerKernel> &,
+                                                       bool sharded) {
   AddressPtr weight_addr = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(weight_addr);
   weight_addr->addr = weight->data();
@@ -178,13 +181,14 @@ OptimizerInfo *SparseAdamOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
   AddressPtr grad = GenInputAddrPtr<float>(kSparseAdam, "grad", values.data(), lens, inputs_shape);
   AddressPtr indices = GenInputAddrPtr<float>(kSparseAdam, "indices", values.data(), lens, inputs_shape);
   return new SparseAdamOptimInfo(weight_addr, m, v, beta1_power, beta2_power, learning_rate, beta1, beta2, epsilon,
-                                 grad, indices);
+                                 grad, indices, sharded);
 }
 
 OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, const Keys &keys, const Values &values,
                                                        const Lengths &lens, const InputsShapePtr &inputs_shape,
                                                        size_t worker_num,
-                                                       const std::shared_ptr<PServerKernel> &pserver_kernel) {
+                                                       const std::shared_ptr<PServerKernel> &pserver_kernel,
+                                                       bool sharded) {
   MS_EXCEPTION_IF_NULL(inputs_shape);
   AddressPtr weight_addr = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(weight_addr);
@@ -216,7 +220,7 @@ OptimizerInfo *SparseFtrlOptimInfoBuilder::BuildInputs(const WeightPtr &weight, 
 
   AddressPtr grad = GenInputAddrPtr<float>(kSparseFtrl, "grad", values.data(), lens, inputs_shape);
   AddressPtr indices = GenInputAddrPtr<float>(kSparseFtrl, "indices", values.data(), lens, inputs_shape);
-  return new SparseFtrlOptimInfo(weight_addr, accum, linear, grad, indices);
+  return new SparseFtrlOptimInfo(weight_addr, accum, linear, grad, indices, sharded);
 }
 }  // namespace ps
 }  // namespace mindspore
