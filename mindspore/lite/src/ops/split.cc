@@ -150,6 +150,7 @@ int Split::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
       for (size_t j = 0; j < size_splits_.size() - 1; ++j) {
         split_dim_i -= size_splits_[j];
       }
+      size_splits_[i] = split_dim_i;
     } else {
       split_dim_i = size_splits_[i];
     }

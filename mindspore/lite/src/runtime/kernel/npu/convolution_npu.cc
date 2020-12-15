@@ -24,7 +24,7 @@ using mindspore::schema::PrimitiveType_Conv2D;
 namespace mindspore::kernel {
 int ConvolutionNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                     const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
-  return RET_OK;
+  return RET_ERROR;
 }
 
 int ConvolutionNPUKernel::SetConvParam() {

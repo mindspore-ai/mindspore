@@ -24,7 +24,7 @@ using mindspore::schema::PrimitiveType_Pooling;
 namespace mindspore::kernel {
 int PoolingNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                 OpParameter *opParameter) {
-  return RET_OK;
+  return RET_ERROR;
 }
 
 int PoolingNPUKernel::SetPoolingParam() {

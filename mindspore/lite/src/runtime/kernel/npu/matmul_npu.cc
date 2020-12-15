@@ -14,43 +14,38 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/npu/concat_npu.h"
+#include "src/runtime/kernel/npu/matmul_npu.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Concat;
+using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
-int ConcatNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+int MatMulNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                OpParameter *opParameter) {
-  return RET_ERROR;
-}
-
-int ConcatNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                                  const std::vector<ge::Operator *> &npu_inputs) {
-  op_ = new (std::nothrow) hiai::op::ConcatD(name_);
-  if (op_ == nullptr) {
-    MS_LOG(ERROR) << name_ << " op is nullptr";
-    return RET_ERROR;
-  }
-  op_->set_attr_concat_dim(axis_);
-  op_->set_attr_N(npu_inputs.size());
-  op_->create_dynamic_input_x(npu_inputs.size());
-  for (int i = 0; i < npu_inputs.size(); ++i) {
-    op_->set_dynamic_input_x(i + 1, *npu_inputs[i]);
-  }
   return RET_OK;
 }
 
-ge::Operator *mindspore::kernel::ConcatNPUKernel::GetNPUOp() { return this->op_; }
+int MatMulNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                                  const std::vector<ge::Operator *> &npu_inputs) {
+  op_ = new (std::nothrow) hiai::op::MatMul(name_);
+  op_->set_input_x1(*npu_inputs[0]);
+  op_->set_input_x2(*npu_inputs[1]);
 
-ConcatNPUKernel::~ConcatNPUKernel() {
+  op_->set_attr_transpose_x1(a_transpose_);
+  op_->set_attr_transpose_x2(b_transpose_);
+  return RET_OK;
+}
+
+ge::Operator *mindspore::kernel::MatMulNPUKernel::GetNPUOp() { return this->op_; }
+
+MatMulNPUKernel::~MatMulNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
     op_ = nullptr;
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Concat, NPUKernelCreator<ConcatNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_MatMul, NPUKernelCreator<MatMulNPUKernel>)
 }  // namespace mindspore::kernel
