@@ -124,7 +124,7 @@ class Dataset:
 
         self.parent = []
         for child in self.children:
-            child.parent.append(self)
+            child.parent.append(weakref.ref(self))
         self.num_parallel_workers = num_parallel_workers
 
         # todo check the following:
@@ -1945,6 +1945,7 @@ class BatchDataset(Dataset):
 
     def __del__(self):
         if hasattr(self, 'process_pool') and self.process_pool is not None:
+            logger.info("Batch process pool is being terminated.")
             self.process_pool.close()
 
 
@@ -2376,6 +2377,7 @@ class MapDataset(Dataset):
 
     def __del__(self):
         if hasattr(self, 'process_pool') and self.process_pool is not None:
+            logger.info("Map process pool is being terminated.")
             self.process_pool.close()
 
 
