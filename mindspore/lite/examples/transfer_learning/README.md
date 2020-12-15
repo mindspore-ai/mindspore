@@ -29,7 +29,7 @@ For this demo we will use only the [validation data of small images](http://plac
 - Dataiset format：jpg files
     - Note：In the current release, data is customely loaded using a proprietary DataSet class (provided in dataset.cc). In the upcoming releases loading will be done using MindSpore MindData infrastructure. In order to fit the data to the model it will be preprocessed using [ImageMagick convert tool](https://imagemagick.org/), namely croping and converting to bmp format.
     - Note: Only 10 classes out of the 365 will be used in this demo
-    - Note: 60% of the data will be used for training and 20% will be used for testing and the remaining 20% for validation
+    - Note: 60% of the data will be used for training, 20% will be used for testing and the remaining 20% for validation
 
 - The original dataset directory structure is as follows:
 
@@ -68,7 +68,7 @@ where:
 - DATASET_PATH is the path to the [dataset](#dataset),
 - MINDSPORE_DOCKER is the image name of the docker that runs [MindSpore](#environment-requirements). If not provided MindSpore will be run locally
 - REALEASE.tar.gz is a pointer to the MindSpore ToD release tar ball. If not provided, the script will attempt to find MindSpore ToD compilation output
-- target is defaulted to arm64, i.e., on-device. If x86 is provided, the demo will be run locally. Note that infrastructure is not optimized for device
+- target is defaulted to arm64, i.e., on-device. If x86 is provided, the demo will be run locally. Note that infrastructure is not optimized for running on x86. Also, note that user needs to call "make clean" when switching betweeen targets.
 
 # Script Detailed Description
 
@@ -82,7 +82,7 @@ See how to run the script and paramaters definitions in the [Quick Start Section
 
 ## Preparing the model
 
-Within the model folder a `prepare_model.sh` script uses MindSpore infrastructure to export the model into a `.mindir` file. The user can specify a docker image on which MindSpore is installed. Otherwise, the pyhton script will be run locally.
+Within the model folder a `prepare_model.sh` script uses MindSpore infrastructure to export the model into a `.mindir` file. The user can specify a docker image on which MindSpore is installed. Otherwise, the pyhton script will be run locally. As explained above, the head of the network is pretrained and a `.ckpt` file should be loaded to the head network. In the first time the script is run, it attempts to download the `.ckpt` file using `wget` command.
 The script then converts the `.mindir` to a `.ms` format using the MindSpore ToD converter.
 The script accepts a tar ball where the converter resides. Otherwise, the script will attempt to find the converter in the MindSpore ToD build output directory.
 

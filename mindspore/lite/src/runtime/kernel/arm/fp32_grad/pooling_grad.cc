@@ -35,6 +35,10 @@ int PoolingGradCPUKernel::Init() {
   auto in_shape = in_tensors_.at(0)->shape();
   auto out_shape = in_tensors_.at(1)->shape();
 
+  if (pool_param->pool_mode_ == PoolMode_AvgPool) {
+    out_shape = in_tensors_.at(2)->shape();
+  }
+
   int input_h = in_shape.at(1);
   int input_w = in_shape.at(2);
 

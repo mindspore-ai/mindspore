@@ -47,7 +47,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const int *
       total_loss -= logf(losses[i * param->number_of_classes_ + label]);
     }
   }
-  output[0] = total_loss / param->batch_size_;
+  output[0] = total_loss / static_cast<float>(param->batch_size_);
   return RET_OK;
 }
 
@@ -67,9 +67,9 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::GradPostExecute(const int *lab
       for (size_t j = 0; j < param->number_of_classes_; ++j) {
         size_t index = row_start + j;
         if (j == label) {
-          grads[index] = (losses[index] - 1) / param->batch_size_;
+          grads[index] = (losses[index] - 1) / static_cast<float>(param->batch_size_);
         } else {
-          grads[index] = losses[index] / param->batch_size_;
+          grads[index] = losses[index] / static_cast<float>(param->batch_size_);
         }
       }
     }
@@ -138,7 +138,7 @@ int SparseSoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
   size_t data_size = in_tensors_.at(0)->ElementsNum();
   set_workspace_size((data_size + dims.at(0)) * sizeof(float));
   sm_params_.n_dim_ = 2;
-  sm_params_.element_size_ = data_size;
+  sm_params_.element_size_ = static_cast<int>(data_size);
   sm_params_.axis_ = 1;
   for (size_t i = 0; i < dims.size(); i++) sm_params_.input_shape_[i] = dims.at(i);
 

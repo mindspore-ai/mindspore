@@ -12,7 +12,6 @@ checkopts()
   MNIST_DATA_PATH=""
   while getopts 'D:d:r:t:' opt
   do
-    OPTARG=$(echo ${OPTARG} | tr '[A-Z]' '[a-z]')
     case "${opt}" in
       D)
         MNIST_DATA_PATH=$OPTARG
@@ -70,7 +69,7 @@ PACKAGE=package-${TARGET}
 
 rm -rf ${PACKAGE}
 mkdir -p ${PACKAGE}/model
-cp model/*.ms ${PACKAGE}/model
+cp model/*.ms ${PACKAGE}/model || exit 1
 
 # Copy the running script to the package
 cp scripts/*.sh ${PACKAGE}/
@@ -85,7 +84,7 @@ mv mindspore-*/* msl/
 rm -rf mindspore-*
 
 # Copy the dataset to the package
-cp -r ${MNIST_DATA_PATH} ${PACKAGE}/dataset
+cp -r $MNIST_DATA_PATH ${PACKAGE}/dataset || exit 1
 
 echo "==========Compiling============"
 make TARGET=${TARGET}
@@ -94,6 +93,8 @@ make TARGET=${TARGET}
 mv bin ${PACKAGE}/ || exit 1
 
 if [ "${TARGET}" == "arm64" ]; then
+  cp ${ANDROID_NDK}/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so ${PACKAGE}/lib/ || exit 1
+
   echo "=======Pushing to device======="
   adb push ${PACKAGE} /data/local/tmp/
 
