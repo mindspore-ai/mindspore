@@ -30,6 +30,7 @@ UINT32_MAX = 4294967295
 
 _config = cde.GlobalContext.config_manager()
 
+
 def _init_device_info():
     """
     INTERNAL USE ONLY!
@@ -51,6 +52,7 @@ def _init_device_info():
                 if cuda_id != rank_id:
                     rank_id = cuda_id
         _config.set_rank_id(rank_id)
+
 
 def set_seed(seed):
     """
@@ -149,6 +151,7 @@ def set_num_parallel_workers(num):
 def get_num_parallel_workers():
     """
     Get the default number of parallel workers.
+    This is the DEFAULT num_parallel_workers value used for each op, it is not related to AutoNumWorker feature.
 
     Returns:
         Int, number of parallel workers to be used as a default for each operation

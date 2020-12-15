@@ -228,7 +228,7 @@ class DatasetSizeGetter : public TreeConsumer, public std::enable_shared_from_th
 
  private:
   std::shared_ptr<DatasetNode> root_;
-  std::vector<std::shared_ptr<TreeAdapter>> tree_adapters_;
+  std::vector<std::shared_ptr<TreeAdapter>> tree_adapters_;  // this is vector to handle different branch of zip
   int64_t dataset_size_;
 };
 

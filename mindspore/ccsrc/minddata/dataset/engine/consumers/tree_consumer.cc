@@ -444,7 +444,7 @@ Status SaveToDisk::TransformTensor(const unsigned char *src, const TensorShape &
 #endif
 
 TreeGetters::TreeGetters() : dataset_size_(-1), init_flag_(false), first_row_obtained_(false) {
-  tree_adapter_ = std::make_unique<TreeAdapter>();
+  tree_adapter_ = std::make_unique<TreeAdapter>(TreeAdapter::UsageFlag::kDeGetter);
 }
 
 Status TreeGetters::Init(std::shared_ptr<DatasetNode> d) {
@@ -570,7 +570,7 @@ Status DatasetSizeGetter::Init(std::shared_ptr<DatasetNode> d) {
   return Status::OK();
 }
 Status DatasetSizeGetter::DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *dataset_size) {
-  std::shared_ptr<TreeAdapter> tree_adapter = std::make_shared<TreeAdapter>();
+  std::shared_ptr<TreeAdapter> tree_adapter = std::make_shared<TreeAdapter>(TreeAdapter::UsageFlag::kDeGetter);
   tree_adapters_.push_back(tree_adapter);
   tree_adapter->SetPrePassOverride([](OptPass pre) {
     pre.push_back(
