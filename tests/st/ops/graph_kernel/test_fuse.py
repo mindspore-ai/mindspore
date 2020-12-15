@@ -19,7 +19,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.nn import Cell
 import mindspore.ops.operations as P
-from mindspore.nn.graph_kernels import ReLU
+from mindspore.ops.operations import _grad_ops as G
 
 
 class Net(Cell):
@@ -28,41 +28,45 @@ class Net(Cell):
         self.add = P.TensorAdd()
         self.sub = P.Sub()
         self.mul = P.Mul()
-        self.relu = ReLU()
+        self.sqrt_grad = G.SqrtGrad()
 
-    def construct(self, x, y):
+    def construct(self, x, y, z):
         sub_res = self.sub(x, y)
         mul_res = self.mul(sub_res, x)
-        relu_res = self.relu(mul_res)
-        square_res = P.Square()(relu_res)
-        add_res = self.add(relu_res, square_res)
+        sqrt_grad_res = self.sqrt_grad(mul_res, z)
+        square_res = P.Square()(sqrt_grad_res)
+        add_res = self.add(sqrt_grad_res, square_res)
         add1_res = self.add(add_res, add_res)
         return self.add(add1_res, add1_res)
 
 
-def test_basic():
-    input_x = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
-    input_y = np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32)
-    sub_res = input_x - input_y
-    mul_res = sub_res * input_x
-    relu_res = np.maximum(mul_res, 0)
-    square_res = np.square(relu_res)
-    add_res = relu_res + square_res
-    add1_res = add_res + add_res
-    expect = add1_res + add1_res
-
+def get_output(i0, i1, i2, enable_graph_kernel=False):
+    if enable_graph_kernel:
+        context.set_context(enable_graph_kernel=True)
     net = Net()
-    result = net(Tensor(input_x), Tensor(input_y))
+    output = net(i0, i1, i2)
+    return output
 
-    res = np.allclose(expect, result.asnumpy(), rtol=1.e-4, atol=1.e-7, equal_nan=True)
-    assert res
+
+def test_basic():
+    i0 = Tensor(np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32))
+    i1 = Tensor(np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32))
+    i2 = Tensor(np.random.normal(0, 1, [2, 3, 4, 3]).astype(np.float32))
+
+    expect = get_output(i0, i1, i2, False)
+    output = get_output(i0, i1, i2, True)
+
+    expect_np = expect.asnumpy().copy()
+    output_np = output.asnumpy().copy()
+
+    assert np.allclose(expect_np, output_np, 1.e-4, 1.e-7)
 
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_basic_gpu():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="GPU")
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     test_basic()
 
 
@@ -71,5 +75,5 @@ def test_basic_gpu():
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
 def test_basic_ascend():
-    context.set_context(mode=context.GRAPH_MODE, enable_graph_kernel=True, device_target="Ascend")
+    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
     test_basic()

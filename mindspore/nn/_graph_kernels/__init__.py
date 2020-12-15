@@ -18,13 +18,6 @@ GraphKernel.
 GraphKernel provides a unified style to express graph and kernel for user.
 It breaks the boundary between graph and kernel and provides more opportunities to do compile optimization.
 """
-from .graph_kernels import MaximumGrad, MinimumGrad, AbsGrad, ApplyMomentum, BiasAdd, EqualCount,     \
-    ReduceMean, ReLU, SoftmaxCrossEntropyWithLogits, LayerNorm, LayerNormXBackprop,   \
-    LayerNormBetaGammaBackprop, LogSoftmax, Tanh, TanhGrad, Gelu, Softmax, BiasAddGrad,            \
-    LambUpdateWithLR, LambNextMV
+from .graph_kernels import LambUpdateWithLR, LambNextMV
 
-__all__ = ['MaximumGrad', 'MinimumGrad', 'AbsGrad', 'ApplyMomentum', 'BiasAdd', 'EqualCount',
-           'ReduceMean', 'ReLU', 'SoftmaxCrossEntropyWithLogits', 'LayerNorm',
-           'LayerNormXBackprop', 'LayerNormBetaGammaBackprop', 'LogSoftmax', 'Tanh', 'TanhGrad',
-           'Gelu', 'Softmax', 'BiasAddGrad', 'LambUpdateWithLR', 'LambNextMV'
-           ]
+__all__ = ['LambUpdateWithLR', 'LambNextMV']

@@ -26,7 +26,7 @@ from mindspore._checkparam import Validator as validator
 from mindspore._checkparam import Rel
 from .optimizer import Optimizer
 from .. import layer
-from .. import graph_kernels as G
+from .. import _graph_kernels as G
 
 num_one = Tensor(np.ones([1]), mstype.float32)
 
