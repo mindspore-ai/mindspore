@@ -139,7 +139,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingKernelGradFp32) {
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(input1_data);
 
-  std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
+  std::vector<lite::Tensor *> inputs = {&x_tensor, &x_tensor, &dy_tensor};
 
   auto output_data = new float[output_data_size];
   ASSERT_NE(output_data, nullptr);
@@ -209,7 +209,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolingBatchGradFp32) {
   lite::Tensor x_tensor(TypeId::kNumberTypeFloat32, dim_x);
   x_tensor.set_data(input1_data);
 
-  std::vector<lite::Tensor *> inputs = {&dy_tensor, &x_tensor};
+  std::vector<lite::Tensor *> inputs = {&x_tensor, &x_tensor, &dy_tensor};
 
   std::vector<int> dim_dx({3, 28, 28, 3});
   lite::Tensor dx_tensor(TypeId::kNumberTypeFloat32, dim_dx);
@@ -282,7 +282,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride2Fp32) {
   lite::Tensor out_tensor(TypeId::kNumberTypeFloat32, dim_x);
   ASSERT_EQ(out_tensor.MallocData(), 0);
   float *out_data = static_cast<float *>(out_tensor.MutableData());
-  std::vector<lite::Tensor *> inputs = {&yt_tensor, &x_tensor};
+  std::vector<lite::Tensor *> inputs = {&x_tensor, &yt_tensor, &yt_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   lite::InnerContext context;
@@ -349,7 +349,7 @@ TEST_F(TestPoolingGradFp32, AvgPoolGradStride3Fp32) {
   ASSERT_EQ(out_tensor.MallocData(), 0);
   auto out_data = static_cast<float *>(out_tensor.MutableData());
 
-  std::vector<lite::Tensor *> inputs = {&yt_tensor, &x_tensor};
+  std::vector<lite::Tensor *> inputs = {&x_tensor, &yt_tensor, &yt_tensor};
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   lite::InnerContext context;

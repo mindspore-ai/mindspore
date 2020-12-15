@@ -37,7 +37,7 @@ int BiasGradCPUKernel::Init() {
     bias_param->out_shape_[i] = 1;  // 1 dimension for N,H,W,
   }
   bias_param->out_shape_[bias_param->ndim_ - 1] = dims[bias_param->ndim_ - 1];
-  for (int i = bias_param->ndim_; i < 4; i++) {
+  for (auto i = bias_param->ndim_; i < 4; i++) {
     bias_param->in_shape0_[i] = 0;
     bias_param->out_shape_[i] = 0;
   }

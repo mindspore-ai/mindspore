@@ -35,9 +35,9 @@ int SigmoidCrossEntropyWithLogitsCPUKernel::Execute(int task_id) {
   auto *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   const size_t tensor_len = in_tensors_.at(0)->ElementsNum();
 
-  float zero = 0.0f;
-  float one = 1.0f;
-  float two = 2.0f;
+  const float zero = 0.0f;
+  const float one = 1.0f;
+  const float two = 2.0f;
 
   for (uint64_t i = 0; i < tensor_len; ++i) {
     if (logits[i] >= zero) {
