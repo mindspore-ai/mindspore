@@ -840,7 +840,7 @@ LoopRow:
             vmovups %ymm12, (%rdx)
             addq %r12, %rdx
             vmovups %ymm14, (%rdx)
-            cmpq $-8, %rbx
+            cmpq $8, %rbx
             je WriteEnd
             movq %rax, %rdx
             addq %r13, %rax

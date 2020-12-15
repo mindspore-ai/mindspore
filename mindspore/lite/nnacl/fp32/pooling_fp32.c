@@ -17,6 +17,7 @@
 #include "nnacl/fp32/pooling_fp32.h"
 #include <float.h>
 #include "nnacl/errorcode.h"
+#include "nnacl/op_base.h"
 
 int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter *pooling_param, int task_id,
                float minf, float maxf) {
@@ -32,9 +33,9 @@ int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
   int window = win_w * win_h;
 
-#ifdef ENABLE_NEON
-  float32x4_t min_value = vdupq_n_f32(minf);
-  float32x4_t max_value = vdupq_n_f32(maxf);
+#if defined(ENABLE_NEON) || defined(ENALBE_SSE)
+  MS_FLOAT32X4 min_value = MS_MOVQ_F32(minf);
+  MS_FLOAT32X4 max_value = MS_MOVQ_F32(maxf);
 #endif
 
   for (int batch = 0; batch < pooling_param->output_batch_; batch++) {
@@ -61,8 +62,8 @@ int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
         for (int ci = 0; ci < c4; ci++) {
           const float *src_c_ptr = src_plane_ptr + ci * C4NUM;
           float *dst_c_ptr = dst_plane_ptr + ci * C4NUM;
-#ifdef ENABLE_NEON
-          float32x4_t tmp_avg = vdupq_n_f32(0);
+#if defined(ENABLE_NEON) || defined(ENALBE_SSE)
+          MS_FLOAT32X4 tmp_avg = MS_MOVQ_F32(0);
 #else
           float tmp_avg1 = 0;
           float tmp_avg2 = 0;
@@ -73,8 +74,8 @@ int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
           for (int h = real_win_h_start; h < real_win_h_end; h++) {
             for (int w = real_win_w_start; w < real_win_w_end; w++) {
               const float *src_win_ptr = src_c_ptr + ((in_h_index + h) * in_w + in_w_index + w) * channel;
-#ifdef ENABLE_NEON
-              tmp_avg = vaddq_f32(tmp_avg, vld1q_f32(src_win_ptr));
+#if defined(ENABLE_NEON) || defined(ENALBE_SSE)
+              tmp_avg = MS_ADDQ_F32(tmp_avg, MS_LDQ_F32(src_win_ptr));
 #else
               tmp_avg1 += src_win_ptr[0];
               tmp_avg2 += src_win_ptr[1];
@@ -90,11 +91,11 @@ int AvgPooling(const float *input_ptr, float *output_ptr, const PoolingParameter
           if (real_count == 0) {
             return NNACL_ERR;
           }
-#ifdef ENABLE_NEON
-          tmp_avg = tmp_avg / vdupq_n_f32(real_count);
-          tmp_avg = vmaxq_f32(tmp_avg, min_value);
-          tmp_avg = vminq_f32(tmp_avg, max_value);
-          vst1q_f32(dst_c_ptr, tmp_avg);
+#if defined(ENABLE_NEON) || defined(ENALBE_SSE)
+          tmp_avg = tmp_avg / MS_MOVQ_F32(real_count);
+          tmp_avg = MS_MAXQ_F32(tmp_avg, min_value);
+          tmp_avg = MS_MINQ_F32(tmp_avg, max_value);
+          MS_STQ_F32(dst_c_ptr, tmp_avg);
 #else
           tmp_avg1 /= (float)real_count;
           tmp_avg2 /= (float)real_count;
@@ -158,9 +159,9 @@ void MaxPooling(const float *input_ptr, float *output_ptr, const PoolingParamete
   int out_tile_count = UP_DIV(out_plane, TILE_NUM);
   int c4 = channel / C4NUM; /* oc && ic */
 
-#ifdef ENABLE_NEON
-  float32x4_t min_value = vdupq_n_f32(minf);
-  float32x4_t max_value = vdupq_n_f32(maxf);
+#if defined(ENABLE_NEON) || defined(ENALBE_SSE)
+  MS_FLOAT32X4 min_value = MS_MOVQ_F32(minf);
+  MS_FLOAT32X4 max_value = MS_MOVQ_F32(maxf);
 #endif
 
   for (int batch = 0; batch < output_batch; batch++) {
@@ -187,8 +188,8 @@ void MaxPooling(const float *input_ptr, float *output_ptr, const PoolingParamete
         for (int ci = 0; ci < c4; ci++) {
           const float *src_c_ptr = src_plane_ptr + ci * C4NUM;
           float *dst_c_ptr = dst_plane_ptr + ci * C4NUM;
-#ifdef ENABLE_NEON
-          float32x4_t tmp_max = vdupq_n_f32(-FLT_MAX);
+#if defined(ENABLE_NEON) || defined(ENALBE_SSE)
+          MS_FLOAT32X4 tmp_max = MS_MOVQ_F32(-FLT_MAX);
 #else
           float tmp_max1 = -FLT_MAX;
           float tmp_max2 = -FLT_MAX;
@@ -199,8 +200,8 @@ void MaxPooling(const float *input_ptr, float *output_ptr, const PoolingParamete
           for (int kh = real_win_h_start; kh < real_win_h_end; kh++) {
             for (int kw = real_win_w_start; kw < real_win_w_end; kw++) {
               const float *src_win_ptr = src_c_ptr + ((in_h_index + kh) * in_w + in_w_index + kw) * channel;
-#ifdef ENABLE_NEON
-              tmp_max = vmaxq_f32(tmp_max, vld1q_f32(src_win_ptr));
+#if defined(ENABLE_NEON) || defined(ENALBE_SSE)
+              tmp_max = MS_MAXQ_F32(tmp_max, MS_LDQ_F32(src_win_ptr));
 #else
               tmp_max1 = fmax(tmp_max1, src_win_ptr[0]);
               tmp_max2 = fmax(tmp_max2, src_win_ptr[1]);
@@ -209,10 +210,10 @@ void MaxPooling(const float *input_ptr, float *output_ptr, const PoolingParamete
 #endif
             }  // win_w loop
           }    // win_h loop
-#ifdef ENABLE_NEON
-          tmp_max = vmaxq_f32(tmp_max, min_value);
-          tmp_max = vminq_f32(tmp_max, max_value);
-          vst1q_f32(dst_c_ptr, tmp_max);
+#if defined(ENABLE_NEON) || defined(ENALBE_SSE)
+          tmp_max = MS_MAXQ_F32(tmp_max, min_value);
+          tmp_max = MS_MINQ_F32(tmp_max, max_value);
+          MS_STQ_F32(dst_c_ptr, tmp_max);
 #else
           tmp_max1 = fmax(tmp_max1, minf);
           tmp_max2 = fmax(tmp_max2, minf);
