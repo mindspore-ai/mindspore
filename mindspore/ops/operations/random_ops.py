@@ -621,14 +621,14 @@ class LogUniformCandidateSampler(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> sampler = ops.LogUniformCandidateSampler(1, 5, True, 5)
+        >>> sampler = ops.LogUniformCandidateSampler(2, 5, True, 5)
         >>> output1, output2, output3 = sampler(Tensor(np.array([[1, 7], [0, 4], [3, 3]])))
         >>> print(output1, output2, output3)
-        [3, 2, 0, 4, 1],
-        [[9.23129916e-01, 4.93363708e-01],
-         [9.92489874e-01, 6.58063710e-01],
-         [7.35534430e-01, 7.35534430e-01]],
-        [7.35534430e-01, 8.26258004e-01, 9.92489874e-01, 6.58063710e-01, 9.23129916e-01]
+        [3 2 0 4 1]
+        [[0.92312991 0.49336370]
+         [0.99248987 0.65806371]
+         [0.73553443 0.73553443]]
+        [0.73553443 0.82625800 0.99248987 0.65806371 0.92312991]
 
     """
 
@@ -645,14 +645,14 @@ class LogUniformCandidateSampler(PrimitiveWithInfer):
         self.num_true = Validator.check_number("num_true", num_true, 1, Rel.GE, self.name)
         self.num_sampled = Validator.check_number("num_sampled", num_sampled, 1, Rel.GE, self.name)
         if unique:
-            Validator.check_number("range_max", range_max, num_sampled, Rel.GE, self.name)
+            Validator.check("range_max", range_max, "num_sampled", num_sampled, Rel.GE, self.name)
         self.range_max = range_max
         self.unique = unique
-        self.seed = seed
+        self.seed = Validator.check_number("seed", seed, 0, Rel.GE, self.name)
 
     def infer_shape(self, true_classes_shape):
-        Validator.check("true_classes shape rank", len(true_classes_shape), "expect", 2, Rel.EQ, self.name)
-        Validator.check_int(true_classes_shape[1], self.num_true, Rel.EQ, 'true_classes_shape', self.name)
+        Validator.check_int(len(true_classes_shape), 2, Rel.EQ, "dim of true_classes", self.name)
+        Validator.check("true_classes_shape[1]", true_classes_shape[1], "num_true", self.num_true, Rel.EQ, self.name)
         return (self.num_sampled,), true_classes_shape, (self.num_sampled,)
 
     def infer_dtype(self, true_classes_type):
