@@ -47,7 +47,6 @@ class RangeInfo : public OperatorInfo {
 
   Status GenerateStrategies(int64_t stage_id) override;
   Status SetCostUnderStrategy(const StrategyPtr &strategy) override;
-  ReplaceGraphPtr replace_graph(const CNodePtr &cnode) override;
 
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
@@ -57,9 +56,7 @@ class RangeInfo : public OperatorInfo {
   Status InferDevMatrixShape() override;
   Status InferTensorMap() override;
   Status GetAttrs() override;
-  Status InferNewAttr();
   float GetRangeAttr(const std::string &arg);
-  Status ComputeReplaceGraph(const CNodePtr &cnode);
 
   float start_ = 0.0;
   float limit_ = 0.0;
