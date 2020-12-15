@@ -65,6 +65,8 @@ class Scheduler {
   kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
                                                kernel::SubGraphType type);
 
+  bool MergeOpIsReady(const kernel::LiteKernel *kernel, std::map<const kernel::LiteKernel *, bool> is_kernel_finish);
+
   std::vector<kernel::LiteKernel *> FindAllSubGraphKernels(
     kernel::LiteKernel *head_kernel, std::map<const kernel::LiteKernel *, bool> *sinked_kernel_map);
 

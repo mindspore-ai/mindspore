@@ -92,6 +92,7 @@ int BroadcastDiv(const float *input0, const float *input1, float *tile_input0, f
                  int element_size, ArithmeticParameter *param);
 
 int ElementLogicalAnd(const float *input0, const float *input1, float *output, const int element_size);
+int ElementLogicalAndInt(const int *input0, const int *input1, int *output, const int element_size);
 int BroadcastLogicalAnd(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                         int element_size, ArithmeticParameter *param);
 

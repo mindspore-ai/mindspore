@@ -85,4 +85,5 @@ kernel::LiteKernel *CpuSqueezeFp32KernelCreator(const std::vector<lite::Tensor *
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Squeeze, CpuSqueezeFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Squeeze, CpuSqueezeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Squeeze, CpuSqueezeFp32KernelCreator)
 }  // namespace mindspore::kernel

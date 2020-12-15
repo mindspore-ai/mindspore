@@ -30,7 +30,7 @@ int SwitchCPUKernel::PostProcess() {
   MS_ASSERT(bool_tensor->data_type() == kNumberTypeBool);
   MS_ASSERT(bool_tensor->shape().size() == 1);
   MS_ASSERT(bool_tensor->shape().front() == 1);
-  auto *active = static_cast<bool *>(bool_tensor->data_c());
+  auto active = static_cast<bool *>(bool_tensor->data_c());
   if (active == nullptr) {
     MS_LOG(ERROR) << "data of bool tensor is nullptr";
     return lite::RET_NULL_PTR;
