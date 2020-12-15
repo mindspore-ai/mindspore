@@ -127,14 +127,15 @@ std::shared_ptr<CaseFoldOperation> CaseFold();
 #endif
 
 /// \brief Tokenize Chinese string into words based on dictionary.
+/// \notes The integrity of the HMMSEgment algorithm and MPSegment algorithm files must be confirmed.
 /// \param[in] hmm_path Dictionary file is used by HMMSegment algorithm. The dictionary can be obtained on the
 ///   official website of cppjieba.
 /// \param[in] mp_path Dictionary file is used by MPSegment algorithm. The dictionary can be obtained on the
 ///   official website of cppjieba.
 /// \param[in] mode Valid values can be any of [JiebaMode.MP, JiebaMode.HMM, JiebaMode.MIX](default=JiebaMode.MIX).
-///   - JiebaMode.MP, tokenize with MPSegment algorithm.
-///   - JiebaMode.HMM, tokenize with Hiddel Markov Model Segment algorithm.
-///   - JiebaMode.MIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
+///   - JiebaMode.kMP, tokenize with MPSegment algorithm.
+///   - JiebaMode.kHMM, tokenize with Hiddel Markov Model Segment algorithm.
+///   - JiebaMode.kMIX, tokenize with a mix of MPSegment and HMMSegment algorithm.
 /// \param[in] with_offsets If or not output offsets of tokens (default=false).
 /// \return Shared pointer to the current TensorOperation.
 std::shared_ptr<JiebaTokenizerOperation> JiebaTokenizer(const std::string &hmm_path, const std::string &mp_path,

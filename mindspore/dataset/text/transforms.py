@@ -159,6 +159,9 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
     """
     Tokenize Chinese string into words based on dictionary.
 
+    Note:
+        The integrity of the HMMSEgment algorithm and MPSegment algorithm files must be confirmed.
+
     Args:
         hmm_path (str): Dictionary file is used by HMMSegment algorithm.
             The dictionary can be obtained on the official website of cppjieba.
