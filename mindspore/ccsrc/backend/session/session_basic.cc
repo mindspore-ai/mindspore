@@ -1626,7 +1626,11 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
     manager->AddFuncGraph(graph);
     graph->set_manager(manager);
   }
-  UnifyMindIR(graph);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
+    UnifyMindIR(graph);
+  }
   return graph;
 }
 
