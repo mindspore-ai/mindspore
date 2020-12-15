@@ -17,7 +17,9 @@ from math import ceil
 import numpy as np
 
 import mindspore.nn.learning_rate_schedule as lr_schedules
-
+from mindspore import Tensor
+from mindspore.ops import operations as P
+import mindspore.common.dtype as mstype
 
 def square_root_schedule(lr, update_num, decay_start_step,
                          warmup_steps=2000,
