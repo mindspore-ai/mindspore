@@ -162,11 +162,11 @@ class LGamma(Cell):
     The algorithm is:
 
     .. math::
-        lgamma(z + 1) = \frac{(\log(2) + \log(pi))}{2} + (z + 1/2) * log(t(z)) - t(z) + A(z)
-
-        t(z) = z + kLanczosGamma + 1/2
-
-        A(z) = kBaseLanczosCoeff + \sum_{k=1}^n \frac{kLanczosCoefficients[i]}{z + k}
+        \begin{array}{ll} \\
+            lgamma(z + 1) = \frac{(\log(2) + \log(pi))}{2} + (z + 1/2) * log(t(z)) - t(z) + A(z) \\
+            t(z) = z + kLanczosGamma + 1/2 \\
+            A(z) = kBaseLanczosCoeff + \sum_{k=1}^n \frac{kLanczosCoefficients[i]}{z + k}
+        \end{array}
 
     However, if the input is less than 0.5 use Euler's reflection formula:
 
