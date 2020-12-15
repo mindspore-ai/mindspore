@@ -233,24 +233,34 @@ def query_step_trace_file(profiler_dir):
     return None
 
 
-def get_summary_for_step_trace(average_info, header):
+def get_summary_for_step_trace(average_info, header, is_training_mode=True):
     """The property of summary info."""
     if not average_info or not header:
         return {}
     total_time = get_field_value(average_info, 'total', header)
     iteration_interval = get_field_value(average_info, 'iteration_interval',
                                          header)
-    fp_and_bp = get_field_value(average_info, 'fp_and_bp', header)
-    tail = get_field_value(average_info, 'tail', header)
-    summary = {
+    summary_part = {
         'total_time': total_time,
         'iteration_interval': iteration_interval,
         'iteration_interval_percent': calculate_percent(iteration_interval, total_time),
-        'fp_and_bp': fp_and_bp,
-        'fp_and_bp_percent': calculate_percent(fp_and_bp, total_time),
-        'tail': tail,
-        'tail_percent': calculate_percent(tail, total_time)
     }
+    if is_training_mode:
+        fp_and_bp = get_field_value(average_info, 'fp_and_bp', header)
+        tail = get_field_value(average_info, 'tail', header)
+        summary = {
+            'fp_and_bp': fp_and_bp,
+            'fp_and_bp_percent': calculate_percent(fp_and_bp, total_time),
+            'tail': tail,
+            'tail_percent': calculate_percent(tail, total_time)
+        }
+    else:
+        fp = get_field_value(average_info, 'fp', header)
+        summary = {
+            'fp': fp,
+            'fp_percent': calculate_percent(fp, total_time)
+        }
+    summary.update(summary_part)
     return summary
 
 

@@ -170,7 +170,6 @@ std::string ProfilingUtils::GetGraphSecondLastKernelName(const std::vector<CNode
 
   return second_last_kernel_name;
 }
-
 }  // namespace gpu
 }  // namespace profiler
 }  // namespace mindspore
