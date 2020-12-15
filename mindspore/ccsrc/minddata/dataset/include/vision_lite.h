@@ -68,7 +68,9 @@ std::shared_ptr<CenterCropOperation> CenterCrop(std::vector<int32_t> size);
 /// \brief Function to create a Crop TensorOp
 /// \notes Crop an image based on location and crop size
 /// \param[in] coordinates Starting location of crop. Must be a vector of two values, in the form of {x_coor, y_coor}
-/// \param[in] size Size of the cropped area. Must be a vector of two values, in the form of {height, width}
+/// \param[in] size Size of the cropped area.
+///     If size is a single value, a square crop of size (size, size) is returned.
+///     If size has 2 values, it should be (height, width).
 /// \return Shared pointer to the current TensorOp
 std::shared_ptr<CropOperation> Crop(std::vector<int32_t> coordinates, std::vector<int32_t> size);
 
