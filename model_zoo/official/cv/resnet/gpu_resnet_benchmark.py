@@ -67,7 +67,7 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
 
     # define map operations
     normalize_op = C.Normalize(mean=mean, std=std)
-    if dtype == "float16":
+    if dtype == "fp16":
         normalize_op = C.NormalizePad(mean=mean, std=std, dtype="float16")
     if do_train:
         trans = [
