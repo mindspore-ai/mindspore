@@ -42,6 +42,10 @@ int ResizeCPUKernel::Init() {
 int ResizeCPUKernel::ReSize() {
   int ret = RET_OK;
   if (method_ == static_cast<int>(schema::ResizeMethod_LINEAR)) {
+    if (!const_shape_) {
+      new_height_ = out_tensors_.at(0)->shape()[1];
+      new_width_ = out_tensors_.at(0)->shape()[2];
+    }
     FreeTmpBuffer();
     ret = MallocTmpBuffer();
     if (ret != RET_OK) {
