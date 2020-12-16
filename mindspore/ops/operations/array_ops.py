@@ -733,7 +733,7 @@ class Unique(Primitive):
         - **x** (Tensor) - The input tensor.
 
     Outputs:
-        Tuple, containing Tensor objects `(y, idx)., `y` is a tensor with the
+        Tuple, containing Tensor objects `(y, idx), `y` is a tensor with the
         same type as `x`, and contains the unique elements in `x`, sorted in
         ascending order. `idx` is a tensor containing indices of elements in
         the input corresponding to the output tensor.

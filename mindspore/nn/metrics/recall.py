@@ -23,7 +23,7 @@ from ._evaluation import EvaluationBase
 
 class Recall(EvaluationBase):
     r"""
-    Calculate recall for classification and multilabel data.
+    Calculates recall for classification and multilabel data.
 
     The recall class creates two local variables, :math:`\text{true_positive}` and :math:`\text{false_negative}`,
     that are used to compute the recall. This value is ultimately returned as the recall, an idempotent operation

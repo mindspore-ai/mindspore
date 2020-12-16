@@ -1512,7 +1512,14 @@ class MaxPool(_Pool):
     Examples:
         >>> input_tensor = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
         >>> maxpool_op = ops.MaxPool(padding="VALID", ksize=2, strides=1)
-        >>> output_tensor = maxpool_op(input_tensor)
+        >>> output = maxpool_op(input_tensor)
+        >>> print(output)
+        [[[[ 5.  6.  7.]
+           [ 9. 10. 11.]]
+          [[17. 18. 19.]
+           [21. 22. 23.]]
+          [[29. 30. 31.]
+           [33. 34. 35.]]]]
     """
 
     @prim_attr_register
@@ -1568,6 +1575,13 @@ class MaxPoolWithArgmax(_Pool):
         >>> input_tensor = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
         >>> maxpool_arg_op = ops.MaxPoolWithArgmax(padding="VALID", ksize=2, strides=1)
         >>> output_tensor, argmax = maxpool_arg_op(input_tensor)
+        >>> print(output_tensor)
+        [[[[ 5.  6.  7.]
+           [ 9. 10. 11.]]
+          [[17. 18. 19.]
+           [21. 22. 23.]]
+          [[29. 30. 31.]
+           [33. 34. 35.]]]]
     """
 
     def __init__(self, ksize=1, strides=1, padding="valid", data_format="NCHW"):
@@ -2315,7 +2329,9 @@ class SGD(PrimitiveWithCheck):
         >>> accum = Tensor(np.array([0.1, 0.3, -0.2, -0.1]), mindspore.float32)
         >>> momentum = Tensor(0.1, mindspore.float32)
         >>> stat = Tensor(np.array([1.5, -0.3, 0.2, -0.7]), mindspore.float32)
-        >>> result = sgd(parameters, gradient, learning_rate, accum, momentum, stat)
+        >>> output = sgd(parameters, gradient, learning_rate, accum, momentum, stat)
+        >>> print(output[0])
+        [ 1.9899   -0.4903   1.6952001  3.9801   ]
     """
 
     @prim_attr_register
@@ -2931,7 +2947,7 @@ class FastGelu(PrimitiveWithInfer):
     FastGelu is defined as follows:
 
     .. math::
-        \text{output} = \frac {x} {1 + \exp(-1.702 * \left| x \right|)} * \exp(0.851 * (x - \left| x \right|))`,
+        \text{output} = \frac {x} {1 + \exp(-1.702 * \left| x \right|)} * \exp(0.851 * (x - \left| x \right|)),
 
     where :math:`x` is the element of the input.
 
@@ -3466,8 +3482,8 @@ class ROIAlign(PrimitiveWithInfer):
     points. The details of (RoI) Align operator are described in `Mask R-CNN <https://arxiv.org/abs/1703.06870>`_.
 
     Args:
-        pooled_height (int): The output features' height.
-        pooled_width (int): The output features' width.
+        pooled_height (int): The output features height.
+        pooled_width (int): The output features width.
         spatial_scale (float): A scaling factor that maps the raw image coordinates to the input
             feature map coordinates. Suppose the height of a RoI is `ori_h` in the raw image and `fea_h` in the
             input feature map, the `spatial_scale` must be `fea_h / ori_h`.
@@ -4046,7 +4062,7 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         - **linear** (Tensor) - A Tensor with shape (1,).
 
     Supported Platforms:
-        ``CPU``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -4072,6 +4088,9 @@ class FusedSparseFtrl(PrimitiveWithInfer):
         >>> indices = Tensor(np.array([0, 1]).astype(np.int32))
         >>> output = net(grad, indices)
         >>> print(output)
+        (Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]),
+         Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]),
+         Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]))
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -4155,6 +4174,7 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
     Examples:
         >>> import numpy as np
         >>> import mindspore.nn as nn
+        >>> import mindspore.common.dtype as mstype
         >>> from mindspore import Tensor, Parameter
         >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
@@ -4176,6 +4196,8 @@ class FusedSparseProximalAdagrad(PrimitiveWithInfer):
         >>> indices = Tensor(np.array([0, 1]).astype(np.int32))
         >>> output = net(grad, indices)
         >>> print(output)
+        (Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]),
+         Tensor(shape=[1], dtype=Float32, value= [0.00000000e+00]))
     """
     __mindspore_signature__ = (
         sig.make_sig('var', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
@@ -4225,9 +4247,9 @@ class KLDivLoss(PrimitiveWithInfer):
 
         .. math::
             \ell(x, y) = \begin{cases}
-            L, & \text{if reduction} = \text{`none';}\\
-            \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+            L, & \text{if reduction} = \text{'none';}\\
+            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
             \end{cases}
 
     Args:
@@ -4302,9 +4324,9 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
 
         .. math::
             \ell(x, y) = \begin{cases}
-            L, & \text{if reduction} = \text{`none';}\\
-            \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+            L, & \text{if reduction} = \text{'none';}\\
+            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
             \end{cases}
 
     Args:
@@ -6102,10 +6124,13 @@ class CTCLoss(PrimitiveWithInfer):
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> ctc_loss = ops.CTCLoss()
         >>> loss, gradient = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
-        >>> print(loss.shape)
-        (2,)
-        >>> print(gradient.shape)
-        (2, 2, 3)
+        >>> print(loss)
+        [ 0.69121575  0.5381993 ]
+        >>> print(gradient)
+        [[[ 0.25831494  0.3623634  -0.62067937 ]
+          [ 0.25187883  0.2921483  -0.5440271 ]]
+         [[ 0.43522435  0.24408469  0.07787037 ]
+          [ 0.29642645  0.4232373   0.06138104 ]]]
     """
 
     @prim_attr_register

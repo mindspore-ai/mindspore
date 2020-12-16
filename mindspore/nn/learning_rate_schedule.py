@@ -53,7 +53,7 @@ def _check_inputs(learning_rate, decay_rate, decay_steps, is_stair, cls_name):
 
 class ExponentialDecayLR(LearningRateSchedule):
     r"""
-    Calculate learning rate base on exponential decay function.
+    Calculates learning rate base on exponential decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -111,7 +111,7 @@ class ExponentialDecayLR(LearningRateSchedule):
 
 class NaturalExpDecayLR(LearningRateSchedule):
     r"""
-    Calculate learning rate base on natural exponential decay function.
+    Calculates learning rate base on natural exponential decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -170,7 +170,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
 
 class InverseDecayLR(LearningRateSchedule):
     r"""
-    Calculate learning rate base on inverse-time decay function.
+    Calculates learning rate base on inverse-time decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -227,7 +227,7 @@ class InverseDecayLR(LearningRateSchedule):
 
 class CosineDecayLR(LearningRateSchedule):
     r"""
-    Calculate learning rate base on cosine decay function.
+    Calculates learning rate base on cosine decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -283,7 +283,7 @@ class CosineDecayLR(LearningRateSchedule):
 
 class PolynomialDecayLR(LearningRateSchedule):
     r"""
-    Calculate learning rate base on polynomial decay function.
+    Calculates learning rate base on polynomial decay function.
 
     For the i-th step, the formula of computing decayed_learning_rate[i] is:
 
@@ -362,7 +362,7 @@ class PolynomialDecayLR(LearningRateSchedule):
 
 class WarmUpLR(LearningRateSchedule):
     r"""
-    Get learning rate warming up.
+    Gets learning rate warming up.
 
     For the i-th step, the formula of computing warmup_learning_rate[i] is:
 
