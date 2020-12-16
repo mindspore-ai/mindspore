@@ -4,11 +4,11 @@
     - [MobileNetV1 Description](#mobilenetv1-description)
     - [Model architecture](#model-architecture)
     - [Dataset](#dataset)
-    - [[Features]](#features)
-        - [[Mixed Precision(Ascend)]](#mixed-precisionascend)
-    - [[Environment Requirements]](#environment-requirements)
-    - [[Script description]](#script-description)
-        - [[Script and sample code]](#script-and-sample-code)
+    - [Features](#features)
+        - [Mixed Precision(Ascend)](#mixed-precisionascend)
+    - [Environment Requirements](#environment-requirements)
+    - [Script description](#script-description)
+        - [Script and sample code](#script-and-sample-code)
     - [Training process](#training-process)
         - [Usage](#usage)
         - [Launch](#launch)
@@ -17,7 +17,7 @@
         - [Usage](#usage-1)
         - [Launch](#launch-1)
         - [Result](#result-1)
-    - [[Model description]](#model-description)
+    - [Model description](#model-description)
         - [Performance](#performance)
             - [Training Performance](#training-performance)
     - [Description of Random Situation](#description-of-random-situation)
@@ -36,6 +36,8 @@ The overall network architecture of MobileNetV1 is show below:
 [Link](https://arxiv.org/abs/1704.04861)
 
 ## [Dataset](#contents)
+
+Note that you can run the scripts based on the dataset mentioned in original paper or widely used in relevant domain/network architecture. In the following sections, we will introduce how to run the scripts using the related dataset below.
 
 Dataset used: [ImageNet2012](http://www.image-net.org/)
 
