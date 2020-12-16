@@ -22,13 +22,14 @@ from mindspore.train.serialization import load_checkpoint, export
 
 from src.vgg import vgg16
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-
 parser = argparse.ArgumentParser(description='VGG16 export')
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument('--dataset', type=str, choices=["cifar10", "imagenet2012"], default="cifar10", help='ckpt file')
 parser.add_argument('--ckpt_file', type=str, required=True, help='vgg16 ckpt file.')
-parser.add_argument('--output_file', type=str, default='vgg16', help='vgg16 output air name.')
+parser.add_argument('--file_name', type=str, default='vgg16', help='vgg16 output file name.')
 parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
+                    help="device target")
 args = parser.parse_args()
 
 if args.dataset == "cifar10":
@@ -45,6 +46,7 @@ args.batch_norm = cfg.batch_norm
 args.has_dropout = cfg.has_dropout
 args.image_size = list(map(int, cfg.image_size.split(',')))
 
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 if __name__ == '__main__':
     if args.dataset == "cifar10":
@@ -58,4 +60,4 @@ if __name__ == '__main__':
 
     input_data = Tensor(np.zeros([cfg.batch_size, 3, args.image_size[0], args.image_size[1]]), mstype.float32)
 
-    export(net, input_data, file_name=args.output_file, file_format=args.file_format)
+    export(net, input_data, file_name=args.file_name, file_format=args.file_format)

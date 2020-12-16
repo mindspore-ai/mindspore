@@ -13,42 +13,45 @@
 # limitations under the License.
 # ============================================================================
 """
-##############export checkpoint file into air and onnx models#################
+##############export checkpoint file into air , mindir and onnx models#################
 python export.py --net squeezenet --dataset cifar10 --checkpoint_path squeezenet_cifar10-120_1562.ckpt
 """
 
 import argparse
 import numpy as np
-from mindspore import Tensor
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore import context, Tensor, load_checkpoint, load_param_into_net, export
+
+parser = argparse.ArgumentParser(description='checkpoint export')
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--batch_size", type=int, default=32, help="batch size")
+parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
+parser.add_argument('--width', type=int, default=227, help='input width')
+parser.add_argument('--height', type=int, default=227, help='input height')
+parser.add_argument('--net', type=str, default='squeezenet', choices=['squeezenet', 'squeezenet_residual'],
+                    help='Model.')
+parser.add_argument('--dataset', type=str, default='cifar10', choices=['cifar10', 'imagenet'], help='Dataset.')
+parser.add_argument("--file_name", type=str, default="squeezenet", help="output file name.")
+parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+parser.add_argument("--device_target", type=str, default="Ascend",
+                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
+args = parser.parse_args()
+
+if args.net == "squeezenet":
+    from src.squeezenet import SqueezeNet as squeezenet
+else:
+    from src.squeezenet import SqueezeNet_Residual as squeezenet
+if args.dataset == "cifar10":
+    num_classes = 10
+else:
+    num_classes = 1000
+
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Image classification')
-    parser.add_argument('--net', type=str, default='squeezenet', choices=['squeezenet', 'squeezenet_residual'],
-                        help='Model.')
-    parser.add_argument('--dataset', type=str, default='cifar10', choices=['cifar10', 'imagenet'], help='Dataset.')
-    parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
-    args_opt = parser.parse_args()
-
-    if args_opt.net == "squeezenet":
-        from src.squeezenet import SqueezeNet as squeezenet
-    else:
-        from src.squeezenet import SqueezeNet_Residual as squeezenet
-    if args_opt.dataset == "cifar10":
-        num_classes = 10
-    else:
-        num_classes = 1000
-
-    onnx_filename = args_opt.net + '_' + args_opt.dataset
-    air_filename = args_opt.net + '_' + args_opt.dataset
-
     net = squeezenet(num_classes=num_classes)
 
-    assert args_opt.checkpoint_path is not None, "checkpoint_path is None."
-
-    param_dict = load_checkpoint(args_opt.checkpoint_path)
+    param_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(net, param_dict)
 
-    input_arr = Tensor(np.zeros([1, 3, 227, 227], np.float32))
-    export(net, input_arr, file_name=onnx_filename, file_format="ONNX")
-    export(net, input_arr, file_name=air_filename, file_format="AIR")
+    input_data = Tensor(np.zeros([args.batch_size, 3, args.height, args.width], np.float32))
+    export(net, input_data, file_name=args.file_name, file_format=args.file_format)
