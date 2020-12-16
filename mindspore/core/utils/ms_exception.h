@@ -27,7 +27,7 @@ class ExceptionListener {
 
 class MsException {
  public:
-  static MsException &GetInstance() {
+  static MsException &Instance() {
     static MsException instance;
     return instance;
   }

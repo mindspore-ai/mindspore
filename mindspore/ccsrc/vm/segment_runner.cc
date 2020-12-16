@@ -87,6 +87,10 @@ AnfNodePtr RefSubGraphNode(const FuncGraphPtr &fg, const AnfNodePtr &node, AnfNo
   if (node->isa<ValueNode>() && !IsValueNode<FuncGraph>(node)) {
     eqv[node] = node;
   } else if (eqv.find(node) == eqv.end()) {
+    if (IsPrimitiveCNode(node, prim::kPrimControlDepend)) {
+      eqv[node] = NewValueNode(MakeValue(0));
+      return eqv[node];
+    }
     bool ignore_make_tuple = false;
     if (IsPrimitiveCNode(node, prim::kPrimMakeTuple)) {
       ignore_make_tuple = true;

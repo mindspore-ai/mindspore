@@ -637,7 +637,7 @@ void SessionBasic::GetNewCNodeInputs(const CNodePtr &cnode, KernelGraph *graph, 
         (*other_graph_cnode)[anf] = new_parameter;
       }
       continue;
-    } else if (optimize_control_depend) {
+    } else if (optimize_control_depend || IsPrimitiveCNode(anf, prim::kPrimControlDepend)) {
       cnode_inputs->push_back(NewValueNode(MakeValue(SizeToLong(input_idx))));
     } else {
       // the input node is a cnode from other graph
