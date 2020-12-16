@@ -99,7 +99,6 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
         return RET_ERROR;
       }
     } else {
-      MS_ASSERT(dst_tensor->Size() == src_tensor->data()->size());
       if (WeightTensorNeedCopy(model, tensor_index)) {
         auto dst_data = dst_tensor->MutableData();
         if (dst_data == nullptr) {
@@ -118,6 +117,7 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
             return RET_ERROR;
           }
           kernel::DequantUtil::UnPackToInt(src_tensor, dst_tensor->MutableData());
+          copyed_tensor_idxes_.emplace_back(tensor_index);
         } else {
           dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
         }
