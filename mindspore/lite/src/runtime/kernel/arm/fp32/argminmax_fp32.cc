@@ -15,11 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/argminmax_fp32.h"
-#include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "nnacl/arg_min_max.h"
-#include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -30,22 +27,79 @@ using mindspore::schema::PrimitiveType_ArgMin;
 
 namespace mindspore::kernel {
 int ArgMinMaxCPUKernel::Init() {
-  auto ret = ArgMinMaxBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    return ret;
-  }
-  auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
-  param->data_type_ = kNumberTypeFloat32;
+  arg_param_->data_type_ = kNumberTypeFloat32;
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
-int ArgMinMaxCPUKernel::ReSize() { return ArgMinMaxBaseCPUKernel::ReSize(); }
+int ArgMinMaxCPUKernel::ReSize() {
+  auto in_shape = in_tensors_.at(0)->shape();
+  auto dims_size = in_shape.size();
+  int axis = arg_param_->axis_ < 0 ? arg_param_->axis_ + dims_size : arg_param_->axis_;
+  arg_param_->axis_ = axis;
+  arg_param_->dims_size_ = dims_size;
+  if (arg_param_->topk_ <= 0) {
+    MS_LOG(ERROR) << "Invalid topk " << arg_param_->topk_;
+    return RET_ERROR;
+  }
+  arg_param_->topk_ = MSMIN(arg_param_->topk_, in_shape.at(axis));
+  ComputeStrides(in_shape.data(), arg_param_->in_strides_, in_shape.size());
+  auto out_shape = out_tensors_.at(0)->shape();
+  ComputeStrides(out_shape.data(), arg_param_->out_strides_, out_shape.size());
+  return RET_OK;
+}
 
 int ArgMinMaxCPUKernel::Run() {
-  auto ret = ArgMinMaxBaseCPUKernel::Run();
-  return ret;
+  float *input_data = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  float *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  float *output_value = nullptr;
+  if (out_tensors_.size() == 2) {
+    output_value = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
+  }
+
+  auto shape = in_tensors_.at(0)->shape();
+
+  MS_ASSERT(context_->allocator != nullptr);
+  if (arg_param_->topk_ > 1 || arg_param_->keep_dims_) {
+    arg_param_->arg_elements_ =
+      reinterpret_cast<ArgElement *>(context_->allocator->Malloc(sizeof(ArgElement) * shape[arg_param_->axis_]));
+    if (arg_param_->arg_elements_ == nullptr) {
+      MS_LOG(ERROR) << "malloc memroy fail!";
+      return RET_ERROR;
+    }
+  }
+  ArgMinMaxFp32(input_data, output_data, output_value, reinterpret_cast<const int *>(shape.data()), arg_param_);
+  context_->allocator->Free(arg_param_->arg_elements_);
+  arg_param_->arg_elements_ = nullptr;
+  return RET_OK;
 }
+
+kernel::LiteKernel *CpuArgMinMaxFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
+                                                  const mindspore::lite::PrimitiveC *primitive) {
+  if (op_parameter == nullptr) {
+    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
+    return nullptr;
+  }
+  auto kernel = new (std::nothrow) ArgMinMaxCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "new ArgMinMaxCPUKernel fail!";
+    free(op_parameter);
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
+    delete kernel;
+    return nullptr;
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ArgMax, CpuArgMinMaxFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ArgMin, CpuArgMinMaxFp32KernelCreator)
 }  // namespace mindspore::kernel

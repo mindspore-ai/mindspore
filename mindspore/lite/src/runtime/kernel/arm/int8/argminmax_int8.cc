@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/int8/argminmax_int8.h"
-#include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "nnacl/int8/arg_min_max_int8.h"
-#include "include/errorcode.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -31,10 +28,6 @@ using mindspore::schema::PrimitiveType_ArgMin;
 
 namespace mindspore::kernel {
 int ArgMinMaxInt8CPUKernel::Init() {
-  auto ret = ArgMinMaxBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    return ret;
-  }
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   param->data_type_ = kNumberTypeInt8;
   auto *input_tensor = in_tensors_.at(kInputIndex);
@@ -52,7 +45,23 @@ int ArgMinMaxInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int ArgMinMaxInt8CPUKernel::ReSize() { return ArgMinMaxBaseCPUKernel::ReSize(); }
+int ArgMinMaxInt8CPUKernel::ReSize() {
+  auto in_shape = in_tensors_.at(0)->shape();
+  auto dims_size = in_shape.size();
+  auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
+  int axis = param->axis_ < 0 ? param->axis_ + dims_size : param->axis_;
+  param->axis_ = axis;
+  param->dims_size_ = dims_size;
+  if (param->topk_ <= 0) {
+    MS_LOG(ERROR) << "Invalid topk " << param->topk_;
+    return RET_ERROR;
+  }
+  param->topk_ = MSMIN(param->topk_, in_shape.at(axis));
+  ComputeStrides(in_shape.data(), param->in_strides_, in_shape.size());
+  auto out_shape = out_tensors_.at(0)->shape();
+  ComputeStrides(out_shape.data(), param->out_strides_, out_shape.size());
+  return RET_OK;
+}
 
 int ArgMinMaxInt8CPUKernel::Run() {
   auto input = in_tensors_.at(0);
@@ -110,5 +119,4 @@ kernel::LiteKernel *CpuArgMinMaxInt8KernelCreator(const std::vector<lite::Tensor
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ArgMax, CpuArgMinMaxInt8KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ArgMin, CpuArgMinMaxInt8KernelCreator)
-
 }  // namespace mindspore::kernel

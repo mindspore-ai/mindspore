@@ -35,6 +35,7 @@ OpParameter *PopulateArgMinParameter(const mindspore::lite::PrimitiveC *primitiv
   arg_param->axis_type_ = param->GetAxisType();
   arg_param->out_value_ = param->GetOutMaxValue();
   arg_param->keep_dims_ = param->GetKeepDims();
+  arg_param->get_max_ = false;
   return reinterpret_cast<OpParameter *>(arg_param);
 }
 
