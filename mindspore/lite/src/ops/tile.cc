@@ -52,12 +52,6 @@ int Tile::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &input
       MS_LOG(ERROR) << "new primitiveT value failed";
       return RET_ERROR;
     }
-    if (prim.GetAttr("dims") == nullptr) {
-      MS_LOG(INFO) << "Tile's attr dims is set to default";
-      attr->dims = {1};
-    } else {
-      attr->dims = CastToInt(prim.GetAttr("dims"));
-    }
     if (inputs.size() == kAnfPopulaterInputNumTwo) {
       auto inputNode = inputs[kAnfPopulaterInputNumOne];
       MS_ASSERT(inputNode != nullptr);
@@ -79,6 +73,15 @@ int Tile::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &input
           attr->multiples = {multiple};
         }
       }
+    }
+    if (prim.GetAttr("dims") == nullptr) {
+      MS_LOG(INFO) << "Tile's attr dims is set to default. The operator in mindspore has no attribute"
+                      "named dims and all the dimensions needs to be multiplied by default.";
+      for (size_t i = 0; i < attr->multiples.size(); i++) {
+        attr->dims.push_back(i);
+      }
+    } else {
+      attr->dims = CastToInt(prim.GetAttr("dims"));
     }
     this->primitive_->value.value = attr;
   }

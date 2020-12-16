@@ -36,6 +36,7 @@ class Range : public PrimitiveC {
   void SetStart(int start);
   void SetLimit(int limit);
   void SetDelta(int delta);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif

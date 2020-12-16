@@ -593,6 +593,22 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Div>(prim, inputs, quantType);
   } else if (op_type == "Tanh") {
     return NewPrimitiveC<Activation>(prim, inputs, quantType);
+  } else if (op_type == "Equal") {
+    return NewPrimitiveC<Equal>(prim, inputs, quantType);
+  } else if (op_type == "TopK") {
+    return NewPrimitiveC<TopK>(prim, inputs, quantType);
+  } else if (op_type == "Range") {
+    return NewPrimitiveC<Range>(prim, inputs, quantType);
+  } else if (op_type == "Tile") {
+    return NewPrimitiveC<Tile>(prim, inputs, quantType);
+  } else if (op_type == "GatherNd") {
+    return NewPrimitiveC<GatherNd>(prim, inputs, quantType);
+  } else if (op_type == "Square") {
+    return NewPrimitiveC<Square>(prim, inputs, quantType);
+  } else if (op_type == "Sqrt") {
+    return NewPrimitiveC<Sqrt>(prim, inputs, quantType);
+  } else if (op_type == "Greater") {
+    return NewPrimitiveC<Greater>(prim, inputs, quantType);
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
     return NewPrimitiveC<SoftmaxCrossEntropy>(prim, inputs, quantType);
@@ -621,8 +637,6 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<FlattenGrad>(prim, inputs, quantType);
   } else if (op_type == "FusedBatchNormGrad") {
     return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
-  } else if (op_type == "Tile") {
-    return NewPrimitiveC<Tile>(prim, inputs, quantType);
   } else if (op_type == "PowerGrad") {
     return NewPrimitiveC<PowerGrad>(prim, inputs, quantType);
   } else if (op_type == "SGD") {

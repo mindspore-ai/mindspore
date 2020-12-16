@@ -28,7 +28,38 @@ bool TopK::GetSorted() const { return this->primitive_->value.AsTopK()->sorted; 
 
 void TopK::SetK(int k) { this->primitive_->value.AsTopK()->k = k; }
 void TopK::SetSorted(bool sorted) { this->primitive_->value.AsTopK()->sorted = sorted; }
-
+int TopK::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_TopK;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_TopK) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::TopKT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.value = attr;
+    // the k value of mindspore models is one of inputs instead of an attribute.
+    attr->k = 0;
+    if (prim.GetAttr("sorted") != nullptr) {
+      attr->sorted = GetValue<bool>(prim.GetAttr("sorted"));
+    }
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 #else
 
 int TopK::GetK() const { return this->primitive_->value_as_TopK()->k(); }
@@ -60,7 +91,7 @@ int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   }
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
-  if (input->format() != schema::Format::Format_NHWC) {
+  if (input->shape().size() == kDimension_4d && input->format() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "topk only support NHWC now!";
     return RET_FORMAT_ERR;
   }
@@ -76,7 +107,16 @@ int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
     return RET_INFER_INVALID;
   }
   auto out_shape = input->shape();
-  out_shape.at(out_shape.size() - 1) = GetK();
+  if (inputs_.size() == kSingleNum) {
+    out_shape.at(out_shape.size() - 1) = GetK();
+  } else if (inputs_.size() == kDoubleNum) {
+    if (inputs_.at(1)->data_c() == nullptr) {
+      return RET_INFER_INVALID;
+    } else {
+      int *data = reinterpret_cast<int32_t *>(inputs_.at(1)->data_c());
+      out_shape.at(out_shape.size() - 1) = *data;
+    }
+  }
   if (inputs_.size() == kDoubleNum && inputs_.at(1)->data_c() != nullptr) {
     out_shape.at(out_shape.size() - 1) = reinterpret_cast<int *>(inputs_.at(1)->data_c())[0];
   }

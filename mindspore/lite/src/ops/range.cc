@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include "src/ops/range.h"
 
 #ifndef PRIMITIVE_WRITEABLE
@@ -32,7 +33,43 @@ void Range::SetDType(int d_type) { this->primitive_->value.AsRange()->dType = d_
 void Range::SetStart(int start) { this->primitive_->value.AsRange()->start = start; }
 void Range::SetLimit(int limit) { this->primitive_->value.AsRange()->limit = limit; }
 void Range::SetDelta(int delta) { this->primitive_->value.AsRange()->delta = delta; }
-
+int Range::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_Range;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_Range) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::RangeT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.value = attr;
+    attr->dType = 0;
+    if (prim.GetAttr("start") != nullptr) {
+      attr->start = static_cast<int32_t>(GetValue<float>(prim.GetAttr("start")));
+    }
+    if (prim.GetAttr("limit") != nullptr) {
+      attr->limit = static_cast<int32_t>(GetValue<float>(prim.GetAttr("limit")));
+    }
+    if (prim.GetAttr("delta") != nullptr) {
+      attr->delta = static_cast<int32_t>(GetValue<float>(prim.GetAttr("delta")));
+    }
+    if (this->primitive_->value.value == nullptr) {
+      MS_LOG(ERROR) << "primitive value is nullptr";
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
 #else
 
 int Range::GetDType() const { return this->primitive_->value_as_Range()->dType(); }
