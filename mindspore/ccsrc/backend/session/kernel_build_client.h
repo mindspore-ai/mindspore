@@ -25,14 +25,28 @@
 
 #include "common/duplex_pipe.h"
 #include "utils/log_adapter.h"
+#include "utils/ms_context.h"
 
 namespace mindspore {
 namespace kernel {
 void ReplaceStr(std::string *dest, const std::string &replace, char new_char);
 
 constexpr inline static int kBufferSize = 4096;
+constexpr inline static auto kEnv = "python";
 // The TAG as prefix of real command from remote.
 constexpr inline static auto kTag = "[~]";
+static std::string GetPyExe() {
+  // get real python executable path
+  auto ms_context = MsContext::GetInstance();
+  if (ms_context == nullptr) {
+    return kEnv;
+  }
+  auto env = ms_context->get_param<std::string>(MS_CTX_PYTHON_EXE_PATH);
+  if (env.empty()) {
+    return kEnv;
+  }
+  return env;
+}
 
 class KernelBuildClient {
  public:
@@ -164,7 +178,6 @@ static std::string GetScriptFilePath(const std::string cmd_env, const std::strin
 class AscendKernelBuildClient : public KernelBuildClient {
  public:
   // Server configure
-  constexpr inline static auto kEnv = "python";
   constexpr inline static auto kGetPathScript =
     "-c "
     "\""
@@ -196,9 +209,12 @@ class AscendKernelBuildClient : public KernelBuildClient {
     return instance;
   }
 
-  std::string GetEnv() override { return kEnv; }
+  std::string GetEnv() override { return GetPyExe(); }
 
-  std::string GetScript() override { return GetScriptFilePath(kEnv, kGetPathScript); }
+  std::string GetScript() override {
+    auto env = GetPyExe();
+    return GetScriptFilePath(env, kGetPathScript);
+  }
 
   // Before building.
   std::string SelectFormat(const std::string &json);
@@ -229,7 +245,6 @@ class AscendKernelBuildClient : public KernelBuildClient {
 class GpuKernelBuildClient : public KernelBuildClient {
  public:
   // Server configure
-  constexpr inline static auto kEnv = "python";
   constexpr inline static auto kGetPathScript =
     "-c "
     "\""
@@ -249,9 +264,12 @@ class GpuKernelBuildClient : public KernelBuildClient {
     return instance;
   }
 
-  std::string GetEnv() override { return kEnv; }
+  std::string GetEnv() override { return GetPyExe(); }
 
-  std::string GetScript() override { return GetScriptFilePath(kEnv, kGetPathScript); }
+  std::string GetScript() override {
+    auto env = GetPyExe();
+    return GetScriptFilePath(env, kGetPathScript);
+  }
 
   // Fetch pid(pid_t) from remote.
   int AkgGetPid();

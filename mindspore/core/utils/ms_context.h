@@ -102,6 +102,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_SAVE_DUMP_PATH,
   MS_CTX_SAVE_GRAPHS_PATH,
   MS_CTX_VARIABLE_MEMORY_MAX_SIZE,
+  MS_CTX_PYTHON_EXE_PATH,
   MS_CTX_TYPE_STRING_END,
 
   // parameter numbers of each type

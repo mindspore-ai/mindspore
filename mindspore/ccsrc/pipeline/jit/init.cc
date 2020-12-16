@@ -91,7 +91,8 @@ PYBIND11_MODULE(_c_expression, m) {
     .def("build_data_graph", &ExecutorPy::BuildGraph, py::arg("build_params"), py::arg("phase") = py::str("train"),
          py::arg("broadcast_params") = py::dict(), "Build data graph.")
     .def("has_compiled", &ExecutorPy::HasCompiled, py::arg("phase") = py::str(""), "get if cell compiled.")
-    .def("run_init_graph", &ExecutorPy::RunInitGraph, "Run init Graph.");
+    .def("run_init_graph", &ExecutorPy::RunInitGraph, "Run init Graph.")
+    .def("set_py_exe_path", &ExecutorPy::PyExePath, py::arg("phase") = py::str(""), "set python executable path.");
 
   (void)py::class_<EnvInstance, std::shared_ptr<EnvInstance>>(m, "EnvInstance_").def(py::init());
 

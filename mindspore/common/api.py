@@ -16,6 +16,7 @@
 # ============================================================================
 """Providing interface methods."""
 import types
+import sys
 from collections import OrderedDict
 from functools import wraps
 
@@ -340,6 +341,7 @@ class _Executor:
         self.is_init = False
         self._executor = Executor_.get_instance()
         self.compile_cache = {}
+        self._executor.set_py_exe_path(sys.executable)
 
     def init_dataset(self, queue_name, dataset_size, batch_size, dataset_types, dataset_shapes,
                      input_indexs, phase='dataset'):
