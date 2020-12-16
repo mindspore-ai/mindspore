@@ -28,6 +28,7 @@ cd run_distribute_train || exit
 EPOCH_SIZE=$2
 DATA_PATH=$3
 
+export HCCL_CONNECT_TIMEOUT=600
 export RANK_TABLE_FILE=$4
 export RANK_SIZE=$1
 export HCCL_FLAG=1
