@@ -69,6 +69,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMapCacheIdx, {InferImplMapCacheIdx, true}},
     {prim::kPrimCacheSwapTable, {InferImplCacheSwapTable, true}},
     {prim::kPrimUpdateCache, {InferImplUpdateCache, true}},
+    {prim::kPrimComputeAccidentalHits, {InferImplComputeAccidentalHits, true}},
     {prim::kPrimDiv, {InferImplDiv, true}},
     {prim::kPrimRealDiv, {InferImplRealDiv, true}},
     {prim::kPrimShape, {InferImplShape, false}},
