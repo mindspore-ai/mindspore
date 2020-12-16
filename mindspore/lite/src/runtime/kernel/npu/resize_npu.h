@@ -22,13 +22,14 @@
 #include "nnacl/arithmetic_common.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
+#include "src/runtime/kernel/npu/transpose_base_npu.h"
 namespace mindspore::kernel {
-class ResizeNPUKernel : public NPUKernel {
+class ResizeNPUKernel : public TransposeBaseNPUKernel {
  public:
   ResizeNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
+      : TransposeBaseNPUKernel(parameter, inputs, outputs, ctx, primitive) {
     auto resize_parameter = reinterpret_cast<ResizeParameter *>(parameter);
     method_ = resize_parameter->method_;
     new_height_ = resize_parameter->new_height_;

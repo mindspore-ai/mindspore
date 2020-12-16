@@ -34,6 +34,10 @@ namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
+std::set<schema::PrimitiveType> trans_nodes = {schema::PrimitiveType_Conv2D, schema::PrimitiveType_DeConv2D,
+                                               schema::PrimitiveType_DepthwiseConv2D,
+                                               schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_Resize};
+
 domi::ModelBufferData *SubGraphNpuKernel::BuildIRModel() {
   ge::Graph graph("NPUGraph");
 
@@ -70,12 +74,12 @@ domi::ModelBufferData *SubGraphNpuKernel::BuildIRModel() {
   return om_model_buff;
 }
 
-int SubGraphNpuKernel::Run() { return this->executor_->Run(in_tensors_, out_tensors_, nodes_, nullptr); }
+int SubGraphNpuKernel::Run() {
+  return reinterpret_cast<lite::NPUExecutor *>(this->executor_)
+    ->Run(in_tensors_, out_tensors_, nodes_, inputs_nhwc2nchw_, outputs_nchw2nhwc_);
+}
 
 int SubGraphNpuKernel::BuildNPUInputOp() {
-  std::set<schema::PrimitiveType> trans_nodes = {schema::PrimitiveType_Conv2D, schema::PrimitiveType_DeConv2D,
-                                                 schema::PrimitiveType_DepthwiseConv2D,
-                                                 schema::PrimitiveType_DeDepthwiseConv2D};
   int count = 0;
   subgraph_input_op_.clear();
   for (auto node : this->nodes_) {
@@ -94,8 +98,10 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
           ge::TensorDesc tensor_desc(lite::ConverterToNPUShape({shape[0], shape[3], shape[1], shape[2]}),
                                      ge::FORMAT_NCHW, lite::ConverterToNPUDataType(in_tensor->data_type()));
           data->update_input_desc_x(tensor_desc);
+          inputs_nhwc2nchw_.push_back(true);
         } else {
           data = mindspore::lite::ConverterToNPUData(in_tensor, tensor_name);
+          inputs_nhwc2nchw_.push_back(false);
         }
         subgraph_input_op_.push_back(*data);
         node_input_op.push_back(data);
@@ -156,6 +162,11 @@ std::vector<ge::Operator> SubGraphNpuKernel::GetNPUNodes(const vector<kernel::Li
   ops.reserve(nodes.size());
   for (int i = 0; i < nodes.size(); i++) {
     ops.push_back(*reinterpret_cast<NPUKernel *>(nodes[i])->GetNPUOp());
+    if (trans_nodes.find(schema::PrimitiveType(nodes[i]->GetPrimitive()->Type())) != trans_nodes.end()) {
+      outputs_nchw2nhwc_.push_back(true);
+    } else {
+      outputs_nchw2nhwc_.push_back(false);
+    }
   }
   return ops;
 }

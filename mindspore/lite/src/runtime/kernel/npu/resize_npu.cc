@@ -31,16 +31,22 @@ int ResizeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const 
     MS_LOG(WARNING) << "Unsupported resize method type:" << method_;
     return RET_ERROR;
   }
-  return RET_ERROR;
+  return RET_OK;
 }
 
 int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                   const std::vector<ge::Operator *> &npu_inputs) {
+  auto ret = SetPreTranspose(npu_inputs[0]);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "New pre transpose npu operator (NHWC -> NCHW) for op " << name_ << " failed.";
+    return RET_ERROR;
+  }
+
   ge::TensorDesc sizeTensorDesc(ge::Shape({2}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr sizeTensor = std::make_shared<hiai::Tensor>(sizeTensorDesc);
   vector<int32_t> dataValue = {static_cast<int32_t>(new_height_), static_cast<int32_t>(new_width_)};
   sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), 2 * sizeof(int32_t));
-  auto out_size = new (std::nothrow) hiai::op::Const(name_ + "size");
+  auto out_size = new (std::nothrow) hiai::op::Const(name_ + "_size");
   out_size->set_attr_value(sizeTensor);
   if (method_ == schema::ResizeMethod_LINEAR) {
     auto op = new (std::nothrow) hiai::op::ResizeBilinearV2(name_);
@@ -49,7 +55,7 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
       return RET_ERROR;
     }
     op->set_attr_align_corners(align_corners_);
-    op->set_input_x(*npu_inputs[0]);
+    op->set_input_x(*pre_trans_);
     op->set_input_size(*out_size);
     op->set_attr_half_pixel_centers(preserve_aspect_ratio_);
     op_ = op;
@@ -60,14 +66,21 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
       return RET_ERROR;
     }
     op->set_attr_align_corners(align_corners_);
-    op->set_input_x(*npu_inputs[0]);
+    op->set_input_x(*pre_trans_);
     op->set_input_size(*out_size);
     op_ = op;
   }
+
+  ret = SetPostTranspose(op_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "New post transpose npu operator (NCHW -> NHWC) for op " << name_ << " failed.";
+    return RET_ERROR;
+  }
+
   return RET_OK;
 }
 
-ge::Operator *mindspore::kernel::ResizeNPUKernel::GetNPUOp() { return this->op_; }
+ge::Operator *mindspore::kernel::ResizeNPUKernel::GetNPUOp() { return this->post_trans_; }
 
 ResizeNPUKernel::~ResizeNPUKernel() {
   if (op_ != nullptr) {
