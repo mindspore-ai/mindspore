@@ -80,6 +80,15 @@ if (ENABLE_ACL)
     find_library(ge_compiler libge_compiler.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
     target_link_libraries(mindspore_shared_lib PRIVATE ${acl} ${acl_retr} ${acl_cblas} ${acl_dvpp} ${acl_runtime}
             ${ge_compiler} mindspore::jpeg_turbo)
+
+    find_library(libplatform libplatform.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
+    find_library(libcompress libcompress.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
+    find_library(libopskernel libopskernel.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
+    find_library(libaicore_utils libaicore_utils.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
+    find_library(libaicpu_engine_common libaicpu_engine_common.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
+    find_library(ge_compiler libge_compiler.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
+    target_link_libraries(mindspore_shared_lib PRIVATE ${libplatform} ${libcompress} ${libopskernel}
+            ${libaicore_utils} ${libaicpu_engine_common})
 endif ()
 
 
