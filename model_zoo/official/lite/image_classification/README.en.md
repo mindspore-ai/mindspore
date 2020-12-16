@@ -20,7 +20,7 @@ The following describes how to use the MindSpore Lite C++ APIs (Android JNIs) an
 
     ![start_sdk](images/sdk_management.png)
 
-    If you have any Android Studio configuration problem when trying this demo, please refer to item 5 to resolve it.
+    If you have any Android Studio configuration problem when trying this demo, please refer to item 4 to resolve it.
 
 2. Connect to an Android device and runs the image classification application.
 
