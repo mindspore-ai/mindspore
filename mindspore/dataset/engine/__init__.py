@@ -22,14 +22,17 @@ high performance and parse data precisely. It also provides the following
 operations for users to preprocess data: shuffle, batch, repeat, map, and zip.
 """
 
-from .datasets import *
-from .iterators import *
-from .serializer_deserializer import serialize, deserialize, show, compare
-from .samplers import *
 from ..core import config
+from .cache_client import DatasetCache
+from .datasets import *
+from .graphdata import GraphData
+from .iterators import *
+from .samplers import *
+from .serializer_deserializer import compare, deserialize, serialize, show
 
-__all__ = ["config", "zip", "ImageFolderDataset", "MnistDataset",
-           "MindDataset", "GeneratorDataset", "TFRecordDataset", "CLUEDataset", "CSVDataset",
-           "ManifestDataset", "Cifar10Dataset", "Cifar100Dataset", "CelebADataset",
-           "VOCDataset", "CocoDataset", "TextFileDataset", "Schema", "DistributedSampler",
-           "PKSampler", "RandomSampler", "SequentialSampler", "SubsetRandomSampler", "WeightedRandomSampler"]
+__all__ = ["CelebADataset", "Cifar100Dataset", "Cifar10Dataset", "CLUEDataset", "CocoDataset", "CSVDataset",
+           "GeneratorDataset", "GraphData", "ImageFolderDataset", "ManifestDataset", "MindDataset", "MnistDataset",
+           "NumpySlicesDataset", "PaddedDataset", "TextFileDataset", "TFRecordDataset", "VOCDataset",
+           "DistributedSampler", "PKSampler", "RandomSampler", "SequentialSampler", "SubsetRandomSampler",
+           "WeightedRandomSampler",
+           "config", "DatasetCache", "Schema", "zip"]
