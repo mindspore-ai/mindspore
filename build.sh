@@ -565,6 +565,12 @@ build_lite()
 {
     get_version
     echo "============ Start building MindSpore Lite ${VERSION_STR} ============"
+
+    LITE_ENABLE_GPU=${ENABLE_GPU}
+    if [[ "${DEVICE}" == "" && "${LITE_PLATFORM}" == "arm64" ]]; then
+      LITE_ENABLE_GPU="on"
+    fi
+
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ] || [ $1 == "arm64" ]; then
       echo "start build opencl"
     fi
@@ -590,7 +596,7 @@ build_lite()
               -DANDROID_STL=${ANDROID_STL} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}                     \
               -DPLATFORM_ARM64=on -DENABLE_NEON=on -DENABLE_FP16="off"      \
               -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
-              -DSUPPORT_GPU=${ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} \
+              -DSUPPORT_GPU=${LITE_ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} \
               -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
@@ -633,33 +639,33 @@ build_lite()
 
 build_lite_java_arm64() {
     # build mindspore-lite arm64
-    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu.tar.gz" ]]; then
+    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-inference-android-aarch64.tar.gz" ]]; then
       build_lite "arm64" "off"
     fi
     # copy arm64 so
     cd ${BASEPATH}/output/
-    rm -rf mindspore-lite-${VERSION_STR}-runtime-arm64-cpu
-    tar -zxvf mindspore-lite-${VERSION_STR}-runtime-arm64-cpu.tar.gz
+    rm -rf mindspore-lite-${VERSION_STR}-inference-android-aarch64
+    tar -zxvf mindspore-lite-${VERSION_STR}-inference-android-aarch64.tar.gz
     [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/arm64-v8a/
     mkdir -p ${JAVA_PATH}/java/app/libs/arm64-v8a/
-    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm64-cpu/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
-    echo mindspore-lite-${VERSION_STR}-runtime-arm64-cpu
-    [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-runtime-arm64-cpu
+    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-inference-android-aarch64/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
+    echo mindspore-lite-${VERSION_STR}-inference-android-aarch64
+    [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-inference-android-aarch64
 }
 
 build_lite_java_arm32() {
     # build mindspore-lite arm32
-    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm32-cpu.tar.gz" ]]; then
+    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-inference-android-aarch32.tar.gz" ]]; then
       build_lite  "arm32" "off"
     fi
     # copy arm32 so
     cd ${BASEPATH}/output/
-    rm -rf mindspore-lite-${VERSION_STR}-runtime-arm32-cpu
-    tar -zxvf mindspore-lite-${VERSION_STR}-runtime-arm32-cpu.tar.gz
+    rm -rf mindspore-lite-${VERSION_STR}-inference-android-aarch32
+    tar -zxvf mindspore-lite-${VERSION_STR}-inference-android-aarch32.tar.gz
     [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/armeabi-v7a/
     mkdir -p ${JAVA_PATH}/java/app/libs/armeabi-v7a/
-    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-runtime-arm32-cpu/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
-    [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-runtime-arm32-cpu
+    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-inference-android-aarch32/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
+    [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-inference-android-aarch32
 }
 
 build_jni_arm64() {
