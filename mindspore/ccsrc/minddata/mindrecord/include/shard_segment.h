@@ -25,7 +25,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class ShardSegment : public ShardReader {
+class __attribute__((visibility("default"))) ShardSegment : public ShardReader {
  public:
   ShardSegment();
 

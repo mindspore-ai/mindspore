@@ -46,7 +46,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class ShardWriter {
+class __attribute__((visibility("default"))) ShardWriter {
  public:
   ShardWriter();
 

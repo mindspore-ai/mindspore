@@ -27,7 +27,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class ShardDistributedSample : public ShardSample {
+class __attribute__((visibility("default"))) ShardDistributedSample : public ShardSample {
  public:
   ShardDistributedSample(int num_shards, int shard_id, int no_of_padded_samples, bool shuffle, uint32_t seed,
                          int no_of_samples = 0, int offset = -1);

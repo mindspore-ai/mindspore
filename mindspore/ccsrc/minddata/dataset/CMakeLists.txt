@@ -3,7 +3,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-reorder")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-switch")
 
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-uninitialized -Wno-deprecated-declarations -Wno-delete-non-abstract-non-virtual-dtor -Wno-constant-conversion")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-uninitialized -Wno-deprecated-declarations -Wno-delete-non-abstract-non-virtual-dtor -Wno-constant-conversion -Wno-unknown-warning-option")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-maybe-uninitialized")
 endif()
@@ -91,6 +91,7 @@ add_subdirectory(core)
 add_subdirectory(kernels)
 add_subdirectory(engine)
 add_subdirectory(api)
+add_subdirectory(text)
 add_subdirectory(callback)
 ######################################################################
 add_dependencies(utils core)
@@ -107,16 +108,12 @@ add_dependencies(engine-perf core)
 add_dependencies(engine-gnn core)
 add_dependencies(engine core)
 add_dependencies(callback core)
+add_dependencies(text core)
+add_dependencies(text-kernels core)
 add_dependencies(cpp-API core)
 add_dependencies(engine-ir-datasetops core)
 add_dependencies(engine-ir-datasetops-source core)
 add_dependencies(engine-ir-cache core)
-
-if (NOT(${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
-    add_subdirectory(text)
-    add_dependencies(text core)
-    add_dependencies(text-kernels core)
-endif ()
 
 if (ENABLE_ACL)
     add_dependencies(kernels-dvpp-image core dvpp-utils)
@@ -162,14 +159,9 @@ set(submodules
         $<TARGET_OBJECTS:engine-opt>
         $<TARGET_OBJECTS:engine-cache-client>
         $<TARGET_OBJECTS:engine>
+        $<TARGET_OBJECTS:text>
+        $<TARGET_OBJECTS:text-kernels>
         )
-if (NOT(${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
-    set(submodules
-            ${submodules}
-            $<TARGET_OBJECTS:text>
-            $<TARGET_OBJECTS:text-kernels>
-            )
-endif ()
 
 if (ENABLE_ACL)
     set(submodules
@@ -229,9 +221,9 @@ target_link_libraries(_c_dataengine PUBLIC mindspore::jpeg_turbo mindspore::turb
                        mindspore::opencv_imgproc mindspore::tinyxml2 mindspore::sentencepiece_train ${ICU_LIB})
 if (ENABLE_GPUQUE)
     target_link_libraries(_c_dataengine PRIVATE gpu_queue
-                                  ${CUDNN_LIBRARY_PATH}
-				                  ${CUDA_PATH}/lib64/libcudart.so
-                                  ${CUDA_PATH}/lib64/stubs/libcuda.so)
+                          ${CUDNN_LIBRARY_PATH}
+                          ${CUDA_PATH}/lib64/libcudart.so
+                          ${CUDA_PATH}/lib64/stubs/libcuda.so)
 endif ()
 
 if (ENABLE_TDTQUE)

@@ -30,7 +30,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class Schema {
+class __attribute__((visibility("default"))) Schema {
  public:
   ~Schema() = default;
 

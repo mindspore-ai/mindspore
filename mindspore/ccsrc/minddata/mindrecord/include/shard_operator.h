@@ -22,7 +22,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class ShardOperator {
+class __attribute__((visibility("default"))) ShardOperator {
  public:
   virtual ~ShardOperator() = default;
 

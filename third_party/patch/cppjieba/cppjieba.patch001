@@ -1,6 +1,39 @@
+diff -Npur cppjieba/deps/limonp/StringUtil.hpp cppjiebap/deps/limonp/StringUtil.hpp
+--- cppjieba/deps/limonp/StringUtil.hpp	2020-03-11 09:30:52.000000000 +0800
++++ cppjiebap/deps/limonp/StringUtil.hpp	2020-12-15 16:02:38.000000000 +0800
+@@ -84,12 +84,12 @@ inline bool IsSpace(unsigned c) {
+ }
+ 
+ inline std::string& LTrim(std::string &s) {
+-  s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::ptr_fun<unsigned, bool>(IsSpace))));
++  s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::function<unsigned(bool)>(IsSpace))));
+   return s;
+ }
+ 
+ inline std::string& RTrim(std::string &s) {
+-  s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::ptr_fun<unsigned, bool>(IsSpace))).base(), s.end());
++  s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::function<unsigned(bool)>(IsSpace))).base(), s.end());
+   return s;
+ }
+ 
+@@ -98,12 +98,12 @@ inline std::string& Trim(std::string &s)
+ }
+ 
+ inline std::string& LTrim(std::string & s, char x) {
+-  s.erase(s.begin(), std::find_if(s.begin(), s.end(), std::not1(std::bind2nd(std::equal_to<char>(), x))));
++  s.erase(s.begin(), std::find_if(s.begin(), s.end(), [x](char c) -> bool { return c != x; }));
+   return s;
+ }
+ 
+ inline std::string& RTrim(std::string & s, char x) {
+-  s.erase(std::find_if(s.rbegin(), s.rend(), std::not1(std::bind2nd(std::equal_to<char>(), x))).base(), s.end());
++  s.erase(std::find_if(s.rbegin(), s.rend(), [x](char c) -> bool { return c != x; } ).base(), s.end());
+   return s;
+ }
+ 
 diff -Npur cppjieba/include/cppjieba/Jieba.hpp cppjiebap/include/cppjieba/Jieba.hpp
---- cppjieba/include/cppjieba/Jieba.hpp	2020-05-07 15:27:16.490147073 +0800
-+++ cppjiebap/include/cppjieba/Jieba.hpp	2020-05-07 15:51:15.315931163 +0800
+--- cppjieba/include/cppjieba/Jieba.hpp	2020-03-11 09:30:52.000000000 +0800
++++ cppjiebap/include/cppjieba/Jieba.hpp	2020-12-15 16:01:46.000000000 +0800
 @@ -10,17 +10,14 @@ class Jieba {
   public:
    Jieba(const string& dict_path, 
@@ -31,8 +64,8 @@ diff -Npur cppjieba/include/cppjieba/Jieba.hpp cppjiebap/include/cppjieba/Jieba.
  
  } // namespace cppjieba
 diff -Npur cppjieba/test/demo.cpp cppjiebap/test/demo.cpp
---- cppjieba/test/demo.cpp	2020-05-07 15:27:16.490147073 +0800
-+++ cppjiebap/test/demo.cpp	2020-05-07 15:53:21.630248552 +0800
+--- cppjieba/test/demo.cpp	2020-03-11 09:30:52.000000000 +0800
++++ cppjiebap/test/demo.cpp	2020-12-15 16:01:46.000000000 +0800
 @@ -11,9 +11,7 @@ const char* const STOP_WORD_PATH = "../d
  int main(int argc, char** argv) {
    cppjieba::Jieba jieba(DICT_PATH,
@@ -56,8 +89,8 @@ diff -Npur cppjieba/test/demo.cpp cppjiebap/test/demo.cpp
    return EXIT_SUCCESS;
  }
 diff -Npur cppjieba/test/unittest/jieba_test.cpp cppjiebap/test/unittest/jieba_test.cpp
---- cppjieba/test/unittest/jieba_test.cpp	2020-05-07 15:27:16.522146752 +0800
-+++ cppjiebap/test/unittest/jieba_test.cpp	2020-05-07 15:59:11.630860061 +0800
+--- cppjieba/test/unittest/jieba_test.cpp	2020-03-11 09:30:52.000000000 +0800
++++ cppjiebap/test/unittest/jieba_test.cpp	2020-12-15 16:01:46.000000000 +0800
 @@ -6,9 +6,7 @@ using namespace cppjieba;
  TEST(JiebaTest, Test1) {
    cppjieba::Jieba jieba("../dict/jieba.dict.utf8",

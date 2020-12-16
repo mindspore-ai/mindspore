@@ -57,7 +57,7 @@ const std::unordered_map<std::string, ColumnDataType> ColumnDataTypeMap = {
   {"bytes", ColumnBytes}, {"string", ColumnString},   {"int32", ColumnInt32},
   {"int64", ColumnInt64}, {"float32", ColumnFloat32}, {"float64", ColumnFloat64}};
 
-class ShardColumn {
+class __attribute__((visibility("default"))) ShardColumn {
  public:
   explicit ShardColumn(const std::shared_ptr<ShardHeader> &shard_header, bool compress_integer = true);
   explicit ShardColumn(const json &schema_json, bool compress_integer = true);

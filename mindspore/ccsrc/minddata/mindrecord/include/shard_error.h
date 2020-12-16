@@ -77,7 +77,7 @@ enum MSRStatus {
 };
 
 // convert error no to string message
-std::string ErrnoToMessage(MSRStatus status);
+std::string __attribute__((visibility("default"))) ErrnoToMessage(MSRStatus status);
 }  // namespace mindrecord
 }  // namespace mindspore
 

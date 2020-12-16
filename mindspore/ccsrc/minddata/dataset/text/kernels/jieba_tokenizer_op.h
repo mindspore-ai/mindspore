@@ -18,7 +18,6 @@
 
 #include <string>
 #include <memory>
-#if !defined(__APPLE__)
 #include "cppjieba/Jieba.hpp"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/kernels/tensor_op.h"
@@ -67,4 +66,3 @@ class JiebaTokenizerOp : public TensorOp {
 }  // namespace dataset
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_TEXT_JIEBA_OP_H_
-#endif

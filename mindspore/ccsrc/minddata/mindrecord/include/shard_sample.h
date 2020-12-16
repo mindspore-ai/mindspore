@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace mindrecord {
-class ShardSample : public ShardOperator {
+class __attribute__((visibility("default"))) ShardSample : public ShardOperator {
  public:
   explicit ShardSample(int n);
 
