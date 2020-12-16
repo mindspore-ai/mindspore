@@ -72,7 +72,7 @@ Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<Tensor> &input,
     // Third part end where we execute the core function of dvpp
     auto data = std::static_pointer_cast<unsigned char>(process.Get_Memory_Data());
     unsigned char *ret_ptr = data.get();
-    std::shared_ptr(DvppDataInfo) CropOut = process.Get_Device_Memory_Data();
+    std::shared_ptr<DvppDataInfo> CropOut = process.Get_Device_Memory_Data();
     dsize_t dvpp_length = CropOut->dataSize;
     const TensorShape dvpp_shape({dvpp_length, 1, 1});
     const DataType dvpp_data_type(DataType::DE_UINT8);
