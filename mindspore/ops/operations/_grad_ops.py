@@ -1105,6 +1105,7 @@ class LayerNormGradGrad(PrimitiveWithInfer):
 
     def __call__(self, x, dy, variance, mean, gamma, grad_dx, grad_dg, grad_db):
         raise NotImplementedError
+
     def infer_shape(self, x, dy, variance, mean, gamma, grad_dx, grad_dg, grad_db):
         return x, dy, gamma
 

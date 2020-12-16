@@ -58,8 +58,7 @@ class LayerNormGradGradGpuKernel : public GpuKernel {
                                cudaMemsetAsync(global_sum2, 0, input_size_, reinterpret_cast<cudaStream_t>(stream_ptr)),
                                "cudaMemsetAsync global_sum2 failed");
 
-    const T epsilon = 10e-12;
-    LayerNormGradGrad(input_row_, input_col_, param_dim_, global_sum1, global_sum2, epsilon, dy, x, mean, var, gamma,
+    LayerNormGradGrad(input_row_, input_col_, param_dim_, global_sum1, global_sum2, epsilon_, dy, x, mean, var, gamma,
                       grad_dx, grad_dg, grad_db, d_dy, d_x, d_gamma, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
@@ -86,6 +85,12 @@ class LayerNormGradGradGpuKernel : public GpuKernel {
 
     for (size_t i = begin_params_axis; i < input_shape.size(); i++) {
       param_dim_ *= input_shape[i];
+    }
+
+    epsilon_ = 1e-12;
+    auto type_id = TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0));
+    if (std::strncmp(type_id, "kNumberTypeFloat16", std::strlen(type_id)) == 0) {
+      epsilon_ = 1e-7;
     }
 
     InitSizeLists();
@@ -122,6 +127,7 @@ class LayerNormGradGradGpuKernel : public GpuKernel {
   int input_col_;
   int param_dim_;
   int input_size_;
+  T epsilon_;
 };
 }  // namespace kernel
 }  // namespace mindspore

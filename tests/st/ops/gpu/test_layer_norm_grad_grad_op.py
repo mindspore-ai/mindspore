@@ -22,7 +22,7 @@ from mindspore import Tensor
 from mindspore.ops.operations import _grad_ops as G
 
 context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-
+np.random.seed(0)
 
 class LayerNormGradGradNet(nn.Cell):
     def __init__(self, begin_norm_axis, begin_params_axis):
@@ -61,6 +61,7 @@ def LayerNormGradReference(x, dy, gamma, epsilon, begin_norm_axis, begin_params_
     dx = dx1 + dx2 + dx3
     return dx, dg, db, mean, var
 
+
 def LayerNormGradGradReference(x, dy, gamma, epsilon, grad_dx_np, grad_dg_np, grad_db_np, begin_norm_axis,
                                begin_params_axis):
     begin_norm_axis = begin_norm_axis if begin_norm_axis >= 0 else begin_norm_axis + len(x.shape)
@@ -77,27 +78,31 @@ def LayerNormGradGradReference(x, dy, gamma, epsilon, grad_dx_np, grad_dg_np, gr
     inv_std = np.power(var + epsilon, -0.5)
     x_hat = (x - mean) * inv_std
 
-    sum1 = np.mean((-1.0) * inv_std * grad_dx_np, tuple(norm_axis), keepdims=True)
-    sum2 = np.mean(x_hat * (-1.0) * inv_std * grad_dx_np, tuple(norm_axis), keepdims=True)
-    sum3 = np.mean(dy * gamma * x_hat, tuple(norm_axis), keepdims=True)
-    part = dy * gamma * sum2 + sum3 * (-1.0) * grad_dx_np * inv_std + dy * grad_dg_np
-    sum4 = np.mean((x - mean) * part, tuple(norm_axis), keepdims=True)
-    sum5 = np.mean(-inv_std * part, tuple(norm_axis), keepdims=True)
+    sum1 = np.mean(-inv_std * grad_dx_np, tuple(norm_axis), keepdims=True)
+    sum2 = np.mean(-x_hat * inv_std * grad_dx_np, tuple(norm_axis), keepdims=True)
+    sum3 = np.mean(dy * gamma, tuple(norm_axis), keepdims=True)
+    sum4 = np.mean(dy * gamma * x_hat, tuple(norm_axis), keepdims=True)
+    part_sum1 = dy * gamma - sum3 - x_hat * sum4
+    part_sum2 = dy * gamma * sum2 - sum4 * grad_dx_np * inv_std + dy * grad_dg_np
+    part1 = np.mean(grad_dx_np * part_sum1, tuple(norm_axis), keepdims=True)
+    part2 = np.mean((x - mean) * part_sum2, tuple(norm_axis), keepdims=True)
+    part3 = inv_std * part_sum2
+    sum5 = np.mean(part1, tuple(norm_axis), keepdims=True)
+    sum6 = np.mean(part2, tuple(norm_axis), keepdims=True)
+    sum7 = np.mean(-part3, tuple(norm_axis), keepdims=True)
+    part4 = -(x - mean) * np.power(var + epsilon, -1.5) * (sum5 + sum6)
+    d_x = part3 + part4 + sum7
 
-    part1 = inv_std * part
-    part2 = (x - mean) * (-1.0) * np.power(var + epsilon, -1.5) * sum4
-    d_x = part1 + part2 + sum5
+    part5 = gamma * grad_dx_np * inv_std
+    part6 = gamma * sum1
+    part7 = gamma * x_hat * sum2
+    part8 = x_hat * grad_dg_np
+    d_dy = part5 + part6 + part7 + part8 + grad_db_np
 
-    part3 = gamma * grad_dx_np * inv_std
-    part4 = gamma * sum1
-    part5 = gamma * x_hat * sum2
-    part6 = x_hat * grad_dg_np
-    d_dy = part3 + part4 + part5 + part6 + grad_db_np
-
-    part7 = np.sum(dy * x_hat * sum2, tuple(param_axis), keepdims=True)
-    part8 = np.sum(dy * sum1, tuple(param_axis), keepdims=True)
-    part9 = np.sum(dy * grad_dx_np * inv_std, tuple(param_axis), keepdims=True)
-    d_gamma = part7 + part8 + part9
+    part9 = np.sum(dy * x_hat * sum2, tuple(param_axis), keepdims=True)
+    part10 = np.sum(dy * sum1, tuple(param_axis), keepdims=True)
+    part11 = np.sum(dy * grad_dx_np * inv_std, tuple(param_axis), keepdims=True)
+    d_gamma = part9 + part10 + part11
 
     return d_x, d_dy, d_gamma
 
@@ -106,17 +111,16 @@ def LayerNormGradGradReference(x, dy, gamma, epsilon, grad_dx_np, grad_dg_np, gr
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_layernormgradgrad0():
-    np.random.seed(1)
     begin_norm_axis = 1
     begin_params_axis = 1
 
-    x_np = np.random.rand(2, 2, 4).astype(np.float32)
-    dy_np = np.random.rand(2, 2, 4).astype(np.float32)
-    gamma_np = np.random.rand(2, 4).astype(np.float32)
+    x_np = np.random.randn(4096, 3072).astype(np.float32)
+    dy_np = np.random.randn(4096, 3072).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
 
-    grad_dx_np = np.random.rand(2, 2, 4).astype(np.float32)
-    grad_dg_np = np.random.rand(2, 4).astype(np.float32)
-    grad_db_np = np.random.rand(2, 4).astype(np.float32)
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
 
     epsilon = 1e-12
     _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
@@ -125,18 +129,433 @@ def test_layernormgradgrad0():
     d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
                                                              grad_db_np, begin_norm_axis, begin_params_axis)
 
-    dy_ms = Tensor(dy_np)
-    x_ms = Tensor(x_np)
-    var_ms = Tensor(var_np)
-    mean_ms = Tensor(mean_np)
-    gamma_ms = Tensor(gamma_np)
-    grad_dx_ms = Tensor(grad_dx_np)
-    grad_dg_ms = Tensor(grad_dg_np)
-    grad_db_ms = Tensor(grad_db_np)
+    dy_ms = Tensor(dy_np.astype(np.float32))
+    x_ms = Tensor(x_np.astype(np.float32))
+    var_ms = Tensor(var_np.astype(np.float32))
+    mean_ms = Tensor(mean_np.astype(np.float32))
+    gamma_ms = Tensor(gamma_np.astype(np.float32))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float32))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float32))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float32))
 
     net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
     d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
 
-    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=1e-6, atol=1e-3)
-    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=1e-6, atol=1e-6)
-    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=1e-6, atol=1e-3)
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgradgrad1():
+    begin_norm_axis = 1
+    begin_params_axis = 1
+    x_np = np.random.randn(640, 768).astype(np.float32)
+    dy_np = np.random.randn(640, 768).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    epsilon = 1e-12
+    _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                      begin_params_axis)
+
+    d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
+                                                             grad_db_np, begin_norm_axis, begin_params_axis)
+
+    dy_ms = Tensor(dy_np.astype(np.float32))
+    x_ms = Tensor(x_np.astype(np.float32))
+    var_ms = Tensor(var_np.astype(np.float32))
+    mean_ms = Tensor(mean_np.astype(np.float32))
+    gamma_ms = Tensor(gamma_np.astype(np.float32))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float32))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float32))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float32))
+
+    net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
+    d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
+
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgradgrad2():
+    begin_norm_axis = -1
+    begin_params_axis = -1
+    x_np = np.random.randn(32, 128, 768).astype(np.float32)
+    dy_np = np.random.randn(32, 128, 768).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    epsilon = 1e-12
+    _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                      begin_params_axis)
+
+    d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
+                                                             grad_db_np, begin_norm_axis, begin_params_axis)
+
+    dy_ms = Tensor(dy_np.astype(np.float32))
+    x_ms = Tensor(x_np.astype(np.float32))
+    var_ms = Tensor(var_np.astype(np.float32))
+    mean_ms = Tensor(mean_np.astype(np.float32))
+    gamma_ms = Tensor(gamma_np.astype(np.float32))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float32))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float32))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float32))
+
+    net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
+    d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
+
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgradgrad3():
+    begin_norm_axis = -1
+    begin_params_axis = -1
+    x_np = np.random.randn(32, 64).astype(np.float32)
+    dy_np = np.random.randn(32, 64).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    epsilon = 1e-12
+    _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                      begin_params_axis)
+
+    d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
+                                                             grad_db_np, begin_norm_axis, begin_params_axis)
+
+    dy_ms = Tensor(dy_np.astype(np.float32))
+    x_ms = Tensor(x_np.astype(np.float32))
+    var_ms = Tensor(var_np.astype(np.float32))
+    mean_ms = Tensor(mean_np.astype(np.float32))
+    gamma_ms = Tensor(gamma_np.astype(np.float32))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float32))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float32))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float32))
+
+    net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
+    d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
+
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgradgrad4():
+    begin_norm_axis = -1
+    begin_params_axis = -1
+    x_np = np.random.randn(32, 64).astype(np.float32)
+    dy_np = np.random.randn(32, 64).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    epsilon = 1e-12
+    _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                      begin_params_axis)
+
+    d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
+                                                             grad_db_np, begin_norm_axis, begin_params_axis)
+
+    dy_ms = Tensor(dy_np.astype(np.float32))
+    x_ms = Tensor(x_np.astype(np.float32))
+    var_ms = Tensor(var_np.astype(np.float32))
+    mean_ms = Tensor(mean_np.astype(np.float32))
+    gamma_ms = Tensor(gamma_np.astype(np.float32))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float32))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float32))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float32))
+
+    net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
+    d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
+
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgradgrad5():
+    begin_norm_axis = 2
+    begin_params_axis = 1
+    x_np = np.random.randn(128, 2, 16, 32).astype(np.float32)
+    dy_np = np.random.randn(128, 2, 16, 32).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    epsilon = 1e-12
+    _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                      begin_params_axis)
+
+    d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
+                                                             grad_db_np, begin_norm_axis, begin_params_axis)
+
+    dy_ms = Tensor(dy_np.astype(np.float32))
+    x_ms = Tensor(x_np.astype(np.float32))
+    var_ms = Tensor(var_np.astype(np.float32))
+    mean_ms = Tensor(mean_np.astype(np.float32))
+    gamma_ms = Tensor(gamma_np.astype(np.float32))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float32))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float32))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float32))
+
+    net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
+    d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
+
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=3e-3, atol=3e-3)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=3e-3, atol=3e-3)
+
+
+def test_layernormgradgrad6():
+    begin_norm_axis = 1
+    begin_params_axis = 1
+
+    x_np = np.random.randn(4096, 3072).astype(np.float32)
+    dy_np = np.random.randn(4096, 3072).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    epsilon = 1e-7
+    _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                      begin_params_axis)
+
+    d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
+                                                             grad_db_np, begin_norm_axis, begin_params_axis)
+
+    dy_ms = Tensor(dy_np.astype(np.float16))
+    x_ms = Tensor(x_np.astype(np.float16))
+    var_ms = Tensor(var_np.astype(np.float16))
+    mean_ms = Tensor(mean_np.astype(np.float16))
+    gamma_ms = Tensor(gamma_np.astype(np.float16))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float16))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float16))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float16))
+
+    net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
+    d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
+
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgradgrad7():
+    begin_norm_axis = 1
+    begin_params_axis = 1
+    x_np = np.random.randn(640, 768).astype(np.float32)
+    dy_np = np.random.randn(640, 768).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    epsilon = 1e-7
+    _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                      begin_params_axis)
+
+    d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
+                                                             grad_db_np, begin_norm_axis, begin_params_axis)
+
+    dy_ms = Tensor(dy_np.astype(np.float16))
+    x_ms = Tensor(x_np.astype(np.float16))
+    var_ms = Tensor(var_np.astype(np.float16))
+    mean_ms = Tensor(mean_np.astype(np.float16))
+    gamma_ms = Tensor(gamma_np.astype(np.float16))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float16))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float16))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float16))
+
+    net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
+    d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
+
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgradgrad8():
+    begin_norm_axis = -1
+    begin_params_axis = -1
+    x_np = np.random.randn(32, 128, 768).astype(np.float32)
+    dy_np = np.random.randn(32, 128, 768).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    epsilon = 1e-7
+    _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                      begin_params_axis)
+
+    d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
+                                                             grad_db_np, begin_norm_axis, begin_params_axis)
+
+    dy_ms = Tensor(dy_np.astype(np.float16))
+    x_ms = Tensor(x_np.astype(np.float16))
+    var_ms = Tensor(var_np.astype(np.float16))
+    mean_ms = Tensor(mean_np.astype(np.float16))
+    gamma_ms = Tensor(gamma_np.astype(np.float16))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float16))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float16))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float16))
+
+    net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
+    d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
+
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgradgrad9():
+    begin_norm_axis = -1
+    begin_params_axis = -1
+    x_np = np.random.randn(32, 64).astype(np.float32)
+    dy_np = np.random.randn(32, 64).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    epsilon = 1e-7
+    _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                      begin_params_axis)
+
+    d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
+                                                             grad_db_np, begin_norm_axis, begin_params_axis)
+
+    dy_ms = Tensor(dy_np.astype(np.float16))
+    x_ms = Tensor(x_np.astype(np.float16))
+    var_ms = Tensor(var_np.astype(np.float16))
+    mean_ms = Tensor(mean_np.astype(np.float16))
+    gamma_ms = Tensor(gamma_np.astype(np.float16))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float16))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float16))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float16))
+
+    net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
+    d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
+
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgradgrad10():
+    begin_norm_axis = -1
+    begin_params_axis = -1
+    x_np = np.random.randn(32, 64).astype(np.float32)
+    dy_np = np.random.randn(32, 64).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    epsilon = 1e-7
+    _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                      begin_params_axis)
+
+    d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
+                                                             grad_db_np, begin_norm_axis, begin_params_axis)
+
+    dy_ms = Tensor(dy_np.astype(np.float16))
+    x_ms = Tensor(x_np.astype(np.float16))
+    var_ms = Tensor(var_np.astype(np.float16))
+    mean_ms = Tensor(mean_np.astype(np.float16))
+    gamma_ms = Tensor(gamma_np.astype(np.float16))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float16))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float16))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float16))
+
+    net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
+    d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
+
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_layernormgradgrad11():
+    begin_norm_axis = 2
+    begin_params_axis = 1
+    x_np = np.random.randn(128, 2, 16, 32).astype(np.float32)
+    dy_np = np.random.randn(128, 2, 16, 32).astype(np.float32)
+    gamma_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    grad_dx_np = np.random.randn(*x_np.shape).astype(np.float32)
+    grad_dg_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+    grad_db_np = np.random.randn(*x_np.shape[begin_params_axis:]).astype(np.float32)
+
+    epsilon = 1e-7
+    _, _, _, mean_np, var_np = LayerNormGradReference(x_np, dy_np, gamma_np, epsilon, begin_norm_axis,
+                                                      begin_params_axis)
+
+    d_x_np, d_dy_np, d_gamma_np = LayerNormGradGradReference(x_np, dy_np, gamma_np, epsilon, grad_dx_np, grad_dg_np,
+                                                             grad_db_np, begin_norm_axis, begin_params_axis)
+
+    dy_ms = Tensor(dy_np.astype(np.float16))
+    x_ms = Tensor(x_np.astype(np.float16))
+    var_ms = Tensor(var_np.astype(np.float16))
+    mean_ms = Tensor(mean_np.astype(np.float16))
+    gamma_ms = Tensor(gamma_np.astype(np.float16))
+    grad_dx_ms = Tensor(grad_dx_np.astype(np.float16))
+    grad_dg_ms = Tensor(grad_dg_np.astype(np.float16))
+    grad_db_ms = Tensor(grad_db_np.astype(np.float16))
+
+    net = LayerNormGradGradNet(begin_norm_axis, begin_params_axis)
+    d_x_ms, d_dy_ms, d_gamma_ms = net(x_ms, dy_ms, var_ms, mean_ms, gamma_ms, grad_dx_ms, grad_dg_ms, grad_db_ms)
+
+    assert np.allclose(d_x_ms.asnumpy(), d_x_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_dy_ms.asnumpy(), d_dy_np, rtol=5e-3, atol=5e-1)
+    assert np.allclose(d_gamma_ms.asnumpy(), d_gamma_np, rtol=5e-3, atol=5e-1)

@@ -20,15 +20,17 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/layer_norm_grad_grad_impl.cuh"
 #include "backend/kernel_compiler/gpu/cuda_impl/layer_norm_impl.cuh"
 
+constexpr int THREAD_PER_BLOCK = 256;
 constexpr int NUM_PER_THREAD_REDUCE = 4;
 constexpr int WARP_SIZE = 32;
-constexpr int NUM_SHARED_SUM_INPUT = 6;
+constexpr int NUM_SHARED_SUM_INPUT = 7;
 constexpr int NUM_SHARED_SUM_GAMMA = 3;
 
 template <typename T>
 inline __device__ T my_pow(T a, double b) {
   return pow(a, static_cast<float>(b));
 }
+
 
 template <>
 inline __device__ half my_pow(half a, double b) {
@@ -52,14 +54,16 @@ inline __device__ void GammaAndBetaThreadReduce(const int &col, const int &row_d
       int pos = row * col_dim + col;
       int mean_offset = pos / mean_dim;
 
-      T v1 = my_pow(var[mean_offset] + epsilon, -0.5);
+      T v1 = x[pos] - mean[mean_offset];
+      T v2 = my_pow(var[mean_offset] + epsilon, -0.5);
 
-      part1[0] += dy[pos] * v1 * (x[pos] - mean[mean_offset]) * global_sum2[pos];
+      part1[0] += dy[pos] * v1 * v2 * global_sum2[pos];
       part2[0] += dy[pos] * global_sum1[pos];
-      part3[0] += dy[pos] * grad_dx[pos] * v1;
+      part3[0] += dy[pos] * v2 * grad_dx[pos];
     }
   }
 }
+
 
 template <typename T>
 inline __device__ void GammaAndBetaWarpReduce(T *part1, T *part2, T *part3) {
@@ -70,6 +74,7 @@ inline __device__ void GammaAndBetaWarpReduce(T *part1, T *part2, T *part3) {
   }
 }
 
+
 template <typename T>
 inline __device__ void GammaAndBetaBlockReduce(const int &col, const int &row_dim, T *part1, T *part2, T *part3,
                                                T *d_gamma) {
@@ -77,7 +82,7 @@ inline __device__ void GammaAndBetaBlockReduce(const int &col, const int &row_di
   // thread(0, 32, 64, 96, ...) keep the data
   DynamicSharedMem<T> share_mem;
   if (threadIdx.x % WARP_SIZE == 0) {
-    int offset = threadIdx.x / WARP_SIZE * 3;
+    int offset = threadIdx.x / WARP_SIZE * NUM_SHARED_SUM_GAMMA;
     share_mem.addr()[offset] = part1[0];
     share_mem.addr()[offset + 1] = part2[0];
     share_mem.addr()[offset + 2] = part3[0];
@@ -86,10 +91,10 @@ inline __device__ void GammaAndBetaBlockReduce(const int &col, const int &row_di
 
   for (int stride = blockDim.x / WARP_SIZE / 2; stride > 0; stride >>= 1) {
     if (threadIdx.x < stride) {
-      int offset = (threadIdx.x + stride) * 3;
-      share_mem.addr()[threadIdx.x * 3] += share_mem.addr()[offset];
-      share_mem.addr()[threadIdx.x * 3 + 1] += share_mem.addr()[offset + 1];
-      share_mem.addr()[threadIdx.x * 3 + 2] += share_mem.addr()[offset + 2];
+      int offset = (threadIdx.x + stride) * NUM_SHARED_SUM_GAMMA;
+      share_mem.addr()[threadIdx.x * NUM_SHARED_SUM_GAMMA] += share_mem.addr()[offset];
+      share_mem.addr()[threadIdx.x * NUM_SHARED_SUM_GAMMA + 1] += share_mem.addr()[offset + 1];
+      share_mem.addr()[threadIdx.x * NUM_SHARED_SUM_GAMMA + 2] += share_mem.addr()[offset + 2];
     }
   }
   __syncthreads();
@@ -98,6 +103,7 @@ inline __device__ void GammaAndBetaBlockReduce(const int &col, const int &row_di
     d_gamma[col] = share_mem.addr()[0] + share_mem.addr()[1] + share_mem.addr()[2];
   }
 }
+
 
 template <typename T>
 __global__ void GammaAndBetaPropKernel(const int row_dim, const int col_dim, const int mean_dim, const T epsilon,
@@ -143,6 +149,7 @@ inline __device__ void InputThreadReduceInnerMean(const int &row, const int &col
   }
 }
 
+
 template <typename T>
 inline __device__ void InputWarpReduceInnerMean(T *sum1, T *sum2, T *sum3, T *sum4) {
   for (int delta = (WARP_SIZE >> 1); delta > 0; delta >>= 1) {
@@ -153,12 +160,13 @@ inline __device__ void InputWarpReduceInnerMean(T *sum1, T *sum2, T *sum3, T *su
   }
 }
 
+
 template <typename T>
 inline __device__ void InputBlockReduceInnerMean(const int &col_dim, T *sum1, T *sum2, T *sum3, T *sum4, T *share_mem) {
   // load data to share memory
   // thread(0, 32, 64, 96, ...) keep the data
   if (threadIdx.x % WARP_SIZE == 0) {
-    int offset = threadIdx.x / WARP_SIZE * 6;
+    int offset = threadIdx.x / WARP_SIZE * NUM_SHARED_SUM_INPUT;
     share_mem[offset] = sum1[0];
     share_mem[offset + 1] = sum2[0];
     share_mem[offset + 2] = sum3[0];
@@ -168,12 +176,12 @@ inline __device__ void InputBlockReduceInnerMean(const int &col_dim, T *sum1, T 
 
   for (int stride = blockDim.x / WARP_SIZE / 2; stride > 0; stride >>= 1) {
     if (threadIdx.x < stride) {
-      int offset = (threadIdx.x + stride) * 6;
+      int offset = (threadIdx.x + stride) * NUM_SHARED_SUM_INPUT;
 
-      share_mem[threadIdx.x * 3] += share_mem[offset];
-      share_mem[threadIdx.x * 3 + 1] += share_mem[offset + 1];
-      share_mem[threadIdx.x * 3 + 2] += share_mem[offset + 2];
-      share_mem[threadIdx.x * 3 + 3] += share_mem[offset + 3];
+      share_mem[threadIdx.x * NUM_SHARED_SUM_INPUT] += share_mem[offset];
+      share_mem[threadIdx.x * NUM_SHARED_SUM_INPUT + 1] += share_mem[offset + 1];
+      share_mem[threadIdx.x * NUM_SHARED_SUM_INPUT + 2] += share_mem[offset + 2];
+      share_mem[threadIdx.x * NUM_SHARED_SUM_INPUT + 3] += share_mem[offset + 3];
     }
   }
   __syncthreads();
@@ -182,8 +190,8 @@ inline __device__ void InputBlockReduceInnerMean(const int &col_dim, T *sum1, T 
 
 template <typename T>
 inline __device__ void InputThreadReduceOuterMean(const int &row, const int &col_dim, const int &param_dim,
-                                                  const T &epsilon, T *sum5, T *sum6, T *share_mem, const T *dy,
-                                                  const T *x, const T *mean, const T *var, const T *gamma,
+                                                  const T &epsilon, T *sum5, T *sum6, T *sum7, T *share_mem,
+                                                  const T *dy, const T *x, const T *mean, const T *var, const T *gamma,
                                                   const T *grad_dx, const T *grad_dg, T *d_x) {
   int loop_num = (col_dim + NUM_PER_THREAD_REDUCE - 1) / NUM_PER_THREAD_REDUCE;
   for (int i = threadIdx.x; i < loop_num; i += blockDim.x) {
@@ -198,17 +206,21 @@ inline __device__ void InputThreadReduceOuterMean(const int &row, const int &col
       T v1 = x[pos] - mean[row];
       T v2 = my_pow(var[row] + epsilon, -0.5);
       T v3 = dy[pos] * gamma[gamma_offset];
-      T v4 = v3 * share_mem[1] * (1.0 / col_dim);
-      T v5 = grad_dx[pos] * v2 * share_mem[3] * (-1.0 / col_dim);
-      T v6 = dy[pos] * grad_dg[gamma_offset];
-      T v7 = v4 + v5 + v6;
 
-      T part1 = v1 * v7;
-      T part2 = v2 * v7;
-      d_x[pos] = part2;
+      T v4 = v3 - share_mem[2] * (1.0 / col_dim)  - v1 * v2 * share_mem[3] * (1.0 / col_dim);
+      T v5 = v3 * share_mem[1] * (1.0 / col_dim);
+      T v6 = grad_dx[pos] * v2 * share_mem[3] * (-1.0 / col_dim);
+      T v7 = dy[pos] * grad_dg[gamma_offset];
+      T v8 = v5 + v6 + v7;
+
+      T part1 = v4 * grad_dx[pos];
+      T part2 = v1 * v8;
+      T part3 = v2 * v8;
+      d_x[pos] = part3;
 
       sum5[0] += part1;
-      sum6[0] -= part2;
+      sum6[0] += part2;
+      sum7[0] -= part3;
     }
   }
 }
@@ -216,10 +228,10 @@ inline __device__ void InputThreadReduceOuterMean(const int &row, const int &col
 
 template <>
 inline __device__ void InputThreadReduceOuterMean(const int &row, const int &col_dim, const int &param_dim,
-                                                  const half &epsilon, half *sum5, half *sum6, half *share_mem,
-                                                  const half *dy, const half *x, const half *mean, const half *var,
-                                                  const half *gamma, const half *grad_dx, const half *grad_dg,
-                                                  half *d_x) {
+                                                  const half &epsilon, half *sum5, half *sum6, half *sum7,
+                                                  half *share_mem, const half *dy, const half *x, const half *mean,
+                                                  const half *var, const half *gamma, const half *grad_dx,
+                                                  const half *grad_dg, half *d_x) {
   int loop_num = (col_dim + NUM_PER_THREAD_REDUCE - 1) / NUM_PER_THREAD_REDUCE;
   for (int i = threadIdx.x; i < loop_num; i += blockDim.x) {
     for (int j = 0; j < NUM_PER_THREAD_REDUCE; j++) {
@@ -233,48 +245,54 @@ inline __device__ void InputThreadReduceOuterMean(const int &row, const int &col
       half v1 = x[pos] - mean[row];
       half v2 = my_pow(var[row] + epsilon, -0.5);
       half v3 = dy[pos] * gamma[gamma_offset];
-      half v4 = v3 * share_mem[1] * __float2half(1.0 / col_dim);
-      half v5 = grad_dx[pos] * v2 * share_mem[3] * __float2half(-1.0 / col_dim);
-      half v6 = dy[pos] * grad_dg[gamma_offset];
-      half v7 = v4 + v5 + v6;
+      half v4 = v3 - share_mem[2] * __float2half(1.0 / col_dim) - v1 * v2 * share_mem[3] * __float2half(1.0 / col_dim);
+      half v5 = v3 * share_mem[1] * __float2half(1.0 / col_dim);
+      half v6 = grad_dx[pos] * v2 * share_mem[3] * __float2half(-1.0 / col_dim);
+      half v7 = dy[pos] * grad_dg[gamma_offset];
+      half v8 = v5 + v6 + v7;
 
-      half part1 = v1 * v7;
-      half part2 = v2 * v7;
-      d_x[pos] = part2;
+      half part1 = v4 * grad_dx[pos];
+      half part2 = v1 * v8;
+      half part3 = v2 * v8;
+      d_x[pos] = part3;
 
       sum5[0] += part1;
-      sum6[0] -= part2;
+      sum6[0] += part2;
+      sum7[0] -= part3;
     }
   }
 }
 
 
 template <typename T>
-inline __device__ void InputWarpReduceOuterMean(T *sum5, T *sum6) {
+inline __device__ void InputWarpReduceOuterMean(T *sum5, T *sum6, T *sum7) {
   for (int delta = (WARP_SIZE >> 1); delta > 0; delta >>= 1) {
     sum5[0] += __shfl_down_sync(0xffffffff, sum5[0], delta);
     sum6[0] += __shfl_down_sync(0xffffffff, sum6[0], delta);
+    sum7[0] += __shfl_down_sync(0xffffffff, sum7[0], delta);
   }
 }
 
 template <typename T>
-inline __device__ void InputBlockReduceOuterMean(const int &col_dim, T *sum5, T *sum6, T *share_mem) {
+inline __device__ void InputBlockReduceOuterMean(const int &col_dim, T *sum5, T *sum6, T *sum7, T *share_mem) {
   // load data to share memory
   // thread(0, 32, 64, 96, ...) keep the data
   if (threadIdx.x % WARP_SIZE == 0) {
-    int offset = threadIdx.x / WARP_SIZE * 6;
+    int offset = threadIdx.x / WARP_SIZE * NUM_SHARED_SUM_INPUT;
 
     share_mem[offset + 4] = sum5[0];
     share_mem[offset + 5] = sum6[0];
+    share_mem[offset + 6] = sum7[0];
   }
   __syncthreads();
 
   for (int stride = blockDim.x / WARP_SIZE / 2; stride > 0; stride >>= 1) {
     if (threadIdx.x < stride) {
-      int offset = (threadIdx.x + stride) * 6;
+      int offset = (threadIdx.x + stride) * NUM_SHARED_SUM_INPUT;
 
-      share_mem[threadIdx.x * 6 + 4] += share_mem[offset + 4];
-      share_mem[threadIdx.x * 6 + 5] += share_mem[offset + 5];
+      share_mem[threadIdx.x * NUM_SHARED_SUM_INPUT + 4] += share_mem[offset + 4];
+      share_mem[threadIdx.x * NUM_SHARED_SUM_INPUT + 5] += share_mem[offset + 5];
+      share_mem[threadIdx.x * NUM_SHARED_SUM_INPUT + 6] += share_mem[offset + 6];
     }
   }
   __syncthreads();
@@ -300,8 +318,8 @@ inline __device__ void InputProp(const int &row, const int &col_dim, const int &
     T part4 = v3 * grad_dg[gamma_offset];
     d_dy[pos] = part1 + part2 + part3 + part4 + grad_db[gamma_offset];
 
-    T part5 = v1 * (my_pow(var[row] + epsilon, -1.5) * (share_mem[4] * (-1.0 / col_dim)));
-    d_x[pos] += part5  + share_mem[5] * (1.0 / col_dim);
+    T part5 = v1 * (my_pow(var[row] + epsilon, -1.5) * ((share_mem[4]+ share_mem[5]) * (-1.0 / col_dim)));
+    d_x[pos] += part5  + share_mem[6] * (1.0 / col_dim);
 
     global_sum1[pos] = share_mem[0] * (1.0 / col_dim);
     global_sum2[pos] = share_mem[1] * (1.0 / col_dim);
@@ -328,8 +346,9 @@ inline __device__ void InputProp(const int &row, const int &col_dim, const int &
     half part4 = v3 * grad_dg[gamma_offset];
     d_dy[pos] = part1 + part2 + part3 + part4 + grad_db[gamma_offset];
 
-    half part5 = v1 * (my_pow(var[row] + epsilon, -1.5) * (share_mem[4] * __float2half(-1.0 / col_dim)));
-    d_x[pos] += part5 + share_mem[5] * __float2half(1.0 / col_dim);
+    half part5 = v1 * (my_pow(var[row] + epsilon, -1.5) *
+                       ((share_mem[4]+ share_mem[5]) * __float2half(-1.0 / col_dim)));
+    d_x[pos] += part5 + share_mem[6] * __float2half(1.0 / col_dim);
 
     global_sum1[pos] = share_mem[0] * __float2half(1.0 / col_dim);
     global_sum2[pos] = share_mem[1] * __float2half(1.0 / col_dim);
@@ -349,6 +368,7 @@ __global__ void InputPropKernel(const int row_dim, const int col_dim, const int 
     T sum4 = 0;
     T sum5 = 0;
     T sum6 = 0;
+    T sum7 = 0;
     DynamicSharedMem<T> share_mem;
 
     InputThreadReduceInnerMean(row, col_dim, param_dim, epsilon, &sum1, &sum2, &sum3, &sum4, dy, x, mean, var, gamma,
@@ -356,33 +376,33 @@ __global__ void InputPropKernel(const int row_dim, const int col_dim, const int 
     InputWarpReduceInnerMean(&sum1, &sum2, &sum3, &sum4);
     InputBlockReduceInnerMean(col_dim, &sum1, &sum2, &sum3, &sum4, share_mem.addr());
 
-    InputThreadReduceOuterMean(row, col_dim, param_dim, epsilon, &sum5, &sum6, share_mem.addr(), dy, x, mean,
+    InputThreadReduceOuterMean(row, col_dim, param_dim, epsilon, &sum5, &sum6, &sum7, share_mem.addr(), dy, x, mean,
                                var, gamma, grad_dx, grad_dg, d_x);
-    InputWarpReduceOuterMean(&sum5, &sum6);
-    InputBlockReduceOuterMean(col_dim, &sum5, &sum6, share_mem.addr());
+    InputWarpReduceOuterMean(&sum5, &sum6, &sum7);
+    InputBlockReduceOuterMean(col_dim, &sum5, &sum6, &sum7, share_mem.addr());
     InputProp(row, col_dim, param_dim, epsilon, dy, x, mean, var, gamma, grad_dx, grad_dg, grad_db, d_dy, d_x,
               share_mem.addr(), global_sum1, global_sum2);
   }
 }
+
 
 template <typename T>
 void LayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim, T *global_sum1, T *global_sum2,
                        const T &epsilon, const T *dy, const T *x, const T *mean, const T *var, const T *gamma,
                        const T* grad_dx, const T* grad_dg, const T* grad_db, T *d_dy, T *d_x, T *d_gamma,
                        cudaStream_t stream) {
-  const int thread_per_block = 256;
-
-  int share_mem_size = thread_per_block / WARP_SIZE * NUM_SHARED_SUM_INPUT * sizeof(T);
-  InputPropKernel<<<row_dim, thread_per_block, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, dy, x,
+  int share_mem_size = THREAD_PER_BLOCK / WARP_SIZE * NUM_SHARED_SUM_INPUT * sizeof(T);
+  InputPropKernel<<<row_dim, THREAD_PER_BLOCK, share_mem_size, stream>>>(row_dim, col_dim, param_dim, epsilon, dy, x,
                                                                          mean, var, gamma, grad_dx, grad_dg, grad_db,
                                                                          d_dy, d_x, global_sum1, global_sum2);
-  share_mem_size = thread_per_block / WARP_SIZE * NUM_SHARED_SUM_GAMMA * sizeof(T);
+  share_mem_size = THREAD_PER_BLOCK / WARP_SIZE * NUM_SHARED_SUM_GAMMA * sizeof(T);
   int param_reduce_dim = row_dim * col_dim / param_dim;
-  GammaAndBetaPropKernel<<<param_dim, thread_per_block, share_mem_size, stream>>>(param_reduce_dim, param_dim,
+  GammaAndBetaPropKernel<<<param_dim, THREAD_PER_BLOCK, share_mem_size, stream>>>(param_reduce_dim, param_dim,
                                                                                   col_dim, epsilon, dy, x, mean, var,
                                                                                   grad_dx, d_gamma, global_sum1,
                                                                                   global_sum2);
 }
+
 
 template void LayerNormGradGrad(const int &row_dim, const int &col_dim, const int &param_dim, float *global_sum1,
                                 float *global_sum2, const float &epsilon, const float *dy, const float *x,
