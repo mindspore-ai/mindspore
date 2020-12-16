@@ -938,6 +938,19 @@ def get_bprop_asin(self):
     return bprop
 
 
+@bprop_getters.register(G.AsinGrad)
+def get_bprop_asin_grad(self):
+    """Grad definition for `AsinGrad` operation."""
+    input_grad = G.AsinGrad()
+    p_pow = P.Pow()
+
+    def bprop(x, grad, out, dout):
+        d2x = dout * grad * x * p_pow((1 - x * x), - 1.5)
+        ddy = input_grad(x, dout)
+        return (d2x, ddy)
+    return bprop
+
+
 @bprop_getters.register(P.Asinh)
 def get_bprop_asinh(self):
     """Grad definition for `Asinh` operation."""
@@ -984,6 +997,21 @@ def get_bprop_acos(self):
         return (dx,)
 
     return bprop
+
+
+@bprop_getters.register(G.ACosGrad)
+def get_bprop_acos_grad(self):
+    """Grad definition for `ACosGrad` operation."""
+    input_grad = G.ACosGrad()
+    p_pow = P.Pow()
+
+    def bprop(x, grad, out, dout):
+        d2x = -dout * grad * x * p_pow((1 - x * x), - 1.5)
+        ddy = input_grad(x, dout)
+        return (d2x, ddy)
+
+    return bprop
+
 
 
 @bprop_getters.register(P.Acosh)
