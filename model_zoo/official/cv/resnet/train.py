@@ -94,7 +94,7 @@ if __name__ == '__main__':
 
     # create dataset
     dataset = create_dataset(dataset_path=args_opt.dataset_path, do_train=True, repeat_num=1,
-                             batch_size=config.batch_size, target=target)
+                             batch_size=config.batch_size, target=target, distribute=args_opt.run_distribute)
     step_size = dataset.get_dataset_size()
 
     # define net
