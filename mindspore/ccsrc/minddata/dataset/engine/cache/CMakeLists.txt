@@ -33,6 +33,13 @@ if (ENABLE_CACHE)
       storage_manager.cc
       storage_container.cc)
 
+  if (ENABLE_ASAN)
+      target_compile_options(engine-cache-server PRIVATE -fsanitize=address)
+      target_compile_options(engine-cache-server PRIVATE -fno-omit-frame-pointer)
+      target_compile_options(engine-cache-server PRIVATE -ggdb)
+      set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS_DEBUG} -fno-omit-frame-pointer -fsanitize=address")
+  endif()
+
   add_executable(cache_server cache_main.cc)
   if (ENABLE_GPU)
     target_link_libraries(cache_server

@@ -91,6 +91,7 @@ class BaseRequest {
   friend class CacheClientRequestTag;
   friend class CacheClient;
   friend class CacheService;
+  friend class CacheServerGreeterImpl;
 
   /// \brief Base class of a cache server request
   /// \param type Type of the request

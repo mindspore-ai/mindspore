@@ -165,7 +165,7 @@ class CacheServer : public Service {
   /// \brief Get a free tag
   /// \param q[in] pointer to a pointer to a CacheServerRequest
   /// \return Status object
-  static Status GetFreeRequestTag(int32_t queue_id, CacheServerRequest **q);
+  static Status GetFreeRequestTag(CacheServerRequest **q);
 
   /// \brief Return a tag to the free list
   /// \param p[in] pointer to already finished CacheServerRequest tag
@@ -232,8 +232,6 @@ class CacheServer : public Service {
   cache_index all_caches_;
   std::set<session_id_type> active_sessions_;
   std::shared_ptr<QueueList<CacheServerRequest *>> cache_q_;
-  std::shared_ptr<QueueList<CacheServerRequest *>> free_list_;
-  std::vector<std::unique_ptr<MemGuard<CacheServerRequest, NumaAllocator<CacheServerRequest>>>> tag_;
   std::shared_ptr<CacheServerGreeterImpl> comm_layer_;
   TaskGroup vg_;
   int32_t num_workers_;
@@ -359,12 +357,14 @@ class CacheServer : public Service {
   /// So we will let the server thread return the free tag immediately but the put
   /// the return code in this following structure. GRPC thread must wait until all
   /// the rc come back.
-  class BatchWait {
+  class BatchWait : public std::enable_shared_from_this<BatchWait> {
    public:
     explicit BatchWait(int n) : expected_(n), num_back_(0) {
       expected_ = n;
       rc_lists_.reserve(expected_);
     }
+
+    std::weak_ptr<BatchWait> GetBatchWait() { return weak_from_this(); }
 
     Status Set(Status rc) {
       CHECK_FAIL_RETURN_UNEXPECTED(expected_ > num_back_, "Programming error");

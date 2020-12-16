@@ -37,12 +37,10 @@ void CacheServerGreeterImpl::Shutdown() {
   // Always shutdown the completion queue after the server.
   if (cq_) {
     cq_->Shutdown();
-    // We need to drain the queue. All the tag is coming from
-    // the Services pool which will be shutdown as well. So we
-    // ignore the tag.
     void *tag;
     bool success;
     while (cq_->Next(&tag, &success)) {
+      delete reinterpret_cast<CacheServerRequest *>(tag);
     }
   }
 }
@@ -93,30 +91,41 @@ Status CacheServerGreeterImpl::HandleRequest(int32_t worker_id) {
   // and inject them into the grpc queue.
   CacheServerRequest *p;
   // Get a free tag from my free list.
-  RETURN_IF_NOT_OK(CacheServer::GetFreeRequestTag(worker_id, &p));
+  RETURN_IF_NOT_OK(CacheServer::GetFreeRequestTag(&p));
   RETURN_IF_NOT_OK((*p)(&svc_, cq_.get()));
   do {
     auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(1);
     // Set a timeout for one second. Check for interrupt if we need to do early exit.
     auto r = cq_->AsyncNext(&tag, &success, deadline);
     if (r == grpc_impl::CompletionQueue::NextStatus::GOT_EVENT) {
+      auto rq = static_cast<CacheServerRequest *>(tag);
       if (success) {
-        auto rq = static_cast<CacheServerRequest *>(tag);
-        RETURN_IF_NOT_OK((*rq)(&svc_, cq_.get()));
+        if (rq->st_ == CacheServerRequest::STATE::PROCESS) {
+          RETURN_IF_NOT_OK((*rq)(&svc_, cq_.get()));
+        } else if (rq->st_ == CacheServerRequest::STATE::FINISH) {
+          MS_LOG(DEBUG) << *rq << " Finished.";
+          if (rq->type_ == BaseRequest::RequestType::kStopService) {
+            // For cache_admin --stop, ProcessRequest is just acknowledging we receive the request. Now
+            // we call the real function.
+            auto &cs = CacheServer::GetInstance();
+            cs.GlobalShutdown();
+          }
+          RETURN_IF_NOT_OK(CacheServer::ReturnRequestTag(rq));
+        }
+      } else {
+        RETURN_IF_NOT_OK(CacheServer::ReturnRequestTag(rq));
       }
     } else if (r == grpc_impl::CompletionQueue::NextStatus::TIMEOUT) {
       // If we are interrupted, exit. Otherwise wait again.
-      RETURN_IF_INTERRUPTED();
     } else {
       // Queue is drained.
       break;
     }
-  } while (true);
+  } while (!this_thread::is_interrupted());
   return Status::OK();
 }
 
 Status CacheServerRequest::operator()(CacheServerGreeter::AsyncService *svc, grpc::ServerCompletionQueue *cq) {
-  auto myQID = getQid();
   if (st_ == STATE::CREATE) {
     st_ = STATE::PROCESS;
     svc->RequestCacheServerRequest(&ctx_, &rq_, &responder_, cq, cq, this);
@@ -129,7 +138,7 @@ Status CacheServerRequest::operator()(CacheServerGreeter::AsyncService *svc, grp
     // We can round robin, use the qid or even use the worker id. We will use the free list queue
     // where the current request comes from.
     CacheServerRequest *next_rq;
-    RETURN_IF_NOT_OK(CacheServer::GetFreeRequestTag(myQID, &next_rq));
+    RETURN_IF_NOT_OK(CacheServer::GetFreeRequestTag(&next_rq));
     RETURN_IF_NOT_OK((*next_rq)(svc, cq));
     // Now we continue with the current request.
     // First thing we need to extract the type from the incoming request.
@@ -144,25 +153,13 @@ Status CacheServerRequest::operator()(CacheServerGreeter::AsyncService *svc, grp
         type_ == BaseRequest::RequestType::kStopService || type_ == BaseRequest::RequestType::kAllocateSharedBlock ||
         type_ == BaseRequest::RequestType::kFreeSharedBlock) {
       cs.ProcessRequest(this);
-      // For cache_admin --stop, ProcessRequest is just acknowledging we receive the request. Now
-      // we call the real function.
-      if (type_ == BaseRequest::RequestType::kStopService) {
-        cs.GlobalShutdown();
-        return Status(StatusCode::kInterrupted);
-      } else if (rc_.IsInterrupted()) {
-        return rc_;
-      }
+      // WARNING. After we call ProcessRequest, the memory of 'this' is being recycled by ReturnRequestTag
+      // asynchronously. Further access of 'this' is unpredictable.
     } else {
-      // When the number of grpc workers is the same as the server workers, we will use this queue id
-      // and push to the corresponding queue.
-      bool random = cs.GetNumWorkers() != cs.GetNumGrpcWorkers();
-      worker_id_t worker_id = random ? cs.GetRandomWorker() : myQID;
-      RETURN_IF_NOT_OK(cs.PushRequest(worker_id, this));
+      RETURN_IF_NOT_OK(cs.PushRequest(cs.GetRandomWorker(), this));
     }
   } else if (st_ == STATE::FINISH) {
-    MS_LOG(DEBUG) << *this << " Finished.";
-    // Return back to the free list.
-    RETURN_IF_NOT_OK(CacheServer::ReturnRequestTag(this));
+    // We don't have logic here but moved to the caller.
   }
   return Status::OK();
 }

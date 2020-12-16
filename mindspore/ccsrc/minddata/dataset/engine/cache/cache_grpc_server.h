@@ -38,12 +38,10 @@ class CacheServerRequest : public BaseRequest {
  public:
   friend class CacheServer;
   friend class CacheService;
+  friend class CacheServerGreeterImpl;
   enum class STATE : int8_t { CREATE = 1, PROCESS = 2, FINISH = 3 };
-  explicit CacheServerRequest(int32_t queue_id)
-      : BaseRequest::BaseRequest(BaseRequest::RequestType::kRequestUnknown),
-        qid_(queue_id),
-        st_(STATE::CREATE),
-        responder_(&ctx_) {}
+  CacheServerRequest()
+      : BaseRequest::BaseRequest(BaseRequest::RequestType::kRequestUnknown), st_(STATE::CREATE), responder_(&ctx_) {}
 
   ~CacheServerRequest() override = default;
 
@@ -58,12 +56,7 @@ class CacheServerRequest : public BaseRequest {
   /// \param out
   void Print(std::ostream &out) const override;
 
-  /// \brief Getter of the queue id
-  /// \return The queue where the request should go to
-  int32_t getQid() const { return qid_; }
-
  private:
-  int32_t qid_;
   Status rc_;
   STATE st_;
   grpc::ServerContext ctx_;

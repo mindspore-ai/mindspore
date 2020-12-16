@@ -115,8 +115,8 @@ Status CacheServerHW::GetNumaNodeInfo() {
   const char kCpuList[] = "cpulist";
   auto r = std::regex("[0-9]*-[0-9]*");
   for (Path p : numa_nodes_) {
-    auto node_dir = p.Basename().data();
-    numa_id_t numa_node = strtol(node_dir + strlen(kNodeName), nullptr, 10);
+    auto node_dir = p.Basename();
+    numa_id_t numa_node = strtol(node_dir.data() + strlen(kNodeName), nullptr, 10);
     Path f = p / kCpuList;
     std::ifstream fs(f.toString());
     CHECK_FAIL_RETURN_UNEXPECTED(!fs.fail(), "Fail to open file: " + f.toString());
