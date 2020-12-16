@@ -5171,7 +5171,9 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be a float number or
           a scalar tensor with float16 or float32 data type..
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
-        - **indices** (Tensor) - A vector of indices in the first dimension of `var` and `accum`.
+        - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
+          If there are duplicates in `indices`, the behavior is undefined. Must be one of the
+          following types: int16, int32, int64, uint16, uint32, uint64.
 
     Outputs:
         Tuple of 2 tensors, the updated parameters.
@@ -5840,8 +5842,9 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         - **accum** (Parameter) - The accumulation to be updated, must be same data type and shape as `var`.
         - **linear** (Parameter) - the linear coefficient to be updated, must be the same data type and shape as `var`.
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
-        - **indices** (Tensor) - A vector of indices in the first dimension of `var` and `accum`.
-          The shape of `indices` must be the same as `grad` in the first dimension. The type must be int32.
+        - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
+          The shape of `indices` must be the same as `grad` in the first dimension. If there are
+          duplicates in `indices`, the behavior is undefined. The type must be int32 or int64.
 
     Outputs:
         - **var** (Tensor) - Tensor, has the same shape and data type as `var`.
