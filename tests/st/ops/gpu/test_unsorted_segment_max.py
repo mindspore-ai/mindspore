@@ -76,7 +76,7 @@ def test_3d_float16_int64():
     input_x = Tensor(np.arange(
         4 * 5 * 3, dtype=np.float16).reshape(4, 5, 3), dtype=mindspore.float16)
     segment_ids = Tensor([2, 1, 1, -1], mstype.int64)
-    num_segments = Tensor(5, dtype=mstype.int64)
+    num_segments = 5
     net = UnsortedSegmentMaxNet(num_segments)
     output = net(input_x, segment_ids).asnumpy()
     expect = np.array([[[-6.55e+04, -6.55e+04, -6.55e+04],
@@ -115,7 +115,7 @@ def test_3d_float32_int64():
     input_x = Tensor(np.arange(
         4 * 5 * 3, dtype=np.float32).reshape(4, 5, 3), dtype=mindspore.float32)
     segment_ids = Tensor([2, 1, 1, -1], mstype.int64)
-    num_segments = Tensor(3, dtype=mstype.int64)
+    num_segments = 3
     net = UnsortedSegmentMaxNet(num_segments)
     output = net(input_x, segment_ids).asnumpy()
     expect = np.array([[[-3.4028235e+38, -3.4028235e+38, -3.4028235e+38],
