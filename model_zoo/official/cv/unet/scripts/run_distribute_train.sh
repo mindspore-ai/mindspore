@@ -26,6 +26,7 @@ then
     exit 1
 fi
 
+export HCCL_CONNECT_TIMEOUT=600
 export RANK_SIZE=8
 
 for((i=0;i<RANK_SIZE;i++))
