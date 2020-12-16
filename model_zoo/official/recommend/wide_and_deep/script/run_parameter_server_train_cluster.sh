@@ -70,9 +70,9 @@ if [[ "$MS_ROLE" == "MS_WORKER" ]]; then
     rm -rf ${execute_path}/worker/
     mkdir ${execute_path}/worker/
     cd ${execute_path}/worker/ || exit
-    mpirun --allow-run-as-root -n $LOCAL_WORKER_NUM \
-      python -s ${self_path}/../train_and_eval_parameter_server_distribute.py                    \
-        --device_target=$DEVICE --data_path=$DATASET --epochs=$EPOCH_SIZE --parameter_server=1   \
+    mpirun --allow-run-as-root -n $LOCAL_WORKER_NUM --output-filename log_output --merge-stderr-to-stdout \
+      python -s ${self_path}/../train_and_eval_parameter_server_distribute.py                             \
+        --device_target=$DEVICE --data_path=$DATASET --epochs=$EPOCH_SIZE --parameter_server=1            \
         --vocab_cache_size=$VOCAB_CACHE_SIZE --dropout_flag=1 >worker.log 2>&1 &
   else
     for((i=0;i<$LOCAL_WORKER_NUM;i++));
