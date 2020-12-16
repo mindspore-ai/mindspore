@@ -87,7 +87,7 @@ TEST_F(MindDataTestPipeline, TestCalculateNumSamples) {
   std::shared_ptr<SamplerObj> sampl = DistributedSampler(2, 1, false, 6);
   EXPECT_NE(sampl, nullptr);
   std::shared_ptr<SamplerRT> sampler_rt = sampl->Build();
-  EXPECT_EQ(sampler_rt->CalculateNumSamples(num_rows), 3);
+  EXPECT_EQ(sampler_rt->CalculateNumSamples(num_rows), 6);
 
   sampl = PKSampler(3, false);
   EXPECT_NE(sampl, nullptr);
