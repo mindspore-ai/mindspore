@@ -249,12 +249,13 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
 
     Examples:
         >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+        >>> np.random.seed(0)
         >>> logits = Tensor(np.random.randint(0, 9, [1, 10]), mindspore.float32)
         >>> labels_np = np.ones([1,]).astype(np.int32)
         >>> labels = Tensor(labels_np)
         >>> output = loss(logits, labels)
         >>> print(output)
-        [5.6924148]
+        [7.868383]
     """
     def __init__(self,
                  sparse=False,

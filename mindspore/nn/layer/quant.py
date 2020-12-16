@@ -375,7 +375,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
     Examples:
         >>> qconfig = compression.quant.create_quant_config()
         >>> conv2d_bnfold = nn.Conv2dBnFoldQuant(1, 6, kernel_size=(2, 2), stride=(1, 1), pad_mode="valid",
-        >>>                                      quant_config=qconfig)
+        ...                                      quant_config=qconfig)
         >>> input = Tensor(np.random.randint(-2, 2, (2, 1, 3, 3)), mindspore.float32)
         >>> result = conv2d_bnfold(input)
         >>> output = result.shape

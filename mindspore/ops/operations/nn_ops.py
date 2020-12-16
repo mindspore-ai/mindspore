@@ -877,8 +877,9 @@ class BNTrainingReduce(PrimitiveWithInfer):
         >>> bn_training_reduce = ops.BNTrainingReduce()
         >>> output = bn_training_reduce(input_x)
         >>> print(output)
-        ([1.22880000e+04, 1.22880000e+04, 1.22880000e+04],
-         [1.22880000e+04, 1.22880000e+04, 1.22880000e+04])
+        (Tensor(shape=[3], dtype=Float32, value=
+        [ 1.22880000e+04,  1.22880000e+04,  1.22880000e+04]), Tensor(shape=[3], dtype=Float32, value=
+        [ 1.22880000e+04,  1.22880000e+04,  1.22880000e+04]))
     """
 
     @prim_attr_register
@@ -943,20 +944,21 @@ class BNTrainingUpdate(PrimitiveWithInfer):
         >>> bn_training_update = ops.BNTrainingUpdate()
         >>> output = bn_training_update(input_x, sum, square_sum, scale, offset, mean, variance)
         >>> print(output)
-        ([[[[2.73200464e+00, 2.73200464e+00],
-            [2.73200464e+00, 2.73200464e+00]],
-           [[2.73200464e+00, 2.73200464e+00],
-            [2.73200464e+00, 2.73200464e+00]]]],
-         [[[[2.73200464e+00, 2.73200464e+00],
-            [2.73200464e+00, 2.73200464e+00]],
-           [[2.73200464e+00, 2.73200464e+00],
-            [2.73200464e+00, 2.73200464e+00]]]],
-         [[[[2.73200464e+00, 2.73200464e+00],
-            [2.73200464e+00, 2.73200464e+00]],
-           [[2.73200464e+00, 2.73200464e+00],
-            [2.73200464e+00, 2.73200464e+00]]]],
-            [2.50000000e-01, 2.50000000e-01],
-            [1.87500000e-01, 1.87500000e-01])
+        (Tensor(shape=[1, 2, 2, 2], dtype=Float32, value=
+        [[[[ 2.73200464e+00,  2.73200464e+00],
+           [ 2.73200464e+00,  2.73200464e+00]],
+          [[ 2.73200464e+00,  2.73200464e+00],
+           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[1, 2, 2, 2], dtype=Float32, value=
+        [[[[ 2.73200464e+00,  2.73200464e+00],
+           [ 2.73200464e+00,  2.73200464e+00]],
+          [[ 2.73200464e+00,  2.73200464e+00],
+           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[1, 2, 2, 2], dtype=Float32, value=
+        [[[[ 2.73200464e+00,  2.73200464e+00],
+           [ 2.73200464e+00,  2.73200464e+00]],
+          [[ 2.73200464e+00,  2.73200464e+00],
+           [ 2.73200464e+00,  2.73200464e+00]]]]), Tensor(shape=[2], dtype=Float32, value=
+           [ 2.50000000e-01,  2.50000000e-01]), Tensor(shape=[2], dtype=Float32, value=
+           [ 1.87500000e-01,  1.87500000e-01]))
     """
 
     @prim_attr_register
@@ -1044,12 +1046,13 @@ class BatchNorm(PrimitiveWithInfer):
         >>> batch_norm = ops.BatchNorm()
         >>> output = batch_norm(input_x, scale, bias, mean, variance)
         >>> print(output)
-        ([[1.0, 1.0],
-          [1.0, 1.0]],
-          [1.0, 1.0],
-          [1.0, 1.0],
-          [1.0, 1.0],
-          [1.0, 1.0])
+        (Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.00000000e+00, 1.00000000e+00],
+         [ 1.00000000e+00, 1.00000000e+00]]), Tensor(shape=[2], dtype=Float32, value=
+         [ 1.00000000e+00, 1.00000000e+00]), Tensor(shape=[2], dtype=Float32, value=
+         [ 1.00000000e+00, 1.00000000e+00]), Tensor(shape=[2], dtype=Float32, value=
+         [ 1.00000000e+00, 1.00000000e+00]), Tensor(shape=[2], dtype=Float32, value=
+         [ 1.00000000e+00, 1.00000000e+00]))
     """
 
     @prim_attr_register
@@ -1822,9 +1825,8 @@ class BiasAdd(PrimitiveWithInfer):
         >>> bias = Tensor(np.random.random(3).reshape((3,)), mindspore.float32)
         >>> bias_add = ops.BiasAdd()
         >>> output = bias_add(input_x, bias)
-        >>> print(output)
-        [[0.4662124 1.2493685 2.3611782]
-         [3.4662123 4.2493687 5.3611784]]
+        >>> print(output.shape)
+        (2, 3)
     """
 
     @prim_attr_register
@@ -2241,15 +2243,10 @@ class RNNTLoss(PrimitiveWithInfer):
         >>> label_length = np.array([len(l) for l in labels]).astype(np.int32)
         >>> rnnt_loss = ops.RNNTLoss(blank_label=0)
         >>> costs, grads = rnnt_loss(Tensor(acts), Tensor(labels), Tensor(input_length), Tensor(label_length))
-        >>> print(costs)
-        [-3.5036912]
-        >>> print(grads)
-        [[[[-0.35275543 -0.64724463 0.          0.          0.         ]
-           [-0.19174816 0.          -0.45549652 0.          0.         ]
-           [-0.45549664 0.          0.          0.          0.         ]]
-          [[0.          -0.35275543 0.          0.          0.         ]
-           [0.          0.          -0.5445037  0.          0.         ]
-           [-1.00000002 0.          0.          0.          0.         ]]]]
+        >>> print(costs.shape)
+        (1,)
+        >>> print(grads.shape)
+        (1, 2, 3, 5)
     """
 
     @prim_attr_register
@@ -2640,13 +2637,8 @@ class L2Normalize(PrimitiveWithInfer):
         >>> l2_normalize = ops.L2Normalize()
         >>> input_x = Tensor(np.random.randint(-256, 256, (2, 3, 4)), mindspore.float32)
         >>> output = l2_normalize(input_x)
-        >>> print(output)
-        [[[-0.47247353   -0.30934513   -0.4991462   0.8185567 ]
-          [-0.08070751   -0.9961299    -0.5741758   0.09262337]
-          [-0.9916556    -0.3049123     0.5730487  -0.40579924]
-         [[-0.88134485    0.9509498    -0.86651784  0.57442576]
-          [ 0.99673784    0.08789381   -0.8187321   0.9957012 ]
-          [ 0.12891524   -0.9523804    -0.81952125  0.91396334]]]
+        >>> print(output.shape)
+        (2, 3, 4)
     """
 
     @prim_attr_register
@@ -2688,8 +2680,8 @@ class DropoutGenMask(Primitive):
         >>> shape = (2, 4, 5)
         >>> keep_prob = Tensor(0.5, mindspore.float32)
         >>> output = dropout_gen_mask(shape, keep_prob)
-        >>> print(output)
-        [249  11 134 133 143 246  89  52 169  15  94  63 146 103   7 101]
+        >>> print(output.shape)
+        (16,)
     """
 
     @prim_attr_register
@@ -2729,11 +2721,8 @@ class DropoutDoMask(PrimitiveWithInfer):
         >>> dropout_do_mask = ops.DropoutDoMask()
         >>> mask = dropout_gen_mask(shape, keep_prob)
         >>> output = dropout_do_mask(x, mask, keep_prob)
-        >>> print(output)
-        [[[2. 0. 0.]
-          [2. 0. 0.]]
-         [[0. 2. 2.]
-          [2. 0. 2.]]]
+        >>> print(output.shape)
+        (2, 2, 3)
     """
 
     @prim_attr_register
@@ -3066,24 +3055,19 @@ class PReLU(PrimitiveWithInfer):
         >>> from mindspore import Tensor
         >>> from mindspore.ops import operations as ops
         >>> class Net(nn.Cell):
-        >>>     def __init__(self):
-        >>>         super(Net, self).__init__()
-        >>>         self.prelu = ops.PReLU()
-        >>>     def construct(self, input_x, weight):
-        >>>         result = self.prelu(input_x, weight)
-        >>>         return result
-        >>>
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.prelu = ops.PReLU()
+        ...     def construct(self, input_x, weight):
+        ...         result = self.prelu(input_x, weight)
+        ...         return result
+        ...
         >>> input_x = Tensor(np.random.randint(-3, 3, (2, 3, 2)), mindspore.float32)
         >>> weight = Tensor(np.array([0.1, 0.6, -0.3]), mindspore.float32)
         >>> net = Net()
         >>> output = net(input_x, weight)
-        >>> print(output)
-        [[[-0.2        -0.1       ]
-          [-1.8000001  -0.6       ]
-          [ 0.90000004  1.        ]]
-         [[-0.3        -0.1       ]
-          [-1.8000001   2.        ]
-          [ 0.90000004  0.90000004]]]
+        >>> print(output.shape)
+        (2, 3, 2)
     """
 
     @prim_attr_register
@@ -3373,11 +3357,8 @@ class MirrorPad(PrimitiveWithInfer):
         >>> paddings = Tensor([[1,1],[2,2]])
         >>> pad = Net()
         >>> output = pad(Tensor(x), paddings)
-        >>> print(output)
-        [[0.5525309  0.49183875 0.99110144 0.49183875 0.5525309  0.49183875 0.99110144]
-         [0.31417271 0.96308136 0.934709   0.96308136 0.31417271 0.96308136 0.934709  ]
-         [0.5525309  0.49183875 0.99110144 0.49183875 0.5525309  0.49183875 0.99110144]
-         [0.31417271 0.96308136 0.934709   0.96308136 0.31417271 0.96308136 0.934709  ]]
+        >>> print(output.shape)
+        (4, 7)
     """
 
     @prim_attr_register
@@ -3613,19 +3594,19 @@ class Adam(PrimitiveWithInfer):
         ...         out = self.apply_adam(self.var, self.m, self.v, beta1_power, beta2_power, lr, beta1, beta2,
         ...                               epsilon, grad)
         ...
-        >>>         return out
+        ...         return out
+        >>> np.random.seed(0)
         >>> net = Net()
         >>> gradient = Tensor(np.random.rand(2, 2).astype(np.float32))
-        >>> result = net(0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient)
         >>> output = net(0.9, 0.999, 0.001, 0.9, 0.999, 1e-8, gradient)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[[ 9.99458194e-01,  9.99398530e-01],
-          [ 9.99404728e-01,  9.99371529e-01]]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[[ 8.17151368e-01,  9.41661000e-01],
-          [ 9.28607702e-01,  9.98143375e-01]]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[[ 9.98003900e-01,  9.98960912e-01],
-          [ 9.98780012e-01,  9.99961138e-01]]]))
+        [[ 9.99697924e-01,  9.99692678e-01],
+         [ 9.99696255e-01,  9.99698043e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 9.54881310e-01,  9.71518934e-01],
+         [ 9.60276306e-01,  9.54488277e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 9.99301195e-01,  9.99511480e-01],
+         [ 9.99363303e-01,  9.99296904e-01]]))
     """
 
     @prim_attr_register
@@ -4461,6 +4442,7 @@ class ApplyAdaMax(PrimitiveWithInfer):
         ...         out = self.apply_ada_max(self.var, self.m, self.v, beta1_power, lr, beta1, beta2, epsilon, grad)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = Net()
         >>> beta1_power =Tensor(0.9, mstype.float32)
         >>> lr = Tensor(0.001, mstype.float32)
@@ -4471,12 +4453,12 @@ class ApplyAdaMax(PrimitiveWithInfer):
         >>> output = net(beta1_power, lr, beta1, beta2, epsilon, grad)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 6.46618605e-01,  6.48276925e-01],
-         [ 7.72792041e-01,  8.58803272e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 6.23247683e-01,  6.30929232e-01],
-         [ 9.17923033e-01,  8.98910999e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 3.03175300e-01,  5.75195193e-01],
-         [ 9.43458021e-01,  8.41971099e-01]]))
+        [[ 5.44221461e-01,  7.07908988e-01],
+         [ 5.97648144e-01,  5.29388547e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 4.38093781e-01,  6.73864365e-01],
+         [ 4.00932074e-01,  8.11308622e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 9.54026103e-01,  9.25596654e-01],
+         [ 7.83807814e-01,  5.23605943e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -4593,6 +4575,7 @@ class ApplyAdadelta(PrimitiveWithInfer):
         ...         out = self.apply_adadelta(self.var, self.accum, self.accum_update, lr, rho, epsilon, grad)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = Net()
         >>> lr = Tensor(0.001, mstype.float32)
         >>> rho = Tensor(0.0, mstype.float32)
@@ -4601,12 +4584,12 @@ class ApplyAdadelta(PrimitiveWithInfer):
         >>> output = net(lr, rho, epsilon, grad)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 7.60124624e-01,  9.54110503e-01],
-         [ 7.25456238e-01,  4.98913884e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 1.00194868e-02,  5.50848258e-01],
-         [ 9.95293319e-01,  1.97404027e-02]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 4.17240560e-01,  8.39873433e-01],
-         [ 4.95992631e-01,  9.19294059e-01]]))
+        [[ 5.47831833e-01,  7.14570105e-01],
+         [ 6.01873636e-01,  5.44156015e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 3.22674602e-01,  8.56729150e-01],
+         [ 5.04612131e-03,  7.59151531e-03]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 9.63660717e-01,  3.83442074e-01],
+         [ 7.91569054e-01,  5.28826237e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -4704,16 +4687,17 @@ class ApplyAdagrad(PrimitiveWithInfer):
         ...         out = self.apply_adagrad(self.var, self.accum, lr, grad)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = Net()
         >>> lr = Tensor(0.001, mstype.float32)
         >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(lr, grad)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 7.12832332e-01,  3.10275197e-01],
-         [ 9.02635300e-01,  3.90718848e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 8.68964046e-02,  3.21274072e-01],
-         [ 1.19302607e+00,  9.59712446e-01]]))
+        [[ 5.47984838e-01,  7.14758754e-01],
+         [ 6.01995945e-01,  5.44394553e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.35230064e+00,  7.92921484e-01],
+         [ 1.06441569e+00,  1.17150283e+00]]))
     """
 
     __mindspore_signature__ = (
@@ -4797,16 +4781,17 @@ class ApplyAdagradV2(PrimitiveWithInfer):
         ...         out = self.apply_adagrad_v2(self.var, self.accum, lr, grad)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = Net()
         >>> lr = Tensor(0.001, mstype.float32)
         >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(lr, grad)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 6.75180078e-01,  5.12131870e-01],
-         [ 9.32922423e-01,  6.53732181e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 8.45080376e-01,  4.80091214e-01],
-         [ 1.68451762e+00,  1.03823669e+00]]))
+        [[ 5.47984838e-01,  7.14758754e-01],
+         [ 6.01995945e-01,  5.44394553e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.35230064e+00,  7.92921484e-01],
+         [ 1.06441569e+00,  1.17150283e+00]]))
     """
 
     __mindspore_signature__ = (
@@ -4891,6 +4876,7 @@ class SparseApplyAdagrad(PrimitiveWithInfer):
         ...         out = self.sparse_apply_adagrad(self.var, self.accum, grad, indices)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = Net()
         >>> grad = Tensor(np.random.rand(1, 1, 1).astype(np.float32))
         >>> indices = Tensor([0], mstype.int32)
@@ -4987,6 +4973,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         ...         out = self.sparse_apply_adagrad_v2(self.var, self.accum, grad, indices)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = Net()
         >>> grad = Tensor(np.random.rand(1, 1, 1).astype(np.float32))
         >>> indices = Tensor([0], mstype.int32)
@@ -4994,7 +4981,7 @@ class SparseApplyAdagradV2(PrimitiveWithInfer):
         >>> print(output)
         (Tensor(shape=[1, 1, 1], dtype=Float32, value=
         [[[1.00000000e+00]]]), Tensor(shape=[1, 1, 1], dtype=Float32, value=
-        [[[1.13986731e+00]]]))
+        [[[1.30119634e+00]]]))
     """
 
     __mindspore_signature__ = (
@@ -5086,15 +5073,16 @@ class ApplyProximalAdagrad(PrimitiveWithInfer):
         ...         out = self.apply_proximal_adagrad(self.var, self.accum, self.lr, self.l1, self.l2, grad)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = Net()
         >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(grad)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 3.79054576e-01,  5.28407156e-01],
-         [ 2.39551291e-01,  7.34573752e-02]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 8.96461844e-01,  1.47237992e+00],
-         [ 8.52952123e-01,  1.22406030e+00]]))
+        [[ 5.40526688e-01,  7.10883260e-01],
+         [ 5.95089436e-01,  5.39996684e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.35230064e+00,  7.92921484e-01],
+         [ 1.06441569e+00,  1.17150283e+00]]))
     """
 
     __mindspore_signature__ = (
@@ -5201,14 +5189,15 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         ...                                                  self.l2, grad, indices)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = Net()
         >>> grad = Tensor(np.random.rand(1, 2).astype(np.float32))
         >>> indices = Tensor(np.ones((1,), np.int32))
         >>> output = net(grad, indices)
         >>> print(output)
-        Tensor(shape=[1, 2], dtype=Float32, value=
-        [[ 7.74297953e-01,  7.12414503e-01]]), Tensor(shape=[1, 2], dtype=Float32, value=
-        [[ 6.14362955e-01,  6.38007671e-02]]))
+        (Tensor(shape=[1, 2], dtype=Float32, value=
+        [[ 5.48813522e-01,  7.15189338e-01]]), Tensor(shape=[1, 2], dtype=Float32, value=
+        [[ 6.02763355e-01,  5.44883192e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -5300,15 +5289,16 @@ class ApplyAddSign(PrimitiveWithInfer):
         ...         out = self.apply_add_sign(self.var, self.m, self.lr, self.alpha, self.sign_decay, self.beta, grad)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = Net()
         >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(grad)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 5.37551343e-01,  3.78310502e-01],
-         [ 7.81984031e-01,  5.19252002e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 8.28343272e-01,  8.14828694e-01],
-         [ 3.79919171e-01,  2.55756438e-01]]))
+        [[ 5.46895862e-01,  7.14426279e-01],
+         [ 6.01187825e-01,  5.43830693e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 4.77655590e-01,  6.19648814e-01],
+         [ 4.73001003e-01,  8.55485201e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -5419,15 +5409,16 @@ class ApplyPowerSign(PrimitiveWithInfer):
         ...                                        self.sign_decay, self.beta, grad)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = Net()
         >>> grad = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(grad)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 5.01964271e-01,  8.59248936e-01],
-         [ 5.14324069e-01,  2.50274092e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 5.16151905e-01,  7.50251293e-01],
-         [ 4.36047137e-01,  1.26427144e-01]]))
+        [[ 5.34601569e-01,  7.09534407e-01],
+         [ 5.91087103e-01,  5.37083089e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 4.77655590e-01,  6.19648814e-01],
+         [ 4.73001003e-01,  8.55485201e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -5517,9 +5508,8 @@ class ApplyGradientDescent(PrimitiveWithInfer):
         >>> net = Net()
         >>> delta = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(delta)
-        >>> print(output)
-        [[0.54876804 0.38894778]
-         [0.5847089  0.09858753]]
+        >>> print(output.shape)
+        (2, 2)
     """
 
     __mindspore_signature__ = (
@@ -5597,9 +5587,8 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
         >>> net = Net()
         >>> delta = Tensor(np.random.rand(2, 2).astype(np.float32))
         >>> output = net(delta)
-        >>> print(output)
-        [[0.38671502 0.087947  ]
-         [0.07595529 0.44336063]]
+        >>> print(output.shape)
+        (2, 2)
     """
 
     __mindspore_signature__ = (
@@ -5776,17 +5765,18 @@ class ApplyFtrl(PrimitiveWithInfer):
         ...                               self.lr_power)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = ApplyFtrlNet()
         >>> input_x = Tensor(np.random.randint(-4, 4, (2, 2)), mindspore.float32)
         >>> output = net(input_x)
         >>> print(output)
         (Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 1.51306406e-01,  4.06460911e-02],
-         [ 5.40895802e-01,  1.35308430e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[ 1.62730598e+01,  4.53126240e+00],
-         [ 4.10181570e+01,  4.67408800e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
-        [[-6.10368164e+02, -8.65223694e+01],
-         [-1.09547302e+03, -2.92531921e+02]]))
+        [[ 4.61418092e-01,  5.30964255e-01],
+         [ 2.68715084e-01,  3.82065028e-01]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[ 1.64236546e+01,  9.64589405e+00],
+         [ 1.43758726e+00,  9.89177322e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
+        [[-1.86994812e+03, -1.64906018e+03],
+         [-3.22187836e+02, -1.20163989e+03]]))
     """
 
     @prim_attr_register
@@ -5870,15 +5860,16 @@ class SparseApplyFtrl(PrimitiveWithCheck):
         ...         out = self.sparse_apply_ftrl(self.var, self.accum, self.linear, grad, indices)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = SparseApplyFtrlNet()
         >>> grad = Tensor(np.random.rand(1, 1).astype(np.float32))
         >>> indices = Tensor(np.ones([1]), mindspore.int32)
         >>> output = net(grad, indices)
         >>> print(output)
         (Tensor(shape=[1, 1], dtype=Float32, value=
-        [[1.21931173e-01]]), Tensor(shape=[1, 1], dtype=Float32, value=
-        [[3.54384869e-01]]), Tensor(shape=[1, 1], dtype=Float32, value=
-        [[2.99625486e-01]]))
+        [[5.48813522e-01]]), Tensor(shape=[1, 1], dtype=Float32, value=
+        [[7.15189338e-01]]), Tensor(shape=[1, 1], dtype=Float32, value=
+        [[6.02763355e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -5976,15 +5967,16 @@ class SparseApplyFtrlV2(PrimitiveWithInfer):
         ...         out = self.sparse_apply_ftrl_v2(self.var, self.accum, self.linear, grad, indices)
         ...         return out
         ...
+        >>> np.random.seed(0)
         >>> net = SparseApplyFtrlV2Net()
         >>> grad = Tensor(np.random.rand(1, 2).astype(np.float32))
         >>> indices = Tensor(np.ones([1]), mindspore.int32)
         >>> output = net(grad, indices)
         >>> print(output)
-        Tensor(shape=[1, 2], dtype=Float32, value=
-        [[ 8.69189978e-01,  7.50899851e-01]]), Tensor(shape=[1, 2], dtype=Float32, value=
-        [[ 2.51525849e-01,  2.19218452e-02]]), Tensor(shape=[1, 2], dtype=Float32, value=
-        [[ 1.70145389e-02,  7.74444342e-01]]))
+        (Tensor(shape=[1, 2], dtype=Float32, value=
+        [[ 5.48813522e-01,  7.15189338e-01]]), Tensor(shape=[1, 2], dtype=Float32, value=
+        [[ 6.02763355e-01,  5.44883192e-01]]), Tensor(shape=[1, 2], dtype=Float32, value=
+        [[ 4.23654795e-01,  6.45894110e-01]]))
     """
 
     __mindspore_signature__ = (
@@ -6107,14 +6099,10 @@ class CTCLoss(PrimitiveWithInfer):
         >>> sequence_length = Tensor(np.array([2, 2]), mindspore.int32)
         >>> ctc_loss = ops.CTCLoss()
         >>> loss, gradient = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
-        >>> print(loss)
-        [0.69121575 0.5381993]
-        >>> print(gradient)
-        [[[0.25831494 0.3623634 -0.62067937]
-          [0.25187883 0.2921483 -0.5440271]]
-
-         [[0.43522435 0.24408469 0.07787037]
-          [0.29642645 0.4232373 0.06138104]]]
+        >>> print(loss.shape)
+        (2,)
+        >>> print(gradient.shape)
+        (2, 2, 3)
     """
 
     @prim_attr_register
@@ -6281,6 +6269,7 @@ class BasicLSTMCell(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
+        >>> np.random.seed(0)
         >>> x = Tensor(np.random.rand(1, 32).astype(np.float16))
         >>> h = Tensor(np.random.rand(1, 2).astype(np.float16))
         >>> c = Tensor(np.random.rand(1, 2).astype(np.float16))
@@ -6290,12 +6279,12 @@ class BasicLSTMCell(PrimitiveWithInfer):
         >>> output = lstm(x, h, c, w, b)
         >>> print(output)
         (Tensor(shape=[1, 2], dtype=Float16, value=
-        ([[9.5312e-01, 9.5215e-01]]), Tensor(shape=[1, 2], dtype=Float16, value=
+        ([[7.6953e-01, 9.2432e-01]]), Tensor(shape=[1, 2], dtype=Float16, value=
          [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
          [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
          [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
          [[1.0000e+00, 1.0000e+00]]), Tensor(shape=[1, 2], dtype=Float16, value=
-         [[9.5312e-01, 9.5215e-01]]), Tensor(shape=[1, 2], dtype=Float16, value=
+         [[7.6953e-01, 9.2432e-01]]), Tensor(shape=[1, 2], dtype=Float16, value=
          [[0.0000e+00, 0.0000e+00]]))
     """
 
@@ -6402,7 +6391,7 @@ class DynamicRNN(PrimitiveWithInfer):
         >>> b = Tensor(np.random.rand(128).astype(np.float16))
         >>> init_h = Tensor(np.random.rand(1, 16, 32).astype(np.float16))
         >>> init_c = Tensor(np.random.rand(1, 16, 32).astype(np.float16))
-        >>> dynamic_rnn = ops.DynamicRNNN()
+        >>> dynamic_rnn = ops.DynamicRNN()
         >>> output = dynamic_rnn(x, w, b, None, init_h, init_c)
         >>> print(output[0].shape)
         (2, 16, 32)
@@ -6696,11 +6685,8 @@ class LRN(PrimitiveWithInfer):
         >>> x = Tensor(np.random.rand(1, 2, 2, 2), mindspore.float32)
         >>> lrn = ops.LRN()
         >>> output = lrn(x)
-        >>> print(output)
-        [[[[0.18990143 0.59475636]
-           [0.6291904  0.1371534 ]]
-          [[0.6258911  0.4964315 ]
-           [0.3141494  0.43636137]]]]
+        >>> print(output.shape)
+        (1, 2, 2, 2)
     """
 
     @prim_attr_register

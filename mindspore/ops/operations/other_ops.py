@@ -318,11 +318,8 @@ class IOU(PrimitiveWithInfer):
         >>> anchor_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
         >>> gt_boxes = Tensor(np.random.randint(1.0, 5.0, [3, 4]), mindspore.float16)
         >>> output = iou(anchor_boxes, gt_boxes)
-        >>> print(output)
-        [[65500. 65500. 65500.]
-         [   -0.    -0.    -0.]
-         [   -0.    -0.    -0.]]
-
+        >>> print(output.shape)
+        (3, 3)
     """
 
     @prim_attr_register
