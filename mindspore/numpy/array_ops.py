@@ -17,37 +17,37 @@ from copy import copy as py_copy
 
 import numpy as onp
 
-import mindspore
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.ops.primitive import constexpr
+from ..common import Tensor
+from ..common import dtype as mstype
+from ..ops import operations as P
+from ..ops import functional as F
+from ..ops.primitive import constexpr
 
 from .utils import _check_shape, _check_shape_compile, _check_dtype, _check_is_int, \
     _check_axes_range, _check_start_normalize, _check_shape_contain_zero, _check_is_tensor, \
     _check_input_for_asarray
 
-DEFAULT_FLOAT_DTYPE = mindspore.float32
-DEFAULT_INT_DTYPE = mindspore.int32
+DEFAULT_FLOAT_DTYPE = mstype.float32
+DEFAULT_INT_DTYPE = mstype.int32
 
 
 def array(obj, dtype=None, copy=True, ndmin=0):
     """
-    Create a tensor.
+    Creates a tensor.
 
-    This function creat tensors from an array-like object.
+    This function creates tensors from an array-like object.
 
     Args:
         obj (Union[int, float, bool, list, tuple, numpy.ndarray]): Input data, in
-        any form that can be converted to an array. This includes lists, lists of
-        tuples, tuples, tuples of tuples, tuples of lists and ndarrays.
-        dtype (Union[mindspore.dtype, str], optional): Designated array dtype, can
+        any form that can be converted to a tensor. This includes lists, lists of
+        tuples, tuples, tuples of tuples, tuples of lists and numpy.ndarray.
+        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
             be in format of np.int32, or `int32`. If dtype is None, the data type
             of the new tensor will be inferred from obj. Default is None.
         copy (bool): If true, then the object is copied. Otherwise, a copy will
             only be made if necessary. Default: True.
         ndmin (int): Specifies the minimum number of dimensions that the resulting
-            array should have. Ones will be pre-pended to the shape as needed to
+            tensor should have. Ones will be pre-pended to the shape as needed to
             meet this requirement. Default: 0
 
     Returns:
@@ -76,15 +76,15 @@ def array(obj, dtype=None, copy=True, ndmin=0):
 
 def asarray(a, dtype=None):
     """
-    Convert the input to tensor.
+    Converts the input to tensor.
 
-    This function convert tensors from an array-like object.
+    This function converts tensors from an array-like object.
 
     Args:
         a (Union[int, float, bool, list, tuple, numpy.ndarray]): Input data, in
-        any form that can be converted to an array. This includes lists, lists of
+        any form that can be converted to a tensor. This includes lists, lists of
         tuples, tuples, tuples of tuples, tuples of lists and ndarrays.
-        dtype (Union[mindspore.dtype, str], optional): Designated array dtype, can
+        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
             be in format of np.int32, or `int32`. If dtype is None, the data type
             of the new tensor will be inferred from a. Default is None.
 
@@ -112,7 +112,7 @@ def asarray(a, dtype=None):
         dtype = DEFAULT_INT_DTYPE
 
     if isinstance(a, bool) and (dtype is None):
-        dtype = mindspore.bool_
+        dtype = mstype.bool_
 
     if isinstance(a, (list, tuple)):
         a = onp.asarray(a)
@@ -126,14 +126,14 @@ def asarray(a, dtype=None):
 
     if isinstance(a, onp.ndarray) and dtype is None:
         if a.dtype is onp.dtype('bool'):
-            dtype = mindspore.bool_
+            dtype = mstype.bool_
         elif a.dtype is onp.dtype('int'):
             dtype = DEFAULT_INT_DTYPE
         elif a.dtype is onp.dtype('float'):
             dtype = DEFAULT_FLOAT_DTYPE
         a = Tensor.from_numpy(a)
 
-    # If a is already an tensor and we don't need to cast dtype, return a
+    # If a is already a tensor and we don't need to cast dtype, return a
     if isinstance(a, Tensor):
         if dtype is None:
             return a
@@ -146,16 +146,16 @@ def asarray(a, dtype=None):
 
 def asfarray(a, dtype=DEFAULT_FLOAT_DTYPE):
     """
-    Similar to asarray, convert the input to an float array.
+    Similar to asarray, converts the input to a float tensor.
 
-    If non-float dtype is defined, this function will return a float32 Tensor instead.
+    If non-float dtype is defined, this function will return a float32 tensor instead.
 
     Args:
         a (Union[int, float, bool, list, tuple, numpy.ndarray]): Input data, in
-        any form that can be converted to an array. This includes lists, lists of
-        tuples, tuples, tuples of tuples, tuples of lists and ndarrays.
-        dtype (Union[mindspore.dtype, str], optional): Designated array dtype, can
-            be in format of np.float32, or `float32`. Default is mindspore.float32.
+        any form that can be converted to a tensor. This includes lists, lists of
+        tuples, tuples, tuples of tuples, tuples of lists and numpy.ndarray.
+        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
+            be in format of np.float32, or `float32`. Default is mstype.float32.
 
     Returns:
         Tensor, generated tensor with the specified float dtype.
@@ -171,7 +171,7 @@ def asfarray(a, dtype=DEFAULT_FLOAT_DTYPE):
     dtype = _check_dtype(dtype)
     _ = _check_input_for_asarray(a)
 
-    if dtype not in (mindspore.float16, mindspore.float32, mindspore.float64):
+    if dtype not in (mstype.float16, mstype.float32, mstype.float64):
         dtype = DEFAULT_FLOAT_DTYPE
 
     if isinstance(a, (list, tuple)):
@@ -185,7 +185,7 @@ def asfarray(a, dtype=DEFAULT_FLOAT_DTYPE):
 
 def copy_(a):
     """
-    Return an tensor copy of the given object.
+    Returns a tensor copy of the given object.
 
     Args:
         a (Tensor): Input tensor.
@@ -198,20 +198,22 @@ def copy_(a):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> print(np.copy([1,2,3]))
-        [1. 2. 3.]
+        >>> x = np.ones((2,2))
+        >>> print(np.copy(x))
+        [[1. 1.]
+         [1. 1.]]
     """
     return py_copy(a)
 
 
 def ones(shape, dtype=DEFAULT_FLOAT_DTYPE):
     """
-    Return a new array of given shape and type, filled with ones.
+    Returns a new tensor of given shape and type, filled with ones.
 
     Args:
-        shape (Union[int, tuple, list]): the shape of the new array.
-        dtype (Union[mindspore.dtype, str], optional): Designated array dtype, can
-            be in format of np.float32, or `float32`. Default is mindspore.float32.
+        shape (Union[int, tuple, list]): the shape of the new tensor.
+        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
+            be in format of np.float32, or `float32`. Default is mstype.float32.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with ones.
@@ -231,17 +233,17 @@ def ones(shape, dtype=DEFAULT_FLOAT_DTYPE):
     dtype = _check_dtype(dtype)
     fill = P.Fill()
     output = fill(dtype, shape, 1)
-    return Tensor(output, dtype=dtype)
+    return output
 
 
 def zeros(shape, dtype=DEFAULT_FLOAT_DTYPE):
     """
-    Return a new array of given shape and type, filled with zeros.
+    Returns a new tensor of given shape and type, filled with zeros.
 
     Args:
-        shape (Union[int, tuple, list]): the shape of the new array.
-        dtype (Union[mindspore.dtype, str], optional): Designated array dtype, can
-            be in format of np.float32, or `float32`. Default is mindspore.float32.
+        shape (Union[int, tuple, list]): the shape of the new tensor.
+        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
+            be in format of np.float32, or `float32`. Default is mstype.float32.
 
     Returns:
         Tensor, with the designated shape and dtype, filled with zeros.
@@ -261,19 +263,19 @@ def zeros(shape, dtype=DEFAULT_FLOAT_DTYPE):
     dtype = _check_dtype(dtype)
     fill = P.Fill()
     output = fill(dtype, shape, 0)
-    return Tensor(output, dtype=dtype)
+    return output
 
 
 def full(shape, fill_value, dtype=None):
     """
-    Return a new array of given shape and type, filled with fill_value.
+    Returns a new tensor of given shape and type, filled with fill_value.
 
     Args:
-        shape (Union[int, tuple(int), list(int)]): Shape of the new array, e.g.,
+        shape (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g.,
             (2, 3) or 2.
         fill_value (Union[int, float, bool, list, tuple]): scalar or array_like
             fill value.
-        dtype (Union[mindspore.dtype, str], optional): Designated array dtype, can
+        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
             be in format of np.float32, or `float32`, if dtype is None, the data type
             of the new tensor will be inferred from fill_value. Default is None.
 
@@ -301,16 +303,16 @@ def full(shape, fill_value, dtype=None):
 
     # if fill_value is array_like or shape contains zero. fall back to original
     # numpy creation
-    return Tensor(onp.full(shape, fill_value, mindspore.dtype_to_nptype(dtype)))
+    return Tensor(onp.full(shape, fill_value, mstype.dtype_to_nptype(dtype)))
 
 
 def arange(*args, **kwargs):
     """
-    Return evenly spaced values within a given interval.
+    Returns evenly spaced values within a given interval.
 
     Returns `num` evenly spaced samples, calculated over the interval [`start`, `stop`].
     The endpoint of the interval can optionally be excluded.
-    The current implementation is a direct wrapper on top of numpy.arange, except
+    The current implementation is a direct wrapper on top of numpy.arange, except that
     the default dtype is float32 and int32, compare to float64 and int64 for numpy
     implementation.
 
@@ -324,12 +326,12 @@ def arange(*args, **kwargs):
             out, this is the distance between two adjacent values, out[i+1] - out[i].
             The default step size is 1. If step is specified as a position argument,
             start must also be given.
-        dtype (Union[mindspore.dtype, str], optional): Designated array dtype, can
+        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
             be in format of np.float32, or `float32`. If dtype is None, the data type
             of the new tensor will be inferred from start, stop and step. Default is None.
 
     Returns:
-        arangend Tensor, array of evenly spaced values.
+        arangend tensor of evenly spaced values.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -361,16 +363,16 @@ def arange(*args, **kwargs):
 
     if 'dtype' in kwargs and kwargs['dtype'] is not None:
         final_dtype = _check_dtype(kwargs['dtype'])
-        final_dtype = mindspore.dtype_to_nptype(final_dtype)
+        final_dtype = mstype.dtype_to_nptype(final_dtype)
     kwargs['dtype'] = final_dtype
     out = onp.arange(*args, **kwargs)
     out = Tensor.from_numpy(out)
-    return Tensor(out)
+    return out
 
 
 def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0):
     """
-    Return evenly spaced values within a given interval.
+    Returns evenly spaced values within a given interval.
 
     The current implementation is a direct wrapper on top of numpy.linspace, except
     the default dtype is float32, compare to float64 for numpy,
@@ -386,7 +388,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
             not included. Default is True.
         retstep (bool, optional): If True, return (`samples`, `step`), where `step` is
             the spacing between samples.
-        dtype (Union[mindspore.dtype, str], optional): Designated array dtype, can
+        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
             be in format of np.float32, or `float32`.If `dtype` is None, infer the data
             type from other input arguments. Default is None.
         axis (int, optional): The axis in the result to store the samples. Relevant
@@ -420,7 +422,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
     final_dtype = None
     if dtype is not None:
         final_dtype = _check_dtype(dtype)
-        final_dtype = mindspore.dtype_to_nptype(final_dtype)
+        final_dtype = mstype.dtype_to_nptype(final_dtype)
     else:
         final_dtype = onp.float32
 
@@ -438,7 +440,7 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
 
 def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
     """
-    Return numbers spaced evenly on a log scale.
+    Returns numbers spaced evenly on a log scale.
 
     In linear space, the sequence starts at base ** start (base to the power of
     start) and ends with base ** stop (see endpoint below).
@@ -457,11 +459,11 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
         base (Union[int, float], optional): The base of the log space. The step size
             between the elements in ln(samples) / ln(base) (or log_base(samples))
             is uniform. Default is 10.0.
-        dtype (Union[mindspore.dtype, str], optional): Designated array dtype, can
+        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
             be in format of np.float32, or `float32`.If `dtype` is None, infer the data
             type from other input arguments. Default is None.
         axis (int, optional): The axis in the result to store the samples. Relevant
-            only if start or stop are array-like.  By default (0), the samples will
+            only if start or stop is array-like.  By default (0), the samples will
             be along a new axis inserted at the beginning. Use -1 to get an axis at the end.
             Default is 0.
 
@@ -486,7 +488,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
     final_dtype = None
     if dtype is not None:
         final_dtype = _check_dtype(dtype)
-        final_dtype = mindspore.dtype_to_nptype(final_dtype)
+        final_dtype = mstype.dtype_to_nptype(final_dtype)
     else:
         final_dtype = onp.float32
 
@@ -499,7 +501,7 @@ def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
 
 def eye(N, M=None, k=0, dtype=DEFAULT_FLOAT_DTYPE):
     """
-    Return a 2-D array with ones on the diagnoal and zeros elsewhere.
+    Returns a 2-D tensor with ones on the diagnoal and zeros elsewhere.
 
     Args:
         N (int): Number of rows in the output, must be larger than 0.
@@ -508,11 +510,11 @@ def eye(N, M=None, k=0, dtype=DEFAULT_FLOAT_DTYPE):
         k (int, optional): Index of the diagonal: 0 (the default) refers to the main
             diagonal, a positive value refers to an upper diagonal, and a negative value
             to a lower diagonal. Default is 0.
-        dtype (Union[mindspore.dtype, str], optional): Designated array dtype, can
-            be in format of np.float32, or `float32`. Default is mindspore.float32.
+        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
+            be in format of np.float32, or `float32`. Default is mstype.float32.
 
     Returns:
-        result (Tensor): A tensor array of shape (N,M). An array where all elements
+        result (Tensor): A tensor of shape (N,M). A tensor where all elements
         are equal to zero, except for the k-th diagonal, whose values are equal to one.
 
     Supported Platforms:
@@ -542,15 +544,15 @@ def eye(N, M=None, k=0, dtype=DEFAULT_FLOAT_DTYPE):
 
 def identity(n, dtype=DEFAULT_FLOAT_DTYPE):
     """
-    Return the identity array.
+    Returns the identity tensor.
 
     Args:
         n (int): Number of rows and columns in the output, must be larger than 0.
-        dtype (Union[mindspore.dtype, str], optional): Designated array dtype, can
-            be in format of np.float32, or `float32`. Default is mindspore.float32.
+        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
+            be in format of np.float32, or `float32`. Default is mstype.float32.
 
     Returns:
-        result (Tensor): A tensor array of shape (n,n). An array where all elements
+        result (Tensor): A tensor of shape (n,n). A tensor where all elements
         are equal to zero, except for the diagonal, whose values are equal to one.
 
     Supported Platforms:
@@ -569,7 +571,7 @@ def identity(n, dtype=DEFAULT_FLOAT_DTYPE):
 @constexpr
 def _prepare_shape_for_expand_dims(shape, axes):
     """
-    Creat the expanded new shape based on the shape and given axes
+    Creates the expanded new shape based on the shape and given axes
 
     Args:
         shape (tuple): the shape of the tensor
@@ -588,7 +590,7 @@ def _prepare_shape_for_expand_dims(shape, axes):
         new_shape_length += 1
         if axes >= new_shape_length or axes < -new_shape_length:
             raise ValueError(
-                f"axis {axes} is out of bounds for array of dimension {new_shape_length}")
+                f"axis {axes} is out of bounds for tensor of dimension {new_shape_length}")
         axes = {axes}
 
     elif isinstance(axes, (list, tuple)):
@@ -596,7 +598,7 @@ def _prepare_shape_for_expand_dims(shape, axes):
         for axis in axes:
             if axis >= new_shape_length or axis < -new_shape_length:
                 raise ValueError(
-                    f"axis {axis} is out of bounds for array of dimension {new_shape_length}")
+                    f"axis {axis} is out of bounds for tensor of dimension {new_shape_length}")
         axes = set(axes)
 
     else:
@@ -614,9 +616,9 @@ def _prepare_shape_for_expand_dims(shape, axes):
 
 def expand_dims(a, axis):
     """
-    Expand the shape of an array.
+    Expands the shape of a tensor.
 
-    Insert a new axis that will appear at the axis position in the expanded array shape.
+    Inserts a new axis that will appear at the axis position in the expanded tensor shape.
 
     Args:
         a (Tensor): Input tensor array.
@@ -633,8 +635,8 @@ def expand_dims(a, axis):
         >>> import mindspore.numpy as np
         >>> x = np.ones((2,2))
         >>> x = np.expand_dims(x,0)
-        >>> print(x,shape)
-        (2,2,1)
+        >>> print(x.shape)
+        (1, 2, 2)
     """
     shape = F.shape(a)
     # yield expanded shape based on the axes
@@ -645,11 +647,11 @@ def expand_dims(a, axis):
 @constexpr
 def _prepare_shape_for_squeeze(shape, axes):
     """
-    Creat the squeezed new shape based on the tensor and given axes.
+    Creates the squeezed new shape based on the tensor and given axes.
 
     Args:
         shape (tuple): the shape of the tensor
-        axes Union(None, int, tuple(int), list(int)): the axes with dimensions squeezed.
+        axes Union[None, int, tuple(int), list(int)]: the axes with dimensions squeezed.
 
     Returns:
         new_shape(tuple): the shape with dimensions squeezed.
@@ -661,14 +663,14 @@ def _prepare_shape_for_squeeze(shape, axes):
     if isinstance(axes, int):
         if axes >= ndim or axes < -ndim:
             raise ValueError(
-                f"axis {axes} is out of bounds for array of dimension {ndim}")
+                f"axis {axes} is out of bounds for tensor of dimension {ndim}")
         axes = {axes}
 
     elif isinstance(axes, (list, tuple)):
         for axis in axes:
             if axis >= ndim or axis < -ndim:
                 raise ValueError(
-                    f"axis {axis} is out of bounds for array of dimension {ndim}")
+                    f"axis {axis} is out of bounds for tensor of dimension {ndim}")
         axes = set(axes)
 
     elif axes is not None:
@@ -690,7 +692,7 @@ def _prepare_shape_for_squeeze(shape, axes):
 
 def squeeze(a, axis=None):
     """
-    Remove single-dimensional entries from the shape of an array.
+    Removes single-dimensional entries from the shape of an tensor.
 
     This is a temporary solution to support CPU backend. Will be changed
     once CPU backend supports P.Squeeze().
@@ -709,8 +711,8 @@ def squeeze(a, axis=None):
         >>> import mindspore.numpy as np
         >>> x = np.ones((1,2,2,1))
         >>> x = np.squeeze(x)
-        >>> print(x,shape)
-        (2,2)
+        >>> print(x.shape)
+        (2, 2)
     """
     shape = F.shape(a)
     # yield squeezed shape based on the axes
@@ -720,11 +722,11 @@ def squeeze(a, axis=None):
 
 def transpose(a, axes=None):
     """
-    Reverse or permute the axes of an array; returns the modified array.
+    Reverses or permutes the axes of a tensor; returns the modified tensor.
 
     Args:
         a (Tensor): a tensor to be transposed
-        axes Union[None, tuple, list]: the axes order, if axes is None, transpose
+        axes (Union[None, tuple, list]): the axes order, if axes is None, transpose
         the entire tensor. Default is None.
 
     Returns:
@@ -737,8 +739,8 @@ def transpose(a, axes=None):
         >>> import mindspore.numpy as np
         >>> x = np.ones((1,2,3))
         >>> x = np.transpose(x)
-        >>> print(x,shape)
-        (3,2,1)
+        >>> print(x.shape)
+        (3, 2, 1)
     """
     if axes is None:
         shape = F.shape(a)
@@ -753,7 +755,7 @@ def transpose(a, axes=None):
 
 def rollaxis(x, axis, start=0):
     """
-    Roll the specified axis backwards, until it lies in the given position.
+    Rolls the specified axis backwards, until it lies in the given position.
     The positions of the other axes do not change relative to one another.
 
     Args:
@@ -761,8 +763,10 @@ def rollaxis(x, axis, start=0):
         axis (int): The axis to be rolled.
         start (int):
             - When start >= 0:
-                - When start <= axis: the axis is rolled back until it lies in this position (start).
-                - When start > axis: the axis is rolled until it lies before this position (start).
+                - When start <= axis: the axis is rolled back until it lies in
+                  this position (start).
+                - When start > axis: the axis is rolled until it lies before this
+                  position (start).
             - When start < 0: the start will be normalized as follows:
                 start ........... Normalized start
                 -(x.ndim+1)       raise ValueError
@@ -786,14 +790,11 @@ def rollaxis(x, axis, start=0):
             start is not in the range from -ndim to ndim.
 
     Examples:
-        >>> import mindspore
-        >>> import mindspore.numpy as mnp
-        >>> from mindspore import Tensor
-        >>> import numpy as onp
-        >>> input_x = Tensor(onp.ones((2,3,4)), mindspore.float32)
-        >>> output = mnp.rollaxis(x, 0, 2)
+        >>> import mindspore.numpy as np
+        >>> x = np.ones((2,3,4))
+        >>> output = np.rollaxis(x, 0, 2)
         >>> print(output.shape)
-        (3,2,4)
+        (3, 2, 4)
     """
     _check_is_int(axis)
     _check_is_int(start)
@@ -826,15 +827,15 @@ def rollaxis(x, axis, start=0):
 
 def swapaxes(x, axis1, axis2):
     """
-    Interchange two axes of a tensor.
+    Interchanges two axes of a tensor.
 
     Args:
-        x (Tensor): A Tensor to be transposed.
+        x (Tensor): A tensor to be transposed.
         axis1 (int): First axis.
         axis2 (int): Second axis.
 
     Returns:
-        Transposed Tensor. Has the same data type as the original tensor x.
+        Transposed tensor, has the same data type as the original tensor x.
 
     Raises:
         TypeError: If axis1 or axis2 is not integer.
@@ -844,12 +845,9 @@ def swapaxes(x, axis1, axis2):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
-        >>> import mindspore.numpy as mnp
-        >>> from mindspore import Tensor
-        >>> import numpy as onp
-        >>> input_x = Tensor(onp.ones((2,3,4)), mindspore.float32)
-        >>> output = mnp.swapaxes(x, 0, 2)
+        >>> import mindspore.numpy as np
+        >>> x = np.ones((2,3,4))
+        >>> output = np.swapaxes(x, 0, 2)
         >>> print(output.shape)
         (4,3,2)
     """
@@ -881,10 +879,10 @@ def swapaxes(x, axis1, axis2):
 
 def reshape(x, new_shape):
     """
-    Reshape a tensor without changing its data.
+    Reshapes a tensor without changing its data.
 
     Args:
-        x (Tensor): A Tensor to be reshaped.
+        x (Tensor): A tensor to be reshaped.
         new_shape (Union[int, list(int), tuple(int)]): The new shape should be
             compatible with the original shape. If the tuple has only one element,
             the result will be a 1-D tensor of that length. One shape dimension
@@ -902,19 +900,19 @@ def reshape(x, new_shape):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = Tensor(np.array([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]]), mindspore.float32)
-        >>> reshape = mindspore.numpy.reshape()
-        >>> output = reshape(x, (3, 2))
+        >>> import mindspore.numpy as np
+        >>> x = np.asarray([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]])
+        >>> output = np.reshape(x, (3, 2))
         >>> print(output)
         [[-0.1  0.3]
          [ 3.6  0.4]
-          [ 0.5 -3.2]]
-        >>> output = reshape(x, (3, -1))
+         [ 0.5 -3.2]]
+        >>> output = np.reshape(x, (3, -1))
         >>> print(output)
         [[-0.1  0.3]
-          [ 3.6  0.4]
-          [ 0.5 -3.2]]
-        >>> output = reshape(x, (6, ))
+         [ 3.6  0.4]
+         [ 0.5 -3.2]]
+        >>> output = np.reshape(x, (6, ))
         >>> print(output)
         [-0.1  0.3  3.6  0.4  0.5 -3.2]
     """
@@ -924,7 +922,7 @@ def reshape(x, new_shape):
 
 def ravel(x):
     """
-    Return a contiguous flattened tensor.
+    Returns a contiguous flattened tensor.
 
     A 1-D tensor, containing the elements of the input, is returned.
 
@@ -932,18 +930,15 @@ def ravel(x):
         x (Tensor): A tensor to be flattened.
 
     Returns:
-        Flattened Tensor. Has the same data type as the original tensor x.
+        Flattened tensor, has the same data type as the original tensor x.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> import mindspore
-        >>> import mindspore.numpy as mnp
-        >>> from mindspore import Tensor
-        >>> import numpy as onp
-        >>> input_x = Tensor(onp.ones((2,3,4)), mindspore.float32)
-        >>> output = mnp.ravel(x)
+        >>> import mindspore.numpy as np
+        >>> x = np.ones((2,3,4))
+        >>> output = np.ravel(x)
         >>> print(output.shape)
         (24,)
     """
@@ -953,8 +948,8 @@ def ravel(x):
 @constexpr
 def _move_axes_for_concatenate(arr_shape, axis):
     """
-    move axis 0 to the disiganated position, while keep other axes' relative
-    positions unchanged, only used if a single array is concatenated.
+    Moves axis 0 to the disiganated position, while keeps other axes' relative
+    positions unchanged, only used if a single tensor is concatenated.
     """
 
     original_axes = tuple(range(len(arr_shape)))
@@ -966,17 +961,17 @@ def _move_axes_for_concatenate(arr_shape, axis):
 
 def concatenate(arrays, axis=0):
     """
-    Join a sequence of arrays along an existing axis.
+    Joins a sequence of tensors along an existing axis.
 
     Args:
-        arrays: Union[Tensor, tuple(Tensor), list(Tensor)], a Tensor or a list
-        of Tensor to be concatenated.
+        arrays: Union[Tensor, tuple(Tensor), list(Tensor)], a tensor or a list
+        of tensors to be concatenated.
 
-        axis (int, optional): The axis along which the arrays will be joined,
-            if axis is None, arrays are flattened before use. Default is 0.
+        axis (int, optional): The axis along which the tensors will be joined,
+            if axis is None, tensors are flattened before use. Default is 0.
 
     Returns:
-        Tensor, a Tensor concatenated from a Tensor or a list of Tensors.
+        Tensor, a tensor concatenated from a tensor or a list of tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -986,8 +981,8 @@ def concatenate(arrays, axis=0):
         >>> x1 = np.ones((1,2,3))
         >>> x2 = np.ones((1,2,1))
         >>> x = np.concatenate((x1, x2), axis=-1)
-        >>> print(x,shape)
-        (1,2,4)
+        >>> print(x.shape)
+        (1, 2, 4)
     """
     array_type = F.typeof(arrays)
     if _check_is_tensor(array_type):

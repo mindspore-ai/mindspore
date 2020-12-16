@@ -17,13 +17,12 @@ from functools import partial
 
 import numpy as onp
 
-import mindspore
 import mindspore.context as context
-from mindspore import Tensor
-from mindspore.ops import operations as P
-from mindspore.ops import functional as F
-from mindspore.ops.primitive import constexpr
-from mindspore.common import dtype as mstype
+from ..common import Tensor
+from ..ops import operations as P
+from ..ops import functional as F
+from ..ops.primitive import constexpr
+from ..common import dtype as mstype
 
 from .dtypes import dtype_tuple, all_types, dtype_map
 
@@ -119,17 +118,17 @@ def _check_shape(shape):
 
 def _check_dtype(dtype):
     """check the input dtype and make conversions"""
-    # convert the string dtype to mindspore.dtype
+    # convert the string dtype to mstype.dtype
     if isinstance(dtype, str):
         dtype = dtype.lower()
         dtype = dtype_map[dtype]
     elif isinstance(dtype, type):
         if dtype is int:
-            dtype = mindspore.int32
+            dtype = mstype.int32
         if dtype is float:
-            dtype = mindspore.float32
+            dtype = mstype.float32
         if dtype is bool:
-            dtype = mindspore.bool_
+            dtype = mstype.bool_
     if dtype not in dtype_tuple:
         raise TypeError(
             f"only {all_types} are allowed for dtype, but got {type(dtype)}")

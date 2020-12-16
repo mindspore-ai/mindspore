@@ -42,3 +42,5 @@ array_ops_module = ['array', 'asarray', 'asfarray', 'copy', 'ones', 'zeros', 'ar
 math_module = ['mean', 'inner']
 
 __all__ = array_ops_module + math_module + numeric_types
+
+__all__.sort()
