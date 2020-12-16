@@ -59,6 +59,8 @@ if __name__ == '__main__':
         if args_opt.freeze_layer == "backbone":
             load_ckpt(backbone_net, args_opt.pretrain_ckpt, trainable=False)
             step_size = extract_features(backbone_net, args_opt.dataset_path, config)
+        elif args_opt.filter_head:
+            load_ckpt(backbone_net, args_opt.pretrain_ckpt)
         else:
             load_ckpt(net, args_opt.pretrain_ckpt)
     if step_size == 0:

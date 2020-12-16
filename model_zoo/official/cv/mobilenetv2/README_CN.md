@@ -1,5 +1,4 @@
 # 目录
-<!-- TOC -->
 
 - [目录](#目录)
 - [MobileNetV2描述](#mobilenetv2描述)
@@ -25,8 +24,6 @@
 - [随机情况说明](#随机情况说明)
 - [ModelZoo主页](#modelzoo主页)
 
-<!-- /TOC -->
-
 # MobileNetV2描述
 
 MobileNetV2结合硬件感知神经网络架构搜索（NAS）和NetAdapt算法，已经可以移植到手机CPU上运行，后续随新架构进一步优化改进。（2019年11月20日）
@@ -44,10 +41,10 @@ MobileNetV2总体网络架构如下：
 使用的数据集：[imagenet](http://www.image-net.org/)
 
 - 数据集大小：125G，共1000个类、1.2万张彩色图像
-  - 训练集：120G，共1.2万张图像
-  - 测试集：5G，共5万张图像
+    - 训练集：120G，共1.2万张图像
+    - 测试集：5G，共5万张图像
 - 数据格式：RGB
-  - 注：数据在src/dataset.py中处理。
+    - 注：数据在src/dataset.py中处理。
 
 # 特性
 
@@ -59,12 +56,12 @@ MobileNetV2总体网络架构如下：
 # 环境要求
 
 - 硬件（Ascend/GPU/CPU）
-  - 使用Ascend、GPU或CPU处理器来搭建硬件环境。如需试用Ascend处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
+    - 使用Ascend、GPU或CPU处理器来搭建硬件环境。如需试用Ascend处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
 - 框架
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - 如需查看详情，请参见如下资源：
-  - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
 # 脚本说明
 
@@ -96,9 +93,11 @@ MobileNetV2总体网络架构如下：
 
 使用python或shell脚本开始训练。shell脚本的使用方法如下：
 
-- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
-- GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
-- CPU: sh run_trian.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
+- Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
+- GPU: sh run_trian.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
+- CPU: sh run_trian.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER] [FILTER_HEAD]
+
+`CKPT_PATH` `FREEZE_LAYER` 和 `FILTER_HEAD` 是可选择的选项, 如果设置`CKPT_PATH`, `FREEZE_LAYER` 也必须同时设置. `FREEZE_LAYER` 可以是 ["none", "backbone"], 如果设置 `FREEZE_LAYER`="backbone", 训练过程中backbone中的参数会被冻结，同时不会从checkpoint中加载head部分的参数. 如果`FILTER_HEAD`=True, 不会从checkpoint中加载head部分的参数.
 
 > RANK_TABLE_FILE 是在Ascned上运行分布式任务时HCCL的配置文件
 > 我们列出使用分布式服务常见的使用限制，详细的可以查看HCCL对应的使用文档。
@@ -122,14 +121,14 @@ MobileNetV2总体网络架构如下：
 
 # 全网微调示例
   python:
-      Ascend: python train.py --platform Ascend --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none
-      GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none
-      CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none
+      Ascend: python train.py --platform Ascend --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none --filter_head True
+      GPU: python train.py --platform GPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none --filter_head True
+      CPU: python train.py --platform CPU --dataset_path [TRAIN_DATASET_PATH] --pretrain_ckpt [CKPT_PATH] --freeze_layer none --filter_head True
 
   shell:
-      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  [CKPT_PATH] none
-      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] [CKPT_PATH] none
-      CPU: sh run_train.sh CPU [TRAIN_DATASET_PATH] [CKPT_PATH] none
+      Ascend: sh run_train.sh Ascend 8 0,1,2,3,4,5,6,7 hccl_config.json [TRAIN_DATASET_PATH]  [CKPT_PATH] none True
+      GPU: sh run_train.sh GPU 8 0,1,2,3,4,5,6,7 [TRAIN_DATASET_PATH] [CKPT_PATH] none True
+      CPU: sh run_train.sh CPU [TRAIN_DATASET_PATH] [CKPT_PATH] none True
 
 # 全连接层微调示例
   python:
@@ -193,7 +192,7 @@ result:{'acc':0.71976314102564111} ckpt=./ckpt_0/mobilenet-200_625.ckpt
 
 修改`src/config.py`文件中的`export_mode`和`export_file`, 运行`export.py`。
 
-```
+```shell
 python export.py --platform [PLATFORM] --pretrain_ckpt [CKPT_PATH]
 ```
 

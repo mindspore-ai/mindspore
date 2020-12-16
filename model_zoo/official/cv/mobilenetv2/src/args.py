@@ -26,6 +26,8 @@ def train_parse_args():
     train_parser.add_argument('--freeze_layer', type=str, default="", choices=["", "none", "backbone"], \
         help="freeze the weights of network from start to which layers")
     train_parser.add_argument('--run_distribute', type=ast.literal_eval, default=True, help='Run distribute')
+    train_parser.add_argument('--filter_head', type=ast.literal_eval, default=False,\
+                              help='Filter head weight parameters when load checkpoint, default is False.')
     train_args = train_parser.parse_args()
     train_args.is_training = True
     if train_args.platform == "CPU":

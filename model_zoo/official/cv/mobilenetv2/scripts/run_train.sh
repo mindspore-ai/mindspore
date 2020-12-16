@@ -16,6 +16,25 @@
 
 run_ascend()
 {
+    if [ $# = 5 ] ; then
+        PRETRAINED_CKPT=""
+        FREEZE_LAYER="none"
+        FILTER_HEAD="False"
+    elif [ $# = 7 ] ; then
+        PRETRAINED_CKPT=$6
+        FREEZE_LAYER=$7
+        FILTER_HEAD="False"
+    elif [ $# = 8 ] ; then
+        PRETRAINED_CKPT=$6
+        FREEZE_LAYER=$7
+        FILTER_HEAD=$8
+    else
+        echo "Usage:
+              Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH](optional) [FREEZE_LAYER](optional) [FILTER_HEAD](optional)
+              Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH]"
+        exit 1
+    fi;
+
     if [ $2 -lt 1 ] && [ $2 -gt 8 ]
     then
         echo "error: DEVICE_NUM=$2 is not in (1-8)"
@@ -59,8 +78,9 @@ run_ascend()
         python train.py \
             --platform=$1 \
             --dataset_path=$5 \
-            --pretrain_ckpt=$6 \
-            --freeze_layer=$7 \
+            --pretrain_ckpt=$PRETRAINED_CKPT \
+            --freeze_layer=$FREEZE_LAYER \
+            --filter_head=$FILTER_HEAD \
             &> log$i.log & 
         cd ..
     done
@@ -68,6 +88,24 @@ run_ascend()
 
 run_gpu()
 {
+    if [ $# = 4 ] ; then
+        PRETRAINED_CKPT=""
+        FREEZE_LAYER="none"
+        FILTER_HEAD="False"
+    elif [ $# = 6 ] ; then
+        PRETRAINED_CKPT=$5
+        FREEZE_LAYER=$6
+        FILTER_HEAD="False"
+    elif [ $# = 7 ] ; then
+        PRETRAINED_CKPT=$5
+        FREEZE_LAYER=$6
+        FILTER_HEAD=$7
+    else
+        echo "Usage:
+              GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH](optional) [FREEZE_LAYER](optional) [FILTER_HEAD](optional)
+              GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]"
+        exit 1
+    fi;
     if [ $2 -lt 1 ] && [ $2 -gt 8 ]
     then
         echo "error: DEVICE_NUM=$2 is not in (1-8)"
@@ -94,14 +132,32 @@ run_gpu()
     python ${BASEPATH}/../train.py \
         --platform=$1 \
         --dataset_path=$4 \
-        --pretrain_ckpt=$5 \
-        --freeze_layer=$6 \
+        --pretrain_ckpt=$PRETRAINED_CKPT \
+        --freeze_layer=$FREEZE_LAYER \
+        --filter_head=$FILTER_HEAD \
         &> ../train.log &  # dataset train folder
 }
 
 run_cpu()
 {
-
+    if [ $# = 2 ] ; then
+        PRETRAINED_CKPT=""
+        FREEZE_LAYER="none"
+        FILTER_HEAD="False"
+    elif [ $# = 4 ] ; then
+        PRETRAINED_CKPT=$3
+        FREEZE_LAYER=$4
+        FILTER_HEAD="False"
+    elif [ $# = 5 ] ; then
+        PRETRAINED_CKPT=$3
+        FREEZE_LAYER=$4
+        FILTER_HEAD=$5
+    else
+        echo "Usage:
+              CPU: sh run_train.sh CPU [DATASET_PATH]
+              CPU: sh run_train.sh CPU [DATASET_PATH] [CKPT_PATH](optional) [FREEZE_LAYER](optional) [FILTER_HEAD](optional)"
+        exit 1
+    fi;
     if [ ! -d $2 ]
     then
         echo "error: DATASET_PATH=$2 is not a directory"
@@ -120,21 +176,11 @@ run_cpu()
     python ${BASEPATH}/../train.py \
         --platform=$1 \
         --dataset_path=$2 \
-        --pretrain_ckpt=$3 \
-        --freeze_layer=$4 \
+        --pretrain_ckpt=$PRETRAINED_CKPT \
+        --freeze_layer=$FREEZE_LAYER \
+        --filter_head=$FILTER_HEAD \
         &> ../train.log &  # dataset train folder
 }
-
-if [ $# -gt 7 ] || [ $# -lt 4 ]
-then
-    echo "Usage:
-          Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
-          Ascend: sh run_train.sh Ascend [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [RANK_TABLE_FILE] [DATASET_PATH] 
-          GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]
-          GPU: sh run_train.sh GPU [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH] 
-          CPU: sh run_train.sh CPU [DATASET_PATH] [CKPT_PATH] [FREEZE_LAYER]"
-exit 1
-fi
 
 if [ $1 = "Ascend" ] ; then
     run_ascend "$@"
