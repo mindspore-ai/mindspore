@@ -161,7 +161,7 @@ void DeConvWgInputPack(const float *src_ptr, float *dst_ptr, int channel, int st
   return;
 }
 
-#ifndef ENABLE_ARM
+#if !defined(ENABLE_ARM) && !defined(ENABLE_SSE)
 void TiledC4MatmulFp32(float *dst, const float *src, const float *weight, size_t cal_num, size_t ic4, size_t oc4) {
   int dx, sz, dz;
   const int src_depth_step = 4 * DECONV_WINOGRAD_DEFAULT_TILE;

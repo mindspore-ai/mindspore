@@ -50,10 +50,6 @@ void DeconvDwFp32Center(float *dst, const float *src, const float *weight, size_
                         size_t in_kh_step, size_t in_kw_step);
 void PostFuncBiasReluC8(float *dst, const float *src, const float *bias, size_t oc8div, size_t oc8mod,
                         size_t plane_size, size_t stride, size_t relu_type);
-#endif
-
-#ifdef ENABLE_ARM
-
 void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, size_t num_pixels,
                    size_t output_channel, size_t input_step);
 void PostFuncBiasReluC4(float *dst, const float *src, const float *bias, size_t oc4div, size_t oc4mod,

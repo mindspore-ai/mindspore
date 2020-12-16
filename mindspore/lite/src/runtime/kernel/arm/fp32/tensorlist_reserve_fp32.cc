@@ -16,7 +16,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32/TensorListReserve.h"
+#include "src/runtime/kernel/arm/fp32/tensorlist_reserve_fp32.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
