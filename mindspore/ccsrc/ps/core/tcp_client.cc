@@ -146,11 +146,7 @@ void TcpClient::StopEventBase() {
   MS_LOG(INFO) << "Stop tcp client event base!";
   int ret = event_base_loopbreak(event_base_);
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "Event base loop break failed!";
-  }
-  if (event_base_) {
-    event_base_free(event_base_);
-    event_base_ = nullptr;
+    MS_LOG(ERROR) << "Event base loop break failed!";
   }
 }
 

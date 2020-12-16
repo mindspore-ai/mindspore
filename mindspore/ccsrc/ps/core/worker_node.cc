@@ -44,7 +44,7 @@ bool WorkerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "Starting worker node!";
   Initialize();
   Register(client_to_scheduler_);
-  Heartbeat(client_to_scheduler_);
+  StartHeartbeatTimer(client_to_scheduler_);
 
   if (!WaitForStart(timeout)) {
     MS_LOG(ERROR) << "Start Worker node timeout!";

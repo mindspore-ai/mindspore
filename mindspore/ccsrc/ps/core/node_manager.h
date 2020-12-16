@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef RPC_CLUSTER_MANAGER_H
-#define RPC_CLUSTER_MANAGER_H
+#ifndef MINDSPORE_CCSRC_PS_CORE_NODE_MANAGER_H_
+#define MINDSPORE_CCSRC_PS_CORE_NODE_MANAGER_H_
 
 #include <atomic>
 #include <cstdlib>
@@ -45,6 +45,7 @@ class NodeManager {
       : is_cluster_ready_(false),
         is_cluster_finish_(false),
         is_cluster_timeout_(false),
+        is_node_timeout_(false),
         total_node_num_(0),
         next_worker_rank_id_(-1),
         next_server_rank_id_(-1) {}
@@ -55,6 +56,8 @@ class NodeManager {
   void InitNodeNum();
   int NextRankId(const RegisterMessage &register_message);
   void UpdateHeartbeat(const std::string &node_id);
+  void UpdateNodeFinishState(const std::string &node_id);
+  bool CheckNodesFinishState();
   std::vector<ServersMeta> FetchServersMeta();
   void UpdateClusterState();
   void CheckClusterTimeout();
@@ -63,11 +66,14 @@ class NodeManager {
   bool is_cluster_ready();
   bool is_cluster_finish();
   bool is_cluster_timeout();
+  bool is_node_timeout();
+  void set_cluster_timeout(bool is_cluster_timeout);
 
  private:
   std::atomic<bool> is_cluster_ready_;
   std::atomic<bool> is_cluster_finish_;
   std::atomic<bool> is_cluster_timeout_;
+  std::atomic<bool> is_node_timeout_;
   uint32_t total_node_num_;
   std::atomic<int> next_worker_rank_id_;
   std::atomic<int> next_server_rank_id_;
@@ -76,6 +82,7 @@ class NodeManager {
   std::mutex assign_rank_id_mutex_;
   std::mutex heartbeat_mutex_;
   std::unordered_map<std::string, timeval> heartbeats_;
+  std::unordered_set<std::string> heartbeats_finish_nodes_;
   // timeout nodes
   std::unordered_map<std::string, NodeInfo> timeout_nodes_info_;
   std::unordered_set<std::string> finish_nodes_id_;
@@ -83,4 +90,4 @@ class NodeManager {
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
-#endif  // RPC_CLUSTER_MANAGER_H
+#endif  // MINDSPORE_CCSRC_PS_CORE_NODE_MANAGER_H_

@@ -29,7 +29,6 @@
 #include <condition_variable>
 #include <utility>
 #include <tuple>
-#include <map>
 
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
@@ -66,28 +65,8 @@ class Node {
   uint32_t rank_id() const;
   NodeRole role() const;
 
-  bool Wait(uint64_t request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
-
-  virtual bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const std::string &message,
-                    const uint32_t &timeout = kCommTimeoutInSeconds);
-  virtual bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids,
-                    const std::vector<std::string> &data, const uint32_t &timeout = kCommTimeoutInSeconds);
-  virtual bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const std::string &message,
-                    CommMessage *comm_message_resp, const uint32_t &timeout = kCommTimeoutInSeconds);
-  virtual bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids,
-                    const std::vector<std::string> &data, std::vector<CommMessage *> *comm_message_resp,
-                    const uint32_t &timeout = kCommTimeoutInSeconds);
-
  protected:
   bool WaitForStart(const uint32_t &timeout);
-  bool SendMessageSync(const std::shared_ptr<TcpClient> &client, const CommMessage &message,
-                       const uint32_t &timeout = kCommTimeoutInSeconds);
-  void SendMessageAsync(const std::shared_ptr<TcpClient> &client, const CommMessage &message);
-  const std::shared_ptr<TcpClient> &GetOrCreateTcpClient(const int &rank_id);
-  void ProcessSendDataResp(const CommMessage &message);
-  void RunMessageCallback(const uint64_t &request_id);
-  void set_message_callback(const uint64_t &request_id, const MessageCallback &message_callback);
-  void NotifyMessageArrival(const CommMessage &message);
 
   NodeInfo node_info_;
   std::atomic<bool> is_ready_;
@@ -97,28 +76,11 @@ class Node {
   std::atomic<bool> is_already_finished_;
   std::atomic_uint64_t next_request_id_;
 
-  // <NodeRole,rank_id>-><ip, port>
-  std::map<std::pair<NodeRole, uint32_t>, std::pair<std::string, uint16_t>> nodes_address_;
-  // rank_id->tcpclient
-  std::unordered_map<int, std::shared_ptr<TcpClient>> connected_nodes_;
-
-  // request_id-><expected responses, actual responses>
-  std::unordered_map<uint64_t, std::pair<uint32_t, uint32_t>> message_tracker_;
-  std::mutex message_tracker_mutex_;
-  std::condition_variable message_tracker_cond_;
-  std::mutex wait_finish_mutex_;
-  std::condition_variable wait_finish_cond_;
   std::mutex wait_start_mutex_;
   std::condition_variable wait_start_cond_;
+  std::mutex wait_finish_mutex_;
+  std::condition_variable wait_finish_cond_;
   std::mutex finish_mutex_;
-  std::mutex client_mutex_;
-
-  // request_id -> <rank_id, CommMessage>
-  std::unordered_map<uint64_t, std::unordered_map<uint32_t, CommMessage>> receive_messages_;
-  std::mutex receive_messages_mutex_;
-  // request_id -> MessageCallback
-  std::unordered_map<uint64_t, MessageCallback> message_callbacks_;
-  std::mutex message_callbacks_mutex_;
 };
 }  // namespace core
 }  // namespace ps
