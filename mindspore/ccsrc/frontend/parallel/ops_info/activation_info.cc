@@ -97,6 +97,7 @@ Status Activation::GenerateStrategies(int64_t stage_id) {
     return FAILED;
   }
 
+  is_auto_parallel_ = true;
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
 
