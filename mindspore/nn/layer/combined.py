@@ -30,9 +30,9 @@ __all__ = [
 
 class Conv2dBnAct(Cell):
     r"""
-    A combination of convolution, Batchnorm, activation layer.
+    A combination of convolution, Batchnorm, and activation layer.
 
-    This part is a more detailed overview of Conv2d op.
+    This part is a more detailed overview of Conv2d operation.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.

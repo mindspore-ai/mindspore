@@ -33,7 +33,7 @@ def _tensor_run_opt_ext(opt, momentum, learning_rate, gradient, weight, accum, s
 
 class SGD(Optimizer):
     r"""
-    Implements stochastic gradient descent (optionally with momentum).
+    Implements stochastic gradient descent. Momentum is optional.
 
     Introduction to SGD can be found at https://en.wikipedia.org/wiki/Stochastic_gradient_descent.
     Nesterov momentum is based on the formula from paper `On the importance of initialization and

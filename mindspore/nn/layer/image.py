@@ -186,7 +186,7 @@ def _compute_multi_channel_loss(c1, c2, img1, img2, conv, concat, mean):
 
 class SSIM(Cell):
     r"""
-    Returns SSIM index between img1 and img2.
+    Returns SSIM index between two images.
 
     Its implementation is based on Wang, Z., Bovik, A. C., Sheikh, H. R., & Simoncelli, E. P. (2004). `Image quality
     assessment: from error visibility to structural similarity <https://ieeexplore.ieee.org/document/1284395>`_.
@@ -266,7 +266,7 @@ def _downsample(img1, img2, op):
 
 class MSSSIM(Cell):
     r"""
-    Returns MS-SSIM index between img1 and img2.
+    Returns MS-SSIM index between two images.
 
     Its implementation is based on Wang, Zhou, Eero P. Simoncelli, and Alan C. Bovik. `Multiscale structural similarity
     for image quality assessment <https://ieeexplore.ieee.org/document/1292216>`_.

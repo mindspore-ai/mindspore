@@ -338,7 +338,7 @@ class Tensor(Tensor_):
 
     def mean(self, axis=(), keep_dims=False):
         """
-        Reduce a dimension of a tensor by averaging all elements in the dimension.
+        Reduces a dimension of a tensor by averaging all elements in the dimension.
 
         Args:
             axis (Union[None, int, tuple(int), list(int)]): Dimensions of reduction,

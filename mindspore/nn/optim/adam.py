@@ -465,9 +465,9 @@ class AdamWeightDecay(Optimizer):
 
 class AdamOffload(Optimizer):
     r"""
-    Updates gradients by the Adaptive Moment Estimation (Adam) algorithm. This optimizer will offload Adam optimizer to
-    host CPU and keep parameters being updated on the device, to minimize the memory cost. Although that would bring
-    about an increase of performance overhead, the optimizer could be used to run a larger model.
+    This optimizer will offload Adam optimizer to host CPU and keep parameters being updated on the device,
+    to minimize the memory cost. Although that would bring about an increase of performance overhead,
+    the optimizer could be used to run a larger model.
 
     The Adam algorithm is proposed in `Adam: A Method for Stochastic Optimization <https://arxiv.org/abs/1412.6980>`_.
 

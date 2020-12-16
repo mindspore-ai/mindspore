@@ -131,21 +131,21 @@ def matmul(inputs_x: Tensor, inputs_y: Tensor) -> Tensor:
 
 
 def maximum(inputs: Tensor, axis: _Axis = (), keep_dims: bool = False) -> Tensor:
-    """Reduce a dimension of a tensor by the maximum value in this dimension."""
+    """Reduces a dimension of a tensor by the maximum value in this dimension."""
     max_op = op.ReduceMax(keep_dims)
     outputs = max_op(inputs, axis)
     return outputs
 
 
 def minimum(inputs: Tensor, axis: _Axis = (), keep_dims: bool = False) -> Tensor:
-    """Reduce a dimension of a tensor by the minimum value in the dimension."""
+    """Reduces a dimension of a tensor by the minimum value in the dimension."""
     max_op = op.ReduceMin(keep_dims)
     outputs = max_op(inputs, axis)
     return outputs
 
 
 def mean(inputs: Tensor, axis: _Axis = (), keep_dims: bool = False) -> Tensor:
-    """Reduce a dimension of a tensor by averaging all elements in the dimension."""
+    """Reduces a dimension of a tensor by averaging all elements in the dimension."""
     mean_op = op.ReduceMean(keep_dims)
     outputs = mean_op(inputs, axis)
     return outputs
@@ -243,7 +243,7 @@ def softmax(axis: int = -1) -> Callable:
 
 
 def summation(inputs: Tensor, axis: _Axis = (), keep_dims: bool = False) -> Tensor:
-    """Reduce a dimension of a tensor by summing all elements in the dimension."""
+    """Reduces a dimension of a tensor by summing all elements in the dimension."""
     sum_op = op.ReduceSum(keep_dims)
     outputs = sum_op(inputs, axis)
     return outputs

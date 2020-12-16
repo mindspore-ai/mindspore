@@ -43,7 +43,7 @@ def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
 
 class LSTM(Cell):
     r"""
-    LSTM (Long Short-Term Memory) layer.
+    Stacked LSTM (Long Short-Term Memory) layers.
 
     Apply LSTM layer to the input.
 

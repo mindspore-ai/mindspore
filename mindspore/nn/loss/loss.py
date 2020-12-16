@@ -66,7 +66,7 @@ class _Loss(Cell):
 
 class L1Loss(_Loss):
     r"""
-    L1Loss creates a criterion to measure the mean absolute error (MAE) between :math:`x` and :math:`y` by element,
+    L1Loss creates a criterion to measure the mean absolute error (MAE) between :math:`x` and :math:`y` element-wise,
     where :math:`x` is the input Tensor and :math:`y` is the target Tensor.
 
     For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
@@ -114,7 +114,7 @@ class L1Loss(_Loss):
 class MSELoss(_Loss):
     r"""
     MSELoss creates a criterion to measure the mean squared error (squared L2-norm) between :math:`x` and :math:`y`
-    by element, where :math:`x` is the input and :math:`y` is the target.
+    element-wise, where :math:`x` is the input and :math:`y` is the target.
 
     For simplicity, let :math:`x` and :math:`y` be 1-dimensional Tensor with length :math:`N`,
     the unreduced loss (i.e. with argument reduction set to 'none') of :math:`x` and :math:`y` is given as:
@@ -490,7 +490,7 @@ class SampledSoftmaxLoss(_Loss):
 
 class BCELoss(_Loss):
     r"""
-    BCELoss creates a criterion to measure the Binary Cross Entropy between the true labels and predicted labels.
+    BCELoss creates a criterion to measure the binary cross entropy between the true labels and predicted labels.
 
     Note:
         Set the predicted labels as :math:`x`, true labels as :math:`y`, the output loss as :math:`\ell(x, y)`.

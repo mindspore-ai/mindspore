@@ -45,7 +45,7 @@ def _check_input_dtype(param_name, input_dtype, allow_dtypes, cls_name):
 
 class ReduceLogSumExp(Cell):
     r"""
-    Reduce a dimension of a tensor by calculating exponential for all elements in the dimension,
+    Reduces a dimension of a tensor by calculating exponential for all elements in the dimension,
     then calculate logarithm of the sum.
 
     The dtype of the tensor to be reduced is number.
@@ -158,7 +158,7 @@ class Range(Cell):
 
 class LGamma(Cell):
     r"""
-    Calculate LGamma using Lanczos' approximation refering to "A Precision Approximationof the Gamma Function".
+    Calculates LGamma using Lanczos' approximation refering to "A Precision Approximationof the Gamma Function".
     The algorithm is:
 
     .. math::
@@ -886,7 +886,7 @@ class MatMul(Cell):
 
 class Moments(Cell):
     """
-    Calculate the mean and variance of `x`.
+    Calculates the mean and variance of `x`.
 
     Args:
         axis (Union[int, tuple(int)]): Calculates the mean and variance along the specified axis. Default: ().

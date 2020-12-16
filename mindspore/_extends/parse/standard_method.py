@@ -34,7 +34,7 @@ abs_ = P.Abs()
 
 def mean(x, axis=(), keep_dims=False):
     """
-    Reduce a dimension of a tensor by averaging all elements in the dimension.
+    Reduces a dimension of a tensor by averaging all elements in the dimension.
 
     Args:
         axis (Union[None, int, tuple(int)]): Dimensions of reduction,

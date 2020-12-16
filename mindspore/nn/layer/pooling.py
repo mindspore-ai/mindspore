@@ -62,7 +62,7 @@ def _shape_check(in_shape):
 
 class MaxPool2d(_PoolNd):
     r"""
-    Max pooling operation for temporal data.
+    2D max pooling operation for temporal data.
 
     Applies a 2D max pooling over an input Tensor which can be regarded as a composition of 2D planes.
 
@@ -139,7 +139,7 @@ class MaxPool2d(_PoolNd):
 
 class MaxPool1d(_PoolNd):
     r"""
-    Max pooling operation for temporal data.
+    1D max pooling operation for temporal data.
 
     Applies a 1D max pooling over an input Tensor which can be regarded as a composition of 1D planes.
 
@@ -220,7 +220,7 @@ class MaxPool1d(_PoolNd):
 
 class AvgPool2d(_PoolNd):
     r"""
-    Average pooling for temporal data.
+    2D average pooling for temporal data.
 
     Applies a 2D average pooling over an input Tensor which can be regarded as a composition of 2D input planes.
 
@@ -294,7 +294,7 @@ class AvgPool2d(_PoolNd):
 
 class AvgPool1d(_PoolNd):
     r"""
-    Average pooling for temporal data.
+    1D average pooling for temporal data.
 
     Applies a 1D average pooling over an input Tensor which can be regarded as a composition of 1D input planes.
 
