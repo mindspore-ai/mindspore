@@ -59,6 +59,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
         - [ResNet50-0.65x](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/resnet50_adv_pruning/README.md)
         - [SSD_GhostNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ssd_ghostnet/README.md)
         - [TinyNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/tinynet/README.md)
+        - [CycleGAN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/cycle_gan/README.md)
     - [Natural Language Processing](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/nlp)
         - [DS-CNN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/nlp/dscnn/README.md)
     - [Audio](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/audio)
