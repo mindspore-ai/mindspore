@@ -39,6 +39,8 @@ class MAE(Metric):
         >>> error.clear()
         >>> error.update(x, y)
         >>> result = error.eval()
+        >>> print(result)
+        0.037499990314245224
     """
     def __init__(self):
         super(MAE, self).__init__()

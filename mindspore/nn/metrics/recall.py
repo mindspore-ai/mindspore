@@ -47,6 +47,8 @@ class Recall(EvaluationBase):
         >>> metric.clear()
         >>> metric.update(x, y)
         >>> recall = metric.eval()
+        >>> print(recall)
+        [1. 0.5]
     """
     def __init__(self, eval_type='classification'):
         super(Recall, self).__init__(eval_type)
