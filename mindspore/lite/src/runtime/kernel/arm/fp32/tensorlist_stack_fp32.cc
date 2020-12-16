@@ -19,7 +19,7 @@
 #include "include/errorcode.h"
 #include "ir/dtype/type_id.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32/TensorListStack.h"
+#include "src/runtime/kernel/arm/fp32/tensorlist_stack_fp32.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;

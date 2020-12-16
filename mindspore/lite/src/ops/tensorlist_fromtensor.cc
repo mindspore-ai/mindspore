@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <vector>
-#include "src/ops/tensorlistfromtensor.h"
+#include "src/ops/tensorlist_fromtensor.h"
 
 #ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
@@ -133,7 +133,6 @@ int TensorListFromTensor::InferShape(std::vector<lite::Tensor *> inputs_, std::v
   auto ele_shape_ptr = reinterpret_cast<int *>(input1->data_c());
   auto output = reinterpret_cast<TensorList *>(outputs_[0]);
   MS_ASSERT(output != nullptr);
-  // output->set_tensors_data_type(input0->data_type());
   std::vector<std::vector<int> > tensor_shape(dim0, std::vector<int>(input0_shape.begin() + 1, input0_shape.end()));
   output->set_element_shape(std::vector<int>(ele_shape_ptr, ele_shape_ptr + input1->ElementsNum()));
   output->set_shape(std::vector<int>(1, dim0));

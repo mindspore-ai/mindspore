@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include <vector>
-#include "src/ops/tensorliststack.h"
+#include "src/ops/tensorlist_stack.h"
 
 #ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"

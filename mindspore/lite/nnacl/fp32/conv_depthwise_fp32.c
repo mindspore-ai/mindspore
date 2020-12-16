@@ -21,7 +21,7 @@
 #include <arm_neon.h>
 #endif
 
-#ifndef ENABLE_ARM
+#if !defined(ENABLE_ARM) && !defined(ENABLE_SSE)
 void ConvDwFp32Row(float *output_ptr, const float *input_ptr, const float *weight_ptr, int num_pixels,
                    int output_channel, int input_step) {
   for (int i = 0; i < num_pixels; i++) {

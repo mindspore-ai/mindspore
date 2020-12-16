@@ -16,7 +16,7 @@
 #include "include/errorcode.h"
 #include "include/ms_tensor.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/fp32/TensorListGetItem.h"
+#include "src/runtime/kernel/arm/fp32/tensorlist_setitem_fp32.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -24,14 +24,21 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_TensorListGetItem;
+using mindspore::schema::PrimitiveType_TensorListSetItem;
 
 namespace mindspore::kernel {
 
-int TensorListGetItemCPUKernel::Init() {
-  auto input0 = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
-  if (dtype_ != input0->tensors_data_type()) {
-    MS_LOG(ERROR) << "op dtype:" << dtype_ << " is not equal in_tensors[0] dtype:" << input0->tensors_data_type();
+int TensorListSetItemCPUKernel::Init() { return RET_OK; }
+
+int TensorListSetItemCPUKernel::Run() {
+  input0_ = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
+  if (dtype_ != input0_->data_type()) {
+    MS_LOG(ERROR) << "op dtype:" << dtype_ << " is not equal in_tensors[0] dtype:" << input0_->data_type();
+    return RET_ERROR;
+  }
+  int dim0 = input0_->ElementsNum() - 1;
+  if (in_tensors_[1]->data_type() != kNumberTypeInt && in_tensors_[1]->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "in_tensors_[1]->data_type():" << in_tensors_[1]->data_type() << " must be int";
     return RET_ERROR;
   }
   if (in_tensors_[1]->ElementsNum() != 1) {
@@ -39,40 +46,45 @@ int TensorListGetItemCPUKernel::Init() {
     return RET_ERROR;
   }
   index_ = reinterpret_cast<int *>(in_tensors_[1]->data_c())[0];
-  int dim0 = input0->ElementsNum() - 1;
   if (index_ < 0 || index_ > dim0) {
     MS_LOG(ERROR) << "index tensor:[" << index_ << "] must be in [0, " << dim0 << "]!";
     return RET_ERROR;
   }
-  return RET_OK;
-}
-
-int TensorListGetItemCPUKernel::Run() {
-  auto input0 = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
-  auto src_ptr = input0->GetTensorIndex(index_);
-  MS_ASSERT(src_ptr != nullptr);
-  if (src_ptr->data_type() != kTypeUnknown) {
-    if (src_ptr->ElementsNum() != out_tensors_[0]->ElementsNum()) {
-      MS_LOG(ERROR) << "src_ptr->ElementsNum():" << src_ptr->ElementsNum()
-                    << " must be equal to out_tensors_[0]->ElementsNum():" << out_tensors_[0]->ElementsNum();
-      return RET_ERROR;
+  input2_ = in_tensors_[2];
+  MS_ASSERT(input2_ != nullptr);
+  if (!input0_->IsCompatibleShape(input2_->shape())) {
+    return RET_ERROR;
+  }
+  output0_ = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
+  MS_ASSERT(output0_ != nullptr);
+  // copy each tensor in tensors_
+  for (int i = 0; i < output0_->ElementsNum(); ++i) {
+    auto dst = output0_->GetTensorIndex(i);
+    MS_ASSERT(dst != nullptr);
+    auto src = input0_->GetTensorIndex(i);
+    if (i == index_) {
+      // copy input2_ data buff
+      src = input2_;
     }
-    auto status = out_tensors_[0]->CopyTensorData(*src_ptr);
-    if (status == RET_ERROR) {
-      MS_LOG(ERROR) << "copy tensor data failed!";
-      return RET_ERROR;
+    MS_ASSERT(src != nullptr);
+    if (src->data_type() != kTypeUnknown) {
+      if (src->Size() != dst->Size()) {
+        MS_LOG(ERROR) << "src->Size():" << src->Size() << " must be equal to dst->Size():" << dst->Size();
+        return RET_ERROR;
+      }
+      auto ret = dst->CopyTensorData(*src);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "CopyTensorData[" << i << "] is failed!";
+        return RET_ERROR;
+      }
     }
-  } else {
-    // reset 0 and dtype = dtype_
-    // TODO(DT_VARIANT): dtype = DT_VARIANT is not handle
-    memset(out_tensors_[0]->MutableData(), 0, out_tensors_[0]->Size());
   }
   return RET_OK;
 }
 
-int TensorListGetItemCPUKernel::ReSize() { return RET_OK; }
+int TensorListSetItemCPUKernel::ReSize() { return RET_OK; }
 
-kernel::LiteKernel *CpuTensorListGetItemFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+kernel::LiteKernel *CpuTensorListSetItemFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                           const std::vector<lite::Tensor *> &outputs,
                                                           OpParameter *op_parameter, const lite::InnerContext *ctx,
                                                           const kernel::KernelKey &desc,
@@ -86,10 +98,10 @@ kernel::LiteKernel *CpuTensorListGetItemFp32KernelCreator(const std::vector<lite
     free(op_parameter);
     return nullptr;
   }
-  MS_ASSERT(desc.type == schema::PrimitiveType_TensorListGetItem);
-  auto *kernel = new (std::nothrow) TensorListGetItemCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+  MS_ASSERT(desc.type == schema::PrimitiveType_TensorListSetItem);
+  auto *kernel = new (std::nothrow) TensorListSetItemCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new TensorListGetItemCPUKernel fail!";
+    MS_LOG(ERROR) << "new TensorListSetItemCPUKernel fail!";
     free(op_parameter);
     return nullptr;
   }
@@ -103,5 +115,5 @@ kernel::LiteKernel *CpuTensorListGetItemFp32KernelCreator(const std::vector<lite
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListGetItem, CpuTensorListGetItemFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListSetItem, CpuTensorListSetItemFp32KernelCreator)
 }  // namespace mindspore::kernel
