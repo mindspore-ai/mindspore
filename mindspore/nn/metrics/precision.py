@@ -47,6 +47,9 @@ class Precision(EvaluationBase):
         >>> metric.clear()
         >>> metric.update(x, y)
         >>> precision = metric.eval()
+        >>> print(precision)
+        [0.5 1. ]
+
     """
     def __init__(self, eval_type='classification'):
         super(Precision, self).__init__(eval_type)
