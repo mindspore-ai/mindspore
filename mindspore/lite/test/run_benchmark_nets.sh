@@ -18,6 +18,24 @@ function Run_Converter() {
     rm -rf ${ms_models_path}
     mkdir -p ${ms_models_path}
 
+    # Convert tf models:
+    while read line; do
+        tf_line_info=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
+        input_num=`echo ${tf_line_info}|awk -F ' ' '{print $2}'`
+        echo ${model_name} >> "${run_converter_log_file}"
+        echo './converter_lite  --fmk=TF --modelFile='${models_path}'/'${model_name}' --outputFile='${ms_models_path}'/'${model_name}'' >> "${run_converter_log_file}"
+        ./converter_lite  --fmk=TF --modelFile=$models_path/${model_name} --outputFile=${ms_models_path}/${model_name}
+        if [ $? = 0 ]; then
+            converter_result='converter tf '${model_name}' pass';echo ${converter_result} >> ${run_converter_result_file}
+        else
+            converter_result='converter tf '${model_name}' failed';echo ${converter_result} >> ${run_converter_result_file};return 1
+        fi
+    done < ${models_tf_config}
+
     # Convert tflite models:
     while read line; do
         model_name=${line}
@@ -291,6 +309,31 @@ function Run_Converter() {
 
 # Run on x86 platform:
 function Run_x86() {
+    # Run tf converted models:
+    while read line; do
+        tf_line_info=${line}
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
+        model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
+        input_num=`echo ${tf_line_info}|awk -F ' ' '{print $2}'`
+        input_files=''
+        for i in $(seq 1 $input_num)
+        do
+          input_files=$input_files'/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'$model_name'.ms_'$i'.bin,'
+        done
+        echo ${model_name} >> "${run_x86_log_file}"
+        echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "{run_x86_log_file}"
+        cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${input_files}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
+        if [ $? = 0 ]; then
+            run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_tf_config}
+
     # Run tflite converted models:
     while read line; do
         model_name=${line}
@@ -1419,6 +1462,7 @@ IFS="-" read -r -a file_name_array <<< "$file_name"
 
 # Set models config filepath
 models_tflite_config=${basepath}/models_tflite.cfg
+models_tf_config=${basepath}/models_tf.cfg
 models_caffe_config=${basepath}/models_caffe.cfg
 models_tflite_awaretraining_config=${basepath}/models_tflite_awaretraining.cfg
 models_tflite_posttraining_config=${basepath}/models_tflite_posttraining.cfg
