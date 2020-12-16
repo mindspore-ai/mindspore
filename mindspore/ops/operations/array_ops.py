@@ -4134,7 +4134,7 @@ class Meshgrid(PrimitiveWithInfer):
     """
     Generates coordinate matrices from given coordinate tensors.
 
-    Given N one-dimensional coordinate tensors, returns a list outputs of N N-D
+    Given N one-dimensional coordinate tensors, returns a tuple outputs of N N-D
     coordinate tensors for evaluating expressions on an N-D grid.
 
 
@@ -4144,11 +4144,14 @@ class Meshgrid(PrimitiveWithInfer):
           instructions for the first two dimensions are swapped.
 
     Inputs:
-        - **input_x** (Union[tuple, list]) - A Tuple or list of N 1-D Tensor objects.
-          The length of input_x should be greater than 1
+        - **input** (Union[tuple]) - A Tuple of N 1-D Tensor objects.
+          The length of input should be greater than 1
 
     Outputs:
         Tensors, A Tuple of N N-D Tensor objects.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.array([1, 2, 3, 4]).astype(np.int32))
@@ -4158,45 +4161,45 @@ class Meshgrid(PrimitiveWithInfer):
         >>> meshgrid = ops.Meshgrid(indexing="xy")
         >>> output = meshgrid(inputs)
         >>> print(output)
-        (Tensor(shape=[3, 4, 6], dtype=Int32, value=
+        (Tensor(shape=[3, 4, 5], dtype=Int32, value=
          [[[1, 1, 1, 1, 1],
-          [2, 2, 2, 2, 2],
-          [3, 3, 3, 3, 3],
-          [4, 4, 4, 4, 4]],
-         [[1, 1, 1, 1, 1],
-          [2, 2, 2, 2, 2],
-          [3, 3, 3, 3, 3],
-          [4, 4, 4, 4, 4]],
-         [[1, 1, 1, 1, 1],
-          [2, 2, 2, 2, 2],
-          [3, 3, 3, 3, 3],
-          [4, 4, 4, 4, 4]]]),
-         Tensor(shape=[3, 4, 6], dtype=Int32, value=
+           [2, 2, 2, 2, 2],
+           [3, 3, 3, 3, 3],
+           [4, 4, 4, 4, 4]],
+          [[1, 1, 1, 1, 1],
+           [2, 2, 2, 2, 2],
+           [3, 3, 3, 3, 3],
+           [4, 4, 4, 4, 4]],
+          [[1, 1, 1, 1, 1],
+           [2, 2, 2, 2, 2],
+           [3, 3, 3, 3, 3],
+           [4, 4, 4, 4, 4]]]),
+         Tensor(shape=[3, 4, 5], dtype=Int32, value=
          [[[5, 5, 5, 5, 5],
-          [5, 5, 5, 5, 5],
-          [5, 5, 5, 5, 5],
-          [5, 5, 5, 5, 5]],
-         [[6, 6, 6, 6, 6],
-          [6, 6, 6, 6, 6],
-          [6, 6, 6, 6, 6],
-          [6, 6, 6, 6, 6]],
-         [[7, 7, 7, 7, 7],
-          [7, 7, 7, 7, 7],
-          [7, 7, 7, 7, 7],
-          [7, 7, 7, 7, 7]]]),
-         Tensor(shape=[3, 4, 6], dtype=Int32, value=
+           [5, 5, 5, 5, 5],
+           [5, 5, 5, 5, 5],
+           [5, 5, 5, 5, 5]],
+          [[6, 6, 6, 6, 6],
+           [6, 6, 6, 6, 6],
+           [6, 6, 6, 6, 6],
+           [6, 6, 6, 6, 6]],
+          [[7, 7, 7, 7, 7],
+           [7, 7, 7, 7, 7],
+           [7, 7, 7, 7, 7],
+           [7, 7, 7, 7, 7]]]),
+         Tensor(shape=[3, 4, 5], dtype=Int32, value=
          [[[8, 9, 0, 1, 2],
-          [8, 9, 0, 1, 2],
-          [8, 9, 0, 1, 2],
-          [8, 9, 0, 1, 2]],
-         [[8, 9, 0, 1, 2],
-          [8, 9, 0, 1, 2],
-          [8, 9, 0, 1, 2],
-          [8, 9, 0, 1, 2]],
-         [[8, 9, 0, 1, 2],
-          [8, 9, 0, 1, 2],
-          [8, 9, 0, 1, 2],
-          [8, 9, 0, 1, 2]]]))
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2]],
+          [[8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2]],
+          [[8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2],
+           [8, 9, 0, 1, 2]]]))
     """
 
     @prim_attr_register
@@ -4208,12 +4211,12 @@ class Meshgrid(PrimitiveWithInfer):
         self.indexing = indexing
 
     def infer_shape(self, x_shape):
-        validator.check_value_type("shape", x_shape, [tuple, list], self.name)
-        validator.check_int(len(x_shape), 2, Rel.GE, "len of input_x", self.name)
+        validator.check_value_type("shape", x_shape, [tuple], self.name)
+        validator.check_int(len(x_shape), 2, Rel.GE, "len of input", self.name)
         n = len(x_shape)
         shape_0 = []
         for s in x_shape:
-            validator.check_int(len(s), 1, Rel.EQ, 'each_input_rank', self.name)
+            validator.check_int(len(s), 1, Rel.EQ, 'each input rank', self.name)
             shape_0.append(s[0])
         if self.indexing == "xy":
             shape_0[0], shape_0[1] = shape_0[1], shape_0[0]
@@ -4221,7 +4224,7 @@ class Meshgrid(PrimitiveWithInfer):
         return out_shape
 
     def infer_dtype(self, x_type):
-        validator.check_subclass("input_x[0]", x_type[0], mstype.tensor, self.name)
+        validator.check_subclass("input[0]", x_type[0], mstype.tensor, self.name)
         n = len(x_type)
         for i in range(1, n):
             validator.check('x_type[%d]' % i, x_type[i], 'base', x_type[0], Rel.EQ, self.name, TypeError)
@@ -4393,8 +4396,8 @@ class EditDistance(PrimitiveWithInfer):
         >>> edit_distance = EditDistance(hypothesis_shape, truth_shape)
         >>> output = edit_distance(hypothesis_indices, hypothesis_values, truth_indices, truth_values)
         >>> print(output)
-		[[1. 1.]
-		 [1. 1.]]
+        [[1. 1.]
+         [1. 1.]]
     """
 
     @prim_attr_register
