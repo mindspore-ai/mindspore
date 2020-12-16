@@ -563,10 +563,6 @@ std::vector<size_t> AnfRuntimeAlgorithm::GetInputDeviceShape(const AnfNodePtr &n
   if (trans::IsNeedPadding(format, infer_shape.size())) {
     infer_shape = trans::PaddingShapeTo4d(infer_shape, GetInputReshapeType(node, input_idx));
   }
-  if (node->isa<CNode>() && GetCNodeName(node) == kExtractImagePatchesOpName) {
-    auto shape_tmp = {infer_shape[0], infer_shape[3], infer_shape[1], infer_shape[2]};
-    return trans::TransShapeToDevice(shape_tmp, format);
-  }
   return trans::TransShapeToDevice(infer_shape, format);
 }
 

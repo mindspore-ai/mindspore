@@ -41,6 +41,11 @@ def _create_sequence_length(shape):
 def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
     validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
 
+@constexpr
+def _check_input_3d(input_shape, param_name, func_name):
+    if len(input_shape) != 3:
+        raise ValueError(f"{func_name} {param_name} should be 3d, but got shape {input_shape}")
+
 class LSTM(Cell):
     r"""
     Stacked LSTM (Long Short-Term Memory) layers.
@@ -237,6 +242,8 @@ class LSTM(Cell):
             x = self.transpose(x, (1, 0, 2))
         h, c = hx
         if self.is_ascend:
+            _check_input_3d(F.shape(h), "h of hx", self.cls_name)
+            _check_input_3d(F.shape(c), "c of hx", self.cls_name)
             _check_input_dtype(F.dtype(x), "x", [mstype.float32, mstype.float16], self.cls_name)
             _check_input_dtype(F.dtype(h), "h", [mstype.float32, mstype.float16], self.cls_name)
             _check_input_dtype(F.dtype(c), "c", [mstype.float32, mstype.float16], self.cls_name)

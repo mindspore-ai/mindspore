@@ -6405,7 +6405,7 @@ class DynamicRNN(PrimitiveWithInfer):
         >>> b = Tensor(np.random.rand(128).astype(np.float16))
         >>> init_h = Tensor(np.random.rand(1, 16, 32).astype(np.float16))
         >>> init_c = Tensor(np.random.rand(1, 16, 32).astype(np.float16))
-        >>> dynamic_rnn = ops.DynamicRNNN()
+        >>> dynamic_rnn = ops.DynamicRNN()
         >>> output = dynamic_rnn(x, w, b, None, init_h, init_c)
         >>> print(output[0].shape)
         (2, 16, 32)
