@@ -97,6 +97,26 @@ Status SequentialSamplerRT::ResetSampler() {
   return Status::OK();
 }
 
+int64_t SequentialSamplerRT::CalculateNumSamples(int64_t num_rows) {
+  // Holds the number of rows available for Sequential sampler. It can be the rows passed from its child sampler or the
+  // num_rows from the dataset
+  int64_t child_num_rows = num_rows;
+  if (!child_.empty()) {
+    child_num_rows = child_[0]->CalculateNumSamples(num_rows);
+  }
+  int64_t num_samples = (num_samples_ > 0) ? std::min(child_num_rows, num_samples_) : child_num_rows;
+  // For this sampler we need to take start_index into account. Because for example in the case we are given n rows
+  // and start_index != 0 and num_samples >= n then we can't return all the n rows.
+  if (child_num_rows - (start_index_ - current_id_) <= 0) {
+    return 0;
+  }
+  if (child_num_rows - (start_index_ - current_id_) < num_samples)
+    num_samples = child_num_rows - (start_index_ - current_id_) > num_samples
+                    ? num_samples
+                    : num_samples - (start_index_ - current_id_);
+  return num_samples;
+}
+
 void SequentialSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {
   out << "\nSampler: SequentialSampler";
   if (show_all) {

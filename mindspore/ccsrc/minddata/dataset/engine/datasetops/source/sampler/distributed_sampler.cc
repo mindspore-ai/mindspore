@@ -173,7 +173,7 @@ int64_t DistributedSamplerRT::CalculateNumSamples(int64_t num_rows) {
     child_num_rows = child_[0]->CalculateNumSamples(num_rows);
   }
   int64_t num_samples = (num_samples_ > 0) ? std::min(child_num_rows, num_samples_) : child_num_rows;
-  int64_t num_per_shard = std::ceil(num_rows * 1.0 / num_devices_);
+  int64_t num_per_shard = std::ceil(child_num_rows * 1.0 / num_devices_);
   return std::min(num_samples, num_per_shard);
 }
 
