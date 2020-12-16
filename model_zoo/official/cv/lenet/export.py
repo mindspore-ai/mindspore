@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-export network to infer `AIR` backend.
-"""
+"""export checkpoint file into air, onnx, mindir models"""
 
 import argparse
 import numpy as np
@@ -25,25 +23,26 @@ from mindspore import Tensor, context, load_checkpoint, load_param_into_net, exp
 from src.config import mnist_cfg as cfg
 from src.lenet import LeNet5
 
-
 parser = argparse.ArgumentParser(description='MindSpore MNIST Example')
-parser.add_argument('--device_target', type=str, default="Ascend",
-                    choices=['Ascend', 'GPU'],
-                    help='device where the code will be implemented (default: Ascend)')
-parser.add_argument('--ckpt_path', type=str, default="",
-                    help='if mode is test, must provide path where the trained ckpt file')
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
+parser.add_argument("--file_name", type=str, default="lenet", help="output file name.")
+parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
+                    help="device target")
 args = parser.parse_args()
 
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 if __name__ == "__main__":
-    context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
 
     # define fusion network
     network = LeNet5(cfg.num_classes)
     # load network checkpoint
-    param_dict = load_checkpoint(args.ckpt_path)
+    param_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(network, param_dict)
 
     # export network
-    inputs = Tensor(np.ones([1, 1, cfg.image_height, cfg.image_width]), mindspore.float32)
-    export(network, inputs, file_name=cfg.air_name, file_format='AIR')
+    inputs = Tensor(np.ones([args.batch_size, 1, cfg.image_height, cfg.image_width]), mindspore.float32)
+    export(network, inputs, file_name=args.file_name, file_format=args.file_format)

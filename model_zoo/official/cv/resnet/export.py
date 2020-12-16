@@ -19,29 +19,40 @@ python export.py
 import argparse
 import numpy as np
 
-from mindspore import Tensor, load_checkpoint, load_param_into_net, export
+from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
+
+parser = argparse.ArgumentParser(description='resnet export')
+parser.add_argument('--network_dataset', type=str, default='resnet50_cifar10', choices=['resnet50_cifar10',
+                                                                                        'resnet50_imagenet2012',
+                                                                                        'resnet101_imagenet2012',
+                                                                                        "se-resnet50_imagenet2012"],
+                    help='network and dataset name.')
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
+parser.add_argument("--file_name", type=str, default="resnet", help="output file name.")
+parser.add_argument('--width', type=int, default=224, help='input width')
+parser.add_argument('--height', type=int, default=224, help='input height')
+parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+parser.add_argument("--device_target", type=str, default="Ascend",
+                    choices=["Ascend", "GPU", "CPU"], help="device target(default: Ascend)")
+args = parser.parse_args()
+
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='resnet export')
-    parser.add_argument('--network_dataset', type=str, default='resnet50_cifar10', choices=['resnet50_cifar10',
-                                                                                            'resnet50_imagenet2012',
-                                                                                            'resnet101_imagenet2012',
-                                                                                            "se-resnet50_imagenet2012"],
-                        help='network and dataset name.')
-    parser.add_argument('--ckpt_file', type=str, default='', help='resnet ckpt file.')
-    parser.add_argument('--output_file', type=str, default='', help='resnet output air name.')
-    args_opt = parser.parse_args()
 
-    if args_opt.network_dataset == 'resnet50_cifar10':
+
+    if args.network_dataset == 'resnet50_cifar10':
         from src.config import config1 as config
         from src.resnet import resnet50 as resnet
-    elif args_opt.network_dataset == 'resnet50_imagenet2012':
+    elif args.network_dataset == 'resnet50_imagenet2012':
         from src.config import config2 as config
         from src.resnet import resnet50 as resnet
-    elif args_opt.network_dataset == 'resnet101_imagenet2012':
+    elif args.network_dataset == 'resnet101_imagenet2012':
         from src.config import config3 as config
         from src.resnet import resnet101 as resnet
-    elif args_opt.network_dataset == 'se-resnet50_imagenet2012':
+    elif args.network_dataset == 'se-resnet50_imagenet2012':
         from src.config import config4 as config
         from src.resnet import se_resnet50 as resnet
     else:
@@ -49,10 +60,10 @@ if __name__ == '__main__':
 
     net = resnet(config.class_num)
 
-    assert args_opt.ckpt_file is not None, "checkpoint_path is None."
+    assert args.ckpt_file is not None, "checkpoint_path is None."
 
-    param_dict = load_checkpoint(args_opt.ckpt_file)
+    param_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(net, param_dict)
 
-    input_arr = Tensor(np.zeros([1, 3, 224, 224], np.float32))
-    export(net, input_arr, file_name=args_opt.output_file, file_format="AIR")
+    input_arr = Tensor(np.zeros([args.batch_size, 3, args.height, args.width], np.float32))
+    export(net, input_arr, file_name=args.file_name, file_format=args.file_format)

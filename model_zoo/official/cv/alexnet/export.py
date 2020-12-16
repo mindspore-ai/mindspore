@@ -13,7 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """
-##############export checkpoint file into air and onnx models#################
+##############export checkpoint file into air, onnx, mindir models#################
 python export.py
 """
 import argparse
@@ -25,18 +25,22 @@ from mindspore import context, Tensor, load_checkpoint, load_param_into_net, exp
 from src.config import alexnet_cifar10_cfg, alexnet_imagenet_cfg
 from src.alexnet import AlexNet
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Classification')
-    parser.add_argument('--dataset_name', type=str, default='cifar10', choices=['imagenet', 'cifar10'],
-                        help='please choose dataset: imagenet or cifar10.')
-    parser.add_argument('--device_target', type=str, default="Ascend",
-                        choices=['Ascend', 'GPU'],
-                        help='device where the code will be implemented (default: Ascend)')
-    parser.add_argument('--ckpt_path', type=str, default="./ckpt", help='if is test, must provide\
-                                path where the trained ckpt file')
-    args_opt = parser.parse_args()
-    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
+parser = argparse.ArgumentParser(description='Classification')
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+parser.add_argument('--dataset_name', type=str, default='cifar10', choices=['imagenet', 'cifar10'],
+                    help='please choose dataset: imagenet or cifar10.')
+parser.add_argument('--device_target', type=str, default="Ascend",
+                    choices=['Ascend', 'GPU', 'CPU'],
+                    help='device where the code will be implemented (default: Ascend)')
+parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
+parser.add_argument("--file_name", type=str, default="alexnet", help="output file name.")
+parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+args_opt = parser.parse_args()
 
+context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
+
+if __name__ == '__main__':
     if args_opt.dataset_name == 'cifar10':
         cfg = alexnet_cifar10_cfg
     elif args_opt.dataset_name == 'imagenet':
@@ -46,8 +50,8 @@ if __name__ == '__main__':
 
     net = AlexNet(num_classes=cfg.num_classes)
 
-    param_dict = load_checkpoint(args_opt.ckpt_path)
+    param_dict = load_checkpoint(args_opt.ckpt_file)
     load_param_into_net(net, param_dict)
 
-    input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[1, 3, cfg.image_height, cfg.image_width]), ms.float32)
-    export(net, input_arr, file_name=cfg.air_name, file_format="AIR")
+    input_arr = Tensor(np.zeros([args_opt.batch_size, 3, cfg.image_height, cfg.image_width]), ms.float32)
+    export(net, input_arr, file_name=args_opt.file_name, file_format=args_opt.file_format)

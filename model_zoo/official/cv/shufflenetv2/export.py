@@ -12,43 +12,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""export"""
+"""evaluate_imagenet"""
 import argparse
 import numpy as np
 
+import mindspore as ms
 from mindspore import context, Tensor, load_checkpoint, load_param_into_net, export
-from src.resnet_thor import resnet50 as resnet
-from src.config import config
+
+from src.config import config_gpu as cfg
+from src.shufflenetv2 import ShuffleNetV2
 
 parser = argparse.ArgumentParser(description='checkpoint export')
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument("--batch_size", type=int, default=1, help="batch size")
+parser.add_argument("--batch_size", type=int, default=128, help="batch size")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
 parser.add_argument('--width', type=int, default=224, help='input width')
 parser.add_argument('--height', type=int, default=224, help='input height')
-parser.add_argument("--file_name", type=str, default="resnet_thor", help="output file name.")
+parser.add_argument("--file_name", type=str, default="shufflenetv2", help="output file name.")
 parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
-parser.add_argument("--device_target", type=str, default="Ascend",
-                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
+parser.add_argument("--device_target", type=str, default="GPU",
+                    choices=["Ascend", "GPU", "CPU"], help="device where the code will be implemented (default: GPU)")
 args = parser.parse_args()
 
 context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 if __name__ == '__main__':
+    if args.device_target != 'GPU':
+        raise ValueError("Only supported GPU now.")
 
-    context.set_context(mode=context.GRAPH_MODE, save_graphs=False)
+    net = ShuffleNetV2(n_class=cfg.num_classes)
+    ckpt = load_checkpoint(args.ckpt_file)
+    load_param_into_net(net, ckpt)
+    net.set_train(False)
 
-    # define net
-    net = resnet(class_num=config.class_num)
-    net.add_flags_recursive(thor=False)
-
-    # load checkpoint
-    param_dict = load_checkpoint(args.ckpt_file)
-    keys = list(param_dict.keys())
-    for key in keys:
-        if "damping" in key:
-            param_dict.pop(key)
-    load_param_into_net(net, param_dict)
-
-    inputs = np.random.uniform(0.0, 1.0, size=[args.batch_size, 3, args.height, args.width]).astype(np.float32)
-    export(net, Tensor(inputs), file_name=args.file_name, file_format=args.file_format)
+    input_data = Tensor(np.ones([args.batch_size, 3, args.height, args.width]), ms.float32)
+    export(net, input_data, file_name=args.file_name, file_format=args.file_format)

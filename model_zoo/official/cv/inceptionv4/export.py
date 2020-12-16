@@ -12,35 +12,34 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-##############export checkpoint file into air and onnx models#################
-"""
+"""export checkpoint file into air, onnx, mindir models"""
 import argparse
 import numpy as np
 
 import mindspore as ms
 from mindspore import Tensor
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore.train.serialization import load_checkpoint, load_param_into_net, export, context
 
 from src.config import config_ascend as config
 from src.inceptionv4 import Inceptionv4
 
-def parse_args():
-    '''parse_args'''
-    parser = argparse.ArgumentParser(description='checkpoint export')
-    parser.add_argument('--model_name', type=str, default='inceptionV4.air', help='convert model name of inceptionv4')
-    parser.add_argument('--format', type=str, default='AIR', help='convert model name of inceptionv4')
-    parser.add_argument('--checkpoint', type=str, default='', help='checkpoint of inceptionv4')
-    _args_opt = parser.parse_args()
-    return _args_opt
+parser = argparse.ArgumentParser(description='inceptionv4 export')
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument('--ckpt_file', type=str, required=True, help='inceptionv4 ckpt file.')
+parser.add_argument('--file_name', type=str, default='inceptionv4', help='inceptionv4 output air name.')
+parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument('--width', type=int, default=299, help='input width')
+parser.add_argument('--height', type=int, default=299, help='input height')
+parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
+                    help="device target")
+args = parser.parse_args()
+
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 if __name__ == '__main__':
-
-    args_opt = parse_args()
-
     net = Inceptionv4(classes=config.num_classes)
-    param_dict = load_checkpoint(args_opt.checkpoint)
+    param_dict = load_checkpoint(args.ckpt_file)
     load_param_into_net(net, param_dict)
 
-    input_arr = Tensor(np.random.uniform(0.0, 1.0, size=[1, 3, 299, 299]), ms.float32)
-    export(net, input_arr, file_name=args_opt.model_name, file_format=args_opt.format)
+    input_arr = Tensor(np.ones([config.batch_size, 3, args.width, args.height]), ms.float32)
+    export(net, input_arr, file_name=args.file_name, file_format=args.file_format)
