@@ -282,7 +282,6 @@ Status DeviceQueueOp::PushDataToGPU() {
   bool is_open = false;
   uint32_t handle = INVALID_HANDLE;
   int64_t send_batch = 0;
-  bool ps_data_prefetch = false;
   auto release_function = std::bind(&DeviceQueueOp::ReleaseData, this, std::placeholders::_1, std::placeholders::_2);
   while (!items.empty() && !GpuBufferMgr::GetInstance().IsClosed()) {
     if (!is_open) {
@@ -298,9 +297,8 @@ Status DeviceQueueOp::PushDataToGPU() {
     }
 
     // Data prefetch only when PS mode enables cache.
-    if ((!ps_data_prefetch) && (items.size() > 0)) {
+    if (items.size() > 0) {
       ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_);
-      ps_data_prefetch = true;
     }
     while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
       BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
