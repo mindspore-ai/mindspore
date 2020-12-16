@@ -21,7 +21,6 @@
 #include <iostream>
 #include <fstream>
 #include <memory>
-#include <filesystem>
 
 using LabelId = std::map<std::string, int>;
 
