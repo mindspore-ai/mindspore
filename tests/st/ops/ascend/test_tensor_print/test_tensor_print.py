@@ -25,7 +25,7 @@ expect_array = {'Bool': '\n[[ True False]\n [False  True]]', 'UInt': '\n[[1 2 3]
                               '[ *.********e*** **.********e***  *.********e***]]'}
 
 def get_expect_value(res):
-    if res[0] == '[1]':
+    if res[0] == '[]':
         if res[1] == 'Bool':
             return expect_scalar['Bool']
         if res[1] in ['Uint8', 'Uint16', 'Uint32', 'Uint64']:
