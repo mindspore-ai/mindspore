@@ -14,7 +14,6 @@
 # ============================================================================
 """ test super"""
 import numpy as np
-import pytest
 
 import mindspore.nn as nn
 from mindspore import Tensor
@@ -108,9 +107,7 @@ def test_super_cell():
     net = Net(2)
     x = Tensor(np.ones([1, 2, 3], np.int32))
     y = Tensor(np.ones([1, 2, 3], np.int32))
-    with pytest.raises(RuntimeError) as er:
-        net(x, y)
-    assert "Unsupported syntax 'Raise'" in str(er.value)
+    assert net(x, y) is None
 
 
 def test_single_super_in():
