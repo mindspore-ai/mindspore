@@ -55,6 +55,7 @@ class BaseStepTraceParser:
         self._step_num = 0
         self._tag_map = {}
         self._is_training_mode = is_training_mode
+        self._step_end_tag_id = 255
 
     @property
     def output_file(self):
@@ -201,7 +202,7 @@ class BaseStepTraceParser:
 
     def _construct_event_info(self, next_event, event_info):
         """Construct event info according to next_event."""
-        min_job_id = 255
+        min_job_id = self._step_end_tag_id
         step_flag: bool = lambda tag: tag > min_job_id or tag == 0
         end_flag: bool = lambda tag: tag == min_job_id
         fp_flag: bool = lambda tag: tag == self._fp_tag
@@ -509,10 +510,38 @@ class AscendStepTraceParser(BaseStepTraceParser):
 
         return step_trace_files
 
+    def _get_step_end_tag_id(self, source_files):
+        """
+        Get step end tag id.This id is 255 before 2020.12.16,and 65535 now.
+        File is an old version if there is no 65535 tag id, or it is a new version.
+        """
+
+        step_num = 0
+        source_file = validate_and_normalize_path(source_files[0])
+        try:
+            with open(source_file, 'rb') as handler:
+                content = handler.read()
+                for pos in range(0, len(content), 20):
+                    next_event = self._get_trace_struct(content[pos:pos + self._event_size])
+                    # 1 means bp_start.
+                    if next_event.tag_id == 1:
+                        step_num += 1
+                    # Step end tag id is 65535 in the new version.
+                    if next_event.tag_id == 65535:
+                        self._step_end_tag_id = next_event.tag_id
+                    # We only search the first step to find if there is 65535 tag id.
+                    if step_num == 2:
+                        break
+        except (IOError, OSError) as err:
+            log.warning(f'Failed to read {source_file} while get end tag id', err)
+            raise ProfilerIOException
+
     def _parse(self, source_files):
         """Parse source step trace files."""
         log.info("Start to parse step trace file.")
         event_info = {}
+
+        self._get_step_end_tag_id(source_files)
 
         for source_file in source_files:
             source_file = validate_and_normalize_path(source_file)
