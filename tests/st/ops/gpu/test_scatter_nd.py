@@ -48,10 +48,24 @@ def scatternd_positive(nptype):
                        [0., 1.1]]).astype(nptype)
     scatternd_net(arr_indices, arr_update, shape, expect)
 
+    arr_indices = np.array([[0, 1], [1, 1], [0, 1], [0, 1], [0, 1]]).astype(np.int64)
+    arr_update = np.array([3.2, 1.1, 5.3, -2.2, -1.0]).astype(nptype)
+    shape = (2, 2)
+    expect = np.array([[0., 5.3],
+                       [0., 1.1]]).astype(nptype)
+    scatternd_net(arr_indices, arr_update, shape, expect)
+
 def scatternd_negative(nptype):
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     arr_indices = np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]]).astype(np.int32)
+    arr_update = np.array([-13.4, -3.1, 5.1, -12.1, -1.0]).astype(nptype)
+    shape = (2, 2)
+    expect = np.array([[0., 0.],
+                       [-21.4, -3.1]]).astype(nptype)
+    scatternd_net(arr_indices, arr_update, shape, expect)
+
+    arr_indices = np.array([[1, 0], [1, 1], [1, 0], [1, 0], [1, 0]]).astype(np.int64)
     arr_update = np.array([-13.4, -3.1, 5.1, -12.1, -1.0]).astype(nptype)
     shape = (2, 2)
     expect = np.array([[0., 0.],
