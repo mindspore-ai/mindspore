@@ -111,6 +111,11 @@ class ConcatOp : public PipelineOp {
   /// \return Status of the node visit
   Status PreAccept(NodePass *p, bool *modified) override;
 
+  /// \brief Gets the number of classes
+  /// \param[out] num_classes the number of classes
+  /// \return Status - The status code return
+  Status GetNumClasses(int64_t *num_classes) override;
+
  private:
   Status Verify(int32_t id, const std::unique_ptr<DataBuffer> &buf);
 
