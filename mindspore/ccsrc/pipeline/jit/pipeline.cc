@@ -895,6 +895,15 @@ void ExecutorPy::RunInitGraph(const py::dict &init_params, const std::string &ph
 #endif
 }
 
+void ExecutorPy::PyExePath(const py::object &py_exe_path) {
+  if (!py::isinstance<py::str>(py_exe_path)) {
+    MS_LOG(EXCEPTION) << "Failed, phase input is not a str";
+  }
+  auto py_exe_path_s = py::cast<std::string>(py_exe_path);
+  auto ms_context = MsContext::GetInstance();
+  ms_context->set_param<std::string>(MS_CTX_PYTHON_EXE_PATH, py_exe_path_s);
+}
+
 bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t batch_size,
                      const std::vector<TypePtr> &types, const std::vector<std::vector<int64_t>> &shapes,
                      const std::vector<int64_t> &input_indexes, const std::string &phase, bool need_run) {
