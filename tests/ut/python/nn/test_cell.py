@@ -197,8 +197,7 @@ def test_exceptions():
         ModError2(t)
 
     m = nn.Cell()
-    with pytest.raises(NotImplementedError):
-        m.construct()
+    assert m.construct() is None
 
 
 def test_cell_copy():

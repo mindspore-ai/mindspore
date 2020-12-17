@@ -315,6 +315,9 @@ class Cell(Cell_):
         return tuple(res)
 
     def __call__(self, *inputs, **kwargs):
+        if self.__class__.construct is Cell.construct:
+            logger.warning(f"The '{self.__class__}' does not override the method 'construct', "
+                           f"will call the super class(Cell) 'construct'.")
         if kwargs:
             bound_args = inspect.signature(self.construct).bind(*inputs, **kwargs)
             inputs = bound_args.args
@@ -681,7 +684,7 @@ class Cell(Cell_):
         Returns:
             Tensor, returns the computed result.
         """
-        raise NotImplementedError
+        return None
 
     def init_parameters_data(self, auto_parallel_mode=False):
         """

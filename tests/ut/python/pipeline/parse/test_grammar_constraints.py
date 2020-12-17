@@ -196,6 +196,4 @@ def test_missing_construct():
     np_input = np.arange(2 * 3 * 4).reshape((2, 3, 4)).astype(np.bool_)
     tensor = Tensor(np_input)
     net = NetMissConstruct()
-    with pytest.raises(RuntimeError) as er:
-        net(tensor)
-    assert "Unsupported syntax 'Raise' at " in str(er.value)
+    assert net(tensor) is None
