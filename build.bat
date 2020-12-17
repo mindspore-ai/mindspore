@@ -38,9 +38,6 @@ del version.txt
 
 echo "======Start building MindSpore Lite %VERSION_MAJOR%.%VERSION_MINOR%.%VERSION_REVISION%======"
 
-SET threads=6
-SET X86_64_SIMD=off
-
 ECHO %2%|FINDSTR "^[0-9][0-9]*$"
 IF %errorlevel% == 0 (
     SET threads=%2%
@@ -57,6 +54,7 @@ IF %errorlevel% == 0 (
         ) ELSE (
             echo "MindSpore_lite the second parameter must in [avx, avx512, sse, off], but now is [%2%]"
             call :clean
+            EXIT /b 1
         )
         IF NOT "%3%" == "" (
             SET threads=%3%
@@ -87,24 +85,22 @@ IF "%1%" == "lite" (
 IF NOT %errorlevel% == 0 (
     echo "cmake fail."
     call :clean
+    EXIT /b 1
 )
 
 cmake --build . --target package -- -j%threads%
 IF NOT %errorlevel% == 0 (
     echo "build fail."
     call :clean
+    EXIT /b 1
 )
 
-IF EXIST "%BASE_PATH%/output" (
-    cd %BASE_PATH%/output
-    rd /s /q _CPack_Packages
-)
-
-cd %BASE_PATH%
-set errorlevel=0
-EXIT /b %errorlevel%
+call :clean
+EXIT /b 0
 
 :clean
+    IF EXIST "%BASE_PATH%/output" (
+        cd %BASE_PATH%/output
+        rd /s /q _CPack_Packages
+    )
     cd %BASE_PATH%
-    set errorlevel=1
-    EXIT /b %errorlevel%
