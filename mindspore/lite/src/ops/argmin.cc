@@ -35,6 +35,36 @@ void ArgMin::SetTopK(int top_k) { this->primitive_->value.AsArgMin()->topK = top
 void ArgMin::SetKeepDims(bool keep_dims) { this->primitive_->value.AsArgMin()->keepDims = keep_dims; }
 void ArgMin::SetAxisType(int axis_type) { this->primitive_->value.AsArgMin()->axisType = axis_type; }
 
+int ArgMin::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_ArgMin;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_ArgMin) {
+    MS_LOG(ERROR) << "Primitive type is error :" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto attr = new (std::nothrow) schema::ArgMinT();
+    if (attr == nullptr) {
+      MS_LOG(ERROR) << "new primitiveT value failed";
+      return RET_ERROR;
+    }
+    this->primitive_->value.value = attr;
+    if (prim.GetAttr("axis") != nullptr) {
+      attr->axis = static_cast<int32_t>(GetValue<int64_t>(prim.GetAttr("axis")));
+    }
+    if (prim.GetAttr("keep_dims") != nullptr) {
+      attr->keepDims = static_cast<bool>(GetValue<bool>(prim.GetAttr("keep_dims")));
+    }
+  }
+  return RET_OK;
+}
+
 #else
 int ArgMin::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
@@ -66,7 +96,7 @@ int ArgMin::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  if (inputs_.size() != kSingleNum || outputs_.size() != kSingleNum) {
+  if (inputs_.size() != kSingleNum || outputs_.size() > kDoubleNum) {
     MS_LOG(ERROR) << "tensor number is error.";
   }
   output->set_format(input->format());
@@ -88,6 +118,11 @@ int ArgMin::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
   }
 
   output->set_shape(output_shape);
+  if (outputs_.size() == kDoubleNum) {
+    outputs_.at(1)->set_format(input->format());
+    outputs_.at(1)->set_data_type(input->data_type());
+    outputs_.at(1)->set_shape(output_shape);
+  }
   return RET_OK;
 }
 }  // namespace lite

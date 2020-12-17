@@ -67,6 +67,7 @@ Registry MaximumParameterRegistry(schema::PrimitiveType_Maximum, PopulateArithme
 Registry MinimumParameterRegistry(schema::PrimitiveType_Minimum, PopulateArithmetic);
 Registry FloorDivParameterRegistry(schema::PrimitiveType_FloorDiv, PopulateArithmetic);
 Registry FloorModParameterRegistry(schema::PrimitiveType_FloorMod, PopulateArithmetic);
+Registry ModParameterRegistry(schema::PrimitiveType_Mod, PopulateArithmetic);
 Registry SquaredDifferenceParameterRegistry(schema::PrimitiveType_SquaredDifference, PopulateArithmetic);
 }  // namespace lite
 }  // namespace mindspore

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,40 +14,29 @@
  * limitations under the License.
  */
 
-#ifndef LITE_MINDSPORE_LITE_C_OPS_ARG_MIN_H_
-#define LITE_MINDSPORE_LITE_C_OPS_ARG_MIN_H_
+#ifndef LITE_MINDSPORE_LITE_C_OPS_MOD_H_
+#define LITE_MINDSPORE_LITE_C_OPS_MOD_H_
 
 #include <vector>
 #include <set>
 #include <cmath>
-#include "src/ops/primitive_c.h"
+#include "src/ops/arithmetic.h"
 
 namespace mindspore {
 namespace lite {
-class ArgMin : public PrimitiveC {
+class Mod : public Arithmetic {
  public:
-  ArgMin() = default;
-  ~ArgMin() = default;
+  Mod() = default;
+  ~Mod() = default;
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(ArgMin, PrimitiveC);
-  explicit ArgMin(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
-  void SetAxis(int axis);
-  void SetOutMaxValue(bool out_max_value);
-  void SetTopK(int top_k);
-  void SetKeepDims(bool keep_dims);
-  void SetAxisType(int axis_type);
+  MS_DECLARE_PARENT(Mod, Arithmetic);
+  explicit Mod(schema::PrimitiveT *primitive) : Arithmetic(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
-  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
-  int GetAxis() const;
-  bool GetOutMaxValue() const;
-  int GetTopK() const;
-  bool GetKeepDims() const;
-  int GetAxisType() const;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_ARG_MIN_H_
+#endif  // LITE_MINDSPORE_LITE_C_OPS_FLOOR_MOD_H_

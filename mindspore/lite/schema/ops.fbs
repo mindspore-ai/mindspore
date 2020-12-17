@@ -890,6 +890,9 @@ table FloorDiv {
 table FloorMod {
 }
 
+table Mod {
+}
+
 table L2Norm {
     axis: [int];
     epsilon: float;

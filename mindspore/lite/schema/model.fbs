@@ -260,6 +260,7 @@ union PrimitiveType {
     SigmoidCrossEntropyWithLogitsGrad,
     Reciprocal,
     Merge,
+    Mod,
 }
 
 enum QuantType: int {
