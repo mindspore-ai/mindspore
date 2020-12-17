@@ -28,8 +28,9 @@ namespace mindspore {
 class RangeCountCalculator {
  public:
   RangeCountCalculator();
+  ~RangeCountCalculator() = default;
   void ProcessElement(double element);
-  double GetPercentInRange();
+  double GetPercentInRange() const;
   void set_range_start_inclusive(double value) { range_start_inclusive = value; }
   void set_range_end_inclusive(double value) { range_end_inclusive = value; }
 
@@ -43,6 +44,7 @@ class RangeCountCalculator {
 class AllCloseCalculator {
  public:
   AllCloseCalculator();
+  ~AllCloseCalculator() = default;
   void ProcessElement(double current, double previous);
   bool IsAllClose();
   void set_atol(double value) { atol = value; }
@@ -57,6 +59,7 @@ class AllCloseCalculator {
 class MeanCalculator {
  public:
   MeanCalculator();
+  ~MeanCalculator() = default;
   void ProcessElement(double value);
   double GetMean();
 
@@ -68,6 +71,7 @@ class MeanCalculator {
 class VarianceAndMeanCalculator {
  public:
   VarianceAndMeanCalculator();
+  ~VarianceAndMeanCalculator() = default;
   void ProcessElement(double value);
   double GetStandardDeviation();
   double GetVariance();
@@ -91,6 +95,7 @@ template <typename T>
 class TensorSummary : public ITensorSummary {
  public:
   TensorSummary() = default;
+  ~TensorSummary() override = default;
   TensorSummary(void *, void *, uint32_t);
   void SummarizeTensor(const std::vector<DebugServices::watchpoint_t> &) override;
   // returns hit, error_code, parameter_list

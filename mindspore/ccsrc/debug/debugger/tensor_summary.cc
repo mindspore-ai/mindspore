@@ -36,7 +36,7 @@ void RangeCountCalculator::ProcessElement(double element) {
   total += 1;
 }
 
-double RangeCountCalculator::GetPercentInRange() {
+double RangeCountCalculator::GetPercentInRange() const {
   if (total == 0) {
     return 0.0;
   }
@@ -46,7 +46,7 @@ double RangeCountCalculator::GetPercentInRange() {
 AllCloseCalculator::AllCloseCalculator() : atol(1.0e-8), rtol(1.0e-5), result(true) {}
 
 void AllCloseCalculator::ProcessElement(double current, double previous) {
-  result &= (std::abs(current - previous) <= (atol + rtol * std::abs(previous)));
+  result = result && (std::abs(current - previous) <= (atol + rtol * std::abs(previous)));
 }
 
 bool AllCloseCalculator::IsAllClose() { return result; }
@@ -171,7 +171,7 @@ std::tuple<bool, int, std::vector<DebugServices::parameter_t>> TensorSummary<T>:
         inequality_type = "lt";
       }
       parameter.Evaluate(StatLookup(parameter.name, wp), inequality_type);
-      hit |= parameter.hit;
+      hit = hit || parameter.hit;
     }
   }
   return std::make_tuple(hit, static_cast<int32_t>(error_code.to_ulong()), parameter_list);
@@ -244,7 +244,7 @@ template <typename T>
 void TensorSummary<T>::InitCalculators(const std::vector<DebugServices::watchpoint_t> &wps) {
   for (auto &wp : wps) {
     auto wp_id = wp.id;
-    mean_sd_cal_enabled |= wp.mean_sd_enabled();
+    mean_sd_cal_enabled = mean_sd_cal_enabled || wp.mean_sd_enabled();
     if (wp.allclose_enabled() && prev_tensor_ptr) {
       all_close[wp_id] = std::make_unique<AllCloseCalculator>();
       if (!wp.parameter_list[0].disabled) {
