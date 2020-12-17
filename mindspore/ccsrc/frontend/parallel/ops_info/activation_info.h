@@ -271,6 +271,9 @@ class DropoutInfo : public ActivationOther {
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status GetAttrs() override { return SUCCESS; }
   Status InferTensorInfo() override;
+
+ private:
+  bool IsRepeatedStrategy(const StrategyPtr &sp);
 };
 }  // namespace parallel
 }  // namespace mindspore

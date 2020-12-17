@@ -59,7 +59,7 @@ Status TensorLayout::Init(const Arrangement &device_arrangement, const Map &tens
     return Status::SUCCESS;
   } else {
     if (layout_transfer_) {
-      MS_LOG(WARNING) << "invalid origin tensor layout " << this->OriginToString();
+      MS_LOG(DEBUG) << "invalid origin tensor layout " << this->OriginToString();
     } else {
       MS_LOG(ERROR) << "invalid origin tensor layout " << this->OriginToString();
     }
@@ -95,7 +95,7 @@ bool TensorLayout::IsValidTensorLayout() const {
   }
   if (!TensorShapeDimensionIsDividedBySplitDeviceDimension()) {
     if (layout_transfer_) {
-      MS_LOG(WARNING) << "TensorShapeDimensionIsDividedBySplitDeviceDimension failed!";
+      MS_LOG(DEBUG) << "TensorShapeDimensionIsDividedBySplitDeviceDimension failed!";
     } else {
       MS_LOG(ERROR) << "TensorShapeDimensionIsDividedBySplitDeviceDimension failed!";
     }

@@ -101,7 +101,7 @@ Status AccumulateProductReverseToShape(const Shape &shape_accum_reverse, Shape *
       return Status::FAILED;
     }
     if ((*iter) % value != 0) {
-      MS_LOG(WARNING) << "shape_accum is not a accumulate product in ascending order";
+      MS_LOG(DEBUG) << "shape_accum is not a accumulate product in ascending order";
       return Status::FAILED;
     }
     (void)shape->insert(shape->begin(), static_cast<int64_t>((*iter) / value));
