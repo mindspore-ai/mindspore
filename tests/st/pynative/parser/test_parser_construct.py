@@ -20,6 +20,7 @@ from mindspore.nn import Cell
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
+from mindspore.common.parameter import Parameter
 
 def setup_module():
     context.set_context(mode=context.PYNATIVE_MODE, device_target="Ascend")
@@ -68,3 +69,22 @@ def test_parser_construct():
 
     assert np.allclose(input_np_x, out_me.asnumpy(), 0.001, 0.001)
     assert np.allclose(input_np_x, grad_me.asnumpy(), 0.001, 0.001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sit_parser_input_parameter():
+    def tensor_add(x, y):
+        add = P.TensorAdd()
+        z = add(x, y)
+        return  z
+    x = Tensor(np.ones([2, 2]).astype(np.float32))
+    x = Parameter(x, name="x")
+    y = Tensor(np.ones([2, 2]).astype(np.float32))
+    y = Parameter(y, name="y")
+    grad = GradOperation(get_all=True, get_by_list=False, sens_param=False)
+
+    with pytest.raises(TypeError):
+        grad(tensor_add)(x, y)

@@ -41,7 +41,7 @@ class GradofAllInputsAndParams(nn.Cell):
 @pytest.mark.platform_arm_ascend_training
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.env_onecard
-def test_pynative_diff_shape_with_while_in_construct():
+def test_sit_pynative_diff_shape_with_while_in_construct():
     class WhileNetMs(nn.Cell):
         def __init__(self):
             super().__init__()
