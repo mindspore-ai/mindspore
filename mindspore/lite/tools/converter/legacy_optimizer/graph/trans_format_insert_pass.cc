@@ -24,12 +24,16 @@
 #include "src/common/utils.h"
 
 namespace mindspore {
+namespace {
+std::vector<int> nchw2nhwc_perm = {0, 2, 3, 1};
+std::vector<int> nhwc2nchw_perm = {0, 3, 1, 2};
+}  // namespace
 namespace lite {
 bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_ptr<CNodeT> &node) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(node != nullptr);
   auto input_node_indexes = GetInputNodeIdx(*graph, *node);
-  pre_type_ = schema::PrimitiveType_NONE;
+  pre_type_ = kNONE;
   size_t has_trans_count = 0;
   auto can_fusion = true;
   for (auto input_node_index : input_node_indexes) {
@@ -38,16 +42,28 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
     MS_ASSERT(pre_node != nullptr);
     MS_ASSERT(pre_node->primitive != nullptr);
     MS_ASSERT(pre_node->primitive->value != nullptr);
-    if (pre_type_ == schema::PrimitiveType_NONE) {
-      if (pre_node->primitive->value.type == schema::PrimitiveType_Nchw2Nhwc ||
-          pre_node->primitive->value.type == schema::PrimitiveType_Nhwc2Nchw) {
-        pre_type_ = pre_node->primitive->value.type;
+    if (pre_type_ == kNONE) {
+      if (pre_node->primitive->value.type == schema::PrimitiveType_Transpose) {
+        if (pre_node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm) {
+          pre_type_ = kNCHW2NHWC;
+        } else if (pre_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
+          pre_type_ = kNHWC2NCHW;
+        } else {
+          return false;
+        }
         has_trans_count++;
       }
     } else {
-      if (pre_node->primitive->value.type == schema::PrimitiveType_Nchw2Nhwc ||
-          pre_node->primitive->value.type == schema::PrimitiveType_Nhwc2Nchw) {
-        if (pre_type_ != pre_node->primitive->value.type) {
+      if (pre_node->primitive->value.type == schema::PrimitiveType_Transpose) {
+        auto cur_type = kNONE;
+        if (pre_node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm) {
+          cur_type = kNCHW2NHWC;
+        } else if (pre_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
+          cur_type = kNHWC2NCHW;
+        } else {
+          return false;
+        }
+        if (pre_type_ != cur_type) {
           can_fusion = false;
           break;
         } else {
@@ -60,23 +76,35 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
     return false;
   }
   auto output_node_indexes = GetOutputNodeIdx(*graph, *node);
-  post_type_ = schema::PrimitiveType_NONE;
+  post_type_ = kNONE;
   for (auto output_node_index : output_node_indexes) {
     MS_ASSERT(graph->nodes.size() > output_node_index);
     auto &post_node = graph->nodes.at(output_node_index);
     MS_ASSERT(post_node != nullptr);
     MS_ASSERT(post_node->primitive != nullptr);
     MS_ASSERT(post_node->primitive->value != nullptr);
-    if (post_type_ == schema::PrimitiveType_NONE) {
-      if (post_node->primitive->value.type == schema::PrimitiveType_Nchw2Nhwc ||
-          post_node->primitive->value.type == schema::PrimitiveType_Nhwc2Nchw) {
-        post_type_ = post_node->primitive->value.type;
+    if (post_type_ == kNONE) {
+      if (post_node->primitive->value.type == schema::PrimitiveType_Transpose) {
+        if (post_node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm) {
+          post_type_ = kNCHW2NHWC;
+        } else if (post_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
+          post_type_ = kNHWC2NCHW;
+        } else {
+          return false;
+        }
         has_trans_count++;
       }
     } else {
-      if (post_node->primitive->value.type == schema::PrimitiveType_Nchw2Nhwc ||
-          post_node->primitive->value.type == schema::PrimitiveType_Nhwc2Nchw) {
-        if (post_type_ != post_node->primitive->value.type) {
+      if (post_node->primitive->value.type == schema::PrimitiveType_Transpose) {
+        auto cur_type = kNONE;
+        if (post_node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm) {
+          cur_type = kNCHW2NHWC;
+        } else if (post_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
+          cur_type = kNHWC2NCHW;
+        } else {
+          return false;
+        }
+        if (post_type_ != cur_type) {
           can_fusion = false;
           break;
         } else {
@@ -88,7 +116,7 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
   if (!can_fusion) {
     return false;
   }
-  if (pre_type_ == PrimitiveType_NONE && post_type_ == PrimitiveType_NONE) {
+  if (pre_type_ == kNONE && post_type_ == kNONE) {
     return false;
   }
   auto output_size = output_node_indexes.empty() ? 1 : output_node_indexes.size();
@@ -114,21 +142,21 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
 STATUS TransOpInsertPass::FindOutTransType() {
   pre_insert_trans_type_ = kNHWC2NCHW;
   post_insert_trans_type_ = kNHWC2NCHW;
-  if (pre_type_ == PrimitiveType_NONE && post_type_ != PrimitiveType_NONE) {
-    pre_insert_trans_type_ = post_type_ == schema::PrimitiveType_Nhwc2Nchw ? kNHWC2NCHW : kNCHW2NHWC;
-    post_insert_trans_type_ = post_type_ == schema::PrimitiveType_Nhwc2Nchw ? kNCHW2NHWC : kNHWC2NCHW;
-  } else if (pre_type_ != PrimitiveType_NONE && post_type_ == PrimitiveType_NONE) {
-    pre_insert_trans_type_ = pre_type_ == schema::PrimitiveType_Nhwc2Nchw ? kNCHW2NHWC : kNHWC2NCHW;
-    post_insert_trans_type_ = pre_type_ == schema::PrimitiveType_Nhwc2Nchw ? kNHWC2NCHW : kNCHW2NHWC;
-  } else if (pre_type_ == PrimitiveType_NONE && post_type_ == PrimitiveType_NONE) {
+  if (pre_type_ == kNONE && post_type_ != kNONE) {
+    pre_insert_trans_type_ = post_type_ == kNHWC2NCHW ? kNHWC2NCHW : kNCHW2NHWC;
+    post_insert_trans_type_ = post_type_ == kNHWC2NCHW ? kNCHW2NHWC : kNHWC2NCHW;
+  } else if (pre_type_ != kNONE && post_type_ == kNONE) {
+    pre_insert_trans_type_ = pre_type_ == kNHWC2NCHW ? kNCHW2NHWC : kNHWC2NCHW;
+    post_insert_trans_type_ = pre_type_ == kNHWC2NCHW ? kNHWC2NCHW : kNCHW2NHWC;
+  } else if (pre_type_ == kNONE && post_type_ == kNONE) {
     MS_ASSERT(false);
   } else {
     if (pre_type_ == post_type_) {
       MS_LOG(ERROR) << "Unknow error";
       return RET_ERROR;
     }
-    pre_insert_trans_type_ = pre_type_ == schema::PrimitiveType_Nhwc2Nchw ? kNCHW2NHWC : kNHWC2NCHW;
-    post_insert_trans_type_ = post_type_ == schema::PrimitiveType_Nhwc2Nchw ? kNCHW2NHWC : kNHWC2NCHW;
+    pre_insert_trans_type_ = pre_type_ == kNHWC2NCHW ? kNCHW2NHWC : kNHWC2NCHW;
+    post_insert_trans_type_ = post_type_ == kNHWC2NCHW ? kNCHW2NHWC : kNHWC2NCHW;
   }
   return RET_OK;
 }

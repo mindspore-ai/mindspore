@@ -48,6 +48,14 @@ int TransposeFp16CPUKernel::Run() {
   }
   in_data_fp16_ = reinterpret_cast<float16_t *>(in_tensor->MutableData());
   out_data_fp16_ = reinterpret_cast<float16_t *>(out_tensor->MutableData());
+  MS_ASSERT(in_data_fp16_);
+  MS_ASSERT(out_data_fp16_);
+
+  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
+  if (in_tensor->shape().size() != static_cast<size_t>(param->num_axes_)) {
+    memcpy(out_data_fp16_, in_data_fp16_, in_tensor->ElementsNum() * sizeof(float16_t));
+    return RET_OK;
+  }
   int dims = out_tensor->shape().size();
   if (dims > MAX_TRANSPOSE_DIM_SIZE) {
     dim_size_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * sizeof(int)));
@@ -63,10 +71,7 @@ int TransposeFp16CPUKernel::Run() {
       return RET_ERROR;
     }
   }
-  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
-  MS_ASSERT(param);
-  MS_ASSERT(in_data_fp16_);
-  MS_ASSERT(out_data_fp16_);
+
   MS_ASSERT(out_shape_);
   auto ret = Fp16DoTranspose(in_data_fp16_, out_data_fp16_, out_shape_, param, dim_size_, position_);
   if (dims > MAX_TRANSPOSE_DIM_SIZE) {

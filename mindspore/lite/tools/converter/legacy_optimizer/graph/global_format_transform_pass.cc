@@ -25,6 +25,10 @@
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {
+namespace {
+std::vector<int> nchw2nhwc_perm = {0, 2, 3, 1};
+std::vector<int> nhwc2nchw_perm = {0, 3, 1, 2};
+}  // namespace
 namespace lite {
 
 STATUS GlobalFormatTransformPass::Run(MetaGraphT *graph) {
@@ -34,7 +38,10 @@ STATUS GlobalFormatTransformPass::Run(MetaGraphT *graph) {
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
     auto type = node->primitive->value.type;
-    if (type != schema::PrimitiveType_Nchw2Nhwc) {
+    if (type != PrimitiveType_Transpose) {
+      continue;
+    }
+    if (node->primitive->value.AsTranspose()->perm != nchw2nhwc_perm) {
       continue;
     }
     std::vector<size_t> pre_nh2nc_nodes;
@@ -176,7 +183,8 @@ STATUS GlobalFormatTransformPass::FindPreNh2NcNodes(MetaGraphT *graph, size_t nc
       auto &pre_node = graph->nodes.at(input_node_index);
       MS_ASSERT(pre_node != nullptr);
       auto node_type = pre_node->primitive->value.type;
-      if (node_type == schema::PrimitiveType_Nhwc2Nchw) {
+      if (node_type == schema::PrimitiveType_Transpose &&
+          pre_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
         if (!IsContain(*pre_nh2nc_nodes, input_node_index)) {
           pre_nh2nc_nodes->emplace_back(input_node_index);
         }

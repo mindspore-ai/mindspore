@@ -18,11 +18,14 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
+#include "nnacl/pack.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_OP_EXECUTE_FAILURE;
+using mindspore::schema::PrimitiveType_Nchw2Nhwc;
+using mindspore::schema::PrimitiveType_Nhwc2Nchw;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
@@ -36,7 +39,9 @@ int TransposeCPUKernel::Init() {
 
 int TransposeCPUKernel::ReSize() {
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(op_parameter_);
-
+  if (in_tensors_.at(kInputIndex)->shape().size() != static_cast<size_t>(param->num_axes_)) {
+    return RET_OK;
+  }
   auto &inTensor = in_tensors_.front();
   auto &outTensor = out_tensors_.front();
   auto in_shape = inTensor->shape();
@@ -80,6 +85,41 @@ int TransposeCPUKernel::Run() {
   }
   in_data_ = reinterpret_cast<float *>(in_tensor->MutableData());
   out_data_ = reinterpret_cast<float *>(out_tensor->MutableData());
+  MS_ASSERT(in_data_);
+  MS_ASSERT(out_data_);
+
+  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
+  if (in_tensor->shape().size() != static_cast<size_t>(param->num_axes_)) {
+    memcpy(out_data_, in_data_, in_tensor->ElementsNum() * sizeof(float));
+    return RET_OK;
+  }
+  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 2 && param->perm_[2] == 3 &&
+      param->perm_[3] == 1) {
+    if (in_tensor->data_type() == kNumberTypeFloat32) {
+      PackNCHWToNHWCFp32(in_tensor->MutableData(), out_tensor->MutableData(), out_tensor->Batch(),
+                         out_tensor->Height() * out_tensor->Width(), out_tensor->Channel());
+    } else if (in_tensor->data_type() == kNumberTypeInt8) {
+      PackNCHWToNHWCInt8(in_tensor->MutableData(), out_tensor->MutableData(), out_tensor->Batch(),
+                         out_tensor->Height() * out_tensor->Width(), out_tensor->Channel());
+    }
+    return RET_OK;
+  }
+  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 3 && param->perm_[2] == 1 &&
+      param->perm_[3] == 2) {
+    if (in_tensor->data_type() == kNumberTypeFloat32) {
+      PackNHWCToNCHWFp32(in_tensor->MutableData(), out_tensor->MutableData(), out_tensor->Batch(),
+                         out_tensor->Height() * out_tensor->Width(), out_tensor->Channel());
+    } else if (in_tensor->data_type() == kNumberTypeInt8) {
+      PackNHWCToNCHWInt8(in_tensor->MutableData(), out_tensor->MutableData(), out_tensor->Batch(),
+                         out_tensor->Height() * out_tensor->Width(), out_tensor->Channel());
+    }
+    return RET_OK;
+  }
+  if (in_tensor->data_type() == kNumberTypeInt8) {
+    MS_LOG(ERROR) << "not support now";
+    return RET_ERROR;
+  }
+
   int dims = out_tensor->shape().size();
   if (dims > MAX_TRANSPOSE_DIM_SIZE) {
     dim_size_ = reinterpret_cast<int *>(context_->allocator->Malloc(dims * sizeof(int)));
@@ -96,10 +136,6 @@ int TransposeCPUKernel::Run() {
     }
   }
 
-  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
-  MS_ASSERT(param);
-  MS_ASSERT(in_data_);
-  MS_ASSERT(out_data_);
   MS_ASSERT(out_shape_);
   auto ret = DoTransposeFp32(in_data_, out_data_, out_shape_, param, dim_size_, position_);
   if (dims > MAX_TRANSPOSE_DIM_SIZE) {
@@ -143,4 +179,9 @@ kernel::LiteKernel *CpuTransposeFp32KernelCreator(const std::vector<lite::Tensor
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Transpose, CpuTransposeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Transpose, CpuTransposeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Nchw2Nhwc, CpuTransposeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Nchw2Nhwc, CpuTransposeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Nhwc2Nchw, CpuTransposeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Nhwc2Nchw, CpuTransposeFp32KernelCreator)
 }  // namespace mindspore::kernel

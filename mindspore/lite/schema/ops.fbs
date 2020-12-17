@@ -338,11 +338,11 @@ table ConstantOfShape{
     value: [float];
 }
 
-table Nchw2Nhwc {
+table Nchw2Nhwc {  // DEPRECATED
 
 }
 
-table Nhwc2Nchw {
+table Nhwc2Nchw {  // DEPRECATED
 
 }
 
@@ -729,7 +729,7 @@ table Crop {
     offsets : [long];
 }
 
-table Permute {
+table Permute {  // DEPRECATED
     order: [long];
 }
 

@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <string>
 #include <memory>
 #include <utility>
@@ -196,15 +197,47 @@ NodeIter FormatTransPass::InsertFormatTransNode(schema::MetaGraphT *graph, NodeI
   }
   auto transNode = std::make_unique<schema::CNodeT>();
   transNode->primitive = std::make_unique<schema::PrimitiveT>();
+  transNode->primitive->value.type = schema::PrimitiveType_Transpose;
+  auto attr = new (std::nothrow) schema::TransposeT();
 
   if (nodeType == kNCHW2NHWC) {
     transNode->name = "nchw2nhwc_" + tileName + std::to_string(id++);
-    transNode->primitive->value.type = schema::PrimitiveType_Nchw2Nhwc;
+    attr->perm = {0, 2, 3, 1};
   } else {
     transNode->name = "nhwc2nchw_" + tileName + std::to_string(id++);
-    transNode->primitive->value.type = schema::PrimitiveType_Nhwc2Nchw;
+    attr->perm = {0, 3, 1, 2};
   }
-  return InsertNode(graph, existNodeIter, place, inoutIdx, std::move(transNode), errorCode);
+  transNode->primitive->value.value = attr;
+
+  OpDefCopyer TransposeOpCopyer = [](CNodeT *inOpDef) -> std::unique_ptr<CNodeT> {
+    auto newOpDef = std::make_unique<schema::CNodeT>();
+    if (newOpDef == nullptr) {
+      MS_LOG(ERROR) << "new CNodeT failed";
+      return nullptr;
+    }
+    newOpDef->name = inOpDef->name;
+    newOpDef->quantType = inOpDef->quantType;
+    newOpDef->primitive = std::make_unique<schema::PrimitiveT>();
+    if (newOpDef->primitive == nullptr) {
+      MS_LOG(ERROR) << "new PrimitiveT failed";
+      return nullptr;
+    }
+    newOpDef->primitive->value.type = schema::PrimitiveType_Transpose;
+    auto transposeParam = new (std::nothrow) TransposeT;
+    if (transposeParam == nullptr) {
+      MS_LOG(ERROR) << "new transposeParam failed";
+      return nullptr;
+    }
+    auto inParam = inOpDef->primitive->value.AsTranspose();
+    MS_ASSERT(inParam != nullptr);
+    transposeParam->perm.resize(inParam->perm.size());
+    std::transform(inParam->perm.begin(), inParam->perm.end(), transposeParam->perm.begin(),
+                   [](const int32_t ele) { return ele; });
+    newOpDef->primitive->value.value = transposeParam;
+    return newOpDef;
+  };
+
+  return InsertNode(graph, existNodeIter, place, inoutIdx, std::move(transNode), errorCode, TransposeOpCopyer);
 }
 
 void FormatTransPass::SetQuantType(QuantType quantType) { this->quantType = quantType; }

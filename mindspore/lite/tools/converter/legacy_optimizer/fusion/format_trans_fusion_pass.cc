@@ -16,6 +16,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <vector>
 #include <memory>
 #include "tools/converter/legacy_optimizer/fusion/format_trans_fusion_pass.h"
 #include "src/common/log_adapter.h"
@@ -24,103 +25,59 @@
 #include "schema/inner/model_generated.h"
 
 namespace mindspore {
+namespace {
+std::vector<int> nchw2nhwc_perm = {0, 2, 3, 1};
+std::vector<int> nhwc2nchw_perm = {0, 3, 1, 2};
+}  // namespace
 namespace lite {
 #define kFormatTransMatchPathLen2 2
 #define kFormatTransMatchPathLen3 3
 
 STATUS FormatTransFusionPass::DefinePattern() {
-  // nchw2nhwc + nhwc2nchw
+  // nchw2nhwc + nhwc2nchw  ||  nhwc2nchw + nchw2nhwc
   {
-    auto nc2nhOp = std::make_shared<PatternOp>();
-    nc2nhOp->id = kFormatTransNc2NhOp;
-    nc2nhOp->types = {PrimitiveType_Nchw2Nhwc};
-    auto nh2ncOp = std::make_shared<PatternOp>();
-    nh2ncOp->id = kFormatTransNh2NcOp;
-    nh2ncOp->types = {PrimitiveType_Nhwc2Nchw};
+    auto transpose1 = std::make_shared<PatternOp>();
+    transpose1->id = kFormatTransTranspose1;
+    transpose1->types = {PrimitiveType_Transpose};
+    auto transpose2 = std::make_shared<PatternOp>();
+    transpose2->id = kFormatTransTranspose2;
+    transpose2->types = {PrimitiveType_Transpose};
 
-    nh2ncOp->left = nc2nhOp;
-    std::unique_ptr<FusionPattern> nc2NhAndNh2NcFusionPattern(new (std::nothrow)
-                                                                FusionPattern(kNc2NhAndNh2NcFusionPattern));
-    if (nc2NhAndNh2NcFusionPattern == nullptr) {
+    transpose2->left = transpose1;
+    auto pattern = std::make_unique<FusionPattern>(kNc2NhAndNh2NcFusionPattern);
+    if (pattern == nullptr) {
       MS_LOG(ERROR) << "new " << kNc2NhAndNh2NcFusionPattern << "failed";
       return RET_ERROR;
     }
-    nc2NhAndNh2NcFusionPattern->AddPatternOp(nc2nhOp);
-    nc2NhAndNh2NcFusionPattern->AddPatternOp(nh2ncOp);
-    nc2NhAndNh2NcFusionPattern->Finish();
-    this->patterns.emplace_back(nc2NhAndNh2NcFusionPattern.release());
+    pattern->AddPatternOp(transpose1);
+    pattern->AddPatternOp(transpose2);
+    pattern->Finish();
+    this->patterns.emplace_back(pattern.release());
   }
+  // nhwc2nchw + QuantDtypeCast + nchw2nhwc  ||  nchw2nhwc + QuantDtypeCast + nhwc2nchw
   {
-    auto nc2nhOp = std::make_shared<PatternOp>();
-    nc2nhOp->id = kFormatTransNc2NhOp;
-    nc2nhOp->types = {PrimitiveType_Nchw2Nhwc};
+    auto transpose1 = std::make_shared<PatternOp>();
+    transpose1->id = kFormatTransTranspose1;
+    transpose1->types = {PrimitiveType_Transpose};
     auto passOp = std::make_shared<PatternOp>();
     passOp->id = kFormatTransPassOp;
     passOp->types = {PrimitiveType_QuantDTypeCast};
-    auto nh2ncOp = std::make_shared<PatternOp>();
-    nh2ncOp->id = kFormatTransNh2NcOp;
-    nh2ncOp->types = {PrimitiveType_Nhwc2Nchw};
+    auto transpose2 = std::make_shared<PatternOp>();
+    transpose2->id = kFormatTransTranspose2;
+    transpose2->types = {PrimitiveType_Transpose};
 
-    passOp->left = nc2nhOp;
-    nh2ncOp->left = passOp;
-    std::unique_ptr<FusionPattern> nc2NhAndNh2NcPassFusionPattern(new (std::nothrow)
-                                                                    FusionPattern(kNc2NhAndNh2NcPassFusionPattern));
-    if (nc2NhAndNh2NcPassFusionPattern == nullptr) {
-      MS_LOG(ERROR) << "new " << kNc2NhAndNh2NcPassFusionPattern << "failed";
-      return RET_ERROR;
-    }
-    nc2NhAndNh2NcPassFusionPattern->AddPatternOp(nc2nhOp);
-    nc2NhAndNh2NcPassFusionPattern->AddPatternOp(passOp);
-    nc2NhAndNh2NcPassFusionPattern->AddPatternOp(nh2ncOp);
-    nc2NhAndNh2NcPassFusionPattern->Finish();
-    this->patterns.emplace_back(nc2NhAndNh2NcPassFusionPattern.release());
-  }
-  // nhwc2nchw + nchw2nhwc
-  {
-    auto nc2nhOp = std::make_shared<PatternOp>();
-    nc2nhOp->id = kFormatTransNc2NhOp;
-    nc2nhOp->types = {PrimitiveType_Nchw2Nhwc};
-    auto nh2ncOp = std::make_shared<PatternOp>();
-    nh2ncOp->id = kFormatTransNh2NcOp;
-    nh2ncOp->types = {PrimitiveType_Nhwc2Nchw};
-
-    nc2nhOp->left = nh2ncOp;
-    std::unique_ptr<FusionPattern> nh2NcAndNc2NhFusionPattern(new (std::nothrow)
-                                                                FusionPattern(kNh2NcAndNc2NhFusionPattern));
-    if (nh2NcAndNc2NhFusionPattern == nullptr) {
-      MS_LOG(ERROR) << "new " << kNh2NcAndNc2NhFusionPattern << "failed";
-      return RET_ERROR;
-    }
-    nh2NcAndNc2NhFusionPattern->AddPatternOp(nh2ncOp);
-    nh2NcAndNc2NhFusionPattern->AddPatternOp(nc2nhOp);
-    nh2NcAndNc2NhFusionPattern->Finish();
-    this->patterns.emplace_back(nh2NcAndNc2NhFusionPattern.release());
-  }
-  // nhwc2nchw + QuantDtypeCast + nchw2nhwc
-  {
-    auto nc2nhOp = std::make_shared<PatternOp>();
-    nc2nhOp->id = kFormatTransNc2NhOp;
-    nc2nhOp->types = {PrimitiveType_Nchw2Nhwc};
-    auto passOp = std::make_shared<PatternOp>();
-    passOp->id = kFormatTransPassOp;
-    passOp->types = {PrimitiveType_QuantDTypeCast};
-    auto nh2ncOp = std::make_shared<PatternOp>();
-    nh2ncOp->id = kFormatTransNh2NcOp;
-    nh2ncOp->types = {PrimitiveType_Nhwc2Nchw};
-
-    passOp->left = nh2ncOp;
-    nc2nhOp->left = passOp;
-    std::unique_ptr<FusionPattern> nh2NcAndNc2NhPassFusionPattern(new (std::nothrow)
-                                                                    FusionPattern(kNh2NcAndNc2NhPassFusionPattern));
-    if (nh2NcAndNc2NhPassFusionPattern == nullptr) {
+    passOp->left = transpose2;
+    transpose1->left = passOp;
+    auto pattern = std::make_unique<FusionPattern>(kNh2NcAndNc2NhPassFusionPattern);
+    if (pattern == nullptr) {
       MS_LOG(ERROR) << "new " << kNh2NcAndNc2NhPassFusionPattern << " failed";
       return RET_ERROR;
     }
-    nh2NcAndNc2NhPassFusionPattern->AddPatternOp(nh2ncOp);
-    nh2NcAndNc2NhPassFusionPattern->AddPatternOp(passOp);
-    nh2NcAndNc2NhPassFusionPattern->AddPatternOp(nc2nhOp);
-    nh2NcAndNc2NhPassFusionPattern->Finish();
-    this->patterns.emplace_back(nh2NcAndNc2NhPassFusionPattern.release());
+    pattern->AddPatternOp(transpose1);
+    pattern->AddPatternOp(passOp);
+    pattern->AddPatternOp(transpose2);
+    pattern->Finish();
+    this->patterns.emplace_back(pattern.release());
   }
   return RET_OK;
 }
@@ -136,51 +93,32 @@ STATUS FormatTransFusionPass::DoFusion(schema::MetaGraphT *graph, const std::str
     return RET_PARAM_INVALID;
   }
 
-  std::shared_ptr<Path> srcPath;
-  std::shared_ptr<Path> dstPath;
-  if (patternName == kNc2NhAndNh2NcFusionPattern || patternName == kNc2NhAndNh2NcPassFusionPattern) {
-    srcPath = matchedPath[kFormatTransNc2NhOp];
-    dstPath = matchedPath[kFormatTransNh2NcOp];
-  } else if (patternName == kNh2NcAndNc2NhFusionPattern || patternName == kNh2NcAndNc2NhPassFusionPattern) {
-    srcPath = matchedPath[kFormatTransNh2NcOp];
-    dstPath = matchedPath[kFormatTransNc2NhOp];
-  } else {
-    MS_ASSERT(false);
-  }
-  if (srcPath == nullptr) {
-    MS_LOG(ERROR) << "srcPath is failed to get";
-    return RET_ERROR;
-  }
-  if (dstPath == nullptr) {
-    MS_LOG(ERROR) << "dstPath is failed to get";
+  std::shared_ptr<Path> srcPath = matchedPath[kFormatTransTranspose1];
+  std::shared_ptr<Path> dstPath = matchedPath[kFormatTransTranspose2];
+  if (srcPath == nullptr || dstPath == nullptr) {
+    MS_LOG(ERROR) << "srcPath or dstPath is failed to get";
     return RET_ERROR;
   }
   auto srcNode = graph->nodes.at(srcPath->nodeIdx).get();
   auto dstNode = graph->nodes.at(dstPath->nodeIdx).get();
   MS_ASSERT(srcNode != nullptr);
   MS_ASSERT(dstNode != nullptr);
-  if (patternName == kNc2NhAndNh2NcFusionPattern || patternName == kNc2NhAndNh2NcPassFusionPattern) {
-    MS_ASSERT(GetCNodeTType(*srcNode) == schema::PrimitiveType_Nchw2Nhwc);
-    MS_ASSERT(GetCNodeTType(*dstNode) == schema::PrimitiveType_Nhwc2Nchw);
-  } else if (patternName == kNh2NcAndNc2NhFusionPattern || patternName == kNh2NcAndNc2NhPassFusionPattern) {
-    MS_ASSERT(GetCNodeTType(*srcNode) == schema::PrimitiveType_Nhwc2Nchw);
-    MS_ASSERT(GetCNodeTType(*dstNode) == schema::PrimitiveType_Nchw2Nhwc);
-  } else {
-    MS_ASSERT(false);
+  bool isNc2NhAndNh2Nc = srcNode->primitive->value.AsTranspose()->perm == nchw2nhwc_perm &&
+                         dstNode->primitive->value.AsTranspose()->perm == nhwc2nchw_perm;
+  bool isNh2NcAndNc2Nh = srcNode->primitive->value.AsTranspose()->perm == nhwc2nchw_perm &&
+                         dstNode->primitive->value.AsTranspose()->perm == nchw2nhwc_perm;
+  if (isNc2NhAndNh2Nc || isNh2NcAndNc2Nh) {
+    auto status = IsolateOneWayNode(graph, srcPath->nodeIdx);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "IsolateOneWayNode failed, node: " << srcNode->name << ", error: " << status;
+      return status;
+    }
+    status = IsolateOneWayNode(graph, dstPath->nodeIdx);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "IsolateOneWayNode failed, node: " << dstNode->name << ", error: " << status;
+      return status;
+    }
   }
-
-  auto status = IsolateOneWayNode(graph, srcPath->nodeIdx);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "IsolateOneWayNode failed, node: " << srcNode->name << ", error: " << status;
-    return status;
-  }
-
-  status = IsolateOneWayNode(graph, dstPath->nodeIdx);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "IsolateOneWayNode failed, node: " << dstNode->name << ", error: " << status;
-    return status;
-  }
-
   return RET_OK;
 }
 }  // namespace lite

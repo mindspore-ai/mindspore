@@ -110,24 +110,32 @@ Registry TransposeRegistry(schema::PrimitiveType_Transpose, TransposeCreator);
 #endif
 
 int Transpose::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  MS_ASSERT(this->primitive_ != nullptr);
   auto input = inputs_.front();
-  MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
+  MS_ASSERT(input != nullptr);
   MS_ASSERT(output != nullptr);
+
+  std::vector<int> perm = GetPerm();
+  std::vector<int> nchw2nhwc_perm = {0, 2, 3, 1};
+  std::vector<int> nhwc2nchw_perm = {0, 3, 1, 2};
+  std::vector<int> in_shape = input->shape();
+
   output->set_data_type(input->data_type());
-  output->set_format(input->format());
+  if (input->format() == schema::Format::Format_NCHW && perm == nchw2nhwc_perm) {
+    output->set_format(schema::Format::Format_NHWC);
+  } else if (input->format() == schema::Format::Format_NHWC && perm == nhwc2nchw_perm) {
+    output->set_format(schema::Format::Format_NCHW);
+  } else {
+    output->set_format(input->format());
+  }
   if (!infer_flag()) {
     return RET_INFER_INVALID;
   }
-  MS_ASSERT(inputs_.size() == kSingleNum || inputs_.size() == kDoubleNum);
-  MS_ASSERT(outputs_.size() == kSingleNum);
 
-  std::vector<int> perm;
-  for (size_t i = 0; i < GetPerm().size(); i++) {
-    perm.push_back(GetPerm().at(i));
+  if (in_shape.size() != 4 && perm.size() == 4) {
+    output->set_shape(in_shape);
+    return RET_OK;
   }
-  std::vector<int> in_shape = input->shape();
   std::vector<int> out_shape;
   out_shape.resize(perm.size());
   for (size_t i = 0; i < perm.size(); ++i) {

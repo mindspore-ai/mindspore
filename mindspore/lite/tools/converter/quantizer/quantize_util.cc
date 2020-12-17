@@ -89,13 +89,25 @@ bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
   auto cnode = std::dynamic_pointer_cast<CNode>(node);
   auto type = NodePrimitiveType(cnode);
   static const std::vector<schema::PrimitiveType> int8OpList = {
-    schema::PrimitiveType_Nchw2Nhwc,       schema::PrimitiveType_Nhwc2Nchw,  schema::PrimitiveType_Conv2D,
-    schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_Add,        schema::PrimitiveType_Mul,
-    schema::PrimitiveType_Pooling,         schema::PrimitiveType_Concat,     schema::PrimitiveType_Split,
-    schema::PrimitiveType_TupleGetItem,    schema::PrimitiveType_Reshape,    schema::PrimitiveType_FullConnection,
-    schema::PrimitiveType_MatMul,          schema::PrimitiveType_Crop,       schema::PrimitiveType_DeDepthwiseConv2D,
-    schema::PrimitiveType_DeConv2D,        schema::PrimitiveType_Activation, schema::PrimitiveType_Transpose,
-    schema::PrimitiveType_Eltwise,         schema::PrimitiveType_Gather,     schema::PrimitiveType_LayerNorm,
+    schema::PrimitiveType_Conv2D,
+    schema::PrimitiveType_DepthwiseConv2D,
+    schema::PrimitiveType_Add,
+    schema::PrimitiveType_Mul,
+    schema::PrimitiveType_Pooling,
+    schema::PrimitiveType_Concat,
+    schema::PrimitiveType_Split,
+    schema::PrimitiveType_TupleGetItem,
+    schema::PrimitiveType_Reshape,
+    schema::PrimitiveType_FullConnection,
+    schema::PrimitiveType_MatMul,
+    schema::PrimitiveType_Crop,
+    schema::PrimitiveType_DeDepthwiseConv2D,
+    schema::PrimitiveType_DeConv2D,
+    schema::PrimitiveType_Activation,
+    schema::PrimitiveType_Transpose,
+    schema::PrimitiveType_Eltwise,
+    schema::PrimitiveType_Gather,
+    schema::PrimitiveType_LayerNorm,
   };
   bool contain = IsContain(int8OpList, type);
   if (!contain) {

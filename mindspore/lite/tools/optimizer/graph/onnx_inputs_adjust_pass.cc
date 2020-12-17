@@ -547,6 +547,8 @@ bool OnnxInputAdjustOpPass::Run(const FuncGraphPtr &func_graph) {
       status = ReplaceConstant(func_graph, cnode);
     } else if (type == schema::PrimitiveType_Cast) {
       status = AdjustCast(cnode);
+    } else if (type == schema::PrimitiveType_Transpose) {
+      status = ReplaceTransposeWithGraphInput(func_graph, cnode);
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "adjust input pass is failed.";

@@ -66,9 +66,7 @@ static const std::vector<schema::PrimitiveType> fp32FullOpList = {
 
 static const std::vector<schema::PrimitiveType> int8NeedNhwcOpList = {};
 
-static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveType_Nchw2Nhwc,
-                                                              schema::PrimitiveType_Nhwc2Nchw,
-                                                              schema::PrimitiveType_Conv2D,
+static const std::vector<schema::PrimitiveType> int8OpList = {schema::PrimitiveType_Conv2D,
                                                               schema::PrimitiveType_DepthwiseConv2D,
                                                               schema::PrimitiveType_Add,
                                                               schema::PrimitiveType_Transpose,
