@@ -29,6 +29,7 @@
 #include "utils/ms_context.h"
 #include "utils/primitive_utils.h"
 #include "pipeline/jit/resource.h"
+#include "pipeline/pynative/pynative_execute.h"
 
 namespace mindspore {
 namespace {
@@ -171,11 +172,32 @@ BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
   bool is_bprop = this->HasAttr(kBpropAttrName);
   if (is_bprop) {
     SyncData(py_args);
+    auto size = py_args.size();
+    py::tuple input_args(size - 2);
+    for (size_t i = 0; i < size - 2; ++i) {
+      input_args[i] = py_args[i];
+    }
     py::tuple convert_args(py_args.size());
     ConvertCTensorToPyTensor(py_args, &convert_args);
-    py::object grads_obj = hook_(*convert_args);
-    py::tuple grads = check_bprop_out(grads_obj, py_args);
-    return std::make_shared<PyObjectRef>(grads);
+    auto inst = pynative::PynativeExecutor::GetInstance();
+    MS_EXCEPTION_IF_NULL(inst);
+    try {
+      inst->NewGraph(GetPyObj(), input_args.cast<py::args>());
+      py::object grads_obj = hook_(*convert_args);
+      py::tuple grads = check_bprop_out(grads_obj, py_args);
+      inst->EndGraph(GetPyObj(), grads_obj, input_args.cast<py::args>());
+      return std::make_shared<PyObjectRef>(grads);
+    } catch (const py::type_error &ex) {
+      inst->ClearRes();
+      throw py::type_error(ex);
+    } catch (const py::value_error &ex) {
+      inst->ClearRes();
+      throw py::value_error(ex);
+    } catch (...) {
+      inst->ClearRes();
+      std::string exName(abi::__cxa_current_exception_type()->name());
+      MS_LOG(EXCEPTION) << "Error occurred in run bprop. Exception name: " << exName;
+    }
   }
   SyncData(py_args[2]);
   bool is_cell = this->HasAttr(kCellHookAttrName);
