@@ -96,7 +96,7 @@ class UniformCandidateSamplerGpuKernel : public GpuKernel {
       return false;
     }
     input_size_ = input_shape[0] * input_shape[1];
-    if (num_sampled_ * num_true_ + static_cast<int64_t>(input_size_) > range_max_ * num_true_) {
+    if (num_sampled_ + static_cast<int64_t>(input_size_) > range_max_) {
       remove_accidental_hits_ = false;
     }
     InitSizeLists();
