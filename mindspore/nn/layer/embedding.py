@@ -277,7 +277,7 @@ class EmbeddingLookup(Cell):
             if is_auto_parallel:
                 device_num = get_group_size()
                 full_batch = _get_full_batch()
-                if device_num > 1 and not (full_batch and slice_mode == TABLE_ROW_SLICE):
+                if device_num > 1 and not (full_batch and slice_mode == "table_row_slice"):
                     raise ValueError("The embeddingLookup cache of parameter server parallel only be used "
                                      "in 'full_batch' and 'table_row_slice' parallel strategy.")
                 self.vocab_cache_size = self.vocab_cache_size * device_num
