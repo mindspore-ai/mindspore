@@ -86,8 +86,9 @@ Debugger::Debugger()
         << "Partial Memory Reuse is enabled. Note: 1. Please only set watchpoints before running the first "
            "step. 2. Tensor values are only available for nodes that are watched by any watchpoint.";
     } else {
-      MS_LOG(INFO) << "Memory Reuse is disabled. Set environment variable MS_DEBUGGER_PARTIAL_MEM=1 to reduce memory "
-                      "usage for large models.";
+      MS_LOG(WARNING)
+        << "Memory Reuse is disabled. Set environment variable MS_DEBUGGER_PARTIAL_MEM=1 to reduce memory "
+           "usage for large models.";
     }
   }
 }
