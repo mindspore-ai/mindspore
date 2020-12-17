@@ -40,7 +40,7 @@
 #endif
 
 #define RET_TP_OK (0)
-#define RET_TP_ERROR (1)
+#define RET_TP_ERROR (-8)
 #define RET_TP_SYSTEM_ERROR (-1)
 
 #define MAX_THREAD_NUM (8)
@@ -49,6 +49,8 @@
 typedef struct {
   int (*func)(void *arg, int);
   void *content;
+  int *return_code;
+  int task_num;
 } Task;
 
 typedef struct Thread {
@@ -669,8 +671,11 @@ int DistributeTask(struct ThreadPool *thread_pool, Task *task, int task_num) {
     return RET_TP_ERROR;
   }
   bool k_success_flag = false;
-  int size = thread_pool->thread_num < task_num ? thread_pool->thread_num : task_num;
-  for (int i = 0; i < size - 1; ++i) {
+  if (thread_pool->thread_num < task_num) {
+    LOG_ERROR("task_num: %d should not be larger than thread num: %d", task_num, thread_pool->thread_num);
+    return RET_TP_ERROR;
+  }
+  for (int i = 0; i < task_num - 1; ++i) {
     do {
       k_success_flag = true;
       if (!PushTaskToQueue(thread_pool, i, task)) {
@@ -683,9 +688,18 @@ int DistributeTask(struct ThreadPool *thread_pool, Task *task, int task_num) {
     LOG_ERROR("task->func is nullptr");
     return RET_TP_ERROR;
   }
-  task->func(task->content, size - 1);
+  if (task->task_num <= task_num - 1) {
+    LOG_ERROR("task_num out of range in master thread");
+    return RET_TP_ERROR;
+  }
+  task->return_code[task_num - 1] = task->func(task->content, task_num - 1);
   // wait
   WaitAllThread(thread_pool);
+  for (size_t i = 0; i < task->task_num; i++) {
+    if (task->return_code[i] != 0) {
+      return task->return_code[i];
+    }
+  }
   return RET_TP_OK;
 }
 
@@ -697,14 +711,26 @@ int AddTask(struct ThreadPool *thread_pool, int func(void *, int), void *content
   // if single thread, run master thread
   if (thread_pool->thread_num <= 1 || task_num <= 1) {
     for (int i = 0; i < task_num; ++i) {
-      func(content, i);
+      int ret = func(content, i);
+      if (ret != 0) {
+        return ret;
+      }
     }
     return RET_TP_OK;
   }
   Task task;
   task.func = func;
   task.content = content;
-  return DistributeTask(thread_pool, &task, task_num);
+  task.return_code = (int *)malloc(sizeof(int) * task_num);
+  task.task_num = task_num;
+  if (task.return_code == NULL) {
+    LOG_ERROR("malloc return code return nullptr");
+    return RET_TP_ERROR;
+  }
+  memset(task.return_code, 0, sizeof(int) * task_num);
+  int ret = DistributeTask(thread_pool, &task, task_num);
+  free(task.return_code);
+  return ret;
 }
 
 int ParallelLaunch(struct ThreadPool *thread_pool, int (*func)(void *, int), void *content, int task_num) {
@@ -730,7 +756,11 @@ void ThreadRun(Thread *thread) {
           LOG_ERROR("task->func is nullptr");
           return;
         }
-        task->func(task->content, thread_id);
+        if (task->task_num <= thread_id) {
+          LOG_ERROR("task_num out of range in worker thread");
+          return;
+        }
+        task->return_code[thread_id] = task->func(task->content, thread_id);
         atomic_fetch_sub_explicit(&thread->task_size, 1, memory_order_release);
         spin_count = 0;
         sem_trywait(&thread->sem);

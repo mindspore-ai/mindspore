@@ -28,13 +28,14 @@ using STATUS = int;
 constexpr int RET_OK = 0; /**< No error occurs. */
 
 /* Common error code, range: [-1, -100）*/
-constexpr int RET_ERROR = -1;         /**< Common error code. */
-constexpr int RET_NULL_PTR = -2;      /**< NULL pointer returned.*/
-constexpr int RET_PARAM_INVALID = -3; /**< Invalid parameter.*/
-constexpr int RET_NO_CHANGE = -4;     /**< No change. */
-constexpr int RET_SUCCESS_EXIT = -5;  /**< No error but exit. */
-constexpr int RET_MEMORY_FAILED = -6; /**< Fail to create memory. */
-constexpr int RET_NOT_SUPPORT = -7;   /**< Fail to support. */
+constexpr int RET_ERROR = -1;             /**< Common error code. */
+constexpr int RET_NULL_PTR = -2;          /**< NULL pointer returned.*/
+constexpr int RET_PARAM_INVALID = -3;     /**< Invalid parameter.*/
+constexpr int RET_NO_CHANGE = -4;         /**< No change. */
+constexpr int RET_SUCCESS_EXIT = -5;      /**< No error but exit. */
+constexpr int RET_MEMORY_FAILED = -6;     /**< Fail to create memory. */
+constexpr int RET_NOT_SUPPORT = -7;       /**< Fail to support. */
+constexpr int RET_THREAD_POOL_ERROR = -8; /**< Error occur in thread pool. */
 
 /* Executor error code, range: [-100,-200) */
 constexpr int RET_OUT_OF_TENSOR_RANGE = -100; /**< Failed to check range. */

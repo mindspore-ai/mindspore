@@ -29,6 +29,7 @@ std::string GetErrorInfo(STATUS status) {
                                          {RET_SUCCESS_EXIT, "No error but exit."},
                                          {RET_MEMORY_FAILED, "Fail to create memory."},
                                          {RET_NOT_SUPPORT, "Fail to support."},
+                                         {RET_THREAD_POOL_ERROR, "Thread pool error."},
                                          {RET_OUT_OF_TENSOR_RANGE, "Failed to check range."},
                                          {RET_INPUT_TENSOR_ERROR, "Failed to check input tensor."},
                                          {RET_REENTRANT_ERROR, "Exist executor running."},

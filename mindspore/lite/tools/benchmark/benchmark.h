@@ -19,6 +19,7 @@
 
 #include <getopt.h>
 #include <signal.h>
+#include <random>
 #include <unordered_map>
 #include <fstream>
 #include <iostream>
@@ -124,7 +125,7 @@ class MS_API Benchmark {
   // call GenerateRandomData to fill inputTensors
   int GenerateInputData();
 
-  int GenerateRandomData(size_t size, void *data);
+  int GenerateRandomData(size_t size, void *data, TypeId data_type);
 
   int ReadInputFile();
 
@@ -224,6 +225,14 @@ class MS_API Benchmark {
     }
   }
 
+  template <typename T, typename Distribution>
+  void FillInputData(int size, void *data, Distribution distribution) {
+    MS_ASSERT(data != nullptr);
+    int elements_num = size / sizeof(T);
+    (void)std::generate_n(static_cast<T *>(data), elements_num,
+                          [&]() { return static_cast<T>(distribution(random_engine_)); });
+  }
+
   int MarkPerformance();
 
   int MarkAccuracy();
@@ -249,6 +258,7 @@ class MS_API Benchmark {
 
   KernelCallBack before_call_back_;
   KernelCallBack after_call_back_;
+  std::mt19937 random_engine_;
 };
 
 int MS_API RunBenchmark(int argc, const char **argv);
