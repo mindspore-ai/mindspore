@@ -167,11 +167,17 @@ def _validate_axes(x1_shape, x2_shape, axes):
                 raise ValueError(f"axes for input: {ix_input + 1} contains index: "
                                  f"{x_value}, but range is: [{min_val}, {max_val}]")
 
-    # axis value input compatibility
+    # check axis value with input shape - both ways for axis valid
+    invalid_a = False
+    invalid_b = False
     for i in range(len(axes[0])):  # sizes already validated
         if x1_shape[axes[0][i]] != x2_shape[axes[1][i]]:
-            raise ValueError(
-                "Given Axes are incompatible with given input arrays")
+            invalid_a = True
+        if x1_shape[axes[0][i]] != x2_shape[axes[1][len(axes[0])-1-i]]:
+            invalid_b = True
+    if invalid_a and invalid_b:
+        raise ValueError("Given Axes are incompatible with given input arrays")
+
 
 @constexpr
 def _calc_new_shape(shape, axes, position=0):
@@ -200,16 +206,18 @@ def tensor_dot(x1, x2, axes):
 
     Selected dims in both inputs must also match.
 
-    axes = 0 leads to outer product, and axes = 1 leads to normal matrix multiplication.
-    axes = 1 is the same as axes = ((0,),(1,) where length of input shape is 2 for both `a` and `b`
-    axes = 2 is the same as axes = ((0,1),(1,2)) where length of input shape is 3 for both `a` and `b`
+    axes = 0 leads to outer product
+    axes = 1 leads to normal matrix multiplication when inputs both 2D.
+    axes = 1 is the same as axes = ((1,),(0,) where both `a` and `b` are 2D.
+    axes = 2 is the same as axes = ((1,2),(0,1)) where both `a` and `b` are 3D.
 
     Inputs:
         - **x1** (Tensor) - First tensor in tensor_dot with datatype float16 or float32
         - **x2** (Tensor) - Second tensor in tensor_dot with datatype float16 or float32
         - **axes** (Union[int, tuple(int), tuple(tuple(int)), list(list(int))]) - Single value or
           tuple/list of length 2 with dimensions specified for `a` and `b` each. If single value `N` passed,
-          automatically picks up first N dims from `a` input shape and last N dims from `b` input shape.
+          automatically picks up last N dims from `a` input shape and first N dims from `b` input shape in order
+          as axes for each respectively.
 
     Outputs:
         Tensor, the shape of the output tensor is :math:`(N + M)`. Where :math:`N` and :math:`M` are the free axes not
