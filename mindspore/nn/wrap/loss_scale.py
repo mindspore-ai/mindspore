@@ -102,7 +102,9 @@ class DynamicLossScaleUpdateCell(Cell):
         >>> net_with_loss = WithLossCell(net, loss)
         >>> manager = nn.DynamicLossScaleUpdateCell(loss_scale_value=2**12, scale_factor=2, scale_window=1000)
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=manager)
-        >>> train_network.set_train()
+        >>> input = Tensor(np.ones([out_features, in_features]), mindspore.float32)
+        >>> labels = Tensor(np.ones([out_features,]), mindspore.float32)
+        >>> output = train_network(input, labels)
     """
 
     def __init__(self,
@@ -185,7 +187,9 @@ class FixedLossScaleUpdateCell(Cell):
         >>> net_with_loss = WithLossCell(net, loss)
         >>> manager = nn.FixedLossScaleUpdateCell(loss_scale_value=2**12)
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=manager)
-        >>> train_network.set_train()
+        >>> input = Tensor(np.ones([out_features, in_features]), mindspore.float32)
+        >>> labels = Tensor(np.ones([out_features,]), mindspore.float32)
+        >>> output = train_network(input, labels)
     """
 
     def __init__(self, loss_scale_value):
@@ -255,7 +259,9 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         >>> net_with_loss = WithLossCell(net, loss)
         >>> manager = nn.DynamicLossScaleUpdateCell(loss_scale_value=2**12, scale_factor=2, scale_window=1000)
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=manager)
-        >>> train_network.set_train()
+        >>> input = Tensor(np.ones([out_features, in_features]), mindspore.float32)
+        >>> labels = Tensor(np.ones([out_features,]), mindspore.float32)
+        >>> output = train_network(input, labels)
         >>>
         >>> #2) when the type of scale_sense is Tensor:
         >>> net = Net(in_features, out_features)
@@ -267,8 +273,6 @@ class TrainOneStepWithLossScaleCell(TrainOneStepCell):
         >>> scaling_sens = Tensor(np.full((1), np.finfo(np.float32).max), dtype=mstype.float32)
         >>> train_network = nn.TrainOneStepWithLossScaleCell(net_with_loss, optimizer, scale_sense=scaling_sens)
         >>> output = train_network(inputs, label)
-        >>> print(output[0])
-        256.0
     """
     def __init__(self, network, optimizer, scale_sense):
         super(TrainOneStepWithLossScaleCell, self).__init__(network, optimizer, sens=None)

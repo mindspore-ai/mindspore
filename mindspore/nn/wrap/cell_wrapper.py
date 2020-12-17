@@ -412,7 +412,7 @@ class ParameterUpdate(Cell):
         >>> update = nn.ParameterUpdate(param)
         >>> update.phase = "update_param"
         >>> weight = Tensor(np.arange(12).reshape((4, 3)), mindspore.float32)
-        >>> network_updata = update(weight)
+        >>> output = update(weight)
     """
 
     def __init__(self, param):
