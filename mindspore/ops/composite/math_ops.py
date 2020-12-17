@@ -252,3 +252,51 @@ def tensor_dot(x1, x2, axes):
     mul_result = matmul_op(x1_reshaped, x2_reshaped)
     final_result = reshape_op(mul_result, output_shape)
     return final_result
+
+
+@constexpr
+def _check_invalid_input(x1_shape, x2_shape):
+    if len(x1_shape) < 2 or len(x2_shape) < 2:
+        raise ValueError('C.dot inputs x1, x2 should has dimension >= 2,'
+                         + f'while x1 is ({len(x1_shape)}) and x2 is ({len(x2_shape)}).')
+
+
+def dot(x1, x2):
+    """
+    Computation a dot product between samples in two tensors.
+
+    Inputs:
+        - **x1** (Tensor) - First tensor in Dot op with datatype float16 or float32
+        - **x2** (Tensor) - Second tensor in Dot op with datatype float16 or float32
+
+    Outputs:
+        Tensor, dot product of x1 and x2.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x1 = Tensor(np.ones(shape=[2, 3]), mindspore.float32)
+        >>> input_x2 = Tensor(np.ones(shape=[1, 3, 2]), mindspore.float32)
+        >>> output = C.Dot(input_x1, input_x2)
+        >>> print(output)
+        [[[3. 3.]]
+         [[3. 3.]]]
+    """
+    shape_op = P.Shape()
+    reshape_op = P.Reshape()
+    transpose_op = P.Transpose()
+    matmul_op = P.MatMul(False, False)
+    x1_shape = shape_op(x1)
+    x2_shape = shape_op(x2)
+    _check_invalid_input(x1_shape, x2_shape)
+
+    if len(x1_shape) > 2 or len(x2_shape) > 2:
+        x2_shape_range = range(len(x2_shape))
+        x2_shape_transpose = x2_shape_range[-2:-1] + x2_shape_range[:-2] + x2_shape_range[-1:]
+        x2_transpose = transpose_op(x2, x2_shape_transpose)
+        x1_reshape = reshape_op(x1, (-1, x1_shape[-1]))
+        x2_reshape = reshape_op(x2_transpose, (x2_shape[-2], -1))
+        mul_result = matmul_op(x1_reshape, x2_reshape)
+        return reshape_op(mul_result, x1_shape[:-1] + x2_shape[:-2] + x2_shape[-1:])
+    return matmul_op(x1, x2)
