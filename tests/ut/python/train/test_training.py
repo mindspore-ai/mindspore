@@ -214,8 +214,8 @@ def test_model_build_abnormal_string():
     err = False
     try:
         model.predict('aaa')
-    except ValueError as e:
-        log.error("Find value error: %r ", e)
+    except TypeError as e:
+        log.error("Find type error: %r ", e)
         err = True
     finally:
         assert err

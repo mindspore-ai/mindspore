@@ -635,7 +635,7 @@ def check_input_data(*data, data_class):
                                  f' either a single'
                                  f' or a list of {data_class.__name__},'
                                  f' but got part data type is {str(type(item))}.')
-            if item.size() == 0:
+            if hasattr(item, "size") and item.size() == 0:
                 msg = "Please provide non-empty data."
                 logger.error(msg)
                 raise ValueError(msg)
