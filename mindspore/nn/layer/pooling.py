@@ -111,11 +111,8 @@ class MaxPool2d(_PoolNd):
         >>> pool = nn.MaxPool2d(kernel_size=3, stride=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
         >>> output = pool(x)
-        >>> print(output)
-        [[[[7. 8.]
-           [9. 9.]]
-          [[7. 8.]
-           [8. 8.]]]]
+        >>> print(output.shape)
+        (1, 2, 2, 2)
     """
 
     def __init__(self, kernel_size=1, stride=1, pad_mode="valid", data_format="NCHW"):
@@ -256,11 +253,8 @@ class AvgPool2d(_PoolNd):
         >>> pool = nn.AvgPool2d(kernel_size=3, stride=1)
         >>> x = Tensor(np.random.randint(0, 10, [1, 2, 4, 4]), mindspore.float32)
         >>> output = pool(x)
-        >>> print(output)
-        [[[[4.888889  4.4444447]
-           [4.111111  3.4444444]]
-          [[4.2222223 4.5555553]
-           [3.2222223 4.5555553]]]]
+        >>> print(output.shape)
+        (1, 2, 2, 2)
     """
 
     def __init__(self,
