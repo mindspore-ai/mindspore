@@ -25,11 +25,14 @@ from ..ops.primitive import constexpr
 
 from .utils import _check_shape, _check_shape_compile, _check_dtype, _check_is_int, \
     _check_axes_range, _check_start_normalize, _check_shape_contain_zero, _check_is_tensor, \
-    _check_input_for_asarray
+    _check_input_for_asarray, _deep_list, _deep_tensor_to_nparray, _check_is_list, \
+    _covert_list_tensor_to_tuple_tensor
 
 DEFAULT_FLOAT_DTYPE = mstype.float32
 DEFAULT_INT_DTYPE = mstype.int32
-
+# According to official numpy reference, the dimension of a numpy array must be less
+# than 32
+MAX_NUMPY_DIMS = 32
 
 def array(obj, dtype=None, copy=True, ndmin=0):
     """
@@ -115,6 +118,10 @@ def asarray(a, dtype=None):
         dtype = mstype.bool_
 
     if isinstance(a, (list, tuple)):
+        # Convert all tuple/nested tuples to lists
+        a = _deep_list(a)
+        # Convert all tensor sub-elements to numpy arrays
+        a = _deep_tensor_to_nparray(a)
         a = onp.asarray(a)
         # If dtype is not specified, we keep consistent with numpy decision
         # only exceptions are: we use int/float32
@@ -175,6 +182,10 @@ def asfarray(a, dtype=DEFAULT_FLOAT_DTYPE):
         dtype = DEFAULT_FLOAT_DTYPE
 
     if isinstance(a, (list, tuple)):
+        # Convert all tuple/nested tuples to lists
+        a = _deep_list(a)
+        # Convert all tensor sub-elements to numpy arrays
+        a = _deep_tensor_to_nparray(a)
         a = onp.asarray(a)
 
     if isinstance(a, onp.ndarray):
@@ -317,8 +328,10 @@ def arange(*args, **kwargs):
     implementation.
 
     Args:
-        start(Union[int, float], optional): Start of interval. The interval includes
-            this value. Default is 0.
+        start(Union[int, float]): Start of interval. The interval includes this value.
+            When stop is provided as a position argument, start must be given, when stop
+            is a normal argument, start can be optional, and default is 0.
+            Please see additional examples below.
         stop(Union[int, float], optional): End of interval. The interval does not
             include this value, except in some cases where step is not an integer
             and floating point round-off affects the length of out.
@@ -340,6 +353,13 @@ def arange(*args, **kwargs):
         >>> import mindspore.numpy as np
         >>> print(np.arange(0, 5, 1))
         [0 1 2 3 4]
+        >>> print(np.arange(3))
+        [0 1 2]
+        >>> print(np.arange(start=0, stop=3))
+        [0 1 2]
+        >>> print(np.arange(0, stop=3, step=0.5))
+        [0.  0.5 1.  1.5 2.  2.5]
+        >>> print(np.arange(stop=3)) # This will lead to TypeError
     """
     # infer the dtype, if either of start, end, step is float, default dtype is
     # float32, else int32.
@@ -418,6 +438,9 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
 
     if isinstance(stop, Tensor):
         stop = stop.asnumpy()
+
+    if not isinstance(num, int):
+        raise TypeError(f"num should be an integer, but got {type(num)}")
 
     final_dtype = None
     if dtype is not None:
@@ -990,7 +1013,7 @@ def concatenate(arrays, axis=0):
         # if only one tensor is provided, it is treated as a tuple along the
         # first dimension. For example, a tensor of shape (3,4,5) will be treated
         # as: tuple(tensor_1(4,5), tensor_2(4,5), tensor_3(4,5))
-        if axis is None:
+        if axis is None or axis >= MAX_NUMPY_DIMS:
             return ravel(arrays)
         arr_shape = F.shape(arrays)
         _check_axes_range((axis,), len(arr_shape))
@@ -1002,11 +1025,16 @@ def concatenate(arrays, axis=0):
         return arrays
 
     flattened_arrays = ()
-    if axis is None:
+    if axis is None or axis >= MAX_NUMPY_DIMS:
         for arr in arrays:
             flattened_arrays += (ravel(arr),)
         axis = -1
         return P.Concat(axis)(flattened_arrays)
+
+    # convert a list of tensor to a tuple of tensor
+    if _check_is_list(array_type):
+        arrays = _covert_list_tensor_to_tuple_tensor(arrays)
+
     arr_shape = F.shape(arrays[0])
     _check_axes_range((axis,), len(arr_shape))
 
