@@ -73,7 +73,11 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
     # define map operations
     normalize_op = C.Normalize(mean=mean, std=std)
     if dtype == "fp16":
-        normalize_op = C.NormalizePad(mean=mean, std=std, dtype="float16")
+        if args_opt.eval:
+            x_dtype = "float32"
+        else:
+            x_dtype = "float16"
+        normalize_op = C.NormalizePad(mean=mean, std=std, dtype=x_dtype)
     if do_train:
         trans = [
             C.RandomCropDecodeResize(image_size, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
