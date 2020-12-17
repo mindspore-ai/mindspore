@@ -87,10 +87,10 @@ class WaitEvent : public ExceptionListener {
     if (!need_wait_) {
       return;
     }
-    MsException::GetInstance().AddExceptionListener(const_cast<WaitEvent *>(this));
+    MsException::Instance().AddExceptionListener(const_cast<WaitEvent *>(this));
     cond_var_.wait(lock, [this] { return !need_wait_; });
-    MsException::GetInstance().CheckException();
-    MsException::GetInstance().RemoveExceptionListener(const_cast<WaitEvent *>(this));
+    MsException::Instance().CheckException();
+    MsException::Instance().RemoveExceptionListener(const_cast<WaitEvent *>(this));
   }
 
   void set_need_wait(bool need_wait) {

@@ -30,14 +30,14 @@ class ExecutorManager {
     return instance;
   }
   std::shared_ptr<Executor> GetExecutor(const std::string &device_name, int device_id);
-  void OnRunGraphFinished();
+  void OnEvent(const ExecutorEvent &event);
   void Clear();
 
  private:
   ExecutorManager() = default;
   ~ExecutorManager() = default;
   DISABLE_COPY_AND_ASSIGN(ExecutorManager)
-  void JoinExecutorWorkers();
+
   std::map<std::string, std::shared_ptr<Executor>> executors_;
 };
 }  // namespace session

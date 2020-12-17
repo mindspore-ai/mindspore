@@ -26,7 +26,6 @@
 #include <thread>
 #include <utility>
 #include <vector>
-
 #include "backend/session/session_basic.h"
 #include "ir/anf.h"
 #include "ir/tensor.h"
@@ -156,6 +155,8 @@ class ExitTask : public Task {
   ~ExitTask() override = default;
 };
 
+enum class ExecutorEvent { kClear, kRunGraphFinished, kException };
+
 class Executor {
  public:
   Executor(const std::string &device_name, uint32_t device_id);
@@ -176,9 +177,9 @@ class Executor {
                      VectorRef *outputs);
   void CleanUselessTensors(const SessionPtr &session,
                            const std::shared_ptr<std::vector<tensor::TensorPtr>> &useless_tensors);
-  void OnRunGraphFinished();
   bool CreateCommGroup(const std::string &group_name, std::vector<uint32_t> ranks);
   bool DestroyCommGroup(const std::string &group_name);
+  void OnEvent(const ExecutorEvent &event);
 
  private:
   void SyncRunTask(const std::shared_ptr<Task> &task);
@@ -188,6 +189,7 @@ class Executor {
   bool IsTaskReady(const std::shared_ptr<RunGraphTask> &task);
   void CheckException();
   void OnWorkerExit();
+  void OnRunGraphFinished();
 
   uint32_t device_id_;
   std::string device_name_;

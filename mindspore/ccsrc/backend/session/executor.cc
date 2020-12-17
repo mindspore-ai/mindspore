@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 #include "backend/session/executor.h"
+#include "backend/session/executor_manager.h"
 #include <algorithm>
 #include <exception>
-
-#include "backend/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/comm_manager.h"
 #include "utils/scoped_long_running.h"
@@ -120,14 +119,15 @@ void RunGraphTask::Run() {
     session_->RunGraphImpl(graph_id_, input_tensors_, &outputs_);
     UpdateOutputTensors(&outputs_, tensor_to_node_);
   } catch (const std::exception &e) {
-    MsException::GetInstance().SetException();
+    ExecutorManager::Instance().OnEvent(ExecutorEvent::kException);
+    MsException::Instance().SetException();
   }
   graph->OnRunGraphFinished();
   for (auto &tensor : input_need_lock_tensors_) {
     tensor->SetNeedWait(false);
   }
   NotifyOutputTensors(&outputs_);
-  ExecutorManager::Instance().OnRunGraphFinished();
+  ExecutorManager::Instance().OnEvent(ExecutorEvent::kRunGraphFinished);
   MS_LOG(INFO) << "End run graph " << graph_id_;
 }
 
@@ -187,7 +187,8 @@ void Executor::WorkerLoop() {
     try {
       task->Run();
     } catch (const std::exception &e) {
-      MsException::GetInstance().SetException();
+      ExecutorManager::Instance().OnEvent(ExecutorEvent::kException);
+      MsException::Instance().SetException();
     }
     {
       std::unique_lock<std::mutex> lock(task_mutex_);
@@ -212,6 +213,18 @@ std::vector<std::shared_ptr<RunGraphTask>> Executor::GetNewReadyTasks() {
     }
   }
   return new_ready_tasks;
+}
+
+void Executor::OnEvent(const ExecutorEvent &event) {
+  if (event == ExecutorEvent::kRunGraphFinished) {
+    OnRunGraphFinished();
+  } else if (event == ExecutorEvent::kException) {
+    std::unique_lock<std::mutex> lock(task_mutex_);
+    while (!ready_tasks_.empty()) {
+      done_tasks_.emplace_back(ready_tasks_.front());
+      ready_tasks_.pop();
+    }
+  }
 }
 
 void Executor::OnRunGraphFinished() {
@@ -249,7 +262,7 @@ void Executor::SyncRunTask(const std::shared_ptr<Task> &task) {
   done_tasks_.clear();
   task_cond_var_.notify_all();
   sync_cond_var_.wait(lock);
-  MsException::GetInstance().CheckException();
+  MsException::Instance().CheckException();
 }
 
 GraphId Executor::CompileGraph(const SessionPtr &session, const GraphSegmentPtr &segment,
@@ -311,7 +324,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
       }
     }
   }
-  MsException::GetInstance().CheckException();
+  MsException::Instance().CheckException();
   for (auto &tensor : task->input_need_lock_tensors_) {
     tensor->SetNeedWait(true);
   }
@@ -332,7 +345,7 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
       mindspore::ScopedLongRunning long_running;
       std::unique_lock<std::mutex> lock(reenter_mutex_);
       reenter_cond_var_.wait(lock, [graph] { return graph->IsPostGraphFinished(); });
-      MsException::GetInstance().CheckException();
+      MsException::Instance().CheckException();
     }
   }
 
