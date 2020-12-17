@@ -196,5 +196,20 @@ Status ConcatOp::PreAccept(NodePass *p, bool *modified) {
   return p->PreRunOnNode(shared_from_base<ConcatOp>(), modified);
 }
 
+// Gets the number of classes
+Status ConcatOp::GetNumClasses(int64_t *num_classes) {
+  int64_t max_num_classes = -1;
+  for (const auto &child : child_) {
+    // Choose a dataset which can get valid num_classes
+    int64_t tmp_num_classes = -1;
+    child->GetNumClasses(&tmp_num_classes);
+    if (tmp_num_classes > max_num_classes) {
+      max_num_classes = tmp_num_classes;
+    }
+  }
+  *num_classes = max_num_classes;
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore
