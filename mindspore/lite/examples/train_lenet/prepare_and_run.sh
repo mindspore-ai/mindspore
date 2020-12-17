@@ -47,7 +47,11 @@ if [ "$MNIST_DATA_PATH" == "" ]; then
 fi
 
 if [ "$TARBALL" == "" ]; then
-  file=$(ls ../../../../output/mindspore-lite-*-runtime-${TARGET}-cpu-train.tar.gz)
+  if [ "${TARGET}" == "arm64" ]; then
+    file=$(ls ../../../../output/mindspore-lite-*-train-android-aarch64.tar.gz)
+  else
+    file=$(ls ../../../../output/mindspore-lite-*-train-linux-x64.tar.gz)
+  fi
   if [ -f ${file} ]; then
     TARBALL=${file}
   else

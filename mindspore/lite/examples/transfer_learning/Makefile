@@ -35,7 +35,7 @@ clean:
 
 
 mrproper: 
-	rm -rf dataset package* msl src/*.o bin/ model/*.mindir model/*.ms 
+	rm -rf dataset package* msl src/*.o bin/ model/*.mindir model/*.ms model/*.so model/converter_lite
 
 %.o:%.cc
 	$(CXX) $(CFLAGS) -c $< -o $@

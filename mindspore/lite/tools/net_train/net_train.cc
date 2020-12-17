@@ -679,7 +679,7 @@ NetTrain::~NetTrain() {
     delete (iter.second);
   }
   this->data_.clear();
-  delete (session_);
+  if (session_ != nullptr) delete (session_);
 }
 
 int RunNetTrain(int argc, const char **argv) {
