@@ -111,6 +111,10 @@ PrimitiveC *CaffeConvolutionParser::ParseLitePrimitive(const caffe::LayerParamet
     MS_LOG(ERROR) << "conv channel out failed";
     return nullptr;
   }
+  if (weight.blobs_size() < 1) {
+    MS_LOG(ERROR) << "conv weight blob is empty";
+    return nullptr;
+  }
   auto &weightBlob = weight.blobs(0);
   if (weightBlob.has_shape()) {
     attr->channelIn = weightBlob.shape().dim(1) * attr->group;
