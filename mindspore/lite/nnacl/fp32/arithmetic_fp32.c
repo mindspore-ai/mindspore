@@ -850,6 +850,48 @@ int BroadcastFloorMod(const float *input0, const float *input1, float *tile_inpu
   return ElementFloorMod(tile_input0, tile_input1, output, element_size);
 }
 
+int ElementMod(const float *input0, const float *input1, float *output, const int element_size) {
+  for (int i = 0; i < element_size; i++) {
+    output[i] = fmod(input0[i], input1[i]);
+  }
+  return NNACL_OK;
+}
+
+int ElementModInt(const int *input0, const int *input1, int *output, const int element_size) {
+  for (int i = 0; i < element_size; i++) {
+    output[i] = fmod(input0[i], input1[i]);
+  }
+  return NNACL_OK;
+}
+
+int ElementOptMod(const float *input0, const float *input1, float *output, const int element_size,
+                  const ArithmeticParameter *param) {
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < element_size; index++) {
+      output[index] = fmod(input0[0], input1[index]);
+    }
+  } else {
+    for (int index = 0; index < element_size; index++) {
+      output[index] = fmod(input0[index], input1[0]);
+    }
+  }
+  return NNACL_OK;
+}
+
+int ElementOptModInt(const int *input0, const int *input1, int *output, const int element_size,
+                     const ArithmeticParameter *param) {
+  if (param->in_elements_num0_ == 1) {
+    for (int index = 0; index < element_size; index++) {
+      output[index] = fmod(input0[0], input1[index]);
+    }
+  } else {
+    for (int index = 0; index < element_size; index++) {
+      output[index] = fmod(input0[index], input1[0]);
+    }
+  }
+  return NNACL_OK;
+}
+
 int ElementFloorDiv(const float *input0, const float *input1, float *output, const int element_size) {
   for (int i = 0; i < element_size; i++) {
     output[i] = floorf(input0[i] / input1[i]);

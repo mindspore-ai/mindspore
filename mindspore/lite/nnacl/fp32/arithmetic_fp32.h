@@ -118,6 +118,13 @@ int ElementFloorModInt(const int *input0, const int *input1, int *output, const 
 int BroadcastFloorMod(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                       int element_size, ArithmeticParameter *param);
 
+int ElementMod(const float *input0, const float *input1, float *output, const int element_size);
+int ElementModInt(const int *input0, const int *input1, int *output, const int element_size);
+int ElementOptMod(const float *input0, const float *input1, float *output, const int element_size,
+                  const ArithmeticParameter *param);
+int ElementOptModInt(const int *input0, const int *input1, int *output, const int element_size,
+                     const ArithmeticParameter *param);
+
 int ElementSquaredDifference(const float *input0, const float *input1, float *output, const int element_size);
 int BroadcastSquaredDifference(const float *input0, const float *input1, float *tile_input0, float *tile_input1,
                                float *output, int element_size, ArithmeticParameter *param);
