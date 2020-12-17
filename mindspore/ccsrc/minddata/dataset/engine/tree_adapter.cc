@@ -29,8 +29,7 @@
 namespace mindspore {
 namespace dataset {
 
-TreeAdapter::TreeAdapter() {
-  tree_state_ = kCompileStateInit;
+TreeAdapter::TreeAdapter(UsageFlag usage) : usage_(usage), tree_state_(kCompileStateInit) {
   optimize_ = common::GetEnv("OPTIMIZE") == "true";
 }
 
@@ -81,7 +80,8 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
   MS_LOG(INFO) << "Running post pass loops.";
 
   // AutoWorkerPass should ideally precede CacheTransForm Pass to avoid complications of the setting
-  if (GlobalContext::config_manager()->auto_num_workers()) {
+  if (GlobalContext::config_manager()->auto_num_workers() && usage_ == kDeIterator) {
+    // skip this for getter pass
     actions.emplace_back(std::make_unique<AutoWorkerPass>());
   }
 

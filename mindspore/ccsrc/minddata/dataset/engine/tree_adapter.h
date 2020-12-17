@@ -33,7 +33,12 @@ class DatasetNode;
 
 class TreeAdapter {
  public:
-  TreeAdapter();
+  // this flag is used to indicate the purpose of the creation of this tree adapter (type of the tree_consumer).
+  // Currently there are 3 types of consumer, Iterator, Getter and TDT/Vocab/Save ...
+  // To avoid premature optimization, the last type (TDT/Vocab/Save) is regarded as Iterator for now.
+  enum UsageFlag { kDeIterator = 0, kDeGetter = 1 };
+
+  explicit TreeAdapter(UsageFlag flag = kDeIterator);
 
   ~TreeAdapter() = default;
 
@@ -92,7 +97,7 @@ class TreeAdapter {
   int32_t cur_connector_size_;                         // current connector size of root op, used for profiling
   int32_t cur_connector_capacity_;                     // current connector capacity of root op, used for profiling
   std::function<OptPass(OptPass)> pre_pass_override_;  // function ptr that overrides pre pass, called in PrePrepare()
-
+  UsageFlag usage_;                                    // usage of this tree adapter (type of consumer)
   // State flags for the lifecycle of the tree
   enum CompileState {
     kCompileStateInit = 0,      // The freshly initialized state

@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include <vector>
-#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/perf/monitor.h"
+#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/execution_tree.h"
 
 namespace mindspore {
