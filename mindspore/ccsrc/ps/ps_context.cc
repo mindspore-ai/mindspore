@@ -62,6 +62,7 @@ void PSContext::Reset() {
   is_worker_ = false;
   is_pserver_ = false;
   is_sched_ = false;
+  set_cache_enable(false);
 }
 
 std::string PSContext::ms_role() const {
