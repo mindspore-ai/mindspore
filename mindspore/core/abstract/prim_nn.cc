@@ -529,7 +529,7 @@ AbstractBasePtr InferImplComputeAccidentalHits(const AnalysisEnginePtr &, const 
 
   auto shape = input->shape();
   if (shape->shape().size() != 2) {
-    MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
+    MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 2.";
   }
   ShapeVector indices_shape = {Shape::SHP_ANY};
   ShapeVector min_shape = {1};
