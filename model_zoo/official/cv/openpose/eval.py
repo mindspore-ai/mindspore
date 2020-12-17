@@ -17,10 +17,9 @@ import os
 import argparse
 import warnings
 import sys
-import cv2
-
-from tqdm import tqdm
 import numpy as np
+from tqdm import tqdm
+import cv2
 from scipy.ndimage.filters import gaussian_filter
 from pycocotools.coco import COCO as LoadAnn
 from pycocotools.cocoeval import COCOeval as MapEval
@@ -30,15 +29,28 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.common import dtype as mstype
 
-from src.dataset import valdata
-from src.openposenet import OpenPoseNet
 from src.config import params, JointType
+from src.openposenet import OpenPoseNet
+from src.dataset import valdata
+
 
 warnings.filterwarnings("ignore")
 devid = int(os.getenv('DEVICE_ID'))
 context.set_context(mode=context.GRAPH_MODE,
                     device_target="Ascend", save_graphs=False, device_id=devid)
 show_gt = 0
+
+parser = argparse.ArgumentParser('mindspore openpose_net test')
+parser.add_argument('--model_path', type=str, default='./0-33_170000.ckpt', help='path of testing model')
+parser.add_argument('--imgpath_val', type=str, default='./dataset/coco/val2017', help='path of testing imgs')
+parser.add_argument('--ann', type=str, default='./dataset/coco/annotations/person_keypoints_val2017.json',
+                    help='path of annotations')
+parser.add_argument('--output_path', type=str, default='./output_img', help='path of testing imgs')
+# distributed related
+parser.add_argument('--is_distributed', type=int, default=0, help='if multi device')
+parser.add_argument('--rank', type=int, default=0, help='local rank of distributed')
+parser.add_argument('--group_size', type=int, default=1, help='world size of distributed')
+args, _ = parser.parse_known_args()
 
 def evaluate_mAP(res_file, ann_file, ann_type='keypoints', silence=True):
     class NullWriter():
@@ -68,23 +80,6 @@ def evaluate_mAP(res_file, ann_file, ann_type='keypoints', silence=True):
 
     return info_str
 
-def parse_args():
-    """Parse arguments."""
-    parser = argparse.ArgumentParser('mindspore openpose_net test')
-
-    parser.add_argument('--model_path', type=str, default='./scripts/train_parallel0/checkpoints/ckpt_0/0-60_663.ckpt',
-                        help='path of testing model')
-    parser.add_argument('--imgpath_val', type=str, default='/data0/zhy/dataset/coco/val2017',
-                        help='path of testing imgs')
-    parser.add_argument('--ann', type=str, default='/data0/zhy/dataset/coco/annotations/person_keypoints_val2017.json',
-                        help='path of annotations')
-    parser.add_argument('--output_path', type=str, default='./output_img', help='path of testing imgs')
-    # distributed related
-    parser.add_argument('--is_distributed', type=int, default=0, help='if multi device')
-    parser.add_argument('--rank', type=int, default=0, help='local rank of distributed')
-    parser.add_argument('--group_size', type=int, default=1, help='world size of distributed')
-    args, _ = parser.parse_known_args()
-    return args
 
 def load_model(test_net, model_path):
     assert os.path.exists(model_path)
@@ -178,7 +173,7 @@ def compute_peaks_from_heatmaps(heatmaps):
 
     return all_peaks
 
-def compute_candidate_connections(paf, cand_a, cand_b, img_len, cfg):
+def compute_candidate_connections(paf, cand_a, cand_b, img_len, params_):
     candidate_connections = []
     for joint_a in cand_a:
         for joint_b in cand_b:
@@ -186,33 +181,33 @@ def compute_candidate_connections(paf, cand_a, cand_b, img_len, cfg):
             norm = np.linalg.norm(vector)
             if norm == 0:
                 continue
-            ys = np.linspace(joint_a[1], joint_b[1], num=cfg['n_integ_points'])
-            xs = np.linspace(joint_a[0], joint_b[0], num=cfg['n_integ_points'])
+            ys = np.linspace(joint_a[1], joint_b[1], num=params_['n_integ_points'])
+            xs = np.linspace(joint_a[0], joint_b[0], num=params_['n_integ_points'])
             integ_points = np.stack([ys, xs]).T.round().astype('i')
 
             paf_in_edge = np.hstack([paf[0][np.hsplit(integ_points, 2)], paf[1][np.hsplit(integ_points, 2)]])
             unit_vector = vector / norm
             inner_products = np.dot(paf_in_edge, unit_vector)
             integ_value = inner_products.sum() / len(inner_products)
-            integ_value_with_dist_prior = integ_value + min(cfg['limb_length_ratio'] * img_len / norm -
-                                                            cfg['length_penalty_value'], 0)
-            n_valid_points = sum(inner_products > cfg['inner_product_thresh'])
-            if n_valid_points > cfg['n_integ_points_thresh'] and integ_value_with_dist_prior > 0:
+            integ_value_with_dist_prior = integ_value + min(params_['limb_length_ratio'] * img_len / norm -
+                                                            params_['length_penalty_value'], 0)
+            n_valid_points = sum(inner_products > params_['inner_product_thresh'])
+            if n_valid_points > params_['n_integ_points_thresh'] and integ_value_with_dist_prior > 0:
                 candidate_connections.append([int(joint_a[3]), int(joint_b[3]), integ_value_with_dist_prior])
     candidate_connections = sorted(candidate_connections, key=lambda x: x[2], reverse=True)
     return candidate_connections
 
-def compute_connections(pafs, all_peaks, img_len, cfg):
+def compute_connections(pafs, all_peaks, img_len, params_):
     all_connections = []
-    for i in range(len(cfg['limbs_point'])):
+    for i in range(len(params_['limbs_point'])):
         paf_index = [i * 2, i * 2 + 1]
         paf = pafs[paf_index]  # shape: (2, 320, 320)
-        limb_point = cfg['limbs_point'][i]  # example: [<JointType.Neck: 1>, <JointType.RightWaist: 8>]
+        limb_point = params_['limbs_point'][i]  # example: [<JointType.Neck: 1>, <JointType.RightWaist: 8>]
         cand_a = all_peaks[all_peaks[:, 0] == limb_point[0]][:, 1:]
         cand_b = all_peaks[all_peaks[:, 0] == limb_point[1]][:, 1:]
 
         if cand_a.shape[0] > 0 and cand_b.shape[0] > 0:
-            candidate_connections = compute_candidate_connections(paf, cand_a, cand_b, img_len, cfg)
+            candidate_connections = compute_candidate_connections(paf, cand_a, cand_b, img_len, params_)
 
             connections = np.zeros((0, 3))
 
@@ -226,11 +221,11 @@ def compute_connections(pafs, all_peaks, img_len, cfg):
             all_connections.append(np.zeros((0, 3)))
     return all_connections
 
-def grouping_key_points(all_connections, candidate_peaks, cfg):
+def grouping_key_points(all_connections, candidate_peaks, params_):
     subsets = -1 * np.ones((0, 20))
 
     for l, connections in enumerate(all_connections):
-        joint_a, joint_b = cfg['limbs_point'][l]
+        joint_a, joint_b = params_['limbs_point'][l]
         for ind_a, ind_b, score in connections[:, :3]:
             ind_a, ind_b = int(ind_a), int(ind_b)
             joint_found_cnt = 0
@@ -248,6 +243,7 @@ def grouping_key_points(all_connections, candidate_peaks, cfg):
                     found_subset[joint_b] = ind_b
                     found_subset[-1] += 1  # increment joint count
                     found_subset[-2] += candidate_peaks[ind_b, 3] + score
+
 
             elif joint_found_cnt == 2:
 
@@ -289,10 +285,8 @@ def grouping_key_points(all_connections, candidate_peaks, cfg):
                 pass
 
     # delete low score subsets
-    keep = np.logical_and(subsets[:, -1] >= cfg['n_subset_limbs_thresh'],
-                          subsets[:, -2] / subsets[:, -1] >= cfg['subset_score_thresh'])
-    # cfg['n_subset_limbs_thresh'] = 3
-    # cfg['subset_score_thresh'] = 0.2
+    keep = np.logical_and(subsets[:, -1] >= params_['n_subset_limbs_thresh'],
+                          subsets[:, -2] / subsets[:, -1] >= params_['subset_score_thresh'])
     subsets = subsets[keep]
     return subsets
 
@@ -319,7 +313,7 @@ def detect(img, network):
     # map_w, map_h = compute_optimal_size(orig_img, params['heatmap_size']) # 320
     map_w, map_h = compute_optimal_size(orig_img, params['inference_img_size'])
 
-    print("image size is: ", input_w, input_h)
+    # print("image size is: ", input_w, input_h)
 
     resized_image = cv2.resize(orig_img, (input_w, input_h))
     x_data = preprocess(resized_image)
@@ -394,7 +388,7 @@ def draw_person_pose(orig_img, poses):
     return canvas
 
 def depreprocess(img):
-    # x_data = img.astype('f')
+    #x_data = img.astype('f')
     x_data = img[0]
     x_data += 0.5
     x_data *= 255
@@ -402,15 +396,14 @@ def depreprocess(img):
     x_data = x_data.transpose(1, 2, 0)
     return x_data
 
-def _eval():
-    args = parse_args()
+def val():
     if args.is_distributed:
         init()
         args.rank = get_rank()
         args.group_size = get_group_size()
     if not os.path.exists(args.output_path):
         os.mkdir(args.output_path)
-    network = OpenPoseNet()
+    network = OpenPoseNet(vgg_with_bn=params['vgg_with_bn'])
     network.set_train(False)
     load_model(network, args.model_path)
 
@@ -455,4 +448,4 @@ def _eval():
     print('result: ', res)
 
 if __name__ == "__main__":
-    _eval()
+    val()

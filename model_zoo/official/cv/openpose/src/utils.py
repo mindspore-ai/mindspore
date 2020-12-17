@@ -1,27 +1,11 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
-
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-
-# http://www.apache.org/licenses/LICENSE-2.0
-
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-# ============================================================================
-import argparse
-import os
+import math
 import time
 import numpy as np
 
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from mindspore.train.callback import LossMonitor
+from mindspore.train.callback import LossMonitor, Callback
 from mindspore.common.tensor import Tensor
-
-from src.config import params
+from mindspore.common import dtype as mstype
 
 class MyLossMonitor(LossMonitor):
     def __init__(self, per_print_times=1):
@@ -32,6 +16,7 @@ class MyLossMonitor(LossMonitor):
 
     def step_end(self, run_context):
         cb_params = run_context.original_args()
+
         loss = cb_params.net_outputs
 
         if isinstance(loss, (tuple, list)):
@@ -47,63 +32,76 @@ class MyLossMonitor(LossMonitor):
             raise ValueError("epoch: {} step: {}. Invalid loss, terminating training.".format(
                 cb_params.cur_epoch_num, cur_step_in_epoch))
         if self._per_print_times != 0 and cb_params.cur_step_num % self._per_print_times == 0:
-            # print("epoch: %s step: %s, loss is %s, step time: %.3f s." % (cb_params.cur_epoch_num, cur_step_in_epoch,
-            #                                                               loss,
-            #                                                               (time.time() - self._start_time)), flush=True)
             self._loss_list.append(loss)
             if cb_params.cur_step_num % 100 == 0:
-                print("epoch: %s, steps: [%s] mean loss is: %s"%(cb_params.cur_epoch_num, cur_step_in_epoch,
-                                                                 np.array(self._loss_list).mean()), flush=True)
+                print("epoch: %s, steps: [%s], mean loss is: %s"%(cb_params.cur_epoch_num, cur_step_in_epoch,
+                                                                  np.array(self._loss_list).mean()), flush=True)
                 self._loss_list = []
 
         self._start_time = time.time()
 
+class MyScaleSensCallback(Callback):
+    '''MyLossScaleCallback'''
+    def __init__(self, loss_scale_list, epoch_list):
+        super(MyScaleSensCallback, self).__init__()
+        self.loss_scale_list = loss_scale_list
+        self.epoch_list = epoch_list
+        self.scaling_sens = loss_scale_list[0]
 
-def parse_args():
-    """Parse train arguments."""
-    parser = argparse.ArgumentParser('mindspore openpose training')
+    def epoch_end(self, run_context):
+        cb_params = run_context.original_args()
+        epoch = cb_params.cur_epoch_num
 
-    # dataset related
-    parser.add_argument('--train_dir', type=str, default='train2017', help='train data dir')
-    parser.add_argument('--train_ann', type=str, default='person_keypoints_train2017.json',
-                        help='train annotations json')
-    parser.add_argument('--group_size', type=int, default=1, help='world size of distributed')
+        for i, _ in enumerate(self.epoch_list):
+            if epoch >= self.epoch_list[i]:
+                self.scaling_sens = self.loss_scale_list[i+1]
+            else:
+                break
 
-    args, _ = parser.parse_known_args()
-
-    args.jsonpath_train = os.path.join(params['data_dir'], 'annotations/' + args.train_ann)
-    args.imgpath_train = os.path.join(params['data_dir'], args.train_dir)
-    args.maskpath_train = os.path.join(params['data_dir'], 'ignore_mask_train')
-
-    return args
+        scaling_sens_tensor = Tensor(self.scaling_sens, dtype=mstype.float32)
+        cb_params.train_network.set_sense_scale(scaling_sens_tensor)
+        print("Epoch: set train network scale sens to {}".format(self.scaling_sens))
 
 
-def get_lr(lr, lr_gamma, steps_per_epoch, max_epoch_train, lr_steps, group_size):
-    lr_stage = np.array([lr] * steps_per_epoch * max_epoch_train).astype('f')
-    for step in lr_steps:
-        step //= group_size
-        lr_stage[step:] *= lr_gamma
+def _linear_warmup_learning_rate(current_step, warmup_steps, base_lr, init_lr):
+    lr_inc = (float(base_lr) - float(init_lr)) / float(warmup_steps)
+    learning_rate = float(init_lr) + lr_inc * current_step
+    return learning_rate
+
+def _a_cosine_learning_rate(current_step, base_lr, warmup_steps, decay_steps):
+    base = float(current_step - warmup_steps) / float(decay_steps)
+    learning_rate = (1 + math.cos(base * math.pi)) / 2 * base_lr
+    return learning_rate
+
+def _dynamic_lr(base_lr, total_steps, warmup_steps, warmup_ratio=1 / 3):
+    lr = []
+    for i in range(total_steps):
+        if i < warmup_steps:
+            lr.append(_linear_warmup_learning_rate(i, warmup_steps, base_lr, base_lr * warmup_ratio))
+        else:
+            lr.append(_a_cosine_learning_rate(i, base_lr, warmup_steps, total_steps))
+
+    return lr
+
+def get_lr(lr, lr_gamma, steps_per_epoch, max_epoch_train, lr_steps, group_size, lr_type='default', warmup_epoch=5):
+    if lr_type == 'default':
+        lr_stage = np.array([lr] * steps_per_epoch * max_epoch_train).astype('f')
+        for step in lr_steps:
+            step //= group_size
+            lr_stage[step:] *= lr_gamma
+    elif lr_type == 'cosine':
+        lr_stage = _dynamic_lr(lr, steps_per_epoch * max_epoch_train, warmup_epoch * steps_per_epoch,
+                               warmup_ratio=1 / 3)
+        lr_stage = np.array(lr_stage).astype('f')
+    else:
+        raise ValueError("lr type {} is not support.".format(lr_type))
 
     lr_base = lr_stage.copy()
     lr_base = lr_base / 4
-
     lr_vgg = lr_base.copy()
-    vgg_freeze_step = 2000
+    vgg_freeze_step = 2000 // group_size
     lr_vgg[:vgg_freeze_step] = 0
-    return lr_stage, lr_base, lr_vgg
 
-# zhang add
-def adjust_learning_rate(init_lr, lr_gamma, steps_per_epoch, max_epoch_train, stepvalues):
-    lr_stage = np.array([init_lr] * steps_per_epoch * max_epoch_train).astype('f')
-    for epoch in stepvalues:
-        lr_stage[epoch * steps_per_epoch:] *= lr_gamma
-
-    lr_base = lr_stage.copy()
-    lr_base = lr_base / 4
-
-    lr_vgg = lr_base.copy()
-    vgg_freeze_step = 2000
-    lr_vgg[:vgg_freeze_step] = 0
     return lr_stage, lr_base, lr_vgg
 
 

@@ -142,10 +142,10 @@ Parameters for both training and evaluation can be set in config.py
   'batch_size': 10                                 # training batch size
   'lr_gamma': 0.1                                  # lr scale when reach lr_steps
   'lr_steps': '100000,200000,250000'               # the steps when lr * lr_gamma
-  'loss scale': 16386                              # the loss scale of mixed precision
+  'loss scale': 16384                              # the loss scale of mixed precision
   'max_epoch_train': 60                            # total training epochs
   'insize': 368                                    # image size used as input to the model
-  'keep_checkpoint_max': 5                         # only keep the last keep_checkpoint_max checkpoint
+  'keep_checkpoint_max': 1                         # only keep the last keep_checkpoint_max checkpoint
   'log_interval': 100                              # the interval of print a log
   'ckpt_interval': 5000                            # the interval of saving a output model
   ```
@@ -195,7 +195,7 @@ For more configuration details, please refer the script `config.py`.
   ```python
   # grep "AP" eval.log
 
-  {'AP': 0.40030956300341397, 'Ap .5': 0.6658941566481336, 'AP .75': 0.396047897339743, 'AP (M)': 0.3075356543635785, 'AP (L)': 0.533772768618845, 'AR': 0.4519836272040302, 'AR .5': 0.693639798488665, 'AR .75': 0.4570214105793451, 'AR (M)': 0.32155148866429945, 'AR (L)': 0.6330360460795242}
+  {'AP': 0.39830956300341397, 'Ap .5': 0.6658941566481336, 'AP .75': 0.396047897339743, 'AP (M)': 0.3075356543635785, 'AP (L)': 0.533772768618845, 'AR': 0.4519836272040302, 'AR .5': 0.693639798488665, 'AR .75': 0.4570214105793451, 'AR (M)': 0.32155148866429945, 'AR (L)': 0.6330360460795242}
 
   ```
 
@@ -209,14 +209,14 @@ For more configuration details, please refer the script `config.py`.
 | -------------------------- | -----------------------------------------------------------
 | Model Version              | openpose
 | Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G
-| uploaded Date              | 10/20/2020 (month/day/year)
+| uploaded Date              | 12/14/2020 (month/day/year)
 | MindSpore Version          | 1.0.1-alpha
-| Training Parameters        | epoch = 60, steps = 30k, batch_size = 10, lr = 0.0001
-| Optimizer                  | Adam
+| Training Parameters        | epoch=60(1pcs)/80(8pcs), steps=30k(1pcs)/5k(8pcs), batch_size=10, init_lr=0.0001
+| Optimizer                  | Adam(1pcs)/Momentum(8pcs)
 | Loss Function              | MSE
 | outputs                    | pose
-| Speed                      | 1pc: 29imgs/s
-| Total time                 | 1pc: 30h
+| Speed                      | 1pcs: 35fps, 8pcs: 230fps
+| Total time                 | 1pcs: 22.5h, 8pcs: 5.1h
 | Checkpoint for Fine tuning | 602.33M (.ckpt file)
 
 
