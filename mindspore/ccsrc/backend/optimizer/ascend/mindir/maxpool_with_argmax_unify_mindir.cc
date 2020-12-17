@@ -73,8 +73,6 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
   auto shapes = {output_shape, argmax_shape};
   AnfAlgo::SetOutputInferTypeAndShape(types, shapes, maxpool_with_argmax.get());
 
-  auto manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
   return maxpool_with_argmax;
 }
 
@@ -107,8 +105,6 @@ const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &g
   argmax_shape[2] = ksize[1] * ksize[2];
   AnfAlgo::SetOutputInferTypeAndShape({argmax_dtype}, {argmax_shape}, tuple_getitem0_anf.get());
 
-  auto manager = graph->manager();
-  MS_EXCEPTION_IF_NULL(manager);
   return maxpool_grad_with_argmax;
 }
 }  // namespace opt
