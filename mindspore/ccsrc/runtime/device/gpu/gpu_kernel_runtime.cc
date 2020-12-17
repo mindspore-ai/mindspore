@@ -131,6 +131,10 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
       std::string input_kernel_name = input_kernel->fullname_with_scope();
       auto addr = kernel_inputs[j];
       auto type = AnfAlgo::GetOutputInferDataType(input_kernel, PARAMETER_OUTPUT_INDEX);
+      // For example, this happens with the Depend op
+      if (type == kMetaTypeNone) {
+        continue;
+      }
       auto format = kOpFormat_DEFAULT;
       auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
       string input_tensor_name = input_kernel_name + ':' + "0";
@@ -157,6 +161,10 @@ void LoadKernelData(Debugger *debugger, const CNodePtr &kernel,
     for (int j : real_outputs) {
       auto addr = kernel_outputs[j];
       auto type = AnfAlgo::GetOutputInferDataType(kernel, j);
+      // For example, this happens with the Depend op
+      if (type == kMetaTypeNone) {
+        continue;
+      }
       auto format = kOpFormat_DEFAULT;
       auto gpu_addr = std::make_unique<GPUDeviceAddress>(addr->addr, addr->size, format, type);
       string tensor_name = kernel_name + ':' + std::to_string(j);
