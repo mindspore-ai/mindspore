@@ -16,6 +16,7 @@
 
 #include "nnacl/fp32/lstm_fp32.h"
 #include <string.h>
+#include <float.h>
 #include "nnacl/fp32/activation_fp32.h"
 #include "nnacl/fp32/arithmetic_fp32.h"
 
@@ -79,21 +80,63 @@ void ElementMulAcc(const float *input0, const float *input1, float *output, int 
   }
 }
 
-void UpdataState(float *cell_state, const float *forget_gate, const float *input_gate, const float *cell_gate,
-                 int batch, int hidden_size) {
-  ElementMul(forget_gate, cell_state, cell_state, batch * hidden_size);
-  ElementMulAcc(input_gate, cell_gate, cell_state, batch * hidden_size);
+int ElementOptMulAcc(const float *input0, const float input1, float *output, const int element_size) {
+  int index = 0;
+#ifdef ENABLE_NEON
+  for (; index <= element_size - 4; index += C4NUM) {
+    float32x4_t vin0 = vld1q_f32(input0 + index);
+    float32x4_t vout = vld1q_f32(output + index);
+    vout = vmlaq_n_f32(vout, vin0, input1);
+    vst1q_f32(output + index, vout);
+  }
+#endif
+  for (; index < element_size; index++) {
+    output[index] += input0[index] * input1;
+  }
+  return NNACL_OK;
 }
 
-void UpdataOutput(const float *cell_state, const float *output_gate, float *hidden_state, int batch, int hidden_size) {
+void UpdataState(float *cell_state, const float *forget_gate, const float *input_gate, const float *cell_gate,
+                 float *state_buffer, int batch, int hidden_size, const float smooth) {
+  if (!(smooth >= -FLT_EPSILON && smooth <= FLT_EPSILON)) {  // smooth * old_cell_state
+    memcpy(state_buffer, cell_state, batch * hidden_size * sizeof(float));
+    ArithmeticParameter parameter;
+    parameter.in_elements_num0_ = batch * hidden_size;
+    parameter.in_elements_num1_ = 1;
+    ElementOptMul(state_buffer, &smooth, state_buffer, batch * hidden_size, &parameter);
+  }
+
+  ElementMul(forget_gate, cell_state, cell_state, batch * hidden_size);
+  ElementMulAcc(input_gate, cell_gate, cell_state, batch * hidden_size);
+
+  if (!(smooth >= -FLT_EPSILON && smooth <= FLT_EPSILON)) {  // (1 - smooth) * new_cell_state
+    ElementOptMulAcc(cell_state, 1 - smooth, state_buffer, batch * hidden_size);
+  }
+}
+
+void UpdataOutput(const float *cell_state, const float *output_gate, float *hidden_state, float *state_buffer_in,
+                  int batch, int hidden_size, const float smooth) {
+  float *state_buffer = state_buffer_in + batch * hidden_size;
+  if (!(smooth >= -FLT_EPSILON && smooth <= FLT_EPSILON)) {
+    memcpy(state_buffer, hidden_state, batch * hidden_size * sizeof(float));
+    ArithmeticParameter parameter;
+    parameter.in_elements_num0_ = batch * hidden_size;
+    parameter.in_elements_num1_ = 1;
+    ElementOptMul(state_buffer, &smooth, state_buffer, batch * hidden_size, &parameter);
+  }
+
   Tanh(cell_state, batch * hidden_size, hidden_state);
   ElementMul(hidden_state, output_gate, hidden_state, batch * hidden_size);
+
+  if (!(smooth >= -FLT_EPSILON && smooth <= FLT_EPSILON)) {
+    ElementOptMulAcc(hidden_state, 1 - smooth, state_buffer, batch * hidden_size);
+  }
 }
 
 void LstmStepUnit(float *output, const float *input, const float *input_input_weight, const float *input_forget_weight,
                   const float *input_cell_weight, const float *input_output_weight, const float *state_input_weight,
                   const float *state_forget_weight, const float *state_cell_weight, const float *state_output_weight,
-                  const float *bias, float *hidden_state, float *cell_state, float *gate_buffer,
+                  const float *bias, float *hidden_state, float *cell_state, float *gate_buffer, float *state_buffer,
                   const LstmParameter *lstm_parm) {
   InitGate(gate_buffer, bias, lstm_parm);
 
@@ -129,17 +172,26 @@ void LstmStepUnit(float *output, const float *input, const float *input_input_we
   // update cell_gate
   Tanh(cell_gate, lstm_parm->batch_ * lstm_parm->hidden_size_, cell_gate);
   // update cell state
-  UpdataState(cell_state, forget_gate, input_gate, cell_gate, lstm_parm->batch_, lstm_parm->hidden_size_);
+  UpdataState(cell_state, forget_gate, input_gate, cell_gate, state_buffer, lstm_parm->batch_, lstm_parm->hidden_size_,
+              lstm_parm->smooth_);
 
   // update output_gate
   Sigmoid(output_gate, lstm_parm->batch_ * lstm_parm->hidden_size_, output_gate);
   // update output
-  UpdataOutput(cell_state, output_gate, hidden_state, lstm_parm->batch_, lstm_parm->hidden_size_);
+  UpdataOutput(cell_state, output_gate, hidden_state, state_buffer, lstm_parm->batch_, lstm_parm->hidden_size_,
+               lstm_parm->smooth_);
   memcpy(output, hidden_state, lstm_parm->batch_ * lstm_parm->hidden_size_ * sizeof(float));
+
+  if (!(lstm_parm->smooth_ >= -FLT_EPSILON && lstm_parm->smooth_ <= FLT_EPSILON)) {
+    memcpy(cell_state, state_buffer, lstm_parm->batch_ * lstm_parm->hidden_size_ * sizeof(float));
+    memcpy(hidden_state, state_buffer + lstm_parm->batch_ * lstm_parm->hidden_size_,
+           lstm_parm->batch_ * lstm_parm->hidden_size_ * sizeof(float));
+  }
 }
 
 void Lstm(float *output, const float *input, const float *weight_i, const float *weight_h, const float *bias,
-          float *hidden_state, float *cell_state, float *gate_buffer, const LstmParameter *lstm_parm) {
+          float *hidden_state, float *cell_state, float *gate_buffer, float *state_buffer,
+          const LstmParameter *lstm_parm) {
   // forward
   const float *input_input_weight = weight_i;
   const float *input_forget_weight = weight_i + lstm_parm->input_size_ * lstm_parm->hidden_size_ * 2;
@@ -156,7 +208,7 @@ void Lstm(float *output, const float *input, const float *weight_i, const float 
     float *output_ptr = output + t * lstm_parm->output_step_;
     LstmStepUnit(output_ptr, input_ptr, input_input_weight, input_forget_weight, input_cell_weight, input_output_weight,
                  state_input_weight, state_forget_weight, state_cell_weight, state_output_weight, bias, hidden_state,
-                 cell_state, gate_buffer, lstm_parm);
+                 cell_state, gate_buffer, state_buffer, lstm_parm);
   }
 
   // backward
@@ -180,7 +232,7 @@ void Lstm(float *output, const float *input, const float *weight_i, const float 
       float *output_ptr = backward_output + t * lstm_parm->output_step_;
       LstmStepUnit(output_ptr, input_ptr, input_input_weight, input_forget_weight, input_cell_weight,
                    input_output_weight, state_input_weight, state_forget_weight, state_cell_weight, state_output_weight,
-                   backward_bias, backward_hidden_state, backward_cell_state, gate_buffer, lstm_parm);
+                   backward_bias, backward_hidden_state, backward_cell_state, gate_buffer, state_buffer, lstm_parm);
     }
   }
 }

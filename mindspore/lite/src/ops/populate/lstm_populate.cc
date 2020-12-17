@@ -36,6 +36,7 @@ OpParameter *PopulateLstmParameter(const mindspore::lite::PrimitiveC *primitive)
     return nullptr;
   }
   lstm_param->bidirectional_ = param->GetBidirection();
+  lstm_param->smooth_ = param->GetSmooth();
   return reinterpret_cast<OpParameter *>(lstm_param);
 }
 Registry LstmParameterRegistry(schema::PrimitiveType_Lstm, PopulateLstmParameter);

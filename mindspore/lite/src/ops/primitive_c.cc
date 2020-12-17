@@ -161,6 +161,7 @@
 #include "src/ops/switch.h"
 #include "src/ops/partial.h"
 #include "src/ops/gelu.h"
+#include "src/ops/gru.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -995,6 +996,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) AssertOP(primitive);
     case schema::PrimitiveType_GeLU:
       return new (std::nothrow) GeLU(primitive);
+    case schema::PrimitiveType_Gru:
+      return new (std::nothrow) Gru(primitive);
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
       return new (std::nothrow) ActivationGrad(primitive);

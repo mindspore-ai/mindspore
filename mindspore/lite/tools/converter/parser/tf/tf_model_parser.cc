@@ -572,7 +572,12 @@ STATUS TFModelParser::ConvertOutputTensor(const tensorflow::NodeDef &op, const C
     if (IsContain(tensorListOutputOpList, opt::GetCNodeType(anf_node))) {
       type = TypeIdToType(kObjectTypeTensorType);
     }
-    anf_node->set_abstract(std::make_shared<abstract::AbstractTensor>(type, shape_vector));
+    auto abstract = std::make_shared<abstract::AbstractTensor>(type, shape_vector);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "create AbstractTensor failed";
+      return RET_ERROR;
+    }
+    anf_node->set_abstract(abstract);
     anf_node_map->insert(std::pair(op.name(), anf_node));
   } else {
     AbstractBasePtrList abstractList;
@@ -589,6 +594,12 @@ STATUS TFModelParser::ConvertOutputTensor(const tensorflow::NodeDef &op, const C
       std::vector<AnfNodePtr> inputs{tupleGetItemPrim, anf_node, getItemValue};
       CNodePtr getItemCNode = anf_graph->NewCNode(inputs);
       std::string output_item_name = anf_node->fullname_with_scope() + "_getitem_" + std::to_string(output_idx);
+      auto abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, shape_vector);
+      if (abstract == nullptr) {
+        MS_LOG(ERROR) << "create AbstractTensor failed";
+        return RET_ERROR;
+      }
+      getItemCNode->set_abstract(abstract);
       getItemCNode->set_fullname_with_scope(output_item_name);
       anf_node_map->insert(std::pair(op.name() + ":" + std::to_string(output_idx), getItemCNode));
     }

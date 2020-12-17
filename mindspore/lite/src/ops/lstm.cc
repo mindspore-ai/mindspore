@@ -25,11 +25,16 @@ namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
 bool Lstm::GetBidirection() const { return this->primitive_->value.AsLstm()->bidirection; }
 
+float Lstm::GetSmooth() const { return this->primitive_->value.AsLstm()->smooth; }
+
 void Lstm::SetBidirection(bool bidirection) { this->primitive_->value.AsLstm()->bidirection = bidirection; }
+
+void Lstm::SetSmooth(float smooth) { this->primitive_->value.AsLstm()->smooth = smooth; }
 
 #else
 
 bool Lstm::GetBidirection() const { return this->primitive_->value_as_Lstm()->bidirection(); }
+float Lstm::GetSmooth() const { return this->primitive_->value_as_Lstm()->smooth(); }
 int Lstm::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
   MS_ASSERT(nullptr != fbb);
@@ -38,7 +43,7 @@ int Lstm::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::F
     MS_LOG(ERROR) << "value_as_Lstm return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateLstm(*fbb, attr->bidirection());
+  auto val_offset = schema::CreateLstm(*fbb, attr->bidirection(), attr->smooth());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Lstm, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;

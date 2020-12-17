@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_H_
-
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRU_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRU_FP32_H_
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/lstm_fp32.h"
+#include "nnacl/fp32/gru_fp32.h"
 
 namespace mindspore::kernel {
-class LstmCPUKernel : public LiteKernel {
+class GruCPUKernel : public LiteKernel {
  public:
-  LstmCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                const mindspore::lite::PrimitiveC *primitive)
+  GruCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+               const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    lstm_parm_ = reinterpret_cast<LstmParameter *>(op_parameter_);
+    gru_parm_ = reinterpret_cast<GruParameter *>(op_parameter_);
   }
 
-  ~LstmCPUKernel() override { FreeTmpBuffer(); }
+  ~GruCPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -44,12 +42,11 @@ class LstmCPUKernel : public LiteKernel {
   int InitWeightBias();
 
   float *gate_buffer_ = nullptr;
-  float *state_buffer_ = nullptr;
-  float *weight_i_ptr_ = nullptr;
-  float *weight_h_ptr_ = nullptr;
+  const float *weight_g_ptr_ = nullptr;
+  const float *weight_r_ptr_ = nullptr;
   float *bias_ptr_ = nullptr;
-  LstmParameter *lstm_parm_ = nullptr;
+  GruParameter *gru_parm_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRU_FP32_H_

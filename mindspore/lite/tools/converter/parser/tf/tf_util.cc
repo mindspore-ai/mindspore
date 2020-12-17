@@ -122,7 +122,7 @@ std::string TensorFlowUtils::GetFlattenNodeName(const std::string &input_name) {
                                         std::sregex_token_iterator());
   std::string ret = input_name;
   if (input_splits.size() == 3) {
-    if (input_splits[2] == "0") {
+    if (input_splits[2].compare("0") == 0) {
       ret = input_splits[0];
     } else {
       ret = input_splits[0] + ":" + input_splits[2];  // multi output node
