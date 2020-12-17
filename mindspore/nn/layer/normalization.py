@@ -441,6 +441,7 @@ class GlobalBatchNorm(_BatchNorm):
         eps (float): A value added to the denominator for numerical stability. Default: 1e-5.
         momentum (float): A floating hyperparameter of the momentum for the
             running_mean and running_var computation. Default: 0.9.
+        affine (bool): A bool value. When set to True, gamma and beta can be learned. Default: True.
         gamma_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the gamma weight.
             The values of str refer to the function `initializer` including 'zeros', 'ones', 'xavier_uniform',
             'he_uniform', etc. Default: 'ones'.

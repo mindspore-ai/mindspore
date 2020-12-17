@@ -154,7 +154,6 @@ class DenseBnAct(Cell):
         bias_init (Union[Tensor, str, Initializer, numbers.Number]): The trainable bias_init parameter. The dtype is
             same as input. The values of str refer to the function `initializer`. Default: 'zeros'.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: True.
-        activation (Cell): The regularization function applied to the output of the layer, eg. 'ReLU'. Default: None.
         has_bn (bool): Specifies to use batchnorm or not. Default: False.
         momentum (float): Momentum for moving average for batchnorm, must be [0, 1]. Default:0.9
         eps (float): Term added to the denominator to improve numerical stability for batchnorm, should be greater

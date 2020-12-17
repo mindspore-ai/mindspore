@@ -3018,7 +3018,7 @@ class GetNext(PrimitiveWithInfer):
         >>> relu = P.ReLU()
         >>> result = relu(data).asnumpy()
         >>> print(result.shape)
-        >>> (32, 1, 32, 32)
+        (32, 1, 32, 32)
     """
 
     @prim_attr_register
