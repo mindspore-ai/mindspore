@@ -153,6 +153,18 @@ STATUS TfliteModelParser::ConvertOps() {
         MS_LOG(ERROR) << "convert " << op_name << " node: " << input_idx << " const node failed.";
         continue;
       }
+
+      if (tflite_op_type == tflite::BuiltinOperator_CONV_2D ||
+          tflite_op_type == tflite::BuiltinOperator_DEPTHWISE_CONV_2D ||
+          tflite_op_type == tflite::BuiltinOperator_FULLY_CONNECTED) {
+        if (op_inputs.size() == 2) {
+          parameter->set_name(op_name + "/weight");
+        } else if (op_inputs.size() == 3) {
+          parameter->set_name(op_name + "/bias");
+        }
+      } else {
+        parameter->set_name(op_name + "/input-" + std::to_string(op_inputs.size() - 1));
+      }
       op_inputs.emplace_back(parameter);
       nodes_.insert(std::pair(input_idx, parameter));
     }

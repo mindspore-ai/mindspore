@@ -182,7 +182,7 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
       auto type_ptr = TypeIdToType(TypeId::kNumberTypeFloat32);
       auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
       parameter->set_abstract(abstract_tensor);
-      parameter->set_name("graph-input-" + std::to_string(i));
+      parameter->set_name("graph_input-" + std::to_string(i));
       nodes_.insert(std::pair(layer.top(0), parameter));
       return RET_OK;
     }
@@ -205,7 +205,7 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
       auto type_ptr = TypeIdToType(TypeId::kNumberTypeFloat32);
       auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape);
       parameter->set_abstract(abstract_tensor);
-      parameter->set_name("graph-input-" + caffe_model_.input(i));
+      parameter->set_name("graph_input-" + caffe_model_.input(i));
       nodes_.insert(std::pair(caffe_model_.input(i), parameter));
     }
   } else {
@@ -219,7 +219,7 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
       auto type_ptr = TypeIdToType(TypeId::kNumberTypeFloat32);
       auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
       parameter->set_abstract(abstract_tensor);
-      parameter->set_name("graph-input-" + caffe_model_.input(i));
+      parameter->set_name("graph_input-" + caffe_model_.input(i));
       nodes_.insert(std::pair(caffe_model_.input(i), parameter));
     }
   }

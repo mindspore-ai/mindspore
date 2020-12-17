@@ -40,7 +40,6 @@ PrimitiveC *TfliteUniqueParser::ParseLitePrimitive(const std::unique_ptr<tflite:
     MS_LOG(ERROR) << "get op unique attr failed";
     return nullptr;
   }
-  attr->outType = GetTfliteDataType(tflite_attr->idx_out_type);
 
   primitive->value.type = schema::PrimitiveType_Unique;
   primitive->value.value = attr.release();

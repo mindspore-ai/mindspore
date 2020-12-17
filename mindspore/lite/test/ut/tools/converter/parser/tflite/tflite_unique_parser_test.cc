@@ -34,8 +34,6 @@ TEST_F(TestTfliteParserUnique, OpType) {
 
 TEST_F(TestTfliteParserUnique, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsUnique(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsUnique();
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsUnique(), nullptr);
-  ASSERT_EQ(val->outType, 34);
 }
 }  // namespace mindspore
