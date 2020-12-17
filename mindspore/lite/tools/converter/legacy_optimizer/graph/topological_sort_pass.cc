@@ -27,56 +27,71 @@ namespace mindspore {
 namespace lite {
 STATUS TopologicalSortPass::Run(schema::MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
-  std::vector<std::unique_ptr<schema::CNodeT>> newNodes;
-  std::vector<size_t> sinkedTensorIdxes;
-  // put all const tensor index into sinkedTensorIdxes
+  std::vector<std::unique_ptr<schema::CNodeT>> new_nodes;
+  std::vector<size_t> sinked_tensor_idxes;
+  // put all const tensor index into sinked_tensor_idxes
   for (size_t i = 0; i < graph->allTensors.size(); i++) {
     if (graph->allTensors.at(i)->nodeType == schema::NodeType::NodeType_ValueNode) {
-      sinkedTensorIdxes.insert(sinkedTensorIdxes.end(), i);
+      sinked_tensor_idxes.insert(sinked_tensor_idxes.end(), i);
     }
   }
-  auto &oldNodes = graph->nodes;
-  std::queue<std::unique_ptr<schema::CNodeT>> opQueue;
-  // put all non depend node into queue
-  for (auto &node : graph->nodes) {
-    if (IsNodeNonDepend(node, sinkedTensorIdxes)) {
-      sinkedTensorIdxes.insert(sinkedTensorIdxes.end(), node->outputIndex.begin(), node->outputIndex.end());
-      opQueue.push(std::move(node));
-    }
-  }
-  // bfs
-  while (!opQueue.empty()) {
-    auto &node = opQueue.front();
-    auto postNodeIdxes = GetOutputNodeIdx(*graph, *(node.get()));
-    for (auto postNodeIdx : postNodeIdxes) {
-      auto &postNode = oldNodes.at(postNodeIdx);
-      // check if postNode is non-depended
-      if (IsNodeNonDepend(postNode, sinkedTensorIdxes)) {
-        sinkedTensorIdxes.insert(sinkedTensorIdxes.end(), postNode->outputIndex.begin(), postNode->outputIndex.end());
-        opQueue.push(std::move(postNode));
+  auto &old_nodes = graph->nodes;
+  std::queue<std::unique_ptr<schema::CNodeT>> op_queue;
+  // put all none depend node into queue
+  for (size_t i = 0; i < graph->subGraph.size(); i++) {
+    std::vector<unsigned int> new_subgraph_node_indices = {};
+    auto subgraph_node_indices = graph->subGraph[i]->nodeIndices;
+
+    for (size_t j = 0; j < subgraph_node_indices.size(); j++) {
+      auto &node = old_nodes[subgraph_node_indices[j]];
+      if (IsNodeNonDepend(node, sinked_tensor_idxes)) {
+        sinked_tensor_idxes.insert(sinked_tensor_idxes.end(), node->outputIndex.begin(), node->outputIndex.end());
+        op_queue.push(std::move(node));
       }
     }
-    newNodes.emplace_back(std::move(node));
-    opQueue.pop();
+    while (!op_queue.empty()) {
+      auto &node = op_queue.front();
+      auto post_node_idxes = GetOutputNodeIdx(*graph, *(node.get()));
+      for (auto post_node_idx : post_node_idxes) {
+        if (IsContain(subgraph_node_indices, (unsigned int)(post_node_idx))) {
+          auto &post_node = old_nodes.at(post_node_idx);
+          // check if post_node is non-depended
+          if (IsNodeNonDepend(post_node, sinked_tensor_idxes)) {
+            sinked_tensor_idxes.insert(sinked_tensor_idxes.end(), post_node->outputIndex.begin(),
+                                       post_node->outputIndex.end());
+            op_queue.push(std::move(post_node));
+          }
+        }
+      }
+      new_nodes.emplace_back(std::move(node));
+      new_subgraph_node_indices.push_back(new_nodes.size() - 1);
+      op_queue.pop();
+    }
+    graph->subGraph[i]->nodeIndices.swap(new_subgraph_node_indices);
   }
-  if (newNodes.size() != oldNodes.size()) {
-    MS_LOG(ERROR) << "Unknow error in TopologicalSort, oldNodesSize: " << oldNodes.size()
-                  << ", newNodesSize: " << newNodes.size();
+  if (new_nodes.size() != old_nodes.size()) {
+    MS_LOG(ERROR) << "Unknow error in TopologicalSort, old_nodes size: " << old_nodes.size()
+                  << ", new_nodes size: " << new_nodes.size();
     return RET_ERROR;
   }
-  graph->nodes.swap(newNodes);
+  graph->nodes.swap(new_nodes);
   return RET_OK;
 }
 
 bool TopologicalSortPass::IsNodeNonDepend(const std::unique_ptr<schema::CNodeT> &node,
-                                          const std::vector<size_t> &sinkedTensorIdxes) {
+                                          const std::vector<size_t> &sinked_tensor_idxes) {
   MS_ASSERT(node != nullptr);
-  for (auto inputIdx : node->inputIndex) {
-    if (!IsContain(sinkedTensorIdxes, size_t(inputIdx))) {
-      return false;
-    }
+  if (node->primitive->value.type == schema::PrimitiveType_Merge) {
+    auto node_input_index = node->inputIndex;
+    MS_ASSERT(node_input_index.size() % 2 == 0);
+    return std::all_of(node_input_index.begin(), node_input_index.begin() + node_input_index.size() / 2,
+                       [&](size_t input_idx) { return IsContain(sinked_tensor_idxes, input_idx); }) ||
+           std::all_of(node_input_index.begin() + node_input_index.size() / 2, node_input_index.end(),
+                       [&](size_t input_idx) { return IsContain(sinked_tensor_idxes, input_idx); });
+  } else {
+    return std::all_of(node->inputIndex.begin(), node->inputIndex.end(),
+                       [&](size_t input_idx) { return IsContain(sinked_tensor_idxes, size_t(input_idx)); });
   }
-  return true;
 }
 }  // namespace lite
 }  // namespace mindspore

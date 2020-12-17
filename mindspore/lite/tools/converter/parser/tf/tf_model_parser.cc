@@ -37,10 +37,11 @@ static const std::vector<schema::PrimitiveType> tensorListOutputOpList = {
 
 AnfNodePtr GetAnfNode(const std::string &name, const std::unordered_map<std::string, AnfNodePtr> &anf_node_map) {
   AnfNodePtr ret = nullptr;
-  if (anf_node_map.find(name) != anf_node_map.end()) {
-    ret = anf_node_map.at(name);
+  auto flat_anf_name = TensorFlowUtils::GetFlattenNodeName(name);
+  if (anf_node_map.find(flat_anf_name) != anf_node_map.end()) {
+    ret = anf_node_map.at(flat_anf_name);
   } else if (anf_node_map.find(name + ":0") != anf_node_map.end()) {
-    ret = anf_node_map.at(name + ":0");
+    ret = anf_node_map.at(flat_anf_name + ":0");
   }
   return ret;
 }
@@ -212,6 +213,17 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::AttrValue &attr_value
     if (status != RET_OK) {
       return status;
     }
+  } else if (type == kObjectTypeString) {
+    auto tensor_data = new (std::nothrow) string;
+    if (tensor_proto.string_val_size() == 1) {
+      string value = tensor_proto.string_val(0);
+      *tensor_data = value;
+    } else {
+      MS_LOG(ERROR) << "string size bigger than one, not support.";
+      return RET_ERROR;
+    }
+    tensor_size = (*tensor_data).size();
+    param_value->SetTensorData(tensor_data, tensor_size);
   } else {
     MS_LOG(ERROR) << "Unsupport dataType: " << type;
     return RET_ERROR;
@@ -318,6 +330,7 @@ FuncGraphPtr TFModelParser::Parse(const std::string &modelFile, const std::strin
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
     return nullptr;
   }
+  anf_root_graph_->set_attr("graph_name", MakeValue("main_graph"));
 
   for (int i = 0; i < tf_root_graph_->node_size(); i++) {
     auto &node_def = tf_root_graph_->node(i);
@@ -364,7 +377,6 @@ STATUS TFModelParser::ConvertSubgraph() {
   std::map<CNodePtr, FuncGraphPtr> while_cond_map;
   std::map<CNodePtr, FuncGraphPtr> while_body_map;
   for (int i = 0; i < subgraph_size; i++) {
-    std::vector<ParameterPtr> sub_graph_inputs;
     auto &tf_sub_fuction = graph_def_liarary.function(i);
     auto &tf_sub_signature = tf_sub_fuction.signature();
     auto input_arg_size = tf_sub_signature.input_arg_size();
@@ -381,13 +393,17 @@ STATUS TFModelParser::ConvertSubgraph() {
     }
 
     FuncGraphPtr sub_func_graph = std::make_shared<FuncGraph>();
+    sub_func_graph->set_attr("graph_name", MakeValue(sub_graph_name));
     std::unordered_map<std::string, AnfNodePtr> anf_sub_node_map;
     // convert sub graph inputs
+    std::vector<ParameterPtr> sub_graph_inputs;
     for (int j = 0; j < input_arg_size; j++) {
       auto &input_arg = tf_sub_signature.input_arg(j);
       auto paramter = sub_func_graph->add_parameter();
       paramter->set_name(input_arg.name());
       anf_sub_node_map[input_arg.name()] = paramter;
+      auto root_while_inputs = while_cnode->inputs();
+      paramter->set_abstract(root_while_inputs[j + 1]->abstract());
       sub_graph_inputs.emplace_back(paramter);
     }
     std::map<std::string, const tensorflow::NodeDef *> tf_sub_node_map;
@@ -452,8 +468,19 @@ STATUS TFModelParser::ConvertSubgraph() {
     }
     // hardcode subgraph inputs name
     for (size_t j = 0; j < sub_graph_inputs.size(); j++) {
-      sub_graph_inputs[j]->set_name("graph" + std::to_string(i) + "_input_" + std::to_string(j) + "parameter");
+      sub_graph_inputs[j]->set_name(sub_graph_name + "_input_" + std::to_string(j) + "_parameter");
     }
+    // hardcode subgraph outputs name
+    for (size_t j = 1; j < sub_output_nodes.size(); j++) {
+      if (utils::isa<CNodePtr>(sub_output_nodes[j])) {
+        sub_output_nodes[j]->cast<CNodePtr>()->set_fullname_with_scope(sub_graph_name + "_output_" +
+                                                                       std::to_string(j - 1) + "_cnode");
+      } else if (utils::isa<ParameterPtr>(sub_output_nodes[j])) {
+        sub_output_nodes[j]->cast<ParameterPtr>()->set_name(sub_graph_name + "_output_" + std::to_string(j - 1) +
+                                                            "_parameter");
+      }
+    }
+
     MS_LOG(INFO) << "parse subgraph end:" << sub_graph_name;
   }
   auto status = WhileNodePostProcess(while_cond_map, while_body_map);
@@ -469,9 +496,8 @@ STATUS TFModelParser::WhileNodePostProcess(const std::map<CNodePtr, FuncGraphPtr
     MS_LOG(ERROR) << "while cond body size error";
     return RET_ERROR;
   }
-  std::vector<FuncGraphPtr> roots = {anf_root_graph_};
-  auto root_func_manager = std::make_shared<FuncGraphManager>(roots);
-  anf_root_graph_->set_manager(root_func_manager);
+  static auto root_func_manager = Manage(anf_root_graph_);
+
   for (auto &kv : while_cond_map) {
     auto while_node = kv.first;
     auto &cond_sub_graph = kv.second;
@@ -633,6 +659,11 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
   for (auto &pair : tf_root_graph_nodes_) {
     for (int i = 0; i < pair.second->input_size(); ++i) {
       all_node_inputs.insert(TensorFlowUtils::GetNodeName(pair.second->input(i)));
+      auto input_name = pair.second->input(i);
+      if (input_name[0] == '^') {
+        input_name.erase(0, 1);
+      }
+      all_node_inputs.insert(input_name);
     }
   }
   for (auto &pair : tf_root_graph_nodes_) {
@@ -644,7 +675,7 @@ STATUS TFModelParser::ConvertRootGraphOutputs() {
       auto origin_name = GetOriginInputName(*(pair.second), tf_root_graph_nodes_);
       auto anf_node = GetAnfNode(origin_name, anf_root_node_map_);
       if (anf_node == nullptr) {
-        MS_LOG(ERROR) << "can't find anf node";
+        MS_LOG(ERROR) << "can't find anf node: " << origin_name;
         return RET_ERROR;
       }
       output_nodes.push_back(anf_node);

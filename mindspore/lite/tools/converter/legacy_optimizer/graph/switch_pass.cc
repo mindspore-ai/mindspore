@@ -16,6 +16,7 @@
 
 #include <vector>
 #include <map>
+#include <algorithm>
 #include "tools/converter/legacy_optimizer/graph/switch_pass.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
@@ -96,38 +97,6 @@ std::unique_ptr<schema::TensorT> SingleSwitchPass::NewTensor(const std::unique_p
   return out_tensor;
 }
 
-STATUS SingleSwitchPass::MoveMaxIterationToCond() {
-  auto &body_subgraph_input = graph_->subGraph.at(body_subgraph_index_)->inputIndices;
-  for (auto it = body_subgraph_input.begin(); it != body_subgraph_input.end();) {
-    if (!body_to_cond_partial_node_->inputIndex.empty() && IsContain(body_to_cond_partial_node_->inputIndex, *it)) {
-      int32_t max_iteration_idx = it - body_subgraph_input.begin();
-      // get maxiteration tensor
-      auto &max_iteration_tensor = graph_->allTensors.at(cond_partial_node_->inputIndex.at(max_iteration_idx));
-      auto all_tensor_idx = std::find(graph_->allTensors.begin(), graph_->allTensors.end(), max_iteration_tensor) -
-                            graph_->allTensors.begin();
-
-      // remove maxiteration from body_to_cond partial node
-      body_to_cond_partial_node_->inputIndex.erase(body_to_cond_partial_node_->inputIndex.begin() + max_iteration_idx);
-
-      // concat body subgraph tensor to max iteration in all tensor
-      auto body_max_iteration_tensor_idx = body_subgraph_input.at(max_iteration_idx);
-      for (auto &node : cond_graph_nodes_) {
-        std::replace_if(
-          node->inputIndex.begin(), node->inputIndex.end(),
-          [&body_max_iteration_tensor_idx](uint32_t idx) { return idx == body_max_iteration_tensor_idx; },
-          all_tensor_idx);
-      }
-
-      // remove maxiteration from body partial input and body func input
-      body_partial_node_->inputIndex.erase(body_partial_node_->inputIndex.begin() + max_iteration_idx);
-      it = body_subgraph_input.erase(it);
-    } else {
-      it++;
-    }
-  }
-  return RET_OK;
-}
-
 STATUS SingleSwitchPass::InsertMerge() {
   int ret = RET_OK;
   auto merge_node = std::unique_ptr<CNodeT>(new (std::nothrow) CNodeT);
@@ -154,9 +123,9 @@ STATUS SingleSwitchPass::InsertMerge() {
   }
 
   // double merge inputs to contain the outputs of body node
-  for (auto &out_index : origin_switch_output_tensor_indices_) {
-    auto &switch_out_tensor = graph_->allTensors.at(out_index);
-    auto tensor = NewTensor(switch_out_tensor);
+  for (auto &index : cond_partial_node_->inputIndex) {
+    auto &in_tensor = graph_->allTensors.at(index);
+    auto tensor = NewTensor(in_tensor);
     graph_->allTensors.push_back(std::move(tensor));
     merge_node->inputIndex.push_back(graph_->allTensors.size() - 1);
   }
@@ -266,10 +235,6 @@ STATUS SingleSwitchPass::Init() {
     return RET_NULL_PTR;
   }
 
-  if (switch_node_->inputIndex.size() == kSwitchMinInputSize) {
-    return RET_OK;
-  }
-
   if (switch_node_->inputIndex.size() < kSwitchMinInputSize) {
     MS_LOG(ERROR) << "switch node: " << switch_node_->name
                   << " 's input size is not right, size: " << switch_node_->inputIndex.size();
@@ -297,10 +262,6 @@ STATUS SingleSwitchPass::Init() {
     }
   }
 
-  if (cond_partial_node_->primitive->value.type != PrimitiveType_Partial ||
-      body_partial_node_->primitive->value.type != PrimitiveType_Partial) {
-    return RET_OK;
-  }
   // get cond_graph_nodes_
   cond_subgraph_index_ = cond_partial_node_->primitive->value.AsPartial()->subGraphIndex;
   auto cond_node_indices = graph_->subGraph.at(cond_subgraph_index_)->nodeIndices;
@@ -330,17 +291,36 @@ STATUS SingleSwitchPass::UpdateSubgraphInput(const size_t &subgraph_index, schem
     return RET_INPUT_PARAM_INVALID;
   }
   auto &partial_inputs = partial_node->inputIndex;
-  auto &subgraph_inputs = graph_->subGraph.at(subgraph_index)->inputIndices;
+  auto &subgraph = graph_->subGraph.at(subgraph_index);
+  auto &subgraph_inputs = subgraph->inputIndices;
 
   std::map<int, int> subgraph_input_map;
-  std::vector<int> new_subgraph_inputs{};
+  std::vector<std::pair<int, int>> tmp_inputs_order{};
   for (unsigned int &subgraph_input : subgraph_inputs) {
     auto &tensor = graph_->allTensors.at(subgraph_input);
-    // get parameter input index k. subgraph name + “_input_" + "k"
-    char k = tensor->name[graph_->subGraph.at(subgraph_index)->name.size() + 7];
-    int partial_idx = k - '0';
+    if (tensor->name.size() < subgraph->name.size() + 8) {
+      MS_LOG(ERROR) << "tensor name: " << tensor->name << " not right.";
+      return RET_ERROR;
+    }
+    int partial_idx = -1;
+    if (tensor->name.find("_input_") != std::string::npos) {
+      // get parameter input index k. subgraph name + “_input_" + "k"
+      auto pos = subgraph->name.size() + sizeof("_input_");
+      auto pos2 = tensor->name.find('_', pos);
+      auto idx_str = tensor->name.substr(pos - 1, pos2);
+      partial_idx = std::stoi(idx_str);
+    }
+
+    if (tensor->name.find("_output_") != std::string::npos) {
+      // get parameter input index k. subgraph name + “_output_" + "k"
+      auto pos = subgraph->name.size() + sizeof("_output_");
+      auto pos2 = tensor->name.find('_', pos);
+      auto idx_str = tensor->name.substr(pos - 1, pos2);
+      partial_idx = std::stoi(idx_str);
+    }
+
     subgraph_input_map.insert(std::pair<int, int>{subgraph_input, partial_inputs[partial_idx]});
-    new_subgraph_inputs.push_back(partial_inputs[partial_idx]);
+    tmp_inputs_order.emplace_back(partial_idx, partial_inputs[partial_idx]);
   }
 
   for (auto &subgraph_node : subgraph_nodes) {
@@ -350,6 +330,13 @@ STATUS SingleSwitchPass::UpdateSubgraphInput(const size_t &subgraph_index, schem
       }
     }
   }
+
+  std::sort(tmp_inputs_order.begin(), tmp_inputs_order.end(),
+            [](std::pair<int, int> a, std::pair<int, int> b) { return a.first < b.first; });
+
+  std::vector<int> new_subgraph_inputs{};
+  std::transform(tmp_inputs_order.begin(), tmp_inputs_order.end(), std::back_inserter(new_subgraph_inputs),
+                 [](std::pair<int, int> iter) { return iter.second; });
   subgraph_inputs.assign(new_subgraph_inputs.begin(), new_subgraph_inputs.end());
 
   return RET_OK;
@@ -362,17 +349,28 @@ STATUS SingleSwitchPass::UpdateSubgraphOutput(const size_t &subgraph_index, sche
     return RET_INPUT_PARAM_INVALID;
   }
   auto &partial_outputs = partial_node->outputIndex;
-  auto &subgraph_outputs = graph_->subGraph.at(subgraph_index)->outputIndices;
+  auto &subgraph = graph_->subGraph.at(subgraph_index);
+  auto &subgraph_outputs = subgraph->outputIndices;
 
   std::map<int, int> subgraph_output_map;
-  std::vector<int> new_subgraph_outputs{};
+  std::vector<std::pair<int, int>> tmp_outputs_order{};
   for (unsigned int &subgraph_output : subgraph_outputs) {
-    auto &tensor = graph_->allTensors.at(subgraph_output);
-    // get parameter input index k. subgraph name + “_output_" + "k"
-    char k = tensor->name[graph_->subGraph.at(subgraph_index)->name.size() + 8];
-    int partial_idx = k - '0';
-    subgraph_output_map.insert(std::pair<int, int>{subgraph_output, partial_outputs[partial_idx]});
-    new_subgraph_outputs.push_back(partial_outputs[partial_idx]);
+    for (auto &node : subgraph_nodes) {
+      if (IsContain(node->outputIndex, subgraph_output)) {
+        int partial_idx = -1;
+        if (node->name == "LogicalAnd") {
+          partial_idx = 0;
+        } else {
+          // get parameter input index k. subgraph name + “_output_" + "k"
+          auto pos = subgraph->name.size() + sizeof("_output_");
+          auto pos2 = node->name.find('_', pos);
+          auto idx_str = node->name.substr(pos - 1, pos2);
+          partial_idx = std::stoi(idx_str);
+        }
+        subgraph_output_map.insert(std::pair<int, int>{subgraph_output, partial_outputs[partial_idx]});
+        tmp_outputs_order.emplace_back(partial_idx, partial_outputs[partial_idx]);
+      }
+    }
   }
 
   for (auto &subgraph_node : subgraph_nodes) {
@@ -382,6 +380,10 @@ STATUS SingleSwitchPass::UpdateSubgraphOutput(const size_t &subgraph_index, sche
       }
     }
   }
+
+  std::vector<int> new_subgraph_outputs{};
+  std::transform(tmp_outputs_order.begin(), tmp_outputs_order.end(), std::back_inserter(new_subgraph_outputs),
+                 [](std::pair<int, int> iter) { return iter.second; });
   subgraph_outputs.assign(new_subgraph_outputs.begin(), new_subgraph_outputs.end());
 
   return RET_OK;
@@ -416,125 +418,11 @@ STATUS SingleSwitchPass::ConcatBodySubgraphInputAndOutput() {
   return ret;
 }
 
-STATUS SingleSwitchPass::ConvertSwitchToSelect() {
-  MS_ASSERT(switch_node_->inputIndex.size() >= 3);
-  MS_ASSERT(switch_node_->inputIndex.size() % 2 != 0);
-  MS_ASSERT(switch_node_->outputIndex.size() * 2 + 1 == switch_node_->inputIndex.size());
-  auto bool_index = switch_node_->inputIndex.front();
-
-  // insert switch node1
-  auto switch_node1 = std::make_unique<CNodeT>();
-  switch_node1->name = switch_node_->name + "-Switch-1";
-  switch_node1->primitive = std::make_unique<PrimitiveT>();
-  switch_node1->primitive->value.type = PrimitiveType_Switch;
-  switch_node1->primitive->value.value = new (std::nothrow) SwitchT();
-  switch_node1->inputIndex = {bool_index};
-  std::vector<int> part_one_input_index(
-    switch_node_->inputIndex.begin() + 1,
-    switch_node_->inputIndex.begin() + 1 + (switch_node_->inputIndex.size() - 1) / 2);
-  switch_node1->inputIndex.insert(switch_node1->inputIndex.end(), part_one_input_index.begin(),
-                                  part_one_input_index.end());
-  std::vector<std::unique_ptr<TensorT>> switch_output_tensors1(part_one_input_index.size() * 2);
-  std::vector<int> switch_output_indexes1(part_one_input_index.size() * 2);
-  int i = 0;
-  for (const auto &input_index : part_one_input_index) {
-    auto &switch_in_tensor = graph_->allTensors.at(input_index);
-    auto tensor1 = NewTensor(switch_in_tensor);
-    auto tensor2 = NewTensor(switch_in_tensor);
-    switch_output_tensors1[i] = std::move(tensor1);
-    switch_output_tensors1[part_one_input_index.size() + i] = std::move(tensor2);
-    switch_output_indexes1[i] = graph_->allTensors.size() - 1 + i;
-    switch_output_indexes1[part_one_input_index.size() + i] =
-      graph_->allTensors.size() - 1 + i + part_one_input_index.size();
-    i++;
-  }
-  for (auto &tensor : switch_output_tensors1) {
-    graph_->allTensors.emplace_back(std::move(tensor));
-  }
-  switch_node1->outputIndex.insert(switch_node1->outputIndex.begin(), switch_output_indexes1.begin(),
-                                   switch_output_indexes1.end());
-
-  // insert switch node2
-  auto switch_node2 = std::make_unique<CNodeT>();
-  switch_node2->name = switch_node_->name + "-Switch-1";
-  switch_node2->primitive = std::make_unique<PrimitiveT>();
-  switch_node2->primitive->value.type = PrimitiveType_Switch;
-  switch_node2->primitive->value.value = new (std::nothrow) SwitchT();
-  switch_node2->inputIndex = {bool_index};
-
-  std::vector<int> part_two_input_index(
-    switch_node_->inputIndex.begin() + 1 + (switch_node_->inputIndex.size() - 1) / 2, switch_node_->inputIndex.end());
-  switch_node2->inputIndex.insert(switch_node2->inputIndex.end(), part_two_input_index.begin(),
-                                  part_two_input_index.end());
-  std::vector<std::unique_ptr<TensorT>> switch_output_tensors2(part_two_input_index.size() * 2);
-  std::vector<int> switch_output_indexes2(part_two_input_index.size() * 2);
-  i = 0;
-  for (const auto &input_index : part_two_input_index) {
-    auto &switch_in_tensor = graph_->allTensors.at(input_index);
-    auto tensor1 = NewTensor(switch_in_tensor);
-    auto tensor2 = NewTensor(switch_in_tensor);
-    switch_output_tensors2[i] = std::move(tensor1);
-    switch_output_tensors2[part_two_input_index.size() + i] = std::move(tensor2);
-    switch_output_indexes2[i] = graph_->allTensors.size() - 1 + i;
-    switch_output_indexes2[part_two_input_index.size() + i] =
-      graph_->allTensors.size() - 1 + i + part_two_input_index.size();
-    i++;
-  }
-  for (auto &tensor : switch_output_tensors2) {
-    graph_->allTensors.emplace_back(std::move(tensor));
-  }
-  switch_node2->outputIndex.insert(switch_node2->outputIndex.begin(), switch_output_indexes2.begin(),
-                                   switch_output_indexes2.end());
-
-  // insert merge
-  auto merge_node = std::make_unique<CNodeT>();
-  merge_node->name = switch_node_->name + "-Merge";
-  merge_node->primitive = std::make_unique<PrimitiveT>();
-  merge_node->primitive->value.type = PrimitiveType_Merge;
-  merge_node->primitive->value.value = new (std::nothrow) MergeT();
-
-  std::vector<int> merge_input_indexes(switch_node_->outputIndex.size() * 2);
-  for (i = 0; i < switch_node_->outputIndex.size(); i++) {
-    merge_input_indexes[i] = switch_output_indexes1[i];
-    merge_input_indexes[i + switch_node_->outputIndex.size()] =
-      switch_output_indexes2[i + switch_node_->outputIndex.size()];
-    merge_node->outputIndex.emplace_back(switch_node_->outputIndex.at(i));
-  }
-  merge_node->inputIndex.insert(merge_node->inputIndex.end(), merge_input_indexes.begin(), merge_input_indexes.end());
-  graph_->nodes.emplace_back(std::move(switch_node1));
-  graph_->subGraph.at(this_subgraph_index_)->nodeIndices.push_back(graph_->nodes.size() - 1);
-  graph_->nodes.emplace_back(std::move(switch_node2));
-  graph_->subGraph.at(this_subgraph_index_)->nodeIndices.push_back(graph_->nodes.size() - 1);
-  graph_->nodes.emplace_back(std::move(merge_node));
-  graph_->subGraph.at(this_subgraph_index_)->nodeIndices.push_back(graph_->nodes.size() - 1);
-
-  RemoveUselessNode(switch_node_, graph_);
-  return RET_OK;
-}
-
 STATUS SingleSwitchPass::Run() {
   int ret = Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init failed, ret: " << ret;
     return ret;
-  }
-
-  if (switch_node_->inputIndex.size() == kSwitchMinInputSize) {
-    return RET_OK;
-  }
-
-  if (cond_partial_node_->primitive->value.type != PrimitiveType_Partial ||
-      body_partial_node_->primitive->value.type != PrimitiveType_Partial) {
-    ret = ConvertSwitchToSelect();
-    return ret;
-  }
-
-  if (IsLoop()) {
-    ret = MoveMaxIterationToCond();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "MoveMaxIterationToCond failed, ret: " << ret;
-      return ret;
-    }
   }
 
   ret = DoubleSwitchOutput();

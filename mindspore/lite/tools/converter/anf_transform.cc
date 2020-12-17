@@ -42,6 +42,7 @@
 #include "tools/optimizer/graph/unused_transpose_node_remove_pass.h"
 #include "tools/optimizer/graph/infershape_pass.h"
 #include "tools/optimizer/graph/slice_prepose_pass.h"
+#include "tools/optimizer/graph/while_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
@@ -52,18 +53,21 @@ AnfTransform::AnfTransform() = default;
 
 AnfTransform::~AnfTransform() = default;
 
-FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const converter::Flags *config) {
+FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   MS_ASSERT(nullptr != old_graph);
   if (config == nullptr) {
-    MS_LOG(ERROR) << "config shoud be specified";
+    MS_LOG(ERROR) << "config should be specified";
     return nullptr;
+  }
+  if (old_graph->has_flag("HasTransformed")) {
+    old_graph->set_flag("HasTransformed", false);
+    return old_graph;
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto fusion_pm = std::make_shared<opt::PassManager>("anf fusion pass manager", false);
   auto graph_pm = std::make_shared<opt::PassManager>("anf graph pass manager", true);
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
 
-  // mindir pre adjustment
   if (config->fmk == converter::FmkType_MS) {
     auto mindir_adjust_pass = std::make_shared<opt::MindirAdjustPass>();
     mindir_adjust_pass->SetFmkType(config->fmk);
@@ -85,7 +89,12 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
     }
   }
 
-  // for now - trainning is not supporting fuse operations
+  if (config->fmk == lite::converter::FmkType_TFLITE || config->fmk == lite::converter::FmkType_TF) {
+    auto while_pass = std::make_shared<opt::WhilePass>();
+    graph_pm->AddPass(while_pass);
+  }
+
+  // for now - training is not supporting fuse operations
   if (!config->trainModel) {
     // remove quantdtype when awaretraining
     fusion_pm->AddPass(std::make_shared<opt::RemoveIdentityOpPass>());
@@ -191,7 +200,46 @@ FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &old_graph, const conver
       return nullptr;
     }
   }
-
   return new_graph;
+}
+
+STATUS AnfTransform::GetAllFuncGraph(const FuncGraphPtr &main_graph, FuncGraphPtrList *subgraphs,
+                                     std::vector<ValueNodePtr> *vnodes) {
+  auto nodes = TopoSort(main_graph->get_return());
+  for (auto &node : nodes) {
+    auto fg = GetValueNode<FuncGraphPtr>(node);
+    if (fg) {
+      vnodes->push_back(utils::cast<ValueNodePtr>(node));
+      subgraphs->push_back(fg);
+    }
+  }
+  return RET_OK;
+}
+
+FuncGraphPtr AnfTransform::Transform(const FuncGraphPtr &main_graph, const converter::Flags *config) {
+  // transform main_graph
+  auto new_main_graph = TransformSingleFuncGraph(main_graph, config);
+  if (new_main_graph == nullptr) {
+    MS_LOG(ERROR) << "TransformSingleFuncGraph failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return nullptr;
+  }
+
+  // transform sub_graph
+  FuncGraphPtrList subgraphs{};
+  std::vector<ValueNodePtr> vnodes{};
+  int ret = GetAllFuncGraph(main_graph, &subgraphs, &vnodes);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "GetAllFuncGraph failed " << ret;
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
+    return nullptr;
+  }
+  for (size_t i = 0; i < subgraphs.size(); i++) {
+    auto new_graph = Transform(subgraphs.at(i), config);
+    new_graph->set_flag("HasTransformed", true);
+    vnodes.at(i)->set_value(new_graph);
+  }
+
+  return new_main_graph;
 }
 }  // namespace mindspore::lite

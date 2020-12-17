@@ -80,6 +80,7 @@ FuncGraphPtr OnnxModelParser::Parse(const std::string &model_file, const std::st
     MS_LOG(ERROR) << "convert graph outputs failed.";
     return nullptr;
   }
+  func_graph_ptr_->set_attr("graph_name", MakeValue("main_graph"));
   return func_graph_ptr_;
 }
 
