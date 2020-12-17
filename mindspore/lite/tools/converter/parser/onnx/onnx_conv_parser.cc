@@ -46,7 +46,6 @@ bool OnnxConvParser::ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT
   depthwiseConv2DParam->padRight = attr->padRight;
   depthwiseConv2DParam->dilateW = attr->dilateW;
   depthwiseConv2DParam->dilateH = attr->dilateH;
-  depthwiseConv2DParam->hasBias = attr->hasBias;
   depthwiseConv2DParam->activationType = attr->activationType;
 
   primitive->value.type = schema::PrimitiveType_DepthwiseConv2D;
@@ -162,7 +161,6 @@ lite::PrimitiveC *OnnxConvParser::ParseLitePrimitive(const onnx::GraphProto &onn
     attr->channelOut = dims.at(0);
     attr->channelIn = dims.at(3) * attr->group;
   }
-  attr->hasBias = onnx_node.input().size() == 3;
   if (onnx_node.op_type() == "ConvRelu" || onnx_node.op_type() == "Int8ConvRelu") {
     attr->activationType = schema::ActivationType_RELU;
   } else {

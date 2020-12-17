@@ -37,7 +37,6 @@ int Conv2DGradFilter::GetPadLeft() const { return this->primitive_->value.AsConv
 int Conv2DGradFilter::GetPadRight() const { return this->primitive_->value.AsConv2DGradFilter()->padRight; }
 int Conv2DGradFilter::GetDilateW() const { return this->primitive_->value.AsConv2DGradFilter()->dilateW; }
 int Conv2DGradFilter::GetDilateH() const { return this->primitive_->value.AsConv2DGradFilter()->dilateH; }
-bool Conv2DGradFilter::GetHasBias() const { return this->primitive_->value.AsConv2DGradFilter()->hasBias; }
 
 int Conv2DGradFilter::GetActivationType() const { return this->primitive_->value.AsConv2DGradFilter()->activationType; }
 
@@ -66,7 +65,6 @@ void Conv2DGradFilter::SetPadRight(int pad_right) {
 }
 void Conv2DGradFilter::SetDilateW(int dilate_w) { this->primitive_->value.AsConv2DGradFilter()->dilateW = dilate_w; }
 void Conv2DGradFilter::SetDilateH(int dilate_h) { this->primitive_->value.AsConv2DGradFilter()->dilateH = dilate_h; }
-void Conv2DGradFilter::SetHasBias(bool has_bias) { this->primitive_->value.AsConv2DGradFilter()->hasBias = has_bias; }
 std::vector<int> Conv2DGradFilter::GetFilterShape() const {
   return this->primitive_->value.AsConv2DGradFilter()->filter_shape;
 }
@@ -206,7 +204,6 @@ int Conv2DGradFilter::GetPadLeft() const { return this->primitive_->value_as_Con
 int Conv2DGradFilter::GetPadRight() const { return this->primitive_->value_as_Conv2DGradFilter()->padRight(); }
 int Conv2DGradFilter::GetDilateW() const { return this->primitive_->value_as_Conv2DGradFilter()->dilateW(); }
 int Conv2DGradFilter::GetDilateH() const { return this->primitive_->value_as_Conv2DGradFilter()->dilateH(); }
-bool Conv2DGradFilter::GetHasBias() const { return this->primitive_->value_as_Conv2DGradFilter()->hasBias(); }
 std::vector<int> Conv2DGradFilter::GetFilterShape() const {
   auto fb_vector = this->primitive_->value_as_Conv2DGradFilter()->filter_shape();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());

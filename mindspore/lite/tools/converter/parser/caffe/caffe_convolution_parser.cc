@@ -43,7 +43,6 @@ STATUS CaffeConvolutionParser::ParseGroupConvolution(schema::PrimitiveT *primiti
   depthwiseConv2DParam->padRight = attr->padRight;
   depthwiseConv2DParam->dilateW = attr->dilateW;
   depthwiseConv2DParam->dilateH = attr->dilateH;
-  depthwiseConv2DParam->hasBias = attr->hasBias;
   depthwiseConv2DParam->activationType = attr->activationType;
   delete attr;
   primitiveT->value.type = schema::PrimitiveType_DepthwiseConv2D;
@@ -104,7 +103,6 @@ PrimitiveC *CaffeConvolutionParser::ParseLitePrimitive(const caffe::LayerParamet
   attr->kernelH = kernel[0];
   attr->kernelW = kernel[1];
 
-  attr->hasBias = convParam.bias_term();
   attr->group = CaffeConvBaseParser::ParseGroup(convParam, proto.type());
   auto ret = CaffeConvBaseParser::ParseChannelOut(convParam, &(attr->channelOut));
   if (ret != RET_OK) {

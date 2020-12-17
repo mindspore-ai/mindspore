@@ -49,7 +49,6 @@ class Conv2D : public PrimitiveC {
   virtual void SetPadRight(int pad_right);
   virtual void SetDilateW(int dilate_w);
   virtual void SetDilateH(int dilate_h);
-  virtual void SetHasBias(bool has_bias);
   virtual void SetActivationType(int activation_type);
 
  private:
@@ -82,7 +81,6 @@ class Conv2D : public PrimitiveC {
   virtual int GetPadRight() const;
   virtual int GetDilateW() const;
   virtual int GetDilateH() const;
-  virtual bool GetHasBias() const;
   virtual int GetActivationType() const;
 
  protected:

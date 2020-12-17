@@ -41,7 +41,6 @@ lite::PrimitiveC *TfliteDepthwiseConv2DParser::ParseLitePrimitive(const std::uni
   attr->padMode = GetPadMode(tflite_attr->padding);
   attr->format = schema::Format::Format_NHWC;
   attr->activationType = GetActivationFunctionType(tflite_attr->fused_activation_function);
-  attr->hasBias = true;
   attr->channelMultiplier = tflite_attr->depth_multiplier;
 
   // get the data tensor

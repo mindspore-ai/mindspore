@@ -92,7 +92,6 @@ bool GroupDepthwiseOpConvertPass::Run(const FuncGraphPtr &graph) {
       conv_attr->padRight = attr->padRight;
       conv_attr->dilateH = attr->dilateH;
       conv_attr->dilateW = attr->dilateW;
-      conv_attr->hasBias = attr->hasBias;
       conv_attr->activationType = attr->activationType;
 
       depthwise_primitivec->primitiveT()->value.type = schema::PrimitiveType_Conv2D;

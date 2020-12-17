@@ -38,7 +38,6 @@ int Conv2DGradInput::GetPadLeft() const { return this->primitive_->value.AsConv2
 int Conv2DGradInput::GetPadRight() const { return this->primitive_->value.AsConv2DGradInput()->padRight; }
 int Conv2DGradInput::GetDilateW() const { return this->primitive_->value.AsConv2DGradInput()->dilateW; }
 int Conv2DGradInput::GetDilateH() const { return this->primitive_->value.AsConv2DGradInput()->dilateH; }
-bool Conv2DGradInput::GetHasBias() const { return this->primitive_->value.AsConv2DGradInput()->hasBias; }
 std::vector<int> Conv2DGradInput::GetInputShape() const {
   return this->primitive_->value.AsConv2DGradInput()->input_shape;
 }
@@ -67,7 +66,6 @@ void Conv2DGradInput::SetPadLeft(int pad_left) { this->primitive_->value.AsConv2
 void Conv2DGradInput::SetPadRight(int pad_right) { this->primitive_->value.AsConv2DGradInput()->padRight = pad_right; }
 void Conv2DGradInput::SetDilateW(int dilate_w) { this->primitive_->value.AsConv2DGradInput()->dilateW = dilate_w; }
 void Conv2DGradInput::SetDilateH(int dilate_h) { this->primitive_->value.AsConv2DGradInput()->dilateH = dilate_h; }
-void Conv2DGradInput::SetHasBias(bool has_bias) { this->primitive_->value.AsConv2DGradInput()->hasBias = has_bias; }
 void Conv2DGradInput::SetActivationType(int activation_type) {
   this->primitive_->value.AsConv2DGradInput()->activationType = (schema::ActivationType)activation_type;
 }
@@ -207,7 +205,6 @@ int Conv2DGradInput::GetPadLeft() const { return this->primitive_->value_as_Conv
 int Conv2DGradInput::GetPadRight() const { return this->primitive_->value_as_Conv2DGradInput()->padRight(); }
 int Conv2DGradInput::GetDilateW() const { return this->primitive_->value_as_Conv2DGradInput()->dilateW(); }
 int Conv2DGradInput::GetDilateH() const { return this->primitive_->value_as_Conv2DGradInput()->dilateH(); }
-bool Conv2DGradInput::GetHasBias() const { return this->primitive_->value_as_Conv2DGradInput()->hasBias(); }
 std::vector<int> Conv2DGradInput::GetInputShape() const {
   auto fb_vector = this->primitive_->value_as_Conv2DGradInput()->input_shape();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());

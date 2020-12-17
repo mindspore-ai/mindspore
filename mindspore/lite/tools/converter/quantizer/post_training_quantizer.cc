@@ -1470,25 +1470,6 @@ STATUS PostTrainingQuantizer::BiasCorrection(const FuncGraphPtr &func_graph) {
         parameter->set_default_param(param_value);
         cnode->add_input(parameter);
         DoBiasQuant(parameter, primitive_c);
-
-        auto op_type = (schema::PrimitiveType)primitive_c->Type();
-        if (op_type == schema::PrimitiveType_Conv2D) {
-          auto conv2d = primitive_c->primitiveT()->value.AsConv2D();
-          if (conv2d == nullptr) {
-            MS_LOG(ERROR) << "conv2d is null";
-            delete[] tensor_data;
-            return RET_ERROR;
-          }
-          conv2d->hasBias = true;
-        } else if (op_type == schema::PrimitiveType_DepthwiseConv2D) {
-          auto depthwise_conv2d = primitive_c->primitiveT()->value.AsDepthwiseConv2D();
-          if (depthwise_conv2d == nullptr) {
-            MS_LOG(ERROR) << "conv2d is null";
-            delete[] tensor_data;
-            return RET_ERROR;
-          }
-          depthwise_conv2d->hasBias = true;
-        }
         delete[] tensor_data;
       } else {
         MS_LOG(ERROR) << "unexpected input_quant_params size: " << input_quant_params.size();

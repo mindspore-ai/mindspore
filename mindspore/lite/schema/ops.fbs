@@ -203,7 +203,7 @@ table Conv2D {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool = false;
+    hasBias: bool = false;  // DEPRECATED
     activationType: ActivationType = 0;
 }
 
@@ -243,7 +243,7 @@ table Conv2DGradFilter {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool = false;
+    hasBias: bool = false;  // DEPRECATED
     filter_shape: [int];
     activationType: ActivationType = 0;
 }
@@ -264,7 +264,7 @@ table Conv2DGradInput {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool = false;
+    hasBias: bool = false;  // DEPRECATED
     input_shape: [int];
     activationType: ActivationType = 0;
 }
@@ -285,7 +285,7 @@ table GroupConv2DGradInput {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool = false;
+    hasBias: bool = false;  // DEPRECATED
     input_shape: [int];
     activationType: ActivationType = 0;
 }
@@ -394,7 +394,7 @@ table DepthwiseConv2D {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool  = false;
+    hasBias: bool  = false;  // DEPRECATED
     activationType: ActivationType = 0;
 }
 
@@ -413,7 +413,7 @@ table DeDepthwiseConv2D {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool  = false;
+    hasBias: bool  = false;  // DEPRECATED
     activationType: ActivationType = 0;
 }
 
@@ -478,7 +478,7 @@ table DeConv2D {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool = false;
+    hasBias: bool = false;  // DEPRECATED
     activationType: ActivationType = 0;
 }
 
@@ -498,7 +498,7 @@ table DeConv2DGradFilter {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool = false;
+    hasBias: bool = false;  // DEPRECATED
     activationType: ActivationType = 0;
 }
 

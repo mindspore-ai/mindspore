@@ -46,7 +46,6 @@ bool OnnxDeConvParser::ParseGroupDeConvolution(const std::unique_ptr<schema::DeC
   deDepthwiseConv2DParam->padRight = attr->padRight;
   deDepthwiseConv2DParam->dilateW = attr->dilateW;
   deDepthwiseConv2DParam->dilateH = attr->dilateH;
-  deDepthwiseConv2DParam->hasBias = attr->hasBias;
   deDepthwiseConv2DParam->activationType = attr->activationType;
 
   primitive->value.type = schema::PrimitiveType_DeDepthwiseConv2D;
@@ -146,7 +145,6 @@ lite::PrimitiveC *OnnxDeConvParser::ParseLitePrimitive(const onnx::GraphProto &o
   attr->channelOut = weight_shape[1] * attr->group;
 
   attr->format = schema::Format::Format_NCHW;
-  attr->hasBias = onnx_node.input().size() == 3;
 
   auto primitive = std::make_unique<schema::PrimitiveT>();
   if (primitive == nullptr) {

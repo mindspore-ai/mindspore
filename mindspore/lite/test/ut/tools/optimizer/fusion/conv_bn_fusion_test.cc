@@ -274,9 +274,6 @@ TEST_F(ConvBNFusionTest, TestConvAddNode) {
   ASSERT_NE(nullptr, new_graph);
   auto new_meta_graph = lite::Export(new_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);
-  for (auto &cnode : new_meta_graph->nodes) {
-    ASSERT_EQ(cnode->primitive->value.AsConv2D()->hasBias, true);
-  }
 }
 
 TEST_F(ConvBNFusionTest, TestDeptiwiseConvAddNode) {
@@ -287,8 +284,5 @@ TEST_F(ConvBNFusionTest, TestDeptiwiseConvAddNode) {
   ASSERT_NE(nullptr, new_graph);
   auto new_meta_graph = lite::Export(new_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);
-  for (auto &cnode : new_meta_graph->nodes) {
-    ASSERT_EQ(cnode->primitive->value.AsDepthwiseConv2D()->hasBias, true);
-  }
 }
 }  // namespace mindspore
