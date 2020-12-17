@@ -41,8 +41,10 @@ class QuantDTypeCastFp16CPUKernel : public LiteKernel {
   int thread_n_stride_;
   int num_unit_;
   int8_t *int8_ptr_;
+  uint8_t *uint8_ptr_;
   float16_t *float16_ptr_;
-  bool inverse_;
+  bool int_to_float_;
+  bool is_uint8_;
 };
 }  // namespace mindspore::kernel
 
