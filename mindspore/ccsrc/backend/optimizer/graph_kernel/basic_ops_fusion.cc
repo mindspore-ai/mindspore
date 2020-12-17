@@ -97,15 +97,6 @@ AnfNodePtrList RemoveWildGetitem(const AnfNodePtrList &fused_op) {
         remove_list = DeepLinkedGraphSearch(getitem, check_include);
         break;
       }
-
-      // To fix the issue of getitem-index, only support to fuse the previous node with its all users.
-      const auto &brothers = mng->node_users()[prev_node];
-      if (std::any_of(brothers.begin(), brothers.end(), [check_include](const std::pair<AnfNodePtr, int> &user) {
-            return check_include(user.first) == EXCLUDE;
-          })) {
-        remove_list = DeepLinkedGraphSearch(getitem, check_include);
-        break;
-      }
     }
     if (!remove_list.empty()) {
       for (auto node : remove_list) {

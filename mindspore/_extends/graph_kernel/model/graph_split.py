@@ -31,12 +31,8 @@ class GraphSplitByPattern:
             self.ops = [init_op]
             self.in_relations = dict()  # {area1: relation1, area2: relation2, ...}
             self.out_relations = dict()  # {area1: relation1, area2: relation2, ...}
-            self.mode = self.MODE_BASIC
-            if self.pattern == PrimLib.TRANSFORM or self.pattern == PrimLib.BROADCAST or \
-                    (use_poly_reduce and self.pattern == PrimLib.REDUCE):
-                self.mode = self.MODE_COMPOSITE
-            if init_op.prim == "AddN":
-                self.mode = self.MODE_COMPOSITE
+            self.mode = None
+            self.set_default_mode()
             self.is_output = is_output
             self.output_excluded = set()
             if self.pattern == PrimLib.REDUCE:
@@ -54,6 +50,17 @@ class GraphSplitByPattern:
 
         def __repr__(self):
             return str(self)
+
+        def set_default_mode(self):
+            def _get_default_mode(op):
+                if op.prim == "AddN":
+                    return self.MODE_COMPOSITE
+                pattern = PrimLib.iter_type(op)
+                if pattern == PrimLib.TRANSFORM or pattern == PrimLib.BROADCAST or \
+                        (use_poly_reduce and pattern == PrimLib.REDUCE):
+                    return self.MODE_COMPOSITE
+                return self.MODE_BASIC
+            self.mode = _get_default_mode(self.ops[0])
 
         def get_relation(self, op, i):
             relation = PrimLib.UNKNOWN
@@ -359,8 +366,39 @@ class GraphSplitByPattern:
             if use_poly_reduce:
                 changed = self.fuse(_reduce_output) or changed
         self.fuse(_transpose)
+
+        # The reshape should not be output node
+        # Note: after this function, the input output relation is not maintained.
+        self.split_output_reshapes()
+
         subgraphs, graphmodes = self.to_subgraphs()
         return subgraphs, graphmodes
+
+    def split_output_reshapes(self):
+        """Force split the output reshapes into other new """
+        new_areas = []
+        for area in self.areas:
+            out_reshape_ops = [op for op in area.ops if PrimLib.iter_type(op) == PrimLib.RESHAPE]
+            remain_ops = [op for op in area.ops if op not in out_reshape_ops]
+            if not remain_ops or not out_reshape_ops:
+                continue
+            changed = True
+            while changed:
+                changed = False
+                for op in out_reshape_ops:
+                    if any([to_op in remain_ops for to_op in op.output.to_ops]):
+                        out_reshape_ops.remove(op)
+                        remain_ops.append(op)
+                        changed = True
+                        break
+            if out_reshape_ops:
+                for op in out_reshape_ops:
+                    new_areas.append(self.Area(op, False))
+                area.ops = remain_ops
+                if len(remain_ops) == 1:
+                    area.set_default_mode()
+        if new_areas:
+            self.areas += new_areas
 
 
 def split(graph):

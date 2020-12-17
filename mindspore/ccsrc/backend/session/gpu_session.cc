@@ -188,6 +188,8 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   pm->AddPass(std::make_shared<opt::TensorPromotion>());
   pm->AddPass(std::make_shared<opt::GraphKernelSplitter>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
+  // The CSE may output a graph with repeated outputs.
+  pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
   // After Simplify and Splitter, a lot of redundant getitem/maketuple
   // will be exposed, use GetitemTuple Pass to delete them.
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
