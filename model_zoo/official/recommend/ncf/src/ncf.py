@@ -26,6 +26,8 @@ from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_
 from mindspore.context import ParallelMode
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 
+from src.lr_schedule import dynamic_lr
+
 class DenseLayer(nn.Cell):
     """
     Dense layer definition
@@ -223,14 +225,16 @@ class TrainStepWrap(nn.Cell):
     """
     TrainStepWrap definition
     """
-    def __init__(self, network, sens=16384.0):
+    def __init__(self, network, total_steps=1, sens=16384.0):
         super(TrainStepWrap, self).__init__(auto_prefix=False)
         self.network = network
         self.network.set_train()
         self.network.add_flags(defer_inline=True)
         self.weights = ParameterTuple(network.trainable_params())
+
+        lr = dynamic_lr(0.01, total_steps, 5000)
         self.optimizer = nn.Adam(self.weights,
-                                 learning_rate=0.00382059,
+                                 learning_rate=lr,
                                  beta1=0.9,
                                  beta2=0.999,
                                  eps=1e-8,

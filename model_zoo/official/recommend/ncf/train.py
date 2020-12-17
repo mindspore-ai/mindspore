@@ -22,11 +22,14 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore import context, Model
 from mindspore.context import ParallelMode
 from mindspore.communication.management import get_rank, get_group_size, init
+from mindspore.common import set_seed
 
 from src.dataset import create_dataset
 from src.ncf import NCFModel, NetWithLossClass, TrainStepWrap
 
 from config import cfg
+
+set_seed(1)
 
 logging.set_verbosity(logging.INFO)
 
@@ -86,7 +89,7 @@ def test_train():
                        mlp_reg_layers=[0.0, 0.0, 0.0, 0.0],
                        mf_dim=16)
     loss_net = NetWithLossClass(ncf_net)
-    train_net = TrainStepWrap(loss_net)
+    train_net = TrainStepWrap(loss_net, ds_train.get_dataset_size() * (epochs + 1))
 
     train_net.set_train()
 
