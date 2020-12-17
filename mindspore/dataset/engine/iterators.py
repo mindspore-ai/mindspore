@@ -15,6 +15,8 @@
 """Built-in iterators.
 """
 from abc import abstractmethod
+import os
+import signal
 import weakref
 import numpy as np
 
@@ -160,7 +162,16 @@ class DictIterator(Iterator):
         Returns:
             Dict, the next record in the dataset.
         """
-        return {k: self._transform_tensor(t) for k, t in self._iterator.GetNextAsMap().items()}
+        try:
+            return {k: self._transform_tensor(t) for k, t in self._iterator.GetNextAsMap().items()}
+        except RuntimeError as err:
+            ## maybe "Out of memory" / "MemoryError" error
+            logger.error("Got runtime err: {}.".format(err))
+            err_info = str(err)
+            if err_info.find("Out of memory") >= 0 or err_info.find("MemoryError") >= 0:
+                logger.error("Memory error occurred, process will exit.")
+                os.kill(os.getpid(), signal.SIGKILL)
+            raise err
 
 
 class TupleIterator(Iterator):
