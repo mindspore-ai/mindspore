@@ -115,7 +115,7 @@ STATUS QuantCastFusionPass::DefinePattern() {
     srcOp->types = {schema::PrimitiveType_QuantDTypeCast};
     auto formatOp = std::make_shared<PatternOp>();
     formatOp->id = kFormatTransOp;
-    formatOp->types = {schema::PrimitiveType_Nhwc2Nchw, schema::PrimitiveType_Nchw2Nhwc};
+    formatOp->types = {PrimitiveType_Transpose};
     formatOp->left = srcOp;
     auto dstOp = std::make_shared<PatternOp>();
     dstOp->id = kQuantCastDstOp;

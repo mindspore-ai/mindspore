@@ -25,13 +25,18 @@
 using mindspore::lite::PrimitiveC;
 using mindspore::lite::Tensor;
 namespace mindspore {
+namespace {
+std::vector<int> nchw2nhwc_perm = {0, 2, 3, 1};
+std::vector<int> nhwc2nchw_perm = {0, 3, 1, 2};
+}  // namespace
 namespace lite {
 STATUS TransOpRemovePass::Run(MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
     auto type = node->primitive->value.type;
-    if (type == schema::PrimitiveType_Nchw2Nhwc || type == schema::PrimitiveType_Nhwc2Nchw) {
+    if (type == schema::PrimitiveType_Transpose && (node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm ||
+                                                    node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm)) {
       auto &input_tensor = graph->allTensors.at(node->inputIndex.at(0));
       // less than 4 dims can delete
       if (!input_tensor->dims.empty() && input_tensor->dims.size() < 4) {

@@ -24,12 +24,10 @@
 
 namespace mindspore {
 namespace lite {
-constexpr const char *kFormatTransNc2NhOp = "FormatTransNc2NhOp";
-constexpr const char *kFormatTransNh2NcOp = "FormatTransNh2NcOp";
+constexpr const char *kFormatTransTranspose1 = "FormatTransTransposeOp1";
+constexpr const char *kFormatTransTranspose2 = "FormatTransTransposeOp2";
 constexpr const char *kFormatTransPassOp = "FormatTransPassOp";
 constexpr const char *kNc2NhAndNh2NcFusionPattern = "Nc2NhAndNh2NcFusionPattern";
-constexpr const char *kNc2NhAndNh2NcPassFusionPattern = "Nc2NhAndNh2NcPassFusionPattern";
-constexpr const char *kNh2NcAndNc2NhFusionPattern = "Nh2NcAndNc2NhFusionPattern";
 constexpr const char *kNh2NcAndNc2NhPassFusionPattern = "Nh2NcAndNc2NhPassFusionPattern";
 
 class FormatTransFusionPass : public FusionPass {
