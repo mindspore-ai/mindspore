@@ -12,30 +12,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-network config
-"""
-from easydict import EasyDict as edict
+"""training utils"""
+from mindspore import dtype as mstype
+from mindspore.nn.dynamic_lr import exponential_decay_lr
+from mindspore import Tensor
 
-# LSTM CONFIG
-textrcnn_cfg = edict({
-    'pos_dir': 'data/rt-polaritydata/rt-polarity.pos',
-    'neg_dir': 'data/rt-polaritydata/rt-polarity.neg',
-    'num_epochs': 10,
-    'batch_size': 64,
-    'cell': 'gru',
-    'opt': 'adam',
-    'ckpt_folder_path': './ckpt',
-    'preprocess_path': './preprocess',
-    'preprocess': 'false',
-    'data_path': './data/',
-    'lr': 1e-3,
-    'lstm_base_lr': 3e-3,
-    'lstm_decay_rate': 0.9,
-    'lstm_decay_epoch': 1,
-    'emb_path': './word2vec',
-    'embed_size': 300,
-    'save_checkpoint_steps': 149,
-    'keep_checkpoint_max': 10,
-    'momentum': 0.9
-})
+
+def get_lr(cfg, dataset_size):
+    if cfg.cell == "lstm":
+        lr = exponential_decay_lr(cfg.lstm_base_lr, cfg.lstm_decay_rate, dataset_size * cfg.num_epochs,
+                                  dataset_size,
+                                  cfg.lstm_decay_epoch)
+        lr_ret = Tensor(lr, mstype.float32)
+    else:
+        lr_ret = cfg.lr
+    return lr_ret
