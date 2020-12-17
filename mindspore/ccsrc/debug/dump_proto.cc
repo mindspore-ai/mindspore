@@ -481,6 +481,9 @@ void ProtoExporter::ExportFuncGraphOutput(const FuncGraphPtr &func_graph, const 
   if (ret_node == nullptr || !ret_node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << "Graph return node is illegal";
   }
+  if (ret_node->inputs().size() != 2) {
+    return;
+  }
   AnfNodePtr arg = ret_node->input(1);
   if (graph_proto == nullptr) {
     MS_LOG(EXCEPTION) << "graph_proto is nullptr";
