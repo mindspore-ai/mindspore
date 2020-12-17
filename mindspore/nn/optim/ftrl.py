@@ -74,7 +74,7 @@ def _check_param(initial_accum, lr_power, l1, l2, use_locking, prim_name=None):
 
 class FTRL(Optimizer):
     """
-    Implement the FTRL algorithm with ApplyFtrl Operator.
+    Implements the FTRL algorithm with ApplyFtrl Operator.
 
     FTRL is an online convex optimization algorithm that adaptively chooses its regularization function
     based on the loss functions. Refer to paper `Adaptive Bound Optimization for Online Convex Optimization

@@ -59,7 +59,7 @@ __factory__ = {
 
 def names():
     """
-    Get the names of the metric methods.
+    Gets the names of the metric methods.
 
     Returns:
         List, the name list of metric methods.

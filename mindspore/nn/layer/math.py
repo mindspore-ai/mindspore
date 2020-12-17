@@ -284,7 +284,7 @@ class LGamma(Cell):
 
 class DiGamma(Cell):
     r"""
-    Calculate Digamma using Lanczos' approximation refering to "A Precision Approximationof the Gamma Function".
+    Calculates Digamma using Lanczos' approximation refering to "A Precision Approximationof the Gamma Function".
     The algorithm is:
 
     .. math::
@@ -549,7 +549,7 @@ def _IgammacContinuedFraction(ax, x, a, enabled):
 
 class IGamma(Cell):
     r"""
-    Calculate lower regularized incomplete Gamma function.
+    Calculates lower regularized incomplete Gamma function.
     The lower regularized incomplete Gamma function is defined as:
 
     .. math::
@@ -950,7 +950,7 @@ class Moments(Cell):
 
 class MatInverse(Cell):
     """
-    Calculate the inverse of Positive-Definite Hermitian matrix using Cholesky decomposition.
+    Calculates the inverse of Positive-Definite Hermitian matrix using Cholesky decomposition.
 
     Supported Platforms:
         ``GPU``
@@ -987,7 +987,7 @@ class MatInverse(Cell):
 
 class MatDet(Cell):
     """
-    Calculate the determinant of Positive-Definite Hermitian matrix using Cholesky decomposition.
+    Calculates the determinant of Positive-Definite Hermitian matrix using Cholesky decomposition.
 
     Supported Platforms:
         ``GPU``

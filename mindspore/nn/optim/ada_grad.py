@@ -37,7 +37,7 @@ def _check_param_value(accum, update_slots, prim_name=None):
 
 class Adagrad(Optimizer):
     """
-    Implement the Adagrad algorithm with ApplyAdagrad Operator.
+    Implements the Adagrad algorithm with ApplyAdagrad Operator.
 
     Adagrad is an online Learning and Stochastic Optimization.
     Refer to paper `Efficient Learning using Forward-Backward Splitting

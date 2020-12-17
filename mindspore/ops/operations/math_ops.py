@@ -2961,7 +2961,9 @@ class IsNan(PrimitiveWithInfer):
     Examples:
         >>> is_nan = ops.IsNan()
         >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
-        >>> result = is_nan(input_x)
+        >>> output = is_nan(input_x)
+        >>> print(output)
+        [True False False]
     """
 
     @prim_attr_register
@@ -2992,7 +2994,9 @@ class IsInf(PrimitiveWithInfer):
     Examples:
         >>> is_inf = ops.IsInf()
         >>> input_x = Tensor(np.array([np.log(-1), 1, np.log(0)]), mindspore.float32)
-        >>> result = is_inf(input_x)
+        >>> output = is_inf(input_x)
+        >>> print(output)
+        [False False True]
     """
 
     @prim_attr_register
@@ -3132,9 +3136,9 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
         >>> alloc_status = ops.NPUAllocFloatStatus()
         >>> get_status = ops.NPUGetFloatStatus()
         >>> init = alloc_status()
-        >>> output = get_status(init)
-        >>> print(output)
-        [0. 0. 0. 0. 0. 0. 0. 0.]
+        >>> get_status(init)
+        >>> print(init)
+        [1. 1. 1. 1. 1. 1. 1. 1.]
     """
 
     @prim_attr_register
@@ -3179,9 +3183,9 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
         >>> clear_status = ops.NPUClearFloatStatus()
         >>> init = alloc_status()
         >>> flag = get_status(init)
-        >>> output = clear_status(init)
-        >>> print(output)
-        [0. 0. 0. 0. 0. 0. 0. 0.]
+        >>> clear_status(init)
+        >>> print(init)
+        [1. 1. 1. 1. 1. 1. 1. 1.]
     """
 
     @prim_attr_register
