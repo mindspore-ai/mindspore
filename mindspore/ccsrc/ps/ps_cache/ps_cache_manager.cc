@@ -129,9 +129,17 @@ void PsCacheManager::CloneHashTable(const std::string &dest_param_name, const st
 const Address &PsCacheManager::QueryHashTableAddr(const std::string &param_name) const {
   auto iter = hash_tables_.find(param_name);
   if (iter == hash_tables_.end()) {
-    MS_LOG(EXCEPTION) << "Can not find device_address of " << param_name;
+    MS_LOG(EXCEPTION) << "Can not find device address of " << param_name;
   }
   return iter->second.device_address;
+}
+
+const size_t &PsCacheManager::QueryHashTableSize(const std::string &param_name) const {
+  auto iter = hash_tables_.find(param_name);
+  if (iter == hash_tables_.end()) {
+    MS_LOG(EXCEPTION) << "Can not find vocab cache size of " << param_name;
+  }
+  return iter->second.cache_vocab_size;
 }
 
 void PsCacheManager::Initialize() {
@@ -244,19 +252,19 @@ void PsCacheManager::set_channel_name(const std::string channel_name) {
 
 void PsCacheManager::IncreaseStep() {
   if (data_step_ >= UINT64_MAX) {
-    MS_LOG(EXCEPTION) << "The data step (" << data_step_ << ") << will exceed the maximum value of uint64_t.";
+    MS_LOG(EXCEPTION) << "The data step (" << data_step_ << ") will exceed the maximum value of uint64_t.";
   }
   data_step_++;
   set_current_graph_step();
   if (graph_running_step_ > data_step_) {
-    MS_LOG(EXCEPTION) << "The graph running step (" << graph_running_step_ << ") << exceed the data step ("
-                      << data_step_ << ").";
+    MS_LOG(EXCEPTION) << "The graph running step (" << graph_running_step_ << ") exceed the data step (" << data_step_
+                      << ").";
   }
 }
 
 void PsCacheManager::IncreaseGraphStep(const std::string &channel_name) {
   if (graph_step_ >= UINT64_MAX) {
-    MS_LOG(EXCEPTION) << "The graph step(" << graph_step_ << ")  <<  will exceed the maximum value of uint64_t.";
+    MS_LOG(EXCEPTION) << "The graph step(" << graph_step_ << ") will exceed the maximum value of uint64_t.";
   }
   if (graph_step_ == 0) {
     MS_LOG(INFO) << "Graph running waiting embedding table init begin:" << finish_init_parameter_server_;
@@ -271,8 +279,10 @@ void PsCacheManager::IncreaseGraphStep(const std::string &channel_name) {
 }
 
 void PsCacheManager::DoProcessData(uint32_t device_id, void *context) {
+  // PS embeddingLookup cache check.
   if (!initialized_ps_cache_) {
-    MS_LOG(EXCEPTION) << "PS cache does not init.";
+    MS_LOG(EXCEPTION) << "Only the sink_mode of dataset supports embeddingLookup cache in parameter server training "
+                         "mode, current dataset mode is not sink_mode.";
   }
   auto process_data_thread = std::thread(&PsCacheManager::ProcessDataTask, this, device_id, context);
   process_data_thread.detach();
