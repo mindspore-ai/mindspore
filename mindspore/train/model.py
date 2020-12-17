@@ -456,6 +456,8 @@ class Model:
                     cb_params.cur_step_num += 1
                 cb_params.net_outputs = outputs
                 list_callback.step_end(run_context)
+                if _is_role_pserver():
+                    os._exit(0)
 
             dataset_helper.continue_send()
             list_callback.epoch_end(run_context)
