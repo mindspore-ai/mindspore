@@ -357,6 +357,12 @@ class Adam(Optimizer):
         if value not in ('CPU', 'Ascend', 'GPU'):
             raise ValueError("The value must be 'CPU', 'Ascend' or 'GPU', but got value {}".format(value))
 
+        if self._target == "CPU" and value in('Ascend', 'GPU'):
+            raise ValueError("In the CPU environment, target cannot be set to 'GPU' and 'Ascend'.")
+
+        if self._target == "Ascend" and value == 'GPU':
+            raise ValueError("In the Ascend environment, target cannot be set to 'GPU'.")
+
         self._is_device = (value != 'CPU')
         self._target = value
 
