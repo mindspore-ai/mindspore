@@ -542,15 +542,10 @@ gene_ocl_program() {
     echo "Compile SPIRV done"
 }
 
-build_opencl() {
+get_opencl() {
     cd ${BASEPATH}
     git submodule update --init third_party/OpenCL-Headers
     git submodule update --init third_party/OpenCL-CLHPP
-    if [[ "${OPENCL_OFFLINE_COMPILE}" == "on" ]]; then
-        gene_ocl_program
-    else
-        gene_clhpp
-    fi
 }
 
 
@@ -572,7 +567,8 @@ build_lite()
     fi
 
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ] || [ $1 == "arm64" ]; then
-      echo "start build opencl"
+      echo "start get opencl"
+      get_opencl
     fi
     if [ "${ENABLE_NPU}" == "on" ]; then
       checkddk

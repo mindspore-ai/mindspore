@@ -47,6 +47,8 @@ endif()
 string(REPLACE "-fvisibility=hidden" "-fvisibility=default" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 add_library(nnacl STATIC ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
 add_library(nnacl_mid OBJECT ${KERNEL_SRC} ${TRAIN_SRC} ${ASSEMBLY_SRC})
+add_dependencies(nnacl fbs_src)
+add_dependencies(nnacl_mid fbs_src)
 
 ########################### arm64 build optimize library ########################
 if (PLATFORM_ARM64)

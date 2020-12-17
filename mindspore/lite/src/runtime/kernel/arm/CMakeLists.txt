@@ -14,6 +14,7 @@ set(KERNEL_SRC ${KERNEL_SRC} ${TRAIN_KERNEL_SRC})
 endif()
 
 add_library(cpu_kernel_mid OBJECT ${KERNEL_SRC})
+add_dependencies(cpu_kernel_mid fbs_src)
 
 if (PLATFORM_ARM64)
   file(GLOB FP16_KERNEL_SRC ${CMAKE_CURRENT_SOURCE_DIR}/fp16/*.cc)

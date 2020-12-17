@@ -63,6 +63,12 @@ class OpenCLAllocator : public Allocator {
   void *CreateBuffer(size_t size, void *data, size_t flags, cl::Buffer **buffer);
   void *CreateImage2D(size_t size, const std::vector<size_t> &img_size, void *data, size_t flags, bool is_map,
                       cl::Buffer **buffer, cl::Image2D **image);
+  template <typename T>
+  void ClearMemList(T *list);
+
+ private:
+  OpenCLRuntime *ocl_runtime_{nullptr};
+  std::mutex lock;
   struct MemBuf {
     size_t size_;
     void *device_ptr_;
@@ -72,14 +78,13 @@ class OpenCLAllocator : public Allocator {
     bool map_flags{false};
   };
 
-  std::mutex lock;
   // <membuf->buf, membuf>
   std::unordered_map<void *, MemBuf *> allocated_list_;
   std::multimap<size_t, MemBuf *> free_list_;
+  uint64_t total_size_{0};
   // 6 is empirical value
   int shift_factor_ = 6;
   bool lock_flag_ = false;
-  OpenCLRuntime *ocl_runtime_{nullptr};
 };
 
 }  // namespace mindspore::lite::opencl

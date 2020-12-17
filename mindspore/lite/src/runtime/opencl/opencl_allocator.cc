@@ -147,6 +147,11 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size, 
     UnLock();
     return host_ptr;
   }
+  total_size_ += size;
+  const uint64_t max_size = ocl_runtime_->GetGlobalMemSize();
+  if (total_size_ >= max_size) {
+    MS_LOG(ERROR) << "Mem pool out of max_size, total size: " << total_size_ << ", max size: " << max_size;
+  }
   cl::Buffer *buffer = nullptr;
   cl::Image2D *image = nullptr;
   cl_mem_flags flags = CL_MEM_READ_WRITE;
@@ -188,7 +193,8 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size, 
   UnLock();
   std::string type_name = img_size.empty() ? "buffer" : "Image2D";
   MS_LOG(DEBUG) << "Malloc a new " << type_name << ". size: " << mem_buf->size_ << ", host addr: " << mem_buf->host_ptr_
-                << ", device addr: " << mem_buf->device_ptr_ << ", image_addr: " << image;
+                << ", device addr: " << mem_buf->device_ptr_ << ", image_addr: " << image
+                << ", total size: " << total_size_;
   return host_ptr;
 }
 
@@ -250,10 +256,10 @@ void *OpenCLAllocator::GetBuffer(void *buffer) {
   return nullptr;
 }
 
-void OpenCLAllocator::Clear() {
-  Lock();
+template <typename T>
+void OpenCLAllocator::ClearMemList(T *list) {
   auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
-  for (auto it = allocated_list_.begin(); it != allocated_list_.end(); it++) {
+  for (auto it = list->begin(); it != list->end(); it++) {
     if (it->second->map_flags) {
       int ret = UnmapBuffer(it->second->host_ptr_);
       if (ret != RET_OK) {
@@ -278,29 +284,13 @@ void OpenCLAllocator::Clear() {
     }
     delete it->second;
   }
-  allocated_list_.clear();
+  list->clear();
+}
 
-  for (auto it = free_list_.begin(); it != free_list_.end(); it++) {
-    if (svm_capabilities) {
-      clSVMFree((*ocl_runtime_->Context())(), it->second->host_ptr_);
-      MS_LOG(DEBUG) << "OpenCL free svm buffer : " << it->second->host_ptr_;
-    } else {
-      cl::Buffer *buffer = static_cast<cl::Buffer *>(it->second->device_ptr_);
-      if (buffer != nullptr) {
-        MS_LOG(DEBUG) << "OpenCL free device buffer : " << buffer;
-        delete buffer;
-        it->second->device_ptr_ = nullptr;
-      }
-      cl::Image *image = static_cast<cl::Image *>(it->second->image_ptr_);
-      if (image != nullptr) {
-        MS_LOG(DEBUG) << "OpenCL free image : " << image;
-        delete image;
-        it->second->image_ptr_ = nullptr;
-      }
-    }
-    delete it->second;
-  }
-  free_list_.clear();
+void OpenCLAllocator::Clear() {
+  Lock();
+  ClearMemList<std::unordered_map<void *, MemBuf *>>(&allocated_list_);
+  ClearMemList<std::multimap<size_t, MemBuf *>>(&free_list_);
   UnLock();
 }
 

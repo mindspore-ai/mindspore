@@ -59,6 +59,10 @@ int OpenCLExecutor::RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor 
           return ret;
         }
         auto data_ptr = allocator_->Malloc(output->Size(), img_size);
+        if (data_ptr == nullptr) {
+          MS_LOG(ERROR) << "Malloc data failed";
+          return RET_ERROR;
+        }
         output->set_data(data_ptr);
       } else {
         ret = output->MallocData(allocator_);
