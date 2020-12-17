@@ -163,6 +163,7 @@ class Decode(cde.DecodeOp):
 
     Args:
         rgb (bool, optional): Mode of decoding input image (default=True).
+            If True means format of decoded image is RGB else BGR(deprecated).
 
     Examples:
         >>> import mindspore.dataset.vision.c_transforms as c_vision
@@ -186,7 +187,7 @@ class Decode(cde.DecodeOp):
             img (NumPy), Decoded image.
         """
         if not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
-            raise TypeError("Input should be a 1-D NumPy with integer type, got {}.".format(type(img)))
+            raise TypeError("Input should be an encoded image with 1-D NumPy type, got {}.".format(type(img)))
         decode = cde.Execute(cde.DecodeOp(self.rgb))
         img = decode(cde.Tensor(np.asarray(img)))
         return img.as_array()
