@@ -326,7 +326,8 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         The vectors with the same field_ids  will be combined by the 'operator', such as 'SUM', 'MAX' and
         'MEAN'. Ensure the input_values of the padded id is zero, so that they can be ignored. The final
         output will be zeros if the sum of absolute weight of the field is zero. This class only
-        supports ['table_row_slice', 'batch_slice' and 'table_column_slice']
+        supports ['table_row_slice', 'batch_slice' and 'table_column_slice']. For the operation 'MAX' on
+        device Ascend, there is a constrain where batch_size * (seq_length + field_size) < 3500.
 
     Args:
         vocab_size (int): The size of the dictionary of embeddings.
@@ -476,8 +477,8 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
 
         if self.operator == 'MAX':
             # Fill the padding value to -inf, so the padded value will not influence the results
-            negatvie_inf_mask = self.cast(self.equal(weights, 0), mstype.float32)
-            inf_mask = self.inf_mask_mul(negatvie_inf_mask, self.negative_inf_value)
+            negative_inf_mask = self.cast(self.equal(weights, 0), mstype.float32)
+            inf_mask = self.inf_mask_mul(negative_inf_mask, self.negative_inf_value)
             embedding = self.inf_add(embedding, inf_mask)
             embedding = self.reshape(embedding, (-1, self.embedding_size))
             field_ids = self.reshape(field_ids, (-1,))
