@@ -23,6 +23,7 @@
 #include <vector>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
+#include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
@@ -104,11 +105,11 @@ class UniqueCPUKernel : public CPUKernel {
     }
     IndexType thread_data_size = input_size / thread_num;
     size_t left_data_size = input_size % thread_num;
-    std::vector<std::thread> threads;
-    threads.reserve(thread_num);
     segments.reserve(thread_num);
     segment_bucket_sizes.reserve(thread_num);
     IndexType current_offset = 0;
+    std::vector<common::Task> tasks;
+    tasks.reserve(thread_num);
     for (size_t i = 0; i < thread_num; ++i) {
       segment_bucket_sizes.emplace_back(std::make_shared<std::vector<IndexType>>(thread_num, 0));
       IndexType data_size = thread_data_size;
@@ -119,13 +120,14 @@ class UniqueCPUKernel : public CPUKernel {
       segments[i]->input_ = params->input_ + current_offset;
       segments[i]->input_size_ = data_size;
       segments[i]->thread_num_ = thread_num;
-      threads.emplace_back(
-        std::thread(CalculateEachBucketSize<DataType, IndexType>, segments[i], segment_bucket_sizes[i].get()));
+      auto task = [&segments, &segment_bucket_sizes, i]() {
+        CalculateEachBucketSize<DataType, IndexType>(segments[i], segment_bucket_sizes[i].get());
+        return common::SUCCESS;
+      };
+      tasks.emplace_back(task);
       current_offset += data_size;
     }
-    for (size_t i = 0; i < params->thread_num_; ++i) {
-      threads[i].join();
-    }
+    common::ThreadPool::GetInstance().SyncRun(tasks);
   }
 
   template <typename DataType, typename IndexType>
@@ -214,18 +216,19 @@ class UniqueCPUKernel : public CPUKernel {
       }
       thread_buckets.emplace_back(local_buckets);
     }
-    std::vector<std::thread> threads;
-    threads.reserve(thread_num);
+    std::vector<common::Task> tasks;
+    tasks.reserve(thread_num);
     current_offset = 0;
     for (size_t i = 0; i < thread_num; ++i) {
       MS_EXCEPTION_IF_NULL(segments[i]);
-      threads.emplace_back(
-        std::thread(SegmentToBuckets<DataType, IndexType>, segments[i], current_offset, thread_buckets[i]));
+      auto task = [&segments, &thread_buckets, current_offset, i]() {
+        SegmentToBuckets<DataType, IndexType>(segments[i], current_offset, thread_buckets[i]);
+        return common::SUCCESS;
+      };
+      tasks.emplace_back(task);
       current_offset += segments[i]->input_size_;
     }
-    for (size_t i = 0; i < thread_num; ++i) {
-      threads[i].join();
-    }
+    common::ThreadPool::GetInstance().SyncRun(tasks);
     MS_LOG(DEBUG) << "End";
   }
 
@@ -288,14 +291,16 @@ class UniqueCPUKernel : public CPUKernel {
   static void UniqueEachBucket(const std::vector<std::shared_ptr<UniqueParam<DataType, IndexType>>> &buckets) {
     MS_LOG(DEBUG) << "Start";
     size_t thread_num = buckets.size();
-    std::vector<std::thread> threads;
-    threads.reserve(thread_num);
+    std::vector<common::Task> tasks;
+    tasks.reserve(thread_num);
     for (size_t i = 0; i < thread_num; ++i) {
-      threads.emplace_back(std::thread(Unique<DataType, IndexType>, buckets[i]));
+      auto task = [&buckets, i]() {
+        Unique<DataType, IndexType>(buckets[i]);
+        return common::SUCCESS;
+      };
+      tasks.emplace_back(task);
     }
-    for (size_t i = 0; i < thread_num; ++i) {
-      threads[i].join();
-    }
+    common::ThreadPool::GetInstance().SyncRun(tasks);
     MS_LOG(DEBUG) << "End";
   }
 
@@ -342,15 +347,16 @@ class UniqueCPUKernel : public CPUKernel {
     }
     result->output_size_ = current_size;
 
-    std::vector<std::thread> threads;
-    threads.reserve(thread_num);
+    std::vector<common::Task> tasks;
+    tasks.reserve(thread_num);
     for (size_t i = 0; i < thread_num; ++i) {
-      threads.emplace_back(
-        std::thread(TransformBucketReverseIndices<DataType, IndexType>, buckets[i], result, bucket_offsets[i]));
+      auto task = [&buckets, i, result, &bucket_offsets]() {
+        TransformBucketReverseIndices<DataType, IndexType>(buckets[i], result, bucket_offsets[i]);
+        return common::SUCCESS;
+      };
+      tasks.emplace_back(task);
     }
-    for (size_t i = 0; i < thread_num; ++i) {
-      threads[i].join();
-    }
+    common::ThreadPool::GetInstance().SyncRun(tasks);
     MS_LOG(DEBUG) << "End";
   }
 

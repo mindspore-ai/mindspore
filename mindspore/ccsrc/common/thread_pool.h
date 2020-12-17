@@ -31,6 +31,7 @@
 #include "utils/log_adapter.h"
 
 namespace mindspore {
+namespace common {
 const int kCoreThreadNum = 3;
 const int kDefaultMaxThreadNum = 8;
 enum Status { FAIL = -1, SUCCESS = 0 };
@@ -56,9 +57,11 @@ class ThreadPool {
   ThreadPool(const ThreadPool &) = delete;
   ThreadPool &operator=(const ThreadPool &) = delete;
 
-  static ThreadPool *GetInstance();
+  static ThreadPool &GetInstance();
   // Use the tasks' size of threads to execute these tasks, one thread execute one task.
-  bool LaunchMultipleTask(const std::vector<Task> &tasks);
+  bool SyncRun(const std::vector<Task> &tasks);
+
+  size_t GetSyncRunThreadNum() { return max_thread_num_; }
 
  private:
   ThreadPool();
@@ -81,6 +84,7 @@ class ThreadPool {
   std::vector<std::shared_ptr<Queue>> queue_list_{};
   std::vector<std::pair<int, std::pair<bool, int>>> error_info_{};
 };
+}  // namespace common
 }  // namespace mindspore
 
 #endif  // MINDSPORE_CCSRC_COMMON_THREAD_POOL_H_

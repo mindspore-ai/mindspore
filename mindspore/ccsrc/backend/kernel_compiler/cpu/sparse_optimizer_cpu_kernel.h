@@ -18,20 +18,14 @@
 
 #include <vector>
 #include <memory>
-#include <thread>
 #include <unordered_map>
 #include <algorithm>
 #include <utility>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
-
+#include "common/thread_pool.h"
 namespace mindspore {
 namespace kernel {
-#ifdef ENABLE_D
-constexpr size_t kUsedThreadNum = 23;
-#else
-constexpr size_t kUsedThreadNum = 8;
-#endif
 template <typename T>
 struct SparseGradient {
   float *value_{nullptr};
@@ -100,7 +94,7 @@ class SparseOptimizerCPUKernel : public CPUKernel {
   static void BucketReduceSparseGradient(const ReduceSparseGradientParam<T> &param) {
     MS_LOG(DEBUG) << "Start";
     MS_EXCEPTION_IF_NULL(param.input_grad_);
-    size_t thread_num = kUsedThreadNum;
+    size_t thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
     if (param.input_grad_->indices_size_ < thread_num) {
       thread_num = param.input_grad_->indices_size_;
     }
@@ -125,18 +119,21 @@ class SparseOptimizerCPUKernel : public CPUKernel {
   template <typename T>
   void MultiThreadCompute(const MultiThreadComputeFunc<T> &func, MultiThreadComputeParams<T> *params,
                           size_t total_compute_size) const {
-    std::vector<std::thread> threads;
-    threads.reserve(kUsedThreadNum);
+    std::vector<common::Task> tasks;
+    auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
+    tasks.reserve(max_thread_num);
     size_t start = 0;
-    size_t once_compute_size = (total_compute_size + kUsedThreadNum - 1) / kUsedThreadNum;
+    size_t once_compute_size = (total_compute_size + max_thread_num - 1) / max_thread_num;
     while (start < total_compute_size) {
       size_t end = (start + once_compute_size) > total_compute_size ? total_compute_size : (start + once_compute_size);
-      threads.emplace_back(std::thread(func, params, start, end));
+      auto task = [&func, &params, start, end]() {
+        func(params, start, end);
+        return common::SUCCESS;
+      };
+      tasks.emplace_back(task);
       start += once_compute_size;
     }
-    for (size_t i = 0; i < threads.size(); ++i) {
-      threads[i].join();
-    }
+    common::ThreadPool::GetInstance().SyncRun(tasks);
   }
 
  private:
@@ -173,8 +170,8 @@ class SparseOptimizerCPUKernel : public CPUKernel {
     }
     size_t thread_indices_size = input_grad->indices_size_ / param.thread_num_;
     size_t left_indices_size = input_grad->indices_size_ % param.thread_num_;
-    std::vector<std::thread> threads;
-    threads.reserve(param.thread_num_);
+    std::vector<common::Task> tasks;
+    tasks.reserve(param.thread_num_);
     segments.reserve(param.thread_num_);
 
     size_t current_indices_offset = 0;
@@ -188,14 +185,14 @@ class SparseOptimizerCPUKernel : public CPUKernel {
       segments[i]->value_ = input_grad->value_ + current_indices_offset * param.value_stride_;
       segments[i]->indices_ = input_grad->indices_ + current_indices_offset;
       segments[i]->indices_size_ = indices_size;
-      threads.emplace_back(
-        std::thread(CalculateEachBucketSize<T>, segments[i], param.max_index_, segment_bucket_sizes[i].get()));
+      auto task = [&segments, &param, &segment_bucket_sizes, i]() {
+        CalculateEachBucketSize<T>(segments[i], param.max_index_, segment_bucket_sizes[i].get());
+        return common::SUCCESS;
+      };
+      tasks.emplace_back(task);
       current_indices_offset += indices_size;
     }
-
-    for (size_t i = 0; i < param.thread_num_; ++i) {
-      threads[i].join();
-    }
+    common::ThreadPool::GetInstance().SyncRun(tasks);
   }
 
   template <typename T>
@@ -263,17 +260,18 @@ class SparseOptimizerCPUKernel : public CPUKernel {
       }
       each_thread_buckets.emplace_back(thread_buckets);
     }
-    std::vector<std::thread> threads;
-    threads.reserve(thread_num);
+    std::vector<common::Task> tasks;
+    tasks.reserve(thread_num);
     current_indices_offset = 0;
     for (size_t i = 0; i < thread_num; ++i) {
-      threads.emplace_back(
-        std::thread(CopySegmentIndicesToBucket<T>, param, segments[i], current_indices_offset, each_thread_buckets[i]));
+      auto task = [&param, &segments, &each_thread_buckets, i, current_indices_offset]() {
+        CopySegmentIndicesToBucket<T>(param, segments[i], current_indices_offset, each_thread_buckets[i]);
+        return common::SUCCESS;
+      };
+      tasks.emplace_back(task);
       current_indices_offset += segments[i]->indices_size_;
     }
-    for (size_t i = 0; i < thread_num; ++i) {
-      threads[i].join();
-    }
+    common::ThreadPool::GetInstance().SyncRun(tasks);
   }
 
   template <typename T>
@@ -381,8 +379,8 @@ class SparseOptimizerCPUKernel : public CPUKernel {
     MS_EXCEPTION_IF_NULL(reduced_buckets_ptr);
     auto &reduced_buckets = *reduced_buckets_ptr;
     size_t thread_num = buckets.size();
-    std::vector<std::thread> threads;
-    threads.reserve(thread_num);
+    std::vector<common::Task> tasks;
+    tasks.reserve(thread_num);
 
     size_t current_indices_offset = 0;
     for (size_t i = 0; i < thread_num; ++i) {
@@ -390,16 +388,18 @@ class SparseOptimizerCPUKernel : public CPUKernel {
       reduced_buckets[i]->value_ = param.workspace_grad_->value_ + current_indices_offset * param.value_stride_;
       reduced_buckets[i]->indices_ = param.workspace_grad_->indices_ + current_indices_offset;
       reduced_buckets[i]->indices_size_ = buckets[i]->indices_size_;
-      if (param.use_sort_reduce_) {
-        threads.emplace_back(std::thread(SortAndReduceBucketSparseGradient<T>, param, buckets[i], reduced_buckets[i]));
-      } else {
-        threads.emplace_back(std::thread(ReduceBucketSparseGradient<T>, param, buckets[i], reduced_buckets[i]));
-      }
+      auto task = [&param, &buckets, &reduced_buckets, i]() {
+        if (param.use_sort_reduce_) {
+          SortAndReduceBucketSparseGradient<T>(param, buckets[i], reduced_buckets[i]);
+        } else {
+          ReduceBucketSparseGradient<T>(param, buckets[i], reduced_buckets[i]);
+        }
+        return common::SUCCESS;
+      };
+      tasks.emplace_back(task);
       current_indices_offset += buckets[i]->indices_size_;
     }
-    for (size_t i = 0; i < thread_num; ++i) {
-      threads[i].join();
-    }
+    common::ThreadPool::GetInstance().SyncRun(tasks);
   }
 
   template <typename T>
