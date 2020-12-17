@@ -691,14 +691,14 @@ Status DvppDecodeResizeCropOperation::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (crop_.size() < resize_.size()) {
-    if (crop_[0] >= MIN(resize_[0], resize_[1])) {
+    if (crop_[0] > MIN(resize_[0], resize_[1])) {
       std::string err_msg = "crop size must be smaller than resize size";
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   if (crop_.size() > resize_.size()) {
-    if (MAX(crop_[0], crop_[1]) >= resize_[0]) {
+    if (MAX(crop_[0], crop_[1]) > resize_[0]) {
       std::string err_msg = "crop size must be smaller than resize size";
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -706,7 +706,7 @@ Status DvppDecodeResizeCropOperation::ValidateParams() {
   }
   if (crop_.size() == resize_.size()) {
     for (int32_t i = 0; i < crop_.size(); ++i) {
-      if (crop_[i] >= resize_[i]) {
+      if (crop_[i] > resize_[i]) {
         std::string err_msg = "crop size must be smaller than resize size";
         MS_LOG(ERROR) << err_msg;
         RETURN_STATUS_SYNTAX_ERROR(err_msg);
