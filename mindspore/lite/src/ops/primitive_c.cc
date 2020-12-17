@@ -101,6 +101,7 @@
 #include "src/ops/logical_not.h"
 #include "src/ops/floor_div.h"
 #include "src/ops/floor_mod.h"
+#include "src/ops/mod.h"
 #include "src/ops/equal.h"
 #include "src/ops/not_equal.h"
 #include "src/ops/less.h"
@@ -597,6 +598,10 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Equal>(prim, inputs, quantType);
   } else if (op_type == "TopK") {
     return NewPrimitiveC<TopK>(prim, inputs, quantType);
+  } else if (op_type == "Mod") {
+    return NewPrimitiveC<Mod>(prim, inputs, quantType);
+  } else if (op_type == "ArgMinWithValue") {
+    return NewPrimitiveC<ArgMin>(prim, inputs, quantType);
   } else if (op_type == "Range") {
     return NewPrimitiveC<Range>(prim, inputs, quantType);
   } else if (op_type == "Tile") {
@@ -805,6 +810,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) FloorDiv(primitive);
     case schema::PrimitiveType_FloorMod:
       return new (std::nothrow) FloorMod(primitive);
+    case schema::PrimitiveType_Mod:
+      return new (std::nothrow) Mod(primitive);
     case schema::PrimitiveType_Equal:
       return new (std::nothrow) Equal(primitive);
     case schema::PrimitiveType_NotEqual:
