@@ -66,7 +66,7 @@ app
 │   |   └── MindSporeNetnative.h # header file
 │   |
 │   ├── java # application code at the Java layer
-│   │   └── com.mindspore.himindsporedemo
+│   │   └── com.mindspore.classification
 │   │       ├── gallery.classify # implementation related to image processing and MindSpore JNI calling
 │   │       │   └── ...
 │   │       └── widget # implementation related to camera enabling and drawing

@@ -343,7 +343,7 @@ bool PreProcessImageData(const LiteMat &lite_mat_bgr, LiteMat *lite_norm_mat_ptr
  */
 extern "C"
 JNIEXPORT jlong JNICALL
-Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_loadModel(JNIEnv *env,
+Java_com_mindspore_classification_gallery_classify_TrackingMobile_loadModel(JNIEnv *env,
                          jobject thiz,
                          jobject model_buffer,
                          jint num_thread) {
@@ -396,7 +396,7 @@ Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_loadModel(JNI
  * sending a picture to the model and run inference.
  */
 extern "C" JNIEXPORT jstring JNICALL
-Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_runNet(JNIEnv *env, jclass type,
+Java_com_mindspore_classification_gallery_classify_TrackingMobile_runNet(JNIEnv *env, jclass type,
                       jlong netEnv,
                       jobject srcBitmap) {
   LiteMat lite_mat_bgr, lite_norm_mat_cut;
@@ -469,7 +469,7 @@ Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_runNet(JNIEnv
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
-Java_com_mindspore_himindsporedemo_gallery_classify_TrackingMobile_unloadModel(JNIEnv *env,
+Java_com_mindspore_classification_gallery_classify_TrackingMobile_unloadModel(JNIEnv *env,
                            jclass type,
                            jlong netEnv) {
   MS_PRINT("MindSpore release net.");
