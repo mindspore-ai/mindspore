@@ -14,4 +14,4 @@
 # limitations under the License.
 # ============================================================================
 
-LD_LIBRARY_PATH=./lib/ bin/net_runner -f model/transfer_learning_tod.ms -e 60 -d dataset -s 20
+LD_LIBRARY_PATH=./lib/ bin/net_runner -f model/transfer_learning_tod.ms -e 100 -d dataset -s 20

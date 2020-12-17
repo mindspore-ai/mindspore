@@ -219,7 +219,7 @@ class MS_API NetTrain {
 
  private:
   NetTrainFlags *flags_;
-  session::TrainSession *session_;
+  session::TrainSession *session_ = nullptr;
   std::vector<mindspore::tensor::MSTensor *> ms_inputs_;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> ms_outputs_;
   std::unordered_map<std::string, CheckTensor *> data_;

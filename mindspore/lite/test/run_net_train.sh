@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # Run Export on x86 platform and create output test files:
+docker_image=mindspore_dev:8
 function Run_Export(){
     cd $models_path || exit 1
     if [[ -z "${CLOUD_MODEL_ZOO}" ]]; then
@@ -15,8 +16,8 @@ function Run_Export(){
         fi
         echo ${model_name}'_train_export.py' >> "${export_log_file}"
         echo 'exporting' ${model_name}
-        echo 'docker run --user "$(id -u):$(id -g)" --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true mindspore/mindspore-gpu:1.0.0 python '${models_path}'/'${model_name}'_train_export.py' >>  "${export_log_file}"
-        docker run --user "$(id -u):$(id -g)" --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true mindspore/mindspore-gpu:1.0.0 python ${models_path}'/'${model_name}_train_export.py "${epoch_num}"
+        echo 'docker run --user '"$(id -u):$(id -g)"' --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true '${docker_image}' python '${models_path}'/'${model_name}'_train_export.py' >>  "${export_log_file}"
+        docker run --user "$(id -u):$(id -g)" --env CLOUD_MODEL_ZOO=${CLOUD_MODEL_ZOO} -w $PWD --runtime=nvidia -v /home/$USER:/home/$USER -v /opt/share:/opt/share --privileged=true "${docker_image}" python ${models_path}'/'${model_name}_train_export.py "${epoch_num}"
         if [ $? = 0 ]; then
             export_result='export mindspore '${model_name}'_train_export pass';echo ${export_result} >> ${export_result_file}
         else
@@ -219,32 +220,32 @@ train_io_path=""
 while getopts "r:m:d:i:e:vt:" opt; do
     case ${opt} in
         r)
-	    release_path=${OPTARG}
-            echo "release_path is ${OPTARG}"
+           release_path=${OPTARG}
+           echo "release_path is ${OPTARG}"
             ;;
         m)
 
-	    models_path=${OPTARG}"/models_train"
+            models_path=${OPTARG}"/models_train"
             echo "models_path is ${OPTARG}"
             ;;
         i)
-	    train_io_path=${OPTARG}
+            train_io_path=${OPTARG}
             echo "train_io_path is ${OPTARG}"
             ;;
         d)
-	    device_id=${OPTARG}
+           device_id=${OPTARG}
             echo "device_id is ${OPTARG}"
             ;;
         e)
-	    enable_export=${OPTARG}
+            enable_export=${OPTARG}
             echo "enable_export = ${OPTARG}"
             ;;          
         v)
-	    run_valgrind="valgrind --log-file=valgrind.log "
+            run_valgrind="valgrind --log-file=valgrind.log "
             echo "Run x86 with valgrind"
             ;;
         t)
-	    epoch_num=${OPTARG}
+            epoch_num=${OPTARG}
             echo "train epoch num is ${OPTARG}"
             ;;                          
         ?)

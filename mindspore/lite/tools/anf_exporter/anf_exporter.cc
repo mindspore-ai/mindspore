@@ -429,6 +429,7 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
     paramTensor->dims = dims;
 #ifdef SUPPORT_TRAIN
     if (paramTensor->dims.size() == 0) paramTensor->dims = {1};
+    paramTensor->name = valueNode->fullname_with_scope();
 #endif
     paramTensor->nodeType = schema::NodeType::NodeType_ValueNode;
     auto data = value->cast<tensor::TensorPtr>();

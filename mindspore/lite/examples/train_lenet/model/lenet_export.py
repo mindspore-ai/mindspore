@@ -14,11 +14,11 @@
 # ============================================================================
 """lenet_export."""
 
+import numpy as np
 from mindspore import context, Tensor
 import mindspore.common.dtype as mstype
 from mindspore.train.serialization import export
 from lenet import LeNet5
-import numpy as np
 from train_utils import TrainWrap
 
 
@@ -30,6 +30,6 @@ BATCH_SIZE = 32
 x = Tensor(np.ones((BATCH_SIZE, 1, 32, 32)), mstype.float32)
 label = Tensor(np.zeros([BATCH_SIZE, 10]).astype(np.float32))
 net = TrainWrap(n)
-export(net, x, label, file_name="lenet_tod.mindir", file_format='MINDIR')
+export(net, x, label, file_name="lenet_tod", file_format='MINDIR')
 
 print("finished exporting")

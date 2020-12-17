@@ -14,13 +14,13 @@
 # ============================================================================
 """transfer_learning_export."""
 
+import numpy as np
 import mindspore as M
 from mindspore.nn import Cell
 from mindspore.train.serialization import load_checkpoint
 from mindspore.common.parameter import ParameterTuple
 from mindspore.train.serialization import export
 from effnet import effnet
-import numpy as np
 from train_utils import TrainWrap
 
 
@@ -51,13 +51,13 @@ trainable_weights = ParameterTuple(trainable_weights_list)
 
 M.context.set_context(mode=M.context.PYNATIVE_MODE,
                       device_target="GPU", save_graphs=False)
-BATCH_SIZE = 32
+BATCH_SIZE = 16
 X = M.Tensor(np.ones((BATCH_SIZE, 3, 224, 224)), M.float32)
 label = M.Tensor(np.zeros([BATCH_SIZE, 10]).astype(np.float32))
 
 sgd = M.nn.SGD(trainable_weights, learning_rate=0.01, momentum=0.9,
                dampening=0.01, weight_decay=0.0, nesterov=False, loss_scale=1.0)
 net = TrainWrap(n, optimizer=sgd, weights=trainable_weights)
-export(net, X, label, file_name="transfer_learning_tod.mindir", file_format='MINDIR')
+export(net, X, label, file_name="transfer_learning_tod", file_format='MINDIR')
 
 print("Exported")
