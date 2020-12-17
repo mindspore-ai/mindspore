@@ -96,8 +96,19 @@ template void CalSparseApplyFtrl<float, int>(const float *gradient, const int *i
                                              const float l1_regularization, const float l2_regularization,
                                              const float learning_rate_power, const bool use_locking, float *variable,
                                              float *accumulation, float *linear, cudaStream_t cuda_stream);
+template void CalSparseApplyFtrl<float, int64_t>(const float *gradient, const int64_t *indices, const int num_index,
+                                             const size_t n_stride, const float learning_rate,
+                                             const float l1_regularization, const float l2_regularization,
+                                             const float learning_rate_power, const bool use_locking, float *variable,
+                                             float *accumulation, float *linear, cudaStream_t cuda_stream);
 template void CalSparseApplyFtrl<half, int>(const half *gradient, const int *indices, const int num_index,
                                             const size_t n_stride, const float learning_rate,
                                             const float l1_regularization, const float l2_regularization,
                                             const float learning_rate_power, const bool use_locking, half *variable,
                                             half *accumulation, half *linear, cudaStream_t cuda_stream);
+template void CalSparseApplyFtrl<half, int64_t>(const half *gradient, const int64_t *indices, const int num_index,
+                                            const size_t n_stride, const float learning_rate,
+                                            const float l1_regularization, const float l2_regularization,
+                                            const float learning_rate_power, const bool use_locking, half *variable,
+                                            half *accumulation, half *linear, cudaStream_t cuda_stream);
+

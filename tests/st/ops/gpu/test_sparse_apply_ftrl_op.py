@@ -77,9 +77,9 @@ def test_ftrl():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_ftrl_sparse():
+def test_ftrl_sparse_int64_ind():
     gradient = Tensor(np.ones([2, 3, 3]).astype(np.float32))
-    indices = Tensor([0, 2], mstype.int32)
+    indices = Tensor([0, 2], mstype.int64)
     expect_var = np.array([[[0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479]],
@@ -127,9 +127,9 @@ def test_ftrl_half():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_ftrl_sparse_half():
+def test_ftrl_sparse_half_int64_ind():
     gradient = Tensor(np.ones([2, 3, 3]).astype(np.float16))
-    indices = Tensor([0, 2], mstype.int32)
+    indices = Tensor([0, 2], mstype.int64)
     expect_var = np.array([[[0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479],
                             [0.291479, 0.291479, 0.291479]],
