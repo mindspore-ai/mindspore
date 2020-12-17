@@ -3425,8 +3425,9 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
         >>> sampler = ops.ComputeAccidentalHits(2)
         >>> output1, output2, output3 = sampler(Tensor(x), Tensor(y))
         >>> print(output1, output2, output3)
-        [0, 0, 1, 1, 2, 2], [1, 2, 0, 4, 3, 3],
-        [-3.4028235+38, -3.4028235+38, -3.4028235+38, -3.4028235+38, -3.4028235+38, -3.4028235+38]
+        [0 0 1 1 2 2]
+        [1 2 0 4 3 3]
+        [-3.4028235e+38 -3.4028235e+38 -3.4028235e+38 -3.4028235e+38 -3.4028235e+38 -3.4028235e+38]
 
     """
 
