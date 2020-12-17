@@ -60,6 +60,9 @@ ShapePtr GetBroadcastShape(const std::string &op, const AbstractTensorPtr &tenso
 // Check dynamic shape routine
 void CheckMinMaxShape(const ShapeVector &shape, ShapeVector *min_shape, ShapeVector *max_shape);
 
+// Get 3rd argument for UnsortedSegmentOps' inferImpl function
+int64_t GetUnsortedSegmentOpScalarArg(const AbstractBasePtrList &args_spec_list, const std::string &op_name);
+
 }  // namespace abstract
 }  // namespace mindspore
 #endif  // MINDSPORE_CORE_ABSTRACT_UTILS_H_
