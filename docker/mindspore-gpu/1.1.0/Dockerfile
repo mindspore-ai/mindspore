@@ -4,7 +4,7 @@ MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
-ENV OMPI_ROOT_PATH /usr/local/openmpi-3.1.5
+ENV OMPI_ROOT_PATH /usr/local/openmpi-4.0.3
 ENV PATH ${OMPI_ROOT_PATH}/bin:/usr/local/bin:$PATH
 ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}/lib:$LD_LIBRARY_PATH
 
@@ -69,17 +69,17 @@ RUN mkdir -pv /root/.pip \
     && echo "trusted-host=mirrors.aliyun.com" >> /root/.pip/pip.conf \
     && echo "index-url=http://mirrors.aliyun.com/pypi/simple/" >> /root/.pip/pip.conf
 
-# Install openmpi (v3.1.5)
+# Install openmpi (v4.0.3)
 RUN cd /tmp \
-    && wget https://download.open-mpi.org/release/open-mpi/v3.1/openmpi-3.1.5.tar.gz \
-    && tar -xvf openmpi-3.1.5.tar.gz \
-    && cd /tmp/openmpi-3.1.5 \
+    && wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz \
+    && tar -xvf openmpi-4.0.3.tar.gz \
+    && cd /tmp/openmpi-4.0.3 \
     && mkdir -p ${OMPI_ROOT_PATH} \
     && ./configure --prefix=${OMPI_ROOT_PATH} \
     && make -j4 \
     && make install -j4 \
-    && rm -rf /tmp/openmpi-3.1.5 \
-    && rm -f /tmp/openmpi-3.1.5.tar.gz
+    && rm -rf /tmp/openmpi-4.0.3 \
+    && rm -f /tmp/openmpi-4.0.3.tar.gz
 
 # Install MindSpore cuda-10.1 whl package
 RUN pip install --no-cache-dir https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.1.0/MindSpore/gpu/ubuntu_x86/cuda-10.1/mindspore_gpu-1.1.0-cp37-cp37m-linux_x86_64.whl
