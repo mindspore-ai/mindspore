@@ -23,7 +23,10 @@ from ..core.validator_helpers import type_check, check_uint32, check_uint64, che
 
 class DatasetCache:
     """
-    A client to interface with tensor caching service
+    A client to interface with tensor caching service.
+
+    For details, please check `Chinese tutorial <https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/enable_cache.html>`_,
+    `Chinese programming guide <https://www.mindspore.cn/doc/programming_guide/zh-CN/master/cache.html?highlight=datasetcache>`_.
 
     Args:
         session_id (int): A user assigned session id for the current pipeline.
@@ -34,9 +37,6 @@ class DatasetCache:
         num_connections (int, optional): Number of tcp/ip connections (default=12).
         prefetch_size (int, optional): Prefetch size (default=20).
 
-    Tutorials:
-        https://www.mindspore.cn/doc/programming_guide/zh-CN/master/cache.html?highlight=datasetcache
-        https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/enable_cache.html
     """
 
     def __init__(self, session_id, size=0, spilling=False, hostname=None, port=None, num_connections=None,
