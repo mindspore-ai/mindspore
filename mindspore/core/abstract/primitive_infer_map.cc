@@ -120,6 +120,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimSparseApplyFtrl, {InferImplSparseApplyFtrl, true}},
     {prim::kPrimSparseApplyProximalAdagrad, {InferImplSparseApplyProximalAdagrad, true}},
     {prim::kPrimSGD, {InferImplSGD, true}},
+    {prim::kPrimCTCGreedyDecoder, {InferImplCTCGreedyDecoder, true}},
     // Others
     {prim::kPrimIdentity, {InferImplIdentity, true}},
     // Set impl to null as it will use PartialEvaluator;

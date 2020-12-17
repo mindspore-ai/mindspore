@@ -486,6 +486,42 @@ AbstractBasePtr InferImplSGD(const AnalysisEnginePtr &, const PrimitivePtr &prim
   return std::make_shared<AbstractTuple>(elements);
 }
 
+AbstractBasePtr InferImplCTCGreedyDecoder(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const AbstractBasePtrList &args_spec_list) {
+  // inputs: inputs, sequence_length
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+
+  auto shape = input->shape();
+  if (shape->shape().size() != 3) {
+    MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 3.";
+  }
+
+  ShapeVector indices_shape = {Shape::SHP_ANY, 2};
+  ShapeVector min_shape = {1, 2};
+  ShapeVector max_shape = {shape->shape()[0] * shape->shape()[1], 2};
+  auto decoded_indices =
+    std::make_shared<AbstractTensor>(kInt64, std::make_shared<Shape>(indices_shape, min_shape, max_shape));
+
+  ShapeVector values_shape = {Shape::SHP_ANY};
+  ShapeVector values_min_shape = {1};
+  ShapeVector values_max_shape = {shape->shape()[0] * shape->shape()[1]};
+  ShapePtr values_shapes = std::make_shared<Shape>(values_shape, values_min_shape, values_max_shape);
+  auto decoded_values = std::make_shared<AbstractTensor>(kInt64, values_shapes);
+
+  ShapeVector decoded_shape_shape = {2};
+  auto decoded_shape = std::make_shared<AbstractTensor>(kInt64, decoded_shape_shape);
+
+  ShapeVector log_probability_shape = {shape->shape()[1], 1};
+  auto log_probability =
+    std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(log_probability_shape));
+
+  // outputs: decoded_indices, decoded_values, decoded_shape, log_probability
+  AbstractBasePtrList elements = {decoded_indices, decoded_values, decoded_shape, log_probability};
+  return std::make_shared<AbstractTuple>(elements);
+}
+
 AbstractBasePtr InferImplPad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                              const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
