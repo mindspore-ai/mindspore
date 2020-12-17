@@ -51,6 +51,7 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   int InitConv1x1BiasWeight();
   void InitConv1x1MatmulParam();
   void FreeTmpBuffer();
+  void PackMatmulInput(const float *src_ptr, float *dst_ptr, int row, int col);
 
  private:
   MatMulParameter *matmul_param_ = nullptr;
@@ -62,6 +63,8 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   float *pack_input_ = nullptr;
   float *input_ptr_ = nullptr;
   float *output_ptr_ = nullptr;
+  int row_tile_ = 0;
+  int col_tile_ = 0;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_1X1_H_
