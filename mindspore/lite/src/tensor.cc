@@ -209,10 +209,15 @@ int32_t Tensor::Width() const {
 }
 
 size_t Tensor::Size() const {
-  size_t size = DataTypeSize(this->data_type_);
-  size *= (format_ == schema::Format::Format_NC4HW4 || format_ == schema::Format::Format_NHWC4) ? ElementsC4Num()
-                                                                                                : ElementsNum();
-  return size;
+  size_t element_size = DataTypeSize(this->data_type_);
+  auto element_num = (format_ == schema::Format::Format_NC4HW4 || format_ == schema::Format::Format_NHWC4)
+                       ? ElementsC4Num()
+                       : ElementsNum();
+  if (element_num < 0) {
+    MS_LOG(ERROR) << "Element number of tensor should large than 0 : " << element_num;
+    return 0;
+  }
+  return element_size * element_num;
 }
 
 int Tensor::ElementsNum() const {

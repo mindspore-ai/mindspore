@@ -169,15 +169,18 @@ class LiteKernel {
   void set_desc(const KernelKey kernel_key) { desc_ = kernel_key; }
 
   const mindspore::lite::PrimitiveC *GetPrimitive() const { return primitive_; }
+
+  SubGraphType subgraph_type() const { return this->subgraph_type_; }
+
+  virtual std::string ToString() const;
+
+#ifdef SUPPORT_TRAIN
   void set_workspace_size(size_t value) { workspace_size_ = value; }
   size_t workspace_size() { return workspace_size_; }
   static void AllocWorkspace(size_t size);
   static void FreeWorkspace();
   void *workspace() { return workspace_; }
-
-  SubGraphType subgraph_type() const { return this->subgraph_type_; }
-
-  virtual std::string ToString() const;
+#endif
 
  protected:
   bool InferShapeDone() { return !(primitive_ != nullptr && !primitive_->infer_flag()); }
@@ -195,9 +198,11 @@ class LiteKernel {
   bool train_mode_ = false;
   bool trainable_ = false;  // paramaters of this Kernel are trained in Train Session
   bool is_model_output_ = false;
+  SubGraphType subgraph_type_ = kNotSubGraph;
+#ifdef SUPPORT_TRAIN
   size_t workspace_size_ = 0;
   static void *workspace_;
-  SubGraphType subgraph_type_ = kNotSubGraph;
+#endif
 };
 
 typedef LiteKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,

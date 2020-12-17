@@ -17,13 +17,14 @@
 #include "src/lite_kernel.h"
 #include <algorithm>
 #include <queue>
+#include <set>
 #include "src/tensor.h"
 #include "src/common/utils.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-
+#ifdef SUPPORT_TRAIN
 void *LiteKernel::workspace_ = nullptr;
 
 void LiteKernel::AllocWorkspace(size_t size) {
@@ -40,7 +41,7 @@ void LiteKernel::FreeWorkspace() {
   free(workspace_);
   workspace_ = nullptr;
 }
-
+#endif
 bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
   return std::all_of(this->in_tensors().begin(), this->in_tensors().end(), [&](lite::Tensor *kernel_in_tensor) {
     if (IsContain(scope_tensors, kernel_in_tensor)) {

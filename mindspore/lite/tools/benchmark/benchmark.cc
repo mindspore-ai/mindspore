@@ -33,11 +33,37 @@ static const char *DELIM_COLON = ":";
 static const char *DELIM_COMMA = ",";
 static const char *DELIM_SLASH = "/";
 
-int Benchmark::GenerateRandomData(size_t size, void *data) {
+int Benchmark::GenerateRandomData(size_t size, void *data, TypeId data_type) {
   MS_ASSERT(data != nullptr);
-  char *casted_data = static_cast<char *>(data);
-  for (size_t i = 0; i < size; i++) {
-    casted_data[i] = static_cast<char>(i);
+  switch (data_type) {
+    case kNumberTypeFloat32:
+    case kNumberTypeFloat:
+      FillInputData<float>(size, data, std::uniform_real_distribution<float>(-0.5f, 0.5f));
+      break;
+    case kNumberTypeFloat64:
+      FillInputData<double>(size, data, std::uniform_real_distribution<double>(-0.5, 0.5));
+      break;
+    case kNumberTypeInt64:
+      FillInputData<int64_t>(size, data, std::uniform_int_distribution<int64_t>(0, 99));
+      break;
+    case kNumberTypeInt:
+    case kNumberTypeInt32:
+      FillInputData<int32_t>(size, data, std::uniform_int_distribution<int32_t>(0, 99));
+      break;
+    case kNumberTypeInt16:
+      FillInputData<int16_t>(size, data, std::uniform_int_distribution<int16_t>(0, 99));
+      break;
+    case kNumberTypeInt8:
+      FillInputData<int8_t>(size, data, std::uniform_int_distribution<int8_t>(-127, 127));
+      break;
+    case kNumberTypeUInt8:
+      FillInputData<uint8_t>(size, data, std::uniform_int_distribution<uint8_t>(0, 254));
+      break;
+    default:
+      char *casted_data = static_cast<char *>(data);
+      for (size_t i = 0; i < size; i++) {
+        casted_data[i] = static_cast<char>(i);
+      }
   }
   return RET_OK;
 }
@@ -54,7 +80,7 @@ int Benchmark::GenerateInputData() {
     if (tensor->data_type() == kObjectTypeString) {
       status = StringsToMSTensor({"you're the best."}, tensor);
     } else {
-      status = GenerateRandomData(tensor->Size(), input_data);
+      status = GenerateRandomData(tensor->Size(), input_data, tensor->data_type());
     }
     if (status != RET_OK) {
       std::cerr << "GenerateRandomData for inTensor failed: " << status << std::endl;
