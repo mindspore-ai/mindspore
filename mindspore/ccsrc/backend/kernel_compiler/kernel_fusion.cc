@@ -41,8 +41,10 @@ static size_t GenFusionJsonHash(const nlohmann::json &fusion_json) {
       for (auto &input_desc : op["input_desc"]) {
         input_desc.erase("name");
       }
-      for (auto &list_arg : op["prebuild_output_attrs"]["list_args"]) {
-        list_arg.erase("name");
+      for (auto &list_arg : op["prebuild_outs_attrs"]["list_args"]) {
+        if (list_arg.is_object() && list_arg.find("name") != list_arg.end()) {
+          list_arg.erase("name");
+        }
       }
     }
   }
