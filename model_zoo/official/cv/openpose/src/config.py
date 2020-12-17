@@ -53,21 +53,41 @@ class JointType(IntEnum):
 
 params = {
     # paths
-    'data_dir': '/data0/zhy/dataset/coco',
-    'vgg_path': '/data0/zhy/dataset/coco/vgg19-0-97_5004.ckpt',
+    'data_dir': './dataset',
     'save_model_path': './checkpoints/',
     'load_pretrain': False,
     'pretrained_model_path': "",
-    # training params
-    'batch_size': 10,
 
+    # train type
+    'train_type': 'fix_loss_scale', # chose in ['clip_grad', 'fix_loss_scale']
+    'train_type_NP': 'clip_grad',
+
+    # vgg bn
+    'vgg_with_bn': False,
+    'vgg_path': './vgg_model/vgg19-0-97_5004.ckpt',
+
+    # if clip_grad
+    'GRADIENT_CLIP_TYPE': 1,
+    'GRADIENT_CLIP_VALUE': 10.0,
+
+    # optimizer and lr
+    'optimizer': "Adam", # chose in ['Momentum', 'Adam']
+    'optimizer_NP': "Momentum",
+    'group_params': True,
+    'group_params_NP': False,
     'lr': 1e-4,
-    'lr_gamma': 0.1,
-    'lr_steps': '100000,200000,250000',
-    'lr_steps_NP': '250000',
-
-    'loss_scale': 16386,
+    'lr_type': 'default', # chose in ["default", "cosine"]
+    'lr_gamma': 0.1,                    # if default
+    'lr_steps': '100000,200000,250000', # if default
+    'lr_steps_NP': '250000,300000',     # if default
+    'warmup_epoch': 5,                  # if cosine
     'max_epoch_train': 60,
+    'max_epoch_train_NP': 80,
+
+    'loss_scale': 16384,
+
+    # default param
+    'batch_size': 10,
     'min_keypoints': 5,
     'min_area': 32 * 32,
     'insize': 368,
@@ -75,9 +95,9 @@ params = {
     'paf_sigma': 8,
     'heatmap_sigma': 7,
     'eva_num': 100,
-    'keep_checkpoint_max': 5,
+    'keep_checkpoint_max': 1,
     'log_interval': 100,
-    'ckpt_interval': 663, # 5000,
+    'ckpt_interval': 5304,
 
     'min_box_size': 64,
     'max_box_size': 512,

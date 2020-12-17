@@ -15,7 +15,6 @@
 import os
 import argparse
 import cv2
-
 import numpy as np
 from tqdm import tqdm
 from pycocotools.coco import COCO as ReadJson
@@ -23,44 +22,44 @@ from pycocotools.coco import COCO as ReadJson
 from config import params
 
 class DataLoader():
-    def __init__(self, coco, dir_name, data_mode='train'):
-        self.train = coco
+    def __init__(self, train_, dir_name, mode_='train'):
+        self.train = train_
         self.dir_name = dir_name
-        assert data_mode in ['train', 'val'], 'Data loading mode is invalid.'
-        self.mode = data_mode
-        self.catIds = coco.getCatIds()  # catNms=['person']
-        self.imgIds = sorted(coco.getImgIds(catIds=self.catIds))
+        assert mode_ in ['train', 'val'], 'Data loading mode is invalid.'
+        self.mode = mode_
+        self.catIds = train_.getCatIds()  # catNms=['person']
+        self.imgIds = sorted(train_.getImgIds(catIds=self.catIds))
 
     def __len__(self):
         return len(self.imgIds)
 
-    def gen_masks(self, image, anns):
-        _mask_all = np.zeros(image.shape[:2], 'bool')
-        _mask_miss = np.zeros(image.shape[:2], 'bool')
-        for ann in anns:
+    def gen_masks(self, image_, annotations_):
+        mask_all_1 = np.zeros(image_.shape[:2], 'bool')
+        mask_miss_1 = np.zeros(image_.shape[:2], 'bool')
+        for ann in annotations_:
             mask = self.train.annToMask(ann).astype('bool')
             if ann['iscrowd'] == 1:
-                intxn = _mask_all & mask
-                _mask_miss = np.bitwise_or(_mask_miss.astype(int), np.subtract(mask, intxn, dtype=np.int32))
-                _mask_all = np.bitwise_or(_mask_all.astype(int), mask.astype(int))
+                intxn = mask_all_1 & mask
+                mask_miss_1 = np.bitwise_or(mask_miss_1.astype(int), np.subtract(mask, intxn, dtype=np.int32))
+                mask_all_1 = np.bitwise_or(mask_all_1.astype(int), mask.astype(int))
             elif ann['num_keypoints'] < params['min_keypoints'] or ann['area'] <= params['min_area']:
-                _mask_all = np.bitwise_or(_mask_all.astype(int), mask.astype(int))
-                _mask_miss = np.bitwise_or(_mask_miss.astype(int), mask.astype(int))
+                mask_all_1 = np.bitwise_or(mask_all_1.astype(int), mask.astype(int))
+                mask_miss_1 = np.bitwise_or(mask_miss_1.astype(int), mask.astype(int))
             else:
-                _mask_all = np.bitwise_or(_mask_all.astype(int), mask.astype(int))
-        return _mask_all, _mask_miss
+                mask_all_1 = np.bitwise_or(mask_all_1.astype(int), mask.astype(int))
+        return mask_all_1, mask_miss_1
 
-    def dwaw_gen_masks(self, image, mask, color=(0, 0, 1)):
+    def dwaw_gen_masks(self, image_, mask, color=(0, 0, 1)):
         bimsk = np.repeat(mask[:, :, np.newaxis], 3, axis=2)
-        mskd = image * bimsk.astype(np.int32)
+        mskd = image_ * bimsk.astype(np.int32)
         clmsk = np.ones(bimsk.shape) * bimsk
-        for ind in range(3):
-            clmsk[:, :, ind] = clmsk[:, :, ind] * color[ind] * 255
-        image = image + 0.7 * clmsk - 0.7 * mskd
-        return image.astype(np.uint8)
+        for index_1 in range(3):
+            clmsk[:, :, index_1] = clmsk[:, :, index_1] * color[index_1] * 255
+        image_ = image_ + 0.7 * clmsk - 0.7 * mskd
+        return image_.astype(np.uint8)
 
-    def draw_masks_and_keypoints(self, image, anns):
-        for ann in anns:
+    def draw_masks_and_keypoints(self, image_, annotations_):
+        for ann in annotations_:
             # masks
             mask = self.train.annToMask(ann).astype(np.uint8)
             if ann['iscrowd'] == 1:
@@ -70,30 +69,30 @@ class DataLoader():
             else:
                 color = (1, 0, 0)
             bimsk = np.repeat(mask[:, :, np.newaxis], 3, axis=2)
-            mskd = image * bimsk.astype(np.int32)
+            mskd = image_ * bimsk.astype(np.int32)
             clmsk = np.ones(bimsk.shape) * bimsk
-            for ind in range(3):
-                clmsk[:, :, ind] = clmsk[:, :, ind] * color[ind] * 255
-            image = image + 0.7 * clmsk - 0.7 * mskd
+            for index_1 in range(3):
+                clmsk[:, :, index_1] = clmsk[:, :, index_1] * color[index_1] * 255
+            image_ = image_ + 0.7 * clmsk - 0.7 * mskd
 
             # keypoints
             for x, y, v in np.array(ann['keypoints']).reshape(-1, 3):
                 if v == 1:
-                    cv2.circle(image, (x, y), 3, (255, 255, 0), -1)
+                    cv2.circle(image_, (x, y), 3, (255, 255, 0), -1)
                 elif v == 2:
-                    cv2.circle(image, (x, y), 3, (255, 0, 255), -1)
-        return image.astype(np.uint8)
+                    cv2.circle(image_, (x, y), 3, (255, 0, 255), -1)
+        return image_.astype(np.uint8)
 
-    def get_img_annotation(self, ind=None, image_id=None):
+    def get_img_annotation(self, ind=None, img_id_=None):
         if ind is not None:
-            image_id = self.imgIds[ind]
+            img_id_ = self.imgIds[ind]
 
-        anno_ids = self.train.getAnnIds(imgIds=[image_id])
-        _annotations = self.train.loadAnns(anno_ids)
+        anno_ids = self.train.getAnnIds(imgIds=[img_id_])
+        annotations_ = self.train.loadAnns(anno_ids)
 
-        img_file = os.path.join(params['data_dir'], self.dir_name, self.train.loadImgs([image_id])[0]['file_name'])
-        _image = cv2.imread(img_file)
-        return _image, _annotations, image_id
+        img_file = os.path.join(params['data_dir'], self.dir_name, self.train.loadImgs([img_id_])[0]['file_name'])
+        image_ = cv2.imread(img_file)
+        return image_, annotations_, img_id_
 
 
 if __name__ == '__main__':
@@ -107,7 +106,7 @@ if __name__ == '__main__':
     path_list = [args.train_ann, args.val_ann, args.train_dir, args.val_dir]
     for index, mode in enumerate(['train', 'val']):
         train = ReadJson(path_list[index])
-        data_loader = DataLoader(train, path_list[index+2], mode=mode)
+        data_loader = DataLoader(train, path_list[index+2], mode_=mode)
 
         save_dir = os.path.join(params['data_dir'], 'ignore_mask_{}'.format(mode))
         if not os.path.exists(save_dir):

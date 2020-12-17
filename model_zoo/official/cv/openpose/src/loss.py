@@ -12,37 +12,53 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import time
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.nn.loss.loss import _Loss
-from mindspore.train.callback import Callback
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
-from mindspore.communication.management import get_group_size
 from mindspore.context import ParallelMode
 from mindspore import context
+from mindspore.parallel._utils import _get_device_num, _get_parallel_mode, _get_gradients_mean
+from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
+
+from src.config import params
 
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
 time_stamp_init = False
 time_stamp_first = 0
 grad_scale = C.MultitypeFuncGraph("grad_scale")
+_grad_overflow = C.MultitypeFuncGraph("_grad_overflow")
 reciprocal = P.Reciprocal()
-GRADIENT_CLIP_TYPE = 1
-GRADIENT_CLIP_VALUE = 1.0
 
-@grad_scale.register("Tensor", "Tensor")
-def tensor_grad_scale(scale, grad):
-    return grad * F.cast(reciprocal(scale), F.dtype(grad))
+GRADIENT_CLIP_TYPE = params['GRADIENT_CLIP_TYPE']
+GRADIENT_CLIP_VALUE = params['GRADIENT_CLIP_VALUE']
 
-@grad_scale.register("Tensor", "RowTensor")
-def tensor_grad_scale_row_tensor(scale, grad):
-    return RowTensor(grad.indices,
-                     grad.values * F.cast(reciprocal(scale), F.dtype(grad.values)),
-                     grad.dense_shape)
 clip_grad = C.MultitypeFuncGraph("clip_grad")
 
 @clip_grad.register("Number", "Number", "Tensor")
+def _clip_grad(clip_type, clip_value, grad):
+    """
+    Clip gradients.
+
+    Inputs:
+        clip_type (int): The way to clip, 0 for 'value', 1 for 'norm'.
+        clip_value (float): Specifies how much to clip.
+        grad (tuple[Tensor]): Gradients.
+
+    Outputs:
+        tuple[Tensor]: clipped gradients.
+    """
+    if clip_type not in (0, 1):
+        return grad
+    dt = F.dtype(grad)
+    if clip_type == 0:
+        new_grad = C.clip_by_value(grad, F.cast(F.tuple_to_array((-clip_value,)), dt),
+                                   F.cast(F.tuple_to_array((clip_value,)), dt))
+    else:
+        new_grad = nn.ClipByNorm()(grad, F.cast(F.tuple_to_array((clip_value,)), dt))
+    return new_grad
+
 class openpose_loss(_Loss):
     def __init__(self):
         super(openpose_loss, self).__init__()
@@ -99,54 +115,6 @@ class openpose_loss(_Loss):
 
         return total_loss, heatmaps_loss, pafs_loss
 
-class Depend_network(nn.Cell):
-    def __init__(self, network):
-        super(Depend_network, self).__init__()
-        self.network = network
-
-    def construct(self, *args):
-        loss, _, _ = self.network(*args) # loss, heatmaps_loss, pafs_loss
-        return loss
-
-class TrainingWrapper(nn.Cell):
-    def __init__(self, network, optimizer, sens=1):
-        super(TrainingWrapper, self).__init__(auto_prefix=False)
-        self.network = network
-        self.depend_network = Depend_network(network)
-        # self.weights = ms.ParameterTuple(network.trainable_params())
-        self.weights = optimizer.parameters
-        self.optimizer = optimizer
-        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
-        self.sens = sens
-        self.reducer_flag = False
-        self.grad_reducer = None
-        self.print = P.Print()
-        self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        if self.parallel_mode in [ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL]:
-            self.reducer_flag = True
-        if self.reducer_flag:
-            mean = context.get_auto_parallel_context("gradients_mean")
-            #if mean.get_device_num_is_set():
-            # if mean:
-                #degree = context.get_auto_parallel_context("device_num")
-            # else:
-            degree = get_group_size()
-            self.grad_reducer = nn.DistributedGradReducer(optimizer.parameters, mean, degree)
-
-    def construct(self, *args):
-        weights = self.weights
-        loss, heatmaps_loss, pafs_loss = self.network(*args)
-        sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
-        #grads = self.grad(self.network, weights)(*args, sens)
-        grads = self.grad(self.depend_network, weights)(*args, sens)
-        if self.reducer_flag:
-            grads = self.grad_reducer(grads)
-        #return F.depend(loss, self.optimizer(grads))
-        # for grad in grads:
-            # self.print(grad)
-        loss = F.depend(loss, self.optimizer(grads))
-        return loss, heatmaps_loss, pafs_loss
-
 class BuildTrainNetwork(nn.Cell):
     def __init__(self, network, criterion):
         super(BuildTrainNetwork, self).__init__()
@@ -157,51 +125,39 @@ class BuildTrainNetwork(nn.Cell):
         logit_pafs, logit_heatmap = self.network(input_data)
         loss, _, _ = self.criterion(logit_pafs, logit_heatmap, gt_paf, gt_heatmap, mask)
         return loss
+        #loss = self.criterion(logit_pafs, logit_heatmap, gt_paf, gt_heatmap, mask)
+        # return loss, heatmaps_loss, pafs_loss
 
-class LossCallBack(Callback):
-    """
-    Monitor the loss in training.
-    If the loss is NAN or INF terminating training.
-    Note:
-        If per_print_times is 0 do not print loss.
-    Args:
-        per_print_times (int): Print loss every times. Default: 1.
-    """
+class TrainOneStepWithClipGradientCell(nn.Cell):
+    '''TrainOneStepWithClipGradientCell'''
+    def __init__(self, network, optimizer, sens=1.0):
+        super(TrainOneStepWithClipGradientCell, self).__init__(auto_prefix=False)
+        self.network = network
+        self.network.set_grad()
+        self.network.add_flags(defer_inline=True)
+        self.weights = optimizer.parameters
+        self.optimizer = optimizer
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
+        self.hyper_map = C.HyperMap()
+        self.sens = sens
+        self.reducer_flag = False
+        self.grad_reducer = None
+        parallel_mode = _get_parallel_mode()
+        if parallel_mode in (ParallelMode.DATA_PARALLEL, ParallelMode.HYBRID_PARALLEL):
+            self.reducer_flag = True
+        if self.reducer_flag:
+            mean = _get_gradients_mean()
+            degree = _get_device_num()
+            self.grad_reducer = DistributedGradReducer(optimizer.parameters, mean, degree)
 
-    def __init__(self, per_print_times=1):
-        super(LossCallBack, self).__init__()
-        if not isinstance(per_print_times, int) or per_print_times < 0:
-            raise ValueError("print_step must be int and >= 0.")
-        self._per_print_times = per_print_times
-        self.count = 0
-        self.loss_sum = 0
+    def construct(self, *inputs):
 
-        global time_stamp_init, time_stamp_first
-        if not time_stamp_init:
-            time_stamp_first = time.time()
-            time_stamp_init = True
-
-    def step_end(self, run_context):
-        cb_params = run_context.original_args()
-        loss = cb_params.net_outputs.asnumpy()
-
-        self.count += 1
-        self.loss_sum += float(loss)
-
-        cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
-
-        if self.count >= 1:
-            global time_stamp_first
-            time_stamp_current = time.time()
-
-            loss = self.loss_sum/self.count
-
-            loss_file = open("./loss.log", "a+")
-            loss_file.write("%lu epoch: %s step: %s ,loss: %.5f" %
-                            (time_stamp_current - time_stamp_first, cb_params.cur_epoch_num, cur_step_in_epoch,
-                             loss))
-            loss_file.write("\n")
-            loss_file.close()
-
-            self.count = 0
-            self.loss_sum = 0
+        weights = self.weights
+        loss = self.network(*inputs)
+        sens = P.Fill()(P.DType()(loss), P.Shape()(loss), self.sens)
+        grads = self.grad(self.network, weights)(*inputs, sens)
+        grads = self.hyper_map(F.partial(clip_grad, GRADIENT_CLIP_TYPE, GRADIENT_CLIP_VALUE), grads)
+        if self.reducer_flag:
+            # apply grad reducer on grads
+            grads = self.grad_reducer(grads)
+        return F.depend(loss, self.optimizer(grads))

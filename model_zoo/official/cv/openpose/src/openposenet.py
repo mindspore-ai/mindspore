@@ -17,19 +17,18 @@ from mindspore.nn import Conv2d, ReLU
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.ops import operations as P
 from mindspore import context
+
 context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
-#selfCat = P.Concat(axis=1)
 
 time_stamp_init = False
 time_stamp_first = 0
 loadvgg = 1
 
-
 class OpenPoseNet(nn.Cell):
     insize = 368
-    def __init__(self, vggpath=''):
+    def __init__(self, vggpath='', vgg_with_bn=False):
         super(OpenPoseNet, self).__init__()
-        self.base = Base_model()
+        self.base = Base_model(vgg_with_bn=vgg_with_bn)
         self.stage_1 = Stage_1()
         self.stage_2 = Stage_x()
         self.stage_3 = Stage_x()
@@ -39,23 +38,15 @@ class OpenPoseNet(nn.Cell):
         self.shape = P.Shape()
         self.cat = P.Concat(axis=1)
         self.print = P.Print()
-        # for m in self.modules():
-            # if isinstance(m, Conv2d):
-                # init.constant_(m.bias, 0)
         if loadvgg and vggpath:
             param_dict = load_checkpoint(vggpath)
             param_dict_new = {}
             trans_name = 'base.vgg_base.'
             for key, values in param_dict.items():
-
-                #print('key:',key,self.shape(values))
                 if key.startswith('moments.'):
                     continue
                 elif key.startswith('network.'):
                     param_dict_new[trans_name+key[17:]] = values
-                # else:
-                    # param_dict_new[key] = values
-            #print(param_dict_new)
             load_param_into_net(self.base.vgg_base, param_dict_new)
 
     def construct(self, x):
@@ -205,20 +196,17 @@ class VGG_Base_MS(nn.Cell):
         return x
 
 class Base_model(nn.Cell):
-    def __init__(self):
+    def __init__(self, vgg_with_bn=False):
         super(Base_model, self).__init__()
-        #cfgs_zh = {'16': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 'M', 512, 512]}
         cfgs_zh = {'19': [64, 64, 'M', 128, 128, 'M', 256, 256, 256, 256, 'M', 512, 512]}
-        #cfgs_zh = {'16': [64, 64,128, 128, 256, 256, 256, 512, 512, 512]}
-        self.vgg_base = Vgg(cfgs_zh['19'], batch_norm=False)
-        #self.vgg_base = VGG_Base()
-        #self.vgg_base = VGG_Base_MS()
+        self.vgg_base = Vgg(cfgs_zh['19'], batch_norm=vgg_with_bn)
 
         self.conv4_3_CPM = Conv2d(in_channels=512, out_channels=256, kernel_size=3, stride=1, pad_mode='same',
                                   has_bias=True)
         self.conv4_4_CPM = Conv2d(in_channels=256, out_channels=128, kernel_size=3, stride=1, pad_mode='same',
                                   has_bias=True)
         self.relu = ReLU()
+
     def construct(self, x):
         x = self.vgg_base(x)
         x = self.relu(self.conv4_3_CPM(x))

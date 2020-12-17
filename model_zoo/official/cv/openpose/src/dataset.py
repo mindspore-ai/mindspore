@@ -15,10 +15,10 @@
 import os
 import math
 import random
-import cv2
-
 import numpy as np
+import cv2
 from pycocotools.coco import COCO as ReadJson
+
 import mindspore.dataset as de
 
 from src.config import JointType, params
@@ -40,6 +40,7 @@ class txtdataset():
         if self.mode in ['val', 'eval'] and n_samples is not None:
             self.imgIds = random.sample(self.imgIds, n_samples)
         print('{} images: {}'.format(mode, len(self)))
+
 
     def __len__(self):
         return len(self.imgIds)
@@ -217,9 +218,9 @@ class txtdataset():
         flipped_mask = cv2.flip(mask.astype(np.uint8), 1).astype('bool')
         poses[:, :, 0] = img.shape[1] - 1 - poses[:, :, 0]
 
-        def swap_joints(poses, joint_type_1, joint_type_2):
-            tmp = poses[:, joint_type_1].copy()
-            poses[:, joint_type_1] = poses[:, joint_type_2]
+        def swap_joints(poses, joint_type_, joint_type_2):
+            tmp = poses[:, joint_type_].copy()
+            poses[:, joint_type_] = poses[:, joint_type_2]
             poses[:, joint_type_2] = tmp
 
         swap_joints(poses, JointType.LeftEye, JointType.RightEye)
@@ -243,8 +244,10 @@ class txtdataset():
             aug_img, ignore_mask, poses = self.flip_img(aug_img, ignore_mask, poses)
 
         return aug_img, ignore_mask, poses
-    # ------------------------------------------------------------------
+    # ------------------------------- end -----------------------------------
 
+
+    # ------------------------------ Heatmap ------------------------------------
     # return shape: (height, width)
     def generate_gaussian_heatmap(self, shape, joint, sigma):
         x, y = joint
@@ -269,6 +272,38 @@ class txtdataset():
         heatmaps = np.vstack((heatmaps, bg_heatmap[None]))
         return heatmaps.astype('f')
 
+    def generate_gaussian_heatmap_fast(self, shape, joint, sigma):
+        x, y = joint
+        grid_x = np.tile(np.arange(shape[1]), (shape[0], 1))
+        grid_y = np.tile(np.arange(shape[0]), (shape[1], 1)).transpose()
+        grid_x = grid_x + 0.4375
+        grid_y = grid_y + 0.4375
+        grid_distance = (grid_x - x) ** 2 + (grid_y - y) ** 2
+        gaussian_heatmap = np.exp(-0.5 * grid_distance / sigma**2)
+        return gaussian_heatmap
+
+    def generate_heatmaps_fast(self, img, poses, heatmap_sigma):
+        resize_shape = (img.shape[0] // 8, img.shape[1] // 8)
+        heatmaps = np.zeros((0,) + resize_shape)
+        sum_heatmap = np.zeros(resize_shape)
+        for joint_index in range(len(JointType)):
+            heatmap = np.zeros(resize_shape)
+            for pose in poses:
+                if pose[joint_index, 2] > 0:
+                    jointmap = self.generate_gaussian_heatmap_fast(resize_shape, pose[joint_index][:2]/8,
+                                                                   heatmap_sigma/8)
+                    index_1 = jointmap > heatmap
+                    heatmap[index_1] = jointmap[index_1]
+                    index_2 = jointmap > sum_heatmap
+                    sum_heatmap[index_2] = jointmap[index_2]
+            heatmaps = np.vstack((heatmaps, heatmap.reshape((1,) + heatmap.shape)))
+
+        bg_heatmap = 1 - sum_heatmap  # background channel
+        heatmaps = np.vstack((heatmaps, bg_heatmap[None]))
+        return heatmaps.astype('f')
+    # ------------------------------ end ------------------------------------
+
+    # ------------------------------ PAF ------------------------------------
     # return shape: (2, height, width)
     def generate_constant_paf(self, shape, joint_from, joint_to, paf_width):
         if np.array_equal(joint_from, joint_to): # same joint
@@ -285,7 +320,7 @@ class txtdataset():
         grid_y = np.tile(np.arange(shape[0]), (shape[1], 1)).transpose()
         horizontal_inner_product = unit_vector[0] * (grid_x - joint_from[0]) + unit_vector[1] * (grid_y - joint_from[1])
         horizontal_paf_flag = (horizontal_inner_product >= 0) & (horizontal_inner_product <= joint_distance)
-        vertical_inner_product = vertical_unit_vector[0] * (grid_x - joint_from[0]) + vertical_unit_vector[1] * \
+        vertical_inner_product = vertical_unit_vector[0] * (grid_x - joint_from[0]) + vertical_unit_vector[1] *\
                                  (grid_y - joint_from[1])
         vertical_paf_flag = np.abs(vertical_inner_product) <= paf_width  # paf_width : 8
         paf_flag = horizontal_paf_flag & vertical_paf_flag
@@ -313,6 +348,55 @@ class txtdataset():
             paf[paf_flags > 0] /= paf_flags[paf_flags > 0]
             pafs = np.vstack((pafs, paf))
         return pafs.astype('f')
+
+    def generate_constant_paf_fast(self, shape, joint_from, joint_to, paf_width):
+        if np.array_equal(joint_from, joint_to): # same joint
+            return np.zeros((2,) + shape[:-1])
+
+        joint_distance = np.linalg.norm(joint_to - joint_from)
+        unit_vector = (joint_to - joint_from) / joint_distance
+        rad = np.pi / 2
+        # [[0, 1], [-1, 0]]
+        rot_matrix = np.array([[np.cos(rad), np.sin(rad)], [-np.sin(rad), np.cos(rad)]])
+        # [[u_y], [-u_x]]
+        vertical_unit_vector = np.dot(rot_matrix, unit_vector)
+        grid_x = np.tile(np.arange(shape[1]), (shape[0], 1))
+        grid_y = np.tile(np.arange(shape[0]), (shape[1], 1)).transpose()
+        grid_x = grid_x + 0.4375
+        grid_y = grid_y + 0.4375
+        horizontal_inner_product = unit_vector[0] * (grid_x - joint_from[0]) + unit_vector[1] * (grid_y - joint_from[1])
+        horizontal_paf_flag = (horizontal_inner_product >= 0) & (horizontal_inner_product <= joint_distance)
+        vertical_inner_product = vertical_unit_vector[0] * (grid_x - joint_from[0]) + vertical_unit_vector[1] *\
+                                 (grid_y - joint_from[1])
+        vertical_paf_flag = np.abs(vertical_inner_product) <= paf_width  # paf_width : 8/8 = 1
+        paf_flag = horizontal_paf_flag & vertical_paf_flag
+        constant_paf = np.stack((paf_flag, paf_flag)) *\
+                       np.broadcast_to(unit_vector, shape[:-1] + (2,)).transpose(2, 0, 1)
+
+        return constant_paf
+
+    def generate_pafs_fast(self, img, poses, paf_sigma):
+        resize_shape = (img.shape[0]//8, img.shape[1]//8, 3)
+        pafs = np.zeros((0,) + resize_shape[:-1])
+
+        for limb in params['limbs_point']:
+            paf = np.zeros((2,) + resize_shape[:-1])
+            paf_flags = np.zeros(paf.shape) # for constant paf
+
+            for pose in poses:
+                joint_from, joint_to = pose[limb]
+                if joint_from[2] > 0 and joint_to[2] > 0:
+                    limb_paf = self.generate_constant_paf_fast(resize_shape, joint_from[:2]/8, joint_to[:2]/8, paf_sigma/8) # [2, 368, 368]
+                    limb_paf_flags = limb_paf != 0
+                    paf_flags += np.broadcast_to(limb_paf_flags[0] | limb_paf_flags[1], limb_paf.shape)
+
+                    paf += limb_paf
+
+            index_1 = paf_flags > 0
+            paf[index_1] /= paf_flags[index_1]
+            pafs = np.vstack((pafs, paf))
+        return pafs.astype('f')
+    # ------------------------------ end ------------------------------------
 
     def get_img_annotation(self, ind=None, img_id=None):
         annotations = None
@@ -389,13 +473,17 @@ class txtdataset():
         resized_img, ignore_mask, resized_poses = self.resize_data(img, ignore_mask, poses,
                                                                    shape=(self.insize, self.insize))
 
-        heatmaps = self.generate_heatmaps(resized_img, resized_poses, params['heatmap_sigma'])
-        pafs = self.generate_pafs(resized_img, resized_poses, params['paf_sigma']) # params['paf_sigma']: 8
+        # heatmaps = self.generate_heatmaps(resized_img, resized_poses, params['heatmap_sigma'])
+        # resized_heatmaps = self.resize_output(heatmaps)
+        resized_heatmaps = self.generate_heatmaps_fast(resized_img, resized_poses, params['heatmap_sigma'])
+
+        # pafs = self.generate_pafs(resized_img, resized_poses, params['paf_sigma'])
+        # resized_pafs = self.resize_output(pafs)
+        resized_pafs = self.generate_pafs_fast(resized_img, resized_poses, params['paf_sigma'])
 
         ignore_mask = cv2.morphologyEx(ignore_mask.astype('uint8'), cv2.MORPH_DILATE, np.ones((16, 16))).astype('bool')
-        resized_pafs = self.resize_output(pafs)
-        resized_heatmaps = self.resize_output(heatmaps)
         resized_ignore_mask = self.resize_output(ignore_mask)
+
 
         return resized_img, resized_pafs, resized_heatmaps, resized_ignore_mask
 
@@ -459,7 +547,6 @@ class DistributedSampler():
     def __len__(self):
         return self.num_samplers
 
-
 def valdata(jsonpath, imgpath, rank, group_size, mode='val', maskpath=''):
     #cv2.setNumThreads(0)
     val = ReadJson(jsonpath)
@@ -468,23 +555,6 @@ def valdata(jsonpath, imgpath, rank, group_size, mode='val', maskpath=''):
     ds = de.GeneratorDataset(dataset, ['img', 'img_id'], num_parallel_workers=8, sampler=sampler)
     ds = ds.repeat(1)
     return ds
-
-
-def openpose(jsonpath, imgpath, maskpath, per_batch_size, max_epoch, rank, group_size, mode='train'):
-    train = ReadJson(jsonpath)
-    num_parallel = 48
-    if group_size > 1:
-        num_parallel = 20
-    dataset = txtdataset(train, imgpath, maskpath, params['insize'], mode=mode)
-    sampler = DistributedSampler(dataset, rank, group_size)
-    de_dataset = de.GeneratorDataset(dataset, ["image", "pafs", "heatmaps", "ignore_mask"],
-                                     num_parallel_workers=num_parallel, sampler=sampler, shuffle=True)
-    de_dataset = de_dataset.project(columns=["image", "pafs", "heatmaps", "ignore_mask"])
-    de_dataset = de_dataset.batch(batch_size=per_batch_size, drop_remainder=True, num_parallel_workers=num_parallel)
-    steap_pre_epoch = de_dataset.get_dataset_size()
-    de_dataset = de_dataset.repeat(max_epoch)
-
-    return de_dataset, steap_pre_epoch
 
 
 def create_dataset(jsonpath, imgpath, maskpath, batch_size, rank, group_size, mode='train', repeat_num=1, shuffle=True,
