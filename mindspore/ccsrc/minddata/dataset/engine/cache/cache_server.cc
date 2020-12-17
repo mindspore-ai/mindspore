@@ -76,34 +76,7 @@ Status CacheServer::DoServiceStart() {
   // But technically they don't have to be the same.
   num_grpc_workers_ = num_workers_;
   MS_LOG(DEBUG) << "Number of gprc workers is set to " << num_grpc_workers_;
-  // For the grpc completion queue to work, we need to allocate some
-  // tags which in our case are instances of CacheServerQuest.
-  // They got recycled and we will allocate them in advance and push
-  // them into some free list. We need more (two or three times) the
-  // size of the cache_q. While each worker is working on a CacheSerRequest,
-  // we need some extra running injecting in the the qrpc completion queue.
-  const int32_t kMultiplier = 2;
-  int ratio = num_workers_ / num_grpc_workers_;
-  if (num_workers_ % num_grpc_workers_) ++ratio;
-  const int32_t free_list_capacity = kMultiplier * (kQueCapacity + 1) * ratio;
-  free_list_ = std::make_shared<QueueList<CacheServerRequest *>>();
-  free_list_->Init(num_grpc_workers_, free_list_capacity);
-  tag_.reserve(num_grpc_workers_);
-  // Now we populate all free list. Round robin the free list among the numa nodes.
-  for (auto m = 0; m < num_grpc_workers_; ++m) {
-    NumaAllocator<CacheServerRequest> alloc(m % num_numa_nodes, CachePoolPolicy::kPreferred);
-    // Ideally we allocate all the free list in one malloc. But we will allocate one segment
-    // at a time so that we can change the numa policy easily per grpc worker.
-    auto my_tag = std::make_unique<MemGuard<CacheServerRequest, NumaAllocator<CacheServerRequest>>>(alloc);
-    // Allocate the tag and assign it the current queue
-    RETURN_IF_NOT_OK(my_tag->allocate(free_list_capacity, m));
-    for (int i = 0; i < free_list_capacity; ++i) {
-      RETURN_IF_NOT_OK(free_list_->operator[](m)->Add((*my_tag)[i]));
-    }
-    tag_.push_back(std::move(my_tag));
-  }
   RETURN_IF_NOT_OK(cache_q_->Register(&vg_));
-  RETURN_IF_NOT_OK(free_list_->Register(&vg_));
   // Start the comm layer
   try {
     comm_layer_ = std::make_shared<CacheServerGreeterImpl>(port_);
@@ -396,14 +369,10 @@ Status CacheServer::FastCacheRow(CacheRequest *rq, CacheReply *reply) {
 
 Status CacheServer::BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuilder> &fbb, WritableSlice *out) {
   RETURN_UNEXPECTED_IF_NULL(out);
-  int32_t numQ = GetNumGrpcWorkers();
-  auto rng = GetRandomDevice();
-  std::uniform_int_distribution<session_id_type> distribution(0, numQ - 1);
-  int32_t qID = distribution(rng);
   auto p = flatbuffers::GetRoot<BatchDataLocatorMsg>(fbb->GetBufferPointer());
   const auto num_elements = p->rows()->size();
   auto connection_id = p->connection_id();
-  auto batch_wait = std::make_unique<BatchWait>(num_elements);
+  auto batch_wait = std::make_shared<BatchWait>(num_elements);
   int64_t data_offset = (num_elements + 1) * sizeof(int64_t);
   auto *offset_array = reinterpret_cast<int64_t *>(out->GetMutablePointer());
   offset_array[0] = data_offset;
@@ -423,7 +392,7 @@ Status CacheServer::BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuil
       // Get a request and send to the proper worker (at some numa node) to do the fetch.
       worker_id_t worker_id = IsNumaAffinityOn() ? GetWorkerByNumaId(node_id) : GetRandomWorker();
       CacheServerRequest *cache_rq;
-      RETURN_IF_NOT_OK(GetFreeRequestTag(qID++ % numQ, &cache_rq));
+      RETURN_IF_NOT_OK(GetFreeRequestTag(&cache_rq));
       // Set up all the necessarily field.
       cache_rq->type_ = BaseRequest::RequestType::kInternalFetchRow;
       cache_rq->st_ = CacheServerRequest::STATE::PROCESS;
@@ -719,10 +688,6 @@ Status CacheServer::ConnectReset(CacheRequest *rq) {
 
 Status CacheServer::BatchCacheRows(CacheRequest *rq) {
   CHECK_FAIL_RETURN_UNEXPECTED(rq->buf_data().size() == 3, "Expect three pieces of data");
-  int32_t numQ = GetNumGrpcWorkers();
-  auto rng = GetRandomDevice();
-  std::uniform_int_distribution<session_id_type> distribution(0, numQ - 1);
-  int32_t qID = distribution(rng);
   try {
     auto &cookie = rq->buf_data(0);
     auto connection_id = rq->connection_id();
@@ -733,7 +698,7 @@ Status CacheServer::BatchCacheRows(CacheRequest *rq) {
     offset_addr = strtoll(rq->buf_data(1).data(), nullptr, 10);
     auto p = reinterpret_cast<char *>(reinterpret_cast<int64_t>(base) + offset_addr);
     num_elem = strtol(rq->buf_data(2).data(), nullptr, 10);
-    auto batch_wait = std::make_unique<BatchWait>(num_elem);
+    auto batch_wait = std::make_shared<BatchWait>(num_elem);
     // Get a set of free request and push into the queues.
     for (auto i = 0; i < num_elem; ++i) {
       auto start = reinterpret_cast<int64_t>(p);
@@ -743,7 +708,7 @@ Status CacheServer::BatchCacheRows(CacheRequest *rq) {
         p += msg->data_sz()->Get(k);
       }
       CacheServerRequest *cache_rq;
-      RETURN_IF_NOT_OK(GetFreeRequestTag(qID++ % numQ, &cache_rq));
+      RETURN_IF_NOT_OK(GetFreeRequestTag(&cache_rq));
       // Fill in details.
       cache_rq->type_ = BaseRequest::RequestType::kInternalCacheRow;
       cache_rq->st_ = CacheServerRequest::STATE::PROCESS;
@@ -787,7 +752,11 @@ Status CacheServer::ProcessRequest(CacheServerRequest *cache_req) {
           try {
             int64_t addr = strtol(rq.buf_data(3).data(), nullptr, 10);
             auto *bw = reinterpret_cast<BatchWait *>(addr);
-            RETURN_IF_NOT_OK(bw->Set(std::move(cache_req->rc_)));
+            // Check if the object is still around.
+            auto bwObj = bw->GetBatchWait();
+            if (bwObj.lock()) {
+              RETURN_IF_NOT_OK(bw->Set(std::move(cache_req->rc_)));
+            }
           } catch (const std::exception &e) {
             RETURN_STATUS_UNEXPECTED(e.what());
           }
@@ -820,7 +789,11 @@ Status CacheServer::ProcessRequest(CacheServerRequest *cache_req) {
         try {
           int64_t addr = strtol(rq.buf_data(1).data(), nullptr, 10);
           auto *bw = reinterpret_cast<BatchWait *>(addr);
-          RETURN_IF_NOT_OK(bw->Set(std::move(cache_req->rc_)));
+          // Check if the object is still around.
+          auto bwObj = bw->GetBatchWait();
+          if (bwObj.lock()) {
+            RETURN_IF_NOT_OK(bw->Set(std::move(cache_req->rc_)));
+          }
         } catch (const std::exception &e) {
           RETURN_STATUS_UNEXPECTED(e.what());
         }
@@ -918,7 +891,7 @@ Status CacheServer::ProcessRequest(CacheServerRequest *cache_req) {
   cache_req->st_ = CacheServerRequest::STATE::FINISH;
   // We will re-tag the request back to the grpc queue. Once it comes back from the client,
   // the CacheServerRequest, i.e. the pointer cache_req, will be free
-  if (!internal_request) {
+  if (!internal_request && !global_shutdown_) {
     cache_req->responder_.Finish(reply, grpc::Status::OK, cache_req);
   } else {
     // We can free up the request now.
@@ -994,28 +967,26 @@ Status CacheServer::Run(int msg_qid) {
   // note that after we have sent the initial status using the msg_qid, parent process will exit and
   // remove it. So we can't use it again.
   RETURN_IF_NOT_OK(vg_.join_all(Task::WaitFlag::kBlocking));
+  // Shutdown the grpc queue. No longer accept any new comer.
+  comm_layer_->Shutdown();
+  // The next thing to do drop all the caches.
+  RETURN_IF_NOT_OK(ServiceStop());
   return Status::OK();
 }
 
-Status CacheServer::GetFreeRequestTag(int32_t queue_id, CacheServerRequest **q) {
+Status CacheServer::GetFreeRequestTag(CacheServerRequest **q) {
   RETURN_UNEXPECTED_IF_NULL(q);
-  CacheServer &cs = CacheServer::GetInstance();
-  CacheServerRequest *p;
-  RETURN_IF_NOT_OK(cs.free_list_->operator[](queue_id)->PopFront(&p));
+  auto *p = new (std::nothrow) CacheServerRequest();
+  if (p == nullptr) {
+    return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
+  }
   *q = p;
   return Status::OK();
 }
 
 Status CacheServer::ReturnRequestTag(CacheServerRequest *p) {
   RETURN_UNEXPECTED_IF_NULL(p);
-  int32_t myQID = p->getQid();
-  // Free any memory from the protobufs
-  p->~CacheServerRequest();
-  // Re-initialize the memory
-  new (p) CacheServerRequest(myQID);
-  // Now we return it back to free list.
-  CacheServer &cs = CacheServer::GetInstance();
-  RETURN_IF_NOT_OK(cs.free_list_->operator[](myQID)->Add(p));
+  delete p;
   return Status::OK();
 }
 
@@ -1134,22 +1105,10 @@ void CacheServer::GlobalShutdown() {
   bool expected = false;
   if (global_shutdown_.compare_exchange_strong(expected, true)) {
     MS_LOG(WARNING) << "Shutting down server.";
-    // Shutdown the grpc queue. No longer accept any new comer.
-    // The threads we spawn to work on the grpc queue will exit themselves once
-    // they notice the queue has been shutdown.
-    comm_layer_->Shutdown();
-    // Now we interrupt any threads that are waiting on cache_q_
+    // Interrupt all the threads and queues. We will leave the shutdown
+    // of the comm layer after we have joined all the threads and will
+    // be done by the master thread.
     vg_.interrupt_all();
-    // The next thing to do drop all the caches.
-    UniqueLock lck(&rwLock_);
-    for (auto it = all_caches_.begin(); it != all_caches_.end();) {
-      auto id = it->first;
-      MS_LOG(WARNING) << "Dropping cache with connection id " << std::to_string(id);
-      // Wait for all outstanding work to be finished.
-      auto &cs = it->second;
-      UniqueLock cs_lock(&cs->rw_lock_);
-      it = all_caches_.erase(it);
-    }
   }
 }
 
