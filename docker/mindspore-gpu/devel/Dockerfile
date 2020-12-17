@@ -5,8 +5,9 @@ MAINTAINER leonwanghui <leon.wanghui@huawei.com>
 # Set env
 ENV PYTHON_ROOT_PATH /usr/local/python-3.7.5
 ENV CMAKE_ROOT_PATH /usr/local/cmake-3.14.1
+ENV OMPI_ROOT_PATH /usr/local/openmpi-4.0.3
 ENV PATH ${CMAKE_ROOT_PATH}/bin:/usr/local/bin:$PATH
-ENV LD_LIBRARY_PATH ${PYTHON_ROOT_PATH}/lib
+ENV LD_LIBRARY_PATH ${OMPI_ROOT_PATH}:${PYTHON_ROOT_PATH}/lib
 
 # Install base tools
 RUN apt update \
@@ -79,3 +80,15 @@ RUN cd /tmp \
     && mkdir -p ${CMAKE_ROOT_PATH} \
     && bash ./cmake-3.14.1-Linux-x86_64.sh --prefix=${CMAKE_ROOT_PATH} --exclude-subdir --skip-license \
     && rm -f /tmp/cmake-3.14.1-Linux-x86_64.sh
+
+# Install openmpi (v4.0.3)
+RUN cd /tmp \
+    && wget https://download.open-mpi.org/release/open-mpi/v4.0/openmpi-4.0.3.tar.gz \
+    && tar -xvf openmpi-4.0.3.tar.gz \
+    && cd /tmp/openmpi-4.0.3 \
+    && mkdir -p ${OMPI_ROOT_PATH} \
+    && ./configure --prefix=${OMPI_ROOT_PATH} \
+    && make -j4 \
+    && make install -j4 \
+    && rm -rf /tmp/openmpi-4.0.3 \
+    && rm -f /tmp/openmpi-4.0.3.tar.gz
