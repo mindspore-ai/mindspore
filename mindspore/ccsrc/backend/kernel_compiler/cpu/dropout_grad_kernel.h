@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 class DropoutGradCpuBwdKernel : public CPUKernel {
  public:
   DropoutGradCpuBwdKernel() = default;
@@ -36,9 +35,9 @@ class DropoutGradCpuBwdKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  float keep_prob_{0.0};
+  float keep_prob_{1.0};
   size_t num_count_{1};
-  TypeId dtype_;
+  TypeId dtype_{kTypeUnknown};
   template <typename T>
   void DropoutBackwardKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs,
                              size_t num_count, float keep_prob);

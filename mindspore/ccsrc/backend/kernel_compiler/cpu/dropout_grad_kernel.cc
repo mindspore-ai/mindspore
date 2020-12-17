@@ -59,11 +59,10 @@ void DropoutGradCpuBwdKernel::DropoutBackwardKernel(const std::vector<AddressPtr
   auto dy = reinterpret_cast<T *>(inputs[0]->addr);
   auto mask = reinterpret_cast<T *>(inputs[1]->addr);
 
-  float scale = 1.f / keep_prob;
+  const float scale = 1.f / keep_prob;
   for (size_t i = 0; i < num_count; i += 1) {
     dx[i] = (T)(scale * static_cast<float>(dy[i] * mask[i]));
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore
