@@ -80,12 +80,15 @@ void ApplyAdagradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs) 
   std::vector<std::thread> threads;
   threads.reserve(use_thread_num);
   size_t start = 0;
-  size_t batch_size = (length + use_thread_num - 1) / use_thread_num;
+  const size_t batch_size = (length + use_thread_num - 1) / use_thread_num;
 
+  if (batch_size == 0) {
+    MS_LOG(EXCEPTION) << "Error occur in launch kernel";
+  }
   while (start < length) {
     size_t end = (start + batch_size) > length ? length : (start + batch_size);
     threads.emplace_back(
-      std::thread(&ApplyAdagradCPUKernel::LaunchApplyAdagrad<T>, this, var, accum, *lr, gradient, start, end));
+      std::thread(&ApplyAdagradCPUKernel::LaunchApplyAdagrad<T *>, this, var, accum, lr, gradient, start, end));
     start += batch_size;
   }
 
@@ -95,16 +98,18 @@ void ApplyAdagradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs) 
 }
 
 template <typename T>
-void ApplyAdagradCPUKernel::LaunchApplyAdagrad(T *var, T *accum, T lr, T *gradient, size_t start, size_t end) {
-  const T one = T(1);
-  const T eps = T(1e-6);
+void ApplyAdagradCPUKernel::LaunchApplyAdagrad(T var, T accum, T lr, T gradient, size_t start, size_t end) {
+  // DataType can only be float32 or float16, so eps will not be zero.
+  using DataType = typename std::iterator_traits<T>::value_type;
+  const DataType one = DataType(1);
+  const DataType eps = DataType(1e-6);
   for (size_t i = start; i < end; ++i) {
     // update accum: accum += grad * grad
     if (update_slots_) {
       accum[i] += gradient[i] * gradient[i];
     }
     // update var: var -= lr * grad * \frac{1}{\sqrt{accum}}
-    var[i] -= lr * gradient[i] * (one / sqrt(accum[i] + eps));
+    var[i] -= lr[0] * gradient[i] * (one / sqrt(accum[i] + eps));
   }
 }
 }  // namespace kernel
