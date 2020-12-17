@@ -191,6 +191,83 @@ def test_tensor_dot_outer():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
+def test_tensor_dot_reverse_axes():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    np.random.seed(2746)
+    shape_x1 = (1, 2, 3)
+    shape_x2 = (1, 2, 3)
+    axes = ((1, 0), (0, 1))
+    x1 = np.random.random(shape_x1).astype(np.float32)
+    x2 = np.random.random(shape_x2).astype(np.float32)
+    x1_tensor = Tensor(x1, dtype=mindspore.float32)
+    x2_tensor = Tensor(x2, dtype=mindspore.float32)
+
+    network = NetTensorDot(axes)
+
+    ms_result_np = network(x1_tensor, x2_tensor).asnumpy()
+    expected_result = np.array([[0.58561826, 0.21897982, 0.906598],
+                                [0.19630799, 0.10731681, 0.2680981],
+                                [0.8003185, 0.457294, 1.0721111]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(ms_result_np, expected_result)
+
+
+    np.random.seed(1526)
+    shape_x1 = (1, 2, 3, 4, 5)
+    shape_x2 = (1, 2, 3)
+    axes = ((0, 2), (2, 0))
+    x1 = np.random.random(shape_x1).astype(np.float32)
+    x2 = np.random.random(shape_x2).astype(np.float32)
+    x1_tensor = Tensor(x1, dtype=mindspore.float32)
+    x2_tensor = Tensor(x2, dtype=mindspore.float32)
+
+    network = NetTensorDot(axes)
+    ms_result_np = network(x1_tensor, x2_tensor).asnumpy()
+    expected_result = np.array([[[[1.106365, 0.9736746],
+                                  [0.91042125, 0.7814131],
+                                  [0.5576207, 0.327488],
+                                  [0.93404585, 0.7108171],
+                                  [1.078351, 0.87405884]],
+                                 [[1.1720579, 0.9948833],
+                                  [1.1594493, 1.0185612],
+                                  [0.7251004, 0.60322404],
+                                  [0.4724398, 0.2930961],
+                                  [0.9711088, 0.8482977]],
+                                 [[1.4110168, 1.1171235],
+                                  [0.81948525, 0.778057],
+                                  [0.7914786, 0.78767675],
+                                  [0.77509344, 0.6020987],
+                                  [0.8986199, 0.7100061]],
+                                 [[0.7270926, 0.35752398],
+                                  [0.5529937, 0.31682697],
+                                  [0.73876995, 0.48478222],
+                                  [0.96520174, 0.73099715],
+                                  [0.96569407, 0.8556314]]],
+                                [[[1.2093457, 0.90222925],
+                                  [1.3758272, 0.8189213],
+                                  [1.2997738, 1.045748],
+                                  [1.1460838, 0.67475325],
+                                  [0.95835257, 0.67791444]],
+                                 [[0.84732395, 0.8058369],
+                                  [1.1979935, 0.57202166],
+                                  [0.2577264, 0.22021212],
+                                  [0.8855853, 0.5440637],
+                                  [0.8993537, 0.4622679]],
+                                 [[0.6797033, 0.58302796],
+                                  [0.7820443, 0.49587217],
+                                  [0.64423263, 0.5469],
+                                  [1.0270302, 0.5271675],
+                                  [1.0278721, 0.9446807]],
+                                 [[1.2069539, 1.0113767],
+                                  [0.86160654, 0.7664283],
+                                  [0.9797001, 0.7087945],
+                                  [0.47638205, 0.4660839],
+                                  [0.6920749, 0.36285543]]]]).astype(np.float32)
+    np.testing.assert_array_almost_equal(ms_result_np, expected_result)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
 def test_tensor_dot_backprop():
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     # TEST 1
@@ -218,17 +295,14 @@ def test_tensor_dot_backprop():
                             [2.9727, 1.4873],
                             [1.7910, 3.4727],
                             [2.4160, 1.7227]],
-
                            [[2.5547, 2.5039],
                             [3.4062, 2.3320],
                             [2.6270, 3.1543],
                             [2.1406, 1.7666]]])
     expect_dx2 = np.array([[[2.1523, 2.9199, 0.8350],
                             [2.0254, 2.7734, 1.3213]],
-
                            [[2.6836, 2.4707, 1.0156],
                             [2.9746, 3.0254, 1.9199]],
-
                            [[1.8545, 1.7803, 1.3457],
                             [2.2676, 2.1797, 1.2764]]])
     np.allclose(dx1, expect_dx1)
