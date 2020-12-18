@@ -34,6 +34,16 @@ from ..cell import Cell
 
 __all__ = ['Embedding', 'EmbeddingLookup', 'MultiFieldEmbeddingLookup']
 
+@constexpr
+def _check_input_2d(input_shape, param_name, func_name):
+    if len(input_shape) != 2:
+        raise ValueError(f"{func_name} {param_name} should be 2d, but got shape {input_shape}")
+    return True
+
+@constexpr
+def _check_input_dtype(input_dtype, param_name, allow_dtypes, cls_name):
+    validator.check_type_name(param_name, input_dtype, allow_dtypes, cls_name)
+
 
 class Embedding(Cell):
     r"""
@@ -427,6 +437,13 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         self.negative_inf_value = -3.402823466E+38
 
     def construct(self, input_indices, input_values, field_ids):
+
+        _check_input_2d(F.shape(input_indices), "input_indices", self.cls_name)
+        _check_input_2d(F.shape(input_values), "input_values", self.cls_name)
+        _check_input_2d(F.shape(field_ids), "field_ids", self.cls_name)
+        _check_input_dtype(F.dtype(input_indices), "input_indices", [mstype.int32, mstype.int64], self.cls_name)
+        _check_input_dtype(F.dtype(input_values), "input_values", [mstype.float32], self.cls_name)
+        _check_input_dtype(F.dtype(field_ids), "field_ids", [mstype.int32], self.cls_name)
 
         batch_size = self.shape(input_indices)[0]
         num_segments = batch_size * self.field_size
