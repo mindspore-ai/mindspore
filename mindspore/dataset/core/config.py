@@ -192,25 +192,28 @@ def get_monitor_sampling_interval():
 
 def set_auto_num_workers(enable):
     """
-    Set the default automatic number of workers. (This feature is turned off by default)
-    This will adjust the number of workers in each op automatically, overriding the preset user value.
+    Set num_parallel_workers for each op automatically. (This feature is turned off by default)
+    If turned on, the num_parallel_workers in each op will be adjusted automatically, possibly overwriting the
+    num_parallel_workers passed in by user or the default value (if user doesn't pass anything) set by
+    ds.config.set_num_parallel_workers().
     For now, this function is only optimized for Yolo3 dataset with per_batch_map (running map in batch).
-    It aims to provide a baseline for optimized num_workers assignment. The adjusted value will be logged.
+    This feature aims to provide a baseline for optimized num_workers assignment for each op.
+    Op whose num_parallel_workers is adjusted to a new value will be logged.
 
     Args:
-        enable (bool): Whether to enable auto num_workers.
+        enable (bool): Whether to enable auto num_workers feature or not.
 
     Raises:
-        ValueError: If enable is not of boolean type.
+        TypeError: If enable is not of boolean type.
 
     Examples:
         >>> import mindspore.dataset as ds
         >>>
-        >>> # Enable the auto_num_worker, will override user's preset num_worker values
+        >>> # Enable auto_num_worker feature, this might override the num_parallel_workers passed in by user
         >>> ds.config.set_auto_num_workers(True)
     """
     if not isinstance(enable, bool):
-        raise ValueError("enable isn't of type bool.")
+        raise TypeError("enable isn't of type bool.")
     _config.set_auto_num_workers(enable)
 
 
