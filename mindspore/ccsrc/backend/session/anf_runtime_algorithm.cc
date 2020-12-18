@@ -476,7 +476,8 @@ std::string AnfRuntimeAlgorithm::GetInputFormat(const AnfNodePtr &node, size_t i
   return format;
 }
 
-KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx) {
+KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_node, size_t input_idx,
+                                                       bool visit_nop_node) {
   MS_EXCEPTION_IF_NULL(anf_node);
   if (!anf_node->isa<CNode>()) {
     MS_LOG(EXCEPTION) << anf_node->DebugString() << "anf_node is not CNode."
@@ -484,7 +485,7 @@ KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_nod
   }
   auto input_node = AnfAlgo::GetInputNode(anf_node->cast<CNodePtr>(), input_idx);
   MS_EXCEPTION_IF_NULL(input_node);
-  return VisitKernelWithReturnType(input_node, 0);
+  return VisitKernelWithReturnType(input_node, 0, visit_nop_node);
 }
 
 std::string AnfRuntimeAlgorithm::GetPrevNodeOutputFormat(const AnfNodePtr &anf_node, size_t input_idx) {
