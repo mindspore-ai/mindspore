@@ -35,6 +35,7 @@ class ModelConfig:
     init_args = [-0.01, 0.01]
     weight_bias_init = ['normal', 'normal']
     keep_prob = 0.9
+    convert_dtype = True
 
 class TrainConfig:
     """train config"""

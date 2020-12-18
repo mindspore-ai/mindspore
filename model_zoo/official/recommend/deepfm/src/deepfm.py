@@ -175,6 +175,7 @@ class DeepFMModel(nn.Cell):
         self.init_args = config.init_args
         self.weight_bias_init = config.weight_bias_init
         self.keep_prob = config.keep_prob
+        convert_dtype = config.convert_dtype
         init_acts = [('W_l2', [self.vocab_size, 1], 'normal'),
                      ('V_l2', [self.vocab_size, self.emb_dim], 'normal')]
         var_map = init_var_dict(self.init_args, init_acts)
@@ -184,15 +185,15 @@ class DeepFMModel(nn.Cell):
         self.deep_input_dims = self.field_size * self.emb_dim
         self.all_dim_list = [self.deep_input_dims] + self.deep_layer_dims_list + [1]
         self.dense_layer_1 = DenseLayer(self.all_dim_list[0], self.all_dim_list[1], self.weight_bias_init,
-                                        self.deep_layer_act, self.keep_prob, convert_dtype=True)
+                                        self.deep_layer_act, self.keep_prob, convert_dtype=convert_dtype)
         self.dense_layer_2 = DenseLayer(self.all_dim_list[1], self.all_dim_list[2], self.weight_bias_init,
-                                        self.deep_layer_act, self.keep_prob, convert_dtype=True)
+                                        self.deep_layer_act, self.keep_prob, convert_dtype=convert_dtype)
         self.dense_layer_3 = DenseLayer(self.all_dim_list[2], self.all_dim_list[3], self.weight_bias_init,
-                                        self.deep_layer_act, self.keep_prob, convert_dtype=True)
+                                        self.deep_layer_act, self.keep_prob, convert_dtype=convert_dtype)
         self.dense_layer_4 = DenseLayer(self.all_dim_list[3], self.all_dim_list[4], self.weight_bias_init,
-                                        self.deep_layer_act, self.keep_prob, convert_dtype=True)
+                                        self.deep_layer_act, self.keep_prob, convert_dtype=convert_dtype)
         self.dense_layer_5 = DenseLayer(self.all_dim_list[4], self.all_dim_list[5], self.weight_bias_init,
-                                        self.deep_layer_act, self.keep_prob, convert_dtype=True, use_act=False)
+                                        self.deep_layer_act, self.keep_prob, convert_dtype=convert_dtype, use_act=False)
         " FM, linear Layers "
         self.Gatherv2 = P.GatherV2()
         self.Mul = P.Mul()

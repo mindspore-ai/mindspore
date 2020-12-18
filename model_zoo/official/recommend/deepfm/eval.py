@@ -30,9 +30,10 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 parser = argparse.ArgumentParser(description='CTR Prediction')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--device_target', type=str, default="Ascend", help='Ascend or GPU. Default: Ascend')
+parser.add_argument('--device_target', type=str, default="Ascend", choices=("Ascend", "GPU", "CPU"),
+                    help="device target, support Ascend, GPU and CPU.")
 args_opt, _ = parser.parse_known_args()
-device_id = int(os.getenv('DEVICE_ID'))
+device_id = int(os.getenv('DEVICE_ID', '0'))
 context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
 
 
@@ -49,7 +50,9 @@ if __name__ == '__main__':
     ds_eval = create_dataset(args_opt.dataset_path, train_mode=False,
                              epochs=1, batch_size=train_config.batch_size,
                              data_type=DataType(data_config.data_format))
-    model_builder = ModelBuilder(ModelConfig, TrainConfig)
+    if model_config.convert_dtype:
+        model_config.convert_dtype = args_opt.device_target != "CPU"
+    model_builder = ModelBuilder(model_config, train_config)
     train_net, eval_net = model_builder.get_train_eval_net()
     train_net.set_train()
     eval_net.set_train(False)

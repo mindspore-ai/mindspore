@@ -39,7 +39,8 @@ parser.add_argument('--loss_file_name', type=str, default="./loss.log",
                     help='Loss log file path. Default: "./loss.log"')
 parser.add_argument('--do_eval', type=str, default='True',
                     help='Do evaluation or not, only support "True" or "False". Default: "True"')
-parser.add_argument('--device_target', type=str, default="Ascend", help='Ascend or GPU. Default: Ascend')
+parser.add_argument('--device_target', type=str, default="Ascend", choices=("Ascend", "GPU", "CPU"),
+                    help="device target, support Ascend, GPU and CPU.")
 args_opt, _ = parser.parse_known_args()
 args_opt.do_eval = args_opt.do_eval == 'True'
 rank_size = int(os.environ.get("RANK_SIZE", 1))
@@ -74,11 +75,8 @@ if __name__ == '__main__':
         if args_opt.device_target == "Ascend":
             device_id = int(os.getenv('DEVICE_ID'))
             context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=device_id)
-        elif args_opt.device_target == "GPU":
-            context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
         else:
-            print("Unsupported device_target ", args_opt.device_target)
-            exit()
+            context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
         rank_size = None
         rank_id = None
 
@@ -92,7 +90,9 @@ if __name__ == '__main__':
 
     steps_size = ds_train.get_dataset_size()
 
-    model_builder = ModelBuilder(ModelConfig, TrainConfig)
+    if model_config.convert_dtype:
+        model_config.convert_dtype = args_opt.device_target != "CPU"
+    model_builder = ModelBuilder(model_config, train_config)
     train_net, eval_net = model_builder.get_train_eval_net()
     auc_metric = AUCMetric()
     model = Model(train_net, eval_network=eval_net, metrics={"auc": auc_metric})
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         if rank_size:
             train_config.ckpt_file_name_prefix = train_config.ckpt_file_name_prefix + str(get_rank())
             args_opt.ckpt_path = os.path.join(args_opt.ckpt_path, 'ckpt_' + str(get_rank()) + '/')
-        if args_opt.device_target == "GPU":
+        if args_opt.device_target != "Ascend":
             config_ck = CheckpointConfig(save_checkpoint_steps=steps_size,
                                          keep_checkpoint_max=train_config.keep_checkpoint_max)
         else:
