@@ -31,6 +31,14 @@ using mindspore::kernel::KernelKey;
 namespace mindspore::lite {
 KernelRegistry *KernelRegistry::GetInstance() {
   static KernelRegistry instance;
+
+  std::unique_lock<std::mutex> malloc_creator_array(instance.lock_);
+  if (instance.creator_arrays_ == nullptr) {
+    instance.creator_arrays_ = reinterpret_cast<KernelCreator *>(malloc(array_size_ * sizeof(KernelRegistry)));
+    if (instance.creator_arrays_ == nullptr) {
+      return nullptr;
+    }
+  }
   return &instance;
 }
 
@@ -127,5 +135,12 @@ kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_te
   return nullptr;
 }
 
-KernelRegistry::~KernelRegistry() = default;
+KernelRegistry::~KernelRegistry() {
+  KernelRegistry *instance = GetInstance();
+  std::unique_lock<std::mutex> malloc_creator_array(instance->lock_);
+  if (instance->creator_arrays_ != nullptr) {
+    free(instance->creator_arrays_);
+    instance->creator_arrays_ = nullptr;
+  }
+}
 }  // namespace mindspore::lite
