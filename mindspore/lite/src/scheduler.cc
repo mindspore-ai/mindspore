@@ -375,6 +375,13 @@ int Scheduler::ConstructSubGraphs(std::vector<kernel::LiteKernel *> *kernels) {
     }
     kernels->emplace_back(subgraph);
   }
+  for (auto *subgraph : *kernels) {
+    auto ret = subgraph->Init();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Init SubGraph failed: " << ret;
+      return ret;
+    }
+  }
   return RET_OK;
 }
 bool Scheduler::MergeOpIsReady(const kernel::LiteKernel *kernel,
@@ -407,12 +414,16 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
   }
   std::vector<Tensor *> input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
   std::vector<Tensor *> output_tensors = kernel::LiteKernelUtil::SubgraphOutputTensors(kernels);
-  std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputKernels(kernels);
-  std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputKernels(kernels);
+  std::vector<kernel::LiteKernel *> input_kernels = kernel::LiteKernelUtil::SubgraphInputNodes(kernels);
+  std::vector<kernel::LiteKernel *> output_kernels = kernel::LiteKernelUtil::SubgraphOutputNodes(kernels);
   if (type == kernel::kGpuSubGraph) {
 #if SUPPORT_GPU
     auto sub_kernel = new (std::nothrow)
       kernel::OpenCLSubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
+    if (sub_kernel == nullptr) {
+      MS_LOG(ERROR) << "Create OpenCLSubGraph failed";
+      return nullptr;
+    }
     return sub_kernel;
 #else
     return nullptr;

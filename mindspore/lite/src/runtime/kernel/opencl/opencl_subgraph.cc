@@ -223,19 +223,7 @@ int OpenCLSubGraph::Init() {
   nodes_.insert(nodes_.end(), out_convert_ops_.begin(), out_convert_ops_.end());
   GetInOutNodes();
   UpdateTensorDataType();
-
-  ret = SubGraphKernel::Prepare();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "OpenCL prepare fail";
-    return ret;
-  }
-  auto opencl_exec = reinterpret_cast<lite::opencl::OpenCLExecutor *>(executor_);
-  // If tuning_mode is DEFAULT, just malloc memory for reuse.
-  ret = opencl_exec->RunOrTune(in_tensors_, out_tensors_, nodes_, allocator_, nullptr, nullptr, true);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
-    return ret;
-  }
+  Fusion();
   return RET_OK;
 }
 
@@ -307,10 +295,16 @@ int OpenCLSubGraph::Prepare() {
     MS_LOG(ERROR) << "Create OpenCLExecutor fail";
     return RET_ERROR;
   }
-  Fusion();
-  auto ret = Init();
+  auto ret = SubGraphKernel::Prepare();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "OpenCL subgraph init fail";
+    MS_LOG(ERROR) << "OpenCL prepare fail";
+    return ret;
+  }
+  auto opencl_exec = reinterpret_cast<lite::opencl::OpenCLExecutor *>(executor_);
+  // If tuning_mode is DEFAULT, just malloc memory for reuse.
+  ret = opencl_exec->RunOrTune(in_tensors_, out_tensors_, nodes_, allocator_, nullptr, nullptr, true);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run opencl executor failed: " << ret;
     return ret;
   }
   return RET_OK;

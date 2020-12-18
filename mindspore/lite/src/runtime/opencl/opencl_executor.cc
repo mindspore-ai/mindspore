@@ -79,6 +79,11 @@ int OpenCLExecutor::RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor 
         MS_LOG(ERROR) << "tuning kernel failed, name: " << kernel->name();
         return ret;
       }
+      ret = kernel->PostProcess();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel->name();
+        return ret;
+      }
     } else {
       ret = kernel->Run();
       if (ret != RET_OK) {

@@ -102,6 +102,8 @@ class SubGraphKernel : public LiteKernel {
 
   void InitOutTensorInitRefCount() override;
 
+  int Init() override { return mindspore::lite::RET_OK; }
+
   std::string ToString() const override;
 
   std::vector<LiteKernel *> nodes() { return this->nodes_; }
@@ -146,7 +148,7 @@ class CpuFp32SubGraph : public CpuSubGraph {
   }
 
   ~CpuFp32SubGraph() override = default;
-  int Init() override { return mindspore::lite::RET_ERROR; }
+  int Init() override { return CpuSubGraph::Init(); }
   int PreProcess() override { return CpuSubGraph::PreProcess(); }
   int Run() override { return CpuSubGraph::Run(); }
   int Run(const KernelCallBack &before, const KernelCallBack &after) override {
@@ -166,7 +168,7 @@ class CpuFp16SubGraph : public CpuSubGraph {
   }
 
   ~CpuFp16SubGraph() override = default;
-  int Init() override { return mindspore::lite::RET_ERROR; }
+  int Init() override { return CpuSubGraph::Init(); }
   int PreProcess() override;
   int Run() override { return CpuSubGraph::Run(); }
   int Run(const KernelCallBack &before, const KernelCallBack &after) override {
