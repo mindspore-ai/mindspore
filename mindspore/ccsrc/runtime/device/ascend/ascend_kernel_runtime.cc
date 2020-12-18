@@ -335,16 +335,6 @@ bool AscendKernelRuntime::Load(session::KernelGraph *graph, bool is_task_sink) {
     return true;
   }
 
-  // Bind hccl context to current thread
-  if (graph->is_dynamic_shape()) {
-    if (rt_context_hccl_ != nullptr) {
-      auto ret = rtCtxSetCurrent(rt_context_hccl_);
-      if (ret != RT_ERROR_NONE) {
-        MS_LOG(EXCEPTION) << "Call rtCtxSetCurrent failed, ret[" << ret << "]";
-      }
-    }
-  }
-
   // Do HcomExecutorInitialize
   if (graph->is_dynamic_shape() && !HcclExecutorManager::GetInstance().Initialize()) {
     MS_LOG(ERROR) << "Init Hccl Executor Failed";
@@ -712,17 +702,17 @@ bool AscendKernelRuntime::InitDevice() {
     }
   }
 
-  ret = rtCtxGetCurrent(&rt_context_hccl_);
-  if (ret != RT_ERROR_NONE || rt_context_hccl_ == nullptr) {
+  // Context will be created by rtSetDevice
+  ret = rtCtxGetCurrent(&rt_context_);
+  if (ret != RT_ERROR_NONE || rt_context_ == nullptr) {
     MS_LOG(ERROR) << "Call rtCtxGetCurrent failed, ret[" << ret << "]";
     return false;
   }
-  CreateContext();
+
   ret = rtStreamCreate(&stream_, 0);
   if (ret != RT_ERROR_NONE) {
     MS_LOG(EXCEPTION) << "Call rtStreamCreate, ret[" << ret << "]";
   }
-
   return true;
 }
 
@@ -736,21 +726,12 @@ bool AscendKernelRuntime::ResetDevice(uint32_t device_id) {
     stream_ = nullptr;
   }
 
-  if (rt_context_ != nullptr) {
-    auto ret = rtCtxDestroy(rt_context_);
-    if (ret != RT_ERROR_NONE) {
-      MS_EXCEPTION(DeviceProcessError) << "Call rtCtxDestroy, ret[" << ret << "]";
-    }
-    rt_context_ = nullptr;
-  }
-
   auto ret = rtDeviceReset(device_id);
   if (ret != RT_ERROR_NONE) {
     MS_EXCEPTION(DeviceProcessError) << "Call rtDeviceReset, ret[" << ret << "]";
   }
   // set to nullptr as its not created, only bounded to existing context
-  rt_context_hccl_ = nullptr;
-
+  rt_context_ = nullptr;
   return true;
 }
 
