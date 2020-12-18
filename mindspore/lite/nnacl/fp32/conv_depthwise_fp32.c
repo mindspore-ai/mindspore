@@ -681,12 +681,54 @@ void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, c
 #endif
 
 #ifdef ENABLE_AVX
+#ifdef WIN32
+void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, const float *bias, int channels,
+                           int output_width, int input_stride, bool relu, bool relu6, int kernel) {
+  do {
+    float *in[kernel];
+    for (int k = 0; k < kernel; k++) {
+      in[k] = input[k];
+    }
+    input = input + input_stride;
+
+    size_t c = channels;
+    const float *w = weights;
+    float *out = output;
+    memcpy(out, bias, channels * sizeof(float));
+    for (; c >= C8NUM; c -= C8NUM) {
+      for (int i = 0; i < C8NUM; i++) {
+        for (int k = 0; k < kernel; k++) {
+          out[i] += in[k][i] * w[i + k * C8NUM];
+        }
+      }
+      w += kernel * C8NUM;
+      out += C8NUM;
+      for (int k = 0; k < kernel; k++) {
+        in[k] += C8NUM;
+      }
+    }
+    for (int i = 0; i < c; i++) {
+      for (int k = 0; k < kernel; k++) {
+        out[i] += in[k][i] * w[i + k * C8NUM];
+      }
+    }
+    if (relu) {
+      ReluFp32C8(output, output, channels);
+    }
+    if (relu6) {
+      Relu6Fp32C8(output, output, channels);
+    }
+    output += channels;
+  } while (--output_width != 0);
+}
+#else
 void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, const float *bias, int channels,
                            int output_width, int input_stride, bool relu, bool relu6, int kernel) {
   if (kernel == 9) {
     ConvDwFp32Avx3x3(output, input, weights, bias, channels, output_width, input_stride * sizeof(float *), relu, relu6);
   }
 }
+#endif
 #endif
 
 void ConvDwIndirection(float *output_data, float **indirect_buffer, const float *weight_data, const float *bias_data,
