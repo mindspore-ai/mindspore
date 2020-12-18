@@ -20,8 +20,9 @@ import os
 
 import numpy as np
 
-from src.config import lstm_cfg as cfg
+from src.config import lstm_cfg as cfg, lstm_cfg_ascend
 from src.dataset import lstm_create_dataset, convert_to_mindrecord
+from src.lr_schedule import get_lr
 from src.lstm import SentimentNet
 from mindspore import Tensor, nn, Model, context
 from mindspore.nn import Accuracy
@@ -40,8 +41,8 @@ if __name__ == '__main__':
                         help='path where the pre-process data is stored.')
     parser.add_argument('--ckpt_path', type=str, default=None,
                         help='the checkpoint file path used to evaluate model.')
-    parser.add_argument('--device_target', type=str, default="GPU", choices=['GPU', 'CPU'],
-                        help='the target device to run, support "GPU", "CPU". Default: "GPU".')
+    parser.add_argument('--device_target', type=str, default="Ascend", choices=['GPU', 'CPU', 'Ascend'],
+                        help='the target device to run, support "GPU", "CPU". Default: "Ascend".')
     args = parser.parse_args()
 
     context.set_context(
@@ -49,11 +50,24 @@ if __name__ == '__main__':
         save_graphs=False,
         device_target=args.device_target)
 
+    if args.device_target == 'Ascend':
+        cfg = lstm_cfg_ascend
+    else:
+        cfg = lstm_cfg
+
     if args.preprocess == "true":
         print("============== Starting Data Pre-processing ==============")
         convert_to_mindrecord(cfg.embed_size, args.aclimdb_path, args.preprocess_path, args.glove_path)
 
     embedding_table = np.loadtxt(os.path.join(args.preprocess_path, "weight.txt")).astype(np.float32)
+    # DynamicRNN in this network on Ascend platform only support the condition that the shape of input_size
+    # and hiddle_size is multiples of 16, this problem will be solved later.
+    if args.device_target == 'Ascend':
+        pad_num = int(np.ceil(cfg.embed_size / 16) * 16 - cfg.embed_size)
+        if pad_num > 0:
+            embedding_table = np.pad(embedding_table, [(0, 0), (0, pad_num)], 'constant')
+        cfg.embed_size = int(np.ceil(cfg.embed_size / 16) * 16)
+
     network = SentimentNet(vocab_size=embedding_table.shape[0],
                            embed_size=cfg.embed_size,
                            num_hiddens=cfg.num_hiddens,
@@ -64,13 +78,23 @@ if __name__ == '__main__':
                            batch_size=cfg.batch_size)
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-    opt = nn.Momentum(network.trainable_params(), cfg.learning_rate, cfg.momentum)
+    ds_eval = lstm_create_dataset(args.preprocess_path, cfg.batch_size, training=False)
+    if cfg.dynamic_lr:
+        lr = Tensor(get_lr(global_step=cfg.global_step,
+                           lr_init=cfg.lr_init, lr_end=cfg.lr_end, lr_max=cfg.lr_max,
+                           warmup_epochs=cfg.warmup_epochs,
+                           total_epochs=cfg.num_epochs,
+                           steps_per_epoch=ds_eval.get_dataset_size(),
+                           lr_adjust_epoch=cfg.lr_adjust_epoch))
+    else:
+        lr = cfg.learning_rate
+
+    opt = nn.Momentum(network.trainable_params(), lr, cfg.momentum)
     loss_cb = LossMonitor()
 
     model = Model(network, loss, opt, {'acc': Accuracy()})
 
     print("============== Starting Testing ==============")
-    ds_eval = lstm_create_dataset(args.preprocess_path, cfg.batch_size, training=False)
     param_dict = load_checkpoint(args.ckpt_path)
     load_param_into_net(network, param_dict)
     if args.device_target == "CPU":
