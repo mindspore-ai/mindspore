@@ -27,7 +27,7 @@ from mindspore.nn import ReLU
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops.operations.comm_ops import AllReduce, AllGather, _AlltoAll, ReduceOp, ReduceScatter
 from mindspore.ops.operations.comm_ops import Broadcast, AllSwap
-from mindspore.ops.operations.math_ops import ReduceSum
+from mindspore.ops.operations.array_ops import GatherV2
 import mindspore
 
 # pylint: disable=W0212
@@ -127,14 +127,15 @@ class AllSwapNet(nn.Cell):
         self.dense = Dense(input_channel, out_channel)
         self.allswap = AllSwap()
         self.relu = ReLU()
-        self.reduce = ReduceSum()
         part_slice = batch_size / 2
         self.send_size = Tensor([0, part_slice*out_channel, part_slice*out_channel], mindspore.int64)
         self.recv_size = Tensor([part_slice*out_channel, part_slice*out_channel, 0], mindspore.int64)
+        self.gatherv2 = GatherV2()
+        self.input = Tensor(np.ones([1]), mindspore.int32)
     def construct(self, x):
-        x = self.dense(x)
         x = self.allswap(x, self.send_size, self.recv_size)
         x = self.relu(x)
+        x = self.gatherv2(x, self.input, 0)
         return x
 
 
@@ -180,8 +181,15 @@ def test_allswap():
     """run_allswap"""
     context.set_context(mode=context.GRAPH_MODE)
     input_tensor = Tensor(np.ones((100, 20)), dtype=mindspore.float32)
+    label_tensor = Tensor(np.ones((1, 20)), dtype=mindspore.float32)
     network = AllSwapNet(100, 20, 20)
-    _executor.compile(network, input_tensor)
+    loss_fn = nn.SoftmaxCrossEntropyWithLogits()
+    optimizer = Momentum(filter(lambda x: x.requires_grad, network.get_parameters()),
+                         learning_rate=0.1,
+                         momentum=0.9)
+    network = WithLossCell(network, loss_fn)
+    network = TrainOneStepCell(network, optimizer)
+    _executor.compile(network, input_tensor, label_tensor)
 
 
 def run_reducescatter(op):
