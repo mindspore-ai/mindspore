@@ -28,9 +28,11 @@ parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
 parser.add_argument("--file_name", type=str, default="yolov3_resnet18", help="output file name.")
 parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
+                    help="device target")
 args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 if __name__ == "__main__":
     config = ConfigYOLOV3ResNet18()
