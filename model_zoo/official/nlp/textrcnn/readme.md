@@ -114,13 +114,16 @@ Parameters for both training and evaluation can be set in config.py
   ```python
   'num_epochs': 10, # total training epochs
   'batch_size': 64, # training batch size
-  'cell': 'lstm', # the RNN architecture, can be 'vanilla', 'gru' and 'lstm'.
+  'cell': 'gru', # the RNN architecture, can be 'vanilla', 'gru' and 'lstm'.
   'opt': 'adam', # the optimizer strategy, can be 'adam' or 'momentum'
   'ckpt_folder_path': './ckpt', # the path to save the checkpoints
   'preprocess_path': './preprocess', # the directory to save the processed data
   'preprocess' : 'false', # whethere to preprocess the data
   'data_path': './data/', # the path to store the splited data
   'lr': 1e-3, # the training learning rate
+  'lstm_base_lr': 3e-3, # the training learning rate when using lstm as RNN cell
+  'lstm_decay_rate': 0.9, # lr decay rate when using lstm as RNN cell
+  'lstm_decay_epoch': 1, # lr decay epoch when using lstm as RNN cell
   'emb_path': './word2vec', # the directory to save the embedding file
   'embed_size': 300, # the dimension of the word embedding
   'save_checkpoint_steps': 149, # per step to save the checkpoint
@@ -137,7 +140,7 @@ Parameters for both training and evaluation can be set in config.py
 | Dataset                    | Sentence polarity dataset v1.0                    | Sentence polarity dataset v1.0            |
 | batch_size                 | 64                        | 64                   |
 | Accuracy                   | 0.78                      | 0.78 |
-| Speed                      | 78ms/step                  |  89ms/step                         |
+| Speed                      | 25ms/step                  |  77ms/step                         |
 
 ## [ModelZoo Homepage](#contents)
 

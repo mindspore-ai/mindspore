@@ -45,16 +45,16 @@ class textrcnn(nn.Cell):
             self.lstm = P.DynamicRNN(forget_bias=0.0)
             self.w1_fw = Parameter(
                 np.random.uniform(-k, k, (self.embed_size + self.num_hiddens, 4 * self.num_hiddens)).astype(
-                    np.float16), name="w1_fw")
-            self.b1_fw = Parameter(np.random.uniform(-k, k, (4 * self.num_hiddens)).astype(np.float16),
+                    np.float32), name="w1_fw")
+            self.b1_fw = Parameter(np.random.uniform(-k, k, (4 * self.num_hiddens)).astype(np.float32),
                                    name="b1_fw")
             self.w1_bw = Parameter(
                 np.random.uniform(-k, k, (self.embed_size + self.num_hiddens, 4 * self.num_hiddens)).astype(
-                    np.float16), name="w1_bw")
-            self.b1_bw = Parameter(np.random.uniform(-k, k, (4 * self.num_hiddens)).astype(np.float16),
+                    np.float32), name="w1_bw")
+            self.b1_bw = Parameter(np.random.uniform(-k, k, (4 * self.num_hiddens)).astype(np.float32),
                                    name="b1_bw")
-            self.h1 = Tensor(np.zeros(shape=(1, self.batch_size, self.num_hiddens)).astype(np.float16))
-            self.c1 = Tensor(np.zeros(shape=(1, self.batch_size, self.num_hiddens)).astype(np.float16))
+            self.h1 = Tensor(np.zeros(shape=(1, self.batch_size, self.num_hiddens)).astype(np.float32))
+            self.c1 = Tensor(np.zeros(shape=(1, self.batch_size, self.num_hiddens)).astype(np.float32))
 
         if cell == "vanilla":
             self.rnnW_fw = nn.Dense(self.num_hiddens, self.num_hiddens)

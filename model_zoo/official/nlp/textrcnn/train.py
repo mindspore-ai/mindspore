@@ -29,6 +29,7 @@ from src.config import textrcnn_cfg as cfg
 from src.dataset import create_dataset
 from src.dataset import convert_to_mindrecord
 from src.textrcnn import textrcnn
+from src.utils import get_lr
 
 
 set_seed(1)
@@ -50,25 +51,31 @@ if __name__ == '__main__':
         os.mkdir(cfg.preprocess_path)
         convert_to_mindrecord(cfg.embed_size, cfg.data_path, cfg.preprocess_path, cfg.emb_path)
 
+    if cfg.cell == "vanilla":
+        print("============ Precision is lower than expected when using vanilla RNN architecture ===========")
+
     embedding_table = np.loadtxt(os.path.join(cfg.preprocess_path, "weight.txt")).astype(np.float32)
 
     network = textrcnn(weight=Tensor(embedding_table), vocab_size=embedding_table.shape[0], \
-    cell=cfg.cell, batch_size=cfg.batch_size)
+                       cell=cfg.cell, batch_size=cfg.batch_size)
+
+    ds_train = create_dataset(cfg.preprocess_path, cfg.batch_size, cfg.num_epochs, True)
+    step_size = ds_train.get_dataset_size()
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
+    lr = get_lr(cfg, step_size)
+
     if cfg.opt == "adam":
-        opt = nn.Adam(params=network.trainable_params(), learning_rate=cfg.lr)
+        opt = nn.Adam(params=network.trainable_params(), learning_rate=lr)
     elif cfg.opt == "momentum":
-        opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
+        opt = nn.Momentum(network.trainable_params(), lr, cfg.momentum)
 
     loss_cb = LossMonitor()
     model = Model(network, loss, opt, {'acc': Accuracy()}, amp_level="O3")
 
     print("============== Starting Training ==============")
-    ds_train = create_dataset(cfg.preprocess_path, cfg.batch_size, cfg.num_epochs, True)
     config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps, \
-    keep_checkpoint_max=cfg.keep_checkpoint_max)
+                                 keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix=cfg.cell, directory=cfg.ckpt_folder_path, config=config_ck)
     model.train(cfg.num_epochs, ds_train, callbacks=[ckpoint_cb, loss_cb])
     print("train success")
-    
