@@ -16,6 +16,8 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_CONVERT_CAST_FORMAT_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_CONVERT_CAST_FORMAT_H_
 
+#include <string>
+
 #include "backend/optimizer/common/optimizer.h"
 
 namespace mindspore {
@@ -25,10 +27,11 @@ class ConvertCastFormat : public PatternProcessPass {
   explicit ConvertCastFormat(bool multigraph = true) : PatternProcessPass("convert_cast_format", multigraph) {}
   ~ConvertCastFormat() override = default;
   const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &, const EquivPtr &) const override;
 
  private:
-  bool NeedChangeCastFormat();
+  void ChangeCastFormat(const CNodePtr &cast_node, const FuncGraphPtr &func_graph) const;
+  void SetCastFormat(const CNodePtr &cast_node, const string &format) const;
 };
 }  // namespace opt
 }  // namespace mindspore
