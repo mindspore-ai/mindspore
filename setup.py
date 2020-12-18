@@ -132,7 +132,7 @@ package_data = {
         'lib/*.so*',
         'lib/*.a',
         '.commit_id',
-        'config/*'
+        'config/*',
         'include/*',
         'include/*/*',
         'include/*/*/*',
