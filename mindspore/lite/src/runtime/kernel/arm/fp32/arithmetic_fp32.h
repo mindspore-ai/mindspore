@@ -35,6 +35,7 @@ using mindspore::schema::PrimitiveType_LogicalAnd;
 using mindspore::schema::PrimitiveType_LogicalOr;
 using mindspore::schema::PrimitiveType_Maximum;
 using mindspore::schema::PrimitiveType_Minimum;
+using mindspore::schema::PrimitiveType_Mod;
 using mindspore::schema::PrimitiveType_Mul;
 using mindspore::schema::PrimitiveType_NotEqual;
 using mindspore::schema::PrimitiveType_RealDiv;
