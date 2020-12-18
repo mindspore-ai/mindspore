@@ -39,7 +39,7 @@ python run_pretrain.py  \
     --enable_lossscale="false" \
     --do_shuffle="true" \
     --enable_data_sink="true" \
-    --data_sink_steps=1 \
+    --data_sink_steps=20 \
     --load_checkpoint_path="" \
     --save_checkpoint_path="" \
     --save_checkpoint_steps=10000 \

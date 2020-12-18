@@ -94,7 +94,8 @@ def _get_optimizer(args_opt, network):
 def _auto_enable_graph_kernel(device_target, graph_kernel_mode):
     """Judge whether is suitable to enable graph kernel."""
     return graph_kernel_mode in ("auto", "true") and device_target == 'GPU' and \
-        cfg.bert_network == 'base' and cfg.batch_size == 32 and cfg.optimizer == 'AdamWeightDecay'
+        cfg.bert_network == 'base' and (cfg.batch_size == 32 or cfg.batch_size == 64) and \
+        cfg.optimizer == 'AdamWeightDecay'
 
 
 def run_pretrain():
@@ -148,7 +149,8 @@ def run_pretrain():
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           device_num=device_num)
-        _set_bert_all_reduce_split()
+        if args_opt.device_target == 'Ascend':
+            _set_bert_all_reduce_split()
     else:
         rank = 0
         device_num = 1
