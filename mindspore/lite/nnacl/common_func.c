@@ -78,3 +78,52 @@ void Relu6Fp32(float *data, float *dst, int ele_num) {
     data[j] = data[j] > 6 ? 6 : data[j];
   }
 }
+
+#ifdef ENABLE_AVX
+#ifdef WIN32
+void ReluFp32C8(float *data, float *dst, int ele_num) {
+  int four_block = UP_DIV(ele_num, C8NUM);
+  for (int i = 0; i < four_block - 1; i++) {
+    int index = i * C8NUM;
+    data[index] = data[index] < 0 ? 0 : data[index];
+    data[index + 1] = data[index + 1] < 0 ? 0 : data[index + 1];
+    data[index + 2] = data[index + 2] < 0 ? 0 : data[index + 2];
+    data[index + 3] = data[index + 3] < 0 ? 0 : data[index + 3];
+    data[index + 4] = data[index + 4] < 0 ? 0 : data[index + 4];
+    data[index + 5] = data[index + 5] < 0 ? 0 : data[index + 5];
+    data[index + 6] = data[index + 6] < 0 ? 0 : data[index + 6];
+    data[index + 7] = data[index + 7] < 0 ? 0 : data[index + 7];
+  }
+  for (int j = (four_block - 1) * C8NUM; j < ele_num; ++j) {
+    data[j] = data[j] < 0 ? 0 : data[j];
+  }
+}
+
+void Relu6Fp32C8(float *data, float *dst, int ele_num) {
+  int four_block = UP_DIV(ele_num, C8NUM);
+  for (int i = 0; i < four_block - 1; i++) {
+    int index = i * C8NUM;
+    data[index] = data[index] < 0 ? 0 : data[index];
+    data[index] = data[index] > 6 ? 6 : data[index];
+    data[index + 1] = data[index + 1] < 0 ? 0 : data[index + 1];
+    data[index + 1] = data[index + 1] > 6 ? 6 : data[index + 1];
+    data[index + 2] = data[index + 2] < 0 ? 0 : data[index + 2];
+    data[index + 2] = data[index + 2] > 6 ? 6 : data[index + 2];
+    data[index + 3] = data[index + 3] < 0 ? 0 : data[index + 3];
+    data[index + 3] = data[index + 3] > 6 ? 6 : data[index + 3];
+    data[index + 4] = data[index + 4] < 0 ? 0 : data[index + 4];
+    data[index + 4] = data[index + 4] > 6 ? 6 : data[index + 4];
+    data[index + 5] = data[index + 5] < 0 ? 0 : data[index + 5];
+    data[index + 5] = data[index + 5] > 6 ? 6 : data[index + 5];
+    data[index + 6] = data[index + 6] < 0 ? 0 : data[index + 6];
+    data[index + 6] = data[index + 6] > 6 ? 6 : data[index + 6];
+    data[index + 7] = data[index + 7] < 0 ? 0 : data[index + 7];
+    data[index + 7] = data[index + 7] > 6 ? 6 : data[index + 7];
+  }
+  for (int j = (four_block - 1) * C8NUM; j < ele_num; ++j) {
+    data[j] = data[j] < 0 ? 0 : data[j];
+    data[j] = data[j] > 6 ? 6 : data[j];
+  }
+}
+#endif
+#endif
