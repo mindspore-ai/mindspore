@@ -164,7 +164,7 @@ class Bernoulli(Distribution):
     def probs(self):
         """
         Return the probability of that the outcome is 1
-        after casting to self.dtype.
+        after casting to dtype.
         """
         return self._probs
 

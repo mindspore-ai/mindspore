@@ -190,7 +190,7 @@ class Categorical(Distribution):
     @property
     def probs(self):
         """
-        Return the probability after casting to self.dtype.
+        Return the probability after casting to dtype.
         """
         return self._probs
 

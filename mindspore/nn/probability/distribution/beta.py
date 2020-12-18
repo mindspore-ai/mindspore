@@ -191,7 +191,7 @@ class Beta(Distribution):
     def concentration1(self):
         """
         Return the concentration1, also know as the alpha of the Beta distribution,
-        after casting to self.dtype.
+        after casting to dtype.
         """
         return self._concentration1
 
@@ -199,7 +199,7 @@ class Beta(Distribution):
     def concentration0(self):
         """
         Return the concentration0, also know as the beta of the Beta distribution,
-        after casting to self.dtype.
+        after casting to dtype.
         """
         return self._concentration0
 

@@ -189,7 +189,7 @@ class Gamma(Distribution):
     def concentration(self):
         """
         Return the concentration, also know as the alpha of the Gamma distribution,
-        after casting to self.dtype.
+        after casting to dtype.
         """
         return self._concentration
 
@@ -197,7 +197,7 @@ class Gamma(Distribution):
     def rate(self):
         """
         Return the rate, also know as the beta of the Gamma distribution,
-        after casting to self.dtype.
+        after casting to dtype.
         """
         return self._rate
 
