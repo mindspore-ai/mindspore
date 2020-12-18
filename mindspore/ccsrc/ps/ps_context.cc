@@ -17,10 +17,10 @@
 #include "ps/ps_context.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_utils.h"
-#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #include "backend/kernel_compiler/kernel.h"
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/ps_cache/ps_cache_manager.h"
+#include "ps/ps_cache/ps_data/ps_data_prefetch.h"
 #endif
 
 namespace mindspore {
@@ -62,7 +62,12 @@ void PSContext::Reset() {
   is_worker_ = false;
   is_pserver_ = false;
   is_sched_ = false;
-  set_cache_enable(false);
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
+    ps_cache_instance.Finalize();
+    set_cache_enable(false);
+  }
+#endif
 }
 
 std::string PSContext::ms_role() const {

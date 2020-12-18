@@ -28,16 +28,16 @@ class GPUPsCache : public PsCacheBasic {
  public:
   GPUPsCache() = default;
   ~GPUPsCache() override = default;
-  void InitDevice(uint32_t device_id, const void *context) override;
+  bool InitDevice(uint32_t device_id, const void *context) override;
   void *MallocMemory(size_t size) override;
-  void RecordEvent() override;
-  void SynchronizeEvent() override;
-  void SynchronizeStream() override;
-  void CopyHostMemToDevice(void *dst, void *src, size_t size) override;
-  void CopyDeviceMemToHost(void *dst, void *src, size_t size) override;
-  void HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, void *swap_out_index_addr, size_t hash_table_size,
+  bool RecordEvent() override;
+  bool SynchronizeEvent() override;
+  bool SynchronizeStream() override;
+  bool CopyHostMemToDevice(void *dst, void *src, size_t size) override;
+  bool CopyDeviceMemToHost(void *dst, void *src, size_t size) override;
+  bool HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, void *swap_out_index_addr, size_t hash_table_size,
                    size_t embedding_size, size_t swap_out_size) override;
-  void HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, void *swap_in_index_addr, size_t hash_table_size,
+  bool HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, void *swap_in_index_addr, size_t hash_table_size,
                   size_t embedding_size, size_t swap_in_size) override;
 
  private:

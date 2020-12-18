@@ -55,7 +55,9 @@ TdtStatus TdtPlugin::hostPush(TensorRow ts_row, bool is_wait, std::string channe
 #if ENABLE_D
   // Data prefetch only when PS mode enables cache.
   if (items.size() > 0) {
-    ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name, items[0].dataPtr_.get(), items[0].dataLen_);
+    if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name, items[0].dataPtr_.get(), items[0].dataLen_)) {
+      return FAILED;
+    }
   }
 #endif
   if (tdt::TdtHostPushData(channel_name, items) != 0) {

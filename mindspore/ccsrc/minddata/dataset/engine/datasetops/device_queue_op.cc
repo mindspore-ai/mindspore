@@ -304,7 +304,9 @@ Status DeviceQueueOp::PushDataToGPU() {
 
     // Data prefetch only when PS mode enables cache.
     if (items.size() > 0) {
-      ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_);
+      if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_)) {
+        return Status(StatusCode::kTimeOut, __LINE__, __FILE__, "Failed to prefetch data.");
+      }
     }
     while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
       BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);

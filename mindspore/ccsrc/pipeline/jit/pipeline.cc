@@ -53,6 +53,7 @@
 #include "ps/util.h"
 #include "ps/worker.h"
 #include "ps/ps_cache/ps_data/ps_data_prefetch.h"
+#include "ps/ps_cache/ps_cache_manager.h"
 #endif
 
 #if (ENABLE_GE || ENABLE_D)
@@ -1083,9 +1084,10 @@ void ClearResAtexit() {
   pynative::ClearPyNativeSession();
   session::ClearPythonParasMap();
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  if (ps::Util::IsParamServerMode()) {
-    if (ps::Util::IsRoleOfWorker()) {
-      ps::worker.Finalize();
+  if (ps::Util::IsParamServerMode() && ps::Util::IsRoleOfWorker()) {
+    ps::worker.Finalize();
+    if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
+      ps::ps_cache_instance.Finalize();
     }
   }
 #endif
