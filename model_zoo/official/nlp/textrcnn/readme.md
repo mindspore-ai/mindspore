@@ -140,7 +140,7 @@ Parameters for both training and evaluation can be set in config.py
 | Dataset                    | Sentence polarity dataset v1.0                    | Sentence polarity dataset v1.0            |
 | batch_size                 | 64                        | 64                   |
 | Accuracy                   | 0.78                      | 0.78 |
-| Speed                      | 25ms/step                  |  77ms/step                         |
+| Speed                      | 35ms/step                  |  77ms/step                         |
 
 ## [ModelZoo Homepage](#contents)
 
