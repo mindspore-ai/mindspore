@@ -4110,7 +4110,7 @@ class BroadcastTo(PrimitiveWithInfer):
 
     Args:
         shape (tuple): The target shape to broadcast. Can be fully specified, or have '-1's in one position
-        where it will be substituted by the input tensor's shape in that position, see example.
+            where it will be substituted by the input tensor's shape in that position, see example.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.

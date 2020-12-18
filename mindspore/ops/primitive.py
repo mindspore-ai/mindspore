@@ -480,7 +480,7 @@ def constexpr(fn=None, get_instance=True, name=None):
         ...     return len(x)
         >>> assert tuple_len(a) == 2
         ...
-        >>> # make a operator class to calculate tuple len
+        >>> # make an operator class to calculate tuple len
         >>> @constexpr(get_instance=False, name="TupleLen")
         >>> def tuple_len_class(x):
         ...     return len(x)

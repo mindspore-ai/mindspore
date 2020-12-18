@@ -71,8 +71,8 @@ class Tensor(Tensor_):
         valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
                         np.float16, np.float32, np.float64, np.bool_)
         if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes:
-            raise TypeError(f"For Tensor, the input_data is a numpy array whose value is {input_data} and "
-                            f"data type is {input_data.dtype} that is not supported to initialize a Tensor.")
+            raise TypeError(f"For Tensor, the input_data is a numpy array, "
+                            f"but it's data type is not in supported list: {list(i.__name__ for i in valid_dtypes)}.")
         if isinstance(input_data, (tuple, list)):
             if np.array(input_data).dtype not in valid_dtypes:
                 raise TypeError(f"For Tensor, the input_data is {input_data} that contain unsupported element.")
