@@ -53,7 +53,7 @@ class TransformToBNN:
         >>>         return out
         >>>
         >>> net = Net()
-        >>> criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+        >>> criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> net_with_loss = WithLossCell(network, criterion)
         >>> train_network = TrainOneStepCell(net_with_loss, optim)
@@ -108,7 +108,7 @@ class TransformToBNN:
 
         Examples:
             >>> net = Net()
-            >>> criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+            >>> criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> net_with_loss = WithLossCell(network, criterion)
             >>> train_network = TrainOneStepCell(net_with_loss, optim)
@@ -152,7 +152,7 @@ class TransformToBNN:
 
         Examples:
             >>> net = Net()
-            >>> criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+            >>> criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> net_with_loss = WithLossCell(network, criterion)
             >>> train_network = TrainOneStepCell(net_with_loss, optim)

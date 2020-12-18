@@ -46,7 +46,7 @@ class WithLossCell(Cell):
 
     Examples:
         >>> net = Net()
-        >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+        >>> loss_fn = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> net_with_criterion = nn.WithLossCell(net, loss_fn)
         >>>
         >>> batch_size = 2

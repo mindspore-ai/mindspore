@@ -100,7 +100,7 @@ The loss function `SoftmaxCrossEntropyWithLogits` and the optimizer `AdamWeightD
 if __name__ == "__main__":
     ...
     # define the loss function
-    criterion = SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    criterion = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     optimizer = AdamWeightDecay(params=network.trainable_params(), learning_rate=0.0001)
     ...
 ```
@@ -320,7 +320,7 @@ from mindspore.nn import WithLossCell, TrainOneStepCell
 if __name__ == "__main__":
     network = LeNet5()
 
-    criterion = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True, reduction="mean")
+    criterion = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
     optimizer = nn.AdamWeightDecay(params=network.trainable_params(), learning_rate=0.0001)
 
     net_with_loss = WithLossCell(network, criterion)

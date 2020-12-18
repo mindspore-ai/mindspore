@@ -135,7 +135,7 @@ class Model:
         >>>         return out
         >>>
         >>> net = Net()
-        >>> loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+        >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
         >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
         >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None)
         >>> dataset = get_dataset()
@@ -307,7 +307,7 @@ class Model:
             >>> train_dataset = get_train_dataset()
             >>> valid_dataset = get_valid_dataset()
             >>> net = Net()
-            >>> loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics={'acc'})
             >>> model.init(train_dataset, valid_dataset)
@@ -597,7 +597,7 @@ class Model:
         Examples:
             >>> dataset = get_dataset()
             >>> net = Net()
-            >>> loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> loss_scale_manager = FixedLossScaleManager()
             >>> optim = Momentum(params=net.trainable_params(), learning_rate=0.1, momentum=0.9)
             >>> model = Model(net, loss_fn=loss, optimizer=optim, metrics=None, loss_scale_manager=loss_scale_manager)
@@ -714,7 +714,7 @@ class Model:
         Examples:
             >>> dataset = get_dataset()
             >>> net = Net()
-            >>> loss = nn.SoftmaxCrossEntropyWithLogits(is_grad=False, sparse=True)
+            >>> loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
             >>> model = Model(net, loss_fn=loss, optimizer=None, metrics={'acc'})
             >>> model.eval(dataset)
         """
