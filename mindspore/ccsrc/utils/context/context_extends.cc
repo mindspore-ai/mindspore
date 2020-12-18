@@ -74,9 +74,9 @@ bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr) {
   }
 
   MS_LOG(INFO) << "Device id = " << device_id << ", rank size = " << rank_size << ".";
-  TDT_StatusT status = TsdOpen(device_id, rank_size);
-  if (status != TDT_OK) {
-    MS_LOG(EXCEPTION) << "Device " << device_id << " open tsd failed, status = " << status << ".";
+  auto ret = rtSetDevice(device_id);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Device " << device_id << " call rtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
     return false;
   }
   ms_context_ptr->increase_param<uint32_t>(MS_CTX_TSD_REF);
@@ -125,13 +125,13 @@ bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force) {
     }
 #endif
     auto device_id = ms_context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
-    TDT_StatusT status = TsdClose(device_id);
-    if (status != TDT_OK) {
-      MS_LOG(EXCEPTION) << "Close tsd failed, status = " << status << ".";
+    auto ret = rtDeviceReset(device_id);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(EXCEPTION) << "Device " << device_id << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
       return false;
     }
     ms_context_ptr->set_param<bool>(MS_CTX_IS_PYNATIVE_GE_INIT, false);
-    MS_LOG(INFO) << "Destroy and close tsd successful, status = " << status << ".";
+    MS_LOG(INFO) << "Call rtDeviceReset, destroy and close tsd successful, ret[" << static_cast<int>(ret) << "]";
   } else {
     MS_LOG(DEBUG) << "TDT Dataset client is used, no need to close, tsd reference = "
                   << ms_context_ptr->get_param<uint32_t>(MS_CTX_TSD_REF) << ".";

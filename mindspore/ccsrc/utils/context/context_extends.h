@@ -27,6 +27,7 @@
 #include "tdt/tsd_client.h"
 #include "tdt/tdt_host_interface.h"
 #include "tdt/data_common.h"
+#include "runtime/dev.h"
 #endif
 #ifdef ENABLE_GE
 #include "transform/graph_ir/df_graph_manager.h"
