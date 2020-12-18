@@ -20,6 +20,7 @@ SET BUILD_PATH=%BASE_PATH%/build
 
 SET threads=6
 SET X86_64_SIMD=off
+SET ENABLE_GITEE=OFF
 
 set VERSION_MAJOR=''
 set VERSION_MINOR=''
@@ -62,6 +63,11 @@ IF %errorlevel% == 0 (
     )
 )
 
+IF "%FROM_GITEE%" == "1" (
+    echo "DownLoad from gitee"
+    SET ENABLE_GITEE=ON
+)
+
 IF NOT EXIST "%BUILD_PATH%" (
     md "build"
 )
@@ -79,7 +85,7 @@ IF "%1%" == "lite" (
     -DX86_64_SIMD=%X86_64_SIMD% ^
     -G "CodeBlocks - MinGW Makefiles" "%BASE_PATH%/mindspore/lite"
 ) ELSE (
-    cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON ^
+    cmake -DCMAKE_BUILD_TYPE=Release -DENABLE_CPU=ON -DENABLE_MINDDATA=ON -DUSE_GLOG=ON -DENABLE_GITEE=%ENABLE_GITEE% ^
     -G "CodeBlocks - MinGW Makefiles" ../..
 )
 IF NOT %errorlevel% == 0 (
