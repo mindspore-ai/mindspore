@@ -143,7 +143,7 @@ class ExpandDims(PrimitiveWithInfer):
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
         - **axis** (int) - Specifies the dimension index at which to expand
           the shape of `input_x`. The value of axis must be in the range
-          `[-input_x.dim()-1, input_x.dim()]`. Only constant value is allowed.
+          `[-input_x.ndim-1, input_x.ndim]`. Only constant value is allowed.
 
     Outputs:
         Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
@@ -597,7 +597,7 @@ class Squeeze(PrimitiveWithInfer):
     Returns a tensor with the same type but dimensions of 1 are removed based on `axis`.
 
     Note:
-        The dimension index starts at 0 and must be in the range `[-input.dim(), input.dim())`.
+        The dimension index starts at 0 and must be in the range `[-input.ndim, input.ndim`.
 
     Raises:
         ValueError: If the corresponding dimension of the specified axis does not equal to 1.

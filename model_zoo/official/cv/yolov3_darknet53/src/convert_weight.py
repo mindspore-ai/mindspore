@@ -50,16 +50,16 @@ def convert(weights_file, output_file):
         var = params[i+2]
         gamma = params[i+3]
         beta = params[i+4]
-        beta_data = weights[index: index+beta.size()].reshape(beta.shape)
-        index += beta.size()
-        gamma_data = weights[index: index+gamma.size()].reshape(gamma.shape)
-        index += gamma.size()
-        mean_data = weights[index: index+mean.size()].reshape(mean.shape)
-        index += mean.size()
-        var_data = weights[index: index + var.size()].reshape(var.shape)
-        index += var.size()
-        weight_data = weights[index: index+weight.size()].reshape(weight.shape)
-        index += weight.size()
+        beta_data = weights[index: index+beta.size].reshape(beta.shape)
+        index += beta.size
+        gamma_data = weights[index: index+gamma.size].reshape(gamma.shape)
+        index += gamma.size
+        mean_data = weights[index: index+mean.size].reshape(mean.shape)
+        index += mean.size
+        var_data = weights[index: index + var.size].reshape(var.shape)
+        index += var.size
+        weight_data = weights[index: index+weight.size].reshape(weight.shape)
+        index += weight.size
 
         param_list.append({'name': weight.name, 'type': weight.dtype, 'shape': weight.shape,
                            'data': Tensor(weight_data)})

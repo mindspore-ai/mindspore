@@ -31,6 +31,8 @@ shape_ = P.Shape()
 reshape_ = P.Reshape()
 dtype_ = P.DType()
 abs_ = P.Abs()
+ndim_ = P.Rank()
+size_ = P.Size()
 
 def mean(x, axis=(), keep_dims=False):
     """

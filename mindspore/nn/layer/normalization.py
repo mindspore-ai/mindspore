@@ -318,7 +318,7 @@ class BatchNorm1d(_BatchNorm):
                                           input_dims='1d')
 
     def _check_data_dim(self, x):
-        if x.dim() != 2:
+        if x.ndim != 2:
             pass
 
 
@@ -415,7 +415,7 @@ class BatchNorm2d(_BatchNorm):
                                           data_format=data_format)
 
     def _check_data_dim(self, x):
-        if x.dim() != 4:
+        if x.ndim != 4:
             pass
 
 
