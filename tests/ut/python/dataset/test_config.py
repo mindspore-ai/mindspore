@@ -364,7 +364,7 @@ def test_auto_num_workers_error():
     err_msg = ""
     try:
         ds.config.set_auto_num_workers([1, 2])
-    except ValueError as e:
+    except TypeError as e:
         err_msg = str(e)
 
     assert "isn't of type bool" in err_msg
