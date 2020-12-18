@@ -15,7 +15,8 @@
 """math operations, the function docs are adapted from Numpy API."""
 from ..ops import operations as P
 from ..ops import functional as F
-from .array_ops import squeeze
+from ..ops.primitive import constexpr
+from .array_ops import squeeze, asarray
 from .utils import _infer_out_shape, _is_scalar, _check_axis_valid, _get_device_compile, \
     _check_shape_aligned
 
@@ -63,6 +64,8 @@ def mean(a, axis=None, keepdims=False):
         2.5
     """
     axis = _check_axis_valid(axis, P.Rank()(a))
+    if _is_empty(F.shape(a)):
+        return _nan()
     if _is_scalar(a.shape):
         if keepdims:
             return a
@@ -138,6 +141,17 @@ def inner(a, b):
     res = P.MatMul(False, True)(a_aligned, b_aligned)
     res = P.Reshape()(res, a.shape[:-1] + b.shape[:-1])
     return res
+
+
+@constexpr
+def _nan():
+    """Returns a Tensor with nan value"""
+    return asarray(float('nan'))
+
+
+def _is_empty(shape):
+    """Checks if the shape is empty"""
+    return F.shape_mul(shape) == 0
 
 
 def _expand(x, ndim):

@@ -135,6 +135,37 @@ def _check_dtype(dtype):
     return dtype
 
 
+def _deep_list(array_like):
+    """convert nested tuple/list mixtures to pure nested list"""
+    if isinstance(array_like, (list, tuple)):
+        return list(map(_deep_list, array_like))
+    return array_like
+
+
+def _deep_tensor_to_nparray(array_like):
+    """
+    convert a nested list of tensor to nested list of np_array.
+
+    Args:
+        array_like(list(tensor)): In any format of nested lists that may contain
+        tensors.
+
+    Returns:
+        array_like(list(np_array)): Formatted array that can be directly processed
+            by numpy.array(), with all tensor elements converted to numpy_array.
+    """
+    # Recursively check whether each element is a tensor or not, if is tensor,
+    # convert it to a numpy array in place
+    if isinstance(array_like, Tensor):
+        return array_like.asnumpy()
+
+    if isinstance(array_like, list):
+        for idx, value in enumerate(array_like):
+            array_like[idx] = _deep_tensor_to_nparray(value)
+
+    return array_like
+
+
 def _check_input_for_asarray(array_like):
     """check whether array_like argument is a valid type for np.asarray conversion"""
     if isinstance(array_like, (Tensor, list, tuple, int, float, bool, onp.ndarray)):
@@ -164,6 +195,14 @@ def _get_device_compile():
 def _get_device():
     """Get the current device (`GPU`, `CPU`, `Ascend`)"""
     return context.get_context('device_target')
+
+
+def _covert_list_tensor_to_tuple_tensor(list_of_tensor):
+    """Convert a list of tensor to a tuple of tensor"""
+    tuple_of_tensor = ()
+    for tensor in list_of_tensor:
+        tuple_of_tensor += (tensor,)
+    return tuple_of_tensor
 
 
 def _get_mode():

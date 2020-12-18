@@ -85,6 +85,14 @@ def test_asarray():
             expected = mnp.asarray(array, test_case.mnp_dtypes[i]).asnumpy()
             match_array(actual, expected, error=7)
 
+    # Additional tests for nested tensor/numpy_array mixture
+    mnp_input = [(onp.ones(3,), mnp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
+    onp_input = [(onp.ones(3,), onp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
+
+    actual = onp.asarray(onp_input)
+    expected = mnp.asarray(mnp_input).asnumpy()
+    match_array(actual, expected, error=7)
+
 
 def test_array():
     # array's function is very similar to asarray, so we mainly test the
@@ -99,6 +107,14 @@ def test_array():
         assert arr1 is arr2
         assert arr1 is not arr3
         assert arr4 is arr5
+
+    # Additional tests for nested tensor/numpy_array mixture
+    mnp_input = [(onp.ones(3,), mnp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
+    onp_input = [(onp.ones(3,), onp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
+
+    actual = onp.asarray(onp_input)
+    expected = mnp.asarray(mnp_input).asnumpy()
+    match_array(actual, expected, error=7)
 
 
 def test_asfarray():
@@ -119,6 +135,14 @@ def test_asfarray():
             actual = onp.asfarray(array, test_case.onp_dtypes[i])
             expected = mnp.asfarray(array, test_case.mnp_dtypes[i]).asnumpy()
             match_array(actual, expected, error=7)
+
+    # Additional tests for nested tensor/numpy_array mixture
+    mnp_input = [(onp.ones(3,), mnp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
+    onp_input = [(onp.ones(3,), onp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
+
+    actual = onp.asarray(onp_input)
+    expected = mnp.asarray(mnp_input).asnumpy()
+    match_array(actual, expected, error=7)
 
 
 def test_zeros():
@@ -547,20 +571,9 @@ def test_exec():
     return test_exec_case
 
 
-raise_set = [
-    ('Expand_dims_Error', {
-        'block': (lambda x: mnp.expand_dims, {'exception': ValueError}),
-        'desc_inputs': [mnp.ones((2, 3, 4)), 0]}),
-]
-
-
-def expand_dims_exception(input_tensor):
-    return mnp.expand_dims(input_tensor, 1.2)
-
-
 def test_expand_dims_exception():
     with pytest.raises(TypeError):
-        expand_dims_exception(mnp.ones((3, 3)))
+        mnp.expand_dims(mnp.ones((3, 3)), 1.2)
 
 
 def test_asarray_exception():
@@ -568,10 +581,11 @@ def test_asarray_exception():
         mnp.asarray({1, 2, 3})
 
 
-def swapaxes_exception(input_tensor):
-    return mnp.swapaxes(input_tensor, 1, 10)
-
-
 def test_swapaxes_exception():
     with pytest.raises(TypeError):
-        swapaxes_exception(mnp.ones((3, 3)))
+        mnp.swapaxes(mnp.ones((3, 3)), 1, 10)
+
+
+def test_linspace_exception():
+    with pytest.raises(TypeError):
+        mnp.linspace(0, 1, num=2.5)
