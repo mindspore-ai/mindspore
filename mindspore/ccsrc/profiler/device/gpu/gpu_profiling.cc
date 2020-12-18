@@ -70,6 +70,10 @@ uint32_t GetStreamID(const CUcontext context, const void *stream) {
   uint32_t stream_id = 0;
   if (stream != nullptr) {
     CHECK_CUPTI_RET_WITH_ERROR(CuptiGetStreamId(context, (CUstream)stream, &stream_id), "CuptiGetStreamId");
+    if (CuptiGetStreamId(context, (CUstream)stream, &stream_id) != CUPTI_SUCCESS) {
+      MS_LOG(ERROR) << "Training process unexpectedly stopped, profiling data cannot be write to file"
+                    << "To obtain the profiling data, do not interrupt the training process.";
+    }
   }
   return stream_id;
 }
