@@ -3000,7 +3000,7 @@ class ScatterNd(PrimitiveWithInfer):
     def __infer__(self, indices, update, shape):
         shp = shape['value']
         validator.check_subclass("update_dtype", update['dtype'], mstype.tensor, self.name)
-        validator.check_tensor_dtype_valid("indices", indices['dtype'], [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid("indices", indices['dtype'], [mstype.int32, mstype.int64], self.name)
         validator.check_value_type("shape", shp, [tuple], self.name)
         for i, x in enumerate(shp):
             validator.check_positive_int(x, f'shape[{i}]', self.name)
