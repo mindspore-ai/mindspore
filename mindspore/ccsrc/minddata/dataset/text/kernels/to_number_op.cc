@@ -73,6 +73,8 @@ Status ToNumberOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
     case DataType::DE_FLOAT64:
       RETURN_IF_NOT_OK(ToDouble(input, output));
       break;
+    default:
+      RETURN_STATUS_UNEXPECTED("Unsupported cast type: " + cast_to_type_.ToString());
   }
 
   return Status::OK();
