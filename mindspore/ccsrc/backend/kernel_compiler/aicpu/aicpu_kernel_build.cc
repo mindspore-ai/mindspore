@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <map>
 #include <climits>
+#include "utils/utils.h"
 #include "runtime/device/kernel_runtime.h"
 #include "backend/kernel_compiler/aicpu/aicpu_kernel_mod.h"
 #include "proto/tensor.pb.h"
@@ -402,7 +403,8 @@ bool CreateExtInfo(const std::shared_ptr<AnfNode> &anf_node, const std::shared_p
   char *ext_info_buf = ext_info.data();
 
   UnknowShapeOpType shape_type = UnknowShapeOpType::DEPEND_IN_SHAPE;
-  if (AnfAlgo::GetCNodeName(anf_node) == "Unique") {
+  auto op_name = AnfAlgo::GetCNodeName(anf_node);
+  if (kComputeDepend.find(op_name) != kComputeDepend.end()) {
     shape_type = UnknowShapeOpType::DEPEND_COMPUTE;
   }
   ext_info_offset = SetExtInfoShapeType(ext_info_buf, ext_info_offset, shape_type);

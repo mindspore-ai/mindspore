@@ -30,6 +30,8 @@
 
 namespace mindspore {
 // op name. Op which not exists in operator/ops.h, so define it's name here
+constexpr auto kUniqueOpName = "Unique";
+constexpr auto kComputeAccidentalHitsOpName = "ComputeAccidentalHits";
 constexpr auto kFour2FiveOpName = "Four2Five";
 constexpr auto kFive2FourOpName = "Five2Four";
 constexpr auto kConv2DOpName = "Conv2D";
@@ -477,6 +479,8 @@ const std::set<std::string> kHWSpecialFormatSet = {
   kOpFormat_NC1HWC0_C04,  kOpFormat_FRACTAL_Z_C04, kOpFormat_FRACTAL_ZN_LSTM, kOpFormat_NDC1HWC0, kOpFormat_FRAC_Z};
 
 const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
+
+const std::set<std::string> kComputeDepend = {kUniqueOpName, kComputeAccidentalHitsOpName};
 
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   try {
