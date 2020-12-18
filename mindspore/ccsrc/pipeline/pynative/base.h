@@ -66,7 +66,7 @@ struct OpExecInfo {
 };
 using OpExecInfoPtr = std::shared_ptr<OpExecInfo>;
 
-const std::set<std::string> ignore_infer_prim = {"make_ref", "mixed_precision_cast"};
+const std::set<std::string> ignore_infer_prim = {"mixed_precision_cast"};
 const std::set<std::string> force_infer_prim = {"TopK", "DropoutGenMask"};
 const std::set<std::string> ignore_judge_dynamic_cell = {
   "Cell mindspore.nn.layer.basic.Dense", "Cell mindspore.nn.probability.distribution.normal.Normal",
