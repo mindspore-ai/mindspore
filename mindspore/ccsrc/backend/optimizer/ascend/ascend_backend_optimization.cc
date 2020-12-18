@@ -116,6 +116,7 @@
 #include "backend/optimizer/ascend/ir_fission/concat_fission.h"
 #include "backend/optimizer/ascend/ir_fission/pack_fission.h"
 #include "backend/optimizer/ascend/enhancer/concat_outputs_for_all_gather.h"
+#include "backend/optimizer/ascend/enhancer/split_inputs_for_reduce_scatter.h"
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_gru.h"
 #include "utils/ms_context.h"
@@ -363,6 +364,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   other_pm->AddPass(std::make_shared<AllGatherFusion>());
   other_pm->AddPass(std::make_shared<ConcatOutputsForAllGather>());
   other_pm->AddPass(std::make_shared<ReduceScatterFusion>());
+  other_pm->AddPass(std::make_shared<SplitInputsForReduceScatter>());
   other_pm->AddPass(std::make_shared<BroadcastFusion>());
   other_pm->AddPass(std::make_shared<InsertMemcpyAsyncForCascade>());
   other_pm->AddPass(std::make_shared<ParameterTransOpFusion>());

@@ -125,6 +125,7 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
 
     if (AnfAlgo::GetCNodeName(anf_node) == kReduceScatterOpName) {
       int64_t rank_size;
+      auto cnode = anf_node->cast<CNodePtr>();
       auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
       MS_EXCEPTION_IF_NULL(primitive);
       if (primitive->GetAttr("rank_size") != nullptr) {
@@ -133,7 +134,11 @@ bool HcomUtil::GetHcomCount(const AnfNodePtr &anf_node, const vector<HcclDataTyp
         MS_LOG(ERROR) << "Get rank size failed";
         return false;
       }
-      block_size = input_size / LongToSize(rank_size);
+      int64_t actual_input_size = input_size;
+      if (AnfAlgo::HasNodeAttr(kAttrFusion, cnode) && AnfAlgo::GetNodeAttr<int64_t>(anf_node, kAttrFusion)) {
+        actual_input_size = (input_size + align_size - 1 + filled_size) / align_size * align_size;
+      }
+      block_size = actual_input_size / LongToSize(rank_size);
       total_size = total_size + block_size;
     } else {
       if (AnfAlgo::GetCNodeName(anf_node) == kAllGatherOpName) {
