@@ -343,6 +343,8 @@ class LSTMCell(Cell):
         >>> c = Tensor(np.ones([1, 3, 12]).astype(np.float32))
         >>> w = Tensor(np.ones([1152, 1, 1]).astype(np.float32))
         >>> output, h, c, _, _ = net(input, h, c, w)
+        >>> print(output.shape)
+        (3, 5, 12)
     """
 
     def __init__(self,
