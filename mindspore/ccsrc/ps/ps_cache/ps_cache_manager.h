@@ -126,6 +126,8 @@ class PsCacheManager {
   bool initialized_ps_cache() const { return initialized_ps_cache_; }
   void DoProcessData(uint32_t device_id, void *context);
   void IncreaseGraphStep(const std::string &channel_name);
+  bool terminated() const { return terminated_; }
+  void Finalize();
   void DumpHashTables(bool dump_device_tables = false) const;
 
  private:
@@ -133,7 +135,7 @@ class PsCacheManager {
   ~PsCacheManager() = default;
   PsCacheManager(const PsCacheManager &) = delete;
   PsCacheManager &operator=(const PsCacheManager &) = delete;
-  void IncreaseStep();
+  bool IncreaseStep();
   void set_current_graph_step() { graph_running_step_ = graph_step_; }
   std::string channel_name();
   void set_channel_name(const std::string channel_name);
@@ -141,23 +143,23 @@ class PsCacheManager {
   void AllocMemForHashTable();
   void SetLocalIdRank();
   void ProcessDataTask(uint32_t device_id, void *context);
-  void ProcessData();
-  void ParseData(const int *batch_ids, const size_t batch_ids_len, int *hash_index);
-  void WaitGraphRun();
+  bool ProcessData();
+  bool ParseData(const int *batch_ids, const size_t batch_ids_len, int *hash_index);
+  bool WaitGraphRun();
   int ParseDeviceData(size_t id, bool *need_swap_device_to_host, bool *need_swap_host_to_device);
-  void ParseHostDataHostToDevice(size_t id);
-  void ParseHostDataDeviceToHost(size_t id);
-  void HashSwapDeviceOut(int *swap_out_index, ::ps::SArray<float> *swap_out_data, const HashTableInfo &hash_info);
-  void HashSwapDeviceIn(int *swap_in_ids, int *swap_in_index, const HashTableInfo &hash_info, size_t key);
-  void HashSwapHostToDevice(const HashTableInfo &hash_info);
-  void HashSwapDeviceToHost(const HashTableInfo &hash_info);
-  void HashSwapHostToServer(size_t key, const HashTableInfo &hash_info);
-  void HashSwapServerToHost(size_t key, const HashTableInfo &hash_info);
-  void InsertHostHashTable(size_t embedding_size, size_t insert_indices_size, int *insert_indices, float *insert_data,
+  bool ParseHostDataHostToDevice(size_t id);
+  bool ParseHostDataDeviceToHost(size_t id);
+  bool HashSwapDeviceOut(int *swap_out_index, ::ps::SArray<float> *swap_out_data, const HashTableInfo &hash_info);
+  bool HashSwapDeviceIn(int *swap_in_ids, int *swap_in_index, const HashTableInfo &hash_info, size_t key);
+  bool HashSwapHostToDevice(const HashTableInfo &hash_info);
+  bool HashSwapDeviceToHost(const HashTableInfo &hash_info);
+  bool HashSwapHostToServer(size_t key, const HashTableInfo &hash_info);
+  bool HashSwapServerToHost(size_t key, const HashTableInfo &hash_info);
+  bool InsertHostHashTable(size_t embedding_size, size_t insert_indices_size, int *insert_indices, float *insert_data,
                            float *hash_table_addr);
-  void LookUpHostHashTable(size_t embedding_size, size_t indices_lens, const float *hash_table_addr,
+  bool LookUpHostHashTable(size_t embedding_size, size_t indices_lens, const float *hash_table_addr,
                            const int *indices_addr, float *output_addr);
-  void UpdataEmbeddingTable(const ::ps::SArray<float> &swap_out_data, int *swap_out_ids, size_t key);
+  bool UpdataEmbeddingTable(const ::ps::SArray<float> &swap_out_data, int *swap_out_ids, size_t key);
   void LookUpTableTask(size_t indices_lens, size_t outer_dim_size, size_t first_dim_size, const float *input_addr,
                        const int *indices_addr, float *output_addr);
   bool CheckFinishInsertInitInfo() const;
@@ -172,6 +174,7 @@ class PsCacheManager {
   std::mutex data_mutex_;
   std::condition_variable data_prase_;
   std::condition_variable insert_init_info_;
+  std::thread process_data_thread_;
 
   std::map<std::string, HashTableInfo> hash_tables_;
   std::shared_ptr<EmbeddingDeviceCache> embedding_device_cache_;
@@ -185,6 +188,8 @@ class PsCacheManager {
   std::pair<size_t, size_t> range_bound_;
   std::atomic_bool finish_insert_init_info_{false};
   std::atomic_bool finish_init_parameter_server_{false};
+  std::atomic_bool running_{false};
+  std::atomic_bool terminated_{false};
 };
 
 static PsCacheManager &ps_cache_instance = PsCacheManager::GetInstance();

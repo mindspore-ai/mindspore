@@ -37,155 +37,178 @@ namespace ps {
 namespace ascend {
 MS_REG_PS_CACHE(kAscendDevice, AscendPsCache);
 namespace {
-void SetProtoInputs(const std::vector<std::vector<size_t>> &data_shape, const std::vector<TypeId> &data_type,
+bool SetProtoInputs(const std::vector<std::vector<size_t>> &data_shape, const std::vector<TypeId> &data_type,
                     mindspore::NodeDef *proto) {
-  MS_EXCEPTION_IF_NULL(proto);
+  MS_ERROR_IF_NULL(proto);
   if (data_shape.size() != data_type.size()) {
-    MS_LOG(EXCEPTION) << "The size of data shape is not equal to the size of data type.";
+    MS_LOG(ERROR) << "The size of data shape is not equal to the size of data type.";
+    return false;
   }
   for (size_t input_index = 0; input_index < data_shape.size(); input_index++) {
     ::mindspore::Tensor *proto_inputs = proto->add_inputs();
-    MS_EXCEPTION_IF_NULL(proto_inputs);
+    MS_ERROR_IF_NULL(proto_inputs);
     auto input_shape = data_shape[input_index];
     mindspore::TensorShape *tensorShape = proto_inputs->mutable_tensor_shape();
-    MS_EXCEPTION_IF_NULL(tensorShape);
+    MS_ERROR_IF_NULL(tensorShape);
     for (auto item : input_shape) {
       mindspore::TensorShape_Dim *dim = tensorShape->add_dim();
-      MS_EXCEPTION_IF_NULL(dim);
+      MS_ERROR_IF_NULL(dim);
       dim->set_size((::google::protobuf::int64)item);
     }
     auto input_type = kernel::AicpuOpUtil::MsTypeToProtoType(data_type[input_index]);
     proto_inputs->set_tensor_type(input_type);
     proto_inputs->set_mem_device("HBM");
   }
+  return true;
 }
 
-void SetProtoOutputs(const std::vector<std::vector<size_t>> &data_shape, const std::vector<TypeId> &data_type,
+bool SetProtoOutputs(const std::vector<std::vector<size_t>> &data_shape, const std::vector<TypeId> &data_type,
                      mindspore::NodeDef *proto) {
-  MS_EXCEPTION_IF_NULL(proto);
+  MS_ERROR_IF_NULL(proto);
   if (data_shape.size() != data_type.size()) {
-    MS_LOG(EXCEPTION) << "The size of data shape is not equal to the size of data type.";
+    MS_LOG(ERROR) << "The size of data shape is not equal to the size of data type.";
+    return false;
   }
   for (size_t output_index = 0; output_index < data_shape.size(); output_index++) {
     ::mindspore::Tensor *proto_outputs = proto->add_outputs();
-    MS_EXCEPTION_IF_NULL(proto_outputs);
+    MS_ERROR_IF_NULL(proto_outputs);
     auto output_shape = data_shape[output_index];
     mindspore::TensorShape *tensorShape = proto_outputs->mutable_tensor_shape();
-    MS_EXCEPTION_IF_NULL(tensorShape);
+    MS_ERROR_IF_NULL(tensorShape);
     for (auto item : output_shape) {
       mindspore::TensorShape_Dim *dim = tensorShape->add_dim();
-      MS_EXCEPTION_IF_NULL(dim);
+      MS_ERROR_IF_NULL(dim);
       dim->set_size((::google::protobuf::int64)item);
     }
     auto output_type = kernel::AicpuOpUtil::MsTypeToProtoType(data_type[output_index]);
     proto_outputs->set_tensor_type(output_type);
     proto_outputs->set_mem_device("HBM");
   }
+  return true;
 }
 
-void SetNodedefProto(const std::shared_ptr<KernelNodeInfo> &op_info,
+bool SetNodedefProto(const std::shared_ptr<KernelNodeInfo> &op_info,
                      const std::shared_ptr<kernel::AicpuOpKernelMod> &kernel_mod_ptr) {
-  MS_EXCEPTION_IF_NULL(op_info);
-  MS_EXCEPTION_IF_NULL(kernel_mod_ptr);
+  MS_ERROR_IF_NULL(op_info);
+  MS_ERROR_IF_NULL(kernel_mod_ptr);
   mindspore::NodeDef proto;
   proto.set_op(op_info->op_name_);
-  SetProtoInputs(op_info->input_data_shape_, op_info->input_data_type_, &proto);
-  SetProtoOutputs(op_info->output_data_shape_, op_info->output_data_type_, &proto);
+  RETURN_IF_FALSE(SetProtoInputs(op_info->input_data_shape_, op_info->input_data_type_, &proto));
+  RETURN_IF_FALSE(SetProtoOutputs(op_info->output_data_shape_, op_info->output_data_type_, &proto));
   std::string nodeDefStr;
   if (!proto.SerializeToString(&nodeDefStr)) {
-    MS_LOG(EXCEPTION) << "Serialize nodeDef to string failed.";
+    MS_LOG(ERROR) << "Serialize nodeDef to string failed.";
+    return false;
   }
   MS_LOG(DEBUG) << "Set node def proto, node name:" << op_info->op_name_;
   kernel_mod_ptr->SetNodeDef(nodeDefStr);
+  return true;
 }
 }  // namespace
 
-void AscendPsCache::InitDevice(uint32_t device_id, const void *context) {
-  MS_EXCEPTION_IF_NULL(context);
+bool AscendPsCache::InitDevice(uint32_t device_id, const void *context) {
+  MS_ERROR_IF_NULL(context);
   auto ret = rtSetDevice(device_id);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "Call rtSetDevice, ret[" << ret << "]";
+    MS_LOG(ERROR) << "Call rtSetDevice, ret[" << ret << "]";
+    return false;
   }
   auto rt_context = const_cast<rtContext_t>(context);
   ret = rtCtxSetCurrent(rt_context);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "Call rtCtxSetCurrent, ret[" << ret << "]";
+    MS_LOG(ERROR) << "Call rtCtxSetCurrent, ret[" << ret << "]";
+    return false;
   }
   ret = rtStreamCreate(&stream_, 0);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "Call rtStreamCreate, ret[" << ret << "]";
+    MS_LOG(ERROR) << "Call rtStreamCreate, ret[" << ret << "]";
+    return false;
   }
+  return true;
 }
 
 void *AscendPsCache::MallocMemory(size_t size) {
   return device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(size);
 }
 
-void AscendPsCache::MallocConstantMemory(size_t constant_value) {
+bool AscendPsCache::MallocConstantMemory(size_t constant_value) {
   offset_addr_ = reinterpret_cast<int *>(device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(sizeof(int)));
-  MS_EXCEPTION_IF_NULL(offset_addr_);
+  MS_ERROR_IF_NULL(offset_addr_);
   rtMemset(offset_addr_, sizeof(int), 0, sizeof(int));
   cache_vocab_size_addr_ =
     reinterpret_cast<int *>(device::ascend::AscendMemoryPool::GetInstance().AllocTensorMem(sizeof(int)));
-  MS_EXCEPTION_IF_NULL(cache_vocab_size_addr_);
+  MS_ERROR_IF_NULL(cache_vocab_size_addr_);
   rtMemset(cache_vocab_size_addr_, sizeof(int), constant_value, sizeof(int));
+  return true;
 }
 
-void AscendPsCache::RecordEvent() {
+bool AscendPsCache::RecordEvent() {
   event_.reset(new rtEvent_t());
   auto ret = rtEventCreate(&(*event_));
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "Create event failed";
+    MS_LOG(ERROR) << "Create event failed";
+    return false;
   }
   ret = rtEventRecord(*event_, stream_);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "Record event failed";
+    MS_LOG(ERROR) << "Record event failed";
+    return false;
   }
+  return true;
 }
 
-void AscendPsCache::SynchronizeEvent() {
+bool AscendPsCache::SynchronizeEvent() {
   auto ret = rtEventSynchronize(*event_);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "tEventSynchronize failed";
+    MS_LOG(ERROR) << "tEventSynchronize failed";
+    return false;
   }
   ret = rtEventDestroy(*event_);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtEventDestroy failed";
+    MS_LOG(ERROR) << "rtEventDestroy failed";
+    return false;
   }
+  return true;
 }
 
-void AscendPsCache::SynchronizeStream() {
+bool AscendPsCache::SynchronizeStream() {
   auto ret = rtStreamSynchronize(stream_);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtStreamSynchronize failed";
+    MS_LOG(ERROR) << "rtStreamSynchronize failed";
+    return false;
   }
+  return true;
 }
 
-void AscendPsCache::CopyHostMemToDevice(void *dst, void *src, size_t size) {
-  MS_EXCEPTION_IF_NULL(dst);
-  MS_EXCEPTION_IF_NULL(src);
+bool AscendPsCache::CopyHostMemToDevice(void *dst, void *src, size_t size) {
+  MS_ERROR_IF_NULL(dst);
+  MS_ERROR_IF_NULL(src);
   auto ret = rtMemcpyAsync(dst, size, src, size, RT_MEMCPY_HOST_TO_DEVICE, stream_);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtMemcpyAsync failed";
+    MS_LOG(ERROR) << "rtMemcpyAsync failed";
+    return false;
   }
+  return true;
 }
 
-void AscendPsCache::CopyDeviceMemToHost(void *dst, void *src, size_t size) {
-  MS_EXCEPTION_IF_NULL(dst);
-  MS_EXCEPTION_IF_NULL(src);
+bool AscendPsCache::CopyDeviceMemToHost(void *dst, void *src, size_t size) {
+  MS_ERROR_IF_NULL(dst);
+  MS_ERROR_IF_NULL(src);
   auto ret = rtMemcpyAsync(dst, size, src, size, RT_MEMCPY_DEVICE_TO_HOST, stream_);
   if (ret != RT_ERROR_NONE) {
-    MS_EXCEPTION(DeviceProcessError) << "rtMemcpyAsync failed";
+    MS_LOG(ERROR) << "rtMemcpyAsync failed";
+    return false;
   }
+  return true;
 }
 
-void AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, void *swap_out_index_addr,
+bool AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, void *swap_out_index_addr,
                                 size_t hash_table_size, size_t embedding_size, size_t swap_out_size) {
-  MS_EXCEPTION_IF_NULL(hash_table_addr);
-  MS_EXCEPTION_IF_NULL(swap_out_value_addr);
-  MS_EXCEPTION_IF_NULL(swap_out_index_addr);
+  MS_ERROR_IF_NULL(hash_table_addr);
+  MS_ERROR_IF_NULL(swap_out_value_addr);
+  MS_ERROR_IF_NULL(swap_out_index_addr);
   auto hash_swap_out_mod = std::make_shared<kernel::AicpuOpKernelMod>();
-  MS_EXCEPTION_IF_NULL(hash_swap_out_mod);
+  MS_ERROR_IF_NULL(hash_swap_out_mod);
   hash_swap_out_mod->SetNodeName(kEmbeddingLookupOpName);
   std::vector<std::vector<size_t>> input_shape;
   std::vector<std::vector<size_t>> output_shape;
@@ -197,7 +220,7 @@ void AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr
   output_shape.push_back({swap_out_size, embedding_size});
   auto op_info =
     std::make_shared<KernelNodeInfo>(kEmbeddingLookupOpName, input_shape, input_type, output_shape, output_type);
-  SetNodedefProto(op_info, hash_swap_out_mod);
+  RETURN_IF_FALSE(SetNodedefProto(op_info, hash_swap_out_mod));
 
   AddressPtrList kernel_inputs;
   AddressPtrList kernel_outputs = {
@@ -208,17 +231,19 @@ void AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr
   kernel_inputs.push_back(std::make_shared<Address>(offset_addr_, sizeof(int)));
   auto ret = hash_swap_out_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
   if (!ret) {
-    MS_LOG(EXCEPTION) << "Hash swap out launch failed.";
+    MS_LOG(ERROR) << "Hash swap out launch failed.";
+    return false;
   }
+  return true;
 }
 
-void AscendPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, void *swap_in_index_addr,
+bool AscendPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, void *swap_in_index_addr,
                                size_t hash_table_size, size_t embedding_size, size_t swap_in_size) {
-  MS_EXCEPTION_IF_NULL(hash_table_addr);
-  MS_EXCEPTION_IF_NULL(swap_in_value_addr);
-  MS_EXCEPTION_IF_NULL(swap_in_index_addr);
+  MS_ERROR_IF_NULL(hash_table_addr);
+  MS_ERROR_IF_NULL(swap_in_value_addr);
+  MS_ERROR_IF_NULL(swap_in_index_addr);
   auto hash_swap_in_mod = std::make_shared<kernel::AicpuOpKernelMod>();
-  MS_EXCEPTION_IF_NULL(hash_swap_in_mod);
+  MS_ERROR_IF_NULL(hash_swap_in_mod);
   hash_swap_in_mod->SetNodeName(kernel::kUpdateCache);
   std::vector<std::vector<size_t>> input_shape;
   std::vector<std::vector<size_t>> output_shape;
@@ -245,8 +270,10 @@ void AscendPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, 
   kernel_outputs.push_back(std::make_shared<Address>(offset_addr_, sizeof(int)));
   auto ret = hash_swap_in_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
   if (!ret) {
-    MS_LOG(EXCEPTION) << "Hash swap in launch failed.";
+    MS_LOG(ERROR) << "Hash swap in launch failed.";
+    return false;
   }
+  return true;
 }
 }  // namespace ascend
 }  // namespace ps

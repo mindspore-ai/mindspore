@@ -25,67 +25,75 @@ namespace mindspore {
 namespace ps {
 namespace gpu {
 MS_REG_PS_CACHE(kGPUDevice, GPUPsCache);
-void GPUPsCache::InitDevice(uint32_t device_id, const void *) {
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaSetDevice(device_id), "Cuda set device failed")
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamCreate(reinterpret_cast<CUstream_st **>(&stream_)),
-                                     "Cuda create stream failed");
+bool GPUPsCache::InitDevice(uint32_t device_id, const void *) {
+  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaSetDevice(device_id), "Cuda set device failed")
+  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaStreamCreate(reinterpret_cast<CUstream_st **>(&stream_)),
+                                           "Cuda create stream failed");
+  return true;
 }
 
 void *GPUPsCache::MallocMemory(size_t size) {
   return device::gpu::GPUMemoryAllocator::GetInstance().AllocTensorMem(size);
 }
 
-void GPUPsCache::RecordEvent() {
+bool GPUPsCache::RecordEvent() {
   event_.reset(new cudaEvent_t());
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventCreate(&(*event_)), "Cuda create event failed");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventRecord(*event_, reinterpret_cast<cudaStream_t>(stream_)),
-                                     "Cuda record event failed");
+  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventCreate(&(*event_)), "Cuda create event failed");
+  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventRecord(*event_, reinterpret_cast<cudaStream_t>(stream_)),
+                                           "Cuda record event failed");
+  return true;
 }
 
-void GPUPsCache::SynchronizeEvent() {
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventSynchronize(*event_), "Cuda sync event failed");
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaEventDestroy(*event_), "Cuda destroy event failed");
+bool GPUPsCache::SynchronizeEvent() {
+  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventSynchronize(*event_), "Cuda sync event failed");
+  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaEventDestroy(*event_), "Cuda destroy event failed");
+  return true;
 }
 
-void GPUPsCache::SynchronizeStream() {
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_)),
-                                     "Cuda sync stream failed");
+bool GPUPsCache::SynchronizeStream() {
+  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(cudaStreamSynchronize(reinterpret_cast<cudaStream_t>(stream_)),
+                                           "Cuda sync stream failed");
+  return true;
 }
 
-void GPUPsCache::CopyHostMemToDevice(void *dst, void *src, size_t size) {
-  MS_EXCEPTION_IF_NULL(dst);
-  MS_EXCEPTION_IF_NULL(src);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+bool GPUPsCache::CopyHostMemToDevice(void *dst, void *src, size_t size) {
+  MS_ERROR_IF_NULL(dst);
+  MS_ERROR_IF_NULL(src);
+  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(
     cudaMemcpyAsync(dst, src, size, cudaMemcpyHostToDevice, reinterpret_cast<cudaStream_t>(stream_)),
     "Cuda memcpy failed");
+  return true;
 }
 
-void GPUPsCache::CopyDeviceMemToHost(void *dst, void *src, size_t size) {
-  MS_EXCEPTION_IF_NULL(dst);
-  MS_EXCEPTION_IF_NULL(src);
-  CHECK_CUDA_RET_WITH_EXCEPT_NOTRACE(
+bool GPUPsCache::CopyDeviceMemToHost(void *dst, void *src, size_t size) {
+  MS_ERROR_IF_NULL(dst);
+  MS_ERROR_IF_NULL(src);
+  CHECK_CUDA_RET_WITH_RETURN_ERROR_NOTRACE(
     cudaMemcpyAsync(dst, src, size, cudaMemcpyDeviceToHost, reinterpret_cast<cudaStream_t>(stream_)),
     "Cuda memcpy failed");
+  return true;
 }
 
-void GPUPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, void *swap_out_index_addr, size_t,
+bool GPUPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, void *swap_out_index_addr, size_t,
                              size_t embedding_size, size_t swap_out_size) {
-  MS_EXCEPTION_IF_NULL(hash_table_addr);
-  MS_EXCEPTION_IF_NULL(swap_out_value_addr);
-  MS_EXCEPTION_IF_NULL(swap_out_index_addr);
+  MS_ERROR_IF_NULL(hash_table_addr);
+  MS_ERROR_IF_NULL(swap_out_value_addr);
+  MS_ERROR_IF_NULL(swap_out_index_addr);
   DoHashSwapOut(reinterpret_cast<float *>(hash_table_addr), reinterpret_cast<float *>(swap_out_value_addr),
                 reinterpret_cast<int *>(swap_out_index_addr), swap_out_size, embedding_size,
                 reinterpret_cast<cudaStream_t>(stream_));
+  return true;
 }
 
-void GPUPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, void *swap_in_index_addr, size_t,
+bool GPUPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, void *swap_in_index_addr, size_t,
                             size_t embedding_size, size_t swap_in_size) {
-  MS_EXCEPTION_IF_NULL(hash_table_addr);
-  MS_EXCEPTION_IF_NULL(swap_in_value_addr);
-  MS_EXCEPTION_IF_NULL(swap_in_index_addr);
+  MS_ERROR_IF_NULL(hash_table_addr);
+  MS_ERROR_IF_NULL(swap_in_value_addr);
+  MS_ERROR_IF_NULL(swap_in_index_addr);
   DoHashSwapIn(reinterpret_cast<float *>(hash_table_addr), reinterpret_cast<float *>(swap_in_value_addr),
                reinterpret_cast<int *>(swap_in_index_addr), swap_in_size, embedding_size,
                reinterpret_cast<cudaStream_t>(stream_));
+  return true;
 }
 }  // namespace gpu
 }  // namespace ps

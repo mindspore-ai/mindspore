@@ -19,6 +19,7 @@
 #include <map>
 #include <string>
 #include <memory>
+#include <atomic>
 #include <condition_variable>
 #include "ps/ps_cache/ps_data/ps_data_channel.h"
 
@@ -36,11 +37,12 @@ class EXPORT PsDataPrefetch {
   EXPORT bool cache_enable() const { return cache_enable_; }
   EXPORT void set_cache_enable(bool cache_enable) { cache_enable_ = cache_enable; }
   EXPORT void CreateDataChannel(const std::string &channel_name, size_t step_num);
-  EXPORT void PrefetchData(const std::string &channel_name, void *data, const size_t data_size);
-  EXPORT void FinalizeData(const std::string &channel_name);
+  EXPORT bool PrefetchData(const std::string &channel_name, void *data, const size_t data_size);
+  EXPORT bool FinalizeData(const std::string &channel_name);
+  EXPORT void NotifyFinalize();
   EXPORT void *data(const std::string &channel_name) const;
   EXPORT size_t data_size(const std::string &channel_name) const;
-  EXPORT void TryWakeChannel(const std::string &channel_name);
+  EXPORT bool TryWakeChannel(const std::string &channel_name);
 
  private:
   PsDataPrefetch() : cache_enable_(false), data_ready_(false) {}
@@ -54,6 +56,7 @@ class EXPORT PsDataPrefetch {
   std::mutex data_mutex_;
   std::condition_variable data_prefetch_;
   std::condition_variable data_process_;
+  std::atomic_bool need_wait_{true};
 };
 }  // namespace ps
 }  // namespace mindspore

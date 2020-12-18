@@ -21,21 +21,28 @@
 
 namespace mindspore {
 namespace ps {
+#define RETURN_IF_FALSE(condition) \
+  do {                             \
+    if (!(condition)) {            \
+      return false;                \
+    }                              \
+  } while (false)
+
 class PsCacheBasic {
  public:
   PsCacheBasic() = default;
   virtual ~PsCacheBasic() = default;
-  virtual void InitDevice(uint32_t device_id, const void *context) = 0;
+  virtual bool InitDevice(uint32_t device_id, const void *context) = 0;
   virtual void *MallocMemory(size_t size) = 0;
-  virtual void MallocConstantMemory(size_t constant_value) {}
-  virtual void RecordEvent() = 0;
-  virtual void SynchronizeEvent() = 0;
-  virtual void SynchronizeStream() = 0;
-  virtual void CopyHostMemToDevice(void *dst, void *src, size_t size) = 0;
-  virtual void CopyDeviceMemToHost(void *dst, void *src, size_t size) = 0;
-  virtual void HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, void *swap_out_index_addr,
+  virtual bool MallocConstantMemory(size_t constant_value) { return true; }
+  virtual bool RecordEvent() = 0;
+  virtual bool SynchronizeEvent() = 0;
+  virtual bool SynchronizeStream() = 0;
+  virtual bool CopyHostMemToDevice(void *dst, void *src, size_t size) = 0;
+  virtual bool CopyDeviceMemToHost(void *dst, void *src, size_t size) = 0;
+  virtual bool HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, void *swap_out_index_addr,
                            size_t hash_table_size, size_t embedding_size, size_t swap_out_size) = 0;
-  virtual void HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, void *swap_in_index_addr,
+  virtual bool HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, void *swap_in_index_addr,
                           size_t hash_table_size, size_t embedding_size, size_t swap_in_size) = 0;
 
  protected:
