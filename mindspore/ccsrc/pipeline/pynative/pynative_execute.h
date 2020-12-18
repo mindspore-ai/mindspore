@@ -68,18 +68,18 @@ struct GraphInfo {
 };
 
 struct CellInfo {
-  bool is_grad{false};             // Derivative is calculated
-  bool is_custom_bprop{false};     // Custom bprop
-  bool custom_bprop_graph{false};  // Custom bprop make forward graph
-  FuncGraphPtr fg;                 // Forward graph
+  bool is_grad{false};          // Derivative is calculated
+  bool is_custom_bprop{false};  // Custom bprop
+  FuncGraphPtr fg;              // Forward graph
   std::string cell_id;
+  std::string bprop_cell_id;
   CellInfo() = default;
-  CellInfo(bool isgrad, bool custom_bprop, bool bprop_graph, FuncGraphPtr foward_graph, std::string cellid)
+  CellInfo(bool isgrad, bool custom_bprop, FuncGraphPtr foward_graph, std::string cellid, std::string bprop_id)
       : is_grad(isgrad),
         is_custom_bprop(custom_bprop),
-        custom_bprop_graph(bprop_graph),
         fg(std::move(foward_graph)),
-        cell_id(std::move(cellid)) {}
+        cell_id(std::move(cellid)),
+        bprop_cell_id(std::move(bprop_id)) {}
 };
 
 struct TopCellInfo {
@@ -187,13 +187,15 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool CheckCellGraph(const std::string &cell_id, bool is_grad = false);
   void UpdateCellGraph(const py::object &cell, const FuncGraphPtr &g, const std::string &cell_id,
                        bool need_cloned = false, bool is_grad = false);
+  void ClearResidualRes();
   void NewGraphInner(const py::object &cell, const py::args &args);
   void MakeNewTopGraph(const string &cell_id, const py::args &args, const FuncGraphPtr &g);
   void EndGraphInner(const py::object &cell, const py::object &out, const py::args &args);
   void EndGraphByOutId(const py::object &cell, const std::string &cell_id, const py::object &out,
                        const std::string &out_id, const py::args &args);
-  FuncGraphPtr MakeGradGraph(const py::object &cell, const FuncGraphPtr &g, const ResourcePtr &r, const string &cell_id,
-                             const py::args &args);
+  bool EndBpropGraph(const string &cell_id);
+  FuncGraphPtr MakeGradGraph(const py::object &cell, const FuncGraphPtr &g, const ResourcePtr &r,
+                             const std::string &cell_id, const py::args &args);
   std::string GetGradCellId(bool has_sens, const py::object &cell, const py::args &args, py::object *forward_args,
                             py::object *sens = nullptr);
   void GradNetInner(const GradOperationPtr &grad, const py::object &cell, const py::object &weights,

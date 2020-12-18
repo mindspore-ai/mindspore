@@ -182,21 +182,16 @@ BaseRef PrimitivePy::RunHookFunction(const VectorRef &args) const {
     auto inst = pynative::PynativeExecutor::GetInstance();
     MS_EXCEPTION_IF_NULL(inst);
     try {
-      inst->NewGraph(GetPyObj(), input_args.cast<py::args>());
+      MS_LOG(DEBUG) << "Run bprop function start";
+      inst->NewGraph(hook_, input_args.cast<py::args>());
       py::object grads_obj = hook_(*convert_args);
       py::tuple grads = check_bprop_out(grads_obj, py_args);
-      inst->EndGraph(GetPyObj(), grads_obj, input_args.cast<py::args>());
+      inst->EndGraph(hook_, grads_obj, input_args.cast<py::args>());
+      MS_LOG(DEBUG) << "Run bprop function end";
       return std::make_shared<PyObjectRef>(grads);
-    } catch (const py::type_error &ex) {
+    } catch (std::exception &bt) {
       inst->ClearRes();
-      throw py::type_error(ex);
-    } catch (const py::value_error &ex) {
-      inst->ClearRes();
-      throw py::value_error(ex);
-    } catch (...) {
-      inst->ClearRes();
-      std::string exName(abi::__cxa_current_exception_type()->name());
-      MS_LOG(EXCEPTION) << "Error occurred in run bprop. Exception name: " << exName;
+      std::rethrow_exception(std::current_exception());
     }
   }
   SyncData(py_args[2]);
