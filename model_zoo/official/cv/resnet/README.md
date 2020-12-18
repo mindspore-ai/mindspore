@@ -81,8 +81,8 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 
 # [Environment Requirements](#contents)
 
-- Hardware（Ascend/GPU）
-    - Prepare hardware environment with Ascend or GPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+- Hardware（Ascend/GPU/CPU）
+    - Prepare hardware environment with Ascend, GPU or CPU processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
@@ -121,6 +121,16 @@ sh run_eval_gpu.sh [resnet50|resnet101] [cifar10|imagenet2012] [DATASET_PATH] [C
 
 # gpu benchmark example
 sh run_gpu_resnet_benchmark.sh [DATASET_PATH] [BATCH_SIZE](optional) [DTYPE](optional) [DEVICE_NUM](optional) [SAVE_CKPT](optional) [SAVE_PATH](optional)
+```
+
+- Running on CPU
+
+```bash
+# standalone training example
+python train.py --net=[resnet50|resnet101] --dataset=[cifar10|imagenet2012] --device_target=CPU --dataset_path=[DATASET_PATH] --pre_trained=[CHECKPOINT_PATH](optional)
+
+# infer example
+python eval.py --net=[resnet50|resnet101] --dataset=[cifar10|imagenet2012] --dataset_path=[DATASET_PATH] --checkpoint_path=[CHECKPOINT_PATH] --device_target=CPU
 ```
 
 # [Script Description](#contents)
