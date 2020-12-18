@@ -856,7 +856,7 @@ AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &
     if (it_second != shape.end()) {
       MS_LOG(EXCEPTION) << "At most one component of input shape can be -1";
     }
-    int index = std::distance(it_first, shape.begin());
+    int index = std::distance(shape.begin(), it_first);
     int infer_value = x_num;
     int infer_min_value = x_min_num;
     int infer_max_value = x_max_num;
