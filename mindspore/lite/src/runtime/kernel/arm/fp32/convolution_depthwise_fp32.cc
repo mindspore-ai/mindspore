@@ -147,7 +147,7 @@ kernel::LiteKernel *CpuConvDwFp32KernelCreator(const std::vector<lite::Tensor *>
     conv_param->input_channel_ = inputs[kInputIndex]->Channel();
     conv_param->output_h_ = outputs[kOutputIndex]->Height();
     conv_param->output_w_ = outputs[kOutputIndex]->Width();
-#ifdef ENABLE_ARM64
+#if defined(ENABLE_ARM64) || defined(ENABLE_AVX)
     if (CheckConvDwUseIndirectBuffer(conv_param)) {
       kernel =
         new (std::nothrow) kernel::ConvolutionDepthwiseIndirectCPUKernel(opParameter, inputs, outputs, ctx, primitive);

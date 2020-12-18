@@ -500,6 +500,30 @@ void PackNHWCToNHWC4Fp32(const void *src, void *dst, int batch, int plane, int c
   }
 }
 
+void PackNHWCToNHWC8Fp32(const void *src, void *dst, int batch, int plane, int channel) {
+  int c8 = UP_DIV(channel, C8NUM);
+  int c8_channel = c8 * C8NUM;
+  int nhwc8_batch_unit_offset = c8 * C8NUM * plane;
+  int ic_remainder_ = channel % C8NUM;
+  if (ic_remainder_ != 0) {
+    int nhwc8_batch_offset = 0;
+    for (int b = 0; b < batch; b++) {
+      int batch_offset = b * channel * plane;
+      for (int i = 0; i < plane; i++) {
+        float *dst_per_plane = (float *)dst + nhwc8_batch_offset + i * c8_channel;
+        memcpy(dst_per_plane, (float *)src + batch_offset + i * channel, channel * sizeof(float));
+        for (int j = channel; j < c8_channel; ++j) {
+          dst_per_plane[j] = 0;
+        }
+      }
+      nhwc8_batch_offset += nhwc8_batch_unit_offset;
+    }
+  } else {
+    size_t ori_input_size = batch * plane * channel * sizeof(float);
+    memcpy((float *)dst, (float *)src, ori_input_size);
+  }
+}
+
 void PackNHWC4ToNHWCFp32(const void *src, void *dst, int batch, int plane, int channel) {
   int c4 = UP_DIV(channel, C4NUM);
   int ic_remainder_ = channel % C4NUM;
@@ -593,6 +617,23 @@ void PackDepthwiseIndirectWeightC4Fp32(const void *src, void *dst, int height, i
         int src_off_kh = src_off_c + kh * width;
         for (int kw = 0; kw < width; kw++) {
           int dst_off = dst_off_c + kw * height * C4NUM + kh * C4NUM + i;
+          ((float *)dst)[dst_off] = ((float *)src)[src_off_kh + kw];
+        }
+      }
+    }
+  }
+}
+
+void PackDepthwiseIndirectWeightC8Fp32(const void *src, void *dst, int height, int width, int channel) {
+  int c8 = UP_DIV(channel, C8NUM);
+  for (int c = 0; c < c8; c++) {
+    int dst_off_c = c * C8NUM * height * width;
+    for (int i = 0; i < C8NUM; i++) {
+      int src_off_c = (c * C8NUM + i) * height * width;
+      for (int kh = 0; kh < height; kh++) {
+        int src_off_kh = src_off_c + kh * width;
+        for (int kw = 0; kw < width; kw++) {
+          int dst_off = dst_off_c + kw * height * C8NUM + kh * C8NUM + i;
           ((float *)dst)[dst_off] = ((float *)src)[src_off_kh + kw];
         }
       }

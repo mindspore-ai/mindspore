@@ -587,10 +587,16 @@ bool CheckConvDwUseIndirectBuffer(const ConvParameter *conv_param) {
 
 void ConvDwInitIndirection(float **indirect_buffer, float *src, float *zero_ptr, const ConvParameter *conv_param,
                            int step_h, int step_w) {
-  int ic_4 = UP_DIV(conv_param->input_channel_, C4NUM) * C4NUM;
+#ifdef ENABLE_AVX
+  int div = C8NUM;
+#else
+  int div = C4NUM;
+#endif
+
+  int ic_div = UP_DIV(conv_param->input_channel_, div) * div;
   for (int b = 0; b < conv_param->output_batch_; b++) {
     float **indirect = indirect_buffer + b * conv_param->output_h_ * step_h;
-    float *input = src + b * conv_param->input_h_ * conv_param->input_w_ * ic_4;
+    float *input = src + b * conv_param->input_h_ * conv_param->input_w_ * ic_div;
     for (int oh = 0; oh < conv_param->output_h_; oh++) {
       for (int kh = 0; kh < conv_param->kernel_h_; kh++) {
         int ih = oh * conv_param->stride_h_ + kh * conv_param->dilation_h_ - conv_param->pad_u_;
@@ -600,7 +606,7 @@ void ConvDwInitIndirection(float **indirect_buffer, float *src, float *zero_ptr,
               int iw = ow * conv_param->stride_w_ + kw * conv_param->dilation_w_ - conv_param->pad_l_;
               int index = oh * step_h + ow * step_w * conv_param->kernel_h_ + kw * conv_param->kernel_h_ + kh;
               if (iw < conv_param->input_w_ && iw >= 0) {
-                indirect[index] = input + (ih * conv_param->input_w_ + iw) * ic_4;
+                indirect[index] = input + (ih * conv_param->input_w_ + iw) * ic_div;
               } else {
                 indirect[index] = zero_ptr;
               }
@@ -619,7 +625,7 @@ void ConvDwInitIndirection(float **indirect_buffer, float *src, float *zero_ptr,
   }
 }
 
-#ifndef ENABLE_ARM64
+#if !defined(ENABLE_ARM64) && !defined(ENABLE_AVX)
 void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, const float *bias, int channels,
                            int output_width, int input_stride, bool relu, bool relu6, int kernel) {
   do {
@@ -670,6 +676,15 @@ void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, c
   } else if (kernel == 25) {
     ConvDwFp32Indirect5x5(output, input, weights, bias, channels, output_width, input_stride * sizeof(float *), relu,
                           relu6);
+  }
+}
+#endif
+
+#ifdef ENABLE_AVX
+void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, const float *bias, int channels,
+                           int output_width, int input_stride, bool relu, bool relu6, int kernel) {
+  if (kernel == 9) {
+    ConvDwFp32Avx3x3(output, input, weights, bias, channels, output_width, input_stride * sizeof(float *), relu, relu6);
   }
 }
 #endif

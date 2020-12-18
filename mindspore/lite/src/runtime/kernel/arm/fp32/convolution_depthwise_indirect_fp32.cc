@@ -47,37 +47,47 @@ int ConvolutionDepthwiseIndirectCPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
   auto weight_tensor = in_tensors_[kWeightIndex];
   auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
-  int C4 = UP_DIV(weight_tensor->Batch(), C4NUM);
-  int pack_weight_size = C4NUM * C4 * weight_tensor->Height() * weight_tensor->Width();
+#ifdef ENABLE_AVX
+  int div_flag = C8NUM;
+#else
+  int div_flag = C4NUM;
+#endif
+  int batch_flag = UP_DIV(weight_tensor->Batch(), div_flag);
+  int pack_weight_size = div_flag * batch_flag * weight_tensor->Height() * weight_tensor->Width();
 
   packed_weight_ = reinterpret_cast<float *>(malloc(pack_weight_size * sizeof(float)));
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
+#ifdef ENABLE_AVX
+  PackDepthwiseIndirectWeightC8Fp32(origin_weight, packed_weight_, weight_tensor->Height(), weight_tensor->Width(),
+                                    weight_tensor->Batch());
+#else
   PackDepthwiseIndirectWeightC4Fp32(origin_weight, packed_weight_, weight_tensor->Height(), weight_tensor->Width(),
                                     weight_tensor->Batch());
+#endif
 
   auto bias_tensor = in_tensors_[kBiasIndex];
-  bias_data_ = reinterpret_cast<float *>(malloc(C4NUM * C4 * sizeof(float)));
+  bias_data_ = reinterpret_cast<float *>(malloc(batch_flag * div_flag * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
 
-  memset(bias_data_, 0, C4NUM * C4 * sizeof(float));
+  memset(bias_data_, 0, batch_flag * div_flag * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
     auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
   }
 
   // malloc zero ptr
-  zero_ptr_ = reinterpret_cast<float *>(malloc(C4NUM * C4 * sizeof(float)));
+  zero_ptr_ = reinterpret_cast<float *>(malloc(batch_flag * div_flag * sizeof(float)));
   if (zero_ptr_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
-  memset(zero_ptr_, 0, C4NUM * C4 * sizeof(float));
+  memset(zero_ptr_, 0, batch_flag * div_flag * sizeof(float));
   return RET_OK;
 }
 
@@ -139,8 +149,13 @@ int ConvDwIndirectRun(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseIndirectCPUKernel::MallocPackedInput() {
-  int IC4 = UP_DIV(conv_param_->input_channel_, C4NUM);
-  int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * C4NUM * IC4;
+#ifdef ENABLE_AVX
+  int div_flag = C8NUM;
+#else
+  int div_flag = C4NUM;
+#endif
+  int IC_DIV = UP_DIV(conv_param_->input_channel_, div_flag);
+  int pack_input_size = conv_param_->input_batch_ * conv_param_->input_h_ * conv_param_->input_w_ * div_flag * IC_DIV;
   packed_input_ = reinterpret_cast<float *>(context_->allocator->Malloc(pack_input_size * sizeof(float)));
   if (packed_input_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
@@ -152,14 +167,24 @@ int ConvolutionDepthwiseIndirectCPUKernel::MallocPackedInput() {
 int ConvolutionDepthwiseIndirectCPUKernel::Run() {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto input_ptr = reinterpret_cast<float *>(input_tensor->data_c());
-  if (conv_param_->input_channel_ % C4NUM != 0) {
+#ifdef ENABLE_AVX
+  int div_flag = C8NUM;
+#else
+  int div_flag = C4NUM;
+#endif
+  if (conv_param_->input_channel_ % div_flag != 0) {
     auto ret = MallocPackedInput();
     if (ret != 0) {
       MS_LOG(ERROR) << "Convolution depthwise fp32 indirect buffer MallocPackedInput failed.";
       return RET_ERROR;
     }
+#ifdef ENABLE_AVX
+    PackNHWCToNHWC8Fp32(input_ptr, packed_input_, conv_param_->input_batch_,
+                        conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
+#else
     PackNHWCToNHWC4Fp32(input_ptr, packed_input_, conv_param_->input_batch_,
                         conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
+#endif
   } else {
     packed_input_ = input_ptr;
   }
@@ -174,7 +199,7 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
     MS_LOG(ERROR) << "ConvDwIndirectRun error: error_code[" << ret << "]";
     return RET_ERROR;
   }
-  if (conv_param_->input_channel_ % C4NUM != 0) {
+  if (conv_param_->input_channel_ % div_flag != 0) {
     context_->allocator->Free(packed_input_);
   }
   return RET_OK;

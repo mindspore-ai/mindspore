@@ -66,6 +66,11 @@ void ConvDwFp32Indirect5x5(float *output, float **input, const float *weights, c
                            int output_width, size_t input_stride, size_t relu, size_t relu6);
 #endif
 
+#ifdef ENABLE_AVX
+void ConvDwFp32Avx3x3(float *output, float **input, const float *weights, const float *bias, int channels,
+                      int output_width, size_t input_stride, size_t relu, size_t relu6);
+#endif
+
 void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, const float *bias, int channels,
                            int output_width, int input_stride, bool relu, bool relu6, int kernel);
 
