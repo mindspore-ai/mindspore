@@ -492,63 +492,6 @@ checkddk() {
     fi
 }
 
-gene_clhpp() {
-    CL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
-    if [ ! -d "${CL_SRC_DIR}" ]; then
-      return
-    fi
-    cd ${CL_SRC_DIR}/
-    rm -rf *.inc
-    echo "$(cd "$(dirname $0)"; pwd)"
-    for file_path in "${CL_SRC_DIR}"/*
-    do
-        file="$(basename ${file_path})"
-        inc_file=$(echo ${CL_SRC_DIR}/${file} | sed 's/$/.inc/')
-        sed 's/\\/\\\\/g;s/\"/\\\"/g;s/^/\"/;s/$/\\n\" \\/' ${CL_SRC_DIR}/${file} > ${inc_file}
-        kernel_name=$(echo ${file} | sed s'/.\{3\}$//')
-        sed -i "1i\static const char *${kernel_name}_source =\"\\n\" \\" ${inc_file}
-        sed -i '$a\;' ${inc_file}
-    done
-}
-
-gene_ocl_program() {
-    OCL_SRC_DIR="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl"
-    SPIRV_DIR=build/spirv
-    [ -n "${SPIRV_DIR}" ] && rm -rf ${SPIRV_DIR}
-    mkdir -pv ${SPIRV_DIR}
-    if [ ! -d "${OCL_SRC_DIR}" ]; then
-      return
-    fi
-    for file_path in "${OCL_SRC_DIR}"/*
-    do
-      ocl_file="$(basename ${file_path})"
-      if [ "${ocl_file##*.}" != "cl" ]; then
-        continue
-      fi
-      clang -Xclang -finclude-default-header -cl-std=CL2.0 --target=spir64-unknown-unknown -emit-llvm \
-            -c -O0 -o ${SPIRV_DIR}/${ocl_file%.*}.bc ${OCL_SRC_DIR}/${ocl_file}
-    done
-
-    bcs=$(ls ${SPIRV_DIR}/*.bc)
-    llvm-link ${bcs} -o ${SPIRV_DIR}/program.bc
-    llvm-spirv -o ${SPIRV_DIR}/program.spv ${SPIRV_DIR}/program.bc
-
-    CL_PROGRAM_PATH="${BASEPATH}/mindspore/lite/src/runtime/kernel/opencl/cl/program.inc"
-    echo "#include <vector>" > ${CL_PROGRAM_PATH}
-    echo "std::vector<unsigned char> g_program_binary = {" >> ${CL_PROGRAM_PATH}
-    #hexdump -v -e '16/1 "0x%02x, " "\n"' ${SPIRV_DIR}/program.spv >> ${CL_PROGRAM_PATH}
-    hexdump -v -e '1/1 "0x%02x, "' ${SPIRV_DIR}/program.spv >> ${CL_PROGRAM_PATH}
-    echo "};" >> ${CL_PROGRAM_PATH}
-    echo "Compile SPIRV done"
-}
-
-get_opencl() {
-    cd ${BASEPATH}
-    git submodule update --init third_party/OpenCL-Headers
-    git submodule update --init third_party/OpenCL-CLHPP
-}
-
-
 get_version() {
     VERSION_MAJOR=$(grep "const int ms_version_major =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]")
     VERSION_MINOR=$(grep "const int ms_version_minor =" ${BASEPATH}/mindspore/lite/include/version.h | tr -dc "[0-9]")
@@ -568,7 +511,6 @@ build_lite()
 
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ] || [ $1 == "arm64" ]; then
       echo "start get opencl"
-      get_opencl
     fi
     if [ "${ENABLE_NPU}" == "on" ]; then
       checkddk
