@@ -23,6 +23,7 @@
 #include <utility>
 #include "include/api/graph.h"
 #include "cxx_api/graph/acl/model_process.h"
+#include "cxx_api/graph/acl/acl_env_guard.h"
 #include "cxx_api/graph/graph_impl.h"
 #include "cxx_api/factory.h"
 
@@ -40,8 +41,6 @@ class AclGraphImpl : public GraphCell::GraphImpl {
                         std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) override;
 
  private:
-  class AclEnvGuard;
-
   Status ConvertToOM();
   Status InitEnv();
   Status FinalizeEnv();
@@ -54,20 +53,8 @@ class AclGraphImpl : public GraphCell::GraphImpl {
   aclrtContext context_;
 
   std::shared_ptr<AclEnvGuard> acl_env_;
-  static std::weak_ptr<AclEnvGuard> global_acl_env_;
-  static std::mutex global_acl_env_mutex_;
 
   ModelProcess model_process_;
-};
-
-class AclGraphImpl::AclEnvGuard {
- public:
-  explicit AclEnvGuard(std::string_view cfg_file);
-  ~AclEnvGuard();
-  aclError GetErrno() const { return errno_; }
-
- private:
-  aclError errno_;
 };
 }  // namespace mindspore::api
 #endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_ACL_ACL_GRAPH_IMPL_H

@@ -25,6 +25,7 @@
 #include "ErrorCode.h"
 #include <sys/stat.h>
 #include "mindspore/core/utils/log_adapter.h"
+#include "mindspore/ccsrc/cxx_api/graph/acl/acl_env_guard.h"
 
 #define PATH_MAX 4096
 
@@ -83,6 +84,7 @@ class ResourceManager {
   std::vector<int> deviceIds_;
   std::vector<aclrtContext> contexts_;
   std::unordered_map<int, int> deviceIdMap_;  // Map of device to index
+  std::shared_ptr<mindspore::api::AclEnvGuard> acl_env_;
 };
 
 #endif

@@ -23,6 +23,7 @@
 #include "minddata/dataset/kernels/image/dvpp/utils/CommonDataType.h"
 #include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/kernels/image/dvpp/dvpp_decode_resize_crop_jpeg_op.h"
+#include "include/api/context.h"
 
 namespace mindspore {
 namespace dataset {
@@ -44,7 +45,7 @@ Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<Tensor> &input,
     // applied on device
     ResourceInfo resource;
     resource.aclConfigPath = "";
-    resource.deviceIds.insert(0);  // 0 is device id which should be refined later!
+    resource.deviceIds.insert(api::Context::Instance().GetDeviceID());
     std::shared_ptr<ResourceManager> instance = ResourceManager::GetInstance();
     APP_ERROR ret = instance->InitResource(resource);
     if (ret != APP_ERR_OK) {

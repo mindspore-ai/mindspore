@@ -21,8 +21,6 @@
 
 namespace mindspore::api {
 API_FACTORY_REG(GraphCell::GraphImpl, Ascend310, AclGraphImpl);
-std::weak_ptr<AclGraphImpl::AclEnvGuard> AclGraphImpl::global_acl_env_;
-std::mutex AclGraphImpl::global_acl_env_mutex_;
 
 AclGraphImpl::AclGraphImpl()
     : init_flag_(false),
@@ -95,24 +93,13 @@ Status AclGraphImpl::InitEnv() {
     return SUCCESS;
   }
 
-  aclError ret;
-  {
-    std::lock_guard<std::mutex> lock(global_acl_env_mutex_);
-    acl_env_ = global_acl_env_.lock();
-    if (acl_env_ != nullptr) {
-      MS_LOG(INFO) << "Acl has been initialized, skip.";
-    } else {
-      acl_env_ = std::make_shared<AclEnvGuard>("");
-      if (acl_env_->GetErrno() != ACL_ERROR_NONE) {
-        MS_LOG(ERROR) << "Execute aclInit Failed";
-        return FAILED;
-      }
-      global_acl_env_ = acl_env_;
-      MS_LOG(INFO) << "Acl init success";
-    }
+  acl_env_ = AclEnvGuard::GetAclEnv("");
+  if (acl_env_ == nullptr) {
+    MS_LOG(ERROR) << "Acl init failed.";
+    return FAILED;
   }
 
-  ret = aclrtSetDevice(device_id_);
+  aclError ret = aclrtSetDevice(device_id_);
   if (ret != ACL_ERROR_NONE) {
     MS_LOG(ERROR) << "Acl open device " << device_id_ << " failed";
     return FAILED;
@@ -244,22 +231,5 @@ Status AclGraphImpl::ConvertToOM() {
   }
   MS_LOG(ERROR) << "Unsupported ModelType " << graph_->ModelType();
   return FAILED;
-}
-
-AclGraphImpl::AclEnvGuard::AclEnvGuard(std::string_view cfg_file) {
-  errno_ = aclInit(cfg_file.data());
-  if (errno_ != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Execute aclInit Failed";
-    return;
-  }
-  MS_LOG(INFO) << "Acl init success";
-}
-
-AclGraphImpl::AclEnvGuard::~AclEnvGuard() {
-  errno_ = aclFinalize();
-  if (errno_ != ACL_ERROR_NONE) {
-    MS_LOG(ERROR) << "Finalize acl failed";
-  }
-  MS_LOG(INFO) << "Acl finalize success";
 }
 }  // namespace mindspore::api

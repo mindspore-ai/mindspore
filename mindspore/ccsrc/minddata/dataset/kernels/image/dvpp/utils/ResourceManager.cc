@@ -15,6 +15,8 @@
 
 #include "ResourceManager.h"
 #include <algorithm>
+#include <memory>
+#include <string>
 
 bool ResourceManager::initFlag_ = true;
 std::shared_ptr<ResourceManager> ResourceManager::ptr_ = nullptr;
@@ -79,7 +81,8 @@ std::shared_ptr<ResourceManager> ResourceManager::GetInstance() {
 }
 
 APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
-  if (!GetInitStatus()) {
+  if (acl_env_ != nullptr) {
+    MS_LOG(INFO) << "Acl has been initialized, skip.";
     return APP_ERR_OK;
   }
 
@@ -87,17 +90,17 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
   APP_ERROR ret;
   if (aclConfigPath.length() == 0) {
     // Init acl without aclconfig
-    ret = aclInit(nullptr);
+    acl_env_ = mindspore::api::AclEnvGuard::GetAclEnv("");
   } else {
     ret = ExistFile(aclConfigPath);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Acl config file not exist, ret = " << ret << ".";
       return ret;
     }
-    ret = aclInit(aclConfigPath.c_str());  // Initialize ACL
+    acl_env_ = mindspore::api::AclEnvGuard::GetAclEnv(aclConfigPath);
   }
-  if (ret != APP_ERR_OK) {
-    MS_LOG(ERROR) << "Failed to init acl, ret = " << ret;
+  if (acl_env_ == nullptr) {
+    MS_LOG(ERROR) << "Failed to init acl.";
     return ret;
   }
   std::copy(resourceInfo.deviceIds.begin(), resourceInfo.deviceIds.end(), std::back_inserter(deviceIds_));
