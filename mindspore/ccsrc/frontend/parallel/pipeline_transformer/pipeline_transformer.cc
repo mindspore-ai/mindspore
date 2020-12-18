@@ -28,6 +28,7 @@
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/node_check.h"
+#include "frontend/parallel/graph_util/node_info.h"
 #include "ir/anf.h"
 #include "base/core_ops.h"
 #include "utils/comm_manager.h"
@@ -51,12 +52,37 @@ static bool IsInWhiteList(const CNodePtr &cnode) {
   return false;
 }
 
+static void SetGradTag(const AnfNodePtr &node, NodeUsersMap node_users_map) {
+  auto node_users = node_users_map[node];
+  for (auto &user_pair : node_users) {
+    auto user_node = user_pair.first;
+    if (!user_node->grad()) {
+      user_node->set_grad(true);
+      SetGradTag(user_node, node_users_map);
+    }
+  }
+}
+
+void PipelineTransformer::LabelRequiredGradCNode() {
+  auto parameters = root_->parameters();
+  auto node_users_map = manager_->node_users();
+  for (auto parameter : parameters) {
+    if (!ParameterRequireGrad(parameter)) {
+      continue;
+    }
+    SetGradTag(parameter, node_users_map);
+  }
+}
+
 void PipelineTransformer::Coloring() {
   auto need_coloring = true;
   std::set<int64_t> stage_set;
   while (need_coloring) {
     need_coloring = false;
     for (auto &fg : manager_->func_graphs()) {
+      if (fg == root_) {
+        continue;
+      }
       auto value_nodes = fg->value_nodes();
       for (auto &value_pair : value_nodes) {
         auto node = value_pair.first;
@@ -64,10 +90,12 @@ void PipelineTransformer::Coloring() {
           continue;
         }
         auto graph = GetValueNode<FuncGraphPtr>(node);
+        auto need_grad = graph->get_return()->grad();
         auto node_users = manager_->node_users()[node];
         for (auto &user_pair : node_users) {
           auto user_node = user_pair.first->cast<CNodePtr>();
           user_node->set_stage(graph->stage());
+          user_node->set_grad(need_grad);
           auto user_node_graph = user_node->func_graph();
           if (graph->stage() != -1) {
             stage_set.insert(graph->stage());
@@ -90,7 +118,11 @@ void PipelineTransformer::Coloring() {
 
 void PipelineTransformer::BroadCastColoring() {
   for (auto &fg : manager_->func_graphs()) {
+    if (fg == root_ || fg->stage() == -1) {
+      continue;
+    }
     DoBroadCast(fg);
+    SetNoStageNode(fg);
   }
 }
 
@@ -190,36 +222,31 @@ void PipelineTransformer::DoBroadCast(const FuncGraphPtr &func) {
   while (need_coloring) {
     need_coloring = false;
     auto all_nodes = func->nodes();
+    auto node_users = manager_->node_users();
     for (auto &node : all_nodes) {
-      // only cnode can broadcast color.
-      if (!node->isa<CNode>()) {
+      if (node->isa<CNode>() || node->stage() == -1) {
         continue;
       }
-      auto cnode = node->cast<CNodePtr>();
-      if (cnode->stage() == -1) {
-        // broadcast from inputs to outputs
-        for (auto &input : cnode->inputs()) {
-          if (input->isa<CNode>() && input->stage() == stage_) {
-            cnode->set_stage(input->stage());
-            need_coloring = true;
-          }
-        }
-      } else if (cnode->stage() == stage_) {
-        // broadcast from outputs to inputs
-        for (auto &input : cnode->inputs()) {
-          if (input->stage() != -1 || !input->isa<CNode>()) {
-            continue;
-          }
-          auto input_cnode = input->cast<CNodePtr>();
-          auto prim = GetValueNode<PrimitivePtr>(input_cnode->input(0));
-          if (prim != nullptr && prim->name() == VIRTUAL_DATA_SET) {
-            continue;
-          }
-          input->set_stage(cnode->stage());
+      auto stage = node->stage();
+      for (auto &user_pair : node_users[node]) {
+        auto user_node = user_pair.first->cast<CNodePtr>();
+        auto user_node_stage = user_node->stage();
+        if (IsValueNode<FuncGraph>(user_node->input(0)) && stage > user_node_stage) {
+          user_node->set_stage(stage);
           need_coloring = true;
         }
       }
     }
+  }
+}
+
+void PipelineTransformer::SetNoStageNode(const FuncGraphPtr &func) {
+  auto all_nodes = func->nodes();
+  for (auto &node : all_nodes) {
+    if (!node->isa<CNode>() || node->stage() != -1) {
+      continue;
+    }
+    node->set_stage(0);
   }
 }
 
@@ -412,7 +439,12 @@ void PipelineTransformer::InsertReceive(const FuncGraphPtr &graph, const AnfNode
   if (node->isa<Parameter>()) {
     recv_input = {NewValueNode(recv_op), node};
   } else {
-    recv_input = {NewValueNode(recv_op), virtual_param_};
+    if (node->grad()) {
+      recv_input = {NewValueNode(recv_op), virtual_param_};
+    } else {
+      auto param = root_->parameters()[0];
+      recv_input = {NewValueNode(recv_op), param};
+    }
   }
   auto recv = graph->NewCNode(recv_input);
   auto node_abstract = node->abstract();
@@ -505,7 +537,11 @@ void PipelineTransformer::CutBorder(const FuncGraphPtr &graph) {
     manager_->Replace(graph->output(), out_input[1]);
   }
   if (out_input.size() > 2) {
-    auto out_node = graph->NewCNode(out_input);
+    std::vector<AnfNodePtr> make_tuple_inputs = {NewValueNode(prim::kPrimMakeTuple)};
+    make_tuple_inputs.insert(make_tuple_inputs.begin() + 1, out_input.begin() + 2, out_input.end());
+    auto make_tuple = graph->NewCNode(make_tuple_inputs);
+    std::vector<AnfNodePtr> out_depend_inputs = {out_input[0], out_input[1], make_tuple};
+    auto out_node = graph->NewCNode(out_depend_inputs);
     manager_->Replace(graph->output(), out_node);
   }
 }

@@ -100,7 +100,8 @@ class AnfNode : public Base {
         fullname_with_scope_(""),
         hash_(std::hash<const AnfNode *>()),
         kernel_info_(nullptr),
-        stage_(-1) {
+        stage_(-1),
+        need_grad_(false) {
     scope_ = ScopeManager::GetInstance().GetCurrentScope();
   }
 
@@ -190,6 +191,9 @@ class AnfNode : public Base {
   int64_t stage() { return stage_; }
   void set_stage(const int &stage) { stage_ = stage; }
 
+  bool grad() { return need_grad_; }
+  void set_grad(const bool &need_grad) { need_grad_ = need_grad; }
+
  protected:
   // Hold a weak ref to Graph as Graph also hold ref to AnfNode.
   // Otherwise, func_graph_ and AnfNode will make a reference cycle.
@@ -205,6 +209,7 @@ class AnfNode : public Base {
   KernelInfoDevicePtr kernel_info_;
   UserData user_data_;
   int64_t stage_;
+  bool need_grad_;
 };
 
 // CNode represents the complex node with a set of arguments.

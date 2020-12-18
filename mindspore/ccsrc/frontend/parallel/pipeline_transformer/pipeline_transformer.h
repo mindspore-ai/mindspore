@@ -47,6 +47,7 @@ class PipelineTransformer {
         global_rank_(global_rank),
         per_stage_rank_num_(per_stage_rank_num) {}
   virtual ~PipelineTransformer() = default;
+  void LabelRequiredGradCNode();
   void Coloring();
   void BroadCastColoring();
   void HandleSharedParameter();
@@ -63,6 +64,7 @@ class PipelineTransformer {
                       int64_t node_stage);
   void InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, int index,
                      int64_t user_node_stage, int64_t node_stage);
+  void SetNoStageNode(const FuncGraphPtr &func);
   void CutBorder(const FuncGraphPtr &graph);
   bool IsStageNode(const CNodePtr &node);
   AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node);

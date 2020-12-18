@@ -85,6 +85,7 @@ def get_bprop_send(self):
     shape = self.get_attr_dict()["shape"]
     dtype = self.get_attr_dict()["dtype"]
     send_grad = Receive(self.sr_tag, self.rank, shape, dtype, self.group)
+    send_grad.add_prim_attr("backward", True)
 
     def bprop(x, out, dout):
         dx = send_grad()
@@ -96,6 +97,7 @@ def get_bprop_send(self):
 def get_bprop_receive(self):
     """Generate bprop for Receive."""
     receive_grad = Send(self.tag, self.rank, self.group)
+    receive_grad.add_prim_attr("backward", True)
     depend = P.Depend()
     cast = P.Cast()
 

@@ -638,7 +638,7 @@ FuncGraphPtr TransformableClone(const FuncGraphPtr &func_graph, const TraceInfoP
   (void)std::for_each(parameters.begin(), parameters.end(), [&new_func_graph](const AnfNodePtr &param) -> void {
     MS_EXCEPTION_IF_NULL(param);
     TraceGuard trace_guard(std::make_shared<TraceCopy>(param->debug_info()));
-    (void)new_func_graph->add_parameter();
+    (void)new_func_graph->add_parameter()->set_abstract(param->abstract());
   });
 
   Cloner cloner = Cloner();
