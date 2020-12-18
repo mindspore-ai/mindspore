@@ -79,7 +79,7 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - Download the VGG19 model of the MindSpore version:
-    - [vgg19-0-97_5004.ckpt](http://10.154.33.38:51203/tutorials/image_classification.html)
+    - vgg19-0-97_5004.ckpt
 - For more information, please check the resources below：
     - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
@@ -218,8 +218,3 @@ For more configuration details, please refer the script `config.py`.
 | Speed                      | 1pcs: 35fps, 8pcs: 230fps
 | Total time                 | 1pcs: 22.5h, 8pcs: 5.1h
 | Checkpoint for Fine tuning | 602.33M (.ckpt file)
-
-
-
-
-

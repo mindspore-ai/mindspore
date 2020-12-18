@@ -1,6 +1,6 @@
-![](https://www.mindspore.cn/static/img/logo.a3e472c9.png)
+# ![MindSpore Logo](https://www.mindspore.cn/static/img/logo_black.6a5c850d.png)
 
-# Welcome to the Model Zoo for MindSpore
+## Welcome to the Model Zoo for MindSpore
 
 In order to facilitate developers to enjoy the benefits of MindSpore framework, we will continue to add typical networks and some of the related pre-trained models. If you have needs for the model zoo, you can file an issue on [gitee](https://gitee.com/mindspore/mindspore/issues) or [MindSpore](https://bbs.huaweicloud.com/forum/forum-1076-1.html), We will consider it in time.
 
@@ -10,23 +10,23 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 
 - Officially maintained and supported
 
-# Table of Contents
+## Table of Contents
 
 - [Official](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official)
     - [Computer Vision](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
         - [Image Classification](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
             - [GoogleNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/googlenet/README.md)
             - [ResNet50[benchmark]](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet/README.md)
-            - [ResNet50_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet/resnet_quant/README.md)
+            - [ResNet50_Quant](https://gitee.com/mindspore/mindspore/blob/master/model_zoo/official/cv/resnet50_quant/README.md)
             - [ResNet101](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnet/README.md)
             - [ResNext50](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/resnext50/README.md)
             - [VGG16](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/vgg16/README.md)
             - [AlexNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/alexnet/README.md)
             - [LeNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet/README.md)
-            - [LeNet_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet_quant/README.md)
+            - [LeNet_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/lenet_quant/Readme.md)
             - [MobileNetV2](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv2/README.md)
-            - [MobileNetV2_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv2_quant/README.md)
-            - [MobileNetV3](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv3/README.md)
+            - [MobileNetV2_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv2_quant/Readme.md)
+            - [MobileNetV3](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/mobilenetv3/Readme.md)
             - [InceptionV3](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv3/README.md)
             - [InceptionV4](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/inceptionv4/README.md)
         - [Object Detection and Segmentation](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv)
@@ -59,9 +59,9 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 
 - [Research](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research)
     - [Computer Vision](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv)
-        - [GhostNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ghostnet/README.md)
-        - [GhostNet_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ghostnet_quant/README.md)
-        - [ResNet50-0.65x](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/resnet50_adv_pruning/README.md)
+        - [GhostNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ghostnet/Readme.md)
+        - [GhostNet_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ghostnet_quant/Readme.md)
+        - [ResNet50-0.65x](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/resnet50_adv_pruning/Readme.md)
         - [SSD_GhostNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ssd_ghostnet/README.md)
         - [TinyNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/tinynet/README.md)
         - [CycleGAN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/cycle_gan/README.md)
@@ -81,7 +81,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 
 - [Community](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/community)
 
-# Announcements
+## Announcements
 
 | Date         | News                                                         |
 | ------------ | ------------------------------------------------------------ |
@@ -89,7 +89,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 | September 01, 2020 | Support [MindSpore v0.7.0-beta](https://www.mindspore.cn/news/newschildren/en?id=246) |
 | July 31, 2020 | Support [MindSpore v0.6.0-beta](https://www.mindspore.cn/news/newschildren/en?id=237) |
 
-# Disclaimers
+## Disclaimers
 
 Mindspore only provides scripts that downloads and preprocesses public datasets. We do not own these datasets and are not responsible for their quality or maintenance. Please make sure you have permission to use the dataset under the dataset’s license. The models trained on these dataset are for non-commercial research and educational purpose only.
 
@@ -97,6 +97,6 @@ To dataset owners: we will remove or update all public content upon request if y
 
 MindSpore is Apache 2.0 licensed. Please see the LICENSE file.
 
-# License
+## License
 
 [Apache License 2.0](https://gitee.com/mindspore/mindspore/blob/master/LICENSE)
