@@ -97,7 +97,6 @@ Status Activation::GenerateStrategies(int64_t stage_id) {
     return FAILED;
   }
 
-  is_auto_parallel_ = true;
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
 
@@ -117,6 +116,15 @@ Status Activation::GenerateStrategies(int64_t stage_id) {
   return SUCCESS;
 }
 
+bool DropoutInfo::IsRepeatedStrategy(const StrategyPtr &sp) {
+  auto input_strategy = sp->GetInputDim().at(0);
+  auto product_p = std::accumulate(input_strategy.begin(), input_strategy.end(), 1, std::multiplies<int64_t>());
+  if (product_p != stage_device_size_) {
+    return true;
+  }
+  return false;
+}
+
 Status DropoutInfo::GenerateStrategies(int64_t stage_id) {
   Shape input0_split(inputs_shape_[0].size(), 1);
   Shapes splittable_inputs = {input0_split};
@@ -128,6 +136,9 @@ Status DropoutInfo::GenerateStrategies(int64_t stage_id) {
   }
   size_t success = 0;
   for (auto &sp : sp_vector) {
+    if (IsRepeatedStrategy(sp)) {
+      continue;
+    }
     if (SetCostUnderStrategy(sp) == SUCCESS) {
       success++;
       MS_LOG(INFO) << name_ << " : Successfully generated " << success << " strategy";
