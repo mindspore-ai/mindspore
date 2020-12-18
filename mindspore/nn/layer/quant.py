@@ -559,6 +559,9 @@ class Conv2dBnFoldQuant(Cell):
         padding (int): Implicit paddings on both sides of the input. Default: 0.
         eps (float): Parameters for BatchNormal. Default: 1e-5.
         momentum (float): Parameters for BatchNormal op. Default: 0.997.
+        dilation (int): Specifies the dilation rate to use for dilated convolution. Default: 1.
+        group (int): Splits filter into groups, `in_ channels` and `out_channels` must be
+            divisible by the number of groups. Default: 1.
         has_bias (bool): Specifies whether the layer uses a bias vector. Default: False.
         weight_init (Union[Tensor, str, Initializer, numbers.Number]): Initializer for the
             convolution kernel. Default: 'normal'.

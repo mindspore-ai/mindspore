@@ -258,9 +258,8 @@ class Dense(Cell):
         >>> input = Tensor(np.array([[180, 234, 154], [244, 48, 247]]), mindspore.float32)
         >>> net = nn.Dense(3, 4)
         >>> output = net(input)
-        >>> print(output)
-        [[ 1.1199665   1.6730378   -1.383349  -1.5148697 ]
-         [ 3.0728707   0.0124917   -1.4012015 0.04354739 ]]
+        >>> print(output.shape)
+        (2, 4)
     """
 
     @cell_attr_register(attrs=['has_bias', 'activation', 'in_channels', 'out_channels'])
