@@ -45,7 +45,7 @@ class PadGpuFwdKernel : public GpuKernel {
     int pad_top = paddings[2][0];
     int pad_channel_before = paddings[1][0];
     int pad_channel_after = paddings[1][1];
-    T pad_value = 0.0;
+    const T pad_value = 0.0;
     CalPadGeneral(size, input, input_shape_[0], input_shape_[1], pad_channel_before, pad_channel_after, input_shape_[2],
                   input_shape_[3], output_shape_[2], output_shape_[3], pad_top, pad_left, pad_value, output,
                   reinterpret_cast<cudaStream_t>(stream_ptr));

@@ -28,17 +28,27 @@ from mindspore.ops.composite import GradOperation
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_basic():
-    # confirm array is being padded with 0's
+    """
+    Test array is being padded with 0's
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
+    # float32
     test_arr = np.array([[1, 2], [3, 4]]).astype(np.float32)
     test_arr_expected = np.array(
         [[0, 0, 0, 0], [0, 1, 2, 0], [0, 3, 4, 0], [0, 0, 0, 0]]).astype(np.float32)
     x_test = Tensor(test_arr, dtype=mindspore.float32)
-
     pad_op = nn.Pad(mode='CONSTANT', paddings=((1, 1), (1, 1)))
     y_test = pad_op(x_test).asnumpy()
+    np.testing.assert_array_equal(y_test, test_arr_expected)
 
+    # float16
+    test_arr = np.array([[1, 2], [3, 4]]).astype(np.float16)
+    test_arr_expected = np.array(
+        [[0, 0, 0, 0], [0, 1, 2, 0], [0, 3, 4, 0], [0, 0, 0, 0]]).astype(np.float16)
+    x_test = Tensor(test_arr, dtype=mindspore.float16)
+    pad_op = nn.Pad(mode='CONSTANT', paddings=((1, 1), (1, 1)))
+    y_test = pad_op(x_test).asnumpy()
     np.testing.assert_array_equal(y_test, test_arr_expected)
 
 
@@ -46,12 +56,13 @@ def test_pad_basic():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_row():
-    # Confirm correct row padding
+    """
+    Test correct row padding
+    """
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
 
     test_arr_1 = np.random.rand(40, 40).astype(np.float32)
     test_paddings_1 = ((2, 3), (0, 0))
-
     test_arr_2 = np.random.randn(3, 10, 30, 30).astype(np.float32)
     test_paddings_2 = ((0, 0), (0, 0), (3, 0), (0, 0))
 
@@ -60,7 +71,6 @@ def test_pad_row():
 
     x_test_1 = Tensor(np.array(test_arr_1), dtype=mindspore.float32)
     x_test_2 = Tensor(np.array(test_arr_2), dtype=mindspore.float32)
-
     y_test_1 = pad_op_row_1(x_test_1).asnumpy()
     y_test_2 = pad_op_row_2(x_test_2).asnumpy()
 
@@ -77,12 +87,13 @@ def test_pad_row():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_column():
-    # Confirm correct column padding
+    """
+    Test correct column padding
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     test_arr_1 = np.random.randn(40, 40).astype(np.float32)
     test_paddings_1 = ((0, 0), (3, 3))
-
     test_arr_2 = np.random.randn(3, 10, 30, 30).astype(np.float32)
     test_paddings_2 = ((0, 0), (0, 0), (0, 0), (6, 1))
 
@@ -91,7 +102,6 @@ def test_pad_column():
 
     x_test_1 = Tensor(np.array(test_arr_1), dtype=mindspore.float32)
     x_test_2 = Tensor(np.array(test_arr_2), dtype=mindspore.float32)
-
     y_test_1 = pad_op_col_1(x_test_1).asnumpy()
     y_test_2 = pad_op_col_2(x_test_2).asnumpy()
 
@@ -108,15 +118,34 @@ def test_pad_column():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_3d_pad():
-    # Confirm correct 3d padding - row, column, channel
-    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    """
+    Test full 3d padding, with all 3 input types
+    """
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
+    # float32
     test_arr = np.random.randn(5, 3, 30, 30).astype(np.float32)
     test_paddings = ((0, 0), (2, 1), (0, 1), (0, 2))  # padding 3 dims now
-
     pad_op_3d = nn.Pad(mode='CONSTANT', paddings=test_paddings)
     x_test = Tensor(np.array(test_arr), dtype=mindspore.float32)
+    y_test = pad_op_3d(x_test).asnumpy()
+    assert y_test.shape == (5, 6, 31, 32)
+    np.testing.assert_equal(test_arr, y_test[:, 2:-1, :-1, :-2])
 
+    # float16
+    test_arr = np.random.randn(5, 3, 30, 30).astype(np.float16)
+    test_paddings = ((0, 0), (2, 1), (0, 1), (0, 2))
+    pad_op_3d = nn.Pad(mode='CONSTANT', paddings=test_paddings)
+    x_test = Tensor(np.array(test_arr), dtype=mindspore.float16)
+    y_test = pad_op_3d(x_test).asnumpy()
+    assert y_test.shape == (5, 6, 31, 32)
+    np.testing.assert_equal(test_arr, y_test[:, 2:-1, :-1, :-2])
+
+    # int32
+    test_arr = np.random.randint(1, 3000, (5, 3, 30, 30)).astype(np.int32)
+    test_paddings = ((0, 0), (2, 1), (0, 1), (0, 2))
+    pad_op_3d = nn.Pad(mode='CONSTANT', paddings=test_paddings)
+    x_test = Tensor(np.array(test_arr), dtype=mindspore.int32)
     y_test = pad_op_3d(x_test).asnumpy()
     assert y_test.shape == (5, 6, 31, 32)
     np.testing.assert_equal(test_arr, y_test[:, 2:-1, :-1, :-2])
@@ -147,17 +176,36 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_3d_backprop():
-    # Confirm correct 3d padding backprop
+    """
+    Confirm correct 3d padding backprop
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = Grad(Net())
+    padded_shape = (5, 10, 32, 32)
 
+    # float32
     test_arr = np.random.randn(5, 3, 30, 30).astype(np.float32)
     x_test = Tensor(test_arr, dtype=mindspore.float32)
-
-    padded_shape = (5, 10, 32, 32)
     dy = np.random.randn(*padded_shape).astype(np.float32)
     expected_dx = dy[:, 4:-3, 1:-1, :-2]
+    dx = net(x_test, Tensor(dy))
+    dx = dx[0].asnumpy()
+    np.testing.assert_array_equal(dx, expected_dx)
 
-    net = Grad(Net())
+    # float16
+    test_arr = np.random.randn(5, 3, 30, 30).astype(np.float16)
+    x_test = Tensor(test_arr, dtype=mindspore.float16)
+    dy = np.random.randn(*padded_shape).astype(np.float16)
+    expected_dx = dy[:, 4:-3, 1:-1, :-2]
+    dx = net(x_test, Tensor(dy))
+    dx = dx[0].asnumpy()
+    np.testing.assert_array_equal(dx, expected_dx)
+
+    # int32
+    test_arr = np.random.randint(1, 3000, (5, 3, 30, 30)).astype(np.int32)
+    x_test = Tensor(test_arr, dtype=mindspore.int32)
+    dy = np.random.randn(*padded_shape).astype(np.int32)
+    expected_dx = dy[:, 4:-3, 1:-1, :-2]
     dx = net(x_test, Tensor(dy))
     dx = dx[0].asnumpy()
     np.testing.assert_array_equal(dx, expected_dx)
@@ -167,7 +215,9 @@ def test_pad_3d_backprop():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_pad_error_cases():
-    # Test against common errorneous inputs to catch correctly
+    """
+    Test against common errorneous inputs to trigger correct errors
+    """
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 
     # TEST 1 - Neg padding values
