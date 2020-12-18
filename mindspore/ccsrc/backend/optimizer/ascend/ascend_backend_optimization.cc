@@ -72,7 +72,6 @@
 #include "backend/optimizer/ascend/format_type/rectify_do_mask_kernel_info.h"
 #include "backend/optimizer/ascend/format_type/chang_axis_of_reduce_kernel.h"
 #include "backend/optimizer/ascend/format_type/split_unsupported_transdata.h"
-#include "backend/optimizer/ascend/format_type/insert_reshape_for_extract_image_patches_op.h"
 #include "backend/optimizer/ascend/format_type/convert_cast_format.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "backend/optimizer/pass/optimize_dependence.h"
@@ -241,7 +240,6 @@ void AscendMixPrecision(const std::shared_ptr<session::KernelGraph> &kernel_grap
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto mixed_precision_pm = std::make_shared<PassManager>("cast_pm");
   mixed_precision_pm->AddPass(std::make_shared<InsertCast>());
-  mixed_precision_pm->AddPass(std::make_shared<InsertReshapeForExtractImagePatchesOp>());
   mixed_precision_pm->AddPass(std::make_shared<GetitemTuple>());
   mixed_precision_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   mixed_precision_pm->AddPass(std::make_shared<EliminateRedundantOp>());

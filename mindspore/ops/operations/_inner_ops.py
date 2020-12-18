@@ -31,11 +31,11 @@ class ExtractImagePatches(PrimitiveWithInfer):
 
     Args:
         ksizes (Union[tuple[int], list[int]]): The size of sliding window, must be a tuple or a list of integers,
-            and the format is [1, ksize_row, ksize_col, 1].
+            and the format is [1, 1, ksize_row, ksize_col].
         strides (Union[tuple[int], list[int]]): Distance between the centers of the two consecutive patches,
-            must be a tuple or list of int, and the format is [1, stride_row, stride_col, 1].
+            must be a tuple or list of int, and the format is [1, 1, stride_row, stride_col].
         rates (Union[tuple[int], list[int]]): In each extracted patch, the gap between the corresponding dimension
-            pixel positions, must be a tuple or a list of integers, and the format is [1, rate_row, rate_col, 1].
+            pixel positions, must be a tuple or a list of integers, and the format is [1, 1, rate_row, rate_col].
         padding (str): The type of padding algorithm, is a string whose value is "same" or "valid",
             not case sensitive. Default: "valid".
 
@@ -58,30 +58,28 @@ class ExtractImagePatches(PrimitiveWithInfer):
 
         def _check_tuple_or_list(arg_name, arg_val, prim_name):
             validator.check_value_type(f"{arg_name}s", ksizes, [tuple, list], self.name)
-            if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[3] != 1:
+            if len(arg_val) != 4 or arg_val[0] != 1 or arg_val[1] != 1:
                 raise ValueError(f"For \'{prim_name}\' the format of {arg_name}s should be [1, {arg_name}_row, "
                                  f"{arg_name}_col, 1], but got {arg_val}.")
-            if not isinstance(arg_val[1], int) or not isinstance(arg_val[2], int) or arg_val[1] < 1 or arg_val[2] < 1:
+            if not isinstance(arg_val[2], int) or not isinstance(arg_val[3], int) or arg_val[2] < 1 or arg_val[3] < 1:
                 raise ValueError(f"For '{prim_name}' the {arg_name}_row and {arg_name}_col in {arg_name}s should be an "
-                                 f"positive integer number, but got {arg_name}_row is {arg_val[1]}, {arg_name}_col "
-                                 f"is {arg_val[2]}")
+                                 f"positive integer number, but got {arg_name}_row is {arg_val[2]}, {arg_name}_col "
+                                 f"is {arg_val[3]}")
 
         _check_tuple_or_list("ksize", ksizes, self.name)
         _check_tuple_or_list("stride", strides, self.name)
         _check_tuple_or_list("rate", rates, self.name)
         self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
         self.add_prim_attr("padding", self.padding)
-        self.add_prim_attr("io_format", "NHWC")
+        self.add_prim_attr("io_format", "NCHW")
         self.is_ge = context.get_context("enable_ge")
 
     def infer_shape(self, input_x):
         """infer shape"""
         in_batch, in_depth, in_row, in_col = input_x
-        if self.is_ge:
-            in_batch, in_row, in_col, in_depth = input_x
-        _, ksize_row, ksize_col, _ = self.ksizes
-        _, stride_row, stride_col, _ = self.strides
-        _, rate_row, rate_col, _ = self.rates
+        _, _, ksize_row, ksize_col = self.ksizes
+        _, _, stride_row, stride_col = self.strides
+        _, _, rate_row, rate_col = self.rates
         if len(input_x) != 4:
             raise ValueError("The `input_x` should be a 4-D tensor, "
                              f"but got a {len(input_x)}-D tensor whose shape is {input_x}")
@@ -99,8 +97,6 @@ class ExtractImagePatches(PrimitiveWithInfer):
             out_col = (in_col - 1) // stride_col + 1
 
         out_shape = [out_batch, out_depth, out_row, out_col]
-        if self.is_ge:
-            out_shape = [out_batch, out_row, out_col, out_depth]
         return out_shape
 
     def infer_dtype(self, input_x):
