@@ -21,7 +21,7 @@
 #include "minddata/dataset/include/vision.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #include "include/api/model.h"
-#include "include/api/serializations.h"
+#include "include/api/serialization.h"
 #include "include/api/context.h"
 
 using namespace mindspore::api;
@@ -86,13 +86,13 @@ TEST_F(TestDE, TestDvpp) {
 
 TEST_F(TestDE, TestYoloV3_with_Dvpp) {
   std::vector<std::shared_ptr<Tensor>> images;
-  MIndDataEager::LoadImageFromDir("/home/lizhenglong/val2014", &images);
+  MindDataEager::LoadImageFromDir("/home/lizhenglong/val2014", &images);
   MindDataEager SingleOp({DvppDecodeResizeCropJpeg({416, 416}, {416, 416})});
   constexpr auto yolo_mindir_file = "/home/zhoufeng/yolov3/yolov3_darknet53.mindir";
   Context::Instance().SetDeviceTarget(kDeviceTypeAscend310).SetDeviceID(1);
   auto graph = Serialization::LoadModel(yolo_mindir_file, ModelType::kMindIR);
   Model yolov3((GraphCell(graph)));
-  Status ret = yolov3.Build({{kMOdelOptionInsertOpCfgPath, "/mnt/disk1/yolo_dvpp_result/aipp_resnet50.cfg"}});
+  Status ret = yolov3.Build({{kModelOptionInsertOpCfgPath, "/mnt/disk1/yolo_dvpp_result/aipp_resnet50.cfg"}});
   ASSERT_TRUE(ret == SUCCESS);
 
   std::vector<std::string> names;
@@ -107,8 +107,8 @@ TEST_F(TestDE, TestYoloV3_with_Dvpp) {
   for (auto &img : images) {
     img = SingleOp(img);
     std::vector<float> input_shape = {416, 416};
-    input.clear();
-    inputs.emplace_back(img->data(), img->DataSize());
+    inputs.clear();
+    inputs.emplace_back(img->Data(), img->DataSize());
     inputs.emplace_back(input_shape.data(), input_shape.size() * sizeof(float));
     ret = yolov3.Predict(inputs, &outputs);
     for (size_t i = 0; i < outputs.size(); ++i) {
