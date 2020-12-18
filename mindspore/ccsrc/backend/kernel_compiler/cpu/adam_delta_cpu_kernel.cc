@@ -20,15 +20,11 @@
 #include <memory>
 #include "backend/kernel_compiler/common_utils.h"
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
 constexpr size_t kAdamDeltaInputSize = 9;
-#ifdef ENABLE_D
-constexpr size_t kUsedThreadNum = 23;
-#else
-constexpr size_t kUsedThreadNum = 8;
-#endif
 namespace {
 struct ComputeParam {
   float *delta_{nullptr};
@@ -139,13 +135,13 @@ bool AdamDeltaCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   auto grad = reinterpret_cast<float *>(inputs[8]->addr);
   auto delta = reinterpret_cast<float *>(outputs[0]->addr);
   lr = lr * std::sqrt(1 - beta2_power) / (1 - beta1_power);
-  size_t thread_num = kUsedThreadNum;
+  size_t thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   if (elem_num_ < thread_num) {
     thread_num = elem_num_;
   }
-  std::vector<std::thread> threads;
+  std::vector<common::Task> tasks;
   std::vector<std::shared_ptr<ComputeParam>> thread_params;
-  threads.reserve(thread_num);
+  tasks.reserve(thread_num);
 
   size_t end = 0;
   size_t offset = elem_num_ / thread_num;
@@ -166,12 +162,14 @@ bool AdamDeltaCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
     if (i < left) {
       end += 1;
     }
-    threads.emplace_back(std::thread(ComputeWeightDelta, params, start, end));
+    auto task = [&params, start, end]() {
+      ComputeWeightDelta(params, start, end);
+      return common::SUCCESS;
+    };
+    tasks.emplace_back(task);
     thread_params.emplace_back(params);
   }
-  for (size_t i = 0; i < thread_num; ++i) {
-    threads[i].join();
-  }
+  common::ThreadPool::GetInstance().SyncRun(tasks);
   return true;
 }
 }  // namespace kernel

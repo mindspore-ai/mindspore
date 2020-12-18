@@ -18,15 +18,11 @@
 #include "backend/kernel_compiler/cpu/embedding_look_up_cpu_kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
 #include "ir/primitive.h"
+#include "common/thread_pool.h"
 
 namespace mindspore {
 namespace kernel {
 namespace {
-#ifdef ENABLE_D
-constexpr size_t kUsedThreadNum = 23;
-#else
-constexpr size_t kUsedThreadNum = 8;
-#endif
 template <typename T>
 void LookUpTableTask(const float *input_addr, const T *indices_addr, float *output_addr, size_t indices_lens,
                      size_t outer_dim_size, T offset, size_t first_dim_size) {
@@ -98,8 +94,9 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
   auto indices_addr = reinterpret_cast<T *>(inputs[1]->addr);
   auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
   size_t thread_num = indices_lens_ / 10000 + 1;
-  thread_num = thread_num > kUsedThreadNum ? kUsedThreadNum : thread_num;
-  std::thread threads[kUsedThreadNum];
+  auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
+  thread_num = thread_num > max_thread_num ? max_thread_num : thread_num;
+  std::vector<common::Task> tasks;
   size_t task_proc_lens = (indices_lens_ + thread_num - 1) / thread_num;
   size_t i;
   size_t task_offset = 0;
@@ -109,17 +106,18 @@ void EmbeddingLookUpCPUKernel::LaunchKernel(const std::vector<kernel::AddressPtr
       break;
     }
     MS_LOG(DEBUG) << "task_offset: " << task_offset << " task_proc_lenss:" << task_proc_lens;
-    threads[i] = std::thread(LookUpTableTask<T>, input_addr, indices_addr + task_offset,
-                             output_addr + task_offset * outer_dim_size_, task_proc_lens, outer_dim_size_, offset_,
-                             first_dim_size_);
+    auto task = [input_addr, indices_addr, output_addr, task_offset, task_proc_lens, this]() {
+      LookUpTableTask<T>(input_addr, indices_addr + task_offset, output_addr + task_offset * outer_dim_size_,
+                         task_proc_lens, outer_dim_size_, offset_, first_dim_size_);
+      return common::SUCCESS;
+    };
+    tasks.emplace_back(task);
     task_offset += task_proc_lens;
     if (task_offset + task_proc_lens > indices_lens_) {
       task_proc_lens = indices_lens_ - task_offset;
     }
   }
-  for (size_t j = 0; j < i; j++) {
-    threads[j].join();
-  }
+  common::ThreadPool::GetInstance().SyncRun(tasks);
 }
 
 bool EmbeddingLookUpCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,

@@ -20,11 +20,6 @@
 namespace mindspore {
 namespace kernel {
 const size_t kUseBucketUniqueSize = 100000;
-#ifdef ENABLE_D
-constexpr size_t kUniqueThreadNum = 23;
-#else
-constexpr size_t kUniqueThreadNum = 8;
-#endif
 void UniqueCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   node_ = kernel_node;
   CheckParam(kernel_node);
@@ -88,7 +83,7 @@ void UniqueCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const 
   params->input_size_ = input_size_;
   params->output_size_ = 0;
   params->need_sort_ = true;
-  params->thread_num_ = kUniqueThreadNum;
+  params->thread_num_ = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
   if (input_size_ < kUseBucketUniqueSize) {
     Unique(params);
   } else {

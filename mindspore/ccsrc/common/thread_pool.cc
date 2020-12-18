@@ -16,10 +16,13 @@
 
 #include "common/thread_pool.h"
 #include <algorithm>
+#include <exception>
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"
+#include "utils/ms_exception.h"
 
 namespace mindspore {
+namespace common {
 #ifdef ENABLE_D
 const int kDeviceNum = 8;
 #endif
@@ -52,9 +55,14 @@ bool Queue::Dequeue(Task **out) {
 }
 
 ThreadPool::ThreadPool() {
+  int process_core_num = std::thread::hardware_concurrency() - 1;
+  if (process_core_num < 1) {
+    process_core_num = 1;
+  }
 #ifdef ENABLE_D
-  auto cpu_core_num = std::thread::hardware_concurrency();
-  max_thread_num_ = cpu_core_num / kDeviceNum;
+  max_thread_num_ = process_core_num / kDeviceNum;
+#else
+  max_thread_num_ = process_core_num;
 #endif
   SetThreadPool(core_thread_num_);
 }
@@ -81,7 +89,13 @@ void ThreadPool::AddNewThread(int add_num) {
       while (!exit_run_) {
         while (*active) {
           if (queue->Dequeue(&task)) {
-            auto ret = (*task)();
+            int ret;
+            try {
+              ret = (*task)();
+            } catch (std::exception &e) {
+              ret = FAIL;
+              MsException::Instance().SetException();
+            }
             if (ret != SUCCESS) {
               error_info_.emplace_back(std::make_pair(i, std::make_pair(false, ret)));
             }
@@ -128,7 +142,7 @@ void ThreadPool::SubRunThread(int num) {
   cur_thread_run_nums_ = num;
 }
 
-bool ThreadPool::LaunchMultipleTask(const std::vector<Task> &tasks) {
+bool ThreadPool::SyncRun(const std::vector<Task> &tasks) {
   int thread_num = tasks.size();
   if (thread_num > max_thread_num_) {
     thread_num = max_thread_num_;
@@ -177,14 +191,14 @@ bool ThreadPool::CheckResult() {
   return succ_flag;
 }
 
-ThreadPool *ThreadPool::GetInstance() {
+ThreadPool &ThreadPool::GetInstance() {
   static ThreadPool instance;
-  return &instance;
+  return instance;
 }
 
 ThreadPool::~ThreadPool() {
-  cur_thread_run_nums_ = static_cast<int>(thread_list_.size());
   exit_run_ = true;
+  cur_thread_run_nums_ = static_cast<int>(thread_list_.size());
   SubRunThread(0);
   queue_ready_.notify_all();
   for (auto &it : thread_list_) {
@@ -196,4 +210,5 @@ ThreadPool::~ThreadPool() {
     delete it;
   }
 }
+}  // namespace common
 }  // namespace mindspore

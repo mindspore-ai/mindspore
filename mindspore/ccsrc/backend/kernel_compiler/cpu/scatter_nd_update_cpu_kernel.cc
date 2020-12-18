@@ -22,11 +22,6 @@
 namespace mindspore {
 namespace kernel {
 namespace {
-#ifdef ENABLE_D
-constexpr size_t kUsedThreadNum = 23;
-#else
-constexpr size_t kUsedThreadNum = 8;
-#endif
 template <typename T>
 void Compute(const ComputeParams<T> *params, const size_t start, const size_t end) {
   MS_EXCEPTION_IF_NULL(params);
@@ -120,19 +115,20 @@ void ScatterNdUpdateCPUKernel::LaunchKernel(const std::vector<AddressPtr> &input
   params.indices_unit_rank_ = indices_unit_rank_;
   params.out_strides_ = &out_strides_;
 
-  std::vector<Task> tasks;
+  std::vector<common::Task> tasks;
   size_t start = 0;
-  size_t once_compute_size = (num_units_ + kUsedThreadNum - 1) / kUsedThreadNum;
+  auto max_thread_num = common::ThreadPool::GetInstance().GetSyncRunThreadNum();
+  size_t once_compute_size = (num_units_ + max_thread_num - 1) / max_thread_num;
   while (start < num_units_) {
     size_t end = (start + once_compute_size) > num_units_ ? num_units_ : (start + once_compute_size);
     auto task = [&params, start, end]() -> int {
       Compute<T>(&params, start, end);
-      return SUCCESS;
+      return common::SUCCESS;
     };
     tasks.emplace_back(task);
     start += once_compute_size;
   }
-  ThreadPool::GetInstance()->LaunchMultipleTask(tasks);
+  common::ThreadPool::GetInstance().SyncRun(tasks);
 
   auto ret = memcpy_s(outputs[0]->addr, outputs[0]->size, x, inputs[0]->size);
   if (ret != 0) {
