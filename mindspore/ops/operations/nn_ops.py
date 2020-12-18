@@ -3407,7 +3407,7 @@ class ComputeAccidentalHits(PrimitiveWithCheck):
         - **true_classes** (Tensor) - The target classes. With data type of int32 or int64
           and shape [batch_size, num_true].
         - **sampled_candidates** (Tensor) - The sampled_candidates output of CandidateSampler,
-          with shape [num_sampled] and the same type as true_classes.
+          with data type of int32 or int64 and shape [num_sampled].
 
     Outputs:
         Tuple of 3 Tensors.
