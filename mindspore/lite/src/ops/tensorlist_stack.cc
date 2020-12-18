@@ -95,7 +95,7 @@ int TensorListStack::UnPackToFlatBuilder(const schema::Primitive *primitive, fla
     MS_LOG(ERROR) << "value_as_TensorListStack return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateTensorListStack(*fbb, attr->elementDType(), attr->numElements());
+  auto val_offset = schema::CreateTensorListStack(*fbb, attr->numElements(), attr->elementDType());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_TensorListStack, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
@@ -159,9 +159,8 @@ int TensorListStack::InferShape(std::vector<lite::Tensor *> inputs_, std::vector
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   output->set_data_type(input0->tensors_data_type());
-  output->set_shape(std::vector<int>(
-    1,
-    input0->ElementsNum() * std::accumulate(output_shape_.begin(), output_shape_.end(), 1LL, std::multiplies<int>())));
+  output_shape_.insert(output_shape_.begin(), input0->ElementsNum());
+  output->set_shape(output_shape_);
   return RET_OK;
 }
 

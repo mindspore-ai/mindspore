@@ -32,7 +32,7 @@ int TensorListSetItemCPUKernel::Init() { return RET_OK; }
 
 int TensorListSetItemCPUKernel::Run() {
   input0_ = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
-  if (dtype_ != input0_->data_type()) {
+  if (dtype_ != input0_->tensors_data_type()) {
     MS_LOG(ERROR) << "op dtype:" << dtype_ << " is not equal in_tensors[0] dtype:" << input0_->data_type();
     return RET_ERROR;
   }
