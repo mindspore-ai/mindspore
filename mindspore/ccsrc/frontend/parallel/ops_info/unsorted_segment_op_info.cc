@@ -87,7 +87,7 @@ Status UnsortedSegmentOpInfo::CheckStrategy(const StrategyPtr &strategy) {
   Shape input_b_shape = inputs_shape_.at(1);
   // The size of the input b must be equal or smaller than input a
   for (size_t i = 0; i < input_b_shape.size(); ++i) {
-    if ((sub_a_strategy[i] != sub_b_strategy[i]) && (input_a_shape[i] != input_b_shape[i])) {
+    if ((sub_a_strategy[i] != sub_b_strategy[i]) || (input_a_shape[i] != input_b_shape[i])) {
       MS_LOG(ERROR) << name_
                     << " : Invalid strategy. The shape and the strategy of the input0 and input1 "
                        "should be same before the front size of the input[1]";
