@@ -361,11 +361,14 @@ class MakeRefKey(Primitive):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> from mindspore.ops import functional as ops
+        >>> import numpy as np
+        >>> from mindspore import Parameter, Tensor
+        >>> from mindspore import dtype as mstype
+        >>> import mindspore.ops as ops
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.y = mindspore.Parameter(Tensor(np.ones([6, 8, 10]), mindspore.int32), name="y")
+        ...         self.y = Parameter(Tensor(np.ones([6, 8, 10]), mstype.int32), name="y")
         ...         self.make_ref_key = ops.MakeRefKey("y")
         ...
         ...     def construct(self, x):
@@ -373,7 +376,7 @@ class MakeRefKey(Primitive):
         ...         ref = ops.make_ref(key, x, self.y)
         ...         return ref * x
         ...
-        >>> x = Tensor(np.ones([3, 4, 5]), mindspore.int32)
+        >>> x = Tensor(np.ones([3, 4, 5]), mstype.int32)
         >>> net = Net()
         >>> output = net(x)
         >>> print(output)
