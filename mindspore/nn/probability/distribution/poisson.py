@@ -157,7 +157,7 @@ class Poisson(Distribution):
     @property
     def rate(self):
         """
-        Return `rate` of the distribution.
+        Return `rate` of the distribution after casting to self.dtype.
         """
         return self._rate
 
@@ -212,7 +212,6 @@ class Poisson(Distribution):
         """
         value = self._check_value(value, "value")
         value = self.cast(value, self.dtype)
-        value = self.floor(value)
         rate = self._check_param_type(rate)
         log_rate = self.log(rate)
         zeros = self.fill(self.dtypeop(value), self.shape(value), 0.0)
@@ -240,7 +239,6 @@ class Poisson(Distribution):
         """
         value = self._check_value(value, 'value')
         value = self.cast(value, self.dtype)
-        value = self.floor(value)
         rate = self._check_param_type(rate)
         zeros = self.fill(self.dtypeop(value), self.shape(value), 0.0)
         comp = self.less(value, zeros)
