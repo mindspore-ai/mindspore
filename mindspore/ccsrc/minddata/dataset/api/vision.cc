@@ -679,27 +679,42 @@ DvppDecodeResizeCropOperation::DvppDecodeResizeCropOperation(const std::vector<u
 Status DvppDecodeResizeCropOperation::ValidateParams() {
   // size
   if (crop_.empty() || crop_.size() > 2) {
-    std::string err_msg = "DvppDecodeResizeCropJpeg: crop size must be a vector of one or two elements, got: " +
+    std::string err_msg = "DvppDecodeResizeCropJpeg: crop resolution must be a vector of one or two elements, got: " +
                           std::to_string(crop_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (resize_.empty() || resize_.size() > 2) {
-    std::string err_msg = "DvppDecodeResizeCropJpeg: resize size must be a vector of one or two elements, got: " +
+    std::string err_msg = "DvppDecodeResizeCropJpeg: resize resolution must be a vector of one or two elements, got: " +
                           std::to_string(resize_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
+  if (*min_element(crop_.begin(), crop_.end()) < 32 || *max_element(crop_begin(), crop_.end()) > 2048) {
+    std::string err_msg = "Dvpp module supports crop image with resolution in range [32, 2048], got Crop Parameters: ";
+    MS_LOG(ERROR) << err_msg << crop_;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (*min_element(resize_.begin(), resize_.end()) < 32 || *max_element(resize_begin(), resize_.end()) > 2048) {
+    std::string err_msg =
+      "Dvpp module supports resize image with resolution in range [32, 2048], got Crop Parameters: ";
+    MS_LOG(ERROR) << err_msg << resize_;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
   if (crop_.size() < resize_.size()) {
     if (crop_[0] > MIN(resize_[0], resize_[1])) {
-      std::string err_msg = "crop size must be smaller than resize size";
+      std::string err_msg =
+        "Each value of crop parameter must be smaller than corresponding resize parameter, for example: x[0] <= "
+        "y[0],  and x[1] <= y[1], please verify your input parameters.";
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
   }
   if (crop_.size() > resize_.size()) {
     if (MAX(crop_[0], crop_[1]) > resize_[0]) {
-      std::string err_msg = "crop size must be smaller than resize size";
+      std::string err_msg =
+        "Each value of crop parameter must be smaller than corresponding resize parameter, for example: x[0] <= "
+        "y[0],  and x[1] <= y[1], please verify your input parameters.";
       MS_LOG(ERROR) << err_msg;
       RETURN_STATUS_SYNTAX_ERROR(err_msg);
     }
@@ -707,7 +722,9 @@ Status DvppDecodeResizeCropOperation::ValidateParams() {
   if (crop_.size() == resize_.size()) {
     for (int32_t i = 0; i < crop_.size(); ++i) {
       if (crop_[i] > resize_[i]) {
-        std::string err_msg = "crop size must be smaller than resize size";
+        std::string err_msg =
+          "Each value of crop parameter must be smaller than corresponding resize parameter, for example: x[0] <= "
+          "y[0],  and x[1] <= y[1], please verify your input parameters.";
         MS_LOG(ERROR) << err_msg;
         RETURN_STATUS_SYNTAX_ERROR(err_msg);
       }

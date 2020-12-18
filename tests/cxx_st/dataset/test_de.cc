@@ -15,6 +15,7 @@
  */
 #include <string>
 #include <vector>
+#include <cmath>
 #include "common/common_test.h"
 #include "include/api/types.h"
 #include "minddata/dataset/include/minddata_eager.h"
@@ -72,13 +73,17 @@ TEST_F(TestDE, ResNetPreprocess) {
 TEST_F(TestDE, TestDvpp) {
   std::vector<std::shared_ptr<Tensor>> images;
   MindDataEager::LoadImageFromDir("/root/Dvpp_Unit_Dev/val2014_test/", &images);
-
-  MindDataEager Solo({DvppDecodeResizeCropJpeg({224, 224}, {256, 256})});
-
+  std::vector<uint32_t> crop_size = {224, 224};
+  std::vector<uint32_t> resize_size = {256, 256};
+  MindDataEager Solo({DvppDecodeResizeCropJpeg(crop_size, resize_size)});
   for (auto &img : images) {
     img = Solo(img);
     ASSERT_EQ(images[0]->Shape().size(), 3);
-    ASSERT_EQ(images[0]->Shape()[0], 224 * 224 * 1.5);
+    if (crop_size.size() == 1) {
+      ASSERT_EQ(images[0]->Shape()[0], pow(crop_size[0], 2) 1.5);
+    } else {
+      ASSERT_EQ(images[0]->Shape()[0], crop_size[0] * crop_size[1] * 1.5);
+    }
     ASSERT_EQ(images[0]->Shape()[1], 1);
     ASSERT_EQ(images[0]->Shape()[2], 1);
   }

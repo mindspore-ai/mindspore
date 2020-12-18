@@ -380,12 +380,12 @@ APP_ERROR DvppCommon::CheckResizeParams(const DvppDataInfo &input, const DvppDat
   }
   if (((float)output.height / input.height) < MIN_RESIZE_SCALE ||
       ((float)output.height / input.height) > MAX_RESIZE_SCALE) {
-    MS_LOG(ERROR) << "Resize scale should be in range [1/16, 32], which is " << (output.height / input.height) << ".";
+    MS_LOG(ERROR) << "Resize scale should be in range [1/16, 16], which is " << (output.height / input.height) << ".";
     return APP_ERR_COMM_INVALID_PARAM;
   }
   if (((float)output.width / input.width) < MIN_RESIZE_SCALE ||
       ((float)output.width / input.width) > MAX_RESIZE_SCALE) {
-    MS_LOG(ERROR) << "Resize scale should be in range [1/16, 32], which is " << (output.width / input.width) << ".";
+    MS_LOG(ERROR) << "Resize scale should be in range [1/16, 16], which is " << (output.width / input.width) << ".";
     return APP_ERR_COMM_INVALID_PARAM;
   }
   return APP_ERR_OK;
