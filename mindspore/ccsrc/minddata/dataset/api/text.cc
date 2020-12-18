@@ -485,9 +485,8 @@ std::shared_ptr<TensorOp> SlidingWindowOperation::Build() {
 ToNumberOperation::ToNumberOperation(DataType data_type) : data_type_(data_type) {}
 
 Status ToNumberOperation::ValidateParams() {
-  if (!data_type_.IsNumeric()) {
-    std::string err_msg =
-      "ToNumber : The parameter data_type must be a numeric type: " + std::to_string(data_type_.value());
+  if (!data_type_.IsNumeric() || data_type_.IsBool()) {
+    std::string err_msg = "ToNumber : The parameter data_type must be a numeric type, got: " + data_type_.ToString();
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
