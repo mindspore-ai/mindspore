@@ -16,30 +16,30 @@
 import argparse
 import numpy as np
 
-from mindspore import Tensor, context
 import mindspore.common.dtype as mstype
-from mindspore.train.serialization import load_checkpoint, export
+from mindspore import Tensor, context, load_checkpoint, export
 
 from src.finetune_eval_model import BertCLSModel, BertSquadModel, BertNERModel
 from src.finetune_eval_config import bert_net_cfg
 from src.bert_for_finetune import BertNER
 from src.utils import convert_labels_to_index
 
-
-parser = argparse.ArgumentParser(description='Bert export')
+parser = argparse.ArgumentParser(description="Bert export")
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
-parser.add_argument('--use_crf', type=str, default="false", help='Use cfg, default is false.')
-parser.add_argument('--downstream_task', type=str, choices=["NER", "CLS", "SQUAD"], default="NER",
-                    help='at present，support NER only')
-parser.add_argument('--num_class', type=int, default=41, help='The number of class, default is 41.')
+parser.add_argument("--use_crf", type=str, default="false", help="Use cfg, default is false.")
+parser.add_argument("--downstream_task", type=str, choices=["NER", "CLS", "SQUAD"], default="NER",
+                    help="at present，support NER only")
+parser.add_argument("--num_class", type=int, default=41, help="The number of class, default is 41.")
 parser.add_argument("--batch_size", type=int, default=16, help="batch size")
-parser.add_argument('--label_file_path', type=str, default="", help='label file path, used in clue benchmark.')
-parser.add_argument('--ckpt_file', type=str, required=True, help='Bert ckpt file.')
-parser.add_argument('--output_file', type=str, default='Bert', help='bert output air name.')
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument("--label_file_path", type=str, default="", help="label file path, used in clue benchmark.")
+parser.add_argument("--ckpt_file", type=str, required=True, help="Bert ckpt file.")
+parser.add_argument("--file_name", type=str, default="Bert", help="bert output air name.")
+parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+parser.add_argument("--device_target", type=str, default="Ascend",
+                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
 args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 label_list = []
 with open(args.label_file_path) as f:
@@ -56,8 +56,7 @@ if args.use_crf.lower() == "true":
 else:
     number_labels = args.num_class
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     if args.downstream_task == "NER":
         if args.use_crf.lower() == "true":
             net = BertNER(bert_net_cfg, args.batch_size, False, num_labels=number_labels,
@@ -83,4 +82,4 @@ if __name__ == '__main__':
         input_data = [input_ids, input_mask, token_type_id, label_ids]
     else:
         input_data = [input_ids, input_mask, token_type_id]
-    export(net, *input_data, file_name=args.output_file, file_format=args.file_format)
+    export(net, *input_data, file_name=args.file_name, file_format=args.file_format)
