@@ -562,8 +562,10 @@ build_lite()
     echo "============ Start building MindSpore Lite ${VERSION_STR} ============"
 
     LITE_ENABLE_GPU=${ENABLE_GPU}
+    LITE_ENABLE_NPU=${ENABLE_NPU}
     if [[ "${DEVICE}" == "" && "${LITE_PLATFORM}" == "arm64" ]]; then
       LITE_ENABLE_GPU="on"
+      LITE_ENABLE_NPU="on"
     fi
 
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ] || [ $1 == "arm64" ]; then
@@ -592,7 +594,7 @@ build_lite()
               -DANDROID_STL=${ANDROID_STL} -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_TRAIN=${SUPPORT_TRAIN}                     \
               -DPLATFORM_ARM64=on -DENABLE_NEON=on -DENABLE_FP16="off"      \
               -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
-              -DSUPPORT_GPU=${LITE_ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} \
+              -DSUPPORT_GPU=${LITE_ENABLE_GPU} -DSUPPORT_NPU=${LITE_ENABLE_NPU} \
               -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
