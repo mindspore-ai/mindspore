@@ -26,12 +26,17 @@ from src.utils.load_weights import load_infer_weights
 from src.transformer.transformer_for_infer import TransformerInferModel
 from config import TransformerConfig
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-
-parser = argparse.ArgumentParser(description='mass')
+parser = argparse.ArgumentParser(description="mass export")
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--file_name", type=str, default="mass", help="output file name.")
+parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+parser.add_argument("--device_target", type=str, default="Ascend",
+                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
 parser.add_argument('--gigaword_infer_config', type=str, required=True, help='gigaword config file')
 parser.add_argument('--vocab_file', type=str, required=True, help='vocabulary file')
 args = parser.parse_args()
+
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 def get_config(config_file):
     tfm_config = TransformerConfig.from_json_file(config_file)
@@ -40,12 +45,10 @@ def get_config(config_file):
 
     return tfm_config
 
-
 if __name__ == '__main__':
     vocab = Dictionary.load_from_persisted_dict(args.vocab_file)
     config = get_config(args.gigaword_infer_config)
     dec_len = config.max_decode_length
-    output_file_name = 'giga_' + str(dec_len) + '.air'
 
     tfm_model = TransformerInferModel(config=config, use_one_hot_embeddings=False)
     tfm_model.init_parameters_data()
@@ -79,4 +82,4 @@ if __name__ == '__main__':
     source_ids = Tensor(np.ones((1, config.seq_length)).astype(np.int32))
     source_mask = Tensor(np.ones((1, config.seq_length)).astype(np.int32))
 
-    export(tfm_model, source_ids, source_mask, file_name=output_file_name, file_format="AIR")
+    export(tfm_model, source_ids, source_mask, file_name=args.file_name, file_format=args.file_format)

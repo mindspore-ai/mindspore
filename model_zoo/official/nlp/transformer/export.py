@@ -29,9 +29,11 @@ parser.add_argument("--device_id", type=int, default=0, help="Device id")
 parser.add_argument("--batch_size", type=int, default=1, help="batch size")
 parser.add_argument("--file_name", type=str, default="transformer", help="output file name.")
 parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument("--device_target", type=str, default="Ascend",
+                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
 args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 if __name__ == '__main__':
     tfm_model = TransformerModel(config=transformer_net_cfg, is_training=False, use_one_hot_embeddings=False)
@@ -42,6 +44,4 @@ if __name__ == '__main__':
     source_ids = Tensor(np.ones((args.batch_size, transformer_net_cfg.seq_length)).astype(np.int32))
     source_mask = Tensor(np.ones((args.batch_size, transformer_net_cfg.seq_length)).astype(np.int32))
 
-    dec_len = transformer_net_cfg.max_decode_length
-
-    export(tfm_model, source_ids, source_mask, file_name=args.file_name + str(dec_len), file_format=args.file_format)
+    export(tfm_model, source_ids, source_mask, file_name=args.file_name, file_format=args.file_format)
