@@ -323,7 +323,6 @@ Status CacheClient::BuildPhaseDone() const {
 Status CacheClient::PushRequest(std::shared_ptr<BaseRequest> rq) const { return comm_->HandleRequest(std::move(rq)); }
 
 void CacheClient::ServerRunningOutOfResources() {
-  MS_LOG(WARNING) << "Cache server runs out of memory or disk space to cache any more rows!\n";
   bool expected = true;
   if (fetch_all_keys_.compare_exchange_strong(expected, false)) {
     Status rc;
