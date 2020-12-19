@@ -454,10 +454,10 @@ def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis
 
     if retstep:
         array_out, step_out = out[0], out[1]
-        tensor_out = Tensor.from_numpy(array_out)
+        tensor_out = Tensor(array_out)
         return tensor_out, step_out
 
-    tensor_out = Tensor.from_numpy(out)
+    tensor_out = Tensor(out)
     return tensor_out
 
 
