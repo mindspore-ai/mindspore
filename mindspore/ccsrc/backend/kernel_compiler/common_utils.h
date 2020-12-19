@@ -102,6 +102,16 @@ void GetGraphRealOutput(const FuncGraphPtr &func_graph, std::vector<std::pair<An
 bool IsWeightBoundary(const AnfNodePtr &node);
 std::vector<int64_t> GetReduceAttrAxis(const CNodePtr &cnode);
 std::string GetProcessorStr(const AnfNodePtr &anf_node);
+float Scaling(size_t in_size, size_t out_size, bool align_corners);
+float ScaleGrid(const int x, const float scale);
+struct CachedInterpolation {
+  size_t lower;
+  size_t upper;
+  float lerp;
+};
+
+void ComputeInterpolationWeights(const size_t out_size, const size_t in_size, const float scale,
+                                 CachedInterpolation *interpolation);
 
 template <typename T>
 inline std::string Vector2Str(const std::vector<T> &inputs) {
@@ -113,6 +123,14 @@ inline std::string Vector2Str(const std::vector<T> &inputs) {
   }
   return "";
 }
+
+template <typename T>
+inline T ComputeLerp(T top_left, T top_right, T bottom_left, T bottom_right, T x_lerp, T y_lerp) {
+  T top = top_left + (top_right - top_left) * x_lerp;
+  T bottom = bottom_left + (bottom_right - bottom_left) * x_lerp;
+  return top + (bottom - top) * y_lerp;
+}
+
 }  // namespace kernel
 }  // namespace mindspore
 

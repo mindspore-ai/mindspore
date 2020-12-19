@@ -826,5 +826,26 @@ std::string GetProcessorStr(const AnfNodePtr &anf_node) {
 
   return processor;
 }
+
+float Scaling(size_t in_size, size_t out_size, bool align_corners) {
+  return (align_corners && out_size > 1) ? (in_size - 1) / static_cast<float>(out_size - 1)
+                                         : in_size / static_cast<float>(out_size);
+}
+
+float ScaleGrid(const int x, const float scale) { return static_cast<float>(x) * scale; }
+
+void ComputeInterpolationWeights(const size_t out_size, const size_t in_size, const float scale,
+                                 CachedInterpolation *interpolation) {
+  interpolation[out_size].lower = 0;
+  interpolation[out_size].upper = 0;
+  for (size_t i = 0; i <= out_size - 1; ++i) {
+    const float in = ScaleGrid(i, scale);
+    const float in_f = std::floor(in);
+    interpolation[i].lower = std::max(static_cast<size_t>(in_f), static_cast<size_t>(0));
+    interpolation[i].upper = std::min(static_cast<size_t>(std::ceil(in)), in_size - 1);
+    interpolation[i].lerp = in - in_f;
+  }
+}
+
 }  // namespace kernel
 }  // namespace mindspore
