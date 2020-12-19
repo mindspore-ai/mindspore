@@ -52,6 +52,8 @@ struct PrimAbsInfo {
 
 using AbstractListMap = std::unordered_map<abstract::AbstractBasePtrList, PrimAbsInfo,
                                            abstract::AbstractBasePtrListHasher, abstract::AbstractBasePtrListEqual>;
+using OpIndexWithTensorId = std::unordered_map<std::string, std::vector<std::string>>;
+using TensorIdWithTensor = std::unordered_map<std::string, std::vector<tensor::TensorPtr>>;
 
 py::tuple RunOp(const py::args &args);
 
@@ -87,6 +89,7 @@ struct TopCellInfo {
   FuncGraphPtr df_builder;
   FuncGraphPtr bg;  // Backward graph
   std::string cell_id;
+  bool is_dynamic_cell{false};
   TopCellInfo() = default;
   TopCellInfo(ResourcePtr r, FuncGraphPtr df, FuncGraphPtr backward_graph, std::string cellid)
       : resource(std::move(r)), df_builder(std::move(df)), bg(std::move(backward_graph)), cell_id(std::move(cellid)) {}
@@ -154,9 +157,12 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool IsDynamicCell(const py::object &cell);
   std::string GetCellInfo(const py::object &cell);
   void ParseInputArgs(const std::shared_ptr<parse::ParseAst> &ast, const py::object &fn_node);
-  bool ParseBodyContext(const std::shared_ptr<parse::ParseAst> &ast, const py::object &fn_node);
+  bool ParseBodyContext(const std::shared_ptr<parse::ParseAst> &ast, const py::object &fn_node,
+                        const std::vector<std::string> &compare_prim = {});
   bool ParseIfWhileExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
   bool ParseAssignExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
+  bool ParseAugAssignExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node,
+                              const std::vector<std::string> &compare_prim = {});
   bool ParseForExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node);
   std::string ParseNodeName(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node,
                             parse::AstMainType type);
@@ -190,7 +196,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   // Update the abstract and device address info of value node and tensors in bprop graph
   void UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
   void SaveTensorsInValueNode(const ResourcePtr &resource);
-  void CleanTensorsInValueNode();
+  void CleanPreMemoryInValueNode(const std::string &cell_id);
 
   // Construct grad graph
   void PushCurrentGraphToStack();
@@ -259,6 +265,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   static std::mutex instance_lock_;
   static int64_t graph_id_;
   size_t grad_order_{0};
+  std::string top_cell_id_;
   bool grad_flag_{false};
   bool dynamic_cell_{false};
   bool grad_is_running_{false};
@@ -282,8 +289,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   // Used for runop and replace forward result of grad graph
   std::unordered_map<std::string, size_t> op_index_map_;
   std::unordered_map<std::string, std::string> obj_to_forward_id_;
-  std::unordered_map<std::string, std::vector<std::string>> op_index_with_tensor_id_;
-  std::unordered_map<std::string, std::vector<tensor::TensorPtr>> tensor_id_with_tensor_;
+  std::unordered_map<std::string, OpIndexWithTensorId> cell_op_index_with_tensor_id_;
+  std::unordered_map<std::string, TensorIdWithTensor> cell_tensor_id_with_tensor_;
   std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
   std::unordered_map<std::string, AbstractListMap> prim_abs_list_;
 };

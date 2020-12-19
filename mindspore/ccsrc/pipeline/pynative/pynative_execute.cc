@@ -622,7 +622,7 @@ OpExecInfoPtr PynativeExecutor::GenerateOpExecInfo(const py::args &args) {
   op_exec_info->op_name = op_name;
   if (grad_flag()) {
     int64_t graph_id = graph_id_;
-    auto resource = GetResource();
+    auto resource = GetResource(top_cell_id_);
     if (resource != nullptr) {
       MS_LOG(DEBUG) << "Get resource ptr " << resource.get();
       auto it = resource->results().find(pipeline::kPynativeGraphId);
@@ -1007,21 +1007,21 @@ void PynativeExecutor::UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_ex
   MS_EXCEPTION_IF_NULL(output_value);
   std::vector<tensor::TensorPtr> output_tensors;
   TensorValueToTensor(output_value, &output_tensors);
-  if (op_index_with_tensor_id_.find(op_index) == op_index_with_tensor_id_.end()) {
+  if (cell_op_index_with_tensor_id_[top_cell_id_].find(op_index) == cell_op_index_with_tensor_id_[top_cell_id_].end()) {
     // first step
     std::for_each(output_tensors.begin(), output_tensors.end(), [&](const tensor::TensorPtr &tensor) {
-      op_index_with_tensor_id_[op_index].emplace_back(tensor->id());
+      cell_op_index_with_tensor_id_[top_cell_id_][op_index].emplace_back(tensor->id());
     });
     return;
   }
   auto ms_context = MsContext::GetInstance();
   auto target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
-  const auto &tensor_id_list = op_index_with_tensor_id_[op_index];
+  const auto &tensor_id_list = cell_op_index_with_tensor_id_[top_cell_id_][op_index];
   for (size_t i = 0; i < tensor_id_list.size(); ++i) {
     auto tensor_id = tensor_id_list[i];
-    if (tensor_id_with_tensor_.find(tensor_id) != tensor_id_with_tensor_.end()) {
+    if (cell_tensor_id_with_tensor_[top_cell_id_].find(tensor_id) != cell_tensor_id_with_tensor_[top_cell_id_].end()) {
       auto &new_tensor = output_tensors[i];
-      auto &tensors_in_value_node = tensor_id_with_tensor_[tensor_id];
+      auto &tensors_in_value_node = cell_tensor_id_with_tensor_[top_cell_id_][tensor_id];
       std::for_each(tensors_in_value_node.begin(), tensors_in_value_node.end(), [&](tensor::TensorPtr &tensor) {
         MS_LOG(DEBUG) << "Debug address: Replace forward old tensor obj " << tensor.get() << ", tensor id "
                       << tensor->id() << ", device address " << tensor->device_address().get()
@@ -1050,7 +1050,15 @@ void PynativeExecutor::UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_ex
 
 void PynativeExecutor::SaveTensorsInValueNode(const ResourcePtr &resource) {
   MS_EXCEPTION_IF_NULL(resource);
-  tensor_id_with_tensor_.clear();
+  std::set<std::string> forward_op_tensor_id;
+  for (const auto &elem : cell_op_index_with_tensor_id_[top_cell_id_]) {
+    const auto &tensor_id_list = elem.second;
+    for (const auto &tensor_id : tensor_id_list) {
+      forward_op_tensor_id.emplace(tensor_id);
+    }
+  }
+
+  cell_tensor_id_with_tensor_[top_cell_id_].clear();
   const auto &func_graph = resource->func_graph();
   const auto &value_node_list = func_graph->value_nodes();
   for (const auto &elem : value_node_list) {
@@ -1059,8 +1067,9 @@ void PynativeExecutor::SaveTensorsInValueNode(const ResourcePtr &resource) {
     std::vector<tensor::TensorPtr> tensors;
     TensorValueToTensor(value_node->value(), &tensors);
     for (const auto &tensor : tensors) {
-      if (tensor->device_address() != nullptr) {
-        tensor_id_with_tensor_[tensor->id()].emplace_back(tensor);
+      if (tensor->device_address() != nullptr &&
+          forward_op_tensor_id.find(tensor->id()) != forward_op_tensor_id.end()) {
+        cell_tensor_id_with_tensor_[top_cell_id_][tensor->id()].emplace_back(tensor);
         MS_LOG(DEBUG) << "Debug address: Save forward tensor obj " << tensor.get() << ", tensor id " << tensor->id()
                       << ", device address " << tensor->device_address().get();
       }
@@ -1068,16 +1077,22 @@ void PynativeExecutor::SaveTensorsInValueNode(const ResourcePtr &resource) {
   }
 }
 
-void PynativeExecutor::CleanTensorsInValueNode() {
-  // Only need clean in ms backend policy and session should not be nullptr in ms backend.
-  if (session == nullptr) {
+void PynativeExecutor::CleanPreMemoryInValueNode(const std::string &cell_id) {
+  auto ms_context = MsContext::GetInstance();
+  std::string device_target = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (device_target == "CPU") {
+    top_cell_id_ = cell_id;
     return;
   }
-  auto useless_tensors = std::make_shared<std::vector<tensor::TensorPtr>>();
-  for (const auto &id_tensor_pair : tensor_id_with_tensor_) {
-    std::copy(id_tensor_pair.second.begin(), id_tensor_pair.second.end(), std::back_inserter(*useless_tensors));
+  const auto &tensor_id_with_tensor = cell_tensor_id_with_tensor_[top_cell_id_];
+  for (const auto &elem : tensor_id_with_tensor) {
+    const auto &tensors_in_value_node = elem.second;
+    for (const auto &tensor : tensors_in_value_node) {
+      MS_EXCEPTION_IF_NULL(tensor);
+      tensor->set_device_address(nullptr);
+    }
   }
-  session->CleanUselessTensors(useless_tensors);
+  top_cell_id_ = cell_id;
 }
 
 AnfNodePtr PynativeExecutor::GetObjNode(const py::object &obj, const std::string &obj_id) {
@@ -1462,6 +1477,12 @@ void PynativeExecutor::SubNestedGradOrder() {
 }
 
 bool PynativeExecutor::CheckCellGraph(const std::string &cell_id, bool is_grad) {
+  auto it = std::find_if(top_cell_list_.begin(), top_cell_list_.end(), [&cell_id](const TopCellInfo &value) {
+    return value.cell_id == cell_id && value.is_dynamic_cell;
+  });
+  if (it != top_cell_list_.end()) {
+    return false;
+  }
   return std::any_of(cell_graph_list_.begin(), cell_graph_list_.end(), [&cell_id, is_grad](const CellInfo &value) {
     return value.cell_id == cell_id && (!is_grad || value.is_grad);
   });
@@ -1584,6 +1605,22 @@ bool PynativeExecutor::ParseIfWhileExprNode(const std::shared_ptr<parse::ParseAs
     }
     auto left = ParseNodeName(ast, left_node, parse::AST_MAIN_TYPE_EXPR);
     auto right = ParseNodeName(ast, comparators_node[0], parse::AST_MAIN_TYPE_EXPR);
+    // while self.a > self.b and changed self.a or self.b
+    if (left == parse::NAMED_PRIMITIVE_ATTRIBUTE && right == parse::NAMED_PRIMITIVE_ATTRIBUTE) {
+      auto left_value = parse::python_adapter::GetPyObjAttr(left_node, parse::NAMED_PRIMITIVE_VALUE);
+      std::string left_variable;
+      if (py::hasattr(left_node, "attr") && py::hasattr(left_value, "id")) {
+        left_variable = py::cast<std::string>(left_value.attr("id")) + py::cast<std::string>(left_node.attr("attr"));
+      }
+      auto right_value = parse::python_adapter::GetPyObjAttr(comparators_node[0], parse::NAMED_PRIMITIVE_VALUE);
+      std::string right_variable;
+      if (py::hasattr(comparators_node[0], "attr") && py::hasattr(right_value, "id")) {
+        right_variable =
+          py::cast<std::string>(right_value.attr("id")) + py::cast<std::string>(comparators_node[0].attr("attr"));
+      }
+      return ParseBodyContext(ast, node, {left_variable, right_variable});
+    }
+    // if a[0]
     if (left == parse::NAMED_PRIMITIVE_SUBSCRIPT) {
       py::object value_in_subscript = parse::python_adapter::GetPyObjAttr(left_node, parse::NAMED_PRIMITIVE_VALUE);
       left = ParseNodeName(ast, value_in_subscript, parse::AST_MAIN_TYPE_EXPR);
@@ -1623,6 +1660,34 @@ bool PynativeExecutor::ParseAssignExprNode(const std::shared_ptr<parse::ParseAst
   return false;
 }
 
+bool PynativeExecutor::ParseAugAssignExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node,
+                                              const std::vector<std::string> &compare_prim) {
+  MS_LOG(DEBUG) << "Parse augassign expr";
+  bool ret = false;
+  if (compare_prim.empty()) {
+    return ret;
+  }
+  py::object target_node = parse::python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_TARGET);
+  if (py::isinstance<py::none>(target_node)) {
+    MS_LOG(DEBUG) << "Parse target node is none!";
+    return ret;
+  }
+  py::object value_node = parse::python_adapter::GetPyObjAttr(target_node, parse::NAMED_PRIMITIVE_VALUE);
+  if (py::isinstance<py::none>(value_node)) {
+    MS_LOG(DEBUG) << "Parse value node is none!";
+    return ret;
+  }
+  std::string assign_prim;
+  if (py::hasattr(target_node, "attr") && py::hasattr(value_node, "id")) {
+    assign_prim = py::cast<std::string>(value_node.attr("id")) + py::cast<std::string>(target_node.attr("attr"));
+  }
+  auto iter = std::find(compare_prim.begin(), compare_prim.end(), assign_prim);
+  if (iter != compare_prim.end()) {
+    ret = true;
+  }
+  return ret;
+}
+
 bool PynativeExecutor::ParseForExprNode(const std::shared_ptr<parse::ParseAst> &ast, const py::object &node) {
   MS_LOG(DEBUG) << "Parse for expr";
   py::object body_node = parse::python_adapter::GetPyObjAttr(node, parse::NAMED_PRIMITIVE_BODY);
@@ -1643,7 +1708,8 @@ bool PynativeExecutor::ParseForExprNode(const std::shared_ptr<parse::ParseAst> &
   return false;
 }
 
-bool PynativeExecutor::ParseBodyContext(const std::shared_ptr<parse::ParseAst> &ast, const py::object &fn_node) {
+bool PynativeExecutor::ParseBodyContext(const std::shared_ptr<parse::ParseAst> &ast, const py::object &fn_node,
+                                        const std::vector<std::string> &compare_prim) {
   MS_EXCEPTION_IF_NULL(ast);
   py::object func_obj = parse::python_adapter::GetPyObjAttr(fn_node, parse::NAMED_PRIMITIVE_BODY);
   if (py::isinstance<py::none>(func_obj)) {
@@ -1659,6 +1725,8 @@ bool PynativeExecutor::ParseBodyContext(const std::shared_ptr<parse::ParseAst> &
     const auto &node_name = ParseNodeName(ast, node, parse::AST_MAIN_TYPE_STMT);
     if (node_name == parse::NAMED_PRIMITIVE_ASSIGN) {
       ret = ParseAssignExprNode(ast, node);
+    } else if (node_name == parse::NAMED_PRIMITIVE_AUGASSIGN) {
+      ret = ParseAugAssignExprNode(ast, node, compare_prim);
     } else if (node_name == parse::NAMED_PRIMITIVE_FOR) {
       ret = ParseForExprNode(ast, node);
     } else if (node_name == parse::NAMED_PRIMITIVE_IF || node_name == parse::NAMED_PRIMITIVE_WHILE) {
@@ -1713,17 +1781,18 @@ void PynativeExecutor::NewGraphInner(const py::object &cell, const py::args &arg
       MS_LOG(EXCEPTION) << "Top cell list is empty";
     }
     if (IsTopGraph(cell_id)) {
+      // Clear previous step resource
       op_index_map_.clear();
+      CleanPreMemoryInValueNode(cell_id);
     }
     MS_LOG(INFO) << "NewGraph already compiled";
     return;
   }
   // init resource for constructing forward graph and grad graph
-  auto g = std::make_shared<FuncGraph>();
-  curr_g_ = g;
+  curr_g_ = std::make_shared<FuncGraph>();
   ClearResidualRes(cell_id);
   if (graph_stack_.empty() && !IsBpropGraph(cell_id)) {
-    MakeNewTopGraph(cell_id, args, g);
+    MakeNewTopGraph(cell_id, args, curr_g_);
   }
   PushCurrentGraphToStack();
   if (graph_info_map_.find(curr_g_) == graph_info_map_.end()) {
@@ -1732,7 +1801,7 @@ void PynativeExecutor::NewGraphInner(const py::object &cell, const py::args &arg
   }
   for (size_t i = 0; i < args.size(); ++i) {
     auto param = args[i];
-    auto new_param = g->add_parameter();
+    auto new_param = curr_g_->add_parameter();
     std::string param_id = GetId(param);
     SetTupleArgsToGraphInfoMap(curr_g_, param, new_param, true);
     SetNodeMapInGraphInfoMap(curr_g_, param_id, new_param);
@@ -1741,6 +1810,13 @@ void PynativeExecutor::NewGraphInner(const py::object &cell, const py::args &arg
   // check whether the construct of cell will be changed
   if (!dynamic_cell_) {
     dynamic_cell_ = IsDynamicCell(cell);
+    if (dynamic_cell_) {
+      auto it = std::find_if(top_cell_list_.begin(), top_cell_list_.end(),
+                             [&](const TopCellInfo &value) { return value.cell_id == top_cell_id_; });
+      if (it != top_cell_list_.end()) {
+        it->is_dynamic_cell = dynamic_cell_;
+      }
+    }
     MS_LOG(DEBUG) << "cell id: " << cell_id << ", is dynamic cell: " << dynamic_cell_;
   }
 }
@@ -1754,16 +1830,17 @@ void PynativeExecutor::MakeNewTopGraph(const string &cell_id, const py::args &ar
       }
     }
   }
-  // Clear runop pre
+  // Clear resource in old top cell
   auto it = std::find_if(top_cell_list_.begin(), top_cell_list_.end(),
                          [&cell_id](const TopCellInfo &value) { return value.cell_id == cell_id; });
   if (it != top_cell_list_.end()) {
     top_cell_list_.erase(it);
   }
-  dynamic_cell_ = false;
   op_index_map_.clear();
-  op_index_with_tensor_id_.clear();
+  CleanPreMemoryInValueNode(cell_id);
 
+  // Init resource for new top cell
+  dynamic_cell_ = false;
   auto df_builder = std::make_shared<FuncGraph>();
   GraphInfo graph_info = GraphInfo(cell_id);
   graph_info_map_.emplace(df_builder, graph_info);
@@ -2353,7 +2430,6 @@ py::object PynativeExecutor::Run(const py::object &cell, const py::tuple &args, 
   MS_LOG(DEBUG) << "Eval run " << backend;
   set_grad_runing(true);
   BaseRef value = (*run)(arg_list);
-  CleanTensorsInValueNode();
   set_grad_runing(false);
   MS_LOG(DEBUG) << "Eval run end " << value.ToString();
   auto out = BaseRefToPyData(value);
@@ -2464,8 +2540,8 @@ void PynativeExecutor::ClearRes() {
   cell_graph_list_.clear();
   top_cell_list_.clear();
   op_index_map_.clear();
-  op_index_with_tensor_id_.clear();
-  tensor_id_with_tensor_.clear();
+  cell_op_index_with_tensor_id_.clear();
+  cell_tensor_id_with_tensor_.clear();
   cell_dynamic_map_.clear();
   prim_abs_list_.clear();
   std::stack<FuncGraphPtr>().swap(graph_stack_);
