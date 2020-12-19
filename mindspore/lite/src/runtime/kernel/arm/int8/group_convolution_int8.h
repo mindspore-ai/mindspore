@@ -33,7 +33,6 @@ class GroupConvolutionInt8CPUKernel : public GroupConvolutionCPUKernel {
       : GroupConvolutionCPUKernel(parameter, inputs, outputs, ctx, primitive, group_convs, group_num) {
   }  // opParameter(in channel, out channel) in this kernel has been split to groups, if
   // you want to get real params, multiply in channel / out channel with group num
-  ~GroupConvolutionInt8CPUKernel() override { GroupConvolutionCPUKernel::FreeSubKernel(); }
 
   int Run() override;
   void SeparateInput(int group_id) override;
