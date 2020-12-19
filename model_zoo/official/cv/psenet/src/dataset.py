@@ -160,7 +160,7 @@ def shrink(bboxes, rate, max_shr=20):
 
 class TrainDataset:
     def __init__(self):
-        self.is_transform = config.TRAIN_IS_TRANSFORM
+        self.is_transform = True
         self.img_size = config.TRAIN_LONG_SIZE
         self.kernel_num = config.KERNEL_NUM
         self.min_scale = config.TRAIN_MIN_SCALE

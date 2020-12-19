@@ -37,7 +37,6 @@ config = ed({
 
     # dataset for train
     "TRAIN_ROOT_DIR": "psenet/ic15/",
-    "TRAIN_IS_TRANSFORM": True,
     "TRAIN_LONG_SIZE": 640,
     "TRAIN_MIN_SCALE": 0.4,
     "TRAIN_BATCH_SIZE": 4,
