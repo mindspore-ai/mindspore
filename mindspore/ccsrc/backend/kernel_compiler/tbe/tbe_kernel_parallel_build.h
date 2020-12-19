@@ -67,9 +67,6 @@ class ParallelBuildManager {
   AnfNodePtr GetAnfNodeByTaskID(int32_t task_id);
 
  private:
-  std::string ProcessBuildRetStr(const std::string &build_result);
-
- private:
   std::map<int32_t, AnfNodePtr> pre_task_map_;
   std::map<int32_t, KernelBuildTaskInfo> task_map_;
   std::vector<KernelBuildTaskInfo> same_op_list_;

@@ -25,8 +25,6 @@ build_in_impl_path = get_build_in_impl_path()
 
 # op function list
 op_build = "compile"
-fusion_pattern_start_flag = "fusion_pattern_start"
-fusion_pattern_end_flag = "fusion_pattern_end"
 
 def _initialize(impl_path):
     """Initialize"""
@@ -157,5 +155,6 @@ def compile_with_json(json_str):
 if __name__ == "__main__":
     in_args = sys.stdin.readline()
     result = compile_with_json(in_args)
-    sys.stdout.write(fusion_pattern_start_flag + str(result) + fusion_pattern_end_flag)
-    sys.stdout.flush()
+    if isinstance(result, dict):
+        sys.stdout.write(json.dumps(result))
+        sys.stdout.flush()
