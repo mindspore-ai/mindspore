@@ -869,7 +869,7 @@ table BatchToSpaceND {
 }
 
 table AddN {
-    N: int;
+    N: int;  // DEPRECATED
 }
 
 
