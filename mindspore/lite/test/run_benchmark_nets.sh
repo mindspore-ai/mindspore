@@ -835,6 +835,9 @@ function Run_arm64() {
         cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/third_party/opencv/lib/libopencv_imgproc.so ${benchmark_test_path}/libopencv_imgproc.so || exit 1
         cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/lib/libminddata-lite.so ${benchmark_test_path}/libminddata-lite.so || exit 1
     fi
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/third_party/hiai_ddk/lib/libhiai.so ${benchmark_test_path}/libhiai.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_test_path}/libhiai_ir.so || exit 1
+    cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_test_path}/libhiai_ir_build.so || exit 1
 
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/lib/libmindspore-lite.so ${benchmark_test_path}/libmindspore-lite.so || exit 1
     cp -a ${arm64_path}/mindspore-lite-${version}-inference-android-aarch64/benchmark/benchmark ${benchmark_test_path}/benchmark || exit 1

@@ -131,6 +131,11 @@ function Run_arm() {
         cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_imgproc.so ${net_train_test_path}/libopencv_imgproc.so || exit 1
         cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libminddata-lite.so ${net_train_test_path}/libminddata-lite.so || exit 1
     fi
+    if [ "$1" == arm64 ]; then
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai.so ${net_train_test_path}/libhiai.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai_ir.so ${net_train_test_path}/libhiai_ir.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai_ir_build.so ${net_train_test_path}/libhiai_ir_build.so || exit 1
+    fi
 
     cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libmindspore-lite.so ${net_train_test_path}/libmindspore-lite.so || exit 1
 #    if [ "$1" == arm64 ]; then
