@@ -883,11 +883,7 @@ void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActT
   if (out_type == OutType_C8) {
     MatmulFloatSse64(a, b, c, bias, (int)act_type, deep, row, col, stride, 0, 0);
   } else {
-#ifdef WIN32
-    MatMul6x16(a, b, c, bias, act_type, deep, row, col, stride, out_type);
-#else
-    MatmulFloatAvxOpt(a, b, c, bias, (int)act_type, deep, row, col, stride, (int)(out_type));
-#endif
+    MatmulFloatAvxOpt(a, b, c, bias, (size_t)act_type, deep, row, col, stride, (size_t)(out_type));
   }
 #elif ENABLE_SSE
   if (out_type == OutType_C8) {

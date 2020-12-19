@@ -62,8 +62,8 @@ void MatmulFloatSse64(const float *a, const float *b, float *c, const float *bia
 void MatmulFloatSse64Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                          int col, int stride, int write_mode);
 #ifdef ENABLE_AVX
-void MatmulFloatAvxOpt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
-                       int col, int stride, int write_mode);
+void MatmulFloatAvxOpt(const float *a, const float *b, float *c, const float *bias, size_t act_type, size_t depth,
+                       size_t row, size_t col, size_t stride, size_t write_mode);
 #endif
 #endif
 
