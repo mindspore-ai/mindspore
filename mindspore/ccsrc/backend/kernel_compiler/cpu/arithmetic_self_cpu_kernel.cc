@@ -30,6 +30,19 @@ void Square(const T *in, T *out, size_t start, size_t end) {
 }
 
 template <typename T>
+void Sign(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    if (in[i] < 0) {
+      out[i] = -1;
+    } else if (in[i] > 0) {
+      out[i] = 1;
+    } else {
+      out[i] = 0;
+    }
+  }
+}
+
+template <typename T>
 void Neg(const T *in, T *out, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
     out[i] = -in[i];
@@ -62,6 +75,8 @@ void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = ZEROSLIKE;
   } else if (kernel_name == prim::kPrimNeg->name()) {
     operate_type_ = NEG;
+  } else if (kernel_name == prim::kPrimSign->name()) {
+    operate_type_ = SIGN;
   }
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
@@ -111,6 +126,8 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
       threads.emplace_back(std::thread(OnesLike<T>, input, output, start, end));
     } else if (operate_type_ == ZEROSLIKE) {
       threads.emplace_back(std::thread(ZerosLike<T>, input, output, start, end));
+    } else if (operate_type_ == SIGN) {
+      threads.emplace_back(std::thread(Sign<T>, input, output, start, end));
     }
     start += once_compute_size;
   }

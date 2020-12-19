@@ -951,7 +951,7 @@ class Split(PrimitiveWithCheck):
         :math:`(y_1, y_2, ..., y_S)`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> split = ops.Split(1, 2)

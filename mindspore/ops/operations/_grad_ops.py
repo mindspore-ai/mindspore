@@ -885,6 +885,20 @@ class AvgPoolGradGpu(_PoolGrad):
         return x1_dtype
 
 
+class AvgPoolGradCpu(_PoolGrad):
+    """Gradients of the avg pool operation for cpu."""
+
+    @prim_attr_register
+    def __init__(self, ksize=1, strides=1, padding="VALID", data_format="NCHW"):
+        super(AvgPoolGradCpu, self).__init__(ksize, strides, padding, data_format)
+
+    def infer_shape(self, x1_shape, x2_shape, grad_shape):
+        return x1_shape
+
+    def infer_dtype(self, x1_dtype, x2_dtype, grad_dtype):
+        return x1_dtype
+
+
 class MaxPoolGrad(_PoolGrad):
     """Performs gradients of the max pool operation."""
 

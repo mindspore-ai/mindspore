@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "backend/kernel_compiler/cpu/mkldnn/pooling_grad_cpu_kernel.h"
+#include "backend/kernel_compiler/cpu/mkldnn/pooling_max_grad_cpu_kernel.h"
 #include <string>
 #include <utility>
 #include <algorithm>
@@ -23,7 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
-void PoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+void MaxPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   src_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
   dst_shape_ = AnfAlgo::GetInputDeviceShape(kernel_node, 1);
@@ -45,9 +45,9 @@ void PoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   GetPadding(kernel_node, pad_mode, src_shape_, kernel_size_, stride_, &padding_l_, &padding_r);
 }
 
-void PoolingGradCPUKernel::RowPoolingGrad(const float *input, float *output, float diff,
-                                          const std::vector<std::pair<size_t, size_t>> &box,
-                                          std::vector<std::pair<size_t, float>> *row_max_pair) {
+void MaxPoolingGradCPUKernel::RowPoolingGrad(const float *input, float *output, float diff,
+                                             const std::vector<std::pair<size_t, size_t>> &box,
+                                             std::vector<std::pair<size_t, float>> *row_max_pair) {
   float max_value = 0;
   size_t max_index = box[1].second;
   size_t src_width = src_shape_[3];
@@ -74,7 +74,7 @@ void PoolingGradCPUKernel::RowPoolingGrad(const float *input, float *output, flo
   output[(*row_max_pair)[max_index].first] += diff;
 }
 
-void PoolingGradCPUKernel::ChannelPoolingGrad(const float *input, const float *diff, float *output) {
+void MaxPoolingGradCPUKernel::ChannelPoolingGrad(const float *input, const float *diff, float *output) {
   int src_width = SizeToInt(src_shape_[3]);
   int src_height = SizeToInt(src_shape_[2]);
   std::vector<std::pair<size_t, float>> row_max_pair(src_shape_[3]);
@@ -100,9 +100,9 @@ void PoolingGradCPUKernel::ChannelPoolingGrad(const float *input, const float *d
   }
 }
 
-bool PoolingGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                  const std::vector<kernel::AddressPtr> & /*workspace*/,
-                                  const std::vector<kernel::AddressPtr> &outputs) {
+bool MaxPoolingGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                     const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                     const std::vector<kernel::AddressPtr> &outputs) {
   if (inputs.size() < 3 || outputs.empty()) {
     MS_LOG(EXCEPTION) << "pooling grad error input output size!";
   }
