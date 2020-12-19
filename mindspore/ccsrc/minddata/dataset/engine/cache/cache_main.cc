@@ -118,7 +118,7 @@ ds::Status StartServer(int argc, char **argv) {
   }
 
   // Dump the summary
-  MS_LOG(INFO) << "Cache server has started successfully and is listening on port " << port << std::endl;
+  MS_LOG(WARNING) << "Cache server has started successfully and is listening on port " << port << std::endl;
   MS_LOG(WARNING) << "Logging services started with log level: " << argv[5];
   MS_LOG(WARNING) << builder << std::endl;
   // Create the instance with some sanity checks built in
