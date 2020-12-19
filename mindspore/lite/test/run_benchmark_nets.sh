@@ -570,16 +570,17 @@ function Run_x86() {
         input_num=${input_params%%;*}
         input_files=''
         output_file=''
-        if [[ -z "$input_files" || $input_files == 1 ]] && [ -e ${ms_models_path}/${model_name}'.ms.bin' ]; then
-          input_files=$model_name'.ms.bin'
-        elif [[ ! -z "$input_files" && $input_files -gt 1 ]]; then
+        data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
+        if [[ -z "$input_num" || $input_num == 1 ]] && [ -e ${data_path}'input/'${model_name}'.ms.bin' ]; then
+          input_files=${data_path}'input/'$model_name'.ms.bin'
+        elif [[ ! -z "$input_num" && $input_num -gt 1 ]]; then
           for i in $(seq 1 $input_num)
           do
-            input_files=$input_files$model_name'.ms.bin_'$i','
+            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
           done
         fi
-        if [ -e ${ms_models_path}/${model_name}'.ms.out' ]; then
-          output_file=${ms_models_path}/${model_name}'.ms.out'
+        if [ -e ${data_path}'output/'${model_name}'.ms.out' ]; then
+          output_file=${data_path}'output/'${model_name}'.ms.out'
         fi
         if [[ ${model_name##*.} == "caffemodel" ]]; then
           model_name=${model_name%.*}
@@ -835,16 +836,17 @@ function Run_x86_sse() {
         input_num=${input_params%%;*}
         input_files=''
         output_file=''
-        if [[ -z "$input_files" || $input_files == 1 ]] && [ -e ${ms_models_path}/${model_name}'.ms.bin' ]; then
-          input_files=$model_name'.ms.bin'
-        elif [[ ! -z "$input_files" && $input_files -gt 1 ]]; then
+        data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
+        if [[ -z "$input_num" || $input_num == 1 ]] && [ -e ${data_path}'input/'${model_name}'.ms.bin' ]; then
+          input_files=${data_path}'input/'$model_name'.ms.bin'
+        elif [[ ! -z "$input_num" && $input_num -gt 1 ]]; then
           for i in $(seq 1 $input_num)
           do
-            input_files=$input_files$model_name'.ms.bin_'$i','
+            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
           done
         fi
-        if [ -e ${ms_models_path}/${model_name}'.ms.out' ]; then
-          output_file=${ms_models_path}/${model_name}'.ms.out'
+        if [ -e ${data_path}'output/'${model_name}'.ms.out' ]; then
+          output_file=${data_path}'output/'${model_name}'.ms.out'
         fi
         if [[ ${model_name##*.} == "caffemodel" ]]; then
           model_name=${model_name%.*}
@@ -1323,16 +1325,17 @@ function Run_arm64() {
         input_num=${input_params%%;*}
         input_files=''
         output_file=''
-        if [[ -z "$input_files" || $input_files == 1 ]] && [ -e ${ms_models_path}/${model_name}'.ms.bin' ]; then
-          input_files=$model_name'.ms.bin'
-        elif [[ ! -z "$input_files" && $input_files -gt 1 ]]; then
+        data_path="/data/local/tmp/input_output/"
+        if [[ -z "$input_num" || $input_num == 1 ]] && [ -e ${data_path}'input/'${model_name}'.ms.bin' ]; then
+          input_files=${data_path}'input/'$model_name'.ms.bin'
+        elif [[ ! -z "$input_num" && $input_num -gt 1 ]]; then
           for i in $(seq 1 $input_num)
           do
-            input_files=$input_files$model_name'.ms.bin_'$i','
+            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
           done
         fi
-        if [ -e ${ms_models_path}/${model_name}'.ms.out' ]; then
-          output_file=${ms_models_path}/${model_name}'.ms.out'
+        if [ -e ${data_path}'output/'${model_name}'.ms.out' ]; then
+          output_file=${data_path}'output/'${model_name}'.ms.out'
         fi
         if [[ ${model_name##*.} == "caffemodel" ]]; then
           model_name=${model_name%.*}
