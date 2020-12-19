@@ -151,10 +151,6 @@ Buffer ModelConverter::BuildAirModel(const transform::DfGraphPtr &graph,
 }
 
 Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
-  if (!PythonIsInited()) {
-    MS_LOG_INFO << "Call LoadMindIRInner directly";
-    return LoadMindIRInner(func_graph);
-  }
   MultiProcess multi_process;
   Buffer buffer_ret;
   auto parent_process = [&func_graph, &buffer_ret, this](MultiProcess *multi_process) -> Status {
@@ -227,10 +223,6 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
 }
 
 Buffer ModelConverter::LoadAscendIR(const Buffer &model_data) {
-  if (!PythonIsInited()) {
-    MS_LOG_INFO << "Call LoadAscendIRInner directly";
-    return LoadAscendIRInner(model_data);
-  }
   MultiProcess multi_process;
   Buffer buffer_ret;
   auto parent_process = [&model_data, &buffer_ret](MultiProcess *multi_process) -> Status {
