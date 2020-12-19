@@ -421,7 +421,11 @@ static void DrawValueNode(Graphviz *const graph_obj, const ValueNodePtr &node) {
             graph_obj->buffer() << "<br/>";
           }
           graph_obj->buffer() << attr.first << " ";
-          graph_obj->buffer() << attr.second->ToString();
+          if (attr.second == nullptr) {
+            graph_obj->buffer() << " ";
+          } else {
+            graph_obj->buffer() << attr.second->ToString();
+          }
           i++;
         }
       }
