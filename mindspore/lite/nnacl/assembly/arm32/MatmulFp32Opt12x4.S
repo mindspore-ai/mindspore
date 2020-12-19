@@ -35,6 +35,12 @@ MatmulFloatNeon32Opt12x4:
     mov lr, #4
     mul r8, r8, lr // stride * sizeof(float)
 
+LoopRowStart:
+    cmp r6, #4
+    ble LoopRow4
+    cmp r6, #8
+    ble LoopRow8
+
 LoopRow:
     ldr r1, [sp, #-44] // reload rhs ptr
     ldr r7, [sp, #12] // reload rhs col
@@ -142,6 +148,158 @@ LoopRow:
             vmax.f32 q13, q13, q3
             vmax.f32 q14, q14, q3
             vmax.f32 q15, q15, q3
+            b Write
+
+LoopRow8:
+    ldr r1, [sp, #-44] // reload rhs ptr
+    ldr r7, [sp, #12] // reload rhs col
+    ldr r3, [sp, #-36] // reload bias ptr
+
+    LoopCol_R8:
+        ldr r2, [sp, #-40] // reload dst ptr
+        ldr r0, [sp, #-48] // reload lhs ptr
+        ldr r5, [sp, #4] // reload depth
+        vld1.32 {q3}, [r1]!
+        vld1.32 {q0, q1}, [r0]!
+        vmul.f32 q4, q3, d0[0]
+        vmul.f32 q5, q3, d0[1]
+        vmul.f32 q6, q3, d1[0]
+        vld1.32 {q2}, [r0]!
+        vmul.f32 q7, q3, d1[1]
+
+        vmul.f32 q8, q3, d2[0]
+        vmul.f32 q9, q3, d2[1]
+        vmul.f32 q10, q3, d3[0]
+        vmul.f32 q11, q3, d3[1]
+
+        subs r5, r5, #1
+        beq Bias_R8
+
+        LoopDepth_R8:
+            vld1.32 {q3}, [r1]!
+            vld1.32 {q0, q1}, [r0]!
+            vmla.f32 q4, q3, d0[0]
+            vmla.f32 q5, q3, d0[1]
+            vmla.f32 q6, q3, d1[0]
+            vld1.32 {q2}, [r0]!
+            vmla.f32 q7, q3, d1[1]
+
+            vmla.f32 q8, q3, d2[0]
+            vmla.f32 q9, q3, d2[1]
+            vmla.f32 q10, q3, d3[0]
+            vmla.f32 q11, q3, d3[1]
+
+            subs r5, r5, #1
+            bne LoopDepth_R8
+
+        Bias_R8:
+            cmp r3, #0
+            beq Activation_R8
+            vld1.32 {q0}, [r3]!
+            vadd.f32 q4, q4, q0
+            vadd.f32 q5, q5, q0
+            vadd.f32 q6, q6, q0
+            vadd.f32 q7, q7, q0
+            vadd.f32 q8, q8, q0
+            vadd.f32 q9, q9, q0
+            vadd.f32 q10, q10, q0
+            vadd.f32 q11, q11, q0
+
+        Activation_R8:
+            ldr lr, [sp]
+            cmp lr, #3
+            beq Relu6_R8
+            cmp lr, #1
+            beq Relu_R8
+            b Write
+
+        Relu6_R8:
+            vmov.i32 q2, #6
+            vcvt.f32.s32 q2, q2
+            vmin.f32 q4, q4, q2
+            vmin.f32 q5, q5, q2
+            vmin.f32 q6, q6, q2
+            vmin.f32 q7, q7, q2
+            vmin.f32 q8, q8, q2
+            vmin.f32 q9, q9, q2
+            vmin.f32 q10, q10, q2
+            vmin.f32 q11, q11, q2
+
+        Relu_R8:
+            veor q3, q3, q3
+            vmax.f32 q4, q4, q3
+            vmax.f32 q5, q5, q3
+            vmax.f32 q6, q6, q3
+            vmax.f32 q7, q7, q3
+            vmax.f32 q8, q8, q3
+            vmax.f32 q9, q9, q3
+            vmax.f32 q10, q10, q3
+            vmax.f32 q11, q11, q3
+            b Write
+
+LoopRow4:
+    ldr r1, [sp, #-44] // reload rhs ptr
+    ldr r7, [sp, #12] // reload rhs col
+    ldr r3, [sp, #-36] // reload bias ptr
+
+    LoopCol_R4:
+        ldr r2, [sp, #-40] // reload dst ptr
+        ldr r0, [sp, #-48] // reload lhs ptr
+        ldr r5, [sp, #4] // reload depth
+        vld1.32 {q3}, [r1]!
+        vld1.32 {q0, q1}, [r0]!
+        vmul.f32 q4, q3, d0[0]
+        vmul.f32 q5, q3, d0[1]
+        vmul.f32 q6, q3, d1[0]
+        vld1.32 {q2}, [r0]!
+        vmul.f32 q7, q3, d1[1]
+
+        subs r5, r5, #1
+        beq Bias_R4
+
+        LoopDepth_R4:
+            vld1.32 {q3}, [r1]!
+            vld1.32 {q0, q1}, [r0]!
+            vmla.f32 q4, q3, d0[0]
+            vmla.f32 q5, q3, d0[1]
+            vmla.f32 q6, q3, d1[0]
+            vld1.32 {q2}, [r0]!
+            vmla.f32 q7, q3, d1[1]
+
+            subs r5, r5, #1
+            bne LoopDepth_R4
+
+        Bias_R4:
+            cmp r3, #0
+            beq Activation_R4
+            vld1.32 {q0}, [r3]!
+            vadd.f32 q4, q4, q0
+            vadd.f32 q5, q5, q0
+            vadd.f32 q6, q6, q0
+            vadd.f32 q7, q7, q0
+
+        Activation_R4:
+            ldr lr, [sp]
+            cmp lr, #3
+            beq Relu6_R4
+            cmp lr, #1
+            beq Relu_R4
+            b Write
+
+        Relu6_R4:
+            vmov.i32 q2, #6
+            vcvt.f32.s32 q2, q2
+            vmin.f32 q4, q4, q2
+            vmin.f32 q5, q5, q2
+            vmin.f32 q6, q6, q2
+            vmin.f32 q7, q7, q2
+
+        Relu_R4:
+            veor q3, q3, q3
+            vmax.f32 q4, q4, q3
+            vmax.f32 q5, q5, q3
+            vmax.f32 q6, q6, q3
+            vmax.f32 q7, q7, q3
 
         Write:
             cmp r7, #1
@@ -398,7 +556,7 @@ LoopRow:
         cmp r6, #12
         ble LoopRowEnd
         sub r6, r6, #12 // lhs row - 12
-        b LoopRow
+        b LoopRowStart
 
 LoopRowEnd:
     sub sp, sp, #112
