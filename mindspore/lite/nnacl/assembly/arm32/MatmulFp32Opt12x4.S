@@ -22,7 +22,8 @@
 MatmulFloatNeon32Opt12x4:
     // r4-r8 and q4-q7 must be saved according to https://static.docs.arm.com/ihi0042/i/aapcs32.pdf
     push {r0-r8, r10, r11, lr}
-    add sp, sp, #48
+    vpush {q4-q7}
+    add sp, sp, #112
 
     ldr r5, [sp, #4]
     ldr r6, [sp, #8]
@@ -400,6 +401,7 @@ LoopRow:
         b LoopRow
 
 LoopRowEnd:
-    sub sp, sp, #48
+    sub sp, sp, #112
+    vpop {q4-q7}
     pop {r0-r8, r10, r11, pc}
 #endif
