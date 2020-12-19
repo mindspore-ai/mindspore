@@ -128,8 +128,8 @@ class BoundingBoxEncode(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> anchor_box = Tensor([[4,1,2,1],[2,2,2,3]],mindspore.float32)
-        >>> groundtruth_box = Tensor([[3,1,2,2],[1,2,1,4]],mindspore.float32)
+        >>> anchor_box = Tensor([[4, 1, 2, 1], [2, 2, 2, 3]], mindspore.float32)
+        >>> groundtruth_box = Tensor([[3, 1, 2, 2], [1, 2, 1, 4]], mindspore.float32)
         >>> boundingbox_encode = ops.BoundingBoxEncode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0))
         >>> output = boundingbox_encode(anchor_box, groundtruth_box)
         >>> print(output)
@@ -184,8 +184,8 @@ class BoundingBoxDecode(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> anchor_box = Tensor([[4,1,2,1],[2,2,2,3]],mindspore.float32)
-        >>> deltas = Tensor([[3,1,2,2],[1,2,1,4]],mindspore.float32)
+        >>> anchor_box = Tensor([[4, 1, 2, 1], [2, 2, 2, 3]], mindspore.float32)
+        >>> deltas = Tensor([[3, 1, 2, 2], [1, 2, 1, 4]], mindspore.float32)
         >>> boundingbox_decode = ops.BoundingBoxDecode(means=(0.0, 0.0, 0.0, 0.0), stds=(1.0, 1.0, 1.0, 1.0),
         ...                                          max_shape=(768, 1280), wh_ratio_clip=0.016)
         >>> output = boundingbox_decode(anchor_box, deltas)

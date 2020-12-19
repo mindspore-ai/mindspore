@@ -560,7 +560,7 @@ class UniformCandidateSampler(PrimitiveWithInfer):
 
     Examples:
         >>> sampler = ops.UniformCandidateSampler(1, 3, False, 4)
-        >>> output1, output2, output3 = sampler(Tensor(np.array([[1],[3],[4],[6],[3]], dtype=np.int32)))
+        >>> output1, output2, output3 = sampler(Tensor(np.array([[1], [3], [4], [6], [3]], dtype=np.int32)))
         >>> print(output1, output2, output3)
         [1, 1, 3], [[0.75], [0.75], [0.75], [0.75], [0.75]], [0.75, 0.75, 0.75]
     """

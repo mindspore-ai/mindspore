@@ -701,7 +701,7 @@ class MatMul(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The first tensor to be multiplied. The shape of the tensor is :math:`(N, C)`. If
-          `transpose_a` is True, its shape must be :math:`(N, C)` after transposing.
+          `transpose_a` is True, its shape must be :math:`(N, C)` after transpose.
         - **input_y** (Tensor) - The second tensor to be multiplied. The shape of the tensor is :math:`(C, M)`. If
           `transpose_b` is True, its shape must be :math:`(C, M)` after transpose.
 
@@ -856,7 +856,7 @@ class CumSum(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> input = Tensor(np.array([[3, 4, 6, 10],[1, 6, 7, 9],[4, 3, 8, 7],[1, 3, 7, 9]]).astype(np.float32))
+        >>> input = Tensor(np.array([[3, 4, 6, 10], [1, 6, 7, 9], [4, 3, 8, 7], [1, 3, 7, 9]]).astype(np.float32))
         >>> cumsum = ops.CumSum()
         >>> output = cumsum(input, 1)
         >>> print(output)
