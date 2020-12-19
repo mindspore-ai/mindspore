@@ -133,7 +133,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_quant_clusters(const std::vector<float> &clusters);
 
-  bool IsConst() const {
+  virtual bool IsConst() const {
     return (this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR) && this->data_ != nullptr;
   }
 

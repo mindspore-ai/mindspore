@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/base/merge.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "src/tensorlist.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -56,31 +57,72 @@ bool MergeCPUKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
          std::all_of(this->in_tensors().begin() + in_tensors().size() / 2, this->in_tensors().end(),
                      [&](lite::Tensor *kernel_in_tensor) {
                        return kernel_in_tensor->IsConst() || kernel_in_tensor->IsGraphInput() ||
-                              kernel_in_tensor->ref_count() >= 1;
+                              kernel_in_tensor->ref_count() >= 1 ||
+                              (kernel_in_tensor->data_type() == kObjectTypeTensorType);
                      });
 }
 
 int MergeCPUKernel::Init() { return RET_OK; }
 
-int MergeCPUKernel::ReSize() { return RET_ERROR; }
+int MergeCPUKernel::ReSize() { return RET_OK; }
+
+bool MergeCPUKernel::PartialInputReady(int num_begin, int num_end) {
+  MS_ASSERT(in_tensors_.size() == 2 * out_tensors_.size());
+  bool result = (std::all_of(this->in_tensors().begin() + num_begin, this->in_tensors().begin() + num_end,
+                             [&](lite::Tensor *kernel_in_tensor) {
+                               return kernel_in_tensor->IsConst() || kernel_in_tensor->ref_count() >= 1 ||
+                                      kernel_in_tensor->IsGraphInput() ||
+                                      kernel_in_tensor->data_type() == kObjectTypeTensorType;
+                             })) &&
+                std::all_of(this->in_tensors_.begin() + num_begin, this->in_tensors_.begin() + num_end,
+                            [&](lite::Tensor *in_tensor) {
+                              if (in_tensor->data_type() != kObjectTypeTensorType) {
+                                return in_tensor->data_c() != nullptr;
+                              } else {
+                                return true;
+                              }
+                            });
+  return result;
+}
 
 int MergeCPUKernel::Run() {
   MS_ASSERT(in_tensors_.size() == 2 * out_tensors_.size());
   int in_tesnor_part_one = 0;
-  int in_tensor_part_two = out_tensors().size();
-  if (in_tensors_[in_tesnor_part_one]->data_c() != nullptr) {
+  int in_tensor_part_two = in_tensors_.size() / 2;
+  int in_tensor_part_three = in_tensors_.size();
+  if (PartialInputReady(in_tesnor_part_one, in_tensor_part_two)) {
     for (size_t i = 0; i < out_tensors().size(); i++) {
       auto out_data = out_tensors_[i]->data_c();
       auto in_data = in_tensors_[i]->data_c();
+      if (in_tensors_[i]->data_type() == kObjectTypeTensorType) {
+        auto in_tensor_list = reinterpret_cast<lite::TensorList *>(in_tensors_[i]);
+        auto out_tensor_list = reinterpret_cast<lite::TensorList *>(out_tensors_[i]);
+        if (std::any_of(in_tensor_list->tensors().begin(), in_tensor_list->tensors().end(),
+                        [&](lite::Tensor *tensor) { return tensor->data_c() == nullptr; })) {
+          continue;
+        }
+        *out_tensor_list = *in_tensor_list;
+        continue;
+      }
       MS_ASSERT(in_data != nullptr);
       MS_ASSERT(out_data != nullptr);
       memcpy(out_data, in_data, in_tensors_[i]->Size());
     }
   }
-  if (in_tensors_[in_tensor_part_two]->data_c() != nullptr) {
+  if (PartialInputReady(in_tensor_part_two, in_tensor_part_three)) {
     for (size_t i = 0; i < out_tensors().size(); i++) {
       auto out_data = out_tensors_[i]->data_c();
       auto in_data = in_tensors_[i + in_tensor_part_two]->data_c();
+      if (in_tensors_[i]->data_type() == kObjectTypeTensorType) {
+        auto in_tensor_list = reinterpret_cast<lite::TensorList *>(in_tensors_[i + in_tensor_part_two]);
+        auto out_tensor_list = reinterpret_cast<lite::TensorList *>(out_tensors_[i]);
+        if (std::any_of(in_tensor_list->tensors().begin(), in_tensor_list->tensors().end(),
+                        [&](lite::Tensor *tensor) { return tensor->data_c() == nullptr; })) {
+          continue;
+        }
+        *out_tensor_list = *in_tensor_list;
+        continue;
+      }
       MS_ASSERT(in_data != nullptr);
       MS_ASSERT(out_data != nullptr);
       memcpy(out_data, in_data, in_tensors_[i]->Size());

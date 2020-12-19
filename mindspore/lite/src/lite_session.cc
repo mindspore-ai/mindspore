@@ -144,7 +144,7 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   }
   lite::Tensor *dst_tensor = nullptr;
   if (TypeId(src_tensor.dataType()) == kObjectTypeTensorType) {
-    dst_tensor = new (std::nothrow) TensorList(shape, std::vector<int>());
+    dst_tensor = new (std::nothrow) TensorList(shape, std::vector<int>(), src_category);
   } else {
     dst_tensor = new (std::nothrow) Tensor(TypeId(src_tensor.dataType()), shape, src_tensor.format(), src_category);
   }

@@ -59,9 +59,19 @@ int TensorListFromTensorCPUKernel::Init() {
   return IsCompatibleShape();
 }
 
-int TensorListFromTensorCPUKernel::ReSize() { return RET_OK; }
+int TensorListFromTensorCPUKernel::ReSize() {
+  auto ret = this->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init kernel failed!";
+    return ret;
+  }
+  return RET_OK;
+}
 
 int TensorListFromTensorCPUKernel::Run() {
+  input0_ = in_tensors_[0];  // row tensor
+  input1_ = in_tensors_[1];  // element_shape tensor
+  output0_ = out_tensors_[0];
   if (input0_->shape().size() == 0) {
     MS_LOG(ERROR) << "input0_->shape().size():" << input0_->shape().size() << " must be greater than 0";
   }
@@ -112,13 +122,6 @@ kernel::LiteKernel *CpuTensorListFromTensorFp32KernelCreator(const std::vector<l
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new TensorListFromTensorCPUKernel fail!";
     free(op_parameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed! name: " << op_parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
-    delete kernel;
     return nullptr;
   }
   return kernel;

@@ -117,6 +117,9 @@ int TensorListGetItem::MergeShape(const std::vector<int> &tmp) {
 }
 
 int TensorListGetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
+  if (!infer_flag()) {
+    return RET_INFER_INVALID;
+  }
   auto input0 = reinterpret_cast<TensorList *>(inputs_[0]);
   auto get_index = inputs_[1];
   MS_ASSERT(get_index != nullptr);
@@ -125,8 +128,8 @@ int TensorListGetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
     return RET_ERROR;
   }
   if (get_index->data_c() == nullptr) {
-    MS_LOG(ERROR) << "get_index->data_c() is nullptr";
-    return RET_NULL_PTR;
+    MS_LOG(DEBUG) << "get_index->data_c() is nullptr";
+    return RET_INFER_INVALID;
   }
   index_ = reinterpret_cast<int *>(get_index->data_c())[0];
   if (index_ < 0 || index_ > (input0->ElementsNum() - 1)) {

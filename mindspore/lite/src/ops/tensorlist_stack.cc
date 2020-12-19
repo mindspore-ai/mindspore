@@ -117,6 +117,9 @@ bool TensorListStack::IsFullyDefined(const std::vector<int> &shape) const {
 }
 
 int TensorListStack::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
+  if (!infer_flag()) {
+    return RET_INFER_INVALID;
+  }
   auto input0 = reinterpret_cast<TensorList *>(inputs_.front());
   MS_ASSERT(input0 != nullptr);
   if (input0->ElementsNum() == 0) {
@@ -130,7 +133,7 @@ int TensorListStack::InferShape(std::vector<lite::Tensor *> inputs_, std::vector
     return RET_NULL_PTR;
   }
   auto ele_shape_ptr = reinterpret_cast<int *>(ele_shape->data_c());
-  for (int i = 0; ele_shape->ElementsNum(); ++i) {
+  for (int i = 0; i < ele_shape->ElementsNum(); ++i) {
     output_shape_.push_back(ele_shape_ptr[i]);
   }
 

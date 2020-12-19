@@ -39,6 +39,7 @@ class MergeCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  bool PartialInputReady(int num_begin, int num_end);
 
  private:
   MergeParameter *merge_param_ = nullptr;

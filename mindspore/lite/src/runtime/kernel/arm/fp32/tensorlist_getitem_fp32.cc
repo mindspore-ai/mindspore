@@ -70,7 +70,14 @@ int TensorListGetItemCPUKernel::Run() {
   return RET_OK;
 }
 
-int TensorListGetItemCPUKernel::ReSize() { return RET_OK; }
+int TensorListGetItemCPUKernel::ReSize() {
+  auto ret = this->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init kernel failed!";
+    return ret;
+  }
+  return RET_OK;
+}
 
 kernel::LiteKernel *CpuTensorListGetItemFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                           const std::vector<lite::Tensor *> &outputs,
@@ -93,15 +100,9 @@ kernel::LiteKernel *CpuTensorListGetItemFp32KernelCreator(const std::vector<lite
     free(op_parameter);
     return nullptr;
   }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed! name: " << op_parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
   return kernel;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListGetItem, CpuTensorListGetItemFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TensorListGetItem, CpuTensorListGetItemFp32KernelCreator)
 }  // namespace mindspore::kernel

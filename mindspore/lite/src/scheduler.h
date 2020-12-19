@@ -53,7 +53,8 @@ class Scheduler {
   // schedule a node to a kernel
   kernel::LiteKernel *ScheduleNodeToKernel(const lite::Model::Node *src_node);
   // schedule a Model::SubGraph into a vector of kernel and subgraph_kernel
-  int ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kernel::LiteKernel *> *dst_kernels);
+  int ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kernel::LiteKernel *> *dst_kernels,
+                                std::vector<lite::Tensor *> *in_tensors, std::vector<lite::Tensor *> *out_tensors);
 
   // find in_kernels_ and out_kernels of kernel, sub_graph and nodes_ in sub_graph
   static void FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &kernels);
@@ -63,6 +64,8 @@ class Scheduler {
 
   // create subgraph_kernel from a vector of kernel
   kernel::SubGraphKernel *CreateSubGraphKernel(const std::vector<kernel::LiteKernel *> &kernels,
+                                               const std::vector<lite::Tensor *> *in_tensors,
+                                               const std::vector<lite::Tensor *> *out_tensors,
                                                kernel::SubGraphType type);
 
   bool MergeOpIsReady(const kernel::LiteKernel *kernel, std::map<const kernel::LiteKernel *, bool> is_kernel_finish);
