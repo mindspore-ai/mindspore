@@ -202,7 +202,6 @@ class MovieReview:
         dataset = ds.GeneratorDataset(source=Generator(input_list=self.train),
                                       column_names=["data", "label"], shuffle=False)
         dataset = dataset.batch(batch_size=batch_size, drop_remainder=True)
-        dataset = dataset.repeat(epoch_size)
         return dataset
 
     def create_test_dataset(self, batch_size):
