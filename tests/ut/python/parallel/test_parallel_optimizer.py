@@ -164,6 +164,12 @@ def test_edge_case():
         context.set_auto_parallel_context(parallel_mode="stand_alone")
         Lamb(net.trainable_params(), learning_rate=0.1)
     with pytest.raises(RuntimeError):
+        context.set_context(device_target="GPU")
+        context.set_auto_parallel_context(parallel_mode="data_parallel")
+        Lamb(net.trainable_params(), learning_rate=0.1)
+    with pytest.raises(RuntimeError):
+        context.set_context(device_target="Ascend")
+        context.set_auto_parallel_context(parallel_mode="data_parallel")
         Adam(net.trainable_params(), learning_rate=0.1)
     with pytest.raises(RuntimeError):
         context.set_auto_parallel_context(device_num=16)
