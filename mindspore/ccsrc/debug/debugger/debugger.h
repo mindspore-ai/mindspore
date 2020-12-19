@@ -164,6 +164,8 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
   // check if debugger enabled
   bool CheckDebuggerEnabled();
 
+  void CheckDebuggerEnabledParam();
+
   bool CheckDebuggerPartialMemoryEnabled();
 
   // check and save graph pointer

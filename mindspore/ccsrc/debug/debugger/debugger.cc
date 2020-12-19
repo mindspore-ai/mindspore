@@ -72,6 +72,7 @@ Debugger::Debugger()
       initial_suspend_(true),
       not_dataset_graph_sum_(0),
       version_("") {
+  CheckDebuggerEnabledParam();
   if (CheckDebuggerEnabled()) {
     // configure partial memory reuse
     partial_memory_ = CheckDebuggerPartialMemoryEnabled();
@@ -222,13 +223,28 @@ bool Debugger::CheckDebuggerDumpEnabled() {
 
 bool Debugger::CheckDebuggerEnabled() {
   // get env variables to configure debugger
-  const char *env_enable_str = std::getenv("ENABLE_MS_DEBUGGER");
-  if (env_enable_str != nullptr) {
-    if (std::strcmp(env_enable_str, "1") == 0) {
+  const char *env_enable_char = std::getenv("ENABLE_MS_DEBUGGER");
+  if (env_enable_char != nullptr) {
+    std::string env_enable_str = env_enable_char;
+    (void)std::transform(env_enable_str.begin(), env_enable_str.end(), env_enable_str.begin(), ::tolower);
+    if (env_enable_str == "1" || env_enable_str == "true") {
       return true;
     }
   }
   return false;
+}
+
+void Debugger::CheckDebuggerEnabledParam() {
+  // check the value of env variable ENABLE_MS_DEBUGGER
+  const char *env_enable_char = std::getenv("ENABLE_MS_DEBUGGER");
+  if (env_enable_char != nullptr) {
+    std::string env_enable_str = env_enable_char;
+    (void)std::transform(env_enable_str.begin(), env_enable_str.end(), env_enable_str.begin(), ::tolower);
+    if (env_enable_str != "0" && env_enable_str != "1" && env_enable_str != "false" && env_enable_str != "true") {
+      MS_LOG(WARNING) << "Env variable ENABLE_MS_DEBUGGER should be True/False/1/0 (case insensitive), but get: "
+                      << env_enable_str;
+    }
+  }
 }
 
 bool Debugger::CheckDebuggerPartialMemoryEnabled() {
