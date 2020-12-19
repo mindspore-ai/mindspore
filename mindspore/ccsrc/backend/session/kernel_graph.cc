@@ -1213,6 +1213,33 @@ void KernelGraph::RemoveNodeFromGraph(const AnfNodePtr &node) {
   }
 }
 
+ParameterPtr KernelGraph::AddExtraParamAndTensor(std::string param_name, int32_t value) {
+  ParameterPtr param;
+  ShapeVector shp = {1};
+  tensor::TensorPtr tensor_ptr = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
+  MS_EXCEPTION_IF_NULL(tensor_ptr);
+  mindspore::abstract::AbstractBasePtr paremeter_abstract_ptr = tensor_ptr->ToAbstract();
+  ParameterPtr new_param = std::make_shared<Parameter>(shared_from_this()->cast<KernelGraphPtr>());
+  MS_EXCEPTION_IF_NULL(new_param);
+  new_param->set_name(param_name);
+  new_param->set_abstract(paremeter_abstract_ptr);
+  param = NewParameter(new_param);
+  // ensure alloc mem for this param
+  std::vector<AnfNodePtr> *mute_inputs = MutableInputs();
+  MS_EXCEPTION_IF_NULL(mute_inputs);
+  mute_inputs->push_back(param);
+
+  tensor::TensorPtr data_tensor_ptr = std::make_shared<tensor::Tensor>(kInt32->type_id(), shp);
+  MS_EXCEPTION_IF_NULL(data_tensor_ptr);
+  int32_t *val = nullptr;
+  val = static_cast<int32_t *>(data_tensor_ptr->data_c());
+  *val = value;
+
+  extra_param_tensor_.push_back(std::make_pair(param, data_tensor_ptr));
+  MS_LOG(INFO) << "Create new param: " << param->DebugString();
+  return param;
+}
+
 void KernelGraph::UpdateGraphDynamicAttr() {
   for (const auto &cnode : execution_order_) {
     if (AnfAlgo::IsDynamicShape(cnode)) {

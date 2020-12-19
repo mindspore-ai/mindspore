@@ -739,8 +739,14 @@ void AscendControlParser::InsertMultipleAssignToGraph(NotNull<KernelGraphPtr> fr
                         << from_graph->ToString();
     }
     // insert assign between jump_node -1 and jump_node
-    if (jump_node_iter != from_graph_exe_order.begin()) {
-      InsertControlDependToGraph(from_graph, NOT_NULL(*(jump_node_iter - 1)), NOT_NULL(assign_node));
+    while (jump_node_iter != from_graph_exe_order.begin()) {
+      CNodePtr node = *(jump_node_iter - 1);
+      if (AnfAlgo::GetGraphId(node.get()) == from_graph->graph_id()) {
+        InsertControlDependToGraph(from_graph, NOT_NULL(*(jump_node_iter - 1)), NOT_NULL(assign_node));
+        break;
+      } else {
+        jump_node_iter--;
+      }
     }
     InsertControlDependToGraph(from_graph, NOT_NULL(assign_node), NOT_NULL(jump_node));
   }

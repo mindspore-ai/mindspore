@@ -45,6 +45,16 @@ bool NodePass::Run(const FuncGraphPtr &func_graph) {
     bool change = (new_node != nullptr);
     if (new_node != nullptr && new_node != node) {
       (void)manager->Replace(node, new_node);
+      // if replaced node is end_goto, refresh relative params in kernel graph
+      auto kernel_graph = func_graph->cast<std::shared_ptr<session::KernelGraph>>();
+      if (kernel_graph != nullptr && node->isa<CNode>()) {
+        auto cnode = node->cast<CNodePtr>();
+        MS_EXCEPTION_IF_NULL(cnode);
+        auto end_label = kernel_graph->get_end_goto();
+        if (cnode == end_label && AnfAlgo::GetCNodeName(cnode) == kLabelSwitchOpName) {
+          kernel_graph->set_end_goto(new_node->cast<CNodePtr>());
+        }
+      }
       (void)seen_node.erase(node);
     } else if (new_node == nullptr) {
       new_node = node;

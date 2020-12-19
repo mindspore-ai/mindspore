@@ -23,6 +23,7 @@
 #include <utility>
 #include <functional>
 #include <memory>
+#include <string>
 #include "backend/session/kernel_graph.h"
 #include "base/base_ref.h"
 #include "utils/contract.h"

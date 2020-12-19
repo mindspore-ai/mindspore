@@ -205,6 +205,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   std::unordered_map<GraphId, std::shared_ptr<KernelGraph>> graphs_;
   std::unordered_map<GraphInfo, std::shared_ptr<KernelGraph>> run_op_graphs_;
   std::unordered_map<FuncGraphPtr, KernelGraphPtr> front_backend_graph_map_;
+  std::unordered_map<GraphId, std::vector<GraphId>> parent_graphs_;
   std::shared_ptr<Context> context_;
   CallBackFunc summary_callback_;
   static GraphId graph_sum_;
