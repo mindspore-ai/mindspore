@@ -1639,7 +1639,7 @@ class AvgPool(_Pool):
         Tensor, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> import mindspore
@@ -1672,6 +1672,8 @@ class AvgPool(_Pool):
     def __init__(self, ksize=1, strides=1, padding="valid", data_format="NCHW"):
         if context.get_context("device_target") == "GPU":
             self.target = "GPU"
+        elif context.get_context("device_target") == "CPU":
+            self.target = "CPU"
         elif context.get_context("enable_ge"):
             self.target = "GE"
         else:

@@ -338,6 +338,19 @@ def get_bprop_avg_pool_grad(self):
 
         bprop_fn = bprop_gpu
 
+    elif self.target == "CPU":
+        avgpool_grad_cpu = G.AvgPoolGradCpu(
+            ksize=self.ksize,
+            strides=self.strides,
+            padding=self.padding,
+            data_format=self.format)
+
+        def bprop_cpu(x, out, dout):
+            dx = avgpool_grad_cpu(x, out, dout)
+            return (dx,)
+
+        bprop_fn = bprop_cpu
+
     elif self.target == "GE":
         avgpool_grad_ge = G.AvgPoolGrad(
                         ksize=self.ksize,

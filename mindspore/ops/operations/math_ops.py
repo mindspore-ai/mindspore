@@ -2519,7 +2519,7 @@ class Equal(_LogicBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -2656,7 +2656,7 @@ class NotEqual(_LogicBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.float32)
@@ -3459,7 +3459,7 @@ class Sign(PrimitiveWithInfer):
         Tensor, has the same shape and type as the `input_x`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
          >>> input_x = Tensor(np.array([[2.0, 0.0, -1.0]]), mindspore.float32)

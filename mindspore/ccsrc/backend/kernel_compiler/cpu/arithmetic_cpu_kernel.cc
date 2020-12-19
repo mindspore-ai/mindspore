@@ -99,6 +99,24 @@ void ArithmeticCPUKernel::Less(const T *input1, const T *input2, bool *out, size
   }
 }
 
+template <typename T>
+void ArithmeticCPUKernel::Equal(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    out[i] = input1[idx[0]] == input2[idx[1]];
+  }
+}
+
+template <typename T>
+void ArithmeticCPUKernel::NotEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    out[i] = input1[idx[0]] != input2[idx[1]];
+  }
+}
+
 void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -114,6 +132,10 @@ void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = POW;
   } else if (kernel_name == prim::kPrimLess->name()) {
     operate_type_ = LESS;
+  } else if (kernel_name == prim::kPrimEqual->name()) {
+    operate_type_ = EQUAL;
+  } else if (kernel_name == prim::kPrimNotEqual->name()) {
+    operate_type_ = NOTEQUAL;
   } else if (kernel_name == prim::kPrimAssignAdd->name()) {
     operate_type_ = ASSIGNADD;
   } else {
@@ -141,19 +163,22 @@ void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (dtype_ != AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 1)) {
     MS_LOG(EXCEPTION) << "Input0 and input1 must has the same data type";
   }
+  target_dtype_ = AnfAlgo::GetOutputInferDataType(kernel_node, 0);
 }
 
 bool ArithmeticCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                  const std::vector<kernel::AddressPtr> & /*workspace*/,
                                  const std::vector<kernel::AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt16) {
+  if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt16 || dtype_ == kNumberTypeInt8) {
     LaunchKernel<int>(inputs, outputs);
   } else if (dtype_ == kNumberTypeFloat32 || dtype_ == kNumberTypeFloat16 || dtype_ == kNumberTypeFloat64) {
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt64) {
     LaunchKernel<int64_t>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeBool) {
+    LaunchKernelLogic<bool>(inputs, outputs);
   } else {
-    MS_LOG(EXCEPTION) << "Data type is " << TypeIdLabel(dtype_) << "is not support.";
+    MS_LOG(EXCEPTION) << "Data type " << TypeIdLabel(dtype_) << "is not support.";
   }
   return true;
 }
@@ -190,7 +215,8 @@ void ArithmeticCPUKernel::GenIndex(size_t num, std::vector<size_t> *idx) {
 }
 
 template <typename T>
-void ArithmeticCPUKernel::LaunchLess(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
+void ArithmeticCPUKernel::LaunchKernelLogic(const std::vector<AddressPtr> &inputs,
+                                            const std::vector<AddressPtr> &outputs) {
   T *input1 = reinterpret_cast<T *>(inputs[0]->addr);
   T *input2 = reinterpret_cast<T *>(inputs[1]->addr);
   bool *output = reinterpret_cast<bool *>(outputs[0]->addr);
@@ -213,7 +239,15 @@ void ArithmeticCPUKernel::LaunchLess(const std::vector<AddressPtr> &inputs, cons
   }
   while (start < lens) {
     size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
-    threads.emplace_back(std::thread(&ArithmeticCPUKernel::Less<T>, this, input1, input2, output, start, end));
+    if (operate_type_ == LESS) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Less<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == EQUAL) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Equal<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == NOTEQUAL) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::NotEqual<T>, this, input1, input2, output, start, end));
+    } else {
+      MS_LOG(EXCEPTION) << "Not support " << operate_type_;
+    }
     start += once_compute_size;
   }
   for (size_t i = 0; i < threads.size(); ++i) {
@@ -223,8 +257,8 @@ void ArithmeticCPUKernel::LaunchLess(const std::vector<AddressPtr> &inputs, cons
 
 template <typename T>
 void ArithmeticCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs) {
-  if (operate_type_ == LESS) {
-    LaunchLess<T>(inputs, outputs);
+  if (target_dtype_ == kNumberTypeBool) {
+    LaunchKernelLogic<T>(inputs, outputs);
     return;
   }
   T *input1 = reinterpret_cast<T *>(inputs[0]->addr);
