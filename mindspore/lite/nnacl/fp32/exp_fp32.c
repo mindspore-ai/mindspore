@@ -49,7 +49,8 @@ void ExpFp32(const float *src, float *dst, int num) {
   float32x4_t param3 = vdupq_n_f32(1.0f / 6);
   float32x4_t param4 = vdupq_n_f32(0.5f);
   float32x4_t param5 = vdupq_n_f32(1.0f);
-  for (; i < num - C4NUM; i += C4NUM) {
+  int count = (num / C4NUM) * C4NUM;
+  for (; i < count; i += C4NUM) {
     float32x4_t input4 = vmaxq_f32(minv, vminq_f32(maxv, vld1q_f32(src + i)));
     int32x4_t integer4 = vcvtq_s32_f32(vdivq_f32(input4, param0));
     float32x4_t decimal4 = vsubq_f32(input4, vmulq_f32(vcvtq_f32_s32(integer4), param0));

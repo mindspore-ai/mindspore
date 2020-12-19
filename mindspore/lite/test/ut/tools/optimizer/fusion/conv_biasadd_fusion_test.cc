@@ -157,9 +157,6 @@ TEST_F(ConvBiasAddFusionTest, TestConvAddNode) {
   ASSERT_NE(nullptr, new_graph);
   auto new_meta_graph = lite::Export(new_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);
-  for (auto &cnode : new_meta_graph->nodes) {
-    ASSERT_EQ(cnode->primitive->value.AsConv2D()->hasBias, true);
-  }
   MS_LOG(INFO) << "Passed";
 }
 
@@ -171,9 +168,6 @@ TEST_F(ConvBiasAddFusionTest, TestDeptiwiseConvAddNode) {
   ASSERT_NE(nullptr, new_graph);
   auto new_meta_graph = lite::Export(new_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 1);
-  for (auto &cnode : new_meta_graph->nodes) {
-    ASSERT_EQ(cnode->primitive->value.AsDepthwiseConv2D()->hasBias, true);
-  }
 }
 
 TEST_F(ConvBiasAddFusionTest, TestBadCase_ConvAdd) {
@@ -184,10 +178,5 @@ TEST_F(ConvBiasAddFusionTest, TestBadCase_ConvAdd) {
   ASSERT_NE(nullptr, new_graph);
   auto new_meta_graph = lite::Export(new_graph);
   ASSERT_EQ(new_meta_graph->nodes.size(), 2);
-  for (auto &cnode : new_meta_graph->nodes) {
-    if (cnode->primitive->value.type == schema::PrimitiveType_DepthwiseConv2D) {
-      ASSERT_EQ(cnode->primitive->value.AsDepthwiseConv2D()->hasBias, false);
-    }
-  }
 }
 }  // namespace mindspore

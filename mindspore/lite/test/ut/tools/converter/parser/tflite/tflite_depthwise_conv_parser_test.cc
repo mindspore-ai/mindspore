@@ -37,7 +37,6 @@ TEST_F(TestTfliteParserDepthwiseConv1, AttrValue) {
   ASSERT_EQ(val->format, schema::Format_NHWC);
   ASSERT_EQ(val->group, 0);
   ASSERT_EQ(val->activationType, schema::ActivationType_NO_ACTIVATION);
-  ASSERT_EQ(val->hasBias, true);
   ASSERT_EQ(val->channelIn, 1);
   ASSERT_EQ(val->channelOut, 4);
   ASSERT_EQ(val->kernelH, 3);
@@ -71,7 +70,6 @@ TEST_F(TestTfliteParserDepthwiseConv2, AttrValue) {
   auto val = meta_graph->nodes.front()->primitive->value.AsDepthwiseConv2D();
   ASSERT_EQ(val->format, schema::Format_NHWC);
   ASSERT_EQ(val->activationType, schema::ActivationType_NO_ACTIVATION);
-  ASSERT_EQ(val->hasBias, true);
   ASSERT_EQ(val->channelIn, 2);
   ASSERT_EQ(val->channelMultiplier, 1);
   ASSERT_EQ(val->kernelH, 3);

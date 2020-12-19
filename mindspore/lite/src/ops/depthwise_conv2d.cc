@@ -44,7 +44,6 @@ int DepthwiseConv2D::GetPadLeft() const { return this->primitive_->value.AsDepth
 int DepthwiseConv2D::GetPadRight() const { return this->primitive_->value.AsDepthwiseConv2D()->padRight; }
 int DepthwiseConv2D::GetDilateW() const { return this->primitive_->value.AsDepthwiseConv2D()->dilateW; }
 int DepthwiseConv2D::GetDilateH() const { return this->primitive_->value.AsDepthwiseConv2D()->dilateH; }
-bool DepthwiseConv2D::GetHasBias() const { return this->primitive_->value.AsDepthwiseConv2D()->hasBias; }
 int DepthwiseConv2D::GetActivationType() const { return this->primitive_->value.AsDepthwiseConv2D()->activationType; }
 
 void DepthwiseConv2D::SetFormat(int format) {
@@ -69,7 +68,6 @@ void DepthwiseConv2D::SetPadLeft(int pad_left) { this->primitive_->value.AsDepth
 void DepthwiseConv2D::SetPadRight(int pad_right) { this->primitive_->value.AsDepthwiseConv2D()->padRight = pad_right; }
 void DepthwiseConv2D::SetDilateW(int dilate_w) { this->primitive_->value.AsDepthwiseConv2D()->dilateW = dilate_w; }
 void DepthwiseConv2D::SetDilateH(int dilate_h) { this->primitive_->value.AsDepthwiseConv2D()->dilateH = dilate_h; }
-void DepthwiseConv2D::SetHasBias(bool has_bias) { this->primitive_->value.AsDepthwiseConv2D()->hasBias = has_bias; }
 void DepthwiseConv2D::SetActivationType(int activation_type) {
   this->primitive_->value.AsDepthwiseConv2D()->activationType = static_cast<schema::ActivationType>(activation_type);
 }
@@ -183,7 +181,6 @@ int DepthwiseConv2D::GetPadLeft() const { return this->primitive_->value_as_Dept
 int DepthwiseConv2D::GetPadRight() const { return this->primitive_->value_as_DepthwiseConv2D()->padRight(); }
 int DepthwiseConv2D::GetDilateW() const { return this->primitive_->value_as_DepthwiseConv2D()->dilateW(); }
 int DepthwiseConv2D::GetDilateH() const { return this->primitive_->value_as_DepthwiseConv2D()->dilateH(); }
-bool DepthwiseConv2D::GetHasBias() const { return this->primitive_->value_as_DepthwiseConv2D()->hasBias(); }
 int DepthwiseConv2D::GetActivationType() const {
   return this->primitive_->value_as_DepthwiseConv2D()->activationType();
 }

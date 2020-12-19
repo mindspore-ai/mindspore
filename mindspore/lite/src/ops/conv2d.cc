@@ -53,7 +53,6 @@ int Conv2D::GetPadLeft() const { return this->primitive_->value.AsConv2D()->padL
 int Conv2D::GetPadRight() const { return this->primitive_->value.AsConv2D()->padRight; }
 int Conv2D::GetDilateW() const { return this->primitive_->value.AsConv2D()->dilateW; }
 int Conv2D::GetDilateH() const { return this->primitive_->value.AsConv2D()->dilateH; }
-bool Conv2D::GetHasBias() const { return this->primitive_->value.AsConv2D()->hasBias; }
 int Conv2D::GetActivationType() const { return this->primitive_->value.AsConv2D()->activationType; }
 
 void Conv2D::SetFormat(int format) { this->primitive_->value.AsConv2D()->format = (schema::Format)format; }
@@ -71,7 +70,6 @@ void Conv2D::SetPadLeft(int pad_left) { this->primitive_->value.AsConv2D()->padL
 void Conv2D::SetPadRight(int pad_right) { this->primitive_->value.AsConv2D()->padRight = pad_right; }
 void Conv2D::SetDilateW(int dilate_w) { this->primitive_->value.AsConv2D()->dilateW = dilate_w; }
 void Conv2D::SetDilateH(int dilate_h) { this->primitive_->value.AsConv2D()->dilateH = dilate_h; }
-void Conv2D::SetHasBias(bool has_bias) { this->primitive_->value.AsConv2D()->hasBias = has_bias; }
 void Conv2D::SetActivationType(int activation_type) {
   this->primitive_->value.AsConv2D()->activationType = (schema::ActivationType)activation_type;
 }
@@ -330,7 +328,6 @@ int Conv2D::GetPadLeft() const { return this->primitive_->value_as_Conv2D()->pad
 int Conv2D::GetPadRight() const { return this->primitive_->value_as_Conv2D()->padRight(); }
 int Conv2D::GetDilateW() const { return this->primitive_->value_as_Conv2D()->dilateW(); }
 int Conv2D::GetDilateH() const { return this->primitive_->value_as_Conv2D()->dilateH(); }
-bool Conv2D::GetHasBias() const { return this->primitive_->value_as_Conv2D()->hasBias(); }
 int Conv2D::GetActivationType() const { return this->primitive_->value_as_Conv2D()->activationType(); }
 
 PrimitiveC *Conv2DCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Conv2D>(primitive); }

@@ -48,7 +48,6 @@ class Conv2DGradFilter : public PrimitiveC {
   void SetPadRight(int pad_right);
   void SetDilateW(int dilate_w);
   void SetDilateH(int dilate_h);
-  void SetHasBias(bool has_bias);
   void SetActivationType(int activation_type);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
@@ -70,7 +69,6 @@ class Conv2DGradFilter : public PrimitiveC {
   int GetPadRight() const;
   int GetDilateW() const;
   int GetDilateH() const;
-  bool GetHasBias() const;
   int GetActivationType() const;
   std::vector<int> GetFilterShape() const;
 };

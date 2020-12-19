@@ -37,7 +37,6 @@ TEST_F(TestTfliteParserDeConv, AttrValue) {
   ASSERT_EQ(val->format, schema::Format_NHWC);
   ASSERT_EQ(val->group, 1);
   ASSERT_EQ(val->activationType, schema::ActivationType_NO_ACTIVATION);
-  ASSERT_EQ(val->hasBias, true);
 
   ASSERT_EQ(val->channelIn, 1);
   ASSERT_EQ(val->channelOut, 4);

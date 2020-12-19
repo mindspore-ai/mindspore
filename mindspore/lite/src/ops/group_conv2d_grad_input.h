@@ -48,7 +48,6 @@ class GroupConv2DGradInput : public PrimitiveC {
   void SetPadRight(int pad_right);
   void SetDilateW(int dilate_w);
   void SetDilateH(int dilate_h);
-  void SetHasBias(bool has_bias);
   void SetActivationType(int activation_type);
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
@@ -69,7 +68,6 @@ class GroupConv2DGradInput : public PrimitiveC {
   int GetPadRight() const;
   int GetDilateW() const;
   int GetDilateH() const;
-  bool GetHasBias() const;
   std::vector<int> GetInputShape() const;
   int GetActivationType() const;
 };

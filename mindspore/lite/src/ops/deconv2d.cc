@@ -47,7 +47,6 @@ int DeConv2D::GetPadLeft() const { return this->primitive_->value.AsDeConv2D()->
 int DeConv2D::GetPadRight() const { return this->primitive_->value.AsDeConv2D()->padRight; }
 int DeConv2D::GetDilateW() const { return this->primitive_->value.AsDeConv2D()->dilateW; }
 int DeConv2D::GetDilateH() const { return this->primitive_->value.AsDeConv2D()->dilateH; }
-bool DeConv2D::GetHasBias() const { return this->primitive_->value.AsDeConv2D()->hasBias; }
 int DeConv2D::GetActivationType() const { return this->primitive_->value.AsDeConv2D()->activationType; }
 
 void DeConv2D::SetFormat(int format) { this->primitive_->value.AsDeConv2D()->format = (schema::Format)format; }
@@ -65,7 +64,6 @@ void DeConv2D::SetPadLeft(int pad_left) { this->primitive_->value.AsDeConv2D()->
 void DeConv2D::SetPadRight(int pad_right) { this->primitive_->value.AsDeConv2D()->padRight = pad_right; }
 void DeConv2D::SetDilateW(int dilate_w) { this->primitive_->value.AsDeConv2D()->dilateW = dilate_w; }
 void DeConv2D::SetDilateH(int dilate_h) { this->primitive_->value.AsDeConv2D()->dilateH = dilate_h; }
-void DeConv2D::SetHasBias(bool has_bias) { this->primitive_->value.AsDeConv2D()->hasBias = has_bias; }
 void DeConv2D::SetActivationType(int activation_type) {
   this->primitive_->value.AsDeConv2D()->activationType = (schema::ActivationType)activation_type;
 }
@@ -297,7 +295,6 @@ int DeConv2D::GetPadLeft() const { return this->primitive_->value_as_DeConv2D()-
 int DeConv2D::GetPadRight() const { return this->primitive_->value_as_DeConv2D()->padRight(); }
 int DeConv2D::GetDilateW() const { return this->primitive_->value_as_DeConv2D()->dilateW(); }
 int DeConv2D::GetDilateH() const { return this->primitive_->value_as_DeConv2D()->dilateH(); }
-bool DeConv2D::GetHasBias() const { return this->primitive_->value_as_DeConv2D()->hasBias(); }
 int DeConv2D::GetActivationType() const { return this->primitive_->value_as_DeConv2D()->activationType(); }
 
 PrimitiveC *DeConv2DCreator(const schema::Primitive *primitive) {

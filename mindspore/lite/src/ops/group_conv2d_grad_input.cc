@@ -38,7 +38,6 @@ int GroupConv2DGradInput::GetPadLeft() const { return this->primitive_->value.As
 int GroupConv2DGradInput::GetPadRight() const { return this->primitive_->value.AsGroupConv2DGradInput()->padRight; }
 int GroupConv2DGradInput::GetDilateW() const { return this->primitive_->value.AsGroupConv2DGradInput()->dilateW; }
 int GroupConv2DGradInput::GetDilateH() const { return this->primitive_->value.AsGroupConv2DGradInput()->dilateH; }
-bool GroupConv2DGradInput::GetHasBias() const { return this->primitive_->value.AsGroupConv2DGradInput()->hasBias; }
 std::vector<int> GroupConv2DGradInput::GetInputShape() const {
   return this->primitive_->value.AsGroupConv2DGradInput()->input_shape;
 }
@@ -87,9 +86,6 @@ void GroupConv2DGradInput::SetDilateW(int dilate_w) {
 void GroupConv2DGradInput::SetDilateH(int dilate_h) {
   this->primitive_->value.AsGroupConv2DGradInput()->dilateH = dilate_h;
 }
-void GroupConv2DGradInput::SetHasBias(bool has_bias) {
-  this->primitive_->value.AsGroupConv2DGradInput()->hasBias = has_bias;
-}
 void GroupConv2DGradInput::SetActivationType(int activation_type) {
   this->primitive_->value.AsGroupConv2DGradInput()->activationType = (schema::ActivationType)activation_type;
 }
@@ -135,7 +131,6 @@ int GroupConv2DGradInput::GetPadLeft() const { return this->primitive_->value_as
 int GroupConv2DGradInput::GetPadRight() const { return this->primitive_->value_as_GroupConv2DGradInput()->padRight(); }
 int GroupConv2DGradInput::GetDilateW() const { return this->primitive_->value_as_GroupConv2DGradInput()->dilateW(); }
 int GroupConv2DGradInput::GetDilateH() const { return this->primitive_->value_as_GroupConv2DGradInput()->dilateH(); }
-bool GroupConv2DGradInput::GetHasBias() const { return this->primitive_->value_as_GroupConv2DGradInput()->hasBias(); }
 std::vector<int> GroupConv2DGradInput::GetInputShape() const {
   auto fb_vector = this->primitive_->value_as_GroupConv2DGradInput()->input_shape();
   return std::vector<int>(fb_vector->begin(), fb_vector->end());
