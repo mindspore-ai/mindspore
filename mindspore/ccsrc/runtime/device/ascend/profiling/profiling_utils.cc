@@ -24,14 +24,15 @@
 #include "runtime/device/ascend/profiling/reporter/task_desc_reporter.h"
 #include "utils/ms_context.h"
 #include "runtime/device/ascend/profiling/reporter/point_reporter.h"
+#include "nlohmann/json.hpp"
 
 namespace mindspore {
 namespace device {
 namespace ascend {
 constexpr uint32_t kMaxProfilingNodeNum = 100;
 constexpr char kCustomNode[] = "PROFILING_CUSTOM_";
-constexpr char kFpStartNode[] = "PROFILING_FP_START";
-constexpr char kBpEndNode[] = "PROFILING_BP_END";
+constexpr char kFpStartNode[] = "fp_point";
+constexpr char kBpEndNode[] = "bp_point";
 constexpr char kIterEndNode[] = "PROFILING_ITER_END";
 // PROFILING_CUSTOM_LOGID_START 3
 constexpr uint64_t kProfilingFpStartLogId = 1;
@@ -42,14 +43,29 @@ std::map<uint32_t, std::vector<std::string>> ProfilingUtils::graph_kernel_name_;
 std::map<uint32_t, std::vector<std::shared_ptr<ProfDesc>>> ProfilingUtils::graph_point_;
 uint32_t ProfilingUtils::custom_node_index_ = 1;
 
+nlohmann::json GetContextProfilingOption() {
+  auto context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context);
+  const string prof_options_str = context->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
+  nlohmann::json j;
+  try {
+    j = nlohmann::json::parse(prof_options_str);
+  } catch (nlohmann::json::parse_error &e) {
+    MS_LOG(EXCEPTION) << "Parse profiling option json failed, error:" << e.what();
+  }
+  return j;
+}
+
 ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<const session::KernelGraph *> graph_ptr) {
   MS_LOG(INFO) << "get env start";
   custom_node_index_ = 1;
   auto &cnode_exec_order = graph_ptr->execution_order();
+  auto profiling_option = GetContextProfilingOption();
+
   ProfilingTraceInfo profiling_trace;
-  profiling_trace.trace_begin = GetTraceBegin(cnode_exec_order);
-  profiling_trace.trace_bp_end = GetTraceBpEnd(cnode_exec_order);
-  profiling_trace.trace_netoutput = GetTraceNetoutput(cnode_exec_order);
+  profiling_trace.trace_begin = GetTraceBegin(cnode_exec_order, profiling_option);
+  profiling_trace.trace_bp_end = GetTraceBpEnd(cnode_exec_order, profiling_option);
+  profiling_trace.trace_netoutput = GetTraceNetoutput(cnode_exec_order, profiling_option);
 
   for (uint32_t i = 1; i <= kMaxProfilingNodeNum; ++i) {
     std::string env_str = std::string(kCustomNode) + std::to_string(i);
@@ -80,10 +96,14 @@ void ProfilingUtils::GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order,
   }
 }
 
-std::string ProfilingUtils::GetTraceBegin(const std::vector<CNodePtr> &cnode_exec_order) {
-  const char *trace_begin = std::getenv(kFpStartNode);
-  if (trace_begin != nullptr) {
-    return std::string(trace_begin);
+std::string ProfilingUtils::GetTraceBegin(const std::vector<CNodePtr> &cnode_exec_order, const nlohmann::json &option) {
+  auto iter = option.find(kFpStartNode);
+  if (iter != option.end() && iter->is_string()) {
+    std::string trace_begin_str = *iter;
+    if (!trace_begin_str.empty()) {
+      MS_LOG(INFO) << "Get fp_point from profiling_option:" << trace_begin_str;
+      return trace_begin_str;
+    }
   }
 
   std::string fp_start_str;
@@ -124,12 +144,16 @@ void ProfilingUtils::GetCNodeOutputRealNode(const std::string &node_name, const 
   }
 }
 
-std::string ProfilingUtils::GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order) {
-  const char *trace_bp_end = std::getenv(kBpEndNode);
-
-  if (trace_bp_end != nullptr) {
-    return std::string(trace_bp_end);
+std::string ProfilingUtils::GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order, const nlohmann::json &option) {
+  auto bp_point = option.find(kBpEndNode);
+  if (bp_point != option.end() && bp_point->is_string()) {
+    std::string bp_point_str = *bp_point;
+    if (!bp_point_str.empty()) {
+      MS_LOG(INFO) << "Get bp_point from profiling_option:" << bp_point_str;
+      return bp_point_str;
+    }
   }
+
   std::string bp_end_str;
   // Contain hccl kernel
   auto iter = cnode_exec_order.rbegin();
@@ -179,9 +203,17 @@ std::string ProfilingUtils::GetGraphLastTbeKernelName(const std::vector<CNodePtr
   return last_tbe_kernel_name;
 }
 
-std::string ProfilingUtils::GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order) {
-  const char *trace_netoutput = std::getenv(kIterEndNode);
-  return trace_netoutput == nullptr ? GetGraphLastTbeKernelName(cnode_exec_order) : std::string(trace_netoutput);
+std::string ProfilingUtils::GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order,
+                                              const nlohmann::json &option) {
+  auto iter_end = option.find(kIterEndNode);
+  if (iter_end != option.end() && iter_end->is_string()) {
+    std::string iter_end_str = *iter_end;
+    if (!iter_end_str.empty()) {
+      MS_LOG(INFO) << "Get iter_end from profiling_option:" << iter_end_str;
+      return iter_end_str;
+    }
+  }
+  return GetGraphLastTbeKernelName(cnode_exec_order);
 }
 
 NotNull<CNodePtr> ProfilingUtils::CreateProfilingCNode(const ProfilingContent &profiling_content,

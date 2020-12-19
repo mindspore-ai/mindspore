@@ -23,13 +23,21 @@
 #include <nlohmann/json.hpp>
 #include "utils/contract.h"
 #include "utils/ms_context.h"
+#include "toolchain/prof_callback.h"
+#include "runtime/device/ascend/profiling/profiling_callback_register.h"
 
 using std::map;
 using std::string;
+using Status = uint32_t;
 namespace mindspore {
 namespace device {
 namespace ascend {
-class ProfilingEngineImpl;
+struct MsprofCallback {
+  MsprofCtrlCallback msprofCtrlCallback;
+  MsprofSetDeviceCallback msprofSetDeviceCallback;
+  MsprofReporterCallback msprofReporterCallback;
+};
+
 class ProfilingManager {
  public:
   static ProfilingManager &GetInstance();
@@ -43,17 +51,31 @@ class ProfilingManager {
     MS_EXCEPTION_IF_NULL(context);
     return context->get_param<bool>(MS_CTX_ENABLE_PROFILING);
   }
+  Status PluginInit() const;
+  void PluginUnInit() const;
+  Status CallMsprofReport(NotNull<ReporterData *> reporter_data) const;
+  struct MsprofCallback &GetMsprofCallback() {
+    return prof_cb_;
+  }
+  void SetMsprofCtrlCallback(MsprofCtrlCallback func) { prof_cb_.msprofCtrlCallback = func; }
+  void SetMsprofReporterCallback(MsprofReporterCallback func) { prof_cb_.msprofReporterCallback = func; }
+  void SetMsprofSetDeviceCallback(MsprofSetDeviceCallback func) { prof_cb_.msprofSetDeviceCallback = func; }
+  Status GetProfConf(NotNull<MsprofGeOptions *> prof);
 
  protected:
   ProfilingManager();
-  ~ProfilingManager() { prof_handle_ = nullptr; }
+  ~ProfilingManager() {}
 
  private:
-  bool ProfStartUp(const nlohmann::json &json);
-  std::shared_ptr<ProfilingEngineImpl> engine_0_;
+  bool ProfStartUp(NotNull<MsprofGeOptions *> prof_conf);
   uint32_t device_id_;
-  void *prof_handle_;
+  MsprofCallback prof_cb_;
 };
+
+Status RegProfCtrlCallback(MsprofCtrlCallback func);
+Status RegProfSetDeviceCallback(MsprofSetDeviceCallback func);
+Status RegProfReporterCallback(MsprofReporterCallback func);
+Status ProfCommandHandle(ProfCommandHandleType type, void *data, uint32_t len);
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

@@ -16,7 +16,7 @@
 
 #include <algorithm>
 #include "runtime/device/ascend/profiling/reporter/desc_reporter.h"
-#include "runtime/device/ascend/profiling/plugin_impl.h"
+#include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "utils/log_adapter.h"
 
 constexpr size_t kReportMaxLen = 2048;
@@ -27,16 +27,13 @@ namespace ascend {
 DescReporter::~DescReporter() = default;
 
 void DescReporter::ReportByLine(const std::string &data, const std::string &file_name) const {
-  auto reporter = PluginImpl::GetPluginReporter();
-  MS_EXCEPTION_IF_NULL(reporter);
-
   auto tot_size = data.size();
   size_t cur_size = 0;
   while (cur_size < tot_size) {
     size_t remain_size = tot_size - cur_size;
     size_t report_size = std::min(remain_size, kReportMaxLen);
 
-    Msprof::Engine::ReporterData report_data{};
+    ReporterData report_data{};
     report_data.deviceId = device_id_;
     report_data.dataLen = report_size;
     report_data.data = (unsigned char *)data.c_str() + cur_size;
@@ -44,7 +41,7 @@ void DescReporter::ReportByLine(const std::string &data, const std::string &file
     if (ret != 0) {
       MS_LOG(EXCEPTION) << "Memcpy_s report data tag failed";
     }
-    auto report_ret = reporter->Report(&report_data);
+    auto report_ret = ProfilingManager::GetInstance().CallMsprofReport(NOT_NULL(&report_data));
     if (report_ret != 0) {
       MS_LOG(EXCEPTION) << "Report data failed";
     }

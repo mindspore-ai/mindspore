@@ -422,12 +422,7 @@ GraphInfo GetSingleOpGraphInfo(const PrimitivePtr &prim, const std::vector<tenso
 }
 }  // namespace
 
-void AscendSession::Init(uint32_t device_id) {
-  InitExecutor(kAscendDevice, device_id);
-  auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id);
-  MS_EXCEPTION_IF_NULL(runtime_instance);
-  runtime_instance->CreateContext();
-}
+void AscendSession::Init(uint32_t device_id) { InitExecutor(kAscendDevice, device_id); }
 
 void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   auto context_ptr = MsContext::GetInstance();

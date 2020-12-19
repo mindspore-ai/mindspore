@@ -515,6 +515,10 @@ CNodePtr KernelAdjust::CreateStreamAssignAddnOP(const std::shared_ptr<session::K
   selected_kernel_builder.SetKernelType(KernelType::TBE_KERNEL);
   MS_EXCEPTION_IF_NULL(switch_loop_input.at(kCurLoopCountParamName));
   assign_add_one->set_abstract(switch_loop_input.at(kCurLoopCountParamName)->abstract());
+  // add AssignAdd op to kernel ref node map
+  session::AnfWithOutIndex final_pair = std::make_pair(assign_add_one, 0);
+  session::KernelWithIndex kernel_with_index = AnfAlgo::VisitKernel(AnfAlgo::GetInputNode(assign_add_one, 0), 0);
+  kernel_graph_ptr->AddRefCorrespondPairs(final_pair, kernel_with_index);
   return assign_add_one;
 }
 

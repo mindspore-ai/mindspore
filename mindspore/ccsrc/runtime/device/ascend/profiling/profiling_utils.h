@@ -118,9 +118,9 @@ class ProfilingUtils {
                                                 NotNull<session::KernelGraph *> graph_ptr);
   static CNodePtr CreateProfilingCNodeWithStream(const AnfNodePtr &anf_node, const ProfilingContent &profiling_content,
                                                  NotNull<session::KernelGraph *> graph_ptr);
-  static std::string GetTraceBegin(const std::vector<CNodePtr> &cnode_exec_order);
-  static std::string GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order);
-  static std::string GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order);
+  static std::string GetTraceBegin(const std::vector<CNodePtr> &cnode_exec_order, const nlohmann::json &option);
+  static std::string GetTraceBpEnd(const std::vector<CNodePtr> &cnode_exec_order, const nlohmann::json &option);
+  static std::string GetTraceNetoutput(const std::vector<CNodePtr> &cnode_exec_order, const nlohmann::json &option);
   static std::string GetGraphLastTbeKernelName(const std::vector<CNodePtr> &cnode_exec_order);
   static void GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order,
                            NotNull<ProfilingTraceInfo *> profiling_trace);

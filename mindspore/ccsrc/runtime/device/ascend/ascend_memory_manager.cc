@@ -31,7 +31,7 @@ void AscendMemoryManager::MallocDeviceMemory() {
   device_mem_size_ = context_mem == 0 ? kAscendDeviceMemSize : context_mem;
   auto ret = rtMalloc(reinterpret_cast<void **>(&device_mem_base_), device_mem_size_, RT_MEMORY_HBM);
   if (ret != ACL_RT_SUCCESS) {
-    if (ret == ACL_ERROR_RT_DRV_INTERNEL_ERROR) {
+    if (ret == ACL_ERROR_RT_DRV_INTERNAL_ERROR) {
       auto context_ptr = MsContext::GetInstance();
       MS_EXCEPTION_IF_NULL(context_ptr);
       unsigned int device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);

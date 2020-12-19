@@ -1019,7 +1019,6 @@ void InitHccl() {
   mindspore::parse::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
-  (void)context::OpenTsd(ms_context);
   uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
   std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
   ms_context->set_param<bool>(MS_CTX_ENABLE_HCCL, true);
@@ -1027,10 +1026,14 @@ void InitHccl() {
       ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
     auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(device_name, device_id);
     MS_EXCEPTION_IF_NULL(runtime_instance);
+    runtime_instance->PreInit();
+    (void)context::OpenTsd(ms_context);
     if (!runtime_instance->Init()) {
       MS_LOG(ERROR) << "Kernel runtime init error.";
       return;
     }
+  } else {
+    (void)context::OpenTsd(ms_context);
   }
 #endif
 }
@@ -1060,9 +1063,29 @@ void ReleaseGeTsd() {
   }
 }
 
+void StartUpProfiling() {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PROFILING)) {
+    return;
+  }
+  MS_LOG(INFO) << "Startup profiling";
+  // Start up profiling before OpenTsd
+  uint32_t device_id = ms_context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  std::string device_name = ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  if (ms_context->backend_policy() == "ms" &&
+      ms_context->get_param<std::string>(MS_CTX_DEVICE_TARGET) == kAscendDevice) {
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(device_name, device_id);
+    MS_EXCEPTION_IF_NULL(runtime_instance);
+    runtime_instance->PreInit();
+  }
+}
+
 void InitBackend() {
   // set python env flag
   mindspore::parse::python_adapter::set_python_env_flag(true);
+  // Startup profiling before open tsd
+  StartUpProfiling();
   // open tsd before ge initialize
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
