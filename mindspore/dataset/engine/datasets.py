@@ -1928,6 +1928,10 @@ class BatchDataset(Dataset):
         new_op.input_columns = copy.deepcopy(self.input_columns, memodict)
         new_op.output_columns = copy.deepcopy(self.output_columns, memodict)
         new_op.column_order = copy.deepcopy(self.column_order, memodict)
+        new_op.saved_output_types = self.saved_output_types
+        new_op.saved_output_shapes = self.saved_output_shapes
+        new_op.input_indexs = copy.deepcopy(self._input_indexs, memodict)
+        new_op.dataset_size = self.dataset_size
         new_op.pad = self.pad
         new_op.python_multiprocessing = copy.deepcopy(self.python_multiprocessing, memodict)
         new_op.hook = copy.deepcopy(self.hook, memodict)
