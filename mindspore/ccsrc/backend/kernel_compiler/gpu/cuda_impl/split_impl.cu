@@ -48,3 +48,6 @@ template void SplitKernel(const size_t size, const int axis_step, const int all_
 template void SplitKernel(const size_t size, const int axis_step, const int all_size_before_axis,
                           const int all_size_axis, const half* input, half** outputs,
                           cudaStream_t cuda_stream);
+template void SplitKernel(const size_t size, const int axis_step, const int all_size_before_axis,
+                          const int all_size_axis, const uint32_t* input, uint32_t** outputs,
+                          cudaStream_t cuda_stream);
