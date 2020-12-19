@@ -94,6 +94,7 @@ struct EmbeddingHostCache {
 };
 
 struct PsCacheStatisticsInfo {
+  size_t batch_id_count_{0};
   size_t batch_id_unique_count_{0};
   size_t device_to_host_size_{0};
   size_t host_to_device_size_{0};
@@ -126,7 +127,6 @@ class PsCacheManager {
   bool initialized_ps_cache() const { return initialized_ps_cache_; }
   void DoProcessData(uint32_t device_id, void *context);
   void IncreaseGraphStep(const std::string &channel_name);
-  bool terminated() const { return terminated_; }
   void Finalize();
   void DumpHashTables(bool dump_device_tables = false) const;
 
@@ -140,13 +140,14 @@ class PsCacheManager {
   std::string channel_name();
   void set_channel_name(const std::string channel_name);
   void InitParameterServer();
+  void InitDataChannel();
   void AllocMemForHashTable();
   void SetLocalIdRank();
   void ProcessDataTask(uint32_t device_id, void *context);
   bool ProcessData();
   bool ParseData(const int *batch_ids, const size_t batch_ids_len, int *hash_index);
   bool WaitGraphRun();
-  int ParseDeviceData(size_t id, bool *need_swap_device_to_host, bool *need_swap_host_to_device);
+  bool ParseDeviceData(size_t id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, int *hash_index);
   bool ParseHostDataHostToDevice(size_t id);
   bool ParseHostDataDeviceToHost(size_t id);
   bool HashSwapDeviceOut(int *swap_out_index, ::ps::SArray<float> *swap_out_data, const HashTableInfo &hash_info);
@@ -164,6 +165,7 @@ class PsCacheManager {
                        const int *indices_addr, float *output_addr);
   bool CheckFinishInsertInitInfo() const;
   void AddEmbeddingTable() const;
+  void DumpStatisticsInfo(size_t each_print_step = 1000);
 
   bool initialized_ps_cache_{false};
   std::string channel_name_;
@@ -189,7 +191,6 @@ class PsCacheManager {
   std::atomic_bool finish_insert_init_info_{false};
   std::atomic_bool finish_init_parameter_server_{false};
   std::atomic_bool running_{false};
-  std::atomic_bool terminated_{false};
 };
 
 static PsCacheManager &ps_cache_instance = PsCacheManager::GetInstance();
