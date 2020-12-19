@@ -26,6 +26,9 @@ void FusedWeightDecayScaleMomentum(const size_t element_num, T *weight_decay, T 
                                    const T *learning_rate, const S *gradient, const T *momentum,
                                    cudaStream_t cuda_stream);
 template <typename T, typename S>
+void FusedWeightDecayMomentum(const size_t element_num, T *weight_decay, T *variable, T *accumulation,
+                              const T *learning_rate, const S *gradient, const T *momentum, cudaStream_t cuda_stream);
+template <typename T, typename S>
 void FusedScaleMomentum(const size_t element_num, T *scale, T *variable, T *accumulation, const T *learning_rate,
                         const S *gradient, const T *momentum, cudaStream_t cuda_stream);
 template <typename T, typename S>

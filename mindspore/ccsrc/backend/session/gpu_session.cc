@@ -22,6 +22,7 @@
 #include "backend/optimizer/gpu/adam_fusion.h"
 #include "backend/optimizer/gpu/apply_momentum_weight_scale_fusion.h"
 #include "backend/optimizer/gpu/apply_momentum_scale_fusion.h"
+#include "backend/optimizer/gpu/apply_momentum_weight_fusion.h"
 #include "backend/optimizer/gpu/batch_norm_relu_fusion.h"
 #include "backend/optimizer/gpu/batch_norm_relu_grad_fusion.h"
 #include "backend/optimizer/gpu/batch_norm_add_relu_fusion.h"
@@ -125,6 +126,7 @@ void GPUSession::Optimize(const std::shared_ptr<KernelGraph> &kernel_graph) {
   pm->AddPass(std::make_shared<opt::AdamFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayScaleFusion>());
   pm->AddPass(std::make_shared<opt::ApplyMomentumScaleFusion>());
+  pm->AddPass(std::make_shared<opt::ApplyMomentumWeightDecayFusion>());
   if (!(context_ptr->get_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL))) {
     pm->AddPass(std::make_shared<opt::CastAllFusion>("cast_all"));
   }

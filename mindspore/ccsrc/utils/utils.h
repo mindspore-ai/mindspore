@@ -234,6 +234,7 @@ constexpr auto kReduceMeanOpName = "ReduceMean";
 constexpr auto kReduceAnyOpName = "ReduceAny";
 constexpr auto kReduceAllOpName = "ReduceAll";
 constexpr auto kFusedWeightScaleApplyMomentum = "FusedWeightScaleApplyMomentum";
+constexpr auto kFusedWeightApplyMomentum = "FusedWeightApplyMomentum";
 constexpr auto kFusedScaleApplyMomentum = "FusedScaleApplyMomentum";
 constexpr auto kBasicLSTMCellWeightGradOpName = "BasicLSTMCellWeightGrad";
 constexpr auto kBasicLSTMCellInputGradOpName = "BasicLSTMCellInputGrad";
