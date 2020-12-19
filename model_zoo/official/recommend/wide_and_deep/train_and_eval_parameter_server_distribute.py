@@ -24,6 +24,7 @@ from mindspore.context import ParallelMode
 from mindspore.communication.management import get_rank, get_group_size, init
 from mindspore.nn.wrap.cell_wrapper import VirtualDatasetCellTriple
 from mindspore.common import set_seed
+from mindspore.parallel._ps_context import _is_role_worker
 
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
 from src.callbacks import LossCallBack, EvalCallBack
@@ -117,11 +118,14 @@ def train_and_eval(config):
     eval_callback = EvalCallBack(model, ds_eval, auc_metric, config)
 
     callback = LossCallBack(config=config)
-    if cache_enable:
-        ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size()*epochs,
-                                      keep_checkpoint_max=5, integrated_save=False)
+    if _is_role_worker():
+        if cache_enable:
+            ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size()*epochs,
+                                          keep_checkpoint_max=1, integrated_save=False)
+        else:
+            ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(), keep_checkpoint_max=5)
     else:
-        ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(), keep_checkpoint_max=5)
+        ckptconfig = CheckpointConfig(save_checkpoint_steps=1, keep_checkpoint_max=1)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
                                  directory=config.ckpt_path + '/ckpt_' + str(get_rank()) + '/',
                                  config=ckptconfig)

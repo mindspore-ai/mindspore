@@ -48,7 +48,7 @@ struct HashTableInfo {
   size_t embedding_size{0};
   size_t vocab_size{0};
   Address device_address{nullptr, 0};
-  std::shared_ptr<int[]> host_address{nullptr};
+  std::shared_ptr<float[]> host_address{nullptr};
   ParamInitInfo param_init_info_;
 };
 
@@ -166,6 +166,8 @@ class PsCacheManager {
   bool CheckFinishInsertInitInfo() const;
   void AddEmbeddingTable() const;
   void DumpStatisticsInfo(size_t each_print_step = 1000);
+  bool SyncHostEmbeddingTable();
+  bool SyncDeviceEmbeddingTable();
 
   bool initialized_ps_cache_{false};
   std::string channel_name_;

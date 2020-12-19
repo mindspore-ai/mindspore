@@ -552,7 +552,6 @@ template <typename T>
 void ParameterServer<T>::Finalize() {
   running_ = false;
   apply_grads_cv_.notify_one();
-  SyncEmbeddingTables();
 }
 
 template <typename T>
@@ -774,7 +773,7 @@ void ParameterServer<T>::GetEmbeddingTableParamPtr() {
   for (auto cnode : cnodes) {
     MS_EXCEPTION_IF_NULL(cnode);
     std::string cnode_name = AnfAlgo::GetCNodeName(cnode);
-    if (cnode_name == kEmbeddingLookupOpName) {
+    if (cnode_name == kEmbeddingLookupOpName || cnode_name == kGatherV2OpName) {
       auto embedding_table = AnfAlgo::GetInputNode(cnode, 0);
       MS_EXCEPTION_IF_NULL(embedding_table);
       MS_LOG(INFO) << "Embedding table name is " << embedding_table->fullname_with_scope() << ", key is " << count;
@@ -832,6 +831,7 @@ void ParameterServer<T>::Run(const FuncGraphPtr &func_graph) {
   Init(func_graph);
   PSContext::instance()->SetPSRankId(rank_id_);
   thread_->join();
+  SyncEmbeddingTables();
   MS_LOG(INFO) << "PServer finished updating models, starts finalizing...";
   ::ps::Finalize(0, true);
   MS_LOG(INFO) << "PServer finalized successfully.";

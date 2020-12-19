@@ -1085,10 +1085,10 @@ void ClearResAtexit() {
   session::ClearPythonParasMap();
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
   if (ps::Util::IsParamServerMode() && ps::Util::IsRoleOfWorker()) {
-    ps::worker.Finalize();
     if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
       ps::ps_cache_instance.Finalize();
     }
+    ps::worker.Finalize();
   }
 #endif
   ad::g_k_prims.clear();

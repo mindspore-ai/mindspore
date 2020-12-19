@@ -292,7 +292,8 @@ class EmbeddingLookup(Cell):
                                      "in 'full_batch' and 'table_row_slice' parallel strategy.")
                 self.vocab_cache_size = self.vocab_cache_size * device_num
             self.cache_enable = True
-            self.vocab_size = self.vocab_cache_size
+            if _is_role_worker():
+                self.vocab_size = self.vocab_cache_size
 
     def _set_voacb_cache_enable(self, vocab_cache_size, embedding_size, vocab_size):
         """PS embeddingLookup cache enable set."""

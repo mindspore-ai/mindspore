@@ -30,8 +30,8 @@ static const size_t INVALID_STEP_VALUE = 0;
 static const int INVALID_INDEX_VALUE = -1;
 
 struct HashMapElement {
-  int id_;
-  size_t step_;
+  int id_{INVALID_INDEX_VALUE};
+  size_t step_{INVALID_STEP_VALUE};
   bool IsEmpty() const { return step_ == INVALID_STEP_VALUE; }
   bool IsExpired(size_t graph_running_step) const { return graph_running_step > step_; }
   void set_id(int id) { id_ = id; }
@@ -42,7 +42,7 @@ struct HashMapElement {
 class EmbeddingHashMap {
  public:
   EmbeddingHashMap(size_t hash_count, size_t hash_capacity) : hash_count_(hash_count), hash_capacity_(hash_capacity) {
-    hash_map_unit_.resize(hash_capacity);
+    hash_map_elements_.resize(hash_capacity);
   }
   virtual ~EmbeddingHashMap() = default;
   int ParseData(const int id, int *swap_out_index, int *swap_out_ids, const size_t data_step,
@@ -51,8 +51,10 @@ class EmbeddingHashMap {
   bool IsIdExist(const std::unordered_map<int, int>::const_iterator iter) const {
     return iter != hash_id_to_index_.end();
   }
-  size_t hash_step(const int hash_index) const { return hash_map_unit_[hash_index].step_; }
-  void set_hash_step(const int hash_index, const size_t step) { hash_map_unit_[hash_index].set_step(step); }
+  size_t hash_step(const int hash_index) const { return hash_map_elements_[hash_index].step_; }
+  void set_hash_step(const int hash_index, const size_t step) { hash_map_elements_[hash_index].set_step(step); }
+  const std::unordered_map<int, int> &hash_id_to_index() const { return hash_id_to_index_; }
+  size_t hash_capacity() const { return hash_capacity_; }
   void DumpHashMap();
 
  private:
@@ -60,7 +62,7 @@ class EmbeddingHashMap {
   bool NeedSwap() const { return hash_count_ > FloatToSize(hash_capacity_ * 0.9); }
   size_t hash_count_;
   size_t hash_capacity_;
-  std::vector<HashMapElement> hash_map_unit_;
+  std::vector<HashMapElement> hash_map_elements_;
   std::unordered_map<int, int> hash_id_to_index_;
 };
 }  // namespace ps
