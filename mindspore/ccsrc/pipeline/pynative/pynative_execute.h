@@ -128,6 +128,28 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
  private:
   PynativeExecutor() = default;
 
+  template <typename T>
+  void MapClear(T *map, const std::string &cell_id) {
+    for (auto it = map->begin(); it != map->end();) {
+      if (it->first.find(cell_id) != std::string::npos) {
+        it = map->erase(it);
+      } else {
+        it++;
+      }
+    }
+  }
+
+  template <typename T>
+  void VectorClear(T *vec, const std::string &cell_id) {
+    for (auto it = vec->begin(); it != vec->end();) {
+      if (it->cell_id.find(cell_id) != std::string::npos) {
+        it = vec->erase(it);
+      } else {
+        it++;
+      }
+    }
+  }
+
   // Check cell struct
   bool IsDynamicCell(const py::object &cell);
   std::string GetCellInfo(const py::object &cell);
@@ -187,7 +209,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool CheckCellGraph(const std::string &cell_id, bool is_grad = false);
   void UpdateCellGraph(const py::object &cell, const FuncGraphPtr &g, const std::string &cell_id,
                        bool need_cloned = false, bool is_grad = false);
-  void ClearResidualRes();
+  void ClearResidualRes(const std::string &cell_id);
   void NewGraphInner(const py::object &cell, const py::args &args);
   void MakeNewTopGraph(const string &cell_id, const py::args &args, const FuncGraphPtr &g);
   void EndGraphInner(const py::object &cell, const py::object &out, const py::args &args);
@@ -203,7 +225,6 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   std::string GetCellId(const py::object &obj, const py::args &args);
   std::pair<bool, bool> CheckCellChanged(const std::string &cell_id, const py::object &weights, const py::object &sens);
   void SetGradGraphParams(const FuncGraphPtr &df_builder, const ResourcePtr &resource, size_t size);
-  bool CloneDfbuiler(const std::string &cell_id, const FuncGraphPtr &df_builder, const ResourcePtr &resource);
   void GradGraph(const FuncGraphPtr &g, const GradOperationPtr &grad_op, const std::vector<AnfNodePtr> &weights,
                  size_t arg_size, const std::string &cell_id);
   std::vector<AnfNodePtr> GetWeightsArgs(const py::object &weights, const FuncGraphPtr &df_builder);
