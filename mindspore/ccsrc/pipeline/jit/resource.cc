@@ -275,38 +275,77 @@ Any Resource::GetAttrPtr(const TypeId &type, const std::string &name) {
   return GetMethodOrAttr(name, type_id, attr_map);
 }
 
-std::unordered_map<PrimitivePy *, bool> Resource::py_objs_ = std::unordered_map<PrimitivePy *, bool>();
-void Resource::RecordPrimitivePy(PrimitivePy *prim) {
+MemoryCleaner Resource::mem_cleaner_ = MemoryCleaner();
+void MemoryCleaner::RecordPrimitivePy(PrimitivePy *prim) {
   if (prim == nullptr) {
     return;
   }
-  py_objs_[prim] = true;
+  all_primitives_[prim] = true;
 }
 
-void Resource::ErasePrimitivePy(PrimitivePy *prim) {
+void MemoryCleaner::ErasePrimitivePy(PrimitivePy *prim) {
   if (prim == nullptr) {
     return;
   }
-  auto it = py_objs_.find(prim);
-  if (it == py_objs_.end()) {
+  auto it = all_primitives_.find(prim);
+  if (it == all_primitives_.end()) {
     return;
   }
   // If flag is false,the pointer hased been released, so it can't be visited.
   if (!it->second) {
     return;
   }
-  py_objs_[prim] = false;
+  all_primitives_[prim] = false;
   prim->SetPyObj(py::none());
 }
 
-void Resource::ClearPrimitivePyPythonObj() {
-  for (auto &it : py_objs_) {
+void MemoryCleaner::ClearPrimitivePyPythonObj() {
+  for (auto &it : all_primitives_) {
     if (it.second) {
       it.first->SetPyObj(py::none());
     }
   }
-  py_objs_.clear();
+  all_primitives_.clear();
 }
+
+void MemoryCleaner::RecordPynativeShortLifePrimitivePy(PrimitivePy *prim) {
+  if (prim == nullptr) {
+    return;
+  }
+  if (pynative_short_life_primitives_.find(prim) != pynative_short_life_primitives_.end()) {
+    return;
+  }
+  MS_LOG(DEBUG) << "Record pynative tmp primitve:" << prim->ToString();
+  pynative_short_life_primitives_.insert(prim);
+}
+
+void MemoryCleaner::ErasePynativeShortLifePrimitivePy(PrimitivePy *prim) {
+  if (prim == nullptr) {
+    return;
+  }
+  if (pynative_short_life_primitives_.find(prim) == pynative_short_life_primitives_.end()) {
+    return;
+  }
+  MS_LOG(DEBUG) << "Erase pynative tmp primitive:" << prim->ToString();
+  ErasePrimitivePy(prim);
+}
+
+void MemoryCleaner::ClearPynativeShortLifePrimitivePy() {
+  for (auto &primitive : pynative_short_life_primitives_) {
+    ErasePynativeShortLifePrimitivePy(primitive);
+  }
+  pynative_short_life_primitives_.clear();
+}
+
+void MemoryCleaner::EnterPynativeConstructProcess() { pynative_in_construct_process_ = true; }
+void MemoryCleaner::LeavePynativeConstructProcess() {
+  pynative_in_construct_process_ = false;
+  ClearPynativeShortLifePrimitivePy();
+}
+bool MemoryCleaner::IsInPynativeConstructProcess() const { return pynative_in_construct_process_; }
+void MemoryCleaner::EnterPynativeEndGraphProcess() { pynative_in_end_graph_process_ = true; }
+void MemoryCleaner::LeavePynativeEndGraphProcess() { pynative_in_end_graph_process_ = false; }
+bool MemoryCleaner::IsInPynativeEndGraphProcess() const { return pynative_in_end_graph_process_; }
 
 void Resource::Clean() {
   // AbstractTensor->elements() will be saved in AbstractBasePtrList

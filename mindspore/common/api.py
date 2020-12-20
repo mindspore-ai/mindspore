@@ -321,6 +321,12 @@ class _PynativeExecutor:
     def set_grad_flag(self, flag):
         self._executor.set_grad_flag(flag)
 
+    def enter_construct(self, cell):
+        self._executor.enter_construct(cell)
+
+    def leave_construct(self, cell):
+        self._executor.leave_construct(cell)
+
     def __call__(self, obj, *args, **kwargs):
         args = args + tuple(kwargs.values())
         return self._executor(obj, args, "")

@@ -352,9 +352,13 @@ class Cell(Cell_):
         if not cast_inputs:
             cast_inputs = inputs
         if self.enable_hook:
+            _pynative_exec.enter_construct(self)
             output = self._hook_construct(*cast_inputs, **kwargs)
+            _pynative_exec.leave_construct(self)
         else:
+            _pynative_exec.enter_construct(self)
             output = self.construct(*cast_inputs, **kwargs)
+            _pynative_exec.leave_construct(self)
         if isinstance(output, Parameter):
             output = output.data
         if self.requires_grad is True:

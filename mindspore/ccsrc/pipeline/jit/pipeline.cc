@@ -304,7 +304,7 @@ void ExecutorPy::DelNetRes(const std::string &id) {
 
 void ExecutorPy::ClearRes() {
   MS_LOG(INFO) << "Clean executor resource!";
-  Resource::ClearPrimitivePyPythonObj();
+  Resource::mem_cleaner().ClearPrimitivePyPythonObj();
   executor_ = nullptr;
 }
 
