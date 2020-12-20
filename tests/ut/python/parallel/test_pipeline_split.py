@@ -51,7 +51,7 @@ class DatasetLenet():
     def get_batch_size(self):
         return 32
 
-    def create_tuple_iterator(self, num_epochs=1):
+    def create_tuple_iterator(self, num_epochs=1, do_copy=True):
         return self
 
 
