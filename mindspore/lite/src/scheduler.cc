@@ -439,11 +439,6 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
       MS_LOG(ERROR) << "NPU subgraph new failed.";
       return nullptr;
     }
-    sub_kernel->set_name("NPUSubgraph" + std::to_string(NPUManager::GetInstance()->index()));
-    if (sub_kernel->Init() != RET_OK) {
-      MS_LOG(ERROR) << "NPU subgraph init failed.";
-      return nullptr;
-    }
     return sub_kernel;
 #else
     return nullptr;

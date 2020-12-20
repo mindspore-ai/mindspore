@@ -69,6 +69,8 @@ class SubGraphNpuKernel : public SubGraphKernel {
   std::string GetOMModelName();
 
  private:
+  bool isCompiled_ = false;
+
   domi::ModelBufferData *model_buffer_data_;
 
   std::vector<ge::Operator> subgraph_input_op_;
