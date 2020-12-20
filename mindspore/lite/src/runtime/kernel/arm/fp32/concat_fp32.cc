@@ -59,8 +59,8 @@ int ConcatCPUKernel::DoConcat(int task_id) {
   inputs_output_shape[input_num] = output_shape.data();
   auto output_addr = out_tensors_.at(0)->MutableData();
 
-  Concat(inputs_addr.data(), input_num, axis_, inputs_output_shape.data(), output_shape.size(), output_addr, task_id,
-         thread_count_);
+  Concat(inputs_addr.data(), input_num, concat_param_->axis_, inputs_output_shape.data(), output_shape.size(),
+         output_addr, task_id, thread_count_);
   return RET_OK;
 }
 

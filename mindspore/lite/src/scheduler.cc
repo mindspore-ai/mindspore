@@ -35,6 +35,8 @@
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/npu_transform_pass.h"
 #include "src/runtime/agent/npu/npu_fusion_pass.h"
+#include "src/runtime/agent/npu/npu_add_transform_pass.h"
+#include "src/runtime/agent/npu/npu_concat_transform_pass.h"
 #endif
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
@@ -543,6 +545,23 @@ int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
     MS_LOG(ERROR) << "Run npu format transform pass failed.";
     return ret;
   }
+
+  auto add_format_pass = new NPUAddTransformPass;
+  ret = add_format_pass->Run(context_, dst_kernels, &src_tensors_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run npu add op insert transform pass failed.";
+    return ret;
+  }
+  delete add_format_pass;
+
+  auto concat_format_pass = new NPUConcatTransformPass;
+  ret = concat_format_pass->Run(context_, dst_kernels, &src_tensors_);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run npu concat op insert transform pass failed.";
+    return ret;
+  }
+  delete concat_format_pass;
+
   auto fusion_pass = new NPUFusionPass(dst_kernels);
   ret = fusion_pass->Fusion();
   if (ret != RET_OK) {

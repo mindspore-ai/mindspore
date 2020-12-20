@@ -106,24 +106,19 @@ void UpdatePreTensors(kernel::LiteKernel *cur_kernel) {
 }
 
 void UpdatePostTensors(kernel::LiteKernel *cur_kernel) {
-  auto tensors_vec = cur_kernel->out_tensors();
+  auto tensor = cur_kernel->out_tensors()[0];
   for (auto out_kernel : cur_kernel->out_kernels()) {
-    auto in_tensor = out_kernel->in_tensors()[0];
     auto out_tensor = out_kernel->out_tensors()[0];
-    auto post_kernel = out_kernel->out_kernels()[0];
-    lite::Tensor *cur_tensor = nullptr;
-    for (size_t i = 0; i < post_kernel->in_tensors().size(); i++) {
-      if (post_kernel->in_tensors()[i] == out_tensor) {
-        cur_tensor = post_kernel->in_tensors()[i];
+    for (auto post_kernel : out_kernel->out_kernels()) {
+      auto tensors_vec = post_kernel->in_tensors();
+      for (int i = 0; i < tensors_vec.size(); i++) {
+        if (tensors_vec[i] == out_tensor) {
+          tensors_vec[i] = tensor;
+        }
       }
-    }
-    for (size_t i = 0; i < tensors_vec.size(); i++) {
-      if (tensors_vec[i] == in_tensor) {
-        tensors_vec[i] = cur_tensor;
-      }
+      post_kernel->set_in_tensors(tensors_vec);
     }
   }
-  cur_kernel->set_out_tensors(tensors_vec);
 }
 
 int TransFormAxis(int axis) {

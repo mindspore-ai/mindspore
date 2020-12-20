@@ -43,7 +43,6 @@ class ConcatBaseCPUKernel : public LiteKernel {
   int Run() override { return 0; }
 
  protected:
-  int axis_ = 0;
   const InnerContext *ctx_ = nullptr;
   int thread_count_ = 1;
   ConcatParameter *concat_param_ = nullptr;

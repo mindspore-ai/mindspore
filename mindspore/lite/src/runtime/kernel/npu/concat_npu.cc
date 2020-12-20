@@ -24,7 +24,7 @@ using mindspore::schema::PrimitiveType_Concat;
 namespace mindspore::kernel {
 int ConcatNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                OpParameter *opParameter) {
-  return RET_ERROR;
+  return RET_OK;
 }
 
 int ConcatNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -34,7 +34,7 @@ int ConcatNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
-  op_->set_attr_concat_dim(axis_);
+  op_->set_attr_concat_dim(concat_param_->axis_);
   op_->set_attr_N(npu_inputs.size());
   op_->create_dynamic_input_x(npu_inputs.size());
   for (int i = 0; i < npu_inputs.size(); ++i) {
