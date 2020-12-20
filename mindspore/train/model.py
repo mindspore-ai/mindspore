@@ -465,6 +465,7 @@ class Model:
             if should_stop:
                 break
         dataset_helper.stop_send()
+        dataset_helper.release()
 
         list_callback.end(run_context)
 

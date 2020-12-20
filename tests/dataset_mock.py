@@ -64,6 +64,9 @@ class MindData:
     def stop_send(self):
         pass
 
+    def release(self):
+        pass
+
     def continue_send(self):
         pass
 
