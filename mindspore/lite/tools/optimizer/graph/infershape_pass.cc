@@ -21,7 +21,22 @@
 #include "mindspore/lite/src/ops/primitive_c.h"
 #include "tools/anf_importer/import_from_meta_graphT.h"
 
+using mindspore::lite::RET_INFER_INVALID;
+
 namespace mindspore::opt {
+
+ParamValueLitePtr NewParamValueLitePtr(lite::Tensor *tensor) {
+  auto para_value_lite = std::make_shared<ParamValueLite>();
+  if (para_value_lite == nullptr) {
+    MS_LOG(ERROR) << "new ParamValueLite failed";
+    return nullptr;
+  }
+  para_value_lite->set_tensor_shape(tensor->shape());
+  para_value_lite->set_tensor_type(tensor->data_type());
+  para_value_lite->set_format(tensor->format());
+  return para_value_lite;
+}
+
 abstract::AbstractTensorPtr InferShapePass::ConvertLiteTensorToAbstractTensor(lite::Tensor *tensor) {
   MS_ASSERT(nullptr != tensor);
   std::vector<int> shape(tensor->shape());
@@ -33,15 +48,30 @@ abstract::AbstractTensorPtr InferShapePass::ConvertLiteTensorToAbstractTensor(li
     MS_LOG(ERROR) << "new AbstractTensor failed";
     return nullptr;
   }
-  auto new_value = std::make_shared<ParamValueLite>();
-  if (new_value == nullptr) {
+
+  auto para_value_lite = NewParamValueLitePtr(tensor);
+  if (para_value_lite == nullptr) {
     MS_LOG(ERROR) << "new ParamValueLite failed";
     return nullptr;
   }
-  new_value->set_tensor_shape(tensor->shape());
-  new_value->set_tensor_type(tensor->data_type());
-  new_value->set_format(tensor->format());
-  new_abstract->set_value(new_value);
+
+  if (type_id == kObjectTypeTensorType) {
+    auto tensor_list = dynamic_cast<lite::TensorList *>(tensor);
+    if (tensor_list == nullptr) {
+      MS_LOG(ERROR) << "cast tensor_list failed";
+      return nullptr;
+    }
+    auto tensor_info = new int[tensor_list->element_shape().size() + 2];
+    tensor_info[0] = tensor_list->tensors_data_type();
+    tensor_info[1] = tensor_list->element_shape().size();
+    for (size_t i = 0; i < tensor_list->element_shape().size(); ++i) {
+      tensor_info[i + 2] = tensor_list->element_shape()[i];
+    }
+    para_value_lite->set_tensor_addr(tensor_info);
+    para_value_lite->set_tensor_size(tensor_list->element_shape().size() + 2);
+  }
+
+  new_abstract->set_value(para_value_lite);
   return new_abstract;
 }
 
@@ -121,13 +151,13 @@ STATUS InferShapePass::GetCNodeInputTensors(const CNodePtr &cnode, std::vector<l
     }
 
     if (utils::isa<ValueNodePtr>(cnode->input(i))) {
-      MS_LOG(WARNING) << "input is value node";
+      MS_LOG(WARNING) << cnode->fullname_with_scope() << "'s input[" << i << "] is value node";
       continue;
     }
 
     AbstractBasePtr abstract = GetCNodeInputAbstract(cnode, i);
     if (abstract == nullptr) {
-      MS_LOG(ERROR) << "Abstract of CNode is nullptr";
+      MS_LOG(ERROR) << "Abstract of CNode: " << cnode->fullname_with_scope() << " is nullptr";
       return RET_ERROR;
     }
     if (!utils::isa<abstract::AbstractTensorPtr>(abstract)) {
@@ -194,7 +224,7 @@ STATUS InferShapePass::GetCNodeOutputTensors(const CNodePtr &cnode, std::vector<
   MS_ASSERT(output_tensors != nullptr);
   auto abstract = cnode->abstract();
   if (abstract == nullptr) {
-    MS_LOG(ERROR) << "abstract is nullptr";
+    MS_LOG(ERROR) << "node " << cnode->fullname_with_scope() << " abstract is nullptr";
     return RET_ERROR;
   }
   std::vector<TypeId> types;
@@ -264,7 +294,62 @@ STATUS InferShapePass::SetCNodeAbstract(const std::vector<lite::Tensor *> &outpu
   return RET_OK;
 }
 
+int InferShapePass::StrIsContain(const std::vector<std::string> &total, const std::string &aim) {
+  for (size_t i = 0; i < total.size(); i++) {
+    if (aim.find(total[i]) != std::string::npos) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+STATUS InferShapePass::SetSubGraphInputsAbstract(const CNodePtr &cnode, const FuncGraphPtr &func_graph) {
+  // hard code construct input parameter name
+  std::vector<std::string> inputs_names{};
+  for (size_t i = 1; i < cnode->inputs().size(); i++) {
+    inputs_names.emplace_back("_input_" + std::to_string(i - 1) + "_parameter");
+  }
+  // copy cnode input to func_graph input
+  auto node_list = TopoSort(func_graph->get_return());
+  for (auto &node : node_list) {
+    if (utils::isa<ParameterPtr>(node)) {
+      auto pos = StrIsContain(inputs_names, node->fullname_with_scope());
+      if (pos != -1) {
+        auto pnode = utils::cast<ParameterPtr>(node);
+        auto input_pnode = utils::cast<ParameterPtr>(cnode->input(pos + 1));
+        MS_ASSERT(pnode != nullptr);
+        pnode->set_abstract(input_pnode->abstract());
+      }
+    }
+  }
+  return RET_OK;
+}
+
+STATUS InferShapePass::SwitchCNodeInferShape(const CNodePtr &switch_cnode) {
+  auto body_partial_cnode = switch_cnode->input(2)->cast<CNodePtr>();
+  MS_ASSERT(body_partial_cnode != nullptr);
+  auto body_vnode = body_partial_cnode->input(0)->cast<ValueNodePtr>();
+  MS_ASSERT(body_vnode != nullptr);
+  auto body_fg = GetValueNode<FuncGraphPtr>(body_vnode);
+  MS_ASSERT(body_fg != nullptr);
+  AbstractBasePtrList abstract_list;
+  auto body_fg_output_cnode = utils::cast<CNodePtr>(body_fg->output());
+  for (auto &cnode : body_fg_output_cnode->inputs()) {
+    if (!utils::isa<CNodePtr>(cnode) && !utils::isa<ParameterPtr>(cnode)) {
+      continue;
+    }
+    abstract_list.push_back(cnode->abstract());
+  }
+
+  switch_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
+  return RET_OK;
+}
+
 bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
+  if (func_graph->has_flag("HasInferShaped")) {
+    return true;
+  }
+
   if (fmk_type != lite::converter::FmkType_TF && fmk_type != lite::converter::FmkType_TFLITE) {
     MS_LOG(INFO) << "The framework type of model should be tf/tflite.";
     return false;
@@ -287,8 +372,14 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
     auto cnode = node->cast<CNodePtr>();
     auto origin_primc = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(cnode->input(0));
     if (origin_primc == nullptr) {
-      MS_LOG(ERROR) << "origin_primc is nullptr";
-      return false;
+      auto sub_func_graph = GetValueNode<FuncGraphPtr>(cnode->input(0));
+      if (sub_func_graph == nullptr) {
+        MS_LOG(ERROR) << "node " << node->fullname_with_scope() << "'s origin_primc is nullptr";
+        return false;
+      } else {
+        MS_LOG(WARNING) << "subgraph infer shape invalid.";
+        return RET_INFER_INVALID;
+      }
     }
     auto origin_primt = origin_primc->primitiveT();
     if (origin_primt == nullptr) {
@@ -296,6 +387,15 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
       return false;
     }
     auto type = GetCNodeType(cnode);
+
+    if (type == schema::PrimitiveType_Switch) {
+      int ret = SwitchCNodeInferShape(cnode);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "PartialCNodeInferShape failed.";
+        return false;
+      }
+    }
+
     if ((type == schema::PrimitiveType_TupleGetItem) ||
 #ifdef SUPPORT_TRAIN
         (type == schema::PrimitiveType_Depend) || (type == schema::PrimitiveType_ControlDepend) ||

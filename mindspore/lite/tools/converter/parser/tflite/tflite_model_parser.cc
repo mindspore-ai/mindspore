@@ -76,6 +76,7 @@ FuncGraphPtr TfliteModelParser::Parse(const std::string &model_file, const std::
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
+  func_graph_->set_attr("graph_name", MakeValue("main_graph"));
   return func_graph_;
 }
 

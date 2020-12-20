@@ -61,7 +61,7 @@ STATUS TFArithmeticParser::Parse(const tensorflow::NodeDef &tf_op,
     }
     primitive->value.type = schema::PrimitiveType_Mul;
     primitive->value.value = attr.release();
-  } else if (tf_op.op() == "Div") {
+  } else if (tf_op.op() == "Div" || tf_op.op() == "RealDiv") {
     auto attr = std::make_unique<schema::DivT>();
     if (attr == nullptr) {
       MS_LOG(ERROR) << "new attr failed";
@@ -154,6 +154,7 @@ TFNodeRegistrar g_tfAddV2Parser("AddV2", new TFArithmeticParser());
 TFNodeRegistrar g_tfSubParser("Sub", new TFArithmeticParser());
 TFNodeRegistrar g_tfMulParser("Mul", new TFArithmeticParser());
 TFNodeRegistrar g_tfDivParser("Div", new TFArithmeticParser());
+TFNodeRegistrar g_tfRealDivParser("RealDiv", new TFArithmeticParser());
 TFNodeRegistrar g_tfMaximumParser("Maximum", new TFArithmeticParser());
 TFNodeRegistrar g_tfMinimumParser("Minimum", new TFArithmeticParser());
 TFNodeRegistrar g_tfGreaterParser("Greater", new TFArithmeticParser());

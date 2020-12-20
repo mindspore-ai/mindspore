@@ -28,6 +28,8 @@
 #include "src/tensor.h"
 #include "src/param_value_lite.h"
 #include "src/common/utils.h"
+#include "src/ops/partial.h"
+#include "tools/common/graph_util.h"
 
 namespace mindspore::lite {
 void AnfExporter::RemoveIfMakeTuple(const CNodePtr &cnode) {
@@ -73,7 +75,7 @@ void AnfExporter::RemoveIfDepend(const CNodePtr &cnode) {
     if (IsPrimitiveCNode(dependNode, schema::PrimitiveType_Depend) ||
         IsPrimitiveCNode(dependNode, schema::PrimitiveType_ControlDepend)) {
       hasDepend = true;
-      bool maskOut = (dependNode->inputs().size() == 3) ? true : false;
+      bool maskOut = (dependNode->inputs().size() == 3);
       for (size_t j = 1; j < dependNode->inputs().size(); ++j) {
         AnfNodePtr dependInputNode = dependNode->input(j);
         if (dependInputNode->isa<CNode>()) {
@@ -172,22 +174,50 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
   return RET_OK;
 }
 
-void AnfExporter::SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT) {
-  for (auto node : graph_input_nodes_) {
+std::vector<schema::CNodeT *> AnfExporter::GetSubgraphNodes(const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
+                                                            const size_t &subgraph_index) {
+  std::vector<schema::CNodeT *> subgraph_nodes{};
+  subgraph_nodes.resize(meta_graphT->subGraph.at(subgraph_index)->nodeIndices.size());
+  std::transform(meta_graphT->subGraph.at(subgraph_index)->nodeIndices.begin(),
+                 meta_graphT->subGraph.at(subgraph_index)->nodeIndices.end(), subgraph_nodes.begin(),
+                 [&meta_graphT](const uint32_t idx) { return meta_graphT->nodes.at(idx).get(); });
+  return subgraph_nodes;
+}
+
+int AnfExporter::SetGraphInputIndex(const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
+                                    const size_t &subgraph_index) {
+  auto &subgraph = meta_graphT->subGraph.at(subgraph_index);
+  auto subgraph_nodes = GetSubgraphNodes(meta_graphT, subgraph_index);
+  std::vector<schema::CNodeT *> subgraph_input_nodes{};
+  for (auto &node : subgraph_nodes) {
+    if (IsContain(graph_input_nodes_, node)) {
+      subgraph_input_nodes.push_back(node);
+    }
+  }
+  std::vector<schema::TensorT *> subgraph_inputs{};
+  for (auto &node : subgraph_input_nodes) {
     for (auto input : node->inputIndex) {
       auto tensor = meta_graphT->allTensors[input].get();
       if (tensor->nodeType != schema::NodeType_CNode && tensor->data.empty()) {
         tensor->nodeType = schema::NodeType_ValueNode;
         tensor->format = schema::Format_NHWC;
-        if (!IsContain(meta_graphT->inputIndex, input)) {
-          meta_graphT->inputIndex.emplace_back(input);
+        if (!IsContain(subgraph->inputIndices, input)) {
+          if (subgraph_index == kMainGraphIndex) {
+            meta_graphT->inputIndex.push_back(input);
+          }
+          subgraph->inputIndices.push_back(input);
+          subgraph_inputs.push_back(tensor);
         }
       }
     }
   }
+
+  return RET_OK;
 }
 
-int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
+int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const size_t subgraph_index,
+                                     const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
+                                     const std::unique_ptr<schema::SubGraphT> &sub_graphT,
                                      schema::CNodeT *return_node) {
   MS_ASSERT(nullptr != meta_graphT);
   MS_ASSERT(nullptr != return_node);
@@ -202,28 +232,62 @@ int AnfExporter::SetGraphoutputIndex(const CNodePtr &cnode, const std::unique_pt
         MS_LOG(ERROR) << "obtain outputs failed";
         return ret;
       }
+    } else if (input_node->isa<Parameter>()) {
+      MS_LOG(INFO) << "the node " << input_node->fullname_with_scope().c_str() << "is parameter node";
+      continue;
     } else {
       MS_LOG(ERROR) << "the node " << input_node->fullname_with_scope().c_str() << "is not output node";
       return RET_ERROR;
     }
   }
   for (unsigned int &i : return_node->inputIndex) {
-    meta_graphT->outputIndex.push_back(i);
+    if (subgraph_index == kMainGraphIndex) {
+      meta_graphT->outputIndex.push_back(i);
+    }
+    meta_graphT->subGraph.at(subgraph_index)->outputIndices.push_back(i);
   }
   return RET_OK;
 }
 
-schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool keep_graph, bool copy_primitive) {
-  auto cnodes = func_graph->GetOrderedCnodes();
-  auto meta_graphT = std::make_unique<schema::MetaGraphT>();
+int AnfExporter::ExportSubgraph(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
+                                const size_t &subgraph_index, bool keep_graph, bool copy_primitive,
+                                const std::shared_ptr<AnfNode> &partial_anode) {
   int ret = RET_OK;
+  meta_graphT->subGraph.emplace_back(std::make_unique<schema::SubGraphT>());
+  auto &sub_graphT = meta_graphT->subGraph.at(subgraph_index);
+  auto subgraph_name = func_graph->get_attr("graph_name");
+  MS_ASSERT(subgraph_name != nullptr);
+  sub_graphT->name = GetValue<std::string>(subgraph_name);
+
+  auto cnodes = func_graph->GetOrderedCnodes();
   for (const auto &cnode : cnodes) {
     auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
     if (primitive_c == nullptr) {
-      MS_LOG(ERROR) << "primitive_c is nullptr";
-      ret = RET_MEMORY_FAILED;
-      break;
+      auto fg = GetValueNode<FuncGraphPtr>(cnode->input(0));
+      if (fg != nullptr) {
+        auto partial_cnode = CreatePartialCnode(fg, cnode);
+        primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(partial_cnode->input(0));
+        auto primT = primitive_c->primitiveT();
+        auto pos = fg_subgraph_map.find(fg);
+        if (pos != fg_subgraph_map.end()) {
+          primT->value.AsPartial()->subGraphIndex = fg_subgraph_map.at(fg);
+        } else {
+          size_t next_subgraph_index = fg_subgraph_map.size() + 1;
+          fg_subgraph_map.insert(std::pair<FuncGraphPtr, int>{fg, next_subgraph_index});
+          primT->value.AsPartial()->subGraphIndex = next_subgraph_index;
+          ret = ExportSubgraph(fg, meta_graphT, next_subgraph_index, keep_graph, copy_primitive, cnode);
+          if (ret != RET_OK) {
+            MS_LOG(ERROR) << "ExportSubgraph failed";
+            break;
+          }
+        }
+      } else {
+        MS_LOG(ERROR) << "primitive_c is nullptr";
+        ret = RET_MEMORY_FAILED;
+        break;
+      }
     }
+
 #ifdef SUPPORT_TRAIN
     RemoveIfMakeTuple(cnode);
     RemoveIfDepend(cnode);
@@ -249,13 +313,14 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
     }
     if (primT->value.type == schema::PrimitiveType_Return) {
       node->name = "return_node";
-      ret = SetGraphoutputIndex(cnode, meta_graphT, node.get());
+      ret = SetGraphoutputIndex(cnode, subgraph_index, meta_graphT, sub_graphT, node.get());
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "SetOpOutputN failed";
         break;
       }
       continue;
     }
+
     node->nodeType = schema::NodeType_CNode;
     node->name = cnode->fullname_with_scope();
     if (copy_primitive) {
@@ -281,21 +346,45 @@ schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool kee
     if (!keep_graph) {
       primitive_c->ClearPrimitiveT();
     }
-    meta_graphT->nodes.emplace_back(std::move(node));
+    meta_graphT->nodes.push_back(std::move(node));
+    meta_graphT->subGraph.at(subgraph_index)->nodeIndices.push_back(node_idx++);
   }
+  if (ret != RET_OK) {
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
+    return ret;
+  }
+
+  ret = SetGraphInputIndex(meta_graphT, subgraph_index);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetGraphInputIndex failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
+    return ret;
+  }
+
+  ret = SetSubgraphTensorIndices(meta_graphT.get());
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "SetSubgraphTensorIndices failed";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
+    return ret;
+  }
+
+  return RET_OK;
+}
+
+schema::MetaGraphT *AnfExporter::Export(const FuncGraphPtr &func_graph, bool keep_graph, bool copy_primitive) {
+  static int subgraph_index = 0;
+  auto meta_graphT = std::make_unique<schema::MetaGraphT>();
+  int ret = ExportSubgraph(func_graph, meta_graphT, subgraph_index, keep_graph, copy_primitive);
   if (ret != RET_OK) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(ret);
     return nullptr;
   }
-  // set graph input tensors
-  SetGraphInputIndex(meta_graphT);
   return meta_graphT.release();
 }
 
 int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, schema::CNodeT *output_cnode) {
   std::string input_name = input_anode->fullname_with_scope();
   auto input_cnode = utils::cast<CNodePtr>(input_anode);
-
   if (!IsPrimitiveCNode(input_cnode, schema::PrimitiveType_TupleGetItem)) {
 #ifndef SUPPORT_TRAIN
     if (node_id_map_.find(input_name) != node_id_map_.end()) {
@@ -343,11 +432,11 @@ int AnfExporter::ConvertInputCNode(const std::shared_ptr<AnfNode> &input_anode, 
       input_index_key = get_item_input_cnode->fullname_with_scope() + "_o:" + std::to_string(0);  // try name with 0
       iter = node_id_map_.find(input_index_key);
       if (iter == node_id_map_.end()) {
-        MS_LOG(ERROR) << "Can not find get_item output tensor" << input_index_key;
+        MS_LOG(ERROR) << "Can not find get_item output tensor " << input_index_key;
         return RET_ERROR;
       }
 #else
-      MS_LOG(ERROR) << "Can not find get_item output tensor" << input_index_key;
+      MS_LOG(ERROR) << "Can not find get_item output tensor " << input_index_key;
       return RET_ERROR;
 #endif
     }
@@ -367,6 +456,7 @@ int AnfExporter::ConvertInputParameter(const std::shared_ptr<AnfNode> &input_ano
   }
   auto paramTensor = std::make_unique<schema::TensorT>();
   paramTensor->format = schema::Format_NHWC;
+  paramTensor->name = paramNode->name();
   auto abstractBase = paramNode->abstract();
   if (abstractBase == nullptr) {
     MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << paramNode->name();
@@ -518,6 +608,9 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
     node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
     output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
     meta_graphT->allTensors.emplace_back(std::move(paramTensor));
+  } else if (value->isa<FuncGraph>()) {
+    MS_LOG(INFO) << "op name:" << input_anode->fullname_with_scope() << " input is func_graph";
+    return RET_OK;
   } else {
     MS_LOG(ERROR) << "Not support value type , need add support.";
     return RET_ERROR;
@@ -644,6 +737,20 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
   }
 }
 
+bool AnfExporter::HasPrimitiveCNode(const AnfNodePtr &node) {
+  MS_ASSERT(node != nullptr);
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return false;
+  }
+
+  auto prim = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+  if (prim == nullptr) {
+    return false;
+  }
+  return true;
+}
+
 bool AnfExporter::IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType type) {
   MS_ASSERT(node != nullptr);
   auto cnode = node->cast<CNodePtr>();
@@ -656,6 +763,47 @@ bool AnfExporter::IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType
     return false;
   }
   return (schema::PrimitiveType)(prim->Type()) == type;
+}
+
+ValueNodePtr AnfExporter::GetPartialAnfPrim() {
+  auto partial_primitiveT = new (std::nothrow) schema::PrimitiveT;
+  if (partial_primitiveT == nullptr) {
+    MS_LOG(ERROR) << "new partial_primitiveT failed";
+    return nullptr;
+  }
+  partial_primitiveT->value.type = schema::PrimitiveType_Partial;
+  partial_primitiveT->value.value = new (std::nothrow) schema::PartialT;
+  if (partial_primitiveT->value.value == nullptr) {
+    MS_LOG(ERROR) << "new PartialT failed";
+    return nullptr;
+  }
+
+  auto partial_prim = std::make_shared<lite::Partial>(partial_primitiveT);
+  ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
+  return partial_anf_prim;
+}
+
+CNodePtr AnfExporter::CreatePartialCnode(const FuncGraphPtr &fg, AnfNodePtr node) {
+  if (utils::isa<CNodePtr>(node)) {
+    auto cnode = utils::cast<CNodePtr>(node);
+    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+    if (primitive_c != nullptr) {
+      return cnode;
+    }
+    auto partial_anf_prim_vnode = GetPartialAnfPrim();
+    auto cnode_input = cnode->inputs();
+    cnode_input.insert(cnode_input.begin(), partial_anf_prim_vnode);
+    cnode->set_inputs(cnode_input);
+    return cnode;
+  } else if (utils::isa<ValueNodePtr>(node)) {
+    auto partial_anf_prim_vnode = GetPartialAnfPrim();
+    std::vector<AnfNodePtr> inputs{partial_anf_prim_vnode, node};
+    auto cnode = fg->NewCNode(inputs);
+    return cnode;
+  } else {
+    MS_LOG(ERROR) << "failed to create partial cnode.";
+    return nullptr;
+  }
 }
 
 schema::MetaGraphT *Export(const FuncGraphPtr &func_graph, bool keep_graph, bool copy_primitive) {

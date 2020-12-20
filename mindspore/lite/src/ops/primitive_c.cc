@@ -20,6 +20,7 @@
 #include <map>
 
 #include "tools/converter/quantizer/quantize_util.h"
+#include "src/ops/assert_op.h"
 #include "src/ops/space_to_batch.h"
 #include "src/ops/space_to_batch_nd.h"
 #include "src/ops/conv2d.h"
@@ -614,6 +615,13 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Sqrt>(prim, inputs, quantType);
   } else if (op_type == "Greater") {
     return NewPrimitiveC<Greater>(prim, inputs, quantType);
+  } else if (op_type == "Switch") {
+    return NewPrimitiveC<Switch>(prim, inputs, quantType);
+  } else if (op_type == "Partial") {
+    return NewPrimitiveC<Partial>(prim, inputs, quantType);
+  } else if (op_type == "Merge") {
+    return NewPrimitiveC<Merge>(prim, inputs, quantType);
+
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
     return NewPrimitiveC<SoftmaxCrossEntropy>(prim, inputs, quantType);
@@ -955,6 +963,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) Merge(primitive);
     case schema::PrimitiveType_Partial:
       return new (std::nothrow) Partial(primitive);
+    case schema::PrimitiveType_Assert:
+      return new (std::nothrow) AssertOP(primitive);
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
       return new (std::nothrow) ActivationGrad(primitive);

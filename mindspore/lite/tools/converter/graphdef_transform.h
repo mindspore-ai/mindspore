@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_GRAPHDEF_TRANSFORM_H
 
 #include <memory>
+#include <vector>
 #include "tools/converter/optimizer.h"
 #include "tools/converter/quantizer/quantizer.h"
 #include "schema/inner/model_generated.h"
@@ -39,6 +40,7 @@ class GraphDefTransform {
   inline schema::MetaGraphT *GetOutput() { return graphDefT; }
 
  protected:
+  std::vector<schema::CNodeT *> GetGraphNodes();
   schema::MetaGraphT *graphDefT = nullptr;
   Optimizer *optimizer = nullptr;
 };

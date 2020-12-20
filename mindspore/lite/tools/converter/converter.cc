@@ -67,6 +67,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     int status = modelImporter->Import(flag);
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     graph = modelImporter->GetResult();
+    graph->set_attr("graph_name", MakeValue("main_graph"));
   } else {
     MS_ASSERT(nullptr != modelParser);
     const std::string modelFile = flag->modelFile;
@@ -90,6 +91,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     MS_LOG(ERROR) << "Export to meta graph return nullptr";
     return nullptr;
   }
+
   // transform
   transform->SetGraphDef(meta_graph);
   auto status = transform->Transform(*flag);

@@ -45,11 +45,9 @@ class SingleSwitchPass {
   STATUS Init();
   size_t InitThisGraphIndex();
   STATUS DoubleSwitchOutput();
-  STATUS MoveMaxIterationToCond();
   STATUS UpdateSwitchUser();
   STATUS ConcatCondSubgraphInputAndOutput();
   STATUS ConcatBodySubgraphInputAndOutput();
-  STATUS ConvertSwitchToSelect();
   bool IsLoop();
   STATUS InsertMerge();
   STATUS UpdateSubgraphInput(const size_t &subgraph_index, schema::CNodeT *partial_node,

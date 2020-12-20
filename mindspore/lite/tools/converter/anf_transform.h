@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_ANF_TRANSFORM_H
 
 #include <memory>
+#include <vector>
 #include "schema/inner/model_generated.h"
 #include "tools/common/storage.h"
 #include "tools/converter/converter_flags.h"
@@ -34,6 +35,9 @@ class AnfTransform {
   FuncGraphPtr Transform(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
 
  private:
+  STATUS GetAllFuncGraph(const FuncGraphPtr &main_graph, FuncGraphPtrList *subgraphs,
+                         std::vector<ValueNodePtr> *vnodes);
+  FuncGraphPtr TransformSingleFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
   std::unique_ptr<quant::Quantizer> mQuantizer = nullptr;
 };
 }  // namespace lite

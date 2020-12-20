@@ -92,6 +92,8 @@ STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNo
 
 STATUS ChangeOpAttrForSlice(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNodeT> &node);
 
+STATUS SetSubgraphTensorIndices(schema::MetaGraphT *meta_graphT);
+
 std::string GetModelName(const std::string &modelFile);
 }  // namespace lite
 }  // namespace mindspore
