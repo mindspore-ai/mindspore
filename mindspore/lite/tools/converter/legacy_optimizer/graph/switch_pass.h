@@ -56,6 +56,7 @@ class SingleSwitchPass {
                               const std::vector<schema::CNodeT *> &subgraph_nodes);
   std::unique_ptr<schema::TensorT> NewTensor(const std::unique_ptr<schema::TensorT> &in_tensor);
   void RemoveUselessNode(schema::CNodeT *partial_node, schema::MetaGraphT *graph);
+  void DoubleIdx(uint32_t *idx);
 
   const size_t kSwitchCondIndex = 0;
   const size_t kSwitchBodyIndex = 1;
