@@ -45,7 +45,8 @@ class Tensor : public mindspore::tensor::MSTensor {
   enum Category {
     CONST_TENSOR,  // weight tensor
     CONST_SCALAR,  // weight scalar
-    VAR            // activation tensor
+    VAR,           // activation tensor
+    GRAPH_INPUT,
   };
   Tensor() = default;
 
@@ -102,11 +103,13 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual void set_data(void *data) { this->data_ = data; }
 
-  Category category() { return this->category_; }
+  Category category() const { return this->category_; }
+
+  void set_category(Category category) { this->category_ = category; }
 
   void set_format(schema::Format format) { this->format_ = format; }
 
-  schema::Format format() { return this->format_; }
+  schema::Format format() const { return this->format_; }
 
   size_t ref_count() const { return this->ref_count_; }
 
@@ -130,9 +133,13 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_quant_clusters(const std::vector<float> &clusters);
 
-  bool IsConst();
+  bool IsConst() const {
+    return (this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR) && this->data_ != nullptr;
+  }
 
-  bool IsScalar();
+  bool IsScalar() const { return this->category_ == CONST_SCALAR && this->data_ != nullptr; }
+
+  bool IsGraphInput() const { return this->category_ == GRAPH_INPUT; }
 
   void Prepare() {
     if (allocator_ != nullptr) {

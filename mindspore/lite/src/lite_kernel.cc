@@ -45,7 +45,7 @@ void LiteKernel::FreeWorkspace() {
 bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
   return std::all_of(this->in_tensors().begin(), this->in_tensors().end(), [&](lite::Tensor *kernel_in_tensor) {
     if (IsContain(scope_tensors, kernel_in_tensor)) {
-      return (kernel_in_tensor->IsConst() || kernel_in_tensor->ref_count() >= 1);
+      return (kernel_in_tensor->IsConst() || kernel_in_tensor->IsGraphInput() || kernel_in_tensor->ref_count() >= 1);
     } else {
       return true;
     }
@@ -54,7 +54,7 @@ bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
 
 void LiteKernel::InitOutTensorInitRefCount() {
   for (auto *tensor : this->out_tensors_) {
-    int init_ref_count = 0;
+    size_t init_ref_count = 0;
     for (auto *post_kernel : this->out_kernels_) {
       init_ref_count +=
         std::count_if(post_kernel->in_tensors_.begin(), post_kernel->in_tensors_.end(),
@@ -81,7 +81,7 @@ int LiteKernel::DecOutTensorRefCount() {
 int LiteKernel::FreeInWorkTensor() const {
   for (auto &in_tensor : this->in_tensors_) {
     MS_ASSERT(in_tensor != nullptr);
-    if (in_tensor->IsConst()) {
+    if (in_tensor->IsConst() || in_tensor->IsGraphInput()) {
       continue;
     }
     MS_ASSERT(in_tensor->ref_count() > 0);
@@ -220,19 +220,18 @@ void LiteKernel::FindInoutKernels(const std::vector<kernel::LiteKernel *> &scope
   }
 }
 
-std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputKernels(
-  const std::vector<kernel::LiteKernel *> &kernels) {
-  std::set<kernel::LiteKernel *> input_kernels;
+std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputNodes(const std::vector<kernel::LiteKernel *> &kernels) {
+  std::set<kernel::LiteKernel *> input_nodes;
   for (const auto &kernel : kernels) {
     // if kernel has no pre-kernel, kernel is a graph input, it must be a subgraph input
     if (kernel->in_kernels().empty() && !kernel->in_tensors().empty()) {
-      input_kernels.insert(kernel);
+      input_nodes.insert(kernel);
       continue;
     }
     auto all_input_tensors = kernel->in_tensors();
     // remove all const tensor from input tensors
     for (auto iter = all_input_tensors.begin(); iter != all_input_tensors.end();) {
-      if ((*iter)->IsConst()) {
+      if ((*iter)->IsConst() || (*iter)->IsGraphInput()) {
         iter = all_input_tensors.erase(iter);
       } else {
         iter++;
@@ -249,83 +248,76 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputKernels(
     }
     // if some input tensor is not from kernel in subgraph
     if (!all_input_tensors.empty()) {
-      input_kernels.insert(kernel);
+      input_nodes.insert(kernel);
     }
   }
   std::vector<kernel::LiteKernel *> result;
-  result.insert(result.end(), input_kernels.begin(), input_kernels.end());
+  result.insert(result.end(), input_nodes.begin(), input_nodes.end());
   return result;
 }
 
-std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputKernels(
+std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphOutputNodes(
   const std::vector<kernel::LiteKernel *> &kernels) {
-  std::set<kernel::LiteKernel *> output_kernels;
+  std::set<kernel::LiteKernel *> output_nodes;
   // if kernel has no post-kernel, kernel is a graph output, it must be a subgraph output
   for (const auto &kernel : kernels) {
     if (kernel->is_model_output() || (kernel->out_kernels().empty() && !kernel->out_tensors().empty())) {
-      output_kernels.insert(kernel);
+      output_nodes.insert(kernel);
       continue;
     }
     for (const auto &output : kernel->out_kernels()) {
       auto out_kernel_in_graph = std::find(kernels.begin(), kernels.end(), output);
       if (out_kernel_in_graph == kernels.end()) {
-        output_kernels.insert(kernel);
+        output_nodes.insert(kernel);
         break;
       }
     }
   }
   std::vector<kernel::LiteKernel *> result;
-  result.insert(result.end(), output_kernels.begin(), output_kernels.end());
+  result.insert(result.end(), output_nodes.begin(), output_nodes.end());
   return result;
 }
 
 std::vector<lite::Tensor *> LiteKernelUtil::SubgraphInputTensors(const std::vector<kernel::LiteKernel *> &kernels) {
-  std::vector<lite::Tensor *> input_tensors;
-  std::vector<kernel::LiteKernel *> input_kernels = SubgraphInputKernels(kernels);
-  for (const auto &input_kernel : input_kernels) {
-    auto &outer_in_kernels = input_kernel->in_kernels();
-    auto &in_kernel_in_tensors = input_kernel->in_tensors();
-    if (outer_in_kernels.empty()) {
-      for (auto &in_kernel_in_tensor : in_kernel_in_tensors) {
-        if (!in_kernel_in_tensor->IsConst()) {
-          if (!IsContain(input_tensors, in_kernel_in_tensor)) {
-            input_tensors.push_back(in_kernel_in_tensor);
-          }
-        }
+  std::set<lite::Tensor *> input_tensors;
+  std::vector<kernel::LiteKernel *> input_nodes = SubgraphInputNodes(kernels);
+  for (const auto &input_node : input_nodes) {
+    auto &in_node_in_kernels = input_node->in_kernels();
+    auto &in_node_in_tensors = input_node->in_tensors();
+    for (auto &in_node_in_tensor : in_node_in_tensors) {
+      if (in_node_in_tensor->IsGraphInput()) {
+        input_tensors.insert(in_node_in_tensor);
       }
-      continue;
     }
-    for (auto outer_in_kernel : outer_in_kernels) {
-      auto iter = std::find(kernels.begin(), kernels.end(), outer_in_kernel);
+    for (auto in_node_in_kernel : in_node_in_kernels) {
+      auto iter = std::find(kernels.begin(), kernels.end(), in_node_in_kernel);
       if (iter != kernels.end()) {
         continue;
       }
-      auto &outer_in_kernel_out_tensors = outer_in_kernel->out_tensors();
-      for (auto in_kernel_in_tensor : in_kernel_in_tensors) {
+      auto &outer_in_kernel_out_tensors = in_node_in_kernel->out_tensors();
+      for (auto in_node_in_tensor : in_node_in_tensors) {
         auto outer_in_kernel_out_tensors_iter =
-          std::find(outer_in_kernel_out_tensors.begin(), outer_in_kernel_out_tensors.end(), in_kernel_in_tensor);
+          std::find(outer_in_kernel_out_tensors.begin(), outer_in_kernel_out_tensors.end(), in_node_in_tensor);
         if (outer_in_kernel_out_tensors_iter != outer_in_kernel_out_tensors.end()) {
-          if (!IsContain(input_tensors, in_kernel_in_tensor)) {
-            input_tensors.emplace_back(in_kernel_in_tensor);
-          }
+          input_tensors.insert(in_node_in_tensor);
         }
       }
     }
   }
-  return input_tensors;
+  std::vector<lite::Tensor *> result;
+  result.insert(result.end(), input_tensors.begin(), input_tensors.end());
+  return result;
 }
 
 std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vector<kernel::LiteKernel *> &kernels) {
-  std::vector<lite::Tensor *> output_tensors;
-  std::vector<kernel::LiteKernel *> output_kernels = SubgraphOutputKernels(kernels);
-  for (const auto &output_kernel : output_kernels) {
+  std::set<lite::Tensor *> output_tensors;
+  std::vector<kernel::LiteKernel *> output_nodes = SubgraphOutputNodes(kernels);
+  for (const auto &output_kernel : output_nodes) {
     auto &outer_out_kernels = output_kernel->out_kernels();
     auto &out_kernel_out_tensors = output_kernel->out_tensors();
     if (outer_out_kernels.empty()) {
       for (auto out_kernel_out_tensor : out_kernel_out_tensors) {
-        if (!IsContain(output_tensors, out_kernel_out_tensor)) {
-          output_tensors.push_back(out_kernel_out_tensor);
-        }
+        output_tensors.insert(out_kernel_out_tensor);
       }
       continue;
     }
@@ -339,14 +331,14 @@ std::vector<lite::Tensor *> LiteKernelUtil::SubgraphOutputTensors(const std::vec
         auto outer_out_kernel_in_tensors_iter =
           std::find(outer_out_kernel_in_tensors.begin(), outer_out_kernel_in_tensors.end(), out_kernel_out_tensor);
         if (outer_out_kernel_in_tensors_iter != outer_out_kernel_in_tensors.end()) {
-          if (!IsContain(output_tensors, out_kernel_out_tensor)) {
-            output_tensors.emplace_back(out_kernel_out_tensor);
-          }
+          output_tensors.insert(out_kernel_out_tensor);
         }
       }
     }
   }
-  return output_tensors;
+  std::vector<lite::Tensor *> result;
+  result.insert(result.end(), output_tensors.begin(), output_tensors.end());
+  return result;
 }
 
 int LiteKernelUtil::TopologicalSortKernels(std::vector<kernel::LiteKernel *> *kernels) {

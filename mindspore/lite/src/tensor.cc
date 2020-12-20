@@ -328,12 +328,6 @@ void *Tensor::MutableData() {
   return this->data_;
 }
 
-bool Tensor::IsConst() {
-  return (this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR) && this->data_ != nullptr;
-}
-
-bool Tensor::IsScalar() { return this->category_ == CONST_SCALAR && this->data_ != nullptr; }
-
 void Tensor::AddQuantParam(const QuantArg &quant_arg) { this->quant_params_.push_back(quant_arg); }
 
 std::vector<QuantArg> Tensor::quant_params() const { return this->quant_params_; }

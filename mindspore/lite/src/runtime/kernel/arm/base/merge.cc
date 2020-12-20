@@ -28,7 +28,7 @@ namespace mindspore::kernel {
 int MergeCPUKernel::FreeInWorkTensor() const {
   for (auto &in_tensor : this->in_tensors_) {
     MS_ASSERT(in_tensor != nullptr);
-    if (in_tensor->IsConst()) {
+    if (in_tensor->IsConst() || in_tensor->IsGraphInput()) {
       continue;
     }
     if (in_tensor->ref_count() > 0) {
@@ -50,11 +50,13 @@ bool MergeCPUKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
   MS_ASSERT(in_tensors().size() == 2 * out_tensors().size());
   return std::all_of(this->in_tensors().begin(), this->in_tensors().begin() + in_tensors().size() / 2,
                      [&](lite::Tensor *kernel_in_tensor) {
-                       return kernel_in_tensor->IsConst() || kernel_in_tensor->ref_count() >= 1;
+                       return kernel_in_tensor->IsConst() || kernel_in_tensor->IsGraphInput() ||
+                              kernel_in_tensor->ref_count() >= 1;
                      }) ||
          std::all_of(this->in_tensors().begin() + in_tensors().size() / 2, this->in_tensors().end(),
                      [&](lite::Tensor *kernel_in_tensor) {
-                       return kernel_in_tensor->IsConst() || kernel_in_tensor->ref_count() >= 1;
+                       return kernel_in_tensor->IsConst() || kernel_in_tensor->IsGraphInput() ||
+                              kernel_in_tensor->ref_count() >= 1;
                      });
 }
 

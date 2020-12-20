@@ -148,9 +148,6 @@ lite::Tensor *LiteSession::ConvertTensor(const schema::Tensor &src_tensor) {
   } else {
     dst_tensor = new (std::nothrow) Tensor(TypeId(src_tensor.dataType()), shape, src_tensor.format(), src_category);
   }
-  if (dst_tensor == nullptr) {
-    return nullptr;
-  }
   return dst_tensor;
 }
 
@@ -158,6 +155,8 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   copyed_tensor_idxes_.clear();
   uint32_t tensor_count = model->all_tensors_.size();
+  MS_ASSERT(!model->sub_graphs_.empty());
+  auto model_input_indices = model->sub_graphs_.front()->input_indices_;
   for (uint32_t i = 0; i < tensor_count; ++i) {
     auto *src_tensor = model->all_tensors_[i];
     if (src_tensor == nullptr) {
@@ -176,6 +175,9 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
       return ret;
     }
     ConvertTensorsQuantParam(src_tensor, dst_tensor);
+    if (IsContain(model_input_indices, i)) {
+      dst_tensor->set_category(Tensor::GRAPH_INPUT);
+    }
     this->tensors_.emplace_back(dst_tensor);
   }
   return RET_OK;
@@ -329,6 +331,9 @@ void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
   InitGraphOutputNodeMap(model);
   InitGraphOutputTensorNames(model);
   InitGraphOutputTensorMap(model);
+  for (auto *tensor : this->inputs_) {
+    tensor->set_category(Tensor::Category::GRAPH_INPUT);
+  }
 }
 
 int LiteSession::CompileGraph(Model *model) {
@@ -398,11 +403,6 @@ int LiteSession::PrepareKernels(Model *model) {
   // find in_kernels and out_kernels for subgraphs
   for (auto kernel : this->kernels_) {
     kernel->FindInoutKernels(this->kernels_);
-    auto ret = kernel->Prepare();
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Prepare kernel " << kernel->name() << " failed: " << ret;
-      return ret;
-    }
     auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
     MS_ASSERT(sub_graph != nullptr);
     auto kernel_in_subgraph = sub_graph->nodes();
@@ -417,6 +417,13 @@ int LiteSession::PrepareKernels(Model *model) {
     kernel->InitOutTensorInitRefCount();
   }
   AdjustModelOutputTensorInitRefCount(model);
+  for (auto kernel : this->kernels_) {
+    auto ret = kernel->Prepare();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Prepare kernel " << kernel->name() << " failed: " << ret;
+      return ret;
+    }
+  }
   return RET_OK;
 }
 

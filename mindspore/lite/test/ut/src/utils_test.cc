@@ -56,9 +56,9 @@ TEST_F(UtilsTest, TestSubgraph) {
 
   std::vector<kernel::LiteKernel *> kernels = {kernel0.get(), kernel1.get(), kernel2.get()};
 
-  auto input_kernels = kernel::LiteKernelUtil::SubgraphInputKernels(kernels);
+  auto input_kernels = kernel::LiteKernelUtil::SubgraphInputNodes(kernels);
   ASSERT_EQ(input_kernels.size(), 1);
-  auto output_kernels = kernel::LiteKernelUtil::SubgraphOutputKernels(kernels);
+  auto output_kernels = kernel::LiteKernelUtil::SubgraphOutputNodes(kernels);
   ASSERT_EQ(output_kernels.size(), 1);
   auto input_tensors = kernel::LiteKernelUtil::SubgraphInputTensors(kernels);
   ASSERT_EQ(input_tensors.size(), 2);
