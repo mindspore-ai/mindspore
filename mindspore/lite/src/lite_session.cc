@@ -479,12 +479,6 @@ int LiteSession::Init(const Context *context) {
     is_running_.store(false);
     return ret;
   }
-  ret = InitNPURuntime();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init NPU runtime failed.";
-    is_running_.store(false);
-    return ret;
-  }
   executor_ = new (std::nothrow) Executor();
   if (nullptr == executor_) {
     MS_LOG(ERROR) << "New Executor failed";
@@ -658,18 +652,6 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
     return ret;
   }
   is_running_.store(false);
-  return RET_OK;
-}
-
-int LiteSession::InitNPURuntime() {
-#if SUPPORT_NPU
-  if (this->context_->IsNpuEnabled()) {
-    if (mindspore::lite::NPUManager::GetInstance()->InitClient() != RET_OK) {
-      MS_LOG(ERROR) << "NPU client init error.";
-      return RET_ERROR;
-    }
-  }
-#endif
   return RET_OK;
 }
 

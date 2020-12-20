@@ -32,8 +32,7 @@ class NPUExecutor : public Executor {
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels) override;
 
   int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
-          const std::vector<kernel::LiteKernel *> &kernels, const std::vector<bool> &inputs_nhwc2nchw,
-          const std::vector<bool> &outputs_nchw2nhwc, Allocator *allocator = nullptr,
+          const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
           const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr);
 
  private:

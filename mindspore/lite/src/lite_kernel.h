@@ -95,6 +95,8 @@ class LiteKernel {
 
   virtual int Init() { return mindspore::lite::RET_ERROR; }
 
+  OpParameter *op_parameter() { return op_parameter_; }
+
   std::string name() const { return this->name_; }
 
   virtual int Train() {

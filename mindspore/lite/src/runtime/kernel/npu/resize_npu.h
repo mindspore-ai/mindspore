@@ -24,12 +24,12 @@
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/kernel/npu/transpose_base_npu.h"
 namespace mindspore::kernel {
-class ResizeNPUKernel : public TransposeBaseNPUKernel {
+class ResizeNPUKernel : public NPUKernel {
  public:
   ResizeNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
-      : TransposeBaseNPUKernel(parameter, inputs, outputs, ctx, primitive) {
+      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
     auto resize_parameter = reinterpret_cast<ResizeParameter *>(parameter);
     method_ = resize_parameter->method_;
     new_height_ = resize_parameter->new_height_;

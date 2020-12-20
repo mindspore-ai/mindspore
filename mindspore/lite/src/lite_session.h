@@ -103,8 +103,6 @@ class LiteSession : public session::LiteSession {
  private:
   void ResetInputsShape(const std::vector<std::vector<int>> &dims);
 
-  int InitNPURuntime();
-
   int InitGPURuntime();
 
  protected:

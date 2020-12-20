@@ -77,6 +77,8 @@ class Scheduler {
 
   static kernel::SubGraphType GetKernelSubGraphType(const kernel::LiteKernel *kernel);
 
+  int RunPass(std::vector<kernel::LiteKernel *> *dst_kernels);
+
  protected:
   const InnerContext *context_ = nullptr;
   Model *src_model_ = nullptr;
