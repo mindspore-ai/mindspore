@@ -33,6 +33,8 @@
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/subgraph_npu_kernel.h"
 #include "src/runtime/agent/npu/npu_manager.h"
+#include "src/runtime/agent/npu/npu_transform_pass.h"
+#include "src/runtime/agent/npu/npu_fusion_pass.h"
 #endif
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
@@ -63,6 +65,11 @@ int Scheduler::Schedule(std::vector<kernel::LiteKernel *> *dst_kernels) {
     return ret;
   }
   FindAllInoutKernels(*dst_kernels);
+  ret = RunPass(dst_kernels);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Schedule run pass failed.";
+    return ret;
+  }
   ret = ConstructSubGraphs(dst_kernels);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConstructSubGraphs failed.";
@@ -513,5 +520,26 @@ void Scheduler::FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &ker
     MS_ASSERT(kernel != nullptr);
     kernel->FindInoutKernels(kernels);
   }
+}
+
+int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
+  int ret = RET_OK;
+#if SUPPORT_NPU
+  auto transform_pass = new NPUTransformPass;
+  ret = transform_pass->FormatTransformPass(context_, dst_kernels, &src_tensors_);
+  delete transform_pass;
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run npu format transform pass failed.";
+    return ret;
+  }
+  auto fusion_pass = new NPUFusionPass(dst_kernels);
+  ret = fusion_pass->Fusion();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Run npu fussion transform pass failed.";
+    return ret;
+  }
+  delete fusion_pass;
+#endif
+  return ret;
 }
 }  // namespace mindspore::lite

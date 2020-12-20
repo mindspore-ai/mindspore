@@ -17,17 +17,18 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_CONVOLUTION_BASE_NPU_H_
 
 #include <vector>
+#include <memory>
 #include "include/graph/op/all_ops.h"
 #include "src/runtime/kernel/npu/transpose_base_npu.h"
 #include "nnacl/conv_parameter.h"
 
 namespace mindspore::kernel {
-class ConvolutionBaseNPUKernel : public TransposeBaseNPUKernel {
+class ConvolutionBaseNPUKernel : public NPUKernel {
  public:
   ConvolutionBaseNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                            const mindspore::lite::PrimitiveC *primitive)
-      : TransposeBaseNPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~ConvolutionBaseNPUKernel() override;
 
  protected:

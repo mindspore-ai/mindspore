@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_UTILS_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_MANAGER_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_MANAGER_H_
 #include <string>
 #include <memory>
 #include <vector>
+#include <unordered_map>
+#include <set>
+#include "schema/model_generated.h"
 #include "include/HiAiModelManagerService.h"
 
 namespace mindspore::lite {
-
+static std::set<mindspore::schema::PrimitiveType> npu_trans_nodes = {
+  schema::PrimitiveType_Conv2D,          schema::PrimitiveType_DeConv2D,
+  schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_DeDepthwiseConv2D,
+  schema::PrimitiveType_Resize,          schema::PrimitiveType_Pooling};
 class NPUManager {
  public:
   static NPUManager *GetInstance() {
@@ -32,8 +38,6 @@ class NPUManager {
 
   bool IsSupportNPU();
 
-  int InitClient();
-
   // provide to subgraph to add model.
   int AddModel(void *model_buf, uint32_t size, const std::string &model_name, int frequency);
 
@@ -41,18 +45,18 @@ class NPUManager {
   int LoadOMModel();
 
   // provide to executor.
-  std::shared_ptr<hiai::AiModelMngerClient> GetClient();
+  std::shared_ptr<hiai::AiModelMngerClient> GetClient(const std::string &model_name);
 
-  int index();
+  int index() const;
 
  private:
-  void CheckSupportNPU();
-
   bool IsKirinChip();
 
-  bool CheckOmBuildIr(const std::string &path);
+  bool CheckEMUIVersion();
 
-  std::string GetExecutorPath();
+  bool CheckDDKVersion();
+
+  int CompareVersion(const std::string &version1, const std::string &version2);
 
  private:
   int index_ = 0;
@@ -61,12 +65,14 @@ class NPUManager {
 
   bool is_support_npu = false;
 
-  std::shared_ptr<hiai::AiModelMngerClient> client_ = nullptr;
+  std::vector<std::shared_ptr<hiai::AiModelMngerClient>> clients_;
 
   std::vector<std::shared_ptr<hiai::AiModelDescription>> model_desc_;
 
   std::shared_ptr<hiai::AiModelBuilder> mc_builder_ = nullptr;
+
+  std::unordered_map<std::string, int> model_map_;
 };
 
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_MANAGER_H_

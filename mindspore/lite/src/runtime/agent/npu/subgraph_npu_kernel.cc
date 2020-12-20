@@ -24,7 +24,6 @@
 #include "include/graph/model.h"
 #include "include/hiai_ir_build.h"
 #include "include/HiAiModelManagerType.h"
-#include "include/context.h"
 #include "include/version.h"
 #include "src/common/utils.h"
 #include "src/runtime/agent/npu/npu_converter_utils.h"
@@ -33,10 +32,6 @@
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-
-std::set<schema::PrimitiveType> trans_nodes = {schema::PrimitiveType_Conv2D, schema::PrimitiveType_DeConv2D,
-                                               schema::PrimitiveType_DepthwiseConv2D,
-                                               schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_Resize};
 
 domi::ModelBufferData *SubGraphNpuKernel::BuildIRModel() {
   ge::Graph graph("NPUGraph");
@@ -75,8 +70,7 @@ domi::ModelBufferData *SubGraphNpuKernel::BuildIRModel() {
 }
 
 int SubGraphNpuKernel::Run() {
-  return reinterpret_cast<lite::NPUExecutor *>(this->executor_)
-    ->Run(in_tensors_, out_tensors_, nodes_, inputs_nhwc2nchw_, outputs_nchw2nhwc_);
+  return reinterpret_cast<lite::NPUExecutor *>(this->executor_)->Run(in_tensors_, out_tensors_, nodes_);
 }
 
 int SubGraphNpuKernel::BuildNPUInputOp() {
@@ -88,21 +82,7 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
       if (IsSubGraphInputTensor(in_tensor)) {
         auto tensor_name = node->name() + "_" + std::to_string(count++);
         hiai::op::Data *data;
-        if (trans_nodes.find(node->Type()) != trans_nodes.end()) {
-          auto shape = in_tensor->shape();
-          data = new (std::nothrow) hiai::op::Data(tensor_name);
-          if (data == nullptr) {
-            MS_LOG(ERROR) << "New data failed.";
-            return RET_ERROR;
-          }
-          ge::TensorDesc tensor_desc(lite::ConverterToNPUShape({shape[0], shape[3], shape[1], shape[2]}),
-                                     ge::FORMAT_NCHW, lite::ConverterToNPUDataType(in_tensor->data_type()));
-          data->update_input_desc_x(tensor_desc);
-          inputs_nhwc2nchw_.push_back(true);
-        } else {
-          data = mindspore::lite::ConverterToNPUData(in_tensor, tensor_name);
-          inputs_nhwc2nchw_.push_back(false);
-        }
+        data = mindspore::lite::ConverterToNPUData(in_tensor, tensor_name);
         subgraph_input_op_.push_back(*data);
         node_input_op.push_back(data);
         continue;
@@ -132,7 +112,7 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
 
       // weight tensor
       if (is_weight_tensor) {
-        if (trans_nodes.find(node->Type()) == trans_nodes.end()) {
+        if (lite::npu_trans_nodes.find(node->Type()) == lite::npu_trans_nodes.end()) {
           auto name = node->name() + "_" + std::to_string(count++);
           auto weight_const = new (std::nothrow) hiai::op::Const(node->name() + "_" + std::to_string(count++));
           if (weight_const == nullptr) {
@@ -162,11 +142,6 @@ std::vector<ge::Operator> SubGraphNpuKernel::GetNPUNodes(const vector<kernel::Li
   ops.reserve(nodes.size());
   for (int i = 0; i < nodes.size(); i++) {
     ops.push_back(*reinterpret_cast<NPUKernel *>(nodes[i])->GetNPUOp());
-    if (trans_nodes.find(schema::PrimitiveType(nodes[i]->GetPrimitive()->Type())) != trans_nodes.end()) {
-      outputs_nchw2nhwc_.push_back(true);
-    } else {
-      outputs_nchw2nhwc_.push_back(false);
-    }
   }
   return ops;
 }

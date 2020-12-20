@@ -62,23 +62,17 @@ int PoolingNPUKernel::SetPoolingParam() {
 int PoolingNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs,
                                    const std::vector<ge::Operator *> &npu_inputs) {
-  auto ret = SetPreTranspose(npu_inputs[0]);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "New pre transpose npu operator (NHWC -> NCHW) for op " << name_ << " failed.";
-    return RET_ERROR;
-  }
-
   pooling_ = new (std::nothrow) hiai::op::PoolingD(name_ + "_pooling");
   if (pooling_ == nullptr) {
     MS_LOG(ERROR) << "New pooling npu operator for op " << name_ << " failed.";
     return RET_ERROR;
   }
-  ret = SetPoolingParam();
+  auto ret = SetPoolingParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set npu op parameter for convolution op " << name_ << " failed.";
     return RET_ERROR;
   }
-  pooling_->set_input_x(*pre_trans_);
+  pooling_->set_input_x(*npu_inputs[0]);
 
   if (pooling_param_->act_type_ != ActType_No) {
     ret = SetActivation(pooling_, pooling_param_->act_type_);
@@ -87,20 +81,16 @@ int PoolingNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
       return RET_ERROR;
     }
   }
-
-  if (pooling_param_->act_type_ == ActType_No) {
-    ret = SetPostTranspose(pooling_);
-  } else {
-    ret = SetPostTranspose(act_);
-  }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "New post transpose npu operator (NCHW -> NHWC) for op " << name_ << " failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
-ge::Operator *mindspore::kernel::PoolingNPUKernel::GetNPUOp() { return post_trans_; }
+ge::Operator *mindspore::kernel::PoolingNPUKernel::GetNPUOp() {
+  if (pooling_param_->act_type_ == ActType_No) {
+    return pooling_;
+  } else {
+    return act_;
+  }
+}
 
 PoolingNPUKernel::~PoolingNPUKernel() {
   if (pooling_ != nullptr) {

@@ -25,7 +25,7 @@ using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 namespace mindspore::kernel {
 int ConvolutionDepthwiseNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
-  return RET_ERROR;
+  return RET_OK;
 }
 
 int ConvolutionDepthwiseNPUKernel::SetConvDwParam() {
@@ -49,19 +49,13 @@ int ConvolutionDepthwiseNPUKernel::SetConvDwParam() {
 int ConvolutionDepthwiseNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
                                                 const std::vector<lite::Tensor *> &outputs,
                                                 const std::vector<ge::Operator *> &npu_inputs) {
-  auto ret = SetPreTranspose(npu_inputs[0]);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "New pre transpose npu operator (NHWC -> NCHW) for op " << name_ << " failed.";
-    return RET_ERROR;
-  }
-
   // set conv attr param
   conv_dw_ = new (std::nothrow) hiai::op::ConvolutionDepthwise(name_ + "_conv_depthwise");
   if (conv_dw_ == nullptr) {
     MS_LOG(ERROR) << "New convolution depthwise operator for op " << name_ << " failed.";
     return RET_ERROR;
   }
-  ret = SetConvDwParam();
+  auto ret = SetConvDwParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set npu op parameter for convolution depthwise op " << name_ << " failed.";
     return RET_ERROR;
@@ -76,7 +70,7 @@ int ConvolutionDepthwiseNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *
   if (inputs.size() == 3) {
     conv_dw_->set_input_bias(*bias_);
   }
-  conv_dw_->set_input_x(*pre_trans_);
+  conv_dw_->set_input_x(*npu_inputs[0]);
 
   if (conv_param_->act_type_ != ActType_No) {
     ret = SetActivation(conv_dw_, conv_param_->act_type_);
@@ -85,20 +79,16 @@ int ConvolutionDepthwiseNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *
       return RET_ERROR;
     }
   }
-
-  if (conv_param_->act_type_ == ActType_No) {
-    ret = SetPostTranspose(conv_dw_);
-  } else {
-    ret = SetPostTranspose(act_);
-  }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "New post transpose npu operator (NCHW -> NHWC) for op " << name_ << " failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
-ge::Operator *mindspore::kernel::ConvolutionDepthwiseNPUKernel::GetNPUOp() { return post_trans_; }
+ge::Operator *mindspore::kernel::ConvolutionDepthwiseNPUKernel::GetNPUOp() {
+  if (conv_param_->act_type_ == ActType_No) {
+    return conv_dw_;
+  } else {
+    return act_;
+  }
+}
 
 ConvolutionDepthwiseNPUKernel::~ConvolutionDepthwiseNPUKernel() {
   if (conv_dw_ != nullptr) {

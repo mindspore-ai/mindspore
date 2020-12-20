@@ -24,7 +24,7 @@ using mindspore::schema::PrimitiveType_Conv2D;
 namespace mindspore::kernel {
 int ConvolutionNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                     const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
-  return RET_ERROR;
+  return RET_OK;
 }
 
 int ConvolutionNPUKernel::SetConvParam() {
@@ -49,19 +49,13 @@ int ConvolutionNPUKernel::SetConvParam() {
 int ConvolutionNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
                                        const std::vector<lite::Tensor *> &outputs,
                                        const std::vector<ge::Operator *> &npu_inputs) {
-  auto ret = SetPreTranspose(npu_inputs[0]);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "New pre transpose npu operator (NHWC -> NCHW) for op " << name_ << " failed.";
-    return RET_ERROR;
-  }
-
   // set conv attr param
   conv_ = new (std::nothrow) hiai::op::Convolution(name_ + "_conv");
   if (conv_ == nullptr) {
     MS_LOG(ERROR) << "New convolution operator for convolution op " << name_ << " failed.";
     return RET_ERROR;
   }
-  ret = SetConvParam();
+  auto ret = SetConvParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set npu op parameter for convolution op " << name_ << " failed.";
     return RET_ERROR;
@@ -76,7 +70,7 @@ int ConvolutionNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs
   if (inputs.size() == 3) {
     conv_->set_input_bias(*bias_);
   }
-  conv_->set_input_x(*pre_trans_);
+  conv_->set_input_x(*npu_inputs[0]);
 
   if (conv_param_->act_type_ != ActType_No) {
     ret = SetActivation(conv_, conv_param_->act_type_);
@@ -85,20 +79,16 @@ int ConvolutionNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs
       return RET_ERROR;
     }
   }
-
-  if (conv_param_->act_type_ == ActType_No) {
-    ret = SetPostTranspose(conv_);
-  } else {
-    ret = SetPostTranspose(act_);
-  }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "New post transpose npu operator (NCHW -> NHWC) for op " << name_ << " failed.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
-ge::Operator *mindspore::kernel::ConvolutionNPUKernel::GetNPUOp() { return post_trans_; }
+ge::Operator *mindspore::kernel::ConvolutionNPUKernel::GetNPUOp() {
+  if (conv_param_->act_type_ == ActType_No) {
+    return conv_;
+  } else {
+    return act_;
+  }
+}
 
 ConvolutionNPUKernel::~ConvolutionNPUKernel() {
   if (conv_ != nullptr) {
