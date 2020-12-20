@@ -205,8 +205,12 @@ class DatasetHelper:
         return self.iter.get_sink_size()
 
     def stop_send(self):
-        """Free up resources about data sink."""
+        """stop send data about data sink."""
         self.iter.stop_send()
+
+    def release(self):
+        """Free up resources about data sink."""
+        self.iter.release()
 
     def continue_send(self):
         """continue send data to device at the beginning of epoch."""
@@ -241,6 +245,7 @@ class _DatasetIter:
             _send_data_no_flag(dataset, epoch_num)
 
         self.stop_send = dataset.__transfer_dataset__.stop_send
+        self.release = dataset.__transfer_dataset__.release
         self.continue_send = dataset.__transfer_dataset__.continue_send
         self.get_data_info = dataset.__transfer_dataset__.get_data_info
         self.dataset_types, self.dataset_shapes = _get_types_and_shapes(dataset)
