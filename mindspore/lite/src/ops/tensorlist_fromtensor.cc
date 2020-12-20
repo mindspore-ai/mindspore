@@ -112,6 +112,9 @@ Registry TensorListFromTensorRegistry(schema::PrimitiveType_TensorListFromTensor
 #endif
 
 int TensorListFromTensor::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
+  if (!infer_flag()) {
+    return RET_INFER_INVALID;
+  }
   auto input0 = inputs_[0];
   MS_ASSERT(input0 != nullptr);
   std::vector<int> input0_shape = input0->shape();

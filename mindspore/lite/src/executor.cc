@@ -25,7 +25,7 @@ int Executor::CheckInputs(const std::vector<Tensor *> &in_tensors) {
       MS_LOG(ERROR) << "Graph input tensor is nullptr";
       return RET_ERROR;
     }
-    if (inTensor->data_c() == nullptr) {
+    if (inTensor->data_type() != kObjectTypeTensorType && inTensor->data_c() == nullptr) {
       MS_LOG(ERROR) << "Graph input tensor data is nullptr " << in_tensors;
       return RET_ERROR;
     }

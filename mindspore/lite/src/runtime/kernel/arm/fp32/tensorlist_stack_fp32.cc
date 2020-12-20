@@ -198,4 +198,5 @@ kernel::LiteKernel *CpuTensorListStackFp32KernelCreator(const std::vector<lite::
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListStack, CpuTensorListStackFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TensorListStack, CpuTensorListStackFp32KernelCreator)
 }  // namespace mindspore::kernel

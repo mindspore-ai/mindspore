@@ -125,7 +125,7 @@ std::string TensorFlowUtils::GetFlattenNodeName(const std::string &input_name) {
     if (input_splits[2] == "0") {
       ret = input_splits[0];
     } else {
-      ret = input_splits[0] + input_splits[2];  // multi output node
+      ret = input_splits[0] + ":" + input_splits[2];  // multi output node
     }
   }
   return ret;

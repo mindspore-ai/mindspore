@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/base/switch.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "src/tensorlist.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -28,8 +29,8 @@ int SwitchCPUKernel::PostProcess() {
   auto bool_tensor = in_tensors_.front();
   MS_ASSERT(bool_tensor != nullptr);
   MS_ASSERT(bool_tensor->data_type() == kNumberTypeBool);
-  MS_ASSERT(bool_tensor->shape().size() == 1);
-  MS_ASSERT(bool_tensor->shape().front() == 1);
+  MS_ASSERT(bool_tensor->Size() == 1);
+  MS_ASSERT(bool_tensor->Size() == 1);
   auto active = static_cast<bool *>(bool_tensor->data_c());
   if (active == nullptr) {
     MS_LOG(ERROR) << "data of bool tensor is nullptr";
@@ -47,7 +48,7 @@ int SwitchCPUKernel::PostProcess() {
 
 int SwitchCPUKernel::Init() { return RET_OK; }
 
-int SwitchCPUKernel::ReSize() { return RET_ERROR; }
+int SwitchCPUKernel::ReSize() { return RET_OK; }
 
 // inputs: bool*1 data*n
 // output: true-data*n, false-data*n
@@ -56,8 +57,8 @@ int SwitchCPUKernel::Run() {
   auto bool_tensor = in_tensors_.front();
   MS_ASSERT(bool_tensor != nullptr);
   MS_ASSERT(bool_tensor->data_type() == kNumberTypeBool);
-  MS_ASSERT(bool_tensor->shape().size() == 1);
-  MS_ASSERT(bool_tensor->shape().front() == 1);
+  MS_ASSERT(bool_tensor->Size() == 1);
+  MS_ASSERT(bool_tensor->Size() == 1);
   auto active = static_cast<bool *>(bool_tensor->data_c());
   if (active == nullptr) {
     MS_LOG(ERROR) << "data of bool tensor is nullptr";
@@ -68,6 +69,14 @@ int SwitchCPUKernel::Run() {
   while (in_index < in_tensors_.size()) {
     auto in_tensor = in_tensors_.at(in_index++);
     auto out_tensor = out_tensors_.at(out_index++);
+    // copy for tensorlist
+    if (in_tensor->data_type() == kObjectTypeTensorType) {
+      auto in_tensor_list = reinterpret_cast<lite::TensorList *>(in_tensor);
+      auto out_tensor_list = reinterpret_cast<lite::TensorList *>(out_tensor);
+      *out_tensor_list = *in_tensor_list;
+      continue;
+    }
+    // copy for tensor
     MS_ASSERT(in_tensor != nullptr);
     MS_ASSERT(out_tensor != nullptr);
     auto input = in_tensor->data_c();
@@ -111,4 +120,5 @@ kernel::LiteKernel *CpuSwitchKernelCreator(const std::vector<lite::Tensor *> &in
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Switch, CpuSwitchKernelCreator)
 REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Switch, CpuSwitchKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Switch, CpuSwitchKernelCreator)
 }  // namespace mindspore::kernel

@@ -60,7 +60,7 @@ class TensorList : public Tensor {
  public:
   TensorList() = default;
 
-  TensorList(std::vector<int> shape, std::vector<int> element_shape);
+  TensorList(std::vector<int> shape, std::vector<int> element_shape, Category category = VAR);
 
   ~TensorList() override;
 
@@ -113,6 +113,8 @@ class TensorList : public Tensor {
   bool IsCompatibleShape(const Tensor *src);
 
   STATUS Decode(const int *data);
+
+  bool IsConst() const override;
 
  protected:
   // The following functions must be masked.

@@ -24,8 +24,8 @@
 namespace mindspore {
 namespace lite {
 
-TensorList::TensorList(std::vector<int> shape, std::vector<int> element_shape)
-    : Tensor(kObjectTypeTensorType, shape), element_shape_(element_shape) {}
+TensorList::TensorList(std::vector<int> shape, std::vector<int> element_shape, Category category)
+    : Tensor(kObjectTypeTensorType, shape, schema::Format::Format_NHWC, category), element_shape_(element_shape) {}
 
 TensorList::~TensorList() {
   if (!this->tensors_.empty()) {
@@ -66,6 +66,9 @@ int TensorList::CopyTensorList(const TensorList &src, bool copy_data) {
 }
 
 int TensorList::CopyTensorData(const TensorList &src) {
+  if (src.tensors_.empty()) {
+    return RET_OK;
+  }
   for (int i = 0; i < this->ElementsNum(); ++i) {
     if (src.tensors_[i] == nullptr) {
       MS_LOG(ERROR) << "src tensors_[" << i << "] is nullptr!";
@@ -115,8 +118,14 @@ int TensorList::MallocTensorListData(TypeId dtype, const std::vector<std::vector
 }
 
 int TensorList::MallocData(const mindspore::lite::Allocator *allocator) {
+  if (allocator != nullptr) {
+    allocator_ = const_cast<mindspore::lite::Allocator *>(allocator);
+  }
   // malloc data buf of each tensor in tensors_
   for (int i = 0; i < this->ElementsNum(); ++i) {
+    if (tensors_.empty()) {
+      return RET_OK;
+    }
     auto tensor_ptr = this->tensors_[i];
     if (tensor_ptr == nullptr) {
       MS_LOG(ERROR) << "tensors_[" << i << "] is nullptr!";
@@ -252,5 +261,8 @@ STATUS TensorList::Decode(const int *data) {
   }
   return RET_OK;
 }
+
+bool TensorList::IsConst() const { return this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR; }
+
 }  // namespace lite
 }  // namespace mindspore
