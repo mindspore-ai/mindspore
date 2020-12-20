@@ -17,9 +17,9 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_SERVICES_H_
 
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <mutex>
-#include <set>
 #include <string>
 #include <vector>
 #include "minddata/dataset/util/memory_pool.h"
@@ -27,6 +27,8 @@
 #include "minddata/dataset/util/service.h"
 
 #define UNIQUEID_LEN 36
+#define UNIQUEID_LIST_LIMITS 1024
+#define UNIQUEID_HALF_INDEX ((UNIQUEID_LIST_LIMITS) / 2)
 namespace mindspore {
 namespace dataset {
 class TaskManager;
@@ -98,7 +100,8 @@ class Services {
  private:
   static std::once_flag init_instance_flag_;
   static std::unique_ptr<Services> instance_;
-  static std::set<std::string> unique_id_list_;
+  static std::map<std::string, uint64_t> unique_id_list_;
+  static uint64_t unique_id_count_;
   static std::mutex unique_id_mutex_;
   // A small pool used for small objects that last until the
   // Services Manager shuts down. Used by all sub-services.
