@@ -348,7 +348,7 @@ def get_index_tensor_dtype(dtype):
 def check_index_tensors_dtype(dtypes, op_name):
     """Check a tuple of tensor data type."""
     for ele in dtypes:
-        if not ele == mstype.int32:
+        if not ele in mstype.int_type:
             raise IndexError(f"For '{op_name}', the all index tensor "
                              f"data types should be mstype.int32, but got {dtypes}.")
     return True
@@ -357,7 +357,7 @@ def check_index_tensors_dtype(dtypes, op_name):
 @constexpr
 def check_index_tensor_dtype(dtype, op_name):
     """Check a tensor data type."""
-    if dtype == mstype.int32:
+    if dtype in mstype.int_type:
         return True
     raise IndexError(
         f"For '{op_name}', the index tensor data type should be mstype.int32, but got {dtype}.")
