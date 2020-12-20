@@ -88,7 +88,7 @@ int ConcatInt8CPUKernel::ReSize() {
   }
 
   before_axis_size = 1;
-  for (int i = 0; i < axis_; i++) {
+  for (int i = 0; i < concat_param_->axis_; i++) {
     before_axis_size *= out_tensors_.at(kOutputIndex)->DimensionSize(i);
   }
 
@@ -104,7 +104,7 @@ int ConcatInt8CPUKernel::ReSize() {
   memcpy(reinterpret_cast<void *>(concat_param_->output_shapes_), output_tensor->shape().data(),
          sizeof(int) * output_dim);
 
-  for (size_t i = axis_ + 1; i < output_dim; i++) {
+  for (size_t i = concat_param_->axis_ + 1; i < output_dim; i++) {
     after_axis_size *= concat_param_->output_shapes_[i];
   }
   concat_param_->after_axis_size = after_axis_size;
@@ -137,7 +137,7 @@ int ConcatInt8CPUKernel::DoExecute(int task_id) {
   if (real_dst_count <= 0) {
     return lite::RET_OK;
   }
-  Int8Concat(input_data_, output_data_, concat_param_, axis_, real_dst_count, task_id);
+  Int8Concat(input_data_, output_data_, concat_param_, concat_param_->axis_, real_dst_count, task_id);
   return lite::RET_OK;
 }
 

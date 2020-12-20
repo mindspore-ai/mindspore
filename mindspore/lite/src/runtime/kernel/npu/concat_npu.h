@@ -20,6 +20,7 @@
 #include "nnacl/concat_parameter.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
+
 namespace mindspore::kernel {
 class ConcatNPUKernel : public NPUKernel {
  public:
@@ -27,8 +28,7 @@ class ConcatNPUKernel : public NPUKernel {
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto concat_parameter = reinterpret_cast<ConcatParameter *>(parameter);
-    axis_ = concat_parameter->axis_;
+    concat_param_ = reinterpret_cast<ConcatParameter *>(parameter);
   }
   ~ConcatNPUKernel() override;
 
@@ -40,7 +40,7 @@ class ConcatNPUKernel : public NPUKernel {
 
  private:
   hiai::op::ConcatD *op_ = nullptr;
-  int axis_;
+  ConcatParameter *concat_param_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_CONCAT_NPU_H_
