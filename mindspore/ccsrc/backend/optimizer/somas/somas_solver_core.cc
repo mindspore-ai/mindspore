@@ -317,7 +317,7 @@ void SomasSolverCore::SortTensors() {  // need to sort the tensors for Fast Heur
 
 void SomasSolverCore::RestoreSolution(uint32_t sol_id) {
   for (auto block : block_tensors_) {
-    if (block.offsets_.count(sol_id) == 0) assert(0);
+    if (block.offsets_.count(sol_id) == 0) MS_ASSERT(0);
     size_t bestOffset = block.offsets_[sol_id];
     size_t offset = bestOffset;
     SomasSolverTensorDescPtr pTensor = block.m_start_tensor_;

@@ -646,8 +646,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
       output_type_id = AnfAlgo::GetOutputInferDataType(value_node, output_idx);
     }
     auto output_format = AnfAlgo::GetOutputFormat(value_node, output_idx);
-    DeviceAddressPtr address = nullptr;
-    address = CreateDeviceAddress(nullptr, node_size, output_format, output_type_id);
+    DeviceAddressPtr address = CreateDeviceAddress(nullptr, node_size, output_format, output_type_id);
     MS_EXCEPTION_IF_NULL(address);
     if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
         !mem_manager_->MallocMemFromMemPool(address, node_size)) {

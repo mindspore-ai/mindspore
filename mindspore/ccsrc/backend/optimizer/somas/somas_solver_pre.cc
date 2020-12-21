@@ -22,14 +22,15 @@
 
 #include "backend/optimizer/somas/somas_solver_core.h"
 #include "backend/optimizer/somas/somas_solver_pre.h"
+#include "debug/common.h"
 
 namespace mindspore {
 namespace somas {
 Status SomasSolverPre::Solving(const session::KernelGraph *graph,
                                std::unordered_map<size_t, SomasSolverTensorDescPtr> *ptensors,
-                               std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v,
-                               bool bVerifySolution, bool ball, SortingType sorting, FittingType fitting,
-                               AlgorithmType algorithm) {
+                               const std::vector<DynamicBitSet> *pConstraints,
+                               const vector<vector<size_t>> &continuous_v, bool bVerifySolution, bool ball,
+                               SortingType sorting, FittingType fitting, AlgorithmType algorithm) {
   Status retval = SUCCESS;
 
   try {
@@ -92,7 +93,7 @@ Status SomasSolverPre::Solving(const session::KernelGraph *graph,
 
 void SomasSolverPre::Log(const session::KernelGraph *graph,
                          const unordered_map<size_t, SomasSolverTensorDescPtr> &tensors,
-                         std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v) {
+                         const std::vector<DynamicBitSet> *pConstraints, const vector<vector<size_t>> &continuous_v) {
   MS_LOG(INFO) << "SomasSolver::Log Writing somas-input.txt..";
 
   auto context_ptr = MsContext::GetInstance();
@@ -103,28 +104,22 @@ void SomasSolverPre::Log(const session::KernelGraph *graph,
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return;
   }
-  char real_path[PATH_MAX] = {0};
-#if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, filename.c_str(), PATH_MAX) == nullptr) {
-    MS_LOG(DEBUG) << "dir " << filename << " does not exit.";
+  auto real_path = Common::GetRealPath(filename);
+  if (!real_path.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
+    return;
   }
-#else
-  if (realpath(filename.c_str(), real_path) == nullptr) {
-    MS_LOG(DEBUG) << "Dir " << filename << " does not exit.";
-  }
-#endif
 
-  std::string path_string = real_path;
-  ChangeFileMode(path_string, S_IRWXU);
-  std::ofstream ofs_1(real_path);
+  ChangeFileMode(real_path.value(), S_IRWXU);
+  std::ofstream ofs(real_path.value());
 
-  if (!ofs_1.is_open()) {
-    MS_LOG(ERROR) << "Open log file '" << real_path << "' failed!";
+  if (!ofs.is_open()) {
+    MS_LOG(ERROR) << "Open log file '" << real_path.value() << "' failed!";
     return;
   }
 
   for (auto &t : tensors) {
-    ofs_1 << "T " << t.second->index_ << " " << t.second->size_ << " " << t.second->lifelong_ << std::endl;
+    ofs << "T " << t.second->index_ << " " << t.second->size_ << " " << t.second->lifelong_ << std::endl;
   }
 
   for (auto &t1 : tensors) {
@@ -132,18 +127,18 @@ void SomasSolverPre::Log(const session::KernelGraph *graph,
       size_t idx1 = t1.first;
       size_t idx2 = t2.first;
       if ((idx1 != idx2) && (*pConstraints)[idx1].IsBitTrue(idx2) == false) {
-        ofs_1 << "C " << idx1 << " " << idx2 << std::endl;
+        ofs << "C " << idx1 << " " << idx2 << std::endl;
       }
     }
   }
   for (auto &s : continuous_v) {
-    ofs_1 << "S";
+    ofs << "S";
     for (auto idx : s) {
-      ofs_1 << " " << idx;
+      ofs << " " << idx;
     }
-    ofs_1 << std::endl;
+    ofs << std::endl;
   }
-  ofs_1.close();
+  ofs.close();
 
   MS_LOG(INFO) << "SomasSolver::Log Writing somas-output.txt..";
   std::string out_filename =
@@ -152,21 +147,17 @@ void SomasSolverPre::Log(const session::KernelGraph *graph,
     MS_LOG(ERROR) << "File path " << out_filename << " is too long.";
     return;
   }
-#if defined(_WIN32) || defined(_WIN64)
-  if (_fullpath(real_path, out_filename.c_str(), PATH_MAX) == nullptr) {
-    MS_LOG(DEBUG) << "dir " << out_filename << " does not exit.";
+  auto out_real_path = Common::GetRealPath(filename);
+  if (!out_real_path.has_value()) {
+    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
+    return;
   }
-#else
-  if (realpath(out_filename.c_str(), real_path) == nullptr) {
-    MS_LOG(DEBUG) << "Dir " << out_filename << " does not exit.";
-  }
-#endif
-  path_string = real_path;
-  ChangeFileMode(path_string, S_IRWXU);
-  std::ofstream ofs_2(real_path);
 
-  if (!ofs_2.is_open()) {
-    MS_LOG(ERROR) << "Open log file '" << real_path << "' failed!";
+  ChangeFileMode(out_real_path.value(), S_IRWXU);
+  std::ofstream ofs_out(out_real_path.value());
+
+  if (!ofs_out.is_open()) {
+    MS_LOG(ERROR) << "Open log file '" << out_real_path.value() << "' failed!";
     return;
   }
 
@@ -183,12 +174,12 @@ void SomasSolverPre::Log(const session::KernelGraph *graph,
     bool size_aligned = tensor->size_ % alignment == 0;
     bool offset_aligned = tensor->offset_ % alignment == 0;
 
-    ofs_2 << std::endl
-          << "tensor_id=" << tensor->index_ << "\tsize=" << tensor->size_ << "\toffset=" << tensor->offset_
-          << "\tcontinuous=" << continuous << "\tsize_aligned=" << size_aligned
-          << "\toffset_aligned=" << offset_aligned;
+    ofs_out << std::endl
+            << "tensor_id=" << tensor->index_ << "\tsize=" << tensor->size_ << "\toffset=" << tensor->offset_
+            << "\tcontinuous=" << continuous << "\tsize_aligned=" << size_aligned
+            << "\toffset_aligned=" << offset_aligned;
   }
-  ofs_2.close();
+  ofs_out.close();
 
   MS_LOG(INFO) << "SomasSolver::Log done";
 }
