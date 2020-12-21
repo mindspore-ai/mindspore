@@ -34,7 +34,7 @@ class ControlDepend(Primitive):
         This operation does not work in `PYNATIVE_MODE`.
     Args:
         depend_mode (int): Use 0 for a normal dependency relation and 1 for a user-defined dependency relation.
-        Default: 0.
+            Default: 0.
 
     Inputs:
         - **src** (Any) - The source input. It can be a tuple of operations output or a single operation output. We do
@@ -102,7 +102,7 @@ class GeSwitch(PrimitiveWithInfer):
 
     Examples:
         >>> class Net(nn.Cell):
-        ... 	def __init__(self):
+        ...     def __init__(self):
         ...         super(Net, self).__init__()
         ...         self.square = ops.Square()
         ...         self.add = ops.TensorAdd()
