@@ -21,7 +21,7 @@
 
     使用过程中若出现Android Studio配置问题，可参考第5项解决。
 
-2. 连接Android设备，运行骨应用程序。
+2. 连接Android设备，运行应用程序。
 
     通过USB连接Android设备调试，点击`Run 'app'`即可在你的设备上运行本示例项目。
     > 编译过程中Android Studio会自动下载MindSpore Lite、模型文件等相关依赖项，编译过程需做耐心等待。
