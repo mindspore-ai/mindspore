@@ -370,6 +370,9 @@ Strategys MakeRecSearchStrategy(const std::shared_ptr<Graph> &graph,
   if (iter_ops >= ops.size()) {
     MS_LOG(EXCEPTION) << "Failure: Operators' elements out of range.";
   }
+  if (graph->nodes[iter_graph].apply.op_type == kRecUnsortedSegmentOp) {
+    return MakeDataParallelStrategy(graph, ops, iter_graph, iter_ops);
+  }
 
   StrategyPtr origin_strategy = ops[iter_ops]->strategy();
   Strategys strategies;
