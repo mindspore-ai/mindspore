@@ -1014,7 +1014,7 @@ Status CacheServer::DestroySession(CacheRequest *rq) {
   // Finally remove the session itself
   auto n = active_sessions_.erase(drop_session_id);
   if (n > 0) {
-    MS_LOG(INFO) << "Session destroyed with id " << drop_session_id;
+    MS_LOG(WARNING) << "Session destroyed with id " << drop_session_id;
     return Status::OK();
   } else {
     if (found) {
