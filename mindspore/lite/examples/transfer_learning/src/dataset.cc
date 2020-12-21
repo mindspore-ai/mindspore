@@ -15,13 +15,13 @@
  */
 
 #include "src/dataset.h"
-#include <assert.h>
 #include <dirent.h>
 #include <arpa/inet.h>
 #include <map>
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include "src/utils.h"
 
 #pragma pack(push, 1)
 
@@ -52,7 +52,7 @@ float CH_STD[3] = {0.229, 0.224, 0.225};
 using LabelId = std::map<std::string, int>;
 
 static char *ReadBitmapFile(const std::string &filename, size_t *size) {
-  assert(size != nullptr);
+  MS_ASSERT(size != nullptr);
   *size = 0;
   bmp_header bitmap_header;
   std::ifstream ifs(filename);
@@ -71,7 +71,7 @@ static char *ReadBitmapFile(const std::string &filename, size_t *size) {
   ifs.seekg(bitmap_header.offset, std::ios::beg);
 
   unsigned char *bmp_image = reinterpret_cast<unsigned char *>(malloc(bitmap_header.image_size_bytes));
-  if (!bmp_image) {
+  if (bmp_image == nullptr) {
     ifs.close();
     return nullptr;
   }
@@ -80,7 +80,7 @@ static char *ReadBitmapFile(const std::string &filename, size_t *size) {
 
   size_t buffer_size = bitmap_header.width * bitmap_header.height * 3;
   float *hwc_bin_image = new (std::nothrow) float[buffer_size];
-  if (!hwc_bin_image) {
+  if (hwc_bin_image == nullptr) {
     free(bmp_image);
     ifs.close();
     return nullptr;
@@ -114,7 +114,7 @@ static char *ReadBitmapFile(const std::string &filename, size_t *size) {
 }
 
 char *ReadFile(const std::string &file, size_t *size) {
-  assert(size != nullptr);
+  MS_ASSERT(size != nullptr);
   std::string realPath(file);
   std::ifstream ifs(realPath);
   if (!ifs.good()) {
@@ -203,6 +203,7 @@ std::vector<FileTuple> DataSet::ReadDir(const std::string dpath) {
         }
       }
     }
+    closedir(dp);
   }
   return vec;
 }

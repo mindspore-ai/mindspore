@@ -15,17 +15,17 @@
  */
 
 #include "src/dataset.h"
-#include <assert.h>
 #include <arpa/inet.h>
 #include <map>
 #include <iostream>
 #include <fstream>
 #include <memory>
+#include "src/utils.h"
 
 using LabelId = std::map<std::string, int>;
 
 char *ReadFile(const std::string &file, size_t *size) {
-  assert(size != nullptr);
+  MS_ASSERT(size != nullptr);
   std::string realPath(file);
   std::ifstream ifs(realPath);
   if (!ifs.good()) {

@@ -20,6 +20,7 @@
 #include <iostream>
 #include <fstream>
 #include "include/context.h"
+#include "src/utils.h"
 
 unsigned int NetRunner::seed_ = time(NULL);
 // Definition of callback function after forwarding operator.
@@ -61,10 +62,10 @@ void NetRunner::InitAndFigureInputs() {
   context.thread_num_ = 1;
 
   session_ = mindspore::session::TrainSession::CreateSession(ms_file_, &context);
-  assert(nullptr != session_);
+  MS_ASSERT(nullptr != session_);
 
   auto inputs = session_->GetInputs();
-  assert(inputs.size() > 1);
+  MS_ASSERT(inputs.size() > 1);
   data_index_ = 0;
   label_index_ = 1;
   batch_size_ = inputs[data_index_]->shape()[0];
@@ -91,8 +92,8 @@ std::vector<int> NetRunner::FillInputData(const std::vector<DataLabelTuple> &dat
   auto inputs = session_->GetInputs();
   char *input_data = reinterpret_cast<char *>(inputs.at(data_index_)->MutableData());
   auto labels = reinterpret_cast<float *>(inputs.at(label_index_)->MutableData());
-  assert(total_size > 0);
-  assert(input_data != nullptr);
+  MS_ASSERT(total_size > 0);
+  MS_ASSERT(input_data != nullptr);
   std::fill(labels, labels + inputs.at(label_index_)->ElementsNum(), 0.f);
   for (int i = 0; i < batch_size_; i++) {
     if (serially) {
@@ -122,7 +123,7 @@ float NetRunner::CalculateAccuracy(int max_tests) const {
     auto labels = FillInputData(test_set, (max_tests == -1));
     session_->RunGraph();
     auto outputsv = SearchOutputsForSize(batch_size_ * num_of_classes_);
-    assert(outputsv != nullptr);
+    MS_ASSERT(outputsv != nullptr);
     auto scores = reinterpret_cast<float *>(outputsv->MutableData());
     for (int b = 0; b < batch_size_; b++) {
       int max_idx = 0;
@@ -147,7 +148,7 @@ int NetRunner::InitDB() {
   num_of_classes_ = ds_.num_of_classes();
   if (ds_.test_data().size() == 0) {
     std::cout << "No relevant data was found in " << data_dir_ << std::endl;
-    assert(ds_.test_data().size() != 0);
+    MS_ASSERT(ds_.test_data().size() != 0);
   }
 
   return ret;
@@ -155,7 +156,7 @@ int NetRunner::InitDB() {
 
 float NetRunner::GetLoss() const {
   auto outputsv = SearchOutputsForSize(1);  // Search for Loss which is a single value tensor
-  assert(outputsv != nullptr);
+  MS_ASSERT(outputsv != nullptr);
   auto loss = reinterpret_cast<float *>(outputsv->MutableData());
   return loss[0];
 }
