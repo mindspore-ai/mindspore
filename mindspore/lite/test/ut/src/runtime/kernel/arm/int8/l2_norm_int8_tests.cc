@@ -46,7 +46,6 @@ TEST_F(TestL2NormInt8, norm) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   param_.axis_num_ = 1;
-  param_.axis_ = reinterpret_cast<int *>(malloc(sizeof(int)));
   param_.axis_[0] = -1;
   param_.epsilon_ = 1e-6;
   param_.act_type_ = ActType_No;
@@ -91,7 +90,6 @@ TEST_F(TestL2NormInt8, norm2) {
   std::vector<lite::Tensor *> outputs = {&out_tensor};
 
   param_.axis_num_ = 1;
-  param_.axis_ = reinterpret_cast<int *>(malloc(sizeof(int)));
   param_.axis_[0] = -1;
   param_.epsilon_ = 1e-6;
   param_.act_type_ = ActType_No;

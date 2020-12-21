@@ -61,7 +61,6 @@ int SplitBaseCPUKernel::ReSize() {
     }
   }
 
-  MS_ASSERT(param->num_split_ >= 1 && param->num_split_ <= SPLIT_STRIDES_SIZE);
   if (param->split_sizes_[param->num_split_ - 1] == -1) {
     int split_shape_end = input_shape.at(param->split_dim_);
     for (int i = 0; i < param->num_split_ - 1; i++) {

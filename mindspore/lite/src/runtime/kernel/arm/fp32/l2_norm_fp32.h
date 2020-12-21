@@ -35,12 +35,7 @@ class L2NormCPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     l2_norm_param_ = reinterpret_cast<L2NormParameter *>(op_parameter_);
   }
-  ~L2NormCPUKernel() {
-    FreeTmpBuffer();
-    if (l2_norm_param_->axis_ != nullptr) {
-      free(l2_norm_param_->axis_);
-    }
-  }
+  ~L2NormCPUKernel() { FreeTmpBuffer(); }
 
   int CalcSquareSum(int task_id);
   int DivSqrtSum(int task_id);

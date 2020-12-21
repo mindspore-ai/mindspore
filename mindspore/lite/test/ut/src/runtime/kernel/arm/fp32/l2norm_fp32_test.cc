@@ -58,7 +58,6 @@ void TestL2NormFp32::Init(const std::vector<int> &input_shape, const std::vector
 
   param_.axis_num_ = axis_num;
   if (axis_num == 1) {
-    param_.axis_ = reinterpret_cast<int *>(malloc(sizeof(int)));
     param_.axis_[0] = -1;
   }
   param_.epsilon_ = 1e-6;
