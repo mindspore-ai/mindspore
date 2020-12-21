@@ -13,48 +13,40 @@
 # limitations under the License.
 # ============================================================================
 """
-##############export checkpoint file into air and onnx models#################
+##############export checkpoint file into air, mindir and onnx models#################
 """
+import argparse
 import numpy as np
 
-from mindspore import Tensor, nn
-from mindspore.ops import operations as P
-from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
+from mindspore import Tensor, context, load_checkpoint, export, load_param_into_net
 
-from src.wide_and_deep import WideDeepModel
+from eval import ModelBuilder
 from src.config import WideDeepConfig
 
-class PredictWithSigmoid(nn.Cell):
-    """
-    PredictWithSigmoid
-    """
-    def __init__(self, network):
-        super(PredictWithSigmoid, self).__init__()
-        self.network = network
-        self.sigmoid = P.Sigmoid()
+parser = argparse.ArgumentParser(description="wide_and_deep export")
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
+parser.add_argument("--file_name", type=str, default="wide_and_deep", help="output file name.")
+parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+parser.add_argument("--device_target", type=str, default="Ascend",
+                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
+args = parser.parse_args()
 
-    def construct(self, batch_ids, batch_wts):
-        logits, _, = self.network(batch_ids, batch_wts)
-        pred_probs = self.sigmoid(logits)
-        return pred_probs
-
-def get_WideDeep_net(config):
-    """
-    Get network of wide&deep predict model.
-    """
-    WideDeep_net = WideDeepModel(config)
-    eval_net = PredictWithSigmoid(WideDeep_net)
-    return eval_net
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 if __name__ == '__main__':
     widedeep_config = WideDeepConfig()
     widedeep_config.argparse_init()
-    ckpt_path = widedeep_config.ckpt_path
-    net = get_WideDeep_net(widedeep_config)
-    param_dict = load_checkpoint(ckpt_path)
-    load_param_into_net(net, param_dict)
+
+    net_builder = ModelBuilder()
+    _, eval_net = net_builder.get_net(widedeep_config)
+
+    param_dict = load_checkpoint(args.ckpt_file)
+    load_param_into_net(eval_net, param_dict)
+    eval_net.set_train(False)
+
     ids = Tensor(np.ones([widedeep_config.eval_batch_size, widedeep_config.field_size]).astype(np.int32))
     wts = Tensor(np.ones([widedeep_config.eval_batch_size, widedeep_config.field_size]).astype(np.float32))
-    input_tensor_list = [ids, wts]
-    export(net, *input_tensor_list, file_name='wide_and_deep', file_format="ONNX")
-    export(net, *input_tensor_list, file_name='wide_and_deep', file_format="AIR")
+    label = Tensor(np.ones([widedeep_config.eval_batch_size, 1]).astype(np.float32))
+    input_tensor_list = [ids, wts, label]
+    export(eval_net, *input_tensor_list, file_name=args.file_name, file_format=args.file_format)

@@ -16,24 +16,27 @@
 import argparse
 import numpy as np
 
-from mindspore import Tensor, context
-from mindspore.train.serialization import load_checkpoint, export
+from mindspore import Tensor, context, load_checkpoint, export
 
 from src.gcn import GCN
 from src.config import ConfigGCN
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
+parser = argparse.ArgumentParser(description="GCN export")
+parser.add_argument("--device_id", type=int, default=0, help="Device id")
+parser.add_argument("--ckpt_file", type=str, required=True, help="Checkpoint file path.")
+parser.add_argument("--dataset", type=str, default="cora", choices=["cora", "citeseer"], help="Dataset.")
+parser.add_argument("--file_name", type=str, default="gcn", help="output file name.")
+parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
+parser.add_argument("--device_target", type=str, default="Ascend",
+                    choices=["Ascend", "GPU", "CPU"], help="device target (default: Ascend)")
+args = parser.parse_args()
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='GCN_export')
-    parser.add_argument('--ckpt_file', type=str, default='', help='GCN ckpt file.')
-    parser.add_argument('--output_file', type=str, default='gcn.air', help='GCN output air name.')
-    parser.add_argument('--dataset', type=str, default='cora', help='GCN dataset name.')
-    args_opt = parser.parse_args()
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
+if __name__ == "__main__":
     config = ConfigGCN()
 
-    if args_opt.dataset == "cora":
+    if args.dataset == "cora":
         input_dim = 1433
         class_num = 7
         adj = Tensor(np.zeros((2708, 2708), np.float64))
@@ -47,7 +50,7 @@ if __name__ == '__main__':
     gcn_net = GCN(config, input_dim, class_num)
 
     gcn_net.set_train(False)
-    load_checkpoint(args_opt.ckpt_file, net=gcn_net)
+    load_checkpoint(args.ckpt_file, net=gcn_net)
     gcn_net.add_flags_recursive(fp16=True)
 
-    export(gcn_net, adj, feature, file_name=args_opt.output_file, file_format="AIR")
+    export(gcn_net, adj, feature, file_name=args.file_name, file_format=args.file_format)
