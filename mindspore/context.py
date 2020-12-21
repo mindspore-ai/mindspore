@@ -377,7 +377,12 @@ def set_auto_parallel_context(**kwargs):
                      - recursive_programming: Recursive programming search mode.
 
                      - dynamic_programming: Dynamic programming search mode.
-        parameter_broadcast (bool): Whether to broadcast parameters before training. Default: False.
+        parameter_broadcast (bool): Whether to broadcast parameters before training. Before training, in order to have
+                     the same network initialization parameter values for all devices, broadcast the parameters
+                     on device 0 to other devices. Parameter broadcasting in different parallel modes is different,
+                     data_parallel mode, all parameters are broadcast except for the prameter whose attribute
+                     layerwise_parallel is True. Hybrid_parallel, semi_auto_parallel and auto_parallel mode, the
+                     segmented parameters do not participate in broadcasting. Default: False.
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
         full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
