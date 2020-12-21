@@ -4,9 +4,3 @@
 [submodule "graphengine"]
 	path = graphengine
 	url = https://gitee.com/mindspore/graphengine.git
-[submodule "third_party/OpenCL-CLHPP"]
-	path = third_party/OpenCL-CLHPP
-	url = https://github.com/KhronosGroup/OpenCL-CLHPP.git
-[submodule "third_party/OpenCL-Headers"]
-	path = third_party/OpenCL-Headers
-	url = https://github.com/KhronosGroup/OpenCL-Headers.git
