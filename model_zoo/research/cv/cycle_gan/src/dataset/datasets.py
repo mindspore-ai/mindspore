@@ -18,6 +18,7 @@ import random
 import numpy as np
 from PIL import Image
 
+random.seed(1)
 IMG_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.ppm', '.bmp', '.tif', '.tiff']
 
 def is_image_file(filename):

@@ -82,7 +82,7 @@ class CityScapes:
                         'bus', 'train', 'motorcycle', 'bicycle', 'unlabeled']
         self.color_list = []
         for name in self.classes:
-            self.color_list.append(label2color[name].color)
+            self.color_list.append(label2color[name])
         self.class_num = len(self.classes)
 
     def get_id(self, img_path):

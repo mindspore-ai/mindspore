@@ -12,7 +12,7 @@
     - [Script Parameters](#script-parameters)
     - [Training Process](#training-process)
     - [Evaluation Process](#evaluation-process)
-    - [Export MindIR](#export-mindir)
+    - [Model Export](#model-export)
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Training Performance](#evaluation-performance)
@@ -206,13 +206,13 @@ acc=78.16%(TOP1)
 acc=93.88%(TOP5)
 ```
 
-## [Export MindIR](#contents)
+## [Model Export](#contents)
 
-Change the export mode and export file in `src/config.py`, and run `export.py`.
-
-```script
-python export.py --platform PLATFORM --pretrained CKPT_PATH
+```shell
+python export.py --device_target [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT]
 ```
+
+`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
 
 # [Model description](#contents)
 
