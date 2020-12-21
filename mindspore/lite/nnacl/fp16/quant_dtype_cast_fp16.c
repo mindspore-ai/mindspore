@@ -29,12 +29,16 @@ int DoDequantizeInt8ToFp16(int8_t *quant_values, float16_t *real_values, float s
   return NNACL_OK;
 }
 
-int DoQuantizeToInt8FromFp16(float16_t *real_values, int8_t *quant_values, float scale, int32_t zp, int size) {
+int DoQuantizeFp16ToInt8(float16_t *real_values, int8_t *quant_values, float scale, int32_t zp, int size) {
   if (quant_values == NULL || real_values == NULL) {
     return NNACL_PARAM_INVALID;
   }
 
   for (int i = 0; i < size; ++i) {
+    if (isinf(real_values[i])) {
+      quant_values[i] = 127;
+      continue;
+    }
     float temp = round((float)real_values[i] / scale + zp);
     if (temp > 127) {
       quant_values[i] = 127;
@@ -42,6 +46,40 @@ int DoQuantizeToInt8FromFp16(float16_t *real_values, int8_t *quant_values, float
       quant_values[i] = -128;
     } else {
       quant_values[i] = (int8_t)temp;
+    }
+  }
+  return NNACL_OK;
+}
+
+int DoDequantizeUInt8ToFp16(uint8_t *quant_values, float16_t *real_values, float scale, int32_t zp, int size) {
+  uint8_t zp_ = (uint8_t)zp;
+  if (quant_values == NULL || real_values == NULL) {
+    return NNACL_PARAM_INVALID;
+  }
+
+  for (int i = 0; i < size; ++i) {
+    real_values[i] = (quant_values[i] - zp_) * scale;
+  }
+  return NNACL_OK;
+}
+
+int DoQuantizeFp16ToUInt8(float16_t *real_values, uint8_t *quant_values, float scale, int32_t zp, int size) {
+  if (quant_values == NULL || real_values == NULL) {
+    return NNACL_PARAM_INVALID;
+  }
+
+  for (int i = 0; i < size; ++i) {
+    if (isinf(real_values[i])) {
+      quant_values[i] = 255;
+      continue;
+    }
+    float temp = round((float)real_values[i] / scale + zp);
+    if (temp > 255.0f) {
+      quant_values[i] = 255;
+    } else if (temp < 0.0f) {
+      quant_values[i] = 0;
+    } else {
+      quant_values[i] = (uint8_t)temp;
     }
   }
   return NNACL_OK;
