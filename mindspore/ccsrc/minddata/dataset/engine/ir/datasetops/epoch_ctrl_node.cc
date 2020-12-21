@@ -48,6 +48,7 @@ Status EpochCtrlNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
 
 // Function to validate the parameters for EpochCtrlNode
 Status EpochCtrlNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (num_epochs_ <= 0 && num_epochs_ != -1) {
     std::string err_msg =
       "EpochCtrlNode: num_epochs should be either -1 or positive integer, num_epochs: " + std::to_string(num_epochs_);

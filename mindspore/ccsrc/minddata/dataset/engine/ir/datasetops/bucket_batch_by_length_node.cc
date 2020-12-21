@@ -94,6 +94,7 @@ Status BucketBatchByLengthNode::Build(std::vector<std::shared_ptr<DatasetOp>> *n
 }
 
 Status BucketBatchByLengthNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (element_length_function_ == nullptr && column_names_.size() != 1) {
     std::string err_msg =
       "BucketBatchByLengthNode: when element_length_function is not specified, size of column_name must be 1 but is: " +

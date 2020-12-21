@@ -67,6 +67,7 @@ std::shared_ptr<DatasetNode> MindDataNode::Copy() {
 void MindDataNode::Print(std::ostream &out) const { out << Name() + "(file:" + dataset_file_ + ",...)"; }
 
 Status MindDataNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (!search_for_pattern_ && dataset_files_.size() > 4096) {
     std::string err_msg =
       "MindDataNode: length of dataset_file must be less than or equal to 4096, dataset_file length: " +

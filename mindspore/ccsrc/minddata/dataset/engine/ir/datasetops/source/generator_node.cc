@@ -83,7 +83,10 @@ Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
 }
 
 // no validation is needed for generator op.
-Status GeneratorNode::ValidateParams() { return Status::OK(); }
+Status GeneratorNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
+  return Status::OK();
+}
 
 Status GeneratorNode::GetShardId(int32_t *shard_id) {
   RETURN_UNEXPECTED_IF_NULL(shard_id);

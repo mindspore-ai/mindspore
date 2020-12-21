@@ -43,6 +43,7 @@ Status RepeatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
 }
 
 Status RepeatNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (repeat_count_ <= 0 && repeat_count_ != -1) {
     std::string err_msg = "RepeatNode: repeat_count should be either -1 or positive integer, repeat_count_: " +
                           std::to_string(repeat_count_);

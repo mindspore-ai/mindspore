@@ -1833,3 +1833,20 @@ TEST_F(MindDataTestPipeline, TestZipSuccess2) {
   // Manually terminate the pipeline
   iter->Stop();
 }
+
+TEST_F(MindDataTestPipeline, TestNumWorkersValidate) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestNumWorkersValidate.";
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path);
+
+  // ds needs to be non nullptr otherwise, the subsequent logic will core dump
+  ASSERT_NE(ds, nullptr);
+
+  // test if set num_workers=-1
+  EXPECT_EQ(ds->SetNumWorkers(-1)->CreateIterator(), nullptr);
+
+  // test if set num_workers can be very large
+  EXPECT_EQ(ds->SetNumWorkers(INT32_MAX)->CreateIterator(), nullptr);
+}

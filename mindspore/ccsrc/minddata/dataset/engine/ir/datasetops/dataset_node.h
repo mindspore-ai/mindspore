@@ -150,9 +150,9 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \return Status Status::OK() if build successfully
   virtual Status Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) = 0;
 
-  /// \brief Pure virtual function for derived class to implement parameters validation
+  /// \brief base virtual function for derived class to implement parameters validation
   /// \return Status Status::OK() if all the parameters are valid
-  virtual Status ValidateParams() = 0;
+  virtual Status ValidateParams();
 
   /// \brief Pure virtual function for derived class to get the shard id of specific node
   /// \return Status Status::OK() if get shard id successfully
@@ -262,7 +262,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   std::vector<std::shared_ptr<DatasetNode>> children_;
   DatasetNode *parent_;  // used to record the only one parent of an IR node after parsing phase
   std::shared_ptr<DatasetCache> cache_;
-  int64_t dataset_size_ = -1;
+  int64_t dataset_size_;
   int32_t num_workers_;
   int32_t rows_per_buffer_;
   int32_t connector_que_size_;

@@ -40,6 +40,7 @@ std::shared_ptr<DatasetNode> MnistNode::Copy() {
 void MnistNode::Print(std::ostream &out) const { out << Name(); }
 
 Status MnistNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("MnistNode", dataset_dir_));
 
   RETURN_IF_NOT_OK(ValidateDatasetSampler("MnistNode", sampler_));

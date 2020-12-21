@@ -46,6 +46,7 @@ std::shared_ptr<DatasetNode> CocoNode::Copy() {
 void CocoNode::Print(std::ostream &out) const { out << Name(); }
 
 Status CocoNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("CocoNode", dataset_dir_));
 
   RETURN_IF_NOT_OK(ValidateDatasetSampler("CocoNode", sampler_));
