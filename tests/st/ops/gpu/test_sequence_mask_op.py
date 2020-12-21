@@ -2,14 +2,13 @@ import numpy as np
 import pytest
 
 from mindspore import Tensor
-from mindspore.ops import operations as P
+from mindspore.ops import composite as C
 from mindspore.ops.operations import _inner_ops as inner
 import mindspore.nn as nn
 import mindspore.context as context
 
 def sequence_mask(x, maxlen):
-    sequence_mask_op = P.SequenceMask()
-    return sequence_mask_op(Tensor(x.astype(np.int32)), maxlen)
+    return C.sequence_mask(Tensor(x.astype(np.int32)), maxlen)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
@@ -87,11 +86,10 @@ def test_sequence_mask_dynamic():
             super(SequenceMaskDynamicNet, self).__init__()
             self.maxlen = maxlen
             self.convert_to_dynamic_shape = inner.GpuConvertToDynamicShape()
-            self.sequence_mask = P.SequenceMask()
 
         def construct(self, x):
             converted_to_dynamic_shape = self.convert_to_dynamic_shape(x)
-            return self.sequence_mask(converted_to_dynamic_shape, self.maxlen)
+            return C.sequence_mask(converted_to_dynamic_shape, self.maxlen)
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 

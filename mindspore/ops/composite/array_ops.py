@@ -20,6 +20,7 @@ from mindspore._checkparam import Rel
 from mindspore.ops.primitive import constexpr
 from mindspore.ops import functional as F
 from .. import operations as P
+from ..operations import _inner_ops as inner
 
 
 @constexpr
@@ -103,3 +104,35 @@ def repeat_elements(x, rep, axis=0):
     x_rep = reshape_op(x_expand, x_reshape)
 
     return x_rep
+
+def sequence_mask(lengths, maxlen):
+    """
+    Returns a mask tensor representing the first N positions of each cell.
+
+    If lengths has shape [d_1, d_2, ..., d_n], then the resulting tensor mask has type dtype and shape
+    [d_1, d_2, ..., d_n, maxlen], with mask[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])
+
+    Args:
+        length (Tensor): Tensor to calculate the mask for. All values in this tensor must be
+          less than `maxlen`. Must be type int32 or int64.
+
+        maxlen (int): size of the last dimension of returned tensor. Must be positive and same
+          type as elements in `lengths`.
+
+    Outputs:
+        One mask tensor of shape lengths.shape + (maxlen,).
+
+    Supported Platforms:
+        ``GPU``
+
+    Examples:
+        >>> x = Tensor(np.array([[1, 3], [2, 0]])
+        >>> sequence_mask = P.SequenceMask()
+        >>> output = sequence_mask(x, 3)
+        >>> print(output)
+        [[[True, False, False],
+          [True, True, True]],
+         [[True, True, False],
+          [False, False, False]]]
+    """
+    return inner.SequenceMask()(lengths, maxlen)
