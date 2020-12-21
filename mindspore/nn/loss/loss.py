@@ -29,7 +29,7 @@ class _Loss(Cell):
     """
     Base class for other losses.
     """
-    def __init__(self, reduction='mean'):
+    def __init__(self, reduction='mean', weights=1.0):
         super(_Loss, self).__init__()
         if reduction is None:
             reduction = 'none'
@@ -46,6 +46,11 @@ class _Loss(Cell):
 
         self.reduce_mean = _selected_ops.ReduceMean()
         self.reduce_sum = P.ReduceSum()
+        self.mul = P.Mul()
+        if isinstance(weights, int):
+            self.weights = float(weights)
+        else:
+            self.weights = weights
 
     def get_axis(self, x):
         shape = F.shape(x)
@@ -54,6 +59,8 @@ class _Loss(Cell):
         return perm
 
     def get_loss(self, x):
+        if self.weights != 1.0:
+            x = self.mul(self.weights, x)
         if self.reduce and self.average:
             x = self.reduce_mean(x, self.get_axis(x))
         if self.reduce and not self.average:
