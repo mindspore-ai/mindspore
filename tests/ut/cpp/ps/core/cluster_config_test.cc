@@ -40,7 +40,6 @@ TEST_F(TestClusterConfig, HeartbeatInterval) {
   EXPECT_STREQ(ClusterConfig::scheduler_host().c_str(), "127.0.0.1");
   EXPECT_TRUE(ClusterConfig::scheduler_port() == 8080);
 }
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
