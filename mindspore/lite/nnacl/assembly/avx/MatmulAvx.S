@@ -1,14 +1,16 @@
 #ifdef ENABLE_AVX
-#ifndef WIN32
     .text
     .align 4
     .global MatmulFloatAvxOpt
 #ifndef __APPLE__
+#ifndef WIN32
     .type MatmulFloatAvxOpt, %function
 #endif
+#endif
 
-// void MatmulFloatNeon32Opt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth
+// void MatmulFloatAvxOpt(const float *a, const float *b, float *c, const float *bias, int act_type, int depth
 //                        int row, int col, size_t stride, size_t writeMode)
+// parameters pass in Linux x86 platform:
 // rdi: a
 // rsi: b
 // rdx: c
@@ -20,6 +22,18 @@
 // 24: stride
 // 32: writeNhwc/writeWino
 
+// parameters pass in win x64 platfrom: "shadow space" needs to be opened up for first four parameters ==> 32 bites
+// rcx: a
+// rdx: b
+// r8: c
+// r9: bias
+// 40: act_type
+// 48: depth
+// 56: row
+// 64: col
+// 72: stride
+// 80: writeMode
+
 MatmulFloatAvxOpt:
     // rbx, rsp, rbp, r12-r15 must be saved according to x86 calling convention
     pushq %r15
@@ -28,14 +42,37 @@ MatmulFloatAvxOpt:
     pushq %r12
     pushq %rbx
     pushq %rbp
-    pushq %r9
-    pushq %r8
-    pushq %rcx
-    pushq %rdx
-    pushq %rsi
-    pushq %rdi
-    addq $96, %rsp
+    pushq %r9  // -56
+    pushq %r8  // -64
+    pushq %rcx  // -72
+    pushq %rdx  // -80
+    pushq %rsi  // -88
+    pushq %rdi  // -96
+    pushq %rsi  // -104  rsi
+    pushq %rdi  // -112  rdi
+    addq $112, %rsp
+#ifdef WIN32
+    movq %rcx, %rdi
+    movq %rdx, %rsi
+    movq %r8, %rdx
+    movq %r9, %rcx
+    movq 40(%rsp), %r8  // act_type
+    movq 48(%rsp), %r9  // depth
+    movq %r9, -56(%rsp)  // r9
+    movq %rcx, -72(%rsp)  // rcx
+    movq %rdx, -80(%rsp)  // rdx
+    movq %rsi, -88(%rsp)  // rsi
+    movq %rdi, -96(%rsp)  // rdi
 
+    movq 56(%rsp), %rbp // row
+    movq %rbp, 8(%rsp)
+    movq 64(%rsp), %rbp  // col
+    movq %rbp, 16(%rsp)
+    movq 72(%rsp), %rbp  // stride
+    movq %rbp, 24(%rsp)
+    movq 80(%rsp), %rbp  // weiteMode
+    movq %rbp, 32(%rsp)
+#endif
     movq 8(%rsp), %rbp
     movq 16(%rsp), %rbx
     movq 24(%rsp), %r10
@@ -926,9 +963,11 @@ LoopRow:
         jmp LoopRow
 
 LoopRowEnd:
-    subq $96, %rsp
+    subq $112, %rsp
     popq %rdi
     popq %rsi
+    popq %rdx
+    popq %rdx
     popq %rdx
     popq %rcx
     popq %r8
@@ -940,5 +979,4 @@ LoopRowEnd:
     popq %r14
     popq %r15
     retq
-#endif
 #endif

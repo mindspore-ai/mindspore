@@ -1,15 +1,16 @@
 #ifdef ENABLE_AVX
-#ifndef WIN32
-
 .text
 .align 4
 .global ConvDwFp32Avx3x3
 #ifndef __APPLE__
+#ifndef WIN32
 .type ConvDwFp32Avx3x3, %function
 #endif
+#endif
 
-// void ConvDwFp32Avx3x3(float *output, float **input, const float *weights, const float *bias, int channels, int output_width,
-//                       size_t input_stride, size_t relu)
+// void ConvDwFp32Avx3x3(float *output, float **input, const float *weights, const float *bias, size_t channels, size_t output_width,
+//                       size_t input_stride, size_t relum, szie_t relu6)
+// in linux x64 platfrom:
 // rdi: output
 // rsi: input
 // rdx: weights
@@ -20,6 +21,16 @@
 // 16: relu
 // 24: relu6
 
+// in win x64 platfrom: "shadow space" needs to be opened up for first four parameters ==> 32 bites
+// rcx: output
+// rdx: input
+// r8: weights
+// r9: bias
+// 40: channels
+// 48: output_width
+// 56: input_stride
+// 64: relu
+// 72: relu6
 ConvDwFp32Avx3x3:
     pushq %r15
     pushq %r14
@@ -27,13 +38,33 @@ ConvDwFp32Avx3x3:
     pushq %r12
     pushq %rbx
     pushq %rbp
-    pushq %r9
-    pushq %r8
-    pushq %rcx
-    pushq %rdx
-    pushq %rsi
-    pushq %rdi
+    pushq %r9  // -56
+    pushq %r8  // -64
+    pushq %rcx  // -72
+    pushq %rdx  // -80
+    pushq %rsi  // -88
+    pushq %rdi  // -96
     addq $96, %rsp
+
+#ifdef WIN32
+    movq %rcx, %rdi
+    movq %rdx, %rsi
+    movq %r8, %rdx
+    movq %r9, %rcx
+    movq 40(%rsp), %r8  // channels
+    movq 48(%rsp), %r9  // output_width
+
+    mov %rdx, -80(%rsp)
+    mov %rcx, -72(%rsp)
+    mov %r9, -56(%rsp)
+    mov %r8, -64(%rsp)
+    movq 56(%rsp), %rbp // input_stride
+    movq %rbp, 8(%rsp)
+    movq 64(%rsp), %rbp  // relu
+    movq %rbp, 16(%rsp)
+    movq 72(%rsp), %rbp  // relu6
+    movq %rbp, 24(%rsp)
+#endif
 
     movq $6, %rax
     vcvtsi2ss %rax, %xmm15, %xmm15
@@ -269,5 +300,4 @@ End:
     popq %r14
     popq %r15
     retq
-#endif
 #endif
