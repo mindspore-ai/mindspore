@@ -15,8 +15,6 @@
  */
 
 #include "runtime/device/ascend/executor/ai_core_dynamic_kernel.h"
-
-#include <regex>
 #include <algorithm>
 #include <memory>
 #include "framework/common/debug/log.h"
@@ -54,15 +52,6 @@ void AiCoreDynamicKernel::Execute() {
   MS_LOG(INFO) << "End Execute node:" << cnode_ptr_->fullname_with_scope();
 }
 
-std::string ReplaceInvalidJsonStr(const std::string &str) {
-  auto ret = std::regex_replace(str, std::regex("100000000"), R"("100000000")");
-  ret = std::regex_replace(ret, std::regex("100000001"), R"("100000001")");
-  ret = std::regex_replace(ret, std::regex("100000002"), R"("100000002")");
-  ret = std::regex_replace(ret, std::regex("True"), R"(true)");
-  ret = std::regex_replace(ret, std::regex("False"), R"(false)");
-  return ret;
-}
-
 void AiCoreDynamicKernel::ParseCompileJson() {
   if (!AnfAlgo::IsDynamicShape(cnode_ptr_)) {
     return;
@@ -71,8 +60,6 @@ void AiCoreDynamicKernel::ParseCompileJson() {
     MS_LOG(EXCEPTION) << "Get compile_info failed";
   }
   auto compile_info_attr = AnfAlgo::GetNodeAttr<std::string>(cnode_ptr_, kAttrCompileInfo);
-  std::replace(compile_info_attr.begin(), compile_info_attr.end(), '\'', '\"');
-  compile_info_attr = ReplaceInvalidJsonStr(compile_info_attr);
   MS_LOG(INFO) << "Get compile_info:" << compile_info_attr;
   op_compile_info_.str = compile_info_attr;
   op_compile_info_.key = "";
