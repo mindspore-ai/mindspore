@@ -582,7 +582,7 @@ def test_asarray_exception():
 
 
 def test_swapaxes_exception():
-    with pytest.raises(TypeError):
+    with pytest.raises(ValueError):
         mnp.swapaxes(mnp.ones((3, 3)), 1, 10)
 
 

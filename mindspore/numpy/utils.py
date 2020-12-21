@@ -78,7 +78,7 @@ def _check_axes_range(axes, ndim):
             f"Lower bound {low} and upper bound {up} of axes are not allowed.")
     if isinstance(axes, int):
         if axes < low or axes > up:
-            raise TypeError(
+            raise ValueError(
                 f"axis {axes} is out of bounds for tensor of dimension {ndim}.")
         return axes if axes >= 0 else axes + ndim
     new_axes = []
@@ -87,7 +87,7 @@ def _check_axes_range(axes, ndim):
             raise TypeError(
                 f"int in tuple or list expected, but got {type(item)}.")
         if item < low or item > up:
-            raise TypeError(
+            raise ValueError(
                 f"axis {item} in {axes} is out of bounds for tensor of dimension {ndim}.")
         new_axes.append(item if item >= 0 else item + ndim)
     return tuple(new_axes)
