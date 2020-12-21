@@ -49,6 +49,11 @@ int Executor::Run(std::vector<Tensor *> &in_tensors, std::vector<Tensor *> &out_
     MS_LOG(ERROR) << "CheckInputs failed";
     return ret;
   }
+  MS_ASSERT(std::all_of(kernels.begin(), kernels.end(), [](kernel::LiteKernel *kernel) {
+    return std::all_of(kernel->in_tensors().begin(), kernel->in_tensors().end(), [](Tensor *in_tensor) {
+      return in_tensor->IsConst() || in_tensor->IsGraphInput() || in_tensor->ref_count() == 0;
+    });
+  }));
   std::queue<kernel::LiteKernel *> kernel_queue;
   for (auto kernel : kernels) {
     if (kernel->IsReady(kernel->in_tensors())) {

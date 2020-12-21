@@ -65,6 +65,10 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual bool operator==(const Tensor &tensor);
 
+  void set_tensor_name(std::string name) { tensor_name_ = name; }
+
+  std::string tensor_name() const { return tensor_name_; }
+
   TypeId data_type() const override { return data_type_; }
 
   void set_data_type(TypeId data_type) { data_type_ = data_type; }
@@ -162,6 +166,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   }
 
  protected:
+  std::string tensor_name_;
   void *data_ = nullptr;
   void *device_data_ = nullptr;
   TypeId data_type_;

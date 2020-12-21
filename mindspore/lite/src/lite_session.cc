@@ -178,6 +178,9 @@ int LiteSession::ConvertTensors(const lite::Model *model) {
     if (IsContain(model_input_indices, i)) {
       dst_tensor->set_category(Tensor::GRAPH_INPUT);
     }
+    if (src_tensor->name() != nullptr) {
+      dst_tensor->set_tensor_name(src_tensor->name()->str());
+    }
     this->tensors_.emplace_back(dst_tensor);
   }
   return RET_OK;
@@ -305,6 +308,9 @@ void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
       return;
     }
     this->output_tensor_map_.insert(std::make_pair(std::to_string(graph_out_index), out_tensor));
+    if (!out_tensor->tensor_name().empty()) {
+      this->output_tensor_map_.insert(std::make_pair(out_tensor->tensor_name(), out_tensor));
+    }
   }
 }
 
