@@ -1255,10 +1255,16 @@ TEST_F(MindDataTestPipeline, TestToNumberFail4) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("string"));
+  std::shared_ptr<TensorOperation> to_number1 = text::ToNumber(DataType("string"));
 
   // Expect failure: invalid parameter with non numerical DataType
-  EXPECT_EQ(to_number, nullptr);
+  EXPECT_EQ(to_number1, nullptr);
+
+  // Create ToNumber operation on ds
+  std::shared_ptr<TensorOperation> to_number2 = text::ToNumber(DataType("bool"));
+
+  // Expect failure: invalid parameter with non numerical DataType
+  EXPECT_EQ(to_number2, nullptr);
 }
 
 TEST_F(MindDataTestPipeline, TestTruncateSequencePairSuccess1) {

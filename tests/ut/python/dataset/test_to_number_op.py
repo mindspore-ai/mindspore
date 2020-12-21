@@ -186,6 +186,13 @@ def test_to_number_invalid_input():
     assert "It is invalid to convert " + input_strings[0] + " to a number" in str(info.value)
 
 
+def test_to_number_invalid_type():
+    with pytest.raises(TypeError) as info:
+        dataset = ds.GeneratorDataset(string_dataset_generator(["a8fa9ds8fa"]), "strings")
+        dataset = dataset.map(operations=text.ToNumber(mstype.bool_), input_columns=["strings"])
+    assert "data_type: Bool is not numeric data type" in str(info.value)
+
+
 if __name__ == '__main__':
     test_to_number_typical_case_integral()
     test_to_number_typical_case_non_integral()
@@ -193,3 +200,4 @@ if __name__ == '__main__':
     test_to_number_out_of_bounds_integral()
     test_to_number_out_of_bounds_non_integral()
     test_to_number_invalid_input()
+    test_to_number_invalid_type()
