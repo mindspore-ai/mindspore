@@ -424,6 +424,15 @@ KernelGraphPtr SessionBasic::GetGraph(mindspore::GraphId graph_id) const {
   return it->second;
 }
 
+void SessionBasic::ClearGraph() {
+  auto graph_iter = graphs_.begin();
+  while (graph_iter != graphs_.end()) {
+    graph_iter->second.reset();
+    graphs_.erase(graph_iter++);
+  }
+  graph_sum_ = 0;
+}
+
 void SessionBasic::InitInternalOutputParameter(const AnfNodePtr &out_node, const AnfNodePtr &parameter) {
   auto graph_id = GetGraphIdByNode(out_node);
   if (graph_id == kInvalidGraphId) {

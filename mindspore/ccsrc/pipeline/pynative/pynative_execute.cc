@@ -1529,6 +1529,15 @@ void PynativeExecutor::ClearResidualRes(const std::string &cell_id) {
   }
   if (dynamic_cell_) {
     VectorClear<std::vector<TopCellInfo>>(&top_cell_list_, cell_id);
+    if (IsTopGraph(cell_id) && graph_stack_.empty() && !IsBpropGraph(cell_id)) {
+      // Clear previous step resource
+      auto resource = GetResource(cell_id);
+      if (resource != nullptr && resource->results().find(pipeline::kBackend) != resource->results().end()) {
+        compile::BackendPtr backend = resource->results()[pipeline::kBackend].cast<compile::BackendPtr>();
+        auto ms_backend = std::dynamic_pointer_cast<compile::MsBackend>(backend);
+        ms_backend->ClearSessionGraphs();
+      }
+    }
   }
 }
 
