@@ -225,7 +225,7 @@ void CPUKernelRuntime::CreateOutputTensors(session::KernelGraph *kernel_graph,
   if (input_nodes.size() != inputs.size()) {
     MS_LOG(EXCEPTION) << "Input size not equal to input node size!";
   }
-  input_param_tensor_map_.clear();
+
   size_t input_idx = 0;
   for (auto &item : input_nodes) {
     MS_EXCEPTION_IF_NULL(item);
@@ -240,6 +240,7 @@ void CPUKernelRuntime::CreateOutputTensors(session::KernelGraph *kernel_graph,
     auto out = CreatTensorForOutput(kernel_graph, item_with_index, tensor_to_node);
     outputs->push_back(std::move(out));
   }
+  input_param_tensor_map_.clear();
 }
 
 void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &kernel_graph,
