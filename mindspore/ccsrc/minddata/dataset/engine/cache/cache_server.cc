@@ -248,7 +248,8 @@ Status CacheServer::CreateService(CacheRequest *rq, CacheReply *reply) {
   } else {
     duplicate = true;
     client_id = it->second->num_clients_.fetch_add(1);
-    MS_LOG(INFO) << "Duplicate request for " + std::to_string(connection_id) + " to create cache service";
+    MS_LOG(INFO) << "Duplicate request from client " + std::to_string(client_id) + " for " +
+                      std::to_string(connection_id) + " to create cache service";
   }
   // Shuffle the worker threads. But we need to release the locks or we will deadlock when calling
   // the following function
@@ -357,7 +358,15 @@ Status CacheServer::FastCacheRow(CacheRequest *rq, CacheReply *reply) {
       rc = cs->FastCacheRow(src, &id);
       reply->set_result(std::to_string(id));
     } else {
-      rc = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Cookie mismatch");
+      auto state = cs->GetState();
+      if (state != CacheServiceState::kFetchPhase) {
+        rc = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+                    "Cache service is not in fetch phase. The current phase is " +
+                      std::to_string(static_cast<int8_t>(state)) + ". Client id: " + std::to_string(client_id));
+      } else {
+        rc = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+                    "Cookie mismatch. Client id: " + std::to_string(client_id));
+      }
     }
   }
   // Return the block to the shared memory only if it is not internal request.
