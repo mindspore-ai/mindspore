@@ -27,5 +27,8 @@ MS_REG_GPU_KERNEL_ONE(Split,
 MS_REG_GPU_KERNEL_ONE(
   Split, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   SplitGpuFwdKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  Split, KernelAttr().AddAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+  SplitGpuFwdKernel, uint32_t)
 }  // namespace kernel
 }  // namespace mindspore
