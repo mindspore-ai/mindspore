@@ -160,15 +160,15 @@ max_text_length": 23,                     # max number of digits in each
 
 ### [Training](#contents)
 
-- Run `run_standalone_train.sh` for non-distributed training of CRNN model, either on Ascend or on GPU.
+- Run `run_standalone_train.sh` for non-distributed training of CRNN model, only support Ascend now.
 
 ``` bash
-bash run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM]
+bash run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM](optional)
 ```
 
 #### [Distributed Training](#contents)
 
-- Run `run_distribute_train.sh` for distributed training of WarpCTC model on Ascend.
+- Run `run_distribute_train.sh` for distributed training of CRNN model on Ascend.
 
 ``` bash
 bash run_distribute_train.sh [DATASET_NAME] [RANK_TABLE_FILE] [DATASET_PATH]
@@ -188,7 +188,7 @@ Epoch time: 2743.688s, per step time: 0.097s
 - Run `run_eval.sh` for evaluation.
 
 ``` bash
-bash run_eval.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]
+bash run_eval.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM](optional)
 ```
 
 Check the `eval/log.txt` and you will get outputs as following:
@@ -232,7 +232,7 @@ result: {'CRNNAccuracy': (0.806)}
 | Dataset             | SVT                         | IIIT5K                      |
 | batch_size          | 1                           | 1                           |
 | outputs             | ACC                         | ACC                         |
-| Accuracy            | 80.9%                       | 80.6%                       |
+| Accuracy            | 80.8%                       | 79.7%                       |
 | Model for inference | 83M (.ckpt file)            | 83M (.ckpt file)            |
 
 ## [Description of Random Situation](#contents)

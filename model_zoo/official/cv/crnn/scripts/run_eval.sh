@@ -14,8 +14,8 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 4 ]; then
-  echo "Usage: sh run_eval.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM]"
+if [ $# != 4 ] && [ $# != 3 ]; then
+  echo "Usage: sh run_eval.sh [DATASET_NAME] [DATASET_PATH] [CHECKPOINT_PATH] [PLATFORM](optional) "
   exit 1
 fi
 
@@ -30,7 +30,12 @@ get_real_path() {
 DATASET_NAME=$1
 PATH1=$(get_real_path $2)
 PATH2=$(get_real_path $3)
-PLATFORM=$4
+
+if [ $# == 4 ]; then
+  PLATFORM=$4
+else
+  PLATFORM="Ascend"
+fi
 
 if [ ! -d $PATH1 ]; then
   echo "error: DATASET_PATH=$PATH1 is not a directory"
