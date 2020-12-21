@@ -92,6 +92,7 @@ bool AicpuExtInfoHandler::ParseExtShapeType(AicpuExtInfo *aicpu_ext_info) {
   if (*type != unknown_type_) {
     MS_LOG(ERROR) << "Node:" << node_name_ << " parse ext shape type failed as need:" << unknown_type_
                   << " but got:" << *type;
+    return false;
   }
   MS_LOG(INFO) << "Node:" << node_name_ << "parse ext shape type success infoLen=" << aicpu_ext_info->infoLen;
   return true;

@@ -21,6 +21,7 @@
 #include <algorithm>
 #include "runtime/mem.h"
 #include "runtime/kernel.h"
+#include "utils/utils.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/aicpu/aicpu_util.h"
 #include "runtime/device/executor/executor_callback.h"
@@ -28,7 +29,6 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
-std::set<std::string> kComputeDepend = {"Unique", "ComputeAccidentalHits"};
 AiCpuDynamicKernel::~AiCpuDynamicKernel() {
   // free dev ptr
   if (ext_info_addr_dev_ == nullptr) {
