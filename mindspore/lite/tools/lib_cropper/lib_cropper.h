@@ -24,6 +24,7 @@
 #include "tools/common/flag_parser.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
+#include "schema/model_generated.h"
 #include "include/lite_session.h"
 #include "tools/lib_cropper/cropper_flags.h"
 

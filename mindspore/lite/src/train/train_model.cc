@@ -18,19 +18,12 @@
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/common/graph_util.h"
-#include "src/model_common.h"
 
 namespace mindspore::lite {
 
 TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   if (model_buf == nullptr) {
     MS_LOG(ERROR) << "The model buf is nullptr";
-    return nullptr;
-  }
-  flatbuffers::Verifier verify((const uint8_t *)model_buf, size);
-  int schema_version = VersionVerify(&verify);
-  if (schema_version == -1) {
-    MS_LOG(ERROR) << "The model buffer is invalid, cannot get schema version";
     return nullptr;
   }
   TrainModel *model = new (std::nothrow) TrainModel();
@@ -46,19 +39,10 @@ TrainModel *TrainModel::Import(const char *model_buf, size_t size) {
   }
   memcpy(model->buf, model_buf, size);
   model->buf_size_ = size;
-  const void *meta_graph = GetMetaGraphByVerison(model->buf, schema_version);
-  if (meta_graph == nullptr) {
-    MS_LOG(ERROR) << "meta_graph is nullptr!";
-    free(model->buf);
-    delete (model);
-    return nullptr;
-  }
-
-  int status = GenerateModelByVersion(meta_graph, model, schema_version);
+  auto status = model->ConstructModel();
   if (status != RET_OK) {
-    free(model->buf);
-    delete (model);
-    MS_LOG(ERROR) << "fail to generate model";
+    MS_LOG(ERROR) << "construct model failed.";
+    delete model;
     return nullptr;
   }
   return model;
@@ -91,6 +75,4 @@ char *TrainModel::ExportBuf(char *buffer, size_t *len) const {
   *len = buf_size_;
   return buffer;
 }
-
-TrainModel::~TrainModel() { Model::Free(); }
 }  // namespace mindspore::lite

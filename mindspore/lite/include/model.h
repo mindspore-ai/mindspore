@@ -53,13 +53,10 @@ struct MS_API Model {
   static Model *Import(const char *model_buf, size_t size);
 
   /// \brief Free meta graph temporary buffer
-  virtual void Free();
-
-  /// \brief Free all temporay buffer.EG: nodes in the model.
-  void Destroy();
+  virtual void Free() = 0;
 
   /// \brief Model destruct, free all memory
-  virtual ~Model();
+  virtual ~Model() = default;
 };
 }  // namespace mindspore::lite
 

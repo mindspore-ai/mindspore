@@ -9,7 +9,7 @@ set(CCSRC_SRC
 
 include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 
-file(GLOB_RECURSE OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/*.cc
+file(GLOB OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/populate/*.cc)
 
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
@@ -88,8 +88,7 @@ set(LITE_SRC
         ${SRC_DIR}/sub_graph_kernel.cc
         ${SRC_DIR}/lite_session.cc
         ${SRC_DIR}/executor.cc
-        ${SRC_DIR}/model.cc
-        ${SRC_DIR}/model_common.cc
+        ${SRC_DIR}/lite_model.cc
         ${SRC_DIR}/errorcode.cc
         )
 if (SUPPORT_TRAIN)

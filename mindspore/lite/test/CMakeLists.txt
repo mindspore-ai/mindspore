@@ -105,7 +105,8 @@ if (PLATFORM_ARM32 OR PLATFORM_ARM64)
   endif()
 endif()
 ### runtime framework
-file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc ${LITE_DIR}/src/ops/populate/*.cc)
+add_definitions(-DENABLE_V0)
+file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
 set(TEST_LITE_SRC
         ${TEST_LITE_SRC}
         ${CCSRC_SRC}
@@ -123,8 +124,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/lite_kernel.cc
         ${LITE_DIR}/src/lite_session.cc
         ${LITE_DIR}/src/sub_graph_kernel.cc
-        ${LITE_DIR}/src/model.cc
-        ${LITE_DIR}/src/model_common.cc
+        ${LITE_DIR}/src/lite_model.cc
         ${LITE_DIR}/src/scheduler.cc
         ${LITE_DIR}/src/common/graph_util.cc
         ${LITE_DIR}/src/common/file_utils.cc
