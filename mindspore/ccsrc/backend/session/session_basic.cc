@@ -1601,6 +1601,11 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   // set output
   CreateOutputNode(cnode, graph);
   graph->SetInputNodes();
+  auto manager = MakeManager({graph});
+  if (manager != nullptr) {
+    manager->AddFuncGraph(graph);
+    graph->set_manager(manager);
+  }
   UnifyMindIR(graph);
   return graph;
 }

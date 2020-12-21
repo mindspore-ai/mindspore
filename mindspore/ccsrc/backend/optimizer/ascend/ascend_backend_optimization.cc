@@ -220,8 +220,8 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
     data_layout_pm->AddPass(std::make_shared<ConvertCastFormat>());
     data_layout_pm->AddPass(std::make_shared<EraseVisitAttr>());
     data_layout_pm->AddPass(std::make_shared<InsertTransOp>());
+    data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
   }
-  data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   data_layout_pm->AddPass(std::make_shared<RemoveReshapePair>());
   data_layout_pm->AddPass(std::make_shared<EliminateRedundantOp>());

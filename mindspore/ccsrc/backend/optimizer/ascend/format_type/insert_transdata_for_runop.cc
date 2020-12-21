@@ -22,22 +22,46 @@
 
 namespace mindspore {
 namespace opt {
-const BaseRef RunOpInsertTransData::DefinePattern() const {
-  std::shared_ptr<Var> V = std::make_shared<CondVar>(UnVisited);
-  MS_EXCEPTION_IF_NULL(V);
-  std::shared_ptr<Var> Xs = std::make_shared<SeqVar>();
-  MS_EXCEPTION_IF_NULL(Xs);
-  return VectorRef({V, Xs});
-}
-
-const AnfNodePtr RunOpInsertTransData::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                               const EquivPtr &) const {
-  if (node == nullptr || !AnfAlgo::IsRealKernel(node)) {
-    return nullptr;
+bool RunOpInsertTransData::Run(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+  bool changed = false;
+  std::vector<AnfNodePtr> node_list = TopoSort(graph->get_return());
+  for (auto &node : node_list) {
+    bool has_changed = false;
+    MS_EXCEPTION_IF_NULL(node);
+    if (!node->cast<CNodePtr>() || !AnfAlgo::IsRealKernel(node)) {
+      continue;
+    }
+    auto cnode = node->cast<CNodePtr>();
+    for (size_t index = 0; index < AnfAlgo::GetInputTensorNum(cnode); ++index) {
+      auto prev_input_format = AnfAlgo::GetPrevNodeOutputFormat(cnode, index);
+      auto prev_node_out_infer_shape = AnfAlgo::GetPrevNodeOutputInferShape(cnode, index);
+      auto input_format = AnfAlgo::GetInputFormat(cnode, index);
+      auto input_node = AnfAlgo::GetInputNode(cnode, index);
+      // convert the format of node's input node to default
+      if (kCommonFormatSet.find(prev_input_format) == kCommonFormatSet.end() && prev_node_out_infer_shape.size() > 1) {
+        auto trans_node = AddTransOpNodeToGraph(graph, input_node, kernel_select_, 0, false);
+        AnfAlgo::SetNodeInput(cnode, trans_node, index);
+        has_changed = true;
+      }
+      // convert node's output format
+      if (kCommonFormatSet.find(input_format) == kCommonFormatSet.end() && prev_node_out_infer_shape.size() > 1) {
+        auto trans_node = AddTransOpNodeToGraph(graph, cnode, kernel_select_, index, true);
+        AnfAlgo::SetNodeInput(cnode, trans_node, index);
+        has_changed = true;
+      }
+    }
+    if (has_changed) {
+      auto kernel_graph = graph->cast<KernelGraphPtr>();
+      MS_EXCEPTION_IF_NULL(kernel_graph);
+      auto new_node = kernel_graph->NewCNode(cnode);
+      auto manager = kernel_graph->manager();
+      MS_EXCEPTION_IF_NULL(manager);
+      manager->Replace(cnode, new_node);
+      changed = true;
+    }
   }
-  AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), node);
-  MS_LOG(DEBUG) << "====process op: " << node->DebugString();
-  return InsertTransOpForInput(func_graph, node, kernel_select_);
+  return changed;
 }
 }  // namespace opt
 }  // namespace mindspore

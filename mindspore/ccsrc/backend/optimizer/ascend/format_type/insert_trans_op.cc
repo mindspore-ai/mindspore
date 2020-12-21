@@ -52,14 +52,6 @@ const AnfNodePtr InsertTransOp::Process(const FuncGraphPtr &func_graph, const An
   if (kernel_graph != nullptr && kernel_graph->IsInternalOutput(node)) {
     kernel_graph->ReplaceInternalOutput(node, new_node);
   }
-  auto ms_context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(ms_context);
-  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
-      !ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_HOOK)) {
-    if (IsGraphOutput(node, func_graph)) {
-      return new_node;
-    }
-  }
   return InsertTransOpForOutput(func_graph, new_node, kernel_select_);
 }
 }  // namespace opt
