@@ -178,3 +178,26 @@ def test_train_stats_false_forward():
     diff = output.asnumpy() - expect_output
     assert np.all(diff < error)
     assert np.all(-diff < error)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_infer_backward():
+    expect_output = np.array([[[[-0.3224156, -0.3840524], [1.1337637, -1.0998858]],
+                               [[-0.1724273, -0.877854], [0.0422135, 0.5828123]],
+                               [[-1.1006137, 1.1447179], [0.9015862, 0.5024918]]]]).astype(np.float32)
+    np.random.seed(1)
+    x_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
+    input_grad_np = np.random.randn(1, 3, 2, 2).astype(np.float32)
+    ms_input = Tensor(x_np)
+    weight = Tensor(np.ones(3).astype(np.float32))
+    bias = Tensor(np.zeros(3).astype(np.float32))
+    moving_mean = Tensor(np.zeros(3).astype(np.float32))
+    moving_var_init = Tensor(np.ones(3).astype(np.float32))
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    ms_net = Batchnorm_Net(3, weight, bias, moving_mean, moving_var_init)
+    ms_net.set_train(False)
+    ms_grad = Grad(ms_net)
+    ms_out_grad_np = ms_grad(ms_input, Tensor(input_grad_np))
+    assert np.allclose(ms_out_grad_np[0].asnumpy(), expect_output)
