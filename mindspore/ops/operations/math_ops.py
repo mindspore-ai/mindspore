@@ -3376,9 +3376,9 @@ class NMSWithMask(PrimitiveWithInfer):
         >>> inputs = Tensor(bbox, mindspore.float32)
         >>> nms = ops.NMSWithMask(0.5)
         >>> output_boxes, indices, mask = nms(inputs)
-        >>> print(output_boxes)
-        [[0.39990234 0.19995117 0.7998047  0.5        0.09997559]
-         [0.39990234 0.30004883 1.         1.0996094  0.7001953 ]]
+        >>> indices_np = indices.asnumpy()
+        >>> print(indices_np[mask.asnumpy()])
+        [0 1]
     """
 
     @prim_attr_register
