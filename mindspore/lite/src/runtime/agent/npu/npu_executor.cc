@@ -42,6 +42,14 @@ int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<
       return RET_ERROR;
     }
     memcpy(npu_input_tensors_[i]->GetBuffer(), data, in_tensors[i]->Size());
+    in_tensors[i]->set_ref_count(in_tensors[i]->ref_count() - 1);
+    if (in_tensors[i]->ref_count() <= 0) {
+      auto ret = in_tensors[i]->FreeData();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Free tensor data failed";
+        return RET_ERROR;
+      }
+    }
   }
   context.AddPara("model_name", model_name_);
   if (this->client_ == nullptr) {
