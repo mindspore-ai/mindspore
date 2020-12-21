@@ -30,7 +30,7 @@ int TransposeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, con
     MS_LOG(ERROR) << "Unsupported conjugate transpose.";
     return RET_ERROR;
   }
-  return RET_OK;
+  return RET_ERROR;
 }
 
 int TransposeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
@@ -57,6 +57,4 @@ TransposeNPUKernel::~TransposeNPUKernel() {
 }
 
 REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Transpose, NPUKernelCreator<TransposeNPUKernel>)
-// REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Nhwc2Nchw, NPUKernelCreator<TransposeNPUKernel>)
-// REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Nchw2Nhwc, NPUKernelCreator<TransposeNPUKernel>)
 }  // namespace mindspore::kernel

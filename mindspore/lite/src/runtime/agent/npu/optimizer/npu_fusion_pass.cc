@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/agent/npu/npu_fusion_pass.h"
+#include "src/runtime/agent/npu/optimizer/npu_fusion_pass.h"
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/concat_parameter.h"
@@ -198,7 +198,7 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
   return RET_OK;
 }
 
-int NPUFusionPass::Fusion() {
+int NPUFusionPass::Run() {
   for (auto kernel : *kernels) {
     switch (kernel->Type()) {
       case schema::PrimitiveType_Concat:

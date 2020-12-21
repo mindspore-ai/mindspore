@@ -34,7 +34,7 @@ int ScaleNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, cons
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
-  op_->set_attr_axis(this->axis_);
+  op_->set_attr_axis(scale_parameter_->axis_);
   op_->set_input_x(*npu_inputs[0]);
   op_->set_input_scale(*npu_inputs[1]);
   op_->set_input_bias(*npu_inputs[2]);

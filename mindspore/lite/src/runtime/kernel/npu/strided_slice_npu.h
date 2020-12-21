@@ -28,12 +28,7 @@ class StridedSliceNPUKernel : public NPUKernel {
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                         const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto strided_slice = reinterpret_cast<const mindspore::lite::StridedSlice *>(primitive);
-    begin_mask_ = strided_slice->GetBeginMask();
-    end_mask_ = strided_slice->GetEndMask();
-    ellipsis_mask_ = strided_slice->GetEllipsisMask();
-    new_axis_mask_ = strided_slice->GetNewAxisMask();
-    shrink_axis_mask_ = strided_slice->GetShrinkAxisMask();
+    strided_slice_ = reinterpret_cast<const mindspore::lite::StridedSlice *>(primitive);
   }
   ~StridedSliceNPUKernel() override;
 
@@ -45,11 +40,7 @@ class StridedSliceNPUKernel : public NPUKernel {
 
  private:
   hiai::op::StridedSlice *op_ = nullptr;
-  int begin_mask_;
-  int end_mask_;
-  int ellipsis_mask_;
-  int new_axis_mask_;
-  int shrink_axis_mask_;
+  const mindspore::lite::StridedSlice *strided_slice_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_STRIDEDSLICE_NPU_H_

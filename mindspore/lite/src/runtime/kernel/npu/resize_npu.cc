@@ -27,8 +27,9 @@ using mindspore::schema::PrimitiveType_Resize;
 namespace mindspore::kernel {
 int ResizeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                OpParameter *opParameter) {
-  if (method_ != schema::ResizeMethod_LINEAR || method_ == schema::ResizeMethod_NEAREST) {
-    MS_LOG(WARNING) << "Unsupported resize method type:" << method_;
+  if (resize_parameter_->method_ != schema::ResizeMethod_LINEAR ||
+      resize_parameter_->method_ == schema::ResizeMethod_NEAREST) {
+    MS_LOG(WARNING) << "Unsupported resize method type:" << resize_parameter_->method_;
     return RET_ERROR;
   }
   return RET_OK;
@@ -38,20 +39,21 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
                                   const std::vector<ge::Operator *> &npu_inputs) {
   ge::TensorDesc sizeTensorDesc(ge::Shape({2}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr sizeTensor = std::make_shared<hiai::Tensor>(sizeTensorDesc);
-  vector<int32_t> dataValue = {static_cast<int32_t>(new_height_), static_cast<int32_t>(new_width_)};
+  vector<int32_t> dataValue = {static_cast<int32_t>(resize_parameter_->new_height_),
+                               static_cast<int32_t>(resize_parameter_->new_width_)};
   sizeTensor->SetData(reinterpret_cast<uint8_t *>(dataValue.data()), 2 * sizeof(int32_t));
   auto out_size = new (std::nothrow) hiai::op::Const(name_ + "_size");
   out_size->set_attr_value(sizeTensor);
-  if (method_ == schema::ResizeMethod_LINEAR) {
+  if (resize_parameter_->method_ == schema::ResizeMethod_LINEAR) {
     auto op = new (std::nothrow) hiai::op::ResizeBilinearV2(name_);
     if (op == nullptr) {
       MS_LOG(ERROR) << " op is nullptr.";
       return RET_ERROR;
     }
-    op->set_attr_align_corners(align_corners_);
+    op->set_attr_align_corners(resize_parameter_->align_corners_);
     op->set_input_x(*npu_inputs[0]);
     op->set_input_size(*out_size);
-    op->set_attr_half_pixel_centers(preserve_aspect_ratio_);
+    op->set_attr_half_pixel_centers(resize_parameter_->preserve_aspect_ratio_);
     op_ = op;
   } else {
     auto op = new (std::nothrow) hiai::op::ResizeNearestNeighborV2(name_);
@@ -59,7 +61,7 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
       MS_LOG(ERROR) << " op is nullptr.";
       return RET_ERROR;
     }
-    op->set_attr_align_corners(align_corners_);
+    op->set_attr_align_corners(resize_parameter_->align_corners_);
     op->set_input_x(*npu_inputs[0]);
     op->set_input_size(*out_size);
     op_ = op;

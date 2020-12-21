@@ -18,8 +18,8 @@
 
 #include <vector>
 #include <memory>
+#include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
-#include "src/runtime/kernel/npu/transpose_base_npu.h"
 #include "nnacl/conv_parameter.h"
 
 namespace mindspore::kernel {

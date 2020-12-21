@@ -17,7 +17,7 @@
 #include "src/kernel_registry.h"
 #include "src/ops/nhwc2nchw.h"
 #include "src/ops/nchw2nhwc.h"
-#include "src/runtime/agent/npu/npu_pass_utils.h"
+#include "src/runtime/agent/npu/optimizer/npu_pass_utils.h"
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
 using kernel::KERNEL_ARCH::kNPU;
@@ -34,7 +34,7 @@ PrimitiveC *NPUPassUtils::CreateNchw2NhwcPrimitive() {
   }
   auto primitive_buf = reinterpret_cast<char *>(malloc(fbb.GetSize()));
   if (primitive_buf == nullptr) {
-    MS_LOG(ERROR) << "Malloc primitive_buf_ failed.";
+    MS_LOG(ERROR) << "Malloc primitive buffer failed.";
     fbb.Clear();
     return nullptr;
   }
@@ -58,7 +58,7 @@ PrimitiveC *NPUPassUtils::CreateNhwc2NchwPrimitive() {
   }
   auto primitive_buf = reinterpret_cast<char *>(malloc(fbb.GetSize()));
   if (primitive_buf == nullptr) {
-    MS_LOG(ERROR) << "Malloc primitive_buf_ failed.";
+    MS_LOG(ERROR) << "Malloc primitive buffer failed.";
     fbb.Clear();
     return nullptr;
   }

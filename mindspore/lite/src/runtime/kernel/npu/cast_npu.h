@@ -27,9 +27,7 @@ class CastNPUKernel : public NPUKernel {
                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                 const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto cast_parameter = reinterpret_cast<CastParameter *>(parameter);
-    dst_type_ = static_cast<TypeId>(cast_parameter->dst_type_);
-    src_type_ = static_cast<TypeId>(cast_parameter->src_type_);
+    cast_parameter_ = reinterpret_cast<CastParameter *>(parameter);
   }
   ~CastNPUKernel() override;
 
@@ -41,8 +39,7 @@ class CastNPUKernel : public NPUKernel {
 
  private:
   hiai::op::CastT *op_ = nullptr;
-  TypeId dst_type_;
-  TypeId src_type_;
+  CastParameter *cast_parameter_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_CAST_NPU_H_

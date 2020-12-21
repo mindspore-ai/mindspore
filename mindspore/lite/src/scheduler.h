@@ -28,8 +28,8 @@
 namespace mindspore::lite {
 class Scheduler {
  public:
-  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> src_tensors)
-      : context_(ctx), src_model_(src_model), src_tensors_(std::move(src_tensors)) {}
+  Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors)
+      : context_(ctx), src_model_(src_model), src_tensors_(src_tensors) {}
   ~Scheduler() = default;
 
   int Schedule(std::vector<kernel::LiteKernel *> *dst_kernels);
@@ -85,7 +85,7 @@ class Scheduler {
  protected:
   const InnerContext *context_ = nullptr;
   Model *src_model_ = nullptr;
-  std::vector<Tensor *> src_tensors_;
+  std::vector<Tensor *> *src_tensors_;
   std::vector<size_t> graph_output_node_indexes_;
 };
 }  // namespace mindspore::lite

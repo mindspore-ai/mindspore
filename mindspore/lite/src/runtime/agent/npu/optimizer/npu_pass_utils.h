@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_PASS_UTILS_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_PASS_UTILS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_
 #include <vector>
 #include <string>
 #include "src/ops/primitive_c.h"
@@ -41,4 +41,4 @@ class NPUPassUtils {
   static PrimitiveC *CreateNhwc2NchwPrimitive();
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_PASS_UTILS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_

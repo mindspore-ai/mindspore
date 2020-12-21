@@ -33,8 +33,8 @@ int MatMulNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
   op_->set_input_x1(*npu_inputs[0]);
   op_->set_input_x2(*npu_inputs[1]);
 
-  op_->set_attr_transpose_x1(a_transpose_);
-  op_->set_attr_transpose_x2(b_transpose_);
+  op_->set_attr_transpose_x1(matmul_parameter_->a_transpose_);
+  op_->set_attr_transpose_x2(matmul_parameter_->b_transpose_);
   return RET_OK;
 }
 

@@ -1,9 +1,8 @@
 include_directories(${DDK_PATH})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/kernel)
 file(GLOB_RECURSE NPU_RUNTIME_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../kernel/npu/*.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/optimizer/*.cc
         )
 add_library(hiai SHARED IMPORTED)
 set_target_properties(hiai PROPERTIES IMPORTED_LOCATION

@@ -42,18 +42,11 @@ using mindspore::schema::PrimitiveType_Sub;
 namespace mindspore::kernel {
 int ArithmeticNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
-  if (primitive_->Type() == PrimitiveType_Mul || primitive_->Type() == PrimitiveType_Div) {
+  if (primitive_->Type() == PrimitiveType_Mul || primitive_->Type() == PrimitiveType_Div ||
+      primitive_->Type() == PrimitiveType_Add || primitive_->Type() == PrimitiveType_Sub) {
     if (inputs[0]->shape() != inputs[1]->shape()) {
-      MS_LOG(WARNING) << "For the two inputs, the corresponding dimensions must have the same value."
+      MS_LOG(WARNING) << name_ << " for the two inputs, the corresponding dimensions must have the same value."
                       << " shape 1 is:" << inputs[0]->shape() << " shape 2 is:" << inputs[1]->shape();
-      return RET_ERROR;
-    }
-  }
-  if (primitive_->Type() == PrimitiveType_Add || primitive_->Type() == PrimitiveType_Sub) {
-    if (inputs[0]->shape().size() != inputs[1]->shape().size()) {
-      MS_LOG(WARNING)
-        << "For the two inputs, the corresponding dimensions must have the same value, or one of them is 1."
-        << " shape 1 is:" << inputs[0]->shape() << " shape 2 is:" << inputs[1]->shape();
       return RET_ERROR;
     }
   }

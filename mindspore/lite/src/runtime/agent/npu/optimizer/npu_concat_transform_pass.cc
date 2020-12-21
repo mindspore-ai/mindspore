@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/agent/npu/npu_concat_transform_pass.h"
-#include "src/runtime/agent/npu/npu_pass_utils.h"
+#include "src/runtime/agent/npu/optimizer/npu_concat_transform_pass.h"
+#include "src/runtime/agent/npu/optimizer/npu_pass_utils.h"
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kNPU;
 int NPUConcatTransformPass::UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
@@ -54,9 +54,11 @@ int NPUConcatTransformPass::InsertNode(const InnerContext *context, std::vector<
     auto nh2nc_name = kernel->name() + "_nh2nc_" + std::to_string(total++);
     auto *nh2nc_kernel = NPUPassUtils::CreateNhwc2NchwKernel(kernel->out_tensors(), nh2nc_tensors, context, nh2nc_name);
     all_kernels->push_back(nh2nc_kernel);
+    insert_primitive_.push_back(nh2nc_kernel->GetPrimitive());
     auto nc2nh_name = kernel->name() + "_nc2nh_" + std::to_string(total++);
     auto *nc2nh_kernel = NPUPassUtils::CreateNchw2NhwcKernel(nh2nc_tensors, nc2nh_tensors, context, nc2nh_name);
     all_kernels->push_back(nc2nh_kernel);
+    insert_primitive_.push_back(nc2nh_kernel->GetPrimitive());
     NPUPassUtils::UpdateKernel(nh2nc_kernel, {kernel}, {nc2nh_kernel}, kernel->out_tensors(), nh2nc_tensors);
     NPUPassUtils::UpdateKernel(nc2nh_kernel, {nh2nc_kernel}, {out_kernel}, nh2nc_tensors, nc2nh_tensors);
     UpdateNH2NCTransNodePreKernel(kernel, nh2nc_kernel, out_kernel);
@@ -90,12 +92,11 @@ int NPUConcatTransformPass::UpdateNC2NHTransNodeAfterKernel(kernel::LiteKernel *
   return RET_OK;
 }
 
-int NPUConcatTransformPass::Run(const InnerContext *context, std::vector<kernel::LiteKernel *> *all_kernels,
-                                std::vector<Tensor *> *all_tensors) {
-  if (context->IsNpuEnabled()) {
+int NPUConcatTransformPass::Run() {
+  if (context_->IsNpuEnabled()) {
     std::vector<kernel::LiteKernel *> new_kernels;
 
-    for (auto it = all_kernels->begin(); it != all_kernels->end(); it++) {
+    for (auto it = all_kernels_->begin(); it != all_kernels_->end(); it++) {
       auto kernel = *it;
       if (kernel->desc().arch != kNPU) {
         new_kernels.push_back(kernel);
@@ -109,15 +110,15 @@ int NPUConcatTransformPass::Run(const InnerContext *context, std::vector<kernel:
           }
         }
         if (kernel->out_kernels().size() != sum) {
-          InsertNode(context, it, &new_kernels, all_tensors);
+          InsertNode(context_, it, &new_kernels, all_tensors_);
         }
       }
       new_kernels.push_back(kernel);
     }
 
-    all_kernels->clear();
+    all_kernels_->clear();
     for (int i = 0; i < new_kernels.size(); i++) {
-      all_kernels->push_back(new_kernels[i]);
+      all_kernels_->push_back(new_kernels[i]);
     }
   }
   return RET_OK;

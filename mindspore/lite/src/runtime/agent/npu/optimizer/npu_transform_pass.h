@@ -14,16 +14,30 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_TRANSFORM_PASS_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_TRANSFORM_PASS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_TRANSFORM_PASS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_TRANSFORM_PASS_H_
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/ops/primitive_c.h"
+#include "src/runtime/agent/npu/optimizer/npu_base_pass.h"
 namespace mindspore::lite {
-class NPUTransformPass {
+class NPUTransformPass : public NPUBasePass {
  public:
-  int FormatTransformPass(const InnerContext *context, std::vector<kernel::LiteKernel *> *all_kernels,
-                          std::vector<Tensor *> *all_tensors);
+  int Run() override;
+
+  explicit NPUTransformPass(const InnerContext *context, std::vector<kernel::LiteKernel *> *all_kernels,
+                            std::vector<Tensor *> *all_tensors) {
+    context_ = context;
+    all_kernels_ = all_kernels;
+    all_tensors_ = all_tensors;
+    name_ = "NPUTransformPass";
+  }
+  ~NPUTransformPass() override {
+    for (auto primitive : insert_primitive_) {
+      delete primitive;
+    }
+    insert_primitive_.clear();
+  }
 
  private:
   int UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
@@ -46,6 +60,10 @@ class NPUTransformPass {
 
  private:
   int total = 0;
+  const InnerContext *context_;
+  std::vector<kernel::LiteKernel *> *all_kernels_;
+  std::vector<Tensor *> *all_tensors_;
+  std::vector<const PrimitiveC *> insert_primitive_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_TRANSFORM_PASS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_TRANSFORM_PASS_H_
