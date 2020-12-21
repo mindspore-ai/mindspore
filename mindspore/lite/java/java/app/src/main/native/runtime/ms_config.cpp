@@ -32,9 +32,12 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_config_MSConfig_creat
       context->device_list_[0].device_type_ = mindspore::lite::DT_CPU;
       break;
     case 1:  // DT_GPU
-      MS_LOGE("We only support CPU now.");
-      return (jlong)context;
+    {
+      mindspore::lite::DeviceContext gpu_device_ctx{mindspore::lite::DT_GPU, {false}};
+      gpu_device_ctx.device_info_.gpu_device_info_.enable_float16_ = enable_float16;
+      context->device_list_.push_back(gpu_device_ctx);
       break;
+    }
     case 2:  // DT_NPU
       MS_LOGE("We only support CPU now.");
       return (jlong)context;
