@@ -37,6 +37,7 @@
 
 namespace mindspore {
 namespace somas {
+constexpr auto kGapSize = 512;
 std::map<TensorType, std::string> tensor_type_name_map = {{kCommon, "Common"},
                                                           {kOutputOnly, "OutputOnly"},
                                                           {kWorkspace, "Workspace"},
@@ -44,7 +45,6 @@ std::map<TensorType, std::string> tensor_type_name_map = {{kCommon, "Common"},
                                                           {kSummaryInput, "SummaryInput"},
                                                           {kRefNodeInput, "RefNodeInput"},
                                                           {kRefNodeOutput, "RefNodeOutput"},
-                                                          {kGap, "Gap"},
                                                           {kUnknown, "Unknown"}};
 
 bool Somas::Allocate(const session::KernelGraph *graph) {
@@ -451,62 +451,37 @@ void Somas::UnReuseNodeProcess(const session::KernelGraph *graph) {
   }
 }
 
-SomasTensorPtr Somas::CreateGapTensor(size_t gap_tensor_id) {
-  // real size 512 and lifelong_
-  const size_t gap_size = 512;
-  auto gap_tensor = std::make_shared<SomasTensor>(gap_tensor_id++, nullptr, nullptr, gap_size, kLifeLongNone);
-  gap_tensor->type_ = kGap;
-  gap_tensor->aligned_size_ = gap_size;
-  tensors_map_[gap_tensor->GetId()] = gap_tensor;
-  tensors_list_.push_back(gap_tensor);
-  return gap_tensor;
-}
-
 void Somas::GenContiguousList(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  size_t gap_tensor_id = tensors_list_.size();
   for (const auto &node : nodes_list_) {
     MS_EXCEPTION_IF_NULL(node);
     if (node->GetType() != kCommunicationNode) {
       continue;
     }
-    if ((!node->input_tensors_.empty()) && (!node->input_tensors_[0]->contiguous_)) {
-      std::vector<size_t> inputs;
-      auto input_before_gap = CreateGapTensor(gap_tensor_id);
-      input_before_gap->contiguous_ = true;
-      gap_tensor_id++;
-      inputs.push_back(input_before_gap->GetId());
 
+    // Contiguous input
+    if ((!node->input_tensors_.empty()) && (!node->input_tensors_[0]->contiguous_)) {
+      node->input_tensors_[0]->aligned_size_ += kGapSize;
+      node->input_tensors_[node->input_tensors_.size() - 1]->aligned_size_ += kGapSize;
+      std::vector<size_t> inputs;
       for (const auto &input_tensor : node->input_tensors_) {
         comm_input_total_size_ += input_tensor->aligned_size_;
         input_tensor->contiguous_ = true;
         inputs.push_back(input_tensor->GetId());
       }
-
-      auto input_after_gap = CreateGapTensor(gap_tensor_id);
-      gap_tensor_id++;
-      input_after_gap->contiguous_ = true;
-      inputs.push_back(input_after_gap->GetId());
       contiguous_tensors_list_.push_back(inputs);
     }
 
+    // Contiguous output
     if ((!node->output_tensors_.empty()) && (!node->output_tensors_[0]->contiguous_)) {
+      node->output_tensors_[0]->aligned_size_ += kGapSize;
+      node->output_tensors_[node->output_tensors_.size() - 1]->aligned_size_ += kGapSize;
       std::vector<size_t> outputs;
-      auto output_before_gap = CreateGapTensor(gap_tensor_id);
-      gap_tensor_id++;
-      output_before_gap->contiguous_ = true;
-      outputs.push_back(output_before_gap->GetId());
-
       for (const auto &output_tensor : node->output_tensors_) {
         comm_output_total_size_ += output_tensor->aligned_size_;
         output_tensor->contiguous_ = true;
         outputs.push_back(output_tensor->GetId());
       }
-
-      auto output_after_gap = CreateGapTensor(gap_tensor_id);
-      gap_tensor_id++;
-      output_after_gap->contiguous_ = true;
-      outputs.push_back(output_after_gap->GetId());
       contiguous_tensors_list_.push_back(outputs);
     }
   }
@@ -553,9 +528,6 @@ void Somas::PreprocessingConflicts() {
   // Atomic: fix any issues on saved lifetimes of tensors
   for (auto tensor : tensors_list_) {
     MS_EXCEPTION_IF_NULL(tensor);
-    if (tensor->IsGap()) {
-      continue;
-    }
     for (auto node : tensor->destinations_) {
       MS_EXCEPTION_IF_NULL(node);
       MS_EXCEPTION_IF_NULL(tensor->GetSourceNode());
@@ -581,6 +553,7 @@ void Somas::ComputeConflictPairs() {
   MS_LOG(INFO) << "End Preprocessing Conflicts";
 
   MS_LOG(INFO) << "Start Conflict Computing (Bitset Model)";
+
   std::sort(nodes_list_.begin(), nodes_list_.end(), NodeSort);
 
   // Loop to add edges within each stream (node order within stream)
@@ -651,16 +624,18 @@ void Somas::ComputeConflictPairs() {
   }
 
   for (size_t i = 0; i < tensors_list_.size(); i++) {
+    auto t0 = tensors_list_[i];
+    if (t0->IsLifelong() || t0->IsRefOverlap() || t0->GetAlignedSize() == 0) {
+      continue;
+    }
+    size_t t0_src_node = t0->GetSourceNode()->GetId();
     for (size_t j = i + 1; j < tensors_list_.size(); j++) {
-      auto t0 = tensors_list_[i];
       auto t1 = tensors_list_[j];
 
-      if (t0 == t1 || t0->IsGap() || t1->IsGap() || t0->IsLifelong() || t1->IsLifelong() || t0->IsRefOverlap() ||
-          t1->IsRefOverlap() || t0->GetAlignedSize() == 0 || t1->GetAlignedSize() == 0) {
+      if (t0 == t1 || t1->IsLifelong() || t1->IsRefOverlap() || t1->GetAlignedSize() == 0) {
         continue;
       }
 
-      size_t t0_src_node = t0->GetSourceNode()->GetId();
       size_t t1_src_node = t1->GetSourceNode()->GetId();
       if (t0_src_node == t1_src_node) {
         continue;
@@ -879,54 +854,6 @@ bool Somas::Assign(const session::KernelGraph *graph) {
     tensor1->num_constraints_ = count_constraints;
   }
 
-  // Preprocessing contiguous gaps
-  MS_LOG(INFO) << "Start Contiguous Gaps Preprocessing";
-  for (auto contiguous_list : contiguous_tensors_list_) {
-    if (contiguous_list.size() < 3) {
-      MS_LOG(ERROR) << "contiguous_list should have at least one input and two gap, now it is "
-                    << contiguous_list.size();
-    }
-    size_t front_gap_id = contiguous_list[0];
-    size_t back_gap_id = contiguous_list[contiguous_list.size() - 1];
-
-    SomasTensorPtr front_gap = tensors_map_[front_gap_id];
-    SomasTensorPtr back_gap = tensors_map_[back_gap_id];
-    MS_EXCEPTION_IF_NULL(front_gap);
-    MS_EXCEPTION_IF_NULL(back_gap);
-
-    // Update conflicts to conflicts of neighbour
-    size_t front_neighbour_id = contiguous_list[1];
-    size_t back_neighbour_id = contiguous_list[contiguous_list.size() - 2];
-    for (SomasTensorPtr tensor : tensors_list_) {
-      MS_EXCEPTION_IF_NULL(tensor);
-      if (tensor_relation[tensor->GetId()].IsBitTrue(front_neighbour_id) == false) {
-        tensor_relation[tensor->GetId()].SetBitFalse(front_gap_id);
-        tensor_relation[front_gap_id].SetBitFalse(tensor->GetId());
-      } else {
-        tensor_relation[tensor->GetId()].SetBitTrue(front_gap_id);
-        tensor_relation[front_gap_id].SetBitTrue(tensor->GetId());
-      }
-      if (tensor_relation[tensor->GetId()].IsBitTrue(back_neighbour_id) == false) {
-        tensor_relation[tensor->GetId()].SetBitFalse(back_gap_id);
-        tensor_relation[back_gap_id].SetBitFalse(tensor->GetId());
-      } else {
-        tensor_relation[tensor->GetId()].SetBitTrue(back_gap_id);
-        tensor_relation[back_gap_id].SetBitTrue(tensor->GetId());
-      }
-    }
-    SomasTensorPtr front_neighbour = tensors_map_[front_neighbour_id];
-    SomasTensorPtr back_neighbour = tensors_map_[back_neighbour_id];
-    MS_EXCEPTION_IF_NULL(front_neighbour);
-    MS_EXCEPTION_IF_NULL(back_neighbour);
-    front_gap->num_constraints_ = front_neighbour->num_constraints_;
-    front_gap->lifetime_.start_ = front_neighbour->lifetime_.end_;
-    front_gap->lifetime_.end_ = front_neighbour->lifetime_.end_;
-    back_gap->num_constraints_ = back_neighbour->num_constraints_;
-    back_gap->lifetime_.start_ = back_neighbour->lifetime_.end_;
-    back_gap->lifetime_.end_ = back_neighbour->lifetime_.end_;
-  }
-  MS_LOG(INFO) << "End Contiguous Gaps Preprocessing";
-
   // Prepare solver info
   MS_LOG(INFO) << "Start Loop to create solver info";
   for (auto tensor : tensors_list_) {
@@ -976,6 +903,11 @@ bool Somas::Assign(const session::KernelGraph *graph) {
     }
   }
   MS_LOG(INFO) << "\nEnd Solving Postprocessing for Ref Node";
+
+  // Contiguous gaps postprocessing
+  for (auto list : contiguous_tensors_list_) {
+    tensors_map_[list[0]]->offset_ += kGapSize;
+  }
 
   // Set mem_offset_ value by solver result
   mem_offset_ = static_cast<size_t>(somas_solver_->GetMaxOffset());
@@ -1108,12 +1040,11 @@ void Somas::DumpOfflineIR(const string filename) {
   }
 
   for (auto tensor : tensors_list_) {
-    if (tensor->IsGap()) continue;
-    if (tensor->IsOutputOnly()) {
+    if (tensor->IsOutputOnly() || tensor->type_ == TensorType::kRefNodeOutput) {
       ofs << "Somas EDGE ERROR src=n" << tensor->GetSourceNode()->GetId()
           << ", srcstm=" << tensor->GetSourceStream()->GetId() << ", dst=nc"
           << ", dststm=nc"
-          << ", workspace=0, size=" << tensor->GetAlignedSize()
+          << ", workspace=0, size=" << tensor->GetOriginalSize()
           << ", lifelong=" << static_cast<int>(tensor->lifelong_value_) << ", tid=" << tensor->GetId()
           << ", start=" << tensor->lifetime_.start_ << ", end=" << tensor->lifetime_.end_ << std::endl;
     } else {
@@ -1126,24 +1057,15 @@ void Somas::DumpOfflineIR(const string filename) {
         ofs << "Somas EDGE src=n" << tensor->GetSourceNode()->GetId()
             << ", srcstm=" << tensor->GetSourceStream()->GetId() << ", dst=n" << dest_info.first
             << ", dststm=" << dest_info.second << ", workspace=" << static_cast<int>(tensor->type_ == kWorkspace)
-            << ", size=" << tensor->GetAlignedSize() << ", lifelong=" << static_cast<int>(tensor->lifelong_value_)
+            << ", size=" << tensor->GetOriginalSize() << ", lifelong=" << static_cast<int>(tensor->lifelong_value_)
             << ", tid=" << tensor->GetId() << ", start=" << tensor->lifetime_.start_
             << ", end=" << tensor->lifetime_.end_ << std::endl;
       }
     }
   }
   for (vector<size_t> tList : contiguous_tensors_list_) {
-    ofs << "Somas CONTIGUOUS ";
-    // ignore front and back gaps
-    for (size_t i = 1; i < tList.size() - 1; ++i) {
-      if (tensors_map_[tList[i]]->IsGap()) {
-        ofs << "INPUT";
-        break;
-      }
-      if (i == tList.size() - 2) ofs << "OUTPUT";
-    }
+    ofs << "Somas CONTIGUOUS";
     for (size_t tid : tList) {
-      if (tensors_map_[tid]->IsGap()) continue;
       ofs << " " << tid;
     }
     ofs << std::endl;

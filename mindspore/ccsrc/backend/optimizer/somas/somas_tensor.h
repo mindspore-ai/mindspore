@@ -49,7 +49,6 @@ enum TensorType {
   kSummaryInput,
   kRefNodeInput,
   kRefNodeOutput,
-  kGap,
   kUnknown
 };
 
@@ -105,7 +104,6 @@ class SomasTensor {
   bool IsSemiLifelongStart() { return lifelong_value_ == kLifeLongGraphStart; }
   bool IsSemiLifelongEnd() { return lifelong_value_ == kLifeLongGraphEnd; }
   bool IsRefOverlap() { return ref_overlap_; }
-  bool IsGap() { return type_ == kGap; }
 
   // Computing functions
   void SetOffset() {
