@@ -192,10 +192,6 @@ class ExecutionTree {
   // @return Status The status code returned
   Status PostAction();
 
-  // Optimization transformation/action, optional.
-  // @return Status The status code returned
-  Status Optimize();
-
   // The DEPRECATED driver of the prepare phase of the execution tree. The prepare phase will recursively
   // walk the tree to perform modifications to the tree or specific nodes within the tree to get
   // it ready for execution.
@@ -240,28 +236,9 @@ class ExecutionTree {
   // Getter for profiling manager, no ownership
   ProfilingManager *GetProfilingManager() { return profiling_manager_.get(); }
 
-  // Set optional optimization if tree has not been prepared yet
-  Status SetOptimize(bool value) {
-    if (tree_state_ != kDeTStateInit && tree_state_ != kDeTStateBuilding) {
-      std::string optimize = (optimize_ == true) ? "true" : "false";
-      std::string msg = "Tree has already been prepared with OPTIMIZE set to " + optimize;
-      RETURN_STATUS_UNEXPECTED(msg);
-    } else {
-      optimize_ = value;
-      return Status::OK();
-    }
-  }
-
-  // Optional optimizations status
-  bool OptimizationEnabled() const { return optimize_; }
-
   // Getter function to get the total number of epochs to be run on this tree.
   // @return total number of epochs
   int32_t num_epochs() { return num_epochs_; }
-
-  // set the function ptr that overrides the pre-pass which allows caller to adjust the existing pre_pass and
-  // introduce new passes. E.g. caller can override the num_epoch in EpochInjectionPass
-  void SetPrePassOverride(std::function<OptPass(OptPass)> pre_pass_override) { pre_pass_override_ = pre_pass_override; }
 
  private:
   // A helper functions for doing the recursive printing
@@ -279,8 +256,6 @@ class ExecutionTree {
   TreeState tree_state_;                                 // Tracking the current tree state
   int32_t num_epochs_;                                   // Total number of epochs to run for this tree
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
-  bool optimize_;                                        // Flag to enable optional optimizations
-  std::function<OptPass(OptPass)> pre_pass_override_;    // function ptr that overrides pre pass, called in PrePrepare()
   bool partially_prepare_;                               // Temp: during migration to IR, if true, run remaining passes.
 #if defined(NUMA_ENABLED) && (defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE))
   // This rank_id is for numa and device_queue, one process work with only one rank_id,

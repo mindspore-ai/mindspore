@@ -454,6 +454,38 @@ def test_callbacks_one_cb():
     assert events3 == expected_events3
 
 
+def test_clear_callback():
+    logger.info("test_clear_callback")
+
+    # this test case will test that callback is removed for get_dataset_size and output_shape/type
+    class FlagCallback(DSCallback):
+        def __init__(self):
+            super().__init__(step_size=1)
+            self.flag = False
+            self.row_cnt = 0
+
+        def ds_begin(self, ds_run_context):
+            # if callback isn't removed in getter pass, this function will be called
+            self.flag = True
+
+        def ds_step_begin(self, ds_run_context):
+            self.row_cnt += 1
+
+    data = ds.NumpySlicesDataset([1, 2, 3, 4], shuffle=False)
+    cb = FlagCallback()
+    # make sure variables are properly initialized before testing
+    assert not cb.flag and cb.row_cnt == 0
+    data = data.map(operations=(lambda x: x), callbacks=cb)
+    assert data.get_dataset_size() == 4
+    assert data.output_shapes() == [[]]
+    # make sure callback is never called by checking flag and row_cnt
+    assert not cb.flag and cb.row_cnt == 0
+    for _ in data.create_dict_iterator(num_epochs=1):
+        pass
+    # this ensure that callback is indeed called
+    assert cb.flag and cb.row_cnt == 4
+
+
 if __name__ == '__main__':
     test_callbacks_all_2cbs()
     test_callbacks_all_methods()
@@ -467,3 +499,4 @@ if __name__ == '__main__':
     test_callbacks_one_cb()
     test_callbacks_non_sink_mismatch_size()
     test_callbacks_train_end()
+    test_clear_callback()

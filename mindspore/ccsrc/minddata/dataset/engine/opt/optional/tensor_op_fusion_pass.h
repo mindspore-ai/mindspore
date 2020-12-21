@@ -25,12 +25,12 @@ namespace dataset {
 /// \class TensorOpFusionPass tensor_op_fusion_pass.h
 /// \brief And optional optimization pass identifying and fusing
 ///     tensor ops within MapOp
-class TensorOpFusionPass : public NodePass {
+class TensorOpFusionPass : public IRNodePass {
   /// \brief Identifies and fuses tensor ops within MapOp
   /// \param[in] node The node being visited
   /// \param[inout] *modified indicates whether the node has been visited
   /// \return Status The status code returned
-  Status RunOnNode(std::shared_ptr<MapOp> node, bool *modified) override;
+  Status Visit(std::shared_ptr<MapNode> node, bool *modified) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

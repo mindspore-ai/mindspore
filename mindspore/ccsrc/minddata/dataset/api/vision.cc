@@ -1264,72 +1264,7 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
 RandomCropDecodeResizeOperation::RandomCropDecodeResizeOperation(std::vector<int32_t> size, std::vector<float> scale,
                                                                  std::vector<float> ratio,
                                                                  InterpolationMode interpolation, int32_t max_attempts)
-    : TensorOperation(true),
-      size_(size),
-      scale_(scale),
-      ratio_(ratio),
-      interpolation_(interpolation),
-      max_attempts_(max_attempts) {}
-
-Status RandomCropDecodeResizeOperation::ValidateParams() {
-  // size
-  if (size_.empty() || size_.size() > 2) {
-    std::string err_msg = "RandomCropDecodeResize: size vector has incorrect size: " + std::to_string(size_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  RETURN_IF_NOT_OK(ValidateVectorPositive("RandomCropDecodeResize", size_));
-  // rescale
-  if (scale_.empty() || scale_.size() != 2) {
-    std::string err_msg = "RandomCropDecodeResize: scale vector has incorrect size: " + std::to_string(scale_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  if (scale_[0] < 0) {
-    std::string err_msg = "RandomCropDecodeResize: invalid scale, min scale must be greater than or equal to 0, got: " +
-                          std::to_string(scale_[0]);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  if (scale_[1] <= 0) {
-    std::string err_msg =
-      "RandomCropDecodeResize: invalid scale, max scale must be greater than 0, got: " + std::to_string(scale_[1]);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  if (scale_[0] > scale_[1]) {
-    std::string err_msg = "RandomCropDecodeResize: scale should be in (min,max) format. Got (max,min).";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  // ratio
-  if (ratio_.empty() || ratio_.size() != 2) {
-    std::string err_msg = "RandomCropDecodeResize: ratio vector has incorrect size: " + std::to_string(ratio_.size());
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  for (int32_t i = 0; i < ratio_.size(); ++i) {
-    if (ratio_[i] <= 0) {
-      std::string err_msg =
-        "RandomCropDecodeResize: invalid ratio, ratio must be greater than 0, got: " + std::to_string(ratio_[i]);
-      MS_LOG(ERROR) << err_msg;
-      RETURN_STATUS_SYNTAX_ERROR(err_msg);
-    }
-  }
-  if (ratio_[0] > ratio_[1]) {
-    std::string err_msg = "RandomCropDecodeResize: ratio should be in (min,max) format. Got (max,min).";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  // max_attempts
-  if (max_attempts_ < 1) {
-    std::string err_msg =
-      "RandomCropDecodeResize: max_attempts must be greater than or equal to 1, got: " + std::to_string(max_attempts_);
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
-  }
-  return Status::OK();
-}
+    : RandomResizedCropOperation(size, scale, ratio, interpolation, max_attempts) {}
 
 std::shared_ptr<TensorOp> RandomCropDecodeResizeOperation::Build() {
   int32_t crop_height = size_[0];
@@ -1351,6 +1286,9 @@ std::shared_ptr<TensorOp> RandomCropDecodeResizeOperation::Build() {
                                                aspect_lower_bound, aspect_upper_bound, interpolation_, max_attempts_);
   return tensor_op;
 }
+
+RandomCropDecodeResizeOperation::RandomCropDecodeResizeOperation(const RandomResizedCropOperation &base)
+    : RandomResizedCropOperation(base) {}
 
 // RandomCropWithBBoxOperation
 RandomCropWithBBoxOperation::RandomCropWithBBoxOperation(std::vector<int32_t> size, std::vector<int32_t> padding,
@@ -1574,62 +1512,56 @@ RandomResizedCropOperation::RandomResizedCropOperation(std::vector<int32_t> size
 Status RandomResizedCropOperation::ValidateParams() {
   // size
   if (size_.size() != 2 && size_.size() != 1) {
-    std::string err_msg =
-      "RandomResizedCrop: size must be a vector of one or two values, got: " + std::to_string(size_.size());
+    std::string err_msg = Name() + ": size must be a vector of one or two values, got: " + std::to_string(size_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (size_[0] <= 0 || (size_.size() == 2 && size_[1] <= 0)) {
-    std::string err_msg = "RandomResizedCrop: size must only contain positive integers.";
-    MS_LOG(ERROR) << "RandomResizedCrop: size must only contain positive integers, got: " << size_;
+    std::string err_msg = Name() + ": size must only contain positive integers.";
+    MS_LOG(ERROR) << Name() + ": size must only contain positive integers, got: " << size_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // scale
   if (scale_.size() != 2) {
-    std::string err_msg =
-      "RandomResizedCrop: scale must be a vector of two values, got: " + std::to_string(scale_.size());
+    std::string err_msg = Name() + ": scale must be a vector of two values, got: " + std::to_string(scale_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (scale_[0] < 0) {
-    std::string err_msg = "RandomResizedCrop: min scale must be greater than or equal to 0.";
-    MS_LOG(ERROR) << "RandomResizedCrop: min scale must be greater than or equal to 0, got: " +
-                       std::to_string(scale_[0]);
+    std::string err_msg = Name() + ": min scale must be greater than or equal to 0.";
+    MS_LOG(ERROR) << Name() + ": min scale must be greater than or equal to 0, got: " + std::to_string(scale_[0]);
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (scale_[1] <= 0) {
-    std::string err_msg = "RandomResizedCrop: max scale must be greater than 0.";
-    MS_LOG(ERROR) << "RandomResizedCrop: max scale must be greater than 0, got: " + std::to_string(scale_[1]);
+    std::string err_msg = Name() + ": max scale must be greater than 0.";
+    MS_LOG(ERROR) << Name() + ": max scale must be greater than 0, got: " + std::to_string(scale_[1]);
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (scale_[1] < scale_[0]) {
-    std::string err_msg = "RandomResizedCrop: scale must have a size of two in the format of (min, max).";
-    MS_LOG(ERROR) << "RandomResizedCrop: scale must have a size of two in the format of (min, max), but got: "
-                  << scale_;
+    std::string err_msg = Name() + ": scale must have a size of two in the format of (min, max).";
+    MS_LOG(ERROR) << Name() + ": scale must have a size of two in the format of (min, max), but got: " << scale_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // ratio
   if (ratio_.size() != 2) {
-    std::string err_msg =
-      "RandomResizedCrop: ratio must be a vector of two values, got: " + std::to_string(ratio_.size());
+    std::string err_msg = Name() + ": ratio must be a vector of two values, got: " + std::to_string(ratio_.size());
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (ratio_[0] <= 0 || ratio_[1] <= 0) {
-    std::string err_msg = "RandomResizedCrop: ratio must be greater than 0.";
-    MS_LOG(ERROR) << "RandomResizedCrop: ratio must be greater than 0, got: " << ratio_;
+    std::string err_msg = Name() + ": ratio must be greater than 0.";
+    MS_LOG(ERROR) << Name() + ": ratio must be greater than 0, got: " << ratio_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (ratio_[1] < ratio_[0]) {
-    std::string err_msg = "RandomResizedCrop: ratio must have a size of two in the format of (min, max).";
-    MS_LOG(ERROR) << "RandomResizedCrop: ratio must have a size of two in the format of (min, max), but got: "
-                  << ratio_;
+    std::string err_msg = Name() + ": ratio must have a size of two in the format of (min, max).";
+    MS_LOG(ERROR) << Name() + ": ratio must have a size of two in the format of (min, max), but got: " << ratio_;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   // max_attempts
   if (max_attempts_ < 1) {
     std::string err_msg =
-      "RandomResizedCrop: max_attempts must be greater than or equal to 1, got: " + std::to_string(max_attempts_);
+      Name() + ": max_attempts must be greater than or equal to 1, got: " + std::to_string(max_attempts_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }

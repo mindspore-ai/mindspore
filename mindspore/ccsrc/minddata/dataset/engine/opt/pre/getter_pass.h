@@ -19,7 +19,6 @@
 
 #include <memory>
 #include <list>
-#include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/opt/pass.h"
 
 namespace mindspore {
@@ -28,48 +27,16 @@ namespace dataset {
 class DatasetOp;
 
 /// \class GetterPass
-/// \brief This is a tree pass that will remove nodes or clears the callback in MapOp
-class GetterPass : public TreePass {
+/// \brief This is a tree pass that will for now only clear the callback in MapOp to prevent hang
+class GetterPass : public IRNodePass {
  public:
-  enum GetterType { kDatasetSize = 1, kOutputShapeAndType = 2 };
-  /// \brief Constructor
-  explicit GetterPass(GetterType tp) : pass_(tp) {}
+  /// \brief Default Constructor
+  GetterPass() = default;
 
-  /// \brief default copy Constructor
-  explicit GetterPass(const GetterPass &) = default;
-
-  /// \brief Destructor
+  /// \brief Default Destructor
   ~GetterPass() = default;
 
-  Status RunOnTree(ExecutionTree *tree, bool *modified) override;
-
- private:
-  /// \class GetterNodes, this is a nested class which is owned via composition by the outter class to identify nodes
-  /// \brief This is a NodePass who's job is to identify which nodes should be removed.
-  class GetterNodes : public NodePass {
-   public:
-    /// \brief Constructor
-    explicit GetterNodes(GetterType tp) : type_(tp) {}
-
-    ~GetterNodes() = default;
-
-    Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) override;
-    Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) override;
-    Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) override { return Status::OK(); }
-    Status RunOnNode(std::shared_ptr<SkipOp> node, bool *modified) override;
-    Status RunOnNode(std::shared_ptr<TakeOp> node, bool *modified) override;
-    Status RunOnNode(std::shared_ptr<MapOp> node, bool *modified) override;
-
-#ifdef ENABLE_PYTHON
-    Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) override;
-#endif
-
-    GetterType type_;
-    std::list<std::shared_ptr<DatasetOp>> nodes_to_clear_callback_;
-    std::list<std::shared_ptr<DatasetOp>> nodes_to_remove_;
-  };
-  // outer class needs only to own the inner class object since it automatically has access to its private variables
-  GetterNodes pass_;
+  Status Visit(std::shared_ptr<MapNode> node, bool *modified) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

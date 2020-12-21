@@ -13,45 +13,53 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <algorithm>
 #include <memory>
+#include <string>
+#include <vector>
+
+#include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
-#include "minddata/dataset/kernels/image/decode_op.h"
-#include "minddata/dataset/engine/datasetops/map_op/map_op.h"
+#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/vision.h"
+#include "minddata/dataset/include/vision_lite.h"
+#include "minddata/dataset/kernels/image/random_crop_and_resize_op.h"
 #include "minddata/dataset/kernels/image/random_crop_decode_resize_op.h"
 
 namespace mindspore {
 namespace dataset {
 
-Status TensorOpFusionPass::RunOnNode(std::shared_ptr<MapOp> node, bool *modified) {
-  // Most primitive pattern: DecodeOp immediately followed by RandomCropAndResizeOp
-  // Abstract into a more general member function that can find any pattern, expressed
-  // by regular expressions, for instance.
-  // Add a list of optimisation policies. For now, just this lambda
-  auto FindPattern = [](auto &tfuncs) {
-    auto it =
-      std::find_if(tfuncs.begin(), tfuncs.end(), [](const auto &tf) -> bool { return tf->Name() == kDecodeOp; });
-    auto next = it + 1;
-    if (it != tfuncs.end() && next != tfuncs.end() && (*next)->Name() == kRandomCropAndResizeOp) {
-      return it;
-    } else {
-      return tfuncs.end();
-    }
-  };
+Status TensorOpFusionPass::Visit(std::shared_ptr<MapNode> node, bool *modified) {
+  std::vector<std::shared_ptr<TensorOperation>> ops = node->operations();
 
-  auto &tfuncs = node->TFuncs();
-  auto it = FindPattern(tfuncs);
-  if (it != tfuncs.end()) {
-    auto next = it + 1;
-    auto op = static_cast<RandomCropAndResizeOp *>(next->get());
-    *it = std::static_pointer_cast<TensorOp>(std::make_shared<RandomCropDecodeResizeOp>(*op));
-    tfuncs.erase(next);
-  }
-  if (modified != nullptr) {
+  // start temporary code, to deal with pre-built TensorOperation
+  std::vector<std::string> pattern = {kDecodeOp, kRandomCropAndResizeOp};
+  auto itr = std::search(ops.begin(), ops.end(), pattern.begin(), pattern.end(),
+                         [](auto op, const std::string &nm) { return op->Name() == nm; });
+  if (itr != ops.end()) {
+    MS_LOG(WARNING) << "Fusing pre-build Decode and RandomCropResize into one pre-build.";
+    auto op = dynamic_cast<RandomCropAndResizeOp *>((*(itr + 1))->Build().get());
+    (*itr) = std::make_shared<transforms::PreBuiltOperation>(std::make_shared<RandomCropDecodeResizeOp>(*op));
+    ops.erase(itr + 1);
+    node->setOperations(ops);
     *modified = true;
-  } else {
-    RETURN_STATUS_UNEXPECTED("modified is nullptr");
-  }
+    return Status::OK();
+  }  // end of temporary code, needs to be deleted when tensorOperation's pybind completes
+
+  // logic below is for non-prebuilt TensorOperation
+  pattern = {vision::kDecodeOperation, vision::kRandomResizedCropOperation};
+  itr = std::search(ops.begin(), ops.end(), pattern.begin(), pattern.end(),
+                    [](auto op, const std::string &nm) { return op->Name() == nm; });
+
+  // return here if no pattern is found
+  RETURN_OK_IF_TRUE(itr == ops.end());
+  auto *op = dynamic_cast<vision::RandomResizedCropOperation *>((itr + 1)->get());
+  RETURN_UNEXPECTED_IF_NULL(op);
+  // fuse the two ops
+  (*itr) = std::make_shared<vision::RandomCropDecodeResizeOperation>(*op);
+  ops.erase(itr + 1);
+  node->setOperations(ops);
+  *modified = true;
   return Status::OK();
 }
 }  // namespace dataset
