@@ -27,7 +27,7 @@ class ScaleNPUKernel : public NPUKernel {
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                  const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    axis_ = reinterpret_cast<ScaleParameter *>(parameter)->axis_;
+    scale_parameter_ = reinterpret_cast<ScaleParameter *>(parameter);
   }
   ~ScaleNPUKernel() override;
 
@@ -39,7 +39,7 @@ class ScaleNPUKernel : public NPUKernel {
 
  private:
   hiai::op::Scale *op_ = nullptr;
-  int axis_;
+  ScaleParameter *scale_parameter_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_Scale_NPU_H_

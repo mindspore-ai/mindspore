@@ -34,10 +34,11 @@
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/subgraph_npu_kernel.h"
 #include "src/runtime/agent/npu/npu_manager.h"
-#include "src/runtime/agent/npu/npu_transform_pass.h"
-#include "src/runtime/agent/npu/npu_fusion_pass.h"
-#include "src/runtime/agent/npu/npu_add_transform_pass.h"
-#include "src/runtime/agent/npu/npu_concat_transform_pass.h"
+#include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
+#include "src/runtime/agent/npu/optimizer/npu_transform_pass.h"
+#include "src/runtime/agent/npu/optimizer/npu_fusion_pass.h"
+#include "src/runtime/agent/npu/optimizer/npu_add_transform_pass.h"
+#include "src/runtime/agent/npu/optimizer/npu_concat_transform_pass.h"
 #endif
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
@@ -89,12 +90,12 @@ void Scheduler::FindNodeInoutTensors(const lite::Model::Node &node, std::vector<
   auto in_size = node.input_indices_.size();
   inputs->reserve(in_size);
   for (size_t j = 0; j < in_size; ++j) {
-    inputs->emplace_back(src_tensors_.at(node.input_indices_[j]));
+    inputs->emplace_back(src_tensors_->at(node.input_indices_[j]));
   }
   auto out_size = node.output_indices_.size();
   outputs->reserve(out_size);
   for (size_t j = 0; j < out_size; ++j) {
-    outputs->emplace_back(src_tensors_.at(node.output_indices_[j]));
+    outputs->emplace_back(src_tensors_->at(node.output_indices_[j]));
   }
 }
 
@@ -303,11 +304,11 @@ int Scheduler::ScheduleSubGraphToKernels(size_t subgraph_index, std::vector<kern
   }
   if (in_tensors != nullptr) {
     std::transform(subgraph->input_indices_.begin(), subgraph->input_indices_.end(), std::back_inserter(*in_tensors),
-                   [&](const uint32_t index) { return this->src_tensors_.at(index); });
+                   [&](const uint32_t index) { return this->src_tensors_->at(index); });
   }
   if (out_tensors != nullptr) {
     std::transform(subgraph->output_indices_.begin(), subgraph->output_indices_.end(), std::back_inserter(*out_tensors),
-                   [&](const uint32_t index) { return this->src_tensors_.at(index); });
+                   [&](const uint32_t index) { return this->src_tensors_->at(index); });
   }
   return RET_OK;
 }
@@ -567,37 +568,16 @@ void Scheduler::FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &ker
 int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
   int ret = RET_OK;
 #if SUPPORT_NPU
-  auto transform_pass = new NPUTransformPass;
-  ret = transform_pass->FormatTransformPass(context_, dst_kernels, &src_tensors_);
-  delete transform_pass;
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run npu format transform pass failed.";
-    return ret;
-  }
-
-  auto add_format_pass = new NPUAddTransformPass;
-  ret = add_format_pass->Run(context_, dst_kernels, &src_tensors_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run npu add op insert transform pass failed.";
-    return ret;
-  }
-  delete add_format_pass;
-
-  auto concat_format_pass = new NPUConcatTransformPass;
-  ret = concat_format_pass->Run(context_, dst_kernels, &src_tensors_);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run npu concat op insert transform pass failed.";
-    return ret;
-  }
-  delete concat_format_pass;
-
+  auto transform_pass = new NPUTransformPass(context_, dst_kernels, src_tensors_);
+  mindspore::lite::NPUPassManager::GetInstance()->AddPass(transform_pass);
+  auto add_format_pass = new NPUAddTransformPass(context_, dst_kernels, src_tensors_);
+  mindspore::lite::NPUPassManager::GetInstance()->AddPass(add_format_pass);
+  auto concat_format_pass = new NPUConcatTransformPass(context_, dst_kernels, src_tensors_);
+  mindspore::lite::NPUPassManager::GetInstance()->AddPass(concat_format_pass);
   auto fusion_pass = new NPUFusionPass(dst_kernels);
-  ret = fusion_pass->Fusion();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Run npu fussion transform pass failed.";
-    return ret;
-  }
-  delete fusion_pass;
+  mindspore::lite::NPUPassManager::GetInstance()->AddPass(fusion_pass);
+
+  ret = mindspore::lite::NPUPassManager::GetInstance()->Run();
 #endif
   return ret;
 }

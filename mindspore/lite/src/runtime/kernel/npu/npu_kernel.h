@@ -53,6 +53,11 @@ kernel::LiteKernel *NPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                      const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                      const mindspore::lite::PrimitiveC *primitive) {
+  if (!primitive->infer_flag()) {
+    MS_LOG(ERROR) << "NPU does not support runtime inference shape";
+    return nullptr;
+  }
+
   auto *kernel = new (std::nothrow) T(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";

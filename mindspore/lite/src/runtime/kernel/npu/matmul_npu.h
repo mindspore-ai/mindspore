@@ -28,9 +28,7 @@ class MatMulNPUKernel : public NPUKernel {
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto matmul_parameter = reinterpret_cast<MatMulParameter *>(parameter);
-    a_transpose_ = matmul_parameter->a_transpose_;
-    b_transpose_ = matmul_parameter->b_transpose_;
+    matmul_parameter_ = reinterpret_cast<MatMulParameter *>(parameter);
   }
   ~MatMulNPUKernel() override;
 
@@ -42,8 +40,7 @@ class MatMulNPUKernel : public NPUKernel {
 
  private:
   hiai::op::MatMul *op_ = nullptr;
-  bool a_transpose_ = false;
-  bool b_transpose_ = false;
+  MatMulParameter *matmul_parameter_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_MATMUL_NPU_H_

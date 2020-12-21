@@ -35,10 +35,10 @@ int SoftmaxNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
-  if (axis_ == -1) {
+  if (softmax_parameter_->axis_ == -1) {
     op_->set_attr_axis(inputs[0]->shape().size() - 1);
   } else {
-    op_->set_attr_axis(axis_);
+    op_->set_attr_axis(softmax_parameter_->axis_);
   }
   op_->set_input_x(*npu_inputs[0]);
   return RET_OK;

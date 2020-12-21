@@ -70,7 +70,7 @@ domi::ModelBufferData *SubGraphNpuKernel::BuildIRModel() {
 }
 
 int SubGraphNpuKernel::Run() {
-  return reinterpret_cast<lite::NPUExecutor *>(this->executor_)->Run(in_tensors_, out_tensors_, nodes_);
+  return reinterpret_cast<lite::NPUExecutor *>(this->executor_)->Run(in_tensors_, out_tensors_, out_kernels_, nodes_);
 }
 
 int SubGraphNpuKernel::BuildNPUInputOp() {
@@ -159,17 +159,17 @@ int SubGraphNpuKernel::BuildNPUOutputOp() {
 std::string SubGraphNpuKernel::GetOMModelName() { return this->name_ + ".om"; }
 
 int SubGraphNpuKernel::Init() {
-  if (!isCompiled_) {
-    model_buffer_data_ = BuildIRModel();
-    if (model_buffer_data_ == nullptr) {
+  if (!is_compiled_) {
+    auto model_buffer_data = BuildIRModel();
+    if (model_buffer_data == nullptr) {
       MS_LOG(ERROR) << "Build IR model failed.";
       return RET_ERROR;
     }
 
     name_ = "kNpuSubGraph" + std::to_string(mindspore::lite::NPUManager::GetInstance()->index());
 
-    mindspore::lite::NPUManager::GetInstance()->AddModel(model_buffer_data_->data, model_buffer_data_->length,
-                                                         GetOMModelName(), context_->GetNpuInfo().frequency_);
+    mindspore::lite::NPUManager::GetInstance()->AddModel(model_buffer_data, GetOMModelName(),
+                                                         context_->GetNpuInfo().frequency_);
 
     executor_ = new (std::nothrow) mindspore::lite::NPUExecutor(GetOMModelName());
 
@@ -177,7 +177,7 @@ int SubGraphNpuKernel::Init() {
       MS_LOG(ERROR) << "Create NPUExecutor failed.";
       return RET_ERROR;
     }
-    isCompiled_ = true;
+    is_compiled_ = true;
   }
   return RET_OK;
 }

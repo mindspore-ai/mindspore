@@ -17,6 +17,7 @@
 #include "src/runtime/agent/npu/npu_executor.h"
 #include "include/errorcode.h"
 #include "src/runtime/agent/npu/npu_manager.h"
+#include "nnacl/pack.h"
 namespace mindspore::lite {
 int NPUExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
   this->client_ = mindspore::lite::NPUManager::GetInstance()->GetClient(model_name_);
@@ -32,6 +33,7 @@ int NPUExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
 }
 
 int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                     const std::vector<kernel::LiteKernel *> &out_kernels,
                      const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                      const KernelCallBack &before, const KernelCallBack &after) {
   hiai::AiContext context;
@@ -63,14 +65,32 @@ int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<
     return RET_ERROR;
   }
 
+  // For the output kernel of the entire model, and the format is nchw, the output tensor needs to be nchw TO nhwc.
+  std::vector<Tensor *> trans_tensors;
+  for (auto kernel : out_kernels) {
+    if (kernel->out_kernels().empty() && npu_trans_nodes.find(kernel->Type()) != npu_trans_nodes.end()) {
+      for (int i = 0; i < kernel->out_tensors().size(); ++i) {
+        trans_tensors.push_back(kernel->out_tensors()[i]);
+      }
+    }
+  }
   for (int i = 0; i < npu_output_tensors_.size(); ++i) {
     void *data = out_tensors[i]->MutableData();
     if (data == nullptr) {
       MS_LOG(ERROR) << "Malloc buffer failed.";
       return RET_ERROR;
     }
-    memcpy(data, npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
-    out_tensors[i]->ResetRefCount();
+
+    if (std::find(trans_tensors.begin(), trans_tensors.end(), out_tensors[i]) != trans_tensors.end()) {
+      // Change data&tensor shape nc->nh
+      PackNCHWToNHWCFp32(npu_output_tensors_[i]->GetBuffer(), data, out_tensors[i]->Batch(),
+                         out_tensors[i]->Width() * out_tensors[i]->Height(), out_tensors[i]->Channel());
+      out_tensors[i]->set_shape({out_tensors[i]->shape()[0], out_tensors[i]->shape()[2], out_tensors[i]->shape()[3],
+                                 out_tensors[i]->shape()[1]});
+    } else {
+      memcpy(data, npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
+      out_tensors[i]->ResetRefCount();
+    }
   }
   return RET_OK;
 }

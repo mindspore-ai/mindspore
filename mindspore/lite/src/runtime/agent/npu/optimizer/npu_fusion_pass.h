@@ -14,17 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_FUSION_PASS_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_FUSION_PASS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_FUSION_PASS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_FUSION_PASS_H_
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/ops/primitive_c.h"
+#include "src/runtime/agent/npu/optimizer/npu_base_pass.h"
 namespace mindspore::lite {
-class NPUFusionPass {
+class NPUFusionPass : public NPUBasePass {
  public:
-  explicit NPUFusionPass(std::vector<kernel::LiteKernel *> *dst_kernels) { kernels = dst_kernels; }
-  ~NPUFusionPass() = default;
-  int Fusion();
+  explicit NPUFusionPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
+    kernels = dst_kernels;
+    name_ = "NPUFusionPass";
+  }
+
+  ~NPUFusionPass() override = default;
+
+  int Run() override;
 
  protected:
   int ConcatFusion(kernel::LiteKernel *kernel);
@@ -37,4 +43,4 @@ class NPUFusionPass {
   std::vector<kernel::LiteKernel *> *kernels;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_NPU_FUSION_PASS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_FUSION_PASS_H_

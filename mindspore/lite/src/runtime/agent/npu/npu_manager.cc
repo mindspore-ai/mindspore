@@ -55,6 +55,26 @@ bool NPUManager::CheckEMUIVersion() {
   return true;
 }
 
+void NPUManager::Reset() {
+  index_ = 0;
+  domi::HiaiIrBuild ir_build;
+  for (const auto &model_map : models_) {
+    auto model = model_map.second;
+    if (!model->is_freed) {
+      ir_build.ReleaseModelBuff(*model->model_buffer_data_);
+      model->model_buffer_data_ = nullptr;
+      model->is_freed = true;
+      model->desc_.reset();
+      model->desc_ = nullptr;
+    }
+  }
+  models_.clear();
+  for (auto client : clients_) {
+    client.reset();
+  }
+  clients_.clear();
+}
+
 bool NPUManager::CheckDDKVersion() {
   auto client = std::make_shared<hiai::AiModelMngerClient>();
   if (client->GetVersion() != nullptr) {
@@ -104,54 +124,102 @@ bool NPUManager::IsKirinChip() {
   return false;
 }
 
-int NPUManager::AddModel(void *model_buf, uint32_t size, const std::string &model_name, int frequency) {
-  hiai::MemBuffer *buffer = mc_builder_->InputMemBufferCreate(model_buf, size);
-  if (buffer == nullptr) {
-    MS_LOG(ERROR) << "MemBuffer is null.";
-    return RET_ERROR;
-  }
-
+int NPUManager::AddModel(domi::ModelBufferData *model_buffer_data, const std::string &model_name, int frequency) {
+  auto model = new SubGraphModel(index_, model_name, model_buffer_data, frequency);
   auto desc = std::make_shared<hiai::AiModelDescription>(model_name, frequency, 0, 0, 0);
-  desc->SetModelBuffer(buffer->GetMemBufferData(), buffer->GetMemBufferSize());
-  model_desc_.push_back(desc);
-  mc_builder_->MemBufferDestroy(buffer);
-
-  model_map_.insert({model_name, index_});
+  model->desc_ = desc;
+  models_.insert({model_name, model});
   index_++;
   return RET_OK;
 }
-
-int NPUManager::LoadOMModel() {
-  for (int i = 0; i < index_ / MAX_MODEL_NUM + 1; i++) {
-    auto client = std::make_shared<hiai::AiModelMngerClient>();
-    if (client == nullptr) {
-      MS_LOG(ERROR) << "NPU client is nullptr.";
-      return RET_ERROR;
-    }
-    int ret = client->Init(nullptr);
-    if (ret != hiai::AI_SUCCESS) {
-      MS_LOG(ERROR) << "NPU client init failed. code is " << ret;
-      return RET_ERROR;
-    }
-    mc_builder_ = std::make_shared<hiai::AiModelBuilder>(client);
-
-    vector<std::shared_ptr<hiai::AiModelDescription>> desc(model_desc_.begin() + i * MAX_MODEL_NUM,
-                                                           ((i + 1) * MAX_MODEL_NUM > index_)
-                                                             ? model_desc_.begin() + index_
-                                                             : model_desc_.begin() + (i + 1) * MAX_MODEL_NUM);
-    ret = client->Load(desc);
-    if (ret != hiai::AI_SUCCESS) {
-      MS_LOG(ERROR) << "Client load model failed." << ret;
-      return RET_ERROR;
-    }
-    clients_.push_back(client);
+std::shared_ptr<hiai::AiModelMngerClient> NPUManager::CreateAiModelMngerClient() {
+  auto client = std::make_shared<hiai::AiModelMngerClient>();
+  if (client == nullptr) {
+    MS_LOG(ERROR) << "NPU client is nullptr.";
+    return nullptr;
   }
+  int ret = client->Init(nullptr);
+  if (ret != hiai::AI_SUCCESS) {
+    MS_LOG(ERROR) << "NPU client init failed. code is " << ret;
+    return nullptr;
+  }
+  return client;
+}
+int NPUManager::LoadOMModel() {
+  std::vector<std::shared_ptr<hiai::AiModelDescription>> models_desc;
+  std::shared_ptr<hiai::AiModelMngerClient> client = nullptr;
+  std::shared_ptr<hiai::AiModelBuilder> mc_builder = nullptr;
+  int total = 0;
+  for (const auto &model_map : models_) {
+    if (total % MAX_MODEL_NUM == 0) {
+      client = CreateAiModelMngerClient();
+      if (client == nullptr) {
+        MS_LOG(ERROR) << "Create Client failed.";
+        return RET_ERROR;
+      }
+      mc_builder = std::make_shared<hiai::AiModelBuilder>(client);
+      if (mc_builder == nullptr) {
+        MS_LOG(ERROR) << "Create AiModelBuilder failed.";
+        return RET_ERROR;
+      }
+    }
+    total++;
+    auto model = model_map.second;
+    if (model->is_loaded && model->is_freed) {
+      continue;
+    }
+    models_desc.push_back(model->desc_);
+
+    auto buffer = mc_builder->InputMemBufferCreate(model->model_buffer_data_->data, model->model_buffer_data_->length);
+    if (buffer == nullptr) {
+      MS_LOG(ERROR) << "NPU input memory buffer create failed.";
+      return RET_ERROR;
+    }
+    model->desc_->SetModelBuffer(model->model_buffer_data_->data, model->model_buffer_data_->length);
+    if (models_desc.size() == MAX_MODEL_NUM) {
+      auto ret = LoadModel(client, models_desc);
+      if (ret != RET_ERROR) {
+        MS_LOG(ERROR) << "Client load model failed.";
+        return RET_ERROR;
+      }
+      models_desc.clear();
+    }
+  }
+
+  if (!models_desc.empty()) {
+    auto ret = LoadModel(client, models_desc);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Client load model failed.";
+      return RET_ERROR;
+    }
+    models_desc.clear();
+  }
+
   return RET_OK;
 }
 
 std::shared_ptr<hiai::AiModelMngerClient> NPUManager::GetClient(const std::string &model_name) {
-  return clients_[model_map_[model_name] / MAX_MODEL_NUM];
+  return models_[model_name]->client_;
 }
 
 int NPUManager::index() const { return index_; }
+
+int NPUManager::LoadModel(const std::shared_ptr<hiai::AiModelMngerClient> &client,
+                          std::vector<std::shared_ptr<hiai::AiModelDescription>> desc_list) {
+  auto ret = client->Load(desc_list);
+  if (ret != hiai::AI_SUCCESS) {
+    MS_LOG(ERROR) << "Client load model failed." << ret;
+    return RET_ERROR;
+  }
+
+  for (const auto &desc : desc_list) {
+    MS_LOG(ERROR) << desc->GetName();
+    auto it = models_.find(desc->GetName());
+    it->second->is_loaded = true;
+    it->second->client_ = client;
+  }
+
+  this->clients_.push_back(client);
+  return RET_OK;
+}
 }  // namespace mindspore::lite

@@ -25,7 +25,7 @@ using mindspore::schema::PrimitiveType_Pad;
 namespace mindspore::kernel {
 int PadNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                             OpParameter *opParameter) {
-  if (padding_mode_ != schema::PaddingMode_CONSTANT) {
+  if (pad_->GetPaddingMode() != schema::PaddingMode_CONSTANT) {
     MS_LOG(WARNING) << "NPU only support CONSTANT padding mode";
     return RET_ERROR;
   }
@@ -39,16 +39,16 @@ int PadNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const 
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
-  int size = static_cast<int>(paddings_.size() / 2);
+  int size = static_cast<int>(pad_->GetPaddings().size() / 2);
   ge::TensorDesc padding_tensor_desc(ge::Shape({size, 2}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr padding_tensor = std::make_shared<hiai::Tensor>(padding_tensor_desc);
-  padding_tensor->SetData(reinterpret_cast<uint8_t *>(paddings_.data()), size * sizeof(int));
+  padding_tensor->SetData(reinterpret_cast<uint8_t *>(pad_->GetPaddings().data()), size * sizeof(int));
   auto paddings = new hiai::op::Const(name_ + "paddings");
   paddings->set_attr_value(padding_tensor);
 
   ge::TensorDesc constant_values_tensor_desc(ge::Shape({1}), ge::FORMAT_NCHW, ge::DT_FLOAT);
   ge::TensorPtr constant_values_tensor = std::make_shared<hiai::Tensor>(constant_values_tensor_desc);
-  vector<float> constant_values_data_value = {constant_value_};
+  vector<float> constant_values_data_value = {pad_->GetConstantValue()};
   constant_values_tensor->SetData(reinterpret_cast<uint8_t *>(constant_values_data_value.data()), 1 * sizeof(float));
   auto constant = new hiai::op::Const(name_ + "constant");
   constant->set_attr_value(constant_values_tensor);

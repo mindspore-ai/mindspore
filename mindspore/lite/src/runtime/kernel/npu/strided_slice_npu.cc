@@ -59,11 +59,11 @@ int StridedSliceNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &input
   } else {
     op_->set_input_strides(*npu_inputs[3]);
   }
-  op_->set_attr_begin_mask(begin_mask_);
-  op_->set_attr_ellipsis_mask(ellipsis_mask_);
-  op_->set_attr_end_mask(end_mask_);
-  op_->set_attr_shrink_axis_mask(shrink_axis_mask_);
-  op_->set_attr_new_axis_mask(new_axis_mask_);
+  op_->set_attr_begin_mask(strided_slice_->GetBeginMask());
+  op_->set_attr_ellipsis_mask(strided_slice_->GetEllipsisMask());
+  op_->set_attr_end_mask(strided_slice_->GetEndMask());
+  op_->set_attr_shrink_axis_mask(strided_slice_->GetShrinkAxisMask());
+  op_->set_attr_new_axis_mask(strided_slice_->GetNewAxisMask());
   return RET_OK;
 }
 

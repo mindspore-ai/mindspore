@@ -27,8 +27,7 @@ class SoftmaxNPUKernel : public NPUKernel {
                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                    const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto softmax_parameter = reinterpret_cast<SoftmaxParameter *>(parameter);
-    axis_ = softmax_parameter->axis_;
+    softmax_parameter_ = reinterpret_cast<SoftmaxParameter *>(parameter);
   }
   ~SoftmaxNPUKernel() override;
 
@@ -40,7 +39,7 @@ class SoftmaxNPUKernel : public NPUKernel {
 
  private:
   hiai::op::Softmax *op_ = nullptr;
-  int axis_;
+  SoftmaxParameter *softmax_parameter_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SOFTMAX_NPU_H_

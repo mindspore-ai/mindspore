@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/agent/npu/npu_transform_pass.h"
+#include "src/runtime/agent/npu/optimizer/npu_transform_pass.h"
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/runtime/agent/npu/npu_manager.h"
-#include "src/runtime/agent/npu/npu_pass_utils.h"
+#include "src/runtime/agent/npu/optimizer/npu_pass_utils.h"
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
 using kernel::KERNEL_ARCH::kNPU;
@@ -77,6 +77,7 @@ int NPUTransformPass::InsertPreNode(const InnerContext *context, std::vector<ker
       NPUPassUtils::CreateNhwc2NchwKernel({kernel->in_tensors()[0]}, pre_trans_out_tensors, context, name);
     // Insert Nhwc2Nchw into the front of the current queue
     all_kernels->push_back(pre_trans_kernel);
+    insert_primitive_.push_back(pre_trans_kernel->GetPrimitive());
     // Replace the output kernel of the previous node
     std::vector<kernel::LiteKernel *> pre_trans_in_kernel;
     if (is_input_kernel) {
@@ -99,6 +100,10 @@ int NPUTransformPass::InsertPostNode(const InnerContext *context, std::vector<ke
                                      std::vector<kernel::LiteKernel *> *all_kernels,
                                      std::vector<Tensor *> *all_tensors) {
   auto kernel = *it;
+  // Model output does not insert operator
+  if (kernel->out_kernels().empty()) {
+    return RET_OK;
+  }
   // Single output multiple references
   for (int i = 0; i < kernel->out_kernels().size(); i++) {
     auto next_kernel = kernel->out_kernels().at(i);
@@ -118,6 +123,7 @@ int NPUTransformPass::InsertPostNode(const InnerContext *context, std::vector<ke
     // Replace the input tensor of the next node
     NPUPassUtils::UpdateKernel(post_trans_kernel, {kernel}, {next_kernel}, kernel->out_tensors(),
                                post_trans_out_tensors);
+    insert_primitive_.push_back(post_trans_kernel->GetPrimitive());
     // Directly insert in the back, will not affect the topological sort
     all_kernels->push_back(post_trans_kernel);
     UpdateNC2NHTransNodePreKernel(kernel, post_trans_kernel, next_kernel);
@@ -171,28 +177,27 @@ int NPUTransformPass::UpdateNC2NHTransNodeAfterKernel(kernel::LiteKernel *kernel
   return RET_OK;
 }
 
-int NPUTransformPass::FormatTransformPass(const InnerContext *context, std::vector<kernel::LiteKernel *> *all_kernels,
-                                          std::vector<Tensor *> *all_tensors) {
-  if (context->IsNpuEnabled()) {
+int NPUTransformPass::Run() {
+  if (context_->IsNpuEnabled()) {
     std::vector<kernel::LiteKernel *> new_kernels;
 
-    for (auto it = all_kernels->begin(); it != all_kernels->end(); it++) {
+    for (auto it = all_kernels_->begin(); it != all_kernels_->end(); it++) {
       auto kernel = *it;
       if (kernel->desc().arch != kNPU) {
         new_kernels.push_back(kernel);
         continue;
       }
       if (npu_trans_nodes.find(kernel->Type()) != npu_trans_nodes.end()) {
-        InsertPreNode(context, it, &new_kernels, all_tensors);
+        InsertPreNode(context_, it, &new_kernels, all_tensors_);
         new_kernels.push_back(kernel);
-        InsertPostNode(context, it, &new_kernels, all_tensors);
+        InsertPostNode(context_, it, &new_kernels, all_tensors_);
       } else {
         new_kernels.push_back(kernel);
       }
     }
-    all_kernels->clear();
+    all_kernels_->clear();
     for (int i = 0; i < new_kernels.size(); i++) {
-      all_kernels->push_back(new_kernels[i]);
+      all_kernels_->push_back(new_kernels[i]);
     }
   }
   return RET_OK;

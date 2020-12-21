@@ -27,10 +27,7 @@ class SplitNPUKernel : public NPUKernel {
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                  const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto split = reinterpret_cast<const mindspore::lite::Split *>(primitive);
-    num_split_ = split->GetNumberSplit();
-    size_splits_ = split->GetSizeSplit();
-    split_dim_ = split->GetSplitDim();
+    split_ = reinterpret_cast<const mindspore::lite::Split *>(primitive);
   }
   ~SplitNPUKernel() override;
 
@@ -42,9 +39,7 @@ class SplitNPUKernel : public NPUKernel {
 
  private:
   hiai::op::SplitV *op_ = nullptr;
-  int num_split_;
-  std::vector<int> size_splits_;
-  int split_dim_;
+  const mindspore::lite::Split *split_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SPLIT_NPU_H_

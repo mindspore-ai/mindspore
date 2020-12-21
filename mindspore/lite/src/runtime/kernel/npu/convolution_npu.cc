@@ -30,7 +30,7 @@ int ConvolutionNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
 int ConvolutionNPUKernel::SetConvParam() {
   conv_->set_attr_strides(ge::AttrValue::LIST_INT({conv_param_->stride_h_, conv_param_->stride_w_}));
   conv_->set_attr_dilations(ge::AttrValue::LIST_INT({conv_param_->dilation_h_, conv_param_->dilation_w_}));
-  conv_->set_attr_groups(1);
+  conv_->set_attr_groups(conv_param_->group_);
 
   if (conv_param_->pad_mode_ == Pad_Same) {
     conv_->set_attr_pad_mode(ge::AttrValue::STR{"SAME"});

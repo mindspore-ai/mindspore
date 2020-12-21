@@ -41,7 +41,7 @@ int GatherNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
 
   op_->set_input_x(*npu_inputs[0]);
   op_->set_input_indices(*npu_inputs[1]);
-  op_->set_attr_axis(axis_);
+  op_->set_attr_axis(gather_parameter_->axis_);
   return RET_OK;
 }
 

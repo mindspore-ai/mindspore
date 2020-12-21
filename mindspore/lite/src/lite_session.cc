@@ -30,6 +30,7 @@
 #include "src/runtime/kernel/arm/base/dequant.h"
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/npu_manager.h"
+#include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
 #endif
 
 namespace mindspore {
@@ -366,7 +367,7 @@ int LiteSession::CompileGraph(Model *model) {
     return ret;
   }
   // scheduler kernels
-  Scheduler scheduler(context_, model, tensors_);
+  Scheduler scheduler(context_, model, &tensors_);
   ret = scheduler.Schedule(&kernels_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Schedule kernels failed: " << ret;
@@ -537,6 +538,10 @@ LiteSession::~LiteSession() {
   delete this->context_;
   delete this->executor_;
   this->executor_ = nullptr;
+#if SUPPORT_NPU
+  mindspore::lite::NPUPassManager::GetInstance()->Clear();
+  mindspore::lite::NPUManager::GetInstance()->Reset();
+#endif
   is_running_.store(false);
 }
 

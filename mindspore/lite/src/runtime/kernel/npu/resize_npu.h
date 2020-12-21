@@ -22,7 +22,6 @@
 #include "nnacl/arithmetic_common.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
-#include "src/runtime/kernel/npu/transpose_base_npu.h"
 namespace mindspore::kernel {
 class ResizeNPUKernel : public NPUKernel {
  public:
@@ -30,12 +29,7 @@ class ResizeNPUKernel : public NPUKernel {
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto resize_parameter = reinterpret_cast<ResizeParameter *>(parameter);
-    method_ = resize_parameter->method_;
-    new_height_ = resize_parameter->new_height_;
-    new_width_ = resize_parameter->new_width_;
-    align_corners_ = resize_parameter->align_corners_;
-    preserve_aspect_ratio_ = resize_parameter->preserve_aspect_ratio_;
+    resize_parameter_ = reinterpret_cast<ResizeParameter *>(parameter);
   }
   ~ResizeNPUKernel() override;
 
@@ -48,11 +42,7 @@ class ResizeNPUKernel : public NPUKernel {
 
  private:
   ge::Operator *op_ = nullptr;
-  int method_;
-  int64_t new_height_;
-  int64_t new_width_;
-  bool align_corners_;
-  bool preserve_aspect_ratio_;
+  ResizeParameter *resize_parameter_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_RESIZE_NPU_H_

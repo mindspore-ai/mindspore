@@ -28,10 +28,7 @@ class PadNPUKernel : public NPUKernel {
                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto pad = reinterpret_cast<const mindspore::lite::Pad *>(primitive);
-    constant_value_ = pad->GetConstantValue();
-    paddings_ = pad->GetPaddings();
-    padding_mode_ = pad->GetPaddingMode();
+    pad_ = reinterpret_cast<const mindspore::lite::Pad *>(primitive);
   }
   ~PadNPUKernel() override;
 
@@ -43,9 +40,7 @@ class PadNPUKernel : public NPUKernel {
 
  private:
   hiai::op::PadV2 *op_ = nullptr;
-  std::vector<int> paddings_;
-  int padding_mode_;
-  float constant_value_;
+  const mindspore::lite::Pad *pad_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_PAD_NPU_H_
