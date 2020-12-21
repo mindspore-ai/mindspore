@@ -383,9 +383,9 @@ def set_auto_parallel_context(**kwargs):
         full_batch (bool): If you load whole batch datasets in auto_parallel mode, this parameter
                        should be set with True. Default: False.
         enable_parallel_optimizer (bool): This is a developing feature, which shards the weight update computation for
-                       data parallel training in the benefit of time and memory saving. For now, auto parallel mode
-                       supports all optimizers. Data parallel mode only supports `Lamb` and `AdamWeightDecay`.
-                       Default: False.
+                       data parallel training in the benefit of time and memory saving. Currently, auto and semi auto
+                       parallel mode support all optimizers in both Ascend and GPU. Data parallel mode only supports
+                       `Lamb` and `AdamWeightDecay` in Ascend . Default: False.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices. Only support ReduceOp.SUM
                        and HCCL_WORLD_GROUP/NCCL_WORLD_GROUP. No Default, if it is not set, the fusion is closed.
         pipeline_stages (int): Set the stage information for pipeline parallel. This indicates how
