@@ -61,10 +61,6 @@ class NPUManager {
  private:
   int index_ = 0;
 
-  bool is_npu_check_executor = false;
-
-  bool is_support_npu = false;
-
   std::vector<std::shared_ptr<hiai::AiModelMngerClient>> clients_;
 
   std::vector<std::shared_ptr<hiai::AiModelDescription>> model_desc_;
