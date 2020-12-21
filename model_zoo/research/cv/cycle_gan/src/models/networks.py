@@ -15,7 +15,7 @@
 """Cycle GAN network."""
 
 import mindspore.nn as nn
-
+from mindspore.common import initializer as init
 
 def init_weights(net, init_type='normal', init_gain=0.02):
     """
@@ -27,12 +27,14 @@ def init_weights(net, init_type='normal', init_gain=0.02):
         init_gain (float): Gain factor for normal and xavier.
 
     """
-    for cell in net.cells_and_names():
-        if isinstance(cell, nn.Conv2d):
+    for _, cell in net.cells_and_names():
+        if isinstance(cell, (nn.Conv2d, nn.Conv2dTranspose)):
             if init_type == 'normal':
-                cell.weight.set_data(init.initializer(init.Normal(init_gain)))
+                cell.weight.set_data(init.initializer(init.Normal(init_gain), cell.weight.shape))
             elif init_type == 'xavier':
-                cell.weight.set_data(init.initializer(init.XavierUniform(init_gain)))
+                cell.weight.set_data(init.initializer(init.XavierUniform(init_gain), cell.weight.shape))
+            elif init_type == 'constant':
+                cell.weight.set_data(init.initializer(0.001, cell.weight.shape))
             else:
                 raise NotImplementedError('initialization method [%s] is not implemented' % init_type)
         elif isinstance(cell, nn.BatchNorm2d):

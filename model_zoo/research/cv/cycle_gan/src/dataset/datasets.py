@@ -52,7 +52,7 @@ class UnalignedDataset:
         Two domain image path list.
     """
 
-    def __init__(self, dataroot, phase, max_dataset_size=float("inf")):
+    def __init__(self, dataroot, phase, max_dataset_size=float("inf"), use_random=True):
         self.dir_A = os.path.join(dataroot, phase + 'A')
         self.dir_B = os.path.join(dataroot, phase + 'B')
 
@@ -60,12 +60,14 @@ class UnalignedDataset:
         self.B_paths = sorted(make_dataset(self.dir_B, max_dataset_size))    # load images from '/path/to/data/trainB'
         self.A_size = len(self.A_paths)  # get the size of dataset A
         self.B_size = len(self.B_paths)  # get the size of dataset B
+        self.use_random = use_random
 
     def __getitem__(self, index):
-        if index % max(self.A_size, self.B_size) == 0:
+        index_B = index % self.B_size
+        if index % max(self.A_size, self.B_size) == 0 and self.use_random:
             random.shuffle(self.A_paths)
+            index_B = random.randint(0, self.B_size - 1)
         A_path = self.A_paths[index % self.A_size]
-        index_B = random.randint(0, self.B_size - 1)
         B_path = self.B_paths[index_B]
         A_img = np.array(Image.open(A_path).convert('RGB'))
         B_img = np.array(Image.open(B_path).convert('RGB'))

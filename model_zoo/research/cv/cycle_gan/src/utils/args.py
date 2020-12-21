@@ -105,6 +105,9 @@ def get_args(phase):
     parser.add_argument('--save_imgs', type=ast.literal_eval, default=True, \
                         help='whether save imgs when epoch end, if True result images will generate in '
                              '`outputs_dir/imgs`, default is True.')
+    parser.add_argument('--use_random', type=ast.literal_eval, default=True, \
+                        help='whether use random when training, default is True.')
+    parser.add_argument('--max_dataset_size', type=int, default=None, help='max images pre epoch, default is None.')
     if phase == "export":
         parser.add_argument("--file_name", type=str, default="cyclegan", help="output file name prefix.")
         parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', \
@@ -140,6 +143,14 @@ def get_args(phase):
     if args.dataroot is None and (phase in ["train", "predict"]):
         raise ValueError('Must set dataroot!')
 
+    if not args.use_random:
+        args.need_dropout = False
+        args.init_type = "constant"
+
+    if args.max_dataset_size is None:
+        args.max_dataset_size = float("inf")
+
+    args.n_epochs = min(args.max_epoch, args.n_epochs)
     args.n_epochs_decay = args.max_epoch - args.n_epochs
     args.phase = phase
     return args
