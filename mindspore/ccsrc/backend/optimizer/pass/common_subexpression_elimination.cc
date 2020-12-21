@@ -37,6 +37,12 @@ bool HasSideEffectAttr(const AnfNodePtr &node) {
 bool BackendCSE::CheckEqualKernelBuildInfo(const AnfNodePtr &main, const AnfNodePtr &node) const {
   MS_EXCEPTION_IF_NULL(main);
   MS_EXCEPTION_IF_NULL(node);
+  if (main->isa<CNode>()) {
+    auto main_name = AnfAlgo::GetCNodeName(main);
+    if (main_name == prim::kPrimTensorMove->name() || main_name == prim::kPrimMemCpyAsync->name()) {
+      return false;
+    }
+  }
   auto main_kernel_info = dynamic_cast<device::KernelInfo *>(main->kernel_info());
   auto node_kernel_info = dynamic_cast<device::KernelInfo *>(node->kernel_info());
   if (main_kernel_info == nullptr && node_kernel_info == nullptr) {

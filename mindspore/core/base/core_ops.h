@@ -200,6 +200,7 @@ inline const PrimitivePtr kPrimFusedAdam = std::make_shared<Primitive>("FusedAda
 inline const PrimitivePtr kPrimFusedAdamWeightDecay = std::make_shared<Primitive>("FusedAdamWeightDecay");
 inline const PrimitivePtr kPrimSGD = std::make_shared<Primitive>("SGD");
 inline const PrimitivePtr kPrimClipByNormNoDivSum = std::make_shared<Primitive>("ClipByNormNoDivSum");
+inline const PrimitivePtr kPrimTensorMove = std::make_shared<Primitive>("TensorMove");
 
 // Comm ops
 inline const PrimitivePtr kPrimMirror = std::make_shared<Primitive>("_MirrorOperator");
