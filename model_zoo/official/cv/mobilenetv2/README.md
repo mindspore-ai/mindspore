@@ -10,7 +10,7 @@
     - [Script and Sample Code](#script-and-sample-code)
         - [Training Process](#training-process)
         - [Evaluation Process](#eval-process)
-        - [Export MindIR](#export-mindir)
+        - [Model Export](#model-export)
 - [Model Description](#model-description)
     - [Performance](#performance)  
         - [Training Performance](#training-performance)
@@ -182,13 +182,13 @@ Inference result will be stored in the example path, you can find result like th
 result: {'acc': 0.71976314102564111} ckpt=./ckpt_0/mobilenet-200_625.ckpt
 ```
 
-## [Export MindIR](#contents)
-
-Change the export mode and export file in `src/config.py`, and run `export.py`.
+## [Model Export](#contents)
 
 ```shell
-python export.py --platform [PLATFORM] --pretrain_ckpt [CKPT_PATH]
+python export.py --platform [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT]
 ```
+
+`EXPORT_FORMAT` should be in ["AIR", "ONNX", "MINDIR"]
 
 # [Model description](#contents)
 

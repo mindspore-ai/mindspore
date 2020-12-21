@@ -17,7 +17,7 @@
         - [用法](#用法-1)
         - [启动](#启动-1)
         - [结果](#结果-1)
-    - [导出MINDIR](#导出MINDIR)
+    - [模型导出](#模型导出)
 - [模型描述](#模型描述)
     - [性能](#性能)
         - [训练性能](#训练性能)
@@ -188,13 +188,13 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 result:{'acc':0.71976314102564111} ckpt=./ckpt_0/mobilenet-200_625.ckpt
 ```
 
-## 导出MINDIR
-
-修改`src/config.py`文件中的`export_mode`和`export_file`, 运行`export.py`。
+## 模型导出
 
 ```shell
-python export.py --platform [PLATFORM] --pretrain_ckpt [CKPT_PATH]
+python export.py --platform [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EXPORT_FORMAT]
 ```
+
+`EXPORT_FORMAT` 可选 ["AIR", "ONNX", "MINDIR"].
 
 # 模型描述
 
