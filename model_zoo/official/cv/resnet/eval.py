@@ -28,7 +28,8 @@ parser.add_argument('--dataset', type=str, default=None, help='Dataset, either c
 
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
+parser.add_argument('--device_target', type=str, default='Ascend', choices=("Ascend", "GPU", "CPU"),
+                    help="Device target, support Ascend, GPU and CPU.")
 args_opt = parser.parse_args()
 
 set_seed(1)

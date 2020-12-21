@@ -39,7 +39,8 @@ parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, he
 parser.add_argument('--device_num', type=int, default=1, help='Device num.')
 
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
-parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
+parser.add_argument('--device_target', type=str, default='Ascend', choices=("Ascend", "GPU", "CPU"),
+                    help="Device target, support Ascend, GPU and CPU.")
 parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
 parser.add_argument('--parameter_server', type=ast.literal_eval, default=False, help='Run parameter server train')
 args_opt = parser.parse_args()
@@ -66,6 +67,9 @@ else:
 
 if __name__ == '__main__':
     target = args_opt.device_target
+    if target == "CPU":
+        args_opt.run_distribute = False
+
     ckpt_save_dir = config.save_checkpoint_path
 
     # init context
@@ -153,7 +157,7 @@ if __name__ == '__main__':
         model = Model(net, loss_fn=loss, optimizer=opt, loss_scale_manager=loss_scale, metrics={'acc'},
                       amp_level="O2", keep_batchnorm_fp32=False)
     else:
-        # GPU target
+        # GPU and CPU target
         if args_opt.dataset == "imagenet2012":
             if not config.use_label_smooth:
                 config.label_smooth_factor = 0.0
@@ -162,7 +166,8 @@ if __name__ == '__main__':
         else:
             loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
 
-        if (args_opt.net == "resnet101" or args_opt.net == "resnet50") and not args_opt.parameter_server:
+        if (args_opt.net == "resnet101" or args_opt.net == "resnet50") and \
+            not args_opt.parameter_server and target != "CPU":
             opt = Momentum(filter(lambda x: x.requires_grad, net.get_parameters()), lr, config.momentum, config.weight_decay,
                            config.loss_scale)
             loss_scale = FixedLossScaleManager(config.loss_scale, drop_overflow_update=False)
@@ -187,5 +192,6 @@ if __name__ == '__main__':
     # train model
     if args_opt.net == "se-resnet50":
         config.epoch_size = config.train_epoch_size
+    dataset_sink_mode = (not args_opt.parameter_server) and target != "CPU"
     model.train(config.epoch_size - config.pretrain_epoch_size, dataset, callbacks=cb,
-                sink_size=dataset.get_dataset_size(), dataset_sink_mode=(not args_opt.parameter_server))
+                sink_size=dataset.get_dataset_size(), dataset_sink_mode=dataset_sink_mode)
