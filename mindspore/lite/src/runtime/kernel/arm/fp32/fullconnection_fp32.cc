@@ -60,7 +60,7 @@ int FullconnectionCPUKernel::ReSize() {
 #endif
   fc_param_->row_12_ = UP_ROUND(fc_param_->row_, C12NUM);
   fc_param_->col_align_ = UP_ROUND(fc_param_->col_, col_tile);
-  fc_param_->row_6_ = UP_ROUND(fc_param_->col_, C6NUM);
+  fc_param_->row_6_ = UP_ROUND(fc_param_->row_, C6NUM);
   fc_param_->row_4_ = UP_ROUND(fc_param_->row_, C4NUM);
 
   thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_align_, col_tile));

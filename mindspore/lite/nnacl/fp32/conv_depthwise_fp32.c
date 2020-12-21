@@ -685,6 +685,8 @@ void ConvDwFp32IndirectRow(float *output, float **input, const float *weights, c
                            int output_width, int input_stride, bool relu, bool relu6, int kernel) {
   if (kernel == 9) {
     ConvDwFp32Avx3x3(output, input, weights, bias, channels, output_width, input_stride * sizeof(float *), relu, relu6);
+  } else if (kernel == 25) {
+    ConvDwFp32Avx5x5(output, input, weights, bias, channels, output_width, input_stride * sizeof(float *), relu, relu6);
   }
 }
 #endif
