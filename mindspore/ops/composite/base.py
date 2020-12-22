@@ -75,6 +75,15 @@ def core(fn=None, **flags):
         fn (Function): Function to add flag. Default: None.
         flags (dict): The following flags can be set core, which indicates that this is a core function or
                       other flag. Default: None.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+
+    Examples:
+        >>> net = Net()
+        >>> net = core(net, predit=True)
+        >>> print(hasattr(net, '_mindspore_flags'))
+        True
     """
     # need set the attr and access on c++
 
