@@ -42,7 +42,7 @@ __global__ void MaxPoolWithArgmax(const T* input,
        pos += blockDim.x * gridDim.x) {
     const int posn = pos / outputCHW;
     const int posc = pos / outputHW % c;
-    const int posh = pos / outputHeight % outputHeight;
+    const int posh = pos / outputWidth % outputHeight;
     const int posw = pos % outputWidth;
     int hstart = posh * strideHeight - padTop;
     int wstart = posw * strideWidth - padLeft;
@@ -50,12 +50,12 @@ __global__ void MaxPoolWithArgmax(const T* input,
     const int wend = min(wstart + windowWidth, w);
     hstart = max(hstart, 0);
     wstart = max(wstart, 0);
-    S inputStart = posn*c*h*w + posc*h*w;
-    S maxIdx = hstart*w + wstart;
+    S inputStart = posn*c*h*w;
+    S maxIdx = posc*h*w + hstart*w + wstart;
     T maxData = input[inputStart+maxIdx];
     for (int hcur = hstart; hcur < hend; ++hcur) {
         for (int wcur = wstart; wcur < wend; ++wcur) {
-            S inputIdx = hcur*w + wcur;
+            S inputIdx = posc*h*w + hcur*w + wcur;
             T inputData = input[inputStart+inputIdx];
             if (inputData > maxData) {
               maxIdx = inputIdx;
