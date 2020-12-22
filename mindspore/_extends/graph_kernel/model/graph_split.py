@@ -13,6 +13,7 @@
 # limitations under the License.
 # ===========================================================================
 """Cost model splitter"""
+import os
 from functools import reduce
 from .model import PrimLib, Graph, Tensor
 
@@ -29,6 +30,8 @@ class GraphSplitByPattern:
             self.in_relations = dict()  # {area1: relation1, area2: relation2, ...}
             self.out_relations = dict()  # {area1: relation1, area2: relation2, ...}
             self.mode = None
+            self.stitch_info = set()
+            self.stitch_with_atomic = set()
             self.is_output = is_output
             self.output_excluded = set()
             if self.pattern == PrimLib.REDUCE:
@@ -107,6 +110,10 @@ class GraphSplitByPattern:
                 self.is_output = True
             if area.output_excluded:
                 self.output_excluded.update(area.output_excluded)
+            if area.stitch_info:
+                self.stitch_info.update(area.stitch_info)
+            if area.stitch_with_atomic:
+                self.stitch_with_atomic.update(area.stitch_with_atomic)
 
         def check_circle(self, to):
             """Check circle. It returns false if circle exists"""
@@ -181,9 +188,25 @@ class GraphSplitByPattern:
         graphmodes = []
         for i, area in enumerate(self.areas):
             area.ops.sort(key=lambda op: ids[op])
-            subgraphs.append(Graph('{}_{}'.format(self.graph.name, i), area.ops))
+            subgraphs.append(Graph('{}_{}'.format(self.graph.name, i), area.ops, list(area.stitch_info),
+                                   list(area.stitch_with_atomic)))
             graphmodes.append("basic" if area.mode == self.Area.MODE_BASIC else "composite")
         return subgraphs, graphmodes
+
+    def dump_subgraphs(self, subgraphs):
+        """Dump subgraphs"""
+        if os.environ.get("ENABLE_SUBGRAPHS", "off") == "on":
+            subgraphs_str = "subgraphs:\nlen: " + str(len(subgraphs)) + "\n"
+            for i, sub in enumerate(subgraphs):
+                subgraphs_str += str("============") + str(i) + "\n"
+                subgraphs_str += str(sub)
+            dirname = 'subgraphs'
+            if not os.path.exists(dirname):
+                os.makedirs(dirname)
+            graphname = self.graph.name
+            filename = dirname + '/' + graphname + '.log'
+            with open(filename, 'w') as f:
+                f.write(subgraphs_str)
 
     def split(self):
         """Split graph by pattern"""
@@ -192,6 +215,7 @@ class GraphSplitByPattern:
         # Note: after this function, the input output relation is not maintained.
         self.split_output_reshapes()
         subgraphs, graphmodes = self.to_subgraphs()
+        self.dump_subgraphs(subgraphs)
         return subgraphs, graphmodes
 
     def split_output_reshapes(self):
@@ -362,6 +386,19 @@ class GraphSplitGpu(GraphSplitByPattern):
                 return reduce_size >= 1024
             return True
 
+        def _reduce_nums(ops):
+            count = 0
+            for op in ops:
+                if op.prim.startswith('Reduce'):
+                    count += 1
+            return count
+
+        def _reduce_output_name(ops):
+            for op in ops:
+                if op.prim.startswith('Reduce'):
+                    return op.output.name
+            return None
+
         def _reduce_output(dom):
             if dom.pattern != PrimLib.REDUCE:
                 return None
@@ -371,11 +408,30 @@ class GraphSplitGpu(GraphSplitByPattern):
             # excluded large size all reduce
             if is_all_reduce and _tensor_size(dom.ops[0].inputs[0]) > 1024 * 12:
                 return None
+
             fused = []
             for a, r in dom.out_relations.items():
                 if a.pattern <= PrimLib.BROADCAST and r <= PrimLib.BROADCAST and \
                         dom.check_circle(a) and not dom.reduce_out_exclude(a):
                     fused.append(a)
+            return fused, False
+
+        def _reduce_stitch(dom):
+            if dom.pattern != PrimLib.REDUCE:
+                return None
+            is_all_reduce = _tensor_size(dom.ops[0].output) == 1
+            # excluded large size all reduce
+            if is_all_reduce and _tensor_size(dom.ops[0].inputs[0]) > 1024 * 12:
+                return None
+
+            fused = []
+            for a, r in dom.out_relations.items():
+                if a.pattern <= PrimLib.REDUCE and r <= PrimLib.BROADCAST and dom.check_circle(a):
+                    if len(a.ops) > 4 and len(a.ops[0].inputs[0].shape) == 4 and _reduce_nums(a.ops) < 2:
+                        dom.stitch_info.add(dom.ops[0].output.name)
+                        if 0 and _reduce_nums(a.ops) == 1 and _tensor_size(dom.ops[0].inputs[0]) > 1024 * 2:
+                            dom.stitch_with_atomic.add(_reduce_output_name(a.ops))
+                        fused.append(a)
             return fused, False
 
         def _transpose(dom):
@@ -398,6 +454,7 @@ class GraphSplitGpu(GraphSplitByPattern):
             changed = self.fuse(_broadcast_width) or changed
             if use_poly_reduce:
                 changed = self.fuse(_reduce_output) or changed
+                changed = self.fuse(_reduce_stitch) or changed
         self.fuse(_transpose)
 
 class GraphSplitAscend(GraphSplitByPattern):

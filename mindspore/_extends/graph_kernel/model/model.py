@@ -310,11 +310,13 @@ class Operator:
 class Graph:
     """Graph"""
 
-    def __init__(self, name, ops):
+    def __init__(self, name, ops, stitch_info=None, stitch_with_atomic=None):
         self.name = name
         self.ops = ops  # in topo order, can not use set
         self.inputs = []
         self.outputs = []
+        self.stitch_info = stitch_info
+        self.stitch_with_atomic = stitch_with_atomic
 
     def set_processor(self, processor):
         """Set processor"""
@@ -372,6 +374,11 @@ class Graph:
         out_str = ', '.join([repr(t) for t in outputs])
         lines = []
         lines.append("%s(%s) -> %s {" % (self.name, para_str, out_str))
+        if self.stitch_info:
+            lines.append('  stitch -> ' + str(self.stitch_info))
+        if self.stitch_with_atomic:
+            lines.append('  stitch_with_atomic -> ' + str(self.stitch_with_atomic))
+
         for op in self.ops:
             lines.append('  ' + str(op))
         lines.append('}')
@@ -405,12 +412,20 @@ class Graph:
                     in_desc.append([{'data_type': t.dtype, 'value': t.value, 'name': '', 'shape': t.shape,
                                      'tensor_name': t.name, 'format': t.data_format}])
             out_desc = [{'data_type': op.output.dtype, 'name': '', 'shape': op.output.shape,
-                         'tensor_name': op.output.name, 'format': t.data_format}]
+                         'tensor_name': op.output.name, 'format': op.output.data_format}]
             op_desc.append({'attr': attrs, 'impl_path': '',
                             'input_desc': in_desc, 'name': op.prim, 'output_desc': out_desc})
+
         graph_desc = {'composite': True, 'composite_graph': '', 'id': 0,
                       'input_desc': input_desc, 'op': self.name, 'op_desc': op_desc, 'output_desc': output_desc,
                       'platform': 'AKG', 'process': self.processor}
+
+        if self.stitch_info:
+            buffer_stitch = {'stitch_op': self.stitch_info}
+            if self.stitch_with_atomic:
+                buffer_stitch['stitch_with_atomic'] = self.stitch_with_atomic
+            graph_desc['buffer_stitch'] = buffer_stitch
+
         return graph_desc
 
 

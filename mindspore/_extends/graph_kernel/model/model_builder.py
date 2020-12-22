@@ -368,6 +368,12 @@ class CompositeGraph:
                 desc[key] = subgraph.name
             else:
                 desc[key] = self.desc[key]
+
+        if  subgraph.stitch_info:
+            buffer_stitch = {'stitch_op': subgraph.stitch_info}
+            if subgraph.stitch_with_atomic:
+                buffer_stitch['stitch_with_atomic'] = subgraph.stitch_with_atomic
+            desc['buffer_stitch'] = buffer_stitch
         return desc
 
 
