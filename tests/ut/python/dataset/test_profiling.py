@@ -40,6 +40,12 @@ def test_profiling_simple_pipeline():
     data1 = ds.GeneratorDataset(source, ["data"])
     data1 = data1.shuffle(64)
     data1 = data1.batch(32)
+    # try output shape type and dataset size and make sure no profiling file is generated
+    assert data1.output_shapes() == [[32, 1]]
+    assert [str(tp) for tp in data1.output_types()] == ["int64"]
+    assert data1.get_dataset_size() == 32
+    assert os.path.exists(PIPELINE_FILE) is False
+    assert os.path.exists(DATASET_ITERATOR_FILE) is False
 
     for _ in data1:
         pass
@@ -92,7 +98,7 @@ def test_profiling_complex_pipeline():
     del os.environ['MINDDATA_PROFILING_DIR']
 
 
-def test_profiling_sampling_iterval():
+def test_profiling_sampling_interval():
     """
     Test non-default monitor sampling interval
     """
@@ -126,4 +132,4 @@ def test_profiling_sampling_iterval():
 if __name__ == "__main__":
     test_profiling_simple_pipeline()
     test_profiling_complex_pipeline()
-    test_profiling_sampling_iterval()
+    test_profiling_sampling_interval()
