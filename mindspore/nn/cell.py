@@ -361,6 +361,7 @@ class Cell(Cell_):
             _pynative_exec.end_graph(self, output, *inputs, **kwargs)
             for i, cell in enumerate(self.cells()):
                 cell.set_grad(origin_grad[i])
+            self._already_run = True
         return output
 
     def _add_attr(self, name, value):

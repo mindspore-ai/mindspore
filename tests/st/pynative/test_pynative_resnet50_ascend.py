@@ -38,7 +38,6 @@ random.seed(1)
 np.random.seed(1)
 ds.config.set_seed(1)
 
-
 grad_by_list = CP.GradOperation(get_by_list=True)
 
 
@@ -404,10 +403,10 @@ def test_pynative_resnet50():
         step = step + 1
         if step > max_step:
             break
+        start_time = time.time()
         input_data = element["image"]
         input_label = element["label"]
         loss_output = net_with_criterion(input_data, input_label)
-        start_time = time.time()
         grads = train_network(input_data, input_label)
         optimizer(grads)
         end_time = time.time()
