@@ -226,9 +226,9 @@ void PsCacheManager::AllocMemForHashTable() {
     device_address.addr = addr;
 
     auto &host_address = item.second.host_address;
-    auto host_address_ptr = new int[host_cache_vocab_size_ * embedding_size];
+    auto host_address_ptr = new float[host_cache_vocab_size_ * embedding_size];
     MS_EXCEPTION_IF_NULL(host_address_ptr);
-    host_address = std::shared_ptr<int[]>(host_address_ptr, std::default_delete<int[]>());
+    host_address = std::shared_ptr<float[]>(host_address_ptr, std::default_delete<float[]>());
     MS_EXCEPTION_IF_NULL(host_address);
 
     max_embedding_size = (embedding_size > max_embedding_size) ? embedding_size : max_embedding_size;
@@ -330,6 +330,14 @@ void PsCacheManager::ProcessDataTask(uint32_t device_id, void *context) {
 }
 
 void PsCacheManager::Finalize() {
+  if (running_) {
+    if (!SyncHostEmbeddingTable()) {
+      MS_LOG(ERROR) << "SyncHostEmbeddingTable failed.";
+    }
+    if (!SyncDeviceEmbeddingTable()) {
+      MS_LOG(ERROR) << "SyncDeviceEmbeddingTable failed.";
+    }
+  }
   running_ = false;
   PsDataPrefetch::GetInstance().NotifyFinalize();
   insert_init_info_.notify_all();
@@ -835,6 +843,99 @@ bool PsCacheManager::UpdataEmbeddingTable(const ::ps::SArray<float> &swap_out_da
   // Need synchronize event to ensure that the swap-out in device is completed.
   RETURN_IF_FALSE(embedding_device_cache_->cache_->SynchronizeEvent());
   worker.UpdateEmbeddingTable({key}, lookup_ids, swap_out_data);
+  return true;
+}
+
+bool PsCacheManager::SyncHostEmbeddingTable() {
+  MS_ERROR_IF_NULL(embedding_host_cache_);
+  const auto &hash_id_to_index = embedding_host_cache_->host_hash_map_->hash_id_to_index();
+  size_t swap_indices_lens = hash_id_to_index.size();
+  if (swap_indices_lens == 0) {
+    return true;
+  }
+  std::unique_ptr<int[]> host_to_server_ids_ptr = std::make_unique<int[]>(swap_indices_lens);
+  MS_ERROR_IF_NULL(host_to_server_ids_ptr);
+  std::unique_ptr<int[]> host_to_server_indices_ptr = std::make_unique<int[]>(swap_indices_lens);
+  MS_ERROR_IF_NULL(host_to_server_indices_ptr);
+  size_t idx = 0;
+  for (const auto &item : hash_id_to_index) {
+    host_to_server_ids_ptr[idx] = item.first;
+    host_to_server_indices_ptr[idx++] = item.second;
+  }
+  for (const auto &item : hash_tables_) {
+    const auto &hash_info = item.second;
+    if (hash_info.param_init_info_.param_type_ != kWeight) {
+      continue;
+    }
+    auto key = worker.GetParamKey(item.first);
+    ::ps::SArray<int> lookup_ids(swap_indices_lens, 0);
+    ::ps::SArray<float> swap_out_data;
+    auto embedding_size = hash_info.embedding_size;
+    swap_out_data.resize(swap_indices_lens * embedding_size);
+    auto host_hash_table_addr = hash_info.host_address.get();
+    MS_ERROR_IF_NULL(host_hash_table_addr);
+    RETURN_IF_FALSE(LookUpHostHashTable(embedding_size, swap_indices_lens, host_hash_table_addr,
+                                        host_to_server_indices_ptr.get(), swap_out_data.data()));
+
+    auto copy_len = swap_indices_lens * sizeof(int);
+    auto ret = memcpy_s(lookup_ids.data(), copy_len, host_to_server_ids_ptr.get(), copy_len);
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "Lookup id memcpy failed.";
+      return false;
+    }
+    worker.UpdateEmbeddingTable({key}, lookup_ids, swap_out_data);
+  }
+  return true;
+}
+
+bool PsCacheManager::SyncDeviceEmbeddingTable() {
+  MS_ERROR_IF_NULL(embedding_device_cache_);
+  const auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
+  size_t swap_indices_lens = hash_id_to_index.size();
+  if (swap_indices_lens == 0) {
+    return true;
+  }
+  std::unique_ptr<int[]> device_to_server_ids_ptr = std::make_unique<int[]>(swap_indices_lens);
+  MS_ERROR_IF_NULL(device_to_server_ids_ptr);
+  std::unique_ptr<int[]> device_to_server_indices_ptr = std::make_unique<int[]>(swap_indices_lens);
+  MS_ERROR_IF_NULL(device_to_server_indices_ptr);
+  size_t idx = 0;
+  for (const auto &item : hash_id_to_index) {
+    device_to_server_ids_ptr[idx] = item.first;
+    device_to_server_indices_ptr[idx++] = item.second;
+  }
+  for (const auto &item : hash_tables_) {
+    const auto &hash_info = item.second;
+    if (hash_info.param_init_info_.param_type_ != kWeight) {
+      continue;
+    }
+    auto key = worker.GetParamKey(item.first);
+    ::ps::SArray<int> lookup_ids(swap_indices_lens, 0);
+    ::ps::SArray<float> swap_out_data;
+    auto embedding_size = hash_info.embedding_size;
+    swap_out_data.resize(swap_indices_lens * embedding_size);
+    std::unique_ptr<float[]> device_hash_table_addr_tmp =
+      std::make_unique<float[]>(device_hash_map->hash_capacity() * embedding_size);
+    MS_ERROR_IF_NULL(device_hash_table_addr_tmp);
+
+    auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
+    MS_ERROR_IF_NULL(hash_table_addr);
+    auto hash_table_size = hash_info.device_address.size;
+    RETURN_IF_FALSE(embedding_device_cache_->cache_->CopyDeviceMemToHost(device_hash_table_addr_tmp.get(),
+                                                                         hash_table_addr, hash_table_size));
+    RETURN_IF_FALSE(embedding_device_cache_->cache_->SynchronizeStream());
+    RETURN_IF_FALSE(LookUpHostHashTable(embedding_size, swap_indices_lens, device_hash_table_addr_tmp.get(),
+                                        device_to_server_indices_ptr.get(), swap_out_data.data()));
+
+    auto copy_len = swap_indices_lens * sizeof(int);
+    auto ret = memcpy_s(lookup_ids.data(), copy_len, device_to_server_ids_ptr.get(), copy_len);
+    if (ret != EOK) {
+      MS_LOG(ERROR) << "Lookup id memcpy failed.";
+      return false;
+    }
+    worker.UpdateEmbeddingTable({key}, lookup_ids, swap_out_data);
+  }
   return true;
 }
 

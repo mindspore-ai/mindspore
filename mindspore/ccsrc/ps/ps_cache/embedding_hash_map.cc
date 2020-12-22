@@ -30,21 +30,21 @@ int EmbeddingHashMap::ParseData(const int id, int *swap_out_index, int *swap_out
     if (loop++ == hash_capacity_) {
       return INVALID_INDEX_VALUE;
     }
-    if (hash_map_unit_[hash_index].IsEmpty()) {
+    if (hash_map_elements_[hash_index].IsEmpty()) {
       hash_count_++;
       (void)hash_id_to_index_.emplace(id, hash_index);
-      hash_map_unit_[hash_index].set_id(id);
-      hash_map_unit_[hash_index].set_step(data_step);
+      hash_map_elements_[hash_index].set_id(id);
+      hash_map_elements_[hash_index].set_step(data_step);
       return hash_index;
-    } else if (need_swap && hash_map_unit_[hash_index].IsExpired(graph_running_step)) {
+    } else if (need_swap && hash_map_elements_[hash_index].IsExpired(graph_running_step)) {
       // Need swap out from the hash table.
       swap_out_index[*swap_out_size] = hash_index;
-      swap_out_ids[*swap_out_size] = hash_map_unit_[hash_index].id_;
+      swap_out_ids[*swap_out_size] = hash_map_elements_[hash_index].id_;
       (*swap_out_size)++;
-      (void)hash_id_to_index_.erase(hash_map_unit_[hash_index].id_);
+      (void)hash_id_to_index_.erase(hash_map_elements_[hash_index].id_);
       (void)hash_id_to_index_.emplace(id, hash_index);
-      hash_map_unit_[hash_index].set_id(id);
-      hash_map_unit_[hash_index].set_step(data_step);
+      hash_map_elements_[hash_index].set_id(id);
+      hash_map_elements_[hash_index].set_step(data_step);
       return hash_index;
     }
     hash_index = (hash_index + 1) % hash_capacity_;
@@ -58,9 +58,10 @@ void EmbeddingHashMap::DumpHashMap() {
     MS_LOG(INFO) << "  id: " << iter->first << " index: " << iter->second;
   }
   MS_LOG(INFO) << "Dump hash_map_unit: ";
-  for (size_t i = 0; i < hash_map_unit_.size(); i++) {
-    if (!hash_map_unit_[i].IsEmpty()) {
-      MS_LOG(INFO) << "  index: " << i << " id: " << hash_map_unit_[i].id_ << " step: " << hash_map_unit_[i].step_;
+  for (size_t i = 0; i < hash_map_elements_.size(); i++) {
+    if (!hash_map_elements_[i].IsEmpty()) {
+      MS_LOG(INFO) << "  index: " << i << " id: " << hash_map_elements_[i].id_
+                   << " step: " << hash_map_elements_[i].step_;
     }
   }
   MS_LOG(INFO) << "Dump hash map info end.";

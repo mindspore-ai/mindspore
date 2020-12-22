@@ -20,6 +20,7 @@ import sys
 from mindspore import Model, context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.common import set_seed
+from mindspore.parallel._ps_context import _is_role_worker
 
 from src.wide_and_deep import PredictWithSigmoid, TrainStepWrap, NetWithLossClass, WideDeepModel
 from src.callbacks import LossCallBack, EvalCallBack
@@ -99,7 +100,14 @@ def train_and_eval(config):
 
     eval_callback = EvalCallBack(model, ds_eval, auc_metric, config)
     callback = LossCallBack(config=config)
-    ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(), keep_checkpoint_max=5)
+    if _is_role_worker():
+        if cache_enable:
+            ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size() * epochs,
+                                          keep_checkpoint_max=1)
+        else:
+            ckptconfig = CheckpointConfig(save_checkpoint_steps=ds_train.get_dataset_size(), keep_checkpoint_max=5)
+    else:
+        ckptconfig = CheckpointConfig(save_checkpoint_steps=1, keep_checkpoint_max=1)
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train', directory=config.ckpt_path, config=ckptconfig)
     callback_list = [TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback, ckpoint_cb]
 
