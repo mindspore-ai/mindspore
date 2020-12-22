@@ -14,7 +14,7 @@
 # ============================================================================
 """Accuracy."""
 import numpy as np
-from ._evaluation import EvaluationBase
+from .metric import EvaluationBase
 
 
 class Accuracy(EvaluationBase):
