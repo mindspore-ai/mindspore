@@ -19,6 +19,8 @@
 
 #include <vector>
 #include <utility>
+#include <set>
+#include <memory>
 #include "tools/converter/optimizer.h"
 
 namespace mindspore {
@@ -32,7 +34,11 @@ class SubgraphNodePass : public GraphPass {
   STATUS Run(schema::MetaGraphT *graph) override;
 
  private:
-  void UpdateSubgraphNodeIndices(const size_t &node_idx, schema::MetaGraphT *graph);
+  void DecreaseSubgraphNodeIndices(const size_t &node_idx, schema::MetaGraphT *graph);
+  void IncreaseSubgraphNodeIndices(const size_t &node_idx, schema::MetaGraphT *graph);
+  std::set<uint32_t> GetSubgraphAllTensorIndices(const std::unique_ptr<SubGraphT> &subgraph, schema::MetaGraphT *graph);
+  bool IsNodeInSubgraph(const std::set<uint32_t> &tensors_indices, const std::unique_ptr<CNodeT> &node,
+                        const std::unique_ptr<SubGraphT> &subgraph);
   std::vector<schema::CNodeT *> old_nodes_;
 };
 }  // namespace lite
