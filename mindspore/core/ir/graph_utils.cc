@@ -61,7 +61,7 @@ std::vector<AnfNodePtr> TopoSort(const AnfNodePtr &root, const SuccFunc &succ, c
     node->seen_ = seen;
     if (incl == FOLLOW) {
       auto succs = succ(node);
-      (void)std::copy_if(succs.begin(), succs.end(), std::back_inserter(todo), [seen, todo](const AnfNodePtr &next) {
+      (void)std::copy_if(succs.begin(), succs.end(), std::back_inserter(todo), [seen, &todo](const AnfNodePtr &next) {
         if (next == nullptr || next->extra_seen_ == seen) {
           return false;
         }
