@@ -39,7 +39,6 @@ class Allocator {
   virtual void Free(void *ptr) = 0;
   virtual void SetContext(const AllocatorContext &ctx) {}
   virtual size_t GetTotalSize() { return 0; }
-  virtual void Clear() {}
   static std::shared_ptr<Allocator> Create();
   virtual void *Prepare(void *ptr) { return ptr; }
   std::string name;
@@ -53,7 +52,7 @@ class DefaultAllocator : public Allocator {
   void *Malloc(size_t size) override;
   void Free(void *ptr) override;
   size_t GetTotalSize() override;
-  void Clear() override;
+  void Clear();
 
  private:
   void Lock();
@@ -72,7 +71,8 @@ class DefaultAllocator : public Allocator {
   bool lockFlag_ = false;
 };
 
-#define MAX_MALLOC_SIZE (2000 * 1024 * 1024)
+constexpr int64_t MAX_MALLOC_SIZE = static_cast<size_t>(2000) * 1024 * 1024;
+constexpr int64_t MAX_THREAD_POOL_SIZE = static_cast<size_t>(3000) * 1024 * 1024;
 
 }  // namespace mindspore::lite
 

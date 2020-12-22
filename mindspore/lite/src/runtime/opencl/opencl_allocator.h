@@ -42,7 +42,7 @@ class OpenCLAllocator : public Allocator {
   void Free(void *ptr) override;
   size_t GetTotalSize() override;
 
-  void Clear() override;
+  void Clear();
   void *GetImage(void *host_ptr);
   void *GetBuffer(void *host_ptr);
   void *MapBuffer(void *host_ptr, int flags, void *command_queue = nullptr, bool sync = true);
