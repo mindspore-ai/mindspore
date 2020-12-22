@@ -24,6 +24,7 @@ typedef struct BatchToSpaceParameter {
   OpParameter op_parameter_;
   int32_t block_shape_[BATCH_TO_SPACE_BLOCK_SHAPE_SIZE];
   int32_t crops_[BATCH_TO_SPACE_CROPS_SIZE];
+  bool no_crop_;
 } BatchToSpaceParameter;
 
 #ifdef __cplusplus

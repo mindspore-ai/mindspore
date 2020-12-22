@@ -18,18 +18,21 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_PRELU_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include <limits>
+#include "include/errorcode.h"
 #include "include/context.h"
-#include "src/runtime/kernel/arm/base/leaky_relu_base.h"
+#include "nnacl/fp32/activation_fp32.h"
+#include "nnacl/int8/leaky_relu_int8.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {
-class LeakyReluInt8CPUKernel : public LeakyReluBaseCPUKernel {
+class LeakyReluInt8CPUKernel : public LiteKernel {
  public:
   LeakyReluInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                          const mindspore::lite::PrimitiveC *primitive)
-      : LeakyReluBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~LeakyReluInt8CPUKernel() override;
 
   int Init() override;

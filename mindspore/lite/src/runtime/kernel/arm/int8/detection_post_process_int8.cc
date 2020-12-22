@@ -26,7 +26,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore::kernel {
-
 int DetectionPostProcessInt8CPUKernel::DequantizeInt8ToFp32(const int task_id) {
   int num_unit_thread = MSMIN(thread_n_stride_, quant_size_ - task_id * thread_n_stride_);
   int thread_offset = task_id * thread_n_stride_;
@@ -89,31 +88,6 @@ int DetectionPostProcessInt8CPUKernel::GetInputData() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuDetectionPostProcessInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                             const std::vector<lite::Tensor *> &outputs,
-                                                             OpParameter *opParameter, const lite::InnerContext *ctx,
-                                                             const kernel::KernelKey &desc,
-                                                             const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Create kernel failed, opParameter is nullptr, type: PrimitiveType_DetectionPostProcess. ";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_DetectionPostProcess);
-  auto *kernel = new (std::nothrow) DetectionPostProcessInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new DetectionPostProcessInt8CPUKernel fail!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DetectionPostProcess, CpuDetectionPostProcessInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DetectionPostProcess,
+           CPUKernelCreator<DetectionPostProcessInt8CPUKernel>)
 }  // namespace mindspore::kernel

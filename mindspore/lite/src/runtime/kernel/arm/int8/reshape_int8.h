@@ -20,18 +20,20 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "src/runtime/kernel/arm/base/reshape_base.h"
+#include "nnacl/reshape_parameter.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::lite::InnerContext;
 
 namespace mindspore::kernel {
-class ReshapeInt8CPUKernel : public ReshapeBaseCPUKernel {
+class ReshapeInt8CPUKernel : public LiteKernel {
  public:
   ReshapeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
-      : ReshapeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    reshape_param_ = reinterpret_cast<ReshapeParameter *>(op_parameter_);
+  }
   ~ReshapeInt8CPUKernel() = default;
 
   int Init() override;
@@ -44,6 +46,7 @@ class ReshapeInt8CPUKernel : public ReshapeBaseCPUKernel {
   int64_t count_unit_;
   int8_t *input_data_ = nullptr;
   int8_t *output_data_ = nullptr;
+  ReshapeParameter *reshape_param_ = nullptr;
 };
 
 int ReshapeInt8Run(void *cdata, int task_id);

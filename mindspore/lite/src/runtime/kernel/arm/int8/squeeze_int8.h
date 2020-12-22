@@ -21,17 +21,15 @@
 #include "src/lite_kernel.h"
 #include "include/context.h"
 #include "src/runtime/runtime_api.h"
-#include "src/runtime/kernel/arm/base/squeeze_base.h"
 
 using mindspore::lite::InnerContext;
-
 namespace mindspore::kernel {
-class SqueezeInt8CPUKernel : public SqueezeBaseCPUKernel {
+class SqueezeInt8CPUKernel : public LiteKernel {
  public:
   SqueezeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
-      : SqueezeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     para_ = reinterpret_cast<SqueezeParameter *>(parameter);
   }
   ~SqueezeInt8CPUKernel() override;
@@ -47,7 +45,6 @@ class SqueezeInt8CPUKernel : public SqueezeBaseCPUKernel {
 };
 
 int SqueezeInt8Run(void *cdata, int task_id);
-
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SQUEEZE_INT8_H_

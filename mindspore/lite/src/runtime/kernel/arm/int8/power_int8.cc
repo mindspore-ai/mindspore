@@ -22,20 +22,13 @@
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-
-using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_Power;
 
 namespace mindspore::kernel {
-
 int PowerInt8CPUKernel::Init() {
-  auto ret = PowerBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    return ret;
-  }
-
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
   MS_ASSERT(input);
@@ -58,12 +51,12 @@ int PowerInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int PowerInt8CPUKernel::ReSize() { return PowerBaseCPUKernel::ReSize(); }
+int PowerInt8CPUKernel::ReSize() { return RET_OK; }
 
 int PowerInt8CPUKernel::DoPower(int task_id) {
-  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_[0]->MutableData());
+  const int8_t *input_data = reinterpret_cast<const int8_t *>(in_tensors_[0]->data_c());
   MS_ASSERT(input_data);
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->MutableData());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensors_[0]->data_c());
   MS_ASSERT(output_data);
 
   auto size = in_tensors_.at(0)->ElementsNum();
@@ -112,30 +105,6 @@ int PowerInt8CPUKernel::Run() {
   }
   return ret;
 }
-kernel::LiteKernel *CpuPowerInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                              const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Power);
-  auto *kernel = new (std::nothrow) PowerInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new PowerInt8CPUKernel fail!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Power, CpuPowerInt8KernelCreator)
 
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Power, CPUKernelCreator<PowerInt8CPUKernel>)
 }  // namespace mindspore::kernel

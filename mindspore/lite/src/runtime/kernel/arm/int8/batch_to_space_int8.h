@@ -17,15 +17,18 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_BATCH_TO_SPACE_INT8_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/base/batch_to_space_base.h"
+#include "include/errorcode.h"
+#include "nnacl/batch_to_space.h"
+#include "nnacl/int8/batch_to_space_int8.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class BatchToSpaceInt8CPUKernel : public BatchToSpaceBaseCPUKernel {
+class BatchToSpaceInt8CPUKernel : public LiteKernel {
  public:
   BatchToSpaceInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                             const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                             const mindspore::lite::PrimitiveC *primitive)
-      : BatchToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
 
   ~BatchToSpaceInt8CPUKernel() = default;
 

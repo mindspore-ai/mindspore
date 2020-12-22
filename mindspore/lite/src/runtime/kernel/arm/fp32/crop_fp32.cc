@@ -16,14 +16,10 @@
 #include "src/runtime/kernel/arm/fp32/crop_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "nnacl/fp32/crop_fp32.h"
-#include "nnacl/crop_parameter.h"
-#include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_FORMAT_ERR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Crop;
@@ -40,34 +36,42 @@ int CropLaunch(void *cdata, int task_id) {
 }
 }  // namespace
 
-int CropCPUKernel::Init() { return RET_OK; }
+int CropCPUKernel::Init() {
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
+
+int CropCPUKernel::ReSize() { return CropBaseCPUKernel::ReSize(); }
 
 int CropCPUKernel::CropParallelRun(int thread_id) {
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
-  float *input_data = reinterpret_cast<float *>(input->MutableData());
-  float *output_data = reinterpret_cast<float *>(output->MutableData());
-  auto param = reinterpret_cast<CropParameter *>(op_parameter_);
-  Crop4D(input_data, output_data, input->shape().data(), output->shape().data(), param, thread_id);
+  float *input_data = reinterpret_cast<float *>(input->data_c());
+  float *output_data = reinterpret_cast<float *>(output->data_c());
+  Crop4D(input_data, output_data, input->shape().data(), output->shape().data(), crop_para_, thread_id);
   return RET_OK;
 }
 
 int CropCPUKernel::Run() {
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
-  auto param = reinterpret_cast<CropParameter *>(op_parameter_);
-  if (output->shape()[1] < param->op_parameter_.thread_num_) {
-    float *input_data = reinterpret_cast<float *>(input->MutableData());
-    float *output_data = reinterpret_cast<float *>(output->MutableData());
-    Crop4DNoParallel(input_data, output_data, input->shape().data(), output->shape().data(), param);
+  if (output->shape()[1] < crop_para_->thread_count_) {
+    float *input_data = reinterpret_cast<float *>(input->data_c());
+    float *output_data = reinterpret_cast<float *>(output->data_c());
+    Crop4DNoParallel(input_data, output_data, input->shape().data(), output->shape().data(), crop_para_);
     return RET_OK;
   }
 
-  auto ret = ParallelLaunch(this->context_->thread_pool_, CropLaunch, this, param->op_parameter_.thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, CropLaunch, this, crop_para_->thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Crop launch fail!ret: " << ret;
     return RET_ERROR;
   }
   return RET_OK;
 }
+
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Crop, CPUKernelCreator<CropCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Crop, CPUKernelCreator<CropCPUKernel>)
 }  // namespace mindspore::kernel

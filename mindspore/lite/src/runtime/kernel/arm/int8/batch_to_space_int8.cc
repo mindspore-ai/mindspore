@@ -14,27 +14,19 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/int8/batch_to_space_int8.h"
-#include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "nnacl/batch_to_space.h"
-#include "nnacl/int8/batch_to_space_int8.h"
-#include "include/errorcode.h"
-
-using mindspore::lite::RET_OK;
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
-using mindspore::lite::RET_FORMAT_ERR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchToSpace;
 using mindspore::schema::PrimitiveType_BatchToSpaceND;
 
 namespace mindspore::kernel {
 int BatchToSpaceInt8CPUKernel::Init() {
-  auto ret = BatchToSpaceBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    return ret;
-  }
+  MS_ASSERT(in_tensors_.at(0)->format() == schema::Format::Format_NHWC);
+
   auto *input_tensor = in_tensors_.at(kInputIndex);
   auto in_quant_args = input_tensor->quant_params();
   in_quant_arg_.scale_ = in_quant_args.front().scale;
@@ -50,7 +42,10 @@ int BatchToSpaceInt8CPUKernel::Init() {
   return ReSize();
 }
 
-int BatchToSpaceInt8CPUKernel::ReSize() { return BatchToSpaceBaseCPUKernel::ReSize(); }
+int BatchToSpaceInt8CPUKernel::ReSize() {
+  MS_ASSERT(in_tensors_.at(0)->shape().size() == 4);
+  return RET_OK;
+}
 
 int BatchToSpaceInt8CPUKernel::Run() {
   auto input = in_tensors_[0];
@@ -62,7 +57,7 @@ int BatchToSpaceInt8CPUKernel::Run() {
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
 
   if (in_quant_arg_.scale_ == out_quant_arg_.scale_ && in_quant_arg_.zp_ == out_quant_arg_.zp_) {
-    if (IsNoCrop()) {
+    if (param->no_crop_) {
       BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
                                 sizeof(int8_t));
     } else {
@@ -70,7 +65,7 @@ int BatchToSpaceInt8CPUKernel::Run() {
                           sizeof(int8_t));
     }
   } else {
-    if (IsNoCrop()) {
+    if (param->no_crop_) {
       BatchToSpaceNoCropForNHWCInt8(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
                                     &in_quant_arg_, &out_quant_arg_);
     } else {
@@ -82,27 +77,6 @@ int BatchToSpaceInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuBatchToSpaceInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                     const std::vector<lite::Tensor *> &outputs,
-                                                     OpParameter *op_parameter, const lite::InnerContext *ctx,
-                                                     const kernel::KernelKey &desc,
-                                                     const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) BatchToSpaceInt8CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new BatchToSpaceInt8CPUKernel fail!";
-    free(op_parameter);
-    return nullptr;
-  }
-
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BatchToSpace, CpuBatchToSpaceInt8KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BatchToSpaceND, CpuBatchToSpaceInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BatchToSpace, CPUKernelCreator<BatchToSpaceInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BatchToSpaceND, CPUKernelCreator<BatchToSpaceInt8CPUKernel>)
 }  // namespace mindspore::kernel

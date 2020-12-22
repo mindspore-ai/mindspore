@@ -15,7 +15,11 @@
  */
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CROP_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CROP_H_
+
 #include <vector>
+#include "include/errorcode.h"
+#include "nnacl/fp32/crop_fp32.h"
+#include "nnacl/crop_parameter.h"
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "src/runtime/kernel/arm/base/crop_base.h"
@@ -29,7 +33,7 @@ class CropCPUKernel : public CropBaseCPUKernel {
       : CropBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~CropCPUKernel() = default;
   int Init() override;
-  int ReSize() override { return 0; }
+  int ReSize() override;
   int Run() override;
   int CropParallelRun(int thread_id);
 };

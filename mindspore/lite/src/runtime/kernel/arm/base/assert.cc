@@ -24,7 +24,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Assert;
 
 namespace mindspore::kernel {
-
 int AssertCPUKernel::Init() { return RET_OK; }
 
 int AssertCPUKernel::ReSize() { return RET_OK; }
@@ -41,37 +40,6 @@ int AssertCPUKernel::Run() {
   }
 }
 
-kernel::LiteKernel *CpuAssertKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                           const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                           const lite::InnerContext *ctx, const KernelKey &desc,
-                                           const mindspore::lite::PrimitiveC *primitive) {
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "parameter is nullptr";
-    return nullptr;
-  }
-  if (ctx == nullptr) {
-    MS_LOG(ERROR) << "ctx is nullptr";
-    free(parameter);
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == PrimitiveType_Assert);
-  auto *kernel = new (std::nothrow) AssertCPUKernel(parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
-    free(parameter);
-    return nullptr;
-  }
-
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
-                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Assert, CpuAssertKernelCreator)
-REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Assert, CpuAssertKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Assert, CPUKernelCreator<AssertCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Assert, CPUKernelCreator<AssertCPUKernel>)
 }  // namespace mindspore::kernel

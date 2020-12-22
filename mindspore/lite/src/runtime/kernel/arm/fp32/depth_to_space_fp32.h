@@ -17,6 +17,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_DEPTH_TO_SPACE_H_
 
 #include <vector>
+#include "include/errorcode.h"
+#include "nnacl/arithmetic_common.h"
+#include "nnacl/depth_to_space.h"
 #include "src/runtime/kernel/arm/base/depth_to_space_base.h"
 
 namespace mindspore::kernel {

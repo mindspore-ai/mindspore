@@ -18,20 +18,22 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FULLCONNECTION_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/base/fullconnection_base.h"
 #include "include/context.h"
 #include "include/errorcode.h"
 #include "nnacl/fp32/matmul_fp32.h"
+#include "src/lite_kernel.h"
+#include "src/runtime/kernel/arm/base/dequant.h"
 
 using mindspore::lite::InnerContext;
-
 namespace mindspore::kernel {
-class FullconnectionCPUKernel : public FullconnectionBaseCPUKernel {
+class FullconnectionCPUKernel : public LiteKernel {
  public:
   FullconnectionCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
                           const mindspore::lite::PrimitiveC *primitive)
-      : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    fc_param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
+  }
   ~FullconnectionCPUKernel() override;
 
   int Init() override;
@@ -47,6 +49,7 @@ class FullconnectionCPUKernel : public FullconnectionBaseCPUKernel {
   void InitMatrixB(const float *src_ptr, float *dst_ptr);
 
  private:
+  MatMulParameter *fc_param_ = nullptr;
   float *a_pack_ptr_ = nullptr;
   float *b_pack_ptr_ = nullptr;
   float *c_ptr_ = nullptr;
@@ -54,6 +57,8 @@ class FullconnectionCPUKernel : public FullconnectionBaseCPUKernel {
   float *a_ptr_ = nullptr;
   float *b_ptr_ = nullptr;
   bool is_vector_input_ = false;
+  int thread_count_ = 1;
+  int thread_stride_ = 0;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_FULLCONNECTION_H_

@@ -21,15 +21,13 @@
 #include "src/lite_kernel.h"
 #include "nnacl/crop_parameter.h"
 
-using mindspore::lite::InnerContext;
-
 namespace mindspore::kernel {
 class CropBaseCPUKernel : public LiteKernel {
  public:
   CropBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
+                    const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx,
                     const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     crop_para_ = reinterpret_cast<CropParameter *>(op_parameter_);
     crop_para_->thread_count_ = op_parameter_->thread_num_;
   }
@@ -50,7 +48,6 @@ class CropBaseCPUKernel : public LiteKernel {
 
  protected:
   CropParameter *crop_para_;
-  int thread_count_;
   void PadOffset(int input_dim, CropParameter *crop_para);
 };
 }  // namespace mindspore::kernel

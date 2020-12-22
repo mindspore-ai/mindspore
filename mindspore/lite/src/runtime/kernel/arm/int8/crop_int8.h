@@ -18,32 +18,27 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CROP_INT8_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include <limits>
+#include "include/errorcode.h"
 #include "include/context.h"
-#include "src/runtime/kernel/arm/base/crop_base.h"
+#include "nnacl/int8/crop_int8.h"
+#include "src/lite_kernel.h"
 #include "src/runtime/runtime_api.h"
-
-using mindspore::lite::InnerContext;
+#include "src/runtime/kernel/arm/base/crop_base.h"
 
 namespace mindspore::kernel {
 class CropInt8CPUKernel : public CropBaseCPUKernel {
  public:
   CropInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
+                    const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx,
                     const mindspore::lite::PrimitiveC *primitive)
-      : CropBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    crop_para_ = reinterpret_cast<CropParameter *>(op_parameter_);
-    crop_para_->thread_count_ = op_parameter_->thread_num_;
-  }
+      : CropBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~CropInt8CPUKernel();
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   int DoExecute(int task_id);
-
- private:
-  CropParameter *crop_para_;
 };
 
 int CropInt8Run(void *cdata, int task_id);
