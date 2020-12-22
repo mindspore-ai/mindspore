@@ -251,6 +251,9 @@ void LiteSession::InitGraphInputMap(const lite::Model *model) {
       }
       auto tensor_name = in_node->name_ + std::to_string(i);
       this->input_map_[tensor_name] = in_tensor;
+      if (!in_tensor->tensor_name().empty()) {
+        this->input_map_[in_tensor->tensor_name()] = in_tensor;
+      }
     }
   }
 }

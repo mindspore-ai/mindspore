@@ -49,6 +49,10 @@ void *DefaultAllocator::Malloc(size_t size) {
     MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
     return nullptr;
   }
+  if (this->GetTotalSize() >= MAX_THREAD_POOL_SIZE) {
+    MS_LOG(ERROR) << "Memory pool is exhausted";
+    return nullptr;
+  }
   Lock();
   auto iter = freeList_.lower_bound(size);
   if (iter != freeList_.end() && (iter->second->size >= size) && (iter->second->size < (size << shiftFactor_))) {
