@@ -20,7 +20,7 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/int8/add_int8.h"
 #include "src/runtime/runtime_api.h"
-#include "src/ops/populate/arithmetic_populate.h"
+#include "src/ops/arithmetic.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -90,40 +90,6 @@ int ArithmeticCPUKernel::InitBroadCastCase() {
                      arithmeticParameter_->out_strides_, arithmeticParameter_->multiples1_);
     arithmeticParameter_->broadcasting_ = false;
     input1_broadcast_ = true;
-  }
-  return RET_OK;
-}
-
-int ArithmeticCPUKernel::PreProcess() {
-  if (!InferShapeDone()) {
-    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
-    auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
-    if (ret != 0) {
-      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(false);
-      MS_LOG(ERROR) << "InferShape fail!";
-      return ret;
-    }
-    if (op_parameter_ != nullptr) {
-      free(op_parameter_);
-      op_parameter_ = nullptr;
-    }
-    op_parameter_ = PopulateArithmetic(primitive_);
-    if (op_parameter_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc parameter failed";
-      return RET_ERROR;
-    }
-    arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
-    ret = ReSize();
-    if (ret != 0) {
-      MS_LOG(ERROR) << "ReSize fail!ret: " << ret;
-      return ret;
-    }
-  }
-
-  auto outputs = this->out_tensors();
-  for (auto *output : outputs) {
-    MS_ASSERT(output != nullptr);
-    output->MallocData();
   }
   return RET_OK;
 }

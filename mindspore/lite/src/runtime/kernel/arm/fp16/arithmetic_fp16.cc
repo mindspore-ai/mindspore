@@ -21,8 +21,8 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
-#include "src/ops/populate/arithmetic_populate.h"
 #include "include/errorcode.h"
+#include "src/ops/arithmetic.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -100,44 +100,26 @@ int ArithmeticFP16CPUKernel::Init() {
   return ReSize();
 }
 
-int ArithmeticFP16CPUKernel::PreProcess() {
-  if (!InferShapeDone()) {
-    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
-    auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
-    if (ret != 0) {
-      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(false);
-      MS_LOG(ERROR) << "InferShape fail!";
-      return ret;
-    }
-    if (op_parameter_ != nullptr) {
-      free(op_parameter_);
-      op_parameter_ = nullptr;
-    }
-    op_parameter_ = PopulateArithmetic(primitive_);
-    if (op_parameter_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc parameter failed";
-      return RET_ERROR;
-    }
-    param_ = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
-    ret = ReSize();
-    if (ret != 0) {
-      MS_LOG(ERROR) << "ReSize fail!ret: " << ret;
-      return ret;
-    }
-  }
+void ArithmeticFP16CPUKernel::InitParam() {
+  auto arithmetic_lite_primitive = (lite::Arithmetic *)primitive_;
+  param_->broadcasting_ = arithmetic_lite_primitive->Broadcasting();
+  param_->ndim_ = arithmetic_lite_primitive->NDims();
 
-  auto outputs = this->out_tensors();
-  for (auto *output : outputs) {
-    MS_ASSERT(output != nullptr);
-    output->MallocData();
-  }
-  return RET_OK;
+  param_->in_elements_num0_ = in_tensors_[0]->ElementsNum();
+  param_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
+  param_->out_elements_num_ = out_tensors_[0]->ElementsNum();
+  memcpy(param_->in_shape0_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape0().data(),
+         reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape0().size() * sizeof(int));
+  memcpy(param_->in_shape1_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape1().data(),
+         reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape1().size() * sizeof(int));
+  memcpy(param_->out_shape_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->OutputShape().data(),
+         reinterpret_cast<const lite::Arithmetic *>(primitive_)->OutputShape().size() * sizeof(int));
+
+  return;
 }
 
 int ArithmeticFP16CPUKernel::ReSize() {
-  param_->in_elements_num0_ = in_tensors_.at(0)->ElementsNum();
-  param_->in_elements_num1_ = in_tensors_.at(1)->ElementsNum();
-  param_->out_elements_num_ = out_tensors_.at(0)->ElementsNum();
+  InitParam();
 
   if (param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) {
     param_->broadcasting_ = false;

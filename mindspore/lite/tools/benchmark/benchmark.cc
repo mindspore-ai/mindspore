@@ -38,20 +38,20 @@ int Benchmark::GenerateRandomData(size_t size, void *data, TypeId data_type) {
   switch (data_type) {
     case kNumberTypeFloat32:
     case kNumberTypeFloat:
-      FillInputData<float>(size, data, std::uniform_real_distribution<float>(-0.5f, 0.5f));
+      FillInputData<float>(size, data, std::uniform_real_distribution<float>(0.1f, 1.0f));
       break;
     case kNumberTypeFloat64:
-      FillInputData<double>(size, data, std::uniform_real_distribution<double>(-0.5, 0.5));
+      FillInputData<double>(size, data, std::uniform_real_distribution<double>(0.1, 1.0));
       break;
     case kNumberTypeInt64:
-      FillInputData<int64_t>(size, data, std::uniform_int_distribution<int64_t>(0, 99));
+      FillInputData<int64_t>(size, data, std::uniform_int_distribution<int64_t>(0, 1));
       break;
     case kNumberTypeInt:
     case kNumberTypeInt32:
-      FillInputData<int32_t>(size, data, std::uniform_int_distribution<int32_t>(0, 99));
+      FillInputData<int32_t>(size, data, std::uniform_int_distribution<int32_t>(0, 1));
       break;
     case kNumberTypeInt16:
-      FillInputData<int16_t>(size, data, std::uniform_int_distribution<int16_t>(0, 99));
+      FillInputData<int16_t>(size, data, std::uniform_int_distribution<int16_t>(0, 1));
       break;
     case kNumberTypeInt8:
       FillInputData<int8_t>(size, data, std::uniform_int_distribution<int8_t>(-127, 127));
