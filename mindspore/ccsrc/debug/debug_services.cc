@@ -207,7 +207,7 @@ void DebugServices::CheckWatchpoints(std::vector<std::string> *name, std::vector
 }
 
 void DebugServices::ReadNodesTensors(std::vector<std::string> name, std::vector<std::string> *ret_name,
-                                     std::vector<char *> *data_ptr, std::vector<unsigned int> *data_size,
+                                     std::vector<char *> *data_ptr, std::vector<ssize_t> *data_size,
                                      std::vector<TypePtr> *dtype, std::vector<std::vector<int64_t>> *shape) {
   std::vector<std::tuple<std::string, std::shared_ptr<TensorData>>> result_list;
   tensor_loader_->SearchTensors(name, &result_list);
