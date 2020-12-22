@@ -158,7 +158,7 @@ def default_recurisive_init(custom_cell):
         if isinstance(cell, nn.Conv2d):
             cell.weight.set_data(init.initializer(KaimingUniform(a=math.sqrt(5)),
                                                   cell.weight.data.shape,
-                                                  cell.weight.data.dtype).to_tensor())
+                                                  cell.weight.data.dtype))
             if cell.bias is not None:
                 fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight.data.asnumpy())
                 bound = 1 / math.sqrt(fan_in)
@@ -167,7 +167,7 @@ def default_recurisive_init(custom_cell):
         elif isinstance(cell, nn.Dense):
             cell.weight.set_data(init.initializer(KaimingUniform(a=math.sqrt(5)),
                                                   cell.weight.data.shape,
-                                                  cell.weight.data.dtype).to_tensor())
+                                                  cell.weight.data.dtype))
             if cell.bias is not None:
                 fan_in, _ = _calculate_fan_in_and_fan_out(cell.weight.data.asnumpy())
                 bound = 1 / math.sqrt(fan_in)

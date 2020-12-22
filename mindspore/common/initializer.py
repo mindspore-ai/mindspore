@@ -21,7 +21,7 @@ import numpy as np
 from scipy.stats import truncnorm
 from .seed import get_seed, _get_graph_seed
 from . import dtype as mstype
-from .tensor import Tensor, MetaTensor
+from .tensor import Tensor
 from .._c_expression import random_normal
 
 _INITIALIZER_ALIAS = dict()
@@ -416,8 +416,8 @@ def initializer(init, shape=None, dtype=mstype.float32):
         dtype (:class:`mindspore.dtype`): The type of data in initialized tensor. Default: mindspore.float32.
 
     Returns:
-        Union[Tensor, MetaTensor], When `init` is Tensor, the return is Tensor object,
-        otherwise the return is Initialize object.
+        Union[Tensor], return is Tensor object.
+
 
     Examples:
         >>> tensor = initializer('ones', [1, 2, 3], mindspore.float32)
@@ -451,7 +451,7 @@ def initializer(init, shape=None, dtype=mstype.float32):
     elif isinstance(init, numbers.Number):
         init = Constant(init)
     shape = shape if shape is not None else init.shape
-    init_obj = MetaTensor(dtype, shape, init)
+    init_obj = Tensor(dtype=dtype, shape=shape, init=init)
     return init_obj
 
 __all__ = [

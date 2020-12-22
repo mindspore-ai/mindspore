@@ -29,7 +29,7 @@ def bias_init_zeros(shape):
 def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mode='pad'):
     """Conv2D wrapper."""
     shape = (out_channels, in_channels, kernel_size, kernel_size)
-    weights = initializer("XavierUniform", shape=shape, dtype=mstype.float16).to_tensor()
+    weights = initializer("XavierUniform", shape=shape, dtype=mstype.float16)
     shape_bias = (out_channels,)
     biass = bias_init_zeros(shape_bias)
     return nn.Conv2d(in_channels, out_channels,

@@ -164,18 +164,18 @@ class RPN(nn.Cell):
 
         shp_weight_conv = (feat_channels, in_channels, 3, 3)
         shp_bias_conv = (feat_channels,)
-        weight_conv = initializer('Normal', shape=shp_weight_conv, dtype=mstype.float16).to_tensor()
-        bias_conv = initializer(0, shape=shp_bias_conv, dtype=mstype.float16).to_tensor()
+        weight_conv = initializer('Normal', shape=shp_weight_conv, dtype=mstype.float16)
+        bias_conv = initializer(0, shape=shp_bias_conv, dtype=mstype.float16)
 
         shp_weight_cls = (num_anchors * cls_out_channels, feat_channels, 1, 1)
         shp_bias_cls = (num_anchors * cls_out_channels,)
-        weight_cls = initializer('Normal', shape=shp_weight_cls, dtype=mstype.float16).to_tensor()
-        bias_cls = initializer(0, shape=shp_bias_cls, dtype=mstype.float16).to_tensor()
+        weight_cls = initializer('Normal', shape=shp_weight_cls, dtype=mstype.float16)
+        bias_cls = initializer(0, shape=shp_bias_cls, dtype=mstype.float16)
 
         shp_weight_reg = (num_anchors * 4, feat_channels, 1, 1)
         shp_bias_reg = (num_anchors * 4,)
-        weight_reg = initializer('Normal', shape=shp_weight_reg, dtype=mstype.float16).to_tensor()
-        bias_reg = initializer(0, shape=shp_bias_reg, dtype=mstype.float16).to_tensor()
+        weight_reg = initializer('Normal', shape=shp_weight_reg, dtype=mstype.float16)
+        bias_reg = initializer(0, shape=shp_bias_reg, dtype=mstype.float16)
 
         for i in range(num_layers):
             rpn_layer.append(RpnRegClsBlock(in_channels, feat_channels, num_anchors, cls_out_channels, \

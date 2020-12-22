@@ -195,14 +195,14 @@ def test_parameter_lazy_init():
     context.set_auto_parallel_context(parallel_mode="semi_auto_parallel", device_num=8)
     # Call init_data() without set set_data.
     para = Parameter(initializer('ones', [1, 2, 3], mstype.float32), 'test1')
-    assert not isinstance(para.data, Tensor)
+    assert isinstance(para.data, Tensor)
     para = para.init_data()
     assert isinstance(para.data, Tensor)
     assert np.array_equal(para.data.asnumpy(), np.ones((1, 2, 3)))
 
     # Call init_data() after set_data is set.
     para = Parameter(initializer('ones', [1, 2, 3], mstype.float32), 'test2')
-    assert not isinstance(para.data, Tensor)
+    assert isinstance(para.data, Tensor)
     # expect type error when not init
     with pytest.raises(TypeError):
         para.set_data(Tensor(np.zeros((1, 2, 3))))

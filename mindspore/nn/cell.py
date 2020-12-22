@@ -29,7 +29,7 @@ from .._checkparam import Validator
 from ..common import dtype as mstype
 from ..common.api import _executor, _pynative_exec
 from ..common.parameter import Parameter, ParameterTuple
-from ..common.tensor import Tensor, MetaTensor
+from ..common.tensor import Tensor
 from ..ops.functional import cast
 from ..ops.operations import HookBackward
 from ..ops.primitive import Primitive
@@ -589,7 +589,7 @@ class Cell(Cell_):
 
         new_inputs = []
         for i in inputs:
-            if isinstance(i, (Tensor, MetaTensor)):
+            if isinstance(i, Tensor):
                 new_inputs.append(i)
 
         if self._auto_parallel_mode:

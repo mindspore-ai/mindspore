@@ -34,7 +34,7 @@ def _make_layer(base, args, batch_norm):
             weight = 'ones'
             if args.initialize_mode == "XavierUniform":
                 weight_shape = (v, in_channels, 3, 3)
-                weight = initializer('XavierUniform', shape=weight_shape, dtype=mstype.float32).to_tensor()
+                weight = initializer('XavierUniform', shape=weight_shape, dtype=mstype.float32)
 
             conv2d = nn.Conv2d(in_channels=in_channels,
                                out_channels=v,

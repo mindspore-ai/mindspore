@@ -20,7 +20,7 @@ import mindspore as ms
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore import context
-from mindspore._c_expression import MetaTensor as MetaTensor_
+from mindspore._c_expression import MetaTensor
 from mindspore.common import dtype
 from mindspore.common.api import ms_function
 from mindspore.ops import functional as F
@@ -70,8 +70,8 @@ def scalar_mul_while(x):
     return rv
 
 
-@ms_function(input_signature=(MetaTensor_(dtype.float32, (1, 1, 3, 3)),
-                              MetaTensor_(dtype.float32, (1, 1, 3, 3))))
+@ms_function(input_signature=(MetaTensor(dtype.float32, (1, 1, 3, 3)),
+                              MetaTensor(dtype.float32, (1, 1, 3, 3))))
 def tensor_add_test(x, y):
     """ tensor_add_test """
     z = F.tensor_add(x, y)

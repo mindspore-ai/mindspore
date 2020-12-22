@@ -209,7 +209,7 @@ def test_bert_performance():
     for param in params:
         value = param.data
         name = param.name
-        if isinstance(value, Tensor):
+        if isinstance(value, Tensor) and not value.has_init:
             if name.split('.')[-1] in ['weight']:
                 if name.split('.')[-3] in ['cls2']:
                     logger.info("***************** BERT param name is 1 {}".format(name))

@@ -15,7 +15,7 @@
 """embedding"""
 import mindspore.common.dtype as mstype
 from mindspore import log as logger
-from mindspore.common.tensor import Tensor, MetaTensor
+from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.common.parameter import Parameter
@@ -101,8 +101,8 @@ class Embedding(Cell):
         if padding_idx is not None:
             self.padding_idx = validator.check_int_range(padding_idx, 0, vocab_size, Rel.INC_BOTH,
                                                          "padding_idx", self.cls_name)
-            if isinstance(self.init_tensor, MetaTensor):
-                self.init_tensor = self.init_tensor.to_tensor()
+            if isinstance(self.init_tensor, Tensor) and self.init_tensor.init is not None:
+                self.init_tensor = self.init_tensor.init_data()
             self.init_tensor = self.init_tensor.asnumpy()
             self.init_tensor[self.padding_idx] = 0
             self.init_tensor = Tensor(self.init_tensor)

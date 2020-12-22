@@ -817,13 +817,13 @@ class CreateAttentionMaskFromInputMask(nn.Cell):
 
         if not self.input_mask_from_dataset:
             self.input_mask = initializer(
-                "ones", [config.batch_size, config.seq_length], mstype.int32).to_tensor()
+                "ones", [config.batch_size, config.seq_length], mstype.int32).init_data()
 
         self.cast = P.Cast()
         self.reshape = P.Reshape()
         self.shape = (config.batch_size, 1, config.seq_length)
         self.broadcast_ones = initializer(
-            "ones", [config.batch_size, config.seq_length, 1], mstype.float32).to_tensor()
+            "ones", [config.batch_size, config.seq_length, 1], mstype.float32).init_data()
         self.batch_matmul = P.BatchMatMul()
 
     def construct(self, input_mask):
@@ -869,7 +869,7 @@ class BertModel(nn.Cell):
 
         if not self.token_type_ids_from_dataset:
             self.token_type_ids = initializer(
-                "zeros", [self.batch_size, self.seq_length], mstype.int32).to_tensor()
+                "zeros", [self.batch_size, self.seq_length], mstype.int32).init_data()
 
         self.bert_embedding_lookup = EmbeddingLookup(
             vocab_size=config.vocab_size,

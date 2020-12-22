@@ -23,7 +23,7 @@ from .. import signature as sig
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
-from ...common.tensor import Tensor, MetaTensor
+from ...common.tensor import Tensor
 from .._utils import get_broadcast_shape
 from ..primitive import PrimitiveWithInfer, PrimitiveWithCheck, prim_attr_register, _run_op
 
@@ -2542,10 +2542,10 @@ class Equal(_LogicBinaryOp):
     def infer_value(self, x, y):
         if x is None or y is None:
             return None
-        if isinstance(x, MetaTensor):
-            x = x.to_tensor()
-        if isinstance(y, MetaTensor):
-            y = y.to_tensor()
+        if isinstance(x, Tensor) and x.has_init:
+            x = x.init_data()
+        if isinstance(y, Tensor) and y.has_init:
+            y = y.init_data()
         return Tensor(x.asnumpy() == y.asnumpy())
 
 
