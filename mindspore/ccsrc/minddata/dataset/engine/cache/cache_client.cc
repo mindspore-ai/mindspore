@@ -219,9 +219,11 @@ Status CacheClient::CreateCache(uint32_t tree_crc, bool generate_id) {
     // Check the state of the server. For non-mappable case where there is a build phase and a fetch phase, we should
     // skip the build phase.
     lck.Unlock();  // GetStat will grab the mutex again. So unlock it to prevent deadlock.
-    CacheServiceStat stat{};
-    RETURN_IF_NOT_OK(GetStat(&stat));
-    if (stat.cache_service_state == static_cast<uint8_t>(CacheServiceState::kFetchPhase)) {
+    int8_t out;
+    RETURN_IF_NOT_OK(GetState(&out));
+    auto cache_state = static_cast<CacheServiceState>(out);
+    if (cache_state == CacheServiceState::kFetchPhase ||
+        (cache_state == CacheServiceState::kBuildPhase && cookie_.empty())) {
       return Status(StatusCode::kDuplicateKey, __LINE__, __FILE__, "Not an error and we should bypass the build phase");
     }
   } else {
