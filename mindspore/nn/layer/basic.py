@@ -352,6 +352,13 @@ def _is_float_dtype(dtype):
     return False
 
 
+@constexpr
+def _need_reduce_all(axis):
+    if axis == ():
+        return True
+    return False
+
+
 class ClipByNorm(Cell):
     r"""
     Clips tensor values to a maximum :math:`L_2`-norm.
@@ -424,7 +431,7 @@ class ClipByNorm(Cell):
             intermediate = x * clip_norm
 
         max_norm = self.max_op(l2norm, clip_norm)
-        if self.axis is None:
+        if _need_reduce_all(self.axis):
             max_norm = self.expand_dims(max_norm, -1)
         values_clip = self.cast(intermediate, mstype.float32) / max_norm
         values_clip = self.reshape(values_clip, self.shape(x))
