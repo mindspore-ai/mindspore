@@ -1178,11 +1178,8 @@ void Debugger::LoadGraphOutputs() {
       }
     }
     for (size_t j = 0; j < output_size; ++j) {
-      auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
-      MS_EXCEPTION_IF_NULL(kernel_info);
-      auto addr_test = kernel_info->GetOutputAddr(j);
-      if (addr_test == nullptr) {
-        MS_LOG(INFO) << "Cannot find output addr for slot " << j << " for " << kernel_name;
+      if (!AnfAlgo::OutputAddrExist(node, j)) {
+        MS_LOG(INFO) << "Cannot find output addr for slot " << j << " for " << node->fullname_with_scope();
         continue;
       }
       auto addr = AnfAlgo::GetOutputAddr(node, j);
