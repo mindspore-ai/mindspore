@@ -49,6 +49,7 @@ std::shared_ptr<DatasetNode> VOCNode::Copy() {
 void VOCNode::Print(std::ostream &out) const { out << Name(); }
 
 Status VOCNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   Path dir(dataset_dir_);
 
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("VOCNode", dataset_dir_));

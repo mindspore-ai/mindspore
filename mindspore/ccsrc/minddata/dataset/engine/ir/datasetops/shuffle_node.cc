@@ -51,6 +51,7 @@ Status ShuffleNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
 
 // Function to validate the parameters for ShuffleNode
 Status ShuffleNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (shuffle_size_ <= 1) {
     std::string err_msg = "ShuffleNode: Invalid input, shuffle_size: " + std::to_string(shuffle_size_);
     MS_LOG(ERROR) << err_msg;

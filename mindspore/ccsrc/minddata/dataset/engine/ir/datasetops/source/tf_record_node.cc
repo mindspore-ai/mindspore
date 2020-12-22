@@ -49,6 +49,7 @@ void TFRecordNode::Print(std::ostream &out) const {
 
 // Validator for TFRecordNode
 Status TFRecordNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (dataset_files_.empty()) {
     std::string err_msg = "TFRecordNode: dataset_files is not specified.";
     MS_LOG(ERROR) << err_msg;

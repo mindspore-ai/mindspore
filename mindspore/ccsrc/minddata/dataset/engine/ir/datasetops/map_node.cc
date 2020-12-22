@@ -82,6 +82,7 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
 }
 
 Status MapNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (operations_.empty()) {
     std::string err_msg = "MapNode: No operation is specified.";
     MS_LOG(ERROR) << err_msg;

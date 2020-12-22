@@ -61,6 +61,7 @@ void CSVNode::Print(std::ostream &out) const {
 }
 
 Status CSVNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CSVNode", dataset_files_));
 
   if (field_delim_ == '"' || field_delim_ == '\r' || field_delim_ == '\n') {

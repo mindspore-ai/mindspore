@@ -55,6 +55,7 @@ void TextFileNode::Print(std::ostream &out) const {
 }
 
 Status TextFileNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetFilesParam("TextFileNode", dataset_files_));
 
   if (num_samples_ < 0) {

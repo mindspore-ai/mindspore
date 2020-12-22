@@ -53,6 +53,7 @@ void CLUENode::Print(std::ostream &out) const {
 }
 
 Status CLUENode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetFilesParam("CLUENode", dataset_files_));
 
   RETURN_IF_NOT_OK(ValidateStringValue("CLUENode", task_, {"AFQMC", "TNEWS", "IFLYTEK", "CMNLI", "WSC", "CSL"}));

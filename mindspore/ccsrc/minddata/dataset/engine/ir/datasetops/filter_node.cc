@@ -49,6 +49,7 @@ Status FilterNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
 }
 
 Status FilterNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (predicate_ == nullptr) {
     std::string err_msg = "FilterNode: predicate is not specified.";
     MS_LOG(ERROR) << err_msg;

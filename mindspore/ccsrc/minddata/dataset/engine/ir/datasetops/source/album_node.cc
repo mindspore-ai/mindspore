@@ -50,6 +50,7 @@ void AlbumNode::Print(std::ostream &out) const {
 }
 
 Status AlbumNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("AlbumNode", dataset_dir_));
 
   RETURN_IF_NOT_OK(ValidateDatasetFilesParam("AlbumNode", {schema_path_}));

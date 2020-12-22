@@ -40,6 +40,7 @@ std::shared_ptr<DatasetNode> ProjectNode::Copy() {
 void ProjectNode::Print(std::ostream &out) const { out << Name() + "(column: " + PrintColumns(columns_) + ")"; }
 
 Status ProjectNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (columns_.empty()) {
     std::string err_msg = "ProjectNode: No columns are specified.";
     MS_LOG(ERROR) << err_msg;

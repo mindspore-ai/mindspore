@@ -17,6 +17,7 @@
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <set>
 
@@ -220,7 +221,7 @@ std::shared_ptr<DatasetNode> DatasetNode::SetNumWorkers(int32_t num_workers) {
   return shared_from_this();
 }
 
-DatasetNode::DatasetNode() : cache_(nullptr), parent_(nullptr), children_({}) {
+DatasetNode::DatasetNode() : cache_(nullptr), parent_(nullptr), children_({}), dataset_size_(-1) {
   // Fetch some default value from config manager
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   num_workers_ = cfg->num_parallel_workers();
@@ -417,6 +418,13 @@ Status DatasetNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &siz
   } else {
     RETURN_STATUS_UNEXPECTED("Trying to get dataset size from leaf node, missing override");
   }
+}
+Status DatasetNode::ValidateParams() {
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    num_workers_ > 0 && num_workers_ < std::numeric_limits<uint16_t>::max(),
+    Name() + "'s num_workers=" + std::to_string(num_workers_) + ", this value is less than 1 or too large.");
+
+  return Status::OK();
 }
 
 Status MappableSourceNode::Accept(IRNodePass *p, bool *modified) {

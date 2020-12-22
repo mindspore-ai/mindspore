@@ -46,6 +46,7 @@ Status TakeNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
 
 // Function to validate the parameters for TakeNode
 Status TakeNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (take_count_ <= 0 && take_count_ != -1) {
     std::string err_msg =
       "TakeNode: take_count should be either -1 or positive integer, take_count: " + std::to_string(take_count_);

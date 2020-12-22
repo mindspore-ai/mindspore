@@ -45,6 +45,7 @@ Status SkipNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
 
 // Function to validate the parameters for SkipNode
 Status SkipNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (skip_count_ <= -1) {
     std::string err_msg = "SkipNode: skip_count should not be negative, skip_count: " + std::to_string(skip_count_);
     MS_LOG(ERROR) << err_msg;

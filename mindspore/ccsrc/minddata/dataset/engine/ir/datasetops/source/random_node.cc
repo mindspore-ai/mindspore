@@ -41,6 +41,7 @@ void RandomNode::Print(std::ostream &out) const { out << Name() + "(num_row:" + 
 
 // ValidateParams for RandomNode
 Status RandomNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (total_rows_ < 0) {
     std::string err_msg =
       "RandomNode: total_rows must be greater than or equal 0, now get " + std::to_string(total_rows_);

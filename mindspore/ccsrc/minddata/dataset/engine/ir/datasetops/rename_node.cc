@@ -43,6 +43,7 @@ void RenameNode::Print(std::ostream &out) const {
 }
 
 Status RenameNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (input_columns_.size() != output_columns_.size()) {
     std::string err_msg = "RenameNode: input and output columns must be the same size";
     MS_LOG(ERROR) << err_msg;

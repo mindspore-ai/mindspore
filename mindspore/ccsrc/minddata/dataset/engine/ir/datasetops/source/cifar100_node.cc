@@ -43,6 +43,7 @@ void Cifar100Node::Print(std::ostream &out) const {
 }
 
 Status Cifar100Node::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("Cifar100Node", dataset_dir_));
 
   RETURN_IF_NOT_OK(ValidateDatasetSampler("Cifar100Node", sampler_));

@@ -50,6 +50,7 @@ void CelebANode::Print(std::ostream &out) const {
 }
 
 Status CelebANode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("CelebANode", dataset_dir_));
 
   RETURN_IF_NOT_OK(ValidateDatasetSampler("CelebANode", sampler_));

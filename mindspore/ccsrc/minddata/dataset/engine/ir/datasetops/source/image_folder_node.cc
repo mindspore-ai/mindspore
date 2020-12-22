@@ -53,6 +53,7 @@ void ImageFolderNode::Print(std::ostream &out) const {
 }
 
 Status ImageFolderNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   RETURN_IF_NOT_OK(ValidateDatasetDirParam("ImageFolderNode", dataset_dir_));
 
   RETURN_IF_NOT_OK(ValidateDatasetSampler("ImageFolderNode", sampler_));

@@ -57,6 +57,7 @@ void TransferNode::Print(std::ostream &out) const {
 
 // Validator for TransferNode
 Status TransferNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (total_batch_ < 0) {
     std::string err_msg = "TransferNode: Total batches should be >= 0, value given: ";
     MS_LOG(ERROR) << err_msg << total_batch_;

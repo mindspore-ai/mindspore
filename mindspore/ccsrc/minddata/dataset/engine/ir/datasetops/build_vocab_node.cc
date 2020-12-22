@@ -59,6 +59,7 @@ Status BuildVocabNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) 
 }
 
 Status BuildVocabNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
   if (vocab_ == nullptr) {
     std::string err_msg = "BuildVocabNode: vocab is null.";
     MS_LOG(ERROR) << err_msg;

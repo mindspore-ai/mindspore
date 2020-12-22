@@ -52,7 +52,10 @@ Status SyncWaitNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
 }
 
 // Function to validate the parameters for SyncWaitNode
-Status SyncWaitNode::ValidateParams() { return Status::OK(); }
+Status SyncWaitNode::ValidateParams() {
+  RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
+  return Status::OK();
+}
 
 }  // namespace dataset
 }  // namespace mindspore
