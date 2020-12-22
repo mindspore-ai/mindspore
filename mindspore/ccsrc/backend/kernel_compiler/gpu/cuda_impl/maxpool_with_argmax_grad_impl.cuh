@@ -17,9 +17,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_MAXPOOLWITHARGMAX_GRAD_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_MAXPOOLWITHARGMAX_GRAD_H_
 template <typename T, typename S>
-void CalMaxPoolWithArgmaxGrad(const T* x, const T* dy, const S* index, const int n, const int c, const int xHeight,
-                              const int xWidth, const int dyHeight, const int dyWidth, const int windowHeight,
-                              const int windowWidth, const int strideHeight, const int strideWidth, const int padTop,
-                              const int padLeft, T* dx, cudaStream_t cuda_stream);
+void CalMaxPoolWithArgmaxGrad(const T* dy, const S* index, const int n, const int c, const int xHeight,
+                              const int xWidth, const int dyHeight, const int dyWidth, T* dx, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_MAXPOOLWITHARGMAX_GRAD_H_

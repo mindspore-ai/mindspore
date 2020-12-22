@@ -18,130 +18,34 @@
 #include "maxpool_with_argmax_grad_impl.cuh"
 #include "runtime/device/gpu/cuda_common.h"
 #include "include/cuda_fp16.h"
+#include "backend/kernel_compiler/gpu/cuda_impl/util.cuh"
 
 template <typename T, typename S>
-__global__ void MaxPoolWithArgmaxGrad(const T* x,
-                                      const T* dy,
+__global__ void MaxPoolWithArgmaxGrad(const T* dy,
                                       const S* index,
-                                      const int n,
-                                      const int c,
-                                      const int xHeight,
-                                      const int xWidth,
-                                      const int dyHeight,
-                                      const int dyWidth,
-                                      const int windowHeight,
-                                      const int windowWidth,
-                                      const int strideHeight,
-                                      const int strideWidth,
-                                      const int padTop,
-                                      const int padLeft,
-                                      const int xNCHW,
                                       const int xCHW,
-                                      const int xHW,
                                       const int dyCHW,
-                                      const int dyHW,
+                                      const int dyNCHW,
                                       T* dx) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x;
-       pos < (xNCHW);
-       pos += blockDim.x * gridDim.x) {
-    const int posn = pos / xCHW;
-    const int posc = pos / xHW % c;
-    const int posh = pos / xHeight % xHeight;
-    const int posw = pos % xWidth;
-    const S posIdx = posh*xWidth + posw;
-    int hstart = posh+padTop;
-    if (hstart < windowHeight) {
-      hstart = 0;
-    } else {
-      hstart = (hstart-windowHeight)/strideHeight + 1;
-    }
-    int wstart = posw+padLeft;
-    if (wstart < windowWidth) {
-      wstart = 0;
-    } else {
-      wstart = (wstart-windowWidth)/strideWidth + 1;
-    }
-    const int hend = min((posh+padTop)/strideHeight +1, dyHeight);
-    const int wend = min((posw+padLeft)/strideWidth +1, dyWidth);
-    const int channelStart = posn*dyCHW + posc*dyHW;
-    T dySum = static_cast<T>(0.0);
-    for (int hcur = hstart; hcur < hend; ++hcur) {
-      for (int wcur = wstart; wcur < wend; ++wcur) {
-        const int curIdx = hcur*dyWidth + wcur;
-        S maxIdx = index[channelStart+curIdx];
-        if (maxIdx == posIdx) {
-          dySum += dy[channelStart+curIdx];
-        }
-      }
-    }
-    dx[pos] = dySum;
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (dyNCHW); pos += blockDim.x * gridDim.x) {
+    const S idx = index[pos];
+    const int posn = pos / dyCHW;
+    MsAtomicAdd(dx + posn*xCHW + static_cast<int>(idx), dy[pos]);
   }
   return;
 }
 
-template <>
-__global__ void MaxPoolWithArgmaxGrad(const half* x,
-                                      const half* dy,
-                                      const int* index,
-                                      const int n,
-                                      const int c,
-                                      const int xHeight,
-                                      const int xWidth,
-                                      const int dyHeight,
-                                      const int dyWidth,
-                                      const int windowHeight,
-                                      const int windowWidth,
-                                      const int strideHeight,
-                                      const int strideWidth,
-                                      const int padTop,
-                                      const int padLeft,
-                                      const int xNCHW,
-                                      const int xCHW,
-                                      const int xHW,
-                                      const int dyCHW,
-                                      const int dyHW,
-                                      half* dx) {
-  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x;
-       pos < (xNCHW);
-       pos += blockDim.x * gridDim.x) {
-    const int posn = pos / xCHW;
-    const int posc = pos / xHW % c;
-    const int posh = pos / xHeight % xHeight;
-    const int posw = pos % xWidth;
-    const int posIdx = posh*xWidth + posw;
-    int hstart = posh+padTop;
-    if (hstart < windowHeight) {
-      hstart = 0;
-    } else {
-      hstart = (hstart-windowHeight)/strideHeight + 1;
+template <typename T>
+__global__ void InitOutput(const int size, T *output) {
+    T zero = 0;
+    for (size_t id = blockIdx.x * blockDim.x + threadIdx.x; id < size; id += blockDim.x * gridDim.x) {
+        output[id] = zero;
     }
-    int wstart = posw+padLeft;
-    if (wstart < windowWidth) {
-      wstart = 0;
-    } else {
-      wstart = (wstart-windowWidth)/strideWidth + 1;
-    }
-    const int hend = min((posh+padTop)/strideHeight +1, dyHeight);
-    const int wend = min((posw+padLeft)/strideWidth +1, dyWidth);
-    const int channelStart = posn*dyCHW + posc*dyHW;
-    float dySum = 0.0f;
-    for (int hcur = hstart; hcur < hend; ++hcur) {
-      for (int wcur = wstart; wcur < wend; ++wcur) {
-        const int curIdx = hcur*dyWidth + wcur;
-        int maxIdx = index[channelStart+curIdx];
-        if (maxIdx == posIdx) {
-          dySum += __half2float(dy[channelStart+curIdx]);
-        }
-      }
-    }
-    dx[pos] = __float2half(dySum);
-  }
-  return;
+    return;
 }
 
 template <typename T, typename S>
-void CalMaxPoolWithArgmaxGrad(const T* x,
-                              const T* dy,
+void CalMaxPoolWithArgmaxGrad(const T* dy,
                               const S* index,
                               const int n,
                               const int c,
@@ -149,12 +53,6 @@ void CalMaxPoolWithArgmaxGrad(const T* x,
                               const int xWidth,
                               const int dyHeight,
                               const int dyWidth,
-                              const int windowHeight,
-                              const int windowWidth,
-                              const int strideHeight,
-                              const int strideWidth,
-                              const int padTop,
-                              const int padLeft,
                               T* dx,
                               cudaStream_t cuda_stream) {
   const int xHW = xHeight*xWidth;
@@ -162,36 +60,22 @@ void CalMaxPoolWithArgmaxGrad(const T* x,
   const int xNCHW = n*xCHW;
   const int dyHW = dyHeight*dyWidth;
   const int dyCHW = c*dyHW;
-  MaxPoolWithArgmaxGrad<<<GET_BLOCKS(xNCHW),
+  const int dyNCHW = n*dyCHW;
+  InitOutput<<<GET_BLOCKS(xNCHW), GET_THREADS, 0, cuda_stream>>>(xNCHW, dx);
+  MaxPoolWithArgmaxGrad<<<GET_BLOCKS(dyNCHW),
                           GET_THREADS,
                           0,
                           cuda_stream>>>(
-                            x,
                             dy,
                             index,
-                            n,
-                            c,
-                            xHeight,
-                            xWidth,
-                            dyHeight,
-                            dyWidth,
-                            windowHeight,
-                            windowWidth,
-                            strideHeight,
-                            strideWidth,
-                            padTop,
-                            padLeft,
-                            xNCHW,
                             xCHW,
-                            xHW,
                             dyCHW,
-                            dyHW,
+                            dyNCHW,
                             dx);
   return;
 }
 
-template void CalMaxPoolWithArgmaxGrad<float, int>(const float* x,
-                                                    const float* dy,
+template void CalMaxPoolWithArgmaxGrad<float, int>(const float* dy,
                                                     const int* index,
                                                     const int n,
                                                     const int c,
@@ -199,16 +83,9 @@ template void CalMaxPoolWithArgmaxGrad<float, int>(const float* x,
                                                     const int xWidth,
                                                     const int dyHeight,
                                                     const int dyWidth,
-                                                    const int windowHeight,
-                                                    const int windowWidth,
-                                                    const int strideHeight,
-                                                    const int strideWidth,
-                                                    const int padTop,
-                                                    const int padLeft,
                                                     float* dx,
                                                     cudaStream_t cuda_stream);
-template void CalMaxPoolWithArgmaxGrad<half, int>(const half* x,
-                                                    const half* dy,
+template void CalMaxPoolWithArgmaxGrad<half, int>(const half* dy,
                                                     const int* index,
                                                     const int n,
                                                     const int c,
@@ -216,11 +93,5 @@ template void CalMaxPoolWithArgmaxGrad<half, int>(const half* x,
                                                     const int xWidth,
                                                     const int dyHeight,
                                                     const int dyWidth,
-                                                    const int windowHeight,
-                                                    const int windowWidth,
-                                                    const int strideHeight,
-                                                    const int strideWidth,
-                                                    const int padTop,
-                                                    const int padLeft,
                                                     half* dx,
                                                     cudaStream_t cuda_stream);
