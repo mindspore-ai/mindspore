@@ -89,6 +89,7 @@ if (ENABLE_ACL)
     find_library(ge_compiler libge_compiler.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
     target_link_libraries(mindspore_shared_lib PRIVATE ${libplatform} ${libcompress} ${libopskernel}
             ${libaicore_utils} ${libaicpu_engine_common})
+    add_dependencies(mindspore_shared_lib graph)
 endif ()
 
 
