@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -401,20 +401,23 @@ def test_weighted_random_sampler_exception():
         weights = (0.9, 0.8, 1.1)
         ds.WeightedRandomSampler(weights)
 
-    error_msg_3 = "weights size should not be 0"
-    with pytest.raises(ValueError, match=error_msg_3):
+    error_msg_3 = "WeightedRandomSampler: weights vector must not be empty"
+    with pytest.raises(RuntimeError, match=error_msg_3):
         weights = []
-        ds.WeightedRandomSampler(weights)
+        sampler = ds.WeightedRandomSampler(weights)
+        sampler.parse()
 
-    error_msg_4 = "weights should not contain negative numbers"
-    with pytest.raises(ValueError, match=error_msg_4):
+    error_msg_4 = "WeightedRandomSampler: weights vector must not contain negative number, got: "
+    with pytest.raises(RuntimeError, match=error_msg_4):
         weights = [1.0, 0.1, 0.02, 0.3, -0.4]
-        ds.WeightedRandomSampler(weights)
+        sampler = ds.WeightedRandomSampler(weights)
+        sampler.parse()
 
-    error_msg_5 = "elements of weights should not be all zero"
-    with pytest.raises(ValueError, match=error_msg_5):
+    error_msg_5 = "WeightedRandomSampler: elements of weights vector must not be all zero"
+    with pytest.raises(RuntimeError, match=error_msg_5):
         weights = [0, 0, 0, 0, 0]
-        ds.WeightedRandomSampler(weights)
+        sampler = ds.WeightedRandomSampler(weights)
+        sampler.parse()
 
 
 def test_chained_sampler_01():

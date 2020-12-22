@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ class BuiltinSampler:
         self.child_sampler = None
         self.num_samples = num_samples
 
-    def create(self):
+    def parse(self):
         pass
 
     def add_child(self, sampler):
@@ -59,16 +59,16 @@ class BuiltinSampler:
     def get_child(self):
         return self.child_sampler
 
-    def create_child(self):
+    def parse_child(self):
         c_child_sampler = None
         if self.child_sampler is not None:
-            c_child_sampler = self.child_sampler.create()
+            c_child_sampler = self.child_sampler.parse()
         return c_child_sampler
 
-    def create_child_for_minddataset(self):
+    def parse_child_for_minddataset(self):
         c_child_sampler = None
         if self.child_sampler is not None:
-            c_child_sampler = self.child_sampler.create_for_minddataset()
+            c_child_sampler = self.child_sampler.parse_for_minddataset()
         return c_child_sampler
 
     def is_shuffled(self):
@@ -158,6 +158,8 @@ class Sampler(BuiltinSampler):
     def __init__(self, num_samples=None):
         super().__init__(num_samples)
         self.dataset_size = 0
+        self.child_sampler = None
+        self.num_samples = num_samples
 
     def __iter__(self):
         """
@@ -192,12 +194,25 @@ class Sampler(BuiltinSampler):
 
     # Instance fetcher
     # Do not override this method!
-    def create(self):
+    def parse(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
-        c_sampler = cde.PythonSampler(num_samples, self)
-        c_child_sampler = self.create_child()
+        c_sampler = cde.PreBuiltSamplerObj(num_samples, self)
+        c_child_sampler = self.parse_child()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
+
+    def add_child(self, sampler):
+        self.child_sampler = sampler
+
+    def get_child(self):
+        return self.child_sampler
+
+    def parse_child(self):
+        c_child_sampler = None
+        if self.child_sampler is not None:
+            c_child_sampler = self.child_sampler.parse()
+
+        return c_child_sampler
 
     def is_shuffled(self):
         if self.child_sampler is None:
@@ -246,23 +261,14 @@ class DistributedSampler(BuiltinSampler):
     """
 
     def __init__(self, num_shards, shard_id, shuffle=True, num_samples=None, offset=-1):
-        if num_shards <= 0:
-            raise ValueError("num_shards should be a positive integer value, but got num_shards:{}.".format(num_shards))
+        if not isinstance(num_shards, int):
+            raise ValueError("num_shards must be integer but was: {}.".format(num_shards))
 
-        if shard_id < 0 or shard_id >= num_shards:
-            raise ValueError("shard_id should in range [0, {}], but got shard_id: {}.".format(num_shards, shard_id))
+        if not isinstance(shard_id, int):
+            raise ValueError("shard_id must be integer but was: {}.".format(shard_id))
 
         if not isinstance(shuffle, bool):
             raise ValueError("shuffle should be a boolean value, but got shuffle: {}.".format(shuffle))
-
-        if num_samples is not None:
-            if num_samples <= 0:
-                raise ValueError("num_samples should be a positive integer "
-                                 "value, but got num_samples: {}.".format(num_samples))
-
-        if offset > num_shards:
-            raise ValueError("offset should be no more than num_shards: {}, "
-                             "but got offset: {}".format(num_shards, offset))
 
         self.num_shards = num_shards
         self.shard_id = shard_id
@@ -271,21 +277,23 @@ class DistributedSampler(BuiltinSampler):
         self.offset = offset
         super().__init__(num_samples)
 
-    def create(self):
+    def parse(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
+        shuffle = self.shuffle if self.shuffle is not None else True
+        offset = self.offset if self.offset is not None else -1
         # each time user calls create_dict_iterator() (to do repeat) sampler would get a different seed to shuffle
         self.seed += 1
-        c_sampler = cde.DistributedSampler(num_samples, self.num_shards, self.shard_id,
-                                           self.shuffle, self.seed, self.offset)
-        c_child_sampler = self.create_child()
+        c_sampler = cde.DistributedSamplerObj(self.num_shards, self.shard_id,
+                                              shuffle, num_samples, self.seed, offset, True)
+        c_child_sampler = self.parse_child()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
-    def create_for_minddataset(self):
+    def parse_for_minddataset(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.MindrecordDistributedSampler(self.num_shards, self.shard_id, self.shuffle,
                                                      self.seed, num_samples, self.offset)
-        c_child_sampler = self.create_child_for_minddataset()
+        c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
@@ -334,8 +342,8 @@ class PKSampler(BuiltinSampler):
     """
 
     def __init__(self, num_val, num_class=None, shuffle=False, class_column='label', num_samples=None):
-        if num_val <= 0:
-            raise ValueError("num_val should be a positive integer value, but got num_val: {}.".format(num_val))
+        if not isinstance(num_val, int):
+            raise ValueError("num_val must be integer but was: {}.".format(num_val))
 
         if num_class is not None:
             raise NotImplementedError("Not supported to specify num_class for PKSampler.")
@@ -343,20 +351,16 @@ class PKSampler(BuiltinSampler):
         if not isinstance(shuffle, bool):
             raise ValueError("shuffle should be a boolean value, but got shuffle: {}.".format(shuffle))
 
-        if num_samples is not None:
-            if num_samples <= 0:
-                raise ValueError("num_samples should be a positive integer "
-                                 "value, but got num_samples: {}.".format(num_samples))
-
         self.num_val = num_val
         self.shuffle = shuffle
         self.class_column = class_column  # work for minddataset
         super().__init__(num_samples)
 
-    def create(self):
+    def parse(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
-        c_sampler = cde.PKSampler(num_samples, self.num_val, self.shuffle)
-        c_child_sampler = self.create_child()
+        shuffle = self.shuffle if self.shuffle is not None else False
+        c_sampler = cde.PKSamplerObj(self.num_val, shuffle, num_samples)
+        c_child_sampler = self.parse_child()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
@@ -372,13 +376,13 @@ class PKSampler(BuiltinSampler):
 
         return self.child_sampler.is_sharded()
 
-    def create_for_minddataset(self):
+    def parse_for_minddataset(self):
         if not self.class_column or not isinstance(self.class_column, str):
             raise ValueError("class_column should be a not empty string value, \
                     but got class_column: {}.".format(class_column))
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.MindrecordPkSampler(self.num_val, self.class_column, self.shuffle, num_samples)
-        c_child_sampler = self.create_child_for_minddataset()
+        c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
@@ -409,27 +413,23 @@ class RandomSampler(BuiltinSampler):
         if not isinstance(replacement, bool):
             raise ValueError("replacement should be a boolean value, but got replacement: {}.".format(replacement))
 
-        if num_samples is not None:
-            if num_samples <= 0:
-                raise ValueError("num_samples should be a positive integer "
-                                 "value, but got num_samples: {}.".format(num_samples))
-
         self.deterministic = False
         self.replacement = replacement
         self.reshuffle_each_epoch = True
         super().__init__(num_samples)
 
-    def create(self):
+    def parse(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
-        c_sampler = cde.RandomSampler(num_samples, self.replacement, self.reshuffle_each_epoch)
-        c_child_sampler = self.create_child()
+        replacement = self.replacement if self.replacement is not None else False
+        c_sampler = cde.RandomSamplerObj(replacement, num_samples, self.reshuffle_each_epoch)
+        c_child_sampler = self.parse_child()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
-    def create_for_minddataset(self):
+    def parse_for_minddataset(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.MindrecordRandomSampler(num_samples, self.replacement, self.reshuffle_each_epoch)
-        c_child_sampler = self.create_child_for_minddataset()
+        c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
@@ -462,32 +462,22 @@ class SequentialSampler(BuiltinSampler):
     """
 
     def __init__(self, start_index=None, num_samples=None):
-        if num_samples is not None:
-            if num_samples <= 0:
-                raise ValueError("num_samples should be a positive integer "
-                                 "value, but got num_samples: {}.".format(num_samples))
-
-        if start_index is not None:
-            if start_index < 0:
-                raise ValueError("start_index should be a positive integer "
-                                 "value or 0, but got start_index: {}.".format(start_index))
-
         self.start_index = start_index
         super().__init__(num_samples)
 
-    def create(self):
+    def parse(self):
         start_index = self.start_index if self.start_index is not None else 0
         num_samples = self.num_samples if self.num_samples is not None else 0
-        c_sampler = cde.SequentialSampler(num_samples, start_index)
-        c_child_sampler = self.create_child()
+        c_sampler = cde.SequentialSamplerObj(start_index, num_samples)
+        c_child_sampler = self.parse_child()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
-    def create_for_minddataset(self):
+    def parse_for_minddataset(self):
         start_index = self.start_index if self.start_index is not None else 0
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.MindrecordSequentialSampler(num_samples, start_index)
-        c_child_sampler = self.create_child_for_minddataset()
+        c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
@@ -525,21 +515,21 @@ class SubsetSampler(BuiltinSampler):
     """
 
     def __init__(self, indices, num_samples=None):
-        if num_samples is not None:
-            if num_samples <= 0:
-                raise ValueError("num_samples should be a positive integer "
-                                 "value, but got num_samples: {}.".format(num_samples))
-
         if not isinstance(indices, list):
             indices = [indices]
+
+        for i, item in enumerate(indices):
+            if not isinstance(item, numbers.Number):
+                raise TypeError("type of weights element should be number, "
+                                "but got w[{}]: {}, type: {}.".format(i, item, type(item)))
 
         self.indices = indices
         super().__init__(num_samples)
 
-    def create(self):
+    def parse(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
-        c_sampler = cde.SubsetSampler(num_samples, self.indices)
-        c_child_sampler = self.create_child()
+        c_sampler = cde.SubsetSamplerObj(self.indices, num_samples)
+        c_child_sampler = self.parse_child()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
@@ -552,9 +542,9 @@ class SubsetSampler(BuiltinSampler):
 
         return self.child_sampler.is_sharded()
 
-    def create_for_minddataset(self):
+    def parse_for_minddataset(self):
         c_sampler = cde.MindrecordSubsetSampler(self.indices)
-        c_child_sampler = self.create_child_for_minddataset()
+        c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
@@ -586,19 +576,19 @@ class SubsetRandomSampler(SubsetSampler):
         >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
     """
 
-    def create(self):
+    def parse(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
-        c_sampler = cde.SubsetRandomSampler(num_samples, self.indices)
-        c_child_sampler = self.create_child()
+        c_sampler = cde.SubsetRandomSamplerObj(self.indices, num_samples)
+        c_child_sampler = self.parse_child()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
     def is_shuffled(self):
         return True
 
-    def create_for_minddataset(self):
+    def parse_for_minddataset(self):
         c_sampler = cde.MindrecordSubsetSampler(self.indices, ds.config.get_seed())
-        c_child_sampler = self.create_child_for_minddataset()
+        c_child_sampler = self.parse_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 
@@ -637,20 +627,6 @@ class WeightedRandomSampler(BuiltinSampler):
                 raise TypeError("type of weights element should be number, "
                                 "but got w[{}]: {}, type: {}.".format(ind, w, type(w)))
 
-        if weights == []:
-            raise ValueError("weights size should not be 0")
-
-        if list(filter(lambda x: x < 0, weights)) != []:
-            raise ValueError("weights should not contain negative numbers.")
-
-        if list(filter(lambda x: x == 0, weights)) == weights:
-            raise ValueError("elements of weights should not be all zeros.")
-
-        if num_samples is not None:
-            if num_samples <= 0:
-                raise ValueError("num_samples should be a positive integer "
-                                 "value, but got num_samples: {}.".format(num_samples))
-
         if not isinstance(replacement, bool):
             raise ValueError("replacement should be a boolean value, but got replacement: {}.".format(replacement))
 
@@ -658,10 +634,11 @@ class WeightedRandomSampler(BuiltinSampler):
         self.replacement = replacement
         super().__init__(num_samples)
 
-    def create(self):
+    def parse(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
-        c_sampler = cde.WeightedRandomSampler(num_samples, self.weights, self.replacement)
-        c_child_sampler = self.create_child()
+        replacement = self.replacement if self.replacement is not None else True
+        c_sampler = cde.WeightedRandomSamplerObj(self.weights, num_samples, replacement)
+        c_child_sampler = self.parse_child()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
 

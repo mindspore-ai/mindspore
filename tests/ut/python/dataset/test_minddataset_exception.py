@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -273,14 +273,14 @@ def test_cv_minddataset_partition_num_samples_equals_0():
         for partition_id in range(num_shards):
             data_set = ds.MindDataset(CV_FILE_NAME, columns_list, num_readers,
                                       num_shards=num_shards,
-                                      shard_id=partition_id, num_samples=0)
+                                      shard_id=partition_id, num_samples=-1)
             num_iter = 0
             for _ in data_set.create_dict_iterator(num_epochs=1):
                 num_iter += 1
-    with pytest.raises(Exception) as error_info:
+    with pytest.raises(ValueError) as error_info:
         partitions(5)
     try:
-        assert 'num_samples should be a positive integer value, but got num_samples: 0.' in str(error_info.value)
+        assert 'Input num_samples is not within the required interval of (0 to 2147483647).' in str(error_info.value)
     except Exception as error:
         os.remove(CV_FILE_NAME)
         os.remove("{}.db".format(CV_FILE_NAME))

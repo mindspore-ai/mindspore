@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,8 @@ class SamplerObj {
   Status AddChildSampler(std::shared_ptr<SamplerObj> child);
 
   virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
+
+  std::vector<std::shared_ptr<SamplerObj>> GetChild() { return children_; }
 
 #ifndef ENABLE_ANDROID
   /// \brief Virtual function to convert a SamplerObj class into a runtime mindrecord sampler object,
@@ -175,6 +177,11 @@ class DistributedSamplerObj : public SamplerObj {
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 #endif
 
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
   Status ValidateParams() override;
 
   /// \brief Function to get the shard id of sampler
@@ -210,6 +217,11 @@ class PKSamplerObj : public SamplerObj {
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 #endif
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
 
   Status ValidateParams() override;
 
@@ -249,14 +261,14 @@ class PreBuiltSamplerObj : public SamplerObj {
 
 class RandomSamplerObj : public SamplerObj {
  public:
-  RandomSamplerObj(bool replacement, int64_t num_samples);
+  RandomSamplerObj(bool replacement, int64_t num_samples, bool reshuffle_each_epoch = true);
 
   ~RandomSamplerObj() = default;
 
   std::shared_ptr<SamplerRT> SamplerBuild() override;
 
   std::shared_ptr<SamplerObj> SamplerCopy() override {
-    auto sampler = std::make_shared<RandomSamplerObj>(replacement_, num_samples_);
+    auto sampler = std::make_shared<RandomSamplerObj>(replacement_, num_samples_, reshuffle_each_epoch_);
     for (auto child : children_) {
       sampler->AddChildSampler(child);
     }
@@ -267,11 +279,17 @@ class RandomSamplerObj : public SamplerObj {
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 #endif
 
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
   Status ValidateParams() override;
 
  private:
   bool replacement_;
   int64_t num_samples_;
+  bool reshuffle_each_epoch_;
 };
 
 class SequentialSamplerObj : public SamplerObj {
@@ -293,6 +311,11 @@ class SequentialSamplerObj : public SamplerObj {
 #ifndef ENABLE_ANDROID
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 #endif
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
 
   Status ValidateParams() override;
 
@@ -321,6 +344,11 @@ class SubsetSamplerObj : public SamplerObj {
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 #endif
 
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
   Status ValidateParams() override;
 
  protected:
@@ -333,6 +361,8 @@ class SubsetRandomSamplerObj : public SubsetSamplerObj {
   SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
 
   ~SubsetRandomSamplerObj() = default;
+
+  Status to_json(nlohmann::json *out_json) override;
 
   std::shared_ptr<SamplerRT> SamplerBuild() override;
 
@@ -366,6 +396,11 @@ class WeightedRandomSamplerObj : public SamplerObj {
     }
     return sampler;
   }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
 
   Status ValidateParams() override;
 
