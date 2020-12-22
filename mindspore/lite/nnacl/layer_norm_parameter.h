@@ -26,7 +26,7 @@ typedef struct LayerNormParameter {
   float epsilon_;
   enum ElementwiseMode elementwise_mode_;
   // shape correlative
-  int *normalized_shape_;
+  int normalized_shape_[8];
   int normalized_dims_;
   // other parameter
   int thread_count_;
