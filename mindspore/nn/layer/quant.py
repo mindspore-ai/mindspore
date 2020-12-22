@@ -407,8 +407,8 @@ class Conv2dBnFoldQuantOneConv(Cell):
                  quant_dtype=QuantDtype.INT8):
         """Initialize Conv2dBnFoldQuant layer"""
         super(Conv2dBnFoldQuantOneConv, self).__init__()
-        self.in_channels = in_channels
-        self.out_channels = out_channels
+        self.in_channels = Validator.check_positive_int(in_channels)
+        self.out_channels = Validator.check_positive_int(out_channels)
         self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
         self.pad_mode = pad_mode
@@ -626,8 +626,8 @@ class Conv2dBnFoldQuant(Cell):
                  freeze_bn=100000):
         """Initialize Conv2dBnFoldQuant layer"""
         super(Conv2dBnFoldQuant, self).__init__()
-        self.in_channels = in_channels
-        self.out_channels = out_channels
+        self.in_channels = Validator.check_positive_int(in_channels)
+        self.out_channels = Validator.check_positive_int(out_channels)
         self.kernel_size = twice(kernel_size)
         self.stride = twice(stride)
         self.pad_mode = pad_mode
