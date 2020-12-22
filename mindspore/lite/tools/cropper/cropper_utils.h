@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-#include "tools/lib_cropper/lib_cropper.h"
-#include "include/version.h"
-
-int main(int argc, const char **argv) {
-  MS_LOG(INFO) << mindspore::lite::Version();
-  return mindspore::lite::cropper::RunCropper(argc, argv);
-}
+#ifndef MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_UTILS_H
+#define MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_UTILS_H
+#include <string>
+namespace mindspore {
+namespace lite {
+namespace cropper {
+int ValidFileSuffix(const std::string &filename, const std::string &suffix);
+int ValidFile(std::ifstream &in_file, const char *file_path);
+}  // namespace cropper
+}  // namespace lite
+}  // namespace mindspore
+#endif  // MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_UTILS_H

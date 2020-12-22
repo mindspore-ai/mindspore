@@ -3,7 +3,7 @@
 CURRENT_PATH=$(pwd)
 MINDSPORE_HOME="${CURRENT_PATH}/../../../.."
 echo "MINDSPORE_HOME path is ${MINDSPORE_HOME}"
-CROPPER_OUTPUT_DIR=${MINDSPORE_HOME}/mindspore/lite/build/tools/lib_cropper
+CROPPER_OUTPUT_DIR=${MINDSPORE_HOME}/mindspore/lite/build/tools/cropper
 mkdir -p ${CROPPER_OUTPUT_DIR}
 MAPPING_OUTPUT_FILE_NAME_TMP=${CROPPER_OUTPUT_DIR}/cropper_mapping_cpu_tmp.cfg
 MAPPING_OUTPUT_FILE_NAME=${CROPPER_OUTPUT_DIR}/cropper_mapping_cpu.cfg
@@ -14,7 +14,8 @@ ops_list=()
 DEFINE_STR="-DENABLE_ANDROID -DENABLE_ARM -DENABLE_ARM64 -DENABLE_NEON -DNO_DLIB -DUSE_ANDROID_LOG -DANDROID"
 # get the flatbuffers path
 if [ ${MSLIBS_CACHE_PATH} ]; then
-  FLATBUFFERS_LIST=($(ls -d ${MSLIBS_CACHE_PATH}/flatbuffers_*/include))
+  FLATBUFFERS_LIST=()
+  while IFS='' read -r line; do FLATBUFFERS_LIST+=("$line"); done < <(ls -d ${MSLIBS_CACHE_PATH}/flatbuffers_*/include)
   FLATBUFFERS=${FLATBUFFERS_LIST[0]}
   echo "FLATBUFFERS path is ${FLATBUFFERS}"
 else
@@ -41,7 +42,9 @@ REMOVE_LISTS_STR=""
 getDeep() {
   map_files=$(gcc -MM ${2} ${DEFINE_STR} ${HEADER_LOCATION})
   # first is *.o second is *.cc
-  array_deep=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -E 'src/runtime|nnacl' | egrep -v ${REMOVE_LISTS_STR}))
+  array_deep=()
+  while IFS='' read -r line; do array_deep+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -E 'src/runtime|nnacl' | egrep -v ${REMOVE_LISTS_STR})
+  # shellcheck disable=SC2068
   for array_deep_file in ${array_deep[@]}; do
     # only add existing files
     if [[ -e ${array_deep_file%h*}cc ]]; then
@@ -56,10 +59,12 @@ getDeep() {
 }
 getOpsFile() {
   echo "start get operator mapping file $3"
+  # shellcheck disable=SC2068
   for type in ${ops_list[@]}; do
     # get mapping
     ret=$(egrep -r -l "$1${type}," $2)
-    array=(${ret})
+    array=("${ret}")
+    # shellcheck disable=SC2068
     for file in ${array[@]}; do
       # delete \n
       out_file=$(echo ${file} | awk -F '/' '{print $NF}')
@@ -67,7 +72,9 @@ getOpsFile() {
       echo "${type},${3},${out_file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP}
       map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
       # first is *.o second is *.cc
-      array_file=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -E 'src/runtime|nnacl' | egrep -v ${REMOVE_LISTS_STR}))
+      array_file=()
+      while IFS='' read -r line; do array_file+=("$line"); done < <(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -E 'src/runtime|nnacl' | egrep -v ${REMOVE_LISTS_STR})
+      # shellcheck disable=SC2068
       for array_file in ${array_file[@]}; do
         # only add existing files
         if [[ -e ${array_file%h*}cc ]]; then
@@ -86,45 +93,55 @@ getOpsFile() {
 }
 getCommonFile() {
   echo "start get common files"
-  include_h=($(ls ${MINDSPORE_HOME}/mindspore/lite/include/*.h))
-  src_files_h=($(ls ${MINDSPORE_HOME}/mindspore/lite/src/*.h))
-  common_files_h=($(ls ${MINDSPORE_HOME}/mindspore/lite/src/common/*.h))
-  runtime_files_h=($(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.h))
-  others_files=(
-    ${MINDSPORE_HOME}/mindspore/lite/src/populate/populate_register.h
-    ${MINDSPORE_HOME}/mindspore/lite/src/ops/primitive_c.h
-    ${MINDSPORE_HOME}/mindspore/lite/nnacl/nnacl_utils.h
-    ${MINDSPORE_HOME}/mindspore/lite/nnacl/pack.h
-    ${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.h
+  include_h=()
+  while IFS='' read -r line; do include_h+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/include/*.h)
+  src_files_h=()
+  while IFS='' read -r line; do src_files_h+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/*.h)
+  common_files_h=()
+  while IFS='' read -r line; do common_files_h+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/common/*.h)
+  runtime_files_h=()
+  while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.h)
+  others_files_h=(
+    "${MINDSPORE_HOME}"/mindspore/lite/src/populate/populate_register.h
+    "${MINDSPORE_HOME}"/mindspore/lite/src/ops/primitive_c.h
+    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/nnacl_utils.h
+    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/pack.h
+    "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.h
   )
-  all_files_h=(${include_h[@]} ${src_files_h[@]} ${common_files_h[@]} ${runtime_files_h[@]} ${others_files[@]})
+  all_files_h=("${include_h[@]}" "${src_files_h[@]}" "${common_files_h[@]}" "${runtime_files_h[@]}" "${others_files_h[@]}")
 
   # concat regx
   REMOVE_LISTS_STR="${all_files_h[0]}"
+  # shellcheck disable=SC2068
   for val in ${all_files_h[@]:1}; do
     REMOVE_LISTS_STR="$REMOVE_LISTS_STR|$val"
   done
 
-  src_files=($(ls ${MINDSPORE_HOME}/mindspore/lite/src/*.cc))
-  common_files=($(ls ${MINDSPORE_HOME}/mindspore/lite/src/common/*.cc))
-  runtime_files_cc=($(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.cc))
-  runtime_files_c=($(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.c))
-
+  src_files=()
+  while IFS='' read -r line; do src_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/*.cc)
+  common_files=()
+  while IFS='' read -r line; do common_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/common/*.cc)
+  runtime_files_cc=()
+  while IFS='' read -r line; do runtime_files_cc+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.cc)
+  runtime_files_c=()
+  while IFS='' read -r line; do runtime_files_c+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.c)
   # sava all assembly files
-  assembly_files=("$(ls ${MINDSPORE_HOME}/mindspore/lite/nnacl/assembly/*/*.S)")
-  others_files=(
-    ${MINDSPORE_HOME}/mindspore/lite/src/ops/primitive_c.cc
-    ${MINDSPORE_HOME}/mindspore/lite/nnacl/nnacl_utils.c
-    ${MINDSPORE_HOME}/mindspore/lite/nnacl/pack.c
-    ${MINDSPORE_HOME}/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.cc
-    ${MINDSPORE_HOME}/mindspore/lite/src/ops/populate/arithmetic_populate.cc
-    ${MINDSPORE_HOME}/mindspore/lite/src/ops/populate/arithmetic_self_populate.cc
+  assembly_files=()
+  while IFS='' read -r line; do assembly_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/nnacl/assembly/*/*.S)
+  others_files_c=(
+    "${MINDSPORE_HOME}"/mindspore/lite/src/ops/primitive_c.cc
+    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/nnacl_utils.c
+    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/pack.c
+    "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.cc
+    "${MINDSPORE_HOME}"/mindspore/lite/src/ops/populate/arithmetic_populate.cc
+    "${MINDSPORE_HOME}"/mindspore/lite/src/ops/populate/arithmetic_self_populate.cc
   )
-  all_files=(${src_files[@]} ${common_files[@]} ${runtime_files_cc[@]} ${runtime_files_c[@]} ${others_files[@]} ${assembly_files[@]})
-
+  all_files=("${src_files[@]}" "${common_files[@]}" "${runtime_files_cc[@]}" "${runtime_files_c[@]}" "${others_files_c[@]}" "${assembly_files[@]}")
+  # shellcheck disable=SC2068
   for file in ${all_files[@]}; do
     map_files=$(gcc -MM ${file} ${DEFINE_STR} ${HEADER_LOCATION})
     # first is *.o second is *.cc
+    # shellcheck disable=SC2207
     array_runtime=($(echo ${map_files} | awk -F '\' '{for(i=3;i<=NF;i++){print $i}}' | grep -v "flatbuffers" | egrep -v ${REMOVE_LISTS_STR}))
     # only add existing files
     for array_runtime_file in "${array_runtime[@]}"; do
@@ -136,6 +153,7 @@ getCommonFile() {
       fi
     done
   done
+  # shellcheck disable=SC2068
   for file in ${all_files[@]}; do
     file=$(echo ${file} | awk -F '/' '{print $NF}')
     echo "CommonFile,common,${file}.o" >>${MAPPING_OUTPUT_FILE_NAME_TMP} &
@@ -146,11 +164,12 @@ getCommonFile() {
 # automatically generate operator list
 generateOpsList() {
   echo "start generate operator list"
-  ops=($(egrep "PrimitiveType_.* = " "${MINDSPORE_HOME}/mindspore/lite/build/schema/model_generated.h" | awk -F '_' '{print $2}' | awk -F ' ' '{print $1}'))
-
+  ops=()
+  while IFS='' read -r line; do ops+=("$line"); done < <(egrep "PrimitiveType_.* = " "${MINDSPORE_HOME}/mindspore/lite/build/schema/model_generated.h" | awk -F '_' '{print $2}' | awk -F ' ' '{print $1}')
   ops_num=$((${#ops[@]} - 3))
   echo "ops nums:${ops_num}"
-  ops_list=${ops[@]:1:$ops_num}
+  ops_list=()
+  mapfile -t ops_list <<< "${ops[*]:1:$ops_num}"
 }
 echo "Start getting all file associations."
 generateOpsList

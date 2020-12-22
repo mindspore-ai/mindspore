@@ -126,7 +126,7 @@ bool NPUManager::IsKirinChip() {
 }
 
 int NPUManager::AddModel(domi::ModelBufferData *model_buffer_data, const std::string &model_name, int frequency) {
-  auto model = new SubGraphModel(index_, model_name, model_buffer_data, frequency);
+  auto model = new SubGraphModel(index_, model_name, model_buffer_data);
   auto desc = std::make_shared<hiai::AiModelDescription>(model_name, frequency, 0, 0, 0);
   model->desc_ = desc;
   models_.insert({model_name, model});

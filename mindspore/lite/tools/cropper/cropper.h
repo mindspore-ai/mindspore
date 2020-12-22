@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_LIB_CROPPER_LIB_CROPPER_H_
-#define MINDSPORE_LITE_TOOLS_LIB_CROPPER_LIB_CROPPER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_H_
+#define MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_H_
 
 #include <set>
 #include <string>
@@ -26,7 +26,7 @@
 #include "src/common/utils.h"
 #include "schema/model_generated.h"
 #include "include/lite_session.h"
-#include "tools/lib_cropper/cropper_flags.h"
+#include "tools/cropper/cropper_flags.h"
 
 namespace mindspore::lite::cropper {
 

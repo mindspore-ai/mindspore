@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_LIB_CROPPER_LIB_CROPPER_FLAGS_H
-#define MINDSPORE_LITE_TOOLS_LIB_CROPPER_LIB_CROPPER_FLAGS_H
+#ifndef MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_FLAGS_H
+#define MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_FLAGS_H
 
 #include <string>
 #include "tools/common/flag_parser.h"
@@ -42,4 +42,4 @@ class CropperFlags : public virtual mindspore::lite::FlagParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif
+#endif  // MINDSPORE_LITE_TOOLS_CROPPER_CROPPER_FLAGS_H
