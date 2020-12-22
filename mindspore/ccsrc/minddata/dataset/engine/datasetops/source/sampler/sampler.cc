@@ -142,7 +142,9 @@ int64_t SamplerRT::CalculateNumSamples(int64_t num_rows) {
 }
 
 Status SamplerRT::SetNumRowsInDataset(int64_t num_rows) {
-  CHECK_FAIL_RETURN_UNEXPECTED(num_rows > 0, "Invalid parameter, num_rows must be greater than 0.");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    num_rows > 0,
+    "Invalid data, data rows of input dataset must not be less than or equal to 0, please check the input dataset.");
   num_rows_ = num_rows;
   return Status::OK();
 }
