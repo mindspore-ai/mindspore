@@ -40,7 +40,7 @@ class OpenCLAllocator : public Allocator {
   void *Malloc(size_t size) override;
   void *Malloc(size_t size, const std::vector<size_t> &img_size, void *data = nullptr);
   void Free(void *ptr) override;
-  size_t GetTotalSize() override;
+  size_t total_size() override;
 
   void Clear();
   void *GetImage(void *host_ptr);

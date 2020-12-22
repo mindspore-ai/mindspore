@@ -38,7 +38,7 @@ class Allocator {
   virtual void *Malloc(size_t size) = 0;
   virtual void Free(void *ptr) = 0;
   virtual void SetContext(const AllocatorContext &ctx) {}
-  virtual size_t GetTotalSize() { return 0; }
+  virtual size_t total_size() = 0;
   static std::shared_ptr<Allocator> Create();
   virtual void *Prepare(void *ptr) { return ptr; }
   std::string name;
@@ -51,7 +51,7 @@ class DefaultAllocator : public Allocator {
   void SetContext(const AllocatorContext &ctx) override;
   void *Malloc(size_t size) override;
   void Free(void *ptr) override;
-  size_t GetTotalSize() override;
+  size_t total_size() override { return this->total_size_; }
   void Clear();
 
  private:
@@ -63,6 +63,7 @@ class DefaultAllocator : public Allocator {
   };
 
   std::mutex lock_;
+  size_t total_size_ = 0;
   // <membuf->buf, membuf>
   std::unordered_map<void *, MemBuf *> allocatedList_;
   std::multimap<size_t, MemBuf *> freeList_;
