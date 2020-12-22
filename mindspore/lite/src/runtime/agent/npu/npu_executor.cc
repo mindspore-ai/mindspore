@@ -19,6 +19,11 @@
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "nnacl/pack.h"
 namespace mindspore::lite {
+NPUExecutor::~NPUExecutor() {
+  npu_input_tensors_.clear();
+  npu_output_tensors_.clear();
+}
+
 int NPUExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
   this->client_ = mindspore::lite::NPUManager::GetInstance()->GetClient(model_name_);
   if (this->client_ == nullptr) {

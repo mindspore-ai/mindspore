@@ -70,6 +70,7 @@ void NPUManager::Reset() {
   }
   models_.clear();
   for (auto client : clients_) {
+    client->UnLoadModel();
     client.reset();
   }
   clients_.clear();
@@ -213,7 +214,6 @@ int NPUManager::LoadModel(const std::shared_ptr<hiai::AiModelMngerClient> &clien
   }
 
   for (const auto &desc : desc_list) {
-    MS_LOG(ERROR) << desc->GetName();
     auto it = models_.find(desc->GetName());
     it->second->is_loaded = true;
     it->second->client_ = client;

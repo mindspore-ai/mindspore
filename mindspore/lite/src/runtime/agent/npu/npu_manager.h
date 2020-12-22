@@ -42,7 +42,7 @@ struct SubGraphModel {
   bool is_loaded = false;
   int index_;
   std::string model_name_;
-  domi::ModelBufferData *model_buffer_data_;
+  std::shared_ptr<domi::ModelBufferData> model_buffer_data_;
   std::shared_ptr<hiai::AiModelMngerClient> client_;
   std::shared_ptr<hiai::AiModelDescription> desc_;
 };
