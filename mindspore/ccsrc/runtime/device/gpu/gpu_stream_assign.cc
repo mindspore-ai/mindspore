@@ -83,7 +83,10 @@ bool FindAllReduceStreamSwitchPos(const std::shared_ptr<session::KernelGraph> &k
       std::vector<CNodePtr>::iterator mock_recv_node_iter =
         FindRecvNodePos(iter, iter_end, *iter, kAllReduceStreamSwitch);
       if (mock_recv_node_iter == iter_end) {
+        // Each AllReduce must have its corresponding node which takes AllReduce as a input to synchronize stream,
+        // otherwise consider FindAllReduceStreamSwitchPos as failed.
         MS_LOG(INFO) << "Can't find recv node place after AllReduce node.";
+        return false;
       } else if (AnfAlgo::GetCNodeName(*mock_recv_node_iter) != kAllReduceOpName) {
         SendRecvPair pair2 = {kAllReduceStreamSwitch, *iter, *mock_recv_node_iter, IntToSize(iter - iter_begin + 1),
                               IntToSize(mock_recv_node_iter - iter_begin)};
