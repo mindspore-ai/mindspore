@@ -228,7 +228,7 @@ python export.py --platform [PLATFORM] --G_A_ckpt [G_A_CKPT] --G_B_ckpt [G_B_CKP
 
 # [Description of Random Situation](#contents)
 
-In dataset.py, we set the seed inside “create_dataset" function. We also use random seed in train.py.
+If you set --use_random=False, there are no random when training.
 
 # [ModelZoo Homepage](#contents)
 
