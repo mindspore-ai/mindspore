@@ -185,7 +185,6 @@ STATUS CaffeModelParser::ConvertGraphInputs() {
       parameter->set_abstract(abstract_tensor);
       parameter->set_name("graph_input-" + std::to_string(i));
       nodes_.insert(std::pair(layer.top(0), parameter));
-      return RET_OK;
     }
   }
 

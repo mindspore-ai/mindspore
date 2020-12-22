@@ -231,7 +231,7 @@ std::vector<kernel::LiteKernel *> LiteKernelUtil::SubgraphInputNodes(const std::
     auto all_input_tensors = kernel->in_tensors();
     // remove all const tensor from input tensors
     for (auto iter = all_input_tensors.begin(); iter != all_input_tensors.end();) {
-      if ((*iter)->IsConst() || (*iter)->IsGraphInput()) {
+      if ((*iter)->IsConst()) {
         iter = all_input_tensors.erase(iter);
       } else {
         iter++;
