@@ -238,7 +238,7 @@ def _load_tensor_by_layout(tensor, layout):
     group = layout[5]
     if uniform_split == 0:
         raise RuntimeError("The load tensor only support uniform split now")
-    if tensor.size() == 1:
+    if tensor.size == 1:
         return tensor
     tensor_slice = _load_tensor(tensor, dev_mat, tensor_map)
     if group:

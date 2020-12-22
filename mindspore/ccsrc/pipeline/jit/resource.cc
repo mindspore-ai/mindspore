@@ -192,6 +192,8 @@ BuiltInTypeMap &GetAttrMap() {
      {
        {"shape", std::string("shape_")},  // C.shape_
        {"dtype", std::string("dtype_")},  // C.dtype_
+       {"size", std::string("size_")},    // C.size_
+       {"ndim", std::string("ndim_")},    // C.ndim_
      }},
     {kObjectTypeRowTensorType,
      {

@@ -238,6 +238,16 @@ class Tensor(Tensor_):
         return self._dtype
 
     @property
+    def size(self):
+        """The size reflects the total number of elements in tensor."""
+        return self._size
+
+    @property
+    def ndim(self):
+        """The ndim of tensor is an integer."""
+        return len(self._shape)
+
+    @property
     def virtual_flag(self):
         """Mark tensor is virtual."""
         return self._virtual_flag
