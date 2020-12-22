@@ -368,7 +368,7 @@ class MakeRefKey(Primitive):
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.y = Parameter(Tensor(np.ones([6, 8, 10]), mstype.int32), name="y")
+        ...         self.y = Parameter(Tensor(np.ones([2, 3]), mstype.int32), name="y")
         ...         self.make_ref_key = ops.MakeRefKey("y")
         ...
         ...     def construct(self, x):
@@ -376,10 +376,12 @@ class MakeRefKey(Primitive):
         ...         ref = ops.make_ref(key, x, self.y)
         ...         return ref * x
         ...
-        >>> x = Tensor(np.ones([3, 4, 5]), mstype.int32)
+        >>> x = Tensor(np.array([[1, 2, 3], [4, 5, 6]]), mindspore.int32)
         >>> net = Net()
         >>> output = net(x)
         >>> print(output)
+        [[ 1  4  9]
+         [16 25 36]]
     """
 
     @prim_attr_register

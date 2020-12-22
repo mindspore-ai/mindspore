@@ -623,22 +623,40 @@ def _expand_tuple(n_dimensions):
     return convert
 
 
+def _check_data_type_valid(data, valid_type):
+    """Check data type valid."""
+    if valid_type is None:
+        return data is None
+    if isinstance(data, valid_type):
+        if hasattr(data, 'size') and data.size == 0:
+            msg = "Please provide non-empty data."
+            logger.error(msg)
+            raise ValueError(msg)
+        return True
+    return False
+
+
 def check_input_data(*data, data_class):
     """Input data check."""
     for item in data:
         if isinstance(item, (list, tuple)):
             for v in item:
                 check_input_data(v, data_class=data_class)
+        elif isinstance(item, dict):
+            for v in item.values():
+                check_input_data(v, data_class=data_class)
         else:
-            if not isinstance(item, data_class):
-                raise ValueError(f'Please provide as model inputs'
-                                 f' either a single'
-                                 f' or a list of {data_class.__name__},'
-                                 f' but got part data type is {str(type(item))}.')
-            if hasattr(item, "size") and item.size == 0:
-                msg = "Please provide non-empty data."
-                logger.error(msg)
-                raise ValueError(msg)
+            if isinstance(data_class, (tuple, list)):
+                ret = True in tuple(_check_data_type_valid(item, data_type) for data_type in data_class)
+            else:
+                ret = _check_data_type_valid(item, data_class)
+            if not ret:
+                data_class_str = tuple(i.__name__ if hasattr(i, '__name__') else i for i in data_class) \
+                                 if isinstance(data_class, (tuple, list)) else \
+                                 (data_class if data_class is None else data_class.__name__)
+                raise ValueError(f'Please provide as model inputs either a single or '
+                                 f'a tuple or a list or a dict of {data_class_str}, '
+                                 f'but got part data type is {item if item is None else type(item).__name__}.')
 
 
 def check_output_data(data):

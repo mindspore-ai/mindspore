@@ -727,7 +727,8 @@ class Model:
             Batch data should be put together in one tensor.
 
         Args:
-           predict_data: The predict data, can be array, number, str, dict, list or tuple.
+           predict_data: The predict data, can be bool, int, float, str, None, tensor,
+                         or tuple, list and dict that store these types.
 
         Returns:
             Tensor, array(s) of predictions.
@@ -738,7 +739,7 @@ class Model:
             >>> result = model.predict(input_data)
         """
         self._predict_network.set_train(False)
-        check_input_data(*predict_data, data_class=(int, float, str, tuple, list, dict, Tensor))
+        check_input_data(*predict_data, data_class=(int, float, str, None, Tensor))
         _parallel_predict_check()
         result = self._predict_network(*predict_data)
 

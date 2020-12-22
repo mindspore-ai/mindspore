@@ -235,27 +235,32 @@ def ms_function(fn=None, obj=None, input_signature=None):
     Examples:
         >>> from mindspore.ops import functional as F
         ...
+        >>> x = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
+        >>> y = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
+        ...
+        >>> # create a callable MindSpore graph by calling ms_function
         >>> def tensor_add(x, y):
         ...     z = x + y
         ...     return z
         ...
+        >>> tensor_add_graph = ms_function(fn=tensor_add)
+        >>> out = tensor_add_graph(x, y)
+        ...
+        >>> # create a callable MindSpore graph through decorator @ms_function
         >>> @ms_function
         ... def tensor_add_with_dec(x, y):
         ...     z = x + y
         ...     return z
         ...
+         >>> out = tensor_add_with_dec(x, y)
+        ...
+        >>> # create a callable MindSpore graph through decorator @ms_function with input_signature parameter
         >>> @ms_function(input_signature=(MetaTensor(mindspore.float32, (1, 1, 3, 3)),
         ...                               MetaTensor(mindspore.float32, (1, 1, 3, 3))))
         ... def tensor_add_with_sig(x, y):
         ...     z = x + y
         ...     return z
         ...
-        >>> x = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
-        >>> y = Tensor(np.ones([1, 1, 3, 3]).astype(np.float32))
-        ...
-        >>> tensor_add_graph = ms_function(fn=tensor_add)
-        >>> out = tensor_add_graph(x, y)
-        >>> out = tensor_add_with_dec(x, y)
         >>> out = tensor_add_with_sig(x, y)
     """
 
