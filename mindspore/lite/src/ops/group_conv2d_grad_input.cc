@@ -146,8 +146,8 @@ Registry GroupConv2DGradInputRegistry(schema::PrimitiveType_GroupConv2DGradInput
 #endif
 
 int GroupConv2DGradInput::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
-  if (2 != inputs.size()) {
-    MS_LOG(ERROR) << "Conv2d Grad input should have 2 inputs";
+  if (inputs.size() < 2) {
+    MS_LOG(ERROR) << "Conv2d Grad input should be at least two input";
     return RET_ERROR;
   }
   if (1 != outputs.size()) {

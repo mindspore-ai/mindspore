@@ -244,7 +244,7 @@ table Conv2DGradFilter {
     dilateW: int;
     dilateH: int;
     hasBias: bool = false;  // DEPRECATED
-    filter_shape: [int];
+    filter_shape: [int];  // DEPRECATED
     activationType: ActivationType = 0;
 }
 
@@ -265,7 +265,7 @@ table Conv2DGradInput {
     dilateW: int;
     dilateH: int;
     hasBias: bool = false;  // DEPRECATED
-    input_shape: [int];
+    input_shape: [int];  // DEPRECATED
     activationType: ActivationType = 0;
 }
 

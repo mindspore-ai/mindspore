@@ -98,8 +98,8 @@ Registry GatherRegistry(schema::PrimitiveType_Gather, GatherCreator);
 
 int Gather::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
-  if (inputs_.size() != kDoubleNum) {
-    MS_LOG(DEBUG) << "Gather should have two inputs";
+  if (inputs_.size() < kDoubleNum) {
+    MS_LOG(DEBUG) << "Gather should be at least two inputs";
   }
   if (outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "Gather should have one outputs";

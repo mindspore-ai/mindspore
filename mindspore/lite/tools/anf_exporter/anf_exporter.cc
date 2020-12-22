@@ -571,8 +571,34 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
     output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
     meta_graphT->allTensors.emplace_back(std::move(paramTensor));
   } else if (value->isa<mindspore::ValueSequeue>()) {
-    MS_LOG(DEBUG) << "Value type is ValueSequence.";
-    return RET_OK;
+    auto valueAbstract = valueNode->abstract();
+    auto abstractSequnce = utils::cast<abstract::AbstractSequeuePtr>(valueAbstract);
+    if (abstractSequnce->isa<abstract::AbstractTuple>()) {
+      auto abstractTuple = utils::cast<abstract::AbstractTuplePtr>(valueAbstract);
+      auto x_shape_data = abstractTuple->elements();
+      std::vector<int32_t> shape;
+      for (std::size_t i = 0; i < abstractTuple->size(); ++i) {
+        auto value_track = x_shape_data[i]->GetValueTrack();
+        MS_ASSERT(value_track != nullptr);
+        if (value_track->isa<Int32Imm>()) {
+          shape.push_back((GetValue<int>(value_track)));
+        } else if (value_track->isa<Int64Imm>()) {
+          shape.push_back((GetValue<int64_t>(value_track)));
+        } else {
+          MS_LOG(ERROR) << "Value type is ValueSequence is not integer, it is " << value_track->ToString() << ".";
+          return RET_ERROR;
+        }
+      }
+      auto typePtr = abstractTuple->elements()[0]->GetTypeTrack();
+      paramTensor->dataType = kNumberTypeInt32;
+      paramTensor->dims = {static_cast<int32_t>(shape.size())};
+      paramTensor->nodeType = schema::NodeType_ValueNode;
+      paramTensor->data.resize(shape.size() * sizeof(int));
+      memcpy(paramTensor->data.data(), shape.data(), shape.size() * sizeof(int));
+      node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
+      output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
+      meta_graphT->allTensors.emplace_back(std::move(paramTensor));
+    }
   } else if (value->isa<mindspore::BoolImm>()) {
     auto valueAbstract = valueNode->abstract();
     auto abstractScalar = utils::cast<abstract::AbstractScalarPtr>(valueAbstract);

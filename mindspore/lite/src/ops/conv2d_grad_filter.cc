@@ -219,11 +219,11 @@ Registry conv2DGradFilterRegistry(schema::PrimitiveType_Conv2DGradFilter, Conv2D
 #endif
 
 int Conv2DGradFilter::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
-  if (2 != inputs.size()) {
-    MS_LOG(ERROR) << "Conv2d Grad Filter should have 2 inputs, but it got " << inputs.size();
+  if (inputs.size() < 2) {
+    MS_LOG(ERROR) << "Conv2d Grad Filter should be at least two input, but it got " << inputs.size();
     return RET_ERROR;
   }
-  if (1 != outputs.size()) {
+  if (outputs.size() != 1) {
     MS_LOG(ERROR) << "Conv2d Grad Filter should have one output but it got " << outputs.size();
     return RET_ERROR;
   }
