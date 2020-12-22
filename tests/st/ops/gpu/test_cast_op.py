@@ -604,7 +604,7 @@ def test_cast31():
 @pytest.mark.env_onecard
 def test_cast32():
     np.random.seed(10)
-    x = np.random.rand(*(3, 2)).astype(np.float16)
+    x = np.random.uniform(-5, 5, (3, 2)).astype(np.float16)
     x0 = Tensor(x)
     t0 = mstype.int32
     x1 = Tensor(x)
