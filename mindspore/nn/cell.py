@@ -49,7 +49,7 @@ class Cell(Cell_):
         The bprop implementation will receive a Tensor `dout` containing the gradient of the loss w.r.t.
         the output, and a Tensor `out` containing the forward result. The bprop needs to compute the
         gradient of the loss w.r.t. the inputs, gradient of the loss w.r.t. Parameter variables are not supported
-        currently.
+        currently. The bprop method must contain the self parameter.
 
     Args:
         auto_prefix (bool): Recursively generate namespaces. Default: True.

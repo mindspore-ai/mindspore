@@ -52,6 +52,7 @@ FuncGraphPtr ConvertToBpropCut(const py::object &obj) {
   outputs.push_back(NewValueNode(fake_bprop));
 
   py::object code_obj = py::getattr(bprop_func, "__code__");
+  // Three parameters self, out and dout need to be excluded
   size_t inputs_num = py::cast<int64_t>(py::getattr(code_obj, "co_argcount")) - 3;
   for (size_t i = 0; i < inputs_num; ++i) {
     auto param = bprop_graph->add_parameter();
