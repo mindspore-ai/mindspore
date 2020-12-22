@@ -28,7 +28,7 @@ namespace mindspore::lite {
 class NPUExecutor : public Executor {
  public:
   explicit NPUExecutor(const std::string &model_name) { this->model_name_ = model_name; }
-  ~NPUExecutor() override = default;
+  ~NPUExecutor() override;
   int Prepare(const std::vector<kernel::LiteKernel *> &kernels) override;
 
   int Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,

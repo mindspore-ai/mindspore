@@ -33,6 +33,14 @@ namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
+SubGraphNpuKernel::~SubGraphNpuKernel() {
+  subgraph_input_op_.clear();
+  subgraph_output_op_.clear();
+  if (executor_ != nullptr) {
+    delete executor_;
+  }
+}
+
 domi::ModelBufferData *SubGraphNpuKernel::BuildIRModel() {
   ge::Graph graph("NPUGraph");
 

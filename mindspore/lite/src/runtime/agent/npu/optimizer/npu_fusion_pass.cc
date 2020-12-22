@@ -55,7 +55,6 @@ void NPUFusionPass::UpdatePreKernels(kernel::LiteKernel *cur_kernel) {
       }
     }
     cur_kernel->set_in_kernels(cur_in_kernels);
-    kernels->erase(find(kernels->begin(), kernels->end(), in_kernel));
   }
 }
 
@@ -80,7 +79,6 @@ void NPUFusionPass::UpdatePostKernels(kernel::LiteKernel *cur_kernel) {
       }
     }
     cur_kernel->set_out_kernels(cur_out_kernels);
-    kernels->erase(find(kernels->begin(), kernels->end(), out_kernel));
   }
 }
 
@@ -191,10 +189,8 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
       post_kernel->set_in_kernels(post_in_kernels);
       pre_out_kernels.push_back(post_kernel);
     }
-    kernels->erase(find(kernels->begin(), kernels->end(), nc2nh));
   }
   pre_kernel->set_out_kernels(pre_out_kernels);
-  kernels->erase(find(kernels->begin(), kernels->end(), kernel));
   return RET_OK;
 }
 

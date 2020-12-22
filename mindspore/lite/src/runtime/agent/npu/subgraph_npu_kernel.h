@@ -36,7 +36,7 @@ class SubGraphNpuKernel : public SubGraphKernel {
     subgraph_type_ = kNpuSubGraph;
   }
 
-  ~SubGraphNpuKernel() override = default;
+  ~SubGraphNpuKernel() override;
 
   int Init() override;
 
