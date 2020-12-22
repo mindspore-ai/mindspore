@@ -55,6 +55,10 @@
 #include "runtime/device/ascend/profiling/reporter/op_name_task_stream_reporter.h"
 #include "runtime/hccl_adapter/hccl_adapter.h"
 #include "backend/kernel_compiler/hccl/hccl_context.h"
+#ifdef ENABLE_TDTQUE
+#include "tdt/tdt_host_interface.h"
+#include "tdt/status.h"
+#endif
 
 using ge::model_runner::ModelRunner;
 using mindspore::device::ascend::ProfilingManager;
@@ -652,6 +656,18 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
   bool status = ModelRunner::Instance().RunModel(graph->graph_id(), input_tensors, output_tensors);
   if (!status) {
     DumpTaskExceptionInfo(graph);
+
+#ifdef ENABLE_TDTQUE
+    // Run task error, we should call TdtHostDestroy to release tdt to avoid DeviceQueueOp hostPush hung
+    // case1: cpu usage 100% cause thread/process exit, but some tdt thread remain in backend
+    int32_t destory_status = tdt::TdtHostDestroy();
+    if (destory_status != TDT_OK_CODE) {
+      MS_LOG(WARNING) << "Destroy tsd failed, status = " << destory_status << ".";
+    } else {
+      MS_LOG(INFO) << "Destroy tsd success.";
+    }
+#endif
+
     return false;
   }
   exception_infoes_.clear();
