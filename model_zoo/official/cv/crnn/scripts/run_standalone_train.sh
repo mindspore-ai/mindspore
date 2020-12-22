@@ -14,8 +14,8 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 3 ]; then
-  echo "Usage: sh run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM]"
+if [ $# != 3 ] && [ $# != 2 ]; then
+  echo "Usage: sh run_standalone_train.sh [DATASET_NAME] [DATASET_PATH] [PLATFORM](optional)"
   exit 1
 fi
 
@@ -29,7 +29,11 @@ get_real_path() {
 
 DATASET_NAME=$1
 PATH1=$(get_real_path $2)
-PLATFORM=$3
+if [ $# == 3 ]; then
+  PLATFORM=$3
+else
+  PLATFORM="Ascend"
+fi
 
 if [ ! -d $PATH1 ]; then
   echo "error: DATASET_PATH=$PATH1 is not a directory"
@@ -58,7 +62,7 @@ run_gpu() {
 if [ -d "train" ]; then
     rm -rf ./train
 fi
-WORKDIR=./train$(DEVICE_ID)
+WORKDIR=./train${DEVICE_ID}
 mkdir $WORKDIR
 cp ../*.py $WORKDIR
 cp -r ../src $WORKDIR
