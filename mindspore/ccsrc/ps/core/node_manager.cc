@@ -46,7 +46,6 @@ int NodeManager::NextRankId(const RegisterMessage &register_message) {
     nodes_info_[node_id] = node_info;
     MS_LOG(INFO) << "The server node id:" << node_id << ",node ip: " << node_info.ip_ << ",node port:" << port
                  << " assign rank id:" << rank_id;
-
   } else if (register_message.role() == NodeRole::WORKER) {
     rank_id = ++next_worker_rank_id_;
     NodeInfo node_info;

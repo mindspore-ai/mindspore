@@ -38,7 +38,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 class SchedulerNode : public Node {
  public:
   SchedulerNode() : server_(nullptr), scheduler_thread_(nullptr), update_state_thread_(nullptr) {}

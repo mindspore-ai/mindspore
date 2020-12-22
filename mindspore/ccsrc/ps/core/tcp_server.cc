@@ -368,7 +368,6 @@ int TcpServer::ConnectionNum() const { return connections_.size(); }
 const std::map<evutil_socket_t, const TcpConnection *> &TcpServer::Connections() const { return connections_; }
 
 void TcpServer::SetMessageCallback(const OnServerReceiveMessage &cb) { message_callback_ = cb; }
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

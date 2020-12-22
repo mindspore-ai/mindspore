@@ -97,7 +97,6 @@ class TcpClient {
   std::atomic<bool> is_stop_;
   std::atomic<bool> is_connected_;
 };
-
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore
