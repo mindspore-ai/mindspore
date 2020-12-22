@@ -60,7 +60,7 @@ void ClearPyNativeSession();
 struct GraphInfo {
   std::string cell_id;
   AnfNodePtr output;
-  std::unordered_map<std::string, ParameterPtr> params;  // hold input parameters and cell weigths
+  OrderedMap<std::string, ParameterPtr> params;  // hold input parameters and cell weigths
   std::unordered_map<std::string, std::pair<AnfNodePtr, std::vector<int64_t>>> node_map;
   std::vector<std::string> objects;
   GraphInfo() = default;
@@ -210,6 +210,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void UpdateCellGraph(const py::object &cell, const FuncGraphPtr &g, const std::string &cell_id,
                        bool need_cloned = false, bool is_grad = false);
   void ClearResidualRes(const std::string &cell_id);
+  void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   void NewGraphInner(const py::object &cell, const py::args &args);
   void MakeNewTopGraph(const string &cell_id, const py::args &args, const FuncGraphPtr &g);
   void EndGraphInner(const py::object &cell, const py::object &out, const py::args &args);
@@ -233,6 +234,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void SetNestedTopGraph(const py::object &cell, const py::args &args, const std::string &cell_id);
   void MakeNestedCnode(const std::string &cell_id, const py::args &args, const ResourcePtr &resource,
                        const py::object &out, bool has_sens);
+  void SetNestedWeigthsParam(const FuncGraphPtr &newfg, const std::string &cell_id, std::vector<AnfNodePtr> *inputs);
   bool MakeBpropNestedCnode(const py::object &cell, const py::object &out, const std::string &cell_id);
 
   // Hold graph(forward and grad) info
@@ -242,7 +244,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void SetTupleArgsToGraphInfoMap(const FuncGraphPtr &g, const py::object &args, const AnfNodePtr &node,
                                   bool is_param = false);
   void SetParamNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const ParameterPtr &param) {
-    graph_info_map_[g].params.emplace(std::make_pair(id, param));
+    graph_info_map_[g].params[id] = param;
   }
   void SetNodeMapInGraphInfoMap(const FuncGraphPtr &g, const std::string &id, const AnfNodePtr &node,
                                 int64_t index = -1) {
@@ -269,15 +271,16 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   // Records forwrad graph, the bottom is top graph
   std::stack<FuncGraphPtr> graph_stack_;
 
+  // Use vector for keep order
+  std::vector<CellInfo> cell_graph_list_;
+  std::vector<TopCellInfo> top_cell_list_;
   std::unordered_set<std::string> cell_input_args_;
   std::unordered_map<std::string, bool> cell_dynamic_map_;
   // Record all info for all cells
   std::unordered_map<FuncGraphPtr, GraphInfo> graph_info_map_;
-  // Use vector for keep order
-  std::vector<CellInfo> cell_graph_list_;
-  std::vector<TopCellInfo> top_cell_list_;
   // key: cell_id, value: (send_id, weighs_id), cache for sens and weight change
   std::unordered_map<std::string, std::pair<std::string, std::string>> cell_sw_map_;
+  std::unordered_map<FuncGraphPtr, std::vector<std::pair<ParameterPtr, ParameterPtr>>> replace_weights_map_;
 
   // Used for runop and replace forward result of grad graph
   std::unordered_map<std::string, size_t> op_index_map_;
