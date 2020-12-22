@@ -70,31 +70,31 @@ class Logistic(Distribution):
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing 'prob' by the name of the function
         >>> ans = l1.prob(value)
-        >>> print(ans)
-        [0.05875093 0.06153352 0.0625    ]
+        >>> print(ans.shape)
+        (3,)
         >>> # Evaluate with respect to distribution b.
         >>> ans = l1.prob(value, loc_b, scale_b)
-        >>> print(ans)
-        [0.25       0.14943825 0.09830598]
+        >>> print(ans.shape)
+        (3,)
         >>> # `loc` and `scale` must be passed in during function calls
         >>> ans = l1.prob(value, loc_a, scale_a)
-        >>> print(ans)
-        [0.11750185 0.125      0.11750185]
+        >>> print(ans.shape)
+        (3,)
         >>> # Functions `mean`, `mode`, `sd`, `var`, and `entropy` have the same arguments.
         >>> # Args:
         >>> #     loc (Tensor): the location of the distribution. Default: self.loc.
         >>> #     scale (Tensor): the scale of the distribution. Default: self.scale.
         >>> # Example of `mean`. `mode`, `sd`, `var`, and `entropy` are similar.
         >>> ans = l1.mean()
-        >>> print(ans)
-        3.0
+        >>> print(ans.shape)
+        ()
         >>> ans = l1.mean(loc_b, scale_b)
-        >>> print(ans)
-        [1. 1. 1.]
+        >>> print(ans.shape)
+        (3,)
         >>> # `loc` and `scale` must be passed in during function calls.
         >>> ans = l1.mean(loc_a, scale_a)
-        >>> print(ans)
-        [2. 2. 2.]
+        >>> print(ans.shape)
+        (3,)
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ()

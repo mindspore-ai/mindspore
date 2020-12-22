@@ -69,31 +69,31 @@ class Cauchy(Distribution):
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing 'prob' by the name of the function
         >>> ans = cauchy1.prob(value)
-        >>> print(ans)
-        [0.06366198 0.07489645 0.07957748]
+        >>> print(ans.shape)
+        (3,)
         >>> # Evaluate with respect to distribution b.
         >>> ans = cauchy1.prob(value, loc_b, scale_b)
-        >>> print(ans)
-        [0.31830987 0.14691226 0.07957747]
+        >>> print(ans.shape)
+        (3,)
         >>> # `loc` and `scale` must be passed in during function calls
         >>> ans = cauchy2.prob(value, loc_a, scale_a)
-        >>> print(ans)
-        [0.12732396 0.15915494 0.12732396]
+        >>> print(ans.shape)
+        (3,)
         >>> # Functions `mode` and `entropy` have the same arguments.
         >>> # Args:
         >>> #     loc (Tensor): the location of the distribution. Default: self.loc.
         >>> #     scale (Tensor): the scale of the distribution. Default: self.scale.
         >>> # Example of `mode`.
         >>> ans = cauchy1.mode() # return 3.0
-        >>> print(ans)
-        3.0
+        >>> print(ans.shape)
+        ()
         >>> ans = cauchy1.mode(loc_b, scale_b) # return loc_b
-        >>> print(ans)
-        [1. 1. 1.]
+        >>> print(ans.shape)
+        (3,)
         >>> # `loc` and `scale` must be passed in during function calls.
         >>> ans = cauchy2.mode(loc_a, scale_a)
-        >>> print(ans)
-        [2. 2. 2.]
+        >>> print(ans.shape)
+        (3,)
         >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
         >>> # Args:
         >>> #     dist (str): the type of the distributions. Only "Cauchy" is supported.
@@ -103,15 +103,15 @@ class Cauchy(Distribution):
         >>> #     scale (Tensor): the scale distribution a. Default: self.scale.
         >>> # Examples of `kl_loss`. `cross_entropy` is similar.
         >>> ans = cauchy1.kl_loss('Cauchy', loc_b, scale_b)
-        >>> print(ans)
-        [0.594707   0.35563278 0.22314358]
+        >>> print(ans.shape)
+        (3,)
         >>> ans = cauchy1.kl_loss('Cauchy', loc_b, scale_b, loc_a, scale_a)
-        >>> print(ans)
-        [0.22314358 0.09909081 0.0606246 ]
+        >>> print(ans.shape)
+        (3,)
         >>> # Additional `loc` and `scale` must be passed in.
         >>> ans = cauchy2.kl_loss('Cauchy', loc_b, scale_b, loc_a, scale_a)
-        >>> print(ans)
-        [0.22314358 0.09909081 0.0606246 ]
+        >>> print(ans.shape)
+        (3,)
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ()

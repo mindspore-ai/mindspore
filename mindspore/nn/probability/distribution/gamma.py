@@ -72,31 +72,31 @@ class Gamma(Distribution):
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing 'prob' by the name of the function
         >>> ans = g1.prob(value)
-        >>> print(ans)
-        [0.58610016 0.0429392  0.00176953]
+        >>> print(ans.shape)
+        (3,)
         >>> # Evaluate with respect to the distribution b.
         >>> ans = g1.prob(value, concentration_b, rate_b)
-        >>> print(ans)
-        [0.3678793  0.07468057 0.0049575 ]
+        >>> print(ans.shape)
+        (3,)
         >>> # `concentration` and `rate` must be passed in during function calls for g2.
         >>> ans = g2.prob(value, concentration_a, rate_a)
-        >>> print(ans)
-        [0.54134095 0.14652506 0.02974501]
+        >>> print(ans.shape)
+        (3,)
         >>> # Functions `mean`, `sd`, `mode`, `var`, and `entropy` have the same arguments.
         >>> # Args:
         >>> #     concentration (Tensor): the concentration of the distribution. Default: self._concentration.
         >>> #     rate (Tensor): the rate of the distribution. Default: self._rate.
         >>> # Example of `mean`, `sd`, `mode`, `var`, and `entropy` are similar.
         >>> ans = g1.mean()
-        >>> print(ans)
-        [0.75]
+        >>> print(ans.shape)
+        (1,)
         >>> ans = g1.mean(concentration_b, rate_b)
-        >>> print(ans)
-        [1.        0.6666667 0.5      ]
+        >>> print(ans.shape)
+        (3,)
         >>> # `concentration` and `rate` must be passed in during function calls.
         >>> ans = g2.mean(concentration_a, rate_a)
-        >>> print(ans)
-        [1. 1. 1.]
+        >>> print(ans.shape)
+        (3,)
         >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
         >>> # Args:
         >>> #     dist (str): the type of the distributions. Only "Gamma" is supported.
@@ -106,15 +106,15 @@ class Gamma(Distribution):
         >>> #     rate_a (Tensor): the rate of distribution a. Default: self._rate.
         >>> # Examples of `kl_loss`. `cross_entropy` is similar.
         >>> ans = g1.kl_loss('Gamma', concentration_b, rate_b)
-        >>> print(ans)
-        [0.28871584 0.2582507  0.34556866]
+        >>> print(ans.shape)
+        (3,)
         >>> ans = g1.kl_loss('Gamma', concentration_b, rate_b, concentration_a, rate_a)
-        >>> print(ans)
-        [0.11593175 0.21046662 0.42278457]
+        >>> print(ans.shape)
+        (3,)
         >>> # Additional `concentration` and `rate` must be passed in.
         >>> ans = g2.kl_loss('Gamma', concentration_b, rate_b, concentration_a, rate_a)
-        >>> print(ans)
-        [0.11593175 0.21046662 0.42278457]
+        >>> print(ans.shape)
+        (3,)
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ()

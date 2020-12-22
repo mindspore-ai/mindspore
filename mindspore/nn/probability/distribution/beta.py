@@ -71,31 +71,31 @@ class Beta(Distribution):
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing 'prob' by the name of the function
         >>> ans = b1.prob(value)
-        >>> print(ans)
-        [0.43740022 1.8750011  0.30720013]
+        >>> print(ans.shape)
+        (3,)
         >>> # Evaluate with respect to the distribution b.
         >>> ans = b1.prob(value, concentration1_b, concentration0_b)
-        >>> print(ans)
-        [0.99999964 1.0606599  0.39999983]
+        >>> print(ans.shape)
+        (3,)
         >>> # `concentration1` and `concentration0` must be passed in during function calls
         >>> ans = b2.prob(value, concentration1_a, concentration0_a)
-        >>> print(ans)
-        [0.5400001  1.5000001  0.96000004]
+        >>> print(ans.shape)
+        (3,)
         >>> # Functions `mean`, `sd`, `mode`, `var`, and `entropy` have the same arguments.
         >>> # Args:
         >>> #     concentration1 (Tensor): the concentration1 of the distribution. Default: self._concentration1.
         >>> #     concentration0 (Tensor): the concentration0 of the distribution. Default: self._concentration0.
         >>> # Example of `mean`, `sd`, `mode`, `var`, and `entropy` are similar.
         >>> ans = b1.mean()
-        >>> print(ans)
-        [0.42857143]
+        >>> print(ans.shape)
+        (1,)
         >>> ans = b1.mean(concentration1_b, concentration0_b)
-        >>> print(ans)
-        [0.5        0.4        0.33333334]
+        >>> print(ans.shape)
+        (3,)
         >>> # `concentration1` and `concentration0` must be passed in during function calls.
         >>> ans = b2.mean(concentration1_a, concentration0_a)
-        >>> print(ans)
-        [0.5 0.5 0.5]
+        >>> print(ans.shape)
+        (3,)
         >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
         >>> # Args:
         >>> #     dist (str): the type of the distributions. Only "Beta" is supported.
@@ -107,15 +107,15 @@ class Beta(Distribution):
         >>> #       Default: self._concentration0.
         >>> # Examples of `kl_loss`. `cross_entropy` is similar.
         >>> ans = b1.kl_loss('Beta', concentration1_b, concentration0_b)
-        >>> print(ans)
-        [0.34434414 0.24721336 0.26786423]
+        >>> print(ans.shape)
+        (3,)
         >>> ans = b1.kl_loss('Beta', concentration1_b, concentration0_b, concentration1_a, concentration0_a)
-        >>> print(ans)
-        [0.12509346 0.13629508 0.26527953]
+        >>> print(ans.shape)
+        (3,)
         >>> # Additional `concentration1` and `concentration0` must be passed in.
         >>> ans = b2.kl_loss('Beta', concentration1_b, concentration0_b, concentration1_a, concentration0_a)
-        >>> print(ans)
-        [0.12509346 0.13629508 0.26527953]
+        >>> print(ans.shape)
+        (3,)
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ()

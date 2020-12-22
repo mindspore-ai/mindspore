@@ -40,17 +40,17 @@ class Invert(Bijector):
         >>> inv_exp = msb.Invert(msb.Exp())
         >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
         >>> ans1 = inv_exp.forward(value)
-        >>> print(ans1)
-        [0.        0.6931472 1.0986123]
+        >>> print(ans1.shape)
+        (3,)
         >>> ans2 = inv_exp.inverse(value)
-        >>> print(ans2)
-        [ 2.718282  7.389056 20.085537]
+        >>> print(ans2.shape)
+        (3,)
         >>> ans3 = inv_exp.forward_log_jacobian(value)
-        >>> print(ans3)
-        [-0.        -0.6931472 -1.0986123]
+        >>> print(ans3.shape)
+        (3,)
         >>> ans4 = inv_exp.inverse_log_jacobian(value)
-        >>> print(ans4)
-        [1. 2. 3.]
+        >>> print(ans4.shape)
+        (3,)
     """
 
     def __init__(self,

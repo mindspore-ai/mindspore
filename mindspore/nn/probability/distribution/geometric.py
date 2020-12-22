@@ -67,30 +67,30 @@ class Geometric(Distribution):
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing `prob` by the name of the function.
         >>> ans = g1.prob(value)
-        >>> print(ans)
-        [0.25 0.5  0.25]
+        >>> print(ans.shape)
+        (3,)
         >>> # Evaluate with respect to distribution b.
         >>> ans = g1.prob(value, probs_b)
-        >>> print(ans)
-        [0.16 0.5  0.24]
+        >>> print(ans.shape)
+        (3,)
         >>> # `probs` must be passed in during function calls.
         >>> ans = g2.prob(value, probs_a)
-        >>> print(ans)
-        [0.24 0.6  0.24]
+        >>> print(ans.shape)
+        (3,)
         >>> # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
         >>> # Args:
         >>> #     probs1 (Tensor): the probability of success of a Bernoulli trail. Default: self.probs.
         >>> # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
         >>> ans = g1.mean() # return 1.0
-        1.0
-        >>> print(ans)
+        >>> print(ans.shape)
+        ()
         >>> ans = g1.mean(probs_b)
-        >>> print(ans)
-        [4.  1.  1.5]
+        >>> print(ans.shape)
+        (3,)
         >>> # Probs must be passed in during function calls
         >>> ans = g2.mean(probs_a)
-        >>> print(ans)
-        [0.6666666]
+        >>> print(ans.shape)
+        (1,)
         >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same.
         >>> # Args:
         >>> #     dist (str): the name of the distribution. Only 'Geometric' is supported.
@@ -98,15 +98,15 @@ class Geometric(Distribution):
         >>> #     probs1_a (Tensor): the probability of success of a Bernoulli trail of distribution a. Default: self.probs.
         >>> # Examples of `kl_loss`. `cross_entropy` is similar.
         >>> ans = g1.kl_loss('Geometric', probs_b)
-        >>> print(ans)
-        [0.44628713 0.         0.04082197]
+        >>> print(ans.shape)
+        (3,)
         >>> ans = g1.kl_loss('Geometric', probs_b, probs_a)
-        >>> print(ans)
-        [0.6365142  0.0335592  0.13515502]
+        >>> print(ans.shape)
+        (3,)
         >>> # An additional `probs` must be passed in.
         >>> ans = g2.kl_loss('Geometric', probs_b, probs_a)
-        >>> print(ans)
-        [0.6365142  0.0335592  0.13515502]
+        >>> print(ans.shape)
+        (3,)
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ()

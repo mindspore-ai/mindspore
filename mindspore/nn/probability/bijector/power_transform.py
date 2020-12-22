@@ -56,17 +56,17 @@ class PowerTransform(Bijector):
         >>> powertransform = msb.PowerTransform(0.5)
         >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
         >>> ans1 = powertransform.forward(value)
-        >>> print(ans1)
-        [2.25 4.   6.25]
+        >>> print(ans1.shape)
+        (3,)
         >>> ans2 = powertransform.inverse(value)
-        >>> print(ans2)
-        [0.         0.82842714 1.4641017 ]
+        >>> print(ans2.shape)
+        (3,)
         >>> ans3 = powertransform.forward_log_jacobian(value)
-        >>> print(ans3)
-        [0.40546513 0.6931472  0.91629076]
+        >>> print(ans3.shape)
+        (3,)
         >>> ans4 = powertransform.inverse_log_jacobian(value)
-        >>> print(ans4)
-        [-0.         -0.3465736  -0.54930615]
+        >>> print(ans4.shape)
+        (3,)
     """
 
     def __init__(self,

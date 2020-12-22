@@ -41,19 +41,26 @@ class Exp(PowerTransform):
         >>> exp_bijector = nn.probability.bijector.Exp()
         >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
         >>> ans1 = exp_bijector.forward(value)
-        [ 2.7182817  7.389056  20.085537 ]
-        >>> print(ans1)
+        >>> print(ans1.shape)
+        (3,)
         >>> ans2 = exp_bijector.inverse(value)
-        [0.        0.6931472 1.0986123]
-        >>> print(ans2)
+        >>> print(ans2.shape)
+        (3,)
         >>> ans3 = exp_bijector.forward_log_jacobian(value)
-        >>> print(ans3)
-        [1. 2. 3.]
+        >>> print(ans3.shape)
+        (3,)
         >>> ans4 = exp_bijector.inverse_log_jacobian(value)
-        >>> print(ans4)
-        [-0.        -0.6931472 -1.0986123]
+        >>> print(ans4.shape)
+        (3,)
     """
 
     def __init__(self,
                  name='Exp'):
         super(Exp, self).__init__(name=name)
+
+    def extend_repr(self):
+        if self.is_scalar_batch:
+            str_info = 'exp'
+        else:
+            str_info = f'batch_shape = {self.batch_shape}'
+        return str_info

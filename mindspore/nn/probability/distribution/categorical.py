@@ -65,30 +65,30 @@ class Categorical(Distribution):
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing `prob` by the name of the function.
         >>> ans = ca1.prob(value)
-        >>> print(ans)
-        [0.8 0.2]
+        >>> print(ans.shape)
+        (2,)
         >>> # Evaluate `prob` with respect to distribution b.
         >>> ans = ca1.prob(value, probs_b)
-        >>> print(ans)
-        [0.65 0.35]
+        >>> print(ans.shape)
+        (2,)
         >>> # `probs` must be passed in during function calls.
         >>> ans = ca2.prob(value, probs_a)
-        >>> print(ans)
-        [0.5 0.5]
+        >>> print(ans.shape)
+        (2,)
         >>> # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
         >>> # Args:
         >>> #     probs (Tensor): event probabilities. Default: self.probs.
         >>> # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
         >>> ans = ca1.mean() # return 0.8
-        >>> print(ans)
-        [0.8]
+        >>> print(ans.shape)
+        (1,)
         >>> ans = ca1.mean(probs_b)
-        >>> print(ans)
-        [0.65]
+        >>> print(ans.shape)
+        (1,)
         >>> # `probs` must be passed in during function calls.
         >>> ans = ca2.mean(probs_a)
-        >>> print(ans)
-        [0.5]
+        >>> print(ans.shape)
+        (1,)
         >>> # Interfaces of `kl_loss` and `cross_entropy` are the same as follows:
         >>> # Args:
         >>> #     dist (str): the name of the distribution. Only 'Categorical' is supported.
@@ -96,15 +96,15 @@ class Categorical(Distribution):
         >>> #     probs (Tensor): event probabilities of distribution a. Default: self.probs.
         >>> # Examples of kl_loss. `cross_entropy` is similar.
         >>> ans = ca1.kl_loss('Categorical', probs_b)
-        >>> print(ans)
-        0.05418826
+        >>> print(ans.shape)
+        ()
         >>> ans = ca1.kl_loss('Categorical', probs_b, probs_a)
-        >>> print(ans)
-        0.04715523
+        >>> print(ans.shape)
+        ()
         >>> # An additional `probs` must be passed in.
         >>> ans = ca2.kl_loss('Categorical', probs_b, probs_a)
-        >>> print(ans)
-        0.04715523
+        >>> print(ans.shape)
+        ()
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ().

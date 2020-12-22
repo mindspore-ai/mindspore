@@ -53,17 +53,17 @@ class Softplus(Bijector):
         >>> # To use a ScalarAffine bijector in a network.
         >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
         >>> ans1 = softplus.forward(value)
-        >>> print(ans1)
-        [1.063464  2.009075  3.0012379]
+        >>> print(ans1.shape)
+        (3,)
         >>> ans2 = softplus.inverse(value)
-        >>> print(ans2)
-        [0.9272933 1.9907573 2.998759 ]
+        >>> print(ans2.shape)
+        (3,)
         >>> ans3 = softplus.forward_log_jacobian(value)
-        >>> print(ans3)
-        [-0.12692806 -0.01814996 -0.00247564]
+        >>> print(ans3.shape)
+        (3,)
         >>> ans4 = softplus.inverse_log_jacobian(value)
-        >>> print(ans4)
-        [0.1454134  0.01848531 0.00248194]
+        >>> print(ans4.shape)
+        (3,)
     """
 
     def __init__(self,
