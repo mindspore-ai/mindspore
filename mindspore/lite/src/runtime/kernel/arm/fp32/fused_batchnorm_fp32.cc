@@ -129,27 +129,5 @@ int FusedBatchnormCPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuFusedBatchnormKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                   const std::vector<lite::Tensor *> &outputs,
-                                                   OpParameter *op_parameter, const lite::InnerContext *ctx,
-                                                   const kernel::KernelKey &desc,
-                                                   const mindspore::lite::PrimitiveC *primitive) {
-  FusedBatchnormCPUKernel *kernel =
-    new (std::nothrow) FusedBatchnormCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new FusedBatchnormCPUKernel fail!";
-    free(op_parameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FusedBatchNorm, CpuFusedBatchnormKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FusedBatchNorm, CPUKernelCreator<FusedBatchnormCPUKernel>)
 }  // namespace mindspore::kernel

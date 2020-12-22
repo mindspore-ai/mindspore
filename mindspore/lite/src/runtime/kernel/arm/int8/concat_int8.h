@@ -18,20 +18,22 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_CONCAT_INT8_H_
 
 #include <vector>
+#include <limits>
+#include "nnacl/int8/concat_int8.h"
+#include "include/errorcode.h"
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "src/runtime/kernel/arm/base/concat_base.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::lite::InnerContext;
-
 namespace mindspore::kernel {
-class ConcatInt8CPUKernel : public ConcatBaseCPUKernel {
+class ConcatInt8CPUKernel : public LiteKernel {
  public:
   ConcatInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
+                      const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
-      : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    concat_param_ = reinterpret_cast<ConcatParameter *>(op_parameter_);
+  }
   ~ConcatInt8CPUKernel() override {
     if (input_data_ != nullptr) {
       free(input_data_);
@@ -64,6 +66,7 @@ class ConcatInt8CPUKernel : public ConcatBaseCPUKernel {
   int64_t count_unit_;
   int8_t **input_data_ = nullptr;
   int8_t *output_data_ = nullptr;
+  ConcatParameter *concat_param_ = nullptr;
 };
 
 int ConcatInt8Run(void *cdata, int task_id);

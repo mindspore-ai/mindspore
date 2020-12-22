@@ -197,5 +197,5 @@ kernel::LiteKernel *CpuQuantDTypeCastFp16KernelCreator(const std::vector<lite::T
   }
   return kernel;
 }
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_QuantDTypeCast, CpuQuantDTypeCastFp16KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_QuantDTypeCast, CPUKernelCreator<QuantDTypeCastFp16CPUKernel>)
 }  // namespace mindspore::kernel

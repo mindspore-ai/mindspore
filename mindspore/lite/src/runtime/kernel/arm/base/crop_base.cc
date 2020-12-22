@@ -31,30 +31,25 @@ int CropBaseCPUKernel::Init() { return RET_OK; }
 
 int CropBaseCPUKernel::ReSize() {
   auto *input_tensor = in_tensors_.at(kInputIndex);
+  auto *out_tensor = out_tensors_.at(kOutputIndex);
   auto input_shape = input_tensor->shape();
+  auto output_shape = out_tensor->shape();
   size_t input_dim = input_shape.size();
+  size_t output_dim = output_shape.size();
 
   crop_para_->in_shape_ = reinterpret_cast<int *>(malloc(input_dim * sizeof(int)));
   if (crop_para_->in_shape_ == nullptr) {
     MS_LOG(ERROR) << "in_shape_ is nullptr";
     return RET_ERROR;
   }
-
-  memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->in_shape_)), input_shape.data(),
-         sizeof(int) * input_dim);
-
-  auto *out_tensor = out_tensors_.at(kOutputIndex);
-  auto output_shape = out_tensor->shape();
-  size_t output_dim = output_shape.size();
+  memcpy(crop_para_->in_shape_, input_shape.data(), sizeof(int) * input_dim);
 
   crop_para_->out_shape_ = reinterpret_cast<int *>(malloc(output_dim * sizeof(int)));
   if (crop_para_->out_shape_ == nullptr) {
     MS_LOG(ERROR) << "out_shape_ is nullptr";
     return RET_ERROR;
   }
-
-  memcpy(reinterpret_cast<void *>(const_cast<int *>(crop_para_->out_shape_)), output_shape.data(),
-         sizeof(int) * output_dim);
+  memcpy(crop_para_->out_shape_, output_shape.data(), sizeof(int) * output_dim);
 
   MS_ASSERT(input_dim <= CROP_OFFSET_MAX_SIZE);
   crop_para_->input_dim_ = input_dim;
@@ -81,56 +76,4 @@ void CropBaseCPUKernel::PadOffset(int input_dim, CropParameter *crop_para) {
     crop_para->in_offset_[i] = crop_offset;
   }
 }
-
-kernel::LiteKernel *CpuCropInt32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                              const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                              const InnerContext *ctx, const kernel::KernelKey &desc,
-                                              const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Crop);
-  auto *kernel = new (std::nothrow) CropCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new CropCPUKernel fail!";
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-kernel::LiteKernel *CpuCropFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const InnerContext *ctx, const kernel::KernelKey &desc,
-                                             const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Crop);
-  auto *kernel = new (std::nothrow) CropCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new CropCPUKernel fail!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Crop, CpuCropInt32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Crop, CpuCropFp32KernelCreator)
 }  // namespace mindspore::kernel

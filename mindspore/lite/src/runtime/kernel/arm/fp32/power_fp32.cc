@@ -74,4 +74,5 @@ int PowerCPUKernel::RunImpl(int task_id) {
   return RET_OK;
 }
 
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Power, CPUKernelCreator<PowerCPUKernel>)
 }  // namespace mindspore::kernel

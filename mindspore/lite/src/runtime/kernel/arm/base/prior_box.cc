@@ -174,35 +174,6 @@ int PriorBoxCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuPriorBoxKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                             const InnerContext *ctx, const kernel::KernelKey &desc,
-                                             const mindspore::lite::PrimitiveC *primitive) {
-  if (op_parameter == nullptr) {
-    MS_LOG(ERROR) << "Input op_parameter is nullptr!";
-    return nullptr;
-  }
-  if (desc.type != schema::PrimitiveType_PriorBox) {
-    MS_LOG(ERROR) << "PriorBox invalid desc type " << desc.type;
-    free(op_parameter);
-    return nullptr;
-  }
-  auto *kernel = new (std::nothrow) PriorBoxCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new PriorBoxCPUKernel fail!";
-    free(op_parameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_PriorBox, CpuPriorBoxKernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_PriorBox, CpuPriorBoxKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_PriorBox, CPUKernelCreator<PriorBoxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_PriorBox, CPUKernelCreator<PriorBoxCPUKernel>)
 }  // namespace mindspore::kernel

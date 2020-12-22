@@ -15,21 +15,14 @@
  */
 
 #include "src/runtime/kernel/arm/int8/leaky_relu_int8.h"
-#include <limits>
-#include "nnacl/fp32/activation_fp32.h"
-#include "nnacl/int8/leaky_relu_int8.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
-#include "include/errorcode.h"
-#include "nnacl/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
-
-using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_LeakyReLU;
 
 namespace mindspore::kernel {
@@ -46,7 +39,6 @@ int LeakyReluInt8Run(void *cdata, int task_id) {
 }  // namespace
 
 int LeakyReluInt8CPUKernel::Init() {
-  LeakyReluBaseCPUKernel::Init();
   quant_prelu_parm_.op_parameter_ = *op_parameter_;
   quant_prelu_parm_.slope_ = reinterpret_cast<ActivationParameter *>(op_parameter_)->alpha_;
 
@@ -126,41 +118,17 @@ int LeakyReluInt8CPUKernel::Run() {
 int LeakyReluInt8CPUKernel::DoExecute(int task_id) {
   auto input_tensor = in_tensors_.at(kInputIndex);
   auto out_tensor = out_tensors_.at(kOutputIndex);
-  int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->MutableData());
-  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->MutableData());
+  int8_t *input_data = reinterpret_cast<int8_t *>(input_tensor->data_c());
+  int8_t *output_data = reinterpret_cast<int8_t *>(out_tensor->data_c());
   MS_ASSERT(input_data);
   MS_ASSERT(output_data);
   auto ret = DoLeakReluInt8(input_data, output_data, &quant_prelu_parm_, task_id);
-  if (ret != NNACL_OK) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoLeakReluInt8 failed";
     return RET_ERROR;
   }
   return RET_OK;
 }
-kernel::LiteKernel *CpuLeakyReluInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                  const InnerContext *ctx, const kernel::KernelKey &desc,
-                                                  const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
 
-  auto *kernel = new (std::nothrow) LeakyReluInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new LeakyReluInt8CPUKernel fail!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LeakyReLU, CpuLeakyReluInt8KernelCreator)
-
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LeakyReLU, CPUKernelCreator<LeakyReluInt8CPUKernel>)
 }  // namespace mindspore::kernel

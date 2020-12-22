@@ -234,4 +234,8 @@ void ReduceCPUKernel::FreeTmpBuffer() {
   }
   data_buffers_.clear();
 }
+
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reduce, CPUKernelCreator<ReduceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt, PrimitiveType_Reduce, CPUKernelCreator<ReduceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Reduce, CPUKernelCreator<ReduceCPUKernel>)
 }  // namespace mindspore::kernel

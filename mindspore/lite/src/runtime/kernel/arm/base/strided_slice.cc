@@ -70,7 +70,7 @@ int StridedSliceCPUKernel::Run() {
   }
   auto output = out_tensors_.at(0);
   MS_ASSERT(output);
-  auto ret = DoStridedSlice(input->MutableData(), output->MutableData(), param_);
+  auto ret = DoStridedSlice(input->data_c(), output->data_c(), param_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "StridedSlice error error_code[" << ret << "]";
     return RET_ERROR;
@@ -78,33 +78,7 @@ int StridedSliceCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuStridedSliceKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                 const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                                 const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(desc.type == schema::PrimitiveType_StridedSlice);
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "opParameter null pointer dereferencing.";
-    return nullptr;
-  }
-  auto *kernel = new (std::nothrow) StridedSliceCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "New kernel fails.";
-    free(opParameter);
-    return nullptr;
-  }
-
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_StridedSlice, CpuStridedSliceKernelCreator)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_StridedSlice, CpuStridedSliceKernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_StridedSlice, CpuStridedSliceKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_StridedSlice, CPUKernelCreator<StridedSliceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_StridedSlice, CPUKernelCreator<StridedSliceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_StridedSlice, CPUKernelCreator<StridedSliceCPUKernel>)
 }  // namespace mindspore::kernel

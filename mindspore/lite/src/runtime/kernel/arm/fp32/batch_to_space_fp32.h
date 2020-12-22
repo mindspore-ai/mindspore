@@ -15,17 +15,19 @@
  */
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCH_TO_SPACE_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_BATCH_TO_SPACE_H_
+
 #include <vector>
-#include "src/runtime/kernel/arm/base/batch_to_space_base.h"
+#include "include/errorcode.h"
+#include "nnacl/batch_to_space.h"
+#include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-class BatchToSpaceCPUKernel : public BatchToSpaceBaseCPUKernel {
+class BatchToSpaceCPUKernel : public LiteKernel {
  public:
   BatchToSpaceCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                         const mindspore::lite::PrimitiveC *primitive)
-      : BatchToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~BatchToSpaceCPUKernel() = default;
 
   int Init() override;
