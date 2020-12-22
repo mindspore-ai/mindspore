@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <tuple>
 #include <utility>
 #include <vector>
+#include <string>
 #include "backend/optimizer/common/optimizer.h"
 #include "backend/session/kernel_graph.h"
 
@@ -28,21 +29,24 @@ namespace mindspore {
 namespace opt {
 class AtomicCleanInsertter : public Pass {
  public:
-  AtomicCleanInsertter() : Pass("atomic_clean") {}
+  explicit AtomicCleanInsertter(const std::string &name = "atomic_clean") : Pass(name) {}
   ~AtomicCleanInsertter() override = default;
-  bool Run(const FuncGraphPtr &func_graph) override;
+  virtual bool Run(const FuncGraphPtr &func_graph);
 
- private:
-  void ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input,
-                          const FuncGraphManagerPtr &mng);
-  bool CanActivateAtomicAdd(const AnfNodePtr &anf_node);
+ protected:
+  virtual void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input);
+  virtual void ProcessOriginCNode(const AnfNodePtr &composite_node, const AnfNodePtr &new_input,
+                                  const FuncGraphManagerPtr &mng);
   void InsertAtomicClean(const KernelGraphPtr &main_graph, const AnfNodePtr &anf_node, const FuncGraphManagerPtr &mng);
   void AddDepend(const FuncGraphPtr &main_graph, const AnfNodePtr &clean_node, const AnfNodePtr &composite_node,
                  const AnfNodePtr &user_node, int index);
-  void CreateInplaceAssignNodeAndCorrectReturn(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter);
+  CNodePtr atomic_add_node_{nullptr};
+
+ private:
+  bool CanActivateAtomicAdd(const AnfNodePtr &anf_node);
   void CorrectAbstract(const AnfNodePtr &composite_node);
-  void CorrectKernelBuildInfo(const AnfNodePtr &composite_node, const AnfNodePtr &new_input);
   CNodePtr CreateAtomicCleanCompositeNode(const KernelGraphPtr &main_graph, TypeId dst_type);
+  void CreateInplaceAssignNodeAndCorrectReturn(const FuncGraphPtr &sub_graph, const AnfNodePtr &new_parameter);
   void ProcessOriginCNodeUser(const KernelGraphPtr &main_graph, const AnfNodePtr &composite_node,
                               const AnfNodePtr &broadcast_to_node, const FuncGraphManagerPtr &mng);
   std::tuple<AnfNodePtr, AnfNodePtr, int> FindPatronNode(const KernelGraphPtr &main_graph);
@@ -55,7 +59,6 @@ class AtomicCleanInsertter : public Pass {
   bool IsExistStructuralObstacle(const KernelGraphPtr &main_graph, const AnfNodePtr &node,
                                  const FuncGraphManagerPtr &mng);
 
-  CNodePtr atomic_add_node_{nullptr};
   size_t reduce_real_output_index_{0};
   size_t real_output_num_{0};
   std::vector<std::pair<AnfNodePtr, AnfNodePtr>> to_process_order_;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@
 #include "backend/optimizer/gpu/add_relu_v2_fusion.h"
 #include "backend/optimizer/gpu/add_relu_grad_v2_fusion.h"
 #include "backend/optimizer/graph_kernel/add_atomic_clean_gpu.h"
+#include "backend/optimizer/graph_kernel/add_stitch_atomic_clean_gpu.h"
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 #include "backend/optimizer/graph_kernel/clean_all_in_once.h"
@@ -201,6 +202,7 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   // will be exposed, use GetitemTuple Pass to delete them.
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
   pm->AddPass(std::make_shared<opt::AtomicCleanInsertter>());
+  pm->AddPass(std::make_shared<opt::StitchAtomicCleanInsertter>());
   pm->AddPass(std::make_shared<opt::DependFormater>());  // Prevent fake loop in parallel fusion.
   pm->AddPass(std::make_shared<opt::ParallelOpFusion>(kGPUDevice, opt::ParallelConfig(7)));
   pm->AddPass(std::make_shared<opt::BindValueToGraph>());

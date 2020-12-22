@@ -384,6 +384,7 @@ constexpr auto kAttrIsGrad = "is_grad";
 constexpr auto kAttrRecompute = "recompute";
 constexpr auto kAttrNeedCseAfterRecompute = "need_cse_after_recompute";
 constexpr auto kAttrParallelDimInfo = "parallel_dim_info";
+constexpr auto kAttrStitch = "stitch";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";

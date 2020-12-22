@@ -313,6 +313,14 @@ class CompositeGraph:
         self.graph = builder.get()[0]
         self.desc = desc
 
+    def add_stitch_info(self, subgraph, desc):
+        if subgraph.stitch_info and subgraph.stitch_info.stitch_ops:
+            buffer_stitch = {'stitch_op': list(subgraph.stitch_info.stitch_ops)}
+            if subgraph.stitch_info.stitch_atomic_ops:
+                buffer_stitch['stitch_atomic_op'] = list(subgraph.stitch_info.stitch_atomic_ops)
+            desc['buffer_stitch'] = buffer_stitch
+        return desc
+
     def dump(self, subgraph):
         """Dump Graph to json"""
         desc = {}
@@ -368,6 +376,8 @@ class CompositeGraph:
                 desc[key] = subgraph.name
             else:
                 desc[key] = self.desc[key]
+
+        desc = self.add_stitch_info(subgraph, desc)
         return desc
 
 
