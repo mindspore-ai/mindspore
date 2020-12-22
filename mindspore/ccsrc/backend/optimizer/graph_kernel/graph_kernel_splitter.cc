@@ -544,8 +544,7 @@ class CostModelSplitSchemer : public Splitter::SplitSchemer {
     }
     func_graph_ = func_graph;
     this->Run();
-    if (split_plan_.empty()) return false;
-    return split_plan_.size() > 1 || NeedInline(0);
+    return !split_plan_.empty();
   }
 
   bool NeedInline(size_t group_id) const override {
@@ -630,7 +629,12 @@ class CostModelSplitSchemer : public Splitter::SplitSchemer {
     }
     GetValidKernelNodes();
     // call CostModel to get a split plan.
-    if (!SplitByCostModel()) {
+    if (!SplitByCostModel() || split_plan_.size() != need_inline_.size()) {
+      split_plan_.clear();
+      need_inline_.clear();
+      return;
+    } else if (split_plan_.size() == 1 && !NeedInline(0)) {
+      /*In this case, the CostModel decided to keep the whole graph unchanged.*/
       split_plan_.clear();
       need_inline_.clear();
       return;

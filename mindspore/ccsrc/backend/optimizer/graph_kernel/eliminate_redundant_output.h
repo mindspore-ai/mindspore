@@ -28,7 +28,7 @@ class EliminateRedundantOutput : public Pass {
 
  private:
   bool Process(const FuncGraphPtr &func_graph);
-  void UpdateGetitemIndex(const CNodePtr &getitem, int64_t offset);
+  void UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset);
   AnfNodePtr ReplaceMakeTuple(const AnfNodePtr &node, const AnfNodePtrList &getitems);
 };
 }  // namespace opt
