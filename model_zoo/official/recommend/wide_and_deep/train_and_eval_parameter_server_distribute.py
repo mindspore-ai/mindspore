@@ -115,6 +115,10 @@ def train_and_eval(config):
 
     model = Model(train_net, eval_network=eval_net, metrics={"auc": auc_metric})
 
+    if cache_enable:
+        config.stra_ckpt = os.path.join(config.stra_ckpt + "-{}".format(get_rank()), "strategy.ckpt")
+        context.set_auto_parallel_context(strategy_ckpt_save_file=config.stra_ckpt)
+
     eval_callback = EvalCallBack(model, ds_eval, auc_metric, config)
 
     callback = LossCallBack(config=config)
@@ -129,9 +133,6 @@ def train_and_eval(config):
     ckpoint_cb = ModelCheckpoint(prefix='widedeep_train',
                                  directory=config.ckpt_path + '/ckpt_' + str(get_rank()) + '/',
                                  config=ckptconfig)
-    if cache_enable:
-        config.stra_ckpt = './stra_ckpt_' + str(get_rank()) + '/strategy.ckpt'
-        context.set_auto_parallel_context(strategy_ckpt_save_file=config.stra_ckpt)
     callback_list = [TimeMonitor(ds_train.get_dataset_size()), eval_callback, callback]
     if get_rank() == 0:
         callback_list.append(ckpoint_cb)
