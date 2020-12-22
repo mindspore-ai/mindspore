@@ -31,6 +31,8 @@ ALL_SCALAR = 3
 ALL_INT = 4
 NO_INT = 5
 CONTAIN_INT = 6
+ALL_BASIC = 7
+MIXED = 8
 
 INT_ = 0
 BOOL_ = 1
@@ -308,6 +310,18 @@ def tuple_index_int_cnt(types, op_name):
 
 
 @constexpr
+def tuple_index_type_cnt(types, op_name):
+    """count the tensor type of types which contains the tuple elements' type."""
+    tensor_cnt = sum(isinstance(ele, mstype.tensor_type) for ele in types)
+    basic_cnt = sum(isinstance(ele, (mstype.Int, mstype.ellipsis_type, mstype.slice_type)) for ele in types)
+    if tensor_cnt == len(types):
+        return ALL_TENSOR
+    if basic_cnt == len(types):
+        return ALL_BASIC
+    return MIXED
+
+
+@constexpr
 def check_value_elements(data_dtype, types):
     """Judges the type of all elements of the tuple."""
     tensors_number = 0
@@ -499,6 +513,34 @@ def convert_ellipsis_to_tensors(slice_number,
         slice_number += 1
         dims_dealt_count += 1
     return tensor_list
+
+
+@constexpr
+def check_and_transform_int_index(index, shape, op_name):
+    if index < -shape or index >= shape:
+        raise IndexError(f"In the \"{op_name}\", the index should in the range [-{shape}, {shape-1}] to fit "
+                         f"the corresponding dim length, but get {index}.")
+    if index < 0:
+        index += shape
+    return index
+
+
+@constexpr
+def transform_sequence_index(sequence_index, shape, op_name):
+    """transform list or tuple with integer and boolean to tuple with integer index"""
+    bool_count = len(list(filter(lambda index: isinstance(index, bool), sequence_index)))
+    int_count = len(list(filter(lambda index: isinstance(index, int), sequence_index)))-bool_count
+    if int_count == 0:
+        if bool_count == shape:
+            list_index = list(filter(lambda i: sequence_index[i], range(bool_count)))
+        else:
+            raise IndexError("The boolean array should have the same length with the corresponding dimensiton")
+    else:
+        list_index = [int(index) for index in sequence_index]
+    for i, index in enumerate(list_index):
+        list_index[i] = check_and_transform_int_index(index, shape, op_name)
+    sub_tuple_index = tuple(list_index)
+    return sub_tuple_index
 
 
 @constexpr
@@ -700,6 +742,18 @@ def get_pos_of_int_index(indexes_types):
         if ele_type in (mstype.int32, mstype.int64):
             int_positions.append(i)
     return int_positions
+
+
+@constexpr
+def get_pos_of_int_sequence(indexes_types):
+    """Get int and sequence index positions from the mixed tensors index."""
+    int_positions, sequence_positions = [], []
+    for i, index_type in enumerate(indexes_types):
+        if isinstance(index_type, mstype.Int):
+            int_positions.append(i)
+        elif isinstance(index_type, (tuple, list)):
+            sequence_positions.append(i)
+    return int_positions, sequence_positions
 
 
 @constexpr

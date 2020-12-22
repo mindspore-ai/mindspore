@@ -21,61 +21,64 @@ from mindspore import dtype as mstype
 from mindspore.nn import Cell
 
 
-class NetWorkFancyIndexBoolean(Cell):
+class NetWorkFancyIndex(Cell):
     def __init__(self, index):
-        super(NetWorkFancyIndexBoolean, self).__init__()
+        super(NetWorkFancyIndex, self).__init__()
         self.index = index
 
     def construct(self, tensor):
         return tensor[self.index]
 
 
-class NetWorkFancyIndexInterger(Cell):
-    def __init__(self, index):
-        super(NetWorkFancyIndexInterger, self).__init__()
-        self.index = index
-
-    def construct(self, tensor):
-        return tensor[self.index]
-
-
-class NetWorkFancyIndexIntergerBooleanMixed(Cell):
-    def __init__(self, index):
-        super(NetWorkFancyIndexIntergerBooleanMixed, self).__init__()
-        self.index = index
-
-    def construct(self, tensor):
-        return tensor[self.index]
-
-
-def test_tensor_fancy_index_integer_list():
+def test_tensor_fancy_index_integer_list_graph():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     index = [0, 2, 1]
-    net = NetWorkFancyIndexBoolean(index)
+    net = NetWorkFancyIndex(index)
     input_np = np.arange(60).reshape(3, 4, 5)
     input_me = Tensor(input_np, dtype=mstype.float32)
-    output_me = net(input_me).asnumpy()
-    output_np = input_np[index]
-    assert np.allclose(output_np, output_me, 0, 0)
+    net(input_me)
 
 
-def test_tensor_fancy_boolean_list():
+def test_tensor_fancy_boolean_list_graph():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     index = [True, True, False]
-    net = NetWorkFancyIndexInterger(index)
+    net = NetWorkFancyIndex(index)
     input_np = np.arange(60).reshape(3, 4, 5)
     input_me = Tensor(input_np, dtype=mstype.float32)
-    output_me = net(input_me).asnumpy()
-    output_np = input_np[index]
-    assert np.allclose(output_np, output_me, 0, 0)
+    net(input_me)
 
 
-def test_tensor_fancy_integer_boolean_list():
+def test_tensor_fancy_integer_boolean_list_graph():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     index = [1, 2, True, False]
-    net = NetWorkFancyIndexIntergerBooleanMixed(index)
+    net = NetWorkFancyIndex(index)
     input_np = np.arange(60).reshape(3, 4, 5)
     input_me = Tensor(input_np, dtype=mstype.float32)
-    output_me = net(input_me).asnumpy()
-    output_np = input_np[index]
-    assert np.allclose(output_np, output_me, 0, 0)
+    net(input_me)
+
+
+def test_tensor_fancy_integer_list_mixed_graph():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    index = (1, [2, 1, 3], slice(1, 3, 1), ..., 4)
+    net = NetWorkFancyIndex(index)
+    input_np = np.arange(3*4*5*6*7*8).reshape(3, 4, 5, 6, 7, 8)
+    input_me = Tensor(input_np, dtype=mstype.float32)
+    net(input_me)
+
+
+def test_tensor_fancy_integer_tuple_mixed_graph():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    index = (1, (2, 1, 3), slice(1, 3, 1), ..., 4)
+    net = NetWorkFancyIndex(index)
+    input_np = np.arange(3*4*5*6*7*8).reshape(3, 4, 5, 6, 7, 8)
+    input_me = Tensor(input_np, dtype=mstype.float32)
+    net(input_me)
+
+
+def test_tensor_fancy_integer_list_tuple_mixed_graph():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    index = (1, [2, 1, 3], (3, 2, 1), slice(1, 3, 1), ..., 4)
+    net = NetWorkFancyIndex(index)
+    input_np = np.arange(3*4*5*6*7*8).reshape(3, 4, 5, 6, 7, 8)
+    input_me = Tensor(input_np, dtype=mstype.float32)
+    net(input_me)
