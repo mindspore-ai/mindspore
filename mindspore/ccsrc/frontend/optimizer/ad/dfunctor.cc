@@ -253,6 +253,7 @@ AdjointPtr DFunctor::MapMorphism(const AnfNodePtr &morph) {
     k_app = k_graph_->NewCNode(inputs);
   }
   ReplaceEquivdout(k_app, cnode_morph);
+  cnode_morph->clear_inputs_value();
   cnode_morph->set_forward(nullptr, "");
   for (size_t i = 0; i < param_adjoints.size(); ++i) {
     param_adjoints[i]->RegisterKUser(k_app, i);
@@ -387,7 +388,6 @@ void DFunctor::ReplaceEquivdout(const CNodePtr &cnode, const CNodePtr &cnode_mor
   MS_EXCEPTION_IF_NULL(out_node);
   out_node->set_value(GenNewTensor(manager, out_node, out_node->value(), need_replace_forward));
   // clear resource
-  cnode_morph->clear_inputs_value();
   fg->ClearAllManagerInfo();
   func_graph->ClearAllManagerInfo();
 }

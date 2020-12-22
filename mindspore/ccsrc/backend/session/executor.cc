@@ -141,11 +141,6 @@ void RunOpsInGraphTask::Run() {
   session_->RunOpsInGraphImpl(graph_id_, input_tensors_, &outputs_);
 }
 
-void CleanUselessTensorsTask::Run() {
-  MS_EXCEPTION_IF_NULL(session_);
-  session_->CleanUselessTensorsImpl(useless_tensors_);
-}
-
 void CreateCommGroupTask::Run() { result_ = CommManager::GetInstance().CreateGroupSync(group_name_, ranks_); }
 
 void DestroyCommGroupTask::Run() { result_ = CommManager::GetInstance().DestroyGroup(group_name_); }
@@ -390,15 +385,6 @@ void Executor::RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id,
   task->input_tensors_ = inputs;
   SyncRunTask(task);
   *outputs = task->outputs_;
-}
-
-void Executor::CleanUselessTensors(const SessionPtr &session,
-                                   const std::shared_ptr<std::vector<tensor::TensorPtr>> &useless_tensors) {
-  MS_EXCEPTION_IF_NULL(useless_tensors);
-  auto task = std::make_shared<CleanUselessTensorsTask>();
-  task->session_ = session;
-  task->useless_tensors_ = useless_tensors;
-  SyncRunTask(task);
 }
 
 bool Executor::CreateCommGroup(const std::string &group_name, std::vector<uint32_t> ranks) {
