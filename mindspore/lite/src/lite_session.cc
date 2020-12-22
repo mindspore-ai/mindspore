@@ -26,7 +26,7 @@
 #include "src/common/utils.h"
 #include "src/common/graph_util.h"
 #include "src/kernel_registry.h"
-#include "src/model_common.h"
+#include "src/lite_model.h"
 #include "src/runtime/kernel/arm/base/dequant.h"
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/npu_manager.h"
@@ -363,7 +363,7 @@ int LiteSession::CompileGraph(Model *model) {
     is_running_.store(false);
     return RET_PARAM_INVALID;
   }
-  if (!ModelVerify(*model)) {
+  if (!reinterpret_cast<LiteModel *>(model)->ModelVerify()) {
     MS_LOG(ERROR) << "wrong model input, please check";
     is_running_.store(false);
     return RET_ERROR;

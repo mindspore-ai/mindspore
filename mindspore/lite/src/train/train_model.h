@@ -16,13 +16,13 @@
 #ifndef MINDSPORE_LITE_SRC_TRAIN_TRAIN_MODEL_H_
 #define MINDSPORE_LITE_SRC_TRAIN_TRAIN_MODEL_H_
 #include <vector>
-#include "include/model.h"
+#include "src/lite_model.h"
 
 namespace mindspore {
 namespace lite {
 
 /// \brief TrainModel Defines a class that allows to import and export a mindsport trainable model
-struct TrainModel : public lite::Model {
+struct TrainModel : public lite::LiteModel {
   /// \brief Static method to create a TrainModel object
   ///
   /// \param[in] model_buf A buffer that was read from a MS model file
@@ -35,7 +35,7 @@ struct TrainModel : public lite::Model {
   void Free() override;
 
   /// \brief Class destructor, free all memory
-  virtual ~TrainModel();
+  virtual ~TrainModel() = default;
 
   /// \brief Export Model into a buffer
   ///
@@ -44,8 +44,6 @@ struct TrainModel : public lite::Model {
   ///
   /// \return Pointer to buffer with exported model
   char *ExportBuf(char *buf, size_t *len) const;
-
-  size_t buf_size_;
 };
 }  // namespace lite
 }  // namespace mindspore

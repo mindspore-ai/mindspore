@@ -1,4 +1,7 @@
 add_compile_definitions(USE_ANDROID_LOG)
+if (ENABLE_V0)
+  add_definitions(-DENABLE_V0)
+endif()
 set(LITE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 include_directories(${LITE_DIR}/nnacl/)
 include_directories(${LITE_DIR}/nnacl/optimize)
@@ -29,13 +32,12 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/inner_context.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/model_common.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/lite_model.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/kernel_registry.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/sub_graph_kernel.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
-        ${CMAKE_CURRENT_SOURCE_DIR}/model.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/errorcode.cc
         )
 

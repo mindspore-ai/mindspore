@@ -1581,6 +1581,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   flatbuffers::FlatBufferBuilder builder(1024);
   auto offset = schema::MetaGraph::Pack(builder, meta_graph);
   builder.Finish(offset);
+  schema::FinishMetaGraphBuffer(builder, offset);
   size_t size = builder.GetSize();
   auto *content = reinterpret_cast<const char *>(builder.GetBufferPointer());
   if (content == nullptr) {
@@ -1662,6 +1663,7 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     flatbuffers::FlatBufferBuilder int8_builder(1024);
     auto int8_offset = schema::MetaGraph::Pack(int8_builder, int8_meta_graph);
     int8_builder.Finish(int8_offset);
+    schema::FinishMetaGraphBuffer(int8_builder, int8_offset);
     size = int8_builder.GetSize();
     auto *int8_content = reinterpret_cast<const char *>(int8_builder.GetBufferPointer());
     if (int8_content == nullptr) {
