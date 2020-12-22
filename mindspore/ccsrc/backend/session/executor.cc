@@ -122,13 +122,13 @@ void RunGraphTask::Run() {
     ExecutorManager::Instance().OnEvent(ExecutorEvent::kException);
     MsException::Instance().SetException();
   }
+  MS_LOG(INFO) << "End run graph " << graph_id_;
   graph->OnRunGraphFinished();
   for (auto &tensor : input_need_lock_tensors_) {
     tensor->SetNeedWait(false);
   }
   NotifyOutputTensors(&outputs_);
   ExecutorManager::Instance().OnEvent(ExecutorEvent::kRunGraphFinished);
-  MS_LOG(INFO) << "End run graph " << graph_id_;
 }
 
 void RunOpTask::Run() {
@@ -218,11 +218,22 @@ std::vector<std::shared_ptr<RunGraphTask>> Executor::GetNewReadyTasks() {
 void Executor::OnEvent(const ExecutorEvent &event) {
   if (event == ExecutorEvent::kRunGraphFinished) {
     OnRunGraphFinished();
+  } else if (event == ExecutorEvent::kClear) {
+    WorkerJoin();
   } else if (event == ExecutorEvent::kException) {
-    std::unique_lock<std::mutex> lock(task_mutex_);
-    while (!ready_tasks_.empty()) {
-      done_tasks_.emplace_back(ready_tasks_.front());
-      ready_tasks_.pop();
+    {
+      std::unique_lock<std::mutex> lock(task_mutex_);
+      while (!ready_tasks_.empty()) {
+        done_tasks_.emplace_back(ready_tasks_.front());
+        ready_tasks_.pop();
+      }
+    }
+    {
+      std::unique_lock<std::mutex> lock(pending_task_mutex_);
+      for (auto iter = pending_tasks_.begin(); iter != pending_tasks_.end();) {
+        done_tasks_.emplace_back(*iter);
+      }
+      pending_tasks_.clear();
     }
   }
 }
