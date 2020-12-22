@@ -50,13 +50,16 @@ class SingleSwitchPass {
   STATUS ConcatBodySubgraphInputAndOutput();
   bool IsLoop();
   STATUS InsertMerge();
+  int GetSubgraphInputTensorIndex(const std::unique_ptr<SubGraphT> &subgraph, const std::unique_ptr<TensorT> &tensor);
+  int GetSubgraphOutputTensorIndex(const std::unique_ptr<SubGraphT> &subgraph, CNodeT *node);
   STATUS UpdateSubgraphInput(const size_t &subgraph_index, schema::CNodeT *partial_node,
                              const std::vector<schema::CNodeT *> &subgraph_nodes);
   STATUS UpdateSubgraphOutput(const size_t &subgraph_index, schema::CNodeT *partial_node,
                               const std::vector<schema::CNodeT *> &subgraph_nodes);
-  std::unique_ptr<schema::TensorT> NewTensor(const std::unique_ptr<schema::TensorT> &in_tensor);
-  void RemoveUselessNode(schema::CNodeT *partial_node, schema::MetaGraphT *graph);
-  void DoubleIdx(uint32_t *idx);
+  std::unique_ptr<schema::TensorT> NewTensor(const std::unique_ptr<schema::TensorT> &in_tensor, bool with_data = false);
+  void IsolateUselessNode(schema::CNodeT *partial_node, schema::MetaGraphT *graph);
+  void UpdateSwitchOutputIndices(uint32_t *idx);
+  STATUS BodyGraphVariableInput(std::vector<size_t> *variable_input);
 
   const size_t kSwitchCondIndex = 0;
   const size_t kSwitchBodyIndex = 1;
@@ -70,10 +73,7 @@ class SingleSwitchPass {
   std::vector<schema::CNodeT *> this_graph_nodes_;
   std::vector<schema::CNodeT *> body_graph_nodes_;
   std::vector<schema::CNodeT *> cond_graph_nodes_;
-  std::vector<schema::CNodeT *> switch_users_;
   size_t switch_node_index_ = -1;
-  size_t cond_node_index_ = -1;
-  size_t body_node_index_ = -1;
   int32_t this_subgraph_index_ = -1;
   int32_t cond_subgraph_index_ = -1;
   int32_t body_subgraph_index_ = -1;
