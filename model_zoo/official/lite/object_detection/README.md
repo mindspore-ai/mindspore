@@ -1,15 +1,15 @@
-## MindSpore Lite 端侧目标检测demo（Android）
+# MindSpore Lite 端侧目标检测demo（Android）
 
 本示例程序演示了如何在端侧利用MindSpore Lite C++ API（Android JNI）以及MindSpore Lite 目标检测模型完成端侧推理，实现对图库或者设备摄像头捕获的内容进行检测，并在App图像预览界面中显示连续目标检测结果。
 
-### 运行依赖
+## 运行依赖
 
 - Android Studio >= 3.2 (推荐4.0以上版本)
 - NDK 21.3
 - CMake 3.10
 - Android SDK >= 26
 
-### 构建与运行
+## 构建与运行
 
 1. 在Android Studio中加载本示例源码，并安装相应的SDK（指定SDK版本后，由Android Studio自动安装）。
 
