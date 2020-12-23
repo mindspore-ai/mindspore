@@ -26,6 +26,8 @@ from .precision import Precision
 from .recall import Recall
 from .fbeta import Fbeta, F1
 from .dice import Dice
+from .roc import ROC
+from .auc import auc
 from .topk import TopKCategoricalAccuracy, Top1CategoricalAccuracy, Top5CategoricalAccuracy
 from .loss import Loss
 
@@ -40,6 +42,8 @@ __all__ = [
     "Fbeta",
     "F1",
     "Dice",
+    "ROC",
+    "auc",
     "TopKCategoricalAccuracy",
     "Top1CategoricalAccuracy",
     "Top5CategoricalAccuracy",
@@ -53,6 +57,8 @@ __factory__ = {
     'recall': Recall,
     'F1': F1,
     'dice': Dice,
+    'roc': ROC,
+    'auc': auc,
     'topk': TopKCategoricalAccuracy,
     'hausdorff_distance': HausdorffDistance,
     'top_1_accuracy': Top1CategoricalAccuracy,
