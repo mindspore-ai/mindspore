@@ -240,7 +240,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void SetNestedTopGraph(const py::object &cell, const py::args &args, const std::string &cell_id);
   void MakeNestedCnode(const std::string &cell_id, const py::args &args, const ResourcePtr &resource,
                        const py::object &out, bool has_sens);
-  void SetNestedWeigthsParam(const FuncGraphPtr &newfg, const std::string &cell_id, std::vector<AnfNodePtr> *inputs);
+  void SetNestedWeightsParam(const FuncGraphPtr &newfg, const std::string &cell_id, std::vector<AnfNodePtr> *inputs);
   bool MakeBpropNestedCnode(const py::object &cell, const py::object &out, const std::string &cell_id);
 
   // Hold graph(forward and grad) info

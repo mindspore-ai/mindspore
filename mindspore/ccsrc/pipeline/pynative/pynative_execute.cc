@@ -2488,7 +2488,7 @@ void PynativeExecutor::MakeNestedCnode(const std::string &cell_id, const py::arg
     inputs.emplace_back(GetInput(args[i], false));
   }
   if (newfg->parameters().size() > inputs_size) {
-    SetNestedWeigthsParam(newfg, cell_id, &inputs);
+    SetNestedWeightsParam(newfg, cell_id, &inputs);
   }
   auto out_id = GetId(out);
   auto cnode = graph_prev->NewCNode(inputs);
@@ -2497,7 +2497,7 @@ void PynativeExecutor::MakeNestedCnode(const std::string &cell_id, const py::arg
   MS_LOG(DEBUG) << "Nested make cnode is " << cnode->DebugString(4);
 }
 
-void PynativeExecutor::SetNestedWeigthsParam(const FuncGraphPtr &newfg, const std::string &cell_id,
+void PynativeExecutor::SetNestedWeightsParam(const FuncGraphPtr &newfg, const std::string &cell_id,
                                              std::vector<AnfNodePtr> *inputs) {
   FuncGraphPtr forward_graph = nullptr;
   auto ic = std::find_if(cell_graph_list_.begin(), cell_graph_list_.end(),
