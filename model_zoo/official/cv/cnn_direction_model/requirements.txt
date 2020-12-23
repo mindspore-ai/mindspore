@@ -1,0 +1,5 @@
+mindspore
+numpy
+Pillow
+python-opencv
+scikit-image
