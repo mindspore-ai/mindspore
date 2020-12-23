@@ -101,7 +101,7 @@ void LiteModel::Free() {
   attr_tensor_bufs_.resize(0);
 }
 
-LiteModel::~LiteModel() {
+void LiteModel::Destroy() {
   Free();
   auto nodes_size = this->all_nodes_.size();
   for (size_t i = 0; i < nodes_size; ++i) {
