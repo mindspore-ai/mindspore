@@ -470,41 +470,45 @@ void Somas::GenContiguousList(const session::KernelGraph *graph) {
     if (node->GetType() != kCommunicationNode) {
       continue;
     }
-    std::vector<size_t> inputs;
-    auto input_before_gap = CreateGapTensor(gap_tensor_id);
-    input_before_gap->contiguous_ = true;
-    gap_tensor_id++;
-    inputs.push_back(input_before_gap->GetId());
+    if ((!node->input_tensors_.empty()) && (!node->input_tensors_[0]->contiguous_)) {
+      std::vector<size_t> inputs;
+      auto input_before_gap = CreateGapTensor(gap_tensor_id);
+      input_before_gap->contiguous_ = true;
+      gap_tensor_id++;
+      inputs.push_back(input_before_gap->GetId());
 
-    for (const auto &input_tensor : node->input_tensors_) {
-      comm_input_total_size_ += input_tensor->aligned_size_;
-      input_tensor->contiguous_ = true;
-      inputs.push_back(input_tensor->GetId());
+      for (const auto &input_tensor : node->input_tensors_) {
+        comm_input_total_size_ += input_tensor->aligned_size_;
+        input_tensor->contiguous_ = true;
+        inputs.push_back(input_tensor->GetId());
+      }
+
+      auto input_after_gap = CreateGapTensor(gap_tensor_id);
+      gap_tensor_id++;
+      input_after_gap->contiguous_ = true;
+      inputs.push_back(input_after_gap->GetId());
+      contiguous_tensors_list_.push_back(inputs);
     }
 
-    auto input_after_gap = CreateGapTensor(gap_tensor_id);
-    gap_tensor_id++;
-    input_after_gap->contiguous_ = true;
-    inputs.push_back(input_after_gap->GetId());
-    contiguous_tensors_list_.push_back(inputs);
+    if ((!node->output_tensors_.empty()) && (!node->output_tensors_[0]->contiguous_)) {
+      std::vector<size_t> outputs;
+      auto output_before_gap = CreateGapTensor(gap_tensor_id);
+      gap_tensor_id++;
+      output_before_gap->contiguous_ = true;
+      outputs.push_back(output_before_gap->GetId());
 
-    std::vector<size_t> outputs;
-    auto output_before_gap = CreateGapTensor(gap_tensor_id);
-    gap_tensor_id++;
-    output_before_gap->contiguous_ = true;
-    outputs.push_back(output_before_gap->GetId());
+      for (const auto &output_tensor : node->output_tensors_) {
+        comm_output_total_size_ += output_tensor->aligned_size_;
+        output_tensor->contiguous_ = true;
+        outputs.push_back(output_tensor->GetId());
+      }
 
-    for (const auto &output_tensor : node->output_tensors_) {
-      comm_output_total_size_ += output_tensor->aligned_size_;
-      output_tensor->contiguous_ = true;
-      outputs.push_back(output_tensor->GetId());
+      auto output_after_gap = CreateGapTensor(gap_tensor_id);
+      gap_tensor_id++;
+      output_after_gap->contiguous_ = true;
+      outputs.push_back(output_after_gap->GetId());
+      contiguous_tensors_list_.push_back(outputs);
     }
-
-    auto output_after_gap = CreateGapTensor(gap_tensor_id);
-    gap_tensor_id++;
-    output_after_gap->contiguous_ = true;
-    outputs.push_back(output_after_gap->GetId());
-    contiguous_tensors_list_.push_back(outputs);
   }
 }
 
