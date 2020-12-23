@@ -3703,7 +3703,7 @@ class DepthToSpace(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> x = Tensor(np.random.rand(1,12,1,1), mindspore.float32)
+        >>> x = Tensor(np.random.rand(1, 12, 1, 1), mindspore.float32)
         >>> block_size = 2
         >>> depth_to_space = ops.DepthToSpace(block_size)
         >>> output = depth_to_space(x)
