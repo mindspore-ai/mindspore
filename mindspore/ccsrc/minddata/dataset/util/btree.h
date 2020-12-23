@@ -384,11 +384,11 @@ class BPlusTree {
 
     ~Iterator();
 
-    Iterator(const Iterator &);
+    explicit Iterator(const Iterator &);
 
     Iterator &operator=(const Iterator &lhs);
 
-    Iterator(Iterator &&) noexcept;
+    explicit Iterator(Iterator &&) noexcept;
 
     Iterator &operator=(Iterator &&lhs);
 
@@ -448,11 +448,11 @@ class BPlusTree {
     ConstIterator(const LeafNode *leaf, slot_type slot, bool locked = false)
         : cur_(leaf), slot_(slot), locked_(locked) {}
 
-    ConstIterator(const ConstIterator &);
+    explicit ConstIterator(const ConstIterator &);
 
     ConstIterator &operator=(const ConstIterator &lhs);
 
-    ConstIterator(ConstIterator &&) noexcept;
+    explicit ConstIterator(ConstIterator &&) noexcept;
 
     ConstIterator &operator=(ConstIterator &&lhs);
 
