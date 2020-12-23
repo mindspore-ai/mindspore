@@ -16,29 +16,29 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_INSERT_TRANSDATA_FOR_RUNOP_H_
 #define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_INSERT_TRANSDATA_FOR_RUNOP_H_
-
+#include <vector>
 #include <string>
 #include <utility>
 #include <memory>
-#include "backend/optimizer/common/optimizer.h"
+
+#include "backend/optimizer/common/pass.h"
+#include "ir/func_graph.h"
+#include "ir/anf.h"
 #include "backend/optimizer/common/helper.h"
+#include "backend/optimizer/common/optimizer.h"
 #include "backend/optimizer/ascend/ascend_helper.h"
 
 namespace mindspore {
 namespace opt {
-class RunOpInsertTransData : public PatternProcessPass {
+class RunOpInsertTransData : public Pass {
  public:
-  explicit RunOpInsertTransData(bool multigraph = true)
-      : PatternProcessPass("insert_transdata_for_runop", multigraph),
-        kernel_select_(std::make_shared<KernelSelect>()) {}
+  RunOpInsertTransData() : Pass("insert_transdata_for_runop"), kernel_select_(std::make_shared<KernelSelect>()) {}
   ~RunOpInsertTransData() override = default;
-  const BaseRef DefinePattern() const override;
-  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+  bool Run(const FuncGraphPtr &graph) override;
 
  private:
   KernelSelectPtr kernel_select_;
 };
 }  // namespace opt
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_INSERT_TRANSDATA_FOR_RUNOP_H_
