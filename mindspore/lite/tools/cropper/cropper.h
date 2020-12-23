@@ -57,7 +57,6 @@ class MS_API Cropper {
 
   std::set<schema::PrimitiveType> all_operators_;
   std::set<schema::PrimitiveType> int8_operators_;
-  std::set<schema::PrimitiveType> fp16_operators_;
   std::set<schema::PrimitiveType> fp32_operators_;
 
  private:
