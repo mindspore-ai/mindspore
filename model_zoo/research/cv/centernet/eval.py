@@ -55,9 +55,9 @@ def predict():
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
 
     logger.info("Begin creating {} dataset".format(args_opt.run_mode))
-    coco = COCOHP(args_opt.data_dir, dataset_config, net_config, run_mode=args_opt.run_mode)
-    coco.init(enable_visual_image=(args_opt.visual_image == "true"), save_path=args_opt.save_result_dir,
-              keep_res=eval_config.keep_res, flip_test=eval_config.flip_test)
+    coco = COCOHP(dataset_config, run_mode=args_opt.run_mode, net_opt=net_config,
+                  enable_visual_image=(args_opt.visual_image == "true"), save_path=args_opt.save_result_dir,)
+    coco.init(args_opt.data_dir, keep_res=eval_config.keep_res, flip_test=eval_config.flip_test)
     dataset = coco.create_eval_dataset()
 
     net_for_eval = CenterNetMultiPoseEval(net_config, eval_config.flip_test, eval_config.K)

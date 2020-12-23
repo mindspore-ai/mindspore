@@ -19,6 +19,7 @@ Data operations, will be used in train.py
 import os
 import copy
 import math
+import argparse
 import cv2
 import numpy as np
 import pycocotools.coco as coco
@@ -26,10 +27,9 @@ import pycocotools.coco as coco
 import mindspore.dataset.engine.datasets as de
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
-from .image import color_aug
-from .image import get_affine_transform, affine_transform
-from .image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian, draw_dense_reg
-from .visual import visual_image
+from src.image import color_aug, get_affine_transform, affine_transform
+from src.image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian, draw_dense_reg
+from src.visual import visual_image
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 
 
@@ -47,40 +47,39 @@ class COCOHP(de.Dataset):
     Returns:
         Prepocessed training or testing dataset for CenterNet network.
     """
-    def __init__(self, data_dir, data_opt, net_opt, run_mode):
+    def __init__(self, data_opt, run_mode="train", net_opt=None, enable_visual_image=False, save_path=None):
         super(COCOHP, self).__init__()
-        if not os.path.isdir(data_dir):
-            raise RuntimeError("Invalid dataset path")
-        assert run_mode in ["train", "test", "val"], "only train/test/val mode are supported"
-        self.run_mode = run_mode
-
-        if self.run_mode != "test":
-            self.annot_path = os.path.join(data_dir, 'annotations',
-                                           'person_keypoints_{}2017.json').format(self.run_mode)
-        else:
-            self.annot_path = os.path.join(data_dir, 'annotations', 'image_info_test-dev2017.json')
-        self.image_path = os.path.join(data_dir, '{}2017').format(self.run_mode)
-
         self._data_rng = np.random.RandomState(123)
         self.data_opt = data_opt
         self.data_opt.mean = self.data_opt.mean.reshape(1, 1, 3)
         self.data_opt.std = self.data_opt.std.reshape(1, 1, 3)
-        self.net_opt = net_opt
-        self.coco = coco.COCO(self.annot_path)
+        assert run_mode in ["train", "test", "val"], "only train/test/val mode are supported"
+        self.run_mode = run_mode
 
-
-    def init(self, enable_visual_image=False, save_path=None, keep_res=False, flip_test=False):
-        """initailize additional info"""
-        logger.info('Initializing coco 2017 {} data.'.format(self.run_mode))
-        logger.info('Image path: {}'.format(self.image_path))
-        logger.info('Annotations: {}'.format(self.annot_path))
-
+        if net_opt is not None:
+            self.net_opt = net_opt
         self.enable_visual_image = enable_visual_image
         if self.enable_visual_image:
             self.save_path = os.path.join(save_path, self.run_mode, "input_image")
             if not os.path.exists(self.save_path):
                 os.makedirs(self.save_path)
 
+
+    def init(self, data_dir, keep_res=False, flip_test=False):
+        """initailize additional info"""
+        logger.info('Initializing coco 2017 {} data.'.format(self.run_mode))
+        if not os.path.isdir(data_dir):
+            raise RuntimeError("Invalid dataset path")
+        if self.run_mode != "test":
+            self.annot_path = os.path.join(data_dir, 'annotations',
+                                           'person_keypoints_{}2017.json').format(self.run_mode)
+        else:
+            self.annot_path = os.path.join(data_dir, 'annotations', 'image_info_test-dev2017.json')
+        self.image_path = os.path.join(data_dir, '{}2017').format(self.run_mode)
+        logger.info('Image path: {}'.format(self.image_path))
+        logger.info('Annotations: {}'.format(self.annot_path))
+
+        self.coco = coco.COCO(self.annot_path)
         image_ids = self.coco.getImgIds()
         if self.run_mode != "test":
             self.images = []
@@ -102,8 +101,15 @@ class COCOHP(de.Dataset):
     def __len__(self):
         return self.num_samples
 
-    def transfer_coco_to_mindrecord(self, mindrecord_dir, file_name, shard_num=1):
+    def transfer_coco_to_mindrecord(self, mindrecord_dir, file_name="coco_hp.train.mind", shard_num=1):
         """Create MindRecord file by image_dir and anno_path."""
+        if not os.path.isdir(mindrecord_dir):
+            os.makedirs(mindrecord_dir)
+        if os.path.isdir(self.image_path) and os.path.exists(self.annot_path):
+            logger.info("Create MindRecord based on COCO_HP dataset")
+        else:
+            raise ValueError('data_dir {} or anno_path {} does not exist'.format(self.image_path, self.annot_path))
+
         mindrecord_path = os.path.join(mindrecord_dir, file_name)
         writer = FileWriter(mindrecord_path, shard_num)
         centernet_json = {
@@ -139,6 +145,7 @@ class COCOHP(de.Dataset):
                    "category_id": np.array(category_id, np.int32)}
             writer.write_raw_data([row])
         writer.commit()
+        logger.info("Create Mindrecord Done, at {}".format(mindrecord_dir))
 
 
     def _coco_box_to_bbox(self, box):
@@ -393,19 +400,11 @@ class COCOHP(de.Dataset):
         return ret
 
 
-    def create_train_dataset(self, mindrecord_dir, prefix, batch_size=1,
+    def create_train_dataset(self, mindrecord_dir, prefix="coco_hp.train.mind", batch_size=1,
                              device_num=1, rank=0, num_parallel_workers=1, do_shuffle=True):
         """create train dataset based on mindrecord file"""
         if not os.path.isdir(mindrecord_dir):
-            os.makedirs(mindrecord_dir)
-            if os.path.isdir(self.image_path) and os.path.exists(self.annot_path):
-                logger.info("Create MindRecord based on COCO_HP dataset")
-                self.transfer_coco_to_mindrecord(mindrecord_dir, prefix, shard_num=8)
-                logger.info("Create Mindrecord Done, at {}".format(mindrecord_dir))
-            else:
-                raise ValueError('data_dir {} or anno_path {} does not exist'.format(self.image_path, self.annot_path))
-        else:
-            logger.info("MindRecord dataset already exists, dir: {}".format(mindrecord_dir))
+            raise ValueError('MindRecord data_dir {} does not exist'.format(mindrecord_dir))
 
         files = os.listdir(mindrecord_dir)
         data_files = []
@@ -414,7 +413,6 @@ class COCOHP(de.Dataset):
                 data_files.append(os.path.join(mindrecord_dir, file_name))
         if not data_files:
             raise ValueError('data_dir {} have no data files'.format(mindrecord_dir))
-
 
         columns = ["image", "num_objects", "keypoints", "bbox", "category_id"]
         ds = de.MindDataset(data_files,
@@ -447,3 +445,17 @@ class COCOHP(de.Dataset):
         ds = de.GeneratorDataset(generator, column, num_parallel_workers=num_parallel_workers)
         ds = ds.batch(batch_size, drop_remainder=True, num_parallel_workers=8)
         return ds
+
+
+if __name__ == '__main__':
+    # Convert coco2017 dataset to mindrecord to improve performance on host
+    from src.config import dataset_config
+    parser = argparse.ArgumentParser(description='CenterNet MindRecord dataset')
+    parser.add_argument("--coco_data_dir", type=str, default="", help="Coco dataset directory.")
+    parser.add_argument("--mindrecord_dir", type=str, default="", help="MindRecord dataset dir.")
+    parser.add_argument("--mindrecord_prefix", type=str, default="coco_hp.train.mind",
+                        help="Prefix of MindRecord dataset filename.")
+    args_opt = parser.parse_args()
+    dsc = COCOHP(dataset_config, run_mode="train")
+    dsc.init(args_opt.coco_data_dir)
+    dsc.transfer_coco_to_mindrecord(args_opt.mindrecord_dir, args_opt.mindrecord_prefix, shard_num=8)

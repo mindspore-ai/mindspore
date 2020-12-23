@@ -117,18 +117,21 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-Note: 1.the first run will generate the mindrecord file, which will take a long time.
-      2.VALIDATION_JSON_FILE is ground truth label file. CHECKPOINT_PATH is a checkpoint file after training.
+Note: 1.the first run of training will generate the mindrecord file, which will take a long time.
+      2.MINDRECORD_DATASET_PATH is the mindrecord dataset directory.
 
 ```shell
+# create dataset in mindrecord format
+bash scripts/convert_dataset_to_mindrecord.sh
+
 # standalone training
-bash run_standalone_train_ascend.sh [DEVICE_ID] [EPOCH_SIZE]
+bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [EPOCH_SIZE]
 
 # distributed training
-bash run_distributed_train_ascend.sh [COCO_DATASET_PATH] [MINDRECORD_DATASET_PATH] [RANK_TABLE_FILE]
+bash scripts/run_distributed_train_ascend.sh [MINDRECORD_DATASET_PATH] [RANK_TABLE_FILE]
 
 # eval
-bash run_standalone_eval_ascend.sh [DEVICE_ID]
+bash scripts/run_standalone_eval_ascend.sh [DEVICE_ID]
 ```
 
 # [Script Description](#contents)
@@ -149,6 +152,7 @@ bash run_standalone_eval_ascend.sh [DEVICE_ID]
         │   │    ├──hyper_parameter_config.ini         // hyper parameter for distributed pretraining
         │   │    ├──get_distribute_pretrain_cmd.py     // script for distributed pretraining
         │   │    ├──README.md
+        │   ├──convert_dataset_to_mindrecord.sh        // shell script for converting coco type dataset to mindrecord
         │   ├──run_standalone_train_ascend.sh          // shell script for standalone pretrain on ascend
         │   ├──run_distributed_train_ascend.sh         // shell script for distributed pretrain on ascend
         │   ├──run_standalone_eval_ascend.sh           // shell script for standalone evaluation on ascend
@@ -168,6 +172,19 @@ bash run_standalone_eval_ascend.sh [DEVICE_ID]
 
 ## [Script Parameters](#contents)
 
+### Create MindRecord type dataset
+
+```text
+usage: dataset.py  [--coco_data_dir COCO_DATA_DIR]
+                   [--mindrecord_dir MINDRECORD_DIR]
+                   [--mindrecord_prefix MINDRECORD_PREFIX]
+
+options:
+    --coco_data_dir            path to coco dataset directory: PATH, default is ""
+    --mindrecord_dir           path to mindrecord dataset directory: PATH, default is ""
+    --mindrecord_prefix        prefix of MindRecord dataset filename: STR, default is "coco_hp.train.mind"
+```
+
 ### Training
 
 ```text
@@ -180,7 +197,8 @@ usage: train.py  [--device_target DEVICE_TARGET] [--distribute DISTRIBUTE]
                  [--save_checkpoint_path SAVE_CHECKPOINT_PATH]
                  [--load_checkpoint_path LOAD_CHECKPOINT_PATH]
                  [--save_checkpoint_steps N] [--save_checkpoint_num N]
-                 [--data_dir DATA_DIR] [--mindrecord_dir MINDRECORD_DIR]
+                 [--mindrecord_dir MINDRECORD_DIR]
+                 [--mindrecord_prefix MINDRECORD_PREFIX]
                  [--visual_image VISUAL_IMAGE] [--save_result_dir SAVE_RESULT_DIR]
 
 options:
@@ -201,8 +219,8 @@ options:
     --load_checkpoint_path     path to load checkpoint files: PATH, default is ""
     --save_checkpoint_steps    steps for saving checkpoint files: N, default is 1000
     --save_checkpoint_num      number for saving checkpoint files: N, default is 1
-    --data_dir                 path to original dataset directory: PATH, default is ""
     --mindrecord_dir           path to mindrecord dataset directory: PATH, default is ""
+    --mindrecord_prefix        prefix of MindRecord dataset filename: STR, default is "coco_hp.train.mind"
     --visual_image             whether visualize the image and annotation info: "true" | "false", default is "false"
     --save_result_dir          path to save the visualization results: PATH, default is ""
 ```
@@ -214,7 +232,7 @@ usage: eval.py  [--device_target DEVICE_TARGET] [--device_id N]
                 [--load_checkpoint_path LOAD_CHECKPOINT_PATH]
                 [--data_dir DATA_DIR] [--run_mode RUN_MODE]
                 [--visual_image VISUAL_IMAGE]
-                [enable_eval ENABLE_EVAL] [--save_result_dir SAVE_RESULT_DIR]
+                [--enable_eval ENABLE_EVAL] [--save_result_dir SAVE_RESULT_DIR]
 options:
     --device_target              device where the code will be implemented: "Ascend" | "CPU", default is "Ascend"
     --device_id                  device id to run task, default is 0
@@ -323,6 +341,14 @@ Parameters for optimizer and learning rate:
 ```
 
 ## [Training Process](#contents)
+
+Before your first training, convert coco type dataset to mindrecord files is needed to improve performance on host.
+
+```bash
+bash scripts/convert_dataset_to_mindrecord.sh
+```
+
+The command above will run in the background, after converting mindrecord files will be located in path specified by yourself.
 
 ### Training
 
