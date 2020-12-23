@@ -173,7 +173,8 @@ class EmbeddingLookup(Cell):
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
           Specifies the indices of elements of the original Tensor. Values can be out of range of embedding_table,
-          and the exceeding part will be filled with 0 in the output. Input_indices must only be a 2d tensor in
+          and the exceeding part will be filled with 0 in the output. Values does not support negative and the result
+          is undefined if values are negative. Input_indices must only be a 2d tensor in
           this interface when run in semi auto parallel/auto parallel mode.
 
     Outputs:

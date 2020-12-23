@@ -498,6 +498,8 @@ class Multinomial(PrimitiveWithInfer):
         >>> input = Tensor([0., 9., 4., 0.], mstype.float32)
         >>> multinomial = ops.Multinomial(seed=10)
         >>> output = multinomial(input, 2)
+        >>> print(output)
+        [2 1]
     """
 
     @prim_attr_register
