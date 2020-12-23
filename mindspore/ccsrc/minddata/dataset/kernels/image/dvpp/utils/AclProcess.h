@@ -1,4 +1,3 @@
-#include <climits>
 /*
  * Copyright (c) 2020.Huawei Technologies Co., Ltd. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,6 +16,7 @@
 #ifndef ACLMANAGER_H
 #define ACLMANAGER_H
 
+#include <climits>
 #include <string>
 #include <string.h>
 #include <map>
