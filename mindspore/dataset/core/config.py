@@ -41,7 +41,7 @@ def _init_device_info():
     """
     from mindspore import context
     from mindspore.parallel._auto_parallel_context import auto_parallel_context
-    from mindspore.parallel._utils import _get_global_rank
+    from mindspore.parallel._utils import _get_global_rank, _get_device_num
     if context.get_context("device_target") == "GPU":
         rank_id = _get_global_rank()
         parallel_mode = auto_parallel_context().get_parallel_mode()
@@ -52,6 +52,12 @@ def _init_device_info():
                 if cuda_id != rank_id:
                     rank_id = cuda_id
         _config.set_rank_id(rank_id)
+    elif context.get_context("device_target") == "Ascend":
+        rank_id = _get_global_rank()
+        device_num = _get_device_num()
+        # Ascend only support multi-process scenario
+        if device_num > 1:
+            _config.set_rank_id(rank_id)
 
 
 def set_seed(seed):
