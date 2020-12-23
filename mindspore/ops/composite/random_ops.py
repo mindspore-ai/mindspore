@@ -92,10 +92,15 @@ def laplace(shape, mean, lambda_param, seed=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> shape = (4, 16)
+        >>> from mindspore import Tensor
+        >>> from mindspore.ops import composite as C
+        >>> import mindspore.common.dtype as mstype
+        >>> shape = (2, 3)
         >>> mean = Tensor(1.0, mstype.float32)
         >>> lambda_param = Tensor(1.0, mstype.float32)
         >>> output = C.laplace(shape, mean, lambda_param, seed=5)
+        >>> print(output.shape)
+        (2, 3)
     """
     mean_dtype = F.dtype(mean)
     lambda_param_dtype = F.dtype(lambda_param)
