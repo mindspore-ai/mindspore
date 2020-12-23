@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "backend/session/executor_manager.h"
-
+#include "common/thread_pool.h"
 namespace mindspore {
 namespace session {
 std::shared_ptr<Executor> ExecutorManager::GetExecutor(const std::string &device_name, int device_id) {
@@ -40,6 +40,7 @@ void ExecutorManager::OnEvent(const ExecutorEvent &event) {
 void ExecutorManager::Clear() {
   OnEvent(ExecutorEvent::kClear);
   executors_.clear();
+  common::ThreadPool::GetInstance().ClearThreadPool();
 }
 }  // namespace session
 }  // namespace mindspore
