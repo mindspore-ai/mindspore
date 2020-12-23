@@ -3,7 +3,6 @@
     "random_seed": 50,
     "epochs": 6,
     "batch_size": 128,
-    "dataset_schema": "/home/workspace/dataset_menu/newstest2014.en.json",
     "pre_train_dataset": null,
     "fine_tune_dataset": null,
     "test_dataset":  "/home/workspace/dataset_menu/newstest2014.en.mindrecord",

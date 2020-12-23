@@ -16,18 +16,16 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "sh run_distributed_train_ascend.sh RANK_TABLE_ADDR DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET"
+echo "sh run_distributed_train_ascend.sh RANK_TABLE_ADDR PRE_TRAIN_DATASET"
 echo "for example:"
 echo "sh run_distributed_train_ascend.sh \
   /home/workspace/rank_table_8p.json \
-  /home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.json \
   /home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.mindrecord"
 echo "It is better to use absolute path."
 echo "=============================================================================================================="
 
 RANK_TABLE_ADDR=$1
-DATASET_SCHEMA_TRAIN=$2
-PRE_TRAIN_DATASET=$3
+PRE_TRAIN_DATASET=$2
 
 current_exec_path=$(pwd)
 echo ${current_exec_path}
@@ -49,10 +47,9 @@ do
     cp -r ../../config .
     export RANK_ID=$i
     export DEVICE_ID=$i
-	python ../../train.py \
-	  --config=${current_exec_path}/device${i}/config/config.json \
-	  --dataset_schema_train=$DATASET_SCHEMA_TRAIN \
-	  --pre_train_dataset=$PRE_TRAIN_DATASET > log_gnmt_network${i}.log 2>&1 &
+  python ../../train.py \
+    --config=${current_exec_path}/device${i}/config/config.json \
+    --pre_train_dataset=$PRE_TRAIN_DATASET > log_gnmt_network${i}.log 2>&1 &
     cd ${current_exec_path} || exit
 done
 cd ${current_exec_path} || exit
