@@ -19,7 +19,7 @@ from .bijector import Bijector
 
 class Invert(Bijector):
     r"""
-    Invert Bijector.
+    Invert Bijector. Compute the inverse function of the input bijector.
 
     Args:
         bijector (Bijector): Base Bijector.
@@ -59,6 +59,7 @@ class Invert(Bijector):
         param = dict(locals())
         validator.check_value_type('bijector', bijector, [Bijector], "Invert")
         name = name or ('Invert' + bijector.name)
+        param["name"] = name
         super(Invert, self).__init__(is_constant_jacobian=bijector.is_constant_jacobian,
                                      is_injective=bijector.is_injective,
                                      name=name,

@@ -30,7 +30,7 @@ class GumbelCDF(Bijector):
     Args:
         loc (float, list, numpy.ndarray, Tensor): The location. Default: 0..
         scale (float, list, numpy.ndarray, Tensor): The scale. Default: 1.0.
-        name (str): The name of the Bijector. Default: 'Gumbel_CDF'.
+        name (str): The name of the Bijector. Default: 'GumbelCDF'.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

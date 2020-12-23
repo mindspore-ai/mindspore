@@ -35,7 +35,7 @@ class Poisson(Distribution):
         name (str): The name of the distribution. Default: 'Poisson'.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Note:
         `rate` must be strictly greater than 0.
@@ -157,7 +157,7 @@ class Poisson(Distribution):
     @property
     def rate(self):
         """
-        Return `rate` of the distribution after casting to self.dtype.
+        Return `rate` of the distribution after casting to dtype.
         """
         return self._rate
 

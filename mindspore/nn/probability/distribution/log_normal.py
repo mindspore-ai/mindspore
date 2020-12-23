@@ -184,7 +184,7 @@ class LogNormal(msd.TransformedDistribution):
     def loc(self):
         """
         Distribution parameter for the pre-transformed mean
-        after casting to self.dtype.
+        after casting to dtype.
         """
         return self._loc
 
@@ -192,7 +192,7 @@ class LogNormal(msd.TransformedDistribution):
     def scale(self):
         """
         Distribution parameter for the pre-transformed standard deviation
-        after casting to self.dtype.
+        after casting to dtype.
         """
         return self._scale
 

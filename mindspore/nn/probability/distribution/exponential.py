@@ -167,7 +167,7 @@ class Exponential(Distribution):
     @property
     def rate(self):
         """
-        Return `rate` of the distribution after casting to self.dtype.
+        Return `rate` of the distribution after casting to dtype.
         """
         return self._rate
 

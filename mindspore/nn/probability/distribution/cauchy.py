@@ -181,14 +181,14 @@ class Cauchy(Distribution):
     @property
     def loc(self):
         """
-        Return the location of the distribution after casting to self.dtype.
+        Return the location of the distribution after casting to dtype.
         """
         return self._loc
 
     @property
     def scale(self):
         """
-        Return the scale of the distribution after casting to self.dtype.
+        Return the scale of the distribution after casting to dtype.
         """
         return self._scale
 
