@@ -32,6 +32,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+
 void TcpConnection::InitConnection() {
   tcp_message_handler_.SetCallback([&](const CommMessage &message) {
     OnServerReceiveMessage on_server_receive = server_->GetServerReceive();
@@ -76,7 +77,22 @@ TcpServer::TcpServer(const std::string &address, std::uint16_t port)
       server_port_(port),
       is_stop_(true) {}
 
-TcpServer::~TcpServer() { Stop(); }
+TcpServer::~TcpServer() {
+  if (signal_event_ != nullptr) {
+    event_free(signal_event_);
+    signal_event_ = nullptr;
+  }
+
+  if (listener_ != nullptr) {
+    evconnlistener_free(listener_);
+    listener_ = nullptr;
+  }
+
+  if (base_ != nullptr) {
+    event_base_free(base_);
+    base_ = nullptr;
+  }
+}
 
 void TcpServer::SetServerCallback(const OnConnected &client_conn, const OnDisconnected &client_disconn,
                                   const OnAccepted &client_accept) {
@@ -136,7 +152,6 @@ void TcpServer::Init() {
 }
 
 void TcpServer::Start() {
-  std::unique_lock<std::recursive_mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Start tcp server!";
   MS_EXCEPTION_IF_NULL(base_);
   int ret = event_base_dispatch(base_);
@@ -148,7 +163,7 @@ void TcpServer::Start() {
 }
 
 void TcpServer::StartWithNoBlock() {
-  std::unique_lock<std::recursive_mutex> lock(connection_mutex_);
+  std::lock_guard<std::mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Start tcp server with no block!";
   MS_EXCEPTION_IF_NULL(base_);
   int ret = event_base_loop(base_, EVLOOP_NONBLOCK);
@@ -187,33 +202,25 @@ void TcpServer::StartTimer(const uint32_t &time) {
 }
 
 void TcpServer::Stop() {
+  std::lock_guard<std::mutex> lock(connection_mutex_);
   MS_LOG(INFO) << "Stop tcp server!";
+  if (event_base_got_break(base_)) {
+    MS_LOG(DEBUG) << "The event base has stopped!";
+    is_stop_ = true;
+    return;
+  }
   if (!is_stop_.load()) {
+    is_stop_ = true;
     int ret = event_base_loopbreak(base_);
     if (ret != 0) {
-      MS_LOG(EXCEPTION) << "event base loop break failed!";
+      MS_LOG(ERROR) << "Event base loop break failed!";
     }
-    if (signal_event_ != nullptr) {
-      event_free(signal_event_);
-      signal_event_ = nullptr;
-    }
-
-    if (listener_ != nullptr) {
-      evconnlistener_free(listener_);
-      listener_ = nullptr;
-    }
-
-    if (base_ != nullptr) {
-      event_base_free(base_);
-      base_ = nullptr;
-    }
-    is_stop_ = true;
   }
 }
 
 void TcpServer::SendToAllClients(const char *data, size_t len) {
   MS_EXCEPTION_IF_NULL(data);
-  std::unique_lock<std::recursive_mutex> lock(connection_mutex_);
+  std::lock_guard<std::mutex> lock(connection_mutex_);
   for (auto it = connections_.begin(); it != connections_.end(); ++it) {
     it->second->SendMessage(data, len);
   }
@@ -221,12 +228,12 @@ void TcpServer::SendToAllClients(const char *data, size_t len) {
 
 void TcpServer::AddConnection(const evutil_socket_t &fd, const TcpConnection *connection) {
   MS_EXCEPTION_IF_NULL(connection);
-  std::unique_lock<std::recursive_mutex> lock(connection_mutex_);
+  std::lock_guard<std::mutex> lock(connection_mutex_);
   connections_.insert(std::make_pair(fd, connection));
 }
 
 void TcpServer::RemoveConnection(const evutil_socket_t &fd) {
-  std::unique_lock<std::recursive_mutex> lock(connection_mutex_);
+  std::lock_guard<std::mutex> lock(connection_mutex_);
   TcpConnection *connection = const_cast<TcpConnection *>(connections_.find(fd)->second);
   delete connection;
   connections_.erase(fd);
@@ -352,7 +359,7 @@ void TcpServer::TimerOnceCallback(evutil_socket_t, int16_t, void *arg) {
 void TcpServer::SendMessage(const TcpConnection &conn, const CommMessage &message) { conn.SendMessage(message); }
 
 void TcpServer::SendMessage(const CommMessage &message) {
-  std::unique_lock<std::recursive_mutex> lock(connection_mutex_);
+  std::lock_guard<std::mutex> lock(connection_mutex_);
 
   for (auto it = connections_.begin(); it != connections_.end(); ++it) {
     SendMessage(*it->second, message);
@@ -368,6 +375,7 @@ int TcpServer::ConnectionNum() const { return connections_.size(); }
 const std::map<evutil_socket_t, const TcpConnection *> &TcpServer::Connections() const { return connections_; }
 
 void TcpServer::SetMessageCallback(const OnServerReceiveMessage &cb) { message_callback_ = cb; }
+
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

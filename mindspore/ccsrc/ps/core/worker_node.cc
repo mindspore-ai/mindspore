@@ -21,24 +21,7 @@ namespace ps {
 namespace core {
 WorkerNode::~WorkerNode() {
   MS_LOG(INFO) << "Stop worker node!";
-  if (!is_already_stopped_.load()) {
-    is_ready_ = true;
-    is_timeout_ = true;
-    client_to_scheduler_->Stop();
-    if (!connected_nodes_.empty()) {
-      for (auto &connected_node : connected_nodes_) {
-        connected_node.second->Stop();
-      }
-    }
-    client_to_scheduler_->StopEventBase();
-    if (client_to_scheduler_thread_->joinable()) {
-      client_to_scheduler_thread_->join();
-    }
-    if (heart_beat_thread_->joinable()) {
-      heart_beat_thread_->join();
-    }
-    is_already_stopped_ = true;
-  }
+  Stop();
 }
 bool WorkerNode::Start(const uint32_t &timeout) {
   MS_LOG(INFO) << "Starting worker node!";
@@ -78,19 +61,15 @@ bool WorkerNode::Stop() {
   if (!is_already_stopped_.load()) {
     is_ready_ = true;
     is_timeout_ = true;
+    is_finish_ = true;
+    heart_beat_thread_->join();
     client_to_scheduler_->Stop();
     if (!connected_nodes_.empty()) {
       for (auto &connected_node : connected_nodes_) {
         connected_node.second->Stop();
       }
     }
-    client_to_scheduler_->StopEventBase();
-    if (client_to_scheduler_thread_->joinable()) {
-      client_to_scheduler_thread_->join();
-    }
-    if (heart_beat_thread_->joinable()) {
-      heart_beat_thread_->join();
-    }
+    client_to_scheduler_thread_->join();
     is_already_stopped_ = true;
   }
   return true;

@@ -19,19 +19,10 @@
 namespace mindspore {
 namespace ps {
 namespace core {
+
 SchedulerNode::~SchedulerNode() {
   MS_LOG(INFO) << "Stop scheduler node!";
-  if (!is_already_stopped_) {
-    is_already_stopped_ = true;
-    server_->Stop();
-    if (scheduler_thread_->joinable()) {
-      scheduler_thread_->join();
-    }
-    if (update_state_thread_->joinable()) {
-      update_state_thread_->join();
-    }
-    is_ready_ = true;
-  }
+  Stop();
 }
 
 bool SchedulerNode::Start(const uint32_t &timeout) {
@@ -114,7 +105,6 @@ void SchedulerNode::CreateTcpServer() {
     MS_LOG(INFO) << "The scheduler node start a tcp server!";
     server_->Start();
   });
-  scheduler_thread_->detach();
 }
 
 void SchedulerNode::ProcessRegister(const TcpServer &server, const TcpConnection &conn, const CommMessage &message) {
@@ -186,20 +176,15 @@ void SchedulerNode::StartUpdateClusterStateTimer() {
       }
     }
   });
-  update_state_thread_->detach();
 }
 
 bool SchedulerNode::Stop() {
   MS_LOG(INFO) << "Stop scheduler node!";
   if (!is_already_stopped_) {
     is_already_stopped_ = true;
+    update_state_thread_->join();
     server_->Stop();
-    if (scheduler_thread_->joinable()) {
-      scheduler_thread_->join();
-    }
-    if (update_state_thread_->joinable()) {
-      update_state_thread_->join();
-    }
+    scheduler_thread_->join();
     is_ready_ = true;
   }
   return true;
