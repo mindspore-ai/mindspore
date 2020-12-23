@@ -44,23 +44,24 @@ void TbeUtils::SaveJsonInfo(const std::string &json_name, const std::string &inf
   char real_path[PATH_MAX] = {0};
   std::string path = kCceKernelMeta + json_name + kInfoSuffix;
   if (path.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "file path: " << path << "is too long.";
+    MS_LOG(ERROR) << "File path: " << path << "is too long.";
     return;
   }
   std::ifstream fin(path);
   if (fin) {
-    MS_LOG(INFO) << "json file exist, no need to create.";
+    MS_LOG(INFO) << "Json file exist(" << path << "), no need to create.";
     return;
   }
   std::ofstream file_write;
   file_write.open(path);
   if (!file_write.is_open()) {
+    MS_LOG(WARNING) << "Create info file failed(" << path << ").";
     return;
   }
   file_write << info << std::endl;
   file_write.close();
   if (realpath(path.c_str(), real_path) == nullptr) {
-    MS_LOG(INFO) << "dir: " << path << "does not exit.";
+    MS_LOG(WARNING) << "Get realpath failed(" << path << ").";
     return;
   }
   MS_LOG(INFO) << "real path is: " << real_path;

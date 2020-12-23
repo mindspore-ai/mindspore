@@ -148,9 +148,6 @@ bool TbeKernelJsonCreator::GenTbeSingleKernelJson(const std::shared_ptr<mindspor
   op_info_json[kJKernelName] = json_name_;
   (*kernel_json)[kJOpInfo] = op_info_json;
   (*kernel_json)[kJFullName] = anf_node->fullname_with_scope();
-  if (creater_type_ == SINGLE_BUILD) {
-    TbeUtils::SaveJsonInfo(json_name_, json_info_);
-  }
 
   MS_LOG(INFO) << "Operate type:" << creater_type_ << ", full scope name is :" << anf_node->fullname_with_scope()
                << ", json info name is : " << json_name_ << ", kernel json:" << kernel_json->dump();

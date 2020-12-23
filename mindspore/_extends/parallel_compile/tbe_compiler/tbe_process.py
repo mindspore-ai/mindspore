@@ -89,14 +89,12 @@ def run_compiler(op_json):
         tbe_compiler = os.path.join(os.path.split(os.path.realpath(__file__))[0], "compiler.py")
         completed_object = subprocess.run([sys.executable, tbe_compiler], input=op_json, timeout=300,
                                           text=True, capture_output=True, check=True)
-        if completed_object:
-            out = completed_object.stdout
-        return "Success", out
+        return "Success", completed_object.stderr
     except subprocess.TimeoutExpired:
         tb = traceback.format_exc()
-        return "TBEException", "PreCompileTimeOut: " + tb + "\ninput_args: " + op_json
+        return "TBEException", "ERROR: " + tb + "\ninput_args: " + op_json
     except subprocess.CalledProcessError as e:
-        return "TBEException", "PreCompileProcessFailed:\n" + e.stdout + "\n" + e.stderr + "\ninput_args: " + op_json
+        return "TBEException", "ERROR:\n" + e.stdout + "\n" + e.stderr + "\ninput_args: " + op_json
 
 class TbeProcess:
     """tbe process"""

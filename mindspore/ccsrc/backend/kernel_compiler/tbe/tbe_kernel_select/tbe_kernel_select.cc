@@ -492,10 +492,10 @@ std::string TbeKernelSelect::OpSelectFormat() {
   }
   res_json_str = AscendKernelBuildClient::Instance().SelectFormat(kernel_json.dump());
   if (res_json_str.empty()) {
-    MS_LOG(EXCEPTION) << "Op select format error.";
+    MS_LOG(EXCEPTION) << "Op select format error, input args: " << kernel_json.dump();
   }
   if (res_json_str.find("TBEException") != std::string::npos) {
-    MS_LOG(EXCEPTION) << "Dynamic op select failed: " << res_json_str;
+    MS_LOG(EXCEPTION) << "Dynamic op select failed: " << res_json_str << ", input args: " << kernel_json.dump();
   }
   MS_LOG(INFO) << "Dynamic select foramt response result:" << res_json_str;
   return res_json_str;

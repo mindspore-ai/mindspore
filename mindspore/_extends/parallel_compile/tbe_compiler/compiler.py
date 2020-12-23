@@ -156,5 +156,5 @@ if __name__ == "__main__":
     in_args = sys.stdin.readline()
     result = compile_with_json(in_args)
     if isinstance(result, dict):
-        sys.stdout.write(json.dumps(result))
-        sys.stdout.flush()
+        sys.stderr.write(json.dumps(result))
+        sys.stderr.flush()

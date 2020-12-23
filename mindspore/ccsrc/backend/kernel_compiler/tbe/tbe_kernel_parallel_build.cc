@@ -47,6 +47,7 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     TbeKernelJsonCreator creator(SINGLE_BUILD);
     if (!creator.GenTbeSingleKernelJson(anf_node, &kernel_json)) {
       MS_LOG(ERROR) << "GenTbeSingleKernelJson failed";
+      TbeUtils::SaveJsonInfo(kernel_json["op_info"]["kernel_name"], kernel_json["op_info"].dump());
       return false;
     }
     // get size
@@ -69,6 +70,7 @@ bool TbeOpParallelBuild(const std::vector<AnfNodePtr> &anf_nodes) {
     }
     (void)processed_kernel.insert(json_name);
     // op build
+    TbeUtils::SaveJsonInfo(kernel_json["op_info"]["kernel_name"], kernel_json["op_info"].dump());
     auto task_id = build_manger->StartCompileOp(kernel_json);
     build_manger->SaveTaskInfo(task_id, anf_node, json_name, input_size_list, output_size_list);
   }
