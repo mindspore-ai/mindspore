@@ -112,11 +112,12 @@ bool NPUManager::IsKirinChip() {
     if (index == string::npos) {
       continue;
     }
-    auto kirin_number_str = line.substr(index + 5);
-    if (kirin_number_str == "9000E") {
+    // support Kirin 990 5G\990E\9000E
+    if (line.find("990") != string::npos || line.find("9000") != string::npos) {
       cpu_info.close();
       return true;
     }
+    auto kirin_number_str = line.substr(index + 5);
     auto kirin_number = atoi(kirin_number_str.c_str());
     if (kirin_number >= 985 || kirin_number == 810 || kirin_number == 820) {
       cpu_info.close();
