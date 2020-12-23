@@ -26,7 +26,8 @@
 namespace mindspore {
 namespace dataset {
 
-RepeatNode::RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count) : repeat_count_(count) {
+RepeatNode::RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count)
+    : repeat_count_(count), reset_ancestor_(nullptr), op_(nullptr) {
   this->AddChild(child);
 }
 
@@ -35,10 +36,22 @@ std::shared_ptr<DatasetNode> RepeatNode::Copy() {
   return node;
 }
 
-void RepeatNode::Print(std::ostream &out) const { out << Name() + "(count:" + std::to_string(repeat_count_) + ")"; }
+void RepeatNode::Print(std::ostream &out) const { out << Name() + "(count:" + std::to_string(repeat_count_) + ") "; }
 
 Status RepeatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
-  node_ops->push_back(std::make_shared<RepeatOp>(repeat_count_));
+  auto new_op = std::make_shared<RepeatOp>(repeat_count_);
+  node_ops->push_back(new_op);
+  op_ = new_op;
+
+  // Add this RepeatOp to its RepeatOp/EpochCtrlOp ancestor's EOE list.
+  // When the ancestor reaches an end-of-epoch boundary, it will send a "reset" signal to all the ops in the EOE list.
+  // The ancestor is updated by GeneratorNodePass post pass.
+  // Assumption:
+  //   We build the run-time ops from IR nodes from top to bottom. Hence Repeat/EpochCtrl ancestor ops are built
+  //   before this leaf Generator op is built.
+  if (reset_ancestor_ != nullptr) {
+    reset_ancestor_->op_->AddToEoeList(new_op);
+  }
   return Status::OK();
 }
 

@@ -28,10 +28,18 @@
 namespace mindspore {
 namespace dataset {
 
+class RepeatOp;
+
 class RepeatNode : public DatasetNode {
+  // Allow GeneratorNode to access internal members
+  friend class GeneratorNode;
+
  public:
   /// \brief Constructor
-  explicit RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count);
+  RepeatNode() : op_(nullptr), reset_ancestor_(nullptr), repeat_count_(-1) {}
+
+  /// \brief Constructor
+  RepeatNode(std::shared_ptr<DatasetNode> child, int32_t count);
 
   /// \brief Destructor
   ~RepeatNode() = default;
@@ -82,7 +90,34 @@ class RepeatNode : public DatasetNode {
   /// \return Status of the node visit
   Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
 
- private:
+  /// \brief Record the Repeat/EpochCtrl node that is the closest ancestor of this node
+  /// \param[in] the ancestor node
+  /// \return Status of the function
+  Status AddResetAncestor(const std::shared_ptr<RepeatNode> &src) {
+    /*
+     * This check is to ensure we don't overwrite an existing value of its ancestor.
+     * It is okay to assign to the same value more than once in RepeatNode (but not in GeneratorNode).
+     * Consider the following scenario
+     *       EpochCtrl(-1)
+     *           |
+     *        Repeat
+     *           |
+     *        Concat
+     *        /    \
+     *  GenData1  GenData2
+     *
+     * We will record the ancestor relationship of (Repeat, EpochCtrl) twice, one at Visit(GenData1), the other at
+     * Vist(GenData2).
+     */
+    CHECK_FAIL_RETURN_UNEXPECTED(reset_ancestor_ == nullptr || reset_ancestor_ == src,
+                                 "Internal error: Overwriting an existing value");
+    reset_ancestor_ = src;
+    return Status::OK();
+  }
+
+ protected:
+  std::shared_ptr<RepeatOp> op_;                // keep its corresponding run-time op of EpochCtrlNode and RepeatNode
+  std::shared_ptr<RepeatNode> reset_ancestor_;  // updated its immediate Repeat/EpochCtrl ancestor in GeneratorNodePass
   int32_t repeat_count_;
 };
 

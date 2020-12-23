@@ -149,6 +149,10 @@ if (BUILD_MINDDATA STREQUAL "full")
             )
 
     list(REMOVE_ITEM MINDDATA_ENGINE_OPT_POST_SRC_FILES
+            "${MINDDATA_DIR}/engine/opt/post/generator_node_pass.cc"
+            )
+
+    list(REMOVE_ITEM MINDDATA_ENGINE_OPT_POST_SRC_FILES
             "${MINDDATA_DIR}/engine/opt/post/repeat_pass.cc"
             )
 
