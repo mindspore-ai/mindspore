@@ -88,7 +88,7 @@ class Monitor(Callback):
         print("epoch: [{:3d}/{:3d}], step:[{:5d}/{:5d}], loss:[{:5.3f}/{:5.3f}], time:[{:5.3f}], lr:[{:5.3f}]".format(
             cb_params.cur_epoch_num - 1 + config.finish_epoch, cb_params.epoch_num + config.finish_epoch,
             cur_step_in_epoch, cb_params.batch_num, step_loss,
-            np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]))
+            np.mean(self.losses), step_mseconds, self.lr_init[cb_params.cur_step_num - 1]), flush=True)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='image classification training')
@@ -164,10 +164,10 @@ if __name__ == '__main__':
         if args_opt.is_distributed:
             if rank == 0:
                 cb += [ckpt_cb]
-            model.train(config.epoch_size - config.finish_epoch, dataset, callbacks=cb, dataset_sink_mode=False)
+            model.train(config.epoch_size - config.finish_epoch, dataset, callbacks=cb, dataset_sink_mode=True)
         else:
             cb += [ckpt_cb]
-            model.train(config.epoch_size - config.finish_epoch, dataset, callbacks=cb, dataset_sink_mode=False)
+            model.train(config.epoch_size - config.finish_epoch, dataset, callbacks=cb, dataset_sink_mode=True)
         print("train success")
     else:
         raise ValueError("Unsupported device_target.")
