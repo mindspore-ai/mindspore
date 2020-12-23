@@ -75,19 +75,19 @@ function Run_x86() {
         echo ${model_name}'_train' >> "${run_x86_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-train-linux-x64' >> "${run_x86_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-train-linux-x64 || return 1
-        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./net_train/net_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_outputs.bin --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms'  >> "${run_x86_log_file}"
+        echo 'LD_LIBRARY_PATH='${LD_LIBRARY_PATH}':./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark_train/benchmark_train --epochs='${epoch_num}' --modelFile='${ms_models_path}'/'${model_name}'_train.ms --inDataFile='${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin' --expectedDataFile='${train_io_path}'/'${model_name}'_outputs.bin --exportFile='${ms_models_path}'/'${model_name}'_train_exported.ms'  >> "${run_x86_log_file}"
         echo '-------------------------------------------------------------------------------' >> "${run_x86_log_file}"
         LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib \
-        ${run_valgrind}./net_train/net_train \
+        ${run_valgrind}./benchmark_train/benchmark_train \
         --modelFile=${ms_models_path}/${model_name}_train.ms \
         --inDataFile=${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin \
         --expectedDataFile=${train_io_path}/${model_name}_outputs.bin \
         --exportFile=${ms_models_path}/${model_name}_train_exported.ms >> "${run_x86_log_file}" \
         --epochs=${epoch_num}
         if [ $? = 0 ]; then
-            run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_net_train_result_file}
+            run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_net_train_result_file}
+            run_result='x86: '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_train_result_file}
         fi
     done < ${models_mindspore_train_config}
 }
@@ -95,7 +95,7 @@ function Run_x86() {
 # Run on arm platform: 
 # Gets a parameter - arm64/arm32
 function Run_arm() {
-    tmp_dir=/data/local/tmp/net_train_test
+    tmp_dir=/data/local/tmp/benchmark_train_test
     if [ "$1" == arm64 ]; then
         arm_path=${arm64_path}
         process_unit="aarch64"
@@ -122,34 +122,34 @@ function Run_arm() {
     tar -zxf mindspore-lite-${version_arm}-train-android-${process_unit}.tar.gz || exit 1
 
     # If build with minddata, copy the minddata related libs
-    cd ${net_train_test_path} || exit 1
+    cd ${benchmark_train_test_path} || exit 1
     if [ -f ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libminddata-lite.so ]; then
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/libjpeg-turbo/lib/libjpeg.so ${net_train_test_path}/libjpeg.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${net_train_test_path}/libturbojpeg.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_core.so ${net_train_test_path}/libopencv_core.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_imgcodecs.so ${net_train_test_path}/libopencv_imgcodecs.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_imgproc.so ${net_train_test_path}/libopencv_imgproc.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libminddata-lite.so ${net_train_test_path}/libminddata-lite.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/libjpeg-turbo/lib/libjpeg.so ${benchmark_train_test_path}/libjpeg.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/libjpeg-turbo/lib/libturbojpeg.so ${benchmark_train_test_path}/libturbojpeg.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_core.so ${benchmark_train_test_path}/libopencv_core.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_imgcodecs.so ${benchmark_train_test_path}/libopencv_imgcodecs.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/opencv/lib/libopencv_imgproc.so ${benchmark_train_test_path}/libopencv_imgproc.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libminddata-lite.so ${benchmark_train_test_path}/libminddata-lite.so || exit 1
     fi
     if [ "$1" == arm64 ]; then
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai.so ${net_train_test_path}/libhiai.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai_ir.so ${net_train_test_path}/libhiai_ir.so || exit 1
-        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai_ir_build.so ${net_train_test_path}/libhiai_ir_build.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai.so ${benchmark_train_test_path}/libhiai.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai_ir.so ${benchmark_train_test_path}/libhiai_ir.so || exit 1
+        cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/third_party/hiai_ddk/lib/libhiai_ir_build.so ${benchmark_train_test_path}/libhiai_ir_build.so || exit 1
     fi
 
-    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libmindspore-lite.so ${net_train_test_path}/libmindspore-lite.so || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/lib/libmindspore-lite.so ${benchmark_train_test_path}/libmindspore-lite.so || exit 1
 #    if [ "$1" == arm64 ]; then
-#        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-fp16.so ${net_train_test_path}/libmindspore-lite-fp16.so || exit 1
-#        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-optimize.so ${net_train_test_path}/libmindspore-lite-optimize.so || exit 1
+#        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-fp16.so ${benchmark_train_test_path}/libmindspore-lite-fp16.so || exit 1
+#        cp -a ${arm_path}/mindspore-lite-${version_arm}-runtime-${arm_type}-${process_unit}-train/lib/libmindspore-lite-optimize.so ${benchmark_train_test_path}/libmindspore-lite-optimize.so || exit 1
 #    fi
-    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/net_train/net_train ${net_train_test_path}/net_train || exit 1
+    cp -a ${arm_path}/mindspore-lite-${version_arm}-train-android-${process_unit}/benchmark_train/benchmark_train ${benchmark_train_test_path}/benchmark_train || exit 1
 
     # adb push all needed files to the phone
-    adb -s ${device_id} push ${net_train_test_path} /data/local/tmp/ > ${adb_push_log_file}
+    adb -s ${device_id} push ${benchmark_train_test_path} /data/local/tmp/ > ${adb_push_log_file}
 
     # run adb ,run session ,check the result:
-    echo 'cd  /data/local/tmp/net_train_test' > ${adb_cmd_file}
-    echo 'chmod 777 net_train' >> ${adb_cmd_file}
+    echo 'cd  /data/local/tmp/benchmark_train_test' > ${adb_cmd_file}
+    echo 'chmod 777 benchmark_train' >> ${adb_cmd_file}
 
     adb -s ${device_id} shell < ${adb_cmd_file}
     
@@ -160,11 +160,11 @@ function Run_arm() {
           continue
         fi
 
-        # run net_train test without clib data
+        # run benchmark_train test without clib data
         echo ${model_name}'_train' >> "${run_arm_log_file}"
-        adb -s ${device_id} push ${train_io_path}/${model_name}_input*.bin ${train_io_path}/${model_name}_outputs.bin  /data/local/tmp/net_train_test >> ${adb_push_log_file}
-        echo 'cd /data/local/tmp/net_train_test' > ${adb_cmd_run_file}
-        echo 'chmod 777 net_train' >> ${adb_cmd_run_file}
+        adb -s ${device_id} push ${train_io_path}/${model_name}_input*.bin ${train_io_path}/${model_name}_outputs.bin  /data/local/tmp/benchmark_train_test >> ${adb_push_log_file}
+        echo 'cd /data/local/tmp/benchmark_train_test' > ${adb_cmd_run_file}
+        echo 'chmod 777 benchmark_train' >> ${adb_cmd_run_file}
         if [ "$1" == arm64 ]; then
             echo 'cp  /data/local/tmp/libc++_shared.so ./' >> ${adb_cmd_run_file}
         elif [ "$1" == arm32 ]; then
@@ -173,7 +173,7 @@ function Run_arm() {
         echo "rm -f ${tmp_dir}/${model_name}_train_exported.ms" >> ${run_arm_log_file}
         echo "rm -f ${tmp_dir}/${model_name}_train_exported.ms" >> ${adb_cmd_run_file}
         adb_cmd=$(cat <<-ENDM
-        export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/net_train_test;./net_train \
+        export LD_LIBRARY_PATH=./:/data/local/tmp/:/data/local/tmp/benchmark_train_test;./benchmark_train \
         --epochs=${epoch_num} \
         --modelFile=${model_name}_train.ms \
         --inDataFile=${tmp_dir}/${model_name}_input1.bin,${tmp_dir}/${model_name}_input2.bin \
@@ -186,9 +186,9 @@ ENDM
         adb -s ${device_id} shell < ${adb_cmd_run_file} >> ${run_arm_log_file}
         # TODO: change to arm_type
         if [ $? = 0 ]; then
-            run_result=$1': '${model_name}'_train pass'; echo ${run_result} >> ${run_net_train_result_file}
+            run_result=$1': '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
-            run_result=$1': '${model_name}'_train failed'; echo ${run_result} >> ${run_net_train_result_file}; return 1
+            run_result=$1': '${model_name}'_train failed'; echo ${run_result} >> ${run_benchmark_train_result_file}; return 1
         fi
     done < ${models_mindspore_train_config}
 }
@@ -218,7 +218,7 @@ function Print_Result() {
 basepath=$(pwd)
 echo ${basepath}
 
-# Example:run_net_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
+# Example:run_benchmark_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
 # For running on arm64, use -t to set platform tools path (for using adb commands)
 epoch_num=1
 train_io_path=""
@@ -336,9 +336,9 @@ else
 fi
 
 
-# Write net_train result to temp file
-run_net_train_result_file=${logs_path}/run_net_train_result.txt
-echo ' ' > ${run_net_train_result_file}
+# Write benchmark_train result to temp file
+run_benchmark_train_result_file=${logs_path}/run_benchmark_train_result.txt
+echo ' ' > ${run_benchmark_train_result_file}
 
 # Create log files
 run_x86_log_file=${logs_path}/run_x86_log.txt
@@ -357,11 +357,11 @@ adb_cmd_arm32_file=${logs_path}/adb_arm32_cmd.txt
 adb_cmd_arm32_run_file=${logs_path}/adb_arm32_cmd_run.txt
 
 # Copy the MindSpore models:
-echo "Push files to net_train_test folder and run net_train"
-net_train_test_path=${basepath}/net_train_test
-rm -rf ${net_train_test_path}
-mkdir -p ${net_train_test_path}
-cp -a ${ms_models_path}/*.ms ${net_train_test_path} || exit 1
+echo "Push files to benchmark_train_test folder and run benchmark_train"
+benchmark_train_test_path=${basepath}/benchmark_train_test
+rm -rf ${benchmark_train_test_path}
+mkdir -p ${benchmark_train_test_path}
+cp -a ${ms_models_path}/*.ms ${benchmark_train_test_path} || exit 1
 
 # Run on x86
 echo "start Run x86 ..."
@@ -371,7 +371,7 @@ sleep 1
 
 
 # wait ${Run_x86_PID}
-cat ${run_net_train_result_file}
+cat ${run_benchmark_train_result_file}
 wait ${Run_x86_PID}
 Run_x86_status=$?
 
@@ -395,11 +395,11 @@ function Print_Benchmark_Result() {
     while read line; do
         arr=("${line}")
         printf "%-20s %-100s %-7s\n" ${arr[0]} ${arr[1]} ${arr[2]}
-    done < ${run_net_train_result_file}
+    done < ${run_benchmark_train_result_file}
     MS_PRINT_TESTCASE_END_MSG
 }
 
-# Check net_train result and return value
+# Check benchmark_train result and return value
 if [[ ${Run_x86_status} != 0 ]];then
     echo "Run_x86 failed"
     cat ${run_x86_log_file}

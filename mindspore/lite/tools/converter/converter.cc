@@ -67,6 +67,9 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     int status = modelImporter->Import(flag);
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     graph = modelImporter->GetResult();
+    if (graph == nullptr) {
+      return nullptr;
+    }
     graph->set_attr("graph_name", MakeValue("main_graph"));
   } else {
     MS_ASSERT(nullptr != modelParser);

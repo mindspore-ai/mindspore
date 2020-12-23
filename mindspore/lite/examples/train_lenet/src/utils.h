@@ -17,6 +17,10 @@
 #ifndef MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_UTILS_H_
 #define MINDSPORE_LITE_EXAMPLES_TRAIN_LENET_SRC_UTILS_H_
 
+// DEBUG should be defined because the source code use assert to test exception
+// but the Code Analysis Tool not allow us to use assert directly
+#define DEBUG TRUE
+
 #ifdef DEBUG
 #include <cassert>
 #define MS_ASSERT(f) assert(f)

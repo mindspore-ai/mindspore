@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/net_train/net_train.h"
+#include "tools/benchmark_train/net_train.h"
 #define __STDC_FORMAT_MACROS
 #include <cinttypes>
 #undef __STDC_FORMAT_MACROS

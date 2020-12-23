@@ -15,7 +15,7 @@
  */
 
 #include <malloc.h>
-#include "tools/net_train/net_train.h"
+#include "tools/benchmark_train/net_train.h"
 #include "include/version.h"
 
 int main(int argc, const char **argv) {
