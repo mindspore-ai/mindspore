@@ -735,6 +735,12 @@ def _derive_result_shape_info_from_tuple_of_mixed_tensors(indexes_info, index_te
 
 
 @constexpr
+def make_empty_slice():
+    empty_slice = slice(None, None, None)
+    return empty_slice
+
+
+@constexpr
 def get_pos_of_int_index(indexes_types):
     """Get int index positions from the mixed tensors index which contains int, tensor, slice, and ellipsis."""
     int_positions = []
@@ -770,10 +776,38 @@ def separate_mixed_tensors_index(indexes_types, op_name):
         elif isinstance(ele_type, mstype.ellipsis_type):
             ellipsis_position = i
         else:
-            raise IndexError(f"For '{op_name}', the index elements only support "
-                             f"'Tensor', 'int32', 'int64', 'Slice', 'Ellipsis', but got {ele_type}.")
+            raise TypeError(f"For '{op_name}', the index elements only support "
+                            f"'Tensor', 'int32', 'int64', 'Slice', 'Ellipsis', but got {ele_type}.")
 
     return tensor_positions, slice_positions, ellipsis_position
+
+
+@constexpr
+def get_pos_of_indexes_types(indexes_types, op_name):
+    """Separate the position information of tensor and slice and ellipsis from the mixed tensors index."""
+    slice_positions, ellipsis_positions, none_positions, int_positions, bool_positions, tensor_positions, \
+        sequence_positions = [], [], [], [], [], [], []
+    for i, index_type in enumerate(indexes_types):
+        if isinstance(index_type, mstype.slice_type):
+            slice_positions.append(i)
+        elif isinstance(index_type, mstype.ellipsis_type):
+            ellipsis_positions.append(i)
+        elif isinstance(index_type, mstype.none_type):
+            none_positions.append(i)
+        elif isinstance(index_type, mstype.Int):
+            int_positions.append(i)
+        elif isinstance(index_type, mstype.bool_type):
+            bool_positions.append(i)
+        elif isinstance(index_type, mstype.tensor_type):
+            tensor_positions.append(i)
+        elif isinstance(index_type, (list, tuple)):
+            sequence_positions.append(i)
+        else:
+            raise IndexError(f"For '{op_name}', the index elements only support "
+                             f"'Tensor', 'int32', 'int64', 'Slice', 'Ellipsis', but got {index_type}.")
+
+    return slice_positions, ellipsis_positions, none_positions, int_positions, bool_positions, \
+        tensor_positions, sequence_positions
 
 
 @constexpr
@@ -849,17 +883,13 @@ def get_slice_stride(dim_size, index_slice):
 
 
 @constexpr
-def get_stride_info_from_tuple(data_shape, index_tuple):
+def get_stride_info_from_tuple(data_shape, tuple_index):
     """Get stride info from a tuple"""
-    begin_strides = []
-    end_strides = []
-    step_strides = []
-    index_size = len(index_tuple)
-    data_shape_size = len(data_shape)
-    shrink_axis = 0
-    index_count = 0
-    ellipsis_count = 0
-    for idx, item in enumerate(index_tuple):
+    begin_strides, end_strides, step_strides = [], [], []
+    tuple_index_len = len(tuple_index)
+    data_rank = len(data_shape)
+    shrink_axis, index_count, ellipsis_count = 0, 0, 0
+    for idx, item in enumerate(tuple_index):
         if isinstance(item, slice):
             start, stop, step = get_slice_stride(data_shape[idx], item)
             begin_strides.append(start)
@@ -876,7 +906,7 @@ def get_stride_info_from_tuple(data_shape, index_tuple):
             ellipsis_count = ellipsis_count + 1
             if ellipsis_count > 1:
                 raise IndexError("An index can have only one ellipsis (...)")
-            ellipsis_range_size = data_shape_size - (index_size - 1)
+            ellipsis_range_size = data_rank - (tuple_index_len - 1)
             begin_strides.extend([0] * (ellipsis_range_size))
             end_strides.extend(
                 [i for i in data_shape[index_count: index_count + (ellipsis_range_size)]])
@@ -885,7 +915,7 @@ def get_stride_info_from_tuple(data_shape, index_tuple):
         else:
             raise IndexError("Not supported index data type, got ",
                              item, " type is ", type(item))
-    for item in range(index_count, data_shape_size):
+    for item in range(index_count, data_rank):
         begin_strides.append(0)
         end_strides.append(data_shape[item])
         step_strides.append(1)
