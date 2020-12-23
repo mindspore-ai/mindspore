@@ -2211,7 +2211,7 @@ class _PythonCallable:
         self.idx = idx
 
     def __call__(self, *args):
-        if self.pool is not None:
+        if self.pool is not None and self.pool._state == 0: # pylint: disable=W0212
             # This call will send the tensors along with Python callable index to the process pool.
             # Block, yield GIL. Current thread will reacquire GIL once result is returned.
             result = self.pool.apply_async(_pyfunc_worker_exec, [self.idx, *args])
