@@ -31,17 +31,11 @@ namespace mindspore {
 namespace dataset {
 
 // Constructor
-ProfilingManager::ProfilingManager(ExecutionTree *tree) : tree_(tree) {
+ProfilingManager::ProfilingManager(ExecutionTree *tree) : tree_(tree), enabled_(true) {
   perf_monitor_ = std::make_unique<Monitor>(tree_);
 }
 
-bool ProfilingManager::IsProfilingEnable() const {
-  auto profiling = common::GetEnv("PROFILING_MODE");
-  if (profiling.empty() || profiling != "true") {
-    return false;
-  }
-  return true;
-}
+bool ProfilingManager::IsProfilingEnable() const { return common::GetEnv("PROFILING_MODE") == "true" && enabled_; }
 
 Status ProfilingManager::Initialize() {
   // Register nodes based on config
@@ -64,7 +58,7 @@ Status ProfilingManager::Initialize() {
 #endif
   dir_path_ = real_path;
 
-  // If DEVICE_ID is not set,defult value is 0
+  // If DEVICE_ID is not set, default value is 0
   device_id_ = common::GetEnv("DEVICE_ID");
   if (device_id_.empty()) {
     device_id_ = "0";

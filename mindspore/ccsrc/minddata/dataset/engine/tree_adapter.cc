@@ -126,7 +126,8 @@ Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std
 Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir, int32_t num_epochs) {
   // This will evolve in the long run
   tree_ = std::make_unique<ExecutionTree>();
-
+  // disable profiling if this is only a getter pass
+  if (usage_ == kDeGetter) tree_->GetProfilingManager()->DisableProfiling();
   // Build the Execution tree from the child of the IR root node, which represent the root of the input IR tree
   std::shared_ptr<DatasetOp> root_op;
   RETURN_IF_NOT_OK(BuildExecutionTreeRecur(root_ir->Children()[0], &root_op));

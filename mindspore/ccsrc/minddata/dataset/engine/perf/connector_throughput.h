@@ -68,7 +68,7 @@ class ConnectorThroughput : public Sampling {
   // @return Status The status code returned
   Status SaveToFile() override;
 
-  Status Init(const std::string &dir_path, const std::string &device_id);
+  Status Init(const std::string &dir_path, const std::string &device_id) override;
 
   json ParseOpInfo(const DatasetOp &node, const std::vector<double> &thr);
 
