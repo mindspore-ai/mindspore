@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_RELU_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_RELU_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_ACTIVATION_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_ACTIVATION_GPU_KERNEL_H_
 
 #include <vector>
 #include <map>
@@ -44,17 +44,12 @@ class ActivationGpuFwdKernel : public GpuKernel {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 0);
 
-    if (mode_ == CUDNN_ACTIVATION_RELU) {
-      const int size = input_size_ / sizeof(T);
-      CalReLU(size, input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
-    } else {
-      const float alpha = 1;
-      const float beta = 0;
-      CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
-                                  cudnnActivationForward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_,
-                                                         input, &beta, data_descriptor_, output),
-                                  "cudnnActivationForward failed");
-    }
+    const float alpha = 1;
+    const float beta = 0;
+    CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_,
+                                cudnnActivationForward(cudnn_handle_, activation_desc_, &alpha, data_descriptor_, input,
+                                                       &beta, data_descriptor_, output),
+                                "cudnnActivationForward failed");
 
     return true;
   }
@@ -125,7 +120,7 @@ class ActivationGpuFwdKernel : public GpuKernel {
   void ResetResource() noexcept override {
     cudnn_handle_ = nullptr;
     activation_desc_ = nullptr;
-    mode_ = CUDNN_ACTIVATION_RELU;
+    mode_ = CUDNN_ACTIVATION_SIGMOID;
     data_descriptor_ = nullptr;
     is_null_input_ = false;
     input_size_list_.clear();
@@ -154,11 +149,11 @@ class ActivationGpuFwdKernel : public GpuKernel {
     }
     input_size_list_.push_back(input_size_);
     output_size_list_.push_back(output_size_);
+    workspace_size_list_.push_back(workspace_size_);
   }
 
  private:
-  std::map<std::string, cudnnActivationMode_t> kernel_map = {{"ReLU", CUDNN_ACTIVATION_RELU},
-                                                             {"ReLU6", CUDNN_ACTIVATION_CLIPPED_RELU},
+  std::map<std::string, cudnnActivationMode_t> kernel_map = {{"ReLU6", CUDNN_ACTIVATION_CLIPPED_RELU},
                                                              {"Tanh", CUDNN_ACTIVATION_TANH},
                                                              {"Elu", CUDNN_ACTIVATION_ELU},
                                                              {"Sigmoid", CUDNN_ACTIVATION_SIGMOID}};
@@ -179,4 +174,4 @@ class ActivationGpuFwdKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_RELU_GPU_KERNEL_H_
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_ACTIVATION_GPU_KERNEL_H_
