@@ -39,8 +39,10 @@ Status CacheService::DoServiceStart() {
   if (cache_mem_sz_ > 0) {
     auto avail_mem = CacheServerHW::GetTotalSystemMemory();
     if (cache_mem_sz_ > avail_mem) {
-      // Output a warning that we use more than recommended. If we fail to allocate, we will fail anyway.
-      MS_LOG(WARNING) << "Requesting cache size " << cache_mem_sz_ << " while available system memory " << avail_mem;
+      // Return an error if we use more than recommended memory.
+      std::string errMsg = "Requesting cache size " + std::to_string(cache_mem_sz_) +
+                           " while available system memory " + std::to_string(avail_mem);
+      return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__, errMsg);
     }
     memory_cap_ratio = static_cast<float>(cache_mem_sz_) / avail_mem;
   }

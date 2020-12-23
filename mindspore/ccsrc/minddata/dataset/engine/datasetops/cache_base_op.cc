@@ -308,6 +308,7 @@ Status CacheBase::Prefetcher(int32_t worker_id) {
           // If we get some network error, we will attempt some retries
           retry_count++;
         } else if (rc.IsError()) {
+          MS_LOG(WARNING) << rc.ToString();
           return rc;
         }
       } while (rc.IsNetWorkError());
