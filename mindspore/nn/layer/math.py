@@ -50,6 +50,10 @@ class ReduceLogSumExp(Cell):
 
     The dtype of the tensor to be reduced is number.
 
+    .. math::
+
+        ReduceLogSumExp(x) = \log(\sum(e^x))
+
     Args:
         axis (Union[int, tuple(int), list(int)]) - The dimensions to reduce. Default: (), reduce all dimensions.
             Only constant value is allowed.
