@@ -66,7 +66,8 @@ class HcclExecutorManager {
 
   bool Initialize();
   bool Finalize();
-  void *handle() { return handle_; }
+  void *GetHcomOpertion();
+  void CloseHandle();
 
  private:
   HcclExecutorManager() = default;

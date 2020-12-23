@@ -88,14 +88,12 @@ void HcclDynamicKernel::StaticShapeExecute() {
 void HcclDynamicKernel::Execute() {
   MS_LOG(INFO) << "Start Execute";
 
-  auto handle = HcclExecutorManager::GetInstance().handle();
   auto EnqueueHcomOperation =
-    (HcclResult(*)(ge::HcomOpertion, std::function<void(HcclResult status)>))dlsym(handle, "EnqueueHcomOpertion");
+    (HcclResult(*)(ge::HcomOpertion, std::function<void(HcclResult status)>))HcclExecutorManager::GetInstance()
+      .GetHcomOpertion();
   if (EnqueueHcomOperation == nullptr) {
     MS_LOG(ERROR) << "Failed to get EnqueueHcomOperation function";
-    if (dlclose(handle) != 0) {
-      MS_LOG(WARNING) << "Failed to close hcom handle";
-    }
+    HcclExecutorManager::GetInstance().CloseHandle();
     MS_LOG(EXCEPTION) << "Hccl dynamic kernel execute failed";
     return;
   }
@@ -185,6 +183,13 @@ bool HcclExecutorManager::Finalize() {
   }
   MS_LOG(INFO) << "Hccl DynamicKernel Finalize success";
   return true;
+}
+
+void *HcclExecutorManager::GetHcomOpertion() { return dlsym(handle_, "EnqueueHcomOpertion"); }
+void HcclExecutorManager::CloseHandle() {
+  if (dlclose(handle_) != 0) {
+    MS_LOG(WARNING) << "Failed to close hcom handle";
+  }
 }
 }  // namespace ascend
 }  // namespace device
