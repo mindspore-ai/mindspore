@@ -16,8 +16,8 @@
 
 #include <memory>
 #include <string>
-#include "tools/lib_cropper/lib_cropper.h"
-#include "tools/lib_cropper/cropper_utils.h"
+#include "tools/cropper/cropper.h"
+#include "tools/cropper/cropper_utils.h"
 #define BUF_SIZE 1024
 
 namespace mindspore {

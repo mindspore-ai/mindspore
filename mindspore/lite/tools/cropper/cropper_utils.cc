@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "tools/lib_cropper/cropper_utils.h"
+#include "tools/cropper/cropper_utils.h"
 #include <fstream>
 #include <iostream>
 #include "src/common/log_adapter.h"

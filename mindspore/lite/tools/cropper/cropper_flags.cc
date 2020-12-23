@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "tools/lib_cropper/cropper_flags.h"
+#include "tools/cropper/cropper_flags.h"
 #include <string>
-#include "tools/lib_cropper/cropper_utils.h"
+#include "tools/cropper/cropper_utils.h"
 #include "src/common/file_utils.h"
 
 namespace mindspore {
