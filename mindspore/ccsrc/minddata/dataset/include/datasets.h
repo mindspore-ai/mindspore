@@ -1011,7 +1011,8 @@ std::shared_ptr<VOCDataset> VOC(const std::string &dataset_dir, const std::strin
 
 /// \brief Function the create a cache to be attached to a dataset
 /// \param id A user assigned session id for the current pipeline.
-/// \param mem_sz Size of the memory set aside for the row caching (default=0 which means unlimited).
+/// \param mem_sz Size of the memory set aside for the row caching (default=0 which means unlimited,
+///     note that it might bring in the risk of running out of memory on the machine).
 /// \param spill Spill to disk if out of memory (default=False).
 /// \param hostname optional host name (default="127.0.0.1").
 /// \param port optional port (default=50052).

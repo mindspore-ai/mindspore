@@ -30,7 +30,8 @@ class DatasetCache:
 
     Args:
         session_id (int): A user assigned session id for the current pipeline.
-        size (int, optional): Size of the memory set aside for the row caching (default=0 which means unlimited).
+        size (int, optional): Size of the memory set aside for the row caching (default=0 which means unlimited,
+            note that it might bring in the risk of running out of memory on the machine).
         spilling (bool, optional): Whether or not spilling to disk if out of memory (default=False).
         hostname (str, optional): Host name (default="127.0.0.1").
         port (int, optional): Port to connect to server (default=50052).
