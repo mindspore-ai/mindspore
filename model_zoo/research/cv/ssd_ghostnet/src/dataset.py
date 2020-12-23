@@ -24,7 +24,7 @@ import numpy as np
 import cv2
 
 import mindspore.dataset as de
-import mindspore.dataset.transforms.vision.c_transforms as C
+import mindspore.dataset.vision.c_transforms as C2
 from mindspore.mindrecord import FileWriter
 from .config_ghostnet_13x import config
 from .box_utils import jaccard_numpy, ssd_bboxes_encode
@@ -397,12 +397,12 @@ def create_ssd_dataset(mindrecord_file, batch_size=32, repeat_num=10, device_num
     """Create SSD dataset with MindDataset."""
     ds = de.MindDataset(mindrecord_file, columns_list=["img_id", "image", "annotation"], num_shards=device_num,
                         shard_id=rank, num_parallel_workers=num_parallel_workers, shuffle=is_training)
-    decode = C.Decode()
+    decode = C2.Decode()
     ds = ds.map(input_columns=["image"], operations=decode)
-    change_swap_op = C.HWC2CHW()
-    normalize_op = C.Normalize(
+    change_swap_op = C2.HWC2CHW()
+    normalize_op = C2.Normalize(
         mean=[0.485*255, 0.456*255, 0.406*255], std=[0.229*255, 0.224*255, 0.225*255])
-    color_adjust_op = C.RandomColorAdjust(
+    color_adjust_op = C2.RandomColorAdjust(
         brightness=0.4, contrast=0.4, saturation=0.4)
     compose_map_func = (lambda img_id, image, annotation: preprocess_fn(
         img_id, image, annotation, is_training))
@@ -413,7 +413,7 @@ def create_ssd_dataset(mindrecord_file, batch_size=32, repeat_num=10, device_num
         output_columns = ["img_id", "image", "image_shape"]
         trans = [normalize_op, change_swap_op]
     ds = ds.map(input_columns=["img_id", "image", "annotation"],
-                output_columns=output_columns, columns_order=output_columns,
+                output_columns=output_columns, column_order=output_columns,
                 operations=compose_map_func, python_multiprocessing=is_training,
                 num_parallel_workers=num_parallel_workers)
     ds = ds.map(input_columns=["image"], operations=trans, python_multiprocessing=is_training,
