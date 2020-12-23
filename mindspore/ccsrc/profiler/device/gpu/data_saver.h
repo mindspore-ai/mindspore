@@ -129,7 +129,7 @@ class DataSaver {
 
   void ParseEvent(const std::vector<Event> &events);
 
-  void WriteFile(std::string out_path);
+  void WriteFile(std::string out_path, const BaseTime &start_time);
 
  private:
   void AddOpDetailInfoForType(const OpDetailInfo &op_detail_info);
@@ -149,6 +149,8 @@ class DataSaver {
   void WriteOpTimestamp(const std::string &saver_base_dir);
 
   void WriteStepTrace(const std::string &saver_base_dir);
+
+  void WriteStartTime(const std::string &saver_base_dir, const BaseTime &start_time);
 
   void ChangeFileMode(const std::string &file_path);
 

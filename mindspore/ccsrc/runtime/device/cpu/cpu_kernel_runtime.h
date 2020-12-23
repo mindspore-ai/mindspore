@@ -26,6 +26,7 @@
 #include "backend/session/session_basic.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/any.h"
+#include "profiler/device/cpu/cpu_profiling.h"
 namespace mindspore {
 namespace device {
 namespace cpu {

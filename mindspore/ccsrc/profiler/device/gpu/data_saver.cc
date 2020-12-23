@@ -153,7 +153,7 @@ void DataSaver::AddKernelEventToDevice(const Event &event, DeviceActivityInfos *
   }
 }
 
-void DataSaver::WriteFile(std::string out_path_dir) {
+void DataSaver::WriteFile(std::string out_path_dir, const BaseTime &start_time) {
   if (out_path_dir.empty()) {
     MS_LOG(WARNING) << "Output directory. Ignore the writing data.";
     return;
@@ -169,6 +169,7 @@ void DataSaver::WriteFile(std::string out_path_dir) {
   WriteActivity(out_path_dir);
   WriteOpTimestamp(out_path_dir);
   WriteStepTrace(out_path_dir);
+  WriteStartTime(out_path_dir, start_time);
 }
 
 void DataSaver::WriteOpType(const std::string &saver_base_dir) {
@@ -305,6 +306,28 @@ void DataSaver::WriteStepTrace(const std::string &saver_base_dir) {
   ofs.close();
   ChangeFileMode(file_path);
   MS_LOG(INFO) << "Write step trace infos into file: " << file_path;
+}
+
+void DataSaver::WriteStartTime(const std::string &saver_base_dir, const BaseTime &start_time) {
+  std::string file_path = saver_base_dir + "/start_time_" + device_id_ + ".txt";
+  std::ofstream ofs(file_path);
+  // check if the file is writable
+  if (!ofs.is_open()) {
+    MS_LOG(WARNING) << "Open file '" << file_path << "' failed!";
+    return;
+  }
+
+  // write start time info into file
+  try {
+    ofs << "host_monotonic_raw_time(ns): " << start_time.host_start_monotonic_raw_time << std::endl;
+    ofs << "gpu_start_time(ns): " << start_time.gpu_start_time << std::endl;
+  } catch (const std::exception &e) {
+    MS_LOG(ERROR) << "Write " << file_path << "failed:" << e.what();
+  }
+
+  ofs.close();
+  ChangeFileMode(file_path);
+  MS_LOG(INFO) << "Write profiler start time infos into file: " << file_path;
 }
 
 void DataSaver::SetStepTraceOpName(ProfilingTraceInfo trace_op_name) { step_trace_op_name = trace_op_name; }
