@@ -509,7 +509,7 @@ def set_context(**kwargs):
     ===========================  ===========================  =================
     Common(CPU/GPU/Ascend)       Ascend                       GPU
     ===========================  ===========================  =================
-    check_bprop                  enable_auto_mixed_precision  max_device_memory
+    check_bprop                  print_file_path              max_device_memory
     device_id                    enable_dump                  enable_graph_kernel
     device_target                save_dump_path
     enable_sparse                enable_graph_kernel
@@ -517,7 +517,7 @@ def set_context(**kwargs):
     mode                         enable_profiling
     reserve_class_name_in_scope  profiling_options
     save_graphs                  variable_memory_max_size
-    save_graphs_path             print_file_path
+    save_graphs_path
     ===========================  ===========================  =================
 
     Args:
@@ -527,7 +527,6 @@ def set_context(**kwargs):
                     while device_num_per_host should be no more than 4096. Default: 0.
         save_graphs (bool): Whether to save graphs. Default: False.
         save_graphs_path (str): Path to save graphs. Default: "."
-        enable_auto_mixed_precision (bool): Whether to enable auto mixed precision. Default: False.
         enable_graph_kernel (bool): Whether to enable composition of basic primitives. These primitives would be
             compiled into a fused kernel automatically. Default: False.
         reserve_class_name_in_scope (bool) : Whether to save the network class name in the scope. Default: True.
