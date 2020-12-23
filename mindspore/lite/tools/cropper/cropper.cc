@@ -180,7 +180,7 @@ int Cropper::GetOpMatchFiles() {
         String primitive = mapping[0];
         String type = mapping[1];
         String file = mapping[2];
-        if (type == "kNumberTypeFloat32" || type == "kNumberTypeFloat16") {
+        if (type == "kNumberTypeFloat32" || type == "kNumberTypeFloat16" || type == "kNumberTypeInt32") {
           for (auto op : this->fp32_operators_) {
             if (schema::EnumNamePrimitiveType(op) == primitive) {
               MS_LOG(DEBUG) << "kNumberTypeFloat32:" << mapping[2];

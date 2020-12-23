@@ -113,6 +113,10 @@ bool NPUManager::IsKirinChip() {
       continue;
     }
     auto kirin_number_str = line.substr(index + 5);
+    if (kirin_number_str == "9000E") {
+      cpu_info.close();
+      return true;
+    }
     auto kirin_number = atoi(kirin_number_str.c_str());
     if (kirin_number >= 985 || kirin_number == 810 || kirin_number == 820) {
       cpu_info.close();

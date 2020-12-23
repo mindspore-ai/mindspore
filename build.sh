@@ -514,7 +514,7 @@ build_lite()
     if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ] || [ $1 == "arm64" ]; then
       echo "start get opencl"
     fi
-    if [ "${ENABLE_NPU}" == "on" ]; then
+    if [ "${LITE_ENABLE_NPU}" == "on" ]; then
       checkddk
     fi
 
