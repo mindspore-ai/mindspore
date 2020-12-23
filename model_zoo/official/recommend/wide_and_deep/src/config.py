@@ -40,7 +40,7 @@ def argparse_init():
     parser.add_argument("--dropout_flag", type=int, default=0, help="Enable dropout")
     parser.add_argument("--output_path", type=str, default="./output/")
     parser.add_argument("--ckpt_path", type=str, default="./", help="The location of the checkpoint file.")
-    parser.add_argument("--stra_ckpt", type=str, default="./checkpoints/strategy.ckpt",
+    parser.add_argument("--stra_ckpt", type=str, default="./checkpoints",
                         help="The strategy checkpoint file.")
     parser.add_argument("--eval_file_name", type=str, default="eval.log", help="Eval output file.")
     parser.add_argument("--loss_file_name", type=str, default="loss.log", help="Loss output file.")
