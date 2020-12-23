@@ -54,8 +54,8 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (stride_ori.size() != 2 || stride_ori[0] != stride_ori[1]) {
     MS_LOG(EXCEPTION) << "Conv2dGradInputCPUKernel only support equal stride, and stride must be 2d!";
   }
-  if (dilation_ori.size() != 4 || dilation_ori[2] != 1 || dilation_ori[3] != 1) {
-    MS_LOG(EXCEPTION) << "Conv2dGradInputCPUKernel dilation only support 1, and dilation must be 4d!";
+  if (dilation_ori.size() != 4) {
+    MS_LOG(EXCEPTION) << "Conv2dGradInputCPUKernel dilation must be 4d!";
   }
   if (dilation_ori[0] != 1 || dilation_ori[1] != 1) {
     MS_LOG(EXCEPTION) << "Conv2dGradInputCPUKernel dilation only support 1 in N axis and C axis!";
