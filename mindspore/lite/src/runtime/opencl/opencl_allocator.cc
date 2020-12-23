@@ -225,7 +225,7 @@ void OpenCLAllocator::Free(void *buf) {
   MS_LOG(WARNING) << "Host ptr " << buf << " has freed";
 }
 
-size_t OpenCLAllocator::GetTotalSize() {
+size_t OpenCLAllocator::total_size() {
   Lock();
   size_t totalSize = 0;
 
