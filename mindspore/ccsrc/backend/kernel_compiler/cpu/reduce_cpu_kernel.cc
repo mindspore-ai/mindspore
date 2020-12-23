@@ -164,27 +164,30 @@ void ReduceCPUKernel::ConvertDataToOutput(const float *new_input, float *output)
 
 void ReduceCPUKernel::Transpose(const int size, const float *input, const std::vector<size_t> &input_shape,
                                 const std::vector<size_t> &input_axis, const int shape_size, float *output) {
-  int pos_array[kMaxDim];
   int size_offset[kMaxDim];
   size_offset[0] = size / SizeToInt(input_shape[0]);
   for (int i = 1; i < shape_size; ++i) {
     size_offset[i] = size_offset[i - 1] / SizeToInt(input_shape[i]);
   }
-  for (int position = 0; position < size; position += 1) {
-    int temp_position = position;
-    pos_array[0] = temp_position / size_offset[0];
-    for (int i = 1; i < shape_size; ++i) {
-      temp_position -= pos_array[i - 1] * size_offset[i - 1];
-      pos_array[i] = temp_position / size_offset[i];
+  auto task = [&](size_t start, size_t end) {
+    int pos_array[kMaxDim];
+    for (size_t position = start; position < end; position += 1) {
+      size_t temp_position = position;
+      pos_array[0] = temp_position / size_offset[0];
+      for (int i = 1; i < shape_size; ++i) {
+        temp_position -= pos_array[i - 1] * size_offset[i - 1];
+        pos_array[i] = temp_position / size_offset[i];
+      }
+      size_t new_position = pos_array[SizeToInt(input_axis[shape_size - 1])];
+      size_t new_position_size = 1;
+      for (int j = shape_size - 2; j >= 0; j--) {
+        new_position_size *= SizeToInt(input_shape[SizeToInt(input_axis[j + 1])]);
+        new_position += pos_array[SizeToInt(input_axis[j])] * new_position_size;
+      }
+      output[new_position] = input[position];
     }
-    int new_position = pos_array[SizeToInt(input_axis[shape_size - 1])];
-    int new_position_size = 1;
-    for (int j = shape_size - 2; j >= 0; j--) {
-      new_position_size *= SizeToInt(input_shape[SizeToInt(input_axis[j + 1])]);
-      new_position += pos_array[SizeToInt(input_axis[j])] * new_position_size;
-    }
-    output[new_position] = input[position];
-  }
+  };
+  CPUKernelUtils::ParallelFor(task, size);
   return;
 }
 }  // namespace kernel

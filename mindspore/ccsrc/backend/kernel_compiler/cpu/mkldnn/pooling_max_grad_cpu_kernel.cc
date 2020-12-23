@@ -117,12 +117,15 @@ bool MaxPoolingGradCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
   size_t src_wh = src_shape_[2] * src_shape_[3];
   size_t dst_wh = dst_shape_[2] * dst_shape_[3];
   for (size_t n = 0; n < src_shape_[0]; ++n) {
-    for (size_t c = 0; c < src_shape_[1]; ++c) {
-      ChannelPoolingGrad(input, diff, output);
-      input = input + src_wh;
-      output = output + src_wh;
-      diff = diff + dst_wh;
-    }
+    auto task = [&](size_t start, size_t end) {
+      for (size_t c = start; c < end; ++c) {
+        ChannelPoolingGrad(input, diff, output);
+        input = input + src_wh;
+        output = output + src_wh;
+        diff = diff + dst_wh;
+      }
+    };
+    CPUKernelUtils::ParallelFor(task, src_shape_[1]);
   }
   return true;
 }

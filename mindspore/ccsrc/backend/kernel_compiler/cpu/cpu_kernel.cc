@@ -79,5 +79,24 @@ void CPUKernelUtils::GetElementNumEveryDim(const std::vector<size_t> &shape, std
   }
   std::reverse(element_num->begin(), element_num->end());
 }
+
+void CPUKernelUtils::ParallelFor(const CTask &task, size_t count) {
+  auto max_thread_num = std::thread::hardware_concurrency();
+  const float block_size = 128.0;
+  size_t thread_num = count < block_size * max_thread_num ? std::ceil(count / block_size) : max_thread_num;
+  std::vector<std::thread> threads;
+  threads.reserve(thread_num);
+  size_t start = 0;
+  size_t once_compute_size = (count + thread_num - 1) / thread_num;
+  while (start < count) {
+    size_t end = (start + once_compute_size) > count ? count : (start + once_compute_size);
+    threads.emplace_back(std::thread(task, start, end));
+    start += once_compute_size;
+  }
+  for (size_t i = 0; i < threads.size(); ++i) {
+    threads[i].join();
+  }
+}
+
 }  // namespace kernel
 }  // namespace mindspore
