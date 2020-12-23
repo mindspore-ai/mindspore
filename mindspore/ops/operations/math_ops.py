@@ -791,7 +791,7 @@ class BatchMatMul(MatMul):
         Tensor, the shape of the output tensor is :math:`(*B, N, M)`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.ones(shape=[2, 4, 1, 3]), mindspore.float32)
