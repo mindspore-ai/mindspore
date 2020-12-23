@@ -420,10 +420,13 @@ Status DatasetNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &siz
   }
 }
 Status DatasetNode::ValidateParams() {
+  int32_t num_threads = GlobalContext::config_manager()->num_cpu_threads();
+  // in case std::thread::hardware_concurrency returns 0, use an artificial upper limit
+  num_threads = num_threads > 0 ? num_threads : std::numeric_limits<uint16_t>::max();
   CHECK_FAIL_RETURN_UNEXPECTED(
-    num_workers_ > 0 && num_workers_ < std::numeric_limits<uint16_t>::max(),
-    Name() + "'s num_workers=" + std::to_string(num_workers_) + ", this value is less than 1 or too large.");
-
+    num_workers_ > 0 && num_workers_ <= num_threads,
+    Name() + "'s num_workers=" + std::to_string(num_workers_) +
+      ", this value is not within the required range of [1, cpu_thread_cnt=" + std::to_string(num_threads) + "].");
   return Status::OK();
 }
 
