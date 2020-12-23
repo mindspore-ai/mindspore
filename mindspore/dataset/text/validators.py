@@ -402,7 +402,7 @@ def check_to_number(method):
         type_check(data_type, (typing.Type,), "data_type")
 
         if data_type not in mstype.number_type:
-            raise TypeError("data_type is not numeric data type.")
+            raise TypeError("data_type: " + str(data_type) + " is not numeric data type.")
 
         return method(self, *args, **kwargs)
 

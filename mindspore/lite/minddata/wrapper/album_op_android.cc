@@ -228,7 +228,7 @@ Status AlbumOp::LoadImageTensor(const std::string &image_file_path, uint32_t col
 // get orientation from EXIF file
 int AlbumOp::GetOrientation(const std::string &folder_path) {
   FILE *fp = fopen(folder_path.c_str(), "rb");
-  if (!fp) {
+  if (fp == nullptr) {
     MS_LOG(ERROR) << "Can't read file for EXIF:  file = " << folder_path;
     return 0;
   }
