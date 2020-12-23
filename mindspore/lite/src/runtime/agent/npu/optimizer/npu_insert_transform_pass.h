@@ -14,23 +14,25 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_CONCAT_TRANSFORM_PASS_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_CONCAT_TRANSFORM_PASS_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_INSERT_TRANSFORM_PASS_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_INSERT_TRANSFORM_PASS_H_
 #include <vector>
 #include "src/lite_kernel.h"
 #include "src/ops/primitive_c.h"
 #include "src/runtime/agent/npu/optimizer/npu_base_pass.h"
+
 namespace mindspore::lite {
-class NPUConcatTransformPass : public NPUBasePass {
+class NPUInsertTransformPass : public NPUBasePass {
  public:
-  explicit NPUConcatTransformPass(const InnerContext *context, std::vector<kernel::LiteKernel *> *all_kernels,
+  explicit NPUInsertTransformPass(const InnerContext *context, std::vector<kernel::LiteKernel *> *all_kernels,
                                   std::vector<Tensor *> *all_tensors) {
     context_ = context;
     all_kernels_ = all_kernels;
     all_tensors_ = all_tensors;
-    name_ = "NPUConcatTransformPass";
+    name_ = "NPUInsertTransformPass";
   }
-  ~NPUConcatTransformPass() override {
+
+  ~NPUInsertTransformPass() override {
     for (auto primitive : insert_primitive_) {
       delete primitive;
     }
@@ -39,14 +41,11 @@ class NPUConcatTransformPass : public NPUBasePass {
   int Run() override;
 
  private:
-  int UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                    kernel::LiteKernel *after_kernel);
+  int InsertPreNode(const InnerContext *context, kernel::LiteKernel *cur_kernel,
+                    std::vector<kernel::LiteKernel *> *all_kernels, std::vector<Tensor *> *all_tensors);
 
-  int UpdateNC2NHTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                      kernel::LiteKernel *next_kernel);
-
-  int InsertNode(const InnerContext *context, std::vector<kernel::LiteKernel *>::iterator it,
-                 std::vector<kernel::LiteKernel *> *all_kernels, std::vector<Tensor *> *all_tensors);
+  int InsertPostNode(const InnerContext *context, kernel::LiteKernel *cur_kernel,
+                     std::vector<kernel::LiteKernel *> *all_kernels, std::vector<Tensor *> *all_tensors);
 
  private:
   int total = 0;
@@ -56,4 +55,4 @@ class NPUConcatTransformPass : public NPUBasePass {
   std::vector<const PrimitiveC *> insert_primitive_;
 };
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_CONCAT_TRANSFORM_PASS_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_INSERT_TRANSFORM_PASS_H_
