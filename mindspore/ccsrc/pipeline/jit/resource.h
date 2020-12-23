@@ -22,6 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <unordered_set>
 
 #include "pybind11/pybind11.h"
 #include "pybind11/stl.h"
@@ -52,6 +53,34 @@ BuiltInTypeMap &GetMethodMap();
 
 BuiltInTypeMap &GetAttrMap();
 
+class MemoryCleaner {
+ public:
+  MemoryCleaner() = default;
+  ~MemoryCleaner() = default;
+  void RecordPrimitivePy(PrimitivePy *prim);
+  void ErasePrimitivePy(PrimitivePy *prim);
+  void ClearPrimitivePyPythonObj();
+
+  void RecordPynativeShortLifePrimitivePy(PrimitivePy *prim);
+  void ErasePynativeShortLifePrimitivePy(PrimitivePy *prim);
+  void ClearPynativeShortLifePrimitivePy();
+
+  void EnterPynativeConstructProcess();
+  void LeavePynativeConstructProcess();
+  bool IsInPynativeConstructProcess() const;
+  void EnterPynativeEndGraphProcess();
+  void LeavePynativeEndGraphProcess();
+  bool IsInPynativeEndGraphProcess() const;
+
+ private:
+  std::unordered_map<PrimitivePy *, bool> all_primitives_;
+  // PrimitivePy objects that created in pynative construct process.These primitives should be released after construct
+  // finished.
+  std::unordered_set<PrimitivePy *> pynative_short_life_primitives_;
+  bool pynative_in_construct_process_{false};
+  bool pynative_in_end_graph_process_{false};
+};
+
 class Resource : public ResourceBase {
  public:
   explicit Resource(const py::object &obj = py::none());
@@ -80,13 +109,11 @@ class Resource : public ResourceBase {
   }
   bool gpu_loopsink_flag() { return gpu_loopsink_flag_; }
   int64_t gpu_loopsink_size() { return gpu_loopsink_size_; }
-  static void RecordPrimitivePy(PrimitivePy *prim);
-  static void ErasePrimitivePy(PrimitivePy *prim);
-  static void ClearPrimitivePyPythonObj();
   // Reclaim resource and clear the cache.
   // ExecutorPy::Compile() can be called multiple times, so cache
   // should be cleared.
   void Clean();
+  static MemoryCleaner &mem_cleaner() { return mem_cleaner_; }
 
  private:
   abstract::AnalysisEnginePtr engine_;
@@ -96,7 +123,8 @@ class Resource : public ResourceBase {
   bool is_cleaned_;
   bool gpu_loopsink_flag_{false};
   int64_t gpu_loopsink_size_{1};
-  static std::unordered_map<PrimitivePy *, bool> py_objs_;
+  // Used to handle mem leak objects.
+  static MemoryCleaner mem_cleaner_;
 };
 
 using ResourcePtr = std::shared_ptr<pipeline::Resource>;

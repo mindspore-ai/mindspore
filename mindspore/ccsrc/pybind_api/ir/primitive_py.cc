@@ -54,9 +54,18 @@ std::map<std::string, py::object> PrimitivePy::hook_grad_;
 
 PrimitivePy::PrimitivePy(const py::str &name, const py::object &python_obj)
     : Primitive(name, false), python_obj_(python_obj), signatures_() {
-  pipeline::Resource::RecordPrimitivePy(this);
+  auto &mem_cleaner = pipeline::Resource::mem_cleaner();
+  mem_cleaner.RecordPrimitivePy(this);
+  if (mem_cleaner.IsInPynativeConstructProcess() && !mem_cleaner.IsInPynativeEndGraphProcess()) {
+    mem_cleaner.RecordPynativeShortLifePrimitivePy(this);
+  }
 }
-PrimitivePy::~PrimitivePy() { pipeline::Resource::ErasePrimitivePy(this); }
+PrimitivePy::~PrimitivePy() {
+  // Erase primitive here to set released flag false, to avoid calling released pointer when clear primitives in
+  // resource.
+  pipeline::Resource::mem_cleaner().ErasePrimitivePy(this);
+  MS_LOG(DEBUG) << "Release:" << ToString();
+}
 void PrimitivePy::SetPyObj(const py::object &obj) { python_obj_ = obj; }
 void PrimitivePy::set_signatures(const std::vector<Signature> &signatures) {
   signatures_ = signatures;

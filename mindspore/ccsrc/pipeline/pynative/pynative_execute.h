@@ -111,6 +111,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool need_replace_forward() const { return need_replace_forward_; }
   bool grad_flag() const { return grad_flag_; }
   void set_grad_flag(bool flag) { grad_flag_ = flag; }
+  void EnterConstruct(const py::object &cell);
+  void LeaveConstruct(const py::object &cell);
 
   py::tuple RunOpInner(const OpExecInfoPtr &op_exec_info);
   OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
@@ -272,6 +274,12 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool dynamic_cell_{false};
   bool grad_is_running_{false};
   bool need_replace_forward_{true};
+  // The pointer of top python Cell object, which is always the network(inherit class Cell) ran in python test script,
+  // such as Resnet50(Cell),LeNet(Cell).This pointer is used to distinguish temporary primitives from global
+  // primitives to control memory release. Global primitives are always created in top cell's '__init__' function and
+  // temporary primitives are always created in other place.Temporary primitives will be released after executing top
+  // cell's 'construct' function but global primitives will not.
+  PyObject *top_cell_{nullptr};
 
   // Used for construct grad graph
   FuncGraphPtr curr_g_{nullptr};

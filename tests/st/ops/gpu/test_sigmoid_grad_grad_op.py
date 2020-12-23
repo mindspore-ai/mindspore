@@ -19,7 +19,6 @@ import pytest
 import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
-from mindspore.common.api import ms_function
 from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.composite import GradOperation
 
@@ -29,7 +28,6 @@ class NetSigmoidGrad(nn.Cell):
         super(NetSigmoidGrad, self).__init__()
         self.sigmoid_grad = G.SigmoidGrad()
 
-    @ms_function
     def construct(self, y, dy):
         return self.sigmoid_grad(y, dy)
 
@@ -40,7 +38,6 @@ class Grad(nn.Cell):
         self.grad = GradOperation(get_all=True, sens_param=True)
         self.network = network
 
-    @ms_function
     def construct(self, y, y_grad, dout):
         return self.grad(self.network)(y, y_grad, dout)
 
