@@ -22,7 +22,7 @@ parser.add_argument('--data_dir', type=str, help='the source dataset directory.'
 parser.add_argument('--out_dir', type=str, help='the target dataset directory.', default='./data')
 
 args = parser.parse_args()
-
+np.random.seed(2)
 
 def dataset_split(label):
     """dataset_split api"""
