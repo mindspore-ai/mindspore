@@ -80,12 +80,12 @@ function android_release_package()
 
         if [ ${name} == "train" ]
         then
-            mkdir -p ${dst_android_pkg_name}/net_train/aarch64/
-            mkdir -p ${dst_android_pkg_name}/net_train/aarch32/
+            mkdir -p ${dst_android_pkg_name}/benchmark_train/aarch64/
+            mkdir -p ${dst_android_pkg_name}/benchmark_train/aarch32/
             mkdir -p ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch64/
             mkdir -p ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch32/
-            cp ${src_arm64_pkg_name}/net_train/* ${dst_android_pkg_name}/net_train/aarch64/
-            cp ${src_arm32_pkg_name}/net_train/* ${dst_android_pkg_name}/net_train/aarch32/
+            cp ${src_arm64_pkg_name}/benchmark_train/* ${dst_android_pkg_name}/benchmark_train/aarch64/
+            cp ${src_arm32_pkg_name}/benchmark_train/* ${dst_android_pkg_name}/benchmark_train/aarch32/
             cp ${src_arm64_pkg_name}/minddata/third_party/libjpeg-turbo/lib/* ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch64/
             cp ${src_arm32_pkg_name}/minddata/third_party/libjpeg-turbo/lib/* ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch32/
         fi
