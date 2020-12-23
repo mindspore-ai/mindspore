@@ -17,25 +17,7 @@ network config setting, will be used in train.py and eval.py
 """
 from easydict import EasyDict as ed
 
-config_ascend = ed({
-    "num_classes": 438,
-    "image_height": 224,
-    "image_width": 224,
-    "batch_size": 256,
-    "epoch_size": 200,
-    "warmup_epochs": 1,
-    "lr": 0.02,
-    "momentum": 0.9,
-    "weight_decay": 4e-5,
-    "label_smooth": 0.1,
-    "loss_scale": 1024,
-    "save_checkpoint": True,
-    "save_checkpoint_epochs": 5,
-    "keep_checkpoint_max": 200,
-    "save_checkpoint_path": "./checkpoint",
-})
-
-config_gpu = ed({
+cfg = ed({
     "num_classes": 37,
     "image_height": 224,
     "image_width": 224,
