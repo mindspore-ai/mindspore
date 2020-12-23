@@ -257,6 +257,8 @@ def multinomial(inputs, num_sample, replacement=True, seed=None):
     Examples:
         >>> input = Tensor([0, 9, 4, 0], mstype.float32)
         >>> output = C.multinomial(input, 2, True)
+        >>> print(output)
+        [1 2]
     """
     shape = P.Shape()
     reshape = P.Reshape()
