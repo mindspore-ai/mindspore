@@ -20,7 +20,6 @@ import math
 import numpy as np
 import mindspore.nn as nn
 import mindspore.ops as ops
-from mindspore import log as logger
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer
@@ -494,11 +493,11 @@ class LossCallBack(Callback):
             if percent == 0:
                 percent = 1
                 epoch_num -= 1
-            logger.info("epoch: {}, current epoch percent: {}, step: {}, outputs are {}"
-                        .format(int(epoch_num), "%.3f" % percent, cb_params.cur_step_num, str(cb_params.net_outputs)))
+            print("epoch: {}, current epoch percent: {}, step: {}, outputs are {}"
+                  .format(int(epoch_num), "%.3f" % percent, cb_params.cur_step_num, str(cb_params.net_outputs)))
         else:
-            logger.info("epoch: {}, step: {}, outputs are {}".format(cb_params.cur_epoch_num, cb_params.cur_step_num,
-                                                                     str(cb_params.net_outputs)))
+            print("epoch: {}, step: {}, outputs are {}".format(cb_params.cur_epoch_num, cb_params.cur_step_num,
+                                                               str(cb_params.net_outputs)))
 
 
 class CenterNetPolynomialDecayLR(LearningRateSchedule):

@@ -16,20 +16,13 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_distributed_train_ascend.sh DATA_DIR MINDRECORD_DIR RANK_TABLE_FILE"
-echo "for example: bash run_distributed_train_ascend.sh /path/dataset /path/mindrecord /path/hccl.json"
-echo "It is better to use absolute path."
-echo "For hyper parameter, please note that you should customize the scripts:
-          '{CUR_DIR}/scripts/ascend_distributed_launcher/hyper_parameter_config.ini' "
+echo "bash convert_dataset_to_mindrecord.sh"
 echo "=============================================================================================================="
-CUR_DIR=`pwd`
 
-python ${CUR_DIR}/scripts/ascend_distributed_launcher/get_distribute_train_cmd.py \
-    --run_script_dir=${CUR_DIR}/train.py \
-    --hyper_parameter_config_dir=${CUR_DIR}/scripts/ascend_distributed_launcher/hyper_parameter_config.ini \
-    --mindrecord_dir=$1 \
-    --hccl_config_dir=$2 \
-    --hccl_time_out=1200 \
-    --cmd_file=distributed_cmd.sh
+export GLOG_v=1
+PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 
-bash distributed_cmd.sh
+python ${PROJECT_DIR}/../src/dataset.py  \
+    --coco_data_dir="" \
+    --mindrecord_dir="" \
+    --mindrecord_prefix="coco_hp.train.mind" > create_dataset.log 2>&1 &

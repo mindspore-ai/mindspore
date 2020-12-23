@@ -42,7 +42,7 @@ python ${PROJECT_DIR}/../train.py  \
     --load_checkpoint_path="" \
     --save_checkpoint_steps=10000 \
     --save_checkpoint_num=1 \
-    --data_dir="" \
     --mindrecord_dir="" \
+    --mindrecord_prefix="coco_hp.train.mind" \
     --visual_image=false \
-    --save_result_dir=""> log.txt 2>&1 &
+    --save_result_dir="" > training_log.txt 2>&1 &

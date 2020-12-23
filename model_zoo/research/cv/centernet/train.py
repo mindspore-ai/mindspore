@@ -58,13 +58,9 @@ parser.add_argument("--save_checkpoint_path", type=str, default="", help="Save c
 parser.add_argument("--load_checkpoint_path", type=str, default="", help="Load checkpoint file path")
 parser.add_argument("--save_checkpoint_steps", type=int, default=1000, help="Save checkpoint steps, default is 1000.")
 parser.add_argument("--save_checkpoint_num", type=int, default=1, help="Save checkpoint numbers, default is 1.")
-parser.add_argument("--mindrecord_dir", type=str, default="",
-                    help="Mindrecord files directory. If is empty, mindrecord format files will be generated"
-                         "based on the original dataset and annotation information. If mindrecord_dir isn't empty,"
-                         "mindrecord_dir will be used inplace of data_dir and anno_path.")
-parser.add_argument("--data_dir", type=str, default="", help="Dataset directory, "
-                                                             "the absolute image path is joined by the data_dir "
-                                                             "and the relative path in anno_path")
+parser.add_argument("--mindrecord_dir", type=str, default="", help="Mindrecord dataset files directory")
+parser.add_argument("--mindrecord_prefix", type=str, default="coco_hp.train.mind",
+                    help="Prefix of MindRecord dataset filename.")
 parser.add_argument("--visual_image", type=str, default="false", help="Visulize the ground truth and predicted image")
 parser.add_argument("--save_result_dir", type=str, default="", help="The path to save the predict results")
 
@@ -148,16 +144,15 @@ def train():
     else:
         rank = 0
         device_num = 1
-    num_workers = device_num * 8
+    num_workers = 8
     # Start create dataset!
     # mindrecord files will be generated at args_opt.mindrecord_dir such as centernet.mindrecord0, 1, ... file_num.
     logger.info("Begin creating dataset for CenterNet")
-    prefix = "coco_hp.train.mind"
-    coco = COCOHP(args_opt.data_dir, dataset_config, net_config, run_mode="train")
-    coco.init(enable_visual_image=(args_opt.visual_image == "true"), save_path=args_opt.save_result_dir)
-    dataset = coco.create_train_dataset(args_opt.mindrecord_dir, prefix, batch_size=train_config.batch_size,
-                                        device_num=device_num, rank=rank, num_parallel_workers=num_workers,
-                                        do_shuffle=args_opt.do_shuffle == 'true')
+    coco = COCOHP(dataset_config, run_mode="train", net_opt=net_config,
+                  enable_visual_image=(args_opt.visual_image == "true"), save_path=args_opt.save_result_dir)
+    dataset = coco.create_train_dataset(args_opt.mindrecord_dir, args_opt.mindrecord_prefix,
+                                        batch_size=train_config.batch_size, device_num=device_num, rank=rank,
+                                        num_parallel_workers=num_workers, do_shuffle=args_opt.do_shuffle == 'true')
     dataset_size = dataset.get_dataset_size()
     logger.info("Create dataset done!")
 

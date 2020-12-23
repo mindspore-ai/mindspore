@@ -38,12 +38,9 @@ def parse_args():
                         help="Run script path, it is better to use absolute path")
     parser.add_argument("--hyper_parameter_config_dir", type=str, default="",
                         help="Hyper Parameter config path, it is better to use absolute path")
-    parser.add_argument("--mindrecord_dir", type=str, default="./Mindrecord_train",
-                        help="Mindrecord directory. If the mindrecord_dir is empty, it wil generate mindrecord file by "
-                        "data_dir and anno_path. Note if mindrecord_dir isn't empty, it will use mindrecord_dir "
-                        "rather than data_dir and anno_path. Default is ./Mindrecord_train")
-    parser.add_argument("--data_dir", type=str, default="",
-                        help="Data path, it is better to use absolute path")
+    parser.add_argument("--mindrecord_dir", type=str, default="", help="Mindrecord dataset directory")
+    parser.add_argument("--mindrecord_prefix", type=str, default="coco_hp.train.mind",
+                        help="Prefix of MindRecord dataset filename.")
     parser.add_argument("--hccl_config_dir", type=str, default="",
                         help="Hccl config path, it is better to use absolute path")
     parser.add_argument("--cmd_file", type=str, default="distributed_cmd.sh",
@@ -74,8 +71,8 @@ def distribute_train():
     args = parse_args()
 
     run_script = args.run_script_dir
-    data_dir = args.data_dir
     mindrecord_dir = args.mindrecord_dir
+    mindrecord_prefix = args.mindrecord_prefix
     cf = configparser.ConfigParser()
     cf.read(args.hyper_parameter_config_dir)
     cfg = dict(cf.items("config"))
@@ -142,7 +139,6 @@ def distribute_train():
 
         print("core_nums:", cmdopt)
         print("epoch_size:", str(cfg['epoch_size']))
-        print("data_dir:", data_dir)
         print("mindrecord_dir:", mindrecord_dir)
         print("log_file_dir: " + cur_dir + "/LOG" + str(device_id) + "/training_log.txt")
 
@@ -150,12 +146,12 @@ def distribute_train():
 
         run_cmd = 'taskset -c ' + cmdopt + ' nohup python ' + run_script + " "
         opt = " ".join(["--" + key + "=" + str(cfg[key]) for key in cfg.keys()])
-        if ('device_id' in opt) or ('device_num' in opt) or ('data_dir' in opt):
+        if ('device_id' in opt) or ('device_num' in opt) or ('mindrecord_dir' in opt):
             raise ValueError("hyper_parameter_config.ini can not setting 'device_id',"
-                             " 'device_num' or 'data_dir'! ")
+                             " 'device_num' or 'mindrecord_dir'! ")
         run_cmd += opt
-        run_cmd += " --data_dir=" + data_dir
         run_cmd += " --mindrecord_dir=" + mindrecord_dir
+        run_cmd += " --mindrecord_prefix=" + mindrecord_prefix
         run_cmd += ' --device_id=' + str(device_id) + ' --device_num=' \
                + str(rank_size) + ' >./training_log.txt 2>&1 &'
 

@@ -48,4 +48,4 @@ python ${PROJECT_DIR}/../eval.py  \
     --visual_image=true \
     --enable_eval=true \
     --save_result_dir="" \
-    --run_mode=val > log.txt 2>&1 &
+    --run_mode=val > eval_log.txt 2>&1 &
