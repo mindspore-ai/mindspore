@@ -38,6 +38,7 @@ class AdagradGpuKernel : public GpuKernel {
 
   bool Init(const CNodePtr &kernel_node) override {
     size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    update_slots = AnfAlgo::GetNodeAttr<bool>(kernel_node, "update_slots");
     if (input_num != 4) {
       MS_LOG(ERROR) << "Input number is " << input_num << ", but adagrad needs 4 inputs.";
       return false;
