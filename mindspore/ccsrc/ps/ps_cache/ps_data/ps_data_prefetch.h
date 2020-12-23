@@ -50,6 +50,7 @@ class EXPORT PsDataPrefetch {
   PsDataPrefetch(const PsDataPrefetch &) = delete;
   PsDataPrefetch &operator=(const PsDataPrefetch &) = delete;
   std::shared_ptr<PsDataChannel> ps_data_channel(const std::string &channel_name) const;
+  void WakeAllChannel();
   std::map<std::string, std::shared_ptr<PsDataChannel>> ps_data_channel_map_;
   bool cache_enable_;
   bool data_ready_;

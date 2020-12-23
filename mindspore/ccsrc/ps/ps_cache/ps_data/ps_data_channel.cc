@@ -32,8 +32,8 @@ void PsDataChannel::TryLockChannel() {
   current_data_step_++;
 }
 
-void PsDataChannel::TryWakeChannel() {
-  if ((current_graph_step_ != 0) && (current_graph_step_ % step_num_ == 0)) {
+void PsDataChannel::TryWakeChannel(bool force_wake) {
+  if (force_wake || ((current_graph_step_ != 0) && (current_graph_step_ % step_num_ == 0))) {
     MS_LOG(INFO) << "Wake up channel:" << channel_name_;
     std::lock_guard<std::mutex> locker(channel_mutex_);
     channel_open_ = true;

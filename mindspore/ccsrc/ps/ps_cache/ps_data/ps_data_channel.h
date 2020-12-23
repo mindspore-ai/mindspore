@@ -38,7 +38,7 @@ class PsDataChannel {
   size_t data_size() const { return data_size_; }
   void ResetData() { data_ = nullptr; }
   void set_step_num(size_t step_num) { step_num_ = step_num; }
-  void TryWakeChannel();
+  void TryWakeChannel(bool force_wake = false);
 
  private:
   void TryLockChannel();
