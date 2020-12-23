@@ -18,7 +18,7 @@
 #include <string>
 #include <utility>
 #include <limits>
-#if defined(NUMA_ENABLED) && defined(ENABLE_GPUQUE)
+#if defined(NUMA_ENABLED) && (defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE))
 #include <numa.h>
 #endif
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
@@ -46,7 +46,7 @@ ExecutionTree::ExecutionTree() : id_count_(0), pre_pass_override_(nullptr) {
   prepare_flags_ = kDePrepNone;
   profiling_manager_ = std::make_unique<ProfilingManager>(this);
   optimize_ = common::GetEnv("OPTIMIZE") == "true" ? true : false;
-#if defined(NUMA_ENABLED) && defined(ENABLE_GPUQUE)
+#if defined(NUMA_ENABLED) && (defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE))
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   rank_id_ = cfg->rank_id();
 #endif
@@ -145,7 +145,7 @@ Status ExecutionTree::Launch() {
   // opencv limit too many threads
 #ifndef ENABLE_ANDROID
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
-#if defined(NUMA_ENABLED) && defined(ENABLE_GPUQUE)
+#if defined(NUMA_ENABLED) && (defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE))
   // Here we do numa bind for performance optimization, as our test result,
   // if we do numa bind when get_dataset_size launch a tree, we'll get a
   // better performance than only we do numa bind at the time _To_Device
@@ -155,7 +155,10 @@ Status ExecutionTree::Launch() {
   // Now we only test pass in GPU scenario, we've not tested D scenario,
   // without enough test we don't suggest numa feature open in D scenario
   int numa_node_max_id = numa_max_node();
-  if (numa_node_max_id >= 0 && rank_id_ >= 0) {
+  if (numa_node_max_id < 0) {
+    RETURN_STATUS_UNEXPECTED("Get numa max node failed.");
+  }
+  if (rank_id_ >= 0) {
     uint32_t numa_bind_id = static_cast<uint32_t>(rank_id_ % (numa_node_max_id + 1));
     auto bm = numa_allocate_nodemask();
     numa_bitmask_clearall(bm);
@@ -163,7 +166,7 @@ Status ExecutionTree::Launch() {
     numa_bind(bm);
     numa_bitmask_free(bm);
   } else {
-    RETURN_STATUS_UNEXPECTED("Get numa max node failed.");
+    MS_LOG(INFO) << "Numa bind feature doesn't work now.";
   }
 #endif
   int32_t thread_num = get_nprocs();

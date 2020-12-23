@@ -85,9 +85,11 @@ def create_dataset_imagenet(dataset_path, batch_size=32, repeat_num=1, training=
     device_num, rank_id = _get_rank_info()
     cfg = alexnet_imagenet_cfg
 
-    if num_parallel_workers is None:
-        num_parallel_workers = int(64 / device_num)
-    data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallel_workers,
+    num_parallel_workers = 16
+    if device_num == 1:
+        num_parallel_workers = 48
+        ds.config.set_prefetch_size(8)
+    data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=4,
                                      shuffle=shuffle, sampler=sampler, class_indexing=class_indexing,
                                      num_shards=device_num, shard_id=rank_id)
 
@@ -113,18 +115,14 @@ def create_dataset_imagenet(dataset_path, batch_size=32, repeat_num=1, training=
             CV.HWC2CHW()
         ]
 
-    transform_label = [C.TypeCast(mstype.int32)]
-
     data_set = data_set.map(input_columns="image", num_parallel_workers=num_parallel_workers,
                             operations=transform_img)
-    data_set = data_set.map(input_columns="label", num_parallel_workers=num_parallel_workers,
-                            operations=transform_label)
 
-    num_parallel_workers2 = int(16 / device_num)
-    data_set = data_set.batch(batch_size, num_parallel_workers=num_parallel_workers2, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    data_set = data_set.repeat(repeat_num)
+    if repeat_num > 1:
+        data_set = data_set.repeat(repeat_num)
 
     return data_set
 

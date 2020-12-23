@@ -35,6 +35,7 @@ ConfigManager::ConfigManager()
       num_parallel_workers_(kCfgParallelWorkers),
       worker_connector_size_(kCfgWorkerConnectorSize),
       op_connector_size_(kCfgOpConnectorSize),
+      rank_id_(kCfgDefaultRankId),
       seed_(kCfgDefaultSeed),
       monitor_sampling_interval_(kCfgMonitorSamplingInterval),
       callback_timout_(kCfgCallbackTimeout),
@@ -128,7 +129,7 @@ void ConfigManager::set_op_connector_size(int32_t connector_size) { op_connector
 
 uint32_t ConfigManager::seed() const { return seed_; }
 
-void ConfigManager::set_rank_id(uint32_t rank_id) { rank_id_ = rank_id; }
+void ConfigManager::set_rank_id(int32_t rank_id) { rank_id_ = rank_id; }
 
 void ConfigManager::set_seed(uint32_t seed) { seed_ = seed; }
 

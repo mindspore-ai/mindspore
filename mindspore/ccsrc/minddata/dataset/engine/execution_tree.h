@@ -282,11 +282,11 @@ class ExecutionTree {
   bool optimize_;                                        // Flag to enable optional optimizations
   std::function<OptPass(OptPass)> pre_pass_override_;    // function ptr that overrides pre pass, called in PrePrepare()
   bool partially_prepare_;                               // Temp: during migration to IR, if true, run remaining passes.
-#if defined(NUMA_ENABLED) && defined(ENABLE_GPUQUE)
+#if defined(NUMA_ENABLED) && (defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE))
   // This rank_id is for numa and device_queue, one process work with only one rank_id,
   // for standalone scenario, this rank_id may come from env 'CUDA_VISIBLE_DEVICES',
   // but for distribute scenario, this rank_id come from _get_global_rank() in python
-  uint32_t rank_id_;
+  int32_t rank_id_;
 #endif
 };
 }  // namespace dataset
