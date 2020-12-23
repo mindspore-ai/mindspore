@@ -42,7 +42,9 @@ class LiteModel : public Model {
 
   void Free() override;
 
-  ~LiteModel() override;
+  void Destroy() override;
+
+  ~LiteModel() override { Destroy(); }
 
  private:
 #ifdef ENABLE_V0

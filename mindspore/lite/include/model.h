@@ -55,6 +55,9 @@ struct MS_API Model {
   /// \brief Free meta graph temporary buffer
   virtual void Free() = 0;
 
+  /// \brief Free all temporay buffer.EG: nodes in the model.
+  virtual void Destroy() = 0;
+
   /// \brief Model destruct, free all memory
   virtual ~Model() = default;
 };
