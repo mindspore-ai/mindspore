@@ -426,6 +426,9 @@ class Depend(Primitive):
 
     Outputs:
         Tensor, the value passed by last operator.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
     """
 
     @prim_attr_register
