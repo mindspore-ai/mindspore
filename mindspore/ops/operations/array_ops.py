@@ -289,11 +289,11 @@ class Cast(PrimitiveWithInfer):
     Examples:
         >>> input_np = np.random.randn(2, 3, 4, 5).astype(np.float32)
         >>> input_x = Tensor(input_np)
-        >>> type_dst = mindspore.float16
+        >>> type_dst = mindspore.int32
         >>> cast = ops.Cast()
         >>> output = cast(input_x, type_dst)
         >>> print(output.dtype)
-        Float16
+        Int32
         >>> print(output.shape)
         (2, 3, 4, 5)
     """
@@ -1541,10 +1541,10 @@ class Argmax(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([2.0, 3.1, 1.2]), mindspore.float32)
+        >>> input_x = Tensor(np.array([[1, 20, 5], [67, 8, 9], [130, 24, 15]]).astype(np.float32))
         >>> output = ops.Argmax(output_type=mindspore.int32)(input_x)
         >>> print(output)
-        1
+        [1 0 0]
     """
 
     @prim_attr_register
@@ -2115,15 +2115,15 @@ class Concat(PrimitiveWithInfer):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> data1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
-        >>> data2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.int32))
+        >>> data1 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
+        >>> data2 = Tensor(np.array([[0, 1], [2, 1]]).astype(np.float32))
         >>> op = ops.Concat()
         >>> output = op((data1, data2))
         >>> print(output)
-        [[0 1]
-         [2 1]
-         [0 1]
-         [2 1]]
+        [[0. 1.]
+         [2. 1.]
+         [0. 1.]
+         [2. 1.]]
     """
 
     @prim_attr_register
