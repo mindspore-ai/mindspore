@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -207,7 +207,9 @@ class SummaryCollector(Callback):
         self._dataset_sink_mode = True
 
     def __enter__(self):
-        self._record = SummaryRecord(log_dir=self._summary_dir, max_file_size=self._max_file_size)
+        self._record = SummaryRecord(log_dir=self._summary_dir,
+                                     max_file_size=self._max_file_size,
+                                     raise_exception=False)
         self._first_step, self._dataset_sink_mode = True, True
         return self
 
@@ -319,7 +321,14 @@ class SummaryCollector(Callback):
                              f'expect the follow keys: {list(self._DEFAULT_SPECIFIED_DATA.keys())}')
 
         if 'histogram_regular' in specified_data:
-            check_value_type('histogram_regular', specified_data.get('histogram_regular'), (str, type(None)))
+            regular = specified_data.get('histogram_regular')
+            check_value_type('histogram_regular', regular, (str, type(None)))
+            if isinstance(regular, str):
+                try:
+                    re.match(regular, '')
+                except re.error as exc:
+                    raise ValueError(f'For `collect_specified_data`, the value of `histogram_regular` '
+                                     f'is not a valid regular expression. Detail: {str(exc)}.')
 
         bool_items = set(self._DEFAULT_SPECIFIED_DATA) - {'histogram_regular'}
         for item in bool_items:

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,17 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""
-@File  : test_summary.py
-@Author:
-@Date  : 2019-07-4
-@Desc  : test summary function
-"""
-import logging
+"""Test summary."""
 import os
 import random
+
 import numpy as np
-import pytest
+
 
 import mindspore.nn as nn
 from mindspore.common.tensor import Tensor
@@ -31,9 +26,6 @@ from mindspore.train.summary.summary_record import SummaryRecord, _cache_summary
 
 CUR_DIR = os.getcwd()
 SUMMARY_DIR = CUR_DIR + "/test_temp_summary_event_file/"
-
-log = logging.getLogger("test")
-log.setLevel(level=logging.ERROR)
 
 
 def get_test_data(step):
@@ -58,25 +50,13 @@ def get_test_data(step):
     return test_data_list
 
 
-# Test 1: summary sample of scalar
 def test_scalar_summary_sample():
     """ test_scalar_summary_sample """
-    log.debug("begin test_scalar_summary_sample")
-    # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
-        # step 1: create the test data for summary
-
-        # step 2: create the Event
-        for i in range(1, 500):
+        for i in range(1, 5):
             test_data = get_test_data(i)
             _cache_summary_tensor_data(test_data)
             test_writer.record(i)
-
-        # step 3: send the event to mq
-
-        # step 4: accept the event and write the file
-
-        log.debug("finished test_scalar_summary_sample")
 
 
 def get_test_data_shape_1(step):
@@ -104,22 +84,11 @@ def get_test_data_shape_1(step):
 # Test: shape = (1,)
 def test_scalar_summary_sample_with_shape_1():
     """ test_scalar_summary_sample_with_shape_1 """
-    log.debug("begin test_scalar_summary_sample_with_shape_1")
-    # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
-        # step 1: create the test data for summary
-
-        # step 2: create the Event
         for i in range(1, 100):
             test_data = get_test_data_shape_1(i)
             _cache_summary_tensor_data(test_data)
             test_writer.record(i)
-
-        # step 3: send the event to mq
-
-        # step 4: accept the event and write the file
-
-        log.debug("finished test_scalar_summary_sample")
 
 
 # Test: test with ge
@@ -143,13 +112,7 @@ class SummaryDemo(nn.Cell):
 
 def test_scalar_summary_with_ge():
     """ test_scalar_summary_with_ge """
-    log.debug("begin test_scalar_summary_with_ge")
-
-    # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
-        # step 1: create the network for summary
-        x = Tensor(np.array([1.1]).astype(np.float32))
-        y = Tensor(np.array([1.2]).astype(np.float32))
         net = SummaryDemo()
         net.set_train()
 
@@ -161,45 +124,17 @@ def test_scalar_summary_with_ge():
             net(x, y)
             test_writer.record(i)
 
-        log.debug("finished test_scalar_summary_with_ge")
-
 
 # test the problem of two consecutive use cases going wrong
 def test_scalar_summary_with_ge_2():
     """ test_scalar_summary_with_ge_2 """
-    log.debug("begin test_scalar_summary_with_ge_2")
-
-    # step 0: create the thread
     with SummaryRecord(SUMMARY_DIR, file_suffix="_MS_SCALAR") as test_writer:
-        # step 1: create the network for summary
-        x = Tensor(np.array([1.1]).astype(np.float32))
-        y = Tensor(np.array([1.2]).astype(np.float32))
         net = SummaryDemo()
         net.set_train()
 
-        # step 2: create the Event
         steps = 100
         for i in range(1, steps):
             x = Tensor(np.array([1.1]).astype(np.float32))
             y = Tensor(np.array([1.2]).astype(np.float32))
             net(x, y)
             test_writer.record(i)
-
-        log.debug("finished test_scalar_summary_with_ge_2")
-
-
-def test_validate():
-    with SummaryRecord(SUMMARY_DIR) as sr:
-        sr.record(1)
-        with pytest.raises(ValueError):
-            sr.record(False)
-        with pytest.raises(ValueError):
-            sr.record(2.0)
-        with pytest.raises(ValueError):
-            sr.record((1, 3))
-        with pytest.raises(ValueError):
-            sr.record([2, 3])
-        with pytest.raises(ValueError):
-            sr.record("str")
-        with pytest.raises(ValueError):
-            sr.record(sr)

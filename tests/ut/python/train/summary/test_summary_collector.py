@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -187,6 +187,14 @@ class TestSummaryCollector:
 
         assert expected_msg == str(exc.value)
 
+    def test_params_with_histogram_regular_value_error(self):
+        """Test histogram regular."""
+        summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
+        with pytest.raises(ValueError) as exc:
+            SummaryCollector(summary_dir, collect_specified_data={'histogram_regular': '*'})
+
+        assert 'For `collect_specified_data`, the value of `histogram_regular`' in str(exc.value)
+
     def test_params_with_collect_specified_data_unexpected_key(self):
         """Test the collect_specified_data parameter with unexpected key."""
         summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
@@ -260,7 +268,7 @@ class TestSummaryCollector:
         cb_params.train_dataset_element = image_data
         with SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir))) as summary_collector:
             summary_collector._collect_input_data(cb_params)
-            # Note Here need to asssert the result and expected data
+            # Note Here need to assert the result and expected data
 
     @mock.patch.object(SummaryRecord, 'add_value')
     def test_collect_dataset_graph_success(self, mock_add_value):
@@ -295,7 +303,6 @@ class TestSummaryCollector:
         summary_collector = SummaryCollector((tempfile.mkdtemp(dir=self.base_summary_dir)))
 
         assert summary_collector._is_parse_loss_success
-
 
     def test_get_optimizer_from_cb_params_success(self):
         """Test get optimizer success from cb params."""
