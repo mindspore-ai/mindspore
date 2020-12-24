@@ -50,6 +50,7 @@ class ArithmeticCPUKernel : public LiteKernel {
   typedef int (*ArithmeticIntRun)(const int *input0, const int *input1, int *output, const int element_size);
   typedef int (*ArithmeticOptIntRun)(const int *input0, const int *input1, int *output, const int element_size,
                                      const ArithmeticParameter *param);
+  typedef int (*ArithmeticBoolRun)(const bool *input0, const bool *input1, bool *output, const int element_size);
 
  public:
   ArithmeticCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
@@ -91,6 +92,7 @@ class ArithmeticCPUKernel : public LiteKernel {
   ArithmeticOptRun arithmetic_opt_run_ = nullptr;
   ArithmeticIntRun arithmetic_run_int_ = nullptr;
   ArithmeticOptIntRun arithmetic_opt_run_int_ = nullptr;
+  ArithmeticBoolRun arithmetic_run_bool_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_ARITHMETIC_H_

@@ -25,8 +25,7 @@
 #include "schema/model_generated.h"
 #include "src/tensor.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 /**
  * Tensorlist is a container of vector, in which each element is a tensor object.
  * Member objects:
@@ -64,17 +63,9 @@ class TensorList : public Tensor {
 
   ~TensorList() override;
 
-  // **Note**: This is a shallow copy, src and dst tensorlist share one memory space of each tensor in tensors_
-  // If your want to not share one memory space please use "operator="
-  TensorList(const TensorList &other)
-      : Tensor(other.data_type_, other.shape()),
-        tensors_(other.tensors_),
-        tensors_data_type_(other.tensors_data_type_),
-        element_shape_(other.element_shape_),
-        max_elements_num_(other.max_elements_num_) {}
+  TensorList(const TensorList &other) = delete;
 
-  // tensorlist deep copy memory
-  TensorList &operator=(const TensorList &tl);
+  TensorList &operator=(const TensorList &tl) = delete;
 
   void set_element_shape(const std::vector<int> &shape) { element_shape_ = shape; }
 
@@ -90,21 +81,23 @@ class TensorList : public Tensor {
 
   int FreeTensorListData();
 
-  int FreeData() override;
+  void FreeData() override;
 
   int CopyTensorList(const TensorList &src, bool copy_data);
 
   int CopyTensorData(const TensorList &src);
 
-  int SetTensorIndex(int index, Tensor *);
+  int SetTensor(int index, Tensor *src_tensor);
 
-  Tensor *GetTensorIndex(int index);
+  Tensor *GetTensor(int index);
 
   void set_tensors_data_type(TypeId type) { tensors_data_type_ = type; }
 
   TypeId tensors_data_type() const { return tensors_data_type_; }
 
   std::vector<Tensor *> &tensors() { return tensors_; }
+
+  void set_tensors(const std::vector<Tensor *> &tensors) { this->tensors_ = tensors; }
 
   int CheckTensorListParam();
 
@@ -116,18 +109,19 @@ class TensorList : public Tensor {
 
   bool IsConst() const override;
 
+  int set_root_tensor(Tensor *tensor) override;
+
  protected:
   // The following functions must be masked.
-  void set_data(void *data) override { return; }
+  void set_data(void *data) override {}
   void *data_c() const override { return nullptr; }
   void *MutableData() override { return nullptr; }
   size_t Size() const override { return 0; }
-  std::vector<Tensor *> tensors_;
-  TypeId tensors_data_type_;
-  std::vector<int> element_shape_;
+  std::vector<Tensor *> tensors_{};
+  TypeId tensors_data_type_ = kTypeUnknown;
+  std::vector<int> element_shape_{};
   int max_elements_num_ = -1;
 };
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_TENSORLIST_H_

@@ -157,7 +157,7 @@ class LiteKernel {
 
   const std::vector<LiteKernel *> &out_kernels() const { return this->out_kernels_; }
 
-  virtual bool IsReady(const std::vector<lite::Tensor *> &scope_tensors);
+  virtual bool IsReady(const std::vector<lite::Tensor *> &in_tensor);
 
   virtual void InitOutTensorInitRefCount();
 

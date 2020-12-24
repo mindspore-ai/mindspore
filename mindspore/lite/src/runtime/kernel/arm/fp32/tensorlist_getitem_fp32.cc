@@ -49,7 +49,7 @@ int TensorListGetItemCPUKernel::Init() {
 
 int TensorListGetItemCPUKernel::Run() {
   auto input0 = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
-  auto src_ptr = input0->GetTensorIndex(index_);
+  auto src_ptr = input0->GetTensor(index_);
   MS_ASSERT(src_ptr != nullptr);
   if (src_ptr->data_type() != kTypeUnknown) {
     if (src_ptr->ElementsNum() != out_tensors_[0]->ElementsNum()) {
@@ -57,7 +57,7 @@ int TensorListGetItemCPUKernel::Run() {
                     << " must be equal to out_tensors_[0]->ElementsNum():" << out_tensors_[0]->ElementsNum();
       return RET_ERROR;
     }
-    auto status = out_tensors_[0]->CopyTensorData(*src_ptr);
+    auto status = lite::Tensor::CopyTensorData(*src_ptr, out_tensors_[0]);
     if (status == RET_ERROR) {
       MS_LOG(ERROR) << "copy tensor data failed!";
       return RET_ERROR;

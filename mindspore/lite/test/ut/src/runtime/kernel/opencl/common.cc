@@ -43,23 +43,23 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
 
   // simulating benchmark:  session_->CompileGraph() -> ConvertTensors()
   MS_LOG(DEBUG) << "create Tensors & init weight data";
-  std::vector<Tensor> tensors;
+  std::vector<std::shared_ptr<Tensor>> tensors;
   // firstly, create all Tensors
   tensors.reserve(input_infos.size());  // vector's capacity() is 0, so call reserve() avoiding vector re-malloc
   for (auto input_info : input_infos) {
     auto &shape = std::get<0>(input_info);
     auto category = std::get<2>(input_info);
     auto data_type = std::get<3>(input_info);
-    tensors.emplace_back(data_type, shape, Format_NHWC, category);
+    tensors.emplace_back(std::make_shared<Tensor>(data_type, shape, Format_NHWC, category));
   }
   // secondly, init weight Tensor's data
   std::vector<Tensor *> kernel_inputs;
   std::vector<Tensor *> subgraph_inputs;
   std::map<Tensor *, float *> subgraph_inputs_data;
   for (int i = 0; i < tensors.size(); ++i) {
-    auto *tensor = &tensors[i];
+    auto tensor = tensors[i];
     auto *input_data = std::get<1>(input_infos[i]);
-    kernel_inputs.push_back(tensor);
+    kernel_inputs.push_back(tensor.get());
     if (tensor->category() != VAR) {  // tensor is weight
       // simulating src/lite_session.cc:WeightTensorNeedCopy()
       if (packed_op.count(primitive_type)) {
@@ -69,8 +69,8 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
       }
     } else {
       EXPECT_TRUE(tensor->data_type() == kNumberTypeFloat32 || tensor->data_type() == kNumberTypeInt32);
-      subgraph_inputs.push_back(tensor);
-      subgraph_inputs_data[tensor] = reinterpret_cast<float *>(input_data);
+      subgraph_inputs.push_back(tensor.get());
+      subgraph_inputs_data[tensor.get()] = reinterpret_cast<float *>(input_data);
     }
   }
 
@@ -115,7 +115,7 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
   // simulating benchmark:  model->Free(), clear weight data in input_infos
   std::vector<std::unique_ptr<uint8_t[]>> saved_weights;
   for (int i = 0; i < tensors.size(); ++i) {
-    auto *tensor = &tensors[i];
+    auto &tensor = tensors[i];
     if (tensor->category() != VAR) {
       saved_weights.emplace_back(new uint8_t[tensor->Size()]);
       auto *weight_data = std::get<1>(input_infos[i]);
@@ -143,12 +143,12 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
 
   MS_LOG(DEBUG) << "release resources";
   for (auto &tensor : tensors) {
-    if (tensor.category() != VAR && packed_op.count(primitive_type)) {
-      tensor.set_data(nullptr);
+    if (tensor->category() != VAR && packed_op.count(primitive_type)) {
+      tensor->set_data(nullptr);
     }
   }
   for (int i = 0, j = 0; i < tensors.size(); ++i) {  // resume weight data to input_infos
-    auto *tensor = &tensors[i];
+    auto &tensor = tensors[i];
     if (tensor->category() != VAR) {
       auto *weight_data = std::get<1>(input_infos[i]);
       memcpy(weight_data, saved_weights[j++].get(), tensor->Size());
