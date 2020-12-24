@@ -249,8 +249,8 @@ const std::string APP_ERR_FACE_LOG_STRING[] = {
 };
 
 std::string GetAppErrCodeInfo(APP_ERROR err);
-void AssertErrorCode(int code, std::string file, std::string function, int line);
-void CheckErrorCode(int code, std::string file, std::string function, int line);
+void AssertErrorCode(const int code, const std::string file, const std::string function, const int line);
+void CheckErrorCode(const int code, const std::string file, const std::string function, const int line);
 
 #define RtAssert(code) AssertErrorCode(code, __FILE__, __FUNCTION__, __LINE__);
 #define RtCheckError(code) CheckErrorCode(code, __FILE__, __FUNCTION__, __LINE__);

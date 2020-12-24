@@ -16,10 +16,15 @@
 #ifndef ACLMANAGER_H
 #define ACLMANAGER_H
 
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <string.h>
+#include <sys/types.h>
+#include <string>
+#include <map>
 #include <climits>
 #include <string>
-#include <string.h>
-#include <map>
 #include <iostream>
 #include <memory>
 #include "acl/acl.h"
@@ -27,10 +32,6 @@
 #include "mindspore/core/utils/log_adapter.h"
 #include "ErrorCode.h"
 #include "DvppCommon.h"
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 
 mode_t SetFileDefaultUmask();
 
@@ -39,14 +40,14 @@ class AclProcess {
   AclProcess(uint32_t resizeWidth, uint32_t resizeHeight, uint32_t cropWidth, uint32_t cropHeight, aclrtContext context,
              aclrtStream stream = nullptr, std::shared_ptr<DvppCommon> dvppCommon = nullptr);
 
-  ~AclProcess(){};
+  ~AclProcess() {}
 
   // Release all the resource
   APP_ERROR Release();
   // Create resource for this sample
   APP_ERROR InitResource();
   // Process the result
-  APP_ERROR Process(RawData &ImageInfo);
+  APP_ERROR Process(const RawData &ImageInfo);
   // API for access memory
   std::shared_ptr<void> Get_Memory_Data();
   // API for access device memory
@@ -64,9 +65,7 @@ class AclProcess {
   // Initialize the modules used by this sample
   APP_ERROR InitModule();
   // Preprocess the input image
-  APP_ERROR Preprocess(RawData &ImageInfo);
-  // Filename process
-  APP_ERROR RenameFile(std::string &filename);
+  APP_ERROR Preprocess(const RawData &ImageInfo);
 
   aclrtContext context_;
   aclrtStream stream_;

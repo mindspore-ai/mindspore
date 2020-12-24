@@ -692,10 +692,11 @@ Status DvppDecodeResizeCropOperation::ValidateParams() {
   }
   if (*min_element(crop_.begin(), crop_.end()) < 32 || *max_element(crop_.begin(), crop_.end()) > 2048) {
     std::string err_msg = "Dvpp module supports crop image with resolution in range [32, 2048], got Crop Parameters: ";
-    if (crop_.size() == 2)
+    if (crop_.size() == 2) {
       MS_LOG(ERROR) << err_msg << "[" << crop_[0] << ", " << crop_[1] << "]";
-    else
+    } else {
       MS_LOG(ERROR) << err_msg << "[" << crop_[0] << ", " << crop_[0] << "]";
+    }
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
   if (*min_element(resize_.begin(), resize_.end()) < 32 || *max_element(resize_.begin(), resize_.end()) > 2048) {
