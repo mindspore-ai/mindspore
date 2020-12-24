@@ -1314,6 +1314,22 @@ function Run_arm64() {
         fi
     done < ${models_mindspore_weightquant_config}
 
+    # Run npu converted models:
+    while read line; do
+        model_name=`echo ${mindspore_line_info}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
+        echo "mindspore run npu: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
+        echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=NPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=NPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+        adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
+        if [ $? = 0 ]; then
+            run_result='arm64_npu: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
+        else
+            run_result='arm64_npu: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
+        fi
+    done < ${models_npu_config}
+
     # Run converted models which has several inputs or does not need to be cared about the accuracy:
     while read line; do
         model_name=${line%%;*}
@@ -1492,6 +1508,7 @@ models_gpu_fp16_config=${basepath}/models_gpu_fp16.cfg
 models_gpu_weightquant_config=${basepath}/models_gpu_weightquant.cfg
 models_mindspore_weightquant_config=${basepath}/models_mindspore_weightquant.cfg
 models_arm32_config=${basepath}/models_arm32.cfg
+models_npu_config=${basepath}/models_npu.cfg
 models_compatibility_config=${basepath}/models_compatibility.cfg
 models_only_for_process_config=${basepath}/models_with_several_inputs_or_without_outputs.cfg
 

@@ -78,7 +78,7 @@ domi::ModelBufferData *SubGraphNpuKernel::BuildIRModel() {
 }
 
 int SubGraphNpuKernel::Run() {
-  return reinterpret_cast<lite::NPUExecutor *>(this->executor_)->Run(in_tensors_, out_tensors_, out_kernels_, nodes_);
+  return reinterpret_cast<lite::NPUExecutor *>(this->executor_)->Run(in_tensors_, out_tensors_, out_nodes_, nodes_);
 }
 
 int SubGraphNpuKernel::BuildNPUInputOp() {

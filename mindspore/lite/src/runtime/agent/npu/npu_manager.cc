@@ -47,7 +47,7 @@ bool NPUManager::CheckEMUIVersion() {
   int pos = emui_str.find('_');
   if (pos != std::string::npos) {
     auto version = emui_str.substr(pos + 1);
-    int ret = CompareVersion(version, "11.0.0");
+    int ret = CompareVersion(version, "10.0.0");
     if (ret < 0) {
       return false;
     }
@@ -138,6 +138,7 @@ int NPUManager::AddModel(domi::ModelBufferData *model_buffer_data, const std::st
   index_++;
   return RET_OK;
 }
+
 std::shared_ptr<hiai::AiModelMngerClient> NPUManager::CreateAiModelMngerClient() {
   auto client = std::make_shared<hiai::AiModelMngerClient>();
   if (client == nullptr) {
@@ -151,6 +152,7 @@ std::shared_ptr<hiai::AiModelMngerClient> NPUManager::CreateAiModelMngerClient()
   }
   return client;
 }
+
 int NPUManager::LoadOMModel() {
   std::vector<std::shared_ptr<hiai::AiModelDescription>> models_desc;
   std::shared_ptr<hiai::AiModelMngerClient> client = nullptr;
