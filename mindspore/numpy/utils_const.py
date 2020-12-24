@@ -13,14 +13,16 @@
 # limitations under the License.
 # ============================================================================
 """internal graph-compatible utility functions"""
+import math
 from functools import partial
 
 import mindspore.context as context
 from ..ops import functional as F
 from ..ops.primitive import constexpr
 from ..common import dtype as mstype
+from ..common import Tensor
 from .._c_expression import Tensor as Tensor_
-from .._c_expression.typing import Tuple, List
+from .._c_expression import typing
 
 from .dtypes import promotion_rule, dtype_tuple, all_types, dtype_map
 
@@ -28,12 +30,17 @@ from .dtypes import promotion_rule, dtype_tuple, all_types, dtype_map
 @constexpr
 def _check_shape(shape):
     """check the shape param to match the numpy style"""
-    if not isinstance(shape, (int, tuple, list, Tuple, List)):
+    if not isinstance(shape, (int, tuple, list, typing.Tuple, typing.List)):
         raise TypeError(f"only int, tuple and list are allowed for shape, but got {type(shape)}")
     if isinstance(shape, int):
         shape = (shape,)
-    if isinstance(shape, (list, List)):
+    if isinstance(shape, (list, typing.List)):
         shape = tuple(shape)
+    for s in shape:
+        if not isinstance(s, int):
+            raise TypeError("each entry in shape should be int.")
+        if s < 0:
+            raise ValueError("each entry in shape should no less than 0.")
     return shape
 
 
@@ -57,7 +64,7 @@ def _check_dtype(dtype):
 
 
 @constexpr
-def _check_shape_contain_zero(shp):
+def _is_shape_empty(shp):
     """Check whether shape contains zero"""
     if isinstance(shp, int):
         return shp == 0
@@ -77,35 +84,28 @@ def _check_start_normalize(start, ndim):
 @constexpr
 def _check_axes_range(axes, ndim):
     """
-    Check axes are within the number of dimensions of tensor x and normalize the negative axes.
+    Check axes type and normalize the negative axes.
+
     Args:
-        axes (Union[int, tuple(int), list(int)]): Axes of the tensor.
+        axes: Axes of the tensor.
         ndim (int): The number of dimensions of the tensor.
+
     Return:
         Axes (Union[int, tuple(int)]). If input is integer, return integer, else tuple.
+
+    Raises:
+        TypeError: If the axes are not integer, tuple(int) or list(int).
+        ValueError: If duplicate axes exists or some axis is out of bounds.
     """
-    if not isinstance(axes, int) and not isinstance(axes, tuple) and not isinstance(axes, list):
-        raise TypeError(f"int, tuple(int) or list(int) expected, but got {type(axes)}.")
-    low = -ndim
-    up = ndim - 1
-    if low > up:
-        raise ValueError(f"Lower bound {low} and upper bound {up} of axes are not allowed.")
-    if isinstance(axes, int):
-        if axes < low or axes > up:
-            raise ValueError(f"axis {axes} is out of bounds for tensor of dimension {ndim}.")
-        return axes if axes >= 0 else axes + ndim
-    new_axes = []
-    for item in axes:
-        if not isinstance(item, int):
-            raise TypeError(f"int in tuple or list expected, but got {type(item)}.")
-        if item < low or item > up:
-            raise ValueError(f"axis {item} in {axes} is out of bounds for tensor of dimension {ndim}.")
-        new_axes.append(item if item >= 0 else item + ndim)
-    return tuple(new_axes)
+    _check_axis_type(axes, True, True, True)
+    if isinstance(axes, (list, tuple)):
+        _check_element_int(axes)
+    axes = _canonicalize_axis(axes, ndim)
+    return axes
 
 
 @constexpr
-def _get_device_compile():
+def _get_device():
     """Get the current device (`GPU`, `CPU`, `Ascend`)"""
     return context.get_context('device_target')
 
@@ -153,9 +153,10 @@ def _infer_out_shape(*shapes):
 @constexpr
 def _check_axis_in_range(axis, ndim):
     """Checks axes are with the bounds of ndim"""
-    if -ndim <= axis < ndim:
-        return True
-    raise ValueError(f'axis {axis} is out of bounds for array of dimension {ndim}')
+    if not isinstance(axis, int):
+        raise TypeError(f'axes should be integers, not {type(axis)}')
+    if not -ndim <= axis < ndim:
+        raise ValueError(f'axis {axis} is out of bounds for array of dimension {ndim}')
 
 
 @constexpr
@@ -165,26 +166,25 @@ def _check_axis_valid(axes, ndim):
     to the built-in operator (non-negative, int or tuple)
     """
     if isinstance(axes, int):
-        _ = _check_axis_in_range(axes, ndim)
+        _check_axis_in_range(axes, ndim)
         return (axes % ndim,)
-    if isinstance(axes, tuple):
+    if isinstance(axes, (tuple, list)):
         for axis in axes:
-            _ = _check_axis_in_range(axis, ndim)
+            _check_axis_in_range(axis, ndim)
         axes = tuple(map(lambda x: x % ndim, axes))
         if all(axes.count(el) <= 1 for el in axes):
             return axes
     if axes is None:
         axes = F.make_range(ndim)
         return axes
-    raise ValueError('duplicate value in \'axis\'')
+    raise ValueError('duplicate value in "axis"')
 
 
 @constexpr
 def _check_shape_aligned(shape1, shape2):
     """Checks shape1 and shape2 are valid shapes to perform inner product"""
-    if shape1[-1] == shape2[-1]:
-        return True
-    raise ValueError(f'shapes {shape1} {shape2} not aligned: {shape1[-1]} (dim 0) != {shape2[-1]} (dim 0)')
+    if shape1[-1] != shape2[-1]:
+        raise ValueError(f'shapes {shape1} {shape2} not aligned: {shape1[-1]} (dim 0) != {shape2[-1]} (dim 0)')
 
 
 @constexpr
@@ -195,30 +195,6 @@ def _tile_size(shape, out_shape, ndim):
         if i != j:
             size[idx] = j
     return tuple(size)
-
-
-@constexpr
-def _check_is_int(obj):
-    """Check whether obj is an integer."""
-    return isinstance(obj, int)
-
-
-@constexpr
-def _check_is_tuple(obj):
-    """Check whether obj is a tuple"""
-    return isinstance(obj, (tuple, Tuple))
-
-
-@constexpr
-def _check_is_list(obj):
-    """Check whether obj is a list"""
-    return isinstance(obj, (list, List))
-
-
-@constexpr
-def _check_is_tensor(obj):
-    """Check whether obj is a tensor"""
-    return isinstance(obj, mstype.tensor_type)
 
 
 @constexpr
@@ -298,6 +274,177 @@ def _check_is_float(dtype):
 
 
 @constexpr
-def _check_input_tensor(input_type):
-    if not _check_is_tensor(input_type):
-        raise TypeError(f'expect Tensor, but got {input_type}')
+def _check_is_int(dtype):
+    return isinstance(dtype, typing.Int)
+
+
+@constexpr
+def _check_matmul_shapes(shape1, shape2):
+    """Checks shape1 and shape2 are valid shapes to perform matmul"""
+    ndim1, ndim2 = len(shape1), len(shape2)
+    if ndim1 < 1 or ndim2 < 1:
+        raise ValueError('input operands must have at least 1 dimension')
+    if ndim2 >= 2 and shape1[-1] != shape2[-2]:
+        raise ValueError(f'mismatch in core dimension of input operands (size '
+                         f'{shape1[-1]} is different from {shape2[-2]})')
+
+
+@constexpr
+def _check_axis_type(axis, type_int=True, type_tuple=True, type_list=True):
+    """Check axis argument type."""
+    if type_int and isinstance(axis, int):
+        return True
+    if (type_tuple and isinstance(axis, tuple)) or (type_list and isinstance(axis, list)):
+        for ax in axis:
+            if not isinstance(ax, int):
+                raise TypeError(f"Each axis should be integer, but got {type(ax)} in {axis}.")
+        return True
+
+    type_str = ""
+    if type_int: type_str += "int, "
+    if type_tuple: type_str += "tuple, "
+    if type_list: type_str += "list, "
+    raise TypeError(f"Axis should be {type_str}but got {type(axis)}.")
+
+
+@constexpr
+def _canonicalize_axis(axis, ndim):
+    """
+    Check axes are within the number of dimensions of tensor x and normalize the negative axes.
+    Args:
+        axis (Union[int, tuple(int), list(int)]): Axes of the tensor.
+        ndim (int): The number of dimensions of the tensor.
+    Return:
+        Axis (Union[int, tuple(int)]). If input is integer, return integer, else tuple.
+    """
+    if isinstance(axis, int):
+        axis = [axis]
+    for ax in axis:
+        _check_axis_in_range(ax, ndim)
+
+    def canonicalizer(ax):
+        return ax + ndim if ax < 0 else ax
+
+    axis = tuple([canonicalizer(axis) for axis in axis])
+    if all(axis.count(el) <= 1 for el in axis):
+        return axis if len(axis) > 1 else axis[0]
+    raise ValueError(f"duplicate axes in {axis}.")
+
+
+@constexpr
+def _broadcast_tuples(tup1, tup2):
+    """
+    Broadcast two 1D tuples to the same length, if inputs are ints, convert to
+    tuples first.
+    """
+    tup1 = (tup1,) if isinstance(tup1, int) else tup1
+    tup2 = (tup2,) if isinstance(tup2, int) else tup2
+    if not isinstance(tup1, (tuple, list)) or not isinstance(tup2, (tuple, list)):
+        raise TypeError("input shift and axis must be tuple or list or int.")
+    if len(tup1) == len(tup2):
+        return tup1, tup2
+    if len(tup1) == 1:
+        tup1 *= len(tup2)
+    elif len(tup2) == 1:
+        tup2 *= len(tup1)
+    else:
+        raise ValueError("shape mismatch: objects cannot be broadcast to a single shape")
+    return tup1, tup2
+
+
+@constexpr
+def _expanded_shape(ndim, axis_size, axis):
+    """
+    Returns a shape with size = 1 for all dimensions
+    except at axis.
+    """
+    return tuple([axis_size if i == axis else 1 for i in range(ndim)])
+
+
+@constexpr
+def _add_unit_axes(shape, ndim, append=False):
+    """
+    Prepends shape with 1s so that it has the number of dimensions ndim.
+    If append is set to True, returns shape appended with 1s instead.
+    """
+    if isinstance(shape, int):
+        shape = (shape,)
+    ndim_diff = ndim - len(shape)
+    if ndim_diff > 0:
+        if append:
+            shape = [i for i in shape] + [1]*ndim_diff
+        else:
+            shape = [1]*ndim_diff + [i for i in shape]
+    return tuple(shape)
+
+
+@constexpr
+def  _check_element_int(lst):
+    """
+    Check whether each element in `lst` is an integer.
+    """
+    for item in lst:
+        if not isinstance(item, int):
+            raise TypeError(f"Each element in {lst} should be integer, but got {type(item)}.")
+    return True
+
+
+@constexpr
+def _type_convert(force, obj):
+    """
+    Convert type of `obj` to `force`.
+    """
+    return force(obj)
+
+
+@constexpr
+def _list_comprehensions(obj, item=None, return_tuple=False):
+    """
+    Generates a new list/tuple by list comprehension.
+
+    Args:
+        obj (Union[int, list, tuple]):
+            If integer, it will be the length of the returned tuple/list.
+        item: The value to be filled. Default: None.
+            If None, the values in the new list/tuple are the same as obj
+            or range(obj) when obj is integer.
+        return_tuple(bool): If true, returns tuple, else returns list.
+
+    Returns:
+        List or tuple.
+    """
+    res = []
+    lst = obj
+    if isinstance(obj, int):
+        lst = range(obj)
+    if item is None:
+        res = [i for i in lst]
+    else:
+        res = [item for i in lst]
+    if return_tuple:
+        return tuple(res)
+    return res
+
+
+@constexpr
+def _tuple_getitem(tup, idx, startswith=True):
+    """
+    Returns a slice from tup starting with idx. If startswith is False,
+    returns a lice from tup ending with idx instead.
+    """
+    if startswith:
+        return tup[idx:]
+    return tup[:idx]
+
+
+@constexpr
+def _iota(dtype, num):
+    """Creates a 1-D tensor with value: [0,1,...num-1] and dtype."""
+    # TODO: Change to P.Linspace when the kernel is implemented on CPU.
+    return Tensor(list(range(int(num))), dtype)
+
+
+@constexpr
+def _ceil(number):
+    """Ceils the number in graph mode."""
+    return math.ceil(number)

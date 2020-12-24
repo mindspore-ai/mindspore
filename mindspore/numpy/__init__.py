@@ -22,36 +22,59 @@ Note:
     - array_ops.py defines all the array operation interfaces.
     - array_creations.py defines all the array generation interfaces.
     - math_ops.py defines all the math operations on tensors.
+    - logic_ops.py defines all the logical operations on tensors.
     - dtypes.py defines all the mindspore.numpy dtypes (mainly redirected from mindspore)
 """
 
 from .array_ops import (transpose, expand_dims, squeeze, rollaxis, swapaxes, reshape,
                         ravel, concatenate, where, atleast_1d, atleast_2d, atleast_3d,
-                        column_stack, hstack, dstack, vstack, stack, unique)
+                        column_stack, hstack, dstack, vstack, stack, unique, moveaxis,
+                        tile, broadcast_to, broadcast_arrays, roll, append, split, vsplit,
+                        flip, flipud, fliplr, hsplit, dsplit, take_along_axis, take, repeat)
 from .array_creations import copy_ as copy
 from .array_creations import (array, asarray, asfarray, ones, zeros, full, arange,
                               linspace, logspace, eye, identity, empty, empty_like,
                               ones_like, zeros_like, full_like, diagonal, tril, triu,
-                              tri, trace)
+                              tri, trace, cumsum, meshgrid, mgrid, ogrid, diagflat,
+                              diag, diag_indices, ix_)
 from .dtypes import (int_, int8, int16, int32, int64, uint, uint8, uint16,
-                     uint32, uint64, float_, float16, float32, float64, bool_, inf,
-                     numeric_types)
-from .math_ops import (mean, inner, add, subtract, multiply, divide, power,
-                       dot, outer, tensordot, absolute)
+                     uint32, uint64, float_, float16, float32, float64, bool_, inf, nan,
+                     numeric_types, PINF, NINF)
+from .math_ops import (mean, inner, add, subtract, multiply, divide, true_divide, power,
+                       dot, outer, tensordot, absolute, std, var, average, minimum,
+                       matmul, square, sqrt, reciprocal, log, maximum, heaviside, amax, amin,
+                       hypot, float_power, floor, ptp, deg2rad, rad2deg, count_nonzero,
+                       positive, negative, clip, floor_divide, remainder, fix, fmod, trunc,
+                       exp, expm1)
+from .logic_ops import (not_equal, less_equal, less, greater_equal, greater, equal, isfinite,
+                        isnan, isinf, isposinf, isneginf, isscalar)
 
+mod = remainder
+fabs = absolute
 
 array_ops_module = ['transpose', 'expand_dims', 'squeeze', 'rollaxis', 'swapaxes', 'reshape',
                     'ravel', 'concatenate', 'where', 'atleast_1d', 'atleast_2d', 'atleast_3d',
-                    'column_stack', 'hstack', 'dstack', 'vstack', 'stack', 'unique']
+                    'column_stack', 'hstack', 'dstack', 'vstack', 'stack', 'unique', 'moveaxis',
+                    'tile', 'broadcast_to', 'broadcast_arrays', 'append', 'roll', 'split', 'vsplit',
+                    'flip', 'flipud', 'fliplr', 'hsplit', 'dsplit', 'take_along_axis', 'take',
+                    'repeat']
 
 array_creations_module = ['array', 'asarray', 'asfarray', 'ones', 'zeros', 'full', 'arange',
                           'linspace', 'logspace', 'eye', 'identity', 'empty', 'empty_like',
                           'ones_like', 'zeros_like', 'full_like', 'diagonal', 'tril', 'triu',
-                          'tri', 'trace']
+                          'tri', 'trace', 'meshgrid', 'mgrid', 'ogrid', 'diagflat', 'diag',
+                          'diag_indices', 'ix_', 'cumsum']
 
-math_module = ['mean', 'inner', 'add', 'subtract', 'multiply', 'divide', 'power',
-               'dot', 'outer', 'tensordot', 'absolute']
+math_module = ['mean', 'inner', 'add', 'subtract', 'multiply', 'divide', 'true_divide', 'power',
+               'dot', 'outer', 'tensordot', 'absolute', 'std', 'var', 'average', 'not_equal',
+               'minimum', 'matmul', 'square', 'sqrt', 'reciprocal', 'log', 'maximum',
+               'heaviside', 'amax', 'amin', 'hypot', 'float_power', 'floor', 'ptp', 'deg2rad',
+               'rad2deg', 'count_nonzero', 'positive', 'negative', 'clip', 'floor_divide',
+               'remainder', 'mod', 'fix', 'fmod', 'trunc', 'exp', 'expm1', 'fabs']
 
-__all__ = array_ops_module + array_creations_module + math_module + numeric_types
+logic_module = ['not_equal', 'less_equal', 'less', 'greater_equal', 'greater', 'equal', 'isfinite',
+                'isnan', 'isinf', 'isposinf', 'isneginf', 'isscalar']
+
+__all__ = array_ops_module + array_creations_module + math_module + logic_module + numeric_types
 
 __all__.sort()

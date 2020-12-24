@@ -14,15 +14,13 @@
 # ============================================================================
 """unit tests for numpy array operations"""
 
-import functools
-
 import pytest
 import numpy as onp
 
-import mindspore.context as context
 import mindspore.numpy as mnp
 
-context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
+from .utils import rand_int, rand_bool, match_array, match_res, match_meta, \
+    match_all_arrays
 
 
 class Cases():
@@ -97,10 +95,10 @@ class Cases():
         self.mnp_prototypes = [
             mnp.ones((2, 3, 4)),
             mnp.ones((0, 3, 0, 2, 5)),
-            onp.ones((2, 7, 0)),
-            onp.ones(()),
-            [mnp.ones(3), (1, 2, 3), onp.ones(3), [4, 5, 6]],
-            ([(1, 2), mnp.ones(2)], (onp.ones(2), [3, 4])),
+            mnp.ones((2, 7, 0)),
+            mnp.ones(()),
+            [mnp.ones(3), (1, 2, 3), mnp.ones(3), [4, 5, 6]],
+            ([(1, 2), mnp.ones(2)], (mnp.ones(2), [3, 4])),
         ]
 
         self.onp_prototypes = [
@@ -111,97 +109,6 @@ class Cases():
             [onp.ones(3), (1, 2, 3), onp.ones(3), [4, 5, 6]],
             ([(1, 2), onp.ones(2)], (onp.ones(2), [3, 4])),
         ]
-
-
-def match_array(actual, expected, error=0):
-    if error > 0:
-        onp.testing.assert_almost_equal(actual.tolist(), expected.tolist(),
-                                        decimal=error)
-    else:
-        onp.testing.assert_equal(actual.tolist(), expected.tolist())
-
-
-def check_all_results(onp_results, mnp_results, error=0):
-    """Check all results from numpy and mindspore.numpy"""
-    for i, _ in enumerate(onp_results):
-        match_array(onp_results[i], mnp_results[i].asnumpy())
-
-
-def check_all_unique_results(onp_results, mnp_results):
-    """
-    Check all results from numpy and mindspore.numpy.
-
-    Args:
-        onp_results (Union[tuple of numpy.arrays, numpy.array])
-        mnp_results (Union[tuple of Tensors, Tensor])
-    """
-    for i, _ in enumerate(onp_results):
-        if isinstance(onp_results[i], tuple):
-            for j in range(len(onp_results[i])):
-                match_array(onp_results[i][j],
-                            mnp_results[i][j].asnumpy(), error=7)
-        else:
-            match_array(onp_results[i], mnp_results[i].asnumpy(), error=7)
-
-
-def run_non_kw_test(mnp_fn, onp_fn):
-    """Run tests on functions with non keyword arguments"""
-    test_case = Cases()
-    for i in range(len(test_case.arrs)):
-        arrs = test_case.arrs[:i]
-        match_res(mnp_fn, onp_fn, *arrs)
-
-    for i in range(len(test_case.scalars)):
-        arrs = test_case.scalars[:i]
-        match_res(mnp_fn, onp_fn, *arrs)
-
-    for i in range(len(test_case.expanded_arrs)):
-        arrs = test_case.expanded_arrs[:i]
-        match_res(mnp_fn, onp_fn, *arrs)
-
-    for i in range(len(test_case.nested_arrs)):
-        arrs = test_case.nested_arrs[:i]
-        match_res(mnp_fn, onp_fn, *arrs)
-
-
-def rand_int(*shape):
-    """return an random integer array with parameter shape"""
-    res = onp.random.randint(low=1, high=5, size=shape)
-    if isinstance(res, onp.ndarray):
-        return res.astype(onp.float32)
-    return float(res)
-
-
-# return an random boolean array
-def rand_bool(*shape):
-    return onp.random.rand(*shape) > 0.5
-
-
-def match_res(mnp_fn, onp_fn, *arrs, **kwargs):
-    """Checks results from applying mnp_fn and onp_fn on arrs respectively"""
-    mnp_arrs = map(functools.partial(mnp.asarray, dtype='float32'), arrs)
-    mnp_res = mnp_fn(*mnp_arrs, **kwargs)
-    onp_res = onp_fn(*arrs, **kwargs)
-    match_all_arrays(mnp_res, onp_res)
-
-
-def match_all_arrays(mnp_res, onp_res, error=0):
-    if isinstance(mnp_res, (tuple, list)):
-        for actual, expected in zip(mnp_res, onp_res):
-            match_array(actual.asnumpy(), expected, error)
-    else:
-        match_array(mnp_res.asnumpy(), onp_res, error)
-
-
-def match_meta(actual, expected):
-    # float64 and int64 are not supported, and the default type for
-    # float and int are float32 and int32, respectively
-    if expected.dtype == onp.float64:
-        expected = expected.astype(onp.float32)
-    elif expected.dtype == onp.int64:
-        expected = expected.astype(onp.int32)
-    assert actual.shape == expected.shape
-    assert actual.dtype == expected.dtype
 
 
 @pytest.mark.level1
@@ -440,27 +347,50 @@ def test_arange():
 def test_linspace():
     actual = onp.linspace(2.0, 3.0, dtype=onp.float32)
     expected = mnp.linspace(2.0, 3.0).asnumpy()
-    match_array(actual, expected, error=7)
+    match_array(actual, expected, error=6)
 
     actual = onp.linspace(2.0, 3.0, num=5, dtype=onp.float32)
     expected = mnp.linspace(2.0, 3.0, num=5).asnumpy()
-    match_array(actual, expected, error=7)
+    match_array(actual, expected, error=6)
 
     actual = onp.linspace(
         2.0, 3.0, num=5, endpoint=False, dtype=onp.float32)
     expected = mnp.linspace(2.0, 3.0, num=5, endpoint=False).asnumpy()
-    match_array(actual, expected, error=7)
+    match_array(actual, expected, error=6)
 
     actual = onp.linspace(2.0, 3.0, num=5, retstep=True, dtype=onp.float32)
     expected = mnp.linspace(2.0, 3.0, num=5, retstep=True)
     match_array(actual[0], expected[0].asnumpy())
-    assert actual[1] == expected[1]
+    assert actual[1] == expected[1].asnumpy()
 
     actual = onp.linspace(2.0, [3, 4, 5], num=5,
                           endpoint=False, dtype=onp.float32)
     expected = mnp.linspace(
         2.0, [3, 4, 5], num=5, endpoint=False).asnumpy()
-    match_array(actual, expected)
+    match_array(actual, expected, error=6)
+
+    start = onp.random.random([2, 1, 4])
+    stop = onp.random.random([1, 5, 1])
+    actual = onp.linspace(start, stop, num=20, retstep=True,
+                          endpoint=False, dtype=onp.float32)
+    expected = mnp.linspace(mnp.asarray(start), mnp.asarray(stop), num=20,
+                            retstep=True, endpoint=False)
+    match_array(actual[0], expected[0].asnumpy(), error=6)
+    match_array(actual[1], expected[1].asnumpy(), error=6)
+
+    actual = onp.linspace(start, stop, num=20, retstep=True,
+                          endpoint=False, dtype=onp.int16)
+    expected = mnp.linspace(mnp.asarray(start), mnp.asarray(stop), num=20,
+                            retstep=True, endpoint=False, dtype=mnp.int16)
+    match_array(actual[0], expected[0].asnumpy(), error=6)
+    match_array(actual[1], expected[1].asnumpy(), error=6)
+
+    for axis in range(2):
+        actual = onp.linspace(start, stop, num=20, retstep=False,
+                              endpoint=False, dtype=onp.float32, axis=axis)
+        expected = mnp.linspace(mnp.asarray(start), mnp.asarray(stop), num=20,
+                                retstep=False, endpoint=False, dtype=mnp.float32, axis=axis)
+        match_array(actual, expected.asnumpy(), error=6)
 
 
 @pytest.mark.level1
@@ -472,22 +402,22 @@ def test_linspace():
 def test_logspace():
     actual = onp.logspace(2.0, 3.0, dtype=onp.float32)
     expected = mnp.logspace(2.0, 3.0).asnumpy()
-    match_array(actual, expected)
+    match_array(actual, expected, error=3)
 
     actual = onp.logspace(2.0, 3.0, num=5, dtype=onp.float32)
     expected = mnp.logspace(2.0, 3.0, num=5).asnumpy()
-    match_array(actual, expected)
+    match_array(actual, expected, error=3)
 
     actual = onp.logspace(
         2.0, 3.0, num=5, endpoint=False, dtype=onp.float32)
     expected = mnp.logspace(2.0, 3.0, num=5, endpoint=False).asnumpy()
-    match_array(actual, expected)
+    match_array(actual, expected, error=3)
 
-    actual = onp.logspace(2.0, [3, 4, 5], num=5,
+    actual = onp.logspace(2.0, [3, 4, 5], num=5, base=2,
                           endpoint=False, dtype=onp.float32)
     expected = mnp.logspace(
-        2.0, [3, 4, 5], num=5, endpoint=False).asnumpy()
-    match_array(actual, expected)
+        2.0, [3, 4, 5], num=5, base=2, endpoint=False).asnumpy()
+    match_array(actual, expected, error=3)
 
 
 @pytest.mark.level1
@@ -537,7 +467,6 @@ def run_x_like(mnp_fn, onp_fn):
             actual = mnp_fn(mnp_proto, shape=shape).asnumpy()
             expected = onp_fn(onp_proto, shape=shape)
             match_array(actual, expected)
-
             for mnp_dtype, onp_dtype in zip(test_case.mnp_dtypes,
                                             test_case.onp_dtypes):
                 actual = mnp_fn(mnp_proto, dtype=mnp_dtype).asnumpy()
@@ -581,18 +510,18 @@ def test_full_like():
     for mnp_proto, onp_proto in zip(test_case.mnp_prototypes, test_case.onp_prototypes):
         shape = onp.zeros_like(onp_proto).shape
         fill_value = rand_int()
-        actual = mnp.full_like(mnp_proto, fill_value).asnumpy()
+        actual = mnp.full_like(mnp_proto, mnp.array(fill_value)).asnumpy()
         expected = onp.full_like(onp_proto, fill_value)
         match_array(actual, expected)
 
         for i in range(len(shape) - 1, 0, -1):
             fill_value = rand_int(*shape[i:])
-            actual = mnp.full_like(mnp_proto, fill_value).asnumpy()
+            actual = mnp.full_like(mnp_proto, mnp.array(fill_value)).asnumpy()
             expected = onp.full_like(onp_proto, fill_value)
             match_array(actual, expected)
 
             fill_value = rand_int(1, *shape[i + 1:])
-            actual = mnp.full_like(mnp_proto, fill_value).asnumpy()
+            actual = mnp.full_like(mnp_proto, mnp.array(fill_value)).asnumpy()
             expected = onp.full_like(onp_proto, fill_value)
             match_array(actual, expected)
 
@@ -618,6 +547,26 @@ def test_tri_triu_tril():
 
     match_array(mnp.tri(64, 64).asnumpy(), onp.tri(64, 64))
     match_array(mnp.tri(64, 64, -10).asnumpy(), onp.tri(64, 64, -10))
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_cumsum():
+    x = mnp.ones((16, 16), dtype="bool")
+    match_array(mnp.cumsum(x).asnumpy(), onp.cumsum(x.asnumpy()))
+    match_array(mnp.cumsum(x, axis=0).asnumpy(),
+                onp.cumsum(x.asnumpy(), axis=0))
+    match_meta(mnp.cumsum(x).asnumpy(), onp.cumsum(x.asnumpy()))
+
+    x = rand_int(3, 4, 5)
+    match_array(mnp.cumsum(mnp.asarray(x), dtype="bool").asnumpy(),
+                onp.cumsum(x, dtype="bool"))
+    match_array(mnp.cumsum(mnp.asarray(x), axis=-1).asnumpy(),
+                onp.cumsum(x, axis=-1))
 
 
 def mnp_diagonal(arr):
@@ -695,6 +644,138 @@ def test_trace():
         match_res(mnp.trace, onp.trace, arr, offset=i, axis1=1, axis2=3)
         match_res(mnp.trace, onp.trace, arr, offset=i, axis1=0, axis2=-2)
         match_res(mnp.trace, onp.trace, arr, offset=i, axis1=2, axis2=-1)
+
+
+def mnp_meshgrid(*xi):
+    a = mnp.meshgrid(*xi)
+    b = mnp.meshgrid(*xi, sparse=True)
+    c = mnp.meshgrid(*xi, indexing='ij')
+    d = mnp.meshgrid(*xi, sparse=False, indexing='ij')
+    return a, b, c, d
+
+
+def onp_meshgrid(*xi):
+    a = onp.meshgrid(*xi)
+    b = onp.meshgrid(*xi, sparse=True)
+    c = onp.meshgrid(*xi, indexing='ij')
+    d = onp.meshgrid(*xi, sparse=False, indexing='ij')
+    return a, b, c, d
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_meshgrid():
+    xi = (onp.full(3, 2), onp.full(1, 5), onp.full(
+        (2, 3), 9), onp.full((4, 5, 6), 7))
+    for i in range(len(xi)):
+        arrs = xi[i:]
+        mnp_arrs = map(mnp.asarray, arrs)
+        for mnp_res, onp_res in zip(mnp_meshgrid(*mnp_arrs), onp_meshgrid(*arrs)):
+            match_all_arrays(mnp_res, onp_res)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_mgrid():
+    mnp_res = mnp.mgrid[0:5]
+    onp_res = onp.mgrid[0:5]
+    match_all_arrays(mnp_res, onp_res, error=5)
+
+    mnp_res = mnp.mgrid[2:30:4j, -10:20:7, 2:5:0.5]
+    onp_res = onp.mgrid[2:30:4j, -10:20:7, 2:5:0.5]
+    match_all_arrays(mnp_res, onp_res, error=5)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_ogrid():
+    mnp_res = mnp.ogrid[0:5]
+    onp_res = onp.ogrid[0:5]
+    match_all_arrays(mnp_res, onp_res, error=5)
+
+    mnp_res = mnp.ogrid[2:30:4j, -10:20:7, 2:5:0.5]
+    onp_res = onp.ogrid[2:30:4j, -10:20:7, 2:5:0.5]
+    match_all_arrays(mnp_res, onp_res, error=5)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_diagflat():
+    arrs = [rand_int(0), rand_int(2, 3), rand_int(3, 5, 0)]
+    for arr in arrs:
+        for i in [-2, 0, 7]:
+            match_res(mnp.diagflat, onp.diagflat, arr, k=i)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_diag():
+    arrs = [rand_int(0), rand_int(0, 0), rand_int(7), rand_int(5, 5),
+            rand_int(3, 8), rand_int(9, 6)]
+    for arr in arrs:
+        for i in [-10, -5, -1, 0, 2, 5, 6, 10]:
+            match_res(mnp.diag, onp.diag, arr, k=i)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_diag_indices():
+    mnp_res = mnp.diag_indices(0)
+    onp_res = onp.diag_indices(0)
+    match_all_arrays(mnp_res, onp_res)
+
+    mnp_res = mnp.diag_indices(3, 0)
+    onp_res = onp.diag_indices(3, 0)
+    match_all_arrays(mnp_res, onp_res)
+
+    mnp_res = mnp.diag_indices(5, 7)
+    onp_res = onp.diag_indices(5, 7)
+    match_all_arrays(mnp_res, onp_res)
+
+
+def mnp_ix_(*args):
+    return mnp.ix_(*args)
+
+
+def onp_ix_(*args):
+    return onp.ix_(*args)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_ix_():
+    arrs = [rand_int(i + 1) for i in range(10)]
+    for i in range(10):
+        test_arrs = arrs[:i + 1]
+        match_res(mnp_ix_, onp_ix_, *test_arrs)
 
 
 @pytest.mark.level1
