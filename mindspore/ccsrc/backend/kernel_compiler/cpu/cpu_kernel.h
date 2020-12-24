@@ -19,6 +19,7 @@
 #include <memory>
 #include <numeric>
 #include <string>
+#include <thread>
 #include <vector>
 #include "backend/kernel_compiler/kernel.h"
 #include "backend/session/anf_runtime_algorithm.h"
@@ -26,6 +27,7 @@
 
 using mindspore::kernel::Address;
 using mindspore::kernel::AddressPtr;
+using CTask = std::function<void(size_t, size_t)>;
 namespace mindspore {
 namespace kernel {
 const char KSIZE[] = "ksize";
@@ -106,6 +108,7 @@ class CPUKernelUtils {
   static size_t CalcOffset(const std::vector<size_t> &shape, size_t dim0, size_t dim1, size_t dim2, size_t dim3);
   static size_t GetElementNumOnAxis(const std::vector<size_t> &shape, int axis);
   static void GetElementNumEveryDim(const std::vector<size_t> &shape, std::vector<size_t> *element_num);
+  static void ParallelFor(const CTask &task, size_t count);
 };
 }  // namespace kernel
 }  // namespace mindspore
