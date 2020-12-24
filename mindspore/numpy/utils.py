@@ -13,14 +13,11 @@
 # limitations under the License.
 # ============================================================================
 """internal utility functions"""
-
-import numpy as onp
-
 from ..common import Tensor
 from ..ops import functional as F
 from ..common import dtype as mstype
 
-from .utils_const import _tile_size, _add_unit_axes, _raise_type_error
+from .utils_const import _tile_size, _add_unit_axes, _raise_type_error, _type_convert
 
 
 def _deep_list(array_like):
@@ -56,9 +53,8 @@ def _deep_tensor_to_nparray(array_like):
 
 def _check_input_for_asarray(array_like):
     """check whether array_like argument is a valid type for np.asarray conversion"""
-    if not isinstance(array_like, (Tensor, list, tuple, int, float, bool, onp.ndarray)):
-        _raise_type_error("input data must be `int`, `float`, `bool`, `Tensor`, `list`, `tuple`" + \
-            "or numpy.ndarray, but got ", array_like)
+    if not isinstance(array_like, (Tensor, list, tuple, int, float, bool)):
+        _raise_type_error("input data must be `int`, `float`, `bool`, `Tensor`, `list`, `tuple`, but got ", array_like)
 
 
 def _is_scalar(shape):
@@ -121,6 +117,20 @@ def _convert_64_to_32(tensor):
     return tensor
 
 
+def _to_tensor(*args):
+    """Returns each input as Tensor"""
+    res = ()
+    for arg in args:
+        if isinstance(arg, (int, float, bool, list, tuple)):
+            arg = _convert_64_to_32(_type_convert(Tensor, arg))
+        elif not isinstance(arg, Tensor):
+            _raise_type_error("Expect input to be array like.")
+        res += (arg,)
+    if len(res) == 1:
+        return res[0]
+    return res
+
+
 def _get_dtype_from_scalar(*input_numbers):
     """
     Get the final dtype from series of input numbers, compared with F.typeof, we
@@ -139,3 +149,8 @@ def _get_dtype_from_scalar(*input_numbers):
     if int_flag:
         return mstype.int32
     return mstype.float32
+
+
+def _isnan(x):
+    """Computes isnan."""
+    return F.not_equal(x, x)

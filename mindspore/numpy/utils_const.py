@@ -14,7 +14,8 @@
 # ============================================================================
 """internal graph-compatible utility functions"""
 import math
-from functools import partial
+from itertools import zip_longest
+from collections import deque
 
 import mindspore.context as context
 from ..ops import functional as F
@@ -24,7 +25,7 @@ from ..common import Tensor
 from .._c_expression import Tensor as Tensor_
 from .._c_expression import typing
 
-from .dtypes import promotion_rule, dtype_tuple, all_types, dtype_map
+from .dtypes import promotion_rule, dtype_tuple, all_types, dtype_map, rule_for_trigonometric
 
 
 @constexpr
@@ -111,43 +112,18 @@ def _get_device():
 
 
 @constexpr
-def _reverse_index(idx, arr):
-    """
-    Returns 1 if shape[idx:] is broadcastable to shape_out[idx:],
-    2 situations if the function returns 1:
-    - 1. Tensor's shape has 1 at the designated dimension.
-    - 2. Tensor's dimension is less than the designated idx. (The Tensor shape
-         has been reversed)
-    For both cases, 2 tensors are broadcastable.
-    otherwise returns the element at position of shape
-    """
-    if len(arr) <= idx:
-        return 1
-    return arr[-1 - idx]
-
-
-@constexpr
 def _infer_out_shape(*shapes):
     """
-    Returns shape of output after broadcasting
-    Raises ValueError if shape1 and shape2 cannot be broadcast
+    Returns shape of output after broadcasting. Raises ValueError if shapes cannot be broadcast.
     """
-    shapes_unbroadcastable = False
-    ndim_max = max(map(len, shapes))
-    shape_out = [0]*ndim_max
-    i = 0
-    for i in range(ndim_max):
-        shape_out[-1 - i] = max(map(partial(_reverse_index, i), shapes))
-        for shape in shapes:
-            if _reverse_index(i, shape) != shape_out[-1 - i]:
-                if _reverse_index(i, shape) != 1:
-                    shapes_unbroadcastable = True
-                    break
-        if shapes_unbroadcastable:
-            break
-    if not shapes_unbroadcastable:
-        return tuple(shape_out)
-    raise ValueError(f'operands could not be broadcast together with shapes {*shapes,}')
+    shape_out = deque()
+    reversed_shapes = map(reversed, shapes)
+    for items in zip_longest(*reversed_shapes, fillvalue=1):
+        max_size = 0 if 0 in items else max(items)
+        if any(item not in (1, max_size) for item in items):
+            raise ValueError(f'operands could not be broadcast together with shapes {*shapes,}')
+        shape_out.appendleft(max_size)
+    return tuple(shape_out)
 
 
 @constexpr
@@ -229,6 +205,21 @@ def _raise_value_error(info, param=None):
 
 
 @constexpr
+def _raise_runtime_error(info, param=None):
+    """
+    Raise RuntimeError in both graph/pynative mode
+
+    Args:
+        info(str): info string to display
+        param(python obj): any object that can be recognized by graph mode. If is
+            not None, then param's value information will be extracted and displayed.
+            Default is None.
+    """
+    if param is None:
+        raise RuntimeError(info)
+    raise RuntimeError(info + f"{param}")
+
+@constexpr
 def _empty(dtype, shape):
     """Returns an uninitialized array with dtype and shape."""
     return Tensor_(dtype, shape)
@@ -242,6 +233,9 @@ def _promote(dtype1, dtype2):
         return promotion_rule[dtype1, dtype2]
     return promotion_rule[dtype2, dtype1]
 
+@constexpr
+def _promote_for_trigonometric(dtype):
+    return rule_for_trigonometric[dtype]
 
 @constexpr
 def _max(*args):
@@ -315,7 +309,7 @@ def _canonicalize_axis(axis, ndim):
 
     axis = tuple([canonicalizer(axis) for axis in axis])
     if all(axis.count(el) <= 1 for el in axis):
-        return axis if len(axis) > 1 else axis[0]
+        return tuple(sorted(axis)) if len(axis) > 1 else axis[0]
     raise ValueError(f"duplicate axes in {axis}.")
 
 
@@ -426,13 +420,37 @@ def _tuple_getitem(tup, idx, startswith=True):
 
 
 @constexpr
-def _iota(dtype, num):
+def _tuple_setitem(tup, idx, value):
+    """
+    Returns a tuple with specified `idx` set to `value`.
+    """
+    tup = list(tup)
+    tup[idx] = value
+    return tuple(tup)
+
+
+@constexpr
+def _iota(dtype, num, increasing=True):
     """Creates a 1-D tensor with value: [0,1,...num-1] and dtype."""
     # TODO: Change to P.Linspace when the kernel is implemented on CPU.
-    return Tensor(list(range(int(num))), dtype)
+    if increasing:
+        return Tensor(list(range(int(num))), dtype)
+    return Tensor(list(range(int(num)-1, -1, -1)), dtype)
 
 
 @constexpr
 def _ceil(number):
     """Ceils the number in graph mode."""
     return math.ceil(number)
+
+
+@constexpr
+def _seq_prod(seq1, seq2):
+    """Returns the element-wise product of seq1 and seq2."""
+    return tuple(map(lambda x, y: x*y, seq1, seq2))
+
+
+@constexpr
+def _make_tensor(val, dtype):
+    """ Returns the tensor with value `val` and dtype `dtype`."""
+    return Tensor(val, dtype)

@@ -24,60 +24,17 @@ from ..ops.primitive import constexpr
 from ..nn import Cell
 
 from .utils import _convert_list_tensor_to_tuple_tensor, _expand, _broadcast_to_shape, \
-    _check_input_tensor, _broadcast_to
+    _check_input_tensor, _broadcast_to, _to_tensor
 from .utils_const import _check_axes_range, _check_start_normalize, \
     _raise_type_error, _raise_value_error, _infer_out_shape, _empty, _promote, \
     _check_same_type, _check_axis_valid, _add_unit_axes, _broadcast_tuples, \
     _check_is_float, _check_axis_in_range, _check_axis_type, _canonicalize_axis, \
     _list_comprehensions, _check_element_int, _is_shape_empty, _type_convert, \
-    _tuple_getitem, _expanded_shape
+    _tuple_getitem, _expanded_shape, _seq_prod, _get_device, _tuple_setitem
 
 # According to official numpy reference, the dimension of a numpy array must be less
 # than 32
 MAX_NUMPY_DIMS = 32
-
-
-@constexpr
-def _prepare_shape_for_expand_dims(shape, axes):
-    """
-    Creates the expanded new shape based on the shape and given axes
-
-    Args:
-        shape (tuple): the shape of the tensor
-        axes Union(int, tuple(int), list(int)): the axes with dimensions expanded.
-
-    Returns:
-        new_shape(tuple): the shape with dimensions expanded.
-    """
-
-    new_shape = []
-    shape_idx = 0
-    new_shape_length = len(shape)
-
-    # Convert to set
-    if isinstance(axes, int):
-        new_shape_length += 1
-        if axes >= new_shape_length or axes < -new_shape_length:
-            raise ValueError(f"axis {axes} is out of bounds for tensor of dimension {new_shape_length}")
-        axes = {axes}
-
-    elif isinstance(axes, (list, tuple)):
-        new_shape_length += len(axes)
-        for axis in axes:
-            if axis >= new_shape_length or axis < -new_shape_length:
-                raise ValueError(f"axis {axis} is out of bounds for tensor of dimension {new_shape_length}")
-        axes = set(axes)
-
-    else:
-        raise TypeError(f"only int, tuple and list are allowed for axes, but got {type(axes)}")
-
-    for new_shape_idx in range(new_shape_length):
-        if new_shape_idx in axes or new_shape_idx - new_shape_length in axes:
-            new_shape.append(1)
-        else:
-            new_shape.append(shape[shape_idx])
-            shape_idx += 1
-    return tuple(new_shape)
 
 
 def expand_dims(a, axis):
@@ -109,10 +66,15 @@ def expand_dims(a, axis):
         (1, 2, 2)
     """
     _check_input_tensor(a)
-    shape = F.shape(a)
-    # yield expanded shape based on the axes
-    new_shape = _prepare_shape_for_expand_dims(shape, axis)
-    return F.reshape(a, new_shape)
+    if not isinstance(axis, (int, tuple, list)):
+        _raise_type_error("axis must be tuple, list or int, but got ", axis)
+    if isinstance(axis, int):
+        return F.expand_dims(a, axis)
+    ndim = a.ndim + len(axis)
+    axis = _canonicalize_axis(axis, ndim)
+    for ax in axis:
+        a = F.expand_dims(a, ax)
+    return a
 
 
 def squeeze(a, axis=None):
@@ -1091,6 +1053,9 @@ def roll(a, shift, axis=None):
     Returns:
         Tensor, with the same shape as a.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Raises:
         TypeError: If input arguments have types not specified above.
         ValueError: If axis exceeds `a.ndim`, or `shift` and `axis` cannot broadcast.
@@ -1210,12 +1175,6 @@ def moveaxis(a, source, destination):
         return _empty(F.dtype(a), _get_moved_shape(shape, perm))
 
     return F.transpose(a, perm)
-
-
-@constexpr
-def _seq_prod(seq1, seq2):
-    """Returns the element-wise product of seq1 and seq2."""
-    return tuple(map(lambda x, y: x*y, seq1, seq2))
 
 
 def tile(a, reps):
@@ -1355,6 +1314,60 @@ def broadcast_arrays(*args):
     return res
 
 
+def array_split(x, indices_or_sections, axis=0):
+    """
+    Splits a tensor into multiple sub-tensors.
+
+    Note:
+        Currently, array_split only supports :class:`mindspore.float32` on ``CPU``.
+
+    The only difference between ``np.split`` and ``np.array_split`` is that
+    ``np.array_split`` allows indices_or_sections to be an integer that does not
+    equally divide the axis. For a tensor of length l that should be split into
+    n sections, it returns :math:`l % n` sub-arrays of size :math:`l//n + 1` and
+    the rest of size :math:`l//n`.
+
+    Args:
+        x (Tensor): A Tensor to be divided.
+        indices_or_sections (Union[int, tuple(int), list(int)]):
+            If integer, :math:`N`, the tensor will be divided into
+            :math:`N` tensors along axis.
+            If tuple(int), list(int) or of sorted integers,
+            the entries indicate where along axis the array is split.
+            For example, :math:`[2, 3]` would, for :math:`axis=0`, result in
+            three sub-tensors :math:`x[:2]`, :math:`x[2:3]`and :math:`x[3:]`.
+            If an index exceeds the dimension of the array along axis,
+            an empty sub-array is returned correspondingly.
+        axis (int): The axis along which to split. Default: 0.
+
+    Returns:
+        A list of sub-tensors.
+
+    Raises:
+        TypeError: If argument `indices_or_sections` is not integer,
+            tuple(int) or list(int) or argument `axis` is not integer.
+        ValueError: If argument `axis` is out of range of :math:`[-x.ndim, x.ndim)`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> input_x = np.arange(9).astype("float32")
+        >>> output = np.array_split(input_x, 4)
+        >>> print(output)
+        (Tensor(shape=[3], dtype=Float32,
+            value= [ 0.00000000e+00,  1.00000000e+00,  2.00000000e+00]),
+        Tensor(shape=[2], dtype=Float32,
+            value= [ 3.00000000e+00,  4.00000000e+00]),
+        Tensor(shape=[2], dtype=Float32,
+            value= [ 5.00000000e+00,  6.00000000e+00]),
+        Tensor(shape=[2], dtype=Float32,
+            value= [ 7.00000000e+00,  8.00000000e+00]))
+    """
+    return _split(x, indices_or_sections, opname="array_split", axis=axis)
+
+
 def split(x, indices_or_sections, axis=0):
     """
     Splits a tensor into multiple sub-tensors along the given axis.
@@ -1380,9 +1393,12 @@ def split(x, indices_or_sections, axis=0):
             tuple(int) or list(int) or argument `axis` is not integer.
         ValueError: If argument `axis` is out of range of :math:`[-x.ndim, x.ndim)`.
 
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
     Examples:
         >>> import mindspore.numpy as np
-        >>> input_x = np.arange(9).astype('float32')
+        >>> input_x = np.arange(9).astype("float32")
         >>> output = np.split(input_x, 3)
         >>> print(output)
         (Tensor(shape=[3], dtype=Float32,
@@ -1392,13 +1408,32 @@ def split(x, indices_or_sections, axis=0):
          Tensor(shape=[3], dtype=Float32,
           value= [ 6.00000000e+00,  7.00000000e+00,  8.00000000e+00]))
     """
+    return _split(x, indices_or_sections, opname="split", axis=axis)
+
+
+def _split(x, indices_or_sections, opname, axis=0):
+    """Splits a tensor based on ``np.split`` or ``np.array_split``."""
     _check_input_tensor(x)
     _ = _check_axis_type(axis, True, False, False)
     axis = _canonicalize_axis(axis, x.ndim)
     res = None
+    arr_shape = x.shape
+    length_along_dim = arr_shape[axis]
     if isinstance(indices_or_sections, int):
-        _split = P.Split(axis, indices_or_sections)
-        res = _split(x)
+        if opname == "split" or length_along_dim % indices_or_sections == 0:
+            res = P.Split(axis, indices_or_sections)(x)
+        else:
+            num_long_tensor = length_along_dim % indices_or_sections
+            num_short_tensor = indices_or_sections - num_long_tensor
+            length1 = num_long_tensor * (length_along_dim // indices_or_sections + 1)
+            length2 = length_along_dim - length1
+            start1 = _list_comprehensions(F.rank(x), 0, True)
+            size1 = _tuple_setitem(arr_shape, axis, length1)
+            start2 = _tuple_setitem(start1, axis, length1)
+            size2 = _tuple_setitem(arr_shape, axis, length2)
+            res = P.Split(axis, num_long_tensor)(F.tensor_slice(x, start1, size1)) + \
+                P.Split(axis, num_short_tensor)(F.tensor_slice(x, start2, size2))
+
     elif isinstance(indices_or_sections, (list, tuple)) and _check_element_int(indices_or_sections):
         res = _split_sub_tensors(x, indices_or_sections, axis)
     else:
@@ -1921,7 +1956,6 @@ def repeat(a, repeats, axis=None):
         if repeats == 0:
             return _empty(F.dtype(a), (0,))
         return C.repeat_elements(a, repeats, axis)
-
     shape = F.shape(a)
     size = shape[axis]
     if len(repeats) != size:
@@ -1932,3 +1966,144 @@ def repeat(a, repeats, axis=None):
         if rep != 0:
             repeated_subs.append(C.repeat_elements(sub, rep, axis))
     return concatenate(repeated_subs, axis)
+
+
+def rot90(a, k=1, axes=(0, 1)):
+    """
+    Rotates a tensor by 90 degrees in the plane specified by axes.
+    Rotation direction is from the first towards the second axis.
+
+    Args:
+        a (Tensor): Input tensor of two or more dimensions.
+        k (int): Number of times the tensor is rotated by 90 degrees. Default: 1.
+        axes (Union[tuple(int), list(int)]): The tensor is rotated in the plane
+            defined by the axes. Default: `(0, 1)`.
+            Axes must be different and with the shape of `(2,)`.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: if input `a` is not a Tensor or
+            the argument `k` is not integer or
+            the argument `axes` is not tuple of ints or list of ints.
+        ValueError: if any axis is out of range or
+            the length of `axes` is not `2`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = np.arange(24).reshape((2, 3, 4))
+        >>> output = np.rot90(a)
+        >>> print(output)
+        [[[ 8  9 10 11]
+          [20 21 22 23]]
+         [[ 4  5  6  7]
+          [16 17 18 19]]
+         [[ 0  1  2  3]
+          [12 13 14 15]]]
+        >>> output = np.rot90(a, 3, (1, 2))
+        >>> print(output)
+        [[[ 8  4  0]
+          [ 9  5  1]
+          [10  6  2]
+          [11  7  3]]
+         [[20 16 12]
+          [21 17 13]
+          [22 18 14]
+          [23 19 15]]]
+    """
+    _check_input_tensor(a)
+
+    if not isinstance(k, int):
+        _raise_type_error("integer argument expected, but got ", k)
+    k = k % 4 if k >= 0 else 4 - (-k % 4)
+
+    if not isinstance(axes, (tuple, list)):
+        _raise_type_error("tuple(ints) or list(ints) expected, but got ", axes)
+    if len(axes) != 2:
+        _raise_value_error("len(axes) must be 2.")
+    axis1, axis2 = axes[0], axes[1]
+    axis1 = _canonicalize_axis(axis1, a.ndim)
+    axis2 = _canonicalize_axis(axis2, a.ndim)
+    if axis1 == axis2:
+        _raise_value_error('Axes must be different.')
+
+    if k == 0:
+        return a
+    if k == 2:
+        return flip(flip(a, axis1), axis2)
+    perm = _list_comprehensions(a.ndim)
+    perm[axis1], perm[axis2] = perm[axis2], perm[axis1]
+    if k == 1:
+        return flip(transpose(a, perm), axis1)
+    return flip(transpose(a, perm), axis2)
+
+
+def select(condlist, choicelist, default=0):
+    """
+    Returns an array drawn from elements in `choicelist`, depending on conditions.
+
+    Args:
+        condlist (array_like): The list of conditions which determine from which array
+            in `choicelist` the output elements are taken. When multiple conditions are
+            satisfied, the first one encountered in `condlist` is used.
+        choicelist (array_like): The list of arrays from which the output elements are
+            taken. It has to be of the same length as `condlist`.
+        default (scalar, optional): The element inserted in output when all conditions
+            evaluate to `False`.
+
+    Returns:
+        Tensor, the output at position `m` is the `m-th` element of the array in
+        `choicelist` where the `m-th` element of the corresponding array in `condlist`
+        is `True`.
+
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        ValueError: if ``len(condlist) != len(choicelist)``.
+
+    Examples:
+        >>> condlist = [[True, True, True, False, False],
+                       [False, False, True, False, True]]
+        >>> choicelist = [[0, 1, 2, 3, 4], [0, 1, 4, 9, 16]]
+        >>> output = np.select(condlist, choicelist)
+        >>> print(output)
+        [ 0  1  2  0 16]
+    """
+    condlist, choicelist = _to_tensor(condlist, choicelist)
+    shape_cond = F.shape(condlist)
+    shape_choice = F.shape(choicelist)
+    if F.rank(condlist) == 0 or F.rank(condlist) == 0:
+        _raise_value_error('input cannot be scalars')
+    case_num = shape_cond[0]
+    if shape_choice[0] != case_num:
+        _raise_value_error('list of cases must be same length as list of conditions')
+
+    # performs broadcast over the cases in condlist and choicelist
+    case_size = _infer_out_shape(shape_cond[1:], shape_choice[1:])
+    shape_broadcasted = (case_num,) + case_size
+    ndim = len(shape_broadcasted)
+    shape_cond_expanded = ((case_num,) + _list_comprehensions(ndim - F.rank(condlist), 1, True) +
+                           shape_cond[1:])
+    condlist = _broadcast_to_shape(F.reshape(condlist, shape_cond_expanded), shape_broadcasted)
+    shape_choice_expanded = ((case_num,) + _list_comprehensions(ndim - F.rank(choicelist), 1, True) +
+                             shape_choice[1:])
+    choicelist = _broadcast_to_shape(F.reshape(choicelist, shape_choice_expanded), shape_broadcasted)
+
+    slice_start = _list_comprehensions(ndim - 1, 0, True)
+    slice_size = (1,) + case_size
+    dtype = F.dtype(choicelist)
+    if _get_device() == 'CPU' and not _check_is_float(dtype):
+        # F.tensor_slice only supports float on CPU
+        choicelist = F.cast(choicelist, mstype.float32)
+    default_slice = F.fill(F.dtype(choicelist), slice_size, default)
+    for i in range(case_num - 1, -1, -1):
+        cond_slice = F.tensor_slice(condlist.astype(mstype.float32), (i,) + slice_start, slice_size)
+        choice_slice = F.tensor_slice(choicelist, (i,) + slice_start, slice_size)
+        default_slice = F.select(cond_slice.astype(mstype.bool_), choice_slice, default_slice)
+    return F.reshape(default_slice, (case_size)).astype(dtype)

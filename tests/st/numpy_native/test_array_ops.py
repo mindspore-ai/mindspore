@@ -23,7 +23,7 @@ import mindspore.numpy as mnp
 from mindspore.nn import Cell
 
 from .utils import rand_int, run_non_kw_test, check_all_results, match_array, \
-    rand_bool, match_res, run_multi_test
+    rand_bool, match_res, run_multi_test, to_tensor
 
 
 class Cases():
@@ -139,7 +139,7 @@ def onp_transpose(input_array):
 @pytest.mark.env_onecard
 def test_transpose():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_transposed = onp_transpose(onp_array)
     m_transposed = mnp_transpose(mnp_array)
     check_all_results(o_transposed, m_transposed)
@@ -170,7 +170,7 @@ def onp_expand_dims(input_array):
 @pytest.mark.env_onecard
 def test_expand_dims():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_expanded = onp_expand_dims(onp_array)
     m_expanded = mnp_expand_dims(mnp_array)
     check_all_results(o_expanded, m_expanded)
@@ -205,13 +205,13 @@ def onp_squeeze(input_array):
 @pytest.mark.env_onecard
 def test_squeeze():
     onp_array = onp.random.random((1, 3, 1, 4, 2)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_squeezed = onp_squeeze(onp_array)
     m_squeezed = mnp_squeeze(mnp_array)
     check_all_results(o_squeezed, m_squeezed)
 
     onp_array = onp.random.random((1, 1, 1, 1, 1)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_squeezed = onp_squeeze(onp_array)
     m_squeezed = mnp_squeeze(mnp_array)
     check_all_results(o_squeezed, m_squeezed)
@@ -246,7 +246,7 @@ def onp_rollaxis(input_array):
 @pytest.mark.env_onecard
 def test_rollaxis():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_rolled = onp_rollaxis(onp_array)
     m_rolled = mnp_rollaxis(mnp_array)
     check_all_results(o_rolled, m_rolled)
@@ -281,7 +281,7 @@ def onp_swapaxes(input_array):
 @pytest.mark.env_onecard
 def test_swapaxes():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_swaped = onp_swapaxes(onp_array)
     m_swaped = mnp_swapaxes(mnp_array)
     check_all_results(o_swaped, m_swaped)
@@ -324,7 +324,7 @@ def onp_reshape(input_array):
 @pytest.mark.env_onecard
 def test_reshape():
     onp_array = onp.random.random((2, 3, 4)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_reshaped = onp_reshape(onp_array)
     m_reshaped = mnp_reshape(mnp_array)
     check_all_results(o_reshaped, m_reshaped)
@@ -349,7 +349,7 @@ def onp_ravel(input_array):
 @pytest.mark.env_onecard
 def test_ravel():
     onp_array = onp.random.random((2, 3, 4)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_ravel = onp_ravel(onp_array)
     m_ravel = mnp_ravel(mnp_array).asnumpy()
     match_array(o_ravel, m_ravel)
@@ -380,7 +380,7 @@ def onp_concatenate(input_array):
 @pytest.mark.env_onecard
 def test_concatenate():
     onp_array = onp.random.random((5, 4, 3, 2)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_concatenate = onp_concatenate(onp_array)
     m_concatenate = mnp_concatenate(mnp_array)
     check_all_results(o_concatenate, m_concatenate)
@@ -407,8 +407,8 @@ def onp_append(arr1, arr2):
 def test_append():
     onp_array = onp.random.random((4, 3, 2)).astype('float32')
     onp_value = onp.random.random((4, 3, 2)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
-    mnp_value = mnp.asarray(onp_value)
+    mnp_array = to_tensor(onp_array)
+    mnp_value = to_tensor(onp_value)
     onp_res = onp_append(onp_array, onp_value)
     mnp_res = mnp_append(mnp_array, mnp_value)
     check_all_results(onp_res, mnp_res)
@@ -424,13 +424,13 @@ def construct_arrays(n=1, ndim=1, axis=None, low=1, high=5):
         onp_array1 = onp.random.randint(
             low=low, high=high, size=shape).astype(onp.float32)
         onp_array_lst.append(onp_array1)
-        mnp_array_lst.append(mnp.asarray(onp_array1))
+        mnp_array_lst.append(to_tensor(onp_array1))
         if axis is not None and axis < ndim:
             new_shape[axis] += onp.random.randint(2)
             onp_array2 = onp.random.randint(
                 low=low, high=high, size=new_shape).astype(onp.float32)
             onp_array_lst.append(onp_array2)
-            mnp_array_lst.append(mnp.asarray(onp_array2))
+            mnp_array_lst.append(to_tensor(onp_array2))
     return onp_array_lst, mnp_array_lst
 
 # Test np.xstack
@@ -656,7 +656,7 @@ def onp_ndarray_flatten(input_array):
 @pytest.mark.env_onecard
 def test_ndarray_flatten():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_flatten = onp_ndarray_flatten(onp_array)
     m_flatten = mnp_ndarray_flatten(mnp_array)
     check_all_results(o_flatten, m_flatten)
@@ -687,7 +687,7 @@ def onp_ndarray_transpose(input_array):
 @pytest.mark.env_onecard
 def test_ndarray_transpose():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_transposed = onp_ndarray_transpose(onp_array)
     m_transposed = mnp_ndarray_transpose(mnp_array)
     check_all_results(o_transposed, m_transposed)
@@ -716,7 +716,7 @@ def onp_ndarray_astype(input_array):
 @pytest.mark.env_onecard
 def test_ndarray_astype():
     onp_array = onp.random.random((3, 4, 5)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     o_astype = onp_ndarray_astype(onp_array)
     m_astype = mnp_ndarray_astype(mnp_array)
     for arr1, arr2 in zip(o_astype, m_astype):
@@ -747,7 +747,7 @@ def mnp_concatenate_type_promotion(mnp_array1, mnp_array2, mnp_array3, mnp_array
 @pytest.mark.env_onecard
 def test_concatenate_type_promotion():
     onp_array = onp.random.random((5, 1)).astype('float32')
-    mnp_array = mnp.asarray(onp_array)
+    mnp_array = to_tensor(onp_array)
     onp_array1 = onp_array.astype(onp.float16)
     onp_array2 = onp_array.astype(onp.bool_)
     onp_array3 = onp_array.astype(onp.float32)
@@ -1049,13 +1049,43 @@ def test_split():
     onp_arrs = [
         onp.random.randint(1, 5, size=(9, 4, 5)).astype('float32')
     ]
-    mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
+    mnp_arrs = [to_tensor(arr) for arr in onp_arrs]
     for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
         o_split = onp_split(onp_arr)
         m_split = mnp_split(mnp_arr)
         for expect_lst, actual_lst in zip(o_split, m_split):
             for expect, actual in zip(expect_lst, actual_lst):
                 match_array(expect, actual.asnumpy())
+
+
+def mnp_array_split(input_tensor):
+    a = mnp.array_split(input_tensor, indices_or_sections=4, axis=2)
+    b = mnp.array_split(input_tensor, indices_or_sections=3, axis=1)
+    c = mnp.array_split(input_tensor, indices_or_sections=6)
+    return a, b, c
+
+
+def onp_array_split(input_array):
+    a = onp.array_split(input_array, indices_or_sections=4, axis=2)
+    b = onp.array_split(input_array, indices_or_sections=3, axis=1)
+    c = onp.array_split(input_array, indices_or_sections=6)
+    return a, b, c
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_array_split():
+    onp_arr = onp.random.randint(1, 5, size=(9, 7, 13)).astype('float32')
+    mnp_arr = to_tensor(onp_arr)
+    o_split = onp_split(onp_arr)
+    m_split = mnp_split(mnp_arr)
+    for expect_lst, actual_lst in zip(o_split, m_split):
+        for expect, actual in zip(expect_lst, actual_lst):
+            match_array(expect, actual.asnumpy())
 
 
 def mnp_vsplit(input_tensor):
@@ -1082,7 +1112,7 @@ def test_vsplit():
     onp_arrs = [
         onp.random.randint(1, 5, size=(9, 4, 5)).astype('float32')
     ]
-    mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
+    mnp_arrs = [to_tensor(arr) for arr in onp_arrs]
     for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
         o_vsplit = onp_vsplit(onp_arr)
         m_vsplit = mnp_vsplit(mnp_arr)
@@ -1115,7 +1145,7 @@ def test_hsplit():
     onp_arrs = [
         onp.random.randint(1, 5, size=(4, 9, 5)).astype('float32')
     ]
-    mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
+    mnp_arrs = [to_tensor(arr) for arr in onp_arrs]
     for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
         o_hsplit = onp_hsplit(onp_arr)
         m_hsplit = mnp_hsplit(mnp_arr)
@@ -1148,7 +1178,7 @@ def test_dsplit():
     onp_arrs = [
         onp.random.randint(1, 5, size=(5, 4, 9)).astype('float32')
     ]
-    mnp_arrs = [mnp.asarray(arr) for arr in onp_arrs]
+    mnp_arrs = [to_tensor(arr) for arr in onp_arrs]
     for onp_arr, mnp_arr in zip(onp_arrs, mnp_arrs):
         o_dsplit = onp_dsplit(onp_arr)
         m_dsplit = mnp_dsplit(mnp_arr)
@@ -1248,6 +1278,29 @@ def test_repeat():
     run_multi_test(mnp_repeat, onp_repeat, (x,))
 
 
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_select():
+    choicelist = rand_int(2, 3, 4, 5)
+    condlist = choicelist > 2
+    match_res(mnp.select, onp.select, condlist, choicelist)
+    match_res(mnp.select, onp.select, condlist, choicelist, default=10)
+
+    condlist = rand_bool(5, 4, 1, 3)
+    choicelist = rand_int(5, 3)
+    match_res(mnp.select, onp.select, condlist, choicelist)
+    match_res(mnp.select, onp.select, condlist, choicelist, default=10)
+
+    condlist = rand_bool(3, 1, 7)
+    choicelist = rand_int(3, 5, 2, 1)
+    match_res(mnp.select, onp.select, condlist, choicelist)
+    match_res(mnp.select, onp.select, condlist, choicelist, default=10)
+
+
 class ReshapeExpandSqueeze(Cell):
     def __init__(self):
         super(ReshapeExpandSqueeze, self).__init__()
@@ -1333,7 +1386,7 @@ def test_swapaxes_exception():
 @pytest.mark.env_onecard
 def test_tensor_flatten():
     lst = [[1.0, 2.0], [3.0, 4.0]]
-    tensor_list = mnp.asarray(lst)
+    tensor_list = to_tensor(lst)
     assert tensor_list.flatten().asnumpy().tolist() == [1.0, 2.0, 3.0, 4.0]
     assert tensor_list.flatten(order='F').asnumpy().tolist() == [
         1.0, 3.0, 2.0, 4.0]
@@ -1347,7 +1400,7 @@ def test_tensor_flatten():
 @pytest.mark.env_onecard
 def test_tensor_reshape():
     lst = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
-    tensor_list = mnp.asarray(lst)
+    tensor_list = to_tensor(lst)
     with pytest.raises(TypeError):
         tensor_list = tensor_list.reshape({0, 1, 2})
     with pytest.raises(ValueError):
@@ -1364,7 +1417,7 @@ def test_tensor_reshape():
 @pytest.mark.env_onecard
 def test_tensor_squeeze():
     lst = [[[1.0], [2.0], [3.0]]]
-    tensor_list = mnp.asarray(lst)
+    tensor_list = to_tensor(lst)
     with pytest.raises(TypeError):
         tensor_list = tensor_list.squeeze(1.2)
     with pytest.raises(ValueError):
@@ -1381,7 +1434,7 @@ def test_tensor_squeeze():
 @pytest.mark.env_onecard
 def test_tensor_ravel():
     lst = [[1.0, 2.0, 3.0, 4.0], [5.0, 6.0, 7.0, 8.0]]
-    tensor_list = mnp.asarray(lst)
+    tensor_list = to_tensor(lst)
     assert tensor_list.ravel().shape == (8,)
     assert tensor_list.ravel().asnumpy().tolist() == [
         1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]
@@ -1395,9 +1448,47 @@ def test_tensor_ravel():
 @pytest.mark.env_onecard
 def test_tensor_swapaxes():
     lst = [[1.0, 2.0, 3.0], [4.0, 5.0, 6.0]]
-    tensor_list = mnp.asarray(lst)
+    tensor_list = to_tensor(lst)
     with pytest.raises(TypeError):
         tensor_list = tensor_list.swapaxes(0, (1,))
     with pytest.raises(ValueError):
         tensor_list = tensor_list.swapaxes(0, 3)
     assert tensor_list.swapaxes(0, 1).shape == (3, 2)
+
+
+def mnp_rot90(input_tensor):
+    a = mnp.rot90(input_tensor)
+    b = mnp.rot90(input_tensor, 2)
+    c = mnp.rot90(input_tensor, 3)
+    d = mnp.rot90(input_tensor, 4)
+    e = mnp.rot90(input_tensor, 5, (0, -1))
+    f = mnp.rot90(input_tensor, 1, (2, 0))
+    g = mnp.rot90(input_tensor, -3, (-1, -2))
+    h = mnp.rot90(input_tensor, 3, (2, 1))
+    return a, b, c, d, e, f, g, h
+
+
+def onp_rot90(input_array):
+    a = onp.rot90(input_array)
+    b = onp.rot90(input_array, 2)
+    c = onp.rot90(input_array, 3)
+    d = onp.rot90(input_array, 4)
+    e = onp.rot90(input_array, 5, (0, -1))
+    f = onp.rot90(input_array, 1, (2, 0))
+    g = onp.rot90(input_array, -3, (-1, -2))
+    h = onp.rot90(input_array, 3, (2, 1))
+    return a, b, c, d, e, f, g, h
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_rot90():
+    onp_array = rand_int(3, 4, 5).astype('float32')
+    mnp_array = to_tensor(onp_array)
+    o_rot = onp_rot90(onp_array)
+    m_rot = mnp_rot90(mnp_array)
+    check_all_results(o_rot, m_rot)

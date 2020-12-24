@@ -20,7 +20,7 @@ import numpy as onp
 import mindspore.numpy as mnp
 
 from .utils import rand_int, rand_bool, match_array, match_res, match_meta, \
-    match_all_arrays
+    match_all_arrays, run_multi_test, to_tensor
 
 
 class Cases():
@@ -40,8 +40,8 @@ class Cases():
 
         self.array_sets = [1, 1.1, True, [1, 0, True], [1, 1.0, 2], (1,),
                            [(1, 2, 3), (4, 5, 6)], onp.random.random(  # pylint: disable=no-member
-                               (100, 100)).astype(onp.float32),
-                           onp.random.random((100, 100)).astype(onp.bool)]
+                               (100, 100)).astype(onp.float32).tolist(),
+                           onp.random.random((100, 100)).astype(onp.bool).tolist()]
 
         self.arrs = [
             rand_int(2),
@@ -138,8 +138,8 @@ def test_asarray():
             expected = mnp.asarray(array, test_case.mnp_dtypes[i]).asnumpy()
             match_array(actual, expected, error=7)
 
-    # Additional tests for nested tensor/numpy_array mixture
-    mnp_input = [(onp.ones(3,), mnp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
+    # Additional tests for nested tensor mixture
+    mnp_input = [(mnp.ones(3,), mnp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
     onp_input = [(onp.ones(3,), onp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
 
     actual = onp.asarray(onp_input)
@@ -168,11 +168,11 @@ def test_array():
         assert arr4 is arr5
 
     # Additional tests for nested tensor/numpy_array mixture
-    mnp_input = [(onp.ones(3,), mnp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
+    mnp_input = [(mnp.ones(3,), mnp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
     onp_input = [(onp.ones(3,), onp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
 
-    actual = onp.asarray(onp_input)
-    expected = mnp.asarray(mnp_input).asnumpy()
+    actual = onp.array(onp_input)
+    expected = mnp.array(mnp_input).asnumpy()
     match_array(actual, expected, error=7)
 
 
@@ -202,11 +202,11 @@ def test_asfarray():
             match_array(actual, expected, error=7)
 
     # Additional tests for nested tensor/numpy_array mixture
-    mnp_input = [(onp.ones(3,), mnp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
+    mnp_input = [(mnp.ones(3,), mnp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
     onp_input = [(onp.ones(3,), onp.ones(3)), [[1, 1, 1], (1, 1, 1)]]
 
-    actual = onp.asarray(onp_input)
-    expected = mnp.asarray(mnp_input).asnumpy()
+    actual = onp.asfarray(onp_input)
+    expected = mnp.asfarray(mnp_input).asnumpy()
     match_array(actual, expected, error=7)
 
 
@@ -373,14 +373,14 @@ def test_linspace():
     stop = onp.random.random([1, 5, 1]).astype("float32")
     actual = onp.linspace(start, stop, num=20, retstep=True,
                           endpoint=False, dtype=onp.float32)
-    expected = mnp.linspace(mnp.asarray(start), mnp.asarray(stop), num=20,
+    expected = mnp.linspace(to_tensor(start), to_tensor(stop), num=20,
                             retstep=True, endpoint=False)
     match_array(actual[0], expected[0].asnumpy(), error=6)
     match_array(actual[1], expected[1].asnumpy(), error=6)
 
     actual = onp.linspace(start, stop, num=20, retstep=True,
                           endpoint=False, dtype=onp.int16)
-    expected = mnp.linspace(mnp.asarray(start), mnp.asarray(stop), num=20,
+    expected = mnp.linspace(to_tensor(start), to_tensor(stop), num=20,
                             retstep=True, endpoint=False, dtype=mnp.int16)
     match_array(actual[0], expected[0].asnumpy(), error=6)
     match_array(actual[1], expected[1].asnumpy(), error=6)
@@ -388,7 +388,7 @@ def test_linspace():
     for axis in range(2):
         actual = onp.linspace(start, stop, num=20, retstep=False,
                               endpoint=False, dtype=onp.float32, axis=axis)
-        expected = mnp.linspace(mnp.asarray(start), mnp.asarray(stop), num=20,
+        expected = mnp.linspace(to_tensor(start), to_tensor(stop), num=20,
                                 retstep=False, endpoint=False, dtype=mnp.float32, axis=axis)
         match_array(actual, expected.asnumpy(), error=6)
 
@@ -510,18 +510,18 @@ def test_full_like():
     for mnp_proto, onp_proto in zip(test_case.mnp_prototypes, test_case.onp_prototypes):
         shape = onp.zeros_like(onp_proto).shape
         fill_value = rand_int()
-        actual = mnp.full_like(mnp_proto, mnp.array(fill_value)).asnumpy()
+        actual = mnp.full_like(mnp_proto, to_tensor(fill_value)).asnumpy()
         expected = onp.full_like(onp_proto, fill_value)
         match_array(actual, expected)
 
         for i in range(len(shape) - 1, 0, -1):
             fill_value = rand_int(*shape[i:])
-            actual = mnp.full_like(mnp_proto, mnp.array(fill_value)).asnumpy()
+            actual = mnp.full_like(mnp_proto, to_tensor(fill_value)).asnumpy()
             expected = onp.full_like(onp_proto, fill_value)
             match_array(actual, expected)
 
             fill_value = rand_int(1, *shape[i + 1:])
-            actual = mnp.full_like(mnp_proto, mnp.array(fill_value)).asnumpy()
+            actual = mnp.full_like(mnp_proto, to_tensor(fill_value)).asnumpy()
             expected = onp.full_like(onp_proto, fill_value)
             match_array(actual, expected)
 
@@ -547,6 +547,21 @@ def test_tri_triu_tril():
 
     match_array(mnp.tri(64, 64).asnumpy(), onp.tri(64, 64))
     match_array(mnp.tri(64, 64, -10).asnumpy(), onp.tri(64, 64, -10))
+
+
+@pytest.mark.level1
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_nancumsum():
+    x = rand_int(2, 3, 4, 5)
+    x[0][2][1][3] = onp.nan
+    x[1][0][2][4] = onp.nan
+    x[1][1][1][1] = onp.nan
+    match_res(mnp.nancumsum, onp.nancumsum, x)
+    match_res(mnp.nancumsum, onp.nancumsum, x, axis=-2)
+    match_res(mnp.nancumsum, onp.nancumsum, x, axis=0)
+    match_res(mnp.nancumsum, onp.nancumsum, x, axis=3)
 
 
 def mnp_diagonal(arr):
@@ -653,7 +668,7 @@ def test_meshgrid():
         (2, 3), 9), onp.full((4, 5, 6), 7))
     for i in range(len(xi)):
         arrs = xi[i:]
-        mnp_arrs = map(mnp.asarray, arrs)
+        mnp_arrs = map(to_tensor, arrs)
         for mnp_res, onp_res in zip(mnp_meshgrid(*mnp_arrs), onp_meshgrid(*arrs)):
             match_all_arrays(mnp_res, onp_res)
 
@@ -748,6 +763,68 @@ def test_ix_():
     for i in range(10):
         test_arrs = arrs[:i + 1]
         match_res(mnp_ix_, onp_ix_, *test_arrs)
+
+
+def mnp_indices():
+    a = mnp.indices((2, 3))
+    b = mnp.indices((2, 3, 4), sparse=True)
+    return a, b
+
+
+def onp_indices():
+    a = onp.indices((2, 3))
+    b = onp.indices((2, 3, 4), sparse=True)
+    return a, b
+
+
+def test_indices():
+    run_multi_test(mnp_indices, onp_indices, ())
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_geomspace():
+    start = onp.arange(1, 7).reshape(2, 3)
+    end = [1000, 2000, 3000]
+    match_array(mnp.geomspace(1, 256, num=9).asnumpy(),
+                onp.geomspace(1, 256, num=9), error=1)
+    match_array(mnp.geomspace(1, 256, num=8, endpoint=False).asnumpy(),
+                onp.geomspace(1, 256, num=8, endpoint=False), error=1)
+    match_array(mnp.geomspace(to_tensor(start), end, num=4).asnumpy(),
+                onp.geomspace(start, end, num=4), error=1)
+    match_array(mnp.geomspace(to_tensor(start), end, num=4, endpoint=False).asnumpy(),
+                onp.geomspace(start, end, num=4, endpoint=False), error=1)
+    match_array(mnp.geomspace(to_tensor(start), end, num=4, axis=-1).asnumpy(),
+                onp.geomspace(start, end, num=4, axis=-1), error=1)
+    match_array(mnp.geomspace(to_tensor(start), end, num=4, endpoint=False, axis=-1).asnumpy(),
+                onp.geomspace(start, end, num=4, endpoint=False, axis=-1), error=1)
+
+    start = onp.arange(1, 1 + 2*3*4*5).reshape(2, 3, 4, 5)
+    end = [1000, 2000, 3000, 4000, 5000]
+    for i in range(-5, 5):
+        match_array(mnp.geomspace(to_tensor(start), end, num=4, axis=i).asnumpy(),
+                    onp.geomspace(start, end, num=4, axis=i), error=1)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_vander():
+    arrs = [rand_int(i + 3) for i in range(3)]
+    for i in range(3):
+        mnp_vander = mnp.vander(to_tensor(arrs[i]))
+        onp_vander = onp.vander(arrs[i])
+        match_all_arrays(mnp_vander, onp_vander)
+        mnp_vander = mnp.vander(to_tensor(arrs[i]), N=2, increasing=True)
+        onp_vander = onp.vander(arrs[i], N=2, increasing=True)
+        match_all_arrays(mnp_vander, onp_vander)
 
 
 @pytest.mark.level1

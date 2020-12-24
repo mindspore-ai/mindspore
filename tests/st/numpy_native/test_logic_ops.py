@@ -19,7 +19,8 @@ import numpy as onp
 
 import mindspore.numpy as mnp
 
-from .utils import rand_int, run_binop_test, match_res
+from .utils import rand_int, rand_bool, run_binop_test, run_logical_test, match_res, \
+    match_all_arrays, to_tensor
 
 
 class Cases():
@@ -53,6 +54,15 @@ class Cases():
             rand_int(6, 1),
             rand_int(7, 1, 5),
             rand_int(8, 1, 6, 1)
+        ]
+
+        # Boolean arrays
+        self.boolean_arrs = [
+            rand_bool(),
+            rand_bool(5),
+            rand_bool(6, 1),
+            rand_bool(7, 1, 5),
+            rand_bool(8, 1, 6, 1)
         ]
 
         # array which contains infs and nans
@@ -246,10 +256,147 @@ def test_isneginf():
     match_res(mnp_isneginf, onp_isneginf, test_case.infs)
 
 
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_isscalar():
     assert mnp.isscalar(1) == onp.isscalar(1)
     assert mnp.isscalar(2.3) == onp.isscalar(2.3)
     assert mnp.isscalar([4.5]) == onp.isscalar([4.5])
     assert mnp.isscalar(False) == onp.isscalar(False)
-    assert mnp.isscalar(mnp.array(True)) == onp.isscalar(onp.array(True))
+    assert mnp.isscalar(to_tensor(True)) == onp.isscalar(onp.array(True))
     assert mnp.isscalar('numpy') == onp.isscalar('numpy')
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_isclose():
+    a = [0, 1, 2, float('inf'), float('inf'), float('nan')]
+    b = [0, 1, -2, float('-inf'), float('inf'), float('nan')]
+    match_all_arrays(mnp.isclose(a, b), onp.isclose(a, b))
+    match_all_arrays(mnp.isclose(a, b, equal_nan=True), onp.isclose(a, b, equal_nan=True))
+
+    a = rand_int(2, 3, 4, 5)
+    diff = (onp.random.random((2, 3, 4, 5)).astype("float32") - 0.5) / 1000
+    b = a + diff
+    match_all_arrays(mnp.isclose(to_tensor(a), to_tensor(b), atol=1e-3), onp.isclose(a, b, atol=1e-3))
+    match_all_arrays(mnp.isclose(to_tensor(a), to_tensor(b), atol=1e-3, rtol=1e-4),
+                     onp.isclose(a, b, atol=1e-3, rtol=1e-4))
+    match_all_arrays(mnp.isclose(to_tensor(a), to_tensor(b), atol=1e-2, rtol=1e-6),
+                     onp.isclose(a, b, atol=1e-2, rtol=1e-6))
+
+    a = rand_int(2, 3, 4, 5)
+    b = rand_int(4, 5)
+    match_all_arrays(mnp.isclose(to_tensor(a), to_tensor(b)), onp.isclose(a, b))
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_in1d():
+    xi = [rand_int(), rand_int(1), rand_int(10)]
+    yi = [rand_int(), rand_int(1), rand_int(10)]
+    for x in xi:
+        for y in yi:
+            match_res(mnp.in1d, onp.in1d, x, y)
+            match_res(mnp.in1d, onp.in1d, x, y, invert=True)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_isin():
+    xi = [rand_int(), rand_int(1), rand_int(10), rand_int(2, 3)]
+    yi = [rand_int(), rand_int(1), rand_int(10), rand_int(2, 3)]
+    for x in xi:
+        for y in yi:
+            match_res(mnp.in1d, onp.in1d, x, y)
+            match_res(mnp.in1d, onp.in1d, x, y, invert=True)
+
+
+def mnp_logical_or(x1, x2):
+    return mnp.logical_or(x1, x2)
+
+
+def onp_logical_or(x1, x2):
+    return onp.logical_or(x1, x2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_logical_or():
+    run_logical_test(mnp_logical_or, onp_logical_or, test_case)
+
+
+def mnp_logical_xor(x1, x2):
+    return mnp.logical_xor(x1, x2)
+
+
+def onp_logical_xor(x1, x2):
+    return onp.logical_xor(x1, x2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_logical_xor():
+    run_logical_test(mnp_logical_xor, onp_logical_xor, test_case)
+
+
+def mnp_logical_and(x1, x2):
+    return mnp.logical_and(x1, x2)
+
+
+def onp_logical_and(x1, x2):
+    return onp.logical_and(x1, x2)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_logical_and():
+    run_logical_test(mnp_logical_and, onp_logical_and, test_case)
+
+
+def mnp_logical_not(x):
+    return mnp.logical_not(x)
+
+
+def onp_logical_not(x):
+    return onp.logical_not(x)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_logical_not():
+    for arr in test_case.boolean_arrs:
+        expected = onp_logical_not(arr)
+        actual = mnp_logical_not(to_tensor(arr))
+        onp.testing.assert_equal(actual.asnumpy().tolist(), expected.tolist())

@@ -169,3 +169,16 @@ promotion_rule = {
     (bool_, float32): float32,
     (bool_, float64): float64,
 }
+
+rule_for_trigonometric = {float16: float16,
+                          float32: float32,
+                          float64: float64,
+                          int8: float16,
+                          int16: float32,
+                          int32: float32,
+                          int64: float32,
+                          uint8: float16,
+                          uint16: float32,
+                          uint32: float32,
+                          uint64: float32,
+                          bool_: float16}
