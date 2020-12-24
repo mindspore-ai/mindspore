@@ -19,7 +19,7 @@ import os
 import argparse
 import time
 import numpy as np
-from mindspore import context, Tensor
+from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.ssd_ghostnet import SSD300, ssd_ghostnet
 from src.dataset import create_ssd_dataset, data_to_mindrecord_byte_image, voc_data_to_mindrecord
@@ -47,11 +47,11 @@ def ssd_eval(dataset_path, ckpt_path):
     print("total images num: ", total)
     print("Processing, please wait a moment.")
     for data in ds.create_dict_iterator():
-        img_id = data['img_id']
+        img_id = data['img_id'].asnumpy()
         img_np = data['image']
-        image_shape = data['image_shape']
+        image_shape = data['image_shape'].asnumpy()
 
-        output = net(Tensor(img_np))
+        output = net(img_np)
         for batch_idx in range(img_np.shape[0]):
             pred_data.append({"boxes": output[0].asnumpy()[batch_idx],
                               "box_scores": output[1].asnumpy()[batch_idx],

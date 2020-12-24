@@ -70,7 +70,7 @@ def main():
     if args_opt.distribute:
         device_num = args_opt.device_num
         context.reset_auto_parallel_context()
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, mirror_mean=True,
+        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
                                           device_num=device_num)
         init()
         rank = args_opt.device_id % device_num

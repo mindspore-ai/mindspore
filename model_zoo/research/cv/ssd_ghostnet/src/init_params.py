@@ -25,16 +25,16 @@ def init_net_param(network, initialize_mode='TruncatedNormal'):
         if 'beta' not in p.name and 'gamma' not in p.name and 'bias' not in p.name:
             np.random.seed(seed=1)
             if initialize_mode == 'TruncatedNormal':
-                p.set_parameter_data(initializer(
+                p.set_data(initializer(
                     TruncatedNormal(), p.data.shape, p.data.dtype))
             else:
-                p.set_parameter_data(
-                    initialize_mode, p.data.shape, p.data.dtype)
+                p.set_data(
+                    initialize_mode, p.data.shape)
 
 
 def load_backbone_params(network, param_dict):
     """Init the parameters from pre-train model, default is mobilenetv2."""
-    for _, param in net.parameters_and_names():
+    for _, param in network.parameters_and_names():
         param_name = param.name.replace('network.backbone.', '')
         name_split = param_name.split('.')
         if 'features_1' in param_name:

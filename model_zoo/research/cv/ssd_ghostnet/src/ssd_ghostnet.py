@@ -118,13 +118,11 @@ class DepthwiseConv(nn.Cell):
                                                       stride=stride, pad_mode=pad_mode, pad=pad)
         self.bias_add = P.BiasAdd()
         weight_shape = [channel_multiplier, in_planes, *self.kernel_size]
-        self.weight = Parameter(initializer(
-            'ones', weight_shape))
+        self.weight = Parameter(initializer('ones', weight_shape), name="weight")
 
         if has_bias:
             bias_shape = [channel_multiplier * in_planes]
-            self.bias = Parameter(initializer(
-                'zeros', bias_shape))
+            self.bias = Parameter(initializer('zeros', bias_shape), name="bias")
         else:
             self.bias = None
 
@@ -624,15 +622,15 @@ class TrainingWrapper(nn.Cell):
         self.network = network
         self.weights = ms.ParameterTuple(network.trainable_params())
         self.optimizer = optimizer
-        self.grad = C.GradOperation('grad', get_by_list=True, sens_param=True)
+        self.grad = C.GradOperation(get_by_list=True, sens_param=True)
         self.sens = sens
         self.reducer_flag = False
         self.grad_reducer = None
         self.parallel_mode = context.get_auto_parallel_context("parallel_mode")
-        if self.parallel_mode in [ms.ParallelMode.DATA_PARALLEL, ms.ParallelMode.HYBRID_PARALLEL]:
+        if self.parallel_mode in [context.ParallelMode.DATA_PARALLEL, context.ParallelMode.HYBRID_PARALLEL]:
             self.reducer_flag = True
         if self.reducer_flag:
-            mean = context.get_auto_parallel_context("mirror_mean")
+            mean = context.get_auto_parallel_context("gradients_mean")
             if auto_parallel_context().get_device_num_is_set():
                 degree = context.get_auto_parallel_context("device_num")
             else:
