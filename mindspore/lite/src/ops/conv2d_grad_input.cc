@@ -220,11 +220,11 @@ Registry Conv2DGradInputRegistry(schema::PrimitiveType_Conv2DGradInput, Conv2DGr
 #endif
 
 int Conv2DGradInput::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
-  if (2 != inputs.size()) {
-    MS_LOG(ERROR) << "Conv2d Grad Input should have 2 inputs";
+  if (inputs.size() < 2) {
+    MS_LOG(ERROR) << "Conv2d Grad Input should be at least two input";
     return RET_ERROR;
   }
-  if (1 != outputs.size()) {
+  if (outputs.size() != 1) {
     MS_LOG(ERROR) << "Conv2d Grad output should have one output";
     return RET_ERROR;
   }

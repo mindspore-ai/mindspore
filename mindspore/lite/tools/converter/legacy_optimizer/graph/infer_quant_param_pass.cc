@@ -36,8 +36,7 @@ STATUS InferQuantParamPass::Run(schema::MetaGraphT *graph) {
     if (node->quantType == schema::QuantType_AwareTraining) {
       continue;
     }
-    if (GetCNodeTType(*node) == schema::PrimitiveType_FakeQuantWithMinMax ||
-        GetCNodeTType(*node) == schema::PrimitiveType_FakeQuantWithMinMaxVars) {
+    if (GetCNodeTType(*node) == schema::PrimitiveType_FakeQuantWithMinMaxVars) {
       MS_ASSERT(false);
     }
     auto quantParamCalcer = quantParamRegister->GetQuantParamCalcer(GetCNodeTType(*node));
