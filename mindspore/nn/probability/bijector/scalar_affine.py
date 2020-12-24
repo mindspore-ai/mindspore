@@ -54,18 +54,17 @@ class ScalarAffine(Bijector):
         >>> scalaraffine = nn.probability.bijector.ScalarAffine(1.0, 2.0)
         >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
         >>> ans1 = scalaraffine.forward(value)
-        >>> print(ans1)
-        [3. 4. 5.]
+        >>> print(ans1.shape)
+        (3,)
         >>> ans2 = scalaraffine.inverse(value)
-        >>> print(ans2)
-        [-1.  0.  1.]
+        >>> print(ans2.shape)
+        (3,)
         >>> ans3 = scalaraffine.forward_log_jacobian(value)
-        >>> print(ans3)
-        0.0
+        >>> print(ans3.shape)
+        ()
         >>> ans4 = scalaraffine.inverse_log_jacobian(value)
-        >>> print(ans4)
-        0.0
-        ...
+        >>> print(ans4.shape)
+        ()
     """
 
     def __init__(self,

@@ -58,17 +58,17 @@ class GumbelCDF(Bijector):
         >>> x = Tensor([1, 2, 3], dtype=mindspore.float32)
         >>> y = Tensor([0.1, 0.2, 0.3], dtype=mindspore.float32)
         >>> ans1 = gumbel_cdf.forward(x)
-        >>> print(ans1)
-        [0.36787945 0.5452392  0.69220066]
+        >>> print(ans1.shape)
+        (3,)
         >>> ans2 = gumbel_cdf.inverse(y)
-        >>> print(ans2)
-        [-0.66806495  0.04822993  0.62874645]
+        >>> print(ans2.shape)
+        (3,)
         >>> ans3 = gumbel_cdf.forward_log_jacobian(x)
-        >>> print(ans3)
-        [-1.6931472 -1.7996778 -2.0610266]
+        >>> print(ans3.shape)
+        (3,)
         >>> ans4 = gumbel_cdf.inverse_log_jacobian(y)
-        >>> print(ans4)
-        [2.1616998 1.8267001 1.7114931]
+        >>> print(ans4.shape)
+        (3,)
     """
 
     def __init__(self,

@@ -71,31 +71,31 @@ class Uniform(Distribution):
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing 'prob' by the name of the function.
         >>> ans = u1.prob(value)
-        >>> print(ans)
-        [1. 1.]
+        >>> print(ans.shape)
+        (2,)
         >>> # Evaluate with respect to distribution b.
         >>> ans = u1.prob(value, low_b, high_b)
-        >>> print(ans)
-        [0.25       0.15384614]
+        >>> print(ans.shape)
+        (2,)
         >>> # `high` and `low` must be passed in during function calls.
         >>> ans = u2.prob(value, low_a, high_a)
-        >>> print(ans)
-        [0.5  0.25]
+        >>> print(ans.shape)
+        (2,)
         >>> # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
         >>> # Args:
         >>> #     low (Tensor): the lower bound of the distribution. Default: self.low.
         >>> #     high (Tensor): the higher bound of the distribution. Default: self.high.
         >>> # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
         >>> ans = u1.mean() # return 0.5
-        >>> print(ans)
-        0.5
+        >>> print(ans.shape)
+        ()
         >>> ans = u1.mean(low_b, high_b) # return (low_b + high_b) / 2
-        >>> print(ans)
-        [0.5  1.75]
+        >>> print(ans.shape)
+        (2,)
         >>> # `high` and `low` must be passed in during function calls.
         >>> ans = u2.mean(low_a, high_a)
-        >>> print(ans)
-        [1. 2.]
+        >>> print(ans.shape)
+        (2,)
         >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same.
         >>> # Args:
         >>> #     dist (str): the type of the distributions. Should be "Uniform" in this case.
@@ -105,15 +105,15 @@ class Uniform(Distribution):
         >>> #     high_a (Tensor): the upper bound of distribution a. Default: self.high.
         >>> # Examples of `kl_loss`. `cross_entropy` is similar.
         >>> ans = u1.kl_loss('Uniform', low_b, high_b)
-        >>> print(ans)
-        [1.3862944 1.8718022]
+        >>> print(ans.shape)
+        (2,)
         >>> ans = u1.kl_loss('Uniform', low_b, high_b, low_a, high_a)
-        >>> print(ans)
-        [0.6931472  0.48550785]
+        >>> print(ans.shape)
+        (2,)
         >>> # Additional `high` and `low` must be passed in.
         >>> ans = u2.kl_loss('Uniform', low_b, high_b, low_a, high_a)
-        >>> print(ans)
-        [0.6931472  0.48550785]
+        >>> print(ans.shape)
+        (2,)
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ()

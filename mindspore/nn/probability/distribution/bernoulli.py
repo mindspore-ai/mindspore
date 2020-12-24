@@ -64,30 +64,30 @@ class Bernoulli(Distribution):
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing `prob` by the name of the function.
         >>> ans = b1.prob(value)
-        >>> print(ans)
-        [0.5 0.5 0.5]
+        >>> print(ans.shape)
+        (3,)
         >>> # Evaluate `prob` with respect to distribution b.
         >>> ans = b1.prob(value, probs_b)
-        >>> print(ans)
-        [0.2 0.7 0.4]
+        >>> print(ans.shape)
+        (3,)
         >>> # `probs` must be passed in during function calls.
         >>> ans = b2.prob(value, probs_a)
-        >>> print(ans)
-        [0.6 0.4 0.6]
+        >>> print(ans.shape)
+        (3,)
         >>> # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
         >>> # Args:
         >>> #     probs1 (Tensor): the probability of success. Default: self.probs.
         >>> # Examples of `mean`. `sd`, `var`, and `entropy` are similar.
         >>> ans = b1.mean() # return 0.5
-        >>> print(ans)
-        0.5
+        >>> print(ans.shape)
+        ()
         >>> ans = b1.mean(probs_b) # return probs_b
-        >>> print(ans)
-        [0.2 0.5 0.4]
+        >>> print(ans.shape)
+        (3,)
         >>> # `probs` must be passed in during function calls.
         >>> ans = b2.mean(probs_a)
-        [0.6]
-        >>> print(ans)
+        (1,)
+        >>> print(ans.shape)
         >>> # Interfaces of `kl_loss` and `cross_entropy` are the same as follows:
         >>> # Args:
         >>> #     dist (str): the name of the distribution. Only 'Bernoulli' is supported.
@@ -95,15 +95,15 @@ class Bernoulli(Distribution):
         >>> #     probs1_a (Tensor): the probability of success of distribution a. Default: self.probs.
         >>> # Examples of kl_loss. `cross_entropy` is similar.
         >>> ans = b1.kl_loss('Bernoulli', probs_b)
-        >>> print(ans)
-        [0.22314356 0.         0.02041098]
+        >>> print(ans.shape)
+        (3,)
         >>> ans = b1.kl_loss('Bernoulli', probs_b, probs_a)
-        >>> print(ans)
-        [0.38190854 0.02013553 0.08109301]
+        >>> print(ans.shape)
+        (3,)
         >>> # An additional `probs_a` must be passed in.
         >>> ans = b2.kl_loss('Bernoulli', probs_b, probs_a)
-        >>> print(ans)
-        [0.38190854 0.02013553 0.08109301]
+        >>> print(ans.shape)
+        (3,)
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ().

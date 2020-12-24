@@ -67,8 +67,8 @@ class TransformedDistribution(Distribution):
         >>>
         >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
         >>> prob = trans_dist.prob(value)
-        >>> print(prob)
-        [0.3989423  0.15687403 0.07272825]
+        >>> print(prob.shape)
+        (3,)
         >>> sample = trans_dist.sample(shape=(2, 3))
         >>> print(sample.shape)
         (2, 3)

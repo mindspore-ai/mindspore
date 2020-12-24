@@ -76,16 +76,16 @@ class LogNormal(msd.TransformedDistribution):
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing 'prob' by the name of the function.
         >>> ans = n1.prob(value)
-        >>> print(ans)
-        [0.07528435 0.04222769 0.02969363]
+        >>> print(ans.shape)
+        (3,)
         >>> # Evaluate with respect to distribution b.
         >>> ans = n1.prob(value, loc_b, scale_b)
-        >>> print(ans)
-        [0.24197072 0.13022715 0.0664096 ]
+        >>> print(ans.shape)
+        (3,)
         >>> # `loc` and `scale` must be passed in during function calls since they were not passed in construct.
         >>> ans = n2.prob(value, loc_a, scale_a)
-        >>> print(ans)
-        [0.12098535 0.08056299 0.06006904]
+        >>> print(ans.shape)
+        (3,)
         >>> # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
         >>> # Args:
         >>> #     loc (Tensor): the loc of distribution. Default: None. If `loc` is passed in as None,
@@ -94,15 +94,15 @@ class LogNormal(msd.TransformedDistribution):
         >>> #         the standard deviation of the underlying Normal distribution will be used.
         >>> # Example of `mean`. `sd`, `var`, and `entropy` are similar.
         >>> ans = n1.mean()
-        >>> print(ans)
-        59874.14
+        >>> print(ans.shape)
+        ()
         >>> ans = n1.mean(loc_b, scale_b)
-        >>> print(ans)
-        [ 4.481689  8.372897 20.085537]
+        >>> print(ans.shape)
+        (3,)
         >>> # `loc` and `scale` must be passed in during function calls since they were not passed in construct.
         >>> ans = n2.mean(loc_a, scale_a)
-        >>> print(ans)
-        [54.59815 54.59815 54.59815]
+        >>> print(ans.shape)
+        (3,)
         >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
         >>> # Args:
         >>> #     dist (str): the type of the distributions. Only "Normal" is supported.
@@ -114,15 +114,15 @@ class LogNormal(msd.TransformedDistribution):
         >>> #         the standard deviation of the underlying Normal distribution will be used.
         >>> # Examples of `kl_loss`. `cross_entropy` is similar.
         >>> ans = n1.kl_loss('LogNormal', loc_b, scale_b)
-        >>> print(ans)
-        [8.113706  2.963615  1.3068528]
+        >>> print(ans.shape)
+        (3,)
         >>> ans = n1.kl_loss('LogNormal', loc_b, scale_b, loc_a, scale_a)
-        >>> print(ans)
-        [1.3068528  0.32342905 0.125     ]
+        >>> print(ans.shape)
+        (3,)
         >>> # Additional `loc` and `scale` must be passed in since they were not passed in construct.
         >>> ans = n2.kl_loss('LogNormal', loc_b, scale_b, loc_a, scale_a)
-        >>> print(ans)
-        [1.3068528  0.32342905 0.125     ]
+        >>> print(ans.shape)
+        (3,)
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ()

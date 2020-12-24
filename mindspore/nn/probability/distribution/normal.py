@@ -70,31 +70,31 @@ class Normal(Distribution):
         >>> # Similar calls can be made to other probability functions
         >>> # by replacing 'prob' by the name of the function
         >>> ans = n1.prob(value)
-        >>> print(ans)
-        [0.08801632 0.09666702 0.09973556]
+        >>> print(ans.shape)
+        (3,)
         >>> # Evaluate with respect to the distribution b.
         >>> ans = n1.prob(value, mean_b, sd_b)
-        >>> print(ans)
-        [0.3989423  0.21296532 0.12098535]
+        >>> print(ans.shape)
+        (3,)
         >>> # `mean` and `sd` must be passed in during function calls
         >>> ans = n2.prob(value, mean_a, sd_a)
-        >>> print(ans)
-        [0.17603266 0.19947115 0.17603266]
+        >>> print(ans.shape)
+        (3,)
         >>> # Functions `mean`, `sd`, `var`, and `entropy` have the same arguments.
         >>> # Args:
         >>> #     mean (Tensor): the mean of the distribution. Default: self._mean_value.
         >>> #     sd (Tensor): the standard deviation of the distribution. Default: self._sd_value.
         >>> # Example of `mean`. `sd`, `var`, and `entropy` are similar.
         >>> ans = n1.mean() # return 0.0
-        >>> print(ans)
-        3.0
+        >>> print(ans.shape)
+        ()
         >>> ans = n1.mean(mean_b, sd_b) # return mean_b
-        >>> print(ans)
-        [1. 1. 1.]
+        >>> print(ans.shape)
+        (3,)
         >>> # `mean` and `sd` must be passed in during function calls.
         >>> ans = n2.mean(mean_a, sd_a)
-        >>> print(ans)
-        [2. 2. 2.]
+        >>> print(ans.shape)
+        (3,)
         >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
         >>> # Args:
         >>> #     dist (str): the type of the distributions. Only "Normal" is supported.
@@ -104,15 +104,15 @@ class Normal(Distribution):
         >>> #     sd_a (Tensor): the standard deviation of distribution a. Default: self._sd_value.
         >>> # Examples of `kl_loss`. `cross_entropy` is similar.
         >>> ans = n1.kl_loss('Normal', mean_b, sd_b)
-        >>> print(ans)
-        [8.113706  2.963615  1.3068528]
+        >>> print(ans.shape)
+        (3,)
         >>> ans = n1.kl_loss('Normal', mean_b, sd_b, mean_a, sd_a)
-        >>> print(ans)
-        [1.3068528  0.32342905 0.125     ]
+        >>> print(ans.shape)
+        (3,)
         >>> # Additional `mean` and `sd` must be passed in.
         >>> ans = n2.kl_loss('Normal', mean_b, sd_b, mean_a, sd_a)
-        >>> print(ans)
-        [1.3068528  0.32342905 0.125     ]
+        >>> print(ans.shape)
+        (3,)
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ()

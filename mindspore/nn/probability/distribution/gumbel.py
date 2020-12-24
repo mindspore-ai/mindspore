@@ -29,8 +29,8 @@ class Gumbel(TransformedDistribution):
     Gumbel distribution.
 
     Args:
-        loc (int, float, list, numpy.ndarray, Tensor): The location of Gumbel distribution.
-        scale (int, float, list, numpy.ndarray, Tensor): The scale of Gumbel distribution.
+        loc (float, list, numpy.ndarray, Tensor): The location of Gumbel distribution.
+        scale (float, list, numpy.ndarray, Tensor): The scale of Gumbel distribution.
         seed (int): the seed used in sampling. The global seed is used if it is None. Default: None.
         dtype (mindspore.dtype): type of the distribution. Default: mstype.float32.
         name (str): the name of the distribution. Default: 'Gumbel'.
@@ -63,12 +63,12 @@ class Gumbel(TransformedDistribution):
         >>> # by replacing 'prob' by the name of the function.
         >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
         >>> ans = gumbel.prob(value)
-        >>> print(ans)
-        [0.07926048 0.08889319 0.09196986]
+        >>> print(ans.shape)
+        (3,)
         >>> # Functions `mean`, `mode`, sd`, `var`, and `entropy` do not take in any argument.
         >>> ans = gumbel.mean()
-        >>> print(ans)
-        5.3088627
+        >>> print(ans.shape)
+        ()
         >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
         >>> # Args:
         >>> #     dist (str): the type of the distributions. Only "Gumbel" is supported.
@@ -78,8 +78,8 @@ class Gumbel(TransformedDistribution):
         >>> loc_b = Tensor([1.0], dtype=mindspore.float32)
         >>> scale_b = Tensor([1.0, 1.5, 2.0], dtype=mindspore.float32)
         >>> ans = gumbel.kl_loss('Gumbel', loc_b, scale_b)
-        >>> print(ans)
-        [ 2.5934026   0.03880269 -0.38017237]
+        >>> print(ans.shape)
+        (3,)
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ()
