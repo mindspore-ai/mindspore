@@ -114,7 +114,7 @@ def sequence_mask(lengths, maxlen):
 
     Args:
         length (Tensor): Tensor to calculate the mask for. All values in this tensor must be
-          less than `maxlen`. Must be type int32 or int64.
+          less than or equal to `maxlen`. Must be type int32 or int64.
 
         maxlen (int): size of the last dimension of returned tensor. Must be positive and same
           type as elements in `lengths`.
