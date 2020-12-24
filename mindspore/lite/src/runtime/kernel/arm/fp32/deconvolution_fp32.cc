@@ -62,7 +62,8 @@ int DeConvolutionCPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, UP_ROUND(output_channel, C4NUM) * sizeof(float));
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == 3 && in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
+      in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
     memcpy(bias_data_, in_tensors_.at(2)->MutableData(), output_channel * sizeof(float));
   }
 

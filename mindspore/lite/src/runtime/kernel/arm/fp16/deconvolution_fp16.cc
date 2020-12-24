@@ -63,7 +63,8 @@ int DeConvolutionFp16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(bias_data_, 0, UP_ROUND(output_channel, C4NUM) * sizeof(float16_t));
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == 3 && in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
+      in_tensors_.at(kBiasIndex)->DimensionSize(0) == output_channel) {
     Float32ToFloat16(reinterpret_cast<float *>(in_tensors_.at(2)->MutableData()),
                      reinterpret_cast<float16_t *>(bias_data_), output_channel);
   }

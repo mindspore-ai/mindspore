@@ -286,7 +286,8 @@ int DeConvolutionWinogradCPUKernel::InitDataParam() {
     return RET_NULL_PTR;
   }
   memset(bias_data_, 0, deconv_param_->oc_up4_ * sizeof(float));
-  if (in_tensors_.size() == 3) {
+  if (in_tensors_.size() == 3 && in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
+      in_tensors_.at(kBiasIndex)->DimensionSize(0) == conv_param_->output_channel_) {
     auto bias_tensor = in_tensors_.at(kBiasIndex);
     memcpy(bias_data_, bias_tensor->data_c(), conv_param_->output_channel_ * sizeof(float));
   }
