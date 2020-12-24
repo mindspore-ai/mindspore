@@ -20,6 +20,7 @@ from easydict import EasyDict as edict
 # LSTM CONFIG
 lstm_cfg = edict({
     'num_classes': 2,
+    'dynamic_lr': False,
     'learning_rate': 0.1,
     'momentum': 0.9,
     'num_epochs': 20,
@@ -30,4 +31,25 @@ lstm_cfg = edict({
     'bidirectional': True,
     'save_checkpoint_steps': 390,
     'keep_checkpoint_max': 10
+})
+
+# LSTM CONFIG IN ASCEND
+lstm_cfg_ascend = edict({
+    'num_classes': 2,
+    'momentum': 0.9,
+    'num_epochs': 20,
+    'batch_size': 64,
+    'embed_size': 300,
+    'num_hiddens': 128,
+    'num_layers': 2,
+    'bidirectional': True,
+    'save_checkpoint_steps': 7800,
+    'keep_checkpoint_max': 10,
+    'dynamic_lr': True,
+    'lr_init': 0.05,
+    'lr_end': 0.01,
+    'lr_max': 0.1,
+    'lr_adjust_epoch': 6,
+    'warmup_epochs': 1,
+    'global_step': 0
 })

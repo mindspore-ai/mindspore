@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash run_train_gpu.sh DEVICE_ID ACLIMDB_DIR GLOVE_DIR"
 echo "for example: bash run_train_gpu.sh 0 ./aclimdb ./glove_dir"
 echo "=============================================================================================================="

@@ -16,22 +16,24 @@
 
 echo "=============================================================================================================="
 echo "Please run the script as: "
-echo "bash run_eval_cpu.sh ACLIMDB_DIR GLOVE_DIR CKPT_FILE"
-echo "for example: bash run_eval_cpu.sh ./aclimdb ./glove_dir lstm-20_390.ckpt"
+echo "bash run_train_ascend.sh DEVICE_ID ACLIMDB_DIR GLOVE_DIR"
+echo "for example: bash run_train_ascend.sh 0 ./aclimdb ./glove_dir"
 echo "=============================================================================================================="
 
-ACLIMDB_DIR=$1
-GLOVE_DIR=$2
-CKPT_FILE=$3
+DEVICE_ID=$1
+ACLIMDB_DIR=$2
+GLOVE_DIR=$3
 
+mkdir -p train
+cd train
 mkdir -p ms_log
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
-python eval.py  \
-    --device_target="CPU" \
+export DEVICE_ID=$DEVICE_ID
+python ../../train.py  \
+    --device_target="Ascend" \
     --aclimdb_path=$ACLIMDB_DIR \
     --glove_path=$GLOVE_DIR \
-    --preprocess=false  \
-    --preprocess_path=./preprocess \
-    --ckpt_path=$CKPT_FILE > log.txt 2>&1 &
+    --preprocess=true  \
+    --preprocess_path=./preprocess > log.txt 2>&1 &
