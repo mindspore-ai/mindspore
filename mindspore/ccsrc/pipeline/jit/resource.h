@@ -57,8 +57,10 @@ class MemoryCleaner {
  public:
   MemoryCleaner() = default;
   ~MemoryCleaner() = default;
+  void Init();
+
   void RecordPrimitivePy(PrimitivePy *prim);
-  void ErasePrimitivePy(PrimitivePy *prim);
+  void ReleasePrimitivePyObj(PrimitivePy *prim);
   void ClearPrimitivePyPythonObj();
 
   void RecordPynativeShortLifePrimitivePy(PrimitivePy *prim);
@@ -77,6 +79,9 @@ class MemoryCleaner {
   // PrimitivePy objects that created in pynative construct process.These primitives should be released after construct
   // finished.
   std::unordered_set<PrimitivePy *> pynative_short_life_primitives_;
+  // Sequence of primtive names in one construct process.
+  std::vector<std::string> pynative_new_primtives_squence_;
+  std::vector<std::vector<std::string>> pynative_released_history_;
   bool pynative_in_construct_process_{false};
   bool pynative_in_end_graph_process_{false};
 };

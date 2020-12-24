@@ -24,7 +24,7 @@ import numpy
 from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
 from .. import context
-from .._c_expression import init_backend, Cell_
+from .._c_expression import init_pipeline, Cell_
 from .._checkparam import Validator
 from ..common import dtype as mstype
 from ..common.api import _executor, _pynative_exec
@@ -90,7 +90,7 @@ class Cell(Cell_):
         self._parameter_layout_dict = {}
         self._create_time = int(time.time() * 1e9)
         self.phase_prefix = ""
-        init_backend()
+        init_pipeline()
 
         # call gc to release GE session resources used by non-used cell objects
         if os.getenv('GC_COLLECT_IN_CELL') == '1':

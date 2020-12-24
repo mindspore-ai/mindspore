@@ -24,7 +24,7 @@ from mindspore import context
 from mindspore import log as logger
 from .tensor import Tensor as MsTensor
 from .._c_expression import generate_key, Executor_, Tensor, MetaTensor, PynativeExecutor_
-from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_backend
+from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
 from ..parallel._ps_context import _is_role_pserver
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
     _get_parameter_broadcast
@@ -195,7 +195,7 @@ class _MindSporeFunction:
 
     @_wrap_func
     def __call__(self, *args):
-        init_backend()
+        init_pipeline()
         converted, arguments_dict, parse_method = _convert_function_arguments(self.fn, *args)
         if not converted:
             raise RuntimeError('Process function parameter is failure')
