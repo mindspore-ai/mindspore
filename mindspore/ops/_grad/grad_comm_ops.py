@@ -183,11 +183,11 @@ def get_bprop_allswap(self):
     all_swap_grad = AllSwap(self.group)
     if self.instance_name:
         instance_name = "grad" + self.instance_name
-        all_to_all_grad.set_prim_instance_name(instance_name)
+        all_swap_grad.set_prim_instance_name(instance_name)
 
     def bprop(x, send_size, recv_size, out, dout):
         dx = all_swap_grad(dout, recv_size, send_size)
-        return (dx,)
+        return (dx, zeros_like(send_size), zeros_like(recv_size))
 
     return bprop
 
