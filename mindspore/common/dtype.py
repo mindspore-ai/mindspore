@@ -105,6 +105,8 @@ index_slices = typing.RowTensorType()
 sparse_tensor = typing.SparseTensorType()
 undetermined = typing.UndeterminedType()
 Int = typing.Int
+bool_type = typing.Bool
+none_type = typing.TypeNone
 
 number_type = (int8,
                int16,
