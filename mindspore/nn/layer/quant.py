@@ -157,7 +157,7 @@ class _Observer(Cell):
         self.quant_dtype = quant_dtype
 
     def extend_repr(self):
-        s = f"dtype={self.dtype}"
+        s = f"quant_dtype={self.quant_dtype}"
         return s
 
     def construct(self):
