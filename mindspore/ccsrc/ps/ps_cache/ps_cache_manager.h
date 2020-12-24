@@ -127,6 +127,7 @@ class PsCacheManager {
   bool initialized_ps_cache() const { return initialized_ps_cache_; }
   void DoProcessData(uint32_t device_id, void *context);
   void IncreaseGraphStep(const std::string &channel_name);
+  void SyncEmbeddingTable();
   void Finalize();
   void DumpHashTables(bool dump_device_tables = false) const;
 
@@ -193,6 +194,7 @@ class PsCacheManager {
   std::atomic_bool finish_insert_init_info_{false};
   std::atomic_bool finish_init_parameter_server_{false};
   std::atomic_bool running_{false};
+  bool finish_embedding_table_sync_{false};
 };
 
 static PsCacheManager &ps_cache_instance = PsCacheManager::GetInstance();

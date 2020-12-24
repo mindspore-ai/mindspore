@@ -16,10 +16,16 @@
 
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/log_adapter.h"
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#include "ps/ps_cache/ps_cache_manager.h"
+#endif
 
 namespace mindspore {
 namespace device {
 void KernelRuntimeManager::ClearRuntimeResource() {
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  ps::ps_cache_instance.SyncEmbeddingTable();
+#endif
   std::lock_guard<std::mutex> guard(lock_);
   for (auto &iter : runtime_map_) {
     MS_LOG(INFO) << "Release device " << iter.first;

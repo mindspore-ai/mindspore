@@ -331,12 +331,7 @@ void PsCacheManager::ProcessDataTask(uint32_t device_id, void *context) {
 
 void PsCacheManager::Finalize() {
   if (running_) {
-    if (!SyncHostEmbeddingTable()) {
-      MS_LOG(ERROR) << "SyncHostEmbeddingTable failed.";
-    }
-    if (!SyncDeviceEmbeddingTable()) {
-      MS_LOG(ERROR) << "SyncDeviceEmbeddingTable failed.";
-    }
+    SyncEmbeddingTable();
   }
   running_ = false;
   PsDataPrefetch::GetInstance().NotifyFinalize();
@@ -844,6 +839,19 @@ bool PsCacheManager::UpdataEmbeddingTable(const ::ps::SArray<float> &swap_out_da
   RETURN_IF_FALSE(embedding_device_cache_->cache_->SynchronizeEvent());
   worker.UpdateEmbeddingTable({key}, lookup_ids, swap_out_data);
   return true;
+}
+
+void PsCacheManager::SyncEmbeddingTable() {
+  if (finish_embedding_table_sync_) {
+    return;
+  }
+  if (!SyncHostEmbeddingTable()) {
+    MS_LOG(ERROR) << "SyncHostEmbeddingTable failed.";
+  }
+  if (!SyncDeviceEmbeddingTable()) {
+    MS_LOG(ERROR) << "SyncDeviceEmbeddingTable failed.";
+  }
+  finish_embedding_table_sync_ = true;
 }
 
 bool PsCacheManager::SyncHostEmbeddingTable() {
