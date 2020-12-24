@@ -18,12 +18,11 @@
 import os
 
 import mindspore.common.dtype as mstype
-import mindspore.dataset as dataset
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C2
 import mindspore.dataset.vision.c_transforms as C
 
-dataset.config.set_seed(1)
+ds.config.set_seed(1)
 
 
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
@@ -43,10 +42,10 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
     device_num = int(os.getenv("RANK_SIZE"))
     rank_id = int(os.getenv("RANK_ID"))
     if device_num == 1:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                   num_shards=device_num, shard_id=rank_id)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                         num_shards=device_num, shard_id=rank_id)
 
     image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
@@ -71,12 +70,12 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32):
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
-    return ds
+    data_set = data_set.repeat(repeat_num)
+    return data_set

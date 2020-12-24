@@ -21,7 +21,7 @@ import numpy as np
 from mindspore import Tensor
 from mindspore.train.model import Model
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 
@@ -43,22 +43,22 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
         rank_size = int(os.getenv("RANK_SIZE", '1'))
         rank_id = int(os.getenv("RANK_ID", '0'))
         if rank_size == 1:
-            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
         else:
-            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                       num_shards=rank_size, shard_id=rank_id)
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                             num_shards=rank_size, shard_id=rank_id)
     elif config.platform == "GPU":
         if do_train:
             if config.run_distribute:
                 from mindspore.communication.management import get_rank, get_group_size
-                ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                           num_shards=get_group_size(), shard_id=get_rank())
+                data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                                 num_shards=get_group_size(), shard_id=get_rank())
             else:
-                ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+                data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
         else:
-            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     elif config.platform == "CPU":
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
 
     resize_height = config.image_height
     resize_width = config.image_width
@@ -83,19 +83,19 @@ def create_dataset(dataset_path, do_train, config, repeat_num=1):
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply shuffle operations
-    ds = ds.shuffle(buffer_size=buffer_size)
+    data_set = data_set.shuffle(buffer_size=buffer_size)
 
     # apply batch operations
-    ds = ds.batch(config.batch_size, drop_remainder=True)
+    data_set = data_set.batch(config.batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set
 
 
 def extract_features(net, dataset_path, config):
@@ -121,5 +121,5 @@ def extract_features(net, dataset_path, config):
             features = model.predict(Tensor(image))
             np.save(features_path, features.asnumpy())
             np.save(label_path, label)
-        print(f"Complete the batch {i+1}/{step_size}")
+        print(f"Complete the batch {i + 1}/{step_size}")
     return step_size

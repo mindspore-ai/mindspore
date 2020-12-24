@@ -16,7 +16,7 @@
 Data operations, will be used in train.py and eval.py
 """
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C2
 import mindspore.dataset.vision.c_transforms as C
 from src.config import config_gpu as cfg
@@ -37,33 +37,33 @@ def create_dataset(dataset_path, do_train, rank, group_size, repeat_num=1):
         dataset
     """
     if group_size == 1:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True)
     else:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True,
-                                   num_shards=group_size, shard_id=rank)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=cfg.work_nums, shuffle=True,
+                                         num_shards=group_size, shard_id=rank)
     # define map operations
     if do_train:
         trans = [
             C.RandomCropDecodeResize(299, scale=(0.08, 1.0), ratio=(0.75, 1.333)),
             C.RandomHorizontalFlip(prob=0.5),
             C.RandomColorAdjust(brightness=0.4, contrast=0.4, saturation=0.4)
-            ]
+        ]
     else:
         trans = [
             C.Decode(),
             C.Resize(299),
             C.CenterCrop(299)
-            ]
+        ]
     trans += [
         C.Rescale(1.0 / 255.0, 0.0),
         C.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         C.HWC2CHW()
     ]
     type_cast_op = C2.TypeCast(mstype.int32)
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=cfg.work_nums)
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=cfg.work_nums)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=cfg.work_nums)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=cfg.work_nums)
     # apply batch operations
-    ds = ds.batch(cfg.batch_size, drop_remainder=True)
+    data_set = data_set.batch(cfg.batch_size, drop_remainder=True)
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
-    return ds
+    data_set = data_set.repeat(repeat_num)
+    return data_set

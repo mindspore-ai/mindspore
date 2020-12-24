@@ -17,7 +17,7 @@ create train or eval dataset.
 """
 import os
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 from mindspore.communication.management import init, get_rank, get_group_size
@@ -47,10 +47,10 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
         num_parallels = 4
 
     if device_num == 1:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallels, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallels, shuffle=True)
     else:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallels, shuffle=True,
-                                   num_shards=device_num, shard_id=rank_id)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=num_parallels, shuffle=True,
+                                         num_shards=device_num, shard_id=rank_id)
 
     image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
@@ -75,16 +75,16 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=num_parallels)
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=num_parallels)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=num_parallels)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=num_parallels)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set
 
 
 def _get_rank_info():

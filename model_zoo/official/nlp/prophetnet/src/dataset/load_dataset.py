@@ -14,7 +14,7 @@
 # ============================================================================
 """Dataset loader to feed into model."""
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as deC
 
 
@@ -45,7 +45,7 @@ def _load_dataset(input_files, batch_size, epoch_count=1,
     for datafile in input_files:
         print(f" | Loading {datafile}.")
 
-    ds = de.TFRecordDataset(
+    data_set = ds.TFRecordDataset(
         input_files,
         columns_list=[
             "src", "src_padding",
@@ -55,19 +55,19 @@ def _load_dataset(input_files, batch_size, epoch_count=1,
         shuffle=shuffle, num_shards=rank_size, shard_id=rank_id,
         shard_equal_rows=True, num_parallel_workers=8)
 
-    ori_dataset_size = ds.get_dataset_size()
+    ori_dataset_size = data_set.get_dataset_size()
     print(f" | Dataset size: {ori_dataset_size}.")
     repeat_count = epoch_count
 
     type_cast_op = deC.TypeCast(mstype.int32)
-    ds = ds.map(input_columns="src", operations=type_cast_op)
-    ds = ds.map(input_columns="src_padding", operations=type_cast_op)
-    ds = ds.map(input_columns="prev_opt", operations=type_cast_op)
-    ds = ds.map(input_columns="prev_padding", operations=type_cast_op)
-    ds = ds.map(input_columns="target", operations=type_cast_op)
-    ds = ds.map(input_columns="tgt_padding", operations=type_cast_op)
+    data_set = data_set.map(input_columns="src", operations=type_cast_op)
+    data_set = data_set.map(input_columns="src_padding", operations=type_cast_op)
+    data_set = data_set.map(input_columns="prev_opt", operations=type_cast_op)
+    data_set = data_set.map(input_columns="prev_padding", operations=type_cast_op)
+    data_set = data_set.map(input_columns="target", operations=type_cast_op)
+    data_set = data_set.map(input_columns="tgt_padding", operations=type_cast_op)
 
-    ds = ds.rename(
+    data_set = data_set.rename(
         input_columns=["src",
                        "src_padding",
                        "prev_opt",
@@ -82,11 +82,11 @@ def _load_dataset(input_files, batch_size, epoch_count=1,
                         "target_eos_mask"]
     )
 
-    ds = ds.batch(batch_size, drop_remainder=True)
-    ds = ds.repeat(repeat_count)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
+    data_set = data_set.repeat(repeat_count)
 
-    ds.channel_name = 'transformer'
-    return ds
+    data_set.channel_name = 'transformer'
+    return data_set
 
 
 def load_dataset(data_files: list, batch_size: int, epoch_count: int,

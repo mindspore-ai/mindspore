@@ -18,7 +18,7 @@ import math
 import pickle
 import numpy as np
 import pandas as pd
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.common.dtype as mstype
 
 
@@ -97,8 +97,7 @@ class H5Dataset():
                 np.random.shuffle(sample_index)
         assert X.shape[0] > 0
         while True:
-            batch_index = sample_index[batch_size * counter:batch_size *
-                                       (counter + 1)]
+            batch_index = sample_index[batch_size * counter:batch_size * (counter + 1)]
             X_batch = X[batch_index]
             y_batch = y[batch_index]
             counter += 1
@@ -135,9 +134,8 @@ class H5Dataset():
                 X, y, finished = data_gen.__next__()
                 X_id = X[:, 0:self.input_length]
                 X_va = X[:, self.input_length:]
-                yield np.array(X_id.astype(dtype=np.int32)), np.array(
-                    X_va.astype(dtype=np.float32)), np.array(
-                        y.astype(dtype=np.float32))
+                yield np.array(X_id.astype(dtype=np.int32)), np.array(X_va.astype(dtype=np.float32)), np.array(
+                    y.astype(dtype=np.float32))
 
 
 def _get_h5_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000):
@@ -159,10 +157,10 @@ def _get_h5_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000):
         for _ in range(0, numbers_of_batch, 1):
             yield train_eval_gen.__next__()
 
-    ds = de.GeneratorDataset(_iter_h5_data(),
-                             ["ids", "weights", "labels"])
-    ds = ds.repeat(epochs)
-    return ds
+    data_set = ds.GeneratorDataset(_iter_h5_data(),
+                                   ["ids", "weights", "labels"])
+    data_set = data_set.repeat(epochs)
+    return data_set
 
 
 def _get_tf_dataset(data_dir,
@@ -184,7 +182,7 @@ def _get_tf_dataset(data_dir,
         for filename in filenames:
             if file_prefix_name in filename and "tfrecord" in filename:
                 dataset_files.append(os.path.join(dirpath, filename))
-    schema = de.Schema()
+    schema = ds.Schema()
 
     float_key_list = ["label", "continue_val"]
 
@@ -199,19 +197,19 @@ def _get_tf_dataset(data_dir,
         schema.add_column(key, de_type=ms_dtype)
 
     if rank_size is not None and rank_id is not None:
-        ds = de.TFRecordDataset(dataset_files=dataset_files,
-                                shuffle=shuffle,
-                                schema=schema,
-                                num_parallel_workers=8,
-                                num_shards=rank_size,
-                                shard_id=rank_id,
-                                shard_equal_rows=True)
+        data_set = ds.TFRecordDataset(dataset_files=dataset_files,
+                                      shuffle=shuffle,
+                                      schema=schema,
+                                      num_parallel_workers=8,
+                                      num_shards=rank_size,
+                                      shard_id=rank_id,
+                                      shard_equal_rows=True)
     else:
-        ds = de.TFRecordDataset(dataset_files=dataset_files,
-                                shuffle=shuffle,
-                                schema=schema,
-                                num_parallel_workers=8)
-    ds = ds.batch(int(batch_size / line_per_sample), drop_remainder=True)
+        data_set = ds.TFRecordDataset(dataset_files=dataset_files,
+                                      shuffle=shuffle,
+                                      schema=schema,
+                                      num_parallel_workers=8)
+    data_set = data_set.batch(int(batch_size / line_per_sample), drop_remainder=True)
 
     operations_list = []
     for key in columns_list:
@@ -249,7 +247,7 @@ def _get_tf_dataset(data_dir,
         u = np.array(u).flatten().reshape(batch_size, -1)
         return a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u
 
-    ds = ds.map(
+    data_set = data_set.map(
         operations=mixup,
         input_columns=[
             'label', 'continue_val', 'indicator_id', 'emb_128_id',
@@ -275,8 +273,8 @@ def _get_tf_dataset(data_dir,
         ],
         num_parallel_workers=8)
 
-    ds = ds.repeat(epochs)
-    return ds
+    data_set = data_set.repeat(epochs)
+    return data_set
 
 
 def compute_emb_dim(config):

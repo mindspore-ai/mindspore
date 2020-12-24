@@ -17,7 +17,7 @@ import os
 import math as m
 import numpy as np
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c
 import mindspore.dataset.vision.c_transforms as vc
 from PIL import Image
@@ -86,7 +86,7 @@ def create_dataset(dataset_path, batch_size=1, num_shards=1, shard_id=0, device_
      """
 
     dataset = _CaptchaDataset(dataset_path, cf.max_captcha_digits, device_target)
-    ds = de.GeneratorDataset(dataset, ["image", "label"], shuffle=True, num_shards=num_shards, shard_id=shard_id)
+    data_set = ds.GeneratorDataset(dataset, ["image", "label"], shuffle=True, num_shards=num_shards, shard_id=shard_id)
     image_trans = [
         vc.Rescale(1.0 / 255.0, 0.0),
         vc.Normalize([0.9010, 0.9049, 0.9025], std=[0.1521, 0.1347, 0.1458]),
@@ -96,12 +96,12 @@ def create_dataset(dataset_path, batch_size=1, num_shards=1, shard_id=0, device_
     label_trans = [
         c.TypeCast(mstype.int32)
     ]
-    ds = ds.map(operations=image_trans, input_columns=["image"], num_parallel_workers=8)
+    data_set = data_set.map(operations=image_trans, input_columns=["image"], num_parallel_workers=8)
     if device_target == 'Ascend':
-        ds = ds.map(operations=transpose_hwc2whc, input_columns=["image"], num_parallel_workers=8)
+        data_set = data_set.map(operations=transpose_hwc2whc, input_columns=["image"], num_parallel_workers=8)
     else:
-        ds = ds.map(operations=transpose_hwc2chw, input_columns=["image"], num_parallel_workers=8)
-    ds = ds.map(operations=label_trans, input_columns=["label"], num_parallel_workers=8)
+        data_set = data_set.map(operations=transpose_hwc2chw, input_columns=["image"], num_parallel_workers=8)
+    data_set = data_set.map(operations=label_trans, input_columns=["label"], num_parallel_workers=8)
 
-    ds = ds.batch(batch_size, drop_remainder=True)
-    return ds
+    data_set = data_set.batch(batch_size, drop_remainder=True)
+    return data_set

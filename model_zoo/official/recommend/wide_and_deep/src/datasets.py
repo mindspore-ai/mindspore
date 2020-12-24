@@ -14,13 +14,12 @@
 # ============================================================================
 """train_dataset."""
 
-
 import os
 import math
 from enum import Enum
 import numpy as np
 import pandas as pd
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.common.dtype as mstype
 
 
@@ -84,9 +83,9 @@ class H5Dataset():
                 yield os.path.join(self._hdf_data_dir,
                                    self._file_prefix + '_input_part_' + str(
                                        p) + '.h5'), \
-                    os.path.join(self._hdf_data_dir,
-                                 self._file_prefix + '_output_part_' + str(
-                                     p) + '.h5'), i + 1 == len(parts)
+                      os.path.join(self._hdf_data_dir,
+                                   self._file_prefix + '_output_part_' + str(
+                                       p) + '.h5'), i + 1 == len(parts)
 
     def _generator(self, X, y, batch_size, shuffle=True):
         """
@@ -106,8 +105,7 @@ class H5Dataset():
                 np.random.shuffle(sample_index)
         assert X.shape[0] > 0
         while True:
-            batch_index = sample_index[
-                batch_size * counter: batch_size * (counter + 1)]
+            batch_index = sample_index[batch_size * counter: batch_size * (counter + 1)]
             X_batch = X[batch_index]
             y_batch = y[batch_index]
             counter += 1
@@ -140,9 +138,8 @@ class H5Dataset():
                 X, y, finished = data_gen.__next__()
                 X_id = X[:, 0:self.input_length]
                 X_va = X[:, self.input_length:]
-                yield np.array(X_id.astype(dtype=np.int32)), np.array(
-                    X_va.astype(dtype=np.float32)), np.array(
-                        y.astype(dtype=np.float32))
+                yield np.array(X_id.astype(dtype=np.int32)), np.array(X_va.astype(dtype=np.float32)), np.array(
+                    y.astype(dtype=np.float32))
 
 
 def _get_h5_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000):
@@ -164,9 +161,9 @@ def _get_h5_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000):
         for _ in range(0, numbers_of_batch, 1):
             yield train_eval_gen.__next__()
 
-    ds = de.GeneratorDataset(_iter_h5_data(), ["ids", "weights", "labels"])
-    ds = ds.repeat(epochs)
-    return ds
+    data_set = ds.GeneratorDataset(_iter_h5_data(), ["ids", "weights", "labels"])
+    data_set = data_set.repeat(epochs)
+    return data_set
 
 
 def _padding_func(batch_size, manual_shape, target_column, field_size=39):
@@ -174,11 +171,11 @@ def _padding_func(batch_size, manual_shape, target_column, field_size=39):
     get padding_func
     """
     if manual_shape:
-        generate_concat_offset = [item[0]+item[1] for item in manual_shape]
+        generate_concat_offset = [item[0] + item[1] for item in manual_shape]
         part_size = int(target_column / len(generate_concat_offset))
         filled_value = []
         for i in range(field_size, target_column):
-            filled_value.append(generate_concat_offset[i//part_size]-1)
+            filled_value.append(generate_concat_offset[i // part_size] - 1)
         print("Filed Value:", filled_value)
 
         def padding_func(x, y, z):
@@ -190,7 +187,7 @@ def _padding_func(batch_size, manual_shape, target_column, field_size=39):
                            dtype=np.int32) * filled_value
             x_id = np.concatenate([x, x_id.astype(dtype=np.int32)], axis=1)
             mask = np.concatenate(
-                [y, np.zeros((batch_size, target_column-39), dtype=np.float32)], axis=1)
+                [y, np.zeros((batch_size, target_column - 39), dtype=np.float32)], axis=1)
             return (x_id, mask, z)
     else:
         def padding_func(x, y, z):
@@ -214,24 +211,25 @@ def _get_tf_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000,
         for filename in filenames:
             if file_prefix_name in filename and "tfrecord" in filename:
                 dataset_files.append(os.path.join(dirpath, filename))
-    schema = de.Schema()
+    schema = ds.Schema()
     schema.add_column('feat_ids', de_type=mstype.int32)
     schema.add_column('feat_vals', de_type=mstype.float32)
     schema.add_column('label', de_type=mstype.float32)
     if rank_size is not None and rank_id is not None:
-        ds = de.TFRecordDataset(dataset_files=dataset_files, shuffle=shuffle, schema=schema, num_parallel_workers=8,
-                                num_shards=rank_size, shard_id=rank_id, shard_equal_rows=True)
+        data_set = ds.TFRecordDataset(dataset_files=dataset_files, shuffle=shuffle, schema=schema,
+                                      num_parallel_workers=8,
+                                      num_shards=rank_size, shard_id=rank_id, shard_equal_rows=True)
     else:
-        ds = de.TFRecordDataset(dataset_files=dataset_files,
-                                shuffle=shuffle, schema=schema, num_parallel_workers=8)
-    ds = ds.batch(int(batch_size / line_per_sample),
-                  drop_remainder=True)
+        data_set = ds.TFRecordDataset(dataset_files=dataset_files,
+                                      shuffle=shuffle, schema=schema, num_parallel_workers=8)
+    data_set = data_set.batch(int(batch_size / line_per_sample),
+                              drop_remainder=True)
 
-    ds = ds.map(operations=_padding_func(batch_size, manual_shape, target_column),
-                input_columns=['feat_ids', 'feat_vals', 'label'],
-                column_order=['feat_ids', 'feat_vals', 'label'], num_parallel_workers=8)
-    ds = ds.repeat(epochs)
-    return ds
+    data_set = data_set.map(operations=_padding_func(batch_size, manual_shape, target_column),
+                            input_columns=['feat_ids', 'feat_vals', 'label'],
+                            column_order=['feat_ids', 'feat_vals', 'label'], num_parallel_workers=8)
+    data_set = data_set.repeat(epochs)
+    return data_set
 
 
 def _get_mindrecord_dataset(directory, train_mode=True, epochs=1, batch_size=1000,
@@ -257,21 +255,21 @@ def _get_mindrecord_dataset(directory, train_mode=True, epochs=1, batch_size=100
     shuffle = train_mode
 
     if rank_size is not None and rank_id is not None:
-        ds = de.MindDataset(os.path.join(directory, file_prefix_name + file_suffix_name),
-                            columns_list=['feat_ids', 'feat_vals', 'label'],
-                            num_shards=rank_size, shard_id=rank_id, shuffle=shuffle,
-                            num_parallel_workers=8)
+        data_set = ds.MindDataset(os.path.join(directory, file_prefix_name + file_suffix_name),
+                                  columns_list=['feat_ids', 'feat_vals', 'label'],
+                                  num_shards=rank_size, shard_id=rank_id, shuffle=shuffle,
+                                  num_parallel_workers=8)
     else:
-        ds = de.MindDataset(os.path.join(directory, file_prefix_name + file_suffix_name),
-                            columns_list=['feat_ids', 'feat_vals', 'label'],
-                            shuffle=shuffle, num_parallel_workers=8)
-    ds = ds.batch(int(batch_size / line_per_sample), drop_remainder=True)
-    ds = ds.map(_padding_func(batch_size, manual_shape, target_column),
-                input_columns=['feat_ids', 'feat_vals', 'label'],
-                column_order=['feat_ids', 'feat_vals', 'label'],
-                num_parallel_workers=8)
-    ds = ds.repeat(epochs)
-    return ds
+        data_set = ds.MindDataset(os.path.join(directory, file_prefix_name + file_suffix_name),
+                                  columns_list=['feat_ids', 'feat_vals', 'label'],
+                                  shuffle=shuffle, num_parallel_workers=8)
+    data_set = data_set.batch(int(batch_size / line_per_sample), drop_remainder=True)
+    data_set = data_set.map(_padding_func(batch_size, manual_shape, target_column),
+                            input_columns=['feat_ids', 'feat_vals', 'label'],
+                            column_order=['feat_ids', 'feat_vals', 'label'],
+                            num_parallel_workers=8)
+    data_set = data_set.repeat(epochs)
+    return data_set
 
 
 def _get_vocab_size(target_column_number, worker_size, total_vocab_size, multiply=False, per_vocab_size=None):
@@ -284,7 +282,7 @@ def _get_vocab_size(target_column_number, worker_size, total_vocab_size, multipl
                        5, 21762, 14, 15, 15030, 61, 12220]
 
     new_vocabs = inidival_vocabs + [1] * \
-        (target_column_number - len(inidival_vocabs))
+                 (target_column_number - len(inidival_vocabs))
     part_size = int(target_column_number / worker_size)
 
     # According to the workers, we merge some fields into the same part
@@ -304,21 +302,21 @@ def _get_vocab_size(target_column_number, worker_size, total_vocab_size, multipl
         # Expands the vocabulary of each field by the multiplier
         if multiply is True:
             cur_sum = sum(new_vocab_size)
-            k = total_vocab_size/cur_sum
+            k = total_vocab_size / cur_sum
             new_vocab_size = [
-                math.ceil(int(item*k)/worker_size)*worker_size for item in new_vocab_size]
-            new_vocab_size = [(item // 8 + 1)*8 for item in new_vocab_size]
+                math.ceil(int(item * k) / worker_size) * worker_size for item in new_vocab_size]
+            new_vocab_size = [(item // 8 + 1) * 8 for item in new_vocab_size]
 
         else:
             if total_vocab_size > sum(new_vocab_size):
                 new_vocab_size[-1] = total_vocab_size - \
-                    sum(new_vocab_size[:-1])
+                                     sum(new_vocab_size[:-1])
                 new_vocab_size = [item for item in new_vocab_size]
             else:
                 raise ValueError(
                     "Please providede the correct vocab size, now is {}".format(total_vocab_size))
 
-    for i in range(worker_size-1):
+    for i in range(worker_size - 1):
         off = index_offsets[i] + features[i]
         index_offsets.append(off)
 

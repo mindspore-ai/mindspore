@@ -14,11 +14,10 @@
 # ============================================================================
 """ create train dataset. """
 
-
 from functools import partial
 
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C2
 import mindspore.dataset.vision.c_transforms as C
 
@@ -37,8 +36,8 @@ def create_dataset(dataset_path, config, repeat_num=1, batch_size=32):
         dataset
     """
 
-    load_func = partial(de.Cifar10Dataset, dataset_path)
-    ds = load_func(num_parallel_workers=8, shuffle=False)
+    load_func = partial(ds.Cifar10Dataset, dataset_path)
+    data_set = load_func(num_parallel_workers=8, shuffle=False)
 
     resize_height = config.image_height
     resize_width = config.image_width
@@ -54,15 +53,15 @@ def create_dataset(dataset_path, config, repeat_num=1, batch_size=32):
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(operations=c_trans, input_columns="image",
-                num_parallel_workers=8)
-    ds = ds.map(operations=type_cast_op,
-                input_columns="label", num_parallel_workers=8)
+    data_set = data_set.map(operations=c_trans, input_columns="image",
+                            num_parallel_workers=8)
+    data_set = data_set.map(operations=type_cast_op,
+                            input_columns="label", num_parallel_workers=8)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set

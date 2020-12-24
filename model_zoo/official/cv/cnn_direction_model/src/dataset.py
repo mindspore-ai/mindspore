@@ -17,7 +17,7 @@ Data operations, will be used in train.py and eval.py
 """
 import os
 
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
 from src.dataset_utils import lucky, noise_blur, noise_speckle, noise_gamma, noise_gaussian, noise_salt_pepper, \
     shift_color, enhance_brightness, enhance_sharpness, enhance_contrast, enhance_color, gaussian_blur, \
@@ -26,6 +26,7 @@ from src.dataset_utils import lucky, noise_blur, noise_speckle, noise_gamma, noi
 
 import cv2
 import numpy as np
+
 cv2.setNumThreads(0)
 
 image_height = None
@@ -179,23 +180,24 @@ def create_dataset_train(mindrecord_file_pos, config):
     rank_id = int(os.getenv("RANK_ID", '0'))
     decode = C.Decode()
 
-    ds = de.MindDataset(mindrecord_file_pos, columns_list=["image", "label"], num_parallel_workers=4,
-                        num_shards=rank_size, shard_id=rank_id, shuffle=True)
-    ds = ds.map(operations=decode, input_columns=["image"], num_parallel_workers=8)
+    data_set = ds.MindDataset(mindrecord_file_pos, columns_list=["image", "label"], num_parallel_workers=4,
+                              num_shards=rank_size, shard_id=rank_id, shuffle=True)
+    data_set = data_set.map(operations=decode, input_columns=["image"], num_parallel_workers=8)
 
     augmentor = Augmentor(config.augment_severity, config.augment_prob)
     operation = augmentor.process
-    ds = ds.map(operations=operation, input_columns=["image"],
-                num_parallel_workers=1, python_multiprocessing=True)
+    data_set = data_set.map(operations=operation, input_columns=["image"],
+                            num_parallel_workers=1, python_multiprocessing=True)
     ##randomly augment half of samples to be negative samples
-    ds = ds.map(operations=[random_neg_with_rotate, unify_img_label, transform_image], input_columns=["image", "label"],
-                num_parallel_workers=8, python_multiprocessing=True)
-    ##for training double the dataset to accoun for positive and negative
-    ds = ds.repeat(2)
+    data_set = data_set.map(operations=[random_neg_with_rotate, unify_img_label, transform_image],
+                            input_columns=["image", "label"],
+                            num_parallel_workers=8, python_multiprocessing=True)
+    ##for training double the data_set to accoun for positive and negative
+    data_set = data_set.repeat(2)
 
     # apply batch operations
-    ds = ds.batch(config.batch_size, drop_remainder=True)
-    return ds
+    data_set = data_set.batch(config.batch_size, drop_remainder=True)
+    return data_set
 
 
 def resize_image(img, label):
@@ -230,17 +232,18 @@ def create_dataset_eval(mindrecord_file_pos, config):
     rank_id = int(os.getenv("RANK_ID", '0'))
     decode = C.Decode()
 
-    ds = de.MindDataset(mindrecord_file_pos, columns_list=["image", "label"], num_parallel_workers=1,
-                        num_shards=rank_size, shard_id=rank_id, shuffle=False)
-    ds = ds.map(operations=decode, input_columns=["image"], num_parallel_workers=8)
+    data_set = ds.MindDataset(mindrecord_file_pos, columns_list=["image", "label"], num_parallel_workers=1,
+                              num_shards=rank_size, shard_id=rank_id, shuffle=False)
+    data_set = data_set.map(operations=decode, input_columns=["image"], num_parallel_workers=8)
 
     global image_height
     global image_width
     image_height = config.im_size_h
     image_width = config.im_size_w
-    ds = ds.map(operations=resize_image, input_columns=["image", "label"], num_parallel_workers=config.work_nums,
-                python_multiprocessing=False)
+    data_set = data_set.map(operations=resize_image, input_columns=["image", "label"],
+                            num_parallel_workers=config.work_nums,
+                            python_multiprocessing=False)
     # apply batch operations
-    ds = ds.batch(1, drop_remainder=True)
+    data_set = data_set.batch(1, drop_remainder=True)
 
-    return ds
+    return data_set

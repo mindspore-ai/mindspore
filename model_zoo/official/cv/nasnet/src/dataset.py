@@ -16,7 +16,7 @@
 Data operations, will be used in train.py and eval.py
 """
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C2
 import mindspore.dataset.vision.c_transforms as C
 
@@ -37,10 +37,10 @@ def create_dataset(dataset_path, config, do_train, repeat_num=1):
     rank = config.rank
     group_size = config.group_size
     if group_size == 1:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=config.work_nums, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=config.work_nums, shuffle=True)
     else:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=config.work_nums, shuffle=True,
-                                   num_shards=group_size, shard_id=rank)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=config.work_nums, shuffle=True,
+                                         num_shards=group_size, shard_id=rank)
     # define map operations
     if do_train:
         trans = [
@@ -60,10 +60,10 @@ def create_dataset(dataset_path, config, do_train, repeat_num=1):
         C.HWC2CHW()
     ]
     type_cast_op = C2.TypeCast(mstype.int32)
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=config.work_nums)
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=config.work_nums)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=config.work_nums)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=config.work_nums)
     # apply batch operations
-    ds = ds.batch(config.batch_size, drop_remainder=True)
+    data_set = data_set.batch(config.batch_size, drop_remainder=True)
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
-    return ds
+    data_set = data_set.repeat(repeat_num)
+    return data_set

@@ -25,20 +25,23 @@ import pyclipper
 from PIL import Image
 from src.config import config
 
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.vision.py_transforms as py_transforms
 
 __all__ = ['train_dataset_creator', 'test_dataset_creator']
+
 
 def get_img(img_path):
     img = cv2.imread(img_path)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img
 
+
 def get_imgs_names(root_dir):
     img_paths = [i for i in os.listdir(root_dir)
                  if os.path.splitext(i)[-1].lower() in ['.jpg', '.jpeg', '.png']]
     return img_paths
+
 
 def get_bboxes(img, gt_path):
     h, w = img.shape[0:2]
@@ -58,6 +61,7 @@ def get_bboxes(img, gt_path):
         tags.append(tag)
     return np.array(bboxes), tags
 
+
 def random_scale(img, min_size):
     h, w = img.shape[0:2]
     if max(h, w) > 1280:
@@ -74,11 +78,13 @@ def random_scale(img, min_size):
         img = cv2.resize(img, dsize=None, fx=scale2, fy=scale2)
     return img
 
+
 def random_horizontal_flip(imgs):
     if random.random() < 0.5:
         for i, _ in enumerate(imgs):
             imgs[i] = np.flip(imgs[i], axis=1).copy()
     return imgs
+
 
 def random_rotate(imgs):
     max_angle = 10
@@ -90,6 +96,7 @@ def random_rotate(imgs):
         img_rotation = cv2.warpAffine(img, rotation_matrix, (h, w))
         imgs[i] = img_rotation
     return imgs
+
 
 def random_crop(imgs, img_size):
     h, w = imgs[0].shape[0:2]
@@ -118,20 +125,24 @@ def random_crop(imgs, img_size):
             imgs[idx] = imgs[idx][i:i + th, j:j + tw]
     return imgs
 
+
 def scale(img, long_size=2240):
     h, w = img.shape[0:2]
     scale_long = long_size * 1.0 / max(h, w)
     img = cv2.resize(img, dsize=None, fx=scale_long, fy=scale_long)
     return img
 
+
 def dist(a, b):
     return np.sqrt(np.sum((a - b) ** 2))
+
 
 def perimeter(bbox):
     peri = 0.0
     for i in range(bbox.shape[0]):
         peri += dist(bbox[i], bbox[(i + 1) % bbox.shape[0]])
     return peri
+
 
 def shrink(bboxes, rate, max_shr=20):
     rate = rate * rate
@@ -157,6 +168,7 @@ def shrink(bboxes, rate, max_shr=20):
         shrinked_bboxes.append(shrinked_bbox)
 
     return np.array(shrinked_bboxes)
+
 
 class TrainDataset:
     def __init__(self):
@@ -260,6 +272,7 @@ class TrainDataset:
     def __len__(self):
         return len(self.all_img_paths)
 
+
 def IC15_TEST_Generator():
     ic15_test_data_dir = config.TEST_ROOT_DIR + 'ch4_test_images/'
     img_size = config.INFER_LONG_SIZE
@@ -298,6 +311,7 @@ def IC15_TEST_Generator():
 
         yield img, img_resized, img_name
 
+
 class DistributedSampler():
     def __init__(self, dataset, rank, group_size, shuffle=True, seed=0):
         self.dataset = dataset
@@ -324,18 +338,20 @@ class DistributedSampler():
     def __len__(self):
         return self.num_samplers
 
+
 def train_dataset_creator(rank, group_size, shuffle=True):
     cv2.setNumThreads(0)
     dataset = TrainDataset()
     sampler = DistributedSampler(dataset, rank, group_size, shuffle)
-    ds = de.GeneratorDataset(dataset, ['img', 'gt_text', 'gt_kernels', 'training_mask'], num_parallel_workers=8,
-                             sampler=sampler)
-    ds = ds.repeat(1)
-    ds = ds.batch(config.TRAIN_BATCH_SIZE, drop_remainder=config.TRAIN_DROP_REMAINDER)
-    return ds
+    data_set = ds.GeneratorDataset(dataset, ['img', 'gt_text', 'gt_kernels', 'training_mask'], num_parallel_workers=8,
+                                   sampler=sampler)
+    data_set = data_set.repeat(1)
+    data_set = data_set.batch(config.TRAIN_BATCH_SIZE, drop_remainder=config.TRAIN_DROP_REMAINDER)
+    return data_set
+
 
 def test_dataset_creator():
-    ds = de.GeneratorDataset(IC15_TEST_Generator, ['img', 'img_resized', 'img_name'])
-    ds = ds.shuffle(config.TEST_BUFFER_SIZE)
-    ds = ds.batch(1, drop_remainder=config.TEST_DROP_REMAINDER)
-    return ds
+    data_set = ds.GeneratorDataset(IC15_TEST_Generator, ['img', 'img_resized', 'img_name'])
+    data_set = data_set.shuffle(config.TEST_BUFFER_SIZE)
+    data_set = data_set.batch(1, drop_remainder=config.TEST_DROP_REMAINDER)
+    return data_set

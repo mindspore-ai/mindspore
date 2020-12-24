@@ -17,7 +17,7 @@ create train or eval dataset.
 """
 import os
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.vision.c_transforms as C
 import mindspore.dataset.transforms.vision.py_transforms as P
 import mindspore.dataset.transforms.c_transforms as C2
@@ -41,18 +41,18 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
         rank_size = int(os.getenv("RANK_SIZE"))
         rank_id = int(os.getenv("RANK_ID"))
         if rank_size == 1:
-            ds = de.MindDataset(
+            data_set = ds.MindDataset(
                 dataset_path, num_parallel_workers=8, shuffle=True)
         else:
-            ds = de.MindDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                num_shards=rank_size, shard_id=rank_id)
+            data_set = ds.MindDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                      num_shards=rank_size, shard_id=rank_id)
     elif platform == "GPU":
         if do_train:
             from mindspore.communication.management import get_rank, get_group_size
-            ds = de.MindDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                num_shards=get_group_size(), shard_id=get_rank())
+            data_set = ds.MindDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                      num_shards=get_group_size(), shard_id=get_rank())
         else:
-            ds = de.MindDataset(
+            data_set = ds.MindDataset(
                 dataset_path, num_parallel_workers=8, shuffle=True)
     else:
         raise ValueError("Unsupport platform.")
@@ -67,7 +67,7 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
 
     color_op = C.RandomColorAdjust(
         brightness=0.4, contrast=0.4, saturation=0.4)
-    rescale_op = C.Rescale(1/255.0, 0)
+    rescale_op = C.Rescale(1 / 255.0, 0)
     normalize_op = C.Normalize(
         mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     change_swap_op = C.HWC2CHW()
@@ -93,18 +93,18 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
         trans = composeop()
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(input_columns="image", operations=trans,
-                num_parallel_workers=8)
-    ds = ds.map(input_columns="label_list",
-                operations=type_cast_op, num_parallel_workers=8)
+    data_set = data_set.map(input_columns="image", operations=trans,
+                            num_parallel_workers=8)
+    data_set = data_set.map(input_columns="label_list",
+                            operations=type_cast_op, num_parallel_workers=8)
 
     # apply shuffle operations
-    ds = ds.shuffle(buffer_size=buffer_size)
+    data_set = data_set.shuffle(buffer_size=buffer_size)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set

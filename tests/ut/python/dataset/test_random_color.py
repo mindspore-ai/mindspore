@@ -19,7 +19,6 @@ import numpy as np
 import pytest
 
 import mindspore.dataset as ds
-import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.py_transforms
 import mindspore.dataset.vision.c_transforms as vision
 import mindspore.dataset.vision.py_transforms as F
@@ -44,7 +43,7 @@ def test_random_color_py(degrees=(0.1, 1.9), plot=False):
     logger.info("Test RandomColor")
 
     # Original Images
-    data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_original = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
                                                                               F.Resize((224, 224)),
@@ -63,7 +62,7 @@ def test_random_color_py(degrees=(0.1, 1.9), plot=False):
                                         axis=0)
 
             # Random Color Adjusted Images
-    data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_random_color = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
                                                                                   F.Resize((224, 224)),
@@ -146,7 +145,7 @@ def test_random_color_py_md5():
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # Generate dataset
-    data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
                                                                      F.RandomColor((2.0, 2.5)),
@@ -234,7 +233,7 @@ def test_random_color_c_errors():
     assert "degrees must be a sequence with length 2." in str(error_info.value)
 
     # RandomColor Cpp Op will fail with one channel input
-    mnist_ds = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+    mnist_ds = ds.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
     mnist_ds = mnist_ds.map(operations=vision.RandomColor(), input_columns="image")
 
     with pytest.raises(RuntimeError) as error_info:

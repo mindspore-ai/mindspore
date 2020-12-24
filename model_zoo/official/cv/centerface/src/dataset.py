@@ -14,7 +14,7 @@
 # ============================================================================
 """generate dataloader and data processing entry"""
 
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 
 from src.utils import DistributedSampler
 
@@ -32,7 +32,7 @@ def GetDataLoader(per_batch_size,
     """
     centerface_gen = CenterfaceDataset(config=config, split=split)
     sampler = DistributedSampler(centerface_gen, rank, group_size, shuffle=(split == 'train')) # user defined sampling strategy
-    de_dataset = de.GeneratorDataset(centerface_gen, ["image", "anns"], sampler=sampler, num_parallel_workers=16)
+    de_dataset = ds.GeneratorDataset(centerface_gen, ["image", "anns"], sampler=sampler, num_parallel_workers=16)
 
     if group_size > 1:
         num_parallel_workers = 24

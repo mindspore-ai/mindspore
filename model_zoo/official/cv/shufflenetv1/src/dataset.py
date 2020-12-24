@@ -15,7 +15,7 @@
 """Data operations, will be used in train.py and eval.py"""
 from src.config import config
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C2
 import mindspore.dataset.vision.c_transforms as C
 
@@ -36,10 +36,10 @@ def create_dataset(dataset_path, do_train, device_num=1, rank=0):
     """
 
     if device_num == 1:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                   num_shards=device_num, shard_id=rank)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                         num_shards=device_num, shard_id=rank)
     # define map operations
     if do_train:
         trans = [
@@ -59,8 +59,8 @@ def create_dataset(dataset_path, do_train, device_num=1, rank=0):
     ]
 
     type_cast_op = C2.TypeCast(mstype.int32)
-    ds = ds.map(input_columns="image", operations=trans, num_parallel_workers=8)
-    ds = ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=8)
+    data_set = data_set.map(input_columns="image", operations=trans, num_parallel_workers=8)
+    data_set = data_set.map(input_columns="label", operations=type_cast_op, num_parallel_workers=8)
     # apply batch operations
-    ds = ds.batch(config.batch_size, drop_remainder=True)
-    return ds
+    data_set = data_set.batch(config.batch_size, drop_remainder=True)
+    return data_set

@@ -17,7 +17,7 @@ create train or eval dataset.
 """
 import os
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 from mindspore.communication.management import init, get_rank, get_group_size
@@ -47,10 +47,10 @@ def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         else:
             device_num = 1
     if device_num == 1:
-        ds = de.Cifar10Dataset(dataset_path, num_parallel_workers=8, shuffle=True)
+        data_set = ds.Cifar10Dataset(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
-        ds = de.Cifar10Dataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                               num_shards=device_num, shard_id=rank_id)
+        data_set = ds.Cifar10Dataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                     num_shards=device_num, shard_id=rank_id)
 
     # define map operations
     trans = []
@@ -69,15 +69,15 @@ def create_dataset1(dataset_path, do_train, repeat_num=1, batch_size=32, target=
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set
 
 
 def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False):
@@ -106,10 +106,10 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
             device_num = 1
 
     if device_num == 1:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                   num_shards=device_num, shard_id=rank_id)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                         num_shards=device_num, shard_id=rank_id)
 
     image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
@@ -134,16 +134,16 @@ def create_dataset2(dataset_path, do_train, repeat_num=1, batch_size=32, target=
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set
 
 
 def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False):
@@ -171,10 +171,10 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
             device_num = 1
             rank_id = 1
     if device_num == 1:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                   num_shards=device_num, shard_id=rank_id)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                         num_shards=device_num, shard_id=rank_id)
     image_size = 224
     mean = [0.475 * 255, 0.451 * 255, 0.392 * 255]
     std = [0.275 * 255, 0.267 * 255, 0.278 * 255]
@@ -198,15 +198,15 @@ def create_dataset3(dataset_path, do_train, repeat_num=1, batch_size=32, target=
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set
 
 
 def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend", distribute=False):
@@ -234,10 +234,10 @@ def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         else:
             device_num = 1
     if device_num == 1:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=12, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=12, shuffle=True)
     else:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=12, shuffle=True,
-                                   num_shards=device_num, shard_id=rank_id)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=12, shuffle=True,
+                                         num_shards=device_num, shard_id=rank_id)
     image_size = 224
     mean = [123.68, 116.78, 103.94]
     std = [1.0, 1.0, 1.0]
@@ -260,16 +260,16 @@ def create_dataset4(dataset_path, do_train, repeat_num=1, batch_size=32, target=
         ]
 
     type_cast_op = C2.TypeCast(mstype.int32)
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=12)
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=12)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=12)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=12)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set
 
 
 def _get_rank_info():

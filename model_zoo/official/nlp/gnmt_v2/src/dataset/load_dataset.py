@@ -15,7 +15,7 @@
 """Dataset loader to feed into model."""
 import os
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as deC
 
 
@@ -55,7 +55,7 @@ def _load_dataset(input_files, schema_file, batch_size, sink_mode=False,
         print(f" | Loading {datafile}.")
 
     if not is_translate:
-        ds = de.MindDataset(
+        data_set = ds.MindDataset(
             input_files, columns_list=[
                 "src", "src_padding",
                 "prev_opt",
@@ -64,18 +64,18 @@ def _load_dataset(input_files, schema_file, batch_size, sink_mode=False,
             num_parallel_workers=8
         )
 
-        ori_dataset_size = ds.get_dataset_size()
+        ori_dataset_size = data_set.get_dataset_size()
         print(f" | Dataset size: {ori_dataset_size}.")
         if shuffle:
-            ds = ds.shuffle(buffer_size=ori_dataset_size // 20)
+            data_set = data_set.shuffle(buffer_size=ori_dataset_size // 20)
         type_cast_op = deC.TypeCast(mstype.int32)
-        ds = ds.map(input_columns="src", operations=type_cast_op, num_parallel_workers=8)
-        ds = ds.map(input_columns="src_padding", operations=type_cast_op, num_parallel_workers=8)
-        ds = ds.map(input_columns="prev_opt", operations=type_cast_op, num_parallel_workers=8)
-        ds = ds.map(input_columns="target", operations=type_cast_op, num_parallel_workers=8)
-        ds = ds.map(input_columns="tgt_padding", operations=type_cast_op, num_parallel_workers=8)
+        data_set = data_set.map(input_columns="src", operations=type_cast_op, num_parallel_workers=8)
+        data_set = data_set.map(input_columns="src_padding", operations=type_cast_op, num_parallel_workers=8)
+        data_set = data_set.map(input_columns="prev_opt", operations=type_cast_op, num_parallel_workers=8)
+        data_set = data_set.map(input_columns="target", operations=type_cast_op, num_parallel_workers=8)
+        data_set = data_set.map(input_columns="tgt_padding", operations=type_cast_op, num_parallel_workers=8)
 
-        ds = ds.rename(
+        data_set = data_set.rename(
             input_columns=["src",
                            "src_padding",
                            "prev_opt",
@@ -87,9 +87,9 @@ def _load_dataset(input_files, schema_file, batch_size, sink_mode=False,
                             "target_eos_ids",
                             "target_eos_mask"]
         )
-        ds = ds.batch(batch_size, drop_remainder=drop_remainder)
+        data_set = data_set.batch(batch_size, drop_remainder=drop_remainder)
     else:
-        ds = de.MindDataset(
+        data_set = ds.MindDataset(
             input_files, columns_list=[
                 "src", "src_padding"
             ],
@@ -97,23 +97,23 @@ def _load_dataset(input_files, schema_file, batch_size, sink_mode=False,
             num_parallel_workers=8
         )
 
-        ori_dataset_size = ds.get_dataset_size()
+        ori_dataset_size = data_set.get_dataset_size()
         print(f" | Dataset size: {ori_dataset_size}.")
         if shuffle:
-            ds = ds.shuffle(buffer_size=ori_dataset_size // 20)
+            data_set = data_set.shuffle(buffer_size=ori_dataset_size // 20)
         type_cast_op = deC.TypeCast(mstype.int32)
-        ds = ds.map(input_columns="src", operations=type_cast_op, num_parallel_workers=8)
-        ds = ds.map(input_columns="src_padding", operations=type_cast_op, num_parallel_workers=8)
+        data_set = data_set.map(input_columns="src", operations=type_cast_op, num_parallel_workers=8)
+        data_set = data_set.map(input_columns="src_padding", operations=type_cast_op, num_parallel_workers=8)
 
-        ds = ds.rename(
+        data_set = data_set.rename(
             input_columns=["src",
                            "src_padding"],
             output_columns=["source_eos_ids",
                             "source_eos_mask"]
         )
-        ds = ds.batch(batch_size, drop_remainder=drop_remainder)
+        data_set = data_set.batch(batch_size, drop_remainder=drop_remainder)
 
-    return ds
+    return data_set
 
 
 def load_dataset(data_files: list, schema: str, batch_size: int, sink_mode: bool,

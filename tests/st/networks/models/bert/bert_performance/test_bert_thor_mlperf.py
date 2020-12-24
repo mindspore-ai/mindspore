@@ -20,7 +20,7 @@ import time
 from multiprocessing import Process, Queue
 import pytest
 import numpy as np
-import mindspore.dataset as dataset
+import mindspore.dataset as ds
 import mindspore.common.dtype as mstype
 import mindspore.communication.management as D
 from mindspore import context
@@ -28,7 +28,6 @@ from mindspore import log as logger
 from mindspore.train.callback import Callback
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore.dataset.engine.datasets as de
 import mindspore.dataset.transforms.c_transforms as C
 from model_zoo.official.nlp.bert_thor.src.bert_for_pre_training import BertNetworkWithLoss, BertTrainOneStepCell
 from model_zoo.official.nlp.bert_thor.src.bert_net_config import bert_net_cfg
@@ -45,11 +44,13 @@ train_steps = 200
 batch_size = 12
 
 np.random.seed(1)
-dataset.config.set_seed(1)
+ds.config.set_seed(1)
 os.environ['GLOG_v'] = str(2)
+
 
 class TimeMonitor(Callback):
     """Time Monitor."""
+
     def __init__(self, data_size):
         super(TimeMonitor, self).__init__()
         self.data_size = data_size
@@ -67,6 +68,7 @@ class TimeMonitor(Callback):
         self.per_step_mseconds_list.append(per_step_mseconds)
         print("epoch: {}, per_step_mseconds are {}".format(cb_params.cur_epoch_num, str(per_step_mseconds)), flush=True)
 
+
 class LossCallback(Callback):
     def __init__(self):
         super(LossCallback, self).__init__()
@@ -78,6 +80,7 @@ class LossCallback(Callback):
         print("epoch: {}, step: {}, outputs are {}".format(cb_params.cur_epoch_num, cb_params.cur_step_num,
                                                            str(cb_params.net_outputs)), flush=True)
 
+
 def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, schema_dir=None):
     """create train dataset"""
     # apply repeat operations
@@ -87,25 +90,25 @@ def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, 
         if "tfrecord" in file_name:
             data_files.append(os.path.join(data_dir, file_name))
     data_files = sorted(data_files)
-    ds = de.TFRecordDataset(data_files, schema_dir if schema_dir != "" else None,
-                            columns_list=["input_ids", "input_mask", "segment_ids", "next_sentence_labels",
-                                          "masked_lm_positions", "masked_lm_ids", "masked_lm_weights"],
-                            shuffle=de.Shuffle.FILES if do_shuffle == "true" else False,
-                            num_shards=device_num, shard_id=rank, shard_equal_rows=True)
-    ori_dataset_size = ds.get_dataset_size()
+    data_set = ds.TFRecordDataset(data_files, schema_dir if schema_dir != "" else None,
+                                  columns_list=["input_ids", "input_mask", "segment_ids", "next_sentence_labels",
+                                                "masked_lm_positions", "masked_lm_ids", "masked_lm_weights"],
+                                  shuffle=ds.Shuffle.FILES if do_shuffle == "true" else False,
+                                  num_shards=device_num, shard_id=rank, shard_equal_rows=True)
+    ori_dataset_size = data_set.get_dataset_size()
     print('origin dataset size: ', ori_dataset_size)
     type_cast_op = C.TypeCast(mstype.int32)
-    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_ids")
-    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_positions")
-    ds = ds.map(operations=type_cast_op, input_columns="next_sentence_labels")
-    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
-    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
-    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="masked_lm_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="masked_lm_positions")
+    data_set = data_set.map(operations=type_cast_op, input_columns="next_sentence_labels")
+    data_set = data_set.map(operations=type_cast_op, input_columns="segment_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="input_mask")
+    data_set = data_set.map(operations=type_cast_op, input_columns="input_ids")
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
-    logger.info("data size: {}".format(ds.get_dataset_size()))
-    logger.info("repeat count: {}".format(ds.get_repeat_count()))
-    return ds
+    data_set = data_set.batch(batch_size, drop_remainder=True)
+    logger.info("data size: {}".format(data_set.get_dataset_size()))
+    logger.info("repeat count: {}".format(data_set.get_repeat_count()))
+    return data_set
 
 
 def _set_bert_all_reduce_split():
@@ -151,12 +154,12 @@ def train_process_bert_thor(q, device_id, epoch_size, device_num):
                                       device_num=device_num)
 
     bert_net_cfg.num_hidden_layers = 4
-    ds = create_bert_dataset(device_num=device_num, rank=rank, do_shuffle=False, data_dir=DATASET_PATH, schema_dir=None)
+    data_set = create_bert_dataset(device_num=device_num, rank=rank, do_shuffle=False, data_dir=DATASET_PATH,
+                                   schema_dir=None)
     net_with_loss = BertNetworkWithLoss(bert_net_cfg, True)
 
-    new_repeat_count = epoch_size * ds.get_dataset_size() // data_sink_steps
+    new_repeat_count = epoch_size * data_set.get_dataset_size() // data_sink_steps
     new_repeat_count = min(new_repeat_count, train_steps // data_sink_steps)
-
 
     lr = get_bert_lr()
     damping = get_bert_damping()
@@ -175,7 +178,7 @@ def train_process_bert_thor(q, device_id, epoch_size, device_num):
 
     net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer)
     model = Model(net_with_grads, frequency=cfg.Thor.frequency)
-    model.train(new_repeat_count, ds, callbacks=callback, dataset_sink_mode=True, sink_size=data_sink_steps)
+    model.train(new_repeat_count, data_set, callbacks=callback, dataset_sink_mode=True, sink_size=data_sink_steps)
 
     loss_list = loss_callback.loss_list
     per_step_mseconds = time_monitor_callback.per_step_mseconds_list
@@ -229,6 +232,7 @@ def test_bert_thor_mlperf_8p():
     print("End training...")
     assert mean_cost < 64.2
     assert mean_loss < 7.9
+
 
 if __name__ == '__main__':
     test_bert_thor_mlperf_8p()
