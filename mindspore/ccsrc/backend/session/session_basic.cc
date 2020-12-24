@@ -1421,6 +1421,13 @@ std::vector<AnfNodePtr> ExtendNodeUsers(const FuncGraphManagerPtr &front_func_gr
       continue;
     }
     if (IsPrimitiveCNode(user.first, prim::kPrimDepend)) {
+      auto depend_cnode = user.first->cast<CNodePtr>();
+      if (depend_cnode == nullptr) {
+        continue;
+      }
+      if (front_node != depend_cnode->input(1)) {
+        continue;
+      }
       auto res = ExtendNodeUsers(front_func_graph_manager, user.first);
       result.insert(result.end(), res.begin(), res.end());
       continue;
