@@ -104,6 +104,10 @@ void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std
     return;
   }
 
+  // call sub_graph->Init() after construct subgraph like scheduler.cc
+  MS_LOG(DEBUG) << "call sub_graph->Init()";
+  EXPECT_TRUE(sub_graph->Init() == RET_OK);
+
   // simulating benchmark:  session_->CompileGraph() -> PrepareKernels() -> OpenCLSubGraph.Prepare()
   MS_LOG(DEBUG) << "call sub_graph->Prepare()";
   EXPECT_TRUE(sub_graph->Prepare() == RET_OK);  // will set Tensor's allocator be OpenCLAllocator
