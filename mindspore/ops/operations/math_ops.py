@@ -140,8 +140,8 @@ class TensorAdd(_MathBinaryOp):
 
     Examples:
         >>> add = ops.TensorAdd()
-        >>> input_x = Tensor(np.array([1,2,3]).astype(np.float32))
-        >>> input_y = Tensor(np.array([4,5,6]).astype(np.float32))
+        >>> input_x = Tensor(np.array([1, 2, 3]).astype(np.float32))
+        >>> input_y = Tensor(np.array([4, 5, 6]).astype(np.float32))
         >>> output = add(input_x, input_y)
         >>> print(output)
         [5. 7. 9.]
