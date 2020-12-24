@@ -31,7 +31,6 @@ from src.dataset import convert_to_mindrecord
 from src.textrcnn import textrcnn
 from src.utils import get_lr
 
-
 set_seed(2)
 
 if __name__ == '__main__':
@@ -56,7 +55,7 @@ if __name__ == '__main__':
 
     embedding_table = np.loadtxt(os.path.join(cfg.preprocess_path, "weight.txt")).astype(np.float32)
 
-    network = textrcnn(weight=Tensor(embedding_table), vocab_size=embedding_table.shape[0], \
+    network = textrcnn(weight=Tensor(embedding_table), vocab_size=embedding_table.shape[0],
                        cell=cfg.cell, batch_size=cfg.batch_size)
 
     ds_train = create_dataset(cfg.preprocess_path, cfg.batch_size, cfg.num_epochs, True)
@@ -74,7 +73,7 @@ if __name__ == '__main__':
     model = Model(network, loss, opt, {'acc': Accuracy()}, amp_level="O3")
 
     print("============== Starting Training ==============")
-    config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps, \
+    config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
                                  keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix=cfg.cell, directory=cfg.ckpt_folder_path, config=config_ck)
     model.train(num_epochs, ds_train, callbacks=[ckpoint_cb, loss_cb])

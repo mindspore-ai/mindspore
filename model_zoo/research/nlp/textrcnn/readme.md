@@ -74,7 +74,7 @@ DEVICE_ID=7 python train.py
 bash scripts/run_train.sh
 
 # run evaluating
-DEVICE_ID=7 python eval.py --ckpt_path ./ckpt/lstm-10_149.ckpt
+DEVICE_ID=7 python eval.py --ckpt_path {checkpoint path}
 # or you can use the shell script to evaluate in background
 bash scripts/run_eval.sh
 ```
