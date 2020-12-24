@@ -20,12 +20,23 @@ namespace mindspore {
 namespace kernel {
 MS_REG_GPU_KERNEL_ONE(
   ReluGradV2,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeFloat64),
+  ReluGradV2GpuKernel, double)
+MS_REG_GPU_KERNEL_ONE(
+  ReluGradV2,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeFloat32),
   ReluGradV2GpuKernel, float)
 MS_REG_GPU_KERNEL_ONE(
   ReluGradV2,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeFloat16),
   ReluGradV2GpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  ReluGradV2, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt8),
+  ReluGradV2GpuKernel, int8_t)
+MS_REG_GPU_KERNEL_ONE(
+  ReluGradV2,
+  KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt16),
+  ReluGradV2GpuKernel, int16_t)
 MS_REG_GPU_KERNEL_ONE(
   ReluGradV2,
   KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt32),
@@ -34,5 +45,10 @@ MS_REG_GPU_KERNEL_ONE(
   ReluGradV2,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
   ReluGradV2GpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  ReluGradV2,
+  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt8),
+  ReluGradV2GpuKernel, uint8_t)
+
 }  // namespace kernel
 }  // namespace mindspore

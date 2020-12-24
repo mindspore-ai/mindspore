@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_RELU_V2_GPU_KERNEL_H_
-#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_RELU_V2_GPU_KERNEL_H_
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_RELU_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_RELU_GPU_KERNEL_H_
 
 #include <vector>
-#include <algorithm>
-#include <functional>
+#include <map>
+#include <string>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
 #include "backend/kernel_compiler/gpu/cuda_impl/relu_impl.cuh"
@@ -27,56 +27,72 @@
 namespace mindspore {
 namespace kernel {
 template <typename T>
-class ReluV2GpuKernel : public GpuKernel {
+class ReLUGpuFwdKernel : public GpuKernel {
  public:
-  ReluV2GpuKernel() { ResetResource(); }
-  ~ReluV2GpuKernel() override = default;
-
+  ReLUGpuFwdKernel() { ResetResource(); }
+  ~ReLUGpuFwdKernel() override {}
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
   const std::vector<size_t> &GetWorkspaceSizeList() const override { return workspace_size_list_; }
 
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
-    auto x = GetDeviceAddress<T>(inputs, 0);
-    auto y = GetDeviceAddress<T>(outputs, 0);
-    auto mask = GetDeviceAddress<uint32_t>(outputs, 1);
+    if (is_null_input_) {
+      return true;
+    }
+    T *input = GetDeviceAddress<T>(inputs, 0);
+    T *output = GetDeviceAddress<T>(outputs, 0);
 
-    ReluV2(element_num_, x, y, mask, reinterpret_cast<cudaStream_t>(stream_ptr));
+    const int size = input_size_ / sizeof(T);
+    CalReLU(size, input, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
-
   bool Init(const CNodePtr &kernel_node) override {
-    MS_EXCEPTION_IF_NULL(kernel_node);
-    auto shape = AnfAlgo::GetInputDeviceShape(kernel_node, 0);
-    element_num_ = std::accumulate(shape.begin(), shape.end(), static_cast<size_t>(1), std::multiplies<size_t>());
+    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
+    if (input_num != 1) {
+      MS_LOG(ERROR) << "Argument number is " << input_num << ", but ReLUGpuFwdKernel needs 1.";
+      return false;
+    }
+    auto input_shape = AnfAlgo::GetInputRealDeviceShapeIfExist(kernel_node, 0);
+    is_null_input_ = CHECK_NULL_INPUT(input_shape);
+    if (is_null_input_) {
+      MS_LOG(WARNING) << "ReLUGpuFwdKernel input is null.";
+    }
+    size_t size = 1;
+    for (size_t i = 0; i < input_shape.size(); i++) {
+      size *= input_shape[i];
+    }
+    input_size_ = size * sizeof(T);
+
     InitSizeLists();
     return true;
   }
 
   void ResetResource() noexcept override {
-    element_num_ = 0;
+    is_null_input_ = false;
     input_size_list_.clear();
     output_size_list_.clear();
     workspace_size_list_.clear();
+    input_size_ = 0;
+    workspace_size_ = 0;
   }
 
  protected:
   void InitSizeLists() override {
-    auto size = element_num_ * sizeof(T);
-    input_size_list_.push_back(size);
-    output_size_list_.push_back(size);
-    auto mask_size = (element_num_ + 31) / 32 * sizeof(uint32_t);
-    output_size_list_.push_back(mask_size);
+    input_size_list_.push_back(input_size_);
+    output_size_list_.push_back(input_size_);
+    workspace_size_list_.push_back(workspace_size_);
   }
 
  private:
-  size_t element_num_;
-
+  bool is_null_input_;
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
+  size_t input_size_;
+  size_t workspace_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_RELU_V2_GPU_KERNEL_H_
+
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_RELU_GPU_KERNEL_H_

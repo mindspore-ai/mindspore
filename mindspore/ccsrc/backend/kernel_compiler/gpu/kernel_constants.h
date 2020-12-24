@@ -46,7 +46,8 @@ static constexpr float kSignedMinFloat = -3.402823466e+38F;
 static std::map<std::string, cudnnDataType_t> kCudnnDtypeMap = {
   {"kNumberTypeFloat32", CUDNN_DATA_FLOAT},  {"kNumberTypeFloat16", CUDNN_DATA_HALF},
   {"kNumberTypeFloat64", CUDNN_DATA_DOUBLE}, {"kNumberTypeInt32", CUDNN_DATA_INT32},
-  {"kNumberTypeBool", CUDNN_DATA_INT8},      {"kNumberTypeInt8", CUDNN_DATA_INT8}};
+  {"kNumberTypeBool", CUDNN_DATA_INT8},      {"kNumberTypeInt8", CUDNN_DATA_INT8},
+  {"kNumberTypeUInt8", CUDNN_DATA_UINT8}};
 // Used by mixprecision, cuda dtype select
 static std::map<std::string, cudaDataType_t> kCudaDtypeMap = {{"kNumberTypeFloat32", CUDA_R_32F},
                                                               {"kNumberTypeFloat16", CUDA_R_16F}};
