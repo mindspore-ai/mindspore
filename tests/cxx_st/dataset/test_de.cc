@@ -74,7 +74,7 @@ TEST_F(TestDE, TestDvpp) {
     ASSERT_EQ(img->Shape().size(), 3);
     int32_t real_h = 0;
     int32_t real_w = 0;
-    int remainder = crop_size[crop_size.size() - 1] % 16;
+    int32_t remainder = crop_size[crop_size.size() - 1] % 16;
     if (crop_size.size() == 1) {
       real_h = (crop_size[0] % 2 == 0) ? crop_size[0] : crop_size[0] + 1;
       real_w = (remainder == 0) ? crop_size[0] : crop_size[0] + 16 - remainder;

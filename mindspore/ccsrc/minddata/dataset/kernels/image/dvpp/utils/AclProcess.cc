@@ -14,9 +14,9 @@
  */
 
 #include "AclProcess.h"
+#include <sys/stat.h>
 #include <sys/time.h>
 #include <thread>
-#include <sys/stat.h>
 
 namespace {
 const int BUFFER_SIZE = 2048;
@@ -125,7 +125,7 @@ APP_ERROR AclProcess::InitResource() {
  * @param: imageFile specifies the image path to be processed
  * @return: aclError which is error code of ACL API
  */
-APP_ERROR AclProcess::Preprocess(RawData &ImageInfo) {
+APP_ERROR AclProcess::Preprocess(const RawData &ImageInfo) {
   // Decode process
   APP_ERROR ret = dvppCommon_->CombineJpegdProcess(ImageInfo, PIXEL_FORMAT_YUV_SEMIPLANAR_420, true);
   if (ret != APP_ERR_OK) {
@@ -179,7 +179,7 @@ APP_ERROR AclProcess::Preprocess(RawData &ImageInfo) {
  * @param: imageFile specifies the image path to be processed
  * @return: aclError which is error code of ACL API
  */
-APP_ERROR AclProcess::Process(RawData &ImageInfo) {
+APP_ERROR AclProcess::Process(const RawData &ImageInfo) {
   struct timeval begin = {0};
   struct timeval end = {0};
   gettimeofday(&begin, nullptr);
@@ -215,28 +215,6 @@ APP_ERROR AclProcess::Process(RawData &ImageInfo) {
   if (ret != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed to copy memory from device to host, ret = " << ret;
     return ret;
-  }
-  return APP_ERR_OK;
-}
-
-/*
- * @description: Rename the image for saving
- * @Param: primary name of image
- * @return: aclError which is error code of ACL API
- */
-APP_ERROR AclProcess::RenameFile(std::string &filename) {
-  std::string delimiter = "/";
-  size_t pos = 0;
-  std::string token;
-  while ((pos = filename.find(delimiter)) != std::string::npos) {
-    token = filename.substr(0, pos);
-    filename.erase(0, pos + delimiter.length());
-  }
-  delimiter = ".";
-  pos = filename.find(delimiter);
-  filename = filename.substr(0, pos);
-  if (filename.length() == 0) {
-    return APP_ERR_COMM_WRITE_FAIL;
   }
   return APP_ERR_OK;
 }

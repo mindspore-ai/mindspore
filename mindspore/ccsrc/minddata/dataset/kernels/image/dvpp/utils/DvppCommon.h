@@ -16,9 +16,10 @@
 #ifndef DVPP_COMMON_H
 #define DVPP_COMMON_H
 
+#include <vector>
+#include <memory>
 #include "CommonDataType.h"
 #include "ErrorCode.h"
-
 #include "acl/ops/acl_dvpp.h"
 
 const int MODULUS_NUM_2 = 2;

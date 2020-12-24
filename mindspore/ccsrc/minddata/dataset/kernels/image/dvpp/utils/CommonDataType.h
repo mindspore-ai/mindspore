@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <memory>
+#include <string>
 #include <vector>
 #include "acl/acl.h"
 #include "acl/ops/acl_dvpp.h"

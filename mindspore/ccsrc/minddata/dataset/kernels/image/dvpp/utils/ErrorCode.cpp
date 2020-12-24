@@ -37,14 +37,14 @@ std::string GetAppErrCodeInfo(const APP_ERROR err) {
   }
 }
 
-void AssertErrorCode(int code, std::string file, std::string function, int line) {
+void AssertErrorCode(const int code, const std::string file, const std::string function, const int line) {
   if (code != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed at " << file << "->" << function << "->" << line << ": error code=" << code;
     exit(code);
   }
 }
 
-void CheckErrorCode(int code, std::string file, std::string function, int line) {
+void CheckErrorCode(const int code, const std::string file, const std::string function, const int line) {
   if (code != APP_ERR_OK) {
     MS_LOG(ERROR) << "Failed at " << file << "->" << function << "->" << line << ": error code=" << code;
   }
