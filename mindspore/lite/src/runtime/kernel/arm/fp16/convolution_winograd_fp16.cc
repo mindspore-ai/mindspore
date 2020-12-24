@@ -81,6 +81,7 @@ int ConvolutionWinogradFP16CPUKernel::InitWeightBias() {
   if (fp16_weight_ != nullptr) {
     free(fp16_weight_);
     fp16_weight_ = nullptr;
+    execute_weight_ = nullptr;
   }
 
   // init bias

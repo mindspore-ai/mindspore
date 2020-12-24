@@ -36,6 +36,7 @@ class Pad : public PrimitiveC {
   void SetPaddings(const std::vector<int> &paddings);
   void SetPaddingMode(int padding_mode);
   void SetConstantValue(float constant_value);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif

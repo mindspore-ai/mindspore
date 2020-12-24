@@ -194,11 +194,20 @@ STATUS GlobalFormatTransformPass::FindPreNh2NcNodes(MetaGraphT *graph, size_t nc
         }
         // todo multi output,other edge need insert nh2nc node
         auto pre_node_output_indexs = GetOutputNodeIdx(*graph, *pre_node);
-        if ((pre_node_output_indexs.size() != 1) &&
-            (node_type == schema::PrimitiveType_Activation || node_type == schema::PrimitiveType_Concat)) {
-          pre_nh2nc_nodes->clear();
-          pre_not_trans_nodes->clear();
-          return RET_OK;
+        if (pre_node_output_indexs.size() != 1) {
+          if (node_type == schema::PrimitiveType_Activation || node_type == schema::PrimitiveType_Concat) {
+            pre_nh2nc_nodes->clear();
+            pre_not_trans_nodes->clear();
+            return RET_OK;
+          }
+          for (auto pre_node_output_index : pre_node_output_indexs) {
+            MS_ASSERT(graph->nodes.size() > pre_node_output_index);
+            if (graph->nodes.at(pre_node_output_index)->primitive->value.type == schema::PrimitiveType_Pad) {
+              pre_nh2nc_nodes->clear();
+              pre_not_trans_nodes->clear();
+              return RET_OK;
+            }
+          }
         }
       } else {
         pre_nh2nc_nodes->clear();
