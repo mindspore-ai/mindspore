@@ -26,8 +26,7 @@
 
 namespace mindspore {
 namespace opt {
-namespace {
-session::KernelWithIndex FindRefOriginNode(const AnfNodePtr &node) {
+session::KernelWithIndex DealRefTransAndCast::FindRefOriginNode(const AnfNodePtr &node) const {
   session::KernelWithIndex kernel_with_index = AnfAlgo::VisitKernel(node, 0);
   AnfNodePtr cur_node = kernel_with_index.first;
   size_t cur_out_index = kernel_with_index.second;
@@ -62,8 +61,8 @@ session::KernelWithIndex FindRefOriginNode(const AnfNodePtr &node) {
   return kernel_with_index;
 }
 
-void AddRefNodePairToKernelGraph(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const size_t output_index,
-                                 const size_t input_index) {
+void DealRefTransAndCast::AddRefNodePairToKernelGraph(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                      const size_t output_index, const size_t input_index) const {
   // record the ref_pair
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -72,9 +71,10 @@ void AddRefNodePairToKernelGraph(const FuncGraphPtr &func_graph, const CNodePtr 
   kernel_graph->AddRefCorrespondPairs(final_pair, kernel_with_index);
 }
 
-void AddRefPairToKernelGraph(const FuncGraphPtr &func_graph, const CNodePtr &cnode, const AnfNodePtr &get_item,
-                             const AnfNodePtr &final_node, size_t final_index,
-                             const session::KernelWithIndex &origin_pair) {
+void DealRefTransAndCast::AddRefPairToKernelGraph(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                  const AnfNodePtr &get_item, const AnfNodePtr &final_node,
+                                                  size_t final_index,
+                                                  const session::KernelWithIndex &origin_pair) const {
   // record the ref_pair
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -95,9 +95,10 @@ void AddRefPairToKernelGraph(const FuncGraphPtr &func_graph, const CNodePtr &cno
 
 // if get_item is nullptr, the additional node will link to the cnode
 // else the additional node will link to the get_item node (the get_item node link to cnode)
-AnfNodePtr AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, size_t output_index,
-                                    size_t input_index, const AnfNodePtr &get_item) {
-  AnfNodePtr final_node = (get_item == nullptr ? cnode : get_item);
+CNodePtr DealRefTransAndCast::AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                       size_t output_index, size_t input_index,
+                                                       const CNodePtr &get_item) const {
+  CNodePtr final_node = (get_item == nullptr ? cnode : get_item);
   bool need_refresh_ref_addr = false;
   size_t final_index = output_index;
   AnfNodePtr input_node = AnfAlgo::GetInputNode(cnode, input_index);
@@ -119,6 +120,7 @@ AnfNodePtr AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodeP
     auto kernel_select = std::make_shared<KernelSelect>();
     final_node = NewTransOpNode(func_graph, final_node, kernel_select, false, prim::KPrimTransData->name());
     RefreshKernelBuildInfo(cur_format, origin_format, final_node, {}, cur_type);
+    final_node = SplitTransdataIfNotSupported(func_graph, final_node);
     final_index = 0;
     need_refresh_ref_addr = true;
     MS_EXCEPTION_IF_NULL(final_node);
@@ -148,15 +150,15 @@ AnfNodePtr AddAdditionalToRefOutput(const FuncGraphPtr &func_graph, const CNodeP
 
   return final_node;
 }
-AnfNodePtr DealRefForMultipleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                    const std::shared_ptr<kernel::OpInfo> &op_info) {
+CNodePtr DealRefTransAndCast::DealRefForMultipleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                       const std::shared_ptr<kernel::OpInfo> &op_info) const {
   MS_EXCEPTION_IF_NULL(op_info);
   auto ref_infos = op_info->ref_infos();
   std::vector<AnfNodePtr> make_tuple_inputs;
   AbstractBasePtrList abstract_list;
   make_tuple_inputs.push_back(NewValueNode(prim::kPrimMakeTuple));
   for (size_t output_index = 0; output_index < AnfAlgo::GetOutputTensorNum(cnode); ++output_index) {
-    AnfNodePtr final_node = CreatTupleGetItemNode(func_graph, cnode, output_index);
+    CNodePtr final_node = CreatTupleGetItemNode(func_graph, cnode, output_index);
     // deal with ref output
     if (ref_infos.count(output_index) != 0) {
       auto input_index = ref_infos.at(output_index);
@@ -167,14 +169,14 @@ AnfNodePtr DealRefForMultipleOutput(const FuncGraphPtr &func_graph, const CNodeP
     make_tuple_inputs.push_back(final_node);
   }
   MS_EXCEPTION_IF_NULL(func_graph);
-  AnfNodePtr make_tuple = func_graph->NewCNode(make_tuple_inputs);
+  CNodePtr make_tuple = func_graph->NewCNode(make_tuple_inputs);
   MS_EXCEPTION_IF_NULL(make_tuple);
   make_tuple->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
   return make_tuple;
 }
 
-AnfNodePtr DealRefSigleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                              const std::shared_ptr<kernel::OpInfo> &op_info) {
+CNodePtr DealRefTransAndCast::DealRefSigleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
+                                                 const std::shared_ptr<kernel::OpInfo> &op_info) const {
   MS_EXCEPTION_IF_NULL(cnode);
   MS_EXCEPTION_IF_NULL(op_info);
   auto ref_infos = op_info->ref_infos();
@@ -187,7 +189,6 @@ AnfNodePtr DealRefSigleOutput(const FuncGraphPtr &func_graph, const CNodePtr &cn
   }
   return nullptr;
 }
-}  // namespace
 
 const BaseRef DealRefTransAndCast::DefinePattern() const {
   VarPtr V = std::make_shared<CondVar>(UnVisited);
@@ -195,7 +196,7 @@ const BaseRef DealRefTransAndCast::DefinePattern() const {
   return VectorRef({V, Xs});
 }
 
-void DealBroadCastAsRef(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+void DealRefTransAndCast::DealBroadCastAsRef(const FuncGraphPtr &func_graph, const CNodePtr &cnode) const {
   if (AnfAlgo::GetCNodeName(cnode) == kBroadcastOpName) {
     auto input_size = AnfAlgo::GetInputTensorNum(cnode);
     for (size_t i = 0; i < input_size; ++i) {
@@ -237,6 +238,39 @@ const AnfNodePtr DealRefTransAndCast::Process(const FuncGraphPtr &graph, const A
     }
   }
   return nullptr;
+}
+
+CNodePtr DealRefTransAndCast::SplitTransdataIfNotSupported(const FuncGraphPtr &func_graph,
+                                                           const CNodePtr &cnode) const {
+  MS_EXCEPTION_IF_NULL(cnode);
+  auto kernel_info = AnfAlgo::GetSelectKernelBuildInfo(cnode);
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  if (kHWSpecialFormatSet.find(kernel_info->GetInputFormat(0)) == kHWSpecialFormatSet.end() ||
+      kHWSpecialFormatSet.find(kernel_info->GetOutputFormat(0)) == kHWSpecialFormatSet.end()) {
+    if (IsFormatInvaild(cnode)) {
+      return DoSplit(func_graph, cnode);
+    }
+    return cnode;
+  }
+  auto builder_info_to_default = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(kernel_info);
+  auto builder_info_to_special_foramt = std::make_shared<kernel::KernelBuildInfo::KernelBuildInfoBuilder>(kernel_info);
+  builder_info_to_default->SetOutputsFormat({kOpFormat_DEFAULT});
+  builder_info_to_special_foramt->SetInputsFormat({kOpFormat_DEFAULT});
+  std::vector<AnfNodePtr> next_trans_node_inputs = {
+    NewValueNode(std::make_shared<Primitive>(prim::KPrimTransData->name())), cnode};
+  MS_EXCEPTION_IF_NULL(func_graph);
+  auto next_trans_node = func_graph->NewCNode(next_trans_node_inputs);
+  next_trans_node->set_abstract(cnode->abstract());
+  AnfAlgo::SetSelectKernelBuildInfo(builder_info_to_default->Build(), cnode.get());
+  AnfAlgo::SetSelectKernelBuildInfo(builder_info_to_special_foramt->Build(), next_trans_node.get());
+  if (IsFormatInvaild(cnode)) {
+    auto after_split_node = DoSplit(func_graph, cnode);
+    AnfAlgo::SetNodeInput(next_trans_node, after_split_node, 0);
+  }
+  if (IsFormatInvaild(next_trans_node)) {
+    return DoSplit(func_graph, next_trans_node);
+  }
+  return next_trans_node;
 }
 }  // namespace opt
 }  // namespace mindspore

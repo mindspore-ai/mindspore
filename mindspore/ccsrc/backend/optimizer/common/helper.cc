@@ -481,13 +481,13 @@ bool IsNotRealUsedByOthers(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   return true;
 }
 
-AnfNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
+CNodePtr CreatTupleGetItemNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node, size_t output_idx) {
   auto idx = NewValueNode(SizeToLong(output_idx));
   MS_EXCEPTION_IF_NULL(idx);
   auto imm = std::make_shared<Int64Imm>(SizeToLong(output_idx));
   auto abstract_scalar = std::make_shared<abstract::AbstractScalar>(imm);
   idx->set_abstract(abstract_scalar);
-  AnfNodePtr tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
+  CNodePtr tuple_getitem = func_graph->NewCNode({NewValueNode(prim::kPrimTupleGetItem), node, idx});
   MS_EXCEPTION_IF_NULL(tuple_getitem);
   tuple_getitem->set_scope(node->scope());
   std::vector<size_t> origin_shape = AnfAlgo::GetOutputInferShape(node, output_idx);

@@ -31,15 +31,6 @@ const BaseRef InsertTransOp::DefinePattern() const {
   return VectorRef({V, Xs});
 }
 
-bool IsGraphOutput(const AnfNodePtr &node, const FuncGraphPtr &func_graph) {
-  auto outputs = AnfAlgo::GetAllOutput(func_graph->output(), {prim::kPrimTupleGetItem});
-  auto iter = std::find(outputs.begin(), outputs.end(), node);
-  if (iter != outputs.end() && GetRealNodeNum(func_graph, node) == 1) {
-    return true;
-  }
-  return false;
-}
-
 const AnfNodePtr InsertTransOp::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                         const EquivPtr &) const {
   if (node == nullptr || !AnfAlgo::IsRealKernel(node)) {
