@@ -32,7 +32,6 @@ from src.textrcnn import textrcnn
 
 set_seed(1)
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='textrcnn')
     parser.add_argument('--ckpt_path', type=str)
@@ -46,8 +45,8 @@ if __name__ == '__main__':
     context.set_context(device_id=device_id)
 
     embedding_table = np.loadtxt(os.path.join(cfg.preprocess_path, "weight.txt")).astype(np.float32)
-    network = textrcnn(weight=Tensor(embedding_table), vocab_size=embedding_table.shape[0], \
-    cell=cfg.cell, batch_size=cfg.batch_size)
+    network = textrcnn(weight=Tensor(embedding_table), vocab_size=embedding_table.shape[0],
+                       cell=cfg.cell, batch_size=cfg.batch_size)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
     opt = nn.Momentum(network.trainable_params(), cfg.lr, cfg.momentum)
     loss_cb = LossMonitor()

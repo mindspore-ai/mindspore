@@ -16,6 +16,7 @@
 import argparse
 import os
 import numpy as np
+
 parser = argparse.ArgumentParser(description='textrcnn')
 parser.add_argument('--task', type=str, help='the data preprocess task, including dataset_split.')
 parser.add_argument('--data_dir', type=str, help='the source dataset directory.', default='./data_src')
@@ -24,18 +25,18 @@ parser.add_argument('--out_dir', type=str, help='the target dataset directory.',
 args = parser.parse_args()
 np.random.seed(2)
 
+
 def dataset_split(label):
     """dataset_split api"""
     # label can be 'pos' or 'neg'
     pos_samples = []
-    pos_file = os.path.join(args.data_dir, "rt-polaritydata", "rt-polarity."+label)
+    pos_file = os.path.join(args.data_dir, "rt-polaritydata", "rt-polarity." + label)
     pfhand = open(pos_file, encoding='utf-8')
     pos_samples += pfhand.readlines()
     pfhand.close()
     perm = np.random.permutation(len(pos_samples))
-    # print(perm[0:int(len(pos_samples)*0.8)])
-    perm_train = perm[0:int(len(pos_samples)*0.9)]
-    perm_test = perm[int(len(pos_samples)*0.9):]
+    perm_train = perm[0:int(len(pos_samples) * 0.9)]
+    perm_test = perm[int(len(pos_samples) * 0.9):]
     pos_samples_train = []
     pos_samples_test = []
     for pt in perm_train:
@@ -51,10 +52,7 @@ def dataset_split(label):
     f.close()
 
 
-
 if __name__ == '__main__':
     if args.task == "dataset_split":
         dataset_split('pos')
         dataset_split('neg')
-
-    # search(args.q)

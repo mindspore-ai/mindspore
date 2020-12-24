@@ -21,6 +21,7 @@ import numpy as np
 from mindspore.mindrecord import FileWriter
 import mindspore.dataset as ds
 
+
 # preprocess part
 def encode_samples(tokenized_samples, word_to_idx):
     """ encode word to index """
@@ -78,7 +79,8 @@ def collect_weight(glove_path, vocab, word_to_idx, embed_size):
     # wvmodel = gensim.models.KeyedVectors.load_word2vec_format(os.path.join(glove_path, 'glove.6B.300d.txt'),
     #                                                           binary=False, encoding='utf-8')
     wvmodel = gensim.models.KeyedVectors.load_word2vec_format(os.path.join(glove_path, \
-    'GoogleNews-vectors-negative300.bin'), binary=True)
+                                                                           'GoogleNews-vectors-negative300.bin'),
+                                                              binary=True)
     weight_np = np.zeros((vocab_size + 1, embed_size)).astype(np.float32)
 
     idx_to_word = {i + 1: word for i, word in enumerate(vocab)}
@@ -140,8 +142,8 @@ def convert_to_mindrecord(embed_size, data_path, proprocess_path, glove_path):
         preprocess(data_path, glove_path, embed_size)
     np.savetxt(os.path.join(proprocess_path, 'weight.txt'), weight_np)
 
-    print("train_features.shape:", train_features.shape, "train_labels.shape:", train_labels.shape, "weight_np.shape:",\
-    weight_np.shape, "type:", train_labels.dtype)
+    print("train_features.shape:", train_features.shape, "train_labels.shape:", train_labels.shape, "weight_np.shape:",
+          weight_np.shape, "type:", train_labels.dtype)
     # write mindrecord
     schema_json = {"id": {"type": "int32"},
                    "label": {"type": "int32"},
