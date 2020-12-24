@@ -113,17 +113,19 @@ Parameters for both training and evaluation can be set in config.py
 
   ```python
   'num_epochs': 10, # total training epochs
+  'lstm_num_epochs': 15, # total training epochs when using lstm
   'batch_size': 64, # training batch size
   'cell': 'gru', # the RNN architecture, can be 'vanilla', 'gru' and 'lstm'.
-  'opt': 'adam', # the optimizer strategy, can be 'adam' or 'momentum'
   'ckpt_folder_path': './ckpt', # the path to save the checkpoints
   'preprocess_path': './preprocess', # the directory to save the processed data
   'preprocess' : 'false', # whethere to preprocess the data
   'data_path': './data/', # the path to store the splited data
   'lr': 1e-3, # the training learning rate
-  'lstm_base_lr': 3e-3, # the training learning rate when using lstm as RNN cell
-  'lstm_decay_rate': 0.9, # lr decay rate when using lstm as RNN cell
-  'lstm_decay_epoch': 1, # lr decay epoch when using lstm as RNN cell
+  'lstm_lr_init': 2e-3, # learning rate initial value when using lstm
+  'lstm_lr_end': 5e-4, # learning rate end value when using lstm
+  'lstm_lr_max': 3e-3, # learning eate max value when using lstm
+  'lstm_lr_warm_up_epochs': 2 # warm up epoch num when using lstm
+  'lstm_lr_adjust_epochs': 9 # lr adjust in lr_adjust_epoch, after that, the lr is lr_end when using lstm
   'emb_path': './word2vec', # the directory to save the embedding file
   'embed_size': 300, # the dimension of the word embedding
   'save_checkpoint_steps': 149, # per step to save the checkpoint

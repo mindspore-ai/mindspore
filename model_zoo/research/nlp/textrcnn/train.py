@@ -32,7 +32,7 @@ from src.textrcnn import textrcnn
 from src.utils import get_lr
 
 
-set_seed(1)
+set_seed(2)
 
 if __name__ == '__main__':
 
@@ -64,11 +64,11 @@ if __name__ == '__main__':
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
     lr = get_lr(cfg, step_size)
+    num_epochs = cfg.num_epochs
+    if cfg.cell == "lstm":
+        num_epochs = cfg.lstm_num_epochs
 
-    if cfg.opt == "adam":
-        opt = nn.Adam(params=network.trainable_params(), learning_rate=lr)
-    elif cfg.opt == "momentum":
-        opt = nn.Momentum(network.trainable_params(), lr, cfg.momentum)
+    opt = nn.Adam(params=network.trainable_params(), learning_rate=lr)
 
     loss_cb = LossMonitor()
     model = Model(network, loss, opt, {'acc': Accuracy()}, amp_level="O3")
@@ -77,5 +77,5 @@ if __name__ == '__main__':
     config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps, \
                                  keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix=cfg.cell, directory=cfg.ckpt_folder_path, config=config_ck)
-    model.train(cfg.num_epochs, ds_train, callbacks=[ckpoint_cb, loss_cb])
+    model.train(num_epochs, ds_train, callbacks=[ckpoint_cb, loss_cb])
     print("train success")
