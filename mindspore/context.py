@@ -214,11 +214,8 @@ class _Context:
         self.set_param(ms_ctx_param.max_call_depth, max_call_depth)
 
     def set_profiling_options(self, option):
-        options = ["training_trace", "task_trace",
-                   "task_trace:training_trace", "training_trace:task_trace", "op_trace"]
-        if option not in options:
-            raise ValueError("Profiling options must be in 'training_trace' 'task_trace' "
-                             "'task_trace:training_trace' 'training_trace:task_trace' or 'op_trace'.")
+        if not isinstance(option, str):
+            raise TypeError("The parameter option must be str.")
         self.set_param(ms_ctx_param.profiling_options, option)
 
     def set_variable_memory_max_size(self, variable_memory_max_size):

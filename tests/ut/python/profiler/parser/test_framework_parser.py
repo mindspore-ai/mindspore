@@ -49,13 +49,15 @@ class TestFrameworkParser:
     """Test the class of `FrameworkParser`."""
     def setup_method(self):
         """Initialization before test case execution."""
-        with mock.patch.object(FrameworkParser, '_raw_data_dir', RAW_DATA_BASE):
-            self._output_path_1 = tempfile.mkdtemp(prefix='test_framework_parser_')
-            self._parser_1 = FrameworkParser('JOB1', '0', self._output_path_1)
-            self._output_path_2 = tempfile.mkdtemp(prefix='test_framework_parser_')
-            self._parser_2 = FrameworkParser('JOB2', '0', self._output_path_2)
-            self._output_path_4 = tempfile.mkdtemp(prefix='test_framework_parser_')
-            self._parser_4 = FrameworkParser('JOB4', '0', self._output_path_4)
+        self._output_path_1 = tempfile.NamedTemporaryFile(prefix='test_framework_parser_').name
+        shutil.copytree(RAW_DATA_BASE, self._output_path_1)
+        self._parser_1 = FrameworkParser('JOB1', '0', self._output_path_1)
+        self._output_path_2 = tempfile.NamedTemporaryFile(prefix='test_framework_parser_').name
+        shutil.copytree(RAW_DATA_BASE, self._output_path_2)
+        self._parser_2 = FrameworkParser('JOB2', '0', self._output_path_2)
+        self._output_path_4 = tempfile.NamedTemporaryFile(prefix='test_framework_parser_').name
+        shutil.copytree(RAW_DATA_BASE, self._output_path_4)
+        self._parser_4 = FrameworkParser('JOB4', '0', self._output_path_4)
 
     def teardown_method(self) -> None:
         """Clear up after test case execution."""

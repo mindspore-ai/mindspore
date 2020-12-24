@@ -128,7 +128,6 @@ def cleanup():
 class TestProfiler:
     device_id = int(os.getenv('DEVICE_ID')) if os.getenv('DEVICE_ID') else 0
     mnist_path = '/home/workspace/mindspore_dataset/mnist'
-    profiler_path = os.path.join(os.getcwd(), 'data/profiler/')
 
     @classmethod
     def teardown_class(cls):
@@ -140,7 +139,9 @@ class TestProfiler:
     @pytest.mark.env_onecard
     def test_gpu_profiler(self):
         context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
-        profiler = Profiler()
+        profiler = Profiler(output_path='data')
+        profiler_name = os.listdir(os.path.join(os.getcwd(), 'data'))[0]
+        self.profiler_path = os.path.join(os.getcwd(), f'data/{profiler_name}/')
         ds_train = create_dataset(os.path.join(self.mnist_path, "train"))
         if ds_train.get_dataset_size() == 0:
             raise ValueError("Please check dataset size > 0 and batch_size <= dataset size")
