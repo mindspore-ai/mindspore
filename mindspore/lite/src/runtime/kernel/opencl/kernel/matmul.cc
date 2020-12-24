@@ -43,9 +43,9 @@ int MatMulOpenCLKernel::CheckSpecs() {
   }
   transposeB = param->b_transpose_;
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
-  if (in_tensors_[0]->shape().size() != out_tensors_[0]->shape().size() ||
-      (in_tensors_[0]->shape().size() != 2 && in_tensors_[0]->shape().size() != 4)) {
-    MS_LOG(ERROR) << "matmul only support input shape size=2 or 4.";
+  if (in_tensors_[0]->shape().size() != out_tensors_[0]->shape().size() || in_tensors_[0]->shape().size() < 2 ||
+      in_tensors_[0]->shape().size() > 4) {
+    MS_LOG(ERROR) << "matmul only support input shape size= 2, 3 or 4.";
     return mindspore::lite::RET_ERROR;
   }
   return RET_OK;
@@ -58,7 +58,7 @@ int MatMulOpenCLKernel::Prepare() {
     inShape[MAX_DIMS - dims + i] = in_tensors_[0]->shape()[i];
     outShape[MAX_DIMS - dims + i] = out_tensors_[0]->shape()[i];
   }
-  std::map<int, std::string> dims2str = {{2, "_2d"}, {4, "_4d"}};
+  std::map<int, std::string> dims2str = {{2, "_2d"}, {3, "_4d"}, {4, "_4d"}};
   kernel_name += dims2str[dims];
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
