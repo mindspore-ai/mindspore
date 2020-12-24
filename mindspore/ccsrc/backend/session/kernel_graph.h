@@ -44,6 +44,7 @@ class KernelGraph : public FuncGraph {
     executable_ = true;
     summary_node_exist_ = false;
     stream_distinction_label_ = kInvalidDistincLabel;
+    extra_param_tensor_ = {};
   }
 
   KernelGraph(const KernelGraph &graph) : FuncGraph(graph) {
@@ -87,6 +88,7 @@ class KernelGraph : public FuncGraph {
     first_step_ = graph.first_step_;
     has_optimizer_ = graph.has_optimizer_;
     is_dynamic_shape_ = graph.is_dynamic_shape_;
+    extra_param_tensor_ = graph.extra_param_tensor_;
   }
 
   ~KernelGraph() override;
@@ -220,7 +222,9 @@ class KernelGraph : public FuncGraph {
     }
   }
   void RemoveNodeFromGraph(const AnfNodePtr &node);
-
+  // Add Param which pass callback point
+  ParameterPtr AddExtraParamAndTensor(std::string param_name, int32_t value);
+  const std::vector<std::pair<ParameterPtr, tensor::TensorPtr>> GetExtraParamAndTensor() { return extra_param_tensor_; }
   void UpdateGraphDynamicAttr();
   bool is_dynamic_shape() const { return is_dynamic_shape_; }
   void SetOptimizerFlag();
@@ -302,6 +306,8 @@ class KernelGraph : public FuncGraph {
   std::shared_ptr<std::vector<AnfNodePtr>> inputs_;
   std::vector<AnfNodePtr> child_graph_result_;
   std::vector<CNodePtr> execution_order_;
+  // extra params and tensors for control flow
+  std::vector<std::pair<ParameterPtr, tensor::TensorPtr>> extra_param_tensor_;
   uint32_t graph_id_;
   uint32_t stream_distinction_label_;
 

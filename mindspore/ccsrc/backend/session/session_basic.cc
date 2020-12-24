@@ -1012,6 +1012,12 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
         (void)ConstructKernelGraph(child_graph, all_out_graph);
       }
       (void)CreateValueNodeKernelGraph(node, graph.get());
+      auto &parent_graph = parent_graphs_[front_backend_graph_map_[child_graph]->graph_id()];
+      auto parent_graph_it =
+        std::find(parent_graph.begin(), parent_graph.end(), front_backend_graph_map_[func_graph]->graph_id());
+      if (parent_graph_it == parent_graph.end()) {
+        parent_graph.push_back(front_backend_graph_map_[func_graph]->graph_id());
+      }
       continue;
     }
     // Create cnode
@@ -1096,10 +1102,10 @@ void SessionBasic::LoadInputData(const std::shared_ptr<KernelGraph> &kernel_grap
     input_ctrl_size = LoadCtrlInputTensor(kernel_graph, &inputs);
   }
   auto &input_nodes = kernel_graph->input_nodes();
-
-  if ((inputs.size() + input_ctrl_size) - 3 != input_nodes.size()) {
+  auto extra_param_size = kernel_graph->GetExtraParamAndTensor().size();
+  if ((inputs.size() + input_ctrl_size) - 3 != input_nodes.size() - extra_param_size) {
     MS_LOG(EXCEPTION) << "Tensor input:" << inputs.size() << " is not equal graph inputs:" << input_nodes.size()
-                      << ", input_ctrl_size:" << input_ctrl_size;
+                      << ", input_ctrl_size:" << input_ctrl_size << ", extra_param_size:" << extra_param_size;
   }
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
