@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -595,6 +595,123 @@ class Validator:
             raise ValueError(f'For {prim_name}, {ori_shape} reduce on {axis} should be '
                              f'{tuple(exp_shape)}, but got {shape}.')
 
+    @staticmethod
+    def check_astype_dtype(dtype):
+        """Check whether dtype is a valid input, and convert to mstype"""
+        all_types = mstype.__dtype__ + ["int", "float", "bool"]
+        if isinstance(dtype, str):
+            if dtype.lower() not in all_types:
+                raise TypeError(f"`{dtype}` not understood.")
+            dtype = mstype.pytype_to_dtype(np.dtype(dtype.lower()))
+        elif isinstance(dtype, type):
+            dtype = mstype.pytype_to_dtype(dtype)
+        elif not dtype in mstype.number_type + (mstype.bool_,):
+            raise TypeError(f"`{dtype}` not understood.")
+        return dtype
+
+    @staticmethod
+    def check_transpose_axis(axes, ndim):
+        """Check the axis argument for tensor.transpose"""
+        if not axes or (len(axes) == 1 and axes[0] is None):
+            return tuple(range(ndim-1, -1, -1))
+
+        if len(axes) == 1:
+            perm = axes[0]
+            # if only one argument provided, it must be tuple or list
+            if isinstance(perm, list):
+                perm = tuple(perm)
+            else:
+                if not isinstance(perm, tuple):
+                    raise TypeError(f"The `axes` should be a tuple/list, or series of int, but got {type(axes[0])}")
+            return perm
+
+        # if multiple arguments provided, it must be `ndim` number of ints
+        if len(axes) != ndim:
+            raise ValueError("The number of axes must equal to the dimension of tensor.")
+        return axes
+
+    @staticmethod
+    def check_reshape_shp(shp):
+        """Check the shape argument for tensor.reshape"""
+
+        if len(shp) == 1:
+            new_shape = shp[0]
+            # if only one argument provided, it must be int, tuple or list
+            if isinstance(new_shape, int):
+                return shp
+            if isinstance(new_shape, list):
+                new_shape = tuple(new_shape)
+            else:
+                if not isinstance(new_shape, tuple):
+                    raise TypeError(
+                        f"The `shape` should be an int, or tuple/list, or series of int, but got {type(shp[0])}")
+            return new_shape
+
+        return shp
+
+    @staticmethod
+    def check_flatten_order(order):
+        """Check flatten function input order"""
+        if not isinstance(order, str):
+            raise TypeError(f"The order variable should be a string, but got {type(order)}")
+        if order not in ('C', 'F'):
+            raise ValueError(f"only `C` and `F` are supported as order, but got {order}")
+        return order
+
+    @staticmethod
+    def check_swapaxes_axis(axes, ndim):
+        """Check all the axes argument for tensor.swapaxes"""
+        if isinstance(axes, int):
+            check_axis_in_range(axes, ndim)
+            return axes % ndim
+        if isinstance(axes, (tuple, list)):
+            for axis in axes:
+                if not isinstance(axis, int):
+                    raise TypeError(f"axis argument should be integer, but got {type(axis)}.")
+                check_axis_in_range(axis, ndim)
+            axes = tuple(map(lambda x: x % ndim, axes))
+            return axes
+        raise TypeError(f"axes should be integer, list or tuple for check, but got {type(axes)}.")
+
+    @staticmethod
+    def prepare_shape_for_squeeze(shape, axes):
+        """
+        Creates the squeezed new shape based on the tensor and given axes.
+
+        Args:
+            shape (tuple): the shape of the tensor
+            axes Union[int, tuple(int), list(int)]: the axes with dimensions need to
+                be squeezed.
+
+        Returns:
+            new_shape(tuple): the shape with dimensions squeezed.
+        """
+        new_shape = []
+        ndim = len(shape)
+
+        # Convert to set
+        if isinstance(axes, int):
+            if axes >= ndim or axes < -ndim:
+                raise ValueError(f"axis {axes} is out of bounds for tensor of dimension {ndim}")
+            axes = {axes}
+
+        elif isinstance(axes, (list, tuple)):
+            for axis in axes:
+                if axis >= ndim or axis < -ndim:
+                    raise ValueError(f"axis {axis} is out of bounds for tensor of dimension {ndim}")
+            axes = set(axes)
+
+        else:
+            raise TypeError(f"only int, tuple and list are allowed for axes, but got {type(axes)}")
+
+        for idx, s in enumerate(shape):
+            if s != 1 or (idx not in axes) and (idx - ndim not in axes):
+                new_shape.append(s)
+            # if an axis is selected with shape entry greater than one, an error is raised.
+            if s != 1 and ((idx in axes) or (idx - ndim in axes)):
+                raise ValueError(f"axis {axes} has shape entry {s} > 1, cannot be squeezed.")
+        return tuple(new_shape)
+
 
 def check_input_format(input_param):
     """Judge input format."""
@@ -621,6 +738,13 @@ def _expand_tuple(n_dimensions):
         return m
 
     return convert
+
+
+def check_axis_in_range(axis, ndim):
+    """Checks axes are with the bounds of ndim"""
+    if -ndim <= axis < ndim:
+        return True
+    raise ValueError(f'axis {axis} is out of bounds for tensor of dimension {ndim}')
 
 
 def _check_data_type_valid(data, valid_type):

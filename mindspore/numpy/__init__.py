@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -25,22 +25,33 @@ Note:
     - random/ defines all the random operations.
 """
 
-from .array_ops import (array, asarray, asfarray, ones, zeros, full, arange,
-                        linspace, logspace, eye, identity, transpose, expand_dims,
-                        squeeze, rollaxis, swapaxes, reshape, ravel, concatenate)
-from .array_ops import copy_ as copy
+from .array_ops import (transpose, expand_dims, squeeze, rollaxis, swapaxes, reshape,
+                        ravel, concatenate, where, atleast_1d, atleast_2d, atleast_3d,
+                        column_stack, hstack, dstack, vstack, stack, unique)
+from .array_creations import copy_ as copy
+from .array_creations import (array, asarray, asfarray, ones, zeros, full, arange,
+                              linspace, logspace, eye, identity, empty, empty_like,
+                              ones_like, zeros_like, full_like, diagonal, tril, triu,
+                              tri, trace)
 from .dtypes import (int_, int8, int16, int32, int64, uint, uint8, uint16,
                      uint32, uint64, float_, float16, float32, float64, bool_, inf,
                      numeric_types)
-from .math_ops import mean, inner
+from .math_ops import (mean, inner, add, subtract, multiply, divide, power,
+                       dot, outer, tensordot, absolute)
 
 
-array_ops_module = ['array', 'asarray', 'asfarray', 'copy', 'ones', 'zeros', 'arange',
-                    'linspace', 'logspace', 'eye', 'identity', 'transpose', 'expand_dims',
-                    'squeeze', 'rollaxis', 'swapaxes', 'reshape', 'ravel', 'concatenate']
+array_ops_module = ['transpose', 'expand_dims', 'squeeze', 'rollaxis', 'swapaxes', 'reshape',
+                    'ravel', 'concatenate', 'where', 'atleast_1d', 'atleast_2d', 'atleast_3d',
+                    'column_stack', 'hstack', 'dstack', 'vstack', 'stack', 'unique']
 
-math_module = ['mean', 'inner']
+array_creations_module = ['array', 'asarray', 'asfarray', 'ones', 'zeros', 'full', 'arange',
+                          'linspace', 'logspace', 'eye', 'identity', 'empty', 'empty_like',
+                          'ones_like', 'zeros_like', 'full_like', 'diagonal', 'tril', 'triu',
+                          'tri', 'trace']
 
-__all__ = array_ops_module + math_module + numeric_types
+math_module = ['mean', 'inner', 'add', 'subtract', 'multiply', 'divide', 'power',
+               'dot', 'outer', 'tensordot', 'absolute']
+
+__all__ = array_ops_module + array_creations_module + math_module + numeric_types
 
 __all__.sort()

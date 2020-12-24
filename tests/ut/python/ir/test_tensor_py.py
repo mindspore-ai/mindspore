@@ -69,6 +69,24 @@ def test_tensor_size():
     assert arr.size == b.size
 
 
+def test_tensor_itemsize():
+    arr = np.ones((1, 2, 3))
+    b = ms.Tensor(arr)
+    assert arr.itemsize == b.itemsize
+
+
+def test_tensor_strides():
+    arr = np.ones((3, 4, 5, 6))
+    b = ms.Tensor(arr)
+    assert arr.strides == b.strides
+
+
+def test_tensor_nbytes():
+    arr = np.ones((3, 4, 5, 6))
+    b = ms.Tensor(arr)
+    assert arr.nbytes == b.nbytes
+
+
 def test_dtype():
     a = ms.Tensor(np.ones((2, 3), dtype=np.int32))
     assert a.dtype == ms.int32
