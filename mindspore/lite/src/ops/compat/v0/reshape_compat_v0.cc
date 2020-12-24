@@ -29,7 +29,6 @@ int TransferReshapeAttr(const void *primitive, Model::Node *node, std::vector<sc
     return RET_OK;
   }
   dst_tensors->clear();
-  tensor_bufs->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(primitive);
   auto dst_shape_attr = prim->value_as_Reshape()->shape();
   std::vector<int> dst_shape = std::vector<int>(dst_shape_attr->begin(), dst_shape_attr->end());

@@ -25,7 +25,6 @@ int TransferStridedSliceAttr(const void *primitive, Model::Node *node, std::vect
     return RET_ERROR;
   }
   dst_tensors->clear();
-  tensor_bufs->clear();
   auto prim = reinterpret_cast<const schema::v0::Primitive *>(primitive);
   int inputs_size = node->input_indices_.size();
   switch (inputs_size) {
