@@ -55,10 +55,6 @@ class AclProcess {
   void set_mode(bool flag);
   // Get the mode of Acl process
   bool get_mode();
-  // Save the result
-  APP_ERROR WriteResult(uint32_t fileSize, std::shared_ptr<void> outBuf, std::string filename);
-  // Color space reform
-  void YUV420TOYUV444(unsigned char *inputBuffer, unsigned char *outputBuffer, int w, int h);
   // Crop definition
   void CropConfigFilter(CropRoiConfig &cfg, DvppCropInputInfo &cropinfo);
   // D-chip memory release

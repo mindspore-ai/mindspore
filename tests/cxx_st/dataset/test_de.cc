@@ -15,7 +15,6 @@
  */
 #include <string>
 #include <vector>
-#include <cmath>
 #include "common/common_test.h"
 #include "include/api/types.h"
 #include "minddata/dataset/include/minddata_eager.h"
@@ -73,11 +72,17 @@ TEST_F(TestDE, TestDvpp) {
     img = Transform(img);
     ASSERT_NE(img, nullptr);
     ASSERT_EQ(img->Shape().size(), 3);
+    int32_t real_h = 0;
+    int32_t real_w = 0;
+    int remainder = crop_size[crop_size.size() - 1] % 16;
     if (crop_size.size() == 1) {
-      ASSERT_EQ(img->Shape()[0], pow(crop_size[0], 2) * 1.5);
+      real_h = (crop_size[0] % 2 == 0) ? crop_size[0] : crop_size[0] + 1;
+      real_w = (remainder == 0) ? crop_size[0] : crop_size[0] + 16 - remainder;
     } else {
-      ASSERT_EQ(img->Shape()[0], crop_size[0] * crop_size[1] * 1.5);
+      real_h = (crop_size[0] % 2 == 0) ? crop_size[0] : crop_size[0] + 1;
+      real_w = (remainder == 0) ? crop_size[1] : crop_size[1] + 16 - remainder;
     }
+    ASSERT_EQ(img->Shape()[0], real_h * real_w * 1.5);  // For image in YUV format, each pixel takes 1.5 byte
     ASSERT_EQ(img->Shape()[1], 1);
     ASSERT_EQ(img->Shape()[2], 1);
   }
