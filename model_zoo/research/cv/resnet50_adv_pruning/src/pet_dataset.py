@@ -18,10 +18,11 @@ create train or eval dataset.
 import os
 import mindspore.common.dtype as mstype
 import mindspore.dataset.engine as de
-import mindspore.dataset.transforms.vision.c_transforms as C
-import mindspore.dataset.transforms.vision.py_transforms as P
+import mindspore.dataset.vision.c_transforms as C
+import mindspore.dataset.vision.py_transforms as P
 import mindspore.dataset.transforms.c_transforms as C2
-from mindspore.dataset.transforms.vision import Inter
+import mindspore.dataset.transforms.py_transforms as P2
+from mindspore.dataset.vision import Inter
 
 
 def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch_size=100):
@@ -78,13 +79,13 @@ def create_dataset(dataset_path, do_train, config, platform, repeat_num=1, batch
     center_crop_p = P.CenterCrop(224)
     totensor = P.ToTensor()
     normalize_p = P.Normalize((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
-    composeop = P.ComposeOp(
+    composeop = P2.Compose(
         [decode_p, resize_p, center_crop_p, totensor, normalize_p])
     if do_train:
         trans = [resize_crop_op, horizontal_flip_op, color_op,
                  rescale_op, normalize_op, change_swap_op]
     else:
-        trans = composeop()
+        trans = composeop
     type_cast_op = C2.TypeCast(mstype.int32)
 
     ds = ds.map(input_columns="image", operations=trans,

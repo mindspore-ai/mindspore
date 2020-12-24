@@ -26,7 +26,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import dtype as mstype
 
 from src.pet_dataset import create_dataset
-from src.config import config_ascend, config_gpu
+from src.config import cfg
 from src.resnet_imgnet import resnet50
 
 
@@ -40,26 +40,18 @@ args_opt = parser.parse_args()
 
 
 if __name__ == '__main__':
-    config_platform = None
+    config_platform = cfg
     if args_opt.platform == "Ascend":
-        config_platform = config_ascend
         device_id = int(os.getenv('DEVICE_ID'))
         context.set_context(mode=context.GRAPH_MODE, device_target="Ascend",
                             device_id=device_id, save_graphs=False)
     elif args_opt.platform == "GPU":
-        config_platform = config_gpu
         context.set_context(mode=context.GRAPH_MODE,
                             device_target="GPU", save_graphs=False)
     else:
         raise ValueError("Unsupport platform.")
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
-
-    if args_opt.platform == "Ascend":
-        net.to_float(mstype.float16)
-        for _, cell in net.cells_and_names():
-            if isinstance(cell, nn.Dense):
-                cell.to_float(mstype.float32)
 
     dataset = create_dataset(dataset_path=args_opt.dataset_path,
                              do_train=False,
@@ -76,6 +68,13 @@ if __name__ == '__main__':
 
     net = resnet50(
         rate=0.65, class_num=config_platform.num_classes, index=index)
+
+    if args_opt.platform == "Ascend":
+        net.to_float(mstype.float16)
+        for _, cell in net.cells_and_names():
+            if isinstance(cell, nn.Dense):
+                cell.to_float(mstype.float32)
+
     if args_opt.checkpoint_path:
         param_dict = load_checkpoint(args_opt.checkpoint_path)
         load_param_into_net(net, param_dict)
