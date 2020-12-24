@@ -82,7 +82,7 @@ bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int ri
          uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r);
 
 /// \brief Extract image channel by index
-bool ExtractChannel(const LiteMat &src, LiteMat &dst, int col);
+bool ExtractChannel(LiteMat &src, LiteMat &dst, int col);
 
 /// \brief Split image channels to single channel
 bool Split(const LiteMat &src, std::vector<LiteMat> &mv);
