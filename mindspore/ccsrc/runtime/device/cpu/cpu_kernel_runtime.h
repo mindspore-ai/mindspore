@@ -24,7 +24,6 @@
 #include "runtime/device/kernel_runtime.h"
 #include "backend/session/kernel_graph.h"
 #include "backend/session/session_basic.h"
-#include "runtime/device/cpu/cpu_resource_manager.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/any.h"
 namespace mindspore {
@@ -35,7 +34,7 @@ class CPUKernelRuntime : public KernelRuntime {
   CPUKernelRuntime() = default;
   ~CPUKernelRuntime() override = default;
 
-  bool Init() override { return true; }
+  bool Init();
   bool Run(session::KernelGraph *graph, bool is_task_sink) override;
   void AssignKernelAddress(session::KernelGraph *kernel_graph);
   void CreateOutputTensors(session::KernelGraph *kernel_graph, const std::vector<tensor::TensorPtr> &inputs,
@@ -63,9 +62,9 @@ class CPUKernelRuntime : public KernelRuntime {
   void AssignInputNodeAddress(const session::KernelGraph *kernel_graph);
   void AssignKernelOutputAddress(const session::KernelGraph *kernel_graph);
   void AddRuntimeAddress(DeviceAddress *address, std::vector<kernel::AddressPtr> *input_list);
-  CPUResourceManager resource_manager_;
   std::set<DeviceAddressPtr> bound_addresses_;
   std::map<AnfNodePtr, tensor::TensorPtr> input_param_tensor_map_;
+  bool initialized_{false};
 };
 }  // namespace cpu
 }  // namespace device

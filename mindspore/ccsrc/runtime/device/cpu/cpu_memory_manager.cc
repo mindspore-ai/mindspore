@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,90 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "runtime/device/cpu/cpu_resource_manager.h"
-#include "backend/session/anf_runtime_algorithm.h"
 
+#include "runtime/device/cpu/cpu_memory_manager.h"
+#include "backend/session/anf_runtime_algorithm.h"
+#include "utils/ms_context.h"
+#include "utils/convert_utils.h"
 namespace mindspore {
 namespace device {
 namespace cpu {
-CPUResourceManager::~CPUResourceManager() { MemFree(); }
 
-void CPUResourceManager::MemFree() {
+uint8_t *CPUMemoryManager::MallocStaticMem(size_t size, bool) {
+  void *ptr = malloc(size);
+  if (ptr != nullptr) {
+    memset_s(ptr, size, 0, size);
+    static_mem_[ptr] = size;
+    return reinterpret_cast<uint8_t *>(ptr);
+  } else {
+    MS_LOG(EXCEPTION) << "Malloc memory failed: size " << size;
+  }
+}
+
+uint8_t *CPUMemoryManager::MallocDynamicMem(size_t size, bool) {
+  void *ptr = nullptr;
+  size_t min_size = 0;
+  // first find the smallest cached_mem_ which fits the size
+  for (auto &&iter : cached_mem_) {
+    if (iter.second >= size) {
+      if (min_size == 0) {
+        ptr = iter.first;
+        min_size = iter.second;
+      } else if (iter.second < min_size) {
+        ptr = iter.first;
+        min_size = iter.second;
+      }
+    }
+  }
+  if (ptr != nullptr) {
+    memset_s(ptr, size, 0, size);
+    dynamic_mem_[ptr] = min_size;
+    (void)cached_mem_.erase(ptr);
+    return reinterpret_cast<uint8_t *>(ptr);
+  }
+  // if not found, malloc
+  ptr = malloc(size);
+  if (ptr != nullptr) {
+    memset_s(ptr, size, 0, size);
+    dynamic_mem_[ptr] = size;
+    return reinterpret_cast<uint8_t *>(ptr);
+  } else {
+    MS_LOG(EXCEPTION) << "Malloc memory failed: size " << size;
+  }
+}
+
+void CPUMemoryManager::ResetDynamicMemory() {
+  // don't free, for multi graph
+  for (auto &&iter : dynamic_mem_) {
+    cached_mem_[iter.first] = iter.second;
+  }
+  dynamic_mem_.clear();
+}
+
+CPUMemoryManager::~CPUMemoryManager() { MemFree(); }
+
+void CPUMemoryManager::MemFree() {
   if (mem_ptr_ != nullptr) {
     free(mem_ptr_);
     mem_ptr_ = nullptr;
     mem_size_ = 0;
   }
 
+  for (auto &&iter : static_mem_) {
+    free(iter.first);
+  }
+  static_mem_.clear();
   for (auto &&iter : dynamic_mem_) {
     free(iter.first);
   }
   dynamic_mem_.clear();
+  for (auto &&iter : cached_mem_) {
+    free(iter.first);
+  }
+  cached_mem_.clear();
 }
 
-void CPUResourceManager::AssignMemory(const session::KernelGraph *graph) {
+void CPUMemoryManager::AssignMemory(const session::KernelGraph *graph) {
   size_t graph_mem_size = mem_plan_.MemPlan(graph);
   if (graph_mem_size > mem_size_) {
     if (mem_size_ > 0) {
@@ -43,6 +105,7 @@ void CPUResourceManager::AssignMemory(const session::KernelGraph *graph) {
     }
     mem_ptr_ = reinterpret_cast<uint8_t *>(malloc(graph_mem_size));
     if (mem_ptr_ != nullptr) {
+      MS_LOG(INFO) << "Simple MemPlan GraphMemSize [" << graph_mem_size << "]";
       mem_size_ = graph_mem_size;
       dynamic_malloc_ = false;
     } else {
@@ -56,26 +119,26 @@ void CPUResourceManager::AssignMemory(const session::KernelGraph *graph) {
   mem_plan_.MemAssign(graph, mem_ptr_);
 }
 
-void *CPUResourceManager::MemMalloc(size_t mem_size) {
+void *CPUMemoryManager::StaticMemMalloc(size_t mem_size) {
   void *ptr = malloc(mem_size);
   if (ptr != nullptr) {
     memset_s(ptr, mem_size, 0, mem_size);
-    dynamic_mem_[ptr] = mem_size;
+    static_mem_[ptr] = mem_size;
     return ptr;
   } else {
     MS_LOG(EXCEPTION) << "Malloc memory failed: size " << mem_size;
   }
 }
 
-void CPUResourceManager::MemFree(void *ptr) {
-  auto iter = dynamic_mem_.find(ptr);
-  if (iter != dynamic_mem_.end()) {
-    (void)dynamic_mem_.erase(iter);
+void CPUMemoryManager::MemFree(void *ptr) {
+  auto iter = static_mem_.find(ptr);
+  if (iter != static_mem_.end()) {
+    (void)static_mem_.erase(iter);
     free(ptr);
   }
 }
 
-void CPUResourceManager::IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
+void CPUMemoryManager::IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
   if (!dynamic_malloc_) {
     return;
   }
@@ -93,7 +156,7 @@ void CPUResourceManager::IncreaseSummaryRefCount(const session::NamedSummaryOutp
   }
 }
 
-void CPUResourceManager::DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
+void CPUMemoryManager::DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
   if (!dynamic_malloc_) {
     return;
   }
@@ -115,7 +178,7 @@ void CPUResourceManager::DecreaseSummaryRefCount(const session::NamedSummaryOutp
   }
 }
 
-void CPUResourceManager::IncreaseAddressRefCount(const session::KernelGraph *graph) {
+void CPUMemoryManager::IncreaseAddressRefCount(const session::KernelGraph *graph) {
   if (!dynamic_malloc_) {
     return;
   }
@@ -140,7 +203,7 @@ void CPUResourceManager::IncreaseAddressRefCount(const session::KernelGraph *gra
   }
 }
 
-void CPUResourceManager::DecreaseAddressRefCount(const AnfNodePtr &kernel) {
+void CPUMemoryManager::DecreaseAddressRefCount(const AnfNodePtr &kernel) {
   if (!dynamic_malloc_) {
     return;
   }

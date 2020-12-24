@@ -24,6 +24,7 @@
 #include <exception>
 #include "backend/kernel_compiler/kernel.h"
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "runtime/device/cpu/cpu_memory_manager.h"
 #include "utils/ms_context.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/session_basic.h"
@@ -31,16 +32,47 @@
 #include "utils/shape_utils.h"
 #include "utils/profile.h"
 #include "utils/trace_base.h"
+#ifdef MEM_REUSE_DEBUG
+#include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
+#endif
 
 namespace mindspore {
 namespace device {
 namespace cpu {
+
+bool CPUKernelRuntime::Init() {
+  if (initialized_) {
+    return true;
+  }
+  mem_manager_ = std::make_shared<CPUMemoryManager>();
+  MS_EXCEPTION_IF_NULL(mem_manager_);
+  initialized_ = true;
+  return true;
+}
+
 const size_t INIT_NODE_REF = 1;
 void CPUKernelRuntime::AssignKernelAddress(session::KernelGraph *kernel_graph) {
   AssignValueNodeAddress(kernel_graph);
   AssignInputNodeAddress(kernel_graph);
-  AssignKernelOutputAddress(kernel_graph);
-  resource_manager_.AssignMemory(kernel_graph);
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  bool is_enable_mem_reuse = context_ptr->get_param<bool>(MS_CTX_ENABLE_MEM_REUSE);
+  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    // disable mem reuse for kPynativeMode
+    is_enable_mem_reuse = false;
+  }
+  if (is_enable_mem_reuse) {
+    MS_EXCEPTION_IF_NULL(mem_manager_);
+    mem_manager_->ResetDynamicMemory();
+    AssignDynamicMemory(kernel_graph);
+#ifdef MEM_REUSE_DEBUG
+    // Get normal graph ir for memreuse
+    mindspore::memreuse::MemReuseChecker::GetInstance().CheckNormalIR(kernel_graph);
+#endif
+  } else {
+    AssignKernelOutputAddress(kernel_graph);
+    static_cast<CPUMemoryManager *>(mem_manager_.get())->AssignMemory(kernel_graph);
+  }
 }
 
 void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph) {
@@ -75,7 +107,7 @@ void CPUKernelRuntime::AssignValueNodeAddress(session::KernelGraph *kernel_graph
       if (tensor->data_type() == output_type_id) {
         address->ptr_ = tensor->data_c();
       } else {
-        address->ptr_ = resource_manager_.MemMalloc(tensor_size);
+        address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
         if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                        tensor->data_c())) {
           MS_LOG(EXCEPTION) << "Value node sync host to device failed!";
@@ -169,7 +201,7 @@ tensor::TensorPtr CPUKernelRuntime::CreatTensorForOutput(
       size_t type_size = GetTypeByte(TypeIdToType(device_type_id));
       ShapeVector data_shape = tensor->shape();
       size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(), type_size, std::multiplies<size_t>());
-      address->ptr_ = resource_manager_.MemMalloc(tensor_size);
+      address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
       tensor->set_sync_status(kNeedSyncDeviceToHostImmediately);
     } else {
       tensor->set_sync_status(kNoNeedSync);
@@ -268,7 +300,7 @@ void CPUKernelRuntime::BindInputTensorAddressPtr(const session::KernelGraph &ker
         ShapeVector data_shape = tensor->shape();
         size_t tensor_size = std::accumulate(data_shape.begin(), data_shape.end(),
                                              GetTypeByte(TypeIdToType(address->type_id_)), std::multiplies<size_t>());
-        address->ptr_ = resource_manager_.MemMalloc(tensor_size);
+        address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(tensor_size);
         if (!address->SyncHostToDevice(data_shape, LongToSize(tensor->data().nbytes()), tensor->data_type(),
                                        tensor->data_c())) {
           MS_LOG(EXCEPTION) << "Parameter node sync host to device failed!";
@@ -322,7 +354,7 @@ void CPUKernelRuntime::AddRuntimeAddress(DeviceAddress *address, std::vector<ker
   kernel::AddressPtr input = std::make_shared<kernel::Address>();
   MS_EXCEPTION_IF_NULL(input);
   if (address->ptr_ == nullptr) {
-    address->ptr_ = resource_manager_.MemMalloc(address->size_);
+    address->ptr_ = static_cast<CPUMemoryManager *>(mem_manager_.get())->StaticMemMalloc(address->size_);
   }
   MS_EXCEPTION_IF_NULL(address->ptr_);
   input->addr = address->ptr_;
@@ -331,16 +363,16 @@ void CPUKernelRuntime::AddRuntimeAddress(DeviceAddress *address, std::vector<ker
 }
 
 void CPUKernelRuntime::IncreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
-  resource_manager_.IncreaseSummaryRefCount(summary_outputs);
+  static_cast<CPUMemoryManager *>(mem_manager_.get())->IncreaseSummaryRefCount(summary_outputs);
 }
 
 void CPUKernelRuntime::DecreaseSummaryRefCount(const session::NamedSummaryOutputs &summary_outputs) {
-  resource_manager_.DecreaseSummaryRefCount(summary_outputs);
+  static_cast<CPUMemoryManager *>(mem_manager_.get())->DecreaseSummaryRefCount(summary_outputs);
 }
 
 bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  resource_manager_.IncreaseAddressRefCount(kernel_graph);
+  static_cast<CPUMemoryManager *>(mem_manager_.get())->IncreaseAddressRefCount(kernel_graph);
 
   auto kernels = kernel_graph->execution_order();
   for (const auto &kernel : kernels) {
@@ -381,7 +413,7 @@ bool CPUKernelRuntime::Run(session::KernelGraph *kernel_graph, bool is_task_sink
     if (!ret) {
       MS_LOG(EXCEPTION) << "Launch kernel failed. Trace:" << trace::DumpSourceLines(kernel);
     }
-    resource_manager_.DecreaseAddressRefCount(kernel);
+    static_cast<CPUMemoryManager *>(mem_manager_.get())->DecreaseAddressRefCount(kernel);
 #ifdef ENABLE_PROFILE
     double cost_time = GetTime() - start_time;
     MS_LOG(INFO) << "cpu kernel: " << kernel->fullname_with_scope() << "  costs " << cost_time * 1e6 << " us";

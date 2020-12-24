@@ -28,7 +28,7 @@ namespace mindspore {
 namespace device {
 namespace cpu {
 class CPUSimpleMemPlan;
-class CPUResourceManager;
+class CPUMemoryManager;
 class CPUKernelRuntime;
 }  // namespace cpu
 namespace ascend {
@@ -93,7 +93,7 @@ class DeviceAddress : public mindspore::DeviceSync {
   friend class MemoryManager;
   friend class mindspore::device::ascend::tasksink::TaskGenerator;
   friend class mindspore::device::cpu::CPUSimpleMemPlan;
-  friend class mindspore::device::cpu::CPUResourceManager;
+  friend class mindspore::device::cpu::CPUMemoryManager;
   friend class mindspore::device::cpu::CPUKernelRuntime;
   friend class mindspore::device::gpu::GPUKernelRuntime;
   friend class mindspore::device::gpu::GPUMemoryManager;
