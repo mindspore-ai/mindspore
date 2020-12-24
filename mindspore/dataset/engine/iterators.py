@@ -63,7 +63,7 @@ class Iterator:
         dataset: Dataset to be iterated over
     """
 
-    def __init__(self, dataset, num_epochs=-1, output_numpy=False):
+    def __init__(self, dataset, num_epochs=-1, output_numpy=False, do_copy=True):
         self._col_names = None
 
         # create a copy of tree and work on it.
@@ -80,7 +80,10 @@ class Iterator:
 
         self._transform_tensor = lambda t: t.as_array()
         if not output_numpy:
-            self._transform_tensor = lambda t: Tensor(t.as_array())
+            if do_copy:
+                self._transform_tensor = lambda t: Tensor(t.as_array())
+            else:
+                self._transform_tensor = lambda t: Tensor.from_numpy(t.as_array())
         self._index = 0
 
         # todo remove next when ContextManager is done
@@ -179,13 +182,13 @@ class TupleIterator(Iterator):
     The derived class of Iterator with list type.
     """
 
-    def __init__(self, dataset, columns=None, num_epochs=-1, output_numpy=False):
+    def __init__(self, dataset, columns=None, num_epochs=-1, output_numpy=False, do_copy=True):
         if columns is not None:
             if not isinstance(columns, list):
                 columns = [columns]
             # todo: move next to IR
             dataset = dataset.project(columns)
-        super().__init__(dataset, num_epochs, output_numpy)
+        super().__init__(dataset, num_epochs, output_numpy, do_copy)
 
     def _get_next(self):
         """

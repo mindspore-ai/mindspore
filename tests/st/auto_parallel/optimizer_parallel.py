@@ -125,7 +125,7 @@ class FakeData:
     def set_label_onehot(self, is_onehot=True):
         self.is_onehot = is_onehot
 
-    def create_tuple_iterator(self, num_epochs=-1):
+    def create_tuple_iterator(self, num_epochs=-1, do_copy=True):
         _ = num_epochs
         return self
 

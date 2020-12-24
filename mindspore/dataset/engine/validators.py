@@ -298,7 +298,7 @@ def check_tuple_iterator(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [columns, num_epochs, _], param_dict = parse_user_args(method, *args, **kwargs)
+        [columns, num_epochs, _, _], param_dict = parse_user_args(method, *args, **kwargs)
         nreq_param_bool = ['output_numpy']
         validate_dataset_param_value(nreq_param_bool, param_dict, bool)
         if num_epochs is not None:

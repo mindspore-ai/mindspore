@@ -1255,7 +1255,7 @@ class Dataset:
         del api_tree
 
     @check_tuple_iterator
-    def create_tuple_iterator(self, columns=None, num_epochs=-1, output_numpy=False):
+    def create_tuple_iterator(self, columns=None, num_epochs=-1, output_numpy=False, do_copy=True):
         """
         Create an iterator over the dataset. The data retrieved will be a list of ndarrays of data.
 
@@ -1269,6 +1269,8 @@ class Dataset:
                 (default=-1, iterator can be iterated infinite number of epochs)
             output_numpy (bool, optional): Whether or not to output NumPy datatype.
                 If output_numpy=False, iterator will output MSTensor (default=False).
+            do_copy (bool, optional): when output data type is mindspore.Tensor,
+                use this param to select the conversion method, only take False for better performance (default=True).
 
         Returns:
             Iterator, list of ndarrays.
@@ -1290,7 +1292,7 @@ class Dataset:
 
         if Dataset._noop_mode():
             return DummyIterator(self, 'tuple')
-        return TupleIterator(self, columns, num_epochs, output_numpy)
+        return TupleIterator(self, columns, num_epochs, output_numpy, do_copy)
 
     @check_dict_iterator
     def create_dict_iterator(self, num_epochs=-1, output_numpy=False):
@@ -2788,7 +2790,7 @@ class TransferDataset(Dataset):
     def create_dict_iterator(self, num_epochs=-1, output_numpy=False):
         raise RuntimeError("TransferDataset is not iterable.")
 
-    def create_tuple_iterator(self, columns=None, num_epochs=-1, output_numpy=False):
+    def create_tuple_iterator(self, columns=None, num_epochs=-1, output_numpy=False, do_copy=True):
         raise RuntimeError("TransferDataset is not iterable.")
 
     def __iter__(self):
