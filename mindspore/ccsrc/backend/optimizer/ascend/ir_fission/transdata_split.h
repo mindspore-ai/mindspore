@@ -29,15 +29,17 @@
 
 namespace mindspore {
 namespace opt {
-class TransDataSplit : public Pass {
+class TransDataSplit : public PatternProcessPass {
  public:
-  TransDataSplit() : Pass("trans_data_split"), kernel_select_(std::make_shared<KernelSelect>()) {}
+  explicit TransDataSplit(bool multigraph = true, const string &name = "trans_data_split")
+      : PatternProcessPass(name, multigraph), kernel_select_(std::make_shared<KernelSelect>()) {}
   ~TransDataSplit() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const override;
 
- private:
-  bool DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &node);
-  bool IsFormatInvaild(const AnfNodePtr &node);
+ protected:
+  CNodePtr DoSplit(const FuncGraphPtr &func_graph, const AnfNodePtr &node) const;
+  bool IsFormatInvaild(const AnfNodePtr &node) const;
   KernelSelectPtr kernel_select_;
 };
 }  // namespace opt

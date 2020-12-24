@@ -256,9 +256,9 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
   return trans_node;
 }
 
-AnfNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
-                                const TypeId &input_type, const TypeId &output_type,
-                                const std::vector<size_t> &origin_shape, const TypeId &origin_type) {
+CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
+                              const TypeId &input_type, const TypeId &output_type,
+                              const std::vector<size_t> &origin_shape, const TypeId &origin_type) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::string input_format = format;
   std::string output_format = format;
