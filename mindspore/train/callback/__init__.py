@@ -26,6 +26,7 @@ from ._checkpoint import ModelCheckpoint
 from ._loss_monitor import LossMonitor
 from ._time_monitor import TimeMonitor
 from ._summary_collector import SummaryCollector
+from ._lr_scheduler_callback import LearningRateScheduler
 
 __all__ = ["Callback", "LossMonitor", "TimeMonitor", "ModelCheckpoint",
-           "SummaryCollector", "CheckpointConfig", "RunContext"]
+           "SummaryCollector", "CheckpointConfig", "RunContext", "LearningRateScheduler"]
