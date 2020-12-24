@@ -23,38 +23,41 @@ from mindspore.common.parameter import Parameter
 from mindspore.common.tensor import Tensor
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as deC
 from mindspore import context
 
 from src.transformer_model import TransformerModel
 from src.eval_config import cfg, transformer_net_cfg
 
+
 def load_test_data(batch_size=1, data_file=None):
     """
     Load test dataset
     """
-    ds = de.MindDataset(data_file,
-                        columns_list=["source_eos_ids", "source_eos_mask",
-                                      "target_sos_ids", "target_sos_mask",
-                                      "target_eos_ids", "target_eos_mask"],
-                        shuffle=False)
+    data_set = ds.MindDataset(data_file,
+                              columns_list=["source_eos_ids", "source_eos_mask",
+                                            "target_sos_ids", "target_sos_mask",
+                                            "target_eos_ids", "target_eos_mask"],
+                              shuffle=False)
     type_cast_op = deC.TypeCast(mstype.int32)
-    ds = ds.map(operations=type_cast_op, input_columns="source_eos_ids")
-    ds = ds.map(operations=type_cast_op, input_columns="source_eos_mask")
-    ds = ds.map(operations=type_cast_op, input_columns="target_sos_ids")
-    ds = ds.map(operations=type_cast_op, input_columns="target_sos_mask")
-    ds = ds.map(operations=type_cast_op, input_columns="target_eos_ids")
-    ds = ds.map(operations=type_cast_op, input_columns="target_eos_mask")
+    data_set = data_set.map(operations=type_cast_op, input_columns="source_eos_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="source_eos_mask")
+    data_set = data_set.map(operations=type_cast_op, input_columns="target_sos_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="target_sos_mask")
+    data_set = data_set.map(operations=type_cast_op, input_columns="target_eos_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="target_eos_mask")
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
-    ds.channel_name = 'transformer'
-    return ds
+    data_set = data_set.batch(batch_size, drop_remainder=True)
+    data_set.channel_name = 'transformer'
+    return data_set
+
 
 class TransformerInferCell(nn.Cell):
     """
     Encapsulation class of transformer network infer.
     """
+
     def __init__(self, network):
         super(TransformerInferCell, self).__init__(auto_prefix=False)
         self.network = network
@@ -64,6 +67,7 @@ class TransformerInferCell(nn.Cell):
                   source_mask):
         predicted_ids = self.network(source_ids, source_mask)
         return predicted_ids
+
 
 def load_weights(model_path):
     """
@@ -92,6 +96,7 @@ def load_weights(model_path):
     for name in weights:
         parameter_dict[name] = Parameter(Tensor(weights[name]), name=name)
     return parameter_dict
+
 
 def run_transformer_eval():
     """
@@ -135,6 +140,7 @@ def run_transformer_eval():
             token_ids = [str(x) for x in batch_out[i].tolist()]
             f.write(" ".join(token_ids) + "\n")
     f.close()
+
 
 if __name__ == "__main__":
     run_transformer_eval()

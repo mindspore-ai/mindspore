@@ -20,7 +20,7 @@ import time
 import numpy as np
 import pytest
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine.datasets as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore import context
 from mindspore import log as logger
@@ -87,25 +87,26 @@ def me_de_train_dataset(sink_mode=False):
     repeat_count = 1
     sink_size = -1
     batch_size = 16
-    ds = de.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["input_ids", "input_mask", "segment_ids",
-                                                                "next_sentence_labels", "masked_lm_positions",
-                                                                "masked_lm_ids", "masked_lm_weights"], shuffle=False)
+    data_set = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["input_ids", "input_mask", "segment_ids",
+                                                                      "next_sentence_labels", "masked_lm_positions",
+                                                                      "masked_lm_ids", "masked_lm_weights"],
+                                  shuffle=False)
     type_cast_op = C.TypeCast(mstype.int32)
     new_repeat_count = repeat_count
     if sink_mode:
         sink_size = 100
         new_repeat_count = 3
-    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_ids")
-    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_positions")
-    ds = ds.map(operations=type_cast_op, input_columns="next_sentence_labels")
-    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
-    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
-    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="masked_lm_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="masked_lm_positions")
+    data_set = data_set.map(operations=type_cast_op, input_columns="next_sentence_labels")
+    data_set = data_set.map(operations=type_cast_op, input_columns="segment_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="input_mask")
+    data_set = data_set.map(operations=type_cast_op, input_columns="input_ids")
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
-    logger.info("data size: {}".format(ds.get_dataset_size()))
-    logger.info("repeat_count: {}".format(ds.get_repeat_count()))
-    return ds, new_repeat_count, sink_size
+    data_set = data_set.batch(batch_size, drop_remainder=True)
+    logger.info("data size: {}".format(data_set.get_dataset_size()))
+    logger.info("repeat_count: {}".format(data_set.get_repeat_count()))
+    return data_set, new_repeat_count, sink_size
 
 
 def weight_variable(shape):
@@ -178,11 +179,11 @@ def test_bert_percision(enable_graph_kernel=False):
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
     if enable_graph_kernel:
         context.set_context(enable_graph_kernel=True)
-    ds, new_repeat_count, _ = me_de_train_dataset()
+    data_set, new_repeat_count, _ = me_de_train_dataset()
     version = os.getenv('VERSION', 'large')
     config = get_config(version=version)
     netwithloss = BertNetworkWithLoss(config, True)
-    lr = BertLearningRate(decay_steps=ds.get_dataset_size() * new_repeat_count,
+    lr = BertLearningRate(decay_steps=data_set.get_dataset_size() * new_repeat_count,
                           learning_rate=5e-5, end_learning_rate=1e-9,
                           power=10.0, warmup_steps=0)
     decay_filter = lambda x: 'layernorm' not in x.name.lower() and 'bias' not in x.name.lower()
@@ -218,7 +219,7 @@ def test_bert_percision(enable_graph_kernel=False):
             else:
                 logger.info("***************** BERT param name is 3 {}".format(name))
                 param.set_data(weight_variable(value.asnumpy().shape))
-    model.train(new_repeat_count, ds, callbacks=callback, dataset_sink_mode=False)
+    model.train(new_repeat_count, data_set, callbacks=callback, dataset_sink_mode=False)
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
     loss_value = np.array(callback.loss_list)

@@ -14,12 +14,12 @@
 # ============================================================================
 """train_imagenet."""
 
-
 import os
 from enum import Enum
 import numpy as np
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.common.dtype as mstype
+
 
 class DataType(Enum):
     """
@@ -28,6 +28,7 @@ class DataType(Enum):
     MINDRECORD = 1
     TFRECORD = 2
     H5 = 3
+
 
 def _get_tf_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000,
                     line_per_sample=1000, rank_size=None, rank_id=None):
@@ -41,26 +42,29 @@ def _get_tf_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000,
         for filename in filenames:
             if file_prefix_name in filename and "tfrecord" in filename:
                 dataset_files.append(os.path.join(dirpath, filename))
-    schema = de.Schema()
+    schema = ds.Schema()
     schema.add_column('feat_ids', de_type=mstype.int32)
     schema.add_column('feat_vals', de_type=mstype.float32)
     schema.add_column('label', de_type=mstype.float32)
     if rank_size is not None and rank_id is not None:
-        ds = de.TFRecordDataset(dataset_files=dataset_files, shuffle=shuffle, schema=schema, num_parallel_workers=8,
-                                num_shards=rank_size, shard_id=rank_id, shard_equal_rows=True)
+        data_set = ds.TFRecordDataset(dataset_files=dataset_files, shuffle=shuffle, schema=schema,
+                                      num_parallel_workers=8,
+                                      num_shards=rank_size, shard_id=rank_id, shard_equal_rows=True)
     else:
-        ds = de.TFRecordDataset(dataset_files=dataset_files, shuffle=shuffle, schema=schema, num_parallel_workers=8)
-    ds = ds.batch(int(batch_size / line_per_sample),
-                  drop_remainder=True)
-    ds = ds.map(operations=(lambda x, y, z: (
+        data_set = ds.TFRecordDataset(dataset_files=dataset_files, shuffle=shuffle, schema=schema,
+                                      num_parallel_workers=8)
+    data_set = data_set.batch(int(batch_size / line_per_sample),
+                              drop_remainder=True)
+    data_set = data_set.map(operations=(lambda x, y, z: (
         np.array(x).flatten().reshape(batch_size, 39),
         np.array(y).flatten().reshape(batch_size, 39),
         np.array(z).flatten().reshape(batch_size, 1))),
-                input_columns=['feat_ids', 'feat_vals', 'label'],
-                column_order=['feat_ids', 'feat_vals', 'label'], num_parallel_workers=8)
-    #if train_mode:
-    ds = ds.repeat(epochs)
-    return ds
+                            input_columns=['feat_ids', 'feat_vals', 'label'],
+                            column_order=['feat_ids', 'feat_vals', 'label'], num_parallel_workers=8)
+    # if train_mode:
+    data_set = data_set.repeat(epochs)
+    return data_set
+
 
 def _get_mindrecord_dataset(directory, train_mode=True, epochs=1, batch_size=1000,
                             line_per_sample=1000, rank_size=None, rank_id=None):
@@ -84,23 +88,23 @@ def _get_mindrecord_dataset(directory, train_mode=True, epochs=1, batch_size=100
     shuffle = train_mode
 
     if rank_size is not None and rank_id is not None:
-        ds = de.MindDataset(os.path.join(directory, file_prefix_name + file_suffix_name),
-                            columns_list=['feat_ids', 'feat_vals', 'label'],
-                            num_shards=rank_size, shard_id=rank_id, shuffle=shuffle,
-                            num_parallel_workers=8)
+        data_set = ds.MindDataset(os.path.join(directory, file_prefix_name + file_suffix_name),
+                                  columns_list=['feat_ids', 'feat_vals', 'label'],
+                                  num_shards=rank_size, shard_id=rank_id, shuffle=shuffle,
+                                  num_parallel_workers=8)
     else:
-        ds = de.MindDataset(os.path.join(directory, file_prefix_name + file_suffix_name),
-                            columns_list=['feat_ids', 'feat_vals', 'label'],
-                            shuffle=shuffle, num_parallel_workers=8)
-    ds = ds.batch(int(batch_size / line_per_sample), drop_remainder=True)
-    ds = ds.map(operations=(lambda x, y, z: (np.array(x).flatten().reshape(batch_size, 39),
-                                             np.array(y).flatten().reshape(batch_size, 39),
-                                             np.array(z).flatten().reshape(batch_size, 1))),
-                input_columns=['feat_ids', 'feat_vals', 'label'],
-                column_order=['feat_ids', 'feat_vals', 'label'],
-                num_parallel_workers=8)
-    ds = ds.repeat(epochs)
-    return ds
+        data_set = ds.MindDataset(os.path.join(directory, file_prefix_name + file_suffix_name),
+                                  columns_list=['feat_ids', 'feat_vals', 'label'],
+                                  shuffle=shuffle, num_parallel_workers=8)
+    data_set = data_set.batch(int(batch_size / line_per_sample), drop_remainder=True)
+    data_set = data_set.map(operations=(lambda x, y, z: (np.array(x).flatten().reshape(batch_size, 39),
+                                                         np.array(y).flatten().reshape(batch_size, 39),
+                                                         np.array(z).flatten().reshape(batch_size, 1))),
+                            input_columns=['feat_ids', 'feat_vals', 'label'],
+                            column_order=['feat_ids', 'feat_vals', 'label'],
+                            num_parallel_workers=8)
+    data_set = data_set.repeat(epochs)
+    return data_set
 
 
 def create_dataset(data_dir, train_mode=True, epochs=1, batch_size=1000,

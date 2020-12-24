@@ -20,7 +20,7 @@ import time
 import numpy as np
 import pytest
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine.datasets as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 from mindspore import context
 from mindspore import log as logger
@@ -34,7 +34,6 @@ import mindspore.nn.learning_rate_schedule as lr_schedules
 from model_zoo.official.nlp.bert.src.bert_for_pre_training import BertNetworkWithLoss
 from model_zoo.official.nlp.bert.src.bert_for_pre_training import BertTrainOneStepWithLossScaleCell
 from model_zoo.official.nlp.bert.src.bert_model import BertConfig
-
 
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = ["/home/workspace/mindspore_dataset/bert/example/examples.tfrecord"]
@@ -88,25 +87,26 @@ def me_de_train_dataset(sink_mode=False):
     repeat_count = 1
     sink_size = -1
     batch_size = 16
-    ds = de.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["input_ids", "input_mask", "segment_ids",
-                                                                "next_sentence_labels", "masked_lm_positions",
-                                                                "masked_lm_ids", "masked_lm_weights"], shuffle=False)
+    data_set = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["input_ids", "input_mask", "segment_ids",
+                                                                      "next_sentence_labels", "masked_lm_positions",
+                                                                      "masked_lm_ids", "masked_lm_weights"],
+                                  shuffle=False)
     type_cast_op = C.TypeCast(mstype.int32)
     new_repeat_count = repeat_count
     if sink_mode:
         sink_size = 100
         new_repeat_count = 3
-    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_ids")
-    ds = ds.map(operations=type_cast_op, input_columns="masked_lm_positions")
-    ds = ds.map(operations=type_cast_op, input_columns="next_sentence_labels")
-    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
-    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
-    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="masked_lm_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="masked_lm_positions")
+    data_set = data_set.map(operations=type_cast_op, input_columns="next_sentence_labels")
+    data_set = data_set.map(operations=type_cast_op, input_columns="segment_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="input_mask")
+    data_set = data_set.map(operations=type_cast_op, input_columns="input_ids")
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
-    logger.info("data size: {}".format(ds.get_dataset_size()))
-    logger.info("repeat_count: {}".format(ds.get_repeat_count()))
-    return ds, new_repeat_count, sink_size
+    data_set = data_set.batch(batch_size, drop_remainder=True)
+    logger.info("data size: {}".format(data_set.get_dataset_size()))
+    logger.info("repeat_count: {}".format(data_set.get_repeat_count()))
+    return data_set, new_repeat_count, sink_size
 
 
 def weight_variable(shape):
@@ -155,13 +155,16 @@ class ModelCallback(Callback):
         self.lossscale_list.append(cb_params.net_outputs[2].asnumpy())
         print("epoch: {}, outputs are: {}".format(cb_params.cur_epoch_num, str(cb_params.net_outputs)))
 
+
 class TimeMonitor(Callback):
     """Time Monitor."""
+
     def __init__(self, data_size):
         super(TimeMonitor, self).__init__()
         self.data_size = data_size
         self.epoch_mseconds_list = []
         self.per_step_mseconds_list = []
+
     def epoch_begin(self, run_context):
         self.epoch_time = time.time()
 
@@ -178,7 +181,7 @@ class TimeMonitor(Callback):
 def test_bert_performance():
     """test bert performance"""
     context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", reserve_class_name_in_scope=False)
-    ds, new_repeat_count, sink_size = me_de_train_dataset(sink_mode=True)
+    data_set, new_repeat_count, sink_size = me_de_train_dataset(sink_mode=True)
     version = os.getenv('VERSION', 'large')
     config = get_config(version=version)
     netwithloss = BertNetworkWithLoss(config, True)
@@ -221,7 +224,7 @@ def test_bert_performance():
                 logger.info("***************** BERT param name is 3 {}".format(name))
                 param.set_data(weight_variable(value.asnumpy().shape))
     time_monitor_callback = TimeMonitor(sink_size)
-    model.train(new_repeat_count, ds, callbacks=[time_monitor_callback, callback],
+    model.train(new_repeat_count, data_set, callbacks=[time_monitor_callback, callback],
                 dataset_sink_mode=True, sink_size=sink_size)
 
     # assertion occurs while the loss value, overflow state or loss_scale value is wrong
@@ -249,6 +252,7 @@ def test_bert_performance():
     expect_per_step_mseconds = 14
     print("per step mseconds: {}".format(per_step_mseconds))
     assert per_step_mseconds <= expect_per_step_mseconds + 1
+
 
 if __name__ == '__main__':
     test_bert_performance()

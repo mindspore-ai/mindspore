@@ -16,7 +16,7 @@
 import os
 import numpy as np
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
 import mindspore.dataset.vision.c_transforms as vc
 from PIL import Image, ImageFile
@@ -105,7 +105,7 @@ def create_dataset(name, dataset_path, batch_size=1, num_shards=1, shard_id=0, i
         dataset = IIIT5KDataset(dataset_path, "annotation.txt", config)
     else:
         raise ValueError(f"unsupported dataset name: {name}")
-    ds = de.GeneratorDataset(dataset, ["image", "label"], shuffle=True, num_shards=num_shards, shard_id=shard_id)
+    data_set = ds.GeneratorDataset(dataset, ["image", "label"], shuffle=True, num_shards=num_shards, shard_id=shard_id)
     image_trans = [
         vc.Resize((config.image_height, config.image_width)),
         vc.Normalize([127.5, 127.5, 127.5], std=[127.5, 127.5, 127.5]),
@@ -114,8 +114,8 @@ def create_dataset(name, dataset_path, batch_size=1, num_shards=1, shard_id=0, i
     label_trans = [
         C.TypeCast(mstype.int32)
     ]
-    ds = ds.map(operations=image_trans, input_columns=["image"], num_parallel_workers=8)
-    ds = ds.map(operations=label_trans, input_columns=["label"], num_parallel_workers=8)
+    data_set = data_set.map(operations=image_trans, input_columns=["image"], num_parallel_workers=8)
+    data_set = data_set.map(operations=label_trans, input_columns=["label"], num_parallel_workers=8)
 
-    ds = ds.batch(batch_size, drop_remainder=True)
-    return ds
+    data_set = data_set.batch(batch_size, drop_remainder=True)
+    return data_set

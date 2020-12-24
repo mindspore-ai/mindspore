@@ -17,7 +17,7 @@
 
 import os
 import sys
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 from mindspore import Model, context
 from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, TimeMonitor
 from mindspore.context import ParallelMode
@@ -88,7 +88,7 @@ def train_and_eval(config):
     print("epochs is {}".format(epochs))
     if config.full_batch:
         context.set_auto_parallel_context(full_batch=True)
-        de.config.set_seed(1)
+        ds.config.set_seed(1)
         if config.field_slice:
             compute_manual_shape(config, get_group_size())
             ds_train = create_dataset(data_path, train_mode=True, epochs=1,

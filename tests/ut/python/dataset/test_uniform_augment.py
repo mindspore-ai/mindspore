@@ -18,7 +18,7 @@ Testing UniformAugment in DE
 import numpy as np
 import pytest
 
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.py_transforms
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.vision.py_transforms as F
@@ -35,13 +35,13 @@ def test_uniform_augment(plot=False, num_ops=2):
     logger.info("Test UniformAugment")
 
     # Original Images
-    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_original = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
                                                                               F.Resize((224, 224)),
                                                                               F.ToTensor()])
 
-    ds_original = ds.map(operations=transforms_original, input_columns="image")
+    ds_original = data_set.map(operations=transforms_original, input_columns="image")
 
     ds_original = ds_original.batch(512)
 
@@ -54,7 +54,7 @@ def test_uniform_augment(plot=False, num_ops=2):
                                         axis=0)
 
             # UniformAugment Images
-    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transform_list = [F.RandomRotation(45),
                       F.RandomColor(),
@@ -70,7 +70,7 @@ def test_uniform_augment(plot=False, num_ops=2):
                                                                              num_ops=num_ops),
                                                             F.ToTensor()])
 
-    ds_ua = ds.map(operations=transforms_ua, input_columns="image")
+    ds_ua = data_set.map(operations=transforms_ua, input_columns="image")
 
     ds_ua = ds_ua.batch(512)
 
@@ -99,12 +99,12 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
     logger.info("Test CPP UniformAugment")
 
     # Original Images
-    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_original = [C.Decode(), C.Resize(size=[224, 224]),
                            F.ToTensor()]
 
-    ds_original = ds.map(operations=transforms_original, input_columns="image")
+    ds_original = data_set.map(operations=transforms_original, input_columns="image")
 
     ds_original = ds_original.batch(512)
 
@@ -117,7 +117,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
                                         axis=0)
 
     # UniformAugment Images
-    ds = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data_set = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     transforms_ua = [C.RandomCrop(size=[224, 224], padding=[32, 32, 32, 32]),
                      C.RandomHorizontalFlip(),
                      C.RandomVerticalFlip(),
@@ -130,7 +130,7 @@ def test_cpp_uniform_augment(plot=False, num_ops=2):
                       uni_aug,
                       F.ToTensor()]
 
-    ds_ua = ds.map(operations=transforms_all, input_columns="image", num_parallel_workers=1)
+    ds_ua = data_set.map(operations=transforms_all, input_columns="image", num_parallel_workers=1)
 
     ds_ua = ds_ua.batch(512)
 
@@ -240,7 +240,7 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
     logger.info("Test CPP UniformAugment with random_crop bad input")
     batch_size = 2
     cifar10_dir = "../data/dataset/testCifar10Data"
-    ds1 = de.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
+    ds1 = ds.Cifar10Dataset(cifar10_dir, shuffle=False)  # shape = [32,32,3]
 
     transforms_ua = [
         # Note: crop size [224, 224] > image size [32, 32]

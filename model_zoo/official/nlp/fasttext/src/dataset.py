@@ -25,8 +25,10 @@ import spacy
 from sklearn.feature_extraction import FeatureHasher
 from mindspore.mindrecord import FileWriter
 
+
 class FastTextDataPreProcess():
     """FastText data preprocess"""
+
     def __init__(self, train_path,
                  test_file,
                  max_length,
@@ -194,7 +196,6 @@ class FastTextDataPreProcess():
         if self.text_less in sent_describe and self.text_greater in sent_describe:
             sent_describe = self.str_html.sub('', sent_describe)
 
-
         doc = spacy_nlp(sent_describe)
         bows_token = [token.text for token in doc]
 
@@ -222,7 +223,7 @@ class FastTextDataPreProcess():
     def _get_bucket_length(self, x, bts):
         x_len = len(x)
         for index in range(1, len(bts)):
-            if bts[index-1] < x_len <= bts[index]:
+            if bts[index - 1] < x_len <= bts[index]:
                 return bts[index]
         return bts[0]
 
@@ -310,7 +311,6 @@ if __name__ == '__main__':
 
     print("Writing test data to MindRecord file.....")
     for k in args.test_bucket:
-
         write_to_mindrecord(test_data_example[k], './test_dataset_bs_' + str(k) + '.mindrecord', 1)
 
     print("All done.....")

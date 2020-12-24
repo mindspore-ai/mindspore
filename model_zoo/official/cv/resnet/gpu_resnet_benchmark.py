@@ -29,7 +29,7 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from mindspore.common import set_seed
 import mindspore.nn as nn
 import mindspore.common.initializer as weight_init
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
 from src.resnet_gpu_benchmark import resnet50 as resnet
 from src.CrossEntropySmooth import CrossEntropySmooth
@@ -45,19 +45,22 @@ parser.add_argument('--dataset_path', type=str, default=None, help='Imagenet dat
 parser.add_argument('--ckpt_path', type=str, default="./", help='The path to save ckpt if save_ckpt is True;\
                     Or the ckpt model file when eval is True')
 parser.add_argument('--mode', type=str, default="GRAPH", choices=["GRAPH", "PYNATIVE"], help='Execute mode')
-parser.add_argument('--dtype', type=str, choices=["fp32", "fp16", "FP16", "FP32"], default="fp16",\
-     help='Compute data type fp32 or fp16: default fp16')
+parser.add_argument('--dtype', type=str, choices=["fp32", "fp16", "FP16", "FP32"], default="fp16", \
+                    help='Compute data type fp32 or fp16: default fp16')
 args_opt = parser.parse_args()
 
 set_seed(1)
+
 
 class MyTimeMonitor(Callback):
     def __init__(self, batch_size, sink_size):
         super(MyTimeMonitor, self).__init__()
         self.batch_size = batch_size
         self.size = sink_size
+
     def step_begin(self, run_context):
         self.step_time = time.time()
+
     def step_end(self, run_context):
         cb_params = run_context.original_args()
         loss = cb_params.net_outputs
@@ -75,17 +78,18 @@ class MyTimeMonitor(Callback):
             raise ValueError("epoch: {} step: {}. Invalid loss, terminating training.".format(
                 cb_params.cur_epoch_num, cur_step_in_epoch))
         step_mseconds = (time.time() - self.step_time) * 1000
-        fps = self.batch_size / step_mseconds *1000 * self.size
+        fps = self.batch_size / step_mseconds * 1000 * self.size
         print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num, cur_step_in_epoch, loss),
               "Epoch time: {:5.3f} ms, fps: {:d} img/sec.".format(step_mseconds, int(fps)), flush=True)
+
 
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="GPU", dtype="fp16",
                    device_num=1):
     if device_num == 1:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=4, shuffle=True)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=4, shuffle=True)
     else:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=4, shuffle=True,
-                                   num_shards=device_num, shard_id=get_rank())
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=4, shuffle=True,
+                                         num_shards=device_num, shard_id=get_rank())
     image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
     std = [0.229 * 255, 0.224 * 255, 0.225 * 255]
@@ -113,14 +117,15 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
         ]
     if dtype == "fp32":
         trans.append(C.HWC2CHW())
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
     # apply dataset repeat operation
     if repeat_num > 1:
-        ds = ds.repeat(repeat_num)
+        data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set
+
 
 def get_liner_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch):
     lr_each_step = []
@@ -135,6 +140,7 @@ def get_liner_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per
         lr_each_step.append(lr_)
     lr_each_step = np.array(lr_each_step).astype(np.float32)
     return lr_each_step
+
 
 def train():
     # set args
@@ -221,6 +227,7 @@ def train():
     else:
         model.train(epoch_size, dataset, callbacks=cb)
 
+
 def eval_():
     # set args
     dev = "GPU"
@@ -250,6 +257,7 @@ def eval_():
     print("========START EVAL RESNET50 ON GPU ========")
     res = model.eval(dataset)
     print("result:", res, "ckpt=", ckpt_dir)
+
 
 if __name__ == '__main__':
     if not args_opt.eval:

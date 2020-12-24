@@ -17,7 +17,6 @@ Testing RandomSolarizeOp op in DE
 """
 import pytest
 import mindspore.dataset as ds
-import mindspore.dataset.engine as de
 import mindspore.dataset.vision.c_transforms as vision
 from mindspore import log as logger
 from util import visualize_list, save_and_check_md5, config_get_set_seed, config_get_set_num_parallel_workers, \
@@ -78,8 +77,8 @@ def test_random_solarize_mnist(plot=False, run_golden=True):
     Test RandomSolarize op with MNIST dataset (Grayscale images)
     """
 
-    mnist_1 = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
-    mnist_2 = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+    mnist_1 = ds.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+    mnist_2 = ds.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
     mnist_2 = mnist_2.map(operations=vision.RandomSolarize((0, 255)), input_columns="image")
 
     images = []

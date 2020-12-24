@@ -18,13 +18,15 @@
 import os
 from enum import Enum
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine.datasets as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C
+
 
 class DataType(Enum):
     """Enumerate supported dataset format"""
     TFRECORD = 1
     MINDRECORD = 2
+
 
 def create_tinybert_dataset(task='td', batch_size=32, device_num=1, rank=0,
                             do_shuffle="true", data_dir=None, schema_dir=None,
@@ -47,22 +49,22 @@ def create_tinybert_dataset(task='td', batch_size=32, device_num=1, rank=0,
         shuffle = False
 
     if data_type == DataType.MINDRECORD:
-        ds = de.MindDataset(data_files, columns_list=columns_list,
-                            shuffle=(do_shuffle == "true"), num_shards=device_num, shard_id=rank)
+        data_set = ds.MindDataset(data_files, columns_list=columns_list,
+                                  shuffle=(do_shuffle == "true"), num_shards=device_num, shard_id=rank)
     else:
-        ds = de.TFRecordDataset(data_files, schema_dir, columns_list=columns_list,
-                                shuffle=shuffle, num_shards=device_num, shard_id=rank,
-                                shard_equal_rows=shard_equal_rows)
+        data_set = ds.TFRecordDataset(data_files, schema_dir, columns_list=columns_list,
+                                      shuffle=shuffle, num_shards=device_num, shard_id=rank,
+                                      shard_equal_rows=shard_equal_rows)
     if device_num == 1 and shuffle is True:
-        ds = ds.shuffle(10000)
+        data_set = data_set.shuffle(10000)
 
     type_cast_op = C.TypeCast(mstype.int32)
-    ds = ds.map(operations=type_cast_op, input_columns="segment_ids")
-    ds = ds.map(operations=type_cast_op, input_columns="input_mask")
-    ds = ds.map(operations=type_cast_op, input_columns="input_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="segment_ids")
+    data_set = data_set.map(operations=type_cast_op, input_columns="input_mask")
+    data_set = data_set.map(operations=type_cast_op, input_columns="input_ids")
     if task == "td":
-        ds = ds.map(operations=type_cast_op, input_columns="label_ids")
+        data_set = data_set.map(operations=type_cast_op, input_columns="label_ids")
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
-    return ds
+    return data_set

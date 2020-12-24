@@ -18,7 +18,7 @@ create train or eval dataset.
 import os
 from functools import partial
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as C2
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.py_transforms as P2
@@ -53,14 +53,14 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
 
     columns_list = ['image', 'label']
     if config.data_load_mode == "mindrecord":
-        load_func = partial(de.MindDataset, dataset_path, columns_list)
+        load_func = partial(ds.MindDataset, dataset_path, columns_list)
     else:
-        load_func = partial(de.ImageFolderDataset, dataset_path)
+        load_func = partial(ds.ImageFolderDataset, dataset_path)
     if device_num == 1:
-        ds = load_func(num_parallel_workers=8, shuffle=True)
+        data_set = load_func(num_parallel_workers=8, shuffle=True)
     else:
-        ds = load_func(num_parallel_workers=8, shuffle=True,
-                       num_shards=device_num, shard_id=rank_id)
+        data_set = load_func(num_parallel_workers=8, shuffle=True,
+                             num_shards=device_num, shard_id=rank_id)
 
     image_size = 224
     mean = [0.485 * 255, 0.456 * 255, 0.406 * 255]
@@ -85,16 +85,16 @@ def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=8)
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=8)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set
 
 
 def create_dataset_py(dataset_path, do_train, repeat_num=1, batch_size=32, target="Ascend"):
@@ -121,12 +121,12 @@ def create_dataset_py(dataset_path, do_train, repeat_num=1, batch_size=32, targe
 
     if do_train:
         if device_num == 1:
-            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
         else:
-            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                       num_shards=device_num, shard_id=rank_id)
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                             num_shards=device_num, shard_id=rank_id)
     else:
-        ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=False)
+        data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=False)
 
     image_size = 224
 
@@ -147,12 +147,13 @@ def create_dataset_py(dataset_path, do_train, repeat_num=1, batch_size=32, targe
         trans = [decode_op, resize_op, center_crop, to_tensor, normalize_op]
 
     compose = P2.Compose(trans)
-    ds = ds.map(operations=compose, input_columns="image", num_parallel_workers=8, python_multiprocessing=True)
+    data_set = data_set.map(operations=compose, input_columns="image", num_parallel_workers=8,
+                            python_multiprocessing=True)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set

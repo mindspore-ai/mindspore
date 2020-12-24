@@ -24,16 +24,17 @@ import cv2
 import numpy as np
 import pycocotools.coco as coco
 
-import mindspore.dataset.engine.datasets as de
+import mindspore.dataset as ds
 from mindspore import log as logger
 from mindspore.mindrecord import FileWriter
 from src.image import color_aug, get_affine_transform, affine_transform
 from src.image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian, draw_dense_reg
 from src.visual import visual_image
+
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 
 
-class COCOHP(de.Dataset):
+class COCOHP(ds.Dataset):
     """
     Encapsulation class of COCO person keypoints datast.
     Initilize and preprocess of image for training and testing.
@@ -47,6 +48,7 @@ class COCOHP(de.Dataset):
     Returns:
         Prepocessed training or testing dataset for CenterNet network.
     """
+
     def __init__(self, data_opt, run_mode="train", net_opt=None, enable_visual_image=False, save_path=None):
         super(COCOHP, self).__init__()
         self._data_rng = np.random.RandomState(123)
@@ -63,7 +65,6 @@ class COCOHP(de.Dataset):
             self.save_path = os.path.join(save_path, self.run_mode, "input_image")
             if not os.path.exists(self.save_path):
                 os.makedirs(self.save_path)
-
 
     def init(self, data_dir, keep_res=False, flip_test=False):
         """initailize additional info"""
@@ -124,7 +125,7 @@ class COCOHP(de.Dataset):
         for img_id in self.images:
             image_info = self.coco.loadImgs([img_id])
             annos = self.coco.loadAnns(self.anns[img_id])
-            #get image
+            # get image
             img_name = image_info[0]['file_name']
             img_name = os.path.join(self.image_path, img_name)
             with open(img_name, 'rb') as f:
@@ -147,18 +148,15 @@ class COCOHP(de.Dataset):
         writer.commit()
         logger.info("Create Mindrecord Done, at {}".format(mindrecord_dir))
 
-
     def _coco_box_to_bbox(self, box):
         bbox = np.array([box[0], box[1], box[0] + box[2], box[1] + box[3]], dtype=np.float32)
         return bbox
-
 
     def _get_border(self, border, size):
         i = 1
         while size - border // i <= border // i:
             i *= 2
         return border // i
-
 
     def __getitem__(self, index):
         img_id = self.images[index]
@@ -168,7 +166,6 @@ class COCOHP(de.Dataset):
         image_id = np.array([img_id], dtype=np.int32).reshape((-1))
         ret = (img, image_id)
         return ret
-
 
     def pre_process_for_test(self, image, img_id, scale, meta=None):
         """image pre-process for evaluation"""
@@ -249,7 +246,6 @@ class COCOHP(de.Dataset):
 
         return images, meta
 
-
     def preprocess_fn(self, img, num_objects, keypoints, bboxes, category_id):
         """image pre-process and augmentation"""
         num_objs = min(num_objects, self.data_opt.max_objs)
@@ -269,12 +265,12 @@ class COCOHP(de.Dataset):
         else:
             sf = self.data_opt.scale
             cf = self.data_opt.shift
-            c[0] += s * np.clip(np.random.randn()*cf, -2*cf, 2*cf)
-            c[1] += s * np.clip(np.random.randn()*cf, -2*cf, 2*cf)
-            s = s * np.clip(np.random.randn()*sf + 1, 1 - sf, 1 + sf)
+            c[0] += s * np.clip(np.random.randn() * cf, -2 * cf, 2 * cf)
+            c[1] += s * np.clip(np.random.randn() * cf, -2 * cf, 2 * cf)
+            s = s * np.clip(np.random.randn() * sf + 1, 1 - sf, 1 + sf)
         if np.random.random() < self.data_opt.aug_rot:
             rf = self.data_opt.rotate
-            rot = np.clip(np.random.randn()*rf, -rf*2, rf*2)
+            rot = np.clip(np.random.randn() * rf, -rf * 2, rf * 2)
 
         if np.random.random() < self.data_opt.flip_prop:
             flipped = True
@@ -323,7 +319,7 @@ class COCOHP(de.Dataset):
             cls_id = int(category_id[k]) - 1
             pts = np.array(keypoints[k], np.float32).reshape(num_joints, 3)
             if flipped:
-                bbox[[0, 2]] = width - bbox[[2, 0]] - 1 # index begin from zero
+                bbox[[0, 2]] = width - bbox[[2, 0]] - 1  # index begin from zero
                 pts[:, 0] = width - pts[:, 0] - 1
                 for e in self.data_opt.flip_idx:
                     pts[e[0]], pts[e[1]] = pts[e[1]].copy(), pts[e[0]].copy()
@@ -360,7 +356,7 @@ class COCOHP(de.Dataset):
                 if pts[j, 2] > 0:
                     pts[j, :2] = affine_transform(pts[j, :2], trans_output_rot)
                     if pts[j, 0] >= 0 and pts[j, 0] < output_res and \
-                        pts[j, 1] >= 0 and pts[j, 1] < output_res:
+                            pts[j, 1] >= 0 and pts[j, 1] < output_res:
                         kps[k, j * 2: j * 2 + 2] = pts[j, :2] - ct_int
                         kps_mask[k, j * 2: j * 2 + 2] = 1
                         pt_int = pts[j, :2].astype(np.int32)
@@ -399,7 +395,6 @@ class COCOHP(de.Dataset):
             visual_image(out_img, ground_truth, self.save_path, ratio=self.data_opt.input_res[0] // output_res)
         return ret
 
-
     def create_train_dataset(self, mindrecord_dir, prefix="coco_hp.train.mind", batch_size=1,
                              device_num=1, rank=0, num_parallel_workers=1, do_shuffle=True):
         """create train dataset based on mindrecord file"""
@@ -415,41 +410,43 @@ class COCOHP(de.Dataset):
             raise ValueError('data_dir {} have no data files'.format(mindrecord_dir))
 
         columns = ["image", "num_objects", "keypoints", "bbox", "category_id"]
-        ds = de.MindDataset(data_files,
-                            columns_list=columns,
-                            num_parallel_workers=num_parallel_workers, shuffle=do_shuffle,
-                            num_shards=device_num, shard_id=rank)
-        ori_dataset_size = ds.get_dataset_size()
+        data_set = ds.MindDataset(data_files,
+                                  columns_list=columns,
+                                  num_parallel_workers=num_parallel_workers, shuffle=do_shuffle,
+                                  num_shards=device_num, shard_id=rank)
+        ori_dataset_size = data_set.get_dataset_size()
         logger.info('origin dataset size: {}'.format(ori_dataset_size))
 
-        ds = ds.map(operations=self.preprocess_fn,
-                    input_columns=["image", "num_objects", "keypoints", "bbox", "category_id"],
-                    output_columns=["image", "hm", "reg_mask", "ind", "wh", "kps", "kps_mask",
-                                    "reg", "hm_hp", "hp_offset", "hp_ind", "hp_mask"],
-                    column_order=["image", "hm", "reg_mask", "ind", "wh", "kps", "kps_mask",
-                                  "reg", "hm_hp", "hp_offset", "hp_ind", "hp_mask"],
-                    num_parallel_workers=num_parallel_workers,
-                    python_multiprocessing=True)
-        ds = ds.batch(batch_size, drop_remainder=True, num_parallel_workers=8)
-        logger.info("data size: {}".format(ds.get_dataset_size()))
-        logger.info("repeat count: {}".format(ds.get_repeat_count()))
-        return ds
-
+        data_set = data_set.map(operations=self.preprocess_fn,
+                                input_columns=["image", "num_objects", "keypoints", "bbox", "category_id"],
+                                output_columns=["image", "hm", "reg_mask", "ind", "wh", "kps", "kps_mask",
+                                                "reg", "hm_hp", "hp_offset", "hp_ind", "hp_mask"],
+                                column_order=["image", "hm", "reg_mask", "ind", "wh", "kps", "kps_mask",
+                                              "reg", "hm_hp", "hp_offset", "hp_ind", "hp_mask"],
+                                num_parallel_workers=num_parallel_workers,
+                                python_multiprocessing=True)
+        data_set = data_set.batch(batch_size, drop_remainder=True, num_parallel_workers=8)
+        logger.info("data size: {}".format(data_set.get_dataset_size()))
+        logger.info("repeat count: {}".format(data_set.get_repeat_count()))
+        return data_set
 
     def create_eval_dataset(self, batch_size=1, num_parallel_workers=1):
         """create testing dataset based on coco format"""
+
         def generator():
             for i in range(self.num_samples):
                 yield self.__getitem__(i)
+
         column = ["image", "image_id"]
-        ds = de.GeneratorDataset(generator, column, num_parallel_workers=num_parallel_workers)
-        ds = ds.batch(batch_size, drop_remainder=True, num_parallel_workers=8)
-        return ds
+        data_set = ds.GeneratorDataset(generator, column, num_parallel_workers=num_parallel_workers)
+        data_set = data_set.batch(batch_size, drop_remainder=True, num_parallel_workers=8)
+        return data_set
 
 
 if __name__ == '__main__':
     # Convert coco2017 dataset to mindrecord to improve performance on host
     from src.config import dataset_config
+
     parser = argparse.ArgumentParser(description='CenterNet MindRecord dataset')
     parser.add_argument("--coco_data_dir", type=str, default="", help="Coco dataset directory.")
     parser.add_argument("--mindrecord_dir", type=str, default="", help="MindRecord dataset dir.")

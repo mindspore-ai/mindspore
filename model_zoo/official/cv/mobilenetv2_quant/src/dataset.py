@@ -18,7 +18,7 @@ create train or eval dataset.
 import os
 from functools import partial
 import mindspore.common.dtype as mstype
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.vision.c_transforms as C
 import mindspore.dataset.transforms.c_transforms as C2
 import mindspore.dataset.transforms.py_transforms as P2
@@ -43,24 +43,24 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
         rank_id = int(os.getenv("RANK_ID"))
         columns_list = ['image', 'label']
         if config.data_load_mode == "mindrecord":
-            load_func = partial(de.MindDataset, dataset_path, columns_list)
+            load_func = partial(ds.MindDataset, dataset_path, columns_list)
         else:
-            load_func = partial(de.ImageFolderDataset, dataset_path)
+            load_func = partial(ds.ImageFolderDataset, dataset_path)
         if do_train:
             if rank_size == 1:
-                ds = load_func(num_parallel_workers=8, shuffle=True)
+                data_set = load_func(num_parallel_workers=8, shuffle=True)
             else:
-                ds = load_func(num_parallel_workers=8, shuffle=True,
-                               num_shards=rank_size, shard_id=rank_id)
+                data_set = load_func(num_parallel_workers=8, shuffle=True,
+                                     num_shards=rank_size, shard_id=rank_id)
         else:
-            ds = load_func(num_parallel_workers=8, shuffle=False)
+            data_set = load_func(num_parallel_workers=8, shuffle=False)
     elif device_target == "GPU":
         if do_train:
             from mindspore.communication.management import get_rank, get_group_size
-            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                       num_shards=get_group_size(), shard_id=get_rank())
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                             num_shards=get_group_size(), shard_id=get_rank())
         else:
-            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
     else:
         raise ValueError("Unsupported device_target.")
 
@@ -69,7 +69,7 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
     if do_train:
         buffer_size = 20480
         # apply shuffle operations
-        ds = ds.shuffle(buffer_size=buffer_size)
+        data_set = data_set.shuffle(buffer_size=buffer_size)
 
     # define map operations
     decode_op = C.Decode()
@@ -89,16 +89,16 @@ def create_dataset(dataset_path, do_train, config, device_target, repeat_num=1, 
 
     type_cast_op = C2.TypeCast(mstype.int32)
 
-    ds = ds.map(operations=trans, input_columns="image", num_parallel_workers=16)
-    ds = ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
+    data_set = data_set.map(operations=trans, input_columns="image", num_parallel_workers=16)
+    data_set = data_set.map(operations=type_cast_op, input_columns="label", num_parallel_workers=8)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set
 
 
 def create_dataset_py(dataset_path, do_train, config, device_target, repeat_num=1, batch_size=32):
@@ -119,12 +119,12 @@ def create_dataset_py(dataset_path, do_train, config, device_target, repeat_num=
         rank_id = int(os.getenv("RANK_ID"))
         if do_train:
             if rank_size == 1:
-                ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
+                data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True)
             else:
-                ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
-                                           num_shards=rank_size, shard_id=rank_id)
+                data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=True,
+                                                 num_shards=rank_size, shard_id=rank_id)
         else:
-            ds = de.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=False)
+            data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=8, shuffle=False)
     else:
         raise ValueError("Unsupported device target.")
 
@@ -133,7 +133,7 @@ def create_dataset_py(dataset_path, do_train, config, device_target, repeat_num=
     if do_train:
         buffer_size = 20480
         # apply shuffle operations
-        ds = ds.shuffle(buffer_size=buffer_size)
+        data_set = data_set.shuffle(buffer_size=buffer_size)
 
     # define map operations
     decode_op = P.Decode()
@@ -152,12 +152,13 @@ def create_dataset_py(dataset_path, do_train, config, device_target, repeat_num=
 
     compose = P2.Compose(trans)
 
-    ds = ds.map(operations=compose, input_columns="image", num_parallel_workers=8, python_multiprocessing=True)
+    data_set = data_set.map(operations=compose, input_columns="image", num_parallel_workers=8,
+                            python_multiprocessing=True)
 
     # apply batch operations
-    ds = ds.batch(batch_size, drop_remainder=True)
+    data_set = data_set.batch(batch_size, drop_remainder=True)
 
     # apply dataset repeat operation
-    ds = ds.repeat(repeat_num)
+    data_set = data_set.repeat(repeat_num)
 
-    return ds
+    return data_set

@@ -17,7 +17,6 @@ Testing RandomSharpness op in DE
 """
 import numpy as np
 import mindspore.dataset as ds
-import mindspore.dataset.engine as de
 import mindspore.dataset.transforms.py_transforms
 import mindspore.dataset.vision.py_transforms as F
 import mindspore.dataset.vision.c_transforms as C
@@ -38,7 +37,7 @@ def test_random_sharpness_py(degrees=(0.7, 0.7), plot=False):
     logger.info("Test RandomSharpness python op")
 
     # Original Images
-    data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_original = mindspore.dataset.transforms.py_transforms.Compose([F.Decode(),
                                                                               F.Resize((224, 224)),
@@ -57,7 +56,7 @@ def test_random_sharpness_py(degrees=(0.7, 0.7), plot=False):
                                         axis=0)
 
     # Random Sharpness Adjusted Images
-    data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     py_op = F.RandomSharpness()
     if degrees is not None:
@@ -108,7 +107,7 @@ def test_random_sharpness_py_md5():
     transform = mindspore.dataset.transforms.py_transforms.Compose(transforms)
 
     #  Generate dataset
-    data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     data = data.map(operations=transform, input_columns=["image"])
 
     # check results with md5 comparison
@@ -128,7 +127,7 @@ def test_random_sharpness_c(degrees=(1.6, 1.6), plot=False):
     logger.info("Test RandomSharpness cpp op")
 
     # Original Images
-    data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     transforms_original = [C.Decode(),
                            C.Resize((224, 224))]
@@ -146,7 +145,7 @@ def test_random_sharpness_c(degrees=(1.6, 1.6), plot=False):
                                         axis=0)
 
             # Random Sharpness Adjusted Images
-    data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
 
     c_op = C.RandomSharpness()
     if degrees is not None:
@@ -194,7 +193,7 @@ def test_random_sharpness_c_md5():
     ]
 
     #  Generate dataset
-    data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     data = data.map(operations=transforms, input_columns=["image"])
 
     # check results with md5 comparison
@@ -213,7 +212,7 @@ def test_random_sharpness_c_py(degrees=(1.0, 1.0), plot=False):
     logger.info("Test RandomSharpness C and python Op")
 
     # RandomSharpness Images
-    data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     data = data.map(operations=[C.Decode(), C.Resize((200, 300))], input_columns=["image"])
 
     python_op = F.RandomSharpness(degrees)
@@ -236,7 +235,7 @@ def test_random_sharpness_c_py(degrees=(1.0, 1.0), plot=False):
                                                    image,
                                                    axis=0)
 
-    data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
     data = data.map(operations=[C.Decode(), C.Resize((200, 300))], input_columns=["image"])
 
     ds_images_random_sharpness_c = data.map(operations=c_op, input_columns="image")
@@ -271,10 +270,10 @@ def test_random_sharpness_one_channel_c(degrees=(1.4, 1.4), plot=False):
     if degrees is not None:
         c_op = C.RandomSharpness(degrees)
     # RandomSharpness Images
-    data = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+    data = ds.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
     ds_random_sharpness_c = data.map(operations=c_op, input_columns="image")
     # Original images
-    data = de.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
+    data = ds.MnistDataset(dataset_dir=MNIST_DATA_DIR, num_samples=2, shuffle=False)
 
     images = []
     images_trans = []
@@ -296,7 +295,7 @@ def test_random_sharpness_invalid_params():
     """
     logger.info("Test RandomSharpness with invalid input parameters.")
     try:
-        data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+        data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
         data = data.map(operations=[C.Decode(), C.Resize((224, 224)),
                                     C.RandomSharpness(10)], input_columns=["image"])
     except TypeError as error:
@@ -304,7 +303,7 @@ def test_random_sharpness_invalid_params():
         assert "tuple" in str(error)
 
     try:
-        data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+        data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
         data = data.map(operations=[C.Decode(), C.Resize((224, 224)),
                                     C.RandomSharpness((-10, 10))], input_columns=["image"])
     except ValueError as error:
@@ -312,7 +311,7 @@ def test_random_sharpness_invalid_params():
         assert "interval" in str(error)
 
     try:
-        data = de.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
+        data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, shuffle=False)
         data = data.map(operations=[C.Decode(), C.Resize((224, 224)),
                                     C.RandomSharpness((10, 5))], input_columns=["image"])
     except ValueError as error:

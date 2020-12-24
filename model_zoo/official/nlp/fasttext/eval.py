@@ -22,7 +22,7 @@ import mindspore.ops.operations as P
 from mindspore.common.tensor import Tensor
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore.dataset.engine as de
+import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as deC
 from mindspore import context
 from src.fasttext_model import FastText
@@ -73,15 +73,15 @@ class FastTextInferCell(nn.Cell):
 
 def load_infer_dataset(batch_size, datafile):
     """data loader for infer"""
-    ds = de.MindDataset(datafile, columns_list=['src_tokens', 'src_tokens_length', 'label_idx'])
+    data_set = ds.MindDataset(datafile, columns_list=['src_tokens', 'src_tokens_length', 'label_idx'])
 
     type_cast_op = deC.TypeCast(mstype.int32)
-    ds = ds.map(operations=type_cast_op, input_columns="src_tokens")
-    ds = ds.map(operations=type_cast_op, input_columns="src_tokens_length")
-    ds = ds.map(operations=type_cast_op, input_columns="label_idx")
-    ds = ds.batch(batch_size=batch_size, drop_remainder=True)
+    data_set = data_set.map(operations=type_cast_op, input_columns="src_tokens")
+    data_set = data_set.map(operations=type_cast_op, input_columns="src_tokens_length")
+    data_set = data_set.map(operations=type_cast_op, input_columns="label_idx")
+    data_set = data_set.batch(batch_size=batch_size, drop_remainder=True)
 
-    return ds
+    return data_set
 
 def run_fasttext_infer():
     """run infer with FastText"""
