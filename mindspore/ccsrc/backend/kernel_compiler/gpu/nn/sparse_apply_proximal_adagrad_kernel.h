@@ -32,15 +32,7 @@ namespace kernel {
 template <typename T>
 class SparseApplyProximalAdagradKernel : public GpuKernel {
  public:
-  SparseApplyProximalAdagradKernel()
-      : variable_size_(0),
-        accumulation_size_(0),
-        learning_rate_size_(0),
-        l1_regularization_size_(0),
-        l2_regularization_size_(0),
-        gradient_size_(0),
-        indices_size_(0) {}
-
+  SparseApplyProximalAdagradKernel() { ResetResource(); }
   ~SparseApplyProximalAdagradKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -119,6 +111,19 @@ class SparseApplyProximalAdagradKernel : public GpuKernel {
     input_size_list_.push_back(indices_size_);
     output_size_list_.push_back(variable_size_);
     output_size_list_.push_back(accumulation_size_);
+  }
+
+  void ResetResource() noexcept override {
+    variable_size_ = 0;
+    accumulation_size_ = 0;
+    learning_rate_size_ = 0;
+    l1_regularization_size_ = 0;
+    l2_regularization_size_ = 0;
+    gradient_size_ = 0;
+    indices_size_ = 0;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  private:
