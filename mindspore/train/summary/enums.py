@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -34,7 +34,17 @@ class PluginEnum(BaseEnum):
     HISTOGRAM = 'histogram'
     TRAIN_LINEAGE = 'train_lineage'
     EVAL_LINEAGE = 'eval_lineage'
+    CUSTOM_LINEAGE_DATA = 'custom_lineage_data'
     DATASET_GRAPH = 'dataset_graph'
+    EXPLAINER = 'explainer'
+
+
+class WriterPluginEnum(Enum):
+    """The list of extra plugins."""
+    EXPORTER = 'exporter'
+    EXPLAINER = 'explainer'
+    SUMMARY = 'summary'
+    LINEAGE = 'lineage'
 
 
 class ModeEnum(BaseEnum):

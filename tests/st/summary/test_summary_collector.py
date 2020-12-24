@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -170,13 +170,17 @@ class TestSummary:
     def test_summarycollector_user_defind(self):
         """Test SummaryCollector with user defind."""
         summary_dir = self._run_network(dataset_sink_mode=True, num_samples=2,
-                                        custom_lineage_data={'test': 'self test'})
+                                        custom_lineage_data={'test': 'self test'},
+                                        export_options={'tensor_format': 'npy'})
 
         tag_list = self._list_summary_tags(summary_dir)
+        file_list = self._list_tensor_files(summary_dir)
         # There will not record input data when dataset sink mode is True
         expected_tags = {'conv1.weight/auto', 'conv2.weight/auto', 'fc1.weight/auto', 'fc1.bias/auto',
                          'fc2.weight/auto', 'loss/auto', 'histogram', 'image', 'scalar', 'tensor'}
         assert set(expected_tags) == set(tag_list)
+        expected_files = {'tensor_1.npy'}
+        assert set(expected_files) == set(file_list)
 
     @staticmethod
     def _list_summary_tags(summary_dir):
@@ -198,3 +202,21 @@ class TestSummary:
                 for value in summary_event.summary.value:
                     tags.append(value.tag)
         return tags
+
+    @staticmethod
+    def _list_tensor_files(summary_dir):
+        """list tensor tags."""
+        export_file_path = ''
+        for file in os.listdir(summary_dir):
+            if re.search("export_", file):
+                export_file_path = os.path.join(summary_dir, file)
+                break
+        assert export_file_path
+        tensor_file_path = os.path.join(export_file_path, "tensor")
+        assert tensor_file_path
+
+        tensors = list()
+        for file in os.listdir(tensor_file_path):
+            tensors.append(file)
+
+        return tensors

@@ -27,7 +27,7 @@ from mindspore import log as logger
 from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
-from mindspore.train.summary.summary_record import SummaryRecord
+from mindspore.train.summary.summary_record import SummaryRecord, process_export_options
 from mindspore.train.summary.enums import PluginEnum, ModeEnum
 from mindspore.train.callback import Callback, ModelCheckpoint
 from mindspore.train import lineage_pb2
@@ -89,21 +89,21 @@ class SummaryCollector(Callback):
             For example, you can set {'collect_metric': False} to control not collecting metrics.
             The data that supports control is shown below.
 
-            - collect_metric: Whether to collect training metrics, currently only the loss is collected.
+            - collect_metric (bool): Whether to collect training metrics, currently only the loss is collected.
               The first output will be treated as the loss and it will be averaged.
               Optional: True/False. Default: True.
-            - collect_graph: Whether to collect the computational graph. Currently, only
+            - collect_graph (bool): Whether to collect the computational graph. Currently, only
               training computational graph is collected. Optional: True/False. Default: True.
-            - collect_train_lineage: Whether to collect lineage data for the training phase,
+            - collect_train_lineage (bool): Whether to collect lineage data for the training phase,
               this field will be displayed on the lineage page of Mindinsight. Optional: True/False. Default: True.
-            - collect_eval_lineage: Whether to collect lineage data for the evaluation phase,
+            - collect_eval_lineage (bool): Whether to collect lineage data for the evaluation phase,
               this field will be displayed on the lineage page of Mindinsight. Optional: True/False. Default: True.
-            - collect_input_data: Whether to collect dataset for each training. Currently only image data is supported.
+            - collect_input_data (bool): Whether to collect dataset for each training.
+              Currently only image data is supported. Optional: True/False. Default: True.
+            - collect_dataset_graph (bool): Whether to collect dataset graph for the training phase.
               Optional: True/False. Default: True.
-            - collect_dataset_graph: Whether to collect dataset graph for the training phase.
-              Optional: True/False. Default: True.
-            - histogram_regular: Collect weight and bias for parameter distribution page and displayed in MindInsight.
-              This field allows regular strings to control which parameters to collect.
+            - histogram_regular (Union[str, None]): Collect weight and bias for parameter distribution page
+              and displayed in MindInsight. This field allows regular strings to control which parameters to collect.
               Default: None, it means only the first five parameters are collected.
               It is not recommended to collect too many parameters at once, as it can affect performance.
               Note that if you collect too many parameters and run out of memory, the training will fail.
@@ -127,6 +127,13 @@ class SummaryCollector(Callback):
         max_file_size (Optional[int]): The maximum size in bytes of each file that can be written to the disk.
             Default: None, which means no limit. For example, to write not larger than 4GB,
             specify `max_file_size=4 * 1024**3`.
+        export_options (Union[None, dict]): Perform custom operations on the export data.
+            Default: None, it means there is no export data.
+            You can customize the export data with a dictionary. For example, you can set {'tensor_format': 'npy'}
+            to export tensor as npy file. The data that supports control is shown below.
+
+            - tensor_format (Union[str, None]): Customize the export tensor format.
+              Default: None, it means there is no export tensor.
 
     Raises:
         ValueError: If the parameter value is not expected.
@@ -175,7 +182,8 @@ class SummaryCollector(Callback):
                  keep_default_action=True,
                  custom_lineage_data=None,
                  collect_tensor_freq=None,
-                 max_file_size=None):
+                 max_file_size=None,
+                 export_options=None):
         super(SummaryCollector, self).__init__()
 
         self._summary_dir = self._process_summary_dir(summary_dir)
@@ -190,6 +198,8 @@ class SummaryCollector(Callback):
 
         self._check_positive('max_file_size', max_file_size, allow_none=True)
         self._max_file_size = max_file_size
+
+        self._export_options = process_export_options(export_options)
 
         self._check_action(keep_default_action)
 
@@ -209,7 +219,8 @@ class SummaryCollector(Callback):
     def __enter__(self):
         self._record = SummaryRecord(log_dir=self._summary_dir,
                                      max_file_size=self._max_file_size,
-                                     raise_exception=False)
+                                     raise_exception=False,
+                                     export_options=self._export_options)
         self._first_step, self._dataset_sink_mode = True, True
         return self
 

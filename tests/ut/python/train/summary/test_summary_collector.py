@@ -143,6 +143,18 @@ class TestSummaryCollector:
 
         assert expected_msg == str(exc.value)
 
+    @pytest.mark.parametrize("export_options", [123])
+    def test_params_with_export_options_type_error(self, export_options):
+        """Test type error scenario for collect specified data param."""
+        summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
+        with pytest.raises(TypeError) as exc:
+            SummaryCollector(summary_dir, export_options=export_options)
+
+        expected_msg = f"For `export_options` the type should be a valid type of ['dict', 'NoneType'], " \
+                       f"but got {type(export_options).__name__}."
+
+        assert expected_msg == str(exc.value)
+
     @pytest.mark.parametrize("collect_specified_data", [
         {
             123: 123
@@ -202,6 +214,15 @@ class TestSummaryCollector:
         with pytest.raises(ValueError) as exc:
             SummaryCollector(summary_dir, collect_specified_data=data)
         expected_msg = f"For `collect_specified_data` the keys {set(data)} are unsupported"
+        assert expected_msg in str(exc.value)
+
+    def test_params_with_export_options_unexpected_key(self):
+        """Test the export_options parameter with unexpected key."""
+        summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
+        data = {'unexpected_key': "value"}
+        with pytest.raises(ValueError) as exc:
+            SummaryCollector(summary_dir, export_options=data)
+        expected_msg = f"For `export_options` the keys {set(data)} are unsupported"
         assert expected_msg in str(exc.value)
 
     @pytest.mark.parametrize("custom_lineage_data", [

@@ -15,12 +15,19 @@
 """Writes events to disk in a logdir."""
 import os
 import stat
+from urllib.parse import quote
 from shutil import disk_usage
 
+import numpy as np
+
+from mindspore.train.summary.enums import PluginEnum, WriterPluginEnum
+
+from .._utils import _make_directory
 from ..._c_expression import EventWriter_
 from ._summary_adapter import package_init_event
 
 FREE_DISK_SPACE_TIMES = 32
+FILE_MODE = 0o600
 
 
 class BaseWriter:
@@ -79,11 +86,11 @@ class SummaryWriter(BaseWriter):
 
     def init_writer(self):
         """Write some metadata etc."""
-        self.write('summary', package_init_event().SerializeToString())
+        self.write(WriterPluginEnum.SUMMARY.value, package_init_event().SerializeToString())
 
     def write(self, plugin, data):
         """Write data to file."""
-        if plugin in ('summary', 'graph'):
+        if plugin in (WriterPluginEnum.SUMMARY.value, PluginEnum.GRAPH.value):
             super().write(plugin, data)
 
 
@@ -92,7 +99,8 @@ class LineageWriter(BaseWriter):
 
     def write(self, plugin, data):
         """Write data to file."""
-        if plugin in ('dataset_graph', 'train_lineage', 'eval_lineage', 'custom_lineage_data'):
+        if plugin in (PluginEnum.DATASET_GRAPH.value, PluginEnum.TRAIN_LINEAGE.value, PluginEnum.EVAL_LINEAGE.value,
+                      PluginEnum.CUSTOM_LINEAGE_DATA.value):
             super().write(plugin, data)
 
 
@@ -101,5 +109,64 @@ class ExplainWriter(BaseWriter):
 
     def write(self, plugin, data):
         """Write data to file."""
-        if plugin == 'explainer':
+        if plugin == WriterPluginEnum.EXPLAINER.value:
             super().write(plugin, data)
+
+
+class ExportWriter(BaseWriter):
+    """ExportWriter for export data."""
+
+    def write(self, plugin, data):
+        """Write data to file."""
+        if plugin == WriterPluginEnum.EXPORTER.value:
+            self.export_data(data, data.get('export_option'))
+
+    def flush(self):
+        """Flush the writer."""
+
+    def close(self):
+        """Close the writer."""
+
+    def export_data(self, data, export_option):
+        """
+        export the tensor data.
+
+        Args:
+            data (dict): Export data info.
+            export_option (Union[None, str]): The export options.
+        """
+        options = {
+            'npy': self._export_npy
+        }
+
+        if export_option in options:
+            options[export_option](data, self._filepath, self._max_file_size)
+
+    @staticmethod
+    def _export_npy(data, export_dir, max_file_size):
+        """
+        export the tensor data as npy.
+
+        Args:
+            data (dict): Export data info.
+            export_dir (str): The path of export dir.
+            max_file_size (Optional[int]): The maximum size in bytes of each file that can be written to the disk.
+        """
+        tag = quote(data.get('tag'), safe="")
+        step = int(data.get('step'))
+        np_value = data.get('value')
+        path = _make_directory(os.path.join(export_dir, 'tensor'))
+
+        #  128 is the typical length of header of npy file
+        metadata_length = 128
+        required_length = np_value.nbytes + metadata_length
+        if disk_usage(path).free < required_length * FREE_DISK_SPACE_TIMES:
+            raise RuntimeError(f"The disk space may be soon exhausted by the '{path}'.")
+
+        if max_file_size is not None and max_file_size < required_length:
+            raise RuntimeWarning(f"'max_file_size' reached: There are {max_file_size} bytes remaining, "
+                                 f"but the '{path}' requires to write {required_length} bytes.")
+
+        np_path = "{}/{}_{}.npy".format(path, tag, step)
+        np.save(np_path, np_value)
+        os.chmod(np_path, FILE_MODE)

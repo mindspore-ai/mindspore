@@ -19,11 +19,12 @@ import signal
 from collections import deque
 
 import mindspore.log as logger
+from mindspore.train.summary.enums import PluginEnum, WriterPluginEnum
 
 from ._lineage_adapter import serialize_to_lineage_event
 from ._summary_adapter import package_graph_event, package_summary_event
 from ._explain_adapter import package_explain_event
-from .writer import LineageWriter, SummaryWriter, ExplainWriter
+from .writer import LineageWriter, SummaryWriter, ExplainWriter, ExportWriter
 
 try:
     from multiprocessing import get_context
@@ -37,17 +38,24 @@ def _pack_data(datadict, wall_time):
     result, summaries, step = [], [], None
     for plugin, datalist in datadict.items():
         for data in datalist:
-            if plugin == 'graph':
+            if plugin == PluginEnum.GRAPH.value:
                 result.append([plugin, package_graph_event(data.get('value')).SerializeToString()])
-            elif plugin in ('train_lineage', 'eval_lineage', 'custom_lineage_data', 'dataset_graph'):
+            elif plugin in (PluginEnum.TRAIN_LINEAGE.value, PluginEnum.EVAL_LINEAGE.value,
+                            PluginEnum.CUSTOM_LINEAGE_DATA.value, PluginEnum.DATASET_GRAPH.value):
                 result.append([plugin, serialize_to_lineage_event(plugin, data.get('value'))])
-            elif plugin in ('scalar', 'tensor', 'histogram', 'image'):
+            elif plugin in (PluginEnum.SCALAR.value, PluginEnum.TENSOR.value, PluginEnum.HISTOGRAM.value,
+                            PluginEnum.IMAGE.value):
                 summaries.append({'_type': plugin.title(), 'name': data.get('tag'), 'data': data.get('value')})
                 step = data.get('step')
-            elif plugin == 'explainer':
+            elif plugin == PluginEnum.EXPLAINER.value:
                 result.append([plugin, package_explain_event(data.get('value'))])
+
+            if 'export_option' in data:
+                result.append([WriterPluginEnum.EXPORTER.value, data])
+
     if summaries:
-        result.append(['summary', package_summary_event(summaries, step, wall_time).SerializeToString()])
+        result.append(
+            [WriterPluginEnum.SUMMARY.value, package_summary_event(summaries, step, wall_time).SerializeToString()])
     return result
 
 
@@ -60,6 +68,7 @@ class WriterPool(ctx.Process):
         max_file_size (Optional[int]): The maximum size of each file that can be written to disk in bytes.
         raise_exception (bool, optional): Sets whether to throw an exception when an RuntimeError exception occurs
             in recording data. Default: False, this means that error logs are printed and no exception is thrown.
+        export_options (Union[None, dict]): Perform custom operations on the export data. Default: None.
         filedict (dict): The mapping from plugin to filename.
     """
 
@@ -114,12 +123,14 @@ class WriterPool(ctx.Process):
         self._writers_ = []
         for plugin, filename in self._filedict.items():
             filepath = os.path.join(self._base_dir, filename)
-            if plugin == 'summary':
+            if plugin == WriterPluginEnum.SUMMARY.value:
                 self._writers_.append(SummaryWriter(filepath, self._max_file_size))
-            elif plugin == 'lineage':
+            elif plugin == WriterPluginEnum.LINEAGE.value:
                 self._writers_.append(LineageWriter(filepath, self._max_file_size))
-            elif plugin == 'explainer':
+            elif plugin == WriterPluginEnum.EXPLAINER.value:
                 self._writers_.append(ExplainWriter(filepath, self._max_file_size))
+            elif plugin == WriterPluginEnum.EXPORTER.value:
+                self._writers_.append(ExportWriter(filepath, self._max_file_size))
         return self._writers_
 
     def _write(self, plugin, data):

@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,13 +36,14 @@ EVENT_FILE_INIT_VERSION = 1
 F32_MIN, F32_MAX = np.finfo(np.float32).min, np.finfo(np.float32).max
 
 
-def get_event_file_name(prefix, suffix):
+def get_event_file_name(prefix, suffix, seconds=None):
     """
     Create file name: file_prefix + EVENT_FILE_NAME_MARK + time(seconds) + "." + Hostname + file_suffix.
 
     Args:
         prefix (str): The prefix of file name.
         suffix (str): The suffix of file name.
+        seconds (str): The time stamp of file name.
 
     Returns:
         String, the name of event log file.
@@ -51,6 +52,8 @@ def get_event_file_name(prefix, suffix):
     Validator.check_str_by_regular(suffix)
     file_name = ""
     time_second = str(int(time.time()))
+    if seconds is not None:
+        time_second = seconds
     hostname = platform.node()
 
     if prefix is not None:
@@ -96,8 +99,9 @@ def package_summary_event(data_list, step, wall_time):
     Package the summary to event protobuffer.
 
     Args:
-        data_id (Number): Summary data id.
+        data_list (list): Summary data list.
         step (Number): The recode step index.
+        wall_time (float): The wall time.
 
     Returns:
         Summary, the summary event.
