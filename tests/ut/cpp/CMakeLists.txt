@@ -85,8 +85,6 @@ file(GLOB_RECURSE MINDSPORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         # dont remove the 4 lines above
         "../../../mindspore/ccsrc/debug/data_dump/dump_json_parser.cc"
         "../../../mindspore/ccsrc/debug/common.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/profiling/profiling_manager.cc"
-        "../../../mindspore/ccsrc/runtime/device/ascend/profiling/profiling_engine_impl.cc"
         "../../../mindspore/ccsrc/runtime/device/kernel_runtime.cc"
         "../../../mindspore/ccsrc/runtime/device/memory_manager.cc"
         "../../../mindspore/ccsrc/runtime/device/kernel_runtime_manager.cc"

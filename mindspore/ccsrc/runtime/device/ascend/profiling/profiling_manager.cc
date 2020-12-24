@@ -19,18 +19,20 @@
 #include <vector>
 #include "securec/include/securec.h"
 #include "./prof_mgr_core.h"
-#include "runtime/device/ascend/profiling/plugin_impl.h"
-#include "runtime/device/ascend/profiling/profiling_engine_impl.h"
 #include "utils/log_adapter.h"
 #include "utils/ms_context.h"
 #include "utils/ms_utils.h"
 #include "utils/convert_utils.h"
 #include "runtime/base.h"
 #include "toolchain/prof_acl_api.h"
+#include "runtime/device/ascend/profiling/profiling_callback_register.h"
 
 namespace {
 constexpr uint32_t kProfilingDeviceNum = 1;
-}
+constexpr auto kRtSetDeviceRegName = "profiling";
+constexpr Status PROF_SUCCESS = 0;
+constexpr Status PROF_FAILED = 0xFFFFFFFF;
+}  // namespace
 
 namespace mindspore {
 namespace device {
@@ -40,9 +42,7 @@ ProfilingManager &ProfilingManager::GetInstance() {
   return inst;
 }
 
-ProfilingManager::ProfilingManager() : device_id_(0), prof_handle_(nullptr) {
-  engine_0_ = std::make_shared<ProfilingEngineImpl>();
-}
+ProfilingManager::ProfilingManager() : device_id_(0), prof_cb_({0}) {}
 
 uint64_t ProfilingManager::GetJobId() const {
   const char *job_id = std::getenv("JOB_ID");
@@ -58,14 +58,10 @@ bool ProfilingManager::ReportProfilingData(const map<uint32_t, string> &op_taskI
     MS_LOG(WARNING) << "op_taskId_map is empty.";
     return false;
   }
-  auto reporter = PluginImpl::GetPluginReporter();
-  if (reporter == nullptr) {
-    MS_LOG(ERROR) << "No profiling data report!";
-    return false;
-  }
+
   MS_LOG(INFO) << "DistributeTask: op tasId map size = " << op_taskId_map.size();
 
-  Msprof::Engine::ReporterData reporter_data = {};
+  ReporterData reporter_data = {};
   for (const auto &iter : op_taskId_map) {
     auto data = iter.second + ' ' + std::to_string(iter.first) + ';';
     reporter_data.deviceId = UintToInt(device_id_);
@@ -76,41 +72,65 @@ bool ProfilingManager::ReportProfilingData(const map<uint32_t, string> &op_taskI
       MS_LOG(ERROR) << "memcpy_s error, errorno(" << ret << ")";
       return false;
     }
-    ret = reporter->Report(&reporter_data);
-    if (ret != 0) {
-      MS_LOG(ERROR) << "reporter data fail, errorno(" << ret << ")";
+    int32_t cb_ret = CallMsprofReport(NOT_NULL(&reporter_data));
+    if (cb_ret != 0) {
+      MS_LOG(ERROR) << "reporter data fail, errorno(" << cb_ret << ")";
       return false;
     }
   }
   return true;
 }
 
-static std::vector<std::string> Split(const std::string &str, const char delim) {
-  std::vector<std::string> elems;
-
-  if (str.empty()) {
-    elems.emplace_back("");
-    return elems;
-  }
-
-  std::stringstream ss(str);
-  std::string item;
-
-  while (getline(ss, item, delim)) {
-    elems.push_back(item);
-  }
-  auto str_size = str.size();
-  if (str_size > 0 && str[str_size - 1] == delim) {
-    elems.emplace_back("");
-  }
-
-  return elems;
-}
-
 uint64_t GetProfilingModule() {
   return PROF_MODEL_EXECUTE_MASK | PROF_RUNTIME_API_MASK | PROF_RUNTIME_TRACE_MASK | PROF_SCHEDULE_TIMELINE_MASK |
          PROF_SCHEDULE_TRACE_MASK | PROF_TASK_TIME_MASK | PROF_SUBTASK_TIME_MASK | PROF_AICPU_TRACE_MASK |
          PROF_AICORE_METRICS_MASK | PROF_AIVECTORCORE_METRICS_MASK | PROF_MODEL_LOAD_MASK;
+}
+
+Status ProfilingManager::PluginInit() const {
+  if (prof_cb_.msprofReporterCallback == nullptr) {
+    MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
+    return PROF_FAILED;
+  }
+  return prof_cb_.msprofReporterCallback(static_cast<uint32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+                                         static_cast<uint32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_INIT),
+                                         nullptr, 0);
+}
+
+void ProfilingManager::PluginUnInit() const {
+  if (prof_cb_.msprofReporterCallback == nullptr) {
+    MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
+    return;
+  }
+  int32_t cb_ret = prof_cb_.msprofReporterCallback(
+    static_cast<uint32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+    static_cast<uint32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_UNINIT), nullptr, 0);
+  if (cb_ret != 0) {
+    MS_LOG(WARNING) << "profiling plugin uninit failed, ret:%d" << cb_ret;
+  }
+}
+
+Status ProfilingManager::GetProfConf(NotNull<MsprofGeOptions *> prof) {
+  string job_id = std::to_string(GetJobId());
+
+  if (memcpy_s(prof->jobId, sizeof(prof->jobId), job_id.c_str(), sizeof(job_id.c_str())) != EOK) {
+    MS_LOG(ERROR) << "Copy job_id failed.";
+    return PROF_FAILED;
+  }
+
+  auto context = MsContext::GetInstance();
+  if (context == nullptr) {
+    MS_LOG(ERROR) << "Context is nullptr.";
+    return PROF_FAILED;
+  }
+
+  const string prof_options_str = context->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
+
+  if (memcpy_s(prof->options, MSPROF_OPTIONS_DEF_LEN_MAX, prof_options_str.c_str(), prof_options_str.size()) != EOK) {
+    MS_LOG(ERROR) << "Copy profiling_options failed";
+    return PROF_FAILED;
+  }
+  return PROF_SUCCESS;
 }
 
 bool ProfilingManager::StartupProfiling(uint32_t device_id) {
@@ -120,42 +140,14 @@ bool ProfilingManager::StartupProfiling(uint32_t device_id) {
     return true;
   }
   device_id_ = device_id;
-  // register Framework to profiling
-  int result = Msprof::Engine::RegisterEngine("Framework", engine_0_.get());
-  if (result != 0) {
-    MS_LOG(ERROR) << "Register profiling Engine failed.";
+
+  struct MsprofGeOptions prof_conf = {0};
+  if (GetProfConf(NOT_NULL(&prof_conf)) != PROF_SUCCESS) {
+    MS_LOG(ERROR) << "Get prof conf failed.";
     return false;
   }
-  auto context = MsContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  const string prof_options_str = context->get_param<std::string>(MS_CTX_PROFILING_OPTIONS);
-  std::vector<string> opts = Split(prof_options_str, ':');
-  if (opts.empty()) {
-    MS_LOG(WARNING) << "Profiling is enabled, but profiling option is not set!";
-    return true;
-  }
-  // current one docker only use one device`
-  nlohmann::json p_device;
-  // JOBID
-  auto job_id = GetJobId();
-  p_device["jobID"] = std::to_string(job_id);
-  // device_id
-  p_device["deviceID"] = std::to_string(device_id);
-  // features:'training_trace', 'task_trace'  etc
-  nlohmann::json features;
-  for (std::vector<string>::size_type i = 0; i < opts.size(); i++) {
-    nlohmann::json f;
-    f["name"] = opts[i];
-    features[i] = f;
-  }
-  p_device["features"] = features;
-  // only one device, but sProfMgrStartUp API require for device list
-  nlohmann::json devices;
-  devices[0] = p_device;
-  nlohmann::json startCfg;
-  startCfg["startCfg"] = devices;
 
-  if (!ProfStartUp(startCfg)) {
+  if (!ProfStartUp(NOT_NULL(&prof_conf))) {
     MS_LOG(ERROR) << "ProfMgrStartUp failed.";
     return false;
   }
@@ -168,28 +160,24 @@ uint32_t GetCurrentDeviceId() {
   return context->get_param<uint32_t>(MS_CTX_DEVICE_ID);
 }
 
-bool ProfilingManager::ProfStartUp(const nlohmann::json &startCfg) {
-  // convert json to string
-  std::stringstream ss;
-  ss << startCfg;
-  std::string cfg = ss.str();
-  MS_LOG(INFO) << "profiling config " << cfg;
+bool ProfilingManager::ProfStartUp(NotNull<MsprofGeOptions *> prof_conf) {
+  MS_LOG(INFO) << "Prof start up. ";
 
-  auto module = GetProfilingModule();
-  auto device_id = GetCurrentDeviceId();
-  auto ret = rtProfilerStart(module, kProfilingDeviceNum, &device_id);
-  if (ret != RT_ERROR_NONE) {
-    MS_LOG(INFO) << "Call rtProfilerStart failed, ret:" << ret;
+  if (prof_cb_.msprofCtrlCallback == nullptr) {
+    MS_LOG(ERROR) << "MsprofCtrlCallback callback is nullptr.";
     return false;
   }
 
-  // call profiling startup API
-  ProfMgrCfg prof_cfg = {cfg};
-  prof_handle_ = ProfMgrStartUp(&prof_cfg);
-  if (prof_handle_ == nullptr) {
-    MS_LOG(ERROR) << "Startup profiling failed.";
+  // call profiling start up api
+  int32_t cb_ret =
+    prof_cb_.msprofCtrlCallback(static_cast<uint32_t>(MsprofCtrlCallbackType::MSPROF_CTRL_INIT_GE_OPTIONS),
+                                static_cast<void *>(prof_conf.get()), sizeof(MsprofGeOptions));
+  if (cb_ret != PROF_SUCCESS) {
+    MS_LOG(ERROR) << "Call msprofCtrlCallback failed, ret: " << cb_ret;
     return false;
   }
+
+  MS_LOG(INFO) << "Start up profiling success.";
   return true;
 }
 
@@ -199,12 +187,10 @@ bool ProfilingManager::StopProfiling() {
     MS_LOG(INFO) << "No need profiling. please export PROFILING_MODE and in train mode.";
     return true;
   }
-  Msprof::Engine::Reporter *reporter = PluginImpl::GetPluginReporter();
-  if (reporter != nullptr) {
-    auto ret = reporter->Flush();
-    MS_LOG(INFO) << "report data end, ret = " << ret;
-  }
 
+  // plugin unregister
+  PluginUnInit();
+  // stop runtime profiler
   auto module = GetProfilingModule();
   uint32_t device_ids[kProfilingDeviceNum] = {GetCurrentDeviceId()};
 
@@ -214,18 +200,109 @@ bool ProfilingManager::StopProfiling() {
     return false;
   }
 
-  if (prof_handle_ != nullptr) {
-    int result = ProfMgrStop(prof_handle_);
-    if (result != 0) {
-      MS_LOG(ERROR) << "ProfMgr stop return fail:" << result << ".";
-      prof_handle_ = nullptr;
-      return false;
-    }
-    prof_handle_ = nullptr;
+  // stop profiling
+  if (prof_cb_.msprofCtrlCallback == nullptr) {
+    MS_LOG(ERROR) << "MsprofCtrlCallback callback is nullptr.";
+    return false;
   }
 
+  int32_t cb_ret =
+    prof_cb_.msprofCtrlCallback(static_cast<uint32_t>(MsprofCtrlCallbackType::MSPROF_CTRL_FINALIZE), nullptr, 0);
+  if (cb_ret != 0) {
+    MS_LOG(WARNING) << "Call msprofCtrlCallback failed, ret: " << cb_ret;
+    return false;
+  }
   return true;
 }
+
+Status ProfilingManager::CallMsprofReport(NotNull<ReporterData *> reporter_data) const {
+  if (prof_cb_.msprofReporterCallback == nullptr) {
+    MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
+    return PROF_FAILED;
+  }
+  return prof_cb_.msprofReporterCallback(static_cast<uint32_t>(MsprofReporterModuleId::MSPROF_MODULE_FRAMEWORK),
+                                         static_cast<uint32_t>(MsprofReporterCallbackType::MSPROF_REPORTER_REPORT),
+                                         static_cast<void *>(reporter_data.get()), sizeof(ReporterData));
+}
+
+Status RegProfCtrlCallback(MsprofCtrlCallback func) {
+  if (func == nullptr) {
+    MS_LOG(ERROR) << "Msprof ctrl callback is nullptr.";
+    return PROF_FAILED;
+  }
+  if (ProfilingManager::GetInstance().GetMsprofCallback().msprofCtrlCallback != nullptr) {
+    MS_LOG(WARNING) << "Msprof ctrl callback is exist, just ignore it.";
+  } else {
+    MS_LOG(INFO) << "GE register Msprof ctrl callback.";
+    ProfilingManager::GetInstance().SetMsprofCtrlCallback(func);
+  }
+  return PROF_SUCCESS;
+}
+
+Status RegProfSetDeviceCallback(MsprofSetDeviceCallback func) {
+  if (func == nullptr) {
+    MS_LOG(ERROR) << "MsprofSetDeviceCallback callback is nullptr.";
+    return PROF_FAILED;
+  }
+  ProfilingManager::GetInstance().SetMsprofSetDeviceCallback(func);
+  // Pass MsprofSetDeviceCallback to runtime
+  MS_LOG(INFO) << "GE pass setdevice callback to runtime.";
+  Status rt_ret = rtRegDeviceStateCallback(kRtSetDeviceRegName, static_cast<rtDeviceStateCallback>(func));
+  if (rt_ret != PROF_SUCCESS) {
+    MS_LOG(ERROR) << "Pass MsprofSetDeviceCallback to runtime failed!";
+    return rt_ret;
+  }
+  return PROF_SUCCESS;
+}
+
+Status RegProfReporterCallback(MsprofReporterCallback func) {
+  if (func == nullptr) {
+    MS_LOG(ERROR) << "MsprofReporterCallback callback is nullptr.";
+    return PROF_FAILED;
+  }
+  if (ProfilingManager::GetInstance().GetMsprofCallback().msprofReporterCallback != nullptr) {
+    MS_LOG(WARNING) << "Msprof reporter callback is exist, just ignore it.";
+  } else {
+    MS_LOG(INFO) << "GE register Msprof reporter callback.";
+    ProfilingManager::GetInstance().SetMsprofReporterCallback(func);
+    // Pass MsprofReporterCallback to runtime
+    Status rt_ret = rtSetMsprofReporterCallback(func);
+    if (rt_ret != PROF_SUCCESS) {
+      MS_LOG(ERROR) << "Pass MsprofReporterCallback to runtime failed, ret: " << rt_ret;
+      return rt_ret;
+    }
+    // Pass MsprofReporterCallback to hccl
+  }
+  return PROF_SUCCESS;
+}
+
+Status ProfCommandHandle(ProfCommandHandleType type, void *data, uint32_t len) {
+  MS_LOG(INFO) << "ProfCommandHandle start, type:" << type;
+  if (type == kProfCommandhandleInit) {
+    auto cb_ret = ProfilingManager::GetInstance().PluginInit();
+    if (cb_ret != PROF_SUCCESS) {
+      MS_LOG(ERROR) << "Profiling plugin int failed.";
+      return PROF_FAILED;
+    }
+
+    // call runtime profiler API
+    auto module = GetProfilingModule();
+    auto device_id = GetCurrentDeviceId();
+    auto ret = rtProfilerStart(module, kProfilingDeviceNum, &device_id);
+    if (ret != RT_ERROR_NONE) {
+      MS_LOG(ERROR) << "Call rtProfilerStart failed, ret:" << ret;
+      return PROF_FAILED;
+    }
+  }
+  return PROF_SUCCESS;
+}
+
+bool DoRegiste() {
+  MS_LOG(INFO) << "VM profiling register start";
+  return VMCallbackRegister::GetInstance().Registe(RegProfCtrlCallback, RegProfSetDeviceCallback,
+                                                   RegProfReporterCallback, ProfCommandHandle);
+}
+static bool doRegiste = DoRegiste();
 }  // namespace ascend
 }  // namespace device
 }  // namespace mindspore

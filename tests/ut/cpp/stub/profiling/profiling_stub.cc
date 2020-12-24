@@ -15,7 +15,6 @@
  */
 #include <string>
 #include "prof_mgr_core.h"
-#include <string>
 
 namespace Msprof {
 namespace Engine {
@@ -51,3 +50,7 @@ void* ProfMgrStartUp(const ProfMgrCfg* cfg) { return const_cast<void*>(reinterpr
  *        PROFILING_FAILED -1 (failed)
  */
 int ProfMgrStop(void* handle) { return 0; }
+
+namespace Analysis::Dvvp::ProfilerCommon {
+uint32_t MsprofilerInit() { return 0; }
+}

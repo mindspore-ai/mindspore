@@ -99,6 +99,8 @@ class KernelRuntime {
 #endif
   }
 
+  virtual void PreInit() {}
+
  protected:
   virtual DeviceAddressPtr CreateDeviceAddress(void *device_ptr, size_t device_size, const string &format,
                                                TypeId type_id) = 0;

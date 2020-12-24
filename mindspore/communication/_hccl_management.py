@@ -110,7 +110,7 @@ def create_group(group, rank_num, rank_ids):
         c_array_rank_ids = c_array(ctypes.c_uint, rank_ids)
         c_rank_num = ctypes.c_uint(rank_num)
         c_group = c_str(group)
-        ret = HCCL_LIB_CTYPES.hcom_create_group(c_group, c_rank_num, c_array_rank_ids)
+        ret = HCCL_LIB_CTYPES.HcomCreateGroup(c_group, c_rank_num, c_array_rank_ids)
         if ret != 0:
             raise RuntimeError('Create group error.')
     else:
@@ -129,7 +129,7 @@ def destroy_group(group):
     """
     check_group(group)
     c_group = c_str(group)
-    ret = HCCL_LIB_CTYPES.hcom_destroy_group(c_group)
+    ret = HCCL_LIB_CTYPES.HcomDestroyGroup(c_group)
     if ret != 0:
         raise RuntimeError('Destroy group error.')
 
@@ -147,7 +147,7 @@ def get_rank_size(group="hccl_world_group"):
     check_group(group)
     c_group = c_str(group)
     c_rank_size = ctypes.c_uint()
-    ret = HCCL_LIB_CTYPES.hcom_get_rank_size(c_group, ctypes.byref(c_rank_size))
+    ret = HCCL_LIB_CTYPES.HcomGetRankSize(c_group, ctypes.byref(c_rank_size))
     if ret != 0:
         raise RuntimeError('Get rank size error.')
 
@@ -164,7 +164,7 @@ def get_rank_id(group="hccl_world_group"):
     check_group(group)
     c_group = c_str(group)
     c_rank_id = ctypes.c_uint()
-    ret = HCCL_LIB_CTYPES.hcom_get_rank_id(c_group, ctypes.byref(c_rank_id))
+    ret = HCCL_LIB_CTYPES.HcomGetRankId(c_group, ctypes.byref(c_rank_id))
     if ret != 0:
         raise RuntimeError('Get rank id error.')
 
@@ -184,7 +184,7 @@ def get_local_rank_size(group="hccl_world_group"):
     check_group(group)
     c_group = c_str(group)
     c_local_rank_size = ctypes.c_uint()
-    ret = HCCL_LIB_CTYPES.hcom_get_local_rank_size(c_group, ctypes.byref(c_local_rank_size))
+    ret = HCCL_LIB_CTYPES.HcomGetLocalRankSize(c_group, ctypes.byref(c_local_rank_size))
     if ret != 0:
         raise RuntimeError('Get local rank size error.')
 
@@ -203,7 +203,7 @@ def get_local_rank_id(group="hccl_world_group"):
     check_group(group)
     c_group = c_str(group)
     c_local_rank_id = ctypes.c_uint()
-    ret = HCCL_LIB_CTYPES.hcom_get_local_rank_id(c_group, ctypes.byref(c_local_rank_id))
+    ret = HCCL_LIB_CTYPES.HcomGetLocalRankId(c_group, ctypes.byref(c_local_rank_id))
     if ret != 0:
         raise RuntimeError('Get local rank id error.')
 
@@ -225,7 +225,7 @@ def get_world_rank_from_group_rank(group, group_rank_id):
     c_group = c_str(group)
     c_group_rank_id = ctypes.c_uint(group_rank_id)
     c_world_rank_id = ctypes.c_uint()
-    ret = HCCL_LIB_CTYPES.hcom_get_world_rank_from_group_rank(c_group, c_group_rank_id, ctypes.byref(c_world_rank_id))
+    ret = HCCL_LIB_CTYPES.HcomGetWorldRankFromGroupRank(c_group, c_group_rank_id, ctypes.byref(c_world_rank_id))
     if ret != 0:
         raise RuntimeError('Get world rank from group rank error.')
 
@@ -247,7 +247,7 @@ def get_group_rank_from_world_rank(world_rank_id, group):
     c_group = c_str(group)
     c_world_rank_id = ctypes.c_uint(world_rank_id)
     c_group_rank_id = ctypes.c_uint()
-    ret = HCCL_LIB_CTYPES.hcom_get_group_rank_from_world_rank(c_world_rank_id, c_group, ctypes.byref(c_group_rank_id))
+    ret = HCCL_LIB_CTYPES.HcomGetGroupRankFromWorldRank(c_world_rank_id, c_group, ctypes.byref(c_group_rank_id))
     if ret != 0:
         raise RuntimeError('Get group rank from world rank error.')
 
