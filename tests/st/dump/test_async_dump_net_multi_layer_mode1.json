@@ -1,0 +1,25 @@
+{
+    "common_dump_settings":{
+        "dump_mode": 0,
+        "path": "/tmp/async_dump/test_async_dump_net_multi_layer_mode1",
+        "net_name": "test",
+        "iteration": 0,
+        "input_output": 2,
+        "kernels": [
+            "default/TensorAdd-op10",
+            "Gradients/Default/network-WithLossCell/_backbone-ReLUReduceMeanDenseRelu/dense-Dense/gradBiasAdd/BiasAddGrad-op8",
+            "Default/network-WithLossCell/_loss_fn-SoftmaxCrossEntropyWithLogits/SoftmaxCrossEntropyWithLogits-op5",
+            "Default/optimizer-Momentum/tuple_getitem-op29",
+            "Default/optimizer-Momentum/ApplyMomentum-op12"
+        ],
+        "support_device": [0,1,2,3,4,5,6,7]
+    },
+    "async_dump_settings": {
+        "enable": true,
+        "op_debug_mode": 0
+    },
+    "e2e_dump_settings": {
+        "enable": false,
+        "trans_flag": false
+    }
+}
