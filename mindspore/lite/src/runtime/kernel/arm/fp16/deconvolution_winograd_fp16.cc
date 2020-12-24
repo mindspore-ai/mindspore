@@ -340,7 +340,8 @@ int DeConvWinogradFp16CPUKernel::InitDataParam() {
   }
   memset(bias_data_, 0, deconv_param_->oc_up4_ * sizeof(float16_t));
   auto fp16_bias_data = reinterpret_cast<float16_t *>(bias_data_);
-  if (in_tensors_.size() == kInputSize2) {
+  if (in_tensors_.size() == 3 && in_tensors_.at(kBiasIndex)->shape().size() == 1 &&
+      in_tensors_.at(kBiasIndex)->DimensionSize(0) == conv_param_->output_channel_) {
     auto src_bias = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
     MS_ASSERT(src_bias);
     for (int i = 0; i < conv_param_->output_channel_; ++i) {
