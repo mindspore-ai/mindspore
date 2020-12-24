@@ -35,6 +35,18 @@ class NPUPassUtils {
                            const std::vector<kernel::LiteKernel *> &out_kernels,
                            const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors);
 
+  static void UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
+                                            kernel::LiteKernel *after_kernel);
+
+  static void UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
+                                            kernel::LiteKernel *next_kernel);
+
+  static void UpdateNH2NCTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
+                                              kernel::LiteKernel *before_kernel);
+
+  static void UpdateNC2NHTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
+                                              kernel::LiteKernel *next_kernel);
+
  private:
   static PrimitiveC *CreateNchw2NhwcPrimitive();
 

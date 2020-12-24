@@ -34,6 +34,28 @@ bool CheckFusion(kernel::LiteKernel *kernel) {
   return post_flag;
 }
 
+bool CheckFormatFusion(kernel::LiteKernel *kernel) {
+  if (kernel->Type() == schema::PrimitiveType_Nhwc2Nchw) {
+    return std::all_of(
+      kernel->out_kernels().begin(), kernel->out_kernels().end(),
+      [](const kernel::LiteKernel *kernel) { return kernel->Type() == schema::PrimitiveType_Nchw2Nhwc; });
+  }
+  if (kernel->Type() == schema::PrimitiveType_Nchw2Nhwc) {
+    return std::all_of(
+      kernel->out_kernels().begin(), kernel->out_kernels().end(),
+      [](const kernel::LiteKernel *kernel) { return kernel->Type() == schema::PrimitiveType_Nhwc2Nchw; });
+  }
+  return false;
+}
+
+void NPUFusionPass::RemoveAndFreeKernel(kernel::LiteKernel *cur_kernel) {
+  auto itr = find(kernels->begin(), kernels->end(), cur_kernel);
+  if (itr != kernels->end()) {
+    kernels->erase(itr);
+  }
+  delete cur_kernel;
+}
+
 void NPUFusionPass::UpdatePreKernels(kernel::LiteKernel *cur_kernel) {
   for (auto in_kernel : cur_kernel->in_kernels()) {
     auto pre_kernel = in_kernel->in_kernels()[0];
@@ -55,6 +77,7 @@ void NPUFusionPass::UpdatePreKernels(kernel::LiteKernel *cur_kernel) {
       }
     }
     cur_kernel->set_in_kernels(cur_in_kernels);
+    RemoveAndFreeKernel(in_kernel);
   }
 }
 
@@ -79,6 +102,7 @@ void NPUFusionPass::UpdatePostKernels(kernel::LiteKernel *cur_kernel) {
       }
     }
     cur_kernel->set_out_kernels(cur_out_kernels);
+    RemoveAndFreeKernel(out_kernel);
   }
 }
 
@@ -163,34 +187,52 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
   if (kernel->out_kernels().empty()) {
     return RET_OK;
   }
-  if (!std::all_of(kernel->out_kernels().begin(), kernel->out_kernels().end(), [](const kernel::LiteKernel *kernel) {
-        return kernel->Type() == schema::PrimitiveType_Nhwc2Nchw;
-      })) {
+  if (!CheckFormatFusion(kernel)) {
     return RET_OK;
   }
-  auto pre_kernel = kernel->in_kernels()[0];
 
-  auto pre_out_kernels = pre_kernel->out_kernels();
-  for (size_t i = 0; i < pre_out_kernels.size(); i++) {
-    if (pre_out_kernels[i] == kernel) {
-      pre_out_kernels.erase(pre_out_kernels.begin() + i);
-      break;
-    }
+  auto pre_kernel = kernel->in_kernels()[0];
+  auto in_tensor = kernel->in_tensors()[0];
+  auto out_tensor = kernel->out_tensors()[0];
+  auto tensor_itr = std::find(pre_kernel->out_tensors().begin(), pre_kernel->out_tensors().end(), in_tensor);
+  if (tensor_itr != pre_kernel->out_tensors().end()) {
+    in_tensor = *tensor_itr;
+  } else {
+    MS_LOG(ERROR) << "Can't find the connneted tensor between kernel " << kernel->name() << " and it's pre_kernel.";
+    return RET_ERROR;
   }
-  for (const auto &nc2nh : kernel->out_kernels()) {
-    for (const auto &post_kernel : nc2nh->out_kernels()) {
+
+  std::vector<kernel::LiteKernel *> pre_insert_kernels;
+  for (const auto &trans_kernel : kernel->out_kernels()) {
+    for (const auto &post_kernel : trans_kernel->out_kernels()) {
+      // update tensor
+      auto tensors_vec = post_kernel->in_tensors();
+      for (size_t i = 0; i < tensors_vec.size(); i++) {
+        if (tensors_vec[i] == out_tensor) {
+          tensors_vec[i] = in_tensor;
+          break;
+        }
+      }
+      post_kernel->set_in_tensors(tensors_vec);
+
+      // update kernel
       auto post_in_kernels = post_kernel->in_kernels();
       for (size_t i = 0; i < post_in_kernels.size(); i++) {
-        if (post_in_kernels[i] == nc2nh) {
+        if (post_in_kernels[i] == trans_kernel) {
           post_in_kernels[i] = pre_kernel;
           break;
         }
       }
       post_kernel->set_in_kernels(post_in_kernels);
-      pre_out_kernels.push_back(post_kernel);
+      pre_insert_kernels.push_back(post_kernel);
+      RemoveAndFreeKernel(trans_kernel);
     }
   }
-  pre_kernel->set_out_kernels(pre_out_kernels);
+  auto pre_out_kernels = pre_kernel->out_kernels();
+  auto itr = find(pre_out_kernels.begin(), pre_out_kernels.end(), kernel);
+  pre_out_kernels.insert(itr, pre_insert_kernels.begin(), pre_insert_kernels.end());
+  pre_kernel->set_in_kernels(pre_out_kernels);
+  RemoveAndFreeKernel(kernel);
   return RET_OK;
 }
 
@@ -201,6 +243,7 @@ int NPUFusionPass::Run() {
         ConcatFusion(kernel);
         continue;
       case schema::PrimitiveType_Add:
+      case schema::PrimitiveType_Activation:
         AddFusion(kernel);
         continue;
       case schema::PrimitiveType_Nchw2Nhwc:

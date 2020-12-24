@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/npu/activation.h"
+#include "src/runtime/kernel/npu/activation_npu.h"
 #include "include/graph/op/all_ops.h"
 #include "src/kernel_registry.h"
 
@@ -37,7 +37,7 @@ int ActivationNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
 int ActivationNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
                                       const std::vector<lite::Tensor *> &outputs,
                                       const std::vector<ge::Operator *> &npu_inputs) {
-  act_ = new (std::nothrow) hiai::op::Activation(name_ + "_act");
+  act_ = new (std::nothrow) hiai::op::Activation(name_);
   if (act_ == nullptr) {
     MS_LOG(ERROR) << "New activation npu operator for activation op " << name_ << " failed.";
     return RET_ERROR;

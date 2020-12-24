@@ -20,6 +20,7 @@
 #include "src/lite_kernel.h"
 #include "src/ops/primitive_c.h"
 #include "src/runtime/agent/npu/optimizer/npu_base_pass.h"
+
 namespace mindspore::lite {
 class NPUTransformPass : public NPUBasePass {
  public:
@@ -32,6 +33,7 @@ class NPUTransformPass : public NPUBasePass {
     all_tensors_ = all_tensors;
     name_ = "NPUTransformPass";
   }
+
   ~NPUTransformPass() override {
     for (auto primitive : insert_primitive_) {
       delete primitive;
@@ -40,22 +42,10 @@ class NPUTransformPass : public NPUBasePass {
   }
 
  private:
-  int UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                    kernel::LiteKernel *after_kernel);
-
-  int UpdateNH2NCTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                      kernel::LiteKernel *before_kernel);
-
-  int UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                    kernel::LiteKernel *after_kernel);
-
-  int UpdateNC2NHTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                      kernel::LiteKernel *next_kernel);
-
-  int InsertPreNode(const InnerContext *context, std::vector<kernel::LiteKernel *>::iterator it,
+  int InsertPreNode(const InnerContext *context, kernel::LiteKernel *kernel,
                     std::vector<kernel::LiteKernel *> *all_kernels, std::vector<Tensor *> *all_tensors);
 
-  int InsertPostNode(const InnerContext *context, std::vector<kernel::LiteKernel *>::iterator it,
+  int InsertPostNode(const InnerContext *context, kernel::LiteKernel *kernel,
                      std::vector<kernel::LiteKernel *> *all_kernels, std::vector<Tensor *> *all_tensors);
 
  private:

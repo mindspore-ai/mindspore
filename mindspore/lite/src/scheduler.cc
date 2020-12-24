@@ -37,8 +37,7 @@
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_transform_pass.h"
 #include "src/runtime/agent/npu/optimizer/npu_fusion_pass.h"
-#include "src/runtime/agent/npu/optimizer/npu_add_transform_pass.h"
-#include "src/runtime/agent/npu/optimizer/npu_concat_transform_pass.h"
+#include "src/runtime/agent/npu/optimizer/npu_insert_transform_pass.h"
 #endif
 namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kCPU;
@@ -570,9 +569,7 @@ int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
 #if SUPPORT_NPU
   auto transform_pass = new NPUTransformPass(context_, dst_kernels, src_tensors_);
   mindspore::lite::NPUPassManager::GetInstance()->AddPass(transform_pass);
-  auto add_format_pass = new NPUAddTransformPass(context_, dst_kernels, src_tensors_);
-  mindspore::lite::NPUPassManager::GetInstance()->AddPass(add_format_pass);
-  auto concat_format_pass = new NPUConcatTransformPass(context_, dst_kernels, src_tensors_);
+  auto concat_format_pass = new NPUInsertTransformPass(context_, dst_kernels, src_tensors_);
   mindspore::lite::NPUPassManager::GetInstance()->AddPass(concat_format_pass);
   auto fusion_pass = new NPUFusionPass(dst_kernels);
   mindspore::lite::NPUPassManager::GetInstance()->AddPass(fusion_pass);
