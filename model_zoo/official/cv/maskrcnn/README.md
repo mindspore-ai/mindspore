@@ -55,6 +55,8 @@ Note that you can run the scripts based on the dataset mentioned in original pap
     - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
     - [MindSpore](https://gitee.com/mindspore/mindspore)
+- Docker base image
+    - [Ascend Hub](ascend.huawei.com/ascendhub/#/home)
 - For more information, please check the resources below:
     - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
@@ -119,6 +121,39 @@ pip install mmcv=0.2.14
 
    Note:
    1. VALIDATION_JSON_FILE is a label json file for evaluation.
+
+# Run in docker
+
+1. Build docker images
+
+```shell
+# build docker
+docker build -t maskrcnn:20.1.0 . --build-arg FROM_IMAGE_NAME=ascend-mindspore-arm:20.1.0
+```
+
+2. Create a container layer over the created image and start it
+
+```shell
+# start docker
+bash scripts/docker_start.sh maskrcnn:20.1.0 [DATA_DIR] [MODEL_DIR]
+```
+
+3. Train
+
+```shell
+# standalone training
+bash run_standalone_train.sh [PRETRAINED_CKPT]
+
+# distributed training
+bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
+```
+
+4. Eval
+
+```shell
+# Evaluation
+bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+```
 
 # [Script Description](#contents)
 
@@ -336,9 +371,37 @@ bash run_standalone_train.sh [PRETRAINED_MODEL]
 bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 ```
 
-> hccl.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
-> As for PRETRAINED_MODEL, if not set, the model will be trained from the very beginning. Ready-made pretrained_models are not available now. Stay tuned.
-> This is processor cores binding operation regarding the `device_num` and total processor numbers. If you are not expect to do it, remove the operations `taskset` in `scripts/run_distribute_train.sh`
+- Notes
+1. hccl.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
+2. As for PRETRAINED_MODEL，it should be a trained ResNet50 checkpoint. If not set, the model will be trained from the very beginning. If you need to load Ready-made pretrained FasterRcnn checkpoint, you may make changes to the train.py script as follows.
+
+```python
+# Comment out the following code
+#   load_path = args_opt.pre_trained
+#    if load_path != "":
+#        param_dict = load_checkpoint(load_path)
+#        for item in list(param_dict.keys()):
+#            if not item.startswith('backbone'):
+#                param_dict.pop(item)
+#        load_param_into_net(net, param_dict)
+
+# Add the following codes after optimizer definition since the FasterRcnn checkpoint includes optimizer parameters：
+    lr = Tensor(dynamic_lr(config, rank_size=device_num, start_steps=config.pretrain_epoch_size * dataset_size),
+                mstype.float32)
+    opt = Momentum(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
+                   weight_decay=config.weight_decay, loss_scale=config.loss_scale)
+
+    if load_path != "":
+        param_dict = load_checkpoint(load_path)
+        if config.pretrain_epoch_size == 0:
+            for item in list(param_dict.keys()):
+                if item in ("global_step", "learning_rate") or "rcnn.cls" in item or "rcnn.mask" in item:
+                    param_dict.pop(item)
+        load_param_into_net(net, param_dict)
+        load_param_into_net(opt, param_dict)
+```
+
+3. This is processor cores binding operation regarding the `device_num` and total processor numbers. If you are not expect to do it, remove the operations `taskset` in `scripts/run_distribute_train.sh`
 
 ### [Training Result](#content)
 

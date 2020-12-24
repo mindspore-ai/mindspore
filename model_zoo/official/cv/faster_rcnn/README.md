@@ -46,6 +46,12 @@ Dataset used: [COCO2017](<https://cocodataset.org/>)
 
 # Environment Requirements
 
+- Hardware（Ascend）
+    - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+
+- Docker base image
+    - [Ascend Hub](ascend.huawei.com/ascendhub/#/home)
+
 - Install [MindSpore](https://www.mindspore.cn/install/en).
 
 - Download the dataset COCO2017.
@@ -104,6 +110,39 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
 
+# Run in docker
+
+1. Build docker images
+
+```shell
+# build docker
+docker build -t fasterrcnn:20.1.0 . --build-arg FROM_IMAGE_NAME=ascend-mindspore-arm:20.1.0
+```
+
+2. Create a container layer over the created image and start it
+
+```shell
+# start docker
+bash scripts/docker_start.sh fasterrcnn:20.1.0 [DATA_DIR] [MODEL_DIR]
+```
+
+3. Train
+
+```shell
+# standalone training
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
+
+# distributed training
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+```
+
+4. Eval
+
+```shell
+# eval
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+```
+
 # Script Description
 
 ## Script and Sample Code
@@ -150,9 +189,36 @@ sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
 sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 ```
 
-> Rank_table.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
-> As for PRETRAINED_MODEL，it should be a ResNet50 checkpoint that trained over ImageNet2012. Ready-made pretrained_models are not available now. Stay tuned.
-> The original dataset path needs to be in the config.py,you can select "coco_root" or "image_dir".
+Notes:
+
+1. Rank_table.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
+2. As for PRETRAINED_MODEL，it should be a trained ResNet50 checkpoint. If you need to load Ready-made pretrained FasterRcnn checkpoint, you may make changes to the train.py script as follows.
+
+```python
+# Comment out the following code
+#   load_path = args_opt.pre_trained
+#    if load_path != "":
+#        param_dict = load_checkpoint(load_path)
+#        for item in list(param_dict.keys()):
+#            if not item.startswith('backbone'):
+#                param_dict.pop(item)
+#        load_param_into_net(net, param_dict)
+
+# Add the following codes after optimizer definition since the FasterRcnn checkpoint includes optimizer parameters：
+    lr = Tensor(dynamic_lr(config, rank_size=device_num), mstype.float32)
+    opt = SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
+              weight_decay=config.weight_decay, loss_scale=config.loss_scale)
+
+    if load_path != "":
+        param_dict = load_checkpoint(load_path)
+        for item in list(param_dict.keys()):
+            if item in ("global_step", "learning_rate") or "rcnn.reg_scores" in item or "rcnn.cls_scores" in item:
+                param_dict.pop(item)
+        load_param_into_net(opt, param_dict)
+        load_param_into_net(net, param_dict)
+```
+
+3. The original dataset path needs to be in the config.py,you can select "coco_root" or "image_dir".
 
 ### Result
 
