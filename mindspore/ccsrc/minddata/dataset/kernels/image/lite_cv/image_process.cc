@@ -306,9 +306,9 @@ static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool 
     const uint8_t *y_ptr = data;
     const uint8_t *uv_ptr = y_ptr + w * h;
     uint8_t *bgr_ptr = mat;
-    int bgr_stride = 3 * w;
+    const int bgr_stride = 3 * w;
 
-    for (int y = 0; y < h; ++y) {
+    for (uint64_t y = 0; y < h; ++y) {
       uint8_t *bgr_buf = bgr_ptr;
       const uint8_t *uv_buf = uv_ptr;
       const uint8_t *y_buf = y_ptr;
