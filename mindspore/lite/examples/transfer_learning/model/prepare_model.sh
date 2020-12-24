@@ -19,6 +19,7 @@ if [ ! -f "$CONVERTER" ]; then
   if ! command -v converter_lite &> /dev/null
   then
     tar -xzf ../../../../../output/mindspore-lite-*-train-converter-linux-x64.tar.gz --strip-components 2 --wildcards --no-anchored converter_lite libmindspore_gvar.so
+    tar -xzf ../../../../../output/mindspore-lite-*-train-converter-linux-x64.tar.gz --strip-components 4 --wildcards --no-anchored libglog.so.0
     if [ -f ./converter_lite ]; then
       CONVERTER=./converter_lite
     else
