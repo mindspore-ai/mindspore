@@ -24,14 +24,14 @@ from ..ops.primitive import constexpr
 from ..nn import Cell
 
 from .utils import _convert_list_tensor_to_tuple_tensor, _expand, _broadcast_to_shape, \
-    _check_input_tensor, _broadcast_to, _to_tensor
+    _check_input_tensor, _broadcast_to, _to_tensor, _callable
 from .utils_const import _check_axes_range, _check_start_normalize, \
     _raise_type_error, _raise_value_error, _infer_out_shape, _empty, _promote, \
     _check_same_type, _check_axis_valid, _add_unit_axes, _broadcast_tuples, \
     _check_is_float, _check_axis_in_range, _check_axis_type, _canonicalize_axis, \
     _list_comprehensions, _check_element_int, _is_shape_empty, _type_convert, \
-    _tuple_getitem, _expanded_shape, _seq_prod, _get_device, _tuple_setitem, \
-    _raise_unimplemented_error
+    _tuple_slice, _expanded_shape, _seq_prod, _tuple_setitem, _iota, \
+    _raise_unimplemented_error, _cumprod, _get_device
 
 # According to official numpy reference, the dimension of a numpy array must be less
 # than 32
@@ -697,6 +697,7 @@ def where(condition, x=None, y=None):
         [7 5]
         [7 5]]]
     """
+    condition, x, y = _to_tensor(condition, x, y)
     # type promotes input tensors
     dtype1 = F.dtype(x)
     dtype2 = F.dtype(y)
@@ -1781,16 +1782,15 @@ def take_along_axis(arr, indices, axis):
     ndim = F.rank(arr)
     if ndim != F.rank(indices):
         _raise_value_error('`indices` and `arr` must have the same number of dimensions')
-    _check_axis_in_range(axis, ndim)
-    axis = axis + ndim if axis < 0 else axis
+    axis = _check_axis_in_range(axis, ndim)
 
     shape_arr = F.shape(arr)
     shape_indices = F.shape(indices)
     # broadcasts indices against the shape of arr except at axis
-    indices = _broadcast_to(indices, _tuple_getitem(shape_indices, axis, False),
-                            _tuple_getitem(shape_arr, axis, False), ndim)
-    indices = _broadcast_to(indices, _tuple_getitem(shape_arr, axis + 1, False) +
-                            _tuple_getitem(shape_indices, axis + 1), shape_arr, ndim)
+    indices = _broadcast_to(indices, _tuple_slice(shape_indices, None, axis),
+                            _tuple_slice(shape_arr, None, axis), ndim)
+    indices = _broadcast_to(indices, _tuple_slice(shape_arr, None, axis + 1) +
+                            _tuple_slice(shape_indices, axis + 1, None), shape_arr, ndim)
     return F.gather_d(arr, axis, indices)
 
 
@@ -1801,18 +1801,21 @@ def _mod(x, y):
     return F.tensor_sub(x, prod)
 
 
-def _check_indices(size, indices, mode):
+def _check_indices(dims, indices, mode, allow_negative_index=True):
     """Checks whether indices are out of bounds."""
     shape = F.shape(indices)
     dtype = F.dtype(indices)
-    lowerbounds = F.fill(dtype, shape, -size)
-    upperbounds = F.fill(dtype, shape, size - 1)
+    if not allow_negative_index:
+        lowerbounds = F.fill(dtype, shape, 0)
+    else:
+        lowerbounds = F.fill(dtype, shape, -dims)
+    upperbounds = F.fill(dtype, shape, dims - 1)
     out_of_lowerbounds = F.tensor_lt(indices, lowerbounds)
     out_of_upperbounds = F.tensor_gt(indices, upperbounds)
     if mode == 'raise':
         _raise_unimplemented_error('"raise" mode is not implemented')
     if mode == 'wrap':
-        return _mod(indices, F.fill(dtype, shape, size))
+        return _mod(indices, F.fill(mstype.float32, shape, dims)).astype(dtype)
     zeros = F.fill(dtype, shape, 0)
     clipped = F.select(out_of_lowerbounds, zeros, indices)
     clipped = F.select(out_of_upperbounds, upperbounds, clipped)
@@ -1878,8 +1881,7 @@ def take(a, indices, axis=None, mode='clip'):
         a = ravel(a)
         axis = 0
     ndim = F.rank(a)
-    _check_axis_in_range(axis, ndim)
-    axis = axis + ndim if axis < 0 else axis
+    axis = _check_axis_in_range(axis, ndim)
 
     shape_a = F.shape(a)
     shape_indices = F.shape(indices)
@@ -1887,8 +1889,8 @@ def take(a, indices, axis=None, mode='clip'):
     indices = _check_indices(shape_a[axis], indices, mode)
 
     # reshapes indices to shape (Ni..., Nj..., Nk)
-    shape_ni = _tuple_getitem(shape_a, axis, False)
-    shape_nk = _tuple_getitem(shape_a, axis + 1)
+    shape_ni = _tuple_slice(shape_a, None, axis)
+    shape_nk = _tuple_slice(shape_a, axis + 1, None)
     shape_out = shape_ni + shape_indices + shape_nk
     shape_indices = _expanded_shape(ndim, size_indices, axis)
     indices = F.reshape(indices, shape_indices)
@@ -1948,18 +1950,17 @@ def repeat(a, repeats, axis=None):
         a = ravel(a)
         axis = 0
     ndim = F.rank(a)
-    _check_axis_in_range(axis, ndim)
-    axis = axis + ndim if axis < 0 else axis
+    axis = _check_axis_in_range(axis, ndim)
     if len(repeats) == 1:
         repeats = repeats[0]
         if repeats == 0:
             return _empty(F.dtype(a), (0,))
         return C.repeat_elements(a, repeats, axis)
     shape = F.shape(a)
-    size = shape[axis]
-    if len(repeats) != size:
+    dims = shape[axis]
+    if len(repeats) != dims:
         _raise_value_error('operands could not be broadcast together')
-    subs = split(a, size, axis)
+    subs = split(a, dims, axis)
     repeated_subs = []
     for sub, rep in zip(subs, repeats):
         if rep != 0:
@@ -2046,11 +2047,13 @@ def select(condlist, choicelist, default=0):
     Returns an array drawn from elements in `choicelist`, depending on conditions.
 
     Args:
-        condlist (array_like): The list of conditions which determine from which array
-            in `choicelist` the output elements are taken. When multiple conditions are
-            satisfied, the first one encountered in `condlist` is used.
-        choicelist (array_like): The list of arrays from which the output elements are
-            taken. It has to be of the same length as `condlist`.
+        condlist (Union[int, float, bool, list, tuple, Tensor]): The list of conditions
+            which determine from which array in `choicelist` the output elements are
+            taken. When multiple conditions are satisfied, the first one encountered in
+            `condlist` is used.
+        choicelist (Union[int, float, bool, list, tuple, Tensor]): The list of arrays
+            from which the output elements are taken. It has to be of the same length as
+            `condlist`.
         default (scalar, optional): The element inserted in output when all conditions
             evaluate to `False`.
 
@@ -2059,7 +2062,6 @@ def select(condlist, choicelist, default=0):
         `choicelist` where the `m-th` element of the corresponding array in `condlist`
         is `True`.
 
-
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -2067,7 +2069,9 @@ def select(condlist, choicelist, default=0):
         ValueError: if ``len(condlist) != len(choicelist)``.
 
     Examples:
-        >>> condlist = [[True, True, True, False, False], [False, False, True, False, True]]
+        >>> import mindspore.numpy as np
+        >>> condlist = [[True, True, True, False, False], \
+                       [False, False, True, False, True]]
         >>> choicelist = [[0, 1, 2, 3, 4], [0, 1, 4, 9, 16]]
         >>> output = np.select(condlist, choicelist)
         >>> print(output)
@@ -2076,32 +2080,481 @@ def select(condlist, choicelist, default=0):
     condlist, choicelist = _to_tensor(condlist, choicelist)
     shape_cond = F.shape(condlist)
     shape_choice = F.shape(choicelist)
-    if F.rank(condlist) == 0 or F.rank(condlist) == 0:
+    if F.rank(condlist) == 0 or F.rank(choicelist) == 0:
         _raise_value_error('input cannot be scalars')
     case_num = shape_cond[0]
     if shape_choice[0] != case_num:
         _raise_value_error('list of cases must be same length as list of conditions')
 
+    case_size_cond = _tuple_slice(shape_cond, 1, None)
+    case_size_choice = _tuple_slice(shape_choice, 1, None)
     # performs broadcast over the cases in condlist and choicelist
-    case_size = _infer_out_shape(shape_cond[1:], shape_choice[1:])
+    case_size = _infer_out_shape(case_size_cond, case_size_choice)
     shape_broadcasted = (case_num,) + case_size
     ndim = len(shape_broadcasted)
     shape_cond_expanded = ((case_num,) + _list_comprehensions(ndim - F.rank(condlist), 1, True) +
-                           shape_cond[1:])
+                           case_size_cond)
     condlist = _broadcast_to_shape(F.reshape(condlist, shape_cond_expanded), shape_broadcasted)
     shape_choice_expanded = ((case_num,) + _list_comprehensions(ndim - F.rank(choicelist), 1, True) +
-                             shape_choice[1:])
+                             case_size_choice)
     choicelist = _broadcast_to_shape(F.reshape(choicelist, shape_choice_expanded), shape_broadcasted)
 
     slice_start = _list_comprehensions(ndim - 1, 0, True)
     slice_size = (1,) + case_size
     dtype = F.dtype(choicelist)
-    if _get_device() == 'CPU' and not _check_is_float(dtype):
-        # F.tensor_slice only supports float on CPU
-        choicelist = F.cast(choicelist, mstype.float32)
-    default_slice = F.fill(F.dtype(choicelist), slice_size, default)
+    if isinstance(default, Tensor):
+        default_slice = default.astype(F.dtype(choicelist)).reshape(slice_size)
+    else:
+        default_slice = F.fill(F.dtype(choicelist), slice_size, default)
     for i in range(case_num - 1, -1, -1):
         cond_slice = F.tensor_slice(condlist.astype(mstype.float32), (i,) + slice_start, slice_size)
         choice_slice = F.tensor_slice(choicelist, (i,) + slice_start, slice_size)
         default_slice = F.select(cond_slice.astype(mstype.bool_), choice_slice, default_slice)
     return F.reshape(default_slice, (case_size)).astype(dtype)
+
+
+@constexpr
+def _get_grid(shape):
+    """Returns a grid representing all the indices for an array with the given shape."""
+    grids = []
+    ndim = len(shape)
+    for i in range(ndim):
+        dim_grid = _iota(mstype.int32, shape[i])
+        dim_shape = _expanded_shape(ndim, shape[i], i)
+        dim_grid = _broadcast_to_shape(dim_grid.reshape(dim_shape), shape)
+        grids.append(dim_grid)
+    return stack(grids, -1)
+
+
+def choose(a, choices, mode='clip'):
+    """
+    Construct an array from an index array and a list of arrays to choose from.
+    Given an “index” array `a`` of integers and a sequence of n arrays (choices),
+    `a` and each choice array are first broadcast, as necessary, to arrays of a
+    common shape; calling these `Ba` and `Bchoices[i], i = 0,…,n-1` we have that,
+    necessarily, ``Ba.shape == Bchoices[i].shape`` for each `i`. Then, a new array
+    with ``shape Ba.shape`` is created as follows:
+
+    - if ``mode='raise'`` (the default), then, first of all, each element of `a`
+    (and thus `Ba`) must be in the range `[0, n-1]`; now, suppose that `i`
+    (in that range) is the value at the `(j0, j1, ..., jm)` position in
+    `Ba` - then the value at the same position in the new array is the
+    value in ``Bchoices[i]`` at that same position;
+
+    - if ``mode='wrap'``, values in `a` (and thus `Ba`) may be any (signed)
+    integer; modular arithmetic is used to map integers outside the
+    range ``[0, n-1]`` back into that range; and then the new array is
+    constructed as above;
+
+    - if ``mode='clip'``, values in `a` (and thus `Ba`) may be any (signed) integer;
+    negative integers are mapped to 0; values greater than `n-1` are mapped to
+    `n-1`; and then the new array is constructed as above.
+
+    Note:
+        Numpy argument `out` is not supported.
+        ``mode = 'raise'`` is not supported, and the default mode is 'clip' instead.
+
+    Args:
+        a (int array): This array must contain integers in ``[0, n-1]``, where `n` is
+            the number of choices, unless ``mode=wrap`` or ``mode=clip``, in which
+            cases any integers are permissible.
+        choices (sequence of arrays): Choice arrays. `a` and all of the `choices` must
+            be broadcastable to the same shape. If `choices` is itself an array, then
+            its outermost dimension (i.e., the one corresponding to ``choices.shape[0]``)
+            is taken as defining the “sequence”.
+        mode (‘raise’, ‘wrap’, ‘clip’, optional): Specifies how indices outside
+            ``[0, n-1]`` will be treated:
+
+            ‘raise’ – raise an error (default);
+
+            ‘wrap’ – wrap around;
+
+            ‘clip’ – clip to the range. ‘clip’ mode means that all indices that are
+            too large are replaced by the index that addresses the last element
+            along that axis. Note that this disables indexing with negative numbers.
+
+    Returns:
+        Tensor, the merged result.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        ValueError: if ``len(condlist) != len(choicelist)``.
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> choices = [[0, 1, 2, 3], [10, 11, 12, 13],
+            [20, 21, 22, 23], [30, 31, 32, 33]]
+        >>> print(np.choose([2, 3, 1, 0], choices))
+        [20 31 12  3]
+        >>> print(np.choose([2, 4, 1, 0], choices, mode='clip'))
+        [20 31 12  3]
+        >>> print(np.choose([2, 4, 1, 0], choices, mode='wrap'))
+        [20  1 12  3]
+        >>> a = [[1, 0, 1], [0, 1, 0], [1, 0, 1]]
+        >>> choices = [-10, 10]
+        >>> print(np.choose(a, choices))
+        [[ 10 -10  10]
+        [-10  10 -10]
+        [ 10 -10  10]]
+        >>> a = np.array([0, 1]).reshape((2,1,1))
+        >>> c1 = np.array([1, 2, 3]).reshape((1,3,1))
+        >>> c2 = np.array([-1, -2, -3, -4, -5]).reshape((1,1,5))
+        >>> print(np.choose(a, (c1, c2)))
+        [[[ 1  1  1  1  1]
+        [ 2  2  2  2  2]
+        [ 3  3  3  3  3]]
+
+        [[-1 -2 -3 -4 -5]
+        [-1 -2 -3 -4 -5]
+        [-1 -2 -3 -4 -5]]]
+    """
+    a = _to_tensor(a)
+    if isinstance(choices, (tuple, list)):
+        # broadcasts choices to the same shape if choices is a sequence
+        choices = _to_tensor(*choices)
+        shapes = ()
+        for choice in choices:
+            shapes += (F.shape(choice),)
+        shape_choice = _infer_out_shape(F.shape(a), *shapes)
+        tmp = []
+        for choice in choices:
+            tmp.append(broadcast_to(choice, shape_choice))
+        choices = stack(tmp)
+    else:
+        choices = _to_tensor(choices)
+        shape_choice = _infer_out_shape(F.shape(a), F.shape(choices)[1:])
+        choices = broadcast_to(choices, (F.shape(choices)[0],) + shape_choice)
+
+    if F.rank(a) == 0 or F.rank(choices) == 0:
+        _raise_value_error('input cannot be scalars')
+    a = broadcast_to(a, shape_choice)
+    dtype = F.dtype(choices)
+    # adjusts dtype for F.tensor_mul and F.gather_nd
+    a = a.astype(mstype.int32)
+    choices = choices.astype(mstype.int32)
+    a = _check_indices(F.shape(choices)[0], a, mode, allow_negative_index=False)
+    grid = _get_grid(F.shape(a))
+    indices = concatenate((a.reshape(F.shape(a) + (1,)), grid), -1)
+    return F.gather_nd(choices, indices).astype(dtype)
+
+
+def size(a, axis=None):
+    """
+    Returns the number of elements along a given axis.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Input data.
+        axis (int): Axis along which the elements are counted. Default: None.
+            If None, give the total number of elements.
+
+    Returns:
+        Number of elements along the specified axis.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If input is not array_like or `axis` is not int or tuple of ints.
+        ValueError: If any axis is out of range or duplicate axes exist.
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.arange(10).reshape(2, 5).astype('float32')
+        >>> print(np.size(x))
+        10
+        >>> print(np.size(x, axis=1))
+        5
+    """
+    a = _to_tensor(a)
+    if axis is None:
+        return a.size
+    if not isinstance(axis, int):
+        _raise_type_error("axis argument should be integer.")
+    axis = _canonicalize_axis(axis, a.ndim)
+    return a.shape[axis]
+
+
+def array_str(a):
+    """
+    Returns a string representation of the data in an array.
+
+    The data in the array is returned as a single string.
+    This function is similar to array_repr, the difference being that array_repr also
+    returns information on the kind of array and its data type.
+
+    Note:
+        Numpy argument `max_line_width`, `precision` and `suppress_small` are not supported.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Input data.
+
+    Returns:
+        String.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If input is not array_like.
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.arange(5)
+        >>> np.array_str(x)
+        '[0 1 2 3 4]'
+    """
+    a = _to_tensor(a)
+    return a.__str__()
+
+
+def apply_along_axis(func1d, axis, arr, *args, **kwargs):
+    """
+    Applies a function to 1-D slices along the given axis.
+    Executes ``func1d(a, *args, **kwargs)`` where `func1d` operates on 1-D arrays and `a` is a
+    1-D slice of arr along axis.
+
+    Args:
+        func1d (function): Maps `(M,) -> (Nj…)`. This function should accept 1-D arrays. It is
+            applied to 1-D slices of arr along the specified axis.
+        axis (int): Axis along which arr is sliced.
+        arr (Tensor): Input array with shape `(Ni…, M, Nk…)`.
+        args (any): Additional arguments to `func1d`.
+        kwargs (any): Additional named arguments to `func1d`.
+
+    Returns:
+        Tensor with shape `(Ni…, Nj…, Nk…)`, the output array. Its shape is identical to the
+        shape of `arr`, except along the `axis` dimension. This axis is removed, and replaced
+        with new dimensions equal to the shape of the return value of `func1d`. So if `func1d`
+        returns a scalar, the output will have one fewer dimensions than `arr`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        ValueError: if axis is out of the range.
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> b = np.array([[1,2,3], [4,5,6], [7,8,9]])
+        >>> print(np.apply_along_axis(np.diag, -1, b))
+        [[[1 0 0]
+        [0 2 0]
+        [0 0 3]]
+
+        [[4 0 0]
+        [0 5 0]
+        [0 0 6]]
+
+        [[7 0 0]
+        [0 8 0]
+        [0 0 9]]]
+    """
+    ndim = F.rank(arr)
+    shape = F.shape(arr)
+    axis = _check_axis_in_range(axis, ndim)
+    arr = moveaxis(arr, axis, -1)
+    arr = F.reshape(arr, (-1, F.shape(arr)[-1]))
+    slices = []
+    for i in range(F.shape(arr)[0]):
+        slices.append(func1d(arr[i], *args, **kwargs))
+    stacked_slices = stack(slices)
+    shape_stacked = (_tuple_slice(shape, None, axis) + _tuple_slice(shape, axis + 1, None) +
+                     _tuple_slice(F.shape(stacked_slices), 1, None))
+    res = F.reshape(stacked_slices, shape_stacked)
+
+    # moves the dimensions returned by `func1d` back to `axis`
+    ndim_func = F.rank(res) - ndim + 1
+    if ndim_func >= 1:
+        res = moveaxis(res, F.make_range(ndim - 1, F.rank(res)),
+                       F.make_range(axis, axis + ndim_func))
+    return res
+
+
+def _stack_arrays(arrs):
+    """Stacks a sequence of Tensor"""
+    if isinstance(arrs, (tuple, list)):
+        tensor_list = []
+        for arr in arrs:
+            tensor_list.append(_to_tensor(arr))
+        return stack(tensor_list)
+    return atleast_1d(_to_tensor(arrs))
+
+
+def piecewise(x, condlist, funclist, *args, **kw):
+    """
+    Evaluates a piecewise-defined function.
+    Given a set of conditions and corresponding functions, evaluate each function on the input
+    data wherever its condition is true.
+
+    Args:
+        x (Union[int, float, bool, list, tuple, Tensor]): The input domain.
+        condlist (Union[bool, list of bool Tensor]): Each boolean array corresponds to a
+            function in `funclist`. Wherever `condlist[i]` is True, `funclist[i](x)` is used as
+            the output value. Each boolean array in `condlist` selects a piece of `x`, and
+            should therefore be of the same shape as `x`. The length of `condlist` must
+            correspond to that of `funclist`. If one extra function is given, i.e. if
+            ``len(funclist) == len(condlist) + 1``, then that extra function is the default
+            value, used wherever all conditions are false.
+        funclist (Union[list of callables, list of scalars]): Each function is evaluated over
+            `x` wherever its corresponding condition is True. It should take a 1d array as input
+            and give an 1d array or a scalar value as output. If, instead of a callable, a scalar
+            is provided then a constant function ``(lambda x: scalar)`` is assumed.
+        args (any): Any further arguments given to `piecewise` are passed to the functions upon
+            execution, i.e., if called ``piecewise(..., ..., 1, 'a')``, then each function is
+            called as ``f(x, 1, 'a')``.
+        kw (any): Keyword arguments used in calling `piecewise` are passed to the functions upon
+            execution, i.e., if called ``piecewise(..., ..., alpha=1)``, then each function is
+            called as ``f(x, alpha=1)``.
+
+    Returns:
+        Tensor, the output is the same shape and type as `x` and is found by calling the
+        functions in `funclist` on the appropriate portions of `x`, as defined by the boolean
+        arrays in `condlist`. Portions not covered by any condition have a default value of 0.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        ValueError: if length of `funclist` is not in ``(len(condlist), len(condlist) + 1)``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.linspace(-2.5, 2.5, 6)
+        >>> print(np.piecewise(x, [x < 0, x >= 0], [-1, 1]))
+        [2.5 1.5 0.5 0.5 1.5 2.5]
+    """
+    x = _to_tensor(x)
+    choicelist = funclist
+    if isinstance(funclist, (tuple, list)):
+        if _callable(x, funclist[0]):
+            choicelist = []
+            for func in funclist:
+                choicelist.append(func(x, *args, **kw))
+    condlist = _stack_arrays(condlist)
+    choicelist = _stack_arrays(choicelist)
+
+    default = 0
+    n1 = len(condlist)
+    n2 = len(funclist)
+    if n1 + 1 == n2:
+        default = choicelist[-1]
+        choicelist = choicelist[:-1]
+    elif n1 != n2:
+        _raise_value_error('the number of choices should be either equal to conditions or ', n1 + 1)
+    return select(condlist, choicelist, default=default)
+
+
+def unravel_index(indices, shape, order='C'):
+    """
+    Converts a flat index or array of flat indices into a tuple of coordinate arrays.
+
+    Note:
+        Out-of-bound indices are clipped by the boundaries of `shape` instead of raising
+        an error.
+
+    Args:
+        indices (Union[int, float, bool, list, tuple, Tensor]): An integer array whose elements
+            are indices into the flattened version of an array of dimensions shape.
+        shape (tuple of ints): The shape of the array to use for unraveling indices.
+        order (Union['C', 'F'], optional): Determines whether the indices should be viewed as
+            indexing in row-major (C-style) or column-major (Fortran-style) order.
+
+    Returns:
+        Tensor, each array in the tuple has the same shape as the indices array.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        ValueError: if `order` is not 'C' or 'F'.
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> print(np.unravel_index([22, 41, 37], (7,6)))
+        (Tensor(shape=[3], dtype=Int32, value= [3, 6, 6]),
+        Tensor(shape=[3], dtype=Int32, value= [4, 5, 1]))
+        >>> print(np.unravel_index([31, 41, 13], (7,6), order='F'))
+        (Tensor(shape=[3], dtype=Int32, value= [3, 6, 6]),
+        Tensor(shape=[3], dtype=Int32, value= [4, 5, 1]))
+    """
+    indices = _to_tensor(indices)
+    if order not in ('C', 'F'):
+        _raise_value_error('invalid order. Expected "C" or "F"')
+    if isinstance(shape, int):
+        shape = (shape,)
+    ndim = F.rank(indices)
+    if order == 'F':
+        sizes = _cumprod(shape)
+    else:
+        sizes = _cumprod(shape[::-1])
+    sizes = _to_tensor(sizes[::-1] + (1,))
+    sizes = F.reshape(sizes, (-1,) + _list_comprehensions(ndim, 1, True))
+    total_size = sizes[0]
+    indices = where(indices > total_size - 1, total_size - 1, indices)
+    if _get_device() == 'GPU':
+        dtype = F.dtype(total_size)
+        lowerbounds = (-(total_size.astype(mstype.float32))).astype(dtype)
+    else:
+        lowerbounds = -total_size
+    indices = where(indices < lowerbounds, lowerbounds, indices)
+    res = _mod(indices, sizes[:-1])//sizes[1:]
+
+    num = len(res)
+    if ndim == 0 and num == 1:
+        return res.ravel()
+    if order == 'F':
+        r = range(num - 1, -1, -1)
+    else:
+        r = range(num)
+    subs = ()
+    for i in r:
+        subs += (res[i],)
+    return subs
+
+
+def apply_over_axes(func, a, axes):
+    """
+    Applies a function repeatedly over multiple axes.
+
+    `func` is called as `res = func(a, axis)`, where `axis` is the first element of `axes`.
+    The result `res` of the function call must have either the same dimensions as `a` or
+    one less dimension. If `res` has one less dimension than `a`, a dimension is inserted before `axis`.
+    The call to `func` is then repeated for each axis in `axes`, with `res` as the first argument.
+
+    Args:
+        func (function): This function must take two arguments, `func(a, axis)`.
+        a (Union[int, float, bool, list, tuple, Tensor]): Input tensor.
+        axes (Union[int, list, tuple]): Axes over which `func` is applied; the elements must be integers.
+
+    Returns:
+        Tensor. The number of dimensions is the same as `a`, but the shape can be different.
+        This depends on whether `func` changes the shape of its output with respect to its input.
+
+    Raises:
+        TypeError: If input `a` is not array_like or `axes` is not int or sequence of ints.
+        ValueError: If any axis is out of range or duplicate axes exist.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.arange(10).reshape(2, 5).astype('float32')
+        >>> print(x)
+        [[0. 1. 2. 3. 4.]
+         [5. 6. 7. 8. 9.]]
+        >>> print(np.apply_over_axes(np.sum, x, axes=0))
+        [[ 5.  7.  9. 11. 13.]]
+    """
+    a = _to_tensor(a)
+    if isinstance(axes, int):
+        axes = (axes,)
+    res = a
+    for axis in axes:
+        res = func(res, axis=axis)
+        res = F.expand_dims(res, axis) if res.ndim != a.ndim else res
+        if res.ndim != a.ndim:
+            _raise_value_error("function is not returning a tensor of the correct shape")
+    return res

@@ -15,6 +15,7 @@
 
 """Implementation for internal polymorphism `mul` operations."""
 
+from . import _constexpr_utils as const_utils
 from ...composite import base
 from ... import functional as F
 
@@ -68,3 +69,47 @@ def _tensor_mul_scalar(x, y):
         Tensor, has the same dtype as x.
     """
     return F.tensor_mul(x, y)
+
+
+@mul.register("List", "Number")
+def _list_mul_scalar(x, y):
+    """
+    Returns x * y where x is a list and y is a number. y must be integer.
+
+    Outputs:
+        List.
+    """
+    return const_utils.sequence_mul_int(x, y)
+
+
+@mul.register("Tuple", "Number")
+def _tuple_mul_scalar(x, y):
+    """
+    Returns x * y where x is a tuple and y is a number. y must be integer.
+
+    Outputs:
+        Tuple.
+    """
+    return const_utils.sequence_mul_int(x, y)
+
+
+@mul.register("Number", "List")
+def _scalar_mul_list(x, y):
+    """
+    Returns x * y where x is a number and y is a list. x must be integer.
+
+    Outputs:
+        List.
+    """
+    return const_utils.sequence_mul_int(y, x)
+
+
+@mul.register("Number", "Tuple")
+def _scalar_mul_tuple(x, y):
+    """
+    Returns x * y where x is a number and y is a tuple. x must be integer.
+
+    Outputs:
+        Tuple.
+    """
+    return const_utils.sequence_mul_int(y, x)

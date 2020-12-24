@@ -484,6 +484,21 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, has the same dimension as input tensor, with axes suitably permuted.
+
+        Raises:
+            TypeError: If input arguments have types not specified above.
+            ValueError: If the number of `axes` is not euqal to a.ndim.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.ones((1,2,3), dtype=np.float32))
+            >>> x = x.transpose()
+            >>> print(x.shape)
+            (3, 2, 1)
         """
         self.init_check()
         perm = validator.check_transpose_axis(axes, self.ndim)
@@ -501,6 +516,23 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, with new specified shape.
+
+        Raises:
+            TypeError: If new_shape is not integer, list or tuple, or `x` is not tensor.
+            ValueError: If new_shape is not compatible with the original shape.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> from mindspore import Tensor
+            >>> from mindspore import dtype as mstype
+            >>> x = Tensor([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], dtype=mstype.float32)
+            >>> output = np.reshape(x, (3, 2))
+            >>> print(output)
+            [[-0.1  0.3]
+            [ 3.6  0.4]
+            [ 0.5 -3.2]]
         """
         self.init_check()
         new_shape = validator.check_reshape_shp(shape)
@@ -512,6 +544,17 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, a 1-D tensor, containing the same elements of the input.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
+            >>> output = x.ravel()
+            >>> print(output.shape)
+            (24,)
         """
         self.init_check()
         reshape_op = tensor_operator_registry.get('reshape')()
@@ -528,6 +571,21 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, has the same data type as input.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Raises:
+            TypeError: If `order` is not string type.
+            ValueError: If `order` is string type, but not 'C' or 'F'.
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
+            >>> output = x.flatten()
+            >>> print(output.shape)
+            (24,)
         """
         self.init_check()
         reshape_op = tensor_operator_registry.get('reshape')()
@@ -550,6 +608,21 @@ class Tensor(Tensor_):
 
         Returns:
             Transposed tensor, has the same data type as the input.
+
+        Raises:
+            TypeError: If `axis1` or `axis2` is not integer.
+            ValueError: If `axis1` or `axis2` is not in the range of :math:`[-ndim, ndim-1]`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
+            >>> output = np.swapaxes(x, 0, 2)
+            >>> print(output.shape)
+            (4,3,2)
         """
         self.init_check()
         axis1, axis2 = validator.check_swapaxes_axis((axis1, axis2), self.ndim)
@@ -579,6 +652,21 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, with all or a subset of the dimensions of length 1 removed.
+
+        Raises:
+            TypeError: If input arguments have types not specified above.
+            ValueError: If specified axis has shape entry :math:`> 1`.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.ones((1,2,2,1), dtype=np.float32))
+            >>> x = x.squeeze()
+            >>> print(x.shape)
+            (2, 2)
         """
         self.init_check()
         if axis is None:
@@ -600,12 +688,97 @@ class Tensor(Tensor_):
 
         Returns:
             Tensor, with the designated dtype.
+
+        Raises:
+            TypeError: If `dtype` has types not specified above, or values cannot be understood.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> x = Tensor(np.ones((1,2,2,1), dtype=np.float32))
+            >>> x = x.astype("int32")
+            >>> print(x.dtype)
+            Int32
         """
         self.init_check()
         dtype = validator.check_astype_dtype(dtype)
         if not copy and dtype == self.dtype:
             return self
         return tensor_operator_registry.get('cast')(self, dtype)
+
+    def argmax(self, axis=None):
+        """
+        Returns the indices of the maximum values along an axis.
+
+        Args:
+            axis (int, optional): By default, the index is into
+                the flattened array, otherwise along the specified axis.
+
+        Returns:
+            Tensor, array of indices into the array. It has the same
+            shape as a.shape with the dimension along axis removed.
+
+        Raises:
+            ValueError: if axis is out of range.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> a = Tensor(np.arange(10, 16).reshape(2, 3).astype("float32"))
+            >>> print(np.argmax(a))
+            5
+        """
+        # P.Argmax only supports float
+        a = self.astype(mstype.float32)
+        if axis is None:
+            a = a.ravel()
+            axis = 0
+        else:
+            axis = validator.check_axis_in_range(axis, a.ndim)
+        return tensor_operator_registry.get('argmax')(axis)(a)
+
+    def argmin(self, axis=None):
+        """
+        Returns the indices of the minimum values along an axis.
+
+        Args:
+            a (Union[int, float, bool, list, tuple, Tensor]): Input array.
+            axis (int, optional): By default, the index is into
+                the flattened array, otherwise along the specified axis.
+
+        Returns:
+            Tensor, array of indices into the array. It has the same
+            shape as a.shape with the dimension along axis removed.
+
+        Raises:
+            ValueError: if axis is out of range.
+
+        Supported Platforms:
+            ``Ascend`` ``GPU`` ``CPU``
+
+        Examples:
+            >>> import numpy as np
+            >>> from mindspore import Tensor
+            >>> a = Tensor(np.arange(10, 16).reshape(2, 3).astype("float32"))
+            >>> print(np.argmin(a))
+            0
+        """
+        # P.Argmax only supports float
+        a = self.astype(mstype.float32)
+        if axis is None:
+            a = a.ravel()
+            axis = 0
+        else:
+            axis = validator.check_axis_in_range(axis, a.ndim)
+        # P.Argmin is currently not supported
+        return tensor_operator_registry.get('argmax')(axis)(tensor_operator_registry.get('__neg__')(a))
+
 
     def init_check(self):
         if self.has_init:

@@ -16,15 +16,14 @@
 
 
 from ..ops import functional as F
-from ..ops.primitive import constexpr
 from ..common import dtype as mstype
 from ..common import Tensor
-from .._c_expression import typing
 
 from .math_ops import _apply_tensor_op, absolute
-from .array_creations import zeros, ones, empty
+from .array_creations import zeros, ones, empty, asarray
 from .utils import _check_input_tensor, _to_tensor, _isnan
-from .utils_const import _raise_type_error, _is_shape_empty, _infer_out_shape
+from .utils_const import _raise_type_error, _is_shape_empty, _infer_out_shape, _check_same_type, \
+    _check_axis_type, _canonicalize_axis, _can_broadcast, _isscalar
 
 
 def not_equal(x1, x2, dtype=None):
@@ -410,13 +409,6 @@ def isneginf(x):
     return _is_sign_inf(x, F.tensor_lt)
 
 
-@constexpr
-def _isscalar(x):
-    """Returns True if x is a scalar type"""
-    return isinstance(x, (typing.Number, typing.Int, typing.UInt, typing.Float,
-                          typing.Bool, typing.String))
-
-
 def isscalar(element):
     """
     Returns True if the type of element is a scalar type.
@@ -534,8 +526,9 @@ def in1d(ar1, ar2, invert=False):
         not rely on the uniqueness of the input arrays.
 
     Args:
-        ar1 (array_like): Input array with shape `(M,)`.
-        ar2 (array_like): The values against which to test each value of `ar1`.
+        ar1 (Union[int, float, bool, list, tuple, Tensor]): Input array with shape `(M,)`.
+        ar2 (Union[int, float, bool, list, tuple, Tensor]): The values against which
+            to test each value of `ar1`.
         invert (boolean, optional): If True, the values in the returned array are
             inverted (that is, False where an element of `ar1` is in `ar2` and True
             otherwise). Default is False.
@@ -746,3 +739,167 @@ def logical_xor(x1, x2, dtype=None):
     y1 = F.logical_or(x1, x2)
     y2 = F.logical_or(F.logical_not(x1), F.logical_not(x2))
     return _apply_tensor_op(F.logical_and, y1, y2, dtype=dtype)
+
+
+def array_equal(a1, a2, equal_nan=False):
+    """
+    Returns `True` if input arrays have same shapes and all elements equal.
+
+    Note:
+        In mindpsore, a bool tensor is returned instead, since in Graph mode, the
+        value cannot be traced and computed at compile time.
+
+    Args:
+        a1/a2 (Union[int, float, bool, list, tuple, Tensor]): Input arrays.
+        equal_nan (bool): Whether to compare NaN’s as equal.
+
+    Returns:
+        Scalar bool tensor, value is `True` if inputs are equal, `False` otherwise.
+
+    Raises:
+        TypeError: If inputs have types not specified above.
+
+    Supported Platforms:
+        ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = [0,1,2]
+        >>> b = [[0,1,2], [0,1,2]]
+        >>> print(np.array_equal(a,b))
+        False
+    """
+    a1 = asarray(a1)
+    a2 = asarray(a2)
+    if not isinstance(equal_nan, bool):
+        _raise_type_error("equal_nan must be bool.")
+    if a1.shape == a2.shape:
+        res = equal(a1, a2)
+        if equal_nan:
+            res = logical_or(res, logical_and(isnan(a1), isnan(a2)))
+        return res.all()
+    return _to_tensor(False)
+
+
+def array_equiv(a1, a2):
+    """
+    Returns `True` if input arrays are shape consistent and all elements equal.
+
+    Shape consistent means they are either the same shape, or one input array can
+    be broadcasted to create the same shape as the other one.
+
+    Note:
+        In mindpsore, a bool tensor is returned instead, since in Graph mode, the
+        value cannot be traced and computed at compile time.
+
+    Args:
+        a1/a2 (Union[int, float, bool, list, tuple, Tensor]): Input arrays.
+
+    Returns:
+        Scalar bool tensor, value is `True` if inputs are equivalent, `False` otherwise.
+
+    Raises:
+        TypeError: If inputs have types not specified above.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> a = [0,1,2]
+        >>> b = [[0,1,2], [0,1,2]]
+        >>> print(np.array_equiv(a,b))
+        True
+    """
+    a1 = asarray(a1)
+    a2 = asarray(a2)
+    if _can_broadcast(a1.shape, a2.shape):
+        return equal(a1, a2).all()
+    return _to_tensor(False)
+
+
+def signbit(x, dtype=None):
+    """
+    Returns element-wise True where signbit is set (less than zero).
+
+    Note:
+        Numpy arguments `out`, `where`, `casting`, `order`, `subok`, `signature`, and
+        `extobj` are not supported.
+
+    Args:
+        x (Union[int, float, bool, list, tuple, Tensor]): The input value(s).
+        dtype (:class:`mindspore.dtype`, optional): defaults to None. Overrides the dtype of the
+            output Tensor.
+
+    Returns:
+        Tensor.
+
+    Raises:
+        TypeError: If input is not array_like or `dtype` is not `None` or `bool`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.array([1, -2.3, 2.1]).astype('float32')
+        >>> output = np.signbit(x)
+        >>> print(output)
+        [False  True False]
+    """
+    if dtype is not None and not _check_same_type(dtype, mstype.bool_):
+        _raise_type_error("Casting was not allowed for signbit.")
+    x = _to_tensor(x)
+    res = F.less(x, 0)
+    if dtype is not None and not _check_same_type(F.dtype(res), dtype):
+        res = F.cast(res, dtype)
+    return res
+
+
+def sometrue(a, axis=None, keepdims=False):
+    """
+    Tests whether any array element along a given axis evaluates to True.
+
+    Returns single boolean unless axis is not None
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Input tensor or object that can be converted to an array.
+        axis (Union[None, int, tuple(int)]): Axis or axes along which a logical OR reduction is
+            performed. Default: None.
+            If None, perform a logical OR over all the dimensions of the input array.
+            If negative, it counts from the last to the first axis.
+            If tuple of ints, a reduction is performed on multiple axes, instead of a single axis or
+            all the axes as before.
+        keepdims (bool): Default: False.
+            If True, the axes which are reduced are left in the result as dimensions with size one.
+            With this option, the result will broadcast correctly against the input array.
+            If the default value is passed, then keepdims will not be passed through to the any method of
+            sub-classes of ndarray, however any non-default value will be. If the sub-class’ method does not
+            implement keepdims any exceptions will be raised.
+
+    Returns:
+        Returns single boolean unless axis is not None
+
+    Raises:
+        TypeError: If input is not array_like or `axis` is not int or tuple of ints or
+            `keepdims` is not integer or `initial` is not scalar.
+        ValueError: If any axis is out of range or duplicate axes exist.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> x = np.array([1, -2.3, 2.1]).astype('float32')
+        >>> output = np.signbit(x)
+        >>> print(output)
+        [False  True False]
+    """
+    if not isinstance(keepdims, int):
+        _raise_type_error("integer argument expected, but got ", keepdims)
+    if axis is not None:
+        _check_axis_type(axis, True, True, False)
+        axis = _canonicalize_axis(axis, a.ndim)
+    a = _to_tensor(a)
+    keepdims = keepdims not in (0, False)
+    return F.not_equal(a, 0).any(axis, keepdims)

@@ -2654,7 +2654,7 @@ class Acosh(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> acosh = ops.Acosh()
@@ -2731,7 +2731,7 @@ class Asinh(PrimitiveWithInfer):
         TypeError: If `input_x` is not a Tensor.
 
     Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> asinh = ops.Asinh()

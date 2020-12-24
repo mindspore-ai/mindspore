@@ -23,7 +23,7 @@ import mindspore.numpy as mnp
 from mindspore.nn import Cell
 
 from .utils import rand_int, run_non_kw_test, check_all_results, match_array, \
-    rand_bool, match_res, run_multi_test, to_tensor
+    rand_bool, match_res, run_multi_test, to_tensor, match_all_arrays
 
 
 class Cases():
@@ -1253,6 +1253,22 @@ def test_select():
     match_res(mnp.select, onp.select, condlist, choicelist, default=10)
 
 
+def test_choose():
+    x = rand_int(2, 1, 4).astype(onp.int32)
+    y = rand_int(3, 2, 5, 4).astype(onp.int32)
+    match_res(mnp.choose, onp.choose, x, y, mode='wrap')
+    match_res(mnp.choose, onp.choose, x, y, mode='clip')
+
+    x = rand_int(5, 3, 1, 7).astype(onp.int32)
+    y1 = rand_int(7).astype(onp.int32)
+    y2 = rand_int(1, 3, 1).astype(onp.int32)
+    y3 = rand_int(5, 1, 1, 7).astype(onp.int32)
+    onp_arrays = (x, (y1, y2, y3))
+    mnp_arrays = (to_tensor(x), tuple(map(to_tensor, (y1, y2, y3))))
+    match_all_arrays(mnp.choose(*mnp_arrays, mode='wrap'), onp.choose(*onp_arrays, mode='wrap'))
+    match_all_arrays(mnp.choose(*mnp_arrays, mode='clip'), onp.choose(*onp_arrays, mode='clip'))
+
+
 class ReshapeExpandSqueeze(Cell):
     def __init__(self):
         super(ReshapeExpandSqueeze, self).__init__()
@@ -1444,3 +1460,159 @@ def test_rot90():
     o_rot = onp_rot90(onp_array)
     m_rot = mnp_rot90(mnp_array)
     check_all_results(o_rot, m_rot)
+
+
+def mnp_size(x):
+    a = mnp.size(x)
+    b = mnp.size(x, axis=0)
+    return a, b
+
+
+def onp_size(x):
+    a = onp.size(x)
+    b = onp.size(x, axis=0)
+    return a, b
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_size():
+    onp_arr = onp.random.rand(2, 3, 4).astype('float32')
+    mnp_arr = to_tensor(onp_arr)
+    for actual, expected in zip(mnp_size(mnp_arr), onp_size(onp_arr)):
+        match_array(actual, expected)
+
+
+def mnp_array_str(x):
+    return mnp.array_str(x)
+
+
+def onp_array_str(x):
+    return onp.array_str(x)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_array_str():
+    onp_arr = onp.random.rand(2, 3, 4).astype('float32')
+    mnp_arr = to_tensor(onp_arr)
+    for actual, expected in zip(mnp_size(mnp_arr), onp_size(onp_arr)):
+        match_array(actual, expected)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_apply_along_axis():
+    onp_arr = rand_int(5, 3, 7)
+    mnp_arr = to_tensor(onp_arr)
+    for i in range(-3, 3):
+        mnp_res = mnp.apply_along_axis(mnp.diag, i, mnp_arr)
+        onp_res = onp.apply_along_axis(onp.diag, i, onp_arr)
+        match_all_arrays(mnp_res, onp_res)
+    mnp_res = mnp.apply_along_axis(lambda x: x[0], 2, mnp_arr)
+    onp_res = onp.apply_along_axis(lambda x: x[0], 2, onp_arr)
+    match_all_arrays(mnp_res, onp_res)
+    mnp_res = mnp.apply_along_axis(lambda x, y, offset=0: (x[4] - y)*offset, 2, mnp_arr, 1, offset=3)
+    onp_res = onp.apply_along_axis(lambda x, y, offset=0: (x[4] - y)*offset, 2, onp_arr, 1, offset=3)
+    match_all_arrays(mnp_res, onp_res)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_piecewise():
+    x = rand_int(2, 4)
+    mnp_x = to_tensor(x)
+    condlist = [x < 2, x == 2, x > 2]
+    mnp_condlist = [mnp_x < 2, mnp_x == 2, mnp_x > 2]
+    funclist = [lambda x, offset=0: x - offset, lambda x, offset=0: x, lambda x, offset=0: x*offset]
+    mnp_res = mnp.piecewise(mnp_x, mnp_condlist, funclist, offset=2)
+    onp_res = onp.piecewise(x, condlist, funclist, offset=2)
+    match_all_arrays(mnp_res, onp_res)
+
+    funclist = [-1, 0, 1]
+    mnp_res = mnp.piecewise(mnp_x, mnp_condlist, funclist)
+    onp_res = onp.piecewise(x, condlist, funclist)
+    match_all_arrays(mnp_res, onp_res)
+
+    condlist = [x > 10, x < 0]
+    mnp_x = to_tensor(x)
+    mnp_condlist = [mnp_x > 10, mnp_x < 0]
+    funclist = [lambda x: x - 2, lambda x: x - 1, lambda x: x*2]
+    mnp_res = mnp.piecewise(mnp_x, mnp_condlist, funclist)
+    onp_res = onp.piecewise(x, condlist, funclist)
+    match_all_arrays(mnp_res, onp_res)
+
+    x = 2
+    condlist = True
+    funclist = [lambda x: x - 1]
+    mnp_res = mnp.piecewise(x, condlist, funclist)
+    onp_res = onp.piecewise(x, condlist, funclist)
+    match_all_arrays(mnp_res, onp_res)
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_unravel_index():
+    shapes = [(), 1, 3, (5, 1), (2, 6, 3)]
+    dims = [(5, 4, 7), (5*4, 7), 5*4*7]
+    for shape in shapes:
+        x = onp.random.randint(0, 5*4*7, shape)
+        for dim in dims:
+            for order in ('C', 'F'):
+                mnp_res = mnp.unravel_index(to_tensor(x), dim, order=order)
+                onp_res = onp.unravel_index(x, dim, order=order)
+                match_all_arrays(mnp_res, onp_res)
+
+
+def mnp_apply_over_axes(x):
+    a = mnp.apply_over_axes(mnp.sum, x, axes=0)
+    b = mnp.apply_over_axes(mnp.sum, x, axes=(0, 1))
+    c = mnp.apply_over_axes(mnp.std, x, axes=1)
+    d = mnp.apply_over_axes(mnp.mean, x, axes=(-1,))
+    return a, b, c, d
+
+
+def onp_apply_over_axes(x):
+    a = onp.apply_over_axes(onp.sum, x, axes=0)
+    b = onp.apply_over_axes(onp.sum, x, axes=(0, 1))
+    c = onp.apply_over_axes(onp.std, x, axes=1)
+    d = onp.apply_over_axes(onp.mean, x, axes=(-1,))
+    return a, b, c, d
+
+
+@pytest.mark.level1
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_apply_over_axes():
+    arrs = [
+        onp.random.rand(2, 2).astype('float32'),
+        onp.random.rand(3, 2, 2).astype('float32'),
+        onp.random.rand(5, 4, 3, 3).astype('float32'),
+    ]
+    for x in arrs:
+        for expected, actual in zip(onp_apply_over_axes(x),
+                                    mnp_apply_over_axes(to_tensor(x))):
+            match_array(actual.asnumpy(), expected, error=5)

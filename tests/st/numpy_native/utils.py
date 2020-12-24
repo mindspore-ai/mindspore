@@ -24,7 +24,7 @@ def match_array(actual, expected, error=0):
     if isinstance(actual, int):
         actual = onp.asarray(actual)
 
-    if isinstance(expected, int):
+    if isinstance(expected, (int, tuple)):
         expected = onp.asarray(expected)
 
     if error > 0:
@@ -91,11 +91,9 @@ def rand_bool(*shape):
 
 def match_res(mnp_fn, onp_fn, *arrs, **kwargs):
     """Checks results from applying mnp_fn and onp_fn on arrs respectively"""
-    dtype = kwargs.get('dtype', mnp.float32)
-    kwargs.pop('dtype', None)
+    dtype = kwargs.pop('dtype', mnp.float32)
     mnp_arrs = map(functools.partial(Tensor, dtype=dtype), arrs)
-    error = kwargs.get('error', 0)
-    kwargs.pop('error', None)
+    error = kwargs.pop('error', 0)
     mnp_res = mnp_fn(*mnp_arrs, **kwargs)
     onp_res = onp_fn(*arrs, **kwargs)
     match_all_arrays(mnp_res, onp_res, error=error)
@@ -172,6 +170,7 @@ def run_logical_test(mnp_fn, onp_fn, test_case):
     for x1 in test_case.boolean_arrs:
         for x2 in test_case.boolean_arrs:
             match_res(mnp_fn, onp_fn, x1, x2, dtype=mnp.bool_)
+
 
 def to_tensor(obj, dtype=None):
     if dtype is None:

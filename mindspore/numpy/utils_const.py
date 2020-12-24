@@ -14,8 +14,9 @@
 # ============================================================================
 """internal graph-compatible utility functions"""
 import math
-from itertools import zip_longest
+from itertools import zip_longest, accumulate
 from collections import deque
+import operator
 
 import mindspore.context as context
 from ..ops import functional as F
@@ -127,12 +128,25 @@ def _infer_out_shape(*shapes):
 
 
 @constexpr
+def _can_broadcast(*shapes):
+    """
+    Returns Ture if shapes can broadcast, False if they cannot.
+    """
+    try:
+        _infer_out_shape(*shapes)
+    except ValueError:
+        return False
+    return True
+
+
+@constexpr
 def _check_axis_in_range(axis, ndim):
     """Checks axes are with the bounds of ndim"""
     if not isinstance(axis, int):
         raise TypeError(f'axes should be integers, not {type(axis)}')
     if not -ndim <= axis < ndim:
         raise ValueError(f'axis {axis} is out of bounds for array of dimension {ndim}')
+    return axis % ndim
 
 
 @constexpr
@@ -145,14 +159,11 @@ def _check_axis_valid(axes, ndim):
         axes = F.make_range(ndim)
         return axes
     if isinstance(axes, (tuple, list)):
-        for axis in axes:
-            _check_axis_in_range(axis, ndim)
-        axes = tuple(map(lambda x: x % ndim, axes))
+        axes = tuple(map(lambda x: _check_axis_in_range(x, ndim), axes))
         if any(axes.count(el) > 1 for el in axes):
             raise ValueError('duplicate value in "axis"')
         return axes
-    _check_axis_in_range(axes, ndim)
-    return (axes % ndim,)
+    return (_check_axis_in_range(axes, ndim),)
 
 
 @constexpr
@@ -397,7 +408,7 @@ def _type_convert(force, obj):
 
 
 @constexpr
-def _list_comprehensions(obj, item=None, return_tuple=False):
+def _list_comprehensions(obj, item=None, return_tuple=False, make_none=False):
     """
     Generates a new list/tuple by list comprehension.
 
@@ -416,24 +427,15 @@ def _list_comprehensions(obj, item=None, return_tuple=False):
     lst = obj
     if isinstance(obj, int):
         lst = range(obj)
-    if item is None:
+    if make_none:
+        res = [None for _ in lst]
+    elif item is None:
         res = [i for i in lst]
     else:
         res = [item for i in lst]
     if return_tuple:
         return tuple(res)
     return res
-
-
-@constexpr
-def _tuple_getitem(tup, idx, startswith=True):
-    """
-    Returns a slice from tup starting with idx. If startswith is False,
-    returns a lice from tup ending with idx instead.
-    """
-    if startswith:
-        return tup[idx:]
-    return tup[:idx]
 
 
 @constexpr
@@ -471,7 +473,7 @@ def _seq_prod(seq1, seq2):
 
 @constexpr
 def _make_tensor(val, dtype):
-    """ Returns the tensor with value `val` and dtype `dtype`."""
+    """Returns the tensor with value `val` and dtype `dtype`."""
     return Tensor(val, dtype)
 
 
@@ -479,3 +481,26 @@ def _make_tensor(val, dtype):
 def _tuple_slice(tup, start, end):
     """get sliced tuple from start and end."""
     return tup[start:end]
+
+
+@constexpr
+def _isscalar(x):
+    """Returns True if x is a scalar type"""
+    return isinstance(x, (typing.Number, typing.Int, typing.UInt, typing.Float,
+                          typing.Bool, typing.String))
+
+
+@constexpr
+def _cumprod(x):
+    return tuple(accumulate(x, operator.mul))
+
+
+@constexpr
+def _in(x, y):
+    return x in y
+
+
+@constexpr
+def _callable_const(x):
+    """Returns true if x is a function in graph mode."""
+    return isinstance(x, typing.Function)

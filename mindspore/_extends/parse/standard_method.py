@@ -148,7 +148,34 @@ def strides_(x):
 
 
 def astype(x, dtype, copy=True):
-    """Implementation of `astype`."""
+    """
+    Return a copy of the tensor, casted to a specified type.
+
+    Args:
+        dtype (Union[:class:`mindspore.dtype`, str]): Designated tensor dtype, can be in format
+            of :class:`mindspore.dtype.float32` or `float32`.
+            Default: :class:`mindspore.dtype.float32`.
+        copy (bool, optional): By default, astype always returns a newly allocated
+            tensor. If this is set to false, the input tensor is returned instead
+            of a copy if possible. Default: True.
+
+    Returns:
+        Tensor, with the designated dtype.
+
+    Raises:
+        TypeError: If `dtype` has types not specified above, or values cannot be understood.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.ones((1,2,2,1), dtype=np.float32))
+        >>> x = x.astype("int32")
+        >>> print(x.dtype)
+        Int32
+    """
     dtype = check_astype_dtype_const(dtype)
     if not copy and dtype == x.dtype:
         return x
@@ -156,7 +183,40 @@ def astype(x, dtype, copy=True):
 
 
 def transpose(x, *axis):
-    """Implementation of `transpose`."""
+    r"""
+    Return a view of the tensor with axes transposed.
+
+    For a 1-D tensor this has no effect, as a transposed vector is simply the
+    same vector. For a 2-D tensor, this is a standard matrix transpose. For a
+    n-D tensor, if axes are given, their order indicates how the axes are permuted.
+    If axes are not provided and tensor.shape = (i[0], i[1],...i[n-2], i[n-1]),
+    then tensor.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
+
+    Args:
+        axes(Union[None, tuple(int), list(int), int], optional): If axes is None or
+            blank, tensor.transpose() will reverse the order of the axes. If axes is tuple(int)
+            or list(int), tensor.transpose() will transpose the tensor to the new axes order.
+            If axes is int, this form is simply intended as a convenience alternative to the
+            tuple/list form.
+
+    Returns:
+        Tensor, has the same dimension as input tensor, with axes suitably permuted.
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If the number of `axes` is not euqal to a.ndim.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.ones((1,2,3), dtype=np.float32))
+        >>> x = x.transpose()
+        >>> print(x.shape)
+        (3, 2, 1)
+    """
     ndim = F.rank(x)
     perm = check_transpose_axis_const(axis, ndim)
     return F.transpose(x, perm)
@@ -167,27 +227,86 @@ T_ = transpose
 
 
 def reshape(x, *shape):
-    """Implementation of `reshape`."""
+    """
+    Give a new shape to a tensor without changing its data.
+
+    Args:
+        shape(Union[int, tuple(int), list(int)]): The new shape should be compatible
+            with the original shape. If an integer, then the result will be a 1-D
+            array of that length. One shape dimension can be -1. In this case, the
+            value is inferred from the length of the array and remaining dimensions.
+
+    Returns:
+        Tensor, with new specified shape.
+
+    Raises:
+        TypeError: If new_shape is not integer, list or tuple, or `x` is not tensor.
+        ValueError: If new_shape is not compatible with the original shape.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> from mindspore import Tensor
+        >>> from mindspore import dtype as mstype
+        >>> x = Tensor([[-0.1, 0.3, 3.6], [0.4, 0.5, -3.2]], dtype=mstype.float32)
+        >>> output = np.reshape(x, (3, 2))
+        >>> print(output)
+        [[-0.1  0.3]
+        [ 3.6  0.4]
+        [ 0.5 -3.2]]
+    """
     new_shape = check_reshape_shp_const(shape)
     return F.reshape(x, new_shape)
 
 
 def ravel(x):
-    """Implementation of `ravel`."""
+    """
+    Return a contiguous flattened tensor.
+
+    Returns:
+        Tensor, a 1-D tensor, containing the same elements of the input.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
+        >>> output = x.ravel()
+        >>> print(output.shape)
+        (24,)
+    """
     return reshape(x, (-1,))
 
 
 def flatten(x, order='C'):
-    """
-    Returns a copy of the array collapsed into one dimension.
+    r"""
+    Return a copy of the tensor collapsed into one dimension.
 
     Args:
-        order (str, optional): Can choose between `C` and `F`. `C` means to
-        flatten in row-major (C-style) order. ‘F’ means to flatten in column-major
-        (Fortran- style) order. Only `C` and `F` are supported.
+        order (str, optional): Can choose between 'C' and 'F'. 'C' means to
+            flatten in row-major (C-style) order. 'F' means to flatten in column-major
+            (Fortran-style) order. Only 'C' and 'F' are supported. Default: 'C'.
 
     Returns:
-        Tensor, has the same data type as x.
+        Tensor, has the same data type as input.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If `order` is not string type.
+        ValueError: If `order` is string type, but not 'C' or 'F'.
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
+        >>> output = x.flatten()
+        >>> print(output.shape)
+        (24,)
     """
     order = check_flatten_order_const(order)
     if order == 'C':
@@ -200,14 +319,29 @@ def flatten(x, order='C'):
 
 def swapaxes(x, axis1, axis2):
     """
-    Interchanges two axes of a tensor.
+    Interchange two axes of a tensor.
 
     Args:
         axis1 (int): First axis.
         axis2 (int): Second axis.
 
     Returns:
-        Transposed tensor, has the same data type as the original tensor x.
+        Transposed tensor, has the same data type as the input.
+
+    Raises:
+        TypeError: If `axis1` or `axis2` is not integer.
+        ValueError: If `axis1` or `axis2` is not in the range of :math:`[-ndim, ndim-1]`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.ones((2,3,4), dtype=np.float32))
+        >>> output = np.swapaxes(x, 0, 2)
+        >>> print(output.shape)
+        (4,3,2)
     """
     axis1, axis2 = check_swapaxes_axis_const((axis1, axis2), x.ndim)
 
@@ -230,13 +364,28 @@ def swapaxes(x, axis1, axis2):
 
 def squeeze(x, axis=None):
     """
-    Removes single-dimensional entries from the shape of an tensor.
+    Remove single-dimensional entries from the shape of a tensor.
 
     Args:
-        axis: Union[None, int, list(int), tuple(list)]. Default is None.
+        axis (Union[None, int, list(int), tuple(int)], optional): Default is None.
 
     Returns:
         Tensor, with all or a subset of the dimensions of length 1 removed.
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If specified axis has shape entry :math:`> 1`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> x = Tensor(np.ones((1,2,2,1), dtype=np.float32))
+        >>> x = x.squeeze()
+        >>> print(x.shape)
+        (2, 2)
     """
     shape = F.shape(x)
     if axis is None:
@@ -244,6 +393,78 @@ def squeeze(x, axis=None):
     # yield squeezed shape based on the axes
     new_shape = prepare_shape_for_squeeze_const(shape, axis)
     return F.reshape(x, new_shape)
+
+
+def argmax(x, axis=None):
+    """
+    Returns the indices of the maximum values along an axis.
+
+    Args:
+        axis (int, optional): By default, the index is into
+            the flattened array, otherwise along the specified axis.
+
+    Returns:
+        Tensor, array of indices into the array. It has the same
+        shape as a.shape with the dimension along axis removed.
+
+    Raises:
+        ValueError: if axis is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> a = Tensor(np.arange(10, 16).reshape(2, 3).astype("float32"))
+        >>> print(np.argmax(a))
+        5
+    """
+    # P.Argmax only supports float
+    x = x.astype(mstype.float32)
+    if axis is None:
+        x = ravel(x)
+        axis = 0
+    else:
+        axis = check_axis_in_range_const(axis, F.rank(x))
+    return P.Argmax(axis)(x)
+
+
+def argmin(x, axis=None):
+    """
+    Returns the indices of the minimum values along an axis.
+
+    Args:
+        a (Union[int, float, bool, list, tuple, Tensor]): Input array.
+        axis (int, optional): By default, the index is into
+            the flattened array, otherwise along the specified axis.
+
+    Returns:
+        Tensor, array of indices into the array. It has the same
+        shape as a.shape with the dimension along axis removed.
+
+    Raises:
+        ValueError: if axis is out of range.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import numpy as np
+        >>> from mindspore import Tensor
+        >>> a = Tensor(np.arange(10, 16).reshape(2, 3).astype("float32"))
+        >>> print(np.argmin(a))
+        0
+    """
+    # P.Argmax only supports float
+    x = x.astype(mstype.float32)
+    if axis is None:
+        x = ravel(x)
+        axis = 0
+    else:
+        axis = check_axis_in_range_const(axis, F.rank(x))
+    # P.Argmin is currently not supported
+    return P.Argmax(axis)(F.neg_tensor(x))
 
 
 def getitem(data, item):
@@ -466,6 +687,7 @@ check_reshape_shp_const = constexpr(validator.check_reshape_shp)
 check_flatten_order_const = constexpr(validator.check_flatten_order)
 check_swapaxes_axis_const = constexpr(validator.check_swapaxes_axis)
 prepare_shape_for_squeeze_const = constexpr(validator.prepare_shape_for_squeeze)
+check_axis_in_range_const = constexpr(validator.check_axis_in_range)
 
 
 def tensor_bool(x):

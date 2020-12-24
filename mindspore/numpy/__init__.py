@@ -31,15 +31,18 @@ from .array_ops import (transpose, expand_dims, squeeze, rollaxis, swapaxes, res
                         column_stack, hstack, dstack, vstack, stack, unique, moveaxis,
                         tile, broadcast_to, broadcast_arrays, roll, append, split, vsplit,
                         flip, flipud, fliplr, hsplit, dsplit, take_along_axis, take, repeat,
-                        rot90, select, array_split)
+                        rot90, select, array_split, choose, size, array_str, apply_along_axis,
+                        piecewise, unravel_index, apply_over_axes)
 from .array_creations import copy_ as copy
 from .array_creations import (array, asarray, asfarray, ones, zeros, full, arange,
                               linspace, logspace, eye, identity, empty, empty_like,
                               ones_like, zeros_like, full_like, diagonal, tril, triu,
                               tri, trace, meshgrid, mgrid, ogrid, diagflat,
-                              diag, diag_indices, ix_, indices, geomspace, vander)
+                              diag, diag_indices, ix_, indices, geomspace, vander, hamming,
+                              hanning, bartlett, blackman, triu_indices, tril_indices,
+                              triu_indices_from, tril_indices_from, histogram_bin_edges, pad)
 from .dtypes import (int_, int8, int16, int32, int64, uint, uint8, uint16,
-                     uint32, uint64, float_, float16, float32, float64, bool_, inf, nan,
+                     uint32, uint64, float_, float16, float32, float64, bool_, inf, nan, pi,
                      numeric_types, PINF, NINF)
 from .math_ops import (mean, inner, add, subtract, multiply, divide, true_divide, power,
                        dot, outer, tensordot, absolute, std, var, average, minimum,
@@ -50,31 +53,43 @@ from .math_ops import (mean, inner, add, subtract, multiply, divide, true_divide
                        cross, ceil, trapz, gcd, lcm, convolve, log1p, logaddexp, log2,
                        logaddexp2, log10, ediff1d, nansum, nanmean, nanvar, nanstd, cumsum, nancumsum,
                        sin, cos, tan, arcsin, arccos, arctan, sinh, cosh, tanh, arcsinh, arccosh,
-                       arctanh, arctan2, cov)
+                       arctanh, arctan2, cov, multi_dot, nanmax, nanmin, argmax, argmin, searchsorted,
+                       interp, sum_, corrcoef, gradient, sign, copysign, digitize, bincount, histogram,
+                       histogramdd, histogram2d, matrix_power, around, polyadd, polysub, polyval,
+                       polyder, polymul, polyint, result_type, unwrap, cumprod, ravel_multi_index,
+                       norm, bitwise_and, bitwise_or, bitwise_xor, invert, rint, correlate, radians)
 from .logic_ops import (not_equal, less_equal, less, greater_equal, greater, equal, isfinite,
                         isnan, isinf, isposinf, isneginf, isscalar, logical_and, logical_not,
-                        logical_or, logical_xor, in1d, isin, isclose)
+                        logical_or, logical_xor, in1d, isin, isclose, signbit, sometrue,
+                        array_equal, array_equiv)
 
 mod = remainder
 fabs = absolute
+round = around # pylint: disable=redefined-builtin
 divmod = divmod_ # pylint: disable=redefined-builtin
+del divmod_
 abs = absolute # pylint: disable=redefined-builtin
 max = amax # pylint: disable=redefined-builtin
 min = amin # pylint: disable=redefined-builtin
-
+sum = sum_ # pylint: disable=redefined-builtin
+del sum_
+bitwise_not = invert
 
 array_ops_module = ['transpose', 'expand_dims', 'squeeze', 'rollaxis', 'swapaxes', 'reshape',
                     'ravel', 'concatenate', 'where', 'atleast_1d', 'atleast_2d', 'atleast_3d',
                     'column_stack', 'hstack', 'dstack', 'vstack', 'stack', 'unique', 'moveaxis',
                     'tile', 'broadcast_to', 'broadcast_arrays', 'append', 'roll', 'split', 'vsplit',
                     'flip', 'flipud', 'fliplr', 'hsplit', 'dsplit', 'take_along_axis', 'take',
-                    'repeat', 'rot90', 'select', 'array_split']
+                    'repeat', 'rot90', 'select', 'array_split', 'choose', 'size', 'array_str',
+                    'apply_along_axis', 'piecewise', 'unravel_index', 'apply_over_axes']
 
 array_creations_module = ['array', 'asarray', 'asfarray', 'ones', 'zeros', 'full', 'arange',
                           'linspace', 'logspace', 'eye', 'identity', 'empty', 'empty_like',
                           'ones_like', 'zeros_like', 'full_like', 'diagonal', 'tril', 'triu',
                           'tri', 'trace', 'meshgrid', 'mgrid', 'ogrid', 'diagflat', 'diag',
-                          'diag_indices', 'ix_', 'indices', 'geomspace', 'vander']
+                          'diag_indices', 'ix_', 'indices', 'geomspace', 'vander', 'hamming',
+                          'hanning', 'bartlett', 'blackman', 'triu_indices', 'tril_indices',
+                          'triu_indices_from', 'tril_indices_from', 'histogram_bin_edges', 'pad']
 
 math_module = ['mean', 'inner', 'add', 'subtract', 'multiply', 'divide', 'true_divide', 'power',
                'dot', 'outer', 'tensordot', 'absolute', 'std', 'var', 'average', 'not_equal',
@@ -86,11 +101,17 @@ math_module = ['mean', 'inner', 'add', 'subtract', 'multiply', 'divide', 'true_d
                'abs', 'max', 'min', 'gcd', 'lcm', 'log1p', 'logaddexp', 'log2', 'logaddexp2', 'log10',
                'convolve', 'ediff1d', 'nansum', 'nanmean', 'nanvar', 'nanstd', 'cumsum',
                'nancumsum', 'sin', 'cos', 'tan', 'arcsin', 'arccos', 'arctan', 'sinh', 'cosh', 'tanh',
-               'arcsinh', 'arccosh', 'arctanh', 'arctan2', 'cov']
+               'arcsinh', 'arccosh', 'arctanh', 'arctan2', 'cov', 'multi_dot', 'nanmax', 'nanmin',
+               'argmax', 'argmin', 'searchsorted', 'interp', 'sum', 'corrcoef', 'gradient', 'sign',
+               'copysign', 'radians', 'digitize', 'bincount', 'histogram', 'histogramdd', 'histogram2d',
+               'polyadd', 'polysub', 'polyval', 'polyder', 'polymul', 'polyint', 'result_type',
+               'unwrap', 'cumprod', 'ravel_multi_index', 'norm', 'bitwise_and', 'bitwise_or',
+               'bitwise_xor', 'invert', 'bitwise_not', 'rint', "correlate"]
 
 logic_module = ['not_equal', 'less_equal', 'less', 'greater_equal', 'greater', 'equal', 'isfinite',
                 'isnan', 'isinf', 'isposinf', 'isneginf', 'isscalar', 'logical_and', 'logical_not',
-                'logical_or', 'logical_xor', 'in1d', 'isin', 'isclose']
+                'logical_or', 'logical_xor', 'in1d', 'isin', 'isclose', 'signbit', 'sometrue',
+                'array_equal', 'array_equiv']
 
 __all__ = array_ops_module + array_creations_module + math_module + logic_module + numeric_types
 

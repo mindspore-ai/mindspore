@@ -184,6 +184,8 @@ BuiltInTypeMap &GetMethodMap() {
                                          {"squeeze", std::string("squeeze")},             // P.squeeze()
                                          {"astype", std::string("astype")},               // P.cast()
                                          {"__bool__", std::string("tensor_bool")},        // C.tensor_bool
+                                         {"argmax", std::string("argmax")},               // P.Argmax()
+                                         {"argmin", std::string("argmin")},               // P.Argmax()
                                        }},
                                       {kObjectTypeRowTensorType,
                                        {
