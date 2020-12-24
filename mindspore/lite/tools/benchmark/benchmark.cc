@@ -159,8 +159,7 @@ int Benchmark::ReadInputFile() {
 }
 
 // calibData is FP32
-int Benchmark::ReadCalibData() {
-  const char *calib_data_path = flags_->benchmark_data_file_.c_str();
+int Benchmark::ReadCalibData(bool new_data, const char *calib_data_path) {
   // read calib data
   std::ifstream in_file(calib_data_path);
   if (!in_file.good()) {
@@ -232,7 +231,11 @@ int Benchmark::ReadTensorData(std::ifstream &in_file_stream, const std::string &
     MS_LOG(ERROR) << "New CheckTensor failed, tensor name: " << tensor_name;
     return RET_ERROR;
   }
-  this->benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));
+  if (has_new_data_) {
+    this->new_benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));
+  } else {
+    this->benchmark_data_.insert(std::make_pair(tensor_name, check_tensor));
+  }
   return RET_OK;
 }
 
@@ -240,26 +243,51 @@ int Benchmark::CompareOutput() {
   std::cout << "================ Comparing Output data ================" << std::endl;
   float total_bias = 0;
   int total_size = 0;
-  for (const auto &calib_tensor : benchmark_data_) {
-    std::string node_or_tensor_name = calib_tensor.first;
-    tensor::MSTensor *tensor = GetTensorByNodeOrTensorName(node_or_tensor_name);
-    if (tensor == nullptr) {
-      MS_LOG(ERROR) << "Get tensor failed, tensor name: " << node_or_tensor_name;
-      return RET_ERROR;
+  if (new_benchmark_data_.size() > benchmark_data_.size()) {
+    for (const auto &calib_tensor : new_benchmark_data_) {
+      std::string node_or_tensor_name = calib_tensor.first;
+      tensor::MSTensor *tensor = GetTensorByNodeOrTensorName(node_or_tensor_name);
+      if (tensor == nullptr) {
+        MS_LOG(ERROR) << "Get tensor failed, tensor name: " << node_or_tensor_name;
+        return RET_ERROR;
+      }
+      int ret;
+      if (tensor->data_type() == kObjectTypeString) {
+        ret = CompareStringData(node_or_tensor_name, tensor, new_benchmark_data_);
+      } else {
+        ret =
+          CompareDataGetTotalBiasAndSize(node_or_tensor_name, tensor, &total_bias, &total_size, new_benchmark_data_);
+      }
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Error in CompareData";
+        std::cerr << "Error in CompareData" << std::endl;
+        std::cout << "=======================================================" << std::endl << std::endl;
+        return ret;
+      }
     }
-    int ret;
-    if (tensor->data_type() == kObjectTypeString) {
-      ret = CompareStringData(node_or_tensor_name, tensor);
-    } else {
-      ret = CompareDataGetTotalBiasAndSize(node_or_tensor_name, tensor, &total_bias, &total_size);
-    }
-    if (ret != RET_OK) {
-      MS_LOG(ERROR) << "Error in CompareData";
-      std::cerr << "Error in CompareData" << std::endl;
-      std::cout << "=======================================================" << std::endl << std::endl;
-      return ret;
+  } else {
+    for (const auto &calib_tensor : benchmark_data_) {
+      std::string node_or_tensor_name = calib_tensor.first;
+      tensor::MSTensor *tensor = GetTensorByNodeOrTensorName(node_or_tensor_name);
+      if (tensor == nullptr) {
+        MS_LOG(ERROR) << "Get tensor failed, tensor name: " << node_or_tensor_name;
+        return RET_ERROR;
+      }
+      int ret;
+      if (tensor->data_type() == kObjectTypeString) {
+        ret = CompareStringData(node_or_tensor_name, tensor, benchmark_data_);
+      } else {
+        ret = CompareDataGetTotalBiasAndSize(node_or_tensor_name, tensor, &total_bias, &total_size, benchmark_data_);
+      }
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Error in CompareData";
+        std::cerr << "Error in CompareData" << std::endl;
+        std::cout << "=======================================================" << std::endl << std::endl;
+        return ret;
+      }
     }
   }
+
   float mean_bias;
   if (total_size != 0) {
     mean_bias = total_bias / float_t(total_size) * 100;
@@ -291,7 +319,8 @@ tensor::MSTensor *Benchmark::GetTensorByNodeOrTensorName(const std::string &node
   return tensor;
 }
 
-int Benchmark::CompareStringData(const std::string &name, tensor::MSTensor *tensor) {
+int Benchmark::CompareStringData(const std::string &name, tensor::MSTensor *tensor,
+                                 std::unordered_map<std::string, CheckTensor *> benchmark_data) {
   auto iter = this->benchmark_data_.find(name);
   if (iter != this->benchmark_data_.end()) {
     std::vector<std::string> calib_strings = iter->second->strings_data;
@@ -314,7 +343,8 @@ int Benchmark::CompareStringData(const std::string &name, tensor::MSTensor *tens
 }
 
 int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::MSTensor *tensor, float *total_bias,
-                                              int *total_size) {
+                                              int *total_size,
+                                              std::unordered_map<std::string, CheckTensor *> benchmark_data) {
   float bias = 0;
   auto mutableData = tensor->MutableData();
   if (mutableData == nullptr) {
@@ -323,19 +353,19 @@ int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::M
   }
   switch (msCalibDataType) {
     case TypeId::kNumberTypeFloat: {
-      bias = CompareData<float>(name, tensor->shape(), mutableData);
+      bias = CompareData<float>(name, tensor->shape(), mutableData, benchmark_data);
       break;
     }
     case TypeId::kNumberTypeInt8: {
-      bias = CompareData<int8_t>(name, tensor->shape(), mutableData);
+      bias = CompareData<int8_t>(name, tensor->shape(), mutableData, benchmark_data);
       break;
     }
     case TypeId::kNumberTypeUInt8: {
-      bias = CompareData<uint8_t>(name, tensor->shape(), mutableData);
+      bias = CompareData<uint8_t>(name, tensor->shape(), mutableData, benchmark_data);
       break;
     }
     case TypeId::kNumberTypeInt32: {
-      bias = CompareData<int32_t>(name, tensor->shape(), mutableData);
+      bias = CompareData<int32_t>(name, tensor->shape(), mutableData, benchmark_data);
       break;
     }
     default:
@@ -423,12 +453,20 @@ int Benchmark::MarkAccuracy() {
     std::cerr << "Inference error " << status << std::endl;
     return status;
   }
-  status = ReadCalibData();
+  const char *calib_data_path = flags_->benchmark_data_file_.c_str();
+  status = ReadCalibData(false, calib_data_path);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Read calib data error " << status;
     std::cerr << "Read calib data error " << status << std::endl;
-    return status;
+    has_new_data_ = true;
+    status = ReadCalibData(true, flags_->benchmark_data_file_.append("_1").c_str());
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "no new data.";
+      has_new_data_ = false;
+      return status;
+    }
   }
+
   status = CompareOutput();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Compare output error " << status;
