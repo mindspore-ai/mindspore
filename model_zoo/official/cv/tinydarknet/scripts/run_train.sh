@@ -50,7 +50,7 @@ echo "RANK_TABLE_FILE=${RANK_TABLE_FILE}"
 
 export SERVER_ID=0
 rank_start=$((DEVICE_NUM * SERVER_ID))
-for((i=0; i<${SERVER_NUM}; i++))
+for((i=0; i<${DEVICE_NUM}; i++))
 do
     export DEVICE_ID=$i
     export RANK_ID=$((rank_start + i))
@@ -59,7 +59,7 @@ do
     cp -r ../src ./train_parallel$i
     cp ../train.py ./train_parallel$i
     echo "start training for rank $RANK_ID, device $DEVICE_ID, $dataset_type"
-    cd .train_parallel$i || exit
+    cd ./train_parallel$i || exit
     env > env.log
     python train.py --device_id=$i --dataset_name=$dataset_type> log 2>&1 &
     cd ..
