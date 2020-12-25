@@ -142,6 +142,9 @@ class ELU(Cell):
         \text{alpha} * (\exp(x_i) - 1), &\text{otherwise.}
         \end{cases}
 
+    The picture about ELU looks like this `ELU <https://en.wikipedia.org/wiki/
+    Activation_function#/media/File:Activation_elu.svg>`_.
+
     Args:
         alpha (float): The coefficient of negative factor whose type is float. Default: 1.0.
 
@@ -177,6 +180,9 @@ class ReLU(Cell):
     Applies the rectified linear unit function element-wise. It returns
     element-wise :math:`\max(0, x)`, specially, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
+
+    The picture about ReLU looks like this `ReLU <https://en.wikipedia.org/wiki/
+    Activation_function#/media/File:Activation_rectified_linear.svg>`_.
 
     Inputs:
         - **input_data** (Tensor) - The input of ReLU.
@@ -335,6 +341,9 @@ class GELU(Cell):
     :math:`GELU(x_i) = x_i*P(X < x_i)`, where :math:`P` is the cumulative distribution function
     of standard Gaussian distribution and :math:`x_i` is the element of the input.
 
+    The picture about GELU looks like this `GELU <https://en.wikipedia.org/wiki/
+    Activation_function#/media/File:Activation_gelu.png>`_.
+
     Inputs:
         - **input_data** (Tensor) - The input of GELU.
 
@@ -410,6 +419,9 @@ class Sigmoid(Cell):
     Sigmoid function is defined as:
     :math:`\text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}`,    where :math:`x_i` is the element of the input.
 
+    The picture about Sigmoid looks like this `Sigmoid <https://en.wikipedia.org/wiki/
+    Sigmoid_function#/media/File:Logistic-curve.svg>`_.
+
     Inputs:
         - **input_data** (Tensor) - The input of Tanh.
 
@@ -447,6 +459,9 @@ class PReLU(Cell):
     Here :math:`w` is a learnable parameter with a default initial value 0.25.
     Parameter :math:`w` has dimensionality of the argument channel. If called without argument
     channel, a single parameter :math:`w` will be shared across all channels.
+
+    The picture about PReLU looks like this `PReLU <https://en.wikipedia.org/wiki/
+    Activation_function#/media/File:Activation_prelu.svg>`_.
 
     Args:
         channel (int): The dimension of input. Default: 1.

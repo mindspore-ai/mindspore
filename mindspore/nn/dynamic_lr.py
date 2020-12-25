@@ -343,13 +343,12 @@ def warmup_lr(learning_rate, total_step, step_per_epoch, warmup_epoch):
 
     Args:
         learning_rate (float): The initial value of learning rate.
-        warmup_steps (int): The warm up steps of learning rate.
-
-    Inputs:
-        Tensor. The current step number.
+        total_step (int): The total number of steps.
+        step_per_epoch (int): The number of steps in per epoch.
+        warmup_epoch (int): A value that determines the epochs of the learning rate is warmed up.
 
     Returns:
-        Tensor. The learning rate value for the current step.
+        list[float]. The size of list is `total_step`.
 
     Examples:
         >>> learning_rate = 0.1
