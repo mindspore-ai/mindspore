@@ -88,10 +88,11 @@ int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<
 
     if (std::find(trans_tensors.begin(), trans_tensors.end(), out_tensors[i]) != trans_tensors.end()) {
       // Change data&tensor shape nc->nh
-      PackNCHWToNHWCFp32(npu_output_tensors_[i]->GetBuffer(), data, out_tensors[i]->Batch(),
-                         out_tensors[i]->Width() * out_tensors[i]->Height(), out_tensors[i]->Channel());
-      out_tensors[i]->set_shape({out_tensors[i]->shape()[0], out_tensors[i]->shape()[2], out_tensors[i]->shape()[3],
-                                 out_tensors[i]->shape()[1]});
+      PackNCHWToNHWCFp32(npu_output_tensors_[i]->GetBuffer(), data,
+                         npu_output_tensors_[i]->GetTensorDimension().GetNumber(),
+                         npu_output_tensors_[i]->GetTensorDimension().GetWidth() *
+                           npu_output_tensors_[i]->GetTensorDimension().GetHeight(),
+                         npu_output_tensors_[i]->GetTensorDimension().GetChannel());
     } else {
       memcpy(data, npu_output_tensors_[i]->GetBuffer(), npu_output_tensors_[i]->GetSize());
       out_tensors[i]->ResetRefCount();

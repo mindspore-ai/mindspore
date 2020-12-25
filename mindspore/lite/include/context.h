@@ -34,7 +34,7 @@ typedef enum {
 typedef enum {
   DT_CPU, /**< CPU device type */
   DT_GPU, /**< GPU device type */
-  DT_NPU  /**< NPU device type, not supported yet */
+  DT_NPU  /**< NPU device type */
 } DeviceType;
 
 /// \brief CpuDeviceInfo defined for CPU's configuration information.
