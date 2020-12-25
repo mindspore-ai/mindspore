@@ -35,7 +35,11 @@ void Concat(const void **input, int input_num, int axis, const int **inputs_outp
     const uint8_t *src_base = (input[i]);
     size_t input_stride = after_axis_size * inputs_output_shape[i][axis];
     int offset = UP_DIV(input_stride, thread_num);
-    int count = MSMIN(offset, input_stride - offset * task_id);
+    int count = input_stride - offset * task_id;
+    if (count <= 0) {
+      continue;
+    }
+    count = MSMIN(offset, count);
     for (int j = 0; j < before_axis_size; j++) {
       const uint8_t *src = src_base + j * input_stride + task_id * offset;
       uint8_t *dst = dst_base + j * output_stride + axis_offset * after_axis_size + task_id * offset;
