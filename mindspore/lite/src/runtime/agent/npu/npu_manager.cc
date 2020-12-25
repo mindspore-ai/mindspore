@@ -60,10 +60,10 @@ void NPUManager::Reset() {
   domi::HiaiIrBuild ir_build;
   for (const auto &model_map : models_) {
     auto model = model_map.second;
-    if (!model->is_freed) {
+    if (!model->is_freed_) {
       ir_build.ReleaseModelBuff(*model->model_buffer_data_);
       model->model_buffer_data_ = nullptr;
-      model->is_freed = true;
+      model->is_freed_ = true;
       model->desc_.reset();
       model->desc_ = nullptr;
     }
@@ -88,12 +88,19 @@ bool NPUManager::CheckDDKVersion() {
   return true;
 }
 bool NPUManager::IsSupportNPU() {
-  if (IsKirinChip() && CheckEMUIVersion() && CheckDDKVersion()) {
-    MS_LOG(INFO) << "The current device support NPU.";
-    return true;
+  // Avoid multiple checks
+  if (!is_check_version_) {
+    is_check_version_ = true;
+    if (IsKirinChip() && CheckEMUIVersion() && CheckDDKVersion()) {
+      is_support_ = true;
+      MS_LOG(INFO) << "The current device support NPU.";
+    } else {
+      is_support_ = false;
+      MS_LOG(INFO) << "The current device NOT SUPPORT NPU.";
+    }
+    return is_support_;
   } else {
-    MS_LOG(INFO) << "The current device NOT SUPPORT NPU.";
-    return false;
+    return is_support_;
   }
 }
 
@@ -173,7 +180,7 @@ int NPUManager::LoadOMModel() {
     }
     total++;
     auto model = model_map.second;
-    if (model->is_loaded && model->is_freed) {
+    if (model->is_loaded_ && model->is_freed_) {
       continue;
     }
     models_desc.push_back(model->desc_);
@@ -222,7 +229,7 @@ int NPUManager::LoadModel(const std::shared_ptr<hiai::AiModelMngerClient> &clien
 
   for (const auto &desc : desc_list) {
     auto it = models_.find(desc->GetName());
-    it->second->is_loaded = true;
+    it->second->is_loaded_ = true;
     it->second->client_ = client;
   }
 

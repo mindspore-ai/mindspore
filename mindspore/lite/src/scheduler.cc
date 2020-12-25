@@ -574,7 +574,7 @@ int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
   auto fusion_pass = new NPUFusionPass(dst_kernels);
   mindspore::lite::NPUPassManager::GetInstance()->AddPass(fusion_pass);
 
-  ret = mindspore::lite::NPUPassManager::GetInstance()->Run();
+  ret = mindspore::lite::NPUPassManager::GetInstance()->Run(context_);
 #endif
   return ret;
 }
