@@ -19,6 +19,7 @@
 #include <memory>
 
 #include "src/ops/primitive_c.h"
+#include "tools/converter/converter_context.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "src/common/log_adapter.h"
 #include "src/tensor.h"
@@ -111,7 +112,8 @@ int MindirAdjustPass::PrimitiveConvert(std::shared_ptr<AnfNode> anf_node) {
     auto primitive_c = PrimitiveC::Create(*primitive, inputs, quant_type_);
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "fail to create a primitive_c: " << cnode->fullname_with_scope();
-      return lite::RET_ERROR;
+      lite::NoSupportOp::GetInstance()->InsertOp(primitive->name());
+      return lite::RET_NOT_FIND_OP;
     }
     value_node->set_value(primitive_c);
   } else {
@@ -131,6 +133,7 @@ bool MindirAdjustPass::Run(const FuncGraphPtr &graph) {
   MS_ASSERT(graph != nullptr);
   auto node_list = TopoSort(graph->get_return());
   int status = lite::RET_OK;
+  bool success_flag = true;
   for (auto &node : node_list) {
     if (utils::isa<ParameterPtr>(node)) {
       status = ParameterNodeConvert(node);
@@ -138,8 +141,13 @@ bool MindirAdjustPass::Run(const FuncGraphPtr &graph) {
       status = PrimitiveConvert(node);
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
-      return false;
+      lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+      success_flag = false;
     }
+  }
+  if (!success_flag) {
+    MS_LOG(ERROR) << "Adjust mindir failed.";
+    return false;
   }
   return true;
 }
