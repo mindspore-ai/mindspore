@@ -14,6 +14,7 @@
 # ============================================================================
 """dependency package version check"""
 from argparse import ArgumentParser
+import sys
 
 def parse_args():
     """
@@ -45,6 +46,11 @@ def check_deps_version(mindspore_version, supported_version):
         void
     """
     try:
+        from hccl import sys_version as hccl_version
+        v = hccl_version.__sys_version__
+        if v not in supported_version:
+            print(f"MindSpore version {mindspore_version} and \"hccl\" wheel package version {v} does not "
+                  "match, reference to the match info on: https://www.mindspore.cn/install")
         import te
         v = te.__version__
         if v not in supported_version:
@@ -55,12 +61,9 @@ def check_deps_version(mindspore_version, supported_version):
         if v not in supported_version:
             print(f"MindSpore version {mindspore_version} and \"topi\" wheel package version {v} does not "
                   "match, reference to the match info on: https://www.mindspore.cn/install")
-        from hccl import sys_version as hccl_version
-        v = hccl_version.__sys_version__
-        if v not in supported_version:
-            print(f"MindSpore version {mindspore_version} and \"hccl\" wheel package version {v} does not "
-                  "match, reference to the match info on: https://www.mindspore.cn/install")
-    except ImportError as e:
+
+    # pylint: disable=broad-except
+    except Exception as e:
         print("CheckFailed: ", e.args)
         print("Minspore relies on the 3 whl packages of \"te\", \"topi\" and \"hccl\" in the \"fwkacllib\" "
               "folder of the Ascend 910 AI software package, please check whether they are installed "
@@ -71,4 +74,5 @@ def main():
     check_deps_version(args.mindspore_version, args.supported_version)
 
 if __name__ == "__main__":
+    sys.path = sys.path[1:] # avoid the impact of relative path env, only affect this process
     main()
