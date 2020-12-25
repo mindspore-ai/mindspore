@@ -15,12 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/fullconnection_fp16.h"
-#include "nnacl/fp16/matmul_fp16.h"
-#include "nnacl/fp16/cast_fp16.h"
 #include "src/runtime/runtime_api.h"
-#include "include/errorcode.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/base/dequant.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -34,19 +30,19 @@ FullconnectionFP16CPUKernel::~FullconnectionFP16CPUKernel() { FreeTmpBuffer(); }
 
 void FullconnectionFP16CPUKernel::FreeTmpBuffer() {
   if (a_pack_ptr_ != nullptr) {
-    ctx_->allocator->Free(a_pack_ptr_);
+    context_->allocator->Free(a_pack_ptr_);
     a_pack_ptr_ = nullptr;
   }
   if (b_pack_ptr_ != nullptr) {
-    ctx_->allocator->Free(b_pack_ptr_);
+    context_->allocator->Free(b_pack_ptr_);
     b_pack_ptr_ = nullptr;
   }
   if (bias_ptr_ != nullptr) {
-    ctx_->allocator->Free(bias_ptr_);
+    context_->allocator->Free(bias_ptr_);
     bias_ptr_ = nullptr;
   }
   if (output_fp16_ != nullptr) {
-    ctx_->allocator->Free(output_fp16_);
+    context_->allocator->Free(output_fp16_);
     output_fp16_ = nullptr;
   }
 }
@@ -60,7 +56,7 @@ int FullconnectionFP16CPUKernel::ReSize() {
   fc_param_->deep_ = (in_tensors_.at(1)->shape()).at(1);
   fc_param_->row_16_ = UP_ROUND(fc_param_->row_, C16NUM);
   fc_param_->col_8_ = UP_ROUND(fc_param_->col_, C8NUM);
-  thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_, C8NUM));
+  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(fc_param_->col_, C8NUM));
   thread_stride_ = UP_DIV(UP_DIV(fc_param_->col_, C8NUM), thread_count_) * C8NUM;
 
   if (row == 1) is_vector_input_ = true;
@@ -74,7 +70,7 @@ int FullconnectionFP16CPUKernel::ReSize() {
     b_pack_col = fc_param_->col_8_;
   }
   a_pack_ptr_ =
-    reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(a_pack_row * fc_param_->deep_ * sizeof(float16_t)));
+    reinterpret_cast<float16_t *>(context_->allocator->Malloc(a_pack_row * fc_param_->deep_ * sizeof(float16_t)));
   if (a_pack_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
@@ -82,7 +78,7 @@ int FullconnectionFP16CPUKernel::ReSize() {
   memset(a_pack_ptr_, 0, a_pack_row * fc_param_->deep_ * sizeof(float16_t));
 
   b_pack_ptr_ =
-    reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(b_pack_col * fc_param_->deep_ * sizeof(float16_t)));
+    reinterpret_cast<float16_t *>(context_->allocator->Malloc(b_pack_col * fc_param_->deep_ * sizeof(float16_t)));
   if (b_pack_ptr_ == nullptr) {
     FreeTmpBuffer();
     return RET_MEMORY_FAILED;
@@ -110,7 +106,7 @@ int FullconnectionFP16CPUKernel::ReSize() {
   }
 
   if (in_tensors_.size() == 3) {
-    bias_ptr_ = reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(b_pack_col * sizeof(float16_t)));
+    bias_ptr_ = reinterpret_cast<float16_t *>(context_->allocator->Malloc(b_pack_col * sizeof(float16_t)));
     if (bias_ptr_ == nullptr) {
       FreeTmpBuffer();
       return RET_MEMORY_FAILED;
@@ -121,7 +117,7 @@ int FullconnectionFP16CPUKernel::ReSize() {
 
   if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
     output_fp16_ =
-      reinterpret_cast<float16_t *>(ctx_->allocator->Malloc(fc_param_->row_ * fc_param_->col_ * sizeof(float16_t)));
+      reinterpret_cast<float16_t *>(context_->allocator->Malloc(fc_param_->row_ * fc_param_->col_ * sizeof(float16_t)));
     if (output_fp16_ == nullptr) {
       FreeTmpBuffer();
       return RET_MEMORY_FAILED;

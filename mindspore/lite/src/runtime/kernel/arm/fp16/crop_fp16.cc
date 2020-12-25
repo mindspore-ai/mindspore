@@ -14,15 +14,8 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/fp16/crop_fp16.h"
-
-#include "include/errorcode.h"
-#include "nnacl/crop_parameter.h"
-#include "nnacl/fp16/cast_fp16.h"
-#include "nnacl/fp16/crop_fp16.h"
-#include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/base/crop_base.h"
-#include "src/runtime/kernel/arm/fp16/common_fp16.h"
 #include "src/runtime/runtime_api.h"
+#include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -31,12 +24,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Crop;
 
 namespace mindspore::kernel {
-
 int CropFp16CPUKernel::Init() {
-  auto ret = CropBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    return ret;
-  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -69,13 +57,13 @@ int CropFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  auto ret = ParallelLaunch(this->context_->thread_pool_, CropFp16Run, this, thread_count_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, CropFp16Run, this, crop_para_->thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ParallelLaunch failed: " << ret;
     FreeInputAndOutput();
   }
   if (out_tensors_.at(kOutputIndex)->data_type() == kNumberTypeFloat32) {
-    Float16ToFloat32(output_ptr_, reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData()),
+    Float16ToFloat32(output_ptr_, reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->data_c()),
                      out_tensors_.at(kOutputIndex)->ElementsNum());
   }
   FreeInputAndOutput();
@@ -93,29 +81,5 @@ void CropFp16CPUKernel::FreeInputAndOutput() {
   }
 }
 
-kernel::LiteKernel *CpuCropFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const InnerContext *ctx, const kernel::KernelKey &desc,
-                                             const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Crop);
-  auto *kernel = new (std::nothrow) CropFp16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new CropFp16CPUKernel fail!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Crop, CpuCropFp16KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Crop, CPUKernelCreator<CropFp16CPUKernel>)
 }  // namespace mindspore::kernel

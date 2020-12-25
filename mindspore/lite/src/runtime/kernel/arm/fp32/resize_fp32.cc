@@ -15,17 +15,17 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/resize_fp32.h"
-#include <algorithm>
-#include "include/errorcode.h"
-#include "nnacl/fp32/resize_fp32.h"
 #include "schema/model_generated.h"
+#include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INVALID_OP_ATTR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_Resize;
 
 namespace mindspore::kernel {
 int ResizeCPUKernel::Init() {
@@ -217,4 +217,6 @@ int ResizeCPUKernel::Run() {
 
   return RET_OK;
 }
+
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Resize, CPUKernelCreator<ResizeCPUKernel>)
 }  // namespace mindspore::kernel

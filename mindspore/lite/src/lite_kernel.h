@@ -227,6 +227,27 @@ class LiteKernelUtil {
 
   static int SetInput(LiteKernel &kernelMod, const std::vector<lite::Tensor *> &inputs);
 };
+
+template <class T>
+kernel::LiteKernel *CPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                     const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                     const lite::InnerContext *ctx, const kernel::KernelKey &desc,
+                                     const mindspore::lite::PrimitiveC *primitive) {
+  auto *kernel = new (std::nothrow) T(parameter, inputs, outputs, ctx, primitive);
+  if (kernel == nullptr) {
+    MS_LOG(ERROR) << "kernel: " << parameter->name_ << "is nullptr.";
+    free(parameter);
+    return nullptr;
+  }
+
+  auto ret = kernel->Init();
+  if (ret != lite::RET_OK) {
+    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_;
+    delete kernel;
+    return nullptr;
+  }
+  return kernel;
+}
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_LITE_KERNEL_H_

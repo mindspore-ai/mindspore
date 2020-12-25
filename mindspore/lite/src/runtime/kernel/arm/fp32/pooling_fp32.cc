@@ -91,4 +91,6 @@ int PoolingCPUKernel::Run() {
   }
   return RET_OK;
 }
+
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Pooling, CPUKernelCreator<PoolingCPUKernel>)
 }  // namespace mindspore::kernel

@@ -28,20 +28,20 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Reshape;
 
 namespace mindspore::kernel {
-int ReshapeCPUKernel::Init() {
-  ReshapeBaseCPUKernel::Init();
-  return RET_OK;
-}
+int ReshapeCPUKernel::Init() { return RET_OK; }
 
 int ReshapeCPUKernel::ReSize() { return RET_OK; }
 
 int ReshapeCPUKernel::Run() {
-  auto input_ptr = in_tensors_.at(kInputIndex)->MutableData();
-  auto output_ptr = out_tensors_.at(kOutputIndex)->MutableData();
+  auto input_ptr = in_tensors_.at(kInputIndex)->data_c();
+  auto output_ptr = out_tensors_.at(kOutputIndex)->data_c();
   size_t data_size = in_tensors_.at(kInputIndex)->Size();
   MS_ASSERT(input_ptr);
   MS_ASSERT(output_ptr);
   Reshape(input_ptr, output_ptr, data_size);
   return RET_OK;
 }
+
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Reshape, CPUKernelCreator<ReshapeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reshape, CPUKernelCreator<ReshapeCPUKernel>)
 }  // namespace mindspore::kernel

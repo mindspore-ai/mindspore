@@ -18,19 +18,24 @@
 
 #include <arm_neon.h>
 #include <vector>
-#include "src/lite_kernel.h"
 #include "include/context.h"
-#include "src/runtime/kernel/arm/base/concat_base.h"
+#include "include/errorcode.h"
+#include "nnacl/fp16/concat_fp16.h"
+#include "nnacl/concat_parameter.h"
+#include "nnacl/fp16/cast_fp16.h"
+#include "src/lite_kernel.h"
+#include "src/runtime/kernel/arm/fp16/common_fp16.h"
 
 using mindspore::lite::InnerContext;
-
 namespace mindspore::kernel {
-class ConcatFp16CPUKernel : public ConcatBaseCPUKernel {
+class ConcatFp16CPUKernel : public LiteKernel {
  public:
   ConcatFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                       const mindspore::lite::PrimitiveC *primitive)
-      : ConcatBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    concat_param_ = reinterpret_cast<ConcatParameter *>(op_parameter_);
+  }
 
   ~ConcatFp16CPUKernel() = default;
 
@@ -47,6 +52,7 @@ class ConcatFp16CPUKernel : public ConcatBaseCPUKernel {
  private:
   std::vector<float16_t *> fp16_inputs_;
   float16_t *fp16_output_ = nullptr;
+  ConcatParameter *concat_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONCAT_FP16_H_

@@ -20,15 +20,16 @@
 #include <vector>
 #include "nnacl/matmul_parameter.h"
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/base/matmul_base.h"
 
 namespace mindspore::kernel {
-class MatmulCPUKernel : public MatmulBaseCPUKernel {
+class MatmulCPUKernel : public LiteKernel {
  public:
   explicit MatmulCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                            const mindspore::lite::PrimitiveC *primitive)
-      : MatmulBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
+  }
   ~MatmulCPUKernel() override;
   int Init() override;
   int ReSize() override;
@@ -45,6 +46,7 @@ class MatmulCPUKernel : public MatmulBaseCPUKernel {
   void FreeTmpBuffer();
 
  private:
+  MatMulParameter *params_ = nullptr;
   float *a_pack_ptr_ = nullptr;
   float *b_pack_ptr_ = nullptr;
   float *bias_ptr_ = nullptr;
@@ -55,6 +57,8 @@ class MatmulCPUKernel : public MatmulBaseCPUKernel {
   float *cur_c_ptr_ = nullptr;
   bool is_vector_a_ = false;
   int col_tile_ = 0;
+  int thread_stride_ = 0;
+  int thread_count_ = 0;
 };
 }  // namespace mindspore::kernel
 

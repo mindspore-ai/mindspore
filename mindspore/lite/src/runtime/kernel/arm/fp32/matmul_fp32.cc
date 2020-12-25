@@ -124,7 +124,7 @@ int MatmulCPUKernel::MallocMatrixBBuffer() {
     return RET_MEMORY_FAILED;
   }
 
-  thread_count_ = MSMIN(thread_count_, UP_DIV(params_->col_align_, col_tile_));
+  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(params_->col_align_, col_tile_));
   thread_stride_ = UP_DIV(UP_DIV(params_->col_align_, col_tile_), thread_count_);
   return RET_OK;
 }

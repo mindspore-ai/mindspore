@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "src/runtime/kernel/arm/base/concat_base.h"
+#include "nnacl/concat_parameter.h"
 
 namespace mindspore::kernel {
 

@@ -18,22 +18,28 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_POWER_INT8_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/base/power_base.h"
+#include "src/lite_kernel.h"
 #include "nnacl/quantization/quantize.h"
+#include "nnacl/power_parameter.h"
 
 namespace mindspore::kernel {
-class PowerInt8CPUKernel : public PowerBaseCPUKernel {
+class PowerInt8CPUKernel : public LiteKernel {
  public:
   PowerInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
-      : PowerBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    param_ = reinterpret_cast<PowerParameter *>(op_parameter_);
+  }
   ~PowerInt8CPUKernel() {}
 
   int Init() override;
   int ReSize() override;
   int Run() override;
   int DoPower(int task_id);
+
+ private:
+  PowerParameter *param_;
 };
 }  // namespace mindspore::kernel
 
