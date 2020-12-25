@@ -97,9 +97,6 @@ int NPUTransformPass::InsertPostNode(const InnerContext *context, kernel::LiteKe
 }
 
 int NPUTransformPass::Run() {
-  if (!context_->IsNpuEnabled()) {
-    return RET_OK;
-  }
   for (size_t i = 0; i < all_kernels_->size();) {
     auto kernel = (*all_kernels_)[i];
     if (kernel->desc().arch != kNPU || npu_trans_nodes.find(kernel->Type()) == npu_trans_nodes.end()) {

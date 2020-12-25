@@ -18,6 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_MANAGER_H_
 #include <vector>
 #include "src/runtime/agent/npu/optimizer/npu_base_pass.h"
+#include "src/inner_context.h"
 namespace mindspore::lite {
 class NPUPassManager {
  public:
@@ -30,7 +31,7 @@ class NPUPassManager {
 
   void AddPass(NPUBasePass *pass);
 
-  int Run();
+  int Run(const InnerContext *context);
 
   void Clear();
 
