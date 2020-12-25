@@ -209,14 +209,20 @@ def _get_tf_dataset(data_dir,
                                       shuffle=shuffle,
                                       schema=schema,
                                       num_parallel_workers=8)
+    if batch_size <= 0:
+        raise ValueError("Batch size should be a positive int value, but found {}".format(str(batch_size)))
+    if batch_size % line_per_sample != 0:
+        raise ValueError(
+            "Batch size should be a multiple of {}, but found {}".format(str(line_per_sample), str(batch_size)))
+
     data_set = data_set.batch(int(batch_size / line_per_sample), drop_remainder=True)
 
     operations_list = []
     for key in columns_list:
         operations_list.append(lambda x: np.array(x).flatten().reshape(input_shape_dict[key]))
-    print("ssssssssssssssssssssss---------------------" * 10)
+    print("input_shape_dict start logging")
     print(input_shape_dict)
-    print("---------------------" * 10)
+    print("input_shape_dict end logging")
     print(schema_dict)
 
     def mixup(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u):
