@@ -67,6 +67,7 @@ ShuffleNetV1的核心部分被分成三个阶段，每个阶段重复堆积了�
     ├─crossentropysmooth.py                   # 损失函数定义
     ├─lr_generator.py                         # 学习率生成函数
   ├─train.py                                  # 网络训练脚本
+  ├─export.py                                 # 模型格式转换脚本
   └─eval.py                                   # 网络评估脚本
 ```
 
