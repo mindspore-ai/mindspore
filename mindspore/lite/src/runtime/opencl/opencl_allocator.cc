@@ -150,7 +150,9 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size, 
   total_size_ += size;
   const uint64_t max_size = ocl_runtime_->GetGlobalMemSize();
   if (total_size_ >= max_size) {
+    UnLock();
     MS_LOG(ERROR) << "Mem pool out of max_size, total size: " << total_size_ << ", max size: " << max_size;
+    return nullptr;
   }
   cl::Buffer *buffer = nullptr;
   cl::Image2D *image = nullptr;
