@@ -209,6 +209,7 @@ class OpenCLKernel : public LiteKernel {
   std::vector<size_t> local_size_;
   cl::Kernel kernel_;
   cl::Event event_;
+  void *restore_quant_data_{nullptr};
   bool dequant_flag_{false};
 
  private:
