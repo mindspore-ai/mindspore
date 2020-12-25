@@ -554,7 +554,8 @@ class Model:
                                      returned and passed to the network. Otherwise, a tuple (data, label) should
                                      be returned. The data and label would be passed to the network and loss
                                      function respectively.
-            callbacks (list): List of callback objects which should be executed while training. Default: None.
+            callbacks (list, object): List of callback objects or callback object, which should be executed
+                                      while training. Default: None.
             dataset_sink_mode (bool): Determines whether to pass the data through dataset channel. Default: True.
                                       Configure pynative mode or CPU, the training process will be performed with
                                       dataset not sink.
