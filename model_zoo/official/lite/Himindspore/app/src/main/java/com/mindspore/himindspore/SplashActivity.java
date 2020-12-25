@@ -292,7 +292,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
 
     public void showUpdate(final UpdateInfoBean updateInfo) {
         if (now_version == updateInfo.getVersionCode()) {
-            Toast.makeText(this, "已经是最新版本", Toast.LENGTH_SHORT).show();
+           // Toast.makeText(this, "已经是最新版本", Toast.LENGTH_SHORT).show();
             Log.d(TAG + "版本号是", "onResponse: " + now_version);
         } else {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);

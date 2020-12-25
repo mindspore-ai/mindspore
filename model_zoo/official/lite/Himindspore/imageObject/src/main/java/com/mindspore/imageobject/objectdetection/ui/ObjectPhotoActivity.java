@@ -100,7 +100,7 @@ public class ObjectPhotoActivity extends AppCompatActivity {
         Pair<Integer, Integer> targetedSize = this.getTargetSize();
         int targetWidth = targetedSize.first;
         int maxHeight = targetedSize.second;
-        originBitmap = BitmapUtils.loadFromPath(ObjectPhotoActivity.this, imageUri, targetWidth, maxHeight);
+        originBitmap = BitmapUtils.loadFromPath(this, imageUri, targetWidth, maxHeight).copy(Bitmap.Config.ARGB_8888, true);
         // Determine how much to scale down the image.
         Log.i(ObjectPhotoActivity.TAG, "resized image size width:" + originBitmap.getWidth() + ",height: " + originBitmap.getHeight());
 
