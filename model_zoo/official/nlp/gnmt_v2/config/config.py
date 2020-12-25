@@ -67,7 +67,6 @@ class GNMTConfig:
         random_seed (int): Random seed, it can be changed.
         epochs (int): Epoch number.
         batch_size (int): Batch size of input dataset.
-        dataset_schema (str): Path of dataset schema file.
         pre_train_dataset (str): Path of pre-training dataset file or folder.
         fine_tune_dataset (str): Path of fine-tune dataset file or folder.
         test_dataset (str): Path of test dataset file or folder.
@@ -126,7 +125,6 @@ class GNMTConfig:
     def __init__(self,
                  random_seed=50,
                  epochs=6, batch_size=128,
-                 dataset_schema: str = None,
                  pre_train_dataset: str = None,
                  fine_tune_dataset: str = None,
                  test_dataset: str = None,
@@ -157,7 +155,6 @@ class GNMTConfig:
 
         self.save_graphs = save_graphs
         self.random_seed = random_seed
-        self.dataset_schema = dataset_schema
         self.pre_train_dataset = get_source_list(pre_train_dataset)  # type: List[str]
         self.fine_tune_dataset = get_source_list(fine_tune_dataset)  # type: List[str]
         self.valid_dataset = get_source_list(valid_dataset)  # type: List[str]

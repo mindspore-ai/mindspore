@@ -13,13 +13,12 @@
 # limitations under the License.
 # ============================================================================
 """Dataset loader to feed into model."""
-import os
 import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as deC
 
 
-def _load_dataset(input_files, schema_file, batch_size, sink_mode=False,
+def _load_dataset(input_files, batch_size, sink_mode=False,
                   rank_size=1, rank_id=0, shuffle=True, drop_remainder=True,
                   is_translate=False):
     """
@@ -27,7 +26,6 @@ def _load_dataset(input_files, schema_file, batch_size, sink_mode=False,
 
     Args:
         input_files (list): Data files.
-        schema_file (str): Schema file path.
         batch_size (int): Batch size.
         sink_mode (bool): Whether enable sink mode.
         rank_size (int): Rank size.
@@ -41,12 +39,6 @@ def _load_dataset(input_files, schema_file, batch_size, sink_mode=False,
     """
     if not input_files:
         raise FileNotFoundError("Require at least one dataset.")
-
-    if not (schema_file and
-            os.path.exists(schema_file)
-            and os.path.isfile(schema_file)
-            and os.path.basename(schema_file).endswith(".json")):
-        raise FileNotFoundError("`dataset_schema` must be a existed json file.")
 
     if not isinstance(sink_mode, bool):
         raise ValueError("`sink` must be type of bool.")
@@ -116,14 +108,13 @@ def _load_dataset(input_files, schema_file, batch_size, sink_mode=False,
     return data_set
 
 
-def load_dataset(data_files: list, schema: str, batch_size: int, sink_mode: bool,
+def load_dataset(data_files: list, batch_size: int, sink_mode: bool,
                  rank_size: int = 1, rank_id: int = 0, shuffle=True, drop_remainder=True, is_translate=False):
     """
     Load dataset.
 
     Args:
         data_files (list): Data files.
-        schema (str): Schema file path.
         batch_size (int): Batch size.
         sink_mode (bool): Whether enable sink mode.
         rank_size (int): Rank size.
@@ -133,5 +124,5 @@ def load_dataset(data_files: list, schema: str, batch_size: int, sink_mode: bool
     Returns:
         Dataset, dataset instance.
     """
-    return _load_dataset(data_files, schema, batch_size, sink_mode, rank_size, rank_id, shuffle=shuffle,
+    return _load_dataset(data_files, batch_size, sink_mode, rank_size, rank_id, shuffle=shuffle,
                          drop_remainder=drop_remainder, is_translate=is_translate)
