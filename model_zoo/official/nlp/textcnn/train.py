@@ -26,15 +26,16 @@ from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMoni
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
-from src.config import cfg
+from src.config import cfg_mr, cfg_subj, cfg_sst2
 from src.textcnn import TextCNN
 from src.textcnn import SoftmaxCrossEntropyExpand
-from src.dataset import MovieReview
+from src.dataset import MovieReview, SST2, Subjectivity
 
 parser = argparse.ArgumentParser(description='TextCNN')
 parser.add_argument('--device_target', type=str, default="Ascend", choices=['Ascend', 'GPU', 'CPU'],
                     help='device where the code will be implemented (default: Ascend)')
 parser.add_argument('--device_id', type=int, default=5, help='device id of GPU or Ascend.')
+parser.add_argument('--dataset', type=str, default="MR", choices=['MR', 'SUBJ', 'SST2'])
 args_opt = parser.parse_args()
 
 if __name__ == '__main__':
@@ -42,16 +43,25 @@ if __name__ == '__main__':
     # set context
     context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
     context.set_context(device_id=args_opt.device_id)
+    if args_opt.dataset == 'MR':
+        cfg = cfg_mr
+        instance = MovieReview(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
+    elif args_opt.dataset == 'SUBJ':
+        cfg = cfg_subj
+        instance = Subjectivity(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
+    elif args_opt.dataset == 'SST2':
+        cfg = cfg_sst2
+        instance = SST2(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
 
-    instance = MovieReview(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
     dataset = instance.create_train_dataset(batch_size=cfg.batch_size, epoch_size=cfg.epoch_size)
     batch_num = dataset.get_dataset_size()
 
+    base_lr = cfg.base_lr
     learning_rate = []
-    warm_up = [1e-3 / math.floor(cfg.epoch_size / 5) * (i + 1) for _ in range(batch_num) for i in
+    warm_up = [base_lr / math.floor(cfg.epoch_size / 5) * (i + 1) for _ in range(batch_num) for i in
                range(math.floor(cfg.epoch_size / 5))]
-    shrink = [1e-3 / (16 * (i + 1)) for _ in range(batch_num) for i in range(math.floor(cfg.epoch_size * 3 / 5))]
-    normal_run = [1e-3 for _ in range(batch_num) for i in
+    shrink = [base_lr / (16 * (i + 1)) for _ in range(batch_num) for i in range(math.floor(cfg.epoch_size * 3 / 5))]
+    normal_run = [base_lr for _ in range(batch_num) for i in
                   range(cfg.epoch_size - math.floor(cfg.epoch_size / 5) - math.floor(cfg.epoch_size * 2 / 5))]
     learning_rate = learning_rate + warm_up + normal_run + shrink
 

@@ -24,20 +24,29 @@ from mindspore import context
 from mindspore.train.model import Model
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
-from src.config import cfg
+from src.config import cfg_mr, cfg_subj, cfg_sst2
 from src.textcnn import TextCNN
-from src.dataset import MovieReview
+from src.dataset import MovieReview, SST2, Subjectivity
 
 parser = argparse.ArgumentParser(description='TextCNN')
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
+parser.add_argument('--dataset', type=str, default="MR", choices=['MR', 'SUBJ', 'SST2'])
 args_opt = parser.parse_args()
 
 if __name__ == '__main__':
+    if args_opt.dataset == 'MR':
+        cfg = cfg_mr
+        instance = MovieReview(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
+    elif args_opt.dataset == 'SUBJ':
+        cfg = cfg_subj
+        instance = Subjectivity(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
+    elif args_opt.dataset == 'SST2':
+        cfg = cfg_sst2
+        instance = SST2(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
     device_target = cfg.device_target
     context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
     if device_target == "Ascend":
         context.set_context(device_id=cfg.device_id)
-    instance = MovieReview(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
     dataset = instance.create_test_dataset(batch_size=cfg.batch_size)
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
     net = TextCNN(vocab_len=instance.get_dict_len(), word_len=cfg.word_len,
