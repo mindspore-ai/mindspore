@@ -240,7 +240,7 @@ class Uniform(Distribution):
 
     def _cross_entropy(self, dist, low_b, high_b, low=None, high=None):
         """
-        Evaluate cross entropy between Uniform distributoins.
+        Evaluate cross entropy between Uniform distributions.
 
         Args:
             dist (str): The type of the distributions. Should be "Uniform" in this case.

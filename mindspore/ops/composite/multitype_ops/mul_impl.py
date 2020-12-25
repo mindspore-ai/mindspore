@@ -62,7 +62,7 @@ def _scalar_mul_tensor(x, y):
 @mul.register("Tensor", "Number")
 def _tensor_mul_scalar(x, y):
     """
-    Returns x * y where x is a tensor and y is a scalar. x and y hava same dtype.
+    Returns x * y where x is a tensor and y is a scalar. x and y have same dtype.
 
     Outputs:
         Tensor, has the same dtype as x.

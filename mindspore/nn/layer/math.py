@@ -162,7 +162,7 @@ class Range(Cell):
 
 class LGamma(Cell):
     r"""
-    Calculates LGamma using Lanczos' approximation refering to "A Precision Approximationof the Gamma Function".
+    Calculates LGamma using Lanczos' approximation referring to "A Precision Approximation of the Gamma Function".
     The algorithm is:
 
     .. math::
@@ -291,7 +291,7 @@ class LGamma(Cell):
 
 class DiGamma(Cell):
     r"""
-    Calculates Digamma using Lanczos' approximation refering to "A Precision Approximationof the Gamma Function".
+    Calculates Digamma using Lanczos' approximation referring to "A Precision Approximation of the Gamma Function".
     The algorithm is:
 
     .. math::

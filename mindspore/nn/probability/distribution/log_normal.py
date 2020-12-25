@@ -235,7 +235,7 @@ class LogNormal(msd.TransformedDistribution):
 
     def _var(self, loc=None, scale=None):
         """
-        The varience of the distribution.
+        The variance of the distribution.
         """
         mean, sd = self._check_param_type(loc, scale)
         var = self.distribution("var", mean=mean, sd=sd)

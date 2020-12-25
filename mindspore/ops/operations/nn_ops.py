@@ -1900,7 +1900,8 @@ class TopK(PrimitiveWithInfer):
         >>> k = 3
         >>> values, indices = topk(input_x, k)
         >>> print((values, indices))
-        ([5.0, 4.0, 3.0], [4, 3, 2])
+        (Tensor(shape=[3], dtype=Float16, value= [ 5.0000e+00,  4.0000e+00,  3.0000e+00]), Tensor(shape=[3],
+          dtype=Int32, value= [4, 3, 2]))
     """
 
     @prim_attr_register
@@ -2104,7 +2105,7 @@ class ApplyMomentum(PrimitiveWithInfer):
     Data type conversion of Parameter is not supported. RuntimeError exception will be thrown.
 
     Args:
-        use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
+        use_locking (bool): Whether to enable a lock to protect the variable and accumulation tensors
                             from being updated. Default: False.
         use_nesterov (bool): Enable Nesterov momentum. Default: False.
         gradient_scale (float): The scale of the gradient. Default: 1.0.
@@ -2400,7 +2401,7 @@ class SGD(PrimitiveWithCheck):
         >>> stat = Tensor(np.array([1.5, -0.3, 0.2, -0.7]), mindspore.float32)
         >>> output = sgd(parameters, gradient, learning_rate, accum, momentum, stat)
         >>> print(output[0])
-        [ 1.9899   -0.4903   1.6952001  3.9801   ]
+        (Tensor(shape=[4], dtype=Float32, value= [ 1.98989999e+00, -4.90300000e-01,  1.69520009e+00,  3.98009992e+00]),)
     """
 
     @prim_attr_register
@@ -5646,7 +5647,7 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
-        - **alpha** (Union[Number, Tensor]) - Saling factor, must be a scalar. With float32 or float16 data type.
+        - **alpha** (Union[Number, Tensor]) - Scaling factor, must be a scalar. With float32 or float16 data type.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be scalar.
           With float32 or float16 data type.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be scalar.
@@ -5838,7 +5839,7 @@ class ApplyFtrl(PrimitiveWithInfer):
 
         There is only one output for GPU environment.
 
-        - **var** (Tensor) - This value is alwalys zero and the input parameters has been updated in-place.
+        - **var** (Tensor) - This value is always zero and the input parameters has been updated in-place.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -5881,7 +5882,7 @@ class ApplyFtrl(PrimitiveWithInfer):
          [ 1.43758726e+00,  9.89177322e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[-1.86994812e+03, -1.64906018e+03],
          [-3.22187836e+02, -1.20163989e+03]]))
-         >>> else:
+         ... else:
          ...    print(net.var.asnumpy())
          [[0.4614181  0.5309642 ]
           [0.2687151  0.38206503]]
@@ -6208,6 +6209,7 @@ class CTCLoss(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> np.random.seed(0)
         >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
         >>> labels_indices = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int64)
         >>> labels_values = Tensor(np.array([2, 2]), mindspore.int32)
@@ -6215,12 +6217,12 @@ class CTCLoss(PrimitiveWithInfer):
         >>> ctc_loss = ops.CTCLoss()
         >>> loss, gradient = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
         >>> print(loss)
-        [ 0.69121575  0.5381993 ]
+        [ 0.7864997  0.720426 ]
         >>> print(gradient)
-        [[[ 0.25831494  0.3623634  -0.62067937 ]
-          [ 0.25187883  0.2921483  -0.5440271 ]]
-         [[ 0.43522435  0.24408469  0.07787037 ]
-          [ 0.29642645  0.4232373   0.06138104 ]]]
+        [[[ 0.30898064  0.36491138  -0.673892  ]
+          [ 0.33421117  0.2960548  -0.63026595 ]]
+         [[ 0.23434742  0.36907154  0.11261538 ]
+          [ 0.27316454  0.41090325  0.07584976 ]]]
     """
 
     @prim_attr_register

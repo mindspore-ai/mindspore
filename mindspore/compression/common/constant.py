@@ -66,7 +66,7 @@ class QuantDtype(enum.Enum):
     @staticmethod
     def switch_signed(dtype):
         """
-        Swicth the signed state of the input quant datatype.
+        Switch the signed state of the input quant datatype.
 
         Args:
             dtype (QuantDtype): quant datatype.
