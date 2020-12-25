@@ -290,15 +290,6 @@ void LiteSession::InitGraphOutputNodeMap(const lite::Model *model) {
   }
 }
 
-void LiteSession::InitGraphOutputTensorNames(const lite::Model *model) {
-  MS_ASSERT(model != nullptr);
-  MS_ASSERT(this->output_tensor_names_.empty());
-  auto out_size = model->sub_graphs_.front()->output_indices_.size();
-  for (size_t i = 0; i < out_size; ++i) {
-    this->output_tensor_names_.emplace_back(std::to_string(model->sub_graphs_.front()->output_indices_[i]));
-  }
-}
-
 void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
   MS_ASSERT(model != nullptr);
   MS_ASSERT(this->output_tensor_map_.empty());
@@ -311,9 +302,12 @@ void LiteSession::InitGraphOutputTensorMap(const lite::Model *model) {
       MS_LOG(ERROR) << "out_tensor is null!";
       return;
     }
-    this->output_tensor_map_.insert(std::make_pair(std::to_string(graph_out_index), out_tensor));
     if (!out_tensor->tensor_name().empty()) {
       this->output_tensor_map_.insert(std::make_pair(out_tensor->tensor_name(), out_tensor));
+      this->output_tensor_names_.emplace_back(out_tensor->tensor_name());
+    } else {
+      this->output_tensor_map_.insert(std::make_pair(std::to_string(graph_out_index), out_tensor));
+      this->output_tensor_names_.emplace_back(std::to_string(graph_out_index));
     }
   }
 }
@@ -339,7 +333,6 @@ void LiteSession::InitGraphInOutTensors(const lite::Model *model) {
   InitGraphOutputTensors(model);
   InitGraphInputMap(model);
   InitGraphOutputNodeMap(model);
-  InitGraphOutputTensorNames(model);
   InitGraphOutputTensorMap(model);
   for (auto *tensor : this->inputs_) {
     tensor->set_category(Tensor::Category::GRAPH_INPUT);
