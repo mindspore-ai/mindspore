@@ -203,9 +203,9 @@ std::set<size_t> OpenCLKernel::GenerateLocalByGlobal(size_t global_i) {
 int OpenCLKernel::DequantWeight() {
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
   auto *weight_tensor = in_tensors_.at(kWeightIndex);
-  auto *restore_data = weight_tensor->data_c();
-  dequant_flag_ =
-    !weight_tensor->quant_params().empty() && weight_tensor->quant_params().front().inited && restore_data != nullptr;
+  restore_quant_data_ = weight_tensor->data_c();
+  dequant_flag_ = !weight_tensor->quant_params().empty() && weight_tensor->quant_params().front().inited &&
+                  restore_quant_data_ != nullptr;
   if (dequant_flag_) {
     void *dequant_weight{nullptr};
     bool set_flag{true};
@@ -242,6 +242,7 @@ void OpenCLKernel::FreeDequantedWeight() {
   auto *weight_tensor = in_tensors_.at(kWeightIndex);
   if (dequant_flag_) {
     free(weight_tensor->data_c());
+    weight_tensor->set_data(restore_quant_data_);
   }
 }
 }  // namespace mindspore::kernel
