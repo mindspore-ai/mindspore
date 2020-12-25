@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "toolchain/prof_mgr_core.h"
-#include "utils/log_adapter.h"
+#include "runtime/device/ascend/profiling/profiling_callback_register.h"
 
-int ProfMgrStop(void *) {
-  MS_LOG(WARNING) << "Unsupported feature.";
-  return -1;
+VMCallbackRegister &VMCallbackRegister::GetInstance() {
+  static VMCallbackRegister instance;
+  return instance;
 }
 
-void *ProfMgrStartUp(const ProfMgrCfg *) {
-  MS_LOG(WARNING) << "Unsupported feature.";
-  return nullptr;
+bool VMCallbackRegister::Registe(Status (*pRegProfCtrlCallback)(MsprofCtrlCallback),
+                                 Status (*pRegProfSetDeviceCallback)(MsprofSetDeviceCallback),
+                                 Status (*pRegProfReporterCallback)(MsprofReporterCallback),
+                                 Status (*pProfCommandHandle)(ProfCommandHandleType, void *, uint32_t)) {
+  return false;
 }
+
+void VMCallbackRegister::ForceMsprofilerInit() {}

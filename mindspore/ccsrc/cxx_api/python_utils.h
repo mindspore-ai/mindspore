@@ -20,6 +20,8 @@
 namespace mindspore::api {
 void RegAllOp();
 bool PythonIsInited();
+void InitPython();
+void FinalizePython();
 }  // namespace mindspore::api
 
 #endif  // MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H

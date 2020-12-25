@@ -119,4 +119,16 @@ void RegAllOp() {
 }
 
 bool PythonIsInited() { return Py_IsInitialized() != 0; }
+
+void InitPython() {
+  if (!PythonIsInited()) {
+    Py_Initialize();
+  }
+}
+
+void FinalizePython() {
+  if (PythonIsInited()) {
+    Py_Finalize();
+  }
+}
 }  // namespace mindspore::api

@@ -122,10 +122,13 @@ Status MsGraphImpl::FinalizeEnv() {
     MS_LOG(ERROR) << "Get Context failed!";
     return FAILED;
   }
+
+  InitPython();  // CloseTsd will release python git
   if (!context::CloseTsd(ms_context)) {
     MS_LOG(ERROR) << "CloseTsd failed!";
     return FAILED;
   }
+  FinalizePython();
 
   init_flag_ = false;
   MS_LOG(INFO) << "End finalize env";
