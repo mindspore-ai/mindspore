@@ -776,8 +776,8 @@ def separate_mixed_tensors_index(indexes_types, op_name):
         elif isinstance(ele_type, mstype.ellipsis_type):
             ellipsis_position = i
         else:
-            raise TypeError(f"For '{op_name}', the index elements only support "
-                            f"'Tensor', 'int32', 'int64', 'Slice', 'Ellipsis', but got {ele_type}.")
+            raise IndexError(f"For '{op_name}', the index elements only support "
+                             f"'Tensor', 'int32', 'int64', 'Slice', 'Ellipsis', but got {ele_type}.")
 
     return tensor_positions, slice_positions, ellipsis_position
 

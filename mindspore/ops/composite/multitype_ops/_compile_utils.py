@@ -365,6 +365,7 @@ def tensor_index_by_tuple(data, tuple_index):
     """Tensor getitem by tuple of various types with None"""
     if len(tuple_index) == 1:
         return data[tuple_index[0]]
+    tuple_index = _transform_ellipsis_to_slice(tuple_index, data, const_utils.TENSOR_GETITEM)
     indexes_types = hyper_map(F.typeof, tuple_index)
     contain_type = const_utils.tuple_index_type_cnt(indexes_types, const_utils.TENSOR_GETITEM)
     if contain_type == const_utils.ALL_TENSOR:
