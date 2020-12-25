@@ -69,7 +69,7 @@ bool GPUDeviceAddress::SyncHostToDevice(const ShapeVector &, size_t size, TypeId
   return GPUDeviceManager::GetInstance().SyncStream(stream);
 }
 
-GPUDeviceAddress::~GPUDeviceAddress() {
+void GPUDeviceAddress::ClearDeviceMemory() {
   if (ptr_ == nullptr) {
     return;
   }
@@ -78,6 +78,8 @@ GPUDeviceAddress::~GPUDeviceAddress() {
     ptr_ = nullptr;
   }
 }
+
+GPUDeviceAddress::~GPUDeviceAddress() { ClearDeviceMemory(); }
 #ifdef ENABLE_DEBUGGER
 bool GPUDeviceAddress::LoadMemToHost(const std::string &tensor_name, int execution_order, const std::string &host_fmt,
                                      const ShapeVector &host_shape, TypeId host_type, size_t slot,
