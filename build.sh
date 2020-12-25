@@ -503,12 +503,13 @@ build_lite()
 
     LITE_ENABLE_GPU=${ENABLE_GPU}
     LITE_ENABLE_NPU=${ENABLE_NPU}
-    if [[ "${DEVICE}" == "" && "${LITE_PLATFORM}" == "arm64" ]]; then
+    if [ "${DEVICE}" == "" ] && [ "${LITE_PLATFORM}" == "arm64" ]; then
       LITE_ENABLE_GPU="on"
       LITE_ENABLE_NPU="on"
     fi
 
-    if [ "${ENABLE_GPU}" == "on" ] && [ "${LITE_PLATFORM}" == "arm64" ] || [ $1 == "arm64" ]; then
+    if [ "${LITE_ENABLE_GPU}" == "on" ] || [ $1 == "arm64" ]; then
+      LITE_ENABLE_GPU="on"
       echo "start get opencl"
     fi
     if [ "${LITE_ENABLE_NPU}" == "on" ]; then
@@ -545,7 +546,7 @@ build_lite()
               -DANDROID_STL=${ANDROID_STL}  -DCMAKE_BUILD_TYPE=${BUILD_TYPE}                                                      \
               -DPLATFORM_ARM32=on -DENABLE_NEON=on -DSUPPORT_TRAIN=${SUPPORT_TRAIN}  \
               -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
-              -DSUPPORT_GPU=${ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} -DENABLE_V0=on \
+              -DSUPPORT_GPU=${LITE_ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} -DENABLE_V0=on \
               -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} \
               -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp -DMS_VERSION_MAJOR=${VERSION_MAJOR}                           \
               -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
@@ -553,7 +554,7 @@ build_lite()
     else
         cmake -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=${SUPPORT_TRAIN}   \
         -DENABLE_TOOLS=${ENABLE_TOOLS} -DENABLE_CONVERTER=${ENABLE_CONVERTER} -DBUILD_TESTCASES=${RUN_TESTCASES} \
-        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} \
+        -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DSUPPORT_GPU=${LITE_ENABLE_GPU} -DSUPPORT_NPU=${ENABLE_NPU} \
         -DBUILD_MINDDATA=${COMPILE_MINDDATA_LITE} -DENABLE_V0=on \
         -DOFFLINE_COMPILE=${OPENCL_OFFLINE_COMPILE} -DCMAKE_INSTALL_PREFIX=${BASEPATH}/output/tmp  \
         -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
@@ -647,6 +648,7 @@ build_jni_arm32() {
 
 build_java() {
   JAVA_PATH=${BASEPATH}/mindspore/lite/java
+  LITE_ENABLE_GPU="on"
   get_version
   build_lite_java_arm64
   build_lite_java_arm32
