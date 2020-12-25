@@ -69,7 +69,7 @@ class VAEAnomalyDetection:
             sample_x (Tensor): The sample to be predicted, the shape is (N, C, H, W).
 
         Returns:
-            numpy.dtype, the predicted outlier score of the sample.
+            float, the predicted outlier score of the sample.
         """
         reconstructed_sample = self.vae.reconstruct_sample(sample_x)
         return self._calculate_euclidean_distance(sample_x.asnumpy(), reconstructed_sample.asnumpy())
