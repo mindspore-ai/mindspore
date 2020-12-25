@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2020 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -123,7 +123,7 @@ echo "Usage: bash lite_release_package.sh input_path output_path"
 
 input_path=$1
 output_path=$2
-version=`ls ${input_path}/android_aarch64/mindspore-lite-*-inference-*.tar.gz | cut -d"-" -f3`
+version=`ls ${input_path}/android_aarch64/mindspore-lite-*-inference-*.tar.gz | awk -F'/' '{print $NF}' | cut -d"-" -f3`
 
 android_release_package
 linux_release_package
