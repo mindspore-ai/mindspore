@@ -39,7 +39,7 @@ extern "C" JNIEXPORT jlong JNICALL Java_com_mindspore_lite_config_MSConfig_creat
       break;
     }
     case 2:  // DT_NPU
-      MS_LOGE("We only support CPU now.");
+      MS_LOGE("We only support CPU and GPU now.");
       return (jlong)context;
       break;
     default:

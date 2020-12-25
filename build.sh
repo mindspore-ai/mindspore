@@ -508,12 +508,18 @@ build_lite()
       LITE_ENABLE_NPU="on"
     fi
 
-    if [ "${LITE_ENABLE_GPU}" == "on" ] || [ $1 == "arm64" ]; then
+    if [[ $1 == "arm64" && "X$DEVICE" != "Xcpu" ]]; then
       LITE_ENABLE_GPU="on"
       echo "start get opencl"
     fi
+
     if [ "${LITE_ENABLE_NPU}" == "on" ]; then
-      checkddk
+      if [ "${LITE_PLATFORM}" == "arm64" ]; then
+        checkddk
+      else
+        echo "NPU only support platform arm64."
+        exit 1
+      fi
     fi
 
     cd "${BASEPATH}/mindspore/lite"
@@ -648,7 +654,6 @@ build_jni_arm32() {
 
 build_java() {
   JAVA_PATH=${BASEPATH}/mindspore/lite/java
-  LITE_ENABLE_GPU="on"
   get_version
   build_lite_java_arm64
   build_lite_java_arm32
