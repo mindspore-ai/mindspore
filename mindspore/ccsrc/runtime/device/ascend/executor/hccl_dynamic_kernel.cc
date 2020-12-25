@@ -145,7 +145,7 @@ bool HcclExecutorManager::Initialize() {
     return false;
   }
 
-  auto HcomExecutorInitialize = (HcclResult(*)())dlsym(handle_, "HcomExcutorInitialize");
+  auto HcomExecutorInitialize = (HcclResult(*)())dlsym(handle_, "HcomExecInitialize");
   if (HcomExecutorInitialize == nullptr) {
     MS_LOG(ERROR) << "dlsym HcomExecutorInitialize failed";
     return false;
@@ -167,7 +167,7 @@ bool HcclExecutorManager::Finalize() {
   if (!initialized_) {
     return true;
   }
-  auto HcomExecutorFinalize = (HcclResult(*)())dlsym(handle_, "HcomExcutorFinalize");
+  auto HcomExecutorFinalize = (HcclResult(*)())dlsym(handle_, "HcomExecFinalize");
   if (HcomExecutorFinalize == nullptr) {
     MS_LOG(ERROR) << "Fail to dlsym HcomExecutorFinalize";
     return false;
@@ -185,7 +185,7 @@ bool HcclExecutorManager::Finalize() {
   return true;
 }
 
-void *HcclExecutorManager::GetHcomOpertion() { return dlsym(handle_, "EnqueueHcomOpertion"); }
+void *HcclExecutorManager::GetHcomOpertion() { return dlsym(handle_, "HcomExecEnqueueOperation"); }
 void HcclExecutorManager::CloseHandle() {
   if (dlclose(handle_) != 0) {
     MS_LOG(WARNING) << "Failed to close hcom handle";
