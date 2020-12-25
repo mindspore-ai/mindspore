@@ -47,16 +47,16 @@ class textrcnn(nn.Cell):
             self.lstm = P.DynamicRNN(forget_bias=0.0)
             self.w1_fw = Parameter(
                 np.random.uniform(-k, k, (self.embed_size + self.num_hiddens, 4 * self.num_hiddens)).astype(
-                    np.float32), name="w1_fw")
-            self.b1_fw = Parameter(np.random.uniform(-k, k, (4 * self.num_hiddens)).astype(np.float32),
+                    np.float16), name="w1_fw")
+            self.b1_fw = Parameter(np.random.uniform(-k, k, (4 * self.num_hiddens)).astype(np.float16),
                                    name="b1_fw")
             self.w1_bw = Parameter(
                 np.random.uniform(-k, k, (self.embed_size + self.num_hiddens, 4 * self.num_hiddens)).astype(
-                    np.float32), name="w1_bw")
-            self.b1_bw = Parameter(np.random.uniform(-k, k, (4 * self.num_hiddens)).astype(np.float32),
+                    np.float16), name="w1_bw")
+            self.b1_bw = Parameter(np.random.uniform(-k, k, (4 * self.num_hiddens)).astype(np.float16),
                                    name="b1_bw")
-            self.h1 = Tensor(np.zeros(shape=(1, self.batch_size, self.num_hiddens)).astype(np.float32))
-            self.c1 = Tensor(np.zeros(shape=(1, self.batch_size, self.num_hiddens)).astype(np.float32))
+            self.h1 = Tensor(np.zeros(shape=(1, self.batch_size, self.num_hiddens)).astype(np.float16))
+            self.c1 = Tensor(np.zeros(shape=(1, self.batch_size, self.num_hiddens)).astype(np.float16))
 
         if cell == "vanilla":
             self.rnnW_fw = nn.Dense(self.num_hiddens, self.num_hiddens)
@@ -72,6 +72,12 @@ class textrcnn(nn.Cell):
             self.rnnWz_bw = nn.Dense(self.num_hiddens + self.embed_size, self.num_hiddens)
             self.rnnWh_bw = nn.Dense(self.num_hiddens + self.embed_size, self.num_hiddens)
             self.ones = Tensor(np.ones(shape=(self.batch_size, self.num_hiddens)).astype(np.float16))
+            self.rnnWr_fw.to_float(mstype.float16)
+            self.rnnWz_fw.to_float(mstype.float16)
+            self.rnnWh_fw.to_float(mstype.float16)
+            self.rnnWr_bw.to_float(mstype.float16)
+            self.rnnWz_bw.to_float(mstype.float16)
+            self.rnnWh_bw.to_float(mstype.float16)
 
         self.transpose = P.Transpose()
         self.reduce_max = P.ReduceMax()
@@ -91,6 +97,9 @@ class textrcnn(nn.Cell):
         self.tanh = P.Tanh()
         self.sigmoid = P.Sigmoid()
         self.slice = P.Slice()
+        self.text_rep_dense.to_float(mstype.float16)
+        self.mydense.to_float(mstype.float16)
+        self.output_dense.to_float(mstype.float16)
 
     def construct(self, x):
         """class construction"""
