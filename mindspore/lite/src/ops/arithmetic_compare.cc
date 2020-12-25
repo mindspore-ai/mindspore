@@ -21,13 +21,9 @@ namespace lite {
 
 int ArithmeticCompare::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   auto res = Arithmetic::InferShape(inputs_, outputs_);
-  if (res == RET_OK) {
-    auto output = outputs_.front();
-    output->set_data_type(TypeId::kNumberTypeBool);
-    return RET_OK;
-  } else {
-    return res;
-  }
+  auto output = outputs_.front();
+  output->set_data_type(TypeId::kNumberTypeBool);
+  return res;
 }
 }  // namespace lite
 }  // namespace mindspore
