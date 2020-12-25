@@ -553,7 +553,7 @@ std::string Tensor::ToStringInternal(int limit_size) const {
   std::ostringstream buf;
   auto dtype = Dtype();
   MS_EXCEPTION_IF_NULL(dtype);
-  buf << "Tensor(id=" << id_ << ", shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ", value=";
+  buf << "Tensor(shape=" << ShapeToString(shape_) << ", dtype=" << dtype->ToString() << ", value=";
   if (limit_size <= 0 || DataSize() < limit_size) {
     // Only print data for small tensor.
     buf << ((data().ndim() > 1) ? '\n' : ' ') << data().ToString(data_type_, shape_, false);
