@@ -886,6 +886,10 @@ AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const Primitive
     maxlen_value = *static_cast<int64_t *>(maxlen_tensor->data_c());
   }
 
+  if (maxlen_value <= 0) {
+    MS_LOG(EXCEPTION) << "maxlen must be positive, but got: " << maxlen_value;
+  }
+
   ShapeVector lengths_shape = lengths->shape()->shape();
   ShapeVector lengths_shape_min = lengths->shape()->min_shape();
   if (lengths_shape_min.empty()) {
