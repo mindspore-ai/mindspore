@@ -88,8 +88,6 @@ class LiteSession : public session::LiteSession {
 
   void InitGraphOutputNodeMap(const lite::Model *model);
 
-  void InitGraphOutputTensorNames(const lite::Model *model);
-
   void InitGraphOutputTensorMap(const lite::Model *model);
 
   void AdjustModelOutputTensorInitRefCount(const lite::Model *model);

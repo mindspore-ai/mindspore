@@ -129,7 +129,7 @@ class MS_API Benchmark {
 
   int ReadInputFile();
 
-  int ReadCalibData();
+  int ReadCalibData(bool new_data, const char *calib_data_path);
 
   int ReadTensorData(std::ifstream &in_file_stream, const std::string &tensor_name, const std::vector<size_t> &dims);
 
@@ -137,10 +137,11 @@ class MS_API Benchmark {
 
   tensor::MSTensor *GetTensorByNodeOrTensorName(const std::string &node_or_tensor_name);
 
-  int CompareStringData(const std::string &name, tensor::MSTensor *tensor);
+  int CompareStringData(const std::string &name, tensor::MSTensor *tensor,
+                        std::unordered_map<std::string, CheckTensor *> benchmark_data);
 
   int CompareDataGetTotalBiasAndSize(const std::string &name, tensor::MSTensor *tensor, float *total_bias,
-                                     int *total_size);
+                                     int *total_size, std::unordered_map<std::string, CheckTensor *> benchmark_data);
 
   int InitCallbackParameter();
 
@@ -150,10 +151,11 @@ class MS_API Benchmark {
 
   // tensorData need to be converter first
   template <typename T>
-  float CompareData(const std::string &nodeName, const std::vector<int> &msShape, const void *tensor_data) {
+  float CompareData(const std::string &nodeName, const std::vector<int> &msShape, const void *tensor_data,
+                    std::unordered_map<std::string, CheckTensor *> benchmark_data) {
     const T *msTensorData = static_cast<const T *>(tensor_data);
-    auto iter = this->benchmark_data_.find(nodeName);
-    if (iter != this->benchmark_data_.end()) {
+    auto iter = benchmark_data.find(nodeName);
+    if (iter != benchmark_data.end()) {
       std::vector<size_t> castedMSShape;
       size_t shapeSize = 1;
       for (int64_t dim : msShape) {
@@ -238,11 +240,13 @@ class MS_API Benchmark {
   int MarkAccuracy();
 
  private:
+  bool has_new_data_ = false;
   BenchmarkFlags *flags_;
   session::LiteSession *session_{nullptr};
   std::vector<mindspore::tensor::MSTensor *> ms_inputs_;
   std::unordered_map<std::string, std::vector<mindspore::tensor::MSTensor *>> ms_outputs_;
   std::unordered_map<std::string, CheckTensor *> benchmark_data_;
+  std::unordered_map<std::string, CheckTensor *> new_benchmark_data_;
   std::unordered_map<std::string, TypeId> data_type_map_{{"FLOAT", TypeId::kNumberTypeFloat},
                                                          {"INT8", TypeId::kNumberTypeInt8},
                                                          {"INT32", TypeId::kNumberTypeInt32},
