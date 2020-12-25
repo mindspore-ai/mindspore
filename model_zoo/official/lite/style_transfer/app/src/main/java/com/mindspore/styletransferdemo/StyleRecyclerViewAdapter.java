@@ -16,7 +16,6 @@
 package com.mindspore.styletransferdemo;
 
 import android.content.Context;
-import android.net.Uri;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -27,35 +26,16 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 
-import java.util.List;
-
 public class StyleRecyclerViewAdapter extends RecyclerView.Adapter<StyleRecyclerViewAdapter.StyleItemViewHolder> {
 
-    private View.OnClickListener mOnClickListener;
-    private List<String> stylesList;
-    private Context context;
-    private StyleFragment.OnListFragmentInteractionListener mListener;
+    private final int[] IMAGES;
+    private final Context context;
+    private final OnBackgroundImageListener mListener;
 
-    public StyleRecyclerViewAdapter(Context context, List<String> stylesList, StyleFragment.OnListFragmentInteractionListener mListener) {
-        this.stylesList = stylesList;
+    public StyleRecyclerViewAdapter(Context context, int[] IMAGES, OnBackgroundImageListener mListener) {
+        this.IMAGES = IMAGES;
         this.context = context;
         this.mListener = mListener;
-
-        this.mOnClickListener = new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-
-            }
-        };
-
-        this.mOnClickListener = (View.OnClickListener) (new View.OnClickListener() {
-            public final void onClick(View v) {
-
-                if (v.getTag() != null && v.getTag() instanceof String) {
-                    mListener.onListFragmentInteraction(String.valueOf(v.getTag()));
-                }
-            }
-        });
     }
 
     @NonNull
@@ -68,21 +48,27 @@ public class StyleRecyclerViewAdapter extends RecyclerView.Adapter<StyleRecycler
 
     @Override
     public void onBindViewHolder(@NonNull StyleItemViewHolder holder, int position) {
-        String imagePath = stylesList.get(position);
         Glide.with(context).
-                load(Uri.parse("file:///android_asset/thumbnails/" + imagePath)).
-                centerInside().
+                load(IMAGES[position]).
                 into(holder.getImageView());
 
         View view = holder.getMView();
-        view.setTag(imagePath);
-        view.setOnClickListener(this.mOnClickListener);
+        view.setTag(IMAGES[position]);
+        view.setOnClickListener(view1 -> {
+            if (mListener != null) {
+                if (IMAGES.length - 1 == position) {
+                    mListener.onImageAdd(holder.getImageView());
+                } else {
+                    mListener.onBackImageSelected(position);
+                }
+            }
+        });
     }
 
 
     @Override
     public int getItemCount() {
-        return stylesList == null ? 0 : stylesList.size();
+        return IMAGES == null ? 0 : IMAGES.length;
     }
 
 
