@@ -36,8 +36,8 @@ struct SubGraphModel {
   SubGraphModel(int index, std::string model_name, domi::ModelBufferData *model_buffer_data)
       : index_(index), model_name_(std::move(model_name)), model_buffer_data_(model_buffer_data) {}
 
-  bool is_freed = false;
-  bool is_loaded = false;
+  bool is_freed_ = false;
+  bool is_loaded_ = false;
   int index_;
   std::string model_name_;
   std::shared_ptr<domi::ModelBufferData> model_buffer_data_;
@@ -84,6 +84,8 @@ class NPUManager {
 
  private:
   int index_ = 0;
+  bool is_check_version_ = false;
+  bool is_support_ = false;
   std::unordered_map<std::string, SubGraphModel *> models_;
   std::vector<std::shared_ptr<hiai::AiModelMngerClient>> clients_;
 };
