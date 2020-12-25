@@ -188,6 +188,8 @@ class AnfRuntimeAlgorithm {
   static bool IsNodeInGraphKernel(const AnfNodePtr &node);
   // check parameter is weight or data
   static bool IsParameterWeight(const ParameterPtr &node);
+  // checkout whether the anf node is include the label_index.
+  static bool IsLabelIndexInNode(const AnfNodePtr &node, size_t label_index);
   // set stream id of kernel,which will be set in stream assign and be used in stream generate
   static void SetStreamId(uint32_t stream_id, AnfNode *node);
   // get stream id
