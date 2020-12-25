@@ -234,8 +234,7 @@ int OpenCLRuntime::Init() {
   MS_LOG(INFO) << "Compute Unit: " << compute_units_;
   MS_LOG(INFO) << "Clock Frequency: " << max_freq_ << " MHz";
 
-  const cl_command_queue_properties properties = 0;
-  default_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, properties, &ret);
+  default_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, 0, &ret);
   if (ret != CL_SUCCESS) {
     delete device_;
     delete context_;
@@ -243,8 +242,7 @@ int OpenCLRuntime::Init() {
     return RET_ERROR;
   }
 
-  const cl_command_queue_properties profiling_properties = CL_QUEUE_PROFILING_ENABLE;
-  profiling_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, profiling_properties, &ret);
+  profiling_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, CL_QUEUE_PROFILING_ENABLE, &ret);
   if (ret != CL_SUCCESS) {
     delete device_;
     delete context_;
@@ -258,6 +256,7 @@ int OpenCLRuntime::Init() {
     delete device_;
     delete context_;
     delete default_command_queue_;
+    delete profiling_command_queue_;
     MS_LOG(ERROR) << "Command OpenCL allocator failed!";
     return RET_ERROR;
   }
@@ -275,6 +274,9 @@ int OpenCLRuntime::Init() {
 }
 
 int OpenCLRuntime::Uninit() {
+  if (!init_done_) {
+    return RET_OK;
+  }
   if (enable_cache_ && !binary_map_.empty()) {
     StoreCache();
   }
@@ -282,10 +284,12 @@ int OpenCLRuntime::Uninit() {
   program_map_.clear();
   delete allocator_;
   delete default_command_queue_;
+  delete profiling_command_queue_;
   delete context_;
   delete device_;
   allocator_ = nullptr;
   default_command_queue_ = nullptr;
+  profiling_command_queue_ = nullptr;
   context_ = nullptr;
   device_ = nullptr;
 #ifdef USE_OPENCL_WRAPPER

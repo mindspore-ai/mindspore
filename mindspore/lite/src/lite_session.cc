@@ -670,7 +670,7 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 }
 
 int LiteSession::InitGPURuntime() {
-#if SUPPORT_GPU
+#if SUPPORT_GPU && !SUPPORT_TRAIN
   if (this->context_->IsGpuEnabled()) {
     auto gpu_device_info = this->context_->GetGpuInfo();
     auto opencl_runtime = ocl_runtime_wrap_.GetInstance();
