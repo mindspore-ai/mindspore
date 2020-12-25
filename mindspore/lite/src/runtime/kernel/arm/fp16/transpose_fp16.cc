@@ -88,5 +88,5 @@ int TransposeFp16CPUKernel::Run() {
   return ret;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Transpose, CPUKernelCreator<TransposeFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Transpose, LiteKernelCreator<TransposeFp16CPUKernel>)
 }  // namespace mindspore::kernel

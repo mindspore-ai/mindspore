@@ -416,5 +416,5 @@ int PadCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Pad, CPUKernelCreator<PadCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Pad, LiteKernelCreator<PadCPUKernel>)
 }  // namespace mindspore::kernel

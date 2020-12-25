@@ -81,5 +81,5 @@ void CropFp16CPUKernel::FreeInputAndOutput() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Crop, CPUKernelCreator<CropFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Crop, LiteKernelCreator<CropFp16CPUKernel>)
 }  // namespace mindspore::kernel

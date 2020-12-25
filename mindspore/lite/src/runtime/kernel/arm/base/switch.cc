@@ -91,7 +91,7 @@ int SwitchCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Switch, CPUKernelCreator<SwitchCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Switch, CPUKernelCreator<SwitchCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Switch, CPUKernelCreator<SwitchCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Switch, LiteKernelCreator<SwitchCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Switch, LiteKernelCreator<SwitchCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Switch, LiteKernelCreator<SwitchCPUKernel>)
 }  // namespace mindspore::kernel

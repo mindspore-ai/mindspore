@@ -40,6 +40,6 @@ int AssertCPUKernel::Run() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Assert, CPUKernelCreator<AssertCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Assert, CPUKernelCreator<AssertCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Assert, LiteKernelCreator<AssertCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Assert, LiteKernelCreator<AssertCPUKernel>)
 }  // namespace mindspore::kernel

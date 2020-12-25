@@ -89,5 +89,5 @@ int DetectionPostProcessInt8CPUKernel::GetInputData() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DetectionPostProcess,
-           CPUKernelCreator<DetectionPostProcessInt8CPUKernel>)
+           LiteKernelCreator<DetectionPostProcessInt8CPUKernel>)
 }  // namespace mindspore::kernel

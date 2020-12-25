@@ -77,6 +77,6 @@ int BatchToSpaceInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BatchToSpace, CPUKernelCreator<BatchToSpaceInt8CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BatchToSpaceND, CPUKernelCreator<BatchToSpaceInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BatchToSpace, LiteKernelCreator<BatchToSpaceInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BatchToSpaceND, LiteKernelCreator<BatchToSpaceInt8CPUKernel>)
 }  // namespace mindspore::kernel

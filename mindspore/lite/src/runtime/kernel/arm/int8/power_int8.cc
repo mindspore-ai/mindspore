@@ -106,5 +106,5 @@ int PowerInt8CPUKernel::Run() {
   return ret;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Power, CPUKernelCreator<PowerInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Power, LiteKernelCreator<PowerInt8CPUKernel>)
 }  // namespace mindspore::kernel

@@ -130,7 +130,7 @@ int MergeCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Merge, CPUKernelCreator<MergeCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Merge, CPUKernelCreator<MergeCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Merge, CPUKernelCreator<MergeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Merge, LiteKernelCreator<MergeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Merge, LiteKernelCreator<MergeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Merge, LiteKernelCreator<MergeCPUKernel>)
 }  // namespace mindspore::kernel

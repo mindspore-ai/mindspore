@@ -236,16 +236,16 @@ void ArithmeticFP16CPUKernel::FreeTmpBuffer() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Mul, CPUKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Add, CPUKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Sub, CPUKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Div, CPUKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_FloorMod, CPUKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_FloorDiv, CPUKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_LogicalAnd, CPUKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_LogicalOr, CPUKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Maximum, CPUKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Minimum, CPUKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Eltwise, CPUKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SquaredDifference, CPUKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Mul, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Add, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Sub, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Div, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_FloorMod, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_FloorDiv, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_LogicalAnd, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_LogicalOr, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Maximum, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Minimum, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Eltwise, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SquaredDifference, LiteKernelCreator<ArithmeticFP16CPUKernel>)
 }  // namespace mindspore::kernel
