@@ -76,9 +76,7 @@ def tokenizer(text):
 def collect_weight(glove_path, vocab, word_to_idx, embed_size):
     """ collect weight """
     vocab_size = len(vocab)
-    # wvmodel = gensim.models.KeyedVectors.load_word2vec_format(os.path.join(glove_path, 'glove.6B.300d.txt'),
-    #                                                           binary=False, encoding='utf-8')
-    wvmodel = gensim.models.KeyedVectors.load_word2vec_format(os.path.join(glove_path, \
+    wvmodel = gensim.models.KeyedVectors.load_word2vec_format(os.path.join(glove_path,
                                                                            'GoogleNews-vectors-negative300.bin'),
                                                               binary=True)
     weight_np = np.zeros((vocab_size + 1, embed_size)).astype(np.float32)
@@ -164,7 +162,7 @@ def convert_to_mindrecord(embed_size, data_path, proprocess_path, glove_path):
     writer.commit()
 
 
-def create_dataset(base_path, batch_size, num_epochs, is_train):
+def create_dataset(base_path, batch_size, is_train):
     """Create dataset for training."""
     columns_list = ["feature", "label"]
     num_consumer = 4
@@ -175,7 +173,7 @@ def create_dataset(base_path, batch_size, num_epochs, is_train):
         path = os.path.join(base_path, 'aclImdb_test.mindrecord0')
 
     data_set = ds.MindDataset(path, columns_list, num_consumer)
-    ds.config.set_seed(1)
+    ds.config.set_seed(0)
     data_set = data_set.shuffle(buffer_size=data_set.get_dataset_size())
     data_set = data_set.batch(batch_size, drop_remainder=True)
     return data_set

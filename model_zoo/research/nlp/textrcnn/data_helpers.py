@@ -23,7 +23,6 @@ parser.add_argument('--data_dir', type=str, help='the source dataset directory.'
 parser.add_argument('--out_dir', type=str, help='the target dataset directory.', default='./data')
 
 args = parser.parse_args()
-np.random.seed(2)
 
 
 def dataset_split(label):
@@ -34,6 +33,7 @@ def dataset_split(label):
     pfhand = open(pos_file, encoding='utf-8')
     pos_samples += pfhand.readlines()
     pfhand.close()
+    np.random.seed(0)
     perm = np.random.permutation(len(pos_samples))
     perm_train = perm[0:int(len(pos_samples) * 0.9)]
     perm_test = perm[int(len(pos_samples) * 0.9):]

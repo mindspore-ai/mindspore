@@ -22,7 +22,7 @@ import mindspore.context as context
 from mindspore import Tensor
 from mindspore.train import Model
 from mindspore.nn.metrics import Accuracy
-from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor
+from mindspore.train.callback import ModelCheckpoint, CheckpointConfig, LossMonitor, TimeMonitor
 from mindspore.common import set_seed
 
 from src.config import textrcnn_cfg as cfg
@@ -31,7 +31,7 @@ from src.dataset import convert_to_mindrecord
 from src.textrcnn import textrcnn
 from src.utils import get_lr
 
-set_seed(2)
+set_seed(0)
 
 if __name__ == '__main__':
 
@@ -58,7 +58,7 @@ if __name__ == '__main__':
     network = textrcnn(weight=Tensor(embedding_table), vocab_size=embedding_table.shape[0],
                        cell=cfg.cell, batch_size=cfg.batch_size)
 
-    ds_train = create_dataset(cfg.preprocess_path, cfg.batch_size, cfg.num_epochs, True)
+    ds_train = create_dataset(cfg.preprocess_path, cfg.batch_size, True)
     step_size = ds_train.get_dataset_size()
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True)
@@ -70,11 +70,12 @@ if __name__ == '__main__':
     opt = nn.Adam(params=network.trainable_params(), learning_rate=lr)
 
     loss_cb = LossMonitor()
+    time_cb = TimeMonitor()
     model = Model(network, loss, opt, {'acc': Accuracy()}, amp_level="O3")
 
     print("============== Starting Training ==============")
     config_ck = CheckpointConfig(save_checkpoint_steps=cfg.save_checkpoint_steps,
                                  keep_checkpoint_max=cfg.keep_checkpoint_max)
     ckpoint_cb = ModelCheckpoint(prefix=cfg.cell, directory=cfg.ckpt_folder_path, config=config_ck)
-    model.train(num_epochs, ds_train, callbacks=[ckpoint_cb, loss_cb])
+    model.train(num_epochs, ds_train, callbacks=[ckpoint_cb, loss_cb, time_cb])
     print("train success")
