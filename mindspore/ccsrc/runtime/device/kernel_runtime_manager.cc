@@ -24,7 +24,9 @@ namespace mindspore {
 namespace device {
 void KernelRuntimeManager::ClearRuntimeResource() {
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
-  ps::ps_cache_instance.SyncEmbeddingTable();
+  if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
+    ps::ps_cache_instance.SyncEmbeddingTable();
+  }
 #endif
   std::lock_guard<std::mutex> guard(lock_);
   for (auto &iter : runtime_map_) {
