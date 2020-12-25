@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H
 #define MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H
 
@@ -22,6 +21,14 @@ void RegAllOp();
 bool PythonIsInited();
 void InitPython();
 void FinalizePython();
-}  // namespace mindspore::api
 
+class PythonEnvGuard {
+ public:
+  PythonEnvGuard();
+  ~PythonEnvGuard();
+
+ private:
+  bool origin_init_status_;
+};
+}  // namespace mindspore::api
 #endif  // MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H

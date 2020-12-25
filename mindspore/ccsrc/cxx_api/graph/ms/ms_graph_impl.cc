@@ -123,12 +123,13 @@ Status MsGraphImpl::FinalizeEnv() {
     return FAILED;
   }
 
-  InitPython();  // CloseTsd will release python git
-  if (!context::CloseTsd(ms_context)) {
-    MS_LOG(ERROR) << "CloseTsd failed!";
-    return FAILED;
+  {
+    PythonEnvGuard guard;
+    if (!context::CloseTsd(ms_context)) {
+      MS_LOG(ERROR) << "CloseTsd failed!";
+      return FAILED;
+    }
   }
-  FinalizePython();
 
   init_flag_ = false;
   MS_LOG(INFO) << "End finalize env";
