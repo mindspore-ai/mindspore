@@ -983,12 +983,6 @@ APP_ERROR DvppCommon::CombineJpegdProcess(const RawData &imageInfo, acldvppPixel
  * @return: APP_ERR_OK if success, other values if failure
  */
 APP_ERROR DvppCommon::TransferImageH2D(const RawData &imageInfo, const std::shared_ptr<DvppDataInfo> &jpegInput) {
-  // Check image buffer size validity
-  if (imageInfo.lenOfByte <= 0) {
-    MS_LOG(ERROR) << "The input buffer size on host should not be empty.";
-    return APP_ERR_COMM_INVALID_PARAM;
-  }
-
   uint8_t *inDevBuff = nullptr;
   APP_ERROR ret = acldvppMalloc((void **)&inDevBuff, imageInfo.lenOfByte);
   if (ret != APP_ERR_OK) {
