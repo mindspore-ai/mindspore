@@ -6655,7 +6655,7 @@ class DynamicGRUV2(PrimitiveWithInfer):
             args = {'init_h': h_dtype, 'bias_input': binput_dtype}
             validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
             b_dtype = binput_dtype
-        elif bhidden_dtype is not None:
+        if bhidden_dtype is not None:
             args = {'init_h': h_dtype, 'bias_hidden': bhidden_dtype}
             validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
             b_dtype = bhidden_dtype

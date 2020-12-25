@@ -77,7 +77,9 @@ def _get_square_sum(x):
 apply_global_norm = C.MultitypeFuncGraph("apply_global_norm")
 @apply_global_norm.register("Tensor", "Tensor", "Tensor")
 def _apply_global_norm(clip_norm, global_norm, x):
+    x_dtype = F.dtype(x)
     x = x * clip_norm / global_norm
+    x = F.cast(x, x_dtype)
     return x
 
 
