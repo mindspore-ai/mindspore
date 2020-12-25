@@ -3688,8 +3688,8 @@ class SquareSumAll(PrimitiveWithInfer):
 
     def infer_dtype(self, x_type, y_type):
         valid_types = (mstype.float16, mstype.float32)
-        validator.check_tensor_dtype_valid('x1_type', x_type, valid_types, self.name)
-        validator.check_tensor_dtype_valid('x2_type', y_type, valid_types, self.name)
+        args = {"x1_type": x_type, "x2_type": y_type}
+        validator.check_tensors_dtypes_same_and_valid(args, valid_types, self.name)
         return x_type, y_type
 
 
