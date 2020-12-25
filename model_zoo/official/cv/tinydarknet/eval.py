@@ -56,8 +56,6 @@ if __name__ == '__main__':
 
     device_target = cfg.device_target
     context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
-    if device_target == "Ascend":
-        context.set_context(device_id=cfg.device_id)
 
     if args_opt.checkpoint_path is not None:
         param_dict = load_checkpoint(args_opt.checkpoint_path)
