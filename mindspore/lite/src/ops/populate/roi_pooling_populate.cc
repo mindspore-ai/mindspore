@@ -32,7 +32,7 @@ OpParameter *PopulateROIPoolingParameter(const mindspore::lite::PrimitiveC *prim
   }
   memset(roi_pooling_param, 0, sizeof(ROIPoolingParameter));
   roi_pooling_param->op_parameter_.type_ = primitive->Type();
-  roi_pooling_param->pooledH_ = param->GetPooledW();
+  roi_pooling_param->pooledH_ = param->GetPooledH();
   roi_pooling_param->pooledW_ = param->GetPooledW();
   roi_pooling_param->scale_ = param->GetScale();
   return reinterpret_cast<OpParameter *>(roi_pooling_param);
