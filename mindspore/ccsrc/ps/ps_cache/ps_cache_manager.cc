@@ -856,6 +856,7 @@ void PsCacheManager::SyncEmbeddingTable() {
 
 bool PsCacheManager::SyncHostEmbeddingTable() {
   MS_ERROR_IF_NULL(embedding_host_cache_);
+  MS_ERROR_IF_NULL(embedding_host_cache_->host_hash_map_);
   const auto &hash_id_to_index = embedding_host_cache_->host_hash_map_->hash_id_to_index();
   size_t swap_indices_lens = hash_id_to_index.size();
   if (swap_indices_lens == 0) {
@@ -899,6 +900,7 @@ bool PsCacheManager::SyncHostEmbeddingTable() {
 bool PsCacheManager::SyncDeviceEmbeddingTable() {
   MS_ERROR_IF_NULL(embedding_device_cache_);
   const auto &device_hash_map = embedding_device_cache_->device_hash_map_;
+  MS_ERROR_IF_NULL(device_hash_map);
   const auto &hash_id_to_index = device_hash_map->hash_id_to_index();
   size_t swap_indices_lens = hash_id_to_index.size();
   if (swap_indices_lens == 0) {
