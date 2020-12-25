@@ -16,6 +16,10 @@ DeconvDwFp32Border:
     // https://github.com/ARM-software/abi-aa/blob/master/aapcs64/aapcs64.rst#simd-and-floating-point-registers
     // x19 ~ x29 should be also preserved
     // whereas our coding style do not permit such amount of parameters
+    cmp x3, #0
+    beq End
+    cmp x4, #0
+    beq End
     ld1 {v1.4s}, [x1]
 
     mov x13, x0
@@ -35,5 +39,6 @@ DeconvDwFp32Border:
         add x13, x13, x5
         add x14, x14, x7
         bne LoopH
+    End:
         ret
 #endif
