@@ -238,6 +238,9 @@ int CpuFp16SubGraph::PreProcess() {
   }
   for (auto kernel : this->nodes_) {
     for (auto tensor : kernel->out_tensors()) {
+      if (kernel->Type() == schema::PrimitiveType_Cast) {
+        continue;
+      }
       if (tensor->data_type() == kNumberTypeFloat32) {
         tensor->set_data_type(kNumberTypeFloat16);
       }

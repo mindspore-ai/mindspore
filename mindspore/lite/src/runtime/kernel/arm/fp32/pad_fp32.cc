@@ -304,10 +304,12 @@ int PadCPUKernel::CheckPaddings(int *paddings, int length, int *input_shape, int
   for (auto i = 0; i < length; ++i) {
     int max_valid = input_shape[i] - offset;
     if (paddings[i * 2] > max_valid) {
-      MS_LOG(WARNING) << prefix << "paddings " << paddings[i * 2] << "should be less than " << max_valid + 1;
+      MS_LOG(ERROR) << prefix << "paddings " << paddings[i * 2] << "should be less than " << max_valid + 1;
+      return RET_ERROR;
     }
     if (paddings[i * 2 + 1] > max_valid) {
-      MS_LOG(WARNING) << prefix << "paddings " << paddings[i * 2 + 1] << "should be less than " << max_valid + 1;
+      MS_LOG(ERROR) << prefix << "paddings " << paddings[i * 2 + 1] << "should be less than " << max_valid + 1;
+      return RET_ERROR;
     }
   }
   return RET_OK;
