@@ -1885,7 +1885,7 @@ class TopK(PrimitiveWithInfer):
         - **indices** (Tensor) - The indices of values within the last dimension of input.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> topk = ops.TopK(sorted=True)
