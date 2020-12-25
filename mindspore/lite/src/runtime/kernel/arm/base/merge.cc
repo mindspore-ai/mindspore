@@ -25,7 +25,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Merge;
 
 namespace mindspore::kernel {
-
 int MergeCPUKernel::FreeInWorkTensor() const {
   for (auto &in_tensor : this->in_tensors_) {
     MS_ASSERT(in_tensor != nullptr);
@@ -131,35 +130,7 @@ int MergeCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuMergeKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                          const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                          const lite::InnerContext *ctx, const KernelKey &desc,
-                                          const mindspore::lite::PrimitiveC *primitive) {
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "parameter is nullptr";
-    return nullptr;
-  }
-  if (desc.type != PrimitiveType_Merge) {
-    MS_LOG(ERROR) << "type in desc is not Merge";
-    free(parameter);
-    return nullptr;
-  }
-  if (ctx == nullptr) {
-    MS_LOG(ERROR) << "ctx is nullptr";
-    free(parameter);
-    return nullptr;
-  }
-
-  auto *kernel = new (std::nothrow) MergeCPUKernel(parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
-    free(parameter);
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Merge, CpuMergeKernelCreator)
-REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Merge, CpuMergeKernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Merge, CpuMergeKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Merge, CPUKernelCreator<MergeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Merge, CPUKernelCreator<MergeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Merge, CPUKernelCreator<MergeCPUKernel>)
 }  // namespace mindspore::kernel

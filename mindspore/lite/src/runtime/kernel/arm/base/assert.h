@@ -20,27 +20,17 @@
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-
-typedef struct AssertParameter {
-  OpParameter op_parameter_;
-} AssertParameter;
-
 class AssertCPUKernel : public LiteKernel {
  public:
   AssertCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    assert_param_ = reinterpret_cast<AssertParameter *>(op_parameter_);
-  }
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~AssertCPUKernel() override {}
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
-  AssertParameter *assert_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

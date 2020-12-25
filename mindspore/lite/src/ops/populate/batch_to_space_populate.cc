@@ -51,8 +51,12 @@ OpParameter *PopulateBatchToSpaceParameter(const mindspore::lite::PrimitiveC *pr
     batch_space_param->block_shape_[i] = block_shape[i];
   }
 
+  batch_space_param->no_crop_ = true;
   for (int i = 0; i < BATCH_TO_SPACE_CROPS_SIZE; ++i) {
     batch_space_param->crops_[i] = crops[i];
+    if (batch_space_param->crops_[i] != 0) {
+      batch_space_param->no_crop_ = false;
+    }
   }
   return reinterpret_cast<OpParameter *>(batch_space_param);
 }

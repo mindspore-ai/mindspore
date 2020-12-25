@@ -14,39 +14,37 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/fp32/batch_to_space_fp32.h"
-#include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "nnacl/batch_to_space.h"
-#include "include/errorcode.h"
 
-using mindspore::lite::RET_OK;
+using mindspore::lite::KernelRegistrar;
+using mindspore::schema::PrimitiveType_BatchToSpace;
+using mindspore::schema::PrimitiveType_BatchToSpaceND;
 
 namespace mindspore::kernel {
 int BatchToSpaceCPUKernel::Init() {
-  auto ret = BatchToSpaceBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    return ret;
-  }
-
+  MS_ASSERT(in_tensors_.at(0)->format() == schema::Format::Format_NHWC);
   if (!InferShapeDone()) {
-    return RET_OK;
+    return lite::RET_OK;
   }
   return ReSize();
 }
 
-int BatchToSpaceCPUKernel::ReSize() { return BatchToSpaceBaseCPUKernel::ReSize(); }
+int BatchToSpaceCPUKernel::ReSize() {
+  MS_ASSERT(in_tensors_.at(0)->shape().size() == 4);
+  return lite::RET_OK;
+}
 
 int BatchToSpaceCPUKernel::Run() {
   auto input = in_tensors_[0];
   auto output = out_tensors_[0];
-  const float *input_data = reinterpret_cast<const float *>(input->MutableData());
+  const float *input_data = reinterpret_cast<const float *>(input->data_c());
   float *output_data = reinterpret_cast<float *>(output->MutableData());
   auto in_shape = input->shape();
   auto out_shape = output->shape();
   BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
 
-  if (IsNoCrop()) {
+  if (param->no_crop_) {
     BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
                               sizeof(float));
   } else {
@@ -54,6 +52,9 @@ int BatchToSpaceCPUKernel::Run() {
                         sizeof(float));
   }
 
-  return RET_OK;
+  return lite::RET_OK;
 }
+
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpace, CPUKernelCreator<BatchToSpaceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpaceND, CPUKernelCreator<BatchToSpaceCPUKernel>)
 }  // namespace mindspore::kernel

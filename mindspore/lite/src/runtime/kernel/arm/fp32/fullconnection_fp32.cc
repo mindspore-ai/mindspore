@@ -15,10 +15,17 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/fullconnection_fp32.h"
+#include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
+
+using mindspore::kernel::KERNEL_ARCH::kCPU;
+using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_INVALID_OP_ATTR;
 using mindspore::lite::RET_MEMORY_FAILED;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
 FullconnectionCPUKernel::~FullconnectionCPUKernel() {
@@ -63,7 +70,7 @@ int FullconnectionCPUKernel::ReSize() {
   fc_param_->row_6_ = UP_ROUND(fc_param_->row_, C6NUM);
   fc_param_->row_4_ = UP_ROUND(fc_param_->row_, C4NUM);
 
-  thread_count_ = MSMIN(thread_count_, UP_DIV(fc_param_->col_align_, col_tile));
+  thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(fc_param_->col_align_, col_tile));
   thread_stride_ = UP_DIV(UP_DIV(fc_param_->col_align_, col_tile), thread_count_);
 
 #ifdef ENABLE_ARM
@@ -214,4 +221,57 @@ int FullconnectionCPUKernel::Run() {
 
   return RET_OK;
 }
+kernel::LiteKernel *CpuFullConnectionFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                                       const std::vector<lite::Tensor *> &outputs,
+                                                       OpParameter *opParameter, const lite::InnerContext *ctx,
+                                                       const kernel::KernelKey &desc,
+                                                       const mindspore::lite::PrimitiveC *primitive) {
+  MS_ASSERT(opParameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_FullConnection);
+  auto *weight_tensor = inputs.at(kWeightIndex);
+  // data of second tensor of fc may be nullptr
+  auto *restore_data = weight_tensor->data_c();
+  auto restore_type = weight_tensor->data_type();
+  bool dequant_flag =
+    !weight_tensor->quant_params().empty() && weight_tensor->quant_params().front().inited && restore_data != nullptr;
+  if (dequant_flag) {
+    auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
+    if (dequant_weight == nullptr) {
+      MS_LOG(ERROR) << "dequant data is nullptr.";
+      return nullptr;
+    }
+    weight_tensor->set_data(dequant_weight);
+  }
+  auto kernel = new (std::nothrow) FullconnectionCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  if (!kernel) {
+    MS_LOG(ERROR) << "kernel is nullptr.";
+    if (dequant_flag) {
+      weight_tensor->FreeData();
+      weight_tensor->set_data(restore_data);
+      weight_tensor->set_data_type(restore_type);
+    }
+    free(opParameter);
+    return nullptr;
+  }
+  auto ret = kernel->Init();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    if (dequant_flag) {
+      weight_tensor->FreeData();
+      weight_tensor->set_data(restore_data);
+      weight_tensor->set_data_type(restore_type);
+    }
+    delete kernel;
+    return nullptr;
+  }
+  if (dequant_flag) {
+    weight_tensor->FreeData();
+    weight_tensor->set_data(restore_data);
+    weight_tensor->set_data_type(restore_type);
+  }
+  return kernel;
+}
+
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FullConnection, CpuFullConnectionFp32KernelCreator)
 }  // namespace mindspore::kernel

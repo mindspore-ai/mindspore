@@ -15,13 +15,8 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/concat_fp32.h"
-#include <vector>
-#include "nnacl/fp32/concat_fp32.h"
 #include "src/kernel_registry.h"
 #include "schema/model_generated.h"
-#include "include/errorcode.h"
-#include "src/runtime/runtime_api.h"
-#include "src/runtime/thread_pool.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -31,18 +26,17 @@ using mindspore::schema::PrimitiveType_Concat;
 
 namespace mindspore::kernel {
 int ConcatCPUKernel::Init() {
-  auto ret = ConcatBaseCPUKernel::Init();
-  if (ret != RET_OK) {
-    return ret;
-  }
   if (!InferShapeDone()) {
     return RET_OK;
   }
-
   return ReSize();
 }
 
-int ConcatCPUKernel::ReSize() { return ConcatBaseCPUKernel::ReSize(); }
+int ConcatCPUKernel::ReSize() {
+  concat_param_->axis_ =
+    concat_param_->axis_ >= 0 ? concat_param_->axis_ : in_tensors_.front()->shape().size() + concat_param_->axis_;
+  return RET_OK;
+}
 
 int ConcatCPUKernel::DoConcat(int task_id) {
   auto input_num = in_tensors_.size();
@@ -60,7 +54,7 @@ int ConcatCPUKernel::DoConcat(int task_id) {
   auto output_addr = out_tensors_.at(0)->MutableData();
 
   Concat(inputs_addr.data(), input_num, concat_param_->axis_, inputs_output_shape.data(), output_shape.size(),
-         output_addr, task_id, thread_count_);
+         output_addr, task_id, op_parameter_->thread_num_);
   return RET_OK;
 }
 
@@ -75,7 +69,10 @@ int ConcatsRun(void *cdata, int task_id) {
 }
 
 int ConcatCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ConcatsRun, this, thread_count_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ConcatsRun, this, op_parameter_->thread_num_);
   return error_code;
 }
+
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Concat, CPUKernelCreator<ConcatCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Concat, CPUKernelCreator<ConcatCPUKernel>)
 }  // namespace mindspore::kernel

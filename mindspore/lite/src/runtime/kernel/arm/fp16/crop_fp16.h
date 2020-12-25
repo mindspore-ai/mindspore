@@ -18,11 +18,14 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CROP_H_
 
 #include <arm_neon.h>
-
 #include <vector>
-
+#include "include/errorcode.h"
+#include "nnacl/crop_parameter.h"
+#include "nnacl/fp16/cast_fp16.h"
+#include "nnacl/fp16/crop_fp16.h"
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/crop_base.h"
+#include "src/runtime/kernel/arm/fp16/common_fp16.h"
 
 namespace mindspore::kernel {
 class CropFp16CPUKernel : public CropBaseCPUKernel {
@@ -30,10 +33,7 @@ class CropFp16CPUKernel : public CropBaseCPUKernel {
   CropFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                     const mindspore::lite::PrimitiveC *primitive)
-      : CropBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    crop_para_ = reinterpret_cast<CropParameter *>(op_parameter_);
-    crop_para_->thread_count_ = op_parameter_->thread_num_;
-  }
+      : CropBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~CropFp16CPUKernel() override = default;
 
   int Init() override;
@@ -44,7 +44,6 @@ class CropFp16CPUKernel : public CropBaseCPUKernel {
  private:
   float16_t *input_ptr_ = nullptr;
   float16_t *output_ptr_ = nullptr;
-  CropParameter *crop_para_;
   void FreeInputAndOutput();
 };
 }  // namespace mindspore::kernel

@@ -91,34 +91,7 @@ int SwitchCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuSwitchKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                           const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                           const lite::InnerContext *ctx, const KernelKey &desc,
-                                           const mindspore::lite::PrimitiveC *primitive) {
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "parameter is nullptr";
-    return nullptr;
-  }
-  if (desc.type != PrimitiveType_Switch) {
-    MS_LOG(ERROR) << "type in desc is not Switch";
-    free(parameter);
-    return nullptr;
-  }
-  if (ctx == nullptr) {
-    MS_LOG(ERROR) << "ctx is nullptr";
-    free(parameter);
-    return nullptr;
-  }
-  auto *kernel = new (std::nothrow) SwitchCPUKernel(parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
-    free(parameter);
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Switch, CpuSwitchKernelCreator)
-REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Switch, CpuSwitchKernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Switch, CpuSwitchKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Switch, CPUKernelCreator<SwitchCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeBool, PrimitiveType_Switch, CPUKernelCreator<SwitchCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Switch, CPUKernelCreator<SwitchCPUKernel>)
 }  // namespace mindspore::kernel

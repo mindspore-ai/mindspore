@@ -17,21 +17,24 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_FULLCONNECTION_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_FULLCONNECTION_H_
 
-#ifdef ENABLE_NEON
 #include <arm_neon.h>
-#endif
 #include <vector>
-#include "src/lite_kernel.h"
+#include "include/errorcode.h"
 #include "nnacl/matmul_parameter.h"
-#include "src/runtime/kernel/arm/base/fullconnection_base.h"
+#include "nnacl/fp16/matmul_fp16.h"
+#include "nnacl/fp16/cast_fp16.h"
+#include "src/lite_kernel.h"
+#include "src/runtime/kernel/arm/base/dequant.h"
 
 namespace mindspore::kernel {
-class FullconnectionFP16CPUKernel : public FullconnectionBaseCPUKernel {
+class FullconnectionFP16CPUKernel : public LiteKernel {
  public:
   explicit FullconnectionFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                        const mindspore::lite::PrimitiveC *primitive)
-      : FullconnectionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    fc_param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
+  }
   ~FullconnectionFP16CPUKernel() override;
   int Init() override;
   int ReSize() override;
@@ -46,6 +49,7 @@ class FullconnectionFP16CPUKernel : public FullconnectionBaseCPUKernel {
   void FreeTmpBuffer();
 
  private:
+  MatMulParameter *fc_param_ = nullptr;
   float16_t *a_pack_ptr_ = nullptr;
   float16_t *b_pack_ptr_ = nullptr;
   float16_t *bias_ptr_ = nullptr;
@@ -54,6 +58,8 @@ class FullconnectionFP16CPUKernel : public FullconnectionBaseCPUKernel {
   float16_t *a_ptr_ = nullptr;
   float16_t *b_ptr_ = nullptr;
   bool is_vector_input_ = false;
+  int thread_count_ = 1;
+  int thread_stride_ = 0;
 };
 }  // namespace mindspore::kernel
 

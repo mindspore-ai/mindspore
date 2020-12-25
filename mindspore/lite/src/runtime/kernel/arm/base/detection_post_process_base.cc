@@ -26,7 +26,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_DetectionPostProcess;
 
 namespace mindspore::kernel {
-
 void PartialArgSort(const float *scores, int *indexes, int num_to_sort, int num_values) {
   std::partial_sort(indexes, indexes + num_to_sort, indexes + num_values, [&scores](const int i, const int j) {
     if (scores[i] == scores[j]) {
@@ -151,10 +150,10 @@ int DetectionPostProcessBaseCPUKernel::Run() {
   if (status != RET_OK) {
     return status;
   }
-  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
-  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->MutableData());
-  auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->MutableData());
+  auto output_boxes = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
+  auto output_classes = reinterpret_cast<float *>(out_tensors_.at(1)->data_c());
+  auto output_scores = reinterpret_cast<float *>(out_tensors_.at(2)->data_c());
+  auto output_num = reinterpret_cast<float *>(out_tensors_.at(3)->data_c());
 
   num_boxes_ = in_tensors_.at(0)->shape().at(1);
   num_classes_with_bg_ = in_tensors_.at(1)->shape().at(2);
@@ -256,5 +255,5 @@ int DetectionPostProcessBaseCPUKernel::Run() {
   }
   FreeAllocatedBuffer();
   return RET_OK;
-}  // namespace mindspore::kernel
+}
 }  // namespace mindspore::kernel

@@ -23,15 +23,16 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/matmul_parameter.h"
-#include "src/runtime/kernel/arm/base/matmul_base.h"
 
 namespace mindspore::kernel {
-class MatmulFP16CPUKernel : public MatmulBaseCPUKernel {
+class MatmulFP16CPUKernel : public LiteKernel {
  public:
   explicit MatmulFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                const mindspore::lite::PrimitiveC *primitive)
-      : MatmulBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+    params_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
+  }
   ~MatmulFP16CPUKernel() override;
   int Init() override;
   int ReSize() override;
@@ -50,6 +51,7 @@ class MatmulFP16CPUKernel : public MatmulBaseCPUKernel {
   void FreeTmpBuffer();
 
  private:
+  MatMulParameter *params_ = nullptr;
   float16_t *a_pack_ptr_ = nullptr;
   float16_t *b_pack_ptr_ = nullptr;
   float16_t *bias_ptr_ = nullptr;
@@ -57,6 +59,8 @@ class MatmulFP16CPUKernel : public MatmulBaseCPUKernel {
   float16_t *current_a_ = nullptr;
   float16_t *current_b_ = nullptr;
   float16_t *current_c_ = nullptr;
+  int thread_stride_ = 0;
+  int thread_count_ = 0;
 };
 }  // namespace mindspore::kernel
 

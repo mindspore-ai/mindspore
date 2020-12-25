@@ -20,29 +20,21 @@
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {
-
-typedef struct MergeParameter {
-  OpParameter op_parameter_;
-} MergeParameter;
-
 class MergeCPUKernel : public LiteKernel {
  public:
   MergeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                  const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    merge_param_ = reinterpret_cast<MergeParameter *>(op_parameter_);
-  }
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~MergeCPUKernel() override {}
-  int FreeInWorkTensor() const override;
-  bool IsReady(const std::vector<lite::Tensor *> &scope_tensors) override;
   int Init() override;
   int ReSize() override;
   int Run() override;
-  bool PartialInputReady(int num_begin, int num_end);
+  int FreeInWorkTensor() const override;
+  bool IsReady(const std::vector<lite::Tensor *> &scope_tensors) override;
 
  private:
-  MergeParameter *merge_param_ = nullptr;
+  bool PartialInputReady(int num_begin, int num_end);
 };
 }  // namespace mindspore::kernel
 
