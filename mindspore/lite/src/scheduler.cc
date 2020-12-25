@@ -567,6 +567,9 @@ void Scheduler::FindAllInoutKernels(const std::vector<kernel::LiteKernel *> &ker
 int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
   int ret = RET_OK;
 #if SUPPORT_NPU
+  if (!context_->IsNpuEnabled()) {
+    return RET_OK;
+  }
   auto transform_pass = new NPUTransformPass(context_, dst_kernels, src_tensors_);
   mindspore::lite::NPUPassManager::GetInstance()->AddPass(transform_pass);
   auto concat_format_pass = new NPUInsertTransformPass(context_, dst_kernels, src_tensors_);
@@ -574,7 +577,7 @@ int Scheduler::RunPass(std::vector<kernel::LiteKernel *> *dst_kernels) {
   auto fusion_pass = new NPUFusionPass(dst_kernels);
   mindspore::lite::NPUPassManager::GetInstance()->AddPass(fusion_pass);
 
-  ret = mindspore::lite::NPUPassManager::GetInstance()->Run(context_);
+  ret = mindspore::lite::NPUPassManager::GetInstance()->Run();
 #endif
   return ret;
 }
