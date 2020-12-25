@@ -77,30 +77,7 @@ int UnsqueezeCPUKernel::Run() {
   }
   return RET_OK;
 }
-
-kernel::LiteKernel *CpuUnsqueezeFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                  const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                  const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                                  const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(parameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Unsqueeze);
-  auto *kernel = new (std::nothrow) UnsqueezeCPUKernel(parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new UnsqueezeCPUKernel fail!";
-    free(parameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
-                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unsqueeze, CpuUnsqueezeFp32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Unsqueeze, CpuUnsqueezeFp32KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_Unsqueeze, CpuUnsqueezeFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unsqueeze, LiteKernelCreator<UnsqueezeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Unsqueeze, LiteKernelCreator<UnsqueezeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_Unsqueeze, LiteKernelCreator<UnsqueezeCPUKernel>)
 }  // namespace mindspore::kernel

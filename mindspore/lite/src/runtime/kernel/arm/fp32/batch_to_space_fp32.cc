@@ -55,6 +55,6 @@ int BatchToSpaceCPUKernel::Run() {
   return lite::RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpace, CPUKernelCreator<BatchToSpaceCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpaceND, CPUKernelCreator<BatchToSpaceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpace, LiteKernelCreator<BatchToSpaceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpaceND, LiteKernelCreator<BatchToSpaceCPUKernel>)
 }  // namespace mindspore::kernel

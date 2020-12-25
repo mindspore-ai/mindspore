@@ -120,5 +120,5 @@ int SqueezeInt8CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Squeeze, CPUKernelCreator<SqueezeInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Squeeze, LiteKernelCreator<SqueezeInt8CPUKernel>)
 }  // namespace mindspore::kernel

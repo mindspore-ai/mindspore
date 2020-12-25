@@ -187,5 +187,5 @@ kernel::LiteKernel *CpuSubInt8KernelCreator(const std::vector<lite::Tensor *> &i
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Sub, CpuSubInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Sub, LiteKernelCreator<SubInt8CPUKernel>)
 }  // namespace mindspore::kernel

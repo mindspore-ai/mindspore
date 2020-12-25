@@ -50,30 +50,6 @@ int SpaceToBatchInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuSpaceToBatchInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                     const std::vector<lite::Tensor *> &outputs, OpParameter *param,
-                                                     const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                                     const mindspore::lite::PrimitiveC *primitive) {
-  if (param == nullptr) {
-    MS_LOG(ERROR) << "Input param is nullptr!";
-    return nullptr;
-  }
-  auto *kernel = new (std::nothrow) SpaceToBatchInt8CPUKernel(param, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new SpaceToBatchInt8CPUKernel fail!";
-    free(param);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << param->name_
-                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(param->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_SpaceToBatch, CpuSpaceToBatchInt8KernelCreator)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_SpaceToBatchND, CpuSpaceToBatchInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_SpaceToBatch, LiteKernelCreator<SpaceToBatchInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_SpaceToBatchND, LiteKernelCreator<SpaceToBatchInt8CPUKernel>)
 }  // namespace mindspore::kernel

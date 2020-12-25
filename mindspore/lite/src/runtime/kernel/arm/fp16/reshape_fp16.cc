@@ -69,5 +69,5 @@ int ReshapeFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reshape, CPUKernelCreator<ReshapeFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reshape, LiteKernelCreator<ReshapeFp16CPUKernel>)
 }  // namespace mindspore::kernel

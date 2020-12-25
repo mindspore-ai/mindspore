@@ -135,5 +135,5 @@ int ConcatInt8CPUKernel::DoExecute(int task_id) {
   return lite::RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Concat, CPUKernelCreator<ConcatInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Concat, LiteKernelCreator<ConcatInt8CPUKernel>)
 }  // namespace mindspore::kernel

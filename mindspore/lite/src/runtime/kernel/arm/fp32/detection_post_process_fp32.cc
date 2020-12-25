@@ -37,5 +37,5 @@ int DetectionPostProcessCPUKernel::GetInputData() {
   return RET_OK;
 }
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DetectionPostProcess,
-           CPUKernelCreator<DetectionPostProcessCPUKernel>)
+           LiteKernelCreator<DetectionPostProcessCPUKernel>)
 }  // namespace mindspore::kernel

@@ -59,6 +59,6 @@ int DepthToSpaceInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DepthToSpace, CPUKernelCreator<DepthToSpaceInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DepthToSpace, LiteKernelCreator<DepthToSpaceInt8CPUKernel>)
 
 }  // namespace mindspore::kernel

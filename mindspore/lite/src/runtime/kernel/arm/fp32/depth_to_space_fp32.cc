@@ -50,5 +50,5 @@ int DepthToSpaceCPUKernel::Run() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DepthToSpace, CPUKernelCreator<DepthToSpaceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DepthToSpace, LiteKernelCreator<DepthToSpaceCPUKernel>)
 }  // namespace mindspore::kernel

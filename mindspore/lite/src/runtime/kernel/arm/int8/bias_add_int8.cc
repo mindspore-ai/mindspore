@@ -73,26 +73,5 @@ int BiasAddInt8CPUKernel::Run() {
   return NNACL_OK;
 }
 
-kernel::LiteKernel *CpuBiasAddInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                                const lite::InnerContext *ctx, const KernelKey &desc,
-                                                const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) BiasAddInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "Create kernel failed, name: " << parameter->name_;
-    free(parameter);
-    return nullptr;
-  }
-
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
-                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BiasAdd, CpuBiasAddInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_BiasAdd, LiteKernelCreator<BiasAddInt8CPUKernel>)
 }  // namespace mindspore::kernel
