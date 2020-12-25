@@ -25,6 +25,15 @@ The Adversarial Pruning method is a reliable neural network pruning algorithm by
 
 Dataset used: [Oxford-IIIT Pet](https://www.robots.ox.ac.uk/~vgg/data/pets/)
 
+- step 1: Download dataset
+
+- step 2: Convert the dataset to mindrecord:
+
+    ```bash
+    cd ./src
+    python data_to_mindrecord_test.py
+    ```
+
 - Dataset size: 7049 colorful images in 1000 classes
     - Train:  3680 images
     - Test: 3369 images
