@@ -158,6 +158,7 @@ def _construct_input_tensors(dataset_types, dataset_shapes, device_number=1):
 def _check_to_numpy(plugin, tensor):
     """Check the tensor and return a numpy.ndarray."""
     np_value = tensor.asnumpy()
+    np_value = np_value.copy()
     if plugin == 'scalar':
         if np_value.size == 1:
             return np_value
