@@ -93,17 +93,27 @@ PyCapsule_GetPointer = ctypes.pythonapi.PyCapsule_GetPointer
 PyCapsule_GetPointer.restype = ctypes.c_void_p
 PyCapsule_GetPointer.argtypes = (ctypes.py_object, ctypes.c_char_p)
 
-def to_dlpack(dl_managed_tensor):
-	return PyCapsule_New(ctypes.byref(dl_managed_tensor), b'dltensor', None)
 
-## dlpack to numpy.array
-def numpy_from_dlpack(pycapsule):
-	dl_managed_tensor = ctypes.cast(PyCapsule_GetPointer(pycapsule, b'dltensor'), ctypes.POINTER(DLManagedTensor)).contents
-	wrapped = type('', (), dict(__array_interface__ = dl_managed_tensor.dl_tensor.__array_interface__, __del__ = lambda self: dl_managed_tensor.deleter(ctypes.byref(dl_managed_tensor))))()
-	return numpy.asarray(wrapped)
-
-### numpy.array to mindspore.tensor
+###  mindspore.tensor to numpy.array
 from mindspore import Tensor
 import numpy as np 
 def tensor_from_numpy(data_numpy):
+    if not isinstance(data_numpy,np.array):
+	panic()
     return Tensor(data_numpy)
+
+## dlpack to numpy.array
+def from_dlpack(pycapsule):
+	dl_managed_tensor = ctypes.cast(PyCapsule_GetPointer(pycapsule, b'dltensor'), ctypes.POINTER(DLManagedTensor)).contents
+	wrapped = type('', (), dict(__array_interface__ = dl_managed_tensor.dl_tensor.__array_interface__, __del__ = lambda self: dl_managed_tensor.deleter(ctypes.byref(dl_managed_tensor))))()
+	tensor_mindspore = tensor_from_numpy(numpy.asarray(wrapped))
+	return tensor_mindspore
+
+# def to_dlpack(tensor_mindspore):
+# 	if not isinstance(tensor_mindspore, mindspore.Tensor):
+# 		panic()
+# 	data_numpy = tensor_mindspore.asnumpy()	
+# 	return PyCapsule_New(ctypes.byref(dl_managed_tensor), b'dltensor', None)
+
+
+# 
