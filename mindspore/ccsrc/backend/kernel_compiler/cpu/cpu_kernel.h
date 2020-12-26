@@ -79,6 +79,7 @@ enum OperateType {
   EQUAL,
   NOTEQUAL,
   FLOOR,
+  SQUAREDDIFFERENCE
 };
 
 class CPUKernel : public kernel::KernelMod {

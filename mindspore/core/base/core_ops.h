@@ -268,6 +268,7 @@ inline const PrimitivePtr kPrimRsqrt = std::make_shared<Primitive>("Rsqrt");
 inline const PrimitivePtr kPrimSplitV = std::make_shared<Primitive>("SplitV");
 inline const PrimitivePtr kPrimLinSpace = std::make_shared<Primitive>("LinSpace");
 inline const PrimitivePtr kPrimSign = std::make_shared<Primitive>("Sign");
+inline const PrimitivePtr kPrimSquaredDifference = std::make_shared<Primitive>("SquaredDifference");
 
 // Statements
 inline const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("return");

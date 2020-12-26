@@ -157,6 +157,16 @@ void ArithmeticCPUKernel::NotEqual(const T *input1, const T *input2, bool *out, 
   }
 }
 
+template <typename T>
+void ArithmeticCPUKernel::SquaredDifference(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    T diff = input1[idx[0]] - input2[idx[1]];
+    out[i] = diff * diff;
+  }
+}
+
 void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -182,6 +192,8 @@ void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = NOTEQUAL;
   } else if (kernel_name == prim::kPrimAssignAdd->name()) {
     operate_type_ = ASSIGNADD;
+  } else if (kernel_name == prim::kPrimSquaredDifference->name()) {
+    operate_type_ = SQUAREDDIFFERENCE;
   } else {
     MS_LOG(EXCEPTION) << "Not support " << kernel_name;
   }
@@ -343,6 +355,9 @@ void ArithmeticCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, co
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::Pow<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == ASSIGNADD) {
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::AssignAdd<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == SQUAREDDIFFERENCE) {
+      threads.emplace_back(
+        std::thread(&ArithmeticCPUKernel::SquaredDifference<T>, this, input1, input2, output, start, end));
     } else {
       MS_LOG(EXCEPTION) << "Not support " << operate_type_;
     }
