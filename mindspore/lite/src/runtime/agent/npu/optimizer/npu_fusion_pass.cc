@@ -21,20 +21,22 @@
 namespace mindspore::lite {
 bool CheckFusion(kernel::LiteKernel *kernel) {
   auto pre_flag =
-    std::all_of(kernel->in_kernels().begin(), kernel->in_kernels().end(), [](const kernel::LiteKernel *kernel) {
-      return kernel->Type() == schema::PrimitiveType_Nchw2Nhwc && kernel->out_kernels().size() == 1;
+    std::all_of(kernel->in_kernels().begin(), kernel->in_kernels().end(), [](const kernel::LiteKernel *in_kernel) {
+      return in_kernel->Type() == schema::PrimitiveType_Nchw2Nhwc && in_kernel->out_kernels().size() == 1;
     });
   if (!pre_flag) {
     return false;
   }
-  auto post_flag =
-    std::all_of(kernel->out_kernels().begin(), kernel->out_kernels().end(), [](const kernel::LiteKernel *kernel) {
-      return kernel->Type() == schema::PrimitiveType_Nhwc2Nchw && kernel->in_kernels().size() == 1;
-    });
+  auto post_flag = std::all_of(
+    kernel->out_kernels().begin(), kernel->out_kernels().end(),
+    [](const kernel::LiteKernel *out_kernel) { return out_kernel->Type() == schema::PrimitiveType_Nhwc2Nchw; });
   return post_flag;
 }
 
 bool CheckFormatFusion(kernel::LiteKernel *kernel) {
+  if (kernel->out_kernels().empty()) {
+    return false;
+  }
   if (kernel->Type() == schema::PrimitiveType_Nhwc2Nchw) {
     return std::all_of(
       kernel->out_kernels().begin(), kernel->out_kernels().end(),
@@ -159,38 +161,26 @@ int TransFormAxis(int axis) {
   }
 }
 
-int NPUFusionPass::AddFusion(kernel::LiteKernel *kernel) {
-  if (!CheckFusion(kernel)) {
-    return RET_OK;
-  }
+void NPUFusionPass::UpdateKernel(kernel::LiteKernel *kernel) {
   UpdatePreTensors(kernel);
   UpdatePostTensors(kernel);
   UpdatePreKernels(kernel);
   UpdatePostKernels(kernel);
+}
+
+int NPUFusionPass::CommonFusion(kernel::LiteKernel *kernel) {
+  UpdateKernel(kernel);
   return RET_OK;
 }
 
 int NPUFusionPass::ConcatFusion(kernel::LiteKernel *kernel) {
-  if (!CheckFusion(kernel)) {
-    return RET_OK;
-  }
-  UpdatePreTensors(kernel);
-  UpdatePostTensors(kernel);
-  UpdatePreKernels(kernel);
-  UpdatePostKernels(kernel);
+  UpdateKernel(kernel);
   auto concat_param = reinterpret_cast<ConcatParameter *>(kernel->op_parameter());
   concat_param->axis_ = TransFormAxis(concat_param->axis_);
   return RET_OK;
 }
 
 int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
-  if (kernel->out_kernels().empty()) {
-    return RET_OK;
-  }
-  if (!CheckFormatFusion(kernel)) {
-    return RET_OK;
-  }
-
   auto pre_kernel = kernel->in_kernels()[0];
   auto in_tensor = kernel->in_tensors()[0];
   auto out_tensor = kernel->out_tensors()[0];
@@ -237,17 +227,28 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
 }
 
 int NPUFusionPass::Run() {
-  for (auto kernel : *kernels) {
+  for (size_t i = 0; i < kernels->size(); i++) {
+    auto kernel = (*kernels)[i];
+    if (kernel->Type() == schema::PrimitiveType_Nchw2Nhwc || kernel->Type() == schema::PrimitiveType_Nchw2Nhwc) {
+      if (CheckFormatFusion(kernel)) {
+        i--;
+        FormatFusion(kernel);
+      }
+      continue;
+    }
+    if (!CheckFusion(kernel)) {
+      continue;
+    }
     switch (kernel->Type()) {
       case schema::PrimitiveType_Concat:
+        i -= kernel->in_kernels().size();
         ConcatFusion(kernel);
         continue;
       case schema::PrimitiveType_Add:
       case schema::PrimitiveType_Activation:
-        AddFusion(kernel);
-        continue;
-      case schema::PrimitiveType_Nchw2Nhwc:
-        FormatFusion(kernel);
+      case schema::PrimitiveType_Eltwise:
+        i -= kernel->in_kernels().size();
+        CommonFusion(kernel);
         continue;
       default:
         continue;

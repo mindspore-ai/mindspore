@@ -100,25 +100,25 @@ void NPUPassUtils::UpdateKernel(kernel::LiteKernel *kernel, const std::vector<ke
   kernel->set_out_kernels(out_kernels);
 }
 
-void NPUPassUtils::UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                                 kernel::LiteKernel *after_kernel) {
+void NPUPassUtils::UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *pre_kernel, kernel::LiteKernel *trans_kernel,
+                                                 kernel::LiteKernel *kernel) {
   std::vector<kernel::LiteKernel *> out_kernels;
 
-  for (auto out_kernel : kernel->out_kernels()) {
-    if (out_kernel == after_kernel) {
+  for (auto out_kernel : pre_kernel->out_kernels()) {
+    if (out_kernel == kernel) {
       out_kernels.push_back(trans_kernel);
     } else {
       out_kernels.push_back(out_kernel);
     }
   }
-  UpdateKernel(kernel, kernel->in_kernels(), out_kernels, kernel->in_tensors(), kernel->out_tensors());
+  pre_kernel->set_out_kernels(out_kernels);
 }
 
 void NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                                 kernel::LiteKernel *next_kernel) {
+                                                 kernel::LiteKernel *post_kernel) {
   std::vector<kernel::LiteKernel *> cur_out_kernels;
   for (auto out_kernel : kernel->out_kernels()) {
-    if (out_kernel == next_kernel) {
+    if (out_kernel == post_kernel) {
       cur_out_kernels.push_back(trans_kernel);
     } else {
       cur_out_kernels.push_back(out_kernel);
@@ -130,45 +130,47 @@ void NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *kernel, ker
   std::vector<int> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
   kernel_out_tensor->set_format(schema::Format_NCHW);
   kernel_out_tensor->set_shape(nchw_shape);
-  UpdateKernel(kernel, kernel->in_kernels(), cur_out_kernels, kernel->in_tensors(), {kernel_out_tensor});
+  kernel->set_out_kernels(cur_out_kernels);
+  kernel->set_out_tensors({kernel_out_tensor});
 }
 
 void NPUPassUtils::UpdateNH2NCTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                                   kernel::LiteKernel *before_kernel) {
+                                                   kernel::LiteKernel *pre_kernel) {
   std::vector<lite::Tensor *> cur_kernel_in_tensors = {trans_kernel->out_tensors()[0]};
   for (int i = 1; i < kernel->in_tensors().size(); i++) {
     cur_kernel_in_tensors.push_back(kernel->in_tensors()[i]);
   }
   std::vector<kernel::LiteKernel *> cur_in_kernels = {trans_kernel};
-  for (int i = 0; i < kernel->in_kernels().size(); i++) {
+  for (int i = 1; i < kernel->in_kernels().size(); i++) {
     auto in_kernel = kernel->in_kernels()[i];
     if (in_kernel != kernel) {
       cur_in_kernels.push_back(in_kernel);
     }
   }
-  UpdateKernel(kernel, cur_in_kernels, kernel->out_kernels(), cur_kernel_in_tensors, kernel->out_tensors());
+  kernel->set_in_kernels(cur_in_kernels);
+  kernel->set_in_tensors({cur_kernel_in_tensors});
 }
 
 void NPUPassUtils::UpdateNC2NHTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                                   kernel::LiteKernel *next_kernel) {
-  std::vector<Tensor *> next_in_tensors;
-  for (auto next_in_tensor : next_kernel->in_tensors()) {
-    if (next_in_tensor != kernel->out_tensors()[0]) {
-      next_in_tensors.push_back(next_in_tensor);
+                                                   kernel::LiteKernel *post_kernel) {
+  std::vector<Tensor *> post_in_tensors;
+  for (auto post_in_tensor : post_kernel->in_tensors()) {
+    if (post_in_tensor != kernel->out_tensors()[0]) {
+      post_in_tensors.push_back(post_in_tensor);
     } else {
-      next_in_tensors.push_back(trans_kernel->out_tensors()[0]);
+      post_in_tensors.push_back(trans_kernel->out_tensors()[0]);
     }
   }
-  next_kernel->set_in_tensors(next_in_tensors);
-  std::vector<kernel::LiteKernel *> next_in_kernels;
-  for (auto in_kernel : next_kernel->in_kernels()) {
+  post_kernel->set_in_tensors(post_in_tensors);
+  std::vector<kernel::LiteKernel *> post_in_kernels;
+  for (auto in_kernel : post_kernel->in_kernels()) {
     if (in_kernel == kernel) {
-      next_in_kernels.push_back(trans_kernel);
+      post_in_kernels.push_back(trans_kernel);
     } else {
-      next_in_kernels.push_back(in_kernel);
+      post_in_kernels.push_back(in_kernel);
     }
   }
-  NPUPassUtils::UpdateKernel(next_kernel, next_in_kernels, next_kernel->out_kernels(), next_in_tensors,
-                             next_kernel->out_tensors());
+  post_kernel->set_in_kernels(post_in_kernels);
+  post_kernel->set_in_tensors({post_in_tensors});
 }
 }  // namespace mindspore::lite
