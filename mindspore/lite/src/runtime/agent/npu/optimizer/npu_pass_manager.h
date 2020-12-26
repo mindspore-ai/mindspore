@@ -31,7 +31,7 @@ class NPUPassManager {
 
   void AddPass(NPUBasePass *pass);
 
-  int Run(const InnerContext *context);
+  int Run();
 
   void Clear();
 
