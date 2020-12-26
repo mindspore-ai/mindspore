@@ -44,8 +44,6 @@ class ReduceFp16CPUKernel : public ReduceBaseCPUKernel {
  private:
   Reducer reducer_ = nullptr;
   std::vector<float16_t *> data_buffers_;
-  float *dst_data_ = nullptr;
-  float16_t *fp16_input_ = nullptr;
   const float16_t *fp16_src_data_ = nullptr;
   float16_t *fp16_dst_data_ = nullptr;
 

@@ -146,7 +146,8 @@ void ReduceBaseCPUKernel::CalculateInnerOuterSize() {
 void ReduceBaseCPUKernel::CalculateTmpBufferSize() {
   buffer_sizes_.clear();
   auto input_shape = in_tensors_.at(0)->shape();
-  for (auto i = 0; i < num_axes_; i++) {
+  // calculate size of buffer to malloc for each reducing axis
+  for (auto i = 0; i < num_axes_ - 1; i++) {
     int axis = axes_[i];
     size_t size = 1;
     for (size_t j = 0; j < input_shape.size(); j++) {
