@@ -39,6 +39,7 @@ if __name__ == "__main__":
 
     model_builder = ModelBuilder(ModelConfig, TrainConfig)
     _, network = model_builder.get_train_eval_net()
+    network.set_train(False)
 
     load_checkpoint(args.ckpt_file, net=network)
 
