@@ -1316,8 +1316,8 @@ function Run_arm64() {
 
     # Run npu converted models:
     while read line; do
-        model_name=`echo ${mindspore_line_info}|awk -F ' ' '{print $1}'`
-        accuracy_limit=`echo ${mindspore_line_info}|awk -F ' ' '{print $2}'`
+        model_name=`echo ${line}|awk -F ' ' '{print $1}'`
+        accuracy_limit=`echo ${line}|awk -F ' ' '{print $2}'`
         echo "mindspore run npu: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
         echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=NPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_arm64_log_file}"

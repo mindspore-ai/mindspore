@@ -54,7 +54,8 @@ kernel::LiteKernel *NPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                      const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                      const mindspore::lite::PrimitiveC *primitive) {
   if (!primitive->infer_flag()) {
-    MS_LOG(ERROR) << "NPU does not support runtime inference shape";
+    MS_LOG(ERROR) << "NPU does not support runtime inference shape. Type is:"
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
     return nullptr;
   }
 

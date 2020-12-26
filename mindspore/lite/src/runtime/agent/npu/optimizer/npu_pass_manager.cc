@@ -20,10 +20,7 @@
 namespace mindspore::lite {
 
 void NPUPassManager::AddPass(NPUBasePass *pass) { all_pass_.push_back(pass); }
-int NPUPassManager::Run(const InnerContext *context) {
-  if (!context->IsNpuEnabled()) {
-    return RET_OK;
-  }
+int NPUPassManager::Run() {
   for (auto pass : all_pass_) {
     auto ret = pass->Run();
     if (ret != RET_OK) {
