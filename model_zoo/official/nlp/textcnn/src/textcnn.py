@@ -97,14 +97,14 @@ class TextCNN(nn.Cell):
     """
     TextCNN architecture
     """
-    def __init__(self, vocab_len, word_len, num_classes, vec_length):
+    def __init__(self, vocab_len, word_len, num_classes, vec_length, embedding_table='uniform'):
         super(TextCNN, self).__init__()
         self.vec_length = vec_length
         self.word_len = word_len
         self.num_classes = num_classes
 
         self.unsqueeze = P.ExpandDims()
-        self.embedding = nn.Embedding(vocab_len, self.vec_length, embedding_table='uniform')
+        self.embedding = nn.Embedding(vocab_len, self.vec_length, embedding_table=embedding_table)
 
         self.slice = P.Slice()
         self.layer1 = self.make_layer(kernel_height=3)

@@ -17,7 +17,7 @@ network config setting, will be used in main.py
 """
 from easydict import EasyDict as edict
 
-cfg = edict({
+cfg_mr = edict({
     'name': 'movie review',
     'pre_trained': False,
     'num_classes': 2,
@@ -30,5 +30,40 @@ cfg = edict({
     'keep_checkpoint_max': 1,
     'checkpoint_path': './ckpt/train_textcnn-4_149.ckpt',
     'word_len': 51,
-    'vec_length': 40
+    'vec_length': 40,
+    'base_lr': 1e-3
+})
+
+cfg_subj = edict({
+    'name': 'subjectivity',
+    'pre_trained': False,
+    'num_classes': 2,
+    'batch_size': 64,
+    'epoch_size': 5,
+    'weight_decay': 3e-5,
+    'data_path': './Subj/',
+    'device_target': 'Ascend',
+    'device_id': 7,
+    'keep_checkpoint_max': 1,
+    'checkpoint_path': './ckpt/train_textcnn-4_149.ckpt',
+    'word_len': 51,
+    'vec_length': 40,
+    'base_lr': 8e-4
+})
+
+cfg_sst2 = edict({
+    'name': 'SST2',
+    'pre_trained': False,
+    'num_classes': 2,
+    'batch_size': 64,
+    'epoch_size': 4,
+    'weight_decay': 3e-5,
+    'data_path': './SST-2/',
+    'device_target': 'Ascend',
+    'device_id': 7,
+    'keep_checkpoint_max': 1,
+    'checkpoint_path': './ckpt/train_textcnn-4_149.ckpt',
+    'word_len': 51,
+    'vec_length': 40,
+    'base_lr': 5e-3
 })
