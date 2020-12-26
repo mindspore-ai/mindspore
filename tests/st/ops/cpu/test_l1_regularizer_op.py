@@ -58,3 +58,31 @@ def test_l1_regularizer08():
     expect = 5.0
     print("output : ", output.asnumpy())
     assert np.all(output.asnumpy() == expect)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_l1_regularizer_input_int():
+    scale = 0.5
+    net = nn.L1Regularizer(scale)
+    weights = 2
+    try:
+        output = net(weights)
+        print("output : ", output.asnumpy())
+    except TypeError:
+        assert True
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_l1_regularizer_input_tuple():
+    scale = 0.5
+    net = nn.L1Regularizer(scale)
+    weights = (1, 2, 3, 4)
+    try:
+        output = net(weights)
+        print("output : ", output.asnumpy())
+    except TypeError:
+        assert True
