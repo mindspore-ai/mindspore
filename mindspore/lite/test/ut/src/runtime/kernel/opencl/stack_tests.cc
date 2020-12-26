@@ -33,11 +33,12 @@ OpParameter *CreateParameter(int axis) {
 TEST_F(TestOpenCL_Stack, input2_ndim1_axis1) {
   constexpr int INPUT_NUM = 2;
   int axis = 1;
-  std::vector<int> input_shapes[INPUT_NUM] = {{8}, {8}};
-  std::vector<int> output_shape = {8, 2};
-  float input_datas[INPUT_NUM][8] = {{0.75, 0.06, 0.74, 0.30, 0.9, 0.59, 0.03, 0.37},
-                                     {0.5, 0.6, 0.74, 0.23, 0.46, 0.69, 0.13, 0.47}};
-  float output_data[] = {0.75, 0.5, 0.06, 0.6, 0.74, 0.74, 0.30, 0.23, 0.9, 0.46, 0.59, 0.69, 0.03, 0.13, 0.37, 0.47};
+  std::vector<int> input_shapes[INPUT_NUM] = {{10}, {10}};
+  std::vector<int> output_shape = {10, 2};
+  float input_datas[INPUT_NUM][10] = {{0.75, 0.06, 0.74, 0.30, 0.9, 0.59, 0.03, 0.37, 0.13, 0.47},
+                                      {0.5, 0.6, 0.74, 0.23, 0.46, 0.69, 0.13, 0.47, 0.59, 0.03}};
+  float output_data[] = {0.75, 0.5,  0.06, 0.6,  0.74, 0.74, 0.30, 0.23, 0.9,  0.46,
+                         0.59, 0.69, 0.03, 0.13, 0.37, 0.47, 0.13, 0.59, 0.47, 0.03};
 
   for (auto fp16_enable : {true}) {
     auto *param = CreateParameter(axis);

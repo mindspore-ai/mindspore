@@ -49,7 +49,6 @@ class GatherOpenCLKernel : public OpenCLKernel {
   int axis_ = {0};
   bool intensor1_is_tensor{false};
   bool enable_fp16_{false};
-  cl_int stride_w{1};
 };
 }  // namespace mindspore::kernel
 #endif

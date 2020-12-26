@@ -126,8 +126,6 @@ int GatherOpenCLKernel::Prepare() {
 int GatherOpenCLKernel::ConvertTensorToweight() {
   auto allocator = ocl_runtime_->GetAllocator();
   GpuTensorInfo img_info(in_tensors_[1]);
-  size_t dtype = sizeof(cl_int);
-  stride_w = img_info.RowPitch() / dtype;
   auto indices_tensor = in_tensors_.at(1);
   auto indices_num = indices_tensor->ElementsNum();
   indices_data_ = reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num));
@@ -140,7 +138,7 @@ int GatherOpenCLKernel::ConvertTensorToweight() {
   auto data = indices_tensor->data_c();
   if (data_type == kNumberTypeInt32) {
     for (int i = 0; i < indices_num; i++) {
-      indices_data_[i] = reinterpret_cast<int32_t *>(data)[i * stride_w];
+      indices_data_[i] = reinterpret_cast<int32_t *>(data)[i];
     }
   } else {
     MS_LOG(ERROR) << "Gather Only supported The DataType Of Intensor1 is Int32  "

@@ -14,16 +14,19 @@ __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE |
 // input -1D
 __kernel void stack_2input_3axis_1inshape(__read_only image2d_t input0, __read_only image2d_t input1,
                                           __write_only image2d_t output, int4 input_shape, int4 output_shape) {
-  int X = get_global_id(0);
-  int Y = get_global_id(1);
-  if (X >= output_shape.x * output_shape.y || Y >= output_shape.z) {
+  int X = get_global_id(0);  // N*H
+  int Y = get_global_id(1);  // W*C
+  if (X >= output_shape.x * output_shape.y || Y >= output_shape.z * output_shape.w) {
     return;
   }
-  int coordinate_x_out = output_shape.w;
-  FLT4 result1 = READ_IMAGE(input0, smp_none, (int2)(0, (X)));
-  FLT4 result2 = READ_IMAGE(input1, smp_none, (int2)(0, (X)));
-  FLT4 result = {result1.x, result2.x, 0, 0};
-  WRITE_IMAGE(output, (int2)(Y, (X)), result);
+  FLT4 result1 = READ_IMAGE(input0, smp_none, (int2)(X, 0));
+  FLT result1_temp[4] = {result1.x, result1.y, result1.z, result1.w};
+  FLT4 result2 = READ_IMAGE(input1, smp_none, (int2)(X, 0));
+  FLT result2_temp[4] = {result2.x, result2.y, result2.z, result2.w};
+  for (int i = 0; i < C4NUM; ++i) {
+    FLT4 result = {result1_temp[i], result2_temp[i], 0, 0};
+    WRITE_IMAGE(output, (int2)(Y, (X * C4NUM + i)), result);
+  }
 }
 
 // input -2D -axis = 1
