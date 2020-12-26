@@ -1006,6 +1006,25 @@ bool AnfRuntimeAlgorithm::IsParameterWeight(const ParameterPtr &node) {
   return node->has_default();
 }
 
+bool AnfRuntimeAlgorithm::IsLabelIndexInNode(const AnfNodePtr &node, size_t label_index) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!node->isa<CNode>()) {
+    return false;
+  }
+  auto cnode = node->cast<CNodePtr>();
+  MS_EXCEPTION_IF_NULL(cnode);
+  if (AnfAlgo::GetCNodeName(cnode) == kLabelGotoOpName &&
+      (AnfAlgo::GetNodeAttr<uint32_t>(cnode, kAttrLabelIndex) == label_index)) {
+    return true;
+  } else if (AnfAlgo::GetCNodeName(cnode) == kLabelSwitchOpName) {
+    auto label_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cnode, kAttrLabelSwitchList);
+    if (std::find(label_list.begin(), label_list.end(), label_index) != label_list.end()) {
+      return true;
+    }
+  }
+  return false;
+}
+
 void AnfRuntimeAlgorithm::SetStreamId(uint32_t stream_id, AnfNode *node) {
   MS_EXCEPTION_IF_NULL(node);
   auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
