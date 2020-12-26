@@ -346,10 +346,6 @@ STATUS InferShapePass::SwitchCNodeInferShape(const CNodePtr &switch_cnode) {
 }
 
 bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
-  if (func_graph->has_flag("HasInferShaped")) {
-    return true;
-  }
-
   if (fmk_type != lite::converter::FmkType_TF && fmk_type != lite::converter::FmkType_TFLITE) {
     MS_LOG(INFO) << "The framework type of model should be tf/tflite.";
     return false;
