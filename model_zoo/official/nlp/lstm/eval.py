@@ -20,7 +20,7 @@ import os
 
 import numpy as np
 
-from src.config import lstm_cfg as cfg, lstm_cfg_ascend
+from src.config import lstm_cfg, lstm_cfg_ascend
 from src.dataset import lstm_create_dataset, convert_to_mindrecord
 from src.lr_schedule import get_lr
 from src.lstm import SentimentNet
