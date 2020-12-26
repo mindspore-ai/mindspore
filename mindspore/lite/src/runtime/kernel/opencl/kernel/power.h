@@ -38,13 +38,9 @@ class PowerOpenCLKernel : public OpenCLKernel {
   int Run() override;
 
  private:
-  int Initweight();
-
- private:
   cl_int4 out_shape_{};
   bool broadcast_{false};
   bool use_fp16_enable_{false};
-  void *weight_{nullptr};
   float power_{1.0};
   float scale_{0.0};
   float shift_{1.0};

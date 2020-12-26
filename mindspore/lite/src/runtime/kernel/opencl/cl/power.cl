@@ -24,27 +24,19 @@ FLT OptimizedPowerImpl(FLT x, int exponent) {
   return exponent >= 0 ? result : 1 / result;
 }
 
-__kernel void power(__read_only image2d_t input0, __global FLT *input1, __write_only image2d_t output,
+__kernel void power(__read_only image2d_t input0, __read_only image2d_t input1, __write_only image2d_t output,
                     int4 output_shape, FLT4 parameter) {
   CHECK_IDX;
   int n = X / output_shape.y;
   int h = X % output_shape.y;
-  int unalign_w = (int)parameter.w;
   FLT4 result;
   FLT4 result0 = READ_IMAGE(input0, smp_none, (int2)((Y)*output_shape.w + Z, (n * output_shape.y + h)));
-  int index_weight = (n * output_shape.y + h) * output_shape.z * unalign_w + Y * unalign_w + Z * C4NUM;
+  FLT4 result1 = READ_IMAGE(input1, smp_none, (int2)((Y)*output_shape.w + Z, (n * output_shape.y + h)));
+
   FLT tmp_result[4];
   FLT tmp_result0[4] = {result0.x, result0.y, result0.z, result0.w};
-  FLT tmp_result1[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-  if ((Z + 1) * C4NUM <= unalign_w) {
-    for (int i = 0; i < C4NUM; ++i) {
-      tmp_result1[i] = input1[index_weight + i];
-    }
-  } else {
-    for (int i = 0; i < unalign_w % C4NUM; ++i) {
-      tmp_result1[i] = input1[index_weight + i];
-    }
-  }
+  FLT tmp_result1[4] = {result1.x, result1.y, result1.z, result1.w};
+
   for (int i = 0; i < 4; ++i) {
     tmp_result0[i] = tmp_result0[i] * parameter.z + parameter.y;
     if (floor(tmp_result1[i]) == tmp_result1[i]) {

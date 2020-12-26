@@ -48,6 +48,10 @@ int MatMulOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "matmul only support input shape size= 2, 3 or 4.";
     return mindspore::lite::RET_ERROR;
   }
+  if (!in_tensors_.at(kWeightIndex)->IsConst()) {
+    MS_LOG(ERROR) << "Matmul don't support non-constant filter yet.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -80,10 +84,6 @@ int MatMulOpenCLKernel::Prepare() {
 
 int MatMulOpenCLKernel::InitWeights() {
   // ABMCI @ ABCICO = ABMCO
-  if (!in_tensors_.at(kWeightIndex)->IsConst()) {
-    MS_LOG(ERROR) << "Matmul don't support non-constant filter yet.";
-    return RET_ERROR;
-  }
   auto ret = DequantWeight();
   if (ret != RET_OK) {
     return ret;

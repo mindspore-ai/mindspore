@@ -48,8 +48,8 @@ TEST_F(TestPowerOpenCLCI, Int32CI) {
                          100.0, 121.0, 1728.0, 1.0, 196.0, 225.0, 16.0, 289.0};
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(broadcast_, shift_, scale_);
-    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
-             param, fp16_enable, fp16_enable ? 1e-3 : 1e-9);
+    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, VAR}}, {output_shape, output_data}, param,
+             fp16_enable, fp16_enable ? 1e-3 : 1e-9);
   }
 }
 
@@ -68,8 +68,8 @@ TEST_F(TestPowerOpenCLCI, Fp32CI) {
                          3.20657016, 0.64395994, 0.01526405, 0.13275899, 5.85509388, 0.16177453, 0.07150001, 0.0542811};
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(broadcast_, shift_, scale_);
-    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
-             param, fp16_enable, fp16_enable ? 1e-2 : 1e-6);
+    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, VAR}}, {output_shape, output_data}, param,
+             fp16_enable, fp16_enable ? 1e-2 : 1e-6);
   }
 }
 
@@ -87,8 +87,8 @@ TEST_F(TestPowerOpenCLCI, Fp32UnAlign) {
                          3.20657016, 0.64395994, 0.01526405, 0.13275899, 5.85509388, 0.16177453, 0.07150001};
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(broadcast_, shift_, scale_);
-    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
-             param, fp16_enable, fp16_enable ? 1e-2 : 1e-6);
+    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, VAR}}, {output_shape, output_data}, param,
+             fp16_enable, fp16_enable ? 1e-2 : 1e-6);
   }
 }
 
@@ -121,8 +121,8 @@ TEST_F(TestPowerOpenCLCI, Fp16CI) {
                          0.4856,  1.014,   0.2025,  -1.736, 0.2134, 0.489, -0.596, 0.7466};
   for (auto fp16_enable : {true}) {
     auto *param = CreateParameter(broadcast_, shift_, scale_);
-    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, CONST_TENSOR}}, {output_shape, output_data},
-             param, fp16_enable, fp16_enable ? 1e-3 : 1e-6);
+    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, VAR}}, {output_shape, output_data}, param,
+             fp16_enable, fp16_enable ? 1e-3 : 1e-6);
   }
 }
 

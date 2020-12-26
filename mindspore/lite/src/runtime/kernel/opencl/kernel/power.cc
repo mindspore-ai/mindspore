@@ -48,40 +48,6 @@ int PowerOpenCLKernel::CheckSpecs() {
   return RET_OK;
 }
 
-int PowerOpenCLKernel::Initweight() {
-  auto allocator = ocl_runtime_->GetAllocator();
-  GpuTensorInfo img_info(in_tensors_.at(1));
-  auto weight_tensor = in_tensors_.at(1);
-  size_t weight_size = img_info.OriginSize;
-  weight_ = allocator->Malloc(weight_size);
-  allocator->MapBuffer(weight_, CL_MAP_WRITE, nullptr, true);
-  memset(weight_, 0x00, weight_size);
-
-  if (weight_tensor->data_type() == kNumberTypeFloat16) {
-    if (use_fp16_enable_) {
-      memcpy(weight_, weight_tensor->data_c(), weight_size);
-    } else {
-      auto weight_fp32 = reinterpret_cast<float *>(weight_);
-      auto origin_bias_fp16 = reinterpret_cast<float16_t *>(weight_tensor->data_c());
-      for (int i = 0; i < img_info.ElementsNum; ++i) {
-        weight_fp32[i] = static_cast<float>(origin_bias_fp16[i]);
-      }
-    }
-  } else {
-    if (use_fp16_enable_) {
-      auto weight_fp16 = reinterpret_cast<float16_t *>(weight_);
-      auto origin_bias_fp32 = reinterpret_cast<float *>(weight_tensor->data_c());
-      for (int i = 0; i < img_info.ElementsNum; ++i) {
-        weight_fp16[i] = static_cast<float16_t>(origin_bias_fp32[i]);
-      }
-    } else {
-      memcpy(weight_, weight_tensor->data_c(), weight_size);
-    }
-  }
-  allocator->UnmapBuffer(weight_);
-  return RET_OK;
-}
-
 void PowerGetWorkGroup(const std::vector<size_t> &global, std::vector<size_t> *local, int max_size) {
   const int max_divider = 8;
   const int max_x = 2, max_y = 8;
@@ -145,11 +111,9 @@ int PowerOpenCLKernel::Prepare() {
   std::string kernel_name = "power";
   std::string source = power_source;
   std::string program_name = "power";
-  if (broadcast_ && in_tensors_.size() == 1) {
+  if (broadcast_) {
     power_ = param->power_;
     kernel_name += "_broadcast";
-  } else {
-    Initweight();
   }
   scale_ = param->scale_;
   shift_ = param->shift_;
@@ -168,7 +132,7 @@ int PowerOpenCLKernel::Run() {
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c());
   } else {
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(0)->data_c());
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, weight_, lite::opencl::MemType::BUF);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_.at(1)->data_c());
   }
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_.at(0)->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);

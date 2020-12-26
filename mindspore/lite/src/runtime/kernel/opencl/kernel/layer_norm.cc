@@ -33,24 +33,24 @@ namespace mindspore::kernel {
 
 int LayerNormOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<LayerNormParameter *>(this->op_parameter_);
-  if (param->elementwise_mode_ == ELEMENTWISE_PER_CHANNEL) {
-    if (in_tensors_.size() != 3) {
-      MS_LOG(ERROR) << " invalid in_tensors_ size" << in_tensors_.size() << std::endl;
-      return RET_ERROR;
-    }
-    if (param->normalized_dims_ > in_tensors_.at(0)->shape().size()) {
-      MS_LOG(ERROR) << " invalid normalized_shape_ size" << param->normalized_dims_ << std::endl;
-      return RET_ERROR;
-    }
-  } else if (param->elementwise_mode_ == ELEMENTWISE_NOT) {
-    if (in_tensors_.size() != 1) {
-      MS_LOG(ERROR) << " invalid in_tensors_ size" << in_tensors_.size() << std::endl;
-      return RET_ERROR;
-    }
-  } else {
-    MS_LOG(ERROR) << "Unsupported elementwise_mode_" << param->elementwise_mode_;
-    return RET_ERROR;
-  }
+  //  if (param->elementwise_mode_ == ELEMENTWISE_PER_CHANNEL) {
+  //    if (in_tensors_.size() != 3) {
+  //      MS_LOG(ERROR) << " invalid in_tensors_ size" << in_tensors_.size() << std::endl;
+  //      return RET_ERROR;
+  //    }
+  //    if (param->normalized_dims_ > in_tensors_.at(0)->shape().size()) {
+  //      MS_LOG(ERROR) << " invalid normalized_shape_ size" << param->normalized_dims_ << std::endl;
+  //      return RET_ERROR;
+  //    }
+  //  } else if (param->elementwise_mode_ == ELEMENTWISE_NOT) {
+  //    if (in_tensors_.size() != 1) {
+  //      MS_LOG(ERROR) << " invalid in_tensors_ size" << in_tensors_.size() << std::endl;
+  //      return RET_ERROR;
+  //    }
+  //  } else {
+  //    MS_LOG(ERROR) << "Unsupported elementwise_mode_" << param->elementwise_mode_;
+  //    return RET_ERROR;
+  //  }
   if (in_tensors_.at(0)->shape().size() != 4 || out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "UnSupported in_tensors_.shape.size: " << in_tensors_.at(0)->shape().size()
                   << " out_tensors_.size(): " << out_tensors_.size();
@@ -184,7 +184,7 @@ int LayerNormOpenCLKernel::Initweight() {
 int LayerNormOpenCLKernel::Prepare() {
   use_fp16_enable_ = ocl_runtime_->GetFp16Enable();
   auto param = reinterpret_cast<LayerNormParameter *>(this->op_parameter_);
-  elementwise_affine_ = param->elementwise_mode_;
+  elementwise_affine_ = true;  // param->elementwise_mode_;
   normalized_dims_ = param->normalized_dims_;
   epsilon_ = param->epsilon_;
   if (elementwise_affine_) {

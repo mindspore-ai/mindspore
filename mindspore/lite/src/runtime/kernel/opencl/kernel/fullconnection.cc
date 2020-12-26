@@ -92,6 +92,10 @@ int FullConnectionOpenCLKernel::CheckSpecs() {
       return RET_ERROR;
     }
   }
+  if (in_tensors_.size() == 3 && !in_tensors_.at(2)->IsConst()) {
+    MS_LOG(ERROR) << "FullConnection don't support non-constant bias yet.";
+    return RET_ERROR;
+  }
   CI_remainder_ = input_nhw / N_;
   return RET_OK;
 }
@@ -211,11 +215,7 @@ int FullConnectionOpenCLKernel::InitBias() {
   bias_ = allocator->Malloc(im_dst_x * im_dst_y * C4NUM * dtype_size, img_size);
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
   memset(bias_, 0x00, co4 * C4NUM * dtype_size);
-  if (in_tensors_.size() >= 3) {
-    if (!in_tensors_.at(2)->IsConst()) {
-      MS_LOG(ERROR) << "FullConnection don't support non-constant bias yet.";
-      return RET_ERROR;
-    }
+  if (in_tensors_.size() == 3) {
     if (in_tensors_[2]->data_type() == kNumberTypeFloat32 && enable_fp16_) {
       for (int i = 0; i < CO_; i++) {
         reinterpret_cast<float16_t *>(bias_)[i] = reinterpret_cast<float *>(in_tensors_[2]->data_c())[i];
