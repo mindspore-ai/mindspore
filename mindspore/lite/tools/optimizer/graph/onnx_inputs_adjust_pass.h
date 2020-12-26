@@ -43,8 +43,6 @@ class OnnxInputAdjustOpPass : public Pass {
   STATUS ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   STATUS ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode);
   bool Run(const FuncGraphPtr &func_graph) override;
-
- private:
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_TOOLS_OPTIMIZER_GRAPH_ONNX_INPUTS_ADJUST_PASS_H_

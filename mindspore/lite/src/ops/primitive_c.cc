@@ -160,6 +160,7 @@
 #include "src/ops/merge.h"
 #include "src/ops/switch.h"
 #include "src/ops/partial.h"
+#include "src/ops/gelu.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -330,9 +331,28 @@ void PrimitiveC::PopulaterOutputQuantParam(const Primitive &prim, bool narrowRan
 
 void PrimitiveC::PopulaterQuantParam(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   auto narrow_range = prim.GetAttr("narrow_range");
-  bool narrowRangeQuantParam = narrow_range != nullptr && GetValue<bool>(narrow_range);
+  bool narrowRangeQuantParam = false;
+  if (narrow_range != nullptr) {
+    if (utils::isa<tensor::TensorPtr>(narrow_range)) {
+      auto narrow_range_tensor = narrow_range->cast<tensor::TensorPtr>();
+      narrowRangeQuantParam = *reinterpret_cast<bool *>(narrow_range_tensor->data_c());
+    } else if (utils::isa<ImmTraits<bool>::type>(narrow_range)) {
+      narrowRangeQuantParam = GetValue<bool>(narrow_range);
+    } else {
+      MS_LOG(ERROR) << "valueptr is invalid.";
+      return;
+    }
+  }
   auto num_bits = prim.GetAttr("num_bits");
-  int32_t numbitsRangeQuantParam = num_bits != nullptr ? GetValue<int64_t>(num_bits) : 8;
+  int32_t numbitsRangeQuantParam = 8;
+  if (num_bits != nullptr) {
+    if (utils::isa<tensor::TensorPtr>(num_bits)) {
+      auto num_bits_tensor = num_bits->cast<tensor::TensorPtr>();
+      numbitsRangeQuantParam = *reinterpret_cast<int64_t *>(num_bits_tensor->data_c());
+    } else if (utils::isa<ImmTraits<int64_t>::type>(num_bits)) {
+      numbitsRangeQuantParam = GetValue<int64_t>(num_bits);
+    }
+  }
   PopulaterInputQuantParam(prim, inputs, narrowRangeQuantParam, numbitsRangeQuantParam);
   PopulaterOutputQuantParam(prim, narrowRangeQuantParam, numbitsRangeQuantParam);
 }
@@ -511,7 +531,7 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<FusedBatchNorm>(prim, inputs, quantType);
   } else if (op_type == "make_tuple") {
     return NewPrimitiveC<MakeTuple>(prim, inputs, quantType);
-  } else if (op_type == "MatMul") {
+  } else if (op_type == "MatMul" || op_type == "BatchMatMul") {
     return NewPrimitiveC<MatMul>(prim, inputs, quantType);
   } else if (op_type == "Mul") {
     return NewPrimitiveC<Mul>(prim, inputs, quantType);
@@ -601,7 +621,7 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<TopK>(prim, inputs, quantType);
   } else if (op_type == "Mod") {
     return NewPrimitiveC<Mod>(prim, inputs, quantType);
-  } else if (op_type == "ArgMinWithValue") {
+  } else if (op_type == "ArgMin" || op_type == "ArgMinWithValue") {
     return NewPrimitiveC<ArgMin>(prim, inputs, quantType);
   } else if (op_type == "Range") {
     return NewPrimitiveC<Range>(prim, inputs, quantType);
@@ -621,6 +641,12 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Partial>(prim, inputs, quantType);
   } else if (op_type == "Merge") {
     return NewPrimitiveC<Merge>(prim, inputs, quantType);
+  } else if (op_type == "LayerNorm") {
+    return NewPrimitiveC<LayerNorm>(prim, inputs, quantType);
+  } else if (op_type == "ArgMax" || op_type == "ArgMaxWithValue") {
+    return NewPrimitiveC<ArgMax>(prim, inputs, quantType);
+  } else if (op_type == "Gelu") {
+    return NewPrimitiveC<GeLU>(prim, inputs, quantType);
 
 #ifdef SUPPORT_TRAIN
   } else if (op_type == "SoftmaxCrossEntropyWithLogits") {
@@ -965,6 +991,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) Partial(primitive);
     case schema::PrimitiveType_Assert:
       return new (std::nothrow) AssertOP(primitive);
+    case schema::PrimitiveType_GeLU:
+      return new (std::nothrow) GeLU(primitive);
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
       return new (std::nothrow) ActivationGrad(primitive);

@@ -35,6 +35,7 @@ class LayerNorm : public PrimitiveC {
   void SetNormalizedShape(const std::vector<int> &normalizedShape);
   void SetEpsilon(float epsilon);
   void SetElementwiseAffine(bool elementwiseAffine);
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
