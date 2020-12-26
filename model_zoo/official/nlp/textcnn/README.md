@@ -83,6 +83,7 @@ After installing MindSpore via the official website, you can start training and 
         │   ├── config.py            // parameter configuration
         ├── train.py               // training script
         ├── eval.py               //  evaluation script
+        ├── export.py               //  export checkpoint to other format file
 ```
 
 ## [Script Parameters](#contents)
