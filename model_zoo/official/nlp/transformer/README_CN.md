@@ -211,6 +211,8 @@ Parameters for learning rate:
     sh scripts/run_distribute_train_ascend.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE
     ```
 
+**注意**：由于网络输入中有不同句长的数据，所以数据下沉模式不可使用。
+
 ### 评估过程
 
 - 在`eval_config.py`中设置选项。确保已设置了‘data_file'、'model_file’和'output_file'文件路径。
