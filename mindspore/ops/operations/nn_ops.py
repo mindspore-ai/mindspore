@@ -5765,10 +5765,13 @@ class ApplyFtrl(PrimitiveWithInfer):
 
     Outputs:
         There are three outputs for Ascend environment.
+
         - **var** (Tensor) - represents the updated `var`.
         - **accum** (Tensor) - represents the updated `accum`.
         - **linear** (Tensor) - represents the updated `linear`.
+
         There is only one output for GPU environment.
+
         - **var** (Tensor) - This value is alwalys zero and the input parameters has been updated in-place.
 
     Supported Platforms:
