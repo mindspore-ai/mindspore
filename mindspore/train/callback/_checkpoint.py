@@ -272,11 +272,13 @@ class ModelCheckpoint(Callback):
         if _is_role_pserver():
             self._prefix = "PServer_" + str(_get_ps_mode_rank()) + "_" + self._prefix
         cb_params = run_context.original_args()
+        _make_directory(self._directory)
         # save graph (only once)
         if not self._graph_saved:
             graph_file_name = os.path.join(self._directory, self._prefix + '-graph.meta')
             _save_graph(cb_params.train_network, graph_file_name)
             self._graph_saved = True
+
         self._save_ckpt(cb_params)
 
     def end(self, run_context):
