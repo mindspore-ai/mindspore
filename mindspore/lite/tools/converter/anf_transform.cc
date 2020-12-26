@@ -30,6 +30,7 @@
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
 #include "tools/optimizer/graph/mindir_adjust_pass.h"
+#include "tools/optimizer/graph/mindir_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/identity_remove_pass.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
@@ -74,6 +75,12 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
     mindir_adjust_pass->SetQuantType(config->quantType);
     if (!mindir_adjust_pass->Run(old_graph)) {
       MS_LOG(ERROR) << "mindir adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return nullptr;
+    }
+    auto mindir_inputs_adjust_pass = std::make_shared<opt::MindirInputAdjustOpPass>();
+    if (!mindir_inputs_adjust_pass->Run(old_graph)) {
+      MS_LOG(ERROR) << "mindir inputs adjust failed.";
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return nullptr;
     }

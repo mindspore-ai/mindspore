@@ -35,7 +35,42 @@ void LayerNorm::SetEpsilon(float epsilon) { this->primitive_->value.AsLayerNorm(
 void LayerNorm::SetElementwiseAffine(bool elementwiseAffine) {
   this->primitive_->value.AsLayerNorm()->elementwiseAffine = elementwiseAffine;
 }
-
+int LayerNorm::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitive error";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_LayerNorm;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_LayerNorm) {
+    MS_LOG(ERROR) << "primitive_ type is error:" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto layer_norm_attr = new (std::nothrow) schema::LayerNormT();
+    if (layer_norm_attr == nullptr) {
+      MS_LOG(ERROR) << "new primitive value.value error";
+      return RET_ERROR;
+    }
+    auto value_attr = prim.GetAttr("epsilon");
+    if (value_attr != nullptr) {
+      layer_norm_attr->epsilon = GetValue<float>(value_attr);
+    } else {
+      layer_norm_attr->epsilon = 1e-7;
+    }
+    value_attr = prim.GetAttr("normalized_shape");
+    if (value_attr != nullptr) {
+      layer_norm_attr->normalizedShape = CastToInt(value_attr);
+    }
+    if (inputs.size() == 3) {
+      layer_norm_attr->elementwiseAffine = true;
+    }
+    this->primitive_->value.value = layer_norm_attr;
+  }
+  return RET_OK;
+}
 #else
 int LayerNorm::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
@@ -100,13 +135,12 @@ int LayerNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite:
     return RET_PARAM_INVALID;
   }
   if (normlized_shape_.empty()) {
-    // instance norm -> layernorm
+    // instance norm -> layernorm only for nchw
     if (input->format() == schema::Format_NCHW) {
       normlized_shape_.insert(normlized_shape_.begin(), input_shape.begin() + 2, input_shape.end());
       elementwise_mode_ = 1;
     } else {
-      MS_LOG(INFO) << "normalized_shape attr invalid";
-      return RET_PARAM_INVALID;
+      normlized_shape_.insert(normlized_shape_.begin(), input_shape.begin() + 1, input_shape.end());
     }
   }
   size_t first_index = input_shape.size() - normlized_shape_.size();

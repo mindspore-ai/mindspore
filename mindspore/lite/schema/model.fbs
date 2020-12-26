@@ -261,6 +261,7 @@ union PrimitiveType {
     Reciprocal,
     Merge,
     Mod,
+    GeLU,
 }
 
 enum QuantType: int {

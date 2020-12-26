@@ -34,7 +34,36 @@ void ArgMax::SetOutMaxValue(bool out_max_value) { this->primitive_->value.AsArgM
 void ArgMax::SetTopK(int top_k) { this->primitive_->value.AsArgMax()->topK = top_k; }
 void ArgMax::SetKeepDims(bool keep_dims) { this->primitive_->value.AsArgMax()->keepDims = keep_dims; }
 void ArgMax::SetAxisType(int axis_type) { this->primitive_->value.AsArgMax()->axisType = axis_type; }
-
+int ArgMax::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
+  if (this->primitive_ == nullptr) {
+    this->primitive_ = new (std::nothrow) schema::PrimitiveT;
+    if (this->primitive_ == nullptr) {
+      MS_LOG(ERROR) << "new primitive error";
+      return RET_ERROR;
+    }
+    this->primitive_->value.type = schema::PrimitiveType_ArgMax;
+  }
+  if (this->primitive_->value.type != schema::PrimitiveType_ArgMax) {
+    MS_LOG(ERROR) << "primitive_ type is error:" << this->primitive_->value.type;
+    return RET_ERROR;
+  }
+  if (this->primitive_->value.value == nullptr) {
+    auto argmax_attr = new (std::nothrow) schema::ArgMaxT();
+    if (argmax_attr == nullptr) {
+      MS_LOG(ERROR) << "new primitive value.value error";
+      return RET_ERROR;
+    }
+    if (prim.GetAttr("axis") != nullptr) {
+      argmax_attr->axis = static_cast<int32_t>(GetValue<int64_t>(prim.GetAttr("axis")));
+    }
+    if (prim.GetAttr("keep_dims") != nullptr) {
+      argmax_attr->keepDims = static_cast<bool>(GetValue<bool>(prim.GetAttr("keep_dims")));
+    }
+    argmax_attr->outMaxValue = false;
+    this->primitive_->value.value = argmax_attr;
+  }
+  return RET_OK;
+}
 #else
 int ArgMax::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
