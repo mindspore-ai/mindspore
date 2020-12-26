@@ -160,6 +160,10 @@ class MinddataPipelineParser:
 
         op_id_info_cache = {}
         for item in op_info:
+            if not item:
+                raise ProfilerRawFileException(
+                    'The content of minddata pipeline raw file is wrong.'
+                )
             op_id_info_cache[item.get('op_id')] = item
 
         with open(self._save_path, 'w') as save_file:
