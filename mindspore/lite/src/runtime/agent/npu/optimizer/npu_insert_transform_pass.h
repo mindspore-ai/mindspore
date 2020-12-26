@@ -41,11 +41,11 @@ class NPUInsertTransformPass : public NPUBasePass {
   int Run() override;
 
  private:
-  int InsertPreNode(const InnerContext *context, kernel::LiteKernel *cur_kernel,
-                    std::vector<kernel::LiteKernel *> *all_kernels, std::vector<Tensor *> *all_tensors);
+  int InsertPreNode(const InnerContext *context, kernel::LiteKernel *kernel,
+                    std::vector<kernel::LiteKernel *> *trans_kernels, std::vector<Tensor *> *all_tensors);
 
-  int InsertPostNode(const InnerContext *context, kernel::LiteKernel *cur_kernel,
-                     std::vector<kernel::LiteKernel *> *all_kernels, std::vector<Tensor *> *all_tensors);
+  int InsertPostNode(const InnerContext *context, kernel::LiteKernel *kernel,
+                     std::vector<kernel::LiteKernel *> *trans_kernels, std::vector<Tensor *> *all_tensors);
 
  private:
   int total = 0;
