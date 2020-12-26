@@ -62,6 +62,13 @@ void ZerosLike(const T *in, T *out, size_t start, size_t end) {
     out[i] = static_cast<T>(0);
   }
 }
+
+template <typename T>
+void Floor(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = static_cast<T>(floor(in[i]));
+  }
+}
 }  // namespace
 
 void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
@@ -77,6 +84,8 @@ void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = NEG;
   } else if (kernel_name == prim::kPrimSign->name()) {
     operate_type_ = SIGN;
+  } else if (kernel_name == prim::kPrimFloor->name()) {
+    operate_type_ = FLOOR;
   }
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
 }
@@ -128,6 +137,8 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
       threads.emplace_back(std::thread(ZerosLike<T>, input, output, start, end));
     } else if (operate_type_ == SIGN) {
       threads.emplace_back(std::thread(Sign<T>, input, output, start, end));
+    } else if (operate_type_ == FLOOR) {
+      threads.emplace_back(std::thread(Floor<T>, input, output, start, end));
     }
     start += once_compute_size;
   }

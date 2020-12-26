@@ -63,6 +63,7 @@ enum OperateType {
   SQRT,
   POW,
   REALDIV,
+  MOD,
   NEG,
   LESS,
   ASSIGNADD,
@@ -77,6 +78,7 @@ enum OperateType {
   SIGN,
   EQUAL,
   NOTEQUAL,
+  FLOOR,
 };
 
 class CPUKernel : public kernel::KernelMod {

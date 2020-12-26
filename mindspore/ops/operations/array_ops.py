@@ -1708,7 +1708,7 @@ class ArgMinWithValue(PrimitiveWithInfer):
         - output_x (Tensor) - The minimum value of input tensor, with the same shape as index.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([0.0, 0.4, 0.6, 0.7, 0.1]), mindspore.float32)
