@@ -49,7 +49,6 @@ class Adder : public Conv2D {
   void SetPadRight(int pad_right);
   void SetDilateW(int dilate_w);
   void SetDilateH(int dilate_h);
-  void SetHasBias(bool has_bias);
   void SetActivationType(int activation_type);
 
  private:
@@ -74,7 +73,6 @@ class Adder : public Conv2D {
   int GetPadRight() const;
   int GetDilateW() const;
   int GetDilateH() const;
-  bool GetHasBias() const;
   int GetActivationType() const;
 };
 }  // namespace lite

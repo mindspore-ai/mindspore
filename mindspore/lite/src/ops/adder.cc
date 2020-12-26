@@ -46,7 +46,6 @@ int Adder::GetPadLeft() const { return this->primitive_->value.AsAdder()->padLef
 int Adder::GetPadRight() const { return this->primitive_->value.AsAdder()->padRight; }
 int Adder::GetDilateW() const { return this->primitive_->value.AsAdder()->dilateW; }
 int Adder::GetDilateH() const { return this->primitive_->value.AsAdder()->dilateH; }
-bool Adder::GetHasBias() const { return this->primitive_->value.AsAdder()->hasBias; }
 int Adder::GetActivationType() const { return this->primitive_->value.AsAdder()->activationType; }
 
 void Adder::SetFormat(int format) { this->primitive_->value.AsAdder()->format = (schema::Format)format; }
@@ -64,7 +63,6 @@ void Adder::SetPadLeft(int pad_left) { this->primitive_->value.AsAdder()->padLef
 void Adder::SetPadRight(int pad_right) { this->primitive_->value.AsAdder()->padRight = pad_right; }
 void Adder::SetDilateW(int dilate_w) { this->primitive_->value.AsAdder()->dilateW = dilate_w; }
 void Adder::SetDilateH(int dilate_h) { this->primitive_->value.AsAdder()->dilateH = dilate_h; }
-void Adder::SetHasBias(bool has_bias) { this->primitive_->value.AsAdder()->hasBias = has_bias; }
 void Adder::SetActivationType(int activation_type) {
   this->primitive_->value.AsAdder()->activationType = (schema::ActivationType)activation_type;
 }
@@ -154,10 +152,10 @@ int Adder::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::
     return RET_ERROR;
   }
 
-  auto val_offset = schema::CreateAdder(
-    *fbb, attr->format(), attr->group(), attr->channelIn(), attr->channelOut(), attr->kernelW(), attr->kernelH(),
-    attr->strideW(), attr->strideH(), attr->padMode(), attr->padUp(), attr->padDown(), attr->padLeft(),
-    attr->padRight(), attr->dilateW(), attr->dilateH(), attr->hasBias(), attr->activationType());
+  auto val_offset = schema::CreateAdder(*fbb, attr->format(), attr->group(), attr->channelIn(), attr->channelOut(),
+                                        attr->kernelW(), attr->kernelH(), attr->strideW(), attr->strideH(),
+                                        attr->padMode(), attr->padUp(), attr->padDown(), attr->padLeft(),
+                                        attr->padRight(), attr->dilateW(), attr->dilateH(), attr->activationType());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Adder, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
@@ -178,7 +176,6 @@ int Adder::GetPadLeft() const { return this->primitive_->value_as_Adder()->padLe
 int Adder::GetPadRight() const { return this->primitive_->value_as_Adder()->padRight(); }
 int Adder::GetDilateW() const { return this->primitive_->value_as_Adder()->dilateW(); }
 int Adder::GetDilateH() const { return this->primitive_->value_as_Adder()->dilateH(); }
-bool Adder::GetHasBias() const { return this->primitive_->value_as_Adder()->hasBias(); }
 int Adder::GetActivationType() const { return this->primitive_->value_as_Adder()->activationType(); }
 
 PrimitiveC *AdderCreator(const schema::Primitive *primitive) { return PrimitiveC::NewPrimitiveC<Adder>(primitive); }
