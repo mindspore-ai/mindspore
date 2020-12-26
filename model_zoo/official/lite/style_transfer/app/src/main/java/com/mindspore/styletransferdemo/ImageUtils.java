@@ -16,22 +16,32 @@
 package com.mindspore.styletransferdemo;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Matrix;
 import android.graphics.RectF;
+import android.media.MediaScannerConnection;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.exifinterface.media.ExifInterface;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class ImageUtils {
+
+    private static final String TAG = "ImageUtils";
 
     private static Matrix decodeExifOrientation(int orientation) {
         Matrix matrix = new Matrix();
@@ -197,5 +207,60 @@ public class ImageUtils {
             ret.eraseColor(color);
         }
         return ret;
+    }
+
+    // Save the picture to the system album and refresh it.
+    public static void saveToAlbum(final Context context, Bitmap bitmap) {
+        File file = null;
+        String fileName = System.currentTimeMillis() + ".jpg";
+        File root = new File(Environment.getExternalStorageDirectory().getAbsoluteFile(), context.getPackageName());
+        File dir = new File(root, "image");
+        if (dir.mkdirs() || dir.isDirectory()) {
+            file = new File(dir, fileName);
+        }
+        FileOutputStream os = null;
+        try {
+            os = new FileOutputStream(file);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
+            os.flush();
+
+        } catch (FileNotFoundException e) {
+            Log.e(TAG, e.getMessage());
+        } catch (IOException e) {
+            Log.e(TAG, e.getMessage());
+        } finally {
+            try {
+                if (os != null) {
+                    os.close();
+                }
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+            }
+        }
+        if (file == null) {
+            return;
+        }
+        // Gallery refresh.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            String path = null;
+            try {
+                path = file.getCanonicalPath();
+            } catch (IOException e) {
+                Log.e(TAG, e.getMessage());
+            }
+            MediaScannerConnection.scanFile(context, new String[]{path}, null,
+                    new MediaScannerConnection.OnScanCompletedListener() {
+                        @Override
+                        public void onScanCompleted(String path, Uri uri) {
+                            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                            mediaScanIntent.setData(uri);
+                            context.sendBroadcast(mediaScanIntent);
+                        }
+                    });
+        } else {
+            String relationDir = file.getParent();
+            File file1 = new File(relationDir);
+            context.sendBroadcast(new Intent(Intent.ACTION_MEDIA_MOUNTED, Uri.fromFile(file1.getAbsoluteFile())));
+        }
     }
 }
