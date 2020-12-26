@@ -204,6 +204,8 @@ Parameters for learning rate:
     sh scripts/run_distribute_train_ascend.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE
     ```
 
+**Attention**: data sink mode can not be used in transformer since the input datas have different sequence lengths.
+
 ## [Evaluation Process](#contents)
 
 - Set options in `eval_config.py`. Make sure the 'data_file', 'model_file' and 'output_file' are set to your own path.
