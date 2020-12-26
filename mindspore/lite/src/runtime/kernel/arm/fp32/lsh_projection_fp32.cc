@@ -157,26 +157,5 @@ void LshProjectionCPUKernel::LshProjectionDense(float *hash_seed_, int32_t *feat
   }
 }
 
-kernel::LiteKernel *CpuLshProjectionFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                      const std::vector<lite::Tensor *> &outputs,
-                                                      OpParameter *op_parameter, const lite::InnerContext *ctx,
-                                                      const kernel::KernelKey &desc,
-                                                      const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) LshProjectionCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new LshProjectionCPUKernel fail!";
-    free(op_parameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed! name: " << op_parameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LshProjection, CpuLshProjectionFp32KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LshProjection, LiteKernelCreator<LshProjectionCPUKernel>)
 }  // namespace mindspore::kernel

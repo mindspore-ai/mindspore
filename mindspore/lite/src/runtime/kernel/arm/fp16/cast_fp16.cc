@@ -128,5 +128,5 @@ int CastFp16CPUKernel::Run() {
   return ParallelLaunch(this->context_->thread_pool_, CastFp16Run, this, op_parameter_->thread_num_);
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Cast, CPUKernelCreator<CastFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Cast, LiteKernelCreator<CastFp16CPUKernel>)
 }  // namespace mindspore::kernel

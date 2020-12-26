@@ -130,5 +130,5 @@ int LeakyReluInt8CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LeakyReLU, CPUKernelCreator<LeakyReluInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_LeakyReLU, LiteKernelCreator<LeakyReluInt8CPUKernel>)
 }  // namespace mindspore::kernel

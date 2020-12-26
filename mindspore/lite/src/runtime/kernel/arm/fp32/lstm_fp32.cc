@@ -177,31 +177,5 @@ int LstmCPUKernel::Run() {
   return RET_OK;
 }
 
-kernel::LiteKernel *CpuLstmKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                         const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                         const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                         const mindspore::lite::PrimitiveC *primitive) {
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "Input parameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Lstm);
-
-  auto *kernel = new (std::nothrow) LstmCPUKernel(parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    free(parameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
-                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Lstm, CpuLstmKernelCreator)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Lstm, LiteKernelCreator<LstmCPUKernel>)
 }  // namespace mindspore::kernel

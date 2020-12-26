@@ -87,5 +87,5 @@ void BatchnormFp16CPUKernel::FreeInputAndOutput() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_BatchNorm, CPUKernelCreator<BatchnormFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_BatchNorm, LiteKernelCreator<BatchnormFp16CPUKernel>)
 }  // namespace mindspore::kernel

@@ -212,7 +212,7 @@ int QuantDTypeCastCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_QuantDTypeCast, CPUKernelCreator<QuantDTypeCastCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_QuantDTypeCast, CPUKernelCreator<QuantDTypeCastCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_QuantDTypeCast, CPUKernelCreator<QuantDTypeCastCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeUInt8, PrimitiveType_QuantDTypeCast, LiteKernelCreator<QuantDTypeCastCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_QuantDTypeCast, LiteKernelCreator<QuantDTypeCastCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_QuantDTypeCast, LiteKernelCreator<QuantDTypeCastCPUKernel>)
 }  // namespace mindspore::kernel

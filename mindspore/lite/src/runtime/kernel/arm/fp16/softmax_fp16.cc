@@ -119,5 +119,5 @@ int SoftmaxFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SoftMax, CPUKernelCreator<SoftmaxFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SoftMax, LiteKernelCreator<SoftmaxFp16CPUKernel>)
 }  // namespace mindspore::kernel

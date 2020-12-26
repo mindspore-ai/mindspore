@@ -78,7 +78,7 @@ int StridedSliceCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_StridedSlice, CPUKernelCreator<StridedSliceCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_StridedSlice, CPUKernelCreator<StridedSliceCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_StridedSlice, CPUKernelCreator<StridedSliceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_StridedSlice, LiteKernelCreator<StridedSliceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_StridedSlice, LiteKernelCreator<StridedSliceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_StridedSlice, LiteKernelCreator<StridedSliceCPUKernel>)
 }  // namespace mindspore::kernel

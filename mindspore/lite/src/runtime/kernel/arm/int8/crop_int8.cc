@@ -83,5 +83,5 @@ int CropInt8CPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Crop, CPUKernelCreator<CropInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Crop, LiteKernelCreator<CropInt8CPUKernel>)
 }  // namespace mindspore::kernel

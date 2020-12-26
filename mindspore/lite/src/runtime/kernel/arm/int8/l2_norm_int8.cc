@@ -70,25 +70,5 @@ int L2NormInt8CPUKernel::DoExecute(int task_id) {
   return L2NormalizationInt8(input_data, output_data, l2_norm_param_, &quant_param_, begin, end);
 }
 
-kernel::LiteKernel *CpuL2NormInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                               const lite::InnerContext *ctx, const KernelKey &desc,
-                                               const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) L2NormInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    free(parameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
-                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_L2Norm, CpuL2NormInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_L2Norm, LiteKernelCreator<L2NormInt8CPUKernel>)
 }  // namespace mindspore::kernel

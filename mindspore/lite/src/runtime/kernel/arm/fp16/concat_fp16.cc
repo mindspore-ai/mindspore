@@ -123,5 +123,5 @@ int ConcatFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Concat, CPUKernelCreator<ConcatFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Concat, LiteKernelCreator<ConcatFp16CPUKernel>)
 }  // namespace mindspore::kernel

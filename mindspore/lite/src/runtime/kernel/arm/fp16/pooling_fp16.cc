@@ -112,5 +112,5 @@ int PoolingFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Pooling, CPUKernelCreator<PoolingFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Pooling, LiteKernelCreator<PoolingFp16CPUKernel>)
 }  // namespace mindspore::kernel

@@ -221,28 +221,5 @@ int MulInt8CPUKernel::DoExecute(int task_id) {
   return lite::RET_OK;
 }
 
-kernel::LiteKernel *CpuMulInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                            const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                            const lite::InnerContext *ctx, const KernelKey &desc,
-                                            const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Mul);
-  auto *kernel = new (std::nothrow) MulInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Mul, CpuMulInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Mul, LiteKernelCreator<MulInt8CPUKernel>)
 }  // namespace mindspore::kernel

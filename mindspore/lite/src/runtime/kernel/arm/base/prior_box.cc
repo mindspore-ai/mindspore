@@ -174,6 +174,6 @@ int PriorBoxCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_PriorBox, CPUKernelCreator<PriorBoxCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_PriorBox, CPUKernelCreator<PriorBoxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_PriorBox, LiteKernelCreator<PriorBoxCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_PriorBox, LiteKernelCreator<PriorBoxCPUKernel>)
 }  // namespace mindspore::kernel

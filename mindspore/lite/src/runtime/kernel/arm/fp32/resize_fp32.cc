@@ -218,5 +218,5 @@ int ResizeCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Resize, CPUKernelCreator<ResizeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Resize, LiteKernelCreator<ResizeCPUKernel>)
 }  // namespace mindspore::kernel
