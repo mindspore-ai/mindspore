@@ -1,4 +1,4 @@
-
+# https://github.com/vadimkantorov/pydlpack/blob/master/dlpack.py
 import ctypes
 
 class DLDeviceType(ctypes.c_int):
@@ -95,31 +95,7 @@ PyCapsule_GetPointer.argtypes = (ctypes.py_object, ctypes.c_char_p)
 
 def to_dlpack(dl_managed_tensor):
 	return PyCapsule_New(ctypes.byref(dl_managed_tensor), b'dltensor', None)
-		
-def numpy_from_dlpack(pycapsule):
-	dl_managed_tensor = ctypes.cast(PyCapsule_GetPointer(pycapsule, b'dltensor'), ctypes.POINTER(DLManagedTensor)).contents
-	wrapped = type('', (), dict(__array_interface__ = dl_managed_tensor.dl_tensor.__array_interface__, __del__ = lambda self: dl_managed_tensor.deleter(ctypes.byref(dl_managed_tensor))))()
-	return numpy.asarray(wrapped)
-	
-if __name__ == '__main__':
-	import os
-	import sys
-	import numpy
-	import torch.utils.dlpack
-	
-	lib = ctypes.CDLL(os.path.abspath('libdlpack.so'))
-	lib.create_and_allocate_dlpack_tensor.restype = DLManagedTensor
-	dl_managed_tensor = lib.create_and_allocate_dlpack_tensor()
-	
-	dlpack_tensor = to_dlpack(dl_managed_tensor)
 
-	if 'numpy' in sys.argv[1]:
-		array = numpy_from_dlpack(dlpack_tensor)
-	elif 'torch' in sys.argv[1]:
-		array = torch.utils.dlpack.from_dlpack(dlpack_tensor)
-	
-	array.tofile(sys.argv[1])
-	del dlpack_tensor
 ## dlpack to numpy.array
 def numpy_from_dlpack(pycapsule):
 	dl_managed_tensor = ctypes.cast(PyCapsule_GetPointer(pycapsule, b'dltensor'), ctypes.POINTER(DLManagedTensor)).contents
