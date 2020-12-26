@@ -22,6 +22,7 @@
 #include <exception>
 #include <algorithm>
 #include <thread>
+#include "runtime/device/ascend/signal_util.h"
 #include "debug/data_dump/e2e_dump_util.h"
 #include "runtime/device/ascend/ascend_device_address.h"
 #include "runtime/device/cpu/mpi/mpi_interface.h"
@@ -595,6 +596,7 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *grap
 }
 
 bool AscendKernelRuntime::Run(session::KernelGraph *graph, bool is_task_sink) {
+  SignalGuard sg;
   MS_EXCEPTION_IF_NULL(graph);
   bool ret = false;
 #if defined(_WIN32) || defined(_WIN64)
