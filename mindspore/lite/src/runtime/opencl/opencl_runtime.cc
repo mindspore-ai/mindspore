@@ -226,11 +226,11 @@ int OpenCLRuntime::Init() {
     }
   }
   global_memery_size_ = device_->getInfo<CL_DEVICE_GLOBAL_MEM_SIZE>();
-
+  max_alloc_size_ = device_->getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
   MS_LOG(INFO) << "Address space bits: " << device_->getInfo<CL_DEVICE_ADDRESS_BITS>();
   MS_LOG(INFO) << "Global Mem Size: " << global_memery_size_;
   MS_LOG(INFO) << "Global Mem Cache Size: " << global_memery_cachesize_;
-  MS_LOG(INFO) << "Max Alloc Size: " << device_->getInfo<CL_DEVICE_MAX_MEM_ALLOC_SIZE>();
+  MS_LOG(INFO) << "Max Alloc Size: " << max_alloc_size_;
   MS_LOG(INFO) << "Compute Unit: " << compute_units_;
   MS_LOG(INFO) << "Clock Frequency: " << max_freq_ << " MHz";
 

@@ -137,7 +137,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size, 
     uint32_t image_alignment = ocl_runtime_->GetImagePitchAlignment();
     size = UP_ROUND(img_size[0], image_alignment) * img_size[1] * dtype_size;
   }
-  if (size > MAX_MALLOC_SIZE) {
+  if (size > ocl_runtime_->GetMaxAllocSize()) {
     MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
     return nullptr;
   }
@@ -148,7 +148,7 @@ void *OpenCLAllocator::Malloc(size_t size, const std::vector<size_t> &img_size, 
     return host_ptr;
   }
   total_size_ += size;
-  const uint64_t max_size = ocl_runtime_->GetGlobalMemSize();
+  const uint64_t max_size = ocl_runtime_->GetGlobalMemSize() * 0.8;
   if (total_size_ >= max_size) {
     UnLock();
     MS_LOG(ERROR) << "Mem pool out of max_size, total size: " << total_size_ << ", max size: " << max_size;
