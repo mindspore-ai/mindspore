@@ -22,6 +22,12 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
+from mindspore.nn import Cell
+from mindspore.nn import Dense
+from mindspore.nn import SoftmaxCrossEntropyWithLogits
+from mindspore.nn import Momentum
+from mindspore.nn import TrainOneStepCell
+from mindspore.nn import WithLossCell
 
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
 
@@ -81,3 +87,62 @@ def test_e2e_dump():
     add(Tensor(x), Tensor(y))
     time.sleep(5)
     assert len(os.listdir(dump_file_path)) == 5
+
+class ReluReduceMeanDenseRelu(Cell):
+    def __init__(self, kernel, bias, in_channel, num_class):
+        super().__init__()
+        self.relu = P.ReLU()
+        self.mean = P.ReduceMean(keep_dims=False)
+        self.dense = Dense(in_channel, num_class, kernel, bias)
+
+    def construct(self, x_):
+        x_ = self.relu(x_)
+        x_ = self.mean(x_, (2, 3))
+        x_ = self.dense(x_)
+        x_ = self.relu(x_)
+        return x_
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_async_dump_net_multi_layer_mode1():
+    test_name = "test_async_dump_net_multi_layer_mode1"
+    json_file = os.path.join(os.getcwd(), "{}.json".format(test_name))
+    device_id = context.get_context("device_id")
+    dump_full_path = os.path.join("/tmp/async_dump/", "{}_{}".format(test_name, device_id))
+    os.system("rm -rf {}/*".format(dump_full_path))
+    os.environ["MINDSPORE_DUMP_CONFIG"] = json_file
+    weight = Tensor(np.ones((1000, 2048)).astype(np.float32))
+    bias = Tensor(np.ones((1000,)).astype(np.float32))
+    net = ReluReduceMeanDenseRelu(weight, bias, 2048, 1000)
+    criterion = SoftmaxCrossEntropyWithLogits(sparse=False)
+    optimizer = Momentum(learning_rate=0.1, momentum=0.1, params=filter(lambda  x: x.requires_grad, net.get_parameters()))
+    net_with_criterion = WithLossCell(net, criterion)
+    train_network = TrainOneStepCell(net_with_criterion, optimizer)
+    train_network.set_train()
+    inputs = Tensor(np.random.randn(32, 2048, 7, 7).astype(np.float32))
+    label = Tensor(np.zeros(shape=(32, 1000)).astype(np.float32))
+    net_dict = train_network(inputs, label)
+
+    dump_path = "/tmp/async_dump/{}/device_{}/test_graph_0/0/0/".format(test_name, device_id)
+    dump_file = os.listdir(dump_path)
+    dump_file_name = ""
+    for file in dump_file:
+        if "SoftmaxCrossEntropyWithLogits" in file:
+            dump_file_name = file
+    dump_file_full_path = os.path.join(dump_path, dump_file_name)
+    npy_path = os.path.join(os.getcwd(), "./{}".format(test_name))
+    if os.path.exists(npy_path):
+        shutil.rmtree(npy_path)
+    os.mkdir(npy_path)
+    cmd = "python /usr/local/Ascend/toolkit/tools/operator_cmp/compare/dump_data_conversion.pyc " \
+        "-type offline -target numpy -i {0} -o {1}".format(dump_file_full_path, npy_path)
+    os.system(cmd)
+    npy_file_list = os.listdir(npy_path)
+    dump_result = {}
+    for file in npy_file_list:
+        if "output.0.npy" in file:
+            dump_result["output0"] = np.load(os.path.join(npy_path, file))
+    for index, value in enumerate(net_dict):
+        assert value.asnumpy() == dump_result["output0"][index]
