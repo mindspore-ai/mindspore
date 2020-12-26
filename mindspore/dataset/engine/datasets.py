@@ -300,14 +300,14 @@ class Dataset:
                 The last parameter of the callable should always be a BatchInfo object. Per_batch_map should return
                 (list[Tensor], list[Tensor], ...). The length of each list in output should be same as the input.
                 output_columns is required if the number of output lists is different from input.
-            input_columns (list[str], optional): List of names of the input columns. The size of the list should
-                match with signature of per_batch_map callable.
-            output_columns (list[str], optional): List of names assigned to the columns
+            input_columns (Union[str, list[str]], optional): List of names of the input columns. The size of the list
+                should match with signature of per_batch_map callable.
+            output_columns (Union[str, list[str]], optional): List of names assigned to the columns
                 outputted by the last operation. This parameter is mandatory if len(input_columns) !=
                 len(output_columns). The size of this list must match the number of output
                 columns of the last operation. (default=None, output columns will have the same
                 name as the input columns, i.e., the columns will be replaced).
-            column_order (list[str], optional): List of all the desired columns to propagate to
+            column_order (Union[str, list[str]], optional): List of all the desired columns to propagate to
                 the child node. This list must be a subset of all the columns in the dataset after
                 all operations are applied. The order of the columns in each row propagated to the
                 child node follow the order they appear in this list. The parameter is mandatory
@@ -477,12 +477,12 @@ class Dataset:
         Args:
             operations (Union[list[TensorOp], list[functions]]): List of operations to be
                 applied on the dataset. Operations are applied in the order they appear in this list.
-            input_columns (list[str], optional): List of the names of the columns that will be passed to
+            input_columns (Union[str, list[str]], optional): List of the names of the columns that will be passed to
                 the first operation as input. The size of this list must match the number of
                 input columns expected by the first operator. (default=None, the first
                 operation will be passed however many columns that is required, starting from
                 the first column).
-            output_columns (list[str], optional): List of names assigned to the columns outputted by
+            output_columns (Union[str, list[str]], optional): List of names assigned to the columns outputted by
                 the last operation. This parameter is mandatory if len(input_columns) !=
                 len(output_columns). The size of this list must match the number of output
                 columns of the last operation. (default=None, output columns will have the same
@@ -630,7 +630,7 @@ class Dataset:
 
         Args:
             predicate (callable): Python callable which returns a boolean value. If False then filter the element.
-            input_columns (list[str], optional): List of names of the input columns, when
+            input_columns (Union[str, list[str]], optional): List of names of the input columns, when
                 default=None, the predicate will be applied on all columns in the dataset.
             num_parallel_workers (int, optional): Number of workers to process the dataset
                 in parallel (default=None).
@@ -933,8 +933,8 @@ class Dataset:
         Rename the columns in input datasets.
 
         Args:
-            input_columns (list[str]): List of names of the input columns.
-            output_columns (list[str]): List of names of the output columns.
+            input_columns (Union[str, list[str]]): List of names of the input columns.
+            output_columns (Union[str, list[str]]): List of names of the output columns.
 
         Returns:
             RenameDataset, dataset renamed.
@@ -963,7 +963,7 @@ class Dataset:
         the pipeline in the order specified. The other columns are discarded.
 
         Args:
-            columns(list[str]): List of names of the columns to project.
+            columns(Union[str, list[str]]): List of names of the columns to project.
 
         Returns:
             ProjectDataset, dataset projected.
@@ -990,7 +990,7 @@ class Dataset:
 
         Args:
 
-            columns(list[str]): Column names to get words from.
+            columns(Union[str, list[str]]): Column names to get words from.
             freq_range(tuple[int]): A tuple of integers (min_frequency, max_frequency). Words within the frequency
                 range would be kept. 0 <= min_frequency <= max_frequency <= total_words. min_frequency/max_frequency
                 an be set to default, which corresponds to 0/total_words separately
@@ -1823,14 +1823,14 @@ class BatchDataset(Dataset):
             (list[Tensor], list[Tensor], ..., BatchInfo) as input parameters. Each list[Tensor] represents a batch of
             Tensors on a given column. The number of lists should match with number of entries in input_columns. The
             last parameter of the callable must always be a BatchInfo object.
-        input_columns (list[str], optional): List of names of the input columns. The size of the list must
+        input_columns (Union[str, list[str]], optional): List of names of the input columns. The size of the list must
             match with signature of per_batch_map callable.
-        output_columns (list[str], optional): List of names assigned to the columns outputted by
+        output_columns (Union[str, list[str]], optional): List of names assigned to the columns outputted by
             the last operation. This parameter is mandatory if len(input_columns) !=
             len(output_columns). The size of this list must match the number of output
             columns of the last operation. (default=None, output columns will have the same
             name as the input columns, i.e., the columns will be replaced).
-        column_order (list[str], optional): List of all the desired columns to propagate to the
+        column_order (Union[str, list[str]], optional): List of all the desired columns to propagate to the
             child node. This list must be a subset of all the columns in the dataset after
             all operations are applied. The order of the columns in each row propagated to the
             child node follow the order they appear in this list. The parameter is mandatory
@@ -2250,10 +2250,10 @@ class MapDataset(Dataset):
         input_dataset (Dataset): Input Dataset to be mapped.
         operations (TensorOp): A function mapping a nested structure of tensors
             to another nested structure of tensor (default=None).
-        input_columns (list[str]): List of names of the input columns
+        input_columns (Union[str, list[str]]): List of names of the input columns
             (default=None, the operations will be applied on the first columns in the dataset).
             The size of the list should match the number of inputs of the first operator.
-        output_columns (list[str], optional): List of names of the output columns.
+        output_columns (Union[str, list[str]], optional): List of names of the output columns.
             The size of the list should match the number of outputs of the last operator
             (default=None, output columns will be the input columns, i.e., the columns will
             be replaced).
@@ -2414,7 +2414,7 @@ class FilterDataset(Dataset):
     Args:
         input_dataset (Dataset): Input Dataset to be mapped.
         predicate (callable): Python callable which returns a boolean value. If False then filter the element.
-        input_columns (list[str], optional): List of names of the input columns
+        input_columns (Union[str, list[str]], optional): List of names of the input columns
         (default=None, the predicate will be applied to all columns in the dataset).
         num_parallel_workers (int, optional): Number of workers to process the dataset
             in parallel (default=None).
@@ -2652,8 +2652,8 @@ class RenameDataset(Dataset):
 
     Args:
         input_dataset (Dataset): Input Dataset to be Renamed.
-        input_columns (list[str]): List of names of the input columns.
-        output_columns (list[str]): List of names of the output columns.
+        input_columns (Union[str, list[str]]): List of names of the input columns.
+        output_columns (Union[str, list[str]]): List of names of the output columns.
     """
 
     def __init__(self, input_dataset, input_columns, output_columns):
@@ -2681,7 +2681,7 @@ class ProjectDataset(Dataset):
 
     Args:
         input_dataset (Dataset): Input Dataset to be Projected.
-        columns (list[str]): List of names of the columns to project.
+        columns (Union[str, list[str]]): List of names of the columns to project.
         prefetch_size (int, optional): Prefetch number of records ahead of the
             user's request (default=None).
     """
@@ -3684,8 +3684,8 @@ class GeneratorDataset(MappableDataset):
             iter(source).next().
             Random accessible source is required to return a tuple of NumPy arrays as a row of the dataset on
             source[idx].
-        column_names (list[str], optional): List of column names of the dataset (default=None). Users are required to
-            provide either column_names or schema.
+        column_names (Union[str, list[str]], optional): List of column names of the dataset (default=None). Users are
+            required to provide either column_names or schema.
         column_types (list[mindspore.dtype], optional): List of column data types of the dataset (default=None).
             If provided, sanity check will be performed on generator output.
         schema (Union[Schema, str], optional): Path to the JSON schema file or schema object (default=None). Users are
