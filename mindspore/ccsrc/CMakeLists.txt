@@ -304,7 +304,6 @@ elseif (ENABLE_GPU)
     set(MINDSPORE_RPATH ${MINDSPORE_RPATH}:/usr/local/cuda/lib64)
 endif ()
 set(MINDSPORE_RPATH ${ORIGIN_PATH}/lib:${MINDSPORE_RPATH})
-
 set_target_properties(_c_expression PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
 
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
@@ -349,6 +348,12 @@ if (ENABLE_GPU)
     if (ENABLE_MPI)
         set_target_properties(_ms_mpi PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
     endif ()
+endif ()
+
+if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    set(CMAKE_MACOSX_RPATH 1)
+    set(CMAKE_INSTALL_RPATH "@loader_path/lib;@loader_path")
+    set_target_properties(_c_expression PROPERTIES INSTALL_RPATH "${CMAKE_INSTALL_RPATH}")
 endif ()
 
 if (ENABLE_CPU)

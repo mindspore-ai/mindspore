@@ -131,6 +131,7 @@ package_data = {
         '*.dll',
         'lib/*.so*',
         'lib/*.a',
+        'lib/*.dylib*',
         '.commit_id',
         'config/*',
         'include/*',
