@@ -6435,7 +6435,7 @@ class DynamicRNN(PrimitiveWithInfer):
           Has the same type with input `b`.
 
     Supported Platforms:
-            ``Ascend``
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.random.rand(2, 16, 64).astype(np.float16))
@@ -6570,7 +6570,7 @@ class DynamicGRUV2(PrimitiveWithInfer):
         - If `bias_input` is `None` and `bias_hidden` is not `None, `bias_type` is the date type of `bias_hidden`.
 
     Supported Platforms:
-            ``Ascend``
+        ``Ascend``
 
     Examples:
         >>> x = Tensor(np.random.rand(2, 8, 64).astype(np.float16))
