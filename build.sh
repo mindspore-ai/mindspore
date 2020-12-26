@@ -503,7 +503,7 @@ build_lite()
 
     LITE_ENABLE_GPU=${ENABLE_GPU}
     LITE_ENABLE_NPU=${ENABLE_NPU}
-    if [ "${DEVICE}" == "" ] && [ "${LITE_PLATFORM}" == "arm64" ]; then
+    if [[ "${DEVICE}" == ""  &&  "${LITE_PLATFORM}" == "arm64" ]]; then
       LITE_ENABLE_GPU="on"
       LITE_ENABLE_NPU="on"
     fi

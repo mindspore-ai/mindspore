@@ -124,7 +124,7 @@ class LiteSession : public session::LiteSession {
   std::unordered_map<std::string, mindspore::tensor::MSTensor *> output_tensor_map_;
   Executor *executor_ = nullptr;
   std::atomic<bool> is_running_ = false;
-#if SUPPORT_GPU
+#if SUPPORT_GPU && !SUPPORT_TRAIN
   opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
 #endif
 };
