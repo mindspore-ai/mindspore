@@ -61,6 +61,7 @@ int ArgMin::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
     if (prim.GetAttr("keep_dims") != nullptr) {
       attr->keepDims = static_cast<bool>(GetValue<bool>(prim.GetAttr("keep_dims")));
     }
+    attr->outMaxValue = false;
   }
   return RET_OK;
 }
