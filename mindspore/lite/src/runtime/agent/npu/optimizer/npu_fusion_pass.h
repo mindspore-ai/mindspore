@@ -33,11 +33,12 @@ class NPUFusionPass : public NPUBasePass {
   int Run() override;
 
  protected:
-  void RemoveAndFreeKernel(kernel::LiteKernel *cur_kernel);
   void UpdatePreKernels(kernel::LiteKernel *kernel);
   void UpdatePostKernels(kernel::LiteKernel *kernel);
+  void RemoveAndFreeKernel(kernel::LiteKernel *cur_kernel);
+  void UpdateKernel(kernel::LiteKernel *kernel);
+  int CommonFusion(kernel::LiteKernel *kernel);
   int ConcatFusion(kernel::LiteKernel *kernel);
-  int AddFusion(kernel::LiteKernel *kernel);
   int FormatFusion(kernel::LiteKernel *kernel);
 
  private:

@@ -19,51 +19,53 @@
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_pass_utils.h"
 namespace mindspore::lite {
-using kernel::KERNEL_ARCH::kCPU;
 using kernel::KERNEL_ARCH::kNPU;
 int NPUTransformPass::InsertPreNode(const InnerContext *context, kernel::LiteKernel *kernel,
-                                    std::vector<kernel::LiteKernel *> *all_kernels,
+                                    std::vector<kernel::LiteKernel *> *trans_kernels,
                                     std::vector<Tensor *> *all_tensors) {
   bool is_input_kernel = kernel->in_kernels().empty();
   if (is_input_kernel || kernel->in_kernels()[0]->desc().arch != kNPU ||
       npu_trans_nodes.find(kernel->in_kernels()[0]->Type()) == npu_trans_nodes.end()) {
-    kernel::LiteKernel *before_kernel = nullptr;
+    kernel::LiteKernel *pre_kernel = nullptr;
     if (!is_input_kernel) {
-      before_kernel = kernel->in_kernels()[0];
+      pre_kernel = kernel->in_kernels()[0];
     }
-    // Create pre transform kernel out tensors.
+
+    // Create pre transform kernel's out tensor.
     auto nhwc_shape = kernel->in_tensors()[0]->shape();
     std::vector<int> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
     auto tensor = new Tensor(kernel->in_tensors()[0]->data_type(), nchw_shape, schema::Format_NCHW, Tensor::VAR);
     std::vector<Tensor *> pre_trans_out_tensors = {tensor};
     all_tensors->push_back(pre_trans_out_tensors[0]);
-    // Replace the output tensor of the previous node
+
+    // Create pre transform kernel: Nhwc2Nchw
     auto name = kernel->name() + "_pre_trans" + "_Nhwc2Nchw_" + std::to_string(total++);
-    auto *pre_trans_kernel =
+    auto *trans_kernel =
       NPUPassUtils::CreateNhwc2NchwKernel({kernel->in_tensors()[0]}, pre_trans_out_tensors, context, name);
-    // Insert Nhwc2Nchw into the front of the current queue
-    all_kernels->push_back(pre_trans_kernel);
-    insert_primitive_.push_back(pre_trans_kernel->GetPrimitive());
-    // Replace the output kernel of the previous node
+
+    trans_kernels->push_back(trans_kernel);
+    insert_primitive_.push_back(trans_kernel->GetPrimitive());
+
+    // Set in_kernels, out_kernels, in_tensors,out_tensors for transform kernel
     std::vector<kernel::LiteKernel *> pre_trans_in_kernel;
     if (is_input_kernel) {
       pre_trans_in_kernel = {};
     } else {
-      pre_trans_in_kernel = {before_kernel};
+      pre_trans_in_kernel = {pre_kernel};
     }
-    NPUPassUtils::UpdateKernel(pre_trans_kernel, pre_trans_in_kernel, {kernel}, {kernel->in_tensors()[0]},
+    NPUPassUtils::UpdateKernel(trans_kernel, pre_trans_in_kernel, {kernel}, {kernel->in_tensors()[0]},
                                pre_trans_out_tensors);
 
-    if (before_kernel != nullptr) {
-      NPUPassUtils::UpdateNH2NCTransNodePreKernel(before_kernel, pre_trans_kernel, kernel);
+    if (pre_kernel != nullptr) {
+      NPUPassUtils::UpdateNH2NCTransNodePreKernel(pre_kernel, trans_kernel, kernel);
     }
-    NPUPassUtils::UpdateNH2NCTransNodeAfterKernel(kernel, pre_trans_kernel, before_kernel);
+    NPUPassUtils::UpdateNH2NCTransNodeAfterKernel(kernel, trans_kernel, pre_kernel);
   }
   return RET_OK;
 }
 
 int NPUTransformPass::InsertPostNode(const InnerContext *context, kernel::LiteKernel *kernel,
-                                     std::vector<kernel::LiteKernel *> *all_kernels,
+                                     std::vector<kernel::LiteKernel *> *trans_kernels,
                                      std::vector<Tensor *> *all_tensors) {
   // Model output does not insert operator
   if (kernel->out_kernels().empty()) {
@@ -71,27 +73,30 @@ int NPUTransformPass::InsertPostNode(const InnerContext *context, kernel::LiteKe
   }
   // Single output multiple references
   for (int i = 0; i < kernel->out_kernels().size(); i++) {
-    auto next_kernel = kernel->out_kernels().at(i);
-    if (next_kernel->desc().arch == kNPU && npu_trans_nodes.find(next_kernel->Type()) != npu_trans_nodes.end()) {
+    auto post_kernel = kernel->out_kernels().at(i);
+    if (post_kernel->desc().arch == kNPU && npu_trans_nodes.find(post_kernel->Type()) != npu_trans_nodes.end()) {
       continue;
     }
-    // Change format the output of the current kernel nhwc->nchw
+
+    // Create post transform kernel's out tensor.
     auto tensor = new Tensor(kernel->out_tensors()[0]->data_type(), kernel->out_tensors()[0]->shape(),
                              schema::Format_NHWC, Tensor::VAR);
     std::vector<Tensor *> post_trans_out_tensors = {tensor};
     all_tensors->push_back(post_trans_out_tensors[0]);
-    // Use the output tensor of the current node as the input tensor of the post-conversion operator
+
+    // Create post transform kernel: Nchw2Nhwc
     auto name = kernel->name() + "_post_trans" + "_Nchw2Nhwc" + std::to_string(total++);
     auto *post_trans_kernel =
       NPUPassUtils::CreateNchw2NhwcKernel(kernel->out_tensors(), post_trans_out_tensors, context, name);
-    // Replace the input tensor of the next node
-    NPUPassUtils::UpdateKernel(post_trans_kernel, {kernel}, {next_kernel}, kernel->out_tensors(),
+
+    // Set in_kernels, out_kernels, in_tensors,out_tensors for transform kernel
+    NPUPassUtils::UpdateKernel(post_trans_kernel, {kernel}, {post_kernel}, kernel->out_tensors(),
                                post_trans_out_tensors);
     insert_primitive_.push_back(post_trans_kernel->GetPrimitive());
-    // Directly insert in the back, will not affect the topological sort
-    all_kernels->push_back(post_trans_kernel);
-    NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel, post_trans_kernel, next_kernel);
-    NPUPassUtils::UpdateNC2NHTransNodeAfterKernel(kernel, post_trans_kernel, next_kernel);
+
+    trans_kernels->push_back(post_trans_kernel);
+    NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel, post_trans_kernel, post_kernel);
+    NPUPassUtils::UpdateNC2NHTransNodeAfterKernel(kernel, post_trans_kernel, post_kernel);
   }
   return RET_OK;
 }
