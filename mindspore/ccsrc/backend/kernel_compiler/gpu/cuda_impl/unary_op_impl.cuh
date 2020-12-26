@@ -49,6 +49,12 @@ void Asin(const T *input, T *output, const size_t count, cudaStream_t cuda_strea
 template <typename T>
 void ACos(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
+void Atan(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void Asinh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void Acosh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
 void Zeroslike(T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 void Abs(const T *input, T *output, const size_t count, cudaStream_t cuda_stream);

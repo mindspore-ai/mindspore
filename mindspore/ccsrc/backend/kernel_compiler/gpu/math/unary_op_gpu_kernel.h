@@ -44,6 +44,9 @@ enum UnaryOptype {
   UNARY_OP_COS,
   UNARY_OP_ASIN,
   UNARY_OP_ACOS,
+  UNARY_OP_ATAN,
+  UNARY_OP_ASINH,
+  UNARY_OP_ACOSH,
   UNARY_OP_ABS,
   UNARY_OP_FLOOR,
   UNARY_OP_INVALID_TYPE = 255
@@ -64,6 +67,9 @@ static const std::map<std::string, UnaryOptype> kUnaryOpTypeMap = {{"Exp", UNARY
                                                                    {"Cos", UNARY_OP_COS},
                                                                    {"Asin", UNARY_OP_ASIN},
                                                                    {"ACos", UNARY_OP_ACOS},
+                                                                   {"Atan", UNARY_OP_ATAN},
+                                                                   {"Asinh", UNARY_OP_ASINH},
+                                                                   {"Acosh", UNARY_OP_ACOSH},
                                                                    {"Abs", UNARY_OP_ABS},
                                                                    {"Floor", UNARY_OP_FLOOR}};
 template <typename T>
@@ -140,6 +146,18 @@ class UnaryOpGpuKernel : public GpuKernel {
       }
       case UNARY_OP_ACOS: {
         ACos(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ATAN: {
+        Atan(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ASINH: {
+        Asinh(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ACOSH: {
+        Acosh(input_addr, output_addr, inputs[0]->size / sizeof(T), reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
       case UNARY_OP_ZEROSLIKE: {
