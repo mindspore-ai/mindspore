@@ -277,6 +277,31 @@ Any Resource::GetAttrPtr(const TypeId &type, const std::string &name) {
   return GetMethodOrAttr(name, type_id, attr_map);
 }
 
+void Resource::Clean() {
+  // AbstractTensor->elements() will be saved in AbstractBasePtrList
+  args_spec_.clear();
+  input_ = py::none();
+  // Context with AbstractBasePtrList may be saved in GraphEvaluator
+  // some Evaluator like ResolveEvaluator may save Python object in cache,
+  // it should be cleaned before Python Interpreter destructed.
+  MS_EXCEPTION_IF_NULL(engine_);
+  engine_->ClearEvaluatorCache();
+  // clean static variable to prevent from crash. As static variable is released after
+  // Python threads is released.
+  parse::data_converter::ClearObjectCache();
+  parse::Parser::CleanParserResource();
+  parse::CleanDataClassToClassMap();
+  trace::ClearTraceStack();
+  is_cleaned_ = true;
+}
+
+void MemoryCleaner::Init() {
+  pynative_in_construct_process_ = false;
+  pynative_in_end_graph_process_ = false;
+  pynative_released_history_.clear();
+  pynative_new_primtives_squence_.clear();
+}
+
 MemoryCleaner Resource::mem_cleaner_ = MemoryCleaner();
 void MemoryCleaner::RecordPrimitivePy(PrimitivePy *prim) {
   if (prim == nullptr) {
@@ -285,7 +310,7 @@ void MemoryCleaner::RecordPrimitivePy(PrimitivePy *prim) {
   all_primitives_[prim] = true;
 }
 
-void MemoryCleaner::ErasePrimitivePy(PrimitivePy *prim) {
+void MemoryCleaner::ReleasePrimitivePyObj(PrimitivePy *prim) {
   if (prim == nullptr) {
     return;
   }
@@ -319,6 +344,7 @@ void MemoryCleaner::RecordPynativeShortLifePrimitivePy(PrimitivePy *prim) {
   }
   MS_LOG(DEBUG) << "Record pynative tmp primitve:" << prim->ToString();
   pynative_short_life_primitives_.insert(prim);
+  pynative_new_primtives_squence_.push_back(prim->ToString());
 }
 
 void MemoryCleaner::ErasePynativeShortLifePrimitivePy(PrimitivePy *prim) {
@@ -328,15 +354,22 @@ void MemoryCleaner::ErasePynativeShortLifePrimitivePy(PrimitivePy *prim) {
   if (pynative_short_life_primitives_.find(prim) == pynative_short_life_primitives_.end()) {
     return;
   }
+  pynative_short_life_primitives_.erase(prim);
   MS_LOG(DEBUG) << "Erase pynative tmp primitive:" << prim->ToString();
-  ErasePrimitivePy(prim);
 }
 
 void MemoryCleaner::ClearPynativeShortLifePrimitivePy() {
-  for (auto &primitive : pynative_short_life_primitives_) {
-    ErasePynativeShortLifePrimitivePy(primitive);
+  // If the primitives name sequence never been released before, keep the primtives alive
+  if (std::find(pynative_released_history_.begin(), pynative_released_history_.end(),
+                pynative_new_primtives_squence_) == pynative_released_history_.end()) {
+    pynative_released_history_.push_back(pynative_new_primtives_squence_);
+  } else {
+    for (auto &primitive : pynative_short_life_primitives_) {
+      ReleasePrimitivePyObj(primitive);
+    }
   }
   pynative_short_life_primitives_.clear();
+  pynative_new_primtives_squence_.clear();
 }
 
 void MemoryCleaner::EnterPynativeConstructProcess() { pynative_in_construct_process_ = true; }
@@ -348,23 +381,5 @@ bool MemoryCleaner::IsInPynativeConstructProcess() const { return pynative_in_co
 void MemoryCleaner::EnterPynativeEndGraphProcess() { pynative_in_end_graph_process_ = true; }
 void MemoryCleaner::LeavePynativeEndGraphProcess() { pynative_in_end_graph_process_ = false; }
 bool MemoryCleaner::IsInPynativeEndGraphProcess() const { return pynative_in_end_graph_process_; }
-
-void Resource::Clean() {
-  // AbstractTensor->elements() will be saved in AbstractBasePtrList
-  args_spec_.clear();
-  input_ = py::none();
-  // Context with AbstractBasePtrList may be saved in GraphEvaluator
-  // some Evaluator like ResolveEvaluator may save Python object in cache,
-  // it should be cleaned before Python Interpreter destructed.
-  MS_EXCEPTION_IF_NULL(engine_);
-  engine_->ClearEvaluatorCache();
-  // clean static variable to prevent from crash. As static variable is released after
-  // Python threads is released.
-  parse::data_converter::ClearObjectCache();
-  parse::Parser::CleanParserResource();
-  parse::CleanDataClassToClassMap();
-  trace::ClearTraceStack();
-  is_cleaned_ = true;
-}
 }  // namespace pipeline
 }  // namespace mindspore
