@@ -31,3 +31,13 @@ atDLMTensor->tensor.dl_tensor.byte_offset = 0;
 return&(atDLMTensor->tensor);
 
 }
+
+
+DLPack FromDLPack(DLtensor){
+DLtensor dltensor;
+dltensor.data* = mindsporeTensor.data;
+dltensor.ndim = mindsporeTensor.ndim;
+dltensor.dtype = mindsporeTensor.dtype;
+dltensor.shape* = mindsporeTensor.shape;
+dltensor.stride* = mindsporeTensor.stride;
+}
