@@ -122,7 +122,7 @@ class Fbeta(Metric):
 class F1(Fbeta):
     r"""
     Calculates the F1 score. F1 is a special case of Fbeta when beta is 1.
-    Refer to class `Fbeta` for more details.
+    Refer to class :class:`mindspore.nn.Fbeta` for more details.
 
     .. math::
         F_1=\frac{2\cdot true\_positive}{2\cdot true\_positive + false\_negative + false\_positive}
