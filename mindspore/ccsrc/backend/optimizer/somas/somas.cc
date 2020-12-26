@@ -334,7 +334,7 @@ void Somas::SummaryInputProcess(const session::KernelGraph *graph) {
       auto input_node = iter->second;
       if (index < input_node->output_tensors_.size()) {
         auto tensor = iter->second->output_tensors_[index];
-        tensor->lifelong_value_ = kLifeLongGraphEnd;
+        tensor->lifelong_value_ = kLifeLongGraphAll;
         tensor->type_ = kSummaryInput;
         total_summary_size += tensor->GetAlignedSize();
         MS_LOG(INFO) << "Set summary node input tensor's lifelong, node: " << node->fullname_with_scope()
