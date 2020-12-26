@@ -29,7 +29,7 @@ exit 1
 fi
 
 
-dataset_type='cifar10'
+dataset_type='imagenet'
 if [ $# == 2 ]
 then
     if [ $2 != "cifar10" ] && [ $2 != "imagenet" ]
@@ -56,8 +56,8 @@ do
     export RANK_ID=$((rank_start + i))
     rm -rf ./train_parallel$i
     mkdir ./train_parallel$i
-    cp -r ../src ./train_parallel$i
-    cp ../train.py ./train_parallel$i
+    cp -r ./src ./train_parallel$i
+    cp ./train.py ./train_parallel$i
     echo "start training for rank $RANK_ID, device $DEVICE_ID, $dataset_type"
     cd ./train_parallel$i || exit
     env > env.log

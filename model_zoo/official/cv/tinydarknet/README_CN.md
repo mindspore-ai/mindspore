@@ -78,16 +78,16 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 - 在Ascend资源上运行：
 
   ```python
-  # 单机训练
-  python train.py > train.log 2>&1 &
+  # 单卡训练
+  bash ./scripts/run_train_single.sh
 
   # 分布式训练
-  bash scripts/run_train.sh rank_table.json
+  bash ./scripts/run_train.sh rank_table.json
 
   # 评估
   python eval.py > eval.log 2>&1 &
   OR
-  bash run_eval.sh
+  bash ./script/run_eval.sh
   ```
 
   进行并行训练时, 需要提前创建JSON格式的hccl配置文件。
@@ -105,9 +105,10 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 ```bash
 
 ├── Tiny-DarkNet
-    ├── README.md                    // Tiny-Darknet相关说明
+    ├── README.md                  // Tiny-Darknet相关说明
     ├── scripts
-    │   ├──run_train.sh                // Ascend分布式训练shell脚本
+    │   ├──run_train_single.sh     // Ascend单卡训练shell脚本
+    │   ├──run_train.sh               // Ascend分布式训练shell脚本
     │   ├──run_eval.sh                // Ascend评估shell脚本
     ├── src
     │   ├──dataset.py                 // 创建数据集
@@ -140,7 +141,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
   'device_target': 'Ascend' # 程序运行的设备
   'device_id': 0            # 用来训练和评估的设备编号
   'keep_checkpoint_max': 10 # 仅仅保持最新的keep_checkpoint_max个checkpoint文件
-  'checkpoint_path': './train_tinydarknet_imagenet-125_390.ckpt'  # 保存checkpoint文件的绝对路径
+  'checkpoint_path': '/train_tinydarknet.ckpt'  # 保存checkpoint文件的绝对路径
   'onnx_filename': 'tinydarknet.onnx' # 用于export.py 文件中的onnx模型的文件名
   'air_filename': 'tinydarknet.air'   # 用于export.py 文件中的air模型的文件名
   'lr_scheduler': 'exponential'     # 学习率策略
@@ -164,10 +165,10 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 - 在Ascend资源上运行：
 
   ```python
-  python train.py > train.log 2>&1 &
+  sh scripts/run_train_single.sh
   ```
 
-  上述的python命令将运行在后台中，可以通过 `train.log` 文件查看运行结果.
+  上述的命令将运行在后台中，可以通过 `train.log` 文件查看运行结果.
 
   训练完成后,默认情况下,可在script文件夹下得到一些checkpoint文件. 训练的损失值将以如下的形式展示:
   <!-- After training, you'll get some checkpoint files under the script folder by default. The loss value will be achieved as follows: -->
@@ -213,7 +214,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 
 - 在Ascend资源上进行评估:
 
-  在运行如下命令前,请确认用于评估的checkpoint文件的路径.请将checkpoint路径设置为绝对路径,例如:"username/imagenet/train_tiny-darknet_imagenet-125_390.ckpt".
+  在运行如下命令前,请确认用于评估的checkpoint文件的路径.请将checkpoint路径设置为绝对路径,例如:"/username/imagenet/train_tinydarknet.ckpt"
 
   ```python
   python eval.py > eval.log 2>&1 &  
@@ -254,7 +255,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 | 速度                      | 8卡: 104 ms/step                        |
 | 总时间                 | 8卡: 17.8小时                                             |
 | 参数(M)             | 4.0                                                        |
-| 脚本                    | [Tiny-Darknet脚本](https://gitee.com/mindspore/mindspore/tree/r0.7/model_zoo/official/cv/googlenet) |
+| 脚本                    | [Tiny-Darknet脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/tinydarknet) |
 
 ### [评估性能](#目录)
 
