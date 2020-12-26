@@ -91,6 +91,11 @@ function android_release_package()
         fi
         mkdir -p ${dst_android_pkg_name}/third_party/hiai_ddk/lib/aarch64/
         cp -r ${src_arm64_pkg_name}/third_party/hiai_ddk/lib/* ${dst_android_pkg_name}/third_party/hiai_ddk/lib/aarch64/
+        if [ ${name} == "inference" ]
+        then
+            # Copy java runtime to Android package
+            cp ${input_path}/aar/* ${dst_android_pkg_name}
+        fi
 
         mkdir -p ${output_path}/release/android/
         tar -czf ${output_path}/release/android/${dst_android_pkg_name}.tar.gz ${dst_android_pkg_name}
@@ -109,13 +114,18 @@ function android_release_package()
 function linux_release_package()
 {
     mkdir -p ${output_path}/release/linux/
-    cp ${input_path}/ubuntu_x86/* ${output_path}/release/linux/
+    cp ${input_path}/ubuntu_x86/mindspore-lite-${version}-converter-* ${output_path}/release/linux/
+    cp ${input_path}/ubuntu_x86/mindspore-lite-${version}-inference-linux-x64-avx.tar.gz  ${output_path}/release/linux/mindspore-lite-${version}-inference-linux-x64.tar.gz
+    cp ${input_path}/ubuntu_x86/mindspore-lite-${version}-inference-linux-x64-avx.tar.gz.sha256  ${output_path}/release/linux/mindspore-lite-${version}-inference-linux-x64.tar.gz.sha256
+    cp ${input_path}/ubuntu_x86/mindspore-lite-${version}-train-* ${output_path}/release/linux/
 }
 
 function windows_release_package()
 {
     mkdir -p ${output_path}/release/windows/
-    cp ${input_path}/windows_x64/* ${output_path}/release/windows/
+    cp ${input_path}/windows_x64/mindspore-lite-${version}-converter-* ${output_path}/release/windows/
+    cp ${input_path}/windows_x64/mindspore-lite-${version}-inference-win-x64-avx.zip ${output_path}/release/windows/mindspore-lite-${version}-inference-win-x64.zip
+    cp ${input_path}/windows_x64/mindspore-lite-${version}-inference-win-x64-avx.zip.sha256 ${output_path}/release/windows/mindspore-lite-${version}-inference-win-x64.zip.sha256
 }
 
 echo "============================== begin =============================="
