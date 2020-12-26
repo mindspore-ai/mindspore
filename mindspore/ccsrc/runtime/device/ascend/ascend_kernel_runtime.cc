@@ -309,7 +309,7 @@ bool AscendKernelRuntime::LoadData(mindspore::session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
 #ifdef ENABLE_DEBUGGER
   MS_LOG(INFO) << "Start load step";
-  for (auto graph_ptr : debugger_->GetGraphPtrList()) {
+  for (const auto &graph_ptr : debugger_->GetGraphPtrList()) {
     debugger_->SetGraphPtr(graph_ptr);
     // load output
     debugger_->LoadGraphOutputs();
@@ -543,17 +543,15 @@ void AscendKernelRuntime::TaskFailCallback(rtTaskFailInfo *task_fail_info) {
   std::lock_guard<std::mutex> lock(exception_mutex);
   if (task_fail_info->retcode == ACL_ERROR_RT_AICORE_OVER_FLOW) {
     auto key = std::to_string(task_fail_info->streamid) + std::to_string(task_fail_info->taskid);
-    auto find_iter = overflow_tasks_.find(key);
-    if (find_iter == overflow_tasks_.end()) {
+    if (overflow_tasks_.find(key) == overflow_tasks_.end()) {
       overflow_tasks_[key] = 1;
+    }
+    if (overflow_tasks_[key] == 5) {
+      auto node_name = AscendKernelRuntime::GetErrorNodeName(task_fail_info->streamid, task_fail_info->taskid);
+      MS_LOG(WARNING) << "Node run task overflow, node name: " << node_name;
+      overflow_tasks_[key] = 0;
     } else {
-      if (overflow_tasks_[key] == 5) {
-        auto node_name = AscendKernelRuntime::GetErrorNodeName(task_fail_info->streamid, task_fail_info->taskid);
-        MS_LOG(WARNING) << "Node run task overflow, node name: " << node_name;
-        overflow_tasks_.erase(find_iter);
-      } else {
-        overflow_tasks_[key]++;
-      }
+      overflow_tasks_[key]++;
     }
   } else {
     MS_LOG(WARNING) << "Task fail infos task_id: " << task_fail_info->taskid
@@ -578,16 +576,20 @@ string AscendKernelRuntime::GetErrorNodeName(uint32_t streamid, uint32_t taskid)
 
 void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *graph) {
   MS_EXCEPTION_IF_NULL(graph);
-  auto full_scope_name =
-    AscendKernelRuntime::GetErrorNodeName(task_fail_infoes_.at(0).streamid, task_fail_infoes_.at(0).taskid);
-  // Dump error data in local path
   const std::string local_path = std::string("./task_error_dump/") + std::to_string(task_fail_infoes_.at(0).deviceid);
-  for (const auto &node : graph->execution_order()) {
-    if (node->fullname_with_scope() == full_scope_name) {
-      MS_LOG(ERROR) << "Begin to dump node (" << full_scope_name << ") task error input/output data in local path."
-                    << " trace: " << trace::DumpSourceLines(node);
-      E2eDumpUtil::DumpInputImpl(node, false, local_path, &full_scope_name, nullptr);
-      E2eDumpUtil::DumpOutputImpl(node, false, local_path, &full_scope_name, nullptr);
+  for (const auto &task_fail_info : task_fail_infoes_) {
+    auto full_scope_name = AscendKernelRuntime::GetErrorNodeName(task_fail_info.streamid, task_fail_info.taskid);
+    // Dump error data in local path
+    if (full_scope_name.empty()) {
+      continue;
+    }
+    for (const auto &node : graph->execution_order()) {
+      if (node->fullname_with_scope() == full_scope_name) {
+        MS_LOG(ERROR) << "Dump node (" << full_scope_name << ") task error input/output data to: " << local_path
+                      << " trace: " << trace::DumpSourceLines(node);
+        E2eDumpUtil::DumpInputImpl(node, false, local_path, &full_scope_name, nullptr);
+        E2eDumpUtil::DumpOutputImpl(node, false, local_path, &full_scope_name, nullptr);
+      }
     }
   }
 }
@@ -686,7 +688,8 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
   if (!status) {
     DumpTaskExceptionInfo(graph);
     std::string file_name = "task_error_debug" + std::to_string(current_graph_id_) + ".ir";
-    DumpIR(file_name, std::shared_ptr<session::KernelGraph>(const_cast<session::KernelGraph *>(graph)));
+    auto graph_tmp = std::make_shared<session::KernelGraph>(*graph);
+    DumpIR(file_name, graph_tmp);
 #ifdef ENABLE_TDTQUE
     // Run task error, we should call TdtHostDestroy to release tdt to avoid DeviceQueueOp hostPush hung
     // case1: cpu usage 100% cause thread/process exit, but some tdt thread remain in backend
