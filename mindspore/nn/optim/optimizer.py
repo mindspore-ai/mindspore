@@ -166,7 +166,8 @@ class Optimizer(Cell):
         if context.get_auto_parallel_context("enable_parallel_optimizer"):
             if _get_parallel_mode() == ParallelMode.DATA_PARALLEL and context.get_context("device_target") == "Ascend":
                 self.use_parallel = True
-            elif context.get_context("device_target") != "Ascend":
+            elif _get_parallel_mode() == ParallelMode.DATA_PARALLEL \
+                    and context.get_context("device_target") != "Ascend":
                 raise RuntimeError("Parallel optimizer only supports Ascend in data parallel mode.")
             elif _get_parallel_mode() in (ParallelMode.STAND_ALONE, ParallelMode.HYBRID_PARALLEL):
                 raise RuntimeError("Parallel optimizer is not supported in {}.".format(_get_parallel_mode()))
