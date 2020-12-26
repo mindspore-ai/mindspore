@@ -129,5 +129,5 @@ int FusedBatchnormCPUKernel::DoExecute(int task_id) {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FusedBatchNorm, CPUKernelCreator<FusedBatchnormCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FusedBatchNorm, LiteKernelCreator<FusedBatchnormCPUKernel>)
 }  // namespace mindspore::kernel

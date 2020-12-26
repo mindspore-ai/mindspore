@@ -157,5 +157,5 @@ int ReduceFp16CPUKernel::MallocTmpBuffer() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reduce, CPUKernelCreator<ReduceFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Reduce, LiteKernelCreator<ReduceFp16CPUKernel>)
 }  // namespace mindspore::kernel

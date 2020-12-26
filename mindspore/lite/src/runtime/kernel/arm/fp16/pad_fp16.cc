@@ -91,5 +91,5 @@ void PadFp16CPUKernel::FreeInputAndOutput() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Pad, CPUKernelCreator<PadFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Pad, LiteKernelCreator<PadFp16CPUKernel>)
 }  // namespace mindspore::kernel

@@ -229,10 +229,10 @@ class LiteKernelUtil {
 };
 
 template <class T>
-kernel::LiteKernel *CPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                     const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                     const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                     const mindspore::lite::PrimitiveC *primitive) {
+kernel::LiteKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                      const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
+                                      const lite::InnerContext *ctx, const kernel::KernelKey &desc,
+                                      const mindspore::lite::PrimitiveC *primitive) {
   auto *kernel = new (std::nothrow) T(parameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel: " << parameter->name_ << "is nullptr.";

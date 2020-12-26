@@ -72,6 +72,6 @@ int CropCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Crop, CPUKernelCreator<CropCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Crop, CPUKernelCreator<CropCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Crop, LiteKernelCreator<CropCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Crop, LiteKernelCreator<CropCPUKernel>)
 }  // namespace mindspore::kernel

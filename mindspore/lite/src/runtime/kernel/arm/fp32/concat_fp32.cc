@@ -73,6 +73,6 @@ int ConcatCPUKernel::Run() {
   return error_code;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Concat, CPUKernelCreator<ConcatCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Concat, CPUKernelCreator<ConcatCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Concat, LiteKernelCreator<ConcatCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Concat, LiteKernelCreator<ConcatCPUKernel>)
 }  // namespace mindspore::kernel

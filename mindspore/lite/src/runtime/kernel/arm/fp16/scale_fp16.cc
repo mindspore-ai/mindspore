@@ -181,5 +181,5 @@ void ScaleFp16CPUKernel::FreeTmpBuffer() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Scale, CPUKernelCreator<ScaleFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Scale, LiteKernelCreator<ScaleFp16CPUKernel>)
 }  // namespace mindspore::kernel

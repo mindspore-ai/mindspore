@@ -113,6 +113,6 @@ kernel::LiteKernel *CpuSplitInt32KernelCreator(const std::vector<lite::Tensor *>
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Split, CPUKernelCreator<SplitCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Split, CPUKernelCreator<SplitCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Split, LiteKernelCreator<SplitCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Split, LiteKernelCreator<SplitCPUKernel>)
 }  // namespace mindspore::kernel

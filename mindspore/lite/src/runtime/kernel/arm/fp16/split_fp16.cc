@@ -116,5 +116,5 @@ void SplitFp16CPUKernel::FreeInputAndOutput() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Split, CPUKernelCreator<SplitFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Split, LiteKernelCreator<SplitFp16CPUKernel>)
 }  // namespace mindspore::kernel

@@ -136,5 +136,5 @@ int ActivationFp16CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Activation, CPUKernelCreator<ActivationFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Activation, LiteKernelCreator<ActivationFp16CPUKernel>)
 }  // namespace mindspore::kernel

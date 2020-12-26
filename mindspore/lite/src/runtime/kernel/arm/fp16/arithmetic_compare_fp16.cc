@@ -184,10 +184,10 @@ void ArithmeticCompareFP16CPUKernel::FreeTmpBuffer() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_NotEqual, CPUKernelCreator<ArithmeticCompareFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Equal, CPUKernelCreator<ArithmeticCompareFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Less, CPUKernelCreator<ArithmeticCompareFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_LessEqual, CPUKernelCreator<ArithmeticCompareFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Greater, CPUKernelCreator<ArithmeticCompareFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_GreaterEqual, CPUKernelCreator<ArithmeticCompareFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_NotEqual, LiteKernelCreator<ArithmeticCompareFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Equal, LiteKernelCreator<ArithmeticCompareFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Less, LiteKernelCreator<ArithmeticCompareFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_LessEqual, LiteKernelCreator<ArithmeticCompareFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Greater, LiteKernelCreator<ArithmeticCompareFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_GreaterEqual, LiteKernelCreator<ArithmeticCompareFP16CPUKernel>)
 }  // namespace mindspore::kernel
