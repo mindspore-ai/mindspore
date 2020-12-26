@@ -102,7 +102,7 @@ def numpy_from_dlpack(pycapsule):
 	wrapped = type('', (), dict(__array_interface__ = dl_managed_tensor.dl_tensor.__array_interface__, __del__ = lambda self: dl_managed_tensor.deleter(ctypes.byref(dl_managed_tensor))))()
 	return numpy.asarray(wrapped)
 
-## numpy.array to mindspore.tensor
+### numpy.array to mindspore.tensor
 from mindspore import Tensor
 import numpy as np 
 def tensor_from_numpy(data_numpy):
