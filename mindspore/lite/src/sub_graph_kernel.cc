@@ -288,10 +288,10 @@ int CpuFp16SubGraph::PostProcess() {
   for (size_t i = 0; i < this->in_tensors_.size(); i++) {
     auto tensor = in_tensors_.at(i);
     MS_ASSERT(tensor != nullptr);
-    if (tensor->data_type() == kNumberTypeFloat16) {
+    auto origin_tensor_data = origin_input_data_.at(i);
+    if (tensor->data_type() == kNumberTypeFloat16 && origin_tensor_data != nullptr) {
+      MS_ASSERT(tensor != nullptr);
       tensor->FreeData();
-      auto origin_tensor_data = origin_input_data_.at(i);
-      MS_ASSERT(origin_tensor_data != nullptr);
       MS_ASSERT(origin_tensor_data->data_ != nullptr);
       tensor->set_data(origin_tensor_data->data_);
       tensor->set_data_type(kNumberTypeFloat32);
