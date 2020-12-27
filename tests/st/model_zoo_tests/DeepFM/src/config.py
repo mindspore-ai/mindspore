@@ -27,7 +27,7 @@ class DataConfig:
     batch_size = 16000
     data_field_size = 39
     # dataset format, 1: mindrecord, 2: tfrecord, 3: h5
-    data_format = 3
+    data_format = 1
 
 
 class ModelConfig:
