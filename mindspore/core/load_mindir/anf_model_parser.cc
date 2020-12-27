@@ -102,6 +102,10 @@ std::shared_ptr<T> ParserAttr(const std::string &str, const std::unordered_map<s
       count++;
       if (str[i + 1] == '[' || str[i + 1] == ']' || str[i + 1] == ',') {
         auto value_name = str.substr(i - count + 1, count);
+        if (kv.find(value_name) == kv.end()) {
+          MS_LOG(ERROR) << "Node's attributes and shape do not match.";
+          return nullptr;
+        }
         value.push(kv.at(value_name));
         rules.push(value_name);
         count = 0;
@@ -723,6 +727,10 @@ CNodePtr MSANFModelParser::BuildCNodeForFuncGraph(const FuncGraphPtr &outputFunc
     cnode_ptr->set_abstract(iter->second);
   } else {
     auto abstract = ParserAttrShape(shape_ref_attr_name, kv);
+    if (abstract == nullptr) {
+      MS_LOG(ERROR) << "Node's attribute is nullptr.";
+      return nullptr;
+    }
     cnode_ptr->set_abstract(abstract);
   }
 
