@@ -90,6 +90,7 @@ bool PipelineSplit(const ResourcePtr &res) {
   auto transformer =
     std::make_shared<parallel::PipelineTransformer>(manager, stage, root, global_rank, per_stage_rank_num);
   // step1: Do color graph
+  transformer->LabelRequiredGradCNode();
   transformer->Coloring();
   // step2: Do color broadcast
   transformer->BroadCastColoring();

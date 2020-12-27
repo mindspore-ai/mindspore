@@ -21,7 +21,7 @@ from ... import context
 from ...common import dtype as mstype
 from ..primitive import PrimitiveWithCheck, PrimitiveWithInfer, prim_attr_register
 from ..operations.math_ops import _infer_shape_reduce
-from ...communication.management import get_rank, GlobalComm, _get_group
+from ...communication.management import GlobalComm
 
 
 class ExtractImagePatches(PrimitiveWithInfer):
@@ -409,7 +409,7 @@ class Send(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self, sr_tag, dest_rank, group=GlobalComm.WORLD_COMM_GROUP):
-        self.rank = get_rank(_get_group(group))
+        self.rank = dest_rank
         self.sr_tag = sr_tag
         self.group = group
 
@@ -465,7 +465,7 @@ class Receive(PrimitiveWithInfer):
     """
     @prim_attr_register
     def __init__(self, sr_tag, src_rank, shape, dtype, group=GlobalComm.WORLD_COMM_GROUP):
-        self.rank = get_rank(_get_group(group))
+        self.rank = src_rank
         self.tag = sr_tag
         self.shape = shape
         self.dtype = dtype

@@ -69,6 +69,8 @@ namespace mindspore {
 namespace session {
 const size_t kInvalidIndex = SIZE_MAX;
 constexpr size_t kReturnDataIndex = 1;
+constexpr char SR_TAG[] = "sr_tag";
+constexpr char BACKWARD[] = "backward";
 namespace {
 void DumpGraphExeOrder(const std::vector<CNodePtr> &execution_order, const std::string &tag = "") {
   MS_LOG(INFO) << "Dump execution_order size " << execution_order.size();
@@ -460,6 +462,90 @@ GraphId AscendSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNode
   return graph_id;
 }
 
+bool IsBackward(const CNodePtr &cnode) {
+  auto prim = GetValueNode<PrimitivePtr>(cnode->input(0));
+  return prim->HasAttr(BACKWARD);
+}
+
+// compare the value of send/recv sr_tag
+bool comp(const CNodePtr &node1, const CNodePtr &node2) {
+  auto prim1 = GetValueNode<PrimitivePtr>(node1->input(0));
+  MS_EXCEPTION_IF_NULL(prim1);
+  auto prim2 = GetValueNode<PrimitivePtr>(node1->input(0));
+  MS_EXCEPTION_IF_NULL(prim2);
+  auto sr_tag_value1 = prim1->GetAttr(SR_TAG);
+  MS_EXCEPTION_IF_NULL(sr_tag_value1);
+  auto sr_tag_value2 = prim2->GetAttr(SR_TAG);
+  MS_EXCEPTION_IF_NULL(sr_tag_value2);
+  auto sr_tag1 = GetValue<int64_t>(sr_tag_value1);
+  auto sr_tag2 = GetValue<int64_t>(sr_tag_value2);
+  return sr_tag1 < sr_tag2;
+}
+
+// Reorder the execution order of send
+void ReorderSend(std::vector<CNodePtr> *execution_order, std::vector<CNodePtr> op_v) {
+  auto last_node = op_v.back();
+  for (auto &node : op_v) {
+    if (node == last_node) {
+      continue;
+    }
+    auto node_iter = std::find(execution_order->begin(), execution_order->end(), node);
+    (void)execution_order->erase(node_iter);
+  }
+  std::sort(op_v.begin(), op_v.end(), comp);
+  auto last_node_iter = std::find(execution_order->begin(), execution_order->end(), last_node);
+  auto node_iter = execution_order->erase(last_node_iter);
+  // all send will insert the end of the last node
+  execution_order->insert(node_iter, op_v.begin(), op_v.end());
+}
+
+// Reorder the execution order of receive
+void ReorderRecv(std::vector<CNodePtr> *execution_order, std::vector<CNodePtr> op_v) {
+  auto begin_node = op_v.front();
+  for (auto &node : op_v) {
+    if (node == begin_node) {
+      continue;
+    }
+    auto node_iter = std::find(execution_order->begin(), execution_order->end(), node);
+    (void)execution_order->erase(node_iter);
+  }
+  std::sort(op_v.begin(), op_v.end(), comp);
+  auto begin_node_iter = std::find(execution_order->begin(), execution_order->end(), begin_node);
+  auto node_iter = execution_order->erase(begin_node_iter);
+  // all receive will insert before the begin node
+  execution_order->insert(node_iter, op_v.begin(), op_v.end());
+}
+
+void ReorderSendRecv(std::vector<CNodePtr> *execution_order) {
+  std::vector<CNodePtr> forward_send, forward_recv, backward_send, backward_recv;
+  for (auto &cnode : *execution_order) {
+    if (IsPrimitiveCNode(cnode, prim::kPrimSend) && IsBackward(cnode)) {
+      backward_send.push_back(cnode);
+      continue;
+    } else if (IsPrimitiveCNode(cnode, prim::kPrimSend)) {
+      forward_send.push_back(cnode);
+      continue;
+    }
+    if (IsPrimitiveCNode(cnode, prim::kPrimReceive) && IsBackward(cnode)) {
+      backward_recv.push_back(cnode);
+    } else if (IsPrimitiveCNode(cnode, prim::kPrimReceive)) {
+      forward_recv.push_back(cnode);
+    }
+  }
+  if (!forward_send.empty()) {
+    ReorderSend(execution_order, forward_send);
+  }
+  if (!backward_send.empty()) {
+    ReorderSend(execution_order, backward_send);
+  }
+  if (!forward_recv.empty()) {
+    ReorderRecv(execution_order, forward_recv);
+  }
+  if (!backward_recv.empty()) {
+    ReorderRecv(execution_order, backward_recv);
+  }
+}
+
 GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   MS_LOG(INFO) << "Start";
   std::vector<KernelGraphPtr> all_graphs;
@@ -520,6 +606,11 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
 
   // adjust kernel
   AdjustKernel(root_graph);
+
+  // reorder send/recv
+  auto execution_order = root_graph->execution_order();
+  ReorderSendRecv(&execution_order);
+  root_graph->set_execution_order(execution_order);
 #if ENABLE_CPU && ENABLE_D
   InitPsWorker(root_graph);
 #endif
