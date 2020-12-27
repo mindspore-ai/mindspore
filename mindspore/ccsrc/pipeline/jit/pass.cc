@@ -485,8 +485,7 @@ std::vector<PassItem> kGePasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"opt_prepare", PrepareGroup},
                                    {"cconv", CconvPass}};
 
-std::vector<PassItem> kPynativePasses = {{"opt_grad_epilogue", OptPassGradEpilogueGroup},
-                                         {"opt_a", OptPassAGroup},
+std::vector<PassItem> kPynativePasses = {{"opt_a", OptPassAGroup},
                                          {"opt_b", OptPassBGroup},
                                          {"cconv", CconvPass},
                                          {"transform_top", TransformTopGraphPass},
