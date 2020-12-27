@@ -104,20 +104,27 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 
 ```bash
 
-├── Tiny-DarkNet
+├── tinydarknet
     ├── README.md                  // Tiny-Darknet英文说明
     ├── README_CN.md                  // Tiny-Darknet中文说明
     ├── scripts
-    │   ├──run_standalone_train.sh     // Ascend单卡训练shell脚本
-    │   ├──run_distribute_train.sh               // Ascend分布式训练shell脚本
-    │   ├──run_eval.sh                // Ascend评估shell脚本
+        ├──run_standalone_train.sh     // Ascend单卡训练shell脚本
+        ├──run_distribute_train.sh               // Ascend分布式训练shell脚本
+        ├──run_eval.sh                // Ascend评估shell脚本
     ├── src
-    │   ├──dataset.py                 // 创建数据集
-    │   ├──tinydarknet.py             // Tiny-Darknet网络结构
-    │   ├──config.py                  // 参数配置
+        ├─lr_scheduler    //学习率策略
+            ├─__init__.py    // 初始化文件
+            ├─linear_warmup.py    // linear_warmup策略
+            ├─warmup_cosine_annealing_lr.py    // warmup_cosine_annealing_lr策略
+            ├─warmup_step_lr.py    // warmup_step_lr策略
+        ├──dataset.py                 // 创建数据集
+        ├──CrossEntropySmooth.py     // 损失函数
+        ├──tinydarknet.py             // Tiny-Darknet网络结构
+        ├──config.py                  // 参数配置
     ├── train.py                       // 训练脚本
     ├── eval.py                        //  评估脚本
     ├── export.py                      // 导出checkpoint文件
+    ├── mindspore_hub_conf.py          // hub配置文件
 
 ```
 
