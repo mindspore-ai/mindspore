@@ -113,7 +113,6 @@ bool FinalizeHccl() {
   }
 
   ::Finalize();
-  ge::OpsKernelBuilderRegistry::GetInstance().UnregisterAll();
   ops_kernel_info_store.reset();
   ops_kernel_builder.reset();
   MS_LOG(INFO) << "Destroy hccl adapter success.";
