@@ -135,11 +135,13 @@ The GNMT network script and code result are as follows:
   │      ├──lr_scheduler.py                  // Learning rate scheduler.
   │      ├──optimizer.py                     // Optimizer.
   ├── scripts
-  │   ├──run_distributed_train_ascend.sh     // shell script for distributed train on ascend.
-  │   ├──run_standalone_eval_ascend.sh       // shell script for standalone eval on ascend.
-  │   ├──run_standalone_train_ascend.sh      // shell script for standalone eval on ascend.
-  ├── create_dataset.py                      // dataset preparation.
+  │   ├──run_distributed_train_ascend.sh     // Shell script for distributed train on ascend.
+  │   ├──run_standalone_eval_ascend.sh       // Shell script for standalone eval on ascend.
+  │   ├──run_standalone_train_ascend.sh      // Shell script for standalone eval on ascend.
+  ├── create_dataset.py                      // Dataset preparation.
   ├── eval.py                                // Infer API entry.
+  ├── export.py                              // Export checkpoint file into air models.
+  ├── mindspore_hub_conf.py                  // Hub config.
   ├── requirements.txt                       // Requirements of third party package.
   ├── train.py                               // Train API entry.
 ```

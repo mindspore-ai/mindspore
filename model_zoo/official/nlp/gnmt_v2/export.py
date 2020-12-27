@@ -65,33 +65,28 @@ if __name__ == '__main__':
 
     for param in params:
         value = param.data
-        name = param.name
-        if name not in weights:
-            raise ValueError(f"{name} is not found in weights.")
-        with open("weight_after_deal.txt", "a+") as f:
-            weights_name = name
-            f.write(weights_name)
-            f.write("\n")
-            if isinstance(value, Tensor):
-                print(name, value.asnumpy().shape)
-                if weights_name in weights:
-                    assert weights_name in weights
-                    if isinstance(weights[weights_name], Parameter):
-                        if param.data.dtype == "Float32":
-                            param.set_data(Tensor(weights[weights_name].data.asnumpy(), mstype.float32))
-                        elif param.data.dtype == "Float16":
-                            param.set_data(Tensor(weights[weights_name].data.asnumpy(), mstype.float16))
+        weights_name = param.name
+        if weights_name not in weights:
+            raise ValueError(f"{weights_name} is not found in weights.")
+        if isinstance(value, Tensor):
+            if weights_name in weights:
+                assert weights_name in weights
+                if isinstance(weights[weights_name], Parameter):
+                    if param.data.dtype == "Float32":
+                        param.set_data(Tensor(weights[weights_name].data.asnumpy(), mstype.float32))
+                    elif param.data.dtype == "Float16":
+                        param.set_data(Tensor(weights[weights_name].data.asnumpy(), mstype.float16))
 
-                    elif isinstance(weights[weights_name], Tensor):
-                        param.set_data(Tensor(weights[weights_name].asnumpy(), config.dtype))
-                    elif isinstance(weights[weights_name], np.ndarray):
-                        param.set_data(Tensor(weights[weights_name], config.dtype))
-                    else:
-                        param.set_data(weights[weights_name])
+                elif isinstance(weights[weights_name], Tensor):
+                    param.set_data(Tensor(weights[weights_name].asnumpy(), config.dtype))
+                elif isinstance(weights[weights_name], np.ndarray):
+                    param.set_data(Tensor(weights[weights_name], config.dtype))
                 else:
-                    print("weight not found in checkpoint: " + weights_name)
-                    param.set_data(zero_weight(value.asnumpy().shape))
-        f.close()
+                    param.set_data(weights[weights_name])
+            else:
+                print("weight not found in checkpoint: " + weights_name)
+                param.set_data(zero_weight(value.asnumpy().shape))
+
     print(" | Load weights successfully.")
     tfm_infer = GNMTInferCell(tfm_model)
     tfm_infer.set_train(False)
