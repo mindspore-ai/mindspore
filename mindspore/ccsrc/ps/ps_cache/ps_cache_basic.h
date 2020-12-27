@@ -34,7 +34,7 @@ class PsCacheBasic {
   virtual ~PsCacheBasic() = default;
   virtual bool InitDevice(uint32_t device_id, const void *context) = 0;
   virtual void *MallocMemory(size_t size) = 0;
-  virtual bool MallocConstantMemory(size_t constant_value) { return true; }
+  virtual bool MallocConstantMemory(size_t cache_vocab_size) { return true; }
   virtual bool RecordEvent() = 0;
   virtual bool SynchronizeEvent() = 0;
   virtual bool SynchronizeStream() = 0;

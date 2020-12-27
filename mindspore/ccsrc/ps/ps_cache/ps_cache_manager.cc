@@ -674,6 +674,7 @@ bool PsCacheManager::HashSwapHostToDevice(const HashTableInfo &hash_info) {
   RETURN_IF_FALSE(embedding_device_cache_->cache_->HashSwapIn(
     hash_table_addr, embedding_device_cache_->hash_swap_value_addr_, embedding_device_cache_->hash_swap_index_addr_,
     hash_table_size, embedding_size, swap_indices_size));
+  RETURN_IF_FALSE(embedding_device_cache_->cache_->SynchronizeStream());
   return true;
 }
 
