@@ -5689,9 +5689,10 @@ class LARSUpdate(PrimitiveWithInfer):
         ...         super(Net, self).__init__()
         ...         self.lars = ops.LARSUpdate()
         ...         self.reduce = ops.ReduceSum()
+        ...         self.square = ops.Square()
         ...     def construct(self, weight, gradient):
-        ...         w_square_sum = self.reduce(ops.Square()(weight))
-        ...         grad_square_sum = self.reduce(ops.Square()(gradient))
+        ...         w_square_sum = self.reduce(self.square(weight))
+        ...         grad_square_sum = self.reduce(self.square(gradient))
         ...         grad_t = self.lars(weight, gradient, w_square_sum, grad_square_sum, 0.0, 1.0)
         ...         return grad_t
         ...
