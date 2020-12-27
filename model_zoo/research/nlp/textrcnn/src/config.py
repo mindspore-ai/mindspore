@@ -38,6 +38,5 @@ textrcnn_cfg = edict({
     'emb_path': './word2vec',
     'embed_size': 300,
     'save_checkpoint_steps': 149,
-    'keep_checkpoint_max': 10,
-    'momentum': 0.9
+    'keep_checkpoint_max': 10
 })

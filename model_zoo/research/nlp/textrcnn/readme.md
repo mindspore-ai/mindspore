@@ -100,6 +100,7 @@ bash scripts/run_eval.sh
         │   ├──textrcnn.py          // textrcnn architecture
         │   ├──config.py            // parameter configuration
         ├── train.py               // training script
+        ├── export.py             // export script
         ├── eval.py               //  evaluation script
         ├── data_helpers.py               //  dataset split script
         ├── sample.txt               //  the shell to train and eval the model without scripts
@@ -129,8 +130,7 @@ Parameters for both training and evaluation can be set in config.py
   'emb_path': './word2vec', # the directory to save the embedding file
   'embed_size': 300, # the dimension of the word embedding
   'save_checkpoint_steps': 149, # per step to save the checkpoint
-  'keep_checkpoint_max': 10, # max checkpoints to save
-  'momentum': 0.9 # the momentum rate
+  'keep_checkpoint_max': 10 # max checkpoints to save
   ```
 
 ### Performance
