@@ -39,5 +39,4 @@ textrcnn_cfg = edict({
     'embed_size': 300,
     'save_checkpoint_steps': 149,
     'keep_checkpoint_max': 10,
-    'momentum': 0.9
 })
