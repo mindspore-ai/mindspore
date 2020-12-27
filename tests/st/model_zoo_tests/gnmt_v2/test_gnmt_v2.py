@@ -31,15 +31,11 @@ parser = argparse.ArgumentParser(description='GNMT train and eval.')
 # train
 parser.add_argument("--config_train", type=str, required=True,
                     help="model config json file path.")
-parser.add_argument("--dataset_schema_train", type=str, required=True,
-                    help="dataset schema for train.")
 parser.add_argument("--pre_train_dataset", type=str, required=True,
                     help="pre-train dataset address.")
 # eval
 parser.add_argument("--config_test", type=str, required=True,
                     help="model config json file path.")
-parser.add_argument("--dataset_schema_test", type=str, required=True,
-                    help="dataset schema for evaluation.")
 parser.add_argument("--test_dataset", type=str, required=True,
                     help="test dataset address.")
 parser.add_argument("--existed_ckpt", type=str, required=True,
@@ -77,7 +73,6 @@ if __name__ == '__main__':
     # train
     _check_args(args.config_train)
     _config_train = get_config(args.config_train)
-    _config_train.dataset_schema = args.dataset_schema_train
     _config_train.pre_train_dataset = args.pre_train_dataset
     set_seed(_config_train.random_seed)
     assert _rank_size is not None and int(_rank_size) > 1
@@ -86,7 +81,6 @@ if __name__ == '__main__':
     # eval
     _check_args(args.config_test)
     _config_test = get_config(args.config_test)
-    _config_test.dataset_schema = args.dataset_schema_test
     _config_test.test_dataset = args.test_dataset
     _config_test.existed_ckpt = args.existed_ckpt
     result = infer(_config_test)

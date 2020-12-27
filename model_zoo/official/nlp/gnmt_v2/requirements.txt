@@ -1,6 +1,4 @@
-nltk
-jieba
 numpy
 subword-nmt==0.3.7
-sacrebleu==1.2.10
-sacremoses==0.0.19
+sacrebleu==1.4.14
+sacremoses==0.0.35

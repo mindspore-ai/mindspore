@@ -40,7 +40,6 @@ from src.utils.optimizer import Adam
 
 parser = argparse.ArgumentParser(description='GNMT train entry point.')
 parser.add_argument("--config", type=str, required=True, help="model config json file path.")
-parser.add_argument("--dataset_schema_train", type=str, required=True, help="dataset schema for train.")
 parser.add_argument("--pre_train_dataset", type=str, required=True, help="pre-train dataset address.")
 
 device_id = os.getenv('DEVICE_ID', None)
@@ -273,21 +272,20 @@ def train_parallel(config: GNMTConfig):
 
     pre_train_dataset = load_dataset(
         data_files=config.pre_train_dataset,
-        schema=config.dataset_schema,
         batch_size=config.batch_size,
         sink_mode=config.dataset_sink_mode,
         rank_size=MultiAscend.get_group_size(),
         rank_id=MultiAscend.get_rank()
     ) if config.pre_train_dataset else None
     fine_tune_dataset = load_dataset(
-        data_files=config.fine_tune_dataset, schema=config.dataset_schema,
+        data_files=config.fine_tune_dataset,
         batch_size=config.batch_size,
         sink_mode=config.dataset_sink_mode,
         rank_size=MultiAscend.get_group_size(),
         rank_id=MultiAscend.get_rank()
     ) if config.fine_tune_dataset else None
     test_dataset = load_dataset(
-        data_files=config.test_dataset, schema=config.dataset_schema,
+        data_files=config.test_dataset,
         batch_size=config.batch_size,
         sink_mode=config.dataset_sink_mode,
         rank_size=MultiAscend.get_group_size(),
@@ -310,15 +308,12 @@ def train_single(config: GNMTConfig):
     print(" | Starting training on single device.")
 
     pre_train_dataset = load_dataset(data_files=config.pre_train_dataset,
-                                     schema=config.dataset_schema,
                                      batch_size=config.batch_size,
                                      sink_mode=config.dataset_sink_mode) if config.pre_train_dataset else None
     fine_tune_dataset = load_dataset(data_files=config.fine_tune_dataset,
-                                     schema=config.dataset_schema,
                                      batch_size=config.batch_size,
                                      sink_mode=config.dataset_sink_mode) if config.fine_tune_dataset else None
     test_dataset = load_dataset(data_files=config.test_dataset,
-                                schema=config.dataset_schema,
                                 batch_size=config.batch_size,
                                 sink_mode=config.dataset_sink_mode) if config.test_dataset else None
 
@@ -341,7 +336,6 @@ if __name__ == '__main__':
     args, _ = parser.parse_known_args()
     _check_args(args.config)
     _config = get_config(args.config)
-    _config.dataset_schema = args.dataset_schema_train
     _config.pre_train_dataset = args.pre_train_dataset
     set_seed(_config.random_seed)
     if _rank_size is not None and int(_rank_size) > 1:

@@ -37,36 +37,26 @@ def load_infer_weights(config):
         ms_ckpt = load_checkpoint(model_path)
         is_npz = False
     weights = {}
-    with open("variable_after_deal.txt", "w") as f:
-        for param_name in ms_ckpt:
-            infer_name = param_name.replace("gnmt.gnmt.", "")
-            if infer_name.startswith("embedding_lookup."):
-                if is_npz:
-                    weights[infer_name] = ms_ckpt[param_name]
-                else:
-                    weights[infer_name] = ms_ckpt[param_name].data.asnumpy()
-                f.write(infer_name)
-                f.write("\n")
-                infer_name = "beam_decoder.decoder." + infer_name
-                if is_npz:
-                    weights[infer_name] = ms_ckpt[param_name]
-                else:
-                    weights[infer_name] = ms_ckpt[param_name].data.asnumpy()
-                f.write(infer_name)
-                f.write("\n")
-                continue
-
-            elif not infer_name.startswith("gnmt_encoder"):
-                if infer_name.startswith("gnmt_decoder."):
-                    infer_name = infer_name.replace("gnmt_decoder.", "decoder.")
-                infer_name = "beam_decoder.decoder." + infer_name
-
+    for param_name in ms_ckpt:
+        infer_name = param_name.replace("gnmt.gnmt.", "")
+        if infer_name.startswith("embedding_lookup."):
             if is_npz:
                 weights[infer_name] = ms_ckpt[param_name]
             else:
                 weights[infer_name] = ms_ckpt[param_name].data.asnumpy()
-            f.write(infer_name)
-            f.write("\n")
+            infer_name = "beam_decoder.decoder." + infer_name
+            if is_npz:
+                weights[infer_name] = ms_ckpt[param_name]
+            else:
+                weights[infer_name] = ms_ckpt[param_name].data.asnumpy()
+            continue
+        elif not infer_name.startswith("gnmt_encoder"):
+            if infer_name.startswith("gnmt_decoder."):
+                infer_name = infer_name.replace("gnmt_decoder.", "decoder.")
+            infer_name = "beam_decoder.decoder." + infer_name
 
-    f.close()
+        if is_npz:
+            weights[infer_name] = ms_ckpt[param_name]
+        else:
+            weights[infer_name] = ms_ckpt[param_name].data.asnumpy()
     return weights
