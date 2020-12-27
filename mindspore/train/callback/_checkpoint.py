@@ -275,6 +275,8 @@ class ModelCheckpoint(Callback):
         # save graph (only once)
         if not self._graph_saved:
             graph_file_name = os.path.join(self._directory, self._prefix + '-graph.meta')
+            if os.path.isfile(graph_file_name):
+                os.remove(graph_file_name)
             _save_graph(cb_params.train_network, graph_file_name)
             self._graph_saved = True
         self._save_ckpt(cb_params)
