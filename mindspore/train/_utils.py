@@ -76,20 +76,16 @@ def _exec_datagraph(exec_dataset, dataset_size, phase='dataset', create_data_inf
 
 def _make_directory(path: str):
     """Make directory."""
-    real_path = None
     if path is None or not isinstance(path, str) or path.strip() == "":
         logger.error("The path(%r) is invalid type.", path)
         raise TypeError("Input path is invaild type")
 
-    # convert the relative paths
     path = os.path.realpath(path)
     logger.debug("The abs path is %r", path)
 
-    # check the path is exist and write permissions?
     if os.path.exists(path):
         real_path = path
     else:
-        # All exceptions need to be caught because create directory maybe have some limit(permissions)
         logger.debug("The directory(%s) doesn't exist, will create it", path)
         try:
             os.makedirs(path, exist_ok=True)
