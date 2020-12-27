@@ -690,10 +690,10 @@ class SequenceMask(PrimitiveWithCheck):
 
     Inputs:
         - **lengths** (Tensor) - Tensor to calculate the mask for. All values in this tensor must be
-          less than `maxlen`. Must be type int32 or int64.
+          less than or equal to `maxlen`. Must be type int32 or int64.
 
         - **maxlen** (int) - size of the last dimension of returned tensor. Must be positive and same
-          type as elements in `lengths`.
+          type as elements in `lengths`. Default is the maximum value in lengths.
 
     Outputs:
         One mask tensor of shape lengths.shape + (maxlen,).
@@ -702,8 +702,8 @@ class SequenceMask(PrimitiveWithCheck):
         ``GPU``
 
     Examples:
-        >>> x = Tensor(np.array([[1, 3], [2, 0]])
-        >>> sequence_mask = P.SequenceMask()
+        >>> x = Tensor(np.array([[1, 3], [2, 0]]))
+        >>> sequence_mask = ops.SequenceMask()
         >>> output = sequence_mask(x, 3)
         >>> print(output)
         [[[True, False, False],
