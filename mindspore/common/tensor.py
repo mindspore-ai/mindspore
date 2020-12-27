@@ -197,9 +197,10 @@ class Tensor(Tensor_):
 
     def __len__(self):
         out = tensor_operator_registry.get('shape')(self)
-        if not out:
-            return 1
-        return out[0]
+        if out:
+            return out[0]
+        raise TypeError("Not support len of a 0-D tensor")
+
 
     def __mod__(self, other):
         return tensor_operator_registry.get('__mod__')(self, other)
