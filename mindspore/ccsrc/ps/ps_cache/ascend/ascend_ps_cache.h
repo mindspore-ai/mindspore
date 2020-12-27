@@ -51,7 +51,7 @@ class AscendPsCache : public PsCacheBasic {
   ~AscendPsCache() override = default;
   bool InitDevice(uint32_t device_id, const void *context) override;
   void *MallocMemory(size_t size) override;
-  bool MallocConstantMemory(size_t constant_value) override;
+  bool MallocConstantMemory(size_t cache_vocab_size) override;
   bool RecordEvent() override;
   bool SynchronizeEvent() override;
   bool SynchronizeStream() override;
