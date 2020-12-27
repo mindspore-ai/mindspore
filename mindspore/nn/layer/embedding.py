@@ -171,7 +171,10 @@ class EmbeddingLookup(Cell):
         max_norm (Union[float, None]): A maximum clipping value. The data type must be float16, float32
                                        or None. Default: None
         sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: True.
-        vocab_cache_size (int): Cache size of the dictionary of embeddings.
+        vocab_cache_size (int): Cache size of the dictionary of embeddings. Default: 0. It is valid only in
+            parameter server trainning mode and 'DEVICE' target. And the moment parameter of corresponding
+            optimizer will also be set to the cache size. In addition, it should be noted that it will cost the 'DEVICE'
+            memory, so suggests setting a reasonable value to avoid insufficient memory.
 
     Inputs:
         - **input_indices** (Tensor) - The shape of tensor is :math:`(y_1, y_2, ..., y_S)`.
