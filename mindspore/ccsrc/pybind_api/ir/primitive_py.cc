@@ -56,6 +56,7 @@ PrimitivePy::PrimitivePy(const py::str &name, const py::object &python_obj)
     : Primitive(name, false), python_obj_(python_obj), signatures_() {
   auto &mem_cleaner = pipeline::Resource::mem_cleaner();
   mem_cleaner.RecordPrimitivePy(this);
+  MS_LOG(DEBUG) << "New primitive:" << name;
   if (mem_cleaner.IsInPynativeConstructProcess() && !mem_cleaner.IsInPynativeEndGraphProcess()) {
     mem_cleaner.RecordPynativeShortLifePrimitivePy(this);
   }
@@ -63,7 +64,7 @@ PrimitivePy::PrimitivePy(const py::str &name, const py::object &python_obj)
 PrimitivePy::~PrimitivePy() {
   // Erase primitive here to set released flag false, to avoid calling released pointer when clear primitives in
   // resource.
-  pipeline::Resource::mem_cleaner().ErasePrimitivePy(this);
+  pipeline::Resource::mem_cleaner().ReleasePrimitivePyObj(this);
   MS_LOG(DEBUG) << "Release:" << ToString();
 }
 void PrimitivePy::SetPyObj(const py::object &obj) { python_obj_ = obj; }
@@ -327,6 +328,10 @@ py::dict PrimitivePy::RunInfer(const py::tuple &args) {
   if (!HasPyObj()) {
     MS_LOG(EXCEPTION) << "[" << this->ToString() << "]: pyobj is empty";
   }
+  // Python obj could be replaced as None, so it will losed the original info when throw exception in python.
+  if (!py::hasattr(python_obj_, PY_PRIM_METHOD_INFER)) {
+    MS_LOG(EXCEPTION) << "prim:" << ToString() << " has no attr:" << PY_PRIM_METHOD_INFER;
+  }
   auto infer_fuc = python_obj_.attr(PY_PRIM_METHOD_INFER);
   return infer_fuc(*args);
 }
@@ -335,6 +340,10 @@ void PrimitivePy::RunCheck(const py::tuple &args) {
   if (!HasPyObj()) {
     MS_LOG(EXCEPTION) << "[" << this->ToString() << "]: pyobj is empty";
   }
+  // Python obj could be replaced as None, so it will losed the original info when throw exception in python.
+  if (!py::hasattr(python_obj_, PY_PRIM_METHOD_CHECK)) {
+    MS_LOG(EXCEPTION) << "prim:" << ToString() << " has no attr:" << PY_PRIM_METHOD_CHECK;
+  }
   auto check_func = python_obj_.attr(PY_PRIM_METHOD_CHECK);
   (void)check_func(*args);
 }
@@ -342,6 +351,10 @@ void PrimitivePy::RunCheck(const py::tuple &args) {
 py::object PrimitivePy::RunInferValue(const py::tuple &args) {
   if (!HasPyObj()) {
     MS_LOG(EXCEPTION) << "[" << this->ToString() << "]: pyobj is empty";
+  }
+  // Python obj could be replaced as None, so it will losed the original info when throw exception in python.
+  if (!py::hasattr(python_obj_, PY_PRIM_METHOD_INFER_VALUE)) {
+    MS_LOG(EXCEPTION) << "prim:" << ToString() << " has no attr:" << PY_PRIM_METHOD_INFER_VALUE;
   }
   auto infer_value = python_obj_.attr(PY_PRIM_METHOD_INFER_VALUE);
   return infer_value(*args);

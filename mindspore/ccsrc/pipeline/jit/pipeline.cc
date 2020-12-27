@@ -913,7 +913,7 @@ bool InitExecDataset(const std::string &queue_name, int64_t iter_num, int64_t ba
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (!context::IsTsdOpened(ms_context) || !context::IsGeInited(ms_context)) {
-    (void)InitBackend();
+    (void)InitPipeline();
   }
 #endif
   if (iter_num == -1) {
@@ -1014,7 +1014,7 @@ void ResetOpId() { mindspore::id_generator::reset_id(); }
 
 void InitHccl() {
 #ifdef ENABLE_GE
-  (void)InitBackend();
+  (void)InitPipeline();
 #else
   mindspore::parse::python_adapter::set_python_env_flag(true);
   auto ms_context = MsContext::GetInstance();
@@ -1081,7 +1081,10 @@ void StartUpProfiling() {
   }
 }
 
-void InitBackend() {
+void InitPipeline() {
+  // If previous pipeline exit with exception, memory cleaner's flags maybe unpredictable, so init when a new pipeline
+  // start.
+  pipeline::Resource::mem_cleaner().Init();
   // set python env flag
   mindspore::parse::python_adapter::set_python_env_flag(true);
   // Startup profiling before open tsd

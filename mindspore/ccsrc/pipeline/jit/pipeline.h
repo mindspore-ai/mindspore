@@ -133,7 +133,7 @@ bool InitDistribute(const std::map<std::string, std::string> &options);
 void ResetOpId();
 void InitHccl();
 void FinalizeHccl();
-void InitBackend();
+void InitPipeline();
 void FinalizeBackend();
 void ClearResAtexit();
 void ReleaseGeTsd();
