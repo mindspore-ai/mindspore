@@ -112,12 +112,12 @@ def sequence_mask(lengths, maxlen):
     If lengths has shape [d_1, d_2, ..., d_n], then the resulting tensor mask has type dtype and shape
     [d_1, d_2, ..., d_n, maxlen], with mask[i_1, i_2, ..., i_n, j] = (j < lengths[i_1, i_2, ..., i_n])
 
-    Args:
-        length (Tensor): Tensor to calculate the mask for. All values in this tensor must be
+    Inputs:
+        - **lengths** (Tensor) - Tensor to calculate the mask for. All values in this tensor must be
           less than or equal to `maxlen`. Must be type int32 or int64.
 
-        maxlen (int): size of the last dimension of returned tensor. Must be positive and same
-          type as elements in `lengths`.
+        - **maxlen** (int) - size of the last dimension of returned tensor. Must be positive and same
+          type as elements in `lengths`. Default is the maximum value in lengths.
 
     Outputs:
         One mask tensor of shape lengths.shape + (maxlen,).
@@ -126,9 +126,8 @@ def sequence_mask(lengths, maxlen):
         ``GPU``
 
     Examples:
-        >>> x = Tensor(np.array([[1, 3], [2, 0]])
-        >>> sequence_mask = P.SequenceMask()
-        >>> output = sequence_mask(x, 3)
+        >>> x = Tensor(np.array([[1, 3], [2, 0]]))
+        >>> output = C.sequence_mask(x, 3)
         >>> print(output)
         [[[True, False, False],
           [True, True, True]],
