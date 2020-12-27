@@ -168,6 +168,9 @@ const std::vector<size_t> &HcclKernel::GetOutputSizeList() const {
   if (AnfAlgo::GetInputTensorNum(anf_node_) > 1 && op_name == kAllGatherOpName && fusion >= 1) {
     loop_size *= rank_size;
   }
+  if (op_name == kReduceScatterOpName && fusion >= 1) {
+    loop_size = AnfAlgo::GetOutputTensorNum(anf_node_);
+  }
   for (ulong i = 0; i < loop_size; ++i) {
     if (!HcomUtil::GetHcclOpSize(hccl_data_type_list_[0], hccl_kernel_output_shape_list_[i], &size)) {
       MS_LOG(ERROR) << "GetHcclOpOutputSize failed";
