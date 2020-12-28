@@ -58,8 +58,8 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 
 ```txt
 numpy
-sacrebleu==1.2.10
-sacremoses==0.0.19
+sacrebleu==1.4.14
+sacremoses==0.0.35
 subword_nmt==0.3.7
 ```
 
@@ -77,15 +77,15 @@ After dataset preparation, you can start training and evaluation as follows:
 ```bash
 # run training example
 cd ./scripts
-sh run_standalone_train_ascend.sh DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET
+sh run_standalone_train_ascend.sh PRE_TRAIN_DATASET
 
 # run distributed training example
 cd ./scripts
-sh run_distributed_train_ascend.sh RANK_TABLE_ADDR DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET
+sh run_distributed_train_ascend.sh RANK_TABLE_ADDR PRE_TRAIN_DATASET
 
 # run evaluation example
 cd ./scripts
-sh run_standalone_eval_ascend.sh DATASET_SCHEMA_TEST TEST_DATASET EXISTED_CKPT_PATH \
+sh run_standalone_eval_ascend.sh TEST_DATASET EXISTED_CKPT_PATH \
   VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
 ```
 
@@ -135,11 +135,13 @@ The GNMT network script and code result are as follows:
   │      ├──lr_scheduler.py                  // Learning rate scheduler.
   │      ├──optimizer.py                     // Optimizer.
   ├── scripts
-  │   ├──run_distributed_train_ascend.sh     // shell script for distributed train on ascend.
-  │   ├──run_standalone_eval_ascend.sh       // shell script for standalone eval on ascend.
-  │   ├──run_standalone_train_ascend.sh      // shell script for standalone eval on ascend.
-  ├── create_dataset.py                      // dataset preparation.
+  │   ├──run_distributed_train_ascend.sh     // Shell script for distributed train on ascend.
+  │   ├──run_standalone_eval_ascend.sh       // Shell script for standalone eval on ascend.
+  │   ├──run_standalone_train_ascend.sh      // Shell script for standalone eval on ascend.
+  ├── create_dataset.py                      // Dataset preparation.
   ├── eval.py                                // Infer API entry.
+  ├── export.py                              // Export checkpoint file into air models.
+  ├── mindspore_hub_conf.py                  // Hub config.
   ├── requirements.txt                       // Requirements of third party package.
   ├── train.py                               // Train API entry.
 ```
@@ -187,7 +189,7 @@ For more configuration details, please refer the script `config/config.py` file.
 
 ## Training Process
 
-For a pre-trained model, configure the following options in the `scripts/run_standalone_train_ascend.json` file:
+For a pre-trained model, configure the following options in the `config/config.json` file:
 
 - Select an optimizer ('momentum/adam/lamb' is available).
 - Specify `ckpt_prefix` and `ckpt_path` in `checkpoint_path` to save the model file.
@@ -198,17 +200,17 @@ Start task training on a single device and run the shell script `scripts/run_sta
 
 ```bash
 cd ./scripts
-sh run_standalone_train_ascend.sh DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET
+sh run_standalone_train_ascend.sh PRE_TRAIN_DATASET
 ```
 
-In this script, the `DATASET_SCHEMA_TRAIN` and `PRE_TRAIN_DATASET` are the dataset schema and dataset address.
+In this script, the `PRE_TRAIN_DATASET` is the dataset address.
 
 Run `scripts/run_distributed_train_ascend.sh` for distributed training of GNMTv2 model.
 Task training on multiple devices and run the following command in bash to be executed in `scripts/`.:
 
 ```bash
 cd ./scripts
-sh run_distributed_train_ascend.sh RANK_TABLE_ADDR DATASET_SCHEMA_TRAIN PRE_TRAIN_DATASET
+sh run_distributed_train_ascend.sh RANK_TABLE_ADDR PRE_TRAIN_DATASET
 ```
 
 Note: the `RANK_TABLE_ADDR` is the hccl_json file assigned when distributed training is running.
@@ -224,11 +226,11 @@ Run the shell script `scripts/run_standalone_eval_ascend.sh` to process the outp
 ```bash
 cd ./scripts
 sh run_standalone_eval_ascend.sh
-sh run_standalone_eval_ascend.sh DATASET_SCHEMA_TEST TEST_DATASET EXISTED_CKPT_PATH \
+sh run_standalone_eval_ascend.sh TEST_DATASET EXISTED_CKPT_PATH \
   VOCAB_ADDR BPE_CODE_ADDR TEST_TARGET
 ```
 
-The `DATASET_SCHEMA_TEST` and the `TEST_DATASET` are the schema and address of inference dataset respectively, and `EXISTED_CKPT_PATH` is the path of the model file generated during training process.
+The `TEST_DATASET` is the address of inference dataset, and `EXISTED_CKPT_PATH` is the path of the model file generated during training process.
 The `VOCAB_ADDR` is the vocabulary address, `BPE_CODE_ADDR` is the bpe code address and the `TEST_TARGET` are the path of answers.
 
 # [Model Description](#contents)

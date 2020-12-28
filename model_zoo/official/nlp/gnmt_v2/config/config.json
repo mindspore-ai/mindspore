@@ -3,7 +3,6 @@
     "random_seed": 50,
     "epochs": 6,
     "batch_size": 128,
-    "dataset_schema": "/home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.json",
     "pre_train_dataset": "/home/workspace/dataset_menu/train.tok.clean.bpe.32000.en.mindrecord",
     "fine_tune_dataset": null,
     "valid_dataset": null,

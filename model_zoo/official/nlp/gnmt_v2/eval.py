@@ -27,8 +27,6 @@ from src.dataset.tokenizer import Tokenizer
 parser = argparse.ArgumentParser(description='gnmt')
 parser.add_argument("--config", type=str, required=True,
                     help="model config json file path.")
-parser.add_argument("--dataset_schema_test", type=str, required=True,
-                    help="dataset schema for evaluation.")
 parser.add_argument("--test_dataset", type=str, required=True,
                     help="test dataset address.")
 parser.add_argument("--existed_ckpt", type=str, required=True,
@@ -63,7 +61,6 @@ if __name__ == '__main__':
     args, _ = parser.parse_known_args()
     _check_args(args.config)
     _config = get_config(args.config)
-    _config.dataset_schema = args.dataset_schema_test
     _config.test_dataset = args.test_dataset
     _config.existed_ckpt = args.existed_ckpt
     result = infer(_config)
