@@ -82,14 +82,7 @@ int ReduceFp16CPUKernel::Run() {
   }
 
   auto in_tensor = in_tensors_.at(0);
-  if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
-    auto input_data = reinterpret_cast<float *>(in_tensor->MutableData());
-    Float32ToFloat16(input_data, fp16_input_, in_tensor->ElementsNum());
-  } else {
-    fp16_input_ = reinterpret_cast<float16_t *>(in_tensor->MutableData());
-  }
-
-  fp16_src_data_ = fp16_input_;
+  fp16_src_data_ = reinterpret_cast<float16_t *>(in_tensor->MutableData());
   for (size_t i = 0; i < data_buffers_.size(); ++i) {
     fp16_dst_data_ = data_buffers_.at(i);
     outer_size_ = outer_sizes_.at(i);
@@ -105,11 +98,16 @@ int ReduceFp16CPUKernel::Run() {
   }
 
   auto out_tensor = out_tensors_.at(0);
-  if (out_tensor->data_type() == kNumberTypeFloat32 || out_tensor->data_type() == kNumberTypeFloat) {
-    dst_data_ = reinterpret_cast<float *>(out_tensor->MutableData());
-    Float16ToFloat32(fp16_dst_data_, dst_data_, out_tensor->ElementsNum());
-  } else {
-    memcpy(out_tensor->MutableData(), fp16_dst_data_, out_tensor->ElementsNum() * sizeof(float16_t));
+  fp16_dst_data_ = reinterpret_cast<float16_t *>(out_tensor->data_c());
+  MS_ASSERT(fp16_dst_data_ != nullptr);
+  outer_size_ = outer_sizes_.back();
+  inner_size_ = inner_sizes_.back();
+  axis_size_ = axis_sizes_.back();
+  auto error_code = ParallelLaunch(this->context_->thread_pool_, ReduceFp16Impl, this, context_->thread_num_);
+  if (error_code != RET_OK) {
+    FreeTmpBuffer();
+    MS_LOG(ERROR) << "Reduce run error, error_code[" << error_code << "]";
+    return RET_ERROR;
   }
 
   FreeTmpBuffer();
@@ -124,14 +122,6 @@ void ReduceFp16CPUKernel::FreeTmpBuffer() {
     }
   }
   data_buffers_.clear();
-
-  auto in_tensor = in_tensors_.at(0);
-  if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
-    if (fp16_input_ != nullptr) {
-      context_->allocator->Free(fp16_input_);
-      fp16_input_ = nullptr;
-    }
-  }
 }
 
 int ReduceFp16CPUKernel::MallocTmpBuffer() {
@@ -143,16 +133,6 @@ int ReduceFp16CPUKernel::MallocTmpBuffer() {
       return RET_ERROR;
     }
     data_buffers_.emplace_back(buffer);
-  }
-
-  auto in_tensor = in_tensors_.front();
-  if (in_tensor->data_type() == kNumberTypeFloat32 || in_tensor->data_type() == kNumberTypeFloat) {
-    fp16_input_ =
-      reinterpret_cast<float16_t *>(context_->allocator->Malloc(in_tensor->ElementsNum() * sizeof(float16_t)));
-    if (fp16_input_ == nullptr) {
-      MS_LOG(ERROR) << "Malloc data failed";
-      return RET_ERROR;
-    }
   }
   return RET_OK;
 }

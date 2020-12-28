@@ -315,6 +315,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
 int ReduceInt8CPUKernel::MallocTmpBuffer() {
   data_buffers_.clear();
   MS_ASSERT(static_cast<int>(buffer_sizes_.size()) == num_axes_ - 1);
+  // malloc num_axes_-1 buffers, since reduce on last axis will generate result to out_tensor, no need for buffer.
   for (auto buffer_size : buffer_sizes_) {
     int32_t *buffer = reinterpret_cast<int32_t *>(context_->allocator->Malloc(buffer_size * sizeof(int32_t)));
     if (buffer == nullptr) {
@@ -488,7 +489,7 @@ int ReduceInt8CPUKernel::Run() {
     begin_src_data_[i] = static_cast<int32_t>(input_data[i]);
   }
   src_data_ = begin_src_data_;
-  for (size_t i = 0; i < data_buffers_.size() - 1; ++i) {
+  for (size_t i = 0; i < data_buffers_.size(); ++i) {
     GetQuantArgs(i);
     dst_data_ = data_buffers_[i];
     outer_size_ = outer_sizes_[i];
