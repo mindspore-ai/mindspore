@@ -2253,7 +2253,7 @@ class Pack(PrimitiveWithInfer):
                     or if the shapes of elements in input_x are not the same.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> data1 = Tensor(np.array([0, 1]).astype(np.float32))
@@ -2308,7 +2308,7 @@ class Unpack(PrimitiveWithInfer):
         ValueError: If axis is out of the range [-len(input_x.shape), len(input_x.shape)).
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> unpack = ops.Unpack()
