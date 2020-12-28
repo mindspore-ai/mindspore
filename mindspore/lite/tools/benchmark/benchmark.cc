@@ -686,6 +686,16 @@ int Benchmark::Init() {
   MS_LOG(INFO) << "NumThreads = " << this->flags_->num_threads_;
   MS_LOG(INFO) << "Fp16Priority = " << this->flags_->enable_fp16_;
   MS_LOG(INFO) << "calibDataPath = " << this->flags_->benchmark_data_file_;
+  std::cout << "ModelPath = " << this->flags_->model_file_ << std::endl;
+  std::cout << "InDataPath = " << this->flags_->in_data_file_ << std::endl;
+  std::cout << "InDataType = " << this->flags_->in_data_type_in_ << std::endl;
+  std::cout << "LoopCount = " << this->flags_->loop_count_ << std::endl;
+  std::cout << "DeviceType = " << this->flags_->device_ << std::endl;
+  std::cout << "AccuracyThreshold = " << this->flags_->accuracy_threshold_ << std::endl;
+  std::cout << "WarmUpLoopCount = " << this->flags_->warm_up_loop_count_ << std::endl;
+  std::cout << "NumThreads = " << this->flags_->num_threads_ << std::endl;
+  std::cout << "Fp16Priority = " << this->flags_->enable_fp16_ << std::endl;
+  std::cout << "calibDataPath = " << this->flags_->benchmark_data_file_ << std::endl;
 
   if (this->flags_->loop_count_ < 1) {
     MS_LOG(ERROR) << "LoopCount:" << this->flags_->loop_count_ << " must be greater than 0";

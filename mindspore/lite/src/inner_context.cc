@@ -51,6 +51,12 @@ int InnerContext::Init() {
       return RET_NULL_PTR;
     }
   }
+  if (IsNpuEnabled()) {
+    MS_LOG(DEBUG) << "NPU enabled.";
+  }
+  if (IsGpuEnabled()) {
+    MS_LOG(DEBUG) << "GPU enabled.";
+  }
   return RET_OK;
 }
 
