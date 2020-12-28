@@ -55,7 +55,7 @@ using AbstractListMap = std::unordered_map<abstract::AbstractBasePtrList, PrimAb
 using OpIndexWithTensorId = std::unordered_map<std::string, std::vector<std::string>>;
 using TensorIdWithTensor = std::unordered_map<std::string, std::vector<tensor::TensorPtr>>;
 
-py::tuple RunOp(const py::args &args);
+py::object RunOp(const py::args &args);
 
 void ClearPyNativeSession();
 
@@ -114,7 +114,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void EnterConstruct(const py::object &cell);
   void LeaveConstruct(const py::object &cell);
 
-  py::tuple RunOpInner(const OpExecInfoPtr &op_exec_info);
+  py::object RunOpInner(const OpExecInfoPtr &op_exec_info);
   OpExecInfoPtr GenerateOpExecInfo(const py::args &args);
   void NewGraph(const py::object &cell, const py::args &args);
   py::object Run(const py::object &cell, const py::tuple &args, const py::object &phase);

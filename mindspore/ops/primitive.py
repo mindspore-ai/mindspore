@@ -510,8 +510,4 @@ def constexpr(fn=None, get_instance=True, name=None):
 def _run_op(obj, op_name, args):
     """Single op execution function supported by ge in PyNative mode."""
     output = real_run_op(obj, op_name, args)
-    if not output:
-        raise RuntimeError("Pynative run op %s failed!" % op_name)
-    if len(output) == 1:
-        output = output[0]
     return output
