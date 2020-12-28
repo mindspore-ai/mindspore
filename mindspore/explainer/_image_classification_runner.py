@@ -167,7 +167,7 @@ class ImageClassificationRunner:
         if not explainers:
             raise ValueError("Argument explainers is empty.")
 
-        if benchmarkers:
+        if benchmarkers is not None:
             check_value_type("benchmarkers", benchmarkers, list)
             if not all(isinstance(ele, AttributionMetric) for ele in benchmarkers):
                 raise TypeError("Argument benchmarkers is not list of mindspore.explainer.benchmark .")
