@@ -47,10 +47,12 @@ class NPUPassUtils {
   static void UpdateNC2NHTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
                                               kernel::LiteKernel *post_kernel);
 
- private:
-  static PrimitiveC *CreateNchw2NhwcPrimitive();
+  static bool IsNhwc2Nchw(kernel::LiteKernel *kernel);
 
-  static PrimitiveC *CreateNhwc2NchwPrimitive();
+  static bool IsNchw2Nhwc(kernel::LiteKernel *kernel);
+
+ private:
+  static PrimitiveC *CreateTransposePrimitive();
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_
