@@ -96,20 +96,27 @@ For more details, please refer the specify script.
 
 ```bash
 
-├── Tiny-DarkNet
+├── tinydarknet
     ├── README.md                      // descriptions about Tiny-Darknet in English
     ├── README_CN.md                      // descriptions about Tiny-Darknet in Chinese
     ├── scripts
-    │   ├──run_standalone_train.sh      // shell script for single on Ascend
-    │   ├──run_distribute_train.sh                // shell script for distributed on Ascend
-    │   ├──run_eval.sh                 // shell script for evaluation on Ascend
+        ├──run_standalone_train.sh      // shell script for single on Ascend
+        ├──run_distribute_train.sh                // shell script for distributed on Ascend
+        ├──run_eval.sh                 // shell script for evaluation on Ascend
     ├── src
-    │   ├──dataset.py                 // creating dataset
-    │   ├──tinydarknet.py             // Tiny-Darknet architecture
-    │   ├──config.py                  // parameter configuration
+        ├─lr_scheduler    //learning rate scheduler
+            ├─__init__.py    // init
+            ├─linear_warmup.py    // linear_warmup
+            ├─warmup_cosine_annealing_lr.py    // warmup_cosine_annealing_lr
+            ├─warmup_step_lr.py    // warmup_step_lr
+        ├──dataset.py                 // creating dataset
+        ├──CrossEntropySmooth.py     // loss function
+        ├──tinydarknet.py             // Tiny-Darknet architecture
+        ├──config.py                  // parameter configuration
     ├── train.py                       // training script
     ├── eval.py                        //  evaluation script
     ├── export.py                      // export checkpoint file into air/onnx
+    ├── mindspore_hub_conf.py                      // hub config
 
 ```
 
