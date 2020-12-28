@@ -20,6 +20,7 @@
 #include <memory>
 #include <set>
 #include <vector>
+#include "ir/dtype/tensor_type.h"
 #include "utils/check_convert_utils.h"
 #include "abstract/primitive_infer_map.h"
 
@@ -110,8 +111,8 @@ abstract::ShapePtr Conv2dInferShape(const PrimitivePtr &primitive, const std::ve
   MS_EXCEPTION_IF_NULL(conv_prim);
   auto prim_name = conv_prim->name();
   CheckAndConvertUtils::CheckInRange("conv2d_infer", input_args.size(), kIncludeBoth, {2, 3}, prim_name);
-  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->GetShapeTrack(), prim_name);
-  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShape("w_shape", input_args[1]->GetShapeTrack(), prim_name);
+  auto x_shape = CheckAndConvertUtils::ConvertShapePtrToShape("x_shape", input_args[0]->BuildShape(), prim_name);
+  auto w_shape = CheckAndConvertUtils::ConvertShapePtrToShape("w_shape", input_args[1]->BuildShape(), prim_name);
 
   CheckAndConvertUtils::CheckInteger("weight rank", w_shape.size(), kEqual, 4, prim_name);
   CheckAndConvertUtils::CheckInteger("x rank", x_shape.size(), kEqual, 4, prim_name);
@@ -181,7 +182,7 @@ TypePtr Conv2dInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
   types.emplace("w", input_args[1]->BuildType());
   auto infer_type = CheckAndConvertUtils::CheckTensorTypeSame(types, valid_types, prim->name());
   if (infer_type == kNumberTypeInt8) {
-    return std::make_shared<TensorType>(TypeIdToType(kNumberTypeInt32));
+    return TypeIdToType(kNumberTypeInt32);
   }
   return TypeIdToType(infer_type);
 }
