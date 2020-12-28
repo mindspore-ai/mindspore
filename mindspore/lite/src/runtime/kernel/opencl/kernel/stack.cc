@@ -119,8 +119,8 @@ void StackOpenCLKernel::SetGlobalLocal() {
     OW_ = out_shape_.s[2];
     OC_ = out_shape_.s[3];
   } else if (in_tensors_[0]->shape().size() == 1) {
-    OH_ = out_shape_.s[0] * out_shape_.s[1];
-    OW_ = out_shape_.s[2];
+    OH_ = UP_DIV(out_shape_.s[0], C4NUM);
+    OW_ = out_shape_.s[3];
   } else {
     OH_ = out_shape_.s[0];
     OW_ = out_shape_.s[1];
