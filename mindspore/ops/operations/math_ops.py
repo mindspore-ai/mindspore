@@ -1597,7 +1597,7 @@ class Expm1(PrimitiveWithInfer):
         Tensor, has the same shape as the `input_x`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([0.0, 1.0, 2.0, 4.0]), mindspore.float32)
