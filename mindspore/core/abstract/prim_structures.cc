@@ -291,9 +291,17 @@ AbstractBasePtr InferImplListLen(const AnalysisEnginePtr &, const PrimitivePtr &
   return InferTupleOrListOrDictLen<AbstractList>(primitive->name(), args_spec_list);
 }
 
-AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const PrimitivePtr &,
+AbstractBasePtr InferImplArrayLen(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                   const AbstractBasePtrList &args_spec_list) {
-  return std::make_shared<AbstractScalar>(kAnyValue, kInt32);
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 1);
+  auto arg_abs = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  auto shape = arg_abs->BuildShape()->cast<ShapePtr>();
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->shape().empty()) {
+    MS_EXCEPTION(TypeError) << "Not support len of a 0-D tensor.";
+  }
+  return std::make_shared<AbstractScalar>(shape->shape()[0]);
 }
 }  // namespace abstract
 }  // namespace mindspore
