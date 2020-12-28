@@ -44,6 +44,6 @@ def create_network(name, *args, **kwargs):
     Create bert network for bert_thor.
     '''
     if name == 'bert_thor':
-        is_training = kwargs.get("is_training", default=False)
+        is_training = kwargs.get("is_training", False)
         return BertModel(bert_net_cfg, is_training, *args)
     raise NotImplementedError(f"{name} is not implemented in the repo")
