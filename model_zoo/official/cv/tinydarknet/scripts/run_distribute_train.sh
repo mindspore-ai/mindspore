@@ -18,7 +18,7 @@ echo "$1 $2"
 
 if [ $# != 1 ] && [ $# != 2 ]
 then
-    echo "Usage: sh run_train.sh [RANK_TABLE_FILE] [cifar10|imagenet]"
+    echo "Usage: bash run_distribute_train.sh [RANK_TABLE_FILE] [cifar10|imagenet]"
 exit 1
 fi
 

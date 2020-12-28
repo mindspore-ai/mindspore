@@ -71,10 +71,10 @@ After installing MindSpore via the official website, you can start training and 
 
   ```python
   # run training example
-  bash ./scripts/run_train_single.sh
+  bash ./scripts/run_standalone_train.sh
 
   # run distributed training example
-  bash ./scripts/run_train.sh rank_table.json
+  bash ./scripts/run_distribute_train.sh rank_table.json
 
   # run evaluation example
   python eval.py > eval.log 2>&1 &
@@ -97,10 +97,11 @@ For more details, please refer the specify script.
 ```bash
 
 ├── Tiny-DarkNet
-    ├── README.md                      // descriptions about Tiny-Darknet
+    ├── README.md                      // descriptions about Tiny-Darknet in English
+    ├── README_CN.md                      // descriptions about Tiny-Darknet in Chinese
     ├── scripts
-    │   ├──run_train_single.sh      // shell script for single on Ascend
-    │   ├──run_train.sh                // shell script for distributed on Ascend
+    │   ├──run_standalone_train.sh      // shell script for single on Ascend
+    │   ├──run_distribute_train.sh                // shell script for distributed on Ascend
     │   ├──run_eval.sh                 // shell script for evaluation on Ascend
     ├── src
     │   ├──dataset.py                 // creating dataset
@@ -131,7 +132,6 @@ Parameters for both training and evaluation can be set in config.py
   'data_path': './ImageNet_Original/train/'  # absolute full path to the train datasets
   'val_data_path': './ImageNet_Original/val/'  # absolute full path to the evaluation datasets
   'device_target': 'Ascend' # device running the program
-  'device_id': 0            # device ID used to train or evaluate the dataset. Ignore it when you use run_train.sh for distributed training
   'keep_checkpoint_max': 10 # only keep the last keep_checkpoint_max checkpoint
   'checkpoint_path': '/train_tinydarknet.ckpt'  # the absolute full path to save the checkpoint file
   'onnx_filename': 'tinydarknet.onnx' # file name of the onnx model used in export.py
@@ -157,7 +157,7 @@ For more configuration details, please refer the script config.py.
 - running on Ascend：
 
   ```python
-  sh scripts/run_train_single.sh
+  bash scripts/run_standalone_train.sh
   ```
 
   The command above will run in the background, you can view the results through the file train.log.
@@ -184,7 +184,7 @@ For more configuration details, please refer the script config.py.
 - running on Ascend：
 
   ```python
-  sh scripts/run_train.sh
+  bash ./scripts/run_distribute_train.sh rank_table.json
   ```
 
   The above shell script will run distribute training in the background. You can view the results through the file train_parallel[X]/log. The loss value will be achieved as follows:
@@ -211,7 +211,7 @@ For more configuration details, please refer the script config.py.
   ```python
   python eval.py > eval.log 2>&1 &  
   OR
-  sh scripts/run_eval.sh
+  bash scripts/run_eval.sh
   ```
 
   The above python command will run in the background. You can view the results through the file "eval.log". The accuracy of the test dataset will be as follows:
@@ -232,7 +232,7 @@ For more configuration details, please refer the script config.py.
 
 ## [Performance](#contents)
 
-### [Evaluation Performance](#contents)
+### [Training Performance](#contents)
 
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ----------------------------------------------------------- |
@@ -260,7 +260,7 @@ For more configuration details, please refer the script config.py.
 | Dataset             | 200k images                |
 | batch_size          | 128                         |
 | Outputs             | probability                 |
-| Accuracy            | 8 pc Top-5: 81.7%                 |
+| Accuracy            | 8 pc Top-1: 58.7%; Top-5: 81.7%                 |
 | Model for inference             | 11.6M (.ckpt file)                 |
 
 # [ModelZoo Homepage](#contents)

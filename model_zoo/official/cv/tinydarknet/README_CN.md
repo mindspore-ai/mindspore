@@ -79,10 +79,10 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 
   ```python
   # 单卡训练
-  bash ./scripts/run_train_single.sh
+  bash ./scripts/run_standalone_train.sh
 
   # 分布式训练
-  bash ./scripts/run_train.sh rank_table.json
+  bash ./scripts/run_distribute_train.sh rank_table.json
 
   # 评估
   python eval.py > eval.log 2>&1 &
@@ -105,10 +105,11 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 ```bash
 
 ├── Tiny-DarkNet
-    ├── README.md                  // Tiny-Darknet相关说明
+    ├── README.md                  // Tiny-Darknet英文说明
+    ├── README_CN.md                  // Tiny-Darknet中文说明
     ├── scripts
-    │   ├──run_train_single.sh     // Ascend单卡训练shell脚本
-    │   ├──run_train.sh               // Ascend分布式训练shell脚本
+    │   ├──run_standalone_train.sh     // Ascend单卡训练shell脚本
+    │   ├──run_distribute_train.sh               // Ascend分布式训练shell脚本
     │   ├──run_eval.sh                // Ascend评估shell脚本
     ├── src
     │   ├──dataset.py                 // 创建数据集
@@ -139,7 +140,6 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
   'data_path': './ImageNet_Original/train/'  # 训练数据集的绝对路径
   'val_data_path': './ImageNet_Original/val/'  # 评估数据集的绝对路径
   'device_target': 'Ascend' # 程序运行的设备
-  'device_id': 0            # 用来训练和评估的设备编号
   'keep_checkpoint_max': 10 # 仅仅保持最新的keep_checkpoint_max个checkpoint文件
   'checkpoint_path': '/train_tinydarknet.ckpt'  # 保存checkpoint文件的绝对路径
   'onnx_filename': 'tinydarknet.onnx' # 用于export.py 文件中的onnx模型的文件名
@@ -165,7 +165,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 - 在Ascend资源上运行：
 
   ```python
-  sh scripts/run_train_single.sh
+  bash ./scripts/run_standalone_train.sh
   ```
 
   上述的命令将运行在后台中，可以通过 `train.log` 文件查看运行结果.
@@ -192,7 +192,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 - 在Ascend资源上运行：
 
   ```python
-  sh scripts/run_train.sh
+  bash scripts/run_distribute_train.sh rank_table.json
   ```
 
   上述的脚本命令将在后台中进行分布式训练，可以通过`train_parallel[X]/log`文件查看运行结果. 训练的损失值将以如下的形式展示:
@@ -219,7 +219,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
   ```python
   python eval.py > eval.log 2>&1 &  
   OR
-  sh scripts/run_eval.sh
+  bash scripts/run_eval.sh
   ```
 
   上述的python命令将运行在后台中，可以通过"eval.log"文件查看结果. 测试数据集的准确率将如下面所列:
@@ -268,7 +268,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 | 数据集             | 200k张图片                |
 | batch_size          | 128                         |
 | 输出             | 分类概率                 |
-| 准确率            | 8卡 Top-5: 81.7%                 |
+| 准确率            | 8卡 Top-1: 58.7%; Top-5: 81.7%                 |
 | 推理模型             | 11.6M (.ckpt文件)                 |
 
 # [ModelZoo主页](#目录)
