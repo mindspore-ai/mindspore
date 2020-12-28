@@ -150,7 +150,7 @@ class PsCacheManager {
   bool WaitGraphRun();
   bool ParseDeviceData(size_t id, bool *need_swap_device_to_host, bool *need_swap_host_to_device, int *hash_index);
   bool ParseHostDataHostToDevice(size_t id);
-  bool ParseHostDataDeviceToHost(size_t id);
+  bool ParseHostDataDeviceToHost();
   bool HashSwapDeviceOut(int *swap_out_index, ::ps::SArray<float> *swap_out_data, const HashTableInfo &hash_info);
   bool HashSwapDeviceIn(int *swap_in_ids, int *swap_in_index, const HashTableInfo &hash_info, size_t key);
   bool HashSwapHostToDevice(const HashTableInfo &hash_info);
