@@ -260,7 +260,7 @@ Parameters for both training and evaluation can be set in config.py
 
 ## [Performance](#contents)
 
-### Evaluation Performance
+### Training Performance
 
 | Parameters                 | Ascend                                                      | GPU                    |
 | -------------------------- | ----------------------------------------------------------- | ---------------------- |
