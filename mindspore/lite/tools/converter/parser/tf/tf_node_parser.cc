@@ -37,6 +37,14 @@ const NodeDef *TFNodeParser::GetConstInputNode(const std::map<string, const tens
     return nullptr;
   }
   auto node = tf_node_map.at(flatten_input_name);
+  // node is "Identity Const"
+  if (node->op() == "Identity") {
+    flatten_input_name = TensorFlowUtils::GetFlattenNodeName(node->input(0));
+    if (tf_node_map.find(flatten_input_name) == tf_node_map.end()) {
+      return nullptr;
+    }
+    node = tf_node_map.at(flatten_input_name);
+  }
   if (node->op() != "Const") {
     MS_LOG(ERROR) << "Attr node is not Const";
     return nullptr;
