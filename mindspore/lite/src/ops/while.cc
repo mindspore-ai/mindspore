@@ -56,10 +56,6 @@ int While::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inpu
     attr->bodySubgraphIndex = GetValue<bool>(prim.GetAttr("body_subgraph_index"));
     attr->condSubgraphIndex = GetValue<bool>(prim.GetAttr("cond_subgraph_index"));
     this->primitive_->value.value = attr;
-    if (this->primitive_->value.value == nullptr) {
-      MS_LOG(ERROR) << "primitive value is nullptr";
-      return RET_ERROR;
-    }
   }
   return RET_OK;
 }

@@ -591,6 +591,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<Dropout>(prim, inputs, quantType);
   } else if (op_type == "While") {
     return NewPrimitiveC<While>(prim, inputs, quantType);
+  } else if (op_type == "MirrorPad") {
+    return NewPrimitiveC<Pad>(prim, inputs, quantType);
   } else if (op_type == "GatherV2") {
     return NewPrimitiveC<Gather>(prim, inputs, quantType);
   } else if (op_type == "OnesLike") {
