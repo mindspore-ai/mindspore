@@ -202,8 +202,10 @@ std::vector<FileTuple> DataSet::ReadDir(const std::string dpath) {
           vec.push_back(ft);
         }
       }
+      closedir(dp);
+    } else {
+      std::cerr << "open directory: " << dirname << " failed." << std::endl;
     }
-    closedir(dp);
   }
   return vec;
 }
