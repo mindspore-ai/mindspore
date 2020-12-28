@@ -21,9 +21,9 @@ import numpy as np
 
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 
-from src.config import cfg
+from src.config import cfg_mr, cfg_subj, cfg_sst2
 from src.textcnn import TextCNN
-from src.dataset import MovieReview
+from src.dataset import MovieReview, SST2, Subjectivity
 
 parser = argparse.ArgumentParser(description='TextCNN export')
 parser.add_argument("--device_id", type=int, default=0, help="device id")
@@ -32,7 +32,7 @@ parser.add_argument("--file_name", type=str, default="textcnn", help="output fil
 parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
 parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"], default="Ascend",
                     help="device target")
-parser.add_argument('--dataset_name', type=str, default='MR', choices=['MR'],
+parser.add_argument('--dataset', type=str, default='MR', choices=['MR', 'SUBJ', 'SST2'],
                     help='dataset name.')
 
 args = parser.parse_args()
@@ -41,8 +41,15 @@ context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, d
 
 if __name__ == '__main__':
 
-    if args.dataset_name == 'MR':
+    if args.dataset == 'MR':
+        cfg = cfg_mr
         instance = MovieReview(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
+    elif args.dataset == 'SUBJ':
+        cfg = cfg_subj
+        instance = Subjectivity(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
+    elif args.dataset == 'SST2':
+        cfg = cfg_sst2
+        instance = SST2(root_dir=cfg.data_path, maxlen=cfg.word_len, split=0.9)
     else:
         raise ValueError("dataset is not support.")
 

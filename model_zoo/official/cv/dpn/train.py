@@ -51,7 +51,7 @@ def parse_args():
     # distributed related
     parser.add_argument('--is_distributed', type=int, default=1, help='if multi device')
     parser.add_argument('--ckpt_path', type=str, default='', help='ckpt path to save')
-    parser.add_argument('--eval_each_epoch', type=int, default=0, help='ckpt path to save')
+    parser.add_argument('--eval_each_epoch', type=int, default=0, help='evaluate on each epoch')
     args, _ = parser.parse_known_args()
     args.image_size = config.image_size
     args.num_classes = config.num_classes
