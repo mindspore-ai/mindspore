@@ -38,8 +38,9 @@ AnfNodePtr ExpandJPrimitive(const ValueNodePtr &vnode, const pipeline::ResourceB
   return nullptr;
 }
 
-bool CheckIfEmbedJFuncGraph(const FuncGraphPtr func_graph) {
-  // if func graph also contain J FuncGraph, then ignore this funcgraph. ExpandJ innermost graph first;
+bool CheckIfEmbedJ(const FuncGraphPtr &func_graph) {
+  // if func graph also contain J(FuncGraph) or J(Primitive), then ignore this funcgraph.
+  // ExpandJ innermost graph first.
   auto func_graph_manager = func_graph->manager();
   MS_EXCEPTION_IF_NULL(func_graph_manager);
   return func_graph_manager->func_graph_j_total(func_graph);
@@ -53,9 +54,10 @@ AnfNodePtr ExpandJ(const ValueNodePtr &vnode, const pipeline::ResourceBasePtr &r
     MS_LOG(DEBUG) << "Node is ValueNodeGraph, graph: " << func_graph->ToString();
 
     // high_order_grad begin;
-    // if graph also contain J Graph, then ignore this graph. ExpandJ innermost graph first;
-    if (CheckIfEmbedJFuncGraph(func_graph)) {
-      MS_LOG(DEBUG) << "Funcgraph: " << func_graph->ToString() << " contains J(funcgraph), will expandJ later";
+    // if graph also contains J(FuncGraph) or J(Primitive), then ignore this graph.
+    // ExpandJ innermost graph or primitive first.
+    if (CheckIfEmbedJ(func_graph)) {
+      MS_LOG(DEBUG) << "Funcgraph: " << func_graph->ToString() << " contains J, will expandJ later";
       return nullptr;
     }
     // high_order_grad end;

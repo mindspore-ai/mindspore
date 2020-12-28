@@ -15,6 +15,7 @@
 import numpy as np
 
 import mindspore.nn as nn
+import mindspore.ops as ops
 from mindspore import context
 from mindspore import Tensor
 from mindspore.ops import operations as P
@@ -68,3 +69,44 @@ def test_user_defined_bprop():
     grad_net = TestUserDefinedBpropGradNet(net)
     x = Tensor(np.ones((128, 3, 12, 12)).astype(np.float32))
     grad_net(x)
+
+
+class SinNet(nn.Cell):
+    def __init__(self):
+        super(SinNet, self).__init__()
+        self.sin = ops.Sin()
+
+    def construct(self, x):
+        out = self.sin(x)
+        return out
+
+
+class SinGrad(nn.Cell):
+    def __init__(self, network):
+        super(SinGrad, self).__init__()
+        self.grad = ops.GradOperation()
+        self.network = network
+
+    def construct(self, x):
+        gout = self.grad(self.network)(x)
+        return gout
+
+
+class SinGradSec(nn.Cell):
+    def __init__(self, network):
+        super(SinGradSec, self).__init__()
+        self.grad = ops.GradOperation()
+        self.network = network
+
+    def construct(self, x):
+        gout = self.grad(self.network)(x)
+        return gout
+
+
+def test_second_grad_with_j_primitive():
+    context.set_context(mode=context.GRAPH_MODE)
+    net = SinNet()
+    first_grad = SinGrad(net)
+    second_grad = SinGradSec(first_grad)
+    x = Tensor(np.array([1.0], dtype=np.float32))
+    second_grad(x)
