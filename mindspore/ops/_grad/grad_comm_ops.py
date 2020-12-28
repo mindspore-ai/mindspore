@@ -21,7 +21,7 @@ from .. import operations as P
 from ...common.tensor import RowTensor
 from ..composite.multitype_ops.zeros_like_impl import zeros_like
 from ..operations.comm_ops import (AllGather, _HostAllGather, AllReduce, _AlltoAll, Broadcast,
-                                   _GetTensorSlice, _MirrorOperator, ReduceOp,
+                                   _GetTensorSlice, _MirrorOperator, _MirrorMiniStepOperator, ReduceOp,
                                    ReduceScatter, _HostReduceScatter, _VirtualDiv, AllSwap)
 from .grad_base import bprop_getters
 from ..operations._inner_ops import Send, Receive
@@ -279,6 +279,82 @@ def get_bprop_mirror_operator(self):
                 dx = RowTensor(indices, grad, dout.dense_shape)
 
         return (dx,)
+    return bprop
+
+
+@bprop_getters.register(_MirrorMiniStepOperator)
+def get_bprop_mirror_mini_step_operator(self):
+    """
+    Backpropagator for _MirrorMiniStepOperator, do allreduce or allgather for the devices in the group,
+    allgather for sparse feature.
+    """
+    group = self.group
+    dev_num = self.dev_num
+    mean_flag = self.mean_flag
+    grad_accumulation_step = self.grad_accumulation_step
+
+    all_reduce = AllReduce(group=group)
+    all_gather = AllGather(group=group)
+    mul = P.Mul()
+    cast = P.Cast()
+    equal = P.Equal()
+    reshape = P.Reshape()
+
+    fusion = 1
+    if hasattr(self, 'fusion'):
+        fusion = self.fusion
+    all_reduce.add_prim_attr("fusion", fusion)
+    if hasattr(self, 'parameter'):
+        parameter = self.parameter
+        all_reduce.add_prim_attr("parameter", parameter)
+
+    if self.instance_name:
+        instance_name = "grad_mirror" + self.instance_name
+        all_reduce.set_prim_instance_name(instance_name)
+
+    def bprop(x, y, z, out, dout):
+        do_mirror = equal(y, grad_accumulation_step)
+        do_mirror = reshape(do_mirror, (()))
+        if mean_flag:
+            if F.issubclass_(F.typeof(dout), mstype.tensor):
+                if do_mirror:
+                    tmp = z + dout
+                    real_grad = all_reduce(tmp)
+                    dx = real_grad - z
+                else:
+                    dx = dout
+                float_one = F.scalar_cast(1.0, F.dtype(dx))
+                num = F.scalar_cast(dev_num, F.dtype(dx))
+                dx = mul(dx, cast(F.scalar_to_array(float_one/num), F.dtype(dx)))
+            else:
+                if do_mirror:
+                    indices = all_gather(dout.indices)
+                    grad = all_gather(dout.values)
+                else:
+                    indices = dout.indices
+                    grad = dout.values
+                float_one = F.scalar_cast(1.0, F.dtype(grad))
+                num = F.scalar_cast(dev_num, F.dtype(grad))
+                grad = mul(grad, cast(F.scalar_to_array(float_one/num), F.dtype(grad)))
+                dx = RowTensor(indices, grad, dout.dense_shape)
+        else:
+            if F.issubclass_(F.typeof(dout), mstype.tensor):
+                if do_mirror:
+                    tmp = z + dout
+                    real_grad = all_reduce(tmp)
+                    dx = real_grad - z
+                else:
+                    dx = dout
+            else:
+                if do_mirror:
+                    indices = all_gather(dout.indices)
+                    grad = all_gather(dout.values)
+                else:
+                    indices = dout.indices
+                    grad = dout.values
+                dx = RowTensor(indices, grad, dout.dense_shape)
+
+        return (dx, zeros_like(y), zeros_like(z))
     return bprop
 
 

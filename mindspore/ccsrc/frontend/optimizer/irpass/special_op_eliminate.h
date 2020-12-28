@@ -155,6 +155,29 @@ class CheckBpropEliminater : public AnfVisitor {
   AnfNodePtr x_{nullptr};
 };
 
+// {prim::kPrimMirrorMiniStep, X, Y, Z} -> X
+class MirrorMiniStepEliminater : public AnfVisitor {
+ public:
+  AnfNodePtr operator()(const OptimizerPtr &, const AnfNodePtr &node) override {
+    if (!IsPrimitiveCNode(node, prim::kPrimMirrorMiniStep) || node->func_graph() == nullptr) {
+      return nullptr;
+    }
+
+    auto cnode = node->cast<CNodePtr>();
+    if (cnode == nullptr) {
+      return nullptr;
+    }
+    auto inputs = cnode->inputs();
+    if (inputs.size() < 2) {
+      return nullptr;
+    }
+
+    return inputs[1];
+  }
+
+  void Visit(const AnfNodePtr &) override {}
+};
+
 // Reset defer_inline flag
 class ResetDeferInline : public AnfVisitor {
  public:

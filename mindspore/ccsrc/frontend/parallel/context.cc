@@ -64,6 +64,7 @@ void ParallelContext::Reset() {
   all_reduce_fusion_split_sizes_.clear();
   strategy_search_mode_ = DYNAMIC_PROGRAMMING;
   pipeline_stage_split_num_ = 1;
+  grad_accumulation_step_ = 1;
 }
 
 void ParallelContext::set_device_num(int64_t device_num) {
@@ -79,6 +80,10 @@ void ParallelContext::set_global_rank(int64_t global_rank) {
 void ParallelContext::set_gradients_mean(bool gradients_mean) { gradients_mean_ = gradients_mean; }
 
 void ParallelContext::set_full_batch(bool full_batch) { full_batch_ = full_batch; }
+
+void ParallelContext::set_grad_accumulation_step(int64_t grad_accumulation_step) {
+  grad_accumulation_step_ = grad_accumulation_step;
+}
 
 void ParallelContext::set_gradient_fp32_sync(bool gradient_fp32_sync) { gradient_fp32_sync_ = gradient_fp32_sync; }
 
