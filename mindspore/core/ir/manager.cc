@@ -486,9 +486,9 @@ void FuncGraphManager::AddEdge(AnfNodePtr node, int index, AnfNodePtr input) {
       if (fg->AddFuncGraphUsed(used)) {
         signals_->InvalidateComputer();
       }
-      if (IsPrimitiveCNode(node, prim::kPrimJ)) {
-        fg->AddJFuncGraph(used);
-      }
+    }
+    if (IsPrimitiveCNode(node, prim::kPrimJ)) {
+      fg->AddJValueNode(input);
     }
   } else if (fg != nullptr && fg != input->func_graph()) {
     if (fg->AddFreeVariable(input)) {
@@ -507,9 +507,9 @@ void FuncGraphManager::DropEdge(AnfNodePtr node, int index, AnfNodePtr input) {
       if (fg->DropFuncGraphUsed(used)) {
         signals_->InvalidateComputer();
       }
-      if (IsPrimitiveCNode(node, prim::kPrimJ)) {
-        fg->DropJFuncGraph(used);
-      }
+    }
+    if (IsPrimitiveCNode(node, prim::kPrimJ)) {
+      fg->DropJValueNode(input);
     }
   } else if (fg != nullptr && fg != input->func_graph()) {
     if (fg->DropFreeVariable(input)) {
@@ -524,7 +524,7 @@ void FuncGraphManager::MoveAllNodes(FuncGraphPtr source, FuncGraphPtr target) {
   target->CopyFuncGraphCNodesIndex(source);
   target->CopyFreeVariables(source);
   target->CopyFuncGraphsUsed(source);
-  target->CopyJFuncGraphs(source);
+  target->CopyJValueNodes(source);
   signals_->InvalidateComputer();
   source->ClearAllManagerInfo();
 }
@@ -880,32 +880,44 @@ void RecursiveComputer::CheckRecursiveGraphs(const FuncGraphPtr &fg, std::list<F
 }
 
 bool FuncGraphJTotalComputer::SeekJ(const FuncGraphPtr &fg, size_t seen_num) {
+  MS_EXCEPTION_IF_NULL(fg);
   if (fg->seen_ == seen_num) {
     MS_LOG(DEBUG) << fg->ToString() << " had been checked";
     return false;
   }
-  auto &j_fgs = fg->j_func_graphs();
-  if (!j_fgs.empty()) {
-    // check g1->J(fg)->g2->g cycle;
-    auto contains_j = std::find_if(j_fgs.begin(), j_fgs.end(), [seen_num](const std::pair<FuncGraphPtr, int> iter) {
-      return iter.first->seen_ != seen_num;
-    });
-    if (contains_j != j_fgs.end()) {
-      MS_LOG(DEBUG) << fg->ToString() << " contains J(" << contains_j->first->ToString() << ")";
+  const auto &j_values = fg->j_value_nodes();
+  if (!j_values.empty()) {
+    auto contains_j =
+      std::find_if(j_values.begin(), j_values.end(), [seen_num](const std::pair<AnfNodePtr, int> &iter) {
+        // check g1->J(fg)->g2->g cycle.
+        if (IsValueNode<FuncGraph>(iter.first)) {
+          auto func_graph = GetValueNode<FuncGraphPtr>(iter.first);
+          return func_graph->seen_ != seen_num;
+        }
+        if (IsValueNode<Primitive>(iter.first)) {
+          // exclude the primitive of J itself.
+          auto prim = GetValueNode<PrimitivePtr>(iter.first);
+          return prim->name() != prim::kPrimJ->name();
+        }
+        return false;
+      });
+    if (contains_j != j_values.end()) {
+      MS_LOG(DEBUG) << fg->ToString() << " contains J(" << contains_j->first->DebugString() << ")";
       return true;
     }
   }
   fg->seen_ = seen_num;
 
-  // check if func graphs used contains J(func_graph);
+  // check if func graphs used contains J(func_graph) or J(Primitive)
   for (auto &item : fg->func_graphs_used()) {
     auto used_g = item.first;
     if (SeekJ(used_g, seen_num)) {
-      MS_LOG(DEBUG) << fg->ToString() << " users func graph " << used_g->ToString() << " which contains J(func_graph)";
+      MS_LOG(DEBUG) << fg->ToString() << " users func graph " << used_g->ToString()
+                    << " which contains J(func_graph) or J(Primitive)";
       return true;
     }
   }
-  MS_LOG(DEBUG) << fg->ToString() << " doesn't contain J(func_graph)";
+  MS_LOG(DEBUG) << fg->ToString() << " doesn't contain J(func_graph) or J(Primitive)";
   return false;
 }
 

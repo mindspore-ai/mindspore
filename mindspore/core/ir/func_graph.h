@@ -275,12 +275,12 @@ class FuncGraph : public FuncGraphBase {
   bool AddFuncGraphUsed(FuncGraphPtr fg, int count = 1);
   bool DropFuncGraphUsed(FuncGraphPtr fg);
 
-  // get all value nodes of J func graph directly used by this func graph
-  const FuncGraphCounterMap &j_func_graphs();
-  void CopyJFuncGraphs(const FuncGraphPtr &source);
-  void ClearJFuncGraphs();
-  void AddJFuncGraph(FuncGraphPtr fg, int count = 1);
-  void DropJFuncGraph(FuncGraphPtr fg);
+  // get all value nodes in the inputs of J directly used by this func graph
+  const std::unordered_map<AnfNodePtr, int> &j_value_nodes();
+  void CopyJValueNodes(const FuncGraphPtr &source);
+  void ClearJValueNodes();
+  void AddJValueNode(const AnfNodePtr &value_node, int count = 1);
+  void DropJValueNode(const AnfNodePtr &value_node);
 
   // get all func graphs nested used by this func graph
   const FuncGraphSet &func_graphs_used_total();
@@ -375,7 +375,7 @@ class FuncGraph : public FuncGraphBase {
   AnfNodeCounterMap free_variables_;
 
   // all value nodes calling J in the function
-  FuncGraphCounterMap j_func_graphs_;
+  std::unordered_map<AnfNodePtr, int> j_value_nodes_;
 
   // all user value nodes of this func graph, recording by CNode and its input's index
   CNodeIndexCounterMap func_graph_cnodes_index_;
