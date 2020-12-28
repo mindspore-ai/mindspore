@@ -380,7 +380,8 @@ class GpuStepTraceParser(BaseStepTraceParser):
             points = {
                 'fp_start': fp_start_name,
             }
-
+        if os.path.exists(output_path):
+            return points
         try:
             with open(output_path, 'w') as json_file:
                 json.dump(points, json_file)
@@ -486,7 +487,8 @@ class AscendStepTraceParser(BaseStepTraceParser):
             points = {
                 'fp_start': point_info.get(self._fp_tag, ''),
             }
-
+        if os.path.exists(output_path):
+            return points
         try:
             with open(output_path, 'w') as json_file:
                 json.dump(points, json_file)
