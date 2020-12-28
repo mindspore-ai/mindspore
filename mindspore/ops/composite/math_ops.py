@@ -38,7 +38,7 @@ def _check_validate_keepdims(keep_dims, name):
 
 
 def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
-    """
+    r"""
     Count number of nonzero elements across axis of input tensor
 
     Args:
@@ -47,7 +47,7 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
                                                   Default: (), reduce all dimensions.
         keep_dims (bool): If true, keep these reduced dimensions and the length is 1.
                           If false, don't keep these dimensions. Default: False.
-        dtype (Union[Number, mstype.bool_]): The data type of the output tensor. Only constant value is allowed.
+        dtype (Union[Number, mstype.bool\_]): The data type of the output tensor. Only constant value is allowed.
                                              Default: mstype.int32
 
     Returns:

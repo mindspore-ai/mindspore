@@ -119,7 +119,7 @@ class WithGradCell(Cell):
 
     Wraps the network with backward cell to compute gradients. A network with a loss function is necessary
     as argument. If loss function in None, the network must be a wrapper of network and loss function. This
-    Cell accepts '*inputs' as inputs and returns gradients for each trainable parameter.
+    Cell accepts '\*inputs' as inputs and returns gradients for each trainable parameter.
 
     Note:
         Run in PyNative mode.
@@ -132,7 +132,7 @@ class WithGradCell(Cell):
             output value. Default: None.
 
     Inputs:
-        - **(*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        - **(\*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         list, a list of Tensors with identical shapes as trainable weights.
@@ -178,7 +178,7 @@ class TrainOneStepCell(Cell):
     r"""
     Network training package class.
 
-    Wraps the network with an optimizer. The resulting Cell is trained with input *inputs.
+    Wraps the network with an optimizer. The resulting Cell is trained with input '\*inputs'.
     The backward graph will be created in the construct function to update the parameter. Different
     parallel modes are available for training.
 
@@ -188,7 +188,7 @@ class TrainOneStepCell(Cell):
         sens (Number): The scaling number to be filled as the input of backpropagation. Default value is 1.0.
 
     Inputs:
-        - **(*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
+        - **(\*inputs)** (Tuple(Tensor)) - Tuple of input tensors with shape :math:`(N, \ldots)`.
 
     Outputs:
         Tensor, a scalar Tensor with shape :math:`()`.
