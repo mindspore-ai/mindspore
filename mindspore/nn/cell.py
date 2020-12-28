@@ -1087,6 +1087,12 @@ class Cell(Cell_):
         for param in params:
             param.set_param_ps(init_in_server)
 
+    def set_comm_fusion(self, fusion_type, recurse=True):
+        Validator.check_is_int(fusion_type)
+        for param in self.trainable_params(recurse):
+            param.comm_fusion = fusion_type
+        return self
+
 
 class GraphKernel(Cell):
     """
