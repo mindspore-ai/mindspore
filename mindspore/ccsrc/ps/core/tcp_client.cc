@@ -51,7 +51,20 @@ TcpClient::TcpClient(const std::string &address, std::uint16_t port)
   });
 }
 
-TcpClient::~TcpClient() { Stop(); }
+TcpClient::~TcpClient() {
+  if (buffer_event_) {
+    bufferevent_free(buffer_event_);
+    buffer_event_ = nullptr;
+  }
+  if (event_timeout_) {
+    event_free(event_timeout_);
+    event_timeout_ = nullptr;
+  }
+  if (event_base_) {
+    event_base_free(event_base_);
+    event_base_ = nullptr;
+  }
+}
 
 std::string TcpClient::GetServerAddress() const { return server_address_; }
 
@@ -69,9 +82,9 @@ bool TcpClient::WaitConnected(const uint32_t &connected_timeout) {
 void TcpClient::Init() {
   std::lock_guard<std::mutex> lock(connection_mutex_);
   if (buffer_event_) {
-    return;
+    bufferevent_free(buffer_event_);
+    buffer_event_ = nullptr;
   }
-  is_stop_ = false;
   if (!CommUtil::CheckIp(server_address_)) {
     MS_LOG(EXCEPTION) << "The tcp client ip:" << server_address_ << " is illegal!";
   }
@@ -82,8 +95,9 @@ void TcpClient::Init() {
   }
   if (event_base_ == nullptr) {
     event_base_ = event_base_new();
+    MS_EXCEPTION_IF_NULL(event_base_);
+    is_stop_ = false;
   }
-  MS_EXCEPTION_IF_NULL(event_base_);
 
   sockaddr_in sin{};
   if (memset_s(&sin, sizeof(sin), 0, sizeof(sin)) != EOK) {
@@ -127,26 +141,18 @@ void TcpClient::StartWithDelay(int seconds) {
 
 void TcpClient::Stop() {
   std::lock_guard<std::mutex> lock(connection_mutex_);
-  MS_LOG(INFO) << "Stop tcp client event buffer!";
-  if (!is_stop_.load()) {
-    if (buffer_event_) {
-      bufferevent_free(buffer_event_);
-      buffer_event_ = nullptr;
-    }
-
-    if (event_timeout_) {
-      event_free(event_timeout_);
-      event_timeout_ = nullptr;
-    }
+  MS_LOG(INFO) << "Stop tcp client!";
+  if (event_base_got_break(event_base_)) {
+    MS_LOG(DEBUG) << "The event base has stopped!";
     is_stop_ = true;
+    return;
   }
-}
-
-void TcpClient::StopEventBase() {
-  MS_LOG(INFO) << "Stop tcp client event base!";
-  int ret = event_base_loopbreak(event_base_);
-  if (ret != 0) {
-    MS_LOG(ERROR) << "Event base loop break failed!";
+  if (!is_stop_.load()) {
+    is_stop_ = true;
+    int ret = event_base_loopbreak(event_base_);
+    if (ret != 0) {
+      MS_LOG(ERROR) << "Event base loop break failed!";
+    }
   }
 }
 
@@ -280,6 +286,7 @@ void TcpClient::StartTimer(const uint32_t &time) {
 void TcpClient::set_timer_callback(const OnTimer &timer) { on_timer_callback_ = timer; }
 
 const event_base &TcpClient::eventbase() { return *event_base_; }
+
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

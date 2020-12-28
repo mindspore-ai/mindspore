@@ -121,7 +121,7 @@ class TcpServer {
   OnConnected client_connection_;
   OnDisconnected client_disconnection_;
   OnAccepted client_accept_;
-  std::recursive_mutex connection_mutex_;
+  std::mutex connection_mutex_;
   OnServerReceiveMessage message_callback_;
   OnTimerOnce on_timer_once_callback_;
   OnTimer on_timer_callback_;

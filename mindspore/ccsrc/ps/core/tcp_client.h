@@ -58,7 +58,6 @@ class TcpClient {
   void Init();
   void StartWithDelay(int seconds);
   void Stop();
-  static void StopEventBase();
   void Start();
   void StartWithNoBlock();
   void SetMessageCallback(const OnMessage &cb);
@@ -97,6 +96,7 @@ class TcpClient {
   std::atomic<bool> is_stop_;
   std::atomic<bool> is_connected_;
 };
+
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

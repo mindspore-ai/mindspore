@@ -20,18 +20,7 @@ namespace ps {
 namespace core {
 ServerNode::~ServerNode() {
   MS_LOG(INFO) << "Stop server node!";
-  if (!is_already_stopped_.load()) {
-    server_->Stop();
-    client_to_scheduler_->Stop();
-    client_to_scheduler_->StopEventBase();
-    if (server_thread_->joinable()) {
-      server_thread_->join();
-    }
-    if (client_to_scheduler_thread_->joinable()) {
-      client_to_scheduler_thread_->join();
-    }
-    is_already_stopped_ = true;
-  }
+  Stop();
 }
 
 bool ServerNode::Start(const uint32_t &timeout) {
@@ -78,6 +67,10 @@ void ServerNode::CreateTcpServer() {
       case NodeCommand::SEND_DATA:
         ProcessSendData(server, conn, message);
         break;
+      case NodeCommand::COLLECTIVE_SEND_DATA:
+        ProcessCollectiveSendData(server, conn, message);
+        RunReceiveCallback(message);
+        break;
       default:
         MS_LOG(EXCEPTION) << "The cmd:" << message.pb_meta().cmd() << " is not supported!";
     }
@@ -87,7 +80,6 @@ void ServerNode::CreateTcpServer() {
     MS_LOG(INFO) << "The server node start a tcp server!";
     server_->Start();
   });
-  server_thread_->detach();
 }
 
 void ServerNode::Initialize() {
@@ -106,27 +98,31 @@ void ServerNode::Initialize() {
 }
 
 void ServerNode::ProcessSendData(const TcpServer &server, const TcpConnection &conn, const CommMessage &message) {
-  if (request_handler_) {
-    request_handler_(server, conn, message.pb_meta(), message.data());
-  }
+  request_handler_(server, conn, message.pb_meta(), message.data());
+}
+
+void ServerNode::ProcessCollectiveSendData(const TcpServer &server, const TcpConnection &conn,
+                                           const CommMessage &message) {
+  CommMessage comm_message;
+  *comm_message.mutable_pb_meta() = {message.pb_meta()};
+  const_cast<TcpServer &>(server).SendMessage(conn, comm_message);
 }
 
 bool ServerNode::Stop() {
   MS_LOG(INFO) << "Stop server node!";
   if (!is_already_stopped_.load()) {
-    server_->Stop();
-    client_to_scheduler_->Stop();
-    client_to_scheduler_->StopEventBase();
-    if (server_thread_->joinable()) {
-      server_thread_->join();
-    }
-    if (client_to_scheduler_thread_->joinable()) {
-      client_to_scheduler_thread_->join();
-    }
-    if (heart_beat_thread_->joinable()) {
-      heart_beat_thread_->join();
-    }
     is_already_stopped_ = true;
+    is_finish_ = true;
+    heart_beat_thread_->join();
+    client_to_scheduler_->Stop();
+    if (!connected_nodes_.empty()) {
+      for (auto &connected_node : connected_nodes_) {
+        connected_node.second->Stop();
+      }
+    }
+    client_to_scheduler_thread_->join();
+    server_->Stop();
+    server_thread_->join();
   }
   return true;
 }
