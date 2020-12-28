@@ -60,9 +60,7 @@ In order to facilitate developers to enjoy the benefits of MindSpore framework, 
 
 - [Research](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research)
     - [Computer Vision](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv)
-        - [GhostNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ghostnet/Readme.md)
         - [GhostNet_Quant](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ghostnet_quant/Readme.md)
-        - [ResNet50-0.65x](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/resnet50_adv_pruning/Readme.md)
         - [SSD_GhostNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/ssd_ghostnet/README.md)
         - [TinyNet](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/tinynet/README.md)
         - [CycleGAN](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/cycle_gan/README.md)
