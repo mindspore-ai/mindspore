@@ -83,6 +83,7 @@ REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                            .value("precompile_only", MsCtxParam::MS_CTX_PRECOMPILE_ONLY)
                            .value("enable_profiling", MsCtxParam::MS_CTX_ENABLE_PROFILING)
                            .value("save_graphs", MsCtxParam::MS_CTX_SAVE_GRAPHS_FLAG)
+                           .value("enable_parallel_split", MsCtxParam::MS_CTX_ENABLE_PARALLEL_SPLIT)
                            .value("max_device_memory", MsCtxParam::MS_CTX_MAX_DEVICE_MEMORY)
                            .value("mode", MsCtxParam::MS_CTX_EXECUTION_MODE)
                            .value("device_target", MsCtxParam::MS_CTX_DEVICE_TARGET)

@@ -73,6 +73,7 @@ enum MsCtxParam : unsigned {
   MS_CTX_PRECOMPILE_ONLY,
   MS_CTX_ENABLE_PROFILING,
   MS_CTX_SAVE_GRAPHS_FLAG,
+  MS_CTX_ENABLE_PARALLEL_SPLIT,
   MS_CTX_TYPE_BOOL_END,
 
   // paramater of type int

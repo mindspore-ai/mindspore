@@ -72,6 +72,7 @@ MsContext::MsContext(const std::string &policy, const std::string &target) {
   set_param<std::string>(MS_CTX_PRINT_FILE_PATH, "");
   set_param<bool>(MS_CTX_ENABLE_GRAPH_KERNEL, false);
   set_param<bool>(MS_CTX_ENABLE_SPARSE, false);
+  set_param<bool>(MS_CTX_ENABLE_PARALLEL_SPLIT, false);
 
   backend_policy_ = policy_map_[policy];
 }
