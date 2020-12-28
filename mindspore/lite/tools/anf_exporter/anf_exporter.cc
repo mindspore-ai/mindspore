@@ -594,7 +594,12 @@ int AnfExporter::ConvertInputValueNode(const std::shared_ptr<AnfNode> &input_ano
       paramTensor->dims = {static_cast<int32_t>(shape.size())};
       paramTensor->nodeType = schema::NodeType_ValueNode;
       paramTensor->data.resize(shape.size() * sizeof(int));
-      memcpy(paramTensor->data.data(), shape.data(), shape.size() * sizeof(int));
+      auto ret = memcpy_s(paramTensor->data.data(), shape.size() * sizeof(int32_t), shape.data(),
+                          shape.size() * sizeof(int32_t));
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "memcpy_s data into paramTensor failed.";
+        return RET_ERROR;
+      }
       node_id_map_[valueNode->fullname_with_scope()] = meta_graphT->allTensors.size();
       output_cnode->inputIndex.emplace_back(meta_graphT->allTensors.size());
       meta_graphT->allTensors.emplace_back(std::move(paramTensor));
