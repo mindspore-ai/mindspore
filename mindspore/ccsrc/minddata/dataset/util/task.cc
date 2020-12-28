@@ -42,7 +42,7 @@ void Task::operator()() {
 #endif
   MS_LOG(DEBUG) << my_name_ << " Thread ID " << ss.str() << " Started.";
 
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   native_handle_ = pthread_self();
 #endif
 
@@ -200,7 +200,7 @@ Status Task::OverrideInterruptRc(const Status &rc) {
   return rc;
 }
 
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 pthread_t Task::GetNativeHandle() const { return native_handle_; }
 #endif
 
