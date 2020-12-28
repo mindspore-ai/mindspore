@@ -78,25 +78,42 @@ int ConstantOfShape::InferShape(std::vector<Tensor *> inputs_, std::vector<Tenso
     MS_LOG(ERROR) << "outputs to ConstantOfShape operator should be 1, but " << outputs_.size() << " is given.";
     return RET_ERROR;
   }
+
   auto in_tensor = inputs_.front();
   auto out_tensor = outputs_.front();
   out_tensor->set_data_type(static_cast<TypeId>(GetDataType()));
   out_tensor->set_format(in_tensor->format());
-  if (!infer_flag()) {
+
+  if (!infer_flag() || in_tensor->data_c() == nullptr) {
     return RET_INFER_INVALID;
   }
-  auto in_data = reinterpret_cast<int *>(in_tensor->data_c());
-  if (in_data == nullptr) {
-    MS_LOG(INFO) << "Input data is nullptr. Input tensor has not been calculated out yet.";
-    return RET_INFER_INVALID;
-  }
+
   int size = in_tensor->ElementsNum();
   std::vector<int> out_shape(size);
-  for (int i = 0; i < size; ++i) {
-    out_shape[i] = in_data[i];
-  }
-  out_tensor->set_shape(out_shape);
 
+  switch (in_tensor->data_type()) {
+    case kNumberTypeInt32: {
+      int32_t *in_data = reinterpret_cast<int32_t *>(in_tensor->data_c());
+      for (int i = 0; i < size; ++i) {
+        out_shape[i] = in_data[i];
+        MS_ASSERT(out_shape[i] > 0);
+      }
+      break;
+    }
+    case kNumberTypeInt64: {
+      int64_t *in_data = reinterpret_cast<int64_t *>(in_tensor->data_c());
+      for (int i = 0; i < size; ++i) {
+        out_shape[i] = in_data[i];
+        MS_ASSERT(out_shape[i] > 0);
+      }
+      break;
+    }
+    default:
+      MS_LOG(INFO) << "Invalid input data type!";
+      return RET_INFER_INVALID;
+  }
+
+  out_tensor->set_shape(out_shape);
   return RET_OK;
 }
 }  // namespace mindspore::lite
