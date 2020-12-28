@@ -206,7 +206,7 @@ class AscendEnvChecker(EnvChecker):
             if process.stdout.strip() != "":
                 logger.warning(process.stdout.strip())
         except subprocess.TimeoutExpired:
-            logger.warning("Package te, topi, hccl version check timed out, skip.")
+            logger.info("Package te, topi, hccl version check timed out, skip.")
 
     def set_env(self):
         if not self.tbe_path:
