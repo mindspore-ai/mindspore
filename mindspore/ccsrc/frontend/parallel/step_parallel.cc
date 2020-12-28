@@ -2675,6 +2675,20 @@ void InsertShapeOp(const CNodePtr &node, const AnfNodePtr &pre_node, const FuncG
   InsertNode(op, node, 2, pre_node, root, "shape");
 }
 
+static AnfNodePtr FindGrad(const CNodePtr &cnode) {
+  for (auto &node : cnode->inputs()) {
+    if (!node->isa<CNode>()) {
+      continue;
+    }
+    if (!IsPrimitiveCNode(node, prim::kPrimEnvGetItem)) {
+      return FindGrad(node->cast<CNodePtr>());
+    } else {
+      return node;
+    }
+  }
+  return nullptr;
+}
+
 void HandleRootReshapeAndSaveStrategy(const std::vector<AnfNodePtr> &all_nodes) {
   // If root graph has reshape op. Find the corresponding parameter.
   // Reshape's shape is the shape of the parameter.
@@ -2706,12 +2720,9 @@ void HandleRootReshapeAndSaveStrategy(const std::vector<AnfNodePtr> &all_nodes) 
       continue;
     }
     auto root = node->func_graph();
-    auto all_dfs_nodes = DeepLinkedGraphSearch(node);
-    for (auto r_iter = all_dfs_nodes.rbegin(); r_iter != all_dfs_nodes.rend(); ++r_iter) {
-      if ((*r_iter)->isa<Parameter>()) {
-        InsertShapeOp(cnode, *r_iter, root);
-        break;
-      }
+    auto grad_node = FindGrad(cnode);
+    if (grad_node) {
+      InsertShapeOp(cnode, grad_node, root);
     }
   }
 }
@@ -3113,7 +3124,8 @@ bool StepParallel(const FuncGraphPtr &root, const opt::OptimizerPtr &optimizer) 
   std::reverse(all_nodes.begin(), all_nodes.end());
   if (parallel_mode != AUTO_PARALLEL) {
     TOTAL_OPS = 0;
-    if (ParallelInit() != SUCCESS) {
+    auto pipeline_stages = ParallelContext::GetInstance()->pipeline_stage_split_num();
+    if (pipeline_stages <= 1 && ParallelInit() != SUCCESS) {
       MS_LOG(EXCEPTION) << "Parallel init failed";
     }
 
