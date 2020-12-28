@@ -395,7 +395,7 @@ class _DatasetIterNormal:
         self.dataset = dataset
         self.device_num = _get_device_num()
         self.global_rank = _get_global_rank()
-        self.iter = self.dataset.create_tuple_iterator(num_epochs=epoch_num, do_copy=False)
+        self.iter = self.dataset.create_tuple_iterator(num_epochs=epoch_num, do_copy=True)
 
     def __iter__(self):
         return self
