@@ -16,7 +16,7 @@
 #include "minddata/dataset/util/services.h"
 
 #include <limits.h>
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <sys/syscall.h>
 #else
 #include <stdlib.h>
@@ -39,7 +39,7 @@ std::map<std::string, uint64_t> Services::unique_id_list_ = {};
 uint64_t Services::unique_id_count_ = 0;
 std::mutex Services::unique_id_mutex_;
 
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 std::string Services::GetUserName() {
   char user[LOGIN_NAME_MAX];
   (void)getlogin_r(user, sizeof(user));

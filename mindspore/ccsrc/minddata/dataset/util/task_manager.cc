@@ -124,7 +124,7 @@ TaskManager::TaskManager() try : global_interrupt_(0),
   master_->is_master_ = true;
 #if !defined(_WIN32) && !defined(_WIN64)
   gMyTask = master_.get();
-#if !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   // Initialize the semaphore for the watchdog
   errno_t rc = sem_init(&sem_, 0, 0);
   if (rc == -1) {
@@ -147,14 +147,14 @@ TaskManager::~TaskManager() {
     watchdog_grp_ = nullptr;
     watchdog_ = nullptr;
   }
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   (void)sem_destroy(&sem_);
 #endif
 }
 
 Status TaskManager::DoServiceStart() {
   MS_LOG(INFO) << "Starting Task Manager.";
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   // Create a watchdog for control-c
   std::shared_ptr<MemoryPool> mp = Services::GetInstance().GetServiceMemPool();
   // A dummy group just for the watchdog. We aren't really using it. But most code assumes a thread must
@@ -183,7 +183,7 @@ Status TaskManager::DoServiceStop() {
 
 Status TaskManager::WatchDog() {
   TaskManager::FindMe()->Post();
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   errno_t err = sem_wait(&sem_);
   if (err == -1) {
     RETURN_STATUS_UNEXPECTED("Errno = " + std::to_string(errno));

@@ -66,7 +66,7 @@ class Services {
 
   std::shared_ptr<MemoryPool> GetServiceMemPool() { return pool_; }
 
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   static std::string GetUserName();
 
   static std::string GetHostName();
