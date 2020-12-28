@@ -14,7 +14,7 @@
  * limitations under the License.
 */
 #include "minddata/dataset/engine/cache/cache_request.h"
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <sched.h>
 #include <sys/types.h>
 #include <unistd.h>

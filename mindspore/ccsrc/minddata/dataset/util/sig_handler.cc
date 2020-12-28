@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace dataset {
 // Register the custom signal handlers
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 void RegisterHandlers() {
   struct sigaction new_int_action;
 

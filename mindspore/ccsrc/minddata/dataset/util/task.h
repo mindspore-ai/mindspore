@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_TASK_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_UTIL_TASK_H_
 
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 #include <pthread.h>
 #endif
 #include <chrono>
@@ -100,7 +100,7 @@ class Task : public IntrpResource {
 
   static Status OverrideInterruptRc(const Status &rc);
 
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   pthread_t GetNativeHandle() const;
 #endif
 
@@ -120,7 +120,7 @@ class Task : public IntrpResource {
   volatile bool running_;
   volatile bool caught_severe_exception_;
 
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID)
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
   pthread_t native_handle_;
 #else
   uint64_t native_handle_;
