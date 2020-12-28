@@ -36,7 +36,7 @@ class ReshapeInfo : public OperatorInfo {
  public:
   ReshapeInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
               const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReshapeCost>(false)),
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReshapeCost>()),
         dev_num_(0),
         pre_operator_index_(0),
         next_operator_index_(0),

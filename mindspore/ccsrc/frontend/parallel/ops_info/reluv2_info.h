@@ -37,7 +37,7 @@ class ReLUV2Info : public OperatorInfo {
  public:
   ReLUV2Info(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
              const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<ActivationCost>(false)) {}
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<ReLUV2Cost>()) {}
   ~ReLUV2Info() override = default;
 
   Status Init(const StrategyPtr &strategy) override;

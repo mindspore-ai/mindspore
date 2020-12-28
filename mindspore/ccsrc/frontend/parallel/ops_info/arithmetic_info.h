@@ -56,7 +56,7 @@ class ArithmeticBase : public OperatorInfo {
 class SubInfo : public ArithmeticBase {
  public:
   SubInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<SubCost>()) {}
   ~SubInfo() override = default;
 };
 
@@ -64,28 +64,28 @@ class TensorAddInfo : public ArithmeticBase {
  public:
   TensorAddInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                 const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<TensorAddCost>()) {}
   ~TensorAddInfo() override = default;
 };
 
 class MulInfo : public ArithmeticBase {
  public:
   MulInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(true)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<MulCost>()) {}
   ~MulInfo() override = default;
 };
 
 class DivInfo : public ArithmeticBase {
  public:
   DivInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(true)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<DivCost>()) {}
   ~DivInfo() override = default;
 };
 
 class ModInfo : public ArithmeticBase {
  public:
   ModInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(true)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ModCost>()) {}
   ~ModInfo() override = default;
 };
 
@@ -93,7 +93,7 @@ class RealDivInfo : public ArithmeticBase {
  public:
   RealDivInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
               const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(true)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReadDivCost>()) {}
   ~RealDivInfo() override = default;
 };
 
@@ -101,7 +101,7 @@ class FloorDivInfo : public ArithmeticBase {
  public:
   FloorDivInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(true)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<FloorDivCost>()) {}
   ~FloorDivInfo() override = default;
 };
 
@@ -109,14 +109,14 @@ class FloorModInfo : public ArithmeticBase {
  public:
   FloorModInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(true)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<FloorModCost>()) {}
   ~FloorModInfo() override = default;
 };
 
 class PowInfo : public ArithmeticBase {
  public:
   PowInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(true)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<PowCost>()) {}
   ~PowInfo() override = default;
 };
 
@@ -124,7 +124,7 @@ class AssignSubInfo : public ArithmeticBase {
  public:
   AssignSubInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                 const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<AssignSubCost>()) {}
   ~AssignSubInfo() override = default;
 };
 
@@ -132,7 +132,7 @@ class AssignInfo : public ArithmeticBase {
  public:
   AssignInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
              const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<AssignCost>()) {}
   ~AssignInfo() override = default;
 };
 
@@ -140,7 +140,7 @@ class AssignAddInfo : public ArithmeticBase {
  public:
   AssignAddInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                 const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<AssignAddCost>()) {}
   ~AssignAddInfo() override = default;
 };
 
@@ -149,7 +149,8 @@ class SigmoidCrossEntropyWithLogitsInfo : public ArithmeticBase {
  public:
   SigmoidCrossEntropyWithLogitsInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                                     const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs,
+                       std::make_shared<SigmoidCrossEntropyWithLogitsCost>()) {}
   ~SigmoidCrossEntropyWithLogitsInfo() override = default;
 };
 
@@ -157,7 +158,7 @@ class Atan2Info : public ArithmeticBase {
  public:
   Atan2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
             const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<Atan2Cost>()) {}
   ~Atan2Info() override = default;
 };
 
@@ -165,7 +166,7 @@ class DivNoNanInfo : public ArithmeticBase {
  public:
   DivNoNanInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(true)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<DivNoNanCost>()) {}
   ~DivNoNanInfo() override = default;
 };
 
@@ -173,7 +174,7 @@ class LogicalAndInfo : public ArithmeticBase {
  public:
   LogicalAndInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                  const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<LogicalAndCost>()) {}
   ~LogicalAndInfo() override = default;
 };
 
@@ -181,7 +182,7 @@ class LogicalOrInfo : public ArithmeticBase {
  public:
   LogicalOrInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                 const PrimitiveAttrs &attrs)
-      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArithmeticCost>(false)) {}
+      : ArithmeticBase(name, inputs_shape, outputs_shape, attrs, std::make_shared<LogicalOrCost>()) {}
   ~LogicalOrInfo() override = default;
 };
 }  // namespace parallel

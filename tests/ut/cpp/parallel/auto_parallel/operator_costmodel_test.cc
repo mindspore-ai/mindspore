@@ -85,11 +85,11 @@ class TestActivationCost : public UT::Common {
   TestActivationCost() {}
   void SetUp();
   void TearDown();
-  ActivationCost ac_cost_;
+  ActivationInfoCost ac_cost_;
 };
 
 void TestActivationCost::SetUp() {
-  ac_cost_ = ActivationCost();
+  ac_cost_ = ActivationInfoCost();
   RankList dev_list;
 
   for (int32_t i = 0; i < 1050; i++) {

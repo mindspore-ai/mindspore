@@ -34,7 +34,7 @@ class SliceInfo : public OperatorInfo {
  public:
   SliceInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
             const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<SliceCost>(false)),
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<SliceCost>()),
         slice_axis_(-1) {}
   ~SliceInfo() override = default;
 

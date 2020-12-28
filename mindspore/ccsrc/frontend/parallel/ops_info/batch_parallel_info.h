@@ -34,8 +34,7 @@ class BatchParallelInfo : public OperatorInfo {
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, cost), dev_num_(1) {}
   BatchParallelInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                     const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>(false)),
-        dev_num_(1) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>()), dev_num_(1) {}
 
   ~BatchParallelInfo() override = default;
   Status Init(const StrategyPtr &strategy) override;
@@ -62,7 +61,8 @@ class SparseSoftmaxCrossEntropyWithLogitsInfo : public BatchParallelInfo {
  public:
   SparseSoftmaxCrossEntropyWithLogitsInfo(const std::string &name, const Shapes &inputs_shape,
                                           const Shapes &outputs_shape, const PrimitiveAttrs &attrs)
-      : BatchParallelInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<BatchParallelCost>(true)) {}
+      : BatchParallelInfo(name, inputs_shape, outputs_shape, attrs,
+                          std::make_shared<SparseSoftmaxCrossEntropyWithLogitsCost>()) {}
   ~SparseSoftmaxCrossEntropyWithLogitsInfo() override = default;
   void ReComputeBatchSplitFlagList() override;
 };

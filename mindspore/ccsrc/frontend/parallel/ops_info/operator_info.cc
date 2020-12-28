@@ -1204,6 +1204,20 @@ int64_t OperatorInfo::ComputeOpAndPrevEdgeParameterInvolved() {
   } else {
     is_output_parameter_involve_ = 0;
   }
+  // Set 'is_parameter_involve_' and 'is_output_parameter_involve_' into operatorCost, which are used in
+  // calculating 'inputs_in_memory' and 'output_in_memory', respectively.
+  operator_cost()->set_is_parameter_involve(is_parameter_involve_);
+  operator_cost()->set_output_parameter_involve(is_output_parameter_involve_);
+  // Calculating 'output_in_memory'
+  operator_cost()->CalculateOutputInMemory();
+  // Calculating 'inputs_in_memory'
+  std::map<size_t, bool> input_in_memory;
+  for (auto &p_edge : prev_edges) {
+    auto input_index = p_edge->next_op_input_index();
+    auto is_in_mem = p_edge->prev_operator()->operator_cost()->is_output_in_memory();
+    input_in_memory.emplace(std::make_pair(input_index, is_in_mem));
+  }
+  operator_cost()->CalculateInputsInMemory(input_in_memory);
 
   return is_output_parameter_involve_;
 }
@@ -1220,14 +1234,10 @@ Status OperatorInfo::set_is_parameter(const std::vector<bool> &is_parameter) {
 }
 
 Status OperatorInfo::CalculateMemoryCost() {
-  // First, set the 'is_parameter_involve_' and 'is_output_parameter_involve_' into OperatorCost, which are necessary to
-  // calculate memory cost.
   if (is_parameter_involve_.size() != is_parameter_.size()) {
     MS_LOG(ERROR) << "'is_parameter_' does not have the same number of input size of 'is_parameter_involve_'.";
     return FAILED;
   }
-  operator_cost()->set_is_parameter_involve(is_parameter_involve_);
-  operator_cost()->set_output_parameter_involve(is_output_parameter_involve_);
   // Set the memory cost in the 'strategy_cost_'
   for (auto &swc : strategy_cost_) {
     auto mem_cost = operator_cost()->GetMemoryCost(swc->inputs_ptr, swc->outputs_ptr);
