@@ -20,6 +20,7 @@
 #include <utility>
 #include <string>
 #include <memory>
+#include <vector>
 #include "ir/value.h"
 #include "ir/graph_utils.h"
 #include "base/base.h"
@@ -62,11 +63,13 @@ class PipelineTransformer {
   void DoBroadCast(const FuncGraphPtr &func);
   SendAttr InsertSend(const FuncGraphPtr &graph, const AnfNodePtr &parameter, int64_t user_node_stage,
                       int64_t node_stage);
-  void InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, int index,
-                     int64_t user_node_stage, int64_t node_stage);
+  AnfNodePtr InsertReceive(const FuncGraphPtr &graph, const AnfNodePtr &node, const AnfNodePtr &use_node, int index,
+                           int64_t user_node_stage, int64_t node_stage);
   void SetNoStageNode(const FuncGraphPtr &func);
   void CutBorder(const FuncGraphPtr &graph);
   bool IsStageNode(const CNodePtr &node);
+  bool Reuse(const AnfNodePtr &node, int64_t next_node_stage, int64_t node_stage,
+             const std::vector<AnfNodePtr> &out_input);
   AnfNodePtr FindPipelineCareNode(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, TensorInfoPtr> GetOpInfo(const AnfNodePtr &node);
   std::pair<OperatorInfoPtr, TensorInfoPtr> GetParameterPair(const AnfNodePtr &node);
