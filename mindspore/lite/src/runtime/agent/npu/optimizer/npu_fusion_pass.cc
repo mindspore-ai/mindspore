@@ -15,6 +15,7 @@
  */
 #include "src/runtime/agent/npu/optimizer/npu_fusion_pass.h"
 #include <vector>
+#include "src/runtime/agent/npu/optimizer/npu_pass_utils.h"
 #include "src/lite_kernel.h"
 #include "nnacl/concat_parameter.h"
 
@@ -22,14 +23,16 @@ namespace mindspore::lite {
 bool CheckFusion(kernel::LiteKernel *kernel) {
   auto pre_flag =
     std::all_of(kernel->in_kernels().begin(), kernel->in_kernels().end(), [](const kernel::LiteKernel *in_kernel) {
-      return in_kernel->Type() == schema::PrimitiveType_Nchw2Nhwc && in_kernel->out_kernels().size() == 1;
+      return NPUPassUtils::IsNchw2Nhwc(const_cast<kernel::LiteKernel *>(in_kernel)) &&
+             in_kernel->out_kernels().size() == 1;
     });
   if (!pre_flag) {
     return false;
   }
-  auto post_flag = std::all_of(
-    kernel->out_kernels().begin(), kernel->out_kernels().end(),
-    [](const kernel::LiteKernel *out_kernel) { return out_kernel->Type() == schema::PrimitiveType_Nhwc2Nchw; });
+  auto post_flag =
+    std::all_of(kernel->out_kernels().begin(), kernel->out_kernels().end(), [](const kernel::LiteKernel *out_kernel) {
+      return NPUPassUtils::IsNhwc2Nchw(const_cast<kernel::LiteKernel *>(out_kernel));
+    });
   return post_flag;
 }
 
@@ -37,15 +40,17 @@ bool CheckFormatFusion(kernel::LiteKernel *kernel) {
   if (kernel->out_kernels().empty()) {
     return false;
   }
-  if (kernel->Type() == schema::PrimitiveType_Nhwc2Nchw) {
-    return std::all_of(
-      kernel->out_kernels().begin(), kernel->out_kernels().end(),
-      [](const kernel::LiteKernel *kernel) { return kernel->Type() == schema::PrimitiveType_Nchw2Nhwc; });
+  if (NPUPassUtils::IsNhwc2Nchw(const_cast<kernel::LiteKernel *>(kernel))) {
+    return std::all_of(kernel->out_kernels().begin(), kernel->out_kernels().end(),
+                       [](const kernel::LiteKernel *kernel) {
+                         return NPUPassUtils::IsNchw2Nhwc(const_cast<kernel::LiteKernel *>(kernel));
+                       });
   }
-  if (kernel->Type() == schema::PrimitiveType_Nchw2Nhwc) {
-    return std::all_of(
-      kernel->out_kernels().begin(), kernel->out_kernels().end(),
-      [](const kernel::LiteKernel *kernel) { return kernel->Type() == schema::PrimitiveType_Nhwc2Nchw; });
+  if (NPUPassUtils::IsNchw2Nhwc(const_cast<kernel::LiteKernel *>(kernel))) {
+    return std::all_of(kernel->out_kernels().begin(), kernel->out_kernels().end(),
+                       [](const kernel::LiteKernel *kernel) {
+                         return NPUPassUtils::IsNhwc2Nchw(const_cast<kernel::LiteKernel *>(kernel));
+                       });
   }
   return false;
 }
@@ -60,6 +65,10 @@ void NPUFusionPass::RemoveAndFreeKernel(kernel::LiteKernel *cur_kernel) {
 
 void NPUFusionPass::UpdatePreKernels(kernel::LiteKernel *cur_kernel) {
   for (auto in_kernel : cur_kernel->in_kernels()) {
+    // graph in kernel
+    if (in_kernel->in_kernels().empty()) {
+      continue;
+    }
     auto pre_kernel = in_kernel->in_kernels()[0];
 
     auto pre_out_kernels = pre_kernel->out_kernels();
@@ -85,6 +94,10 @@ void NPUFusionPass::UpdatePreKernels(kernel::LiteKernel *cur_kernel) {
 
 void NPUFusionPass::UpdatePostKernels(kernel::LiteKernel *cur_kernel) {
   for (auto out_kernel : cur_kernel->out_kernels()) {
+    // graph out kernel
+    if (out_kernel->out_kernels().empty()) {
+      continue;
+    }
     auto post_kernel = out_kernel->out_kernels()[0];
 
     auto post_in_kernels = post_kernel->in_kernels();
@@ -183,22 +196,13 @@ int NPUFusionPass::ConcatFusion(kernel::LiteKernel *kernel) {
 int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
   auto pre_kernel = kernel->in_kernels()[0];
   auto in_tensor = kernel->in_tensors()[0];
-  auto out_tensor = kernel->out_tensors()[0];
-  auto tensor_itr = std::find(pre_kernel->out_tensors().begin(), pre_kernel->out_tensors().end(), in_tensor);
-  if (tensor_itr != pre_kernel->out_tensors().end()) {
-    in_tensor = *tensor_itr;
-  } else {
-    MS_LOG(ERROR) << "Can't find the connneted tensor between kernel " << kernel->name() << " and it's pre_kernel.";
-    return RET_ERROR;
-  }
-
   std::vector<kernel::LiteKernel *> pre_insert_kernels;
   for (const auto &trans_kernel : kernel->out_kernels()) {
     for (const auto &post_kernel : trans_kernel->out_kernels()) {
       // update tensor
       auto tensors_vec = post_kernel->in_tensors();
       for (size_t i = 0; i < tensors_vec.size(); i++) {
-        if (tensors_vec[i] == out_tensor) {
+        if (tensors_vec[i] == trans_kernel->out_tensors()[0]) {
           tensors_vec[i] = in_tensor;
           break;
         }
@@ -218,10 +222,7 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
       RemoveAndFreeKernel(trans_kernel);
     }
   }
-  auto pre_out_kernels = pre_kernel->out_kernels();
-  auto itr = find(pre_out_kernels.begin(), pre_out_kernels.end(), kernel);
-  pre_out_kernels.insert(itr, pre_insert_kernels.begin(), pre_insert_kernels.end());
-  pre_kernel->set_in_kernels(pre_out_kernels);
+  pre_kernel->set_out_kernels(pre_insert_kernels);
   RemoveAndFreeKernel(kernel);
   return RET_OK;
 }
@@ -229,7 +230,8 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
 int NPUFusionPass::Run() {
   for (size_t i = 0; i < kernels->size(); i++) {
     auto kernel = (*kernels)[i];
-    if (kernel->Type() == schema::PrimitiveType_Nchw2Nhwc || kernel->Type() == schema::PrimitiveType_Nchw2Nhwc) {
+    if (NPUPassUtils::IsNchw2Nhwc(const_cast<kernel::LiteKernel *>(kernel)) ||
+        NPUPassUtils::IsNhwc2Nchw(const_cast<kernel::LiteKernel *>(kernel))) {
       if (CheckFormatFusion(kernel)) {
         i--;
         FormatFusion(kernel);
