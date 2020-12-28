@@ -111,7 +111,7 @@ def test_mobilenetv2_quant():
                 dataset_sink_mode=False)
     print("============== End Training ==============")
 
-    export_time_used = 700
+    export_time_used = 650
     train_time = monitor.step_mseconds
     print('train_time_used:{}'.format(train_time))
     assert train_time < export_time_used
