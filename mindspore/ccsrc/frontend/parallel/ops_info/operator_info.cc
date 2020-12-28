@@ -284,6 +284,39 @@ Operator CreateReduceScatterOp(const std::string &reduce_op, const std::string &
   return op;
 }
 
+void AddCommOpFusionType(const CNodePtr &comm_node, const AnfNodePtr &param_node) {
+  MS_EXCEPTION_IF_NULL(comm_node);
+  MS_EXCEPTION_IF_NULL(param_node);
+  if (IsPrimitiveCNode(param_node, prim::kPrimReceive)) {
+    MS_LOG(WARNING) << "The mirror of Receive does not support fusion type now.";
+    return;
+  }
+  auto param = param_node->cast<ParameterPtr>();
+  MS_EXCEPTION_IF_NULL(param);
+  auto prim = GetValueNode<PrimitivePtr>(comm_node->input(0));
+  MS_EXCEPTION_IF_NULL(prim);
+  auto attrs = prim->attrs();
+  auto param_info = param->param_info();
+  if (!param_info) {
+    MS_LOG(WARNING) << param->ToString() << "does not have parameter info.";
+    return;
+  }
+  int32_t fusion_type = param_info->comm_fusion();
+  attrs[FUSION] = MakeValue<int64_t>(fusion_type);
+  prim->SetAttrs(attrs);
+  MS_LOG(INFO) << "Set comm fusion:" << param->param_info()->name() << "'s fusion type is " << fusion_type;
+}
+
+void AddCommOpMeanFlag(const CNodePtr &comm_node) {
+  MS_EXCEPTION_IF_NULL(comm_node);
+  auto prim = GetValueNode<PrimitivePtr>(comm_node->input(0));
+  auto attrs = prim->attrs();
+  MS_EXCEPTION_IF_NULL(ParallelContext::GetInstance());
+  bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
+  attrs[MEAN_FLAG] = MakeValue<bool>(mean_flag);
+  prim->SetAttrs(attrs);
+}
+
 Operator CreateAllGatherOp(const std::string &group) {
   OperatorName operator_name = ALL_GATHER;
   ValuePtr attr0_value = MakeValue(group);  // group
@@ -296,6 +329,30 @@ Operator CreateAllGatherOp(const std::string &group) {
 
   Operator op = std::make_pair(operator_name, operator_arg);
   MS_LOG(INFO) << "Create allgather op success, the group is " << group;
+  return op;
+}
+
+Operator CreateMiniStepAllGatherOp(const std::string &group) {
+  int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
+  bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
+
+  OperatorName operator_name = MINI_STEP_ALL_GATHER;
+  ValuePtr attr0_value = MakeValue(group);  // group
+  Attr attr0 = std::make_pair(GROUP, attr0_value);
+  ValuePtr attr1_value = MakeValue(grad_accumulation_step);  // grad_accumulation_step
+  Attr attr1 = std::make_pair(GRAD_ACCUMULATION_STEP, attr1_value);
+  ValuePtr attr2_value = MakeValue(mean_flag);  // mean_flag
+  Attr attr2 = std::make_pair(MEAN_FLAG, attr2_value);
+  OperatorAttrs operator_attrs;
+  operator_attrs.push_back(attr0);
+  operator_attrs.push_back(attr1);
+  operator_attrs.push_back(attr2);
+
+  OperatorParams operator_param;
+  OperatorArgs operator_arg = std::make_pair(operator_attrs, operator_param);
+
+  Operator op = std::make_pair(operator_name, operator_arg);
+  MS_LOG(INFO) << "Create MINI_STEP_ALL_GATHER success, the group is " << group;
   return op;
 }
 
@@ -771,7 +828,7 @@ void OperatorInfo::ComputeBatchSplitFlagList() {
   ReComputeBatchSplitFlagList();
 }
 
-// This is a common method for checking whether the generated stragegy has the correct number of devuces.
+// This is a common method for checking whether the generated strategy has the correct number of devuces.
 Status PrepareStrategyBase(int64_t stage_id, size_t dev_num, const Shapes &inputs_partitions, StrategyPtr *const sp) {
   if (sp == nullptr) {
     MS_LOG(ERROR) << "The strategy is null.";
@@ -886,7 +943,7 @@ Status GenerateStrategiesForBroadcastLeft(int64_t stage_id, const Shapes &inputs
     (void)input0_strategy.erase(input0_strategy.begin(),
                                 input0_strategy.begin() + static_cast<different_type>(size_diff));
 
-    // handel the case likes ([1, c, d], [a, b, c, d])
+    // handle the case likes ([1, c, d], [a, b, c, d])
     for (size_t i = 0; i < inputs_shape[0].size(); ++i) {
       if (inputs_shape[0][i] == 1) {
         input0_strategy[i] = 1;
@@ -937,7 +994,7 @@ Status GenerateStrategiesForBroadcastRight(int64_t stage_id, const Shapes &input
     (void)input1_strategy.erase(input1_strategy.begin(),
                                 input1_strategy.begin() + static_cast<different_type>(size_diff));
 
-    // handel the case likes ([a, b, c, d], [1, c, d])
+    // handle the case likes ([a, b, c, d], [1, c, d])
     for (size_t i = 0; i < inputs_shape[1].size(); ++i) {
       if (inputs_shape[1][i] == 1) {
         input1_strategy[i] = 1;

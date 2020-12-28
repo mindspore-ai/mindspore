@@ -258,9 +258,9 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
 
   FuncGraphPtr func_graph = res->func_graph();
   abstract::AbstractBasePtrList args_spec = res->args_spec();
-
-  parallel::ParallelParameterContextInit(func_graph);
-
+  auto context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel::ParallelContext::GetInstance());
+  context->ParallelParameterContextInitShape(func_graph);
   // suppose that there is not KeywordArgument for the top graph
   // get the hyper parameter
   for (const auto &param : func_graph->parameters()) {
@@ -271,9 +271,9 @@ bool AbstractSpecializeAction(const ResourcePtr &res) {
       auto ref_key = std::make_shared<RefKey>(param_node->name());
       auto abs_ref_key = ref_key->ToAbstract();
       auto abs_ref = std::make_shared<abstract::AbstractRef>(abs_ref_key, abs_value);
-      parallel::ParallelParameterContextRestoreInNoTraining(func_graph, param_node, abs_ref);
+      context->ParallelParameterContextRestoreShape(func_graph, param_node, abs_ref);
       args_spec.push_back(abs_ref);
-      parallel::ParallelParameterContextCkptInTraining(func_graph, param_node, abs_ref);
+      context->ParallelParameterContextCkptShape(func_graph, param_node, abs_ref);
     }
   }
   // Analyze

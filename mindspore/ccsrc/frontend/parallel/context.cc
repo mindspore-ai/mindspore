@@ -153,25 +153,27 @@ const std::vector<uint32_t> ParallelContext::GetAllReduceFusionSplitSizes(const 
 }
 
 // Clear param_shapes before training in auto-parallel or semi-auto-parallel mode
-void ParallelParameterContextInit(const FuncGraphPtr &func_graph) {
+void ParallelContext::ParallelParameterContextInitShape(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  if (!func_graph->has_flag(AUTO_PARALLEL) || !func_graph->has_flag(TRAINING)) {
-    return;
+  if (func_graph->has_flag(AUTO_PARALLEL) &&
+      (!func_graph->has_flag(TRAINING) ||
+       (ParallelContext::GetInstance()->grad_accumulation_step() > 1 && !func_graph->has_flag(ACCUMULATION)))) {
+    init_param_shape_ = false;
+  } else {
+    param_shapes.clear();
+    init_param_shape_ = true;
   }
-  param_shapes.clear();
 }
 
 // Restore the parameters' shape for evaluation/prediction in auto-parallel or semi-auto-parallel mode
-void ParallelParameterContextRestoreInNoTraining(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
-                                                 AbstractBasePtr ptr) {
+void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &func_graph,
+                                                           const ParameterPtr &param_node, AbstractBasePtr ptr) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ptr);
-  if (!func_graph->has_flag(AUTO_PARALLEL) || (func_graph->attrs().count(TRAINING) == 0) ||
-      func_graph->has_flag(TRAINING)) {
+  if (init_param_shape_) {
     return;
   }
-
   auto iter = param_shapes.find(param_node->name());
   if (iter == param_shapes.end()) {
     MS_LOG(WARNING) << "Can not found the shape for parameter " << param_node->name();
@@ -183,16 +185,16 @@ void ParallelParameterContextRestoreInNoTraining(const FuncGraphPtr &func_graph,
   MS_LOG(DEBUG) << "The parameter name is " << param_node->name() << ", the shape is " << shape;
 }
 
+// Clear param_shapes before training in auto-parallel or semi-auto-parallel mode
 // Checkpoint the parameters' shape for training in auto-parallel or semi-auto-parallel mode
-void ParallelParameterContextCkptInTraining(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
-                                            const AbstractBasePtr &ptr) {
+void ParallelContext::ParallelParameterContextCkptShape(const FuncGraphPtr &func_graph, const ParameterPtr &param_node,
+                                                        const AbstractBasePtr &ptr) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ptr);
-  if (!func_graph->has_flag(AUTO_PARALLEL) || !func_graph->has_flag(TRAINING)) {
+  if (!init_param_shape_) {
     return;
   }
-
   std::vector<int64_t> shape = dyn_cast<abstract::Shape>(ptr->GetShapeTrack())->shape();
   auto ret = param_shapes.try_emplace(param_node->name(), shape);
   if (!ret.second) {
