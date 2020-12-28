@@ -131,7 +131,7 @@ class RMSProp(Optimizer):
         Tensor[bool], the value is True.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> net = Net()
