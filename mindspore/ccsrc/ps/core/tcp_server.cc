@@ -32,7 +32,6 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-
 void TcpConnection::InitConnection() {
   tcp_message_handler_.SetCallback([&](const CommMessage &message) {
     OnServerReceiveMessage on_server_receive = server_->GetServerReceive();
@@ -58,7 +57,7 @@ void TcpConnection::SendMessage(const CommMessage &message) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
   size_t buf_size = message.ByteSizeLong();
   std::vector<unsigned char> serialized(buf_size);
-  message.SerializeToArray(serialized.data(), static_cast<int>(buf_size));
+  message.SerializeToArray(serialized.data(), SizeToInt(buf_size));
   if (evbuffer_add(bufferevent_get_output(const_cast<struct bufferevent *>(buffer_event_)), &buf_size,
                    sizeof(buf_size)) == -1) {
     MS_LOG(EXCEPTION) << "Event buffer add header failed!";
@@ -304,7 +303,7 @@ void TcpServer::ReadCallback(struct bufferevent *bev, void *connection) {
     if (read == -1) {
       MS_LOG(EXCEPTION) << "Can not drain data from the event buffer!";
     }
-    conn->OnReadHandler(read_buffer, static_cast<size_t>(read));
+    conn->OnReadHandler(read_buffer, IntToSize(read));
   }
 }
 

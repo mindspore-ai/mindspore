@@ -44,7 +44,7 @@ class SchedulerNode : public Node {
   SchedulerNode() : server_(nullptr), scheduler_thread_(nullptr), update_state_thread_(nullptr) {}
   ~SchedulerNode() override;
 
-  bool Start(const uint32_t &timeout = kTimeoutInSeconds) override;
+  bool Start(const uint32_t &timeout = ClusterConfig::cluster_available_timeout()) override;
   bool Stop() override;
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
 

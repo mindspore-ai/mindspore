@@ -35,6 +35,7 @@
 #include "proto/ps.pb.h"
 #include "ps/core/node.h"
 #include "utils/log_adapter.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace ps {
@@ -47,6 +48,7 @@ class NodeManager {
         is_cluster_timeout_(false),
         is_node_timeout_(false),
         total_node_num_(0),
+        current_node_num_(-1),
         next_worker_rank_id_(-1),
         next_server_rank_id_(-1) {}
   virtual ~NodeManager() = default;
@@ -75,6 +77,7 @@ class NodeManager {
   std::atomic<bool> is_cluster_timeout_;
   std::atomic<bool> is_node_timeout_;
   uint32_t total_node_num_;
+  int32_t current_node_num_;
   std::atomic<int> next_worker_rank_id_;
   std::atomic<int> next_server_rank_id_;
   // worker nodes and server nodes

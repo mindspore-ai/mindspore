@@ -105,7 +105,7 @@ void NodeManager::UpdateClusterState() {
   }
 
   // 2. update cluster finish state
-  if (finish_nodes_id_.size() == total_node_num_) {
+  if (finish_nodes_id_.size() == total_node_num_ || SizeToInt(finish_nodes_id_.size()) == current_node_num_) {
     is_cluster_finish_ = true;
     is_cluster_ready_ = true;
   }
@@ -119,7 +119,9 @@ void NodeManager::UpdateClusterState() {
 void NodeManager::CheckClusterTimeout() {
   if (total_node_num_ != nodes_info_.size()) {
     MS_LOG(WARNING) << "The cluster is not ready after " << ClusterConfig::cluster_available_timeout()
-                    << " seconds,so finish the cluster";
+                    << " seconds,so finish the cluster, and change total node number from " << total_node_num_ << " to "
+                    << nodes_info_.size();
+    current_node_num_ = nodes_info_.size();
     is_cluster_timeout_ = true;
   }
 }

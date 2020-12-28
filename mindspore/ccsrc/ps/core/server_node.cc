@@ -30,7 +30,7 @@ bool ServerNode::Start(const uint32_t &timeout) {
   StartHeartbeatTimer(client_to_scheduler_);
 
   if (!WaitForStart(timeout)) {
-    MS_LOG(EXCEPTION) << "Start Worker node timeout!";
+    MS_LOG(ERROR) << "Start Server node timeout!";
   }
   MS_LOG(INFO) << "The cluster is ready to use!";
 

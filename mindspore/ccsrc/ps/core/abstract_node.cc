@@ -33,11 +33,12 @@ void AbstractNode::Register(const std::shared_ptr<TcpClient> &client) {
   *comm_message.mutable_pb_meta() = {message_meta};
   comm_message.set_data(register_message.SerializeAsString());
   if (!SendMessageSync(client, comm_message)) {
-    MS_LOG(EXCEPTION) << "Node register timeout!";
+    MS_LOG(EXCEPTION) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                      << " the node id:" << node_info_.node_id_ << " register timeout!";
   }
 
-  MS_LOG(INFO) << "The node id:" << node_info_.node_id_
-               << "is registering to scheduler, the request id is:" << message_meta.request_id();
+  MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+               << " the node id:" << node_info_.node_id_ << "is registering to scheduler!";
 }
 
 void AbstractNode::ProcessRegisterResp(const CommMessage &message) {
@@ -395,7 +396,7 @@ bool AbstractNode::InitClientToScheduler() {
 
   client_to_scheduler_->Init();
   client_to_scheduler_thread_ = std::make_unique<std::thread>([&]() {
-    MS_LOG(INFO) << "The worker node start a tcp client!";
+    MS_LOG(INFO) << "The node start a tcp client!";
     client_to_scheduler_->Start();
   });
 

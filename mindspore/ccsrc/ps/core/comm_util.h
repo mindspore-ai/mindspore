@@ -45,6 +45,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <thread>
 
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
@@ -68,6 +69,7 @@ class CommUtil {
   static std::string GenerateUUID();
   static std::string NodeRoleToString(const NodeRole &role);
   static bool ValidateRankId(const enum NodeRole &node_role, const uint32_t &rank_id);
+  static bool Retry(const std::function<bool()> &func, size_t max_attempts, size_t interval_milliseconds);
 
  private:
   static std::random_device rd;

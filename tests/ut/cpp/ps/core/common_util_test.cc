@@ -27,6 +27,18 @@ class TestCommUtil : public UT::Common {
  public:
   TestCommUtil() = default;
   virtual ~TestCommUtil() = default;
+  struct MockRetry {
+    bool operator()(std::string mock) {
+      ++count_;
+
+      if (count_ > 3) {
+        return true;
+      }
+      return false;
+    }
+
+    int count_{0};
+  };
 
   void SetUp() override {}
   void TearDown() override {}
@@ -46,6 +58,14 @@ TEST_F(TestCommUtil, ValidateRankId) {
   EXPECT_FALSE(CommUtil::ValidateRankId(NodeRole::WORKER, 3));
   EXPECT_TRUE(CommUtil::ValidateRankId(NodeRole::SERVER, 1));
   EXPECT_FALSE(CommUtil::ValidateRankId(NodeRole::SERVER, 2));
+}
+
+TEST_F(TestCommUtil, Retry) {
+  bool const ret = CommUtil::Retry([]() -> bool { return false; }, 5, 100);
+  EXPECT_FALSE(ret);
+  MockRetry mock_retry;
+  bool const mock_ret = CommUtil::Retry([&] { return mock_retry("mock"); }, 5, 100);
+  EXPECT_TRUE(mock_ret);
 }
 }  // namespace core
 }  // namespace ps

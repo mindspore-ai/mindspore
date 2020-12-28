@@ -36,6 +36,8 @@ namespace mindspore {
 namespace ps {
 namespace core {
 event_base *TcpClient::event_base_ = nullptr;
+std::mutex TcpClient::event_base_mutex_;
+bool TcpClient::is_started_ = false;
 
 TcpClient::TcpClient(const std::string &address, std::uint16_t port)
     : event_timeout_(nullptr),
@@ -59,10 +61,6 @@ TcpClient::~TcpClient() {
   if (event_timeout_) {
     event_free(event_timeout_);
     event_timeout_ = nullptr;
-  }
-  if (event_base_) {
-    event_base_free(event_base_);
-    event_base_ = nullptr;
   }
 }
 
@@ -234,6 +232,13 @@ void TcpClient::EventCallback(struct bufferevent *bev, std::int16_t events, void
 }
 
 void TcpClient::Start() {
+  event_base_mutex_.lock();
+  if (is_started_) {
+    event_base_mutex_.unlock();
+    return;
+  }
+  is_started_ = true;
+  event_base_mutex_.unlock();
   MS_EXCEPTION_IF_NULL(event_base_);
   int ret = event_base_dispatch(event_base_);
   MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base dispatch success!";
@@ -260,7 +265,7 @@ void TcpClient::SendMessage(const CommMessage &message) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
   size_t buf_size = message.ByteSizeLong();
   std::vector<unsigned char> serialized(buf_size);
-  message.SerializeToArray(serialized.data(), static_cast<int>(buf_size));
+  message.SerializeToArray(serialized.data(), SizeToInt(buf_size));
   if (evbuffer_add(bufferevent_get_output(buffer_event_), &buf_size, sizeof(buf_size)) == -1) {
     MS_LOG(EXCEPTION) << "Event buffer add header failed!";
   }
