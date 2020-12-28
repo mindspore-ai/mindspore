@@ -259,7 +259,7 @@ def _infer_rank_list(train_map, predict_map=None):
             logger.warning("predict_map does not contain %s", param_name)
             continue
         predict_layout = predict_map[param_name]
-        dev_num = np.array(predict_layout[0].prod())
+        dev_num = np.array(predict_layout[0]).prod()
         # optimization pass
         if _check_same_layout(train_layout, predict_layout):
             dev_rank = _get_global_rank()
