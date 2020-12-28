@@ -217,6 +217,7 @@ class DeviceQueueOp : public PipelineOp {
   int32_t total_batch_;
   bool create_data_info_queue_;
   std::unique_ptr<DATA_INFO_QUEUE> data_info_queue_ptr_;
+  std::mutex data_info_mutex_;
 
 #ifdef ENABLE_TDTQUE
   std::shared_ptr<TdtPlugin> tdtInstancePtr;
