@@ -103,6 +103,7 @@ class ArrayReduceGpuKernel : public GpuKernel {
         for (auto axis : attr_axis) {
           axis < 0 ? axis_.push_back(axis + input_dim_length) : axis_.push_back(axis);
         }
+        std::sort(axis_.begin(), axis_.end());
       }
     } else if (AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("axis")->isa<Int64Imm>()) {
       int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
