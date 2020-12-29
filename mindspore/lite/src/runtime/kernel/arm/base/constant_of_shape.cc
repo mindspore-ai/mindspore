@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/constant_of_shape_fp32.h"
-#include <vector>
+#include "src/runtime/kernel/arm/base/constant_of_shape.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -28,30 +26,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_ConstantOfShape;
 
 namespace mindspore::kernel {
-int ConstantOfShapeCPUKernel::Init() { return RET_OK; }
-
-int ConstantOfShapeCPUKernel::ReSize() { return RET_OK; }
-
-int ConstantOfShapeCPUKernel::DoExecute(int task_id) {
-  int ret = RET_ERROR;
-  switch (param_->data_type_) {
-    case kNumberTypeFloat32:
-      ret = ConstantOfShape(reinterpret_cast<float *>(out_ptr_), task_id, param_);
-      break;
-    case kNumberTypeInt32:
-      ret = ConstantOfShapeInt(reinterpret_cast<int32_t *>(out_ptr_), task_id, param_);
-      break;
-    default:
-      MS_LOG(ERROR) << "Constant of shape does not support the output data type.";
-      return RET_ERROR;
-  }
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConstantOfShapeRun error task_id[" << task_id << "] error_code[" << ret << "]";
-    return ret;
-  }
-  return RET_OK;
-}
-
 int ConstantOfShapeRun(void *cdata, int task_id) {
   auto g_kernel = reinterpret_cast<ConstantOfShapeCPUKernel *>(cdata);
   auto ret = g_kernel->DoExecute(task_id);
@@ -62,23 +36,38 @@ int ConstantOfShapeRun(void *cdata, int task_id) {
   return RET_OK;
 }
 
-int ConstantOfShapeCPUKernel::Run() {
-  param_->element_sz_ = out_tensors_.front()->ElementsNum();
-  int thread_num = MSMIN(param_->op_parameter_.thread_num_, param_->element_sz_);
-  param_->unit_ = UP_DIV(param_->element_sz_, thread_num);
-  param_->op_parameter_.thread_num_ = thread_num;
+int ConstantOfShapeCPUKernel::DoExecute(int task_id) {
+  int start = task_id * thread_stride_;
+  int current_stride = MSMIN(thread_stride_, param_->element_size_ - start);
+  if (current_stride < 0) {
+    return RET_OK;
+  }
+
   switch (param_->data_type_) {
     case kNumberTypeFloat32:
-      out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
+      ConstantOfShapeFp32(reinterpret_cast<float *>(output_ptr_), start, start + current_stride,
+                          param_->value_.f32_value_);
       break;
     case kNumberTypeInt32:
-      out_ptr_ = reinterpret_cast<int32_t *>(out_tensors_.front()->MutableData());
+      ConstantOfShapeInt32(reinterpret_cast<int32_t *>(output_ptr_), start, start + current_stride,
+                           param_->value_.int32_value_);
       break;
     default:
-      MS_LOG(ERROR) << "Constant of shape does not support the output data type.";
+      MS_LOG(ERROR) << "Invalid datatype in ConstantOfShapeRun";
       return RET_ERROR;
   }
-  auto ret = ParallelLaunch(this->context_->thread_pool_, ConstantOfShapeRun, this, thread_num);
+  return RET_OK;
+}
+
+int ConstantOfShapeCPUKernel::Run() {
+  auto output = out_tensors_.front();
+  param_->data_type_ = output->data_type();
+  param_->element_size_ = output->ElementsNum();
+  output_ptr_ = output->data_c();
+  int thread_count = MSMIN(op_parameter_->thread_num_, param_->element_size_);
+  thread_stride_ = UP_DIV(param_->element_size_, thread_count);
+
+  auto ret = ParallelLaunch(this->context_->thread_pool_, ConstantOfShapeRun, this, thread_count);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConstantOfShapeRun error error_code[" << ret << "]";
     return ret;
@@ -88,4 +77,5 @@ int ConstantOfShapeCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ConstantOfShape, LiteKernelCreator<ConstantOfShapeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_ConstantOfShape, LiteKernelCreator<ConstantOfShapeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_ConstantOfShape, LiteKernelCreator<ConstantOfShapeCPUKernel>)
 }  // namespace mindspore::kernel

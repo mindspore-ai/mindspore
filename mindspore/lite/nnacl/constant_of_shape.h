@@ -24,17 +24,19 @@
 
 typedef struct ConstantOfShapeParameter {
   OpParameter op_parameter_;
-  float value_;
+  union value_ {
+    float f32_value_;
+    int32_t int32_value_;
+  } value_;
   int data_type_;
-  int unit_;
-  int element_sz_;
+  int element_size_;
 } ConstantOfShapeParameter;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ConstantOfShape(float *output, int tid, const ConstantOfShapeParameter *param);
-int ConstantOfShapeInt(int32_t *output, int tid, const ConstantOfShapeParameter *param);
+int ConstantOfShapeFp32(float *output, int start, int end, float value);
+int ConstantOfShapeInt32(int32_t *output, int start, int end, int32_t value);
 #ifdef __cplusplus
 }
 #endif

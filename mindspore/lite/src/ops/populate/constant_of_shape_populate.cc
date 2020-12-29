@@ -19,7 +19,7 @@
 #include "src/tensor.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/constant_of_shape_fp32.h"
+#include "nnacl/constant_of_shape.h"
 
 namespace mindspore::lite {
 namespace {
@@ -34,13 +34,22 @@ OpParameter *PopulateConstantOfShapeParameter(const mindspore::lite::PrimitiveC 
   }
   memset(param, 0, sizeof(ConstantOfShapeParameter));
   param->op_parameter_.type_ = primitive->Type();
+  param->data_type_ = attr->GetDataType();
   auto value = attr->GetValue();
   if (value.empty() || value.size() > 1) {
     MS_LOG(ERROR) << "The value of constant of shape is empty or more than 1.";
   } else {
-    param->value_ = attr->GetValue().at(0);
+    switch (param->data_type_) {
+      case kNumberTypeFloat32:
+        param->value_.f32_value_ = attr->GetValue().at(0);
+        break;
+      case kNumberTypeInt32:
+        param->value_.int32_value_ = attr->GetValue().at(0);
+        break;
+      default:
+        MS_LOG(ERROR) << "The value of constant of shape is invalid";
+    }
   }
-  param->data_type_ = attr->GetDataType();
   return reinterpret_cast<OpParameter *>(param);
 }
 Registry ConstantOfShapeParameterRegistry(schema::PrimitiveType_ConstantOfShape, PopulateConstantOfShapeParameter);
