@@ -68,7 +68,7 @@ ge::Operator *CreateOperator(const std::vector<ge::Operator *> &npu_inputs, cons
 int ArithmeticNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
                                       const std::vector<lite::Tensor *> &outputs,
                                       const std::vector<ge::Operator *> &npu_inputs) {
-  ge::Operator *op;
+  ge::Operator *op = nullptr;
   switch (primitive_->Type()) {
     case PrimitiveType_Mul:
       op = CreateOperator<hiai::op::Mul>(npu_inputs, name_);

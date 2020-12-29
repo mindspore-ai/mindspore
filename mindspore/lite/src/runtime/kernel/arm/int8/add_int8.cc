@@ -143,7 +143,9 @@ void QuantizedAddCPUKernel::BroadcastRun(int task_id) {
   if (real_out_count <= 0) {
     return;
   }
-  int8_t *cur_in0, *cur_in1, *cur_out;
+  int8_t *cur_in0 = nullptr;
+  int8_t *cur_in1 = nullptr;
+  int8_t *cur_out = nullptr;
   for (int i = 0; i < real_out_count; i++) {
     if (arith_para_->in_elements_num0_ == arith_para_->out_elements_num_) {
       cur_in0 = input0_data_ + task_id * stride * in_size_ + i * in_size_;

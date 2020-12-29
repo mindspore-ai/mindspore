@@ -34,8 +34,8 @@ int SigmoidCrossEntropyWithLogitsGradCPUKernel::Execute(int task_id) {
   auto labels = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto dloss = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
   auto *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  float zero = 0.0f;
-  float one = 1.0f;
+  const float zero = 0.0f;
+  const float one = 1.0f;
 
   size_t tensor_len = in_tensors_.at(0)->ElementsNum();
   for (uint64_t i = 0; i < tensor_len; ++i) {
