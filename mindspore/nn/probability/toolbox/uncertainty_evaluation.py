@@ -239,13 +239,16 @@ class EpistemicUncertaintyModel(Cell):
     def __init__(self, epi_model):
         super(EpistemicUncertaintyModel, self).__init__()
         self.drop_count = 0
+        if not self._make_epistemic(epi_model):
+            raise ValueError("The model has not Dense Layer or Convolution Layer, "
+                             "it can not evaluate epistemic uncertainty so far.")
         self.epi_model = self._make_epistemic(epi_model)
 
     def construct(self, x):
         x = self.epi_model(x)
         return x
 
-    def _make_epistemic(self, epi_model, dropout_rate=0.5):
+    def _make_epistemic(self, epi_model, keep_prob=0.5):
         """
         The dropout rate is set to 0.5 by default.
         """
@@ -256,13 +259,13 @@ class EpistemicUncertaintyModel(Cell):
                     return epi_model
                 uncertainty_layer = layer
                 uncertainty_name = name
-                drop = Dropout(keep_prob=dropout_rate)
+                drop = Dropout(keep_prob=keep_prob)
                 bnn_drop = SequentialCell([uncertainty_layer, drop])
                 setattr(epi_model, uncertainty_name, bnn_drop)
                 return epi_model
-            self._make_epistemic(layer)
-        raise ValueError("The model has not Dense Layer or Convolution Layer, "
-                         "it can not evaluate epistemic uncertainty so far.")
+            if self._make_epistemic(layer):
+                return epi_model
+        return None
 
 
 class AleatoricUncertaintyModel(Cell):
