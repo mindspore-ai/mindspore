@@ -28,6 +28,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops.operations import _inner_ops as inner
 from mindspore.ops.operations import _quant_ops as Q
 from mindspore.ops.operations import nn_ops as nps
+from mindspore.nn.layer import normalization
 from ..ut_filter import non_graph_engine
 from ....mindspore_test_framework.mindspore_test import mindspore_test
 from ....mindspore_test_framework.pipeline.forward.compile_forward \
@@ -227,6 +228,18 @@ class Moments(nn.Cell):
     def construct(self, input_x):
         mean, variance = self.moments(input_x)
         return mean, variance
+
+
+class BatchNorm3d(nn.Cell):
+    """BatchNorm3d net definition"""
+
+    def __init__(self, num_features):
+        super(BatchNorm3d, self).__init__()
+        self.bn3d = normalization.BatchNorm3d(num_features=num_features)
+
+    def construct(self, input_x):
+        bn3d_out = self.bn3d(input_x)
+        return bn3d_out
 
 
 class ClipByNorm(nn.Cell):
@@ -1239,6 +1252,10 @@ test_case_math_ops = [
     ('Moments', {
         'block': Moments(axis=(), keep_dims=False),
         'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 4).astype(np.float32))],
+        'skip': ['backward']}),
+    ('BatchNorm3d', {
+        'block': BatchNorm3d(num_features=3),
+        'desc_inputs': [Tensor(np.random.rand(3, 3, 3, 5, 4).astype(np.float32))],
         'skip': ['backward']}),
     ('Conv3D', {
         'block': Conv3D(out_channel=32, kernel_size=(4, 3, 3), mode=1, pad_mode='valid', pad=0,
