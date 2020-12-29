@@ -86,7 +86,8 @@ class KernelAdjust {
   void LoadSwitchInputs(std::vector<tensor::TensorPtr> *inputs);
   void InsertProfilingKernel(const ProfilingTraceInfo &profiling_trace_info,
                              NotNull<session::KernelGraph *> kernel_graph_ptr);
-  bool ExitIndependent(const std::shared_ptr<session::KernelGraph> &graph_ptr);
+  bool ExistIndependent(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
+  bool ExistGetNext(const std::shared_ptr<session::KernelGraph> &kernel_graph_ptr);
 };
 }  // namespace device
 }  // namespace mindspore

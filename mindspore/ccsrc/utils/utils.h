@@ -315,6 +315,7 @@ constexpr auto kAttrOutputUsedNum = "output_used_num";
 constexpr auto kAttrHasBias = "has_bias";
 constexpr auto kAttrN = "n";
 constexpr auto kAttrLabelForInsertStreamActive = "label_for_insert_stream_active";
+constexpr auto kAttrFpBpEnd = "fpbp_end";
 constexpr auto kAttrFusion = "fusion";
 constexpr auto kAttrGroup = "group";
 constexpr auto kAttrOp = "op";
