@@ -37,23 +37,42 @@ int NPUExecutor::Prepare(const std::vector<kernel::LiteKernel *> &kernels) {
   return RET_OK;
 }
 
+bool IsSameShapeTensor(Tensor *tensor, std::shared_ptr<hiai::AiTensor> npu_tensor) {
+  return tensor->Batch() == npu_tensor->GetTensorDimension().GetNumber() &&
+         tensor->Channel() == npu_tensor->GetTensorDimension().GetChannel() &&
+         tensor->Height() == npu_tensor->GetTensorDimension().GetHeight() &&
+         tensor->Width() == npu_tensor->GetTensorDimension().GetWidth();
+}
+
 int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
                      const std::vector<kernel::LiteKernel *> &out_kernels,
                      const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator,
                      const KernelCallBack &before, const KernelCallBack &after) {
   hiai::AiContext context;
   for (int i = 0; i < npu_input_tensors_.size(); ++i) {
-    void *data = in_tensors[i]->data_c();
-    if (data == nullptr) {
-      MS_LOG(ERROR) << model_name_ << " inputs data is nullptr";
-      return RET_ERROR;
-    }
-    memcpy(npu_input_tensors_[i]->GetBuffer(), data, in_tensors[i]->Size());
-    in_tensors[i]->set_ref_count(in_tensors[i]->ref_count() - 1);
-    if (in_tensors[i]->ref_count() <= 0) {
-      auto ret = in_tensors[i]->FreeData();
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "Free tensor data failed";
+    int index = 0;
+    for (; index < in_tensors.size(); index++) {
+      if (IsSameShapeTensor(in_tensors[index], npu_input_tensors_[i])) {
+        void *data = in_tensors[index]->data_c();
+        if (data == nullptr) {
+          MS_LOG(ERROR) << model_name_ << " Inputs data is nullptr";
+          return RET_ERROR;
+        }
+
+        memcpy(npu_input_tensors_[i]->GetBuffer(), data, in_tensors[index]->Size());
+        in_tensors[index]->set_ref_count(in_tensors[index]->ref_count() - 1);
+        if (in_tensors[index]->ref_count() <= 0) {
+          auto ret = in_tensors[index]->FreeData();
+          if (ret != RET_OK) {
+            MS_LOG(ERROR) << "Free tensor data failed";
+            return RET_ERROR;
+          }
+        }
+        break;
+      }
+      if (index == in_tensors.size()) {
+        MS_LOG(ERROR) << "Can't find corresponding ms lite tensor of " << i << " input tensor for npu executor "
+                      << model_name_;
         return RET_ERROR;
       }
     }

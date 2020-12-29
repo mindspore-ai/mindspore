@@ -29,14 +29,10 @@ int GetInsertState(kernel::LiteKernel *kernel) {
   if (npu_insert_nodes.find(kernel->Type()) == npu_insert_nodes.end()) {
     return InsertNone;
   }
-  auto pre_flag =
-    std::all_of(kernel->in_kernels().begin(), kernel->in_kernels().end(), [](const kernel::LiteKernel *kernel) {
-      return NPUPassUtils::IsNchw2Nhwc(const_cast<kernel::LiteKernel *>(kernel));
-    });
-  auto post_flag =
-    std::all_of(kernel->out_kernels().begin(), kernel->out_kernels().end(), [](const kernel::LiteKernel *kernel) {
-      return NPUPassUtils::IsNhwc2Nchw(const_cast<kernel::LiteKernel *>(kernel));
-    });
+  auto pre_flag = std::all_of(kernel->in_kernels().begin(), kernel->in_kernels().end(),
+                              [](const kernel::LiteKernel *kernel) { return NPUPassUtils::IsNchw2Nhwc(kernel); });
+  auto post_flag = std::all_of(kernel->out_kernels().begin(), kernel->out_kernels().end(),
+                               [](const kernel::LiteKernel *kernel) { return NPUPassUtils::IsNhwc2Nchw(kernel); });
   if (pre_flag && !post_flag) {
     return PostInsert;
   }
@@ -50,7 +46,7 @@ int NPUInsertTransformPass::InsertPreNode(const InnerContext *context, kernel::L
                                           std::vector<kernel::LiteKernel *> *trans_kernels,
                                           std::vector<Tensor *> *all_tensors) {
   for (auto in_kernel : kernel->in_kernels()) {
-    if (NPUPassUtils::IsNchw2Nhwc(const_cast<kernel::LiteKernel *>(in_kernel))) {
+    if (NPUPassUtils::IsNchw2Nhwc(in_kernel)) {
       continue;
     }
     auto nhwc_shape = in_kernel->out_tensors()[0]->shape();
@@ -88,7 +84,7 @@ int NPUInsertTransformPass::InsertPostNode(const InnerContext *context, kernel::
                                            std::vector<kernel::LiteKernel *> *trans_kernels,
                                            std::vector<Tensor *> *all_tensors) {
   for (auto out_kernel : kernel->out_kernels()) {
-    if (NPUPassUtils::IsNhwc2Nchw(const_cast<kernel::LiteKernel *>(out_kernel))) {
+    if (NPUPassUtils::IsNhwc2Nchw(out_kernel)) {
       continue;
     }
     auto nhwc_shape = kernel->out_tensors()[0]->shape();
