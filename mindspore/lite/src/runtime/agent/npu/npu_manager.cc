@@ -49,6 +49,7 @@ bool NPUManager::CheckEMUIVersion() {
     auto version = emui_str.substr(pos + 1);
     int ret = CompareVersion(version, "10.0.0");
     if (ret < 0) {
+      MS_LOG(WARNING) << "EMUI version " << version << " less than 10.0.0";
       return false;
     }
   }
@@ -80,8 +81,9 @@ bool NPUManager::CheckDDKVersion() {
   auto client = std::make_shared<hiai::AiModelMngerClient>();
   if (client->GetVersion() != nullptr) {
     std::string version = client->GetVersion();
-    int ret = CompareVersion(version, "100.330.010.011");
+    int ret = CompareVersion(version, "100.320.010.023");
     if (ret < 0) {
+      MS_LOG(WARNING) << "DDK Version " << version << " less than 100.320.010.023";
       return false;
     }
   }
@@ -96,7 +98,7 @@ bool NPUManager::IsSupportNPU() {
       MS_LOG(INFO) << "The current device support NPU.";
     } else {
       is_support_ = false;
-      MS_LOG(INFO) << "The current device NOT SUPPORT NPU.";
+      MS_LOG(WARNING) << "The current device NOT SUPPORT NPU.";
     }
     return is_support_;
   } else {
@@ -130,6 +132,7 @@ bool NPUManager::IsKirinChip() {
       cpu_info.close();
       return true;
     } else {
+      MS_LOG(WARNING) << "Unsupported KirinChip " << kirin_number;
       cpu_info.close();
       return false;
     }

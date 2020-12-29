@@ -103,7 +103,6 @@ int SubGraphNpuKernel::BuildNPUInputOp() {
             // input come from npu
             auto npu_op = reinterpret_cast<NPUKernel *>(in_kernel)->GetNPUOp();
             if (npu_op != nullptr) {
-              npu_op->GetOutputDesc(0).GetName();
               node_input_op.push_back(npu_op);
               is_weight_tensor = false;
               break;
@@ -168,13 +167,12 @@ std::string SubGraphNpuKernel::GetOMModelName() { return this->name_ + ".om"; }
 
 int SubGraphNpuKernel::Init() {
   if (!is_compiled_) {
+    name_ = "kNpuSubGraph" + std::to_string(mindspore::lite::NPUManager::GetInstance()->index());
     auto model_buffer_data = BuildIRModel();
     if (model_buffer_data == nullptr) {
       MS_LOG(ERROR) << "Build IR model failed.";
       return RET_ERROR;
     }
-
-    name_ = "kNpuSubGraph" + std::to_string(mindspore::lite::NPUManager::GetInstance()->index());
 
     mindspore::lite::NPUManager::GetInstance()->AddModel(model_buffer_data, GetOMModelName(),
                                                          context_->GetNpuInfo().frequency_);
