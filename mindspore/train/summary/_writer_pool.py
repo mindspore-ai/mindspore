@@ -15,6 +15,7 @@
 """Write events to disk in a base directory."""
 import os
 import time
+import signal
 from collections import deque
 
 import mindspore.log as logger
@@ -76,6 +77,10 @@ class WriterPool(ctx.Process):
         os.environ['OPENBLAS_NUM_THREADS'] = '2'
         os.environ['GOTO_NUM_THREADS'] = '2'
         os.environ['OMP_NUM_THREADS'] = '2'
+
+        # Prevent the multiprocess from capturing KeyboardInterrupt,
+        # which causes the main process to fail to exit.
+        signal.signal(signal.SIGINT, signal.SIG_IGN)
 
         with ctx.Pool(min(ctx.cpu_count(), 32)) as pool:
             deq = deque()

@@ -206,7 +206,7 @@ def check_value_type(arg_name, arg_value, valid_types):
 
     if not is_valid:
         raise TypeError(f'For `{arg_name}` the type should be a valid type of {[t.__name__ for t in valid_types]}, '
-                        f'bug got {type(arg_value).__name__}.')
+                        f'but got {type(arg_value).__name__}.')
 
 
 def read_proto(file_name, proto_format="MINDIR"):
