@@ -15,7 +15,7 @@
  */
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/kernel/arm/fp32/constant_of_shape_fp32.h"
+#include "mindspore/lite/src/runtime/kernel/arm/base/constant_of_shape.h"
 #include "src/kernel_registry.h"
 #include "src/lite_kernel.h"
 
@@ -47,7 +47,8 @@ TEST_F(TestConstantOfShapeFp32, Simple) {
   std::vector<lite::Tensor *> inputs_;
   std::vector<lite::Tensor *> outputs_;
   auto param = new ConstantOfShapeParameter();
-  param->value_ = 1;
+  param->value_.f32_value_ = 1;
+  param->data_type_ = kNumberTypeFloat32;
   float a[] = {1, 2, 3, 4};
   std::vector<int> a_shape = {4, 1, 1, 1};
   // std::vector<int> c_shape = {2, 2, 2, 1};

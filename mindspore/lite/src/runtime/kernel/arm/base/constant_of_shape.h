@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONSTANT_OF_SHAPE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONSTANT_OF_SHAPE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONSTANT_OF_SHAPE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONSTANT_OF_SHAPE_H_
 
 #include <vector>
+#include "include/errorcode.h"
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "nnacl/fp32/constant_of_shape_fp32.h"
-
-using mindspore::lite::InnerContext;
+#include "nnacl/constant_of_shape.h"
 
 namespace mindspore::kernel {
 class ConstantOfShapeCPUKernel : public LiteKernel {
@@ -34,15 +33,16 @@ class ConstantOfShapeCPUKernel : public LiteKernel {
   }
   ~ConstantOfShapeCPUKernel() override = default;
 
-  int Init() override;
-  int ReSize() override;
+  int Init() override { return lite::RET_OK; }
+  int ReSize() override { return lite::RET_OK; }
   int Run() override;
   int DoExecute(int task_id);
 
  private:
   ConstantOfShapeParameter *param_ = nullptr;
-  void *out_ptr_ = nullptr;
+  void *output_ptr_ = nullptr;
+  int thread_stride_;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONSTANT_OF_SHAPE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_CONSTANT_OF_SHAPE_H_
