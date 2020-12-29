@@ -70,6 +70,30 @@ TEST_F(TestShardReader, TestShardReaderGeneral) {
   dataset.Close();
 }
 
+TEST_F(TestShardReader, TestShardReaderLazyLoad) {
+  MS_LOG(INFO) << FormatInfo("Test read imageNet");
+  std::string file_name = "./imagenet.shard01";
+  auto column_list = std::vector<std::string>{"file_name"};
+
+  ShardReader dataset;
+  dataset.Open({file_name}, true, 4, column_list, {}, 0, true);
+  dataset.Launch();
+
+  uint32_t count = 0;
+  while (true) {
+    auto x = dataset.GetNext();
+    if (x.empty()) break;
+    for (auto &j : x) {
+      for (auto &item : std::get<1>(j).items()) {
+        MS_LOG(INFO) << "key: " << item.key() << ", value: " << item.value().dump();
+      }
+    }
+    count++;
+  }
+  ASSERT_TRUE(count == 10);
+  dataset.Close();
+}
+
 TEST_F(TestShardReader, TestShardReaderSample) {
   MS_LOG(INFO) << FormatInfo("Test read imageNet");
   std::string file_name = "./imagenet.shard01";
@@ -91,6 +115,31 @@ TEST_F(TestShardReader, TestShardReaderSample) {
     }
   }
   dataset.Close();
+}
+
+TEST_F(TestShardReader, TestShardReaderLazyLoadDistributed) {
+  MS_LOG(INFO) << FormatInfo("Test read imageNet");
+  std::string file_name = "./imagenet.shard01";
+  auto column_list = std::vector<std::string>{"file_name"};
+
+  std::vector<std::shared_ptr<ShardOperator>> ops;
+  ops.push_back(std::make_shared<ShardSample>(1, 8));
+  ShardReader dataset;
+  dataset.Open({file_name}, true, 4, column_list, ops, 0, true);
+  dataset.Launch();
+
+  uint32_t count = 0;
+  while (true) {
+    auto x = dataset.GetNext();
+    if (x.empty()) break;
+    for (auto &j : x) {
+      for (auto &item : std::get<1>(j).items()) {
+        MS_LOG(INFO) << "key: " << item.key() << ", value: " << item.value().dump();
+      }
+    }
+    count++;
+  }
+  ASSERT_TRUE(count == 2);
   dataset.Close();
 }
 
