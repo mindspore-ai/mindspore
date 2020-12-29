@@ -41,6 +41,15 @@ class FloorNet(nn.Cell):
         return self.floor(x)
 
 
+class ReciprocalNet(nn.Cell):
+    def __init__(self):
+        super(ReciprocalNet, self).__init__()
+        self.reciprocal = P.Reciprocal()
+
+    def construct(self, x):
+        return self.reciprocal(x)
+
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -108,5 +117,27 @@ def test_floor():
     print(output.asnumpy())
     assert np.all(output.asnumpy() == expect_output)
 
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_reciprocal():
+    net = ReciprocalNet()
+    prop = 100 if np.random.random() > 0.5 else -100
+    x = np.random.randn(3, 4, 5, 6).astype(np.float16) * prop
+    output = net(Tensor(x))
+    expect_output = (1. / x).astype(np.float16)
+    diff = output.asnumpy() - expect_output
+    error = np.ones(shape=expect_output.shape) * 1.0e-5
+    assert np.all(np.abs(diff) < error)
+
+    x = np.random.randn(3, 4, 5, 6).astype(np.float32) * prop
+    output = net(Tensor(x))
+    expect_output = (1. / x).astype(np.float32)
+    diff = output.asnumpy() - expect_output
+    error = np.ones(shape=expect_output.shape) * 1.0e-5
+    assert np.all(np.abs(diff) < error)
+
 test_square()
 test_floor()
+test_reciprocal()

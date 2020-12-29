@@ -4648,7 +4648,7 @@ class GatherD(PrimitiveWithInfer):
         Tensor, the shape of tensor is :math:`(z_1, z_2, ..., z_N)`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> x = Tensor(np.array([[1, 2], [3, 4]]), mindspore.int32)
@@ -4680,7 +4680,7 @@ class GatherD(PrimitiveWithInfer):
         if dim_v < 0:
             dim['value'] = dim_v + x_rank
         for i in range(x_rank):
-            if i == dim_v:
+            if i == dim['value']:
                 continue
             validator.check("x_shp[{0}], idx_shp[{0}]".format(i), x_shp[i], "expected", idx_shp[i], Rel.EQ, self.name)
 

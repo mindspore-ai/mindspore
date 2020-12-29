@@ -67,6 +67,8 @@ class ArithmeticCPUKernel : public CPUKernel {
   void Greater(const T *input1, const T *input2, bool *out, size_t start, size_t end);
   template <typename T>
   void GreaterEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  template <typename T>
+  void LessEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end);
   std::vector<size_t> input_shape0_;
   std::vector<size_t> input_shape1_;
   std::vector<size_t> input_element_num0_;
@@ -238,6 +240,41 @@ MS_REG_CPU_KERNEL(
 MS_REG_CPU_KERNEL(
   GreaterEqual,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LessEqual, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LessEqual, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LessEqual,
+  KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LessEqual,
+  KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LessEqual,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LessEqual,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LessEqual,
+  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
   ArithmeticCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore

@@ -185,6 +185,15 @@ void ArithmeticCPUKernel::GreaterEqual(const T *input1, const T *input2, bool *o
   }
 }
 
+template <typename T>
+void ArithmeticCPUKernel::LessEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    out[i] = input1[idx[0]] <= input2[idx[1]];
+  }
+}
+
 void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -212,6 +221,8 @@ void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = GREATER;
   } else if (kernel_name == prim::kPrimGreaterEqual->name()) {
     operate_type_ = GREATEREQUAL;
+  } else if (kernel_name == prim::kPrimLessEqual->name()) {
+    operate_type_ = LESSEQUAL;
   } else if (kernel_name == prim::kPrimAssignAdd->name()) {
     operate_type_ = ASSIGNADD;
   } else if (kernel_name == prim::kPrimSquaredDifference->name()) {
@@ -328,6 +339,8 @@ void ArithmeticCPUKernel::LaunchKernelLogic(const std::vector<AddressPtr> &input
     } else if (operate_type_ == GREATEREQUAL) {
       threads.emplace_back(
         std::thread(&ArithmeticCPUKernel::GreaterEqual<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == LESSEQUAL) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::LessEqual<T>, this, input1, input2, output, start, end));
     } else {
       MS_LOG(EXCEPTION) << "Not support " << operate_type_;
     }
