@@ -956,7 +956,7 @@ def get_bprop_dynamic_rnn(self):
 def get_bprop_dynamic_gru_v2(self):
     """Grad definition for `DynamicGRUV2` operation."""
     dynamic_gru_v2_grad = G.DynamicGRUV2Grad(self.direction, self.cell_depth, self.keep_prob, self.cell_clip,
-                                             self.num_proj, self.time_major, 'double_bias', self.gate_order,
+                                             self.num_proj, self.time_major, self.gate_order,
                                              self.reset_after)
 
     def bprop(x, winput, whidden, binput, bhidden, seq, init_h, out, dout):
