@@ -48,7 +48,6 @@ OpParameter *PopulateSplitParameter(const mindspore::lite::PrimitiveC *primitive
   memset(split_param->split_sizes_, 0, split_param->num_split_ * sizeof(int));
 
   auto split_sizes_vector_ = param->size_splits();
-  MS_ASSERT(split_sizes_vector_.size() == split_param->num_split_);
   for (size_t i = 0; i < split_sizes_vector_.size(); i++) {
     split_param->split_sizes_[i] = split_sizes_vector_[i];
   }

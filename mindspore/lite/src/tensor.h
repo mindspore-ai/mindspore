@@ -53,15 +53,19 @@ class Tensor : public mindspore::tensor::MSTensor {
   Tensor(TypeId data_type, std::vector<int> shape, const schema::Format &format = schema::Format::Format_NHWC,
          Category category = VAR);
 
-  Tensor(const Tensor &tensor);
+  Tensor(const Tensor &tensor) = delete;
+
+  Tensor(Tensor &&other) = delete;
+
+  Tensor &operator=(const Tensor &tensor) = delete;
+
+  Tensor &operator=(Tensor &&src) = delete;
 
   ~Tensor() override;
 
-  int CopyTensorData(const Tensor &srcTensor);
+  static int CopyTensorData(const Tensor &src_tensor, Tensor *dst_tensor);
 
-  int CopyTensor(const Tensor &srcTensor, bool copyData = false);
-
-  Tensor &operator=(const Tensor &tensor);
+  static Tensor *CopyTensor(const Tensor &src_tensor, bool copy_data = false);
 
   virtual bool operator==(const Tensor &tensor);
 
@@ -99,11 +103,16 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual int MallocData(const mindspore::lite::Allocator *allocator = nullptr);
 
-  virtual int FreeData();
+  virtual void FreeData();
 
   void *MutableData() override;
 
-  virtual void *data_c() const { return data_; }
+  virtual void *data_c() const {
+    if (this->root_tensor_ != nullptr) {
+      return this->root_tensor_->data_;
+    }
+    return data_;
+  }
 
   virtual void set_data(void *data) { this->data_ = data; }
 
@@ -125,7 +134,7 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void ResetRefCount() { this->ref_count_ = this->init_ref_count_; }
 
-  void DecRefCount() { this->ref_count_--; }
+  void DecRefCount();
 
   std::string ToString() const;
 
@@ -151,6 +160,14 @@ class Tensor : public mindspore::tensor::MSTensor {
     }
   }
 
+  virtual int set_root_tensor(Tensor *tensor);
+
+  Tensor *root_tensor() const { return this->root_tensor_; }
+
+  bool IsReady() const {
+    return this->IsConst() || (this->IsGraphInput() && this->data_ != nullptr) || this->ref_count_ >= 1;
+  }
+
  private:
   template <typename T>
   std::string DataToString(void *data, size_t data_number) const {
@@ -168,7 +185,6 @@ class Tensor : public mindspore::tensor::MSTensor {
  protected:
   std::string tensor_name_;
   void *data_ = nullptr;
-  void *device_data_ = nullptr;
   TypeId data_type_;
   std::vector<int> shape_;
   schema::Format format_;
@@ -178,6 +194,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   std::vector<QuantArg> quant_params_;
   std::vector<float> quant_clusters_;
   mindspore::lite::Allocator *allocator_ = nullptr;
+  Tensor *root_tensor_ = nullptr;
 };
 
 inline size_t DataTypeSize(const TypeId type) {

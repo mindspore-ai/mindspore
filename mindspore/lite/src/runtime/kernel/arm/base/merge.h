@@ -17,21 +17,28 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_MERGE_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/runtime/kernel/arm/base/carry_data.h"
+#include "src/tensor.h"
+#include "src/tensorlist.h"
 
 namespace mindspore::kernel {
-class MergeCPUKernel : public LiteKernel {
+enum InputPart { UNKNOWN_INPUT_PART, LEFT_INPUT_PART, RIGHT_INPUT_PART };
+
+class MergeCPUKernel : public CarryDataKernel {
  public:
   MergeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                  const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~MergeCPUKernel() override {}
+      : CarryDataKernel(parameter, inputs, outputs, ctx, primitive) {}
+  bool IsReady(const std::vector<lite::Tensor *> &scope_tensors) override;
+  ~MergeCPUKernel() override = default;
+  int FreeInWorkTensor() const override;
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int FreeInWorkTensor() const override;
-  bool IsReady(const std::vector<lite::Tensor *> &scope_tensors) override;
+
+ private:
+  InputPart FindReadyPart(const std::vector<lite::Tensor *> &scope_tensors);
 
  private:
   bool PartialInputReady(int num_begin, int num_end);
