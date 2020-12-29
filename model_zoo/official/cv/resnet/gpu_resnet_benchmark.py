@@ -53,10 +53,11 @@ set_seed(1)
 
 
 class MyTimeMonitor(Callback):
-    def __init__(self, batch_size, sink_size):
+    def __init__(self, batch_size, sink_size, dataset_size):
         super(MyTimeMonitor, self).__init__()
         self.batch_size = batch_size
         self.size = sink_size
+        self.data_size = dataset_size
 
     def step_begin(self, run_context):
         self.step_time = time.time()
@@ -72,14 +73,16 @@ class MyTimeMonitor(Callback):
         if isinstance(loss, Tensor) and isinstance(loss.asnumpy(), np.ndarray):
             loss = np.mean(loss.asnumpy())
 
-        cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
+        cur_epoch_num = int(cb_params.cur_epoch_num / (self.data_size / self.size))
+        cur_step_in_epoch = int(self.size * (cb_params.cur_epoch_num % (self.data_size / self.size)))
 
         if isinstance(loss, float) and (np.isnan(loss) or np.isinf(loss)):
             raise ValueError("epoch: {} step: {}. Invalid loss, terminating training.".format(
-                cb_params.cur_epoch_num, cur_step_in_epoch))
+                cur_epoch_num, cur_step_in_epoch))
         step_mseconds = (time.time() - self.step_time) * 1000
         fps = self.batch_size / step_mseconds * 1000 * self.size
-        print("epoch: %s step: %s, loss is %s" % (cb_params.cur_epoch_num, cur_step_in_epoch, loss),
+        print("epoch: [%s/%s] step: [%s/%s], loss is %s" % (cur_epoch_num, int(cb_params.epoch_num /\
+             (self.data_size / self.size)), cur_step_in_epoch, self.data_size, loss),
               "Epoch time: {:5.3f} ms, fps: {:d} img/sec.".format(step_mseconds, int(fps)), flush=True)
 
 
@@ -214,7 +217,7 @@ def train():
     # define callbacks
     if mode == context.PYNATIVE_MODE:
         print_per_steps = 1
-    time_cb = MyTimeMonitor(total_batch, print_per_steps)
+    time_cb = MyTimeMonitor(total_batch, print_per_steps, step_size)
     cb = [time_cb]
     if save_ckpt:
         config_ck = CheckpointConfig(save_checkpoint_steps=5 * step_size, keep_checkpoint_max=5)
