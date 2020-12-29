@@ -82,7 +82,7 @@ def repeat_elements(x, rep, axis=0):
          [3 4 5]
          [3 4 5]]
     """
-    const_utils.check_valid_type(F.dtype(x), mstype.number_type, 'input x')
+    const_utils.check_type_valid(F.dtype(x), mstype.number_type, 'input x')
     rep = _check_positive_int(rep, "rep", "repeat_elements")
     axis = _check_is_int(axis, "axis", "repeat_elements")
 

@@ -22,6 +22,8 @@ from mindspore.ops import functional as F
 from .. import operations as P
 
 # count_nonzero
+
+
 @constexpr
 def _check_validate_axis(axis, name):
     if isinstance(axis, (tuple, list)):
@@ -63,10 +65,10 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
         [[3]]
     """
 
-    const_utils.check_valid_type(F.dtype(x), mstype.number_type, 'input x')
+    const_utils.check_type_valid(F.dtype(x), mstype.number_type, 'input x')
     axis = _check_validate_axis(axis, "count_nonzero")
     keep_dims = _check_validate_keepdims(keep_dims, "count_nonzero")
-    const_utils.check_valid_type(dtype, mstype.number_type + (mstype.bool_,), 'dtype')
+    const_utils.check_type_valid(dtype, mstype.number_type + (mstype.bool_,), 'dtype')
 
     not_equal = P.NotEqual()
     cast = P.Cast()
@@ -79,6 +81,8 @@ def count_nonzero(x, axis=(), keep_dims=False, dtype=mstype.int32):
     return nonzero_num
 
 # tensor dot
+
+
 @constexpr
 def _int_to_tuple_conv(axes):
     """
@@ -97,10 +101,10 @@ def _check_axes(axes):
     """
     validator.check_value_type('axes', axes, [int, tuple, list], "tensor dot")
     if not isinstance(axes, int):
-        axes = list(axes) # to avoid immutability issues
+        axes = list(axes)  # to avoid immutability issues
         if len(axes) != 2:
             raise ValueError("Require two axes inputs, given less")
-        axes = _int_to_tuple_conv(axes) # convert before length checks
+        axes = _int_to_tuple_conv(axes)  # convert before length checks
         if len(axes[0]) != len(axes[1]):
             raise ValueError("Axes have to be the same size/length")
         if len(axes[0]) != len(set(axes[0])) or len(axes[1]) != len(set(axes[1])):
@@ -113,8 +117,8 @@ def _typecheck_input(x1_type, x2_type):
     """
     Check input tensor types to be valid and confirm they are the same type.
     """
-    const_utils.check_valid_type(x1_type, [mstype.float32, mstype.float16], 'x1')
-    const_utils.check_valid_type(x2_type, [mstype.float32, mstype.float16], 'x2')
+    const_utils.check_type_valid(x1_type, [mstype.float32, mstype.float16], 'x1')
+    const_utils.check_type_valid(x2_type, [mstype.float32, mstype.float16], 'x2')
     if x1_type != x2_type:
         raise TypeError(f'Both Inputs must be the same Type. x1 is \'{x1_type}\' and x2 is \'{x2_type}\' ')
 

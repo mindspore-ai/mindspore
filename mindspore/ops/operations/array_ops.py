@@ -724,6 +724,7 @@ class Transpose(PrimitiveWithInfer):
             out['max_shape'] = tuple(max_vec)
         return out
 
+
 class Unique(Primitive):
     """
     Returns the unique elements of input tensor and also return a tensor containing the index of each value of input
@@ -2787,7 +2788,7 @@ class StridedSlice(PrimitiveWithInfer):
         if has_ellipsis:
             # When there is ellipsis, handle the second half of the ellipsis split.
             ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + \
-                                     len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
+                len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
             ret_shape.extend(x_shape[i:i + ellipsis_occupied_dims])
             j += 1
             i += ellipsis_occupied_dims
@@ -3144,7 +3145,7 @@ class TensorScatterUpdate(PrimitiveWithInfer):
         return x_shape
 
     def infer_dtype(self, x_dtype, indices_dtype, value_dtype):
-        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32], self.name)
+        validator.check_tensor_dtype_valid('indices', indices_dtype, [mstype.int32, mstype.int64], self.name)
         args = {"x": x_dtype, "value": value_dtype}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.bool_,) + mstype.number_type, self.name)
         return x_dtype
@@ -3983,7 +3984,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
             offset = 1
         for i in range(len(self.block_shape)):
             padded = out_shape[i + offset] + self.paddings[i][0] + \
-                     self.paddings[i][1]
+                self.paddings[i][1]
             if padded % self.block_shape[i] != 0:
                 raise ValueError(f'For \'{self.name}\' padded[{i}] {padded} should be divisible by '
                                  f'block_shape[{i}] {self.block_shape[i]}')
