@@ -58,11 +58,14 @@ class ToTensor:
         output_type (NumPy datatype, optional): The datatype of the NumPy output (default=np.float32).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(), py_vision.RandomHorizontalFlip(0.5),
-        >>>          py_vision.ToTensor()])
+        >>> # create a list of transformations to be applied to the "image" column of each data row
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                           py_vision.RandomHorizontalFlip(0.5),
+        ...                           py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     def __init__(self, output_type=np.float32):
@@ -89,13 +92,15 @@ class ToType:
         output_type (NumPy datatype): The datatype of the NumPy output, e.g. numpy.float32.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
         >>> import numpy as np
-        >>>
-        >>> Compose([py_vision.Decode(), py_vision.RandomHorizontalFlip(0.5),
-        >>>          py_vision.ToTensor(),
-        >>>          py_vision.ToType(np.float32)])
+        >>> transforms_list =Compose([py_vision.Decode(),
+        ...                           py_vision.RandomHorizontalFlip(0.5),
+        ...                           py_vision.ToTensor(),
+        ...                           py_vision.ToType(np.float32)])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     def __init__(self, output_type):
@@ -119,11 +124,12 @@ class HWC2CHW:
     Transpose a NumPy image array; shape (H, W, C) to shape (C, H, W).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.HWC2CHW()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.HWC2CHW()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     def __call__(self, img):
@@ -145,11 +151,13 @@ class ToPIL:
 
     Examples:
         >>> # data is already decoded, but not in PIL image format
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.ToPIL(),  py_vision.RandomHorizontalFlip(0.5),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.ToPIL(),
+        ...                            py_vision.RandomHorizontalFlip(0.5),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     def __call__(self, img):
@@ -170,12 +178,13 @@ class Decode:
     Decode the input image to PIL image format in RGB mode.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomHorizontalFlip(0.5),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomHorizontalFlip(0.5),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     def __call__(self, img):
@@ -204,13 +213,14 @@ class Normalize:
             The standard deviation values must be in the range (0.0, 1.0].
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomHorizontalFlip(0.5),
-        >>>          py_vision.ToTensor(),
-        >>>          py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262))])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomHorizontalFlip(0.5),
+        ...                            py_vision.ToTensor(),
+        ...                            py_vision.Normalize((0.491, 0.482, 0.447), (0.247, 0.243, 0.262))])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_normalize_py
@@ -246,13 +256,14 @@ class NormalizePad:
         dtype (str): Set the output data type of image (default is "float32").
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomHorizontalFlip(0.5),
-        >>>          py_vision.ToTensor(),
-        >>>          py_vision.NormalizePad((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), "float32")])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomHorizontalFlip(0.5),
+        ...                            py_vision.ToTensor(),
+        ...                            py_vision.NormalizePad((0.491, 0.482, 0.447), (0.247, 0.243, 0.262), "float32")])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_normalizepad_py
@@ -308,12 +319,13 @@ class RandomCrop:
               value of edge.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomCrop(224),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomCrop(224),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_random_crop
@@ -350,12 +362,13 @@ class RandomHorizontalFlip:
         prob (float, optional): Probability of the image being flipped (default=0.5).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomHorizontalFlip(0.5),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomHorizontalFlip(0.5),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_prob
@@ -383,12 +396,13 @@ class RandomVerticalFlip:
         prob (float, optional): Probability of the image being flipped (default=0.5).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomVerticalFlip(0.5),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomVerticalFlip(0.5),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_prob
@@ -429,12 +443,13 @@ class Resize:
             - Inter.BICUBIC, means the interpolation method is bicubic interpolation.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.Resize(256),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.Resize(256),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_resize_interpolation
@@ -481,12 +496,13 @@ class RandomResizedCrop:
             crop area (default=10). If exceeded, fall back to use center crop instead.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomResizedCrop(224),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomResizedCrop(224),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_random_resize_crop
@@ -522,12 +538,13 @@ class CenterCrop:
             If size is a sequence of length 2, it should be (height, width).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.CenterCrop(64),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.CenterCrop(64),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_crop
@@ -566,12 +583,13 @@ class RandomColorAdjust:
             If it is a sequence, it should be [min, max] where -0.5 <= min <= max <= 0.5.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomColorAdjust(0.4, 0.4, 0.4, 0.1),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomColorAdjust(0.4, 0.4, 0.4, 0.1),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_random_color_adjust
@@ -629,12 +647,13 @@ class RandomRotation:
             If it is an integer, it is used for all RGB channels. Default is 0.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomRotation(30),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomRotation(30),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_random_rotation
@@ -668,13 +687,14 @@ class FiveCrop:
             If size is a sequence of length 2, it should be (height, width).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.FiveCrop(size=200),
-        >>>          # 4D stack of 5 images
-        >>>          lambda *images: numpy.stack([py_vision.ToTensor()(image) for image in images])])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.FiveCrop(size=200),
+        ...                            # 4D stack of 5 images
+        ...                            lambda *images: numpy.stack([py_vision.ToTensor()(image) for image in images])])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_crop
@@ -708,13 +728,14 @@ class TenCrop:
             if set to True (default=False).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.TenCrop(size=200),
-        >>>          # 4D stack of 10 images
-        >>>          lambda *images: numpy.stack([py_vision.ToTensor()(image) for image in images])])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.TenCrop(size=200),
+        ...                            # 4D stack of 10 images
+        ...                            lambda *images: numpy.stack([py_vision.ToTensor()(image) for image in images])])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_ten_crop
@@ -748,12 +769,13 @@ class Grayscale:
             Default is 1. If set to 3, the returned image has 3 identical RGB channels.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.Grayscale(3),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.Grayscale(3),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_num_channels
@@ -781,12 +803,13 @@ class RandomGrayscale:
         prob (float, optional): Probability of the image being converted to grayscale (default=0.1).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomGrayscale(0.3),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomGrayscale(0.3),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_prob
@@ -844,13 +867,14 @@ class Pad:
               value of edge.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          # adds 10 pixels (default black) to each side of the border of the image
-        >>>          py_vision.Pad(padding=10),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            # adds 10 pixels (default black) to each side of the border of the image
+        ...                            py_vision.Pad(padding=10),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_pad
@@ -891,12 +915,13 @@ class RandomPerspective:
             - Inter.BICUBIC, means the interpolation method is bicubic interpolation.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomPerspective(prob=0.1),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomPerspective(prob=0.1),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_random_perspective
@@ -944,12 +969,13 @@ class RandomErasing:
             erase_area (default=10). If exceeded, return the original image.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.ToTensor(),
-        >>>          py_vision.RandomErasing(value='random')])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.ToTensor(),
+        ...                            py_vision.RandomErasing(value='random')])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_random_erasing
@@ -991,12 +1017,13 @@ class Cutout:
         num_patches (int, optional): Number of patches to be cut out of an image (default=1).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.ToTensor(),
-        >>>          py_vision.Cutout(80)])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.ToTensor(),
+        ...                            py_vision.Cutout(80)])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_cutout
@@ -1040,13 +1067,19 @@ class LinearTransformation:
         mean_vector (numpy.ndarray): a NumPy ndarray of shape (D,) where D = C x H x W.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.Resize(256),
-        >>>          py_vision.ToTensor(),
-        >>>          py_vision.LinearTransformation(transformation_matrix, mean_vector)])
+        >>> import numpy as np
+        >>> height, width = 32, 32
+        >>> dim = 3 * height * width
+        >>> transformation_matrix = np.ones([dim, dim])
+        >>> mean_vector = np.zeros(dim)
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.Resize((height,width)),
+        ...                            py_vision.ToTensor(),
+        ...                            py_vision.LinearTransformation(transformation_matrix, mean_vector)])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_linear_transform
@@ -1116,12 +1149,13 @@ class RandomAffine:
         TypeError: If fill_value is not a single integer or a 3-tuple.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomAffine(degrees=15, translate=(0.1, 0.1), scale=(0.9, 1.1)),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_random_affine
@@ -1179,12 +1213,11 @@ class MixUp:
 
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
-        >>>
         >>> # Setup multi-batch mixup transformation
         >>> transform = [py_vision.MixUp(batch_size=16, alpha=0.2, is_single=False)]
         >>> # Apply the transform to the dataset through dataset.map()
-        >>> dataset = dataset.map(input_columns="image", operations=transform())
+        >>> image_folder_dataset = image_folder_dataset.map(input_columns="image",
+        ...                                                 operations=transform)
     """
 
     @check_mix_up
@@ -1222,13 +1255,14 @@ class RgbToHsv:
                        and (C, H, W) or (N, C, H, W) if False (default=False).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.CenterCrop(20),
-        >>>          py_vision.ToTensor(),
-        >>>          py_vision.RgbToHsv()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.CenterCrop(20),
+        ...                            py_vision.ToTensor(),
+        ...                            py_vision.RgbToHsv()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     def __init__(self, is_hwc=False):
@@ -1257,13 +1291,14 @@ class HsvToRgb:
                        and (C, H, W) or (N, C, H, W) if False (default=False).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.CenterCrop(20),
-        >>>          py_vision.ToTensor(),
-        >>>          py_vision.HsvToRgb()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.CenterCrop(20),
+        ...                            py_vision.ToTensor(),
+        ...                            py_vision.HsvToRgb()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     def __init__(self, is_hwc=False):
@@ -1292,12 +1327,13 @@ class RandomColor:
             It should be in (min, max) format (default=(0.1,1.9)).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomColor((0.5, 2.0)),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomColor((0.5, 2.0)),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_positive_degrees
@@ -1327,12 +1363,13 @@ class RandomSharpness:
             It should be in (min, max) format (default=(0.1,1.9)).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.RandomSharpness((0.5, 1.5)),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.RandomSharpness((0.5, 1.5)),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_positive_degrees
@@ -1362,13 +1399,13 @@ class AutoContrast:
         ignore (Union[int, sequence], optional): Pixel values to ignore (default=None).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.AutoContrast(),
-        >>>          py_vision.ToTensor()])
-
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.AutoContrast(),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_auto_contrast
@@ -1395,13 +1432,13 @@ class Invert:
     Invert colors of input PIL image.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.Invert(),
-        >>>          py_vision.ToTensor()])
-
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.Invert(),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     def __call__(self, img):
@@ -1423,12 +1460,13 @@ class Equalize:
     Equalize the histogram of input PIL image.
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.Equalize(),
-        >>>          py_vision.ToTensor()])
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.Equalize(),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
 
     """
 
@@ -1459,16 +1497,17 @@ class UniformAugment:
          num_ops (int, optional): number of transforms to sequentially apply (default=2).
 
     Examples:
-        >>> import mindspore.dataset.vision.py_transforms as py_vision
         >>> from mindspore.dataset.transforms.py_transforms import Compose
-        >>>
-        >>> transforms_list = [py_vision.CenterCrop(64),
-        >>>                    py_vision.RandomColor(),
-        >>>                    py_vision.RandomSharpness(),
-        >>>                    py_vision.RandomRotation(30)]
-        >>> Compose([py_vision.Decode(),
-        >>>          py_vision.UniformAugment(transforms_list),
-        >>>          py_vision.ToTensor()])
+        >>> transforms = [py_vision.CenterCrop(64),
+        ...               py_vision.RandomColor(),
+        ...               py_vision.RandomSharpness(),
+        ...               py_vision.RandomRotation(30)]
+        >>> transforms_list = Compose([py_vision.Decode(),
+        ...                            py_vision.UniformAugment(transforms),
+        ...                            py_vision.ToTensor()])
+        >>> # apply the transform to dataset through map function
+        >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
+        ...                                                 input_columns="image")
     """
 
     @check_uniform_augment_py
