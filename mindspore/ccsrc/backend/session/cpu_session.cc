@@ -81,6 +81,14 @@ GraphId CPUSession::CompileGraphImpl(const AnfNodePtrList &lst, const AnfNodePtr
 #endif
   MS_LOG(INFO) << "Build kernel";
   BuildKernel(graph.get());
+  // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
+  auto execution_order = graph->execution_order();
+  Reorder(&execution_order);
+  graph->set_execution_order(execution_order);
+  // runtime init
+  if (!runtime_.Init()) {
+    MS_LOG(EXCEPTION) << "Kernel runtime init error.";
+  }
   MS_LOG(INFO) << "Assign kernel address";
   runtime_.AssignKernelAddress(graph.get());
   return graph_id;
@@ -116,11 +124,8 @@ void CPUSession::RunGraphImpl(const GraphId &graph_id, const std::vector<tensor:
 #endif
 
   MS_LOG(INFO) << "Run graph start";
-  auto execution_order = kernel_graph->execution_order();
-  Reorder(&execution_order);
 
   bool enable_summary = summary_callback_ != nullptr;
-  kernel_graph->set_execution_order(execution_order);
   NamedSummaryOutputs summary_outputs;
   if (enable_summary) {
     SetSummaryNodes(kernel_graph.get());
@@ -181,16 +186,21 @@ void CPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
 
+  // Set graph execution order before memory alloc, ensure that memory alloc is according to the reorder graph
+  auto execution_order = kernel_graph->execution_order();
+  Reorder(&execution_order);
+  kernel_graph->set_execution_order(execution_order);
+
+  // runtime init
+  if (!runtime_.Init()) {
+    MS_LOG(EXCEPTION) << "Kernel runtime init error.";
+  }
   runtime_.AssignKernelAddress(kernel_graph.get());
   std::map<tensor::TensorPtr, session::KernelWithIndex> tensor_to_node;
   runtime_.CreateOutputTensors(kernel_graph.get(), *input_tensors, outputs, &tensor_to_node);
   runtime_.BindInputOutput(kernel_graph.get(), *input_tensors, outputs);
 
   MS_LOG(INFO) << "Run Op start";
-  auto execution_order = kernel_graph->execution_order();
-  Reorder(&execution_order);
-
-  kernel_graph->set_execution_order(execution_order);
 
   bool ret = runtime_.Run(kernel_graph.get(), false);
   if (!ret) {
