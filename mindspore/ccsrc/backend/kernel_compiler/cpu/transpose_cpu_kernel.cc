@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,13 +29,36 @@ void TransposeCPUFwdKernel::InitKernel(const CNodePtr &kernel_node) {
   if (shape_.size() != axis_.size()) {
     MS_LOG(EXCEPTION) << "The size of input shape and transpose axis shape must be equal.";
   }
+  dtype_ = AnfAlgo ::GetPrevNodeOutputDeviceDataType(kernel_node, 0);
+  if (dtype_ == kTypeUnknown) {
+    dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  }
+
+  launch_map_[kNumberTypeInt8] = &TransposeCPUFwdKernel::LaunchKernel<int8_t>;
+  launch_map_[kNumberTypeInt16] = &TransposeCPUFwdKernel::LaunchKernel<int16_t>;
+  launch_map_[kNumberTypeInt32] = &TransposeCPUFwdKernel::LaunchKernel<int>;
+  launch_map_[kNumberTypeInt64] = &TransposeCPUFwdKernel::LaunchKernel<int64_t>;
+  launch_map_[kNumberTypeUInt8] = &TransposeCPUFwdKernel::LaunchKernel<uint8_t>;
+  launch_map_[kNumberTypeUInt16] = &TransposeCPUFwdKernel::LaunchKernel<uint16_t>;
+  launch_map_[kNumberTypeUInt32] = &TransposeCPUFwdKernel::LaunchKernel<uint32_t>;
+  launch_map_[kNumberTypeUInt64] = &TransposeCPUFwdKernel::LaunchKernel<uint64_t>;
+  launch_map_[kNumberTypeFloat32] = &TransposeCPUFwdKernel::LaunchKernel<float>;
+  launch_map_[kNumberTypeBool] = &TransposeCPUFwdKernel::LaunchKernel<bool>;
+
+  auto iter = launch_map_.find(dtype_);
+  if (iter != launch_map_.end()) {
+    launch_func_ = iter->second;
+  } else {
+    MS_LOG(EXCEPTION) << "Input data type: " << dtype_ << "is not supported for Transpose kernel on CPU.";
+  }
 }
-bool TransposeCPUFwdKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                                   const std::vector<kernel::AddressPtr> & /*workspace*/,
-                                   const std::vector<kernel::AddressPtr> &outputs) {
-  auto input = reinterpret_cast<float *>(inputs[0]->addr);
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
-  size_t size = IntToSize(inputs[0]->size / sizeof(float));
+
+template <typename T>
+void TransposeCPUFwdKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
+                                         const std::vector<AddressPtr> &outputs) {
+  auto input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  size_t size = IntToSize(inputs[0]->size / sizeof(T));
   size_t shape_size = IntToSize(shape_.size());
   if (shape_size > kMaxDim) {
     MS_LOG(EXCEPTION) << "Input is " << shape_size << "-D, but transpose supports max " << kMaxDim << "-D inputs.";
@@ -61,7 +84,14 @@ bool TransposeCPUFwdKernel::Launch(const std::vector<kernel::AddressPtr> &inputs
     }
     output[new_position] = input[position];
   }
+}
+
+bool TransposeCPUFwdKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                   const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                   const std::vector<kernel::AddressPtr> &outputs) {
+  launch_func_(this, inputs, outputs);
   return true;
 }
+
 }  // namespace kernel
 }  // namespace mindspore
