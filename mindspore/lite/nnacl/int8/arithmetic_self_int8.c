@@ -288,7 +288,9 @@ int Int8ElementReciprocal(int8_t *input, int8_t *output, int element_size, Arith
   float bias = in_zp * in_scale;
   for (int i = 0; i < element_size; i++) {
     float input_f32 = input[i] * in_scale + bias;
-    assert(input_f32 != 0.0f);
+    if (input_f32 == 0.0f) {
+      return NNACL_ERR;
+    }
     int32_t output_tmp = round(1.f / (input_f32 * out_scale)) + out_zp;
     if (output_tmp > para.output_activation_max_) {
       output[i] = para.output_activation_max_;
