@@ -429,6 +429,8 @@ TensorDataPtr MakeTensorData(TypeId data_type, const ShapeVector &shape, const A
       return std::make_shared<TensorDataImpl<uint64_t>>(shape, args...);
     case kNumberTypeFloat16:
       return std::make_shared<TensorDataImpl<float16>>(shape, args...);
+    case kNumberTypeFloat:
+      return std::make_shared<TensorDataImpl<float>>(shape, args...);
     case kNumberTypeFloat32:
       return std::make_shared<TensorDataImpl<float>>(shape, args...);
     case kNumberTypeFloat64:

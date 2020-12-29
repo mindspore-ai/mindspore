@@ -124,7 +124,6 @@ ATTR_MAP(DynamicGRUV2Grad) = {{"direction", ATTR_DESC(direction, AnyTraits<std::
                               {"cell_clip", ATTR_DESC(cell_clip, AnyTraits<float>())},
                               {"num_proj", ATTR_DESC(num_proj, AnyTraits<int64_t>())},
                               {"time_major", ATTR_DESC(time_major, AnyTraits<bool>())},
-                              {"bias_type", ATTR_DESC(bias_type, AnyTraits<std::string>())},
                               {"gate_order", ATTR_DESC(gate_order, AnyTraits<std::string>())},
                               {"reset_after", ATTR_DESC(reset_after, AnyTraits<bool>())}};
 OUTPUT_MAP(DynamicGRUV2Grad) = {{0, OUTPUT_DESC(dw_input)},  {1, OUTPUT_DESC(dw_hidden)}, {2, OUTPUT_DESC(db_input)},
