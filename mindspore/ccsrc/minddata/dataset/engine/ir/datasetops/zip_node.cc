@@ -56,7 +56,7 @@ Status ZipNode::ValidateParams() {
   return Status::OK();
 }
 
-Status ZipNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status ZipNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   node_ops->push_back(std::make_shared<ZipOp>(rows_per_buffer_, connector_que_size_));
   return Status::OK();
 }

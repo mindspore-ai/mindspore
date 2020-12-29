@@ -65,7 +65,7 @@ Status AlbumNode::ValidateParams() {
 }
 
 // Function to build AlbumNode
-Status AlbumNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status AlbumNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   auto schema = std::make_unique<DataSchema>();
   RETURN_IF_NOT_OK(schema->LoadSchemaFile(schema_path_, column_names_));
 

@@ -82,7 +82,7 @@ void BucketBatchByLengthNode::Print(std::ostream &out) const {
   out << ")";
 }
 
-Status BucketBatchByLengthNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status BucketBatchByLengthNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   bucket_boundaries_.insert(bucket_boundaries_.begin(), 0);
   node_ops->push_back(std::make_shared<BucketBatchByLengthOp>(
     column_names_, bucket_boundaries_, bucket_batch_sizes_, element_length_function_, pad_info_,

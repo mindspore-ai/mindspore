@@ -85,7 +85,7 @@ Status VOCNode::ValidateParams() {
 }
 
 // Function to build VOCNode
-Status VOCNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status VOCNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   auto schema = std::make_unique<DataSchema>();
   VOCOp::TaskType task_type_;
 

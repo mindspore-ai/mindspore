@@ -148,7 +148,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \brief Pure virtual function to convert a DatasetNode class into a runtime dataset object
   /// \param node_ops - A vector containing shared pointer to the Dataset Ops that this object will create
   /// \return Status Status::OK() if build successfully
-  virtual Status Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) = 0;
+  virtual Status Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) = 0;
 
   /// \brief base virtual function for derived class to implement parameters validation
   /// \return Status Status::OK() if all the parameters are valid

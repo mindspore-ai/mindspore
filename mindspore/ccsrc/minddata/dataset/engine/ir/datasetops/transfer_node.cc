@@ -67,7 +67,7 @@ Status TransferNode::ValidateParams() {
 }
 
 // Function to build TransferNode
-Status TransferNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status TransferNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   if (queue_name_.empty()) {
     // Get a uuid for queue name
     queue_name_ = Services::GetUniqueID();

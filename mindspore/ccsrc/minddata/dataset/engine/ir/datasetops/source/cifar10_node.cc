@@ -54,7 +54,7 @@ Status Cifar10Node::ValidateParams() {
 }
 
 // Function to build CifarOp for Cifar10
-Status Cifar10Node::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status Cifar10Node::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   // Do internal Schema generation.
   auto schema = std::make_unique<DataSchema>();
   RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("image", DataType(DataType::DE_UINT8), TensorImpl::kCv, 1)));

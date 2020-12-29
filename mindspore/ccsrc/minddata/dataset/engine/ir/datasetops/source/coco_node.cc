@@ -64,7 +64,7 @@ Status CocoNode::ValidateParams() {
 }
 
 // Function to build CocoNode
-Status CocoNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status CocoNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   CocoOp::TaskType task_type = CocoOp::TaskType::Detection;
   if (task_ == "Detection") {
     task_type = CocoOp::TaskType::Detection;
