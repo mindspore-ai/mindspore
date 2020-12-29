@@ -42,6 +42,19 @@ enum MS_API InDataType { kImage = 0, kBinary = 1 };
 constexpr float relativeTolerance = 1e-5;
 constexpr float absoluteTolerance = 1e-8;
 
+#ifdef ENABLE_ARM64
+struct PerfResult {
+  int64_t nr;
+  struct {
+    int64_t value;
+    int64_t id;
+  } values[2];
+};
+struct PerfCount {
+  int64_t value[2];
+};
+#endif
+
 struct MS_API CheckTensor {
   CheckTensor(const std::vector<size_t> &shape, const std::vector<float> &data,
               const std::vector<std::string> &strings_data = {""}) {
@@ -69,6 +82,9 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::enable_fp16_, "enableFp16", "Enable float16", false);
     AddFlag(&BenchmarkFlags::warm_up_loop_count_, "warmUpLoopCount", "Run warm up loop", 3);
     AddFlag(&BenchmarkFlags::time_profiling_, "timeProfiling", "Run time profiling", false);
+    AddFlag(&BenchmarkFlags::perf_profiling_, "perfProfiling",
+            "Perf event profiling(only instructions statics enabled currently)", false);
+    AddFlag(&BenchmarkFlags::perf_event_, "perfEvent", "CYCLE|CACHE|STALL", "CYCLE");
     // MarkAccuracy
     AddFlag(&BenchmarkFlags::benchmark_data_file_, "benchmarkDataFile", "Benchmark data file path", "");
     AddFlag(&BenchmarkFlags::benchmark_data_type_, "benchmarkDataType",
@@ -98,6 +114,8 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
   bool enable_fp16_ = false;
   int warm_up_loop_count_ = 3;
   bool time_profiling_ = false;
+  bool perf_profiling_ = false;
+  std::string perf_event_ = "CYCLE";
   // MarkAccuracy
   std::string benchmark_data_file_;
   std::string benchmark_data_type_ = "FLOAT";
@@ -145,6 +163,11 @@ class MS_API Benchmark {
   int InitCallbackParameter();
 
   int PrintResult(const std::vector<std::string> &title, const std::map<std::string, std::pair<int, float>> &result);
+
+#ifdef ENABLE_ARM64
+  int PrintPerfResult(const std::vector<std::string> &title,
+                      const std::map<std::string, std::pair<int, struct PerfCount>> &result);
+#endif
 
   int PrintInputData();
 
@@ -255,7 +278,13 @@ class MS_API Benchmark {
   float op_cost_total_ = 0.0f;
   std::map<std::string, std::pair<int, float>> op_times_by_type_;
   std::map<std::string, std::pair<int, float>> op_times_by_name_;
-
+#ifdef ENABLE_ARM64
+  int perf_fd = 0;
+  int perf_fd2 = 0;
+  float op_cost2_total_ = 0.0f;
+  std::map<std::string, std::pair<int, struct PerfCount>> op_perf_by_type_;
+  std::map<std::string, std::pair<int, struct PerfCount>> op_perf_by_name_;
+#endif
   KernelCallBack before_call_back_;
   KernelCallBack after_call_back_;
   std::mt19937 random_engine_;

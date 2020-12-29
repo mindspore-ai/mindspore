@@ -26,6 +26,12 @@
 #include "include/version.h"
 #include "src/common/common.h"
 #include "src/runtime/runtime_api.h"
+#ifdef ENABLE_ARM64
+#include <linux/perf_event.h>
+#include <sys/ioctl.h>
+#include <asm/unistd.h>
+#include <unistd.h>
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -372,8 +378,9 @@ int Benchmark::MarkPerformance() {
   for (int i = 0; i < flags_->loop_count_; i++) {
     session_->BindThread(true);
     auto start = GetTimeUs();
-    auto status =
-      flags_->time_profiling_ ? session_->RunGraph(before_call_back_, after_call_back_) : session_->RunGraph();
+    auto status = (flags_->time_profiling_ || flags_->perf_profiling_)
+                    ? session_->RunGraph(before_call_back_, after_call_back_)
+                    : session_->RunGraph();
     if (status != 0) {
       MS_LOG(ERROR) << "Inference error " << status;
       std::cerr << "Inference error " << status;
@@ -393,6 +400,27 @@ int Benchmark::MarkPerformance() {
     const std::vector<std::string> per_op_type = {"opType", "avg(ms)", "percent", "calledTimes", "opTotalTime"};
     PrintResult(per_op_name, op_times_by_name_);
     PrintResult(per_op_type, op_times_by_type_);
+#ifdef ENABLE_ARM64
+  } else if (flags_->perf_profiling_) {
+    if (flags_->perf_event_ == "CACHE") {
+      const std::vector<std::string> per_op_name = {"opName", "cache ref(k)", "cache ref(%)", "miss(k)", "miss(%)"};
+      const std::vector<std::string> per_op_type = {"opType", "cache ref(k)", "cache ref(%)", "miss(k)", "miss(%)"};
+      PrintPerfResult(per_op_name, op_perf_by_name_);
+      PrintPerfResult(per_op_type, op_perf_by_type_);
+    } else if (flags_->perf_event_ == "STALL") {
+      const std::vector<std::string> per_op_name = {"opName", "frontend(k)", "frontend(%)", "backendend(k)",
+                                                    "backendend(%)"};
+      const std::vector<std::string> per_op_type = {"opType", "frontend(k)", "frontend(%)", "backendend(k)",
+                                                    "backendend(%)"};
+      PrintPerfResult(per_op_name, op_perf_by_name_);
+      PrintPerfResult(per_op_type, op_perf_by_type_);
+    } else {
+      const std::vector<std::string> per_op_name = {"opName", "cycles(k)", "cycles(%)", "ins(k)", "ins(%)"};
+      const std::vector<std::string> per_op_type = {"opType", "cycles(k)", "cycles(%)", "ins(k)", "ins(%)"};
+      PrintPerfResult(per_op_name, op_perf_by_name_);
+      PrintPerfResult(per_op_type, op_perf_by_type_);
+    }
+#endif
   }
 
   if (flags_->loop_count_ > 0) {
@@ -625,50 +653,144 @@ void BenchmarkFlags::InitResizeDimsList() {
 }
 
 int Benchmark::InitCallbackParameter() {
-  // before callback
-  before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
-                          const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
-                          const CallBackParam &callParam) {
-    if (before_inputs.empty()) {
-      MS_LOG(INFO) << "The num of beforeInputs is empty";
-    }
-    if (before_outputs.empty()) {
-      MS_LOG(INFO) << "The num of beforeOutputs is empty";
-    }
-    if (op_times_by_type_.find(callParam.node_type) == op_times_by_type_.end()) {
-      op_times_by_type_.insert(std::make_pair(callParam.node_type, std::make_pair(0, 0.0f)));
-    }
-    if (op_times_by_name_.find(callParam.node_name) == op_times_by_name_.end()) {
-      op_times_by_name_.insert(std::make_pair(callParam.node_name, std::make_pair(0, 0.0f)));
-    }
+  if (flags_->time_profiling_) {
+    // before callback
+    before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
+                            const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+                            const CallBackParam &callParam) {
+      if (before_inputs.empty()) {
+        MS_LOG(INFO) << "The num of beforeInputs is empty";
+      }
+      if (before_outputs.empty()) {
+        MS_LOG(INFO) << "The num of beforeOutputs is empty";
+      }
+      if (op_times_by_type_.find(callParam.node_type) == op_times_by_type_.end()) {
+        op_times_by_type_.insert(std::make_pair(callParam.node_type, std::make_pair(0, 0.0f)));
+      }
+      if (op_times_by_name_.find(callParam.node_name) == op_times_by_name_.end()) {
+        op_times_by_name_.insert(std::make_pair(callParam.node_name, std::make_pair(0, 0.0f)));
+      }
 
-    op_call_times_total_++;
-    op_begin_ = GetTimeUs();
-    return true;
-  };
+      op_call_times_total_++;
+      op_begin_ = GetTimeUs();
+      return true;
+    };
 
-  // after callback
-  after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
-                         const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
-                         const CallBackParam &call_param) {
-    uint64_t opEnd = GetTimeUs();
+    // after callback
+    after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
+                           const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
+                           const CallBackParam &call_param) {
+      uint64_t opEnd = GetTimeUs();
 
-    if (after_inputs.empty()) {
-      MS_LOG(INFO) << "The num of after inputs is empty";
+      if (after_inputs.empty()) {
+        MS_LOG(INFO) << "The num of after inputs is empty";
+      }
+      if (after_outputs.empty()) {
+        MS_LOG(INFO) << "The num of after outputs is empty";
+      }
+
+      float cost = static_cast<float>(opEnd - op_begin_) / 1000.0f;
+      op_cost_total_ += cost;
+      op_times_by_type_[call_param.node_type].first++;
+      op_times_by_type_[call_param.node_type].second += cost;
+      op_times_by_name_[call_param.node_name].first++;
+      op_times_by_name_[call_param.node_name].second += cost;
+      return true;
+    };
+  } else if (flags_->perf_profiling_) {
+#ifndef ENABLE_ARM64
+    MS_LOG(ERROR) << "Only support perf_profiling on arm64.";
+    return RET_ERROR;
+#else
+    struct perf_event_attr pe, pe2;
+    memset(&pe, 0, sizeof(struct perf_event_attr));
+    memset(&pe2, 0, sizeof(struct perf_event_attr));
+    pe.type = PERF_TYPE_HARDWARE;
+    pe2.type = PERF_TYPE_HARDWARE;
+    pe.size = sizeof(struct perf_event_attr);
+    pe2.size = sizeof(struct perf_event_attr);
+    pe.disabled = 1;
+    pe2.disabled = 1;
+    pe.exclude_kernel = 1;   // don't count kernel
+    pe2.exclude_kernel = 1;  // don't count kernel
+    pe.exclude_hv = 1;       // don't count hypervisor
+    pe2.exclude_hv = 1;      // don't count hypervisor
+    pe.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
+    pe2.read_format = PERF_FORMAT_GROUP | PERF_FORMAT_ID;
+    if (flags_->perf_event_ == "CACHE") {
+      pe.config = PERF_COUNT_HW_CACHE_REFERENCES;
+      pe2.config = PERF_COUNT_HW_CACHE_MISSES;
+    } else if (flags_->perf_event_ == "STALL") {
+      pe.config = PERF_COUNT_HW_STALLED_CYCLES_FRONTEND;
+      pe2.config = PERF_COUNT_HW_STALLED_CYCLES_BACKEND;
+    } else {
+      pe.config = PERF_COUNT_HW_CPU_CYCLES;
+      pe2.config = PERF_COUNT_HW_INSTRUCTIONS;
     }
-    if (after_outputs.empty()) {
-      MS_LOG(INFO) << "The num of after outputs is empty";
+    perf_fd = syscall(__NR_perf_event_open, pe, 0, -1, -1, 0);
+    if (perf_fd == -1) {
+      MS_LOG(ERROR) << "Failed to open perf event " << pe.config;
+      return RET_ERROR;
     }
+    perf_fd2 = syscall(__NR_perf_event_open, pe2, 0, -1, perf_fd, 0);
+    if (perf_fd2 == -1) {
+      MS_LOG(ERROR) << "Failed to open perf event " << pe2.config;
+      return RET_ERROR;
+    }
+    struct PerfCount zero;
+    zero.value[0] = 0;
+    zero.value[1] = 0;
+    // before callback
+    before_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &before_inputs,
+                            const std::vector<mindspore::tensor::MSTensor *> &before_outputs,
+                            const CallBackParam &callParam) {
+      if (before_inputs.empty()) {
+        MS_LOG(INFO) << "The num of beforeInputs is empty";
+      }
+      if (before_outputs.empty()) {
+        MS_LOG(INFO) << "The num of beforeOutputs is empty";
+      }
+      if (op_perf_by_type_.find(callParam.node_type) == op_perf_by_type_.end()) {
+        op_perf_by_type_.insert(std::make_pair(callParam.node_type, std::make_pair(0, zero)));
+      }
+      if (op_perf_by_name_.find(callParam.node_name) == op_perf_by_name_.end()) {
+        op_perf_by_name_.insert(std::make_pair(callParam.node_name, std::make_pair(0, zero)));
+      }
 
-    float cost = static_cast<float>(opEnd - op_begin_) / 1000.0f;
-    op_cost_total_ += cost;
-    op_times_by_type_[call_param.node_type].first++;
-    op_times_by_type_[call_param.node_type].second += cost;
-    op_times_by_name_[call_param.node_name].first++;
-    op_times_by_name_[call_param.node_name].second += cost;
-    return true;
-  };
+      op_call_times_total_++;
+      ioctl(perf_fd, PERF_EVENT_IOC_RESET, PERF_IOC_FLAG_GROUP);
+      ioctl(perf_fd, PERF_EVENT_IOC_ENABLE, PERF_IOC_FLAG_GROUP);
+      return true;
+    };
 
+    // after callback
+    after_call_back_ = [&](const std::vector<mindspore::tensor::MSTensor *> &after_inputs,
+                           const std::vector<mindspore::tensor::MSTensor *> &after_outputs,
+                           const CallBackParam &call_param) {
+      struct PerfResult res;
+      ioctl(perf_fd, PERF_EVENT_IOC_DISABLE, PERF_IOC_FLAG_GROUP);
+      read(perf_fd, &res, sizeof(struct PerfResult));
+
+      if (after_inputs.empty()) {
+        MS_LOG(INFO) << "The num of after inputs is empty";
+      }
+      if (after_outputs.empty()) {
+        MS_LOG(INFO) << "The num of after outputs is empty";
+      }
+      float cost1 = static_cast<float>(res.values[0].value);
+      float cost2 = static_cast<float>(res.values[1].value);
+      op_cost_total_ += cost1;
+      op_cost2_total_ += cost2;
+      op_perf_by_type_[call_param.node_type].first++;
+      op_perf_by_type_[call_param.node_type].second.value[0] += cost1;
+      op_perf_by_type_[call_param.node_type].second.value[1] += cost2;
+      op_perf_by_name_[call_param.node_name].first++;
+      op_perf_by_name_[call_param.node_name].second.value[0] += cost1;
+      op_perf_by_name_[call_param.node_name].second.value[1] += cost2;
+      return true;
+    };
+#endif
+  }
   return RET_OK;
 }
 
@@ -751,7 +873,10 @@ int Benchmark::Init() {
     return RET_ERROR;
   }
 
-  if (flags_->time_profiling_) {
+  if (flags_->time_profiling_ || flags_->perf_profiling_) {
+    if (flags_->time_profiling_ && flags_->perf_profiling_) {
+      MS_LOG(INFO) << "time_profiling is enabled, will not run perf_profiling.";
+    }
     auto status = InitCallbackParameter();
     if (status != RET_OK) {
       MS_LOG(ERROR) << "Init callback Parameter failed.";
@@ -771,7 +896,7 @@ int Benchmark::PrintResult(const std::vector<std::string> &title,
   for (auto &iter : result) {
     char stringBuf[5][100] = {};
     std::vector<std::string> columns;
-    size_t len;
+    size_t len = 0;
 
     len = iter.first.size();
     if (len > columnLenMax.at(0)) {
@@ -826,6 +951,74 @@ int Benchmark::PrintResult(const std::vector<std::string> &title,
   }
   return RET_OK;
 }
+
+#ifdef ENABLE_ARM64
+int Benchmark::PrintPerfResult(const std::vector<std::string> &title,
+                               const std::map<std::string, std::pair<int, struct PerfCount>> &result) {
+  std::vector<size_t> columnLenMax(5);
+  std::vector<std::vector<std::string>> rows;
+
+  for (auto &iter : result) {
+    char stringBuf[5][100] = {};
+    std::vector<std::string> columns;
+    size_t len = 0;
+
+    len = iter.first.size();
+    if (len > columnLenMax.at(0)) {
+      columnLenMax.at(0) = len + 4;
+    }
+    columns.push_back(iter.first);
+
+    float tmp = float_t(flags_->num_threads_) * iter.second.second.value[0] / float_t(flags_->loop_count_) / 1000.0f;
+    len = snprintf(stringBuf[1], sizeof(stringBuf[1]), "%.2f", tmp);
+    if (len > columnLenMax.at(1)) {
+      columnLenMax.at(1) = len + 4;
+    }
+    columns.emplace_back(stringBuf[1]);
+
+    len = snprintf(stringBuf[2], sizeof(stringBuf[2]), "%f", iter.second.second.value[0] / op_cost_total_);
+    if (len > columnLenMax.at(2)) {
+      columnLenMax.at(2) = len + 4;
+    }
+    columns.emplace_back(stringBuf[2]);
+
+    tmp = float_t(flags_->num_threads_) * iter.second.second.value[1] / float_t(flags_->loop_count_) / 1000.0f;
+    len = snprintf(stringBuf[3], sizeof(stringBuf[3]), "%.2f", tmp);
+    if (len > columnLenMax.at(3)) {
+      columnLenMax.at(3) = len + 4;
+    }
+    columns.emplace_back(stringBuf[3]);
+
+    len = snprintf(stringBuf[4], sizeof(stringBuf[4]), "%f", iter.second.second.value[1] / op_cost2_total_);
+    if (len > columnLenMax.at(4)) {
+      columnLenMax.at(4) = len + 4;
+    }
+    columns.emplace_back(stringBuf[4]);
+
+    rows.push_back(columns);
+  }
+
+  printf("-------------------------------------------------------------------------\n");
+  for (int i = 0; i < 5; i++) {
+    auto printBuf = title[i];
+    if (printBuf.size() > columnLenMax.at(i)) {
+      columnLenMax.at(i) = printBuf.size();
+    }
+    printBuf.resize(columnLenMax.at(i), ' ');
+    printf("%s\t", printBuf.c_str());
+  }
+  printf("\n");
+  for (auto &row : rows) {
+    for (int j = 0; j < 5; j++) {
+      auto printBuf = row[j];
+      printBuf.resize(columnLenMax.at(j), ' ');
+      printf("%s\t", printBuf.c_str());
+    }
+    printf("\n");
+  }
+  return RET_OK;
+}
+#endif
 
 Benchmark::~Benchmark() {
   for (const auto &iter : this->benchmark_data_) {
