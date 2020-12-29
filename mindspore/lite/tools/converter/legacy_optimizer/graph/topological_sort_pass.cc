@@ -52,13 +52,12 @@ STATUS TopologicalSortPass::Run(schema::MetaGraphT *graph) {
     while (!op_queue.empty()) {
       auto &node = op_queue.front();
       auto post_node_idxes = GetOutputNodeIdx(*graph, *(node.get()));
+      sinked_tensor_idxes.insert(sinked_tensor_idxes.end(), node->outputIndex.begin(), node->outputIndex.end());
       for (auto post_node_idx : post_node_idxes) {
         if (IsContain(subgraph_node_indices, (unsigned int)(post_node_idx))) {
           auto &post_node = old_nodes.at(post_node_idx);
           // check if post_node is non-depended
           if (IsNodeNonDepend(post_node, sinked_tensor_idxes)) {
-            sinked_tensor_idxes.insert(sinked_tensor_idxes.end(), post_node->outputIndex.begin(),
-                                       post_node->outputIndex.end());
             op_queue.push(std::move(post_node));
           }
         }
