@@ -180,7 +180,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
   // create a single run op graph
   std::shared_ptr<KernelGraph> ConstructSingleOpGraph(const OpRunInfo &op_run_info,
                                                       const std::vector<tensor::TensorPtr> &input_tensors,
-                                                      const std::vector<int64_t> &tensors_mask);
+                                                      const std::vector<int64_t> &tensors_mask, bool is_ascend = false);
   // create a new kernel graph and update the graph sum
   KernelGraphPtr NewKernelGraph();
   std::vector<AnfNodePtr> CreateParameterFromTuple(const AnfNodePtr &node, KernelGraph *graph);

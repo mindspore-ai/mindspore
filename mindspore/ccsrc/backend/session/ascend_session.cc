@@ -817,7 +817,7 @@ void AscendSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &g
   }
 
   // construct graph include one op
-  auto graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask);
+  auto graph = ConstructSingleOpGraph(op_run_info, input_tensors, tensors_mask, true);
   MS_EXCEPTION_IF_NULL(graph);
   opt::RunOpAscendBackendIRFusionOptimization(graph);
   // kernel select
