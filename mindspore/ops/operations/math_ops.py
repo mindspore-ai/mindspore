@@ -2698,7 +2698,7 @@ class Greater(_LogicBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)
@@ -2739,7 +2739,7 @@ class GreaterEqual(_LogicBinaryOp):
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1, 2, 3]), mindspore.int32)

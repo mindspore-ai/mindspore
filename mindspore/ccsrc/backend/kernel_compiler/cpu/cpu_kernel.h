@@ -53,6 +53,9 @@ const char END[] = "end";
 const char SIZE[] = "size";
 const char USE_NESTEROV[] = "use_nesterov";
 const char GROUP[] = "group";
+const char START[] = "start";
+const char LIMIT[] = "limit";
+const char DELTA[] = "delta";
 
 enum OperateType {
   ADD = 0,
@@ -79,7 +82,9 @@ enum OperateType {
   EQUAL,
   NOTEQUAL,
   FLOOR,
-  SQUAREDDIFFERENCE
+  SQUAREDDIFFERENCE,
+  GREATER,
+  GREATEREQUAL,
 };
 
 class CPUKernel : public kernel::KernelMod {

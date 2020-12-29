@@ -63,6 +63,10 @@ class ArithmeticCPUKernel : public CPUKernel {
   void NotEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end);
   template <typename T>
   void SquaredDifference(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  template <typename T>
+  void Greater(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  template <typename T>
+  void GreaterEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end);
   std::vector<size_t> input_shape0_;
   std::vector<size_t> input_shape1_;
   std::vector<size_t> input_element_num0_;
@@ -212,6 +216,28 @@ MS_REG_CPU_KERNEL(
 MS_REG_CPU_KERNEL(
   SquaredDifference,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Greater, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Greater,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  Greater, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  GreaterEqual,
+  KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  GreaterEqual,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  GreaterEqual,
+  KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
   ArithmeticCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore

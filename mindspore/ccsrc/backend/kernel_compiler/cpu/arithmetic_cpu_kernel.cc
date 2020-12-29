@@ -167,6 +167,24 @@ void ArithmeticCPUKernel::SquaredDifference(const T *input1, const T *input2, T 
   }
 }
 
+template <typename T>
+void ArithmeticCPUKernel::Greater(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    out[i] = input1[idx[0]] > input2[idx[1]];
+  }
+}
+
+template <typename T>
+void ArithmeticCPUKernel::GreaterEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    out[i] = input1[idx[0]] >= input2[idx[1]];
+  }
+}
+
 void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -190,6 +208,10 @@ void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = EQUAL;
   } else if (kernel_name == prim::kPrimNotEqual->name()) {
     operate_type_ = NOTEQUAL;
+  } else if (kernel_name == prim::kPrimGreater->name()) {
+    operate_type_ = GREATER;
+  } else if (kernel_name == prim::kPrimGreaterEqual->name()) {
+    operate_type_ = GREATEREQUAL;
   } else if (kernel_name == prim::kPrimAssignAdd->name()) {
     operate_type_ = ASSIGNADD;
   } else if (kernel_name == prim::kPrimSquaredDifference->name()) {
@@ -301,6 +323,11 @@ void ArithmeticCPUKernel::LaunchKernelLogic(const std::vector<AddressPtr> &input
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::Equal<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == NOTEQUAL) {
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::NotEqual<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == GREATER) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::Greater<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == GREATEREQUAL) {
+      threads.emplace_back(
+        std::thread(&ArithmeticCPUKernel::GreaterEqual<T>, this, input1, input2, output, start, end));
     } else {
       MS_LOG(EXCEPTION) << "Not support " << operate_type_;
     }

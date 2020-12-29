@@ -116,7 +116,7 @@ class Range(Cell):
         Tensor, the dtype is int if the dtype of `start`, `limit` and `delta` all are int. Otherwise, dtype is float.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``CPU``
 
     Examples:
         >>> net = nn.Range(1, 8, 2)
