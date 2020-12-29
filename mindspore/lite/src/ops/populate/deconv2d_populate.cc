@@ -46,6 +46,7 @@ OpParameter *PopulateDeconvParameter(const mindspore::lite::PrimitiveC *primitiv
   conv_param->pad_r_ = deconv_lite_primitive->PadRight();
   conv_param->dilation_h_ = conv_primitive->GetDilateH();
   conv_param->dilation_w_ = conv_primitive->GetDilateW();
+  conv_param->group_ = conv_primitive->GetGroup();
   auto act_type = conv_primitive->GetActivationType();
   switch (act_type) {
     case schema::ActivationType_RELU:

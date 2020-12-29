@@ -192,7 +192,7 @@ void NPUPassUtils::UpdateNC2NHTransNodeAfterKernel(kernel::LiteKernel *kernel, k
   post_kernel->set_in_tensors({post_in_tensors});
 }
 
-bool NPUPassUtils::IsNhwc2Nchw(kernel::LiteKernel *kernel) {
+bool NPUPassUtils::IsNhwc2Nchw(const kernel::LiteKernel *kernel) {
   if (kernel->Type() != schema::PrimitiveType_Transpose) {
     return false;
   }
@@ -209,7 +209,7 @@ bool NPUPassUtils::IsNhwc2Nchw(kernel::LiteKernel *kernel) {
   return false;
 }
 
-bool NPUPassUtils::IsNchw2Nhwc(kernel::LiteKernel *kernel) {
+bool NPUPassUtils::IsNchw2Nhwc(const kernel::LiteKernel *kernel) {
   if (kernel->Type() != schema::PrimitiveType_Transpose) {
     return false;
   }
