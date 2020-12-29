@@ -33,8 +33,8 @@ namespace parallel {
 class ReduceMethod : public OperatorInfo {
  public:
   ReduceMethod(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-               const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceMethodCost>(true)) {}
+               const PrimitiveAttrs &attrs, OperatorCostPtr cost)
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, cost) {}
   ~ReduceMethod() override = default;
 
   Status Init(const StrategyPtr &strategy) override;
@@ -62,7 +62,7 @@ class ReduceMaxInfo : public ReduceMethod {
  public:
   ReduceMaxInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                 const PrimitiveAttrs &attrs)
-      : ReduceMethod(name, inputs_shape, outputs_shape, attrs) {
+      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceMaxCost>()) {
     reduce_method_ = REDUCE_OP_MAX;
   }
 
@@ -73,7 +73,7 @@ class ArgMaxWithValueInfo : public ReduceMethod {
  public:
   ArgMaxWithValueInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                       const PrimitiveAttrs &attrs)
-      : ReduceMethod(name, inputs_shape, outputs_shape, attrs) {
+      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ArgMaxWithValueCost>()) {
     reduce_method_ = REDUCE_OP_MAX;
   }
 
@@ -105,9 +105,7 @@ class ReduceMeanInfo : public ReduceMethod {
  public:
   ReduceMeanInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                  const PrimitiveAttrs &attrs)
-      : ReduceMethod(name, inputs_shape, outputs_shape, attrs) {
-    set_cost(std::make_shared<ReduceMeanCost>());
-  }
+      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceMeanCost>()) {}
 
   ~ReduceMeanInfo() override = default;
 
@@ -119,7 +117,7 @@ class ReduceSumInfo : public ReduceMethod {
  public:
   ReduceSumInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                 const PrimitiveAttrs &attrs)
-      : ReduceMethod(name, inputs_shape, outputs_shape, attrs) {
+      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceSumCost>()) {
     reduce_method_ = REDUCE_OP_SUM;
   }
 
@@ -130,7 +128,7 @@ class ReduceMinInfo : public ReduceMethod {
  public:
   ReduceMinInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                 const PrimitiveAttrs &attrs)
-      : ReduceMethod(name, inputs_shape, outputs_shape, attrs) {
+      : ReduceMethod(name, inputs_shape, outputs_shape, attrs, std::make_shared<ReduceMinCost>()) {
     reduce_method_ = REDUCE_OP_MIN;
   }
 

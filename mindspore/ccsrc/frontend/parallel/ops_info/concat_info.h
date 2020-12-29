@@ -33,7 +33,7 @@ class ConcatInfo : public OperatorInfo {
  public:
   ConcatInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
              const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<ConcatCost>(false)) {}
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<ConcatCost>()) {}
   ~ConcatInfo() override = default;
 
   Status Init(const StrategyPtr &strategy) override;

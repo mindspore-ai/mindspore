@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include <map>
 #include "frontend/parallel/device_manager.h"
 #include "frontend/parallel/tensor_layout/tensor_info.h"
 
@@ -47,16 +48,7 @@ double ListProduct(std::vector<T> vec) {
 // entries timing the length of each entry's data type
 class OperatorCost {
  public:
-  explicit OperatorCost(bool is_inputs_related) : inputs_related_(is_inputs_related) {
-    // this is only for the case when set_is_parameter() and SetInputAndOutputTypeLength() are not invoked
-    for (size_t i = 0; i < MAXIMUM_INPUT_NUMBER; ++i) {
-      is_parameter_.push_back(false);
-      is_parameter_involve_.push_back(false);
-      inputs_type_lengths_.push_back(DEFAULT_DATA_TYPE_LENGTH);
-      outputs_type_lengths_.push_back(DEFAULT_DATA_TYPE_LENGTH);
-    }
-  }
-  OperatorCost() : inputs_related_(false) {
+  OperatorCost() {
     // this is only for the case when set_is_parameter() and SetInputAndOutputTypeLength() are not invoked
     for (size_t i = 0; i < MAXIMUM_INPUT_NUMBER; ++i) {
       is_parameter_.push_back(false);
@@ -89,10 +81,17 @@ class OperatorCost {
                                            const std::vector<TensorInfo> &outputs, int64_t stage_id) const = 0;
   virtual double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs,
                                             const std::vector<TensorInfo> &outputs, int64_t stage_id) const = 0;
+  virtual void CalculateOutputInMemory() = 0;
+  virtual void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) = 0;
+  bool is_output_in_memory() const { return is_output_should_in_memory_; }
   // per device PEAK memory cost in a training iteration
-  // Typically, the PEAK memory cost contributed by an operator is its output (if the output is parameter-invovled),
+  // Typically, the PEAK memory cost contributed by an operator is its output (if the output is parameter-involved),
   // plus necessary inputs.
   virtual double GetMemoryCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs) const;
+  // Contributing the input part for 'GetMemoryCost'
+  double GetInputMemoryCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs) const;
+  // Contributing the output part for 'GetMemoryCost'
+  double GetOutputMemoryCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs) const;
   // per device memory cost in a inference phase
   double GetMemoryCostForInference(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &) const;
 
@@ -101,25 +100,25 @@ class OperatorCost {
   // pre-operator that has parameters as input.
   std::vector<bool> is_parameter_involve_;
   int64_t output_parameter_involve_ = -1;  // -1: unset; 0: not parameter_involved; 1: parameter_involved
-  // Whether the inputs are related or not? For example, TensorAdd's two inputs are independent (not related), while
-  // Mul's two inputs are dependent (related).
-  bool inputs_related_;
-  // for each input in 'inputs_', there is a bool variable indicating whether that the corresponding input is parameter
+  // For each input in 'inputs_', there is a bool variable indicating whether that the corresponding input is parameter
   std::vector<bool> is_parameter_;
-  // for each input and output, the followings record the number of bytes of each element
+  // Whether the input should keep in memory in training phase. It depends on the operator and the operator's
+  // previous operators.
+  std::vector<bool> is_inputs_should_in_memory_;
+  // Whether the output should keep in memory in training phase. It depends on 'is_parameter_involve_' and the operator.
+  bool is_output_should_in_memory_ = false;
+  // For each input and output, the followings record the number of bytes of each element
   std::vector<size_t> inputs_type_lengths_;
   std::vector<size_t> outputs_type_lengths_;
   // Whether the output is critical, which means that this output is included in calculating peak memory cost
   // in the inference phase.
   int64_t is_outputs_critical_ = -1;
 };
-
 using OperatorCostPtr = std::shared_ptr<OperatorCost>;
 
 class MatMulCost : public OperatorCost {
  public:
-  explicit MatMulCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  MatMulCost() : OperatorCost(true) {}
+  MatMulCost() : OperatorCost() {}
   ~MatMulCost() override = default;
 
   // per device communication cost
@@ -141,14 +140,15 @@ class MatMulCost : public OperatorCost {
                                    int64_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t stage_id) const override;
+  void CalculateOutputInMemory() override;
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-using MatMulCostPtr = std::shared_ptr<MatMulCost>;
+using TensorDotCost = MatMulCost;
 
-class ActivationCost : public OperatorCost {
+class CastCost : public OperatorCost {
  public:
-  explicit ActivationCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  ActivationCost() : OperatorCost(false) {}
-  ~ActivationCost() override = default;
+  CastCost() : OperatorCost() {}
+  ~CastCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                      int64_t stage_id) const override {
@@ -166,21 +166,95 @@ class ActivationCost : public OperatorCost {
                                    int64_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t stage_id) const override;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Not Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-using ActivationCostPtr = std::shared_ptr<ActivationCost>;
-using TransposeCost = ActivationCost;
-using TransposeCostPtr = std::shared_ptr<TransposeCost>;
-using StridedSliceCost = ActivationCost;
-using StridedSliceCostPtr = std::shared_ptr<StridedSliceCost>;
-using SliceCost = ActivationCost;
-using SliceCostPtr = std::shared_ptr<SliceCost>;
-using SplitCost = ActivationCost;
-using SplitCostPtr = std::shared_ptr<SplitCost>;
+using RepeatElementsCost = CastCost;
+using NegCost = CastCost;
+using ExpandDimsCost = CastCost;
+using SqueezeCost = CastCost;
+using ConcatCost = CastCost;
+using LogicalNotCost = CastCost;
+using SignCost = CastCost;
+using FloorCost = CastCost;
+using RoundCost = CastCost;
+using CeilCost = CastCost;
+using ZerosLikeCost = CastCost;
+using OnesLikeCost = CastCost;
+using RangeCost = CastCost;
+using SplitCost = CastCost;
+
+class SqrtCost : public CastCost {
+ public:
+  SqrtCost() : CastCost() {}
+  ~SqrtCost() override = default;
+  // Taking account of output, not taking accounting of input
+  void CalculateOutputInMemory() override;
+};
+using TanhCost = SqrtCost;
+using EluCost = SqrtCost;
+using ReLUCost = SqrtCost;
+using SigmoidCost = SqrtCost;
+using ReciprocalCost =
+  SqrtCost;  // The derivative of 'Reciprocal' is different on 'Ascend' and 'GPU'. Here, 'Ascend' is chosen
+using InvCost = SqrtCost;
+using RsqrtCost = SqrtCost;
+using AsinhCost = SqrtCost;
+using AcoshCost = SqrtCost;
+using ReLUV2Cost = SqrtCost;
+
+class ReLU6Cost : public CastCost {
+ public:
+  ReLU6Cost() : CastCost() {}
+  ~ReLU6Cost() override = default;
+  // Taking account of input, not taking account of output
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+using SoftsignCost = ReLU6Cost;
+using SoftplusCost = ReLU6Cost;
+using SquareCost = ReLU6Cost;
+using ExpCost = ReLU6Cost;
+using LogCost = ReLU6Cost;
+using CosCost = ReLU6Cost;
+using ACosCost = ReLU6Cost;
+using AbsCost = ReLU6Cost;
+using TanCost = ReLU6Cost;
+using SinCost = ReLU6Cost;
+using SinhCost = ReLU6Cost;
+using Log1pCost = ReLU6Cost;
+using Expm1Cost = ReLU6Cost;
+using CoshCost = ReLU6Cost;
+using AtanhCost = ReLU6Cost;
+using AtanCost = ReLU6Cost;
+using AsinCost = ReLU6Cost;
+using ErfCost = ReLU6Cost;
+using ErfcCost = ReLU6Cost;
+using ActivationInfoCost = ReLU6Cost;
+
+class TransposeCost : public CastCost {
+ public:
+  TransposeCost() : CastCost() {}
+  ~TransposeCost() override = default;
+  // Taking account of input, not taking account of output
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
+class GeLUCost : public SqrtCost {
+ public:
+  GeLUCost() : SqrtCost() {}
+  ~GeLUCost() override = default;
+  // Taking account of input and output
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+using BesselI0eCost = GeLUCost;
+using BesselI1eCost = GeLUCost;
+using L2NormalizeCost = GeLUCost;
 
 class SoftmaxCost : public OperatorCost {
  public:
-  explicit SoftmaxCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  SoftmaxCost() : OperatorCost(false) {}
+  SoftmaxCost() : OperatorCost() {}
   ~SoftmaxCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -199,21 +273,45 @@ class SoftmaxCost : public OperatorCost {
                                    int64_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t) const override;
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+  // Not Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-using SoftmaxCostPtr = std::shared_ptr<SoftmaxCost>;
-using TileCost = SoftmaxCost;
-using TileCostPtr = std::shared_ptr<TileCost>;
-using PackCost = TileCost;
-using PackCostPtr = std::shared_ptr<PackCost>;
-using ConcatCost = TileCost;
-using ConcatCostPtr = std::shared_ptr<ConcatCost>;
-using BroadcastToCost = SoftmaxCost;
-using BroadcastToCostPtr = std::shared_ptr<BroadcastToCost>;
+
+class TileCost : public SoftmaxCost {
+ public:
+  TileCost() : SoftmaxCost() {}
+  ~TileCost() override = default;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
+class PackCost : public SoftmaxCost {
+ public:
+  PackCost() : SoftmaxCost() {}
+  ~PackCost() override = default;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Not taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
+class BroadcastToCost : public SoftmaxCost {
+ public:
+  BroadcastToCost() : SoftmaxCost() {}
+  ~BroadcastToCost() override = default;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Not Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
 
 class TmpIdentityCost : public OperatorCost {
  public:
-  explicit TmpIdentityCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  TmpIdentityCost() : OperatorCost(false) {}
+  TmpIdentityCost() : OperatorCost() {}
   ~TmpIdentityCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -232,15 +330,16 @@ class TmpIdentityCost : public OperatorCost {
                                    int64_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t stage_id) const override;
-  // per device PEAK memory cost in a training iteration
-  double GetMemoryCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs) const override;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Not taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 using TmpIdentityCostPtr = std::shared_ptr<TmpIdentityCost>;
 
 class BatchParallelCost : public OperatorCost {
  public:
-  explicit BatchParallelCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  BatchParallelCost() : OperatorCost(false) {}
+  BatchParallelCost() : OperatorCost() {}
   ~BatchParallelCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -259,13 +358,25 @@ class BatchParallelCost : public OperatorCost {
                                    int64_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t stage_id) const override;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-using BatchParallelCostPtr = std::shared_ptr<BatchParallelCost>;
+
+class SparseSoftmaxCrossEntropyWithLogitsCost : public BatchParallelCost {
+ public:
+  SparseSoftmaxCrossEntropyWithLogitsCost() : BatchParallelCost() {}
+  ~SparseSoftmaxCrossEntropyWithLogitsCost() override = default;
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+  // Not taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
 
 class VirtualDatasetCost : public OperatorCost {
  public:
-  explicit VirtualDatasetCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  VirtualDatasetCost() : OperatorCost(false) {}
+  VirtualDatasetCost() : OperatorCost() {}
   ~VirtualDatasetCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -290,17 +401,15 @@ class VirtualDatasetCost : public OperatorCost {
                                     int64_t) const override {
     return 0.0;
   }
-  // per device PEAK memory cost in a training iteration
-  double GetMemoryCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs) const override {
-    return 0.0;
-  }
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Not taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-using VirtualDatasetCostPtr = std::shared_ptr<VirtualDatasetCost>;
 
 class GeneratorBaseCost : public OperatorCost {
  public:
-  explicit GeneratorBaseCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  GeneratorBaseCost() : OperatorCost(false) {}
+  GeneratorBaseCost() : OperatorCost() {}
   ~GeneratorBaseCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -332,8 +441,7 @@ using GeneratorBaseCostPtr = std::shared_ptr<GeneratorBaseCost>;
 
 class PReLUCost : public OperatorCost {
  public:
-  explicit PReLUCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  PReLUCost() : OperatorCost(true) {}
+  PReLUCost() : OperatorCost() {}
   ~PReLUCost() override = default;
 
   // per device communication cost
@@ -355,13 +463,16 @@ class PReLUCost : public OperatorCost {
                                    int64_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t stage_id) const override;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 using PReLUCostPtr = std::shared_ptr<PReLUCost>;
 
 class OneHotCost : public OperatorCost {
  public:
-  explicit OneHotCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  OneHotCost() : OperatorCost(true) {}
+  OneHotCost() : OperatorCost() {}
   ~OneHotCost() override = default;
 
   // per device communication cost
@@ -383,13 +494,16 @@ class OneHotCost : public OperatorCost {
                                    int64_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t stage_id) const override;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Not taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 using OneHotCostPtr = std::shared_ptr<OneHotCost>;
 
 class SoftmaxCrossEntropyWithLogitsCost : public OperatorCost {
  public:
-  explicit SoftmaxCrossEntropyWithLogitsCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  SoftmaxCrossEntropyWithLogitsCost() : OperatorCost(false) {}
+  SoftmaxCrossEntropyWithLogitsCost() : OperatorCost() {}
   ~SoftmaxCrossEntropyWithLogitsCost() override = default;
 
   // per device communication cost
@@ -411,13 +525,15 @@ class SoftmaxCrossEntropyWithLogitsCost : public OperatorCost {
                                    int64_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t stage_id) const override;
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+  // Not taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-using SoftmaxCrossEntropyWithLogitsCostPtr = std::shared_ptr<SoftmaxCrossEntropyWithLogitsCost>;
 
 class ReshapeCost : public OperatorCost {
  public:
-  explicit ReshapeCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  ReshapeCost() : OperatorCost(true) {}
+  ReshapeCost() : OperatorCost() {}
 
   ~ReshapeCost() override = default;
 
@@ -444,14 +560,17 @@ class ReshapeCost : public OperatorCost {
 
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t stage_id) const override;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Not taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 using ReshapeCostPtr = std::shared_ptr<ReshapeCost>;
 
-class ArithmeticCost : public OperatorCost {
+class SubCost : public OperatorCost {
  public:
-  explicit ArithmeticCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  ArithmeticCost() : OperatorCost(false) {}
-  ~ArithmeticCost() override = default;
+  SubCost() : OperatorCost() {}
+  ~SubCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                      int64_t stage_id) const override {
@@ -470,16 +589,127 @@ class ArithmeticCost : public OperatorCost {
                                    int64_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t stage_id) const override;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Not taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-using ArithmeticCostPtr = std::shared_ptr<ArithmeticCost>;
-using BiasAddCost = ArithmeticCost;
-using BiasAddCostPtr = std::shared_ptr<BiasAddCost>;
+using TensorAddCost = SubCost;
+using FloorDivCost = SubCost;
+using AssignSubCost = SubCost;
+using AssignAddCost = SubCost;
+using LogicalAndCost = SubCost;
+using LogicalOrCost = SubCost;
+using BiasAddCost = SubCost;
+using EqualCost = SubCost;
+using ApproximateEqualCost = SubCost;
+using NotEqualCost = SubCost;
+using GreaterCost = SubCost;
+using GreaterEqualCost = SubCost;
+using LessCost = SubCost;
+using LessEqualCost = SubCost;
 
-class ReduceMethodCost : public OperatorCost {
+class MulCost : public SubCost {
  public:
-  explicit ReduceMethodCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  ReduceMethodCost() : OperatorCost(true) {}
-  ~ReduceMethodCost() override = default;
+  MulCost() : SubCost() {}
+  ~MulCost() override = default;
+  // Taking account of input, not taking account of output
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
+class DivCost : public SubCost {
+ public:
+  DivCost() : SubCost() {}
+  ~DivCost() override = default;
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+using ReadDivCost = DivCost;
+
+class ModCost : public SubCost {
+ public:
+  ModCost() : SubCost() {}
+  ~ModCost() override = default;
+  // Taking account of input, not taking account of output
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+using FloorModCost = ModCost;
+
+class PowCost : public SubCost {
+ public:
+  PowCost() : SubCost() {}
+  ~PowCost() override = default;
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
+class AssignCost : public SubCost {
+ public:
+  AssignCost() : SubCost() {}
+  ~AssignCost() override = default;
+  // Taking account of input, not taking account of output
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
+class SigmoidCrossEntropyWithLogitsCost : public SubCost {
+ public:
+  SigmoidCrossEntropyWithLogitsCost() : SubCost() {}
+  ~SigmoidCrossEntropyWithLogitsCost() override = default;
+  // Taking account of input, not taking account of output
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
+class Atan2Cost : public SubCost {
+ public:
+  Atan2Cost() : SubCost() {}
+  ~Atan2Cost() override = default;
+  // Taking account of input, not taking account of output
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
+class DivNoNanCost : public SubCost {
+ public:
+  DivNoNanCost() : SubCost() {}
+  ~DivNoNanCost() override = default;
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
+class MaximumCost : public SubCost {
+ public:
+  MaximumCost() : SubCost() {}
+  ~MaximumCost() override = default;
+  // Taking account of input, not taking account of output
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+using MinimumCost = MaximumCost;
+
+class SliceCost : public CastCost {
+ public:
+  SliceCost() : CastCost() {}
+  ~SliceCost() override = default;
+  // Not taking account of output, taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
+class StridedSliceCost : public CastCost {
+ public:
+  StridedSliceCost() : CastCost() {}
+  ~StridedSliceCost() override = default;
+  // Not taking account of output, taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+
+class ReduceSumCost : public OperatorCost {
+ public:
+  ReduceSumCost() : OperatorCost() {}
+  ~ReduceSumCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                      int64_t stage_id) const override {
@@ -500,27 +730,50 @@ class ReduceMethodCost : public OperatorCost {
     return 0.0;
   }
   void set_cross_batch(bool cb) { cross_batch_ = cb; }
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 
  protected:
   bool cross_batch_ = false;
 };
-using ReduceMethodCostPtr = std::shared_ptr<ReduceMethodCost>;
+using ReduceMethodCost = ReduceSumCost;
 
-class ReduceMeanCost : public ReduceMethodCost {
+class ReduceMeanCost : public ReduceSumCost {
  public:
-  explicit ReduceMeanCost(bool is_inputs_related) : ReduceMethodCost(is_inputs_related) {}
-  ReduceMeanCost() : ReduceMethodCost(true) {}
+  ReduceMeanCost() : ReduceSumCost() {}
   ~ReduceMeanCost() override = default;
 
   double GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                    int64_t stage_id) const override;
 };
-using ReduceMeanCostPtr = std::shared_ptr<ReduceMeanCost>;
+
+class ReduceMinCost : public ReduceSumCost {
+ public:
+  ReduceMinCost() : ReduceSumCost() {}
+  ~ReduceMinCost() override = default;
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+using ReduceMaxCost = ReduceMinCost;
+
+class ArgMaxWithValueCost : public ReduceSumCost {
+ public:
+  ArgMaxWithValueCost() : ReduceSumCost() {}
+  ~ArgMaxWithValueCost() override = default;
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
+using ArgMinWithValueCost = ArgMaxWithValueCost;
 
 class GetNextCost : public OperatorCost {
  public:
-  explicit GetNextCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  GetNextCost() : OperatorCost(false) {}
+  GetNextCost() : OperatorCost() {}
   ~GetNextCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -547,13 +800,17 @@ class GetNextCost : public OperatorCost {
                                     int64_t) const override {
     return 0.0;
   }
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Not Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 using GetNextCostPtr = std::shared_ptr<GetNextCost>;
 
-class DropOutCost : public OperatorCost {
+// For memory cost, taking account of output, not taking account of input
+class DropOutCost : public SqrtCost {
  public:
-  explicit DropOutCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  DropOutCost() : OperatorCost(true) {}
+  DropOutCost() : SqrtCost() {}
   ~DropOutCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -578,12 +835,19 @@ class DropOutCost : public OperatorCost {
   }
 };
 
-using DropOutCostPtr = std::shared_ptr<DropOutCost>;
+class DropOutDoMaskCost : public DropOutCost {
+ public:
+  DropOutDoMaskCost() : DropOutCost() {}
+  ~DropOutDoMaskCost() override = default;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
+};
 
 class UnsortedSegmentSumCost : public OperatorCost {
  public:
-  explicit UnsortedSegmentSumCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  UnsortedSegmentSumCost() : OperatorCost(true) {}
+  UnsortedSegmentSumCost() : OperatorCost() {}
   ~UnsortedSegmentSumCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -602,14 +866,15 @@ class UnsortedSegmentSumCost : public OperatorCost {
                                     int64_t) const override {
     return 0.0;
   }
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-
-using UnsortedSegmentSumCostPtr = std::shared_ptr<UnsortedSegmentSumCost>;
 
 class UnsortedSegmentMinCost : public OperatorCost {
  public:
-  explicit UnsortedSegmentMinCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  UnsortedSegmentMinCost() : OperatorCost(true) {}
+  UnsortedSegmentMinCost() : OperatorCost() {}
   ~UnsortedSegmentMinCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -628,14 +893,16 @@ class UnsortedSegmentMinCost : public OperatorCost {
                                     int64_t) const override {
     return 0.0;
   }
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-
-using UnsortedSegmentMinCostPtr = std::shared_ptr<UnsortedSegmentMinCost>;
+using UnsortedSegmentMaxCost = UnsortedSegmentMinCost;
 
 class LayerNormCost : public OperatorCost {
  public:
-  explicit LayerNormCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  LayerNormCost() : OperatorCost(true) {}
+  LayerNormCost() : OperatorCost() {}
   ~LayerNormCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -656,14 +923,15 @@ class LayerNormCost : public OperatorCost {
                                     int64_t) const override {
     return 0.0;
   }
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-
-using DropOutCostPtr = std::shared_ptr<DropOutCost>;
 
 class UniqueCost : public OperatorCost {
  public:
-  explicit UniqueCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  UniqueCost() : OperatorCost(true) {}
+  UniqueCost() : OperatorCost() {}
   ~UniqueCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -682,14 +950,15 @@ class UniqueCost : public OperatorCost {
                                    int64_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t) const override;
+  // Taking account of output
+  void CalculateOutputInMemory() override;
+  // Not Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-
-using UniqueCostPtr = std::shared_ptr<UniqueCost>;
 
 class UniformCandidateSamplerCost : public OperatorCost {
  public:
-  explicit UniformCandidateSamplerCost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  UniformCandidateSamplerCost() : OperatorCost(false) {}
+  UniformCandidateSamplerCost() : OperatorCost() {}
   ~UniformCandidateSamplerCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -714,14 +983,15 @@ class UniformCandidateSamplerCost : public OperatorCost {
                                     int64_t) const override {
     return 0.0;
   }
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Not Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
-
-using UniformCandidateSamplerCostPtr = std::shared_ptr<UniformCandidateSamplerCost>;
 
 class GatherV2Cost : public OperatorCost {
  public:
-  explicit GatherV2Cost(bool is_inputs_related) : OperatorCost(is_inputs_related) {}
-  GatherV2Cost() : OperatorCost(true) {}
+  GatherV2Cost() : OperatorCost() {}
   ~GatherV2Cost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -740,14 +1010,15 @@ class GatherV2Cost : public OperatorCost {
                                    int64_t stage_id) const override;
   double GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
                                     int64_t) const override;
+  // Not taking account of output
+  void CalculateOutputInMemory() override;
+  // Taking account of input
+  void CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) override;
 };
 
-using GatherV2CostPtr = std::shared_ptr<GatherV2Cost>;
-
-class GatherV2PCost : public OperatorCost {
+class GatherV2PCost : public GatherV2Cost {
  public:
-  explicit GatherV2PCost(bool is_inputs_related) : OperatorCost(is_inputs_related), axis_(0) {}
-  GatherV2PCost() : OperatorCost(true), axis_(0) {}
+  GatherV2PCost() : GatherV2Cost(), axis_(0) {}
   ~GatherV2PCost() override = default;
 
   double GetCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -773,8 +1044,6 @@ class GatherV2PCost : public OperatorCost {
   int64_t axis_;
   Shape strategy_;
 };
-
-using GatherV2PCostPtr = std::shared_ptr<GatherV2PCost>;
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // PARALLEL_AUTO_PARALLEL_OPERATOR_COSTMODEL_H_

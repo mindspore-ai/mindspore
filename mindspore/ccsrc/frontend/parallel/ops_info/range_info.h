@@ -39,7 +39,7 @@ class RangeInfo : public OperatorInfo {
  public:
   RangeInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
             const PrimitiveAttrs &attrs)
-      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<ActivationCost>(true)) {}
+      : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<RangeCost>()) {}
   ~RangeInfo() override = default;
 
   Status Init(const StrategyPtr &strategy) override;

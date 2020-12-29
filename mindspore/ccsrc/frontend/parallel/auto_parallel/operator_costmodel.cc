@@ -27,6 +27,7 @@ void OperatorCost::set_is_parameter(const std::vector<bool> &is_parameter) { is_
 
 void OperatorCost::set_is_parameter_involve(const std::vector<bool> &is_parameter_inv) {
   is_parameter_involve_ = is_parameter_inv;
+  is_inputs_should_in_memory_ = std::vector<bool>(is_parameter_involve_.size(), false);
 }
 
 void OperatorCost::set_output_parameter_involve(int64_t output_para) { output_parameter_involve_ = output_para; }
@@ -41,27 +42,28 @@ void OperatorCost::set_output_critical(int64_t critical) { is_outputs_critical_ 
 
 double OperatorCost::GetMemoryCost(const std::vector<TensorInfo> &inputs,
                                    const std::vector<TensorInfo> &outputs) const {
+  return GetInputMemoryCost(inputs, outputs) + GetOutputMemoryCost(inputs, outputs);
+}
+
+double OperatorCost::GetInputMemoryCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &) const {
   double result = 0.0;
-  if (output_parameter_involve_ == 1) {
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (is_inputs_should_in_memory_[i]) {
+      result += ListProduct(inputs[i].slice_shape()) * static_cast<double>(inputs_type_lengths_[i]);
+    }
+  }
+  return result;
+}
+
+double OperatorCost::GetOutputMemoryCost(const std::vector<TensorInfo> &inputs,
+                                         const std::vector<TensorInfo> &outputs) const {
+  double result = 0.0;
+  if (is_output_should_in_memory_) {
     // When this operator has multiple outputs, they all contributes to the memory.
     for (size_t i = 0; i < outputs.size(); ++i) {
       result += ListProduct(outputs[i].slice_shape()) * static_cast<double>(outputs_type_lengths_[i]);
     }
-    bool is_any_para_inv =
-      std::any_of(is_parameter_involve_.begin(), is_parameter_involve_.end(), [](bool value) { return value; });
-    if (is_any_para_inv) {
-      for (size_t i = 0; i < inputs.size(); ++i) {
-        if (is_parameter_[i]) {
-          result += ListProduct(inputs[i].slice_shape()) * static_cast<double>(inputs_type_lengths_[i]);
-        } else if (inputs_related_ && (!is_parameter_involve_[i])) {
-          // When the inputs of this operator are related, and they are not parameter-involved, then they are included
-          // in the memory cost.
-          result += ListProduct(inputs[i].slice_shape()) * static_cast<double>(inputs_type_lengths_[i]);
-        }
-      }
-    }
   }
-
   return result;
 }
 
@@ -166,16 +168,43 @@ double MatMulCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inp
   return result;
 }
 
+// Not taking account of output
+void MatMulCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+// Taking account of input
+void MatMulCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  if (is_parameter_[0]) {
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+
+  if (is_parameter_[1]) {
+    is_inputs_should_in_memory_[1] = true;
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  } else if (is_parameter_involve_[1]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  }
+}
+
 // Return the per device communication cost in the forward phase.
-double ActivationCost::GetForwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
-                                          int64_t) const {
+double CastCost::GetForwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int64_t) const {
   // ReLU is the element-wise operator, thus it does not need communication in the forward phase
   return 0.0;
 }
 
 // Return the per device communication cost in the backward phase.
-double ActivationCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
-                                           int64_t stage_id) const {
+double CastCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                     int64_t stage_id) const {
   double result = 0.0;
   if (is_parameter_[0]) {
     TensorInfo input1 = inputs[0];
@@ -196,8 +225,8 @@ double ActivationCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs
 
 // Return the per device computation cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double ActivationCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
-                                                 int64_t) const {
+double CastCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                           int64_t) const {
   TensorInfo input0 = inputs[0];
   Shape input0_slice_shape = input0.slice_shape();
   return ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
@@ -205,9 +234,31 @@ double ActivationCost::GetForwardComputationCost(const std::vector<TensorInfo> &
 
 // Return the per device computation cost in the forward phase. The cost is calculated according to the bytes
 // this operator uses
-double ActivationCost::GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
-                                                  int64_t) const {
+double CastCost::GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
+                                            int64_t) const {
   return 0.0;
+}
+
+// Not taking account of output
+void CastCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+// Not taking account of input
+void CastCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+}
+
+// Taking account of output
+void SqrtCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[0]; }
+
+// Taking account of input
+void GeLUCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  if (is_parameter_[0]) {
+    is_inputs_should_in_memory_[0] = true;
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  }
 }
 
 // Return the per device communication cost in the forward phase.
@@ -259,6 +310,81 @@ double SoftmaxCost::GetBackwardComputationCost(const std::vector<mindspore::para
   return 0.0;
 }
 
+// Taking account of output
+void SoftmaxCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[0]; }
+
+// Not taking account of input
+void SoftmaxCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+}
+
+// Not taking account of output
+void PackCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+// Not taking account of input
+void PackCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+}
+
+// Not taking account of output
+void TileCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+// Taking account of input
+void TileCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'y'
+  if (is_parameter_[0]) {
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+
+  if (!is_inputs_should_in_memory_[1]) {
+    is_inputs_should_in_memory_[1] = is_parameter_[1];
+  }
+}
+
+// Not taking account of output
+void BroadcastToCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+void BroadcastToCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+}
+
+// Taking account of input
+void ReLU6Cost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  if (is_parameter_[0]) {
+    is_inputs_should_in_memory_[0] = true;
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  }
+}
+
+// Taking account of input
+void TransposeCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calulating 'dx', taking account of 'y'
+  if (is_parameter_[0]) {
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+
+  if (!is_inputs_should_in_memory_[1]) {
+    is_inputs_should_in_memory_[1] = is_parameter_[1];
+  }
+}
+
 // return the per device communication cost in the forward phase.
 double TmpIdentityCost::GetForwardCommCost(const std::vector<mindspore::parallel::TensorInfo> &,
                                            const std::vector<mindspore::parallel::TensorInfo> &, int64_t) const {
@@ -288,9 +414,12 @@ double TmpIdentityCost::GetBackwardComputationCost(const std::vector<mindspore::
   return 0.0;
 }
 
-// Return the per device PEAK memory cost contributed by this operator in a training iteration.
-double TmpIdentityCost::GetMemoryCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &) const {
-  return 0.0;
+// Not taking account of output
+void TmpIdentityCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+// Not taking account of input
+void TmpIdentityCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
 }
 
 double BatchParallelCost::GetForwardComputationCost(const std::vector<mindspore::parallel::TensorInfo> &inputs,
@@ -333,6 +462,42 @@ double BatchParallelCost::GetBackwardCommCost(const std::vector<TensorInfo> &inp
   }
 
   return result;
+}
+
+void BatchParallelCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+void BatchParallelCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  if (is_parameter_[0]) {
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+
+  if (is_parameter_[1]) {
+    is_inputs_should_in_memory_[1] = true;
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  } else if (is_parameter_involve_[1]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  }
+}
+
+void SparseSoftmaxCrossEntropyWithLogitsCost::CalculateOutputInMemory() {
+  is_output_should_in_memory_ = is_parameter_involve_[0];
+}
+
+void SparseSoftmaxCrossEntropyWithLogitsCost::CalculateInputsInMemory(
+  const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+  is_inputs_should_in_memory_[1] = is_parameter_[1];
 }
 // return the per device communication cost in the forward phase.
 double PReLUCost::GetForwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int64_t) const {
@@ -401,6 +566,21 @@ double PReLUCost::GetBackwardComputationCost(const std::vector<mindspore::parall
   return result;
 }
 
+void PReLUCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+void PReLUCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of both 'x' and 'y';
+  // when calculating 'dy', taking account of both 'x' and 'y'
+  if (is_parameter_involve_[0] || is_parameter_involve_[1]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+}
+
 // return the per device communication cost in the forward phase.
 double OneHotCost::GetForwardCommCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &, int64_t) const {
   // onehot does not need communication in the forward phase
@@ -428,6 +608,17 @@ double OneHotCost::GetForwardComputationCost(const std::vector<TensorInfo> &inpu
 double OneHotCost::GetBackwardComputationCost(const std::vector<TensorInfo> &, const std::vector<TensorInfo> &,
                                               int64_t) const {
   return 0.0;
+}
+
+// Not taking account of output
+void OneHotCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+// Not taking account of input
+void OneHotCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+  is_inputs_should_in_memory_[1] = is_parameter_[1];
+  is_inputs_should_in_memory_[2] = is_parameter_[2];
+  is_inputs_should_in_memory_[3] = is_parameter_[3];
 }
 
 // return the per device communication cost in the forward phase.
@@ -461,6 +652,16 @@ double SoftmaxCrossEntropyWithLogitsCost::GetForwardComputationCost(const std::v
 double SoftmaxCrossEntropyWithLogitsCost::GetBackwardComputationCost(const std::vector<TensorInfo> &,
                                                                      const std::vector<TensorInfo> &, int64_t) const {
   return 0.0;
+}
+
+// Taking account of output
+void SoftmaxCrossEntropyWithLogitsCost::CalculateOutputInMemory() {
+  is_output_should_in_memory_ = is_parameter_involve_[0];
+}
+
+void SoftmaxCrossEntropyWithLogitsCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+  is_inputs_should_in_memory_[1] = is_parameter_[1];
 }
 
 // return the per device communication cost in the forward phase.
@@ -524,50 +725,22 @@ double ReshapeCost::GetBackwardComputationCost(const std::vector<mindspore::para
   return 0.0;
 }
 
-double ArithmeticCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
-                                                 int64_t) const {
+void ReshapeCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+void ReshapeCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+  is_inputs_should_in_memory_[1] = is_parameter_[1];
+}
+
+double SubCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                          int64_t) const {
   double result;
   result = ListProduct(inputs[0].slice_shape()) * static_cast<double>(inputs_type_lengths_[0]) +
            ListProduct(inputs[1].slice_shape()) * static_cast<double>(inputs_type_lengths_[1]);
   return result;
 }
 
-double ArithmeticCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs,
-                                                  const std::vector<TensorInfo> &, int64_t stage_id) const {
-  double result = 0.0;
-  CheckGlobalDeviceManager();
-  MS_EXCEPTION_IF_NULL(g_device_manager);
-  auto total_device_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
-
-  if (is_parameter_[0]) {
-    TensorInfo input_a_tensor_info = inputs[0];
-    Shape input_a_shape = input_a_tensor_info.shape();
-    Shape input_a_slice_shape = input_a_tensor_info.slice_shape();
-    int64_t used_device_num = 1;
-    for (size_t i = 0; i < input_a_shape.size(); ++i) {
-      used_device_num *= input_a_shape[i] / input_a_slice_shape[i];
-    }
-
-    if (total_device_num != LongToSize(used_device_num))
-      result += ListProduct(input_a_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
-  }
-
-  if (is_parameter_[1]) {
-    TensorInfo input_b_tensor_info = inputs[1];
-    Shape input_b_shape = input_b_tensor_info.shape();
-    Shape input_b_slice_shape = input_b_tensor_info.slice_shape();
-    int64_t used_device_num = 1;
-    for (size_t i = 0; i < input_b_shape.size(); ++i) {
-      used_device_num *= input_b_shape[i] / input_b_slice_shape[i];
-    }
-
-    if (total_device_num != LongToSize(used_device_num))
-      result += ListProduct(input_b_slice_shape) * static_cast<double>(inputs_type_lengths_[1]);
-  }
-  return result;
-}
-
-double ArithmeticCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+double SubCost::GetBackwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
                                            int64_t stage_id) const {
   double result = 0.0;
   CheckGlobalDeviceManager();
@@ -599,8 +772,310 @@ double ArithmeticCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs
     if (total_device_num != LongToSize(used_device_num))
       result += ListProduct(input_b_slice_shape) * static_cast<double>(inputs_type_lengths_[1]);
   }
+  return result;
+}
+
+double SubCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                    int64_t stage_id) const {
+  double result = 0.0;
+  CheckGlobalDeviceManager();
+  MS_EXCEPTION_IF_NULL(g_device_manager);
+  auto total_device_num = g_device_manager->GetDeviceListByStageId(stage_id).size();
+
+  if (is_parameter_[0]) {
+    TensorInfo input_a_tensor_info = inputs[0];
+    Shape input_a_shape = input_a_tensor_info.shape();
+    Shape input_a_slice_shape = input_a_tensor_info.slice_shape();
+    int64_t used_device_num = 1;
+    for (size_t i = 0; i < input_a_shape.size(); ++i) {
+      used_device_num *= input_a_shape[i] / input_a_slice_shape[i];
+    }
+
+    if (total_device_num != LongToSize(used_device_num))
+      result += ListProduct(input_a_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
+  }
+
+  if (is_parameter_[1]) {
+    TensorInfo input_b_tensor_info = inputs[1];
+    Shape input_b_shape = input_b_tensor_info.shape();
+    Shape input_b_slice_shape = input_b_tensor_info.slice_shape();
+    int64_t used_device_num = 1;
+    for (size_t i = 0; i < input_b_shape.size(); ++i) {
+      used_device_num *= input_b_shape[i] / input_b_slice_shape[i];
+    }
+
+    if (total_device_num != LongToSize(used_device_num))
+      result += ListProduct(input_b_slice_shape) * static_cast<double>(inputs_type_lengths_[1]);
+  }
 
   return result;
+}
+
+// Not taking account of output
+void SubCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+// Not taking account of input
+void SubCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+  is_inputs_should_in_memory_[1] = is_parameter_[1];
+}
+
+// Taking account of input
+void MulCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  if (is_parameter_[0]) {
+    // 'x' is parameter, so it should be in memory.
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      // In this case, if 'y' is not be calculated by the previous operator, then 'y' should be included here.
+      is_inputs_should_in_memory_[1] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+
+  if (is_parameter_[1]) {
+    is_inputs_should_in_memory_[1] = true;
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  } else if (is_parameter_involve_[1]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  }
+}
+
+// Taking account of output
+void DivCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[1]; }
+
+// Taking account of input
+void DivCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'y'
+  if (is_parameter_[0]) {
+    // 'x' is parameter, so it should be in memory.
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      // In this case, if 'y' is not be calculated by the previous operator, then 'y' should be included here.
+      is_inputs_should_in_memory_[1] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+
+  // When calculating 'dy', taking account of 'y'
+  if (is_parameter_involve_[1]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+}
+
+// Taking account of input
+void ModCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', not taking account of 'x' and 'y'
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+  // When calculating 'dy', taking account of 'x' and 'y'
+  if (is_parameter_involve_[1]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+}
+
+void PowCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[1]; }
+
+void PowCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of both 'x' and 'power'
+  if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+  // When calculating 'dpower', taking account of 'x'
+  if (is_parameter_[1]) {
+    is_inputs_should_in_memory_[1] = true;
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  } else if (is_parameter_involve_[1]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  }
+}
+
+void AssignCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'x'
+  if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  }
+  // When calculating 'dy', not taking account of 'x' and 'y'
+  is_inputs_should_in_memory_[1] = is_parameter_[1];
+}
+
+void SigmoidCrossEntropyWithLogitsCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of both 'x' and 'y'
+  if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+  // When calculating 'dy', not taking account of 'x' and 'y'
+  if (!is_inputs_should_in_memory_[1]) {
+    is_inputs_should_in_memory_[1] = is_parameter_[1];
+  }
+}
+
+void Atan2Cost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of both 'x' and 'y'; when calculating 'dy', taking account of both 'x' and
+  // 'y'
+  if (is_parameter_involve_[0] || is_parameter_involve_[1]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+}
+
+void DivNoNanCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[1]; }
+
+void DivNoNanCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'y'
+  if (is_parameter_[0]) {
+    // 'x' is parameter, so it should be in memory.
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      // In this case, if 'y' is not be calculated by the previous operator, then 'y' should be included here.
+      is_inputs_should_in_memory_[1] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+
+  // When calculating 'dy', taking account of 'y'
+  if (is_parameter_involve_[1]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+}
+
+void MaximumCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of both 'x' and 'y';
+  // when calculating 'dy', taking account of both 'x' and 'y'
+  if (is_parameter_involve_[0] || is_parameter_involve_[1]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+}
+
+void SliceCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'y' and 'z'
+  if (is_parameter_[0]) {
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
+      is_inputs_should_in_memory_[2] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
+      is_inputs_should_in_memory_[2] = true;
+    }
+  }
+
+  if (!is_inputs_should_in_memory_[1]) {
+    is_inputs_should_in_memory_[1] = is_parameter_[1];
+  }
+  if (!is_inputs_should_in_memory_[2]) {
+    is_inputs_should_in_memory_[2] = is_parameter_[2];
+  }
+}
+
+void StridedSliceCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'y', 'z' and 'w'
+  if (is_parameter_[0]) {
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
+      is_inputs_should_in_memory_[2] = true;
+    }
+    if ((prev_output_in_mem.find(3) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(3))) {
+      is_inputs_should_in_memory_[3] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
+      is_inputs_should_in_memory_[2] = true;
+    }
+    if ((prev_output_in_mem.find(3) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(3))) {
+      is_inputs_should_in_memory_[3] = true;
+    }
+  }
+
+  if (!is_inputs_should_in_memory_[1]) {
+    is_inputs_should_in_memory_[1] = is_parameter_[1];
+  }
+  if (!is_inputs_should_in_memory_[2]) {
+    is_inputs_should_in_memory_[2] = is_parameter_[2];
+  }
+  if (!is_inputs_should_in_memory_[3]) {
+    is_inputs_should_in_memory_[3] = is_parameter_[3];
+  }
+}
+
+void DropOutDoMaskCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+void DropOutDoMaskCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'y'
+  if (is_parameter_[0]) {
+    // 'x' is parameter, so it should be in memory.
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      // In this case, if 'y' is not be calculated by the previous operator, then 'y' should be included here.
+      is_inputs_should_in_memory_[1] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+
+  if (!is_inputs_should_in_memory_[1]) {
+    is_inputs_should_in_memory_[1] = is_parameter_[1];
+  }
+  is_inputs_should_in_memory_[2] = is_parameter_[2];
 }
 
 bool IsDataParallel(const Shape &shape, const Shape &slice_shape, int64_t stage_id) {
@@ -612,8 +1087,8 @@ bool IsDataParallel(const Shape &shape, const Shape &slice_shape, int64_t stage_
   return (total_device_num == LongToSize(strategy0));
 }
 
-double ReduceMethodCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs,
-                                            const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+double ReduceSumCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
+                                         int64_t stage_id) const {
   double result = 0.0;
   TensorInfo input0 = inputs[0];
   TensorInfo output0 = outputs[0];
@@ -634,8 +1109,8 @@ double ReduceMethodCost::GetForwardCommCost(const std::vector<TensorInfo> &input
   return result;
 }
 
-double ReduceMethodCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
-                                             int64_t stage_id) const {
+double ReduceSumCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
+                                          int64_t stage_id) const {
   double result = 0.0;
   if (is_parameter_[0]) {
     TensorInfo input_tensor_info = inputs[0];
@@ -657,8 +1132,8 @@ double ReduceMethodCost::GetBackwardCommCost(const std::vector<TensorInfo> &inpu
   return result;
 }
 
-double ReduceMethodCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
-                                                   const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
+double ReduceSumCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
+                                                const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
   double result = 0.0;
   TensorInfo input0 = inputs[0];
   TensorInfo output0 = outputs[0];
@@ -677,6 +1152,30 @@ double ReduceMethodCost::GetForwardComputationCost(const std::vector<TensorInfo>
   result += ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
 
   return result;
+}
+
+// Not taking account of output
+void ReduceSumCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+void ReduceSumCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'y'
+  if (is_parameter_[0]) {
+    // 'x' is parameter, so it should be in memory.
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      // In this case, if 'y' is not be calculated by the previous operator, then 'y' should be included here.
+      is_inputs_should_in_memory_[1] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+
+  // Not taking account of 'y'
+  if (!is_inputs_should_in_memory_[1]) {
+    is_inputs_should_in_memory_[1] = is_parameter_[1];
+  }
 }
 
 double ReduceMeanCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
@@ -699,6 +1198,42 @@ double ReduceMeanCost::GetForwardComputationCost(const std::vector<TensorInfo> &
   result += ListProduct(input0_slice_shape) * static_cast<double>(inputs_type_lengths_[0]);
 
   return result;
+}
+
+void ReduceMinCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[0]; }
+
+void ReduceMinCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'y'
+  if (is_parameter_[0]) {
+    // 'x' is parameter, so it should be in memory.
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      // In this case, if 'y' is not be calculated by the previous operator, then 'y' should be included here.
+      is_inputs_should_in_memory_[1] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+
+  // Not taking account of 'y'
+  if (!is_inputs_should_in_memory_[1]) {
+    is_inputs_should_in_memory_[1] = is_parameter_[1];
+  }
+}
+
+void ArgMaxWithValueCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[0]; }
+
+void ArgMaxWithValueCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'x'
+  if (is_parameter_[0]) {
+    is_inputs_should_in_memory_[0] = true;
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+  }
 }
 
 double DropOutCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
@@ -760,6 +1295,52 @@ double GatherV2Cost::GetBackwardComputationCost(const std::vector<TensorInfo> &,
   return 0.0;
 }
 
+// Not taking account of output
+void GatherV2Cost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+void GatherV2Cost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'y' and 'z'
+  if (is_parameter_[0]) {
+    // 'x' is parameter, so it should be in memory.
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
+      is_inputs_should_in_memory_[2] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
+      is_inputs_should_in_memory_[2] = true;
+    }
+  }
+
+  if (!is_inputs_should_in_memory_[1]) {
+    is_inputs_should_in_memory_[1] = is_parameter_[1];
+  }
+  if (!is_inputs_should_in_memory_[2]) {
+    is_inputs_should_in_memory_[2] = is_parameter_[2];
+  }
+}
+
+void GetNextCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+void GetNextCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  if (is_inputs_should_in_memory_.size() == 0) {
+    return;
+  }
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+}
+
+void UniqueCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[0]; }
+
+void UniqueCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+}
+
 double LayerNormCost::GetBackwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &,
                                           int64_t stage_id) const {
   double result = 0.0;
@@ -806,6 +1387,24 @@ double LayerNormCost::GetForwardComputationCost(const std::vector<TensorInfo> &i
     result += ListProduct(slice_shape) * static_cast<double>(inputs_type_lengths_[index]);
   }
   return result;
+}
+
+void LayerNormCost::CalculateOutputInMemory() {
+  is_output_should_in_memory_ = is_parameter_involve_[0] || is_parameter_involve_[1] || is_parameter_involve_[2];
+}
+
+void LayerNormCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of both 'x' and 'y'
+  // When calculating 'dy', taking account of both 'x' and 'y'
+  if (is_parameter_involve_[0] || is_parameter_involve_[1]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+  is_inputs_should_in_memory_[2] = is_parameter_[2];
 }
 
 double UniqueCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs, const std::vector<TensorInfo> &outputs,
@@ -924,6 +1523,12 @@ double UniformCandidateSamplerCost::GetForwardComputationCost(const std::vector<
   return result;
 }
 
+void UniformCandidateSamplerCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+void UniformCandidateSamplerCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  is_inputs_should_in_memory_[0] = is_parameter_[0];
+}
+
 double GatherV2PCost::GetForwardComputationCost(const std::vector<TensorInfo> &inputs,
                                                 const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
   double result = 0.0;
@@ -1019,6 +1624,29 @@ double UnsortedSegmentSumCost::GetForwardComputationCost(const std::vector<Tenso
   return result;
 }
 
+// Not taking account of output
+void UnsortedSegmentSumCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+// Taking account of input
+void UnsortedSegmentSumCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'y'
+  if (is_parameter_[0]) {
+    is_inputs_should_in_memory_[0] = true;
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  } else if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+  }
+
+  if (!is_inputs_should_in_memory_[1]) {
+    is_inputs_should_in_memory_[1] = is_parameter_[1];
+  }
+  is_inputs_should_in_memory_[2] = is_parameter_[2];
+}
+
 double UnsortedSegmentMinCost::GetForwardCommCost(const std::vector<TensorInfo> &inputs,
                                                   const std::vector<TensorInfo> &outputs, int64_t stage_id) const {
   TensorInfo input0 = inputs[0];
@@ -1077,6 +1705,41 @@ double UnsortedSegmentMinCost::GetForwardComputationCost(const std::vector<Tenso
                   ListProduct(output_slice_shape) * static_cast<double>(outputs_type_lengths_[0]) +
                   ListProduct(output_slice_shape) * static_cast<double>(outputs_type_lengths_[0]);  // ReduceMin
   return result;
+}
+
+// Taking account of output
+void UnsortedSegmentMinCost::CalculateOutputInMemory() { is_output_should_in_memory_ = is_parameter_involve_[0]; }
+
+// Taking account of input
+void UnsortedSegmentMinCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  // When calculating 'dx', taking account of 'x', 'y' and 'z'
+  if (is_parameter_involve_[0]) {
+    if ((prev_output_in_mem.find(0) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(0))) {
+      is_inputs_should_in_memory_[0] = true;
+    }
+    if ((prev_output_in_mem.find(1) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(1))) {
+      is_inputs_should_in_memory_[1] = true;
+    }
+    if ((prev_output_in_mem.find(2) == prev_output_in_mem.end()) || (!prev_output_in_mem.at(2))) {
+      is_inputs_should_in_memory_[2] = true;
+    }
+  }
+  if (!is_inputs_should_in_memory_[1]) {
+    is_inputs_should_in_memory_[1] = is_parameter_[1];
+  }
+  if (!is_inputs_should_in_memory_[2]) {
+    is_inputs_should_in_memory_[2] = is_parameter_[2];
+  }
+}
+
+// Not taking account of output
+void VirtualDatasetCost::CalculateOutputInMemory() { is_output_should_in_memory_ = false; }
+
+// Not taking account of input
+void VirtualDatasetCost::CalculateInputsInMemory(const std::map<size_t, bool> &prev_output_in_mem) {
+  for (size_t i = 0; i < is_inputs_should_in_memory_.size(); ++i) {
+    is_inputs_should_in_memory_[i] = is_parameter_[i];
+  }
 }
 }  // namespace parallel
 }  // namespace mindspore

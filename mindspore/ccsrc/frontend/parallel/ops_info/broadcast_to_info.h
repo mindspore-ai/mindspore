@@ -36,7 +36,7 @@ class BroadcastToInfo : public OperatorInfo {
  public:
   BroadcastToInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                   const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BroadcastToCost>(false)) {}
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<BroadcastToCost>()) {}
   ~BroadcastToInfo() override = default;
 
   Status Init(const StrategyPtr &strategy) override;

@@ -34,7 +34,7 @@ class StridedSliceInfo : public OperatorInfo {
  public:
   StridedSliceInfo(const std::string &operator_name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                    const PrimitiveAttrs &attrs)
-      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<StridedSliceCost>(false)) {}
+      : OperatorInfo(operator_name, inputs_shape, outputs_shape, attrs, std::make_shared<StridedSliceCost>()) {}
   ~StridedSliceInfo() override = default;
 
   Status Init(const StrategyPtr &strategy) override;

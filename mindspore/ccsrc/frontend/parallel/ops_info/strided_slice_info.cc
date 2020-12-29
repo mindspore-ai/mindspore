@@ -273,6 +273,8 @@ Status StridedSliceInfo::GenerateStrategies(int64_t stage_id) {
       PrintStrategy(sp);
     }
   }
+
+  MS_LOG(INFO) << name() << ", finishing GenerateStrategies().";
   return SUCCESS;
 }
 
