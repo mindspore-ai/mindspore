@@ -308,3 +308,171 @@ def dot(x1, x2):
         mul_result = matmul_op(x1_reshape, x2_reshape)
         return reshape_op(mul_result, x1_shape[:-1] + x2_shape[:-2] + x2_shape[-1:])
     return matmul_op(x1, x2)
+
+
+@constexpr
+def _get_batch_size(x1_shape, x2_shape):
+    """
+    Get batch sizes from two inputs
+    """
+    if len(x1_shape) < 2 or len(x2_shape) < 2:
+        raise ValueError("Require both inputs with rank >= 2.")
+    return x1_shape[0], x2_shape[0]
+
+
+@constexpr
+def _check_axes_for_batch_dot(x1_shape, x2_shape, axes):
+    """
+    Check whether axes are valid and cast axes from tuple to list
+    """
+    if axes is None:
+        if len(x2_shape) == 2:
+            axes = [len(x1_shape) - 1, len(x2_shape) - 1]
+        else:
+            axes = [len(x1_shape) - 1, len(x2_shape) - 2]
+
+    if isinstance(axes, (list, tuple)):
+        if 0 in axes:
+            raise ValueError("Batch dim cannot be used as in axes.")
+        if len(axes) != 2:
+            raise ValueError("Require two axes inputs, given less")
+        if isinstance(axes, tuple):
+            axes = list(axes)
+        for sub_axes in axes:
+            if isinstance(sub_axes, (list, tuple)):
+                raise ValueError("Require dimension to be in any of those: None, int, (int, int).")
+        # Reverse if axis < 0
+        if axes[0] < 0:
+            axes[0] += len(x1_shape)
+        if axes[1] < 0:
+            axes[1] += len(x2_shape)
+    elif isinstance(axes, int):
+        if axes == 0:
+            raise ValueError("Batch dim cannot be used as in axes.")
+        if axes < 0:
+            axes = [axes + len(x1_shape), axes + len(x2_shape)]
+        elif axes > len(x1_shape) or axes > len(x2_shape):
+            raise ValueError(
+                "Axes value too high for given input arrays dimensions.")
+        else:
+            axes = [axes, axes]
+    else:
+        raise ValueError(
+            "Axes type must be one of those: int, tuple(int), list(int).")
+    return axes
+
+
+@constexpr
+def _calc_new_shape_batchdot(shape, axes, position=0):
+    """
+    Calculate transpose and reshape parameters for input transformations,
+    'position' refers to whether tensor is first or second in the op.
+    """
+    axis = axes[position]
+    contraction_axes = tuple([axis])
+    prod_contraction = int(np.prod([shape[i] for i in contraction_axes]))
+    free_axes = tuple(i for i in range(1, len(shape)) if i not in contraction_axes)
+    free_dims = tuple(shape[i] for i in free_axes)
+    prod_free = int(np.prod(free_dims))
+
+    transpose_perm = contraction_axes + free_axes if position else free_axes + contraction_axes
+    transpose_perm = tuple([0]) + transpose_perm
+    new_shape = (prod_contraction, prod_free) if position else (prod_free, prod_contraction)
+    new_shape = tuple([shape[0]]) + new_shape
+    return new_shape, transpose_perm, free_dims
+
+
+@constexpr
+def _check_batch_size(x1_batch_size, x2_batch_size):
+    """
+    Check whether batch size of two inputs are the same
+    """
+    if x1_batch_size != x2_batch_size:
+        raise ValueError("Require both inputs with the same batch sizes.")
+
+@constexpr
+def _get_output_shape(batch_size, x1_ret, x2_ret):
+    """
+    Compute output shape for batch dot
+    """
+    output_shape = tuple([batch_size]) + x1_ret + x2_ret
+    return output_shape
+
+def batch_dot(x1, x2, axes=None):
+    """
+    Computation of batch dot product between samples in two tensors containing batch dims.
+
+    Inputs:
+        - **x1** (Tensor) - First tensor in Batch Dot op with datatype float16 or float32
+        - **x2** (Tensor) - Second tensor in Batch Dot op with datatype float16 or float32. x2's datatype should
+          be same as x1's.
+        - **axes** (Union[int, tuple(int), list(int)]) - Single value or tuple/list of length 2 with dimensions
+          specified for `a` and `b` each. If single value `N` passed, automatically picks up last N dims from
+          `a` input shape and last N dims from `b` input shape in order as axes for each respectively.
+
+    Outputs:
+        Tensor, batch dot product of x1 and x2.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> input_x1 = Tensor(np.ones(shape=[2, 2, 3]), mindspore.float32)
+        >>> input_x2 = Tensor(np.ones(shape=[2, 3, 2]), mindspore.float32)
+        >>> axes = (-1, -2)
+        >>> output = C.batch_dot(input_x1, input_x2, axes)
+        >>> print(output)
+        [[[3. 3.]
+          [3. 3.]]
+         [[3. 3.]
+          [3. 3.]]]
+    """
+
+    transpose_op = P.Transpose()
+    batch_matmul_op = P.BatchMatMul()
+    squeeze_one_op = P.Squeeze(1)
+    squeeze_minus_one_op = P.Squeeze(-1)
+    # input validity checks
+    x1_shape = F.shape(x1)
+    x2_shape = F.shape(x2)
+    x1_dim_num = len(x1_shape)
+    x2_dim_num = len(x2_shape)
+    x1_type = F.dtype(x1)
+    x2_type = F.dtype(x2)
+
+    x1_batch_size, x2_batch_size = _get_batch_size(x1_shape, x2_shape)
+
+    _typecheck_input(x1_type, x2_type)
+    _check_batch_size(x1_batch_size, x2_batch_size)
+    axes = _check_axes_for_batch_dot(x1_shape, x2_shape, axes)
+
+    if x1_dim_num == 2:
+        x1 = F.expand_dims(x1, 1)
+        axes[0] += 1
+    if x2_dim_num == 2:
+        x2 = F.expand_dims(x2, 2)
+
+    x1_shape = F.shape(x1)
+    x2_shape = F.shape(x2)
+
+    x1_reshape_fwd, x1_transpose_fwd, x1_ret = _calc_new_shape_batchdot(x1_shape, axes, 0)
+    x2_reshape_fwd, x2_transpose_fwd, x2_ret = _calc_new_shape_batchdot(x2_shape, axes, 1)
+    output_shape = _get_output_shape(x1_batch_size, x1_ret, x2_ret)
+
+    x1_transposed = transpose_op(x1, x1_transpose_fwd)
+    x2_transposed = transpose_op(x2, x2_transpose_fwd)
+    x1_reshaped = F.reshape(x1_transposed, x1_reshape_fwd)
+    x2_reshaped = F.reshape(x2_transposed, x2_reshape_fwd)
+
+    # Batch matmal op part
+    mul_result = batch_matmul_op(x1_reshaped, x2_reshaped)
+
+    final_result = F.reshape(mul_result, output_shape)
+
+    # if the original dims are expanded, restore them from 3 to 2
+    if x1_dim_num == 2:
+        final_result = squeeze_one_op(final_result)
+    elif x2_dim_num == 2:
+        final_result = squeeze_minus_one_op(final_result)
+
+    return final_result
