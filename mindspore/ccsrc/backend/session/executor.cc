@@ -225,7 +225,7 @@ void Executor::OnEvent(const ExecutorEvent &event) {
     }
     {
       std::unique_lock<std::mutex> lock(pending_task_mutex_);
-      for (auto iter = pending_tasks_.begin(); iter != pending_tasks_.end();) {
+      for (auto iter = pending_tasks_.begin(); iter != pending_tasks_.end(); ++iter) {
         done_tasks_.emplace_back(*iter);
       }
       pending_tasks_.clear();
