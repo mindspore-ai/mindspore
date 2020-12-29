@@ -29,48 +29,53 @@ namespace lite {
 Tensor::Tensor(const TypeId data_type, std::vector<int> shape, const schema::Format &format, Category category)
     : data_type_(data_type), shape_(std::move(shape)), format_(format), category_(category) {}
 
-Tensor::Tensor(const Tensor &tensor) {
-  auto ret = CopyTensor(tensor, true);
-  if (0 != ret) {
-    MS_LOG(ERROR) << "CopyTensorData error";
+int Tensor::CopyTensorData(const Tensor &src_tensor, Tensor *dst_tensor) {
+  if (dst_tensor == nullptr) {
+    MS_LOG(ERROR) << "dst_tensor is nullptr";
+    return RET_PARAM_INVALID;
   }
-}
-
-int Tensor::CopyTensorData(const Tensor &src_tensor) {
   if (src_tensor.data_ == nullptr) {
     MS_LOG(ERROR) << "data of src tensor is nullptr";
     return RET_PARAM_INVALID;
   }
-  size_t data_size = this->Size();
-  MS_ASSERT(data_size == src_tensor.Size());
-  if (this->data_ == nullptr) {
+  size_t data_size = dst_tensor->Size();
+  if (data_size != src_tensor.Size()) {
+    MS_LOG(ERROR) << "Size of dst tensor is not compatible with src tensor";
+    return RET_ERROR;
+  }
+  if (dst_tensor->data_ == nullptr) {
     if (data_size > kMaxMallocSize) {
       MS_LOG(ERROR) << "Malloc size is too big while coping data, " << data_size << " bytes";
       return RET_ERROR;
     }
-    this->data_ = malloc(data_size);
-    if (this->data_ == nullptr) {
+    dst_tensor->data_ = malloc(data_size);
+    if (dst_tensor->data_ == nullptr) {
       MS_LOG(ERROR) << "Malloc memory failed";
       return RET_ERROR;
     }
   }
-  memcpy(this->data_, src_tensor.data_, data_size);
+  memcpy(dst_tensor->data_, src_tensor.data_, data_size);
   return RET_OK;
 }
 
-int Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data) {
-  this->data_type_ = src_tensor.data_type_;
-  this->shape_ = src_tensor.shape_;
-  this->category_ = src_tensor.category_;
-  this->format_ = src_tensor.format_;
+Tensor *Tensor::CopyTensor(const Tensor &src_tensor, bool copy_data) {
+  auto *result = new (std::nothrow) Tensor;
+  if (result == nullptr) {
+    MS_LOG(ERROR) << "New tensor failed";
+    return nullptr;
+  }
+  result->data_type_ = src_tensor.data_type_;
+  result->shape_ = src_tensor.shape_;
+  result->category_ = src_tensor.category_;
+  result->format_ = src_tensor.format_;
   if (copy_data) {
-    auto ret = CopyTensorData(src_tensor);
-    if (0 != ret) {
+    auto ret = CopyTensorData(src_tensor, result);
+    if (ret != RET_OK) {
       MS_LOG(ERROR) << "CopyTensorData error";
-      return RET_ERROR;
+      return nullptr;
     }
   }
-  return RET_OK;
+  return result;
 }
 
 Tensor::~Tensor() {
@@ -82,18 +87,6 @@ Tensor::~Tensor() {
     }
     this->data_ = nullptr;
   }
-}
-
-Tensor &Tensor::operator=(const Tensor &tensor) {
-  if (&tensor == this) {
-    return *this;
-  }
-  auto ret = CopyTensor(tensor, true);
-  if (0 != ret) {
-    MS_LOG(ERROR) << "CopyTensorData error";
-    MS_ASSERT(false);
-  }
-  return *this;
 }
 
 bool Tensor::operator==(const Tensor &tensor) {
@@ -283,6 +276,25 @@ std::string Tensor::ToString() const {
   return oss.str();
 }
 
+int Tensor::set_root_tensor(Tensor *tensor) {
+  this->root_tensor_ = tensor;
+  if (this->root_tensor_ == this) {
+    return RET_OK;
+  }
+  if (this->root_tensor_ == nullptr) {
+    MS_LOG(ERROR) << "root tensor is nullptr";
+    return RET_NULL_PTR;
+  }
+  this->shape_ = this->root_tensor_->shape_;
+  this->format_ = this->root_tensor_->format_;
+  this->data_type_ = this->root_tensor_->data_type_;
+  this->allocator_ = this->root_tensor_->allocator_;
+  this->category_ = this->root_tensor_->category_;
+  this->quant_params_ = this->root_tensor_->quant_params_;
+  this->quant_clusters_ = this->root_tensor_->quant_clusters_;
+  return RET_OK;
+}
+
 int Tensor::MallocData(const mindspore::lite::Allocator *allocator) {
   if (nullptr != this->data_) {
     return RET_OK;
@@ -303,9 +315,9 @@ int Tensor::MallocData(const mindspore::lite::Allocator *allocator) {
   return RET_OK;
 }
 
-int Tensor::FreeData() {
+void Tensor::FreeData() {
   if (nullptr == this->data_) {
-    return RET_OK;
+    return;
   }
   if (nullptr == allocator_) {
     free(this->data_);
@@ -314,10 +326,19 @@ int Tensor::FreeData() {
     allocator_->Free(this->data_);
     this->data_ = nullptr;
   }
-  return RET_OK;
 }
 
 void *Tensor::MutableData() {
+  if (this->root_tensor_ != nullptr) {
+    if (this->root_tensor_ != this && this->root_tensor_->data_ == nullptr) {
+      MS_LOG(ERROR) << "root tensor has not been malloced";
+      return nullptr;
+    } else if (this->root_tensor_ != this && this->root_tensor_->data_ != nullptr) {
+      return this->root_tensor_->data_;
+    } else {
+      // malloc self
+    }
+  }
   if (this->data_ == nullptr) {
     auto ret = this->MallocData();
     if (ret != 0) {
@@ -326,6 +347,17 @@ void *Tensor::MutableData() {
   }
   Prepare();
   return this->data_;
+}
+
+void Tensor::DecRefCount() {
+  if (this->IsConst() || this->IsGraphInput()) {
+    return;
+  }
+  this->ref_count_--;
+  if (this->ref_count_ <= 0) {
+    FreeData();
+    this->ref_count_ = 0;
+  }
 }
 
 void Tensor::AddQuantParam(const QuantArg &quant_arg) { this->quant_params_.push_back(quant_arg); }

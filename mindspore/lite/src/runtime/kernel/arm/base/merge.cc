@@ -18,6 +18,7 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/tensorlist.h"
+#include "src/common/utils.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -28,104 +29,97 @@ namespace mindspore::kernel {
 int MergeCPUKernel::FreeInWorkTensor() const {
   for (auto &in_tensor : this->in_tensors_) {
     MS_ASSERT(in_tensor != nullptr);
-    if (in_tensor->IsConst() || in_tensor->IsGraphInput()) {
+    if (in_tensor->root_tensor() == in_tensor) {
       continue;
     }
-    if (in_tensor->ref_count() > 0) {
-      in_tensor->set_ref_count(in_tensor->ref_count() - 1);
-      if (in_tensor->ref_count() <= 0) {
-        auto ret = in_tensor->FreeData();
-        if (0 != ret) {
-          MS_LOG(ERROR) << "Free tensor data failed";
-          return ret;
-        }
+    in_tensor->DecRefCount();
+  }
+  return RET_OK;
+}
+
+bool MergeCPUKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
+  auto ready_part = FindReadyPart(scope_tensors);
+  return ready_part == LEFT_INPUT_PART || ready_part == RIGHT_INPUT_PART;
+}
+
+int MergeCPUKernel::Init() {
+  MS_ASSERT(in_tensors_.size() == 2 * out_tensors_.size());
+  size_t stride = in_tensors_.size() / 2;
+  for (size_t i = 0; i < in_tensors_.size() / 2; i++) {
+    MS_ASSERT(in_tensors_[i] != nullptr);
+    MS_ASSERT(in_tensors_[i + stride] != nullptr);
+    if (in_tensors_[i] == in_tensors_[i + stride]) {
+      auto ret = in_tensors_[i]->set_root_tensor(in_tensors_[i]);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Set root tensor for tensor(" << in_tensors_[i]->tensor_name() << ") failed";
+        return ret;
+      }
+      ret = in_tensors_[i + stride]->set_root_tensor(in_tensors_[i + stride]);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "Set root tensor for tensor(" << in_tensors_[i + stride]->tensor_name() << ") failed";
+        return ret;
       }
     }
   }
   return RET_OK;
 }
 
-// if one of input of merge is const-tensor, merge is always ready, this will cause error.
-bool MergeCPUKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
-  MS_ASSERT(in_tensors().size() == 2 * out_tensors().size());
-  return std::all_of(this->in_tensors().begin(), this->in_tensors().begin() + in_tensors().size() / 2,
-                     [&](lite::Tensor *kernel_in_tensor) {
-                       return kernel_in_tensor->IsConst() || kernel_in_tensor->IsGraphInput() ||
-                              kernel_in_tensor->ref_count() >= 1;
-                     }) ||
-         std::all_of(this->in_tensors().begin() + in_tensors().size() / 2, this->in_tensors().end(),
-                     [&](lite::Tensor *kernel_in_tensor) {
-                       return kernel_in_tensor->IsConst() || kernel_in_tensor->IsGraphInput() ||
-                              kernel_in_tensor->ref_count() >= 1 ||
-                              (kernel_in_tensor->data_type() == kObjectTypeTensorType);
-                     });
-}
-
-int MergeCPUKernel::Init() { return RET_OK; }
-
 int MergeCPUKernel::ReSize() { return RET_OK; }
 
-bool MergeCPUKernel::PartialInputReady(int num_begin, int num_end) {
+InputPart MergeCPUKernel::FindReadyPart(const std::vector<lite::Tensor *> &scope_tensors) {
   MS_ASSERT(in_tensors_.size() == 2 * out_tensors_.size());
-  bool result = (std::all_of(this->in_tensors().begin() + num_begin, this->in_tensors().begin() + num_end,
-                             [&](lite::Tensor *kernel_in_tensor) {
-                               return kernel_in_tensor->IsConst() || kernel_in_tensor->ref_count() >= 1 ||
-                                      kernel_in_tensor->IsGraphInput() ||
-                                      kernel_in_tensor->data_type() == kObjectTypeTensorType;
-                             })) &&
-                std::all_of(this->in_tensors_.begin() + num_begin, this->in_tensors_.begin() + num_end,
-                            [&](lite::Tensor *in_tensor) {
-                              if (in_tensor->data_type() != kObjectTypeTensorType) {
-                                return in_tensor->data_c() != nullptr;
-                              } else {
-                                return true;
-                              }
-                            });
-  return result;
+  bool is_root_tensor_ready =
+    std::all_of(this->in_tensors().begin(), this->in_tensors().end(), [&](lite::Tensor *in_tensor) {
+      // if not in scope_tensors, not care
+      if (!IsContain(scope_tensors, in_tensor)) {
+        return true;
+      }
+      // if not a root_tensor, not care
+      if (in_tensor->root_tensor() == nullptr || in_tensor->root_tensor() != in_tensor) {
+        return true;
+      }
+      return in_tensor->IsReady();
+    });
+  // check if all root tensor is ready
+  if (!is_root_tensor_ready) {
+    return UNKNOWN_INPUT_PART;
+  }
+  // check one part of in tensors of merge is ready
+  // if not in scope_tensors, not care
+  // if in scope_tensors, in_tensor need to be ready
+  if (std::all_of(
+        this->in_tensors().begin() + in_tensors().size() / 2, this->in_tensors().end(),
+        [&](lite::Tensor *in_tensor) { return !IsContain(scope_tensors, in_tensor) || in_tensor->IsReady(); })) {
+    return RIGHT_INPUT_PART;
+  }
+  if (std::all_of(
+        this->in_tensors().begin(), this->in_tensors().begin() + in_tensors().size() / 2,
+        [&](lite::Tensor *in_tensor) { return !IsContain(scope_tensors, in_tensor) || in_tensor->IsReady(); })) {
+    return LEFT_INPUT_PART;
+  }
+  return UNKNOWN_INPUT_PART;
 }
 
 int MergeCPUKernel::Run() {
   MS_ASSERT(in_tensors_.size() == 2 * out_tensors_.size());
-  int in_tesnor_part_one = 0;
-  int in_tensor_part_two = in_tensors_.size() / 2;
-  int in_tensor_part_three = in_tensors_.size();
-  if (PartialInputReady(in_tesnor_part_one, in_tensor_part_two)) {
-    for (size_t i = 0; i < out_tensors().size(); i++) {
-      auto out_data = out_tensors_[i]->data_c();
-      auto in_data = in_tensors_[i]->data_c();
-      if (in_tensors_[i]->data_type() == kObjectTypeTensorType) {
-        auto in_tensor_list = reinterpret_cast<lite::TensorList *>(in_tensors_[i]);
-        auto out_tensor_list = reinterpret_cast<lite::TensorList *>(out_tensors_[i]);
-        if (std::any_of(in_tensor_list->tensors().begin(), in_tensor_list->tensors().end(),
-                        [&](lite::Tensor *tensor) { return tensor->data_c() == nullptr; })) {
-          continue;
-        }
-        *out_tensor_list = *in_tensor_list;
-        continue;
-      }
-      MS_ASSERT(in_data != nullptr);
-      MS_ASSERT(out_data != nullptr);
-      memcpy(out_data, in_data, in_tensors_[i]->Size());
+  auto ready_part = FindReadyPart(this->in_tensors_);
+  if (ready_part == LEFT_INPUT_PART) {
+    auto ret = MoveData(this->out_tensors_.begin(), this->out_tensors_.end(), this->in_tensors_.begin(),
+                        this->in_tensors_.end());
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "carry data error : " << ret;
+      return ret;
     }
-  }
-  if (PartialInputReady(in_tensor_part_two, in_tensor_part_three)) {
-    for (size_t i = 0; i < out_tensors().size(); i++) {
-      auto out_data = out_tensors_[i]->data_c();
-      auto in_data = in_tensors_[i + in_tensor_part_two]->data_c();
-      if (in_tensors_[i]->data_type() == kObjectTypeTensorType) {
-        auto in_tensor_list = reinterpret_cast<lite::TensorList *>(in_tensors_[i + in_tensor_part_two]);
-        auto out_tensor_list = reinterpret_cast<lite::TensorList *>(out_tensors_[i]);
-        if (std::any_of(in_tensor_list->tensors().begin(), in_tensor_list->tensors().end(),
-                        [&](lite::Tensor *tensor) { return tensor->data_c() == nullptr; })) {
-          continue;
-        }
-        *out_tensor_list = *in_tensor_list;
-        continue;
-      }
-      MS_ASSERT(in_data != nullptr);
-      MS_ASSERT(out_data != nullptr);
-      memcpy(out_data, in_data, in_tensors_[i]->Size());
+  } else if (ready_part == RIGHT_INPUT_PART) {
+    auto ret = MoveData(this->out_tensors_.begin(), this->out_tensors_.end(),
+                        (this->in_tensors_.begin() + in_tensors_.size() / 2), this->in_tensors_.end());
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "carry data error : " << ret;
+      return ret;
     }
+  } else {
+    MS_LOG(ERROR) << "none input part of merge is ready";
+    return RET_ERROR;
   }
   return RET_OK;
 }

@@ -59,23 +59,41 @@ int TensorListSetItemCPUKernel::Run() {
   MS_ASSERT(output0_ != nullptr);
   // copy each tensor in tensors_
   for (int i = 0; i < output0_->ElementsNum(); ++i) {
-    auto dst = output0_->GetTensorIndex(i);
-    MS_ASSERT(dst != nullptr);
-    auto src = input0_->GetTensorIndex(i);
     if (i == index_) {
-      // copy input2_ data buff
-      src = input2_;
-    }
-    MS_ASSERT(src != nullptr);
-    if (src->data_type() != kTypeUnknown) {
-      if (src->Size() != dst->Size()) {
-        MS_LOG(ERROR) << "src->Size():" << src->Size() << " must be equal to dst->Size():" << dst->Size();
-        return RET_ERROR;
+      auto dst = output0_->GetTensor(i);
+      if (dst == nullptr) {
+        dst = lite::Tensor::CopyTensor(*input2_, true);
+        auto &tensors = output0_->tensors();
+        tensors.emplace_back(dst);
+      } else {
+        dst->set_data_type(input2_->data_type());
+        dst->set_shape(input2_->shape());
+        dst->set_format(input2_->format());
+        dst->set_category(input2_->category());
+        dst->set_root_tensor(input2_->root_tensor());
+        dst->set_tensor_name(input2_->tensor_name());
+        dst->set_quant_clusters(input2_->quant_clusters());
+        auto ret = lite::Tensor::CopyTensorData(*input2_, dst);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "CopyTensorData[" << i << "] is failed!";
+          return RET_ERROR;
+        }
       }
-      auto ret = dst->CopyTensorData(*src);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "CopyTensorData[" << i << "] is failed!";
-        return RET_ERROR;
+    } else {
+      auto src = input0_->GetTensor(i);
+      auto dst = output0_->GetTensor(i);
+      MS_ASSERT(src != nullptr);
+      MS_ASSERT(dst != nullptr);
+      if (src->data_type() != kTypeUnknown) {
+        if (src->Size() != dst->Size()) {
+          MS_LOG(ERROR) << "src->Size():" << src->Size() << " must be equal to dst->Size():" << dst->Size();
+          return RET_ERROR;
+        }
+        auto ret = lite::Tensor::CopyTensorData(*src, dst);
+        if (ret != RET_OK) {
+          MS_LOG(ERROR) << "CopyTensorData[" << i << "] is failed!";
+          return RET_ERROR;
+        }
       }
     }
   }

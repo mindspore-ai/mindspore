@@ -13,27 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SWITCH_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SWITCH_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CARRY_DATA_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CARRY_DATA_H_
 
 #include <vector>
-#include "src/runtime/kernel/arm/base/carry_data.h"
 #include "src/lite_kernel.h"
+#include "src/tensor.h"
 #include "src/tensorlist.h"
 
 namespace mindspore::kernel {
-class SwitchCPUKernel : public CarryDataKernel {
+class CarryDataKernel : public LiteKernel {
  public:
-  SwitchCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+  CarryDataKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                   const mindspore::lite::PrimitiveC *primitive)
-      : CarryDataKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~SwitchCPUKernel() override = default;
-  int PostProcess() override;
-  int Init() override;
-  int ReSize() override;
-  int Run() override;
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~CarryDataKernel() override = default;
+
+ protected:
+  int MoveData(std::vector<lite::Tensor *>::iterator dst_begin, std::vector<lite::Tensor *>::iterator dst_end,
+               std::vector<lite::Tensor *>::iterator src_begin, std::vector<lite::Tensor *>::iterator src_limit);
+  static int MoveTensorData(lite::Tensor *dst_tensor, lite::Tensor *src_tensor);
+  static int MoveTensorLiteData(lite::TensorList *dst_tensor, lite::TensorList *src_tensor);
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SWITCH_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_CARRY_DATA_H_

@@ -89,7 +89,7 @@ int TensorListFromTensorCPUKernel::Run() {
   auto in_ptr = reinterpret_cast<float *>(input0_->data_c());
   // copy data from input0(tensor) to output(tensorlist) vector<*tensor>
   for (int i = 0; i < dim0; ++i) {
-    auto out_ptr = output0->GetTensorIndex(i);
+    auto out_ptr = output0->GetTensor(i);
     MS_ASSERT(out_ptr != nullptr);
     if (out_ptr->ElementsNum() != devision_dim0) {
       MS_LOG(ERROR) << "tensors_[" << i << "].ElementsNum():" << out_ptr->ElementsNum()

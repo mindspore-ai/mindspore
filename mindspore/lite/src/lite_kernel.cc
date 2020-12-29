@@ -43,9 +43,9 @@ void LiteKernel::FreeWorkspace() {
 }
 #endif
 bool LiteKernel::IsReady(const std::vector<lite::Tensor *> &scope_tensors) {
-  return std::all_of(this->in_tensors().begin(), this->in_tensors().end(), [&](lite::Tensor *kernel_in_tensor) {
-    if (IsContain(scope_tensors, kernel_in_tensor)) {
-      return (kernel_in_tensor->IsConst() || kernel_in_tensor->IsGraphInput() || kernel_in_tensor->ref_count() >= 1);
+  return std::all_of(this->in_tensors().begin(), this->in_tensors().end(), [&](lite::Tensor *in_tensor) {
+    if (IsContain(scope_tensors, in_tensor)) {
+      return in_tensor->IsReady();
     } else {
       return true;
     }
@@ -66,13 +66,9 @@ void LiteKernel::InitOutTensorInitRefCount() {
 
 int LiteKernel::DecOutTensorRefCount() {
   for (auto *tensor : this->out_tensors_) {
-    tensor->DecRefCount();
+    tensor->set_ref_count(tensor->ref_count() - 1);
     if (0 >= tensor->ref_count()) {
-      auto ret = tensor->FreeData();
-      if (0 != ret) {
-        MS_LOG(ERROR) << "Free tensor data failed";
-        return ret;
-      }
+      tensor->FreeData();
     }
   }
   return 0;
@@ -81,18 +77,10 @@ int LiteKernel::DecOutTensorRefCount() {
 int LiteKernel::FreeInWorkTensor() const {
   for (auto &in_tensor : this->in_tensors_) {
     MS_ASSERT(in_tensor != nullptr);
-    if (in_tensor->IsConst() || in_tensor->IsGraphInput()) {
+    if (in_tensor->root_tensor() == in_tensor) {
       continue;
     }
-    MS_ASSERT(in_tensor->ref_count() > 0);
-    in_tensor->set_ref_count(in_tensor->ref_count() - 1);
-    if (in_tensor->ref_count() <= 0) {
-      auto ret = in_tensor->FreeData();
-      if (0 != ret) {
-        MS_LOG(ERROR) << "Free tensor data failed";
-        return ret;
-      }
-    }
+    in_tensor->DecRefCount();
   }
   return RET_OK;
 }

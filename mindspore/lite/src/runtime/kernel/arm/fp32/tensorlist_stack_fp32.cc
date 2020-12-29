@@ -79,6 +79,7 @@ int TensorListStackCPUKernel::MergeElementShape() {
     return RET_ERROR;
   }
   auto ele_shape_data = reinterpret_cast<int *>(in_tensors_[1]->data_c());
+  output_shape_.clear();
   for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
     output_shape_.push_back(ele_shape_data[i]);
   }
@@ -94,7 +95,7 @@ int TensorListStackCPUKernel::MergeElementShape() {
   }
   if (!IsFullyDefined(input0_->element_shape())) {
     for (int i = 0; i < input0_->ElementsNum(); ++i) {  // get tensorlist every tensor
-      auto tensor_ele = input0_->GetTensorIndex(i);
+      auto tensor_ele = input0_->GetTensor(i);
       MS_ASSERT(tensor_ele != nullptr);
       if (tensor_ele->data_type() != kTypeUnknown) {
         status = MergeSubShape(tensor_ele->shape());
@@ -150,7 +151,7 @@ int TensorListStackCPUKernel::Run() {
   }
   auto out_ptr = reinterpret_cast<float *>(output0_->MutableData());
   for (int i = 0; i < num_element_; ++i) {
-    auto in_ptr = input0_->GetTensorIndex(i);
+    auto in_ptr = input0_->GetTensor(i);
     MS_ASSERT(in_ptr != nullptr);
     if (in_ptr->data_type() != kTypeUnknown) {
       int in_size = in_ptr->ElementsNum();

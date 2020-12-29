@@ -62,11 +62,7 @@ int NPUExecutor::Run(const std::vector<Tensor *> &in_tensors, const std::vector<
         memcpy(npu_input_tensors_[i]->GetBuffer(), data, in_tensors[index]->Size());
         in_tensors[index]->set_ref_count(in_tensors[index]->ref_count() - 1);
         if (in_tensors[index]->ref_count() <= 0) {
-          auto ret = in_tensors[index]->FreeData();
-          if (ret != RET_OK) {
-            MS_LOG(ERROR) << "Free tensor data failed";
-            return RET_ERROR;
-          }
+          in_tensors[index]->FreeData();
         }
         break;
       }
