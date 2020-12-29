@@ -67,8 +67,13 @@ class __attribute__((visibility("default"))) ShardTask {
 
   uint32_t categories;
 
+  // The total sample ids which used to shuffle operation. The ids like: [0, 1, 2, 3, ..., n-1, n]
   std::vector<int> permutation_;
 
+  // The data struct is as below:
+  // 1. TaskType: kCommonTask / kPaddedTask
+  // 2. std::tuple<int, int> : shard_id, group_id(fast load) / sample_id(lazy load)
+  // 3. std::vector<uint64_t>, json>> : [blob_start, blob_end], scalar_variable_fields
   std::vector<std::tuple<TaskType, std::tuple<int, int>, std::vector<uint64_t>, json>> task_list_;
 };
 

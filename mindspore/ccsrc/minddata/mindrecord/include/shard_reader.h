@@ -77,10 +77,13 @@ class __attribute__((visibility("default"))) ShardReader {
   /// \param[in] n_consumer number of threads when reading
   /// \param[in] selected_columns column list to be populated
   /// \param[in] operators operators applied to data, operator type is shuffle, sample or category
+  /// \param[in] num_padded the number of padded samples
+  /// \param[in] lazy_load if the mindrecord dataset is too large, enable lazy load mode to speed up initialization
   /// \return MSRStatus the status of MSRStatus
   MSRStatus Open(const std::vector<std::string> &file_paths, bool load_dataset, int n_consumer = 4,
                  const std::vector<std::string> &selected_columns = {},
-                 const std::vector<std::shared_ptr<ShardOperator>> &operators = {}, const int num_padded = 0);
+                 const std::vector<std::shared_ptr<ShardOperator>> &operators = {}, const int num_padded = 0,
+                 bool lazy_load = false);
 
   /// \brief open files and initialize reader, python API
   /// \param[in] file_paths the path of ONE file, any file in dataset is fine or file list
@@ -218,6 +221,10 @@ class __attribute__((visibility("default"))) ShardReader {
   /// \brief read all rows for specified columns
   ROW_GROUPS ReadAllRowGroup(std::vector<std::string> &columns);
 
+  /// \brief read row meta by shard_id and sample_id
+  ROW_GROUPS ReadRowGroupByShardIDAndSampleID(const std::vector<std::string> &columns, const uint32_t &shard_id,
+                                              const uint32_t &sample_id);
+
   /// \brief read all rows in one shard
   MSRStatus ReadAllRowsInShard(int shard_id, const std::string &sql, const std::vector<std::string> &columns,
                                std::vector<std::vector<std::vector<uint64_t>>> &offsets,
@@ -256,6 +263,10 @@ class __attribute__((visibility("default"))) ShardReader {
   /// \brief create task list in row-reader mode
   MSRStatus CreateTasksByRow(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
                              const std::vector<std::shared_ptr<ShardOperator>> &operators);
+
+  /// \brief create task list in row-reader mode and lazy mode
+  MSRStatus CreateLazyTasksByRow(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
+                                 const std::vector<std::shared_ptr<ShardOperator>> &operators);
 
   /// \brief crate task list
   MSRStatus CreateTasks(const std::vector<std::tuple<int, int, int, uint64_t>> &row_group_summary,
@@ -325,6 +336,15 @@ class __attribute__((visibility("default"))) ShardReader {
   // map of delivery
   std::unordered_map<int, std::shared_ptr<std::vector<std::tuple<std::vector<uint8_t>, json>>>> delivery_map_;
   // Delivery/Iterator mode end
+
+  // all metadata in the index is not loaded during initialization
+  bool lazy_load_;
+
+  // indicate shard_id : inc_count
+  // 0 : 15  -  shard0 has 15 samples
+  // 1 : 41  -  shard1 has 26 samples
+  // 2 : 58  -  shard2 has 17 samples
+  std::vector<uint32_t> shard_sample_count_;
 };
 }  // namespace mindrecord
 }  // namespace mindspore
