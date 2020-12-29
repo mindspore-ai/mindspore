@@ -133,6 +133,7 @@ int TensorListStack::InferShape(std::vector<lite::Tensor *> inputs_, std::vector
     return RET_NULL_PTR;
   }
   auto ele_shape_ptr = reinterpret_cast<int *>(ele_shape->data_c());
+  output_shape_.clear();
   for (int i = 0; i < ele_shape->ElementsNum(); ++i) {
     output_shape_.push_back(ele_shape_ptr[i]);
   }
@@ -148,7 +149,7 @@ int TensorListStack::InferShape(std::vector<lite::Tensor *> inputs_, std::vector
   }
   if (!IsFullyDefined(input0->element_shape())) {
     for (int i = 0; i < input0->ElementsNum(); ++i) {
-      auto tensor_ele = input0->GetTensorIndex(i);
+      auto tensor_ele = input0->GetTensor(i);
       MS_ASSERT(tensor_ele != nullptr);
       if (tensor_ele->data_type() != kTypeUnknown) {
         status = MergeShape(tensor_ele->shape());

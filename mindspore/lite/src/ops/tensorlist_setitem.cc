@@ -140,7 +140,7 @@ int TensorListSetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
   } else {
     output0->set_shape(input0->shape());
     for (int i = 0; i < input0->ElementsNum(); ++i) {
-      auto src_ptr = input0->GetTensorIndex(i);
+      auto src_ptr = input0->GetTensor(i);
       if (src_ptr == nullptr) {
         MS_LOG(ERROR) << "input0->tensors_[" << i << "] is nullptr!";
         return RET_ERROR;

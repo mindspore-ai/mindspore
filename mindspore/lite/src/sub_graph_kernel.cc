@@ -115,11 +115,7 @@ int SubGraphKernel::ReSize(bool is_interrupt) {
     std::vector<lite::Tensor *> inputs = kernel->in_tensors();
     std::vector<lite::Tensor *> outputs = kernel->out_tensors();
     for (auto &output : outputs) {
-      auto ret = output->FreeData();
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "FreeData failed";
-        return RET_ERROR;
-      }
+      output->FreeData();
     }
     primitive->set_infer_flag(!is_interrupt);
     auto ret = primitive->InferShape(inputs, outputs);

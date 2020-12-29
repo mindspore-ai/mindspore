@@ -52,13 +52,13 @@ struct DataStore {
 
 class SubGraphKernel : public LiteKernel {
  public:
-  explicit SubGraphKernel(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                          const std::vector<LiteKernel *> &in_kernels, const std::vector<LiteKernel *> &out_kernels,
-                          std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
+  SubGraphKernel(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                 std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
+                 std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
       : LiteKernel(nullptr, inputs, outputs, ctx, nullptr),
         nodes_(std::move(nodes)),
-        in_nodes_(in_kernels),
-        out_nodes_(out_kernels) {
+        in_nodes_(std::move(in_kernels)),
+        out_nodes_(std::move(out_kernels)) {
     subgraph_type_ = kCpuFP32SubGraph;
   }
 
@@ -109,20 +109,20 @@ class SubGraphKernel : public LiteKernel {
   std::vector<LiteKernel *> nodes() { return this->nodes_; }
 
  protected:
-  std::vector<LiteKernel *> nodes_;
+  std::vector<LiteKernel *> nodes_{};
   // entry nodes in nodes
-  std::vector<LiteKernel *> in_nodes_;
+  std::vector<LiteKernel *> in_nodes_{};
   // exit nodes in nodes
-  std::vector<LiteKernel *> out_nodes_;
+  std::vector<LiteKernel *> out_nodes_{};
   mindspore::lite::Executor *executor_ = nullptr;
 };
 
 class CpuSubGraph : public SubGraphKernel {
  public:
-  explicit CpuSubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                       const std::vector<LiteKernel *> &in_kernels, const std::vector<LiteKernel *> &out_kernels,
-                       const std::vector<LiteKernel *> &nodes, const lite::InnerContext *ctx)
-      : SubGraphKernel(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
+  CpuSubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+              std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
+              std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
+      : SubGraphKernel(inputs, outputs, std::move(in_kernels), std::move(out_kernels), std::move(nodes), ctx) {
     subgraph_type_ = kCpuFP32SubGraph;
   }
 
@@ -139,10 +139,10 @@ class CpuSubGraph : public SubGraphKernel {
 
 class CpuFp32SubGraph : public CpuSubGraph {
  public:
-  explicit CpuFp32SubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                           const std::vector<LiteKernel *> &in_kernels, const std::vector<LiteKernel *> &out_kernels,
-                           const std::vector<LiteKernel *> &nodes, const lite::InnerContext *ctx)
-      : CpuSubGraph(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
+  CpuFp32SubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                  std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
+                  std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
+      : CpuSubGraph(inputs, outputs, std::move(in_kernels), std::move(out_kernels), std::move(nodes), ctx) {
     subgraph_type_ = kCpuFP32SubGraph;
     this->name_ = "CpuFP32SubGraph";
   }
@@ -159,10 +159,10 @@ class CpuFp32SubGraph : public CpuSubGraph {
 
 class CpuFp16SubGraph : public CpuSubGraph {
  public:
-  explicit CpuFp16SubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                           const std::vector<LiteKernel *> &in_kernels, const std::vector<LiteKernel *> &out_kernels,
-                           const std::vector<LiteKernel *> &nodes, const lite::InnerContext *ctx)
-      : CpuSubGraph(inputs, outputs, in_kernels, out_kernels, nodes, ctx) {
+  CpuFp16SubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
+                  std::vector<LiteKernel *> in_kernels, std::vector<LiteKernel *> out_kernels,
+                  std::vector<LiteKernel *> nodes, const lite::InnerContext *ctx)
+      : CpuSubGraph(inputs, outputs, std::move(in_kernels), std::move(out_kernels), std::move(nodes), ctx) {
     subgraph_type_ = kCpuFP16SubGraph;
     this->name_ = "CpuFP16SubGraph";
   }
@@ -180,7 +180,7 @@ class CpuFp16SubGraph : public CpuSubGraph {
   void FreeOriginInputData();
 
  private:
-  std::vector<DataStore *> origin_input_data_;
+  std::vector<DataStore *> origin_input_data_{};
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_SUB_GRAPH_H

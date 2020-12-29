@@ -136,7 +136,7 @@ int TensorListGetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
     MS_LOG(ERROR) << "index_:" << index_ << "must in [0, " << input0->ElementsNum() - 1 << "]";
     return RET_ERROR;
   }
-  auto tensor_index = input0->GetTensorIndex(index_);
+  auto tensor_index = input0->GetTensor(index_);
   MS_ASSERT(tensor_index != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
@@ -159,7 +159,7 @@ int TensorListGetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
     }
     if (!IsFullyDefined(element_shape_)) {
       for (int i = 0; i < input0->ElementsNum(); ++i) {
-        auto input = input0->GetTensorIndex(i);
+        auto input = input0->GetTensor(i);
         MS_ASSERT(input != nullptr);
         if (input->data_type() != kTypeUnknown) {
           status = MergeShape(input->shape());

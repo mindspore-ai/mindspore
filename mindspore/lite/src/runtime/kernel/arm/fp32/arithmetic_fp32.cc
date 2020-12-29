@@ -157,6 +157,7 @@ void ArithmeticCPUKernel::InitRunFunction() {
     case PrimitiveType_LogicalAnd:
       arithmetic_run_ = ElementLogicalAnd;
       arithmetic_run_int_ = ElementLogicalAndInt;
+      arithmetic_run_bool_ = ElementLogicalAndBool;
       break;
     case PrimitiveType_LogicalOr:
       arithmetic_run_ = ElementLogicalOr;
@@ -295,6 +296,8 @@ void ArithmeticCPUKernel::InitParam() {
   arithmeticParameter_->ndim_ = arithmetic_lite_primitive->NDims();
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32 || in_tensors_[0]->data_type() == kNumberTypeFloat16) {
     data_type_ = kDataTypeFloat;
+  } else if (in_tensors_[0]->data_type() == kNumberTypeBool) {
+    data_type_ = KDataTypeBool;
   } else {
     data_type_ = kDataTypeInt;
   }
@@ -419,6 +422,10 @@ int ArithmeticCPUKernel::DoArithmetic(int task_id) {
     error_code = arithmetic_run_(reinterpret_cast<float *>(input0_ptr_) + stride * task_id,
                                  reinterpret_cast<float *>(input1_ptr_) + stride * task_id,
                                  reinterpret_cast<float *>(out_tensors_[0]->data_c()) + stride * task_id, count);
+  } else if (data_type_ == KDataTypeBool) {
+    error_code = arithmetic_run_bool_(reinterpret_cast<bool *>(input0_ptr_) + stride * task_id,
+                                      reinterpret_cast<bool *>(input1_ptr_) + stride * task_id,
+                                      reinterpret_cast<bool *>(out_tensors_[0]->data_c()) + stride * task_id, count);
   } else {
     error_code = arithmetic_run_int_(reinterpret_cast<int *>(input0_ptr_) + stride * task_id,
                                      reinterpret_cast<int *>(input1_ptr_) + stride * task_id,

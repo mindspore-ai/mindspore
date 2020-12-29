@@ -18,6 +18,7 @@
 #ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
 #endif
+#include "src/tensorlist.h"
 
 namespace mindspore {
 namespace lite {
@@ -72,8 +73,29 @@ int Merge::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
     return RET_INFER_INVALID;
   }
   for (size_t i = 0; i < inputs_.size() / 2; i++) {
-    outputs_[i]->set_data_type(inputs_[i]->data_type());
-    outputs_[i]->set_shape(inputs_[i]->shape());
+    auto *input = inputs_[i];
+    auto *output = outputs_[i];
+    if (input == nullptr) {
+      MS_LOG(ERROR) << "input tensor is nullptr";
+      return RET_ERROR;
+    }
+    if (output == nullptr) {
+      MS_LOG(ERROR) << "output tensor is nullptr";
+      return RET_ERROR;
+    }
+    output->set_data_type(input->data_type());
+    output->set_shape(input->shape());
+    output->set_format(input->format());
+    auto data_type = input->data_type();
+    if (data_type != kObjectTypeTensorType) {
+      continue;
+    } else {
+      auto input_tensorlist = reinterpret_cast<TensorList *>(input);
+      auto output_tensorlist = reinterpret_cast<TensorList *>(output);
+      output_tensorlist->set_element_shape(input_tensorlist->element_shape());
+      output_tensorlist->set_max_elements_num(input_tensorlist->max_elements_num());
+      output_tensorlist->set_tensors_data_type(input_tensorlist->tensors_data_type());
+    }
   }
   return RET_OK;
 }
