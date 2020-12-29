@@ -47,6 +47,12 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
 
 # 环境要求
 
+- 硬件（Ascend）
+    - 使用Ascend处理器来搭建硬件环境。如需试用Ascend处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
+
+- 获取基础镜像
+    - [Ascend Hub](ascend.huawei.com/ascendhub/#/home)
+
 - 安装[MindSpore](https://www.mindspore.cn/install)。
 
 - 下载数据集COCO 2017。
@@ -107,6 +113,39 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
 
+# 在docker上运行
+
+1. 编译镜像
+
+```shell
+# 编译镜像
+docker build -t fasterrcnn:20.1.0 . --build-arg FROM_IMAGE_NAME=ascend-mindspore-arm:20.1.0
+```
+
+2. 启动容器实例
+
+```shell
+# 启动容器实例
+bash scripts/docker_start.sh fasterrcnn:20.1.0 [DATA_DIR] [MODEL_DIR]
+```
+
+3. 训练
+
+```shell
+# 单机训练
+sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
+
+# 分布式训练
+sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
+```
+
+4. 评估
+
+```shell
+# 评估
+sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+```
+
 # 脚本说明
 
 ## 脚本及样例代码
@@ -153,9 +192,36 @@ sh run_standalone_train_ascend.sh [PRETRAINED_MODEL]
 sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 ```
 
-> 运行分布式任务时需要用到RANK_TABLE_FILE指定的rank_table.json。您可以使用[hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)生成该文件。
-> PRETRAINED_MODEL应该是在ImageNet 2012上训练的ResNet-50检查点。现成的pretrained_models目前不可用。敬请期待。
-> config.py中包含原数据集路径，可以选择“coco_root”或“image_dir”。
+Notes:
+
+1. 运行分布式任务时需要用到RANK_TABLE_FILE指定的rank_table.json。您可以使用[hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)生成该文件。
+2. PRETRAINED_MODEL应该是训练好的ResNet-50检查点。如果需要加载训练好的FasterRcnn的检查点，需要对train.py作如下修改:
+
+```python
+# 注释掉如下代码
+#   load_path = args_opt.pre_trained
+#    if load_path != "":
+#        param_dict = load_checkpoint(load_path)
+#        for item in list(param_dict.keys()):
+#            if not item.startswith('backbone'):
+#                param_dict.pop(item)
+#        load_param_into_net(net, param_dict)
+
+# 加载训练好的FasterRcnn检查点时需加载网络参数和优化器到模型，因此可以在定义优化器后添加如下代码：
+    lr = Tensor(dynamic_lr(config, rank_size=device_num), mstype.float32)
+    opt = SGD(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
+              weight_decay=config.weight_decay, loss_scale=config.loss_scale)
+
+    if load_path != "":
+        param_dict = load_checkpoint(load_path)
+        for item in list(param_dict.keys()):
+            if item in ("global_step", "learning_rate") or "rcnn.reg_scores" in item or "rcnn.cls_scores" in item:
+                param_dict.pop(item)
+        load_param_into_net(opt, param_dict)
+        load_param_into_net(net, param_dict)
+```
+
+3. config.py中包含原数据集路径，可以选择“coco_root”或“image_dir”。
 
 ### 结果
 
