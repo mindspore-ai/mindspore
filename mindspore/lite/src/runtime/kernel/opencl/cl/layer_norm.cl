@@ -7,7 +7,7 @@ __kernel void ComputeMeanVarDim1NHWC4(__read_only image2d_t src_data, __global F
                                       int4 in_shape, int normalized_shape_size) {
   int X = get_global_id(0);  // n*h
   int Y = get_global_id(1);  // w
-  if (X > in_shape.x * in_shape.y || Y > in_shape.z || in_shape.y == 0) {
+  if (X > in_shape.x * in_shape.y || Y > in_shape.z || in_shape.y == 0 || normalized_shape_size == 0) {
     return;
   }
   int n = X / in_shape.y;

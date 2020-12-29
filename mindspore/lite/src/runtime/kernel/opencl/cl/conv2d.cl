@@ -39,9 +39,9 @@ __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP 
 __kernel void Conv2D_H1W1C1(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
                             __global FLT4 *bias, int4 input_shape, int4 output_shape, int4 kernel_stride, int4 pad,
                             int2 dilation, int act_type, float alpha) {
-  int BlockH = 1;
-  int BlockW = 1;
-  int BlockC = 1;
+  const int BlockH = 1;
+  const int BlockW = 1;
+  const int BlockC = 1;
   DEFINE_ARGS;
 
   int oh0 = oh + 0;
@@ -102,9 +102,9 @@ __kernel void Conv2D_H1W1C1(__read_only image2d_t input, __write_only image2d_t 
 __kernel void Conv2D_H2W1C1(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
                             __global FLT4 *bias, int4 input_shape, int4 output_shape, int4 kernel_stride, int4 pad,
                             int2 dilation, int act_type, float alpha) {
-  int BlockH = 2;
-  int BlockW = 1;
-  int BlockC = 1;
+  const int BlockH = 2;
+  const int BlockW = 1;
+  const int BlockC = 1;
   DEFINE_ARGS;
 
   int oh0 = oh + 0;
@@ -189,9 +189,9 @@ __kernel void Conv2D_H2W1C1(__read_only image2d_t input, __write_only image2d_t 
 __kernel void Conv2D_H2W1C2(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
                             __global FLT4 *bias, int4 input_shape, int4 output_shape, int4 kernel_stride, int4 pad,
                             int2 dilation, int act_type, float alpha) {
-  int BlockH = 2;
-  int BlockW = 1;
-  int BlockC = 2;
+  const int BlockH = 2;
+  const int BlockW = 1;
+  const int BlockC = 2;
   DEFINE_ARGS;
 
   int oh0 = oh + 0;
@@ -312,9 +312,9 @@ __kernel void Conv2D_H2W1C2(__read_only image2d_t input, __write_only image2d_t 
 __kernel void Conv2D_H2W2C2(__read_only image2d_t input, __write_only image2d_t output, __global FLT4 *weight,
                             __global FLT4 *bias, int4 input_shape, int4 output_shape, int4 kernel_stride, int4 pad,
                             int2 dilation, int act_type, float alpha) {
-  int BlockH = 2;
-  int BlockW = 2;
-  int BlockC = 2;
+  const int BlockH = 2;
+  const int BlockW = 2;
+  const int BlockC = 2;
   DEFINE_ARGS;
 
   int oh0 = oh + 0;
