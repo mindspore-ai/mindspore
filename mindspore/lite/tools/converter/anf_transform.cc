@@ -29,6 +29,9 @@
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
+#include "tools/optimizer/fusion/tflite_lstm_cell_fusion.h"
+#include "tools/optimizer/fusion/tf_lstm_cell_fusion.h"
+#include "tools/optimizer/fusion/bidirection_tf_gru_cell_fusion.h"
 #include "tools/optimizer/graph/mindir_adjust_pass.h"
 #include "tools/optimizer/graph/mindir_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/identity_remove_pass.h"
@@ -114,6 +117,9 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
     fusion_pm->AddPass(std::make_shared<opt::ConvActivationFusion>());
     fusion_pm->AddPass(std::make_shared<opt::ConvTupleGetItemFusion>());
     fusion_pm->AddPass(std::make_shared<opt::ConvTupleActivationFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::TfliteLstmCellFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::TfLstmCellFusion>());
+    fusion_pm->AddPass(std::make_shared<opt::BiDirectionTfGruCellFusion>());
   }
   auto weight_format_hardcode_pass = std::make_shared<opt::WeightFormatHardCodePass>();
   weight_format_hardcode_pass->SetFmkType(config->fmk);

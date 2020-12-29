@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2020 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,10 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef LITE_MINDSPORE_LITE_C_OPS_LSTM_H_
-#define LITE_MINDSPORE_LITE_C_OPS_LSTM_H_
-
+#ifndef MINDSPORE_LITE_SRC_OPS_GRU_H_
+#define MINDSPORE_LITE_SRC_OPS_GRU_H_
 #include <vector>
 #include <set>
 #include <cmath>
@@ -25,24 +23,25 @@
 
 namespace mindspore {
 namespace lite {
-class Lstm : public PrimitiveC {
+/*
+ * gru with linear_before_reset = 0
+ */
+class Gru : public PrimitiveC {
  public:
-  Lstm() = default;
-  ~Lstm() = default;
+  Gru() = default;
+  ~Gru() = default;
 #ifdef PRIMITIVE_WRITEABLE
-  MS_DECLARE_PARENT(Lstm, PrimitiveC);
-  explicit Lstm(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  MS_DECLARE_PARENT(Gru, PrimitiveC);
+  explicit Gru(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   void SetBidirection(bool bidirection);
-  void SetSmooth(float smooth);
 
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   bool GetBidirection() const;
-  float GetSmooth() const;
 };
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // LITE_MINDSPORE_LITE_C_OPS_LSTM_H_
+#endif  // MINDSPORE_LITE_SRC_OPS_GRU_H_

@@ -1,0 +1,679 @@
+/**
+ * Copyright 2020 Huawei Technologies Co., Ltd
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include "tools/optimizer/fusion/bidirection_tf_gru_cell_fusion.h"
+#include <memory>
+#include <functional>
+#include "src/ops/primitive_c.h"
+#include "src/common/utils.h"
+#include "utils/utils.h"
+#include "tools/optimizer/common/gllo_utils.h"
+#include "securec/include/securec.h"
+
+namespace mindspore {
+namespace opt {
+namespace {
+constexpr size_t kWhileCommonInputsLength = 2;
+constexpr size_t kWhileUniqInputsLength = 6;
+constexpr size_t kCondNodesNum = 12;
+constexpr size_t kCondCNodesNum = 4;
+constexpr size_t kBodyNodesNum = 69;
+constexpr size_t kBodyCNodesNum = 25;
+const auto &p1 = std::placeholders::_1;
+
+bool IsParameterNode(const BaseRef &n) { return utils::isa<ParameterPtr>(n); }
+
+bool IsOpType(const BaseRef &n, const schema::PrimitiveType &type) {
+  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
+    return opt::GetCNodeType(n) == type;
+  }
+  return false;
+}
+}  // namespace
+
+BiDirectionTfGruCellFusion::BiDirectionTfGruCellFusion(const std::string &name, bool multigraph)
+    : PatternProcessPass(name, multigraph) {
+  /*
+   * vars for while input
+   * common:
+   * 0:const0 1:init_state
+   * fw_while_inputs:
+   * 0:cond 1:body 2:kernel_gate 3:bias_gate 4:cand_kernel 5:cand_bias
+   * bw_while_inputs:
+   * 0:cond 1:body 2:kernel_gate 3:bias_gate 4:cand_kernel 5:cand_bias
+   */
+  for (size_t i = 0; i < kWhileCommonInputsLength; ++i) {
+    common_vars_.emplace_back(std::make_shared<Var>());
+  }
+  for (size_t i = 0; i < kWhileUniqInputsLength; ++i) {
+    fw_vars_.emplace_back(std::make_shared<Var>());
+    bw_vars_.emplace_back(std::make_shared<Var>());
+  }
+  input_ = std::make_shared<Var>();
+  input_length_ = std::make_shared<Var>();
+  transpose_input_ = std::make_shared<Var>();
+}
+
+const BaseRef BiDirectionTfGruCellFusion::DefinePattern() const {
+  auto const1 = std::make_shared<CondVar>(IsParameterNode);
+  auto ele_shape = std::make_shared<CondVar>(IsParameterNode);
+
+  // forward
+  auto fw_max1 =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Reduce)), input_length_});
+  auto fw_max2 =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Maximum)), const1, fw_max1});
+
+  auto fw_shape =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Shape)), transpose_input_});
+  auto fw_stride =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_StridedSlice)), fw_shape});
+  auto fw_min =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Minimum)), fw_stride, fw_max2});
+
+  auto fw_reserve =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListReserve)), ele_shape,
+               fw_stride});
+  auto fw_from_tensor =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListFromTensor)),
+               transpose_input_, ele_shape});
+  auto is_fw_while = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_While));
+  auto fw_while = VectorRef({is_fw_while, fw_vars_[0], fw_vars_[1], common_vars_[0], fw_stride, common_vars_[0],
+                             fw_reserve, common_vars_[1], fw_min, fw_from_tensor, input_length_});
+  fw_while.insert(fw_while.end(), fw_vars_.begin() + 2, fw_vars_.end());
+  fw_while.emplace_back(common_vars_[1]);
+  auto fw_get_item = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TupleGetItem)),
+                                fw_while, std::make_shared<Var>()});
+  auto fw_stack = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListStack)),
+                             fw_get_item, ele_shape});
+  auto fw_out_trans =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Transpose)), fw_stack});
+
+  // backward
+  auto bw_reverse_seq = VectorRef(
+    {std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_ReverseSequence)), input_, input_length_});
+  auto bw_max1 =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Reduce)), input_length_});
+  auto bw_max2 =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Maximum)), const1, bw_max1});
+  auto bw_trans =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Transpose)), bw_reverse_seq});
+  auto bw_shape =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Shape)), bw_trans});
+  auto bw_stride =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_StridedSlice)), bw_shape});
+  auto bw_min =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Minimum)), bw_stride, bw_max2});
+  auto bw_reserve =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListReserve)), ele_shape,
+               bw_stride});
+  auto bw_from_tensor =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListFromTensor)), bw_trans,
+               ele_shape});
+  auto is_bw_while = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_While));
+  auto bw_while = VectorRef({is_bw_while, bw_vars_[0], bw_vars_[1], common_vars_[0], bw_stride, common_vars_[0],
+                             bw_reserve, common_vars_[1], bw_min, bw_from_tensor, input_length_});
+  bw_while.insert(bw_while.end(), bw_vars_.begin() + 2, bw_vars_.end());
+  bw_while.emplace_back(common_vars_[1]);
+  auto bw_get_item = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TupleGetItem)),
+                                bw_while, std::make_shared<Var>()});
+  auto bw_stack = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_TensorListStack)),
+                             bw_get_item, ele_shape});
+  auto bw_out_trans =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Transpose)), bw_stack});
+  auto bw_reverse1 =
+    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_ReverseSequence)), bw_out_trans,
+               input_length_});
+
+  auto concat = VectorRef(
+    {std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Concat)), fw_out_trans, bw_reverse1});
+  return concat;
+}
+
+AnfNodePtr BiDirectionTfGruCellFusion::GetCondGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
+  auto is_parameter1 = std::make_shared<CondVar>(IsParameterNode);
+  auto is_parameter2 = std::make_shared<CondVar>(IsParameterNode);
+  auto is_parameter3 = std::make_shared<CondVar>(IsParameterNode);
+  auto is_parameter4 = std::make_shared<CondVar>(IsParameterNode);
+  auto is_less1 = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Less));
+  auto is_less2 = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Less));
+  auto is_logical_and = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_LogicalAnd));
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Return));
+  VectorRef less1_ref = VectorRef({is_less1, is_parameter1, is_parameter2});
+  VectorRef less2_ref = VectorRef({is_less2, is_parameter3, is_parameter4});
+  VectorRef logicaland_ref = VectorRef({is_logical_and, less1_ref, less2_ref});
+  VectorRef return_ref = VectorRef({is_return, logicaland_ref});
+  VarPtr fg = std::make_shared<Var>("RootG");
+  auto pattern = SexpToNode(return_ref, fg, primitive_vars.get(), true);
+  return pattern;
+}
+
+AnfNodePtr BiDirectionTfGruCellFusion::GetBodyGraphPattern(const PrimitiveVarMapPtr &primitive_vars) const {
+  std::vector<CondVarPtr> placeholders;
+  for (int i = 0; i < 13; ++i) {
+    placeholders.emplace_back(std::make_shared<CondVar>(IsParameterNode));
+  }
+  VectorRef add = VectorRef({std::make_shared<Var>(), placeholders[2], std::make_shared<CondVar>(IsParameterNode)});
+  VectorRef add1 = VectorRef({std::make_shared<Var>(), placeholders[0], std::make_shared<CondVar>(IsParameterNode)});
+
+  VectorRef get_item = VectorRef(
+    {std::make_shared<Var>("GetItem"), placeholders[6], placeholders[2], std::make_shared<CondVar>(IsParameterNode)});
+  VectorRef concat_input_h = VectorRef({std::make_shared<Var>(), get_item, placeholders[4]});
+
+  VectorRef matmul1 = VectorRef({std::make_shared<Var>("Matmul"), concat_input_h, placeholders[8]});
+  VectorRef biasadd1 = VectorRef({std::make_shared<Var>("BiasAdd"), matmul1, placeholders[9]});
+  VectorRef sigmoid1 = VectorRef({std::make_shared<Var>("Sigmoid"), biasadd1});
+
+  VectorRef split = VectorRef({std::make_shared<Var>("Split"), sigmoid1});
+  VectorRef get_item1 = VectorRef({std::make_shared<Var>("TupleGetItem"), split, std::make_shared<Var>()});
+  VectorRef get_item2 = VectorRef({std::make_shared<Var>("TupleGetItem"), split, std::make_shared<Var>()});
+
+  VectorRef pre_reset = VectorRef({std::make_shared<Var>("Mul"), get_item1, placeholders[4]});
+  VectorRef concat2 = VectorRef({std::make_shared<Var>("Concat"), get_item, pre_reset});
+  VectorRef matmul2 = VectorRef({std::make_shared<Var>("Matmul"), concat2, placeholders[10]});
+  VectorRef biasadd2 = VectorRef({std::make_shared<Var>("BiasAdd"), matmul2, placeholders[11]});
+  VectorRef tanh = VectorRef({std::make_shared<Var>("Tanh"), biasadd2});
+
+  VectorRef update_hidden = VectorRef({std::make_shared<Var>("Mul"), get_item2, placeholders[4]});
+  VectorRef minus_update =
+    VectorRef({std::make_shared<Var>("Sub"), std::make_shared<CondVar>(IsParameterNode), get_item2});
+  VectorRef updated = VectorRef({std::make_shared<Var>("Mul"), minus_update, tanh});
+
+  VectorRef new_hidden = VectorRef({std::make_shared<Var>("Add"), update_hidden, updated});
+
+  VectorRef greater_equal = VectorRef({std::make_shared<Var>("GreaterEqual"), placeholders[2], placeholders[7]});
+
+  VectorRef select_output = VectorRef({std::make_shared<Var>("Switch"), greater_equal, placeholders[12], new_hidden});
+  VectorRef output = VectorRef({std::make_shared<Var>("SetItem"), placeholders[3], placeholders[2], select_output});
+
+  VectorRef select_hidden = VectorRef({std::make_shared<Var>("Switch"), greater_equal, placeholders[4], new_hidden});
+
+  auto is_make_tuple = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_MakeTuple));
+  std::vector<BaseRef> outputs = {is_make_tuple,  add1,          placeholders[1], add,
+                                  output,         select_hidden, placeholders[5], placeholders[6],
+                                  placeholders[7]};
+  outputs.insert(outputs.end(), placeholders.begin() + 8, placeholders.end());
+  VectorRef make_tuple_node = VectorRef(outputs);
+  auto is_return = std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Return));
+  VectorRef return_node = VectorRef({is_return, make_tuple_node});
+
+  VarPtr fg = std::make_shared<Var>("RootG");
+  auto pattern = SexpToNode(return_node, fg, primitive_vars.get(), true);
+  return pattern;
+}
+
+ParamValueLitePtr BiDirectionTfGruCellFusion::GetDefaultParamValue(const AnfNodePtr &parameter_anf) const {
+  MS_ASSERT(parameter_anf != nullptr);
+  if (!utils::isa<ParameterPtr>(parameter_anf)) {
+    MS_LOG(DEBUG) << "parameter_anf is not ParameterPtr";
+    return nullptr;
+  }
+  auto parameter = utils::cast<ParameterPtr>(parameter_anf);
+  if (!parameter->has_default()) {
+    MS_LOG(DEBUG) << "parameter not have default value";
+    return nullptr;
+  }
+  auto param_value = std::dynamic_pointer_cast<ParamValueLite>(parameter->default_param());
+  return param_value;
+}
+
+STATUS BiDirectionTfGruCellFusion::GetInputAndHiddenSize(const AnfNodePtr &fw_cand_kernel_anf,
+                                                         const AnfNodePtr &bw_cand_kernel_anf, int *input_size,
+                                                         int *hidden_size) const {
+  MS_ASSERT(fw_cand_kernel != nullptr);
+  MS_ASSERT(bw_cand_kernel != nullptr);
+  MS_ASSERT(input_size != nullptr);
+  MS_ASSERT(hidden_size != nullptr);
+  auto fw_cand_kernel_value = GetDefaultParamValue(fw_cand_kernel_anf);
+  if (fw_cand_kernel_value == nullptr) {
+    return RET_ERROR;
+  }
+  auto fw_cand_kernel_shape = fw_cand_kernel_value->tensor_shape();
+  if (fw_cand_kernel_shape.size() != 2) {
+    return RET_ERROR;
+  }
+  auto bw_cand_kernel_value = GetDefaultParamValue(bw_cand_kernel_anf);
+  if (bw_cand_kernel_value == nullptr) {
+    return RET_ERROR;
+  }
+  auto bw_cand_kernel_shape = bw_cand_kernel_value->tensor_shape();
+  if (bw_cand_kernel_shape.size() != 2) {
+    return RET_ERROR;
+  }
+  if (fw_cand_kernel_shape != bw_cand_kernel_shape) {
+    return RET_ERROR;
+  }
+  if (fw_cand_kernel_shape[1] <= 0 || fw_cand_kernel_shape[0] - fw_cand_kernel_shape[1] <= 0) {
+    MS_LOG(DEBUG) << "gru input size or hidden size illegal";
+    return RET_ERROR;
+  }
+  *hidden_size = fw_cand_kernel_shape[1];
+  *input_size = fw_cand_kernel_shape[0] - fw_cand_kernel_shape[1];
+  return RET_OK;
+}
+
+ParameterPtr BiDirectionTfGruCellFusion::AddDefaultParameter(const FuncGraphPtr &func_graph, const std::string &name,
+                                                             const std::vector<int> &shape, const TypeId type,
+                                                             void **tensor_data) const {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(tensor_data != nullptr);
+  auto parameter = func_graph->add_parameter();
+  parameter->set_name(name);
+  std::vector<int64_t> shape_vector(shape.begin(), shape.end());
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type), shape_vector);
+  if (abstract_tensor == nullptr) {
+    return nullptr;
+  }
+  parameter->set_abstract(abstract_tensor);
+
+  auto gate_weight_default = std::make_shared<ParamValueLite>();
+  if (gate_weight_default == nullptr) {
+    MS_LOG(ERROR) << "gate_weight_default is nullptr";
+    return nullptr;
+  }
+  gate_weight_default->set_tensor_shape(shape);
+  gate_weight_default->set_tensor_type(type);
+  gate_weight_default->set_format(schema::Format_NHWC);
+  int data_len = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+  int data_size = 0;
+  if (type == kNumberTypeFloat32 || type == kNumberTypeFloat) {
+    data_size = data_len * sizeof(float);
+    *tensor_data = new (std::nothrow) float[data_len];
+  } else if (type == kNumberTypeInt || type == kNumberTypeInt32) {
+    data_size = data_len * sizeof(int);
+    *tensor_data = new (std::nothrow) int[data_len];
+  } else {
+    MS_LOG(DEBUG) << "unsupported data type";
+    return nullptr;
+  }
+  if (*tensor_data == nullptr) {
+    MS_LOG(ERROR) << "new data failed";
+    return nullptr;
+  }
+
+  gate_weight_default->SetTensorData(*tensor_data, data_size);
+  parameter->set_default_param(gate_weight_default);
+  return parameter;
+}
+
+void BiDirectionTfGruCellFusion::CopyFlattenMatData(const float *mat, const int R, const int C, const int r0,
+                                                    const int r1, const int c0, const int c1, float *data,
+                                                    bool t) const {
+  MS_ASSERT(mat != nullptr);
+  MS_ASSERT(data != nullptr);
+  MS_ASSERT(0 <= r0 && r0 < r1 && r1 <= R);
+  MS_ASSERT(0 <= c0 && c0 < c1 && c1 <= C);
+  const int RT = r1 - r0;
+  const int CT = c1 - c0;
+  for (int i = r0; i < r1; ++i) {
+    for (int j = c0; j < c1; ++j) {
+      if (t) {
+        data[(j - c0) * RT + (i - r0)] = mat[i * C + j];
+      } else {
+        data[(i - r0) * CT + (j - c0)] = mat[i * C + j];
+      }
+    }
+  }
+}
+
+STATUS BiDirectionTfGruCellFusion::ConvertWeightData(const AnfNodePtr &gate_weight, const AnfNodePtr &cand_weight,
+                                                     const int input_size, const int hidden_size,
+                                                     float *gate_tensor_data, float *recu_tensor_data) const {
+  MS_ASSERT(gate_weight != nullptr);
+  MS_ASSERT(cand_weight != nullptr);
+  MS_ASSERT(gate_tensor_data != nullptr);
+  MS_ASSERT(recu_tensor_data != nullptr);
+  const std::vector<int> gate_shape{input_size + hidden_size, hidden_size * 2};
+  const std::vector<int> cand_shape{hidden_size * 2, hidden_size};
+  auto gate_weight_value = GetDefaultParamValue(gate_weight);
+  if (gate_weight_value == nullptr) {
+    return RET_ERROR;
+  }
+  auto gate_weight_data = reinterpret_cast<float *>(gate_weight_value->tensor_addr());
+  if (gate_weight_data == nullptr) {
+    return RET_ERROR;
+  }
+  auto gate_weight_shape = gate_weight_value->tensor_shape();
+
+  auto cand_weight_value = GetDefaultParamValue(cand_weight);
+  if (cand_weight_value == nullptr) {
+    return RET_ERROR;
+  }
+  auto cand_weight_data = reinterpret_cast<float *>(cand_weight_value->tensor_addr());
+  if (cand_weight_data == nullptr) {
+    return RET_ERROR;
+  }
+  auto cand_weight_shape = cand_weight_value->tensor_shape();
+
+  if (gate_weight_shape != gate_shape || cand_weight_shape != cand_shape) {
+    return RET_ERROR;
+  }
+
+  // input_update_weight
+  CopyFlattenMatData(gate_weight_data, input_size + hidden_size, hidden_size * 2, 0, input_size, hidden_size,
+                     hidden_size * 2, gate_tensor_data, true);
+  // input_reset_weight
+  CopyFlattenMatData(gate_weight_data, input_size + hidden_size, hidden_size * 2, 0, input_size, 0, hidden_size,
+                     gate_tensor_data + input_size * hidden_size, true);
+  // input_hidden_weight
+  CopyFlattenMatData(cand_weight_data, input_size + hidden_size, hidden_size, 0, input_size, 0, hidden_size,
+                     gate_tensor_data + input_size * hidden_size * 2, true);
+
+  // state_update_weight
+  CopyFlattenMatData(gate_weight_data, input_size + hidden_size, hidden_size * 2, input_size, input_size + hidden_size,
+                     hidden_size, hidden_size * 2, recu_tensor_data, true);
+  // state_reset_weight
+  CopyFlattenMatData(gate_weight_data, input_size + hidden_size, hidden_size * 2, input_size, input_size + hidden_size,
+                     0, hidden_size, recu_tensor_data + hidden_size * hidden_size, true);
+  // state_hidden_weight
+  CopyFlattenMatData(cand_weight_data, input_size + hidden_size, hidden_size, input_size, input_size + hidden_size, 0,
+                     hidden_size, recu_tensor_data + hidden_size * hidden_size * 2, true);
+  return RET_OK;
+}
+
+STATUS BiDirectionTfGruCellFusion::ConvertBiasData(const AnfNodePtr &gate_bias, const AnfNodePtr &cand_bias,
+                                                   const int hidden_size, float *tensor_data) const {
+  MS_ASSERT(bias != nullptr);
+  MS_ASSERT(tensor_data != nullptr);
+  std::vector<int> gate_shape{hidden_size * 2};
+  std::vector<int> cand_shape{hidden_size};
+  auto gate_bias_value = GetDefaultParamValue(gate_bias);
+  if (gate_bias_value == nullptr) {
+    return RET_ERROR;
+  }
+  auto gate_bias_data = reinterpret_cast<float *>(gate_bias_value->tensor_addr());
+  auto gate_bias_shape = gate_bias_value->tensor_shape();
+  auto cand_bias_value = GetDefaultParamValue(cand_bias);
+  if (cand_bias_value == nullptr) {
+    return RET_ERROR;
+  }
+  auto cand_bias_data = reinterpret_cast<float *>(cand_bias_value->tensor_addr());
+  auto cand_bias_shape = cand_bias_value->tensor_shape();
+  if (gate_bias_shape != gate_shape || cand_bias_shape != cand_shape) {
+    return RET_ERROR;
+  }
+
+  // update_gate bias
+  CopyFlattenMatData(gate_bias_data, 1, hidden_size * 2, 0, 1, hidden_size, hidden_size * 2, tensor_data, false);
+  // reset_gate bias
+  CopyFlattenMatData(gate_bias_data, 1, hidden_size * 2, 0, 1, 0, hidden_size, tensor_data + hidden_size, false);
+  // hidden_gate bias
+  CopyFlattenMatData(cand_bias_data, 1, hidden_size, 0, 1, 0, hidden_size, tensor_data + hidden_size * 2, false);
+
+  return RET_OK;
+}
+
+CNodePtr BiDirectionTfGruCellFusion::GetStackedHiddenState(const FuncGraphPtr &func_graph,
+                                                           const AnfNodePtr &hidden_state,
+                                                           const std::string base_name) const {
+  MS_ASSERT(func_graph);
+  MS_ASSERT(hidden_state);
+  auto stack_primitive = std::make_unique<schema::PrimitiveT>();
+  std::unique_ptr<schema::StackT> attr = std::make_unique<schema::StackT>();
+  attr->axis = 0;
+  stack_primitive->value.type = schema::PrimitiveType_Stack;
+  stack_primitive->value.value = attr.release();
+  auto stack_cvalue = lite::PrimitiveC::Create(stack_primitive.release());
+  auto value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(stack_cvalue));
+  std::vector<AnfNodePtr> new_node_inputs = {value_node, hidden_state, hidden_state};
+  auto new_node = func_graph->NewCNode(new_node_inputs);
+  new_node->set_abstract(hidden_state->abstract()->Clone());
+  new_node->set_fullname_with_scope("stack_hidden_" + base_name);
+  return new_node;
+}
+
+CNodePtr BiDirectionTfGruCellFusion::CreateBiDirectionGruNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
+                                                              const EquivPtr &equiv, const EquivPtr &fw_body_equiv,
+                                                              const EquivPtr &bw_body_equiv,
+                                                              const std::string &base_name) const {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(input != nullptr);
+  MS_ASSERT(equiv != nullptr);
+  MS_ASSERT(fw_body_equiv != nullptr);
+  MS_ASSERT(bw_body_equiv != nullptr);
+  auto gru_primitive = std::make_unique<schema::PrimitiveT>();
+  std::unique_ptr<schema::GruT> attr = std::make_unique<schema::GruT>();
+  attr->bidirection = true;
+  gru_primitive->value.type = schema::PrimitiveType_Gru;
+  gru_primitive->value.value = attr.release();
+  auto gru_cvalue = lite::PrimitiveC::Create(gru_primitive.release());
+  auto value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(gru_cvalue));
+
+  auto fw_gate_kernel = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[2]]);
+  MS_ASSERT(fw_gate_kernel);
+  auto fw_gate_bias = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[3]]);
+  MS_ASSERT(fw_gate_bias);
+  auto fw_cand_kernel = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[4]]);
+  MS_ASSERT(fw_cand_kernel);
+  auto fw_cand_bias = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[5]]);
+  MS_ASSERT(fw_cand_bias);
+
+  auto bw_gate_kernel = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[2]]);
+  MS_ASSERT(bw_gate_kernel);
+  auto bw_gate_bias = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[3]]);
+  MS_ASSERT(bw_gate_bias);
+  auto bw_cand_kernel = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[4]]);
+  MS_ASSERT(bw_cand_kernel);
+  auto bw_cand_bias = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[5]]);
+  MS_ASSERT(bw_cand_bias);
+
+  auto hidden = utils::cast<AnfNodePtr>((*equiv)[common_vars_[1]]);
+  MS_ASSERT(hidden);
+  auto stacked_hidden = GetStackedHiddenState(func_graph, hidden, base_name);
+  if (stacked_hidden == nullptr) {
+    return nullptr;
+  }
+  auto input_length = utils::cast<AnfNodePtr>((*equiv)[input_length_]);
+  MS_ASSERT(hidden);
+
+  int input_size = 0;
+  int hidden_size = 0;
+  auto status = GetInputAndHiddenSize(fw_cand_kernel, bw_cand_kernel, &input_size, &hidden_size);
+  if (status != RET_OK) {
+    return nullptr;
+  }
+  std::vector<int> gate_weight_shape{2, hidden_size * 3, input_size};
+  float *gate_tensor_data = nullptr;
+  auto gate_weight = AddDefaultParameter(func_graph, base_name + "_gate_weight", gate_weight_shape, kNumberTypeFloat32,
+                                         reinterpret_cast<void **>(&gate_tensor_data));
+  if (gate_weight == nullptr) {
+    return nullptr;
+  }
+  std::vector<int> recu_weight_shape{2, hidden_size * 3, hidden_size};
+  float *recu_tensor_data = nullptr;
+  auto recu_weight = AddDefaultParameter(func_graph, base_name + "_cand_weight", recu_weight_shape, kNumberTypeFloat32,
+                                         reinterpret_cast<void **>(&recu_tensor_data));
+  if (recu_weight == nullptr) {
+    return nullptr;
+  }
+  std::vector<int> bias_shape{2, hidden_size * 6};
+  float *bias_tensor_data = nullptr;
+  auto bias = AddDefaultParameter(func_graph, base_name + "_bias", bias_shape, kNumberTypeFloat32,
+                                  reinterpret_cast<void **>(&bias_tensor_data));
+  if (bias == nullptr) {
+    return nullptr;
+  }
+  for (int i = 0; i < 2 * hidden_size * 6; ++i) {
+    bias_tensor_data[i] = 0.0f;
+  }
+
+  if (ConvertWeightData(fw_gate_kernel, fw_cand_kernel, input_size, hidden_size, gate_tensor_data, recu_tensor_data) !=
+      RET_OK) {
+    return nullptr;
+  }
+  auto gate_data_diff = hidden_size * input_size * 3;
+  auto recu_data_diff = hidden_size * hidden_size * 3;
+  if (ConvertWeightData(bw_gate_kernel, bw_cand_kernel, input_size, hidden_size, gate_tensor_data + gate_data_diff,
+                        recu_tensor_data + recu_data_diff) != RET_OK) {
+    return nullptr;
+  }
+
+  if (ConvertBiasData(fw_gate_bias, fw_cand_bias, hidden_size, bias_tensor_data) != RET_OK) {
+    return nullptr;
+  }
+  auto bias_data_diff = hidden_size * 6;
+  if (ConvertBiasData(bw_gate_bias, bw_cand_bias, hidden_size, bias_tensor_data + bias_data_diff) != RET_OK) {
+    return nullptr;
+  }
+  std::vector<AnfNodePtr> new_node_inputs = {value_node, input,          gate_weight, recu_weight,
+                                             bias,       stacked_hidden, input_length};
+  auto new_node = func_graph->NewCNode(new_node_inputs);
+  new_node->set_fullname_with_scope(base_name);
+  return new_node;
+}
+
+CNodePtr BiDirectionTfGruCellFusion::GetPostProcessNode(const FuncGraphPtr &func_graph, const CNodePtr &gru_output,
+                                                        const std::string base_name) const {
+  MS_ASSERT(func_graph);
+  MS_ASSERT(gru_output);
+  auto split_primitive = std::make_unique<schema::PrimitiveT>();
+  std::unique_ptr<schema::SplitT> split_attr = std::make_unique<schema::SplitT>();
+  split_attr->numberSplit = 2;
+  split_attr->splitDim = 1;
+  split_primitive->value.type = schema::PrimitiveType_Split;
+  split_primitive->value.value = split_attr.release();
+  auto split_cvalue = lite::PrimitiveC::Create(split_primitive.release());
+  auto split_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(split_cvalue));
+  std::vector<AnfNodePtr> new_node_inputs = {split_value_node, gru_output};
+  auto split_new_node = func_graph->NewCNode(new_node_inputs);
+  split_new_node->set_fullname_with_scope("split_" + base_name);
+  if (TfliteLstmCellFusion::SetAbstractTuple(split_new_node, 2) != RET_OK) {
+    return nullptr;
+  }
+
+  auto split_out1 = TfliteLstmCellFusion::CreateOutputGetItem(func_graph, split_new_node, 0);
+  if (split_out1 == nullptr) {
+    return nullptr;
+  }
+  auto split_out2 = TfliteLstmCellFusion::CreateOutputGetItem(func_graph, split_new_node, 1);
+  if (split_out2 == nullptr) {
+    return nullptr;
+  }
+
+  auto concat_primitive = std::make_unique<schema::PrimitiveT>();
+  std::unique_ptr<schema::ConcatT> concat_attr = std::make_unique<schema::ConcatT>();
+  concat_attr->axis = 3;
+  concat_primitive->value.type = schema::PrimitiveType_Concat;
+  concat_primitive->value.value = concat_attr.release();
+  auto concat_cvalue = lite::PrimitiveC::Create(concat_primitive.release());
+  auto concat_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(concat_cvalue));
+  std::vector<AnfNodePtr> concat_new_node_inputs = {concat_value_node, split_out1, split_out2};
+  auto concat_new_node = func_graph->NewCNode(concat_new_node_inputs);
+  concat_new_node->set_fullname_with_scope("concat_" + base_name);
+  concat_new_node->set_abstract(gru_output->abstract()->Clone());
+
+  auto squeeze_primitive = std::make_unique<schema::PrimitiveT>();
+  std::unique_ptr<schema::SqueezeT> squeeze_attr = std::make_unique<schema::SqueezeT>();
+  squeeze_attr->axis = std::vector<int>{1};
+  squeeze_primitive->value.type = schema::PrimitiveType_Squeeze;
+  squeeze_primitive->value.value = squeeze_attr.release();
+  auto squeeze_cvalue = lite::PrimitiveC::Create(squeeze_primitive.release());
+  auto squeeze_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(squeeze_cvalue));
+  std::vector<AnfNodePtr> squeeze_new_node_inputs = {squeeze_value_node, concat_new_node};
+  auto squeeze_new_node = func_graph->NewCNode(squeeze_new_node_inputs);
+  squeeze_new_node->set_fullname_with_scope("squeeze_" + base_name);
+  squeeze_new_node->set_abstract(gru_output->abstract()->Clone());
+
+  auto transpose_primitive = std::make_unique<schema::PrimitiveT>();
+  std::unique_ptr<schema::TransposeT> transpose_attr = std::make_unique<schema::TransposeT>();
+  transpose_attr->perm = std::vector<int>{1, 0, 2};
+  transpose_primitive->value.type = schema::PrimitiveType_Transpose;
+  transpose_primitive->value.value = transpose_attr.release();
+  auto transpose_cvalue = lite::PrimitiveC::Create(transpose_primitive.release());
+  auto transpose_value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(transpose_cvalue));
+  std::vector<AnfNodePtr> transpose_new_node_inputs = {transpose_value_node, squeeze_new_node};
+  auto transpose_new_node = func_graph->NewCNode(transpose_new_node_inputs);
+  transpose_new_node->set_fullname_with_scope("transpose_" + base_name);
+  transpose_new_node->set_abstract(gru_output->abstract()->Clone());
+
+  return transpose_new_node;
+}
+
+const AnfNodePtr BiDirectionTfGruCellFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &concat_node,
+                                                     const EquivPtr &equiv) const {
+  MS_ASSERT(func_graph);
+  MS_ASSERT(concat_node);
+  MS_LOG(DEBUG) << "bidirection tf gru fusion pass";
+  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(concat_node) != lite::RET_OK) {
+    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+    return nullptr;
+  }
+
+  auto transpose_input = utils::cast<AnfNodePtr>((*equiv)[transpose_input_]);
+  MS_ASSERT(transpose_input);
+  if (!utils::isa<CNodePtr>(transpose_input) || GetCNodeType(transpose_input) != schema::PrimitiveType_Transpose) {
+    return nullptr;
+  }
+
+  PrimitiveVarMapPtr fw_cond_primitive_vars = std::make_shared<PrimitiveVarMap>();
+  auto fw_cond_graph_pattern = GetCondGraphPattern(fw_cond_primitive_vars);
+  auto fw_cond = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[0]]);
+  MS_ASSERT(fw_cond != nullptr);
+  auto fw_cond_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, fw_cond_graph_pattern, fw_cond_primitive_vars,
+                                                           fw_cond, kCondCNodesNum, kCondNodesNum);
+  if (fw_cond_equiv == nullptr || fw_cond_equiv->empty()) {
+    return nullptr;
+  }
+
+  PrimitiveVarMapPtr bw_cond_primitive_vars = std::make_shared<PrimitiveVarMap>();
+  auto bw_cond_graph_pattern = GetCondGraphPattern(bw_cond_primitive_vars);
+  auto bw_cond = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[0]]);
+  MS_ASSERT(bw_cond != nullptr);
+  auto bw_cond_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, bw_cond_graph_pattern, bw_cond_primitive_vars,
+                                                           bw_cond, kCondCNodesNum, kCondNodesNum);
+  if (bw_cond_equiv == nullptr || bw_cond_equiv->empty()) {
+    return nullptr;
+  }
+
+  PrimitiveVarMapPtr fw_primitive_vars_body = std::make_shared<PrimitiveVarMap>();
+  auto fw_body_graph_pattern = GetBodyGraphPattern(fw_primitive_vars_body);
+  auto fw_body = utils::cast<AnfNodePtr>((*equiv)[fw_vars_[1]]);
+  MS_ASSERT(fw_body != nullptr);
+  auto fw_body_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, fw_body_graph_pattern, fw_primitive_vars_body,
+                                                           fw_body, kBodyCNodesNum, kBodyNodesNum);
+  if (fw_body_equiv == nullptr || fw_body_equiv->empty()) {
+    return nullptr;
+  }
+
+  PrimitiveVarMapPtr bw_primitive_vars_body = std::make_shared<PrimitiveVarMap>();
+  auto bw_body_graph_pattern = GetBodyGraphPattern(bw_primitive_vars_body);
+  auto bw_body = utils::cast<AnfNodePtr>((*equiv)[bw_vars_[1]]);
+  MS_ASSERT(bw_body != nullptr);
+  auto bw_body_equiv = TfliteLstmCellFusion::CheckSubGraph(func_graph, bw_body_graph_pattern, bw_primitive_vars_body,
+                                                           bw_body, kBodyCNodesNum, kBodyNodesNum);
+  if (bw_body_equiv == nullptr || bw_body_equiv->empty()) {
+    return nullptr;
+  }
+
+  const std::string gru_name = "gru_" + concat_node->fullname_with_scope();
+  auto gru_node = CreateBiDirectionGruNode(func_graph, transpose_input, equiv, fw_body_equiv, bw_body_equiv, gru_name);
+  if (gru_node == nullptr) {
+    return nullptr;
+  }
+  if (TfliteLstmCellFusion::SetAbstractTuple(gru_node, 2) != RET_OK) {
+    return nullptr;
+  }
+
+  auto get_item_node = TfliteLstmCellFusion::CreateOutputGetItem(func_graph, gru_node, 0);
+  if (get_item_node == nullptr) {
+    return nullptr;
+  }
+
+  auto output_node = GetPostProcessNode(func_graph, get_item_node, gru_node->fullname_with_scope());
+  MS_LOG(INFO) << "gru node:" << gru_node->fullname_with_scope() << " fusion success";
+  return output_node;
+}
+}  // namespace opt
+}  // namespace mindspore

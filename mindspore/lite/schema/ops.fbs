@@ -1005,6 +1005,11 @@ table OneHot {
 
 table Lstm{
     bidirection: bool = false;
+    smooth: float = 0.0;
+}
+
+table Gru{
+    bidirection: bool = false;
 }
 
 table PriorBox {
