@@ -33,7 +33,29 @@ TEST_F(TestConv2d, test_cops_conv2d) {
   conv_2d->Init(64, {7, 7});
   auto tensor_x = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat32, std::vector<int64_t>{32, 3, 224, 224});
   auto tensor_w = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat32, std::vector<int64_t>{64, 3, 7, 7});
-  conv_2d->Infer({tensor_w->ToAbstract(), tensor_w->ToAbstract()});
+  MS_EXCEPTION_IF_NULL(tensor_x);
+  MS_EXCEPTION_IF_NULL(tensor_w);
+  auto conv_abstract = conv_2d->Infer({tensor_x->ToAbstract(), tensor_w->ToAbstract()});
+  MS_EXCEPTION_IF_NULL(conv_abstract);
+  EXPECT_EQ(conv_abstract->isa<abstract::AbstractTensor>(), true);
+  auto shape_ptr = conv_abstract->BuildShape();
+  MS_EXCEPTION_IF_NULL(shape_ptr);
+  EXPECT_EQ(shape_ptr->isa<abstract::Shape>(), true);
+  auto conv_shape = shape_ptr->cast<abstract::ShapePtr>();
+  MS_EXCEPTION_IF_NULL(conv_shape);
+  auto shape_vec = conv_shape->shape();
+  auto type = conv_abstract->BuildType();
+  MS_EXCEPTION_IF_NULL(type);
+  EXPECT_EQ(type->isa<TensorType>(), true);
+  auto tensor_type = type->cast<TensorTypePtr>();
+  MS_EXCEPTION_IF_NULL(tensor_type);
+  auto elem_type = tensor_type->element();
+  EXPECT_EQ(elem_type->type_id(), kNumberTypeFloat32);
+  EXPECT_EQ(shape_vec.size(), 4);
+  EXPECT_EQ(shape_vec[0], 32);
+  EXPECT_EQ(shape_vec[1], 64);
+  EXPECT_EQ(shape_vec[2], 218);
+  EXPECT_EQ(shape_vec[3], 218);
 }
 
 }  // namespace mindspore
