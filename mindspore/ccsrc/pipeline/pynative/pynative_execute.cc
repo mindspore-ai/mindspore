@@ -67,6 +67,7 @@ const size_t PTR_LEN = 15;
 // primitive unable to infer value for constant input in PyNative mode
 static const std::set<std::string> vm_operators = {"make_ref", "HookBackward", "InsertGradientOf", "stop_gradient",
                                                    "mixed_precision_cast"};
+static const std::unordered_set<std::string> nop_ops = {"Reshape", "Squeeze", "Flatten", "ExpandDims"};
 static const char kOpsFunctionModelName[] = "mindspore.ops.functional";
 static const char kMSDtypeModelName[] = "mindspore.common.dtype";
 namespace mindspore::pynative {
@@ -228,6 +229,13 @@ std::string TypeIdToMsTypeStr(const TypeId &type_id) {
     MS_LOG(EXCEPTION) << "For implicit type conversion, not support convert to the type: " << TypeIdToType(type_id);
   }
   return type_name->second;
+}
+
+bool IsNopOp(const std::string &op_name) {
+  if (nop_ops.find(op_name) != nop_ops.end()) {
+    return true;
+  }
+  return false;
 }
 
 bool GetSignatureType(const PrimitivePyPtr &prim, std::vector<SignatureEnumDType> *dtypes) {
@@ -997,7 +1005,7 @@ AnfNodePtr PynativeExecutor::GetInput(const py::object &obj, bool op_mask) {
 
 void PynativeExecutor::UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_exec_info, const py::object &out_real) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
-  if (!grad_flag()) {
+  if (!grad_flag() || IsNopOp(op_exec_info->op_name)) {
     return;
   }
   auto op_index = op_exec_info->op_index;
