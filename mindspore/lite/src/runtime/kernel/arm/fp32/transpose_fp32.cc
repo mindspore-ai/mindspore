@@ -93,25 +93,26 @@ int TransposeCPUKernel::Run() {
     memcpy(out_data_, in_data_, in_tensor->ElementsNum() * sizeof(float));
     return RET_OK;
   }
+  auto out_shape = out_tensor->shape();
   if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 2 && param->perm_[2] == 3 &&
       param->perm_[3] == 1) {
     if (in_tensor->data_type() == kNumberTypeFloat32) {
-      PackNCHWToNHWCFp32(in_tensor->MutableData(), out_tensor->MutableData(), out_tensor->Batch(),
-                         out_tensor->Height() * out_tensor->Width(), out_tensor->Channel());
+      PackNCHWToNHWCFp32(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[1] * out_shape[2],
+                         out_shape[3]);
     } else if (in_tensor->data_type() == kNumberTypeInt8) {
-      PackNCHWToNHWCInt8(in_tensor->MutableData(), out_tensor->MutableData(), out_tensor->Batch(),
-                         out_tensor->Height() * out_tensor->Width(), out_tensor->Channel());
+      PackNCHWToNHWCInt8(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[1] * out_shape[2],
+                         out_shape[3]);
     }
     return RET_OK;
   }
   if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 3 && param->perm_[2] == 1 &&
       param->perm_[3] == 2) {
     if (in_tensor->data_type() == kNumberTypeFloat32) {
-      PackNHWCToNCHWFp32(in_tensor->MutableData(), out_tensor->MutableData(), out_tensor->Batch(),
-                         out_tensor->Height() * out_tensor->Width(), out_tensor->Channel());
+      PackNHWCToNCHWFp32(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[2] * out_shape[3],
+                         out_shape[1]);
     } else if (in_tensor->data_type() == kNumberTypeInt8) {
-      PackNHWCToNCHWInt8(in_tensor->MutableData(), out_tensor->MutableData(), out_tensor->Batch(),
-                         out_tensor->Height() * out_tensor->Width(), out_tensor->Channel());
+      PackNHWCToNCHWInt8(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[2] * out_shape[3],
+                         out_shape[1]);
     }
     return RET_OK;
   }

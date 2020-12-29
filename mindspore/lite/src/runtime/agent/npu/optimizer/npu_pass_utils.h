@@ -47,9 +47,9 @@ class NPUPassUtils {
   static void UpdateNC2NHTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
                                               kernel::LiteKernel *post_kernel);
 
-  static bool IsNhwc2Nchw(kernel::LiteKernel *kernel);
+  static bool IsNhwc2Nchw(const kernel::LiteKernel *kernel);
 
-  static bool IsNchw2Nhwc(kernel::LiteKernel *kernel);
+  static bool IsNchw2Nhwc(const kernel::LiteKernel *kernel);
 
  private:
   static PrimitiveC *CreateTransposePrimitive();
