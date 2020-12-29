@@ -32,12 +32,16 @@ enum UnaryGradOptype {
   UNARY_OP_RSQRT_GRAD = 1,
   UNARY_OP_ASIN_GRAD = 2,
   UNARY_OP_ACOS_GRAD = 3,
+  UNARY_OP_ATAN_GRAD = 4,
+  UNARY_OP_ASINH_GRAD = 5,
+  UNARY_OP_ACOSH_GRAD = 6,
   UNARY_OP_GRAD_INVALID_TYPE = 255
 };
-static const std::map<std::string, UnaryGradOptype> kUnaryGradOpTypeMap = {{"SqrtGrad", UNARY_OP_SQRT_GRAD},
-                                                                           {"RsqrtGrad", UNARY_OP_RSQRT_GRAD},
-                                                                           {"AsinGrad", UNARY_OP_ASIN_GRAD},
-                                                                           {"ACosGrad", UNARY_OP_ACOS_GRAD}};
+static const std::map<std::string, UnaryGradOptype> kUnaryGradOpTypeMap = {
+  {"SqrtGrad", UNARY_OP_SQRT_GRAD},  {"RsqrtGrad", UNARY_OP_RSQRT_GRAD}, {"AsinGrad", UNARY_OP_ASIN_GRAD},
+  {"ACosGrad", UNARY_OP_ACOS_GRAD},  {"AtanGrad", UNARY_OP_ATAN_GRAD},   {"AsinhGrad", UNARY_OP_ASINH_GRAD},
+  {"AcoshGrad", UNARY_OP_ACOSH_GRAD}};
+
 template <typename T>
 class UnaryGradOpGpuKernel : public GpuKernel {
  public:
@@ -75,6 +79,21 @@ class UnaryGradOpGpuKernel : public GpuKernel {
       case UNARY_OP_ACOS_GRAD: {
         ACosGrad(input_x_addr, input_dx_addr, output_y_addr, inputs[0]->size / sizeof(T),
                  reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ATAN_GRAD: {
+        AtanGrad(input_x_addr, input_dx_addr, output_y_addr, inputs[0]->size / sizeof(T),
+                 reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ASINH_GRAD: {
+        AsinhGrad(input_x_addr, input_dx_addr, output_y_addr, inputs[0]->size / sizeof(T),
+                  reinterpret_cast<cudaStream_t>(stream_ptr));
+        break;
+      }
+      case UNARY_OP_ACOSH_GRAD: {
+        AcoshGrad(input_x_addr, input_dx_addr, output_y_addr, inputs[0]->size / sizeof(T),
+                  reinterpret_cast<cudaStream_t>(stream_ptr));
         break;
       }
       case UNARY_OP_RSQRT_GRAD: {

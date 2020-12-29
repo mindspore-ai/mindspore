@@ -146,6 +146,15 @@ __global__ void AsinKernel(const T *input, T *output, const size_t count) {
   return;
 }
 template <typename T>
+__global__ void AsinhKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    float inputf = static_cast<float>(input[i]);
+    T res = static_cast<T>(asinhf(inputf));
+    output[i] = res;
+  }
+  return;
+}
+template <typename T>
 __global__ void CosKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     output[i] = cos(input[i]);
@@ -164,6 +173,24 @@ __global__ void ACosKernel(const T *input, T *output, const size_t count) {
   for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
     float inputf = static_cast<float>(input[i]);
     T res = static_cast<T>(acosf(inputf));
+    output[i] = res;
+  }
+  return;
+}
+template <typename T>
+__global__ void AcoshKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    float inputf = static_cast<float>(input[i]);
+    T res = static_cast<T>(acoshf(inputf));
+    output[i] = res;
+  }
+  return;
+}
+template <typename T>
+__global__ void AtanKernel(const T *input, T *output, const size_t count) {
+  for (size_t i = blockIdx.x * blockDim.x + threadIdx.x; i < (count); i += blockDim.x * gridDim.x) {
+    float inputf = static_cast<float>(input[i]);
+    T res = static_cast<T>(atanf(inputf));
     output[i] = res;
   }
   return;
@@ -281,6 +308,21 @@ void ACos(const T *input, T *output, const size_t count, cudaStream_t cuda_strea
   return;
 }
 template <typename T>
+void Atan(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  AtanKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Asinh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  AsinhKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
+void Acosh(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
+  AcoshKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
+  return;
+}
+template <typename T>
 void Rsqrt(const T *input, T *output, const size_t count, cudaStream_t cuda_stream) {
   RsqrtKernel<<<GET_BLOCKS(count), GET_THREADS, 0, cuda_stream>>>(input, output, count);
   return;
@@ -315,6 +357,9 @@ template void Sin<float>(const float *input, float *output, const size_t count, 
 template void Cos<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Asin<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void ACos<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Atan<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Asinh<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
+template void Acosh<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Rsqrt<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
 template void Zeroslike<float>(float *output, const size_t count, cudaStream_t cuda_stream);
 template void Abs<float>(const float *input, float *output, const size_t count, cudaStream_t cuda_stream);
@@ -333,6 +378,9 @@ template void Sin<half>(const half *input, half *output, const size_t count, cud
 template void Cos<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Asin<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void ACos<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Atan<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Asinh<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
+template void Acosh<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Rsqrt<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);
 template void Zeroslike<half>(half *output, const size_t count, cudaStream_t cuda_stream);
 template void Abs<half>(const half *input, half *output, const size_t count, cudaStream_t cuda_stream);

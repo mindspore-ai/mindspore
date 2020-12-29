@@ -26,5 +26,12 @@ template <typename T>
 void AsinGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream);
 template <typename T>
 void ACosGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void AtanGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void AsinhGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream);
+template <typename T>
+void AcoshGrad(const T *input, const T *dout, T *output, const size_t count, cudaStream_t cuda_stream);
+
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_UNARYOP_GRAD_IMPL_H_

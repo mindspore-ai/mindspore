@@ -50,5 +50,29 @@ MS_REG_GPU_KERNEL_ONE(
   ACosGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
   UnaryGradOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  AtanGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  UnaryGradOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  AtanGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  UnaryGradOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  AsinhGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  UnaryGradOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  AsinhGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  UnaryGradOpGpuKernel, half)
+MS_REG_GPU_KERNEL_ONE(
+  AcoshGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  UnaryGradOpGpuKernel, float)
+MS_REG_GPU_KERNEL_ONE(
+  AcoshGrad,
+  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+  UnaryGradOpGpuKernel, half)
 }  // namespace kernel
 }  // namespace mindspore
