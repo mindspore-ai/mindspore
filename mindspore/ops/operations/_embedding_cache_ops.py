@@ -93,7 +93,7 @@ class SubAndFilter(PrimitiveWithCheck):
                                 outputs=['sub_res', 'sub_idx'])
 
     def check_shape(self, input_x_shape, max_num_shape, offset_shape):
-        return (-1, -1)
+        return ((-1,), (-1,))
 
     def check_dtype(self, input_x_dtype, max_num_dtype, offset_dtype):
         validator.check_tensor_dtype_valid(
@@ -358,3 +358,77 @@ class MapCacheIdx(PrimitiveWithCheck):
         else:
             out['min_shape'] = (0, 0, 0, 0)
         return out
+
+
+class DynamicAssign(PrimitiveWithCheck):
+    """
+    Assigns `Parameter` with a value, the `value` can have a dynamic shape.
+
+    Inputs:
+        - **variable** (Parameter) - The `Parameter`.
+        - **value** (Tensor) - The value to be assigned.
+
+    Outputs:
+        Tensor, has the same type as original `variable`.
+
+    Supported Platforms:
+        `CPU`
+    """
+    __mindspore_signature__ = (
+        sig.make_sig('variable', sig.sig_rw.RW_WRITE, dtype=sig.sig_dtype.T),
+        sig.make_sig('value', dtype=sig.sig_dtype.T)
+    )
+
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(inputs=['ref', 'value'], outputs=['output'])
+
+    def check_dtype(self, variable, value):
+        if variable != mstype.type_refkey:
+            validator.check_tensor_dtype_valid(
+                "variable", variable, mstype.number_type, self.name)
+        validator.check_scalar_or_tensor_types_same(
+            {"value": value}, mstype.number_type, self.name)
+
+
+class PadAndShift(PrimitiveWithCheck):
+    """
+    Pad a tensor with -1, and shift with a length.
+
+    Inputs:
+        - **input_x** (Tensor) - The input Tensor, which will be copyed
+            to `output`.
+        - **cum_sum_arr** (Tensor) - The last value of cum_sum_arr is
+            the pad length of output tensor, cum_sum_arr[shift_idx] is
+            the start to shift, and cum_sum_arr[shift_idx+1] is the end.
+        - **shift_idx** (Int) - The idx of cum_sum_arr.
+        if use python, PadAndShift is:
+            output = [-1] * cum_sum_arr[-1]
+            start = cum_sum_arr[shift_idx]
+            end = cum_sum_arr[shift_idx + 1]
+            output[start:end] = input_x[:(end-start)]
+    Outputs:
+        Tensor, has the same type as original `variable`.
+
+    Supported Platforms:
+        `CPU`
+
+    Examples:
+        >>> input_x = Tensor(np.array([9, 13, -1, -1, -1, -1, -1, -1]), mstype.int32)
+        >>> cum_sum_arr = Tensor(np.array([0, 3, 5]), mstype.int32)
+        >>> shift_idx = 1
+        >>> pad_and_shift = ops.PadAndShift()
+        >>> output = pad_and_shift(input_x, cum_sum_arr, shift_idx)
+        >>> print(output)
+        [-1, -1, -1, 9, 13]
+    """
+    @prim_attr_register
+    def __init__(self):
+        self.init_prim_io_names(
+            inputs=['input_x', 'cum_sum_arr', 'shift_idx'], outputs=['output'])
+
+    def check_shape(self, input_x_shape, cum_sum_arr_shape, shift_idx_shape):
+        return input_x_shape
+
+    def check_dtype(self, input_x_dtype, cum_sum_arr_dtype, shift_idx_dtype):
+        return input_x_dtype

@@ -193,6 +193,27 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
   return std::make_shared<AbstractTuple>(elements);
 }
 
+AbstractBasePtr InferImplPadAndShift(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_spec_list) {
+  // inputs: a 1-d Tensor
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 3);
+  AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(input);
+  auto shape = input->shape();
+  MS_EXCEPTION_IF_NULL(shape);
+  if (shape->shape().size() != 1) {
+    MS_LOG(EXCEPTION) << "Rank of " << op_name << "'s input must be 1.";
+  }
+  ShapeVector ids_shape = {Shape::SHP_ANY};
+  ShapeVector min_shape = {1};
+  ShapeVector max_shape = shape->max_shape();
+  if (max_shape.empty()) {
+    max_shape = shape->shape();
+  }
+  return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(ids_shape, min_shape, max_shape));
+}
+
 AbstractBasePtr InferImplUniqueGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   // inputs: a 1-d Tensor
@@ -610,6 +631,29 @@ AbstractBasePtr InferImplGatherV2(const AnalysisEnginePtr &, const PrimitivePtr 
                                             std::make_shared<Shape>(out_shape, min_shape, max_shape));
   }
   return std::make_shared<AbstractTensor>(params->element(), std::make_shared<Shape>(out_shape));
+}
+
+AbstractBasePtr InferImplDynamicAssign(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                       const AbstractBasePtrList &args_spec_list) {
+  // Inputs: a tensor
+  CheckArgsSize(primitive->name(), args_spec_list, 2);
+
+  MS_LOG(INFO) << "InferImplDynamicAssign " << args_spec_list[0];
+  auto type = args_spec_list[0]->BuildType();
+  if (type->type_id() == kObjectTypeRefKey) {
+    return args_spec_list[1]->Broaden();
+  } else {
+    auto x = CheckArg<AbstractTensor>(primitive->name(), args_spec_list, 0);
+    auto y = CheckArg<AbstractTensor>(primitive->name(), args_spec_list, 1);
+    MS_EXCEPTION_IF_NULL(x);
+    MS_EXCEPTION_IF_NULL(y);
+    auto y_shape = y->shape();
+    MS_EXCEPTION_IF_NULL(y_shape);
+    if (!y_shape->max_shape().empty()) {
+      x->set_shape(y->shape());
+    }
+    return args_spec_list[0];
+  }
 }
 
 AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

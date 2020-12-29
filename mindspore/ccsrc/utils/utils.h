@@ -263,6 +263,8 @@ constexpr auto kDropoutOpName = "Dropout";
 constexpr auto kDropoutGradOpName = "DropoutGrad";
 constexpr auto kDropoutGenMaskOpName = "DropoutGenMask";
 constexpr auto kDropoutDoMaskOpName = "DropoutDoMask";
+constexpr auto kSubAndFilterOpName = "SubAndFilter";
+constexpr auto kPadAndShiftOpName = "PadAndShift";
 constexpr auto kSparseSoftmaxCrossEntropyWithLogitsOpName = "SparseSoftmaxCrossEntropyWithLogits";
 constexpr auto kOneHotOpName = "OneHot";
 constexpr auto kSoftmaxCrossEntropyWithLogitsOpName = "SoftmaxCrossEntropyWithLogits";
@@ -482,7 +484,8 @@ const std::set<std::string> kHWSpecialFormatSet = {
 
 const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat32};
 
-const std::set<std::string> kComputeDepend = {kUniqueOpName, kComputeAccidentalHitsOpName};
+const std::set<std::string> kComputeDepend = {kUniqueOpName, kComputeAccidentalHitsOpName, kSubAndFilterOpName,
+                                              kPadAndShiftOpName};
 
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   try {

@@ -47,9 +47,12 @@ constexpr auto kEditDistance = "EditDistance";
 constexpr auto kGatherD = "GatherD";
 constexpr auto kIdentity = "Identity";
 constexpr auto kUpdateCache = "UpdateCache";
+constexpr auto kCacheSwapTable = "CacheSwapTable";
+constexpr auto kSubAndFilter = "SubAndFilter";
+constexpr auto kPadAndShift = "PadAndShift";
 constexpr auto kCustRunApi = "RunCpuKernel";
 const std::set<std::string> kCustAiCpuKernelOps{kEditDistance, kIdentity};
-const std::set<std::string> kCacheKernelOps{kUpdateCache};
+const std::set<std::string> kCacheKernelOps{kUpdateCache, kCacheSwapTable, kSubAndFilter, kPadAndShift};
 
 struct AicpuParamHead {
   uint32_t length;         // Total length: include cunstom message
