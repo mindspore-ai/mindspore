@@ -35,6 +35,7 @@
 #include "ps/core/cluster_config.h"
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
+#include "utils/convert_utils_base.h"
 
 namespace mindspore {
 namespace ps {
@@ -86,6 +87,9 @@ class TcpClient {
   OnTimer on_timer_callback_;
 
   static event_base *event_base_;
+  static std::mutex event_base_mutex_;
+  static bool is_started_;
+
   std::mutex connection_mutex_;
   std::condition_variable connection_cond_;
   event *event_timeout_;

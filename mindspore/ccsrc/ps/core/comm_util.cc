@@ -129,6 +129,16 @@ bool CommUtil::ValidateRankId(const enum NodeRole &node_role, const uint32_t &ra
   }
   return true;
 }
+
+bool CommUtil::Retry(const std::function<bool()> &func, size_t max_attempts, size_t interval_milliseconds) {
+  for (size_t attempt = 0; attempt < max_attempts; ++attempt) {
+    if (func()) {
+      return true;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(interval_milliseconds));
+  }
+  return false;
+}
 }  // namespace core
 }  // namespace ps
 }  // namespace mindspore

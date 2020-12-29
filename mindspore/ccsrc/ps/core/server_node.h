@@ -40,7 +40,7 @@ class ServerNode : public AbstractNode {
   ServerNode() : server_(nullptr), server_thread_(nullptr) {}
   ~ServerNode() override;
 
-  bool Start(const uint32_t &timeout = kTimeoutInSeconds) override;
+  bool Start(const uint32_t &timeout = ClusterConfig::cluster_available_timeout()) override;
   bool Stop() override;
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
 

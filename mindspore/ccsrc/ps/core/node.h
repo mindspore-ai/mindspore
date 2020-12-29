@@ -57,7 +57,7 @@ class Node {
   using OnNodeEventMessage = std::function<void(const NodeEvent &event)>;
   using MessageCallback = std::function<void()>;
 
-  virtual bool Start(const uint32_t &timeout = kTimeoutInSeconds) = 0;
+  virtual bool Start(const uint32_t &timeout = ClusterConfig::cluster_available_timeout()) = 0;
   virtual bool Stop() = 0;
   virtual bool Finish(const uint32_t &timeout = kTimeoutInSeconds) = 0;
 
