@@ -41,8 +41,8 @@ using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
 
-constexpr size_t CI_TILE = C4NUM;
-constexpr size_t CO_TILE = C4NUM;
+const size_t CI_TILE = C4NUM;
+const size_t CO_TILE = C4NUM;
 
 int Conv2DOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != 2 && in_tensors_.size() != 3) {
@@ -164,12 +164,12 @@ int Conv2DOpenCLKernel::Prepare() {
 }
 
 int Conv2DOpenCLKernel::GenerateWinogradFilter() {
-  constexpr float Gt[] = {1.0000000000, 1.0000000000, 1.0000000000,  1.0000000000, 1.0000000000,  0.0000000000,
-                          0.0000000000, 0.7071067691, -0.7071067691, 1.4142135382, -1.4142135382, 0.0000000000,
-                          0.0000000000, 0.4999999702, 0.4999999702,  1.9999998808, 1.9999998808,  1.0000000000};
-  constexpr float G[] = {1.0000000000, 0.0000000000,  0.0000000000, 1.0000000000, 0.7071067691, 0.4999999702,
-                         1.0000000000, -0.7071067691, 0.4999999702, 1.0000000000, 1.4142135382, 1.9999998808,
-                         1.0000000000, -1.4142135382, 1.9999998808, 0.0000000000, 0.0000000000, 1.0000000000};
+  const float Gt[] = {1.0000000000, 1.0000000000, 1.0000000000,  1.0000000000, 1.0000000000,  0.0000000000,
+                      0.0000000000, 0.7071067691, -0.7071067691, 1.4142135382, -1.4142135382, 0.0000000000,
+                      0.0000000000, 0.4999999702, 0.4999999702,  1.9999998808, 1.9999998808,  1.0000000000};
+  const float G[] = {1.0000000000, 0.0000000000,  0.0000000000, 1.0000000000, 0.7071067691, 0.4999999702,
+                     1.0000000000, -0.7071067691, 0.4999999702, 1.0000000000, 1.4142135382, 1.9999998808,
+                     1.0000000000, -1.4142135382, 1.9999998808, 0.0000000000, 0.0000000000, 1.0000000000};
 
   auto weight_tensor = in_tensors_.at(1);
   auto origin_weight_fp32 = reinterpret_cast<float *>(weight_tensor->data_c());
@@ -366,11 +366,11 @@ void Conv2DOpenCLKernel::SetGlobalLocal() {
     size_t global_h = batch_size_ * UP_DIV(OH_, block_size_.H);
     size_t global_w = UP_DIV(OW_, block_size_.W);
     size_t global_c = UP_DIV(CO_SLICES_, block_size_.C);
-    constexpr int local_c_max = 16;
-    constexpr int local_hw_max = 256;
-    constexpr int OH_threshold = 100;
-    constexpr int OW_threshold = 100;
-    constexpr int OC_threshold = 64;
+    const int local_c_max = 16;
+    const int local_hw_max = 256;
+    const int OH_threshold = 100;
+    const int OW_threshold = 100;
+    const int OC_threshold = 64;
     size_t local_c = GetMaxDivisor(global_c, local_c_max);
     local_c = std::max<size_t>(local_c, 1);
     size_t local_hw = local_hw_max / local_c;
