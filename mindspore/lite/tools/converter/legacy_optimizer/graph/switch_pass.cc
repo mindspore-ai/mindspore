@@ -248,7 +248,6 @@ STATUS SingleSwitchPass::InsertMerge() {
                                          merge_node->inputIndex.end());
 
   graph_->nodes.push_back(std::move(merge_node));
-  graph_->subGraph.at(this_subgraph_index_)->nodeIndices.push_back(graph_->nodes.size() - 1);
 
   return RET_OK;
 }
