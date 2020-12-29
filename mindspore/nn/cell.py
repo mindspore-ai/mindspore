@@ -68,7 +68,7 @@ class Cell(Cell_):
     """
     IGNORE_LIST = ['_scope', '_cell_init_args', '_auto_prefix', '_cells', '_params', '_construct_inputs_names',
                    '_construct_inputs_num', '_create_time', '_mindspore_flags', '_parallel_inputs_run',
-                   '_parameter_layout_dict', '_already_run', '_params_list', '_tensor_list', '_phase',
+                   '_parameter_layout_dict', '_params_list', '_tensor_list', '_phase',
                    '_auto_parallel_mode', '_backward_hook', '_bprop_debug', '_is_run', '_param_prefix',
                    '_attr_synced', 'enable_hook', 'pynative', 'requires_grad',
                    '_auto_parallel_compile_and_run', 'cell_type']
@@ -105,14 +105,9 @@ class Cell(Cell_):
         self._backward_hook = None
         self.enable_hook = False
         self._bprop_debug = False
-        self._already_run = False
         self.cell_type = None
         self._auto_parallel_compile_and_run = False
         self._support_non_tensor_inputs = False
-
-    @property
-    def already_run(self):
-        return self._already_run
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -149,10 +144,6 @@ class Cell(Cell_):
     def _cell_tag(self):
         # `<class 'xxxxxxx'>` to `xxxxxxx`
         return str(self.__class__)[8:-2]
-
-    @already_run.setter
-    def already_run(self, value):
-        self._already_run = value
 
     @property
     def create_time(self):
@@ -334,12 +325,10 @@ class Cell(Cell_):
         for item in inputs:
             if isinstance(item, numpy.ndarray):
                 raise TypeError("cell inputs should not be numpy array.")
-        origin_grad = []
         if self.requires_grad is True:
             _pynative_exec.set_grad_flag(True)
             _pynative_exec.new_graph(self, *inputs, **kwargs)
             for cell in self.cells():
-                origin_grad.append(cell.requires_grad)
                 cell.set_grad(True)
         else:
             _pynative_exec.set_grad_flag(False)
@@ -363,9 +352,6 @@ class Cell(Cell_):
             output = output.data
         if self.requires_grad is True:
             _pynative_exec.end_graph(self, output, *inputs, **kwargs)
-            for i, cell in enumerate(self.cells()):
-                cell.set_grad(origin_grad[i])
-            self._already_run = True
         return output
 
     def _add_attr(self, name, value):
