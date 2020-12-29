@@ -16,9 +16,7 @@
 #ifndef MINDSPORE_LITE_NNACL_ADDER_H_
 #define MINDSPORE_LITE_NNACL_ADDER_H_
 
-#include <math.h>
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/fixed_point.h"
 
 typedef struct AdderParameter {
   OpParameter op_parameter_;

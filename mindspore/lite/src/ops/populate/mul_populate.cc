@@ -15,7 +15,7 @@
  */
 
 #include "src/ops/mul.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "src/ops/populate/arithmetic_populate.h"

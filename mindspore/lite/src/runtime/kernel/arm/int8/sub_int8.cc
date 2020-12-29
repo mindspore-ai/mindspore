@@ -15,10 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/int8/sub_int8.h"
-#include <limits>
-#include <algorithm>
-#include "nnacl/arithmetic_common.h"
-#include "nnacl/quantization/quantize.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
@@ -29,7 +25,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Sub;
 
 namespace mindspore::kernel {
-
 int SubInt8CPUKernel::Init() {
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);
@@ -142,9 +137,9 @@ int SubInt8CPUKernel::Run() {
       context_->allocator->Free(tile0_data_);
       return RET_ERROR;
     }
-    TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->MutableData()),
-                        static_cast<uint8_t *>(in_tensors_.at(1)->MutableData()),
-                        reinterpret_cast<uint8_t *>(tile0_data_), reinterpret_cast<uint8_t *>(tile1_data_), &tile_para);
+    TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->data_c()),
+                       static_cast<int8_t *>(in_tensors_.at(1)->data_c()), reinterpret_cast<int8_t *>(tile0_data_),
+                       reinterpret_cast<int8_t *>(tile1_data_), &tile_para);
   }
   auto ret = ParallelLaunch(this->context_->thread_pool_, SubInt8Run, this, op_parameter_->thread_num_);
   if (broadcast_) {

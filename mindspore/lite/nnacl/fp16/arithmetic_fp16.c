@@ -16,7 +16,7 @@
 
 #include "nnacl/fp16/arithmetic_fp16.h"
 #include <math.h>
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/common_func.h"
 #include "nnacl/nnacl_utils.h"
 
 void TileOneDimensionFp16(float16_t *inData, float16_t *outData, int dim, size_t ndim, int *inShape, int *inStrides,

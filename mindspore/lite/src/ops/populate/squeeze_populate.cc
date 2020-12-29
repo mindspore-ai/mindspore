@@ -23,13 +23,13 @@ namespace mindspore {
 namespace lite {
 
 OpParameter *PopulateSqueezeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  SqueezeParameter *squeeze_param = reinterpret_cast<SqueezeParameter *>(malloc(sizeof(SqueezeParameter)));
+  OpParameter *squeeze_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (squeeze_param == nullptr) {
     MS_LOG(ERROR) << "malloc SqueezeParameter failed.";
     return nullptr;
   }
-  memset(squeeze_param, 0, sizeof(SqueezeParameter));
-  squeeze_param->op_parameter_.type_ = primitive->Type();
+  memset(squeeze_param, 0, sizeof(OpParameter));
+  squeeze_param->type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(squeeze_param);
 }
 Registry SqueezeParameterRegistry(schema::PrimitiveType_Squeeze, PopulateSqueezeParameter);

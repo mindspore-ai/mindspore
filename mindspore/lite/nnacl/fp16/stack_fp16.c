@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/fp16/stack_fp16.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/common_func.h"
 
 size_t Fp16GetStackCopyNum(int axis, int *in_shape, size_t shape_size) {
   size_t one_input_size = 1;

@@ -27,7 +27,6 @@
 #include "nnacl/int8/matmul_int8.h"
 #include "src/runtime/kernel/arm/base/layout_transform.h"
 #include "src/runtime/kernel/arm/base/convolution_base.h"
-#include "nnacl/arithmetic_common.h"
 
 namespace mindspore::kernel {
 class DeConvInt8CPUKernel : public ConvolutionBaseCPUKernel {

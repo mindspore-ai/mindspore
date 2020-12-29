@@ -30,7 +30,7 @@
 #include "src/ops/power_grad.h"
 #include "nnacl/power_parameter.h"
 #include "src/ops/bias_grad.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic.h"
 #include "nnacl/fp32_grad/optimizer.h"
 #include "src/ops/apply_momentum.h"
 #include "src/ops/sgd.h"

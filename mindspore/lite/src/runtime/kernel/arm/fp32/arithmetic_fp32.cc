@@ -29,7 +29,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
-
 ArithmeticCPUKernel::~ArithmeticCPUKernel() {
   FreeTmpPtr();
   return;
@@ -72,9 +71,10 @@ int ArithmeticCPUKernel::InitBroadCastCase() {
     if (input0_ptr_ == nullptr) {
       return RET_ERROR;
     }
-    TileOneDimension(reinterpret_cast<float *>(in_tensors_[0]->data_c()), reinterpret_cast<float *>(input0_ptr_), 0,
-                     arithmeticParameter_->ndim_, arithmeticParameter_->in_shape0_, arithmeticParameter_->in_strides0_,
-                     arithmeticParameter_->out_strides_, arithmeticParameter_->multiples0_);
+    TileOneDimensionFp32(reinterpret_cast<float *>(in_tensors_[0]->data_c()), reinterpret_cast<float *>(input0_ptr_), 0,
+                         arithmeticParameter_->ndim_, arithmeticParameter_->in_shape0_,
+                         arithmeticParameter_->in_strides0_, arithmeticParameter_->out_strides_,
+                         arithmeticParameter_->multiples0_);
     arithmeticParameter_->broadcasting_ = false;
     input0_broadcast_ = true;
   }
@@ -85,9 +85,10 @@ int ArithmeticCPUKernel::InitBroadCastCase() {
       FreeTmpPtr();
       return RET_ERROR;
     }
-    TileOneDimension(reinterpret_cast<float *>(in_tensors_[1]->data_c()), reinterpret_cast<float *>(input1_ptr_), 0,
-                     arithmeticParameter_->ndim_, arithmeticParameter_->in_shape1_, arithmeticParameter_->in_strides1_,
-                     arithmeticParameter_->out_strides_, arithmeticParameter_->multiples1_);
+    TileOneDimensionFp32(reinterpret_cast<float *>(in_tensors_[1]->data_c()), reinterpret_cast<float *>(input1_ptr_), 0,
+                         arithmeticParameter_->ndim_, arithmeticParameter_->in_shape1_,
+                         arithmeticParameter_->in_strides1_, arithmeticParameter_->out_strides_,
+                         arithmeticParameter_->multiples1_);
     arithmeticParameter_->broadcasting_ = false;
     input1_broadcast_ = true;
   }

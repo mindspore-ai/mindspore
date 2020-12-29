@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "nnacl/fp32/space_to_depth_fp32.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/common_func.h"
 #include "nnacl/errorcode.h"
 #include "nnacl/op_base.h"
 

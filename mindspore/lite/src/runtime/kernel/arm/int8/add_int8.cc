@@ -15,9 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/int8/add_int8.h"
-#include <limits>
-#include <algorithm>
-#include "nnacl/arithmetic_common.h"
 #include "nnacl/quantization/quantize.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"

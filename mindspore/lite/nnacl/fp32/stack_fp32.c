@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/fp32/stack_fp32.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/common_func.h"
 
 size_t GetStackCopyNum(int axis, const int *in_shape, size_t shape_size) {
   size_t one_input_size = 1;

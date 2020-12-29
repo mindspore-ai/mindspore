@@ -15,6 +15,8 @@
  */
 #ifndef MINDSPORE_LITE_NNACL_BATCH_TO_SPACE_H_
 #define MINDSPORE_LITE_NNACL_BATCH_TO_SPACE_H_
+
+#include <string.h>
 #include "nnacl/op_base.h"
 
 #define BATCH_TO_SPACE_BLOCK_SHAPE_SIZE 2

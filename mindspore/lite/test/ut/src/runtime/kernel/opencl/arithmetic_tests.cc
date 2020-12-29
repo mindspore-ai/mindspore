@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "ut/src/runtime/kernel/opencl/common.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic.h"
 
 namespace mindspore::lite::opencl::test {
 

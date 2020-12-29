@@ -17,7 +17,7 @@
 #include "src/runtime/kernel/arm/int8/arithmetic_int8.h"
 #include "src/runtime/kernel/arm/int8/add_int8.h"
 #include "src/runtime/kernel/arm/int8/mul_int8.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"

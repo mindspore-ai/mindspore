@@ -17,14 +17,15 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SCALE_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SCALE_INT8_H_
 
+#include <string.h>
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/scale.h"
 #include "nnacl/quantization/quantize.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/int8/arithmetic_int8.h"
+#include "nnacl/int8/scale_int8.h"
 
 namespace mindspore::kernel {
-
 class ScaleInt8CPUKernel : public LiteKernel {
  public:
   ScaleInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,

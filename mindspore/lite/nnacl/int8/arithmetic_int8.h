@@ -17,11 +17,17 @@
 #define MINDSPORE_LITE_NNACL_INT8_ARITHMETIC_INT8_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/arithmetic.h"
 #include "nnacl/quantization/quantize.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+void TileOneDimensionInt8(const int8_t *inData, int8_t *outData, int dim, size_t ndim, const int *inShape,
+                          const int *inStrides, const int *outStrides, const int *multiple);
+void TileDimensionsInt8(const int8_t *data0, const int8_t *data1, int8_t *tile_data0, int8_t *tile_data1,
+                        ArithmeticParameter *param);
+
 int ElementNotEqualInt8(int8_t *input0, int8_t *input1, uint8_t *output, int element_size,
                         ArithmeticQuantArg *quant_arg);
 

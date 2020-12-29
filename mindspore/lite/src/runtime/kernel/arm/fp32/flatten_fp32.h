@@ -18,9 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-
 #include "include/context.h"
-#include "nnacl/flatten.h"
 
 using mindspore::lite::InnerContext;
 
@@ -30,17 +28,12 @@ class FlattenCPUKernel : public LiteKernel {
   FlattenCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                    const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
-    flatten_param_ = reinterpret_cast<FlattenParameter *>(parameter);
-  }
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
   ~FlattenCPUKernel() override = default;
 
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
-  FlattenParameter *flatten_param_;
 };
 }  // namespace mindspore::kernel
 

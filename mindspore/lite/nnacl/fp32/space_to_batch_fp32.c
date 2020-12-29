@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 #include "nnacl/fp32/space_to_batch_fp32.h"
-#include "nnacl/arithmetic_common.h"
 
 void DoSpaceToBatch(const float *input, float *output, const int *in_shape, const int *out_shape, const int *in_stride,
                     const int *out_stride, const int *blocks, const int *paddings, int thread, int task_id) {
