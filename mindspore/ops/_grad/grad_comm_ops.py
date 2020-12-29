@@ -134,6 +134,8 @@ def get_bprop_all_gather(self):
         rank = get_rank(self.group)
         dev_num = get_group_size(self.group)
         split = P.Split(output_num=dev_num)
+        mean_flag = self.get_attr_dict()["mean_flag"]
+        scale = 1/self.rank_size
 
     def bprop(x, out, dout):
         if fusion == 0:
@@ -141,6 +143,8 @@ def get_bprop_all_gather(self):
         else:
             grad = all_reduce(dout)
             dx = split(grad)[rank]
+            if mean_flag:
+                dx = F.tensor_mul(dx, scale)
         return (dx,)
 
     return bprop
