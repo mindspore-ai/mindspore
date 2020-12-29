@@ -60,7 +60,7 @@ class GPUDeviceManager {
   }
 
  private:
-  GPUDeviceManager() : dev_id_init_(false), cur_dev_id_(0) {}
+  GPUDeviceManager() : dev_id_init_(false), cur_dev_id_(0), dev_alive_(false) {}
   ~GPUDeviceManager() = default;
   GPUDeviceManager(const GPUDeviceManager &) = delete;
   GPUDeviceManager &operator=(const GPUDeviceManager &) = delete;
@@ -81,6 +81,7 @@ class GPUDeviceManager {
   cusolverDnHandle_t cusolver_dn_handle_{nullptr};
   bool dev_id_init_;
   uint32_t cur_dev_id_;
+  bool dev_alive_;
 };
 }  // namespace gpu
 }  // namespace device
