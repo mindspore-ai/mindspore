@@ -101,7 +101,7 @@ mov x9, x4
     ldrsb w14, [x7], #1
     ldrsh w15, [x8], #2
     ldr w16, [x0], #4
-    add w14, w14, w6
+    sub w14, w14, w6
 
     sxth w14, w14
     madd w14, w14, w15, w16

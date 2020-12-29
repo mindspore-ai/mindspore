@@ -146,7 +146,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
   std::vector<int> pad_cord(pad_region.size());
 
   for (int pos = 0; pos < remain_size; ++pos) {
-    int dst_basic_offset = 0;
+    const int dst_basic_offset = 0;
 
     for (int index = 1; index < region_size; ++index) {
       int dst_offset = dst_basic_offset;
