@@ -54,7 +54,7 @@ export RANK_TABLE_FILE=$PATH1
 echo 3 > /proc/sys/vm/drop_caches
 
 cpus=`cat /proc/cpuinfo| grep "processor"| wc -l`
-avg=`expr $cpus \/ $RANK_SIZE`
+avg=`expr $cpus \/ $DEVICE_NUM`
 gap=`expr $avg \- 1`
 
 for((i=0; i<${DEVICE_NUM}; i++))
