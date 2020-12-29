@@ -42,7 +42,7 @@ class ActivationGradGpuKernel : public GpuKernel {
     }
     T *dy = nullptr;
     T *y = nullptr;
-    if (mode_ == CUDNN_ACTIVATION_RELU || mode_ == CUDNN_ACTIVATION_ELU || mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) {
+    if (mode_ == CUDNN_ACTIVATION_ELU || mode_ == CUDNN_ACTIVATION_CLIPPED_RELU) {
       dy = GetDeviceAddress<T>(inputs, 0);
       y = GetDeviceAddress<T>(inputs, 1);
     } else {
@@ -125,7 +125,7 @@ class ActivationGradGpuKernel : public GpuKernel {
   void ResetResource() noexcept override {
     cudnn_handle_ = nullptr;
     activation_desc_ = nullptr;
-    mode_ = CUDNN_ACTIVATION_RELU;
+    mode_ = CUDNN_ACTIVATION_SIGMOID;
     data_descriptor_ = nullptr;
     is_null_input_ = false;
     input_size_list_.clear();
@@ -154,8 +154,7 @@ class ActivationGradGpuKernel : public GpuKernel {
   }
 
  private:
-  std::map<std::string, cudnnActivationMode_t> kernel_map = {{"ReluGrad", CUDNN_ACTIVATION_RELU},
-                                                             {"ReLU6Grad", CUDNN_ACTIVATION_CLIPPED_RELU},
+  std::map<std::string, cudnnActivationMode_t> kernel_map = {{"ReLU6Grad", CUDNN_ACTIVATION_CLIPPED_RELU},
                                                              {"TanhGrad", CUDNN_ACTIVATION_TANH},
                                                              {"EluGrad", CUDNN_ACTIVATION_ELU},
                                                              {"SigmoidGrad", CUDNN_ACTIVATION_SIGMOID}};
