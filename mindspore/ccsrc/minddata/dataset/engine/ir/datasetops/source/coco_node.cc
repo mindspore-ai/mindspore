@@ -65,7 +65,7 @@ Status CocoNode::ValidateParams() {
 
 // Function to build CocoNode
 Status CocoNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
-  CocoOp::TaskType task_type;
+  CocoOp::TaskType task_type = CocoOp::TaskType::Detection;
   if (task_ == "Detection") {
     task_type = CocoOp::TaskType::Detection;
   } else if (task_ == "Stuff") {
@@ -74,6 +74,10 @@ Status CocoNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
     task_type = CocoOp::TaskType::Keypoint;
   } else if (task_ == "Panoptic") {
     task_type = CocoOp::TaskType::Panoptic;
+  } else {
+    std::string err_msg = "Task type:'" + task_ + "' is not supported.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_UNEXPECTED(err_msg);
   }
 
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
