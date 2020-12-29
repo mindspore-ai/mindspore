@@ -17,7 +17,7 @@
 #include <stdint.h>
 #include "nnacl/int8/reduce_int8.h"
 #include "nnacl/errorcode.h"
-#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 #include "nnacl/common_func.h"
 
 int ReduceMeanN(int n, int h, int w, int c, int8_t *in_data, int8_t *out_data, QuantMulArg quant_arg) {

@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_LITE_NNACL_INT8_BATCH_TO_SPACE_INT8_H_
 #define MINDSPORE_LITE_NNACL_INT8_BATCH_TO_SPACE_INT8_H_
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/int8/quantize.h"
 
 #ifdef __cplusplus
 extern "C" {

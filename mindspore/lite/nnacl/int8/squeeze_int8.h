@@ -17,7 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_SQUEEZE_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_SQUEEZE_INT8_H_
 
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/int8/quantize.h"
 #include "nnacl/squeeze_parameter.h"
 
 #ifdef __cplusplus

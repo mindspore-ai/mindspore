@@ -15,9 +15,6 @@
  */
 
 #include "nnacl/int8/div_int8.h"
-#include "nnacl/quantization/fixed_point.h"
-#include "nnacl/errorcode.h"
-#include "nnacl/quantization/quantize.h"
 
 int DivInt8(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t real_dst_count, DivQuantArg *para) {
   int index = 0;

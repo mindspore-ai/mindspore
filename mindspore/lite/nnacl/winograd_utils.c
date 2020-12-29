@@ -15,7 +15,6 @@
  */
 
 #include "nnacl/winograd_utils.h"
-#include <stdio.h>
 #include "nnacl/minimal_filtering_generator.h"
 
 #define MIN_UNIT 2

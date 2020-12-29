@@ -30,7 +30,7 @@ file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/nnacl/*.c
         ${LITE_DIR}/nnacl/fp32/*.c
         ${LITE_DIR}/nnacl/int8/*.c
-        ${LITE_DIR}/nnacl/quantization/*.c
+        ${LITE_DIR}/nnacl/base/*.c
         )
 
 file(GLOB KERNEL_OP_TRAIN_SRC

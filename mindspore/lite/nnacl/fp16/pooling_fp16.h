@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_NNACL_FP16_POOLING_FP16_H_
 #define MINDSPORE_LITE_NNACL_FP16_POOLING_FP16_H_
 
+#include <math.h>
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
 #endif

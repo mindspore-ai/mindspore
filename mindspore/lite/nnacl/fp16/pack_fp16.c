@@ -16,7 +16,6 @@
 
 #include "nnacl/fp16/pack_fp16.h"
 #include <string.h>
-#include <stdlib.h>
 
 void Im2ColPackUnitFp16(float16_t *input_data, ConvParameter *conv_param, float16_t *packed_input, int real_cal_num,
                         int block_index) {

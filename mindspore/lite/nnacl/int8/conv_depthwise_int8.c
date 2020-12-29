@@ -16,7 +16,7 @@
 
 #include "nnacl/int8/conv_depthwise_int8.h"
 #include <string.h>
-#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 #include "nnacl/int8/common_func_int8.h"
 
 /*conv depthwise int8 begin*/

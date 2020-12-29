@@ -19,7 +19,7 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/power_parameter.h"
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/int8/quantize.h"
 
 #ifdef __cplusplus
 extern "C" {

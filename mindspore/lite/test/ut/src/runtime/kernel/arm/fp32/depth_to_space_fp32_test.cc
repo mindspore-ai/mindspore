@@ -15,7 +15,7 @@
  */
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/nnacl/depth_to_space.h"
+#include "mindspore/lite/nnacl/base/depth_to_space_base.h"
 #include "mindspore/lite/nnacl/common_func.h"
 
 namespace mindspore {

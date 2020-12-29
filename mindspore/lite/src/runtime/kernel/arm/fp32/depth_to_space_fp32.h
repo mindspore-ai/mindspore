@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "include/errorcode.h"
-#include "nnacl/depth_to_space.h"
+#include "nnacl/base/depth_to_space_base.h"
 #include "src/runtime/kernel/arm/base/depth_to_space_base.h"
 
 namespace mindspore::kernel {

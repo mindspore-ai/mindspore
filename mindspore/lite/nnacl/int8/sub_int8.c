@@ -19,7 +19,7 @@
 #include <arm_neon.h>
 #include "nnacl/int8/common_func_int8.h"
 #endif
-#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 
 #ifdef ENABLE_NEON
 

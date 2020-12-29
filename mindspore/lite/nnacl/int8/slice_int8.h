@@ -16,8 +16,11 @@
 #ifndef MINDSPORE_LITE_NNACL_INT8_SLICE_INT8_H_
 #define MINDSPORE_LITE_NNACL_INT8_SLICE_INT8_H_
 
+#include <math.h>
+#include <string.h>
 #include "nnacl/op_base.h"
 #include "nnacl/slice_parameter.h"
+#include "nnacl/int8/fixed_point.h"
 
 #ifdef __cplusplus
 extern "C" {

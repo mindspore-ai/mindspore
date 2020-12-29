@@ -28,11 +28,6 @@
 #define FILTER_PER_CHANNEL 0b010
 #define OUTPUT_PER_CHANNEL 0b100
 
-typedef struct QuantArg {
-  float scale_;
-  int32_t zp_;
-} QuantArg;
-
 typedef struct ConvQuantArg {
   RoundingMode round_mode_;
   CalFixedMultiplierMode quant_multiplier_mode_;
@@ -57,24 +52,6 @@ typedef struct ConcatQuantArg {
   int8_t output_activation_min_;
   int8_t output_activation_max_;
 } ConcatQuantArg;
-
-typedef struct SqueezeQuantArg {
-  QuantArg *in_quant_args_;
-  QuantArg *out_quant_args_;
-} SqueezeQuantArg;
-
-typedef struct UnSqueezeQuantArg {
-  int *input_sizes_;
-  int output_size_;
-  int **input_shapes_;
-  int *output_shape_;
-  float alpha;
-  int axis_;
-  size_t input_num_;
-  size_t output_dim_;
-  QuantArg in_quant_args_;
-  QuantArg out_quant_args_;
-} UnSqueezeQuantArg;
 
 typedef struct PreluQuantArg {
   int *input_sizes_;
@@ -103,22 +80,6 @@ typedef struct MatmulQuantArg {
   int32_t quant_multiplier;
 } MatmulQuantArg;
 
-typedef struct PadQuantArg {
-  QuantArg *in_quant_args_;
-  QuantArg *out_quanr_args_;
-  int8_t *constant_value_;
-} PadQuantArg;
-
-typedef struct MulQuantArg {
-  QuantArg in_quant_args_[2];
-  QuantArg out_quant_arg_;
-  int output_multiplier_;
-  int output_activation_min_;
-  int output_activation_max_;
-  int shift_left_;
-  int shift_right_;
-} MulQuantArg;
-
 typedef struct CropQuantArg {
   QuantArg in_args_;
   QuantArg out_args_;
@@ -142,13 +103,6 @@ typedef struct GatherQuantArg {
   int zp_out_;
 } GatherQuantArg;
 
-typedef struct SplitQuantArg {
-  QuantArg in_args_;
-  QuantArg out_args_[20];
-  int output_activation_min_;
-  int output_activation_max_;
-} SplitQuantArg;
-
 typedef struct SoftmaxQuantArg {
   QuantArg in_quant_args_;
   QuantArg out_quant_arg_;
@@ -158,19 +112,6 @@ typedef struct SoftmaxQuantArg {
   int shift_left_;
   int shift_right_;
 } SoftmaxQuantArg;
-
-typedef struct ReshapeQuantArg {
-  QuantArg in_args_;
-  QuantArg out_args_;
-  int output_activation_min_;
-  int output_activation_max_;
-} ReshapeQuantArg;
-
-typedef struct QuantMulArg {
-  int32_t multiplier_;
-  int left_shift_;
-  int right_shift_;
-} QuantMulArg;
 
 typedef struct SubQuantArg {
   QuantArg in0_args_;
@@ -226,21 +167,6 @@ typedef struct ReduceQuantArg {
   int sum_square_left_shift_;
   int sum_square_right_shift_;
 } ReduceQuantArg;
-
-typedef struct SliceQuantArg {
-  QuantArg in_args_;
-  QuantArg out_args_;
-  int output_activation_min_;
-  int output_activation_max_;
-} SliceQuantArg;
-
-typedef struct PowerQuantArg {
-  QuantArg in_args_;
-  QuantArg exp_args_;
-  QuantArg out_args_;
-  int output_activation_min_;
-  int output_activation_max_;
-} PowerQuantArg;
 
 typedef struct LeakyReluQuantArg {
   OpParameter op_parameter_;

@@ -14,8 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/quantization/quantize.h"
-#include <stdio.h>
+#include "nnacl/int8/quantize.h"
 
 const uint64_t dSignMask = 1ull << 63;
 const uint64_t dExponentMask = 0x7ffull << 52;
@@ -57,8 +56,6 @@ void QuantizeRoundParameterWithSinglePrecision(double double_multiplier, int32_t
   /* multipiler is in[0x40000000, 0x7FFFFF80] range */
   *quantized_multiplier = (int32_t)(((scale_bits & UINT32_C(0x007FFFFF)) | UINT32_C(0x00800000)) << 7);
   if (quantized_multiplier[0] < INT32_C(0x40000000) || quantized_multiplier[0] > INT32_C(0x7FFFFF80)) {
-    printf("quantized multiplier must be in [0x40000000, 0x7FFFFF80] range, now multiplier is %d\n",
-           quantized_multiplier[0]);
     return;
   }
   /* shift is in [0, 31] range */

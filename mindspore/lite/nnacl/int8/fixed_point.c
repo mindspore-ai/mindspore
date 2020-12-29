@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 
 // returns the high-32 bits of a * b with rounding
 // assume that a and b is divided by 2^31, who fall into [-1, 1]
@@ -107,7 +107,7 @@ int CountLeadingZeroBits(uint32_t x) {
   if (x == 0) {
     return 8 * sizeof(uint32_t);
   }
-  const int32_t leading_positive = (int32_t)(1) << (8 * sizeof(uint32_t) - 1);
+  const int32_t leading_positive = (uint32_t)(1) << (8 * sizeof(uint32_t) - 1);
   int leading_zeros = 0;
   while (x < leading_positive) {
     x <<= 1;

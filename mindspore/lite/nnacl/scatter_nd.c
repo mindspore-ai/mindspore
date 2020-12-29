@@ -16,7 +16,6 @@
 
 #include "nnacl/scatter_nd.h"
 #include <string.h>
-#include <stdio.h>
 #include "nnacl/errorcode.h"
 
 int DoScatterND(float *output_ptr, const float *update, int *output_unit_offsets, int unit_size, int num_units) {

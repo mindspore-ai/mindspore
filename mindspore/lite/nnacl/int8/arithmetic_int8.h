@@ -17,8 +17,8 @@
 #define MINDSPORE_LITE_NNACL_INT8_ARITHMETIC_INT8_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/arithmetic.h"
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/int8/quantize.h"
+#include "nnacl/base/arithmetic_base.h"
 
 #ifdef __cplusplus
 extern "C" {

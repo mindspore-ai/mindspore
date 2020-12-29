@@ -14,20 +14,11 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/base/depth_to_space_base.h"
-#include "nnacl/depth_to_space.h"
-#include "src/runtime/kernel/arm/fp32/depth_to_space_fp32.h"
-#include "nnacl/common_func.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
-#include "include/errorcode.h"
-#include "include/context.h"
 
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_FORMAT_ERR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_PARAM_INVALID;
-using mindspore::schema::PrimitiveType_DepthToSpace;
 
 namespace mindspore::kernel {
 int DepthToSpaceBaseCPUKernel::ReSize() {

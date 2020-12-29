@@ -19,7 +19,7 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/int8/quantize.h"
 
 // For Abs, Cos, Exp, Log, Square, Sqrt, Rsqrt ops.
 typedef struct ArithmeticSelfParameter {

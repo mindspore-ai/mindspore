@@ -15,8 +15,6 @@
  */
 
 #include "nnacl/int8/slice_int8.h"
-#include <string.h>
-#include "nnacl/quantization/fixed_point.h"
 
 int SliceInt8NoParallel(const int8_t *input, int8_t *output, SliceParameter *param) {
   double input_scale = param->quant_arg_.in_args_.scale_;

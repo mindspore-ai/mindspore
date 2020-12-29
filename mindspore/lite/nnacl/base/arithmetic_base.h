@@ -14,11 +14,21 @@
  * limitations under the License.
  */
 
-#ifndef PYBIND_API_PYBIND_PATCH_H_
-#define PYBIND_API_PYBIND_PATCH_H_
+#ifndef MINDSPORE_LITE_NNACL_BASE_ARITHMETIC_BASE_H_
+#define MINDSPORE_LITE_NNACL_BASE_ARITHMETIC_BASE_H_
 
-namespace pybind11 {
-PYBIND11_RUNTIME_EXCEPTION(attribute_error, PyExc_AttributeError)
+#include "nnacl/arithmetic.h"
+#include "nnacl/nnacl_utils.h"
+#include "nnacl/nnacl_common.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void CalcMultiplesAndStrides(ArithmeticParameter *param);
+
+#ifdef __cplusplus
 }
+#endif
 
-#endif  // PYBIND_API_PYBIND_PATCH_H_
+#endif  // MINDSPORE_LITE_NNACL_BASE_ARITHMETIC_BASE_H_

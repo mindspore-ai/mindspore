@@ -18,8 +18,16 @@
 #define MINDSPORE_LITE_NNACL_SPLIT_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+
 #define SPLIT_STRIDES_SIZE 32
+
+typedef struct SplitQuantArg {
+  QuantArg in_args_;
+  QuantArg out_args_[20];
+  int output_activation_min_;
+  int output_activation_max_;
+} SplitQuantArg;
+
 typedef struct SplitParameter {
   // primitive parameter
   OpParameter op_parameter_;

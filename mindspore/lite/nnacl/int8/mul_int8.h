@@ -19,6 +19,11 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/mul_parameter.h"
+#include "nnacl/int8/common_func_int8.h"
+#include "nnacl/int8/fixed_point.h"
+#ifdef ENABLE_NEON
+#include <arm_neon.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

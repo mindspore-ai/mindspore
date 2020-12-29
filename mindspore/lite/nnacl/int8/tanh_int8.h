@@ -18,8 +18,8 @@
 #define MINDSPORE_LITE_NNACL_INT8_TANH_INT8_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
-#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/quantize.h"
+#include "nnacl/int8/fixed_point.h"
 #include "nnacl/int8/quant_dtype_cast_int8.h"
 #include "nnacl/fp32/activation_fp32.h"
 

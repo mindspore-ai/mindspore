@@ -19,7 +19,7 @@
 #include <math.h>
 #include "nnacl/op_base.h"
 #include "nnacl/errorcode.h"
-#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 
 typedef struct HswishQuantArg {
   double input_scale;

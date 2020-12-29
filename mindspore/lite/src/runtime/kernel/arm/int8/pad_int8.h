@@ -16,12 +16,15 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_PAD_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_PAD_INT8_H_
 
+#include <string>
 #include <vector>
 #include "include/errorcode.h"
 #include "src/lite_kernel.h"
 #include "src/runtime/runtime_api.h"
+#include "nnacl/errorcode.h"
 #include "nnacl/pad_parameter.h"
 #include "nnacl/int8/pad_int8.h"
+#include "nnacl/int8/quantize.h"
 
 namespace mindspore::kernel {
 class PadInt8CPUKernel : public LiteKernel {

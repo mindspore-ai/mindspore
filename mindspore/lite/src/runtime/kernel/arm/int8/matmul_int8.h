@@ -20,7 +20,7 @@
 #include <vector>
 #include "include/context.h"
 #include "nnacl/matmul_parameter.h"
-#include "nnacl/quantization/quantize.h"
+#include "mindspore/lite/nnacl/int8/quantize.h"
 #include "src/lite_kernel.h"
 
 using mindspore::lite::InnerContext;

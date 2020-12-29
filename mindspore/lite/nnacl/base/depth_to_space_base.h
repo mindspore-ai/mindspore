@@ -15,6 +15,8 @@
  */
 #ifndef MINDSPORE_LITE_NNACL_DEPTH_TO_SPACE_H_
 #define MINDSPORE_LITE_NNACL_DEPTH_TO_SPACE_H_
+
+#include <string.h>
 #include "nnacl/depth_to_space_parameter.h"
 
 #ifdef __cplusplus

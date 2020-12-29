@@ -16,10 +16,25 @@
 
 #ifndef MINDSPORE_LITE_NNACL_UNSQUEEZE_PARAMETER_H_
 #define MINDSPORE_LITE_NNACL_UNSQUEEZE_PARAMETER_H_
+
+#include <string.h>
+#include <math.h>
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
 
 #define UNSQUEEZE_OFFSET_MAX_SIZE 4
+
+typedef struct UnSqueezeQuantArg {
+  int *input_sizes_;
+  int output_size_;
+  int **input_shapes_;
+  int *output_shape_;
+  float alpha;
+  int axis_;
+  size_t input_num_;
+  size_t output_dim_;
+  QuantArg in_quant_args_;
+  QuantArg out_quant_args_;
+} UnSqueezeQuantArg;
 
 typedef struct UnSqueezeParameter {
   // primitive parameter
