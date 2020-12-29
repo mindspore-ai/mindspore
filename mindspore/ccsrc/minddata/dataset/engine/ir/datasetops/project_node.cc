@@ -52,7 +52,7 @@ Status ProjectNode::ValidateParams() {
   return Status::OK();
 }
 
-Status ProjectNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status ProjectNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   node_ops->push_back(std::make_shared<ProjectOp>(columns_));
   return Status::OK();
 }

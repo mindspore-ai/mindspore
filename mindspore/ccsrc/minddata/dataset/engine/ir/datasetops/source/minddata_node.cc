@@ -150,7 +150,7 @@ Status MindDataNode::BuildMindDatasetSamplerChain(const std::shared_ptr<SamplerO
 // Helper function to set sample_bytes from py::byte type
 void MindDataNode::SetSampleBytes(std::map<std::string, std::string> *sample_bytes) { sample_bytes_ = *sample_bytes; }
 
-Status MindDataNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status MindDataNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   RETURN_IF_NOT_OK(BuildMindDatasetSamplerChain(sampler_, &operators_, num_padded_));
 
   std::shared_ptr<MindRecordOp> mindrecord_op;

@@ -67,7 +67,7 @@ int32_t RandomNode::GenRandomInt(int32_t min, int32_t max) {
 }
 
 // Build for RandomNode
-Status RandomNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status RandomNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   rand_gen_.seed(GetSeed());  // seed the random generator
   // If total rows was not given, then randomly pick a number
   std::shared_ptr<SchemaObj> schema_obj;

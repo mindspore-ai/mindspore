@@ -93,7 +93,7 @@ Status BatchNode::ValidateParams() {
   return Status::OK();
 }
 
-Status BatchNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status BatchNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
 #ifdef ENABLE_PYTHON
   // if col_order_ isn't empty, then a project node needs to be attached after batch node. (same as map)
   // this means project_node needs to be the parent of batch_node. this means *node_ops = [project_node, batch_node]

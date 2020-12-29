@@ -50,7 +50,7 @@ void GeneratorNode::Print(std::ostream &out) const {
   out << Name() + "(<func>:" + ",columns:" + PrintColumns(column_names_) + ",<col_types>)";
 }
 
-Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   std::unique_ptr<DataSchema> data_schema = std::make_unique<DataSchema>();
 
   if (schema_ != nullptr) {
