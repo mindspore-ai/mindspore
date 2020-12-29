@@ -24,7 +24,7 @@ void ConvDwFp32Avx5x5(float *output, float **input, const float *weights, const 
   input_stride /= sizeof(float *);
   size_t c8 = UP_DIV(channels, C8NUM) * C8NUM;
   size_t c8_mod = channels % C8NUM;
-  int kernel = 25;
+  const int kernel = 25;
   for (int i = 0; i < output_width; ++i) {
     float *in[kernel];
     for (int k = 0; k < kernel; k++) {

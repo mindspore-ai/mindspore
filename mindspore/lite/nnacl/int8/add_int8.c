@@ -183,7 +183,7 @@ void AddOptInt8(const int8_t *ptr_in, const int8_t element_in, int8_t *output, i
   const int32x4_t ele_left_vec = vdupq_n_s32(ele_left_shift);
 
   const int32x4_t ptr_right_vec = vdupq_n_s32(-ptr_args->right_shift_);
-  const int32x4_t ele_right_vec = vdupq_n_s32(-ptr_args->right_shift_);
+  const int32x4_t ele_right_vec = vdupq_n_s32(-ele_args->right_shift_);
 
   const int32x4_t out_left_vec = vdupq_n_s32(params->out_left_shift_);
   const int32x4_t out_right_vec = vdupq_n_s32(-params->out_right_shift_);

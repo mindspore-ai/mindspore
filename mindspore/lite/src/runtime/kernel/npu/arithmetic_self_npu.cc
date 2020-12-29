@@ -54,7 +54,7 @@ ge::Operator *CreateOperator(ge::Operator *input, const std::string &name) {
 int ArithmeticSelfNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
                                           const std::vector<lite::Tensor *> &outputs,
                                           const std::vector<ge::Operator *> &npu_inputs) {
-  ge::Operator *op;
+  ge::Operator *op = nullptr;
   switch (primitive_->Type()) {
     case PrimitiveType_Cos:
       op = CreateOperator<hiai::op::Cos>(npu_inputs[0], name_);
