@@ -38,7 +38,7 @@ basic_lstm_cell_c_state_grad_op_info_v2 = TBERegOp("BasicLSTMCellCStateGradV2") 
     .output(1, "dct_1", False, "required", "all") \
     .dtype_format(DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
                   DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
-                  DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ) \
+                  DataType.F32_FracNZ, DataType.F16_FracNZ, DataType.F32_FracNZ) \
     .dtype_format(DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
                   DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ) \

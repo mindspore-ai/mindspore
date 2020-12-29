@@ -1344,7 +1344,6 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
         cell_clip (float): A float identifying the cell clip in the op. Default: -1.0.
         num_proj (int): An integer identifying the num proj in the op. Default: 0.
         time_major (bool): A bool identifying the time major in the op. Default: True.
-        bias_type (str): An string identifying the type of bias_type function in the op. Default to "double_bias".
         gate_order (str): An string identifying the gate order in weight and bias. Default: 'rzh.
             'zrh' is another option.
         reset_after (bool): An bool identifying whether to apply reset gate after matrix multiplication. Default: True.
@@ -1402,7 +1401,6 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
                  cell_clip=-1.0,
                  num_proj=0,
                  time_major=True,
-                 bias_type="double_bias",
                  gate_order="rzh",
                  reset_after=True):
         self.cell_depth = validator.check_value_type("cell_depth", cell_depth, [int], self.name)
@@ -1411,8 +1409,6 @@ class DynamicGRUV2Grad(PrimitiveWithInfer):
         self.num_proj = validator.check_non_negative_int(num_proj, "num_proj", self.name)
         self.time_major = validator.check_value_type("time_major", time_major, [bool], self.name)
         self.direction = validator.check_string(direction, ['UNIDIRECTIONAL'], "direction", self.name)
-        self.bias_type = validator.check_string(bias_type,
-                                                ['no_bias', 'single_bias', 'double_bias'], "bias_type", self.name)
         self.gate_order = validator.check_string(gate_order, ['zrh', 'rzh'], "gate_order", self.name)
         self.reset_after = validator.check_value_type("reset_after", reset_after, [bool], self.name)
         self.add_prim_attr("io_format", "ND")
