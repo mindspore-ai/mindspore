@@ -269,7 +269,7 @@ void FuncGraphManager::AddIntoManaged(const FuncGraphPtr &fg) {
   MS_EXCEPTION_IF_NULL(fg);
   if (is_manage_) {
     if (fg->manager() != nullptr && (&(*fg->manager()) != this)) {
-      MS_LOG(WARNING) << "A func graph can only have one manager.";
+      MS_LOG(INFO) << "A func graph can only have one manager.";
     }
     FuncGraphManagerPtr this_manager = shared_from_this();
     fg->set_manager(this_manager);
