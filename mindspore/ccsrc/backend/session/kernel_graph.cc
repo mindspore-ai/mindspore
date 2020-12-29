@@ -1031,32 +1031,42 @@ std::vector<CNodePtr> KernelGraph::FindNodeByPrimitive(const std::vector<Primiti
 }
 
 void KernelGraph::PrintGraphExecuteOrder() const {
-  MS_LOG(INFO) << "Graph:" << graph_id_ << "execution order";
+  MS_LOG(INFO) << "Graph " << graph_id_ << " execution order:";
   for (size_t i = 0; i < execution_order_.size(); i++) {
     CNodePtr cur_cnode_ptr = execution_order_[i];
     MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
+
     std::string event_str;
-    std::string label_str;
     if (AnfAlgo::HasNodeAttr(kAttrEventId, cur_cnode_ptr)) {
-      event_str = ", event_id[" + std::to_string(AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrEventId)) + "]";
+      event_str = ", event id[" + std::to_string(AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrEventId)) + "]";
     }
 
+    std::string label_str;
     if (AnfAlgo::HasNodeAttr(kAttrLabelIndex, cur_cnode_ptr)) {
-      label_str = ", label_id[" + std::to_string(AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrLabelIndex)) + "]";
+      label_str = ", label id[" + std::to_string(AnfAlgo::GetNodeAttr<uint32_t>(cur_cnode_ptr, kAttrLabelIndex)) + "]";
     }
 
     if (AnfAlgo::HasNodeAttr(kAttrLabelSwitchList, cur_cnode_ptr)) {
       auto label_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cur_cnode_ptr, kAttrLabelSwitchList);
-      label_str = ", label_id[";
+      label_str = ", label id[";
       for (size_t j = 0; j < label_list.size(); ++j) {
         label_str += std::to_string(label_list[j]) + (j + 1 < label_list.size() ? ", " : "]");
+      }
+    }
+
+    std::string active_stream_str;
+    if (AnfAlgo::HasNodeAttr(kAttrActiveStreamList, cur_cnode_ptr)) {
+      auto stream_list = AnfAlgo::GetNodeAttr<std::vector<uint32_t>>(cur_cnode_ptr, kAttrActiveStreamList);
+      active_stream_str = ", active stream id[";
+      for (size_t j = 0; j < stream_list.size(); ++j) {
+        active_stream_str += std::to_string(stream_list[j]) + (j + 1 < stream_list.size() ? ", " : "]");
       }
     }
 
     MS_LOG(INFO) << "Index[" << i << "], node name[" << cur_cnode_ptr->fullname_with_scope() << "], logic id["
                  << AnfAlgo::GetStreamDistinctionLabel(cur_cnode_ptr.get()) << "], stream id["
                  << AnfAlgo::GetStreamId(cur_cnode_ptr) << "], node info[" << cur_cnode_ptr->DebugString() << "]"
-                 << event_str << label_str;
+                 << event_str << label_str << active_stream_str;
   }
 }
 
