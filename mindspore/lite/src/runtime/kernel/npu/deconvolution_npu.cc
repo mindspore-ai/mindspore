@@ -24,13 +24,17 @@ using mindspore::schema::PrimitiveType_DeConv2D;
 namespace mindspore::kernel {
 int DeconvolutionNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                       const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
+  if (conv_param_->group_ != 1) {
+    MS_LOG(WARNING) << "Only support group equals 1 for npu deconvolution op";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
 int DeconvolutionNPUKernel::SetConvParam() {
   deconv_->set_attr_strides(ge::AttrValue::LIST_INT({conv_param_->stride_h_, conv_param_->stride_w_}));
   deconv_->set_attr_dilations(ge::AttrValue::LIST_INT({conv_param_->dilation_h_, conv_param_->dilation_w_}));
-  deconv_->set_attr_groups(1);
+  deconv_->set_attr_groups(conv_param_->group_);
 
   if (conv_param_->pad_mode_ == Pad_Same) {
     deconv_->set_attr_pad_mode(ge::AttrValue::STR{"SAME"});
