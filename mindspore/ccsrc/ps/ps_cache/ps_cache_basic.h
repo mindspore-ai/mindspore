@@ -41,9 +41,9 @@ class PsCacheBasic {
   virtual bool CopyHostMemToDevice(void *dst, void *src, size_t size) = 0;
   virtual bool CopyDeviceMemToHost(void *dst, void *src, size_t size) = 0;
   virtual bool HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, void *swap_out_index_addr,
-                           size_t hash_table_size, size_t embedding_size, size_t swap_out_size) = 0;
+                           size_t cache_vocab_size, size_t embedding_size, size_t swap_out_size) = 0;
   virtual bool HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, void *swap_in_index_addr,
-                          size_t hash_table_size, size_t embedding_size, size_t swap_in_size) = 0;
+                          size_t cache_vocab_size, size_t embedding_size, size_t swap_in_size) = 0;
 
  protected:
   void *stream_;
