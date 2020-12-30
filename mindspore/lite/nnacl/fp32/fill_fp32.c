@@ -22,3 +22,10 @@ int Fill(float *output, int size, float data) {
   }
   return NNACL_OK;
 }
+
+int FillInt32(int *output, int size, int data) {
+  for (int i = 0; i < size; ++i) {
+    output[i] = data;
+  }
+  return NNACL_OK;
+}

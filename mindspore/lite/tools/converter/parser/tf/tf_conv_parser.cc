@@ -67,19 +67,23 @@ STATUS TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
   attr->strideW = strides[1];
 
   auto weight_node = GetConstInputNode(tf_node_map, tf_op.input(1));
-  if (weight_node == nullptr) {
-    MS_LOG(ERROR) << "Find Conv2D input weights failed";
-    return RET_ERROR;
+  if (weight_node != nullptr) {
+    std::vector<int64_t> kernels(4);
+    status = ParseKernels(*weight_node, attr->format, &kernels);
+    if (status != RET_OK) {
+      return status;
+    }
+    attr->kernelH = kernels[0];
+    attr->kernelW = kernels[1];
+    attr->channelIn = kernels[2];
+    attr->channelOut = kernels[3];
+  } else {
+    attr->kernelH = -1;
+    attr->kernelW = -1;
+    attr->channelIn = -1;
+    attr->channelOut = -1;
+    MS_LOG(WARNING) << "parsing of kernelH/W channelIn/Out is delayed";
   }
-  std::vector<int64_t> kernels(4);
-  status = ParseKernels(*weight_node, attr->format, &kernels);
-  if (status != RET_OK) {
-    return status;
-  }
-  attr->kernelH = kernels[0];
-  attr->kernelW = kernels[1];
-  attr->channelIn = kernels[2];
-  attr->channelOut = kernels[3];
 
   status = ParsePadMode(tf_op, &attr->padMode);
   if (status != RET_OK) {

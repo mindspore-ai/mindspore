@@ -19,13 +19,19 @@
 #include "schema/inner/model_generated.h"
 #include "backend/optimizer/common/pass.h"
 #include "tools/optimizer/common/gllo_utils.h"
+#include "tools/converter/converter_flags.h"
 
+using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {
 class UpdateConv2DParamPass : public Pass {
  public:
   UpdateConv2DParamPass() : Pass("update_conv2d_param_pass") {}
   ~UpdateConv2DParamPass() override = default;
   bool Run(const FuncGraphPtr &graph) override;
+  void SetFmkType(FmkType fmk_type) { this->fmk_type = fmk_type; }
+
+ private:
+  FmkType fmk_type = lite::converter::FmkType_ONNX;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_UPDATE_CONV2D_PARAM_PASS_H_

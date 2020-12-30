@@ -39,7 +39,7 @@ int TransposeCPUKernel::Init() {
 
 int TransposeCPUKernel::ReSize() {
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(op_parameter_);
-  if (in_tensors_.at(kInputIndex)->shape().size() != static_cast<size_t>(param->num_axes_)) {
+  if (in_tensors_.at(kInputIndex)->shape().size() != static_cast<size_t>(param->num_axes_) && in_tensors_.size() != 2) {
     return RET_OK;
   }
   auto &inTensor = in_tensors_.front();
@@ -89,6 +89,20 @@ int TransposeCPUKernel::Run() {
   MS_ASSERT(out_data_);
 
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
+  if (in_tensors_.size() == 2) {
+    auto input_perm = in_tensors_.at(1);
+    MS_ASSERT(input_perm != nullptr);
+    MS_ASSERT(input_perm->data_c() != nullptr);
+    int *perm_data = reinterpret_cast<int *>(input_perm->data_c());
+    auto perm = std::vector<int>{perm_data, perm_data + input_perm->ElementsNum()};
+    for (int i = 0; i < input_perm->ElementsNum(); ++i) {
+      param->perm_[i] = perm[i];
+    }
+    for (int i = input_perm->ElementsNum(); i <= 8; ++i) {
+      param->perm_[i] = 0;
+    }
+    param->num_axes_ = input_perm->ElementsNum();
+  }
   if (in_tensor->shape().size() != static_cast<size_t>(param->num_axes_)) {
     memcpy(out_data_, in_data_, in_tensor->ElementsNum() * sizeof(float));
     return RET_OK;

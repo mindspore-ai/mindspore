@@ -35,6 +35,8 @@ typedef struct FillParameter {
 extern "C" {
 #endif
 int Fill(float *output, int size, float data);
+
+int FillInt32(int *output, int size, int data);
 #ifdef __cplusplus
 }
 #endif

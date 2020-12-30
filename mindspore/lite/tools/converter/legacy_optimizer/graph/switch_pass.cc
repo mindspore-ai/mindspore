@@ -280,6 +280,7 @@ STATUS SingleSwitchPass::InsertPartialAndMergeAfterSwitch() {
     second_partial_node_->outputIndex.push_back(graph_->allTensors.size() - 1);
   }
 
+  auto origin_switch_outputs = switch_node_->outputIndex;
   switch_node_->outputIndex.clear();
   for (size_t i = 3; i < switch_node_->inputIndex.size(); i++) {
     auto &switch_in_tensor = graph_->allTensors.at(i);
@@ -338,7 +339,7 @@ STATUS SingleSwitchPass::InsertPartialAndMergeAfterSwitch() {
     merge_node->inputIndex.insert(merge_node->inputIndex.end(), second_partial_node_->outputIndex.begin(),
                                   second_partial_node_->outputIndex.end());
   }
-  merge_node->outputIndex = origin_switch_output_tensor_indices_;
+  merge_node->outputIndex = origin_switch_outputs;
   graph_->nodes.push_back(std::move(merge_node));
   return RET_OK;
 }

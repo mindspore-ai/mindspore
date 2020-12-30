@@ -161,7 +161,9 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
     inne_context_ptr->Init();
     const_fold_pm->AddPass(std::make_shared<opt::ConstFoldPass>(inne_context_ptr));
   }
-  const_fold_pm->AddPass(std::make_shared<opt::UpdateConv2DParamPass>());
+  auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
+  update_conv2d_param_pass->SetFmkType(config->fmk);
+  const_fold_pm->AddPass(update_conv2d_param_pass);
   fusion_pm->AddPass(std::make_shared<opt::ConvConvFusion>());
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
   if (config->fmk == lite::converter::FmkType_TFLITE) {

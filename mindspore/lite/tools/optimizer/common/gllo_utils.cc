@@ -693,7 +693,7 @@ STATUS SetFilterDim(const ParamValueLitePtr &tensor, kTransFilterType type, int3
     tensor->set_tensor_shape({filterC, filterK, filterH, filterW});
   } else if (type == kKHWC2CHWK) {
     tensor->set_tensor_shape({filterC, filterH, filterW, filterK});
-  } else if (type == kKCHW2KHWC || type == kCKHW2KHWC || type == kCHWK2KHWC) {
+  } else if (type == kKCHW2KHWC || type == kCKHW2KHWC || type == kCHWK2KHWC || type == kHWCK2KHWC) {
     tensor->set_tensor_shape({filterK, filterH, filterW, filterC});
   } else {
     MS_LOG(ERROR) << "Unsupported transFilterType: " << type;
@@ -812,7 +812,8 @@ static STATUS TransFilterData(const ParamValueLitePtr &tensor, kTransFilterType 
       }
     } break;
     case kHWCK2KCHW:
-    case kHWCK2CKHW: {
+    case kHWCK2CKHW:
+    case kHWCK2KHWC: {
       for (int h = 0; h < filterH; ++h) {
         for (int w = 0; w < filterW; ++w) {
           for (int c = 0; c < filterC; ++c) {
@@ -821,9 +822,12 @@ static STATUS TransFilterData(const ParamValueLitePtr &tensor, kTransFilterType 
               if (type == kHWCK2KCHW) {
                 p2Buff =
                   buf.get() + ((k * filterC * filterH * filterW) + (c * filterH * filterW) + (h * filterW) + (w));
-              } else {
+              } else if (type == kHWCK2CKHW) {
                 p2Buff =
                   buf.get() + ((c * filterK * filterH * filterW) + (k * filterH * filterW) + (h * filterW) + (w));
+              } else {
+                p2Buff =
+                  buf.get() + ((k * filterH * filterW * filterC) + (h * filterW * filterC) + (w * filterC) + (c));
               }
               *p2Buff = *p1Buff;
             }

@@ -41,28 +41,36 @@ STATUS TFTransposeParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "new attr failed";
     return RET_NULL_PTR;
   }
-
   attr->conjugate = false;
+
+  auto status = AddOpInput(tf_op, 0, inputs);
+  if (status != RET_OK) {
+    return status;
+  }
+
   auto perm_node = GetConstInputNode(tf_node_map, tf_op.input(1));
   if (perm_node == nullptr) {
-    MS_LOG(ERROR) << "Find Transpose input perm failed";
-    return RET_ERROR;
-  }
-  tensorflow::AttrValue attr_value;
-  if (!TensorFlowUtils::FindAttrValue(*perm_node, "value", &attr_value)) {
-    MS_LOG(ERROR) << "The value attr should be specified";
-    return RET_ERROR;
-  }
-  auto tensor_proto = attr_value.tensor();
-  if (tensor_proto.int_val_size() > 0) {
-    for (int i = 0; i < tensor_proto.int_val_size(); ++i) {
-      attr->perm.push_back(tensor_proto.int_val(i));
+    status = AddOpInput(tf_op, 1, inputs);
+    if (status != RET_OK) {
+      return status;
     }
   } else {
-    auto data_num = tensor_proto.tensor_content().size() / sizeof(int32_t);
-    auto data = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
-    for (size_t i = 0; i < data_num; ++i) {
-      attr->perm.push_back(data[i]);
+    tensorflow::AttrValue attr_value;
+    if (!TensorFlowUtils::FindAttrValue(*perm_node, "value", &attr_value)) {
+      MS_LOG(ERROR) << "The value attr should be specified";
+      return RET_ERROR;
+    }
+    auto tensor_proto = attr_value.tensor();
+    if (tensor_proto.int_val_size() > 0) {
+      for (int i = 0; i < tensor_proto.int_val_size(); ++i) {
+        attr->perm.push_back(tensor_proto.int_val(i));
+      }
+    } else {
+      auto data_num = tensor_proto.tensor_content().size() / sizeof(int32_t);
+      auto data = reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data());
+      for (size_t i = 0; i < data_num; ++i) {
+        attr->perm.push_back(data[i]);
+      }
     }
   }
 
@@ -75,7 +83,6 @@ STATUS TFTransposeParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
   return status;
 }
 TFNodeRegistrar g_tfTransposeParser("Transpose", new TFTransposeParser());

@@ -54,18 +54,19 @@ class BiDirectionTfGruCellFusion : public PatternProcessPass {
                                float *tensor_data) const;
   void CopyFlattenMatData(const float *mat, const int R, const int C, const int r0, const int r1, const int c0,
                           const int c1, float *data, bool t = false) const;
-  CNodePtr GetStackedHiddenState(const FuncGraphPtr &func_graph, const AnfNodePtr &hidden_state,
-                                 const std::string base_name) const;
+  CNodePtr GetStackedHiddenState(const FuncGraphPtr &func_graph, const AnfNodePtr &fw_init_state,
+                                 const AnfNodePtr &bw_init_state, const std::string base_name) const;
   CNodePtr GetPostProcessNode(const FuncGraphPtr &func_graph, const CNodePtr &gru_output,
                               const std::string base_name) const;
 
  private:
-  std::vector<VarPtr> common_vars_;
   std::vector<VarPtr> fw_vars_;
   std::vector<VarPtr> bw_vars_;
   VarPtr input_;
   VarPtr input_length_;
   VarPtr transpose_input_;
+  VarPtr fw_init_state_;
+  VarPtr bw_init_state_;
 };
 }  // namespace opt
 }  // namespace mindspore

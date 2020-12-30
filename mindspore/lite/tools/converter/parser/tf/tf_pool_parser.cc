@@ -54,7 +54,7 @@ STATUS TFPoolParser::Parse(const tensorflow::NodeDef &tf_op,
     if (attr_value.s() == "VALID") {
       attr->padMode = schema::PadMode_VALID;
     } else if (attr_value.s() == "SAME") {
-      attr->padMode = schema::PadMode_VALID;
+      attr->padMode = schema::PadMode_SAME_UPPER;
     }
   }
 

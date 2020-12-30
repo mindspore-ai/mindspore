@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_FILL_PARSER_H_
-#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_FILL_PARSER_H_
+#ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_RSQRT_PARSER_H_
+#define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_RSQRT_PARSER_H_
 
 #include <string>
 #include <memory>
@@ -24,10 +24,10 @@
 
 namespace mindspore {
 namespace lite {
-class TFFillParser : public TFNodeParser {
+class TFRsqrtParser : public TFNodeParser {
  public:
-  TFFillParser() = default;
-  ~TFFillParser() override = default;
+  TFRsqrtParser() = default;
+  ~TFRsqrtParser() override = default;
 
   STATUS Parse(const tensorflow::NodeDef &tf_op, const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
                PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) override;
@@ -35,4 +35,4 @@ class TFFillParser : public TFNodeParser {
 }  // namespace lite
 }  // namespace mindspore
 
-#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_FILL_PARSER_H_
+#endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_RSQRT_PARSER_H_

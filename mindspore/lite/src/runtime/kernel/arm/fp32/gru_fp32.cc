@@ -138,10 +138,10 @@ int GruCPUKernel::Run() {
   MS_ASSERT(output != nullptr);
   auto input_ptr = reinterpret_cast<float *>(input->data_c());
   MS_ASSERT(input_ptr);
-  auto output_ptr = reinterpret_cast<float *>(output->MutableData());
+  auto output_ptr = reinterpret_cast<float *>(output->data_c());
   MS_ASSERT(output_ptr);
   auto output_hidden_state = out_tensors_[1];
-  memcpy(output_hidden_state->MutableData(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float));
+  memcpy(output_hidden_state->data_c(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float));
   int check_seq_len = gru_parm_->seq_len_;
   if (in_tensors_.size() == 6) {
     auto seq_len = reinterpret_cast<int *>(in_tensors_.at(5)->data_c());
@@ -152,12 +152,12 @@ int GruCPUKernel::Run() {
     check_seq_len = MSMIN(check_seq_len, MSMAX(0, seq_len[0]));
   }
 
-  MS_ASSERT(weight_g_ptr_);
-  MS_ASSERT(weight_r_ptr_);
-  MS_ASSERT(bias_ptr_);
-  MS_ASSERT(gate_buffer_);
+  MS_ASSERT(weight_g_ptr_ != nullptr);
+  MS_ASSERT(weight_r_ptr_ != nullptr);
+  MS_ASSERT(bias_ptr_ != nullptr);
+  MS_ASSERT(gate_buffer_ != nullptr);
   Gru(output_ptr, input_ptr, weight_g_ptr_, weight_r_ptr_, bias_ptr_,
-      reinterpret_cast<float *>(output_hidden_state->MutableData()), gate_buffer_, check_seq_len, gru_parm_);
+      reinterpret_cast<float *>(output_hidden_state->data_c()), gate_buffer_, check_seq_len, gru_parm_);
   return RET_OK;
 }
 
