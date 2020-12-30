@@ -249,7 +249,7 @@ Status RegProfSetDeviceCallback(MsprofSetDeviceCallback func) {
   MS_LOG(INFO) << "GE pass setdevice callback to runtime.";
   Status rt_ret = rtRegDeviceStateCallback(kRtSetDeviceRegName, static_cast<rtDeviceStateCallback>(func));
   if (rt_ret != PROF_SUCCESS) {
-    MS_LOG(ERROR) << "Pass MsprofSetDeviceCallback to runtime failed!";
+    MS_LOG(WARNING) << "Pass MsprofSetDeviceCallback to runtime failed.";
     return rt_ret;
   }
   return PROF_SUCCESS;
@@ -268,7 +268,7 @@ Status RegProfReporterCallback(MsprofReporterCallback func) {
     // Pass MsprofReporterCallback to runtime
     Status rt_ret = rtSetMsprofReporterCallback(func);
     if (rt_ret != PROF_SUCCESS) {
-      MS_LOG(ERROR) << "Pass MsprofReporterCallback to runtime failed, ret: " << rt_ret;
+      MS_LOG(WARNING) << "Pass MsprofReporterCallback to runtime failed, ret: " << rt_ret;
       return rt_ret;
     }
     // Pass MsprofReporterCallback to hccl
