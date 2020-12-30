@@ -93,9 +93,9 @@ namespace device {
 namespace ascend {
 const int FLOAT_LEN = sizeof(float);
 const int FLOAT16_LEN = 2;  // sizeof(float16);
-const std::set<std::string> kOpNeedTransFormat = {kOpFormat_NHWC,        kOpFormat_HWCN,         kOpFormat_NC1HWC0,
-                                                  kOpFormat_FRAC_Z,      kOpFormat_C1HWNCoC0,    kOpFormat_FRAC_NZ,
-                                                  kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04};
+const std::set<std::string> kOpNeedTransFormat = {kOpFormat_NHWC,        kOpFormat_HWCN,          kOpFormat_NC1HWC0,
+                                                  kOpFormat_FRAC_Z,      kOpFormat_C1HWNCoC0,     kOpFormat_FRAC_NZ,
+                                                  kOpFormat_NC1HWC0_C04, kOpFormat_FRACTAL_Z_C04, kOpFormat_NDC1HWC0};
 
 void SyncMemory(void *dst, const void *src, uint64_t size, rtMemcpyKind_t kind) {
   auto ms_context = MsContext::GetInstance();

@@ -65,7 +65,7 @@
 #include "backend/optimizer/ascend/ir_fusion/confusion_mul_grad_fusion.h"
 #include "backend/optimizer/ascend/ir_fusion/softmax_grad_ext_fusion.h"
 #include "backend/optimizer/ascend/format_type/insert_trans_op.h"
-#include "backend/optimizer/ascend/format_type/add_attr_for_3d_graph.h"
+#include "backend/optimizer/ascend/format_type/add_reformat_op.h"
 #include "backend/optimizer/ascend/format_type/dynamic_rnn_grad_reformat.h"
 #include "backend/optimizer/ascend/format_type/insert_transpose_for_basiclstm_op.h"
 #include "backend/optimizer/ascend/format_type/insert_transpose_for_dyanmic_gru_v2.h"
@@ -117,6 +117,7 @@
 #include "backend/optimizer/ascend/enhancer/split_inputs_for_reduce_scatter.h"
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_rnn.h"
 #include "backend/optimizer/ascend/enhancer/add_placeholder_for_dynamic_gru.h"
+#include "backend/optimizer/ascend/enhancer/add_attr_for_3d_graph.h"
 #include "utils/ms_context.h"
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
@@ -210,7 +211,6 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
   data_layout_pm->AddPass(std::make_shared<RectifyDoMaskKernelInfo>());
   data_layout_pm->AddPass(std::make_shared<DynamicRNNGradReformat>());
   data_layout_pm->AddPass(std::make_shared<ChangeAxisOfReduceKernel>());
-  data_layout_pm->AddPass(std::make_shared<AddIoFormatAttrFor3DGraph>());
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
@@ -222,6 +222,8 @@ void AscendDataLayout(const std::shared_ptr<session::KernelGraph> &kernel_graph)
     data_layout_pm->AddPass(std::make_shared<InsertTransOp>());
     data_layout_pm->AddPass(std::make_shared<GetitemTuple>());
   }
+  data_layout_pm->AddPass(std::make_shared<EraseVisitAttr>());
+  data_layout_pm->AddPass(std::make_shared<AddIoFormatAttrFor3DGraph>());
   data_layout_pm->AddPass(std::make_shared<CommonSubexpressionElimination>());
   data_layout_pm->AddPass(std::make_shared<RemoveReshapePair>());
   data_layout_pm->AddPass(std::make_shared<EliminateRedundantOp>());
@@ -381,6 +383,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
       ConfigManager::GetInstance().iter_num() > 1) {
     other2_pm->AddPass(std::make_shared<GetnextMemcpyElimination>());
   }
+  other2_pm->AddPass(std::make_shared<AddReFormatOp>());
   other2_pm->AddPass(std::make_shared<CheckConsistency>());
   optimizer2->AddPassManager(other2_pm);
   (void)optimizer2->Optimize(kernel_graph);

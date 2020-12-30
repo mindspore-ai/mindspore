@@ -14,27 +14,27 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_ADD_ATTR_FOR_3D_GRAPH_H
-#define MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_ADD_ATTR_FOR_3D_GRAPH_H
+#ifndef MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_ATTR_FOR_3D_GRAPH_H
+#define MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_ATTR_FOR_3D_GRAPH_H
 #include <vector>
 #include <string>
 #include <utility>
 #include <memory>
 #include "ir/anf.h"
-#include "backend/optimizer/common/pass.h"
+#include "backend/optimizer/common/optimizer.h"
+#include "backend/optimizer/ascend/ascend_helper.h"
 
 namespace mindspore {
 namespace opt {
-class AddIoFormatAttrFor3DGraph : public Pass {
+class AddIoFormatAttrFor3DGraph : public PatternProcessPass {
  public:
-  explicit AddIoFormatAttrFor3DGraph(size_t groups = 1) : Pass("add_attr_for_3d_graph"), groups_(groups) {}
+  explicit AddIoFormatAttrFor3DGraph(bool multigraph = true)
+      : PatternProcessPass("add_attr_for_3d_graph", multigraph) {}
   ~AddIoFormatAttrFor3DGraph() override = default;
-  bool Run(const FuncGraphPtr &graph) override;
-
- private:
-  size_t groups_ = 1;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
 };
 }  // namespace opt
 }  // namespace mindspore
 
-#endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_FORMAT_TYPE_ADD_ATTR_FOR_3D_GRAPH_H
+#endif  // MINDSPORE_CCSRC_PRE_ACTIVATE_ASCEND_ENHANCER_ADD_ATTR_FOR_3D_GRAPH_H
