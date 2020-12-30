@@ -32,7 +32,6 @@ namespace mindspore {
 namespace opt {
 using KernelBuildInfoBuilder = kernel::KernelBuildInfo::KernelBuildInfoBuilder;
 namespace {
-const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
 AnfNodePtr CreateReshapeNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input_node,
                              const KernelSelectPtr &kernel_select, const std::vector<size_t> &dst_shape) {
   std::vector<AnfNodePtr> trans_inputs;
@@ -66,19 +65,24 @@ void SetTransNodeAttr(const CNodePtr &trans_node) {
 
 std::string InitDefaultFormat(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
-  std::string default_format = kOpFormat_DEFAULT;
   if (node->isa<CNode>() && AnfAlgo::HasNodeAttr("io_format", node->cast<CNodePtr>())) {
     auto attr = AnfAlgo::GetNodeAttr<std::string>(node, "io_format");
     if (attr == kOpFormat_NCDHW) {
-      default_format = kOpFormat_NCDHW;
+      return kOpFormat_NCDHW;
     }
-  } else if (node->isa<ValueNode>() || node->isa<Parameter>()) {
-    auto out_format = AnfAlgo::GetOutputFormat(node, 0);
-    if (k3DFormatSet.find(out_format) != k3DFormatSet.end()) {
-      default_format = kOpFormat_NCDHW;
+  } else if (AnfAlgo::IsRealKernel(node)) {
+    auto formats = AnfAlgo::GetAllOutputFormats(node);
+    if (std::any_of(formats.begin(), formats.end(),
+                    [](const std::string &format) { return k3DFormatSet.find(format) != k3DFormatSet.end(); })) {
+      return kOpFormat_NCDHW;
+    }
+  } else {
+    auto format = AnfAlgo::GetOutputFormat(node, 0);
+    if (k3DFormatSet.find(format) != k3DFormatSet.end()) {
+      return kOpFormat_NCDHW;
     }
   }
-  return default_format;
+  return kOpFormat_DEFAULT;
 }
 
 void ReFreshInferShape(const AnfNodePtr &trans_node, const AnfNodePtr &node) {

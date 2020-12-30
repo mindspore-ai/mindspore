@@ -488,6 +488,8 @@ const std::set<TypeId> kFloatDataTypeSet = {kNumberTypeFloat16, kNumberTypeFloat
 const std::set<std::string> kComputeDepend = {kUniqueOpName, kComputeAccidentalHitsOpName, kSubAndFilterOpName,
                                               kPadAndShiftOpName};
 
+const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
+
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   try {
     if (chmod(file_name.c_str(), mode) != 0) {

@@ -308,6 +308,7 @@ inline const PrimitivePtr kPrimErrorOnDynamicShapeInput = std::make_shared<Primi
 
 // Other miscellaneous
 inline const PrimitivePtr kPrimDepend = std::make_shared<Primitive>("Depend");
+inline const PrimitivePtr kPrimReformat = std::make_shared<Primitive>("Reformat");
 inline const PrimitivePtr kPrimPartial = std::make_shared<Primitive>("Partial");
 inline const PrimitivePtr kPrimIdentity = std::make_shared<Primitive>("identity");
 inline const PrimitivePtr kPrimHookBackward = std::make_shared<Primitive>("HookBackward");

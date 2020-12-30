@@ -281,7 +281,7 @@ bool IsNopNode(const AnfNodePtr &node) {
 
   static std::unordered_set<std::string> nop_nodes = {prim::kPrimReshape->name(), kExpandDimsOpName,
                                                       prim::kPrimSqueeze->name(), prim::kPrimFlatten->name(),
-                                                      kFlattenGradOpName};
+                                                      kFlattenGradOpName,         prim::kPrimReformat->name()};
   if (node == nullptr || !node->isa<CNode>()) {
     return false;
   }
