@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@ class _Loss(Cell):
     """
     Base class for other losses.
     """
-    def __init__(self, reduction='mean', weights=1.0):
+    def __init__(self, reduction='mean'):
         super(_Loss, self).__init__()
         if reduction is None:
             reduction = 'none'
@@ -47,10 +47,7 @@ class _Loss(Cell):
         self.reduce_mean = _selected_ops.ReduceMean()
         self.reduce_sum = P.ReduceSum()
         self.mul = P.Mul()
-        if isinstance(weights, int):
-            self.weights = float(weights)
-        else:
-            self.weights = weights
+        self.cast = P.Cast()
 
     def get_axis(self, x):
         shape = F.shape(x)
@@ -58,13 +55,22 @@ class _Loss(Cell):
         perm = F.make_range(0, length)
         return perm
 
-    def get_loss(self, x):
-        if self.weights != 1.0:
-            x = self.mul(self.weights, x)
+    def get_loss(self, x, weights=1.0):
+        """
+        Computes the weighted loss
+        Args:
+            weights: Optional `Tensor` whose rank is either 0, or the same rank as inputs, and must be broadcastable to
+                inputs (i.e., all dimensions must be either `1`, or the same as the corresponding inputs dimension).
+        """
+        input_dtype = x.dtype
+        x = self.cast(x, mstype.float32)
+        weights = self.cast(weights, mstype.float32)
+        x = self.mul(weights, x)
         if self.reduce and self.average:
             x = self.reduce_mean(x, self.get_axis(x))
         if self.reduce and not self.average:
             x = self.reduce_sum(x, self.get_axis(x))
+        x = self.cast(x, input_dtype)
         return x
 
     def construct(self, base, target):
