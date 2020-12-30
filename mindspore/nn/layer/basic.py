@@ -84,7 +84,7 @@ class L1Regularizer(Cell):
         self.scale = Tensor(scale, dtype=mstype.float32)
 
     def construct(self, weights):
-        const_utils.check_valid_type(F.dtype(weights), mstype.number_type, 'weights')
+        const_utils.check_type_valid(F.dtype(weights), mstype.number_type, 'weights')
         l1_regularization = self.scale * self.reduce_sum(self.abs(weights))
         return l1_regularization
 
