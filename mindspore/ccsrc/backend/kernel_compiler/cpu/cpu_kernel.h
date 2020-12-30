@@ -48,6 +48,7 @@ const char IS_GRAD[] = "is_grad";
 const char TRANSPOSE_NO = 'N';
 const char TRANSPOSE_YES = 'T';
 const char AXIS[] = "axis";
+const char DIM[] = "dim";
 const char BEGIN[] = "begin";
 const char END[] = "end";
 const char SIZE[] = "size";
@@ -81,10 +82,12 @@ enum OperateType {
   SIGN,
   EQUAL,
   NOTEQUAL,
+  LESSEQUAL,
   FLOOR,
   SQUAREDDIFFERENCE,
   GREATER,
   GREATEREQUAL,
+  RECIPROCAL,
 };
 
 class CPUKernel : public kernel::KernelMod {

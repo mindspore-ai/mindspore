@@ -1459,7 +1459,7 @@ class Reciprocal(PrimitiveWithInfer):
         Tensor, has the same shape as the `input_x`.
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 4.0]), mindspore.float32)
