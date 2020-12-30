@@ -504,6 +504,7 @@ class RenameDataset : public Dataset {
  public:
   RenameDataset(std::shared_ptr<Dataset> input, const std::vector<std::string> &input_columns,
                 const std::vector<std::string> &output_columns);
+  ~RenameDataset() = default;
 };
 #endif
 
