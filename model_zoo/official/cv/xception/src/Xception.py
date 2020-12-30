@@ -15,15 +15,14 @@
 """Xception."""
 import mindspore.nn as nn
 import mindspore.ops.operations as P
-from src.config import config
 
 class SeparableConv2d(nn.Cell):
     def __init__(self, in_channels, out_channels, kernel_size=1, stride=1, padding=0):
         super(SeparableConv2d, self).__init__()
         self.conv1 = nn.Conv2d(in_channels, in_channels, kernel_size, stride, group=in_channels, pad_mode='pad',
-                               padding=padding, weight_init=config.weight_init)
+                               padding=padding, weight_init='xavier_uniform')
         self.pointwise = nn.Conv2d(in_channels, out_channels, kernel_size=1, stride=1, pad_mode='valid',
-                                   weight_init=config.weight_init)
+                                   weight_init='xavier_uniform')
 
     def construct(self, x):
         x = self.conv1(x)
@@ -37,7 +36,7 @@ class Block(nn.Cell):
 
         if out_filters != in_filters or strides != 1:
             self.skip = nn.Conv2d(in_filters, out_filters, 1, stride=strides, pad_mode='valid', has_bias=False,
-                                  weight_init=config.weight_init)
+                                  weight_init='xavier_uniform')
             self.skipbn = nn.BatchNorm2d(out_filters, momentum=0.9)
         else:
             self.skip = None
@@ -96,10 +95,10 @@ class Xception(nn.Cell):
         """
         super(Xception, self).__init__()
         self.num_classes = num_classes
-        self.conv1 = nn.Conv2d(3, 32, 3, 2, pad_mode='valid', weight_init=config.weight_init)
+        self.conv1 = nn.Conv2d(3, 32, 3, 2, pad_mode='valid', weight_init='xavier_uniform')
         self.bn1 = nn.BatchNorm2d(32, momentum=0.9)
         self.relu = nn.ReLU()
-        self.conv2 = nn.Conv2d(32, 64, 3, pad_mode='valid', weight_init=config.weight_init)
+        self.conv2 = nn.Conv2d(32, 64, 3, pad_mode='valid', weight_init='xavier_uniform')
         self.bn2 = nn.BatchNorm2d(64, momentum=0.9)
 
         # Entry flow

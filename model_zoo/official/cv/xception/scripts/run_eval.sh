@@ -18,8 +18,14 @@ export DEVICE_ID=$1
 DATA_DIR=$2
 PATH_CHECKPOINT=$3
 
-python ./eval.py  \
+rm -rf eval_output
+mkdir ./eval_output
+cd ./eval_output || exit
+echo "start evaluating model..."
+
+python ../eval.py  \
     --device_target=Ascend \
     --device_id=$DEVICE_ID \
     --checkpoint_path=$PATH_CHECKPOINT \
     --dataset_path=$DATA_DIR > eval.log 2>&1 &
+cd ../

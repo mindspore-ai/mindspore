@@ -36,6 +36,5 @@ config = ed({
     "label_smooth_factor": 0.1,
     "lr_init": 0.00004,
     "lr_max": 0.4,
-    "lr_end": 0.00004,
-    "weight_init": 'xavier_uniform'
+    "lr_end": 0.00004
 })

@@ -59,7 +59,8 @@ if __name__ == '__main__':
         else:
             rank = 0
             group_size = 1
-            context.set_context(device_id=0)
+            if os.getenv('DEVICE_ID', "not_set").isdigit():
+                context.set_context(device_id=int(os.getenv('DEVICE_ID')))
 
         # define network
         net = xception(class_num=config.class_num)
@@ -88,7 +89,8 @@ if __name__ == '__main__':
                            warmup_epochs=config.warmup_epochs,
                            total_epochs=config.epoch_size,
                            steps_per_epoch=step_size,
-                           lr_decay_mode=config.lr_decay_mode))
+                           lr_decay_mode=config.lr_decay_mode,
+                           global_step=config.finish_epoch * step_size))
 
         # define optimization
         opt = Momentum(net.trainable_params(), lr, config.momentum, config.weight_decay, config.loss_scale)
@@ -100,7 +102,7 @@ if __name__ == '__main__':
         # define callbacks
         cb = [TimeMonitor(), LossMonitor()]
         if config.save_checkpoint:
-            save_ckpt_path = os.path.join(config.save_checkpoint_path, 'model_' + str(rank) + '/')
+            save_ckpt_path = os.path.join(config.save_checkpoint_path, 'ckpt_' + str(rank) + '/')
             config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_epochs * step_size,
                                          keep_checkpoint_max=config.keep_checkpoint_max)
             ckpt_cb = ModelCheckpoint(f"Xception-rank{rank}", directory=save_ckpt_path, config=config_ck)
