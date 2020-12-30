@@ -81,9 +81,10 @@ For FP16 operators, if the input data type is FP32, the backend of MindSpore wil
     ├─config.py                       # parameter configuration
     ├─dataset.py                      # data preprocessing
     ├─Xception.py                     # network definition
-    ├─CrossEntropySmooth.py           # Customized CrossEntropy loss function
+    ├─loss.py                         # Customized CrossEntropy loss function
     └─lr_generator.py                 # learning rate generator
   ├─train.py                          # train net
+  ├─export.py                         # export net
   └─eval.py                           # eval net
 
 ```
@@ -110,7 +111,6 @@ Major parameters in train.py and config.py are:
 'lr_init': 0.00004                 # initiate learning rate
 'lr_max': 0.4                      # max bound of learning rate
 'lr_end': 0.00004                  # min bound of learning rate
-"weight_init": 'xavier_uniform'    # Weight initialization mode
 ```
 
 ## [Training process](#contents)
@@ -149,13 +149,13 @@ sh scripts/run_standalone_train.sh DEVICE_ID DATA_PATH
 
 ### Result
 
-Training result will be stored in the example path. Checkpoints will be stored at `. /model_0` by default, and training log will be redirected to `log.txt` like followings.
+Training result will be stored in the example path. Checkpoints will be stored at `. /ckpt_0` by default, and training log will be redirected to `log.txt` like followings.
 
 ``` shell
-epoch: [  0/250], step:[ 1250/ 1251], loss:[4.761/5.613], time:[529.305], lr:[0.400]
-epoch time: 1128662.862, per step time: 902.209, avg loss: 5.609
-epoch: [  1/250], step:[ 1250/ 1251], loss:[4.164/4.318], time:[503.708], lr:[0.398]
-epoch time: 889163.081, per step time: 710.762, avg loss: 4.312
+epoch: 1 step: 1251, loss is 4.8427444
+epoch time: 701242.350 ms, per step time: 560.545 ms
+epoch: 2 step: 1251, loss is 4.0637593
+epoch time: 598591.422 ms, per step time: 478.490ms
 ```
 
 ## [Eval process](#contents)
@@ -199,18 +199,19 @@ result: {'Loss': 1.7797744848789312, 'Top_1_Acc': 0.7985777243589743, 'Top_5_Acc
 | -------------------------- | ---------------------------------------------- |
 | Model Version              | Xception                                       |
 | Resource                   | HUAWEI CLOUD Modelarts                         |
-| uploaded Date              | 11/15/2020                                     |
-| MindSpore Version          | 1.0.0                                          |
+| uploaded Date              | 12/10/2020                                     |
+| MindSpore Version          | 1.1.0                                          |
 | Dataset                    | 1200k images                                   |
 | Batch_size                 | 128                                            |
 | Training Parameters        | src/config.py                                  |
 | Optimizer                  | Momentum                                       |
 | Loss Function              | CrossEntropySmooth                             |
 | Loss                       | 1.78                                           |
-| Accuracy (8p)              | Top1[79.9%] Top5[94.9%]                        |
-| Total time (8p)            | 63h                                            |
+| Accuracy (8p)              | Top1[79.8%] Top5[94.8%]                        |
+| Per step time (8p)         | 479 ms/step                                    |
+| Total time (8p)            | 42h                                            |
 | Params (M)                 | 180M                                           |
-| Scripts                    | [Xception script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/Xception) |
+| Scripts                    | [Xception script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/xception) |
 
 #### Inference Performance
 
