@@ -1569,7 +1569,8 @@ void SessionBasic::CreateOutputNode(const CNodePtr &cnode, const std::shared_ptr
 
 std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInfo &op_run_info,
                                                                   const std::vector<tensor::TensorPtr> &input_tensors,
-                                                                  const std::vector<int64_t> &tensors_mask) {
+                                                                  const std::vector<int64_t> &tensors_mask,
+                                                                  bool is_ascend) {
   auto graph = std::make_shared<KernelGraph>();
   graph->set_graph_id(graph_sum_);
   graph_sum_++;
@@ -1612,7 +1613,11 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructSingleOpGraph(const OpRunInf
   graph->set_execution_order(exe_order);
   graph->UpdateGraphDynamicAttr();
   // set output
-  CreateOutputNode(cnode, graph);
+  if (is_ascend) {
+    graph->set_output(cnode);
+  } else {
+    CreateOutputNode(cnode, graph);
+  }
   graph->SetInputNodes();
   auto manager = MakeManager({graph});
   if (manager != nullptr) {
