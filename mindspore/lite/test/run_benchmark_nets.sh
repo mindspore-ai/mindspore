@@ -1326,10 +1326,21 @@ function Run_arm64() {
     while read line; do
         model_name=`echo ${line}|awk -F ' ' '{print $1}'`
         accuracy_limit=`echo ${line}|awk -F ' ' '{print $2}'`
+        input_num=`echo ${line}|awk -F ' ' '{print $3}'`
+        data_path="/data/local/tmp/input_output/"
+        input_files=''
+        if [[ -z "$input_num" || $input_num == 1 ]]; then
+          input_files=${data_path}'input/'$model_name'.ms.bin'
+        elif [[ ! -z "$input_num" && $input_num -gt 1 ]]; then
+          for i in $(seq 1 $input_num)
+          do
+            input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
+          done
+        fi
         echo "mindspore run npu: ${model_name}, accuracy limit:${accuracy_limit}" >> "${run_arm64_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=NPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=NPU --modelFile='${model_name}'.ms --inDataFile=/data/local/tmp/input_output/input/'${model_name}'.ms.bin --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=NPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --device=NPU --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out --accuracyThreshold='${accuracy_limit} >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64_npu: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -1350,7 +1361,8 @@ function Run_arm64() {
         input_files=''
         output_file=''
         data_path="/data/local/tmp/input_output/"
-        if [[ -z "$input_num" || $input_num == 1 ]] && [ -e ${data_path}'input/'${model_name}'.ms.bin' ]; then
+        model_x86_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
+        if [[ -z "$input_num" || $input_num == 1 ]] && [ -e ${model_x86_path}'input/'${model_name}'.ms.bin' ]; then
           input_files=${data_path}'input/'$model_name'.ms.bin'
         elif [[ ! -z "$input_num" && $input_num -gt 1 ]]; then
           for i in $(seq 1 $input_num)
@@ -1358,7 +1370,7 @@ function Run_arm64() {
             input_files=$input_files${data_path}'input/'$model_name'.ms.bin_'$i','
           done
         fi
-        if [ -e ${data_path}'output/'${model_name}'.ms.out' ]; then
+        if [ -e ${model_x86_path}'output/'${model_name}'.ms.out' ]; then
           output_file=${data_path}'output/'${model_name}'.ms.out'
         fi
         if [[ ${model_name##*.} == "caffemodel" ]]; then
