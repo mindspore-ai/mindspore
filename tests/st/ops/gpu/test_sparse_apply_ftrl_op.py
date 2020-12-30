@@ -147,3 +147,27 @@ def test_ftrl_sparse_half_int64_ind():
     sparse_apply_ftrl = Net_half()
     sparse_apply_ftrl(gradient, indices)
     assert np.all(sparse_apply_ftrl.var.data.asnumpy() == expect_var)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_ftrl_half_return_output():
+    gradient = Tensor(np.ones([3, 3, 3]).astype(np.float16))
+    indices = Tensor([0, 1, 2], mstype.int32)
+    expect_var = np.array([[[0.291479, 0.291479, 0.291479],
+                            [0.291479, 0.291479, 0.291479],
+                            [0.291479, 0.291479, 0.291479]],
+                           [[0.291479, 0.291479, 0.291479],
+                            [0.291479, 0.291479, 0.291479],
+                            [0.291479, 0.291479, 0.291479]],
+                           [[0.291479, 0.291479, 0.291479],
+                            [0.291479, 0.291479, 0.291479],
+                            [0.291479, 0.291479, 0.291479]]]).astype(np.float16)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    sparse_apply_ftrl = Net_half()
+    output = sparse_apply_ftrl(gradient, indices)
+    assert np.all(output[0].asnumpy() == expect_var)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    sparse_apply_ftrl = Net_half()
+    sparse_apply_ftrl(gradient, indices)
+    assert np.all(output[0].asnumpy() == expect_var)
