@@ -34,13 +34,10 @@ class MsException {
 
   void SetException() {
     exception_ptr_ = std::current_exception();
-    if (exception_ptr_ != nullptr) {
-      for (auto &listener : listeners_) {
-        if (listener == nullptr) {
-          continue;
-        }
-        listener->OnException();
-      }
+    if (exception_ptr_ != nullptr && listener_ != nullptr) {
+      auto listener = listener_;
+      listener_ = nullptr;
+      listener->OnException();
     }
   }
 
@@ -52,15 +49,13 @@ class MsException {
     }
   }
 
-  void AddExceptionListener(ExceptionListener *listener) { (void)listeners_.insert(listener); }
-
-  void RemoveExceptionListener(ExceptionListener *listener) { (void)listeners_.erase(listener); }
+  void SetExceptionListener(ExceptionListener *listener) { listener_ = listener; }
 
  private:
   MsException() = default;
   ~MsException() = default;
   DISABLE_COPY_AND_ASSIGN(MsException)
-  std::set<ExceptionListener *> listeners_;
+  ExceptionListener *listener_{nullptr};
   std::exception_ptr exception_ptr_{nullptr};
 };
 }  // namespace mindspore
