@@ -53,9 +53,9 @@ bool AssignCPUKernel::Launch(const std::vector<AddressPtr> &inputs, const std::v
     MS_LOG(EXCEPTION) << "Memcpy size must <= max_size, but got memcpy size is : " << total_size
                       << ", max size is : " << max_size;
   }
-  int ret = memcpy_s(inputs[0]->addr, total_size, inputs[1]->addr, total_size);
+  int ret = memcpy_s(inputs[0]->addr, max_size, inputs[1]->addr, total_size);
   if (ret != 0) {
-    MS_LOG(EXCEPTION) << "memcpy_s error, errorno" << ret;
+    MS_LOG(EXCEPTION) << "memcpy_s error, error no " << ret;
   }
   return true;
 }

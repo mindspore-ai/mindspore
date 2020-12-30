@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace kernel {
-
 template <typename T>
 void MaximumCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
@@ -216,6 +215,5 @@ void MaximumCPUKernel<T>::BroadcastArithTensors(const T *input_x, const T *input
     output[i] = MaximumFunc(input_x[i], input_y[i]);
   }
 }
-
 }  // namespace kernel
 }  // namespace mindspore
