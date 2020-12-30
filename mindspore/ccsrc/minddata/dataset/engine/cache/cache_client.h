@@ -259,12 +259,12 @@ class CacheClient {
 
   // Default size of the async write buffer
   constexpr static int64_t kAsyncBufferSize = 16 * 1048576L;  // 16M
-  constexpr static int32_t kNumAsyncBuffer = 2;
+  constexpr static int32_t kNumAsyncBuffer = 3;
 
-  /// Force a final flush to the cache server. Must be called when receving eoe.
+  /// Force a final flush to the cache server. Must be called when receiving eoe.
   Status FlushAsyncWriteBuffer() {
     if (async_buffer_stream_) {
-      return async_buffer_stream_->SyncFlush(true);
+      return async_buffer_stream_->SyncFlush(AsyncBufferStream::AsyncFlushFlag::kFlushBlocking);
     }
     return Status::OK();
   }
@@ -323,21 +323,20 @@ class CacheClient {
     /// result of some previous flush.
     /// \note Need to call SyncFlush to do the final flush.
     Status AsyncWrite(const TensorRow &row);
-    Status SyncFlush(bool blocking = false);
+    enum class AsyncFlushFlag : int8_t { kFlushNone = 0, kFlushBlocking = 1, kCallerHasXLock = 1u << 2 };
+    Status SyncFlush(AsyncFlushFlag flag);
 
     /// This maps a physical shared memory to the data stream.
     class AsyncWriter {
      public:
       friend class AsyncBufferStream;
-      Status Write(int64_t start_addr, int64_t sz, const std::vector<ReadableSlice> &v);
+      Status Write(int64_t sz, const std::vector<ReadableSlice> &v);
 
      private:
       std::shared_ptr<BatchCacheRowsRequest> rq;
       void *buffer_;
-      int32_t num_ele_;                   // How many tensor rows in this buffer
-      int64_t begin_addr_;                // Start of logical address of the data stream
-      std::atomic<int64_t> end_addr_;     // End of the logical address of the data stream
-      std::atomic<int64_t> bytes_avail_;  // Number of bytes remain
+      int32_t num_ele_;      // How many tensor rows in this buffer
+      int64_t bytes_avail_;  // Number of bytes remain
     };
 
     /// \brief Release the shared memory during shutdown
@@ -346,18 +345,13 @@ class CacheClient {
 
    private:
     Status flush_rc_;
-    WaitPost writer_wp_;
-    WaitPost flush_wp_;
-    RWLock mux_;
+    std::mutex mux_;
     TaskGroup vg_;
     CacheClient *cc_;
     int64_t offset_addr_;
     AsyncWriter buf_arr_[kNumAsyncBuffer];
     int32_t cur_;
     std::atomic<int64_t> next_addr_;
-
-    /// \brief Entry point of the async flush thread.
-    Status AsyncFlush();
   };
   std::shared_ptr<AsyncBufferStream> async_buffer_stream_;
 

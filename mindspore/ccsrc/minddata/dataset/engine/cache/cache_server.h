@@ -363,6 +363,7 @@ class CacheServer : public Service {
       expected_ = n;
       rc_lists_.reserve(expected_);
     }
+    ~BatchWait() = default;
 
     std::weak_ptr<BatchWait> GetBatchWait() { return weak_from_this(); }
 
