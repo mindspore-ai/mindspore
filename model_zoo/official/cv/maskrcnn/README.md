@@ -122,6 +122,18 @@ pip install mmcv=0.2.14
    Note:
    1. VALIDATION_JSON_FILE is a label json file for evaluation.
 
+5. Execute inference script.
+   After training, you can start inference as follows:
+
+   ```shell
+   # inference
+   bash run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+   ```
+
+   Note:
+   1. AIR_PATH is a model file, exported by export script file on the Ascend910 environment.
+   2. ANN_FILE_PATH is a annotation file for inference.
+
 # Run in docker
 
 1. Build docker images
@@ -155,6 +167,13 @@ bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
 bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
 
+5. Inference.
+
+   ```shell
+   # inference
+   bash run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+   ```
+
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
@@ -163,9 +182,11 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 .
 └─MaskRcnn
   ├─README.md                             # README
+  ├─ascend310_infer                       #application for 310 inference
   ├─scripts                               # shell script
     ├─run_standalone_train.sh             # training in standalone mode(1pcs)
     ├─run_distribute_train.sh             # training in parallel mode(8 pcs)
+    ├─run_infer_310.sh                    #shell script for 310 inference
     └─run_eval.sh                         # evaluation
   ├─src
     ├─maskrcnn
@@ -181,13 +202,16 @@ bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
       ├─resnet50.py                       # backbone network
       ├─roi_align.py                      # roi align network
       └─rpn.py                            # reagion proposal network
+    ├─aipp.cfg                            #aipp config file
     ├─config.py                           # network configuration
     ├─dataset.py                          # dataset utils
     ├─lr_schedule.py                      # leanring rate geneatore
     ├─network_define.py                   # network define for maskrcnn
     └─util.py                             # routine operation
   ├─mindspore_hub_conf.py                 # mindspore hub interface
+  ├─export.py                             #script to export AIR,MINDIR,ONNX model
   ├─eval.py                               # evaluation scripts
+  ├─postprogress.py                       #post process for 310 inference
   └─train.py                              # training scripts
 ```
 
@@ -466,6 +490,61 @@ Accumulating evaluation results...
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.285
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.490
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.586
+```
+
+## Model Export
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` shoule be in ["AIR", "ONNX", "MINDIR"]
+
+## Inference Process
+
+### Usage
+
+Before performing inference, the air file must bu exported by export script on the 910 environment.
+
+```shell
+# Ascend310 inference
+sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+```
+
+### result
+
+Inference result is saved in current path, you can find result like this in log file.
+
+```bash
+Evaluate annotation type *bbox*
+Accumulating evaluation results...
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.3368
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.589
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.394
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.218
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.411
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.476
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.305
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.489
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.514
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.323
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.562
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.657
+
+Evaluate annotation type *segm*
+Accumulating evaluation results...
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.323
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.544
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.336
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.147
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.353
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.479
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.278
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.422
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.439
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.248
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.478
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.594
 ```
 
 # Model Description

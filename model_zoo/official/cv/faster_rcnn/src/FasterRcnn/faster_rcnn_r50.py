@@ -423,3 +423,13 @@ class Faster_Rcnn_Resnet50(nn.Cell):
             multi_level_anchors += (Tensor(anchors.astype(np.float16)),)
 
         return multi_level_anchors
+
+class FasterRcnn_Infer(nn.Cell):
+    def __init__(self, config):
+        super(FasterRcnn_Infer, self).__init__()
+        self.network = Faster_Rcnn_Resnet50(config)
+        self.network.set_train(False)
+
+    def construct(self, img_data, img_metas):
+        output = self.network(img_data, img_metas, None, None, None)
+        return output
