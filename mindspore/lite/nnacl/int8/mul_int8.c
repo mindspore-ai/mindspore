@@ -236,8 +236,7 @@ void Mul(int8_t *input0_data, int8_t *input1_data, int8_t *output_data, int64_t 
     mul_result += para.out_quant_arg_.zp_;
     mul_result = mul_result < para.output_activation_max_ ? mul_result : para.output_activation_max_;
     mul_result = mul_result > para.output_activation_min_ ? mul_result : para.output_activation_min_;
-    output_data[0] = (int8_t)mul_result;
-    output_data++;
+    output_data[index] = (int8_t)mul_result;
   }
   return;
 }
