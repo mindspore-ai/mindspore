@@ -710,6 +710,10 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
 
 bool AscendKernelRuntime::SyncStream() {
   InnerSetContext();
+  if (stream_ == nullptr) {
+    MS_LOG(ERROR) << "SyncStream failed. stream_ is nullptr";
+    return false;
+  }
   if (RT_ERROR_NONE != rtStreamSynchronize(stream_)) {  // o for switch stream
     MS_LOG(ERROR) << "Call runtime rtStreamSynchronize error.";
     return false;
