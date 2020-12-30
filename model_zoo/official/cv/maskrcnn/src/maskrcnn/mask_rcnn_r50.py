@@ -567,3 +567,13 @@ class Mask_Rcnn_Resnet50(nn.Cell):
         roi_feats_mask_test = self.cast(roi_feats_mask_test, mstype.float16)
         mask_fb_pred_all = self.rcnn_mask(roi_feats_mask_test)
         return mask_fb_pred_all
+
+class MaskRcnn_Infer(nn.Cell):
+    def __init__(self, config):
+        super(MaskRcnn_Infer, self).__init__()
+        self.network = Mask_Rcnn_Resnet50(config)
+        self.network.set_train(False)
+
+    def construct(self, img_data, img_metas):
+        output = self.network(img_data, img_metas, None, None, None, None)
+        return output

@@ -111,6 +111,9 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 # 评估
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+
+#推理
+sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
 ```
 
 # 在docker上运行
@@ -146,6 +149,13 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
 
+5. 推理
+
+```shell
+# 推理
+sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+```
+
 # 脚本说明
 
 ## 脚本及样例代码
@@ -154,9 +164,11 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 .
 └─faster_rcnn
   ├─README.md    // Faster R-CNN相关说明
+  ├─ascend310_infer  //实现310推理源代码
   ├─scripts
     ├─run_standalone_train_ascend.sh    // Ascend单机shell脚本
     ├─run_distribute_train_ascend.sh    // Ascend分布式shell脚本
+    ├─run_infer_310.sh    // Ascend推理shell脚本
     └─run_eval_ascend.sh    // Ascend评估shell脚本
   ├─src
     ├─FasterRcnn
@@ -171,12 +183,15 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
       ├─resnet50.py    // 骨干网络
       ├─roi_align.py    // ROI对齐网络
       └─rpn.py    //  区域候选网络
+    ├─aipp.cfg    // aipp 配置文件
     ├─config.py    // 总配置
     ├─dataset.py    // 创建并处理数据集
     ├─lr_schedule.py    // 学习率生成器
     ├─network_define.py    // Faster R-CNN网络定义
     └─util.py    // 例行操作
+  ├─export.py    // 导出 AIR,MINDIR,ONNX模型的脚本
   ├─eval.py    // 评估脚本
+  ├─postprogress.py    // 310推理后处理脚本
   └─train.py    // 训练脚本
 ```
 
@@ -267,6 +282,44 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.562
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.631
 ```
+
+## 模型导出
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` 可选 ["AIR", "ONNX", "MINDIR"]
+
+## 推理过程
+
+### 使用方法
+
+在推理之前需要在昇腾910环境上完成模型的导出。
+
+```shell
+# Ascend310 inference
+sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+```
+
+### 结果
+
+推理的结果保存在当前目录下，在日志文件中可以找到类似以下的结果。
+
+```log
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.349
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.570
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.369
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.211
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.391
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.435
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.295
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.476
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.503
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.330
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.547
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.622
+ ```
 
 # 模型描述
 
