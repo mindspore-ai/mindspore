@@ -45,10 +45,5 @@ MS_REG_GPU_KERNEL_ONE(
   ReluGradV2,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
   ReluGradV2GpuKernel, int64_t)
-MS_REG_GPU_KERNEL_ONE(
-  ReluGradV2,
-  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt8),
-  ReluGradV2GpuKernel, uint8_t)
-
 }  // namespace kernel
 }  // namespace mindspore
