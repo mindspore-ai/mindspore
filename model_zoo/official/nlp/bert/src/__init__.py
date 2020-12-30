@@ -21,13 +21,13 @@ from .bert_model import BertAttention, BertConfig, BertEncoderCell, BertModel, \
     BertOutput, BertSelfAttention, BertTransformer, EmbeddingLookup, \
     EmbeddingPostprocessor, RelaPosEmbeddingsGenerator, RelaPosMatrixGenerator, \
     SaturateCast, CreateAttentionMaskFromInputMask
-
+from .adam import AdamWeightDecayForBert
 __all__ = [
     "BertNetworkWithLoss", "BertPreTraining", "BertPretrainingLoss",
     "GetMaskedLMOutput", "GetNextSentenceOutput", "BertTrainOneStepCell",
     "BertTrainOneStepWithLossScaleCell", "BertTrainAccumulateStepsWithLossScaleCell",
     "BertAttention", "BertConfig", "BertEncoderCell", "BertModel", "BertOutput",
     "BertSelfAttention", "BertTransformer", "EmbeddingLookup",
-    "EmbeddingPostprocessor", "RelaPosEmbeddingsGenerator",
+    "EmbeddingPostprocessor", "RelaPosEmbeddingsGenerator", "AdamWeightDecayForBert",
     "RelaPosMatrixGenerator", "SaturateCast", "CreateAttentionMaskFromInputMask"
 ]
