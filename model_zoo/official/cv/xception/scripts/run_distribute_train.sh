@@ -27,13 +27,10 @@ echo "avg_core_per_rank" $avg_core_per_rank
 echo "core_gap" $core_gap
 for((i=0;i<RANK_SIZE;i++))
 do
-    start=`expr $i \* $avg_core_per_rank`
     export DEVICE_ID=$i
     export RANK_ID=$i
     export DEPLOY_MODE=0
     export GE_USE_STATIC_MEMORY=1
-    end=`expr $start \+ $core_gap`
-    cmdopt=$start"-"$end
 
     rm -rf train_parallel$i
     mkdir ./train_parallel$i
@@ -42,7 +39,7 @@ do
     echo "start training for rank $i, device $DEVICE_ID"
 
     env > env.log
-    taskset -c $cmdopt python ../train.py  \
+    python ../train.py  \
     --is_distributed \
     --device_target=Ascend \
     --dataset_path=$DATA_DIR > log.txt 2>&1 &

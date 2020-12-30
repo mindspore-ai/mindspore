@@ -16,7 +16,13 @@
 
 export DEVICE_ID=$1
 DATA_DIR=$2
-python ./train.py  \
+
+rm -rf train_standalone
+mkdir ./train_standalone
+cd ./train_standalone || exit
+echo "start training standalone on device $DEVICE_ID"
+
+python ../train.py  \
     --device_target=Ascend \
     --dataset_path=$DATA_DIR > log.txt 2>&1 &
-
+cd ../

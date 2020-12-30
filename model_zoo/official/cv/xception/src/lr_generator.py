@@ -17,7 +17,7 @@ import math
 import numpy as np
 
 
-def get_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch, lr_decay_mode):
+def get_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch, lr_decay_mode, global_step=0):
     """
     generate learning rate array
 
@@ -82,6 +82,6 @@ def get_lr(lr_init, lr_end, lr_max, warmup_epochs, total_epochs, steps_per_epoch
                 lr = lr_max - (lr_max - lr_end) * (i - warmup_steps) / (total_steps - warmup_steps)
             lr_each_step.append(lr)
 
-    lr_each_step = np.array(lr_each_step).astype(np.float32)
+    lr_each_step = np.array(lr_each_step[global_step:]).astype(np.float32)
 
     return lr_each_step
