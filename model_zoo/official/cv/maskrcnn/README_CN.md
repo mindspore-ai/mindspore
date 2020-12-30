@@ -122,6 +122,18 @@ pip install mmcv=0.2.14
    注：
    1. VALIDATION_JSON_FILE是用于评估的标签JSON文件。
 
+5. 执行推理脚本。
+   训练结束后，按照如下步骤启动推理：
+
+   ```bash
+   # 评估
+   sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+   ```
+
+   注：
+   1. AIR_PATH是在910上使用export脚本导出的模型。
+   2. ANN_FILE_PATH是推理使用的标注文件。
+
 # 脚本说明
 
 ## 脚本和样例代码
@@ -130,9 +142,11 @@ pip install mmcv=0.2.14
 .
 └─MaskRcnn
   ├─README.md                             # README
+  ├─ascend310_infer                       #实现310推理源代码
   ├─scripts                               # shell脚本
     ├─run_standalone_train.sh             # 单机模式训练（单卡）
     ├─run_distribute_train.sh             # 并行模式训练（8卡）
+    ├─run_infer_310.sh                    # Ascend推理shell脚本
     └─run_eval.sh                         # 评估
   ├─src
     ├─maskrcnn
@@ -148,13 +162,16 @@ pip install mmcv=0.2.14
       ├─resnet50.py                       # 骨干网
       ├─roi_align.py                      # 兴趣点对齐网络
       └─rpn.py                            # 区域候选网络
+    ├─aipp.cfg                            #aipp 配置文件
     ├─config.py                           # 网络配置
     ├─dataset.py                          # 数据集工具
     ├─lr_schedule.py                      # 学习率生成器
     ├─network_define.py                   # MaskRCNN的网络定义
     └─util.py                             # 例行操作
   ├─mindspore_hub_conf.py                 # MindSpore hub接口
+  ├─export.py                             #导出 AIR,MINDIR,ONNX模型的脚本
   ├─eval.py                               # 评估脚本
+  ├─postprogress.py                       #310推理后处理脚本
   └─train.py                              # 训练脚本
 ```
 
@@ -408,6 +425,61 @@ sh run_eval.sh [VALIDATION_ANN_FILE_JSON] [CHECKPOINT_PATH]
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.294
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.484
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.558
+```
+
+## 模型导出
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` 选项 ["AIR", "ONNX", "MINDIR"]
+
+## 推理过程
+
+### 使用方法
+
+在推理之前需要在昇腾910环境上完成模型的导出。
+
+```shell
+# Ascend310 推理
+sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+```
+
+### 结果
+
+推理的结果保存在当前目录下，在日志文件中可以找到类似以下的结果。
+
+```bash
+Evaluate annotation type *bbox*
+Accumulating evaluation results...
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.3368
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.589
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.394
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.218
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.411
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.476
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.305
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.489
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.514
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.323
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.562
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.657
+
+Evaluate annotation type *segm*
+Accumulating evaluation results...
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.323
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.544
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.336
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.147
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.353
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.479
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.278
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.422
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.439
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.248
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.478
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.594
 ```
 
 # 模型说明

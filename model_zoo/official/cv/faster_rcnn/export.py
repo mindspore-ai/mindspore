@@ -19,7 +19,7 @@ import numpy as np
 import mindspore as ms
 from mindspore import Tensor, load_checkpoint, load_param_into_net, export, context
 
-from src.FasterRcnn.faster_rcnn_r50 import Faster_Rcnn_Resnet50
+from src.FasterRcnn.faster_rcnn_r50 import FasterRcnn_Infer
 from src.config import config
 
 parser = argparse.ArgumentParser(description='fasterrcnn_export')
@@ -34,15 +34,17 @@ args = parser.parse_args()
 context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 if __name__ == '__main__':
-    net = Faster_Rcnn_Resnet50(config=config)
+    net = FasterRcnn_Infer(config=config)
 
     param_dict = load_checkpoint(args.ckpt_file)
-    load_param_into_net(net, param_dict)
+
+    param_dict_new = {}
+    for key, value in param_dict.items():
+        param_dict_new["network." + key] = value
+
+    load_param_into_net(net, param_dict_new)
 
     img = Tensor(np.zeros([config.test_batch_size, 3, config.img_height, config.img_width]), ms.float16)
     img_metas = Tensor(np.random.uniform(0.0, 1.0, size=[config.test_batch_size, 4]), ms.float16)
-    gt_bboxes = Tensor(np.random.uniform(0.0, 1.0, size=[config.test_batch_size, config.num_gts]), ms.float16)
-    gt_label = Tensor(np.random.uniform(0.0, 1.0, size=[config.test_batch_size, config.num_gts]), ms.int32)
-    gt_num = Tensor(np.random.uniform(0.0, 1.0, size=[config.test_batch_size, config.num_gts]), ms.bool_)
 
-    export(net, img, img_metas, gt_bboxes, gt_label, gt_num, file_name=args.file_name, file_format=args.file_format)
+    export(net, img, img_metas, file_name=args.file_name, file_format=args.file_format)
