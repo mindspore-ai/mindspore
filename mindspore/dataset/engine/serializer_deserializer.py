@@ -40,16 +40,13 @@ def serialize(dataset, json_filepath=""):
         OSError cannot open a file
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms.c_transforms as C
-        >>> DATA_DIR = "../../data/testMnistData"
-        >>> data = ds.MnistDataset(DATA_DIR, 100)
-        >>> one_hot_encode = C.OneHot(10)  # num_classes is input argument
-        >>> data = data.map(operation=one_hot_encode, input_column_names="label")
-        >>> data = data.batch(batch_size=10, drop_remainder=True)
-        >>>
-        >>> ds.engine.serialize(data, json_filepath="mnist_dataset_pipeline.json")  # serialize it to json file
-        >>> serialized_data = ds.engine.serialize(data)  # serialize it to Python dict
+        >>> dataset = ds.MnistDataset(mnist_dataset_dir, 100)
+        >>> one_hot_encode = c_transforms.OneHot(10)  # num_classes is input argument
+        >>> dataset = dataset.map(operation=one_hot_encode, input_column_names="label")
+        >>> dataset = dataset.batch(batch_size=10, drop_remainder=True)
+        >>> # serialize it to json file
+        >>> ds.engine.serialize(dataset, json_filepath="/path/to/mnist_dataset_pipeline.json")
+        >>> serialized_data = ds.engine.serialize(dataset)  # serialize it to Python dict
     """
     return dataset.to_json(json_filepath)
 
@@ -69,20 +66,16 @@ def deserialize(input_dict=None, json_filepath=None):
         OSError cannot open a file.
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>> import mindspore.dataset.transforms.c_transforms as C
-        >>> DATA_DIR = "../../data/testMnistData"
-        >>> data = ds.MnistDataset(DATA_DIR, 100)
-        >>> one_hot_encode = C.OneHot(10)  # num_classes is input argument
-        >>> data = data.map(operation=one_hot_encode, input_column_names="label")
-        >>> data = data.batch(batch_size=10, drop_remainder=True)
-        >>>
+        >>> dataset = ds.MnistDataset(mnist_dataset_dir, 100)
+        >>> one_hot_encode = c_transforms.OneHot(10)  # num_classes is input argument
+        >>> dataset = dataset.map(operation=one_hot_encode, input_column_names="label")
+        >>> dataset = dataset.batch(batch_size=10, drop_remainder=True)
         >>> # Use case 1: to/from json file
-        >>> ds.engine.serialize(data, json_filepath="mnist_dataset_pipeline.json")
-        >>> data = ds.engine.deserialize(json_filepath="mnist_dataset_pipeline.json")
+        >>> ds.engine.serialize(dataset, json_filepath="/path/to/mnist_dataset_pipeline.json")
+        >>> dataset = ds.engine.deserialize(json_filepath="/path/to/mnist_dataset_pipeline.json")
         >>> # Use case 2: to/from Python dictionary
-        >>> serialized_data = ds.engine.serialize(data)
-        >>> data = ds.engine.deserialize(input_dict=serialized_data)
+        >>> serialized_data = ds.engine.serialize(dataset)
+        >>> dataset = ds.engine.deserialize(input_dict=serialized_data)
 
     """
     data = None

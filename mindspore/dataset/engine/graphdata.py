@@ -72,11 +72,9 @@ class GraphData:
             the server automatically exits (default=True).
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
-        >>> data_graph = ds.GraphData('dataset_file', 2)
-        >>> nodes = data_graph.get_all_nodes(0)
-        >>> features = data_graph.get_node_feature(nodes, [1])
+        >>> graph_dataset = ds.GraphData(graph_dataset_dir, 2)
+        >>> nodes = graph_dataset.get_all_nodes(0)
+        >>> features = graph_dataset.get_node_feature(nodes, [1])
     """
 
     @check_gnn_graphdata
@@ -116,10 +114,7 @@ class GraphData:
             numpy.ndarray, array of nodes.
 
         Examples:
-            >>> import mindspore.dataset as ds
-            >>>
-            >>> data_graph = ds.GraphData('dataset_file', 2)
-            >>> nodes = data_graph.get_all_nodes(0)
+            >>> nodes = graph_dataset.get_all_nodes(0)
 
         Raises:
             TypeError: If `node_type` is not integer.
@@ -140,10 +135,7 @@ class GraphData:
             numpy.ndarray, array of edges.
 
         Examples:
-            >>> import mindspore.dataset as ds
-            >>>
-            >>> data_graph = ds.GraphData('dataset_file', 2)
-            >>> nodes = data_graph.get_all_edges(0)
+            >>> edges = graph_dataset.get_all_edges(0)
 
         Raises:
             TypeError: If `edge_type` is not integer.
@@ -183,11 +175,8 @@ class GraphData:
             numpy.ndarray, array of neighbors.
 
         Examples:
-            >>> import mindspore.dataset as ds
-            >>>
-            >>> data_graph = ds.GraphData('dataset_file', 2)
-            >>> nodes = data_graph.get_all_nodes(0)
-            >>> neighbors = data_graph.get_all_neighbors(nodes, 0)
+            >>> nodes = graph_dataset.get_all_nodes(0)
+            >>> neighbors = graph_dataset.get_all_neighbors(nodes, 0)
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -222,11 +211,8 @@ class GraphData:
             numpy.ndarray, array of neighbors.
 
         Examples:
-            >>> import mindspore.dataset as ds
-            >>>
-            >>> data_graph = ds.GraphData('dataset_file', 2)
-            >>> nodes = data_graph.get_all_nodes(0)
-            >>> neighbors = data_graph.get_sampled_neighbors(nodes, [2, 2], [0, 0])
+            >>> nodes = graph_dataset.get_all_nodes(0)
+            >>> neighbors = graph_dataset.get_sampled_neighbors(nodes, [2, 2], [0, 0])
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -254,11 +240,8 @@ class GraphData:
             numpy.ndarray, array of neighbors.
 
         Examples:
-            >>> import mindspore.dataset as ds
-            >>>
-            >>> data_graph = ds.GraphData('dataset_file', 2)
-            >>> nodes = data_graph.get_all_nodes(0)
-            >>> neg_neighbors = data_graph.get_neg_sampled_neighbors(nodes, 5, 0)
+            >>> nodes = graph_dataset.get_all_nodes(0)
+            >>> neg_neighbors = graph_dataset.get_neg_sampled_neighbors(nodes, 5, 0)
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -283,11 +266,8 @@ class GraphData:
             numpy.ndarray, array of features.
 
         Examples:
-            >>> import mindspore.dataset as ds
-            >>>
-            >>> data_graph = ds.GraphData('dataset_file', 2)
-            >>> nodes = data_graph.get_all_nodes(0)
-            >>> features = data_graph.get_node_feature(nodes, [1])
+            >>> nodes = graph_dataset.get_all_nodes(0)
+            >>> features = graph_dataset.get_node_feature(nodes, [1])
 
         Raises:
             TypeError: If `node_list` is not list or ndarray.
@@ -315,11 +295,8 @@ class GraphData:
             numpy.ndarray, array of features.
 
         Examples:
-            >>> import mindspore.dataset as ds
-            >>>
-            >>> data_graph = ds.GraphData('dataset_file', 2)
-            >>> edges = data_graph.get_all_edges(0)
-            >>> features = data_graph.get_edge_feature(edges, [1])
+            >>> edges = graph_dataset.get_all_edges(0)
+            >>> features = graph_dataset.get_edge_feature(edges, [1])
 
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
@@ -370,10 +347,7 @@ class GraphData:
             numpy.ndarray, array of nodes.
 
         Examples:
-            >>> import mindspore.dataset as ds
-            >>>
-            >>> data_graph = ds.GraphData('dataset_file', 2)
-            >>> nodes = data_graph.random_walk([1,2], [1,2,1,2,1])
+            >>> nodes = graph_dataset.random_walk([1,2], [1,2,1,2,1])
 
         Raises:
             TypeError: If `target_nodes` is not list or ndarray.

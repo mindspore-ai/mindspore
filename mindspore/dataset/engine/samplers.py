@@ -245,13 +245,11 @@ class DistributedSampler(BuiltinSampler):
             should be no more than num_shards.
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
-        >>> dataset_dir = "path/to/imagefolder_directory"
-        >>>
         >>> # creates a distributed sampler with 10 shards in total. This shard is shard 5.
         >>> sampler = ds.DistributedSampler(10, 5)
-        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
+        ...                                 num_parallel_workers=8,
+        ...                                 sampler=sampler)
 
     Raises:
         ValueError: If num_shards is not positive.
@@ -327,13 +325,11 @@ class PKSampler(BuiltinSampler):
         num_samples (int, optional): The number of samples to draw (default=None, all elements).
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
-        >>> dataset_dir = "path/to/imagefolder_directory"
-        >>>
         >>> # creates a PKSampler that will get 3 samples from every class.
         >>> sampler = ds.PKSampler(3)
-        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
+        ...                                 num_parallel_workers=8,
+        ...                                 sampler=sampler)
 
     Raises:
         ValueError: If num_val is not positive.
@@ -396,13 +392,11 @@ class RandomSampler(BuiltinSampler):
         num_samples (int, optional): Number of elements to sample (default=None, all elements).
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
-        >>> dataset_dir = "path/to/imagefolder_directory"
-        >>>
         >>> # creates a RandomSampler
         >>> sampler = ds.RandomSampler()
-        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
+        ...                                 num_parallel_workers=8,
+        ...                                 sampler=sampler)
 
     Raises:
         ValueError: If replacement is not boolean.
@@ -452,13 +446,11 @@ class SequentialSampler(BuiltinSampler):
         num_samples (int, optional): Number of elements to sample (default=None, all elements).
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
-        >>> dataset_dir = "path/to/imagefolder_directory"
-        >>>
         >>> # creates a SequentialSampler
         >>> sampler = ds.SequentialSampler()
-        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
+        ...                                 num_parallel_workers=8,
+        ...                                 sampler=sampler)
     """
 
     def __init__(self, start_index=None, num_samples=None):
@@ -503,15 +495,13 @@ class SubsetSampler(BuiltinSampler):
         num_samples (int, optional): Number of elements to sample (default=None, all elements).
 
     Examples:
-        >>> import mindspore.dataset as ds
+        >>> indices = [0, 1, 2, 3, 4, 5]
         >>>
-        >>> dataset_dir = "path/to/imagefolder_directory"
-        >>>
-        >>> indices = [0, 1, 2, 3, 7, 88, 119]
-        >>>
-        >>> # creates a SubsetSampler, will sample from the provided indices
-        >>> sampler = ds.SubsetSampler(indices)
-        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> # creates a SubsetRandomSampler, will sample from the provided indices
+        >>> sampler = ds.SubsetRandomSampler(indices)
+        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
+        ...                                 num_parallel_workers=8,
+        ...                                 sampler=sampler)
     """
 
     def __init__(self, indices, num_samples=None):
@@ -603,15 +593,13 @@ class WeightedRandomSampler(BuiltinSampler):
         replacement (bool): If True, put the sample ID back for the next draw (default=True).
 
     Examples:
-        >>> import mindspore.dataset as ds
-        >>>
-        >>> dataset_dir = "path/to/imagefolder_directory"
-        >>>
         >>> weights = [0.9, 0.01, 0.4, 0.8, 0.1, 0.1, 0.3]
         >>>
         >>> # creates a WeightedRandomSampler that will sample 4 elements without replacement
         >>> sampler = ds.WeightedRandomSampler(weights, 4)
-        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
+        >>> dataset = ds.ImageFolderDataset(image_folder_dataset_dir,
+        ...                                 num_parallel_workers=8,
+        ...                                 sampler=sampler)
 
     Raises:
         ValueError: If num_samples is not positive.

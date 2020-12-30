@@ -46,14 +46,8 @@ class OneHot(cde.OneHotOp):
         RuntimeError: feature size is bigger than num_classes.
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>> import mindspore.dataset.vision.c_transforms as c_vision
-        >>>
         >>> onehot_op = c_transforms.OneHot(num_classes=10)
-        >>> data1 = data1.map(operations=onehot_op, input_columns=["label"])
-        >>> mixup_batch_op = c_vision.MixUpBatch(alpha=0.8)
-        >>> data1 = data1.batch(4)
-        >>> data1 = data1.map(operations=mixup_batch_op, input_columns=["image", "label"])
+        >>> mnist_dataset = mnist_dataset.map(operations=onehot_op, input_columns=["label"])
     """
 
     @check_num_classes
@@ -72,9 +66,15 @@ class Fill(cde.FillOp):
             to fill created tensor with.
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>>
+        >>> import numpy as np
+        >>> from mindspore.dataset import GeneratorDataset
+        >>> # Generate 1d int numpy array from 0 - 63
+        >>> def generator_1d():
+        >>>     for i in range(64):
+        ...         yield (np.array([i]),)
+        >>> generator_dataset = GeneratorDataset(generator_1d,column_names='col')
         >>> fill_op = c_transforms.Fill(3)
+        >>> generator_dataset = generator_dataset.map(operations=fill_op)
     """
 
     @check_fill_value
@@ -90,10 +90,16 @@ class TypeCast(cde.TypeCastOp):
         data_type (mindspore.dtype): mindspore.dtype to be cast to.
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
+        >>> import numpy as np
         >>> import mindspore.common.dtype as mstype
-        >>>
+        >>> from mindspore.dataset import GeneratorDataset
+        >>> # Generate 1d int numpy array from 0 - 63
+        >>> def generator_1d():
+        >>>     for i in range(64):
+        ...         yield (np.array([i]),)
+        >>> generator_dataset = GeneratorDataset(generator_1d,column_names='col')
         >>> type_cast_op = c_transforms.TypeCast(mstype.int32)
+        >>> generator_dataset = generator_dataset.map(operations=type_cast_op)
     """
 
     @check_de_type
@@ -149,14 +155,15 @@ class Slice(cde.SliceOp):
             5.  :py:obj:`Ellipses`: Slice the whole dimension. Similar to `:` in Python indexing.
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>>
         >>> # Data before
         >>> # |   col   |
         >>> # +---------+
         >>> # | [1,2,3] |
         >>> # +---------|
-        >>> data1 = data1.map(operations=c_transforms.Slice(slice(1,3))) # slice indices 1 and 2 only
+        >>> data = [[1, 2, 3]]
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
+        >>> # slice indices 1 and 2 only
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=c_transforms.Slice(slice(1,3)))
         >>> # Data after
         >>> # |   col   |
         >>> # +---------+
@@ -200,16 +207,17 @@ class Mask(cde.MaskOp):
         dtype (mindspore.dtype, optional): Type of the generated mask (Default to bool).
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>>
+        >>> from mindspore.dataset.transforms.c_transforms import Relational
         >>> # Data before
-        >>> # |  col1   |
+        >>> # |  col   |
         >>> # +---------+
         >>> # | [1,2,3] |
         >>> # +---------+
-        >>> data1 = data1.map(operations=c_transforms.Mask(Relational.EQ, 2))
+        >>> data = [[1, 2, 3]]
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=c_transforms.Mask(Relational.EQ, 2))
         >>> # Data after
-        >>> # |       col1         |
+        >>> # |       col         |
         >>> # +--------------------+
         >>> # | [False,True,False] |
         >>> # +--------------------+
@@ -233,14 +241,15 @@ class PadEnd(cde.PadEndOp):
             string in case of tensors of strings.
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>>
         >>> # Data before
         >>> # |   col   |
         >>> # +---------+
         >>> # | [1,2,3] |
         >>> # +---------|
-        >>> data1 = data1.map(operations=c_transforms.PadEnd(pad_shape=[4], pad_value=10))
+        >>> data = [[1, 2, 3]]
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["col"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=c_transforms.PadEnd(pad_shape=[4],
+        ...                                                                                pad_value=10))
         >>> # Data after
         >>> # |    col     |
         >>> # +------------+
@@ -265,12 +274,14 @@ class Concatenate(cde.ConcatenateOp):
         append (numpy.array, optional): NumPy array to be appended to the already concatenated tensors (Default=None).
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>>
+        >>> import numpy as np
         >>> # concatenate string
         >>> prepend_tensor = np.array(["dw", "df"], dtype='S')
         >>> append_tensor = np.array(["dwsdf", "df"], dtype='S')
         >>> concatenate_op = c_transforms.Concatenate(0, prepend_tensor, append_tensor)
+        >>> data = [["This","is","a","string"]]
+        >>> dataset = ds.NumpySlicesDataset(data)
+        >>> dataset = dataset.map(operations=concatenate_op)
     """
 
     @check_concat_type
@@ -287,15 +298,17 @@ class Duplicate(cde.DuplicateOp):
     Duplicate the input tensor to a new output tensor. The input tensor is carried over to the output list.
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>>
         >>> # Data before
         >>> # |  x      |
         >>> # +---------+
         >>> # | [1,2,3] |
         >>> # +---------+
-        >>> data1 = data1.map(operations=c_transforms.Duplicate(), input_columns=["x"],
-        >>>         output_columns=["x", "y"], column_order=["x", "y"])
+        >>> data = [[1,2,3]]
+        >>> numpy_slices_dataset = ds.NumpySlicesDataset(data, ["x"])
+        >>> numpy_slices_dataset = numpy_slices_dataset.map(operations=c_transforms.Duplicate(),
+        ...                                                 input_columns=["x"],
+        ...                                                 output_columns=["x", "y"],
+        ...                                                 column_order=["x", "y"])
         >>> # Data after
         >>> # |  x      |  y      |
         >>> # +---------+---------+
@@ -319,15 +332,17 @@ class Unique(cde.UniqueOp):
         Call batch op before calling this function.
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>>
         >>> # Data before
         >>> # |  x                 |
         >>> # +--------------------+
         >>> # | [[0,1,2], [1,2,3]] |
         >>> # +--------------------+
-        >>> data1 = data1.map(operations=c_transforms.Unique(), input_columns=["x"],
-        >>>         output_columns=["x", "y", "z"], column_order=["x", "y", "z"])
+        >>> data = [[[0,1,2], [1,2,3]]]
+        >>> dataset = ds.NumpySlicesDataset(data, ["x"])
+        >>> dataset = dataset.map(operations=c_transforms.Unique(),
+        ...                       input_columns=["x"],
+        ...                       output_columns=["x", "y", "z"],
+        ...                       column_order=["x", "y", "z"])
         >>> # Data after
         >>> # |  x      |  y              |z        |
         >>> # +---------+-----------------+---------+
@@ -343,11 +358,8 @@ class Compose():
         transforms (list): List of transformations to be applied.
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>> import mindspore.dataset.vision.c_transforms as c_vision
-        >>>
         >>> compose = c_transforms.Compose([c_vision.Decode(), c_vision.RandomCrop(512)])
-        >>> data1 = data1.map(operations=compose)
+        >>> image_folder_dataset = image_folder_dataset.map(operations=compose)
     """
 
     @check_random_transform_ops
@@ -372,11 +384,8 @@ class RandomApply():
         prob (float, optional): The probability to apply the transformation list (default=0.5)
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>> import mindspore.dataset.vision.c_transforms as c_vision
-        >>>
         >>> rand_apply = c_transforms.RandomApply([c_vision.RandomCrop(512)])
-        >>> data1 = data1.map(operations=rand_apply)
+        >>> image_folder_dataset = image_folder_dataset.map(operations=rand_apply)
     """
 
     @check_random_transform_ops
@@ -402,11 +411,8 @@ class RandomChoice():
         transforms (list): List of transformations to be chosen from to apply.
 
     Examples:
-        >>> import mindspore.dataset.transforms.c_transforms as c_transforms
-        >>> import mindspore.dataset.vision.c_transforms as c_vision
-        >>>
         >>> rand_choice = c_transforms.RandomChoice([c_vision.CenterCrop(50), c_vision.RandomCrop(512)])
-        >>> data1 = data1.map(operations=rand_choice)
+        >>> image_folder_dataset = image_folder_dataset.map(operations=rand_choice)
     """
 
     @check_random_transform_ops
