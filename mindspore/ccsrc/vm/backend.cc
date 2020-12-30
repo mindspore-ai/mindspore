@@ -19,6 +19,7 @@
 #include <vector>
 
 #include "backend/session/session_factory.h"
+#include "pipeline/pynative/pynative_execute.h"
 #include "ir/anf.h"
 #include "pybind_api/ir/base_ref_py.h"
 #include "utils/callbacks.h"
@@ -101,7 +102,9 @@ LinConvertResult MsBackend::MsConvert(const GraphSegmentPtr &segment, const std:
   result.graph_id = graph_id;
 
   graph_id_map_[graph_id] = result;
-  (void)g_ConvertCache.emplace(segment, result);
+  if (!pynative::PynativeExecutor::GetInstance()->GetIsDynamicCell()) {
+    (void)g_ConvertCache.emplace(segment, result);
+  }
   return result;
 }
 
@@ -214,6 +217,11 @@ GraphId MsBackend::CompileGraph(NotNull<FuncGraphPtr> fg) { return target_sess_-
 
 VectorRef MsBackend::RunGraph(GraphId graph_id, const VectorRef &args) { return MsRunGraph(graph_id, args); }
 
+void MsBackend::ClearSessionGraphs() {
+  if (target_sess_ != nullptr) {
+    target_sess_->ClearGraph();
+  }
+}
 #ifdef ENABLE_DEBUGGER
 void MsBackend::SetDebugger() { target_sess_->SetDebugger(); }
 #endif

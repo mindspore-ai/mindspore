@@ -71,6 +71,7 @@ class MsBackend : public Backend {
   void Link(GraphId) override;
   GraphId CompileGraph(NotNull<FuncGraphPtr> fg) override;
   VectorRef RunGraph(GraphId graph_id, const VectorRef &args);
+  void ClearSessionGraphs();
   void CreateOtherSession(const std::string &target);
 
 #ifdef ENABLE_DEBUGGER

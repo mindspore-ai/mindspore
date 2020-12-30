@@ -113,6 +113,7 @@ class SessionBasic : public std::enable_shared_from_this<SessionBasic> {
                                                          const std::vector<tensor::TensorPtr> &inputs);
   // Get graph by graph id, if not exist return null ptr
   KernelGraphPtr GetGraph(GraphId graph_id) const;
+  void ClearGraph();
 #ifdef ENABLE_DEBUGGER
   // set debugger
   void SetDebugger() {
