@@ -122,6 +122,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void EndGraph(const py::object &cell, const py::object &out, const py::args &args);
   void GradNet(const GradOperationPtr &grad, const py::object &cell, const py::object &weights, const py::args &args);
 
+  // Get info
+  bool GetIsDynamicCell() const { return dynamic_cell_; }
   // Call by python
   void Clear(const std::string &flag = "");
   void Clean();
