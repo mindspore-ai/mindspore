@@ -56,7 +56,7 @@ class _OpSelector:
 
     def __call__(self, *args, **kwargs):
         _op_type = _OpSelector.DEFAULT_OP_TYPE
-        if context.get_context("enable_graph_kernel"):
+        if context.get_context("device_target") in ['Ascend', 'GPU'] and context.get_context("enable_graph_kernel"):
             if _OpSelector.KW_STR in kwargs:
                 _op_type = kwargs.get(_OpSelector.KW_STR)
                 kwargs.pop(_OpSelector.KW_STR, None)
