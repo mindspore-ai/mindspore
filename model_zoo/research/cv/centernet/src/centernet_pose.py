@@ -197,6 +197,46 @@ class CenterNetMultiPoseLossCell(nn.Cell):
         return total_loss
 
 
+class CenterNetWithoutLossScaleCell(nn.Cell):
+    """
+    Encapsulation class of centernet training.
+
+    Append an optimizer to the training network after that the construct
+    function can be called to create the backward graph.
+
+    Args:
+        network (Cell): The training network. Note that loss function should have been added.
+        optimizer (Optimizer): Optimizer for updating the weights.
+
+    Returns:
+        Tuple of Tensors, the loss, overflow flag and scaling sens of the network.
+    """
+    def __init__(self, network, optimizer):
+        super(CenterNetWithoutLossScaleCell, self).__init__(auto_prefix=False)
+        self.image = ImagePreProcess()
+        self.network = network
+        self.network.set_grad()
+        self.weights = optimizer.parameters
+        self.optimizer = optimizer
+        self.grad = ops.GradOperation(get_by_list=True, sens_param=False)
+
+    @ops.add_flags(has_effect=True)
+    def construct(self, image, hm, reg_mask, ind, wh, kps, kps_mask, reg,
+                  hm_hp, hp_offset, hp_ind, hp_mask):
+        """Defines the computation performed."""
+        image = self.image(image)
+        weights = self.weights
+        loss = self.network(image, hm, reg_mask, ind, wh, kps, kps_mask, reg,
+                            hm_hp, hp_offset, hp_ind, hp_mask)
+
+        grads = self.grad(self.network, weights)(image, hm, reg_mask, ind, wh, kps,
+                                                 kps_mask, reg, hm_hp, hp_offset,
+                                                 hp_ind, hp_mask)
+        succ = self.optimizer(grads)
+        ret = loss
+        return ops.depend(ret, succ)
+
+
 class CenterNetWithLossScaleCell(nn.Cell):
     """
     Encapsulation class of centernet training.
@@ -279,17 +319,16 @@ class CenterNetMultiPoseEval(nn.Cell):
 
     Args:
         net_config: The config info of CenterNet network.
-        flip_test(bool): Flip data augmentation or not. Default: False.
         K(number): Max number of output objects. Default: 100.
+        enable_nms_fp16(bool): Use float16 data for max_pool, adaption for CPU. Default: True.
 
     Returns:
         Tensor, detection of images(bboxes, score, keypoints and category id of each objects)
     """
-    def __init__(self, net_config, flip_test=False, K=100):
+    def __init__(self, net_config, K=100, enable_nms_fp16=True):
         super(CenterNetMultiPoseEval, self).__init__()
         self.network = GatherMultiPoseFeatureCell(net_config)
-        self.decode = MultiPoseDecode(net_config, flip_test, K)
-        self.flip_test = flip_test
+        self.decode = MultiPoseDecode(net_config, K, enable_nms_fp16)
         self.shape = ops.Shape()
         self.reshape = ops.Reshape()
 

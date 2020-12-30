@@ -16,40 +16,29 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_standalone_eval_ascend.sh DEVICE_ID RUN_MODE DATA_DIR LOAD_CHECKPOINT_PATH"
-echo "for example of validation: bash run_standalone_eval_ascend.sh 0 val /path/coco_dataset /path/load_ckpt"
-echo "for example of test: bash run_standalone_eval_ascend.sh 0 test /path/coco_dataset /path/load_ckpt"
+echo "bash run_standalone_train_cpu.sh MINDRECORD_DIR LOAD_CHECKPOINT_PATH"
+echo "for example: bash run_standalone_train_cpu.sh /path/mindrecord_dataset /path/load_ckpt"
+echo "if no ckpt, just run: bash run_standalone_train_cpu.sh /path/mindrecord_dataset \"\" "
 echo "=============================================================================================================="
-DEVICE_ID=$1
-RUN_MODE=$2
-DATA_DIR=$3
-LOAD_CHECKPOINT_PATH=$4
-mkdir -p ms_log 
+
+MINDRECORD_DIR=$1
+LOAD_CHECKPOINT_PATH=$2
+
+mkdir -p ms_log
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 CUR_DIR=`pwd`
 export GLOG_log_dir=${CUR_DIR}/ms_log
 export GLOG_logtostderr=0
 
-# install nms module from third party
-if python -c "import nms" > /dev/null 2>&1
-then
-    echo "NMS module already exits, no need reinstall."
-else
-    echo "NMS module was not found, install it now..."
-    git clone https://github.com/xingyizhou/CenterNet.git
-    cd CenterNet/src/lib/external/
-    make
-    python setup.py install
-    cd -
-    rm -rf CenterNet
-fi
-
-python ${PROJECT_DIR}/../eval.py  \
-    --device_target=Ascend \
-    --device_id=$DEVICE_ID \
+python ${PROJECT_DIR}/../train.py  \
+    --device_target=CPU \
+    --enable_save_ckpt=true \
+    --do_shuffle=true \
+    --epoch_size=1 \
     --load_checkpoint_path=$LOAD_CHECKPOINT_PATH \
-    --data_dir=$DATA_DIR \
-    --run_mode=$RUN_MODE \
-    --visual_image=true \
-    --enable_eval=true \
-    --save_result_dir=./ > eval_log.txt 2>&1 &
+    --save_checkpoint_steps=1000 \
+    --save_checkpoint_num=1 \
+    --mindrecord_dir=$MINDRECORD_DIR \
+    --mindrecord_prefix="coco_hp.train.mind" \
+    --visual_image=false \
+    --save_result_dir="" > training_log.txt 2>&1 &

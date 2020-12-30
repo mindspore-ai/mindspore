@@ -31,12 +31,15 @@ from mindspore.common import set_seed
 from mindspore.profiler import Profiler
 from src.dataset import COCOHP
 from src import CenterNetMultiPoseLossCell, CenterNetWithLossScaleCell
+from src import CenterNetWithoutLossScaleCell
 from src.utils import LossCallBack, CenterNetPolynomialDecayLR, CenterNetMultiEpochsDecayLR
 from src.config import dataset_config, net_config, train_config
 
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 
 parser = argparse.ArgumentParser(description='CenterNet training')
+parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'CPU'],
+                    help='device where the code will be implemented. (Default: Ascend)')
 parser.add_argument("--distribute", type=str, default="false", choices=["true", "false"],
                     help="Run distribute, default is false.")
 parser.add_argument("--need_profiler", type=str, default="false", choices=["true", "false"],
@@ -125,26 +128,32 @@ def _get_optimizer(network, dataset_size):
 
 def train():
     """training CenterNet"""
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
-    context.set_context(enable_auto_mixed_precision=False)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
     context.set_context(reserve_class_name_in_scope=False)
     context.set_context(save_graphs=False)
 
     ckpt_save_dir = args_opt.save_checkpoint_path
-    if args_opt.distribute == "true":
-        D.init()
-        device_num = args_opt.device_num
-        rank = args_opt.device_id % device_num
-        ckpt_save_dir = args_opt.save_checkpoint_path + 'ckpt_' + str(get_rank()) + '/'
-
-        context.reset_auto_parallel_context()
-        context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
-                                          device_num=device_num)
-        _set_parallel_all_reduce_split()
-    else:
-        rank = 0
-        device_num = 1
+    rank = 0
+    device_num = 1
     num_workers = 8
+    if args_opt.device_target == "Ascend":
+        context.set_context(enable_auto_mixed_precision=False)
+        context.set_context(device_id=args_opt.device_id)
+        if args_opt.distribute == "true":
+            D.init()
+            device_num = args_opt.device_num
+            rank = args_opt.device_id % device_num
+            ckpt_save_dir = args_opt.save_checkpoint_path + 'ckpt_' + str(get_rank()) + '/'
+
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
+                                              device_num=device_num)
+            _set_parallel_all_reduce_split()
+    else:
+        args_opt.distribute = "false"
+        args_opt.need_profiler = "false"
+        args_opt.enable_data_sink = "false"
+
     # Start create dataset!
     # mindrecord files will be generated at args_opt.mindrecord_dir such as centernet.mindrecord0, 1, ... file_num.
     logger.info("Begin creating dataset for CenterNet")
@@ -167,7 +176,8 @@ def train():
 
     optimizer = _get_optimizer(net_with_loss, dataset_size)
 
-    callback = [TimeMonitor(args_opt.data_sink_steps), LossCallBack(dataset_size)]
+    enable_static_time = args_opt.device_target == "CPU"
+    callback = [TimeMonitor(args_opt.data_sink_steps), LossCallBack(dataset_size, enable_static_time)]
     if args_opt.enable_save_ckpt == "true" and args_opt.device_id % min(8, device_num) == 0:
         config_ck = CheckpointConfig(save_checkpoint_steps=args_opt.save_checkpoint_steps,
                                      keep_checkpoint_max=args_opt.save_checkpoint_num)
@@ -178,12 +188,13 @@ def train():
     if args_opt.load_checkpoint_path:
         param_dict = load_checkpoint(args_opt.load_checkpoint_path)
         load_param_into_net(net_with_loss, param_dict)
-
-    net_with_grads = CenterNetWithLossScaleCell(net_with_loss, optimizer=optimizer,
-                                                sens=train_config.loss_scale_value)
+    if args_opt.device_target == "Ascend":
+        net_with_grads = CenterNetWithLossScaleCell(net_with_loss, optimizer=optimizer,
+                                                    sens=train_config.loss_scale_value)
+    else:
+        net_with_grads = CenterNetWithoutLossScaleCell(net_with_loss, optimizer=optimizer)
 
     model = Model(net_with_grads)
-
     model.train(new_repeat_count, dataset, callbacks=callback, dataset_sink_mode=(args_opt.enable_data_sink == "true"),
                 sink_size=args_opt.data_sink_steps)
 

@@ -30,25 +30,32 @@ class NMS(nn.Cell):
 
     Args:
         kernel(int): Maxpooling kernel size. Default: 3.
+        enable_nms_fp16(bool): Use float16 data for max_pool, adaption for CPU. Default: True.
 
     Returns:
         Tensor, heatmap after non-maximum suppression.
     """
-    def __init__(self, kernel=3):
+    def __init__(self, kernel=3, enable_nms_fp16=True):
         super(NMS, self).__init__()
         self.pad = (kernel - 1) // 2
         self.cast = ops.Cast()
         self.dtype = ops.DType()
         self.equal = ops.Equal()
         self.max_pool = nn.MaxPool2d(kernel, stride=1, pad_mode="same")
+        self.enable_fp16 = enable_nms_fp16
 
     def construct(self, heat):
+        """Non-maximum suppression"""
         dtype = self.dtype(heat)
-        heat = self.cast(heat, mstype.float16)
-        heat_max = self.max_pool(heat)
-        keep = self.equal(heat, heat_max)
-        keep = self.cast(keep, dtype)
-        heat = self.cast(heat, dtype)
+        if self.enable_fp16:
+            heat = self.cast(heat, mstype.float16)
+            heat_max = self.max_pool(heat)
+            keep = self.equal(heat, heat_max)
+            keep = self.cast(keep, dtype)
+            heat = self.cast(heat, dtype)
+        else:
+            heat_max = self.max_pool(heat)
+            keep = self.equal(heat, heat_max)
         heat = heat * keep
         return heat
 
@@ -127,18 +134,24 @@ class GatherFeatureByInd(nn.Cell):
     """
     Gather features by index
 
-    Args: None
+    Args:
+        enable_cpu_gather (bool): Use cpu operator GatherD to gather feature or not, adaption for CPU. Default: True.
 
     Returns:
         Tensor
     """
-    def __init__(self):
+    def __init__(self, enable_cpu_gatherd=True):
         super(GatherFeatureByInd, self).__init__()
         self.tile = ops.Tile()
         self.shape = ops.Shape()
         self.concat = ops.Concat(axis=1)
         self.reshape = ops.Reshape()
-        self.gather_nd = ops.GatherNd()
+        self.enable_cpu_gatherd = enable_cpu_gatherd
+        if self.enable_cpu_gatherd:
+            self.gather_nd = ops.GatherD()
+            self.expand_dims = ops.ExpandDims()
+        else:
+            self.gather_nd = ops.GatherNd()
 
     def construct(self, feat, ind):
         """gather by index"""
@@ -147,18 +160,24 @@ class GatherFeatureByInd(nn.Cell):
         b, J, K = self.shape(ind)
         feat = self.reshape(feat, (b, J, K, -1))
         _, _, _, N = self.shape(feat)
-        ind = self.reshape(ind, (-1, 1))
-        ind_b = nn.Range(0, b * J, 1)()
-        ind_b = self.reshape(ind_b, (-1, 1))
-        ind_b = self.tile(ind_b, (1, K))
-        ind_b = self.reshape(ind_b, (-1, 1))
-        index = self.concat((ind_b, ind))
-        # (b, N, 2)
-        index = self.reshape(index, (-1, K, 2))
-        # (b, N, c)
-        feat = self.reshape(feat, (-1, K, N))
-        feat = self.gather_nd(feat, index)
-        feat = self.reshape(feat, (b, J, K, -1))
+        if self.enable_cpu_gatherd:
+            # (b, J, K, N)
+            index = self.expand_dims(ind, -1)
+            index = self.tile(index, (1, 1, 1, N))
+            feat = self.gather_nd(feat, 2, index)
+        else:
+            ind = self.reshape(ind, (-1, 1))
+            ind_b = nn.Range(0, b * J, 1)()
+            ind_b = self.reshape(ind_b, (-1, 1))
+            ind_b = self.tile(ind_b, (1, K))
+            ind_b = self.reshape(ind_b, (-1, 1))
+            index = self.concat((ind_b, ind))
+            # (b*J, K, 2)
+            index = self.reshape(index, (-1, K, 2))
+            # (b*J, K)
+            feat = self.reshape(feat, (-1, K, N))
+            feat = self.gather_nd(feat, index)
+            feat = self.reshape(feat, (b, J, K, -1))
         return feat
 
 
@@ -285,17 +304,16 @@ class MultiPoseDecode(nn.Cell):
 
     Args:
         net_config(edict): config info for CenterNet network.
-        flip_test(bool): flip test of not. Default: False.
         K(int): maximum objects number. Default: 100.
+        enable_nms_fp16(bool): Use float16 data for max_pool, adaption for CPU. Default: True.
 
     Returns:
         Tensor, multi-objects detections.
     """
-    def __init__(self, net_config, flip_test=False, K=100):
+    def __init__(self, net_config, K=100, enable_nms_fp16=True):
         super(MultiPoseDecode, self).__init__()
         self.K = K
-        self.flip_test = flip_test
-        self.nms = NMS()
+        self.nms = NMS(enable_nms_fp16=enable_nms_fp16)
         self.shape = ops.Shape()
         self.gather_topk = GatherTopK()
         self.gather_topk_channel = GatherTopKChannel()
@@ -336,8 +354,6 @@ class MultiPoseDecode(nn.Cell):
     def construct(self, feature):
         """gather detections"""
         heat = feature[0]
-        if self.flip_test:
-            heat = self.flip_tensor(heat)
         K = self.K
         b, _, _, _ = self.shape(heat)
         heat = self.nms(heat)
@@ -346,8 +362,6 @@ class MultiPoseDecode(nn.Cell):
         xs = self.reshape(xs, (b, K, 1))
 
         kps = feature[1]
-        if self.flip_test:
-            kps = self.flip_lr_off(kps)
         num_joints = self.shape(kps)[1] / 2
         # (b, K, num_joints*2)
         kps = self.trans_gather_feature(kps, inds)
@@ -365,15 +379,11 @@ class MultiPoseDecode(nn.Cell):
         kps = self.reshape(kps, (b, K, num_joints * 2))
 
         wh = feature[2]
-        if self.flip_test:
-            wh = self.flip_tensor(wh)
         wh = self.trans_gather_feature(wh, inds)
         ws, hs = self.half(wh)
 
         if self.reg_offset:
             reg = feature[self.reg_ind]
-            if self.flip_test:
-                reg, _ = self.half_first(reg)
             reg = self.trans_gather_feature(reg, inds)
             reg = self.reshape(reg, (b, K, 2))
             reg_w, reg_h = self.half(reg)
@@ -387,16 +397,12 @@ class MultiPoseDecode(nn.Cell):
 
         if self.hm_hp:
             hm_hp = feature[self.hm_hp_ind]
-            if self.flip_test:
-                hm_hp = self.flip_lr(hm_hp)
             hm_hp = self.nms(hm_hp)
             # (b, num_joints, K)
             hm_score, hm_inds, hm_ys, hm_xs = self.gather_topk_channel(hm_hp, K=K)
 
             if self.reg_hp_offset:
                 hp_offset = feature[self.reg_hp_ind]
-                if self.flip_test:
-                    hp_offset, _ = self.half_first(hp_offset)
                 hp_offset = self.trans_gather_feature(hp_offset, self.reshape(hm_inds, (b, -1)))
                 hp_offset = self.reshape(hp_offset, (b, num_joints, K, 2))
                 hp_ws, hp_hs = self.half(hp_offset)

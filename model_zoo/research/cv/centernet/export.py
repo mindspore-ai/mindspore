@@ -31,7 +31,7 @@ args = parser.parse_args()
 context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args.device_id)
 
 if __name__ == '__main__':
-    net = CenterNetMultiPoseEval(net_config, eval_config.flip_test, eval_config.K)
+    net = CenterNetMultiPoseEval(net_config, eval_config.K)
     net.set_train(False)
 
     param_dict = load_checkpoint(export_config.ckpt_file)

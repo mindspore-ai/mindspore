@@ -15,7 +15,7 @@
 """CenterNet Init."""
 
 from .centernet_pose import GatherMultiPoseFeatureCell, CenterNetMultiPoseLossCell, \
-    CenterNetWithLossScaleCell, CenterNetMultiPoseEval
+    CenterNetWithLossScaleCell, CenterNetMultiPoseEval, CenterNetWithoutLossScaleCell
 from .dataset import COCOHP
 from .visual import visual_allimages, visual_image
 from .decode import MultiPoseDecode
@@ -23,6 +23,7 @@ from .post_process import convert_eval_format, to_float, resize_detection, post_
 
 __all__ = [
     "GatherMultiPoseFeatureCell", "CenterNetMultiPoseLossCell", "CenterNetWithLossScaleCell", \
-    "CenterNetMultiPoseEval", "COCOHP", "visual_allimages", "visual_image", "MultiPoseDecode", \
-    "convert_eval_format", "to_float", "resize_detection", "post_process", "merge_outputs"
+    "CenterNetMultiPoseEval", "CenterNetWithoutLossScaleCell", "COCOHP", "visual_allimages", \
+    "visual_image", "MultiPoseDecode", "convert_eval_format", "to_float", "resize_detection", \
+    "post_process", "merge_outputs"
 ]
