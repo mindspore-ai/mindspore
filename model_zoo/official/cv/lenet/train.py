@@ -59,7 +59,10 @@ if __name__ == "__main__":
     if args.device_target != "Ascend":
         model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
     else:
-        model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()}, amp_level="O2")
+        if context.get_context("mode") == context.PYNATIVE_MODE:
+            model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()})
+        else:
+            model = Model(network, net_loss, net_opt, metrics={"Accuracy": Accuracy()}, amp_level="O2")
 
     print("============== Starting Training ==============")
     model.train(cfg['epoch_size'], ds_train, callbacks=[time_cb, ckpoint_cb, LossMonitor()])
