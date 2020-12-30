@@ -43,8 +43,8 @@ SomasTensor::SomasTensor(size_t id, SomasNodePtr source_node, SomasStreamPtr sou
 }
 
 SomasSolverTensorDescPtr SomasTensor::GetSolverTensorDesc() {
-  if (type_ == kGap) {  // ignore lifelong_ value for gaps given to solver, and pass with original_size_
-    solver_tensor_desc_->Update(id_, original_size_, offset_, false, num_constraints_);
+  if (contiguous_) {
+    solver_tensor_desc_->Update(id_, aligned_size_, offset_, false, num_constraints_);
   } else {
     solver_tensor_desc_->Update(id_, aligned_size_, offset_, lifelong_value_ == kLifeLongGraphAll, num_constraints_);
   }
