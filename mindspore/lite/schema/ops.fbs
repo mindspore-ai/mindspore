@@ -1154,6 +1154,9 @@ table While {
     bodySubgraphIndex : int;
 }
 
+table If {
+}
+
 table UnsortedSegmentSum {
     numSegments : int;
 }

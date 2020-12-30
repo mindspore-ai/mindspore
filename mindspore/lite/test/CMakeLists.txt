@@ -205,6 +205,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/mindir_inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/onnx_inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/while_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/if_pass.cc
             )
 endif()
 ### train

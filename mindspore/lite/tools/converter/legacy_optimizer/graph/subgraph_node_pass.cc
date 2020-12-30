@@ -52,15 +52,17 @@ STATUS SubgraphNodePass::GetSubgraphAllTensorIndices(const std::unique_ptr<SubGr
 bool SubgraphNodePass::IsNodeInputInSubgraph(const std::set<uint32_t> &tensors_indices,
                                              const std::unique_ptr<CNodeT> &node,
                                              const std::unique_ptr<SubGraphT> &subgraph) {
-  return std::any_of(node->inputIndex.begin(), node->inputIndex.end(),
-                     [&tensors_indices, &subgraph](uint32_t idx) { return tensors_indices.count(idx) > 0; });
+  return std::any_of(node->inputIndex.begin(), node->inputIndex.end(), [&tensors_indices, &subgraph](uint32_t idx) {
+    return (tensors_indices.count(idx) > 0) || IsContain(subgraph->inputIndices, idx);
+  });
 }
 
 bool SubgraphNodePass::IsNodeOutputInSubgraph(const std::set<uint32_t> &tensors_indices,
                                               const std::unique_ptr<CNodeT> &node,
                                               const std::unique_ptr<SubGraphT> &subgraph) {
-  return std::any_of(node->outputIndex.begin(), node->outputIndex.end(),
-                     [&tensors_indices, &subgraph](uint32_t idx) { return tensors_indices.count(idx) > 0; });
+  return std::any_of(node->outputIndex.begin(), node->outputIndex.end(), [&tensors_indices, &subgraph](uint32_t idx) {
+    return (tensors_indices.count(idx) > 0) || IsContain(subgraph->outputIndices, idx);
+  });
 }
 
 void SubgraphNodePass::DecreaseSubgraphNodeIndices(const size_t &node_idx, schema::MetaGraphT *graph) {

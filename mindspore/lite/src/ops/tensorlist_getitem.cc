@@ -137,7 +137,9 @@ int TensorListGetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
     return RET_ERROR;
   }
   auto tensor_index = input0->GetTensor(index_);
-  MS_ASSERT(tensor_index != nullptr);
+  if (tensor_index == nullptr) {
+    return RET_INFER_INVALID;
+  }
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
   if (tensor_index->data_type() != kTypeUnknown) {

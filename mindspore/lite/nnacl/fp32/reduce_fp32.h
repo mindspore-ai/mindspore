@@ -28,6 +28,8 @@ int ReduceSum(int outer_size, int inner_size, int axis_size, const float *src_da
               int thread_num);
 int ReduceMax(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
               int thread_num);
+int IntReduceMax(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,
+                 int thread_num);
 int ReduceMin(int outer_size, int inner_size, int axis_size, const float *src_data, float *dst_data, int tid,
               int thread_num);
 int IntReduceMin(int outer_size, int inner_size, int axis_size, const int *src_data, int *dst_data, int tid,

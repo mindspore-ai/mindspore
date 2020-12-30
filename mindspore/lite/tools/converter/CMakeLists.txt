@@ -63,6 +63,7 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/mindir_adjust_pass.cc
         ../optimizer/graph/onnx_inputs_adjust_pass.cc
         ../optimizer/graph/while_pass.cc
+        ../optimizer/graph/if_pass.cc
         ../optimizer/graph/mindir_inputs_adjust_pass.cc
         )
 

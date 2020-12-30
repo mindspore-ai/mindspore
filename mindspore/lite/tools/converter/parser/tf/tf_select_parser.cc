@@ -36,13 +36,13 @@ STATUS TFSelectParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "primitive is nullptr";
     return RET_NULL_PTR;
   }
-  auto attr = std::make_unique<schema::SwitchT>();
+  auto attr = std::make_unique<schema::SelectT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
 
-  primitive->value.type = schema::PrimitiveType_Switch;
+  primitive->value.type = schema::PrimitiveType_Select;
   primitive->value.value = attr.release();
   *primitiveC = PrimitiveC::Create(primitive.release());
   if (*primitiveC == nullptr) {

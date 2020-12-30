@@ -36,6 +36,8 @@ int ElementOptAddRelu6(const float *input0, const float *input1, float *output, 
                        const ArithmeticParameter *param);
 int ElementOptSub(const float *input0, const float *input1, float *output, const int element_size,
                   const ArithmeticParameter *param);
+int ElementOptSubInt(const int *input0, const int *input1, int *output, const int element_size,
+                     const ArithmeticParameter *param);
 int ElementOptSubRelu(const float *input0, const float *input1, float *output, const int element_size,
                       const ArithmeticParameter *param);
 int ElementOptSubRelu6(const float *input0, const float *input1, float *output, const int element_size,
@@ -102,6 +104,7 @@ int BroadcastLogicalOr(const float *input0, const float *input1, float *tile_inp
                        int element_size, ArithmeticParameter *param);
 
 int ElementMaximum(const float *input0, const float *input1, float *output, const int element_size);
+int ElementMaximumInt(const int *input0, const int *input1, int *output, const int element_size);
 int BroadcastMaximum(const float *input0, const float *input1, float *tile_input0, float *tile_input1, float *output,
                      int element_size, ArithmeticParameter *param);
 

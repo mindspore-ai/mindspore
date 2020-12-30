@@ -47,6 +47,7 @@
 #include "tools/optimizer/graph/infershape_pass.h"
 #include "tools/optimizer/graph/slice_prepose_pass.h"
 #include "tools/optimizer/graph/while_pass.h"
+#include "tools/optimizer/graph/if_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
@@ -100,8 +101,8 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
   }
 
   if (config->fmk == lite::converter::FmkType_TFLITE || config->fmk == lite::converter::FmkType_TF) {
-    auto while_pass = std::make_shared<opt::WhilePass>();
-    graph_pm->AddPass(while_pass);
+    graph_pm->AddPass(std::make_shared<opt::WhilePass>());
+    graph_pm->AddPass(std::make_shared<opt::IfPass>());
   }
 
   // for now - training is not supporting fuse operations

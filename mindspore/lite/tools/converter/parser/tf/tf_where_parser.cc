@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "tools/converter/parser/tf/tf_expand_dims_parser.h"
+#include "tools/converter/parser/tf/tf_where_parser.h"
 #include <string>
 #include <memory>
 #include <map>
@@ -22,10 +22,10 @@
 
 namespace mindspore {
 namespace lite {
-STATUS TFExpandDimsParser::Parse(const tensorflow::NodeDef &tf_op,
-                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                 PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF ExpandDimsParser";
+STATUS TFWhereParser::Parse(const tensorflow::NodeDef &tf_op,
+                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
+                            std::vector<std::string> *inputs, int *output_size) {
+  MS_LOG(INFO) << "TF WhereParser";
   if (primitiveC == nullptr || output_size == nullptr) {
     MS_LOG(ERROR) << "primitiveC is nullptr";
     return RET_NULL_PTR;
@@ -33,31 +33,16 @@ STATUS TFExpandDimsParser::Parse(const tensorflow::NodeDef &tf_op,
 
   auto primitive = std::make_unique<schema::PrimitiveT>();
   if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
+    MS_LOG(ERROR) << "primitive is nullptr";
     return RET_NULL_PTR;
   }
-  auto attr = std::make_unique<schema::ExpandDimsT>();
+  auto attr = std::make_unique<schema::WhereT>();
   if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
+    MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
   }
 
-  auto axis_node = GetConstInputNode(tf_node_map, tf_op.input(1));
-  if (axis_node == nullptr) {
-    MS_LOG(ERROR) << "Find ExpandDims input axis failed";
-    return RET_ERROR;
-  }
-  tensorflow::AttrValue attr_value;
-  if (TensorFlowUtils::FindAttrValue(*axis_node, "value", &attr_value)) {
-    const auto &tensor_proto = attr_value.tensor();
-    if (tensor_proto.int_val_size() > 0) {
-      attr->dim = tensor_proto.int_val(0);
-    } else {
-      attr->dim = (reinterpret_cast<const int32_t *>(tensor_proto.tensor_content().data()))[0];
-    }
-  }
-
-  primitive->value.type = schema::PrimitiveType_ExpandDims;
+  primitive->value.type = schema::PrimitiveType_Where;
   primitive->value.value = attr.release();
   *primitiveC = PrimitiveC::Create(primitive.release());
   if (*primitiveC == nullptr) {
@@ -65,10 +50,12 @@ STATUS TFExpandDimsParser::Parse(const tensorflow::NodeDef &tf_op,
     return RET_ERROR;
   }
 
-  *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  return status;
+  *output_size = tf_op.input_size();
+  for (int i = 0; i < tf_op.input_size(); i++) {
+    inputs->emplace_back(tf_op.input(i));
+  }
+  return RET_OK;
 }
-TFNodeRegistrar g_tfExpandDimsParser("ExpandDims", new TFExpandDimsParser());
+TFNodeRegistrar g_tfWhereParser("Where", new TFWhereParser());
 }  // namespace lite
 }  // namespace mindspore

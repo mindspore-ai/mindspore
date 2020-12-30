@@ -164,6 +164,7 @@ void ArithmeticCPUKernel::InitRunFunction() {
       break;
     case PrimitiveType_Maximum:
       arithmetic_run_ = ElementMaximum;
+      arithmetic_run_int_ = ElementMaximumInt;
       break;
     case PrimitiveType_Minimum:
       arithmetic_run_ = ElementMinimum;
@@ -252,6 +253,7 @@ void ArithmeticCPUKernel::InitOptRunFunction() {
           default:
             arithmeticParameter_->broadcasting_ = false;
             arithmetic_opt_run_ = ElementOptSub;
+            arithmetic_opt_run_int_ = ElementOptSubInt;
             break;
         }
         break;
@@ -509,6 +511,8 @@ REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_LogicalAnd, LiteKernelCreator<A
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LogicalOr, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Maximum, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Minimum, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Maximum, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Minimum, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FloorDiv, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_FloorMod, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_FloorDiv, LiteKernelCreator<ArithmeticCPUKernel>)

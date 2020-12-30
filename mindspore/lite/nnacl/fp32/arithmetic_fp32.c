@@ -257,6 +257,39 @@ int ElementOptSub(const float *input0, const float *input1, float *output, const
   return NNACL_OK;
 }
 
+int ElementOptSubInt(const int *input0, const int *input1, int *output, const int element_size,
+                     const ArithmeticParameter *param) {
+#ifdef ENABLE_NEON
+  int32x4_t vin0_opt = vdupq_n_s32(input0[0]);
+  int32x4_t vin1_opt = vdupq_n_s32(input1[0]);
+#endif
+  int index = 0;
+  if (param->in_elements_num0_ == 1) {
+#ifdef ENABLE_NEON
+    for (; index <= element_size - 4; index += C4NUM) {
+      int32x4_t vin1 = vld1q_s32(input1 + index);
+      int32x4_t vout = vsubq_s32(vin0_opt, vin1);
+      vst1q_s32(output + index, vout);
+    }
+#endif
+    for (; index < element_size; index++) {
+      output[index] = input0[0] - input1[index];
+    }
+  } else {
+#ifdef ENABLE_NEON
+    for (; index <= element_size - 4; index += C4NUM) {
+      int32x4_t vin0 = vld1q_s32(input0 + index);
+      int32x4_t vout = vsubq_s32(vin0, vin1_opt);
+      vst1q_s32(output + index, vout);
+    }
+#endif
+    for (; index < element_size; index++) {
+      output[index] = input0[index] - input1[0];
+    }
+  }
+  return NNACL_OK;
+}
+
 int ElementOptSubRelu(const float *input0, const float *input1, float *output, const int element_size,
                       const ArithmeticParameter *param) {
 #ifdef ENABLE_NEON
@@ -999,6 +1032,22 @@ int ElementMaximum(const float *input0, const float *input1, float *output, cons
     float32x4_t vin1 = vld1q_f32(input1 + index);
     float32x4_t vout = vmaxq_f32(vin0, vin1);
     vst1q_f32(output + index, vout);
+  }
+#endif
+  for (; index < element_size; index++) {
+    output[index] = input0[index] > input1[index] ? input0[index] : input1[index];
+  }
+  return NNACL_OK;
+}
+
+int ElementMaximumInt(const int *input0, const int *input1, int *output, const int element_size) {
+  int index = 0;
+#ifdef ENABLE_NEON
+  for (; index <= element_size - 4; index += C4NUM) {
+    int32x4_t vin0 = vld1q_s32(input0 + index);
+    int32x4_t vin1 = vld1q_s32(input1 + index);
+    int32x4_t vout = vmaxq_s32(vin0, vin1);
+    vst1q_s32(output + index, vout);
   }
 #endif
   for (; index < element_size; index++) {

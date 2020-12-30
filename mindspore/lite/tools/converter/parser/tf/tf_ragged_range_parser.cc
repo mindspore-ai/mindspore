@@ -19,6 +19,7 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "tools/converter/parser/tf/tf_util.h"
 
 namespace mindspore {
 namespace lite {
@@ -43,23 +44,35 @@ STATUS TFRaggedRangeParser::Parse(const tensorflow::NodeDef &tf_op,
   }
 
   tensorflow::AttrValue attr_value;
-  if (!TensorFlowUtils::FindAttrValue(tf_op, "starts", &attr_value)) {
-    MS_LOG(ERROR) << "The starts attr should be specified";
-    return RET_ERROR;
+  if (TensorFlowUtils::FindAttrValue(tf_op, "starts", &attr_value)) {
+    attr->start = static_cast<int32_t>(attr_value.i());
+  } else {
+    auto start_node = tf_node_map.at(TensorFlowUtils::GetFlattenNodeName(tf_op.input(0)));
+    if (TensorFlowUtils::FindAttrValue(*start_node, "value", &attr_value)) {
+      MS_LOG(INFO) << "Found raggedrange start node value attr, means it has default value";
+      attr->start = static_cast<int32_t>(attr_value.i());
+    }
   }
-  attr->start = static_cast<int32_t>(attr_value.i());
 
-  if (!TensorFlowUtils::FindAttrValue(tf_op, "limits", &attr_value)) {
-    MS_LOG(ERROR) << "The limits attr should be specified";
-    return RET_ERROR;
+  if (TensorFlowUtils::FindAttrValue(tf_op, "limits", &attr_value)) {
+    attr->limit = static_cast<int32_t>(attr_value.i());
+  } else {
+    auto limit_node = tf_node_map.at(TensorFlowUtils::GetFlattenNodeName(tf_op.input(1)));
+    if (TensorFlowUtils::FindAttrValue(*limit_node, "value", &attr_value)) {
+      MS_LOG(INFO) << "Found raggedrange limit node value attr, means it has default value";
+      attr->limit = static_cast<int32_t>(attr_value.i());
+    }
   }
-  attr->limit = static_cast<int32_t>(attr_value.i());
 
-  if (!TensorFlowUtils::FindAttrValue(tf_op, "deltas", &attr_value)) {
-    MS_LOG(ERROR) << "The deltas attr should be specified";
-    return RET_ERROR;
+  if (TensorFlowUtils::FindAttrValue(tf_op, "deltas", &attr_value)) {
+    attr->delta = static_cast<int32_t>(attr_value.i());
+  } else {
+    auto delta_node = tf_node_map.at(TensorFlowUtils::GetFlattenNodeName(tf_op.input(2)));
+    if (TensorFlowUtils::FindAttrValue(*delta_node, "value", &attr_value)) {
+      MS_LOG(INFO) << "Found raggedrange delta node value attr, means it has default value";
+    }
+    attr->delta = static_cast<int32_t>(attr_value.i());
   }
-  attr->delta = static_cast<int32_t>(attr_value.i());
 
   primitive->value.type = schema::PrimitiveType_Range;
   primitive->value.value = attr.release();
@@ -71,6 +84,14 @@ STATUS TFRaggedRangeParser::Parse(const tensorflow::NodeDef &tf_op,
 
   *output_size = 1;
   auto status = AddOpInput(tf_op, 0, inputs);
+  if (status != RET_OK) {
+    return status;
+  }
+  status = AddOpInput(tf_op, 1, inputs);
+  if (status != RET_OK) {
+    return status;
+  }
+  status = AddOpInput(tf_op, 2, inputs);
   return status;
 }
 TFNodeRegistrar g_tfRaggedRangeParser("RaggedRange", new TFRaggedRangeParser());

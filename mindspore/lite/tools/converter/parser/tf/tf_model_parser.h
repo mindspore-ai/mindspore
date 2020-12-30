@@ -66,8 +66,8 @@ class TFModelParser : public ModelParser {
 
   STATUS ConvertSubgraph();
 
-  STATUS WhileNodePostProcess(const std::map<CNodePtr, FuncGraphPtr> &while_cond_map,
-                              const std::map<CNodePtr, FuncGraphPtr> &while_body_map);
+  STATUS ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGraphPtr> &first_func_map,
+                                    const std::map<CNodePtr, FuncGraphPtr> &second_func_map);
 
   STATUS MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph);
 
@@ -78,6 +78,7 @@ class TFModelParser : public ModelParser {
   std::vector<std::string> graph_input_names_;
   std::vector<std::string> graph_output_names_;
   std::map<std::string, AnfNodePtr> function_while_map_;  // tf function name->while_node_name
+  std::map<std::string, AnfNodePtr> function_if_map_;     // tf function name->if_node
 };
 }  // namespace lite
 }  // namespace mindspore
