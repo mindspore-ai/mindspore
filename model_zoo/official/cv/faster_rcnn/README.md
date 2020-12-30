@@ -108,6 +108,9 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 # eval
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+
+# inference
+sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
 ```
 
 # Run in docker
@@ -143,6 +146,13 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 ```
 
+5. Inference
+
+```shell
+# inference
+sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+```
+
 # Script Description
 
 ## Script and Sample Code
@@ -151,9 +161,11 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 .
 └─faster_rcnn
   ├─README.md    // descriptions about fasterrcnn
+  ├─ascend310_infer //application for 310 inference
   ├─scripts
     ├─run_standalone_train_ascend.sh    // shell script for standalone on ascend
     ├─run_distribute_train_ascend.sh    // shell script for distributed on ascend
+    ├─run_infer_310.sh    // shell script for 310 inference
     └─run_eval_ascend.sh    // shell script for eval on ascend
   ├─src
     ├─FasterRcnn
@@ -168,12 +180,15 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
       ├─resnet50.py    // backbone network
       ├─roi_align.py    // roi align network
       └─rpn.py    //  region proposal network
+    ├─aipp.cfg    // aipp config file
     ├─config.py    // total config
     ├─dataset.py    // create dataset and process dataset
     ├─lr_schedule.py    // learning ratio generator
     ├─network_define.py    // network define for fasterrcnn
     └─util.py    // routine operation
+  ├─export.py    // script to export AIR,MINDIR,ONNX model
   ├─eval.py    //eval scripts
+  ├─postprogress.py    // post process for 310 inference
   └─train.py    // train scripts
 ```
 
@@ -264,6 +279,44 @@ Eval result will be stored in the example path, whose folder name is "eval". Und
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.562
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.631
 ```
+
+## Model Export
+
+```shell
+python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_format[EXPORT_FORMAT]
+```
+
+`EXPORT_FORMAT` shoule be in ["AIR", "ONNX", "MINDIR"]
+
+## Inference Process
+
+### Usage
+
+Before performing inference, the air file must bu exported by export script on the Ascend910 environment.
+
+```shell
+# Ascend310 inference
+sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+```
+
+### result
+
+Inference result is saved in current path, you can find result like this in log file.
+
+```log
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.349
+ Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.570
+ Average Precision  (AP) @[ IoU=0.75      | area=   all | maxDets=100 ] = 0.369
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.211
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.391
+ Average Precision  (AP) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.435
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=  1 ] = 0.295
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets= 10 ] = 0.476
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.503
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= small | maxDets=100 ] = 0.330
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.547
+ Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.622
+ ```
 
 # Model Description
 

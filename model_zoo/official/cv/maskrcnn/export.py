@@ -18,7 +18,7 @@ import numpy as np
 
 from mindspore import Tensor, context, load_checkpoint, load_param_into_net, export
 
-from src.maskrcnn.mask_rcnn_r50 import Mask_Rcnn_Resnet50
+from src.maskrcnn.mask_rcnn_r50 import MaskRcnn_Infer
 from src.config import config
 
 parser = argparse.ArgumentParser(description='maskrcnn export')
@@ -34,19 +34,20 @@ args = parser.parse_args()
 context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
 
 if __name__ == '__main__':
-    net = Mask_Rcnn_Resnet50(config=config)
+    net = MaskRcnn_Infer(config=config)
     param_dict = load_checkpoint(args.ckpt_file)
-    load_param_into_net(net, param_dict)
+
+    param_dict_new = {}
+    for key, value in param_dict.items():
+        param_dict_new["network." + key] = value
+
+    load_param_into_net(net, param_dict_new)
     net.set_train(False)
 
     bs = config.test_batch_size
 
     img = Tensor(np.zeros([args.batch_size, 3, config.img_height, config.img_width], np.float16))
     img_metas = Tensor(np.zeros([args.batch_size, 4], np.float16))
-    gt_bboxes = Tensor(np.zeros([args.batch_size, config.num_gts, 4], np.float16))
-    gt_labels = Tensor(np.zeros([args.batch_size, config.num_gts], np.int32))
-    gt_num = Tensor(np.zeros([args.batch_size, config.num_gts], np.bool))
-    gt_mask = Tensor(np.zeros([args.batch_size, config.num_gts], np.bool))
 
-    input_data = [img, img_metas, gt_bboxes, gt_labels, gt_num, gt_mask]
+    input_data = [img, img_metas]
     export(net, *input_data, file_name=args.file_name, file_format=args.file_format)
