@@ -54,23 +54,9 @@ class Common : public testing::Test {
     }
   }
 
-  void ReadFile(const char *file, size_t *size, char **buf) {
-    ASSERT_NE(nullptr, file);
-    ASSERT_NE(nullptr, size);
-    ASSERT_NE(nullptr, buf);
-    std::string path = std::string(file);
-    std::ifstream ifs(path);
-    ASSERT_EQ(true, ifs.good());
-    ASSERT_EQ(true, ifs.is_open());
+  void ReadFile(const char *file, size_t *size, char **buf);
 
-    ifs.seekg(0, std::ios::end);
-    *size = ifs.tellg();
-    *buf = new char[*size];
-
-    ifs.seekg(0, std::ios::beg);
-    ifs.read(*buf, *size);
-    ifs.close();
-  }
+  void ContextAutoSet();
 };
 }  // namespace ST
 #endif  // TESTS_CXX_ST_COMMON_COMMON_TEST_H_

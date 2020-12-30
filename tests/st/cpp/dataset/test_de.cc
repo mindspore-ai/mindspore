@@ -57,6 +57,8 @@ TEST_F(TestDE, TestResNetPreprocess) {
 }
 
 TEST_F(TestDE, TestDvpp) {
+  ContextAutoSet();
+
   // Read images from target directory
   std::vector<std::shared_ptr<Tensor>> images;
   MindDataEager::LoadImageFromDir("/home/workspace/mindspore_dataset/imagenet/imagenet_original/val/n01440764",
