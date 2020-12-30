@@ -36,6 +36,8 @@ from src.config import dataset_config, net_config, eval_config
 _current_dir = os.path.dirname(os.path.realpath(__file__))
 
 parser = argparse.ArgumentParser(description='CenterNet evaluation')
+parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'CPU'],
+                    help='device where the code will be implemented. (Default: Ascend)')
 parser.add_argument("--device_id", type=int, default=0, help="Device id, default is 0.")
 parser.add_argument("--load_checkpoint_path", type=str, default="", help="Load checkpoint file path")
 parser.add_argument("--data_dir", type=str, default="", help="Dataset directory, "
@@ -52,15 +54,20 @@ def predict():
     '''
     Predict function
     '''
-    context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", device_id=args_opt.device_id)
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
+    if args_opt.device_target == "Ascend":
+        context.set_context(device_id=args_opt.device_id)
+        enable_nms_fp16 = True
+    else:
+        enable_nms_fp16 = False
 
     logger.info("Begin creating {} dataset".format(args_opt.run_mode))
     coco = COCOHP(dataset_config, run_mode=args_opt.run_mode, net_opt=net_config,
                   enable_visual_image=(args_opt.visual_image == "true"), save_path=args_opt.save_result_dir,)
-    coco.init(args_opt.data_dir, keep_res=eval_config.keep_res, flip_test=eval_config.flip_test)
+    coco.init(args_opt.data_dir, keep_res=eval_config.keep_res)
     dataset = coco.create_eval_dataset()
 
-    net_for_eval = CenterNetMultiPoseEval(net_config, eval_config.flip_test, eval_config.K)
+    net_for_eval = CenterNetMultiPoseEval(net_config, eval_config.K, enable_nms_fp16)
     net_for_eval.set_train(False)
 
     param_dict = load_checkpoint(args_opt.load_checkpoint_path)
@@ -103,9 +110,7 @@ def predict():
         print("Image {}/{} id: {} cost time {} ms".format(index, total_nums, image_id, (end - start) * 1000.))
 
         # post-process
-        soft_nms = eval_config.soft_nms or len(eval_config.multi_scales) > 0
-        detections = merge_outputs(detections, soft_nms)
-
+        detections = merge_outputs(detections, eval_config.soft_nms)
         # get prediction result
         pred_json = convert_eval_format(detections, image_id)
         gt_image_info = coco.coco.loadImgs([image_id])

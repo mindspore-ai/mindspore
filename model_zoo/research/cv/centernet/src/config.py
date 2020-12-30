@@ -104,8 +104,7 @@ train_config = edict({
 
 
 eval_config = edict({
-    'flip_test': False,
-    'soft_nms': False,
+    'soft_nms': True,
     'keep_res': True,
     'multi_scales': [1.0],
     'pad': 31,

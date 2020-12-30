@@ -17,6 +17,7 @@ Functional Cells to be used.
 """
 
 import math
+import time
 import numpy as np
 import mindspore.nn as nn
 import mindspore.ops as ops
@@ -119,33 +120,46 @@ class GatherFeature(nn.Cell):
     """
     Gather feature at specified position
 
-    Args: None
+    Args:
+        enable_cpu_gather (bool): Use cpu operator GatherD to gather feature or not, adaption for CPU. Default: True.
 
     Returns:
         Tensor, feature at spectified position
     """
-    def __init__(self):
+    def __init__(self, enable_cpu_gather=True):
         super(GatherFeature, self).__init__()
         self.tile = ops.Tile()
         self.shape = ops.Shape()
         self.concat = ops.Concat(axis=1)
         self.reshape = ops.Reshape()
-        self.gather_nd = ops.GatherNd()
+        self.enable_cpu_gather = enable_cpu_gather
+        if self.enable_cpu_gather:
+            self.gather_nd = ops.GatherD()
+            self.expand_dims = ops.ExpandDims()
+        else:
+            self.gather_nd = ops.GatherND()
 
     def construct(self, feat, ind):
         """gather by specified index"""
-        # (b, N)->(b*N, 1)
-        b, N = self.shape(ind)
-        ind = self.reshape(ind, (-1, 1))
-        ind_b = nn.Range(0, b, 1)()
-        ind_b = self.reshape(ind_b, (-1, 1))
-        ind_b = self.tile(ind_b, (1, N))
-        ind_b = self.reshape(ind_b, (-1, 1))
-        index = self.concat((ind_b, ind))
-        # (b, N, 2)
-        index = self.reshape(index, (b, N, -1))
-        # (b, N, c)
-        feat = self.gather_nd(feat, index)
+        if self.enable_cpu_gather:
+            _, _, c = self.shape(feat)
+            # (b, N, c)
+            index = self.expand_dims(ind, -1)
+            index = self.tile(index, (1, 1, c))
+            feat = self.gather_nd(feat, 1, index)
+        else:
+            # (b, N)->(b*N, 1)
+            b, N = self.shape(ind)
+            ind = self.reshape(ind, (-1, 1))
+            ind_b = nn.Range(0, b, 1)()
+            ind_b = self.reshape(ind_b, (-1, 1))
+            ind_b = self.tile(ind_b, (1, N))
+            ind_b = self.reshape(ind_b, (-1, 1))
+            index = self.concat((ind_b, ind))
+            # (b, N, 2)
+            index = self.reshape(index, (b, N, -1))
+            # (b, N, c)
+            feat = self.gather_nd(feat, index)
         return feat
 
 
@@ -477,11 +491,19 @@ class LossCallBack(Callback):
 
     Args:
         dataset_size (int): Dataset size. Default: -1.
+        enable_static_time (bool): enable static time cost, adaption for CPU. Default: False.
     """
 
-    def __init__(self, dataset_size=-1):
+    def __init__(self, dataset_size=-1, enable_static_time=False):
         super(LossCallBack, self).__init__()
         self._dataset_size = dataset_size
+        self._enable_static_time = enable_static_time
+
+    def step_begin(self, run_context):
+        """
+        Get begining time of each step
+        """
+        self._begin_time = time.time()
 
     def step_end(self, run_context):
         """
@@ -493,11 +515,19 @@ class LossCallBack(Callback):
             if percent == 0:
                 percent = 1
                 epoch_num -= 1
-            print("epoch: {}, current epoch percent: {}, step: {}, outputs are {}"
-                  .format(int(epoch_num), "%.3f" % percent, cb_params.cur_step_num, str(cb_params.net_outputs)))
+            if self._enable_static_time:
+                cur_time = time.time()
+                time_per_step = cur_time - self._begin_time
+                print("epoch: {}, current epoch percent: {}, step: {}, time per step: {} s, outputs are {}"
+                      .format(int(epoch_num), "%.3f" % percent, cb_params.cur_step_num, "%.3f" % time_per_step,
+                              str(cb_params.net_outputs)), flush=True)
+            else:
+                print("epoch: {}, current epoch percent: {}, step: {}, outputs are {}"
+                      .format(int(epoch_num), "%.3f" % percent, cb_params.cur_step_num,
+                              str(cb_params.net_outputs)), flush=True)
         else:
             print("epoch: {}, step: {}, outputs are {}".format(cb_params.cur_epoch_num, cb_params.cur_step_num,
-                                                               str(cb_params.net_outputs)))
+                                                               str(cb_params.net_outputs)), flush=True)
 
 
 class CenterNetPolynomialDecayLR(LearningRateSchedule):

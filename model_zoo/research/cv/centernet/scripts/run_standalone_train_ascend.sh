@@ -16,12 +16,14 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_standalone_pretrain_ascend.sh DEVICE_ID EPOCH_SIZE"
-echo "for example: bash run_standalone_pretrain_ascend.sh 0 350"
+echo "bash run_standalone_train_ascend.sh DEVICE_ID MINDRECORD_DIR LOAD_CHECKPOINT_PATH"
+echo "for example: bash run_standalone_train_ascend.sh 0 /path/mindrecord_dataset /path/load_ckpt"
+echo "if no ckpt, just run: bash run_standalone_train_ascend.sh 0 /path/mindrecord_dataset \"\" "
 echo "=============================================================================================================="
 
 DEVICE_ID=$1
-EPOCH_SIZE=$2
+MINDRECORD_DIR=$2
+LOAD_CHECKPOINT_PATH=$3
 
 mkdir -p ms_log 
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
@@ -33,16 +35,16 @@ python ${PROJECT_DIR}/../train.py  \
     --distribute=false \
     --need_profiler=false \
     --profiler_path=./profiler \
-    --epoch_size=$EPOCH_SIZE \
     --device_id=$DEVICE_ID \
     --enable_save_ckpt=true \
     --do_shuffle=true \
     --enable_data_sink=true \
     --data_sink_steps=50 \
-    --load_checkpoint_path="" \
+    --epoch_size=350 \
+    --load_checkpoint_path=$LOAD_CHECKPOINT_PATH \
     --save_checkpoint_steps=10000 \
     --save_checkpoint_num=1 \
-    --mindrecord_dir="" \
+    --mindrecord_dir=$MINDRECORD_DIR \
     --mindrecord_prefix="coco_hp.train.mind" \
     --visual_image=false \
     --save_result_dir="" > training_log.txt 2>&1 &

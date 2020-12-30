@@ -119,19 +119,27 @@ After installing MindSpore via the official website, you can start training and 
 
 Note: 1.the first run of training will generate the mindrecord file, which will take a long time.
       2.MINDRECORD_DATASET_PATH is the mindrecord dataset directory.
+      3.LOAD_CHECKPOINT_PATH is the pretrained checkpoint file directory, if no just set ""
+      4.RUN_MODE support validation and testing, set to be "val"/"test"
 
 ```shell
 # create dataset in mindrecord format
 bash scripts/convert_dataset_to_mindrecord.sh
 
-# standalone training
-bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [EPOCH_SIZE]
+# standalone training on Ascend
+bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH]
 
-# distributed training
-bash scripts/run_distributed_train_ascend.sh [MINDRECORD_DATASET_PATH] [RANK_TABLE_FILE]
+# standalone training on CPU
+bash scripts/run_standalone_train_cpu.sh [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH]
 
-# eval
-bash scripts/run_standalone_eval_ascend.sh [DEVICE_ID]
+# distributed training on Ascend
+bash scripts/run_distributed_train_ascend.sh [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH] [RANK_TABLE_FILE]
+
+# eval on Ascend
+bash scripts/run_standalone_eval_ascend.sh [DEVICE_ID] [RUN_MODE] [DATA_DIR] [LOAD_CHECKPOINT_PATH]
+
+# eval on CPU
+bash scripts/run_standalone_eval_cpu.sh [RUN_MODE] [DATA_DIR] [LOAD_CHECKPOINT_PATH]
 ```
 
 # [Script Description](#contents)
@@ -153,9 +161,11 @@ bash scripts/run_standalone_eval_ascend.sh [DEVICE_ID]
         │   │    ├──get_distribute_pretrain_cmd.py     // script for distributed pretraining
         │   │    ├──README.md
         │   ├──convert_dataset_to_mindrecord.sh        // shell script for converting coco type dataset to mindrecord
-        │   ├──run_standalone_train_ascend.sh          // shell script for standalone pretrain on ascend
-        │   ├──run_distributed_train_ascend.sh         // shell script for distributed pretrain on ascend
+        │   ├──run_standalone_train_ascend.sh          // shell script for standalone training on ascend
+        │   ├──run_distributed_train_ascend.sh         // shell script for distributed training on ascend
         │   ├──run_standalone_eval_ascend.sh           // shell script for standalone evaluation on ascend
+        │   ├──run_standalone_train_cpu.sh             // shell script for standalone training on cpu
+        │   ├──run_standalone_eval_cpu.sh              // shell script for standalone evaluation on cpu
         └── src
             ├──__init__.py
             ├──centernet_pose.py         // centernet networks, training entry
@@ -259,7 +269,6 @@ config for training.
 
 ```text
 config for evaluation.
-    flip_test                       whether to use flip test: True | False, default is False
     soft_nms                        nms after decode: True | False, default is True
     keep_res                        keep original or fix resolution: True | False, default is False
     multi_scales                    use multi-scales of image: List, default is [1.0]
@@ -350,12 +359,12 @@ bash scripts/convert_dataset_to_mindrecord.sh
 
 The command above will run in the background, after converting mindrecord files will be located in path specified by yourself.
 
-### Training
+### Standalone Training
 
 #### Running on Ascend
 
 ```bash
-bash scripts/run_standalone_pretrain_ascend.sh 0 1
+bash scripts/run_standalone_train_ascend.sh device_id /path/mindrecord_dataset /path/load_ckpt
 ```
 
 The command above will run in the background, you can view training logs in training_log.txt. After training finished, you will get some checkpoint files under the script folder by default. The loss values will be displayed as follows:
@@ -368,12 +377,31 @@ epoch: 349.0, current epoch percent: 1.00, step: 87500, outputs are (Tensor(shap
 ...
 ```
 
+#### Running on CPU
+
+```bash
+bash scripts/run_standalone_train_cpu.sh /path/mindrecord_dataset /path/load_ckpt
+```
+
+The command above will run in the background, you can view training logs in training_log.txt. After training finished, you will get some checkpoint files under the script folder by default. The loss values will be displayed as follows (rusume from pretrained checkpoint and batch_size was set to be 8):
+
+```text
+# grep "epoch" training_log.txt
+...
+epoch: 0.0, current epoch percent: 0.00, step: 1, time of per steps: 66.693 s, outputs are 3.645
+epoch: 0.0, current epoch percent: 0.00, step: 2, time of per steps: 46.594 s, outputs are 4.862
+epoch: 0.0, current epoch percent: 0.00, step: 3, time of per steps: 44.718 s, outputs are 3.927
+epoch: 0.0, current epoch percent: 0.00, step: 4, time of per steps: 45.113 s, outputs are 3.910
+epoch: 0.0, current epoch percent: 0.00, step: 5, time of per steps: 45.213 s, outputs are 3.749
+...
+```
+
 ### Distributed Training
 
 #### Running on Ascend
 
 ```bash
-bash scripts/run_distributed_pretrain_ascend.sh /path/coco2017 /path/mindrecord /path/hccl.json
+bash scripts/run_distributed_pretrain_ascend.sh /path/mindrecord_dataset /path/load_ckpt /path/hccl.json
 ```
 
 The command above will run in the background, you can view training logs in LOG*/training_log.txt and LOG*/ms_log/. After training finished, you will get some checkpoint files under the LOG*/ckpt_0 folder by default. The loss value will be displayed as follows:
@@ -394,7 +422,11 @@ epoch: 0.0, current epoch percent: 0.002, step: 200, outputs are (Tensor(shape=[
 
 ```bash
 # Evaluation base on validation dataset will be done automatically, while for test or test-dev dataset, the accuracy should be upload to the CodaLab official website(https://competitions.codalab.org).
-bash scripts/run_standalone_eval_ascend.sh [DEVICE_ID]
+# On Ascend
+bash scripts/run_standalone_eval_ascend.sh device_id val(or test) /path/coco_dataset /path/load_ckpt
+
+# On CPU
+bash scripts/run_standalone_eval_cpu.sh val(or test) /path/coco_dataset /path/load_ckpt
 ```
 
 you can see the MAP result below as below:
@@ -439,7 +471,7 @@ python export.py [DEVICE_ID]
 
 ## [Performance](#contents)
 
-### Training Performance
+### Training Performance On Ascend
 
 CenterNet on 11.8K images(The annotation and data format must be the same as coco)
 
@@ -460,7 +492,7 @@ CenterNet on 11.8K images(The annotation and data format must be the same as coc
 | Checkpoint                 | 242M (.ckpt file)                                              |
 | Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/cv/centernet> |
 
-### Inference Performance
+### Inference Performance On Ascend
 
 CenterNet on validation(5K images) and test-dev(40K images)
 

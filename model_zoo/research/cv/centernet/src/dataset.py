@@ -17,7 +17,6 @@ Data operations, will be used in train.py
 """
 
 import os
-import copy
 import math
 import argparse
 import cv2
@@ -66,7 +65,7 @@ class COCOHP(ds.Dataset):
             if not os.path.exists(self.save_path):
                 os.makedirs(self.save_path)
 
-    def init(self, data_dir, keep_res=False, flip_test=False):
+    def init(self, data_dir, keep_res=False):
         """initailize additional info"""
         logger.info('Initializing coco 2017 {} data.'.format(self.run_mode))
         if not os.path.isdir(data_dir):
@@ -94,7 +93,6 @@ class COCOHP(ds.Dataset):
             self.images = image_ids
         self.num_samples = len(self.images)
         self.keep_res = keep_res
-        self.flip_test = flip_test
         if self.run_mode != "train":
             self.pad = 31
         logger.info('Loaded {} {} samples'.format(self.run_mode, self.num_samples))
@@ -167,7 +165,7 @@ class COCOHP(ds.Dataset):
         ret = (img, image_id)
         return ret
 
-    def pre_process_for_test(self, image, img_id, scale, meta=None):
+    def pre_process_for_test(self, image, img_id, scale):
         """image pre-process for evaluation"""
         b, h, w, ch = image.shape
         assert b == 1, "only single image was supported here"
@@ -191,17 +189,8 @@ class COCOHP(ds.Dataset):
                                    flags=cv2.INTER_LINEAR)
         inp_img = (inp_image.astype(np.float32) / 255. - self.data_opt.mean) / self.data_opt.std
 
-        h, w, ch = inp_img.shape
-        images = copy.deepcopy(inp_img)
-        if self.flip_test:
-            flip_image = inp_img[:, ::-1, :]
-            inp_img = inp_img.reshape((1, h, w, ch))
-            flip_image = flip_image.reshape((1, h, w, ch))
-            # (2, h, w, c)
-            images = np.concatenate((inp_img, flip_image), axis=0)
-        else:
-            images = images.reshape((1, h, w, ch))
-        images = images.transpose(0, 3, 1, 2)
+        eval_image = inp_img.reshape((1,) + inp_img.shape)
+        eval_image = eval_image.transpose(0, 3, 1, 2)
 
         meta = {'c': c, 's': s,
                 'out_height': inp_height // self.net_opt.down_ratio,
@@ -244,7 +233,7 @@ class COCOHP(ds.Dataset):
                 image_name = "gt_" + self.run_mode + "_image_" + str(img_id) + "_scale_" + str(scale) + ".png"
                 cv2.imwrite("{}/{}".format(self.save_path, image_name), inp_image)
 
-        return images, meta
+        return eval_image, meta
 
     def preprocess_fn(self, img, num_objects, keypoints, bboxes, category_id):
         """image pre-process and augmentation"""

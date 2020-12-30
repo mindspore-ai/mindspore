@@ -16,14 +16,13 @@
 
 echo "=============================================================================================================="
 echo "Please run the scipt as: "
-echo "bash run_standalone_eval_ascend.sh DEVICE_ID RUN_MODE DATA_DIR LOAD_CHECKPOINT_PATH"
-echo "for example of validation: bash run_standalone_eval_ascend.sh 0 val /path/coco_dataset /path/load_ckpt"
-echo "for example of test: bash run_standalone_eval_ascend.sh 0 test /path/coco_dataset /path/load_ckpt"
+echo "bash run_standalone_eval_cpu.sh RUN_MODE DATA_DIR LOAD_CHECKPOINT_PATH"
+echo "for example of validation: bash run_standalone_eval_cpu.sh val /path/coco_dataset /path/load_ckpt"
+echo "for example of test: bash run_standalone_eval_cpu.sh test /path/coco_dataset /path/load_ckpt"
 echo "=============================================================================================================="
-DEVICE_ID=$1
-RUN_MODE=$2
-DATA_DIR=$3
-LOAD_CHECKPOINT_PATH=$4
+RUN_MODE=$1
+DATA_DIR=$2
+LOAD_CHECKPOINT_PATH=$3
 mkdir -p ms_log 
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)
 CUR_DIR=`pwd`
@@ -45,8 +44,7 @@ else
 fi
 
 python ${PROJECT_DIR}/../eval.py  \
-    --device_target=Ascend \
-    --device_id=$DEVICE_ID \
+    --device_target=CPU \
     --load_checkpoint_path=$LOAD_CHECKPOINT_PATH \
     --data_dir=$DATA_DIR \
     --run_mode=$RUN_MODE \

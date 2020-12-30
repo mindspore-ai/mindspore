@@ -39,8 +39,7 @@ def parse_args():
     parser.add_argument("--hyper_parameter_config_dir", type=str, default="",
                         help="Hyper Parameter config path, it is better to use absolute path")
     parser.add_argument("--mindrecord_dir", type=str, default="", help="Mindrecord dataset directory")
-    parser.add_argument("--mindrecord_prefix", type=str, default="coco_hp.train.mind",
-                        help="Prefix of MindRecord dataset filename.")
+    parser.add_argument("--load_checkpoint_path", type=str, default="", help="Load checkpoint file path")
     parser.add_argument("--hccl_config_dir", type=str, default="",
                         help="Hccl config path, it is better to use absolute path")
     parser.add_argument("--cmd_file", type=str, default="distributed_cmd.sh",
@@ -72,7 +71,7 @@ def distribute_train():
 
     run_script = args.run_script_dir
     mindrecord_dir = args.mindrecord_dir
-    mindrecord_prefix = args.mindrecord_prefix
+    load_checkpoint_path = args.load_checkpoint_path
     cf = configparser.ConfigParser()
     cf.read(args.hyper_parameter_config_dir)
     cfg = dict(cf.items("config"))
@@ -151,7 +150,7 @@ def distribute_train():
                              " 'device_num' or 'mindrecord_dir'! ")
         run_cmd += opt
         run_cmd += " --mindrecord_dir=" + mindrecord_dir
-        run_cmd += " --mindrecord_prefix=" + mindrecord_prefix
+        run_cmd += " --load_checkpoint_path=" + load_checkpoint_path
         run_cmd += ' --device_id=' + str(device_id) + ' --device_num=' \
                + str(rank_size) + ' >./training_log.txt 2>&1 &'
 
