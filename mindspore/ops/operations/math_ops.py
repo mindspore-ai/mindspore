@@ -1312,7 +1312,7 @@ class SquaredDifference(_MathBinaryOp):
         and the data type is the one with higher precision or higher digits among the two inputs.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
         >>> input_x = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
