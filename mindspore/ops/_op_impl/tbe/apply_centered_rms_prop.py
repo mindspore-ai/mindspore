@@ -27,42 +27,42 @@ apply_centered_rms_prop_op_info = TBERegOp("ApplyCenteredRMSProp") \
     .input(1, "mg", False, "required", "all") \
     .input(2, "ms", False, "required", "all") \
     .input(3, "mom", False, "required", "all") \
-    .input(4, "lr", False, "required", "all") \
-    .input(5, "rho", False, "required", "all") \
-    .input(6, "momentum", False, "required", "all") \
-    .input(7, "epsilon", False, "required", "all") \
-    .input(8, "grad", False, "required", "all") \
+    .input(4, "grad", False, "required", "all") \
+    .input(5, "lr", False, "required", "all") \
+    .input(6, "rho", False, "required", "all") \
+    .input(7, "momentum", False, "required", "all") \
+    .input(8, "epsilon", False, "required", "all") \
     .output(0, "var", False, "required", "all") \
     .output(1, "mg", False, "required", "all") \
     .output(2, "ms", False, "required", "all") \
     .output(3, "mom", False, "required", "all") \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD,
-                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD,
+                  DataType.F16_5HD, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default, DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD,
                   DataType.F16_5HD) \
     .dtype_format(DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_FracZ,
-                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_FracZ,
+                  DataType.F16_FracZ, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default, DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_FracZ,
                   DataType.F16_FracZ) \
     .dtype_format(DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0,
-                  DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
-                  DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0,
+                  DataType.F16_C1HWNCoC0, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
+                  DataType.F16_Default, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0, DataType.F16_C1HWNCoC0,
                   DataType.F16_C1HWNCoC0) \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
                   DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
                   DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default,
                   DataType.F16_Default) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
+                  DataType.F32_5HD, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD) \
     .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_FracZ,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_FracZ,
+                  DataType.F32_FracZ, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_FracZ,
                   DataType.F32_FracZ) \
     .dtype_format(DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0,
-                  DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
-                  DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0,
+                  DataType.F32_C1HWNCoC0, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
+                  DataType.F32_Default, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0, DataType.F32_C1HWNCoC0,
                   DataType.F32_C1HWNCoC0) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
                   DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
