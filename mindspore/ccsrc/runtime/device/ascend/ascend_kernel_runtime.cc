@@ -47,6 +47,7 @@
 #include "utils/shape_utils.h"
 #include "utils/trace_base.h"
 #include "graphengine/inc/external/acl/error_codes/rt_error_codes.h"
+#include "utils/runtime_error_codes.h"
 #include "debug/anf_ir_dump.h"
 #ifdef MEM_REUSE_DEBUG
 #include "backend/optimizer/mem_reuse/mem_reuse_checker.h"
@@ -112,9 +113,8 @@ std::string GetRankId() {
 }
 }  // namespace
 
-std::vector<rtTaskFailInfo> AscendKernelRuntime::task_fail_infoes_ = {};
+std::vector<rtExceptionInfo> AscendKernelRuntime::task_fail_infoes_ = {};
 uint32_t AscendKernelRuntime::current_graph_id_ = 0;
-std::map<std::string, uint32_t> AscendKernelRuntime::overflow_tasks_;
 AscendKernelRuntime::~AscendKernelRuntime() { graph_model_map_.clear(); }
 
 void AscendKernelRuntime::SetContext() {
@@ -538,26 +538,24 @@ void AscendKernelRuntime::LaunchDataDump(GraphId graph_id) {
   }
 }
 
-void AscendKernelRuntime::TaskFailCallback(rtTaskFailInfo *task_fail_info) {
+void AscendKernelRuntime::TaskFailCallback(rtExceptionInfo *task_fail_info) {
   MS_EXCEPTION_IF_NULL(task_fail_info);
   static std::mutex exception_mutex;
   std::lock_guard<std::mutex> lock(exception_mutex);
   if (task_fail_info->retcode == ACL_ERROR_RT_AICORE_OVER_FLOW) {
-    auto key = std::to_string(task_fail_info->streamid) + std::to_string(task_fail_info->taskid);
-    if (overflow_tasks_.find(key) == overflow_tasks_.end()) {
-      overflow_tasks_[key] = 1;
-    }
-    if (overflow_tasks_[key] == 5) {
-      auto node_name = AscendKernelRuntime::GetErrorNodeName(task_fail_info->streamid, task_fail_info->taskid);
-      MS_LOG(WARNING) << "Node run task overflow, node name: " << node_name;
-      overflow_tasks_[key] = 0;
+    auto node_name = AscendKernelRuntime::GetErrorNodeName(task_fail_info->streamid, task_fail_info->taskid);
+    if (node_name.empty()) {
+      MS_LOG(WARNING) << "Can not get node by task id: " << task_fail_info->taskid
+                      << ", stream id:" << task_fail_info->streamid;
     } else {
-      overflow_tasks_[key]++;
+      MS_LOG(WARNING) << "Node run task overflow, node name: " << node_name << "(task id: " << task_fail_info->taskid
+                      << ", stream id:" << task_fail_info->streamid << ")";
     }
   } else {
     MS_LOG(WARNING) << "Task fail infos task_id: " << task_fail_info->taskid
                     << ", stream_id: " << task_fail_info->streamid << ", tid: " << task_fail_info->tid
-                    << ", device_id: " << task_fail_info->deviceid << ", retcode: " << task_fail_info->retcode;
+                    << ", device_id: " << task_fail_info->deviceid
+                    << ", error msg: " << GetErrorMsg(task_fail_info->retcode);
     task_fail_infoes_.push_back(*task_fail_info);
   }
 }
@@ -586,7 +584,8 @@ void AscendKernelRuntime::DumpTaskExceptionInfo(const session::KernelGraph *grap
     }
     for (const auto &node : graph->execution_order()) {
       if (node->fullname_with_scope() == full_scope_name) {
-        MS_LOG(ERROR) << "Dump node (" << full_scope_name << ") task error input/output data to: " << local_path
+        MS_LOG(ERROR) << "Dump node (" << full_scope_name << ") task error input/otput data to: " << local_path
+                      << " Error msg: " << GetErrorMsg(task_fail_info.retcode)
                       << " trace: " << trace::DumpSourceLines(node);
         E2eDumpUtil::DumpInputImpl(node, false, local_path, &full_scope_name, nullptr);
         E2eDumpUtil::DumpOutputImpl(node, false, local_path, &full_scope_name, nullptr);
@@ -689,7 +688,7 @@ bool AscendKernelRuntime::RunTask(const session::KernelGraph *graph) {
   bool status = ModelRunner::Instance().RunModel(graph->graph_id(), input_tensors, output_tensors);
   if (!status) {
     DumpTaskExceptionInfo(graph);
-    std::string file_name = "task_error_debug" + std::to_string(current_graph_id_) + ".ir";
+    std::string file_name = "task_error_debug_" + std::to_string(current_graph_id_) + ".ir";
     auto graph_tmp = std::make_shared<session::KernelGraph>(*graph);
     DumpIR(file_name, graph_tmp);
 #ifdef ENABLE_TDTQUE
