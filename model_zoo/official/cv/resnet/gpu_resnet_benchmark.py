@@ -53,11 +53,12 @@ set_seed(1)
 
 
 class MyTimeMonitor(Callback):
-    def __init__(self, batch_size, sink_size, dataset_size):
+    def __init__(self, batch_size, sink_size, dataset_size, mode):
         super(MyTimeMonitor, self).__init__()
         self.batch_size = batch_size
         self.size = sink_size
         self.data_size = dataset_size
+        self.mode = mode
 
     def step_begin(self, run_context):
         self.step_time = time.time()
@@ -73,17 +74,22 @@ class MyTimeMonitor(Callback):
         if isinstance(loss, Tensor) and isinstance(loss.asnumpy(), np.ndarray):
             loss = np.mean(loss.asnumpy())
 
-        cur_epoch_num = int(cb_params.cur_epoch_num / (self.data_size / self.size))
+        cur_epoch_num = int(cb_params.cur_epoch_num / (self.data_size / self.size) +1)
         cur_step_in_epoch = int(self.size * (cb_params.cur_epoch_num % (self.data_size / self.size)))
+        total_epochs = int((cb_params.epoch_num - 1) / (self.data_size / self.size) + 1)
+        if self.mode == context.PYNATIVE_MODE:
+            cur_step_in_epoch = (cb_params.cur_step_num - 1) % cb_params.batch_num + 1
+            cur_epoch_num = cb_params.cur_epoch_num
+            total_epochs = cb_params.epoch_num
 
         if isinstance(loss, float) and (np.isnan(loss) or np.isinf(loss)):
             raise ValueError("epoch: {} step: {}. Invalid loss, terminating training.".format(
                 cur_epoch_num, cur_step_in_epoch))
         step_mseconds = (time.time() - self.step_time) * 1000
         fps = self.batch_size / step_mseconds * 1000 * self.size
-        print("epoch: [%s/%s] step: [%s/%s], loss is %s" % (cur_epoch_num, int(cb_params.epoch_num /\
-             (self.data_size / self.size)), cur_step_in_epoch, self.data_size, loss),
-              "Epoch time: {:5.3f} ms, fps: {:d} img/sec.".format(step_mseconds, int(fps)), flush=True)
+        print("epoch: [%s/%s] step: [%s/%s], loss is %s" % (cur_epoch_num, total_epochs,\
+            cur_step_in_epoch, self.data_size, loss),\
+                "Epoch time: {:5.3f} ms, fps: {:d} img/sec.".format(step_mseconds, int(fps)), flush=True)
 
 
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="GPU", dtype="fp16",
@@ -217,7 +223,7 @@ def train():
     # define callbacks
     if mode == context.PYNATIVE_MODE:
         print_per_steps = 1
-    time_cb = MyTimeMonitor(total_batch, print_per_steps, step_size)
+    time_cb = MyTimeMonitor(total_batch, print_per_steps, step_size, mode)
     cb = [time_cb]
     if save_ckpt:
         config_ck = CheckpointConfig(save_checkpoint_steps=5 * step_size, keep_checkpoint_max=5)
