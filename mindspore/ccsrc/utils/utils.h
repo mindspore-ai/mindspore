@@ -47,6 +47,7 @@ constexpr auto kBNGrad1OpName = "BNGrad1";
 constexpr auto kBNGrad2OpName = "BNGrad2";
 constexpr auto kBNGrad3OpName = "BNGrad3";
 constexpr auto kFusedBatchNormEx = "FusedBatchNormEx";
+constexpr auto kInstanceNorm = "InstanceNorm";
 constexpr auto kFusedBatchNormExWithActivation = "FusedBatchNormExWithActivation";
 constexpr auto kFusedBatchNormExWithAddAndActivation = "FusedBatchNormExWithAddAndActivation";
 constexpr auto kFusedBatchNormGradEx = "FusedBatchNormGradEx";
