@@ -1566,7 +1566,8 @@ class MaxPoolWithArgmax(_Pool):
         Tuple of 2 Tensors, representing the maxpool result and where the max values are generated.
 
         - **output** (Tensor) -  Maxpooling result, with shape :math:`(N, C_{out}, H_{out}, W_{out})`.
-        - **mask** (Tensor) -  Max values' index represented by the mask.
+          It has the same data type as `input`.
+        - **mask** (Tensor) -  Max values' index represented by the mask. Data type is int32.
 
     Supported Platforms:
         ``Ascend``
