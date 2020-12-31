@@ -567,7 +567,7 @@ class PopulationCount(PrimitiveWithInfer):
         - **input** (Tensor) -  The data type must be int16 or uint16.
 
     Outputs:
-        Tensor, with the sam  shape as the input.
+        Tensor, with the same shape as the input.
 
     Supported Platforms:
         ``Ascend``

@@ -28,7 +28,7 @@ def _list_setitem_with_string(data, number_index, value):
     Assigns value to list.
 
     Inputs:
-        data (list): Data of type lis.
+        data (list): Data of type list.
         number_index (Number): Index of data.
 
     Outputs:
@@ -43,7 +43,7 @@ def _list_setitem_with_number(data, number_index, value):
     Assigns value to list.
 
     Inputs:
-        data (list): Data of type lis.
+        data (list): Data of type list.
         number_index (Number): Index of data.
         value (Number): Value given.
 
@@ -59,7 +59,7 @@ def _list_setitem_with_Tensor(data, number_index, value):
     Assigns value to list.
 
     Inputs:
-        data (list): Data of type lis.
+        data (list): Data of type list.
         number_index (Number): Index of data.
         value (Tensor): Value given.
 
@@ -75,7 +75,7 @@ def _list_setitem_with_List(data, number_index, value):
     Assigns value to list.
 
     Inputs:
-        data (list): Data of type lis.
+        data (list): Data of type list.
         number_index (Number): Index of data.
         value (list): Value given.
 
@@ -91,7 +91,7 @@ def _list_setitem_with_Tuple(data, number_index, value):
     Assigns value to list.
 
     Inputs:
-        data (list): Data of type lis.
+        data (list): Data of type list.
         number_index (Number): Index of data.
         value (list): Value given.
 

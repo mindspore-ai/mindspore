@@ -1305,7 +1305,7 @@ class SquaredDifference(_MathBinaryOp):
         - **input_x** (Union[Tensor, Number, bool]) - The first input is a number, or a bool,
           or a tensor whose data type is float16, float32, int32 or bool.
         - **input_y** (Union[Tensor, Number, bool]) - The second input is a number, or a bool when the first input
-          is a tensor or a tensor whose data type isfloat16, float32, int32 or bool.
+          is a tensor or a tensor whose data type is float16, float32, int32 or bool.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,
@@ -3137,6 +3137,8 @@ class NPUGetFloatStatus(PrimitiveWithInfer):
         >>> get_status = ops.NPUGetFloatStatus()
         >>> init = alloc_status()
         >>> get_status(init)
+        Tensor(shape=[8], dtype=Float32, value= [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+          0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00])
         >>> print(init)
         [1. 1. 1. 1. 1. 1. 1. 1.]
     """
@@ -3184,6 +3186,8 @@ class NPUClearFloatStatus(PrimitiveWithInfer):
         >>> init = alloc_status()
         >>> flag = get_status(init)
         >>> clear_status(init)
+        Tensor(shape=[8], dtype=Float32, value= [ 0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00,
+          0.00000000e+00,  0.00000000e+00,  0.00000000e+00,  0.00000000e+00])
         >>> print(init)
         [1. 1. 1. 1. 1. 1. 1. 1.]
     """

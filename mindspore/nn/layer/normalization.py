@@ -252,7 +252,7 @@ class BatchNorm1d(_BatchNorm):
 
     Note:
         The implementation of BatchNorm is different in graph mode and pynative mode, therefore the mode is not
-        recommended to be changed after net was initilized.
+        recommended to be changed after net was initialized.
 
     Args:
         num_features (int): `C` from an expected input of size (N, C).
@@ -339,7 +339,7 @@ class BatchNorm2d(_BatchNorm):
 
     Note:
         The implementation of BatchNorm is different in graph mode and pynative mode, therefore that mode can not be
-        changed after net was initilized.
+        changed after net was initialized.
         Note that the formula for updating the running_mean and running_var is
         :math:`\hat{x}_\text{new} = (1 - \text{momentum}) \times x_t + \text{momentum} \times \hat{x}`,
         where :math:`\hat{x}` is the estimated statistic and :math:`x_t` is the new observed value.

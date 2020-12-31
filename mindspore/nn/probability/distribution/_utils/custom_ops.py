@@ -12,14 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Utitly functions to help distribution class."""
+"""Utility functions to help distribution class."""
 import numpy as np
 from mindspore.ops import operations as P
 from mindspore.common import dtype as mstype
 
 def exp_generic(input_x):
     """
-    Log op on Ascend doesn't supprot int types.
+    Log op on Ascend doesn't support int types.
     Fix this with casting the type.
     """
     exp = P.Exp()
@@ -36,7 +36,7 @@ def log_generic(input_x):
     """
     Log op on Ascend is calculated as log(abs(x)).
     Fix this with putting negative values as nan.
-    And log op on Ascend doesn't supprot int types.
+    And log op on Ascend doesn't support int types.
     Fix this with casting the type.
     """
     log = P.Log()

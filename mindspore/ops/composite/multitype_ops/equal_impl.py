@@ -48,7 +48,7 @@ def _equal_scalar(x, y):
 
     Args:
        x (Number): first input number.
-       y (NUmber): second input number.
+       y (Number): second input number.
 
     Returns:
        bool, if x == y return true, x != y return false.

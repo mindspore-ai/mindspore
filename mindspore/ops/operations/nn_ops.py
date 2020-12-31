@@ -1894,7 +1894,8 @@ class TopK(PrimitiveWithInfer):
         >>> k = 3
         >>> values, indices = topk(input_x, k)
         >>> print((values, indices))
-        ([5.0, 4.0, 3.0], [4, 3, 2])
+        (Tensor(shape=[3], dtype=Float16, value= [ 5.0000e+00,  4.0000e+00,  3.0000e+00]), Tensor(shape=[3],
+          dtype=Int32, value= [4, 3, 2]))
     """
 
     @prim_attr_register
@@ -2038,7 +2039,7 @@ class ApplyMomentum(PrimitiveWithInfer):
     Data type conversion of Parameter is not supported. RuntimeError exception will be thrown.
 
     Args:
-        use_locking (bool): Whether to enable a lock to protect the variable and accumlation tensors
+        use_locking (bool): Whether to enable a lock to protect the variable and accumulation tensors
                             from being updated. Default: False.
         use_nesterov (bool): Enable Nesterov momentum. Default: False.
         gradient_scale (float): The scale of the gradient. Default: 1.0.
@@ -2334,7 +2335,7 @@ class SGD(PrimitiveWithCheck):
         >>> stat = Tensor(np.array([1.5, -0.3, 0.2, -0.7]), mindspore.float32)
         >>> output = sgd(parameters, gradient, learning_rate, accum, momentum, stat)
         >>> print(output[0])
-        [ 1.9899   -0.4903   1.6952001  3.9801   ]
+        (Tensor(shape=[4], dtype=Float32, value= [ 1.98989999e+00, -4.90300000e-01,  1.69520009e+00,  3.98009992e+00]),)
     """
 
     @prim_attr_register
@@ -5774,7 +5775,7 @@ class ApplyFtrl(PrimitiveWithInfer):
 
         There is only one output for GPU environment.
 
-        - **var** (Tensor) - This value is alwalys zero and the input parameters has been updated in-place.
+        - **var** (Tensor) - This value is always zero and the input parameters has been updated in-place.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -5817,7 +5818,7 @@ class ApplyFtrl(PrimitiveWithInfer):
          [ 1.43758726e+00,  9.89177322e+00]]), Tensor(shape=[2, 2], dtype=Float32, value=
         [[-1.86994812e+03, -1.64906018e+03],
          [-3.22187836e+02, -1.20163989e+03]]))
-         >>> else:
+         ... else:
          ...    print(net.var.asnumpy())
          [[0.4614181  0.5309642 ]
           [0.2687151  0.38206503]]

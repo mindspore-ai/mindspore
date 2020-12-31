@@ -452,7 +452,7 @@ def reset_auto_parallel_context():
 
 
 def _check_target_specific_cfgs(device, arg_key):
-    """Checking whether a config is sutable for a specified device"""
+    """Checking whether a config is suitable for a specified device"""
     device_cfgs = {
         'enable_auto_mixed_precision': ['Ascend'],
         'enable_dump': ['Ascend'],
@@ -545,7 +545,7 @@ def set_context(**kwargs):
             - op_trace: collect single operator performance data.
 
             The profiling can choose the combination of `training_trace`, `task_trace`,
-            `training_trace` and `task_trace` combination, and eparated by colons;
+            `training_trace` and `task_trace` combination, and separated by colons;
             a single operator can choose `op_trace`, `op_trace` cannot be combined with
             `training_trace` and `task_trace`. Default: "training_trace".
         check_bprop (bool): Whether to check bprop. Default: False.

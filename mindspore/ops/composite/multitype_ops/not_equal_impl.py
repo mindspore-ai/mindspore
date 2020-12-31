@@ -33,7 +33,7 @@ def _not_equal_scalar(x, y):
 
     Args:
        x (Number): x
-       y (NUmber): y
+       y (Number): y
 
     Returns:
        bool, if x != y return true, x == y return false.
@@ -123,7 +123,7 @@ def _none_not_equal_scalar(x, y):
 
     Args:
        x: None.
-       y: NUmber.
+       y: Number.
 
     Returns:
        bool, return True.

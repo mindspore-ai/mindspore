@@ -33,7 +33,7 @@ def _div_scalar(x, y):
 
     Args:
        x (Number): x
-       y (NUmber): y
+       y (Number): y
 
     Returns:
        Number, equal to x / y, the type is same as x.
