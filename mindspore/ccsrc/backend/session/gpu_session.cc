@@ -504,7 +504,7 @@ void GPUSession::SyncStream() {
   MS_EXCEPTION_IF_NULL(runtime_instance);
   auto ret = runtime_instance->SyncStream();
   if (!ret) {
-    MS_LOG(ERROR) << "Sync stream error!";
+    MS_LOG(EXCEPTION) << "Sync stream error!";
   }
 }
 }  // namespace gpu
