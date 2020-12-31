@@ -913,6 +913,8 @@ class Cell(Cell_):
         """Sets the name on the first time."""
         if self._scope is None:
             self._scope = name
+        elif self._scope == 'recomputed':
+            self._scope = self._scope + "_" + name
 
     def _children_scope_recursive(self, parent_prefix='Default'):
         """Generates the scope of each layer of the network recursively."""
@@ -1092,6 +1094,15 @@ class Cell(Cell_):
         for param in self.trainable_params(recurse):
             param.comm_fusion = fusion_type
         return self
+
+    def recompute(self):
+        """
+        Set the cell recomputed. All the primitive in the cell will be set recomputed. If a primitive feeds into a grad
+        node and is set recomputed, we will compute it again for the grad node after the forward computation.
+        """
+        self._set_scope('recomputed')
+        for cell in self.cells():
+            cell.recompute()
 
 
 class GraphKernel(Cell):
