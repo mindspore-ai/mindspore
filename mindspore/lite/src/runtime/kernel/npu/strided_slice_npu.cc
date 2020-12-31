@@ -27,9 +27,9 @@ int StridedSliceNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
   // Only onnx StridedSlice has 5 inputs, of which the 4th input is axes and the 5th input is strides.
   if (inputs.size() == 5) {
     vector<int> axes;
-    size_t size = inputs[4]->shape()[0];
+    size_t size = inputs[3]->shape()[0];
     axes.resize(size);
-    memcpy(axes.data(), inputs[4]->data_c(), sizeof(int) * size);
+    memcpy(axes.data(), inputs[3]->data_c(), sizeof(int) * size);
     for (int i = 0; i < axes.size(); ++i) {
       if (i != axes[i]) {
         MS_LOG(ERROR) << "Does not support setting axis, so the axis must be continuous.";
@@ -77,4 +77,5 @@ StridedSliceNPUKernel::~StridedSliceNPUKernel() {
 }
 
 REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_StridedSlice, NPUKernelCreator<StridedSliceNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeInt32, PrimitiveType_StridedSlice, NPUKernelCreator<StridedSliceNPUKernel>)
 }  // namespace mindspore::kernel
