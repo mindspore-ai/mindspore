@@ -24,7 +24,7 @@ using mindspore::schema::PrimitiveType_Shape;
 namespace mindspore::kernel {
 int ShapeNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                               OpParameter *opParameter) {
-  return RET_OK;
+  return RET_ERROR;
 }
 
 int ShapeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,

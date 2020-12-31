@@ -50,4 +50,5 @@ CastNPUKernel::~CastNPUKernel() {
 }
 
 REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Cast, NPUKernelCreator<CastNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeInt32, PrimitiveType_Cast, NPUKernelCreator<CastNPUKernel>)
 }  // namespace mindspore::kernel

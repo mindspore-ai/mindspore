@@ -53,5 +53,6 @@ GatherNPUKernel::~GatherNPUKernel() {
     op_ = nullptr;
   }
 }
+// NPU input index 0 datatype not support: 3(int32).
 REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Gather, NPUKernelCreator<GatherNPUKernel>)
 }  // namespace mindspore::kernel

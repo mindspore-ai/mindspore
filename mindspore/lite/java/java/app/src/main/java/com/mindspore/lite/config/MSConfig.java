@@ -29,7 +29,7 @@ public class MSConfig {
     }
 
     public boolean init(int deviceType, int threadNum, int cpuBindMode) {
-        this.msConfigPtr = createMSConfig(deviceType, threadNum, cpuBindMode ,false);
+        this.msConfigPtr = createMSConfig(deviceType, threadNum, cpuBindMode, false);
         return this.msConfigPtr != 0;
     }
 
