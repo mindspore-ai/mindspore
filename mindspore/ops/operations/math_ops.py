@@ -3013,7 +3013,7 @@ class IsInf(PrimitiveWithInfer):
 
 class IsFinite(PrimitiveWithInfer):
     """
-    Deternubes which elements are finite for each position.
+    Determines which elements are finite for each position.
 
     Inputs:
         - **input_x** (Tensor) - The input tensor.

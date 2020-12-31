@@ -5583,7 +5583,7 @@ class ApplyProximalGradientDescent(PrimitiveWithInfer):
 
     Inputs:
         - **var** (Parameter) - Variable tensor to be updated. With float32 or float16 data type.
-        - **alpha** (Union[Number, Tensor]) - Saling factor, must be a scalar. With float32 or float16 data type.
+        - **alpha** (Union[Number, Tensor]) - Scaling factor, must be a scalar. With float32 or float16 data type.
         - **l1** (Union[Number, Tensor]) - l1 regularization strength, must be scalar.
           With float32 or float16 data type.
         - **l2** (Union[Number, Tensor]) - l2 regularization strength, must be scalar.
@@ -6145,6 +6145,7 @@ class CTCLoss(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
+        >>> np.random.seed(0)
         >>> inputs = Tensor(np.random.random((2, 2, 3)), mindspore.float32)
         >>> labels_indices = Tensor(np.array([[0, 0], [1, 0]]), mindspore.int64)
         >>> labels_values = Tensor(np.array([2, 2]), mindspore.int32)
@@ -6152,12 +6153,12 @@ class CTCLoss(PrimitiveWithInfer):
         >>> ctc_loss = ops.CTCLoss()
         >>> loss, gradient = ctc_loss(inputs, labels_indices, labels_values, sequence_length)
         >>> print(loss)
-        [ 0.69121575  0.5381993 ]
+        [ 0.7864997  0.720426 ]
         >>> print(gradient)
-        [[[ 0.25831494  0.3623634  -0.62067937 ]
-          [ 0.25187883  0.2921483  -0.5440271 ]]
-         [[ 0.43522435  0.24408469  0.07787037 ]
-          [ 0.29642645  0.4232373   0.06138104 ]]]
+        [[[ 0.30898064  0.36491138  -0.673892  ]
+          [ 0.33421117  0.2960548  -0.63026595 ]]
+         [[ 0.23434742  0.36907154  0.11261538 ]
+          [ 0.27316454  0.41090325  0.07584976 ]]]
     """
 
     @prim_attr_register
