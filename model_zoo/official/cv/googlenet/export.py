@@ -37,7 +37,9 @@ parser.add_argument('--dataset_name', type=str, default='cifar10', choices=['ima
                     help='dataset name.')
 args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+if args.device_target == "Ascend":
+    context.set_context(device_id=args.device_id)
 
 if __name__ == '__main__':
     if args.dataset_name == 'cifar10':

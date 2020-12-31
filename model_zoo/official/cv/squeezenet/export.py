@@ -45,7 +45,9 @@ if args.dataset == "cifar10":
 else:
     num_classes = 1000
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+if args.device_target == "Ascend":
+    context.set_context(device_id=args.device_id)
 
 if __name__ == '__main__':
     net = squeezenet(num_classes=num_classes)

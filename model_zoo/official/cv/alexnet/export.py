@@ -38,7 +38,9 @@ parser.add_argument("--file_name", type=str, default="alexnet", help="output fil
 parser.add_argument("--file_format", type=str, choices=["AIR", "ONNX", "MINDIR"], default="AIR", help="file format")
 args_opt = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
+if args_opt.device_target == "Ascend":
+    context.set_context(device_id=args_opt.device_id)
 
 if __name__ == '__main__':
     if args_opt.dataset_name == 'cifar10':

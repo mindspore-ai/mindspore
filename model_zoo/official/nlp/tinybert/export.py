@@ -34,7 +34,9 @@ parser.add_argument("--device_target", type=str, default="Ascend",
 parser.add_argument('--task_name', type=str, default='SST-2', choices=['SST-2', 'QNLI', 'MNLI'], help='task name')
 args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+if args.device_target == "Ascend":
+    context.set_context(device_id=args.device_id)
 
 DEFAULT_NUM_LABELS = 2
 DEFAULT_SEQ_LENGTH = 128

@@ -36,7 +36,9 @@ parser.add_argument("--gnew_neighs", type=int, default=20, help="num of sampling
 parser.add_argument("--activation", type=str, default="tanh", choices=["relu", "tanh"], help="activation function")
 args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+if args.device_target == "Ascend":
+    context.set_context(device_id=args.device_id)
 
 if __name__ == "__main__":
     num_user, num_item = 7068, 3570

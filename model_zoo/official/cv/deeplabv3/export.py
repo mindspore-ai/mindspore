@@ -34,7 +34,9 @@ parser.add_argument('--model', type=str.lower, default='deeplab_v3_s8', choices=
 parser.add_argument('--num_classes', type=int, default=21, help='the number of classes (Default: 21)')
 args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+if args.device_target == "Ascend":
+    context.set_context(device_id=args.device_id)
 
 if __name__ == '__main__':
     if args.model == 'deeplab_v3_s16':
