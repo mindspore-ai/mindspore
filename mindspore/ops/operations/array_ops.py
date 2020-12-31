@@ -937,7 +937,7 @@ class Split(PrimitiveWithCheck):
 
     Args:
         axis (int): Index of the split position. Default: 0.
-        output_num (int): The number of output tensors. Must be postive int. Default: 1.
+        output_num (int): The number of output tensors. Must be positive int. Default: 1.
 
     Raises:
         ValueError: If `axis` is out of the range [-len(`input_x.shape`), len(`input_x.shape`)),
@@ -1464,7 +1464,7 @@ class InvertPermutation(PrimitiveWithInfer):
         - **input_x** (Union(tuple[int], list[int]) - The input is constructed by multiple
           integers, i.e., :math:`(y_1, y_2, ..., y_S)` representing the indices.
           The values must include 0. There can be no duplicate values or negative values.
-          Only constant value is allowed. The maximum value msut be equal to length of input_x.
+          Only constant value is allowed. The maximum value must be equal to length of input_x.
 
     Outputs:
         tuple[int]. It has the same length as the input.
@@ -1925,7 +1925,7 @@ class UnsortedSegmentMin(PrimitiveWithCheck):
           The data type must be float16, float32 or int32.
         - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be >= 0.
           The data type must be int32.
-        - **num_segments** (int) - The value spcifies the number of distinct `segment_ids`.
+        - **num_segments** (int) - The value specifies the number of distinct `segment_ids`.
 
     Note:
         If the segment_id i is absent in the segment_ids, then output[i] will be filled with
@@ -1981,7 +1981,7 @@ class UnsortedSegmentMax(PrimitiveWithCheck):
           The data type must be float16, float32 or int32.
         - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be >= 0.
           The data type must be int32.
-        - **num_segments** (int) - The value spcifies the number of distinct `segment_ids`.
+        - **num_segments** (int) - The value specifies the number of distinct `segment_ids`.
 
     Note:
         If the segment_id i is absent in the segment_ids, then output[i] will be filled with
@@ -2038,7 +2038,7 @@ class UnsortedSegmentProd(PrimitiveWithInfer):
           With float16, float32 or int32 data type.
         - **segment_ids** (Tensor) - A `1-D` tensor whose shape is :math:`(x_1)`, the value must be >= 0.
           Data type must be int32.
-        - **num_segments** (int) - The value spcifies the number of distinct `segment_ids`,
+        - **num_segments** (int) - The value specifies the number of distinct `segment_ids`,
           must be greater than 0.
 
     Outputs:
@@ -2503,7 +2503,7 @@ class Select(PrimitiveWithInfer):
 
     If neither is None, :math:`x` and :math:`y` must have the same shape. If :math:`x` and :math:`y` are
     scalars, the conditional tensor must be a scalar. If :math:`x` and :math:`y` are
-    higher-demensional vectors, the `condition` must be a vector whose size matches the
+    higher-dimensional vectors, the `condition` must be a vector whose size matches the
     first dimension of :math:`x`, or must have the same shape as :math:`y`.
 
     The conditional tensor acts as an optional compensation (mask), which
@@ -2511,7 +2511,7 @@ class Select(PrimitiveWithInfer):
     selected from :math:`x` (if true) or :math:`y` (if false) based on the value of each
     element.
 
-    If condition is a vector, then :math:`x` and :math:`y` are higher-demensional matrices, then it
+    If condition is a vector, then :math:`x` and :math:`y` are higher-dimensional matrices, then it
     chooses to copy that row (external dimensions) from :math:`x` and :math:`y`. If condition has
     the same shape as :math:`x` and :math:`y`, you can choose to copy these elements from :math:`x`
     and :math:`y`.
@@ -3904,7 +3904,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
     Args:
         block_shape (Union[list(int), tuple(int)]): The block shape of dividing block with all value greater than 1.
-            The length of `block_shape` is M correspoding to the number of spatial dimensions. M must be 2.
+            The length of `block_shape` is M corresponding to the number of spatial dimensions. M must be 2.
         paddings (Union[tuple, list]): The padding values for H and W dimension, containing 2 subtraction list.
             Each contains 2 integer value. All values must be greater than 0.
             `paddings[i]` specifies the paddings for the spatial dimension i,
@@ -4003,7 +4003,7 @@ class BatchToSpaceND(PrimitiveWithInfer):
 
     Args:
         block_shape (Union[list(int), tuple(int)]): The block shape of dividing block with all value >= 1.
-            The length of block_shape is M correspoding to the number of spatial dimensions. M must be 2.
+            The length of block_shape is M corresponding to the number of spatial dimensions. M must be 2.
         crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 subtraction list,
             each containing 2 int value.
             All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
@@ -4106,7 +4106,7 @@ class BroadcastTo(PrimitiveWithInfer):
     Raises:
         ValueError: Given a shape tuple, if it has several -1; or if the -1 is in an invalid position
             such as one that does not have a opposing dimension in an input tensor; or if the target and
-            input shapes are incompatiable.
+            input shapes are incompatible.
 
     Args:
         shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position

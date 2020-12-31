@@ -111,7 +111,7 @@ def _partial_init(cls_or_self, **kwargs):
     This can be useful when there is a need to create classes with the same
     constructor arguments, but different instances.
 
-    Example::
+    Example:
         >>> Foo.partial_init = classmethod(_partial_init)
         >>> foo_builder = Foo.partial_init(a=3, b=4).partial_init(answer=42)
         >>> foo_instance1 = foo_builder()

@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""Utitly functions to help distribution class."""
+"""Utility functions to help distribution class."""
 import numpy as np
 from mindspore import context
 from mindspore._checkparam import Validator as validator

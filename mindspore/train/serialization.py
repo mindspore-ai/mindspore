@@ -513,11 +513,11 @@ def export(net, *inputs, file_name, file_format='AIR', **kwargs):
         file_name (str): File name of the model to be exported.
         file_format (str): MindSpore currently supports 'AIR', 'ONNX' and 'MINDIR' format for exported model.
 
-            - AIR: Ascend Intermidiate Representation. An intermidiate representation format of Ascend model.
+            - AIR: Ascend Intermediate Representation. An intermediate representation format of Ascend model.
               Recommended suffix for output file is '.air'.
             - ONNX: Open Neural Network eXchange. An open format built to represent machine learning models.
               Recommended suffix for output file is '.onnx'.
-            - MINDIR: MindSpore Native Intermidiate Representation for Anf. An intermidiate representation format
+            - MINDIR: MindSpore Native Intermediate Representation for Anf. An intermediate representation format
               for MindSpore models.
               Recommended suffix for output file is '.mindir'.
 

@@ -79,7 +79,7 @@ def laplace(shape, mean, lambda_param, seed=None):
         shape (tuple): The shape of random tensor to be generated.
         mean (Tensor): The mean μ distribution parameter, which specifies the location of the peak.
           With float32 data type.
-        lambda_param (Tensor): The parameter used for controling the variance of this random distribution. The
+        lambda_param (Tensor): The parameter used for controlling the variance of this random distribution. The
           variance of Laplace distribution is equal to twice the square of lambda_param. With float32 data type.
         seed (int): Seed is used as entropy source for Random number engines generating pseudo-random numbers.
           Default: None, which will be treated as 0.

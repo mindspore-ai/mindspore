@@ -52,7 +52,7 @@ class Beta(Distribution):
         >>> from mindspore import Tensor
         >>> # To initialize a Beta distribution of the concentration1 3.0 and the concentration0 4.0.
         >>> b1 = msd.Beta([3.0], [4.0], dtype=mindspore.float32)
-        >>> # A Beta distribution can be initilized without arguments.
+        >>> # A Beta distribution can be initialized without arguments.
         >>> # In this case, `concentration1` and `concentration0` must be passed in through arguments.
         >>> b2 = msd.Beta(dtype=mindspore.float32)
         >>> # Here are some tensors used below for testing

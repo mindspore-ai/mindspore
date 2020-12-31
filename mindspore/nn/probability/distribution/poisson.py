@@ -48,7 +48,7 @@ class Poisson(Distribution):
         >>> from mindspore import Tensor
         >>> # To initialize an Poisson distribution of the rate 0.5.
         >>> p1 = msd.Poisson([0.5], dtype=mindspore.float32)
-        >>> # An Poisson distribution can be initilized without arguments.
+        >>> # An Poisson distribution can be initialized without arguments.
         >>> # In this case, `rate` must be passed in through `args` during function calls.
         >>> p2 = msd.Poisson(dtype=mindspore.float32)
         >>>

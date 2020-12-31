@@ -99,7 +99,7 @@ class LSTM(Cell):
           Data type of `hx` must be the same as `input`.
 
     Outputs:
-        Tuple, a tuple constains (`output`, (`h_n`, `c_n`)).
+        Tuple, a tuple contains (`output`, (`h_n`, `c_n`)).
 
         - **output** (Tensor) - Tensor of shape (seq_len, batch_size, num_directions * `hidden_size`).
         - **hx_n** (tuple) - A tuple of two Tensor (h_n, c_n) both of shape

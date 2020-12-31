@@ -52,7 +52,7 @@ class Gamma(Distribution):
         >>> from mindspore import Tensor
         >>> # To initialize a Gamma distribution of the concentration 3.0 and the rate 4.0.
         >>> g1 = msd.Gamma([3.0], [4.0], dtype=mindspore.float32)
-        >>> # A Gamma distribution can be initilized without arguments.
+        >>> # A Gamma distribution can be initialized without arguments.
         >>> # In this case, `concentration` and `rate` must be passed in through arguments.
         >>> g2 = msd.Gamma(dtype=mindspore.float32)
         >>> # Here are some tensors used below for testing

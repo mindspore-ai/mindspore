@@ -43,10 +43,10 @@ def create_quant_config(quant_observer=(nn.FakeQuantWithMinMaxObserver, nn.FakeQ
                         symmetric=(False, False),
                         narrow_range=(False, False)):
     r"""
-    Configs the oberser type of weights and data flow with quant params.
+    Configs the observer type of weights and data flow with quant params.
 
     Args:
-        quant_observer (Observer, list or tuple): The oberser type to do quantization. The first element represent
+        quant_observer (Observer, list or tuple): The observer type to do quantization. The first element represent
             weights and second element represent data flow.
             Default: (nn.FakeQuantWithMinMaxObserver, nn.FakeQuantWithMinMaxObserver)
         quant_delay (int, list or tuple): Number of steps after which weights and activations are quantized during
@@ -64,7 +64,7 @@ def create_quant_config(quant_observer=(nn.FakeQuantWithMinMaxObserver, nn.FakeQ
             The first element represents weights and the second element represents data flow. Default: (False, False)
 
     Returns:
-        QuantConfig, Contains the oberser type of weight and activation.
+        QuantConfig, Contains the observer type of weight and activation.
     """
     weight_observer = quant_observer[0].partial_init(quant_delay=quant_delay[0], quant_dtype=quant_dtype[0],
                                                      per_channel=per_channel[0], symmetric=symmetric[0],
