@@ -42,7 +42,7 @@ int PadNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const 
   int size = static_cast<int>(pad_->GetPaddings().size() / 2);
   ge::TensorDesc padding_tensor_desc(ge::Shape({size, 2}), ge::FORMAT_NCHW, ge::DT_INT32);
   ge::TensorPtr padding_tensor = std::make_shared<hiai::Tensor>(padding_tensor_desc);
-  padding_tensor->SetData(reinterpret_cast<uint8_t *>(pad_->GetPaddings().data()), size * sizeof(int));
+  padding_tensor->SetData(reinterpret_cast<uint8_t *>(pad_->GetPaddings().data()), 2 * size * sizeof(int));
   auto paddings = new hiai::op::Const(name_ + "paddings");
   paddings->set_attr_value(padding_tensor);
 

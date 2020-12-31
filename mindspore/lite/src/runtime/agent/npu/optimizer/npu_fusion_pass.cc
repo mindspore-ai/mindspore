@@ -29,9 +29,8 @@ bool CheckFusion(kernel::LiteKernel *kernel) {
     return false;
   }
   auto post_flag =
-    std::all_of(kernel->out_kernels().begin(), kernel->out_kernels().end(), [](const kernel::LiteKernel *out_kernel) {
-      return NPUPassUtils::IsNhwc2Nchw(out_kernel) && (!out_kernel->out_kernels().empty());
-    });
+    std::all_of(kernel->out_kernels().begin(), kernel->out_kernels().end(),
+                [](const kernel::LiteKernel *out_kernel) { return NPUPassUtils::IsNhwc2Nchw(out_kernel); });
   return post_flag;
 }
 
@@ -41,15 +40,11 @@ bool CheckFormatFusion(kernel::LiteKernel *kernel) {
   }
   if (NPUPassUtils::IsNhwc2Nchw(kernel)) {
     return std::all_of(kernel->out_kernels().begin(), kernel->out_kernels().end(),
-                       [](const kernel::LiteKernel *kernel) {
-                         return NPUPassUtils::IsNchw2Nhwc(kernel) && (!kernel->out_kernels().empty());
-                       });
+                       [](const kernel::LiteKernel *kernel) { return NPUPassUtils::IsNchw2Nhwc(kernel); });
   }
   if (NPUPassUtils::IsNchw2Nhwc(kernel)) {
     return std::all_of(kernel->out_kernels().begin(), kernel->out_kernels().end(),
-                       [](const kernel::LiteKernel *kernel) {
-                         return NPUPassUtils::IsNhwc2Nchw(kernel) && (!kernel->out_kernels().empty());
-                       });
+                       [](const kernel::LiteKernel *kernel) { return NPUPassUtils::IsNhwc2Nchw(kernel); });
   }
   return false;
 }
@@ -92,32 +87,32 @@ void NPUFusionPass::UpdatePreKernels(kernel::LiteKernel *cur_kernel) {
 }
 
 void NPUFusionPass::UpdatePostKernels(kernel::LiteKernel *cur_kernel) {
+  auto cur_out_kernels = cur_kernel->out_kernels();
   for (auto out_kernel : cur_kernel->out_kernels()) {
     // graph out kernel
     if (out_kernel->out_kernels().empty()) {
-      continue;
-    }
-    auto post_kernel = out_kernel->out_kernels()[0];
+      cur_out_kernels.erase(find(cur_out_kernels.begin(), cur_out_kernels.end(), out_kernel));
+    } else {
+      auto post_kernel = out_kernel->out_kernels()[0];
+      auto post_in_kernels = post_kernel->in_kernels();
+      for (size_t i = 0; i < post_in_kernels.size(); i++) {
+        if (post_in_kernels[i] == out_kernel) {
+          post_in_kernels[i] = cur_kernel;
+          break;
+        }
+      }
+      post_kernel->set_in_kernels(post_in_kernels);
 
-    auto post_in_kernels = post_kernel->in_kernels();
-    for (size_t i = 0; i < post_in_kernels.size(); i++) {
-      if (post_in_kernels[i] == out_kernel) {
-        post_in_kernels[i] = cur_kernel;
-        break;
+      for (size_t i = 0; i < cur_out_kernels.size(); i++) {
+        if (cur_out_kernels[i] == out_kernel) {
+          cur_out_kernels[i] = post_kernel;
+          break;
+        }
       }
     }
-    post_kernel->set_in_kernels(post_in_kernels);
-
-    auto cur_out_kernels = cur_kernel->out_kernels();
-    for (size_t i = 0; i < cur_out_kernels.size(); i++) {
-      if (cur_out_kernels[i] == out_kernel) {
-        cur_out_kernels[i] = post_kernel;
-        break;
-      }
-    }
-    cur_kernel->set_out_kernels(cur_out_kernels);
     RemoveAndFreeKernel(out_kernel);
   }
+  cur_kernel->set_out_kernels(cur_out_kernels);
 }
 
 void UpdatePreTensors(kernel::LiteKernel *cur_kernel) {
@@ -145,6 +140,9 @@ void UpdatePostTensors(kernel::LiteKernel *cur_kernel) {
   auto tensor = cur_kernel->out_tensors()[0];
   for (auto out_kernel : cur_kernel->out_kernels()) {
     auto out_tensor = out_kernel->out_tensors()[0];
+    if (out_kernel->out_kernels().empty()) {
+      cur_kernel->set_out_tensors({out_kernel->out_tensors()[0]});
+    }
     for (auto post_kernel : out_kernel->out_kernels()) {
       auto tensors_vec = post_kernel->in_tensors();
       for (int i = 0; i < tensors_vec.size(); i++) {
@@ -197,6 +195,10 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
   auto in_tensor = kernel->in_tensors()[0];
   std::vector<kernel::LiteKernel *> pre_insert_kernels;
   for (const auto &trans_kernel : kernel->out_kernels()) {
+    if (trans_kernel->out_kernels().empty()) {
+      // kernel is a trans kernel, it's input kernel num and input tensor num must be 1
+      kernel->in_kernels()[0]->set_out_tensors({trans_kernel->out_tensors()[0]});
+    }
     for (const auto &post_kernel : trans_kernel->out_kernels()) {
       // update tensor
       auto tensors_vec = post_kernel->in_tensors();
@@ -218,8 +220,8 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
       }
       post_kernel->set_in_kernels(post_in_kernels);
       pre_insert_kernels.push_back(post_kernel);
-      RemoveAndFreeKernel(trans_kernel);
     }
+    RemoveAndFreeKernel(trans_kernel);
   }
   pre_kernel->set_out_kernels(pre_insert_kernels);
   RemoveAndFreeKernel(kernel);
