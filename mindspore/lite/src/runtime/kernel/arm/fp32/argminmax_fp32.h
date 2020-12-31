@@ -19,7 +19,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "nnacl/fp32/arg_min_max_fp32.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/common_func.h"
 #include "src/lite_kernel.h"
 
 namespace mindspore::kernel {

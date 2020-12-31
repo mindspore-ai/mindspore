@@ -19,7 +19,7 @@
 #include <vector>
 #include "nnacl/quantization/quantize.h"
 #include "nnacl/int8/arg_min_max_int8.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/common_func.h"
 #include "include/errorcode.h"
 #include "src/lite_kernel.h"
 

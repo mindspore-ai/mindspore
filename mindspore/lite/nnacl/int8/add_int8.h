@@ -18,6 +18,9 @@
 #define MINDSPORE_LITE_NNACL_ADD_INT8_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/arithmetic.h"
+#include "nnacl/int8/arithmetic_int8.h"
 
 typedef struct AddQuantQrgs {
   int32_t zp_;
@@ -47,6 +50,10 @@ extern "C" {
 void AddInt8(const int8_t *input0, const int8_t *input1, int8_t *output, int size, AddQuantParameter *params);
 void AddOptInt8(const int8_t *ptr_in, const int8_t element_in, int8_t *output, int size, AddQuantParameter *params,
                 AddQuantQrgs *ptr_args, AddQuantQrgs *ele_args);
+
+int ElementAddInt8(const int8_t *in0, const int8_t *in1, int8_t *out, int size);
+int BroadcastAddInt8(const int8_t *in0, const int8_t *in1, int8_t *tile_in0, int8_t *tile_in1, int8_t *out, int size,
+                     ArithmeticParameter *param);
 
 #ifdef __cplusplus
 }

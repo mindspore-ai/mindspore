@@ -17,9 +17,12 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_MUL_INT8_H_
 
 #include <vector>
+#include <limits>
+#include <algorithm>
 #include "src/lite_kernel.h"
 #include "nnacl/mul_parameter.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/int8/mul_int8.h"
+#include "nnacl/int8/arithmetic_int8.h"
 #include "src/runtime/runtime_api.h"
 
 namespace mindspore::kernel {

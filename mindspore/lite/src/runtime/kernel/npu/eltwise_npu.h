@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ELTWISE_NPU_H_
 #include <vector>
 #include "src/ops/eltwise.h"
-#include "nnacl/arithmetic_common.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {

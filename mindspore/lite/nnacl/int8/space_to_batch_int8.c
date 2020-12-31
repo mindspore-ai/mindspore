@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 #include "nnacl/int8/space_to_batch_int8.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/common_func.h"
 
 void DoSpaceToBatchNHWCInt8(const int8_t *input, int8_t *output, const int *block_sizes, const int *in_shape,
                             const int *out_shape) {

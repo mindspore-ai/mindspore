@@ -13,23 +13,41 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_FLATTEN_H_
-#define MINDSPORE_LITE_NNACL_FLATTEN_H_
-#include "nnacl/op_base.h"
 
-typedef struct FlattenParameter {
-  // Primitive parameter
+#ifndef MINDSPORE_LITE_NNACL_ARTITHMETIC_H_
+#define MINDSPORE_LITE_NNACL_ARTITHMETIC_H_
+
+#include "nnacl/op_base.h"
+#include "nnacl/common_func.h"
+#include "nnacl/nnacl_utils.h"
+
+typedef struct ArithmeticParameter {
   OpParameter op_parameter_;
-  // other parameter
-  int size;
-} FlattenParameter;
+  bool broadcasting_;
+  size_t ndim_;
+  int activation_type_;
+  int in_shape0_[10];
+  int in_elements_num0_;
+  int in_shape1_[10];
+  int in_elements_num1_;
+
+  int out_shape_[10];
+  int out_elements_num_;
+
+  int in_strides0_[10];
+  int in_strides1_[10];
+  int out_strides_[10];
+
+  int multiples0_[10];
+  int multiples1_[10];
+} ArithmeticParameter;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Flatten(const void *input, void *output, const FlattenParameter *flatten_param);
+void CalcMultiplesAndStrides(ArithmeticParameter *param);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FLATTEN_H_
+#endif  // MINDSPORE_LITE_NNACL_ARTITHMETIC_H_

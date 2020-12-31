@@ -16,7 +16,7 @@
 #include "src/runtime/kernel/arm/base/depth_to_space_base.h"
 #include "nnacl/depth_to_space.h"
 #include "src/runtime/kernel/arm/fp32/depth_to_space_fp32.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/common_func.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"

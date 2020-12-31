@@ -18,7 +18,6 @@
 
 #include <vector>
 #include "include/errorcode.h"
-#include "nnacl/arithmetic_common.h"
 #include "nnacl/depth_to_space.h"
 #include "src/runtime/kernel/arm/base/depth_to_space_base.h"
 

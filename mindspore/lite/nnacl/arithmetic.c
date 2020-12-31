@@ -13,9 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "nnacl/flatten.h"
-#include <string.h>
 
-void Flatten(const void *input, void *output, const FlattenParameter *flatten_param) {
-  memcpy(output, input, flatten_param->size);
+#include "nnacl/arithmetic.h"
+
+void CalcMultiplesAndStrides(ArithmeticParameter *param) {
+  NNACL_ASSERT(param->in_shape0_[i] != 0);
+  NNACL_ASSERT(param->in_shape1_[i] != 0);
+  for (size_t i = 0; i < param->ndim_; i++) {
+    param->multiples0_[i] = param->out_shape_[i] / param->in_shape0_[i];
+    param->multiples1_[i] = param->out_shape_[i] / param->in_shape1_[i];
+  }
+  // cal strides
+  ComputeStrides(param->in_shape0_, param->in_strides0_, param->ndim_);
+  ComputeStrides(param->in_shape1_, param->in_strides1_, param->ndim_);
+  ComputeStrides(param->out_shape_, param->out_strides_, param->ndim_);
 }

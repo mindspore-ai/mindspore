@@ -15,6 +15,8 @@
  */
 #ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_BATCH_H_
 #define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_BATCH_H_
+
+#include <string.h>
 #include "nnacl/op_base.h"
 
 typedef struct SpaceToBatchParameter {

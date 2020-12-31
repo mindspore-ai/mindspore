@@ -17,6 +17,10 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_SUB_INT8_H_
 
 #include <vector>
+#include <limits>
+#include <algorithm>
+#include "nnacl/int8/arithmetic_int8.h"
+#include "nnacl/quantization/quantize.h"
 #include "src/lite_kernel.h"
 #include "nnacl/int8/sub_int8.h"
 #include "src/runtime/runtime_api.h"

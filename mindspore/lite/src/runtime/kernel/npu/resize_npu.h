@@ -19,7 +19,6 @@
 #include <vector>
 #include "nnacl/resize_parameter.h"
 #include "src/ops/resize.h"
-#include "nnacl/arithmetic_common.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {

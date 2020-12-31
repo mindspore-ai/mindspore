@@ -312,3 +312,16 @@ void AddOptInt8(const int8_t *ptr_in, const int8_t element_in, int8_t *output, i
   }
   return;
 }
+
+int ElementAddInt8(const int8_t *in0, const int8_t *in1, int8_t *out, int size) {
+  for (int i = 0; i < size; i++) {
+    out[i] = in0[i] + in1[i];
+  }
+  return NNACL_OK;
+}
+
+int BroadcastAddInt8(const int8_t *in0, const int8_t *in1, int8_t *tile_in0, int8_t *tile_in1, int8_t *out, int size,
+                     ArithmeticParameter *param) {
+  TileDimensionsInt8(in0, in1, tile_in0, tile_in1, param);
+  return ElementAddInt8(tile_in0, tile_in1, out, size);
+}

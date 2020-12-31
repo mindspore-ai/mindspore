@@ -16,18 +16,17 @@
 
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/flatten.h"
 
 namespace mindspore {
 namespace lite {
 OpParameter *PopulateFlattenParameter(const mindspore::lite::PrimitiveC *primitive) {
-  FlattenParameter *flatten_param = reinterpret_cast<FlattenParameter *>(malloc(sizeof(FlattenParameter)));
+  OpParameter *flatten_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (flatten_param == nullptr) {
     MS_LOG(ERROR) << "malloc FlattenParameter failed.";
     return nullptr;
   }
-  memset(flatten_param, 0, sizeof(FlattenParameter));
-  flatten_param->op_parameter_.type_ = primitive->Type();
+  memset(flatten_param, 0, sizeof(OpParameter));
+  flatten_param->type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(flatten_param);
 }
 
