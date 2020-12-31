@@ -18,11 +18,17 @@ echo "==========================================================================
 echo "Please run the scipt as: "
 echo "bash run_standalone_train_cpu.sh MINDRECORD_DIR LOAD_CHECKPOINT_PATH"
 echo "for example: bash run_standalone_train_cpu.sh /path/mindrecord_dataset /path/load_ckpt"
-echo "if no ckpt, just run: bash run_standalone_train_cpu.sh /path/mindrecord_dataset \"\" "
+echo "if no ckpt, just run: bash run_standalone_train_cpu.sh /path/mindrecord_dataset"
 echo "=============================================================================================================="
 
 MINDRECORD_DIR=$1
-LOAD_CHECKPOINT_PATH=$2
+if [ $# == 2 ];
+then
+    LOAD_CHECKPOINT_PATH=$2
+    echo 
+else
+    LOAD_CHECKPOINT_PATH=""
+fi
 
 mkdir -p ms_log
 PROJECT_DIR=$(cd "$(dirname "$0")" || exit; pwd)

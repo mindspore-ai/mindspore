@@ -124,16 +124,16 @@ Note: 1.the first run of training will generate the mindrecord file, which will 
 
 ```shell
 # create dataset in mindrecord format
-bash scripts/convert_dataset_to_mindrecord.sh
+bash scripts/convert_dataset_to_mindrecord.sh [COCO_DATASET_DIR] [MINDRECORD_DATASET_DIR]
 
 # standalone training on Ascend
-bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH]
+bash scripts/run_standalone_train_ascend.sh [DEVICE_ID] [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH](optional)
 
 # standalone training on CPU
-bash scripts/run_standalone_train_cpu.sh [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH]
+bash scripts/run_standalone_train_cpu.sh [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH](optional)
 
 # distributed training on Ascend
-bash scripts/run_distributed_train_ascend.sh [MINDRECORD_DATASET_PATH] [LOAD_CHECKPOINT_PATH] [RANK_TABLE_FILE]
+bash scripts/run_distributed_train_ascend.sh [MINDRECORD_DATASET_PATH] [RANK_TABLE_FILE] [LOAD_CHECKPOINT_PATH](optional)
 
 # eval on Ascend
 bash scripts/run_standalone_eval_ascend.sh [DEVICE_ID] [RUN_MODE] [DATA_DIR] [LOAD_CHECKPOINT_PATH]
@@ -354,7 +354,7 @@ Parameters for optimizer and learning rate:
 Before your first training, convert coco type dataset to mindrecord files is needed to improve performance on host.
 
 ```bash
-bash scripts/convert_dataset_to_mindrecord.sh
+bash scripts/convert_dataset_to_mindrecord.sh /path/coco_dataset_dir /path/mindrecord_dataset_dir
 ```
 
 The command above will run in the background, after converting mindrecord files will be located in path specified by yourself.
@@ -364,7 +364,7 @@ The command above will run in the background, after converting mindrecord files 
 #### Running on Ascend
 
 ```bash
-bash scripts/run_standalone_train_ascend.sh device_id /path/mindrecord_dataset /path/load_ckpt
+bash scripts/run_standalone_train_ascend.sh device_id /path/mindrecord_dataset /path/load_ckpt(optional)
 ```
 
 The command above will run in the background, you can view training logs in training_log.txt. After training finished, you will get some checkpoint files under the script folder by default. The loss values will be displayed as follows:
@@ -380,7 +380,7 @@ epoch: 349.0, current epoch percent: 1.00, step: 87500, outputs are (Tensor(shap
 #### Running on CPU
 
 ```bash
-bash scripts/run_standalone_train_cpu.sh /path/mindrecord_dataset /path/load_ckpt
+bash scripts/run_standalone_train_cpu.sh /path/mindrecord_dataset /path/load_ckpt(optional)
 ```
 
 The command above will run in the background, you can view training logs in training_log.txt. After training finished, you will get some checkpoint files under the script folder by default. The loss values will be displayed as follows (rusume from pretrained checkpoint and batch_size was set to be 8):
@@ -401,7 +401,7 @@ epoch: 0.0, current epoch percent: 0.00, step: 5, time of per steps: 45.213 s, o
 #### Running on Ascend
 
 ```bash
-bash scripts/run_distributed_pretrain_ascend.sh /path/mindrecord_dataset /path/load_ckpt /path/hccl.json
+bash scripts/run_distributed_pretrain_ascend.sh /path/mindrecord_dataset /path/hccl.json /path/load_ckpt(optional)
 ```
 
 The command above will run in the background, you can view training logs in LOG*/training_log.txt and LOG*/ms_log/. After training finished, you will get some checkpoint files under the LOG*/ckpt_0 folder by default. The loss value will be displayed as follows:
