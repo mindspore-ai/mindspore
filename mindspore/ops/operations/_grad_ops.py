@@ -1746,6 +1746,35 @@ class SliceGrad(PrimitiveWithInfer):
                 'value': None}
 
 
+class NLLLossGrad(PrimitiveWithInfer):
+    """Computes the gradients of `NLLLoss`."""
+
+    @prim_attr_register
+    def __init__(self, reduction="mean"):
+        """Initialize NLLLoss"""
+        self.init_prim_io_names(inputs=['x', 'target', "weight"], outputs=['loss'])
+        self.reduction = validator.check_string(reduction, ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.add_prim_attr('reduction', self.reduction)
+
+    def infer_shape(self, x_shape, y_grad_shape, t_shape, w_shape, tw_shape):
+        validator.check_int(len(x_shape), [1, 2], Rel.IN, "x rank", self.name)
+        validator.check_int(len(t_shape), 1, Rel.EQ, "target rank", self.name)
+        validator.check_int(len(w_shape), 1, Rel.EQ, "weight rank", self.name)
+        validator.check(f"input_shape[0]", x_shape[0], "target_shape", t_shape[0], Rel.EQ, self.name)
+        validator.check(f"input_shape[1]", x_shape[1], "weight_shape", w_shape[0], Rel.EQ, self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype, y_grad_dtype, t_dtype, w_dtype, tw_dtype):
+        valid_dtypes = (mstype.float16, mstype.float32)
+        validator.check_tensor_dtype_valid("x_dtype", x_dtype, valid_dtypes, self.name)
+        validator.check_tensor_dtype_valid("y_grad_dtype", y_grad_dtype, valid_dtypes, self.name)
+        validator.check_tensor_dtype_valid("t_dtype", t_dtype, mstype.int32, self.name)
+        validator.check_tensor_dtype_valid("w_dtype", w_dtype, valid_dtypes, self.name)
+        validator.check_tensor_dtype_valid("tw_dtype", tw_dtype, valid_dtypes, self.name)
+        validator.check('tw_shape_dtype', tw_dtype, 'w_shape_dtype', w_dtype, Rel.EQ, self.name)
+        return x_dtype
+
+
 class SmoothL1LossGrad(PrimitiveWithInfer):
     """Computes gradient for prediction on SmoothL1Loss."""
 
