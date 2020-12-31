@@ -112,3 +112,15 @@ class LambUpdateWithLR:
 class LambNextMV:
     def __call__(self, *args):
         pass
+
+
+@op_selector
+class LambApplyOptimizerAssign:
+    def __call__(self, *args):
+        pass
+
+
+@op_selector
+class LambApplyWeightAssign:
+    def __call__(self, *args):
+        pass

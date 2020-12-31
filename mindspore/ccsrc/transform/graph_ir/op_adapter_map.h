@@ -202,6 +202,8 @@ constexpr const char kNameCase[] = "Case";
 constexpr const char kNameAssert[] = "Assert";
 constexpr const char kNameCTCGreedyDecoder[] = "CTCGreedyDecoder";
 constexpr const char kNameReverseV2[] = "ReverseV2";
+constexpr const char kNameLambApplyWeightAssign[] = "LambApplyWeightAssign";
+constexpr const char kNameLambApplyOptimizerAssign[] = "LambApplyOptimizerAssign";
 
 class OpAdapterMap {
  public:

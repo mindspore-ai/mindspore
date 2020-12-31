@@ -362,4 +362,24 @@ INPUT_MAP(Atan2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(Atan2) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Atan2) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Atan2, kNameAtan2, ADPT_DESC(Atan2))
+
+// LambApplyOptimizerAssign
+INPUT_MAP(LambApplyOptimizerAssign) = {
+  {1, INPUT_DESC(grad)},   {2, INPUT_DESC(inputv)},         {3, INPUT_DESC(inputm)},
+  {4, INPUT_DESC(input3)}, {5, INPUT_DESC(mul0_x)},         {6, INPUT_DESC(mul1_x)},
+  {7, INPUT_DESC(mul2_x)}, {8, INPUT_DESC(mul3_x)},         {9, INPUT_DESC(add2_y)},
+  {10, INPUT_DESC(steps)}, {11, INPUT_DESC(do_use_weight)}, {12, INPUT_DESC(weight_decay_rate)}};
+ATTR_MAP(LambApplyOptimizerAssign) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LambApplyOptimizerAssign) = {{0, OUTPUT_DESC(output0)}, {1, OUTPUT_DESC(inputv)}, {2, OUTPUT_DESC(inputm)}};
+REG_ADPT_DESC(LambApplyOptimizerAssign, kNameLambApplyOptimizerAssign, ADPT_DESC(LambApplyOptimizerAssign))
+
+// LambApplyWeightAssign
+INPUT_MAP(LambApplyWeightAssign) = {{1, INPUT_DESC(input0)},
+                                    {2, INPUT_DESC(input1)},
+                                    {3, INPUT_DESC(input2)},
+                                    {4, INPUT_DESC(input3)},
+                                    {5, INPUT_DESC(input_param)}};
+ATTR_MAP(LambApplyWeightAssign) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(LambApplyWeightAssign) = {{0, OUTPUT_DESC(input_param)}};
+REG_ADPT_DESC(LambApplyWeightAssign, kNameLambApplyWeightAssign, ADPT_DESC(LambApplyWeightAssign))
 }  // namespace mindspore::transform
