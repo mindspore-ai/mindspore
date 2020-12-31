@@ -36,7 +36,9 @@ parser.add_argument('--gigaword_infer_config', type=str, required=True, help='gi
 parser.add_argument('--vocab_file', type=str, required=True, help='vocabulary file')
 args = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target)
+if args.device_target == "Ascend":
+    context.set_context(device_id=args.device_id)
 
 def get_config(config_file):
     tfm_config = TransformerConfig.from_json_file(config_file)

@@ -31,7 +31,9 @@ parser.add_argument("--device_target", type=str, choices=["Ascend", "GPU", "CPU"
 parser.add_argument("--ckpt_file", type=str, default="./ckpts/cnn_ctc.ckpt", help="CNN&CTC ckpt file.")
 args_opt = parser.parse_args()
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
+if args_opt.device_target == "Ascend":
+    context.set_context(device_id=args_opt.device_id)
 
 if __name__ == "__main__":
     cfg = Config_CNNCTC()

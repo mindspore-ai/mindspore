@@ -34,7 +34,9 @@ args = parser.parse_args()
 args.is_training = False
 args.run_distribute = False
 
-context.set_context(mode=context.GRAPH_MODE, device_target=args.platform, device_id=args.device_id)
+context.set_context(mode=context.GRAPH_MODE, device_target=args.platform)
+if args.platform == "Ascend":
+    context.set_context(device_id=args.device_id)
 
 if __name__ == '__main__':
     cfg = set_config(args)
