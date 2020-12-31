@@ -4105,12 +4105,12 @@ class BroadcastTo(PrimitiveWithInfer):
     When input shape is broadcast to target shape, it starts with the trailing dimensions.
 
     Raises:
-        ValueError: Given a shape tuple, if it has several -1s; or if the -1 is in an invalid position
-            such as one that does not have a opposing dimension in an input tensor; of if the target and
+        ValueError: Given a shape tuple, if it has several -1; or if the -1 is in an invalid position
+            such as one that does not have a opposing dimension in an input tensor; or if the target and
             input shapes are incompatiable.
 
     Args:
-        shape (tuple): The target shape to broadcast. Can be fully specified, or have '-1's in one position
+        shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
             where it will be substituted by the input tensor's shape in that position, see example.
 
     Inputs:
