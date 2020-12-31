@@ -27,7 +27,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
 
 class NetDot(nn.Cell):
     def construct(self, x, y):
-        return C.math_ops.dot(x, y)
+        return C.dot(x, y)
 
 
 @pytest.mark.level0
