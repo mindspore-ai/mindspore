@@ -71,66 +71,57 @@ int PadCPUKernel::ReSize() {
 
 void PadCPUKernel::InitMirrorPadBlock() {
   mirror_pad_block_.clear();
-
-  auto input = in_tensors_.at(0);
-
-  std::vector<int> left_pads(input->shape().size());
-  for (size_t i = 0; i < input->shape().size(); ++i) {
+  std::vector<int> left_pads(DEFAULT_PAD_NDIMS);
+  for (size_t i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
     left_pads[i] = pad_param_->paddings_[2 * i];
   }
 
-  std::vector<int> input_seperate_dims;
-  std::vector<int> output_seperate_dims;
-  std::vector<int> seperate_offset;
+  std::vector<int> input_separate_dims;
+  std::vector<int> output_separate_dims;
+  std::vector<int> separate_offset;
 
-  /* init seperate dims */
+  /* init separate dims */
   int cur_input = 1;
   int cur_output = 1;
-  for (size_t i = 0; i < input->shape().size(); ++i) {
-    if (in_[i] != out_[i]) {
-      if (1 < cur_input) {
-        input_seperate_dims.emplace_back(cur_input);
-        output_seperate_dims.emplace_back(cur_output);
-        seperate_offset.emplace_back(0);
-      }
-      input_seperate_dims.emplace_back(in_[i]);
-      output_seperate_dims.emplace_back(out_[i]);
-      seperate_offset.emplace_back(left_pads[i]);
-      cur_input = 1;
-      cur_output = 1;
-    } else {
-      cur_input *= in_[i];
-      cur_output *= out_[i];
+  for (size_t i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
+    if (1 < cur_input) {
+      input_separate_dims.emplace_back(cur_input);
+      output_separate_dims.emplace_back(cur_output);
+      separate_offset.emplace_back(0);
     }
+    input_separate_dims.emplace_back(in_[i]);
+    output_separate_dims.emplace_back(out_[i]);
+    separate_offset.emplace_back(left_pads[i]);
+    cur_input = 1;
+    cur_output = 1;
   }
   if (cur_input != 1 || cur_output != 1) {
-    input_seperate_dims.emplace_back(cur_input);
-    output_seperate_dims.emplace_back(cur_output);
-    seperate_offset.emplace_back(0);
+    input_separate_dims.emplace_back(cur_input);
+    output_separate_dims.emplace_back(cur_output);
+    separate_offset.emplace_back(0);
   }
 
-  /* init seperate stride */
-  std::vector<int> output_seperate_stride;
-  output_seperate_stride.resize(output_seperate_dims.size());
-  GetStride(output_seperate_stride.data(), output_seperate_dims.data(), output_seperate_dims.size());
+  /* init separate stride */
+  std::vector<int> output_separate_stride;
+  output_separate_stride.resize(output_separate_dims.size());
+  GetStride(output_separate_stride.data(), output_separate_dims.data(), output_separate_dims.size());
 
-  /* init seperate stride */
+  /* init separate stride */
   std::vector<int> remain_stride;
-  int remain_stride_size = seperate_offset.size() > 3 ? static_cast<int>(seperate_offset.size()) - 3 : 0;
-  remain_stride.resize(remain_stride_size);
-  int remain_size = GetStride(remain_stride.data(), output_seperate_dims.data(), remain_stride.size());
+  remain_stride.resize(0);
+  int remain_size = GetStride(remain_stride.data(), output_separate_dims.data(), remain_stride.size());
 
-  std::vector<int> right_pads(seperate_offset.size());
+  std::vector<int> right_pads(separate_offset.size());
   for (size_t i = 0; i < right_pads.size(); ++i) {
-    right_pads[i] = output_seperate_dims[i] - input_seperate_dims[i] - seperate_offset[i];
+    right_pads[i] = output_separate_dims[i] - input_separate_dims[i] - separate_offset[i];
   }
 
   /* init pad region */
   std::vector<int> pad_region;
-  for (size_t i = remain_stride.size(); i < output_seperate_stride.size(); ++i) {
+  for (size_t i = remain_stride.size(); i < output_separate_stride.size(); ++i) {
     // 0: center, 1: left, 2: right
     int r = 1;
-    if (seperate_offset[i] > 0) {
+    if (separate_offset[i] > 0) {
       r++;
     }
     if (right_pads[i] > 0) {
@@ -158,29 +149,29 @@ void PadCPUKernel::InitMirrorPadBlock() {
       }
 
       MirrorPadBlock block;
-      int size_offset = 3 - static_cast<int>(pad_region.size());
+      int size_offset = DEFAULT_PAD_NDIMS - static_cast<int>(pad_region.size());
       for (size_t i = 0; i < pad_region.size(); ++i) {
         int di = size_offset + i;
         int si = remain_dim_offset + i;
         switch (pad_cord[i]) {
           case 0:
-            dst_offset += seperate_offset[si] * output_seperate_stride[si];
-            block.size_[di] = input_seperate_dims[si];
-            block.out_stride_[di] = output_seperate_stride[si];
+            dst_offset += separate_offset[si] * output_separate_stride[si];
+            block.size_[di] = input_separate_dims[si];
+            block.out_stride_[di] = output_separate_stride[si];
             break;
           case 2:
-            dst_offset += (seperate_offset[si] + input_seperate_dims[si]) * output_seperate_stride[si];
+            dst_offset += (separate_offset[si] + input_separate_dims[si]) * output_separate_stride[si];
             block.size_[di] = right_pads[si];
-            block.out_stride_[di] = output_seperate_stride[si];
+            block.out_stride_[di] = output_separate_stride[si];
             break;
           case 1:
-            if (seperate_offset[si] > 0) {
-              block.size_[di] = seperate_offset[si];
-              block.out_stride_[di] = output_seperate_stride[si];
+            if (separate_offset[si] > 0) {
+              block.size_[di] = separate_offset[si];
+              block.out_stride_[di] = output_separate_stride[si];
             } else {
-              dst_offset += (seperate_offset[si] + input_seperate_dims[si]) * output_seperate_stride[si];
+              dst_offset += (separate_offset[si] + input_separate_dims[si]) * output_separate_stride[si];
               block.size_[di] = right_pads[si];
-              block.out_stride_[di] = output_seperate_stride[si];
+              block.out_stride_[di] = output_separate_stride[si];
             }
             break;
           default:
@@ -235,8 +226,8 @@ int PadCPUKernel::RunImpl(int task_id) {
   auto output = out_tensors_.at(0);
   MS_ASSERT(input);
   MS_ASSERT(output);
-  auto input_data = reinterpret_cast<float *>(input->MutableData());
-  auto output_data = reinterpret_cast<float *>(output->MutableData());
+  auto input_data = reinterpret_cast<float *>(input->data_c());
+  auto output_data = reinterpret_cast<float *>(output->data_c());
   MS_ASSERT(input_data);
   MS_ASSERT(output_data);
   Pad(input_data, output_data, in_, out_, pad_param_->paddings_, task_id, context_->thread_num_);
@@ -257,8 +248,8 @@ int MirrorPadImpl(void *cdata, int task_id) {
 int PadCPUKernel::RunMirrorPadImpl(int task_id) {
   auto input = in_tensors_.at(0);
   auto output = out_tensors_.at(0);
-  auto input_data = reinterpret_cast<float *>(input->MutableData());
-  auto output_data = reinterpret_cast<float *>(output->MutableData());
+  auto input_data = reinterpret_cast<float *>(input->data_c());
+  auto output_data = reinterpret_cast<float *>(output->data_c());
 
   /* Fast Mirror pad */
   if (mirror_pad_block_.size() != 0) {
@@ -272,8 +263,11 @@ int PadCPUKernel::RunMirrorPadImpl(int task_id) {
       for (int a = 0; a < block.size_[0]; a++) {
         int out_a_index = block.out_offset_ + a * block.out_stride_[0];
         for (int b = 0; b < block.size_[1]; b++) {
-          int output_index = out_a_index + b * block.out_stride_[1];
-          MirrorPad(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[2]);
+          int out_b_index = out_a_index + b * block.out_stride_[1];
+          for (int c = 0; c < block.size_[2]; ++c) {
+            int output_index = out_b_index + c * block.out_stride_[2];
+            MirrorPad(input_data, output_data, in_, pad_param_, output_index, output_index + block.size_[3]);
+          }
         }
       }
     }
@@ -321,7 +315,7 @@ int PadCPUKernel::CopyPaddingFromInput() {
     return RET_ERROR;
   }
   auto padding_tensor = in_tensors_.at(1);
-  auto paddings = reinterpret_cast<int *>(padding_tensor->MutableData());
+  auto paddings = reinterpret_cast<int *>(padding_tensor->data_c());
   if (paddings == nullptr) {
     MS_LOG(ERROR) << "Pad second input data nullptr";
     return RET_ERROR;
@@ -389,7 +383,7 @@ int PadCPUKernel::Run() {
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
     auto output = out_tensors_.at(0);
     int output_size = output->ElementsNum();
-    auto output_data = reinterpret_cast<float *>(output->MutableData());
+    auto output_data = reinterpret_cast<float *>(output->data_c());
     if (abs(pad_param_->constant_value_ - 0.0f) < 1e-5) {
       memset(output_data, 0, output_size * sizeof(float));
     } else {
