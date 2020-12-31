@@ -2627,7 +2627,7 @@ class StridedSlice(PrimitiveWithInfer):
 
     Given an input tensor, this operation inserts a dimension of length 1 at the dimension.
     This operation extracts a fragment of size (end-begin)/stride from the given 'input_tensor'.
-    Starting from the begining position, the fragment continues adding stride to the index until
+    Starting from the beginning position, the fragment continues adding stride to the index until
     all dimensions are not less than the ending position.
 
     Note:
@@ -4401,7 +4401,7 @@ class ReverseSequence(PrimitiveWithInfer):
 
 class EditDistance(PrimitiveWithInfer):
     """
-    Computes the Levebshtein Edit Distance. It is used to measure the similarity of two sequences.
+    Computes the Levenshtein Edit Distance. It is used to measure the similarity of two sequences.
 
     Args:
         normalize (bool): If true, edit distances are normalized by length of truth. Default: True.
