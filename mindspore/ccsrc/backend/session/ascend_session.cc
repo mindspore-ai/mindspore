@@ -47,6 +47,7 @@
 #include "debug/data_dump/dump_json_parser.h"
 #include "debug/tensor_load.h"
 #include "debug/anf_ir_utils.h"
+#include "backend/optimizer/graph_kernel/reorder_ops.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 #include "backend/optimizer/graph_kernel/eliminate_redundant_output.h"
 #include "backend/optimizer/graph_kernel/tensor_promotion.h"
@@ -967,6 +968,7 @@ void AscendSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kern
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("graph_kernel_pm");
+  pm->AddPass(std::make_shared<opt::ReorderOps>());
   pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
   pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
