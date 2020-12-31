@@ -39,8 +39,8 @@ typedef struct PadParameter {
 
 typedef struct MirrorPadBlock {
   int out_offset_;
-  int out_stride_[3];
-  int size_[3];
+  int out_stride_[DEFAULT_PAD_NDIMS];
+  int size_[DEFAULT_PAD_NDIMS];
 } MirrorPadBlock;
 
 #endif  // MINDSPORE_LITE_NNACL_PAD_PARAMETER_H_
