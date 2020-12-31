@@ -25,8 +25,9 @@ def split_with_json(json_str: str):
     """Call costmodel to split GraphKernel"""
     try:
         graph_desc = json.loads(json_str)
+        target = graph_desc['process']
         comp = model.load_composite(graph_desc)
-        graph_split, graph_mode = model.split(comp.graph)
+        graph_split, graph_mode = model.split(comp.graph, target)
         is_multi_graph = len(graph_split) > 1
         graph_list = list(map(comp.dump, graph_split))
         result = {"multi_graph": is_multi_graph,
