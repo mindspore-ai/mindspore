@@ -2,29 +2,77 @@
 ## MindSpore
 ### Major Features and Improvements
 #### NewModels
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+  * [STABLE] GNMT v2: similar to the model described in Google's Neural Machine Translation System: Bridging the Gap between Human and Machine Translation, which is mainly used for corpus translation, on WMT Englis-German dataset.(Ascend)
+  * [STABLE] MaskRCNN: a conceptually simple, flexible, and general framework for object instance segmentation on COCO2017 dataset.(Ascend)
+  * [STABLE] YOLOv4: a state-of-the-art detector which is faster and more accurate than all available alternative detectors on MS COCO dataset.(Ascend)
+  * [STABLE] Openpose: proposes a bottom-up human attitude estimation algorithm using Part Affinity Fields on COCO2017 dataset.(Ascend)
+  * [STABLE] CNN-CTC: proposes three major contributions to addresses scene text recognition (STR) on MJSynth and SynthText dataset.(Ascend)
+  * [STABLE] CenterFace: a practical anchor-free face detection and alignment method for edge devices on WiderFace dataset.(Ascend)
+  * [STABLE] ShuffleNetV2:  a much faster and more accurate netowrk than the previous networks on ImageNet 2012 dataset.(GPU)
+  * [STABLE] EfficientNet-B0: a new scaling method that uniformly scales all dimensions of depth/width/resolution using a simple yet highly effective compound coefficient on ImageNet 2012 dataset.(GPU)
+  * [BETA] SSD-GhostNet: based on an Ghost module structure which generate more features from cheap operations on Oxford-IIIT Pet dataset.(Ascend)
+  * [BETA] DS-CNN:  Depthwise separable convolutional neural network on Speech commands dataset.(Ascend)
+  * [BETA] DeepPotentialH2O: A neural network model for molecular dynamics simulations. (Ascend)
+  * [BETA] GOMO: A classical numerical method called GOMO for ocean simulation. (GPU)
 #### FrontEnd
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+  * [STABLE] Refactor the MINDIR to support 310 inference(Ascend).
+  * [STABLE] The execution backend of sparse operations in optimizer can be set through 'target'. (Ascend/GPU/CPU)
+  * [STABLE] Support saving specified network to checkpoint and filtering parameters according to prefix when load checkpoint. (Ascend/GPU/CPU)
+  * [STABLE] Allow user choose whether to load parameter into network strictly.(Ascend/GPU/CPU)
+  * [STABLE] Before training, in graph mode, in order to have the same network initialization parameter values ​​for all devices, broadcast the parameters on device 0 to other devices. (Ascend/GPU)
+  * [STABLE] Support if by if of control flow subgraph. (Ascend/GPU)
+  * [STABLE] Support the judgment that whether a tensor is in a list. (Ascend/GPU/CPU)
+  * [STABLE] Support to get a value by using the corresponding key in a dictionary in the network; Support to get keys and values of a dictionary in the network. (Ascend/GPU/CPU)
+  * [STABLE] Support Tensor in enumerate. (Ascend/GPU/CPU)
+  * [STABLE] Support multilevel index assignment. (Ascend/GPU/CPU)
+  * [STABLE] Support the 'expand_as','view','abs','mean' method of Tensor. (Ascend/GPU/CPU)
+  * [STABLE] Support ResizeBilinear operation transfer ratio. (Ascend)
+  * [STABLE] nn.Matmul supports matrix-vector product and  batched matrix multiply. (Ascend/GPU)
+  * [STABLE] nn.Dense supports input tensor whose dimension can be greater than 2. (Ascend/GPU)
+  * [BETA] Support higher order differentiation for partial operators.(CPU/GPU/Ascend)
+  * [STABLE] Support Tensor Augassign.(Ascend/GPU)
+  * [BETA] Support 22 numpy native interfaces.
+
 #### Auto Parallel
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+  * [STABLE] Support parallel optimizer with weight shard. (Ascend/GPU)
+  * [STABLE] Support distributed operators: element-wise series, UnsortedSegmentSum, UnsortedSegmentMin, Split, BroadcastTo and Unique etc. (Ascend/GPU)
+  * [STABLE] Support distributed model prediction. (Ascend/GPU)
+  * [STABLE] Support auto mixed precision level "O2" in auto and semi auto parallel mode. (Ascend/GPU)
+  * [STABLE] Add MultiFieldEmbeddingLookup high-level interface. (Ascend/GPU)
+
 #### Executor
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+  * [STABLE] ResNet50 performance optimze. (GPU)
+  * [STABLE] Support modelzoo net in PyNative mode(Ascend 29, GPU 23, CPU 2).(Ascend/GPU/CPU)
+  * [STABLE] Support PyNative mode on CPU.(CPU)
+  * [STABLE] Optimize performance in PyNative mode.(Ascend/GPU/CPU)
+  * [STABLE] Support Safe Optimized Memory Allocation Solver (SOMAS) on Ascend to improve the memory-reuse, the batch size of Bert large model (128 sequence length) is increased from 160 to 208.(Ascend)
+  * [BETA] Support second order differentiation in PyNative mode.(Ascend/GPU)
+  * [DEMO] Add distributed trainning in PyNative mode.(Ascend/GPU)
 #### MDP
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+  * [STABLE]  Add new operators for Ascend and GPU: IGamma, LGamma, DiGamma;
+  * [STABLE]  Add new distributions for Ascend and GPU: LogNormal, and Logistic;
+  * [BETA]  Add new distributions for Ascend only: Gumbel, Cauchy, Gamma, Beta, and Poisson; Add Categorical distribution for GPU;
+  * [STABLE]  Add new bijectors for Ascend and GPU: GumbelCDF, Invert;
+  * [STABLE]  Add Bayesian layer realized by local reparameterization method for Ascend and GPU;
+  * [STABLE]  Add Anomaly Detection Toolbox based on VAE for Ascend and GPU.
 #### DataSet
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
-#### Profiling & Debugger
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
+  * [STABLE] Support single node multi-p distributed cache data sharing
+  * [STABLE] Support GPU profiling with data processing
+  * [STABLE] Support YOLOV3 dynamic shape in sink mode with dataset
+  * [STABLE] Support unique processing in the data processing pipeline
+  * [STABLE] Python layer parameter verification error information unified
 ### API Change
 #### Backwards Incompatible Change
 ##### Python API
 
-###### `API name` xxx ([!id](PR_link))
-Description.
-> - This section is an example.
-> - The interface name should be enclosed by grave accent characters, such as `API name`.
-> - Fenced code blocks should be surrounded by blank lines.
-> - The Examples must be provided for the backwards incompatible change.
+###### Parts of `Optimizer` add target interface ([!6760](https://gitee.com/mindspore/mindspore/pulls/6760/files))
+The usage of the sparse optimizer is changed.
+
+The target interface is used to set the execution backend of the sparse operator.
+
+The add_primitive_attr interface is no longer allowed.
+
+The following optimizers add the target interface:  Adam, FTRL, LazyAdam, ProximalAdagrad
 
 <table>
 <tr>
@@ -34,76 +82,366 @@ Description.
 <td>
 
 ```python
->>> from mindspore.ops import operations as P
+>>> from mindspore.nn import Adam
 >>>
->>> input = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
->>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
->>> conv2d = P.Conv2D(out_channel=32, kernel_size=3)
->>> output = conv2d(input, weight)
->>> print(output.shape)
-(10, 32, 30, 30)
+>>> net = LeNet5()
+>>> optimizer = Adam(filter(lambda x: x.requires_grad, net.get_parameters()))
+>>> optimizer.sparse_opt.add_prim_attr("primitive_target", "CPU")
 ```
 
 </td>
 <td>
 
 ```python
->>> import mindspore.ops as ops
+>>> from mindspore.nn import Adam
 >>>
->>> input = Tensor(np.ones([10, 32, 32, 32]), mindspore.float32)
->>> weight = Tensor(np.ones([32, 32, 3, 3]), mindspore.float32)
->>> conv2d = ops.Conv2D(out_channel=32, kernel_size=3)
->>> output = conv2d(input, weight)
->>> print(output.shape)
-(10, 32, 30, 30)
+>>> net = LeNet5()
+>>> optimizer = Adam(filter(lambda x: x.requires_grad, net.get_parameters()))
+>>> optimizer.target = 'CPU'
 ```
 
 </td>
 </tr>
 </table>
 
-##### C++ API
+###### `export` Modify the input parameters and export's file name ([!7385](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/7385?tab=diffs)， [!9057](https://gitee.com/mindspore/mindspore/pulls/9057/files))
 
-#### Deprecations
+Export the MindSpore prediction model to a file in the specified format.
 
-##### Python API
+The reference includes:`net`, `*inputs`, `file_name`, `file_format`, `**kwargs`.
+
+Input parameters can be input according to specific export requirements.
+
+Add the file name extension based on the format.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.0.1 </td> <td style="text-align:center"> 1.1.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> from mindspore.train.quant import quant
+>>>
+>>> network = LeNetQuant()
+>>> inputs = Tensor(np.ones([1, 1, 32, 32]), mindspore.float32)
+>>> quant.export(network, inputs, file_name="lenet_quant.mindir", file_format='MINDIR')
+lenet_quant.mindir
+```
+
+</td>
+<td>
+
+```python
+>>> from mindspore import export
+>>>
+>>> network = LeNetQuant()
+>>> inputs = Tensor(np.ones([1, 1, 32, 32]), mindspore.float32)
+>>> export(network, inputs, file_name="lenet_quant", file_format='MINDIR', quant_mode='AUTO')
+lenet_quant.mindir
+```
+
+</td>
+</tr>
+</table>
+
+###### `Dense`, `Conv2dBnAct`, `DenseBnAct`, `DenseQuant` support setting the activation attribute as an instance of a class derived from `nn.Cell` or `Primtive` ([!7581](https://gitee.com/mindspore/mindspore/pulls/7581))
+
+activation (Union[str, Cell, Primitive]): activate function applied to the output of the fully connected layer
+
+<table>
+<tr>
+<td style="text-align:center"> 1.0.1 </td> <td style="text-align:center"> 1.1.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import mindspore.nn as nn
+>>>
+>>> dense = nn.Dense(1, 1, activation='relu')
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore.nn as nn
+>>> import mindspore.ops as ops
+>>>
+>>> dense = nn.Dense(1, 1, activation=nn.ReLU())
+>>> dense = nn.Dense(1, 1, activation=ops.ReLU())
+```
+
+</td>
+</tr>
+</table>
+
+###### `tensor.dim()`, `tensor.size()` has been renamed to `tensor.ndim`, `tensor.size` ([!10175](https://gitee.com/mindspore/mindspore/pulls/10175))
+
+Previously, tensor.size() and tensor.dim() were used for checking the total number of elements/dimensions in the tensor.
+However, from a user's perspective, tensor.size and tensor.ndim (methods -> properties) are better choices, since they follow the numpy naming convention.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.0.1 </td> <td style="text-align:center"> 1.1.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> from mindspore import Tensor
+>>>
+>>> Tensor((1,2,3)).size()
+>>> Tensor((1,2,3)).dim()
+```
+
+</td>
+<td>
+
+```python
+>>> from mindspore import Tensor
+>>>
+>>> Tensor((1,2,3)).size
+>>> Tensor((1,2,3)).ndim
+```
+
+</td>
+</tr>
+</table>
+
+
+###### `EmbeddingLookup` add a config in the interface: sparse ([!8202](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/8202?tab=diffs))
+sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: True.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.0.1 </td> <td style="text-align:center"> 1.1.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> from mindspore.nn import EmbeddingLookup
+>>>
+>>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)
+>>> result = EmbeddingLookup(4,2)(input_indices)
+>>> print(result.shape)
+(2, 2, 2)
+```
+
+</td>
+<td>
+
+```python
+>>> from mindspore.nn import EmbeddingLookup
+>>>
+>>> input_indices = Tensor(np.array([[1, 0], [3, 2]]), mindspore.int32)
+>>> result = EmbeddingLookup(4,2)(input_indices, sparse=False)
+>>> print(result.shape)
+(2, 2, 2)
+```
+
+</td>
+</tr>
+</table>
+
+
+###### `nn.probability.bijector` change types of attributes from (int, float) to (float, list, numpy.ndarray, Tensor) ([!8191](https://gitee.com/mindspore/mindspore/pulls/8191))
+
+Attributes Type change: (int, float) -> (float, list, numpy.ndarray, Tensor).
+Int type is not supported anymore. Parameters of all bijectors should be type float, list, numpy.ndarray or Tensor.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.0.1 </td> <td style="text-align:center"> 1.1.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import mindspore.nn.probability.bijector as msb
+>>>
+>>> power = 2
+>>> bijector = msb.PowerTransform(power=power)
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore.nn.probability.bijector as msb
+>>>
+>>> power = 2.0
+>>> bijector = msb.PowerTransform(power=power)
+```
+
+</td>
+</tr>
+</table>
+
+###### `nn.probability.bijector.GumbelCDF` remove a attribute in the interface: dtype ([!8191](https://gitee.com/mindspore/mindspore/pulls/8191))
+dtype is removed from GumbelCDF and is no longer an argument of the class.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.0.1 </td> <td style="text-align:center"> 1.1.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import mindspore.nn.probability.bijector as msb
+>>> from mindspore import dtype as mstype
+>>>
+>>> bijector = msb.GumbelCDF(loc=0.0, scale=1.0, dtype=mstype.float32)
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore.nn.probability.bijector as msb
+>>>
+>>> bijector = msb.GumbelCDF(loc=0.0, scale=1.0)
+```
+
+</td>
+</tr>
+</table>
+
+###### `nn.layer.combined.Conv2dBnAct`, `nn.layer.combined.DenseBnAct` move from nn.layer.quant to nn.layer.combined ([!8187](https://gitee.com/mindspore/mindspore/pulls/8187))
+Previously Conv2dBnAct and DenseBnAct are in nn.layer.quant, since they are not quant cells, now move them to nn.layer.combined. If you import Conv2dBnAct, DenseBnAct from mindspore.nn, then your code don't need any change.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.0.1 </td> <td style="text-align:center"> 1.1.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> from mindspore.nn.layer.quant import Conv2dBnAct, DenseBnAct
+```
+
+</td>
+<td>
+
+```python
+>>> from mindspore.nn import Conv2dBnAct, DenseBnAct
+```
+
+</td>
+</tr>
+</table>
+
+###### `nn.layer.conv.Conv2D`, `nn.layer.quant.Conv2dBnFoldQuant`, `nn.layer.quant.Conv2dBnWithoutFoldQuant` change weight shape when group > 1 in Ascend platform ([!9723](https://gitee.com/mindspore/mindspore/pulls/9723))
+In Ascend platform, if group > 1, the weight shape of Conv2D change from [in_channels//group, out_channels, kernel_size, kernel_size] to [out_channels, in_channels//group, kernel_size, kernel_size]. Previously used checkpoints of the networks which use Conv2D with group > 1, such as MobileNet, can not be directly used now, need to transpose the first and second axis of the weight.
+
 
 ##### C++ API
 
 ### Bug fixes
-#### NewModels
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
 #### FrontEnd
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
-#### Auto Parallel
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
-#### Executor
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
-#### MDP
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
-#### DataSet
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
-#### Profiling & Debugger
-  * [STABLE/BETA/DEMO] XXXX (Ascend/GPU/CPU)
-## MindSpore Lite
+  * [STABLE] Fix the problem of the cse optimization in the situation of control flow. (Ascend/GPU)
 
-### Major Features and Improvements
+#### Auto Parallel
+  * [STABLE] Resolve the restriction: input and output layouts of Reshape are restricted in tensor redistribution. (Ascend/GPU)
+  * [STABLE] Resolve the restriction: output strategy should be data parallel in model evaluation. (Ascend/GPU)
+
+#### Executor
+  * [STABLE] Fix fusion operator compilation cache. (Ascend)
+  * [STABLE] Fix compilation error of dynamic shape operator. (Ascend)
+  * [STABLE] Fix bug of pynative cannot insert transdata of node output when node should be spilted in the backend opt.(Ascend)
+  * [STABLE] Fix bug of TensorMove and memcpy_async merge to one after backend cse pass (Ascend)
+
+#### DataSet
+  * [STABLE] Fix cache server hang on RequestFreeTag. (Ascend/GPU/CPU)
+  * [STABLE] Fix hung when use pyfunc multi-processing. (Ascend/GPU/CPU)
+  * [STABLE] Fix add multiple parent nodes to tree node cause core dump. (Ascend/GPU/CPU)
+
+## MindSpore Lite
+#### Converter and runtime
+1. Support dynamic shape in MindSpore Lite Converter.
+2. Optimize sub-graph mechanism by dynamically splitting the entire graph into multiple subgraphs based on the operator supported, backend hardware and user configuration.
+3. Support TensorList and TensorList operators such as TensorListFromTensor, TensorListGetItem and so on.
+4. Support BatchMatMul fusion and LSTM fusion in MindSpore Lite Converter.
+5. Support converting model and run inference on Windows operator system.
+6. Support Model(.ms) visualization on Netron.
+7. Support Tensorflow model in MindSpore Lite Converter
+8. Add 86 converter parsers.
+9. Convert aware training model without user’s awareness
+10. Support scalar tensor in MindSpore Lite Converter and Runtime
+11. Support NPU backend on HUAWEI Kirin SoC.[BETA]
+12. Merge timeprofiler into benchmark
+
+#### ARM backend optimization:
+1. Add 50+ new operators, including new Op type(like Adder, Gru).
+2. Enhanced performance on armv8.2 supported platform. For example, utilizing sdot instruction more efficiently.
+3. Optimize all operators(fp32, fp16, int8) by implementing multi-thread, SIMD tech as much as possible. Model inference time can reduce at least 20% after these optimizations.
+4. Extending to support operators for x86_64 platform based on SSE/AVX instruction set.
+
+#### OpenCL backend:
+1. Add new ops: add 10+ ops, total 58 ops;
+2. Performance optimization: by memory layout optimize, Winograd Convolution select strategyoptimize, SIMT local size optimize, local cache optimize,  GPU performance improvement up to 20+% vs MSLITE Version1.0
+3. Add Online Graph optimzation: by fusion Convolution/Matmul/Fullconnection and add/mul/pad/reshape, improve performance up to 50+% for some networks;
+4. Add auto tuning: by online tuning in the graph compilation phase, optimize performance up to 10%;
+5. Add weight quant: support weight quant
+6. Add opencl kernel binary cache: improve Initilization time .
+
+#### Post quantization
+MindSpore Lite supports both weight quantization and full quantization. Currently, Weights can be quantized into 1 ~ 16 bits according to user configuration. In internal testing, quantization of networks, such as classification, detection, segmentation and transformer are well supported. To ensure high accuracy of quantized models, MindSpore Lite uses a pipeline quantization method. In the first phase, the weight and activation value are quantized using linear quantization methods, such as MIN-MAX. In the second phase, the quantization error is analyzed, and uses statistical methods to compensate loss caused by fp32 quantization to a fixed point such as Int8 to quantized models. The features of Post-training quantization are:
+1. perchannel asymmetric quantization for weights, such as MAX_MIN and KMEANS
+2. Perlayer symmetric quantization for activation, such as KL and MAX_MIN.
+3. perlayer asymmetrical quantization for activation, such as, RemoveOutlier.
+4. accuracy loss compensation, such as BiasCorrection
+
+| mobilenet_v2	  | ACC (ImageNet)  |
+|---|---|
+| FP32  | 71.56%  |
+|A8W8   | 71.16%  |
+| A8W8(without BiasCorrection)  | 70.74% |
+| A8W7  | 71.06%  |
+| A7W7  | 70.78%  |
+
+The above table uses the mobilenet_v2 model from TF official website. Using MindSpore Lite quantization, the precision of A8W8 (8-bit activation value quantization and 8-bit weight quantization) decreases from 0.82% to 0.4% after accuracy loss compensation, for 7-bit quantization, the precision loss is still no more than 1%.
+
+#### Training on Device
+Within MindSpore 1.1 release, the MindSpore Lite provides the following Training-on-Device (ToD) capabilities:
+1. Learning from scratch and Transfer Learning strategies are supported
+2. MindSpore based models can be converted and used in training on the device. (Third-party models such as TensorFlow and PyTorch for now cannot be directly imported to the framework)
+3. Grad operations are supported for more than 30 operators such as Dense layers, Convolutions and Batch Normalizations. Momentum, SGD, and ADAM optimizers are supported.
+4. Supports networks such as LeNet, Alexnet, Resnet, MobileNetV1/V2/V3, and EffectiveNet, and provides complete model loading, conversion, and Python training scripts on the device side.
+The MindSpore Lite ToD framework is already in use in the newest Huawei Smart TV, providing a unique and personalized user experience as a family entertainment center.
 
 ### API Change
 
 #### API Incompatible Change
 
 ##### C++ API
+  * [Modify] Context now support multi-context configuration.(Context.h)
+  * [Modify] Callback is move from lite_session.h into ms_tensor.h.
+  * [Modify] GetInputsByName in lite_session.h is changed into GetInputsByTensorName
+  * [Add] add static LiteSession *CreateSession(const char *model_buf, size_t size, const lite::Context *context) in lite_session.h
+  * [Add] add GetErrorInfo interface returning error message in errorcode.h
+  * [Delete] Remove model_generated.h, ops_generated.h and headers of FlatBuffers library from interfaces
 
 ##### Java API
+  * [Add] Implament JNI layer and add Java api for CPU and GPU backend
 
 #### Deprecations
 
 ##### C++ API
-
-##### Java API
+Deprecate Interface GetOutputsByNodeName
 
 ### Bug fixes
+  * [BUGFIX] Fix bug in sub-graph segmentation
+  * [BUGFIX] Fix bug in Tensor getitem in which the ellipsis matches the wrong dim-size.
+  * [BUGFIX] Fix bug that activation modification after defining Dense will not take effect.
+
+### Contributors
+zhouyifengCode, huqi, JulyAi, damon0626, chenbo116, rmdyh, davidmc, gray0v0, doitH, Gogery, zymaa, xinyunfan
 
 
 # MindSpore 1.0.0 Release Notes
