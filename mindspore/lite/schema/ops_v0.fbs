@@ -1143,3 +1143,6 @@ table LpNormalization {
     axis : int;
     p : int;
 }
+
+table NonZero {
+}

@@ -1241,3 +1241,6 @@ table Merge {
 table GeLU {
     approximate : bool = false;
 }
+
+table NonZero {
+}
