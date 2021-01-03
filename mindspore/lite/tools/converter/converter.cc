@@ -32,8 +32,6 @@
 #include "tools/anf_exporter/anf_exporter.h"
 #include "tools/anf_importer/import_from_mindir.h"
 #include "proto/onnx.pb.h"
-#include "tools/converter/quantizer/post_training_quantizer.h"
-#include "tools/converter/quantizer/quant_cast.h"
 #include "include/version.h"
 
 namespace mindspore {

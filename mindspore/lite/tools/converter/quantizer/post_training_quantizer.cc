@@ -39,6 +39,7 @@
 #include "tools/common/tensor_util.h"
 #include "src/common/file_utils.h"
 #include "src/common/utils.h"
+#include "tools/converter/quantizer/weight_quantizer.h"
 
 using std::string;
 using std::vector;
@@ -380,182 +381,16 @@ STATUS Calibrator::AddQuantizedOp(const CNodePtr &node) {
   return RET_OK;
 }
 
-void Calibrator::AddImage(const string &file, size_t index) {
-  if (index >= images_.size()) {
-    MS_LOG(ERROR) << "images_ size: " << images_.size() << " but index: " << index;
-    return;
-  }
-  auto exist = [](const string &file) {
-    struct stat buf {};
-    return stat(file.c_str(), &buf) == 0;
-  };
-  if (exist(file)) {
-    this->images_[index].push_back(file);
-  } else {
-    MS_LOG(WARNING) << "invalid image file path: " << file;
-  }
-}
-
 STATUS Calibrator::GenerateInputData(size_t input_index, size_t image_index,
                                      mindspore::tensor::MSTensor *tensor) const {
-  MS_ASSERT(tensor != nullptr);
-  if (input_index >= images_.size()) {
-    MS_LOG(ERROR) << "images_ size: " << images_.size() << " but input_index: " << input_index;
-    return RET_ERROR;
-  }
-  if (image_index >= images_[input_index].size()) {
-    MS_LOG(ERROR) << "images_[input_index] size: " << images_[input_index].size()
-                  << " but image_index: " << image_index;
-    return RET_ERROR;
-  }
-  string path = images_[input_index][image_index];
-  MS_LOG(INFO) << "read image: " << path;
-  size_t size;
-  char *bin_buf = ReadFile(path.c_str(), &size);
-  if (bin_buf == nullptr) {
-    MS_LOG(ERROR) << "ReadFile return nullptr";
-    return RET_NULL_PTR;
-  }
-  auto data = tensor->MutableData();
-  if (data == nullptr) {
-    MS_LOG(ERROR) << "Get tensor MutableData return nullptr";
-    return RET_NULL_PTR;
-  }
-  if (size != tensor->Size()) {
-    MS_LOG(ERROR) << "the input data is not consistent with model input, file_size: " << size
-                  << " input tensor size: " << tensor->Size();
-    return RET_ERROR;
-  }
-  auto ret = memcpy_s(data, tensor->Size(), bin_buf, size);
-  if (ret != EOK) {
-    MS_LOG(ERROR) << "memcpy_s error: " << ret;
-    delete[] bin_buf;
-    return RET_ERROR;
-  }
-  delete[] bin_buf;
-  return RET_OK;
+  return CopyInputDataToTensor(input_index, image_index, images_, tensor);
 }
 
 STATUS Calibrator::CollectImages() {
-  this->images_.resize(config_param_.image_paths.size());
-  auto input_i = 0;
-  bool multi_input = config_param_.image_paths.size() > 1;
-  for (const auto &image_path : config_param_.image_paths) {
-    DIR *root = opendir(image_path.c_str());
-    if (root == nullptr) {
-      MS_LOG(ERROR) << "invalid image path: " << image_path;
-      return RET_PARAM_INVALID;
-    }
-    struct dirent *image_dir = readdir(root);
-    size_t count = 0;
-    while (image_dir != nullptr) {
-      string file_name(image_dir->d_name);
-      if (file_name != "." && file_name != "..") {
-        const std::string file_path = image_path + "/" + file_name;
-        if (multi_input || config_param_.batch_count == 0) {
-          this->AddImage(file_path, input_i);
-          count++;
-        } else if (count < config_param_.batch_count) {
-          this->AddImage(file_path, input_i);
-          count++;
-        } else {
-          break;
-        }
-      }
-      image_dir = readdir(root);
-    }
-    std::sort(images_[input_i].begin(), images_[input_i].end());
-    if (config_param_.batch_count != 0 && config_param_.batch_count < images_[input_i].size()) {
-      images_[input_i].resize(config_param_.batch_count);
-    }
-    closedir(root);
-    input_i++;
-  }
-  return RET_OK;
+  return CollectCalibInputs(config_param_.image_paths, config_param_.batch_count, &images_);
 }
 
-STATUS Calibrator::ReadConfig() {
-  if (config_path_.empty() || config_path_.length() > PATH_MAX) {
-    MS_LOG(ERROR) << "invalid config path!";
-    return RET_PARAM_INVALID;
-  }
-  // check whether config file path is valid
-  char *resolved_path = new (std::nothrow) char[PATH_MAX]{0};
-  if (resolved_path == nullptr) {
-    MS_LOG(ERROR) << "New an object failed.";
-    return RET_ERROR;
-  }
-#ifdef _WIN32
-  if (_fullpath(resolved_path, config_path_.c_str(), 1024) != nullptr) {
-    config_path_ = string(resolved_path);
-  }
-#else
-  if (realpath(config_path_.c_str(), resolved_path) != nullptr) {
-    config_path_ = string(resolved_path);
-  }
-#endif
-  std::ifstream fs(config_path_.c_str(), std::ifstream::in);
-  if (!fs.is_open()) {
-    MS_LOG(ERROR) << "config proto file %s open failed: " << config_path_;
-    delete[] resolved_path;
-    return RET_PARAM_INVALID;
-  }
-  std::string line;
-  while (std::getline(fs, line)) {
-    auto index = line.find('=');
-    if (index == std::string::npos) {
-      MS_LOG(ERROR) << "the config file is invalid, can not find '=', please check";
-      delete[] resolved_path;
-      return RET_PARAM_INVALID;
-    }
-    auto key = line.substr(0, index);
-    auto value = line.substr(index + 1);
-    Trim(&key);
-    Trim(&value);
-    if (key == "image_path") {
-      auto &raw_image_paths = value;
-      auto ind = raw_image_paths.find(',');
-      while (ind != std::string::npos) {
-        auto image_path = raw_image_paths.substr(0, ind);
-        Trim(&image_path);
-        config_param_.image_paths.push_back(image_path);
-        raw_image_paths = raw_image_paths.substr(ind + 1);
-        Trim(&raw_image_paths);
-        ind = raw_image_paths.find(',');
-      }
-      config_param_.image_paths.push_back(raw_image_paths);
-    } else if (key == "batch_count") {
-      config_param_.batch_count = std::stoul(value);
-    } else if (key == "thread_num") {
-      config_param_.thread_num = std::stoul(value);
-    } else if (key == "method_x") {
-      if (value != kMethodKL && value != kMethodMaxMin && value != kMethodOutlier) {
-        MS_LOG(WARNING) << "unsupported method_x: " << value << ". Use default value.";
-      } else {
-        config_param_.method_x = value;
-      }
-    } else if (key == "bias_correction") {
-      std::for_each(value.begin(), value.end(), ::tolower);
-      if (value == "true") {
-        config_param_.bias_correction = true;
-      }
-    } else {
-      MS_LOG(WARNING) << "unsupported parameter";
-    }
-  }
-
-  for (const auto &path : config_param_.image_paths) {
-    MS_LOG(DEBUG) << "calibration data_path: " << path;
-  }
-  MS_LOG(DEBUG) << "batch_count: " << config_param_.batch_count << "  "
-                << "method_x: " << config_param_.method_x << "  "
-                << "thread_num: " << config_param_.thread_num << " "
-                << "bias_correction: " << config_param_.bias_correction;
-
-  delete[] resolved_path;
-  fs.close();
-  return RET_OK;
-}
+STATUS Calibrator::ReadConfig() { return ParseConfigFile(config_path_, &config_param_); }
 
 Calibrator::Calibrator(string path, size_t bit_num, int quant_max, int quant_min)
     : config_path_(std::move(path)), bit_num_(bit_num), quant_max_(quant_max), quant_min_(quant_min) {}
@@ -621,8 +456,8 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
   return RET_OK;
 }
 
-STATUS PostTrainingQuantizer::DoWeightQuant(const AnfNodePtr &weight, std::shared_ptr<PrimitiveC> primitive_c,
-                                            bool perchanel) const {
+STATUS PostTrainingQuantizer::DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight,
+                                            std::shared_ptr<PrimitiveC> primitive_c, bool perchanel) const {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(lite_primitive != nullptr);
   // perlayer
@@ -640,8 +475,21 @@ STATUS PostTrainingQuantizer::DoWeightQuant(const AnfNodePtr &weight, std::share
     MS_LOG(ERROR) << weight->fullname_with_scope() << " can not get value";
     return RET_NULL_PTR;
   }
-  auto status = QuantFilter<int8_t>(paramValue, std::move(primitive_c), QuantType_PostTraining, quant_max, quant_min,
-                                    bit_num, perchanel);
+  auto bit_num_t = bit_num;
+  auto quant_max_t = quant_max;
+  auto quant_min_t = quant_min;
+  if (calibrator_->config_param_.mixed) {
+    auto opname_iter = opname_bit_.find(op_name);
+    if (opname_iter == opname_bit_.end()) {
+      MS_LOG(WARNING) << op_name << " not in the opname_bit_ map";
+    } else {
+      bit_num_t = opname_iter->second;
+      quant_max_t = (1 << (unsigned int)(bit_num_t - 1)) - 1;
+      quant_min_t = -(1 << (unsigned int)(bit_num_t - 1));
+    }
+  }
+  auto status = QuantFilter<int8_t>(paramValue, std::move(primitive_c), QuantType_PostTraining, quant_max_t,
+                                    quant_min_t, bit_num_t, perchanel);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "QuantFilter failed: " << status;
     return status;
@@ -921,7 +769,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
           }
           if (abstractTensor->element()->GetTypeTrack()->type_id() == kNumberTypeFloat32) {
             MS_LOG(DEBUG) << "this parameter do quant";
-            DoWeightQuant(input_node, primitive_c, false);
+            DoWeightQuant(op_name, input_node, primitive_c, false);
           } else {
             MS_LOG(DEBUG) << "this parameter no need to do quant";
           }
@@ -943,7 +791,7 @@ STATUS PostTrainingQuantizer::QuantNode() {
           op_type == PrimitiveType_FullConnection) {
         perchannel = true;
       }
-      DoWeightQuant(weight, primitive_c, perchannel);
+      DoWeightQuant(op_name, weight, primitive_c, perchannel);
       // do bias quant
       if (cnode->inputs().size() == 4) {
         auto bias = cnode->input(3);
@@ -982,18 +830,8 @@ STATUS PostTrainingQuantizer::UpdateDivergInverval() {
  * 3. save quantied node
  **/
 STATUS PostTrainingQuantizer::PreProcess() {
-  if (this->calibrator_ == nullptr) {
-    MS_LOG(ERROR) << "calibrator is null!";
-    return RET_ERROR;
-  }
-  // 1. generate config param
-  STATUS status = calibrator_->ReadConfig();
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "read proto text failed!";
-    return status;
-  }
   // 2. collect image files
-  status = calibrator_->CollectImages();
+  auto status = calibrator_->CollectImages();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "collect images failed!";
     return status;
@@ -1560,52 +1398,46 @@ STATUS PostTrainingQuantizer::ComputeThreshold() { return this->calibrator_->Com
 
 STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   MS_LOG(INFO) << "start to parse config file";
-  STATUS status = PreProcess();
+  if (this->calibrator_ == nullptr) {
+    MS_LOG(ERROR) << "calibrator is null!";
+    return RET_ERROR;
+  }
+  // 1. generate config param
+  STATUS status = calibrator_->ReadConfig();
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "read proto text failed!";
+    return status;
+  }
+
+  if (calibrator_->config_param_.mixed) {
+    // get opname_bit map
+    auto weight_quant_func_graph = CopyFuncGraph(func_graph);
+    if (weight_quant_func_graph == nullptr) {
+      MS_LOG(ERROR) << "CopyFuncGraph error";
+      return RET_ERROR;
+    }
+    WeightQuantizer weight_quantizer(weight_quant_func_graph, calibrator_->config_param_);
+    weight_quantizer.flags = flags;
+    status = weight_quantizer.DoQuantize(weight_quant_func_graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Do mix weight quant error";
+      return RET_ERROR;
+    }
+    opname_bit_ = weight_quantizer.opname_bit_;
+  }
+
+  status = PreProcess();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "do pre process failed!";
     return status;
   }
+
   // anf -- fb
-  auto meta_graph = Export(func_graph, true, true);
-  if (meta_graph == nullptr) {
-    MS_LOG(ERROR) << "Export to meta_graph return nullptr";
-    return RET_ERROR;
-  }
-
-  // transform
-  GraphDefTransform transform;
-  transform.SetGraphDef(meta_graph);
   flags.quantType = schema::QuantType_QUANT_NONE;
-  status = transform.Transform(flags);
-  if (status != RET_OK) {
-    MS_LOG(ERROR) << "FBTransform model failed " << status;
-    return RET_ERROR;
-  }
   MS_LOG(INFO) << "start create session";
-  flatbuffers::FlatBufferBuilder builder(1024);
-  auto offset = schema::MetaGraph::Pack(builder, meta_graph);
-  builder.Finish(offset);
-  schema::FinishMetaGraphBuffer(builder, offset);
-  size_t size = builder.GetSize();
-  auto *content = reinterpret_cast<const char *>(builder.GetBufferPointer());
-  if (content == nullptr) {
-    MS_LOG(ERROR) << "GetBufferPointer nullptr";
-    return RET_ERROR;
-  }
-  auto model = lite::Model::Import(content, size);
-
-  Context ctx;
-  ctx.thread_num_ = calibrator_->GetThreadNum();
-
-  fp32_session_ = dynamic_cast<mindspore::lite::LiteSession *>(session::LiteSession::CreateSession(&ctx));
+  fp32_session_ = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum());
   if (fp32_session_ == nullptr) {
     MS_LOG(ERROR) << "create session failed!";
-    return RET_ERROR;
-  }
-
-  auto ret = fp32_session_->CompileGraph(model);
-  if (ret != lite::RET_OK) {
-    MS_LOG(ERROR) << "compile graph error";
     return RET_ERROR;
   }
 
@@ -1647,47 +1479,11 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
 
   if (calibrator_->GetBiasCorrection()) {
     // init in8 session
-    // anf -- fb
-    auto int8_meta_graph = Export(func_graph, true, true);
-    if (int8_meta_graph == nullptr) {
-      MS_LOG(ERROR) << "Export to int8_meta_graph return nullptr";
-      return RET_ERROR;
-    }
-
-    // transform
-    GraphDefTransform fb_transform;
-    fb_transform.SetGraphDef(int8_meta_graph);
+    MS_LOG(INFO) << "create quant session";
     flags.quantType = schema::QuantType_PostTraining;
-    status = fb_transform.Transform(flags);
-    if (status != RET_OK) {
-      MS_LOG(ERROR) << "FBTransform model failed " << status;
-      return RET_ERROR;
-    }
-    MS_LOG(INFO) << "start create quantized session";
-    flatbuffers::FlatBufferBuilder int8_builder(1024);
-    auto int8_offset = schema::MetaGraph::Pack(int8_builder, int8_meta_graph);
-    int8_builder.Finish(int8_offset);
-    schema::FinishMetaGraphBuffer(int8_builder, int8_offset);
-    size = int8_builder.GetSize();
-    auto *int8_content = reinterpret_cast<const char *>(int8_builder.GetBufferPointer());
-    if (int8_content == nullptr) {
-      MS_LOG(ERROR) << "GetBufferPointer nullptr";
-      return RET_ERROR;
-    }
-    auto int8_model = lite::Model::Import(int8_content, size);
-
-    Context int8_ctx;
-    int8_ctx.thread_num_ = calibrator_->GetThreadNum();
-    int8_ctx.device_list_[0].device_info_.cpu_device_info_.cpu_bind_mode_ = HIGHER_CPU;
-
-    int8_session_ = dynamic_cast<mindspore::lite::LiteSession *>(session::LiteSession::CreateSession(&int8_ctx));
+    int8_session_ = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum());
     if (int8_session_ == nullptr) {
       MS_LOG(ERROR) << "create session failed!";
-      return RET_ERROR;
-    }
-    ret = int8_session_->CompileGraph(int8_model);
-    if (ret != lite::RET_OK) {
-      MS_LOG(ERROR) << "compile graph error";
       return RET_ERROR;
     }
 

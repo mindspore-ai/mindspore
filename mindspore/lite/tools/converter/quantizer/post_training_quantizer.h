@@ -28,6 +28,8 @@
 #include "tools/converter/quantizer/quantizer.h"
 #include "tools/converter/converter.h"
 #include "include/ms_tensor.h"
+#include "tools/converter/quantizer/quantize_util.h"
+#include "tools/converter/quantizer/weight_quantizer.h"
 
 namespace mindspore::lite::quant {
 class Calibrator;
@@ -38,18 +40,7 @@ struct MaxMin {
   float max;
 };
 
-const char kMethodMaxMin[] = "MAX_MIN";
-const char kMethodKL[] = "KL";
-const char kMethodOutlier[] = "RemovalOutlier";
 constexpr int kDefaultBinNumber = 2048;
-
-struct ConfigParam {
-  std::vector<std::string> image_paths;
-  uint32_t batch_count{100};
-  std::string method_x{kMethodKL};
-  uint32_t thread_num{1};
-  bool bias_correction{false};
-};
 
 class PostTrainingQuantizer : public Quantizer {
  public:
@@ -64,14 +55,16 @@ class PostTrainingQuantizer : public Quantizer {
   int quant_min{INT8_MIN};
 
  private:
+  std::map<std::string, int> opname_bit_;
+
   bool per_channel_{true};
 
   TypeId target_type_{kNumberTypeInt8};
 
   std::unique_ptr<Calibrator> calibrator_;
 
-  mindspore::lite::LiteSession *fp32_session_;
-  mindspore::lite::LiteSession *int8_session_;
+  session::LiteSession *fp32_session_{nullptr};
+  session::LiteSession *int8_session_{nullptr};
 
   std::map<std::string, std::vector<float>> fp32_op_input_map;           // concurency
   std::map<std::string, std::vector<float>> fp32_op_output_ch_mean_map;  // concurency
@@ -112,7 +105,8 @@ class PostTrainingQuantizer : public Quantizer {
   STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min,
                        const std::shared_ptr<PrimitiveC> &) const;
 
-  STATUS DoWeightQuant(const AnfNodePtr &weight, std::shared_ptr<PrimitiveC> primitive_c, bool perchannel) const;
+  STATUS DoWeightQuant(const std::string &op_name, const AnfNodePtr &weight, std::shared_ptr<PrimitiveC> primitive_c,
+                       bool perchannel) const;
 
   STATUS DoBiasQuant(const AnfNodePtr &bias, const std::shared_ptr<PrimitiveC> &primitive_c);
   STATUS Int8Inference();
@@ -213,12 +207,12 @@ class Calibrator {
 
   std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> *GetOutputDivergInfo();
 
+  PostQuantConfig config_param_;
+
  private:
   std::vector<std::vector<std::string>> images_;  // multi_input, echo input has multi input data
 
   std::string config_path_;
-
-  ConfigParam config_param_;
 
   std::unordered_map<std::string, std::vector<std::unique_ptr<DivergInfo>>> inputs_diverg_info_;
 
@@ -227,8 +221,6 @@ class Calibrator {
   size_t bit_num_;
   int quant_max_;
   int quant_min_;
-
-  void AddImage(const std::string &file, size_t index);
 };
 }  // namespace mindspore::lite::quant
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_POSTRAINING_QUANTIZER_H

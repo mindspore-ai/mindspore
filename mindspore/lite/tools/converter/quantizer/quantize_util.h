@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_UTIL_H
 #define MINDSPORE_LITE_TOOLS_CONVERTER_QUANTIZER_QUANTIZER_UTIL_H
 
+#include <dirent.h>
+#include <sys/stat.h>
 #include <memory>
 #include <string>
 #include <cmath>
@@ -35,10 +37,28 @@
 #include "ir/primitive.h"
 #include "abstract/dshape.h"
 #include "tools/converter/quantizer/bitpacking.h"
+#include "src/lite_session.h"
+#include "tools/converter/graphdef_transform.h"
+#include "src/common/file_utils.h"
 
 namespace mindspore::lite::quant {
 static constexpr size_t UINT8_QUANTIZATION = 8;
 static constexpr size_t WEIGHT_INDEX = 1;
+
+const char kMethodMaxMin[] = "MAX_MIN";
+const char kMethodKL[] = "KL";
+const char kMethodOutlier[] = "RemovalOutlier";
+
+struct PostQuantConfig {
+  std::vector<std::string> image_paths;
+  uint32_t batch_count{100};
+  std::string method_x{kMethodKL};
+  uint32_t thread_num{1};
+  bool bias_correction{false};
+  bool mixed{false};
+  float mean_error_threshold{0.04};
+  bool inited{false};
+};
 
 /**
  * 1. when op's weight size > mWeightSize just skip
@@ -320,6 +340,21 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
   return RET_OK;
 }
 
+// utils
+
 schema::PrimitiveType NodePrimitiveType(const CNodePtr &cnode);
+
+STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_config);
+
+session::LiteSession *CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags,
+                                               int thread_num);
+
+STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t count_limited,
+                          std::vector<std::vector<std::string>> *inputs);
+
+STATUS CopyInputDataToTensor(size_t input_index, size_t image_index,
+                             const std::vector<std::vector<std::string>> &images, mindspore::tensor::MSTensor *tensor);
+
+FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &);
 }  // namespace mindspore::lite::quant
 #endif

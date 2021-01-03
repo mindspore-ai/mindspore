@@ -17,6 +17,8 @@
 #include "mindspore/lite/tools/converter/quantizer/quantize_util.h"
 #include <cmath>
 #include <string>
+#include <map>
+#include <fstream>
 #include <algorithm>
 #include <memory>
 #include <vector>
@@ -26,6 +28,8 @@
 #include "src/common/utils.h"
 #include "abstract/abstract_value.h"
 #include "securec/include/securec.h"
+#include "tools/anf_exporter/anf_exporter.h"
+#include "mindspore/lite/include/version.h"
 
 using std::string;
 using std::vector;
@@ -83,10 +87,10 @@ bool QuantStrategy::CanConvOpQuantized(const CNodePtr &node) const {
 
 bool QuantStrategy::CanOpPostQuantized(AnfNodePtr &node) const {
   MS_ASSERT(node != nullptr);
-  if (!node->isa<CNode>()) {
+  if (!node->isa<mindspore::CNode>()) {
     return false;
   }
-  auto cnode = std::dynamic_pointer_cast<CNode>(node);
+  auto cnode = std::dynamic_pointer_cast<mindspore::CNode>(node);
   auto type = NodePrimitiveType(cnode);
   static const std::vector<schema::PrimitiveType> int8OpList = {
     schema::PrimitiveType_Conv2D,
@@ -475,4 +479,307 @@ schema::PrimitiveType NodePrimitiveType(const CNodePtr &cnode) {
   }
   return (schema::PrimitiveType)primitive_c->Type();
 }
+
+STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_config) {
+  if (post_quant_config == nullptr) {
+    MS_LOG(ERROR) << "post_quant_config is null.";
+    return RET_PARAM_INVALID;
+  }
+
+  if (config_file.empty() || config_file.length() > PATH_MAX) {
+    MS_LOG(ERROR) << "invalid config path!";
+    return RET_PARAM_INVALID;
+  }
+  // check whether config file path is valid
+  auto resolved_path = std::make_unique<char[]>(PATH_MAX);
+  if (resolved_path == nullptr) {
+    MS_LOG(ERROR) << "New an object failed.";
+    return RET_ERROR;
+  }
+#ifdef _WIN32
+  if (_fullpath(resolved_path.get(), config_file.c_str(), 1024) != nullptr) {
+    config_file = string(resolved_path.get());
+  }
+#else
+  if (realpath(config_file.c_str(), resolved_path.get()) != nullptr) {
+    config_file = string(resolved_path.get());
+  }
+#endif
+  std::ifstream fs(config_file.c_str(), std::ifstream::in);
+  if (!fs.is_open()) {
+    MS_LOG(ERROR) << "config file open failed: " << config_file;
+    return RET_PARAM_INVALID;
+  }
+  std::string line;
+  while (std::getline(fs, line)) {
+    Trim(&line);
+    if (line.empty()) {
+      continue;
+    }
+    auto index = line.find('=');
+    if (index == std::string::npos) {
+      MS_LOG(ERROR) << "the config file is invalid, can not find '=', please check";
+      return RET_PARAM_INVALID;
+    }
+    auto key = line.substr(0, index);
+    auto value = line.substr(index + 1);
+    Trim(&key);
+    Trim(&value);
+    if (key == "image_path") {
+      auto &raw_image_paths = value;
+      auto ind = raw_image_paths.find(',');
+      while (ind != std::string::npos) {
+        auto image_path = raw_image_paths.substr(0, ind);
+        Trim(&image_path);
+        post_quant_config->image_paths.push_back(image_path);
+        raw_image_paths = raw_image_paths.substr(ind + 1);
+        Trim(&raw_image_paths);
+        ind = raw_image_paths.find(',');
+      }
+      post_quant_config->image_paths.push_back(raw_image_paths);
+    } else if (key == "batch_count") {
+      post_quant_config->batch_count = std::stoul(value);
+    } else if (key == "thread_num") {
+      post_quant_config->thread_num = std::stoul(value);
+    } else if (key == "method_x") {
+      if (value != kMethodKL && value != kMethodMaxMin && value != kMethodOutlier) {
+        MS_LOG(WARNING) << "unsupported method_x: " << value << ". Use default value.";
+      } else {
+        post_quant_config->method_x = value;
+      }
+    } else if (key == "bias_correction") {
+      std::for_each(value.begin(), value.end(), ::tolower);
+      if (value == "true") {
+        post_quant_config->bias_correction = true;
+      }
+    } else if (key == "mixed") {
+      std::for_each(value.begin(), value.end(), ::tolower);
+      if (value == "true") {
+        post_quant_config->mixed = true;
+      }
+    } else if (key == "mean_error_threshold") {
+      post_quant_config->mean_error_threshold = std::stof(value);
+    } else {
+      MS_LOG(WARNING) << "unsupported parameter: " << key;
+    }
+  }
+
+  for (const auto &path : post_quant_config->image_paths) {
+    MS_LOG(DEBUG) << "calibration data_path: " << path;
+  }
+  MS_LOG(DEBUG) << "batch_count: " << post_quant_config->batch_count << "\n"
+                << "method_x: " << post_quant_config->method_x << "\n"
+                << "thread_num: " << post_quant_config->thread_num << "\n"
+                << "bias_correction: " << post_quant_config->bias_correction << "\n"
+                << "mixed: " << post_quant_config->mixed << "\n"
+                << "mean_error_threshold: " << post_quant_config->mean_error_threshold;
+  post_quant_config->inited = true;
+  fs.close();
+  return RET_OK;
+}
+
+session::LiteSession *CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags,
+                                               int thread_num) {
+  auto meta_graph = Export(func_graph, true, true);
+  if (meta_graph == nullptr) {
+    MS_LOG(ERROR) << "Export to meta_graph failed";
+    return nullptr;
+  }
+
+  // transform
+  GraphDefTransform fb_transform;
+  fb_transform.SetGraphDef(meta_graph);
+  auto status = fb_transform.Transform(flags);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "FBTransform model failed";
+    return nullptr;
+  }
+  meta_graph->version = Version();
+
+  flatbuffers::FlatBufferBuilder builder(1024);
+  auto offset = schema::MetaGraph::Pack(builder, meta_graph);
+  builder.Finish(offset);
+  schema::FinishMetaGraphBuffer(builder, offset);
+  auto size = builder.GetSize();
+  auto *content = reinterpret_cast<const char *>(builder.GetBufferPointer());
+  if (content == nullptr) {
+    MS_LOG(ERROR) << "GetBufferPointer return null";
+    return nullptr;
+  }
+  auto model = lite::Model::Import(content, size);
+  if (model == nullptr) {
+    MS_LOG(ERROR) << "Import model failed";
+    return nullptr;
+  }
+
+  Context ctx;
+  ctx.thread_num_ = thread_num;
+
+  auto session = session::LiteSession::CreateSession(&ctx);
+  if (session == nullptr) {
+    MS_LOG(ERROR) << "create session failed.";
+    return nullptr;
+  }
+
+  status = session->CompileGraph(model);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "CompileGraph error";
+    return nullptr;
+  }
+  model->Free();
+  return session;
+}
+
+STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t count_limited,
+                          std::vector<std::vector<std::string>> *inputs) {
+  if (inputs == nullptr) {
+    MS_LOG(ERROR) << "inputs is null";
+    return RET_ERROR;
+  }
+  auto AddImage = [&inputs](const std::string &file, size_t index) {
+    if (index >= inputs->size()) {
+      MS_LOG(ERROR) << "images_ size: " << inputs->size() << " but input index: " << index;
+      return;
+    }
+    struct stat buf {};
+    if (stat(file.c_str(), &buf) == 0) {
+      inputs->at(index).push_back(file);
+    } else {
+      MS_LOG(WARNING) << "invalid image file path: " << file;
+    }
+  };
+
+  inputs->resize(input_dirs.size());
+  auto input_i = 0;
+  bool multi_input = input_dirs.size() > 1;
+  for (const auto &image_path : input_dirs) {
+    DIR *root = opendir(image_path.c_str());
+    if (root == nullptr) {
+      MS_LOG(ERROR) << "invalid image path: " << image_path;
+      return RET_PARAM_INVALID;
+    }
+    struct dirent *image_dir = readdir(root);
+    size_t count = 0;
+    while (image_dir != nullptr) {
+      string file_name(image_dir->d_name);
+      if (file_name != "." && file_name != "..") {
+        const std::string file_path = image_path + "/" + file_name;
+        if (multi_input || count == 0) {
+          AddImage(file_path, input_i);
+          count++;
+        } else if (count < count_limited) {
+          AddImage(file_path, input_i);
+          count++;
+        } else {
+          break;
+        }
+      }
+      image_dir = readdir(root);
+    }
+    std::sort(inputs->at(input_i).begin(), inputs->at(input_i).end());
+    if (count_limited != 0 && count_limited < inputs->at(input_i).size()) {
+      inputs->at(input_i).resize(count_limited);
+    }
+    closedir(root);
+    input_i++;
+  }
+  return RET_OK;
+}
+
+STATUS CopyInputDataToTensor(size_t input_index, size_t image_index,
+                             const std::vector<std::vector<std::string>> &images, mindspore::tensor::MSTensor *tensor) {
+  MS_ASSERT(tensor != nullptr);
+  if (input_index >= images.size()) {
+    MS_LOG(ERROR) << "images_ size: " << images.size() << " but input_index: " << input_index;
+    return RET_ERROR;
+  }
+  if (image_index >= images[input_index].size()) {
+    MS_LOG(ERROR) << "images_[input_index] size: " << images[input_index].size() << " but image_index: " << image_index;
+    return RET_ERROR;
+  }
+  string path = images[input_index][image_index];
+  MS_LOG(INFO) << "read image: " << path;
+  size_t size;
+  char *bin_buf = ReadFile(path.c_str(), &size);
+  if (bin_buf == nullptr) {
+    MS_LOG(ERROR) << "ReadFile return nullptr";
+    return RET_NULL_PTR;
+  }
+  auto data = tensor->MutableData();
+  if (data == nullptr) {
+    MS_LOG(ERROR) << "Get tensor MutableData return nullptr";
+    return RET_NULL_PTR;
+  }
+  if (size != tensor->Size()) {
+    MS_LOG(ERROR) << "the input data is not consistent with model input, file_size: " << size
+                  << " input tensor size: " << tensor->Size();
+    return RET_ERROR;
+  }
+  auto ret = memcpy_s(data, tensor->Size(), bin_buf, size);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "memcpy_s error: " << ret;
+    delete[] bin_buf;
+    return RET_ERROR;
+  }
+  delete[] bin_buf;
+  return RET_OK;
+}
+
+FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &func_graph) {
+  Cloner cloner({func_graph}, true, true, true, std::make_shared<TraceCopy>(), nullptr);
+  auto new_func_graph = cloner[func_graph];
+
+  std::map<std::string, CNodePtr> old_cnode_map;
+  for (const auto &cnode : func_graph->GetOrderedCnodes()) {
+    old_cnode_map[cnode->fullname_with_scope()] = cnode;
+  }
+
+  for (auto &cnode : new_func_graph->GetOrderedCnodes()) {
+    auto cnode_name = cnode->fullname_with_scope();
+    auto old_cnode_iter = old_cnode_map.find(cnode_name);
+    if (old_cnode_iter == old_cnode_map.end()) {
+      MS_LOG(ERROR) << "can not find node: " << cnode_name;
+      return nullptr;
+    }
+    auto old_cnode = old_cnode_iter->second;
+    auto inputs = cnode->inputs();
+    for (size_t i = 0; i < inputs.size(); i++) {
+      auto input_node = inputs[i];
+      if (input_node->isa<Parameter>()) {
+        auto param_node = input_node->cast<ParameterPtr>();
+        if (param_node->has_default()) {
+          ParamValueLitePtr old_param_value = std::static_pointer_cast<ParamValueLite>(param_node->default_param());
+          auto new_param_value = std::make_shared<ParamValueLite>();
+
+          auto copyed_data = malloc(old_param_value->tensor_size());
+          if (copyed_data == nullptr) {
+            MS_LOG(ERROR) << "malloc data error, size: " << old_param_value->tensor_size();
+            return nullptr;
+          }
+          memcpy(copyed_data, old_param_value->tensor_addr(), old_param_value->tensor_size());
+
+          new_param_value->set_tensor_size(old_param_value->tensor_size());
+          new_param_value->set_tensor_addr(copyed_data);
+          new_param_value->set_tensor_shape(old_param_value->tensor_shape());
+          new_param_value->set_format(old_param_value->format());
+          new_param_value->set_tensor_type(old_param_value->tensor_type());
+
+          param_node->set_default_param(new_param_value);
+        }
+
+        auto old_abstract_base = param_node->abstract();
+        if (!utils::isa<abstract::AbstractTensorPtr>(old_abstract_base)) {
+          MS_LOG(ERROR) << "Abstract of parameter should be abstract tensor, " << param_node->name();
+          return nullptr;
+        }
+        auto old_abstract = utils::cast<abstract::AbstractTensorPtr>(old_abstract_base);
+        auto new_abstract = std::make_shared<abstract::AbstractTensor>(old_abstract->element()->GetTypeTrack(),
+                                                                       old_abstract->GetShapeTrack());
+        param_node->set_abstract(new_abstract);
+      }
+    }  // end inputs loop
+  }    // end cnodes loop
+  return new_func_graph;
+}
+
 }  // namespace mindspore::lite::quant

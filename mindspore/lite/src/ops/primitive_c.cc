@@ -387,7 +387,9 @@ void PrimitiveC::set_input_quant_params(const std::vector<std::vector<schema::Qu
 }
 
 void PrimitiveC::set_input_quant_param(const size_t &index, const std::vector<schema::QuantParamT> &input_quant_param) {
-  MS_ASSERT(index < this->input_quant_param_.size());
+  if (index >= this->input_quant_param_.size()) {
+    this->input_quant_param_.resize(index + 1);
+  }
   this->input_quant_param_.at(index) = input_quant_param;
 }
 
@@ -493,7 +495,7 @@ std::shared_ptr<PrimitiveC> GetTupleGetItemPrim() {
 }
 
 template <typename T, typename = std::enable_if<std::is_base_of<PrimitiveC, T>::value>>
-std::shared_ptr<PrimitiveC> NewPrimitiveC(const Primitive &prim, const std::vector<AnfNodePtr> &inputs,
+std::shared_ptr<PrimitiveC> NewPrimitiveC(const mindspore::Primitive &prim, const std::vector<AnfNodePtr> &inputs,
                                           const schema::QuantType &quantType) {
   auto primc = std::make_shared<T>();
   if (primc == nullptr) {
