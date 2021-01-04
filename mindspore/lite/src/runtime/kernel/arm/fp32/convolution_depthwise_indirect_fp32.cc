@@ -68,17 +68,18 @@ int ConvolutionDepthwiseIndirectCPUKernel::InitWeightBias() {
                                     weight_tensor->Batch());
 #endif
 
-  auto bias_tensor = in_tensors_[kBiasIndex];
   bias_data_ = reinterpret_cast<float *>(malloc(batch_flag * div_flag * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
 
-  memset(bias_data_, 0, batch_flag * div_flag * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
+    auto bias_tensor = in_tensors_[kBiasIndex];
     auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
+  } else {
+    memset(bias_data_, 0, batch_flag * div_flag * sizeof(float));
   }
 
   // malloc zero ptr

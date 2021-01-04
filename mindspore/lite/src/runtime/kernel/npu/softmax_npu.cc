@@ -24,10 +24,6 @@ using mindspore::schema::PrimitiveType_SoftMax;
 namespace mindspore::kernel {
 int SoftmaxNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                                 OpParameter *opParameter) {
-  if (inputs[0]->shape().size() > 4) {
-    MS_LOG(ERROR) << "Npu softmax only supports tensor'dim less than 4.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
