@@ -26,9 +26,12 @@ from .recall import Recall
 from .fbeta import Fbeta, F1
 from .topk import TopKCategoricalAccuracy, Top1CategoricalAccuracy, Top5CategoricalAccuracy
 from .loss import Loss
+from .mean_surface_distance import MeanSurfaceDistance
+from .root_mean_square_surface_distance import RootMeanSquareDistance
 
 __all__ = [
-    "names", "get_metric_fn",
+    "names",
+    "get_metric_fn",
     "Accuracy",
     "MAE", "MSE",
     "Metric",
@@ -40,6 +43,8 @@ __all__ = [
     "Top1CategoricalAccuracy",
     "Top5CategoricalAccuracy",
     "Loss",
+    "MeanSurfaceDistance",
+    "RootMeanSquareDistance",
 ]
 
 __factory__ = {
@@ -54,6 +59,8 @@ __factory__ = {
     'mae': MAE,
     'mse': MSE,
     'loss': Loss,
+    'mean_surface_distance': MeanSurfaceDistance,
+    'root_mean_square_distance': RootMeanSquareDistance,
 }
 
 
