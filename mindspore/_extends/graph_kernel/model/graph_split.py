@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -213,7 +213,9 @@ class GraphSplitByPattern:
                         break
             if out_reshape_ops:
                 for op in out_reshape_ops:
-                    new_areas.append(self.Area(op, False))
+                    a = self.Area(op, False)
+                    self.set_default_mode(a)
+                    new_areas.append(a)
                 area.ops = remain_ops
                 if len(remain_ops) == 1:
                     self.set_default_mode(area)
