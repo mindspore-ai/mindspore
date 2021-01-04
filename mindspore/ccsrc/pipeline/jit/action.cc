@@ -315,7 +315,14 @@ bool GeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kGePa
 
 bool VmOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kVmPasses); }
 
-bool PynativeOptimizeAction(const ResourcePtr &res) { return OptimizeAction(res, kPynativePasses); }
+bool PynativeOptimizeAction(const ResourcePtr &resource) {
+  WITH(MsProfile::GetProfile())[&resource]() { (void)OptimizeAction(resource, kPynativePasses); };
+#ifdef ENABLE_PROFILE
+  MsProfile::Print();
+  MsProfile::Reset();
+#endif
+  return true;
+}
 
 bool PynativeElimOpt(const ResourcePtr &res) {
   if (res->manager() == nullptr) {
