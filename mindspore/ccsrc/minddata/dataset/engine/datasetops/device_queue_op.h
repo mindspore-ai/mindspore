@@ -196,6 +196,7 @@ class DeviceQueueOp : public PipelineOp {
   Status LaunchParallelCopyThread();
   Status PushDataToGPU();
   Status WorkerEntry(int32_t worker_id);
+  Status SetThreadDevice();
 
   QueueList<std::unique_ptr<DataBuffer>> receive_queues_;
   std::vector<std::shared_ptr<MemoryPool>> pool_;

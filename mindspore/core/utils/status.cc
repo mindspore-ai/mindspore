@@ -51,7 +51,7 @@ std::string Status::CodeAsString(enum StatusCode c) {
                                                             {kCoreFailed, "Common error code."},
                                                             // MD
                                                             {kMDOutOfMemory, "Out of memory"},
-                                                            {kMDShapeMisMatch, "Shape is incorrect."},
+                                                            {kMDShapeMisMatch, "Shape is incorrect"},
                                                             {kMDInterrupted, "Interrupted system call"},
                                                             {kMDNoSpace, "No space left on device"},
                                                             {kMDPyFuncException, "Exception thrown from PyFunc"},
