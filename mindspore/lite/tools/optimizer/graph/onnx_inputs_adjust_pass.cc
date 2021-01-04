@@ -296,6 +296,45 @@ STATUS OnnxInputAdjustOpPass::AdjustStridedSlice(const FuncGraphPtr &func_graph,
   return lite::RET_OK;
 }
 
+STATUS OnnxInputAdjustOpPass::AdjustResize(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  auto node = cnode->input(0);
+  MS_ASSERT(value_node != nullptr);
+  auto value_node = node->cast<ValueNodePtr>();
+  if (value_node == nullptr) {
+    MS_LOG(ERROR) << "cnode input0 is not a valuenode.";
+    return lite::RET_ERROR;
+  }
+  MS_ASSERT(value_node->value() != nullptr);
+  auto primitive_c = value_node->value()->cast<PrimitiveCPtr>();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "cnode has no primitive_c.";
+    return lite::RET_ERROR;
+  }
+  auto primitive = primitive_c->primitiveT();
+  if (primitive == nullptr) {
+    MS_LOG(ERROR) << "cnode has no schema::primitive.";
+    return lite::RET_ERROR;
+  }
+  if (primitive->value.type != schema::PrimitiveType_Resize) {
+    MS_LOG(DEBUG) << "cnode is not cast node.";
+    return RET_OK;
+  }
+  auto value = primitive->value.value;
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr.";
+    return lite::RET_ERROR;
+  }
+  auto attr = reinterpret_cast<schema::ResizeT *>(value);
+  if (cnode->inputs().size() > 3 &&
+      attr->coordinateTransformMode == schema::CoordinateTransformMode_TF_CROP_AND_RESIZE) {
+    auto new_resize_inputs = cnode->inputs();
+    new_resize_inputs.erase(new_resize_inputs.begin() + 1);
+    cnode->set_inputs(new_resize_inputs);
+  }
+  return lite::RET_OK;
+}
+
 STATUS OnnxInputAdjustOpPass::AdjustConvOrDeConv(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   if (!CheckInputs(cnode)) {

@@ -236,7 +236,8 @@ union PrimitiveType {
     LpNormalization,
     DropoutGrad,
     MaximumGrad,
-    MinimumGrad
+    MinimumGrad,
+    NonZero,
 }
 
 enum QuantType: int {

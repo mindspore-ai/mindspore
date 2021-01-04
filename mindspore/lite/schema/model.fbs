@@ -264,6 +264,7 @@ union PrimitiveType {
     If,
     GeLU,
     Gru,
+    NonZero,
 }
 
 enum QuantType: int {

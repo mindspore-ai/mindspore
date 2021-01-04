@@ -100,7 +100,8 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
     }
   }
 
-  if (config->fmk == lite::converter::FmkType_TFLITE || config->fmk == lite::converter::FmkType_TF) {
+  if (config->fmk == lite::converter::FmkType_TFLITE || config->fmk == lite::converter::FmkType_TF ||
+      config->fmk == lite::converter::FmkType_ONNX) {
     graph_pm->AddPass(std::make_shared<opt::WhilePass>());
     graph_pm->AddPass(std::make_shared<opt::IfPass>());
   }

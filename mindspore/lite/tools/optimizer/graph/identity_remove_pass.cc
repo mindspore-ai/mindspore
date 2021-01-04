@@ -96,6 +96,19 @@ bool RemoveIdentityOpPass::Run(const FuncGraphPtr &func_graph) {
       status = ReplaceIdentity(node, manager);
     } else if (type == schema::PrimitiveType_TupleGetItem) {
       status = ReplaceTupleGetItem(node, manager);
+    } else if (type == schema::PrimitiveType_If || type == schema::PrimitiveType_While) {
+      auto sub_func_graph = GetValueNode<FuncGraphPtr>(node->cast<CNodePtr>()->input(1));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
+      (void)Run(sub_func_graph);
+      sub_func_graph = GetValueNode<FuncGraphPtr>(node->cast<CNodePtr>()->input(2));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
+      (void)Run(sub_func_graph);
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "remove identity pass is failed.";
