@@ -14,6 +14,7 @@
 # ============================================================================
 """ test_tensor_slice """
 import numpy as np
+import pytest
 
 from mindspore import Tensor
 from mindspore import context
@@ -48,7 +49,7 @@ def test_tensor_fancy_index_boolean_list():
     net(input_me)
 
 
-def test_tensor_fancy_integer_boolean_list_graph():
+def test_tensor_fancy_index_integer_boolean_list_graph():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     index = [1, 2, True, False]
     net = NetWorkFancyIndex(index)
@@ -57,7 +58,7 @@ def test_tensor_fancy_integer_boolean_list_graph():
     net(input_me)
 
 
-def test_tensor_fancy_integer_list_mixed():
+def test_tensor_fancy_index_integer_list_mixed():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     index = (1, [2, 1, 3], slice(1, 3, 1), ..., 4)
     net = NetWorkFancyIndex(index)
@@ -66,7 +67,7 @@ def test_tensor_fancy_integer_list_mixed():
     net(input_me)
 
 
-def test_tensor_fancy_integer_tuple_mixed():
+def test_tensor_fancy_index_integer_tuple_mixed():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     index = (1, (2, 1, 3), slice(1, 3, 1), ..., 4)
     net = NetWorkFancyIndex(index)
@@ -75,10 +76,29 @@ def test_tensor_fancy_integer_tuple_mixed():
     net(input_me)
 
 
-def test_tensor_fancy_integer_list_tuple_mixed():
+def test_tensor_fancy_index_integer_list_tuple_mixed():
     context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
     index = (1, [2, 1, 3], (3, 2, 1), slice(1, 3, 1), ..., 4)
     net = NetWorkFancyIndex(index)
     input_np = np.arange(3*4*5*6*7*8).reshape(3, 4, 5, 6, 7, 8)
     input_me = Tensor(input_np, dtype=mstype.float32)
     net(input_me)
+
+
+def test_tensor_fancy_index_integer_list_tuple_bool_mixed():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    index = (1, [2, 1, 3], True, (3, 2, 1), slice(1, 3, 1), ..., True, 4)
+    net = NetWorkFancyIndex(index)
+    input_np = np.arange(3*4*5*6*7*8).reshape(3, 4, 5, 6, 7, 8)
+    input_me = Tensor(input_np, dtype=mstype.float32)
+    net(input_me)
+
+
+def test_tensor_fancy_index_integer_list_tuple_bool_mixed_error():
+    context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+    index = (1, [2, 1, 3], True, (3, 2, 1), slice(1, 3, 1), ..., False, 4)
+    net = NetWorkFancyIndex(index)
+    input_np = np.arange(3*4*5*6*7*8).reshape(3, 4, 5, 6, 7, 8)
+    input_me = Tensor(input_np, dtype=mstype.float32)
+    with pytest.raises(IndexError):
+        net(input_me)

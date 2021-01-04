@@ -93,6 +93,7 @@ env_type = typing.EnvType()
 env_type_type = typing.EnvType
 type_type = typing.TypeType()
 type_none = typing.TypeNone()
+type_bool = typing.Bool()
 string = typing.String()
 type_refkey = typing.RefKeyType()
 tensor_type = typing.TensorType
