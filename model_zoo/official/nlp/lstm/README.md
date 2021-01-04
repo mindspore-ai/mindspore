@@ -292,7 +292,7 @@ Ascend:
 | Training Parameters        | epoch=20, batch_size=64    | epoch=20, batch_size=64                                        | epoch=20, batch_size=64    |
 | Optimizer                  | Momentum                   | Momentum                                                       | Momentum                   |
 | Loss Function              | Softmax Cross Entropy      | Softmax Cross Entropy                                          | Softmax Cross Entropy      |
-| Speed                      | 1097                       | 1022 (1pcs)                                                    | 20                         |
+| Speed                      | 1049                       | 1022 (1pcs)                                                    | 20                         |
 | Loss                       | 0.12                       | 0.12                                                           | 0.12                       |
 | Params (M)                 | 6.45                       | 6.45                                                           | 6.45                       |
 | Checkpoint for inference   | 292.9M (.ckpt file)        | 292.9M (.ckpt file)                                            | 292.9M (.ckpt file)        |

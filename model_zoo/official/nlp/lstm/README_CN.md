@@ -297,7 +297,7 @@ Ascend:
 | 训练参数                   | epoch=20, batch_size=64    | epoch=20, batch_size=64                                        | epoch=20, batch_size=64    |
 | 优化器                     | Momentum                   | Momentum                                                       | Momentum                   |
 | 损失函数                   | SoftmaxCrossEntropy        | SoftmaxCrossEntropy                                            | SoftmaxCrossEntropy        |
-| 速度                       | 1097                       | 1022（单卡）                                                   | 20                         |
+| 速度                       | 1049                       | 1022（单卡）                                                   | 20                         |
 | 损失                       | 0.12                       | 0.12                                                           | 0.12                       |
 | 参数（M）                  | 6.45                       | 6.45                                                           | 6.45                       |
 | 推理检查点                 | 292.9M（.ckpt文件）        | 292.9M（.ckpt文件）                                            | 292.9M（.ckpt文件）        |
