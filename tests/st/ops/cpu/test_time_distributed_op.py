@@ -81,6 +81,22 @@ def test_time_distributed_dense():
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
+def test_time_distributed_dense_pynative():
+    context.set_context(mode=context.PYNATIVE_MODE, device_target='CPU')
+    inputs = np.random.randint(0, 10, [32, 10])
+    dense = nn.Dense(10, 6)
+    output_expect = dense(Tensor(inputs, mindspore.float32)).asnumpy()
+    inputs = inputs.reshape([32, 1, 10]).repeat(6, axis=1)
+    time_distributed = TestTimeDistributed(dense, time_axis=1, reshape_with_axis=0)
+    output = time_distributed(Tensor(inputs, mindspore.float32)).asnumpy()
+    for i in range(output.shape[1]):
+        assert np.all(output[:, i, :] == output_expect)
+    print("Dense layer with pynative mode wrapped successful")
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
 def test_time_distributed_dense_with_reshape_axis_not_first():
     inputs = np.random.randint(0, 10, [32, 10])
     dense = nn.Dense(10, 6)
