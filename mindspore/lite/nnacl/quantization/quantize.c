@@ -15,6 +15,7 @@
  */
 
 #include "nnacl/quantization/quantize.h"
+#include <stdio.h>
 
 const uint64_t dSignMask = 1ull << 63;
 const uint64_t dExponentMask = 0x7ffull << 52;
@@ -35,10 +36,33 @@ void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantiz
   *right_shift = -shift;
 }
 
-void QuantizeRoundParameter(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
-                            int *right_shift) {
+void QuantizeRoundParameterWithDoublePrecision(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
+                                               int *right_shift) {
   int shift = 0;
   QuantizeMultiplierSmallerThanOne(double_multiplier, quantized_multiplier, &shift);
+  shift = -shift;
+  if (shift < 0) {
+    *left_shift = 0;
+    *right_shift = shift;
+  } else {
+    *left_shift = shift;
+    *right_shift = 0;
+  }
+}
+
+void QuantizeRoundParameterWithSinglePrecision(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
+                                               int *right_shift) {
+  int shift = 0;
+  const uint32_t scale_bits = (uint32_t)(double_multiplier);
+  /* multipiler is in[0x40000000, 0x7FFFFF80] range */
+  *quantized_multiplier = (int32_t)(((scale_bits & UINT32_C(0x007FFFFF)) | UINT32_C(0x00800000)) << 7);
+  if (quantized_multiplier[0] < INT32_C(0x40000000) || quantized_multiplier[0] > INT32_C(0x7FFFFF80)) {
+    printf("quantized multiplier must be in [0x40000000, 0x7FFFFF80] range, now multiplier is %d\n",
+           quantized_multiplier[0]);
+    return;
+  }
+  /* shift is in [0, 31] range */
+  shift = 127 + 31 - 32 - ((uint32_t)(double_multiplier) >> 23);
   shift = -shift;
   if (shift < 0) {
     *left_shift = 0;

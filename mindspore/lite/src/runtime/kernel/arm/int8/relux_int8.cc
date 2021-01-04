@@ -39,7 +39,8 @@ int ReluXInt8CPUKernel::Init() {
   quant_arg_.output_arg.zp_ = output->quant_params().front().zeroPoint;
 
   const double multiplier = quant_arg_.input_arg.scale_ / quant_arg_.output_arg.scale_;
-  QuantizeRoundParameter(multiplier, &quant_arg_.input_multiplier_, &quant_arg_.left_shift_, &quant_arg_.right_shift_);
+  QuantizeRoundParameterWithDoublePrecision(multiplier, &quant_arg_.input_multiplier_, &quant_arg_.left_shift_,
+                                            &quant_arg_.right_shift_);
 
   return RET_OK;
 }

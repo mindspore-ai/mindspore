@@ -595,6 +595,8 @@ STATUS PostTrainingQuantizer::DoQuantInput(double scale, int32_t zeropoint, stru
   quant_param.numBits = bit_num;
   quant_param.narrowRange = false;
   quant_param.inited = true;
+  quant_param.roundType = 1;
+  quant_param.multiplier = 1;
   std::vector<schema::QuantParamT> quant_params = {quant_param};
   lite_primitive->AddInputQuantParam(quant_params);
   return RET_OK;
@@ -612,6 +614,8 @@ STATUS PostTrainingQuantizer::DoQuantOutput(double scale, int zeropoint, struct 
   quant_param.numBits = bit_num;
   quant_param.narrowRange = false;
   quant_param.inited = true;
+  quant_param.roundType = 1;
+  quant_param.multiplier = 1;
   std::vector<schema::QuantParamT> quant_params = {quant_param};
   lite_primitive->AddOutputQuantParam(quant_params);
   return RET_OK;

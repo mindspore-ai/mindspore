@@ -55,6 +55,7 @@ FuncGraphPtr CaffeModelParser::Parse(const std::string &model_file, const std::s
     return nullptr;
   }
   func_graph_ptr_->set_attr("graph_name", MakeValue("main_graph"));
+  func_graph_ptr_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_CAFFE)));
   return func_graph_ptr_;
 }
 

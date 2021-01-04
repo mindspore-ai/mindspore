@@ -132,8 +132,8 @@ int FullconnectionInt8CPUKernel::Init() {
   for (int i = 0; i < weight_quant_num; ++i) {
     const double in_scale = static_cast<double>(quant_.input_.scale_ * quant_.filter_scale_[i]);
     double real_multiplier = in_scale / static_cast<double>(quant_.output_.scale_);
-    QuantizeRoundParameter(real_multiplier, &quant_.quant_multiplier_[i], &quant_.left_shift_[i],
-                           &quant_.right_shift_[i]);
+    QuantizeRoundParameterWithDoublePrecision(real_multiplier, &quant_.quant_multiplier_[i], &quant_.left_shift_[i],
+                                              &quant_.right_shift_[i]);
   }
 
   CalculateActivationRangeQuantized(fc_param_->act_type_ == ActType_Relu, fc_param_->act_type_ == ActType_Relu6,

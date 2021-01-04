@@ -44,7 +44,7 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
       }
     }
   }
-  int index = -1;
+  unsigned int index = -1;
   for (auto &tensor : graph->allTensors) {
     index++;
     if (tensor->quantParams.empty() || !tensor->quantParams.front()->inited) {
@@ -59,7 +59,8 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
       auto &quantParam = tensor->quantParams.front();
       size_t wShapeSize = tensor->data.empty() ? 0 : GetShapeSize(*(tensor.get()));
       void *oriWeightData = tensor->data.data();
-      if (quantParam->dstDtype == TypeId::kNumberTypeInt8) {
+      if (quantParam->dstDtype == TypeId::kNumberTypeUInt8 || quantParam->dstDtype == TypeId::kNumberTypeFloat32 ||
+          quantParam->dstDtype == TypeId::kNumberTypeFloat) {
         std::vector<int8_t> qDatas(wShapeSize);
         auto weightQauntParam = GetTensorQuantParam(tensor);
         if (tensor->dataType == TypeId::kNumberTypeFloat ||
@@ -71,7 +72,7 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
           for (size_t j = 0; j < wShapeSize; j++) {
             qDatas[j] = quant::QuantizeData<int8_t>(weightData[j], weightQauntParam.get());
           }
-        } else {  // tflite awareing quant
+        } else {  // convert uint8 to int8
           auto *weightData = static_cast<uint8_t *>(oriWeightData);
           for (size_t j = 0; j < wShapeSize; j++) {
             qDatas[j] = (int32_t)weightData[j] - 128;

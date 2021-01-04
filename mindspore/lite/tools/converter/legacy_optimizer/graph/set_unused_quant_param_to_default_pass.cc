@@ -25,7 +25,6 @@ STATUS SetUnusedQuantParamToDefaultPass::Run(schema::MetaGraphT *graph) {
       quant_param->min = 0;
       quant_param->max = 0;
       quant_param->narrowRange = true;
-      quant_param->dstDtype = TypeId::kNumberTypeFloat32;
     }
   }
   return RET_OK;
