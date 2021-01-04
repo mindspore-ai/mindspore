@@ -20,6 +20,7 @@
 #include "nnacl/pack.h"
 namespace mindspore::lite {
 NPUExecutor::~NPUExecutor() {
+  client_.reset();
   npu_input_tensors_.clear();
   npu_output_tensors_.clear();
 }

@@ -67,6 +67,7 @@ void NPUManager::Reset() {
       model->is_freed_ = true;
       model->desc_.reset();
       model->desc_ = nullptr;
+      model->client_.reset();
     }
   }
   models_.clear();
