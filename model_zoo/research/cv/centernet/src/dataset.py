@@ -32,6 +32,7 @@ from src.image import gaussian_radius, draw_umich_gaussian, draw_msra_gaussian, 
 from src.visual import visual_image
 
 _current_dir = os.path.dirname(os.path.realpath(__file__))
+cv2.setNumThreads(0)
 
 
 class COCOHP(ds.Dataset):
