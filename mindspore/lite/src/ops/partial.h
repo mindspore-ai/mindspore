@@ -28,15 +28,13 @@ namespace mindspore {
 namespace lite {
 class Partial : public PrimitiveC {
  public:
+  Partial() = default;
+  ~Partial() = default;
 #ifdef PRIMITIVE_WRITEABLE
   MS_DECLARE_PARENT(Partial, PrimitiveC);
-  Partial() = default;
   explicit Partial(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
-
 #else
-  Partial() = default;
-
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
 #endif
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;

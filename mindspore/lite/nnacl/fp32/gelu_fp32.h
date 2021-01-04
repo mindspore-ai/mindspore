@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-int DoGeLU(float *src, float *out, int64_t real_dst_count, const GeLUParameter *param);
+int DoGeLU(const float *src, float *out, int64_t real_dst_count, const GeLUParameter *param);
 #ifdef __cplusplus
 }
 #endif

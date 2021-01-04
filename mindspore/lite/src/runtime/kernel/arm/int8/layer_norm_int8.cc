@@ -19,6 +19,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_LayerNorm;
 
@@ -90,6 +91,10 @@ int LayerNormInt8CPUKernel::ReSize() {
     op_parameter_ = nullptr;
   }
   op_parameter_ = PopulateLayerNormParameter(primitive_);
+  if (op_parameter_ == nullptr) {
+    MS_LOG(ERROR) << "op_parameter_ is nullptr!";
+    return RET_NULL_PTR;
+  }
   op_parameter_->thread_num_ = context_->thread_num_;
   param_ = reinterpret_cast<LayerNormParameter *>(op_parameter_);
   auto shape = in_tensors_.front()->shape();

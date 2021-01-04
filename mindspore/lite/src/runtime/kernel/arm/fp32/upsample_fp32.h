@@ -36,7 +36,7 @@ class UpsampleCPUKernel : public ResizeCPUKernel {
   int RunImpl(int task_id) override;
 
  private:
-  UpsampleParameter *param_;
+  UpsampleParameter *param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
