@@ -1095,14 +1095,19 @@ class Cell(Cell_):
             param.comm_fusion = fusion_type
         return self
 
-    def recompute(self):
+    def recompute(self, mode=True):
         """
         Set the cell recomputed. All the primitive in the cell will be set recomputed. If a primitive feeds into a grad
         node and is set recomputed, we will compute it again for the grad node after the forward computation.
+        Args:
+            mode (bool): Specifies whether the cell is recomputed. Default: True.
         """
-        self._set_scope('recomputed')
+        if mode is True:
+            self._set_scope("recompute")
+        else:
+            self._set_scope("no_recompute")
         for cell in self.cells():
-            cell.recompute()
+            cell.recompute(mode)
 
 
 class GraphKernel(Cell):

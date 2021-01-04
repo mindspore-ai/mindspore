@@ -206,6 +206,16 @@ class Primitive(Primitive_):
         """ Whether the primitive will update the value of parameter."""
         return self._update_parameter
 
+    def recompute(self, mode):
+        """
+        Set the primitive recomputed. If a primitive feeds into a grad node and is set recomputed,
+        we will compute it again for the grad node after the forward computation.
+        Args:
+            mode (bool): Specifies whether the primitive is recomputed. Default: True.
+        """
+        self.add_prim_attr("recompute", mode)
+        return self
+
 
 class PrimitiveWithCheck(Primitive):
     """

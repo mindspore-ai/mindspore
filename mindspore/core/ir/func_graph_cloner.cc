@@ -90,6 +90,7 @@ void Cloner::CloneCNode(const AnfNodePtr &node, const FuncGraphPtr &target) {
   new_node->set_abstract(old_node->abstract());
   new_node->set_forward(old_node->forward().first, old_node->forward().second);
   new_node->set_inputs_value(old_node->inputs_value());
+  new_node->set_attrs(old_node->attrs());
   ScopePtr scope = (node->scope() != kDefaultScope) ? node->scope() : this->scope();
   new_node->set_scope(scope);
   if (IsParallelConsiderCNode(old_node) && new_node->scope() == kDefaultScope) {
