@@ -19,12 +19,8 @@
 #include <algorithm>
 #include <vector>
 #include "src/kernel_registry.h"
-#include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/common/file_utils.h"
 
-using mindspore::lite::KernelRegistrar;
-using mindspore::lite::opencl::MemType;
 using mindspore::schema::ActivationType_LEAKY_RELU;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
@@ -296,65 +292,6 @@ int WriteToBin(const std::string &file_path, void *data, size_t size) {
   }
   out_file.write(reinterpret_cast<char *>(data), size);
   return 0;
-}
-
-void PrintTensor(const lite::Tensor *tensor, MemType mem_type, int n, const std::string &out_file) {
-  if (tensor == nullptr || tensor->data_c() == nullptr) {
-    return;
-  }
-
-  GpuTensorInfo img_info(tensor);
-  auto size = mem_type == MemType::BUF ? img_info.OriginSize : img_info.Image2DSize;
-  std::vector<char> data(size);
-  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
-  auto runtime = runtime_wrapper.GetInstance();
-  auto allocator = runtime->GetAllocator();
-  runtime->SyncCommandQueue();
-  allocator->MapBuffer(tensor->data_c(), CL_MAP_READ, nullptr, true);
-  if (mem_type == MemType::BUF) {
-    memcpy(data.data(), tensor->data_c(), img_info.OriginSize);
-  } else {
-    auto row_size = img_info.width * img_info.FLT4_size;
-    for (int i = 0; i < img_info.height; ++i) {
-      memcpy(reinterpret_cast<char *>(data.data()) + i * row_size,
-             static_cast<char *>(tensor->data_c()) + i * img_info.RowPitch(), row_size);
-    }
-  }
-  allocator->UnmapBuffer(tensor->data_c());
-
-  printf("shape=(");
-  auto shape = tensor->shape();
-  for (int i = 0; i < shape.size(); ++i) {
-    printf("%4d", shape[i]);
-    if (i + 1 < shape.size()) {
-      printf(",");
-    }
-  }
-  printf(") ");
-
-  auto num = mem_type == MemType::BUF ? img_info.ElementsNum : img_info.ElementsC4Num;
-  for (int i = 0; i < n && i < num; ++i) {
-    if (tensor->data_type() == kNumberTypeFloat16) {
-      printf("%d %7.3f | ", i, reinterpret_cast<float16_t *>(data.data())[i]);
-    } else {
-      printf("%d %7.3f | ", i, reinterpret_cast<float *>(data.data())[i]);
-    }
-  }
-  printf("\n");
-
-  if (!out_file.empty()) {
-    (void)WriteToBin(out_file, data.data(), data.size());
-  }
-}
-
-void PrintKernelOutput(OpenCLKernel *kernel, int n, const std::string &out_file) {
-  if (kernel == nullptr) {
-    return;
-  }
-  printf("%-30s", kernel->name().c_str());
-  if (!kernel->out_tensors().empty()) {
-    PrintTensor(kernel->out_tensors()[0], kernel->GetMemType(), n, out_file);
-  }
 }
 
 std::vector<int> GetNHWCShape(const std::vector<int> &tensor_shape) {

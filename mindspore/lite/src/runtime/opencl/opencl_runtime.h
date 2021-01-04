@@ -119,6 +119,9 @@ class OpenCLRuntime {
                   const std::set<std::string> &build_options = {});
   int RunKernel(const cl::Kernel &kernel, const cl::NDRange &global, const cl::NDRange &local,
                 cl::CommandQueue *command_queue = nullptr, cl::Event *event = nullptr);
+  int ReadOrWriteImage(void *buffer, void *data, bool is_read);
+  int ReadImage(void *buffer, void *dst_data);
+  int WriteImage(void *buffer, void *src_data);
   bool CopyDeviceMemToHost(void *dst, const void *src, size_t size, cl::CommandQueue *command_queue = nullptr,
                            bool sync = false) const;
   bool CopyHostMemToDevice(const void *dst, const void *src, size_t size, cl::CommandQueue *command_queue = nullptr,

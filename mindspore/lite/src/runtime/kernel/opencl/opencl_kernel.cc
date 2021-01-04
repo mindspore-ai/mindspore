@@ -71,6 +71,57 @@ int OpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
   return RET_OK;
 }
 
+void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
+  printf("%-30s", name().c_str());
+  if (out_tensors().empty()) {
+    return;
+  }
+  auto *tensor = out_tensors()[0];
+  auto mem_type = GetMemType();
+  if (tensor == nullptr || tensor->data_c() == nullptr) {
+    return;
+  }
+
+  GpuTensorInfo img_info(tensor);
+  auto size = mem_type == lite::opencl::MemType::BUF ? img_info.OriginSize : img_info.Image2DSize;
+  std::vector<char> data(size);
+  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
+  auto runtime = runtime_wrapper.GetInstance();
+  auto allocator = runtime->GetAllocator();
+  runtime->SyncCommandQueue();
+  if (mem_type == lite::opencl::MemType::BUF) {
+    allocator->MapBuffer(tensor->data_c(), CL_MAP_READ, nullptr, true);
+    memcpy(data.data(), tensor->data_c(), img_info.OriginSize);
+    allocator->UnmapBuffer(tensor->data_c());
+  } else {
+    runtime->ReadImage(tensor->data_c(), data.data());
+  }
+
+  printf("shape=(");
+  auto shape = tensor->shape();
+  for (int i = 0; i < shape.size(); ++i) {
+    printf("%4d", shape[i]);
+    if (i + 1 < shape.size()) {
+      printf(",");
+    }
+  }
+  printf(") ");
+
+  auto total_num = mem_type == lite::opencl::MemType::BUF ? img_info.ElementsNum : img_info.ElementsC4Num;
+  for (int i = 0; i < print_num && i < total_num; ++i) {
+    if (tensor->data_type() == kNumberTypeFloat16) {
+      printf("%d %7.3f | ", i, reinterpret_cast<float16_t *>(data.data())[i]);
+    } else {
+      printf("%d %7.3f | ", i, reinterpret_cast<float *>(data.data())[i]);
+    }
+  }
+  printf("\n");
+
+  if (!out_file.empty()) {
+    (void)WriteToBin(out_file, data.data(), data.size());
+  }
+}
+
 int OpenCLKernel::PostProcess() {
   for (auto *output : this->out_tensors()) {
     MS_ASSERT(output != nullptr);
@@ -213,8 +264,10 @@ int OpenCLKernel::DequantWeight() {
 #ifdef ENABLE_ARM64
       if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeInt8) {
         dequant_weight = kernel::DequantUtil::DequantData<int8_t, float16_t>(weight_tensor);
+        weight_tensor->set_data_type(kNumberTypeFloat16);
       } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeInt16) {
         dequant_weight = kernel::DequantUtil::DequantData<int16_t, float16_t>(weight_tensor);
+        weight_tensor->set_data_type(kNumberTypeFloat16);
       } else {
         set_flag = false;
       }
@@ -224,8 +277,10 @@ int OpenCLKernel::DequantWeight() {
     } else {
       if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeInt8) {
         dequant_weight = kernel::DequantUtil::DequantData<int8_t, float>(weight_tensor);
+        weight_tensor->set_data_type(kNumberTypeFloat32);
       } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeInt16) {
         dequant_weight = kernel::DequantUtil::DequantData<int16_t, float>(weight_tensor);
+        weight_tensor->set_data_type(kNumberTypeFloat32);
       } else {
         set_flag = false;
       }
