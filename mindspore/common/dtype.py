@@ -78,36 +78,39 @@ single = float32
 float64 = typing.Float(64)
 double = float64
 
+number = typing.Number()
 int_ = typing.Int()
 uint = typing.UInt()
 float_ = typing.Float()
-number = typing.Number()
-
+string = typing.String()
 list_ = typing.List()
 tuple_ = typing.Tuple()
-tensor = typing.TensorType()
-function = typing.Function()
-function_type = typing.Function
-symbolic_key = typing.SymbolicKeyType()
-env_type = typing.EnvType()
-env_type_type = typing.EnvType
-type_type = typing.TypeType()
 type_none = typing.TypeNone()
-type_bool = typing.Bool()
-string = typing.String()
-type_refkey = typing.RefKeyType()
-tensor_type = typing.TensorType
-anything_type = typing.TypeAnything
-slice_type = typing.Slice
-ellipsis_type = typing.TypeEllipsis
-list_type = typing.List
-tuple_type = typing.Tuple
+
+tensor = typing.TensorType()
 index_slices = typing.RowTensorType()
 sparse_tensor = typing.SparseTensorType()
 undetermined = typing.UndeterminedType()
+
+function = typing.Function()
+symbolic_key = typing.SymbolicKeyType()
+env_type = typing.EnvType()
+type_type = typing.TypeType()
+type_refkey = typing.RefKeyType()
+
 Int = typing.Int
-bool_type = typing.Bool
+Float = typing.Float
+Bool = typing.Bool
+String = typing.String
+List = typing.List
+Tuple = typing.Tuple
+Slice = typing.Slice
+function_type = typing.Function
+Ellipsis_ = typing.TypeEllipsis
 none_type = typing.TypeNone
+env_type_type = typing.EnvType
+tensor_type = typing.TensorType
+anything_type = typing.TypeAnything
 
 number_type = (int8,
                int16,

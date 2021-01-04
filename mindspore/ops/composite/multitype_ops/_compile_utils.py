@@ -148,7 +148,7 @@ def _expand_data_dims_with_bool(data, tuple_index, op_name):
     bool_positions, tuple_index_without_bool = (), ()
 
     for i, (index, index_type) in enumerate(zip(tuple_index, indexes_types)):
-        bool_type_tag = const_utils.judge_index_type(index_type, mstype.type_bool)
+        bool_type_tag = const_utils.judge_index_type(index_type, mstype.bool_)
         if bool_type_tag:
             if index:
                 tuple_index_without_bool += (const_utils.make_tensor([0], mstype.int64),)
@@ -653,6 +653,6 @@ def tensor_in_sequence(x, y):
     """Assigns whether a sequence contains the given tensor"""
     result = const_utils.scalar_to_tensor(False)
     for i in y:
-        if isinstance(i, mstype.tensor) and x.shape == i.shape and x.dtype == i.dtype:
+        if isinstance(i, Tensor) and x.shape == i.shape and x.dtype == i.dtype:
             result = F.logical_or(F.equal(x, i).all(), result)
     return result

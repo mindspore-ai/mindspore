@@ -95,3 +95,7 @@ def not_contains(x):  # pragma: no cover
 def while_cond(x):  # pragma: no cover
     """Not in function."""
     raise RuntimeError('This operation is not meant to be called directly.')
+
+def bool_(x):  # pragma: no cover
+    """judge true function."""
+    raise RuntimeError('This operation is not meant to be called directly.')

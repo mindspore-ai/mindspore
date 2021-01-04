@@ -86,6 +86,8 @@ class PrimitiveAbstractClosure : public AbstractFuncAtom {
 
   std::string ToString() const override { return "Prim: " + prim_->name(); }
 
+  ValuePtr RealBuildValue() const override { return prim_; }
+
  private:
   PrimitivePtr prim_;
   // store it as weak_ptr to break reference cycle.
@@ -183,6 +185,7 @@ class PartialAbstractClosure : public AbstractFuncAtom {
 
   AbstractFunctionPtr fn() { return fn_; }
   AbstractBasePtrList args() { return args_spec_list_; }
+  ValuePtr RealBuildValue() const override { return fn_->BuildValue(); }
   AnfNodePtr node() { return node_.lock(); }
   void set_node(const AnfNodePtr &node) { node_ = AnfNodeWeakPtr(node); }
   AbstractFunctionPtr Copy() const override {
@@ -199,6 +202,7 @@ class PartialAbstractClosure : public AbstractFuncAtom {
   // The CNode which this PartialAbstractClosure evaluated from.
   AnfNodeWeakPtr node_;
 };
+using PartialAbstractClosurePtr = std::shared_ptr<PartialAbstractClosure>;
 
 class JTransformedAbstractClosure : public AbstractFuncAtom {
  public:
