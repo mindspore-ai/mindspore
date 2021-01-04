@@ -50,6 +50,8 @@ JPEGImages/00004.jpg SegmentationClassGray/00004.png
 ......
 ```
 
+You can also generate the list file automatically by run script: `python get_dataset_lst.py --data_root=/PATH/TO/DATA`
+
 - Configure and run build_data.sh to convert dataset to mindrecords. Arguments in scripts/build_data.sh:
 
  ```shell
@@ -164,10 +166,12 @@ run_eval_s8_multiscale_flip.sh
     ├── run_eval_s8_multiscale.sh                 # launch ascend evaluation with multiscale in s8 structure
     ├── run_eval_s8_multiscale_filp.sh            # launch ascend evaluation with multiscale and filp in s8 structure
     ├── run_standalone_train.sh                   # launch ascend standalone training(1 pc)
+    ├── run_standalone_train_cpu.sh               # launch CPU standalone training
   ├── src
     ├── data
         ├── dataset.py                            # mindrecord data generator
         ├── build_seg_data.py                     # data preprocessing
+        ├── get_dataset_lst.py                    # dataset list file generator
     ├── loss
        ├── loss.py                                # loss definition for deeplabv3
     ├── nets
@@ -189,6 +193,7 @@ Default configuration
 
 ```shell
 "data_file":"/PATH/TO/MINDRECORD_NAME"            # dataset path
+"device_target":Ascend                            # device target
 "train_epochs":300                                # total epochs
 "batch_size":32                                   # batch size of input tensor
 "crop_size":513                                   # crop size
@@ -238,7 +243,7 @@ For 8 devices training, training steps are as follows:
 
 1. Train s16 with vocaug dataset, finetuning from resnet101 pretrained model, script is as follows:
 
-```python
+```shell
 # run_distribute_train_s16_r1.sh
 for((i=0;i<=$RANK_SIZE-1;i++));
 do
@@ -328,7 +333,33 @@ do
 done
 ```
 
+#### Running on CPU
+
+For CPU training, please config parameters, training script is as follows:
+
+```shell
+# run_standalone_train_cpu.sh
+python ${train_code_path}/train.py --data_file=/PATH/TO/MINDRECORD_NAME  \
+                    --device_target=CPU  \
+                    --train_dir=${train_path}/ckpt  \
+                    --train_epochs=200  \
+                    --batch_size=32  \
+                    --crop_size=513  \
+                    --base_lr=0.015  \
+                    --lr_type=cos  \
+                    --min_scale=0.5  \
+                    --max_scale=2.0  \
+                    --ignore_label=255  \
+                    --num_classes=21  \
+                    --model=deeplab_v3_s16  \
+                    --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
+                    --save_steps=1500  \
+                    --keep_checkpoint_max=200 >log 2>&1 &
+```
+
 ### Result
+
+#### Running on Ascend
 
 - Training vocaug in s16 structure
 
@@ -386,6 +417,17 @@ epoch time: 5962.164 ms, per step time: 542.015 ms
 ...
 ```
 
+#### Running on CPU
+
+- Training voctrain in s16 structure
+
+```bash
+epoch: 1 step: 1, loss is 3.655448
+epoch: 2 step: 1, loss is 1.5531876
+epoch: 3 step: 1, loss is 1.5099041
+...
+```
+
 ## [Evaluation Process](#contents)
 
 ### Usage
@@ -438,7 +480,7 @@ Note: There OS is output stride, and MS is multiscale.
 
 # [Model Description](#contents)
 
-## [Performance](#contents
+## [Performance](#contents)
 
 ### Evaluation Performance
 

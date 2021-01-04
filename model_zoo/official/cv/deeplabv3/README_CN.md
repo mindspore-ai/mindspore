@@ -63,6 +63,8 @@ Pascal VOC数据集和语义边界数据集（Semantic Boundaries Dataset，SBD�
      ......
      ```
 
+你也可以通过运行脚本：`python get_dataset_lst.py --data_root=/PATH/TO/DATA` 来自动生成数据清单文件。
+
 - 配置并运行build_data.sh，将数据集转换为MindRecords。scripts/build_data.sh中的参数：
 
      ```
@@ -177,10 +179,12 @@ run_eval_s8_multiscale_flip.sh
     ├── run_eval_s8_multiscale.sh                 # 使用多尺度s8结构启动Ascend评估
     ├── run_eval_s8_multiscale_filp.sh            # 使用多尺度和翻转s8结构启动Ascend评估
     ├── run_standalone_train.sh                   # 启动Ascend单机训练（单卡）
+    ├── run_standalone_train_cpu.sh               # 启动CPU单机训练
   ├── src
     ├── data
         ├── dataset.py                            # 生成MindRecord数据
         ├── build_seg_data.py                     # 数据预处理
+        ├── get_dataset_lst.py                    # 生成数据清单文件
     ├── loss
        ├── loss.py                                # DeepLabV3的损失定义
     ├── nets
@@ -202,6 +206,7 @@ run_eval_s8_multiscale_flip.sh
 
 ```bash
 "data_file":"/PATH/TO/MINDRECORD_NAME"            # 数据集路径
+"device_target":Ascend                            # 训练后端类型
 "train_epochs":300                                # 总轮次数
 "batch_size":32                                   # 输入张量的批次大小
 "crop_size":513                                   # 裁剪大小
@@ -342,7 +347,33 @@ do
 done
 ```
 
+#### CPU环境运行
+
+按以下样例配置训练参数，运行CPU训练脚本：
+
+```shell
+# run_standalone_train_cpu.sh
+python ${train_code_path}/train.py --data_file=/PATH/TO/MINDRECORD_NAME  \
+                    --device_target=CPU  \
+                    --train_dir=${train_path}/ckpt  \
+                    --train_epochs=200  \
+                    --batch_size=32  \
+                    --crop_size=513  \
+                    --base_lr=0.015  \
+                    --lr_type=cos  \
+                    --min_scale=0.5  \
+                    --max_scale=2.0  \
+                    --ignore_label=255  \
+                    --num_classes=21  \
+                    --model=deeplab_v3_s16  \
+                    --ckpt_pre_trained=/PATH/TO/PRETRAIN_MODEL  \
+                    --save_steps=1500  \
+                    --keep_checkpoint_max=200 >log 2>&1 &
+```
+
 ### 结果
+
+#### Ascend处理器环境运行
 
 - 使用s16结构训练VOCaug
 
@@ -397,6 +428,17 @@ epoch: 5 step: 11, loss is 0.006262637
 Epoch time: 5956.682, per step time: 541.517
 epoch: 6 step: 11, loss is 0.0060750707
 Epoch time: 5962.164, per step time: 542.015
+...
+```
+
+#### CPU环境运行
+
+- 使用s16结构训练VOCtrain
+
+```bash
+epoch: 1 step: 1, loss is 3.655448
+epoch: 2 step: 1, loss is 1.5531876
+epoch: 3 step: 1, loss is 1.5099041
 ...
 ```
 
@@ -470,7 +512,7 @@ python ${train_code_path}/eval.py --data_root=/PATH/TO/DATA  \
 | 损失 | 0.0065883575 |
 | 速度 | 31毫秒/步（单卡，s8）<br> 234毫秒/步（8卡，s8） |  
 | 微调检查点 | 443M （.ckpt文件） |
-| 脚本 | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/office/cv/deeplabv3) |
+| 脚本 | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeplabv3) |
 
 # 随机情况说明
 
