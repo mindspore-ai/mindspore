@@ -60,6 +60,7 @@ using ValueNodePtr = std::shared_ptr<ValueNode>;
 
 class CNode;
 using CNodePtr = std::shared_ptr<CNode>;
+using CNodePtrList = std::vector<CNodePtr>;
 
 class FuncGraph;
 using FuncGraphSet = OrderedSet<FuncGraphPtr>;
@@ -88,7 +89,7 @@ using ParamInfoPtr = std::shared_ptr<ParamInfo>;
 // intermediate_abstract: return the cached inferring abstract value.
 // Type/Shape: return the related info of this AnfNode. When this AnfNode is an
 // input of other CNodes, you can get the related info by this method.
-// debug_info: return the information retrived from parser. Set it using set_debug_info.
+// debug_info: return the information retrieved from parser. Set it using set_debug_info.
 // fullname_with_scope: return the detailed debug info.
 class AnfNode : public Base {
  public:

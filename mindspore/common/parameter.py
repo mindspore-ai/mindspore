@@ -131,7 +131,7 @@ class Parameter(Tensor_):
         if self.init_mode is not None:
             data = self.init_mode
         else:
-            # cast to break deep infinit loop while deepcopy
+            # cast to break deep infinite loop while deepcopy
             data = Tensor(self)
         return (
             Parameter, (data, self.name, self.requires_grad, self.layerwise_parallel))
@@ -348,6 +348,8 @@ class Parameter(Tensor_):
         x.is_param_ps = self.is_param_ps
         x.init_in_server = self.init_in_server
         x.cache_enable = self.cache_enable
+        if self.cache_shape:
+            x.cache_shape = self.cache_shape
         if init != 'same':
             shape = self.shape
             dtype = self.dtype
@@ -374,6 +376,28 @@ class Parameter(Tensor_):
         if not isinstance(value, bool):
             raise TypeError("`parallel_optimizer` parameter must be bool type")
         self._param_info.parallel_optimizer = value
+
+    @property
+    def cache_enable(self):
+        """Return whether the parameter is cache enable."""
+        return self._param_info.cache_enable
+
+    @cache_enable.setter
+    def cache_enable(self, value=True):
+        if not isinstance(value, bool):
+            raise TypeError("`cache_enable` parameter must be bool type")
+        self._param_info.cache_enable = value
+
+    @property
+    def cache_shape(self):
+        """Return the cache shape corresponding to the parameter if use cache."""
+        return self._param_info.cache_shape
+
+    @cache_shape.setter
+    def cache_shape(self, value):
+        if not isinstance(value, (tuple, list)):
+            raise TypeError("`cache_shape` parameter must be tuple or list type")
+        self._param_info.cache_shape = value
 
     @property
     def requires_grad(self):

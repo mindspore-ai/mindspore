@@ -19,55 +19,20 @@
 #include <memory>
 #include <vector>
 #include "runtime/device/cpu/cpu_device_address.h"
+#include "utils/cache_embedding_hashmap_struct.h"
 
 namespace mindspore {
 namespace kernel {
-template <typename T>
-struct HashmapEntry {
-  T key;
-  T value;
-  T step;
-  T tag;
-
-  bool IsEmpty() {
-    if (this->tag == NULLTAG)
-      return true;
-    else
-      return false;
-  }
-
-  bool IsUsing(const T &train_step) {
-    if (this->step >= (train_step - 1))
-      return true;
-    else
-      return false;
-  }
-
-  bool IsKey(const T &emb_idx) {
-    if (this->key == emb_idx)
-      return true;
-    else
-      return false;
-  }
-
-  void SetEmpty() { this->tag = NULLTAG; }
-};
-
-template <typename T>
-T HashFunc(const T &key, const size_t &m) {
-  return (T)(((0.6180339 * key) - floor(0.6180339 * key)) * m);
-}
-
 template <typename T>
 int Compress(HashmapEntry<T> *entry_p, const size_t &length, T entry) {
   T i = (entry + 1) % length, off = 1;
   int compress_count = 0;
   for (; !entry_p[i].IsEmpty(); i = (i + 1) % length, off++) {
-    if (entry_p[i].tag > off) {
-      entry_p[entry].key = entry_p[i].key;
-      entry_p[entry].value = entry_p[i].value;
-      entry_p[entry].step = entry_p[i].step;
-      entry_p[entry].tag = entry_p[i].tag - off;
+    if (entry_p[i].tag_ > off) {
+      entry_p[entry].key_ = entry_p[i].key_;
+      entry_p[entry].value_ = entry_p[i].value_;
+      entry_p[entry].step_ = entry_p[i].step_;
+      entry_p[entry].tag_ = entry_p[i].tag_ - off;
       entry_p[i].SetEmpty();
       off = 0;
       entry = i;
@@ -127,6 +92,7 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
   float total_count = 0;
   int count_size = 0;
   float hit_count = 0;
+
   // search_cache_idx
   for (size_t i = 0; i < batch_size_; ++i) {
     T key = input_indices[i] - offset;
@@ -140,7 +106,7 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     while ((!hashmap[tmp_entry].IsEmpty() && !hashmap[tmp_entry].IsKey(key))) {
       tmp_entry = (tmp_entry + 1) % hashmap_length_;
       if (count > hashmap_length_) {
-        MS_LOG(ERROR) << "Hashmap is full, search cache idx failed!";
+        MS_LOG(EXCEPTION) << "Hashmap is full, search cache idx failed, please set a larger vocab_cache_size!";
         break;
       }
       count += 1;
@@ -153,8 +119,8 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
       miss_count++;
     } else {
       hit_count += 1;
-      output_cache_idx[i] = hashmap[tmp_entry].value;
-      hashmap[tmp_entry].step = step_[0];
+      output_cache_idx[i] = hashmap[tmp_entry].value_;
+      hashmap[tmp_entry].step_ = step_[0];
     }
   }
   if (miss_count != 0) {
@@ -175,27 +141,27 @@ void MapCacheIdxCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
     while (!hashmap[entry].IsEmpty()) {
       entry = (entry + 1) % hashmap_length_;
       if (tag_count > hashmap_length_) {
-        MS_LOG(ERROR) << "Hashmap is full, insert new key failed!";
+        MS_LOG(EXCEPTION) << "Hashmap is full, insert new key failed, please set a larger vocab_cache_size!";
         break;
       }
       tag_count++;
     }
-    hashmap[entry].key = emb_idx;
-    hashmap[entry].step = step_[0];
-    hashmap[entry].tag = tag_count;
+    hashmap[entry].key_ = emb_idx;
+    hashmap[entry].step_ = step_[0];
+    hashmap[entry].tag_ = tag_count;
     T tmp_entry = (entry + 1) % hashmap_length_;
     size_t delete_count = 1;
     while (hashmap[tmp_entry].IsEmpty() || hashmap[tmp_entry].IsUsing(step_[0])) {
       tmp_entry = (tmp_entry + 1) % hashmap_length_;
       if (delete_count > hashmap_length_) {
-        MS_LOG(ERROR) << "Hashmap is full, delete old key failed!";
+        MS_LOG(EXCEPTION) << "Hashmap is full, delete old key failed, please set a larger vocab_cache_size!";
         break;
       }
       delete_count++;
     }
-    output_swap_cache_idx[i] = hashmap[tmp_entry].value;
-    output_old_emb_idx[i] = hashmap[tmp_entry].key;
-    hashmap[entry].value = output_swap_cache_idx[i];
+    output_swap_cache_idx[i] = hashmap[tmp_entry].value_;
+    output_old_emb_idx[i] = hashmap[tmp_entry].key_;
+    hashmap[entry].value_ = output_swap_cache_idx[i];
     hashmap[tmp_entry].SetEmpty();
     int compress_count = Compress(hashmap, hashmap_length_, tmp_entry);
     total_delete_count += (compress_count + delete_count);

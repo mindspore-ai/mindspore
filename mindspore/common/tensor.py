@@ -308,6 +308,10 @@ class Tensor(Tensor_):
         """Convert tensor to numpy array."""
         return Tensor_.asnumpy(self)
 
+    def _flush_from_cache(self):
+        """Flush cache data to host if tensor is cache enable."""
+        Tensor_._flush_from_cache(self)
+
     def all(self, axis=(), keep_dims=False):
         """
         Check all array elements along a given axis evaluate to True.

@@ -37,6 +37,7 @@ bool PipelineSplitPass(const ResourcePtr &res);
 bool ValidatePass(const ResourcePtr &res);
 bool ConvertPrepareAdapt(const ResourcePtr &res);
 bool AddControlDependPass(const ResourcePtr &res);
+bool AddCacheEmbeddingPass(const ResourcePtr &res);
 bool InferenceOptPreparePass(const ResourcePtr &res);
 void ReclaimOptimizer();
 bool PynativeOptPass(const ResourcePtr &res);

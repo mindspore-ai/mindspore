@@ -526,6 +526,9 @@ class Model:
 
             train_dataset.reset()
 
+            # if param is cache enable, flush data from cache to host before epoch end
+            self._flush_from_cache(cb_params)
+
             list_callback.epoch_end(run_context)
             should_stop = should_stop or run_context.get_stop_requested()
             if should_stop:
@@ -784,5 +787,11 @@ class Model:
         predict_net.compile(*predict_data)
         return predict_net.parameter_layout_dict
 
+    def _flush_from_cache(self, cb_params):
+        """Flush cache data to host if tensor is cache enable."""
+        params = cb_params.train_network.get_parameters()
+        for param in params:
+            if param.cache_enable:
+                Tensor(param)._flush_from_cache()
 
 __all__ = ["Model"]
