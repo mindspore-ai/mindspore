@@ -58,6 +58,10 @@ kernel::LiteKernel *NPUKernelCreator(const std::vector<lite::Tensor *> &inputs,
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive->Type()));
     return nullptr;
   }
+  if (inputs[0]->shape().size() > 4) {
+    MS_LOG(ERROR) << "Npu does not support input tensor dims greater than 4";
+    return nullptr;
+  }
 
   auto *kernel = new (std::nothrow) T(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
