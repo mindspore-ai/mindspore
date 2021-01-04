@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,12 +14,11 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 3 ]
-then 
-    echo "Usage: sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]"
+if [[ $# -lt 3 || $# -gt 4 ]]; then 
+    echo "Usage: sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
+    DEVICE_ID is optional, it can be setted by environment variable device_id, otherwise the value is zero"
 exit 1
 fi
-
 
 get_real_path(){
   if [ "${1:0:1}" == "/" ]; then
@@ -31,9 +30,21 @@ get_real_path(){
 model=$(get_real_path $1)
 data_path=$(get_real_path $2)
 ann_file=$(get_real_path $3)
+if [ $# == 4 ]; then
+    device_id=$4
+elif [ $# == 3 ]; then
+    if [ -z $device_id ]; then
+        device_id=0
+    else
+        device_id=$device_id
+    fi
+fi
+
 echo $model
 echo $data_path
 echo $ann_file
+echo $device_id
+
 export ASCEND_HOME=/usr/local/Ascend/
 export PATH=$ASCEND_HOME/atc/ccec_compiler/bin:$ASCEND_HOME/atc/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/lib:$ASCEND_HOME/atc/lib64:$ASCEND_HOME/acllib/lib64:$ASCEND_HOME/driver/lib64:$ASCEND_HOME/add-ones:$LD_LIBRARY_PATH
@@ -42,13 +53,13 @@ export ASCEND_OPP_PATH=$ASCEND_HOME/opp
 
 function air_to_om()
 {
-    atc --input_format=NCHW --framework=1 --model=$model --input_shape="x:1, 3, 768, 1280; im_info: 1, 4" --output=maskrcnn --insert_op_conf=../src/aipp.cfg --precision_mode=allow_fp32_to_fp16 --soc_version=Ascend310
+    atc --input_format=NCHW --framework=1 --model=$model --input_shape="x:1, 3, 768, 1280; im_info: 1, 4" --output=maskrcnn --insert_op_conf=../src/aipp.cfg --precision_mode=allow_fp32_to_fp16 --soc_version=Ascend310 &>atc.log
 }
 
 function compile_app()
 {
     cd ../ascend310_infer/src
-    sh build.sh
+    sh build.sh &> build.log
     cd -
 }
 
@@ -62,12 +73,12 @@ function infer()
     fi
     mkdir result_Files
     mkdir time_Result
-    ../ascend310_infer/src/out/main --om_path=./maskrcnn.om --data_path=$data_path
+    ../ascend310_infer/src/out/main --om_path=./maskrcnn.om --data_path=$data_path --device_id=$device_id &> infer.log
 }
 
 function cal_acc()
 {
-    python ../postprocess.py --ann_file=$ann_file --img_path=$data_path &> log &
+    python ../postprocess.py --ann_file=$ann_file --img_path=$data_path &> acc.log &
 }
 
 air_to_om
