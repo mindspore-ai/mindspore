@@ -287,7 +287,7 @@ Ascend:
 | -------------------------- | -------------------------- | -------------------------------------------------------------- | -------------------------- |
 | Resource                   | Ascend 910                 | Tesla V100-SMX2-16GB                                           | Ubuntu X86-i7-8565U-16GB   |
 | uploaded Date              | 12/21/2020 (month/day/year)| 10/28/2020 (month/day/year)                                    | 10/28/2020 (month/day/year)|
-| MindSpore Version          | 1.0.0                      | 1.0.0                                                          | 1.0.0                      |
+| MindSpore Version          | 1.1.0                      | 1.0.0                                                          | 1.0.0                      |
 | Dataset                    | aclimdb_v1                 | aclimdb_v1                                                     | aclimdb_v1                 |
 | Training Parameters        | epoch=20, batch_size=64    | epoch=20, batch_size=64                                        | epoch=20, batch_size=64    |
 | Optimizer                  | Momentum                   | Momentum                                                       | Momentum                   |
@@ -304,7 +304,7 @@ Ascend:
 | ------------------- | ---------------------------- | --------------------------- | ---------------------------- |
 | Resource            | Ascend 910                   | Tesla V100-SMX2-16GB        | Ubuntu X86-i7-8565U-16GB     |
 | uploaded Date       | 12/21/2020 (month/day/year)  | 10/28/2020 (month/day/year) | 10/28/2020 (month/day/year)  |
-| MindSpore Version   | 1.0.0                        | 1.0.0                       | 1.0.0                        |
+| MindSpore Version   | 1.1.0                        | 1.0.0                       | 1.0.0                        |
 | Dataset             | aclimdb_v1                   | aclimdb_v1                  | aclimdb_v1                   |
 | batch_size          | 64                           | 64                          | 64                           |
 | Accuracy            | 85%                          | 84%                         | 83%                          |
