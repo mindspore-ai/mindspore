@@ -68,7 +68,7 @@ class OnnxModelParser : public ModelParser {
                              const std::unordered_map<std::string, AnfNodePtr> &anf_nodes_map);
   STATUS BuildReturnNode(const FuncGraphPtr &func_graph_ptr, const std::vector<AnfNodePtr> &return_inputs);
   STATUS BuildParameterNode(const ParameterPtr &parameter_node, const onnx::TensorProto &tensor);
-  STATUS BuildParameterNodeForQuantParam(void *data, const std::string &name, TypeId type);
+  STATUS BuildParameterNodeForQuantParam(const void *data, const std::string &name, TypeId type);
   STATUS BuildCNode(const onnx::NodeProto &onnx_node, const FuncGraphPtr &func_graph_ptr,
                     std::unordered_map<std::string, AnfNodePtr> *anf_nodes_map, std::vector<AnfNodePtr> *graph_inputs,
                     lite::PrimitiveC *primitive_c, std::string loop_name);

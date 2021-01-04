@@ -103,6 +103,7 @@ STATUS FormatTransFusionPass::DoFusion(schema::MetaGraphT *graph, const std::str
   auto dstNode = graph->nodes.at(dstPath->nodeIdx).get();
   MS_ASSERT(srcNode != nullptr);
   MS_ASSERT(dstNode != nullptr);
+  MS_ASSERT(srcNode->primitive->value.AsTranspose() != nullptr);
   bool isNc2NhAndNh2Nc = srcNode->primitive->value.AsTranspose()->perm == nchw2nhwc_perm &&
                          dstNode->primitive->value.AsTranspose()->perm == nhwc2nchw_perm;
   bool isNh2NcAndNc2Nh = srcNode->primitive->value.AsTranspose()->perm == nhwc2nchw_perm &&

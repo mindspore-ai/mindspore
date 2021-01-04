@@ -40,6 +40,7 @@ ValueNodePtr WhilePass::GetSwitchAnfPrim() {
   switch_primitiveT->value.value = new (std::nothrow) schema::SwitchT;
   if (switch_primitiveT->value.value == nullptr) {
     MS_LOG(ERROR) << "new MakeTupleT failed";
+    delete (switch_primitiveT);
     return nullptr;
   }
 

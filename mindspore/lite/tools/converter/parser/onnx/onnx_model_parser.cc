@@ -1090,7 +1090,7 @@ STATUS OnnxModelParser::BuildCNodeForGemm(const onnx::NodeProto &onnx_node, cons
   return RET_OK;
 }
 
-STATUS OnnxModelParser::BuildParameterNodeForQuantParam(void *data, const std::string &name, TypeId type) {
+STATUS OnnxModelParser::BuildParameterNodeForQuantParam(const void *data, const std::string &name, TypeId type) {
   if (data == nullptr) {
     MS_LOG(ERROR) << "value is nullptr.";
     return RET_NULL_PTR;
@@ -1102,10 +1102,18 @@ STATUS OnnxModelParser::BuildParameterNodeForQuantParam(void *data, const std::s
   std::vector<int64_t> shape_vector;
   auto parameter_node = anf_root_graph_->add_parameter();
   auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(type), shape_vector);
+  if (abstract_tensor == nullptr) {
+    MS_LOG(ERROR) << "new abstract_tensor failed";
+    return RET_MEMORY_FAILED;
+  }
   parameter_node->set_abstract(abstract_tensor);
   parameter_node->set_name(name);
   std::vector<int> shape;
   ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
+  if (param_value == nullptr) {
+    MS_LOG(ERROR) << "new param_value failed";
+    return RET_MEMORY_FAILED;
+  }
   param_value->set_tensor_shape(shape);
   param_value->set_format(schema::Format_NUM_OF_FORMAT);
   param_value->set_tensor_type(type);
@@ -1166,8 +1174,10 @@ STATUS OnnxModelParser::CopyOnnxTensorData(const onnx::TensorProto &onnx_const_t
     return RET_NULL_PTR;
   }
   size_t data_count = 1;
-  std::for_each(onnx_const_tensor.dims().begin(), onnx_const_tensor.dims().end(),
-                [&data_count](int dim) { data_count *= dim; });
+  if (!onnx_const_tensor.dims().empty()) {
+    std::for_each(onnx_const_tensor.dims().begin(), onnx_const_tensor.dims().end(),
+                  [&data_count](int dim) { data_count *= dim; });
+  }
   size_t data_size = 0;
   const void *onnx_data = nullptr;
   auto data_type = GetDataTypeFromOnnx(static_cast<onnx::TensorProto_DataType>(onnx_const_tensor.data_type()));
@@ -1208,6 +1218,10 @@ STATUS OnnxModelParser::CopyOnnxTensorData(const onnx::TensorProto &onnx_const_t
   }
   if (data_size == 0) {
     return RET_OK;
+  }
+  if (onnx_data == nullptr) {
+    MS_LOG(ERROR) << "origin data in onnx model is nullptr";
+    return RET_MEMORY_FAILED;
   }
   char *param_data = new (std::nothrow) char[data_size];
   if (param_data == nullptr) {

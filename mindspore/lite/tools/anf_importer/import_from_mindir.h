@@ -75,8 +75,8 @@ class AnfImporterFromMindir : public AnfImporter {
   int ir_version_{};
   std::unordered_map<std::string, AnfNodePtr> anfnode_build_map_;
   std::map<std::string, onnx::TensorProto> default_para_map_;
-  onnx::ModelProto *onnx_model_;
-  FuncGraphPtr func_graph_;
+  onnx::ModelProto *onnx_model_ = nullptr;
+  FuncGraphPtr func_graph_ = nullptr;
 };
 }  // namespace mindspore::lite
 

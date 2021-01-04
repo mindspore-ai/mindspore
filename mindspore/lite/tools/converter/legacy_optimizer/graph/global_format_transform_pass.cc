@@ -41,6 +41,7 @@ STATUS GlobalFormatTransformPass::Run(MetaGraphT *graph) {
     if (type != PrimitiveType_Transpose) {
       continue;
     }
+    MS_ASSERT(pre_node->primitive->value.AsTranspose() != nullptr);
     if (node->primitive->value.AsTranspose()->perm != nchw2nhwc_perm) {
       continue;
     }
@@ -183,6 +184,7 @@ STATUS GlobalFormatTransformPass::FindPreNh2NcNodes(MetaGraphT *graph, size_t nc
       auto &pre_node = graph->nodes.at(input_node_index);
       MS_ASSERT(pre_node != nullptr);
       auto node_type = pre_node->primitive->value.type;
+      MS_ASSERT(pre_node->primitive->value.AsTranspose() != nullptr);
       if (node_type == schema::PrimitiveType_Transpose &&
           pre_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
         if (!IsContain(*pre_nh2nc_nodes, input_node_index)) {

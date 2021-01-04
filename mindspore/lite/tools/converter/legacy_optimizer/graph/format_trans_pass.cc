@@ -233,6 +233,7 @@ NodeIter FormatTransPass::InsertFormatTransNode(schema::MetaGraphT *graph, NodeI
     transposeParam->perm.resize(inParam->perm.size());
     std::transform(inParam->perm.begin(), inParam->perm.end(), transposeParam->perm.begin(),
                    [](const int32_t ele) { return ele; });
+    MS_ASSERT(newOpDef->primitive != nullptr);
     newOpDef->primitive->value.value = transposeParam;
     return newOpDef;
   };

@@ -356,7 +356,15 @@ STATUS CaffeModelParser::ConvertBlobs(const caffe::LayerParameter &layer, std::v
     } else {
       count = layer.blobs(i).data_size();
       auto buf = std::make_unique<float[]>(count);
+      if (buf == nullptr) {
+        MS_LOG(INFO) << "new buffer failed";
+        return RET_NULL_PTR;
+      }
       const float *data_ptr = layer.blobs(i).data().data();
+      if (data_ptr == nullptr) {
+        MS_LOG(INFO) << "data of origin layer is nullptr";
+        return RET_NULL_PTR;
+      }
       if (EOK != ::memcpy_s(buf.get(), count * sizeof(float), data_ptr, count * sizeof(float))) {
         MS_LOG(ERROR) << "memcpy_s failed.";
         return RET_ERROR;

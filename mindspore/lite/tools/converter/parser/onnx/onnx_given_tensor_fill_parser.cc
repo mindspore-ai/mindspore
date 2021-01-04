@@ -43,6 +43,10 @@ STATUS OnnxGivenTensorFillParser::ParseInt8GivenIntTensorFill(const onnx::NodePr
     MS_LOG(ERROR) << "new char[] failed";
     return RET_MEMORY_FAILED;
   }
+  if (iter->ints().data() == nullptr) {
+    MS_LOG(ERROR) << "origin ints data in onnx is nullptr";
+    return RET_NULL_PTR;
+  }
   if (memcpy_s(param_data, data_size, iter->ints().data(), data_size) != EOK) {
     MS_LOG(ERROR) << "memcpy data failed.";
     delete[] param_data;

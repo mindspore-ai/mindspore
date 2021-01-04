@@ -41,6 +41,8 @@ schema::PadMode OnnxNodeParser::GetOnnxPadMode(const onnx::AttributeProto &onnx_
 
 STATUS OnnxNodeParser::GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value,
                                              int *type) {
+  MS_ASSERT(value != nullptr);
+  MS_ASSERT(type != nullptr);
   size_t data_count = 1;
   std::for_each(onnx_tensor.dims().begin(), onnx_tensor.dims().end(), [&data_count](int dim) { data_count *= dim; });
   switch (onnx_tensor.data_type()) {
