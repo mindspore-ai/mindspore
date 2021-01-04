@@ -177,14 +177,14 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto pm = std::make_shared<opt::PassManager>("graph_kernel_pm");
-  std::vector<PrimitivePtr> black_list = {prim::kPrimReshape, prim::kPrimCast};
+  std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimCast};
   pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
-  pm->AddPass(std::make_shared<opt::ShapeOpsSplitter>());
+  pm->AddPass(std::make_shared<opt::ShapeOpsSplitter>(duplicated_ops));
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
   pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
-  pm->AddPass(std::make_shared<opt::GraphKernelCSE>(black_list));
+  pm->AddPass(std::make_shared<opt::GraphKernelCSE>(duplicated_ops));
   pm->AddPass(std::make_shared<opt::ArithmeticSimplify>());
-  pm->AddPass(std::make_shared<opt::GraphKernelCSE>(black_list));
+  pm->AddPass(std::make_shared<opt::GraphKernelCSE>(duplicated_ops));
   pm->AddPass(std::make_shared<opt::TensorPromotion>());
   pm->AddPass(std::make_shared<opt::GraphKernelSplitter>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>());

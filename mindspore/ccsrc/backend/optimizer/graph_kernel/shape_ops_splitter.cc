@@ -33,14 +33,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-bool IsMultiUserShapeOps(AnfNodePtr node, const FuncGraphManagerPtr &mng) {
-  std::vector<PrimitivePtr> shape_ops = {prim::kPrimReshape, prim::kPrimCast};
-  auto &users = mng->node_users();
-  return std::any_of(shape_ops.begin(), shape_ops.end(),
-                     [&node](const PrimitivePtr &prim) { return IsPrimitiveCNode(node, prim); }) &&
-         users[node].size() > 1;
-}
-
 AnfNodePtr CloneCNode(const AnfNodePtr &anf_node) {
   auto kernel_graph = std::dynamic_pointer_cast<session::KernelGraph>(anf_node->func_graph());
   MS_EXCEPTION_IF_NULL(kernel_graph);
@@ -75,7 +67,14 @@ void SplitNode(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) {
 }
 }  // namespace
 
-bool ShapeOpsSplitter::Run(const FuncGraphPtr &func_graph) {
+bool ShapeOpsSplitter::IsMultiUserShapeOps(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) {
+  auto &users = mng->node_users();
+  return users[node].size() > 1 && std::any_of(shape_ops_.begin(), shape_ops_.end(), [&node](const PrimitivePtr &prim) {
+           return IsPrimitiveCNode(node, prim);
+         });
+}
+
+bool ShapeOpsSplitter::Process(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
   auto mng = func_graph->manager();
   if (mng == nullptr) {
@@ -95,6 +94,16 @@ bool ShapeOpsSplitter::Run(const FuncGraphPtr &func_graph) {
   mng->RemoveRoots();
   mng->KeepRoots({func_graph});
   return changed;
+}
+
+bool ShapeOpsSplitter::Run(const FuncGraphPtr &func_graph) {
+  bool result = false;
+  bool changed;
+  do {
+    changed = Process(func_graph);
+    result |= changed;
+  } while (changed);
+  return result;
 }
 }  // namespace opt
 }  // namespace mindspore
