@@ -448,7 +448,7 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
 
 ### 结果
 
-推理的结果保存在当前目录下，在日志文件中可以找到类似以下的结果。
+推理的结果保存在当前目录下，在acc.log日志文件中可以找到类似以下的结果。
 
 ```bash
 Evaluate annotation type *bbox*
