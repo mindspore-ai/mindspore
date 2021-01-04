@@ -64,8 +64,8 @@ def set_seed(seed):
         >>> # Note: (1) Please make sure the code is running in PYNATIVE MODE;
         >>> # (2) Becasuse Composite-level ops need parameters to be Tensors, for below examples,
         >>> # when using C.uniform operator, minval and maxval are initialised as:
-        >>> minval = Tensor(1.0, mstype.float32)
-        >>> maxval = Tensor(2.0, mstype.float32)
+        >>> minval = Tensor(1.0, ms.float32)
+        >>> maxval = Tensor(2.0, ms.float32)
         >>>
         >>> # 1. If global seed is not set, numpy.random and initializer will choose a random seed:
         >>> np_1 = np.random.normal(0, 1, [1]).astype(np.float32) # A1
