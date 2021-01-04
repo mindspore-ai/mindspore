@@ -63,6 +63,7 @@ int LiteModel::ConvertAttrToTensors(const void *meta_graph) {
   for (size_t index = 0; index < this->all_nodes_.size(); ++index) {
     std::vector<schema::Tensor *> dst_tensors;
     auto prim = meta_graph_v0->nodes()->GetAs<schema::v0::CNode>(index)->primitive();
+    MS_ASSERT(prim != nullptr);
     int status = ConvertAttrs(this->all_nodes_[index], prim, &dst_tensors);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "fail to convert attr to tensor.";
@@ -97,6 +98,7 @@ void LiteModel::Free() {
   }
   for (auto &tensor_buf : attr_tensor_bufs_) {
     free(tensor_buf);
+    tensor_buf = nullptr;
   }
   attr_tensor_bufs_.resize(0);
 }

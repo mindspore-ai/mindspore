@@ -268,12 +268,15 @@ int AnfExporter::ExportSubgraph(const FuncGraphPtr &func_graph, const std::uniqu
         auto partial_cnode = CreatePartialCnode(fg, cnode);
         primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(partial_cnode->input(0));
         auto primT = primitive_c->primitiveT();
+        MS_ASSERT(primT != nullptr);
         auto pos = fg_subgraph_map.find(fg);
         if (pos != fg_subgraph_map.end()) {
+          MS_ASSERT(primT->value.AsPartial() != nullptr);
           primT->value.AsPartial()->subGraphIndex = fg_subgraph_map.at(fg);
         } else {
           size_t next_subgraph_index = fg_subgraph_map.size() + 1;
           fg_subgraph_map.insert(std::pair<FuncGraphPtr, int>{fg, next_subgraph_index});
+          MS_ASSERT(primT->value.AsPartial() != nullptr);
           primT->value.AsPartial()->subGraphIndex = next_subgraph_index;
           ret = ExportSubgraph(fg, meta_graphT, next_subgraph_index, keep_graph, copy_primitive, cnode);
           if (ret != RET_OK) {
@@ -730,6 +733,7 @@ void AnfExporter::SetOpOutputNode(const CNodePtr &cnode, const std::unique_ptr<s
 
       if (!utils::isa<abstract::AbstractTensorPtr>(elements[i])) {
         MS_LOG(ERROR) << "abstract is not AbstractTensor";
+        delete (msTensor);
         return;
       }
       auto type = kNumberTypeFloat32;
@@ -807,6 +811,7 @@ ValueNodePtr AnfExporter::GetPartialAnfPrim() {
   partial_primitiveT->value.value = new (std::nothrow) schema::PartialT;
   if (partial_primitiveT->value.value == nullptr) {
     MS_LOG(ERROR) << "new PartialT failed";
+    delete (partial_primitiveT);
     return nullptr;
   }
 

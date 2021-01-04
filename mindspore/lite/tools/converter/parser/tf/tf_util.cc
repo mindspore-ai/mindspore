@@ -85,7 +85,6 @@ schema::Format TensorFlowUtils::ParseNodeFormat(const tensorflow::NodeDef &node_
 
 bool TensorFlowUtils::DecodeInt64(std::string_view *str_view, uint64_t *value) {
   if (str_view == nullptr || value == nullptr) {
-    *value = 0;
     MS_LOG(ERROR) << "str_view or value is nullptr";
     return false;
   }

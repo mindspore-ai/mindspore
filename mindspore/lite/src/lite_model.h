@@ -66,6 +66,7 @@ class LiteModel : public Model {
         return false;
       }
       auto c_node = meta_graph.nodes()->template GetAs<U>(i);
+      MS_ASSERT(c_node != nullptr);
       auto src_prim = reinterpret_cast<const schema::Primitive *>(c_node->primitive());
 #ifdef PRIMITIVE_WRITEABLE
       node->primitive_ = PrimitiveC::Create(const_cast<schema::Primitive *>(src_prim));
@@ -86,8 +87,10 @@ class LiteModel : public Model {
         return false;
       }
       node->primitive_->set_quant_type(static_cast<schema::QuantType>(c_node->quantType()));
+      MS_ASSERT(c_node->name() != nullptr);
       node->name_ = c_node->name()->c_str();
       node->node_type_ = static_cast<NodeType>(c_node->nodeType());
+      MS_ASSERT(c_node->inputIndex() != nullptr);
       auto count = c_node->inputIndex()->size();
       for (uint32_t j = 0; j < count; ++j) {
         node->input_indices_.push_back(size_t(c_node->inputIndex()->template GetAs<uint32_t>(j)));
@@ -180,6 +183,7 @@ class LiteModel : public Model {
       }
     } else {
       auto sub_graphs = meta_graph.subGraph();
+      MS_ASSERT(sub_graphs != nullptr);
       auto sub_graph_size = sub_graphs->size();
       for (size_t i = 0; i < sub_graph_size; i++) {
         auto sub_graph = sub_graphs->template GetAs<schema::SubGraph>(i);

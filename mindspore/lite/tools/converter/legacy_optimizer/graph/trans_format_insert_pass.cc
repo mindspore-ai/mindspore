@@ -44,6 +44,7 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
     MS_ASSERT(pre_node->primitive->value != nullptr);
     if (pre_type_ == kNONE) {
       if (pre_node->primitive->value.type == schema::PrimitiveType_Transpose) {
+        MS_ASSERT(pre_node->primitive->value.AsTranspose() != nullptr);
         if (pre_node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm) {
           pre_type_ = kNCHW2NHWC;
         } else if (pre_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
