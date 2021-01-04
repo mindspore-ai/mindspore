@@ -252,7 +252,7 @@ def ms_function(fn=None, obj=None, input_signature=None):
         ...     z = x + y
         ...     return z
         ...
-         >>> out = tensor_add_with_dec(x, y)
+        >>> out = tensor_add_with_dec(x, y)
         ...
         >>> # create a callable MindSpore graph through decorator @ms_function with input_signature parameter
         >>> @ms_function(input_signature=(MetaTensor(mindspore.float32, (1, 1, 3, 3)),
