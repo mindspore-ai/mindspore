@@ -116,6 +116,15 @@ int Transpose::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> o
   MS_ASSERT(output != nullptr);
 
   std::vector<int> perm = GetPerm();
+  if (inputs_.size() == kDoubleNum) {
+    auto input_perm = inputs_.at(1);
+    MS_ASSERT(input_perm != nullptr);
+    if (input_perm->data_c() == nullptr) {
+      return RET_INFER_INVALID;
+    }
+    int *perm_data = reinterpret_cast<int *>(input_perm->data_c());
+    perm = std::vector<int>{perm_data, perm_data + input_perm->ElementsNum()};
+  }
   std::vector<int> nchw2nhwc_perm = {0, 2, 3, 1};
   std::vector<int> nhwc2nchw_perm = {0, 3, 1, 2};
   std::vector<int> in_shape = input->shape();

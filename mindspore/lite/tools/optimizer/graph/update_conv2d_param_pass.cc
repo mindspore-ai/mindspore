@@ -53,7 +53,44 @@ bool UpdateConv2DParamPass::Run(const FuncGraphPtr &func_graph) {
           primT->value.AsDepthwiseConv2D()->channelIn = weight->tensor_shape().at(0);
         }
       }
+    } else if (type == schema::PrimitiveType_Conv2D) {
+      auto conv2d_cnode = node->cast<CNodePtr>();
+      auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv2d_cnode->input(0));
+      if (primitive_c == nullptr) {
+        MS_LOG(ERROR) << "Conv2D node has no primitiveC.";
+        continue;
+      }
+      auto primT = primitive_c->primitiveT();
+      if (primT == nullptr) {
+        MS_LOG(ERROR) << "Conv2D node has no primitiveT.";
+        continue;
+      }
+      auto conv2d_primt = primT->value.AsConv2D();
+      auto weight_node = conv2d_cnode->input(lite::kAnfPopulaterInputNumTwo);
+      if (weight_node == nullptr) {
+        MS_LOG(ERROR) << "Conv2D weight node is nullptr.";
+        continue;
+      }
+      if (!weight_node->isa<Parameter>()) {
+        MS_LOG(ERROR) << "Conv2D weight node is not parameter.";
+        continue;
+      }
+      auto weight_param = weight_node->cast<ParameterPtr>();
+      if (!weight_param->has_default()) {
+        MS_LOG(ERROR) << "Conv2D weight node is not parameter.";
+        continue;
+      }
+      auto default_param = weight_param->default_param();
+      auto weight_tensor = std::dynamic_pointer_cast<ParamValueLite>(default_param);
+      auto weight_shape = weight_tensor->tensor_shape();
+      if (fmk_type == lite::converter::FmkType_TF && conv2d_primt->format == schema::Format_NHWC) {
+        conv2d_primt->kernelH = weight_shape[0];
+        conv2d_primt->kernelW = weight_shape[1];
+        conv2d_primt->channelIn = weight_shape[2];
+        conv2d_primt->channelOut = weight_shape[3];
+      }
     }
+
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "remove identity pass is failed.";
       return false;

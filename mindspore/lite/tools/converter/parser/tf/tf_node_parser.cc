@@ -46,7 +46,7 @@ const NodeDef *TFNodeParser::GetConstInputNode(const std::map<string, const tens
     node = tf_node_map.at(flatten_input_name);
   }
   if (node->op() != "Const") {
-    MS_LOG(ERROR) << "Attr node is not Const";
+    MS_LOG(DEBUG) << "Attr node is not Const";
     return nullptr;
   }
   return node;

@@ -48,7 +48,15 @@ int FillCPUKernel::DoFill(int task_id) {
     return RET_OK;
   }
   int offset = task_id * thread_sz_stride_;
-  int ret = Fill(out_ptr_ + offset, size, src_data_);
+  auto input_tensor = in_tensors_.at(0);
+  int ret = RET_OK;
+  if (input_tensor->data_type() == kNumberTypeFloat32 || input_tensor->data_type() == kNumberTypeFloat) {
+    ret = Fill(out_ptr_ + offset, size, src_data_);
+  } else if (input_tensor->data_type() == kNumberTypeInt32 || input_tensor->data_type() == kNumberTypeInt) {
+    ret = FillInt32(int32_out_ptr_ + offset, size, int32_src_data_);
+  } else {
+    return RET_ERROR;
+  }
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FillRun error task_id[" << task_id << "] error_code[" << ret << "]";
     return ret;
@@ -67,11 +75,20 @@ int FillRun(void *cdata, int task_id) {
 }
 
 int FillCPUKernel::Run() {
-  auto fillData = in_tensors_.at(in_tensors_.size() - 1);
+  auto fill_input = in_tensors_.front();
   auto output = out_tensors_.front();
-  auto fill_data = reinterpret_cast<float *>(fillData->MutableData());
-  src_data_ = fill_data[0];
-  out_ptr_ = reinterpret_cast<float *>(output->MutableData());
+  if (fill_input->data_type() == kNumberTypeFloat32 || fill_input->data_type() == kNumberTypeFloat) {
+    auto fill_data = reinterpret_cast<float *>(fill_input->MutableData());
+    src_data_ = fill_data[0];
+    out_ptr_ = reinterpret_cast<float *>(output->MutableData());
+  } else if (fill_input->data_type() == kNumberTypeInt32 || fill_input->data_type() == kNumberTypeInt) {
+    auto fill_data = reinterpret_cast<int *>(fill_input->MutableData());
+    int32_src_data_ = fill_data[0];
+    int32_out_ptr_ = reinterpret_cast<int *>(output->MutableData());
+  } else {
+    MS_LOG(ERROR) << "unsupported fill data type " << fill_input->data_type();
+    return RET_ERROR;
+  }
   auto ret = ParallelLaunch(this->context_->thread_pool_, FillRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "FillRun error error_code[" << ret << "]";
@@ -80,5 +97,6 @@ int FillCPUKernel::Run() {
   return RET_OK;
 }
 
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Fill, LiteKernelCreator<FillCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Fill, LiteKernelCreator<FillCPUKernel>)
 }  // namespace mindspore::kernel

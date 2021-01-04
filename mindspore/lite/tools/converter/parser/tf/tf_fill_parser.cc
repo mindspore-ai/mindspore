@@ -42,20 +42,15 @@ STATUS TFFillParser::Parse(const tensorflow::NodeDef &tf_op,
     return RET_NULL_PTR;
   }
 
-  primitive->value.type = schema::PrimitiveType_Fill;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
-  *output_size = 1;
   inputs->emplace_back(tf_op.input(1));
   // parse dims
   tensorflow::AttrValue attr_value;
   auto dims_node = GetConstInputNode(tf_node_map, tf_op.input(0));
-  MS_ASSERT(dims_node != nullptr);
-  if (dims_node != nullptr && TensorFlowUtils::FindAttrValue(*dims_node, "value", &attr_value)) {
+  if (dims_node != nullptr) {
+    if (!TensorFlowUtils::FindAttrValue(*dims_node, "value", &attr_value)) {
+      MS_LOG(ERROR) << "fill dims input not have value attr";
+      return RET_ERROR;
+    }
     if (attr_value.value_case() != tensorflow::AttrValue::kTensor) {
       MS_LOG(ERROR) << "The attrValue of value should have tensor type, actual: " << attr_value.value_case()
                     << ", node: " << tf_op.name().c_str();
@@ -66,32 +61,44 @@ STATUS TFFillParser::Parse(const tensorflow::NodeDef &tf_op,
       MS_LOG(ERROR) << "The dimsTensor dataType should be DT_INT32, actual : " << dims_tensor.dtype();
       return RET_ERROR;
     }
-    const tensorflow::TensorShapeProto &dimsTensorShape = dims_tensor.tensor_shape();
-    size_t shapeSize = 1;
-    for (int i = 0; i < dimsTensorShape.dim_size(); i++) {
-      shapeSize *= dimsTensorShape.dim(i).size();
+    const tensorflow::TensorShapeProto &dims_tensor_shape = dims_tensor.tensor_shape();
+    size_t shape_size = 1;
+    for (int i = 0; i < dims_tensor_shape.dim_size(); i++) {
+      shape_size *= dims_tensor_shape.dim(i).size();
     }
     size_t size = dims_tensor.int_val().size();
     if (size > 0) {
-      for (size_t i = 0; i < shapeSize; i++) {
-        attr->dims.emplace_back(dims_tensor.int_val().Get(0));
+      for (size_t i = 0; i < shape_size; i++) {
+        attr->dims.emplace_back(dims_tensor.int_val().Get(i));
       }
     } else {
       size = dims_tensor.tensor_content().length();
-      if (size == shapeSize * sizeof(int32_t)) {
-        attr->dims.resize(shapeSize);
+      if (size > 0) {
+        if (size != shape_size * sizeof(int32_t)) {
+          MS_LOG(ERROR) << "tensor size mismatch";
+          return RET_ERROR;
+        }
+        attr->dims.resize(shape_size);
         if (EOK != ::memcpy_s(attr->dims.data(), size, dims_tensor.tensor_content().data(), size)) {
           MS_LOG(ERROR) << "Memcpy_s from dimsTensor to attr failed";
           return RET_ERROR;
         }
       } else {
-        MS_LOG(ERROR) << "Can not find weight data, node: " << dims_node->name().c_str();
-        return RET_ERROR;
+        MS_LOG(DEBUG) << "empty dims";
       }
     }
   } else {
     inputs->emplace_back(tf_op.input(0));
   }
+
+  primitive->value.type = schema::PrimitiveType_Fill;
+  primitive->value.value = attr.release();
+  *primitiveC = PrimitiveC::Create(primitive.release());
+  if (*primitiveC == nullptr) {
+    MS_LOG(ERROR) << "primitiveC is nullptr";
+    return RET_ERROR;
+  }
+  *output_size = 1;
   return RET_OK;
 }
 TFNodeRegistrar g_tfFillParser("Fill", new TFFillParser());
