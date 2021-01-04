@@ -168,7 +168,7 @@ class TestSummary:
     @pytest.mark.platform_arm_ascend_training
     @pytest.mark.env_onecard
     def test_summarycollector_user_defind(self):
-        """Test SummaryCollector with user defind."""
+        """Test SummaryCollector with user-defined."""
         summary_dir = self._run_network(dataset_sink_mode=True, num_samples=2,
                                         custom_lineage_data={'test': 'self test'},
                                         export_options={'tensor_format': 'npy'})

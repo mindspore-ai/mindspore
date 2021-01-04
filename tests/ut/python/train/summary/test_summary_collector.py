@@ -55,7 +55,7 @@ _SPECIFIED_DATA['collect_metric'] = False
 
 
 class CustomNet(Cell):
-    """Define custom netwrok."""
+    """Define custom network."""
     def __init__(self):
         super(CustomNet, self).__init__()
         self.add = TensorAdd

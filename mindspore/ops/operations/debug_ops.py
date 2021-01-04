@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,14 +15,24 @@
 
 """debug_ops"""
 from types import FunctionType, MethodType
+
+from mindspore import context
 from ..._checkparam import Validator as validator
 from ..._checkparam import Rel
 from ...common import dtype as mstype
 from ..primitive import prim_attr_register, PrimitiveWithInfer
 
 
+def _check_mode(class_name):
+    """Check for PyNative mode."""
+    mode = context.get_context('mode')
+    if mode == context.PYNATIVE_MODE:
+        raise RuntimeError(f'{class_name} operator does not support PyNative mode.')
+
+
 def _check_summary_param(name, value, class_name):
     """Checks the name and value is valid for summary."""
+    _check_mode(class_name)
     n_type = name['dtype']
     n_value = name['value']
     validator.check_value_type('name', n_type, [type(mstype.string)], class_name)

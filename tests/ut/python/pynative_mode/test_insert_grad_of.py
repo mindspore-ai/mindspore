@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -91,33 +91,6 @@ def test_InsertGradientOf_2():
 
     print("forward: ", f(1.1, 0.1))
     print("clip_gradient:", fd(1.1, 0.1))
-
-
-summary = P.ScalarSummary()
-
-
-def debug_gradient(dx):
-    """ debug_gradient """
-    summary("dx: ", dx)
-    return dx
-
-
-debug = P.InsertGradientOf(debug_gradient)
-
-
-def test_InsertGradientOf_3():
-    """ test_InsertGradientOf_3 """
-
-    def debug_test(x, y):
-        x = debug(x)
-        y = debug(y)
-        c = x * y
-        return c
-
-    def f(x, y):
-        return grad_all(debug_test)(x, y)
-
-    print("debug_gradient:", f(Tensor(1.0), Tensor(2.0)))
 
 
 def test_print_shape_type():

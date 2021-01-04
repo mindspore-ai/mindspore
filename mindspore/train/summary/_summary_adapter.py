@@ -422,7 +422,7 @@ def _make_canvas_for_imgs(tensor, col_imgs=8):
         col_imgs (Number): The image colume number. Default: 8.
 
     Returns:
-        Tensor, retrun canvas of image.
+        Tensor, return canvas of image.
     """
     # expand the N1HW to N3HW
     if tensor.shape[1] == 1:
@@ -435,7 +435,7 @@ def _make_canvas_for_imgs(tensor, col_imgs=8):
     cols = min(n, col_imgs)
     rows = int(np.ceil(float(n) / cols))
 
-    # creat the canvas: expand the n
+    # create the canvas: expand the n
     out_canvas = np.zeros((3, h * rows, w * cols))
     i = 0
     for y in range(rows):
