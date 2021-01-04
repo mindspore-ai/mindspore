@@ -80,6 +80,164 @@ def test_out2_axis1neg():
     assert np.allclose(outputs[1].asnumpy()[0, :, :], [[3., 4., 5.], [9., 10., 11.]])
 
 
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_out_float32():
+    op = P.Split(5, 2)
+    op_wrapper = OpNetWrapper(op)
+
+    input_x = Tensor(np.arange(192).astype(np.float32).reshape((2, 2, 2, 2, 2, 6)))
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[0, 0, 0, 0, 0, :], [0., 1., 2.])
+    assert np.allclose(outputs[1].asnumpy()[0, 0, 0, 0, 0, :], [3., 4., 5.])
+
+    op = P.Split(5, 3)
+    op_wrapper = OpNetWrapper(op)
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[0, 0, 0, 0, 0, :], [0., 1.])
+    assert np.allclose(outputs[1].asnumpy()[0, 0, 0, 0, 0, :], [2., 3.])
+    assert np.allclose(outputs[2].asnumpy()[0, 0, 0, 0, 0, :], [4., 5.])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_out_float64():
+    op = P.Split(5, 2)
+    op_wrapper = OpNetWrapper(op)
+
+    input_x = Tensor(np.arange(192).astype(np.float64).reshape((2, 2, 2, 2, 2, 6)))
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[0, 0, 0, 0, 0, :], [0., 1., 2.])
+    assert np.allclose(outputs[1].asnumpy()[0, 0, 0, 0, 0, :], [3., 4., 5.])
+
+    op = P.Split(5, 3)
+    op_wrapper = OpNetWrapper(op)
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[0, 0, 0, 0, 0, :], [0., 1.])
+    assert np.allclose(outputs[1].asnumpy()[0, 0, 0, 0, 0, :], [2., 3.])
+    assert np.allclose(outputs[2].asnumpy()[0, 0, 0, 0, 0, :], [4., 5.])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_out_float16():
+    op = P.Split(-1, 2)
+    op_wrapper = OpNetWrapper(op)
+
+    input_x = Tensor(np.arange(320).astype(np.float16).reshape((2, 2, 2, 2, 2, 10)))
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[0, 0, 0, 0, 0, :], [0., 1., 2., 3., 4.])
+    assert np.allclose(outputs[1].asnumpy()[0, 0, 0, 0, 0, :], [5., 6., 7., 8., 9.])
+
+    op = P.Split(-1, 5)
+    op_wrapper = OpNetWrapper(op)
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[0, 0, 0, 0, 0, :], [0., 1.])
+    assert np.allclose(outputs[1].asnumpy()[0, 0, 0, 0, 0, :], [2., 3.])
+    assert np.allclose(outputs[2].asnumpy()[0, 0, 0, 0, 0, :], [4., 5.])
+    assert np.allclose(outputs[3].asnumpy()[0, 0, 0, 0, 0, :], [6., 7.])
+    assert np.allclose(outputs[4].asnumpy()[0, 0, 0, 0, 0, :], [8., 9.])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_out_int32():
+    op = P.Split(5, 2)
+    op_wrapper = OpNetWrapper(op)
+
+    input_x = Tensor(np.arange(192).astype(np.int32).reshape((2, 2, 2, 2, 2, 6)))
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[0, 0, 0, 0, 0, :], [0, 1, 2])
+    assert np.allclose(outputs[1].asnumpy()[0, 0, 0, 0, 0, :], [3, 4, 5])
+
+    op = P.Split(5, 3)
+    op_wrapper = OpNetWrapper(op)
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[1, 0, 0, 0, 0, :], [96, 97])
+    assert np.allclose(outputs[1].asnumpy()[1, 0, 0, 0, 0, :], [98, 99])
+    assert np.allclose(outputs[2].asnumpy()[1, 0, 0, 0, 0, :], [100, 101])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_out_int64():
+    op = P.Split(5, 2)
+    op_wrapper = OpNetWrapper(op)
+
+    input_x = Tensor(np.arange(192).astype(np.int64).reshape((2, 2, 2, 2, 2, 6)))
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[0, 0, 0, 0, 0, :], [0, 1, 2])
+    assert np.allclose(outputs[1].asnumpy()[0, 0, 0, 0, 0, :], [3, 4, 5])
+
+    op = P.Split(5, 3)
+    op_wrapper = OpNetWrapper(op)
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[1, 0, 0, 0, 0, :], [96, 97])
+    assert np.allclose(outputs[1].asnumpy()[1, 0, 0, 0, 0, :], [98, 99])
+    assert np.allclose(outputs[2].asnumpy()[1, 0, 0, 0, 0, :], [100, 101])
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_out_uint32():
+    op = P.Split(-1, 2)
+    op_wrapper = OpNetWrapper(op)
+
+    input_x = Tensor(np.arange(320).astype(np.uint32).reshape((2, 2, 2, 2, 2, 10)))
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[0, 0, 0, 0, 0, :], [0, 1, 2, 3, 4])
+    assert np.allclose(outputs[1].asnumpy()[0, 0, 0, 0, 0, :], [5, 6, 7, 8, 9])
+
+    op = P.Split(-1, 5)
+    op_wrapper = OpNetWrapper(op)
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[1, 1, 1, 1, 1, :], [310, 311])
+    assert np.allclose(outputs[1].asnumpy()[1, 1, 1, 1, 1, :], [312, 313])
+    assert np.allclose(outputs[2].asnumpy()[1, 1, 1, 1, 1, :], [314, 315])
+    assert np.allclose(outputs[3].asnumpy()[1, 1, 1, 1, 1, :], [316, 317])
+    assert np.allclose(outputs[4].asnumpy()[1, 1, 1, 1, 1, :], [318, 319])
+
+    op = P.Split(-2, 2)
+    op_wrapper = OpNetWrapper(op)
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy()[0, 0, 0, 0, :, 0], [0])
+    assert np.allclose(outputs[1].asnumpy()[0, 0, 0, 0, :, 1], [11])
+    assert np.allclose(outputs[0].asnumpy()[1, 0, 0, 0, :, 2], [162])
+    assert np.allclose(outputs[1].asnumpy()[1, 0, 0, 0, :, 3], [173])
+    assert np.allclose(outputs[0].asnumpy()[1, 1, 0, 0, :, 4], [244])
+    assert np.allclose(outputs[1].asnumpy()[1, 1, 0, 0, :, 5], [255])
+    assert np.allclose(outputs[0].asnumpy()[1, 1, 1, 0, :, 6], [286])
+    assert np.allclose(outputs[1].asnumpy()[1, 1, 1, 0, :, 7], [297])
+    assert np.allclose(outputs[0].asnumpy()[1, 1, 1, 1, :, 8], [308])
+    assert np.allclose(outputs[1].asnumpy()[1, 1, 1, 1, :, 9], [319])
+
+    op = P.Split(-1, 1)
+    op_wrapper = OpNetWrapper(op)
+    input_x = Tensor(np.arange(1).astype(np.uint32))
+    outputs = op_wrapper(input_x)
+
+    assert np.allclose(outputs[0].asnumpy(), [0])
+
+
 if __name__ == '__main__':
     test_out1_axis0()
     test_out2_axis2()
