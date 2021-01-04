@@ -86,8 +86,8 @@ int ResizeInt8CPUKernel::Init() {
   quant_out_->zp_ = output->quant_params().front().zeroPoint;
   quant_out_->scale_ = output->quant_params().front().scale;
 
-  QuantizeRoundParameter(quant_in_->scale_ / quant_out_->scale_, &multiplier_->multiplier_, &multiplier_->left_shift_,
-                         &multiplier_->right_shift_);
+  QuantizeRoundParameterWithDoublePrecision(quant_in_->scale_ / quant_out_->scale_, &multiplier_->multiplier_,
+                                            &multiplier_->left_shift_, &multiplier_->right_shift_);
   if (!InferShapeDone()) {
     return RET_OK;
   }

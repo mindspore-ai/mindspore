@@ -38,6 +38,8 @@ std::unique_ptr<schema::QuantParamT> CopyQuantParamT(const std::unique_ptr<schem
   dstQuantParam->max = srcQuantParam->max;
   dstQuantParam->narrowRange = srcQuantParam->narrowRange;
   dstQuantParam->numBits = srcQuantParam->numBits;
+  dstQuantParam->dstDtype = srcQuantParam->dstDtype;
+  dstQuantParam->multiplier = srcQuantParam->multiplier;
   return dstQuantParam;
 }
 

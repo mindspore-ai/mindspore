@@ -121,6 +121,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
             std::make_unique<schema::QuantParamT>(input_quant_param);
           MS_LOG(DEBUG) << "[input][" << i << "]node: " << dst_node->name << " scale: " << input_quant_param_ptr->scale
                         << " zp: " << input_quant_param_ptr->zeroPoint;
+          input_quant_param_ptr->dstDtype = tensor_input->dataType;
           tensor_input->quantParams.emplace_back(std::move(input_quant_param_ptr));
         }
       }
@@ -151,6 +152,7 @@ int AnfExporter::ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &me
             std::make_unique<schema::QuantParamT>(channel_quant_param);
           MS_LOG(DEBUG) << "[output]node: " << dst_node->name << " scale: " << output_quant_param_ptr->scale
                         << " zp: " << output_quant_param_ptr->zeroPoint;
+          output_quant_param_ptr->dstDtype = output_tensor->dataType;
           output_tensor->quantParams.emplace_back(std::move(output_quant_param_ptr));
         }
       }
@@ -258,6 +260,9 @@ int AnfExporter::ExportSubgraph(const FuncGraphPtr &func_graph, const std::uniqu
   auto subgraph_name = func_graph->get_attr("graph_name");
   MS_ASSERT(subgraph_name != nullptr);
   sub_graphT->name = GetValue<std::string>(subgraph_name);
+  auto fmk = func_graph->get_attr("fmk");
+  MS_ASSERT(fmk != nullptr);
+  meta_graphT->fmkType = GetValue<int>(fmk);
 
   auto cnodes = func_graph->GetOrderedCnodes();
   for (const auto &cnode : cnodes) {

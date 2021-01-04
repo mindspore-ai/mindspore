@@ -43,8 +43,14 @@ ConvDwInt8PostAlign4PerChannel:
 
         sqrdmulh v0.4s, v0.4s, v4.4s
         sqrdmulh v1.4s, v1.4s, v5.4s
-        sqrshl v0.4s, v0.4s, v6.4s
-        sqrshl v1.4s, v1.4s, v7.4s
+        and v16.16b, v0.16b, v6.16b
+        sshr v16.4s, v16.4s, #31
+        sqadd v0.4s, v0.4s, v16.4s
+        srshl v0.4s, v0.4s, v6.4s
+        and v17.16b, v1.16b, v7.16b
+        sshr v17.4s, v17.4s, #31
+        sqadd v1.4s, v1.4s, v17.4s
+        srshl v1.4s, v1.4s, v7.4s
 
         add v0.4s, v0.4s, v29.4s
         add v1.4s, v1.4s, v29.4s
@@ -80,7 +86,10 @@ ConvDwInt8PostAlign4PerChannel:
         sqrdmulh v0.4s, v0.4s, v4.4s
 
         ld1 {v6.4s}, [x6], #16
-        sqrshl v0.4s, v0.4s, v6.4s
+        and v16.16b, v0.16b, v6.16b
+        sshr v16.4s, v16.4s, #31
+        sqadd v0.4s, v0.4s, v16.4s
+        srshl v0.4s, v0.4s, v6.4s
 
         add v0.4s, v0.4s, v29.4s
         smax v0.4s, v0.4s, v30.4s

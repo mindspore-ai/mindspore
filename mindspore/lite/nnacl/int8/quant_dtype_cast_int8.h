@@ -29,7 +29,8 @@ typedef struct QuantDTypeCastParameter {
 extern "C" {
 #endif
 int DoDequantizeInt8ToFp32(const int8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
-int DoQuantizeFp32ToInt8(const float *real_values, int8_t *quant_values, float scale, int32_t zp, int size);
+int DoQuantizeFp32ToInt8(const float *real_values, int8_t *quant_values, float scale, int32_t zp, int size,
+                         bool uint8_flag);
 int DoDequantizeUInt8ToFp32(const uint8_t *quant_values, float *real_values, float scale, int32_t zp, int size);
 int DoQuantizeFp32ToUInt8(const float *real_values, uint8_t *quant_values, float scale, int32_t zp, int size);
 int Int8ToUInt8(const int8_t *quant_values, uint8_t *real_values, int size);

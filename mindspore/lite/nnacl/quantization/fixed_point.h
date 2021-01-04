@@ -40,7 +40,12 @@ int16_t SaturatingRoundingDoublingHighMulInt16(int16_t a, int16_t b);
 // or arithmetic right shift with rouding
 int RoundingDivideByPOT(int x, int exponent);
 
+int UpwardRounding(int x, int exponent);
+
 int MultiplyByQuantizedMultiplier(int32_t value, int32_t multiplier, int32_t left_shift, int32_t right_shift);
+
+int MultiplyByQuantizedMultiplierWithUpwardRounding(int32_t value, int32_t multiplier, int32_t left_shift,
+                                                    int32_t right_shift);
 
 int MultiplyByMultiplierAndRightShift(int32_t value, int32_t multiplier, int32_t right_shift);
 
