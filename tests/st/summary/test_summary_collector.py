@@ -12,29 +12,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test model train """
+"""test SummaryCollector."""
 import os
 import re
-import tempfile
 import shutil
-
+import tempfile
 from collections import Counter
 
 import pytest
 
-from mindspore import dataset as ds
 from mindspore import nn, Tensor, context
+from mindspore.common.initializer import Normal
 from mindspore.nn.metrics import Loss
 from mindspore.nn.optim import Momentum
-from mindspore.dataset.transforms import c_transforms as C
-from mindspore.dataset.vision import c_transforms as CV
-from mindspore.dataset.vision import Inter
-from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
-from mindspore.common.initializer import Normal
 from mindspore.train import Model
 from mindspore.train.callback import SummaryCollector
-
+from tests.st.summary.dataset import create_mnist_dataset
 from tests.summary_utils import SummaryReader
 
 
@@ -52,6 +46,7 @@ class LeNet5(nn.Cell):
         >>> LeNet(num_class=10)
 
     """
+
     def __init__(self, num_class=10, num_channel=1, include_top=True):
         super(LeNet5, self).__init__()
         self.conv1 = nn.Conv2d(num_channel, 6, 5, pad_mode='valid')
@@ -72,6 +67,7 @@ class LeNet5(nn.Cell):
         self.channel = Tensor(num_channel)
 
     def construct(self, x):
+        """construct."""
         self.image_summary('image', x)
         x = self.conv1(x)
         self.histogram_summary('histogram', x)
@@ -92,43 +88,9 @@ class LeNet5(nn.Cell):
         return x
 
 
-def create_dataset(data_path, num_samples=2):
-    """create dataset for train or test"""
-    num_parallel_workers = 1
-
-    # define dataset
-    mnist_ds = ds.MnistDataset(data_path, num_samples=num_samples)
-
-    resize_height, resize_width = 32, 32
-    rescale = 1.0 / 255.0
-    rescale_nml = 1 / 0.3081
-    shift_nml = -1 * 0.1307 / 0.3081
-
-    # define map operations
-    resize_op = CV.Resize((resize_height, resize_width), interpolation=Inter.LINEAR)  # Bilinear mode
-    rescale_nml_op = CV.Rescale(rescale_nml, shift_nml)
-    rescale_op = CV.Rescale(rescale, shift=0.0)
-    hwc2chw_op = CV.HWC2CHW()
-    type_cast_op = C.TypeCast(mstype.int32)
-
-    # apply map operations on images
-    mnist_ds = mnist_ds.map(operations=type_cast_op, input_columns="label", num_parallel_workers=num_parallel_workers)
-    mnist_ds = mnist_ds.map(operations=resize_op, input_columns="image", num_parallel_workers=num_parallel_workers)
-    mnist_ds = mnist_ds.map(operations=rescale_op, input_columns="image", num_parallel_workers=num_parallel_workers)
-    mnist_ds = mnist_ds.map(operations=rescale_nml_op, input_columns="image", num_parallel_workers=num_parallel_workers)
-    mnist_ds = mnist_ds.map(operations=hwc2chw_op, input_columns="image", num_parallel_workers=num_parallel_workers)
-
-    # apply DatasetOps
-    mnist_ds = mnist_ds.shuffle(buffer_size=10000)  # 10000 as in LeNet train script
-    mnist_ds = mnist_ds.batch(batch_size=2, drop_remainder=True)
-
-    return mnist_ds
-
-
 class TestSummary:
     """Test summary collector the basic function."""
     base_summary_dir = ''
-    mnist_path = '/home/workspace/mindspore_dataset/mnist'
 
     @classmethod
     def setup_class(cls):
@@ -144,6 +106,7 @@ class TestSummary:
             shutil.rmtree(cls.base_summary_dir)
 
     def _run_network(self, dataset_sink_mode=False, num_samples=2, **kwargs):
+        """run network."""
         lenet = LeNet5()
         loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction="mean")
         optim = Momentum(lenet.trainable_params(), learning_rate=0.1, momentum=0.9)
@@ -151,10 +114,10 @@ class TestSummary:
         summary_dir = tempfile.mkdtemp(dir=self.base_summary_dir)
         summary_collector = SummaryCollector(summary_dir=summary_dir, collect_freq=2, **kwargs)
 
-        ds_train = create_dataset(os.path.join(self.mnist_path, "train"), num_samples=num_samples)
+        ds_train = create_mnist_dataset("train", num_samples=num_samples)
         model.train(1, ds_train, callbacks=[summary_collector], dataset_sink_mode=dataset_sink_mode)
 
-        ds_eval = create_dataset(os.path.join(self.mnist_path, "test"))
+        ds_eval = create_mnist_dataset("test")
         model.eval(ds_eval, dataset_sink_mode=dataset_sink_mode, callbacks=[summary_collector])
         return summary_dir
 
@@ -202,10 +165,12 @@ class TestSummary:
 
     @pytest.mark.level0
     @pytest.mark.platform_x86_ascend_training
+    @pytest.mark.platform_arm_ascend_training
     @pytest.mark.env_onecard
     def test_summarycollector_user_defind(self):
         """Test SummaryCollector with user defind."""
-        summary_dir = self._run_network(dataset_sink_mode=True, num_samples=2, user_defind={'test': 'self test'})
+        summary_dir = self._run_network(dataset_sink_mode=True, num_samples=2,
+                                        custom_lineage_data={'test': 'self test'})
 
         tag_list = self._list_summary_tags(summary_dir)
         # There will not record input data when dataset sink mode is True
@@ -213,9 +178,9 @@ class TestSummary:
                          'fc2.weight/auto', 'loss/auto', 'histogram', 'image', 'scalar', 'tensor'}
         assert set(expected_tags) == set(tag_list)
 
-
     @staticmethod
     def _list_summary_tags(summary_dir):
+        """list summary tags."""
         summary_file_path = ''
         for file in os.listdir(summary_dir):
             if re.search("_MS", file):
