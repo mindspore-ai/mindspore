@@ -17,7 +17,6 @@
 #include "nnacl/fp32/adder_fp32.h"
 #include <string.h>
 #include <math.h>
-#include "nnacl/fp32/common_func_fp32.h"
 #include "nnacl/fp32/matmul_fp32.h"
 
 void Adder12x4(const float *a, const float *b, float *dst, const float *bias, ActType act_type, int deep, int row,

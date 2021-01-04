@@ -55,8 +55,8 @@ class TransposeInt8CPUKernel : public LiteKernel {
   int thread_h_stride_ = 0;
   int thread_h_num_ = 0;
   int num_unit_ = 0;
-  int in_shape_[8];
-  int out_shape_[8];
+  int in_shape_[8] = {0};
+  int out_shape_[8] = {0};
 };
 }  // namespace mindspore::kernel
 

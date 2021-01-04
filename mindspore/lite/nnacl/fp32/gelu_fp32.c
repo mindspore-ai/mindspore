@@ -20,7 +20,7 @@
 #include <math.h>
 #include "nnacl/errorcode.h"
 
-int DoGeLU(float *src, float *out, int64_t real_dst_count, const GeLUParameter *param) {
+int DoGeLU(const float *src, float *out, int64_t real_dst_count, const GeLUParameter *param) {
   if (src == NULL || out == NULL) {
     return NNACL_ERR;
   }
