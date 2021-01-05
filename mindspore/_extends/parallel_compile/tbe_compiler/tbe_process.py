@@ -102,9 +102,20 @@ class TbeProcess:
     def __init__(self):
         self.__processe_num = multiprocessing.cpu_count()
         # max_processes_num: Set the maximum number of concurrent processes for compiler
-        max_processes_num = 24
-        if self.__processe_num > max_processes_num:
-            self.__processe_num = max_processes_num
+        self.max_processes_num = 24
+        process_num = os.getenv("MS_BUILD_PROCESS_NUM")
+        if process_num is None:
+            self.max_processes_num = 24
+        elif process_num.isdigit():
+            if int(process_num) in range(1, 25):
+                self.max_processes_num = int(process_num)
+            else:
+                raise EnvironmentError(
+                    f"Env ERROR, [MS_BUILD_PROCESS_NUM] should be in range(1, 25), but: {process_num}")
+        elif not process_num.isdigit():
+            raise EnvironmentError(f"Env ERROR, [MS_BUILD_PROCESS_NUM] should be a digit, but: {process_num}")
+        if self.__processe_num > self.max_processes_num:
+            self.__processe_num = self.max_processes_num
         self.__pool = None
         self.__next_task_id = 1
         self.__running_tasks = []
