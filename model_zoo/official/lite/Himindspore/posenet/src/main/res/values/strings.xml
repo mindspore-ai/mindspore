@@ -1,5 +1,4 @@
 <resources>
     <string name="posenet_app_name">PoseNetDemo</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="posenet_hello_blank_fragment">Hello blank fragment</string>
+    <string name="posenet_app_name_title">MS PoseNet</string>
 </resources>

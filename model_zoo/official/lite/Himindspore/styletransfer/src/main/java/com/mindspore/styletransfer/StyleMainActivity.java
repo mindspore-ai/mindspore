@@ -108,7 +108,7 @@ public class StyleMainActivity extends AppCompatActivity implements OnBackground
         if (originBitmap != null) {
             Glide.with(this).load(originBitmap).into(imgPreview);
         } else {
-            Toast.makeText(this, "Please select an original picture first", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_original, Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -209,7 +209,7 @@ public class StyleMainActivity extends AppCompatActivity implements OnBackground
 
     private void startRunningModel(Bitmap styleBitmap) {
         if (originBitmap == null) {
-            Toast.makeText(this, "Please select an original picture first", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_original, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -219,15 +219,14 @@ public class StyleMainActivity extends AppCompatActivity implements OnBackground
             ModelExecutionResult result = transferModelExecutor.execute(originBitmap, styleBitmap);
             if (null != result && null != result.getStyledImage()) {
                 resultBitmap = BitmapUtils.changeBitmapSize(result.getStyledImage(), originBitmap.getWidth(), originBitmap.getHeight());
-                Log.e("AAA", "w>>" + resultBitmap.getWidth() + ">>>h>>" + resultBitmap.getHeight());
                 Glide.with(this).load(resultBitmap).override(resultBitmap.getWidth(), resultBitmap.getHeight()).into(imgPreview);
             } else {
-                Toast.makeText(this, "ModelExecute failed", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, R.string.toast_execute_fail, Toast.LENGTH_SHORT).show();
             }
             isRunningModel = false;
             progressBar.setVisibility(View.INVISIBLE);
         } else {
-            Toast.makeText(this, "Previous Model still running", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.toast_model_run, Toast.LENGTH_SHORT).show();
         }
     }
 

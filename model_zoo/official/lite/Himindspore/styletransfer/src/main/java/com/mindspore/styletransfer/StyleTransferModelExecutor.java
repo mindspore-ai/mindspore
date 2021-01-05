@@ -34,7 +34,6 @@ import java.nio.FloatBuffer;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class StyleTransferModelExecutor {
 
@@ -96,7 +95,7 @@ public class StyleTransferModelExecutor {
         msConfig.free();
 
 
-        // Complile graph.
+        // Compile graph.
         if (!Predict_session.compileGraph(style_predict_model)) {
             Log.e("MS_LITE", "Compile style_predict graph failed");
             style_predict_model.freeBuffer();
@@ -106,7 +105,7 @@ public class StyleTransferModelExecutor {
             style_transform_model.freeBuffer();
         }
 
-        // Note: when use model.freeBuffer(), the model can not be complile graph again.
+        // Note: when use model.freeBuffer(), the model can not be compile graph again.
         style_predict_model.freeBuffer();
         style_transform_model.freeBuffer();
     }
@@ -151,10 +150,29 @@ public class StyleTransferModelExecutor {
         stylePredictTime = SystemClock.uptimeMillis() - stylePredictTime;
         Log.d(TAG, "Style Predict Time to run: " + stylePredictTime);
 
+        float[][][][] outputImage = getDealData(contentArray);
+
+        Bitmap styledImage =
+                ImageUtils.convertArrayToBitmap(outputImage, CONTENT_IMAGE_SIZE, CONTENT_IMAGE_SIZE);
+        postProcessTime = SystemClock.uptimeMillis() - postProcessTime;
+
+        fullExecutionTime = SystemClock.uptimeMillis() - fullExecutionTime;
+        Log.d(TAG, "Time to run everything: $" + fullExecutionTime);
+
+        return new ModelExecutionResult(styledImage,
+                preProcessTime,
+                stylePredictTime,
+                styleTransferTime,
+                postProcessTime,
+                fullExecutionTime,
+                formatExecutionLog());
+    }
+
+    @SuppressLint("LongLogTag")
+    private float[][][][] getDealData(ByteBuffer contentArray) {
         // Get output tensor values.
         List<String> tensorNames = Predict_session.getOutputTensorNames();
         Map<String, MSTensor> outputs = Predict_session.getOutputMapByTensor();
-        Set<Map.Entry<String, MSTensor>> entrys = outputs.entrySet();
 
         float[] Predict_results = null;
         for (String tensorName : tensorNames) {
@@ -163,10 +181,8 @@ public class StyleTransferModelExecutor {
                 Log.e("MS_LITE", "Can not find Predict_session output " + tensorName);
                 return null;
             }
-            int type = output.getDataType();
             Predict_results = output.getFloatData();
         }
-
 
         List<MSTensor> Transform_inputs = Transform_session.getInputs();
         // transform model have 2 input tensor,  tensor0: 1*1*1*100,   tensor1；1*384*384*3
@@ -217,23 +233,8 @@ public class StyleTransferModelExecutor {
             }
             outputImage[x] = arrayThree;
         }
-
-        Bitmap styledImage =
-                ImageUtils.convertArrayToBitmap(outputImage, CONTENT_IMAGE_SIZE, CONTENT_IMAGE_SIZE);
-        postProcessTime = SystemClock.uptimeMillis() - postProcessTime;
-
-        fullExecutionTime = SystemClock.uptimeMillis() - fullExecutionTime;
-        Log.d(TAG, "Time to run everything: $" + fullExecutionTime);
-
-        return new ModelExecutionResult(styledImage,
-                preProcessTime,
-                stylePredictTime,
-                styleTransferTime,
-                postProcessTime,
-                fullExecutionTime,
-                formatExecutionLog());
+        return outputImage;
     }
-
 
     private String formatExecutionLog() {
         StringBuilder sb = new StringBuilder();

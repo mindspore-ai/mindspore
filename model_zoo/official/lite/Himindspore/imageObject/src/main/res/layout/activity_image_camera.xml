@@ -26,7 +26,7 @@
             android:drawableStart="@drawable/logo2"
             android:drawablePadding="5dp"
             android:gravity="center_vertical"
-            android:text="@string/app_name_title"
+            android:text="@string/app_name"
             android:textColor="@color/white"
             android:textSize="20sp" />
 
@@ -40,6 +40,4 @@
         android:background="@color/colorPrimary"
         android:gravity="center"
         android:orientation="vertical" />
-
-
 </RelativeLayout>

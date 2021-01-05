@@ -43,7 +43,7 @@
             android:layout_gravity="center"
             android:gravity="center"
             android:paddingLeft="4dp"
-            android:text="Choose a Image"
+            android:text="@string/title_choose_image"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="20sp" />
@@ -72,7 +72,7 @@
             android:background="@color/gray_btn"
             android:gravity="center"
             android:onClick="onClickPhoto"
-            android:text="PHOTO"
+            android:text="@string/btn_photo"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="12sp" />
@@ -86,7 +86,7 @@
             android:background="@color/gray_btn"
             android:gravity="center"
             android:onClick="onClickCamera"
-            android:text="CAMERA"
+            android:text="@string/btn_camera"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="12sp" />
@@ -100,7 +100,7 @@
             android:background="@color/gray_btn"
             android:gravity="center"
             android:onClick="onClickRecovery"
-            android:text="RECOVERY"
+            android:text="@string/btn_recovery"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="12sp" />
@@ -114,7 +114,7 @@
             android:background="@color/gray_btn"
             android:gravity="center"
             android:onClick="onClickSave"
-            android:text="SAVE"
+            android:text="@string/btn_save"
             android:textAllCaps="false"
             android:textColor="@color/white"
             android:textSize="12sp" />
@@ -125,7 +125,7 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
         android:layout_marginTop="20dp"
-        android:text="Choose a Style"
+        android:text="@string/title_choose_style"
         android:textColor="@color/white"
         android:textSize="20sp" />
 

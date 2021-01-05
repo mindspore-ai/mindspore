@@ -17,7 +17,6 @@ package com.mindspore.himindspore;
 
 import android.Manifest;
 import android.app.ProgressDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -62,8 +61,9 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     private TextView versionText;
 
     private static final String CODE_URL = "https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/lite";
-    private static final String HELP_URL = "https://github.com/mindspore-ai/mindspore/issues";
+    private static final String HELP_URL = "https://gitee.com/mindspore/mindspore/issues/new?issue%5Bassignee_id%5D=0&issue%5Bmilestone_id%5D=0";
     private static final String STAR_URL = "https://gitee.com/mindspore/mindspore";
+    private static final String APK_URL = "https://download.mindspore.cn/model_zoo/official/lite/apk/mindmain.html";
 
 
     @Override
@@ -85,7 +85,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
             PackageManager packageManager = this.getPackageManager();
             PackageInfo packageInfo = packageManager.getPackageInfo(this.getPackageName(), 0);
             now_version = packageInfo.versionCode;
-            versionText.setText("Version: " + packageInfo.versionName);
+            versionText.setText(getString(R.string.title_version) + packageInfo.versionName);
         } catch (PackageManager.NameNotFoundException e) {
             e.printStackTrace();
         }
@@ -134,21 +134,18 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
 
     private void openAppDetails() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("HiMindSpore需要访问 “相机” 和 “外部存储器”，请到 “应用信息 -> 权限” 中授予！");
-        builder.setPositiveButton("去手动授权", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent();
-                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                intent.addCategory(Intent.CATEGORY_DEFAULT);
-                intent.setData(Uri.parse("package:" + getPackageName()));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                startActivity(intent);
-            }
+        builder.setMessage(getResources().getString(R.string.app_need_permission));
+        builder.setPositiveButton(getResources().getString(R.string.app_permission_by_hand), (dialog, which) -> {
+            Intent intent = new Intent();
+            intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+            intent.addCategory(Intent.CATEGORY_DEFAULT);
+            intent.setData(Uri.parse("package:" + getPackageName()));
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
+            intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+            startActivity(intent);
         });
-        builder.setNegativeButton("取消", null);
+        builder.setNegativeButton(getResources().getString(R.string.cancel), null);
         builder.show();
     }
 
@@ -238,6 +235,16 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
         openBrowser(STAR_URL);
     }
 
+    public void onClickShare(View view) {
+        Intent share_intent = new Intent();
+        share_intent.setAction(Intent.ACTION_SEND);
+        share_intent.setType("text/plain");
+        share_intent.putExtra(Intent.EXTRA_SUBJECT, getString(R.string.title_share));
+        share_intent.putExtra(Intent.EXTRA_TEXT, getString(R.string.title_share_commend) + APK_URL);
+        share_intent = Intent.createChooser(share_intent, getString(R.string.title_share));
+        startActivity(share_intent);
+    }
+
     public void openBrowser(String url) {
         Intent intent = new Intent();
         intent.setAction("android.intent.action.VIEW");
@@ -262,55 +269,40 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setIcon(android.R.drawable.ic_dialog_info);
-        builder.setTitle("下载完成");
-        builder.setMessage("是否安装");
+        builder.setTitle(getResources().getString(R.string.app_download_success));
+        builder.setMessage(getResources().getString(R.string.app_need_install));
         builder.setCancelable(false);
-        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent(Intent.ACTION_VIEW);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                    intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                    Uri contentUri = FileProvider.getUriForFile(SplashActivity.this, "com.mindspore.himindspore.fileprovider",
-                            new File(getApkPath(), "HiMindSpore.apk"));
-                    intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
-                } else {
-                    intent.setDataAndType(Uri.fromFile(new File(getApkPath(), "HiMindSpore.apk")), "application/vnd.android.package-archive");
-                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                }
-                startActivity(intent);
+        builder.setPositiveButton(getResources().getString(R.string.confirm), (dialog, which) -> {
+            Intent intent = new Intent(Intent.ACTION_VIEW);
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                Uri contentUri = FileProvider.getUriForFile(SplashActivity.this, "com.mindspore.himindspore.fileprovider",
+                        new File(getApkPath(), "HiMindSpore.apk"));
+                intent.setDataAndType(contentUri, "application/vnd.android.package-archive");
+            } else {
+                intent.setDataAndType(Uri.fromFile(new File(getApkPath(), "HiMindSpore.apk")), "application/vnd.android.package-archive");
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             }
+            startActivity(intent);
         });
-        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-            }
+        builder.setNegativeButton(getResources().getString(R.string.cancel), (dialog, which) -> {
         });
         builder.create().show();
     }
 
 
     public void showUpdate(final UpdateInfoBean updateInfo) {
-        if (now_version == updateInfo.getVersionCode()) {
-           // Toast.makeText(this, "已经是最新版本", Toast.LENGTH_SHORT).show();
-            Log.d(TAG + "版本号是", "onResponse: " + now_version);
-        } else {
+        if (now_version != updateInfo.getVersionCode()) {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setIcon(android.R.drawable.ic_dialog_info);
-            builder.setTitle("请升级新版本" + updateInfo.getVersionName());
+            builder.setTitle(getResources().getString(R.string.app_update_lastest) + updateInfo.getVersionName());
             builder.setMessage(updateInfo.getMessage());
             builder.setCancelable(false);
-            builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    Log.e(TAG, String.valueOf(Environment.MEDIA_MOUNTED));
-                    downFile();
-                }
+            builder.setPositiveButton(getResources().getString(R.string.confirm), (dialog, which) -> {
+                Log.e(TAG, String.valueOf(Environment.MEDIA_MOUNTED));
+                downFile();
             });
-            builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                }
+            builder.setNegativeButton(getResources().getString(R.string.cancel), (dialog, which) -> {
             });
             builder.create().show();
         }
@@ -319,8 +311,8 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
     public void downFile() {
         progressDialog = new ProgressDialog(this);
         progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        progressDialog.setTitle("正在下载");
-        progressDialog.setMessage("请稍候...");
+        progressDialog.setTitle(getResources().getString(R.string.app_is_loading));
+        progressDialog.setMessage(getResources().getString(R.string.app_wait));
         progressDialog.setProgressNumberFormat("%1d Mb/%2d Mb");
         progressDialog.setProgress(0);
         progressDialog.show();
@@ -332,7 +324,7 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
 
             @Override
             public void onDownLoadFail(Throwable throwable) {
-                Toast.makeText(SplashActivity.this, "下载失败", Toast.LENGTH_LONG).show();
+                Toast.makeText(SplashActivity.this, getResources().getString(R.string.app_load_fail), Toast.LENGTH_LONG).show();
             }
 
             @Override
@@ -358,13 +350,11 @@ public class SplashActivity extends BaseActivity<MainPresenter> implements MainC
             directoryPath = getFilesDir() + File.separator + "apk";
         }
         File file = new File(directoryPath);
-        Log.e("测试路径", directoryPath);
         if (!file.exists()) {
             file.mkdirs();
         }
         return directoryPath;
     }
-
 
 
 }

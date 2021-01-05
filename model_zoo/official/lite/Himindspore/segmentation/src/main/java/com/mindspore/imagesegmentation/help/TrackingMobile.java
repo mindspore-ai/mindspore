@@ -84,19 +84,19 @@ public class TrackingMobile {
         }
         msConfig.free();
 
-        // Complile graph.
+        // Compile graph.
         if (!session.compileGraph(model)) {
             Log.e(TAG, "Compile graph failed");
             model.freeBuffer();
             return;
         }
 
-        // Note: when use model.freeBuffer(), the model can not be complile graph again.
+        // Note: when use model.freeBuffer(), the model can not be compile graph again.
         model.freeBuffer();
 
     }
 
-    public ModelTrackingResult execut(Bitmap bitmap) {
+    public ModelTrackingResult execute(Bitmap bitmap) {
         // Set input tensor values.
         List<MSTensor> inputs = session.getInputs();
         if (inputs.size() != 1) {
@@ -135,8 +135,8 @@ public class TrackingMobile {
             int batch = output.getShape()[0];
             int channel = output.getShape()[1];
             int weight = output.getShape()[2];
-            int hight = output.getShape()[3];
-            int plane = weight * hight;
+            int height = output.getShape()[3];
+            int plane = weight * height;
 
             for (int n = 0; n < batch; n++) {
                 for (int c = 0; c < channel; c++) {

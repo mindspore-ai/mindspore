@@ -249,13 +249,10 @@ public class ImageUtils {
                 Log.e(TAG, e.getMessage());
             }
             MediaScannerConnection.scanFile(context, new String[]{path}, null,
-                    new MediaScannerConnection.OnScanCompletedListener() {
-                        @Override
-                        public void onScanCompleted(String path, Uri uri) {
-                            Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                            mediaScanIntent.setData(uri);
-                            context.sendBroadcast(mediaScanIntent);
-                        }
+                    (path1, uri) -> {
+                        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+                        mediaScanIntent.setData(uri);
+                        context.sendBroadcast(mediaScanIntent);
                     });
         } else {
             String relationDir = file.getParent();

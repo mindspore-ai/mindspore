@@ -123,7 +123,6 @@ ProcessRunnetResult(std::unordered_map<std::string, mindspore::tensor::MSTensor 
     auto branch1_tensor = iter->second;
     MS_PRINT("%s %s", branch1_string.c_str(), branch2_string.c_str());
 
-    // ----------- 接口测试 --------------------------
     float *tmpscores2 = reinterpret_cast<float *>(branch1_tensor->MutableData());
     float *tmpdata = reinterpret_cast<float *>(branch2_tensor->MutableData());
 

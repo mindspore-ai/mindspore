@@ -35,42 +35,7 @@ using mindspore::dataset::LPixelType;
 using mindspore::dataset::LDataType;
 #define MS_PRINT(format, ...) __android_log_print(ANDROID_LOG_INFO, "MSJNI", format, ##__VA_ARGS__)
 
-
-static const int RET_GARBAGE_SORT_SUM = 4;
-static const char *labels_name_grbage_sort_map[RET_GARBAGE_SORT_SUM] = {"可回收物",
-                                                                        "干垃圾",
-                                                                        "有害垃圾",
-                                                                        "湿垃圾"};
-
 static const int RET_GARBAGE_DETAILED_SUM = 26;
-static const char *labels_name_grbage_detailed_map[RET_GARBAGE_DETAILED_SUM] = {
-        "塑料瓶",
-        "帽子",
-        "报纸",
-        "易拉罐",
-        "玻璃制品",
-        "玻璃瓶",
-        "硬纸板",
-        "篮球",
-        "纸张",
-        "金属制品",
-        "一次性筷子",
-        "打火机",
-        "扫把",
-        "旧镜子",
-        "牙刷",
-        "脏污衣服",
-        "贝壳",
-        "陶瓷碗",
-        "油漆桶",
-        "电池",
-        "荧光灯",
-        "药片胶囊",
-        "橙皮",
-        "菜叶",
-        "蛋壳",
-        "香蕉皮"};
-
 
 char *CreateLocalModelBuffer(JNIEnv *env, jobject modelBuffer) {
     jbyte *modelAddr = static_cast<jbyte *>(env->GetDirectBufferAddress(modelBuffer));
@@ -86,7 +51,7 @@ char *CreateLocalModelBuffer(JNIEnv *env, jobject modelBuffer) {
  * @return
  */
 std::string
-GarbageProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_name_map[],
+GarbageProcessRunnetResult(const int RET_CATEGORY_SUM,
                            std::unordered_map<std::string, mindspore::tensor::MSTensor *> msOutputs) {
     // Get the branch of the model output.
     // Use iterators to get map elements.
@@ -110,20 +75,7 @@ GarbageProcessRunnetResult(const int RET_CATEGORY_SUM, const char *const labels_
     // Score for each category.
     // Converted to text information that needs to be displayed in the APP.
     std::string categoryScore = "";
-    if (maxIndex <= 9) {
-        categoryScore += labels_name_grbage_sort_map[0];
-        categoryScore += ":";
-    } else if (maxIndex > 9 && maxIndex <= 17) {
-        categoryScore += labels_name_grbage_sort_map[1];
-        categoryScore += ":";
-    } else if (maxIndex > 17 && maxIndex <= 21) {
-        categoryScore += labels_name_grbage_sort_map[2];
-        categoryScore += ":";
-    } else if (maxIndex > 21 && maxIndex <= 25) {
-        categoryScore += labels_name_grbage_sort_map[3];
-        categoryScore += ":";
-    }
-    categoryScore += labels_name_map[maxIndex];
+    categoryScore = std::to_string(maxIndex);
     return categoryScore;
 }
 
@@ -317,7 +269,6 @@ Java_com_mindspore_imageobject_imageclassification_help_GarbageTrackingMobile_ru
     }
 
     std::string resultStr = GarbageProcessRunnetResult(::RET_GARBAGE_DETAILED_SUM,
-                                                       ::labels_name_grbage_detailed_map,
                                                        msOutputs);
 
     const char *resultCharData = resultStr.c_str();

@@ -1,3 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">ImageSegmentation</string>
     <string name="no_pic_neededSave">Null Image needed to save</string>
@@ -11,5 +12,4 @@
     <string name="btn_recovery">RECOVERY</string>
     <string name="btn_save">SAVE</string>
     <string name="title_choose_back">Choose a Background</string>
-
 </resources>

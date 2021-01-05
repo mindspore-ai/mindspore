@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MindSpore</string>
+    <string name="app_need_permission">"MindSpore需要访问 “相机" 和 “外部存储器"，请到 “应用信息 -> 权限" 中授予！"</string>
+    <string name="app_permission_by_hand">"去手动授权"</string>
+    <string name="cancel">"取消"</string>
+    <string name="confirm">"确定"</string>
+    <string name="app_download_success">"下载完成"</string>
+    <string name="app_need_install">"是否安装"</string>
+    <string name="app_is_loading">"正在下载"</string>
+    <string name="app_wait">"请稍候..."</string>
+    <string name="app_load_fail">"下载失败"</string>
+    <string name="app_update_lastest">"请升级新版本"</string>
+    <string name="title_image">图像分类</string>
+    <string name="title_image_garbage">垃圾分类</string>
+    <string name="title_object">照片检测</string>
+    <string name="title_object_camera">视频检测</string>
+    <string name="title_pose_net"> 骨骼检测</string>
+    <string name="title_style_transfer">风格迁移</string>
+    <string name="title_segmentation">图像分割</string>
+    <string name="title_source">代码</string>
+    <string name="title_scene">场景检测</string>
+    <string name="title_help">反馈</string>
+    <string name="title_star">打星</string>
+    <string name="title_version">版本号： </string>
+    <string name="title_share">分享</string>
+    <string name="title_share_commend">MindSpore APP：初学者的一站式协同学习、演示、体验平台\t</string>
+</resources>
