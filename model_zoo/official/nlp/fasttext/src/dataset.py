@@ -53,14 +53,14 @@ class FastTextDataPreProcess():
         self.ngram = ngram
         self.text_greater = '>'
         self.text_less = '<'
-        self.ngram2idx = dict()
-        self.idx2gram = dict()
+        self.word2vec = dict()
+        self.vec2words = dict()
         self.non_str = '\\'
         self.end_string = ['.', '?', '!']
-        self.ngram2idx['PAD'] = 0
-        self.idx2gram[0] = 'PAD'
-        self.ngram2idx['UNK'] = 1
-        self.idx2gram[1] = 'UNK'
+        self.word2vec['PAD'] = 0
+        self.vec2words[0] = 'PAD'
+        self.word2vec['UNK'] = 1
+        self.vec2words[1] = 'UNK'
         self.str_html = re.compile(r'<[^>]+>')
 
     def load(self):
@@ -144,13 +144,13 @@ class FastTextDataPreProcess():
         for l in range(train_dataset_list_length):
             bucket_length = self._get_bucket_length(train_dataset_list[l][0], self.buckets)
             while len(train_dataset_list[l][0]) < bucket_length:
-                train_dataset_list[l][0].append(self.ngram2idx['PAD'])
+                train_dataset_list[l][0].append(self.word2vec['PAD'])
             train_dataset_list[l][1] = len(train_dataset_list[l][0])
         # pad test dataset
         for j in range(test_dataset_list_length):
             test_bucket_length = self._get_bucket_length(test_dataset_list[j][0], self.test_bucket)
             while len(test_dataset_list[j][0]) < test_bucket_length:
-                test_dataset_list[j][0].append(self.ngram2idx['PAD'])
+                test_dataset_list[j][0].append(self.word2vec['PAD'])
             test_dataset_list[j][1] = len(test_dataset_list[j][0])
 
         train_example_data = []
@@ -173,7 +173,7 @@ class FastTextDataPreProcess():
             for key in self.test_feature_dict:
                 if key == test_example_data[h]['src_tokens_length']:
                     self.test_feature_dict[key].append(test_example_data[h])
-        print("train vocab size is ", len(self.ngram2idx))
+        print("train vocab size is ", len(self.word2vec))
 
         return self.train_feature_dict, self.test_feature_dict
 
@@ -210,13 +210,13 @@ class FastTextDataPreProcess():
 
         if train_mode is True:
             for ngms in bo_ngrams:
-                idx = self.ngram2idx.get(ngms)
+                idx = self.word2vec.get(ngms)
                 if idx is None:
-                    idx = len(self.ngram2idx)
-                    self.ngram2idx[ngms] = idx
-                    self.idx2gram[idx] = ngms
+                    idx = len(self.word2vec)
+                    self.word2vec[ngms] = idx
+                    self.vec2words[idx] = ngms
 
-        processed_out = [self.ngram2idx[ng] if ng in self.ngram2idx else self.ngram2idx['UNK'] for ng in bo_ngrams]
+        processed_out = [self.word2vec[ng] if ng in self.word2vec else self.word2vec['UNK'] for ng in bo_ngrams]
 
         return processed_out
 

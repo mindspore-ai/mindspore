@@ -60,7 +60,7 @@ then
   mkdir ./dbpedia
   cd ./dbpedia || exit
   echo "start data preprocess for device $DEVICE_ID"
-  python ../../src/dataset.py  --train_file $SOURCE_DATASET_PATH/train.csv --test_file $SOURCE_DATASET_PATH/test.csv --class_num 14 --max_len 3013 --bucket [128,512,3013] --test_bucket [1120]
+  python ../../src/dataset.py  --train_file $SOURCE_DATASET_PATH/train.csv --test_file $SOURCE_DATASET_PATH/test.csv --class_num 14 --max_len 3013 --bucket [64,128,256,512,3013] --test_bucket [64,128,256,512,1120]
   cd ..
 fi
 
@@ -74,7 +74,7 @@ then
   mkdir ./yelp_p
   cd ./yelp_p || exit
   echo "start data preprocess for device $DEVICE_ID"
-  python ../../src/dataset.py  --train_file $SOURCE_DATASET_PATH/train.csv --test_file $SOURCE_DATASET_PATH/test.csv --class_num 2 --max_len 2955 --bucket [64,128,256,512,2955] --test_bucket [2955]
+  python ../../src/dataset.py  --train_file $SOURCE_DATASET_PATH/train.csv --test_file $SOURCE_DATASET_PATH/test.csv --class_num 2 --max_len 2955 --bucket [64,128,256,512,2955] --test_bucket [64,128,256,512,2955]
   cd ..
 fi
 

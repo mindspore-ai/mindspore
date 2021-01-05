@@ -136,7 +136,7 @@ def _build_training_pipeline(pre_dataset):
     loss_monitor = LossCallBack(rank_ids=rank_id)
     dataset_size = pre_dataset.get_dataset_size()
     time_monitor = TimeMonitor(data_size=dataset_size)
-    ckpt_config = CheckpointConfig(save_checkpoint_steps=decay_steps,
+    ckpt_config = CheckpointConfig(save_checkpoint_steps=decay_steps * config.epoch,
                                    keep_checkpoint_max=config.keep_ckpt_max)
     callbacks = [time_monitor, loss_monitor]
     if rank_size is None or int(rank_size) == 1:
