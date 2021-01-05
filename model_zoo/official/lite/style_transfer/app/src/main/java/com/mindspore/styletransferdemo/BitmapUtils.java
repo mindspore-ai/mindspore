@@ -89,7 +89,7 @@ public class BitmapUtils {
     }
 
     // Scale pictures to screen width.
-    private static Bitmap zoomImage(Bitmap imageBitmap, int targetWidth, int maxHeight) {
+    public static Bitmap zoomImage(Bitmap imageBitmap, int targetWidth, int maxHeight) {
         float scaleFactor =
                 Math.max(
                         (float) imageBitmap.getWidth() / (float) targetWidth,
@@ -102,6 +102,26 @@ public class BitmapUtils {
                         true);
 
         return resizedBitmap;
+    }
+
+    public static Bitmap changeBitmapSize(Bitmap bitmap, int targetWidth, int targetHeight) {
+        int width = bitmap.getWidth();
+        int height = bitmap.getHeight();
+        Log.e("width", "width:" + width);
+        Log.e("height", "height:" + height);
+
+        float scaleWidth = ((float) targetWidth) / width;
+        float scaleHeight = ((float) targetHeight) / height;
+
+        Matrix matrix = new Matrix();
+        matrix.postScale(scaleWidth, scaleHeight);
+
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, width, height, matrix, true);
+        bitmap.getWidth();
+        bitmap.getHeight();
+        Log.e("newWidth", "newWidth" + bitmap.getWidth());
+        Log.e("newHeight", "newHeight" + bitmap.getHeight());
+        return bitmap;
     }
 
     /**

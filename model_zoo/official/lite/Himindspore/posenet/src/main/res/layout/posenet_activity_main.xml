@@ -27,5 +27,14 @@
             android:text="MindSpore PoseNet"
             android:textColor="#ffffff"
             android:textSize="20sp" />
+
+        <ImageView
+            android:onClick="onClickSwitch"
+            android:clickable="true"
+            android:layout_marginEnd="10dp"
+            android:layout_gravity="center_vertical|right"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:src="@drawable/ic_camera_switch"/>
     </androidx.appcompat.widget.Toolbar>
 </RelativeLayout>
