@@ -274,9 +274,10 @@ PYBIND_REGISTER(TransferNode, 2, ([](const py::module *m) {
                   (void)py::class_<TransferNode, DatasetNode, std::shared_ptr<TransferNode>>(*m, "TransferNode",
                                                                                              "to create a TransferNode")
                     .def(py::init([](std::shared_ptr<DatasetNode> self, std::string queue_name, std::string device_type,
-                                     bool send_epoch_end, int32_t total_batch, bool create_data_info_queue) {
-                      auto transfer = std::make_shared<TransferNode>(self, queue_name, device_type, send_epoch_end,
-                                                                     total_batch, create_data_info_queue);
+                                     int32_t device_id, bool send_epoch_end, int32_t total_batch,
+                                     bool create_data_info_queue) {
+                      auto transfer = std::make_shared<TransferNode>(
+                        self, queue_name, device_type, device_id, send_epoch_end, total_batch, create_data_info_queue);
                       THROW_IF_ERROR(transfer->ValidateParams());
                       return transfer;
                     }));

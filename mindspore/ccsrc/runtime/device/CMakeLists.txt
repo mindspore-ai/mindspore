@@ -16,7 +16,8 @@ else()
 endif()
 
 if(ENABLE_D)
-    file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ascend/*.cc" "kernel_adjust.cc")
+    file(GLOB_RECURSE D_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "ascend/*.cc" "kernel_adjust.cc"
+        "../../minddata/dataset/engine/tdt/tdt_handle.cc")
 endif()
 
 if(ENABLE_CPU)

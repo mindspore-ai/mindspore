@@ -277,7 +277,7 @@ if(ENABLE_GPUQUE)
 endif()
 
 if(ENABLE_TDTQUE)
-    target_link_libraries(_c_dataengine PRIVATE ${TSDCLIENT})
+    target_link_libraries(_c_dataengine PRIVATE ${ACL})
 endif()
 
 add_dependencies(_c_dataengine _c_mindrecord)

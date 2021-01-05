@@ -181,7 +181,7 @@ std::shared_ptr<PullIterator> Dataset::CreatePullBasedIterator(std::vector<std::
 #ifndef ENABLE_ANDROID
 // Function to return a transferred Node that transfers data through a device.
 bool Dataset::DeviceQueueCharIF(const std::vector<char> &queue_name, const std::vector<char> &device_type,
-                                int32_t num_epochs, bool send_epoch_end, int32_t total_batches,
+                                int32_t device_id, int32_t num_epochs, bool send_epoch_end, int32_t total_batches,
                                 bool create_data_info_queue) {
   Status rc;
 
@@ -196,7 +196,7 @@ bool Dataset::DeviceQueueCharIF(const std::vector<char> &queue_name, const std::
   // Add TransferNode IR on top of dataset
   auto ds =
     std::make_shared<TransferNode>(shared_from_this()->IRNode(), CharToString(queue_name), CharToString(device_type),
-                                   send_epoch_end, total_batches, create_data_info_queue);
+                                   device_id, send_epoch_end, total_batches, create_data_info_queue);
 
   // Get ToDevice consumer
   auto consumer = std::make_unique<ToDevice>(num_epochs);
