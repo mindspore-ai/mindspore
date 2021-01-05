@@ -131,6 +131,7 @@ Status CacheServerHW::GetNumaNodeInfo() {
       while (iter != end) {
         auto match = iter->str();
         auto pos = match.find_first_of('-');
+        CHECK_FAIL_RETURN_UNEXPECTED(pos != std::string::npos, "Failed to parse numa node file");
         std::string min = match.substr(0, pos);
         std::string max = match.substr(pos + 1);
         cpu_id_t cpu_min = strtol(min.data(), nullptr, 10);
