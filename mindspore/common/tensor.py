@@ -19,7 +19,7 @@ from mindspore import log as logger
 from mindspore.communication.management import get_rank, get_group_size
 from . import dtype as mstype
 from ._register_for_tensor import tensor_operator_registry
-from .._c_expression import MetaTensor as MetaTensor_
+from .._c_expression import MetaTensor
 from .._c_expression import Tensor as Tensor_
 from .._checkparam import Validator as validator
 
@@ -60,32 +60,46 @@ class Tensor(Tensor_):
         >>> assert t2.dtype == mindspore.float64
     """
 
-    def __init__(self, input_data, dtype=None):
+    def __init__(self, input_data=None, dtype=None, shape=None, init=None):
         # If input data is numpy number, convert it to np array
         if isinstance(input_data, np_types):
             input_data = np.array(input_data)
 
-        # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
-        validator.check_value_type('input_data', input_data, (Tensor_, np.ndarray, list, tuple, float, int, bool),
-                                   'Tensor')
-        valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
-                        np.float16, np.float32, np.float64, np.bool_)
-        if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes:
-            raise TypeError(f"For Tensor, the input_data is a numpy array, "
-                            f"but it's data type is not in supported list: {list(i.__name__ for i in valid_dtypes)}.")
-        if isinstance(input_data, (tuple, list)):
-            if np.array(input_data).dtype not in valid_dtypes:
-                raise TypeError(f"For Tensor, the input_data is {input_data} that contain unsupported element.")
-        if dtype is not None:
-            validator.check_type_name('dtype', dtype, mstype.number_type + (mstype.bool_,), "Tensor")
+        if ((input_data is not None and init is None) or (input_data is None and init is not None)) is False:
+            raise TypeError("input_data and init can not be None at the same time.")
 
-        if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
-            input_data = np.ascontiguousarray(input_data)
-        if dtype is None:
-            Tensor_.__init__(self, input_data)
+        # If input_data is tuple/list/numpy.ndarray, it's support in check_type method.
+        if init is None:
+            validator.check_value_type('input_data', input_data, (Tensor_, np.ndarray, list, tuple, float, int, bool),
+                                       'Tensor')
+            valid_dtypes = (np.int8, np.int16, np.int32, np.int64, np.uint8, np.uint16, np.uint32, np.uint64,
+                            np.float16, np.float32, np.float64, np.bool_)
+            if isinstance(input_data, np.ndarray) and input_data.dtype not in valid_dtypes:
+                raise TypeError(f"For Tensor, the input_data is a numpy array, "
+                                f"but it's data type is not in supported list:\
+                                {list(i.__name__ for i in valid_dtypes)}.")
+            if isinstance(input_data, (tuple, list)):
+                if np.array(input_data).dtype not in valid_dtypes:
+                    raise TypeError(f"For Tensor, the input_data is {input_data} that contain unsupported element.")
+            if dtype is not None:
+                validator.check_type_name('dtype', dtype, mstype.number_type + (mstype.bool_,), "Tensor")
+
+            if isinstance(input_data, np.ndarray) and (not input_data.flags['FORC']):
+                input_data = np.ascontiguousarray(input_data)
+            if dtype is None:
+                Tensor_.__init__(self, input_data)
+            else:
+                Tensor_.__init__(self, input_data, dtype)
         else:
-            Tensor_.__init__(self, input_data, dtype)
+            Tensor_.__init__(self, dtype, shape)
         self._virtual_flag = False
+        self.init = init
+
+    def __deepcopy__(self, memodict):
+        new_obj = Tensor(self)
+        new_obj.init = self.init
+        new_obj._virtual_flag = self._virtual_flag # pylint:disable=w0212
+        return new_obj
 
     def __repr__(self):
         Tensor_.data_sync(self, False)
@@ -249,6 +263,11 @@ class Tensor(Tensor_):
         return len(self._shape)
 
     @property
+    def has_init(self):
+        """tensor is inited."""
+        return self.init is not None
+
+    @property
     def virtual_flag(self):
         """Mark tensor is virtual."""
         return self._virtual_flag
@@ -364,6 +383,69 @@ class Tensor(Tensor_):
         if axis is None:
             axis = ()
         return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
+
+
+    def init_data(self, slice_index=None, shape=None, opt_shard_group=None):
+        """
+        Get the tensor format data of this Tensor.
+
+        Args:
+            slice_index (int): Slice index of a parameter's slices.
+            It is used when initialize a slice of a parameter, it guarantees that devices
+            using the same slice can generate the same tensor.
+            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
+            opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
+                to get one shard of a parameter's slice.
+        """
+        if self.init is None:
+            raise TypeError("init_data must be set Tensor.init, init can't be None")
+
+        if shape is None:
+            shape = self.shape
+
+        try:
+            arr = np.ndarray(shape, dtype=mstype.dtype_to_nptype(self.dtype))
+        except ValueError:
+            msg = "Error shape={}".format(shape)
+            logger.error(msg)
+            raise ValueError(msg)
+
+        class seed_context:
+            '''set and restore seed'''
+
+            def __init__(self, init):
+                self.init = init
+                from .seed import get_seed
+                global_seed = get_seed()
+                self._np_seed = np.random.get_state()[1][0]
+                self.need_set_seed = ((slice_index is not None) and (global_seed is None))
+
+            def __enter__(self):
+                if self.need_set_seed:
+                    self.seed = self.init.seed
+                    np.random.seed(slice_index)
+                    self.init.seed = slice_index
+
+            def __exit__(self, ptype, value, trace):
+                if self.need_set_seed:
+                    np.random.seed(self._np_seed)
+                    self.init.seed, _ = self.seed
+
+        with seed_context(self.init):
+            self.init(arr)
+        data = np.array(arr)
+        if opt_shard_group:
+            rank = get_rank(opt_shard_group)
+            size = get_group_size(opt_shard_group)
+            data = np.split(data, size)[rank]
+        return Tensor(data, dtype=self.dtype)
+
+
+    def to_tensor(self, slice_index=None, shape=None, opt_shard_group=None):
+        """Return init_data()."""
+        logger.warning("WARN_DEPRECATED: The usage of to_tensor is deprecated."
+                       " Please use init_data")
+        return self.init_data(slice_index, shape, opt_shard_group)
 
 
 class RowTensor:
@@ -496,76 +578,6 @@ class SparseTensor:
     @property
     def dense_shape(self):
         return self.__dense_shape
-
-
-class MetaTensor(MetaTensor_):
-    """
-    The base class of the MetaTensor.
-    Initialization of tensor basic attributes and model weight values.
-
-    Returns:
-        Array, an array after being initialized.
-    """
-
-    def __init__(self, dtype, shape, init=None):
-        # check param
-        self.init = init
-        MetaTensor_.__init__(self, dtype, shape)
-
-    def to_tensor(self, slice_index=None, shape=None, opt_shard_group=None):
-        """
-        Get the tensor format data of this MetaTensor.
-
-        Args:
-            slice_index (int): Slice index of a parameter's slices.
-                It is used when initialize a slice of a parameter, it guarantees that devices
-                using the same slice can generate the same tensor.
-            shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
-            opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
-                to get one shard of a parameter's slice.
-        """
-        if self.init is None:
-            raise TypeError("to_dense must be set MetaTensor.init, init can't be None")
-
-        if shape is None:
-            shape = self.shape
-
-        try:
-            arr = np.ndarray(shape, dtype=mstype.dtype_to_nptype(self.dtype))
-        except ValueError:
-            msg = "Error shape={}".format(shape)
-            logger.error(msg)
-            raise ValueError(msg)
-
-        class seed_context:
-            '''set and restore seed'''
-
-            def __init__(self, init):
-                self.init = init
-                from .seed import get_seed
-                global_seed = get_seed()
-                self._np_seed = np.random.get_state()[1][0]
-                self.need_set_seed = ((slice_index is not None) and (global_seed is None))
-
-            def __enter__(self):
-                if self.need_set_seed:
-                    self.seed = self.init.seed
-                    np.random.seed(slice_index)
-                    self.init.seed = slice_index
-
-            def __exit__(self, ptype, value, trace):
-                if self.need_set_seed:
-                    np.random.seed(self._np_seed)
-                    self.init.seed, _ = self.seed
-
-        with seed_context(self.init):
-            self.init(arr)
-        data = np.array(arr)
-        if opt_shard_group:
-            rank = get_rank(opt_shard_group)
-            size = get_group_size(opt_shard_group)
-            data = np.split(data, size)[rank]
-        return Tensor(data, dtype=self.dtype)
 
 
 def _vm_compare(*args):

@@ -29,7 +29,7 @@ class DenseNoTranpose(nn.Cell):
         super(DenseNoTranpose, self).__init__()
 
         self.weight = Parameter(initializer(weight_init, [input_channels, output_channels], mstype.float16))
-        self.bias = Parameter(initializer("zeros", [output_channels], mstype.float16).to_tensor())
+        self.bias = Parameter(initializer("zeros", [output_channels], mstype.float16))
 
         self.matmul = P.MatMul(transpose_b=False)
         self.bias_add = P.BiasAdd()
@@ -79,16 +79,16 @@ class Rcnn(nn.Cell):
         self.test_batch_size = cfg.test_batch_size
 
         shape_0 = (self.rcnn_fc_out_channels, representation_size)
-        weights_0 = initializer("XavierUniform", shape=shape_0[::-1], dtype=mstype.float16).to_tensor()
+        weights_0 = initializer("XavierUniform", shape=shape_0[::-1], dtype=mstype.float16)
         shape_1 = (self.rcnn_fc_out_channels, self.rcnn_fc_out_channels)
-        weights_1 = initializer("XavierUniform", shape=shape_1[::-1], dtype=mstype.float16).to_tensor()
+        weights_1 = initializer("XavierUniform", shape=shape_1[::-1], dtype=mstype.float16)
         self.shared_fc_0 = DenseNoTranpose(representation_size, self.rcnn_fc_out_channels, weights_0)
         self.shared_fc_1 = DenseNoTranpose(self.rcnn_fc_out_channels, self.rcnn_fc_out_channels, weights_1)
 
         cls_weight = initializer('Normal', shape=[num_classes, self.rcnn_fc_out_channels][::-1],
-                                 dtype=mstype.float16).to_tensor()
+                                 dtype=mstype.float16)
         reg_weight = initializer('Normal', shape=[num_classes * 4, self.rcnn_fc_out_channels][::-1],
-                                 dtype=mstype.float16).to_tensor()
+                                 dtype=mstype.float16)
         self.cls_scores = DenseNoTranpose(self.rcnn_fc_out_channels, num_classes, cls_weight)
         self.reg_scores = DenseNoTranpose(self.rcnn_fc_out_channels, num_classes * 4, reg_weight)
 

@@ -27,7 +27,7 @@ class DenseNoTranpose(nn.Cell):
     def __init__(self, input_channels, output_channels, weight_init):
         super(DenseNoTranpose, self).__init__()
         self.weight = Parameter(initializer(weight_init, [input_channels, output_channels], mstype.float16))
-        self.bias = Parameter(initializer("zeros", [output_channels], mstype.float16).to_tensor())
+        self.bias = Parameter(initializer("zeros", [output_channels], mstype.float16))
         self.matmul = P.MatMul(transpose_b=False)
         self.bias_add = P.BiasAdd()
 
@@ -41,16 +41,16 @@ class FpnCls(nn.Cell):
         super(FpnCls, self).__init__()
         representation_size = input_channels * pool_size * pool_size
         shape_0 = (output_channels, representation_size)
-        weights_0 = initializer("XavierUniform", shape=shape_0[::-1], dtype=mstype.float16).to_tensor()
+        weights_0 = initializer("XavierUniform", shape=shape_0[::-1], dtype=mstype.float16)
         shape_1 = (output_channels, output_channels)
-        weights_1 = initializer("XavierUniform", shape=shape_1[::-1], dtype=mstype.float16).to_tensor()
+        weights_1 = initializer("XavierUniform", shape=shape_1[::-1], dtype=mstype.float16)
         self.shared_fc_0 = DenseNoTranpose(representation_size, output_channels, weights_0)
         self.shared_fc_1 = DenseNoTranpose(output_channels, output_channels, weights_1)
 
         cls_weight = initializer('Normal', shape=[num_classes, output_channels][::-1],
-                                 dtype=mstype.float16).to_tensor()
+                                 dtype=mstype.float16)
         reg_weight = initializer('Normal', shape=[num_classes * 4, output_channels][::-1],
-                                 dtype=mstype.float16).to_tensor()
+                                 dtype=mstype.float16)
         self.cls_scores = DenseNoTranpose(output_channels, num_classes, cls_weight)
         self.reg_scores = DenseNoTranpose(output_channels, num_classes * 4, reg_weight)
 

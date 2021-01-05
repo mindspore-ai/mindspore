@@ -253,33 +253,33 @@ def default_recurisive_init(custom_cell):
         if 'hm' in name or 'wh' in name or 'off' in name or 'kps' in name:
             if isinstance(cell, (nn.Conv2d)):
                 cell.weight.set_data(init.initializer(RandomNormal(), cell.weight.data.shape,
-                                                      cell.weight.data.dtype).to_tensor())
+                                                      cell.weight.data.dtype))
                 if cell.bias is not None:
                     cell.bias.set_data(init.initializer('zeros', cell.bias.data.shape,
-                                                        cell.bias.data.dtype).to_tensor())
+                                                        cell.bias.data.dtype))
                 continue
 
         if isinstance(cell, (nn.Conv2d)):
             cell.weight.set_data(init.initializer(KaimingNormal(mode='fan_out'),
                                                   cell.weight.data.shape,
-                                                  cell.weight.data.dtype).to_tensor())
+                                                  cell.weight.data.dtype))
             if cell.bias is not None:
                 cell.bias.set_data(init.initializer('zeros', cell.bias.data.shape,
-                                                    cell.bias.data.dtype).to_tensor())
+                                                    cell.bias.data.dtype))
         elif isinstance(cell, nn.Dense):
             cell.weight.set_data(init.initializer(KaimingNormal(mode='fan_out'),
                                                   cell.weight.data.shape,
-                                                  cell.weight.data.dtype).to_tensor())
+                                                  cell.weight.data.dtype))
             if cell.bias is not None:
                 cell.bias.set_data(init.initializer('zeros', cell.bias.data.shape,
-                                                    cell.bias.data.dtype).to_tensor())
+                                                    cell.bias.data.dtype))
         elif isinstance(cell, (nn.BatchNorm2d, nn.BatchNorm1d)):
-            cell.gamma.set_data(init.initializer('ones', cell.gamma.data.shape).to_tensor())
-            cell.beta.set_data(init.initializer('zeros', cell.beta.data.shape).to_tensor())
+            cell.gamma.set_data(init.initializer('ones', cell.gamma.data.shape))
+            cell.beta.set_data(init.initializer('zeros', cell.beta.data.shape))
         elif isinstance(cell, nn.Conv2dTranspose):
             cell.weight.set_data(init.initializer(KaimingUniform(a=math.sqrt(5), mode='fan_out'),
                                                   cell.weight.data.shape,
-                                                  cell.weight.data.dtype).to_tensor())
+                                                  cell.weight.data.dtype))
             if cell.bias is not None:
                 cell.bias.set_data(init.initializer('zeros', cell.bias.data.shape,
-                                                    cell.bias.data.dtype).to_tensor())
+                                                    cell.bias.data.dtype))
