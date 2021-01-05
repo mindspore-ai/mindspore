@@ -5,6 +5,7 @@
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
 - [Quick Start](#quick-start)
+- [Run in docker](#Run-in-docker)
 - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
     - [Script Parameters](#script-parameters)
@@ -397,7 +398,7 @@ bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 
 - Notes
 1. hccl.json which is specified by RANK_TABLE_FILE is needed when you are running a distribute task. You can generate it by using the [hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools).
-2. As for PRETRAINED_MODEL，it should be a trained ResNet50 checkpoint. If not set, the model will be trained from the very beginning. If you need to load Ready-made pretrained FasterRcnn checkpoint, you may make changes to the train.py script as follows.
+2. As for PRETRAINED_MODEL，it should be a trained ResNet50 checkpoint. If not set, the model will be trained from the very beginning. If you need to load Ready-made pretrained MaskRcnn checkpoint, you may make changes to the train.py script as follows.
 
 ```python
 # Comment out the following code
