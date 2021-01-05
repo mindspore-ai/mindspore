@@ -30,22 +30,6 @@ namespace dataset {
 #define INT16_CAST(X) \
   static_cast<int16_t>(::std::min(::std::max(static_cast<int>(X + (X >= 0.f ? 0.5f : -0.5f)), -32768), 32767));
 
-#define R2GRAY 77
-#define G2GRAY 150
-#define B2GRAY 29
-#define GRAYSHIFT 8
-
-#define YSCALE 0x0101
-#define UTOB (-128)
-#define UTOG 25
-#define VTOR (-102)
-#define VTOG 52
-#define YTOG 18997
-#define YTOGB (-1160)
-#define BTOB (UTOB * 128 + YTOGB)
-#define BTOG (UTOG * 128 + VTOG * 128 + YTOGB)
-#define BTOR (VTOR * 128 + YTOGB)
-
 enum PaddBorderType { PADD_BORDER_CONSTANT = 0, PADD_BORDER_REPLICATE = 1 };
 
 struct BoxesConfig {
@@ -106,6 +90,14 @@ void ConvertBoxes(std::vector<std::vector<float>> &boxes, const std::vector<std:
 /// \brief Apply Non-Maximum Suppression
 std::vector<int> ApplyNms(const std::vector<std::vector<float>> &all_boxes, std::vector<float> &all_scores, float thres,
                           int max_boxes);
+
+/// \brief affine image by linear
+bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int dst_w, int dst_h,
+                        PaddBorderType borderType, std::vector<uint8_t> &borderValue);
+
+/// \brief perspective image by linear
+bool WarpPerspectiveBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int dst_w, int dst_h,
+                             PaddBorderType borderType, std::vector<uint8_t> &borderValue);
 
 }  // namespace dataset
 }  // namespace mindspore

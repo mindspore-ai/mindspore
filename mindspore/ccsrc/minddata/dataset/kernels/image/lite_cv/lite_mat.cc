@@ -39,6 +39,7 @@ LiteMat::LiteMat() {
   size_ = 0;
   data_type_ = LDataType::UINT8;
   ref_count_ = nullptr;
+  setSteps(0, 0, 0);
 }
 
 LiteMat::LiteMat(int width, LDataType data_type) {
@@ -52,6 +53,7 @@ LiteMat::LiteMat(int width, LDataType data_type) {
   data_type_ = LDataType::UINT8;
   ref_count_ = nullptr;
   size_ = 0;
+  setSteps(0, 0, 0);
   Init(width, data_type);
 }
 
@@ -66,6 +68,7 @@ LiteMat::LiteMat(int width, int height, LDataType data_type) {
   data_type_ = LDataType::UINT8;
   ref_count_ = nullptr;
   size_ = 0;
+  setSteps(0, 0, 0);
   Init(width, height, data_type);
 }
 
@@ -80,6 +83,7 @@ LiteMat::LiteMat(int width, int height, void *p_data, LDataType data_type) {
   data_type_ = LDataType::UINT8;
   ref_count_ = nullptr;
   size_ = 0;
+  setSteps(0, 0, 0);
   Init(width, height, p_data, data_type);
 }
 
@@ -94,6 +98,7 @@ LiteMat::LiteMat(int width, int height, int channel, LDataType data_type) {
   data_type_ = LDataType::UINT8;
   ref_count_ = nullptr;
   size_ = 0;
+  setSteps(0, 0, 0);
   Init(width, height, channel, data_type);
 }
 
@@ -108,6 +113,7 @@ LiteMat::LiteMat(int width, int height, int channel, void *p_data, LDataType dat
   data_type_ = LDataType::UINT8;
   ref_count_ = nullptr;
   size_ = 0;
+  setSteps(0, 0, 0);
   Init(width, height, channel, p_data, data_type);
 }
 
@@ -130,9 +136,16 @@ LiteMat::LiteMat(const LiteMat &m) {
   data_type_ = m.data_type_;
   ref_count_ = m.ref_count_;
   size_ = 0;
+  setSteps(m.steps_[0], m.steps_[1], m.steps_[2]);
   if (ref_count_) {
     addRef(ref_count_, 1);
   }
+}
+
+void LiteMat::setSteps(int c0, int c1, int c2) {
+  steps_[0] = c0;
+  steps_[1] = c1;
+  steps_[2] = c2;
 }
 
 LiteMat &LiteMat::operator=(const LiteMat &m) {
@@ -154,7 +167,8 @@ LiteMat &LiteMat::operator=(const LiteMat &m) {
   dims_ = m.dims_;
   data_type_ = m.data_type_;
   ref_count_ = m.ref_count_;
-  size_ = 0;
+  setSteps(m.steps_[0], m.steps_[1], m.steps_[2]);
+  size_ = m.size_;
   return *this;
 }
 
@@ -171,6 +185,7 @@ void LiteMat::Init(int width, LDataType data_type) {
   data_ptr_ = AlignMalloc(size_);
   ref_count_ = new int[1];
   *ref_count_ = 1;
+  steps_[0] = elem_size_;
 }
 
 void LiteMat::Init(int width, int height, LDataType data_type) {
@@ -186,6 +201,8 @@ void LiteMat::Init(int width, int height, LDataType data_type) {
   data_ptr_ = AlignMalloc(size_);
   ref_count_ = new int[1];
   *ref_count_ = 1;
+  steps_[1] = elem_size_;
+  steps_[0] = width_ * steps_[1];
 }
 
 void LiteMat::Init(int width, int height, void *p_data, LDataType data_type) {
@@ -199,6 +216,8 @@ void LiteMat::Init(int width, int height, void *p_data, LDataType data_type) {
   size_ = c_step_ * channel_ * elem_size_;
   data_ptr_ = p_data;
   ref_count_ = nullptr;
+  steps_[1] = elem_size_;
+  steps_[0] = width_ * steps_[1];
 }
 
 void LiteMat::Init(int width, int height, int channel, LDataType data_type) {
@@ -214,6 +233,10 @@ void LiteMat::Init(int width, int height, int channel, LDataType data_type) {
   data_ptr_ = AlignMalloc(size_);
   ref_count_ = new int[1];
   *ref_count_ = 1;
+
+  steps_[2] = elem_size_;
+  steps_[1] = channel * steps_[2];
+  steps_[0] = width_ * steps_[1];
 }
 
 void LiteMat::Init(int width, int height, int channel, void *p_data, LDataType data_type) {
@@ -227,6 +250,9 @@ void LiteMat::Init(int width, int height, int channel, void *p_data, LDataType d
   size_ = c_step_ * channel_ * elem_size_;
   data_ptr_ = p_data;
   ref_count_ = nullptr;
+  steps_[2] = elem_size_;
+  steps_[1] = channel * steps_[2];
+  steps_[0] = width_ * steps_[1];
 }
 
 bool LiteMat::IsEmpty() const { return data_ptr_ == nullptr || c_step_ * channel_ == 0; }
@@ -248,6 +274,7 @@ void LiteMat::Release() {
   c_step_ = 0;
   ref_count_ = 0;
   size_ = 0;
+  setSteps(0, 0, 0);
 }
 
 void *LiteMat::AlignMalloc(unsigned int size) {
@@ -270,6 +297,31 @@ void LiteMat::AlignFree(void *ptr) {
 }
 
 inline void LiteMat::InitElemSize(LDataType data_type) { elem_size_ = data_type.SizeInBytes(); }
+
+bool LiteMat::GetROI(int x, int y, int w, int h, LiteMat &m) {
+  if (x < 0 || y < 0 || x + w > width_ || h + y > height_) {
+    return false;
+  }
+  if (!m.IsEmpty()) {
+    m.Release();
+  }
+
+  if (ref_count_) {
+    addRef(ref_count_, 1);
+  }
+
+  m.height_ = h;
+  m.width_ = w;
+  m.dims_ = dims_;
+  m.elem_size_ = elem_size_;
+  m.data_ptr_ = reinterpret_cast<uint8_t *>(data_ptr_) + y * steps_[0] + x * elem_size_ * channel_;
+  m.channel_ = channel_;
+  m.c_step_ = c_step_;
+  m.data_type_ = data_type_;
+  m.ref_count_ = ref_count_;
+  m.setSteps(steps_[0], steps_[1], steps_[2]);
+  return true;
+}
 
 template <typename T>
 inline void SubtractImpl(const T *src0, const T *src1, T *dst, int64_t total_size) {

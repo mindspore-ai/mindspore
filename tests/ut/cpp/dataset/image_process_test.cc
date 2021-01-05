@@ -887,3 +887,328 @@ TEST_F(MindDataImageProcess, TestExtractChannel) {
   EXPECT_FALSE(ExtractChannel(lite_mat, lite_single, 0));
   EXPECT_TRUE(lite_single.IsEmpty());
 }
+TEST_F(MindDataImageProcess, testROI3C) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+
+  cv::Mat cv_roi = cv::Mat(src_image, cv::Rect(500, 500, 3000, 1500));
+
+  cv::imwrite("./cv_roi.jpg", cv_roi);
+
+  bool ret = false;
+  LiteMat lite_mat_bgr;
+  ret = InitFromPixel(src_image.data, LPixelType::BGR, LDataType::UINT8, src_image.cols, src_image.rows, lite_mat_bgr);
+  EXPECT_TRUE(ret);
+  LiteMat lite_roi;
+
+  ret = lite_mat_bgr.GetROI(500, 500, 3000, 1500, lite_roi);
+  EXPECT_TRUE(ret);
+
+  LiteMat lite_roi_save(3000, 1500, lite_roi.channel_, LDataType::UINT8);
+
+  for (size_t i = 0; i < lite_roi.height_; i++) {
+    const unsigned char *ptr = lite_roi.ptr<unsigned char>(i);
+    size_t image_size = lite_roi.width_ * lite_roi.channel_ * sizeof(unsigned char);
+    unsigned char *dst_ptr = (unsigned char *)lite_roi_save.data_ptr_ + image_size * i;
+    (void)memcpy(dst_ptr, ptr, image_size);
+  }
+
+  cv::Mat dst_imageR(lite_roi_save.height_, lite_roi_save.width_, CV_8UC3, lite_roi_save.data_ptr_);
+  cv::imwrite("./lite_roi.jpg", dst_imageR);
+}
+
+TEST_F(MindDataImageProcess, testROI1C) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+
+  cv::Mat gray_image;
+  cv::cvtColor(src_image, gray_image, CV_BGR2GRAY);
+  cv::Mat cv_roi_gray = cv::Mat(gray_image, cv::Rect(500, 500, 3000, 1500));
+
+  cv::imwrite("./cv_roi_gray.jpg", cv_roi_gray);
+
+  cv::Mat rgba_mat;
+  cv::cvtColor(src_image, rgba_mat, CV_BGR2RGBA);
+  bool ret = false;
+  LiteMat lite_mat_gray;
+  ret =
+    InitFromPixel(rgba_mat.data, LPixelType::RGBA2GRAY, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_gray);
+  EXPECT_TRUE(ret);
+  LiteMat lite_roi_gray;
+
+  ret = lite_mat_gray.GetROI(500, 500, 3000, 1500, lite_roi_gray);
+  EXPECT_TRUE(ret);
+
+  LiteMat lite_roi_gray_save(3000, 1500, lite_roi_gray.channel_, LDataType::UINT8);
+
+  for (size_t i = 0; i < lite_roi_gray.height_; i++) {
+    const unsigned char *ptr = lite_roi_gray.ptr<unsigned char>(i);
+    size_t image_size = lite_roi_gray.width_ * lite_roi_gray.channel_ * sizeof(unsigned char);
+    unsigned char *dst_ptr = (unsigned char *)lite_roi_gray_save.data_ptr_ + image_size * i;
+    (void)memcpy(dst_ptr, ptr, image_size);
+  }
+
+  cv::Mat dst_imageR(lite_roi_gray_save.height_, lite_roi_gray_save.width_, CV_8UC1, lite_roi_gray_save.data_ptr_);
+  cv::imwrite("./lite_roi.jpg", dst_imageR);
+}
+
+
+
+//warp 
+TEST_F(MindDataImageProcess, testWarpAffineBGR) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Point2f srcTri[3];
+  cv::Point2f dstTri[3];
+  srcTri[0] = cv::Point2f(0, 0);
+  srcTri[1] = cv::Point2f(src_image.cols - 1, 0);
+  srcTri[2] = cv::Point2f(0, src_image.rows - 1);
+
+  dstTri[0] = cv::Point2f(src_image.cols * 0.0, src_image.rows * 0.33);
+  dstTri[1] = cv::Point2f(src_image.cols * 0.85, src_image.rows * 0.25);
+  dstTri[2] = cv::Point2f(src_image.cols * 0.15, src_image.rows * 0.7);
+
+  cv::Mat warp_mat = cv::getAffineTransform(srcTri, dstTri);
+  ;
+  cv::Mat warp_dstImage;
+  cv::warpAffine(src_image, warp_dstImage, warp_mat, warp_dstImage.size());
+  cv::imwrite("./warpAffine_cv_bgr.png", warp_dstImage);
+
+  bool ret = false;
+  LiteMat lite_mat_bgr;
+  ret = InitFromPixel(src_image.data, LPixelType::BGR, LDataType::UINT8, src_image.cols, src_image.rows, lite_mat_bgr);
+  EXPECT_TRUE(ret);
+  double *mat_ptr = warp_mat.ptr<double>(0);
+  LiteMat lite_M(3, 2, 1, mat_ptr, LDataType::DOUBLE);
+
+  LiteMat lite_warp;
+  std::vector<uint8_t> borderValues;
+  borderValues.push_back(0);
+  borderValues.push_back(0);
+  borderValues.push_back(0);
+  ret = WarpAffineBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_, lite_mat_bgr.height_, PADD_BORDER_CONSTANT, borderValues);
+  EXPECT_TRUE(ret);
+
+  cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC3, lite_warp.data_ptr_);
+  cv::imwrite("./warpAffine_lite_bgr.png", dst_imageR);
+}
+
+TEST_F(MindDataImageProcess, testWarpAffineBGRScale) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Point2f srcTri[3];
+  cv::Point2f dstTri[3];
+  srcTri[0] = cv::Point2f(10, 20);
+  srcTri[1] = cv::Point2f(src_image.cols - 1 - 100, 0);
+  srcTri[2] = cv::Point2f(0, src_image.rows - 1 - 300);
+
+  dstTri[0] = cv::Point2f(src_image.cols * 0.22, src_image.rows * 0.33);
+  dstTri[1] = cv::Point2f(src_image.cols * 0.87, src_image.rows * 0.75);
+  dstTri[2] = cv::Point2f(src_image.cols * 0.35, src_image.rows * 0.37);
+
+  cv::Mat warp_mat = cv::getAffineTransform(srcTri, dstTri);
+  ;
+  cv::Mat warp_dstImage;
+  cv::warpAffine(src_image, warp_dstImage, warp_mat, warp_dstImage.size());
+  cv::imwrite("./warpAffine_cv_bgr_scale.png", warp_dstImage);
+
+  bool ret = false;
+  LiteMat lite_mat_bgr;
+  ret = InitFromPixel(src_image.data, LPixelType::BGR, LDataType::UINT8, src_image.cols, src_image.rows, lite_mat_bgr);
+  EXPECT_TRUE(ret);
+  double *mat_ptr = warp_mat.ptr<double>(0);
+  LiteMat lite_M(3, 2, 1, mat_ptr, LDataType::DOUBLE);
+
+  LiteMat lite_warp;
+  std::vector<uint8_t> borderValues;
+  borderValues.push_back(0);
+  borderValues.push_back(0);
+  borderValues.push_back(0);
+  ret = WarpAffineBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_, lite_mat_bgr.height_, PADD_BORDER_CONSTANT, borderValues);
+  EXPECT_TRUE(ret);
+
+  cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC3, lite_warp.data_ptr_);
+  cv::imwrite("./warpAffine_lite_bgr_scale.png", dst_imageR);
+}
+
+TEST_F(MindDataImageProcess, testWarpAffineBGRResize) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Point2f srcTri[3];
+  cv::Point2f dstTri[3];
+  srcTri[0] = cv::Point2f(10, 20);
+  srcTri[1] = cv::Point2f(src_image.cols - 1 - 100, 0);
+  srcTri[2] = cv::Point2f(0, src_image.rows - 1 - 300);
+
+  dstTri[0] = cv::Point2f(src_image.cols * 0.22, src_image.rows * 0.33);
+  dstTri[1] = cv::Point2f(src_image.cols * 0.87, src_image.rows * 0.75);
+  dstTri[2] = cv::Point2f(src_image.cols * 0.35, src_image.rows * 0.37);
+
+  cv::Mat warp_mat = cv::getAffineTransform(srcTri, dstTri);
+  ;
+  cv::Mat warp_dstImage;
+  cv::warpAffine(src_image, warp_dstImage, warp_mat, cv::Size(src_image.cols + 200, src_image.rows - 300));
+  cv::imwrite("./warpAffine_cv_bgr_resize.png", warp_dstImage);
+
+  bool ret = false;
+  LiteMat lite_mat_bgr;
+  ret = InitFromPixel(src_image.data, LPixelType::BGR, LDataType::UINT8, src_image.cols, src_image.rows, lite_mat_bgr);
+  EXPECT_TRUE(ret);
+  double *mat_ptr = warp_mat.ptr<double>(0);
+  LiteMat lite_M(3, 2, 1, mat_ptr, LDataType::DOUBLE);
+
+  LiteMat lite_warp;
+  std::vector<uint8_t> borderValues;
+  borderValues.push_back(0);
+  borderValues.push_back(0);
+  borderValues.push_back(0);
+  ret = WarpAffineBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_ + 200, lite_mat_bgr.height_ - 300, PADD_BORDER_CONSTANT,
+                   borderValues);
+  EXPECT_TRUE(ret);
+
+  cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC3, lite_warp.data_ptr_);
+  cv::imwrite("./warpAffine_lite_bgr_resize.png", dst_imageR);
+}
+
+TEST_F(MindDataImageProcess, testWarpAffineGray) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+
+  cv::Mat gray_image;
+  cv::cvtColor(src_image, gray_image, CV_BGR2GRAY);
+
+  cv::Point2f srcTri[3];
+  cv::Point2f dstTri[3];
+  srcTri[0] = cv::Point2f(0, 0);
+  srcTri[1] = cv::Point2f(src_image.cols - 1, 0);
+  srcTri[2] = cv::Point2f(0, src_image.rows - 1);
+
+  dstTri[0] = cv::Point2f(src_image.cols * 0.0, src_image.rows * 0.33);
+  dstTri[1] = cv::Point2f(src_image.cols * 0.85, src_image.rows * 0.25);
+  dstTri[2] = cv::Point2f(src_image.cols * 0.15, src_image.rows * 0.7);
+
+  cv::Mat warp_mat = cv::getAffineTransform(srcTri, dstTri);
+  ;
+  cv::Mat warp_gray_dstImage;
+  cv::warpAffine(gray_image, warp_gray_dstImage, warp_mat, cv::Size(src_image.cols + 200, src_image.rows - 300));
+  cv::imwrite("./warpAffine_cv_gray.png", warp_gray_dstImage);
+
+  cv::Mat rgba_mat;
+  cv::cvtColor(src_image, rgba_mat, CV_BGR2RGBA);
+  bool ret = false;
+  LiteMat lite_mat_gray;
+  ret =
+    InitFromPixel(rgba_mat.data, LPixelType::RGBA2GRAY, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_gray);
+  EXPECT_TRUE(ret);
+  double *mat_ptr = warp_mat.ptr<double>(0);
+  LiteMat lite_M(3, 2, 1, mat_ptr, LDataType::DOUBLE);
+
+  LiteMat lite_warp;
+  std::vector<uint8_t> borderValues;
+  borderValues.push_back(0);
+  ret = WarpAffineBilinear(lite_mat_gray, lite_warp, lite_M, lite_mat_gray.width_ + 200, lite_mat_gray.height_ - 300, PADD_BORDER_CONSTANT,
+                   borderValues);
+  EXPECT_TRUE(ret);
+
+  cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC1, lite_warp.data_ptr_);
+  cv::imwrite("./warpAffine_lite_gray.png", dst_imageR);
+}
+
+TEST_F(MindDataImageProcess, testWarpPerspectiveBGRResize) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+  cv::Point2f srcQuad[4], dstQuad[4];
+  srcQuad[0].x = 0;
+  srcQuad[0].y = 0;
+  srcQuad[1].x = src_image.cols - 1.;
+  srcQuad[1].y = 0;
+  srcQuad[2].x = 0;
+  srcQuad[2].y = src_image.rows - 1;
+  srcQuad[3].x = src_image.cols - 1;
+  srcQuad[3].y = src_image.rows - 1;
+
+  dstQuad[0].x = src_image.cols * 0.05;
+  dstQuad[0].y = src_image.rows * 0.33;
+  dstQuad[1].x = src_image.cols * 0.9;
+  dstQuad[1].y = src_image.rows * 0.25;
+  dstQuad[2].x = src_image.cols * 0.2;
+  dstQuad[2].y = src_image.rows * 0.7;
+  dstQuad[3].x = src_image.cols * 0.8;
+  dstQuad[3].y = src_image.rows * 0.9;
+
+  cv::Mat ptran = cv::getPerspectiveTransform(srcQuad, dstQuad, cv::DECOMP_SVD);
+  cv::Mat warp_dstImage;
+  cv::warpPerspective(src_image, warp_dstImage, ptran, cv::Size(src_image.cols + 200, src_image.rows - 300));
+  cv::imwrite("./warpPerspective_cv_bgr.png", warp_dstImage);
+
+  bool ret = false;
+  LiteMat lite_mat_bgr;
+  ret = InitFromPixel(src_image.data, LPixelType::BGR, LDataType::UINT8, src_image.cols, src_image.rows, lite_mat_bgr);
+  EXPECT_TRUE(ret);
+  double *mat_ptr = ptran.ptr<double>(0);
+  LiteMat lite_M(3, 3, 1, mat_ptr, LDataType::DOUBLE);
+
+  LiteMat lite_warp;
+  std::vector<uint8_t> borderValues;
+  borderValues.push_back(0);
+  borderValues.push_back(0);
+  borderValues.push_back(0);
+  ret = WarpPerspectiveBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_ + 200, lite_mat_bgr.height_ - 300, PADD_BORDER_CONSTANT,
+                        borderValues);
+  EXPECT_TRUE(ret);
+
+  cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC3, lite_warp.data_ptr_);
+  cv::imwrite("./warpPerspective_lite_bgr.png", dst_imageR);
+}
+
+TEST_F(MindDataImageProcess, testWarpPerspectiveGrayResize) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+
+  cv::Mat gray_image;
+  cv::cvtColor(src_image, gray_image, CV_BGR2GRAY);
+
+  cv::Point2f srcQuad[4], dstQuad[4];
+  srcQuad[0].x = 0;
+  srcQuad[0].y = 0;
+  srcQuad[1].x = src_image.cols - 1.;
+  srcQuad[1].y = 0;
+  srcQuad[2].x = 0;
+  srcQuad[2].y = src_image.rows - 1;
+  srcQuad[3].x = src_image.cols - 1;
+  srcQuad[3].y = src_image.rows - 1;
+
+  dstQuad[0].x = src_image.cols * 0.05;
+  dstQuad[0].y = src_image.rows * 0.33;
+  dstQuad[1].x = src_image.cols * 0.9;
+  dstQuad[1].y = src_image.rows * 0.25;
+  dstQuad[2].x = src_image.cols * 0.2;
+  dstQuad[2].y = src_image.rows * 0.7;
+  dstQuad[3].x = src_image.cols * 0.8;
+  dstQuad[3].y = src_image.rows * 0.9;
+
+  cv::Mat ptran = cv::getPerspectiveTransform(srcQuad, dstQuad, cv::DECOMP_SVD);
+  cv::Mat warp_dstImage;
+  cv::warpPerspective(gray_image, warp_dstImage, ptran, cv::Size(gray_image.cols + 200, gray_image.rows - 300));
+  cv::imwrite("./warpPerspective_cv_gray.png", warp_dstImage);
+
+  cv::Mat rgba_mat;
+  cv::cvtColor(src_image, rgba_mat, CV_BGR2RGBA);
+  bool ret = false;
+  LiteMat lite_mat_gray;
+  ret =
+    InitFromPixel(rgba_mat.data, LPixelType::RGBA2GRAY, LDataType::UINT8, rgba_mat.cols, rgba_mat.rows, lite_mat_gray);
+  EXPECT_TRUE(ret);
+  double *mat_ptr = ptran.ptr<double>(0);
+  LiteMat lite_M(3, 3, 1, mat_ptr, LDataType::DOUBLE);
+
+  LiteMat lite_warp;
+  std::vector<uint8_t> borderValues;
+  borderValues.push_back(0);
+  ret = WarpPerspectiveBilinear(lite_mat_gray, lite_warp, lite_M, lite_mat_gray.width_ + 200, lite_mat_gray.height_ - 300, PADD_BORDER_CONSTANT,
+                        borderValues);
+  EXPECT_TRUE(ret);
+
+  cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC1, lite_warp.data_ptr_);
+  cv::imwrite("./warpPerspective_lite_gray.png", dst_imageR);
+}
