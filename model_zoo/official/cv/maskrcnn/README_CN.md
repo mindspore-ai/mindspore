@@ -58,6 +58,8 @@ MaskRCNN是一个两级目标检测网络，作为FasterRCNN的扩展模型，�
     - 采用昇腾处理器搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
 - 框架
     - [MindSpore](https://gitee.com/mindspore/mindspore)
+- 获取基础镜像
+    - [Ascend Hub](ascend.huawei.com/ascendhub/#/home)
 - 如需查看详情，请参见如下资源：
     - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
@@ -133,6 +135,39 @@ pip install mmcv=0.2.14
    注：
    1. AIR_PATH是在910上使用export脚本导出的模型。
    2. ANN_FILE_PATH是推理使用的标注文件。
+
+# 在docker上运行
+
+1. 编译镜像
+
+```shell
+# 编译镜像
+docker build -t maskrcnn:20.1.0 . --build-arg FROM_IMAGE_NAME=ascend-mindspore-arm:20.1.0
+```
+
+2. 启动容器实例
+
+```shell
+# 启动容器实例
+bash scripts/docker_start.sh maskrcnn:20.1.0 [DATA_DIR] [MODEL_DIR]
+```
+
+3. 训练
+
+```shell
+# 单机训练
+bash run_standalone_train.sh [PRETRAINED_CKPT]
+
+# 分布式训练
+bash run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_CKPT]
+```
+
+4. 评估
+
+```shell
+# 评估
+bash run_eval.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
+```
 
 # 脚本说明
 
@@ -358,9 +393,38 @@ sh run_standalone_train.sh [PRETRAINED_MODEL]
 sh run_distribute_train.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 ```
 
-> 运行分布式任务时要用到由RANK_TABLE_FILE指定的hccl.json文件。您可使用[hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)生成该文件。
-> 若不设置PRETRAINED_MODEL，模型将会从头开始训练。暂无预训练模型可用，请持续关注。
-> 本操作涉及处理器内核绑定，需要设置`device_num`及处理器总数。若无需此操作，请删除`scripts/run_distribute_train.sh`中的`taskset`。
+- Notes
+
+1. 运行分布式任务时要用到由RANK_TABLE_FILE指定的hccl.json文件。您可使用[hccl_tools](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/utils/hccl_tools)生成该文件。
+2. PRETRAINED_MODEL应该是训练好的ResNet50检查点。如果此参数未设置，网络将从头开始训练。如果想要加载训练好的MaskRcnn检查点，需要对train.py作如下修改：
+
+```python
+# Comment out the following code
+#   load_path = args_opt.pre_trained
+#    if load_path != "":
+#        param_dict = load_checkpoint(load_path)
+#        for item in list(param_dict.keys()):
+#            if not item.startswith('backbone'):
+#                param_dict.pop(item)
+#        load_param_into_net(net, param_dict)
+
+# Add the following codes after optimizer definition since the FasterRcnn checkpoint includes optimizer parameters：
+    lr = Tensor(dynamic_lr(config, rank_size=device_num, start_steps=config.pretrain_epoch_size * dataset_size),
+                mstype.float32)
+    opt = Momentum(params=net.trainable_params(), learning_rate=lr, momentum=config.momentum,
+                   weight_decay=config.weight_decay, loss_scale=config.loss_scale)
+
+    if load_path != "":
+        param_dict = load_checkpoint(load_path)
+        if config.pretrain_epoch_size == 0:
+            for item in list(param_dict.keys()):
+                if item in ("global_step", "learning_rate") or "rcnn.cls" in item or "rcnn.mask" in item:
+                    param_dict.pop(item)
+        load_param_into_net(net, param_dict)
+        load_param_into_net(opt, param_dict)
+```
+
+3. 本操作涉及处理器内核绑定，需要设置`device_num`及处理器总数。若无需此操作，请删除`scripts/run_distribute_train.sh`中的`taskset`
 
 ### 训练结果
 

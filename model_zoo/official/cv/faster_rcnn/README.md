@@ -5,6 +5,7 @@
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
 - [Quick Start](#quick-start)
+- [Run in docker](#Run-in-docker)
 - [Script Description](#script-description)
     - [Script and Sample Code](#script-and-sample-code)
     - [Training Process](#training-process)
