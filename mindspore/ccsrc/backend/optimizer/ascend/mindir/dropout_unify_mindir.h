@@ -42,6 +42,24 @@ class DropoutGradUnifyMindIR : public PatternProcessPass {
  private:
   VarPtr grad_input_;
 };
+
+class DropoutUnifyMindIRPynative : public PatternProcessPass {
+ public:
+  explicit DropoutUnifyMindIRPynative(bool multigraph = true)
+      : PatternProcessPass("dropout_unify_mindir_pynative", multigraph) {}
+  ~DropoutUnifyMindIRPynative() override = default;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+};
+
+class DropoutGradUnifyMindIRPynative : public PatternProcessPass {
+ public:
+  explicit DropoutGradUnifyMindIRPynative(bool multigraph = true)
+      : PatternProcessPass("dropout_grad_unify_mindir_pynative", multigraph) {}
+  ~DropoutGradUnifyMindIRPynative() override = default;
+  const BaseRef DefinePattern() const override;
+  const AnfNodePtr Process(const FuncGraphPtr &, const AnfNodePtr &, const EquivPtr &) const override;
+};
 }  // namespace opt
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_OPTIMIZER_ASCEND_MINDIR_DROPOUT_UNIFY_MINDIR_H_
