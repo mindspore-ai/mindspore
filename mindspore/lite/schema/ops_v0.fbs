@@ -168,7 +168,7 @@ table FlattenGrad {
 }
 table Concat {
     axis: int;
-    n: int;
+    n: int;  // DEPRECATED
 }
 
 table SoftMax {
@@ -188,6 +188,26 @@ table ActivationGrad {
 
 
 table Conv2D {
+    format: Format = 0;
+    group: int;
+    channelIn: int;
+    channelOut: int;
+    kernelW: int;
+    kernelH: int;
+    strideW: int;
+    strideH: int;
+    padMode: PadMode;
+    padUp: int;
+    padDown: int;
+    padLeft: int;
+    padRight: int;
+    dilateW: int;
+    dilateH: int;
+    hasBias: bool = false;  // DEPRECATED
+    activationType: ActivationType = 0;
+}
+
+table Adder {
     format: Format = 0;
     group: int;
     channelIn: int;
@@ -223,8 +243,8 @@ table Conv2DGradFilter {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool = false;
-    filter_shape: [int];
+    hasBias: bool = false;  // DEPRECATED
+    filter_shape: [int];  // DEPRECATED
     activationType: ActivationType = 0;
 }
 
@@ -244,8 +264,8 @@ table Conv2DGradInput {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool = false;
-    input_shape: [int];
+    hasBias: bool = false;  // DEPRECATED
+    input_shape: [int];  // DEPRECATED
     activationType: ActivationType = 0;
 }
 
@@ -265,7 +285,7 @@ table GroupConv2DGradInput {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool = false;
+    hasBias: bool = false;  // DEPRECATED
     input_shape: [int];
     activationType: ActivationType = 0;
 }
@@ -281,12 +301,16 @@ table BatchNorm {
 }
 
 table BiasGrad {
-    axis: [int];
+    axis: [int];  // DEPRECATED
 }
 
 
 table SoftmaxCrossEntropy {
-    axis: [int];
+    axis: [int];  // DEPRECATED
+}
+
+table SparseSoftmaxCrossEntropy {
+    isGrad: int;
 }
 
 table make_tuple {
@@ -316,11 +340,11 @@ table ConstantOfShape{
     value: [float];
 }
 
-table Nchw2Nhwc {
+table Nchw2Nhwc {  // DEPRECATED
 
 }
 
-table Nhwc2Nchw {
+table Nhwc2Nchw {  // DEPRECATED
 
 }
 
@@ -330,7 +354,7 @@ table FakeQuantWithMinMaxVars {
 }
 
 table BiasAdd {
-    axis: [int];
+    axis: [int];  // DEPRECATED
 }
 
 table ROIPooling {
@@ -372,7 +396,7 @@ table DepthwiseConv2D {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool  = false;
+    hasBias: bool  = false;  // DEPRECATED
     activationType: ActivationType = 0;
 }
 
@@ -391,7 +415,7 @@ table DeDepthwiseConv2D {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool  = false;
+    hasBias: bool  = false;  // DEPRECATED
     activationType: ActivationType = 0;
 }
 
@@ -435,7 +459,7 @@ table FullConnection {
 }
 
 // Mean(input_tensor, axis, keep_dims)
-table Mean {
+table Mean {  // DEPRECATED
     axis: [int];
     keepDims: bool = false;
 }
@@ -456,7 +480,7 @@ table DeConv2D {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool = false;
+    hasBias: bool = false;  // DEPRECATED
     activationType: ActivationType = 0;
 }
 
@@ -476,7 +500,7 @@ table DeConv2DGradFilter {
     padRight: int;
     dilateW: int;
     dilateH: int;
-    hasBias: bool = false;
+    hasBias: bool = false;  // DEPRECATED
     activationType: ActivationType = 0;
 }
 
@@ -638,7 +662,7 @@ table NetOutput {
 }
 
 table MatMul {
-    broadcast : bool = false;
+    broadcast : bool = false;  // DEPRECATED
     transposeA : bool = false;
     transposeB : bool = false;
 }
@@ -674,7 +698,7 @@ table Range {
     dType: int;
     start: int;
     limit: int;
-    delta: int;
+    delta: int = 1;
 }
 
 table ExpandDims {
@@ -707,7 +731,7 @@ table Crop {
     offsets : [long];
 }
 
-table Permute {
+table Permute {  // DEPRECATED
     order: [long];
 }
 
@@ -745,7 +769,8 @@ enum ReduceMode : byte {
     ReduceProd = 3,
     ReduceSum = 4,
     ReduceSumSquare = 5,
-    ReduceASum = 6
+    ReduceASum = 6,
+    ReduceAll = 7
 }
 
 table Reduce {
@@ -758,7 +783,7 @@ table Reduce {
 
 table Transpose {
     perm: [int];
-    conjugate: bool = false;
+    conjugate: bool = false;  // DEPRECATED
 }
 
 table Squeeze {
@@ -822,7 +847,7 @@ table Gather {
 }
 
 table GatherNd {
-    batchDims: int;
+    batchDims: int;  // DEPRECATED
 }
 
 table Fill {
@@ -846,7 +871,7 @@ table BatchToSpaceND {
 }
 
 table AddN {
-    N: int;
+    N: int;  // DEPRECATED
 }
 
 
@@ -865,6 +890,9 @@ table FloorDiv {
 }
 
 table FloorMod {
+}
+
+table Mod {
 }
 
 table L2Norm {
@@ -913,11 +941,11 @@ table ScatterND {
 }
 
 table Unique {
-    outType: int;
+    outType: int;  // DEPRECATED
 }
 
 table Unstack {
-    num: int;
+    num: int;   // deprecated
     axis: int;
 }
 
@@ -1142,4 +1170,68 @@ table BinaryCrossEntropyGrad {
 table LpNormalization {
     axis : int;
     p : int;
+}
+
+table Switch {
+}
+
+table Partial {
+    subGraphIndex : int;
+}
+
+table TensorListFromTensor {
+   elementDType : int;
+   shapeType : int;
+}
+
+table TensorListStack {
+    numElements : int;
+    elementDType : int;
+}
+
+table TensorListGetItem {
+    elementDType : int;
+}
+
+table TensorListSetItem {
+    elementDType : int;
+}
+
+table TensorListReserve {
+    elementDType : int;
+    shapeType : int;
+}
+
+table All {
+    keepDims : int;
+}
+
+table Assert {
+    summarize : int;
+}
+
+table SmoothL1Loss {
+    beta : float;
+}
+
+table SmoothL1LossGrad {
+    beta : float;
+}
+
+table SigmoidCrossEntropyWithLogits {
+    beta : float;
+}
+
+table SigmoidCrossEntropyWithLogitsGrad {
+    beta : float;
+}
+
+table Reciprocal {
+}
+
+table Merge {
+}
+
+table GeLU {
+    approximate : bool = false;
 }

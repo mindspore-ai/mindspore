@@ -49,6 +49,7 @@ table Tensor {
     data: [ubyte];
     quantParams: [QuantParam];
     quantClusters: [float];
+    name: string;
 }
 
 union PrimitiveType {
@@ -66,7 +67,7 @@ union PrimitiveType {
     Resize,
     DetectionPostProcess,
     FullConnection,
-    Mean,
+    Mean,  // DEPRECATED
     DeConv2D,
     Scale,
     Reshape,
@@ -96,11 +97,11 @@ union PrimitiveType {
     Tile,
     Cast,
     Shape,
-    Nchw2Nhwc,
-    Nhwc2Nchw,
+    Nchw2Nhwc,  // DEPRECATED
+    Nhwc2Nchw,  // DEPRECATED
     QuantDTypeCast,
     Split,
-    Permute,
+    Permute,  // DEPRECATED
     FakeQuantWithMinMaxVars,
     Equal,
     Less,
@@ -236,7 +237,26 @@ union PrimitiveType {
     LpNormalization,
     DropoutGrad,
     MaximumGrad,
-    MinimumGrad
+    MinimumGrad,
+    Switch,
+    Partial,
+    TensorListFromTensor,
+    TensorListStack,
+    TensorListGetItem,
+    TensorListSetItem,
+    TensorListReserve,
+    All,
+    Assert,
+    Adder,
+    SparseSoftmaxCrossEntropy,
+    SmoothL1Loss,
+    SmoothL1LossGrad,
+    SigmoidCrossEntropyWithLogits,
+    SigmoidCrossEntropyWithLogitsGrad,
+    Reciprocal,
+    Merge,
+    Mod,
+    GeLU,
 }
 
 enum QuantType: int {
