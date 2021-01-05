@@ -25,7 +25,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-enum NodeEvent { CLUSTER_TIMEOUT = 0, NODE_TIMEOUT = 1 };
+enum NodeEvent { CLUSTER_TIMEOUT = 0, NODE_TIMEOUT = 1, SCHEDULER_TIMEOUT };
 
 struct NodeInfo {
   NodeInfo() : port_(0), node_role_(NodeRole::SCHEDULER), rank_id_(0) {}

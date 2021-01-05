@@ -30,7 +30,8 @@ bool ServerNode::Start(const uint32_t &timeout) {
   StartHeartbeatTimer(client_to_scheduler_);
 
   if (!WaitForStart(timeout)) {
-    MS_LOG(ERROR) << "Start Server node timeout!";
+    MS_LOG(ERROR) << "Start server node timeout!";
+    return false;
   }
   MS_LOG(INFO) << "The cluster is ready to use!";
 
@@ -45,16 +46,16 @@ bool ServerNode::Start(const uint32_t &timeout) {
 
 void ServerNode::set_handler(const RequestHandler &handler) { request_handler_ = handler; }
 
-void ServerNode::Response(const TcpServer &server, const TcpConnection &conn, const MessageMeta &message_meta,
-                          const std::string &message) {
-  auto &meta = const_cast<MessageMeta &>(message_meta);
-  meta.set_role(node_info_.node_role_);
-  meta.set_rank_id(node_info_.rank_id_);
-  CommMessage comm_message;
-  *comm_message.mutable_pb_meta() = {meta};
-  comm_message.set_data(message);
-
-  const_cast<TcpServer &>(server).SendMessage(conn, comm_message);
+void ServerNode::Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(message);
+  message->mutable_pb_meta()->set_role(node_info_.node_role_);
+  message->mutable_pb_meta()->set_rank_id(node_info_.rank_id_);
+  const MessageMeta &message_meta = message->pb_meta();
+  const uint64_t request_id = message_meta.request_id();
+  MS_LOG(DEBUG) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
+                << ", the node id is:" << node_info_.node_id_ << " send the request id is:" << request_id;
+  server_->SendMessage(conn, message);
 }
 
 void ServerNode::CreateTcpServer() {
@@ -62,17 +63,17 @@ void ServerNode::CreateTcpServer() {
   std::string server_ip;
   CommUtil::GetAvailableInterfaceAndIP(&interface, &server_ip);
   server_ = std::make_shared<TcpServer>(server_ip, 0);
-  server_->SetMessageCallback([&](const TcpServer &server, const TcpConnection &conn, const CommMessage &message) {
-    switch (message.pb_meta().cmd()) {
+  server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message) {
+    switch (message->pb_meta().cmd()) {
       case NodeCommand::SEND_DATA:
-        ProcessSendData(server, conn, message);
+        ProcessSendData(conn, message);
         break;
       case NodeCommand::COLLECTIVE_SEND_DATA:
-        ProcessCollectiveSendData(server, conn, message);
-        RunReceiveCallback(message);
+        ProcessCollectiveSendData(conn, message);
+        RunReceiveCallback(*message);
         break;
       default:
-        MS_LOG(EXCEPTION) << "The cmd:" << message.pb_meta().cmd() << " is not supported!";
+        MS_LOG(EXCEPTION) << "The cmd:" << message->pb_meta().cmd() << " is not supported!";
     }
   });
   server_->Init();
@@ -97,15 +98,18 @@ void ServerNode::Initialize() {
   MS_LOG(INFO) << "Server node init client successful!";
 }
 
-void ServerNode::ProcessSendData(const TcpServer &server, const TcpConnection &conn, const CommMessage &message) {
-  request_handler_(server, conn, message.pb_meta(), message.data());
+void ServerNode::ProcessSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(message);
+  request_handler_(conn, message);
 }
 
-void ServerNode::ProcessCollectiveSendData(const TcpServer &server, const TcpConnection &conn,
-                                           const CommMessage &message) {
-  CommMessage comm_message;
-  *comm_message.mutable_pb_meta() = {message.pb_meta()};
-  const_cast<TcpServer &>(server).SendMessage(conn, comm_message);
+void ServerNode::ProcessCollectiveSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(message);
+  std::shared_ptr<CommMessage> comm_message = std::make_shared<CommMessage>();
+  *comm_message->mutable_pb_meta() = {message->pb_meta()};
+  server_->SendMessage(conn, comm_message);
 }
 
 bool ServerNode::Stop() {

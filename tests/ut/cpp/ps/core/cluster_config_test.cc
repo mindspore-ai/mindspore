@@ -33,7 +33,7 @@ class TestClusterConfig : public UT::Common {
 };
 
 TEST_F(TestClusterConfig, HeartbeatInterval) {
-  ClusterConfig::Init(2, 2, std::make_unique<std::string>("127.0.0.1"), 8080);
+  ClusterConfig::Init(2, 2, "127.0.0.1", 8080);
   EXPECT_TRUE(ClusterConfig::heartbeat_interval() == 3);
   ClusterConfig::set_heartbeat_interval(100);
   EXPECT_TRUE(ClusterConfig::heartbeat_interval() == 100);

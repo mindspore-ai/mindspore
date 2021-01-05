@@ -42,23 +42,24 @@ class AbstractNode : public Node {
             const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<std::string> &data,
             const uint32_t &timeout = kCommTimeoutInSeconds);
-  bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const std::string &message, CommMessage *output,
+  bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const std::string &message, std::string *output,
             const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<std::string> &data,
-            std::vector<CommMessage> *output, const uint32_t &timeout = kCommTimeoutInSeconds);
+            std::vector<std::string> *output, const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Wait(uint64_t request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
-  uint64_t CollectiveSendAsync(const enum NodeRole &node_role, const uint32_t &rank_id, const std::string &message,
-                               const uint32_t &timeout = kCommTimeoutInSeconds);
+  uint64_t CollectiveSendAsync(const enum NodeRole &node_role, const uint32_t &rank_id, const std::string &message);
   std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const enum NodeRole &node_role, const uint32_t &rank_id,
-                                                       CommMessage *output);
+                                                       std::string *output);
   bool CollectiveWait(std::pair<uint32_t, uint64_t> request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
  protected:
   void Register(const std::shared_ptr<TcpClient> &client);
   void ProcessRegisterResp(const CommMessage &message);
   void StartHeartbeatTimer(const std::shared_ptr<TcpClient> &client);
-  void Heartbeat(const std::shared_ptr<TcpClient> &client, bool is_node_finish = false);
+  bool Heartbeat(const std::shared_ptr<TcpClient> &client, bool is_node_finish = false);
+  void UpdateSchedulerTime();
+  bool CheckSchedulerTimeout() const;
   void ProcessHeartbeatResp(const CommMessage &message);
   void FetchServers(const std::shared_ptr<TcpClient> &client);
   void ProcessFetchServersResp(const CommMessage &message);
@@ -113,6 +114,7 @@ class AbstractNode : public Node {
   // the key is rank_id, the value is rank_id's actual request_id
   std::unordered_map<uint32_t, uint64_t> actual_rank_request_ids_;
   std::mutex rank_request_ids_mutex;
+  timeval scheduler_time_;
 };
 }  // namespace core
 }  // namespace ps

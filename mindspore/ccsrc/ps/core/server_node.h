@@ -44,18 +44,16 @@ class ServerNode : public AbstractNode {
   bool Stop() override;
   bool Finish(const uint32_t &timeout = kTimeoutInSeconds) override;
 
-  using RequestHandler = std::function<void(const TcpServer &server, const TcpConnection &conn, const MessageMeta meta,
-                                            const std::string &message)>;
+  using RequestHandler = std::function<void(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message)>;
 
   void set_handler(const RequestHandler &handler);
-  void Response(const TcpServer &server, const TcpConnection &conn, const MessageMeta &message_meta,
-                const std::string &message);
+  void Response(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message);
 
  private:
   void CreateTcpServer();
   void Initialize();
-  void ProcessSendData(const TcpServer &server, const TcpConnection &conn, const CommMessage &message);
-  void ProcessCollectiveSendData(const TcpServer &server, const TcpConnection &conn, const CommMessage &message);
+  void ProcessSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message);
+  void ProcessCollectiveSendData(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message);
 
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> server_thread_;

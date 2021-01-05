@@ -46,9 +46,9 @@ TcpClient::TcpClient(const std::string &address, std::uint16_t port)
       server_port_(port),
       is_stop_(true),
       is_connected_(false) {
-  message_handler_.SetCallback([this](const CommMessage &message) {
+  message_handler_.SetCallback([this](std::shared_ptr<CommMessage> message) {
     if (message_callback_) {
-      message_callback_(*this, message);
+      message_callback_(*this, *message);
     }
   });
 }
@@ -105,7 +105,7 @@ void TcpClient::Init() {
   sin.sin_addr.s_addr = inet_addr(server_address_.c_str());
   sin.sin_port = htons(server_port_);
 
-  buffer_event_ = bufferevent_socket_new(event_base_, -1, BEV_OPT_CLOSE_ON_FREE);
+  buffer_event_ = bufferevent_socket_new(event_base_, -1, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
   MS_EXCEPTION_IF_NULL(buffer_event_);
 
   bufferevent_setcb(buffer_event_, ReadCallback, nullptr, EventCallback, this);
@@ -261,17 +261,23 @@ void TcpClient::StartWithNoBlock() {
 
 void TcpClient::SetMessageCallback(const OnMessage &cb) { message_callback_ = cb; }
 
-void TcpClient::SendMessage(const CommMessage &message) const {
+bool TcpClient::SendMessage(const CommMessage &message) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
+  bufferevent_lock(buffer_event_);
+  bool res = true;
   size_t buf_size = message.ByteSizeLong();
   std::vector<unsigned char> serialized(buf_size);
   message.SerializeToArray(serialized.data(), SizeToInt(buf_size));
-  if (evbuffer_add(bufferevent_get_output(buffer_event_), &buf_size, sizeof(buf_size)) == -1) {
-    MS_LOG(EXCEPTION) << "Event buffer add header failed!";
+  if (bufferevent_write(buffer_event_, &buf_size, sizeof(buf_size)) == -1) {
+    MS_LOG(ERROR) << "Event buffer add header failed!";
+    res = false;
   }
-  if (evbuffer_add(bufferevent_get_output(buffer_event_), serialized.data(), buf_size) == -1) {
-    MS_LOG(EXCEPTION) << "Event buffer add protobuf data failed!";
+  if (bufferevent_write(buffer_event_, serialized.data(), buf_size) == -1) {
+    MS_LOG(ERROR) << "Event buffer add protobuf data failed!";
+    res = false;
   }
+  bufferevent_unlock(buffer_event_);
+  return res;
 }
 
 void TcpClient::StartTimer(const uint32_t &time) {

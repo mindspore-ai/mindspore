@@ -21,7 +21,12 @@ namespace ps {
 namespace core {
 std::string Node::node_id() const { return node_info_.node_id_; }
 
-uint32_t Node::rank_id() const { return node_info_.rank_id_; }
+uint32_t Node::rank_id() const {
+  if (!is_ready_.load()) {
+    MS_LOG(EXCEPTION) << "The cluster is not ready yet to get rank id!";
+  }
+  return node_info_.rank_id_;
+}
 
 NodeRole Node::role() const { return node_info_.node_role_; }
 

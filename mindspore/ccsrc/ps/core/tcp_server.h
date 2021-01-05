@@ -34,8 +34,6 @@
 #include <thread>
 #include <atomic>
 
-#include "proto/comm.pb.h"
-#include "proto/ps.pb.h"
 #include "ps/core/tcp_message_handler.h"
 #include "ps/core/cluster_config.h"
 #include "utils/log_adapter.h"
@@ -47,36 +45,42 @@ namespace core {
 class TcpServer;
 class TcpConnection {
  public:
-  explicit TcpConnection(struct bufferevent *bev, const evutil_socket_t &fd, const TcpServer *server)
+  explicit TcpConnection(struct bufferevent *bev, const evutil_socket_t &fd, TcpServer *server)
       : buffer_event_(bev), fd_(fd), server_(server) {}
+  TcpConnection(const TcpConnection &);
   virtual ~TcpConnection() = default;
 
-  virtual void InitConnection();
+  using Callback = std::function<void(const std::shared_ptr<CommMessage>)>;
+
+  virtual void InitConnection(const messageReceive &callback);
   virtual void SendMessage(const void *buffer, size_t num) const;
-  void SendMessage(const CommMessage &message) const;
+  bool SendMessage(std::shared_ptr<CommMessage> message) const;
   virtual void OnReadHandler(const void *buffer, size_t numBytes);
   TcpServer *GetServer() const;
   const evutil_socket_t &GetFd() const;
+  void set_callback(const Callback &callback);
 
  protected:
   struct bufferevent *buffer_event_;
   evutil_socket_t fd_;
-  const TcpServer *server_;
+  TcpServer *server_;
   TcpMessageHandler tcp_message_handler_;
+  Callback callback_;
 };
 
 using OnServerReceiveMessage =
-  std::function<void(const TcpServer &tcp_server, const TcpConnection &conn, const CommMessage &)>;
+  std::function<void(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message)>;
 
 class TcpServer {
  public:
   using OnConnected = std::function<void(const TcpServer &, const TcpConnection &)>;
   using OnDisconnected = std::function<void(const TcpServer &, const TcpConnection &)>;
-  using OnAccepted = std::function<const TcpConnection *(const TcpServer &)>;
+  using OnAccepted = std::function<std::shared_ptr<TcpConnection>(const TcpServer &)>;
   using OnTimerOnce = std::function<void(const TcpServer &)>;
   using OnTimer = std::function<void()>;
 
-  explicit TcpServer(const std::string &address, std::uint16_t port);
+  TcpServer(const std::string &address, std::uint16_t port);
+  TcpServer(const TcpServer &server);
   virtual ~TcpServer();
 
   void SetServerCallback(const OnConnected &client_conn, const OnDisconnected &client_disconn,
@@ -90,16 +94,17 @@ class TcpServer {
   void StartTimer(const uint32_t &time);
   void Stop();
   void SendToAllClients(const char *data, size_t len);
-  void AddConnection(const evutil_socket_t &fd, const TcpConnection *connection);
+  void AddConnection(const evutil_socket_t &fd, std::shared_ptr<TcpConnection> connection);
   void RemoveConnection(const evutil_socket_t &fd);
+  std::shared_ptr<TcpConnection> GetConnectionByFd(const evutil_socket_t &fd);
   OnServerReceiveMessage GetServerReceive() const;
   void SetMessageCallback(const OnServerReceiveMessage &cb);
-  void SendMessage(const TcpConnection &conn, const CommMessage &message);
-  void SendMessage(const CommMessage &message);
+  bool SendMessage(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message);
+  void SendMessage(std::shared_ptr<CommMessage> message);
   uint16_t BoundPort() const;
   std::string BoundIp() const;
   int ConnectionNum() const;
-  const std::map<evutil_socket_t, const TcpConnection *> &Connections() const;
+  const std::map<evutil_socket_t, std::shared_ptr<TcpConnection>> &Connections() const;
 
  protected:
   static void ListenerCallback(struct evconnlistener *listener, evutil_socket_t socket, struct sockaddr *saddr,
@@ -109,7 +114,7 @@ class TcpServer {
   static void EventCallback(struct bufferevent *, std::int16_t events, void *server);
   static void TimerCallback(evutil_socket_t fd, int16_t event, void *arg);
   static void TimerOnceCallback(evutil_socket_t fd, int16_t event, void *arg);
-  virtual TcpConnection *onCreateConnection(struct bufferevent *bev, const evutil_socket_t &fd);
+  std::shared_ptr<TcpConnection> onCreateConnection(struct bufferevent *bev, const evutil_socket_t &fd);
 
   struct event_base *base_;
   struct event *signal_event_;
@@ -118,7 +123,7 @@ class TcpServer {
   std::uint16_t server_port_;
   std::atomic<bool> is_stop_;
 
-  std::map<evutil_socket_t, const TcpConnection *> connections_;
+  std::map<evutil_socket_t, std::shared_ptr<TcpConnection>> connections_;
   OnConnected client_connection_;
   OnDisconnected client_disconnection_;
   OnAccepted client_accept_;
