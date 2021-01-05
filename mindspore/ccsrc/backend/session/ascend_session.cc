@@ -441,6 +441,15 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropInputUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::Conv2DBackpropFilterUnifyMindIR>());
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
+    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR>());
+  } else {
+    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIRPynative>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIRPynative>());
+  }
 
   optimizer->AddPassManager(unify_mindir_pm);
   (void)optimizer->Optimize(graph);
