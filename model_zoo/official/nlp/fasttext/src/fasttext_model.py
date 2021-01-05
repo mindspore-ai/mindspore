@@ -59,9 +59,7 @@ class FastText(nn.Cell):
         src_tokens = self.embeding_func(src_tokens)
         embeding = self.reducesum(src_tokens, 1)
 
-        length_tiled = self.tile(src_token_length, (1, self.embeding_dims))
-
-        embeding = self.realdiv(embeding, length_tiled)
+        embeding = self.realdiv(embeding, src_token_length)
 
         embeding = self.cast(embeding, mstype.float16)
         classifer = self.fc(embeding)
