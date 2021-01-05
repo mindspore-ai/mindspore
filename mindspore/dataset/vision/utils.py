@@ -22,6 +22,7 @@ class Inter(IntEnum):
     ANTIALIAS = 1
     BILINEAR = LINEAR = 2
     BICUBIC = CUBIC = 3
+    AREA = 4
 
 
 # Padding Mode, Border Type

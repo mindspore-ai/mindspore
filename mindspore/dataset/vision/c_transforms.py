@@ -59,7 +59,8 @@ from .validators import check_prob, check_crop, check_resize_interpolation, chec
 
 DE_C_INTER_MODE = {Inter.NEAREST: cde.InterpolationMode.DE_INTER_NEAREST_NEIGHBOUR,
                    Inter.LINEAR: cde.InterpolationMode.DE_INTER_LINEAR,
-                   Inter.CUBIC: cde.InterpolationMode.DE_INTER_CUBIC}
+                   Inter.CUBIC: cde.InterpolationMode.DE_INTER_CUBIC,
+                   Inter.AREA: cde.InterpolationMode.DE_INTER_AREA}
 
 DE_C_BORDER_TYPE = {Border.CONSTANT: cde.BorderType.DE_BORDER_CONSTANT,
                     Border.EDGE: cde.BorderType.DE_BORDER_EDGE,
@@ -746,6 +747,8 @@ class Resize(cde.ResizeOp):
             - Inter.NEAREST, means interpolation method is nearest-neighbor interpolation.
 
             - Inter.BICUBIC, means interpolation method is bicubic interpolation.
+
+            - Inter.AREA, means interpolation method is pixel area interpolation.
 
     Examples:
         >>> import mindspore.dataset.vision.c_transforms as c_vision
