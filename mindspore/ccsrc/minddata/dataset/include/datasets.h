@@ -152,14 +152,16 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///     of data transmission per time is 256M.
   /// \param[in] queue_name Channel name (default="", create new unique name).
   /// \param[in] device_type Type of device (default="", get from MSContext).
+  /// \param[in] device_id id of device (default=0, get from MSContext).
   /// \param[in] num_epochs Number of epochs (default=-1, infinite epochs).
   /// \param[in] send_epoch_end Whether to send end of sequence to device or not (default=true).
   /// \param[in] total_batches Number of batches to be sent to the device (default=0, all data).
   /// \param[in] create_data_info_queue Whether to create queue which stores types and shapes
   ///     of data or not(default=false).
   /// \return Returns true if no error encountered else false.
-  bool DeviceQueue(std::string queue_name = "", std::string device_type = "", int32_t num_epochs = -1,
-                   bool send_epoch_end = true, int32_t total_batches = 0, bool create_data_info_queue = false);
+  bool DeviceQueue(std::string queue_name = "", std::string device_type = "", int32_t device_id = 0,
+                   int32_t num_epochs = -1, bool send_epoch_end = true, int32_t total_batches = 0,
+                   bool create_data_info_queue = false);
 
   /// \brief Function to create a Saver to save the dynamic data processed by the dataset pipeline
   /// \note Usage restrictions:

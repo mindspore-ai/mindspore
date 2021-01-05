@@ -62,6 +62,7 @@ DeviceQueueOp::DeviceQueueOp(std::string channel_name, DeviceType device_type, i
 #endif
 #ifdef ENABLE_TDTQUE
   ascend_keep_waiting_ = true;
+  tdtInstancePtr = std::make_shared<TdtPlugin>(channel_name_, device_id_);
 #endif
 }
 
@@ -159,7 +160,7 @@ Status DeviceQueueOp::SendDataToAscend() {
         RETURN_IF_NOT_OK(current_buffer->GetRow(row_id, &currRow));
         WaitContinueSignal();
         auto status = tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, tdt_cost);
-        if (status == TdtStatus::FAILED) {
+        if (status != Status::OK()) {
           if (stop_send_) {
             MS_LOG(INFO) << "stop_send received";
             return Status::OK();
@@ -190,9 +191,9 @@ Status DeviceQueueOp::SendDataToAscend() {
     }
     if (current_buffer->eoe() && send_epoch_end_) {
       TensorRow currRow;
-      auto status =
-        tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, tdt_cost, tdt::TDT_END_OF_SEQUENCE);
-      if (status == TdtStatus::FAILED) {
+      auto status = tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, tdt_cost,
+                                             ACL_TENSOR_DATA_END_OF_SEQUENCE);
+      if (status != Status::OK()) {
         if (stop_send_) {
           MS_LOG(INFO) << "stop_send received";
           return Status::OK();
@@ -209,7 +210,6 @@ Status DeviceQueueOp::SendDataToAscend() {
     }
     RETURN_IF_NOT_OK(GetNextInput(&current_buffer));
   }
-
   tree_->SetFinished();
 
   return Status::OK();

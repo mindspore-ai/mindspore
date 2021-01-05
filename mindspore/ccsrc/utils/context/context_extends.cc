@@ -230,7 +230,7 @@ void GetGeOptions(const std::shared_ptr<MsContext> &ms_context_ptr, std::map<std
   } else {
     (*ge_options)["ge.exec.precision_mode"] = "allow_fp32_to_fp16";
   }
-  // Disable the global variable acc, only enable it whlie adding training graph in pipeline
+  // Disable the global variable acc, only enable it while adding training graph in pipeline
   (*ge_options)["ge.exec.variable_acc"] = "0";
 #endif
 }
