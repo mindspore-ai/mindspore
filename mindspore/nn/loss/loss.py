@@ -281,15 +281,13 @@ class SoftmaxCrossEntropyWithLogits(_Loss):
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0., mstype.float32)
         self.is_cpugpu = context.get_context('device_target') in ["CPU", "GPU"]
-        if self.is_cpugpu:
-            self.sparse_softmax_cross_entropy = P.SparseSoftmaxCrossEntropyWithLogits()
+        self.sparse_softmax_cross_entropy = P.SparseSoftmaxCrossEntropyWithLogits()
 
     def construct(self, logits, labels):
-        if self.is_cpugpu and self.sparse and self.reduction == 'mean':
-            x = self.sparse_softmax_cross_entropy(logits, labels)
-            return x
-
         if self.sparse:
+            if self.reduction == 'mean':
+                x = self.sparse_softmax_cross_entropy(logits, labels)
+                return x
             labels = self.one_hot(labels, F.shape(logits)[-1], self.on_value, self.off_value)
         x = self.softmax_cross_entropy(logits, labels)[0]
         return self.get_loss(x)
