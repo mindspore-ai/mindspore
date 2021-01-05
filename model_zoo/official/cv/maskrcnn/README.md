@@ -505,6 +505,7 @@ python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_
 ### Usage
 
 Before performing inference, the air file must bu exported by export script on the 910 environment.
+Current batch_ Size can only be set to 1. The inference process needs about 600G hard disk space to save the reasoning results.
 
 ```shell
 # Ascend310 inference
