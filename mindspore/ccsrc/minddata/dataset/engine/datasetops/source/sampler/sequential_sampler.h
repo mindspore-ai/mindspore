@@ -49,6 +49,13 @@ class SequentialSamplerRT : public SamplerRT {
   // @return Status The status code returned
   Status GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) override;
 
+  /// \brief Recursively calls this function on its children to get the actual number of samples on a tree of samplers
+  /// \note This is not a getter for num_samples_. For example, if num_samples_ is 0 or if it's smaller than num_rows,
+  ///     then num_samples_ is not returned at all.
+  /// \param[in] num_rows The total number of rows in the dataset
+  /// \return int64_t Calculated number of samples
+  int64_t CalculateNumSamples(int64_t num_rows) override;
+
   // Printer for debugging purposes.
   // @param out - output stream to write to
   // @param show_all - bool to show detailed vs summary

@@ -188,6 +188,7 @@ def test_subset_sampler():
     assert test_config(2, 3) == [2, 3, 4]
     assert test_config(3, 2) == [3, 4]
     assert test_config(4, 1) == [4]
+    assert test_config(4, None) == [4]
 
 
 def test_sampler_chain():

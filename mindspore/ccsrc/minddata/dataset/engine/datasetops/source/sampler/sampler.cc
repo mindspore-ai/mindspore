@@ -137,12 +137,12 @@ Status SamplerRT::SetNumSamples(int64_t num_samples) {
 int64_t SamplerRT::GetNumSamples() { return num_samples_; }
 
 int64_t SamplerRT::CalculateNumSamples(int64_t num_rows) {
-  int64_t childs = num_rows;
+  int64_t child_num_rows = num_rows;
   if (!child_.empty()) {
-    childs = child_[0]->CalculateNumSamples(num_rows);
+    child_num_rows = child_[0]->CalculateNumSamples(num_rows);
   }
 
-  return (num_samples_ > 0) ? std::min(childs, num_samples_) : childs;
+  return (num_samples_ > 0) ? std::min(child_num_rows, num_samples_) : child_num_rows;
 }
 
 Status SamplerRT::SetNumRowsInDataset(int64_t num_rows) {
