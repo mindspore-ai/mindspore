@@ -254,8 +254,8 @@ int ConvolutionDepthwiseSWInt8CPUKernel::ReinitQuantParam() {
     const double in_scale = static_cast<double>(input_scale_[i] * weight_scale_[i]);
     double real_multiplier = in_scale / static_cast<double>(output_scale_[i]);
     conv_quant_arg_->real_multiplier_[i] = real_multiplier;
-    QuantizeRoundParameter(real_multiplier, &conv_quant_arg_->quant_multiplier_[i], &conv_quant_arg_->left_shift_[i],
-                           &conv_quant_arg_->right_shift_[i]);
+    QuantizeRoundParameterWithDoublePrecision(real_multiplier, &conv_quant_arg_->quant_multiplier_[i],
+                                              &conv_quant_arg_->left_shift_[i], &conv_quant_arg_->right_shift_[i]);
   }
 
   // now only consider per tensor for output

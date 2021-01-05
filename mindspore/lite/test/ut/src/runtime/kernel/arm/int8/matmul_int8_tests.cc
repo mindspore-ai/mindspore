@@ -118,7 +118,7 @@ TEST_F(TestMatmulInt8, simple) {
   int a_sums[ROW4] = {0};
   int bias[COL4] = {0};
   int multiplier, ls, rs;
-  QuantizeRoundParameter(1.0f, &multiplier, &ls, &rs);
+  QuantizeRoundParameterWithDoublePrecision(1.0f, &multiplier, &ls, &rs);
 #ifdef ENABLE_ARM64
   MatmulInt8Neon64(a_r4x16, b_c16x4, output, ROW4, COL4, DEPTH16, a_sums, bias, INT8_MIN, INT8_MAX, 0, &multiplier, &ls,
                    &rs, ROW, COL, COL, false);

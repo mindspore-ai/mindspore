@@ -30,7 +30,14 @@ using mindspore::schema::QuantType_PostTraining;
 using mindspore::schema::QuantType_QUANT_NONE;
 using mindspore::schema::QuantType_WeightQuant;
 namespace converter {
-enum FmkType { FmkType_TF = 0, FmkType_CAFFE = 1, FmkType_ONNX = 2, FmkType_MS = 3, FmkType_TFLITE = 4 };
+enum FmkType {
+  FmkType_TF = 0,
+  FmkType_CAFFE = 1,
+  FmkType_ONNX = 2,
+  FmkType_MS = 3,
+  FmkType_TFLITE = 4,
+  FmkType_ONNX_LOW_VERSION = 5
+};
 
 class Flags : public virtual mindspore::lite::FlagParser {
  public:

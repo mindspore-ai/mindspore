@@ -53,6 +53,7 @@ class ConvolutionBaseCPUKernel : public LiteKernel {
   int SetFilterTensorQuantParam();
   int SetOutputTensorQuantParam();
   int SetQuantMultiplier();
+  void SetRoundingAndMultipilerMode();
   int CheckResizeValid();
   void FreeQuantParam();
 

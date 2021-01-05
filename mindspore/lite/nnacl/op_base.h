@@ -80,6 +80,12 @@ typedef struct OpParameter {
 
 typedef enum ActType { ActType_No, ActType_Relu, ActType_Sigmod, ActType_Relu6, ActType_Prelu } ActType;
 typedef enum PadMode { Pad_No, Pad_Same, Pad_Valid } PadMode;
+typedef enum RoundingMode { Rounding_No, Rounding_Away_from_zero, Rounding_Up } RoundingMode;
+typedef enum CalFixedMultiplierMode {
+  Method_No,
+  Method_SinglePrecision,
+  Method_DoublePrecision
+} CalFixedMultiplierMode;
 
 #ifdef ENABLE_ARM
 #define MS_FLOAT32X4 float32x4_t

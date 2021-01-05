@@ -40,16 +40,15 @@ std::set<std::string> SPECIAL_NODE = {"Gemm", "Loop"};
 FuncGraphPtr OnnxModelParser::Parse(const std::string &model_file, const std::string &weight_file,
                                     const QuantType &quant_type) {
   NoSupportOp::GetInstance()->SetFmkType("ONNX");
+  func_graph_ptr_ = std::make_shared<FuncGraph>();
+  if (func_graph_ptr_ == nullptr) {
+    MS_LOG(ERROR) << "funcgraph is nullptr.";
+    return nullptr;
+  }
   auto status = InitOriginModel(model_file);
   if (RET_OK != status) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     MS_LOG(ERROR) << "init origin model failed.";
-    return nullptr;
-  }
-
-  func_graph_ptr_ = std::make_shared<FuncGraph>();
-  if (func_graph_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "funcgraph is nullptr.";
     return nullptr;
   }
 
@@ -99,6 +98,11 @@ STATUS OnnxModelParser::InitOriginModel(const std::string &model_file) {
   }
   OnnxNodeParser::set_opset_version(onnx_model_.opset_import().Get(0).version());
   onnx_graph_ = onnx_model_.graph();
+  if (OnnxNodeParser::opset_version() > 15) {
+    func_graph_ptr_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
+  } else {
+    func_graph_ptr_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX_LOW_VERSION)));
+  }
   return RET_OK;
 }
 
@@ -388,6 +392,9 @@ STATUS OnnxModelParser::SetTensorQuantParamFromNode(const std::string &tensor_na
                                                     std::vector<QuantParamT> *quant_params) {
   quant_params->clear();
   auto quant_param = std::make_unique<QuantParamT>();
+  if (OnnxNodeParser::opset_version() <= 15) {
+    quant_param->multiplier = 0;
+  }
   std::string quant_tensor_name = "scale_" + tensor_name;
   auto status = CopyTensorQuantParam(quant_tensor_name, quant_param.get(), true);
   if (status != RET_OK) {

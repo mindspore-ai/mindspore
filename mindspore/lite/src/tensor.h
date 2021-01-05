@@ -38,6 +38,9 @@ struct QuantArg {
   bool inited;
   std::vector<float> clusters{};
   int bitNum;
+  int roundType;
+  int multiplier;
+  int dstDtype;
 };
 
 class Tensor : public mindspore::tensor::MSTensor {

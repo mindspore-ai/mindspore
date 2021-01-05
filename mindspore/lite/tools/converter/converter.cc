@@ -71,6 +71,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
       return nullptr;
     }
     graph->set_attr("graph_name", MakeValue("main_graph"));
+    graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_MS)));
   } else {
     MS_ASSERT(nullptr != modelParser);
     const std::string modelFile = flag->modelFile;
