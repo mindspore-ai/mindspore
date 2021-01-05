@@ -39,7 +39,7 @@ int ConvolutionDepthwiseNPUKernel::SetConvDwParam() {
     conv_dw_->set_attr_pad_mode(ge::AttrValue::STR{"VALID"});
     conv_dw_->set_attr_pads(ge::AttrValue::LIST_INT({0, 0, 0, 0}));
   } else {
-    conv_dw_->set_attr_pad_mode(ge::AttrValue::STR{"SPECIFIC"});
+    conv_dw_->set_attr_pad_mode(ge::AttrValue::STR{"VALID"});
     conv_dw_->set_attr_pads(
       ge::AttrValue::LIST_INT({conv_param_->pad_u_, conv_param_->pad_d_, conv_param_->pad_l_, conv_param_->pad_r_}));
   }
@@ -61,13 +61,19 @@ int ConvolutionDepthwiseNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *
     return RET_ERROR;
   }
 
-  ret = InitWeightBiasConst(inputs);
+  ret = InitWeightConst(inputs);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set weight and bias for convolution depthwise op " << name_ << " failed when running npu";
     return RET_ERROR;
   }
   conv_dw_->set_input_filter(*weight_);
+
   if (inputs.size() == 3) {
+    ret = InitBiasConst(inputs);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Set bias for convolution depthwise op " << name_ << " failed when running npu";
+      return RET_ERROR;
+    }
     conv_dw_->set_input_bias(*bias_);
   }
   conv_dw_->set_input_x(*npu_inputs[0]);

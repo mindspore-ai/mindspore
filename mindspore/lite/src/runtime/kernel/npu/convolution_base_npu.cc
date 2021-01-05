@@ -34,7 +34,7 @@ ConvolutionBaseNPUKernel::~ConvolutionBaseNPUKernel() {
   }
 }
 
-int ConvolutionBaseNPUKernel::InitWeightBiasConst(const std::vector<lite::Tensor *> &inputs) {
+int ConvolutionBaseNPUKernel::InitWeightConst(const std::vector<lite::Tensor *> &inputs) {
   weight_ = new (std::nothrow) hiai::op::Const(name_ + "_w");
   if (weight_ == nullptr) {
     MS_LOG(ERROR) << "New weight const failed.";
@@ -61,7 +61,10 @@ int ConvolutionBaseNPUKernel::InitWeightBiasConst(const std::vector<lite::Tensor
 
   weight_->set_attr_value(weight_tensor);
   free(nchw_data);
+  return RET_OK;
+}
 
+int ConvolutionBaseNPUKernel::InitBiasConst(const std::vector<lite::Tensor *> &inputs) {
   if (inputs.size() >= 3) {
     bias_ = new (std::nothrow) hiai::op::Const(name_ + "_b");
     if (bias_ == nullptr) {
@@ -88,7 +91,7 @@ int ConvolutionBaseNPUKernel::SetActivation(const ge::Operator *input, ActType a
   } else if (act_type == ActType_Relu6) {
     act_->set_attr_mode(14);
   } else {
-    MS_LOG(ERROR) << "Unsupport activation for convolution.";
+    MS_LOG(ERROR) << "Unsupport activation type for convolution.";
     return RET_ERROR;
   }
   return RET_OK;

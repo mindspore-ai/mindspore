@@ -21,6 +21,9 @@
 
 namespace mindspore::lite {
 bool CheckFusion(kernel::LiteKernel *kernel) {
+  if (kernel->in_kernels().empty() || kernel->out_kernels().empty()) {
+    return false;
+  }
   auto pre_flag =
     std::all_of(kernel->in_kernels().begin(), kernel->in_kernels().end(), [](const kernel::LiteKernel *in_kernel) {
       return NPUPassUtils::IsNchw2Nhwc(in_kernel) && in_kernel->out_kernels().size() == 1;

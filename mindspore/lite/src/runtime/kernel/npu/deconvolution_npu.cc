@@ -65,13 +65,19 @@ int DeconvolutionNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inpu
     return RET_ERROR;
   }
 
-  ret = InitWeightBiasConst(inputs);
+  ret = InitWeightConst(inputs);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set weight and bias for deconvolution op " << name_ << " failed when running npu";
     return RET_ERROR;
   }
   deconv_->set_input_filter(*weight_);
+
   if (inputs.size() == 3) {
+    ret = InitBiasConst(inputs);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Set bias for deconvolution op " << name_ << " failed when running npu";
+      return RET_ERROR;
+    }
     deconv_->set_input_bias(*bias_);
   }
   deconv_->set_input_x(*npu_inputs[0]);

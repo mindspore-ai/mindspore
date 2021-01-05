@@ -65,13 +65,19 @@ int ConvolutionNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs
     return RET_ERROR;
   }
 
-  ret = InitWeightBiasConst(inputs);
+  ret = InitWeightConst(inputs);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set weight and bias for convolution op " << name_ << " failed when running npu";
     return RET_ERROR;
   }
   conv_->set_input_filter(*weight_);
+
   if (inputs.size() == 3) {
+    ret = InitBiasConst(inputs);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Set bias for convolution op " << name_ << " failed when running npu";
+      return RET_ERROR;
+    }
     conv_->set_input_bias(*bias_);
   }
   conv_->set_input_x(*npu_inputs[0]);
