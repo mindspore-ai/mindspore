@@ -98,5 +98,24 @@ void CPUKernelUtils::ParallelFor(const CTask &task, size_t count) {
   }
 }
 
+std::vector<size_t> CPUKernelUtils::FlatShapeByAxis(const std::vector<size_t> &shape, int axis) {
+  if (axis < 0) {
+    axis = axis + SizeToInt(shape.size());
+  }
+  size_t dim_row = 1;
+  size_t dim_col = 1;
+  std::vector<size_t> flat_shape;
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if (SizeToInt(i) < axis) {
+      dim_row *= shape[i];
+    } else {
+      dim_col *= shape[i];
+    }
+  }
+  flat_shape.push_back(dim_row);
+  flat_shape.push_back(dim_col);
+  return flat_shape;
+}
+
 }  // namespace kernel
 }  // namespace mindspore

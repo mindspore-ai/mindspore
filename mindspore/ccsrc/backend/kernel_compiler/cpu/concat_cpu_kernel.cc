@@ -19,84 +19,50 @@
 
 namespace mindspore {
 namespace kernel {
-void ConcatCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+template <typename T>
+void ConcatCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   CheckParam(kernel_node);
 
-  axis_ = AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS);
+  axis_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
   auto input_1_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
   if (axis_ < 0) {
-    axis_ = axis_ + SizeToLong(input_1_shape.size());
-  }
-  axis_ += 4 - SizeToLong(input_1_shape.size());
-
-  auto input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-  for (size_t i = 0; i < input_num; i++) {
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
-    CPUKernelUtils::ExpandDimsTo4(&input_shape);
-    input_shape_list_.push_back(input_shape);
+    axis_ = axis_ + SizeToInt(input_1_shape.size());
   }
 
-  output_shape_ = AnfAlgo::GetOutputInferShape(kernel_node, 0);
-  CPUKernelUtils::ExpandDimsTo4(&output_shape_);
+  input_num_ = AnfAlgo::GetInputTensorNum(kernel_node);
+  for (size_t i = 0; i < input_num_; i++) {
+    auto input_shape_i = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
+    auto flat_shape = CPUKernelUtils::FlatShapeByAxis(input_shape_i, axis_);
+    input_flat_shape_list_.push_back(flat_shape);
+  }
 }
 
-bool ConcatCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                             const std::vector<kernel::AddressPtr> & /*workspace*/,
-                             const std::vector<kernel::AddressPtr> &outputs) {
-  auto output_addr = reinterpret_cast<float *>(outputs[0]->addr);
+template <typename T>
+bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                const std::vector<kernel::AddressPtr> & /*workspace*/,
+                                const std::vector<kernel::AddressPtr> &outputs) {
+  auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto buff_size = outputs[0]->size;
-  size_t dim0 = output_shape_[0];
-  size_t dim1 = output_shape_[1];
-  size_t dim2 = output_shape_[2];
-
-  if (axis_ == 3) {
-    for (size_t i = 0; i < dim0; ++i) {
-      for (size_t j = 0; j < dim1; ++j) {
-        for (size_t k = 0; k < dim2; ++k) {
-          CopyDataToOutput(inputs, i, j, k, &output_addr, &buff_size);
-        }
+  // each input's row of shape after flat are same
+  auto before_axis = input_flat_shape_list_[0][0];
+  for (size_t i = 0; i < before_axis; ++i) {
+    for (size_t j = 0; j < input_num_; ++j) {
+      auto input_j_addr = reinterpret_cast<T *>(inputs[j]->addr);
+      auto copy_num = input_flat_shape_list_[j][1];
+      auto offset = copy_num * i;
+      auto ret = memcpy_s(output_addr, buff_size, input_j_addr + offset, copy_num * sizeof(T));
+      if (ret != EOK) {
+        MS_LOG(EXCEPTION) << "memcpy failed.";
       }
+      output_addr += copy_num;
+      buff_size -= copy_num * sizeof(T);
     }
-  } else if (axis_ == 2) {
-    for (size_t i = 0; i < dim0; ++i) {
-      for (size_t j = 0; j < dim1; ++j) {
-        CopyDataToOutput(inputs, i, j, 0, &output_addr, &buff_size);
-      }
-    }
-  } else if (axis_ == 1) {
-    for (size_t i = 0; i < dim0; ++i) {
-      CopyDataToOutput(inputs, i, 0, 0, &output_addr, &buff_size);
-    }
-  } else if (axis_ == 0) {
-    CopyDataToOutput(inputs, 0, 0, 0, &output_addr, &buff_size);
   }
   return true;
 }
 
-void ConcatCPUKernel::CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t dim0, size_t dim1,
-                                       size_t dim2, float **output_addr, size_t *buff_size) {
-  for (size_t i = 0; i < input_shape_list_.size(); ++i) {
-    auto input_i_shape = input_shape_list_[i];
-    auto input_i_addr = reinterpret_cast<float *>(inputs[i]->addr);
-
-    size_t num = CPUKernelUtils::GetElementNumOnAxis(input_i_shape, axis_);
-    num *= input_i_shape[axis_];
-    auto pos = CPUKernelUtils::CalcOffset(input_i_shape, dim0, dim1, dim2, 0);
-    auto ret = memcpy_s(*output_addr, *buff_size, input_i_addr + pos, num * sizeof(float));
-    if (ret != EOK) {
-      MS_LOG(EXCEPTION) << "memcpy failed.";
-    }
-    *output_addr += num;
-    *buff_size -= num * sizeof(float);
-  }
-}
-
-void ConcatCPUKernel::CheckParam(const CNodePtr &kernel_node) {
-  auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-  if (input_shape.size() > 4) {
-    MS_LOG(EXCEPTION) << "Input dims is " << input_shape.size() << ", but ConcatCPUKernel olny support 4d or lower.";
-  }
-
+template <typename T>
+void ConcatCPUKernel<T>::CheckParam(const CNodePtr &kernel_node) {
   size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
   if (output_num != 1) {
     MS_LOG(EXCEPTION) << "Output number is " << output_num << ", but ConcatCPUKernel needs 1 output.";

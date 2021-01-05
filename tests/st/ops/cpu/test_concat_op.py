@@ -19,84 +19,290 @@ from mindspore import Tensor
 from mindspore.ops import operations as P
 import mindspore.nn as nn
 import mindspore.context as context
-from mindspore.common import dtype as mstype
 
 context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 
-class Concat_Axis0(nn.Cell):
-    def __init__(self):
-        super(Concat_Axis0, self).__init__()
-        self.cat = P.Concat(axis=0)
+class ConcatV10(nn.Cell):
+    def __init__(self, nptype):
+        super(ConcatV10, self).__init__()
 
-    def construct(self, x1, x2):
-        return self.cat((x1, x2))
+        self.cat = P.Concat(axis=2)
+        self.x1 = Tensor(np.array([[[0., 0., 1.],
+                                    [1., 2., 3.]],
+                                   [[2., 4., 5.],
+                                    [3., 6., 7.]]]).astype(nptype))
+
+    def construct(self):
+        return self.cat((self.x1,))
+
+
+def axis10(nptype):
+    cat = ConcatV10(nptype)
+    output = cat()
+    expect = np.array([[[0., 0., 1.],
+                        [1., 2., 3.]],
+                       [[2., 4., 5.],
+                        [3., 6., 7.]]]).astype(nptype)
+    print(output)
+    assert (output.asnumpy() == expect).all()
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_in2_axis0():
-    x1 = Tensor(np.arange(2 * 2 * 2).reshape(2, 2, 2), mstype.float32)
-    x2 = Tensor(np.arange(3 * 2 * 2).reshape(3, 2, 2), mstype.float32)
-    cat = Concat_Axis0()
-    output_ms = cat(x1, x2)
-    print("output:\n", output_ms)
-    output_np = np.concatenate((x1.asnumpy(), x2.asnumpy()), axis=0)
+def test_axis10_float32():
+    axis10(np.float32)
 
-    error = np.ones(shape=output_np.shape) * 10e-6
-    diff = output_ms.asnumpy() - output_np
-    assert np.all(diff < error)
-    assert np.all(-diff < error)
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_axis10_int32():
+    axis10(np.int32)
 
-class Concat_Axis1(nn.Cell):
-    def __init__(self):
-        super(Concat_Axis1, self).__init__()
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_axis10_bool():
+    axis10(np.bool)
+
+class ConcatV32(nn.Cell):
+    def __init__(self, nptype):
+        super(ConcatV32, self).__init__()
+
+        self.cat = P.Concat(axis=2)
+        self.x1 = Tensor(np.arange(2 * 2 * 1).reshape(2, 2, 1).astype(nptype))
+        self.x2 = Tensor(np.arange(2 * 2 * 2).reshape(2, 2, 2).astype(nptype))
+
+    def construct(self):
+        return self.cat((self.x1, self.x2))
+
+
+def axis32(nptype):
+    cat = ConcatV32(nptype)
+    output = cat()
+    expect = np.array([[[0., 0., 1.],
+                        [1., 2., 3.]],
+                       [[2., 4., 5.],
+                        [3., 6., 7.]]]).astype(nptype)
+    print(output)
+    assert (output.asnumpy() == expect).all()
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_axis32_float32():
+    axis32(np.float32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_axis32_int32():
+    axis32(np.int32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_axis32_bool():
+    axis32(np.bool)
+
+
+class ConcatV43(nn.Cell):
+    def __init__(self, nptype):
+        super(ConcatV43, self).__init__()
+
+        self.cat = P.Concat(axis=3)
+        self.x1 = Tensor(np.arange(2 * 2 * 2 * 2).reshape(2, 2, 2, 2).astype(nptype))
+        self.x2 = Tensor(np.arange(2 * 2 * 2 * 3).reshape(2, 2, 2, 3).astype(nptype))
+
+    def construct(self):
+        return self.cat((self.x1, self.x2))
+
+
+def axis43(nptype):
+    cat = ConcatV43(nptype)
+    output = cat()
+    expect = np.array([[[[0., 1., 0., 1., 2.],
+                         [2., 3., 3., 4., 5.]],
+                        [[4., 5., 6., 7., 8.],
+                         [6., 7., 9., 10., 11.]]],
+                       [[[8., 9., 12., 13., 14.],
+                         [10., 11., 15., 16., 17.]],
+                        [[12., 13., 18., 19., 20.],
+                         [14., 15., 21., 22., 23.]]]]).astype(nptype)
+    assert (output.asnumpy() == expect).all()
+    print(output)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_axis43_float32():
+    axis43(np.float32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_axis43_int32():
+    axis43(np.int32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_axis43_bool():
+    axis43(np.bool)
+
+
+class ConcatV21(nn.Cell):
+    def __init__(self, nptype):
+        super(ConcatV21, self).__init__()
+
         self.cat = P.Concat(axis=1)
+        self.x1 = Tensor(np.arange(2 * 2).reshape(2, 2).astype(nptype))
+        self.x2 = Tensor(np.arange(2 * 3).reshape(2, 3).astype(nptype))
 
-    def construct(self, x1, x2):
-        return self.cat((x1, x2))
+    def construct(self):
+        return self.cat((self.x1, self.x2))
+
+
+def axis21(nptype):
+    cat = ConcatV21(nptype)
+    output = cat()
+    expect = np.array([[0., 1., 0., 1., 2.],
+                       [2., 3., 3., 4., 5.]]).astype(nptype)
+    assert (output.asnumpy() == expect).all()
+    print(output)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
-def test_in2_axis1():
-    x1 = Tensor(np.arange(2 * 2 * 2).reshape(2, 2, 2), mstype.float32)
-    x2 = Tensor(np.arange(2 * 3 * 2).reshape(2, 3, 2), mstype.float32)
-    cat = Concat_Axis1()
-    output_ms = cat(x1, x2)
-    print("output:\n", output_ms)
-    output_np = np.concatenate((x1.asnumpy(), x2.asnumpy()), axis=1)
+def test_axis21_float32():
+    axis21(np.float32)
 
-    error = np.ones(shape=output_np.shape) * 10e-6
-    diff = output_ms.asnumpy() - output_np
-    assert np.all(diff < error)
-    assert np.all(-diff < error)
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_axis21_int32():
+    axis21(np.int32)
 
-class Concat_in3_Axis2(nn.Cell):
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_axis21_bool():
+    axis21(np.bool)
+
+
+class Concat3INet(nn.Cell):
     def __init__(self):
-        super(Concat_in3_Axis2, self).__init__()
-        self.cat = P.Concat(axis=-1)
+        super(Concat3INet, self).__init__()
+        self.cat = P.Concat(axis=1)
 
     def construct(self, x1, x2, x3):
         return self.cat((x1, x2, x3))
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_cpu
-@pytest.mark.env_onecard
-def test_in3_axis2():
-    x1 = Tensor(np.arange(2 * 2 * 1).reshape(2, 2, 1), mstype.float32)
-    x2 = Tensor(np.arange(2 * 2 * 2).reshape(2, 2, 2), mstype.float32)
-    x3 = Tensor(np.arange(2 * 2 * 3).reshape(2, 2, 3), mstype.float32)
-    cat = Concat_in3_Axis2()
-    output_ms = cat(x1, x2, x3)
-    print("output:\n", output_ms)
-    output_np = np.concatenate((x1.asnumpy(), x2.asnumpy(), x3.asnumpy()), axis=-1)
+
+def concat_3i(nptype):
+    cat = Concat3INet()
+
+    x1_np = np.random.randn(32, 4, 224, 224).astype(nptype)
+    x2_np = np.random.randn(32, 8, 224, 224).astype(nptype)
+    x3_np = np.random.randn(32, 10, 224, 224).astype(nptype)
+    output_np = np.concatenate((x1_np, x2_np, x3_np), axis=1)
+
+    x1_ms = Tensor(x1_np)
+    x2_ms = Tensor(x2_np)
+    x3_ms = Tensor(x3_np)
+    output_ms = cat(x1_ms, x2_ms, x3_ms)
 
     error = np.ones(shape=output_np.shape) * 10e-6
     diff = output_ms.asnumpy() - output_np
     assert np.all(diff < error)
-    assert np.all(-diff < error)
 
-if __name__ == '__main__':
-    test_in2_axis0()
-    test_in2_axis1()
-    test_in3_axis2()
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_3i_float32():
+    concat_3i(np.float32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_3i_int32():
+    concat_3i(np.int32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_3i_bool():
+    cat = Concat3INet()
+
+    x1_np = np.random.choice([True, False], (32, 4, 224, 224)).astype(np.bool)
+    x2_np = np.random.choice([True, False], (32, 8, 224, 224)).astype(np.bool)
+    x3_np = np.random.choice([True, False], (32, 10, 224, 224)).astype(np.bool)
+    output_np = np.concatenate((x1_np, x2_np, x3_np), axis=1)
+
+    x1_ms = Tensor(x1_np)
+    x2_ms = Tensor(x2_np)
+    x3_ms = Tensor(x3_np)
+    output_ms = cat(x1_ms, x2_ms, x3_ms)
+
+    assert (output_ms.asnumpy() == output_np).all()
+
+
+class Concat4INet(nn.Cell):
+    def __init__(self):
+        super(Concat4INet, self).__init__()
+        self.cat = P.Concat(axis=1)
+
+    def construct(self, x1, x2, x3, x4):
+        return self.cat((x1, x2, x3, x4))
+
+
+def concat_4i(nptype):
+    cat = Concat4INet()
+
+    x1_np = np.random.randn(32, 4, 224, 224).astype(nptype)
+    x2_np = np.random.randn(32, 8, 224, 224).astype(nptype)
+    x3_np = np.random.randn(32, 10, 224, 224).astype(nptype)
+    x4_np = np.random.randn(32, 5, 224, 224).astype(nptype)
+    output_np = np.concatenate((x1_np, x2_np, x3_np, x4_np), axis=1)
+
+    x1_ms = Tensor(x1_np)
+    x2_ms = Tensor(x2_np)
+    x3_ms = Tensor(x3_np)
+    x4_ms = Tensor(x4_np)
+    output_ms = cat(x1_ms, x2_ms, x3_ms, x4_ms)
+
+    error = np.ones(shape=output_np.shape) * 10e-6
+    diff = output_ms.asnumpy() - output_np
+    assert np.all(diff < error)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_4i_float32():
+    concat_4i(np.float32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_4i_int32():
+    concat_4i(np.int32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_4i_bool():
+    cat = Concat4INet()
+
+    x1_np = np.random.choice([True, False], (32, 4, 224, 224)).astype(np.bool)
+    x2_np = np.random.choice([True, False], (32, 8, 224, 224)).astype(np.bool)
+    x3_np = np.random.choice([True, False], (32, 10, 224, 224)).astype(np.bool)
+    x4_np = np.random.choice([True, False], (32, 5, 224, 224)).astype(np.bool)
+    output_np = np.concatenate((x1_np, x2_np, x3_np, x4_np), axis=1)
+
+    x1_ms = Tensor(x1_np)
+    x2_ms = Tensor(x2_np)
+    x3_ms = Tensor(x3_np)
+    x4_ms = Tensor(x4_np)
+    output_ms = cat(x1_ms, x2_ms, x3_ms, x4_ms)
+
+    assert (output_ms.asnumpy() == output_np).all()

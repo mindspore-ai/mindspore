@@ -22,9 +22,10 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class ConcatCPUKernel : public CPUKernel {
  public:
-  ConcatCPUKernel() : axis_(0) {}
+  ConcatCPUKernel() = default;
   ~ConcatCPUKernel() override = default;
 
   void InitKernel(const CNodePtr &kernel_node) override;
@@ -34,16 +35,20 @@ class ConcatCPUKernel : public CPUKernel {
 
  private:
   void CheckParam(const CNodePtr &kernel_node);
-  void CopyDataToOutput(const std::vector<kernel::AddressPtr> &inputs, size_t dim0, size_t dim1, size_t dim2,
-                        float **output_addr, size_t *buff_size);
-  int64_t axis_;
-  std::vector<std::vector<size_t>> input_shape_list_;
-  std::vector<size_t> output_shape_;
+  int axis_ = 0;
+  size_t input_num_ = 1;
+  std::vector<std::vector<size_t>> input_flat_shape_list_;
 };
 
-MS_REG_CPU_KERNEL(Concat,
-                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ConcatCPUKernel);
+MS_REG_CPU_KERNEL_T(
+  Concat, KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+  ConcatCPUKernel, float);
+MS_REG_CPU_KERNEL_T(Concat,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                    ConcatCPUKernel, int)
+MS_REG_CPU_KERNEL_T(Concat,
+                    KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+                    ConcatCPUKernel, bool)
 }  // namespace kernel
 }  // namespace mindspore
 
