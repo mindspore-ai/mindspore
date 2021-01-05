@@ -311,7 +311,10 @@ function Run_Converter() {
 function Run_x86() {
     # Run tf converted models:
     while read line; do
-        tf_line_info=${line}
+        model_name_and_input_num=${line%;*}
+        length=${#model_name_and_input_num}
+        input_shapes=${line:length+1}
+        tf_line_info=${model_name_and_input_num}
         if [[ $model_name == \#* ]]; then
           continue
         fi
@@ -325,16 +328,16 @@ function Run_x86() {
         echo ${model_name} >> "${run_x86_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "{run_x86_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${input_files}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/input/'${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/'${model_name}'.ms.out' >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/output/${model_name}.ms.out >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
             run_result='x86: '${model_name}' failed'; echo ${run_result} >> ${run_benchmark_result_file}; return 1
         fi
         # run benchmark test without clib data
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms' >> "${run_x86_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms >> "${run_x86_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --inputShapes='${input_shapes}' --modelFile='${ms_models_path}'/'${model_name}'.ms' >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --inputShapes=${input_shapes} --modelFile=${ms_models_path}/${model_name}.ms >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -935,7 +938,10 @@ function Run_arm64() {
 
     # Run tf converted models:
     while read line; do
-        model_name=${line}
+        model_name_and_input_num=${line%;*}
+        length=${#model_name_and_input_num}
+        input_shapes=${line:length+1}
+        tf_line_info=${model_name_and_input_num}
         if [[ $model_name == \#* ]]; then
           continue
         fi
@@ -948,8 +954,8 @@ function Run_arm64() {
         done
         echo ${model_name} >> "${run_arm64_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile=/data/local/tmp/input_output/output/'${model_name}'.ms.out' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
@@ -958,8 +964,8 @@ function Run_arm64() {
         fi
         # run benchmark test without clib data
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --inputShapes='${input_shapes}' --modelFile='${model_name}'.ms --warmUpLoopCount=1 --loopCount=2' >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
