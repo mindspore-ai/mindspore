@@ -58,6 +58,8 @@ class DatasetCacheImpl : public DatasetCache {
 
   Status ValidateParams() override { return Status::OK(); }
 
+  ~DatasetCacheImpl() = default;
+
  private:
   std::shared_ptr<CacheClient> cache_client_;
   session_id_type session_id_;
