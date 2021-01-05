@@ -50,6 +50,8 @@ STATUS TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
     attr->type = schema::ActivationType_SIGMOID;
   } else if (tf_op.op() == "Tanh") {
     attr->type = schema::ActivationType_TANH;
+  } else if (tf_op.op() == "LeakyRelu") {
+    attr->type = schema::ActivationType_LEAKY_RELU;
   } else {
     MS_LOG(ERROR) << "unsupported activation type:" << tf_op.op();
     return RET_ERROR;
@@ -57,6 +59,17 @@ STATUS TFActivationParser::Parse(const tensorflow::NodeDef &tf_op,
 
   primitive->value.type = schema::PrimitiveType_Activation;
   primitive->value.value = attr.release();
+  if (tf_op.op() == "LeakyRelu") {
+    auto attr_leaky_relu = std::make_unique<schema::LeakyReLUT>();
+    tensorflow::AttrValue attr_value;
+    if (!TensorFlowUtils::FindAttrValue(tf_op, "alpha", &attr_value)) {
+      MS_LOG(ERROR) << "The attribute alpha shoud be specified.";
+      return RET_ERROR;
+    }
+    attr_leaky_relu->negativeSlope = attr_value.f();
+    primitive->value.type = schema::PrimitiveType_LeakyReLU;
+    primitive->value.value = attr_leaky_relu.release();
+  }
   *primitiveC = PrimitiveC::Create(primitive.release());
   if (*primitiveC == nullptr) {
     MS_LOG(ERROR) << "primitiveC is nullptr";
@@ -71,5 +84,6 @@ TFNodeRegistrar g_tfReluParser("Relu", new TFActivationParser());
 TFNodeRegistrar g_tfRelu6Parser("Relu6", new TFActivationParser());
 TFNodeRegistrar g_tfSigmoidParser("Sigmoid", new TFActivationParser());
 TFNodeRegistrar g_tfTanhParser("Tanh", new TFActivationParser());
+TFNodeRegistrar g_tfLeakyReluParser("LeakyRelu", new TFActivationParser());
 }  // namespace lite
 }  // namespace mindspore
