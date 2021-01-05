@@ -208,6 +208,37 @@ TEST_F(MindDataTestPipeline, TestDistributedSamplerSuccess) {
   iter->Stop();
 }
 
+TEST_F(MindDataTestPipeline, TestSamplerAddChild) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSamplerAddChild.";
+
+  auto sampler = DistributedSampler(1, 0, false, 5, 0, -1, true);
+  EXPECT_NE(sampler, nullptr);
+
+  auto child_sampler = SequentialSampler();
+  sampler->AddChild(child_sampler);
+  EXPECT_NE(child_sampler, nullptr);
+
+  // Create an ImageFolder Dataset
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds = ImageFolder(folder_path, false, sampler);
+  EXPECT_NE(ds, nullptr);
+
+  // Iterate the dataset and get each row
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    i++;
+    iter->GetNextRow(&row);
+  }
+
+  EXPECT_EQ(ds->GetDatasetSize(), 5);
+  iter->Stop();
+}
+
 TEST_F(MindDataTestPipeline, TestDistributedSamplerFail) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestDistributedSamplerFail.";
   // Test invalid offset setting of distributed_sampler

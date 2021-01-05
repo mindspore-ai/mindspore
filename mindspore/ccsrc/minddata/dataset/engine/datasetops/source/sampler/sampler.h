@@ -160,6 +160,7 @@ class SamplerRT {
   // amount.
   int64_t num_samples_;
 
+  bool is_initialized;
   int64_t samples_per_buffer_;
   std::unique_ptr<ColDescriptor> col_desc_;
   std::vector<std::shared_ptr<SamplerRT>> child_;  // Child nodes

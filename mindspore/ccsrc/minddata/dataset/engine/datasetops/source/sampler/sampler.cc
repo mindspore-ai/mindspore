@@ -34,7 +34,11 @@ Status RandomAccessOp::GetNumRowsInDataset(int64_t *num) const {
 }
 
 SamplerRT::SamplerRT(int64_t num_samples, int64_t samples_per_buffer)
-    : num_rows_(0), num_samples_(num_samples), samples_per_buffer_(samples_per_buffer), col_desc_(nullptr) {}
+    : num_rows_(0),
+      num_samples_(num_samples),
+      samples_per_buffer_(samples_per_buffer),
+      col_desc_(nullptr),
+      is_initialized(false) {}
 
 Status SamplerRT::HandshakeRandomAccessOp(const RandomAccessOp *op) {
   std::shared_ptr<SamplerRT> child_sampler;

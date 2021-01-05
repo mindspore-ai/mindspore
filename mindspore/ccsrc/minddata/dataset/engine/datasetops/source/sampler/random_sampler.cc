@@ -69,6 +69,9 @@ Status RandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
 }
 
 Status RandomSamplerRT::InitSampler() {
+  if (is_initialized) {
+    return Status::OK();
+  }
   // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
   // If the user asked to sample more rows than exists in the dataset, adjust the num_samples accordingly.
   if (num_samples_ == 0 || num_samples_ > num_rows_) {
@@ -91,6 +94,7 @@ Status RandomSamplerRT::InitSampler() {
     dist = std::make_unique<std::uniform_int_distribution<int64_t>>(0, num_rows_ - 1);
   }
 
+  is_initialized = true;
   return Status::OK();
 }
 

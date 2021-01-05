@@ -65,6 +65,9 @@ Status PythonSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
 }
 
 Status PythonSamplerRT::InitSampler() {
+  if (is_initialized) {
+    return Status::OK();
+  }
   CHECK_FAIL_RETURN_UNEXPECTED(
     num_rows_ > 0, "Invalid parameter, num_rows must be greater than 0, but got " + std::to_string(num_rows_));
   // Special value of 0 for num_samples means that the user wants to sample the entire set of data.
@@ -83,6 +86,8 @@ Status PythonSamplerRT::InitSampler() {
       return Status(StatusCode::kPyFuncException, e.what());
     }
   }
+
+  is_initialized = true;
   return Status::OK();
 }
 

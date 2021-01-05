@@ -48,6 +48,34 @@ namespace dataset {
 // Constructor
 SamplerObj::SamplerObj() {}
 
+void SamplerObj::BuildChildren(std::shared_ptr<SamplerRT> sampler) {
+  for (auto child : children_) {
+    auto sampler_rt = child->Build();
+    sampler->AddChild(sampler_rt);
+  }
+}
+
+Status SamplerObj::AddChild(std::shared_ptr<SamplerObj> child) {
+  if (child == nullptr) {
+    return Status::OK();
+  }
+
+  // Only samplers can be added, not any other DatasetOp.
+  std::shared_ptr<SamplerObj> sampler = std::dynamic_pointer_cast<SamplerObj>(child);
+  if (!sampler) {
+    RETURN_STATUS_UNEXPECTED("Cannot add child, child is not a sampler object.");
+  }
+
+  // Samplers can have at most 1 child.
+  if (!children_.empty()) {
+    RETURN_STATUS_UNEXPECTED("Cannot add child sampler, this sampler already has a child.");
+  }
+
+  children_.push_back(child);
+
+  return Status::OK();
+}
+
 /// Function to create a Distributed Sampler.
 std::shared_ptr<DistributedSamplerObj> DistributedSampler(int64_t num_shards, int64_t shard_id, bool shuffle,
                                                           int64_t num_samples, uint32_t seed, int64_t offset,
@@ -55,7 +83,7 @@ std::shared_ptr<DistributedSamplerObj> DistributedSampler(int64_t num_shards, in
   auto sampler =
     std::make_shared<DistributedSamplerObj>(num_shards, shard_id, shuffle, num_samples, seed, offset, even_dist);
   // Input validation
-  if (!sampler->ValidateParams()) {
+  if (sampler->ValidateParams().IsError()) {
     return nullptr;
   }
   return sampler;
@@ -65,7 +93,7 @@ std::shared_ptr<DistributedSamplerObj> DistributedSampler(int64_t num_shards, in
 std::shared_ptr<PKSamplerObj> PKSampler(int64_t num_val, bool shuffle, int64_t num_samples) {
   auto sampler = std::make_shared<PKSamplerObj>(num_val, shuffle, num_samples);
   // Input validation
-  if (!sampler->ValidateParams()) {
+  if (sampler->ValidateParams().IsError()) {
     return nullptr;
   }
   return sampler;
@@ -75,7 +103,7 @@ std::shared_ptr<PKSamplerObj> PKSampler(int64_t num_val, bool shuffle, int64_t n
 std::shared_ptr<RandomSamplerObj> RandomSampler(bool replacement, int64_t num_samples) {
   auto sampler = std::make_shared<RandomSamplerObj>(replacement, num_samples);
   // Input validation
-  if (!sampler->ValidateParams()) {
+  if (sampler->ValidateParams().IsError()) {
     return nullptr;
   }
   return sampler;
@@ -85,7 +113,7 @@ std::shared_ptr<RandomSamplerObj> RandomSampler(bool replacement, int64_t num_sa
 std::shared_ptr<SequentialSamplerObj> SequentialSampler(int64_t start_index, int64_t num_samples) {
   auto sampler = std::make_shared<SequentialSamplerObj>(start_index, num_samples);
   // Input validation
-  if (!sampler->ValidateParams()) {
+  if (sampler->ValidateParams().IsError()) {
     return nullptr;
   }
   return sampler;
@@ -95,7 +123,7 @@ std::shared_ptr<SequentialSamplerObj> SequentialSampler(int64_t start_index, int
 std::shared_ptr<SubsetRandomSamplerObj> SubsetRandomSampler(std::vector<int64_t> indices, int64_t num_samples) {
   auto sampler = std::make_shared<SubsetRandomSamplerObj>(std::move(indices), num_samples);
   // Input validation
-  if (!sampler->ValidateParams()) {
+  if (sampler->ValidateParams().IsError()) {
     return nullptr;
   }
   return sampler;
@@ -106,7 +134,7 @@ std::shared_ptr<WeightedRandomSamplerObj> WeightedRandomSampler(std::vector<doub
                                                                 bool replacement) {
   auto sampler = std::make_shared<WeightedRandomSamplerObj>(std::move(weights), num_samples, replacement);
   // Input validation
-  if (!sampler->ValidateParams()) {
+  if (sampler->ValidateParams().IsError()) {
     return nullptr;
   }
   return sampler;
@@ -131,35 +159,33 @@ DistributedSamplerObj::DistributedSamplerObj(int64_t num_shards, int64_t shard_i
   GlobalContext::config_manager()->set_num_shards_for_auto_num_workers(num_shards_);
 }
 
-bool DistributedSamplerObj::ValidateParams() {
+Status DistributedSamplerObj::ValidateParams() {
   if (num_shards_ <= 0) {
-    MS_LOG(ERROR) << "DistributedSampler: invalid num_shards: " << num_shards_;
-    return false;
+    RETURN_STATUS_UNEXPECTED("DistributedSampler: invalid num_shards: " + std::to_string(num_shards_));
   }
 
   if (shard_id_ < 0 || shard_id_ >= num_shards_) {
-    MS_LOG(ERROR) << "DistributedSampler: invalid input, shard_id: " << shard_id_ << ", num_shards: " << num_shards_;
-    return false;
+    RETURN_STATUS_UNEXPECTED("DistributedSampler: invalid input, shard_id: " + std::to_string(shard_id_) +
+                             ", num_shards: " + std::to_string(num_shards_));
   }
 
   if (num_samples_ < 0) {
-    MS_LOG(ERROR) << "DistributedSampler: invalid num_samples: " << num_samples_;
-    return false;
+    RETURN_STATUS_UNEXPECTED("DistributedSampler: invalid num_samples: " + std::to_string(num_samples_));
   }
 
   if (offset_ > num_shards_) {
-    MS_LOG(ERROR) << "DistributedSampler: invalid offset: " << offset_
-                  << ", which should be no more than num_shards: " << num_shards_;
-    return false;
+    RETURN_STATUS_UNEXPECTED("DistributedSampler: invalid offset: " + std::to_string(offset_) +
+                             ", which should be no more than num_shards: " + std::to_string(num_shards_));
   }
 
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<SamplerRT> DistributedSamplerObj::Build() {
   // runtime sampler object
   auto sampler = std::make_shared<dataset::DistributedSamplerRT>(num_samples_, num_shards_, shard_id_, shuffle_, seed_,
                                                                  offset_, even_dist_);
+  BuildChildren(sampler);
   return sampler;
 }
 
@@ -176,23 +202,21 @@ std::shared_ptr<mindrecord::ShardOperator> DistributedSamplerObj::BuildForMindDa
 PKSamplerObj::PKSamplerObj(int64_t num_val, bool shuffle, int64_t num_samples)
     : num_val_(num_val), shuffle_(shuffle), num_samples_(num_samples) {}
 
-bool PKSamplerObj::ValidateParams() {
+Status PKSamplerObj::ValidateParams() {
   if (num_val_ <= 0) {
-    MS_LOG(ERROR) << "PKSampler: invalid num_val: " << num_val_;
-    return false;
+    RETURN_STATUS_UNEXPECTED("PKSampler: invalid num_val: " + std::to_string(num_val_));
   }
 
   if (num_samples_ < 0) {
-    MS_LOG(ERROR) << "PKSampler: invalid num_samples: " << num_samples_;
-    return false;
+    RETURN_STATUS_UNEXPECTED("PKSampler: invalid num_samples: " + std::to_string(num_samples_));
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<SamplerRT> PKSamplerObj::Build() {
   // runtime sampler object
   auto sampler = std::make_shared<dataset::PKSamplerRT>(num_samples_, num_val_, shuffle_);
-
+  BuildChildren(sampler);
   return sampler;
 }
 
@@ -204,9 +228,12 @@ PreBuiltSamplerObj::PreBuiltSamplerObj(std::shared_ptr<mindrecord::ShardOperator
     : sp_minddataset_(std::move(sampler)) {}
 #endif
 
-bool PreBuiltSamplerObj::ValidateParams() { return true; }
+Status PreBuiltSamplerObj::ValidateParams() { return Status::OK(); }
 
-std::shared_ptr<SamplerRT> PreBuiltSamplerObj::Build() { return sp_; }
+std::shared_ptr<SamplerRT> PreBuiltSamplerObj::Build() {
+  BuildChildren(sp_);
+  return sp_;
+}
 
 #ifndef ENABLE_ANDROID
 std::shared_ptr<mindrecord::ShardOperator> PreBuiltSamplerObj::BuildForMindDataset() { return sp_minddataset_; }
@@ -214,9 +241,19 @@ std::shared_ptr<mindrecord::ShardOperator> PreBuiltSamplerObj::BuildForMindDatas
 
 std::shared_ptr<SamplerObj> PreBuiltSamplerObj::Copy() {
 #ifndef ENABLE_ANDROID
-  if (sp_minddataset_ != nullptr) return std::make_shared<PreBuiltSamplerObj>(sp_minddataset_);
+  if (sp_minddataset_ != nullptr) {
+    auto sampler = std::make_shared<PreBuiltSamplerObj>(sp_minddataset_);
+    for (auto child : children_) {
+      sampler->AddChild(child);
+    }
+    return sampler;
+  }
 #endif
-  return std::make_shared<PreBuiltSamplerObj>(sp_);
+  auto sampler = std::make_shared<PreBuiltSamplerObj>(sp_);
+  for (auto child : children_) {
+    sampler->AddChild(child);
+  }
+  return sampler;
 }
 
 #ifndef ENABLE_ANDROID
@@ -238,19 +275,18 @@ std::shared_ptr<mindrecord::ShardOperator> PKSamplerObj::BuildForMindDataset() {
 RandomSamplerObj::RandomSamplerObj(bool replacement, int64_t num_samples)
     : replacement_(replacement), num_samples_(num_samples) {}
 
-bool RandomSamplerObj::ValidateParams() {
+Status RandomSamplerObj::ValidateParams() {
   if (num_samples_ < 0) {
-    MS_LOG(ERROR) << "RandomSampler: invalid num_samples: " << num_samples_;
-    return false;
+    RETURN_STATUS_UNEXPECTED("RandomSampler: invalid num_samples: " + std::to_string(num_samples_));
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<SamplerRT> RandomSamplerObj::Build() {
   // runtime sampler object
   bool reshuffle_each_epoch = true;
   auto sampler = std::make_shared<dataset::RandomSamplerRT>(num_samples_, replacement_, reshuffle_each_epoch);
-
+  BuildChildren(sampler);
   return sampler;
 }
 
@@ -269,24 +305,22 @@ std::shared_ptr<mindrecord::ShardOperator> RandomSamplerObj::BuildForMindDataset
 SequentialSamplerObj::SequentialSamplerObj(int64_t start_index, int64_t num_samples)
     : start_index_(start_index), num_samples_(num_samples) {}
 
-bool SequentialSamplerObj::ValidateParams() {
+Status SequentialSamplerObj::ValidateParams() {
   if (num_samples_ < 0) {
-    MS_LOG(ERROR) << "SequentialSampler: invalid num_samples: " << num_samples_;
-    return false;
+    RETURN_STATUS_UNEXPECTED("SequentialSampler: invalid num_samples: " + std::to_string(num_samples_));
   }
 
   if (start_index_ < 0) {
-    MS_LOG(ERROR) << "SequentialSampler: invalid start_index: " << start_index_;
-    return false;
+    RETURN_STATUS_UNEXPECTED("SequentialSampler: invalid start_index: " + std::to_string(start_index_));
   }
 
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<SamplerRT> SequentialSamplerObj::Build() {
   // runtime sampler object
   auto sampler = std::make_shared<dataset::SequentialSamplerRT>(num_samples_, start_index_);
-
+  BuildChildren(sampler);
   return sampler;
 }
 
@@ -303,19 +337,18 @@ std::shared_ptr<mindrecord::ShardOperator> SequentialSamplerObj::BuildForMindDat
 SubsetRandomSamplerObj::SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples)
     : indices_(std::move(indices)), num_samples_(num_samples) {}
 
-bool SubsetRandomSamplerObj::ValidateParams() {
+Status SubsetRandomSamplerObj::ValidateParams() {
   if (num_samples_ < 0) {
-    MS_LOG(ERROR) << "SubsetRandomSampler: invalid num_samples: " << num_samples_;
-    return false;
+    RETURN_STATUS_UNEXPECTED("SubsetRandomSampler: invalid num_samples: " + std::to_string(num_samples_));
   }
 
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<SamplerRT> SubsetRandomSamplerObj::Build() {
   // runtime sampler object
   auto sampler = std::make_shared<dataset::SubsetRandomSamplerRT>(num_samples_, indices_);
-
+  BuildChildren(sampler);
   return sampler;
 }
 
@@ -332,34 +365,32 @@ std::shared_ptr<mindrecord::ShardOperator> SubsetRandomSamplerObj::BuildForMindD
 WeightedRandomSamplerObj::WeightedRandomSamplerObj(std::vector<double> weights, int64_t num_samples, bool replacement)
     : weights_(std::move(weights)), num_samples_(num_samples), replacement_(replacement) {}
 
-bool WeightedRandomSamplerObj::ValidateParams() {
+Status WeightedRandomSamplerObj::ValidateParams() {
   if (weights_.empty()) {
-    MS_LOG(ERROR) << "WeightedRandomSampler: weights vector must not be empty";
-    return false;
+    RETURN_STATUS_UNEXPECTED("WeightedRandomSampler: weights vector must not be empty");
   }
   int32_t zero_elem = 0;
   for (int32_t i = 0; i < weights_.size(); ++i) {
     if (weights_[i] < 0) {
-      MS_LOG(ERROR) << "WeightedRandomSampler: weights vector must not contain negative number, got: " << weights_[i];
-      return false;
+      RETURN_STATUS_UNEXPECTED("WeightedRandomSampler: weights vector must not contain negative number, got: " +
+                               std::to_string(weights_[i]));
     }
     if (weights_[i] == 0.0) {
       zero_elem++;
     }
   }
   if (zero_elem == weights_.size()) {
-    MS_LOG(ERROR) << "WeightedRandomSampler: elements of weights vector must not be all zero";
-    return false;
+    RETURN_STATUS_UNEXPECTED("WeightedRandomSampler: elements of weights vector must not be all zero");
   }
   if (num_samples_ < 0) {
-    MS_LOG(ERROR) << "WeightedRandomSampler: invalid num_samples: " << num_samples_;
-    return false;
+    RETURN_STATUS_UNEXPECTED("WeightedRandomSampler: invalid num_samples: " + std::to_string(num_samples_));
   }
-  return true;
+  return Status::OK();
 }
 
 std::shared_ptr<SamplerRT> WeightedRandomSamplerObj::Build() {
   auto sampler = std::make_shared<dataset::WeightedRandomSamplerRT>(num_samples_, weights_, replacement_);
+  BuildChildren(sampler);
   return sampler;
 }
 
