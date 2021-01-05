@@ -93,10 +93,6 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
 }
 
 int DepthwiseConv2dOpenCLKernel::InitWeights() {
-  if (!in_tensors_.at(1)->IsConst()) {
-    MS_LOG(ERROR) << "DepthwiseConv2d don't support non-constant filter yet.";
-    return RET_ERROR;
-  }
   auto ret = DequantWeight();
   if (ret != RET_OK) {
     return ret;
@@ -124,7 +120,6 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     } else {  // int8 or int16
       std::function<int16_t(int16_t)> to_dtype = [](int16_t x) -> int16_t { return x; };
       PackNCHWToNC4HW4<int16_t, int16_t>(origin_weight, packed_weight_, 1, plane, out_info.C, to_dtype);
-      FreeDequantedWeight();
     }
   } else {
     packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(float));
@@ -138,10 +133,10 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     } else {  // int8 or int16
       std::function<float(float)> to_dtype = [](float x) -> float { return x; };
       PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane, out_info.C, to_dtype);
-      FreeDequantedWeight();
     }
   }
   allocator->UnmapBuffer(packed_weight_);
+  FreeDequantedWeight();
 
   size_t dtype_size = sizeof(float);
   if (is_fp16 && in_tensors_.at(kBiasIndex)->data_type() == kNumberTypeFloat16) {

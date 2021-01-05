@@ -264,11 +264,11 @@ int Conv2DOpenCLKernel::InitFilter() {
         ConvertConvWeight4DTo7D<float, float>(weight_tensor->data_c(), packed_weight_, CO_, KH_, KW_, CI_,
                                               block_size_.C);
       }
-      FreeDequantedWeight();
     }
   }
 
   allocator->UnmapBuffer(packed_weight_);
+  FreeDequantedWeight();
   return RET_OK;
 }
 

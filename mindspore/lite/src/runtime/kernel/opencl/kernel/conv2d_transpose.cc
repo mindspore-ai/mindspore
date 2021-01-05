@@ -125,6 +125,10 @@ void Conv2dTransposeOpenCLKernel::SetConstArgs() {
 }
 
 int Conv2dTransposeOpenCLKernel::InitWeights() {
+  auto ret = DequantWeight();
+  if (ret != RET_OK) {
+    return ret;
+  }
   ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
   int ci = in_tensors_[0]->shape()[3];
   int co = out_tensors_[0]->shape()[3];
@@ -180,6 +184,7 @@ int Conv2dTransposeOpenCLKernel::InitWeights() {
     }
   }
   allocator->UnmapBuffer(padWeight_);
+  FreeDequantedWeight();
 
   // init bias_(image2d mem)
   size_t im_dst_x, im_dst_y;
