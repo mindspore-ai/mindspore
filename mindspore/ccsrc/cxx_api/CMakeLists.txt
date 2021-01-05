@@ -85,9 +85,9 @@ if (ENABLE_ACL)
     find_library(libaicpu_engine_common libaicpu_engine_common.so ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
     find_library(atc_protobuf libascend_protobuf.so.3.8.0.0 ${ATC_DIR}/lib64 ${ATLAS_ATC_DIR}/lib64)
 
-    target_link_libraries(mindspore_shared_lib PRIVATE graph ${ge_compiler} ${atc_protobuf}  ${acl_retr} ${acl_cblas}
-            ${acl_dvpp} ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel} ${libaicore_utils}
-            ${libaicpu_engine_common} ${acl})
+    target_link_libraries(mindspore_shared_lib PRIVATE -Wl,--no-as-needed graph ${ge_compiler} ${atc_protobuf}
+            ${acl_retr} ${acl_cblas} ${acl_dvpp} ${acl_runtime} ${libplatform} ${libcompress} ${libopskernel}
+            ${libaicore_utils} ${libaicpu_engine_common} ${acl})
     add_dependencies(mindspore_shared_lib graph)
 endif ()
 
