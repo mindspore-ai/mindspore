@@ -5188,7 +5188,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         - **grad** (Tensor) - A tensor of the same type as `var`, for the gradient.
         - **indices** (Tensor) - A tensor of indices in the first dimension of `var` and `accum`.
           If there are duplicates in `indices`, the behavior is undefined. Must be one of the
-          following types: int16, int32, int64, uint16, uint32, uint64.
+          following types: int32, int64.
 
     Outputs:
         Tuple of 2 tensors, the updated parameters.
@@ -5254,8 +5254,7 @@ class SparseApplyProximalAdagrad(PrimitiveWithCheck):
         validator.check_scalar_or_tensor_types_same({"lr": lr_dtype}, [mstype.float16, mstype.float32], self.name)
         validator.check_scalar_or_tensor_types_same({"l1": l1_dtype}, [mstype.float16, mstype.float32], self.name)
         validator.check_scalar_or_tensor_types_same({"l2": l2_dtype}, [mstype.float16, mstype.float32], self.name)
-        valid_dtypes = [mstype.int16, mstype.int32, mstype.int64,
-                        mstype.uint16, mstype.uint32, mstype.uint64]
+        valid_dtypes = [mstype.int32, mstype.int64]
         validator.check_tensor_dtype_valid('indices', indices_dtype, valid_dtypes, self.name)
 
 
