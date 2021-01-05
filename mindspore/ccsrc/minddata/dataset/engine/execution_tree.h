@@ -211,7 +211,7 @@ class ExecutionTree {
 
   // Return the pointer to the TaskGroup
   // @return raw pointer to the TaskGroup
-  TaskGroup *AllTasks() const { return tg_.get(); }
+  TaskGroup *const AllTasks() const { return tg_.get(); }
 
   // Return if the ExecutionTree is at end of epoch status
   // @return bool - true is ExecutionTree is end of epoch status
