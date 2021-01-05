@@ -34,6 +34,8 @@ typedef struct QuantArg {
 } QuantArg;
 
 typedef struct ConvQuantArg {
+  RoundingMode round_mode_;
+  CalFixedMultiplierMode quant_multiplier_mode_;
   QuantArg *input_quant_args_;
   QuantArg *filter_quant_args_;
   QuantArg *output_quant_args_;
@@ -46,7 +48,6 @@ typedef struct ConvQuantArg {
   size_t input_arg_num_;
   size_t filter_arg_num_;
   size_t output_arg_num_;
-  uint8_t asymmetric_;
   uint8_t per_channel_;
 } ConvQuantArg;
 
@@ -282,7 +283,11 @@ void QuantizeMultiplier(double double_multiplier, int32_t *quantized_multiplier,
 
 void QuantizeMultiplierSmallerThanOne(double double_multiplier, int32_t *quantized_multiplier, int *right_shift);
 
-void QuantizeRoundParameter(double double_multiplier, int32_t *quantized_multiplier, int *left_shift, int *right_shift);
+void QuantizeRoundParameterWithDoublePrecision(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
+                                               int *right_shift);
+
+void QuantizeRoundParameterWithSinglePrecision(double double_multiplier, int32_t *quantized_multiplier, int *left_shift,
+                                               int *right_shift);
 
 uint8_t QuantizeToUint8(float real_value, float scale, int32_t zp);
 

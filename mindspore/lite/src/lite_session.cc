@@ -69,6 +69,9 @@ void LiteSession::ConvertTensorsQuantParam(const schema::Tensor *src_tensor, lit
       quant_arg.var_corr = quant_params->Get(j)->varCorr();
       quant_arg.mean_corr = quant_params->Get(j)->meanCorr();
       quant_arg.inited = quant_params->Get(j)->inited();
+      quant_arg.roundType = quant_params->Get(j)->roundType();
+      quant_arg.multiplier = quant_params->Get(j)->multiplier();
+      quant_arg.dstDtype = quant_params->Get(j)->dstDtype();
       dst_tensor->AddQuantParam(quant_arg);
     }
   }

@@ -158,7 +158,7 @@ int Flags::Init(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->trainModel == true) {
+  if (this->trainModel) {
     if (this->fmk != FmkType_MS) {
       std::cerr << "INPUT ILLEGAL: train model convertor supporting only MINDIR format";
       return RET_INPUT_PARAM_INVALID;

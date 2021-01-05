@@ -366,6 +366,7 @@ FuncGraphPtr TFModelParser::Parse(const std::string &modelFile, const std::strin
     return nullptr;
   }
   anf_root_graph_->set_attr("graph_name", MakeValue("main_graph"));
+  anf_root_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TF)));
 
   for (int i = 0; i < tf_root_graph_->node_size(); i++) {
     auto &node_def = tf_root_graph_->node(i);
@@ -441,6 +442,7 @@ STATUS TFModelParser::ConvertSubgraph() {
 
     FuncGraphPtr sub_func_graph = std::make_shared<FuncGraph>();
     sub_func_graph->set_attr("graph_name", MakeValue(sub_graph_name));
+    sub_func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_TF)));
     std::unordered_map<std::string, AnfNodePtr> anf_sub_node_map;
     // convert sub graph inputs
     std::vector<ParameterPtr> sub_graph_inputs;

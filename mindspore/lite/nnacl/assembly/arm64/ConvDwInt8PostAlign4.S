@@ -53,10 +53,22 @@ ConvDwInt8PostAlign4:
         sqrdmulh v2.4s, v2.4s, v27.4s
         sqrdmulh v3.4s, v3.4s, v27.4s
 
-        sqrshl v0.4s, v0.4s, v28.4s
-        sqrshl v1.4s, v1.4s, v28.4s
-        sqrshl v2.4s, v2.4s, v28.4s
-        sqrshl v3.4s, v3.4s, v28.4s
+        and v4.16b, v0.16b, v28.16b
+        sshr v4.4s, v4.4s, #31
+        sqadd v0.4s, v0.4s, v4.4s
+        srshl v0.4s, v0.4s, v28.4s
+        and v5.16b, v1.16b, v28.16b
+        sshr v5.4s, v5.4s, #31
+        sqadd v1.4s, v1.4s, v5.4s
+        srshl v1.4s, v1.4s, v28.4s
+        and v6.16b, v2.16b, v28.16b
+        sshr v6.4s, v6.4s, #31
+        sqadd v2.4s, v2.4s, v6.4s
+        srshl v2.4s, v2.4s, v28.4s
+        and v7.16b, v3.16b, v28.16b
+        sshr v7.4s, v7.4s, #31
+        sqadd v3.4s, v3.4s, v7.4s
+        srshl v3.4s, v3.4s, v28.4s
 
         AddZpDepth16:
         add v0.4s, v0.4s, v29.4s
@@ -109,8 +121,14 @@ ConvDwInt8PostAlign4:
         RightShiftDepth8:
         sqrdmulh v0.4s, v0.4s, v27.4s
         sqrdmulh v1.4s, v1.4s, v27.4s
-        sqrshl v0.4s, v0.4s, v28.4s
-        sqrshl v1.4s, v1.4s, v28.4s
+        and v4.16b, v0.16b, v28.16b
+        sshr v4.4s, v4.4s, #31
+        sqadd v0.4s, v0.4s, v4.4s
+        srshl v0.4s, v0.4s, v28.4s
+        and v5.16b, v1.16b, v28.16b
+        sshr v5.4s, v5.4s, #31
+        sqadd v1.4s, v1.4s, v5.4s
+        srshl v1.4s, v1.4s, v28.4s
 
         AddZpDepth8:
         add v0.4s, v0.4s, v29.4s
@@ -140,7 +158,10 @@ ConvDwInt8PostAlign4:
 
         sqshl v0.4s, v0.4s, v26.4s
         sqrdmulh v0.4s, v0.4s, v27.4s
-        sqrshl v0.4s, v0.4s, v28.4s
+        and v4.16b, v0.16b, v28.16b
+        sshr v4.4s, v4.4s, #31
+        sqadd v0.4s, v0.4s, v4.4s
+        srshl v0.4s, v0.4s, v28.4s
 
         add v0.4s, v0.4s, v29.4s
         smax v0.4s, v0.4s, v30.4s

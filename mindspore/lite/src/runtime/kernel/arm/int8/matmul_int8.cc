@@ -138,8 +138,8 @@ int MatmulInt8CPUKernel::ReSize() {
     }
   }
   double real_multiplier = quant_params_.input.scale_ * quant_params_.weight.scale_ / quant_params_.output.scale_;
-  QuantizeRoundParameter(real_multiplier, &quant_params_.quant_multiplier, &quant_params_.left_shift,
-                         &quant_params_.right_shift);
+  QuantizeRoundParameterWithDoublePrecision(real_multiplier, &quant_params_.quant_multiplier, &quant_params_.left_shift,
+                                            &quant_params_.right_shift);
   return RET_OK;
 }
 

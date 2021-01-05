@@ -42,7 +42,7 @@ int16_t SaturatingRoundingDoublingHighMulInt16(int16_t a, int16_t b) {
 }
 
 // division by a 2^exponent with rounding
-// or arithmetic right shift with rouding
+// or arithmetic right shift with rounding
 int RoundingDivideByPOT(int x, int exponent) {
   const int mask = (1ll << exponent) - 1;
   const int remainder = x & mask;
@@ -50,8 +50,21 @@ int RoundingDivideByPOT(int x, int exponent) {
   return (x >> exponent) + (remainder > threshold ? 1 : 0);
 }
 
+int UpwardRounding(int x, int exponent) {
+  const int32_t rounding_offset = (exponent > 0) ? (1 << (exponent - 1)) : 0;
+  if (x > INT32_MAX - rounding_offset) {
+    return 1 << (31 - exponent);
+  }
+  return (x + rounding_offset) >> exponent;
+}
+
 int MultiplyByQuantizedMultiplier(int32_t value, int32_t multiplier, int32_t left_shift, int32_t right_shift) {
   return RoundingDivideByPOT(SaturatingRoundingDoublingHighMul(value * (1 << left_shift), multiplier), -right_shift);
+}
+
+int MultiplyByQuantizedMultiplierWithUpwardRounding(int32_t value, int32_t multiplier, int32_t left_shift,
+                                                    int32_t right_shift) {
+  return UpwardRounding(SaturatingRoundingDoublingHighMul(value * (1 << left_shift), multiplier), -right_shift);
 }
 
 int MultiplyByMultiplierAndRightShift(int32_t value, int32_t multiplier, int32_t right_shift) {

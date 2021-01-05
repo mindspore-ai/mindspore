@@ -261,10 +261,41 @@ int ConvolutionBaseCPUKernel::SetQuantMultiplier() {
       static_cast<double>(conv_quant_arg_->input_quant_args_[0].scale_ * conv_quant_arg_->filter_quant_args_[i].scale_);
     double real_multiplier = in_scale / static_cast<double>(conv_quant_arg_->output_quant_args_[0].scale_);
     conv_quant_arg_->real_multiplier_[i] = real_multiplier;
-    QuantizeRoundParameter(real_multiplier, &conv_quant_arg_->quant_multiplier_[i], &conv_quant_arg_->left_shift_[i],
-                           &conv_quant_arg_->right_shift_[i]);
+    if (conv_quant_arg_->quant_multiplier_mode_ == Method_SinglePrecision) {
+      QuantizeRoundParameterWithSinglePrecision(real_multiplier, &conv_quant_arg_->quant_multiplier_[i],
+                                                &conv_quant_arg_->left_shift_[i], &conv_quant_arg_->right_shift_[i]);
+    } else if (conv_quant_arg_->quant_multiplier_mode_ == Method_DoublePrecision) {
+      QuantizeRoundParameterWithDoublePrecision(real_multiplier, &conv_quant_arg_->quant_multiplier_[i],
+                                                &conv_quant_arg_->left_shift_[i], &conv_quant_arg_->right_shift_[i]);
+    }
   }
   return RET_OK;
+}
+
+void ConvolutionBaseCPUKernel::SetRoundingAndMultipilerMode() {
+  auto input_quant_arg = in_tensors_.at(kInputIndex)->quant_params().front();
+  int round_type = input_quant_arg.roundType;
+  switch (round_type) {
+    case 1:
+      conv_quant_arg_->round_mode_ = Rounding_Away_from_zero;
+      break;
+    case 2:
+      conv_quant_arg_->round_mode_ = Rounding_Up;
+      break;
+    default:
+      conv_quant_arg_->round_mode_ = Rounding_No;
+  }
+  int cal_multiplier_type = input_quant_arg.multiplier;
+  switch (cal_multiplier_type) {
+    case 0:
+      conv_quant_arg_->quant_multiplier_mode_ = Method_SinglePrecision;
+      break;
+    case 1:
+      conv_quant_arg_->quant_multiplier_mode_ = Method_DoublePrecision;
+      break;
+    default:
+      conv_quant_arg_->quant_multiplier_mode_ = Method_No;
+  }
 }
 
 int ConvolutionBaseCPUKernel::SetQuantParam() {
@@ -288,13 +319,12 @@ int ConvolutionBaseCPUKernel::SetQuantParam() {
     MS_LOG(ERROR) << "Set Output Tensor Quant Param Failed.";
     return ret;
   }
-
   ret = SetIfPerChannel();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set if per tensor channel failed.";
     return ret;
   }
-
+  SetRoundingAndMultipilerMode();
   ret = SetQuantMultiplier();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Set Quant Multiplier Failed.";
