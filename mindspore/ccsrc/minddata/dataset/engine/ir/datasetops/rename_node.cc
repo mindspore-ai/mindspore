@@ -57,7 +57,7 @@ Status RenameNode::ValidateParams() {
   return Status::OK();
 }
 
-Status RenameNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status RenameNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   node_ops->push_back(std::make_shared<RenameOp>(input_columns_, output_columns_, connector_que_size_));
   return Status::OK();
 }

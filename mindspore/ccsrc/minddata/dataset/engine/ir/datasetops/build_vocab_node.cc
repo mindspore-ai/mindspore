@@ -50,7 +50,7 @@ void BuildVocabNode::Print(std::ostream &out) const {
 }
 
 // Function to build BuildVocabNode
-Status BuildVocabNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status BuildVocabNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   std::shared_ptr<BuildVocabOp> build_vocab_op;
   build_vocab_op = std::make_shared<BuildVocabOp>(vocab_, columns_, freq_range_, top_k_, special_tokens_,
                                                   special_first_, num_workers_, connector_que_size_);

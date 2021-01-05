@@ -105,7 +105,7 @@ Status TFRecordNode::ValidateParams() {
 }
 
 // Function to build TFRecordNode
-Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   // Sort the datasets file in a lexicographical order
   std::vector<std::string> sorted_dir_files = dataset_files_;
   std::sort(sorted_dir_files.begin(), sorted_dir_files.end());

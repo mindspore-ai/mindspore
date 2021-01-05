@@ -84,7 +84,7 @@ std::vector<std::string> CLUENode::split(const std::string &s, char delim) {
 }
 
 // Function to build CLUENode
-Status CLUENode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status CLUENode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   std::map<std::string, std::string> key_map;
   if (task_ == "AFQMC") {
     if (usage_ == "train") {
