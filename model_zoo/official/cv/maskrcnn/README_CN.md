@@ -439,7 +439,7 @@ python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_
 
 ### 使用方法
 
-在推理之前需要在昇腾910环境上完成模型的导出。
+在推理之前需要在昇腾910环境上完成模型的导出。目前推理只支持batch_size=1。推理过程需要占用大约600G的硬盘空间来保存推理的结果。
 
 ```shell
 # Ascend310 推理
