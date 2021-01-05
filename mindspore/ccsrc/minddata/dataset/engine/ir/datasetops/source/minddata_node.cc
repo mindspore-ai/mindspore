@@ -187,7 +187,7 @@ Status MindDataNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
     *dataset_size = dataset_size_;
     return Status::OK();
   }
-  int64_t num_rows;
+  int64_t num_rows = -1;
   std::vector<std::shared_ptr<ShardOperator>> operators;
   RETURN_IF_NOT_OK(BuildMindDatasetSamplerChain(sampler_, &operators, num_padded_));
 

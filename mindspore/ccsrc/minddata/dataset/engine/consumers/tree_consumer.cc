@@ -593,6 +593,8 @@ Status DatasetSizeGetter::GetRow(const std::shared_ptr<TreeAdapter> &tree_adapte
 }
 Status DatasetSizeGetter::Terminate() {
   for (const auto &tree : tree_adapters_) {
+    RETURN_UNEXPECTED_IF_NULL(tree);
+    RETURN_UNEXPECTED_IF_NULL(tree->AllTasks());
     RETURN_IF_NOT_OK(tree->AllTasks()->ServiceStop());
   }
   return Status::OK();
