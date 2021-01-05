@@ -26,7 +26,6 @@ from mindspore import context
 from mindspore.communication.management import init, get_rank, get_group_size
 from mindspore.train.callback import ModelCheckpoint, RunContext
 from mindspore.train.callback import _InternalCallbackParam, CheckpointConfig
-import mindspore as ms
 from mindspore import amp
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
 from mindspore.common import set_seed
@@ -254,9 +253,8 @@ def train():
         batch_gt_box1 = Tensor.from_numpy(data['gt_box2'])
         batch_gt_box2 = Tensor.from_numpy(data['gt_box3'])
 
-        input_shape = Tensor(tuple(input_shape[::-1]), ms.float32)
         loss = network(images, batch_y_true_0, batch_y_true_1, batch_y_true_2, batch_gt_box0, batch_gt_box1,
-                       batch_gt_box2, input_shape)
+                       batch_gt_box2)
         loss_meter.update(loss.asnumpy())
 
         if args.rank_save_ckpt_flag:

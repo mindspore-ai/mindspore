@@ -24,11 +24,9 @@ import numpy as np
 from pycocotools.coco import COCO
 from pycocotools.cocoeval import COCOeval
 
-from mindspore import Tensor
 from mindspore.context import ParallelMode
 from mindspore import context
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-import mindspore as ms
 
 from src.yolo import YOLOV3DarkNet53
 from src.logger import get_logger
@@ -297,7 +295,6 @@ def test():
     # init detection engine
     detection = DetectionEngine(args)
 
-    input_shape = Tensor(tuple(config.test_img_shape), ms.float32)
     args.logger.info('Start inference....')
     for i, data in enumerate(ds.create_dict_iterator(num_epochs=1)):
         image = data["image"]
@@ -305,7 +302,7 @@ def test():
         image_shape = data["image_shape"]
         image_id = data["img_id"]
 
-        prediction = network(image, input_shape)
+        prediction = network(image)
         output_big, output_me, output_small = prediction
         output_big = output_big.asnumpy()
         output_me = output_me.asnumpy()
@@ -324,7 +321,7 @@ def test():
     eval_result = detection.get_eval_result()
 
     cost_time = time.time() - start_time
-    args.logger.info('\n=============coco eval reulst=========\n' + eval_result)
+    args.logger.info('\n=============coco eval result=========\n' + eval_result)
     args.logger.info('testing cost time {:.2f}h'.format(cost_time / 3600.))
 
 
