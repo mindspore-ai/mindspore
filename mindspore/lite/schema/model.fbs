@@ -41,7 +41,7 @@ table QuantParam {
     meanCorr: float = 0;
     dstDtype: int = 32;
     roundType: int = 1;
-    multiplier: int = -1; // calculate fixed point multiplier method
+    multiplier: int = 1; // calculate fixed point multiplier method
 }
 
 table Tensor {
