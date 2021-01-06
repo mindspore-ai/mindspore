@@ -89,4 +89,44 @@ TEST_F(TestOpenCL_MatMul, 3D) {
              param, fp16_enable);
   }
 }
+
+TEST_F(TestOpenCL_MatMul, ActWeightTransposeB3D) {
+  int a = 2;
+  int m = 2;
+  int ci = 5;
+  int co = 3;
+  std::vector<int> input_shape = {a, m, ci};
+  std::vector<int> output_shape = {a, m, co};
+  std::vector<int> weight_shape = {a, co, ci};
+  float input_data[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  float weight_data[] = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
+                         16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
+  float output_data[] = {15, 40, 65, 15, 40, 65, 90, 115, 140, 90, 115, 140};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter();
+    TestMain({{input_shape, input_data, VAR}, {weight_shape, weight_data, VAR}}, {output_shape, output_data}, param,
+             fp16_enable);
+  }
+}
+
+TEST_F(TestOpenCL_MatMul, ActWeight3D) {
+  int a = 2;
+  int m = 2;
+  int ci = 5;
+  int co = 3;
+  std::vector<int> input_shape = {a, m, ci};
+  std::vector<int> output_shape = {a, m, co};
+  std::vector<int> weight_shape = {a, ci, co};
+  float input_data[] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+  float weight_data[] = {1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15,
+                         16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
+  float output_data[] = {35, 40, 45, 35, 40, 45, 110, 115, 120, 110, 115, 120};
+
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(false, false);
+    TestMain({{input_shape, input_data, VAR}, {weight_shape, weight_data, VAR}}, {output_shape, output_data}, param,
+             fp16_enable);
+  }
+}
 }  // namespace mindspore::lite::opencl::test

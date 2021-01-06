@@ -42,21 +42,25 @@ int MatMulOpenCLKernel::CheckSpecs() {
     return mindspore::lite::RET_ERROR;
   }
   transposeB = param->b_transpose_;
+  act_weight_ = !in_tensors_[1]->IsConst();
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   if (in_tensors_[0]->shape().size() != out_tensors_[0]->shape().size() || in_tensors_[0]->shape().size() < 2 ||
       in_tensors_[0]->shape().size() > 4) {
     MS_LOG(ERROR) << "matmul only support input shape size= 2, 3 or 4.";
     return mindspore::lite::RET_ERROR;
   }
-  if (!in_tensors_.at(kWeightIndex)->IsConst()) {
-    MS_LOG(ERROR) << "Matmul don't support non-constant filter yet.";
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
 int MatMulOpenCLKernel::Prepare() {
-  std::string kernel_name = "MatMul_NHWC4";
+  std::string kernel_name = "MatMul";
+  if (act_weight_) {
+    if (transposeB) {
+      kernel_name = "MatMulActWeightTransposeB";
+    } else {
+      kernel_name = "MatMulActWeight";
+    }
+  }
   dims = in_tensors_[0]->shape().size();
   for (int i = 0; i < dims; i++) {
     inShape[MAX_DIMS - dims + i] = in_tensors_[0]->shape()[i];
@@ -83,6 +87,9 @@ int MatMulOpenCLKernel::Prepare() {
 }
 
 int MatMulOpenCLKernel::InitWeights() {
+  if (act_weight_) {
+    return RET_OK;
+  }
   // ABMCI @ ABCICO = ABMCO
   auto ret = DequantWeight();
   if (ret != RET_OK) {
@@ -164,7 +171,11 @@ void MatMulOpenCLKernel::SetConstArgs() {
   int arg_count = 2;
   cl_int4 in_shape = {inShape[0], inShape[1], inShape[2], inShape[3]};
   cl_int4 out_shape = {outShape[0], outShape[1], outShape[2], outShape[3]};
-  ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
+  if (act_weight_) {
+    arg_count++;
+  } else {
+    ocl_runtime_->SetKernelArg(kernel_, arg_count++, padWeight_, lite::opencl::MemType::BUF);
+  }
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape);
 }
@@ -174,6 +185,9 @@ int MatMulOpenCLKernel::Run() {
   int arg_count = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[0]->data_c());
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_tensors_[0]->data_c());
+  if (act_weight_) {
+    ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[1]->data_c());
+  }
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return mindspore::lite::RET_OK;
 }

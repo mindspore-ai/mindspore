@@ -48,6 +48,7 @@ class MatMulOpenCLKernel : public OpenCLKernel {
   static constexpr int MAX_DIMS{4};  // max supported matmul dims
   std::vector<int> inShape{std::vector<int>(MAX_DIMS, 1)};
   std::vector<int> outShape{std::vector<int>(MAX_DIMS, 1)};
+  bool act_weight_{false};
 };
 }  // namespace mindspore::kernel
 
