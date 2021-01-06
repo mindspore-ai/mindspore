@@ -507,6 +507,37 @@ bool OpenCLRuntime::BuildProgram(const std::string &build_options, const cl::Pro
   return true;
 }
 
+int OpenCLRuntime::ReadOrWriteImage(void *buffer, void *data, bool is_read) {
+  cl::CommandQueue *command_queue = profiling_ ? profiling_command_queue_ : default_command_queue_;
+  auto *image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(buffer));
+  if (image == nullptr) {
+    MS_LOG(WARNING) << "Can't get Image2D for " << buffer;
+    return RET_ERROR;
+  }
+  std::vector<size_t> img_size;
+  int ret = allocator_->GetImageSize(buffer, &img_size);
+  if (ret != RET_OK) {
+    MS_LOG(WARNING) << "Can't get GetImageSize for " << buffer;
+    return RET_ERROR;
+  }
+  cl::array<size_t, 3> origin = {0, 0, 0};
+  cl::array<size_t, 3> region = {img_size[0], img_size[1], 1};
+  if (is_read) {
+    ret = command_queue->enqueueReadImage(*image, true, origin, region, 0, 0, data, nullptr, nullptr);
+  } else {
+    ret = command_queue->enqueueWriteImage(*image, true, origin, region, 0, 0, data, nullptr, nullptr);
+  }
+  if (ret != CL_SUCCESS) {
+    MS_LOG(ERROR) << CLErrorCode(ret);
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+int OpenCLRuntime::ReadImage(void *buffer, void *dst_data) { return ReadOrWriteImage(buffer, dst_data, true); }
+
+int OpenCLRuntime::WriteImage(void *buffer, void *src_data) { return ReadOrWriteImage(buffer, src_data, false); }
+
 bool OpenCLRuntime::CopyDeviceMemToHost(void *dst, const void *src, size_t size, cl::CommandQueue *command_queue,
                                         bool sync) const {
   if (command_queue == nullptr) {

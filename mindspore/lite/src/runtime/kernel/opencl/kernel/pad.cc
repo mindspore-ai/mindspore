@@ -97,7 +97,7 @@ void PadOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, output_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, io_slices);
   ocl_runtime_->SetKernelArg(kernel_, arg_cn++, pad_before);
-  ocl_runtime_->SetKernelArg(kernel_, arg_cn, static_cast<cl_float>(param_->constant_value_));
+  ocl_runtime_->SetKernelArg(kernel_, arg_cn, param_->constant_value_);
   local_size_ = {8, 4, 1};
   global_size_ = {output.N * output.H, output.W, output.Slice};
   AlignGlobalLocal(global_size_, local_size_);
