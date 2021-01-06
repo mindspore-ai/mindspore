@@ -130,7 +130,7 @@ class Profiler:
             profiling_options = json.dumps(profiling_options)
             # Characters longer than 2048 are ignored, resulting in profiling option resolution errors
             if len(profiling_options) > 2048:
-                raise ValueError("The parameter length exceeds the limit (2048)")
+                raise ValueError("The parameter length exceeds the limit (2048), please input valid parameters.")
             # use context interface to open profiling, for the new mindspore version(after 2020.5.21)
             context.set_context(enable_profiling=True, profiling_options=profiling_options)
 
@@ -369,36 +369,30 @@ class Profiler:
             return self._profiling_job_id
 
         job_id = ""
-        cmd = "ls -t " + self._output_path + "|grep JOB|awk '{print $1}'"
-        r = os.popen(cmd)
-        profiling_job_dirs = r.readlines()
-        r.close()
-        for item in profiling_job_dirs:
-            path = os.path.join(self._output_path, item.strip())
-            log_file = get_file_names(path, "host_start.log")
-            if not log_file:
-                logger.error("Profiling: job path %s, host_start.log not exist.", path)
-                continue
+        for item in os.listdir(self._output_path):
+            if item.startswith('JOB'):
+                path = os.path.join(self._output_path, item)
+                job_id = item
 
-            log_file = os.path.join(path, log_file[0])
-            item_dict = self._parse_host_start_log(log_file)
+                log_file = get_file_names(path, "host_start.log")
+                if not log_file:
+                    logger.error("Profiling: job path %s, host_start.log not exist.", path)
 
-            if not item_dict:
-                logger.error("Profiling: job path %s, fail to get job start info.", path)
-                continue
+                log_file = os.path.join(path, log_file[0])
+                item_dict = self._parse_host_start_log(log_file)
 
-            if self._dev_id != item_dict["device_id"]:
-                logger.info("Profiling: job path %s, dev id %s, training device id %s.",
-                            path, item_dict["device_id"], self._dev_id)
-                continue
+                if not item_dict:
+                    logger.error("Profiling: job path %s, fail to get job start info.", path)
 
-            if self._start_time > int(item_dict["start_time"]):
-                logger.info("Profiling: job path %s, start_time %s, training start_time %d.",
-                            path, item_dict["start_time"], self._start_time)
+                if self._dev_id != item_dict["device_id"]:
+                    logger.info("Profiling: job path %s, dev id %s, training device id %s.",
+                                path, item_dict["device_id"], self._dev_id)
+
+                if self._start_time > int(item_dict["start_time"]):
+                    logger.info("Profiling: job path %s, start_time %s, training start_time %d.",
+                                path, item_dict["start_time"], self._start_time)
+
                 break
-
-            job_id = item.strip()
-            break
 
         if not job_id:
             msg = "Fail to get profiling job, please check whether job dir was generated"

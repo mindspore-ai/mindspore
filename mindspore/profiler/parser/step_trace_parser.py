@@ -22,7 +22,7 @@ from collections import namedtuple
 from decimal import Decimal
 
 from mindspore.profiler.common.exceptions.exceptions import ProfilerPathErrorException, \
-    JobIdMismatchException, ProfilerIOException
+    JobIdMismatchException, ProfilerIOException, ProfilerRawFileException
 from mindspore import log
 from mindspore.profiler.common.util import get_summary_for_step_trace
 from mindspore.profiler.common.validator.validate_path import \
@@ -401,13 +401,25 @@ class GpuStepTraceParser(BaseStepTraceParser):
         fp_start, bp_end, iter_end, iter_start = 0, 1, 2, 3
         reduce_start = 4
         start_time, end_time = 0, 1
+        STEP_TRACE_POINT_COUNT = 3
 
         source_file = validate_and_normalize_path(source_file)
         try:
             with open(source_file, 'r') as f:
                 lines = f.readlines()
+                if len(lines) < STEP_TRACE_POINT_COUNT:
+                    raise ProfilerRawFileException(
+                        f"Failed to parse {source_file} file. The FP_POINT/BP_POINT/ITER_END_POINT "
+                        f"do not recognized correctly. Try to set the environment variable'PROFILING_FP_START' "
+                        f"and 'PROFILING_BP_END' to solve this problem. For example, "
+                        f"'export PROFILING_FP_START=Defualt/xxx/Conv2d-op1' ")
                 step_trace_info_all = [line.strip().split()[1:] for line in lines]
                 num_of_step = len(step_trace_info_all[0])
+                for step_trace_point in step_trace_info_all:
+                    if len(step_trace_point) != num_of_step:
+                        raise ProfilerRawFileException(
+                            f"Failed to parse {source_file} file. Due to the profiled "
+                            f"step_num of FP/BP/ITER_END Point are not equal")
                 iter_start_info = [step_trace_info_all[fp_start][0]] + \
                     step_trace_info_all[iter_end][:num_of_step]
                 step_trace_info_all.insert(iter_start, iter_start_info)
