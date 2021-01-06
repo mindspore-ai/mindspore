@@ -63,6 +63,7 @@ class WiderFace():
         return self.images_list[item], self.labels_list[item]
 
 def read_dataset(img_path, annotation):
+    cv2.setNumThreads(2)
 
     if isinstance(img_path, str):
         img = cv2.imread(img_path)

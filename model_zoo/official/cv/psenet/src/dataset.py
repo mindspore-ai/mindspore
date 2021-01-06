@@ -172,6 +172,8 @@ def shrink(bboxes, rate, max_shr=20):
 
 class TrainDataset:
     def __init__(self):
+        cv2.setNumThreads(2)
+
         self.is_transform = True
         self.img_size = config.TRAIN_LONG_SIZE
         self.kernel_num = config.KERNEL_NUM
