@@ -16,13 +16,15 @@
 # ============================================================================
 """standard_method"""
 from dataclasses import dataclass
-from mindspore.common import dtype as mstype
+
+from mindspore import Tensor
+from mindspore import dtype as mstype
 from ...ops import functional as F
 from ...ops import operations as P
-from ...ops.primitive import constexpr
 from ...ops.composite import tail, core, MultitypeFuncGraph, env_get, hyper_add, \
     zeros_like, ones_like
 from ...ops.composite.base import _append
+from ...ops.primitive import constexpr
 
 __all__ = ['MultitypeFuncGraph', 'env_get', 'hyper_add', 'zeros_like', 'ones_like']
 
@@ -219,9 +221,23 @@ def while_cond(x):
 @constexpr
 def check_type_same(x_type, base_type):
     """Check x_type is same as base_type."""
-    if mstype.issubclass_(x_type, base_type):
-        return True
-    return False
+    pytype_to_mstype = {
+        bool: mstype.Bool,
+        int: mstype.Int,
+        float: mstype.Float,
+        str: mstype.String,
+        list: mstype.List,
+        tuple: mstype.Tuple,
+        Tensor: mstype.tensor_type
+    }
+    try:
+        if isinstance(base_type, (tuple, list)):
+            target_type = tuple(pytype_to_mstype[i] for i in base_type)
+        else:
+            target_type = pytype_to_mstype[base_type]
+        return isinstance(x_type, target_type)
+    except KeyError:
+        raise TypeError(f"The type '{base_type}' is not supported for 'isinstance'")
 
 
 @constexpr
@@ -235,7 +251,7 @@ def check_is_tensor(x):
 @constexpr
 def check_is_tuple_or_list_or_tensor(x, op_name, arg_name):
     """check whether x is list or tuple or tensor."""
-    if isinstance(x, (mstype.list_type, mstype.tuple_type, mstype.tensor_type)):
+    if isinstance(x, (mstype.List, mstype.Tuple, mstype.tensor_type)):
         return True
     raise TypeError(f"For '{op_name}', the '{arg_name}' should be tuple or list or tensor, but got {x}.")
 

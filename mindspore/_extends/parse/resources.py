@@ -17,13 +17,13 @@
 """Resources for ast tree parse."""
 import ast
 import math
+
 from mindspore import RowTensor, SparseTensor
-from mindspore.ops.composite import multitype_ops
 from mindspore.ops import functional as F, composite as C
+from mindspore.ops.composite import multitype_ops
 from . import standard_method as M
 from . import trope as T
 from .namespace import CellNamespace
-
 
 # namespace define
 functional_ns = CellNamespace('mindspore.ops.functional')
@@ -109,7 +109,7 @@ convert_object_map = {
 
     # system function
     T.len:          M.ms_len,
-    T.bool:         M.bool_,
+    T.bool_:        M.bool_,
     T.map:          C.Map(),
     T.partial:      F.partial,
     T.zip:          C.zip_operation,

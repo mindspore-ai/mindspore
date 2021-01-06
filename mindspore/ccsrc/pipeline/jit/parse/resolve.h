@@ -109,6 +109,7 @@ class ClassType : public PyObjectWrapper {
   MS_DECLARE_PARENT(ClassType, PyObjectWrapper);
   abstract::AbstractBasePtr ToAbstract() override;
 };
+using ClassTypePtr = std::shared_ptr<ClassType>;
 
 // SymbolResolver class for resolving symbol extracted from AnfNode.
 class SymbolResolver {

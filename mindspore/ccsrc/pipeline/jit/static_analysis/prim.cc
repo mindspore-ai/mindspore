@@ -280,24 +280,20 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base) {
   py::tuple max_shape_tuple(len);
   auto dic = py::dict();
   bool dyn_shape = false;
-  bool is_build_value = true;
+  bool dyn_value = false;
 
   for (size_t i = 0; i < len; i++) {
     auto arg = arg_tuple->elements()[i];
     py::dict out = ConvertAbstractToPython(arg);
     shape_tuple[i] = out[ATTR_SHAPE];
     dtype_tuple[i] = out[ATTR_DTYPE];
+    value_tuple[i] = out[ATTR_VALUE];
 
     // Elements in tuple is tensor shape value.
     if (out.contains(py::str(ATTR_MIN_VALUE)) && out.contains(py::str(ATTR_MAX_VALUE))) {
-      value_tuple[i] = out[ATTR_VALUE];
       min_value_tuple[i] = out[ATTR_MIN_VALUE];
       max_value_tuple[i] = out[ATTR_MAX_VALUE];
-      is_build_value = false;
-    } else {
-      value_tuple[i] = BuildValue(arg->BuildValue());
-      min_value_tuple[i] = value_tuple[i];
-      max_value_tuple[i] = value_tuple[i];
+      dyn_value = true;
     }
 
     // Elements in tuple is tensor, which shape is dynamic.
@@ -305,21 +301,21 @@ py::dict AbstractTupleToPython(const AbstractBasePtr &abs_base) {
       min_shape_tuple[i] = out[ATTR_MIN_SHAPE];
       max_shape_tuple[i] = out[ATTR_MAX_SHAPE];
       dyn_shape = true;
-    } else {
-      min_shape_tuple[i] = out[ATTR_SHAPE];
-      max_shape_tuple[i] = out[ATTR_SHAPE];
     }
   }
+
   dic[ATTR_SHAPE] = shape_tuple;
   dic[ATTR_DTYPE] = dtype_tuple;
-  if (is_build_value) {
-    dic[ATTR_VALUE] = BuildValue(arg_tuple->BuildValue());
+  if (arg_tuple->BuildValue()->isa<AnyValue>()) {
+    dic[ATTR_VALUE] = py::none();
   } else {
     dic[ATTR_VALUE] = value_tuple;
+  }
+
+  if (dyn_value) {
     dic[ATTR_MIN_VALUE] = min_value_tuple;
     dic[ATTR_MAX_VALUE] = max_value_tuple;
   }
-
   if (dyn_shape) {
     dic[ATTR_MIN_SHAPE] = min_shape_tuple;
     dic[ATTR_MAX_SHAPE] = max_shape_tuple;
@@ -333,6 +329,7 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base) {
   size_t len = arg_list->size();
   py::list shape_list(len);
   py::list dtype_list(len);
+  py::list value_list(len);
   py::list min_shape_list(len);
   py::list max_shape_list(len);
   auto dic = py::dict();
@@ -342,26 +339,28 @@ py::dict AbstractListToPython(const AbstractBasePtr &abs_base) {
     py::dict out = ConvertAbstractToPython(arg_list->elements()[i]);
     shape_list[i] = out[ATTR_SHAPE];
     dtype_list[i] = out[ATTR_DTYPE];
+    value_list[i] = out[ATTR_VALUE];
 
     // Elements in list is tensor, which shape is dynamic.
     if (out.contains(py::str(ATTR_MIN_SHAPE)) && out.contains(py::str(ATTR_MAX_SHAPE))) {
       min_shape_list[i] = out[ATTR_MIN_SHAPE];
       max_shape_list[i] = out[ATTR_MAX_SHAPE];
       dyn_shape = true;
-    } else {
-      min_shape_list[i] = out[ATTR_SHAPE];
-      max_shape_list[i] = out[ATTR_SHAPE];
     }
+  }
+
+  dic[ATTR_SHAPE] = shape_list;
+  dic[ATTR_DTYPE] = dtype_list;
+  if (arg_list->BuildValue()->isa<AnyValue>()) {
+    dic[ATTR_VALUE] = py::none();
+  } else {
+    dic[ATTR_VALUE] = value_list;
   }
 
   if (dyn_shape) {
     dic[ATTR_MIN_SHAPE] = min_shape_list;
     dic[ATTR_MAX_SHAPE] = max_shape_list;
   }
-
-  dic[ATTR_SHAPE] = shape_list;
-  dic[ATTR_DTYPE] = dtype_list;
-  dic[ATTR_VALUE] = BuildValue(arg_list->BuildValue());
 
   return dic;
 }
@@ -428,6 +427,16 @@ py::dict ConvertAbstractToPython(const AbstractBasePtr &abs_base) {
     dic[ATTR_SHAPE] = py::none();
     dic[ATTR_DTYPE] = abs_base->BuildType();
     dic[ATTR_VALUE] = py::none();
+    if (abs_base->isa<PartialAbstractClosure>()) {
+      AbstractBasePtrList args = abs_base->cast<PartialAbstractClosurePtr>()->args();
+      if (!args.empty()) {
+        auto value = args[0]->BuildValue()->cast<parse::ClassTypePtr>();
+        if (value != nullptr) {
+          dic[ATTR_DTYPE] = std::make_shared<TypeType>();
+          dic[ATTR_VALUE] = value->obj();
+        }
+      }
+    }
   } else if (abs_base->isa<AbstractUndetermined>()) {
     auto arg = dyn_cast<AbstractUndetermined>(abs_base);
     dic[ATTR_SHAPE] = py::none();

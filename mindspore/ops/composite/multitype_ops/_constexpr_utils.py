@@ -171,15 +171,15 @@ def get_pos_of_indexes_types(indexes_types, op_name):
     slice_positions, ellipsis_positions, none_positions, int_positions, bool_positions, tensor_positions, \
         sequence_positions = [], [], [], [], [], [], []
     for i, index_type in enumerate(indexes_types):
-        if isinstance(index_type, mstype.slice_type):
+        if isinstance(index_type, mstype.Slice):
             slice_positions.append(i)
-        elif isinstance(index_type, mstype.ellipsis_type):
+        elif isinstance(index_type, mstype.Ellipsis_):
             ellipsis_positions.append(i)
         elif isinstance(index_type, mstype.none_type):
             none_positions.append(i)
         elif isinstance(index_type, mstype.Int):
             int_positions.append(i)
-        elif isinstance(index_type, mstype.bool_type):
+        elif isinstance(index_type, mstype.Bool):
             bool_positions.append(i)
         elif isinstance(index_type, mstype.tensor_type):
             tensor_positions.append(i)
@@ -341,7 +341,7 @@ def tuple_index_int_cnt(types, op_name):
 def tuple_index_type_cnt(types, op_name):
     """count the tensor type of types which contains the tuple elements' type."""
     tensor_cnt = sum(isinstance(ele, mstype.tensor_type) for ele in types)
-    basic_cnt = sum(isinstance(ele, (mstype.Int, mstype.ellipsis_type, mstype.slice_type)) for ele in types)
+    basic_cnt = sum(isinstance(ele, (mstype.Int, mstype.Ellipsis_, mstype.Slice)) for ele in types)
     if tensor_cnt == len(types):
         return ALL_TENSOR
     if basic_cnt == len(types):
@@ -614,7 +614,7 @@ def generate_index_info_from_tuple_of_mixed_tensors(data_shape, indexes_types, t
             indexes_info[pos] = tensor_indexes_shapes[tensor_count]
             index_tensors_info[pos] = tensor_indexes_shapes[tensor_count]
             tensor_count += 1
-        elif isinstance(index_type, mstype.slice_type):
+        elif isinstance(index_type, mstype.Slice):
             slice_obj = slice(slice_indexes[slice_count].start,
                               slice_indexes[slice_count].stop,
                               slice_indexes[slice_count].step)
@@ -680,7 +680,7 @@ def _derive_result_shape_info_from_tuple_of_mixed_tensors(indexes_info, index_te
     return broadcast_shape, tuple(final_shape), tuple(indexes_shapes_info)
 
 
-@ constexpr
+@constexpr
 def scalar_in_sequence(x, y):
     """Determine whether the scalar in the sequence."""
     if x is None:

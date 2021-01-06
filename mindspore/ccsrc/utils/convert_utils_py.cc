@@ -390,8 +390,8 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
     }
     return PyList2DynamicShapeTensor(shape_obj, type_obj, output);
   } else if (py::isinstance<py::tuple>(shape_obj) && py::isinstance<py::tuple>(type_obj)) {
-    py::tuple shape_tuple = shape_obj.cast<py::tuple>();
-    py::tuple typeid_tuple = type_obj.cast<py::tuple>();
+    auto shape_tuple = shape_obj.cast<py::tuple>();
+    auto typeid_tuple = type_obj.cast<py::tuple>();
     AbstractBasePtrList ptr_list;
     for (size_t it = 0; it < shape_tuple.size(); ++it) {
       auto tensor_it = PyListDtype2AbstractTensor(shape_tuple[it], typeid_tuple[it]);
@@ -400,8 +400,8 @@ AbstractBasePtr PyListDtype2AbstractTensor(const py::object &shape_obj, const py
     auto tuple = std::make_shared<abstract::AbstractTuple>(ptr_list);
     return tuple;
   } else if (py::isinstance<py::list>(shape_obj) && py::isinstance<py::list>(type_obj)) {
-    py::list shape_list = shape_obj.cast<py::list>();
-    py::list typeid_list = type_obj.cast<py::list>();
+    auto shape_list = shape_obj.cast<py::list>();
+    auto typeid_list = type_obj.cast<py::list>();
     AbstractBasePtrList ptr_list;
     for (size_t it = 0; it < shape_list.size(); ++it) {
       auto tensor_it = PyListDtype2AbstractTensor(shape_list[it], typeid_list[it]);

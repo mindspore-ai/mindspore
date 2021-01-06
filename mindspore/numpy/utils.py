@@ -339,13 +339,13 @@ def _cpu_not_support(name):
 @constexpr
 def _check_is_tuple(obj):
     """Check whether obj is a tuple"""
-    return isinstance(obj, mstype.tuple_type)
+    return isinstance(obj, mstype.Tuple)
 
 
 @constexpr
 def _check_is_list(obj):
     """Check whether obj is a list"""
-    return isinstance(obj, mstype.list_type)
+    return isinstance(obj, mstype.List)
 
 
 @constexpr
