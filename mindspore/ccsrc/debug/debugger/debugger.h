@@ -83,7 +83,7 @@ class Debugger : public std::enable_shared_from_this<Debugger> {
 
   bool ReadNodeDataRequired(const CNodePtr &kernel);
 
-  void PostExecuteNode(const CNodePtr &kernel);
+  void PostExecuteNode(const CNodePtr &kernel, bool last_kernel);
 
   // suspend the execution after a debug_op
   void PostDebugOp();
