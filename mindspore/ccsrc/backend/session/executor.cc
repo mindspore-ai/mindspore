@@ -292,6 +292,7 @@ void Executor::RunTask(const std::shared_ptr<Task> &task, bool sync) {
       return finished;
     });
   }
+  ClearDoneTasks();
   MsException::Instance().CheckException();
 }
 
