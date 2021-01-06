@@ -27,12 +27,26 @@ using mindspore::schema::PrimitiveType_Merge;
 
 namespace mindspore::kernel {
 int MergeCPUKernel::FreeInWorkTensor() const {
-  for (auto &in_tensor : this->in_tensors_) {
-    MS_ASSERT(in_tensor != nullptr);
-    if (in_tensor->root_tensor() == in_tensor) {
-      continue;
+  size_t stride = in_tensors_.size() / 2;
+  if (this->ready_part_ == LEFT_INPUT_PART) {
+    for (size_t i = 0; i < stride; ++i) {
+      auto in_tensor = in_tensors_[i];
+      MS_ASSERT(in_tensor != nullptr);
+      if (in_tensor->root_tensor() == in_tensor) {
+        continue;
+      }
+      in_tensor->DecRefCount();
     }
-    in_tensor->DecRefCount();
+  }
+  if (this->ready_part_ == RIGHT_INPUT_PART) {
+    for (size_t i = stride; i < in_tensors_.size(); ++i) {
+      auto in_tensor = in_tensors_[i];
+      MS_ASSERT(in_tensor != nullptr);
+      if (in_tensor->root_tensor() == in_tensor) {
+        continue;
+      }
+      in_tensor->DecRefCount();
+    }
   }
   return RET_OK;
 }
@@ -102,15 +116,15 @@ InputPart MergeCPUKernel::FindReadyPart(const std::vector<lite::Tensor *> &scope
 
 int MergeCPUKernel::Run() {
   MS_ASSERT(in_tensors_.size() == 2 * out_tensors_.size());
-  auto ready_part = FindReadyPart(this->in_tensors_);
-  if (ready_part == LEFT_INPUT_PART) {
+  ready_part_ = FindReadyPart(this->in_tensors_);
+  if (ready_part_ == LEFT_INPUT_PART) {
     auto ret = MoveData(this->out_tensors_.begin(), this->out_tensors_.end(), this->in_tensors_.begin(),
                         this->in_tensors_.end());
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "carry data error : " << ret;
       return ret;
     }
-  } else if (ready_part == RIGHT_INPUT_PART) {
+  } else if (ready_part_ == RIGHT_INPUT_PART) {
     auto ret = MoveData(this->out_tensors_.begin(), this->out_tensors_.end(),
                         (this->in_tensors_.begin() + in_tensors_.size() / 2), this->in_tensors_.end());
     if (ret != RET_OK) {

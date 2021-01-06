@@ -126,7 +126,7 @@ void LiteModel::Destroy() {
 int LiteModel::ConvertSubGraph(const schema::SubGraph &sub_graph) {
   if (sub_graph.name() == nullptr || sub_graph.inputIndices() == nullptr || sub_graph.outputIndices() == nullptr ||
       sub_graph.nodeIndices() == nullptr || sub_graph.tensorIndices() == nullptr) {
-    MS_LOG(ERROR) << "sub_graph is invalid.";
+    MS_LOG(ERROR) << "sub_graph is invalid";
     return RET_ERROR;
   }
 
