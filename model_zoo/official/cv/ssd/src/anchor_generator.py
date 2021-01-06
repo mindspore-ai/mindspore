@@ -39,7 +39,7 @@ class GridAnchorGenerator:
         scales_grid = scales_grid.reshape([-1])
         aspect_ratios_grid = aspect_ratios_grid.reshape([-1])
 
-        feature_size = [self.image_shape[0] / step, self.image_shape[0] / step]
+        feature_size = [self.image_shape[0] / step, self.image_shape[1] / step]
         grid_height, grid_width = feature_size
 
         base_size = np.array([self.scale * step, self.scale * step]).astype(np.float32)

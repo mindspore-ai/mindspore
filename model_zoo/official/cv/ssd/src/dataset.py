@@ -122,7 +122,7 @@ def preprocess_fn(img_id, image, box, is_training):
     def _data_aug(image, box, is_training, image_size=(300, 300)):
         """Data augmentation function."""
         ih, iw, _ = image.shape
-        w, h = image_size
+        h, w = image_size
 
         if not is_training:
             return _infer_data(image, image_size)
