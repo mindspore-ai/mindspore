@@ -32,7 +32,9 @@ from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay
 from mindspore import log as logger
 from mindspore.common import set_seed
 from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell, \
-                BertTrainAccumulateStepsWithLossScaleCell, BertTrainOneStepWithLossScaleCellForAdam, \
+                BertTrainAccumulationAllReduceEachWithLossScaleCell, \
+                BertTrainAccumulationAllReducePostWithLossScaleCell, \
+                BertTrainOneStepWithLossScaleCellForAdam, \
                 AdamWeightDecayForBert
 from src.dataset import create_bert_dataset
 from src.config import cfg, bert_net_cfg
@@ -122,6 +124,8 @@ def run_pretrain():
     parser.add_argument("--data_sink_steps", type=int, default="1", help="Sink steps for each epoch, default is 1.")
     parser.add_argument("--accumulation_steps", type=int, default="1",
                         help="Accumulating gradients N times before weight update, default is 1.")
+    parser.add_argument("--allreduce_post_accumulation", type=str, default="true", choices=["true", "false"],
+                        help="Whether to allreduce after accumulation of N steps or after each step, default is true.")
     parser.add_argument("--save_checkpoint_path", type=str, default="", help="Save checkpoint path")
     parser.add_argument("--load_checkpoint_path", type=str, default="", help="Load checkpoint file path")
     parser.add_argument("--save_checkpoint_steps", type=int, default=1000, help="Save checkpoint steps, "
@@ -207,8 +211,9 @@ def run_pretrain():
         update_cell = DynamicLossScaleUpdateCell(loss_scale_value=cfg.loss_scale_value,
                                                  scale_factor=cfg.scale_factor,
                                                  scale_window=cfg.scale_window)
-
-        if args_opt.accumulation_steps <= 1:
+        accumulation_steps = args_opt.accumulation_steps
+        enable_global_norm = cfg.enable_global_norm
+        if accumulation_steps <= 1:
             if cfg.optimizer == 'AdamWeightDecay':
                 net_with_grads = BertTrainOneStepWithLossScaleCellForAdam(net_with_loss, optimizer=optimizer,
                                                                           scale_update_cell=update_cell)
@@ -216,11 +221,13 @@ def run_pretrain():
                 net_with_grads = BertTrainOneStepWithLossScaleCell(net_with_loss, optimizer=optimizer,
                                                                    scale_update_cell=update_cell)
         else:
-            accumulation_steps = args_opt.accumulation_steps
-            net_with_grads = BertTrainAccumulateStepsWithLossScaleCell(net_with_loss, optimizer=optimizer,
-                                                                       scale_update_cell=update_cell,
-                                                                       accumulation_steps=accumulation_steps,
-                                                                       enable_global_norm=cfg.enable_global_norm)
+            allreduce_post = args_opt.distribute == "false" or args_opt.allreduce_post_accumulation == "true"
+            net_with_accumulation = (BertTrainAccumulationAllReducePostWithLossScaleCell if allreduce_post else
+                                     BertTrainAccumulationAllReduceEachWithLossScaleCell)
+            net_with_grads = net_with_accumulation(net_with_loss, optimizer=optimizer,
+                                                   scale_update_cell=update_cell,
+                                                   accumulation_steps=accumulation_steps,
+                                                   enable_global_norm=enable_global_norm)
     else:
         net_with_grads = BertTrainOneStepCell(net_with_loss, optimizer=optimizer)
 

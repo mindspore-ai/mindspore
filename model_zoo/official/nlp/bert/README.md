@@ -239,30 +239,32 @@ usage: run_pretrain.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_n
                         [--enable_lossscale ENABLE_LOSSSCALE] [--do_shuffle DO_SHUFFLE]
                         [--enable_data_sink ENABLE_DATA_SINK] [--data_sink_steps N]
                         [--accumulation_steps N]
+                        [--allreduce_post_accumulation ALLREDUCE_POST_ACCUMULATION]
                         [--save_checkpoint_path SAVE_CHECKPOINT_PATH]
                         [--load_checkpoint_path LOAD_CHECKPOINT_PATH]
                         [--save_checkpoint_steps N] [--save_checkpoint_num N]
                         [--data_dir DATA_DIR] [--schema_dir SCHEMA_DIR] [train_steps N]
 
 options:
-    --device_target            device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
-    --distribute               pre_training by serveral devices: "true"(training by more than 1 device) | "false", default is "false"
-    --epoch_size               epoch size: N, default is 1
-    --device_num               number of used devices: N, default is 1
-    --device_id                device id: N, default is 0
-    --enable_save_ckpt         enable save checkpoint: "true" | "false", default is "true"
-    --enable_lossscale         enable lossscale: "true" | "false", default is "true"
-    --do_shuffle               enable shuffle: "true" | "false", default is "true"
-    --enable_data_sink         enable data sink: "true" | "false", default is "true"
-    --data_sink_steps          set data sink steps: N, default is 1
-    --accumulation_steps       accumulate gradients N times before weight update: N, default is 1
-    --save_checkpoint_path     path to save checkpoint files: PATH, default is ""
-    --load_checkpoint_path     path to load checkpoint files: PATH, default is ""
-    --save_checkpoint_steps    steps for saving checkpoint files: N, default is 1000
-    --save_checkpoint_num      number for saving checkpoint files: N, default is 1
-    --train_steps              Training Steps: N, default is -1
-    --data_dir                 path to dataset directory: PATH, default is ""
-    --schema_dir               path to schema.json file, PATH, default is ""
+    --device_target                device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
+    --distribute                   pre_training by serveral devices: "true"(training by more than 1 device) | "false", default is "false"
+    --epoch_size                   epoch size: N, default is 1
+    --device_num                   number of used devices: N, default is 1
+    --device_id                    device id: N, default is 0
+    --enable_save_ckpt             enable save checkpoint: "true" | "false", default is "true"
+    --enable_lossscale             enable lossscale: "true" | "false", default is "true"
+    --do_shuffle                   enable shuffle: "true" | "false", default is "true"
+    --enable_data_sink             enable data sink: "true" | "false", default is "true"
+    --data_sink_steps              set data sink steps: N, default is 1
+    --accumulation_steps           accumulate gradients N times before weight update: N, default is 1
+    --allreduce_post_accumulation  allreduce after accumulation of N steps or after each step: "true" | "false", default is "true"
+    --save_checkpoint_path         path to save checkpoint files: PATH, default is ""
+    --load_checkpoint_path         path to load checkpoint files: PATH, default is ""
+    --save_checkpoint_steps        steps for saving checkpoint files: N, default is 1000
+    --save_checkpoint_num          number for saving checkpoint files: N, default is 1
+    --train_steps                  Training Steps: N, default is -1
+    --data_dir                     path to dataset directory: PATH, default is ""
+    --schema_dir                   path to schema.json file, PATH, default is ""
 ```
 
 ### Fine-Tuning and Evaluation
