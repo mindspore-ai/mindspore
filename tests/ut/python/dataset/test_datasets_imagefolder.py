@@ -14,6 +14,7 @@
 # ==============================================================================
 import pytest
 import mindspore.dataset as ds
+import mindspore.dataset.vision.c_transforms as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testPK/data"
@@ -716,6 +717,46 @@ def test_imagefolder_zip():
     assert num_iter == 10
 
 
+def test_imagefolder_exception():
+    logger.info("Test imagefolder exception")
+
+    def exception_func(item):
+        raise Exception("Error occur!")
+
+    def exception_func2(image, label):
+        raise Exception("Error occur!")
+
+    try:
+        data = ds.ImageFolderDataset(DATA_DIR)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.ImageFolderDataset(DATA_DIR)
+        data = data.map(operations=exception_func2, input_columns=["image", "label"],
+                        output_columns=["image", "label", "label1"],
+                        column_order=["image", "label", "label1"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.ImageFolderDataset(DATA_DIR)
+        data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+
 if __name__ == '__main__':
     test_imagefolder_basic()
     logger.info('test_imagefolder_basic Ended.\n')
@@ -797,3 +838,6 @@ if __name__ == '__main__':
 
     test_imagefolder_zip()
     logger.info('test_imagefolder_zip Ended.\n')
+
+    test_imagefolder_exception()
+    logger.info('test_imagefolder_exception Ended.\n')

@@ -34,17 +34,17 @@ Status ConcatenateOp::OutputShape(const std::vector<TensorShape> &inputs, std::v
   std::vector<TensorShape> inputs_copy;
   inputs_copy.push_back(inputs[0].Squeeze());
 
-  CHECK_FAIL_RETURN_UNEXPECTED(inputs.at(0).Rank() == 1, "Only 1D input tensors supported");
+  CHECK_FAIL_RETURN_UNEXPECTED(inputs.at(0).Rank() == 1, "Concatenate: only 1D input supported");
 
   outputs.clear();
   dsize_t output_shape = 0;
   output_shape = output_shape + inputs.at(0).NumOfElements();
   if (prepend_ != nullptr) {
-    CHECK_FAIL_RETURN_UNEXPECTED(prepend_->shape().Rank() == 1, "Only 1D prepend tensors supported");
+    CHECK_FAIL_RETURN_UNEXPECTED(prepend_->shape().Rank() == 1, "Concatenate: only 1D prepend supported");
     output_shape = output_shape + prepend_->shape().NumOfElements();
   }
   if (append_ != nullptr) {
-    CHECK_FAIL_RETURN_UNEXPECTED(append_->shape().Rank() == 1, "Only 1D append tensors supported");
+    CHECK_FAIL_RETURN_UNEXPECTED(append_->shape().Rank() == 1, "Concatenate: only 1D append supported");
     output_shape = output_shape + append_->shape().NumOfElements();
   }
 

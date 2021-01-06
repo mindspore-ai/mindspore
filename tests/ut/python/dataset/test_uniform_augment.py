@@ -258,7 +258,7 @@ def test_cpp_uniform_augment_random_crop_badinput(num_ops=1):
         for _ in ds1.create_dict_iterator(num_epochs=1, output_numpy=True):
             num_batches += 1
     except Exception as e:
-        assert "Crop size" in str(e)
+        assert "crop size" in str(e)
 
 
 if __name__ == "__main__":

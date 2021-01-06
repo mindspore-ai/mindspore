@@ -27,7 +27,10 @@ namespace dataset {
 Status RandomSelectSubpolicyOp::Compute(const TensorRow &input, TensorRow *output) {
   TensorRow in_row = input;
   size_t rand_num = rand_int_(gen_);
-  CHECK_FAIL_RETURN_UNEXPECTED(rand_num < policy_.size(), "invalid rand_num:" + std::to_string(rand_num));
+  CHECK_FAIL_RETURN_UNEXPECTED(rand_num < policy_.size(),
+                               "RandomSelectSubpolicy: "
+                               "get rand number failed:" +
+                                 std::to_string(rand_num));
   for (auto &sub : policy_[rand_num]) {
     if (rand_double_(gen_) <= sub.second) {
       RETURN_IF_NOT_OK(sub.first->Compute(in_row, output));
@@ -88,7 +91,7 @@ Status RandomSelectSubpolicyOp::OutputType(const std::vector<DataType> &inputs, 
 RandomSelectSubpolicyOp::RandomSelectSubpolicyOp(const std::vector<Subpolicy> &policy)
     : gen_(GetSeed()), policy_(policy), rand_int_(0, policy.size() - 1), rand_double_(0, 1) {
   if (policy_.empty()) {
-    MS_LOG(ERROR) << "policy in RandomSelectSubpolicyOp is empty.";
+    MS_LOG(ERROR) << "RandomSelectSubpolicy: policy in RandomSelectSubpolicyOp is empty.";
   }
   is_deterministic_ = false;
 }

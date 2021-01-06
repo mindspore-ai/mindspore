@@ -216,14 +216,19 @@ Status CifarOp::LoadTensorRow(uint64_t index, TensorRow *trow) {
   std::shared_ptr<Tensor> fine_label;
   std::shared_ptr<Tensor> ori_image = cifar_image_label_pairs_[index].first;
   std::shared_ptr<Tensor> copy_image;
+  uint64_t path_index = std::ceil(index / kCifarBlockImageNum);
   RETURN_IF_NOT_OK(Tensor::CreateFromTensor(ori_image, &copy_image));
   RETURN_IF_NOT_OK(Tensor::CreateScalar(cifar_image_label_pairs_[index].second[0], &label));
 
   if (cifar_image_label_pairs_[index].second.size() > 1) {
     RETURN_IF_NOT_OK(Tensor::CreateScalar(cifar_image_label_pairs_[index].second[1], &fine_label));
     (*trow) = TensorRow(index, {copy_image, std::move(label), std::move(fine_label)});
+    // Add file path info
+    trow->setPath({path_record_[path_index], path_record_[path_index], path_record_[path_index]});
   } else {
     (*trow) = TensorRow(index, {copy_image, std::move(label)});
+    // Add file path info
+    trow->setPath({path_record_[path_index], path_record_[path_index]});
   }
 
   return Status::OK();
@@ -310,6 +315,8 @@ Status CifarOp::ReadCifar10BlockData() {
       (void)in.read(reinterpret_cast<char *>(&(image_data[0])), block_size * sizeof(unsigned char));
       CHECK_FAIL_RETURN_UNEXPECTED(!in.fail(), "Invalid data, failed to read data from cifar10 file: " + file);
       (void)cifar_raw_data_block_->EmplaceBack(image_data);
+      // Add file path info
+      path_record_.push_back(file);
     }
     in.close();
   }
@@ -350,6 +357,8 @@ Status CifarOp::ReadCifar100BlockData() {
       (void)in.read(reinterpret_cast<char *>(&(image_data[0])), block_size * sizeof(unsigned char));
       CHECK_FAIL_RETURN_UNEXPECTED(!in.fail(), "Invalid data, failed to read data from cifar100 file: " + file);
       (void)cifar_raw_data_block_->EmplaceBack(image_data);
+      // Add file path info
+      path_record_.push_back(file);
     }
     in.close();
   }

@@ -300,7 +300,7 @@ def test_py_vision_with_c_transforms():
         test_config([py_vision.Decode(),
                      py_vision.CenterCrop((2)), np.array,
                      c_transforms.Concatenate(0)])
-    assert "Only 1D tensors supported" in str(error_info.value)
+    assert "only 1D input supported" in str(error_info.value)
 
 
 def test_compose_with_custom_function():

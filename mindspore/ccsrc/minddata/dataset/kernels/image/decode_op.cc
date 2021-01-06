@@ -38,12 +38,12 @@ Status DecodeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   IO_CHECK(input, output);
   // check the input tensor shape
   if (input->Rank() != 1) {
-    RETURN_STATUS_UNEXPECTED("DecodeOp error: invalid input shape, only support 1D input.");
+    RETURN_STATUS_UNEXPECTED("Decode: invalid input shape, only support 1D input.");
   }
   if (is_rgb_format_) {  // RGB colour mode
     return Decode(input, output);
   } else {  // BGR colour mode
-    RETURN_STATUS_UNEXPECTED("Decode BGR is deprecated");
+    RETURN_STATUS_UNEXPECTED("Decode: only support RGB image.");
   }
 }
 Status DecodeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
@@ -52,7 +52,7 @@ Status DecodeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   TensorShape out({-1, -1, 3});  // we don't know what is output image size, but we know it should be 3 channels
   if (inputs[0].Rank() == 1) outputs.emplace_back(out);
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
+  return Status(StatusCode::kUnexpectedError, "Decode: invalid input shape.");
 }
 
 Status DecodeOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {

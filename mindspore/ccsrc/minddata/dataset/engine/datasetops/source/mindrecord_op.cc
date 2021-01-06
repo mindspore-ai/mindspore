@@ -284,6 +284,8 @@ Status MindRecordOp::GetBufferFromReader(std::unique_ptr<DataBuffer> *fetched_bu
     if (task_type == mindrecord::TaskType::kPaddedTask) {
       TensorRow tensor_row;
       RETURN_IF_NOT_OK(LoadTensorRow(&tensor_row, {}, mindrecord::json(), task_type));
+      std::vector<std::string> file_path(tensor_row.size(), dataset_file_[0]);
+      tensor_row.setPath(file_path);
       tensor_table->push_back(std::move(tensor_row));
     }
     if (tupled_buffer.empty()) break;
@@ -293,6 +295,8 @@ Status MindRecordOp::GetBufferFromReader(std::unique_ptr<DataBuffer> *fetched_bu
         mindrecord::json columns_json = std::get<1>(tupled_row);
         TensorRow tensor_row;
         RETURN_IF_NOT_OK(LoadTensorRow(&tensor_row, columns_blob, columns_json, task_type));
+        std::vector<std::string> file_path(tensor_row.size(), dataset_file_[0]);
+        tensor_row.setPath(file_path);
         tensor_table->push_back(std::move(tensor_row));
       }
     }

@@ -24,17 +24,18 @@ namespace dataset {
 
 Status UniqueOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor");
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Unique: only support 1D input");
 
   auto in_tensor = input[0];
   auto in_tensor_shape = in_tensor->shape();
   auto in_tensor_type = in_tensor->type();
 
-  CHECK_FAIL_RETURN_UNEXPECTED(in_tensor_type.IsNumeric(), "Tensor type must be numeric.");
-  CHECK_FAIL_RETURN_UNEXPECTED(in_tensor_shape.Rank() >= 2, "Tensor must be at least 2-D in order to do unique op.");
+  CHECK_FAIL_RETURN_UNEXPECTED(in_tensor_type.IsNumeric(), "Unique: Tensor type must be numeric.");
+  CHECK_FAIL_RETURN_UNEXPECTED(in_tensor_shape.Rank() >= 2,
+                               "Unique: input must be at least 2-D in order to do unique op.");
   CHECK_FAIL_RETURN_UNEXPECTED(
     in_tensor->Size() <= std::numeric_limits<int32_t>::max(),
-    "UniqueOp does not support input tensor large than " + std::to_string(std::numeric_limits<int32_t>::max()));
+    "Unique: Unique does not support input tensor large than " + std::to_string(std::numeric_limits<int32_t>::max()));
 
   RETURN_IF_NOT_OK(in_tensor->Reshape(TensorShape({in_tensor->Size()})));
 

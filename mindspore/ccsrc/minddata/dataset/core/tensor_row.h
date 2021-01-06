@@ -19,6 +19,7 @@
 
 #include <deque>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "minddata/dataset/core/tensor.h"
@@ -164,6 +165,10 @@ class TensorRow {
 
   void setId(row_id_type id) { id_ = id; }
 
+  std::vector<std::string> getPath() const { return path_; }
+
+  void setPath(std::vector<std::string> path) { path_ = path; }
+
   const vector_type &getRow() const { return row_; }
 
   int64_t SizeInBytes() const {
@@ -219,6 +224,7 @@ class TensorRow {
 
  protected:
   row_id_type id_;
+  std::vector<std::string> path_;
   std::vector<std::shared_ptr<Tensor>> row_;
 };
 }  // namespace dataset

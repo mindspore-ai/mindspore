@@ -113,15 +113,15 @@ def test_mask_string_comparison():
 def test_mask_exceptions_str():
     with pytest.raises(RuntimeError) as info:
         mask_compare([1, 2, 3, 4, 5], ops.Relational.EQ, "3.5")
-    assert "Cannot convert constant value to the type of the input tensor." in str(info.value)
+    assert "input datatype does not match the value datatype." in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
         mask_compare(["1", "2", "3", "4", "5"], ops.Relational.EQ, 3.5)
-    assert "Cannot convert constant value to the type of the input tensor." in str(info.value)
+    assert "input datatype does not match the value datatype." in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
         mask_compare(["1", "2", "3", "4", "5"], ops.Relational.EQ, "3.5", mstype.string)
-    assert "Cannot generate a string mask. Type should be numeric." in str(info.value)
+    assert "only support numeric datatype of input." in str(info.value)
 
 
 if __name__ == "__main__":

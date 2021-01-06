@@ -201,7 +201,7 @@ def test_random_horizontal_flip_with_bbox_invalid_bounds_c():
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.NegativeXY, "min_x")
+    check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.NegativeXY, "negative value")
     dataVoc2 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(dataVoc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 

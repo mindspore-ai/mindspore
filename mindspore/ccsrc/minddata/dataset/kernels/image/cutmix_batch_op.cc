@@ -50,7 +50,7 @@ void CutMixBatchOp::GetCropBox(int height, int width, float lam, int *x, int *y,
 
 Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   if (input.size() < 2) {
-    RETURN_STATUS_UNEXPECTED("Both images and labels columns are required for this operation.");
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: both image and label columns are required.");
   }
 
   std::vector<std::shared_ptr<Tensor>> images;
@@ -60,22 +60,24 @@ Status CutMixBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   // Check inputs
   if (image_shape.size() != 4 || image_shape[0] != label_shape[0]) {
     RETURN_STATUS_UNEXPECTED(
-      "CutMixBatch: You must make sure images are HWC or CHW and batched before calling CutMixBatch.");
+      "CutMixBatch: please make sure images are HWC or CHW "
+      "and batched before calling CutMixBatch.");
   }
   if (!input.at(1)->type().IsInt()) {
     RETURN_STATUS_UNEXPECTED("CutMixBatch: Wrong labels type. The second column (labels) must only include int types.");
   }
   if (label_shape.size() != 2 && label_shape.size() != 3) {
     RETURN_STATUS_UNEXPECTED(
-      "CutMixBatch: Wrong labels shape. The second column (labels) must have a shape of NC or NLC where N is the batch "
-      "size, L is the number of labels in each row, "
-      "and C is the number of classes. labels must be in one-hot format and in a batch.");
+      "CutMixBatch: wrong labels shape. "
+      "The second column (labels) must have a shape of NC or NLC where N is the batch size, "
+      "L is the number of labels in each row, and C is the number of classes. "
+      "labels must be in one-hot format and in a batch.");
   }
   if ((image_shape[1] != 1 && image_shape[1] != 3) && image_batch_format_ == ImageBatchFormat::kNCHW) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: Image doesn't match the given image format.");
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: image doesn't match the NCHW format.");
   }
   if ((image_shape[3] != 1 && image_shape[3] != 3) && image_batch_format_ == ImageBatchFormat::kNHWC) {
-    RETURN_STATUS_UNEXPECTED("CutMixBatch: Image doesn't match the given image format.");
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: image doesn't match the NHWC format.");
   }
 
   // Move images into a vector of Tensors

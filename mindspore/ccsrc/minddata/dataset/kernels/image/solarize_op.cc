@@ -30,22 +30,22 @@ Status SolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
   uint8_t threshold_min_ = threshold_[0], threshold_max_ = threshold_[1];
 
   CHECK_FAIL_RETURN_UNEXPECTED(threshold_min_ <= threshold_max_,
-                               "threshold_min must be smaller or equal to threshold_max.");
+                               "Solarize: threshold_min must be smaller or equal to threshold_max.");
 
   try {
     std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
     cv::Mat input_img = input_cv->mat();
     if (!input_cv->mat().data) {
-      RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
+      RETURN_STATUS_UNEXPECTED("Solarize: load image failed.");
     }
 
     if (input_cv->Rank() != 2 && input_cv->Rank() != 3) {
-      RETURN_STATUS_UNEXPECTED("Shape not of either <H,W,C> or <H,W> format.");
+      RETURN_STATUS_UNEXPECTED("Solarize: image shape is not of either <H,W,C> or <H,W>.");
     }
     if (input_cv->Rank() == 3) {
       int num_channels = input_cv->shape()[2];
       if (num_channels != 3 && num_channels != 1) {
-        RETURN_STATUS_UNEXPECTED("Number of channels is not 1 or 3.");
+        RETURN_STATUS_UNEXPECTED("Solarize: number of channels is not 1 or 3.");
       }
     }
 
@@ -73,7 +73,7 @@ Status SolarizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
 
   catch (const cv::Exception &e) {
     const char *cv_err_msg = e.what();
-    std::string err_message = "Error in SolarizeOp: ";
+    std::string err_message = "Solarize: ";
     err_message += cv_err_msg;
     RETURN_STATUS_UNEXPECTED(err_message);
   }

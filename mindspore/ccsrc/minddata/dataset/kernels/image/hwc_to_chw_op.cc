@@ -33,7 +33,7 @@ Status HwcToChwOp::OutputShape(const std::vector<TensorShape> &inputs, std::vect
   TensorShape out = TensorShape{in[2], in[0], in[1]};
   if (inputs[0].Rank() == 3) outputs.emplace_back(out);
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
+  return Status(StatusCode::kUnexpectedError, "HwcToChw: invalid input shape.");
 }
 }  // namespace dataset
 }  // namespace mindspore

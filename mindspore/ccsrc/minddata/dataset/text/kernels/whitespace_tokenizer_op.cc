@@ -35,16 +35,17 @@ const bool WhitespaceTokenizerOp::kDefWithOffsets = false;
 
 Status WhitespaceTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "WhitespaceTokenizer: input should be one column data.");
   if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("The input tensor should be scalar string tensor.");
+    RETURN_STATUS_UNEXPECTED(
+      "WhitespaceTokenizer: the input shape should be scalar and the input datatype should be string.");
   }
   std::string_view str;
   RETURN_IF_NOT_OK(input[0]->GetItemAt(&str, {}));
 
   RuneStrArray runes;
   if (!DecodeRunesInString(str.data(), str.size(), runes)) {
-    RETURN_STATUS_UNEXPECTED("Decode utf8 string failed.");
+    RETURN_STATUS_UNEXPECTED("WhitespaceTokenizer: Decode utf8 string failed.");
   }
 
   std::shared_ptr<Tensor> token_tensor, offsets_start_tensor, offsets_limit_tensor;

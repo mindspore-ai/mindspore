@@ -27,12 +27,13 @@ namespace dataset {
 
 Status CropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "The shape size " + std::to_string(input->shape().Size()) +
-                                                             " of input tensor is invalid");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input->shape().Size() >= 2,
+    "Crop: the shape size " + std::to_string(input->shape().Size()) + " of input is invalid.");
   int32_t input_h = static_cast<int>(input->shape()[0]);
   int32_t input_w = static_cast<int>(input->shape()[1]);
-  CHECK_FAIL_RETURN_UNEXPECTED(y_ + height_ <= input_h, "Crop height dimensions exceed image dimensions");
-  CHECK_FAIL_RETURN_UNEXPECTED(x_ + width_ <= input_w, "Crop width dimensions exceed image dimensions");
+  CHECK_FAIL_RETURN_UNEXPECTED(y_ + height_ <= input_h, "Crop: Crop height dimension exceeds image dimensions.");
+  CHECK_FAIL_RETURN_UNEXPECTED(x_ + width_ <= input_w, "Crop: Crop width dimension exceeds image dimensions.");
   return Crop(input, output, x_, y_, height_, width_);
 }
 
@@ -43,7 +44,7 @@ Status CropOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<T
   if (inputs[0].Rank() == 2) outputs.emplace_back(out);
   if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
+  return Status(StatusCode::kUnexpectedError, "Crop: invalid input shape.");
 }
 }  // namespace dataset
 }  // namespace mindspore

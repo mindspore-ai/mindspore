@@ -373,7 +373,7 @@ def test_cutmix_batch_fail5():
                 images_cutmix = image.asnumpy()
             else:
                 images_cutmix = np.append(images_cutmix, image.asnumpy(), axis=0)
-    error_message = "Both images and labels columns are required"
+    error_message = "both image and label columns are required"
     assert error_message in str(error.value)
 
 
@@ -400,7 +400,7 @@ def test_cutmix_batch_fail6():
                 images_cutmix = image.asnumpy()
             else:
                 images_cutmix = np.append(images_cutmix, image.asnumpy(), axis=0)
-    error_message = "CutMixBatch: Image doesn't match the given image format."
+    error_message = "image doesn't match the NCHW format."
     assert error_message in str(error.value)
 
 
@@ -425,7 +425,7 @@ def test_cutmix_batch_fail7():
                 images_cutmix = image.asnumpy()
             else:
                 images_cutmix = np.append(images_cutmix, image.asnumpy(), axis=0)
-    error_message = "CutMixBatch: Wrong labels shape. The second column (labels) must have a shape of NC or NLC"
+    error_message = "wrong labels shape. The second column (labels) must have a shape of NC or NLC"
     assert error_message in str(error.value)
 
 

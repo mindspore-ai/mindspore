@@ -43,7 +43,7 @@ Status OneHotEncodingUnsigned(const std::shared_ptr<Tensor> &input, std::shared_
     RETURN_IF_NOT_OK(input->GetItemAt<uint64_t>(&class_idx, {index}));
   }
   if (class_idx >= static_cast<uint64_t>(num_classes)) {
-    RETURN_STATUS_UNEXPECTED("One_hot index values are not in range");
+    RETURN_STATUS_UNEXPECTED("OneHot: OneHot index values are not in range");
   }
   if (input->type() == DataType::DE_UINT64) {
     RETURN_IF_NOT_OK((*output)->SetItemAt<uint64_t>({index, static_cast<dsize_t>(class_idx)}, 1));
@@ -54,7 +54,7 @@ Status OneHotEncodingUnsigned(const std::shared_ptr<Tensor> &input, std::shared_
   } else if (input->type() == DataType::DE_UINT8) {
     RETURN_IF_NOT_OK((*output)->SetItemAt<uint8_t>({index, static_cast<dsize_t>(class_idx)}, 1));
   } else {
-    RETURN_STATUS_UNEXPECTED("One hot unsigned only supports unsigned int as input.");
+    RETURN_STATUS_UNEXPECTED("OneHot: OneHot unsigned only supports unsigned int as input.");
   }
   return Status::OK();
 }
@@ -68,7 +68,7 @@ Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_pt
     RETURN_IF_NOT_OK(input->GetItemAt<int64_t>(&class_idx, {index}));
   }
   if (class_idx >= static_cast<int64_t>(num_classes)) {
-    RETURN_STATUS_UNEXPECTED("One_hot index values are not in range");
+    RETURN_STATUS_UNEXPECTED("OneHot: OneHot index values are not in range");
   }
   if (input->type() == DataType::DE_INT64) {
     RETURN_IF_NOT_OK((*output)->SetItemAt<int64_t>({index, static_cast<dsize_t>(class_idx)}, 1));
@@ -79,7 +79,7 @@ Status OneHotEncodingSigned(const std::shared_ptr<Tensor> &input, std::shared_pt
   } else if (input->type() == DataType::DE_INT8) {
     RETURN_IF_NOT_OK((*output)->SetItemAt<int8_t>({index, static_cast<dsize_t>(class_idx)}, 1));
   } else {
-    RETURN_STATUS_UNEXPECTED("One hot signed only supports signed int as input.");
+    RETURN_STATUS_UNEXPECTED("OneHot: OneHot signed only supports signed int as input.");
   }
   return Status::OK();
 }
@@ -88,10 +88,10 @@ Status OneHotEncoding(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *ou
   input->Squeeze();
 
   if (input->Rank() > 1) {  // We expect the input to be int he first dimension
-    RETURN_STATUS_UNEXPECTED("One hot only supports scalars or 1D shape Tensors.");
+    RETURN_STATUS_UNEXPECTED("OneHot: OneHot only supports scalars or 1D input.");
   }
   if (!input->type().IsInt()) {
-    RETURN_STATUS_UNEXPECTED("One hot does not support input of this type.");
+    RETURN_STATUS_UNEXPECTED("OneHot: OneHot does not support input of this type.");
   }
   try {
     dsize_t num_elements = 1;
@@ -111,7 +111,7 @@ Status OneHotEncoding(std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *ou
     *output = out;
     return Status::OK();
   } catch (const std::exception &e) {
-    std::string err_msg = "Unexpected error in OneHotOp: ";
+    std::string err_msg = "Error raised in OneHot operation: ";
     err_msg += e.what();
     RETURN_STATUS_UNEXPECTED(err_msg);
   }
@@ -123,9 +123,10 @@ Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output
   const TensorShape &input_shape = input->shape();
 
   CHECK_FAIL_RETURN_UNEXPECTED(!((fill_type == DataType::DE_STRING) && (input_type != DataType::DE_STRING)),
-                               "Types do not match");
+                               "Fill: fill datatype does not match the input datatype.");
 
-  CHECK_FAIL_RETURN_UNEXPECTED(fill_value->shape() == TensorShape({}), "fill_value is not a scalar");
+  CHECK_FAIL_RETURN_UNEXPECTED(fill_value->shape() == TensorShape({}),
+                               "Fill: the shape of fill_value is not a scalar.");
 
   std::shared_ptr<Tensor> out, fill_output;
 
@@ -225,7 +226,7 @@ Status Fill(const std::shared_ptr<Tensor> input, std::shared_ptr<Tensor> *output
       break;
     }
     case DataType::DE_UNKNOWN: {
-      RETURN_STATUS_UNEXPECTED("FillOp does not support input of this type.");
+      RETURN_STATUS_UNEXPECTED("Fill: unknown input datatype.");
       break;
     }
   }
@@ -283,7 +284,7 @@ void CastFrom(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
       Cast<T, double>(input, output);
       break;
     case DataType::DE_UNKNOWN:
-      MS_LOG(ERROR) << "Unknown data type.";
+      MS_LOG(ERROR) << "TypeCast: unknown datatype.";
       break;
   }
 }
@@ -331,7 +332,7 @@ Status TypeCast(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *o
       break;
     case DataType::DE_UNKNOWN:
       // sanity check, unreachable code.
-      RETURN_STATUS_UNEXPECTED("TypeCast does not support input of this type.");
+      RETURN_STATUS_UNEXPECTED("TypeCast: TypeCast does not support input of this type.");
   }
   return Status::OK();
 }
@@ -350,7 +351,7 @@ Status ToFloat16(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
     float float16_max = static_cast<float>(std::numeric_limits<float16>::max());
     float float16_min = static_cast<float>(std::numeric_limits<float16>::lowest());
     if (element > float16_max || element < float16_min) {
-      RETURN_STATUS_UNEXPECTED("Value " + std::to_string(element) + " is outside of valid float16 range [" +
+      RETURN_STATUS_UNEXPECTED("ToFloat16: value " + std::to_string(element) + " is outside of valid float16 range [" +
                                std::to_string(float16_max) + ", " + std::to_string(float16_min) + "].");
     }
 
@@ -370,7 +371,7 @@ Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, 
     }
   }
   CHECK_FAIL_RETURN_UNEXPECTED(src->type().IsNumeric() == pad_val->type().IsNumeric(),
-                               "Source and pad_value tensors are not of the same type.");
+                               "PadEnd: Source and pad_value are not of the same type.");
   if (pad_val->type().IsNumeric()) {
     std::shared_ptr<Tensor> float_pad_value;
     RETURN_IF_NOT_OK(TypeCast(pad_val, &float_pad_value, DataType(DataType::DE_FLOAT32)));
@@ -385,11 +386,11 @@ Status PadEnd(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst, 
 
 Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor> *dst,
                      const std::vector<dsize_t> &pad_shape, float pad_val) {
-  CHECK_FAIL_RETURN_UNEXPECTED(src != nullptr && dst != nullptr, "tensor can't be nullptr");
+  CHECK_FAIL_RETURN_UNEXPECTED(src != nullptr && dst != nullptr, "PadEnd: input or output can't be nullptr");
   if (src->Rank() == 0 || src->shape().AsVector() == pad_shape) {
     (*dst) = src;  // if no padding, copy the pointer
   } else {
-    CHECK_FAIL_RETURN_UNEXPECTED(src->Rank() == pad_shape.size(), "Pad to diff rank not allowed");
+    CHECK_FAIL_RETURN_UNEXPECTED(src->Rank() == pad_shape.size(), "PadEnd: invalid pad shape.");
     RETURN_IF_NOT_OK(Tensor::CreateEmpty(TensorShape(pad_shape), src->type(), dst));
     auto tensor_type = src->type().value();
     if (pad_val == 0) {  // if pad with zero, don't care what type it is
@@ -419,7 +420,7 @@ Status PadEndNumeric(const std::shared_ptr<Tensor> &src, std::shared_ptr<Tensor>
     } else if (tensor_type == DataType::DE_FLOAT64) {
       RETURN_IF_NOT_OK((*dst)->Fill<double>(pad_val));
     } else {
-      RETURN_STATUS_UNEXPECTED("Incorrect/Unknown tensor type");
+      RETURN_STATUS_UNEXPECTED("PadEnd: Incorrect/Unknown datatype");
     }
     std::vector<dsize_t> cur_ind(src->Rank(), 0);
     RETURN_IF_NOT_OK(PadEndNumericHelper(src, *dst, cur_ind, 0));
@@ -512,7 +513,7 @@ Status MaskHelper(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Te
         *out_itr = (*in_itr <= value);
         break;
       default:
-        RETURN_STATUS_UNEXPECTED("Unknown relational operator.");
+        RETURN_STATUS_UNEXPECTED("Mask: unknown relational operator.");
     }
   }
   return Status::OK();
@@ -521,8 +522,8 @@ Status MaskHelper(const std::shared_ptr<Tensor> &input, const std::shared_ptr<Te
 Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const std::shared_ptr<Tensor> &value,
             RelationalOp op) {
   CHECK_FAIL_RETURN_UNEXPECTED(input->type().IsNumeric() == value->type().IsNumeric(),
-                               "Cannot convert constant value to the type of the input tensor.");
-  CHECK_FAIL_RETURN_UNEXPECTED(value->shape() == TensorShape::CreateScalar(), "Value is not a scalar");
+                               "Mask: input datatype does not match the value datatype.");
+  CHECK_FAIL_RETURN_UNEXPECTED(value->shape() == TensorShape::CreateScalar(), "Mask: value shape is not a scalar");
 
   RETURN_IF_NOT_OK(Tensor::CreateEmpty(input->shape(), DataType(DataType::DE_BOOL), output));
 
@@ -575,7 +576,7 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
       RETURN_IF_NOT_OK(MaskHelper<std::string_view>(input, *output, casted_value, op));
       break;
     case DataType::DE_UNKNOWN:
-      RETURN_STATUS_UNEXPECTED("Unsupported input type.");
+      RETURN_STATUS_UNEXPECTED("Mask: unsupported input datatype.");
       break;
   }
   return Status::OK();
@@ -584,7 +585,7 @@ Status Mask(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
 Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::shared_ptr<Tensor> prepend,
                    std::shared_ptr<Tensor> append) {
   axis = Tensor::HandleNeg(axis, input[0]->shape().Rank());
-  CHECK_FAIL_RETURN_UNEXPECTED(axis == 0, "Only axis=0 is supported");
+  CHECK_FAIL_RETURN_UNEXPECTED(axis == 0, "Concatenate: only 1D input supported");
 
   TensorShape t = TensorShape::CreateScalar();
 
@@ -593,20 +594,22 @@ Status Concatenate(const TensorRow &input, TensorRow *output, int8_t axis, std::
   TensorRow tensor_list;
 
   if (prepend != nullptr) {
-    CHECK_FAIL_RETURN_UNEXPECTED(first_dtype == prepend->type(), "Tensor types do not match");
-    CHECK_FAIL_RETURN_UNEXPECTED(prepend->shape().Rank() == 1, "Only 1D tensors supported");
+    CHECK_FAIL_RETURN_UNEXPECTED(first_dtype == prepend->type(),
+                                 "Concatenate: input datatype does not match the prepend datatype.");
+    CHECK_FAIL_RETURN_UNEXPECTED(prepend->shape().Rank() == 1, "Concatenate: only 1D input supported");
     tensor_list.emplace_back(prepend);
   }
 
   for (dsize_t i = 0; i < input.size(); i++) {
-    CHECK_FAIL_RETURN_UNEXPECTED(first_dtype == input[i]->type(), "Tensor types do not match");
-    CHECK_FAIL_RETURN_UNEXPECTED(input[i]->shape().Rank() == 1, "Only 1D tensors supported");
+    CHECK_FAIL_RETURN_UNEXPECTED(first_dtype == input[i]->type(), "Concatenate: inconsistent datatype of input.");
+    CHECK_FAIL_RETURN_UNEXPECTED(input[i]->shape().Rank() == 1, "Concatenate: only 1D input supported");
     tensor_list.emplace_back(input[i]);
   }
 
   if (append != nullptr) {
-    CHECK_FAIL_RETURN_UNEXPECTED(first_dtype == append->type(), "Tensor types do not match");
-    CHECK_FAIL_RETURN_UNEXPECTED(append->shape().Rank() == 1, "Only 1D tensors supported");
+    CHECK_FAIL_RETURN_UNEXPECTED(first_dtype == append->type(),
+                                 "Concatenate: input datatype does not match the append datatype.");
+    CHECK_FAIL_RETURN_UNEXPECTED(append->shape().Rank() == 1, "Concatenate: only 1D append supported");
     tensor_list.emplace_back(append);
   }
 
@@ -658,7 +661,7 @@ Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
   TensorShape remaining({-1});
   std::vector<int64_t> index(tensor_shape.size(), 0);
   if (tensor_shape.size() <= 1) {
-    RETURN_STATUS_UNEXPECTED("Tensor must be at least 2-D in order to unpack.");
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: input must be at least 2-D in order to unpack.");
   }
   TensorShape element_shape(std::vector<int64_t>(tensor_shape.begin() + 1, tensor_shape.end()));
 
@@ -670,7 +673,7 @@ Status BatchTensorToCVTensorVector(const std::shared_ptr<Tensor> &input,
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(element_shape, input->type(), start_addr_of_index, &out));
     std::shared_ptr<CVTensor> cv_out = CVTensor::AsCVTensor(std::move(out));
     if (!cv_out->mat().data) {
-      RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor.");
+      RETURN_STATUS_UNEXPECTED("MixUpBatch: allocate memory failed.");
     }
     output->push_back(cv_out);
   }
@@ -683,7 +686,7 @@ Status BatchTensorToTensorVector(const std::shared_ptr<Tensor> &input, std::vect
   TensorShape remaining({-1});
   std::vector<int64_t> index(tensor_shape.size(), 0);
   if (tensor_shape.size() <= 1) {
-    RETURN_STATUS_UNEXPECTED("Tensor must be at least 2-D in order to unpack.");
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: input must be at least 2-D in order to unpack.");
   }
   TensorShape element_shape(std::vector<int64_t>(tensor_shape.begin() + 1, tensor_shape.end()));
 
@@ -700,7 +703,7 @@ Status BatchTensorToTensorVector(const std::shared_ptr<Tensor> &input, std::vect
 
 Status TensorVectorToBatchTensor(const std::vector<std::shared_ptr<Tensor>> &input, std::shared_ptr<Tensor> *output) {
   if (input.empty()) {
-    RETURN_STATUS_UNEXPECTED("TensorVectorToBatchTensor: Received an empty vector.");
+    RETURN_STATUS_UNEXPECTED("CutMixBatch: the input is empty.");
   }
   std::vector<int64_t> tensor_shape = input.front()->shape().AsVector();
   tensor_shape.insert(tensor_shape.begin(), input.size());
@@ -782,7 +785,7 @@ Status UniqueHelper(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
 
 Status Unique(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
               std::shared_ptr<Tensor> *output_idx, std::shared_ptr<Tensor> *output_cnt) {
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Rank() == 1, "Only 1D tensors supported.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Rank() == 1, "Unique: only 1D input supported.");
   if (input->type() == DataType::DE_INT64) {
     RETURN_IF_NOT_OK(UniqueHelper<int64_t>(input, output, output_idx, output_cnt));
   } else if (input->type() == DataType::DE_INT32) {
@@ -806,7 +809,7 @@ Status Unique(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   } else if (input->type() == DataType::DE_FLOAT64) {
     RETURN_IF_NOT_OK(UniqueHelper<double>(input, output, output_idx, output_cnt));
   } else {
-    RETURN_STATUS_UNEXPECTED("Unique op only supports numeric input.");
+    RETURN_STATUS_UNEXPECTED("Unique: Unique op only supports numeric input.");
   }
   return Status::OK();
 }

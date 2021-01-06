@@ -110,9 +110,44 @@ def test_celeba_get_dataset_size():
     size = data.get_dataset_size()
     assert size == 1
 
+
+def test_celeba_dataset_exception_file_path():
+    def exception_func(item):
+        raise Exception("Error occur!")
+
+    try:
+        data = ds.CelebADataset(DATA_DIR, shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.create_dict_iterator():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.CelebADataset(DATA_DIR, shuffle=False)
+        data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.create_dict_iterator():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.CelebADataset(DATA_DIR, shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["attr"], num_parallel_workers=1)
+        for _ in data.create_dict_iterator():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+
 if __name__ == '__main__':
     test_celeba_dataset_label()
     test_celeba_dataset_op()
     test_celeba_dataset_ext()
     test_celeba_dataset_distribute()
     test_celeba_get_dataset_size()
+    test_celeba_dataset_exception_file_path()

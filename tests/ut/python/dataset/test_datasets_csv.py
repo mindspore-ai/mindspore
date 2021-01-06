@@ -241,6 +241,62 @@ def test_csv_dataset_exception():
             pass
     assert "failed to parse file" in str(err.value)
 
+    TEST_FILE1 = '../data/dataset/testCSV/quoted.csv'
+    def exception_func(item):
+        raise Exception("Error occur!")
+
+    try:
+        data = ds.CSVDataset(
+            TEST_FILE1,
+            column_defaults=["", "", "", ""],
+            column_names=['col1', 'col2', 'col3', 'col4'],
+            shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["col1"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.CSVDataset(
+            TEST_FILE1,
+            column_defaults=["", "", "", ""],
+            column_names=['col1', 'col2', 'col3', 'col4'],
+            shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["col2"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.CSVDataset(
+            TEST_FILE1,
+            column_defaults=["", "", "", ""],
+            column_names=['col1', 'col2', 'col3', 'col4'],
+            shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["col3"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.CSVDataset(
+            TEST_FILE1,
+            column_defaults=["", "", "", ""],
+            column_names=['col1', 'col2', 'col3', 'col4'],
+            shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["col4"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
 
 def test_csv_dataset_duplicate_columns():
     data = ds.CSVDataset(

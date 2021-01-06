@@ -18,6 +18,7 @@ import os
 import pytest
 
 import mindspore.dataset as ds
+
 from mindspore.mindrecord import FileWriter
 
 CV_FILE_NAME = "./imagenet.mindrecord"
@@ -288,6 +289,35 @@ def test_cv_minddataset_partition_num_samples_equals_0():
         os.remove(CV_FILE_NAME)
         os.remove("{}.db".format(CV_FILE_NAME))
 
+def test_mindrecord_exception():
+    """tutorial for exception scenario of minderdataset + map would print error info."""
+    def exception_func(item):
+        raise Exception("Error occur!")
+
+    create_cv_mindrecord(1)
+    columns_list = ["data", "file_name", "label"]
+    with pytest.raises(RuntimeError, match="The corresponding data files"):
+        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, shuffle=False)
+        data_set = data_set.map(operations=exception_func, input_columns=["data"], num_parallel_workers=1)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+    with pytest.raises(RuntimeError, match="The corresponding data files"):
+        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, shuffle=False)
+        data_set = data_set.map(operations=exception_func, input_columns=["file_name"], num_parallel_workers=1)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+    with pytest.raises(RuntimeError, match="The corresponding data files"):
+        data_set = ds.MindDataset(CV_FILE_NAME, columns_list, shuffle=False)
+        data_set = data_set.map(operations=exception_func, input_columns=["label"], num_parallel_workers=1)
+        num_iter = 0
+        for _ in data_set.create_dict_iterator(num_epochs=1, output_numpy=True):
+            num_iter += 1
+    os.remove(CV_FILE_NAME)
+    os.remove("{}.db".format(CV_FILE_NAME))
+
+
 if __name__ == '__main__':
     test_cv_lack_json()
     test_cv_lack_mindrecord()
@@ -301,3 +331,4 @@ if __name__ == '__main__':
     test_minddataset_invalidate_shard_id()
     test_minddataset_shard_id_bigger_than_num_shard()
     test_cv_minddataset_partition_num_samples_equals_0()
+    test_mindrecord_exception()

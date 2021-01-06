@@ -201,7 +201,7 @@ def test_random_resized_crop_with_bbox_op_bad_c():
     data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.HeightOverflow, "bounding boxes is out of bounds of the image")
     data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
-    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.NegativeXY, "min_x")
+    check_bad_bbox(data_voc2, test_op, InvalidBBoxType.NegativeXY, "negative value")
     data_voc2 = ds.VOCDataset(DATA_DIR_VOC, task="Detection", usage="train", shuffle=False, decode=True)
     check_bad_bbox(data_voc2, test_op, InvalidBBoxType.WrongShape, "4 features")
 

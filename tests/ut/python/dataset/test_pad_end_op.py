@@ -51,11 +51,11 @@ def test_pad_end_str():
 def test_pad_end_exceptions():
     with pytest.raises(RuntimeError) as info:
         pad_compare([1, 2], [3], "-1", [])
-    assert "Source and pad_value tensors are not of the same type." in str(info.value)
+    assert "Source and pad_value are not of the same type." in str(info.value)
 
     with pytest.raises(RuntimeError) as info:
         pad_compare([b"1", b"2", b"3", b"4", b"5"], [2], 1, [])
-    assert "Source and pad_value tensors are not of the same type." in str(info.value)
+    assert "Source and pad_value are not of the same type." in str(info.value)
 
     with pytest.raises(TypeError) as info:
         pad_compare([3, 4, 5], ["2"], 1, [])

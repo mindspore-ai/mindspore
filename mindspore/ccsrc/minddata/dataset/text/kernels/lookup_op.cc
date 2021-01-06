@@ -27,23 +27,24 @@ LookupOp::LookupOp(std::shared_ptr<Vocab> vocab, WordIdType default_id, const Da
 Status LookupOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   RETURN_UNEXPECTED_IF_NULL(vocab_);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "None string tensor received.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "Lookup: input is not string datatype.");
 
   std::vector<WordIdType> word_ids;
   word_ids.reserve(input->Size());
   for (auto itr = input->begin<std::string_view>(); itr != input->end<std::string_view>(); itr++) {
     WordIdType word_id = vocab_->Lookup(std::string(*itr));
     word_ids.emplace_back(word_id == Vocab::kNoTokenExists ? default_id_ : word_id);
-    CHECK_FAIL_RETURN_UNEXPECTED(
-      word_ids.back() != Vocab::kNoTokenExists,
-      "Invalid data, token: \"" + std::string(*itr) + "\" doesn't exist in vocab and no unknown token is specified.");
+    CHECK_FAIL_RETURN_UNEXPECTED(word_ids.back() != Vocab::kNoTokenExists,
+                                 "Lookup: invalid data, token: \"" + std::string(*itr) +
+                                   "\" doesn't exist in vocab and no unknown token is specified.");
   }
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(word_ids, input->shape(), output));
 
   // type cast to user's requirements if what user wants isn't int32_t
   if ((*output)->type() != type_) {
     CHECK_FAIL_RETURN_UNEXPECTED(type_.IsNumeric(),
-                                 "Lookup doesn't support string to string lookup. data_type needs to be numeric");
+                                 "Lookup: Lookup doesn't support string to string lookup. "
+                                 "data_type needs to be numeric");
     std::shared_ptr<Tensor> cast_to;
     RETURN_IF_NOT_OK(TypeCast(*output, &cast_to, type_));
     *output = cast_to;

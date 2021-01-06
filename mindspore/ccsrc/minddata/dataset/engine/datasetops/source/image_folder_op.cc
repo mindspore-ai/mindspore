@@ -230,6 +230,7 @@ Status ImageFolderOp::LoadTensorRow(row_id_type row_id, ImageLabelPair pairPtr, 
     }
   }
   (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
+  trow->setPath({folder_path_ + (pairPtr->first), std::string("")});
   return Status::OK();
 }
 

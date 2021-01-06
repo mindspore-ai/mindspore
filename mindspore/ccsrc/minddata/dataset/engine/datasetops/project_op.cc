@@ -88,6 +88,9 @@ Status ProjectOp::Project(std::unique_ptr<DataBuffer> *data_buffer) {
     TensorRow new_row;
     (void)std::transform(projected_column_indices_.begin(), projected_column_indices_.end(),
                          std::back_inserter(new_row), [&current_row](uint32_t x) { return current_row[x]; });
+    // Now if columns changed after map, we don't know which column we should keep,
+    // so temporarily we don't support print file_path after ProjectOp.
+    new_row.setPath({});
     new_tensor_table->push_back(new_row);
   }
   (*data_buffer)->set_tensor_table(std::move(new_tensor_table));

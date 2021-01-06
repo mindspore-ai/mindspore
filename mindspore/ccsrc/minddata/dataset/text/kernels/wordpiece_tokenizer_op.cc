@@ -37,7 +37,7 @@ WordpieceTokenizerOp::WordpieceTokenizerOp(const std::shared_ptr<Vocab> &vocab, 
 
 Status WordpieceTokenizerOp::LookupWord(const std::string &input_token, const RuneStrArray &runes, const int start,
                                         bool *out_found, int *out_end) const {
-  CHECK_FAIL_RETURN_UNEXPECTED(start >= 0 && start < input_token.size(), "Out of range");
+  CHECK_FAIL_RETURN_UNEXPECTED(start >= 0 && start < input_token.size(), "WordpieceTokenizer: LookupWord Out of range");
   *out_found = false;
   for (int i = runes.size() - 1; i >= 0; i--) {
     *out_end = runes[i].offset + runes[i].len;
@@ -96,7 +96,7 @@ Status WordpieceTokenizerOp::GetTokens(const std::string &input_token, const uin
   }
   RuneStrArray runes;
   if (!DecodeRunesInString(input_token.data(), input_token.size(), runes)) {
-    RETURN_STATUS_UNEXPECTED("Decode utf8 string failed.");
+    RETURN_STATUS_UNEXPECTED("WordpieceTokenizer: Decode utf8 string failed.");
   }
   int end = 0;
   for (int start = 0; start < input_token.size();) {
@@ -117,7 +117,8 @@ Status WordpieceTokenizerOp::GetTokens(const std::string &input_token, const uin
 Status WordpieceTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   if (input[0]->Rank() > 1 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("The input tensor should be scalar or 1-D string tensor.");
+    RETURN_STATUS_UNEXPECTED(
+      "WordpieceTokenizer: The input shape should be 1D scalar the input datatype should be string.");
   }
   dsize_t count = 0;
   std::vector<std::string> out_tokens;

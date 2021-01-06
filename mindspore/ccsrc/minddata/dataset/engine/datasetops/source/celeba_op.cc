@@ -87,6 +87,7 @@ CelebAOp::CelebAOp(int32_t num_workers, int32_t rows_per_buffer, const std::stri
       extensions_(exts),
       data_schema_(std::move(schema)),
       num_rows_in_attr_file_(0),
+      attr_file_(""),
       usage_(usage) {
   attr_info_queue_ = std::make_unique<Queue<std::vector<std::string>>>(queue_size);
   io_block_queues_.Init(num_workers_, queue_size);
@@ -120,6 +121,7 @@ Status CelebAOp::ParseAttrFile() {
                   "Invalid file, failed to open Celeba attr file: " + attr_file_name);
   }
 
+  attr_file_ = (folder_path / "list_attr_celeba.txt").toString();
   const auto PushBackToQueue = [this](std::vector<std::string> &vec, std::ifstream &attr_file,
                                       std::ifstream &partition_file) {
     Status s = attr_info_queue_->EmplaceBack(vec);
@@ -409,6 +411,8 @@ Status CelebAOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string, 
   label->Squeeze();
 
   (*row) = TensorRow(row_id, {std::move(image), std::move(label)});
+  // Add file path info
+  row->setPath({image_path.toString(), attr_file_});
   return Status::OK();
 }
 

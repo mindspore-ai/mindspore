@@ -95,7 +95,7 @@ AlbumOp::AlbumOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir
 bool StrComp(const std::string &a, const std::string &b) {
   // returns 1 if string "a" represent a numeric value less than string "b"
   // the following will always return name, provided there is only one "." character in name
-  // "." character is guaranteed to exist since the extension is checked befor this function call.
+  // "." character is guaranteed to exist since the extension is checked before this function call.
   int64_t value_a = std::stoi(a.substr(1, a.find(".")).c_str());
   int64_t value_b = std::stoi(b.substr(1, b.find(".")).c_str());
   return value_a < value_b;
@@ -441,7 +441,7 @@ Status AlbumOp::LoadIntTensor(const nlohmann::json &json_obj, uint32_t col_num, 
 // Load 1 TensorRow (image,label) using 1 ImageColumns. 1 function call produces 1 TensorRow in a DataBuffer
 // possible optimization: the helper functions of LoadTensorRow should be optimized
 // to take a reference to a column descriptor?
-// the design of this class is to make the code more readable, forgoing minor perfomance gain like
+// the design of this class is to make the code more readable, forgoing minor performance gain like
 // getting rid of duplicated checks
 Status AlbumOp::LoadTensorRow(row_id_type row_id, const std::string &file, TensorRow *row) {
   // testing here is to just print out file path
@@ -530,6 +530,8 @@ Status AlbumOp::LoadTensorRow(row_id_type row_id, const std::string &file, Tenso
     }
   }
   file_handle.close();
+  std::vector<std::string> path(row->size(), folder_path_ + file);
+  row->setPath(path);
   return Status::OK();
 }
 

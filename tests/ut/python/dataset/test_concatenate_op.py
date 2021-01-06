@@ -108,7 +108,7 @@ def test_concatenate_op_type_mismatch():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data:
             pass
-    assert "Tensor types do not match" in str(error_info.value)
+    assert "input datatype does not match" in str(error_info.value)
 
 
 def test_concatenate_op_type_mismatch2():
@@ -123,7 +123,7 @@ def test_concatenate_op_type_mismatch2():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data:
             pass
-    assert "Tensor types do not match" in str(error_info.value)
+    assert "input datatype does not match" in str(error_info.value)
 
 
 def test_concatenate_op_incorrect_dim():
@@ -138,7 +138,7 @@ def test_concatenate_op_incorrect_dim():
     with pytest.raises(RuntimeError) as error_info:
         for _ in data:
             pass
-    assert "Only 1D tensors supported" in str(error_info.value)
+    assert "only 1D input supported" in str(error_info.value)
 
 
 def test_concatenate_op_wrong_axis():

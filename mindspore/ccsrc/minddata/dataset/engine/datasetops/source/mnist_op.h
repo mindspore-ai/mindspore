@@ -251,6 +251,8 @@ class MnistOp : public ParallelOp, public RandomAccessOp {
   std::vector<MnistLabelPair> image_label_pairs_;
   std::vector<std::string> image_names_;
   std::vector<std::string> label_names_;
+  std::vector<std::string> image_path_;
+  std::vector<std::string> label_path_;
 };
 }  // namespace dataset
 }  // namespace mindspore

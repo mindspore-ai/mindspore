@@ -81,8 +81,6 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
         }
       }
     } catch (const py::error_already_set &e) {
-      MS_LOG(ERROR) << "Pyfunc error, " << e.what() << ". Under sink mode, progress will late exit after 30s "
-                    << "for resource release and thread safe";
       ret = Status(StatusCode::kPyFuncException, e.what());
     }
   }
