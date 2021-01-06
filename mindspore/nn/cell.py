@@ -913,8 +913,11 @@ class Cell(Cell_):
         """Sets the name on the first time."""
         if self._scope is None:
             self._scope = name
-        elif self._scope == 'recomputed':
-            self._scope = self._scope + "_" + name
+        elif self._scope == 'recompute':
+            if name is None:
+                self._scope = None
+            elif name != 'recompute':
+                self._scope = self._scope + '_' + name
 
     def _children_scope_recursive(self, parent_prefix='Default'):
         """Generates the scope of each layer of the network recursively."""
@@ -1102,10 +1105,11 @@ class Cell(Cell_):
         Args:
             mode (bool): Specifies whether the cell is recomputed. Default: True.
         """
+        Validator.check_bool(mode)
         if mode is True:
             self._set_scope("recompute")
         else:
-            self._set_scope("no_recompute")
+            self._set_scope(None)
         for cell in self.cells():
             cell.recompute(mode)
 

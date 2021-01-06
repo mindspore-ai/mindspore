@@ -19,6 +19,7 @@ import copy
 from mindspore.common.api import _wrap_func
 from mindspore import context
 from .._c_expression import Primitive_, real_run_op, prim_type
+from .._checkparam import Validator
 from . import signature as sig
 
 
@@ -213,6 +214,7 @@ class Primitive(Primitive_):
         Args:
             mode (bool): Specifies whether the primitive is recomputed. Default: True.
         """
+        Validator.check_bool(mode)
         self.add_prim_attr("recompute", mode)
         return self
 
