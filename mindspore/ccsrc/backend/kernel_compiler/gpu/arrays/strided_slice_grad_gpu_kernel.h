@@ -26,7 +26,7 @@
 
 namespace mindspore {
 namespace kernel {
-constexpr int MAX_DIMS = 7;
+constexpr size_t MAX_DIMS = 7;
 template <typename T>
 class StridedSliceGradGpuKernel : public GpuKernel {
  public:
@@ -50,12 +50,9 @@ class StridedSliceGradGpuKernel : public GpuKernel {
     return true;
   }
   bool Init(const CNodePtr &kernel_node) override {
-    std::vector<int> shapex;
-    std::vector<int64_t> shapex_me = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
-    (void)std::transform(shapex_me.begin(), shapex_me.end(), std::back_inserter(shapex),
-                         [](const int64_t &value) { return static_cast<int>(value); });
+    std::vector<int64_t> shapex = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
     for (auto x : shapex) {
-      input_shape_.push_back(IntToSize(x));
+      input_shape_.push_back(static_cast<size_t>(x));
     }
     if (input_shape_.size() > MAX_DIMS) {
       MS_LOG(ERROR) << "StridedSliceGrad support support dims less than " << input_shape_.size();
@@ -87,27 +84,21 @@ class StridedSliceGradGpuKernel : public GpuKernel {
 
  private:
   void FillEmptyDims(const CNodePtr &kernel_node) {
-    std::vector<int64_t> begin_me = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
-    std::vector<int64_t> end_me = GetAttr<std::vector<int64_t>>(kernel_node, "end");
-    std::vector<int64_t> strides_me = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
-    (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
-    (void)std::transform(end_me.begin(), end_me.end(), std::back_inserter(end_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
-    (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
+    begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
+    end_ = GetAttr<std::vector<int64_t>>(kernel_node, "end");
+    strides_ = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
 
     for (size_t i = 0; i < MAX_DIMS; i++) {
       if (i < begin_.size()) {
-        int dim = SizeToInt(input_shape_[i]);
-        begin_[i] = std::min(begin_[i] < 0 ? std::max(begin_[i] + dim, 0) : begin_[i], dim - 1);
+        int64_t dim = input_shape_[i];
+        begin_[i] = std::min(begin_[i] < 0 ? std::max(begin_[i] + dim, static_cast<int64_t>(0)) : begin_[i], dim - 1);
       } else {
         begin_.push_back(0);
       }
 
       if (i < end_.size()) {
-        int dim = SizeToInt(input_shape_[i]);
-        end_[i] = std::max(end_[i] < 0 ? end_[i] + dim : std::min(end_[i], dim), -1);
+        int64_t dim = input_shape_[i];
+        end_[i] = std::max(end_[i] < 0 ? end_[i] + dim : std::min(end_[i], dim), static_cast<int64_t>(-1));
       } else {
         end_.push_back(i < input_shape_.size() ? input_shape_[i] : 1);
       }
@@ -169,11 +160,11 @@ class StridedSliceGradGpuKernel : public GpuKernel {
     }
   }
 
-  std::vector<bool> Dec2Bin(const int &mask) {
+  std::vector<bool> Dec2Bin(const int64_t &mask) {
     auto mask_str = std::bitset<MAX_DIMS>(mask).to_string();
-    int dim_idx = 0;
+    int64_t dim_idx = 0;
     std::vector<bool> result = {false, false, false, false};
-    for (int i = mask_str.size() - 1; i >= 0; i--) {
+    for (int64_t i = mask_str.size() - 1; i >= 0; i--) {
       if (mask_str[i] == '1') {
         result[dim_idx] = true;
       }
@@ -183,7 +174,7 @@ class StridedSliceGradGpuKernel : public GpuKernel {
   }
 
   void FillOutputDim() {
-    for (int i = 0; i < MAX_DIMS; i++) {
+    for (size_t i = 0; i < MAX_DIMS; i++) {
       if (begin_[i] <= end_[i] && strides_[i] > 0) {
         output_shape_.push_back((end_[i] - 1 - begin_[i]) / strides_[i] + 1);
       } else if (begin_[i] > end_[i] && strides_[i] < 0) {
@@ -195,7 +186,7 @@ class StridedSliceGradGpuKernel : public GpuKernel {
   }
 
   bool IsNullOutput() {
-    for (int i = 0; i < MAX_DIMS; i++) {
+    for (size_t i = 0; i < MAX_DIMS; i++) {
       if (begin_[i] >= end_[i] && strides_[i] > 0) {
         return true;
       }
@@ -206,12 +197,12 @@ class StridedSliceGradGpuKernel : public GpuKernel {
     return false;
   }
 
-  std::vector<int> begin_;
-  std::vector<int> end_;
-  std::vector<int> strides_;
+  std::vector<int64_t> begin_;
+  std::vector<int64_t> end_;
+  std::vector<int64_t> strides_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> output_shape_;
-  int null_output_;
+  bool null_output_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;

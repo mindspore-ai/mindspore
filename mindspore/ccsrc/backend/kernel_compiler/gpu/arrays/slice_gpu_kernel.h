@@ -107,12 +107,9 @@ class SliceGpuFwdKernel : public GpuKernel {
       MS_LOG(ERROR) << "Input dims is " << input_shape.size() << ", scalar is not supported.";
       return false;
     }
-    std::vector<int64_t> size_me = GetAttr<std::vector<int64_t>>(kernel_node, "size");
-    std::vector<int64_t> begin_me = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
-    (void)std::transform(size_me.begin(), size_me.end(), std::back_inserter(size_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
-    (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
+    size_ = GetAttr<std::vector<int64_t>>(kernel_node, "size");
+    begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
+
     for (size_t i = 0; i < input_shape.size(); i++) {
       if (input_shape[i] <= 0 || size_[i] <= 0) {
         MS_LOG(WARNING) << "Slice output is null.";
@@ -121,8 +118,8 @@ class SliceGpuFwdKernel : public GpuKernel {
     }
     return true;
   }
-  std::vector<int> begin_;
-  std::vector<int> size_;
+  std::vector<int64_t> begin_;
+  std::vector<int64_t> size_;
   std::vector<size_t> input_shape_;
 
   std::vector<size_t> input_size_list_;
