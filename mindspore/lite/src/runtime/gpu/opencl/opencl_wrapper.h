@@ -29,7 +29,7 @@ namespace mindspore::lite::opencl {
 bool LoadOpenCLLibrary(void **handle_ptr);
 bool UnLoadOpenCLLibrary(void *handle);
 
-// get platfrom id
+// get platform id
 using clGetPlatformIDsFunc = cl_int (*)(cl_uint, cl_platform_id *, cl_uint *);
 // get platform info
 using clGetPlatformInfoFunc = cl_int (*)(cl_platform_id, cl_platform_info, size_t, void *, size_t *);
@@ -74,8 +74,7 @@ using clEnqueueMapBufferFunc = void *(*)(cl_command_queue, cl_mem, cl_bool, cl_m
                                          const cl_event *, cl_event *, cl_int *);
 using clEnqueueMapImageFunc = void *(*)(cl_command_queue, cl_mem, cl_bool, cl_map_flags, const size_t *, const size_t *,
                                         size_t *, size_t *, cl_uint, const cl_event *, cl_event *, cl_int *);
-using clCreateCommandQueueFunc = cl_command_queue(CL_API_CALL *)(cl_context, cl_device_id, cl_command_queue_properties,
-                                                                 cl_int *);
+using clCreateCommandQueueFunc = cl_command_queue (*)(cl_context, cl_device_id, cl_command_queue_properties, cl_int *);
 using clGetCommandQueueInfoFunc = cl_int (*)(cl_command_queue, cl_command_queue_info, size_t, void *, size_t *);
 using clReleaseCommandQueueFunc = cl_int (*)(cl_command_queue);
 using clCreateProgramWithBinaryFunc = cl_program (*)(cl_context, cl_uint, const cl_device_id *, const size_t *,
@@ -89,10 +88,10 @@ using clGetProgramInfoFunc = cl_int (*)(cl_program, cl_program_info, size_t, voi
 using clCreateKernelFunc = cl_kernel (*)(cl_program, const char *, cl_int *);
 using clRetainKernelFunc = cl_int (*)(cl_kernel kernel);
 using clCreateBufferFunc = cl_mem (*)(cl_context, cl_mem_flags, size_t, void *, cl_int *);
-using clCreateImage2DFunc = cl_mem(CL_API_CALL *)(cl_context, cl_mem_flags, const cl_image_format *, size_t, size_t,
-                                                  size_t, void *, cl_int *);
-using clCreateImage3DFunc = cl_mem(CL_API_CALL *)(cl_context, cl_mem_flags, const cl_image_format *, size_t, size_t,
-                                                  size_t, size_t, size_t, void *, cl_int *);
+using clCreateImage2DFunc = cl_mem (*)(cl_context, cl_mem_flags, const cl_image_format *, size_t, size_t, size_t,
+                                       void *, cl_int *);
+using clCreateImage3DFunc = cl_mem (*)(cl_context, cl_mem_flags, const cl_image_format *, size_t, size_t, size_t,
+                                       size_t, size_t, void *, cl_int *);
 using clCreateProgramWithSourceFunc = cl_program (*)(cl_context, cl_uint, const char **, const size_t *, cl_int *);
 using clReleaseKernelFunc = cl_int (*)(cl_kernel kernel);
 using clGetDeviceInfoFunc = cl_int (*)(cl_device_id, cl_device_info, size_t, void *, size_t *);
@@ -105,11 +104,10 @@ using clGetEventInfoFunc = cl_int (*)(cl_event event, cl_event_info param_name, 
 using clGetEventProfilingInfoFunc = cl_int (*)(cl_event event, cl_profiling_info param_name, size_t param_value_size,
                                                void *param_value, size_t *param_value_size_ret);
 using clGetImageInfoFunc = cl_int (*)(cl_mem, cl_image_info, size_t, void *, size_t *);
-using clEnqueueCopyBufferToImageFunc = cl_int(CL_API_CALL *)(cl_command_queue, cl_mem, cl_mem, size_t, const size_t *,
-                                                             const size_t *, cl_uint, const cl_event *, cl_event *);
-using clEnqueueCopyImageToBufferFunc = cl_int(CL_API_CALL *)(cl_command_queue, cl_mem, cl_mem, const size_t *,
-                                                             const size_t *, size_t, cl_uint, const cl_event *,
-                                                             cl_event *);
+using clEnqueueCopyBufferToImageFunc = cl_int (*)(cl_command_queue, cl_mem, cl_mem, size_t, const size_t *,
+                                                  const size_t *, cl_uint, const cl_event *, cl_event *);
+using clEnqueueCopyImageToBufferFunc = cl_int (*)(cl_command_queue, cl_mem, cl_mem, const size_t *, const size_t *,
+                                                  size_t, cl_uint, const cl_event *, cl_event *);
 #if CL_TARGET_OPENCL_VERSION >= 120
 using clRetainDeviceFunc = cl_int (*)(cl_device_id);
 using clReleaseDeviceFunc = cl_int (*)(cl_device_id);
@@ -127,11 +125,11 @@ using clEnqueueSVMMapFunc = cl_int (*)(cl_command_queue, cl_bool, cl_map_flags, 
 using clEnqueueSVMUnmapFunc = cl_int (*)(cl_command_queue, void *, cl_uint, const cl_event *, cl_event *);
 using clSetKernelArgSVMPointerFunc = cl_int (*)(cl_kernel, cl_uint, const void *);
 // opencl 2.0 can get sub group info and wave size.
-using clGetKernelSubGroupInfoKHRFunc = cl_int(CL_API_CALL *)(cl_kernel, cl_device_id, cl_kernel_sub_group_info, size_t,
-                                                             const void *, size_t, void *, size_t *);
-using clCreateCommandQueueWithPropertiesFunc = cl_command_queue(CL_API_CALL *)(cl_context, cl_device_id,
-                                                                               const cl_queue_properties *, cl_int *);
-using clGetExtensionFunctionAddressFunc = void *(CL_API_CALL *)(const char *);
+using clGetKernelSubGroupInfoKHRFunc = cl_int (*)(cl_kernel, cl_device_id, cl_kernel_sub_group_info, size_t,
+                                                  const void *, size_t, void *, size_t *);
+using clCreateCommandQueueWithPropertiesFunc = cl_command_queue (*)(cl_context, cl_device_id,
+                                                                    const cl_queue_properties *, cl_int *);
+using clGetExtensionFunctionAddressFunc = void *(*)(const char *);
 #endif
 
 #define CL_DECLARE_FUNC_PTR(func) extern func##Func func

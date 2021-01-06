@@ -16,7 +16,7 @@
 
 #ifdef USE_OPENCL_WRAPPER
 
-#include "src/runtime/opencl/opencl_wrapper.h"
+#include "src/runtime/gpu/opencl/opencl_wrapper.h"
 #include <dlfcn.h>
 #include <memory>
 #include <string>

@@ -18,7 +18,7 @@
 #include <set>
 #include <map>
 #include <string>
-#include "src/runtime/opencl/opencl_executor.h"
+#include "src/runtime/gpu/opencl/opencl_executor.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "include/errorcode.h"
 #include "src/common/utils.h"

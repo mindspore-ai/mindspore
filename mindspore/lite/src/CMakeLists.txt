@@ -40,21 +40,37 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/huffman_decode.cc
         )
 
-if(SUPPORT_GPU)
+if(SUPPORT_GPU STREQUAL opencl)
+    file(GLOB_RECURSE OPENCL_RUNTIME_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/opencl/*.cc
+            )
     set(LITE_SRC
             ${LITE_SRC}
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/opencl_kernel.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/opencl_subgraph.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/opencl_fusion.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/utils.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_executor.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_allocator.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_runtime.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_wrapper.cc
+            ${OPENCL_RUNTIME_SRC}
             )
 endif()
 
+if(SUPPORT_GPU STREQUAL vulkan)
+    file(GLOB VULKAN_RUNTIME_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/*.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/vulkan/*.cc
+            )
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${VULKAN_RUNTIME_SRC}
+            )
+endif()
 
+if(SUPPORT_GPU STREQUAL cuda)
+    file(GLOB CUDA_RUNTIME_SRC
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/*.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/runtime/gpu/cuda/*.cc
+            )
+    set(LITE_SRC
+            ${LITE_SRC}
+            ${CUDA_RUNTIME_SRC}
+            )
+endif()
 if(SUPPORT_TRAIN)
     set(ANF_SRC
             ${ANF_SRC}
@@ -86,10 +102,14 @@ set_target_properties(mindspore-lite_static PROPERTIES OUTPUT_NAME "mindspore-li
 set_target_properties(mindspore-lite_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
-if(SUPPORT_GPU)
+if(SUPPORT_GPU STREQUAL opencl)
     add_subdirectory(runtime/kernel/opencl)
     target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid nnacl cpu_ops_mid)
     target_link_libraries(mindspore-lite_static cpu_kernel_mid opencl_kernel_mid nnacl_mid cpu_ops_mid)
+elseif(SUPPORT_GPU STREQUAL cuda)
+        add_subdirectory(runtime/kernel/cuda)
+        target_link_libraries(mindspore-lite cpu_kernel_mid cuda_kernel_mid nnacl cpu_ops_mid)
+        target_link_libraries(mindspore-lite_static cpu_kernel_mid cuda_kernel_mid nnacl_mid cpu_ops_mid)
 else()
     target_link_libraries(mindspore-lite cpu_kernel_mid nnacl cpu_ops_mid)
     target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid)

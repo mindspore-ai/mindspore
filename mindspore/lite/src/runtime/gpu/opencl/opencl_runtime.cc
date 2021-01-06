@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/runtime/opencl/opencl_runtime.h"
+#include "src/runtime/gpu/opencl/opencl_runtime.h"
 #include <vector>
 #include <numeric>
 #include <utility>
@@ -23,7 +23,7 @@
 #endif
 #include "include/errorcode.h"
 #include "src/runtime/kernel/opencl/utils.h"
-#include "src/runtime/opencl/opencl_allocator.h"
+#include "src/runtime/gpu/opencl/opencl_allocator.h"
 #include "src/common/file_utils.h"
 #ifdef PROGRAM_WITH_IL
 #include "src/backend/opencl/cl/program.inc"
@@ -72,11 +72,12 @@ void printf_callback(const char *buffer, size_t length, size_t final, void *user
   fwrite(buffer, 1, length, stdout);
 }
 
-int OpenCLRuntime::InitGPUDevice(std::vector<cl::Platform> &platforms) {
+int OpenCLRuntime::InitGPUDevice(std::vector<cl::Platform> *platforms) {
+  MS_ASSERT(platforms);
   // search GPU
   std::vector<cl::Device> devices;
   int ret = RET_OK;
-  for (auto &platform : platforms) {
+  for (auto &platform : *platforms) {
     std::string platform_name;
     ret = platform.getInfo(CL_PLATFORM_NAME, &platform_name);
     if (ret != CL_SUCCESS) {
@@ -173,7 +174,8 @@ int OpenCLRuntime::InitGPUDevice(std::vector<cl::Platform> &platforms) {
   return RET_OK;
 }
 
-int OpenCLRuntime::InitQueue(std::vector<cl::Platform> &platforms) {
+int OpenCLRuntime::InitQueue(std::vector<cl::Platform> *platforms) {
+  MS_ASSERT(platforms);
   cl_int ret;
 #if defined(SHARING_MEM_WITH_OPENGL) && (CL_HPP_TARGET_OPENCL_VERSION >= 120)
   // create context from glcontext
@@ -195,7 +197,7 @@ int OpenCLRuntime::InitQueue(std::vector<cl::Platform> &platforms) {
   MS_LOG(INFO) << "Create common opencl context";
 #ifdef Debug
   std::vector<cl_context_properties> ctx_properties = {CL_CONTEXT_PLATFORM,
-                                                       (cl_context_properties)platforms[0](),
+                                                       (cl_context_properties)(*platforms)[0](),
                                                        CL_PRINTF_CALLBACK_ARM,
                                                        (cl_context_properties)printf_callback,
                                                        CL_PRINTF_BUFFERSIZE_ARM,
@@ -258,12 +260,12 @@ int OpenCLRuntime::Init() {
     MS_LOG(ERROR) << "OpenCL Platform not found!" << CLErrorCode(ret);
     return RET_ERROR;
   }
-  auto ms_ret = InitGPUDevice(platforms);
+  auto ms_ret = InitGPUDevice(&platforms);
   if (ms_ret != RET_OK) {
     return ms_ret;
   }
 
-  ms_ret = InitQueue(platforms);
+  ms_ret = InitQueue(&platforms);
   if (ms_ret != RET_OK) {
     return ms_ret;
   }
@@ -362,8 +364,9 @@ bool OpenCLRuntime::SetFp16Enable(bool enable) {
   return fp16_enable_ == enable;
 }
 
-int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_name, const std::string &kernel_name,
-                               const std::vector<std::string> &build_options_ext, TypeId data_type) {
+int OpenCLRuntime::BuildKernel(const cl::Kernel &kernel, const std::string &program_name,
+                               const std::string &kernel_name, const std::vector<std::string> &build_options_ext,
+                               TypeId data_type) {
   std::string build_option = default_build_option_;
   if (fp16_enable_ && data_type != kNumberTypeInt32) {
     build_option +=
@@ -399,7 +402,7 @@ int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_na
   }
 
   cl_int ret;
-  kernel = cl::Kernel(program, kernel_name.c_str(), &ret);
+  const_cast<cl::Kernel &>(kernel) = cl::Kernel(program, kernel_name.c_str(), &ret);
   if (ret != CL_SUCCESS) {
     MS_LOG(ERROR) << kernel_name << " Kernel create failed:" << CLErrorCode(ret);
     return RET_ERROR;

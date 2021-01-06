@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include "src/runtime/opencl/opencl_allocator.h"
+#include "src/runtime/gpu/opencl/opencl_allocator.h"
 #include <utility>
-#include "src/runtime/opencl/opencl_runtime.h"
+#include "src/runtime/gpu/opencl/opencl_runtime.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"

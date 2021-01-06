@@ -27,8 +27,8 @@ j* you may not use this file except in compliance with the License.
 #include <type_traits>
 #include "dtype/type_id.h"
 #include "src/common/log_adapter.h"
-#include "src/runtime/opencl/opencl_wrapper.h"
-#include "src/runtime/opencl/opencl_allocator.h"
+#include "src/runtime/gpu/opencl/opencl_wrapper.h"
+#include "src/runtime/gpu/opencl/opencl_allocator.h"
 #include "schema/gpu_cache_generated.h"
 
 namespace mindspore::lite::opencl {
@@ -76,8 +76,8 @@ class OpenCLRuntime {
   cl_device_svm_capabilities GetSVMCapabilities() const { return svm_enable_ ? svm_capabilities_ : 0; }
 
   template <typename T>
-  typename std::enable_if<std::is_pointer<T>::value, cl_int>::type SetKernelArg(cl::Kernel &kernel, uint32_t index,
-                                                                                const T value,
+  typename std::enable_if<std::is_pointer<T>::value, cl_int>::type SetKernelArg(const cl::Kernel &kernel,
+                                                                                uint32_t index, const T value,
                                                                                 const MemType mem_type = MemType::IMG) {
     switch (mem_type) {
       case MemType::BUF: {
@@ -88,7 +88,7 @@ class OpenCLRuntime {
         }
         cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetBuffer(value));
         MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << buffer << ", host_ptr: " << value;
-        return kernel.setArg(index, *buffer);
+        return const_cast<cl::Kernel &>(kernel).setArg(index, *buffer);
       }
       case MemType::IMG: {
         cl::Image2D *image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(value));
@@ -96,10 +96,10 @@ class OpenCLRuntime {
           MS_LOG(WARNING) << "Can't get Image2D, try to use Buffer. Please confirm the buffer type.";
           cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetBuffer(value));
           MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << buffer << ", host_ptr: " << value;
-          return kernel.setArg(index, *buffer);
+          return const_cast<cl::Kernel &>(kernel).setArg(index, *buffer);
         }
         MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Image2D " << image << ", host_ptr: " << value;
-        return kernel.setArg(index, *image);
+        return const_cast<cl::Kernel &>(kernel).setArg(index, *image);
       }
       default:
         MS_LOG(ERROR) << "Unsupported opencl memory type: " << static_cast<int>(mem_type);
@@ -109,8 +109,8 @@ class OpenCLRuntime {
 
   template <typename T>
   typename std::enable_if<!std::is_pointer<T>::value, cl_int>::type SetKernelArg(
-    cl::Kernel &kernel, uint32_t index, const T value, const MemType mem_type = MemType::IMG) {
-    return kernel.setArg(index, value);
+    const cl::Kernel &kernel, uint32_t index, const T value, const MemType mem_type = MemType::IMG) {
+    return const_cast<cl::Kernel &>(kernel).setArg(index, value);
   }
 
   cl::Program CreateProgramFromIL(const std::vector<char> &binary, const std::string &flag);
@@ -118,7 +118,7 @@ class OpenCLRuntime {
   cl::Kernel GetKernelFromBinary(const std::string &kernel_name);
   std::vector<unsigned char> GetProgramBinary(const cl::Program &program);
   bool LoadSource(const std::string &program_name, const std::string &source);
-  int BuildKernel(cl::Kernel &kernel, const std::string &program_name, const std::string &kernel_name,
+  int BuildKernel(const cl::Kernel &kernel, const std::string &program_name, const std::string &kernel_name,
                   const std::vector<std::string> &build_options_ext = {}, TypeId data_type = kNumberTypeFloat32);
   int RunKernel(const cl::Kernel &kernel, const cl::NDRange &global, const cl::NDRange &local,
                 cl::CommandQueue *command_queue = nullptr, cl::Event *event = nullptr);
@@ -160,8 +160,8 @@ class OpenCLRuntime {
 
   bool LoadProgram(const std::string &program_name, cl::Program *program);
   bool BuildProgram(const std::string &build_options, const cl::Program &program);
-  int InitGPUDevice(std::vector<cl::Platform> &platforms);
-  int InitQueue(std::vector<cl::Platform> &platforms);
+  int InitGPUDevice(std::vector<cl::Platform> *platforms);
+  int InitQueue(std::vector<cl::Platform> *platforms);
 
  private:
   static InitState init_state_;

@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_OPENCL_EXECUTOR_H_
 
 #include <vector>
-#include "src/runtime/opencl/opencl_runtime.h"
+#include "src/runtime/gpu/opencl/opencl_runtime.h"
 #include "src/runtime/allocator.h"
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/executor.h"
@@ -34,8 +34,8 @@ class OpenCLExecutor : public Executor {
   int Run(std::vector<Tensor *> &inputs, std::vector<Tensor *> &outputs, std::vector<kernel::LiteKernel *> &kernels,
           Allocator *allocator = nullptr, const KernelCallBack &before = nullptr,
           const KernelCallBack &after = nullptr) override;
-  int RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor *> &outputs,
-                std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
+  int RunOrTune(const std::vector<Tensor *> &inputs, const std::vector<Tensor *> &outputs,
+                const std::vector<kernel::LiteKernel *> &kernels, Allocator *allocator = nullptr,
                 const KernelCallBack &before = nullptr, const KernelCallBack &after = nullptr, bool is_tune = false);
 
  protected:

@@ -20,8 +20,8 @@
 #include <set>
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "src/runtime/opencl/opencl_allocator.h"
-#include "src/runtime/opencl/opencl_executor.h"
+#include "src/runtime/gpu/opencl/opencl_allocator.h"
+#include "src/runtime/gpu/opencl/opencl_executor.h"
 #include "src/sub_graph_kernel.h"
 
 namespace mindspore::kernel {

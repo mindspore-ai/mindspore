@@ -17,7 +17,6 @@
 #include <memory>
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
-#include "mindspore/lite/src/runtime/opencl/opencl_runtime.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "mindspore/lite/src/runtime/kernel/opencl/kernel/cast.h"
