@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/fp32/gatherNd_fp32.h"
 #include <string.h>
 #include <limits>
+#include <vector>
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
@@ -65,11 +66,17 @@ int GatherNdCPUKernel::ReSize() {
     return RET_ERROR;
   }
   (void)memset(in_offset_, 0, count_ * sizeof(int));
-
   thread_sz_count_ = MSMIN(thread_count_, count_);
   thread_sz_stride_ = UP_DIV(count_, thread_sz_count_);
+  return RET_OK;
+}
 
+void GatherNdCPUKernel::InitOffset() {
+  MS_ASSERT(in_offset_ != nullptr);
+  auto indices_tensor = in_tensors_.at(1);
+  auto indices_shape = indices_tensor->shape();
   auto in_shape = in_tensors_.front()->shape();
+  int indices_rank = indices_shape.size();
   int in_rank = in_shape.size();
   int idx_lastshape = indices_shape[indices_rank - 1];
   auto indices_ptr = reinterpret_cast<int *>(indices_tensor->MutableData());
@@ -89,8 +96,6 @@ int GatherNdCPUKernel::ReSize() {
       in_offset_[j] += indices_ptr[j * idx_stride + k] * in_stride.at(k);
     }
   }
-
-  return RET_OK;
 }
 
 int GatherNdCPUKernel::DoGatherNd(int task_id) {
@@ -120,6 +125,7 @@ int GatherNdRun(void *cdata, int task_id) {
 int GatherNdCPUKernel::Run() {
   in_ptr_ = reinterpret_cast<float *>(in_tensors_.front()->MutableData());
   out_ptr_ = reinterpret_cast<float *>(out_tensors_.front()->MutableData());
+  InitOffset();
   auto ret = ParallelLaunch(this->context_->thread_pool_, GatherNdRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "gatherNd error error_code[" << ret << "]";

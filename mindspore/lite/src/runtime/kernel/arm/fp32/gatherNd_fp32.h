@@ -41,6 +41,7 @@ class GatherNdCPUKernel : public LiteKernel {
   int DoGatherNd(int task_id);
 
  private:
+  void InitOffset();
   int thread_sz_count_;
   int thread_sz_stride_;
   int count_;
