@@ -660,7 +660,7 @@ bool PsCacheManager::HashSwapHostToDevice(const HashTableInfo &hash_info) {
   }
   auto embedding_size = hash_info.embedding_size;
   auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
-  auto hash_table_size = hash_info.device_address.size;
+  auto cache_vocab_size = hash_info.cache_vocab_size;
   auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
   auto swap_out_data = std::make_unique<float[]>(swap_indices_size * embedding_size);
   RETURN_IF_FALSE(LookUpHostHashTable(embedding_size, swap_indices_size, host_hash_table_addr,
@@ -673,7 +673,7 @@ bool PsCacheManager::HashSwapHostToDevice(const HashTableInfo &hash_info) {
                                                                        swap_indices_size * sizeof(int)));
   RETURN_IF_FALSE(embedding_device_cache_->cache_->HashSwapIn(
     hash_table_addr, embedding_device_cache_->hash_swap_value_addr_, embedding_device_cache_->hash_swap_index_addr_,
-    hash_table_size, embedding_size, swap_indices_size));
+    cache_vocab_size, embedding_size, swap_indices_size));
   RETURN_IF_FALSE(embedding_device_cache_->cache_->SynchronizeStream());
   return true;
 }
@@ -689,7 +689,7 @@ bool PsCacheManager::HashSwapDeviceToHost(const HashTableInfo &hash_info) {
     return true;
   }
   auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
-  auto hash_table_size = hash_info.device_address.size;
+  auto cache_vocab_size = hash_info.cache_vocab_size;
   auto host_hash_table_addr = reinterpret_cast<float *>(hash_info.host_address.get());
   auto embedding_size = hash_info.embedding_size;
   auto swap_out_data = std::make_unique<float[]>(swap_indices_size * embedding_size);
@@ -698,7 +698,7 @@ bool PsCacheManager::HashSwapDeviceToHost(const HashTableInfo &hash_info) {
                                                                        swap_indices_size * sizeof(int)));
   RETURN_IF_FALSE(embedding_device_cache_->cache_->HashSwapOut(
     hash_table_addr, embedding_device_cache_->hash_swap_value_addr_, embedding_device_cache_->hash_swap_index_addr_,
-    hash_table_size, embedding_size, swap_indices_size));
+    cache_vocab_size, embedding_size, swap_indices_size));
   RETURN_IF_FALSE(embedding_device_cache_->cache_->CopyDeviceMemToHost(
     swap_out_data.get(), embedding_device_cache_->hash_swap_value_addr_,
     swap_indices_size * embedding_size * sizeof(float)));
@@ -770,14 +770,14 @@ bool PsCacheManager::HashSwapDeviceOut(int *swap_out_index, ::ps::SArray<float> 
     return true;
   }
   auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
-  auto hash_table_size = hash_info.device_address.size;
+  auto cache_vocab_size = hash_info.cache_vocab_size;
   auto embedding_size = hash_info.embedding_size;
   swap_out_data->resize(swap_out_index_size * embedding_size);
   RETURN_IF_FALSE(embedding_device_cache_->cache_->CopyHostMemToDevice(
     embedding_device_cache_->hash_swap_index_addr_, swap_out_index, swap_out_index_size * sizeof(int)));
   RETURN_IF_FALSE(embedding_device_cache_->cache_->HashSwapOut(
     hash_table_addr, embedding_device_cache_->hash_swap_value_addr_, embedding_device_cache_->hash_swap_index_addr_,
-    hash_table_size, embedding_size, swap_out_index_size));
+    cache_vocab_size, embedding_size, swap_out_index_size));
   RETURN_IF_FALSE(embedding_device_cache_->cache_->CopyDeviceMemToHost(
     swap_out_data->data(), embedding_device_cache_->hash_swap_value_addr_,
     swap_out_index_size * embedding_size * sizeof(float)));
@@ -796,7 +796,7 @@ bool PsCacheManager::HashSwapDeviceIn(int *swap_in_ids, int *swap_in_index, cons
     return true;
   }
   auto hash_table_addr = reinterpret_cast<float *>(hash_info.device_address.addr);
-  auto hash_table_size = hash_info.device_address.size;
+  auto cache_vocab_size = hash_info.cache_vocab_size;
   auto embedding_size = hash_info.embedding_size;
   // Get id embs by swap_in_ids in host(Pipeline with hash swap-out in device).
   ::ps::SArray<int> lengths{swap_in_ids_size};
@@ -817,7 +817,7 @@ bool PsCacheManager::HashSwapDeviceIn(int *swap_in_ids, int *swap_in_index, cons
                                                                        swap_in_index, swap_in_ids_size * sizeof(int)));
   RETURN_IF_FALSE(embedding_device_cache_->cache_->HashSwapIn(
     hash_table_addr, embedding_device_cache_->hash_swap_value_addr_, embedding_device_cache_->hash_swap_index_addr_,
-    hash_table_size, embedding_size, swap_in_ids_size));
+    cache_vocab_size, embedding_size, swap_in_ids_size));
   return true;
 }
 
@@ -844,6 +844,9 @@ bool PsCacheManager::UpdataEmbeddingTable(const ::ps::SArray<float> &swap_out_da
 
 void PsCacheManager::SyncEmbeddingTable() {
   if (finish_embedding_table_sync_) {
+    return;
+  }
+  if (!initialized_ps_cache_) {
     return;
   }
   if (!SyncHostEmbeddingTable()) {

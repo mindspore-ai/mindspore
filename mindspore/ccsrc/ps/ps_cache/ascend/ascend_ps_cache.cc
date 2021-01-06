@@ -206,7 +206,7 @@ bool AscendPsCache::CopyDeviceMemToHost(void *dst, void *src, size_t size) {
 }
 
 bool AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr, void *swap_out_index_addr,
-                                size_t hash_table_size, size_t embedding_size, size_t swap_out_size) {
+                                size_t cache_vocab_size, size_t embedding_size, size_t swap_out_size) {
   MS_ERROR_IF_NULL(hash_table_addr);
   MS_ERROR_IF_NULL(swap_out_value_addr);
   MS_ERROR_IF_NULL(swap_out_index_addr);
@@ -217,7 +217,7 @@ bool AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr
   std::vector<std::vector<size_t>> output_shape;
   std::vector<TypeId> input_type = {TypeId::kNumberTypeFloat32, TypeId::kNumberTypeInt32, TypeId::kNumberTypeInt32};
   std::vector<TypeId> output_type = {TypeId::kNumberTypeFloat32};
-  input_shape.push_back({hash_table_size, embedding_size});
+  input_shape.push_back({cache_vocab_size, embedding_size});
   input_shape.push_back({swap_out_size});
   input_shape.push_back({1});
   output_shape.push_back({swap_out_size, embedding_size});
@@ -229,7 +229,8 @@ bool AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr
   AddressPtrList kernel_outputs = {
     std::make_shared<Address>(swap_out_value_addr, swap_out_size * embedding_size * sizeof(float))};
   AddressPtrList kernel_workspaces;
-  kernel_inputs.push_back(std::make_shared<Address>(hash_table_addr, hash_table_size * embedding_size * sizeof(float)));
+  kernel_inputs.push_back(
+    std::make_shared<Address>(hash_table_addr, cache_vocab_size * embedding_size * sizeof(float)));
   kernel_inputs.push_back(std::make_shared<Address>(swap_out_index_addr, swap_out_size * sizeof(int)));
   kernel_inputs.push_back(std::make_shared<Address>(offset_addr_, sizeof(int)));
   auto ret = hash_swap_out_mod->Launch(kernel_inputs, kernel_workspaces, kernel_outputs, stream_);
@@ -241,7 +242,7 @@ bool AscendPsCache::HashSwapOut(void *hash_table_addr, void *swap_out_value_addr
 }
 
 bool AscendPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, void *swap_in_index_addr,
-                               size_t hash_table_size, size_t embedding_size, size_t swap_in_size) {
+                               size_t cache_vocab_size, size_t embedding_size, size_t swap_in_size) {
   MS_ERROR_IF_NULL(hash_table_addr);
   MS_ERROR_IF_NULL(swap_in_value_addr);
   MS_ERROR_IF_NULL(swap_in_index_addr);
@@ -253,7 +254,7 @@ bool AscendPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, 
   std::vector<TypeId> input_type = {TypeId::kNumberTypeFloat32, TypeId::kNumberTypeInt32, TypeId::kNumberTypeFloat32,
                                     TypeId::kNumberTypeInt32};
   std::vector<TypeId> output_type = {TypeId::kNumberTypeInt32};
-  input_shape.push_back({hash_table_size, embedding_size});
+  input_shape.push_back({cache_vocab_size, embedding_size});
   input_shape.push_back({swap_in_size});
   input_shape.push_back({swap_in_size, embedding_size});
   input_shape.push_back({1});
@@ -265,7 +266,8 @@ bool AscendPsCache::HashSwapIn(void *hash_table_addr, void *swap_in_value_addr, 
   AddressPtrList kernel_inputs;
   AddressPtrList kernel_outputs;
   AddressPtrList kernel_workspaces;
-  kernel_inputs.push_back(std::make_shared<Address>(hash_table_addr, hash_table_size * embedding_size * sizeof(float)));
+  kernel_inputs.push_back(
+    std::make_shared<Address>(hash_table_addr, cache_vocab_size * embedding_size * sizeof(float)));
   kernel_inputs.push_back(std::make_shared<Address>(swap_in_index_addr, swap_in_size * sizeof(int)));
   kernel_inputs.push_back(std::make_shared<Address>(swap_in_value_addr, swap_in_size * embedding_size * sizeof(float)));
   kernel_inputs.push_back(std::make_shared<Address>(cache_vocab_size_addr_, sizeof(int)));
