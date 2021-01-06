@@ -302,7 +302,7 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
 
 ### result
 
-Inference result is saved in current path, you can find result like this in log file.
+Inference result is saved in current path, you can find result like this in acc.log file.
 
 ```log
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.349
