@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -60,8 +60,8 @@ class BaseWriter:
             self._max_file_size -= required_length
             self.writer.Write(data)
         else:
-            raise RuntimeError(f"'max_file_size' reached: There are {self._max_file_size} bytes remaining, "
-                               f"but the '{self._filepath}' requires to write {required_length} bytes.")
+            raise RuntimeWarning(f"'max_file_size' reached: There are {self._max_file_size} bytes remaining, "
+                                 f"but the '{self._filepath}' requires to write {required_length} bytes.")
 
     def flush(self):
         """Flush the writer."""

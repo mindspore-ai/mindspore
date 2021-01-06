@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,14 +58,17 @@ class WriterPool(ctx.Process):
     Args:
         base_dir (str): The base directory to hold all the files.
         max_file_size (Optional[int]): The maximum size of each file that can be written to disk in bytes.
+        raise_exception (bool, optional): Sets whether to throw an exception when an RuntimeError exception occurs
+            in recording data. Default: False, this means that error logs are printed and no exception is thrown.
         filedict (dict): The mapping from plugin to filename.
     """
 
-    def __init__(self, base_dir, max_file_size, **filedict) -> None:
+    def __init__(self, base_dir, max_file_size, raise_exception=False, **filedict) -> None:
         super().__init__()
         self._base_dir, self._filedict = base_dir, filedict
         self._queue, self._writers_ = ctx.Queue(ctx.cpu_count() * 2), None
         self._max_file_size = max_file_size
+        self._raise_exception = raise_exception
         self.start()
 
     def run(self):
@@ -124,8 +127,14 @@ class WriterPool(ctx.Process):
         for writer in self._writers[:]:
             try:
                 writer.write(plugin, data)
-            except RuntimeError as e:
-                logger.warning(e.args[0])
+            except RuntimeError as exc:
+                logger.error(str(exc))
+                self._writers.remove(writer)
+                writer.close()
+                if self._raise_exception:
+                    raise
+            except RuntimeWarning as exc:
+                logger.warning(str(exc))
                 self._writers.remove(writer)
                 writer.close()
 

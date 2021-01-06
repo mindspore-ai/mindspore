@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import threading
 from collections import defaultdict
 
 from mindspore import log as logger
+from mindspore.nn import Cell
 
 from ..._c_expression import Tensor
 from ..._checkparam import Validator
@@ -29,7 +30,7 @@ from ._explain_adapter import check_explain_proto
 from ._writer_pool import WriterPool
 
 # for the moment, this lock is for caution's sake,
-# there are actually no any concurrencies happening.
+# there are actually no any concurrences happening.
 _summary_lock = threading.Lock()
 # cache the summary data
 _summary_tensor_cache = {}
@@ -56,10 +57,6 @@ def _get_summary_tensor_data():
         return data
 
 
-def _dictlist():
-    return defaultdict(list)
-
-
 class SummaryRecord:
     """
     SummaryRecord is used to record the summary data and lineage data.
@@ -80,12 +77,13 @@ class SummaryRecord:
         file_prefix (str): The prefix of file. Default: "events".
         file_suffix (str): The suffix of file. Default: "_MS".
         network (Cell): Obtain a pipeline through network for saving graph summary. Default: None.
-        max_file_size (Optional[int]): The maximum size of each file that can be written to disk (in bytes). \
+        max_file_size (int, optional): The maximum size of each file that can be written to disk (in bytes). \
             Unlimited by default. For example, to write not larger than 4GB, specify `max_file_size=4 * 1024**3`.
+        raise_exception (bool, optional): Sets whether to throw an exception when an RuntimeError exception occurs
+            in recording data. Default: False, this means that error logs are printed and no exception is thrown.
 
     Raises:
-        TypeError: If the type of `max_file_size` is not int, or the type of `file_prefix` or `file_suffix` is not str.
-        RuntimeError: If the log_dir is not a normalized absolute path name.
+        TypeError: If the parameter type is incorrect.
 
     Examples:
         >>> # use in with statement to auto close
@@ -100,10 +98,11 @@ class SummaryRecord:
         ...     summary_record.close()
     """
 
-    def __init__(self, log_dir, file_prefix="events", file_suffix="_MS", network=None, max_file_size=None):
+    def __init__(self, log_dir, file_prefix="events", file_suffix="_MS",
+                 network=None, max_file_size=None, raise_exception=False):
 
         self._closed, self._event_writer = False, None
-        self._mode, self._data_pool = 'train', _dictlist()
+        self._mode, self._data_pool = 'train', defaultdict(list)
 
         Validator.check_str_by_regular(file_prefix)
         Validator.check_str_by_regular(file_suffix)
@@ -120,6 +119,8 @@ class SummaryRecord:
             logger.warning("The 'max_file_size' should be greater than 0.")
             max_file_size = None
 
+        Validator.check_value_type(arg_name='raise_exception', arg_value=raise_exception, valid_types=bool)
+
         self.prefix = file_prefix
         self.suffix = file_suffix
         self.network = network
@@ -127,16 +128,15 @@ class SummaryRecord:
 
         # create the summary writer file
         self.event_file_name = get_event_file_name(self.prefix, self.suffix)
-        try:
-            self.full_file_name = os.path.join(self.log_path, self.event_file_name)
-        except Exception as ex:
-            raise RuntimeError(ex)
+        self.full_file_name = os.path.join(self.log_path, self.event_file_name)
 
+        filename_dict = dict(summary=self.full_file_name,
+                             lineage=get_event_file_name(self.prefix, '_lineage'),
+                             explainer=get_event_file_name(self.prefix, '_explain'))
         self._event_writer = WriterPool(log_dir,
                                         max_file_size,
-                                        summary=self.full_file_name,
-                                        lineage=get_event_file_name(self.prefix, '_lineage'),
-                                        explainer=get_event_file_name(self.prefix, '_explain'))
+                                        raise_exception,
+                                        **filename_dict)
         _get_summary_tensor_data()
         atexit.register(self.close)
 
@@ -195,8 +195,8 @@ class SummaryRecord:
                 - The data type of value should be a 'Explain' object when the plugin is 'explainer',
                   see mindspore/ccsrc/summary.proto.
         Raises:
-            ValueError: When the name is not valid.
-            TypeError: When the value is not a Tensor.
+            ValueError: If the parameter value is invalid.
+            TypeError: If the parameter type is error.
 
         Examples:
             >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
@@ -238,6 +238,10 @@ class SummaryRecord:
         Returns:
             bool, whether the record process is successful or not.
 
+        Raises:
+            TypeError: If the parameter type is error.
+            RuntimeError: If the disk space is insufficient.
+
         Examples:
             >>> with SummaryRecord(log_dir="./summary_dir", file_prefix="xxx_", file_suffix="_yyy") as summary_record:
             ...     summary_record.record(step=2)
@@ -245,11 +249,12 @@ class SummaryRecord:
             True
         """
         logger.debug("SummaryRecord step is %r.", step)
+        Validator.check_value_type(arg_name='step', arg_value=step, valid_types=int)
+        Validator.check_value_type(arg_name='train_network', arg_value=train_network, valid_types=[Cell, type(None)])
+
         if self._closed:
             logger.error("The record writer is closed.")
             return False
-        if not isinstance(step, int) or isinstance(step, bool):
-            raise ValueError("`step` should be int")
         # Set the current summary of train step
         if self.network is not None and not self.has_graph:
             graph_proto = self.network.get_func_graph_proto()
@@ -294,7 +299,7 @@ class SummaryRecord:
                     value['step'] = step
             return self._data_pool
         finally:
-            self._data_pool = _dictlist()
+            self._data_pool = defaultdict(list)
 
     @property
     def log_dir(self):

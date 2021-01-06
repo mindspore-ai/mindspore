@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -199,7 +199,7 @@ class ImageClassificationRunner:
         """
         self._verify_data_n_settings(check_all=True)
 
-        with SummaryRecord(self._summary_dir) as summary:
+        with SummaryRecord(self._summary_dir, raise_exception=True) as summary:
             print("Start running and writing......")
             begin = time()
 
