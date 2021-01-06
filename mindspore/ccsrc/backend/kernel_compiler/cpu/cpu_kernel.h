@@ -120,6 +120,7 @@ class CPUKernelUtils {
   static size_t GetElementNumOnAxis(const std::vector<size_t> &shape, int axis);
   static void GetElementNumEveryDim(const std::vector<size_t> &shape, std::vector<size_t> *element_num);
   static void ParallelFor(const CTask &task, size_t count);
+  static std::vector<size_t> FlatShapeByAxis(const std::vector<size_t> &shape, int axis);
 };
 }  // namespace kernel
 }  // namespace mindspore
