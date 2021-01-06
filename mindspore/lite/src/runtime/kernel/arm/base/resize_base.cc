@@ -62,12 +62,12 @@ int ResizeBaseCPUKernel::CheckParameters() {
       MS_LOG(INFO) << "Out shape is not assigned";
       const_shape_ = false;
     } else {
-      new_height_ = reinterpret_cast<int32_t *>(out_shape)[0];
+      new_height_ = out_tensors_.at(0)->shape()[1];
       if (new_height_ < 1) {
         MS_LOG(ERROR) << "Resize new_height should >= 1, but got " << new_height_;
         return RET_INVALID_OP_ATTR;
       }
-      new_width_ = reinterpret_cast<int32_t *>(out_shape)[1];
+      new_width_ = out_tensors_.at(0)->shape()[2];
       if (new_width_ < 1) {
         MS_LOG(ERROR) << "Resize new_width should >= 1, but got " << new_width_;
         return RET_INVALID_OP_ATTR;
