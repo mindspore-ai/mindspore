@@ -566,7 +566,11 @@ py::object RunOp(const py::args &args) {
 py::object PynativeExecutor::RunOpInner(const OpExecInfoPtr &op_exec_info) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
   if (op_exec_info->op_name == prim::kPrimMixedPrecisionCast->name()) {
-    return RunOpWithInitBackendPolicy(op_exec_info)[0];
+    py::tuple ret = RunOpWithInitBackendPolicy(op_exec_info);
+    if (ret.size() == 1) {
+      return ret[0];
+    }
+    return std::move(ret);
   }
   // make cnode for building grad graph if grad flag is set.
   abstract::AbstractBasePtrList args_spec_list;
