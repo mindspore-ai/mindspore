@@ -422,6 +422,18 @@ def get_bprop_relu(self):
     return bprop
 
 
+@bprop_getters.register(G.ReluGrad)
+def get_bprop_relu_grad(self):
+    """Grad definition for `ReLUGrad` operation."""
+    input_grad = G.ReluGrad()
+
+    def bprop(grad, y, out, dout):
+        dgrad = input_grad(dout, y)
+        return dgrad, zeros_like(y)
+
+    return bprop
+
+
 @bprop_getters.register(P.ReLU6)
 def get_bprop_relu6(self):
     """Grad definition for `ReLU6` operation."""
@@ -501,9 +513,9 @@ def get_bprop_sigmoid_grad(self):
     sigmoid_grad = G.SigmoidGrad()
 
     def bprop(y, grad, out, dout):
-        ddy = dout * grad * (1. - 2 * y)
-        d2x = sigmoid_grad(y, dout)
-        return (ddy, d2x)
+        dy = dout * grad * (1. - 2 * y)
+        dgrad = sigmoid_grad(y, dout)
+        return dy, dgrad
 
     return bprop
 
@@ -594,6 +606,19 @@ def get_bprop_tanh(self):
     def bprop(x, out, dout):
         dx = tanh_grad(out, dout)
         return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(G.TanhGrad)
+def get_bprop_tanh_grad(self):
+    """Grad definition for `TanhGrad` operation."""
+    tanh_grad = G.TanhGrad()
+
+    def bprop(y, grad, out, dout):
+        dy = dout * -2.0 * grad * y
+        dgrad = tanh_grad(y, dout)
+        return dy, dgrad
 
     return bprop
 
