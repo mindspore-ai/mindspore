@@ -93,11 +93,11 @@ class TopKGpuKernel : public GpuKernel {
 
  private:
   bool sorted_;
-  int outer_size_;
-  int inner_size_;
-  int k_;
+  size_t outer_size_;
+  size_t inner_size_;
+  size_t k_;
   bool use_share_mem_;
-  int ceil_power2_;
+  size_t ceil_power2_;
 
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
