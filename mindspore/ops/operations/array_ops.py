@@ -1,6 +1,6 @@
 # coding: utf-8
 
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -4722,3 +4722,63 @@ class Identity(PrimitiveWithInfer):
                'dtype': x['dtype'],
                'value': None}
         return out
+
+
+class Range(PrimitiveWithCheck):
+    r"""
+    Creates a sequence of numbers that begins at `start` and extends by increments of
+    `delta` up to but not including `limit`.
+
+    The types of all 3 inputs must be the same. The type of the resulting tensor is
+    the same as the type of the inputs.
+
+    Args:
+        maxlen (int): Memory that can fit `maxlen` many elements
+            will be allocated for the output. Optional, must be positive, defaults to 1000000.
+            If the output has more than `maxlen` elements, a runtime error
+            will occur.
+
+    Inputs:
+        - **start** (Tensor) - A scalar Tensor. The first number in the sequence. Must have
+          type: int32 or float32
+        - **limit** (Tensor) - A scalar Tensor. Upper limit of the sequence, exclusive. Must
+          have type: int32 or float32
+        - **delta** (Tensor) - A scalar Tensor. Number that increments `start`. Must have
+          type: int32 or float32
+
+    Outputs:
+       A 1-D Tensor, with the same type as the inputs.
+
+    Examples:
+        >>> start = Tensor(0)
+        >>> limit = Tensor(10)
+        >>> delta = Tensor(4)
+        >>> output = ops.Range()(start, limit, delta)
+        >>> print(output)
+        [0, 4, 8]
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
+    """
+
+    @prim_attr_register
+    def __init__(self, maxlen=1000000):
+        self.init_prim_io_names(inputs=['start', 'limit', 'delta'], outputs=['output'])
+        validator.check_value_type("maxlen", maxlen, [int], self.name)
+        validator.check_positive_int(maxlen, "maxlen", self.name)
+        self.maxlen = maxlen
+        self.add_prim_attr('maxlen', maxlen)
+
+        self.add_prim_attr("dynamic_shape_depends", [0])
+        self.add_prim_attr("dynamic_shape_depends", [1])
+        self.add_prim_attr("dynamic_shape_depends", [2])
+
+    def check_shape(self, start_shape, limit_shape, delta_shape):
+        validator.check("start_shape", len(start_shape), "", 0, Rel.EQ, self.name)
+        validator.check("limit_shape", len(limit_shape), "", 0, Rel.EQ, self.name)
+        validator.check("delta_shape", len(delta_shape), "", 0, Rel.EQ, self.name)
+
+    def check_dtype(self, start_dtype, limit_dtype, delta_dtype):
+        valid_dtypes = [mstype.int32, mstype.float32]
+        inputs = {"start": start_dtype, "limit": limit_dtype, "delta": delta_dtype}
+        validator.check_tensors_dtypes_same_and_valid(inputs, valid_dtypes, self.name)
