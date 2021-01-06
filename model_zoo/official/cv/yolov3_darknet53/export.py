@@ -47,6 +47,5 @@ if __name__ == "__main__":
 
     shape = [args.batch_size, 3] + config.test_img_shape
     input_data = Tensor(np.zeros(shape), ms.float32)
-    input_shape = Tensor(tuple(config.test_img_shape), ms.float32)
 
-    export(network, input_data, input_shape, file_name=args.file_name, file_format=args.file_format)
+    export(network, input_data, file_name=args.file_name, file_format=args.file_format)
