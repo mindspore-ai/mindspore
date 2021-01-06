@@ -33,7 +33,7 @@ class Slice {
 
   ~Slice() = default;
 
-  bool valid() const { return !(start_ == 0 && stop_ == 0 && step_ == 0); }
+  bool valid() const { return step_ != 0; }
   dsize_t start_;
   dsize_t stop_;
   dsize_t step_;
