@@ -383,7 +383,9 @@ In Ascend platform, if group > 1, the weight shape of Conv2D change from [in_cha
 
 ## MindSpore Lite
 
-### Converter and runtime
+### Major Features and Improvements
+
+#### Converter and runtime
 
 1. Support dynamic shape in MindSpore Lite Converter.
 2. Optimize sub-graph mechanism by dynamically splitting the entire graph into multiple subgraphs based on the operator supported, backend hardware and user configuration.
@@ -398,14 +400,14 @@ In Ascend platform, if group > 1, the weight shape of Conv2D change from [in_cha
 11. Support NPU backend on HUAWEI Kirin SoC.[BETA]
 12. Merge timeprofiler into benchmark
 
-### ARM backend optimization
+#### CPU backend optimization
 
 1. Add 50+ new operators, including new Op type(like Adder, Gru).
 2. Enhanced performance on armv8.2 supported platform. For example, utilizing sdot instruction more efficiently.
 3. Optimize all operators(fp32, fp16, int8) by implementing multi-thread, SIMD tech as much as possible. Model inference time can reduce at least 20% after these optimizations.
 4. Extending to support operators for x86_64 platform based on SSE/AVX instruction set.
 
-### OpenCL backend
+#### OpenCL backend
 
 1. Add new ops: add 10+ ops, total 58 ops;
 2. Performance optimization: by memory layout optimize, Winograd Convolution select strategyoptimize, SIMT local size optimize, local cache optimize,  GPU performance improvement up to 20+% vs MSLITE Version1.0
@@ -414,7 +416,7 @@ In Ascend platform, if group > 1, the weight shape of Conv2D change from [in_cha
 5. Add weight quant: support weight quant
 6. Add opencl kernel binary cache: improve Initilization time .
 
-### Post quantization
+#### Post quantization
 
 MindSpore Lite supports both weight quantization and full quantization. Currently, Weights can be quantized into 1 ~ 16 bits according to user configuration. In internal testing, quantization of networks, such as classification, detection, segmentation and transformer are well supported. To ensure high accuracy of quantized models, MindSpore Lite uses a pipeline quantization method. In the first phase, the weight and activation value are quantized using linear quantization methods, such as MIN-MAX. In the second phase, the quantization error is analyzed, and uses statistical methods to compensate loss caused by fp32 quantization to a fixed point such as Int8 to quantized models. The features of Post-training quantization are:
 
@@ -433,7 +435,7 @@ MindSpore Lite supports both weight quantization and full quantization. Currentl
 
 The above table uses the mobilenet_v2 model from TF official website. Using MindSpore Lite quantization, the precision of A8W8 (8-bit activation value quantization and 8-bit weight quantization) decreases from 0.82% to 0.4% after accuracy loss compensation, for 7-bit quantization, the precision loss is still no more than 1%.
 
-### Training on Device
+#### Training on Device
 
 Within MindSpore 1.1 release, the MindSpore Lite provides the following Training-on-Device (ToD) capabilities:
 
