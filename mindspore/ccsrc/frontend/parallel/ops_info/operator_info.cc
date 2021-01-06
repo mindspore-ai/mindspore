@@ -285,8 +285,8 @@ OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num) {
   }
   OperatorVector op_for_weight;
   bool mean_flag = ParallelContext::GetInstance()->gradients_mean();
+  int64_t grad_accumulation_step = ParallelContext::GetInstance()->grad_accumulation_step();
 
-  OperatorName operator_name = MIRROR_OPERATOR;
   ValuePtr attr0_value = MakeValue(group_name);
   ValuePtr attr1_value = MakeValue(SizeToLong(dev_num));
   ValuePtr attr2_value = MakeValue(mean_flag);
@@ -299,6 +299,17 @@ OperatorVector CreateMirrorOps(const std::string &group_name, size_t dev_num) {
   operator_attrs.push_back(attr0);
   operator_attrs.push_back(attr1);
   operator_attrs.push_back(attr2);
+
+  OperatorName operator_name;
+  if (grad_accumulation_step > 1) {
+    operator_name = MIRROR_MINI_STEP_OPERATOR;
+    ValuePtr attr3_value = MakeValue(grad_accumulation_step);
+    Attr attr3 = std::make_pair(GRAD_ACCUMULATION_STEP, attr3_value);
+    operator_attrs.push_back(attr3);
+    MS_LOG(INFO) << "The grad accumulation step is " << grad_accumulation_step << ", use mini step mirror";
+  } else {
+    operator_name = MIRROR_OPERATOR;
+  }
 
   OperatorParams operator_param;
   OperatorArgs operator_args = std::make_pair(operator_attrs, operator_param);

@@ -51,6 +51,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr reset_defer_inline_;
   SubstitutionPtr depend_value_elim_;
   SubstitutionPtr all_reduce_const_elim_;
+  SubstitutionPtr mirror_mini_step_elim_;
 
   // Env Item Eliminate
   SubstitutionPtr env_get_item_eliminate_;

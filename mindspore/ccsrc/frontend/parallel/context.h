@@ -73,6 +73,9 @@ class ParallelContext {
   void set_global_rank(int64_t global_rank);
   int64_t global_rank() const { return global_rank_; }
 
+  void set_grad_accumulation_step(int64_t grad_accumulation_step);
+  int64_t grad_accumulation_step() const { return grad_accumulation_step_; }
+
   bool set_parallel_mode(const std::string &parallel_mode);
   std::string parallel_mode() const { return parallel_mode_; }
 
@@ -116,6 +119,7 @@ class ParallelContext {
   bool loss_repeated_mean_;
   int64_t device_num_;
   int64_t global_rank_;
+  int64_t grad_accumulation_step_;
   std::string parallel_mode_;
   std::string strategy_search_mode_;
   int64_t pipeline_stage_split_num_;

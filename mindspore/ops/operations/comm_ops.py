@@ -567,6 +567,35 @@ class _MirrorOperator(PrimitiveWithInfer):
 mirror = _MirrorOperator()
 
 
+class _MirrorMiniStepOperator(PrimitiveWithInfer):
+    """
+    Auto parallel virtual operator. Do nothing in forward, do all reduce and mean in backward. It is only for
+    internal use of parallel modules and cannot be called by users.
+
+    Args:
+        group (str): The communication group to work on. Default: None.
+        dev_num (int): The device number of the group. Default: None.
+        mean_flag (bool): Whether use mean in backward. Default: None.
+        grad_accumulation_step (int): The grad accumulation step. Default: None.
+    """
+
+    @prim_attr_register
+    def __init__(self, group=None, dev_num=None, mean_flag=None, grad_accumulation_step=None):
+        self.group = group
+        self.dev_num = dev_num
+        self.mean_flag = mean_flag
+        self.grad_accumulation_step = grad_accumulation_step
+
+    def infer_shape(self, x_shape, y_shape, z_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype, y_shape, z_shape):
+        return x_dtype
+
+
+mirror_mini_step = _MirrorMiniStepOperator()
+
+
 class _VirtualDiv(PrimitiveWithInfer):
     """
     Auto parallel virtual operator. Do nothing in forward, do Div in backward.
