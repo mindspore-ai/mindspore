@@ -30,6 +30,7 @@ namespace dataset {
 RootNode::RootNode(std::shared_ptr<DatasetNode> child) : DatasetNode() {
   // The root node's parent must remain nullptr, which is set in the constructor of DatasetNode.
   AddChild(child);
+  num_epochs_ = 0;
 }
 
 std::shared_ptr<DatasetNode> RootNode::Copy() {
@@ -75,13 +76,13 @@ Status RootNode::ValidateParams() {
 }
 
 // Visitor accepting method for IRNodePass
-Status RootNode::Accept(IRNodePass *p, bool *modified) {
+Status RootNode::Accept(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<RootNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status RootNode::AcceptAfter(IRNodePass *p, bool *modified) {
+Status RootNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<RootNode>(), modified);
 }

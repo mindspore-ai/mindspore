@@ -174,13 +174,13 @@ class CacheMergeOp : public ParallelOp {
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status PreAccept(NodePass *p, bool *modified) override;
+  Status PreAccept(NodePass *p, bool *const modified) override;
 
   /// \brief Base-class override for NodePass visitor acceptor
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status Accept(NodePass *p, bool *modified) override;
+  Status Accept(NodePass *p, bool *const modified) override;
 
   /// \brief Base-class override for eoe handling
   /// \param worker_id

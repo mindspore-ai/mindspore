@@ -503,7 +503,7 @@ void DeviceQueueOp::Print(std::ostream &out, bool show_all) const {
 }
 
 // Visitor accept method for NodePass
-Status DeviceQueueOp::Accept(NodePass *p, bool *modified) {
+Status DeviceQueueOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<DeviceQueueOp>(), modified);
 }

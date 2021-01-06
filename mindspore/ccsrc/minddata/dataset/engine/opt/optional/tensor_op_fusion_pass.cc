@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace dataset {
 
-Status TensorOpFusionPass::RunOnNode(std::shared_ptr<MapOp> node, bool *modified) {
+Status TensorOpFusionPass::RunOnNode(std::shared_ptr<MapOp> node, bool *const modified) {
   // Most primitive pattern: DecodeOp immediately followed by RandomCropAndResizeOp
   // Abstract into a more general member function that can find any pattern, expressed
   // by regular expressions, for instance.

@@ -176,13 +176,13 @@ int32_t RepeatOp::num_producers() const {
 }
 
 // Pre-Visitor accept method for NodePass
-Status RepeatOp::PreAccept(NodePass *p, bool *modified) {
+Status RepeatOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call the pre-visitation
   return p->PreRunOnNode(shared_from_base<RepeatOp>(), modified);
 }
 
 // Visitor accept method for NodePass
-Status RepeatOp::Accept(NodePass *p, bool *modified) {
+Status RepeatOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<RepeatOp>(), modified);
 }

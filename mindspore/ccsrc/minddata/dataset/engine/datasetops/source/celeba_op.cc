@@ -435,7 +435,7 @@ Status CelebAOp::Reset() {
 }
 
 // Visitor accept method for NodePass
-Status CelebAOp::Accept(NodePass *p, bool *modified) {
+Status CelebAOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<CelebAOp>(), modified);
 }

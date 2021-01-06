@@ -454,7 +454,7 @@ Status MnistOp::CountTotalRows(const std::string &dir, const std::string &usage,
 }
 
 // Visitor accept method for NodePass
-Status MnistOp::Accept(NodePass *p, bool *modified) {
+Status MnistOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<MnistOp>(), modified);
 }

@@ -29,20 +29,20 @@ EpochInjectionPass::InjectionFinder::InjectionFinder(std::shared_ptr<DatasetOp> 
 
 #ifndef ENABLE_ANDROID
 // Performs finder work for BuildVocabOp that has special rules about epoch control injection
-Status EpochInjectionPass::InjectionFinder::PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *modified) {
+Status EpochInjectionPass::InjectionFinder::PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *const modified) {
   injection_point_ = nullptr;
   return Status::OK();
 }
 
 // Performs finder work for BuildSentencePieceVocabOp that has special rules about epoch control injection
 Status EpochInjectionPass::InjectionFinder::PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node,
-                                                         bool *modified) {
+                                                         bool *const modified) {
   injection_point_ = nullptr;
   return Status::OK();
 }
 #endif
 
-Status EpochInjectionPass::InjectionFinder::RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) {
+Status EpochInjectionPass::InjectionFinder::RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *const modified) {
   // Assumption: There is only one DeviceQueueOp in a pipeline. This assumption is not validated here.
   injection_point_ = node->child(0);
   return Status::OK();
@@ -52,7 +52,7 @@ Status EpochInjectionPass::InjectionFinder::RunOnNode(std::shared_ptr<DeviceQueu
 EpochInjectionPass::EpochInjectionPass() {}
 
 // Runs an injection pass to inject in operators needed at the pre pass stage
-Status EpochInjectionPass::RunOnTree(ExecutionTree *tree, bool *modified) {
+Status EpochInjectionPass::RunOnTree(ExecutionTree *tree, bool *const modified) {
   MS_LOG(INFO) << "Pre pass: Injection pass started.";
 
   // First, run the finder to perform any injection info before we can go ahead to drive the op injection work.

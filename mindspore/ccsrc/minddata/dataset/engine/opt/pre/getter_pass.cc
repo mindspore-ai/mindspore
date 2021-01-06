@@ -19,39 +19,39 @@
 
 namespace mindspore {
 namespace dataset {
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) {
+Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *const modified) {
   nodes_to_remove_.push_back(node);
   return Status::OK();
 }
 
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
+Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<RepeatOp> node, bool *const modified) {
   if (type_ == kOutputShapeAndType) nodes_to_remove_.push_back(node);
   return Status::OK();
 }
 
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<SkipOp> node, bool *modified) {
+Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<SkipOp> node, bool *const modified) {
   if (type_ == kOutputShapeAndType) nodes_to_remove_.push_back(node);
   return Status::OK();
 }
 
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<TakeOp> node, bool *modified) {
+Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<TakeOp> node, bool *const modified) {
   if (type_ == kOutputShapeAndType) nodes_to_remove_.push_back(node);
   return Status::OK();
 }
 
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<MapOp> node, bool *modified) {
+Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<MapOp> node, bool *const modified) {
   nodes_to_clear_callback_.push_back(node);
   return Status::OK();
 }
 
 #ifdef ENABLE_PYTHON
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
+Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<FilterOp> node, bool *const modified) {
   if (type_ == kOutputShapeAndType) nodes_to_remove_.push_back(node);
   return Status::OK();
 }
 #endif
 
-Status GetterPass::RunOnTree(ExecutionTree *tree, bool *modified) {
+Status GetterPass::RunOnTree(ExecutionTree *tree, bool *const modified) {
   RETURN_IF_NOT_OK(pass_.Run(tree, modified));
 
   // currently the getter pass only disables call_back from the execution tree

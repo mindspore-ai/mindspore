@@ -34,7 +34,7 @@ namespace dataset {
 CacheValidationPass::CacheValidationPass() : is_cached_(false), is_mappable_(false) {}
 
 // Returns an error if BatchNode exists under a cache
-Status CacheValidationPass::Visit(std::shared_ptr<BatchNode> node, bool *modified) {
+Status CacheValidationPass::Visit(std::shared_ptr<BatchNode> node, bool *const modified) {
   MS_LOG(DEBUG) << "CacheValidationPass::Visit(<BatchNode>): visiting " << node->Name() << ".";
   if (is_cached_) {
     RETURN_STATUS_UNEXPECTED("BatchNode is not supported as a descendant operator under a cache.");
@@ -46,7 +46,7 @@ Status CacheValidationPass::Visit(std::shared_ptr<BatchNode> node, bool *modifie
 }
 
 // Returns an error if ConcatNode exists under a cache
-Status CacheValidationPass::Visit(std::shared_ptr<ConcatNode> node, bool *modified) {
+Status CacheValidationPass::Visit(std::shared_ptr<ConcatNode> node, bool *const modified) {
   MS_LOG(DEBUG) << "CacheValidationPass::Visit(<ConcatNode>): visiting " << node->Name() << ".";
   if (is_cached_) {
     RETURN_STATUS_UNEXPECTED("ConcatNode is not supported as a descendant operator under a cache.");
@@ -58,7 +58,7 @@ Status CacheValidationPass::Visit(std::shared_ptr<ConcatNode> node, bool *modifi
 }
 
 // Returns an error if FilterNode exists under a cache
-Status CacheValidationPass::Visit(std::shared_ptr<FilterNode> node, bool *modified) {
+Status CacheValidationPass::Visit(std::shared_ptr<FilterNode> node, bool *const modified) {
   MS_LOG(DEBUG) << "CacheValidationPass::Visit(<FilterNode>): visiting " << node->Name() << ".";
   if (is_cached_) {
     RETURN_STATUS_UNEXPECTED("FilterNode is not supported as a descendant operator under a cache.");
@@ -70,7 +70,7 @@ Status CacheValidationPass::Visit(std::shared_ptr<FilterNode> node, bool *modifi
 }
 
 // Returns an error if SkipNode exists under a cache
-Status CacheValidationPass::Visit(std::shared_ptr<SkipNode> node, bool *modified) {
+Status CacheValidationPass::Visit(std::shared_ptr<SkipNode> node, bool *const modified) {
   MS_LOG(DEBUG) << "CacheValidationPass::Visit(<SkipNode>): visiting " << node->Name() << ".";
   if (is_cached_) {
     RETURN_STATUS_UNEXPECTED("SkipNode is not supported as a descendant operator under a cache.");
@@ -82,7 +82,7 @@ Status CacheValidationPass::Visit(std::shared_ptr<SkipNode> node, bool *modified
 }
 
 // Returns an error if TakeNode exists under a cache
-Status CacheValidationPass::Visit(std::shared_ptr<TakeNode> node, bool *modified) {
+Status CacheValidationPass::Visit(std::shared_ptr<TakeNode> node, bool *const modified) {
   MS_LOG(DEBUG) << "CacheValidationPass::Visit(<TakeNode>): visiting " << node->Name() << ".";
   if (is_cached_) {
     RETURN_STATUS_UNEXPECTED("TakeNode (possibly from Split) is not supported as a descendant operator under a cache.");
@@ -94,7 +94,7 @@ Status CacheValidationPass::Visit(std::shared_ptr<TakeNode> node, bool *modified
 }
 
 // Returns an error if ZipNode exists under a cache
-Status CacheValidationPass::Visit(std::shared_ptr<ZipNode> node, bool *modified) {
+Status CacheValidationPass::Visit(std::shared_ptr<ZipNode> node, bool *const modified) {
   MS_LOG(DEBUG) << "CacheValidationPass::Visit(<ZipNode>): visiting " << node->Name() << ".";
   if (is_cached_) {
     RETURN_STATUS_UNEXPECTED("ZipNode is not supported as a descendant operator under a cache.");
@@ -106,7 +106,7 @@ Status CacheValidationPass::Visit(std::shared_ptr<ZipNode> node, bool *modified)
 }
 
 // Returns an error if MapNode with non-deterministic tensor operations exists under a cache
-Status CacheValidationPass::Visit(std::shared_ptr<MapNode> node, bool *modified) {
+Status CacheValidationPass::Visit(std::shared_ptr<MapNode> node, bool *const modified) {
   MS_LOG(DEBUG) << "CacheValidationPass::Visit(<MapNode>): visiting " << node->Name() << ".";
   if (node->IsCached()) {
     if (is_cached_) {
@@ -126,7 +126,7 @@ Status CacheValidationPass::Visit(std::shared_ptr<MapNode> node, bool *modified)
 }
 
 // Flag an error if we have a cache over another cache
-Status CacheValidationPass::Visit(std::shared_ptr<DatasetNode> node, bool *modified) {
+Status CacheValidationPass::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
   MS_LOG(DEBUG) << "CacheValidationPass::Visit(<DatasetNode>): visiting " << node->Name() << ".";
   if (node->IsCached()) {
     if (is_cached_) {
@@ -143,7 +143,7 @@ Status CacheValidationPass::Visit(std::shared_ptr<DatasetNode> node, bool *modif
 
 // Returns an error if MappableSource <- Repeat <- Node with a cache
 // Because there is no operator in the cache hit stream to consume EoEs, caching above repeat causes problem.
-Status CacheValidationPass::VisitAfter(std::shared_ptr<RepeatNode> node, bool *modified) {
+Status CacheValidationPass::VisitAfter(std::shared_ptr<RepeatNode> node, bool *const modified) {
   MS_LOG(DEBUG) << "CacheValidationPass::VisitAfter(<RepeatNode>): visiting " << node->Name() << ".";
   if (is_cached_ && is_mappable_) {
     RETURN_STATUS_UNEXPECTED("A cache over a RepeatNode of a mappable dataset is not supported.");
@@ -151,7 +151,7 @@ Status CacheValidationPass::VisitAfter(std::shared_ptr<RepeatNode> node, bool *m
   return Status::OK();
 }
 
-Status CacheValidationPass::VisitAfter(std::shared_ptr<DatasetNode> node, bool *modified) {
+Status CacheValidationPass::VisitAfter(std::shared_ptr<DatasetNode> node, bool *const modified) {
   MS_LOG(DEBUG) << "CacheValidationPass::VisitAfter(<DatasetNode>): visiting " << node->Name() << ".";
   // Reset the flag when all descendants are visited
   if (node->IsCached()) {

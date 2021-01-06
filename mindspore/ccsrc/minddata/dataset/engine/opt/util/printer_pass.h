@@ -25,41 +25,41 @@ namespace dataset {
 
 class PrinterPass : public NodePass {
  public:
-  Status RunOnNode(std::shared_ptr<DatasetOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<DatasetOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<BatchOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<BatchOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<MapOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<MapOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<ProjectOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<ProjectOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<RenameOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<RenameOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<SkipOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<SkipOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *const modified) override;
 
 #ifndef ENABLE_ANDROID
-  Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *const modified) override;
 #endif
 
 #ifdef ENABLE_PYTHON
-  Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<FilterOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *const modified) override;
 #endif
 
-  Status RunOnNode(std::shared_ptr<TakeOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<TakeOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<ZipOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<ZipOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *const modified) override;
 
-  Status RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<AlbumOp> node, bool *const modified) override;
 };
 
 }  // namespace dataset

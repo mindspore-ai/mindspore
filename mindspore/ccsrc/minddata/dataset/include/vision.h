@@ -568,7 +568,6 @@ class CutOutOperation : public TensorOperation {
  private:
   int32_t length_;
   int32_t num_patches_;
-  ImageBatchFormat image_batch_format_;
 };
 
 class DvppDecodeResizeCropOperation : public TensorOperation {

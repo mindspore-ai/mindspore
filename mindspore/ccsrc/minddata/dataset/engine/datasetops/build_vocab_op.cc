@@ -231,7 +231,7 @@ void BuildVocabOp::Print(std::ostream &out, bool show_all) const {
 }
 
 // Pre-Visitor accept method for NodePass
-Status BuildVocabOp::PreAccept(NodePass *p, bool *modified) {
+Status BuildVocabOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call the pre-visitation
   return p->PreRunOnNode(shared_from_base<BuildVocabOp>(), modified);
 }

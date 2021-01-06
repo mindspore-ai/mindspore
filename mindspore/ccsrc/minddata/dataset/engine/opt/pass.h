@@ -118,7 +118,7 @@ class IRPass : public std::enable_shared_from_this<IRPass> {
   // Run the transformation pass against the IR tree.
   // @param root_ir - Pointer to the IR tree to be transformed.
   // @param modified - Pointer to the modified flag,
-  virtual Status Run(std::shared_ptr<DatasetNode> root_ir, bool *modified) = 0;
+  virtual Status Run(std::shared_ptr<DatasetNode> root_ir, bool *const modified) = 0;
 
   virtual ~IRPass() = default;
 };
@@ -129,14 +129,14 @@ class IRTreePass : public IRPass {
   /// \brief Run the transformation pass against the IR tree.
   /// \param[inout] root_ir Pointer to the IR tree to be transformed.
   /// \param[inout] modified Indicate if the tree was modified
-  Status Run(std::shared_ptr<DatasetNode> root_ir, bool *modified) final;
+  Status Run(std::shared_ptr<DatasetNode> root_ir, bool *const modified) final;
 
   /// \brief Derived classes may implement the runOnTree function to implement tree transformation.
   ///     "modified" flag needs to be set to true if tree is modified during the pass execution.
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate if the tree was modified.
   /// \return Status The status code returned
-  virtual Status RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *modified) { return Status::OK(); }
+  virtual Status RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) { return Status::OK(); }
 };
 
 // IRNodePass is a base Pass class which performs transformation on node visiting.
@@ -164,21 +164,21 @@ class IRNodePass : public IRPass {
   /// \brief Run the transformation pass against the IR tree
   /// \param[inout] root_ir Pointer to the IR tree to be transformed
   /// \param[inout] modified Indicator if the tree was changed
-  Status Run(std::shared_ptr<DatasetNode> root_ir, bool *modified) final;
+  Status Run(std::shared_ptr<DatasetNode> root_ir, bool *const modified) final;
 
   /// \brief Derived classes may implement the Visit function to implement any initial visit work on the way down
   ///     a tree traversal.  "modified" flag needs to be set to true if node is modified during the pass execution
   /// \param[in] node The node being visited
   /// \param[out] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  virtual Status Visit(std::shared_ptr<DatasetNode> node, bool *modified) { return Status::OK(); }
+  virtual Status Visit(std::shared_ptr<DatasetNode> node, bool *const modified) { return Status::OK(); }
 
   /// \brief Derived classes may implement the VisitAfter function to implement node level tree transformation
   ///     "modified" flag needs to be set to true if node is modified during the pass execution
   /// \param[in] node The node being visited
   /// \param[out] modified Indicator if the node was changed at all.
   /// \return Status The status code returned
-  virtual Status VisitAfter(std::shared_ptr<DatasetNode> node, bool *modified) { return Status::OK(); }
+  virtual Status VisitAfter(std::shared_ptr<DatasetNode> node, bool *const modified) { return Status::OK(); }
 
   // Visit()/VisitAfter() method to be overridden.
   // These pairs of Visit()/VisitAfter() for each derived class of DatasetNode are defined here.
@@ -190,55 +190,55 @@ class IRNodePass : public IRPass {
   // Note that virtual template functions are not permitted in C++.
   //
   // Non-leaf IR node
-  virtual Status Visit(std::shared_ptr<BatchNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<BatchNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<BucketBatchByLengthNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<BucketBatchByLengthNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<BuildVocabNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<BuildVocabNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<ConcatNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<ConcatNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<FilterNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<FilterNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<MapNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<MapNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<ProjectNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<ProjectNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<RenameNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<RenameNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<RepeatNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<RepeatNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<RootNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<RootNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<ShuffleNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<ShuffleNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<SkipNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<SkipNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<TakeNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<TakeNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<TransferNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<TransferNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<ZipNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<ZipNode> node, bool *modified);
+  virtual Status Visit(std::shared_ptr<BatchNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<BatchNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<BucketBatchByLengthNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<BucketBatchByLengthNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<BuildVocabNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<BuildVocabNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<ConcatNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<ConcatNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<FilterNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<FilterNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<MapNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<MapNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<ProjectNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<ProjectNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<RenameNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<RenameNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<RepeatNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<RepeatNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<RootNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<RootNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<ShuffleNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<ShuffleNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<SkipNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<SkipNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<TakeNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<TakeNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<TransferNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<TransferNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<ZipNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<ZipNode> node, bool *const modified);
 #ifdef ENABLE_PYTHON
-  virtual Status Visit(std::shared_ptr<SyncWaitNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<SyncWaitNode> node, bool *modified);
+  virtual Status Visit(std::shared_ptr<SyncWaitNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<SyncWaitNode> node, bool *const modified);
 #endif
 #ifndef ENABLE_ANDROID
-  virtual Status Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *modified);
-  virtual Status VisitAfter(std::shared_ptr<BuildSentenceVocabNode> node, bool *modified);
+  virtual Status Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified);
 #endif
 
   // leaf-IR Node
-  virtual Status Visit(std::shared_ptr<MappableSourceNode> node, bool *modified);
-  virtual Status Visit(std::shared_ptr<NonMappableSourceNode> node, bool *modified);
+  virtual Status Visit(std::shared_ptr<MappableSourceNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<NonMappableSourceNode> node, bool *const modified);
 
  private:
   // Helper function to perform DFS visit
-  Status DFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modified);
+  Status DFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *const modified);
 
   // Helper function to perform BFS visit
-  Status BFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modified);
+  Status BFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *const modified);
 
   // Tree traversal order of the NodePass
   Order traversalOrder_;
@@ -253,7 +253,7 @@ class Pass : public std::enable_shared_from_this<Pass> {
   // Run the transformation pass against the execution tree.
   // @param tree - Pointer to the execution tree to be transformed.
   // @param modified - Pointer to the modified flag,
-  virtual Status Run(ExecutionTree *tree, bool *modified) = 0;
+  virtual Status Run(ExecutionTree *tree, bool *const modified) = 0;
 
   virtual ~Pass() = default;
 };
@@ -264,14 +264,14 @@ class TreePass : public Pass {
   /// \brief Run the transformation pass against the execution tree.
   /// \param[inout] tree Pointer to the execution tree to be transformed.
   /// \param[inout] modified Indicate if the tree was modified
-  Status Run(ExecutionTree *tree, bool *modified) final;
+  Status Run(ExecutionTree *tree, bool *const modified) final;
 
   /// \brief Derived classes may implement the runOnTree function to implement tree transformation.
   ///     "modified" flag needs to be set to true if tree is modified during the pass execution.
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate of the tree was modified.
   /// \return Status The status code returned
-  virtual Status RunOnTree(ExecutionTree *tree, bool *modified) { return Status::OK(); }
+  virtual Status RunOnTree(ExecutionTree *tree, bool *const modified) { return Status::OK(); }
 };
 
 // NodePass is a base Pass class which performs transformation on node visiting.
@@ -299,79 +299,79 @@ class NodePass : public Pass {
   /// \brief Run the transformation pass against the execution tree
   /// \param[inout] tree Pointer to the execution tree to be transformed
   /// \param[inout] modified Indicator if the tree was changed
-  Status Run(ExecutionTree *tree, bool *modified) final;
+  Status Run(ExecutionTree *tree, bool *const modified) final;
 
   /// \brief Derived classes may implement the PreRunOnNode function to implement any initial visit work on the way down
   ///     a tree traversal.  "modified" flag needs to be set to true if tree is modified during the pass execution
   /// \param[in] node The node being visited
   /// \param[out] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  virtual Status PreRunOnNode(std::shared_ptr<DatasetOp> node, bool *modified) { return Status::OK(); }
+  virtual Status PreRunOnNode(std::shared_ptr<DatasetOp> node, bool *const modified) { return Status::OK(); }
 
   /// \brief Derived classes may implement the RunOnNode function to implement node level tree transformation
   ///     "modified" flag needs to be set to true if tree is modified during the pass execution
   /// \param[in] node The node being visited
   /// \param[out] modified Indicator if the node was changed at all.
   /// \return Status The status code returned
-  virtual Status RunOnNode(std::shared_ptr<DatasetOp> node, bool *modified) { return Status::OK(); }
+  virtual Status RunOnNode(std::shared_ptr<DatasetOp> node, bool *const modified) { return Status::OK(); }
 
   // Visit methods to be overridden.
   // Note that member template can not be virtual, any op which wants to work with NodePass should declare RunOnNode
   // of its own type and override "Accept" from DatasetOp.
-  virtual Status RunOnNode(std::shared_ptr<BatchOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<MapOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<ProjectOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<RenameOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<SkipOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<TakeOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<ZipOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<MnistOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<CifarOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<CocoOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<CelebAOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<ZipOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<MapOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<TakeOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<SkipOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<BatchOp> node, bool *modified);
+  virtual Status RunOnNode(std::shared_ptr<BatchOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<MapOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<ProjectOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<RenameOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<SkipOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<RandomDataOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<AlbumOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<TakeOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<ZipOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<MnistOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<CifarOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<CocoOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<CelebAOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<ZipOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<MapOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<TakeOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<SkipOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<BatchOp> node, bool *const modified);
 #ifndef ENABLE_ANDROID
-  virtual Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<ClueOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<CsvOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<TextFileOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *modified);
+  virtual Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<CacheOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<ClueOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<CsvOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<TextFileOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *const modified);
 #endif
 #ifdef ENABLE_PYTHON
-  virtual Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified);
-  virtual Status RunOnNode(std::shared_ptr<VOCOp> node, bool *modified);
-  virtual Status PreRunOnNode(std::shared_ptr<FilterOp> node, bool *modified);
+  virtual Status RunOnNode(std::shared_ptr<FilterOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *const modified);
+  virtual Status RunOnNode(std::shared_ptr<VOCOp> node, bool *const modified);
+  virtual Status PreRunOnNode(std::shared_ptr<FilterOp> node, bool *const modified);
 #endif
 
  private:
   // Helper function to perform DFS visit
-  Status DFSNodeVisit(std::shared_ptr<DatasetOp> node, bool *modified);
+  Status DFSNodeVisit(std::shared_ptr<DatasetOp> node, bool *const modified);
 
   // Helper function to perform BFS visit
-  Status BFSNodeVisit(std::shared_ptr<DatasetOp> root, bool *modified);
+  Status BFSNodeVisit(std::shared_ptr<DatasetOp> root, bool *const modified);
 
   // Tree traversal order of the NodePass
   Order traversalOrder_;

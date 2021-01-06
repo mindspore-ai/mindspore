@@ -31,6 +31,11 @@ namespace dataset {
 
 TreeAdapter::TreeAdapter(UsageFlag usage) : usage_(usage), tree_state_(kCompileStateInit) {
   optimize_ = common::GetEnv("OPTIMIZE") == "true";
+
+  // Initialize profiling parameters
+  cur_batch_num_ = 0;
+  cur_connector_size_ = 0;
+  cur_connector_capacity_ = 0;
 }
 
 Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
@@ -98,7 +103,7 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
   return Status::OK();
 }
 
-Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op) {
+Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *const op) {
   // Build the DatasetOp ExecutionTree from the optimized IR tree
   std::vector<std::shared_ptr<DatasetOp>> ops;
   RETURN_IF_NOT_OK(ir->Build(&ops));
@@ -142,11 +147,6 @@ Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir, int32_t num_epoc
 
   // After the tree is prepared, the col_name_id_map can safely be obtained
   column_name_map_ = tree_->root()->column_name_id_map();
-
-  // Profiling parameters init
-  cur_batch_num_ = 0;
-  cur_connector_size_ = 0;
-  cur_connector_capacity_ = 0;
 
   return Status::OK();
 }

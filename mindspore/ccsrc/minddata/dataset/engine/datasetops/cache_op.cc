@@ -226,13 +226,13 @@ Status CacheOp::EofReceived(int32_t worker_id) {
 }
 
 // Pre-Visitor accept method for NodePass
-Status CacheOp::PreAccept(NodePass *p, bool *modified) {
+Status CacheOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call the pre-visitation
   return p->PreRunOnNode(shared_from_base<CacheOp>(), modified);
 }
 
 // Visitor accept method for NodePass
-Status CacheOp::Accept(NodePass *p, bool *modified) {
+Status CacheOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<CacheOp>(), modified);
 }

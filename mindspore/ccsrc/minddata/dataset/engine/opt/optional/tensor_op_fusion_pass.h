@@ -30,7 +30,7 @@ class TensorOpFusionPass : public NodePass {
   /// \param[in] node The node being visited
   /// \param[inout] *modified indicates whether the node has been visited
   /// \return Status The status code returned
-  Status RunOnNode(std::shared_ptr<MapOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<MapOp> node, bool *const modified) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

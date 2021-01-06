@@ -161,7 +161,7 @@ void BuildSentencePieceVocabOp::Next(std::string *sentence) {
 }
 
 // Pre-Visitor accept method for NodePass
-Status BuildSentencePieceVocabOp::PreAccept(NodePass *p, bool *modified) {
+Status BuildSentencePieceVocabOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call the pre-visitation
   return p->PreRunOnNode(shared_from_base<BuildSentencePieceVocabOp>(), modified);
 }
