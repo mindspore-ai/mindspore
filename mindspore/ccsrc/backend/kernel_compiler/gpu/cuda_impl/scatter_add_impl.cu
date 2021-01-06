@@ -42,3 +42,8 @@ template void CalScatterAdd<half>(const size_t &inner_size, const size_t &indice
                                   const half *updates, half *input, cudaStream_t cuda_stream);
 template void CalScatterAdd<int>(const size_t &inner_size, const size_t &indices_size, const int *indices,
                                  const int *updates, int *input, cudaStream_t cuda_stream);
+template void CalScatterAdd<unsigned char>(const size_t &inner_size, const size_t &indices_size, const int *indices,
+                                           const unsigned char *updates, unsigned char *input,
+                                           cudaStream_t cuda_stream);
+template void CalScatterAdd<int8_t>(const size_t &inner_size, const size_t &indices_size, const int *indices,
+                                    const int8_t *updates, int8_t *input, cudaStream_t cuda_stream);
