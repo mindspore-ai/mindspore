@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -274,7 +274,7 @@ class CompositeGraph:
 
         builder = GraphBuilder()
         with builder.graph_scope(desc['op']):
-            for in_desc in desc['input_desc']:
+            for in_desc in desc['input_desc'] if desc['input_desc'] is not None else []:
                 name, shape, dtype, data_format = in_desc[0]['tensor_name'], in_desc[
                     0]['shape'], in_desc[0]['data_type'], in_desc[0]['format']
                 self.tensors[name] = builder.tensor(
