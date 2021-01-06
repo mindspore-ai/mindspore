@@ -71,7 +71,7 @@ After installing MindSpore via the official website, you can start training and 
 
   ```python
   # run training example
-  bash ./scripts/run_standalone_train.sh
+  bash ./scripts/run_standalone_train.sh 0
 
   # run distributed training example
   bash ./scripts/run_distribute_train.sh rank_table.json
@@ -164,7 +164,7 @@ For more configuration details, please refer the script config.py.
 - running on Ascend：
 
   ```python
-  bash scripts/run_standalone_train.sh
+  bash scripts/run_standalone_train.sh 0
   ```
 
   The command above will run in the background, you can view the results through the file train.log.

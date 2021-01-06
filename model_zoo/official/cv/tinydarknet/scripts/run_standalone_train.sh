@@ -14,9 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
+export DEVICE_ID=$1
 rm -rf ./train_single
 mkdir ./train_single
 cp -r ./src ./train_single
 cp ./train.py ./train_single
 cd ./train_single
-python ./train.py > ./train.log 2>&1 &
+python ./train.py --device_id=$DEVICE_ID > ./train.log 2>&1 &
