@@ -313,7 +313,7 @@ void DumpOperateAttrs(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo
     }
     auto attrs = primitive->attrs();
     if (!attrs.empty()) {
-      gsub->buffer << " {";
+      gsub->buffer << " primitive_attrs: {";
       int i = 0;
       for (const auto &attr : attrs) {
         if (attr.first == PARALLEL_STRATEGY) {
@@ -332,6 +332,32 @@ void DumpOperateAttrs(const AnfNodePtr &op, const std::shared_ptr<SubGraphIRInfo
       gsub->buffer << "}";
     }
   }
+}
+
+void DumpCNodeAttrs(const CNodePtr &op, const std::shared_ptr<SubGraphIRInfo> &gsub) {
+  if (op == nullptr || gsub == nullptr) {
+    return;
+  }
+  if (op->attrs().empty()) {
+    gsub->buffer << std::endl;
+    return;
+  }
+
+  auto attrs = op->attrs();
+  gsub->buffer << " cnode_attrs: {";
+  int i = 0;
+  for (const auto &attr : attrs) {
+    if (i++ != 0) {
+      gsub->buffer << ", ";
+    }
+    gsub->buffer << attr.first << ": ";
+    if (attr.second == nullptr) {
+      gsub->buffer << "null";
+    } else {
+      gsub->buffer << attr.second->ToString();
+    }
+  }
+  gsub->buffer << "}";
   gsub->buffer << std::endl;
 }
 
@@ -383,6 +409,9 @@ void DumpCNode(const CNodePtr &nd, const FuncGraphPtr &sub_graph, OrderedMap<Anf
 
   // print operator attrs
   DumpOperateAttrs(op, gsub);
+
+  // print cnode attrs
+  DumpCNodeAttrs(nd, gsub);
 
   // print parallel info
   DumpParallelInfo(nd, gsub);
