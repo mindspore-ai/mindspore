@@ -143,6 +143,16 @@ class ConfigManager {
   /// \param prefetch_size
   void set_prefetch_size(int32_t prefetch_size);
 
+  /// setter function
+  /// \param numa_switch
+  void set_numa_enable(bool numa_enable);
+
+  /// getter function
+  /// Now we want to seperate the numa link to _c_dataengine in the CMakeLists,
+  /// so we want user to choose whether to open numa switch.
+  /// @return Get the current numa switch state.
+  bool numa_enable() const { return numa_enable_; }
+
   // getter function
   // This rank_id is for numa and device_queue, one process work with only one rank_id
   // for standalone scenario, this rank_id may come from env 'CUDA_VISIBLE_DEVICES',
@@ -217,6 +227,7 @@ class ConfigManager {
   std::string cache_host_;
   int32_t cache_port_;
   int32_t num_connections_;
+  bool numa_enable_;
   int32_t prefetch_size_;
   bool auto_num_workers_;
   const int32_t num_cpu_threads_;

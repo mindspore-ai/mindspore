@@ -257,11 +257,13 @@ class ExecutionTree {
   int32_t num_epochs_;                                   // Total number of epochs to run for this tree
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
   bool partially_prepare_;                               // Temp: during migration to IR, if true, run remaining passes.
-#if defined(NUMA_ENABLED) && (defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE))
+#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
   // This rank_id is for numa and device_queue, one process work with only one rank_id,
   // for standalone scenario, this rank_id may come from env 'CUDA_VISIBLE_DEVICES',
   // but for distribute scenario, this rank_id come from _get_global_rank() in python
   int32_t rank_id_;
+  bool numa_enable_;
+  void *handle_;
 #endif
 };
 }  // namespace dataset

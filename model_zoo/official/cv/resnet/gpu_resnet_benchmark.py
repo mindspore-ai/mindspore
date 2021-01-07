@@ -94,6 +94,7 @@ class MyTimeMonitor(Callback):
 
 def create_dataset(dataset_path, do_train, repeat_num=1, batch_size=32, target="GPU", dtype="fp16",
                    device_num=1):
+    ds.config.set_numa_enable(True)
     if device_num == 1:
         data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=4, shuffle=True)
     else:
