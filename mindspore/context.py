@@ -551,17 +551,43 @@ def set_context(**kwargs):
         enable_profiling (bool): Whether to open profiling. Default: False.
         profiling_options (str): Set profiling collection options, operators can profiling data here.
             The values of profiling collection options are as follows, supporting the collection of multiple data.
+            - output: the saving the path of the profiling collection result file. The directory spectified by this
+              parameter needs to be created in advance on the training environment (container or host side) and ensure
+              that the running user configured during installation has read and write permissions.It supports the
+              configuration of absolute or relative paths(relative to the current path when executing the command line).
+              The absolute path configuration starts with '/', for example:/home/data/output.
+              The relative path configuration directly starts with the directory name,for example:output.
 
             - training_trace: collect iterative trajectory data, that is, the training task and software information of
               the AI software stack, to achieve performance analysis of the training task, focusing on data
               enhancement, forward and backward calculation, gradient aggregation update and other related data.
+              The value is on/off.
+
             - task_trace: collect task trajectory data, that is, the hardware information of the HWTS/AICore of
               the Ascend 910 processor, and analyze the information of beginning and ending of the task.
-            - op_trace: collect single operator performance data.
+              The value is on/off.
 
-            The profiling can choose the combination of `training_trace`, `task_trace`, `training_trace` and
-            `task_trace` combination, and separated by colons; a single operator can choose `op_trace`, `op_trace`
-            cannot be combined with `training_trace` and `task_trace`. Default: "training_trace".
+            - aicpu: collect profiling data enhanced by aicpu data. The value is on/off.
+
+            - fp_point: specify the start position of the forward operator of the training network iteration trajectory,
+              which is used to record the start timestamp of the forward calculation.The configuration value is the name
+              of the first operator specified in the forward direction. when the value is empty,the system will
+              automatically obtain the forward operator name.
+
+            - bp_point: specify the end position of the iteration trajectory reversal operator of the training network,
+              record the end timestamp of the backward calculation. The configuration value is the name of the operator
+              after the specified reverse. when the value is empty,the system will automatically obtain the backward
+              operator name.
+
+            - aic_metrics: the values are as follows:
+              ArithmeticUtilization: percentage statistics of various calculation indicators.
+              PipeUtilization: the time-consuming ratio of calculation unit and handling unit,this item is
+              the default value.
+              Memory: percentage of external memory read and write instructions.
+              MemoryL0: percentage of internal memory read and write instructions.
+              ResourceConflictRatio: proportion of pipline queue instructions.
+            The profiling_options is like '{"output":'/home/data/output','training_trace':'on'}'
+
         check_bprop (bool): Whether to check bprop. Default: False.
         max_device_memory (str): Sets the maximum memory available for devices.
             Currently, it is only supported on GPU. The format is "xxGB". Default: "1024GB".
@@ -588,7 +614,8 @@ def set_context(**kwargs):
         >>> context.set_context(mode=context.GRAPH_MODE,
         ...                     device_target="Ascend",device_id=0, save_graphs=True,
         ...                     save_graphs_path="/mindspore")
-        >>> context.set_context(enable_profiling=True, profiling_options="training_trace")
+        >>> context.set_context(enable_profiling=True, \
+                                profiling_options='{"output":"/home/data/output","training_trace":"on"}')
         >>> context.set_context(max_device_memory="3.5GB")
         >>> context.set_context(print_file_path="print.pb")
         >>> context.set_context(max_call_depth=80)
