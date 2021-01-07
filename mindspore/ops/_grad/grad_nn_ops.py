@@ -14,6 +14,7 @@
 # ============================================================================
 
 """Define the grad rules of neural network related operations."""
+import os
 import numpy as np
 from mindspore.ops import _selected_grad_ops as SG
 from mindspore.ops.primitive import constexpr
@@ -28,6 +29,7 @@ from ..operations import _grad_ops as G
 from ..operations import _inner_ops as inner
 from ... import context
 
+env_force_bprop_seq = os.getenv("ENV_FORCE_BPROP_SEQ")
 
 @bprop_getters.register(P.BiasAdd)
 def get_bprop_bias_add(self):
@@ -55,6 +57,8 @@ def get_bprop_conv2d(self):
 
     def bprop(x, w, out, dout):
         dx = input_grad(dout, w, get_shape(x))
+        if env_force_bprop_seq == '1':
+            x = F.depend(x, dx)
         dw = filter_grad(dout, x, get_shape(w))
         return dx, dw
 
@@ -173,6 +177,8 @@ def get_bprop_depthwise_conv2d_native(self):
 
     def bprop(x, w, out, dout):
         dx = input_grad(get_shape(x), w, dout)
+        if env_force_bprop_seq == '1':
+            x = F.depend(x, dx)
         dw = filter_grad(x, get_shape(w), dout)
         return dx, dw
 
@@ -1047,6 +1053,8 @@ def get_bprop_conv2d_backprop_input(self):
 
     def bprop(x, w, f_sizes, out, dout):
         dx = input_grad(dout, w)
+        if env_force_bprop_seq == '1':
+            x = F.depend(x, dx)
         dw = filter_grad(x, dout, F.shape(w))
         return dx, dw, zeros_like(f_sizes)
 

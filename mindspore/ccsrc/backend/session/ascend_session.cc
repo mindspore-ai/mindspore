@@ -267,7 +267,7 @@ void GetOpInputTensors(const CNodePtr &cnode, const std::map<KernelWithIndex, te
     MS_EXCEPTION_IF_NULL(real_input);
     tensor::TensorPtr tensor = nullptr;
     if (real_input->isa<ValueNode>()) {
-      auto value_node = input->cast<ValueNodePtr>();
+      auto value_node = real_input->cast<ValueNodePtr>();
       MS_EXCEPTION_IF_NULL(value_node);
       auto value = GetValueNode(value_node);
       MS_EXCEPTION_IF_NULL(value_node);
