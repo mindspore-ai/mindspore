@@ -19,6 +19,7 @@ Functions to measure the performance of the machine learning models
 on the evaluation dataset. It's used to choose the best model.
 """
 from .accuracy import Accuracy
+from .hausdorff_distance import HausdorffDistance
 from .error import MAE, MSE
 from .metric import Metric
 from .precision import Precision
@@ -33,6 +34,7 @@ __all__ = [
     "MAE", "MSE",
     "Metric",
     "Precision",
+    "HausdorffDistance",
     "Recall",
     "Fbeta",
     "F1",
@@ -49,6 +51,7 @@ __factory__ = {
     'recall': Recall,
     'F1': F1,
     'topk': TopKCategoricalAccuracy,
+    'hausdorff_distance': HausdorffDistance,
     'top_1_accuracy': Top1CategoricalAccuracy,
     'top_5_accuracy': Top5CategoricalAccuracy,
     'mae': MAE,
