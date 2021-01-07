@@ -15,6 +15,7 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_slice_parser.h"
+#include <algorithm>
 #include <functional>
 #include <memory>
 #include <numeric>
@@ -36,31 +37,32 @@ lite::PrimitiveC *OnnxSliceParser::ParseLitePrimitive(const onnx::GraphProto &on
   std::vector<int> ends;
   std::vector<int> axes;
   std::vector<int> steps;
+  constexpr int64_t int_32_max = INT32_MAX;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "starts") {
       const int num = onnx_node_attr.ints_size();
       starts.clear();
       for (int i = 0; i < num; ++i) {
-        starts.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
+        starts.push_back(static_cast<int>(std::min(onnx_node_attr.ints()[i], int_32_max)));
       }
     } else if (attribute_name == "axes") {
       const int num = onnx_node_attr.ints_size();
       axes.clear();
       for (int i = 0; i < num; ++i) {
-        axes.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
+        axes.push_back(static_cast<int>(std::min(onnx_node_attr.ints()[i], int_32_max)));
       }
     } else if (attribute_name == "ends") {
       const int num = onnx_node_attr.ints_size();
       ends.clear();
       for (int i = 0; i < num; ++i) {
-        ends.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
+        ends.push_back(static_cast<int>(std::min(onnx_node_attr.ints()[i], int_32_max)));
       }
     } else if (attribute_name == "steps") {
       const int num = onnx_node_attr.ints_size();
       steps.clear();
       for (int i = 0; i < num; ++i) {
-        steps.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
+        steps.push_back(static_cast<int>(std::min(onnx_node_attr.ints()[i], int_32_max)));
       }
     }
   }
