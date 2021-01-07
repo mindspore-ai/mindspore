@@ -23,6 +23,7 @@
 #include "common/trans.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "abstract/dshape.h"
+#include "utils/utils.h"
 #include "abstract/param_validator.h"
 
 namespace mindspore {
@@ -122,6 +123,13 @@ void DynamicKernel::InferShape() {
     } else {
       args_spec_list.emplace_back(real_input->abstract());
     }
+  }
+  auto prim_name = primitive->name();
+  if (DynamicShapeConstInputToAttr.find(prim_name) != DynamicShapeConstInputToAttr.end()) {
+    auto new_prim_name = "Dynamic" + prim_name;
+    auto attrs = primitive->attrs();
+    primitive = std::make_shared<Primitive>(new_prim_name);
+    primitive->SetAttrs(attrs);
   }
 
   auto eval_result = abstract::CppInferShape(primitive, args_spec_list);

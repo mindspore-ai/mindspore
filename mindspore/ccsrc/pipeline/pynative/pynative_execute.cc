@@ -774,6 +774,12 @@ void PynativeExecutor::GetOpOutputAbstract(const OpExecInfoPtr &op_exec_info,
   MS_EXCEPTION_IF_NULL(py_shape);
   auto py_shape_info = py_shape->ToString();
   if (py_shape_info.find("-1") != string::npos) {
+    if (DynamicShapeConstInputToAttr.find(op_name) != DynamicShapeConstInputToAttr.end()) {
+      auto new_prim_name = "Dynamic" + op_name;
+      auto attrs = prim->attrs();
+      prim = std::make_shared<PrimitivePy>(new_prim_name, py::object());
+      prim->SetAttrs(attrs);
+    }
     auto c_abstract = abstract::CppInferShape(prim, args_spec_list);
     MS_EXCEPTION_IF_NULL(c_abstract);
     auto c_shape = c_abstract->BuildShape();
