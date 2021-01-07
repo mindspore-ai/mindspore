@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,6 +39,32 @@ arr_x = np.array([[0], [1], [2], [3]]).astype(np.int32)
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
 def test_net():
+    tile = Net()
+    print(arr_x)
+    output = tile(Tensor(arr_x))
+    print(output.asnumpy())
+
+
+arr_x = np.array([[0], [1], [2], [3]]).astype(np.float64)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_float64():
+    tile = Net()
+    print(arr_x)
+    output = tile(Tensor(arr_x))
+    print(output.asnumpy())
+
+
+arr_x = np.array([[0], [1], [2], [3]]).astype(np.bool_)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_net_bool():
     tile = Net()
     print(arr_x)
     output = tile(Tensor(arr_x))

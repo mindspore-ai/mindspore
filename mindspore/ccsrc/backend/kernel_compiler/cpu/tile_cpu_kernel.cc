@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,18 +31,30 @@ void TileCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (dtype_ == kTypeUnknown) {
     dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
   }
+
+  launch_map_[kNumberTypeInt8] = &TileCPUKernel::LaunchKernel<int8_t>;
+  launch_map_[kNumberTypeInt16] = &TileCPUKernel::LaunchKernel<int16_t>;
+  launch_map_[kNumberTypeInt32] = &TileCPUKernel::LaunchKernel<int>;
+  launch_map_[kNumberTypeInt64] = &TileCPUKernel::LaunchKernel<int64_t>;
+  launch_map_[kNumberTypeUInt8] = &TileCPUKernel::LaunchKernel<uint8_t>;
+  launch_map_[kNumberTypeUInt16] = &TileCPUKernel::LaunchKernel<uint16_t>;
+  launch_map_[kNumberTypeUInt32] = &TileCPUKernel::LaunchKernel<uint32_t>;
+  launch_map_[kNumberTypeUInt64] = &TileCPUKernel::LaunchKernel<uint64_t>;
+  launch_map_[kNumberTypeFloat32] = &TileCPUKernel::LaunchKernel<float>;
+  launch_map_[kNumberTypeBool] = &TileCPUKernel::LaunchKernel<bool>;
+
+  auto iter = launch_map_.find(dtype_);
+  if (iter != launch_map_.end()) {
+    launch_func_ = iter->second;
+  } else {
+    MS_LOG(EXCEPTION) << "Input data type: " << dtype_ << "is not supported for Tile kernel on CPU.";
+  }
 }
 
 bool TileCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
                            const std::vector<kernel::AddressPtr> & /*workspace*/,
                            const std::vector<kernel::AddressPtr> &outputs) {
-  if (dtype_ == kNumberTypeInt32) {
-    LaunchKernel<int>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeFloat32) {
-    LaunchKernel<float>(inputs, outputs);
-  } else if (dtype_ == kNumberTypeInt64) {
-    LaunchKernel<int64_t>(inputs, outputs);
-  }
+  launch_func_(this, inputs, outputs);
   return true;
 }
 

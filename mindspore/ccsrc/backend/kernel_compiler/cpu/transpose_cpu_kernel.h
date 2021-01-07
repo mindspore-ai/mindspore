@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TRANSPOSE_CPU_KERNEL_H_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_TRANSPOSE_CPU_KERNEL_H_
 #include <vector>
+#include <unordered_map>
 #include <memory>
 #include <string>
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
@@ -32,12 +33,47 @@ class TransposeCPUFwdKernel : public CPUKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &workspace,
               const std::vector<AddressPtr> &outputs) override;
 
+  template <typename T>
+  void LaunchKernel(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &outputs);
+
  private:
   std::vector<size_t> shape_;
   std::vector<int> axis_;
+  TypeId dtype_{kTypeUnknown};
+  using TypeKernel =
+    std::function<void(TransposeCPUFwdKernel *, const std::vector<AddressPtr> &, const std::vector<AddressPtr> &)>;
+  std::unordered_map<TypeId, TypeKernel> launch_map_;
+  TypeKernel launch_func_;
 };
-
-MS_REG_CPU_KERNEL(Transpose, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+MS_REG_CPU_KERNEL(Transpose,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  TransposeCPUFwdKernel);
+MS_REG_CPU_KERNEL(Transpose,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
+                  TransposeCPUFwdKernel);
+MS_REG_CPU_KERNEL(Transpose,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeInt16),
+                  TransposeCPUFwdKernel);
+MS_REG_CPU_KERNEL(Transpose,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                  TransposeCPUFwdKernel);
+MS_REG_CPU_KERNEL(Transpose,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                  TransposeCPUFwdKernel);
+MS_REG_CPU_KERNEL(Transpose,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+                  TransposeCPUFwdKernel);
+MS_REG_CPU_KERNEL(Transpose,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeUInt16),
+                  TransposeCPUFwdKernel);
+MS_REG_CPU_KERNEL(Transpose,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt32),
+                  TransposeCPUFwdKernel);
+MS_REG_CPU_KERNEL(Transpose,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeUInt64).AddOutputAttr(kNumberTypeUInt64),
+                  TransposeCPUFwdKernel);
+MS_REG_CPU_KERNEL(Transpose,
+                  KernelAttr().SetAllSameAttr(true).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
                   TransposeCPUFwdKernel);
 }  // namespace kernel
 }  // namespace mindspore

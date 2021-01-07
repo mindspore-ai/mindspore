@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ def axis10(nptype):
                         [3., 6., 7.]]]).astype(nptype)
     print(output)
     assert (output.asnumpy() == expect).all()
+
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
@@ -171,6 +172,7 @@ def axis21(nptype):
     assert (output.asnumpy() == expect).all()
     print(output)
 
+
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
 @pytest.mark.env_onecard
@@ -286,6 +288,18 @@ def test_concat_4i_float32():
 @pytest.mark.env_onecard
 def test_concat_4i_int32():
     concat_4i(np.int32)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_4i_int8():
+    concat_4i(np.int8)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_concat_4i_uint64():
+    concat_4i(np.uint64)
 
 @pytest.mark.level0
 @pytest.mark.platform_x86_cpu
