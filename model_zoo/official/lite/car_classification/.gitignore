@@ -1,0 +1,83 @@
+# MindSpore
+build/
+mindspore/lib
+app/src/main/assets/model/
+app/src/main/cpp/mindspore-lite-*
+output
+*.ir
+mindspore/ccsrc/schema/inner/*
+
+# Cmake files
+CMakeFiles/
+cmake_install.cmake
+CMakeCache.txt
+Makefile
+cmake-build-debug
+
+# Dynamic libraries
+*.so
+*.so.*
+*.dylib
+
+# Static libraries
+*.la
+*.lai
+*.a
+*.lib
+
+# Protocol buffers
+*_pb2.py
+*.pb.h
+*.pb.cc
+
+# Object files
+*.o
+
+# Editor
+.vscode
+.idea/
+
+# Cquery
+.cquery_cached_index/
+compile_commands.json
+
+# Ctags and cscope
+tags
+TAGS
+CTAGS
+GTAGS
+GRTAGS
+GSYMS
+GPATH
+cscope.*
+
+# Python files
+*__pycache__*
+.pytest_cache
+
+# Mac files
+*.DS_Store
+
+# Test results
+test_temp_summary_event_file/
+*.dot
+*.dat
+*.svg
+*.perf
+*.info
+*.ckpt
+*.shp
+*.pkl
+.clangd
+mindspore/version.py
+mindspore/default_config.py
+mindspore/.commit_id
+onnx.proto
+mindspore/ccsrc/onnx.proto
+
+# Android
+local.properties
+.gradle
+sdk/build
+sdk/.cxx
+app/.cxx
