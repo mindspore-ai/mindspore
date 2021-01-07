@@ -13,9 +13,7 @@
 # limitations under the License.
 # ============================================================================
 """FastText data loader"""
-import mindspore.common.dtype as mstype
 import mindspore.dataset as ds
-import mindspore.dataset.transforms.c_transforms as deC
 
 
 def load_dataset(dataset_path,
@@ -37,14 +35,10 @@ def load_dataset(dataset_path,
                                   shuffle=shuffle,
                                   num_shards=rank_size,
                                   shard_id=rank_id,
-                                  num_parallel_workers=8)
+                                  num_parallel_workers=4)
         ori_dataset_size = data_set.get_dataset_size()
         print(f"Dataset size: {ori_dataset_size}")
         repeat_count = epoch_count
-        type_cast_op = deC.TypeCast(mstype.int32)
-        data_set = data_set.map(operations=type_cast_op, input_columns="src_tokens")
-        data_set = data_set.map(operations=type_cast_op, input_columns="src_tokens_length")
-        data_set = data_set.map(operations=type_cast_op, input_columns="label_idx")
 
         data_set = data_set.rename(input_columns=['src_tokens', 'src_tokens_length', 'label_idx'],
                                    output_columns=['src_token_text', 'src_tokens_text_length', 'label_idx_tag'])
