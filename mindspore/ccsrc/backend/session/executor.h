@@ -172,8 +172,7 @@ class Executor {
   void OnEvent(const ExecutorEvent &event);
 
  private:
-  void RunTask(const std::shared_ptr<Task> &task, bool sync);
-  void SyncRunTask(const std::shared_ptr<Task> &task);
+  void RunTask(const std::shared_ptr<Task> &task, bool sync, bool long_run = false);
   void UpdateOutputTensors(VectorRef *outputs,
                            const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node);
   std::vector<std::shared_ptr<RunGraphTask>> GetNewReadyTasks();
