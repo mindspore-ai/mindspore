@@ -248,39 +248,14 @@ MS_REG_CPU_KERNEL(
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
   ArithmeticCPUKernel);
 MS_REG_CPU_KERNEL(
-  LessEqual, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt16).AddInputAttr(kNumberTypeInt16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
   LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt32).AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeBool),
   ArithmeticCPUKernel);
 MS_REG_CPU_KERNEL(
-  LessEqual, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  LessEqual,
-  KernelAttr().AddInputAttr(kNumberTypeUInt16).AddInputAttr(kNumberTypeUInt16).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  LessEqual,
-  KernelAttr().AddInputAttr(kNumberTypeUInt32).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  LessEqual,
-  KernelAttr().AddInputAttr(kNumberTypeFloat16).AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeBool),
+  LessEqual, KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeBool),
   ArithmeticCPUKernel);
 MS_REG_CPU_KERNEL(
   LessEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
-  ArithmeticCPUKernel);
-MS_REG_CPU_KERNEL(
-  LessEqual,
-  KernelAttr().AddInputAttr(kNumberTypeFloat64).AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeBool),
   ArithmeticCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
