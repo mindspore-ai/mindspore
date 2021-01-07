@@ -365,13 +365,13 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
         operator (string): The pooling method for the features in one field. Support 'SUM, 'MEAN' and 'MAX'
 
     Inputs:
-        - **input_indices** (Tensor) - The shape of tensor is :math:`(batch_size, seq_length)`.
+        - **input_indices** (Tensor) - The shape of tensor is :math:`(batch\_size, seq\_length)`.
           Specifies the indices of elements of the original Tensor. Input_indices must be a 2d tensor in
           this interface. Type is Int32, Int64.
-        - **input_values** (Tensor) - The shape of tensor is :math:`(batch_size, seq_length)`.
+        - **input_values** (Tensor) - The shape of tensor is :math:`(batch\_size, seq\_length)`.
           Specifies the weights of elements of the input_indices. The lookout vector will multiply with
           the input_values. Type is Float32.
-        - **field_ids** (Tensor)  - The shape of tensor is :math:`(batch_size, seq_length)`.
+        - **field_ids** (Tensor)  - The shape of tensor is :math:`(batch\_size, seq\_length)`.
           Specifies the field id of elements of the input_indices. Type is Int32.
 
     Outputs:
