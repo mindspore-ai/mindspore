@@ -16,18 +16,20 @@
 from .bert_for_pre_training import BertNetworkWithLoss, BertPreTraining, \
     BertPretrainingLoss, GetMaskedLMOutput, GetNextSentenceOutput, \
     BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell, \
-    BertTrainAccumulateStepsWithLossScaleCell
+    BertTrainAccumulateStepsWithLossScaleCell, \
+    BertTrainOneStepWithLossScaleCellForAdam
 from .bert_model import BertAttention, BertConfig, BertEncoderCell, BertModel, \
     BertOutput, BertSelfAttention, BertTransformer, EmbeddingLookup, \
     EmbeddingPostprocessor, RelaPosEmbeddingsGenerator, RelaPosMatrixGenerator, \
     SaturateCast, CreateAttentionMaskFromInputMask
-
+from .adam import AdamWeightDecayForBert
 __all__ = [
     "BertNetworkWithLoss", "BertPreTraining", "BertPretrainingLoss",
     "GetMaskedLMOutput", "GetNextSentenceOutput", "BertTrainOneStepCell",
     "BertTrainOneStepWithLossScaleCell", "BertTrainAccumulateStepsWithLossScaleCell",
     "BertAttention", "BertConfig", "BertEncoderCell", "BertModel", "BertOutput",
     "BertSelfAttention", "BertTransformer", "EmbeddingLookup",
-    "EmbeddingPostprocessor", "RelaPosEmbeddingsGenerator",
-    "RelaPosMatrixGenerator", "SaturateCast", "CreateAttentionMaskFromInputMask"
+    "EmbeddingPostprocessor", "RelaPosEmbeddingsGenerator", "AdamWeightDecayForBert",
+    "RelaPosMatrixGenerator", "SaturateCast", "CreateAttentionMaskFromInputMask",
+    "BertTrainOneStepWithLossScaleCellForAdam"
 ]
