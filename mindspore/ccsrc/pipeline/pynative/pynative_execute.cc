@@ -525,10 +525,13 @@ PynativeExecutor::~PynativeExecutor() {
 }
 
 void CheckPyNativeContext() {
-  auto context = parallel::ParallelContext::GetInstance();
-  MS_EXCEPTION_IF_NULL(context);
-  auto parallel_mode = context->parallel_mode();
-  if (parallel_mode != parallel::STAND_ALONE && parallel_mode != parallel::DATA_PARALLEL) {
+  auto parallel_context = parallel::ParallelContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(parallel_context);
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  auto parallel_mode = parallel_context->parallel_mode();
+  if (parallel_mode != parallel::STAND_ALONE && parallel_mode != parallel::DATA_PARALLEL &&
+      ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
     MS_LOG(EXCEPTION) << "PyNative Only support STAND_ALONE and DATA_PARALLEL, but got:" << parallel_mode;
   }
 }
