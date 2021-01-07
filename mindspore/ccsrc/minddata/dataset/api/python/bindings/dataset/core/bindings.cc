@@ -39,6 +39,8 @@ PYBIND_REGISTER(ConfigManager, 0, ([](const py::module *m) {
                     .def("get_callback_timeout", &ConfigManager::callback_timeout)
                     .def("get_monitor_sampling_interval", &ConfigManager::monitor_sampling_interval)
                     .def("get_num_parallel_workers", &ConfigManager::num_parallel_workers)
+                    .def("get_numa_enable", &ConfigManager::numa_enable)
+                    .def("set_numa_enable", &ConfigManager::set_numa_enable)
                     .def("get_op_connector_size", &ConfigManager::op_connector_size)
                     .def("get_rows_per_buffer", &ConfigManager::rows_per_buffer)
                     .def("get_seed", &ConfigManager::seed)

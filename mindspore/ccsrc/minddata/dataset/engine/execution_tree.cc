@@ -18,13 +18,9 @@
 #include <string>
 #include <utility>
 #include <limits>
-#if defined(NUMA_ENABLED) && (defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE))
-#include <numa.h>
-#endif
 #include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/shuffle_op.h"
 #include "minddata/dataset/engine/datasetops/device_queue_op.h"
-#include "minddata/dataset/util/task_manager.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/opt/pre/removal_pass.h"
 #ifndef ENABLE_ANDROID
@@ -36,6 +32,10 @@
 #include "minddata/dataset/engine/opt/pre/epoch_injection_pass.h"
 #include "minddata/dataset/engine/perf/profiling.h"
 #include "minddata/dataset/engine/perf/monitor.h"
+#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
+#include "minddata/dataset/util/numa_interface.h"
+#endif
+#include "minddata/dataset/util/task_manager.h"
 
 namespace mindspore {
 namespace dataset {
@@ -45,20 +45,28 @@ ExecutionTree::ExecutionTree() : id_count_(0), pre_pass_override_(nullptr) {
   tree_state_ = kDeTStateInit;
   prepare_flags_ = kDePrepNone;
   profiling_manager_ = std::make_unique<ProfilingManager>(this);
-  optimize_ = common::GetEnv("OPTIMIZE") == "true" ? true : false;
-#if defined(NUMA_ENABLED) && (defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE))
+#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   rank_id_ = cfg->rank_id();
+  numa_enable_ = cfg->numa_enable();
+  handle_ = nullptr;
 #endif
 }
 
 // Destructor
 ExecutionTree::~ExecutionTree() {
-#ifdef ENABLE_TDTQUE
+#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
+  if (numa_enable_) {
+    if (handle_ != nullptr) {
+      ReleaseLibrary(handle_);
+    }
+  }
+#if defined(ENABLE_TDTQUE)
   DeviceQueueOp *op = dynamic_cast<DeviceQueueOp *>(root_.get());
   if (op != nullptr) {
     op->StopWaiting();
   }
+#endif
 #endif
   (void)tg_->ServiceStop();
 }
@@ -143,30 +151,26 @@ void ExecutionTree::PrintNode(std::ostream &out, const std::shared_ptr<DatasetOp
 // Start the execution of the tree
 Status ExecutionTree::Launch() {
   // opencv limit too many threads
-#ifndef ENABLE_ANDROID
-#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__)
-#if defined(NUMA_ENABLED) && (defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE))
+#if !defined(_WIN32) && !defined(_WIN64) && !defined(__APPLE__) && !defined(ENABLE_ANDROID)
+#if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
   // Here we do numa bind for performance optimization, as our test result,
   // if we do numa bind when get_dataset_size launch a tree, we'll get a
   // better performance than only we do numa bind at the time _To_Device
   // launch a tree. Our numa bind work is a process level bind, bind with
   // both cpu and memory and we choose numa_node with a polling logic:
   // numa_bind_id = rank_id_ % (numa_max_node() + 1)
-  // Now we only test pass in GPU scenario, we've not tested D scenario,
-  // without enough test we don't suggest numa feature open in D scenario
-  int numa_node_max_id = numa_max_node();
-  if (numa_node_max_id < 0) {
-    RETURN_STATUS_UNEXPECTED("Get numa max node failed.");
-  }
-  if (rank_id_ >= 0) {
-    uint32_t numa_bind_id = static_cast<uint32_t>(rank_id_ % (numa_node_max_id + 1));
-    auto bm = numa_allocate_nodemask();
-    numa_bitmask_clearall(bm);
-    numa_bitmask_setbit(bm, numa_bind_id);
-    numa_bind(bm);
-    numa_bitmask_free(bm);
-  } else {
-    MS_LOG(INFO) << "Numa bind feature doesn't work now.";
+  // Now we only support GPU scenario and the single process scenario of Ascend,
+  // now we remove the target_link of numa with _c_dataengine, and user can use
+  // a config api to control whether to open numa feature.
+  if (numa_enable_ && rank_id_ >= 0) {
+    if (handle_ == nullptr) {
+      handle_ = GetNumaAdapterHandle();
+      if (handle_ == nullptr) {
+        RETURN_STATUS_UNEXPECTED("Numa package not found.");
+      }
+    }
+    RETURN_IF_NOT_OK(NumaBind(handle_, rank_id_));
+    MS_LOG(INFO) << "Numa bind memory and cpu successful.";
   }
 #endif
   int32_t thread_num = get_nprocs();
@@ -179,7 +183,7 @@ Status ExecutionTree::Launch() {
   else
     cv::setNumThreads(thread_num);
 #endif
-#endif
+
   // Tree must be built and prepared before it can be launched!
   if (tree_state_ != kDeTStateReady) {
     std::string err_msg =
