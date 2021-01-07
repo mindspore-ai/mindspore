@@ -73,9 +73,8 @@ void MemoryManager::MallocSomasDynamicMem(const session::KernelGraph *graph) {
     save_graphs_path = ".";
   }
   if (save_graphs) {
-    std::string file_path =
-      save_graphs_path + "/" + "somas_after_allocate_" + std::to_string(graph->graph_id()) + ".ir";
-    somas_reuse_util_ptr_->DumpSomasBasicIR(file_path);
+    std::string file_path = save_graphs_path + "/" + "somas_allocate_info_" + std::to_string(graph->graph_id()) + ".ir";
+    somas_reuse_util_ptr_->DumpSomasInfoIR(file_path);
 
     std::string mem_file_path = save_graphs_path + "/" + "somas_mem_info_" + std::to_string(graph->graph_id()) + ".ir";
     somas_reuse_util_ptr_->DumpSomasMemoryIR(mem_file_path);

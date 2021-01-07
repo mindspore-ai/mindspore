@@ -63,7 +63,7 @@ bool Somas::Allocate(const session::KernelGraph *graph) {
     MS_LOG(EXCEPTION) << "Somas Assign Failed.";
   }
 
-  GenStatisticInfo();
+  GenGraphStatisticInfo();
   return ret;
 }
 
@@ -87,6 +87,10 @@ bool Somas::InitSomasTensors(const session::KernelGraph *graph) {
                << contiguous_tensors_list_.size() << " contiguous lists";
 
   if (save_graphs_) {
+    std::string file_path =
+      save_graphs_path_ + "/" + "somas_pre_processed_info_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpSomasInfoIR(file_path);
+
     std::string offline_file_path =
       save_graphs_path_ + "/" + "somas_offline_log_" + std::to_string(graph->graph_id()) + ".ir";
     DumpOfflineIR(offline_file_path);
@@ -182,62 +186,166 @@ void Somas::InitSomasInputTensors(const session::KernelGraph *graph) {
   bool is_all_nop_node = opt::IsAllNopNode(graph);
   auto kernel_cnodes = graph->execution_order();
   for (const auto &kernel : kernel_cnodes) {
-    auto node = nodes_map_[kernel.get()];
-    MS_EXCEPTION_IF_NULL(node);
-    auto stream = node->GetStream();
-    MS_EXCEPTION_IF_NULL(stream);
+    if (AnfAlgo::GetCNodeName(kernel) != kAtomicAddrCleanOpName) {
+      InitCommonNodeInputs(is_all_nop_node, kernel);
+    } else {
+      InitAtomicCleanInputs(is_all_nop_node, kernel);
+    }
+  }
+}
+void Somas::InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel) {
+  auto node = nodes_map_[kernel.get()];
+  MS_EXCEPTION_IF_NULL(node);
+  auto stream = node->GetStream();
+  MS_EXCEPTION_IF_NULL(stream);
 
-    // Input Tensor
-    auto input_tensor_num = AnfAlgo::GetInputTensorNum(kernel);
-    for (size_t i = 0; i < input_tensor_num; i++) {
-      auto input_node = kernel->input(i + 1);
-      session::KernelWithIndex prenode_index;
-      if (is_all_nop_node) {
-        prenode_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
-      } else {
-        prenode_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
-      }
-      if (AnfAlgo::CheckPrimitiveType(prenode_index.first, prim::kPrimMakeTuple)) {
-        MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << i << " is MakeTuple";
-      }
+  // Input Tensor
+  auto input_tensor_num = AnfAlgo::GetInputTensorNum(kernel);
+  for (size_t i = 0; i < input_tensor_num; i++) {
+    auto input_node = kernel->input(i + 1);
+    session::KernelWithIndex prenode_index;
+    if (is_all_nop_node) {
+      prenode_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0, false);
+    } else {
+      prenode_index = AnfAlgo::VisitKernelWithReturnType(input_node, 0, true);
+    }
+    if (AnfAlgo::CheckPrimitiveType(prenode_index.first, prim::kPrimMakeTuple)) {
+      MS_LOG(EXCEPTION) << "Input node [" << input_node->DebugString() << "]'s input " << i << " is MakeTuple";
+    }
 
-      if (!AnfAlgo::IsRealCNodeKernel(prenode_index.first)) {
-        MS_LOG(DEBUG) << "Input  [" << prenode_index.first->fullname_with_scope() << "] is not a real cnode kernel.";
-        continue;
-      }
+    if (!AnfAlgo::IsRealCNodeKernel(prenode_index.first)) {
+      auto parameter = GetSomasParameters(prenode_index.first, prenode_index.second);
+      node->input_parameters_map_[i] = parameter;
+      MS_LOG(DEBUG) << "Input  [" << prenode_index.first->fullname_with_scope() << "] is not a real cnode kernel.";
+      continue;
+    }
 
-      auto iter = nodes_map_.find(prenode_index.first.get());
-      if (iter == nodes_map_.end()) {
-        MS_LOG(EXCEPTION) << "Kernel[" << kernel->fullname_with_scope() << "]'s input " << i << " ["
-                          << prenode_index.first->fullname_with_scope() << "] is not init.";
+    auto iter = nodes_map_.find(prenode_index.first.get());
+    if (iter == nodes_map_.end()) {
+      MS_LOG(EXCEPTION) << "Kernel[" << kernel->fullname_with_scope() << "]'s input " << i << " ["
+                        << prenode_index.first->fullname_with_scope() << "] is not init.";
+    }
+    auto pre_somas_node = iter->second;
+    if (prenode_index.second > pre_somas_node->output_tensors_.size()) {
+      MS_LOG(EXCEPTION) << "Output index " << prenode_index.second << " exceed input node ["
+                        << prenode_index.first->fullname_with_scope() << "]'s outputs size "
+                        << pre_somas_node->output_tensors_.size();
+    }
+    auto input_somas_tensor = pre_somas_node->output_tensors_[prenode_index.second];
+    MS_EXCEPTION_IF_NULL(input_somas_tensor);
+    node->input_tensors_.push_back(input_somas_tensor);
+    if (input_somas_tensor->type_ == kOutputOnly) {
+      input_somas_tensor->type_ = kCommon;
+    }
+    input_somas_tensor->destinations_.insert(node);
+    input_somas_tensor->destinationStreams_.insert(stream);
+    if (input_somas_tensor->lifetime_.end_ < node->GetId()) {
+      input_somas_tensor->lifetime_.end_ = node->GetId();
+    }
+
+    if (node != pre_somas_node) {
+      node->ancestor_nodes_.insert(pre_somas_node);
+    }
+    auto input_tensor_stream = input_somas_tensor->GetSourceStream();
+    if (input_tensor_stream != stream) {
+      stream->ancestor_streams_.insert(input_tensor_stream);
+      input_somas_tensor->between_streams_ = true;
+    }
+  }
+}
+
+void Somas::InitAtomicCleanInputs(bool is_all_nop_node, const CNodePtr &kernel) {
+  auto node = nodes_map_[kernel.get()];
+  MS_EXCEPTION_IF_NULL(node);
+  auto stream = node->GetStream();
+  MS_EXCEPTION_IF_NULL(stream);
+
+  MS_EXCEPTION_IF_NULL(kernel->inputs()[1]);
+  auto pre_node = (kernel->inputs()[1])->cast<CNodePtr>();
+  auto iter = nodes_map_.find(pre_node.get());
+  if (iter == nodes_map_.end()) {
+    MS_LOG(EXCEPTION) << "Kernel[" << kernel->fullname_with_scope() << "]'s input [" << pre_node->fullname_with_scope()
+                      << "] is not init.";
+  }
+  auto pre_somas_node = iter->second;
+  // set clean output tensors
+  if (AnfAlgo::HasNodeAttr(kAttrAtomicOutputIndexs, pre_node)) {
+    auto clean_output_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicOutputIndexs);
+    for (auto index : clean_output_indexs) {
+      if (index > pre_somas_node->output_tensors_.size()) {
+        MS_LOG(EXCEPTION) << "Output index " << index << " exceed input node [" << pre_node->fullname_with_scope()
+                          << "]'s outputs size " << pre_somas_node->output_tensors_.size();
       }
-      auto pre_somas_node = iter->second;
-      if (prenode_index.second > pre_somas_node->output_tensors_.size()) {
-        MS_LOG(EXCEPTION) << "Output index " << prenode_index.second << " exceed input node ["
-                          << prenode_index.first->fullname_with_scope() << "]'s outputs size "
-                          << pre_somas_node->output_tensors_.size();
-      }
-      auto input_somas_tensor = pre_somas_node->output_tensors_[prenode_index.second];
+      auto input_somas_tensor = pre_somas_node->output_tensors_[index];
       MS_EXCEPTION_IF_NULL(input_somas_tensor);
       node->input_tensors_.push_back(input_somas_tensor);
-      if (input_somas_tensor->type_ == kOutputOnly) {
-        input_somas_tensor->type_ = kCommon;
-      }
       input_somas_tensor->destinations_.insert(node);
       input_somas_tensor->destinationStreams_.insert(stream);
-      if (input_somas_tensor->lifetime_.end_ < node->GetId()) {
-        input_somas_tensor->lifetime_.end_ = node->GetId();
+      if (input_somas_tensor->lifetime_.start_ > node->GetId()) {
+        input_somas_tensor->lifetime_.start_ = node->GetId();
       }
-
-      if (node != pre_somas_node) {
-        node->ancestor_nodes_.insert(pre_somas_node);
-      }
+      node->ancestor_nodes_.insert(pre_somas_node);
       auto input_tensor_stream = input_somas_tensor->GetSourceStream();
       if (input_tensor_stream != stream) {
         stream->ancestor_streams_.insert(input_tensor_stream);
         input_somas_tensor->between_streams_ = true;
       }
     }
+  }
+  // set clean workspace tensors
+  if (AnfAlgo::HasNodeAttr(kAttrAtomicWorkspaceIndexs, pre_node)) {
+    auto clean_workspace_indexs = AnfAlgo::GetNodeAttr<std::vector<size_t>>(pre_node, kAttrAtomicWorkspaceIndexs);
+    for (const auto &index : clean_workspace_indexs) {
+      if (index > pre_somas_node->output_tensors_.size()) {
+        MS_LOG(EXCEPTION) << "Workspace index " << index << " exceed input node [" << pre_node->fullname_with_scope()
+                          << "]'s Workspace size " << pre_somas_node->workspace_tensors_.size();
+      }
+      auto input_somas_tensor = pre_somas_node->workspace_tensors_[index];
+      MS_EXCEPTION_IF_NULL(input_somas_tensor);
+      node->input_tensors_.push_back(input_somas_tensor);
+      input_somas_tensor->destinations_.insert(node);
+      input_somas_tensor->destinationStreams_.insert(stream);
+      if (input_somas_tensor->lifetime_.start_ > node->GetId()) {
+        input_somas_tensor->lifetime_.start_ = node->GetId();
+      }
+      node->ancestor_nodes_.insert(pre_somas_node);
+      auto input_tensor_stream = input_somas_tensor->GetSourceStream();
+      if (input_tensor_stream != stream) {
+        stream->ancestor_streams_.insert(input_tensor_stream);
+        input_somas_tensor->between_streams_ = true;
+      }
+    }
+  }
+}
+
+SomasParameterPtr Somas::CreateSomasParameters(AnfNodePtr node, size_t index) {
+  auto id = parameters_list_.size();
+  auto device_addr = AnfAlgo::GetOutputAddr(node, index);
+  if (device_addr == nullptr) {
+    MS_LOG(EXCEPTION) << "Node " << node->fullname_with_scope() << " has no device address before Somas.";
+  }
+  auto param = std::make_shared<SomasParameter>(id, node, index, device_addr->GetPtr(), device_addr->GetSize());
+  parameters_list_.push_back(param);
+  return param;
+}
+
+SomasParameterPtr Somas::GetSomasParameters(AnfNodePtr node, size_t index) {
+  auto key = node.get();
+  auto iter = parameters_map_.find(key);
+  if (iter != parameters_map_.end()) {
+    auto it = std::find_if(iter->second.begin(), iter->second.end(),
+                           [index](SomasParameterPtr param) -> bool { return index == param->output_index_; });
+    if (it != iter->second.end()) {
+      return *it;
+    } else {
+      auto new_param = CreateSomasParameters(node, index);
+      iter->second.push_back(new_param);
+      return new_param;
+    }
+  } else {
+    auto new_param = CreateSomasParameters(node, index);
+    parameters_map_[key].push_back(new_param);
+    return new_param;
   }
 }
 
@@ -258,8 +366,8 @@ void Somas::InitBasicInfo(const session::KernelGraph *graph) {
     save_graphs_path_ = ".";
   }
   if (save_graphs_) {
-    std::string file_path = save_graphs_path_ + "/" + "somas_basic_info_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpSomasBasicIR(file_path);
+    std::string file_path = save_graphs_path_ + "/" + "somas_initial_info_" + std::to_string(graph->graph_id()) + ".ir";
+    DumpSomasInfoIR(file_path);
   }
 }
 
@@ -281,7 +389,6 @@ void Somas::GetNextOutputProcess(const session::KernelGraph *graph) {
       }
     }
   }
-
   MS_LOG(INFO) << "Special Tensor total size: GetNext Output " << total_size;
 }
 
@@ -305,12 +412,6 @@ void Somas::IndependentNodeOutputProcess(const session::KernelGraph *graph) {
   }
 
   MS_LOG(INFO) << "Special Tensor total size: Independent Node output " << total_size;
-
-  if (save_graphs_ && total_size) {
-    std::string file_path =
-      save_graphs_path_ + "/" + "Independent_node_process_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpSomasBasicIR(file_path);
-  }
 }
 
 void Somas::SummaryInputProcess(const session::KernelGraph *graph) {
@@ -349,12 +450,6 @@ void Somas::SummaryInputProcess(const session::KernelGraph *graph) {
   }
 
   MS_LOG(INFO) << "Special Tensor total size: SummaryNodes: " << total_summary_size;
-
-  if (save_graphs_) {
-    std::string file_path =
-      save_graphs_path_ + "/" + "somas_summary_process_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpSomasBasicIR(file_path);
-  }
 }
 
 void Somas::RefNodeProcess(const session::KernelGraph *graph) {
@@ -400,12 +495,6 @@ void Somas::RefNodeProcess(const session::KernelGraph *graph) {
   }
 
   MS_LOG(INFO) << "Special Tensor total size: RefNode: input " << total_input_size << " output " << total_output_size;
-
-  if (save_graphs_ && (total_input_size || total_output_size)) {
-    std::string file_path =
-      save_graphs_path_ + "/" + "somas_refnode_process_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpSomasBasicIR(file_path);
-  }
 }
 
 void Somas::UnReuseNodeProcess(const session::KernelGraph *graph) {
@@ -442,12 +531,6 @@ void Somas::UnReuseNodeProcess(const session::KernelGraph *graph) {
         workspace->lifelong_value_ = kLifeLongGraphAll;
       }
     }
-  }
-
-  if (save_graphs_) {
-    std::string file_path =
-      save_graphs_path_ + "/" + "somas_unreuse_node_process_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpSomasBasicIR(file_path);
   }
 }
 
@@ -876,7 +959,7 @@ bool Somas::Assign(const session::KernelGraph *graph) {
                                        contiguous_tensors_list_removed_ref, false);
   MS_LOG(INFO) << "End Solving";
   if (status != SUCCESS) {
-    GenStatisticInfo();
+    GenGraphStatisticInfo();
     MS_LOG(EXCEPTION) << "SOMAS Solving Failed.";
   }
 
@@ -912,11 +995,6 @@ bool Somas::Assign(const session::KernelGraph *graph) {
   // Set mem_offset_ value by solver result
   mem_offset_ = static_cast<size_t>(somas_solver_->GetMaxOffset());
 
-  if (save_graphs_) {
-    std::string mem_pool_file_path =
-      save_graphs_path_ + "/" + "somas_mem_pool_info_" + std::to_string(graph->graph_id()) + ".ir";
-    DumpSomasMemoryPoolInfoIR(mem_pool_file_path);
-  }
   return true;
 }
 
@@ -933,7 +1011,7 @@ std::string Somas::GetSplitName(const std::string &scope_name) const {
   }
 }
 
-void Somas::DumpSomasBasicIR(const string filename) {
+void Somas::DumpSomasInfoIR(const string filename) {
   if (filename.size() > PATH_MAX) {
     MS_LOG(ERROR) << "File path " << filename << " is too long.";
     return;
@@ -951,16 +1029,38 @@ void Somas::DumpSomasBasicIR(const string filename) {
     MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
     return;
   }
-  ofs << "All Tensors:\n\n";
+
+  ofs << "All Parameters:\n\n";
+  ofs << "index:"
+      << "\tsize:"
+      << "\tstart_addr:"
+      << "\tsource node name:"
+      << "\tnode out index:\n";
+
+  for (const auto &param : parameters_list_) {
+    ofs << "%" << param->id_ << "P"
+        << "\t"
+        << "#" << param->size_ << "S"
+        << "\t"
+        << "&" << param->addr_ << "\t" << param->source_node_->fullname_with_scope() << "\t" << param->output_index_
+        << "\n";
+  }
+
+  ofs << "\n\nAll Tensors:\n\n";
   ofs << "index:"
       << "\tsize:"
       << "\treal_size:"
       << "\toffset:"
       << "\taddr:"
       << "\ttype:"
-      << "\tlifelong:\n";
+      << "\tlifelong:"
+      << "\tlife_start:"
+      << "\tlife_end:"
+      << "\tsource node name:\n";
 
   for (const auto &tensor : tensors_list_) {
+    auto scope_name = tensor->GetSourceNode()->scope_full_name_;
+    std::string split_name = GetSplitName(scope_name);
     ofs << "%" << tensor->GetId() << "T"
         << "\t"
         << "#" << tensor->GetAlignedSize() << "S"
@@ -970,7 +1070,8 @@ void Somas::DumpSomasBasicIR(const string filename) {
         << "&" << tensor->GetOffset() << ""
         << "\t"
         << "&" << static_cast<void *>(tensor->GetOffset() + mem_base_addr_) << "\t"
-        << tensor_type_name_map[tensor->type_] << "\t" << tensor->IsLifelong() << "\n";
+        << tensor_type_name_map[tensor->type_] << "\t" << tensor->IsLifelong() << "\t" << tensor->lifetime_.start_
+        << "\t" << tensor->lifetime_.end_ << "\t" << split_name << "\n";
   }
 
   ofs << "\n\nAll Nodes:\n\n";
@@ -978,10 +1079,25 @@ void Somas::DumpSomasBasicIR(const string filename) {
     auto scope_name = node->scope_full_name_;
     std::string split_name = GetSplitName(scope_name);
     ofs << "$" << node->GetId() << "\t" << split_name << "\t" << static_cast<int>(node->GetType()) << "\t";
+    vector<std::pair<string, size_t>> input_list;
+    std::transform(
+      node->input_tensors_.begin(), node->input_tensors_.end(), std::back_inserter(input_list),
+      [](SomasTensorPtr in) -> std::pair<string, size_t> { return std::make_pair("Tensor", in->GetId()); });
+    for (const auto &param : node->input_parameters_map_) {
+      auto index = param.first;
+      auto iter = input_list.begin();
+      std::advance(iter, index);
+      input_list.insert(iter, std::make_pair("Parameter", param.second->id_));
+    }
     ofs << "inputs[";
-    for (const auto &in : node->input_tensors_) {
-      ofs << "%" << in->GetId() << "T"
-          << ", ";
+    for (const auto &in : input_list) {
+      if (in.first == "Tensor") {
+        ofs << "%" << in.second << "T"
+            << ", ";
+      } else if (in.first == "Parameter") {
+        ofs << "%" << in.second << "P"
+            << ", ";
+      }
     }
     ofs << "]";
     ofs << "\toutputs[";
@@ -1008,13 +1124,15 @@ void Somas::DumpSomasBasicIR(const string filename) {
     ofs << "\n";
   }
 
-  ofs << "\n\nAll Ref Node Info:\n\n";
-  for (const auto &ref_in_out : ref_node_constraints_) {
-    ofs << "refnode input-output:";
-    for (const auto &item : ref_in_out) {
-      ofs << "%" << item << "T ";
+  if (!ref_node_constraints_.empty()) {
+    ofs << "\n\nAll Ref Node Info:\n\n";
+    for (const auto &ref_in_out : ref_node_constraints_) {
+      ofs << "refnode input-output:";
+      for (const auto &item : ref_in_out) {
+        ofs << "%" << item << "T ";
+      }
+      ofs << "\n";
     }
-    ofs << "\n";
   }
 }
 
@@ -1197,115 +1315,7 @@ size_t Somas::CalcLowerBound() const {
   return max_lifetime;
 }
 
-void Somas::DumpSomasMemoryPoolInfoIR(const string filename) {
-  if (filename.size() > PATH_MAX) {
-    MS_LOG(ERROR) << "File path " << filename << " is too long.";
-    return;
-  }
-
-  auto real_path = Common::GetRealPath(filename);
-  if (!real_path.has_value()) {
-    MS_LOG(ERROR) << "Get real path failed. path=" << filename;
-    return;
-  }
-
-  ChangeFileMode(real_path.value(), S_IRWXU);
-  std::ofstream ofs(real_path.value());
-
-  if (!ofs.is_open()) {
-    MS_LOG(ERROR) << "Open dump file '" << real_path.value() << "' failed!";
-    return;
-  }
-
-  ofs << "Total Dynamic Size (Upper Bound):\t" << upper_bound_ << "\n"
-      << "Theoretical Optimal Size (Lower Bound):\t" << lower_bound_ << "\n"
-      << "Total Workspace Size:\t" << workspace_total_size_ << "\n"
-      << "Total Communication Input Tensor Size:\t" << comm_input_total_size_ << "\n"
-      << "Total Communication Output Tensor Size:\t" << comm_output_total_size_ << "\n"
-      << "Total LifeLong All Tensor Size:\t" << lifelong_all_total_size_ << "\n"
-      << "Total LifeLong Start Tensor Size:\t" << lifelong_start_total_size_ << "\n"
-      << "Total LifeLong End Tensor Size:\t" << lifelong_end_total_size_ << "\n"
-      << "Reused Size(Allocate Size):\t" << GetTotalMemSize() << "\n\n\n";
-
-  std::map<size_t, size_t> mem_map;
-  for (auto tensor : tensors_list_) {
-    mem_map[tensor->GetOffset()] = 0;
-  }
-
-  size_t num = 0;
-  for (auto iter = mem_map.begin(); iter != mem_map.end(); ++iter, ++num) {
-    iter->second = num;
-  }
-
-  std::map<size_t, bool> tensor_mask;
-  for (size_t i = 0; i < tensors_list_.size(); ++i) {
-    tensor_mask[i] = false;
-  }
-
-  std::vector<SomasTensorPtr> order_tensors_list = tensors_list_;
-  std::sort(order_tensors_list.begin(), order_tensors_list.end(),
-            [](const SomasTensorPtr tensor1, const SomasTensorPtr tensor2) {
-              return tensor1->GetOffset() < tensor2->GetOffset();
-            });
-
-  size_t cur_total_tensor_size = 0;
-  for (const auto &node : nodes_list_) {
-    if (node == nullptr) {
-      MS_LOG(WARNING) << "Node is NULL, No ir information output";
-      continue;
-    }
-    ofs << "node_name: " << GetSplitName(node->scope_full_name_) << "\tnode_id: " << node->GetId() << "\n";
-    ofs << "mem_id\t"
-        << "mem_head\t"
-        << "mem_tail\t"
-        << "node_id\t"
-        << "stream_id\t"
-        << "tensor_id\t"
-        << "tensor_type\t"
-        << "lifelong\t"
-        << "origin_size\t"
-        << "align_size\t"
-        << "source_node\t"
-        << "lifetime_start\t"
-        << "lifetime_end\t\n";
-
-    size_t cur_alive_tensor_size = 0;
-    size_t curr_runtime = node->GetId();
-    for (size_t i = 0; i < order_tensors_list.size(); ++i) {
-      auto tensor = order_tensors_list[i];
-      if (tensor->lifetime_.start_ <= curr_runtime && tensor->lifetime_.end_ >= curr_runtime) {
-        cur_alive_tensor_size += tensor->aligned_size_;
-        if (!tensor_mask[i]) {
-          cur_total_tensor_size += tensor->aligned_size_;
-          tensor_mask[i] = true;
-        }
-        std::string scope_name;
-        size_t src_node_id = 0xffff;
-        size_t tensor_stream_id = 0xffff;
-        if (tensor->GetSourceNode() != nullptr) {
-          scope_name = tensor->GetSourceNode()->scope_full_name_;
-          src_node_id = tensor->GetSourceNode()->GetId();
-          tensor_stream_id = tensor->GetSourceNode()->GetId();
-        } else {
-          scope_name = "Somas Tensor";
-        }
-        std::string split_name = GetSplitName(scope_name);
-
-        ofs << "&" << mem_map[tensor->GetOffset()] << "\t" << tensor->GetOffset() << "\t"
-            << tensor->GetOffset() + tensor->GetAlignedSize() << "\t"
-            << "\t#" << src_node_id << "\t@" << tensor_stream_id << "\t%" << tensor->GetId() << "T\t"
-            << tensor_type_name_map[tensor->type_] << "\t" << static_cast<int>(tensor->lifelong_value_) << "\t"
-            << tensor->GetOriginalSize() << "\t" << tensor->GetAlignedSize() << "\t"
-            << "\t" << split_name << "\t" << tensor->lifetime_.start_ << "\t" << tensor->lifetime_.end_ << "\n";
-      }
-    }
-    ofs << "Current Alive Tensor Size(Lower Bound):\t" << cur_alive_tensor_size << "\n"
-        << "Current Total Tensor Size(Upper Bound):\t" << cur_total_tensor_size << "\n\n";
-  }
-  ofs.close();
-}
-
-void Somas::GenStatisticInfo() {
+void Somas::GenGraphStatisticInfo() {
   lower_bound_ = CalcLowerBound();
   for (const auto &tensor : tensors_list_) {
     upper_bound_ += tensor->aligned_size_;

@@ -29,6 +29,7 @@
 #include "backend/optimizer/somas/somas_node.h"
 #include "backend/optimizer/somas/somas_solver_pre.h"
 #include "backend/optimizer/somas/somas_stream.h"
+#include "backend/optimizer/somas/somas_parameter.h"
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/session/kernel_graph.h"
 
@@ -48,7 +49,7 @@ class Somas {
   uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
   uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;
 
-  void DumpSomasBasicIR(const string filename);
+  void DumpSomasInfoIR(const string filename);
   void DumpSomasMemoryIR(const string filename);
 
   static bool NodeSort(SomasNodePtr, SomasNodePtr);
@@ -58,11 +59,13 @@ class Somas {
   // Maps
   std::unordered_map<size_t, SomasTensorPtr> tensors_map_;
   std::map<void *, SomasNodePtr> nodes_map_;
+  std::map<void *, vector<SomasParameterPtr>> parameters_map_;
 
   // Vectors
   std::vector<SomasNodePtr> nodes_list_;
   std::vector<SomasStreamPtr> streams_list_;
   std::vector<SomasTensorPtr> tensors_list_;
+  std::vector<SomasParameterPtr> parameters_list_;
 
   // Stream groups
   std::vector<vector<uint32_t>> streams_groups_;
@@ -120,7 +123,11 @@ class Somas {
   void DumpSomasMemoryPoolInfoIR(const string filename);
   std::string GetSplitName(const string &scope_name) const;
   size_t CalcLowerBound() const;
-  void GenStatisticInfo();
+  void GenGraphStatisticInfo();
+  SomasParameterPtr GetSomasParameters(AnfNodePtr node, size_t index);
+  SomasParameterPtr CreateSomasParameters(AnfNodePtr node, size_t index);
+  void InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel);
+  void InitAtomicCleanInputs(bool is_all_nop_node, const CNodePtr &kernel);
 };
 
 using SomasPtr = std::shared_ptr<Somas>;
