@@ -418,8 +418,6 @@ void GPUSession::BuildOpImpl(const OpRunInfo &op_run_info, const GraphInfo &grap
   SelectKernel(kernel_graph);
   RunOpHardwareOptimize(kernel_graph);
   StartKernelRT();
-  // Hide NopOp from execution graph
-  opt::HideNopNode(kernel_graph.get());
   BuildKernel(kernel_graph);
   run_op_graphs_[graph_info] = kernel_graph;
 }
@@ -434,8 +432,6 @@ void GPUSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info,
   // run op
   auto kernel_graph = run_op_graphs_[graph_info];
   MS_EXCEPTION_IF_NULL(kernel_graph);
-  // Remove NopOp from execution graph
-  opt::RemoveNopNode(kernel_graph.get());
   RunOpAllocateMemory(*input_tensors, kernel_graph.get());
   // Execute the computation
   LoadInputData(kernel_graph, *input_tensors);

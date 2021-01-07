@@ -1173,7 +1173,12 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
     auto &tensor = item.first;
     auto &node = item.second.first;
     auto &output_index = item.second.second;
-    auto address = AnfAlgo::GetMutableOutputAddr(node, output_index);
+    DeviceAddressPtr address = nullptr;
+    if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+      address = AnfAlgo::GetMutableOutputAddr(node, output_index, false);
+    } else {
+      address = AnfAlgo::GetMutableOutputAddr(node, output_index);
+    }
     MS_EXCEPTION_IF_NULL(tensor);
     tensor->set_device_address(address);
     tensor->SetNeedWait(false);

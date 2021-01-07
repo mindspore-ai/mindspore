@@ -200,6 +200,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   // Update the abstract and device address info of value node and tensors in bprop graph
   void UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
   void SaveTensorsInValueNode(const ResourcePtr &resource);
+  void SaveAllValueNodeTensors(const FuncGraphPtr &graph);
   void CleanPreMemoryInValueNode(const std::string &cell_id);
 
   // Construct grad graph
@@ -306,6 +307,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   std::unordered_map<std::string, TensorIdWithTensor> cell_tensor_id_with_tensor_;
   std::unordered_map<std::string, abstract::AbstractBasePtr> node_abs_map_;
   std::unordered_map<std::string, AbstractListMap> prim_abs_list_;
+  std::unordered_set<tensor::TensorPtr> all_value_node_tensors_;
 };
 
 using PynativeExecutorPtr = std::shared_ptr<PynativeExecutor>;

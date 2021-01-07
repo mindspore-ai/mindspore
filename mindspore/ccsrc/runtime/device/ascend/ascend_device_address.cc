@@ -612,7 +612,7 @@ bool AscendDeviceAddress::ConvertFormatAndSyncHostToDevice(const ShapeVector &sh
   return sync_ok;
 }
 
-AscendDeviceAddress::~AscendDeviceAddress() {
+void AscendDeviceAddress::ClearDeviceMemory() {
   if (ptr_ == nullptr) {
     return;
   }
@@ -626,6 +626,8 @@ AscendDeviceAddress::~AscendDeviceAddress() {
     ptr_ = nullptr;
   }
 }
+
+AscendDeviceAddress::~AscendDeviceAddress() { ClearDeviceMemory(); }
 
 bool AscendDeviceAddress::DumpMemToFile(bool trans_flag, const std::string &filepath, const std::string &host_fmt,
                                         const ShapeVector &host_shape, TypeId host_type) const {
