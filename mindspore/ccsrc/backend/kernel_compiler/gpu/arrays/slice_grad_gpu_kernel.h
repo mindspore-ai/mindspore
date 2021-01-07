@@ -51,38 +51,27 @@ class SliceGradGpuKernel : public GpuKernel {
     auto kernel_name = AnfAlgo::GetCNodeName(kernel_node);
     if (kernel_name == "StridedSliceGrad") {
       is_strided_slice_ = true;
-      std::vector<int> shapex;
-      std::vector<int64_t> shapex_me = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
-      (void)std::transform(shapex_me.begin(), shapex_me.end(), std::back_inserter(shapex),
-                           [](const int64_t &value) { return static_cast<int>(value); });
+      std::vector<int64_t> shapex = GetAttr<std::vector<int64_t>>(kernel_node, "shapex");
       for (auto x : shapex) {
-        input_shape_.push_back(IntToSize(x));
+        input_shape_.push_back(static_cast<size_t>(x));
       }
       for (auto i = input_shape_.size(); i < 4; i++) {
         (void)input_shape_.insert(input_shape_.begin(), 1);
       }
-      std::vector<int64_t> strides_me = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
-      (void)std::transform(strides_me.begin(), strides_me.end(), std::back_inserter(strides_),
-                           [](const int64_t &value) { return static_cast<int>(value); });
+      strides_ = GetAttr<std::vector<int64_t>>(kernel_node, "strides");
       for (auto i = strides_.size(); i < 4; i++) {
         (void)strides_.insert(strides_.begin(), 1);
       }
-      std::vector<int64_t> size_me = GetAttr<std::vector<int64_t>>(kernel_node, "end");
-      (void)std::transform(size_me.begin(), size_me.end(), std::back_inserter(size_),
-                           [](const int64_t &value) { return static_cast<int>(value); });
+      size_ = GetAttr<std::vector<int64_t>>(kernel_node, "end");
     } else {
       auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 1);
       ShapeNdTo4d(input_shape, &input_shape_);
-      std::vector<int64_t> size_me = GetAttr<std::vector<int64_t>>(kernel_node, "size");
-      (void)std::transform(size_me.begin(), size_me.end(), std::back_inserter(size_),
-                           [](const int64_t &value) { return static_cast<int>(value); });
+      size_ = GetAttr<std::vector<int64_t>>(kernel_node, "size");
     }
 
     auto dy_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     ShapeNdTo4d(dy_shape, &dy_shape_);
-    std::vector<int64_t> begin_me = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
-    (void)std::transform(begin_me.begin(), begin_me.end(), std::back_inserter(begin_),
-                         [](const int64_t &value) { return static_cast<int>(value); });
+    begin_ = GetAttr<std::vector<int64_t>>(kernel_node, "begin");
     DealParam();
     input_size_ = input_shape_[0] * input_shape_[1] * input_shape_[2] * input_shape_[3] * sizeof(T);
 
@@ -137,9 +126,9 @@ class SliceGradGpuKernel : public GpuKernel {
       }
     }
   }
-  std::vector<int> begin_;
-  std::vector<int> size_;
-  std::vector<int> strides_;
+  std::vector<int64_t> begin_;
+  std::vector<int64_t> size_;
+  std::vector<int64_t> strides_;
   std::vector<size_t> input_shape_;
   std::vector<size_t> dy_shape_;
   std::vector<size_t> input_size_list_;
