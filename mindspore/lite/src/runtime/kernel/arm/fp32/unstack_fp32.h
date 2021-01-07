@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/unstack.h"
+#include "nnacl/base/unstack_base.h"
 
 namespace mindspore::kernel {
 class UnstackCPUKernel : public LiteKernel {
@@ -34,7 +34,7 @@ class UnstackCPUKernel : public LiteKernel {
   int Run() override;
 
  private:
-  float **output_addr_array_ = nullptr;
+  void **output_addr_array_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

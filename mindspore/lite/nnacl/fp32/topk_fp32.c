@@ -30,7 +30,7 @@ int DescendCmp(const void *a, const void *b) {
   }
 }
 
-int AscendCmp(const void *a, const void *b) {
+int IndexSortCmp(const void *a, const void *b) {
   if (((const TopkNode *)a)->index > ((const TopkNode *)b)->index) {
     return 1;
   } else {
@@ -54,7 +54,7 @@ void Topk(float *input_data, float *output_data, int32_t *output_index, TopkPara
     }
     qsort(top_map, last_dim_size, sizeof(top_map[0]), DescendCmp);
     if (!parameter->sorted_) {
-      qsort(top_map, k, sizeof(top_map[0]), AscendCmp);
+      qsort(top_map, k, sizeof(top_map[0]), IndexSortCmp);
     }
     for (int m = 0; m < k; m++) {
       cur_output_data[m] = top_map[m].element;

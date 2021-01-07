@@ -149,7 +149,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
       }
 
       MirrorPadBlock block;
-      int size_offset = DEFAULT_PAD_NDIMS - static_cast<int>(pad_region.size());
+      const int size_offset = DEFAULT_PAD_NDIMS - static_cast<int>(pad_region.size());
       for (size_t i = 0; i < pad_region.size(); ++i) {
         int di = size_offset + i;
         int si = remain_dim_offset + i;

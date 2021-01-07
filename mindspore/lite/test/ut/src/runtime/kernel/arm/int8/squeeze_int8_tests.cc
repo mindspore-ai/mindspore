@@ -64,14 +64,10 @@ TEST_F(TestSqueezeInt8, Squeeze_1d_axis0_offset0_quant0_thread2) {
   output0_tensor->set_data_type(tid_int8);
   outputs_tensor[0] = output0_tensor;
 
-  SqueezeParameter op_param;
-  op_param.op_parameter_.type_ = schema::PrimitiveType_Squeeze;
+  OpParameter op_param;
+  op_param.type_ = schema::PrimitiveType_Squeeze;
   lite::InnerContext *ctx = new lite::InnerContext;
   ctx->thread_num_ = 2;
-  ASSERT_EQ(lite::RET_OK, ctx->Init());
-  op_param.axis_ = 0;
-  op_param.offset_[0] = 1;
-  op_param.offset_size_ = 1;
   kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Squeeze};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
@@ -93,5 +89,4 @@ TEST_F(TestSqueezeInt8, Squeeze_1d_axis0_offset0_quant0_thread2) {
   delete output0_tensor;
   delete ctx;
 }
-
 }  // namespace mindspore

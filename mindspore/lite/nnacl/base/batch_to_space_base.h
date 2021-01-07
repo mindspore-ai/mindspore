@@ -13,8 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_NNACL_BATCH_TO_SPACE_BASE_H_
+#define MINDSPORE_LITE_NNACL_BATCH_TO_SPACE_BASE_H_
 
-#include "nnacl/zeroslike.h"
 #include <string.h>
+#include "nnacl/op_base.h"
 
-void ApproximateZerosLike(float *output, int number) { memset(output, 0.0, number * sizeof(float)); }
+#ifdef __cplusplus
+extern "C" {
+#endif
+void BatchToSpaceNoCropForNHWC(const void *input, void *output, const int *in_shape, int out_n, const int *block,
+                               int data_size);
+void BatchToSpaceForNHWC(const void *input, void *output, const int *in_shape, int out_n, const int *block,
+                         const int *crops, int data_size);
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_BATCH_TO_SPACE_BASE_H_

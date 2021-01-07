@@ -19,7 +19,6 @@
 #ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
 #endif
-#include "nnacl/clip.h"
 
 namespace mindspore {
 namespace lite {

@@ -14,16 +14,25 @@
  * limitations under the License.
  */
 
-#include "nnacl/clip.h"
+#ifndef MINDSPORE_LITE_NNACL_SQUEEZE_BASE_H_
+#define MINDSPORE_LITE_NNACL_SQUEEZE_BASE_H_
+
 #include "nnacl/errorcode.h"
 
-int ClipFp32(const float *src, int length, float *dst, float min_val, float max_val) {
-  if (max_val <= min_val) {
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+inline int DoSqueeze(const void *input_ptr, void *output_ptr, size_t data_size) {
+  if (input_ptr == NULL || output_ptr == NULL) {
     return NNACL_ERR;
   }
-  int i = 0;
-  for (; i < length; ++i) {
-    dst[i] = src[i] < min_val ? min_val : (src[i] > max_val ? max_val : src[i]);
-  }
+  (void)memcpy(output_ptr, input_ptr, data_size);
   return NNACL_OK;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_SQUEEZE_BASE_H_

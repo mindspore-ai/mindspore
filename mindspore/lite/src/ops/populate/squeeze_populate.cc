@@ -14,14 +14,11 @@
  * limitations under the License.
  */
 
-#include "src/ops/squeeze.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/squeeze.h"
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateSqueezeParameter(const mindspore::lite::PrimitiveC *primitive) {
   OpParameter *squeeze_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (squeeze_param == nullptr) {
