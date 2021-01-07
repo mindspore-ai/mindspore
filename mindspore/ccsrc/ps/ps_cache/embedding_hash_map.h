@@ -47,10 +47,6 @@ class EmbeddingHashMap {
   virtual ~EmbeddingHashMap() = default;
   int ParseData(const int id, int *swap_out_index, int *swap_out_ids, const size_t data_step,
                 const size_t graph_running_step, size_t *swap_out_size);
-  std::unordered_map<int, int>::const_iterator id_iter(const int id) const { return hash_id_to_index_.find(id); }
-  bool IsIdExist(const std::unordered_map<int, int>::const_iterator iter) const {
-    return iter != hash_id_to_index_.end();
-  }
   size_t hash_step(const int hash_index) const { return hash_map_elements_[hash_index].step_; }
   void set_hash_step(const int hash_index, const size_t step) { hash_map_elements_[hash_index].set_step(step); }
   const std::unordered_map<int, int> &hash_id_to_index() const { return hash_id_to_index_; }
