@@ -15,7 +15,9 @@
  */
 
 #include "minddata/dataset/kernels/image/rotate_op.h"
+#ifdef ENABLE_ANDROID
 #include "minddata/dataset/kernels/image/lite_image_utils.h"
+#endif
 
 namespace mindspore {
 namespace dataset {
@@ -26,7 +28,9 @@ Status RotateOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
   IO_CHECK(input, output);
   CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "The shape size " + std::to_string(input->shape().Size()) +
                                                              " of input tensor is invalid");
+#ifdef ENABLE_ANDROID
   Rotate(input, output, angle_id_);
+#endif
   return Status::OK();
 }
 
