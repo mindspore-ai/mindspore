@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,6 +168,7 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
   if (max_shape.empty()) {
     max_shape = shape->shape();
   }
+
   auto ids =
     std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(ids_shape, min_shape, max_shape));
   // Currently we choose the same data type as input for the idx.
@@ -186,6 +187,7 @@ AbstractBasePtr InferImplUnique(const AnalysisEnginePtr &, const PrimitivePtr &p
   if (idx_max_shape.empty()) {
     idx_max_shape = shape->shape();
   }
+
   auto ids_idx = std::make_shared<AbstractTensor>(ids_idx_type, idx_shape);
   ids_idx->set_shape(std::make_shared<Shape>(idx_shape, idx_min_shape, idx_max_shape));
   // outputs: ids, ids_idx
@@ -950,6 +952,37 @@ AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const Primitive
 
   ShapePtr output_shape = std::make_shared<Shape>(lengths_shape, lengths_shape_min, lengths_shape_max);
   return std::make_shared<AbstractTensor>(kBool, output_shape);
+}
+
+AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                               const AbstractBasePtrList &args_spec_list) {
+  const std::string &op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 3);
+  AbstractTensorPtr range_start = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  AbstractTensorPtr range_end = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  AbstractTensorPtr range_delta = CheckArg<AbstractTensor>(op_name, args_spec_list, 2);
+
+  TypePtrList supported_types = {kInt64, kInt32, kFloat32, kFloat64};
+  TypePtr range_start_type = CheckTensorDType(range_start, supported_types, "range_start input of Range should be %s");
+  TypePtr range_end_type = CheckTensorDType(range_end, supported_types, "range_start input of Range should be %s");
+  TypePtr range_delta_type = CheckTensorDType(range_delta, supported_types, "range_start input of Range should be %s");
+
+  // check all 3 inputs are same type
+  if (!IsIdentidityOrSubclass(range_start_type, range_end_type) ||
+      !IsIdentidityOrSubclass(range_end_type, range_delta_type)) {
+    MS_LOG(EXCEPTION) << "All inputs must have same type, but got: " << args_spec_list[0]->type_name() << ", "
+                      << args_spec_list[1]->type_name() << ", and " << args_spec_list[2]->type_name();
+  }
+
+  int64_t max_output_length = -1;
+  ValuePtr max_output_length_ptr = primitive->GetAttr("maxlen");
+  max_output_length = GetValue<int64_t>(max_output_length_ptr);
+  ShapeVector output_shape = {Shape::SHP_ANY};
+  ShapeVector min_shape = {1};
+  ShapeVector max_shape = {max_output_length};
+  ShapePtr shape = std::make_shared<Shape>(output_shape, min_shape, max_shape);
+
+  return std::make_shared<AbstractTensor>(range_start_type, shape);
 }
 }  // namespace abstract
 }  // namespace mindspore
