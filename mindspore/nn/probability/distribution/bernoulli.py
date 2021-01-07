@@ -49,12 +49,10 @@ class Bernoulli(Distribution):
         >>> # A Bernoulli distribution can be initialized without arguments.
         >>> # In this case, `probs` must be passed in through arguments during function calls.
         >>> b2 = msd.Bernoulli(dtype=mindspore.int32)
-
         >>> # Here are some tensors used below for testing
         >>> value = Tensor([1, 0, 1], dtype=mindspore.int32)
         >>> probs_a = Tensor([0.6], dtype=mindspore.float32)
         >>> probs_b = Tensor([0.2, 0.3, 0.4], dtype=mindspore.float32)
-
         >>> # Private interfaces of probability functions corresponding to public interfaces, including
         >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
         >>> # Args:

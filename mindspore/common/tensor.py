@@ -391,8 +391,8 @@ class Tensor(Tensor_):
 
         Args:
             slice_index (int): Slice index of a parameter's slices.
-            It is used when initialize a slice of a parameter, it guarantees that devices
-            using the same slice can generate the same tensor.
+                It is used when initialize a slice of a parameter, it guarantees that devices
+                using the same slice can generate the same tensor.
             shape (list[int]): Shape of the slice, it is used when initialize a slice of the parameter.
             opt_shard_group(str): Optimizer shard group which is used in auto or semi auto parallel mode
                 to get one shard of a parameter's slice.

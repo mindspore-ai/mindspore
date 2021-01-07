@@ -56,10 +56,12 @@ class Momentum(Optimizer):
             v_{t} = v_{t-1} \ast u + gradients
 
     If use_nesterov is True:
+
         .. math::
                 p_{t} =  p_{t-1} - (grad \ast lr + v_{t} \ast u \ast lr)
 
     If use_nesterov is Flase:
+
         .. math::
                 p_{t} = p_{t-1} - lr \ast v_{t}
 
