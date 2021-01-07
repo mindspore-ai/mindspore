@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/int8/matmul_int8.h"
-#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 
 void RowMajor2Row2x16MajorInt8(int8_t *src_ptr, int8_t *dst_ptr, int row, int col) {
   int col16 = UP_ROUND(col, C16NUM);

@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_NNACL_MATMUL_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
 
 typedef void (*MATMUL_OPT_R4_FUNC)(const int8_t *a, const int8_t *b, int *dst, int row_4, int col_4, int deep_16,
                                    const int *input_sum, const int *bias);

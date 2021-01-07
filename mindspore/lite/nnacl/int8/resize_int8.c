@@ -16,7 +16,7 @@
 #include <math.h>
 #include "nnacl/int8/resize_int8.h"
 #include "nnacl/common_func.h"
-#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 #include "nnacl/errorcode.h"
 
 int ResizeBilinearInt8(const int8_t *input_ptr, int8_t *output_ptr, int batch, int in_h, int in_w, int out_h, int out_w,

@@ -21,7 +21,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/scale.h"
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/int8/quantize.h"
 #include "nnacl/int8/arithmetic_int8.h"
 #include "nnacl/int8/scale_int8.h"
 

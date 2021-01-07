@@ -18,7 +18,7 @@
 #include <limits>
 #include <algorithm>
 #include "nnacl/int8/sigmoid_int8.h"
-#include "nnacl/quantization/quantize.h"
+#include "mindspore/lite/nnacl/int8/quantize.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"

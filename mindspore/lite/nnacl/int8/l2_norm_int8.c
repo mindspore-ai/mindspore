@@ -15,7 +15,7 @@
  */
 #include "nnacl/int8/l2_norm_int8.h"
 #include <limits.h>
-#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 #include "nnacl/errorcode.h"
 
 int L2NormalizationInt8(const int8_t *input_data, int8_t *output_data, const L2NormParameter *param,

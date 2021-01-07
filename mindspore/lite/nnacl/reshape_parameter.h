@@ -18,7 +18,13 @@
 #define MINDSPORE_LITE_NNACL_RESHAHPE_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+
+typedef struct ReshapeQuantArg {
+  QuantArg in_args_;
+  QuantArg out_args_;
+  int output_activation_min_;
+  int output_activation_max_;
+} ReshapeQuantArg;
 
 typedef struct ReshapeParameter {
   // primitive parameter

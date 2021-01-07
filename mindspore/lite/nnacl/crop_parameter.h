@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_NNACL_CROP_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+#include "mindspore/lite/nnacl/int8/quantize.h"
 
 #define CROP_OFFSET_MAX_SIZE 4
 

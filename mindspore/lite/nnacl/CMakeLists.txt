@@ -15,7 +15,7 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/*.c
     ${NNACL_DIR}/fp32/*.c
     ${NNACL_DIR}/int8/*.c
-    ${NNACL_DIR}/quantization/*.c
+    ${NNACL_DIR}/base/*.c
 )
 
 if (SUPPORT_TRAIN)

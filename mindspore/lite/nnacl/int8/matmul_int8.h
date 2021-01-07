@@ -17,7 +17,6 @@
 #ifndef MINDSPORE_LITE_NNACL_INT8_MATMUL_H_
 #define MINDSPORE_LITE_NNACL_INT8_MATMUL_H_
 
-#include <stdio.h>
 #include <string.h>
 #include "nnacl/op_base.h"
 #include "nnacl/matmul_parameter.h"

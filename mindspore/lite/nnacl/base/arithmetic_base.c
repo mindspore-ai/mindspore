@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "nnacl/arithmetic.h"
+#include "nnacl/base/arithmetic_base.h"
 
 void CalcMultiplesAndStrides(ArithmeticParameter *param) {
   NNACL_ASSERT(param->in_shape0_[i] != 0);

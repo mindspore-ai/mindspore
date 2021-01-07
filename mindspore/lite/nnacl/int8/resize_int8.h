@@ -21,7 +21,7 @@
 #endif
 #include <memory.h>
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/int8/quantize.h"
 #include "nnacl/resize_parameter.h"
 
 #ifdef __cplusplus

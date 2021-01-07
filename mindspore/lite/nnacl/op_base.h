@@ -28,6 +28,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 #define C2NUM 2
 #define C4NUM 4
@@ -77,6 +78,17 @@ typedef struct OpParameter {
   int type_;
   int thread_num_;
 } OpParameter;
+
+typedef struct QuantArg {
+  float scale_;
+  int32_t zp_;
+} QuantArg;
+
+typedef struct QuantMulArg {
+  int32_t multiplier_;
+  int left_shift_;
+  int right_shift_;
+} QuantMulArg;
 
 typedef enum ActType { ActType_No, ActType_Relu, ActType_Sigmod, ActType_Relu6, ActType_Prelu } ActType;
 typedef enum PadMode { Pad_No, Pad_Same, Pad_Valid } PadMode;

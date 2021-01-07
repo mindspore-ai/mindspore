@@ -17,7 +17,7 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/lite_kernel.h"
 #include "src/common/file_utils.h"
-#include "nnacl/quantization/quantize.h"
+#include "mindspore/lite/nnacl/int8/quantize.h"
 #include "nnacl/common_func.h"
 #include "mindspore/lite/src/runtime/kernel/arm/int8/convolution_1x1_int8.h"
 

@@ -18,7 +18,7 @@
 
 #include "nnacl/errorcode.h"
 #include "nnacl/layer_norm_parameter.h"
-#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 
 #ifdef __cplusplus
 extern "C" {

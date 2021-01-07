@@ -18,7 +18,16 @@
 #define MINDSPORE_LITE_NNACL_MUL_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+
+typedef struct MulQuantArg {
+  QuantArg in_quant_args_[2];
+  QuantArg out_quant_arg_;
+  int output_multiplier_;
+  int output_activation_min_;
+  int output_activation_max_;
+  int shift_left_;
+  int shift_right_;
+} MulQuantArg;
 
 typedef struct MulParameter {
   // Primitive parameter

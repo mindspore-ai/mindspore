@@ -15,7 +15,7 @@
  */
 
 #include "nnacl/int8/scale_int8.h"
-#include "nnacl/quantization/fixed_point.h"
+#include "nnacl/int8/fixed_point.h"
 
 #ifdef ENABLE_NEON
 int16x4_t ClacSumHalfWordMul2(int32x4_t scaled_input0, int32x4_t scaled_input1, int32x4_t left_shift_out_vec,

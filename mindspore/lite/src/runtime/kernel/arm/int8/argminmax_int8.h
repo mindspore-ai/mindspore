@@ -17,7 +17,7 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_ARGMINMAX_INT8_H_
 
 #include <vector>
-#include "nnacl/quantization/quantize.h"
+#include "mindspore/lite/nnacl/int8/quantize.h"
 #include "nnacl/int8/arg_min_max_int8.h"
 #include "nnacl/common_func.h"
 #include "include/errorcode.h"

@@ -18,7 +18,14 @@
 #define MINDSPORE_LITE_NNACL_POWER_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+
+typedef struct PowerQuantArg {
+  QuantArg in_args_;
+  QuantArg exp_args_;
+  QuantArg out_args_;
+  int output_activation_min_;
+  int output_activation_max_;
+} PowerQuantArg;
 
 typedef struct PowerParameter {
   // Primitive parameter

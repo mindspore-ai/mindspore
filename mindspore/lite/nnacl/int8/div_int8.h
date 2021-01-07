@@ -18,7 +18,9 @@
 #define MINDSPORE_LITE_NNACL_INT8_DIV_INT8_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/errorcode.h"
+#include "nnacl/int8/quantize.h"
+#include "nnacl/int8/fixed_point.h"
 
 #ifdef __cplusplus
 extern "C" {

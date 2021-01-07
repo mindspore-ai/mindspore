@@ -16,6 +16,8 @@
 
 #ifndef MINDSPORE_LITE_NNACL_INT8_SPLIT_INT8_H_
 #define MINDSPORE_LITE_NNACL_INT8_SPLIT_INT8_H_
+
+#include <math.h>
 #include "nnacl/op_base.h"
 #include "nnacl/split_parameter.h"
 

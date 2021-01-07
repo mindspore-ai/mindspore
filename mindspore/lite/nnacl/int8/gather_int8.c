@@ -16,7 +16,7 @@
  */
 #include "nnacl/int8/gather_int8.h"
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/int8/quantize.h"
 #include "nnacl/errorcode.h"
 
 int GatherInt8(int8_t *in_data, int8_t *out_data, int outer_size, int inner_size, int limit, const int *indices,

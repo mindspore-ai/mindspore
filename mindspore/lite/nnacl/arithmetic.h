@@ -42,12 +42,4 @@ typedef struct ArithmeticParameter {
   int multiples1_[10];
 } ArithmeticParameter;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void CalcMultiplesAndStrides(ArithmeticParameter *param);
-#ifdef __cplusplus
-}
-#endif
-
 #endif  // MINDSPORE_LITE_NNACL_ARTITHMETIC_H_

@@ -17,8 +17,8 @@
 #ifndef MINDSPORE_LITE_NNACL_SCALE_H_
 #define MINDSPORE_LITE_NNACL_SCALE_H_
 
-#include <mindspore/lite/nnacl/quantization/quantize.h>
 #include "nnacl/op_base.h"
+
 typedef struct ScaleParameter {
   // primitive parameter
   OpParameter op_parameter_;

@@ -17,11 +17,10 @@
 #ifndef MINDSPORE_LITE_NNACL_COMMON_FUNC_H_
 #define MINDSPORE_LITE_NNACL_COMMON_FUNC_H_
 
-#include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 #include "nnacl/op_base.h"
 #include "nnacl/conv_parameter.h"
+#include "nnacl/nnacl_common.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -61,14 +60,6 @@ static inline int GetStride(int *strides, const int *shape, int length) {
     stride *= shape[i];
   }
   return stride;
-}
-
-inline void ComputeStrides(const int *shape, int *strides, const int ndim) {
-  int stride = 1;
-  for (int i = ndim - 1; i >= 0; i--) {
-    strides[i] = stride;
-    stride *= shape[i];
-  }
 }
 
 #ifdef ENABLE_ARM64

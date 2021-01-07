@@ -21,7 +21,7 @@
 #include <arm_neon.h>
 #endif
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+#include "mindspore/lite/nnacl/int8/quantize.h"
 
 typedef struct ConvParameter {
   OpParameter op_parameter_;

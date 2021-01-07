@@ -16,10 +16,15 @@
 
 #ifndef MINDSPORE_LITE_NNACL_SQUEEZE_PARAMETER_H_
 #define MINDSPORE_LITE_NNACL_SQUEEZE_PARAMETER_H_
+
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
 
 #define SQUEEZE_OFFSET_MAX_SIZE 4
+
+typedef struct SqueezeQuantArg {
+  QuantArg *in_quant_args_;
+  QuantArg *out_quant_args_;
+} SqueezeQuantArg;
 
 typedef struct SqueezeParameter {
   // primitive parameter

@@ -18,7 +18,7 @@
 #define MINDSPORE_LITE_NNACL_CONCAT_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/quantization/quantize.h"
+#include "mindspore/lite/nnacl/int8/quantize.h"
 
 typedef struct ConcatParameter {
   OpParameter op_parameter_;

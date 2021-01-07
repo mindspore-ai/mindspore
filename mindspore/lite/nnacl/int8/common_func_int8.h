@@ -17,8 +17,6 @@
 #ifndef MINDSPORE_LITE_NNACL_INT8_COMMON_FUNC_H_
 #define MINDSPORE_LITE_NNACL_INT8_COMMON_FUNC_H_
 
-#include <stdint.h>
-#include <stdio.h>
 #include <string.h>
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -29,9 +27,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-void PostFuncInt8C8(const int32_t *in, const int32_t *bias, int8_t *out, size_t oc, size_t plane, int32_t multiplier,
-                    int32_t left_shift, int32_t right_shift, int32_t zp, int32_t mini, int32_t maxi);
 void PostFuncInt8C4(const int32_t *in, const int32_t *bias, int8_t *out, size_t oc, size_t plane, size_t stride,
                     int32_t multiplier, int32_t left_shift, int32_t right_shift, int32_t zp, int32_t mini,
                     int32_t maxi);

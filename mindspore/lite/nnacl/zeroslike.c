@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "nnacl/zeroslike.h"
-#include <stdio.h>
 #include <string.h>
 
 void ApproximateZerosLike(float *output, int number) { memset(output, 0.0, number * sizeof(float)); }

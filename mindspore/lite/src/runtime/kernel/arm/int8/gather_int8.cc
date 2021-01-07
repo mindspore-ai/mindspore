@@ -17,7 +17,7 @@
 #include <vector>
 #include "nnacl/gather_parameter.h"
 #include "nnacl/int8/gather_int8.h"
-#include "nnacl/quantization/quantize.h"
+#include "mindspore/lite/nnacl/int8/quantize.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"

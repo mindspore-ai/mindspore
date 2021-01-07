@@ -22,7 +22,7 @@
 #include <algorithm>
 #include "src/lite_kernel.h"
 #include "nnacl/int8/tanh_int8.h"
-#include "nnacl/quantization/quantize.h"
+#include "mindspore/lite/nnacl/int8/quantize.h"
 #include "include/errorcode.h"
 
 namespace mindspore::kernel {

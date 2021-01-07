@@ -19,6 +19,8 @@
 
 #include "nnacl/op_base.h"
 #include "nnacl/scale.h"
+#include "nnacl/nnacl_common.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

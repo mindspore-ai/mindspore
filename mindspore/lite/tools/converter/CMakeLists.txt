@@ -108,7 +108,7 @@ file(GLOB KERNEL_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/fp32/*.c
         ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/int8/*.c
-        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/quantization/*.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/base/*.c
         ${ARM_DIR}/fp32/*.cc
         ${ARM_DIR}/int8/*.cc
         )

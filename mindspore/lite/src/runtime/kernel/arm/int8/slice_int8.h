@@ -19,7 +19,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/fp32/slice_fp32.h"
-#include "nnacl/quantization/quantize.h"
+#include "mindspore/lite/nnacl/int8/quantize.h"
 
 namespace mindspore::kernel {
 class SliceInt8CPUKernel : public SliceCPUKernel {

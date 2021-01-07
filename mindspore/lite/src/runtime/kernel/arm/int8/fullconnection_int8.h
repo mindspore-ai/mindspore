@@ -20,7 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/errorcode.h"
-#include "nnacl/quantization/quantize.h"
+#include "mindspore/lite/nnacl/int8/quantize.h"
 #include "nnacl/common_func.h"
 #include "nnacl/int8/common_func_int8.h"
 #include "nnacl/int8/matmul_int8.h"

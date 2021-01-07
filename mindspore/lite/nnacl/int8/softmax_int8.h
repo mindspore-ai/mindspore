@@ -17,9 +17,11 @@
 #ifndef MINDSPORE_LITE_NNACL_INT8_SOFTMAX_INT8_H_
 #define MINDSPORE_LITE_NNACL_INT8_SOFTMAX_INT8_H_
 
+#include <math.h>
 #include "nnacl/op_base.h"
 #include "nnacl/softmax_parameter.h"
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/int8/fixed_point.h"
+#include "nnacl/int8/quantize.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "nnacl/fp32/arg_min_max_fp32.h"
-#include <stdlib.h>
 #include <float.h>
 
 int ArgCompareAscFp32(const void *a, const void *b) {

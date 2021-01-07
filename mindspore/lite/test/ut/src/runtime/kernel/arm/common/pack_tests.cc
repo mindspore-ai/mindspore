@@ -169,42 +169,4 @@ TEST_F(TestPack, PackInputFp16) {
 }
 #endif
 
-TEST_F(TestPack, PackWeightUint8) {
-  auto conv_param = new ConvParameter;
-  InitConvParamPack(conv_param);
-
-  int k_h = conv_param->kernel_h_;
-  int k_w = conv_param->kernel_w_;
-  int in_channel = conv_param->input_channel_;
-  int out_channel = conv_param->output_channel_;
-  int ic4 = UP_DIV(in_channel, C4NUM);
-  int oc4 = UP_DIV(out_channel, C4NUM);
-
-  size_t weight_size;
-  std::string weight_path = "./test_data/conv/convuint8_weight_32_3_3_3.bin";
-  auto weight_data = reinterpret_cast<uint8_t *>(mindspore::lite::ReadFile(weight_path.c_str(), &weight_size));
-  auto int8_weight = reinterpret_cast<int8_t *>(malloc(weight_size));
-  for (unsigned int i = 0; i < weight_size; i++) {
-    int8_weight[i] = (int8_t)(weight_data[i] - 128);
-  }
-  int32_t filter_zp = 20;
-
-  int32_t *weight_sum = reinterpret_cast<int32_t *>(malloc(sizeof(int32_t) * out_channel));
-  for (int i = 0; i < out_channel; i++) weight_sum[i] = filter_zp * ic4 * C4NUM * k_h * k_w;
-  auto packed_weight = reinterpret_cast<int8_t *>(malloc(k_h * k_w * ic4 * C4NUM * oc4 * C4NUM));
-  PackWeightInt8(int8_weight, conv_param, packed_weight, weight_sum);
-
-  printf("==================output data=================\n");
-  for (int i = 0; i < 20; i++) {
-    std::cout << static_cast<int>(packed_weight[i]) << " ,";
-  }
-  std::cout << std::endl;
-
-  free(weight_sum);
-  free(int8_weight);
-  free(packed_weight);
-  delete conv_param;
-
-  MS_LOG(INFO) << "TestPackWeightUint8 passed";
-}
 }  // namespace mindspore

@@ -20,7 +20,7 @@
 #include <limits>
 #include <algorithm>
 #include "nnacl/int8/arithmetic_int8.h"
-#include "nnacl/quantization/quantize.h"
+#include "nnacl/int8/quantize.h"
 #include "src/lite_kernel.h"
 #include "nnacl/int8/sub_int8.h"
 #include "src/runtime/runtime_api.h"
