@@ -32,7 +32,8 @@ class ConvolutionBaseNPUKernel : public NPUKernel {
   ~ConvolutionBaseNPUKernel() override;
 
  protected:
-  int InitWeightBiasConst(const std::vector<lite::Tensor *> &inputs);
+  int InitWeightConst(const std::vector<lite::Tensor *> &inputs);
+  int InitBiasConst(const std::vector<lite::Tensor *> &inputs);
   int SetActivation(const ge::Operator *input, ActType act_type);
   hiai::op::Activation *act_ = nullptr;
   hiai::op::Const *weight_ = nullptr;
