@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -1915,6 +1915,66 @@ class TopK(PrimitiveWithInfer):
         return {'shape': (x_shape, x_shape),
                 'dtype': (x_dtype, mstype.int32),
                 'value': None}
+
+
+class NLLLoss(PrimitiveWithInfer):
+    r"""
+    Gets the negative log likelihood loss between logits and labels.
+
+    Args:
+        reduction (string): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
+
+    Inputs:
+        - **input** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only support float32 or float16.
+        - **target** (Tensor) - Ground truth labels, with shape :math:`(N)`. Data type only support int32.
+        - **weight** (Tensor) - The rescaling weight to each class, with shape :math:`(C)` and data type only
+                                support float32 or float16`.
+
+    Outputs:
+        Tuple of 2 tensors composed with `loss` and `total_weight`. when `reduction` is `none` and `input` is 2D
+        tensor, the `loss` shape is `(N,)`. Otherwise, the `loss` and the `total_weight` is a scalar. The data type
+        of `loss` and `total_weight` are same with `input's` and `weight's` respectively.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> input = Tensor(np.array([[0.5488135, 0.71518934],
+        >>>                          [0.60276335, 0.5448832],
+        >>>                          [0.4236548, 0.6458941]]).astype(np.float32))
+        >>> target = Tensor(np.array([0, 0, 0]).astype(np.int32))
+        >>> weight = Tensor(np.array([0.3834415, 0.79172504]).astype(np.float32))
+        >>> nll_loss = ops.NLLLoss(reduction="mean")
+        >>> loss, weight = nll_loss(input, target, weight)
+        >>> print(loss)
+        [-0.52507716]
+        >>> print(weight)
+        [1.1503246 0.79172504]
+    """
+
+    @prim_attr_register
+    def __init__(self, reduction="mean"):
+        """Initialize NLLLoss"""
+        self.init_prim_io_names(inputs=['x', 'target', "weight"], outputs=['loss'])
+        self.reduction = validator.check_string(reduction.lower(), ['none', 'sum', 'mean'], 'reduction', self.name)
+        self.add_prim_attr('reduction', self.reduction)
+
+    def infer_shape(self, x_shape, t_shape, w_shape):
+        validator.check_int(len(x_shape), [1, 2], Rel.IN, "x rank", self.name)
+        validator.check_int(len(t_shape), 1, Rel.EQ, "target rank", self.name)
+        validator.check_int(len(w_shape), 1, Rel.EQ, "weight rank", self.name)
+        validator.check(f"input_shape[0]", x_shape[0], "target_shape", t_shape[0], Rel.EQ, self.name)
+        validator.check(f"input_shape[1]", x_shape[1], "weight_shape", w_shape[0], Rel.EQ, self.name)
+        if self.reduction == "none":
+            return t_shape, ()
+        return (), ()
+
+    def infer_dtype(self, x_dtype, t_dtype, w_dtype):
+        valid_dtypes = (mstype.float16, mstype.float32)
+        validator.check_tensor_dtype_valid("x_dtype", x_dtype, valid_dtypes, self.name)
+        validator.check_tensor_dtype_valid("t_dtype", t_dtype, mstype.int32, self.name)
+        validator.check_tensor_dtype_valid("w_dtype", w_dtype, valid_dtypes, self.name)
+        return x_dtype, w_dtype
 
 
 class SoftmaxCrossEntropyWithLogits(PrimitiveWithInfer):

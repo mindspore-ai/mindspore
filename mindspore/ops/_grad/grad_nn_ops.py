@@ -761,6 +761,20 @@ def get_bprop_softmax_cross_entropy_with_logits(self):
     return bprop
 
 
+@bprop_getters.register(P.NLLLoss)
+def get_bprop_nll_loss(self):
+    """Grad definition for `NLLLoss` operation."""
+    nll_loss_grad = G.NLLLossGrad(reduction=self.reduction)
+
+    def bprop(x, target, weight, out, dout):
+        total_weight = out[1]
+        dout_x = dout[0]
+        dx = nll_loss_grad(x, dout_x, target, weight, total_weight)
+        return dx, zeros_like(target), zeros_like(weight)
+
+    return bprop
+
+
 @bprop_getters.register(P.SparseSoftmaxCrossEntropyWithLogits)
 def get_bprop_sparse_softmax_cross_entropy_with_logits(self):
     """Grad definition for `SparseSoftmaxCrossEntropyWithLogits` operation."""

@@ -242,6 +242,18 @@ class BatchNorm3d(nn.Cell):
         return bn3d_out
 
 
+class NLLLoss(nn.Cell):
+    """NLLLoss net definition"""
+
+    def __init__(self, reduction):
+        super(NLLLoss, self).__init__()
+        self.nll_loss = P.NLLLoss(reduction=reduction)
+
+    def construct(self, input_x, target, weight):
+        loss = self.nll_loss(input_x, target, weight)
+        return loss
+
+
 class ClipByNorm(nn.Cell):
     """ClipByNorm net definition"""
 
@@ -1253,6 +1265,12 @@ test_case_math_ops = [
         'block': Moments(axis=(), keep_dims=False),
         'desc_inputs': [Tensor(np.random.rand(3, 16, 5, 4).astype(np.float32))],
         'skip': ['backward']}),
+    ('NLLLoss', {
+        'block': NLLLoss(reduction="mean"),
+        'desc_inputs': [Tensor(np.random.rand(3, 16), mstype.float32),
+                        Tensor(np.random.rand(3), mstype.int32),
+                        Tensor(np.random.rand(16), mstype.float32)],
+        'desc_bprop': [(Tensor(np.random.rand(1), mstype.float32), Tensor(np.random.rand(1), mstype.float32))]}),
     ('BatchNorm3d', {
         'block': BatchNorm3d(num_features=3),
         'desc_inputs': [Tensor(np.random.rand(3, 3, 3, 5, 4).astype(np.float32))],
