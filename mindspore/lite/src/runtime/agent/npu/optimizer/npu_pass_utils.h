@@ -38,14 +38,16 @@ class NPUPassUtils {
   static void UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *pre_kernel, kernel::LiteKernel *trans_kernel,
                                             kernel::LiteKernel *kernel);
 
-  static void UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                            kernel::LiteKernel *post_kernel);
+  static void UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *pre_kernel, kernel::LiteKernel *trans_kernel,
+                                            std::vector<kernel::LiteKernel *> kernels);
 
-  static void UpdateNH2NCTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                              kernel::LiteKernel *pre_kernel);
+  static void UpdateNH2NCTransNodePostKernel(kernel::LiteKernel *trans_kernel, kernel::LiteKernel *post_kernel);
 
-  static void UpdateNC2NHTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                              kernel::LiteKernel *post_kernel);
+  static void UpdateNC2NHTransNodePostKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
+                                             kernel::LiteKernel *post_kernel);
+
+  static void UpdateNC2NHPostKernelInTensors(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
+                                             kernel::LiteKernel *post_kernel);
 
   static bool IsNhwc2Nchw(const kernel::LiteKernel *kernel);
 

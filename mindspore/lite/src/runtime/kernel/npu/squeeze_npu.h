@@ -14,34 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETIC_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETIC_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SQUEEZE_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SQUEEZE_NPU_H_
 #include <vector>
-#include "nnacl/arithmetic.h"
+#include "src/ops/squeeze.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
-class ArithmeticNPUKernel : public NPUKernel {
+class SqueezeNPUKernel : public NPUKernel {
  public:
-  ArithmeticNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                      const mindspore::lite::PrimitiveC *primitive)
+  SqueezeNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                   const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    activation_type_ = reinterpret_cast<ArithmeticParameter *>(parameter)->activation_type_;
+    auto squeeze = reinterpret_cast<const mindspore::lite::Squeeze *>(primitive);
+    axes_ = squeeze->GetAxis();
   }
-  ~ArithmeticNPUKernel() override;
+  ~SqueezeNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
   int SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                    const std::vector<ge::Operator *> &npu_inputs) override;
-
   ge::Operator *GetNPUOp() override;
 
  private:
-  int activation_type_;
-  ge::Operator *op_ = nullptr;
-  hiai::op::Activation *act_ = nullptr;
+  hiai::op::Squeeze *op_ = nullptr;
+  vector<int> axes_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ARITHMETIC_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SQUEEZE_NPU_H_
