@@ -33,7 +33,6 @@ echo $DATASET
 DATANAME=$(basename $DATASET)
 echo $DATANAME
 
-ulimit -u unlimited
 export DEVICE_NUM=1
 export DEVICE_ID=0
 export RANK_ID=0
