@@ -202,10 +202,15 @@ void ConvTransformFusion::CalNewWeightTensor(float *weight_data, int kernel_num,
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_MEMORY_FAILED);
     return;
   }
-
-  for (int i = 0; i < kernel_num; i++) {
-    for (int j = 0; j < kernel_size; j++) {
-      tmp_weight_data[i * kernel_size + j] = weight_data[i * kernel_size + j] * trans_scale[i];
+  if (this->fmk_type_ == lite::converter::FmkType_TF) {
+    for (int i = 0; i < kernel_num * kernel_size; i++) {
+      tmp_weight_data[i] = weight_data[i] * trans_scale[i % kernel_num];
+    }
+  } else {
+    for (int i = 0; i < kernel_num; i++) {
+      for (int j = 0; j < kernel_size; j++) {
+        tmp_weight_data[i * kernel_size + j] = weight_data[i * kernel_size + j] * trans_scale[i];
+      }
     }
   }
 

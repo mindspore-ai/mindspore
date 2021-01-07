@@ -19,7 +19,9 @@
 
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
+#include "tools/converter/converter_flags.h"
 
+using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {
 class ConvTransformFusion : public PatternProcessPass {
  public:
@@ -32,6 +34,10 @@ class ConvTransformFusion : public PatternProcessPass {
   void GenNewConvTensor(const FuncGraphPtr &, const CNodePtr &, int, const float *, const float *) const;
   void CalNewWeightTensor(float *, int, int, const float *) const;
   void CalNewBiasTensor(float *, int, bool, const float *, const float *) const;
+  void SetFmkType(FmkType type) { this->fmk_type_ = type; }
+
+ private:
+  FmkType fmk_type_ = lite::converter::FmkType_TF;
 };
 }  // namespace mindspore::opt
 #endif  // MINDSPORE_LITE_SRC_PASS_FUSION_CONV_TRANSFORM_FUSION_H_

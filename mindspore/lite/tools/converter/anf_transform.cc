@@ -111,8 +111,12 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
     // remove quantdtype when awaretraining
     fusion_pm->AddPass(std::make_shared<opt::RemoveIdentityOpPass>());
     fusion_pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::ConvBatchNormFusion>());
-    fusion_pm->AddPass(std::make_shared<opt::ConvScaleFusion>());
+    auto conv_bn_pass = std::make_shared<opt::ConvBatchNormFusion>();
+    conv_bn_pass->SetFmkType(config->fmk);
+    fusion_pm->AddPass(conv_bn_pass);
+    auto conv_scale_pass = std::make_shared<opt::ConvScaleFusion>();
+    conv_scale_pass->SetFmkType(config->fmk);
+    fusion_pm->AddPass(conv_scale_pass);
     fusion_pm->AddPass(std::make_shared<opt::LayerNormFusion>());
     fusion_pm->AddPass(std::make_shared<opt::BatchMatMulFusion>());
     fusion_pm->AddPass(std::make_shared<opt::SigmoidMulFusion>());

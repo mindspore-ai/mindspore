@@ -36,7 +36,7 @@ STATUS TFBatchNormParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "primitive is nullptr";
     return RET_NULL_PTR;
   }
-  auto attr = std::make_unique<schema::BatchNormT>();
+  auto attr = std::make_unique<schema::FusedBatchNormT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return RET_NULL_PTR;
@@ -45,7 +45,7 @@ STATUS TFBatchNormParser::Parse(const tensorflow::NodeDef &tf_op,
   TensorFlowUtils::FindAttrValue(tf_op, "epsilon", &attr_value);
   attr->epsilon = attr_value.f();
 
-  primitive->value.type = schema::PrimitiveType_BatchNorm;
+  primitive->value.type = schema::PrimitiveType_FusedBatchNorm;
   primitive->value.value = attr.release();
   *primitiveC = PrimitiveC::Create(primitive.release());
   if (*primitiveC == nullptr) {
