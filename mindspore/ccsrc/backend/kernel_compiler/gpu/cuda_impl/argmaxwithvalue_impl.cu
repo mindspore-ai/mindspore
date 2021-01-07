@@ -18,7 +18,7 @@
 #include "runtime/device/gpu/cuda_common.h"
 #include "include/cuda_fp16.h"
 template <typename T, typename S>
-__global__ void ArgmaxWithValue(const T *input, const size_t bound, size_t outerSize,
+__global__ void ArgmaxWithValue(const T *input, const S bound, size_t outerSize,
                                 size_t innerSize, S *index, T *output) {
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < outerSize * innerSize;
        pos += gridDim.x * blockDim.x) {
@@ -27,7 +27,7 @@ __global__ void ArgmaxWithValue(const T *input, const size_t bound, size_t outer
     S idx = 0;
     size_t InputOffset = x * bound * innerSize + 0 * innerSize + y;
     T maxData = input[InputOffset];
-    for (size_t i = 0; i < bound; i++) {
+    for (S i = 0; i < bound; i++) {
       InputOffset = x * bound * innerSize + i * innerSize + y;
       auto inputData = input[InputOffset];
       idx = inputData > maxData ? i : idx;
@@ -40,16 +40,16 @@ __global__ void ArgmaxWithValue(const T *input, const size_t bound, size_t outer
 }
 
 template <typename T, typename S>
-void CalArgmaxWithValue(const T *input, const size_t bound_, const size_t outerSize_, const size_t innerSize_,
+void CalArgmaxWithValue(const T *input, const S bound_, const size_t outerSize_, const size_t innerSize_,
                         S *index, T *output, cudaStream_t cuda_stream) {
   ArgmaxWithValue<<<GET_BLOCKS(outerSize_), GET_THREADS, 0, cuda_stream>>>(input, bound_, outerSize_, innerSize_,
                                                                            index, output);
   return;
 }
 
-template void CalArgmaxWithValue<float, int>(const float *input, const size_t bound_, const size_t outerSize_,
+template void CalArgmaxWithValue<float, int>(const float *input, const int bound_, const size_t outerSize_,
                                              const size_t innerSize_, int *index, float *output,
                                              cudaStream_t cuda_stream);
-template void CalArgmaxWithValue<half, int>(const half *input, const size_t bound_, const size_t outerSize_,
+template void CalArgmaxWithValue<half, int>(const half *input, const int bound_, const size_t outerSize_,
                                             const size_t innerSize_, int *index, half *output,
                                             cudaStream_t cuda_stream);
