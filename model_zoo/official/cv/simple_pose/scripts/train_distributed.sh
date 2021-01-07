@@ -20,10 +20,9 @@ echo "RANK_TABLE_FILE=$RANK_TABLE_FILE"
 export RANK_SIZE=$3
 SAVE_PATH=$2
 
-device=(0 1 2 3)
 for((i=0;i<RANK_SIZE;i++))
 do
-    export DEVICE_ID=${device[$i]}
+    export DEVICE_ID=$i
     export RANK_ID=$i
 
     rm -rf ./train_parallel$i
