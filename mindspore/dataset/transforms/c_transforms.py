@@ -136,7 +136,7 @@ class Slice(cde.SliceOp):
             1.  :py:obj:`int`: Slice this index only along the first dimension. Negative index is supported.
             2.  :py:obj:`list(int)`: Slice these indices along the first dimension. Negative indices are supported.
             3.  :py:obj:`slice`: Slice the generated indices from the slice object along the first dimension.
-                 Similar to `start:stop:step`.
+                Similar to `start:stop:step`.
             4.  :py:obj:`None`: Slice the whole dimension. Similar to `:` in Python indexing.
             5.  :py:obj:`Ellipses`: Slice the whole dimension. Similar to `:` in Python indexing.
 

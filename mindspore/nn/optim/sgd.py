@@ -50,10 +50,12 @@ class SGD(Optimizer):
             v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
 
     If nesterov is True:
+
         .. math::
                 p_{t+1} = p_{t} - lr \ast (gradient + u \ast v_{t+1})
 
     If nesterov is Flase:
+
         .. math::
                 p_{t+1} = p_{t} - lr \ast v_{t+1}
 

@@ -27,6 +27,7 @@ class Softplus(Bijector):
 
     .. math::
         Y = \frac{\log(1 + e ^ {kX})}{k}
+
     where k is the sharpness factor.
 
     Args:
