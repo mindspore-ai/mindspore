@@ -172,7 +172,7 @@ class BeamSearchDecoder(nn.Cell):
                  max_decode_length=64,
                  sos_id=2,
                  eos_id=3,
-                 is_using_while=False,
+                 is_using_while=True,
                  compute_type=mstype.float32):
         super(BeamSearchDecoder, self).__init__()
 
@@ -408,6 +408,7 @@ class BeamSearchDecoder(nn.Cell):
                                                state_seq, state_length, None, decoder_hidden_state, accu_attn_scores,
                                                state_finished)
         else:
+            # At present, only ascend910 supports while operation.
             idx = self.start + 1
             ends = self.start + self.max_decode_length + 1
             while idx < ends:
