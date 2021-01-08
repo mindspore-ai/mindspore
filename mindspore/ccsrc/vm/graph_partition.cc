@@ -659,6 +659,11 @@ void NodesToSegments(const std::vector<AnfNodePtr> &segment_nodes, std::vector<G
   if (segment_nodes.size() == 0) {
     return;
   }
+  auto segment_target = GetCNodeTarget(segment_nodes[0]);
+  if (segment_target != kAscendDevice) {
+    AddSegment(segment_nodes, segments, node_to_segment);
+    return;
+  }
   MS_EXCEPTION_IF_NULL(segments);
   MS_EXCEPTION_IF_NULL(node_to_segment);
   std::set<AnfNodePtr> dynamic_nodes_set;
