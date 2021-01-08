@@ -233,6 +233,7 @@ class AscendEnvChecker(EnvChecker):
 
         if Path(self.op_impl_path).is_dir():
             sys.path.append(self.op_impl_path)
+            os.environ['TBE_IMPL_PATH'] = self.op_impl_path
         else:
             raise EnvironmentError(
                 f"No such directory: {self.op_impl_path}, Please check if Ascend 910 AI software package is "
