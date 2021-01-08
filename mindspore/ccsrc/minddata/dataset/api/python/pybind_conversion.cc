@@ -92,13 +92,20 @@ std::vector<std::shared_ptr<TensorOperation>> toTensorOperations(py::list operat
       std::shared_ptr<TensorOp> tensor_op;
       if (py::isinstance<TensorOp>(op)) {
         tensor_op = op.cast<std::shared_ptr<TensorOp>>();
+        vector.push_back(std::make_shared<transforms::PreBuiltOperation>(tensor_op));
       } else if (py::isinstance<py::function>(op)) {
         tensor_op = std::make_shared<PyFuncOp>(op.cast<py::function>());
+        vector.push_back(std::make_shared<transforms::PreBuiltOperation>(tensor_op));
       } else {
-        THROW_IF_ERROR(
-          []() { RETURN_STATUS_UNEXPECTED("Error: tensor_op is not recognised (not TensorOp and not pyfunc)."); }());
+        if (py::isinstance<TensorOperation>(op)) {
+          vector.push_back(op.cast<std::shared_ptr<TensorOperation>>());
+        } else {
+          THROW_IF_ERROR([]() {
+            RETURN_STATUS_UNEXPECTED(
+              "Error: tensor_op is not recognised (not TensorOp, TensorOperation and not pyfunc).");
+          }());
+        }
       }
-      vector.push_back(std::make_shared<transforms::PreBuiltOperation>(tensor_op));
     }
   }
   return vector;
@@ -107,12 +114,15 @@ std::vector<std::shared_ptr<TensorOperation>> toTensorOperations(py::list operat
 std::shared_ptr<TensorOperation> toTensorOperation(py::handle operation) {
   std::shared_ptr<TensorOperation> op;
   std::shared_ptr<TensorOp> tensor_op;
-  if (py::isinstance<TensorOp>(operation)) {
+  if (py::isinstance<TensorOperation>(operation)) {
+    op = operation.cast<std::shared_ptr<TensorOperation>>();
+  } else if (py::isinstance<TensorOp>(operation)) {
     tensor_op = operation.cast<std::shared_ptr<TensorOp>>();
+    op = std::make_shared<transforms::PreBuiltOperation>(tensor_op);
   } else {
-    THROW_IF_ERROR([]() { RETURN_STATUS_UNEXPECTED("Error: input operation is not a tensor_op."); }());
+    THROW_IF_ERROR(
+      []() { RETURN_STATUS_UNEXPECTED("Error: input operation is not a tensor_op or TensorOperation."); }());
   }
-  op = std::make_shared<transforms::PreBuiltOperation>(tensor_op);
   return op;
 }
 

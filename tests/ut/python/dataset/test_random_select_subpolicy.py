@@ -41,7 +41,7 @@ def test_random_select_subpolicy():
     # test exceptions
     assert "policy can not be empty." in test_config([[1, 2, 3]], [])
     assert "policy[0] can not be empty." in test_config([[1, 2, 3]], [[]])
-    assert "op of (op, prob) in policy[1][0] is neither a c_transform op (TensorOp) nor a callable pyfunc" \
+    assert "op of (op, prob) in policy[1][0] is neither a c_transform op (TensorOperation) nor a callable pyfunc" \
         in test_config([[1, 2, 3]], [[(ops.PadEnd([4], 0), 0.5)], [(1, 0.4)]])
     assert "prob of (op, prob) policy[1][0] is not within the required interval of (0 to 1)" in test_config([[1]], [
         [(ops.Duplicate(), 0)], [(ops.Duplicate(), -0.1)]])
