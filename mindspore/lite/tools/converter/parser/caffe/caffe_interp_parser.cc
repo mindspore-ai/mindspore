@@ -45,8 +45,8 @@ PrimitiveC *CaffeInterpParser::ParseLitePrimitive(const caffe::LayerParameter &p
     }
     attr->newWidth = width;
   }
-  attr->alignCorners = true;
   attr->method = schema::ResizeMethod_LINEAR;
+  attr->coordinateTransformMode = schema::CoordinateTransformMode_ALIGN_CORNERS;
   auto primitive = std::make_unique<schema::PrimitiveT>();
   primitive->value.type = schema::PrimitiveType_Resize;
   primitive->value.value = attr.release();

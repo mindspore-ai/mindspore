@@ -23,7 +23,7 @@ typedef struct ResizeParameter {
   int method_;
   int64_t new_height_;
   int64_t new_width_;
-  bool align_corners_;
+  int coordinate_transform_mode_;
   bool preserve_aspect_ratio_;
 } ResizeParameter;
 #endif  // MINDSPORE_LITE_NNACL_RESIZE_PARAMETER_H_

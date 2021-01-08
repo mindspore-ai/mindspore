@@ -17,8 +17,10 @@
 #include "nnacl/fp32/resize_fp32.h"
 #include "nnacl/common_func.h"
 #include "nnacl/errorcode.h"
-int PrepareResizeBilinear(const int *input_shape, const int *output_shape, bool align_corners, int *y_bottoms,
-                          int *y_tops, int *x_lefts, int *x_rights, float *y_bottom_weights, float *x_left_weights) {
+
+int PrepareResizeBilinear(const int *input_shape, const int *output_shape, CalculateOriginalCoordinate calculate,
+                          int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights, float *y_bottom_weights,
+                          float *x_left_weights) {
   if (input_shape == NULL || output_shape == NULL || y_bottoms == NULL || y_tops == NULL || x_lefts == NULL ||
       x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
     return NNACL_NULL_PTR;
@@ -29,18 +31,10 @@ int PrepareResizeBilinear(const int *input_shape, const int *output_shape, bool 
 
   int new_height = output_shape[1];
   int new_width = output_shape[2];
-  float height_scale = (float)(in_h) / new_height;
-  float width_scale = (float)(in_w) / new_width;
-  if (align_corners && new_height > 1) {
-    height_scale = (float)(in_h - 1) / (new_height - 1);
-  }
-  if (align_corners && new_width > 1) {
-    width_scale = (float)(in_w - 1) / (new_width - 1);
-  }
 
   int h, w;
   for (h = 0; h < new_height; h++) {
-    float actual_y = (float)h * height_scale;
+    float actual_y = calculate(h, in_h, new_height);
     int y_bottom = (int)(floor(actual_y));
     int y_top = y_bottom + 1 < in_h ? (y_bottom + 1) : (in_h - 1);
     float y_top_weight = actual_y - (float)(y_bottom);
@@ -51,7 +45,7 @@ int PrepareResizeBilinear(const int *input_shape, const int *output_shape, bool 
     y_bottom_weights[h] = y_bottom_weight;
   }
   for (w = 0; w < new_width; w++) {
-    float actual_x = (float)(w)*width_scale;
+    float actual_x = calculate(w, in_w, new_width);
     int x_left = (int)(floor(actual_x));
     int x_right = x_left + 1 < in_w ? (x_left + 1) : (in_w - 1);
     float x_right_weight = actual_x - (float)(x_left);
@@ -61,96 +55,6 @@ int PrepareResizeBilinear(const int *input_shape, const int *output_shape, bool 
     x_rights[w] = x_right;
     x_left_weights[w] = x_left_weight;
   }
-  return NNACL_OK;
-}
-
-int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                   const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
-                   const float *y_bottom_weights, const float *x_left_weights, const int n_h_begin, const int n_h_end) {
-  if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_bottoms == NULL ||
-      y_tops == NULL || x_lefts == NULL || x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
-    return NNACL_NULL_PTR;
-  }
-
-  int in_w = input_shape[2];
-  int in_c = input_shape[3];
-
-  int new_height = output_shape[1];
-  int new_width = output_shape[2];
-
-  int n_h, n, h, w, c;
-  n = n_h_begin / new_height;
-  h = n_h_begin % new_height;
-  int n_h_stride = new_width * in_c;
-  int out_offset = n_h_begin * n_h_stride;
-  for (n_h = n_h_begin; n_h < n_h_end; n_h++, h++) {
-    if (h == new_height) {
-      h = 0;
-      n++;
-    }
-    int y_bottom = y_bottoms[h];
-    int y_top = y_tops[h];
-    float y_bottom_weight = y_bottom_weights[h];
-    const float y_top_weight = 1.0f - y_bottom_weight;
-
-    for (w = 0; w < new_width; w++) {
-      int x_left = x_lefts[w];
-      int x_right = x_rights[w];
-      float x_left_weight = x_left_weights[w];
-      const float x_right_weight = 1.0f - x_left_weight;
-      float top_left_weight = y_top_weight * x_left_weight;
-      float top_right_weight = y_top_weight * x_right_weight;
-      float bottom_left_weight = y_bottom_weight * x_left_weight;
-      float bottom_right_weight = y_bottom_weight * x_right_weight;
-
-      c = 0;
-      int in_bottom_left_offset = offset(input_shape, n, y_bottom, x_left, c);
-      int in_bottom_right_offset = in_bottom_left_offset + (x_right - x_left) * in_c;
-      int in_top_left_offset = in_bottom_left_offset + (y_top - y_bottom) * in_w * in_c;
-      int in_top_right_offset = in_bottom_right_offset + (y_top - y_bottom) * in_w * in_c;
-
-#ifdef ENABLE_NEON
-      float32x4_t top_left_w = vdupq_n_f32(top_left_weight);
-      float32x4_t top_right_w = vdupq_n_f32(top_right_weight);
-      float32x4_t bottom_left_w = vdupq_n_f32(bottom_left_weight);
-      float32x4_t bottom_right_w = vdupq_n_f32(bottom_right_weight);
-
-      for (; c <= in_c - 4; c += 4) {
-        float32x4_t bottom_left = vld1q_f32(input_data + in_bottom_left_offset + c);
-        float32x4_t bottom_right = vld1q_f32(input_data + in_bottom_right_offset + c);
-        float32x4_t top_left = vld1q_f32(input_data + in_top_left_offset + c);
-        float32x4_t top_right = vld1q_f32(input_data + in_top_right_offset + c);
-
-        float32x4_t interp_value = vdupq_n_f32(0.0);
-
-        float32x4_t tmp = vmulq_f32(bottom_left, bottom_left_w);
-        interp_value = vaddq_f32(interp_value, tmp);
-
-        tmp = vmulq_f32(bottom_right, bottom_right_w);
-        interp_value = vaddq_f32(interp_value, tmp);
-
-        tmp = vmulq_f32(top_left, top_left_w);
-        interp_value = vaddq_f32(interp_value, tmp);
-
-        tmp = vmulq_f32(top_right, top_right_w);
-        interp_value = vaddq_f32(interp_value, tmp);
-        vst1q_f32(output_data + out_offset, interp_value);
-        out_offset += 4;
-      }
-#endif
-      for (; c < in_c; c++) {
-        float bottom_left = input_data[in_bottom_left_offset + c];
-        float bottom_right = input_data[in_bottom_right_offset + c];
-        float top_left = input_data[in_top_left_offset + c];
-        float top_right = input_data[in_top_right_offset + c];
-        float interp_value = bottom_left * bottom_left_weight + bottom_right * bottom_right_weight +
-                             top_left * top_left_weight + top_right * top_right_weight;
-        output_data[out_offset] = interp_value;
-        out_offset++;
-      }
-    }
-  }
-
   return NNACL_OK;
 }
 
@@ -207,10 +111,10 @@ int InterpCol(const float *bottom_line, const float *top_line, float *output, in
   return 0;
 }
 
-int ResizeBilinear2(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                    const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
-                    const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
-                    const int n_h_begin, const int n_h_end) {
+int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
+                   const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
+                   const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
+                   const int n_h_begin, const int n_h_end) {
   if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_bottoms == NULL ||
       y_tops == NULL || x_lefts == NULL || x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
     return NNACL_NULL_PTR;
@@ -278,36 +182,29 @@ int ResizeBilinear2(const float *input_data, float *output_data, const int *inpu
   return NNACL_OK;
 }
 
-int CalcNearestNeighbor(const int out_position, const int in_size, const float scale, const bool align_corners) {
-  int actual_v;
-  if (align_corners) {
-    actual_v = (int)(round((float)out_position * scale));
-  } else {
-    actual_v = (int)(floor((float)out_position * scale));
-  }
-  int input_position = actual_v < in_size ? actual_v : in_size - 1;
-  return input_position;
-}
-
 int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                          bool align_corners, int tid, int thread_num) {
+                          CalculateOriginalCoordinate calculate, int coordinate_transform_mode, int tid,
+                          int thread_num) {
   int batch, y, x, c;
   c = input_shape[3];
-
-  float height_scale = (float)(input_shape[1]) / (float)(output_shape[1]);
-  float width_scale = (float)(input_shape[2]) / (float)(output_shape[2]);
-  if (align_corners && output_shape[1] > 1) {
-    height_scale = (float)(input_shape[1] - 1) / (output_shape[1] - 1);
-  }
-  if (align_corners && output_shape[2] > 1) {
-    width_scale = (float)(input_shape[2] - 1) / (output_shape[2] - 1);
-  }
-
+  bool align_corners = coordinate_transform_mode == 1;
   for (batch = 0; batch < output_shape[0]; batch++) {
     for (y = tid; y < output_shape[1]; y += thread_num) {
-      int input_y = CalcNearestNeighbor(y, input_shape[1], height_scale, align_corners);
+      float actual_y = calculate(y, input_shape[1], output_shape[1]);
+      int input_y;
+      if (align_corners) {
+        input_y = (int)(round(actual_y));
+      } else {
+        input_y = (int)(floor(actual_y));
+      }
       for (x = 0; x < output_shape[2]; x++) {
-        int input_x = CalcNearestNeighbor(x, input_shape[2], width_scale, align_corners);
+        float actual_x = calculate(x, input_shape[2], output_shape[2]);
+        int input_x;
+        if (align_corners) {
+          input_x = (int)(round(actual_x));
+        } else {
+          input_x = (int)(floor(actual_x));
+        }
         int in_offset = offset(input_shape, batch, input_y, input_x, 0);
         int out_offset = offset(output_shape, batch, y, x, 0);
         memcpy(output_data + out_offset, input_data + in_offset, c * sizeof(float));
@@ -316,4 +213,20 @@ int ResizeNearestNeighbor(const float *input_data, float *output_data, const int
   }
 
   return NNACL_OK;
+}
+
+float CalculateAsymmetric(int x_resized, int length_original, int length_resized) {
+  float scale = (float)(length_resized) / length_original;
+  return (float)(x_resized) / scale;
+}
+
+float CalculateAlignCorners(int x_resized, int length_original, int length_resized) {
+  float scale = (float)(length_resized - 1) / (length_original - 1);
+  return (float)(x_resized) / scale;
+}
+
+float CalculateHalfPixel(int x_resized, int length_original, int length_resized) {
+  float scale = (float)(length_resized) / length_original;
+  float actual = (float)(x_resized + 0.5) / scale - 0.5;
+  return actual > 0 ? actual : 0;
 }

@@ -75,9 +75,9 @@ int ResizeBaseCPUKernel::CheckParameters() {
       const_shape_ = true;
     }
   }
-  align_corners_ = parameter->align_corners_;
-  preserve_aspect_ratio = parameter->preserve_aspect_ratio_;
-  if (preserve_aspect_ratio) {
+  coordinate_transform_mode_ = parameter->coordinate_transform_mode_;
+  preserve_aspect_ratio_ = parameter->preserve_aspect_ratio_;
+  if (preserve_aspect_ratio_) {
     MS_LOG(ERROR) << "Resize currently not support preserve_aspect_ratio true";
     return RET_ERROR;
   }

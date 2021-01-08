@@ -39,6 +39,7 @@ lite::PrimitiveC *OnnxUpsampleParser::ParseLitePrimitive(const onnx::GraphProto 
       attr->method = onnx_node_attr.s() == "nearest" ? schema::ResizeMethod_NEAREST : schema::ResizeMethod_LINEAR;
     }
   }
+  attr->coordinateTransformMode = schema::CoordinateTransformMode_ASYMMETRIC;
   auto primitive = std::make_unique<schema::PrimitiveT>();
   if (primitive == nullptr) {
     MS_LOG(ERROR) << "new primitive failed";

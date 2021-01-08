@@ -30,6 +30,21 @@ using mindspore::schema::PrimitiveType_Resize;
 namespace mindspore::kernel {
 int ResizeCPUKernel::Init() {
   auto ret = ResizeBaseCPUKernel::Init();
+  switch (coordinate_transform_mode_) {
+    case schema::CoordinateTransformMode_ASYMMETRIC:
+      calculate_ = CalculateAsymmetric;
+      break;
+    case schema::CoordinateTransformMode_ALIGN_CORNERS:
+      calculate_ = CalculateAlignCorners;
+      break;
+    case schema::CoordinateTransformMode_HALF_PIXEL:
+      calculate_ = CalculateHalfPixel;
+      break;
+    default:
+      MS_LOG(ERROR) << "Do not support coordinate transform mode. Mode is"
+                    << schema::EnumNameCoordinateTransformMode(
+                         static_cast<schema::CoordinateTransformMode>(coordinate_transform_mode_));
+  }
   if (ret != RET_OK) {
     return ret;
   }
@@ -55,8 +70,8 @@ int ResizeCPUKernel::ReSize() {
 
     auto input = in_tensors_.at(0);
     auto input_shape = input->shape();
-    ret = PrepareResizeBilinear(input_shape.data(), out_tensors_.at(0)->shape().data(), align_corners_, y_bottoms_,
-                                y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
+    ret = PrepareResizeBilinear(input_shape.data(), out_tensors_.at(0)->shape().data(), calculate_, y_bottoms_, y_tops_,
+                                x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
     if (ret != RET_OK) {
       FreeTmpBuffer();
     }
@@ -163,7 +178,6 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   if (context_ == nullptr) {
     return RET_NULL_PTR;
   }
-
   int ret = 0;
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_LINEAR): {
@@ -176,9 +190,10 @@ int ResizeCPUKernel::RunImpl(int task_id) {
       int c = in_tensors_.at(0)->shape().at(3);
       float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
       float *line1 = line0 + new_width_ * c;
-      ret = ResizeBilinear2(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(), y_bottoms_,
-                            y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0, line1, n_h_begin,
-                            n_h_end);
+
+      ret = ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(), y_bottoms_,
+                           y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0, line1, n_h_begin,
+                           n_h_end);
 
       break;
     }
@@ -195,7 +210,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
         }
       }
       ret = ResizeNearestNeighbor(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
-                                  align_corners_, task_id, context_->thread_num_);
+                                  calculate_, coordinate_transform_mode_, task_id, context_->thread_num_);
       break;
     }
     case schema::ResizeMethod_UNKNOW:

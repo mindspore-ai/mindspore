@@ -36,8 +36,8 @@ class Resize : public PrimitiveC {
   void SetMethod(int method);
   void SetNewHeight(int64_t new_height);
   void SetNewWidth(int64_t new_width);
-  void SetAlignCorners(bool align_corners);
   void SetPreserveAspectRatio(bool preserve_aspect_ratio);
+  void SetCoordinateTransformMode(int coordinate_transform_mode);
   int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs);
 #else
   int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
@@ -47,8 +47,8 @@ class Resize : public PrimitiveC {
   int GetMethod() const;
   int64_t GetNewHeight() const;
   int64_t GetNewWidth() const;
-  bool GetAlignCorners() const;
   bool GetPreserveAspectRatio() const;
+  int GetCoordinateTransformMode() const;
 };
 }  // namespace lite
 }  // namespace mindspore
