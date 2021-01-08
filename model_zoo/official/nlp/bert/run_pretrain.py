@@ -32,7 +32,8 @@ from mindspore.nn.optim import Lamb, Momentum, AdamWeightDecay
 from mindspore import log as logger
 from mindspore.common import set_seed
 from src import BertNetworkWithLoss, BertTrainOneStepCell, BertTrainOneStepWithLossScaleCell, \
-                BertTrainAccumulateStepsWithLossScaleCell
+                BertTrainAccumulateStepsWithLossScaleCell, BertTrainOneStepWithLossScaleCellForAdam, \
+                AdamWeightDecayForBert
 from src.dataset import create_bert_dataset
 from src.config import cfg, bert_net_cfg
 from src.utils import LossCallBack, BertLearningRate
@@ -83,8 +84,10 @@ def _get_optimizer(args_opt, network):
         group_params = [{'params': decay_params, 'weight_decay': cfg.AdamWeightDecay.weight_decay},
                         {'params': other_params, 'weight_decay': 0.0},
                         {'order_params': params}]
-
-        optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
+        if args_opt.enable_lossscale == "true" and args_opt.device_target == 'GPU':
+            optimizer = AdamWeightDecayForBert(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
+        else:
+            optimizer = AdamWeightDecay(group_params, learning_rate=lr_schedule, eps=cfg.AdamWeightDecay.eps)
     else:
         raise ValueError("Don't support optimizer {}, only support [Lamb, Momentum, AdamWeightDecay]".
                          format(cfg.optimizer))
@@ -206,8 +209,12 @@ def run_pretrain():
                                                  scale_window=cfg.scale_window)
 
         if args_opt.accumulation_steps <= 1:
-            net_with_grads = BertTrainOneStepWithLossScaleCell(net_with_loss, optimizer=optimizer,
-                                                               scale_update_cell=update_cell)
+            if cfg.optimizer == 'AdamWeightDecay' and args_opt.device_target == 'GPU':
+                net_with_grads = BertTrainOneStepWithLossScaleCellForAdam(net_with_loss, optimizer=optimizer,
+                                                                          scale_update_cell=update_cell)
+            else:
+                net_with_grads = BertTrainOneStepWithLossScaleCell(net_with_loss, optimizer=optimizer,
+                                                                   scale_update_cell=update_cell)
         else:
             accumulation_steps = args_opt.accumulation_steps
             net_with_grads = BertTrainAccumulateStepsWithLossScaleCell(net_with_loss, optimizer=optimizer,

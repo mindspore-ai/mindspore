@@ -88,7 +88,6 @@ __global__ void IsFinite(const size_t size, const half* input, bool* out) {
 
 template <typename T>
 __global__ void FloatStatus(const size_t size, const T* input, T* out) {
-  out[0] = 0;
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     if (isinf(input[pos]) != 0 || isnan(input[pos])) {
       out[0] = 1;
@@ -98,7 +97,6 @@ __global__ void FloatStatus(const size_t size, const T* input, T* out) {
 }
 template <>
 __global__ void FloatStatus(const size_t size, const half* input, half* out) {
-  out[0] = 0;
   for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < (size); pos += blockDim.x * gridDim.x) {
     if (__hisinf(input[pos]) != 0 || __hisnan(input[pos])) {
       out[0] = 1;
