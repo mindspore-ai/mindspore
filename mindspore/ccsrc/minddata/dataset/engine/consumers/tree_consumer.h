@@ -199,7 +199,6 @@ class TreeGetters : public TreeConsumer {
   bool first_row_obtained_;  // whether first row (which could be empty) is obtained by TreeGetter
   bool init_flag_;           // indicate whether the tree has initialized
 
-  Status InternalInit(int8_t type);
   Status InternalInit();
 };
 

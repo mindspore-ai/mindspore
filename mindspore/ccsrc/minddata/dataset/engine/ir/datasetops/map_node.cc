@@ -115,5 +115,10 @@ Status MapNode::AcceptAfter(IRNodePass *const p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<MapNode>(), modified);
 }
+
+void MapNode::setOperations(const std::vector<std::shared_ptr<TensorOperation>> &operations) {
+  operations_ = operations;
+}
+std::vector<std::shared_ptr<TensorOperation>> MapNode::operations() { return operations_; }
 }  // namespace dataset
 }  // namespace mindspore

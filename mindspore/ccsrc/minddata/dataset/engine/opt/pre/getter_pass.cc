@@ -15,52 +15,13 @@
  */
 
 #include "minddata/dataset/engine/opt/pre/getter_pass.h"
-#include "minddata/dataset/engine/execution_tree.h"
-
+#include "minddata/dataset/engine/ir/datasetops/map_node.h"
 namespace mindspore {
 namespace dataset {
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) {
-  nodes_to_remove_.push_back(node);
+
+Status GetterPass::Visit(std::shared_ptr<MapNode> node, bool *modified) {
+  node->ClearCallbacks();
   return Status::OK();
 }
-
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
-  if (type_ == kOutputShapeAndType) nodes_to_remove_.push_back(node);
-  return Status::OK();
-}
-
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<SkipOp> node, bool *modified) {
-  if (type_ == kOutputShapeAndType) nodes_to_remove_.push_back(node);
-  return Status::OK();
-}
-
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<TakeOp> node, bool *modified) {
-  if (type_ == kOutputShapeAndType) nodes_to_remove_.push_back(node);
-  return Status::OK();
-}
-
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<MapOp> node, bool *modified) {
-  nodes_to_clear_callback_.push_back(node);
-  return Status::OK();
-}
-
-#ifdef ENABLE_PYTHON
-Status GetterPass::GetterNodes::RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
-  if (type_ == kOutputShapeAndType) nodes_to_remove_.push_back(node);
-  return Status::OK();
-}
-#endif
-
-Status GetterPass::RunOnTree(ExecutionTree *tree, bool *modified) {
-  RETURN_IF_NOT_OK(pass_.Run(tree, modified));
-
-  // currently the getter pass only disables call_back from the execution tree
-
-  // clear the callback for selected ops (map when its GetOutputType/Shape)
-  for (auto node : pass_.nodes_to_clear_callback_) node->ClearCallbacks();
-
-  return Status::OK();
-}
-
 }  // namespace dataset
 }  // namespace mindspore

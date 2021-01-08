@@ -40,12 +40,9 @@
 namespace mindspore {
 namespace dataset {
 // Constructor
-ExecutionTree::ExecutionTree() : id_count_(0), pre_pass_override_(nullptr) {
+ExecutionTree::ExecutionTree() : id_count_(0), tree_state_(kDeTStateInit), prepare_flags_(kDePrepNone) {
   tg_ = std::make_unique<TaskGroup>();
-  tree_state_ = kDeTStateInit;
-  prepare_flags_ = kDePrepNone;
   profiling_manager_ = std::make_unique<ProfilingManager>(this);
-  optimize_ = common::GetEnv("OPTIMIZE") == "true" ? true : false;
 #if defined(NUMA_ENABLED) && (defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE))
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   rank_id_ = cfg->rank_id();
@@ -275,10 +272,6 @@ Status ExecutionTree::Prepare(int32_t num_epochs, bool partial) {
   // Pre optimization compulsory transformation
   RETURN_IF_NOT_OK(this->PreAction());
 
-  // If optional optimizations are enabled
-  if (optimize_) {
-    RETURN_IF_NOT_OK(this->Optimize());
-  }
   // Post optimization compulsory transformation
   RETURN_IF_NOT_OK(this->PostAction());
 
@@ -300,14 +293,6 @@ Status ExecutionTree::PreAction() {
 #endif
     pre_actions.push_back(std::make_unique<EpochInjectionPass>());
     pre_actions.push_back(std::make_unique<RemovalPass>());
-  }
-
-  // this offers a way to override the preset optimization pass with customized ones
-  // this is used when certain nodes are removed for tree getters
-  if (pre_pass_override_) {
-    MS_LOG(INFO) << "Default pre optimization passes is being overridden,"
-                 << " number of passes before the override:" << pre_actions.size() << ".";
-    pre_actions = pre_pass_override_(std::move(pre_actions));
   }
 
   MS_LOG(INFO) << "Running " << pre_actions.size() << " pre pass loops.";
@@ -340,22 +325,6 @@ Status ExecutionTree::PostAction() {
   }
   MS_LOG(INFO) << "Post passes complete.";
 
-  return Status::OK();
-}
-
-Status ExecutionTree::Optimize() {
-  // Vector of optimizations, currently only 1, add more as necessary
-  OptPass optimizations;
-#ifndef ENABLE_ANDROID
-  optimizations.push_back(std::make_unique<TensorOpFusionPass>());
-#endif
-  // vector of flags for each optimization
-  std::vector<bool> modified(optimizations.size(), false);
-  for (auto i = 0; i < optimizations.size(); i++) {
-    auto m = false;
-    optimizations[i]->Run(this, &m);
-    modified[i] = m;
-  }
   return Status::OK();
 }
 

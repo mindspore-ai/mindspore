@@ -74,8 +74,19 @@ class MapNode : public DatasetNode {
   /// \return Status of the node visit
   Status AcceptAfter(IRNodePass *p, bool *modified) override;
 
+  /// \brief clear all callbacks
+  void ClearCallbacks() { callbacks_.clear(); }
+
+  /// \brief getter to get all tensor operations
+  std::vector<std::shared_ptr<TensorOperation>> operations();
+
+  /// \brief setter to set all tensor operations
+  void setOperations(const std::vector<std::shared_ptr<TensorOperation>> &operations);
+
  private:
   std::vector<std::shared_ptr<TensorOperation>> operations_;
+
+ private:
   std::vector<std::string> input_columns_;
   std::vector<std::string> output_columns_;
   std::vector<std::string> project_columns_;

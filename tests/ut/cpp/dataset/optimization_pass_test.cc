@@ -16,21 +16,23 @@
 
 #include <memory>
 #include <string>
-#include "minddata/dataset/core/client.h"
+
 #include "common/common.h"
 #include "gtest/gtest.h"
-
-#include "minddata/dataset/engine/execution_tree.h"
+#include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
+#include "minddata/dataset/engine/ir/datasetops/map_node.h"
+#include "minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 #include "minddata/dataset/engine/opt/post/auto_worker_pass.h"
-#include "minddata/dataset/engine/opt/pre/getter_pass.h"
+#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/include/vision.h"
+#include "minddata/dataset/include/vision_lite.h"
 
 using namespace mindspore::dataset;
 using mindspore::LogStream;
 using mindspore::MsLogLevel::INFO;
 
 class MindDataTestOptimizationPass : public UT::DatasetOpTesting {};
-
 
 TEST_F(MindDataTestOptimizationPass, MindDataTestAutoWorkerPass) {
   MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestAutoWorkerPass.";
@@ -62,4 +64,42 @@ TEST_F(MindDataTestOptimizationPass, MindDataTestAutoWorkerPass) {
   MS_LOG(DEBUG) << nonmap_leaf->IRNode()->Name() << ": num_worker=" << nonmap_leaf->IRNode()->num_workers();
   MS_LOG(DEBUG) << batch->IRNode()->Name() << ": num_worker=" << batch->IRNode()->num_workers();
   MS_LOG(DEBUG) << map->IRNode()->Name() << ": num_worker=" << map->IRNode()->num_workers();
+}
+
+TEST_F(MindDataTestOptimizationPass, MindDataTestTensorFusionPass) {
+  MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestTensorFusionPass.";
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> root =
+    ImageFolder(folder_path, false)->Map({vision::Decode(), vision::RandomResizedCrop({100})}, {"image"});
+
+  TensorOpFusionPass fusion_pass;
+  bool modified = false;
+  std::shared_ptr<MapNode> map_node = std::dynamic_pointer_cast<MapNode>(root->IRNode());
+  // no deepcopy is performed because this doesn't go through tree_adapter
+  fusion_pass.Run(root->IRNode(), &modified);
+  EXPECT_EQ(modified, true);
+  ASSERT_NE(map_node, nullptr);
+  auto fused_ops = map_node->operations();
+  ASSERT_EQ(fused_ops.size(), 1);
+  ASSERT_EQ(fused_ops[0]->Name(), vision::kRandomCropDecodeResizeOperation);
+}
+
+TEST_F(MindDataTestOptimizationPass, MindDataTestTensorFusionPassPreBuiltTensorOperation) {
+  MS_LOG(INFO) << "Doing MindDataTestOptimizationPass-MindDataTestTensorFusionPassPreBuiltTensorOperation.";
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  // make prebuilt tensor operation
+  auto decode = std::make_shared<transforms::PreBuiltOperation>(vision::Decode()->Build());
+  auto resize = std::make_shared<transforms::PreBuiltOperation>(vision::RandomResizedCrop({100})->Build());
+  std::shared_ptr<Dataset> root = ImageFolder(folder_path, false)->Map({decode, resize}, {"image"});
+
+  TensorOpFusionPass fusion_pass;
+  bool modified = false;
+  std::shared_ptr<MapNode> map_node = std::dynamic_pointer_cast<MapNode>(root->IRNode());
+  // no deepcopy is performed because this doesn't go through tree_adapter
+  fusion_pass.Run(root->IRNode(), &modified);
+  EXPECT_EQ(modified, true);
+  ASSERT_NE(map_node, nullptr);
+  auto fused_ops = map_node->operations();
+  ASSERT_EQ(fused_ops.size(), 1);
+  ASSERT_EQ(fused_ops[0]->Name(), kRandomCropDecodeResizeOp);
 }

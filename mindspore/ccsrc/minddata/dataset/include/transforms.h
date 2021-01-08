@@ -204,7 +204,7 @@ class PreBuiltOperation : public TensorOperation {
 
   Status ValidateParams() override;
 
-  std::string Name() const override { return kPreBuiltOperation; }
+  std::string Name() const override;
 
  private:
   std::shared_ptr<TensorOp> op_;

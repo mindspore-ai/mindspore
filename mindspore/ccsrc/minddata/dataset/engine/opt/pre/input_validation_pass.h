@@ -27,7 +27,7 @@ namespace dataset {
 /// \class InputValidationPass
 /// \brief This is a parse pass that validates input parameters of the IR tree.
 class InputValidationPass : public IRNodePass {
-  /// \brief Runs a validatation pass to check input parameters
+  /// \brief Runs a validation pass to check input parameters
   /// \param[in] node The node being visited
   /// \param[inout] *modified indicates whether the node has been visited
   /// \return Status code

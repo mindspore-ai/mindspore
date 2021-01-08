@@ -227,6 +227,8 @@ Status PreBuiltOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> PreBuiltOperation::Build() { return op_; }
 
+std::string PreBuiltOperation::Name() const { return op_ ? op_->Name() : kPreBuiltOperation; }
+
 // RandomApplyOperation
 RandomApplyOperation::RandomApplyOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms, double prob)
     : TensorOperation(true), transforms_(transforms), prob_(prob) {}

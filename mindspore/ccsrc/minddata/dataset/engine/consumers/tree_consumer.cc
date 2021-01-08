@@ -515,17 +515,6 @@ Status TreeGetters::GetClassIndexing(std::vector<std::pair<std::string, std::vec
   return Status::OK();
 }
 
-Status TreeGetters::InternalInit(int8_t type) {
-  if (init_flag_) return Status::OK();
-  tree_adapter_->SetPrePassOverride([&type](OptPass pre) {
-    pre.push_back(std::make_unique<GetterPass>(static_cast<GetterPass::GetterType>(type)));
-    return pre;
-  });
-  Status s = tree_adapter_->Compile(std::move(root_), 1);
-  if (s.IsOk()) init_flag_ = true;
-  return s;
-}
-
 Status TreeGetters::InternalInit() {
   if (init_flag_) return Status::OK();
   Status s = tree_adapter_->Compile(std::move(root_), 1);
@@ -535,7 +524,7 @@ Status TreeGetters::InternalInit() {
 
 Status TreeGetters::GetFirstRowShapeAndType() {
   RETURN_OK_IF_TRUE(first_row_obtained_);
-  RETURN_IF_NOT_OK(InternalInit(static_cast<int8_t>(GetterPass::kOutputShapeAndType)));
+  RETURN_IF_NOT_OK(InternalInit());
   TensorRow first_row;
   RETURN_IF_NOT_OK(GetRow(&first_row));
   std::transform(first_row.begin(), first_row.end(), std::back_inserter(first_row_type_),
@@ -572,11 +561,6 @@ Status DatasetSizeGetter::Init(std::shared_ptr<DatasetNode> d) {
 Status DatasetSizeGetter::DryRun(std::shared_ptr<DatasetNode> ir_node, int64_t *dataset_size) {
   std::shared_ptr<TreeAdapter> tree_adapter = std::make_shared<TreeAdapter>(TreeAdapter::UsageFlag::kDeGetter);
   tree_adapters_.push_back(tree_adapter);
-  tree_adapter->SetPrePassOverride([](OptPass pre) {
-    pre.push_back(
-      std::make_unique<GetterPass>(static_cast<GetterPass::GetterType>(GetterPass::GetterType::kDatasetSize)));
-    return pre;
-  });
   RETURN_IF_NOT_OK(tree_adapter->Compile(ir_node, 1));
   TensorRow row;
   RETURN_IF_NOT_OK(GetRow(tree_adapter, &row));
