@@ -438,13 +438,13 @@ void MapOp::CreateFinalColMap(std::unordered_map<std::string, int32_t> *col_name
 }
 
 // Visitor accept method for NodePass
-Status MapOp::Accept(NodePass *p, bool *modified) {
+Status MapOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<MapOp>(), modified);
 }
 
 // Visitor pre-accept method for NodePass
-Status MapOp::PreAccept(NodePass *p, bool *modified) {
+Status MapOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->PreRunOnNode(shared_from_base<MapOp>(), modified);
 }

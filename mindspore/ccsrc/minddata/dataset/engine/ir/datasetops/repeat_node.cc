@@ -72,13 +72,13 @@ Status RepeatNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
 }
 
 // Visitor accepting method for IRNodePass
-Status RepeatNode::Accept(IRNodePass *const p, bool *modified) {
+Status RepeatNode::Accept(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<RepeatNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status RepeatNode::AcceptAfter(IRNodePass *const p, bool *modified) {
+Status RepeatNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<RepeatNode>(), modified);
 }

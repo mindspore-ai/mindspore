@@ -105,13 +105,13 @@ Status MapNode::ValidateParams() {
 }
 
 // Visitor accepting method for IRNodePass
-Status MapNode::Accept(IRNodePass *const p, bool *modified) {
+Status MapNode::Accept(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<MapNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status MapNode::AcceptAfter(IRNodePass *const p, bool *modified) {
+Status MapNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<MapNode>(), modified);
 }

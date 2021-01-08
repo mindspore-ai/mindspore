@@ -76,13 +76,13 @@ Status RootNode::ValidateParams() {
 }
 
 // Visitor accepting method for IRNodePass
-Status RootNode::Accept(IRNodePass *const p, bool *modified) {
+Status RootNode::Accept(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<RootNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status RootNode::AcceptAfter(IRNodePass *const p, bool *modified) {
+Status RootNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<RootNode>(), modified);
 }

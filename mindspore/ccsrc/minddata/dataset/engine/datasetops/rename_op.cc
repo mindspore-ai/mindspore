@@ -172,7 +172,7 @@ Status RenameOp::EoeReceived(int32_t) {
 }
 
 // Visitor accept method for NodePass
-Status RenameOp::Accept(NodePass *p, bool *modified) {
+Status RenameOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<RenameOp>(), modified);
 }

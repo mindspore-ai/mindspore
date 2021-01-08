@@ -54,7 +54,7 @@ namespace dataset {
 CacheTransformPass::CachePass::CachePass() : is_caching_(false), leaf_op_(nullptr) {}
 
 // Identifies the subtree below this node as a cached descendant tree.
-Status CacheTransformPass::CachePass::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) {
   *modified = false;
   MS_LOG(INFO) << "Cache transform pass: CacheOp found, identified descendant tree.";
   if (is_caching_) {
@@ -66,7 +66,7 @@ Status CacheTransformPass::CachePass::PreRunOnNode(std::shared_ptr<CacheOp> node
 
 // Resets the tracking of the cache within the tree and assigns the operators that will be involved in a cache
 // transformation
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) {
   *modified = false;
   is_caching_ = false;  // We a no longer in a cache subtree.  clear the flag.
   if (leaf_op_) {
@@ -138,7 +138,7 @@ Status CacheTransformPass::CachePass::NonMappableCacheLeafSetup(std::shared_ptr<
 
 #ifndef ENABLE_ANDROID
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<TFReaderOp> node, bool *const modified) {
   if (is_caching_) {
     // If we are a TF Reader in a caching tree, then change our config so that it becomes a basic
     // TF reader that parses all files.  Selection of data will come from the sampler on the cache instead.
@@ -148,7 +148,7 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<TFReaderOp> node
 }
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ClueOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ClueOp> node, bool *const modified) {
   if (is_caching_) {
     // If we are a ClueOp in a caching tree, then change our config so that it becomes a basic
     // ClueOp that parses all files.  Selection of data will come from the sampler on the cache instead.
@@ -158,7 +158,7 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ClueOp> node, bo
 }
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CsvOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CsvOp> node, bool *const modified) {
   if (is_caching_) {
     // If we are a CsvOp in a caching tree, then change our config so that it becomes a basic
     // CsvOp that parses all files.  Selection of data will come from the sampler on the cache instead.
@@ -168,7 +168,7 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CsvOp> node, boo
 }
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<TextFileOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<TextFileOp> node, bool *const modified) {
   if (is_caching_) {
     // If we are a TextFileOp in a caching tree, then change our config so that it becomes a basic
     // TextFileOp that parses all files.  Selection of data will come from the sampler on the cache instead.
@@ -179,43 +179,43 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<TextFileOp> node
 #endif
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<RandomDataOp> node, bool *const modified) {
   return NonMappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *const modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<AlbumOp> node, bool *const modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MnistOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MnistOp> node, bool *const modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CifarOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CifarOp> node, bool *const modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CocoOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CocoOp> node, bool *const modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CelebAOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CelebAOp> node, bool *const modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
 #ifndef ENABLE_ANDROID
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *const modified) {
   if (is_caching_) {
     return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
                   "There is currently no support for MindRecordOp under cache.");
@@ -226,7 +226,7 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MindRecordOp> no
 
 #ifdef ENABLE_PYTHON
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *const modified) {
   if (is_caching_) {
     return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
                   "There is currently no support for GeneratorOp under cache.");
@@ -235,12 +235,12 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<GeneratorOp> nod
 }
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *const modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 
 // Perform leaf node cache transform identification
-Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) {
+Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<VOCOp> node, bool *const modified) {
   return MappableCacheLeafSetup(std::static_pointer_cast<DatasetOp>(node));
 }
 #endif
@@ -255,7 +255,7 @@ void CacheTransformPass::CachePass::AddMappableCacheOperators(std::shared_ptr<Da
 CacheTransformPass::CacheTransformPass() {}
 
 // Runs a cache_pass first to set up the transformation nodes, and then drives any of these transformations
-Status CacheTransformPass::RunOnTree(ExecutionTree *tree, bool *modified) {
+Status CacheTransformPass::RunOnTree(ExecutionTree *tree, bool *const modified) {
   MS_LOG(INFO) << "Pre pass: Cache transform pass started.";
   // Create the cache pass and run it.  The cache pass identifies and creates the leaf/cache pairs that we will
   // use to execute a transform.

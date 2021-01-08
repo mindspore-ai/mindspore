@@ -491,7 +491,7 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
 }
 
 // Visitor accept method for NodePass
-Status CifarOp::Accept(NodePass *p, bool *modified) {
+Status CifarOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<CifarOp>(), modified);
 }

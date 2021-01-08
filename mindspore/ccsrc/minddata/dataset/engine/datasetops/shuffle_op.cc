@@ -293,7 +293,7 @@ Status ShuffleOp::EoeReceived(int32_t worker_id) {
 }
 
 // Visitor accept method for NodePass
-Status ShuffleOp::Accept(NodePass *p, bool *modified) {
+Status ShuffleOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<ShuffleOp>(), modified);
 }

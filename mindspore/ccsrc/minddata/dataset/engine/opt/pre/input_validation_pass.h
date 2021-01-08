@@ -31,7 +31,7 @@ class InputValidationPass : public IRNodePass {
   /// \param[in] node The node being visited
   /// \param[inout] *modified indicates whether the node has been visited
   /// \return Status code
-  Status Visit(std::shared_ptr<DatasetNode> node, bool *modified) override;
+  Status Visit(std::shared_ptr<DatasetNode> node, bool *const modified) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

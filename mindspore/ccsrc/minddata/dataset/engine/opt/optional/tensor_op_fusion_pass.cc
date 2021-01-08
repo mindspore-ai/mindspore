@@ -29,7 +29,7 @@
 namespace mindspore {
 namespace dataset {
 
-Status TensorOpFusionPass::Visit(std::shared_ptr<MapNode> node, bool *modified) {
+Status TensorOpFusionPass::Visit(std::shared_ptr<MapNode> node, bool *const modified) {
   std::vector<std::shared_ptr<TensorOperation>> ops = node->operations();
 
   // start temporary code, to deal with pre-built TensorOperation

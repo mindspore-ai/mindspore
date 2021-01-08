@@ -27,7 +27,7 @@ DeepCopyPass::DeepCopyPass() {
   parent_ = root_.get();
 }
 
-Status DeepCopyPass::Visit(std::shared_ptr<DatasetNode> node, bool *modified) {
+Status DeepCopyPass::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
   *modified = true;
   // Do a nested-loop walk to check whether a node has the same child more than once.
   // This is an artificial restriction. We can support it since we will do a clone of the input tree in this pass.
@@ -59,7 +59,7 @@ Status DeepCopyPass::Visit(std::shared_ptr<DatasetNode> node, bool *modified) {
   return Status::OK();
 }
 
-Status DeepCopyPass::VisitAfter(std::shared_ptr<DatasetNode> node, bool *modified) {
+Status DeepCopyPass::VisitAfter(std::shared_ptr<DatasetNode> node, bool *const modified) {
   *modified = true;
   // After visit the node, move up to its parent
   parent_ = parent_->Parent();

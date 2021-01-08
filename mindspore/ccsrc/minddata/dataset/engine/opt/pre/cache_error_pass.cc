@@ -27,14 +27,14 @@ namespace dataset {
 CacheErrorPass::CacheErrorPass() : is_cached_(false), is_mappable_(false) {}
 
 // Identifies the subtree below this node as being cached
-Status CacheErrorPass::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+Status CacheErrorPass::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) {
   // Turn on the flag that we're under a merge op
   is_cached_ = true;
   return Status::OK();
 }
 
 // Returns an error if ZipOp exists under a cache
-Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ZipOp> node, bool *modified) {
+Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ZipOp> node, bool *const modified) {
   if (is_cached_) {
     return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
                   "ZipOp is currently not supported as a descendant operator under a cache.");
@@ -44,7 +44,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ZipOp> node, bool *modified)
 }
 
 // Returns an error if MapOp with non-deterministic TensorOps exists under a cache
-Status CacheErrorPass::PreRunOnNode(std::shared_ptr<MapOp> node, bool *modified) {
+Status CacheErrorPass::PreRunOnNode(std::shared_ptr<MapOp> node, bool *const modified) {
   if (is_cached_) {
     auto tfuncs = node->TFuncs();
     for (size_t i = 0; i < tfuncs.size(); i++) {
@@ -58,7 +58,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<MapOp> node, bool *modified)
 }
 
 // Returns an error if ConcatOp exists under a cache
-Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modified) {
+Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *const modified) {
   if (is_cached_) {
     return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
                   "ConcatOp is currently not supported as a descendant operator under a cache.");
@@ -68,7 +68,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *modifi
 }
 
 // Returns an error if TakeOp exists under a cache
-Status CacheErrorPass::PreRunOnNode(std::shared_ptr<TakeOp> node, bool *modified) {
+Status CacheErrorPass::PreRunOnNode(std::shared_ptr<TakeOp> node, bool *const modified) {
   if (is_cached_) {
     return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
                   "TakeOp/SplitOp is currently not supported as a descendant operator under a cache.");
@@ -78,7 +78,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<TakeOp> node, bool *modified
 }
 
 // Returns an error if SkipOp exists under a cache
-Status CacheErrorPass::PreRunOnNode(std::shared_ptr<SkipOp> node, bool *modified) {
+Status CacheErrorPass::PreRunOnNode(std::shared_ptr<SkipOp> node, bool *const modified) {
   if (is_cached_) {
     return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
                   "SkipOp is currently not supported as a descendant operator under a cache.");
@@ -88,7 +88,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<SkipOp> node, bool *modified
 }
 
 // Returns an error if SkipOp exists under a cache
-Status CacheErrorPass::PreRunOnNode(std::shared_ptr<BatchOp> node, bool *modified) {
+Status CacheErrorPass::PreRunOnNode(std::shared_ptr<BatchOp> node, bool *const modified) {
   if (is_cached_) {
     return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
                   "BatchOp is currently not supported as a descendant operator under a cache.");
@@ -99,7 +99,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<BatchOp> node, bool *modifie
 
 #ifdef ENABLE_PYTHON
 // Returns an error if FilterOp exists under a cache
-Status CacheErrorPass::PreRunOnNode(std::shared_ptr<FilterOp> node, bool *modified) {
+Status CacheErrorPass::PreRunOnNode(std::shared_ptr<FilterOp> node, bool *const modified) {
   if (is_cached_) {
     return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
                   "FilterOp is currently not supported as a descendant operator under a cache.");
@@ -109,67 +109,67 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<FilterOp> node, bool *modifi
 }
 #endif
 
-Status CacheErrorPass::RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *const modified) {
   // Turn on the flag that this is a tree with mappable leaf dataset
   is_mappable_ = true;
   return Status::OK();
 }
 
-Status CacheErrorPass::RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<AlbumOp> node, bool *const modified) {
   // Turn on the flag that this is a tree with mappable leaf dataset
   is_mappable_ = true;
   return Status::OK();
 }
 
-Status CacheErrorPass::RunOnNode(std::shared_ptr<MnistOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<MnistOp> node, bool *const modified) {
   // Turn on the flag that this is a tree with mappable leaf dataset
   is_mappable_ = true;
   return Status::OK();
 }
 
-Status CacheErrorPass::RunOnNode(std::shared_ptr<CifarOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<CifarOp> node, bool *const modified) {
   // Turn on the flag that this is a tree with mappable leaf dataset
   is_mappable_ = true;
   return Status::OK();
 }
 
-Status CacheErrorPass::RunOnNode(std::shared_ptr<CocoOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<CocoOp> node, bool *const modified) {
   // Turn on the flag that this is a tree with mappable leaf dataset
   is_mappable_ = true;
   return Status::OK();
 }
 
-Status CacheErrorPass::RunOnNode(std::shared_ptr<CelebAOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<CelebAOp> node, bool *const modified) {
   // Turn on the flag that this is a tree with mappable leaf dataset
   is_mappable_ = true;
   return Status::OK();
 }
 
-Status CacheErrorPass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<ManifestOp> node, bool *const modified) {
   // Turn on the flag that this is a tree with mappable leaf dataset
   is_mappable_ = true;
   return Status::OK();
 }
 
-Status CacheErrorPass::RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<VOCOp> node, bool *const modified) {
   // Turn on the flag that this is a tree with mappable leaf dataset
   is_mappable_ = true;
   return Status::OK();
 }
 
-Status CacheErrorPass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *const modified) {
   // Turn on the flag that this is a tree with mappable leaf dataset
   is_mappable_ = true;
   return Status::OK();
 }
 
-Status CacheErrorPass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *const modified) {
   // Turn on the flag that this is a tree with mappable leaf dataset
   is_mappable_ = true;
   return Status::OK();
 }
 
-Status CacheErrorPass::RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) {
   // Turn off the flag that we're under a merge op
   is_cached_ = false;
   return Status::OK();
@@ -177,7 +177,7 @@ Status CacheErrorPass::RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) 
 
 // Currently, returns an error if RepeatOp exists under a cache
 // Because there is no operator in the cache hit stream to consume eoes, caching above repeat causes problem.
-Status CacheErrorPass::RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
+Status CacheErrorPass::RunOnNode(std::shared_ptr<RepeatOp> node, bool *const modified) {
   if (is_cached_ && is_mappable_) {
     return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
                   "Repeat is not supported as a descendant operator under a mappable cache.");

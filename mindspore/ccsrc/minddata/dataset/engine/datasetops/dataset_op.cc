@@ -402,13 +402,13 @@ Status DatasetOp::ComputeColMap() {
   return Status::OK();
 }
 
-Status DatasetOp::PreAccept(NodePass *p, bool *modified) {
+Status DatasetOp::PreAccept(NodePass *p, bool *const modified) {
   // DatasetOp is the base class of visitor target pre-visit.
   // This method will only be called if its derived class does not implement one.
   return p->PreRunOnNode(shared_from_this(), modified);
 }
 
-Status DatasetOp::Accept(NodePass *p, bool *modified) {
+Status DatasetOp::Accept(NodePass *p, bool *const modified) {
   // DatasetOp is the base class of visitor target.
   // This method will only be called if its derived class does not implement one.
   return p->RunOnNode(shared_from_this(), modified);

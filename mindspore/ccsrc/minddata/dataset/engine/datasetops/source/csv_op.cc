@@ -911,7 +911,7 @@ void CsvOp::MakeSimpleProducer() {
 }
 
 // Visitor accept method for NodePass
-Status CsvOp::Accept(NodePass *p, bool *modified) {
+Status CsvOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<CsvOp>(), modified);
 }
