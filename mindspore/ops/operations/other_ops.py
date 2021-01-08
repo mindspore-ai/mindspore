@@ -417,9 +417,6 @@ class Depend(Primitive):
     """
     Depend is used for processing side-effect operations.
 
-    Note:
-        Internal API, not for public use.
-
     Inputs:
         - **value** (Tensor) - the real value to return for depend operator.
         - **expr** (Expression) - the expression to execute with no outputs.
