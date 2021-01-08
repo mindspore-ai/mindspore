@@ -288,7 +288,6 @@ int Tensor::set_root_tensor(Tensor *tensor) {
   this->shape_ = this->root_tensor_->shape_;
   this->format_ = this->root_tensor_->format_;
   this->data_type_ = this->root_tensor_->data_type_;
-  this->allocator_ = this->root_tensor_->allocator_;
   this->category_ = this->root_tensor_->category_;
   this->quant_params_ = this->root_tensor_->quant_params_;
   this->quant_clusters_ = this->root_tensor_->quant_clusters_;

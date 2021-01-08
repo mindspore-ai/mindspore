@@ -95,6 +95,7 @@ int ElementSquaredDifference(const float *in0, const float *in1, float *out, int
 int ElementMaximum(const float *in0, const float *in1, float *out, int size);
 int ElementMinimum(const float *in0, const float *in1, float *out, int size);
 int ElementMaximumInt(const int *in0, const int *in1, int *out, int size);
+int ElementMinimumInt(const int *input0, const int *input1, int *output, const int element_size);
 int BroadcastMaximum(const float *in0, const float *in1, float *tile_input0, float *tile_input1, float *out, int size,
                      ArithmeticParameter *param);
 
