@@ -22,7 +22,7 @@ export BUILD_PATH="${BASEPATH}/build/"
 usage()
 {
   echo "Usage:"
-  echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t on|off] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
+  echo "bash build.sh [-d] [-r] [-v] [-c on|off] [-t ut|st] [-g on|off] [-h] [-b ge] [-m infer|train] \\"
   echo "              [-a on|off] [-p on|off] [-i] [-L] [-R] [-D on|off] [-j[n]] [-e gpu|ascend|cpu|npu] \\"
   echo "              [-P on|off] [-z [on|off]] [-M on|off] [-V 9.2|10.1|310|910] [-I arm64|arm32|x86_64] [-K] \\"
   echo "              [-B on|off] [-E] [-l on|off] [-n full|lite|off] [-T on|off] \\"
@@ -33,7 +33,7 @@ usage()
   echo "    -r Release mode, default mode"
   echo "    -v Display build command"
   echo "    -c Enable code coverage, default off"
-  echo "    -t Run testcases, default on"
+  echo "    -t Run testcases, default off"
   echo "    -g Use glog to output log, default on"
   echo "    -h Print usage"
   echo "    -b Select other backend, available: \\"
@@ -86,6 +86,7 @@ checkopts()
   VERBOSE=""
   ENABLE_COVERAGE="off"
   RUN_TESTCASES="off"
+  RUN_CPP_ST_TESTS="off"
   ENABLE_BACKEND=""
   TRAIN_MODE="INFER"
   ENABLE_ASAN="off"
@@ -152,8 +153,17 @@ checkopts()
         ENABLE_COVERAGE="$OPTARG"
         ;;
       t)
-        check_on_off $OPTARG t
-        RUN_TESTCASES="$OPTARG"
+        if [[ "X$OPTARG" == "Xon" || "X$OPTARG" == "Xut" ]]; then
+          RUN_TESTCASES="on"
+        elif [[ "X$OPTARG" == "Xoff" ]]; then
+          RUN_TESTCASES="off"
+        elif [[ "X$OPTARG" == "Xst" ]]; then
+          RUN_CPP_ST_TESTS="on"
+        else
+          echo "Invalid value ${OPTARG} for option -t"
+          usage
+          exit 1
+        fi
         ;;
       g)
         check_on_off $OPTARG g
@@ -405,6 +415,9 @@ build_mindspore()
     fi
     if [[ "X$RUN_TESTCASES" = "Xon" ]]; then
       CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_TESTCASES=ON"
+    fi
+    if [[ "X$RUN_CPP_ST_TESTS" = "Xon" ]]; then
+      CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_CPP_ST=ON"
     fi
     if [[ -n "$ENABLE_BACKEND" ]]; then
       CMAKE_ARGS="${CMAKE_ARGS} -DENABLE_${ENABLE_BACKEND}=ON"

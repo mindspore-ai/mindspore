@@ -3,6 +3,7 @@ build/
 mindspore/lib
 output
 *.ir
+st_tests
 
 # mindspore lite java
 mindspore/lite/java/java/.gradle

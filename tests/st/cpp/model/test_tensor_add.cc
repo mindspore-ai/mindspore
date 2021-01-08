@@ -22,7 +22,7 @@
 
 using namespace mindspore::api;
 
-static const char tensor_add_file[] = "/home/workspace/mindspore_dataset/tensor_add/tensor_add.mindir";
+static const char tensor_add_file[] = "/home/workspace/mindspore_dataset/mindir/tensor_add/tensor_add.mindir";
 static const std::vector<float> input_data_1 = {1, 2, 3, 4};
 static const std::vector<float> input_data_2 = {2, 3, 4, 5};
 
@@ -32,7 +32,8 @@ class TestTensorAdd : public ST::Common {
 };
 
 TEST_F(TestTensorAdd, InferMindIR) {
-  Context::Instance().SetDeviceTarget(kDeviceTypeAscend310).SetDeviceID(1);
+  ContextAutoSet();
+
   auto graph = Serialization::LoadModel(tensor_add_file, ModelType::kMindIR);
   Model tensor_add((GraphCell(graph)));
   Status ret = tensor_add.Build({});
