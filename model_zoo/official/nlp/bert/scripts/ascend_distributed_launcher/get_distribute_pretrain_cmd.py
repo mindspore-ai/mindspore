@@ -85,12 +85,19 @@ def distribute_pretrain():
 
     # get device_ips
     device_ips = {}
+    physic_logic_ids = {}
     with open('/etc/hccn.conf', 'r') as fin:
         for hccn_item in fin.readlines():
             if hccn_item.strip().startswith('address_'):
                 device_id, device_ip = hccn_item.split('=')
                 device_id = device_id.split('_')[1]
                 device_ips[device_id] = device_ip.strip()
+
+    if not device_ips:
+        raise ValueError("There is no address in /etc/hccn.conf")
+
+    for logic_id, device_id in enumerate(sorted(device_ips.keys())):
+        physic_logic_ids[device_id] = logic_id
 
     with open(args.hccl_config_dir, "r", encoding="utf-8") as fin:
         hccl_config = json.loads(fin.read())
@@ -109,38 +116,42 @@ def distribute_pretrain():
 
     count = 0
     for instance in this_server["device"]:
+        # device_id is the physical id, we use logic id to sepcific the selected device.
+        # While running on a server with 8 pcs, the logic ids are equal to the device ids.
         device_id = instance["device_id"]
         rank_id = instance["rank_id"]
+        logic_id = physic_logic_ids[device_id]
         print("\nstart training for rank " + str(rank_id) + ", device " + str(device_id) + ":")
         print("rank_id:", rank_id)
         print("device_id:", device_id)
+        print("logic_id", logic_id)
 
         start = count * int(avg_core_per_rank)
         count += 1
         end = start + core_gap
         cmdopt = str(start) + "-" + str(end)
 
-        cmd = append_cmd_env(cmd, "DEVICE_ID", str(device_id))
+        cmd = append_cmd_env(cmd, "DEVICE_ID", str(logic_id))
         cmd = append_cmd_env(cmd, "RANK_ID", str(rank_id))
         cmd = append_cmd_env(cmd, "DEPLOY_MODE", '0')
         cmd = append_cmd_env(cmd, "GE_USE_STATIC_MEMORY", '1')
 
-        cmd = append_cmd(cmd, "rm -rf LOG" + str(device_id))
-        cmd = append_cmd(cmd, "mkdir ./LOG" + str(device_id))
-        cmd = append_cmd(cmd, "cp *.py ./LOG" + str(device_id))
-        cmd = append_cmd(cmd, "mkdir -p ./LOG" + str(device_id) + "/ms_log")
-        cmd = append_cmd(cmd, "env > ./LOG" + str(device_id) + "/env.log")
+        cmd = append_cmd(cmd, "rm -rf LOG" + str(logic_id))
+        cmd = append_cmd(cmd, "mkdir ./LOG" + str(logic_id))
+        cmd = append_cmd(cmd, "cp *.py ./LOG" + str(logic_id))
+        cmd = append_cmd(cmd, "mkdir -p ./LOG" + str(logic_id) + "/ms_log")
+        cmd = append_cmd(cmd, "env > ./LOG" + str(logic_id) + "/env.log")
 
         cur_dir = os.getcwd()
-        cmd = append_cmd_env(cmd, "GLOG_log_dir", cur_dir + "/LOG" + str(device_id) + "/ms_log")
+        cmd = append_cmd_env(cmd, "GLOG_log_dir", cur_dir + "/LOG" + str(logic_id) + "/ms_log")
         cmd = append_cmd_env(cmd, "GLOG_logtostderr", "0")
 
         print("core_nums:", cmdopt)
         print("epoch_size:", str(cfg['epoch_size']))
         print("data_dir:", data_dir)
-        print("log_file_dir: " + cur_dir + "/LOG" + str(device_id) + "/pretraining_log.txt")
+        print("log_file_dir: " + cur_dir + "/LOG" + str(logic_id) + "/pretraining_log.txt")
 
-        cmd = append_cmd(cmd, "cd " + cur_dir + "/LOG" + str(device_id))
+        cmd = append_cmd(cmd, "cd " + cur_dir + "/LOG" + str(logic_id))
 
         run_cmd = 'taskset -c ' + cmdopt + ' nohup python ' + run_script + " "
         opt = " ".join(["--" + key + "=" + str(cfg[key]) for key in cfg.keys()])
@@ -149,11 +160,15 @@ def distribute_pretrain():
                              " 'device_num' or 'data_dir'! ")
         run_cmd += opt
         run_cmd += " --data_dir=" + data_dir
-        run_cmd += ' --device_id=' + str(device_id) + ' --device_num=' \
+        run_cmd += ' --device_id=' + str(logic_id) + ' --device_num=' \
                + str(rank_size) + ' >./pretraining_log.txt 2>&1 &'
 
         cmd = append_cmd(cmd, run_cmd)
         cmd = append_cmd(cmd, "cd -")
+        cmd = append_cmd(cmd, "echo \"run with" +
+                         " rank_id=" + str(rank_id) +
+                         " device_id=" + str(device_id) +
+                         " logic_id=" + str(logic_id) + "\"")
         cmd += "\n"
 
     with open(args.cmd_file, "w") as f:
