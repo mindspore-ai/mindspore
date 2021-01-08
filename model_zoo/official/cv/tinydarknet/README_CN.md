@@ -79,7 +79,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 
   ```python
   # 单卡训练
-  bash ./scripts/run_standalone_train.sh
+  bash ./scripts/run_standalone_train.sh 0
 
   # 分布式训练
   bash ./scripts/run_distribute_train.sh rank_table.json
@@ -172,7 +172,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 - 在Ascend资源上运行：
 
   ```python
-  bash ./scripts/run_standalone_train.sh
+  bash ./scripts/run_standalone_train.sh 0
   ```
 
   上述的命令将运行在后台中，可以通过 `train.log` 文件查看运行结果.
