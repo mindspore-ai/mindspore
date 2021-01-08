@@ -1,6 +1,6 @@
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
-if (ENABLE_PYTHON)
+if(ENABLE_PYTHON)
     add_library(APItoPython OBJECT
             python/bindings/dataset/callback/bindings.cc
             python/bindings/dataset/core/bindings.cc
@@ -15,7 +15,6 @@ if (ENABLE_PYTHON)
             python/bindings/dataset/include/schema_bindings.cc
             python/bindings/dataset/kernels/bindings.cc
             python/bindings/dataset/kernels/data/bindings.cc
-            python/bindings/dataset/kernels/image/bindings.cc
             python/bindings/dataset/kernels/ir/bindings.cc
             python/bindings/dataset/kernels/ir/image/bindings.cc
             python/bindings/dataset/text/bindings.cc
@@ -25,10 +24,10 @@ if (ENABLE_PYTHON)
             python/pybind_register.cc
             )
     target_include_directories(APItoPython PRIVATE ${pybind11_INCLUDE_DIRS})
-endif ()
+endif()
 
 
-if (ENABLE_ACL)
+if(ENABLE_ACL)
     add_library(cpp-API OBJECT
             config.cc
             datasets.cc

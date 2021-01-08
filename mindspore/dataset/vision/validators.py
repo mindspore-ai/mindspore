@@ -17,7 +17,7 @@
 import numbers
 from functools import wraps
 import numpy as np
-from mindspore._c_dataengine import TensorOp
+from mindspore._c_dataengine import TensorOp, TensorOperation
 
 from mindspore.dataset.core.validator_helpers import check_value, check_uint8, FLOAT_MAX_INTEGER, check_pos_float32, \
     check_float32, check_2tuple, check_range, check_positive, INT32_MAX, parse_user_args, type_check, type_check_list, \
@@ -58,6 +58,7 @@ def check_resize_size(size):
         check_value(size, (1, FLOAT_MAX_INTEGER))
     elif isinstance(size, (tuple, list)) and len(size) == 2:
         for i, value in enumerate(size):
+            type_check(value, (int,), "size at dim {0}".format(i))
             check_value(value, (1, INT32_MAX), "size at dim {0}".format(i))
     else:
         raise TypeError("Size should be a single integer or a list/tuple (h, w) of length 2.")
@@ -194,9 +195,10 @@ def check_resize_interpolation(method):
     @wraps(method)
     def new_method(self, *args, **kwargs):
         [size, interpolation], _ = parse_user_args(method, *args, **kwargs)
+        if interpolation is None:
+            raise KeyError("Interpolation should not be None")
         check_resize_size(size)
-        if interpolation is not None:
-            type_check(interpolation, (Inter,), "interpolation")
+        type_check(interpolation, (Inter,), "interpolation")
 
         return method(self, *args, **kwargs)
 
@@ -605,7 +607,13 @@ def check_uniform_augment_cpp(method):
 
         if num_ops > len(transforms):
             raise ValueError("num_ops is greater than transforms list size.")
-        type_check_list(transforms, (TensorOp,), "tensor_ops")
+        parsed_transforms = []
+        for op in transforms:
+            if op and getattr(op, 'parse', None):
+                parsed_transforms.append(op.parse())
+            else:
+                parsed_transforms.append(op)
+        type_check_list(parsed_transforms, (TensorOp, TensorOperation), "transforms")
 
         return method(self, *args, **kwargs)
 
@@ -620,7 +628,9 @@ def check_bounding_box_augment_cpp(method):
         [transform, ratio], _ = parse_user_args(method, *args, **kwargs)
         type_check(ratio, (float, int), "ratio")
         check_value(ratio, [0., 1.], "ratio")
-        type_check(transform, (TensorOp,), "transform")
+        if transform and getattr(transform, 'parse', None):
+            transform = transform.parse()
+        type_check(transform, (TensorOp, TensorOperation), "transform")
         return method(self, *args, **kwargs)
 
     return new_method

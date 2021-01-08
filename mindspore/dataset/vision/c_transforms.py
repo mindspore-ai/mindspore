@@ -81,8 +81,11 @@ def parse_padding(padding):
         padding = tuple(padding)
     return padding
 
+class TensorOperation:
+    def parse(self):
+        raise NotImplementedError("TensorOperation has to implement parse method.")
 
-class AutoContrast(cde.AutoContrastOp):
+class AutoContrast(TensorOperation):
     """
     Apply automatic contrast on input image.
 
@@ -102,10 +105,14 @@ class AutoContrast(cde.AutoContrastOp):
             ignore = []
         if isinstance(ignore, int):
             ignore = [ignore]
-        super().__init__(cutoff, ignore)
+        self.cutoff = cutoff
+        self.ignore = ignore
+
+    def parse(self):
+        return cde.AutoContrastOperation(self.cutoff, self.ignore)
 
 
-class RandomSharpness(cde.RandomSharpnessOp):
+class RandomSharpness(TensorOperation):
     """
     Adjust the sharpness of the input image by a fixed or random degree. Degree of 0.0 gives a blurred image,
     degree of 1.0 gives the original image, and degree of 2.0 gives a sharpened image.
@@ -128,10 +135,12 @@ class RandomSharpness(cde.RandomSharpnessOp):
     @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
         self.degrees = degrees
-        super().__init__(*degrees)
+
+    def parse(self):
+        return cde.RandomSharpnessOperation(self.degrees)
 
 
-class Equalize(cde.EqualizeOp):
+class Equalize(TensorOperation):
     """
     Apply histogram equalization on input image.
 
@@ -140,9 +149,11 @@ class Equalize(cde.EqualizeOp):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+    def parse(self):
+        return cde.EqualizeOperation()
 
 
-class Invert(cde.InvertOp):
+class Invert(TensorOperation):
     """
     Apply invert on input image in RGB mode.
 
@@ -151,9 +162,11 @@ class Invert(cde.InvertOp):
         >>> image_folder_dataset = image_folder_dataset.map(operations=transforms_list,
         ...                                                 input_columns=["image"])
     """
+    def parse(self):
+        return cde.InvertOperation()
 
 
-class Decode(cde.DecodeOp):
+class Decode(TensorOperation):
     """
     Decode the input image in RGB mode.
 
@@ -169,7 +182,6 @@ class Decode(cde.DecodeOp):
 
     def __init__(self, rgb=True):
         self.rgb = rgb
-        super().__init__(self.rgb)
 
     def __call__(self, img):
         """
@@ -183,12 +195,15 @@ class Decode(cde.DecodeOp):
         """
         if not isinstance(img, np.ndarray) or img.ndim != 1 or img.dtype.type is np.str_:
             raise TypeError("Input should be an encoded image with 1-D NumPy type, got {}.".format(type(img)))
-        decode = cde.Execute(cde.DecodeOp(self.rgb))
+        decode = cde.Execute(cde.DecodeOperation(self.rgb))
         img = decode(cde.Tensor(np.asarray(img)))
         return img.as_array()
 
+    def parse(self):
+        return cde.DecodeOperation(self.rgb)
 
-class CutMixBatch(cde.CutMixBatchOp):
+
+class CutMixBatch(TensorOperation):
     """
     Apply CutMix transformation on input batch of images and labels.
     Note that you need to make labels into one-hot format and batch before calling this function.
@@ -215,10 +230,12 @@ class CutMixBatch(cde.CutMixBatchOp):
         self.image_batch_format = image_batch_format.value
         self.alpha = alpha
         self.prob = prob
-        super().__init__(DE_C_IMAGE_BATCH_FORMAT[image_batch_format], alpha, prob)
+
+    def parse(self):
+        return cde.CutMixBatchOperation(DE_C_IMAGE_BATCH_FORMAT[self.image_batch_format], self.alpha, self.prob)
 
 
-class CutOut(cde.CutOutOp):
+class CutOut(TensorOperation):
     """
     Randomly cut (mask) out a given number of square patches from the input NumPy image array.
 
@@ -236,11 +253,12 @@ class CutOut(cde.CutOutOp):
     def __init__(self, length, num_patches=1):
         self.length = length
         self.num_patches = num_patches
-        fill_value = (0, 0, 0)
-        super().__init__(length, length, num_patches, False, *fill_value)
+
+    def parse(self):
+        return cde.CutOutOperation(self.length, self.num_patches)
 
 
-class MixUpBatch(cde.MixUpBatchOp):
+class MixUpBatch(TensorOperation):
     """
     Apply MixUp transformation on input batch of images and labels. Each image is multiplied by a random weight (lambda)
     and then added to a randomly selected image from the batch multiplied by (1 - lambda). The same formula is also
@@ -263,10 +281,12 @@ class MixUpBatch(cde.MixUpBatchOp):
     @check_mix_up_batch_c
     def __init__(self, alpha=1.0):
         self.alpha = alpha
-        super().__init__(alpha)
+
+    def parse(self):
+        return cde.MixUpBatchOperation(self.alpha)
 
 
-class Normalize(cde.NormalizeOp):
+class Normalize(TensorOperation):
     """
     Normalize the input image with respect to mean and standard deviation.
 
@@ -292,7 +312,6 @@ class Normalize(cde.NormalizeOp):
             std = [std[0]] * 3
         self.mean = mean
         self.std = std
-        super().__init__(*mean, *std)
 
     def __call__(self, img):
         """
@@ -306,12 +325,15 @@ class Normalize(cde.NormalizeOp):
         """
         if not isinstance(img, (np.ndarray, Image.Image)):
             raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
-        normalize = cde.Execute(cde.NormalizeOp(*self.mean, *self.std))
+        normalize = cde.Execute(cde.NormalizeOperation(self.mean, self.std))
         img = normalize(cde.Tensor(np.asarray(img)))
         return img.as_array()
 
+    def parse(self):
+        return cde.NormalizeOperation(self.mean, self.std)
 
-class NormalizePad(cde.NormalizePadOp):
+
+class NormalizePad(TensorOperation):
     """
     Normalize the input image with respect to mean and standard deviation then pad an extra channel with value zero.
 
@@ -337,7 +359,6 @@ class NormalizePad(cde.NormalizePadOp):
         self.mean = mean
         self.std = std
         self.dtype = dtype
-        super().__init__(*mean, *std, dtype)
 
     def __call__(self, img):
         """
@@ -351,12 +372,15 @@ class NormalizePad(cde.NormalizePadOp):
         """
         if not isinstance(img, (np.ndarray, Image.Image)):
             raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
-        normalize_pad = cde.Execute(cde.NormalizePadOp(*self.mean, *self.std, self.dtype))
+        normalize_pad = cde.Execute(cde.NormalizePadOperation(self.mean, self.std, self.dtype))
         img = normalize_pad(cde.Tensor(np.asarray(img)))
         return img.as_array()
 
+    def parse(self):
+        return cde.NormalizePadOperation(self.mean, self.std, self.dtype)
 
-class RandomAffine(cde.RandomAffineOp):
+
+class RandomAffine(TensorOperation):
     """
     Apply Random affine transformation to the input image.
 
@@ -457,10 +481,12 @@ class RandomAffine(cde.RandomAffineOp):
         self.resample = DE_C_INTER_MODE[resample]
         self.fill_value = fill_value
 
-        super().__init__(degrees, translate, scale, shear, DE_C_INTER_MODE[resample], fill_value)
+    def parse(self):
+        return cde.RandomAffineOperation(self.degrees, self.translate, self.scale_, self.shear, self.resample,
+                                         self.fill_value)
 
 
-class RandomCrop(cde.RandomCropOp):
+class RandomCrop(TensorOperation):
     """
     Crop the input image at a random location.
 
@@ -513,7 +539,6 @@ class RandomCrop(cde.RandomCropOp):
             padding = parse_padding(padding)
         if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
-        border_type = DE_C_BORDER_TYPE[padding_mode]
 
         self.size = size
         self.padding = padding
@@ -521,10 +546,12 @@ class RandomCrop(cde.RandomCropOp):
         self.fill_value = fill_value
         self.padding_mode = padding_mode.value
 
-        super().__init__(*size, *padding, border_type, pad_if_needed, *fill_value)
+    def parse(self):
+        border_type = DE_C_BORDER_TYPE[self.padding_mode]
+        return cde.RandomCropOperation(self.size, self.padding, self.pad_if_needed, self.fill_value, border_type)
 
 
-class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
+class RandomCropWithBBox(TensorOperation):
     """
     Crop the input image at a random location and adjust bounding boxes accordingly.
 
@@ -575,7 +602,6 @@ class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
 
         if isinstance(fill_value, int):
             fill_value = tuple([fill_value] * 3)
-        border_type = DE_C_BORDER_TYPE[padding_mode]
 
         self.size = size
         self.padding = padding
@@ -583,10 +609,13 @@ class RandomCropWithBBox(cde.RandomCropWithBBoxOp):
         self.fill_value = fill_value
         self.padding_mode = padding_mode.value
 
-        super().__init__(*size, *padding, border_type, pad_if_needed, *fill_value)
+    def parse(self):
+        border_type = DE_C_BORDER_TYPE[self.padding_mode]
+        return cde.RandomCropWithBBoxOperation(self.size, self.padding, self.pad_if_needed, self.fill_value,
+                                               border_type)
 
 
-class RandomHorizontalFlip(cde.RandomHorizontalFlipOp):
+class RandomHorizontalFlip(TensorOperation):
     """
     Flip the input image horizontally, randomly with a given probability.
 
@@ -602,10 +631,12 @@ class RandomHorizontalFlip(cde.RandomHorizontalFlipOp):
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
-        super().__init__(prob)
+
+    def parse(self):
+        return cde.RandomHorizontalFlipOperation(self.prob)
 
 
-class RandomHorizontalFlipWithBBox(cde.RandomHorizontalFlipWithBBoxOp):
+class RandomHorizontalFlipWithBBox(TensorOperation):
     """
     Flip the input image horizontally, randomly with a given probability and adjust bounding boxes accordingly.
 
@@ -621,10 +652,12 @@ class RandomHorizontalFlipWithBBox(cde.RandomHorizontalFlipWithBBoxOp):
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
-        super().__init__(prob)
+
+    def parse(self):
+        return cde.RandomHorizontalFlipWithBBoxOperation(self.prob)
 
 
-class RandomPosterize(cde.RandomPosterizeOp):
+class RandomPosterize(TensorOperation):
     """
     Reduce the number of bits for each color channel.
 
@@ -644,12 +677,15 @@ class RandomPosterize(cde.RandomPosterizeOp):
     @check_posterize
     def __init__(self, bits=(8, 8)):
         self.bits = bits
+
+    def parse(self):
+        bits = self.bits
         if isinstance(bits, int):
             bits = (bits, bits)
-        super().__init__(bits)
+        return cde.RandomPosterizeOperation(bits)
 
 
-class RandomVerticalFlip(cde.RandomVerticalFlipOp):
+class RandomVerticalFlip(TensorOperation):
     """
     Flip the input image vertically, randomly with a given probability.
 
@@ -665,10 +701,12 @@ class RandomVerticalFlip(cde.RandomVerticalFlipOp):
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
-        super().__init__(prob)
+
+    def parse(self):
+        return cde.RandomVerticalFlipOperation(self.prob)
 
 
-class RandomVerticalFlipWithBBox(cde.RandomVerticalFlipWithBBoxOp):
+class RandomVerticalFlipWithBBox(TensorOperation):
     """
     Flip the input image vertically, randomly with a given probability and adjust bounding boxes accordingly.
 
@@ -684,10 +722,12 @@ class RandomVerticalFlipWithBBox(cde.RandomVerticalFlipWithBBoxOp):
     @check_prob
     def __init__(self, prob=0.5):
         self.prob = prob
-        super().__init__(prob)
+
+    def parse(self):
+        return cde.RandomVerticalFlipWithBBoxOperation(self.prob)
 
 
-class BoundingBoxAugment(cde.BoundingBoxAugmentOp):
+class BoundingBoxAugment(TensorOperation):
     """
     Apply a given image transform on a random selection of bounding box regions of a given image.
 
@@ -711,10 +751,16 @@ class BoundingBoxAugment(cde.BoundingBoxAugmentOp):
     def __init__(self, transform, ratio=0.3):
         self.ratio = ratio
         self.transform = transform
-        super().__init__(transform, ratio)
+
+    def parse(self):
+        if self.transform and getattr(self.transform, 'parse', None):
+            transform = self.transform.parse()
+        else:
+            transform = self.transform
+        return cde.BoundingBoxAugmentOperation(transform, self.ratio)
 
 
-class Resize(cde.ResizeOp):
+class Resize(TensorOperation):
     """
     Resize the input image to the given size.
 
@@ -746,11 +792,9 @@ class Resize(cde.ResizeOp):
     @check_resize_interpolation
     def __init__(self, size, interpolation=Inter.LINEAR):
         if isinstance(size, int):
-            size = (size, 0)
+            size = (size,)
         self.size = size
         self.interpolation = interpolation
-        interpoltn = DE_C_INTER_MODE[interpolation]
-        super().__init__(*size, interpoltn)
 
     def __call__(self, img):
         """
@@ -764,12 +808,15 @@ class Resize(cde.ResizeOp):
         """
         if not isinstance(img, (np.ndarray, Image.Image)):
             raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
-        resize = cde.Execute(cde.ResizeOp(*self.size, DE_C_INTER_MODE[self.interpolation]))
+        resize = cde.Execute(cde.ResizeOperation(self.size, DE_C_INTER_MODE[self.interpolation]))
         img = resize(cde.Tensor(np.asarray(img)))
         return img.as_array()
 
+    def parse(self):
+        return cde.ResizeOperation(self.size, DE_C_INTER_MODE[self.interpolation])
 
-class ResizeWithBBox(cde.ResizeWithBBoxOp):
+
+class ResizeWithBBox(TensorOperation):
     """
     Resize the input image to the given size and adjust bounding boxes accordingly.
 
@@ -800,13 +847,15 @@ class ResizeWithBBox(cde.ResizeWithBBoxOp):
     def __init__(self, size, interpolation=Inter.LINEAR):
         self.size = size
         self.interpolation = interpolation
-        interpoltn = DE_C_INTER_MODE[interpolation]
+
+    def parse(self):
+        size = self.size
         if isinstance(size, int):
-            size = (size, 0)
-        super().__init__(*size, interpoltn)
+            size = (size,)
+        return cde.ResizeWithBBoxOperation(size, DE_C_INTER_MODE[self.interpolation])
 
 
-class RandomResizedCropWithBBox(cde.RandomCropAndResizeWithBBoxOp):
+class RandomResizedCropWithBBox(TensorOperation):
     """
     Crop the input image to a random size and aspect ratio and adjust bounding boxes accordingly.
 
@@ -849,11 +898,13 @@ class RandomResizedCropWithBBox(cde.RandomCropAndResizeWithBBoxOp):
         self.ratio = ratio
         self.interpolation = interpolation
         self.max_attempts = max_attempts
-        interpoltn = DE_C_INTER_MODE[interpolation]
-        super().__init__(*size, *scale, *ratio, interpoltn, max_attempts)
+
+    def parse(self):
+        return cde.RandomResizedCropWithBBoxOperation(self.size, self.scale, self.ratio,
+                                                      DE_C_INTER_MODE[self.interpolation], self.max_attempts)
 
 
-class RandomResizedCrop(cde.RandomCropAndResizeOp):
+class RandomResizedCrop(TensorOperation):
     """
     Crop the input image to a random size and aspect ratio.
 
@@ -897,11 +948,13 @@ class RandomResizedCrop(cde.RandomCropAndResizeOp):
         self.ratio = ratio
         self.interpolation = interpolation
         self.max_attempts = max_attempts
-        interpoltn = DE_C_INTER_MODE[interpolation]
-        super().__init__(*size, *scale, *ratio, interpoltn, max_attempts)
+
+    def parse(self):
+        return cde.RandomResizedCropOperation(self.size, self.scale, self.ratio, DE_C_INTER_MODE[self.interpolation],
+                                              self.max_attempts)
 
 
-class CenterCrop(cde.CenterCropOp):
+class CenterCrop(TensorOperation):
     """
     Crops the input image at the center to the given size.
 
@@ -926,10 +979,12 @@ class CenterCrop(cde.CenterCropOp):
         if isinstance(size, int):
             size = (size, size)
         self.size = size
-        super().__init__(*size)
+
+    def parse(self):
+        return cde.CenterCropOperation(self.size)
 
 
-class RandomColor(cde.RandomColorOp):
+class RandomColor(TensorOperation):
     """
     Adjust the color of the input image by a fixed or random degree.
     This operation works only with 3-channel color images.
@@ -947,10 +1002,13 @@ class RandomColor(cde.RandomColorOp):
 
     @check_positive_degrees
     def __init__(self, degrees=(0.1, 1.9)):
-        super().__init__(*degrees)
+        self.degrees = degrees
+
+    def parse(self):
+        return cde.RandomColorOperation(*self.degrees)
 
 
-class RandomColorAdjust(cde.RandomColorAdjustOp):
+class RandomColorAdjust(TensorOperation):
     """
     Randomly adjust the brightness, contrast, saturation, and hue of the input image.
 
@@ -990,8 +1048,6 @@ class RandomColorAdjust(cde.RandomColorAdjustOp):
         self.saturation = saturation
         self.hue = hue
 
-        super().__init__(*brightness, *contrast, *saturation, *hue)
-
     def expand_values(self, value, center=1, bound=(0, FLOAT_MAX_INTEGER), non_negative=True):
         if isinstance(value, numbers.Number):
             value = [center - value, center + value]
@@ -1000,8 +1056,11 @@ class RandomColorAdjust(cde.RandomColorAdjustOp):
             check_range(value, bound)
         return (value[0], value[1])
 
+    def parse(self):
+        return cde.RandomColorAdjustOperation(self.brightness, self.contrast, self.saturation, self.hue)
 
-class RandomRotation(cde.RandomRotationOp):
+
+class RandomRotation(TensorOperation):
     """
     Rotate the input image by a random angle.
 
@@ -1047,17 +1106,17 @@ class RandomRotation(cde.RandomRotationOp):
         self.expand = expand
         self.center = center
         self.fill_value = fill_value
-        if isinstance(degrees, numbers.Number):
-            degrees = (-degrees, degrees)
-        if center is None:
-            center = (-1, -1)
-        if isinstance(fill_value, int):
-            fill_value = tuple([fill_value] * 3)
-        interpolation = DE_C_INTER_MODE[resample]
-        super().__init__(*degrees, *center, interpolation, expand, *fill_value)
+
+    def parse(self):
+        degrees = (-self.degrees, self.degrees) if isinstance(self.degrees, numbers.Number) else self.degrees
+        interpolation = DE_C_INTER_MODE[self.resample]
+        expand = self.expand
+        center = (-1, -1) if self.center is None else self.center
+        fill_value = tuple([self.fill_value] * 3) if isinstance(self.fill_value, int) else self.fill_value
+        return cde.RandomRotationOperation(degrees, interpolation, expand, center, fill_value)
 
 
-class Rescale(cde.RescaleOp):
+class Rescale(TensorOperation):
     """
     Tensor operation to rescale the input image.
 
@@ -1075,7 +1134,6 @@ class Rescale(cde.RescaleOp):
     def __init__(self, rescale, shift):
         self.rescale = rescale
         self.shift = shift
-        super().__init__(rescale, shift)
 
     def __call__(self, img):
         """
@@ -1089,12 +1147,15 @@ class Rescale(cde.RescaleOp):
         """
         if not isinstance(img, (np.ndarray, Image.Image)):
             raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
-        rescale = cde.Execute(cde.RescaleOp(self.rescale, self.shift))
+        rescale = cde.Execute(cde.RescaleOperation(self.rescale, self.shift))
         img = rescale(cde.Tensor(np.asarray(img)))
         return img.as_array()
 
+    def parse(self):
+        return cde.RescaleOperation(self.rescale, self.shift)
 
-class RandomResize(cde.RandomResizeOp):
+
+class RandomResize(TensorOperation):
     """
     Tensor operation to resize the input image using a randomly selected interpolation mode.
 
@@ -1118,12 +1179,15 @@ class RandomResize(cde.RandomResizeOp):
     @check_resize
     def __init__(self, size):
         self.size = size
+
+    def parse(self):
+        size = self.size
         if isinstance(size, int):
-            size = (size, 0)
-        super().__init__(*size)
+            size = (size,)
+        return cde.RandomResizeOperation(size)
 
 
-class RandomResizeWithBBox(cde.RandomResizeWithBBoxOp):
+class RandomResizeWithBBox(TensorOperation):
     """
     Tensor operation to resize the input image using a randomly selected interpolation mode and adjust
     bounding boxes accordingly.
@@ -1148,12 +1212,15 @@ class RandomResizeWithBBox(cde.RandomResizeWithBBoxOp):
     @check_resize
     def __init__(self, size):
         self.size = size
+
+    def parse(self):
+        size = self.size
         if isinstance(size, int):
-            size = (size, 0)
-        super().__init__(*size)
+            size = (size,)
+        return cde.RandomResizeWithBBoxOperation(size)
 
 
-class HWC2CHW(cde.ChannelSwapOp):
+class HWC2CHW(TensorOperation):
     """
     Transpose the input image; shape (H, W, C) to shape (C, H, W).
 
@@ -1178,12 +1245,15 @@ class HWC2CHW(cde.ChannelSwapOp):
         """
         if not isinstance(img, (np.ndarray, Image.Image)):
             raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
-        hwc2chw = cde.Execute(cde.ChannelSwapOp())
+        hwc2chw = cde.Execute(cde.HwcToChwOperation())
         img = hwc2chw(cde.Tensor(np.asarray(img)))
         return img.as_array()
 
+    def parse(self):
+        return cde.HwcToChwOperation()
 
-class RandomCropDecodeResize(cde.RandomCropDecodeResizeOp):
+
+class RandomCropDecodeResize(TensorOperation):
     """
     Equivalent to RandomResizedCrop, but crops before decodes.
 
@@ -1228,11 +1298,14 @@ class RandomCropDecodeResize(cde.RandomCropDecodeResizeOp):
         self.ratio = ratio
         self.interpolation = interpolation
         self.max_attempts = max_attempts
-        interpoltn = DE_C_INTER_MODE[interpolation]
-        super().__init__(*size, *scale, *ratio, interpoltn, max_attempts)
+
+    def parse(self):
+        return cde.RandomCropDecodeResizeOperation(self.size, self.scale, self.ratio,
+                                                   DE_C_INTER_MODE[self.interpolation],
+                                                   self.max_attempts)
 
 
-class Pad(cde.PadOp):
+class Pad(TensorOperation):
     """
     Pads the image according to padding parameters.
 
@@ -1276,8 +1349,9 @@ class Pad(cde.PadOp):
         self.padding = padding
         self.fill_value = fill_value
         self.padding_mode = padding_mode
-        padding_mode = DE_C_BORDER_TYPE[padding_mode]
-        super().__init__(*padding, padding_mode, *fill_value)
+
+    def parse(self):
+        return cde.PadOperation(self.padding, self.fill_value, DE_C_BORDER_TYPE[self.padding_mode])
 
     def __call__(self, img):
         """
@@ -1291,12 +1365,12 @@ class Pad(cde.PadOp):
         """
         if not isinstance(img, (np.ndarray, Image.Image)):
             raise TypeError("Input should be NumPy or PIL image, got {}.".format(type(img)))
-        pad = cde.Execute(cde.PadOp(*self.padding, DE_C_BORDER_TYPE[self.padding_mode], *self.fill_value))
+        pad = cde.Execute(cde.PadOperation(self.padding, self.fill_value, DE_C_BORDER_TYPE[self.padding_mode]))
         img = pad(cde.Tensor(np.asarray(img)))
         return img.as_array()
 
 
-class UniformAugment(cde.UniformAugOp):
+class UniformAugment(TensorOperation):
     """
     Tensor operation to perform randomly selected augmentation.
 
@@ -1322,10 +1396,18 @@ class UniformAugment(cde.UniformAugOp):
     def __init__(self, transforms, num_ops=2):
         self.transforms = transforms
         self.num_ops = num_ops
-        super().__init__(transforms, num_ops)
+
+    def parse(self):
+        transforms = []
+        for op in self.transforms:
+            if op and getattr(op, 'parse', None):
+                transforms.append(op.parse())
+            else:
+                transforms.append(op)
+        return cde.UniformAugOperation(transforms, self.num_ops)
 
 
-class RandomSelectSubpolicy():
+class RandomSelectSubpolicy(TensorOperation):
     """
     Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
     (op, prob), where op is a TensorOp operation and prob is the probability that this op will be applied. Once
@@ -1356,7 +1438,7 @@ class RandomSelectSubpolicy():
         for list_one in self.policy:
             policy_one = []
             for list_two in list_one:
-                if hasattr(list_two[0], 'parse'):
+                if list_two[0] and getattr(list_two[0], 'parse', None):
                     policy_one.append((list_two[0].parse(), list_two[1]))
                 else:
                     policy_one.append((list_two[0], list_two[1]))
@@ -1364,7 +1446,7 @@ class RandomSelectSubpolicy():
         return cde.RandomSelectSubpolicyOperation(policy)
 
 
-class SoftDvppDecodeResizeJpeg(cde.SoftDvppDecodeResizeJpegOp):
+class SoftDvppDecodeResizeJpeg(TensorOperation):
     """
     Tensor operation to decode and resize JPEG image using the simulation algorithm of
     Ascend series chip DVPP module.
@@ -1397,12 +1479,14 @@ class SoftDvppDecodeResizeJpeg(cde.SoftDvppDecodeResizeJpegOp):
     @check_resize
     def __init__(self, size):
         if isinstance(size, int):
-            size = (size, 0)
+            size = (size,)
         self.size = size
-        super().__init__(*size)
+
+    def parse(self):
+        return cde.SoftDvppDecodeResizeJpegOperation(self.size)
 
 
-class SoftDvppDecodeRandomCropResizeJpeg(cde.SoftDvppDecodeRandomCropResizeJpegOp):
+class SoftDvppDecodeRandomCropResizeJpeg(TensorOperation):
     """
     Tensor operation to decode, random crop and resize JPEG image using the simulation algorithm of
     Ascend series chip DVPP module.
@@ -1442,10 +1526,12 @@ class SoftDvppDecodeRandomCropResizeJpeg(cde.SoftDvppDecodeRandomCropResizeJpegO
         self.scale = scale
         self.ratio = ratio
         self.max_attempts = max_attempts
-        super().__init__(*size, *scale, *ratio, max_attempts)
+
+    def parse(self):
+        return cde.SoftDvppDecodeRandomCropResizeJpegOperation(self.size, self.scale, self.ratio, self.max_attempts)
 
 
-class RandomSolarize(cde.RandomSolarizeOp):
+class RandomSolarize(TensorOperation):
     """
     Invert all pixel values above a threshold.
 
@@ -1462,4 +1548,7 @@ class RandomSolarize(cde.RandomSolarizeOp):
 
     @check_random_solarize
     def __init__(self, threshold=(0, 255)):
-        super().__init__(threshold)
+        self.threshold = threshold
+
+    def parse(self):
+        return cde.RandomSolarizeOperation(self.threshold)
