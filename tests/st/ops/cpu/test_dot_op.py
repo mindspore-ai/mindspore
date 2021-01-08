@@ -207,3 +207,20 @@ def test_dot_010():
                               [[3., 3.]]]).astype(np.float32)
 
     assert (ms_result_np.asnumpy() == expect_result).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_cpu
+@pytest.mark.env_onecard
+def test_dot_011():
+    # for document
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="CPU")
+    input_x1 = Tensor(np.array(np.ones(shape=[2, 3])).astype(np.float32))
+    input_x2 = Tensor(np.array(np.ones(shape=[1, 3, 2])).astype(np.float32))
+
+    network = NetDot()
+    ms_result_np = network(input_x1, input_x2)
+    expect_result = np.array([[[3., 3.]],
+                              [[3., 3.]]]).astype(np.float32)
+
+    assert (ms_result_np.asnumpy() == expect_result).all()
