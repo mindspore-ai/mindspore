@@ -1673,6 +1673,10 @@ test_case_nn_ops = [
         'desc_inputs': [[20, 20, 10]],
         'desc_bprop': [[20, 20, 5]],
         'skip': ['backward']}),
+    ('Sort', {
+        'block': P.Sort(),
+        'desc_inputs': [[2, 3, 4]],
+        'desc_bprop': [[2, 3, 4], ([2, 3, 4], {'dtype': np.int32})]}),
     ('GatherV2_0', {
         'block': P.GatherV2(),
         'desc_const': [0],
