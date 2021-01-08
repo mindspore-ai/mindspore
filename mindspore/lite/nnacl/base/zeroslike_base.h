@@ -13,30 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_LITE_NNACL_UNSTACK_H_
-#define MINDSPORE_LITE_NNACL_UNSTACK_H_
+#ifndef MINDSPORE_LITE_NNACL_ZEROSLIKE_BASE_H_
+#define MINDSPORE_LITE_NNACL_ZEROSLIKE_BASE_H_
 
 #include "nnacl/op_base.h"
-
-typedef struct UnstackParameter {
-  // primitive parameter
-  OpParameter op_parameter_;
-  int num_;
-  int axis_;
-
-  // other parameter
-  int pre_dims_;
-  int axis_dim_;
-  int after_dims_;
-} UnstackParameter;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Unistack(const float *input, float **output, UnstackParameter *para);
+
+static inline void ApproximateZerosLike(void *output, int number, int data_size) {
+  memset(output, 0.0, number * data_size);
+  return;
+}
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_UNSTACK_H_
+#endif  // MINDSPORE_LITE_NNACL_ZEROSLIKE_BASE_H_

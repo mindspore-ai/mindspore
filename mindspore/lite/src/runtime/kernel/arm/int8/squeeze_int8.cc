@@ -14,12 +14,8 @@
  * limitations under the License.
  */
 
-#include "nnacl/int8/squeeze_int8.h"
 #include "src/runtime/kernel/arm/int8/squeeze_int8.h"
-#include "nnacl/squeeze_parameter.h"
 #include "schema/model_generated.h"
-#include "src/runtime/runtime_api.h"
-#include "include/errorcode.h"
 #include "src/kernel_registry.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -116,7 +112,7 @@ int SqueezeInt8CPUKernel::DoExecute(int task_id) {
   MS_ASSERT(output_data);
 
   int num = input_tensor->ElementsNum();
-  SqueezeInt8(input_data, output_data, task_id, quant_squeeze_param_, para_, num);
+  SqueezeInt8(input_data, output_data, quant_squeeze_param_, num, task_id, op_parameter_->thread_num_);
   return RET_OK;
 }
 

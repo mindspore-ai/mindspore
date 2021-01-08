@@ -19,6 +19,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
+#include "nnacl/base/squeeze_base.h"
 
 namespace mindspore::kernel {
 
@@ -33,9 +34,6 @@ class SqueezeCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
-  std::vector<int> axes_;
 };
 }  // namespace mindspore::kernel
 

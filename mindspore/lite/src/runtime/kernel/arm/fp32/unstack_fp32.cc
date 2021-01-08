@@ -56,7 +56,7 @@ int UnstackCPUKernel::ReSize() {
     free(output_addr_array_);
     output_addr_array_ = nullptr;
   }
-  output_addr_array_ = reinterpret_cast<float **>(malloc(sizeof(float *) * out_tensors_.size()));
+  output_addr_array_ = reinterpret_cast<void **>(malloc(sizeof(void *) * out_tensors_.size()));
   if (output_addr_array_ == nullptr) {
     MS_LOG(ERROR) << "Failed to malloc memory";
     return lite::RET_ERROR;
@@ -69,12 +69,12 @@ int UnstackCPUKernel::Run() {
   MS_ASSERT(input);
   size_t out_num = out_tensors_.size();
   for (size_t i = 0; i < out_num; i++) {
-    output_addr_array_[i] = reinterpret_cast<float *>(out_tensors_.at(i)->MutableData());
+    output_addr_array_[i] = out_tensors_.at(i)->data_c();
   }
   MS_ASSERT(output_addr_array_);
   auto para = reinterpret_cast<UnstackParameter *>(op_parameter_);
   para->num_ = out_num;
-  Unistack(input, output_addr_array_, para);
+  Unstack(input, output_addr_array_, para, sizeof(float));
   return RET_OK;
 }
 

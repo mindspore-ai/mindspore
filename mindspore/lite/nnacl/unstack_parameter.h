@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_CLIP_H_
-#define MINDSPORE_LITE_NNACL_CLIP_H_
 
-#include <math.h>
+#ifndef MINDSPORE_LITE_NNACL_UNSTACK_PARAMETER_H_
+#define MINDSPORE_LITE_NNACL_UNSTACK_PARAMETER_H_
+
 #include "nnacl/op_base.h"
-#include "mindspore/lite/nnacl/int8/fixed_point.h"
 
-typedef struct ClipParameter {
+typedef struct UnstackParameter {
+  // primitive parameter
   OpParameter op_parameter_;
-  float min_val_;
-  float max_val_;
-} ClipParameter;
+  int num_;
+  int axis_;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-int ClipFp32(const float *src, int length, float *dst, float min_val, float max_val);
-#ifdef __cplusplus
-}
-#endif
-#endif  // MINDSPORE_LITE_NNACL_CLIP_H_
+  // other parameter
+  int pre_dims_;
+  int axis_dim_;
+  int after_dims_;
+} UnstackParameter;
+
+#endif  // MINDSPORE_LITE_NNACL_UNSTACK_PARAMETER_H_

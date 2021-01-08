@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-#include "nnacl/unstack.h"
-#include <string.h>
+#ifndef MINDSPORE_LITE_NNACL_UNSTACK_H_
+#define MINDSPORE_LITE_NNACL_UNSTACK_H_
 
-void Unistack(const float *input, float **output, UnstackParameter *para) {
-  for (int j = 0; j < para->num_; j++) {
-    float *out_addr = output[j];
-    int out_offset = 0;
-    for (int i = 0; i < para->pre_dims_; i++) {
-      int in_offset = i * para->axis_dim_ * para->after_dims_ + j * para->after_dims_;
-      (void)memcpy(out_addr + out_offset, input + in_offset, para->after_dims_ * sizeof(float));
-      out_offset += para->after_dims_;
-    }
-  }
+#include <string.h>
+#include "nnacl/op_base.h"
+#include "nnacl/unstack_parameter.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void Unstack(const void *input, void **output, UnstackParameter *para, int data_size);
+#ifdef __cplusplus
 }
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_UNSTACK_H_

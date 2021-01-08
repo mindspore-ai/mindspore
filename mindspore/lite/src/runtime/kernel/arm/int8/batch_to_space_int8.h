@@ -19,6 +19,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "nnacl/batch_to_space.h"
+#include "nnacl/base/batch_to_space_base.h"
 #include "nnacl/int8/batch_to_space_int8.h"
 #include "src/lite_kernel.h"
 

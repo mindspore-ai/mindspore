@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "src/runtime/kernel/arm/fp32/zeroslike_fp32.h"
-#include <vector>
 #include "schema/model_generated.h"
-#include "nnacl/zeroslike.h"
+#include "mindspore/lite/nnacl/base/zeroslike_base.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 
@@ -31,7 +31,7 @@ int ZerosLikeCPUKernel::Init() { return RET_OK; }
 
 int ZerosLikeCPUKernel::Run() {
   auto output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  ApproximateZerosLike(output_data, in_tensors_.at(0)->ElementsNum());
+  ApproximateZerosLike(output_data, in_tensors_.at(0)->ElementsNum(), sizeof(float));
   return RET_OK;
 }
 

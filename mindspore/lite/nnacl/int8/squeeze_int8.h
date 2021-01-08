@@ -17,14 +17,14 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_SQUEEZE_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_SQUEEZE_INT8_H_
 
-#include "nnacl/int8/quantize.h"
 #include "nnacl/squeeze_parameter.h"
+#include "nnacl/int8/quantize.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void SqueezeInt8(const int8_t *input_ptr, int8_t *output_ptr, int task_id, SqueezeQuantArg *quant_Squeeze_parm,
-                 SqueezeParameter *para_, const int num);
+void SqueezeInt8(const int8_t *input_ptr, int8_t *output_ptr, const SqueezeQuantArg *quant_Squeeze_parm, int num,
+                 int task_id, int thread_count);
 #ifdef __cplusplus
 }
 #endif
