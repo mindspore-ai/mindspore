@@ -19,6 +19,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "nlohmann/json.hpp"
 
 #include "minddata/dataset/core/tensor.h"
 #include "minddata/dataset/core/tensor_row.h"
@@ -198,6 +199,8 @@ class TensorOp {
   virtual Status OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs);
 
   virtual std::string Name() const = 0;
+
+  virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
 
  protected:
   bool is_deterministic_{true};

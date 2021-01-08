@@ -60,5 +60,12 @@ Status DecodeOp::OutputType(const std::vector<DataType> &inputs, std::vector<Dat
   outputs[0] = DataType(DataType::DE_UINT8);
   return Status::OK();
 }
+
+Status DecodeOp::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["rgb"] = is_rgb_format_;
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

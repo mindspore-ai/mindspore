@@ -431,6 +431,13 @@ Status DatasetNode::ValidateParams() {
   return Status::OK();
 }
 
+Status DatasetNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["num_parallel_workers"] = num_workers_;
+  *out_json = args;
+  return Status::OK();
+}
+
 Status MappableSourceNode::Accept(IRNodePass *const p, bool *const modified) {
   return p->Visit(shared_from_base<MappableSourceNode>(), modified);
 }

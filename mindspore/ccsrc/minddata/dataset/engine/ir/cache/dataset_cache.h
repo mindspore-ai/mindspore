@@ -28,6 +28,7 @@ class DatasetCache {
   virtual Status Build() = 0;
   virtual Status ValidateParams() = 0;
   virtual Status CreateCacheOp(int num_workers, std::shared_ptr<DatasetOp> *ds_op) = 0;
+  virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
 };
 }  // namespace mindspore::dataset
 

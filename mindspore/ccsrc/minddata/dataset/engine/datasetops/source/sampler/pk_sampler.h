@@ -61,6 +61,11 @@ class PKSamplerRT : public SamplerRT {  // NOT YET FINISHED
   // @param show_all - bool to show detailed vs summary
   void SamplerPrint(std::ostream &out, bool show_all) const override;
 
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   bool shuffle_;
   uint32_t seed_;

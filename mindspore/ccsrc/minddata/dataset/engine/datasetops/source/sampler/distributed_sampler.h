@@ -72,6 +72,11 @@ class DistributedSamplerRT : public SamplerRT {
 
   void SamplerPrint(std::ostream &out, bool show_all) const override;
 
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   int64_t cnt_;  // number of samples that have already been filled in to buffer
   uint32_t seed_;

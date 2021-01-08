@@ -20,6 +20,7 @@ set(SRC_FILES_LIST
         runtime_context.cc
         python_runtime_context.cc
         consumers/tree_consumer.cc
+        serdes.cc
         )
 if (ENABLE_PYTHON)
   set(SRC_FILES_LIST

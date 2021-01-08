@@ -29,5 +29,13 @@ Status RescaleOp::OutputType(const std::vector<DataType> &inputs, std::vector<Da
   outputs[0] = DataType(DataType::DE_FLOAT32);
   return Status::OK();
 }
+
+Status RescaleOp::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["rescale"] = rescale_;
+  args["shift"] = shift_;
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

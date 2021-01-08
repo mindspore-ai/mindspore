@@ -20,6 +20,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <nlohmann/json.hpp>
+
 #include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/include/status.h"
 
@@ -62,6 +64,8 @@ class TensorOperation : public std::enable_shared_from_this<TensorOperation> {
   /// \brief Check whether the operation is deterministic.
   /// \return true if this op is a random op (returns non-deterministic result e.g. RandomCrop)
   bool IsRandomOp() const { return random_op_; }
+
+  virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
 
  protected:
   bool random_op_;
@@ -205,6 +209,8 @@ class PreBuiltOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override;
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::shared_ptr<TensorOp> op_;

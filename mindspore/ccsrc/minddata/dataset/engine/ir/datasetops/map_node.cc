@@ -16,6 +16,7 @@
 
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <utility>
@@ -122,5 +123,33 @@ void MapNode::setOperations(const std::vector<std::shared_ptr<TensorOperation>> 
   operations_ = operations;
 }
 std::vector<std::shared_ptr<TensorOperation>> MapNode::operations() { return operations_; }
+
+Status MapNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["num_parallel_workers"] = num_workers_;
+  args["input_columns"] = input_columns_;
+  args["output_columns"] = output_columns_;
+  if (!project_columns_.empty()) args["column_order"] = project_columns_;
+  if (cache_ != nullptr) {
+    nlohmann::json cache_args;
+    RETURN_IF_NOT_OK(cache_->to_json(&cache_args));
+    args["cache"] = cache_args;
+  }
+
+  std::vector<nlohmann::json> ops;
+  std::vector<int32_t> cbs;
+  nlohmann::json op_args;
+  for (auto op : operations_) {
+    RETURN_IF_NOT_OK(op->to_json(&op_args));
+    op_args["tensor_op_name"] = op->Name();
+    ops.push_back(op_args);
+  }
+  args["operations"] = ops;
+  std::transform(callbacks_.begin(), callbacks_.end(), std::back_inserter(cbs),
+                 [](std::shared_ptr<DSCallback> cb) -> int32_t { return cb->step_size(); });
+  args["callback"] = cbs;
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

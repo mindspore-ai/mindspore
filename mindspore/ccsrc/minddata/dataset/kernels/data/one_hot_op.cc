@@ -37,5 +37,12 @@ Status OneHotOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   if (!outputs.empty()) return Status::OK();
   return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
 }
+
+Status OneHotOp::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["num_classes"] = num_classes_;
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

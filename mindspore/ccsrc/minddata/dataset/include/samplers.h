@@ -64,6 +64,8 @@ class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
   /// \return the Status code returned
   Status AddChild(std::shared_ptr<SamplerObj> child);
 
+  virtual Status to_json(nlohmann::json *out_json) { return Status::OK(); }
+
 #ifndef ENABLE_ANDROID
   /// \brief Virtual function to convert a SamplerObj class into a runtime mindrecord sampler object,
   ///     only override by SubsetRandomSampler, PkSampler, RandomSampler, SequentialSampler, DistributedSampler
@@ -227,6 +229,8 @@ class PreBuiltSamplerObj : public SamplerObj {
   std::shared_ptr<SamplerObj> Copy() override;
 
   Status ValidateParams() override;
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::shared_ptr<SamplerRT> sp_;

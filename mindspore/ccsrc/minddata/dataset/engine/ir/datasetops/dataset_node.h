@@ -271,6 +271,11 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
 
   virtual bool IsSizeDefined() { return true; }
 
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  virtual Status to_json(nlohmann::json *out_json);
+
  protected:
   std::vector<std::shared_ptr<DatasetNode>> children_;
   DatasetNode *parent_;  // used to record the only one parent of an IR node after parsing phase

@@ -61,6 +61,11 @@ class SequentialSamplerRT : public SamplerRT {
   // @param show_all - bool to show detailed vs summary
   void SamplerPrint(std::ostream &out, bool show_all) const override;
 
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   int64_t current_id_;   // The id sequencer.  Each new id increments from this
   int64_t start_index_;  // The starting id.  current_id_ begins from here.

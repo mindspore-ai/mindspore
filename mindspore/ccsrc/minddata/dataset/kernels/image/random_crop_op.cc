@@ -15,6 +15,7 @@
  */
 #include "minddata/dataset/kernels/image/random_crop_op.h"
 #include <random>
+#include <tuple>
 #include "minddata/dataset/kernels/image/image_utils.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
@@ -136,6 +137,17 @@ Status RandomCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
   if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
   if (!outputs.empty()) return Status::OK();
   return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
+}
+
+Status RandomCropOp::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["size"] = std::vector<int32_t>{crop_height_, crop_width_};
+  args["padding"] = std::vector<int32_t>{pad_top_, pad_bottom_, pad_left_, pad_right_};
+  args["pad_if_needed"] = pad_if_needed_;
+  args["fill_value"] = std::tuple<uint8_t, uint8_t, uint8_t>{fill_r_, fill_g_, fill_b_};
+  args["padding_mode"] = border_type_;
+  *out_json = args;
+  return Status::OK();
 }
 }  // namespace dataset
 }  // namespace mindspore

@@ -115,6 +115,14 @@ class RepeatNode : public DatasetNode {
     return Status::OK();
   }
 
+  /// \brief Getter functions
+  int32_t RepeatCount() const { return repeat_count_; }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  protected:
   std::shared_ptr<RepeatOp> op_;                // keep its corresponding run-time op of EpochCtrlNode and RepeatNode
   std::shared_ptr<RepeatNode> reset_ancestor_;  // updated its immediate Repeat/EpochCtrl ancestor in GeneratorNodePass

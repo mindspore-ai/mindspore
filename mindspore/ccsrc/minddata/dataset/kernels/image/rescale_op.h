@@ -41,6 +41,8 @@ class RescaleOp : public TensorOp {
 
   std::string Name() const override { return kRescaleOp; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   float rescale_;
   float shift_;

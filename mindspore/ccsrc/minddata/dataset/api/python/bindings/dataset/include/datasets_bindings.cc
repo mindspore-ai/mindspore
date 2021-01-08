@@ -22,6 +22,7 @@
 #include "minddata/dataset/callback/py_ds_callback.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/global_context.h"
+#include "minddata/dataset/engine/serdes.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/text/sentence_piece_vocab.h"
 
@@ -92,7 +93,13 @@ PYBIND_REGISTER(DatasetNode, 1, ([](const py::module *m) {
                         THROW_IF_ERROR(zip->ValidateParams());
                         return zip;
                       },
-                      py::arg("datasets"));
+                      py::arg("datasets"))
+                    .def("to_json", [](std::shared_ptr<DatasetNode> self, const std::string &json_filepath) {
+                      nlohmann::json args;
+                      auto serdas = std::make_shared<Serdes>();
+                      THROW_IF_ERROR(serdas->SaveToJSON(self, json_filepath, &args));
+                      return args.dump();
+                    });
                 }));
 
 // PYBIND FOR LEAF NODES

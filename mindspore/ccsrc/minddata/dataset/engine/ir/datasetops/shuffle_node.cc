@@ -61,5 +61,12 @@ Status ShuffleNode::ValidateParams() {
   return Status::OK();
 }
 
+Status ShuffleNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["buffer_size"] = shuffle_size_;
+  args["reshuffle_each_epoch"] = reset_every_epoch_;
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

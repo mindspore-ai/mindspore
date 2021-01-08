@@ -58,10 +58,6 @@ class MapNode : public DatasetNode {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
-  /// \brief Getter of tensor operations
-  /// \return Vector of operations the Map node will process
-  const auto &TensorOperations() const { return operations_; }
-
   /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
@@ -82,6 +78,20 @@ class MapNode : public DatasetNode {
 
   /// \brief setter to set all tensor operations
   void setOperations(const std::vector<std::shared_ptr<TensorOperation>> &operations);
+
+  /// \brief Getter functions
+  /// \brief Getter of tensor operations
+  /// \return Vector of operations the Map node will process
+  const auto &TensorOperations() const { return operations_; }
+  const std::vector<std::string> &InputColumns() const { return input_columns_; }
+  const std::vector<std::string> &OutputColumns() const { return output_columns_; }
+  const std::vector<std::string> &ProjectColumns() const { return project_columns_; }
+  const std::vector<std::shared_ptr<DSCallback>> &Callbacks() const { return callbacks_; }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<std::shared_ptr<TensorOperation>> operations_;

@@ -61,6 +61,8 @@ class ResizeOp : public TensorOp {
 
   std::string Name() const override { return kResizeOp; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  protected:
   int32_t size1_;
   int32_t size2_;
