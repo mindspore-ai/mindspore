@@ -21,14 +21,14 @@ __global__ void OneHotKernel(size_t size, const S *indices, size_t depth, const 
                              size_t left_dim_size, size_t right_dim_size, T *output) {
   T on_v = *on_value;
   T off_v = *off_value;
-  for (int thread_idx = blockIdx.x * blockDim.x + threadIdx.x; thread_idx < size;
+  for (size_t thread_idx = blockIdx.x * blockDim.x + threadIdx.x; thread_idx < size;
        thread_idx += blockDim.x * gridDim.x) {
     if (thread_idx < size) {
-      int left_idx = (thread_idx / (depth * right_dim_size)) % left_dim_size;
-      int d_idx = thread_idx / right_dim_size % depth;
-      int right_idx = thread_idx % right_dim_size;
-      int input_idx = left_idx * right_dim_size + right_idx;
-      int output_idx = left_idx * depth * right_dim_size + d_idx * right_dim_size + right_idx;
+      size_t left_idx = (thread_idx / (depth * right_dim_size)) % left_dim_size;
+      size_t d_idx = thread_idx / right_dim_size % depth;
+      size_t right_idx = thread_idx % right_dim_size;
+      size_t input_idx = left_idx * right_dim_size + right_idx;
+      size_t output_idx = left_idx * depth * right_dim_size + d_idx * right_dim_size + right_idx;
       if (indices[input_idx] == d_idx) {
         output[output_idx] = on_v;
       } else {

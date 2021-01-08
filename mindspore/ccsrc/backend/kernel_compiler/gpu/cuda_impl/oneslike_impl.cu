@@ -18,20 +18,20 @@
 #include "oneslike_impl.cuh"
 #include "runtime/device/gpu/cuda_common.h"
 template <typename T>
-__global__ void OnesLike(const int size, const T* input,  T* output) {
+__global__ void OnesLike(const size_t size, const T* input,  T* output) {
   int one = 1;
   T val = static_cast<T>(one);
-  for (int pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
+  for (size_t pos = blockIdx.x * blockDim.x + threadIdx.x; pos < size; pos += blockDim.x * gridDim.x) {
     output[pos] = val;
   }
   return;
 }
 template <typename T>
-void CalOnesLike(const int size, const T* input, T* output, cudaStream_t cuda_stream) {
+void CalOnesLike(const size_t size, const T* input, T* output, cudaStream_t cuda_stream) {
   OnesLike<<<GET_BLOCKS(size), GET_THREADS, 0, cuda_stream>>>(size, input, output);
   return;
 }
 
-template void CalOnesLike<float>(const int size, const float* input, float* output, cudaStream_t cuda_stream);
-template void CalOnesLike<half>(const int size, const half* input, half* output, cudaStream_t cuda_stream);
-template void CalOnesLike<int>(const int size, const int* input, int* output, cudaStream_t cuda_stream);
+template void CalOnesLike<float>(const size_t size, const float* input, float* output, cudaStream_t cuda_stream);
+template void CalOnesLike<half>(const size_t size, const half* input, half* output, cudaStream_t cuda_stream);
+template void CalOnesLike<int>(const size_t size, const int* input, int* output, cudaStream_t cuda_stream);

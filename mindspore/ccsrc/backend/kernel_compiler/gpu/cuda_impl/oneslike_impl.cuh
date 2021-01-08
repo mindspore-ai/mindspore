@@ -18,6 +18,6 @@
 #define MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_ONESLIKE_H_
 
 template <typename T>
-void CalOnesLike(const int size, const T* input, T* output, cudaStream_t cuda_stream);
+void CalOnesLike(const size_t size, const T* input, T* output, cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_ONESLIKE_H_

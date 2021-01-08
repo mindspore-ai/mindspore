@@ -55,11 +55,10 @@ class OnesLikeGpuKernel : public GpuKernel {
     auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     size_t shape_size = input_shape.size();
 
-    input_size_ = 1;
+    input_size_ = sizeof(T);
     for (size_t i = 0; i < shape_size; i++) {
       input_size_ *= input_shape[i];
     }
-    input_size_ *= sizeof(T);
     output_size_ = input_size_;
     InitSizeLists();
     return true;
