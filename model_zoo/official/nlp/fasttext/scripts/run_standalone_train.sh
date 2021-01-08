@@ -32,9 +32,10 @@ DATASET=$(get_real_path $1)
 echo $DATASET
 DATANAME=$(basename $DATASET)
 echo $DATANAME
+DEVICEID=$2
 
 export DEVICE_NUM=1
-export DEVICE_ID=0
+export DEVICE_ID=$DEVICEID
 export RANK_ID=0
 export RANK_SIZE=1
 

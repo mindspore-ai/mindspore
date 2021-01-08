@@ -141,12 +141,12 @@ def _build_training_pipeline(pre_dataset):
     callbacks = [time_monitor, loss_monitor]
     if rank_size is None or int(rank_size) == 1:
         ckpt_callback = ModelCheckpoint(prefix='fasttext',
-                                        directory=os.path.join('./', 'ckpe_{}'.format(os.getenv("DEVICE_ID"))),
+                                        directory=os.path.join('./', 'ckpt_{}'.format(os.getenv("DEVICE_ID"))),
                                         config=ckpt_config)
         callbacks.append(ckpt_callback)
     if rank_size is not None and int(rank_size) > 1 and MultiAscend.get_rank() % 8 == 0:
         ckpt_callback = ModelCheckpoint(prefix='fasttext',
-                                        directory=os.path.join('./', 'ckpe_{}'.format(os.getenv("DEVICE_ID"))),
+                                        directory=os.path.join('./', 'ckpt_{}'.format(os.getenv("DEVICE_ID"))),
                                         config=ckpt_config)
         callbacks.append(ckpt_callback)
     print("Prepare to Training....")
