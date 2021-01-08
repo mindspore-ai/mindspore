@@ -142,13 +142,13 @@ Status BatchNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_
 }
 
 // Visitor accepting method for IRNodePass
-Status BatchNode::Accept(IRNodePass *p, bool *modified) {
+Status BatchNode::Accept(IRNodePass *const p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<BatchNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status BatchNode::AcceptAfter(IRNodePass *p, bool *modified) {
+Status BatchNode::AcceptAfter(IRNodePass *const p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<BatchNode>(), modified);
 }

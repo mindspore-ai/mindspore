@@ -73,13 +73,13 @@ Status SkipNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
 }
 
 // Visitor accepting method for IRNodePass
-Status SkipNode::Accept(IRNodePass *p, bool *modified) {
+Status SkipNode::Accept(IRNodePass *const p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<SkipNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status SkipNode::AcceptAfter(IRNodePass *p, bool *modified) {
+Status SkipNode::AcceptAfter(IRNodePass *const p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<SkipNode>(), modified);
 }

@@ -376,14 +376,14 @@ Status DatasetNode::Remove() {
 }
 
 // In DFS tree traversal, each node is visited twice. Accept is called on the first visit.
-Status DatasetNode::Accept(IRNodePass *p, bool *modified) {
+Status DatasetNode::Accept(IRNodePass *const p, bool *modified) {
   // This method will only be called if its derived class does not implement one.
   return p->Visit(shared_from_this(), modified);
 }
 
 // In DFS tree traversal, each node is visited twice. AcceptAfter is called on the second visit
 // after all child nodes are visited.
-Status DatasetNode::AcceptAfter(IRNodePass *p, bool *modified) {
+Status DatasetNode::AcceptAfter(IRNodePass *const p, bool *modified) {
   // This method will only be called if its derived class does not implement one.
   return p->VisitAfter(shared_from_this(), modified);
 }
@@ -431,11 +431,11 @@ Status DatasetNode::ValidateParams() {
   return Status::OK();
 }
 
-Status MappableSourceNode::Accept(IRNodePass *p, bool *modified) {
+Status MappableSourceNode::Accept(IRNodePass *const p, bool *modified) {
   return p->Visit(shared_from_base<MappableSourceNode>(), modified);
 }
 
-Status NonMappableSourceNode::Accept(IRNodePass *p, bool *modified) {
+Status NonMappableSourceNode::Accept(IRNodePass *const p, bool *modified) {
   return p->Visit(shared_from_base<MappableSourceNode>(), modified);
 }
 

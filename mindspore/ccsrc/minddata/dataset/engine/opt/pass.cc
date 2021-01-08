@@ -91,6 +91,8 @@ Status IRTreePass::Run(std::shared_ptr<DatasetNode> root_ir, bool *modified) {
   if (root_ir == nullptr || modified == nullptr) {
     return Status(StatusCode::kUnexpectedError, "Null pointer passed to TreePass");
   }
+  // Initialize modified flag
+  *modified = false;
   return this->RunOnTree(root_ir, modified);
 }
 
@@ -99,6 +101,8 @@ Status IRNodePass::Run(std::shared_ptr<DatasetNode> root_ir, bool *modified) {
   if (root_ir == nullptr || modified == nullptr) {
     return Status(StatusCode::kUnexpectedError, "Null pointer passed to NodePass");
   }
+  // Initialize modified flag
+  *modified = false;
   if (traversalOrder_ == Order::DFS) {
     // DFS
     return DFSNodeVisit(root_ir, modified);
@@ -114,13 +118,13 @@ Status IRNodePass::DFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modi
   bool m = false;
 
   RETURN_IF_NOT_OK(node_ir->Accept(this, &m));
-  *modified |= m;
+  *modified = *modified || m;
   for (const auto &c : node_ir->Children()) {
     RETURN_IF_NOT_OK(this->DFSNodeVisit(c, &m));
-    *modified |= m;
+    *modified = *modified || m;
   }
   RETURN_IF_NOT_OK(node_ir->AcceptAfter(this, &m));
-  *modified |= m;
+  *modified = *modified || m;
   return Status::OK();
 }
 
@@ -140,7 +144,7 @@ Status IRNodePass::BFSNodeVisit(std::shared_ptr<DatasetNode> node_ir, bool *modi
 
     // Run node pass
     RETURN_IF_NOT_OK(curNode->Accept(this, &m));
-    *modified |= m;
+    *modified = *modified || m;
 
     // Push children into bfs queue
     for (const auto &c : curNode->Children()) {
@@ -274,6 +278,8 @@ Status TreePass::Run(ExecutionTree *tree, bool *modified) {
   if (tree == nullptr || modified == nullptr) {
     return Status(StatusCode::kUnexpectedError, "Null pointer passed to TreePass");
   }
+  // Initialize modified flag
+  *modified = false;
   return this->RunOnTree(tree, modified);
 }
 
@@ -282,6 +288,8 @@ Status NodePass::Run(ExecutionTree *tree, bool *modified) {
   if (tree == nullptr || modified == nullptr) {
     return Status(StatusCode::kUnexpectedError, "Null pointer passed to NodePass");
   }
+  // Initialize modified flag
+  *modified = false;
   std::shared_ptr<DatasetOp> root = tree->root();
   if (traversalOrder_ == Order::DFS) {
     // DFS

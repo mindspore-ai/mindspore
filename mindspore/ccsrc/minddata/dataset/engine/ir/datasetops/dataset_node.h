@@ -172,7 +172,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
 
   /// \brief Getter function for the parent node
   /// \return The parent node (of a node from a cloned IR tree)
-  DatasetNode *Parent() const { return parent_; }
+  DatasetNode *const Parent() const { return parent_; }
 
   /// \brief Establish a parent-child relationship between this node and the input node.
   ///    Used when building the IR tree.

@@ -81,13 +81,13 @@ Status ZipNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_ge
 }
 
 // Visitor accepting method for IRNodePass
-Status ZipNode::Accept(IRNodePass *p, bool *modified) {
+Status ZipNode::Accept(IRNodePass *const p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<ZipNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status ZipNode::AcceptAfter(IRNodePass *p, bool *modified) {
+Status ZipNode::AcceptAfter(IRNodePass *const p, bool *modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<ZipNode>(), modified);
 }

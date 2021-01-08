@@ -61,7 +61,6 @@ class MapNode : public DatasetNode {
   /// \brief Getter of tensor operations
   /// \return Vector of operations the Map node will process
   const auto &TensorOperations() const { return operations_; }
-  auto &TensorOperations() { return operations_; }
 
   /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit
