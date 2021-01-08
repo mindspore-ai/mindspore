@@ -96,7 +96,11 @@ class LogSoftmax(Cell):
     The input is transformed by the Softmax function and then by the log function to lie in range[-inf,0).
 
     Logsoftmax is defined as:
-    :math:`\text{logsoftmax}(x_i) = \log \left(\frac{\exp(x_i)}{\sum_{j=0}^{n-1} \exp(x_j)}\right)`,
+
+    .. math::
+
+        \text{logsoftmax}(x_i) = \log \left(\frac{\exp(x_i)}{\sum_{j=0}^{n-1} \exp(x_j)}\right),
+
     where :math:`x_{i}` is the :math:`i`-th slice in the given dimension of the input Tensor.
 
     Args:
@@ -177,8 +181,13 @@ class ReLU(Cell):
     r"""
     Rectified Linear Unit activation function.
 
-    Applies the rectified linear unit function element-wise. It returns
-    element-wise :math:`\max(0, x)`, specially, the neurons with the negative output
+    Applies the rectified linear unit function element-wise.
+
+    .. math::
+
+        \text{ReLU}(x) = (x)^+ = \max(0, x),
+
+    It returns element-wise :math:`\max(0, x)`, specially, the neurons with the negative output
     will be suppressed and the active neurons will stay the same.
 
     The picture about ReLU looks like this `ReLU <https://en.wikipedia.org/wiki/
@@ -215,7 +224,13 @@ class ReLU6(Cell):
 
     ReLU6 is similar to ReLU with a upper limit of 6, which if the inputs are greater than 6, the outputs
     will be suppressed to 6.
-    It computes element-wise as :math:`\min(\max(0, x), 6)`. The input is a Tensor of any valid shape.
+    It computes element-wise as
+
+    .. math::
+
+        \min(\max(0, x), 6).
+
+    The input is a Tensor of any valid shape.
 
     Inputs:
         - **input_data** (Tensor) - The input of ReLU6.
@@ -338,7 +353,12 @@ class GELU(Cell):
     Applies GELU function to each element of the input. The input is a Tensor with any valid shape.
 
     GELU is defined as:
-    :math:`GELU(x_i) = x_i*P(X < x_i)`, where :math:`P` is the cumulative distribution function
+
+    .. math::
+
+        GELU(x_i) = x_i*P(X < x_i),
+
+    where :math:`P` is the cumulative distribution function
     of standard Gaussian distribution and :math:`x_i` is the element of the input.
 
     The picture about GELU looks like this `GELU <https://en.wikipedia.org/wiki/
@@ -417,7 +437,12 @@ class Sigmoid(Cell):
     Applies sigmoid-type activation element-wise.
 
     Sigmoid function is defined as:
-    :math:`\text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)}`,    where :math:`x_i` is the element of the input.
+
+    .. math::
+
+        \text{sigmoid}(x_i) = \frac{1}{1 + \exp(-x_i)},
+
+    where :math:`x_i` is the element of the input.
 
     The picture about Sigmoid looks like this `Sigmoid <https://en.wikipedia.org/wiki/
     Sigmoid_function#/media/File:Logistic-curve.svg>`_.
@@ -453,8 +478,13 @@ class PReLU(Cell):
 
     Applies the PReLU function element-wise.
 
-    PReLU is defined as: :math:`prelu(x_i)= \max(0, x_i) + w * \min(0, x_i)`, where :math:`x_i`
-    is an element of an channel of the input.
+    PReLU is defined as:
+
+    .. math::
+
+        prelu(x_i)= \max(0, x_i) + w * \min(0, x_i),
+
+    where :math:`x_i` is an element of an channel of the input.
 
     Here :math:`w` is a learnable parameter with a default initial value 0.25.
     Parameter :math:`w` has dimensionality of the argument channel. If called without argument

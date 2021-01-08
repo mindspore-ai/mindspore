@@ -260,7 +260,8 @@ class Softsign(PrimitiveWithInfer):
     The function is shown as follows:
 
     .. math::
-        \text{output} = \frac{\text{input_x}}{1 + \left| \text{input_x} \right|},
+
+        \text{SoftSign}(x) = \frac{x}{ 1 + |x|}
 
     Inputs:
         - **input_x** (Tensor) - The input tensor whose data type must be float16 or float32.
@@ -331,6 +332,10 @@ class ReLU(PrimitiveWithCheck):
 class ReLU6(PrimitiveWithInfer):
     r"""
     Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
+
+    .. math::
+
+        \text{ReLU6}(x) = \min(\max(0,x), 6)
 
     It returns :math:`\min(\max(0,x), 6)` element-wise.
 
@@ -437,15 +442,12 @@ class Elu(PrimitiveWithInfer):
     r"""
     Computes exponential linear:
 
-    if x < 0:
-
     .. math::
-        \text{x} = \alpha * (\exp(\text{x}) - 1)
 
-    if x >= 0:
-
-    .. math::
-        \text{x} = \text{x}
+        \text{x} = \begin{cases}
+        \alpha * (\exp(\text{x}) - 1), & \text{if x} < \text{0;}\\
+        \text{x}, & \text{if x} >= \text{0.}
+        \end{cases}
 
     The data type of input tensor must be float.
 
@@ -1569,8 +1571,11 @@ class MaxPoolWithArgmax(_Pool):
           It has the same data type as `input`.
         - **mask** (Tensor) -  Max values' index represented by the mask. Data type is int32.
 
+    Raises:
+        TypeError: If the input data type is not float16 or float32.
+
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_tensor = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
@@ -2357,8 +2362,8 @@ class SGD(PrimitiveWithCheck):
     """
     Computes the stochastic gradient descent. Momentum is optional.
 
-    Nesterov momentum is based on the formula from On the importance of
-    initialization and momentum in deep learning.
+    Nesterov momentum is based on the formula from paper 'On the importance of
+    initialization and momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>'_.
 
     Note:
         For details, please refer to `nn.SGD` source code.
@@ -3005,7 +3010,7 @@ class Gelu(PrimitiveWithInfer):
 
 class FastGelu(PrimitiveWithInfer):
     r"""
-    fast Gaussian Error Linear Units activation function.
+    Fast Gaussian Error Linear Units activation function.
 
     FastGelu is defined as follows:
 
@@ -3181,7 +3186,8 @@ class LSTM(PrimitiveWithInfer):
     """
     Performs the Long Short-Term Memory (LSTM) on the input.
 
-    For detailed information, please refer to `nn.LSTM`.
+    For detailed information, please refer to `nn.LSTM
+    <https://www.mindspore.cn/doc/api_python/zh-CN/master/mindspore/nn/mindspore.nn.LSTM.html>`_.
 
     Supported Platforms:
         ``GPU`` ``CPU``
@@ -3289,14 +3295,13 @@ class SigmoidCrossEntropyWithLogits(PrimitiveWithInfer):
     r"""
     Uses the given logits to compute sigmoid cross entropy.
 
-    Note:
-        Sets input logits as `X`, input label as `Y`, output as `loss`. Then,
+    Sets input logits as `X`, input label as `Y`, output as `loss`. Then,
 
-        .. math::
-            p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}}
+    .. math::
+        p_{ij} = sigmoid(X_{ij}) = \frac{1}{1 + e^{-X_{ij}}}
 
-        .. math::
-            loss_{ij} = -[Y_{ij} * ln(p_{ij}) + (1 - Y_{ij})ln(1 - p_{ij})]
+    .. math::
+        loss_{ij} = -[Y_{ij} * ln(p_{ij}) + (1 - Y_{ij})ln(1 - p_{ij})]
 
     Inputs:
         - **logits** (Tensor) - Input logits.
@@ -4376,22 +4381,21 @@ class BinaryCrossEntropy(PrimitiveWithInfer):
     r"""
     Computes the binary cross entropy between the target and the output.
 
-    Note:
-        Sets input as :math:`x`, input label as :math:`y`, output as :math:`\ell(x, y)`.
-        Let,
+    Sets input as :math:`x`, input label as :math:`y`, output as :math:`\ell(x, y)`.
+    Let,
 
-        .. math::
-            L = \{l_1,\dots,l_N\}^\top, \quad
-            l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
+    .. math::
+        L = \{l_1,\dots,l_N\}^\top, \quad
+        l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
 
-        Then,
+    Then,
 
-        .. math::
-            \ell(x, y) = \begin{cases}
-            L, & \text{if reduction} = \text{'none';}\\
-            \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
-            \end{cases}
+    .. math::
+        \ell(x, y) = \begin{cases}
+        L, & \text{if reduction} = \text{'none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{'mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{'sum'.}
+        \end{cases}
 
     Args:
         reduction (str): Specifies the reduction to be applied to the output.
@@ -6568,6 +6572,21 @@ class DynamicGRUV2(PrimitiveWithInfer):
     r"""
     Applies a single-layer gated recurrent unit (GRU) to an input sequence.
 
+    .. math::
+
+        \begin{array}{ll}
+            r_t = \sigma(W_{ir} x_t + b_{ir} + W_{hr} h_{(t-1)} + b_{hr}) \\
+            z_t = \sigma(W_{iz} x_t + b_{iz} + W_{hz} h_{(t-1)} + b_{hz}) \\
+            n_t = \tanh(W_{in} x_t + b_{in} + r_t * (W_{hn} h_{(t-1)}+ b_{hn})) \\
+            h_t = (1 - z_t) * n_t + z_t * h_{(t-1)}
+        \end{array}
+
+    where :math:`h_t` is the hidden state at time `t`, :math:`x_t` is the input
+    at time `t`, :math:`h_{(t-1)}` is the hidden state of the layer
+    at time `t-1` or the initial hidden state at time `0`, and :math:`r_t`,
+    :math:`z_t`, :math:`n_t` are the reset, update, and new gates, respectively.
+    :math:`\sigma` is the sigmoid function, and :math:`*` is the Hadamard product.
+
     Args:
         direction (str): A string identifying the direction in the op. Default: 'UNIDIRECTIONAL'.
             Only 'UNIDIRECTIONAL' is currently supported.
@@ -6618,6 +6637,8 @@ class DynamicGRUV2(PrimitiveWithInfer):
           Has the same data type with input `bias_type`.
         - **hidden_new** (Tensor) - A Tensor of shape :math:`(\text{num_step}, \text{batch_size}, \text{hidden_size})`.
           Has the same data type with input `bias_type`.
+
+        A note about the bias_type:
 
         - If `bias_input` and `bias_hidden` both are `None`, `bias_type` is date type of `init_h`.
         - If `bias_input` is not `None`, `bias_type` is the date type of `bias_input`.
@@ -6771,6 +6792,11 @@ class InTopK(PrimitiveWithInfer):
 class LRN(PrimitiveWithInfer):
     r"""
     Local Response Normalization.
+
+    .. math::
+
+        b_{c} = a_{c}\left(k + \frac{\alpha}{n}
+        \sum_{c'=\max(0, c-n/2)}^{\min(N-1,c+n/2)}a_{c'}^2\right)^{-\beta}
 
     Args:
         depth_radius (int): Half-width of the 1-D normalization window with the shape of 0-D.

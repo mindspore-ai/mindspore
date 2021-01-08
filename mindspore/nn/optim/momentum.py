@@ -45,13 +45,6 @@ class Momentum(Optimizer):
 
     Refer to the paper on the importance of initialization and momentum in deep learning for more details.
 
-    Note:
-        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
-        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
-
-        To improve parameter groups performance, the customized order of parameters can be supported.
-
     .. math::
             v_{t} = v_{t-1} \ast u + gradients
 
@@ -66,6 +59,13 @@ class Momentum(Optimizer):
                 p_{t} = p_{t-1} - lr \ast v_{t}
 
     Here: where grad, lr, p, v and u denote the gradients, learning_rate, params, moments, and momentum respectively.
+
+    Note:
+        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
+        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
+        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
+
+        To improve parameter groups performance, the customized order of parameters can be supported.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,

@@ -840,6 +840,10 @@ class CumSum(PrimitiveWithInfer):
     """
     Computes the cumulative sum of input tensor along axis.
 
+    .. math::
+
+        y_i = x_1 + x_2 + x_3 + ... + x_i
+
     Args:
         exclusive (bool): If true, perform exclusive mode. Default: False.
         reverse (bool): If true, perform inverse cumulative sum. Default: False.
@@ -2248,6 +2252,10 @@ class Ceil(PrimitiveWithInfer):
     """
     Rounds a tensor up to the closest integer element-wise.
 
+    .. math::
+
+        out_i = [input_i] = [input_i] + 1
+
     Inputs:
         - **input_x** (Tensor) - The input tensor. It's element data type must be float16 or float32.
 
@@ -2357,6 +2365,10 @@ class Acosh(PrimitiveWithInfer):
     """
     Computes inverse hyperbolic cosine of the input element-wise.
 
+    .. math::
+
+        out_i = cosh^{-1}(input_i)
+
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
@@ -2422,6 +2434,10 @@ class Cosh(PrimitiveWithInfer):
 class Asinh(PrimitiveWithInfer):
     """
     Computes inverse hyperbolic sine of the input element-wise.
+
+    .. math::
+
+        out_i = sinh^{-1}(input_i)
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
@@ -3241,6 +3257,10 @@ class ACos(PrimitiveWithInfer):
     """
     Computes arccosine of input tensors element-wise.
 
+    .. math::
+
+        out_i = cos^{-1}(input_i)
+
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
 
@@ -3404,6 +3424,10 @@ class NMSWithMask(PrimitiveWithInfer):
 class Abs(PrimitiveWithInfer):
     """
     Returns absolute value of a tensor element-wise.
+
+    .. math::
+
+        out_i = |input_i|
 
     Inputs:
         - **input_x** (Tensor) - The input tensor. The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.

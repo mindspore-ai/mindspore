@@ -512,23 +512,23 @@ class BCELoss(_Loss):
     r"""
     BCELoss creates a criterion to measure the binary cross entropy between the true labels and predicted labels.
 
+    Set the predicted labels as :math:`x`, true labels as :math:`y`, the output loss as :math:`\ell(x, y)`.
+    Let,
+
+    .. math::
+        L = \{l_1,\dots,l_N\}^\top, \quad
+        l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
+
+    Then,
+
+    .. math::
+        \ell(x, y) = \begin{cases}
+        L, & \text{if reduction} = \text{`none';}\\
+        \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
+        \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
+        \end{cases}
+
     Note:
-        Set the predicted labels as :math:`x`, true labels as :math:`y`, the output loss as :math:`\ell(x, y)`.
-        Let,
-
-        .. math::
-            L = \{l_1,\dots,l_N\}^\top, \quad
-            l_n = - w_n \left[ y_n \cdot \log x_n + (1 - y_n) \cdot \log (1 - x_n) \right]
-
-        Then,
-
-        .. math::
-            \ell(x, y) = \begin{cases}
-            L, & \text{if reduction} = \text{`none';}\\
-            \operatorname{mean}(L), & \text{if reduction} = \text{`mean';}\\
-            \operatorname{sum}(L),  & \text{if reduction} = \text{`sum'.}
-            \end{cases}
-
         Note that the predicted labels should always be the output of sigmoid and the true labels should be numbers
         between 0 and 1.
 

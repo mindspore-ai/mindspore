@@ -39,13 +39,6 @@ class SGD(Optimizer):
     Nesterov momentum is based on the formula from paper `On the importance of initialization and
     momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>`_.
 
-    Note:
-        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
-        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
-        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
-
-        To improve parameter groups performance, the customized order of parameters can be supported.
-
     .. math::
             v_{t+1} = u \ast v_{t} + gradient \ast (1-dampening)
 
@@ -62,6 +55,13 @@ class SGD(Optimizer):
     To be noticed, for the first step, v_{t+1} = gradient
 
     Here : where p, v and u denote the parameters, accum, and momentum respectively.
+
+    Note:
+        When separating parameter groups, the weight decay in each group will be applied on the parameters if the
+        weight decay is positive. When not separating parameter groups, the `weight_decay` in the API will be applied
+        on the parameters without 'beta' or 'gamma' in their names if `weight_decay` is positive.
+
+        To improve parameter groups performance, the customized order of parameters can be supported.
 
     Args:
         params (Union[list[Parameter], list[dict]]): When the `params` is a list of `Parameter` which will be updated,
