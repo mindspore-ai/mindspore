@@ -37,10 +37,13 @@ __all__ = ['Dropout', 'Flatten', 'Dense', 'ClipByNorm', 'Norm', 'OneHot', 'Pad',
 
 
 class L1Regularizer(Cell):
-    """
+    r"""
     Apply l1 regularization to weights
 
     l1 regularization makes weights sparsity
+
+    .. math::
+        \text{loss}=\lambda * \text{reduce_sum}(\text{abs}(\omega))
 
     Note:
         scale(regularization factor) should be a number which greater than 0
