@@ -32,6 +32,9 @@ from .topk import TopKCategoricalAccuracy, Top1CategoricalAccuracy, Top5Categori
 from .loss import Loss
 from .mean_surface_distance import MeanSurfaceDistance
 from .root_mean_square_surface_distance import RootMeanSquareDistance
+from .bleu_score import BleuScore
+from .cosine_similarity import CosineSimilarity
+from .occlusion_sensitivity import OcclusionSensitivity
 
 __all__ = [
     "names",
@@ -43,6 +46,9 @@ __all__ = [
     "HausdorffDistance",
     "Recall",
     "Fbeta",
+    "BleuScore",
+    "CosineSimilarity",
+    "OcclusionSensitivity",
     "F1",
     "Dice",
     "ROC",
@@ -64,6 +70,9 @@ __factory__ = {
     'dice': Dice,
     'roc': ROC,
     'auc': auc,
+    'bleu_score': BleuScore,
+    'cosine_similarity': CosineSimilarity,
+    'occlusion_sensitivity': OcclusionSensitivity,
     'topk': TopKCategoricalAccuracy,
     'hausdorff_distance': HausdorffDistance,
     'top_1_accuracy': Top1CategoricalAccuracy,

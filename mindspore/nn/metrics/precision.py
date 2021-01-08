@@ -18,7 +18,7 @@ import sys
 import numpy as np
 
 from mindspore._checkparam import Validator as validator
-from ._evaluation import EvaluationBase
+from .metric import EvaluationBase
 
 
 class Precision(EvaluationBase):
