@@ -21,12 +21,12 @@
 #include "runtime/device/gpu/cuda_common.h"
 
 template <typename T, typename S>
-void TopK(const int &outer, const int &inner, const T *input_addr, const S *k, T *output, S *indices, T *data_buff,
-          S *index_buff, cudaStream_t stream);
+void TopK(const size_t &outer, const size_t &inner, const T *input_addr, const S *k, T *output, S *indices,
+          T *data_buff, S *index_buff, cudaStream_t stream);
 
 template <typename T, typename S>
-void BitonicSortByKey(const int &outer, const int &inner, T *input, S *indices, T *data_buff, S *index_buff,
+void BitonicSortByKey(const size_t &outer, const size_t &inner, T *input, S *indices, T *data_buff, S *index_buff,
                       cudaStream_t stream);
-int RoundUpPower2(int v);
+size_t RoundUpPower2(size_t v);
 
 #endif  // MINDSPORE_CCSRC_KERNEL_GPU_CUDA_IMPL_TOPK_H_
