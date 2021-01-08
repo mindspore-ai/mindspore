@@ -31,8 +31,6 @@ imagenet_cfg = edict({
     'data_path': './dataset/imagenet_original/train/',
     'val_data_path': './dataset/imagenet_original/val/',
     'device_target': 'Ascend',
-    'device_id': 0,
-    'device_num': 8,
     'keep_checkpoint_max': 1,
     'checkpoint_path': './scripts/train_parallel4/ckpt_4/train_tinydarknet_imagenet-300_1251.ckpt',
     'onnx_filename': 'tinydarknet.onnx',
