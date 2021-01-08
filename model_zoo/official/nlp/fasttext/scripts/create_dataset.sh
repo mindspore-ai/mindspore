@@ -32,7 +32,6 @@ SOURCE_DATASET_PATH=$(get_real_path $1)
 DATASET_NAME=$2
 
 export DEVICE_NUM=1
-export DEVICE_ID=5
 export RANK_ID=0
 export RANK_SIZE=1
 
