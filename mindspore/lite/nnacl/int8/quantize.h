@@ -21,9 +21,6 @@
 #include <limits.h>
 #include "nnacl/op_base.h"
 
-#define INPUT_ASYMMETRIC 0b001
-#define FILTER_ASYMMETRIC 0b010
-#define OUTPUT_ASYMMETRIC 0b100
 #define INPUT_PER_CHANNEL 0b001
 #define FILTER_PER_CHANNEL 0b010
 #define OUTPUT_PER_CHANNEL 0b100
