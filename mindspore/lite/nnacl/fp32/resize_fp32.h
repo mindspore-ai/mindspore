@@ -25,21 +25,27 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+typedef float (*CalculateOriginalCoordinate)(int x_resized, int length_original, int length_resized);
 
-int PrepareResizeBilinear(const int *input_shape, const int *output_shape, bool align_corners, int *y_bottoms,
-                          int *y_tops, int *x_lefts, int *x_rights, float *y_bottom_weights, float *x_left_weights);
+int PrepareResizeBilinear(const int *input_shape, const int *output_shape, CalculateOriginalCoordinate calculate,
+                          int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights, float *y_bottom_weights,
+                          float *x_left_weights);
 
 int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                    const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
-                   const float *y_bottom_weights, const float *x_left_weights, const int n_h_begin, const int n_h_end);
-
-int ResizeBilinear2(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                    const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
-                    const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
-                    const int n_h_begin, const int n_h_end);
+                   const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
+                   const int n_h_begin, const int n_h_end);
 
 int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
-                          bool align_corners, int tid, int thread_num);
+                          CalculateOriginalCoordinate calculate, int coordinate_transform_mode, int tid,
+                          int thread_num);
+
+float CalculateAsymmetric(int x_resized, int length_original, int length_resized);
+
+float CalculateAlignCorners(int x_resized, int length_original, int length_resized);
+
+float CalculateHalfPixel(int x_resized, int length_original, int length_resized);
+
 #ifdef __cplusplus
 }
 #endif

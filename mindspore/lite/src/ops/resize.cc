@@ -27,14 +27,17 @@ int Resize::GetFormat() const { return this->primitive_->value.AsResize()->forma
 int Resize::GetMethod() const { return this->primitive_->value.AsResize()->method; }
 int64_t Resize::GetNewHeight() const { return this->primitive_->value.AsResize()->newHeight; }
 int64_t Resize::GetNewWidth() const { return this->primitive_->value.AsResize()->newWidth; }
-bool Resize::GetAlignCorners() const { return this->primitive_->value.AsResize()->alignCorners; }
 bool Resize::GetPreserveAspectRatio() const { return this->primitive_->value.AsResize()->preserveAspectRatio; }
+int Resize::GetCoordinateTransformMode() const { return this->primitive_->value.AsResize()->coordinateTransformMode; }
 
 void Resize::SetFormat(int format) { this->primitive_->value.AsResize()->format = (schema::Format)format; }
 void Resize::SetMethod(int method) { this->primitive_->value.AsResize()->method = (schema::ResizeMethod)method; }
 void Resize::SetNewHeight(int64_t new_height) { this->primitive_->value.AsResize()->newHeight = new_height; }
 void Resize::SetNewWidth(int64_t new_width) { this->primitive_->value.AsResize()->newWidth = new_width; }
-void Resize::SetAlignCorners(bool align_corners) { this->primitive_->value.AsResize()->alignCorners = align_corners; }
+void Resize::SetCoordinateTransformMode(int coordinate_transform_mode) {
+  this->primitive_->value.AsResize()->coordinateTransformMode =
+    static_cast<schema::CoordinateTransformMode>(coordinate_transform_mode);
+}
 void Resize::SetPreserveAspectRatio(bool preserve_aspect_ratio) {
   this->primitive_->value.AsResize()->preserveAspectRatio = preserve_aspect_ratio;
 }
@@ -71,7 +74,9 @@ int Resize::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inp
     attr->newHeight = targetSize.at(0);
     attr->newWidth = targetSize.at(1);
     attr->alignCorners = GetValue<bool>(prim.GetAttr("align_corners"));
-
+    if (attr->alignCorners) {
+      attr->coordinateTransformMode = schema::CoordinateTransformMode_ALIGN_CORNERS;
+    }
     this->primitive_->value.value = attr;
     if (this->primitive_->value.value == nullptr) {
       if (attr != nullptr) {
@@ -89,7 +94,9 @@ int Resize::GetFormat() const { return this->primitive_->value_as_Resize()->form
 int Resize::GetMethod() const { return this->primitive_->value_as_Resize()->method(); }
 int64_t Resize::GetNewHeight() const { return this->primitive_->value_as_Resize()->newHeight(); }
 int64_t Resize::GetNewWidth() const { return this->primitive_->value_as_Resize()->newWidth(); }
-bool Resize::GetAlignCorners() const { return this->primitive_->value_as_Resize()->alignCorners(); }
+int Resize::GetCoordinateTransformMode() const {
+  return this->primitive_->value_as_Resize()->coordinateTransformMode();
+}
 bool Resize::GetPreserveAspectRatio() const { return this->primitive_->value_as_Resize()->preserveAspectRatio(); }
 int Resize::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) {
   MS_ASSERT(nullptr != primitive);
@@ -99,8 +106,10 @@ int Resize::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers:
     MS_LOG(ERROR) << "value_as_Resize return nullptr";
     return RET_ERROR;
   }
-  auto val_offset = schema::CreateResize(*fbb, attr->format(), attr->method(), attr->newHeight(), attr->newWidth(),
-                                         attr->alignCorners(), attr->preserveAspectRatio());
+  auto val_offset =
+    schema::CreateResize(*fbb, attr->format(), attr->method(), attr->newHeight(), attr->newWidth(),
+                         attr->alignCorners(), attr->preserveAspectRatio(), attr->coordinateTransformMode(),
+                         attr->cubicCoeff(), attr->excludeOutside(), attr->extrapolationValue(), attr->nearestMode());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_Resize, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
@@ -153,12 +162,12 @@ int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
           }
           switch (shape_tensor->format()) {
             case schema::Format_NCHW:
-              output_shape.push_back(data[2] * input->Height());
-              output_shape.push_back(data[3] * input->Width());
+              output_shape.push_back(data[2]);
+              output_shape.push_back(data[3]);
               break;
             case schema::Format_NHWC:
-              output_shape.push_back(data[1] * input->Height());
-              output_shape.push_back(data[2] * input->Width());
+              output_shape.push_back(data[1]);
+              output_shape.push_back(data[2]);
               break;
             default:
               MS_LOG(INFO) << "Resize don't support tensor format.";

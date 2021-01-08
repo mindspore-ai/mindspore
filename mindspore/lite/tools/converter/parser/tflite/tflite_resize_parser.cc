@@ -36,7 +36,7 @@ PrimitiveC *TfliteResizeParser::ParseLitePrimitive(const std::unique_ptr<tflite:
     MS_LOG(ERROR) << "new op failed";
     return nullptr;
   }
-  attr->coordinateTransformMode = schema::CoordinateTransformMode_COMMON;
+  attr->coordinateTransformMode = schema::CoordinateTransformMode_ASYMMETRIC;
   auto tflite_op_type = (tflite_model->operator_codes[tflite_op->opcode_index])->builtin_code;
   if (tflite_op_type == tflite::BuiltinOperator_RESIZE_BILINEAR) {
     MS_LOG(DEBUG) << "parse TfliteResizeBilinearParser";
@@ -46,13 +46,11 @@ PrimitiveC *TfliteResizeParser::ParseLitePrimitive(const std::unique_ptr<tflite:
       return nullptr;
     }
     if (tfliteAttr->align_corners) {
-      attr->alignCorners = tfliteAttr->align_corners;
       attr->coordinateTransformMode = schema::CoordinateTransformMode_ALIGN_CORNERS;
     }
     if (tfliteAttr->half_pixel_centers) {
-      attr->coordinateTransformMode = (attr->coordinateTransformMode == schema::CoordinateTransformMode_COMMON
-                                         ? schema::CoordinateTransformMode_TF_HALF_PIXEL
-                                         : schema::CoordinateTransformMode_ALIGN_CORNERS_WITH_HALF_PIEXL);
+      MS_LOG(ERROR) << "Does not support half pixel centers";
+      return nullptr;
     }
     attr->method = schema::ResizeMethod_LINEAR;
   } else if (tflite_op_type == tflite::BuiltinOperator_RESIZE_NEAREST_NEIGHBOR) {
@@ -63,13 +61,11 @@ PrimitiveC *TfliteResizeParser::ParseLitePrimitive(const std::unique_ptr<tflite:
       return nullptr;
     }
     if (tfliteAttr->align_corners) {
-      attr->alignCorners = tfliteAttr->align_corners;
       attr->coordinateTransformMode = schema::CoordinateTransformMode_ALIGN_CORNERS;
     }
     if (tfliteAttr->half_pixel_centers) {
-      attr->coordinateTransformMode = (attr->coordinateTransformMode == schema::CoordinateTransformMode_COMMON
-                                         ? schema::CoordinateTransformMode_TF_HALF_PIXEL
-                                         : schema::CoordinateTransformMode_ALIGN_CORNERS_WITH_HALF_PIEXL);
+      MS_LOG(ERROR) << "Does not support half pixel centers";
+      return nullptr;
     }
     attr->method = schema::ResizeMethod_NEAREST;
     attr->nearestMode = schema::NearestMode_NORMAL;

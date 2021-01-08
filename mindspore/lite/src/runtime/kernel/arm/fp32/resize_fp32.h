@@ -51,6 +51,7 @@ class ResizeCPUKernel : public ResizeBaseCPUKernel {
   float *y_bottom_weights_ = nullptr;
   float *x_left_weights_ = nullptr;
   float *line_buffer_ = nullptr;
+  CalculateOriginalCoordinate calculate_ = nullptr;
 };
 }  // namespace mindspore::kernel
 

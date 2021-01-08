@@ -71,7 +71,9 @@ void TestResizeBilinearInt8::Prepare(const std::vector<int> &in_shape, const std
   param_.method_ = static_cast<int>(schema::ResizeMethod_LINEAR);
   param_.new_width_ = out_shape[2];
   param_.new_height_ = out_shape[1];
-  param_.align_corners_ = align_corners;
+  if (align_corners) {
+    param_.coordinate_transform_mode_ = 1;
+  }
 
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc_);
 

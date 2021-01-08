@@ -326,10 +326,16 @@ STATUS OnnxInputAdjustOpPass::AdjustResize(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto attr = reinterpret_cast<schema::ResizeT *>(value);
-  if (cnode->inputs().size() > 3 &&
-      attr->coordinateTransformMode == schema::CoordinateTransformMode_TF_CROP_AND_RESIZE) {
+  if (cnode->inputs().size() > 3 && attr->coordinateTransformMode == schema::CoordinateTransformMode_CROP_AND_RESIZE) {
     auto new_resize_inputs = cnode->inputs();
     new_resize_inputs.erase(new_resize_inputs.begin() + 1);
+    cnode->set_inputs(new_resize_inputs);
+  }
+  if (cnode->inputs().size() > 3 && attr->coordinateTransformMode == schema::CoordinateTransformMode_HALF_PIXEL) {
+    std::vector<AnfNodePtr> new_resize_inputs;
+    new_resize_inputs.push_back(cnode->inputs()[0]);
+    new_resize_inputs.push_back(cnode->inputs()[1]);
+    new_resize_inputs.push_back(cnode->inputs()[4]);
     cnode->set_inputs(new_resize_inputs);
   }
   return lite::RET_OK;
@@ -588,6 +594,8 @@ bool OnnxInputAdjustOpPass::Run(const FuncGraphPtr &func_graph) {
       status = AdjustCast(cnode);
     } else if (type == schema::PrimitiveType_Transpose) {
       status = ReplaceTransposeWithGraphInput(func_graph, cnode);
+    } else if (type == schema::PrimitiveType_Resize) {
+      status = AdjustResize(cnode);
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "adjust input pass is failed.";
