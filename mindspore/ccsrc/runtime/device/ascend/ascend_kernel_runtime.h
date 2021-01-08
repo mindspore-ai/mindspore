@@ -81,7 +81,7 @@ class AscendKernelRuntime : public KernelRuntime {
   void LaunchDataDump(GraphId graph_id);
   static string GetErrorNodeName(uint32_t streamid, uint32_t taskid);
   static void DumpTaskExceptionInfo(const session::KernelGraph *graph);
-  static void TaskFailCallback(rtTaskFailInfo *task_fail_info);
+  static void TaskFailCallback(rtExceptionInfo *task_fail_info);
   void ReportProfilingData();
 
   rtContext_t rt_context_{nullptr};
@@ -91,8 +91,7 @@ class AscendKernelRuntime : public KernelRuntime {
   unordered_map<GraphId, std::shared_ptr<DataDumper>> graph_data_dumper_;
   std::map<std::pair<uint32_t, uint32_t>, std::string> stream_id_task_id_op_name_map_;
   static uint32_t current_graph_id_;
-  static std::map<std::string, uint32_t> overflow_tasks_;
-  static std::vector<rtTaskFailInfo> task_fail_infoes_;
+  static std::vector<rtExceptionInfo> task_fail_infoes_;
 };
 
 MS_REG_KERNEL_RUNTIME(kAscendDevice, AscendKernelRuntime);
