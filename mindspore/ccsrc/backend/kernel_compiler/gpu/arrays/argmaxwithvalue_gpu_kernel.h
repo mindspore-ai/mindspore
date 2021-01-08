@@ -46,8 +46,8 @@ class ArgmaxWithValueGpuKernel : public GpuKernel {
   bool Init(const CNodePtr &kernel_node) override {
     std::vector<size_t> shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
     auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 1);
-    int dims = shape.size();
-    int axis = static_cast<int>(GetAttr<int64_t>(kernel_node, "axis"));
+    int64_t dims = shape.size();
+    int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
     if (axis < 0) {
       axis += dims;
     }
@@ -59,14 +59,16 @@ class ArgmaxWithValueGpuKernel : public GpuKernel {
     for (auto x : output_shape) {
       output_size_ *= x;
     }
-    bound_ = shape[axis];
+    bound_ = static_cast<S>(shape[axis]);
+    if (shape[axis] != static_cast<size_t>(bound_)) {
+      MS_LOG(EXCEPTION) << "bound's shape is larger than index type and overflows when casting.";
+    }
     outerSize_ = 1;
-    for (int i = axis - 1; i >= 0; i--) {
+    for (int64_t i = axis - 1; i >= 0; i--) {
       outerSize_ *= shape[i];
     }
-
     innerSize_ = 1;
-    for (int i = axis + 1; i < dims; i++) {
+    for (int64_t i = axis + 1; i < dims; i++) {
       innerSize_ *= shape[i];
     }
     InitSizeLists();
@@ -86,7 +88,7 @@ class ArgmaxWithValueGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-  size_t bound_;
+  S bound_;
   size_t outerSize_;
   size_t innerSize_;
 };
