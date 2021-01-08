@@ -14,6 +14,10 @@
 # limitations under the License.
 # ============================================================================
 
-rm -rf ./eval
-mkdir ./eval
-python ./eval.py > ./eval/eval.log 2>&1 &
+export DEVICE_ID=$1
+rm -rf ./train_single
+mkdir ./train_single
+cp -r ./src ./train_single
+cp ./train.py ./train_single
+cd ./train_single
+python ./train.py --device_id=$DEVICE_ID > ./train.log 2>&1 &

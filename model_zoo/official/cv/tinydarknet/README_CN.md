@@ -78,16 +78,16 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 - 在Ascend资源上运行：
 
   ```python
-  # 单机训练
-  python train.py > train.log 2>&1 &
+  # 单卡训练
+  bash ./scripts/run_standalone_train.sh 0
 
   # 分布式训练
-  bash scripts/run_train.sh rank_table.json
+  bash ./scripts/run_distribute_train.sh rank_table.json
 
   # 评估
   python eval.py > eval.log 2>&1 &
   OR
-  bash run_eval.sh
+  bash ./script/run_eval.sh
   ```
 
   进行并行训练时, 需要提前创建JSON格式的hccl配置文件。
@@ -104,18 +104,27 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 
 ```bash
 
-├── Tiny-DarkNet
-    ├── README.md                    // Tiny-Darknet相关说明
+├── tinydarknet
+    ├── README.md                  // Tiny-Darknet英文说明
+    ├── README_CN.md                  // Tiny-Darknet中文说明
     ├── scripts
-    │   ├──run_train.sh                // Ascend分布式训练shell脚本
-    │   ├──run_eval.sh                // Ascend评估shell脚本
+        ├──run_standalone_train.sh     // Ascend单卡训练shell脚本
+        ├──run_distribute_train.sh               // Ascend分布式训练shell脚本
+        ├──run_eval.sh                // Ascend评估shell脚本
     ├── src
-    │   ├──dataset.py                 // 创建数据集
-    │   ├──tinydarknet.py             // Tiny-Darknet网络结构
-    │   ├──config.py                  // 参数配置
+        ├─lr_scheduler    //学习率策略
+            ├─__init__.py    // 初始化文件
+            ├─linear_warmup.py    // linear_warmup策略
+            ├─warmup_cosine_annealing_lr.py    // warmup_cosine_annealing_lr策略
+            ├─warmup_step_lr.py    // warmup_step_lr策略
+        ├──dataset.py                 // 创建数据集
+        ├──CrossEntropySmooth.py     // 损失函数
+        ├──tinydarknet.py             // Tiny-Darknet网络结构
+        ├──config.py                  // 参数配置
     ├── train.py                       // 训练脚本
     ├── eval.py                        //  评估脚本
     ├── export.py                      // 导出checkpoint文件
+    ├── mindspore_hub_conf.py          // hub配置文件
 
 ```
 
@@ -138,9 +147,8 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
   'data_path': './ImageNet_Original/train/'  # 训练数据集的绝对路径
   'val_data_path': './ImageNet_Original/val/'  # 评估数据集的绝对路径
   'device_target': 'Ascend' # 程序运行的设备
-  'device_id': 0            # 用来训练和评估的设备编号
   'keep_checkpoint_max': 10 # 仅仅保持最新的keep_checkpoint_max个checkpoint文件
-  'checkpoint_path': './train_tinydarknet_imagenet-125_390.ckpt'  # 保存checkpoint文件的绝对路径
+  'checkpoint_path': '/train_tinydarknet.ckpt'  # 保存checkpoint文件的绝对路径
   'onnx_filename': 'tinydarknet.onnx' # 用于export.py 文件中的onnx模型的文件名
   'air_filename': 'tinydarknet.air'   # 用于export.py 文件中的air模型的文件名
   'lr_scheduler': 'exponential'     # 学习率策略
@@ -164,10 +172,10 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 - 在Ascend资源上运行：
 
   ```python
-  python train.py > train.log 2>&1 &
+  bash ./scripts/run_standalone_train.sh 0
   ```
 
-  上述的python命令将运行在后台中，可以通过 `train.log` 文件查看运行结果.
+  上述的命令将运行在后台中，可以通过 `train.log` 文件查看运行结果.
 
   训练完成后,默认情况下,可在script文件夹下得到一些checkpoint文件. 训练的损失值将以如下的形式展示:
   <!-- After training, you'll get some checkpoint files under the script folder by default. The loss value will be achieved as follows: -->
@@ -191,7 +199,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 - 在Ascend资源上运行：
 
   ```python
-  sh scripts/run_train.sh
+  bash scripts/run_distribute_train.sh rank_table.json
   ```
 
   上述的脚本命令将在后台中进行分布式训练，可以通过`train_parallel[X]/log`文件查看运行结果. 训练的损失值将以如下的形式展示:
@@ -213,12 +221,12 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 
 - 在Ascend资源上进行评估:
 
-  在运行如下命令前,请确认用于评估的checkpoint文件的路径.请将checkpoint路径设置为绝对路径,例如:"username/imagenet/train_tiny-darknet_imagenet-125_390.ckpt".
+  在运行如下命令前,请确认用于评估的checkpoint文件的路径.请将checkpoint路径设置为绝对路径,例如:"/username/imagenet/train_tinydarknet.ckpt"
 
   ```python
   python eval.py > eval.log 2>&1 &  
   OR
-  sh scripts/run_eval.sh
+  bash scripts/run_eval.sh
   ```
 
   上述的python命令将运行在后台中，可以通过"eval.log"文件查看结果. 测试数据集的准确率将如下面所列:
@@ -254,7 +262,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 | 速度                      | 8卡: 104 ms/step                        |
 | 总时间                 | 8卡: 17.8小时                                             |
 | 参数(M)             | 4.0                                                        |
-| 脚本                    | [Tiny-Darknet脚本](https://gitee.com/mindspore/mindspore/tree/r0.7/model_zoo/official/cv/googlenet) |
+| 脚本                    | [Tiny-Darknet脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/tinydarknet) |
 
 ### [评估性能](#目录)
 
@@ -267,7 +275,7 @@ Tiny-DarkNet是Joseph Chet Redmon等人提出的一个16层的针对于经典的
 | 数据集             | 200k张图片                |
 | batch_size          | 128                         |
 | 输出             | 分类概率                 |
-| 准确率            | 8卡 Top-5: 81.7%                 |
+| 准确率            | 8卡 Top-1: 58.7%; Top-5: 81.7%                 |
 | 推理模型             | 11.6M (.ckpt文件)                 |
 
 # [ModelZoo主页](#目录)

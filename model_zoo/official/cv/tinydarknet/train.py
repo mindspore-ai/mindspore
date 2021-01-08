@@ -16,6 +16,7 @@
 #################train tinydarknet example on cifar10########################
 python train.py
 """
+import os
 import argparse
 
 from mindspore import Tensor
@@ -78,14 +79,11 @@ if __name__ == '__main__':
     device_target = cfg.device_target
 
     context.set_context(mode=context.GRAPH_MODE, device_target=cfg.device_target)
-    device_num = cfg.device_num
+    device_num = int(os.environ.get("DEVICE_NUM", 1))
 
     rank = 0
     if device_target == "Ascend":
-        if args_opt.device_id is not None:
-            context.set_context(device_id=args_opt.device_id)
-        else:
-            context.set_context(device_id=cfg.device_id)
+        context.set_context(device_id=args_opt.device_id)
 
         if device_num > 1:
             context.reset_auto_parallel_context()
