@@ -12,6 +12,8 @@ include(${TOP_DIR}/cmake/external_libs/glog.cmake)
 file(GLOB OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/*.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/../../src/ops/populate/*.cc)
 
+file(GLOB CONVERTER_OPS_SRC ${CMAKE_CURRENT_SOURCE_DIR}/ops/*.cc)
+
 file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/../flag/flag_parser.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/converter.cc
@@ -65,6 +67,8 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/while_pass.cc
         ../optimizer/graph/if_pass.cc
         ../optimizer/graph/mindir_inputs_adjust_pass.cc
+        ../optimizer/graph/functionalize_control_op_pass.cc
+        ../optimizer/graph/functionalize_while.cc
         )
 
 add_subdirectory(../anf_importer anf_importer)
@@ -97,12 +101,12 @@ set(LITE_SRC
         ${SRC_DIR}/errorcode.cc
         ${SRC_DIR}/dequant.cc
         )
-if (SUPPORT_TRAIN)
+if(SUPPORT_TRAIN)
     set(LITE_SRC
             ${LITE_SRC}
             )
 
-endif ()
+endif()
 set(ARM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../src/runtime/kernel/arm)
 file(GLOB KERNEL_SRC
         ${ARM_DIR}/base/*.cc
@@ -114,13 +118,13 @@ file(GLOB KERNEL_SRC
         ${ARM_DIR}/int8/*.cc
         )
 
-if (PLATFORM_ARM64)
+if(PLATFORM_ARM64)
     # assembly
     file(GLOB ASSEMBLY_SRC ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/assembly/arm64/*.s
             ${CMAKE_CURRENT_SOURCE_DIR}/../../nnacl/assembly/arm64/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_SRC ${KERNEL_SRC} ${ASSEMBLY_SRC})
-endif ()
+endif()
 
 file(GLOB PROTO_FILE ""
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/caffe/caffe.proto
@@ -133,11 +137,13 @@ add_library(proto_mid OBJECT ${PROTO_SRCS})
 set(TFLITE_FBS_FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/parser/tflite/schema.fbs
         )
-ms_build_flatbuffers_lite(TFLITE_FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/parser/tflite/ tflite_fbs_src ${CMAKE_BINARY_DIR}/schema "inner")
+ms_build_flatbuffers_lite(TFLITE_FBS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/parser/tflite/ tflite_fbs_src
+        ${CMAKE_BINARY_DIR}/schema "inner")
 
 set_property(SOURCE ${CONVERTER_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${CCSRC_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${OPS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
+set_property(SOURCE ${CONVERTER_OPS_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${KERNEL_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 set_property(SOURCE ${LITE_SRC} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_executable(converter_lite
@@ -145,6 +151,7 @@ add_executable(converter_lite
         ${CCSRC_SRC}
         ${CONVERTER_SRC}
         ${OPS_SRC}
+        ${CONVERTER_OPS_SRC}
         ${KERNEL_SRC}
         ${LITE_SRC}
         )

@@ -325,26 +325,6 @@ STATUS InferShapePass::SetSubGraphInputsAbstract(const CNodePtr &cnode, const Fu
   return RET_OK;
 }
 
-STATUS InferShapePass::SwitchCNodeInferShape(const CNodePtr &switch_cnode) {
-  auto body_partial_cnode = switch_cnode->input(2)->cast<CNodePtr>();
-  MS_ASSERT(body_partial_cnode != nullptr);
-  auto body_vnode = body_partial_cnode->input(0)->cast<ValueNodePtr>();
-  MS_ASSERT(body_vnode != nullptr);
-  auto body_fg = GetValueNode<FuncGraphPtr>(body_vnode);
-  MS_ASSERT(body_fg != nullptr);
-  AbstractBasePtrList abstract_list;
-  auto body_fg_output_cnode = utils::cast<CNodePtr>(body_fg->output());
-  for (auto &cnode : body_fg_output_cnode->inputs()) {
-    if (!utils::isa<CNodePtr>(cnode) && !utils::isa<ParameterPtr>(cnode)) {
-      continue;
-    }
-    abstract_list.push_back(cnode->abstract());
-  }
-
-  switch_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
-  return RET_OK;
-}
-
 bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
   if (fmk_type != lite::converter::FmkType_TF && fmk_type != lite::converter::FmkType_TFLITE) {
     MS_LOG(INFO) << "The framework type of model should be tf/tflite.";
@@ -383,14 +363,6 @@ bool InferShapePass::Run(const FuncGraphPtr &func_graph) {
       return false;
     }
     auto type = GetCNodeType(cnode);
-
-    if (type == schema::PrimitiveType_Switch) {
-      int ret = SwitchCNodeInferShape(cnode);
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "PartialCNodeInferShape failed.";
-        return false;
-      }
-    }
 
     if ((type == schema::PrimitiveType_TupleGetItem) ||
 #ifdef SUPPORT_TRAIN

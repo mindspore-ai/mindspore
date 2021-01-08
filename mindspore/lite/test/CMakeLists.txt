@@ -2,6 +2,7 @@ set(TOP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../..)
 set(TEST_DIR ${TOP_DIR}/mindspore/lite/test)
 set(LITE_DIR ${TOP_DIR}/mindspore/lite)
 set(CCSRC_DIR ${TOP_DIR}/mindspore/ccsrc)
+set(CONVERTER_DIR ${TOP_DIR}/mindspore/lite/tools/converter)
 include_directories(${TOP_DIR})
 include_directories(${TEST_DIR})
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/external_libs/gtest.cmake)
@@ -16,7 +17,7 @@ set(CCSRC_SRC
         ${CCSRC_DIR}/backend/optimizer/common/visit.cc
         ${CCSRC_DIR}/backend/optimizer/common/optimizer.cc
         )
-else(ENABLE_CONVERTER)
+else()
     set(TEST_LITE_SRC ${LITE_DIR}/src/common/log_adapter.cc)
     add_compile_definitions(USE_ANDROID_LOG)
 endif()
@@ -38,10 +39,10 @@ file(GLOB KERNEL_OP_TRAIN_SRC
         ${LITE_DIR}/src/runtime/kernel/arm/fp32_grad/*.cc
 )
 
-if (SUPPORT_TRAIN)
+if(SUPPORT_TRAIN)
         list(APPEND KERNEL_OP_SRC ${KERNEL_OP_TRAIN_SRC})
 endif()
-if (PLATFORM_ARM64)
+if(PLATFORM_ARM64)
     # assembly
     file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/assembly/arm64/*.s
             ${LITE_DIR}/nnacl/assembly/arm64/*.S)
@@ -53,7 +54,7 @@ if (PLATFORM_ARM64)
             )
 endif()
 
-if (PLATFORM_ARM32)
+if(PLATFORM_ARM32)
     # assembly
     file(GLOB TEST_ASSEMBLY_SRC
             ${LITE_DIR}/nnacl/assembly/arm32/*.S
@@ -65,7 +66,7 @@ if (PLATFORM_ARM32)
             )
 endif()
 
-if ("${X86_64_SIMD}" STREQUAL "sse")
+if("${X86_64_SIMD}" STREQUAL "sse")
     file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/x86_64_sse/*.c)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_OP_SRC
@@ -74,12 +75,12 @@ if ("${X86_64_SIMD}" STREQUAL "sse")
             )
 endif()
 
-if ("${X86_64_SIMD}" STREQUAL "avx")
+if("${X86_64_SIMD}" STREQUAL "avx")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -msse4.1 -mavx -mavx2")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2")
     file(GLOB TEST_ASSEMBLY_SRC ${LITE_DIR}/nnacl/x86_64_sse/*.c
-             ${LITE_DIR}/nnacl/x86_64_avx/*.c
-             ${LITE_DIR}/nnacl/assembly/avx/*.S)
+            ${LITE_DIR}/nnacl/x86_64_avx/*.c
+            ${LITE_DIR}/nnacl/assembly/avx/*.S)
     set_property(SOURCE ${TEST_ASSEMBLY_SRC} PROPERTY LANGUAGE C)
     set(KERNEL_OP_SRC
             ${KERNEL_OP_SRC}
@@ -88,7 +89,7 @@ if ("${X86_64_SIMD}" STREQUAL "avx")
 endif()
 
 ### gpu kernel
-if (SUPPORT_GPU)
+if(SUPPORT_GPU)
     file(GLOB GPU_KERNEL_OP_SRC
             ${LITE_DIR}/src/runtime/kernel/opencl/kernel/*.cc
             )
@@ -102,14 +103,18 @@ if (SUPPORT_GPU)
             )
 endif()
 
-if (PLATFORM_ARM32 OR PLATFORM_ARM64)
-  if (ENABLE_CONVERTER)
+if(PLATFORM_ARM32 OR PLATFORM_ARM64)
+  if(ENABLE_CONVERTER)
     set(BUILD_MINDDATA "off")
   endif()
 endif()
 ### runtime framework
 add_definitions(-DENABLE_V0)
 file(GLOB_RECURSE OPS_SRC ${LITE_DIR}/src/ops/*.cc)
+if(ENABLE_CONVERTER)
+    file(GLOB_RECURSE CONVERTER_OPS_SRC ${CONVERTER_DIR}/ops/*.cc)
+    set(OPS_SRC ${OPS_SRC} ${CONVERTER_OPS_SRC})
+endif()
 set(TEST_LITE_SRC
         ${TEST_LITE_SRC}
         ${CCSRC_SRC}
@@ -144,7 +149,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/errorcode.cc
         )
 ### gpu runtime
-if (SUPPORT_GPU)
+if(SUPPORT_GPU)
     include_directories(${TOP_DIR}/third_party/OpenCL-Headers)
     include_directories(${TOP_DIR}/third_party/OpenCL-CLHPP/include)
     set(OPENCL_RUNTIME_SRC
@@ -210,13 +215,14 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/onnx_inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/while_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/if_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/functionalize_control_op_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/functionalize_while.cc
             )
 endif()
 ### train
-if (SUPPORT_TRAIN)
+if(SUPPORT_TRAIN)
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
-           # ${LITE_DIR}/src/train/ops/train_ops.cc
             ${LITE_DIR}/src/train/train_populate_parameter.cc
             ${LITE_DIR}/src/train/train_session.cc
             ${LITE_DIR}/src/train/train_model.cc
@@ -251,7 +257,7 @@ set(TEST_SRC
         ${TEST_DIR}/ut/src/scheduler_test.cc
 )
 
-if (ENABLE_CONVERTER)
+if(ENABLE_CONVERTER)
     set(TEST_SRC
             ${TEST_SRC}
             ${TEST_DIR}/st/converter_test.cc
@@ -265,7 +271,7 @@ if (ENABLE_CONVERTER)
             )
 endif()
 
-if (SUPPORT_TRAIN)
+if(SUPPORT_TRAIN)
     set(TEST_SRC
             ${TEST_SRC}
             ${TEST_CASE_KERNEL_TRAIN_SRC}
@@ -278,7 +284,7 @@ else()
             )
 endif()
 
-if (SUPPORT_GPU)
+if(SUPPORT_GPU)
     file(GLOB_RECURSE TEST_CASE_KERNEL_GPU_SRC
             ${TEST_DIR}/ut/src/runtime/kernel/opencl/*.cc
             )
@@ -288,7 +294,7 @@ if (SUPPORT_GPU)
             )
 endif()
 
-if (ENABLE_FP16)
+if(ENABLE_FP16)
     file(GLOB_RECURSE TEST_CASE_KERNEL_FP16_SRC
             ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16/*.cc
             )
@@ -296,24 +302,24 @@ if (ENABLE_FP16)
             ${TEST_SRC}
             ${TEST_CASE_KERNEL_FP16_SRC}
             )
-endif ()
+endif()
 
 add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src)
 target_link_libraries(lite-test dl mindspore::gtest)
-if (PLATFORM_ARM64 AND ENABLE_FP16)
+if(PLATFORM_ARM64 AND ENABLE_FP16)
     target_link_libraries(lite-test nnacl_fp16_mid nnacl_optimize_mid)
 endif()
 
-if (PLATFORM_ARM)
+if(PLATFORM_ARM)
     target_link_libraries(lite-test log)
 endif()
 
-if (SUPPORT_NPU)
+if(SUPPORT_NPU)
     include_directories(${DDK_PATH})
     target_link_libraries(lite-test npu_kernel_mid)
-endif ()
-if (ENABLE_CONVERTER)
+endif()
+if(ENABLE_CONVERTER)
     add_dependencies(lite-test fbs_inner_src)
     target_link_libraries(lite-test
             anf_importer_mid
