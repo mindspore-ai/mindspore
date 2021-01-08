@@ -191,7 +191,7 @@ class Tensor(Tensor_):
         return out
 
     def __getitem__(self, index):
-        if isinstance(index, int) and self.shape and index >= self.shape[0]:
+        if isinstance(index, int) and not isinstance(index, bool) and self.shape and index >= self.shape[0]:
             raise IndexError("index {} is out of bounds for axis 0 with size {}".format(index, self.shape[0]))
         out = tensor_operator_registry.get('__getitem__')(self, index)
         return out
