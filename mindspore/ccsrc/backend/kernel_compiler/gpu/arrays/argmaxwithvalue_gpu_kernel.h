@@ -20,7 +20,7 @@
 #include <vector>
 #include "backend/kernel_compiler/gpu/gpu_kernel.h"
 #include "backend/kernel_compiler/gpu/gpu_kernel_factory.h"
-#include "backend/kernel_compiler/gpu/cuda_impl/argmaxwithvalue_impl.cuh"
+#include "backend/kernel_compiler/gpu/cuda_impl/general_reduction_impl.cuh"
 namespace mindspore {
 namespace kernel {
 template <typename T, typename S>
@@ -38,8 +38,8 @@ class ArgmaxWithValueGpuKernel : public GpuKernel {
     T *input = GetDeviceAddress<T>(inputs, 0);
     T *output = GetDeviceAddress<T>(outputs, 1);
     S *index = GetDeviceAddress<S>(outputs, 0);
-    CalArgmaxWithValue(input, bound_, outerSize_, innerSize_, index, output,
-                       reinterpret_cast<cudaStream_t>(stream_ptr));
+    CalGeneralReduction(false, input, bound_, outerSize_, innerSize_, index, output,
+                        reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
