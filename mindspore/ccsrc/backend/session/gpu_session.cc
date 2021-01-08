@@ -47,6 +47,7 @@
 #include "backend/optimizer/graph_kernel/tensor_promotion.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_splitter.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_expander.h"
+#include "backend/optimizer/graph_kernel/raise_reduction_precision.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
 #include "backend/optimizer/graph_kernel/shape_ops_splitter.h"
 #include "backend/optimizer/graph_kernel/value_graph_binder.h"
@@ -182,6 +183,7 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   pm->AddPass(std::make_shared<opt::ShapeOpsSplitter>(duplicated_ops));
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
   pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
+  pm->AddPass(std::make_shared<opt::RaiseReductionPrecision>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>(duplicated_ops));
   pm->AddPass(std::make_shared<opt::ArithmeticSimplify>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>(duplicated_ops));
