@@ -191,7 +191,7 @@ class Conv2d(_Conv):
 
     Inputs:
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, H_{in}, W_{in})` \
-            or `(N, H_{in}, W_{in}, C_{in})`.
+          or `(N, H_{in}, W_{in}, C_{in})`.
 
     Outputs:
         Tensor of shape :math:`(N, C_{out}, H_{out}, W_{out})` or `(N, H_{out}, W_{out}, C_{out})`.

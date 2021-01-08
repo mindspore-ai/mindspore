@@ -51,12 +51,10 @@ class Exponential(Distribution):
         >>> # An Exponential distribution can be initialized without arguments.
         >>> # In this case, `rate` must be passed in through `args` during function calls.
         >>> e2 = msd.Exponential(dtype=mindspore.float32)
-
         >>> # Here are some tensors used below for testing
         >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
         >>> rate_a = Tensor([0.6], dtype=mindspore.float32)
         >>> rate_b = Tensor([0.2, 0.5, 0.4], dtype=mindspore.float32)
-
         >>> # Private interfaces of probability functions corresponding to public interfaces, including
         >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, are the same as follows.
         >>> # Args:
