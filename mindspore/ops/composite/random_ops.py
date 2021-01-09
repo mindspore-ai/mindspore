@@ -211,8 +211,12 @@ def gamma(shape, alpha, beta, seed=None):
 
 
 def poisson(shape, mean, seed=None):
-    """
+    r"""
     Generates random numbers according to the Poisson random number distribution.
+
+    .. math::
+
+        \text{P}(i|μ) = \frac{\exp(-μ)μ^{i}}{i!}
 
     Args:
         shape (tuple): The shape of random tensor to be generated.
