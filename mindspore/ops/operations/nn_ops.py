@@ -1058,9 +1058,10 @@ class BatchNorm(PrimitiveWithInfer):
     """
 
     @prim_attr_register
-    def __init__(self, is_training=False, epsilon=1e-5, data_format="NCHW"):
+    def __init__(self, is_training=False, epsilon=1e-5, momentum=0.1, data_format="NCHW"):
         validator.check_value_type('is_training', is_training, (bool,), self.name)
         validator.check_float_range(epsilon, 0, 1, Rel.INC_RIGHT, 'epsilon', self.name)
+        validator.check_float_range(momentum, 0, 1, Rel.INC_BOTH, 'momentum', self.name)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
