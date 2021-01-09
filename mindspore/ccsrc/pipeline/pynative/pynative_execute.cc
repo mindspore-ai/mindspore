@@ -982,7 +982,7 @@ AnfNodePtr PynativeExecutor::GetInput(const py::object &obj, bool op_mask) {
     // out = op(cell1(x, y))
     // out = op(cell1(x, y)[0])
     node = GetObjNode(obj, obj_id);
-  } else if (py::isinstance<py::tuple>(obj)) {
+  } else if (py::isinstance<py::tuple>(obj) || py::isinstance<py::list>(obj)) {
     // out = op((x, y))
     // out = cell((x, y))
     auto tuple = obj.cast<py::tuple>();
@@ -1009,7 +1009,7 @@ AnfNodePtr PynativeExecutor::GetInput(const py::object &obj, bool op_mask) {
 
 void PynativeExecutor::UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_exec_info, const py::object &out_real) {
   MS_EXCEPTION_IF_NULL(op_exec_info);
-  if (!grad_flag() || IsNopOp(op_exec_info->op_name)) {
+  if (!grad_flag()) {
     return;
   }
   auto op_index = op_exec_info->op_index;
@@ -1094,15 +1094,6 @@ void PynativeExecutor::CleanPreMemoryInValueNode(const std::string &cell_id) {
     top_cell_id_ = cell_id;
     return;
   }
-  const auto &tensor_id_with_tensor = cell_tensor_id_with_tensor_[top_cell_id_];
-  for (const auto &elem : tensor_id_with_tensor) {
-    const auto &tensors_in_value_node = elem.second;
-    for (const auto &tensor : tensors_in_value_node) {
-      MS_EXCEPTION_IF_NULL(tensor);
-      tensor->set_device_address(nullptr);
-    }
-  }
-
   if (dynamic_cell_) {
     std::set<std::string> forward_op_tensor_id;
     for (const auto &elem : cell_op_index_with_tensor_id_[top_cell_id_]) {
@@ -1119,6 +1110,14 @@ void PynativeExecutor::CleanPreMemoryInValueNode(const std::string &cell_id) {
       }
     }
     all_value_node_tensors_.clear();
+  }
+  const auto &tensor_id_with_tensor = cell_tensor_id_with_tensor_[top_cell_id_];
+  for (const auto &elem : tensor_id_with_tensor) {
+    const auto &tensors_in_value_node = elem.second;
+    for (const auto &tensor : tensors_in_value_node) {
+      MS_EXCEPTION_IF_NULL(tensor);
+      tensor->set_device_address(nullptr);
+    }
   }
 
   top_cell_id_ = cell_id;
