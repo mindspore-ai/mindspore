@@ -64,13 +64,13 @@ After dataset preparation, you can start training and evaluation as follows:
 ```bash
 # run training example
 cd ./scripts
-sh run_standalone_train.sh [TRAIN_DATASET]
+sh run_standalone_train.sh [TRAIN_DATASET] [DEVICEID]
 
 # run distributed training example
 sh run_distribute_train.sh [TRAIN_DATASET] [RANK_TABLE_PATH]
 
 # run evaluation example
-sh run_eval.sh [EVAL_DATASET_PATH] [DATASET_NAME] [MODEL_CKPT]
+sh run_eval.sh [EVAL_DATASET_PATH] [DATASET_NAME] [MODEL_CKPT] [DEVICEID]
 ```
 
 # [Script Description](#content)
@@ -116,6 +116,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
   ```text
      vocab_size               # vocabulary size.
      buckets                  # bucket sequence length.
+     test_buckets             # test dataset bucket sequence length
      batch_size               # batch size of input dataset.
      embedding_dims           # The size of each embedding vector.
      num_class                # number of labels.
@@ -134,7 +135,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
     ```bash
     cd ./scripts
-    sh run_standalone_train.sh [DATASET_PATH]
+    sh run_standalone_train.sh [DATASET_PATH] [DEVICEID]
     ```
 
 - Running scripts for distributed training of FastText. Task training on multiple device and run the following command in bash to be executed in `scripts/`:
@@ -150,7 +151,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 
     ``` bash
     cd ./scripts
-    sh run_eval.sh [DATASET_PATH] [DATASET_NAME] [MODEL_CKPT]
+    sh run_eval.sh [DATASET_PATH] [DATASET_NAME] [MODEL_CKPT] [DEVICEID]
     ```
 
   Note: The `DATASET_PATH` is path to mindrecord. eg. /dataset_path/*.mindrecord
@@ -167,13 +168,13 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 | uploaded Date              | 12/21/2020 (month/day/year)                                    |
 | MindSpore Version          | 1.1.0                                                          |
 | Dataset                    | AG's News Topic Classification Dataset                                |
-| Training Parameters        | epoch=5, batch_size=128                                        |
+| Training Parameters        | epoch=5, batch_size=512                                        |
 | Optimizer                  | Adam                                                           |
 | Loss Function              | Softmax Cross Entropy                                          |
 | outputs                    | probability                                                    |
-| Speed                      | 112ms/step (8pcs)                                              |
-| Total Time                 | 66s (8pcs)                                                   |
-| Loss                       | 0.00082                                                          |
+| Speed                      | 10ms/step (1pcs)                                              |
+| Epoch Time                 | 2.36s (1pcs)                                                   |
+| Loss                       | 0.0067                                                          |
 | Params (M)                 | 22                                                            |
 | Checkpoint for inference   | 254M (.ckpt file)                                              |
 | Scripts                    | [fasttext](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/fasttext) |
@@ -184,13 +185,13 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 | uploaded Date              | 11/21/2020 (month/day/year)                                    |
 | MindSpore Version          | 1.1.0                                                          |
 | Dataset                    | DBPedia Ontology Classification Dataset                                |
-| Training Parameters        | epoch=5, batch_size=128                                        |
+| Training Parameters        | epoch=5, batch_size=4096                                        |
 | Optimizer                  | Adam                                                           |
 | Loss Function              | Softmax Cross Entropy                                          |
 | outputs                    | probability                                                    |
-| Speed                      | 60ms/step (8pcs)                                              |
-| Total Time                 | 164s (8pcs)                                                   |
-| Loss                       | 2.6e-5                                                          |
+| Speed                      | 58ms/step (1pcs)                                              |
+| Epoch Time                 | 8.15s (1pcs)                                                   |
+| Loss                       | 2.6e-4                                                          |
 | Params (M)                 | 106                                                            |
 | Checkpoint for inference   | 1.2G (.ckpt file)                                              |
 | Scripts                    | [fasttext](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/fasttext) |
@@ -201,13 +202,13 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 | uploaded Date              | 11/21/2020 (month/day/year)                                    |
 | MindSpore Version          | 1.1.0                                                          |
 | Dataset                    | Yelp Review Polarity Dataset                                |
-| Training Parameters        | epoch=5, batch_size=128                                        |
+| Training Parameters        | epoch=5, batch_size=2048                                        |
 | Optimizer                  | Adam                                                           |
 | Loss Function              | Softmax Cross Entropy                                          |
 | outputs                    | probability                                                    |
-| Speed                      | 74ms/step (8pcs)                                              |
-| Total Time                 | 195s (8pcs)                                                   |
-| Loss                       | 7.7e-4                                                          |
+| Speed                      | 101ms/step (1pcs)                                              |
+| Epoch Time                 | 28s (1pcs)                                                   |
+| Loss                       | 0.062                                                          |
 | Params (M)                 | 103                                                            |
 | Checkpoint for inference   | 1.2G (.ckpt file)                                              |
 | Scripts                    | [fasttext](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/nlp/fasttext) |
@@ -220,8 +221,8 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 | Uploaded Date       | 12/21/2020 (month/day/year) |
 | MindSpore Version   | 1.1.0                       |
 | Dataset             | AG's News Topic Classification Dataset            |
-| batch_size          | 128                         |
-| Total Time          | 66s                       |
+| batch_size          | 512                         |
+| Epoch Time          | 2.36s                       |
 | outputs             | label index                 |
 | Accuracy            | 92.53                        |
 | Model for inference | 254M (.ckpt file)           |
@@ -232,8 +233,8 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 | Uploaded Date       | 12/21/2020 (month/day/year) |
 | MindSpore Version   | 1.1.0                       |
 | Dataset             | DBPedia Ontology Classification Dataset            |
-| batch_size          | 128                         |
-| Total Time          | 164s                          |
+| batch_size          | 4096                         |
+| Epoch Time          | 8.15s                          |
 | outputs             | label index                 |
 | Accuracy            | 98.6                        |
 | Model for inference | 1.2G (.ckpt file)           |
@@ -244,8 +245,8 @@ Parameters for both training and evaluation can be set in config.py. All the dat
 | Uploaded Date       | 12/21/2020 (month/day/year) |
 | MindSpore Version   | 1.1.0                       |
 | Dataset             | Yelp Review Polarity Dataset            |
-| batch_size          | 128                         |
-| Total Time          | 195s                         |
+| batch_size          | 2048                         |
+| Epoch Time          | 28s                         |
 | outputs             | label index                 |
 | Accuracy            | 95.7                        |
 | Model for inference | 1.2G (.ckpt file)           |
