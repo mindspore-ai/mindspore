@@ -47,6 +47,7 @@ class ResizeBaseCPUKernel : public LiteKernel {
  private:
   int CheckParameters();
   int CheckInputsOuputs();
+  int CalculateNewHeightWidth();
 };
 }  // namespace mindspore::kernel
 
