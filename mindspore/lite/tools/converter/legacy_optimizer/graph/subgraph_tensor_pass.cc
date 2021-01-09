@@ -26,7 +26,6 @@
 
 namespace mindspore {
 namespace lite {
-
 bool SubgraphTensorPass::IsUsing(schema::MetaGraphT *graph, const uint32_t &tensor_idx) {
   for (const auto &node : graph->nodes) {
     if (IsContain<uint32_t>(node->inputIndex, tensor_idx)) {

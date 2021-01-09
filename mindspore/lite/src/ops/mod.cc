@@ -23,7 +23,6 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-
 int Mod::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {
     this->primitive_ = new (std::nothrow) schema::PrimitiveT;

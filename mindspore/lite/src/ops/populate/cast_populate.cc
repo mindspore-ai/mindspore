@@ -17,7 +17,7 @@
 #include "src/ops/cast.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/cast_fp32.h"
+#include "nnacl/cast_parameter.h"
 
 namespace mindspore {
 namespace lite {
@@ -29,9 +29,11 @@ OpParameter *PopulateCastParameter(const mindspore::lite::PrimitiveC *primitive)
   }
   memset(cast_param, 0, sizeof(CastParameter));
   cast_param->op_parameter_.type_ = primitive->Type();
+
   auto param = reinterpret_cast<mindspore::lite::Cast *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   cast_param->src_type_ = param->GetSrcT();
   cast_param->dst_type_ = param->GetDstT();
+
   return reinterpret_cast<OpParameter *>(cast_param);
 }
 

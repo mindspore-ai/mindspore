@@ -17,10 +17,10 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHERND_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHERND_H_
 
+#include <string.h>
 #include <vector>
 #include "nnacl/fp32/gatherNd_fp32.h"
 #include "src/lite_kernel.h"
-
 #include "include/context.h"
 #include "nnacl/op_base.h"
 

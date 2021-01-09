@@ -27,7 +27,6 @@
 
 namespace mindspore {
 namespace lite {
-
 STATUS SubgraphNodePass::GetSubgraphAllTensorIndices(const std::unique_ptr<SubGraphT> &subgraph,
                                                      schema::MetaGraphT *graph, std::set<uint32_t> *tensors_indices) {
   for (auto &node_idx : subgraph->nodeIndices) {

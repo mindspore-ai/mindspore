@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateMergeParameter(const mindspore::lite::PrimitiveC *primitive) {
   OpParameter *merge_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (merge_parameter == nullptr) {

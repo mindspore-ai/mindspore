@@ -20,6 +20,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
+#include "nnacl/base/reshape_base.h"
 
 using mindspore::lite::InnerContext;
 
@@ -35,8 +36,6 @@ class ReshapeCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-
- private:
 };
 }  // namespace mindspore::kernel
 

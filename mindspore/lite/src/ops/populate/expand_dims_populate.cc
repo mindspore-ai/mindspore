@@ -14,24 +14,19 @@
  * limitations under the License.
  */
 
-#include "src/ops/expand_dims.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/expandDims_fp32.h"
 
 namespace mindspore {
 namespace lite {
 
 OpParameter *PopulateExpandDimsParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = reinterpret_cast<mindspore::lite::ExpandDims *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  ExpandDimsParameter *expand_dims_param = reinterpret_cast<ExpandDimsParameter *>(malloc(sizeof(ExpandDimsParameter)));
+  OpParameter *expand_dims_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (expand_dims_param == nullptr) {
     MS_LOG(ERROR) << "malloc ExpandDimsParameter failed.";
     return nullptr;
   }
-  memset(expand_dims_param, 0, sizeof(ExpandDimsParameter));
-  expand_dims_param->op_parameter_.type_ = primitive->Type();
-  expand_dims_param->dim_ = param->GetDim();
+  memset(expand_dims_param, 0, sizeof(OpParameter));
   return reinterpret_cast<OpParameter *>(expand_dims_param);
 }
 

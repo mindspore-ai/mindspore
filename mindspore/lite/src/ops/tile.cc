@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/tile.h"
+#include <limits>
 #include <algorithm>
 
 #ifndef PRIMITIVE_WRITEABLE

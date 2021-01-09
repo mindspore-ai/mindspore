@@ -22,7 +22,6 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-
 int AssertOP::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {
     this->primitive_ = new (std::nothrow) schema::PrimitiveT;
@@ -67,6 +66,5 @@ Registry AssertRegistry(schema::PrimitiveType_Assert, AssertCreator);
 #endif
 
 int AssertOP::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) { return RET_OK; }
-
 }  // namespace lite
 }  // namespace mindspore

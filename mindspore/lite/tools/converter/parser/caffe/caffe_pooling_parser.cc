@@ -19,7 +19,6 @@
 
 namespace mindspore {
 namespace lite {
-
 STATUS CaffePoolingParser::ParsePads(const caffe::PoolingParameter &poolingParam, schema::PoolingT *attr) {
   if (poolingParam.has_pad_h() && poolingParam.has_pad_w()) {
     if (poolingParam.has_pad()) {

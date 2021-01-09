@@ -14,20 +14,9 @@
  * limitations under the License.
  */
 
-#include "nnacl/fp32/gather_fp32.h"
-#include <string.h>
-#include "nnacl/errorcode.h"
-
-inline int Stride(const int *shape, int rank, int index) {
-  int i, stride = 1;
-  for (i = index + 1; i < rank; ++i) {
-    stride *= shape[i];
-  }
-  return stride;
-}
-
-int Gather(const float *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
-           float *output) {
+#include "nnacl/base/gather_base.h"
+int GatherFp32(const float *input, int outer_size, int inner_size, int limit, const int *indices,
+               int indices_element_size, float *output) {
   for (int m = 0; m < outer_size; ++m) {
     const float *inputm = input + inner_size * m * limit;
     float *outputm = output + inner_size * m * indices_element_size;

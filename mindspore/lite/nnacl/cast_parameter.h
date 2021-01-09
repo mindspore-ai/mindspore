@@ -13,8 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_NNACL_CAST_PARAMETER_H_
+#define MINDSPORE_LITE_NNACL_CAST_PARAMETER_H_
 
-#include "nnacl/reshape.h"
-#include <string.h>
+#include "nnacl/op_base.h"
 
-void Reshape(const void *input_ptr, void *output_ptr, size_t data_size) { memcpy(output_ptr, input_ptr, data_size); }
+typedef struct CastParameter {
+  OpParameter op_parameter_;
+  int dst_type_;
+  int src_type_;
+} CastParameter;
+
+#endif  // MINDSPORE_LITE_NNACL_CAST_PARAMETER_H_

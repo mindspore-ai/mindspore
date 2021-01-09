@@ -20,7 +20,6 @@
 
 namespace mindspore {
 namespace lite {
-
 /// \brief TrainModel Defines a class that allows to import and export a mindsport trainable model
 struct TrainModel : public lite::LiteModel {
   /// \brief Static method to create a TrainModel object

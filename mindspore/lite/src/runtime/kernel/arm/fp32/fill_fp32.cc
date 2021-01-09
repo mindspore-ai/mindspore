@@ -51,7 +51,7 @@ int FillCPUKernel::DoFill(int task_id) {
   auto input_tensor = in_tensors_.at(0);
   int ret = RET_OK;
   if (input_tensor->data_type() == kNumberTypeFloat32 || input_tensor->data_type() == kNumberTypeFloat) {
-    ret = Fill(out_ptr_ + offset, size, src_data_);
+    ret = FillFp32(out_ptr_ + offset, size, src_data_);
   } else if (input_tensor->data_type() == kNumberTypeInt32 || input_tensor->data_type() == kNumberTypeInt) {
     ret = FillInt32(int32_out_ptr_ + offset, size, int32_src_data_);
   } else {

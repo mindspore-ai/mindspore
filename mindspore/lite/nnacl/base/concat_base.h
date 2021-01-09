@@ -14,16 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_RESHAHPE_H_
-#define MINDSPORE_LITE_NNACL_RESHAHPE_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_CONCAT_BASE_H_
+#define MINDSPORE_LITE_NNACL_FP32_CONCAT_BASE_H_
+
+#include <string.h>
 #include "nnacl/op_base.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Reshape(const void *input_ptr, void *output_ptr, size_t data_size);
+void Concat(void **input, int input_num, int axis, int **inputs_output_shape, size_t shape_size, void *output,
+            int task_id, int thread_num, int data_size);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_RESHAHPE_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_CONCAT_BASE_H_

@@ -18,8 +18,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_RESHAPE_H_
 
 #include <vector>
+#include "nnacl/fp16/cast_fp16.h"
+#include "nnacl/base/reshape_base.h"
 #include "src/lite_kernel.h"
-
 #include "include/context.h"
 #include "src/runtime/kernel/arm/fp32/reshape_fp32.h"
 

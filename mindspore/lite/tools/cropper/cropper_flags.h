@@ -24,7 +24,6 @@
 namespace mindspore {
 namespace lite {
 namespace cropper {
-
 class CropperFlags : public virtual mindspore::lite::FlagParser {
  public:
   CropperFlags();

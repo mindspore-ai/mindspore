@@ -15,9 +15,6 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/reshape_fp16.h"
-#include <vector>
-#include "nnacl/fp16/cast_fp16.h"
-#include "nnacl/reshape.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
