@@ -214,6 +214,11 @@ void Somas::InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel) {
     }
 
     if (!AnfAlgo::IsRealCNodeKernel(prenode_index.first)) {
+      auto op_name = AnfAlgo::GetCNodeName(kernel);
+      TypeId input_origin_type = AnfAlgo::GetPrevNodeOutputInferDataType(kernel, i);
+      if ((op_name == kDynamicRNNOpName || op_name == kDynamicGRUV2OpName) && input_origin_type == kMetaTypeNone) {
+        continue;
+      }
       auto parameter = GetSomasParameters(prenode_index.first, prenode_index.second);
       node->input_parameters_map_[i] = parameter;
       MS_LOG(DEBUG) << "Input  [" << prenode_index.first->fullname_with_scope() << "] is not a real cnode kernel.";
