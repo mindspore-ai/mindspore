@@ -14,41 +14,15 @@
  * limitations under the License.
  */
 
-#include <vector>
-#include <algorithm>
 #include "minddata/dataset/engine/opt/pre/node_removal_pass.h"
 #include "minddata/dataset/engine/ir/datasetops/repeat_node.h"
-#include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
 
 namespace mindspore {
 namespace dataset {
 
-NodeRemovalPass::RemovalNodes::RemovalNodes() : is_caching_(false) {}
-
-// Identifies the subtree below this node as a cached descendant tree.
-Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
-  *modified = false;
-  MS_LOG(INFO) << "Node removal pass: Operation with cache found, identified descendant tree.";
-  if (node->IsCached()) {
-    is_caching_ = true;
-  }
-  return Status::OK();
-}
-
-// Resets the tracking of the cache within the tree
-Status NodeRemovalPass::RemovalNodes::VisitAfter(std::shared_ptr<DatasetNode> node, bool *const modified) {
-  *modified = false;
-  MS_LOG(INFO) << "Removal pass: Descendant walk is complete.";
-  if (is_caching_ && node->IsLeaf()) {
-    // Mark this leaf node to indicate it is a descendant of an operator with cache.
-    // This is currently used in non-mappable dataset (leaf) nodes to not add a ShuffleOp in DatasetNode::Build().
-    node->HasCacheAbove();
-  }
-  is_caching_ = false;
-  return Status::OK();
-}
+NodeRemovalPass::RemovalNodes::RemovalNodes() {}
 
 // Perform RepeatNode removal check.
 Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<RepeatNode> node, bool *const modified) {
@@ -56,12 +30,6 @@ Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<RepeatNode> node, bo
   if (node->Count() == 1) {
     nodes_to_remove_.push_back(std::static_pointer_cast<DatasetNode>(node));
   }
-  return Status::OK();
-}
-
-// Perform ShuffleNode removal check.
-Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<ShuffleNode> node, bool *const modified) {
-  *modified = false;
   return Status::OK();
 }
 
@@ -95,7 +63,7 @@ Status NodeRemovalPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *co
 
   // Then, execute the removal of any nodes that were set up for removal
   for (auto node : removal_nodes->nodes_to_remove()) {
-    RETURN_IF_NOT_OK(node->Remove());
+    RETURN_IF_NOT_OK(node->Drop());
   }
   MS_LOG(INFO) << "Pre pass: node removal pass complete.";
   return Status::OK();

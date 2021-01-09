@@ -28,6 +28,7 @@ namespace mindspore {
 namespace dataset {
 
 ZipNode::ZipNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets) {
+  nary_op_ = true;
   for (auto const &child : datasets) AddChild(child);
 }
 

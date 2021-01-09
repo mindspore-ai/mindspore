@@ -46,6 +46,9 @@ class TreeAdapter {
   // the Execution tree.
   Status Compile(std::shared_ptr<DatasetNode> root_ir, int32_t num_epochs = -1);
 
+  // Return the root node of the IR after cloned from the parsed IR tree
+  std::shared_ptr<DatasetNode> RootIRNode() const { return root_ir_; }
+
   // This is the main method TreeConsumer uses to interact with TreeAdapter
   // 1. GetNext will Launch() the ExeTree on its first call by iterator (tree is already prepared)
   // 2. GetNext will return empty row when eoe/eof is obtained
@@ -87,6 +90,7 @@ class TreeAdapter {
 
   std::unique_ptr<DataBuffer> cur_db_;
   std::unordered_map<std::string, int32_t> column_name_map_;
+  std::shared_ptr<DatasetNode> root_ir_;
   std::unique_ptr<ExecutionTree> tree_;              // current connector capacity of root op, used for profiling
   bool optimize_;                                    // Flag to enable optional optimization pass
   std::shared_ptr<DatasetIteratorTracing> tracing_;  // trace profiling data

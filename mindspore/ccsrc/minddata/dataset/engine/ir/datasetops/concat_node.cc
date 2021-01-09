@@ -35,6 +35,7 @@ ConcatNode::ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets
     : sampler_(sampler),
       children_flag_and_nums_(children_flag_and_nums),
       children_start_end_index_(children_start_end_index) {
+  nary_op_ = true;
   for (auto const &child : datasets) AddChild(child);
 }
 

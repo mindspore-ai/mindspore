@@ -52,7 +52,7 @@ Status DeepCopyPass::Visit(std::shared_ptr<DatasetNode> node, bool *const modifi
   new_node->SetNumWorkers(node->num_workers());
   // This method below assumes a DFS walk and from the first child to the last child.
   // Future: A more robust implementation that does not depend on the above assumption.
-  parent_->AppendChild(new_node);
+  RETURN_IF_NOT_OK(parent_->AppendChild(new_node));
 
   // Then set this node to be a new parent to accept a copy of its next child
   parent_ = new_node.get();

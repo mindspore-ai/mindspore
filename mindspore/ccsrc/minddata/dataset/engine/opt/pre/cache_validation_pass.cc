@@ -135,7 +135,7 @@ Status CacheValidationPass::Visit(std::shared_ptr<DatasetNode> node, bool *const
     // If this node is created to be cached, set the flag.
     is_cached_ = true;
   }
-  if (node->IsLeaf() && node->IsMappable()) {
+  if (node->IsLeaf() && node->IsMappableDataSource()) {
     is_mappable_ = true;
   }
   return Status::OK();
