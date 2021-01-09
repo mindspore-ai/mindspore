@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
-bn = P.FusedBatchNorm()
+bn = P.BatchNorm(is_training=True)
 fused_bn1 = Primitive('FusedBN1')
 fused_bn2 = Primitive('FusedBN2')
 fused_bn3 = Primitive('FusedBN3')

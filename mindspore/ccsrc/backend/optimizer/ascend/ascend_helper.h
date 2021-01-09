@@ -96,7 +96,8 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
 
 CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                               const TypeId &input_type, const TypeId &output_type,
-                              const std::vector<size_t> &origin_shape, const TypeId &origin_type);
+                              const std::vector<size_t> &origin_shape, const TypeId &origin_type,
+                              const std::vector<Axis> &reshape_type = std::vector<Axis>{});
 
 AnfNodePtr InsertTransOpForInput(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                  const KernelSelectPtr &kernel_select);

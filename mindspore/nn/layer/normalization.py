@@ -87,8 +87,7 @@ class _BatchNorm(Cell):
         self.cast = P.Cast()
         self.dtype = P.DType()
         self.reshape = P.Reshape()
-        self.is_ascend = context.get_context("device_target") == "Ascend"
-        self.is_gpu = context.get_context("device_target") == "GPU"
+        self._target = context.get_context("device_target")
         self.is_graph_mode = context.get_context("mode") == context.GRAPH_MODE
         self.momentum = 1.0 - momentum
         if context.get_context("enable_ge"):
@@ -96,22 +95,21 @@ class _BatchNorm(Cell):
         else:
             self.is_ge_backend = False
 
-        if self.is_graph_mode and (self.is_ge_backend or self.is_ascend):
+        if self._target == "Ascend":
             self.bn_train = P.BatchNorm(is_training=True,
-                                        epsilon=self.eps)
-        elif self.is_gpu:
+                                        epsilon=self.eps,
+                                        momentum=self.momentum)
+        if self._target == "GPU":
             self.bn_train = P.FusedBatchNormEx(mode=1,
                                                epsilon=self.eps,
                                                momentum=self.momentum,
                                                data_format=self.format)
-        else:
+        if self._target == "CPU":
             self.bn_train = P.FusedBatchNorm(mode=1,
                                              epsilon=self.eps,
                                              momentum=self.momentum)
         self.bn_infer = P.BatchNorm(is_training=False, epsilon=self.eps, data_format=self.format)
         self.enable_global_sync = self.is_global and (self.is_ge_backend or (self.is_graph_mode and self.is_ascend))
-        self.enable_default_train = self.is_graph_mode and not self.is_global and \
-                                    (self.is_ge_backend or self.is_ascend)
 
         data_parallel_strategy = ((1,), (1,))
         data_parallel_strategy_one = ((1,), ())
@@ -167,21 +165,6 @@ class _BatchNorm(Cell):
             if self.enable_global_sync:
                 axes, re_shape = _shape_infer(F.shape(x), self.num_features)
                 return self._global_sync(x, axes, re_shape)
-
-            if self.enable_default_train:
-                y, batch_mean, batch_var, _, _ = self.bn_train(x,
-                                                               self.gamma,
-                                                               self.beta,
-                                                               None,
-                                                               None)
-
-                mean_sub = self.sub_mean(self.moving_mean, batch_mean)
-                temp_mean = self.mul_mean(mean_sub, self.momentum)
-                mean_sub2 = self.sub_var(self.moving_variance, batch_var)
-                temp_variance = self.mul_var(mean_sub2, self.momentum)
-                y = F.depend(y, self.assign_sub_mean(self.moving_mean, temp_mean))
-                y = F.depend(y, self.assign_sub_var(self.moving_variance, temp_variance))
-                return y
 
             return self.bn_train(x,
                                  self.gamma,

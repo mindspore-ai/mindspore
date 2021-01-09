@@ -18,7 +18,7 @@ from mindspore.ops.operations import _grad_ops as G
 
 make_tuple = Primitive('make_tuple')
 tuple_getitem = Primitive('tuple_getitem')
-bn_grad = G.FusedBatchNormGrad()
+bn_grad = G.BatchNormGrad(is_training=True)
 bn_grad1 = Primitive('BNGrad1')
 bn_grad2 = Primitive('BNGrad2')
 bn_grad3 = Primitive('BNGrad3')

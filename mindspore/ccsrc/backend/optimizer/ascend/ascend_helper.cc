@@ -262,7 +262,8 @@ CNodePtr NewTransOpNode(const FuncGraphPtr &func_graph, const AnfNodePtr &input,
 
 CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &input, const std::string &format,
                               const TypeId &input_type, const TypeId &output_type,
-                              const std::vector<size_t> &origin_shape, const TypeId &origin_type) {
+                              const std::vector<size_t> &origin_shape, const TypeId &origin_type,
+                              const std::vector<Axis> &reshape_type) {
   MS_EXCEPTION_IF_NULL(func_graph);
   std::string input_format = format;
   std::string output_format = format;
@@ -272,6 +273,8 @@ CNodePtr AddCastOpNodeToGraph(const FuncGraphPtr &func_graph, const AnfNodePtr &
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder;
   builder.SetInputsFormat({input_format});
   builder.SetOutputsFormat({output_format});
+  builder.SetInputsReshapeType({reshape_type});
+  builder.SetOutputsReshapeType({reshape_type});
   builder.SetInputsDeviceType({input_type});
   builder.SetOutputsDeviceType({output_type});
   builder.SetFusionType(kernel::FusionType::OPAQUE);
