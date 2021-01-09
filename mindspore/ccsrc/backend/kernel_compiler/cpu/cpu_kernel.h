@@ -67,6 +67,7 @@ enum OperateType {
   SQRT,
   POW,
   REALDIV,
+  FLOORDIV,
   MOD,
   NEG,
   LESS,
