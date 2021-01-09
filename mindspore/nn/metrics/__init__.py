@@ -35,6 +35,7 @@ from .root_mean_square_surface_distance import RootMeanSquareDistance
 from .bleu_score import BleuScore
 from .cosine_similarity import CosineSimilarity
 from .occlusion_sensitivity import OcclusionSensitivity
+from .perplexity import Perplexity
 
 __all__ = [
     "names",
@@ -59,6 +60,7 @@ __all__ = [
     "Loss",
     "MeanSurfaceDistance",
     "RootMeanSquareDistance",
+    "Perplexity",
 ]
 
 __factory__ = {
@@ -82,6 +84,7 @@ __factory__ = {
     'loss': Loss,
     'mean_surface_distance': MeanSurfaceDistance,
     'root_mean_square_distance': RootMeanSquareDistance,
+    'perplexity': Perplexity,
 }
 
 
