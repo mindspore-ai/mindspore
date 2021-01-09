@@ -4103,20 +4103,21 @@ class BroadcastTo(PrimitiveWithInfer):
 
     When input shape is broadcast to target shape, it starts with the trailing dimensions.
 
-    Raises:
-        ValueError: Given a shape tuple, if it has several -1; or if the -1 is in an invalid position
-            such as one that does not have a opposing dimension in an input tensor; or if the target and
-            input shapes are incompatible.
-
     Args:
         shape (tuple): The target shape to broadcast. Can be fully specified, or have -1 in one position
             where it will be substituted by the input tensor's shape in that position, see example.
 
     Inputs:
-        - **input_x** (Tensor) - The input tensor.
+        - **input_x** (Tensor) - The input tensor. The data type should be one of the following types: float16, float32,
+          int32, int8, uint8.
 
     Outputs:
         Tensor, with the given `shape` and the same data type as `input_x`.
+
+    Raises:
+        ValueError: Given a shape tuple, if it has several -1; or if the -1 is in an invalid position
+            such as one that does not have a opposing dimension in an input tensor; or if the target and
+            input shapes are incompatible.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
@@ -4401,7 +4402,9 @@ class ReverseSequence(PrimitiveWithInfer):
 
 class EditDistance(PrimitiveWithInfer):
     """
-    Computes the Levenshtein Edit Distance. It is used to measure the similarity of two sequences.
+    Computes the Levenshtein Edit Distance. It is used to measure the similarity of two sequences. The inputs are
+    variable-length sequences provided by SparseTensors (hypothesis_indices, hypothesis_values, hypothesis_shape)
+    and (truth_indices, truth_values, truth_shape).
 
     Args:
         normalize (bool): If true, edit distances are normalized by length of truth. Default: True.

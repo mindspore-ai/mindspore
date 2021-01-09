@@ -95,18 +95,18 @@ class Dropout(Cell):
     Randomly set some elements of the input tensor to zero with probability :math:`1 - keep\_prob` during training
     using samples from a Bernoulli distribution.
 
+    The outputs are scaled by a factor of :math:`\frac{1}{keep\_prob}`    during training so
+    that the output layer remains at a similar scale. During inference, this
+    layer returns the same tensor as the input.
+
+    This technique is proposed in paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
+    <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ and proved to be effective to reduce
+    over-fitting and prevents neurons from co-adaptation. See more details in `Improving neural networks by
+    preventing co-adaptation of feature detectors
+    <https://arxiv.org/pdf/1207.0580.pdf>`_.
+
     Note:
         Each channel will be zeroed out independently on every construct call.
-
-        The outputs are scaled by a factor of :math:`\frac{1}{keep\_prob}`    during training so
-        that the output layer remains at a similar scale. During inference, this
-        layer returns the same tensor as the input.
-
-        This technique is proposed in paper `Dropout: A Simple Way to Prevent Neural Networks from Overfitting
-        <http://www.cs.toronto.edu/~rsalakhu/papers/srivastava14a.pdf>`_ and proved to be effective to reduce
-        over-fitting and prevents neurons from co-adaptation. See more details in `Improving neural networks by
-        preventing co-adaptation of feature detectors
-        <https://arxiv.org/pdf/1207.0580.pdf>`_.
 
     Args:
         keep_prob (float): The keep rate, greater than 0 and less equal than 1. E.g. rate=0.9,

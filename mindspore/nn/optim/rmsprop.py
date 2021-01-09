@@ -46,13 +46,13 @@ class RMSProp(Optimizer):
 
     The equation is as follows:
 
-    ..  math::
+    .. math::
         s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2
 
-    ..  math::
+    .. math::
         m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} + \\epsilon}} \\nabla Q_{i}(w)
 
-    ..  math::
+    .. math::
         w = w - m_{t}
 
     The first equation calculates moving average of the squared gradient for
@@ -60,16 +60,16 @@ class RMSProp(Optimizer):
 
     if centered is True:
 
-    ..  math::
+    .. math::
         g_{t} = \\rho g_{t-1} + (1 - \\rho)\\nabla Q_{i}(w)
 
-    ..  math::
+    .. math::
         s_{t} = \\rho s_{t-1} + (1 - \\rho)(\\nabla Q_{i}(w))^2
 
-    ..  math::
+    .. math::
         m_{t} = \\beta m_{t-1} + \\frac{\\eta} {\\sqrt{s_{t} - g_{t}^2 + \\epsilon}} \\nabla Q_{i}(w)
 
-    ..  math::
+    .. math::
         w = w - m_{t}
 
     where :math:`w` represents `params`, which will be updated.
