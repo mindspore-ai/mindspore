@@ -39,6 +39,7 @@
 #include "minddata/dataset/text/kernels/unicode_script_tokenizer_op.h"
 #include "minddata/dataset/text/kernels/whitespace_tokenizer_op.h"
 #endif
+#include "minddata/dataset/core/data_type.h"
 #include "minddata/dataset/util/path.h"
 
 namespace mindspore {
@@ -87,7 +88,7 @@ std::shared_ptr<JiebaTokenizerOperation> JiebaTokenizer(const std::string &hmm_p
 }
 
 std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
-                                        const DataType &data_type) {
+                                        const std::string &data_type) {
   auto op = std::make_shared<LookupOperation>(vocab, unknown_token, data_type);
 
   return op->ValidateParams() ? op : nullptr;
@@ -142,7 +143,7 @@ std::shared_ptr<SlidingWindowOperation> SlidingWindow(const int32_t width, const
   return op->ValidateParams() ? op : nullptr;
 }
 
-std::shared_ptr<ToNumberOperation> ToNumber(const DataType data_type) {
+std::shared_ptr<ToNumberOperation> ToNumber(const std::string &data_type) {
   auto op = std::make_shared<ToNumberOperation>(data_type);
 
   return op->ValidateParams() ? op : nullptr;
@@ -200,6 +201,19 @@ Status ValidateTokenizerDirParam(const std::string &tokenizer_name, const std::s
   return Status::OK();
 }
 
+// Helper functions to help validate data type passed by user
+bool IsTypeNumeric(const std::string &data_type) {
+  if (data_type == "int8" || data_type == "uint8" || data_type == "int16" || data_type == "uint16" ||
+      data_type == "int32" || data_type == "uint32" || data_type == "int64" || data_type == "uint64" ||
+      data_type == "float16" || data_type == "float32" || data_type == "float64")
+    return true;
+  return false;
+}
+
+bool IsTypeBoolean(const std::string &data_type) { return data_type == "bool"; }
+
+bool IsTypeString(const std::string &data_type) { return data_type == "string"; }
+
 /* ####################################### Derived TensorOperation classes ################################# */
 
 // (In alphabetical order)
@@ -238,6 +252,8 @@ BertTokenizerOperation::BertTokenizerOperation(const std::shared_ptr<Vocab> &voc
       normalize_form_(normalize_form),
       preserve_unused_token_(preserve_unused_token),
       with_offsets_(with_offsets) {}
+
+BertTokenizerOperation::~BertTokenizerOperation() = default;
 
 Status BertTokenizerOperation::ValidateParams() {
   if (vocab_ == nullptr) {
@@ -303,8 +319,10 @@ std::shared_ptr<TensorOp> JiebaTokenizerOperation::Build() {
 
 // LookupOperation
 LookupOperation::LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
-                                 const DataType &data_type)
+                                 const std::string &data_type)
     : vocab_(vocab), unknown_token_(unknown_token), default_id_(Vocab::kNoTokenExists), data_type_(data_type) {}
+
+LookupOperation::~LookupOperation() = default;
 
 Status LookupOperation::ValidateParams() {
   if (vocab_ == nullptr) {
@@ -320,7 +338,7 @@ Status LookupOperation::ValidateParams() {
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
 
-  if (!data_type_.IsNumeric()) {
+  if (!IsTypeNumeric(data_type_)) {
     std::string err_msg = "Lookup does not support a string to string mapping, data_type can only be numeric.";
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
@@ -330,7 +348,7 @@ Status LookupOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> LookupOperation::Build() {
-  std::shared_ptr<LookupOp> tensor_op = std::make_shared<LookupOp>(vocab_, default_id_, data_type_);
+  std::shared_ptr<LookupOp> tensor_op = std::make_shared<LookupOp>(vocab_, default_id_, DataType(data_type_));
   return tensor_op;
 }
 
@@ -419,6 +437,8 @@ std::shared_ptr<TensorOp> RegexTokenizerOperation::Build() {
 #endif
 
 // SentencePieceTokenizerOperation
+SentencePieceTokenizerOperation::~SentencePieceTokenizerOperation() = default;
+
 SentencePieceTokenizerOperation::SentencePieceTokenizerOperation(const std::shared_ptr<SentencePieceVocab> &vocab,
                                                                  SPieceTokenizerOutType out_type)
     : vocab_(vocab), vocab_path_(std::string()), load_type_(SPieceTokenizerLoadType::kModel), out_type_(out_type) {}
@@ -482,11 +502,11 @@ std::shared_ptr<TensorOp> SlidingWindowOperation::Build() {
 }
 
 // ToNumberOperation
-ToNumberOperation::ToNumberOperation(DataType data_type) : data_type_(data_type) {}
+ToNumberOperation::ToNumberOperation(std::string data_type) : data_type_(data_type) {}
 
 Status ToNumberOperation::ValidateParams() {
-  if (!data_type_.IsNumeric() || data_type_.IsBool()) {
-    std::string err_msg = "ToNumber : The parameter data_type must be a numeric type, got: " + data_type_.ToString();
+  if (!IsTypeNumeric(data_type_) || IsTypeBoolean(data_type_)) {
+    std::string err_msg = "ToNumber : The parameter data_type must be a numeric type, got: " + data_type_;
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }

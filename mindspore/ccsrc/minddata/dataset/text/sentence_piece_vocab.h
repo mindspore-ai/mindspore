@@ -22,10 +22,11 @@
 #include <vector>
 #include <unordered_map>
 #include "minddata/dataset/util/status.h"
+#include "minddata/dataset/include/constants.h"
 
 namespace mindspore {
 namespace dataset {
-enum class SentencePieceModel { kUnigram = 0, kBpe = 1, kChar = 2, kWord = 3 };
+
 class SentencePieceVocab {
  public:
   static Status BuildFromFile(const std::vector<std::string> &path_list, const int vocab_size,

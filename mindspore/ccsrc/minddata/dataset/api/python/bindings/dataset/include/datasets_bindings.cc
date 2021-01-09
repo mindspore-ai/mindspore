@@ -23,6 +23,8 @@
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/include/datasets.h"
+#include "minddata/dataset/text/sentence_piece_vocab.h"
+
 // IR non-leaf nodes
 #include "minddata/dataset/engine/ir/datasetops/batch_node.h"
 #include "minddata/dataset/engine/ir/datasetops/concat_node.h"

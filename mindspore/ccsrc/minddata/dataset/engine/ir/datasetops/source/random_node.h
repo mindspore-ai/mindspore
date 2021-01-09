@@ -22,7 +22,9 @@
 #include <utility>
 #include <vector>
 
+#include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
+#include "minddata/dataset/include/samplers.h"
 
 namespace mindspore {
 namespace dataset {

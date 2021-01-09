@@ -19,6 +19,7 @@
 #include <memory>
 #include <mutex>
 
+#include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/core/constants.h"
 #include "minddata/dataset/util/allocator.h"
 #include "minddata/dataset/util/status.h"
@@ -27,7 +28,6 @@ namespace mindspore {
 namespace dataset {
 // forward declare
 class MemoryPool;
-class ConfigManager;
 class Tensor;
 class CVTensor;
 

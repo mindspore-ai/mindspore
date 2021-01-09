@@ -20,8 +20,9 @@
 #include "common/common.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/status.h"
-#include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/text.h"
+#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/text/vocab.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::DataType;
@@ -49,7 +50,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOp) {
   EXPECT_EQ(s, Status::OK());
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", DataType("int32"));
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", "int32");
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -93,7 +94,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpEmptyString) {
   EXPECT_EQ(s, Status::OK());
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "", DataType("int32"));
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "", "int32");
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -137,7 +138,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail1) {
 
   // Create lookup op for ds
   // Expected failure: "<unk>" is not a word of vocab
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", DataType("int32"));
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", "int32");
   EXPECT_EQ(lookup, nullptr);
 }
 
@@ -148,7 +149,7 @@ TEST_F(MindDataTestPipeline, TestVocabLookupOpFail2) {
 
   // Create lookup op
   // Expected failure: vocab is null
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "", DataType("int32"));
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "", "int32");
   EXPECT_EQ(lookup, nullptr);
 }
 
@@ -170,7 +171,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDataset) {
   EXPECT_EQ(home_index, 4);
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", DataType("int32"));
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "<unk>", "int32");
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds
@@ -324,7 +325,7 @@ TEST_F(MindDataTestPipeline, TestVocabFromDatasetInt64) {
   EXPECT_EQ(home_index, 2);
 
   // Create Lookup operation on ds
-  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "home", DataType("int64"));
+  std::shared_ptr<TensorOperation> lookup = text::Lookup(vocab, "home", "int64");
   EXPECT_NE(lookup, nullptr);
 
   // Create Map operation on ds

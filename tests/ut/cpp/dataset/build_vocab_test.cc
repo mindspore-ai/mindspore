@@ -22,6 +22,7 @@
 #include "common/common.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/status.h"
+#include "minddata/dataset/text/vocab.h"
 
 using mindspore::dataset::Tensor;
 using mindspore::dataset::Status;

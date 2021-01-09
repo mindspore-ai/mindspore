@@ -20,8 +20,6 @@
 #include <cstdint>
 #include <string>
 
-#include "minddata/dataset/util/log_adapter.h"
-
 namespace mindspore {
 namespace dataset {
 

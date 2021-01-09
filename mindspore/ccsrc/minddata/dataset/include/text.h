@@ -22,17 +22,15 @@
 #include <utility>
 #include <vector>
 
-#include "mindspore/ccsrc/minddata/dataset/core/data_type.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
+#include "minddata/dataset/include/status.h"
 #include "minddata/dataset/include/transforms.h"
-#include "minddata/dataset/util/status.h"
-
-#include "minddata/dataset/text/kernels/sentence_piece_tokenizer_op.h"
-#include "minddata/dataset/text/sentence_piece_vocab.h"
-#include "minddata/dataset/text/vocab.h"
 
 namespace mindspore {
 namespace dataset {
+
+class Vocab;
+class SentencePieceVocab;
 
 // Transform operations for text
 namespace text {
@@ -146,10 +144,11 @@ std::shared_ptr<JiebaTokenizerOperation> JiebaTokenizer(const std::string &hmm_p
 /// \param[in] vocab a Vocab object.
 /// \param[in] unknown_token word to use for lookup if the word being looked up is out of Vocabulary (oov).
 ///   If unknown_token is oov, runtime error will be thrown.
-/// \param[in] DataType type of the tensor after lookup, typically int32.
+/// \param[in] data_type type of the tensor after lookup, typically int32.
 /// \return Shared pointer to the current TensorOperation.
+
 std::shared_ptr<LookupOperation> Lookup(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
-                                        const mindspore::dataset::DataType &data_type = DataType("int32"));
+                                        const std::string &data_type = "int32");
 
 /// \brief TensorOp to generate n-gram from a 1-D string Tensor.
 /// \param[in] ngrams ngrams is a vector of positive integers. For example, if ngrams={4, 3}, then the result
@@ -226,9 +225,9 @@ std::shared_ptr<SlidingWindowOperation> SlidingWindow(const int32_t width, const
 ///   https://en.cppreference.com/w/cpp/string/basic_string/stof,
 ///   https://en.cppreference.com/w/cpp/string/basic_string/stoul,
 ///   except that any strings which represent negative numbers cannot be cast to an unsigned integer type.
-/// \param[in] data_type DataType of the tensor to be casted to. Must be a numeric type.
+/// \param[in] data_type of the tensor to be casted to. Must be a numeric type.
 /// \return Shared pointer to the current TensorOperation.
-std::shared_ptr<ToNumberOperation> ToNumber(const DataType data_type);
+std::shared_ptr<ToNumberOperation> ToNumber(const std::string &data_type);
 
 /// \brief Truncate a pair of rank-1 tensors such that the total length is less than max_length.
 /// \param[in] max_length Maximum length required.
@@ -285,7 +284,7 @@ class BertTokenizerOperation : public TensorOperation {
                          bool keep_whitespace, const NormalizeForm normalize_form, bool preserve_unused_token,
                          bool with_offsets);
 
-  ~BertTokenizerOperation() = default;
+  ~BertTokenizerOperation();
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -342,9 +341,9 @@ class JiebaTokenizerOperation : public TensorOperation {
 class LookupOperation : public TensorOperation {
  public:
   explicit LookupOperation(const std::shared_ptr<Vocab> &vocab, const std::string &unknown_token,
-                           const DataType &data_type);
+                           const std::string &data_type);
 
-  ~LookupOperation() = default;
+  ~LookupOperation();
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -356,7 +355,7 @@ class LookupOperation : public TensorOperation {
   std::shared_ptr<Vocab> vocab_;
   std::string unknown_token_;
   int32_t default_id_;
-  DataType data_type_;
+  std::string data_type_;
 };
 
 class NgramOperation : public TensorOperation {
@@ -439,7 +438,7 @@ class SentencePieceTokenizerOperation : public TensorOperation {
 
   SentencePieceTokenizerOperation(const std::string &vocab_path, SPieceTokenizerOutType out_type);
 
-  ~SentencePieceTokenizerOperation() = default;
+  ~SentencePieceTokenizerOperation();
 
   std::shared_ptr<TensorOp> Build() override;
 
@@ -473,7 +472,7 @@ class SlidingWindowOperation : public TensorOperation {
 
 class ToNumberOperation : public TensorOperation {
  public:
-  explicit ToNumberOperation(DataType data_type);
+  explicit ToNumberOperation(std::string data_type);
 
   ~ToNumberOperation() = default;
 
@@ -484,7 +483,7 @@ class ToNumberOperation : public TensorOperation {
   std::string Name() const override { return kToNumberOperation; }
 
  private:
-  DataType data_type_;
+  std::string data_type_;
 };
 
 class TruncateSequencePairOperation : public TensorOperation {

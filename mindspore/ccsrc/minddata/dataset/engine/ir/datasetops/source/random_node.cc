@@ -24,6 +24,7 @@
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
+
 namespace mindspore {
 namespace dataset {
 

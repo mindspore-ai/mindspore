@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DATASETS_H_
 
+#include <sys/stat.h>
 #include <unistd.h>
 #include <map>
 #include <memory>
@@ -26,27 +27,18 @@
 #include <unordered_set>
 #include <utility>
 #include <vector>
-#include "minddata/dataset/engine/ir/cache/dataset_cache.h"
 
-#include "minddata/dataset/core/constants.h"
-#include "minddata/dataset/engine/consumers/tree_consumer.h"
-#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/include/samplers.h"
 #include "minddata/dataset/include/tensor.h"
+#include "minddata/dataset/include/text.h"
 #include "minddata/dataset/include/type_id.h"
-#include "minddata/dataset/kernels/c_func_op.h"
-#include "minddata/dataset/kernels/tensor_op.h"
-#include "minddata/dataset/util/path.h"
-#ifndef ENABLE_ANDROID
-#include "minddata/dataset/text/sentence_piece_vocab.h"
-#include "minddata/dataset/text/vocab.h"
-#endif
 
 namespace mindspore {
 namespace dataset {
 
 class Tensor;
+class TensorRow;
 class TensorShape;
 class TreeAdapter;
 class TreeGetters;
@@ -54,6 +46,7 @@ class TreeGetters;
 class Vocab;
 #endif
 
+class DatasetCache;
 class DatasetNode;
 
 class Iterator;
@@ -77,12 +70,20 @@ class ConcatDataset;
 class RenameDataset;
 #endif
 
+#ifndef ENABLE_ANDROID
+class SentencePieceVocab;
+enum class SentencePieceModel;
+#endif
+
+class DSCallback;
+
 class RepeatDataset;
 
 #ifndef ENABLE_ANDROID
 class SkipDataset;
 class TakeDataset;
 class ZipDataset;
+
 #endif
 
 /// \class Dataset datasets.h
@@ -969,8 +970,12 @@ std::shared_ptr<TFRecordDataset> TFRecord(const std::vector<std::string> &datase
   } else {
     std::string schema_path = schema;
     if (!schema_path.empty()) {
-      Path schema_file(schema_path);
-      if (!schema_file.Exists()) {
+      struct stat sb;
+      int rc = stat(common::SafeCStr(schema_path), &sb);
+      if (rc == -1 && errno != ENOENT) {
+        MS_LOG(WARNING) << "Unable to query the status of [" << schema_path << "]. Errno = " << errno << ".";
+      }
+      if (rc != 0) {
         MS_LOG(ERROR) << "TFRecordDataset: schema path [" << schema_path << "] is invalid or does not exist.";
         return nullptr;
       }

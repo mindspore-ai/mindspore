@@ -21,6 +21,7 @@
 #include "minddata/dataset/callback/ds_callback.h"
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
+#include "minddata/dataset/engine/tree_adapter.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/kernels/data/no_op.h"

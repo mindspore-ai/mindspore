@@ -21,11 +21,11 @@
 #include "minddata/dataset/include/config.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/status.h"
-#include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/text.h"
+#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/text/vocab.h"
 
 using namespace mindspore::dataset;
-using mindspore::dataset::DataType;
 using mindspore::dataset::ShuffleMode;
 using mindspore::dataset::Status;
 using mindspore::dataset::Tensor;
@@ -1011,7 +1011,7 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess1) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("int64"));
+  std::shared_ptr<TensorOperation> to_number = text::ToNumber("int64");
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1064,7 +1064,7 @@ TEST_F(MindDataTestPipeline, TestToNumberSuccess2) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("float64"));
+  std::shared_ptr<TensorOperation> to_number = text::ToNumber("float64");
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1117,7 +1117,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail1) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("int8"));
+  std::shared_ptr<TensorOperation> to_number = text::ToNumber("int8");
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1167,7 +1167,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail2) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("float16"));
+  std::shared_ptr<TensorOperation> to_number = text::ToNumber("float16");
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1213,7 +1213,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail3) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number = text::ToNumber(DataType("int64"));
+  std::shared_ptr<TensorOperation> to_number = text::ToNumber("int64");
   EXPECT_NE(to_number, nullptr);
 
   // Create a Map operation on ds
@@ -1246,7 +1246,7 @@ TEST_F(MindDataTestPipeline, TestToNumberFail3) {
 
 TEST_F(MindDataTestPipeline, TestToNumberFail4) {
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestToNumberFail4.";
-  // Test ToNumber with non numerical DataType
+  // Test ToNumber with non numerical data type
 
   std::string data_file = datasets_root_path_ + "/testTokenizerData/to_number.txt";
 
@@ -1255,15 +1255,15 @@ TEST_F(MindDataTestPipeline, TestToNumberFail4) {
   EXPECT_NE(ds, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number1 = text::ToNumber(DataType("string"));
+  std::shared_ptr<TensorOperation> to_number1 = text::ToNumber("string");
 
-  // Expect failure: invalid parameter with non numerical DataType
+  // Expect failure: invalid parameter with non numerical data type
   EXPECT_EQ(to_number1, nullptr);
 
   // Create ToNumber operation on ds
-  std::shared_ptr<TensorOperation> to_number2 = text::ToNumber(DataType("bool"));
+  std::shared_ptr<TensorOperation> to_number2 = text::ToNumber("bool");
 
-  // Expect failure: invalid parameter with non numerical DataType
+  // Expect failure: invalid parameter with non numerical data type
   EXPECT_EQ(to_number2, nullptr);
 }
 

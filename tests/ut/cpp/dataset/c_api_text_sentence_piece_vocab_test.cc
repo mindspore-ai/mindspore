@@ -18,11 +18,12 @@
 #include <string>
 
 #include "common/common.h"
-#include "minddata/dataset/core/constants.h"
+#include "minddata/dataset/include/constants.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/status.h"
-#include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/text.h"
+#include "minddata/dataset/include/transforms.h"
+#include "minddata/dataset/text/sentence_piece_vocab.h"
 
 using namespace mindspore::dataset;
 using mindspore::dataset::SentencePieceModel;
