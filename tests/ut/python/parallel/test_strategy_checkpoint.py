@@ -75,7 +75,8 @@ def test_six_matmul_save():
             return out
 
     reset_auto_parallel_context()
-    set_auto_parallel_context(device_num=8, global_rank=0, strategy_ckpt_save_file="./strategy_stage1.ckpt")
+    set_auto_parallel_context(device_num=8, global_rank=0, strategy_ckpt_save_file="./strategy_stage1.ckpt",
+                              group_ckpt_save_file="./group_stage1.ckpt")
     strategy1 = ((8, 1), (1, 1))
     strategy2 = ((1, 8), (8, 1))
     strategy3 = ((2, 2), (2, 2))
@@ -137,7 +138,8 @@ def test_six_matmul_load():
             return out
 
     reset_auto_parallel_context()
-    set_auto_parallel_context(device_num=8, global_rank=0, strategy_ckpt_load_file="./strategy_stage1.ckpt")
+    set_auto_parallel_context(device_num=8, global_rank=0, strategy_ckpt_load_file="./strategy_stage1.ckpt",
+                              group_ckpt_save_file="./group_stage1.ckpt")
     strategy1 = ((8, 1), (1, 1))
     strategy3 = ((8, 1), (1, 1))
     strategy4 = ((8, 1), (1, 1))

@@ -157,6 +157,7 @@ PYBIND11_MODULE(_c_expression, m) {
          "Set strategy checkpoint save file.")
     .def("get_strategy_ckpt_load_file", &ParallelContext::strategy_ckpt_load_file, "Get strategy checkpoint load file.")
     .def("get_strategy_ckpt_save_file", &ParallelContext::strategy_ckpt_save_file, "Get strategy checkpoint save file.")
+    .def("set_group_ckpt_save_file", &ParallelContext::set_group_ckpt_save_file, "Set group checkpoint save file.")
     .def("set_pipeline_stage_split_num", &ParallelContext::set_pipeline_stage_split_num,
          "Set pipeline stage split num.")
     .def("get_pipeline_stage_split_num", &ParallelContext::pipeline_stage_split_num, "Get pipeline stage split num.")

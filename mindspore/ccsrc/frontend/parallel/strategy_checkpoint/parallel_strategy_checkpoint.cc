@@ -34,6 +34,8 @@ StrategyCheckpoint &StrategyCheckpoint::GetInstance() {
     instance.load_checkpoint_on_ = !ParallelContext::GetInstance()->strategy_ckpt_load_file().empty();
     instance.save_file_ = ParallelContext::GetInstance()->strategy_ckpt_save_file();
     instance.save_checkpoint_on_ = !ParallelContext::GetInstance()->strategy_ckpt_save_file().empty();
+    instance.group_info_save_file_ = ParallelContext::GetInstance()->group_ckpt_save_file();
+    instance.group_info_save_on_ = !ParallelContext::GetInstance()->group_ckpt_save_file().empty();
   }
   return instance;
 }
@@ -44,6 +46,39 @@ bool StrategyCheckpoint::CheckPointExit(const std::string path) const {
     return true;
   }
   return false;
+}
+
+Status StrategyCheckpoint::LoadGroupInfo(const std::string &file, GroupInfoMap *group_info_map) {
+  MS_EXCEPTION_IF_NULL(group_info_map);
+  if (!CheckPointExit(file)) {
+    MS_LOG(EXCEPTION) << "CheckPoint file is not found";
+  }
+  straspb::ParallelGroupMap parallel_group_map;
+  std::fstream input(file, std::ios::in | std::ios::binary);
+  if (!parallel_group_map.ParseFromIstream(&input)) {
+    MS_LOG(ERROR) << "Load strategy file failed";
+    return FAILED;
+  }
+  input.close();
+
+  size_t group_num = LongToSize(parallel_group_map.parallel_group_item_size());
+  for (size_t i = 0; i < group_num; ++i) {
+    straspb::ParallelGroupItem parallel_group_item = parallel_group_map.parallel_group_item(SizeToLong(i));
+    std::string group_name = parallel_group_item.group_name();
+
+    straspb::ParallelGroupRanks parallel_group_ranks = parallel_group_item.parallel_group_ranks();
+    size_t rank_num = LongToSize(parallel_group_ranks.dim_size());
+    std::vector<uint32_t> ranks;
+    for (size_t j = 0; j < rank_num; ++j) {
+      uint32_t rank = parallel_group_ranks.dim(SizeToLong(j));
+      ranks.push_back(rank);
+    }
+
+    std::pair<std::string, std::vector<uint32_t>> group = std::make_pair(group_name, ranks);
+    group_info_map->push_back(group);
+  }
+
+  return SUCCESS;
 }
 
 Status StrategyCheckpoint::Load(StrategyMap *strategy_map) {
@@ -135,6 +170,28 @@ Status StrategyCheckpoint::Save(const StrategyMap &strategy_map, const TensorInf
 
   std::fstream output(save_file_, std::ios::out | std::ios::trunc | std::ios::binary);
   if (!parallel_strategy_map.SerializeToOstream(&output)) {
+    MS_LOG(ERROR) << "Save strategy file failed";
+    return FAILED;
+  }
+  output.close();
+  return SUCCESS;
+}
+
+Status StrategyCheckpoint::SaveGroupInfo(const GroupInfoMap &group_info_map) {
+  straspb::ParallelGroupMap parallel_group_map;
+  for (auto &group : group_info_map) {
+    straspb::ParallelGroupItem *parallel_group_item = parallel_group_map.add_parallel_group_item();
+    MS_EXCEPTION_IF_NULL(parallel_group_item);
+    parallel_group_item->set_group_name(group.first);
+    straspb::ParallelGroupRanks *parallel_group_ranks = parallel_group_item->mutable_parallel_group_ranks();
+    MS_EXCEPTION_IF_NULL(parallel_group_ranks);
+    for (auto &rank : group.second) {
+      parallel_group_ranks->add_dim(rank);
+    }
+  }
+
+  std::fstream output(group_info_save_file_, std::ios::out | std::ios::trunc | std::ios::binary);
+  if (!parallel_group_map.SerializeToOstream(&output)) {
     MS_LOG(ERROR) << "Save strategy file failed";
     return FAILED;
   }
