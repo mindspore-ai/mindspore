@@ -90,16 +90,11 @@ AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/util MINDDATA_UTIL_SRC_FILES)
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/kernels/image/lite_cv  MINDDATA_KERNELS_IMAGE_LITE_CV_FILES)
 
 
-
-if (BUILD_MINDDATA STREQUAL "full")
-    set(BUILD_MINDDATA "wrapper")
-endif ()
-
-
 if (BUILD_MINDDATA STREQUAL "full")
     include_directories("${CMAKE_SOURCE_DIR}/../ccsrc/minddata/dataset/kernels/image")
     list(REMOVE_ITEM MINDDATA_API_SRC_FILES
             "${MINDDATA_DIR}/api/text.cc"
+            "${MINDDATA_DIR}/api/minddata_eager.cc"
             )
 
     list(REMOVE_ITEM MINDDATA_CALLBACK_SRC_FILES
@@ -198,6 +193,7 @@ if (BUILD_MINDDATA STREQUAL "full")
             "${MINDDATA_DIR}/kernels/image/mixup_batch_op.cc"
             "${MINDDATA_DIR}/kernels/image/pad_op.cc"
             "${MINDDATA_DIR}/kernels/image/posterize_op.cc"
+             ${MINDDATA_DIR}/kernels/image/normalize_pad_op.cc
             "${MINDDATA_DIR}/kernels/image/random_affine_op.cc"
             "${MINDDATA_DIR}/kernels/image/random_color_adjust_op.cc"
             "${MINDDATA_DIR}/kernels/image/random_crop_and_resize_with_bbox_op.cc"
@@ -438,7 +434,7 @@ elseif (BUILD_MINDDATA STREQUAL "lite")
     add_library(minddata-lite SHARED
         ${MINDDATA_CORE_SRC_FILES}
         ${MINDDATA_KERNELS_SRC_FILES}
-	    ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
+        ${MINDDATA_KERNELS_IMAGE_LITE_CV_FILES}
         ${MINDDATA_KERNELS_IMAGE_SRC_FILES}
         ${MINDDATA_KERNELS_DATA_SRC_FILES}
         ${MINDDATA_DIR}/util/status.cc

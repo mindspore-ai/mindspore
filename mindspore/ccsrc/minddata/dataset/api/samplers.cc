@@ -31,6 +31,8 @@
 #include "minddata/mindrecord/include/shard_sequential_sample.h"
 #include "minddata/mindrecord/include/shard_shuffle.h"
 #include "minddata/dataset/util/random.h"
+#else
+#include "minddata/dataset/core/config_manager.h"
 #endif
 
 namespace mindspore {

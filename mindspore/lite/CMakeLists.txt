@@ -116,7 +116,7 @@ if (SUPPORT_GPU)
     include(${TOP_DIR}/cmake/external_libs/opencl.cmake)
 endif()
 
-if (ENABLE_CONVERTER OR BUILD_MINDDATA STREQUAL "full")
+if (ENABLE_CONVERTER OR BUILD_MINDDATA STREQUAL "full" OR BUILD_MINDDATA STREQUAL "wrapper")
     include(${TOP_DIR}/cmake/external_libs/json.cmake)
 endif()
 

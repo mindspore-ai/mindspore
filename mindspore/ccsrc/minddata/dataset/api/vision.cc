@@ -75,6 +75,7 @@
 #include "minddata/dataset/kernels/image/swap_red_blue_op.h"
 #include "minddata/dataset/kernels/image/uniform_aug_op.h"
 #endif
+#include "minddata/dataset/kernels/image/rotate_op.h"
 
 namespace mindspore {
 namespace dataset {
@@ -1919,7 +1920,6 @@ std::shared_ptr<TensorOp> ResizeOperation::Build() {
   return std::make_shared<ResizeOp>(height, width, interpolation_);
 }
 
-#ifdef ENABLE_ANDROID
 // RotateOperation
 RotateOperation::RotateOperation() { rotate_op = std::make_shared<RotateOp>(0); }
 
@@ -1927,8 +1927,9 @@ Status RotateOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> RotateOperation::Build() { return rotate_op; }
 
-void RotateOperation::setAngle(uint64_t angle_id) { rotate_op->setAngle(angle_id); }
-#endif
+void RotateOperation::setAngle(uint64_t angle_id) {
+  std::dynamic_pointer_cast<RotateOp>(rotate_op)->setAngle(angle_id);
+}
 
 #ifndef ENABLE_ANDROID
 // ResizeWithBBoxOperation
