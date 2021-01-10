@@ -16,8 +16,8 @@
 
 #include "runtime/device/ascend/signal_util.h"
 #include <signal.h>
-#include <iostream>
 #include "utils/log_adapter.h"
+#include "backend/session/kernel_build_client.h"
 
 namespace mindspore {
 SignalGuard::SignalGuard() { RegisterHandlers(); }
@@ -44,5 +44,8 @@ void SignalGuard::RegisterHandlers() {
   (void)sigaction(SIGINT, &int_action, nullptr);
 }
 
-void SignalGuard::IntHandler(int, siginfo_t *, void *) { MS_LOG_EXCEPTION << "Exit"; }
+void SignalGuard::IntHandler(int, siginfo_t *, void *) {
+  kernel::AscendKernelBuildClient::Instance().Close();
+  MS_LOG_EXCEPTION << "KeyboardInterrupt";
+}
 }  // namespace mindspore

@@ -28,14 +28,20 @@ namespace dataset {
 #if !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__) && !defined(ANDROID) && !defined(__APPLE__)
 void RegisterHandlers() {
   struct sigaction new_int_action;
+  struct sigaction new_term_action;
 
   // For the interrupt handler, we do not use SA_RESETHAND so this handler remains in play
   // permanently, do not use the OS default handler for it.
-  new_int_action.sa_sigaction = &IntHandler;
+  new_int_action.sa_sigaction = [](int num, siginfo_t *info, void *ctx) { IntHandler(num, info, ctx); };
   (void)sigemptyset(&new_int_action.sa_mask);
   new_int_action.sa_flags = SA_RESTART | SA_SIGINFO;
+
+  new_term_action.sa_sigaction = [](int num, siginfo_t *info, void *ctx) { IntHandler(num, info, ctx); };
+  (void)sigemptyset(&new_term_action.sa_mask);
+  new_term_action.sa_flags = SA_RESTART | SA_SIGINFO;
+
   (void)sigaction(SIGINT, &new_int_action, nullptr);
-  (void)sigaction(SIGTERM, &new_int_action, nullptr);
+  (void)sigaction(SIGTERM, &new_term_action, nullptr);
 }
 
 extern void IntHandler(int sig_num,          // The signal that was raised
