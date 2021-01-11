@@ -32,6 +32,25 @@ OpParameter *CreateParameter(bool a_transpose = false, bool b_transpose = true) 
 }
 }  // namespace
 
+TEST_F(TestOpenCL_MatMul, 2Dfile) {
+  std::vector<int> input_shape = {64, 64};
+  std::vector<int> output_shape = {64, 64};
+  std::vector<int> weight_shape = {64, 64};
+  size_t input1_size, input2_size, output_size;
+  std::string input1Ppath = "./test_data/matmulfp32_input1.bin";
+  std::string input2Ppath = "./test_data/matmulfp32_input2.bin";
+  std::string correctOutputPath = "./test_data/matmulfp32_output.bin";
+  auto input_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input1Ppath.c_str(), &input1_size));
+  auto weight_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(input2Ppath.c_str(), &input2_size));
+  auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
+
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter();
+    TestMain({{input_shape, input_data, VAR}, {weight_shape, weight_data, CONST_TENSOR}}, {output_shape, output_data},
+             param, fp16_enable, fp16_enable ? 1e-3 : 1e-3);
+  }
+}
+
 TEST_F(TestOpenCL_MatMul, 2D) {
   int ci = 5;
   int co = 3;
