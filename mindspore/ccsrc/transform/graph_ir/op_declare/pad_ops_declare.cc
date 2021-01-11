@@ -24,6 +24,12 @@ ATTR_MAP(PadD) = {{"paddings", ATTR_DESC(paddings, AnyTraits<std::vector<std::ve
 OUTPUT_MAP(PadD) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(PadD, kNamePadD, ADPT_DESC(PadD))
 
+// BroadcastToD
+INPUT_MAP(BroadcastToD) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(BroadcastToD) = {{"shape", ATTR_DESC(shape, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())}};
+OUTPUT_MAP(BroadcastToD) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BroadcastToD, kNameBroadcastTo, ADPT_DESC(BroadcastToD))
+
 // Diag
 INPUT_MAP(Diag) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Diag) = EMPTY_ATTR_MAP;

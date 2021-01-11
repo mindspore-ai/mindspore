@@ -26,6 +26,9 @@ namespace mindspore::transform {
 DECLARE_OP_ADAPTER(PadD)
 DECLARE_OP_USE_OUTPUT(PadD)
 
+DECLARE_OP_ADAPTER(BroadcastToD)
+DECLARE_OP_USE_OUTPUT(BroadcastToD)
+
 DECLARE_OP_ADAPTER(Diag)
 DECLARE_OP_USE_OUTPUT(Diag)
 }  // namespace mindspore::transform

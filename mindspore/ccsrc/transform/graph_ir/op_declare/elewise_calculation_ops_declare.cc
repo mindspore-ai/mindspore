@@ -58,6 +58,12 @@ ATTR_MAP(Cos) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Cos) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Cos, kNameCos, ADPT_DESC(Cos))
 
+// Cosh
+INPUT_MAP(Cosh) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Cosh) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Cosh) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Cosh, kNameCosh, ADPT_DESC(Cosh))
+
 // Acos
 INPUT_MAP(Acos) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Acos) = EMPTY_ATTR_MAP;
@@ -82,6 +88,12 @@ ATTR_MAP(AcoshGrad) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(AcoshGrad) = {{0, OUTPUT_DESC(z)}};
 REG_ADPT_DESC(AcoshGrad, kNameAcoshGrad, ADPT_DESC(AcoshGrad))
 
+// Div
+INPUT_MAP(Div) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(Div) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Div) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Div, kNameDiv, ADPT_DESC(Div))
+
 // Floor
 INPUT_MAP(Floor) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Floor) = EMPTY_ATTR_MAP;
@@ -105,6 +117,73 @@ INPUT_MAP(Sin) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Sin) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Sin) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Sin, kNameSin, ADPT_DESC(Sin))
+
+// Sinh
+INPUT_MAP(Sinh) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Sinh) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Sinh) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Sinh, kNameSinh, ADPT_DESC(Sinh))
+
+// Asin
+INPUT_MAP(Asin) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Asin) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Asin) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Asin, kNameAsin, ADPT_DESC(Asin))
+
+// AsinGrad
+INPUT_MAP(AsinGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(AsinGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AsinGrad) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(AsinGrad, kNameAsinGrad, ADPT_DESC(AsinGrad))
+
+// Asinh
+INPUT_MAP(Asinh) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Asinh) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Asinh) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Asinh, kNameAsinh, ADPT_DESC(Asinh))
+
+// AsinhGrad
+INPUT_MAP(AsinhGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(AsinhGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AsinhGrad) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(AsinhGrad, kNameAsinhGrad, ADPT_DESC(AsinhGrad))
+
+// BitwiseAnd
+INPUT_MAP(BitwiseAnd) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(BitwiseAnd) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(BitwiseAnd) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BitwiseAnd, kNameBitwiseAnd, ADPT_DESC(BitwiseAnd))
+
+// BitwiseOr
+INPUT_MAP(BitwiseOr) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(BitwiseOr) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(BitwiseOr) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BitwiseOr, kNameBitwiseOr, ADPT_DESC(BitwiseOr))
+
+// BitwiseXor
+INPUT_MAP(BitwiseXor) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(BitwiseXor) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(BitwiseXor) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(BitwiseXor, kNameBitwiseXor, ADPT_DESC(BitwiseXor))
+
+// Ceil
+INPUT_MAP(Ceil) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Ceil) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Ceil) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Ceil, kNameCeil, ADPT_DESC(Ceil))
+
+// CosineEmbeddingLoss
+INPUT_MAP(CosineEmbeddingLoss) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DESC(target)}};
+ATTR_MAP(CosineEmbeddingLoss) = {{"margin", ATTR_DESC(margin, AnyTraits<float>())},
+                                 {"reduction", ATTR_DESC(reduction, AnyTraits<std::string>())}};
+OUTPUT_MAP(CosineEmbeddingLoss) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(CosineEmbeddingLoss, kNameCosineEmbeddingLoss, ADPT_DESC(CosineEmbeddingLoss))
+
+// Xdivy
+INPUT_MAP(Xdivy) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(Xdivy) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Xdivy) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Xdivy, kNameXdivy, ADPT_DESC(Xdivy))
 
 // Exp
 INPUT_MAP(Exp) = {{1, INPUT_DESC(x)}};
@@ -291,6 +370,12 @@ ATTR_MAP(Equal) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Equal) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Equal, kNameEqual, ADPT_DESC(Equal))
 
+// ApproximateEqual
+INPUT_MAP(ApproximateEqual) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
+ATTR_MAP(ApproximateEqual) = {{"tolerance", ATTR_DESC(tolerance, AnyTraits<float>())}};
+OUTPUT_MAP(ApproximateEqual) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(ApproximateEqual, kNameApproximateEqual, ADPT_DESC(ApproximateEqual))
+
 // NotEqual
 INPUT_MAP(NotEqual) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
 ATTR_MAP(NotEqual) = EMPTY_ATTR_MAP;
@@ -356,6 +441,30 @@ INPUT_MAP(Round) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(Round) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(Round) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(Round, kNameRound, ADPT_DESC(Round))
+
+// Tan
+INPUT_MAP(Tan) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Tan) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Tan) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Tan, kNameTan, ADPT_DESC(Tan))
+
+// Atan
+INPUT_MAP(Atan) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Atan) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Atan) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Atan, kNameAtan, ADPT_DESC(Atan))
+
+// AtanGrad
+INPUT_MAP(AtanGrad) = {{1, INPUT_DESC(y)}, {2, INPUT_DESC(dy)}};
+ATTR_MAP(AtanGrad) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(AtanGrad) = {{0, OUTPUT_DESC(z)}};
+REG_ADPT_DESC(AtanGrad, kNameAtanGrad, ADPT_DESC(AtanGrad))
+
+// Atanh
+INPUT_MAP(Atanh) = {{1, INPUT_DESC(x)}};
+ATTR_MAP(Atanh) = EMPTY_ATTR_MAP;
+OUTPUT_MAP(Atanh) = {{0, OUTPUT_DESC(y)}};
+REG_ADPT_DESC(Atanh, kNameAtanh, ADPT_DESC(Atanh))
 
 // Atan2
 INPUT_MAP(Atan2) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}};
