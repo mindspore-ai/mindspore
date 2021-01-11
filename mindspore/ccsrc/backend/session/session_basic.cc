@@ -1174,7 +1174,8 @@ void SessionBasic::UpdateOutputs(const std::shared_ptr<KernelGraph> &kernel_grap
     auto &node = item.second.first;
     auto &output_index = item.second.second;
     DeviceAddressPtr address = nullptr;
-    if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
+    if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode &&
+        ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
       address = AnfAlgo::GetMutableOutputAddr(node, output_index, false);
     } else {
       address = AnfAlgo::GetMutableOutputAddr(node, output_index);
@@ -1752,6 +1753,22 @@ bool SessionBasic::IsGetNextGraph(const GraphId &graph_id, std::string *channel_
     }
   }
   return false;
+}
+
+void SessionBasic::RunOpRemoveNopNode(const KernelGraphPtr &kernel_graph) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
+    opt::RemoveNopNode(kernel_graph.get());
+  }
+}
+
+void SessionBasic::RunOpHideNopNode(const KernelGraphPtr &kernel_graph) const {
+  auto ms_context = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(ms_context);
+  if (!ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER)) {
+    opt::HideNopNode(kernel_graph.get());
+  }
 }
 
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
