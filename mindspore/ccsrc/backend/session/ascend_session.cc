@@ -768,6 +768,7 @@ void AscendSession::RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_inf
   MS_EXCEPTION_IF_NULL(graph);
   MS_LOG(INFO) << "Run op " << op_run_info->op_name << " start!";
   // malloc mem
+  RunOpRemoveNopNode(graph);
   RunOpMemoryAlloc(*input_tensors, graph.get());
   // Build dynamic kernel
   if (op_run_info->is_dynamic_shape) {
@@ -924,6 +925,7 @@ void AscendSession::AdjustKernel(const std::shared_ptr<KernelGraph> &kernel_grap
 
 void AscendSession::RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const {
   MS_LOG(INFO) << "Start!";
+  RunOpHideNopNode(kernel_graph);
   // Insert CLearZero op
   // prepare for next step from json get atomic info
   BuildKernel(kernel_graph);
