@@ -42,7 +42,6 @@ enum TaskType {
   kCompileNodes,
   kCompileGraph,
   kBuildGraph,
-  kBuildOp,
   kRunGraph,
   kRunOp,
   kCreateCommGroup,
@@ -117,7 +116,7 @@ class RunOpTask : public Task {
   void Run() override;
   OpRunInfo *op_run_info_{nullptr};
   GraphInfo graph_info_;
-  std::vector<tensor::TensorPtr> *input_tensors_;
+  std::vector<tensor::TensorPtr> *input_tensors_{nullptr};
   VectorRef outputs_;
   std::vector<int64_t> tensors_mask_;
 };
@@ -173,12 +172,9 @@ class Executor {
 
  private:
   void RunTask(const std::shared_ptr<Task> &task, bool sync, bool long_run = false);
-  void UpdateOutputTensors(VectorRef *outputs,
-                           const std::map<tensor::TensorPtr, session::KernelWithIndex> &tensor_to_node);
   std::vector<std::shared_ptr<RunGraphTask>> GetNewReadyTasks();
   bool IsTaskReady(const std::shared_ptr<RunGraphTask> &task);
   void WaitTaskGraphAvailable(const SessionPtr &session, const std::shared_ptr<RunGraphTask> &task);
-  void CheckException();
   void OnWorkerExit();
   void OnRunGraphFinished();
   void OnException();
@@ -197,7 +193,7 @@ class Executor {
   std::list<std::shared_ptr<RunGraphTask>> pending_tasks_;
   std::vector<std::shared_ptr<Task>> done_tasks_;
   std::shared_ptr<std::thread> worker_;
-  std::atomic_bool sync_run_task_finished_{false};
+  bool sync_run_task_finished_{false};
 };
 }  // namespace session
 }  // namespace mindspore

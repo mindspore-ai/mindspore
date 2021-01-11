@@ -232,9 +232,7 @@ void Executor::OnException() {
   }
   {
     std::lock_guard<std::mutex> lock(pending_task_mutex_);
-    for (auto iter = pending_tasks_.begin(); iter != pending_tasks_.end(); ++iter) {
-      new_done_tasks.emplace_back(*iter);
-    }
+    std::copy(pending_tasks_.begin(), pending_tasks_.end(), std::back_inserter(new_done_tasks));
     pending_tasks_.clear();
   }
   {
@@ -249,7 +247,7 @@ void Executor::OnRunGraphFinished() {
   for (auto &task : new_ready_tasks) {
     ready_tasks_.push(task);
   }
-  if (new_ready_tasks.size() > 0) {
+  if (!new_ready_tasks.empty()) {
     task_cond_var_.notify_all();
   }
   reenter_cond_var_.notify_all();
@@ -288,15 +286,9 @@ void Executor::RunTask(const std::shared_ptr<Task> &task, bool sync, bool long_r
     std::unique_lock<std::mutex> lock(task_mutex_);
     if (long_run) {
       mindspore::ScopedLongRunning long_running;
-      sync_cond_var_.wait(lock, [this] {
-        bool finished = sync_run_task_finished_;
-        return finished;
-      });
+      sync_cond_var_.wait(lock, [this] { return sync_run_task_finished_; });
     } else {
-      sync_cond_var_.wait(lock, [this] {
-        bool finished = sync_run_task_finished_;
-        return finished;
-      });
+      sync_cond_var_.wait(lock, [this] { return sync_run_task_finished_; });
     }
   }
   ClearDoneTasks();
