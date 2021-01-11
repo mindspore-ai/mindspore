@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -78,7 +78,7 @@ def _make_directory(path: str):
     """Make directory."""
     if path is None or not isinstance(path, str) or path.strip() == "":
         logger.error("The path(%r) is invalid type.", path)
-        raise TypeError("Input path is invaild type")
+        raise TypeError("Input path is invalid type")
 
     path = os.path.realpath(path)
     logger.debug("The abs path is %r", path)
