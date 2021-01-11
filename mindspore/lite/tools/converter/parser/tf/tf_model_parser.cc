@@ -592,7 +592,17 @@ STATUS TFModelParser::ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGr
     auto second_value_node = NewValueNode(second_sub_graph);
     auto inputs = control_flow_node->inputs();
     inputs.insert(inputs.begin() + 1, {first_value_node, second_value_node});
-    control_flow_node->set_inputs(inputs);
+    auto new_node = anf_root_graph_->NewCNode(inputs);  // must create new node, otherwise node_users won't update
+    if (new_node == nullptr) {
+      MS_LOG(ERROR) << "new node failed";
+      return RET_ERROR;
+    }
+    new_node->set_abstract(control_flow_node->abstract()->Clone());
+    new_node->set_fullname_with_scope(control_flow_node->fullname_with_scope());
+    if (!root_func_manager->Replace(control_flow_node, new_node)) {
+      MS_LOG(ERROR) << "replace new node failed";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }

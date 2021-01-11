@@ -41,7 +41,7 @@ class MergeCPUKernel : public CarryDataKernel {
   InputPart FindReadyPart(const std::vector<lite::Tensor *> &scope_tensors);
 
  private:
-  bool PartialInputReady(int num_begin, int num_end);
+  InputPart ready_part_ = UNKNOWN_INPUT_PART;
 };
 }  // namespace mindspore::kernel
 

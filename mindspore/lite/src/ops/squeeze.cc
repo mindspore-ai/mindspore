@@ -111,11 +111,10 @@ int Squeeze::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   std::vector<int> out_shape;
 
   auto axis = GetAxis();
-  std::vector<int> axes_;
-  for (auto iter = axis.begin(); iter != axis.end(); iter++) {
-    axes_.push_back(*iter);
-  }
-  if (axes_.size() == 0) {
+  std::vector<int> axes;
+  std::transform(axis.begin(), axis.end(), std::back_inserter(axes),
+                 [in_shape](int a) { return a >= 0 ? a : a + in_shape.size(); });
+  if (axes.size() == 0) {
     for (size_t i = 0; i < in_shape.size(); i++) {
       if (in_shape.at(i) != 1) {
         out_shape.push_back(in_shape.at(i));
@@ -124,7 +123,7 @@ int Squeeze::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> out
   } else {
     size_t axisIdx = 0;
     for (size_t i = 0; i < in_shape.size(); i++) {
-      if (axisIdx < axes_.size() && axes_.at(axisIdx) == static_cast<int>(i)) {
+      if (axisIdx < axes.size() && axes.at(axisIdx) == static_cast<int>(i)) {
         MS_ASSERT(in_shape.at(i) == 1);
         axisIdx++;
         continue;
