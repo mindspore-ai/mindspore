@@ -109,25 +109,3 @@ def first_derivative_if(x):
 def second_derivative_if(x):
     """ second_derivative_if """
     return grad(first_derivative_if)(x)
-
-
-def test_high_order_grad_1():
-    """ test_high_order_grad_1 """
-    # 18
-    assert third_derivative(2) == 18
-    # 18 * y * y * y, 18 * x * x * x
-    assert third_derivative_dual(4, 5) == (2250, 1152)
-    # 18 * x
-    assert second_derivative_all(3) == 54
-
-
-def test_high_order_grad_2():
-    """ test_high_order_grad_2 """
-    # 2
-    assert second_derivative_if(12) == 2
-
-
-def test_high_order_grad_3():
-    """ test_high_order_grad_2 """
-    # 6 * x
-    assert second_derivative_if(4) == 24

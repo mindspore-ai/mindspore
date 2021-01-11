@@ -208,7 +208,11 @@ class _MindSporeFunction:
 
         if context.get_context("precompile_only"):
             return None
-        return self._executor(args_list, phase)
+        new_inputs = []
+        for i in args_list:
+            if isinstance(i, Tensor):
+                new_inputs.append(i)
+        return self._executor(tuple(new_inputs), phase)
 
 
 def ms_function(fn=None, obj=None, input_signature=None):

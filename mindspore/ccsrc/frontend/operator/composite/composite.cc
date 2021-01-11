@@ -62,8 +62,6 @@ ElemwiseMap kElemwiseMap = {{"__add__", kPrimScalarAdd}, {"__sub__", kPrimScalar
                             {"__gt__", kPrimScalarGt},   {"__ne__", kPrimScalarNe},   {"__le__", kPrimScalarLe},
                             {"__ge__", kPrimScalarGe}};
 
-const MetaFuncGraphPtr kTail = std::make_shared<Tail>("tail");
-
 // copy from python API: reduce.
 // Apply a function of two arguments cumulatively to the items of a sequence,
 // from left to right, so as to reduce the sequence to a single value.For example,
@@ -384,8 +382,8 @@ REGISTER_PYBIND_DEFINE(HyperMap_, ([](const py::module *m) {
                            .def(py::init<>());
                        }));
 
-FuncGraphPtr Tail::GenerateTupleFuncGraph(const abstract::AbstractTuplePtr &a_tuple) {
-  MS_EXCEPTION_IF_NULL(a_tuple);
+FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue) {
+  MS_EXCEPTION_IF_NULL(sequeue);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();
   ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
@@ -393,31 +391,24 @@ FuncGraphPtr Tail::GenerateTupleFuncGraph(const abstract::AbstractTuplePtr &a_tu
   AnfNodePtr ptrTup = ret->add_parameter();
 
   std::vector<AnfNodePtr> elems;
-  elems.push_back(NewValueNode(prim::kPrimMakeTuple));
-
-  int64_t tuple_size = SizeToLong(a_tuple->size());
-  for (int64_t i = 1; i < tuple_size; ++i) {
-    elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimTupleGetItem), ptrTup, NewValueNode(i)}));
+  PrimitivePtr op = nullptr;
+  if (sequeue->isa<AbstractTuple>()) {
+    elems.push_back(NewValueNode(prim::kPrimMakeTuple));
+    op = prim::kPrimTupleGetItem;
+  } else {
+    elems.push_back(NewValueNode(prim::kPrimMakeList));
+    op = prim::kPrimListGetItem;
   }
 
-  ret->set_output(ret->NewCNode(elems));
-  return ret;
-}
-
-FuncGraphPtr Tail::GenerateListFuncGraph(const abstract::AbstractListPtr &a_list) {
-  MS_EXCEPTION_IF_NULL(a_list);
-
-  FuncGraphPtr ret = std::make_shared<FuncGraph>();
-  ret->set_flag(FUNC_GRAPH_FLAG_CORE, true);
-  ret->debug_info()->set_name("tail");
-  AnfNodePtr ptrList = ret->add_parameter();
-
-  std::vector<AnfNodePtr> elems;
-  elems.push_back(NewValueNode(prim::kPrimMakeList));
-
-  int64_t list_size = SizeToLong(a_list->size());
-  for (int64_t i = 1; i < list_size; ++i) {
-    elems.push_back(ret->NewCNode({NewValueNode(prim::kPrimListGetItem), ptrList, NewValueNode(i)}));
+  for (size_t i = 1; i < sequeue->size(); ++i) {
+    if (do_grad_) {
+      MS_EXCEPTION_IF_NULL((*sequeue)[i]);
+      if ((*sequeue)[i]->isa<abstract::AbstractUndetermined>()) {
+        elems.push_back(ret->NewCNode({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(i))}));
+      }
+    } else {
+      elems.push_back(ret->NewCNode({NewValueNode(op), ptrTup, NewValueNode(SizeToLong(i))}));
+    }
   }
 
   ret->set_output(ret->NewCNode(elems));
@@ -430,14 +421,8 @@ FuncGraphPtr Tail::GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) 
   }
 
   AbstractBasePtr a = args_spec_list[0];
-  abstract::AbstractTuplePtr a_tuple = dyn_cast<AbstractTuple>(a);
-  if (a_tuple != nullptr) {
-    return GenerateTupleFuncGraph(a_tuple);
-  }
-
-  abstract::AbstractListPtr a_list = dyn_cast<AbstractList>(a);
-  if (a_list != nullptr) {
-    return GenerateListFuncGraph(a_list);
+  if (a->isa<AbstractTuple>() || a->isa<AbstractList>()) {
+    return GenerateSequeueFuncGraph(a->cast<abstract::AbstractSequeuePtr>());
   }
 
   MS_LOG(EXCEPTION) << "arg0 must be AbstractTuple or AbstractList, but: " << a->ToString();
@@ -614,7 +599,8 @@ void GradOperation::doGetGrad(const FuncGraphPtr &func_graph, AnfNodePtr out, An
 
   CNodePtr inputs_bprop = nullptr;
   if (get_all_) {
-    inputs_bprop = func_graph->NewCNode({NewValueNode(kTail), ptr_bapp});
+    TailPtr tail = std::make_shared<Tail>("tail", true);
+    inputs_bprop = func_graph->NewCNode({NewValueNode(tail), ptr_bapp});
   }
 
   // Gradients wrt inputs and parameters

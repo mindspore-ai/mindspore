@@ -69,6 +69,10 @@ namespace pipeline {
 using Tensor = mindspore::tensor::Tensor;
 using MetaTensor = mindspore::tensor::MetaTensor;
 using TensorOrderMap = std::map<std::string, std::shared_ptr<Tensor>>;
+using mindspore::abstract::AbstractDictionary;
+using mindspore::abstract::AbstractDictionaryPtr;
+using mindspore::abstract::AbstractList;
+using mindspore::abstract::AbstractListPtr;
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTensorPtr;
 using mindspore::abstract::AbstractTuple;
@@ -93,15 +97,10 @@ std::string GetBaseNameForIR(int64_t stage_idx, const std::string &action_name) 
   return oss.str();
 }
 
-void CheckArgIsTensor(const ValuePtr &arg, std::size_t idx) {
-  MS_EXCEPTION_IF_NULL(arg);
-  auto tensor_arg = arg->cast<TensorPtr>();
-  if (tensor_arg == nullptr) {
-    MS_EXCEPTION(TypeError) << "For 'graph mode', the " << idx << "th arg: " << arg->ToString() << " is not a tensor.";
-  }
-  if (tensor_arg->is_parameter()) {
-    MS_EXCEPTION(TypeError) << "The inputs could not be Parameter.";
-  }
+AbstractBasePtr ArgsToAbstract(const ValuePtr &value) {
+  MS_EXCEPTION_IF_NULL(value);
+  bool broaden = value->isa<MetaTensor>();
+  return abstract::FromValue(value, broaden);
 }
 }  // namespace
 
@@ -117,8 +116,7 @@ py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::str
     if (!parse::ConvertData(arg.second, &converted)) {
       MS_LOG(EXCEPTION) << "GenerateKey convert arg failed";
     }
-    bool broaden = converted->isa<Tensor>() || converted->isa<MetaTensor>();
-    args_spec.push_back(abstract::FromValue(converted, broaden));
+    args_spec.push_back(ArgsToAbstract(converted));
   }
   if (g_args_cache.count(args_spec) == 0) {
     static int64_t key = 0;
@@ -484,11 +482,7 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
     if (!succ) {
       MS_LOG(EXCEPTION) << "Args convert error";
     }
-    if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-      CheckArgIsTensor(converted, i);
-    }
-    bool broaden = true;
-    args_spec.push_back(abstract::FromValue(converted, broaden));
+    args_spec.push_back(ArgsToAbstract(converted));
   }
 
   resource->set_args_spec(args_spec);
@@ -813,9 +807,6 @@ py::object ExecutorPy::Run(const py::tuple &args, const py::object &phase) {
           ValuePtr converted = nullptr;
           if (!parse::ConvertData(args[i], &converted)) {
             MS_LOG(EXCEPTION) << "The " << i << "th arg convert failed.";
-          }
-          if (!converted->isa<tensor::Tensor>()) {
-            MS_EXCEPTION(TypeError) << "The " << i << "th arg: " << converted->ToString() << " is not tensor.";
           }
         }
       }
