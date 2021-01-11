@@ -31,6 +31,9 @@ namespace dataset {
 
 Execute::Execute(std::shared_ptr<TensorOperation> op) : op_(std::move(op)) {}
 
+/// \brief Destructor
+Execute::~Execute() = default;
+
 #ifdef ENABLE_ANDROID
 std::shared_ptr<tensor::MSTensor> Execute::operator()(std::shared_ptr<tensor::MSTensor> input) {
   // Build the op

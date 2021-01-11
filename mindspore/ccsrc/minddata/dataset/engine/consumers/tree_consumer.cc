@@ -60,7 +60,7 @@ Status IteratorConsumer::GetNextAsVector(std::vector<TensorPtr> *out) {
   return Status::OK();
 }
 
-Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr> *out_map) {
+Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr> *const out_map) {
   RETURN_UNEXPECTED_IF_NULL(out_map);
   out_map->clear();
 
@@ -77,7 +77,7 @@ Status IteratorConsumer::GetNextAsMap(std::unordered_map<std::string, TensorPtr>
   return Status::OK();
 }
 
-Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *vec) {
+Status IteratorConsumer::GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *const vec) {
   CHECK_FAIL_RETURN_UNEXPECTED(vec != nullptr && vec->empty(), "vec is null or non-empty.");
 
   TensorRow curr_row;
@@ -140,7 +140,7 @@ Status ToDevice::Stop() {
   return Status::OK();
 }
 
-Status ToDevice::GetDataInfo(std::vector<DataType> *types, std::vector<TensorShape> *shapes) {
+Status ToDevice::GetDataInfo(std::vector<DataType> *const types, std::vector<TensorShape> *const shapes) {
   // tree_.root() must be DeviceQueueOp
   std::shared_ptr<DatasetOp> root = std::shared_ptr<DatasetOp>(tree_adapter_->GetRoot());
   CHECK_FAIL_RETURN_UNEXPECTED(root != nullptr, "Root is a nullptr.");

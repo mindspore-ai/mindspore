@@ -32,11 +32,13 @@ class PreBuiltDatasetCache : public DatasetCache {
   /// \param cc a pre-built cache client
   explicit PreBuiltDatasetCache(std::shared_ptr<CacheClient> cc) : cache_client_(std::move(cc)) {}
 
+  ~PreBuiltDatasetCache() = default;
+
   /// Method to initialize the DatasetCache by creating an instance of a CacheClient
   /// \return Status Error code
   Status Build() override;
 
-  Status CreateCacheOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) override;
+  Status CreateCacheOp(int32_t num_workers, std::shared_ptr<DatasetOp> *const ds) override;
 
   Status ValidateParams() override { return Status::OK(); }
 

@@ -61,7 +61,7 @@ Status PythonSaveToDisk::Save() {
 PythonSaveToDisk::PythonSaveToDisk(const std::string &datasetPath, int32_t numFiles, const std::string &datasetType)
     : SaveToDisk(datasetPath, numFiles, datasetType) {}
 
-Status PythonTreeGetters::GetRow(TensorRow *r) {
+Status PythonTreeGetters::GetRow(TensorRow *const r) {
   py::gil_scoped_release gil_release;
   return TreeGetters::GetRow(r);
 }

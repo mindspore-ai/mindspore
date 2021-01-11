@@ -37,6 +37,9 @@ class Execute {
   /// \brief Constructor
   explicit Execute(std::shared_ptr<TensorOperation> op);
 
+  /// \brief Destructor
+  ~Execute();
+
 #ifdef ENABLE_ANDROID
   /// \brief callable function to execute the TensorOperation in eager mode
   /// \param[inout] input - the tensor to be transformed

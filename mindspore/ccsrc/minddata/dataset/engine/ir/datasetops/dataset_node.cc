@@ -388,7 +388,7 @@ Status DatasetNode::AcceptAfter(IRNodePass *const p, bool *modified) {
   return p->VisitAfter(shared_from_this(), modified);
 }
 
-Status DatasetNode::GetShardId(int32_t *shard_id) {
+Status DatasetNode::GetShardId(int32_t *const shard_id) {
   if (!Children().empty()) {
     // Get shard id from the child node
     return Children()[0]->GetShardId(shard_id);
