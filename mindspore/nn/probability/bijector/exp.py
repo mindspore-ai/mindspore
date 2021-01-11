@@ -34,8 +34,6 @@ class Exp(PowerTransform):
         >>> import mindspore
         >>> import mindspore.nn as nn
         >>> from mindspore import Tensor
-        >>> import mindspore.context as context
-        >>> context.set_context(mode=context.GRAPH_MODE)
         >>>
         >>> # To initialize an Exp bijector.
         >>> exp_bijector = nn.probability.bijector.Exp()
