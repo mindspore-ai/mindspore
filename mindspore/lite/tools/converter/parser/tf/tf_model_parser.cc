@@ -175,8 +175,9 @@ STATUS TFModelParser::ConvertConstVariant(const tensorflow::TensorProto &tensor_
   return RET_OK;
 }
 
-STATUS TFModelParser::ConvertConstTensor(const tensorflow::AttrValue &attr_value, const TypeId &type,
-                                         const ParameterPtr &parameter, std::vector<int64_t> *shape_vector) {
+STATUS TFModelParser::ConvertConstTensor(const tensorflow::NodeDef &node_def, const tensorflow::AttrValue &attr_value,
+                                         const TypeId &type, const ParameterPtr &parameter,
+                                         std::vector<int64_t> *shape_vector) {
   MS_ASSERT(parameter != nullptr);
   MS_ASSERT(shape_vector != nullptr);
   const tensorflow::TensorProto &tensor_proto = attr_value.tensor();
@@ -258,6 +259,23 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::AttrValue &attr_value
     }
     tensor_size = (*tensor_data).size();
     param_value->SetTensorData(tensor_data, tensor_size);
+  } else if (type == kNumberTypeInt64) {
+    param_value->set_tensor_type(kNumberTypeInt32);
+    auto *tensor_data = new (std::nothrow) int[shape_size];
+    if (tensor_data == nullptr) {
+      MS_LOG(ERROR) << "new data failed";
+      return RET_ERROR;
+    }
+    const auto origin_data = reinterpret_cast<const int64_t *>(tensor_proto.tensor_content().data());
+    for (int i = 0; i < shape_size; ++i) {
+      if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
+        MS_LOG(WARNING) << "int64 data " << origin_data[i] << "too big to fit into int32";
+        tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
+      } else {
+        tensor_data[i] = static_cast<int>(origin_data[i]);
+      }
+    }
+    param_value->SetTensorData(tensor_data, shape_size * sizeof(int32_t));
   } else {
     MS_LOG(ERROR) << "Unsupport dataType: " << type;
     return RET_ERROR;
@@ -266,7 +284,15 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::AttrValue &attr_value
   std::vector<int> param_shape(shape_vector->begin(), shape_vector->end());
   param_value->set_tensor_shape(param_shape);
   param_value->set_tensor_type(type);
-  param_value->set_format(schema::Format::Format_NHWC);
+  if (TensorFlowUtils::FindAttrValue(node_def, "data_format", const_cast<tensorflow::AttrValue *>(&attr_value))) {
+    auto format = mindspore::lite::TensorFlowUtils::ParseNodeFormat(node_def);
+    if (format == schema::Format_NUM_OF_FORMAT) {
+      MS_LOG(ERROR) << "Do not support data format: " << attr_value.s();
+    }
+    param_value->set_format(format);
+  } else {
+    param_value->set_format(schema::Format::Format_NHWC);
+  }
   parameter->set_default_param(param_value);
   return RET_OK;
 }
@@ -294,7 +320,7 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
 
   if (TensorFlowUtils::FindAttrValue(node, "value", &attr_value)) {
     MS_LOG(INFO) << "Found value attr, means it has default value";
-    auto status = ConvertConstTensor(attr_value, type, parameter, &shape_vector);
+    auto status = ConvertConstTensor(node, attr_value, type, parameter, &shape_vector);
     if (status != RET_OK) {
       return status;
     }

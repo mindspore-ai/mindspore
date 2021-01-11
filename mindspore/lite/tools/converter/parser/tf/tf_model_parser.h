@@ -45,8 +45,8 @@ class TFModelParser : public ModelParser {
 
  private:
   STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, const ParamValueLitePtr &param_value);
-  STATUS ConvertConstTensor(const tensorflow::AttrValue &attr_value, const TypeId &type, const ParameterPtr &parameter,
-                            std::vector<int64_t> *shape_vector);
+  STATUS ConvertConstTensor(const tensorflow::NodeDef &node_def, const tensorflow::AttrValue &attr_value,
+                            const TypeId &type, const ParameterPtr &parameter, std::vector<int64_t> *shape_vector);
   STATUS ConvertParameter(const tensorflow::NodeDef &node, const ParameterPtr &parameter,
                           std::unordered_map<std::string, AnfNodePtr> *anf_node_map);
   STATUS ConvertGraphInputsAndConsts(const std::map<std::string, const tensorflow::NodeDef *> &tf_graph_nodes,

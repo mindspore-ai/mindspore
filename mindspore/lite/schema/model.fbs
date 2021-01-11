@@ -267,6 +267,8 @@ union PrimitiveType {
     GeLU,
     Gru,
     NonZero,
+    InvertPermutation,
+    Size,
 }
 
 enum QuantType: int {
