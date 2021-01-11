@@ -162,6 +162,14 @@ class OrderedMap {
     return pos == map_data_.end() ? sequential_data_.end() : (pos->second);
   }
 
+  ValueT at(const key_t &key) {
+    auto pos = map_data_.find(key);
+    if (pos == map_data_.end()) {
+      MS_LOG(EXCEPTION) << "Have no key " << key;
+    }
+    return pos->second->second;
+  }
+
   // Remove the last element from the sequential_data_.
   void pop_back() {
     typename map_type::iterator pos = map_data_.find(sequential_data_.back().first);
@@ -190,6 +198,24 @@ class OrderedMap {
     if (itr == end()) return 0;
     (void)erase(itr);
     return 1;
+  }
+
+  void update(const key_t &old_key, const key_t &new_key) {
+    auto old_it = find(old_key);
+    if (old_it == end()) {
+      return;
+    }
+    auto new_it = find(new_key);
+    if (new_it == end()) {
+      old_it->first = new_key;
+      auto nh = map_data_.extract(old_key);
+      nh.key() = new_key;
+      map_data_.insert(std::move(nh));
+      return;
+    }
+    *old_it = *new_it;
+    (void)erase(old_key);
+    (void)erase(new_key);
   }
 
  private:
