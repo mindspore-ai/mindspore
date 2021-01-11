@@ -192,7 +192,7 @@ std::vector<std::shared_ptr<CsvBase>> toCSVBase(py::list csv_bases) {
   return vector;
 }
 
-Status ToJson(const py::handle &padded_sample, nlohmann::json *padded_sample_json,
+Status ToJson(const py::handle &padded_sample, nlohmann::json *const padded_sample_json,
               std::map<std::string, std::string> *sample_bytes) {
   for (const py::handle &key : padded_sample) {
     if (py::isinstance<py::bytes>(padded_sample[key])) {
