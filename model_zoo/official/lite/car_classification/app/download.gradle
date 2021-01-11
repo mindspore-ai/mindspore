@@ -1,0 +1,82 @@
+/**
+ * To download necessary library from HuaWei server.
+ * Including mindspore-lite .so file, minddata-lite .so file and model file.
+ * The libraries can be downloaded manually.
+ */
+def targetMindSporeInclude = "src/main/cpp/"
+def mindsporeLite_Version = "mindspore-lite-1.0.1-runtime-arm64-cpu"
+
+def targetModelFile = "src/main/assets/model/mobilenetv2.ms"
+def mindSporeLibrary_arm64 = "src/main/cpp/${mindsporeLite_Version}.tar.gz"
+
+def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_openimage_lite/mobilenetv2.ms"
+def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/android_aarch64/${mindsporeLite_Version}.tar.gz"
+
+def cleantargetMindSporeInclude = "src/main/cpp"
+
+task cleanCmakeCache(type: Delete) {
+    delete '.cxx/cmake/debug'
+    delete '.cxx/cmake/release'
+}
+
+task downloadModelFile(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${modelDownloadUrl}"
+    }
+    sourceUrl = "${modelDownloadUrl}"
+    target = file("${targetModelFile}")
+}
+
+task downloadMindSporeLibrary(type: DownloadUrlTask) {
+    doFirst {
+        println "Downloading ${mindsporeLiteDownloadUrl}"
+    }
+    sourceUrl = "${mindsporeLiteDownloadUrl}"
+    target = file("${mindSporeLibrary_arm64}")
+}
+
+task unzipMindSporeInclude(type: Copy, dependsOn: 'downloadMindSporeLibrary') {
+    doFirst {
+        println "Unzipping ${mindSporeLibrary_arm64}"
+    }
+    from tarTree(resources.gzip("${mindSporeLibrary_arm64}"))
+    into "${targetMindSporeInclude}"
+}
+
+task cleanUnusedmindsporeFiles(type: Delete, dependsOn: ['unzipMindSporeInclude']) {
+    delete fileTree("${cleantargetMindSporeInclude}").matching {
+        include "*.tar.gz"
+    }
+}
+/*
+ * Using preBuild to download mindspore library and model file.
+ * Run before gradle build.
+ */
+if (file("src/main/cpp/${mindsporeLite_Version}/lib/libmindspore-lite.so").exists()){
+    downloadMindSporeLibrary.enabled = false
+    unzipMindSporeInclude.enabled = false
+    cleanUnusedmindsporeFiles.enabled = false
+}
+
+if (file("src/main/assets/model/mobilenetv2.ms").exists()){
+    downloadModelFile.enabled = false
+}
+
+preBuild.dependsOn cleanCmakeCache
+preBuild.dependsOn downloadModelFile
+preBuild.dependsOn downloadMindSporeLibrary
+preBuild.dependsOn unzipMindSporeInclude
+preBuild.dependsOn cleanUnusedmindsporeFiles
+
+class DownloadUrlTask extends DefaultTask {
+    @Input
+    String sourceUrl
+
+    @OutputFile
+    File target
+
+    @TaskAction
+    void download() {
+        ant.get(src: sourceUrl, dest: target)
+    }
+}

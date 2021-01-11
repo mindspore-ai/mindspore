@@ -1,0 +1,6 @@
+/build
+!/libs/
+!/src/main/assets/model/
+!/src/main/cpp/mindspore-lite-1.0.1-runtime-arm64-cpu/
+
+/src/main/cpp/mindspore-lite-1.0.1-runtime-arm64-cpu/
