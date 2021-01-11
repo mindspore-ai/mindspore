@@ -314,6 +314,9 @@ class _PynativeExecutor:
     def check_graph(self, obj, *args, **kwargs):
         return self._executor.check_graph(obj, *args, *(kwargs.values()))
 
+    def check_run(self, obj, *args, **kwargs):
+        return self._executor.check_run(obj, *args, *(kwargs.values()))
+
     def grad(self, grad, obj, weights, *args, **kwargs):
         self._executor.grad_net(grad, obj, weights, *args, *(kwargs.values()))
 

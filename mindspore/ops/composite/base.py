@@ -319,36 +319,30 @@ class GradOperation(GradOperation_):
         GradOperation_.__init__(self, 'grad', get_all, get_by_list, sens_param)
         self.grad_fn = None
         self.fn = None
-        self.need_forward = False
 
     def _pynative_forward_run(self, args, kwargs, fn):
         """ Pynative forward run to build grad graph. """
-        new_kwargs = {}
+        new_kwargs = kwargs
         if self.sens_param:
             if not 'sens' in kwargs.keys():
                 args = args[:-1]
-                new_kwargs = kwargs
             else:
-                for key, value in kwargs.items():
-                    if key != 'sens':
-                        new_kwargs[key] = value
+                new_kwargs = kwargs.copy()
+                new_kwargs.pop('sens')
         for arg in args:
             if not isinstance(arg, Tensor):
                 raise TypeError("grad inputs should be tensor in pynative mode")
         if isinstance(fn, FunctionType):
-            _pynative_exec.set_grad_flag(True)
-            _pynative_exec.new_graph(fn, *args, **new_kwargs)
-            output = fn(*args, **new_kwargs)
-            _pynative_exec.end_graph(fn, output, *args, **new_kwargs)
+            if not _pynative_exec.check_run(fn, *args, **new_kwargs):
+                _pynative_exec.set_grad_flag(True)
+                _pynative_exec.new_graph(fn, *args, **new_kwargs)
+                output = fn(*args, **new_kwargs)
+                _pynative_exec.end_graph(fn, output, *args, **new_kwargs)
         else:
-            if fn.already_run and not fn.requires_grad:
-                raise ValueError("obj must set_grad.")
-            if not fn.already_run:
-                self.need_forward = True
-            if self.need_forward:
+            # Check if fn have run already
+            if not _pynative_exec.check_run(fn, *args, **new_kwargs):
                 fn.set_grad()
                 fn(*args, **new_kwargs)
-                fn.already_run = False
 
     def __call__(self, fn, weights=None):
         grad_ = GradOperation(self.get_all, self.get_by_list, self.sens_param)
@@ -367,7 +361,6 @@ class GradOperation(GradOperation_):
                 def after_grad(*args, **kwargs):
                     if _pynative_exec.check_graph(fn, *args, **kwargs):
                         print("Another grad step is running")
-                        fn.already_run = False
                     self._pynative_forward_run(args, kwargs, fn)
                     _pynative_exec.grad(grad_, fn, weights, *args, **kwargs)
                     out = _pynative_exec(fn, *args, **kwargs)
