@@ -125,13 +125,13 @@ Status SkipOp::EofReceived(int32_t worker_id) {
 }
 
 // Visitor accept method for NodePass
-Status SkipOp::Accept(NodePass *p, bool *modified) {
+Status SkipOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<SkipOp>(), modified);
 }
 
 // Visitor pre-accept method for NodePass
-Status SkipOp::PreAccept(NodePass *p, bool *modified) {
+Status SkipOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->PreRunOnNode(shared_from_base<SkipOp>(), modified);
 }

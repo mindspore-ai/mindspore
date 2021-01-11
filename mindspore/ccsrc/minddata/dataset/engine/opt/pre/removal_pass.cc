@@ -27,7 +27,7 @@ RemovalPass::RemovalNodes::RemovalNodes() : is_caching_(false) {}
 
 #ifndef ENABLE_ANDROID
 // Identifies the subtree below this node as a cached descendant tree.
-Status RemovalPass::RemovalNodes::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+Status RemovalPass::RemovalNodes::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) {
   *modified = false;
   MS_LOG(INFO) << "Removal pass: CacheOp found, identified descendant tree.";
   is_caching_ = true;
@@ -35,7 +35,7 @@ Status RemovalPass::RemovalNodes::PreRunOnNode(std::shared_ptr<CacheOp> node, bo
 }
 
 // Resets the tracking of the cache within the tree
-Status RemovalPass::RemovalNodes::RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+Status RemovalPass::RemovalNodes::RunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) {
   *modified = false;
   MS_LOG(INFO) << "Removal pass: cache descendant tree complete.";
   is_caching_ = false;
@@ -44,7 +44,7 @@ Status RemovalPass::RemovalNodes::RunOnNode(std::shared_ptr<CacheOp> node, bool 
 #endif
 
 // Perform ShuffleOp removal check.
-Status RemovalPass::RemovalNodes::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) {
+Status RemovalPass::RemovalNodes::RunOnNode(std::shared_ptr<ShuffleOp> node, bool *const modified) {
   *modified = false;
   // If we are in a cache descendant tree, then this shuffle op needs to be removed
   if (is_caching_) {
@@ -58,7 +58,7 @@ Status RemovalPass::RemovalNodes::RunOnNode(std::shared_ptr<ShuffleOp> node, boo
 RemovalPass::RemovalPass() {}
 
 // Walk the tree to collect the nodes to remove, then removes them.
-Status RemovalPass::RunOnTree(ExecutionTree *tree, bool *modified) {
+Status RemovalPass::RunOnTree(ExecutionTree *tree, bool *const modified) {
   MS_LOG(INFO) << "Pre pass: removal pass started.";
   // Create the removal node pass which can identify which nodes need to be removed.
   std::unique_ptr<RemovalPass::RemovalNodes> removal_nodes = std::make_unique<RemovalPass::RemovalNodes>();

@@ -63,13 +63,13 @@ class AutoWorkerPass : public IRTreePass {
 
     // this is the base class function which contains the logic to handle most of the pipeline ops
     // pipeline ops although can't config num_workers it still runs 1 thread they need to be factored into weight
-    Status Visit(std::shared_ptr<DatasetNode> node, bool *modified) override;
+    Status Visit(std::shared_ptr<DatasetNode> node, bool *const modified) override;
     // these functions calculate the weights of more complex Nodes which may depend on its input arg. these functions
     // will also push these nodes to a vector whose num_workers will be set int the Tree Pass
-    Status Visit(std::shared_ptr<BatchNode> node, bool *modified) override;
-    Status Visit(std::shared_ptr<MapNode> node, bool *modified) override;
-    Status Visit(std::shared_ptr<MappableSourceNode> node, bool *modified) override;
-    Status Visit(std::shared_ptr<NonMappableSourceNode> node, bool *modified) override;
+    Status Visit(std::shared_ptr<BatchNode> node, bool *const modified) override;
+    Status Visit(std::shared_ptr<MapNode> node, bool *const modified) override;
+    Status Visit(std::shared_ptr<MappableSourceNode> node, bool *const modified) override;
+    Status Visit(std::shared_ptr<NonMappableSourceNode> node, bool *const modified) override;
 
     // helper function to look up weight according to the name of this Op.
     float GetNodeWeightFromProfile(std::shared_ptr<DatasetNode> node);

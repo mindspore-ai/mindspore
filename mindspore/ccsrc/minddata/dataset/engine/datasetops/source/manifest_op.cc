@@ -436,7 +436,7 @@ Status ManifestOp::GetClassIndexing(const std::string &file, const py::dict &dic
 #endif
 
 // Visitor accept method for NodePass
-Status ManifestOp::Accept(NodePass *p, bool *modified) {
+Status ManifestOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<ManifestOp>(), modified);
 }

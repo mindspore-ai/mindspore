@@ -592,7 +592,7 @@ Status AlbumOp::LaunchThreadsAndInitOp() {
 }
 
 // Visitor accept method for NodePass
-Status AlbumOp::Accept(NodePass *p, bool *modified) {
+Status AlbumOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<AlbumOp>(), modified);
 }

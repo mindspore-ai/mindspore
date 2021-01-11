@@ -19,7 +19,7 @@
 namespace mindspore {
 namespace dataset {
 
-Status GetterPass::Visit(std::shared_ptr<MapNode> node, bool *modified) {
+Status GetterPass::Visit(std::shared_ptr<MapNode> node, bool *const modified) {
   node->ClearCallbacks();
   return Status::OK();
 }

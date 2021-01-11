@@ -28,7 +28,7 @@ namespace dataset {
 NodeRemovalPass::RemovalNodes::RemovalNodes() : is_caching_(false) {}
 
 // Identifies the subtree below this node as a cached descendant tree.
-Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<DatasetNode> node, bool *modified) {
+Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
   *modified = false;
   MS_LOG(INFO) << "Node removal pass: Operation with cache found, identified descendant tree.";
   if (node->IsCached()) {
@@ -38,7 +38,7 @@ Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<DatasetNode> node, b
 }
 
 // Resets the tracking of the cache within the tree
-Status NodeRemovalPass::RemovalNodes::VisitAfter(std::shared_ptr<DatasetNode> node, bool *modified) {
+Status NodeRemovalPass::RemovalNodes::VisitAfter(std::shared_ptr<DatasetNode> node, bool *const modified) {
   *modified = false;
   MS_LOG(INFO) << "Removal pass: Descendant walk is complete.";
   if (is_caching_ && node->IsLeaf()) {
@@ -51,7 +51,7 @@ Status NodeRemovalPass::RemovalNodes::VisitAfter(std::shared_ptr<DatasetNode> no
 }
 
 // Perform RepeatNode removal check.
-Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<RepeatNode> node, bool *modified) {
+Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<RepeatNode> node, bool *const modified) {
   *modified = false;
   if (node->Count() == 1) {
     nodes_to_remove_.push_back(std::static_pointer_cast<DatasetNode>(node));
@@ -60,13 +60,13 @@ Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<RepeatNode> node, bo
 }
 
 // Perform ShuffleNode removal check.
-Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<ShuffleNode> node, bool *modified) {
+Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<ShuffleNode> node, bool *const modified) {
   *modified = false;
   return Status::OK();
 }
 
 // Perform SkipNode removal check.
-Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<SkipNode> node, bool *modified) {
+Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<SkipNode> node, bool *const modified) {
   *modified = false;
   if (node->Count() == 0) {
     nodes_to_remove_.push_back(std::static_pointer_cast<DatasetNode>(node));
@@ -75,7 +75,7 @@ Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<SkipNode> node, bool
 }
 
 // Perform TakeNode removal check.
-Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<TakeNode> node, bool *modified) {
+Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<TakeNode> node, bool *const modified) {
   *modified = false;
   if (node->Count() == -1) {
     nodes_to_remove_.push_back(std::static_pointer_cast<DatasetNode>(node));
@@ -87,7 +87,7 @@ Status NodeRemovalPass::RemovalNodes::Visit(std::shared_ptr<TakeNode> node, bool
 NodeRemovalPass::NodeRemovalPass() {}
 
 // Walk the tree to collect the nodes to remove, then removes them.
-Status NodeRemovalPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *modified) {
+Status NodeRemovalPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) {
   MS_LOG(INFO) << "Pre pass: node removal pass started.";
   // Create the removal node pass which can identify which nodes need to be removed.
   std::unique_ptr<NodeRemovalPass::RemovalNodes> removal_nodes = std::make_unique<NodeRemovalPass::RemovalNodes>();

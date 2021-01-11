@@ -197,13 +197,13 @@ class BatchOp : public ParallelOp {
   // @param p - Pointer to the NodePass to be accepted.
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
-  Status Accept(NodePass *p, bool *modified) override;
+  Status Accept(NodePass *p, bool *const modified) override;
 
   // Base-class override for NodePass visitor acceptor.
   // @param p - Pointer to the NodePass to be accepted.
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
-  Status PreAccept(NodePass *p, bool *modified) override;
+  Status PreAccept(NodePass *p, bool *const modified) override;
 
   // Op name getter
   // @return Name of the current Op

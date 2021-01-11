@@ -46,27 +46,27 @@ class EpochCtrlPass : public IRTreePass {
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status Visit(std::shared_ptr<RootNode> node, bool *modified) override;
+    Status Visit(std::shared_ptr<RootNode> node, bool *const modified) override;
 
     /// \brief Performs finder work for BuildVocabNode that has special rules about epoch control injection.
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status Visit(std::shared_ptr<BuildVocabNode> node, bool *modified) override;
+    Status Visit(std::shared_ptr<BuildVocabNode> node, bool *const modified) override;
 
 #ifndef ENABLE_ANDROID
     /// \brief Performs finder work for BuildSentenceVocabNode that has special rules about epoch control injection.
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *modified) override;
+    Status Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified) override;
 #endif
 
     /// \brief Register the TransferNode for further action.
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status VisitAfter(std::shared_ptr<TransferNode> node, bool *modified) override;
+    Status VisitAfter(std::shared_ptr<TransferNode> node, bool *const modified) override;
 
     /// \brief Getter
     std::shared_ptr<DatasetNode> injection_point() { return injection_point_; }
@@ -90,7 +90,7 @@ class EpochCtrlPass : public IRTreePass {
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate of the tree was modified.
   /// \return Status The status code returned
-  Status RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *modified) override;
+  Status RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

@@ -49,14 +49,14 @@ class CacheTransformPass : public TreePass {
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+    Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) override;
 
     /// \brief Resets the tracking of the cache within the tree and assigns the operators that
     ///     will be involved in a cache transformation
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) override;
 
 #ifndef ENABLE_ANDROID
 
@@ -64,95 +64,95 @@ class CacheTransformPass : public TreePass {
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<TFReaderOp> node, bool *const modified) override;
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<ClueOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<ClueOp> node, bool *const modified) override;
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<CsvOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<CsvOp> node, bool *const modified) override;
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<TextFileOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<TextFileOp> node, bool *const modified) override;
 #endif
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<RandomDataOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<RandomDataOp> node, bool *const modified) override;
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<ImageFolderOp> node, bool *const modified) override;
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<AlbumOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<AlbumOp> node, bool *const modified) override;
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<MnistOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<MnistOp> node, bool *const modified) override;
 
 #ifdef ENABLE_PYTHON
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *const modified) override;
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<ManifestOp> node, bool *const modified) override;
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<VOCOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<VOCOp> node, bool *const modified) override;
 #endif
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<CifarOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<CifarOp> node, bool *const modified) override;
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<CocoOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<CocoOp> node, bool *const modified) override;
 
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<CelebAOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<CelebAOp> node, bool *const modified) override;
 
 #ifndef ENABLE_ANDROID
     /// \brief Perform leaf node cache transform identifications
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<MindRecordOp> node, bool *const modified) override;
 #endif
 
     /// \brief Getter
@@ -192,7 +192,7 @@ class CacheTransformPass : public TreePass {
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate of the tree was modified.
   /// \return Status The status code returned
-  Status RunOnTree(ExecutionTree *tree, bool *modified) override;
+  Status RunOnTree(ExecutionTree *tree, bool *const modified) override;
 
  private:
   /// \brief Helper function to execute the cache transformation.

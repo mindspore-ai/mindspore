@@ -36,7 +36,7 @@ class GetterPass : public IRNodePass {
   /// \brief Default Destructor
   ~GetterPass() = default;
 
-  Status Visit(std::shared_ptr<MapNode> node, bool *modified) override;
+  Status Visit(std::shared_ptr<MapNode> node, bool *const modified) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

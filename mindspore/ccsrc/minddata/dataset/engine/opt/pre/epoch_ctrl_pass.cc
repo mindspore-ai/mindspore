@@ -29,7 +29,7 @@ EpochCtrlPass::InjectionFinder::InjectionFinder(std::shared_ptr<DatasetNode> nod
     : injection_point_(nullptr), num_epochs_(-1) {}
 
 // Performs finder work for BuildVocabOp that has special rules about epoch control injection
-Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, bool *modified) {
+Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, bool *const modified) {
   // The injection is at the child of the root node
   injection_point_ = node;
   num_epochs_ = node->num_epochs();
@@ -37,20 +37,20 @@ Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<RootNode> node, boo
 }
 
 // Performs finder work for BuildVocabOp that has special rules about epoch control injection
-Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<BuildVocabNode> node, bool *modified) {
+Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<BuildVocabNode> node, bool *const modified) {
   injection_point_ = nullptr;
   return Status::OK();
 }
 
 #ifndef ENABLE_ANDROID
 // Performs finder work for BuildSentencePieceVocabNode that has special rules about epoch control injection
-Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *modified) {
+Status EpochCtrlPass::InjectionFinder::Visit(std::shared_ptr<BuildSentenceVocabNode> node, bool *const modified) {
   injection_point_ = nullptr;
   return Status::OK();
 }
 #endif
 
-Status EpochCtrlPass::InjectionFinder::VisitAfter(std::shared_ptr<TransferNode> node, bool *modified) {
+Status EpochCtrlPass::InjectionFinder::VisitAfter(std::shared_ptr<TransferNode> node, bool *const modified) {
   // Assumption: There is only one TransferNode in a pipeline. This assumption is not validated here.
   // Move the injection point to the child of this node.
   injection_point_ = node;
@@ -61,7 +61,7 @@ Status EpochCtrlPass::InjectionFinder::VisitAfter(std::shared_ptr<TransferNode> 
 EpochCtrlPass::EpochCtrlPass() {}
 
 // Runs an injection pass to inject in operators needed at the pre pass stage
-Status EpochCtrlPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *modified) {
+Status EpochCtrlPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) {
   MS_LOG(INFO) << "Pre pass: Injection pass started.";
 
   // First, run the finder to perform any injection info before we can go ahead to drive the op injection work.

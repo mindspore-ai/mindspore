@@ -191,7 +191,7 @@ Status ConcatOp::ComputeColMap() {
 }
 
 // Visitor pre-accept method for NodePass
-Status ConcatOp::PreAccept(NodePass *p, bool *modified) {
+Status ConcatOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->PreRunOnNode(shared_from_base<ConcatOp>(), modified);
 }

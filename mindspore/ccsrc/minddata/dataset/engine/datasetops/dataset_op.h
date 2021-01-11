@@ -326,14 +326,14 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  virtual Status PreAccept(NodePass *p, bool *modified);
+  virtual Status PreAccept(NodePass *p, bool *const modified);
 
   /// \brief Base method for NodePass visit. Subclass needs to override this if it requires special node visit access.
   ///     Check "dataset/engine/opt/pass.h" for more details.
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  virtual Status Accept(NodePass *p, bool *modified);
+  virtual Status Accept(NodePass *p, bool *const modified);
 
   /// Op name getter
   /// \return Name of the current Op

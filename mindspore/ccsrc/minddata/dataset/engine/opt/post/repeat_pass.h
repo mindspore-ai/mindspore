@@ -42,74 +42,74 @@ class RepeatPass : public NodePass {
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) override;
+  Status PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *const modified) override;
 
   /// \brief Identifies the subtree below this node as being in a repeated path of the tree.
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) override;
+  Status PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *const modified) override;
 
   /// \brief Identifies the subtree below this node as being in a cache merge path
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified) override;
+  Status PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *const modified) override;
 
   /// \brief Identifies the subtree below this node as being cached
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+  Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) override;
 
   /// \brief Hooks up any identified eoe nodes under this repeat.
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *const modified) override;
 
   /// \brief Hooks up any identified eoe nodes under this repeat.
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *const modified) override;
 
   /// \brief CacheOp removes previous leaf ops and replaces them with itself
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) override;
 
   /// \brief Turns of the tracking for operations under merge op
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *const modified) override;
 
   /// \brief Saves the lookup up in case it needs to be referenced by a repeat
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *const modified) override;
 
   /// \brief Set the epoch count for DeviceQueue
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *const modified) override;
 
   /// \brief Special case for GeneratorOp
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<GeneratorOp> node, bool *const modified) override;
 
   /// \brief All operators have a flag that might be set related to the repeat and any leaf nodes need to be set up
   ///     for use with a controlling repeat above it.
   /// \param[in] node The node being visited
   /// \param[inout] modified Indicator if the node was changed at all
   /// \return Status The status code returned
-  Status RunOnNode(std::shared_ptr<DatasetOp> node, bool *modified) override;
+  Status RunOnNode(std::shared_ptr<DatasetOp> node, bool *const modified) override;
 
  private:
   /// \brief Adds an operator to the eoe operator stack save area

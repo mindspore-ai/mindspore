@@ -128,13 +128,13 @@ Status TakeOp::FillBuffer(std::unique_ptr<DataBuffer> *buffer, std::unique_ptr<D
 }
 
 // Visitor accept method for NodePass
-Status TakeOp::Accept(NodePass *p, bool *modified) {
+Status TakeOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<TakeOp>(), modified);
 }
 
 // Visitor pre-accept method for NodePass
-Status TakeOp::PreAccept(NodePass *p, bool *modified) {
+Status TakeOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->PreRunOnNode(shared_from_base<TakeOp>(), modified);
 }

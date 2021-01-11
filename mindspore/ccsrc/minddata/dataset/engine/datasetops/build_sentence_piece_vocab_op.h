@@ -169,7 +169,7 @@ class BuildSentencePieceVocabOp : public PipelineOp {
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  Status PreAccept(NodePass *p, bool *modified) override;
+  Status PreAccept(NodePass *p, bool *const modified) override;
 
  private:
   bool read_done_;

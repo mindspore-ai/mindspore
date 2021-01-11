@@ -105,13 +105,13 @@ Status EpochCtrlOp::EoeReceived(int32_t worker_id) {
 }
 
 // Pre-Visitor accept method for NodePass
-Status EpochCtrlOp::PreAccept(NodePass *p, bool *modified) {
+Status EpochCtrlOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call the pre-visitation
   return p->PreRunOnNode(shared_from_base<EpochCtrlOp>(), modified);
 }
 
 // Visitor accept method for NodePass
-Status EpochCtrlOp::Accept(NodePass *p, bool *modified) {
+Status EpochCtrlOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call the pre-visitation
   return p->RunOnNode(shared_from_base<EpochCtrlOp>(), modified);
 }

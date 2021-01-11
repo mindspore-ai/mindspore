@@ -26,7 +26,7 @@ namespace mindspore {
 namespace dataset {
 
 // this will become the RootNode:DatasetNode when it is turned on
-Status AutoWorkerPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *modified) {
+Status AutoWorkerPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) {
   uint8_t config = GlobalContext::config_manager()->get_auto_worker_config();
 
   OpWeightPass pass(kOpWeightConfigs[config < kOpWeightConfigs.size() ? config : 0]);
@@ -71,7 +71,7 @@ Status AutoWorkerPass::RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *mod
   return Status::OK();
 }
 
-Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<MapNode> node, bool *modified) {
+Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<MapNode> node, bool *const modified) {
   auto itr = weight_profile_.find(node->Name());
   CHECK_FAIL_RETURN_UNEXPECTED(itr != weight_profile_.end(), node->Name() + "'s weight doesn't exist.");
   int32_t weight = itr->second;
@@ -80,7 +80,7 @@ Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<MapNode> node, bool *
   return Status::OK();
 }
 
-Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<BatchNode> node, bool *modified) {
+Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<BatchNode> node, bool *const modified) {
   auto itr = weight_profile_.find(node->Name());
   CHECK_FAIL_RETURN_UNEXPECTED(itr != weight_profile_.end(), node->Name() + "'s weight doesn't exist.");
   int32_t weight = itr->second;
@@ -89,7 +89,7 @@ Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<BatchNode> node, bool
   return Status::OK();
 }
 
-Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<MappableSourceNode> node, bool *modified) {
+Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<MappableSourceNode> node, bool *const modified) {
   RETURN_OK_IF_TRUE(node->Name() == kGeneratorNode);  // generator is pipeline op, skip this
   auto itr = weight_profile_.find("MappableSource");
   CHECK_FAIL_RETURN_UNEXPECTED(itr != weight_profile_.end(),
@@ -100,7 +100,7 @@ Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<MappableSourceNode> n
   return Status::OK();
 }
 
-Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<NonMappableSourceNode> node, bool *modified) {
+Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<NonMappableSourceNode> node, bool *const modified) {
   auto itr = weight_profile_.find("NonMappableSourceNode");
   CHECK_FAIL_RETURN_UNEXPECTED(itr != weight_profile_.end(),
                                "NonLeafSource::" + node->Name() + "'s weight doesn't exist.");
@@ -110,7 +110,7 @@ Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<NonMappableSourceNode
   return Status::OK();
 }
 
-Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<DatasetNode> node, bool *modified) {
+Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
   weight_sum_ += GetNodeWeightFromProfile(node);
   return Status::OK();
 }

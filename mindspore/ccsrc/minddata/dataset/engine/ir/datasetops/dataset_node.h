@@ -246,7 +246,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  virtual Status Accept(IRNodePass *p, bool *modified);
+  virtual Status Accept(IRNodePass *const p, bool *const modified);
 
   /// \brief Base method for IRNodePass visit on the way back up the tree after its descendants are visited.
   /// \notes Subclass needs to override this if it requires special node visit access.
@@ -254,7 +254,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \param[in] p The node to visit
   /// \param[out] modified Indicator if the node was modified
   /// \return Status of the node visit
-  virtual Status AcceptAfter(IRNodePass *p, bool *modified);
+  virtual Status AcceptAfter(IRNodePass *const p, bool *const modified);
 
   virtual bool IsSizeDefined() { return true; }
 
@@ -289,7 +289,7 @@ class MappableSourceNode : public DatasetNode {
     descendant_of_cache_ = false;
   }
 
-  Status Accept(IRNodePass *p, bool *modified) override;
+  Status Accept(IRNodePass *const p, bool *const modified) override;
 
   /// \brief Destructor
   ~MappableSourceNode() = default;
@@ -313,7 +313,7 @@ class NonMappableSourceNode : public DatasetNode {
     descendant_of_cache_ = false;
   }
 
-  Status Accept(IRNodePass *p, bool *modified) override;
+  Status Accept(IRNodePass *const p, bool *const modified) override;
 
   /// \brief Destructor
   ~NonMappableSourceNode() = default;

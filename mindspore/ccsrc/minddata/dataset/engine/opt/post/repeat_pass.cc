@@ -37,7 +37,7 @@ RepeatPass::RepeatPass()
       cache_lookup_(nullptr) {}
 
 // Identifies the subtree below this node as being in a repeated path of the tree.
-Status RepeatPass::PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
+Status RepeatPass::PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *const modified) {
   // Create a new stack for eoe operators and push onto our stack of stacks.
   std::unique_ptr<op_stack> new_stack = std::make_unique<op_stack>();
   eoe_op_stacks_.push(std::move(new_stack));
@@ -69,7 +69,7 @@ Status RepeatPass::PreRunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) 
 }
 
 // Identifies the subtree below this node as being in a repeated path of the tree.
-Status RepeatPass::PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) {
+Status RepeatPass::PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *const modified) {
   // EpochCtrl is derived from RepeatOp.  Generally it should do the identical setup
   // that RepeatOp does.  However, epoch control is actually simpler because it can
   // only exist as the root node so it doesn't need all the nested code.
@@ -88,21 +88,21 @@ Status RepeatPass::PreRunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modifie
 }
 
 // Identifies the subtree below this node as being in a cache merge path
-Status RepeatPass::PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified) {
+Status RepeatPass::PreRunOnNode(std::shared_ptr<CacheMergeOp> node, bool *const modified) {
   // Turn on the flag that we're under a merge op
   is_merge_ = true;
   return Status::OK();
 }
 
 // Identifies the subtree below this node as being cached
-Status RepeatPass::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+Status RepeatPass::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) {
   // Turn on the flag that we're under a merge op
   is_cached_ = true;
   return Status::OK();
 }
 
 // Hooks up any identified eoe nodes under this repeat.
-Status RepeatPass::RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
+Status RepeatPass::RunOnNode(std::shared_ptr<RepeatOp> node, bool *const modified) {
   // Pop the leaf ops from the save-area stack and add them to the repeat op's eoe node tracking
   std::shared_ptr<DatasetOp> leaf_op = PopFromEOEOpStack();
 
@@ -155,7 +155,7 @@ Status RepeatPass::RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) {
 }
 
 // Hooks up any identified eoe nodes under this repeat.
-Status RepeatPass::RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) {
+Status RepeatPass::RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *const modified) {
   // Pop the leaf ops from the save-area stack and add them to the eoe node tracking
   std::shared_ptr<DatasetOp> leaf_op = PopFromEOEOpStack();
   while (leaf_op != nullptr) {
@@ -171,7 +171,7 @@ Status RepeatPass::RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) 
 }
 
 // CacheOp removes previous leaf ops and replaces them with itself
-Status RepeatPass::RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
+Status RepeatPass::RunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) {
   is_cached_ = false;
 
   // if we are a cache within a repeat path of the tree, then adjust the total repeats and total epochs for cached ops.
@@ -191,7 +191,7 @@ Status RepeatPass::RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) {
   return Status::OK();
 }
 
-Status RepeatPass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) {
+Status RepeatPass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *const modified) {
   // If we are in a repeat path, then set our repeated flag
   if (is_repeated_) {
     // if infinite repeat save ourself in a stack for the repeat operator above us
@@ -210,7 +210,7 @@ Status RepeatPass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *modified) 
 }
 // All operators have a flag that might be set related to the repeat and any leaf nodes need to be set up
 // for use with a controlling repeat above it.
-Status RepeatPass::RunOnNode(std::shared_ptr<DatasetOp> node, bool *modified) {
+Status RepeatPass::RunOnNode(std::shared_ptr<DatasetOp> node, bool *const modified) {
   // If we are under a cache op, then save ourselves to the cached op stack.
   if (is_cached_) {
     AddToCachedOpStack(node);
@@ -222,7 +222,7 @@ Status RepeatPass::RunOnNode(std::shared_ptr<DatasetOp> node, bool *modified) {
 }
 
 // Turns off the tracking for operations under merge op
-Status RepeatPass::RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified) {
+Status RepeatPass::RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *const modified) {
   // If there was not any repeat in the merge cache miss leg, then the cache_lookup
   // would not have been consumed yet.  In that case, we need to set its total repeats for it.
   if (cache_lookup_) {
@@ -237,7 +237,7 @@ Status RepeatPass::RunOnNode(std::shared_ptr<CacheMergeOp> node, bool *modified)
 }
 
 // Saves the lookup up in case it needs to be referenced by a repeat
-Status RepeatPass::RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified) {
+Status RepeatPass::RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *const modified) {
   if (!node->IsLeaf()) {
     // By definition, the CacheLookup must be a leaf op.  Make that clear here.
     RETURN_STATUS_UNEXPECTED("CacheLookupOp must be a leaf node!");
@@ -253,7 +253,7 @@ Status RepeatPass::RunOnNode(std::shared_ptr<CacheLookupOp> node, bool *modified
   return Status::OK();
 }
 
-Status RepeatPass::RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) {
+Status RepeatPass::RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *const modified) {
   // Set total repeats and total epochs for the DeviceQueueOp
   node->set_total_repeats(num_epochs_);
   node->set_num_repeats_per_epoch(1);

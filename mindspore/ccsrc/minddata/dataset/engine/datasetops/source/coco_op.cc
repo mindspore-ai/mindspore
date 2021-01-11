@@ -664,7 +664,7 @@ Status CocoOp::GetClassIndexing(const std::string &dir, const std::string &file,
 }
 
 // Visitor accept method for NodePass
-Status CocoOp::Accept(NodePass *p, bool *modified) {
+Status CocoOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<CocoOp>(), modified);
 }

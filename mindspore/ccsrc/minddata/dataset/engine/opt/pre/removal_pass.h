@@ -47,20 +47,20 @@ class RemovalPass : public TreePass {
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+    Status PreRunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) override;
 
     /// \brief Resets the tracking of the cache within the tree
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<CacheOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<CacheOp> node, bool *const modified) override;
 #endif
 
     /// \brief Perform ShuffleOp removal check
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *const modified) override;
 
     /// \brief Getter
     /// \return All the nodes to be removed
@@ -82,7 +82,7 @@ class RemovalPass : public TreePass {
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate of the tree was modified.
   /// \return Status The status code returned
-  Status RunOnTree(ExecutionTree *tree, bool *modified) override;
+  Status RunOnTree(ExecutionTree *tree, bool *const modified) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

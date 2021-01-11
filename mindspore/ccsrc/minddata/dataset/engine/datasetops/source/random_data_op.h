@@ -263,7 +263,7 @@ class RandomDataOp : public ParallelOp {
   // @param p - Pointer to the NodePass to be accepted.
   // @param modified - Whether this node visit modified the pipeline.
   // @return - Status of the node visit.
-  Status Accept(NodePass *p, bool *modified) override;
+  Status Accept(NodePass *p, bool *const modified) override;
 
   // Private function for computing the assignment of the column name map.
   // @return - Status
