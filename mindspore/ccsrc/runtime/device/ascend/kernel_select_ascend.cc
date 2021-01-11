@@ -377,7 +377,7 @@ void SetWeightFormat(const AnfNodePtr &real_input_node, const std::vector<string
   }
   if (AnfAlgo::GetOutputDeviceDataType(real_input_node, 0) == kTypeUnknown || is_ref) {
     builder->SetOutputsFormat(output_format);
-    std::vector<TypeId> output_type = {selected_kernel_info->GetInputDeviceType(input_index)};
+    std::vector<TypeId> output_type = {AnfAlgo::GetOutputInferDataType(real_input_node, 0)};
     builder->SetOutputsDeviceType(output_type);
     AnfAlgo::SetSelectKernelBuildInfo(builder->Build(), real_input_node.get());
   }
