@@ -16,7 +16,6 @@
 
 #include "tools/converter/legacy_optimizer/graph/tensor_name_pass.h"
 #include "tools/converter/converter_context.h"
-#include "tools/converter/quantizer/quantize_util.h"
 #include "tools/common/tensor_util.h"
 
 namespace mindspore::lite {

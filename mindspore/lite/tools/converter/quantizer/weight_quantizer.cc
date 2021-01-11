@@ -18,6 +18,7 @@
 #include <list>
 #include <string>
 #include <vector>
+#include <unordered_map>
 #include "src/common/common.h"
 #include "ir/dtype/type_id.h"
 
@@ -36,6 +37,7 @@ bool WeightQuantizer::IsPosNum(const std::string &str) {
   }
   return true;
 }
+
 STATUS WeightQuantizer::WeightQuantInputCheck(const converter::Flags *config) {
   MS_ASSERT(config != nullptr);
   if (!WeightQuantizer::IsPosNum(config->quantWeightChannel)) {
@@ -57,28 +59,57 @@ STATUS WeightQuantizer::WeightQuantInputCheck(const converter::Flags *config) {
   }
   return RET_OK;
 }
-WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const string &weightSize,
+
+WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const PostQuantConfig &config) : Quantizer(graph) {
+  quant_strategy_ = std::make_unique<QuantStrategy>(0, 0);
+  config_param_ = config;
+}
+
+WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const std::string &config_file, const string &weightSize,
                                  const std::string &convWeightChannelThreshold, const std::string &bitNum)
     : Quantizer(graph) {
+  this->config_file_ = config_file;
   auto quantSize = static_cast<size_t>(std::stoull(weightSize));
-  this->bitNum = static_cast<size_t>(std::stoull(bitNum));
+  this->bit_num_ = static_cast<size_t>(std::stoull(bitNum));
   auto convQuantWeightChannelThreshold = static_cast<size_t>(std::stoull(convWeightChannelThreshold));
-  mStrategy = std::make_unique<QuantStrategy>(quantSize, convQuantWeightChannelThreshold);
-  quant_max = (1 << (unsigned int)(this->bitNum - 1)) - 1;
-  quant_min = -(1 << (unsigned int)(this->bitNum - 1));
+  quant_strategy_ = std::make_unique<QuantStrategy>(quantSize, convQuantWeightChannelThreshold);
+  quant_max = (1 << (unsigned int)(this->bit_num_ - 1)) - 1;
+  quant_min = -(1 << (unsigned int)(this->bit_num_ - 1));
   // parse type_id
-  if (this->bitNum > 0 && this->bitNum <= 8) {
+  if (this->bit_num_ > 0 && this->bit_num_ <= 8) {
     type_id = kNumberTypeInt8;
-  } else if (this->bitNum <= 16) {
+  } else if (this->bit_num_ <= 16) {
     type_id = kNumberTypeInt16;
   } else {
     MS_LOG(ERROR) << "invalid input bits";
   }
 }
 
+WeightQuantizer::~WeightQuantizer() { delete fp32_session_; }
+
+STATUS WeightQuantizer::SetAbstract(ParamValueLitePtr param_value, ParameterPtr param_node,
+                                    std::shared_ptr<PrimitiveC> primitive_c) {
+  // set dtype
+  param_value->set_tensor_type(type_id);
+  auto abstract_base = param_node->abstract();
+  if (abstract_base == nullptr) {
+    MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
+    return RET_ERROR;
+  }
+  if (!utils::isa<abstract::AbstractTensorPtr>(abstract_base)) {
+    MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << param_node->name();
+    return RET_ERROR;
+  }
+  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract_base);
+  abstract_tensor->element()->set_type(TypeIdToType(type_id));
+  primitive_c->set_quant_type(schema::QuantType_WeightQuant);
+
+  return RET_OK;
+}
+
 STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
   for (auto &cnode : nodes) {
-    if (!mStrategy->CanConvOpQuantized(cnode)) {
+    if (!quant_strategy_->CanConvOpQuantized(cnode)) {
       continue;
     }
 
@@ -108,36 +139,28 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
     }
     auto status = RET_ERROR;
     if (type_id == kNumberTypeInt8) {
-      status = QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
+      status =
+        QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bit_num_, true);
     } else if (type_id == kNumberTypeInt16) {
       status =
-        QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
+        QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bit_num_, true);
     }
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
     }
-    // set dtype
-    param_value->set_tensor_type(type_id);
-    auto abstractBase = param_node->abstract();
-    if (abstractBase == nullptr) {
-      MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
+    status = SetAbstract(param_value, param_node, primitive_c);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "SetAbstract failed : " << status;
       return RET_ERROR;
     }
-    if (!utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
-      MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << param_node->name();
-      return RET_ERROR;
-    }
-    auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
-    abstractTensor->element()->set_type(TypeIdToType(type_id));
-    primitive_c->set_quant_type(schema::QuantType_WeightQuant);
   }
   return RET_OK;
 }
 
 STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
   for (auto &node : nodes) {
-    if (!mStrategy->CanMulOpQuantized(node)) {
+    if (!quant_strategy_->CanMulOpQuantized(node)) {
       continue;
     }
     auto already_quant = false;
@@ -186,38 +209,271 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
 
     auto status = RET_ERROR;
     if (type_id == kNumberTypeInt8) {
-      status = QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
+      status =
+        QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bit_num_, true);
     } else if (type_id == kNumberTypeInt16) {
       status =
-        QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bitNum, true);
+        QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max, quant_min, bit_num_, true);
     }
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
       return status;
     }
-    param_value->set_tensor_type(type_id);
-    // set dtype
-    auto abstractBase = param_node->abstract();
-    if (abstractBase == nullptr) {
-      MS_LOG(ERROR) << "Abstract of parameter is nullptr, " << param_node->name();
+    status = SetAbstract(param_value, param_node, primitive_c);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "SetAbstract failed : " << status;
       return RET_ERROR;
     }
-    if (!utils::isa<abstract::AbstractTensorPtr>(abstractBase)) {
-      MS_LOG(ERROR) << "Abstract of parameter should be anstract tensor, " << param_node->name();
-      return RET_ERROR;
-    }
-    auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
-    abstractTensor->element()->set_type(TypeIdToType(type_id));
-    primitive_c->set_quant_type(schema::QuantType_WeightQuant);
   }
 
   return RET_OK;
 }
 
-STATUS WeightQuantizer::DoQuantize(FuncGraphPtr funcGraph) {
-  MS_ASSERT(funcGraph != nullptr);
+constexpr float relative_tolerance = 1e-5;
+constexpr float abs_tolerance = 1e-4;
+
+template <typename T>
+float CompareOutputData(const std::unordered_map<std::string, mindspore::tensor::MSTensor *> &expected_tensor,
+                        const std::unordered_map<std::string, mindspore::tensor::MSTensor *> &compare_tensor) {
+  auto valid_data = [](T data) -> bool { return (!std::isnan(data) && !std::isinf(data)); };
+
+  float total_mean_error = 0.0f;
+  int tensor_cnt = expected_tensor.size();
+
+  if (tensor_cnt <= 0) {
+    MS_LOG(ERROR) << "unexpected tensor_cnt: " << tensor_cnt;
+    return RET_ERROR;
+  }
+
+  for (const auto &exp_tensor_pair : expected_tensor) {
+    float mean_error = 0.0f;
+    int error_cnt = 0;
+
+    auto exp_tensor_name = exp_tensor_pair.first;
+    auto exp_tensor = exp_tensor_pair.second;
+    auto cmp_tensor_find_iter = compare_tensor.find(exp_tensor_name);
+    if (cmp_tensor_find_iter == compare_tensor.end()) {
+      MS_LOG(ERROR) << "can not find: " << exp_tensor_name;
+      return RET_ERROR;
+    }
+    auto cmp_tensor = cmp_tensor_find_iter->second;
+
+    auto exp_tensor_shape = exp_tensor->shape();
+    auto cmp_tensor_shape = cmp_tensor->shape();
+    if (exp_tensor_shape != cmp_tensor_shape) {
+      MS_LOG(ERROR) << "exp tensor shape not equal to cmp. exp_tensor_elem_cnt: " << exp_tensor->ElementsNum()
+                    << " cmp_tensor_elem_cnt: " << cmp_tensor->ElementsNum();
+      return RET_ERROR;
+    }
+    auto exp_data = static_cast<T *>(exp_tensor->MutableData());
+    auto cmp_data = static_cast<T *>(cmp_tensor->MutableData());
+    auto elem_cnt = exp_tensor->ElementsNum();
+    for (int i = 0; i < elem_cnt; i++) {
+      if (!valid_data(exp_data[i]) || !valid_data(cmp_data[i])) {
+        MS_LOG(ERROR) << "data is not valid. exp: " << exp_data[i] << " cmp: " << cmp_data[i] << " index: " << i;
+        return RET_ERROR;
+      }
+      auto tolerance = abs_tolerance + relative_tolerance * fabs(exp_data[i]);
+      auto abs_error = std::fabs(exp_data[i] - cmp_data[i]);
+      if (abs_error > tolerance) {
+        if (fabs(exp_data[i] == 0)) {
+          if (abs_error > 1e-5) {
+            mean_error += abs_error;
+            error_cnt++;
+          } else {
+            // it is ok, very close to 0
+            continue;
+          }
+        } else {
+          mean_error += abs_error / (fabs(exp_data[i]) + FLT_MIN);
+          error_cnt++;
+        }
+      } else {
+        // it is ok, no error
+        continue;
+      }
+    }  // end one tensor data loop
+    total_mean_error += mean_error / elem_cnt;
+  }  // end tensor loop
+  return total_mean_error / tensor_cnt;
+}
+
+STATUS WeightQuantizer::DoMiexedQuant(FuncGraphPtr func_graph) {
+  // 0.1 Create Fp32 Session
+  flags.quantType = schema::QuantType_QUANT_NONE;
+  fp32_session_ = CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num);
+  if (fp32_session_ == nullptr) {
+    MS_LOG(ERROR) << "CreateSessoin fail";
+    return RET_ERROR;
+  }
+  auto fp32_inputs = fp32_session_->GetInputs();
+  // 0.2 Parse input calib files
+  auto status = CollectCalibInputs(config_param_.image_paths, config_param_.batch_count, &images_);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "CollectCalibInputs fail";
+    return RET_ERROR;
+  }
+
+  auto cnodes = func_graph->GetOrderedCnodes();
+  for (auto iter = cnodes.end(); iter != cnodes.begin();) {
+    auto cnode = *(--iter);
+    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "primitive_c is null.";
+      return RET_ERROR;
+    }
+    auto op_name = cnode->fullname_with_scope();
+    MS_LOG(DEBUG) << "process node: " << op_name
+                  << " type: " << schema::EnumNamePrimitiveType((schema::PrimitiveType)primitive_c->Type());
+    if (quant_strategy_->CanConvOpQuantized(cnode) || quant_strategy_->CanMulOpQuantized(cnode)) {
+      auto input_node = cnode->input(2);
+      if (!input_node->isa<Parameter>()) {
+        MS_LOG(WARNING) << op_name << " the second input is not parameter";
+        continue;
+      }
+      auto param_node = input_node->cast<ParameterPtr>();
+      if (!param_node->has_default()) {
+        MS_LOG(WARNING) << op_name << " the second input can not convert to parameter";
+        continue;
+      }
+      auto param_value = std::static_pointer_cast<ParamValueLite>(param_node->default_param());
+      if (param_value == nullptr) {
+        MS_LOG(WARNING) << op_name << " the second input can not convert to parameter";
+        continue;
+      }
+      if (param_value->tensor_type() != TypeId::kNumberTypeFloat32) {
+        MS_LOG(WARNING) << op_name << " the second input type is not float";
+        continue;
+      }
+      // copy origin data in case to recover
+      auto *raw_data = static_cast<float *>(param_value->tensor_addr());
+      auto elem_count = param_value->tensor_shape_size();
+      auto origin_data = malloc(sizeof(float) * elem_count);
+      auto ret = memcpy_s(origin_data, sizeof(float) * elem_count, raw_data, param_value->tensor_size());
+      if (ret != EOK) {
+        MS_LOG(ERROR) << "memcpy fail: "
+                      << " dst size: " << sizeof(float) * elem_count << " src size: " << param_value->tensor_size();
+        return RET_ERROR;
+      }
+      // 1. try quant
+      for (int bit_num_t = 2; bit_num_t <= 8; bit_num_t++) {
+        type_id = TypeId::kNumberTypeInt8;
+        int quant_max_t = (1 << (unsigned int)(bit_num_t - 1)) - 1;
+        int quant_min_t = -(1 << (unsigned int)(bit_num_t - 1));
+
+        if (type_id == TypeId::kNumberTypeInt8) {
+          status = QuantFilter<int8_t>(param_value, primitive_c, QuantType::QuantType_WeightQuant, quant_max_t,
+                                       quant_min_t, bit_num_t, true);
+        } else if (type_id == TypeId::kNumberTypeInt16) {
+          status = QuantFilter<int16_t>(param_value, primitive_c, QuantType::QuantType_WeightQuant, quant_max_t,
+                                        quant_min_t, bit_num_t, true);
+        } else {
+          MS_LOG(ERROR) << "unexpected type_id: " << type_id;
+          return RET_ERROR;
+        }
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "quant filter fail.";
+          return RET_ERROR;
+        }
+        status = SetAbstract(param_value, param_node, primitive_c);
+        if (status != RET_OK) {
+          MS_LOG(ERROR) << "SetAbstract failed : " << status;
+          return RET_ERROR;
+        }
+        // 2. evaluate the quant
+        // 2.1 create quant session, get input, output tensor
+        flags.quantType = schema::QuantType_WeightQuant;
+        auto quant_session =
+          std::unique_ptr<session::LiteSession>(CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num));
+        if (quant_session == nullptr) {
+          MS_LOG(ERROR) << "create session error: " << status;
+          return RET_ERROR;
+        }
+        auto quant_inputs = quant_session->GetInputs();
+
+        auto mean_error = 0.0f;
+        if (fp32_inputs.size() != images_.size()) {
+          MS_LOG(ERROR) << "model's input tensor cnt: " << fp32_inputs.size() << " != " << images_.size();
+          return RET_ERROR;
+        }
+        auto image_cnt = images_.at(0).size();
+        for (size_t i = 0; i < image_cnt; i++) {
+          // set multi-input data
+          for (size_t input_index = 0; input_index < fp32_inputs.size(); input_index++) {
+            status = CopyInputDataToTensor(input_index, i, images_, fp32_inputs[input_index]);
+            if (status != RET_OK) {
+              MS_LOG(ERROR) << "generate input data from images failed!";
+              return RET_ERROR;
+            }
+            status = CopyInputDataToTensor(input_index, i, images_, quant_inputs[input_index]);
+            if (status != RET_OK) {
+              MS_LOG(ERROR) << "generate input data from images failed!";
+              return RET_ERROR;
+            }
+          }
+          std::future<STATUS> fp32_inference = std::async(
+            std::launch::async, [](session::LiteSession *fp32_session) -> STATUS { return fp32_session->RunGraph(); },
+            fp32_session_);
+
+          status = quant_session->RunGraph();
+          if (status != RET_OK) {
+            MS_LOG(ERROR) << "quant session run error";
+            return RET_ERROR;
+          }
+          status = fp32_inference.get();
+          if (status != RET_OK) {
+            MS_LOG(ERROR) << "fp32 session run error";
+            return RET_ERROR;
+          }
+          // 3. compare betwen quant and fp32
+          auto fp32_outputs = fp32_session_->GetOutputs();
+          auto quant_outputs = quant_session->GetOutputs();
+          mean_error += CompareOutputData<float>(fp32_outputs, quant_outputs);
+        }  // end_for: calib data loop
+        mean_error = mean_error / image_cnt;
+
+        if (mean_error <= config_param_.mean_error_threshold) {
+          MS_LOG(DEBUG) << "op: " << op_name << " got mixed bit: " << bit_num_t << " mean_error: " << mean_error;
+          opname_bit_[op_name] = bit_num_t;
+          break;
+        } else if (bit_num_t != 8) {
+          // recover
+          param_value->set_tensor_size(sizeof(float) * elem_count);
+          ret = memcpy_s(raw_data, param_value->tensor_size(), origin_data, sizeof(float) * elem_count);
+          if (ret != EOK) {
+            MS_LOG(ERROR) << "memcpy fail: "
+                          << " src size: " << sizeof(float) * elem_count << " dst size: " << param_value->tensor_size();
+            return RET_ERROR;
+          }
+        } else {
+          MS_LOG(DEBUG) << "op: " << op_name << " set bit: " << bit_num_t << " mean_error: " << mean_error;
+          opname_bit_[op_name] = bit_num_t;
+        }
+      }  // end bit loop
+      free(origin_data);
+    }  //  if: conv and matmul
+  }    // end loop: all cnode
+  return RET_OK;
+}
+
+STATUS WeightQuantizer::DoQuantize(FuncGraphPtr func_graph) {
+  MS_ASSERT(func_graph != nullptr);
   STATUS ret;
-  auto cnodes = funcGraph->GetOrderedCnodes();
+  auto cnodes = func_graph->GetOrderedCnodes();
+
+  if (!config_file_.empty()) {
+    ret = ParseConfigFile(config_file_, &config_param_);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ReadConfig error.";
+      return RET_ERROR;
+    }
+  }
+
+  if (config_param_.mixed) {
+    MS_LOG(INFO) << "Do mixed bit quantization";
+    return DoMiexedQuant(func_graph);
+  }
+
   ret = DoConvQuantize(cnodes);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoConvQuantize failed :" << ret;

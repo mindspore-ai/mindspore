@@ -18,7 +18,7 @@
 #include <memory>
 #include <utility>
 #ifdef PRIMITIVE_WRITEABLE
-#include "tools/converter/quantizer/quantize_util.h"
+#include "src/param_value_lite.h"
 #endif
 
 #ifndef PRIMITIVE_WRITEABLE
