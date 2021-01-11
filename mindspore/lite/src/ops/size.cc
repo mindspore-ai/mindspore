@@ -56,7 +56,7 @@ int Size::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tens
     return RET_INFER_INVALID;
   }
   std::vector<int> out_shape;
-  out_shape.push_back(static_cast<int>(in_tensor->shape().size()));
+  out_shape.push_back(1);
   out_tensor->set_shape(out_shape);
   return RET_OK;
 }

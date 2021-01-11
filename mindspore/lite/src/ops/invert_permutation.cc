@@ -51,6 +51,14 @@ int InvertPermutation::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
   if (!infer_flag()) {
     return RET_INFER_INVALID;
   }
+  if (input->data_type() != kNumberTypeInt32) {
+    MS_LOG(ERROR) << "InvertPermutation does not support input of data type: " << input->data_type();
+    return RET_ERROR;
+  }
+  if (input->shape().size() != 1) {
+    MS_LOG(ERROR) << "InvertPermutation input must be one-dimensional.";
+    return RET_ERROR;
+  }
   output->set_shape(input->shape());
   return RET_OK;
 }
