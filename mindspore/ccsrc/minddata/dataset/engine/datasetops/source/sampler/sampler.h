@@ -48,6 +48,10 @@ class RandomAccessOp {
   // default destructor
   virtual ~RandomAccessOp() = default;
 
+  /// Set num_rows
+  /// \param num_rows
+  void SetNumRows(int64_t num_rows) { num_rows_ = num_rows; }
+
  protected:
   // The amount of rows in the dataset itself. This is the before-sampling value, the
   // total count of rows.  A sampler may choose to sample less than this amount.

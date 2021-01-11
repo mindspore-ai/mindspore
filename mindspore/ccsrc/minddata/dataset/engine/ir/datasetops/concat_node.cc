@@ -95,19 +95,19 @@ Status ConcatNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
 
   // calculate the size of the shard
   int64_t shard_dataset_size = 0;
-  if (sampler_ != nullptr) {
-    std::shared_ptr<DistributedSamplerRT> sampler_rt =
-      std::static_pointer_cast<DistributedSamplerRT>(sampler_->SamplerBuild());
+  std::shared_ptr<DistributedSamplerRT> sampler_rt =
+    sampler_ ? std::dynamic_pointer_cast<DistributedSamplerRT>(sampler_->SamplerBuild()) : nullptr;
+  if (sampler_rt != nullptr) {
     sampler_rt->SetNumRowsInDataset(total_dataset_size);
     sampler_rt->InitSampler();
 
     // (total_size % num_shards != 0) & shard_id >= (remainder) ? CalculateNumSamples()-1 : CalculateNumSamples()
     // example: 23 rows, 10 shards --> shard sizes = {3,3,3,2,2,2,2,2,2,2}
-    if ((sampler_rt->GetNumSamples() % sampler_rt->GetDeviceNum()) > 0 &&
+    if ((sampler_rt->GetNumSamples() % sampler_rt->GetDeviceNum()) >= 0 &&
         sampler_rt->GetDeviceID() >= (sampler_rt->GetNumSamples() % sampler_rt->GetDeviceNum())) {
-      shard_dataset_size = sampler_rt->CalculateNumSamples(sampler_rt->GetNumSamples()) - 1;
+      shard_dataset_size = sampler_rt->GetNumSamples() / sampler_rt->GetDeviceNum();
     } else {
-      shard_dataset_size = sampler_rt->CalculateNumSamples(sampler_rt->GetNumSamples());
+      shard_dataset_size = sampler_rt->GetNumSamples() / sampler_rt->GetDeviceNum() + 1;
     }
   } else {
     shard_dataset_size = total_dataset_size;

@@ -3427,23 +3427,31 @@ def _py_sampler_fn(sampler, num_samples, dataset):
             yield tuple([np.array(x, copy=False) for x in val])
 
 
-def _cpp_sampler_fn(sampler, dataset):
+def _cpp_sampler_fn(sample_ids, dataset):
     """
     Generator function wrapper for mappable dataset with cpp sampler.
     """
-    indices = sampler.get_indices()
-    for i in indices:
+    if not isinstance(sample_ids, np.ndarray):
+        raise RuntimeError("Sample IDs are not in a numpy array.")
+    if sample_ids.size == 0:
+        raise RuntimeError("Sampler passed an empty sample IDs list.")
+
+    for i in sample_ids:
         val = dataset[i]
         # convert output tensors to ndarrays
         yield tuple([np.array(x, copy=False) for x in val])
 
 
-def _cpp_sampler_fn_mp(sampler, sample_fn):
+def _cpp_sampler_fn_mp(sample_ids, sample_fn):
     """
     Multiprocessing generator function wrapper for mappable dataset with cpp sampler.
     """
-    indices = sampler.get_indices()
-    return sample_fn.process(indices)
+    if not isinstance(sample_ids, np.ndarray):
+        raise RuntimeError("Sample IDs are not in a numpy array.")
+    if sample_ids.size == 0:
+        raise RuntimeError("Sampler passed an empty sample IDs list.")
+
+    return sample_fn.process(sample_ids)
 
 
 def _py_sampler_fn_mp(sampler, num_samples, sample_fn):
@@ -3811,18 +3819,9 @@ class GeneratorDataset(MappableDataset):
                 self.schema = Schema(schema)
         # Move get dataset_size by len from parse to here, because self.source will
         # lose attribution of '__len__' after deepcopy.
-        self.dataset_size = None
+        self.source_len = -1  # unknown
         if hasattr(self.source, "__len__"):
-            if not self.num_shards:
-                self.dataset_size = len(self.source)
-            else:
-                self.dataset_size = math.ceil(len(self.source) / self.num_shards)
-
-            rows_from_sampler = self._get_sampler_dataset_size()
-            if self.num_samples is not None and self.num_samples < rows_from_sampler:
-                rows_from_sampler = self.num_samples
-            if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
-                self.dataset_size = rows_from_sampler
+            self.source_len = len(self.source)
 
     def __deepcopy__(self, memodict):
         if id(self) in memodict:
@@ -3839,6 +3838,7 @@ class GeneratorDataset(MappableDataset):
         new_op.num_samples = copy.deepcopy(self.num_samples, memodict)
         new_op.sampler = copy.deepcopy(self.sampler)
         new_op.dataset_size = self.dataset_size
+        new_op.source_len = self.source_len
         new_op.saved_output_types = self.saved_output_types
         new_op.saved_output_shapes = self.saved_output_shapes
         if hasattr(self, "__total_batch__"):
@@ -3847,22 +3847,28 @@ class GeneratorDataset(MappableDataset):
             if isinstance(new_op.sampler, (samplers.SequentialSampler, samplers.DistributedSampler,
                                            samplers.RandomSampler, samplers.SubsetRandomSampler,
                                            samplers.WeightedRandomSampler, samplers.Sampler)):
-                sampler_instance = new_op.sampler.create()
-                sampler_instance.set_num_rows(len(self.source))
-                sampler_instance.initialize()
                 if new_op.num_parallel_workers > 1:
                     sample_fn = SamplerFn(self.source, new_op.num_parallel_workers, self.python_multiprocessing)
-                    new_op.source = (lambda: _cpp_sampler_fn_mp(sampler_instance, sample_fn))
+                    new_op.source = (lambda sample_ids: _cpp_sampler_fn_mp(sample_ids, sample_fn))
                 else:
-                    new_op.source = (lambda: _cpp_sampler_fn(sampler_instance, self.source))
+                    new_op.source = (lambda sample_ids: _cpp_sampler_fn(sample_ids, self.source))
             else:
+                # the sampler provided is not a built-in sampler, it is a list of sample_ids
+                new_op.sample_ids = new_op.sampler
+                # since list of sample_ids are not passed to c++, we need to find the proper len here
+                new_op.source_len = min(self.source_len, len(new_op.sample_ids)) if self.source_len != -1 else len(
+                    new_op.sample_ids)
+                new_op.source_len = min(self.source_len,
+                                        new_op.num_samples) if new_op.num_samples is not None else new_op.source_len
+                new_op.sampler = None
                 if new_op.num_parallel_workers > 1:
                     sample_fn = SamplerFn(self.source, new_op.num_parallel_workers, self.python_multiprocessing)
-                    new_op.source = (lambda: _py_sampler_fn_mp(new_op.sampler, new_op.num_samples, sample_fn))
+                    new_op.source = (lambda: _py_sampler_fn_mp(new_op.sample_ids, new_op.num_samples, sample_fn))
                 else:
-                    new_op.source = (lambda: _py_sampler_fn(new_op.sampler, new_op.num_samples, self.source))
+                    new_op.source = (lambda: _py_sampler_fn(new_op.sample_ids, new_op.num_samples, self.source))
         else:
             try:
+                new_op.sampler = None
                 iter(self.source)
             except TypeError:
                 # Use generator function if input callable
@@ -3881,16 +3887,13 @@ class GeneratorDataset(MappableDataset):
         return self.sampler.is_sharded()
 
     def parse(self, children=None):
-        if self.dataset_size is None:
-            self.dataset_size = -1
         if self.schema is None:
-            return cde.GeneratorNode(self.source, self.column_names, self.column_types).SetGeneratorDatasetSize(
-                self.dataset_size) \
-                .SetNumWorkers(self.num_parallel_workers)
+            return cde.GeneratorNode(self.source, self.column_names, self.column_types,
+                                     self.source_len, self.sampler).SetNumWorkers(self.num_parallel_workers)
         schema = self.schema
         if isinstance(schema, Schema):
             schema = self.schema.cpp_schema
-        return cde.GeneratorNode(self.source, schema).SetGeneratorDatasetSize(self.dataset_size).SetNumWorkers(
+        return cde.GeneratorNode(self.source, schema, self.source_len, self.sampler).SetNumWorkers(
             self.num_parallel_workers)
 
 
