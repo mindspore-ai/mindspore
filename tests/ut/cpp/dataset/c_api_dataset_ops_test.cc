@@ -15,6 +15,7 @@
  */
 #include "common/common.h"
 #include "minddata/dataset/core/tensor_row.h"
+#include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/vision.h"
 

@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 
+#include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
 #include "minddata/dataset/engine/ir/datasetops/dataset_node.h"
 
 namespace mindspore {

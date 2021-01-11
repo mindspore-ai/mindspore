@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_API_DETENSOR_H_
-#define MINDSPORE_CCSRC_MINDDATA_DATASET_API_DETENSOR_H_
+#ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DETENSOR_H_
+#define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DETENSOR_H_
 #include <string>
 #include <vector>
 #include <memory>
 #include "include/ms_tensor.h"
+#include "minddata/dataset/include/status.h"
 #include "minddata/dataset/include/tensor.h"
-#include "minddata/dataset/util/status.h"
 namespace mindspore {
 namespace tensor {
 class DETensor : public mindspore::tensor::MSTensor {
@@ -79,4 +79,4 @@ class DETensor : public mindspore::tensor::MSTensor {
 };
 }  // namespace tensor
 }  // namespace mindspore
-#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_API_DETENSOR_H_
+#endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_DETENSOR_H_

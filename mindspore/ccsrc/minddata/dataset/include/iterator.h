@@ -21,7 +21,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "minddata/dataset/engine/runtime_context.h"
 #include "minddata/dataset/include/status.h"
 
 namespace mindspore {
@@ -45,10 +44,10 @@ using TensorVec = std::vector<std::shared_ptr<Tensor>>;
 class Iterator {
  public:
   /// \brief Constructor
-  Iterator() : consumer_(nullptr) {}
+  Iterator();
 
   /// \brief Destructor
-  ~Iterator() { Stop(); }
+  ~Iterator();
 
   /// \brief Method for building and launching the pipeline.
   /// \param[in] ops - a vector of DatasetOp in the data pipeline.

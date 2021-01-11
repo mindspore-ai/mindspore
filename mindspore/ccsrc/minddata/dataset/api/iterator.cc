@@ -16,10 +16,14 @@
 #include "minddata/dataset/include/iterator.h"
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
+#include "minddata/dataset/engine/runtime_context.h"
 #include "minddata/dataset/include/datasets.h"
 
 namespace mindspore {
 namespace dataset {
+
+Iterator::Iterator() : consumer_(nullptr) {}
+Iterator::~Iterator() { Stop(); }
 
 // Get the next row from the data pipeline.
 bool Iterator::GetNextRow(TensorMap *row) {

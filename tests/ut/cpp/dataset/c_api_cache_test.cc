@@ -17,8 +17,6 @@
 #include "minddata/dataset/include/datasets.h"
 #include "minddata/dataset/include/vision.h"
 
-#include "minddata/dataset/engine/ir/datasetops/source/csv_node.h"
-
 using namespace mindspore::dataset;
 
 // Helper function to get the session id from SESSION_ID env variable
@@ -28,7 +26,6 @@ class MindDataTestCacheOp : public UT::DatasetOpTesting {
  public:
   void SetUp() override {
     DatasetOpTesting::SetUp();
-    GlobalInit();
   }
 };
 

@@ -22,8 +22,10 @@
 #include <utility>
 #include <vector>
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
-#include "minddata/dataset/engine/tree_adapter.h"
+#include "minddata/dataset/engine/datasetops/device_queue_op.h"
 #include "minddata/dataset/engine/opt/pre/getter_pass.h"
+#include "minddata/dataset/engine/tree_adapter.h"
+#include "minddata/mindrecord/include/shard_index_generator.h"
 
 #ifndef ENABLE_ANDROID
 #include "minddata/mindrecord/include/shard_header.h"

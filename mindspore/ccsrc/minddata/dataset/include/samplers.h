@@ -21,10 +21,11 @@
 #include <string>
 #include <vector>
 
-#include "minddata/dataset/util/status.h"
+#include "minddata/dataset/include/status.h"
 #ifndef ENABLE_ANDROID
 #include "minddata/mindrecord/include/shard_column.h"
 #include "minddata/mindrecord/include/shard_error.h"
+#include "minddata/mindrecord/include/shard_operator.h"
 #include "minddata/mindrecord/include/shard_reader.h"
 #endif
 

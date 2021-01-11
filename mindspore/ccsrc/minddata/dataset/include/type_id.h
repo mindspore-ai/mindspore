@@ -16,7 +16,6 @@
 #ifndef MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TYPEID_H_
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TYPEID_H_
 
-#include "minddata/dataset/core/data_type.h"
 #include "mindspore/core/ir/dtype/type_id.h"
 
 namespace mindspore {

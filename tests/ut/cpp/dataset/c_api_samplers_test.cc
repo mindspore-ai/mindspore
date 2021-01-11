@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "common/common.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/sampler.h"
 #include "minddata/dataset/include/datasets.h"
 
 using namespace mindspore::dataset;

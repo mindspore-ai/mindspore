@@ -59,6 +59,9 @@ enum class SPieceTokenizerOutType { kString = 0, kInt = 1 };
 // Possible values for SPieceTokenizerLoadType
 enum class SPieceTokenizerLoadType { kFile = 0, kModel = 1 };
 
+// Possible values for SentencePieceModel
+enum class SentencePieceModel { kUnigram = 0, kBpe = 1, kChar = 2, kWord = 3 };
+
 // Possible values for NormalizeForm
 enum class NormalizeForm {
   kNone = 0,
