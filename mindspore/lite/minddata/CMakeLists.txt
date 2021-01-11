@@ -89,6 +89,9 @@ AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/util MINDDATA_UTIL_SRC_FILES)
 
 AUX_SOURCE_DIRECTORY(${MINDDATA_DIR}/kernels/image/lite_cv  MINDDATA_KERNELS_IMAGE_LITE_CV_FILES)
 
+if (BUILD_MINDDATA STREQUAL "full")
+    set(BUILD_MINDDATA "wrapper")
+endif ()
 
 if (BUILD_MINDDATA STREQUAL "full")
     include_directories("${CMAKE_SOURCE_DIR}/../ccsrc/minddata/dataset/kernels/image")
