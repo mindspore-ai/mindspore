@@ -31,7 +31,6 @@ namespace opt {
 namespace {
 constexpr auto kGradientsFlag = "Gradients";
 constexpr auto kAttrRecompute = "recompute";
-constexpr auto kAttrNoRecompute = "no_recompute";
 bool IsBpropNode(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!node->isa<CNode>()) {
@@ -46,8 +45,7 @@ bool WithRecomputedScope(const AnfNodePtr &node) {
     return false;
   }
   auto full_name_with_scope = node->fullname_with_scope();
-  return full_name_with_scope.find(kAttrRecompute) == 0 &&
-         full_name_with_scope.find(kAttrNoRecompute) == full_name_with_scope.npos;
+  return full_name_with_scope.find(kAttrRecompute) == 0;
 }
 
 bool HasRecomputeCNodeAttr(const AnfNodePtr &node) {
