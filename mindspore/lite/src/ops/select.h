@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
+#include <vector>
 #include "src/ops/primitive_c.h"
 
 #ifndef LITE_MINDSPORE_LITE_C_OPS_SELECT_H_
@@ -23,10 +23,16 @@ namespace mindspore {
 namespace lite {
 class Select : public PrimitiveC {
  public:
-  MS_DECLARE_PARENT(Select, PrimitiveC);
   Select() = default;
   ~Select() = default;
+#ifdef PRIMITIVE_WRITEABLE
+  MS_DECLARE_PARENT(Select, PrimitiveC);
   explicit Select(schema::PrimitiveT *primitive) : PrimitiveC(primitive) {}
+  int UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) override;
+#else
+  int UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffers::FlatBufferBuilder *fbb) override;
+#endif
+  int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
 };
 }  // namespace lite
 }  // namespace mindspore
