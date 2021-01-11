@@ -30,7 +30,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-using messageReceive = std::function<void(const CommMessage &message)>;
+using messageReceive = std::function<void(std::shared_ptr<CommMessage>)>;
 constexpr int kHeaderLen = 8;
 
 class TcpMessageHandler {

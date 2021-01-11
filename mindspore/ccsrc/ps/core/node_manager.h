@@ -31,8 +31,6 @@
 #include <condition_variable>
 #include <unordered_set>
 
-#include "proto/comm.pb.h"
-#include "proto/ps.pb.h"
 #include "ps/core/node.h"
 #include "utils/log_adapter.h"
 #include "utils/convert_utils_base.h"

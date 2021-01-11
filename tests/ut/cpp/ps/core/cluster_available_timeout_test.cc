@@ -31,7 +31,7 @@ class TestClusterAvailableTimeout : public UT::Common {
 };
 
 TEST_F(TestClusterAvailableTimeout, TestClusterAvailableTimeout) {
-  ClusterConfig::Init(1, 1, std::make_unique<std::string>("127.0.0.1"), 9999);
+  ClusterConfig::Init(1, 1, "127.0.0.1", 9999);
   ClusterConfig::set_cluster_available_timeout(3);
   SchedulerNode node;
   node.Start();

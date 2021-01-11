@@ -35,7 +35,7 @@ class TestTcpMessageHandler : public UT::Common {
 
 TEST_F(TestTcpMessageHandler, 8_Header_1003_Data) {
   TcpMessageHandler handler;
-  handler.SetCallback([this](const CommMessage &message) { EXPECT_EQ(message.data().size(), 1000); });
+  handler.SetCallback([this](std::shared_ptr<CommMessage> message) { EXPECT_EQ(message->data().size(), 1000); });
 
   std::string data(1000, 'a');
   CommMessage message;
@@ -55,7 +55,7 @@ TEST_F(TestTcpMessageHandler, 8_Header_1003_Data) {
 
 TEST_F(TestTcpMessageHandler, 8_Header_1003_Data_8_Header_1003_Data) {
   TcpMessageHandler handler;
-  handler.SetCallback([this](const CommMessage &message) { EXPECT_EQ(message.data().size(), 1000); });
+  handler.SetCallback([this](std::shared_ptr<CommMessage> message) { EXPECT_EQ(message->data().size(), 1000); });
 
   std::string data(1000, 'a');
   CommMessage message;
@@ -86,7 +86,7 @@ TEST_F(TestTcpMessageHandler, 8_Header_1003_Data_8_Header_1003_Data) {
 
 TEST_F(TestTcpMessageHandler, 8_Header_4084_Data_4_Header_4_header_4084_data) {
   TcpMessageHandler handler;
-  handler.SetCallback([this](const CommMessage &message) { EXPECT_EQ(message.data().size(), 4081); });
+  handler.SetCallback([this](std::shared_ptr<CommMessage> message) { EXPECT_EQ(message->data().size(), 4081); });
 
   std::string data(4081, 'a');
   CommMessage message;
@@ -126,7 +126,7 @@ TEST_F(TestTcpMessageHandler, 8_Header_4084_Data_4_Header_4_header_4084_data) {
 
 TEST_F(TestTcpMessageHandler, 8_Header_4080_Data_8_Header_4080_data) {
   TcpMessageHandler handler;
-  handler.SetCallback([this](const CommMessage &message) { EXPECT_EQ(message.data().size(), 4077); });
+  handler.SetCallback([this](std::shared_ptr<CommMessage> message) { EXPECT_EQ(message->data().size(), 4077); });
 
   std::string data(4077, 'a');
   CommMessage message;

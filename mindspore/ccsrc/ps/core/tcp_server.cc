@@ -32,14 +32,7 @@
 namespace mindspore {
 namespace ps {
 namespace core {
-void TcpConnection::InitConnection() {
-  tcp_message_handler_.SetCallback([&](const CommMessage &message) {
-    OnServerReceiveMessage on_server_receive = server_->GetServerReceive();
-    if (on_server_receive) {
-      on_server_receive(*server_, *this, message);
-    }
-  });
-}
+void TcpConnection::InitConnection(const messageReceive &callback) { tcp_message_handler_.SetCallback(callback); }
 
 void TcpConnection::OnReadHandler(const void *buffer, size_t num) { tcp_message_handler_.ReceiveMessage(buffer, num); }
 
@@ -49,23 +42,30 @@ void TcpConnection::SendMessage(const void *buffer, size_t num) const {
   }
 }
 
-TcpServer *TcpConnection::GetServer() const { return const_cast<TcpServer *>(server_); }
+TcpServer *TcpConnection::GetServer() const { return server_; }
 
 const evutil_socket_t &TcpConnection::GetFd() const { return fd_; }
 
-void TcpConnection::SendMessage(const CommMessage &message) const {
+void TcpConnection::set_callback(const Callback &callback) { callback_ = callback; }
+
+bool TcpConnection::SendMessage(std::shared_ptr<CommMessage> message) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
-  size_t buf_size = message.ByteSizeLong();
+  MS_EXCEPTION_IF_NULL(message);
+  bufferevent_lock(buffer_event_);
+  bool res = true;
+  size_t buf_size = message->ByteSizeLong();
   std::vector<unsigned char> serialized(buf_size);
-  message.SerializeToArray(serialized.data(), SizeToInt(buf_size));
-  if (evbuffer_add(bufferevent_get_output(const_cast<struct bufferevent *>(buffer_event_)), &buf_size,
-                   sizeof(buf_size)) == -1) {
-    MS_LOG(EXCEPTION) << "Event buffer add header failed!";
+  message->SerializeToArray(serialized.data(), SizeToInt(buf_size));
+  if (bufferevent_write(buffer_event_, &buf_size, sizeof(buf_size)) == -1) {
+    MS_LOG(ERROR) << "Event buffer add header failed!";
+    res = false;
   }
-  if (evbuffer_add(bufferevent_get_output(const_cast<struct bufferevent *>(buffer_event_)), serialized.data(),
-                   buf_size) == -1) {
-    MS_LOG(EXCEPTION) << "Event buffer add protobuf data failed!";
+  if (bufferevent_write(buffer_event_, serialized.data(), buf_size) == -1) {
+    MS_LOG(ERROR) << "Event buffer add protobuf data failed!";
+    res = false;
   }
+  bufferevent_unlock(buffer_event_);
+  return res;
 }
 
 TcpServer::TcpServer(const std::string &address, std::uint16_t port)
@@ -225,7 +225,7 @@ void TcpServer::SendToAllClients(const char *data, size_t len) {
   }
 }
 
-void TcpServer::AddConnection(const evutil_socket_t &fd, const TcpConnection *connection) {
+void TcpServer::AddConnection(const evutil_socket_t &fd, std::shared_ptr<TcpConnection> connection) {
   MS_EXCEPTION_IF_NULL(connection);
   std::lock_guard<std::mutex> lock(connection_mutex_);
   connections_.insert(std::make_pair(fd, connection));
@@ -233,10 +233,10 @@ void TcpServer::AddConnection(const evutil_socket_t &fd, const TcpConnection *co
 
 void TcpServer::RemoveConnection(const evutil_socket_t &fd) {
   std::lock_guard<std::mutex> lock(connection_mutex_);
-  TcpConnection *connection = const_cast<TcpConnection *>(connections_.find(fd)->second);
-  delete connection;
   connections_.erase(fd);
 }
+
+std::shared_ptr<TcpConnection> TcpServer::GetConnectionByFd(const evutil_socket_t &fd) { return connections_[fd]; }
 
 void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, struct sockaddr *sockaddr, int,
                                  void *data) {
@@ -246,7 +246,7 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
   MS_EXCEPTION_IF_NULL(base);
   MS_EXCEPTION_IF_NULL(sockaddr);
 
-  struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE);
+  struct bufferevent *bev = bufferevent_socket_new(base, fd, BEV_OPT_CLOSE_ON_FREE | BEV_OPT_THREADSAFE);
   if (!bev) {
     MS_LOG(ERROR) << "Error constructing buffer event!";
     int ret = event_base_loopbreak(base);
@@ -256,23 +256,29 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
     return;
   }
 
-  TcpConnection *conn = server->onCreateConnection(bev, fd);
+  std::shared_ptr<TcpConnection> conn = server->onCreateConnection(bev, fd);
   MS_EXCEPTION_IF_NULL(conn);
 
-  conn->InitConnection();
   server->AddConnection(fd, conn);
-  bufferevent_setcb(bev, TcpServer::ReadCallback, nullptr, TcpServer::EventCallback, reinterpret_cast<void *>(conn));
+  conn->InitConnection([=](std::shared_ptr<CommMessage> message) {
+    OnServerReceiveMessage on_server_receive = server->GetServerReceive();
+    if (on_server_receive) {
+      on_server_receive(conn, message);
+    }
+  });
+  bufferevent_setcb(bev, TcpServer::ReadCallback, nullptr, TcpServer::EventCallback,
+                    reinterpret_cast<void *>(conn.get()));
   if (bufferevent_enable(bev, EV_READ | EV_WRITE) == -1) {
     MS_LOG(EXCEPTION) << "Buffer event enable read and write failed!";
   }
 }
 
-TcpConnection *TcpServer::onCreateConnection(struct bufferevent *bev, const evutil_socket_t &fd) {
-  TcpConnection *conn = nullptr;
+std::shared_ptr<TcpConnection> TcpServer::onCreateConnection(struct bufferevent *bev, const evutil_socket_t &fd) {
+  std::shared_ptr<TcpConnection> conn = nullptr;
   if (client_accept_) {
-    conn = const_cast<TcpConnection *>(client_accept_(*this));
+    conn = (client_accept_(*this));
   } else {
-    conn = new TcpConnection(bev, fd, this);
+    conn = std::make_shared<TcpConnection>(bev, fd, this);
   }
 
   return conn;
@@ -312,8 +318,8 @@ void TcpServer::EventCallback(struct bufferevent *bev, std::int16_t events, void
   MS_EXCEPTION_IF_NULL(data);
   struct evbuffer *output = bufferevent_get_output(bev);
   size_t remain = evbuffer_get_length(output);
-  auto conn = reinterpret_cast<TcpConnection *>(data);
-  TcpServer *srv = conn->GetServer();
+  auto conn = static_cast<class TcpConnection *>(data);
+  auto srv = conn->GetServer();
 
   if (events & BEV_EVENT_EOF) {
     MS_LOG(INFO) << "Event buffer end of file!";
@@ -355,13 +361,18 @@ void TcpServer::TimerOnceCallback(evutil_socket_t, int16_t, void *arg) {
   }
 }
 
-void TcpServer::SendMessage(const TcpConnection &conn, const CommMessage &message) { conn.SendMessage(message); }
+bool TcpServer::SendMessage(std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(message);
+  return conn->SendMessage(message);
+}
 
-void TcpServer::SendMessage(const CommMessage &message) {
+void TcpServer::SendMessage(std::shared_ptr<CommMessage> message) {
   std::lock_guard<std::mutex> lock(connection_mutex_);
+  MS_EXCEPTION_IF_NULL(message);
 
   for (auto it = connections_.begin(); it != connections_.end(); ++it) {
-    SendMessage(*it->second, message);
+    SendMessage(it->second, message);
   }
 }
 
@@ -371,7 +382,7 @@ std::string TcpServer::BoundIp() const { return server_address_; }
 
 int TcpServer::ConnectionNum() const { return connections_.size(); }
 
-const std::map<evutil_socket_t, const TcpConnection *> &TcpServer::Connections() const { return connections_; }
+const std::map<evutil_socket_t, std::shared_ptr<TcpConnection>> &TcpServer::Connections() const { return connections_; }
 
 void TcpServer::SetMessageCallback(const OnServerReceiveMessage &cb) { message_callback_ = cb; }
 

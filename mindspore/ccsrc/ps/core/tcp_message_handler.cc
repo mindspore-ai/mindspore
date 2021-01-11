@@ -57,8 +57,8 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
       }
 
       if (remaining_length_ == 0) {
-        CommMessage pb_message;
-        pb_message.ParseFromArray(message_buffer_.get(), message_length_);
+        std::shared_ptr<CommMessage> pb_message = std::make_shared<CommMessage>();
+        pb_message->ParseFromArray(message_buffer_.get(), message_length_);
         if (message_callback_) {
           message_callback_(pb_message);
         }

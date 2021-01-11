@@ -30,8 +30,6 @@
 #include <utility>
 #include <tuple>
 
-#include "proto/comm.pb.h"
-#include "proto/ps.pb.h"
 #include "ps/core/cluster_config.h"
 #include "ps/core/node_info.h"
 #include "ps/core/tcp_client.h"
