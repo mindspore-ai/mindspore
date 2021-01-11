@@ -45,10 +45,6 @@ STATUS TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
 
   attr->group = 1;
   attr->format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  if (attr->format == schema::Format_NCHW) {
-    MS_LOG(ERROR) << "TF Conv2D with data_format=NCHW is not supported now";
-    return RET_ERROR;
-  }
 
   std::vector<int64_t> dilations(2);
   auto status = ParseDilations(tf_op, attr->format, &dilations);
