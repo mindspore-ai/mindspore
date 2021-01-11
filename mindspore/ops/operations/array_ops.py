@@ -4761,7 +4761,7 @@ class Range(PrimitiveWithCheck):
         [0, 4, 8]
 
     Supported Platforms:
-        ``Ascend`` ``GPU``
+        ``GPU``
     """
 
     @prim_attr_register
