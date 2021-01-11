@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -118,13 +118,13 @@ class Profiler:
             bp_point = os.environ.get("PROFILING_BP_END", "")
 
             profiling_options = {
-                "result_path": self._output_path,
+                "output": self._output_path,
                 "fp_point": fp_point,
                 "bp_point": bp_point,
                 "training_trace": "on",
                 "task_trace": "on",
-                "ai_core_metrics": "PipeUtilization",
-                "aicpu_trace": "on"
+                "aic_metrics": "PipeUtilization",
+                "aicpu": "on"
             }
 
             profiling_options = json.dumps(profiling_options)
