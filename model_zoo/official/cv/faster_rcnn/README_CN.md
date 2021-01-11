@@ -52,7 +52,7 @@ Faster R-CNN是一个两阶段目标检测网络，该网络采用RPN，可以�
     - 使用Ascend处理器来搭建硬件环境。如需试用Ascend处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
 
 - 获取基础镜像
-    - [Ascend Hub](ascend.huawei.com/ascendhub/#/home)
+    - [Ascend Hub](https://ascend.huawei.com/ascendhub/#/home)
 
 - 安装[MindSpore](https://www.mindspore.cn/install)。
 
@@ -114,7 +114,7 @@ sh run_distribute_train_ascend.sh [RANK_TABLE_FILE] [PRETRAINED_MODEL]
 sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 #推理
-sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
 ```
 
 # 在docker上运行
@@ -154,7 +154,7 @@ sh run_eval_ascend.sh [VALIDATION_JSON_FILE] [CHECKPOINT_PATH]
 
 ```shell
 # 推理
-sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
 ```
 
 # 脚本说明
@@ -300,7 +300,7 @@ python export.py --ckpt_file [CKPT_PATH] --device_target [DEVICE_TARGET] --file_
 
 ```shell
 # Ascend310 inference
-sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
+sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH] [DEVICE_ID]
 ```
 
 ### 结果
@@ -341,7 +341,7 @@ sh run_infer_310.sh [AIR_PATH] [DATA_PATH] [ANN_FILE_PATH]
 | 速度 | 1卡：190毫秒/步；8卡：200毫秒/步 |
 | 总时间 | 1卡：37.17小时；8卡：4.89小时 |
 | 参数(M) | 250 |
-| 脚本 | [Faster R-CNN脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/office/cv/faster_rcnn) |
+| 脚本 | [Faster R-CNN脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/faster_rcnn) |
 
 ### 评估性能
 
