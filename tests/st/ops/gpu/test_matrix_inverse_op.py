@@ -22,6 +22,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
 
+np.random.seed(1)
 
 class NetMatrixInverse(nn.Cell):
     def __init__(self):
@@ -39,7 +40,7 @@ def test_matrix_inverse():
     x0_np = np.random.uniform(-2, 2, (3, 4, 4)).astype(np.float32)
     x0 = Tensor(x0_np)
     expect0 = inv(x0_np)
-    error0 = np.ones(shape=expect0.shape) * 1.0e-5
+    error0 = np.ones(shape=expect0.shape) * 1.0e-3
 
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     matrix_inverse = NetMatrixInverse()
