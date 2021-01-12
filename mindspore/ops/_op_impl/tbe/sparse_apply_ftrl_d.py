@@ -36,14 +36,10 @@ sparse_apply_ftrl_d_op_info = TBERegOp("SparseApplyFtrl") \
     .output(0, "var", False, "required", "all") \
     .output(1, "accum", False, "required", "all") \
     .output(2, "linear", False, "required", "all") \
-    .dtype_format(DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW,
-                  DataType.I32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW) \
     .dtype_format(DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC,
                   DataType.I32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
                   DataType.I32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW,
-                  DataType.I64_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW) \
     .dtype_format(DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC,
                   DataType.I64_NHWC, DataType.F32_NHWC, DataType.F32_NHWC, DataType.F32_NHWC) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
