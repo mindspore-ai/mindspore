@@ -29,8 +29,6 @@
 #include "utils/shape_utils.h"
 
 namespace mindspore {
-// length of string "dynamic"
-const int kDynamic = 7;
 namespace abstract {
 ValuePtr ValueJoin(const ValuePtr &value1, const ValuePtr &value2);
 TypePtr TypeJoin(const TypePtr &type1, const TypePtr &type2);
