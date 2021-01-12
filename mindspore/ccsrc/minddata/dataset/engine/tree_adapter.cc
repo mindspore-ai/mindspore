@@ -21,6 +21,9 @@
 #include "minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/opt/post/auto_worker_pass.h"
+#ifdef ENABLE_PYTHON
+#include "minddata/dataset/engine/opt/post/generator_node_pass.h"
+#endif
 #include "minddata/dataset/engine/opt/pre/cache_validation_pass.h"
 #include "minddata/dataset/engine/opt/pre/deep_copy_pass.h"
 #include "minddata/dataset/engine/opt/pre/epoch_ctrl_pass.h"
@@ -86,6 +89,9 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
     // skip this for getter pass
     actions.emplace_back(std::make_unique<AutoWorkerPass>());
   }
+#ifdef ENABLE_PYTHON
+  actions.emplace_back(std::make_unique<GeneratorNodePass>());
+#endif
 
   // We will gradually move RepeatPass from ExecutionTree::PrepareTreePostAction to here.
 

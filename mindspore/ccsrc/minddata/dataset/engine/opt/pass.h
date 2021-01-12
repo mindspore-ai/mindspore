@@ -31,6 +31,7 @@ class BatchNode;
 class BucketBatchByLengthNode;
 class BuildVocabNode;
 class ConcatNode;
+class EpochCtrlNode;
 class FilterNode;
 class MapNode;
 class ProjectNode;
@@ -43,6 +44,7 @@ class TakeNode;
 class TransferNode;
 class ZipNode;
 #ifdef ENABLE_PYTHON
+class GeneratorNode;
 class SyncWaitNode;
 #endif
 #ifndef ENABLE_ANDROID
@@ -198,8 +200,14 @@ class IRNodePass : public IRPass {
   virtual Status VisitAfter(std::shared_ptr<BuildVocabNode> node, bool *const modified);
   virtual Status Visit(std::shared_ptr<ConcatNode> node, bool *const modified);
   virtual Status VisitAfter(std::shared_ptr<ConcatNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<EpochCtrlNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<EpochCtrlNode> node, bool *const modified);
   virtual Status Visit(std::shared_ptr<FilterNode> node, bool *const modified);
   virtual Status VisitAfter(std::shared_ptr<FilterNode> node, bool *const modified);
+#ifdef ENABLE_PYTHON
+  virtual Status Visit(std::shared_ptr<GeneratorNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<GeneratorNode> node, bool *const modified);
+#endif
   virtual Status Visit(std::shared_ptr<MapNode> node, bool *const modified);
   virtual Status VisitAfter(std::shared_ptr<MapNode> node, bool *const modified);
   virtual Status Visit(std::shared_ptr<ProjectNode> node, bool *const modified);

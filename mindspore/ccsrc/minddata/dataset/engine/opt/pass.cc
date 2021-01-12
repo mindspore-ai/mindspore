@@ -22,6 +22,7 @@
 #endif
 #include "minddata/dataset/engine/ir/datasetops/build_vocab_node.h"
 #include "minddata/dataset/engine/ir/datasetops/concat_node.h"
+#include "minddata/dataset/engine/ir/datasetops/epoch_ctrl_node.h"
 #include "minddata/dataset/engine/ir/datasetops/filter_node.h"
 #include "minddata/dataset/engine/ir/datasetops/map_node.h"
 #include "minddata/dataset/engine/ir/datasetops/project_node.h"
@@ -31,6 +32,7 @@
 #include "minddata/dataset/engine/ir/datasetops/shuffle_node.h"
 #include "minddata/dataset/engine/ir/datasetops/skip_node.h"
 #ifdef ENABLE_PYTHON
+#include "minddata/dataset/engine/ir/datasetops/source/generator_node.h"
 #include "minddata/dataset/engine/ir/datasetops/sync_wait_node.h"
 #endif
 #include "minddata/dataset/engine/ir/datasetops/take_node.h"
@@ -179,12 +181,26 @@ Status IRNodePass::Visit(std::shared_ptr<ConcatNode> node, bool *const modified)
 Status IRNodePass::VisitAfter(std::shared_ptr<ConcatNode> node, bool *const modified) {
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
+Status IRNodePass::Visit(std::shared_ptr<EpochCtrlNode> node, bool *const modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status IRNodePass::VisitAfter(std::shared_ptr<EpochCtrlNode> node, bool *const modified) {
+  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
+}
 Status IRNodePass::Visit(std::shared_ptr<FilterNode> node, bool *const modified) {
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }
 Status IRNodePass::VisitAfter(std::shared_ptr<FilterNode> node, bool *const modified) {
   return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
 }
+#ifdef ENABLE_PYTHON
+Status IRNodePass::Visit(std::shared_ptr<GeneratorNode> node, bool *const modified) {
+  return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+Status IRNodePass::VisitAfter(std::shared_ptr<GeneratorNode> node, bool *const modified) {
+  return VisitAfter(std::static_pointer_cast<DatasetNode>(node), modified);
+}
+#endif
 Status IRNodePass::Visit(std::shared_ptr<MapNode> node, bool *const modified) {
   return Visit(std::static_pointer_cast<DatasetNode>(node), modified);
 }

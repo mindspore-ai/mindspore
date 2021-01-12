@@ -258,7 +258,7 @@ void DatasetNode::PrintTree(std::ostream &out) const {
 
 void DatasetNode::PrintNode(std::ostream &out, int *level) const {
   const std::string prefix = "+-";
-  const std::string indent = "  ";
+  const std::string indent = "| ";
   out << prefix;
   Print(out);
   for (const auto &c : this->Children()) {

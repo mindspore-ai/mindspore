@@ -28,30 +28,33 @@ namespace mindspore {
 namespace dataset {
 
 // Constructor for EpochCtrlNode
-EpochCtrlNode::EpochCtrlNode(std::shared_ptr<DatasetNode> child, int32_t num_epochs) : num_epochs_(num_epochs) {
+EpochCtrlNode::EpochCtrlNode(std::shared_ptr<DatasetNode> child, int32_t num_epochs) : RepeatNode() {
   // The root node's parent must set to null pointer.
   this->AddChild(child);
+  repeat_count_ = num_epochs;
 }
 
 std::shared_ptr<DatasetNode> EpochCtrlNode::Copy() {
-  auto node = std::make_shared<EpochCtrlNode>(num_epochs_);
+  auto node = std::make_shared<EpochCtrlNode>(repeat_count_);
   return node;
 }
 
-void EpochCtrlNode::Print(std::ostream &out) const { out << Name() + "(epoch:" + std::to_string(num_epochs_) + ")"; }
+void EpochCtrlNode::Print(std::ostream &out) const { out << Name() + "(epoch:" + std::to_string(repeat_count_) + ")"; }
 
 // Function to build the EpochCtrlOp
 Status EpochCtrlNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
-  node_ops->push_back(std::make_shared<EpochCtrlOp>(num_epochs_));
+  auto new_op_ = std::make_shared<EpochCtrlOp>(repeat_count_);
+  node_ops->push_back(new_op_);
+  op_ = new_op_;
   return Status::OK();
 }
 
 // Function to validate the parameters for EpochCtrlNode
 Status EpochCtrlNode::ValidateParams() {
   RETURN_IF_NOT_OK(DatasetNode::ValidateParams());
-  if (num_epochs_ <= 0 && num_epochs_ != -1) {
+  if (repeat_count_ <= 0 && repeat_count_ != -1) {
     std::string err_msg =
-      "EpochCtrlNode: num_epochs should be either -1 or positive integer, num_epochs: " + std::to_string(num_epochs_);
+      "EpochCtrlNode: num_epochs should be either -1 or positive integer, num_epochs: " + std::to_string(repeat_count_);
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
@@ -63,5 +66,16 @@ Status EpochCtrlNode::ValidateParams() {
   return Status::OK();
 }
 
+// Visitor accepting method for IRNodePass
+Status EpochCtrlNode::Accept(IRNodePass *p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<EpochCtrlNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status EpochCtrlNode::AcceptAfter(IRNodePass *p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<EpochCtrlNode>(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

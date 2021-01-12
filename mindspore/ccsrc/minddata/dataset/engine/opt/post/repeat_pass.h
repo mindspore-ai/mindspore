@@ -112,19 +112,6 @@ class RepeatPass : public NodePass {
   Status RunOnNode(std::shared_ptr<DatasetOp> node, bool *const modified) override;
 
  private:
-  /// \brief Adds an operator to the eoe operator stack save area
-  /// \param op - The dataset op to work add to eoe stack
-  /// \return Status The status code returned
-  void AddToEOEOpStack(std::shared_ptr<DatasetOp> dataset_op);
-
-  /// \brief Pops an operator from the eoe operator stack save area
-  /// \return shared_ptr to the popped operator
-  std::shared_ptr<DatasetOp> PopFromEOEOpStack();
-
-  bool is_repeated_;                                     // T/F if we are processing under a repeat
-  int32_t nested_repeats_;                               // A counter for nested repeats
-  std::stack<std::unique_ptr<op_stack>> eoe_op_stacks_;  // A save area for leaf/eoe ops (with nesting)
-
   /// \brief Adds an operator to the cached operator stack save area
   /// \param op - The dataset op to work add to cached stack
   /// \return Status The status code returned
