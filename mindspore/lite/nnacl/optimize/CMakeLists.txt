@@ -23,4 +23,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8.2-a+dotprod+fp16")
 
 add_library(nnacl_optimize_mid OBJECT ${SDOT_FILES})
 
-add_library(nnacl_fp16_mid OBJECT ${FP16_FILES})
+if (ENABLE_FP16)
+    add_library(nnacl_fp16_mid OBJECT ${FP16_FILES})
+endif ()

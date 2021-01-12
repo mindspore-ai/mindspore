@@ -128,8 +128,9 @@ endif ()
 if (PLATFORM_ARM64)
     target_link_libraries(mindspore-lite cpu_opt_kernel_mid nnacl_optimize_mid)
     target_link_libraries(mindspore-lite_static cpu_opt_kernel_mid nnacl_optimize_mid)
-
-    target_link_libraries(mindspore-lite cpu_fp16_kernel_mid nnacl_fp16_mid)
-    target_link_libraries(mindspore-lite_static cpu_fp16_kernel_mid nnacl_fp16_mid)
+    if (ENABLE_FP16)
+        target_link_libraries(mindspore-lite cpu_fp16_kernel_mid nnacl_fp16_mid)
+        target_link_libraries(mindspore-lite_static cpu_fp16_kernel_mid nnacl_fp16_mid)
+    endif ()
 endif ()
 

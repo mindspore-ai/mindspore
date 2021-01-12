@@ -474,9 +474,14 @@ kernel::SubGraphKernel *Scheduler::CreateSubGraphKernel(const std::vector<kernel
 #endif
   }
   if (type == kernel::kCpuFP16SubGraph) {
+#ifdef ENABLE_FP16
     auto sub_kernel = new (std::nothrow)
       kernel::CpuFp16SubGraph(input_tensors, output_tensors, input_kernels, output_kernels, kernels, context_);
     return sub_kernel;
+#else
+    MS_LOG(ERROR) << "FP16 subgraph is not supported!";
+    return nullptr;
+#endif
   }
   if (type == kernel::kCpuFP32SubGraph) {
     auto sub_kernel = new (std::nothrow)
