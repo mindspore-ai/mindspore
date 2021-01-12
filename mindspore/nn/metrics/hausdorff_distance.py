@@ -70,9 +70,9 @@ class HausdorffDistance(Metric):
     Given two feature sets A and B, the Hausdorff distance between two point sets A and B is defined as follows:
 
     .. math::
-        \text{H}(A, B) = \text{max}[\text{h}(A, B), \text{h}(B, A)]
-        \text{h}(A, B) = \underset{a \in A}{\text{max}}\{\underset{b \in B}{\text{min}} \rVert a - b \rVert \}
-        \text{h}(A, B) = \underset{b \in B}{\text{max}}\{\underset{a \in A}{\text{min}} \rVert b - a \rVert \}
+        H(A, B) = \text{max}[h(A, B), h(B, A)]
+        h(A, B) = \underset{a \in A}{\text{max}}\{\underset{b \in B}{\text{min}} \rVert a - b \rVert \}
+        h(A, B) = \underset{b \in B}{\text{max}}\{\underset{a \in A}{\text{min}} \rVert b - a \rVert \}
 
     Args:
         distance_metric (string): The parameter of calculating Hausdorff distance supports three measurement methods,
