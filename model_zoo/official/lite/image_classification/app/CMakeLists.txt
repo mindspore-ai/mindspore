@@ -6,29 +6,37 @@
 cmake_minimum_required(VERSION 3.4.1)
 
 set(CMAKE_VERBOSE_MAKEFILE on)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY  ${CMAKE_SOURCE_DIR}/libs/${ANDROID_ABI})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/libs/${ANDROID_ABI})
 
-set(MINDSPORELITE_VERSION  mindspore-lite-1.0.1-runtime-arm64-cpu)
+set(MINDSPORELITE_VERSION mindspore-lite-1.1.0-inference-android)
 
 # ============== Set MindSpore Dependencies. =============
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/third_party/flatbuffers/include)
+include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/third_party/hiai_ddk/lib/aarch64)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION})
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/include)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/include/ir/dtype)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/include/schema)
 include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/minddata/include)
 
-add_library(mindspore-lite SHARED IMPORTED )
-add_library(minddata-lite SHARED IMPORTED )
-add_library(libmindspore-lite-fp16 SHARED IMPORTED )
+add_library(mindspore-lite SHARED IMPORTED)
+add_library(minddata-lite SHARED IMPORTED)
+add_library(hiai SHARED IMPORTED)
+add_library(hiai_ir SHARED IMPORTED)
+add_library(hiai_ir_build SHARED IMPORTED)
 
 set_target_properties(mindspore-lite PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libmindspore-lite.so)
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/aarch64/libmindspore-lite.so)
 set_target_properties(minddata-lite PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/minddata/lib/libminddata-lite.so)
-set_target_properties(libmindspore-lite-fp16 PROPERTIES IMPORTED_LOCATION
-        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libmindspore-lite-fp16.so)
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/minddata/lib/aarch64/libminddata-lite.so)
+set_target_properties(hiai PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/third_party/hiai_ddk/lib/aarch64/libhiai.so)
+set_target_properties(hiai_ir PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/third_party/hiai_ddk/lib/aarch64/libhiai_ir.so)
+set_target_properties(hiai_ir_build PROPERTIES IMPORTED_LOCATION
+        ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/third_party/hiai_ddk/lib/aarch64/libhiai_ir_build.so)
+
 # --------------- MindSpore Lite set End. --------------------
 
 
@@ -37,7 +45,7 @@ set_target_properties(libmindspore-lite-fp16 PROPERTIES IMPORTED_LOCATION
 # You can define multiple libraries, and CMake builds them for you.
 # Gradle automatically packages shared libraries with your APK.
 
-file(GLOB_RECURSE cpp_src "src/main/cpp/*.cpp"  "src/main/cpp/*.h")
+file(GLOB_RECURSE cpp_src "src/main/cpp/*.cpp" "src/main/cpp/*.h")
 
 add_library( # Sets the name of the library.
         mlkit-label-MS
@@ -60,10 +68,10 @@ find_library( # Sets the name of the path variable.
 
         # Specifies the name of the NDK library that
         # you want CMake to locate.
-        log )
+        log)
 
 
-find_library( jnigraphics-lib jnig·raphics )
+find_library(jnigraphics-lib jnig·raphics)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
@@ -75,7 +83,10 @@ target_link_libraries( # Specifies the target library.
         # --- mindspore ---
         minddata-lite
         mindspore-lite
-        libmindspore-lite-fp16
+        hiai
+        hiai_ir
+        hiai_ir_build
+        #        libmindspore-lite-fp16
 
         # --- other dependencies.---
         -ljnigraphics
