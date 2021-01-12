@@ -53,7 +53,7 @@ class Somas {
   void DumpSomasMemoryIR(const string filename);
 
   static bool NodeSort(SomasNodePtr, SomasNodePtr);
-  std::vector<DynamicBitSet> tensor_relation;
+  std::vector<DynamicBitSet> reuse_matrix_;
 
  private:
   // Maps
@@ -128,6 +128,14 @@ class Somas {
   SomasParameterPtr CreateSomasParameters(AnfNodePtr node, size_t index);
   void InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel);
   void InitAtomicCleanInputs(bool is_all_nop_node, const CNodePtr &kernel);
+  void ComputeOneTensorConflicts(const std::shared_ptr<SomasTensor> &calc_tensor,
+                                 const std::vector<SomasTensorPtr> &all_tensors_list,
+                                 const vector<DynamicBitSet> &nodes_dependency,
+                                 std::vector<DynamicBitSet> *tensor_relation) const;
+  void ComputeMultiTensorConflicts(const std::vector<SomasTensorPtr> &calc_tensors_list,
+                                   const std::vector<SomasTensorPtr> &all_tensors_list,
+                                   const vector<DynamicBitSet> &nodes_dependency,
+                                   std::vector<DynamicBitSet> *tensor_relation) const;
 };
 
 using SomasPtr = std::shared_ptr<Somas>;
