@@ -375,7 +375,7 @@ class MultiFieldEmbeddingLookup(EmbeddingLookup):
           Specifies the field id of elements of the input_indices. Type is Int32.
 
     Outputs:
-        Tensor, the shape of tensor is :math:`(batch_size, field_size, embedding_size)`. Type is Float32.
+        Tensor, the shape of tensor is :math:`(batch\_size, field\_size, embedding\_size)`. Type is Float32.
 
     Supported Platforms:
         ``Ascend`` ``GPU``
