@@ -2035,6 +2035,58 @@ class DivNoNan(_MathBinaryOp):
         return None
 
 
+class MulNoNan(_MathBinaryOp):
+    r"""
+    Computes x * y element-wise. if y is zero, No matter what x is, it will return 0.
+
+    Inputs of `input_x` and `input_y` comply with the implicit type conversion rules to make the data types consistent.
+    The inputs must be two tensors or one tensor and one scalar.
+    When the inputs are two tensors, the shapes of them could be broadcast.
+    When the inputs are one tensor and one scalar, the scalar could only be a constant.
+
+    Note:
+        The shapes of X and y should be same or can be broadcasting.
+
+    Inputs:
+        - **input_x** (Union[Tensor]) - The first input is a tensor whose data type is number.
+        - **input_y** (Union[Tensor]) - The second input is a tensor whose data type is number.
+
+    Outputs:
+        Tensor, the shape is the same as the one after broadcasting,
+        and the data type is the one with higher precision or higher digits among the two inputs.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Raise:
+        TypeError: If x or y is a bool tensor.
+
+    Examples:
+        >>> x = Tensor(np.array([[-1.0, 6.0, np.inf], [np.nan, -7.0, 4.0]]), ms.float32)
+        >>> y = Tensor(np.array([[-1.0, 4.0, 0], [0, -3.0, 1.0]]), ms.float32)
+        >>> mul_no_nan = ops.MulNoNan()
+        >>> output = mul_no_nan(x, y)
+        >>> print(output)
+        [[ 1. 24. 0.]
+        [ 0. 21. 4.]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize _BinaryOp"""
+        self.init_prim_io_names(inputs=['x', 'y'], outputs=['output'])
+
+    def infer_value(self, x, y):
+        if x is not None and y is not None:
+            x = x.asnumpy()
+            y = y.asnumpy()
+            with np.errstate(divide='ignore', invalid='ignore'):
+                out = np.multiply(x, y)
+                out[y == 0] = 0
+            return out
+        return None
+
+
 class FloorDiv(_MathBinaryOp):
     """
     Divides the first input tensor by the second input tensor element-wise and round down to the closest integer.
@@ -4040,6 +4092,7 @@ class LinSpace(PrimitiveWithInfer):
                'dtype': start['dtype'],
                'value': None}
         return out
+
 
 class MatrixInverse(PrimitiveWithInfer):
     """
