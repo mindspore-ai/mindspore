@@ -165,11 +165,10 @@ int BatchNormOpenCLKernel::Initweight() {
 int BatchNormOpenCLKernel::Prepare() {
   use_fp16_enable_ = ocl_runtime_->GetFp16Enable();
   std::string kernel_name = "Batch_normalization_NHWC4";
-  std::set<std::string> build_options;
   std::string source = batchnorm_source;
   std::string program_name = "Batch_normalization";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   int ret = Initweight();
   if (ret) {

@@ -212,13 +212,12 @@ int LayerNormOpenCLKernel::Prepare() {
   }
   std::string kernel_name = "LayerNormalization_NHWC4";
   std::string kernel_name_mean_var = "ComputeMeanVar";
-  std::set<std::string> build_options;
   std::string source = layer_norm_source;
   std::string program_name = "LayerNormalization";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
   kernel_name_mean_var += "Dim" + std::to_string(normalized_dims_) + "NHWC4";
-  ocl_runtime_->BuildKernel(kernel_mean_var_, program_name, kernel_name_mean_var, build_options);
+  ocl_runtime_->BuildKernel(kernel_mean_var_, program_name, kernel_name_mean_var);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   SetConstArgs();
   SetGlobalLocal();

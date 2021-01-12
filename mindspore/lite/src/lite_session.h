@@ -128,7 +128,7 @@ class LiteSession : public session::LiteSession {
   Model *model_ = nullptr;
   std::atomic<bool> is_running_ = false;
 #if SUPPORT_GPU && !SUPPORT_TRAIN
-  opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
+  opencl::OpenCLRuntimeWrapper *opencl_runtime_wrapper_{nullptr};
 #endif
 };
 }  // namespace lite

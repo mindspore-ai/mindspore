@@ -74,18 +74,22 @@ bool UnLoadOpenCLLibrary(void *handle) {
   return true;
 }
 
-bool LoadLibraryFromPath(const std::string &library_path, void *handle) {
-  handle = dlopen(library_path.c_str(), RTLD_NOW | RTLD_LOCAL);
-  if (handle == nullptr) {
+bool LoadLibraryFromPath(const std::string &library_path, void **handle_ptr) {
+  if (handle_ptr == nullptr) {
+    return false;
+  }
+
+  *handle_ptr = dlopen(library_path.c_str(), RTLD_NOW | RTLD_LOCAL);
+  if (*handle_ptr == nullptr) {
     return false;
   }
 
 // load function ptr use dlopen and dlsym.
 #define LOAD_OPENCL_FUNCTION_PTR(func_name)                                                    \
-  func_name = reinterpret_cast<func_name##Func>(dlsym(handle, #func_name));                    \
+  func_name = reinterpret_cast<func_name##Func>(dlsym(*handle_ptr, #func_name));               \
   if (func_name == nullptr) {                                                                  \
     MS_LOG(ERROR) << "load func (" << #func_name << ") from (" << library_path << ") failed!"; \
-    UnLoadOpenCLLibrary(handle);                                                               \
+    UnLoadOpenCLLibrary(*handle_ptr);                                                          \
     return false;                                                                              \
   }
 
@@ -160,13 +164,16 @@ bool LoadLibraryFromPath(const std::string &library_path, void *handle) {
   return true;
 }
 // load default library path
-bool LoadOpenCLLibrary(void *handle) {
-  if (handle != nullptr) {
+bool LoadOpenCLLibrary(void **handle_ptr) {
+  if (handle_ptr == nullptr) {
+    return false;
+  }
+  if (*handle_ptr != nullptr) {
     return true;
   }
-  auto it = std::find_if(
-    g_opencl_library_paths.begin(), g_opencl_library_paths.end(),
-    [&handle](const std::string &lib_path) { return lite::opencl::LoadLibraryFromPath(lib_path, handle); });
+  auto it =
+    std::find_if(g_opencl_library_paths.begin(), g_opencl_library_paths.end(),
+                 [&](const std::string &lib_path) { return lite::opencl::LoadLibraryFromPath(lib_path, handle_ptr); });
   if (it != g_opencl_library_paths.end()) {
     MS_LOG(DEBUG) << "Find a OpenCL dynamic library : " << *it;
     return true;

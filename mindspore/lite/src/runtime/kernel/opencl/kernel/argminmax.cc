@@ -139,11 +139,10 @@ int ArgMinMaxOpenCLKernel::Prepare() {
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
 
-  std::set<std::string> build_options;
   std::string source = argminmax_source;
   std::string program_name = "argminmax";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
 
   InitWeights();
