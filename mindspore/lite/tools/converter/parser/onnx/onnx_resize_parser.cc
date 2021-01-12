@@ -41,7 +41,7 @@ lite::PrimitiveC *OnnxResizeParser::ParseLitePrimitive(const onnx::GraphProto &o
         {"pytorch_half_pixel", schema::CoordinateTransformMode_HALF_PIXEL},
         {"align_corners", schema::CoordinateTransformMode_ALIGN_CORNERS},
         {"asymmetric", schema::CoordinateTransformMode_ASYMMETRIC},
-        {"tf_crop_and_resize", schema::CoordinateTransformMode_CROP_AND_RESIZE},
+        {"tf_crop_and_resize", schema::CoordinateTransformMode_TF_CROP_AND_RESIZE},
       };
       if (transform_map.find(onnx_node_attr.s()) != transform_map.end()) {
         attr->coordinateTransformMode = transform_map[onnx_node_attr.s()];
