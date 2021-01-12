@@ -1,6 +1,9 @@
 # Contents
 
-- [CenterFace Description](#CenterFace-description)
+<!-- TOC -->
+
+- [Contents](#contents)
+- [CenterFace Description](#centerface-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
@@ -11,7 +14,7 @@
     - [Training Process](#training-process)
         - [Training](#training)
     - [Testing Process](#testing-process)
-        - [Evaluation](#testing)
+        - [Testing](#testing)
     - [Evaluation Process](#evaluation-process)
         - [Evaluation](#evaluation)
     - [Convert Process](#convert-process)
@@ -20,7 +23,10 @@
     - [Performance](#performance)
         - [Evaluation Performance](#evaluation-performance)
         - [Inference Performance](#inference-performance)
+- [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
+
+<!-- /TOC -->
 
 # [CenterFace Description](#contents)
 
@@ -80,8 +86,8 @@ other datasets need to use the same format as WiderFace.
 - Framework
     - [MindSpore](https://cmc-szv.clouddragon.huawei.com/cmcversion/index/search?searchKey=Do-MindSpore%20V100R001C00B622)
 - For more information, please check the resources below：
-    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
-    - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
+    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Quick Start](#contents)
 
@@ -226,7 +232,7 @@ sh eval_all.sh
 the command is: python train.py [train parameters]
 Major parameters train.py as follows:
 
-```python
+```text
 --lr: learning rate
 --per_batch_size: batch size on each device
 --is_distributed: multi-device or not

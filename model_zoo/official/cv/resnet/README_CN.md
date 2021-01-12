@@ -491,7 +491,7 @@ result:{'top_5_accuracy':0.9342589628681178, 'top_1_accuracy':0.768065781049936}
 
 # 随机情况说明
 
-[dataset.py](http://dataset.py/)中设置了“create_dataset”函数内的种子，同时还使用了train.py中的随机种子。
+`dataset.py`中设置了“create_dataset”函数内的种子，同时还使用了train.py中的随机种子。
 
 # ModelZoo主页
 

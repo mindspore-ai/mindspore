@@ -2,11 +2,15 @@
 
 <!-- TOC -->
 
+- [目录](#目录)
 - [概述](#概述)
 - [数据集](#数据集)
 - [环境要求](#环境要求)
 - [快速入门](#快速入门)
 - [脚本详述](#脚本详述)
+    - [模型准备](#模型准备)
+    - [模型训练](#模型训练)
+- [工程目录](#工程目录)
 
 <!-- /TOC -->
 
@@ -14,7 +18,7 @@
 
 本文主要讲解如何在端侧进行LeNet模型训练。首先在服务器或个人笔记本上进行模型转换；然后在安卓设备上训练模型。LeNet由2层卷积和3层全连接层组成，模型结构简单，因此可以在设备上快速训练。
 
-# Dataset
+# 数据集
 
 本例使用[MNIST手写字数据集](http://yann.lecun.com/exdb/mnist/)
 
@@ -40,8 +44,9 @@ mnist/
 # 环境要求
 
 - 服务器或个人笔记本
-    - [MindSpore Framework](https://www.mindspore.cn/install/en): 建议使用Docker安装
-    - [MindSpore ToD Framework](https://www.mindspore.cn/tutorial/tod/en/use/prparation.html)
+    - [MindSpore Framework](https://www.mindspore.cn/install): 建议使用Docker安装
+    - [MindSpore ToD Download](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/downloads.html)
+    - [MindSpore ToD Build](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/build.html)
     - [Android NDK r20b](https://dl.google.com/android/repository/android-ndk-r20b-linux-x86_64.zip)
     - [Android SDK](https://developer.android.com/studio?hl=zh-cn#cmdline-tools)
 - Android移动设备

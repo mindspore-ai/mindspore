@@ -2,10 +2,14 @@
 
 <!-- TOC -->
 
+- [目录](#目录)
 - [概述](#概述)
-- [数据集](#环境要求)
+- [数据集](#数据集)
 - [环境要求](#环境要求)
 - [快速入门](#快速入门)
+- [脚本详述](#脚本详述)
+    - [模型准备](#模型准备)
+    - [模型训练](#模型训练)
 - [工程目录](#工程目录)
 
 <!-- /TOC -->
@@ -22,6 +26,7 @@
 - 数据格式：jpeg
 
 > 注意
+>
 > - 当前发布版本中，数据通过dataset.cc中自定义的`DataSet`类加载。我们使用[ImageMagick convert tool](https://imagemagick.org/)进行数据预处理，包括图像裁剪、转换为BMP格式。
 > - 本例将使用10分类而不是365类。
 > - 训练、验证和测试数据集的比例分别是3:1:1。
@@ -42,7 +47,8 @@ places
 
 - 服务端
     - [MindSpore Framework](https://www.mindspore.cn/install/en) - 建议使用安装docker环境
-    - [MindSpore ToD Framework](https://www.mindspore.cn/tutorial/tod/en/use/prparation.html)
+    - [MindSpore ToD Download](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/downloads.html)
+    - [MindSpore ToD Build](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/build.html)
     - [Android NDK r20b](https://dl.google.com/android/repository/android-ndk-r20b-linux-x86_64.zip)
     - [Android SDK](https://developer.android.com/studio?hl=zh-cn#cmdline-tools)
     - [ImageMagick convert tool](https://imagemagick.org/)

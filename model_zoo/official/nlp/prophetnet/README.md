@@ -550,8 +550,8 @@ The comparisons between MASS and other baseline methods in terms of PPL on Corne
 - Framework
     - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
-    - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
+    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 ## Requirements
 
@@ -562,7 +562,7 @@ subword-nmt
 rouge
 ```
 
-<https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/network_migration.html>
+<https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html>
 
 # Get started
 
@@ -624,7 +624,7 @@ Get the log and output files under the path `./train_mass_*/`, and the model fil
 
 ## Inference
 
-If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/network_migration.html).
+If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html).
 For inference, config the options in `config.json` firstly:
 
 - Assign the `test_dataset` under `dataset_config` node to the dataset path.

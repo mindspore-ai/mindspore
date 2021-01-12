@@ -11,18 +11,18 @@
 - [环境要求](#环境要求)
 - [快速入门](#快速入门)
 - [脚本说明](#脚本说明)
-  - [脚本及样例代码](#脚本及样例代码)
-  - [脚本参数](#脚本参数)
-  - [训练过程](#训练过程)
+    - [脚本及样例代码](#脚本及样例代码)
+    - [脚本参数](#脚本参数)
+    - [训练过程](#训练过程)
         - [训练](#训练)
         - [训练结果](#训练结果)
-  - [评估过程](#评估过程)
+    - [评估过程](#评估过程)
         - [评估](#评估)
 - [模型描述](#模型描述)
-  - [性能](#性能)
+    - [性能](#性能)
         - [训练性能](#训练性能)
         - [评估性能](#评估性能)
-  - [用法](#用法)
+    - [用法](#用法)
         - [推理](#推理)
         - [在预训练模型上继续训练](#在预训练模型上继续训练)
 - [ModelZoo主页](#modelzoo主页)
@@ -101,12 +101,12 @@ python src/preprocess_dataset.py
 
 - 框架
 
-  - [MindSpore](https://www.mindspore.cn/install)
+    - [MindSpore](https://www.mindspore.cn/install)
 
 - 如需查看详情，请参见如下资源：
-  - [MindSpore教程](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
 
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
 # 快速入门
 
