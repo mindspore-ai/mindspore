@@ -98,7 +98,7 @@ void AddControlEdge(const FuncGraphPtr &graph, const AnfNodePtr &node,
   auto depend_node = input_cnode->input(kControlDependBehindIndex);
   MS_EXCEPTION_IF_NULL(prior_node);
   MS_EXCEPTION_IF_NULL(depend_node);
-  PrimitivePtr prim_ptr = GetValueNode<PrimitivePtr>(input_cnode->input(0));
+  auto prim_ptr = GetValueNode<PrimitivePtr>(input_cnode->input(0));
   MS_EXCEPTION_IF_NULL(prim_ptr);
   ValuePtr mode_ptr = prim_ptr->GetAttr("depend_mode");
   int64_t depend_mode = 0;
@@ -214,7 +214,7 @@ std::vector<AnfNodePtr> SplitSort(const FuncGraphPtr &graph, const std::string &
   std::map<AnfNodePtr, std::vector<AnfNodePtr>> control_edges;
   CalcNodeRefCount(graph, &nodes_ref, &control_edges);
   std::string handle_target = default_target;
-  std::string next_target = "";
+  std::string next_target;
   to_visit.push(graph->get_return());
   while (!to_visit.empty() || !next_to_visit.empty()) {
     if (to_visit.empty()) {
@@ -590,10 +590,10 @@ struct SplitDynamicNodesHelper {
     if (pre_nodes.size() < merge_node_threshold) {
       AddSegment(pre_nodes, segments, node_to_segment);
     } else {
-      if (pre_common_nodes.size() > 0) {
+      if (!pre_common_nodes.empty()) {
         AddSegment(pre_common_nodes, segments, node_to_segment);
       }
-      if (pre_dynamic_nodes.size() > 0) {
+      if (!pre_dynamic_nodes.empty()) {
         AddSegment(pre_dynamic_nodes, segments, node_to_segment);
       }
     }
@@ -656,7 +656,7 @@ void SplitDynamicNodeSegment(const std::vector<AnfNodePtr> &segment_nodes, std::
 
 void NodesToSegments(const std::vector<AnfNodePtr> &segment_nodes, std::vector<GraphSegmentPtr> *segments,
                      std::map<AnfNodePtr, GraphSegmentPtr> *node_to_segment) {
-  if (segment_nodes.size() == 0) {
+  if (segment_nodes.empty()) {
     return;
   }
   auto segment_target = GetCNodeTarget(segment_nodes[0]);
@@ -702,7 +702,7 @@ bool GraphPartition::IsCut(const AnfNodePtr &node) {
     if (!IsValueNode<Primitive>(fn)) {
       return true;
     }
-    PrimitivePtr node_prim = GetValueNode<PrimitivePtr>(fn);
+    auto node_prim = GetValueNode<PrimitivePtr>(fn);
     for (auto &prim : cut_list_) {
       MS_EXCEPTION_IF_NULL(prim);
       if (prim->name() == node_prim->name()) {
