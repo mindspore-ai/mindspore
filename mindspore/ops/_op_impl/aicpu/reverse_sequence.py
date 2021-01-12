@@ -35,18 +35,6 @@ reverse_sequence_op_info = AiCPURegOp("ReverseSequence") \
     .dtype_format(DataType.F16_Default, DataType.I32_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F64_Default, DataType.I32_Default, DataType.F64_Default) \
-    .dtype_format(DataType.BOOL_NCHW, DataType.I32_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.I8_NCHW, DataType.I32_NCHW, DataType.I8_NCHW) \
-    .dtype_format(DataType.I16_NCHW, DataType.I32_NCHW, DataType.I16_NCHW) \
-    .dtype_format(DataType.I32_NCHW, DataType.I32_NCHW, DataType.I32_NCHW) \
-    .dtype_format(DataType.I64_NCHW, DataType.I32_NCHW, DataType.I64_NCHW) \
-    .dtype_format(DataType.U8_NCHW, DataType.I32_NCHW, DataType.U8_NCHW) \
-    .dtype_format(DataType.U16_NCHW, DataType.I32_NCHW, DataType.U16_NCHW) \
-    .dtype_format(DataType.U32_NCHW, DataType.I32_NCHW, DataType.U32_NCHW) \
-    .dtype_format(DataType.U64_NCHW, DataType.I32_NCHW, DataType.U64_NCHW) \
-    .dtype_format(DataType.F16_NCHW, DataType.I32_NCHW, DataType.F16_NCHW) \
-    .dtype_format(DataType.F32_NCHW, DataType.I32_NCHW, DataType.F32_NCHW) \
-    .dtype_format(DataType.F64_NCHW, DataType.I32_NCHW, DataType.F64_NCHW) \
     .dtype_format(DataType.BOOL_Default, DataType.I64_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.I8_Default, DataType.I64_Default, DataType.I8_Default) \
     .dtype_format(DataType.I16_Default, DataType.I64_Default, DataType.I16_Default) \
@@ -59,18 +47,6 @@ reverse_sequence_op_info = AiCPURegOp("ReverseSequence") \
     .dtype_format(DataType.F16_Default, DataType.I64_Default, DataType.F16_Default) \
     .dtype_format(DataType.F32_Default, DataType.I64_Default, DataType.F32_Default) \
     .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.F64_Default) \
-    .dtype_format(DataType.BOOL_NCHW, DataType.I64_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.I8_NCHW, DataType.I64_NCHW, DataType.I8_NCHW) \
-    .dtype_format(DataType.I16_NCHW, DataType.I64_NCHW, DataType.I16_NCHW) \
-    .dtype_format(DataType.I32_NCHW, DataType.I64_NCHW, DataType.I32_NCHW) \
-    .dtype_format(DataType.I64_NCHW, DataType.I64_NCHW, DataType.I64_NCHW) \
-    .dtype_format(DataType.U8_NCHW, DataType.I64_NCHW, DataType.U8_NCHW) \
-    .dtype_format(DataType.U16_NCHW, DataType.I64_NCHW, DataType.U16_NCHW) \
-    .dtype_format(DataType.U32_NCHW, DataType.I64_NCHW, DataType.U32_NCHW) \
-    .dtype_format(DataType.U64_NCHW, DataType.I64_NCHW, DataType.U64_NCHW) \
-    .dtype_format(DataType.F16_NCHW, DataType.I64_NCHW, DataType.F16_NCHW) \
-    .dtype_format(DataType.F32_NCHW, DataType.I64_NCHW, DataType.F32_NCHW) \
-    .dtype_format(DataType.F64_NCHW, DataType.I64_NCHW, DataType.F64_NCHW) \
     .get_op_info()
 
 @op_info_register(reverse_sequence_op_info)

@@ -25,8 +25,6 @@ rnnt_loss_op_info = AiCPURegOp("RNNTLoss") \
     .output(0, "costs", "required") \
     .output(1, "grads", "required") \
     .attr("blank_label", "int") \
-    .dtype_format(DataType.F32_NCHW, DataType.I32_NCHW, DataType.I32_NCHW, DataType.I32_NCHW, DataType.F32_NCHW,
-                  DataType.F32_NCHW) \
     .dtype_format(DataType.F32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default,
                   DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()
