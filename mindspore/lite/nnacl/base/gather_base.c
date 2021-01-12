@@ -15,31 +15,22 @@
  */
 
 #include "nnacl/base/gather_base.h"
-int GatherFp32(const float *input, int outer_size, int inner_size, int limit, const int *indices,
-               int indices_element_size, float *output) {
-  for (int m = 0; m < outer_size; ++m) {
-    const float *inputm = input + inner_size * m * limit;
-    float *outputm = output + inner_size * m * indices_element_size;
-    for (int i = 0; i < indices_element_size; ++i) {
-      if (indices[i] < 0 || indices[i] > limit) {
-        return NNACL_ERR;
-      }
-      memcpy(outputm + i * inner_size, inputm + indices[i] * inner_size, sizeof(float) * inner_size);
-    }
-  }
-  return NNACL_OK;
-}
 
-int GatherInt32(const int32_t *input, int outer_size, int inner_size, int limit, const int *indices,
-                int indices_element_size, int32_t *output) {
+int Gather(const void *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
+           void *output, int data_size) {
+  const int8_t *int8_in = (int8_t *)input;
+  int8_t *int8_out = (int8_t *)output;
+
   for (int m = 0; m < outer_size; ++m) {
-    const int32_t *inputm = input + inner_size * m * limit;
-    int32_t *outputm = output + inner_size * m * indices_element_size;
+    const int8_t *int8_in_m = int8_in + inner_size * m * limit * data_size;
+    int8_t *int8_out_m = int8_out + inner_size * m * indices_element_size * data_size;
+
     for (int i = 0; i < indices_element_size; ++i) {
       if (indices[i] < 0 || indices[i] > limit) {
         return NNACL_ERR;
       }
-      memcpy(outputm + i * inner_size, inputm + indices[i] * inner_size, sizeof(int32_t) * inner_size);
+      memcpy(int8_out_m + i * inner_size * data_size, int8_in_m + indices[i] * inner_size * data_size,
+             data_size * inner_size);
     }
   }
   return NNACL_OK;

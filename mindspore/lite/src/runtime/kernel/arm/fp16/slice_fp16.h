@@ -32,7 +32,6 @@ class SliceFp16CPUKernel : public SliceCPUKernel {
   int SliceParallelRun(int thread_id) override;
 
  protected:
-  void FreeInputAndOutput();
   float16_t *input_fp16_ = nullptr;
   float16_t *output_fp16_ = nullptr;
 };

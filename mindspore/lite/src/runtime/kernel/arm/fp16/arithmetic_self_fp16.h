@@ -35,7 +35,6 @@ class ArithmeticSelfFp16CPUKernel : public ArithmeticSelfCPUKernel {
   int DoExecute(int task_id) override;
 
  private:
-  void FreeInputAndOutput();
   ArithmeticSelfFp16Func GetArithmeticSelfFp16Fun(int primitive_type);
   ArithmeticSelfFp16Func fp16_func_ = nullptr;
   float16_t *input_fp16_ptr_ = nullptr;

@@ -20,7 +20,6 @@
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 #include "nnacl/op_base.h"
-#include "nnacl/fp16/cast_fp16.h"
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
@@ -84,30 +83,16 @@ static int PoolingFp16Impl(void *cdata, int task_id) {
 }
 
 int PoolingFp16CPUKernel::Run() {
-  auto input_tensor = in_tensors_.at(kInputIndex);
-  auto in_data_type_ = input_tensor->data_type();
-  MS_ASSERT(in_data_type_ == kNumberTypeFloat32 || in_data_type_ == kNumberTypeFloat16);
-  fp16_input_ = ConvertInputFp32toFp16(input_tensor, context_);
+  auto input_tensor = in_tensors_.at(0);
+  auto output_tensor = out_tensors_.at(0);
 
-  auto out_tensor = out_tensors_.at(kOutputIndex);
-  auto out_data_type_ = out_tensor->data_type();
-  MS_ASSERT(out_data_type_ == kNumberTypeFloat32 || out_data_type_ == kNumberTypeFloat16);
-  fp16_output_ = MallocOutputFp16(out_tensor, context_);
+  fp16_input_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
+  fp16_output_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
 
   int error_code = ParallelLaunch(this->context_->thread_pool_, PoolingFp16Impl, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "pooling error error_code[" << error_code << "]";
     return RET_ERROR;
-  }
-
-  if (in_data_type_ == kNumberTypeFloat32) {
-    context_->allocator->Free(fp16_input_);
-  }
-  if (out_data_type_ == kNumberTypeFloat32) {
-    auto out_ele_num = out_tensor->ElementsNum();
-    auto output_addr = reinterpret_cast<float *>(out_tensor->MutableData());
-    Float16ToFloat32(fp16_output_, output_addr, out_ele_num);
-    context_->allocator->Free(fp16_output_);
   }
   return RET_OK;
 }

@@ -17,7 +17,6 @@
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
 #include "src/runtime/kernel/arm/base/split_base.h"
 #include "nnacl/fp16/split_fp16.h"
-#include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/split.h"
 #include "nnacl/split_parameter.h"
 #include "src/kernel_registry.h"
@@ -31,7 +30,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Split;
 
 namespace mindspore::kernel {
-
 int SplitFp16CPUKernel::Init() {
   auto ret = SplitBaseCPUKernel::Init();
   if (ret != RET_OK) {
@@ -76,45 +74,19 @@ static int SplitFp16Run(void *cdata, int task_id) {
 }
 
 int SplitFp16CPUKernel::Run() {
-  input_ptr_ = ConvertInputFp32toFp16(in_tensors_.at(0), context_);
-  if (input_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "input or output is nullptr";
-    return RET_ERROR;
-  }
+  auto input_tensor = in_tensors_.at(0);
+  input_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
+
   for (int i = 0; i < param->num_split_; i++) {
-    output_ptr_.at(i) = MallocOutputFp16(out_tensors_.at(i), context_);
-    if (output_ptr_.at(i) == nullptr) {
-      FreeInputAndOutput();
-      MS_LOG(ERROR) << "input or output is nullptr";
-      return RET_ERROR;
-    }
+    auto output_tensor = out_tensors_.at(i);
+    output_ptr_.at(i) = reinterpret_cast<float16_t *>(output_tensor->data_c());
   }
+
   auto ret = ParallelLaunch(this->context_->thread_pool_, SplitFp16Run, this, thread_n_num_);
-  for (int i = 0; i < param->num_split_; i++) {
-    if (out_tensors_.at(i)->data_type() == kNumberTypeFloat32) {
-      Float16ToFloat32(output_ptr_.at(i), reinterpret_cast<float *>(out_tensors_.at(i)->MutableData()),
-                       out_tensors_.at(i)->ElementsNum());
-    }
-  }
-  FreeInputAndOutput();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "split error error_code[" << ret << "]";
   }
   return ret;
 }
-
-void SplitFp16CPUKernel::FreeInputAndOutput() {
-  if (in_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    context_->allocator->Free(input_ptr_);
-    input_ptr_ = nullptr;
-  }
-  for (int i = 0; i < param->num_split_; i++) {
-    if (out_tensors_.at(i)->data_type() == kNumberTypeFloat32) {
-      context_->allocator->Free(output_ptr_.at(i));
-      output_ptr_.at(i) = nullptr;
-    }
-  }
-}
-
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Split, LiteKernelCreator<SplitFp16CPUKernel>)
 }  // namespace mindspore::kernel

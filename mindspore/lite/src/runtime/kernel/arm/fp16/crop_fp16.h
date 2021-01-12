@@ -21,7 +21,6 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "nnacl/crop_parameter.h"
-#include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/crop_fp16.h"
 #include "src/lite_kernel.h"
 #include "src/runtime/kernel/arm/base/crop_base.h"
@@ -44,7 +43,6 @@ class CropFp16CPUKernel : public CropBaseCPUKernel {
  private:
   float16_t *input_ptr_ = nullptr;
   float16_t *output_ptr_ = nullptr;
-  void FreeInputAndOutput();
 };
 }  // namespace mindspore::kernel
 
