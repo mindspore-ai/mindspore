@@ -421,6 +421,7 @@ Status ConstructCostGraphNodesByUniqueId(const std::vector<AnfNodePtr> &all_node
       }
       // Needed by rec_parser
       operator_info->set_type(prim->name());
+      operator_info->set_last_node_flag(is_last_nodes);
       std::vector<std::string> inputs_tensor_name = ExtractInputsTensorName(cnode);
 
       entire_costgraph->AddOperator(operator_info);
@@ -523,6 +524,7 @@ Status ConstructCostGraphNodesByUniqueIdTC(const std::vector<AnfNodePtr> &all_no
       }
       // Needed by rec_parser
       operator_info->set_type(prim->name());
+      operator_info->set_last_node_flag(is_last_nodes);
       std::vector<std::string> inputs_tensor_name = ExtractInputsTensorName(cnode);
 
       entire_costgraph->AddOperator(operator_info);
@@ -1037,7 +1039,11 @@ Status ParallelStrategyRecSearch(const std::vector<AnfNodePtr> &all_nodes, const
     return FAILED;
   }
 
-  GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list);
+  bool is_training = true;
+  if (!root->has_flag(TRAINING)) {
+    is_training = false;
+  }
+  GenerateStrategy(graph, ops, eli_list, input_tensor_names, index_list, is_training);
 
   if (entire_costgraph->InitSelectedStrategy() == SUCCESS) {
     MS_LOG(INFO) << "Init selected strategy succeeded.";
