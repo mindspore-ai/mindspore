@@ -658,9 +658,9 @@ AbstractBasePtr InferImplDynamicAssign(const AnalysisEnginePtr &, const Primitiv
   }
 }
 
-AbstractBasePtr InferImplDynamicEmbeddingLookup(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                                const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name().substr(kDynamic);
+AbstractBasePtr InferImplEmbeddingLookup(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                         const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 2);
   auto params = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto params_shp = params->shape();
@@ -754,9 +754,9 @@ AbstractBasePtr InferImplZerosLike(const AnalysisEnginePtr &, const PrimitivePtr
   return std::make_shared<AbstractTensor>(input_x->element(), output_shape);
 }
 
-AbstractBasePtr InferImplDynamicTranspose(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                          const AbstractBasePtrList &args_spec_list) {
-  const std::string &op_name = primitive->name().substr(kDynamic);
+AbstractBasePtr InferImplTranspose(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                   const AbstractBasePtrList &args_spec_list) {
+  const std::string &op_name = primitive->name();
   AbstractTensorPtr input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   auto input_shp = input->shape()->shape();
   ValuePtr perm = primitive->GetAttr("perm");
@@ -781,9 +781,9 @@ AbstractBasePtr InferImplDynamicTranspose(const AnalysisEnginePtr &, const Primi
   return std::make_shared<AbstractTensor>(input->element(), std::make_shared<Shape>(result_shp, min_shp, max_shp));
 }
 
-AbstractBasePtr InferImplDynamicReshape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                        const AbstractBasePtrList &args_spec_list) {
-  const std::string op_name = primitive->name().substr(kDynamic);
+AbstractBasePtr InferImplReshape(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                 const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
   auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   MS_EXCEPTION_IF_NULL(x);
   MS_EXCEPTION_IF_NULL(x->shape());

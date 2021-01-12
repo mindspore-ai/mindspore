@@ -1636,13 +1636,7 @@ void AnfRuntimeAlgorithm::InferShape(const CNodePtr &node) {
       args_spec_list.emplace_back(real_input->abstract());
     }
   }
-  auto prim_name = primitive->name();
-  if (DynamicShapeConstInputToAttr.find(prim_name) != DynamicShapeConstInputToAttr.end()) {
-    auto attrs = primitive->attrs();
-    auto new_prim_name = "Dynamic" + prim_name;
-    primitive = std::make_shared<Primitive>(new_prim_name);
-    primitive->SetAttrs(attrs);
-  }
+
   auto &prim_eval_implement_map = abstract::GetPrimitiveToEvalImplMap();
   auto ret = prim_eval_implement_map.find(primitive);
   if (ret == prim_eval_implement_map.end()) {
