@@ -103,7 +103,8 @@ enum kTransFilterType {
   kCKHW2KCHW,
   kCHWK2KCHW,
   kKCHW2CKHW,  // 20
-  kHWCK2KHWC
+  kHWCK2KHWC,
+  kHWKC2KHWC
 };
 
 STATUS GetFilterDim(const std::vector<int32_t> &oriDims, kTransFilterType type, int32_t *filterK, int32_t *filterC,
