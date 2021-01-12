@@ -121,8 +121,9 @@ AbstractBasePtr InferImplEqual(const AnalysisEnginePtr &, const PrimitivePtr &pr
   return ret;
 }
 
-AbstractBasePtr InferImplReduceSum(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
+// To reduce code repeat, use InferImplReduceFunc. Currently registered with ReduceMean, ReduceSum.
+AbstractBasePtr InferImplReduceFunc(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                    const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 1);
   auto input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);

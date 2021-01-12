@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 
 x0 = np.random.rand(2, 3, 4, 4).astype(np.float32)
 axis0 = 3
@@ -265,3 +266,50 @@ def test_ReduceMean():
     error14 = np.ones(shape=expect14.shape) * 1.0e-5
     assert np.all(diff14 < error14)
     assert output[14].shape == expect14.shape
+
+class ReduceMean_Dynamic(nn.Cell):
+    def __init__(self, keepdims=False):
+        super(ReduceMean_Dynamic, self).__init__()
+        self.test_dynamic = inner.GpuConvertToDynamicShape()
+        self.reducemean = P.ReduceMean(keep_dims=keepdims)
+
+    def construct(self, input_x, axis):
+        input_x = self.test_dynamic(input_x)
+        output = self.reducemean(input_x, axis)
+        return output
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_reducemean_keepdims_true():
+    net = ReduceMean_Dynamic(keepdims=True)
+    x_tensor_1 = Tensor(x14)
+    output_1 = net(x_tensor_1, axis14)
+    x_tensor_2 = Tensor(x0)
+    output_2 = net(x_tensor_2, axis0)
+
+    expect_1 = np.mean(x14, axis=np_axis14, keepdims=True)
+    diff_1 = abs(output_1.asnumpy() - expect_1)
+    error_1 = np.ones(shape=expect_1.shape) * 1.0e-5
+    assert np.all(diff_1 < error_1)
+    assert output_1.shape == expect_1.shape
+
+    expect_2 = np.mean(x0, axis=axis0, keepdims=True)
+    diff_2 = abs(output_2.asnumpy() - expect_2)
+    error_2 = np.ones(shape=expect_2.shape) * 1.0e-5
+    assert np.all(diff_2 < error_2)
+    assert output_2.shape == expect_2.shape
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_dynamic_reducemean_keepdims_false():
+    net = ReduceMean_Dynamic(keepdims=False)
+    x_tensor = Tensor(x12)
+    output = net(x_tensor, axis12)
+
+    expect = np.mean(x12, axis=axis12, keepdims=False)
+    diff = abs(output.asnumpy() - expect)
+    error = np.ones(shape=expect.shape) * 1.0e-5
+    assert np.all(diff < error)
+    assert output.shape == expect.shape
