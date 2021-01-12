@@ -105,6 +105,13 @@ class Range(Cell):
     r"""
     Creates a sequence of numbers in range [start, limit) with step size delta.
 
+    The size of output is \left \lfloor \frac{limit-start}{delta}  \right \rfloor + 1 and `delta` is the gap
+    between two values in the tensor.
+
+    .. math::
+
+        out_{i+1} = out_{i} +delta
+
     Args:
         start (Union[int, float]): If `limit` is `None`, the value acts as limit in the range and first entry
             defaults to `0`. Otherwise, it acts as first entry in the range.
@@ -830,7 +837,9 @@ class MatMul(Cell):
     - If at least one of x1 and x2 is N-dimensional (N>2), the none-matrix dimensions(batch) of inputs will be
       broadcasted and must be broadcastable. Note if one of 'x1' and 'x2' is 1-dimensional, the argument will first be
       expanded to 2 dimension and then the none-matrix dimensions will be broadcasted. After the matrix multiply, the
-      expanded dimension will be removed.
+      expanded dimension will be removed. For example, if `x1` is a :math:`(j \times 1 \times n \times m)` tensor and
+      `x2` is a :math:`(k \times m \times p)` tensor, the output will be a :math:`(j \times k \times n \times p)`
+      tensor.
 
     Args:
         transpose_x1 (bool): If true, `a` is transposed before multiplication. Default: False.
