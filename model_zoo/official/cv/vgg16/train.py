@@ -140,7 +140,7 @@ if __name__ == '__main__':
         device_num = args.group_size
         context.reset_auto_parallel_context()
         context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
-                                          gradients_mean=True)
+                                          gradients_mean=True, all_reduce_fusion_config=[3, 10, 12, 15])
     else:
         if args.device_target == "Ascend":
             context.set_context(device_id=args.device_id)

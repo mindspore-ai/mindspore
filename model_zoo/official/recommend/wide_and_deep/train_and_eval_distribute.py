@@ -125,6 +125,6 @@ if __name__ == "__main__":
     init()
     context.set_context(save_graphs_path='./graphs_of_device_id_'+str(get_rank()))
     context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
-                                      device_num=get_group_size())
+                                      device_num=get_group_size(), all_reduce_fusion_config=[6, 12])
 
     train_and_eval(wide_deep_config)
