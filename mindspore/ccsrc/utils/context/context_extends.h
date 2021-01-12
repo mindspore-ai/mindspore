@@ -24,8 +24,8 @@
 #include "utils/tensorprint_utils.h"
 
 #ifndef NO_DLIB
+#include "acl/acl_tdt.h"
 #include "tdt/tsd_client.h"
-#include "tdt/tdt_host_interface.h"
 #include "tdt/data_common.h"
 #include "runtime/dev.h"
 #endif
@@ -35,8 +35,8 @@
 
 namespace mindspore {
 namespace context {
-bool OpenTsd(const std::shared_ptr<MsContext> &inst_context);
-bool CloseTsd(const std::shared_ptr<MsContext> &inst_context, bool force = false);
+bool OpenTsd(const std::shared_ptr<MsContext> &ms_context_ptr);
+bool CloseTsd(const std::shared_ptr<MsContext> &ms_context_ptr, bool force = false);
 void SetHcclOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
 void GetGeOptions(const std::shared_ptr<MsContext> &inst_context, std::map<std::string, std::string> *ge_options);
 void SetDisableReuseMemoryFlag(std::map<std::string, std::string> *ge_options);
