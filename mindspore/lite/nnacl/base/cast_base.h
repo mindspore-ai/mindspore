@@ -71,6 +71,11 @@ inline void Int32ToInt64(const int32_t *input, int64_t *output, int number) {
   }
 }
 
+inline void Float32ToInt16(const float *input, int16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (int16_t)input[i];
+  }
+}
 #ifdef __cplusplus
 }
 #endif
