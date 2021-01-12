@@ -87,7 +87,8 @@ class DynamicMemPoolBestFit {
   void ReleaseDeviceRes();
   // Display the information of memory block and memory buf.
   void DumpDynamicMemPoolInfo();
-  SizeMapMemBuf GetIdleMemBufMap() { return global_idle_mem_buf_map_; }
+  // Get the map of global idle mem buf and size.
+  SizeMapMemBuf global_idle_mem_buf_map() const { return global_idle_mem_buf_map_; }
 
   // Get the related memory statistics information.
   size_t total_mem_statistics() const { return total_mem_statistics_; }
