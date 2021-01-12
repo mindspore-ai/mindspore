@@ -13,7 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """ test expand_as"""
+import mindspore as ms
 import mindspore.nn as nn
+import mindspore.common.initializer as init
 from mindspore import Tensor
 from mindspore import context
 
@@ -26,6 +28,20 @@ def test_expand_as():
             super(Net, self).__init__()
             self.t1 = Tensor([1, 2, 3])
             self.t2 = Tensor([[1, 1, 1], [1, 1, 1]])
+
+        def construct(self):
+            return self.t1.expand_as(self.t2)
+
+    net = Net()
+    net()
+
+
+def test_initializer_expand_as():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.t1 = init.initializer('one', [1, 3], ms.float32)
+            self.t2 = init.initializer('one', [2, 3], ms.float32)
 
         def construct(self):
             return self.t1.expand_as(self.t2)

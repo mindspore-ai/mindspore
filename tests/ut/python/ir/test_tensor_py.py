@@ -16,6 +16,7 @@
 import numpy as np
 
 import mindspore as ms
+import mindspore.common.initializer as init
 from mindspore.common.api import _executor
 from mindspore.nn import Cell
 from mindspore.ops import operations as P
@@ -96,6 +97,12 @@ def test_asnumpy():
     npd = np.ones((2, 3))
     a = ms.Tensor(npd)
     a.set_dtype(ms.int32)
+    assert a.asnumpy().all() == npd.all()
+
+
+def test_initializer_asnumpy():
+    npd = np.ones((2, 3))
+    a = init.initializer('one', [2, 3], ms.int32)
     assert a.asnumpy().all() == npd.all()
 
 

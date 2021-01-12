@@ -100,7 +100,6 @@ class Parameter(Tensor_):
         ...     def construct(self, x):
         ...         out = self.matmul(self.weight, x)
         ...         return out
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target="CPU")
         >>> net = Net()
         >>> x = Tensor(np.ones((2,1)))
         >>> print(net(x))
@@ -113,15 +112,14 @@ class Parameter(Tensor_):
     __base_type__ = {}
 
     def __new__(cls, default_input, *args, **kwargs):
+        init_data_flag = bool(isinstance(default_input, Tensor) and default_input.has_init)
         input_class, *class_init_args = Parameter._get_parameter_new_args(default_input)
         new_type = Parameter._get_base_class(input_class)
         obj = input_class.__new__(new_type)
         input_class.__init__(obj, *class_init_args)
         # it's better to make the Initializer a kind of tensor.
         obj.init_mode = None
-        obj.is_default_input_init = False
-        if isinstance(default_input, Tensor) and default_input.has_init:
-            obj.is_default_input_init = True
+        obj.is_default_input_init = init_data_flag
         if obj.has_init:
             obj.init_mode = default_input
         return obj
