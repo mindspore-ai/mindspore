@@ -56,6 +56,11 @@ class SubsetRandomSamplerRT : public SamplerRT {
   // @param show_all - bool to show detailed vs summary
   void SamplerPrint(std::ostream &out, bool show_all) const override;
 
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   // A list of indices (already randomized in constructor).
   std::vector<int64_t> indices_;

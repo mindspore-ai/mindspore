@@ -203,6 +203,18 @@ class Dataset:
         args["num_parallel_workers"] = self.num_parallel_workers
         return args
 
+    def to_json(self, filename=""):
+        """
+        Serialize a pipeline into JSON string and dump into file if filename is provided.
+
+        Args:
+            filename (str): filename of json file to be saved as
+
+        Returns:
+            Str, JSON string of the pipeline.
+        """
+        return json.loads(self.parse_tree().to_json(filename))
+
     @check_bucket_batch_by_length
     def bucket_batch_by_length(self, column_names, bucket_boundaries, bucket_batch_sizes,
                                element_length_function=None, pad_info=None,

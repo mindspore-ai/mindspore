@@ -67,5 +67,13 @@ Status ResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   if (!outputs.empty()) return Status::OK();
   return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
 }
+
+Status ResizeOp::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["size"] = std::vector<int32_t>{size1_, size2_};
+  args["interpolation"] = interpolation_;
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

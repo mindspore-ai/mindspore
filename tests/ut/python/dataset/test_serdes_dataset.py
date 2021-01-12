@@ -22,7 +22,7 @@ import os
 
 import numpy as np
 from test_minddataset_sampler import add_and_remove_cv_file, get_data, CV_DIR_NAME, CV_FILE_NAME
-from util import config_get_set_num_parallel_workers
+from util import config_get_set_num_parallel_workers, config_get_set_seed
 
 import mindspore.dataset as ds
 import mindspore.dataset.transforms.c_transforms as c
@@ -46,6 +46,8 @@ def test_imagefolder(remove_json_files=True):
 
     # Constructing DE pipeline
     sampler = ds.WeightedRandomSampler(weights, 11)
+    child_sampler = ds.SequentialSampler()
+    sampler.add_child(child_sampler)
     data1 = ds.ImageFolderDataset(data_dir, sampler=sampler)
     data1 = data1.repeat(1)
     data1 = data1.map(operations=[vision.Decode(True)], input_columns=["image"])
@@ -99,6 +101,9 @@ def test_imagefolder(remove_json_files=True):
 
 
 def test_mnist_dataset(remove_json_files=True):
+    """
+    Test serdes on mnist dataset pipeline.
+    """
     data_dir = "../data/dataset/testMnistData"
     ds.config.set_seed(1)
 
@@ -137,6 +142,9 @@ def test_mnist_dataset(remove_json_files=True):
 
 
 def test_zip_dataset(remove_json_files=True):
+    """
+    Test serdes on zip dataset pipeline.
+    """
     files = ["../data/dataset/testTFTestAllTypes/test.data"]
     schema_file = "../data/dataset/testTFTestAllTypes/datasetSchema.json"
     ds.config.set_seed(1)
@@ -178,9 +186,13 @@ def test_zip_dataset(remove_json_files=True):
 
 
 def test_random_crop():
+    """
+    Test serdes on RandomCrop pipeline.
+    """
     logger.info("test_random_crop")
     DATA_DIR = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
     SCHEMA_DIR = "../data/dataset/test_tf_file_3_images/datasetSchema.json"
+    original_seed = config_get_set_seed(1)
     original_num_parallel_workers = config_get_set_num_parallel_workers(1)
 
     # First dataset
@@ -209,6 +221,7 @@ def test_random_crop():
         _ = item2["image"]
 
     # Restore configuration num_parallel_workers
+    ds.config.set_seed(original_seed)
     ds.config.set_num_parallel_workers(original_num_parallel_workers)
 
 
@@ -232,7 +245,7 @@ def delete_json_files():
 
 
 # Test save load minddataset
-def test_minddataset(add_and_remove_cv_file):
+def skip_test_minddataset(add_and_remove_cv_file):
     """tutorial for cv minderdataset."""
     columns_list = ["data", "file_name", "label"]
     num_readers = 4

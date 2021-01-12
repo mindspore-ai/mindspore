@@ -258,6 +258,11 @@ std::shared_ptr<SamplerObj> PreBuiltSamplerObj::Copy() {
   return sampler;
 }
 
+Status PreBuiltSamplerObj::to_json(nlohmann::json *out_json) {
+  RETURN_IF_NOT_OK(sp_->to_json(out_json));
+  return Status::OK();
+}
+
 #ifndef ENABLE_ANDROID
 std::shared_ptr<mindrecord::ShardOperator> PKSamplerObj::BuildForMindDataset() {
   // runtime mindrecord sampler object

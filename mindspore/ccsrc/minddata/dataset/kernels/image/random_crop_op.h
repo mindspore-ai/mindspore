@@ -79,6 +79,8 @@ class RandomCropOp : public TensorOp {
 
   std::string Name() const override { return kRandomCropOp; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  protected:
   int32_t crop_height_ = 0;
   int32_t crop_width_ = 0;

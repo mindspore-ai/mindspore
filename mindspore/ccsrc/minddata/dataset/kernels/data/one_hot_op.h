@@ -37,6 +37,8 @@ class OneHotOp : public TensorOp {
 
   std::string Name() const override { return kOneHotOp; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   int num_classes_;
 };

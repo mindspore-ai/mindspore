@@ -42,6 +42,8 @@ class DecodeOp : public TensorOp {
 
   std::string Name() const override { return kDecodeOp; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   bool is_rgb_format_ = true;
 };

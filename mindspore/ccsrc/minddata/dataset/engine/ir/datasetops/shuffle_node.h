@@ -53,6 +53,16 @@ class ShuffleNode : public DatasetNode {
 
   Status ValidateParams() override;
 
+  /// \brief Getter functions
+  int32_t ShuffleSize() const { return shuffle_size_; }
+  uint32_t ShuffleSeed() const { return shuffle_seed_; }
+  bool ResetEveryEpoch() const { return reset_every_epoch_; }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   int32_t shuffle_size_;
   uint32_t shuffle_seed_;

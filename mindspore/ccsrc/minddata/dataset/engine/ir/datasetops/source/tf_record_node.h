@@ -109,6 +109,21 @@ class TFRecordNode : public NonMappableSourceNode {
   /// \return Status of the function
   Status GetShardFileList(std::vector<std::string> *shard_filenames);
 
+  /// \brief Getter functions
+  const std::vector<std::string> &DatasetFiles() const { return dataset_files_; }
+  const std::string &SchemaPath() const { return schema_path_; }
+  const std::shared_ptr<SchemaObj> &GetSchemaObj() const { return schema_obj_; }
+  const std::vector<std::string> &ColumnsList() const { return columns_list_; }
+  int64_t NumSamples() const { return num_samples_; }
+  ShuffleMode Shuffle() const { return shuffle_; }
+  int32_t NumShards() const { return num_shards_; }
+  bool ShardEqualRows() const { return shard_equal_rows_; }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<std::string> dataset_files_;
   std::string schema_path_;  // schema_path_ path to schema file. It is set when type of schema parameter is string

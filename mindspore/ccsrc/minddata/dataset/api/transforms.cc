@@ -229,6 +229,11 @@ std::shared_ptr<TensorOp> PreBuiltOperation::Build() { return op_; }
 
 std::string PreBuiltOperation::Name() const { return op_ ? op_->Name() : kPreBuiltOperation; }
 
+Status PreBuiltOperation::to_json(nlohmann::json *out_json) {
+  RETURN_IF_NOT_OK(op_->to_json(out_json));
+  return Status::OK();
+}
+
 // RandomApplyOperation
 RandomApplyOperation::RandomApplyOperation(const std::vector<std::shared_ptr<TensorOperation>> &transforms, double prob)
     : TensorOperation(true), transforms_(transforms), prob_(prob) {}

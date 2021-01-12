@@ -199,5 +199,33 @@ Status TFRecordNode::GetShardFileList(std::vector<std::string> *shard_filenames)
   return Status::OK();
 }
 
+Status TFRecordNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["num_parallel_workers"] = num_workers_;
+  args["dataset_files"] = dataset_files_;
+  args["schema"] = schema_path_;
+  args["columns_list"] = columns_list_;
+  args["num_samples"] = num_samples_;
+  args["shuffle_global"] = (shuffle_ == ShuffleMode::kGlobal);
+  args["shuffle_files"] = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
+  args["shuffle"] = shuffle_;
+  args["num_shards"] = num_shards_;
+  args["shard_id"] = shard_id_;
+  args["shard_equal_rows"] = shard_equal_rows_;
+  if (cache_ != nullptr) {
+    nlohmann::json cache_args;
+    RETURN_IF_NOT_OK(cache_->to_json(&cache_args));
+    args["cache"] = cache_args;
+  }
+  if (schema_obj_ != nullptr) {
+    schema_obj_->set_dataset_type("TF");
+    schema_obj_->set_num_rows(num_samples_);
+    args["schema_json_string"] = schema_obj_->to_json();
+  } else {
+    args["schema_file_path"] = schema_path_;
+  }
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

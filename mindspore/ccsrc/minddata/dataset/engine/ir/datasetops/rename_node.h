@@ -56,6 +56,15 @@ class RenameNode : public DatasetNode {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
+  /// \brief Getter functions
+  const std::vector<std::string> &InputColumns() const { return input_columns_; }
+  const std::vector<std::string> &OutputColumns() const { return output_columns_; }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<std::string> input_columns_;
   std::vector<std::string> output_columns_;
