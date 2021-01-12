@@ -15,6 +15,7 @@
  */
 
 #include "src/ops/space_to_depth.h"
+#include <limits>
 #include "src/common/common.h"
 
 #ifndef PRIMITIVE_WRITEABLE

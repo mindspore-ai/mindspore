@@ -23,7 +23,6 @@
 namespace mindspore {
 namespace lite {
 #ifdef PRIMITIVE_WRITEABLE
-
 int Merge::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs) {
   if (this->primitive_ == nullptr) {
     this->primitive_ = new (std::nothrow) schema::PrimitiveT;
@@ -99,6 +98,5 @@ int Merge::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   }
   return RET_OK;
 }
-
 }  // namespace lite
 }  // namespace mindspore

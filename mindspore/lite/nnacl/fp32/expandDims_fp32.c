@@ -13,12 +13,3 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "nnacl/fp32/expandDims_fp32.h"
-#include <string.h>
-#include "nnacl/errorcode.h"
-
-int ExpandDims(const void *input_ptr, void *output_ptr, size_t data_size) {
-  memcpy(output_ptr, input_ptr, data_size);
-  return NNACL_OK;
-}

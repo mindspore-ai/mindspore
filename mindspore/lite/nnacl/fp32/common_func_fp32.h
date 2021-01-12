@@ -33,10 +33,6 @@ void PostConvFuncFp32C4(const float *c4_out_ptr, float *out_ptr, const float *bi
 void WinogradTransLeft(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length);
 void WinogradTransRight(const float *S, const float *B, float *M, size_t w, size_t h, size_t k, size_t length);
 
-float ShortToFloat32(uint16_t src_value);
-
-uint16_t Float32ToShort(float src_value);
-
 #if defined(ENABLE_ARM) || defined(ENABLE_SSE)
 void ConvDwFp32Center(float *dst, const float *src, const float *weight, const float *bias, size_t height, size_t width,
                       size_t kernel_h, size_t kernel_w, size_t out_h_step, size_t block_channel, size_t in_sh_step,

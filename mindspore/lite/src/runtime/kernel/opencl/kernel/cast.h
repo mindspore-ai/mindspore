@@ -20,7 +20,7 @@
 #include <vector>
 #include <string>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "nnacl/fp32/cast_fp32.h"
+#include "nnacl/cast_parameter.h"
 
 namespace mindspore::kernel {
 

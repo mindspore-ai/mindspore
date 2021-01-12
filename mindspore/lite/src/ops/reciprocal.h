@@ -39,7 +39,6 @@ class Reciprocal : public ArithmeticSelf {
   }
 #endif
 };
-
 }  // namespace lite
 }  // namespace mindspore
 

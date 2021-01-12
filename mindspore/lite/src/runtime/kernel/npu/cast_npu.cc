@@ -35,7 +35,7 @@ int CastNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, const
     return RET_ERROR;
   }
   op_->set_input_x(*npu_inputs[0]);
-  op_->set_attr_dst_dtype(lite::ConverterToNPUDataType(static_cast<TypeId>(cast_parameter_->dst_type_)));
+  op_->set_attr_dst_dtype(lite::ConverterToNPUDataType(static_cast<TypeId>(outputs[0]->data_type())));
   op_->set_attr_src_dtype(lite::ConverterToNPUDataType(static_cast<TypeId>(inputs[0]->data_type())));
   return RET_OK;
 }

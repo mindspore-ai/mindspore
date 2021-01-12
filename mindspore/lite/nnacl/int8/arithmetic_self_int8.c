@@ -15,7 +15,6 @@
  */
 
 #include <math.h>
-#include <assert.h>
 #include "nnacl/int8/arithmetic_self_int8.h"
 #ifdef ENABLE_NEON
 #include <arm_neon.h>

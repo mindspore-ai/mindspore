@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-inline int DoSqueeze(const void *input_ptr, void *output_ptr, size_t data_size) {
+static inline int DoSqueeze(const void *input_ptr, void *output_ptr, size_t data_size) {
   if (input_ptr == NULL || output_ptr == NULL) {
     return NNACL_ERR;
   }

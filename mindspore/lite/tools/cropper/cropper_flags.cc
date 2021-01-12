@@ -109,7 +109,6 @@ int CropperFlags::Init(int argc, const char **argv) {
   }
   return RET_OK;
 }
-
 }  // namespace cropper
 }  // namespace lite
 }  // namespace mindspore

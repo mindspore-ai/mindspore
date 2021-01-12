@@ -21,7 +21,10 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Rank(float *output, int rank);
+inline void Rank(float *output, int rank) {
+  output[0] = (float)(rank);
+  return;
+}
 #ifdef __cplusplus
 }
 #endif

@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_NNACL_FILL_PARAMETER_H_
+#define MINDSPORE_LITE_NNACL_FILL_PARAMETER_H_
 
-#include "nnacl/fp32/fill_fp32.h"
+#include "nnacl/op_base.h"
 
-int Fill(float *output, int size, float data) {
-  for (int i = 0; i < size; ++i) {
-    output[i] = data;
-  }
-  return NNACL_OK;
-}
+#define FILL_DIMS_MAX_SIZE 4
 
-int FillInt32(int *output, int size, int data) {
-  for (int i = 0; i < size; ++i) {
-    output[i] = data;
-  }
-  return NNACL_OK;
-}
+typedef struct FillParameter {
+  // Primitive parameter
+  OpParameter op_parameter_;
+  int dims_[FILL_DIMS_MAX_SIZE];
+  int num_dims_;
+} FillParameter;
+
+#endif  // MINDSPORE_LITE_NNACL_FILL_PARAMETER_H_

@@ -16,7 +16,6 @@
 
 #include <string.h>
 #include <math.h>
-#include <assert.h>
 #include "nnacl/fp32/arithmetic_self_fp32.h"
 
 // abs:

@@ -47,7 +47,6 @@ int ValidFile(std::ifstream &in_file, const char *file_path) {
   }
   return RET_OK;
 }
-
 }  // namespace cropper
 }  // namespace lite
 }  // namespace mindspore

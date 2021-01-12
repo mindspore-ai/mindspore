@@ -14,14 +14,9 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/fp32/cast_fp32.h"
-#include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "src/tensor.h"
-#include "nnacl/fp32/cast_fp32.h"
-#include "nnacl/op_base.h"
 #include "src/runtime/runtime_api.h"
-#include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;

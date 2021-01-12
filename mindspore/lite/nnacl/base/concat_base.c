@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-#include "nnacl/fp32/concat_fp32.h"
-#include <string.h>
+#include "nnacl/base/concat_base.h"
 
-void Concat(const void **input, int input_num, int axis, const int **inputs_output_shape, size_t shape_size,
-            void *output, int task_id, int thread_num) {
+void Concat(void **input, int input_num, int axis, int **inputs_output_shape, size_t shape_size, void *output,
+            int task_id, int thread_num, int data_size) {
   int before_axis_size = 1;
   for (int i = 0; i < axis; ++i) {
     before_axis_size *= inputs_output_shape[0][i];
   }
-  // sizeof float/int32
-  int after_axis_size = 4;
+
+  int after_axis_size = data_size;
   for (size_t i = axis + 1; i < shape_size; ++i) {
     after_axis_size *= inputs_output_shape[0][i];
   }

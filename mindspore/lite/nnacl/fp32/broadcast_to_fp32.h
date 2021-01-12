@@ -13,28 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_FP32_BROADCAST_TO_H_
-#define MINDSPORE_LITE_NNACL_FP32_BROADCAST_TO_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_BROADCAST_TO_FP32_H_
+#define MINDSPORE_LITE_NNACL_FP32_BROADCAST_TO_FP32_H_
 
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
 #include "nnacl/op_base.h"
-
-#define BROADCAST_TO_SHAPE_MAX_SIZE 4
-
-typedef struct BroadcastToParameter {
-  OpParameter op_parameter_;
-  int shape_[BROADCAST_TO_SHAPE_MAX_SIZE];
-  size_t shape_size_;
-} BroadcastToParameter;
-
-typedef struct BroadcastShapeInfo {
-  int input_shape_[BROADCAST_TO_SHAPE_MAX_SIZE];
-  int input_shape_size_;
-  int output_shape_[BROADCAST_TO_SHAPE_MAX_SIZE];
-  int output_shape_size_;
-} BroadcastShapeInfo;
+#include "nnacl/broadcast_to_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -44,4 +27,4 @@ int BroadcastTo(const float *input, BroadcastShapeInfo *shape_info, float *outpu
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_BROADCAST_TO_H_
+#endif  // MINDSPORE_LITE_NNACL_FP32_BROADCAST_TO_FP32_H_

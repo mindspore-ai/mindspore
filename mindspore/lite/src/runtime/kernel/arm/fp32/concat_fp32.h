@@ -18,7 +18,7 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/concat_fp32.h"
+#include "nnacl/base/concat_base.h"
 #include "nnacl/concat_parameter.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"

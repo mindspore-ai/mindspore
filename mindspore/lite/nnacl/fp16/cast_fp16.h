@@ -18,16 +18,47 @@
 
 #include <arm_neon.h>
 #include "nnacl/op_base.h"
-#include "nnacl/fp32/cast_fp32.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-void BoolToFloat16(const bool *input, float16_t *output, int number);
-void Uint8ToFloat16(const uint8_t *input, float16_t *output, int number);
-void Float16ToInt32(const float16_t *input, int32_t *output, int number);
-void Float16ToInt64(const float16_t *input, int64_t *output, int number);
-void Float32ToFloat16(const float *input, float16_t *output, int number);
-void Float16ToFloat32(const float16_t *input, float *output, int number);
+
+inline void BoolToFloat16(const bool *input, float16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float16_t)input[i];
+  }
+}
+
+inline void Uint8ToFloat16(const uint8_t *input, float16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float16_t)input[i];
+  }
+}
+
+inline void Float16ToInt32(const float16_t *input, int32_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (int32_t)input[i];
+  }
+}
+
+inline void Float16ToInt64(const float16_t *input, int64_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (int64_t)input[i];
+  }
+}
+
+inline void Float32ToFloat16(const float *input, float16_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float16_t)input[i];
+  }
+}
+
+inline void Float16ToFloat32(const float16_t *input, float *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (float)input[i];
+  }
+}
+
 #ifdef __cplusplus
 }
 #endif

@@ -14,16 +14,22 @@
  * limitations under the License.
  */
 
-#include "nnacl/fp32/range_fp32.h"
+#ifndef MINDSPORE_LITE_NNACL_GATHER_BASE_H_
+#define MINDSPORE_LITE_NNACL_GATHER_BASE_H_
 
-void Range(float *output_ptr, float start, float delta, int nums) {
-  for (int i = 0; i < nums; ++i, start += delta) {
-    output_ptr[i] = start;
-  }
-}
+#include <string.h>
+#include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
 
-void RangeInt(int *output_ptr, int start, int delta, int nums) {
-  for (int i = 0; i < nums; ++i, start += delta) {
-    output_ptr[i] = start;
-  }
+#ifdef __cplusplus
+extern "C" {
+#endif
+int GatherFp32(const float *input, int outer_size, int inner_size, int limit, const int *indices,
+               int indices_element_size, float *output);
+int GatherInt32(const int32_t *input, int outer_size, int inner_size, int limit, const int *indices,
+                int indices_element_size, int32_t *output);
+#ifdef __cplusplus
 }
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_GATHER_BASE_H_

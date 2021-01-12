@@ -96,8 +96,6 @@ int ElementMaximum(const float *in0, const float *in1, float *out, int size);
 int ElementMinimum(const float *in0, const float *in1, float *out, int size);
 int ElementMaximumInt(const int *in0, const int *in1, int *out, int size);
 int ElementMinimumInt(const int *input0, const int *input1, int *output, const int element_size);
-int BroadcastMaximum(const float *in0, const float *in1, float *tile_input0, float *tile_input1, float *out, int size,
-                     ArithmeticParameter *param);
 
 /* floor div */
 int ElementFloorDiv(const float *in0, const float *in1, float *out, int size);
@@ -113,10 +111,6 @@ int ElementModInt(const int *in0, const int *in1, int *out, int size);
 int ElementOptMod(const float *in0, const float *in1, float *out, int size, const ArithmeticParameter *param);
 int ElementOptModInt(const int *in0, const int *in1, int *out, int size, const ArithmeticParameter *param);
 
-#ifdef ENABLE_NNACL_INFER_SHAPE
-int ArithmeticInferShape(int **in_shape, size_t *dim_size, int *out_shape, int *in_format, int *out_format,
-                         int *in_datatype, int *out_datatype, OpParameter *param);
-#endif
 #ifdef __cplusplus
 }
 #endif

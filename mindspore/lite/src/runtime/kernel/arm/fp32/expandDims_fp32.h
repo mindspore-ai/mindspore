@@ -18,8 +18,9 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_EXPANDDIMS_H_
 
 #include <vector>
+#include "include/errorcode.h"
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/expandDims_fp32.h"
+#include "nnacl/base/expand_dims_base.h"
 #include "schema/model_generated.h"
 
 #include "include/context.h"

@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_FP32_CONCAT_H_
-#define MINDSPORE_LITE_NNACL_FP32_CONCAT_H_
+#include "nnacl/base/fill_base.h"
 
-#include "nnacl/op_base.h"
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-void Concat(const void **input, int input_num, int axis, const int **inputs_output_shape, size_t shape_size,
-            void *output, int task_id, int thread_num);
-#ifdef __cplusplus
+int FillFp32(float *output, int size, float data) {
+  for (int i = 0; i < size; ++i) {
+    output[i] = data;
+  }
+  return NNACL_OK;
 }
-#endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_CONCAT_H_
+int FillInt32(int *output, int size, int data) {
+  for (int i = 0; i < size; ++i) {
+    output[i] = data;
+  }
+  return NNACL_OK;
+}

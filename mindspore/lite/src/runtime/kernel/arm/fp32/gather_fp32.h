@@ -18,8 +18,10 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GATHER_H_
 
 #include <vector>
-#include "nnacl/gather_parameter.h"
+#include "include/errorcode.h"
 #include "src/lite_kernel.h"
+#include "nnacl/gather_parameter.h"
+#include "nnacl/base/gather_base.h"
 
 namespace mindspore::kernel {
 class GatherCPUKernel : public LiteKernel {

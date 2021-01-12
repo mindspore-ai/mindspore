@@ -20,9 +20,7 @@
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateLayerNormParameter(const mindspore::lite::PrimitiveC *primitive);
-
 }  // namespace lite
 }  // namespace mindspore
 #endif  // MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_LAYER_NORM_POPULATE_H_

@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_LITE_NNACL_NNACL_COMMON_H_
 #define MINDSPORE_LITE_NNACL_NNACL_COMMON_H_
 
+#include "nnacl/op_base.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -28,6 +30,18 @@ inline void ComputeStrides(const int *shape, int *strides, const int ndim) {
     stride *= shape[i];
   }
 }
+
+static const unsigned int FP32_BIT_SIZE = 32;
+static const unsigned int FP32_EXPONENT_BIAS = 127;
+static const unsigned int FP32_SIGNIFICAND = 23;
+static const unsigned int FP32_EXPONENT_MAX = 255;
+static const unsigned int FP16_BIT_SIZE = 16;
+static const unsigned int FP16_EXPONENT_BIAS = 15;
+static const unsigned int FP16_SIGNIFICAND = 10;
+static const int FP16_EXPONENT_MAX = 30;
+static const int FP16_EXPONENT_MIN = -10;
+float ShortToFloat32(uint16_t src_value);
+uint16_t Float32ToShort(float src_value);
 
 #ifdef __cplusplus
 }

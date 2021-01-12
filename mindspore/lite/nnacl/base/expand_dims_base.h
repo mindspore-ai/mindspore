@@ -14,20 +14,23 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_GATHER_H_
-#define MINDSPORE_LITE_NNACL_GATHER_H_
+#ifndef MINDSPORE_LITE_NNACL_EXPAND_DIMS_BASE_H_
+#define MINDSPORE_LITE_NNACL_EXPAND_DIMS_BASE_H_
 
 #include "nnacl/op_base.h"
+#include "nnacl/errorcode.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Gather(const float *input, int outer_size, int inner_size, int limit, const int *indices, int indices_element_size,
-           float *output);
-int GatherInt32(const int32_t *input, int outer_size, int inner_size, int limit, const int *indices,
-                int indices_element_size, int32_t *output);
+
+inline int ExpandDims(const void *input_ptr, void *output_ptr, size_t data_size) {
+  memcpy(output_ptr, input_ptr, data_size);
+  return NNACL_OK;
+}
+
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_GATHER_H_
+#endif  // MINDSPORE_LITE_NNACL_EXPAND_DIMS_BASE_H_

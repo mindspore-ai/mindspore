@@ -28,6 +28,5 @@ PrimitiveC *ReciprocalCreator(const schema::Primitive *primitive) {
 }
 Registry ReciprocalRegistry(schema::PrimitiveType_Reciprocal, ReciprocalCreator);
 #endif
-
 }  // namespace lite
 }  // namespace mindspore

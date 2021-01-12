@@ -36,6 +36,5 @@ OpParameter *PopulateTensorListSetItemParameter(const mindspore::lite::Primitive
 }
 Registry TensorListSetItemParameterRegistry(schema::PrimitiveType_TensorListSetItem,
                                             PopulateTensorListSetItemParameter);
-
 }  // namespace lite
 }  // namespace mindspore

@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_LITE_NNACL_EXPANDDIMS_H_
-#define MINDSPORE_LITE_NNACL_EXPANDDIMS_H_
+#ifndef MINDSPORE_LITE_NNACL_FILL_BASE_H_
+#define MINDSPORE_LITE_NNACL_FILL_BASE_H_
 
 #include "nnacl/op_base.h"
-
-typedef struct ExpandDimsParameter {
-  // Primitive parameter
-  OpParameter op_parameter_;
-  int dim_;
-} ExpandDimsParameter;
+#include "nnacl/errorcode.h"
+#include "nnacl/fill_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int ExpandDims(const void *input_ptr, void *output_ptr, size_t data_size);
+int FillFp32(float *output, int size, float data);
+int FillInt32(int *output, int size, int data);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_EXPANDDIMS_H_
+#endif  // MINDSPORE_LITE_NNACL_FILL_BASE_H_

@@ -13,14 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 #include "src/runtime/kernel/arm/fp32/gather_fp32.h"
-#include <vector>
-#include "nnacl/gather_parameter.h"
-#include "nnacl/fp32/gather_fp32.h"
+#include <limits>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
-#include "include/errorcode.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -29,7 +27,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Gather;
 
 namespace mindspore::kernel {
-
 int GatherCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -76,7 +73,7 @@ int GatherCPUKernel::DoGather(int task_id) {
   } else {
     input_ptr += thread_stride * limit;
     output_ptr += thread_stride * indices_element_size;
-    error_code = Gather(input_ptr, count, inner_size, limit, indices_data_, indices_element_size, output_ptr);
+    error_code = GatherFp32(input_ptr, count, inner_size, limit, indices_data_, indices_element_size, output_ptr);
   }
   return error_code;
 }
