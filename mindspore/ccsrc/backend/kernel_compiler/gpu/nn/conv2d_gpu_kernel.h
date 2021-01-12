@@ -31,31 +31,7 @@ namespace kernel {
 template <typename T>
 class Conv2dGpuFwdKernel : public GpuKernel {
  public:
-  Conv2dGpuFwdKernel()
-      : cudnn_handle_(nullptr),
-        input_desc_(nullptr),
-        output_desc_(nullptr),
-        filter_desc_(nullptr),
-        conv_desc_(nullptr),
-        padded_desc_(nullptr),
-        cudnn_data_type_(CUDNN_DATA_FLOAT),
-        compute_format_(CUDNN_TENSOR_NCHW),
-        old_height_(0),
-        old_width_(0),
-        pad_height_(0),
-        pad_width_(0),
-        pad_top_(0),
-        pad_left_(0),
-        n_(0),
-        c_(0),
-        group_(1),
-        is_null_input_(false),
-        input_size_(0),
-        filter_size_(0),
-        output_size_(0),
-        padded_size_(0),
-        workspace_size_(0),
-        use_pad_(true) {}
+  Conv2dGpuFwdKernel() { ResetResource(); }
   ~Conv2dGpuFwdKernel() override { DestroyResource(); }
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -192,6 +168,38 @@ class Conv2dGpuFwdKernel : public GpuKernel {
     SelectAlgorithm(input_descriptor_real);
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    cudnn_handle_ = nullptr;
+    input_desc_ = nullptr;
+    output_desc_ = nullptr;
+    filter_desc_ = nullptr;
+    conv_desc_ = nullptr;
+    padded_desc_ = nullptr;
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    compute_format_ = CUDNN_TENSOR_NCHW;
+    old_height_ = 0;
+    old_width_ = 0;
+    pad_height_ = 0;
+    pad_width_ = 0;
+    pad_top_ = 0;
+    pad_left_ = 0;
+    n_ = 0;
+    c_ = 0;
+    stride_.clear();
+    dilation_.clear();
+    group_ = 1;
+    is_null_input_ = false;
+    input_size_ = 0;
+    filter_size_ = 0;
+    output_size_ = 0;
+    padded_size_ = 0;
+    workspace_size_ = 0;
+    use_pad_ = true;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
   void DestroyResource() noexcept override {
