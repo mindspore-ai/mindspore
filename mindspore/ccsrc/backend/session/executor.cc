@@ -428,7 +428,7 @@ void Executor::RunOpsInGraph(const SessionPtr &session, const GraphId &graph_id,
   task->session_ = session;
   task->graph_id_ = graph_id;
   task->input_tensors_ = inputs;
-  RunTask(task, true);
+  RunTask(task, true, true);
   *outputs = task->outputs_;
 }
 
