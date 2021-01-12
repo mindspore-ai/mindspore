@@ -105,7 +105,8 @@ int UpsampleCPUKernel::RunImpl(int task_id) {
       float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
       float *line1 = line0 + new_width_ * c;
       ret = ResizeBilinear(input_data, output_data, input_shape.data(), out_tensor->shape().data(), y_bottoms_, y_tops_,
-                           x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0, line1, n_h_begin, n_h_end);
+                           x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0, line1, n_h_begin, n_h_end,
+                           false);
 
       break;
     }

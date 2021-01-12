@@ -18,6 +18,13 @@
 #include "nnacl/common_func.h"
 #include "nnacl/errorcode.h"
 
+void CalculateCoordinate(float out, int in, int *bottom, int *top, float *bottom_weight) {
+  *bottom = (int)(floor(out));
+  *top = *bottom + 1 < in ? (*bottom + 1) : (in - 1);
+  float top_weight = (float)out - (float)(*bottom);
+  *bottom_weight = 1.0f - top_weight;
+}
+
 int PrepareResizeBilinear(const int *input_shape, const int *output_shape, CalculateOriginalCoordinate calculate,
                           int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights, float *y_bottom_weights,
                           float *x_left_weights) {
@@ -32,28 +39,55 @@ int PrepareResizeBilinear(const int *input_shape, const int *output_shape, Calcu
   int new_height = output_shape[1];
   int new_width = output_shape[2];
 
-  int h, w;
-  for (h = 0; h < new_height; h++) {
+  for (int h = 0; h < new_height; h++) {
     float actual_y = calculate(h, in_h, new_height);
-    int y_bottom = (int)(floor(actual_y));
-    int y_top = y_bottom + 1 < in_h ? (y_bottom + 1) : (in_h - 1);
-    float y_top_weight = actual_y - (float)(y_bottom);
-    const float y_bottom_weight = 1.0f - y_top_weight;
-
-    y_bottoms[h] = y_bottom;
-    y_tops[h] = y_top;
-    y_bottom_weights[h] = y_bottom_weight;
+    CalculateCoordinate(actual_y, in_h, y_bottoms + h, y_tops + h, y_bottom_weights + h);
   }
-  for (w = 0; w < new_width; w++) {
+  for (int w = 0; w < new_width; w++) {
     float actual_x = calculate(w, in_w, new_width);
-    int x_left = (int)(floor(actual_x));
-    int x_right = x_left + 1 < in_w ? (x_left + 1) : (in_w - 1);
-    float x_right_weight = actual_x - (float)(x_left);
-    const float x_left_weight = 1.0f - x_right_weight;
+    CalculateCoordinate(actual_x, in_w, x_lefts + w, x_rights + w, x_left_weights + w);
+  }
+  return NNACL_OK;
+}
 
-    x_lefts[w] = x_left;
-    x_rights[w] = x_right;
-    x_left_weights[w] = x_left_weight;
+int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, const int *box_idx,
+                                 const int *output_shape, int *y_bottoms, int *y_tops, int *x_lefts, int *x_rights,
+                                 float *y_bottom_weights, float *x_left_weights) {
+  if (input_shape == NULL || output_shape == NULL || y_bottoms == NULL || y_tops == NULL || x_lefts == NULL ||
+      x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  int in_b = input_shape[0];
+  int in_h = input_shape[1];
+  int in_w = input_shape[2];
+  int new_height = output_shape[1];
+  int new_width = output_shape[2];
+
+  for (int i = 0; i < in_b; i++) {
+    int b = box_idx[i];
+    const float *box = boxes + b * 4;
+    int start_h = box[0] * (in_h - 1);
+    int end_h = box[2] * (in_h - 1);
+    int start_w = box[1] * (in_w - 1);
+    int end_w = box[3] * (in_w - 1);
+    if (start_h >= end_h || start_w >= end_w || end_h >= in_h || end_w >= in_w) {
+      return NNACL_PARAM_INVALID;
+    }
+
+    int *y_bottom = y_bottoms + b * new_height;
+    int *y_top = y_tops + b * new_height;
+    float *y_bottom_weight = y_bottom_weights + b * new_height;
+    int *x_left = x_lefts + b * new_width;
+    int *x_right = x_rights + b * new_width;
+    float *x_left_weight = x_left_weights + b * new_width;
+    for (int h = 0; h < new_height; h++) {
+      float actual_y = start_h * (in_h - 1) + h * (end_h - start_h) * (in_h - 1) / (new_height - 1);
+      CalculateCoordinate(actual_y, in_h, y_bottom + h, y_top + h, y_bottom_weight + h);
+    }
+    for (int w = 0; w < new_width; w++) {
+      float actual_x = start_w * (in_w - 1) + w * (end_w - start_w) * (in_w - 1) / (new_width - 1);
+      CalculateCoordinate(actual_x, in_w, x_left + w, x_right + w, x_left_weight + w);
+    }
   }
   return NNACL_OK;
 }
@@ -114,82 +148,92 @@ int InterpCol(const float *bottom_line, const float *top_line, float *output, in
 int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                    const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
                    const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
-                   const int n_h_begin, const int n_h_end) {
+                   const int h_begin, const int h_end, bool is_crop) {
   if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_bottoms == NULL ||
       y_tops == NULL || x_lefts == NULL || x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
     return NNACL_NULL_PTR;
   }
 
+  int in_b = input_shape[0];
   int in_h = input_shape[1];
   int in_w = input_shape[2];
   int in_c = input_shape[3];
 
   int new_height = output_shape[1];
   int new_width = output_shape[2];
+  int h_stride = new_width * in_c;
 
-  int n_h;
-  int n_h_stride = new_width * in_c;
+  const int *y_bottom = y_bottoms;
+  const int *y_top = y_tops;
+  const float *y_bottom_weight = y_bottom_weights;
+  const int *x_left = x_lefts;
+  const int *x_right = x_rights;
+  const float *x_left_weight = x_left_weights;
 
-  bool cache_line_used[2] = {false, false};
-  int cache_line_num[2] = {-1, -1};
-  float *const cache_line_ptr[2] = {line0, line1};
-  float *current_line_ptr[2] = {line0, line1};
-  int current_line_num[2] = {-1, -1};
-
-  for (n_h = n_h_begin; n_h < n_h_end; n_h++) {
-    int n, h;
-    n = n_h / new_height;
-    h = n_h % new_height;
-
-    current_line_num[0] = n * in_h + y_bottoms[h];
-    current_line_num[1] = n * in_h + y_tops[h];
-    int i;
-    for (i = 0; i < 2; i++) {
-      cache_line_used[i] = false;
+  for (int b = 0; b < in_b; b++) {
+    if (is_crop) {
+      y_bottom = y_bottoms + b * new_height;
+      y_top = y_tops + b * new_height;
+      y_bottom_weight = y_bottom_weights + b * new_height;
+      x_left = x_lefts + b * new_width;
+      x_right = x_rights + b * new_width;
+      x_left_weight = x_left_weights + b * new_width;
     }
-    // search if we cached
-    int j, k;
-    for (j = 0; j < 2; j++) {
-      bool find = false;
-      for (k = 0; k < 2; k++) {
-        if (current_line_num[j] == cache_line_num[k]) {
-          cache_line_used[k] = true;
-          current_line_ptr[j] = cache_line_ptr[k];
-          find = true;
-          break;
-        }
-      }
+    const float *input = input_data + b * in_h * in_w * in_c;
+    float *output = output_data + b * new_height * new_width * in_c;
+    bool cache_line_used[2] = {false, false};
+    int cache_line_num[2] = {-1, -1};
+    float *const cache_line_ptr[2] = {line0, line1};
+    float *current_line_ptr[2] = {line0, line1};
+    int current_line_num[2] = {-1, -1};
 
-      if (!find) {
-        const float *line = input_data + current_line_num[j] * in_w * in_c;
-        for (k = 0; k < 2; k++) {
-          if (!cache_line_used[k]) {
-            cache_line_num[k] = current_line_num[j];
+    for (int h = h_begin; h < h_end; h++) {
+      current_line_num[0] = y_bottom[h];
+      current_line_num[1] = y_top[h];
+
+      for (int i = 0; i < 2; i++) {
+        cache_line_used[i] = false;
+      }
+      // search if we cached
+      for (int j = 0; j < 2; j++) {
+        bool find = false;
+        for (int k = 0; k < 2; k++) {
+          if (current_line_num[j] == cache_line_num[k]) {
             cache_line_used[k] = true;
             current_line_ptr[j] = cache_line_ptr[k];
-            InterpRow(line, current_line_ptr[j], new_width, x_left_weights, x_lefts, x_rights, in_c);
+            find = true;
             break;
           }
         }
+
+        if (!find) {
+          const float *line = input + current_line_num[j] * in_w * in_c;
+          for (int k = 0; k < 2; k++) {
+            if (!cache_line_used[k]) {
+              cache_line_num[k] = current_line_num[j];
+              cache_line_used[k] = true;
+              current_line_ptr[j] = cache_line_ptr[k];
+              InterpRow(line, current_line_ptr[j], new_width, x_left_weight, x_left, x_right, in_c);
+              break;
+            }
+          }
+        }
       }
+
+      // do col interp
+      InterpCol(current_line_ptr[0], current_line_ptr[1], output + h * h_stride, new_width, y_bottom_weight[h], in_c);
     }
-
-    // do col interp
-    InterpCol(current_line_ptr[0], current_line_ptr[1], output_data + n_h * n_h_stride, new_width, y_bottom_weights[h],
-              in_c);
   }
-
   return NNACL_OK;
 }
 
 int ResizeNearestNeighbor(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                           CalculateOriginalCoordinate calculate, int coordinate_transform_mode, int tid,
                           int thread_num) {
-  int batch, y, x, c;
-  c = input_shape[3];
+  int c = input_shape[3];
   bool align_corners = coordinate_transform_mode == 1;
-  for (batch = 0; batch < output_shape[0]; batch++) {
-    for (y = tid; y < output_shape[1]; y += thread_num) {
+  for (int batch = 0; batch < output_shape[0]; batch++) {
+    for (int y = tid; y < output_shape[1]; y += thread_num) {
       float actual_y = calculate(y, input_shape[1], output_shape[1]);
       int input_y;
       if (align_corners) {
@@ -197,7 +241,7 @@ int ResizeNearestNeighbor(const float *input_data, float *output_data, const int
       } else {
         input_y = (int)(floor(actual_y));
       }
-      for (x = 0; x < output_shape[2]; x++) {
+      for (int x = 0; x < output_shape[2]; x++) {
         float actual_x = calculate(x, input_shape[2], output_shape[2]);
         int input_x;
         if (align_corners) {
@@ -211,7 +255,6 @@ int ResizeNearestNeighbor(const float *input_data, float *output_data, const int
       }
     }
   }
-
   return NNACL_OK;
 }
 

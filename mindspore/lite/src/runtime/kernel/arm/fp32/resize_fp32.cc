@@ -40,6 +40,8 @@ int ResizeCPUKernel::Init() {
     case schema::CoordinateTransformMode_HALF_PIXEL:
       calculate_ = CalculateHalfPixel;
       break;
+    case schema::CoordinateTransformMode_CROP_AND_RESIZE:
+      break;
     default:
       MS_LOG(ERROR) << "Do not support coordinate transform mode. Mode is"
                     << schema::EnumNameCoordinateTransformMode(
@@ -70,8 +72,15 @@ int ResizeCPUKernel::ReSize() {
 
     auto input = in_tensors_.at(0);
     auto input_shape = input->shape();
-    ret = PrepareResizeBilinear(input_shape.data(), out_tensors_.at(0)->shape().data(), calculate_, y_bottoms_, y_tops_,
-                                x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
+    if (coordinate_transform_mode_ == schema::CoordinateTransformMode_CROP_AND_RESIZE) {
+      auto boxes = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
+      auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
+      ret = PrepareCropAndResizeBilinear(input_shape.data(), boxes, box_idx, out_tensors_.at(0)->shape().data(),
+                                         y_bottoms_, y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
+    } else {
+      ret = PrepareResizeBilinear(input_shape.data(), out_tensors_.at(0)->shape().data(), calculate_, y_bottoms_,
+                                  y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
+    }
     if (ret != RET_OK) {
       FreeTmpBuffer();
     }
@@ -80,36 +89,42 @@ int ResizeCPUKernel::ReSize() {
 }
 
 int ResizeCPUKernel::MallocTmpBuffer() {
+  int b = in_tensors_.at(0)->Batch();
+  // Malloc buffer to save coordinate. For mode CROP_AND_RESIZE, different batches require different cache coordinates.
+  // For other modes, different batches have different cache coordinates.
+  if (coordinate_transform_mode_ != schema::CoordinateTransformMode_CROP_AND_RESIZE) {
+    b = 1;
+  }
   int c = in_tensors_.at(0)->Channel();
   int h = new_height_;
   int w = new_width_;
-  y_bottoms_ = reinterpret_cast<int *>(malloc(sizeof(int) * h));
+  y_bottoms_ = reinterpret_cast<int *>(malloc(sizeof(int) * h * b));
   if (y_bottoms_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
-  y_tops_ = reinterpret_cast<int *>(malloc(sizeof(int) * h));
+  y_tops_ = reinterpret_cast<int *>(malloc(sizeof(int) * h * b));
   if (y_tops_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
-  y_bottom_weights_ = reinterpret_cast<float *>(malloc(sizeof(float) * h));
+  y_bottom_weights_ = reinterpret_cast<float *>(malloc(sizeof(float) * h * b));
   if (y_bottom_weights_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
 
-  x_lefts_ = reinterpret_cast<int *>(malloc(sizeof(int) * w));
+  x_lefts_ = reinterpret_cast<int *>(malloc(sizeof(int) * w * b));
   if (x_lefts_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
-  x_rights_ = reinterpret_cast<int *>(malloc(sizeof(int) * w));
+  x_rights_ = reinterpret_cast<int *>(malloc(sizeof(int) * w * b));
   if (x_rights_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
   }
-  x_left_weights_ = reinterpret_cast<float *>(malloc(sizeof(float) * w));
+  x_left_weights_ = reinterpret_cast<float *>(malloc(sizeof(float) * w * b));
   if (x_left_weights_ == nullptr) {
     MS_LOG(ERROR) << "malloc data failed";
     return RET_NULL_PTR;
@@ -181,20 +196,17 @@ int ResizeCPUKernel::RunImpl(int task_id) {
   int ret = 0;
   switch (method_) {
     case static_cast<int>(schema::ResizeMethod_LINEAR): {
-      int n_h_begin, n_h_end;
-      int n = out_tensors_.at(0)->shape().at(0);
-      int h = new_height_;
-      int unit = UP_DIV(n * h, context_->thread_num_);
-      n_h_begin = unit * task_id;
-      n_h_end = std::min(n_h_begin + unit, n * h);
+      int unit = UP_DIV(new_height_, context_->thread_num_);
+      int h_begin = unit * task_id;
+      int h_end = std::min(h_begin + unit, new_height_);
       int c = in_tensors_.at(0)->shape().at(3);
       float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
       float *line1 = line0 + new_width_ * c;
 
+      bool is_crop = coordinate_transform_mode_ == schema::CoordinateTransformMode_CROP_AND_RESIZE;
       ret = ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(), y_bottoms_,
-                           y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0, line1, n_h_begin,
-                           n_h_end);
-
+                           y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0, line1, h_begin,
+                           h_end, is_crop);
       break;
     }
     case static_cast<int>(schema::ResizeMethod_NEAREST): {
@@ -202,7 +214,6 @@ int ResizeCPUKernel::RunImpl(int task_id) {
                                   calculate_, coordinate_transform_mode_, task_id, context_->thread_num_);
       break;
     }
-    case schema::ResizeMethod_UNKNOW:
     default: {
       MS_LOG(ERROR) << "Resize unknown method " << method_;
       ret = RET_ERROR;
@@ -218,7 +229,6 @@ int ResizeCPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
-
   return RET_OK;
 }
 
