@@ -31,8 +31,8 @@ lrn_grad_op_info = TBERegOp("LRNGrad") \
     .input(1, "x", False, "required", "all") \
     .input(2, "y", False, "required", "all") \
     .output(0, "z", False, "required", "all") \
-    .dtype_format(DataType.F16_NCHW, DataType.F16_NCHW, DataType.F16_NCHW, DataType.F16_NCHW) \
-    .dtype_format(DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW) \
+    .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
+    .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()
 
 

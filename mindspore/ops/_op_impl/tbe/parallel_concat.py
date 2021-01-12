@@ -50,27 +50,17 @@ parallel_concat_op_info = TBERegOp("ParallelConcat") \
     .dtype_format(DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD) \
     .dtype_format(DataType.BOOL_NHWC, DataType.BOOL_NHWC) \
-    .dtype_format(DataType.BOOL_NCHW, DataType.BOOL_NCHW) \
+    .dtype_format(DataType.BOOL_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.I8_NHWC, DataType.I8_NHWC) \
-    .dtype_format(DataType.I8_NCHW, DataType.I8_NCHW) \
     .dtype_format(DataType.U8_NHWC, DataType.U8_NHWC) \
-    .dtype_format(DataType.U8_NCHW, DataType.U8_NCHW) \
     .dtype_format(DataType.I16_NHWC, DataType.I16_NHWC) \
-    .dtype_format(DataType.I16_NCHW, DataType.I16_NCHW) \
     .dtype_format(DataType.U16_NHWC, DataType.U16_NHWC) \
-    .dtype_format(DataType.U16_NCHW, DataType.U16_NCHW) \
     .dtype_format(DataType.I32_NHWC, DataType.I32_NHWC) \
-    .dtype_format(DataType.I32_NCHW, DataType.I32_NCHW) \
     .dtype_format(DataType.U32_NHWC, DataType.U32_NHWC) \
-    .dtype_format(DataType.U32_NCHW, DataType.U32_NCHW) \
     .dtype_format(DataType.I64_NHWC, DataType.I64_NHWC) \
-    .dtype_format(DataType.I64_NCHW, DataType.I64_NCHW) \
     .dtype_format(DataType.U64_NHWC, DataType.U64_NHWC) \
-    .dtype_format(DataType.U64_NCHW, DataType.U64_NCHW) \
     .dtype_format(DataType.F16_NHWC, DataType.F16_NHWC) \
-    .dtype_format(DataType.F16_NCHW, DataType.F16_NCHW) \
     .dtype_format(DataType.F32_NHWC, DataType.F32_NHWC) \
-    .dtype_format(DataType.F32_NCHW, DataType.F32_NCHW) \
     .get_op_info()
 
 
