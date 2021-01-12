@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,5 +45,9 @@ MS_REG_GPU_KERNEL_ONE(
   ReluGradV2,
   KernelAttr().AddInputAttr(kNumberTypeInt64).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeInt64),
   ReluGradV2GpuKernel, int64_t)
+MS_REG_GPU_KERNEL_ONE(
+  ReluGradV2,
+  KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt32).AddOutputAttr(kNumberTypeUInt8),
+  ReluGradV2GpuKernel, uint8_t)
 }  // namespace kernel
 }  // namespace mindspore

@@ -42,5 +42,8 @@ MS_REG_GPU_KERNEL_ONE(
 MS_REG_GPU_KERNEL_ONE(
   ReluGrad, KernelAttr().AddInputAttr(kNumberTypeInt8).AddInputAttr(kNumberTypeInt8).AddOutputAttr(kNumberTypeInt8),
   ReluGradGpuFwdKernel, int8_t)
+MS_REG_GPU_KERNEL_ONE(
+  ReluGrad, KernelAttr().AddInputAttr(kNumberTypeUInt8).AddInputAttr(kNumberTypeUInt8).AddOutputAttr(kNumberTypeUInt8),
+  ReluGradGpuFwdKernel, uint8_t)
 }  // namespace kernel
 }  // namespace mindspore
