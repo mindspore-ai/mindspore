@@ -25,8 +25,10 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::schema::PrimitiveType_ExpandDims;
 using mindspore::schema::PrimitiveType_Reshape;
 using mindspore::schema::PrimitiveType_Squeeze;
+using mindspore::schema::PrimitiveType_Unsqueeze;
 
 namespace mindspore::kernel {
 
@@ -97,4 +99,8 @@ REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Reshape, OpenCLKernelCreator<
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Reshape, OpenCLKernelCreator<ReshapeOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Squeeze, OpenCLKernelCreator<ReshapeOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Squeeze, OpenCLKernelCreator<ReshapeOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Unsqueeze, OpenCLKernelCreator<ReshapeOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Unsqueeze, OpenCLKernelCreator<ReshapeOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ExpandDims, OpenCLKernelCreator<ReshapeOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ExpandDims, OpenCLKernelCreator<ReshapeOpenCLKernel>)
 }  // namespace mindspore::kernel
