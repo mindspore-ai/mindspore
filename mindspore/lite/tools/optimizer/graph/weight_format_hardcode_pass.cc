@@ -191,6 +191,8 @@ lite::STATUS WeightFormatHardCodePass::HardCodeTF(const AnfNodePtr &conv_node,
 
   if (op_type == schema::PrimitiveType_Conv2D) {
     param_value->set_format(schema::Format::Format_HWCK);
+  } else if (op_type == schema::PrimitiveType_DepthwiseConv2D) {
+    param_value->set_format(schema::Format::Format_HWKC);
   } else {
     MS_LOG(ERROR) << "Unsupported opType: " << EnumNamePrimitiveType(op_type)
                   << ", node: " << conv_node->fullname_with_scope();

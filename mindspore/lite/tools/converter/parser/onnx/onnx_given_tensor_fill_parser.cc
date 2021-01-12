@@ -45,6 +45,7 @@ STATUS OnnxGivenTensorFillParser::ParseInt8GivenIntTensorFill(const onnx::NodePr
   }
   if (iter->ints().data() == nullptr) {
     MS_LOG(ERROR) << "origin ints data in onnx is nullptr";
+    delete[] param_data;
     return RET_NULL_PTR;
   }
   if (memcpy_s(param_data, data_size, iter->ints().data(), data_size) != EOK) {
