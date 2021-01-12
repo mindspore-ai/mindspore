@@ -120,7 +120,7 @@ The following optimizers add the target interface:  Adam, FTRL, LazyAdam, Proxim
 </tr>
 </table>
 
-###### `export` Modify the input parameters and export's file name ([!7385](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/7385?tab=diffs)， [!9057](https://gitee.com/mindspore/mindspore/pulls/9057/files))
+###### `export` Modify the input parameters and export's file name ([!7385](https://gitee.com/mindspore/mindspore/pulls/7385)， [!9057](https://gitee.com/mindspore/mindspore/pulls/9057/files))
 
 Export the MindSpore prediction model to a file in the specified format.
 
@@ -227,7 +227,7 @@ However, from a user's perspective, tensor.size and tensor.ndim (methods -> prop
 </tr>
 </table>
 
-###### `EmbeddingLookup` add a config in the interface: sparse ([!8202](https://gitee.com/mind_spore/dashboard/projects/mindspore/mindspore/pulls/8202?tab=diffs))
+###### `EmbeddingLookup` add a config in the interface: sparse ([!8202](https://gitee.com/mindspore/mindspore/pulls/8202))
 
 sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: True.
 
@@ -876,7 +876,7 @@ Contributions of any kind are welcome!
     - Fix bug of list cannot be used as input in pynative mode([!1765](https://gitee.com/mindspore/mindspore/pulls/1765))
     - Fix bug of kernel select ([!2103](https://gitee.com/mindspore/mindspore/pulls/2103))
     - Fix bug of pattern matching for batchnorm fusion in the case of auto mix precision.([!1851](https://gitee.com/mindspore/mindspore/pulls/1851))
-    - Fix bug of generate hccl's kernel info.([!2393](https://gitee.com/mindspore/mindspore/mindspore/pulls/2393))
+    - Fix bug of generate hccl's kernel info.([!2393](https://gitee.com/mindspore/mindspore/pulls/2393))
 - GPU platform
     - Fix bug of summary feature invalid([!2173](https://gitee.com/mindspore/mindspore/pulls/2173))
 - Data processing

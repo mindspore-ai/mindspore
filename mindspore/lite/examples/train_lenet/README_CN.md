@@ -41,7 +41,8 @@ mnist/
 
 - 服务器或个人笔记本
     - [MindSpore Framework](https://www.mindspore.cn/install/en): 建议使用Docker安装
-    - [MindSpore ToD Framework](https://www.mindspore.cn/tutorial/tod/en/use/prparation.html)
+    - [MindSpore ToD Download](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/downloads.html)
+    - [MindSpore ToD Build](https://www.mindspore.cn/tutorial/lite/zh-CN/master/use/build.html)
     - [Android NDK r20b](https://dl.google.com/android/repository/android-ndk-r20b-linux-x86_64.zip)
     - [Android SDK](https://developer.android.com/studio?hl=zh-cn#cmdline-tools)
 - Android移动设备

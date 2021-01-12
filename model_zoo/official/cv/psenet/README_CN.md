@@ -1,4 +1,4 @@
-# 目录
+﻿# 目录
 
 - [目录](#目录)
 - [PSENet概述](#psenet概述)
@@ -52,11 +52,11 @@
 - 框架
     - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源：
-    - [MindSpore教程](https://www.mindspore.cn/tutory/training/en/master/index.html)
+    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 - 安装Mindspore
 - 安装[pyblind11](https://github.com/pybind/pybind11)
-- 安装[Opencv3.4](https://docs.opencv.org/3.4.9/d7/d9f/tutory_linux_install.html)
+- 安装[Opencv3.4](https://docs.opencv.org/3.4.9/)
 
 # 快速入门
 
@@ -195,7 +195,7 @@ Calculated!{"precision": 0.8147966668299853，"recall"：0.8006740491092923，"h
 | 总时间 | 1卡：75.48小时；4卡：18.87小时|
 | 参数(M) | 27.36 |
 | 微调检查点 | 109.44M （.ckpt file） |
-| 脚本 | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/psenet> |
+| 脚本 | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/psenet> |
 
 ### 推理性能
 
@@ -213,7 +213,7 @@ Calculated!{"precision": 0.8147966668299853，"recall"：0.8006740491092923，"h
 
 ### 推理
 
-如果您需要使用已训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考[此处](https://www.mindspore.cn/tutory/training/en/master/advanced_use/migrate_3rd_scripts.html)。操作示例如下：
+如果您需要使用已训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考[此处](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/migrate_3rd_scripts.html)。操作示例如下：
 
 ```python
 # 加载未知数据集进行推理

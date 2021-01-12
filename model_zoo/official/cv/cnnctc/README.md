@@ -22,12 +22,12 @@
     - [How to use](#how-to-use)
         - [Inference](#inference)
         - [Continue Training on the Pretrained Model](#continue-training-on-the-pretrained-model)
-       - [Transfer Learning](#transfer-learning)
+        - [Transfer Learning](#transfer-learning)
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-
 # [CNNCTC Description](#contents)
+
 This paper proposes three major contributions to addresses scene text recognition (STR).
 First, we examine the inconsistencies of training and evaluation datasets, and the performance gap results from inconsistencies.
 Second, we introduce a unified four-stage STR framework that most existing STR models fit into.
@@ -38,9 +38,8 @@ comparisons to understand the performance gain of the existing modules.
 [Paper](https://arxiv.org/abs/1904.01906): J. Baek, G. Kim, J. Lee, S. Park, D. Han, S. Yun, S. J. Oh, and H. Lee, “What is wrong with scene text recognition model comparisons? dataset and model analysis,” ArXiv, vol. abs/1904.01906, 2019.
 
 # [Model Architecture](#contents)
+
 This is an example of training CNN+CTC model for text recognition on MJSynth and SynthText dataset with MindSpore.
-
-
 
 # [Dataset](#contents)
 
@@ -49,14 +48,18 @@ Note that you can run the scripts based on the dataset mentioned in original pap
 The [MJSynth](https://www.robots.ox.ac.uk/~vgg/data/text/) and [SynthText](https://github.com/ankush-me/SynthText) dataset are used for model training. The [The IIIT 5K-word dataset](https://cvit.iiit.ac.in/research/projects/cvit-projects/the-iiit-5k-word-dataset) dataset is used for evaluation.
 
 - step 1:
+
 All the datasets have been preprocessed and stored in .lmdb format and can be downloaded [**HERE**](https://drive.google.com/drive/folders/192UfE9agQUMNq6AgU3_E05_FcPZK4hyt).
 
 - step 2:
+
 Uncompress the downloaded file, rename the MJSynth dataset as MJ, the SynthText dataset as ST and the IIIT dataset as IIIT.
 
 - step 3:
+
 Move above mentioned three datasets into `cnnctc_data` folder, and the structure should be as below:
-```
+
+```text
 |--- CNNCTC/
     |--- cnnctc_data/
         |--- ST/
@@ -68,13 +71,15 @@ Move above mentioned three datasets into `cnnctc_data` folder, and the structure
         |--- IIIT/
             data.mdb
             lock.mdb
-    
+
     ......
 ```
 
 - step 4:
+
 Preprocess the dataset by running:
-```
+
+```bash
 python src/preprocess_dataset.py
 ```
 
@@ -84,31 +89,27 @@ This takes around 75 minutes.
 
 ## Mixed Precision
 
-The [mixed precision](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware. 
+The [mixed precision](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html) training method accelerates the deep learning neural network training process by using both the single-precision and half-precision data formats, and maintains the network precision achieved by the single-precision training at the same time. Mixed precision training can accelerate the computation process, reduce memory usage, and enable a larger model or batch size to be trained on specific hardware.
 For FP16 operators, if the input data type is FP32, the backend of MindSpore will automatically handle it with reduced precision. Users could check the reduced-precision operators by enabling INFO log and then searching ‘reduce precision’.
-
-
 
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend）
-  
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources. 
+
+    - Prepare hardware environment with Ascend processor. If you want to try Ascend  , please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
-  
-  - [MindSpore](https://www.mindspore.cn/install/en)
+
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html) 
+    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
 
-  - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
-
-  
-  
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Quick Start](#contents)
 
 - Install dependencies:
-```
+
+```bash
 pip install lmdb
 pip install Pillow
 pip install tqdm
@@ -116,25 +117,30 @@ pip install six
 ```
 
 - Standalone Training:
-```
+
+```bash
 bash scripts/run_standalone_train_ascend.sh $PRETRAINED_CKPT
 ```
 
 - Distributed Training:
-```
+
+```bash
 bash scripts/run_distribute_train_ascend.sh $RANK_TABLE_FILE $PRETRAINED_CKPT
 ```
 
 - Evaluation:
-```
+
+```bash
 bash scripts/run_eval_ascend.sh $TRAINED_CKPT
 ```
 
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
+
 The entire code structure is as following:
-```
+
+```text
 |--- CNNCTC/
     |---README.md    // descriptions about cnnctc
     |---train.py    // train scripts
@@ -154,39 +160,41 @@ The entire code structure is as following:
 
 ```
 
-
 ## [Script Parameters](#contents)
+
 Parameters for both training and evaluation can be set in `config.py`.
 
 Arguments:
-  * `--CHARACTER`: Character labels.
-  * `--NUM_CLASS`: The number of classes including all character labels and the <blank> label for CTCLoss.
-  * `--HIDDEN_SIZE`: Model hidden size.
-  * `--FINAL_FEATURE_WIDTH`: The number of features.
-  * `--IMG_H`： The height of input image.
-  * `--IMG_W`： The width of input image.
-  * `--TRAIN_DATASET_PATH`： The path to training dataset.
-  * `--TRAIN_DATASET_INDEX_PATH`： The path to training dataset index file which determines the order .
-  * `--TRAIN_BATCH_SIZE`： Training batch size. The batch size and index file must ensure input data is in fixed shape.
-  * `--TRAIN_DATASET_SIZE`： Training dataset size.
-  * `--TEST_DATASET_PATH`： The path to test dataset.
-  * `--TEST_BATCH_SIZE`： Test batch size.
-  * `--TRAIN_EPOCHS`：Total training epochs.
-  * `--CKPT_PATH`：The path to model checkpoint file, can be used to resume training and evaluation.
-  * `--SAVE_PATH`：The path to save model checkpoint file.
-  * `--LR`：Learning rate for standalone training.
-  * `--LR_PARA`：Learning rate for distributed training.
-  * `--MOMENTUM`：Momentum.
-  * `--LOSS_SCALE`：Loss scale to prevent gradient underflow.
-  * `--SAVE_CKPT_PER_N_STEP`：Save model checkpoint file per N steps.
-  * `--KEEP_CKPT_MAX_NUM`：The maximum number of saved model checkpoint file.
+
+- `--CHARACTER`: Character labels.
+- `--NUM_CLASS`: The number of classes including all character labels and the <blank> label for CTCLoss.
+- `--HIDDEN_SIZE`: Model hidden size.
+- `--FINAL_FEATURE_WIDTH`: The number of features.
+- `--IMG_H`： The height of input image.
+- `--IMG_W`： The width of input image.
+- `--TRAIN_DATASET_PATH`： The path to training dataset.
+- `--TRAIN_DATASET_INDEX_PATH`： The path to training dataset index file which determines the order .
+- `--TRAIN_BATCH_SIZE`： Training batch size. The batch size and index file must ensure input data is in fixed shape.
+- `--TRAIN_DATASET_SIZE`： Training dataset size.
+- `--TEST_DATASET_PATH`： The path to test dataset.
+- `--TEST_BATCH_SIZE`： Test batch size.
+- `--TRAIN_EPOCHS`：Total training epochs.
+- `--CKPT_PATH`：The path to model checkpoint file, can be used to resume training and evaluation.
+- `--SAVE_PATH`：The path to save model checkpoint file.
+- `--LR`：Learning rate for standalone training.
+- `--LR_PARA`：Learning rate for distributed training.
+- `--MOMENTUM`：Momentum.
+- `--LOSS_SCALE`：Loss scale to prevent gradient underflow.
+- `--SAVE_CKPT_PER_N_STEP`：Save model checkpoint file per N steps.
+- `--KEEP_CKPT_MAX_NUM`：The maximum number of saved model checkpoint file.
 
 ## [Training Process](#contents)
 
 ### Training
 
 - Standalone Training:
-```
+
+```bash
 bash scripts/run_standalone_train_ascend.sh $PRETRAINED_CKPT
 ```
 
@@ -195,22 +203,22 @@ Results and checkpoints are written to `./train` folder. Log can be found in `./
 `$PRETRAINED_CKPT` is the path to model checkpoint and it is **optional**. If none is given the model will be trained from scratch.
 
 - Distributed Training:
-```
+
+```bash
 bash scripts/run_distribute_train_ascend.sh $RANK_TABLE_FILE $PRETRAINED_CKPT
 ```
 
 Results and checkpoints are written to `./train_parallel_{i}` folder for device `i` respectively.
  Log can be found in `./train_parallel_{i}/log_{i}.log` and loss values are recorded in `./train_parallel_{i}/loss.log`.
 
-`$RANK_TABLE_FILE` is needed when you are running a distribute task on ascend. 
+`$RANK_TABLE_FILE` is needed when you are running a distribute task on ascend.
 `$PATH_TO_CHECKPOINT` is the path to model checkpoint and it is **optional**. If none is given the model will be trained from scratch.
 
 ### Training Result
 
 Training result will be stored in the example path, whose folder name begins with "train" or "train_parallel". You can find checkpoint file together with result like the followings in loss.log.
 
- 
-```
+```text
 # distribute training result(8p)
 epoch: 1 step: 1 , loss is 76.25, average time per step is 0.235177839748392712
 epoch: 1 step: 2 , loss is 73.46875, average time per step is 0.25798572540283203
@@ -234,18 +242,20 @@ epoch: 1 step: 8698 , loss is 9.708542263610315, average time per step is 0.2184
 ## [Evaluation Process](#contents)
 
 ### Evaluation
+
 - Evaluation:
-```
+
+```bash
 bash scripts/run_eval_ascend.sh $TRAINED_CKPT
 ```
 
 The model will be evaluated on the IIIT dataset, sample results and overall accuracy will be printed.
 
-
 # [Model Description](#contents)
+
 ## [Performance](#contents)
 
-### Training Performance 
+### Training Performance
 
 | Parameters                 | CNNCTC                                                   |
 | -------------------------- | ----------------------------------------------------------- |
@@ -260,8 +270,7 @@ The model will be evaluated on the IIIT dataset, sample results and overall accu
 | Speed                      | 1pc: 250 ms/step;  8pcs: 260 ms/step                          |
 | Total time                 | 1pc: 15 hours;  8pcs: 1.92 hours                          |
 | Parameters (M)             | 177                                                         |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/cnnctc |
-
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/cnnctc> |
 
 ### Evaluation Performance
 
@@ -278,13 +287,14 @@ The model will be evaluated on the IIIT dataset, sample results and overall accu
 | Model for inference | 675M (.ckpt file)         |
 
 ## [How to use](#contents)
+
 ### Inference
 
-If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/zh-CN/master/advanced_use/network_migration.html). Following the steps below, this is a simple example:
+If you need to use the trained model to perform inference on multiple hardware platforms, such as GPU, Ascend 910 or Ascend 310, you can refer to this [Link](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/migrate_3rd_scripts.html). Following the steps below, this is a simple example:
 
 - Running on Ascend
 
-  ```
+  ```python
   # Set context
   context.set_context(mode=context.GRAPH_HOME, device_target=cfg.device_target)
   context.set_context(device_id=cfg.device_id)
@@ -315,7 +325,7 @@ If you need to use the trained model to perform inference on multiple hardware p
 
 - running on Ascend
 
-  ```
+  ```python
   # Load dataset
   dataset = create_dataset(cfg.data_path, 1)
   batch_num = dataset.get_dataset_size()
@@ -349,6 +359,6 @@ If you need to use the trained model to perform inference on multiple hardware p
   print("train success")
   ```
 
-
 # [ModelZoo Homepage](#contents)
+
  Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
