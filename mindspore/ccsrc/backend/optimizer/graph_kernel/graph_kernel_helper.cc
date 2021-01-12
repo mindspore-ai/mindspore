@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -753,7 +753,7 @@ std::vector<PrimitivePtr> GetFusibleOpList() {
     prim::kPrimPow,     prim::kPrimSub,        prim::kPrimRsqrt,     prim::kPrimSqrt,    prim::kPrimAddN,
     prim::kPrimEqual,   prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,  prim::kPrimGreater,
     prim::kPrimAssign,  prim::kPrimReduceSum,  prim::kPrimTanh,      prim::kPrimReshape, prim::kPrimTranspose,
-    prim::kPrimCast};
+    prim::kPrimCast,    prim::kPrimExpandDims};
 #else
   std::vector<PrimitivePtr> fusible_basic_ops;
 #endif
