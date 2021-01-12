@@ -61,6 +61,12 @@ class AlbumNode : public MappableSourceNode {
   /// \return Status Status::OK() if get shard id successfully
   Status GetShardId(int32_t *shard_id) override;
 
+  /// \brief Getter functions
+  const std::string &DatasetDir() const { return dataset_dir_; }
+  const std::string &SchemaPath() const { return schema_path_; }
+  const std::vector<std::string> &ColumnNames() const { return column_names_; }
+  bool Decode() const { return decode_; }
+
  private:
   std::string dataset_dir_;
   std::string schema_path_;

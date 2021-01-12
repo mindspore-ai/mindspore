@@ -138,8 +138,8 @@ Status MapNode::to_json(nlohmann::json *out_json) {
 
   std::vector<nlohmann::json> ops;
   std::vector<int32_t> cbs;
-  nlohmann::json op_args;
   for (auto op : operations_) {
+    nlohmann::json op_args;
     RETURN_IF_NOT_OK(op->to_json(&op_args));
     op_args["tensor_op_name"] = op->Name();
     ops.push_back(op_args);

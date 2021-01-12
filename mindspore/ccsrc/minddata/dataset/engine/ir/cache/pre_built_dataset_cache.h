@@ -42,6 +42,8 @@ class PreBuiltDatasetCache : public DatasetCache {
 
   Status ValidateParams() override { return Status::OK(); }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::shared_ptr<CacheClient> cache_client_;
 };

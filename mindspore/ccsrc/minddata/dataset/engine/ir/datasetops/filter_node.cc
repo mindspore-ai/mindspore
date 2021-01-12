@@ -73,5 +73,13 @@ Status FilterNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   return p->VisitAfter(shared_from_base<FilterNode>(), modified);
 }
 
+Status FilterNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["input_columns"] = input_columns_;
+  args["num_parallel_workers"] = num_workers_;
+  args["predicate"] = "pyfunc";
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

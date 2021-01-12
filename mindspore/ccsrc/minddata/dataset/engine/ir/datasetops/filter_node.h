@@ -70,6 +70,15 @@ class FilterNode : public DatasetNode {
   /// \return Status of the node visit
   Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
 
+  /// \brief Getter functions
+  const std::shared_ptr<TensorOp> &Predicate() const { return predicate_; }
+  const std::vector<std::string> &InputColumns() const { return input_columns_; }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::shared_ptr<TensorOp> predicate_;
   std::vector<std::string> input_columns_;

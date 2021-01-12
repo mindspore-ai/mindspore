@@ -167,19 +167,82 @@ def create_node(node):
     pyobj = None
     # Find a matching Dataset class and call the constructor with the corresponding args.
     # When a new Dataset class is introduced, another if clause and parsing code needs to be added.
-    if dataset_op == 'ImageFolderDataset':
+    # Dataset Source Ops (in alphabetical order)
+    if dataset_op == 'CelebADataset':
+        sampler = construct_sampler(node.get('sampler'))
+        num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
+        pyobj = pyclass(node['dataset_dir'], node.get('num_parallel_workers'), node.get('shuffle'), node.get('usage'),
+                        sampler, node.get('decode'), node.get('extensions'), num_samples, node.get('num_shards'),
+                        node.get('shard_id'))
+
+    elif dataset_op == 'Cifar10Dataset':
+        sampler = construct_sampler(node.get('sampler'))
+        num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
+        pyobj = pyclass(node['dataset_dir'], node['usage'], num_samples, node.get('num_parallel_workers'),
+                        node.get('shuffle'), sampler, node.get('num_shards'), node.get('shard_id'))
+
+    elif dataset_op == 'Cifar100Dataset':
+        sampler = construct_sampler(node.get('sampler'))
+        num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
+        pyobj = pyclass(node['dataset_dir'], node['usage'], num_samples, node.get('num_parallel_workers'),
+                        node.get('shuffle'), sampler, node.get('num_shards'), node.get('shard_id'))
+
+    elif dataset_op == 'ClueDataset':
+        shuffle = to_shuffle_mode(node.get('shuffle'))
+        if shuffle is not None and isinstance(shuffle, str):
+            shuffle = de.Shuffle(shuffle)
+        num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
+        pyobj = pyclass(node['dataset_files'], node.get('task'),
+                        node.get('usage'), num_samples, node.get('num_parallel_workers'), shuffle,
+                        node.get('num_shards'), node.get('shard_id'))
+
+    elif dataset_op == 'CocoDataset':
+        sampler = construct_sampler(node.get('sampler'))
+        num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
+        pyobj = pyclass(node['dataset_dir'], node.get('annotation_file'), node.get('task'), num_samples,
+                        node.get('num_parallel_workers'), node.get('shuffle'), node.get('decode'), sampler,
+                        node.get('num_shards'), node.get('shard_id'))
+
+    elif dataset_op == 'CSVDataset':
+        shuffle = to_shuffle_mode(node.get('shuffle'))
+        if shuffle is not None and isinstance(shuffle, str):
+            shuffle = de.Shuffle(shuffle)
+        num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
+        pyobj = pyclass(node['dataset_files'], node.get('field_delim'),
+                        node.get('column_defaults'), node.get('column_names'), num_samples,
+                        node.get('num_parallel_workers'), shuffle,
+                        node.get('num_shards'), node.get('shard_id'))
+
+    elif dataset_op == 'ImageFolderDataset':
         sampler = construct_sampler(node.get('sampler'))
         num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
         pyobj = pyclass(node['dataset_dir'], num_samples, node.get('num_parallel_workers'),
                         node.get('shuffle'), sampler, node.get('extensions'),
                         node.get('class_indexing'), node.get('decode'), node.get('num_shards'),
-                        node.get('shard_id'), node.get('cache'))
+                        node.get('shard_id'))
+
+    elif dataset_op == 'ManifestDataset':
+        sampler = construct_sampler(node.get('sampler'))
+        num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
+        pyobj = pyclass(node['dataset_file'], node['usage'], num_samples,
+                        node.get('num_parallel_workers'), node.get('shuffle'), sampler,
+                        node.get('class_indexing'), node.get('decode'), node.get('num_shards'),
+                        node.get('shard_id'))
 
     elif dataset_op == 'MnistDataset':
         sampler = construct_sampler(node.get('sampler'))
         num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
         pyobj = pyclass(node['dataset_dir'], node['usage'], num_samples, node.get('num_parallel_workers'),
-                        node.get('shuffle'), sampler, node.get('num_shards'), node.get('shard_id'), node.get('cache'))
+                        node.get('shuffle'), sampler, node.get('num_shards'), node.get('shard_id'))
+
+    elif dataset_op == 'TextFileDataset':
+        shuffle = to_shuffle_mode(node.get('shuffle'))
+        if shuffle is not None and isinstance(shuffle, str):
+            shuffle = de.Shuffle(shuffle)
+        num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
+        pyobj = pyclass(node['dataset_files'], num_samples,
+                        node.get('num_parallel_workers'), shuffle,
+                        node.get('num_shards'), node.get('shard_id'))
 
     elif dataset_op == 'TFRecordDataset':
         shuffle = to_shuffle_mode(node.get('shuffle'))
@@ -188,29 +251,49 @@ def create_node(node):
         num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
         pyobj = pyclass(node['dataset_files'], node.get('schema'), node.get('columns_list'),
                         num_samples, node.get('num_parallel_workers'),
-                        shuffle, node.get('num_shards'), node.get('shard_id'), node.get('cache'))
+                        shuffle, node.get('num_shards'), node.get('shard_id'))
 
-    elif dataset_op == 'Repeat':
-        pyobj = de.Dataset().repeat(node.get('count'))
+    elif dataset_op == 'VOCDataset':
+        sampler = construct_sampler(node.get('sampler'))
+        num_samples = check_and_replace_input(node.get('num_samples'), 0, None)
+        pyobj = pyclass(node['dataset_dir'], node.get('task'), node.get('usage'), node.get('class_indexing'),
+                        num_samples, node.get('num_parallel_workers'), node.get('shuffle'),
+                        node.get('decode'), sampler, node.get('num_shards'), node.get('shard_id'))
+
+    # Dataset Ops (in alphabetical order)
+    elif dataset_op == 'Batch':
+        pyobj = de.Dataset().batch(node['batch_size'], node.get('drop_remainder'))
 
     elif dataset_op == 'Map':
         tensor_ops = construct_tensor_ops(node.get('operations'))
         pyobj = de.Dataset().map(tensor_ops, node.get('input_columns'), node.get('output_columns'),
                                  node.get('column_order'), node.get('num_parallel_workers'),
-                                 True, node.get('cache'), node.get('callbacks'))
+                                 True, node.get('callbacks'))
+
+    elif dataset_op == 'Project':
+        pyobj = de.Dataset().project(node['columns'])
+
+    elif dataset_op == 'Rename':
+        pyobj = de.Dataset().rename(node['input_columns'], node['output_columns'])
+
+    elif dataset_op == 'Repeat':
+        pyobj = de.Dataset().repeat(node.get('count'))
 
     elif dataset_op == 'Shuffle':
         pyobj = de.Dataset().shuffle(node.get('buffer_size'))
 
-    elif dataset_op == 'Batch':
-        pyobj = de.Dataset().batch(node['batch_size'], node.get('drop_remainder'))
+    elif dataset_op == 'Skip':
+        pyobj = de.Dataset().skip(node.get('count'))
+
+    elif dataset_op == 'Take':
+        pyobj = de.Dataset().take(node.get('count'))
+
+    elif dataset_op == 'Transfer':
+        pyobj = de.Dataset().to_device(node.get('send_epoch_end'), node.get('create_data_info_queue'))
 
     elif dataset_op == 'Zip':
         # Create ZipDataset instance, giving dummy input dataset that will be overrided in the caller.
         pyobj = de.ZipDataset((de.Dataset(), de.Dataset()))
-
-    elif dataset_op == 'Rename':
-        pyobj = de.Dataset().rename(node['input_columns'], node['output_columns'])
 
     else:
         raise RuntimeError(dataset_op + " is not yet supported by ds.engine.deserialize().")
@@ -252,35 +335,59 @@ def construct_tensor_ops(operations):
     """Instantiate tensor op object(s) based on the information from dictionary['operations']"""
     result = []
     for op in operations:
-        op_name = op['tensor_op_name'][:-2]  # to remove op from the back of the name
+        op_name = op['tensor_op_name']
         op_module_vis = sys.modules["mindspore.dataset.vision.c_transforms"]
         op_module_trans = sys.modules["mindspore.dataset.transforms.c_transforms"]
 
+        if op_name == "HwcToChw": op_name = "HWC2CHW"
         if hasattr(op_module_vis, op_name):
             op_class = getattr(op_module_vis, op_name)
-        elif hasattr(op_module_trans, op_name):
+        elif hasattr(op_module_trans, op_name[:-2]):
+            op_name = op_name[:-2]  # to remove op from the back of the name
             op_class = getattr(op_module_trans, op_name)
         else:
             raise RuntimeError(op_name + " is not yet supported by deserialize().")
 
-        if op_name == 'Decode':
+        # Transforms Ops (in alphabetical order)
+        if op_name == 'OneHot':
+            result.append(op_class(op['num_classes']))
+
+        elif op_name == 'TypeCast':
+            result.append(op_class(to_mstype(op['data_type'])))
+
+        # Vision Ops (in alphabetical order)
+        elif op_name == 'CenterCrop':
+            result.append(op_class(op['size']))
+
+        elif op_name == 'Decode':
             result.append(op_class(op.get('rgb')))
+
+        elif op_name == 'HWC2CHW':
+            result.append(op_class())
+
+        elif op_name == 'Normalize':
+            result.append(op_class(op['mean'], op['std']))
+
+        elif op_name == 'Pad':
+            result.append(op_class(op['padding'], tuple(op['fill_value']), Border(to_border_mode(op['padding_mode']))))
+
+        elif op_name == 'RandomColorAdjust':
+            result.append(op_class(op.get('brightness'), op.get('contrast'), op.get('saturation'),
+                                   op.get('hue')))
 
         elif op_name == 'RandomCrop':
             result.append(op_class(op['size'], op.get('padding'), op.get('pad_if_needed'),
                                    tuple(op.get('fill_value')), Border(to_border_mode(op.get('padding_mode')))))
 
-        elif op_name == 'Resize':
-            result.append(op_class(op['size'], Inter(to_interpolation_mode(op.get('interpolation')))))
+        elif op_name == 'RandomRotation':
+            result.append(op_class(op['degrees'], to_interpolation_mode(op.get('interpolation_mode')), op.get('expand'),
+                                   tuple(op.get('center')), tuple(op.get('fill_value'))))
 
         elif op_name == 'Rescale':
             result.append(op_class(op['rescale'], op['shift']))
 
-        elif op_name == 'HWC2CHW':
-            result.append(op_class())
-
-        elif op_name == 'OneHot':
-            result.append(op_class(op['num_classes']))
+        elif op_name == 'Resize':
+            result.append(op_class(op['size'], to_interpolation_mode(op.get('interpolation'))))
 
         else:
             raise ValueError("Tensor op name is unknown: {}.".format(op_name))

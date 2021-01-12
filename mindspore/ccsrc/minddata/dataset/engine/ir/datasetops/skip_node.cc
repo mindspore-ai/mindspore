@@ -83,5 +83,12 @@ Status SkipNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<SkipNode>(), modified);
 }
+
+Status SkipNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["count"] = skip_count_;
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

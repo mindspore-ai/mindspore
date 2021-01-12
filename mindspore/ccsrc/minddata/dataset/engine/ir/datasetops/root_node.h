@@ -29,7 +29,7 @@ namespace dataset {
 class RootNode : public DatasetNode {
  public:
   /// \brief Constructor
-  RootNode() : DatasetNode() {}
+  RootNode() : DatasetNode(), num_epochs_(0) {}
 
   /// \brief Constructor
   explicit RootNode(std::shared_ptr<DatasetNode> child);

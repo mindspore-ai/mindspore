@@ -61,6 +61,10 @@ class ConcatNode : public DatasetNode {
 
   bool IsSizeDefined() override { return false; }
 
+  /// \brief Getter functions
+  const std::vector<std::pair<int, int>> &ChildrenFlagAndNums() const { return children_flag_and_nums_; }
+  const std::vector<std::pair<int, int>> &ChildrenStartEndIndex() const { return children_start_end_index_; }
+
  private:
   std::shared_ptr<SamplerObj> sampler_;
   std::vector<std::pair<int, int>> children_flag_and_nums_;

@@ -105,6 +105,8 @@ class CenterCropOperation : public TensorOperation {
 
   std::string Name() const override { return kCenterCropOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<int32_t> size_;
 };
@@ -137,6 +139,8 @@ class DecodeOperation : public TensorOperation {
 
   std::string Name() const override { return kDecodeOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   bool rgb_;
 };
@@ -152,6 +156,8 @@ class NormalizeOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kNormalizeOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<float> mean_;
@@ -170,6 +176,8 @@ class ResizeOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kResizeOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<int32_t> size_;

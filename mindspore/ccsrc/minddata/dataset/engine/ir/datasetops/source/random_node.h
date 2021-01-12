@@ -91,6 +91,14 @@ class RandomNode : public NonMappableSourceNode {
   Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
                         int64_t *dataset_size) override;
 
+  /// \brief Getter functions
+  int32_t TotalRows() const { return total_rows_; }
+  const std::string &SchemaPath() const { return schema_path_; }
+  const std::shared_ptr<SchemaObj> &GetSchema() const { return schema_; }
+  const std::vector<std::string> &ColumnsList() const { return columns_list_; }
+  const std::mt19937 &RandGen() const { return rand_gen_; }
+  const std::unique_ptr<DataSchema> &GetDataSchema() const { return data_schema_; }
+
  private:
   /// \brief A quick inline for producing a random number between (and including) min/max
   /// \param[in] min minimum number that can be generated.

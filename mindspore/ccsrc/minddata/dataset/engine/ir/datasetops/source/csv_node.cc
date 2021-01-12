@@ -170,5 +170,23 @@ Status CSVNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_ge
   return Status::OK();
 }
 
+Status CSVNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["num_parallel_workers"] = num_workers_;
+  args["dataset_files"] = dataset_files_;
+  args["field_delim"] = std::string(1, field_delim_);
+  args["column_names"] = column_names_;
+  args["num_samples"] = num_samples_;
+  args["shuffle"] = shuffle_;
+  args["num_shards"] = num_shards_;
+  args["shard_id"] = shard_id_;
+  if (cache_ != nullptr) {
+    nlohmann::json cache_args;
+    RETURN_IF_NOT_OK(cache_->to_json(&cache_args));
+    args["cache"] = cache_args;
+  }
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

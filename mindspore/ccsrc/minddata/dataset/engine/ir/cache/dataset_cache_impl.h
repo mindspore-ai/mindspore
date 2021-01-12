@@ -60,8 +60,6 @@ class DatasetCacheImpl : public DatasetCache {
 
   ~DatasetCacheImpl() = default;
 
-  Status to_json(nlohmann::json *out_json) override;
-
  private:
   std::shared_ptr<CacheClient> cache_client_;
   session_id_type session_id_;
