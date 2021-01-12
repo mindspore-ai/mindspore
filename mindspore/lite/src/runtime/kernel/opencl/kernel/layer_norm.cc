@@ -33,24 +33,24 @@ namespace mindspore::kernel {
 
 int LayerNormOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<LayerNormParameter *>(this->op_parameter_);
-  //  if (param->elementwise_mode_ == ELEMENTWISE_PER_CHANNEL) {
-  //    if (in_tensors_.size() != 3) {
-  //      MS_LOG(ERROR) << " invalid in_tensors_ size" << in_tensors_.size() << std::endl;
-  //      return RET_ERROR;
-  //    }
-  //    if (param->normalized_dims_ > in_tensors_.at(0)->shape().size()) {
-  //      MS_LOG(ERROR) << " invalid normalized_shape_ size" << param->normalized_dims_ << std::endl;
-  //      return RET_ERROR;
-  //    }
-  //  } else if (param->elementwise_mode_ == ELEMENTWISE_NOT) {
-  //    if (in_tensors_.size() != 1) {
-  //      MS_LOG(ERROR) << " invalid in_tensors_ size" << in_tensors_.size() << std::endl;
-  //      return RET_ERROR;
-  //    }
-  //  } else {
-  //    MS_LOG(ERROR) << "Unsupported elementwise_mode_" << param->elementwise_mode_;
-  //    return RET_ERROR;
-  //  }
+  if (param->elementwise_mode_ == ELEMENTWISE_PER_NUM) {
+    if (in_tensors_.size() != 3) {
+      MS_LOG(ERROR) << " invalid in_tensors_ size" << in_tensors_.size() << std::endl;
+      return RET_ERROR;
+    }
+    if (param->normalized_dims_ > in_tensors_.at(0)->shape().size()) {
+      MS_LOG(ERROR) << " invalid normalized_shape_ size" << param->normalized_dims_ << std::endl;
+      return RET_ERROR;
+    }
+  } else if (param->elementwise_mode_ == ELEMENTWISE_NOT) {
+    if (in_tensors_.size() != 1) {
+      MS_LOG(ERROR) << " invalid in_tensors_ size" << in_tensors_.size() << std::endl;
+      return RET_ERROR;
+    }
+  } else {
+    MS_LOG(ERROR) << "Unsupported elementwise_mode_" << param->elementwise_mode_;
+    return RET_ERROR;
+  }
   if (in_tensors_.at(0)->shape().size() != 4 || out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "UnSupported in_tensors_.shape.size: " << in_tensors_.at(0)->shape().size()
                   << " out_tensors_.size(): " << out_tensors_.size();

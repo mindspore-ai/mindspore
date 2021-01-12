@@ -24,7 +24,7 @@ namespace {
 // PrimitiveType_Stack: src/ops/populate/stack_populate.cc
 OpParameter *CreateParameter(float epsilon, int normalized_dims_, std::vector<int> normalizedShape) {
   auto *param = test::CreateParameter<LayerNormParameter>(schema::PrimitiveType_LayerNorm);
-  param->elementwise_mode_ = ELEMENTWISE_PER_CHANNEL;
+  param->elementwise_mode_ = ELEMENTWISE_PER_NUM;
   param->epsilon_ = epsilon;
   param->normalized_dims_ = normalized_dims_;
   for (int i = 0; i < normalizedShape.size() && i < normalized_dims_; ++i) {
