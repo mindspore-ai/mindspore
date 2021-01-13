@@ -190,14 +190,17 @@ class LGamma(Cell):
     when x is an integer less or equal to 0, return +inf
     when x = +/- inf, return +inf
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Inputs:
         - **x** (Tensor) - The input tensor. Only float16, float32 are supported.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If dtype of input x is not float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([2, 3, 4]).astype(np.float32))
@@ -306,14 +309,17 @@ class DiGamma(Cell):
 
         digamma(x) = digamma(1 - x) - pi * cot(pi * x)
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. Only float16, float32 are supported.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
+
+    Raises:
+        TypeError: If dtype of input x is not float16 nor float32.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([2, 3, 4]).astype(np.float32))
@@ -568,9 +574,6 @@ class IGamma(Cell):
 
     Above :math:`Q(a, x)` is the upper regularized complete Gamma function.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Inputs:
         - **a** (Tensor) - The input tensor. With float32 data type. `a` should have
           the same dtype with `x`.
@@ -579,6 +582,13 @@ class IGamma(Cell):
 
     Outputs:
         Tensor, has the same dtype as `a` and `x`.
+
+    Raises:
+        TypeError: If dtype of input x and a is not float16 nor float32,
+                   or if x has different dtype with a.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_a = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
@@ -649,9 +659,6 @@ class LBeta(Cell):
     decomposing lgamma into the Stirling approximation and an explicit log_gamma_correction, and cancelling
     the large terms from the Striling analytically.
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Inputs:
         - **x** (Tensor) - The input tensor. With float16 or float32 data type. `x` should have
           the same dtype with `y`.
@@ -660,6 +667,13 @@ class LBeta(Cell):
 
     Outputs:
         Tensor, has the same dtype as `x` and `y`.
+
+    Raises:
+        TypeError: If dtype of input x and a is not float16 nor float32,
+                   or if x has different dtype with a.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([2.0, 4.0, 6.0, 8.0]).astype(np.float32))
@@ -956,15 +970,18 @@ class MatInverse(Cell):
     """
     Calculates the inverse of Positive-Definite Hermitian matrix using Cholesky decomposition.
 
-    Supported Platforms:
-        ``GPU``
-
     Inputs:
         - **a** (Tensor[Number]) - The input tensor. It must be a positive-definite matrix.
           With float16 or float32 data type.
 
     Outputs:
         Tensor, has the same dtype as the `a`.
+
+    Raises:
+        TypeError: If dtype of input x is not float16 nor float32.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> input_a = Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
@@ -993,15 +1010,18 @@ class MatDet(Cell):
     """
     Calculates the determinant of Positive-Definite Hermitian matrix using Cholesky decomposition.
 
-    Supported Platforms:
-        ``GPU``
-
     Inputs:
         - **a** (Tensor[Number]) - The input tensor. It must be a positive-definite matrix.
           With float16 or float32 data type.
 
     Outputs:
         Tensor, has the same dtype as the `a`.
+
+    Raises:
+        TypeError: If dtype of input x is not float16 nor float32.
+
+    Supported Platforms:
+        ``GPU``
 
     Examples:
         >>> input_a = Tensor(np.array([[4, 12, -16], [12, 37, -43], [-16, -43, 98]]).astype(np.float32))
