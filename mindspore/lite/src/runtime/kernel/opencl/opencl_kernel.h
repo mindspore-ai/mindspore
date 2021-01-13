@@ -25,7 +25,7 @@
 #include "src/lite_kernel.h"
 #include "include/errorcode.h"
 #include "src/runtime/opencl/opencl_runtime.h"
-#include "src/runtime/kernel/arm/base/dequant.h"
+#include "mindspore/lite/src/dequant.h"
 #include "src/runtime/kernel/opencl/utils.h"
 
 using mindspore::lite::RET_ERROR;

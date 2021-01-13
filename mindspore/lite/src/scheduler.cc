@@ -27,6 +27,7 @@
 #include "src/common/utils.h"
 #include "src/kernel_registry.h"
 #include "src/sub_graph_kernel.h"
+#include "src/dequant.h"
 #if SUPPORT_GPU
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include "src/runtime/opencl/opencl_runtime.h"
@@ -213,8 +214,10 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   if (mindspore::lite::IsSupportFloat16() &&
       ((context_->IsCpuFloat16Enabled() && data_type == kNumberTypeFloat32) || data_type == kNumberTypeFloat16)) {
     kernel::KernelKey fp16_cpu_desc{desc.arch, kNumberTypeFloat16, desc.type};
+    auto tensor_origin_data_map = DequantUtil::DequantTensor(in_tensors, fp16_cpu_desc.data_type);
     auto *kernel =
       KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, fp16_cpu_desc);
+    DequantUtil::RestoreTensorData(tensor_origin_data_map);
     if (kernel != nullptr) {
       MS_LOG(DEBUG) << "Get fp16 op success: " << schema::EnumNamePrimitiveType(fp16_cpu_desc.type) << " "
                     << node->name_;
@@ -225,7 +228,9 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
     MS_LOG(DEBUG) << "Get fp16 op failed, back to fp32 op.";
     desc.data_type = kNumberTypeFloat32;
   }
+  auto tensor_origin_data_map = DequantUtil::DequantTensor(in_tensors, desc.data_type);
   auto *kernel = KernelRegistry::GetInstance()->GetKernel(in_tensors, out_tensors, primitive, context_, desc);
+  DequantUtil::RestoreTensorData(tensor_origin_data_map);
   if (kernel != nullptr) {
     return kernel;
   }

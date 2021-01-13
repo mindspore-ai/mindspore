@@ -41,19 +41,21 @@ class WeightQuantizer : public Quantizer {
   ~WeightQuantizer();
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
-  STATUS DoConvQuantize(const std::list<CNodePtr> &nodes);
-  STATUS DoMulQuantize(const std::list<CNodePtr> &nodes);
+  STATUS DoConvQuantize(CNodePtr);
+  STATUS DoMulQuantize(CNodePtr);
+  STATUS DoLstmQuntize(CNodePtr cnode);
+  STATUS DoGatherQuntize(CNodePtr cnode);
   static STATUS WeightQuantInputCheck(const converter::Flags *config);
   static bool IsPosNum(const std::string &str);
 
-  int quant_max;
-  int quant_min;
-  TypeId type_id{kTypeUnknown};
+  int quant_max_{127};
+  int quant_min_{-128};
+  TypeId type_id_{kNumberTypeInt8};
   std::map<std::string, int> opname_bit_;
 
  private:
   std::unique_ptr<QuantStrategy> quant_strategy_;
-  size_t bit_num_;
+  size_t bit_num_{8};
   std::string config_file_;
   PostQuantConfig config_param_;
   std::vector<std::vector<std::string>> images_;  // multi_input, [[mode_input_0], [model_input_1]...]
@@ -61,6 +63,7 @@ class WeightQuantizer : public Quantizer {
 
   STATUS DoMiexedQuant(FuncGraphPtr);
   STATUS SetAbstract(ParamValueLitePtr param_value, ParameterPtr param_node, std::shared_ptr<PrimitiveC> primitive_c);
+  STATUS DoFixedQuant(FuncGraphPtr);
 };
 }  // namespace mindspore::lite::quant
 #endif

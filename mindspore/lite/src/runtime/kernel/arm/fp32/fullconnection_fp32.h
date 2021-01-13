@@ -22,7 +22,6 @@
 #include "include/errorcode.h"
 #include "nnacl/fp32/matmul_fp32.h"
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/base/dequant.h"
 
 using mindspore::lite::InnerContext;
 namespace mindspore::kernel {

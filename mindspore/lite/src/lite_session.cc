@@ -27,7 +27,7 @@
 #include "src/common/graph_util.h"
 #include "src/kernel_registry.h"
 #include "src/lite_model.h"
-#include "src/runtime/kernel/arm/base/dequant.h"
+#include "src/dequant.h"
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
@@ -120,7 +120,7 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
             MS_LOG(ERROR) << "Malloc data for tensor failed ";
             return RET_ERROR;
           }
-          kernel::DequantUtil::UnPackToInt(src_tensor, dst_tensor->MutableData());
+          DequantUtil::UnPackToInt(src_tensor, dst_tensor->MutableData());
           copyed_tensor_idxes_.emplace_back(tensor_index);
         } else {
           dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));

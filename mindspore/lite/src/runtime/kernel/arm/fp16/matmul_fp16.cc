@@ -20,7 +20,6 @@
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"
-#include "src/runtime/kernel/arm/base/dequant.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -330,29 +329,9 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
                                                const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                                const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                                const mindspore::lite::PrimitiveC *primitive) {
-  auto *weight_tensor = inputs.at(kWeightIndex);
-  auto *restore_data = weight_tensor->data_c();
-  auto restore_type = weight_tensor->data_type();
-  bool dequant_flag =
-    !weight_tensor->quant_params().empty() && weight_tensor->quant_params().front().inited && restore_data != nullptr;
-  if (dequant_flag) {
-    auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
-    if (dequant_weight == nullptr) {
-      MS_LOG(ERROR) << "dequant data is nullptr.";
-      free(opParameter);
-      return nullptr;
-    }
-    weight_tensor->set_data_type(kNumberTypeFloat32);
-    weight_tensor->set_data(dequant_weight);
-  }
   auto *kernel = new (std::nothrow) MatmulFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
-    if (dequant_flag) {
-      weight_tensor->FreeData();
-      weight_tensor->set_data(restore_data);
-      weight_tensor->set_data_type(restore_type);
-    }
     free(opParameter);
     return nullptr;
   }
@@ -361,17 +340,7 @@ kernel::LiteKernel *CpuMatmulFp16KernelCreator(const std::vector<lite::Tensor *>
     MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
                   << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
     delete kernel;
-    if (dequant_flag) {
-      weight_tensor->FreeData();
-      weight_tensor->set_data(restore_data);
-      weight_tensor->set_data_type(restore_type);
-    }
     return nullptr;
-  }
-  if (dequant_flag) {
-    weight_tensor->FreeData();
-    weight_tensor->set_data(restore_data);
-    weight_tensor->set_data_type(restore_type);
   }
   return kernel;
 }
