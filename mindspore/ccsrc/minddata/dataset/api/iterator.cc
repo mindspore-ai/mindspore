@@ -56,10 +56,10 @@ void Iterator::Stop() {
 }
 
 // Function to build and launch the execution tree.
-Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds) {
+Status Iterator::BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epochs) {
   runtime_context_ = std::make_unique<NativeRuntimeContext>();
   RETURN_IF_NOT_OK(runtime_context_->Init());
-  auto consumer = std::make_unique<IteratorConsumer>();
+  auto consumer = std::make_unique<IteratorConsumer>(num_epochs);
   consumer_ = consumer.get();
   RETURN_IF_NOT_OK(consumer->Init(ds->IRNode()));
   runtime_context_->AssignConsumer(std::move(consumer));

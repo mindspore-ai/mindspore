@@ -410,12 +410,12 @@ Status DatasetNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &siz
     return Status::OK();
   }
   if (children_.size() == 1) {
-    return children_[0]->GetDatasetSize(size_getter, estimate, dataset_size);
+    return children_.front()->GetDatasetSize(size_getter, estimate, dataset_size);
   } else if (children_.size() > 1) {
     // It is okay for dataset to have more than 1 child, GetDatasetSize shouldn't fail in this case.
     // This is done mostly for cache, which injects cache lookup/merge operators. Cache path will
     // always be in front of the child_ structure, so we get the dataset size from the last child.
-    return children_[children_.size() - 1]->GetDatasetSize(size_getter, estimate, dataset_size);
+    return children_.back()->GetDatasetSize(size_getter, estimate, dataset_size);
   } else {
     RETURN_STATUS_UNEXPECTED("Trying to get dataset size from leaf node, missing override");
   }

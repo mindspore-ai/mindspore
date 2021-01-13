@@ -102,7 +102,7 @@ namespace mindspore {
 namespace dataset {
 
 // Function to create the iterator, which will build and launch the execution tree.
-std::shared_ptr<Iterator> Dataset::CreateIterator(std::vector<std::string> columns) {
+std::shared_ptr<Iterator> Dataset::CreateIterator(std::vector<std::string> columns, int32_t num_epochs) {
   std::shared_ptr<Iterator> iter;
   try {
     auto ds = shared_from_this();
@@ -114,7 +114,7 @@ std::shared_ptr<Iterator> Dataset::CreateIterator(std::vector<std::string> colum
     }
 
     iter = std::make_shared<Iterator>();
-    Status rc = iter->BuildAndLaunchTree(ds);
+    Status rc = iter->BuildAndLaunchTree(ds, num_epochs);
     if (rc.IsError()) {
       MS_LOG(ERROR) << "CreateIterator failed." << rc;
       return nullptr;

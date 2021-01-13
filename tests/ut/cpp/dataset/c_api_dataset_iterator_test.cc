@@ -76,7 +76,7 @@ TEST_F(MindDataTestPipeline, TestIteratorOneColumn) {
   // Create an iterator over the result of the above dataset
   // Only select "image" column and drop others
   std::vector<std::string> columns = {"image"};
-  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
+  std::shared_ptr<Iterator> iter = ds->CreateIterator(columns, -1);
   EXPECT_NE(iter, nullptr);
 
   // Iterate the dataset and get each row
@@ -194,4 +194,47 @@ TEST_F(MindDataTestPipeline, TestIteratorWrongColumn) {
   std::vector<std::string> columns = {"digital"};
   std::shared_ptr<Iterator> iter = ds->CreateIterator(columns);
   EXPECT_EQ(iter, nullptr);
+}
+
+TEST_F(MindDataTestPipeline, TestIteratorNumEpoch) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorNumEpoch.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  int32_t random_data_num_row = 2;
+  int32_t num_epochs = 3;
+  ASSERT_OK(schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2}));
+  std::shared_ptr<Dataset> ds = RandomData(random_data_num_row, schema)->SetNumWorkers(1);
+
+  std::shared_ptr<Iterator> iter = ds->CreateIterator({}, num_epochs);
+  ASSERT_NE(iter, nullptr);  // should terminate test case if iterator is null
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+
+  int32_t inner_row_cnt = 0;
+  int32_t total_row_cnt = 0;
+  for (int32_t i = 0; i < num_epochs; i++) {
+    ASSERT_TRUE(iter->GetNextRow(&row));
+    inner_row_cnt = 0;
+    while (row.size() != 0) {
+      ASSERT_TRUE(iter->GetNextRow(&row));
+      ++inner_row_cnt;
+      ++total_row_cnt;
+    }
+    EXPECT_EQ(inner_row_cnt, random_data_num_row);
+  }
+  EXPECT_EQ(total_row_cnt, random_data_num_row * num_epochs);
+  // this will go beyond the random_data_num_row*num_epoch limit, hence error code is expected
+  EXPECT_FALSE(iter->GetNextRow(&row));
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestIteratorNumEpochFail) {
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestIteratorNumEpochFail.";
+
+  std::shared_ptr<SchemaObj> schema = Schema();
+  ASSERT_OK(schema->add_column("image", mindspore::TypeId::kNumberTypeUInt8, {2}));
+  std::shared_ptr<Dataset> ds = RandomData(3, schema)->SetNumWorkers(1);
+  // expect nullptr due to incorrect num_epochs value.
+  EXPECT_EQ(ds->CreateIterator({}, 0), nullptr);
+  EXPECT_EQ(ds->CreateIterator({}, -2), nullptr);
 }
