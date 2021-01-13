@@ -25,7 +25,6 @@ uniform_int_op_info = AiCPURegOp("UniformInt") \
     .attr("seed", "int") \
     .attr("seed2", "int") \
     .dtype_format(DataType.I32_Default, DataType.I32_Default, DataType.I32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I32_NCHW, DataType.I32_NCHW, DataType.I32_NCHW, DataType.I32_NCHW) \
     .get_op_info()
 
 @op_info_register(uniform_int_op_info)

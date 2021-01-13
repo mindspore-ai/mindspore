@@ -24,7 +24,6 @@ poisson_op_info = AiCPURegOp("Poisson") \
     .attr("seed", "int") \
     .attr("seed2", "int") \
     .dtype_format(DataType.I32_Default, DataType.F32_Default, DataType.I32_Default) \
-    .dtype_format(DataType.I32_NCHW, DataType.F32_NCHW, DataType.I32_NCHW) \
     .get_op_info()
 
 @op_info_register(poisson_op_info)
