@@ -782,4 +782,27 @@ FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &func_graph) {
   return new_func_graph;
 }
 
+void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, ParamValueLitePtr *param_value) {
+  MS_ASSERT(node != nullptr);
+  MS_ASSERT(param_node != nullptr);
+  MS_ASSERT(param_value != nullptr);
+
+  auto op_name = node->fullname_with_scope();
+
+  *param_node = node->cast<ParameterPtr>();
+  if (*param_node == nullptr) {
+    MS_LOG(INFO) << op_name << " can not cast to ParameterPtr";
+    return;
+  }
+  if (!(*param_node)->has_default()) {
+    MS_LOG(INFO) << op_name << " not has_default";
+    return;
+  }
+
+  *param_value = std::static_pointer_cast<ParamValueLite>((*param_node)->default_param());
+  if (*param_value == nullptr) {
+    MS_LOG(INFO) << "default_param can not cast to ParamValueLite";
+    return;
+  }
+}
 }  // namespace mindspore::lite::quant

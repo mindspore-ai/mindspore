@@ -15,7 +15,7 @@
  */
 
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "src/runtime/kernel/arm/base/dequant.h"
+#include "mindspore/lite/src/dequant.h"
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
@@ -263,10 +263,10 @@ int OpenCLKernel::DequantWeight() {
     if (is_fp16) {
 #ifdef ENABLE_ARM64
       if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeInt8) {
-        dequant_weight = kernel::DequantUtil::DequantData<int8_t, float16_t>(weight_tensor);
+        dequant_weight = lite::DequantUtil::DequantData<int8_t, float16_t>(weight_tensor);
         weight_tensor->set_data_type(kNumberTypeFloat16);
       } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeInt16) {
-        dequant_weight = kernel::DequantUtil::DequantData<int16_t, float16_t>(weight_tensor);
+        dequant_weight = lite::DequantUtil::DequantData<int16_t, float16_t>(weight_tensor);
         weight_tensor->set_data_type(kNumberTypeFloat16);
       } else {
         set_flag = false;
@@ -276,10 +276,10 @@ int OpenCLKernel::DequantWeight() {
 #endif
     } else {
       if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeInt8) {
-        dequant_weight = kernel::DequantUtil::DequantData<int8_t, float>(weight_tensor);
+        dequant_weight = lite::DequantUtil::DequantData<int8_t, float>(weight_tensor);
         weight_tensor->set_data_type(kNumberTypeFloat32);
       } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeInt16) {
-        dequant_weight = kernel::DequantUtil::DequantData<int16_t, float>(weight_tensor);
+        dequant_weight = lite::DequantUtil::DequantData<int16_t, float>(weight_tensor);
         weight_tensor->set_data_type(kNumberTypeFloat32);
       } else {
         set_flag = false;

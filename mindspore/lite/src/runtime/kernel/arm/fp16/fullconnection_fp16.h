@@ -24,7 +24,6 @@
 #include "nnacl/fp16/matmul_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/base/dequant.h"
 
 namespace mindspore::kernel {
 class FullconnectionFP16CPUKernel : public LiteKernel {

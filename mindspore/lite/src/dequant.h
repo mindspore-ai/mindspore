@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_DEQUANT_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_DEQUANT_H_
 
+#include <map>
+#include <utility>
 #include <vector>
 #include <queue>
 #include <cmath>
@@ -24,12 +26,17 @@
 #include "src/common/utils.h"
 #include "src/tensor.h"
 
-namespace mindspore::kernel {
+namespace mindspore::lite {
 class DequantUtil {
  public:
   static float *DequantWeight(lite::Tensor *input_tensor);
 
   static void UnPackToInt(const schema::Tensor *input_tensor, void *weight_unpack_data);
+
+  static std::map<Tensor *, std::pair<TypeId, void *>> DequantTensor(const std::vector<Tensor *> &in_tensors,
+                                                                     TypeId data_type);
+
+  static void RestoreTensorData(const std::map<Tensor *, std::pair<TypeId, void *>> &tensor_origin_data_map);
 
   template <typename ST, typename DT = float>
   static DT *DequantData(lite::Tensor *input_tensor) {
@@ -108,7 +115,7 @@ class DequantUtil {
   static void UnPackData(int origin_bit, const T2 &packed_data, std::queue<bool> *unpack_bit_data, void *unpack_int,
                          size_t *count, bool is_last) {
     T2 uint_result = 0;
-    T1 result = 0;
+    T1 result;
     UnPackFromUintToOrigin<T2>(packed_data, unpack_bit_data);
     while (static_cast<int>(unpack_bit_data->size()) >= origin_bit) {
       for (int k = 0; k < origin_bit; k++) {
@@ -163,6 +170,6 @@ class DequantUtil {
     }
   }
 };
-}  // namespace mindspore::kernel
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_DEQUANT_H_

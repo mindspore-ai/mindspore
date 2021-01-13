@@ -75,9 +75,10 @@ class QuantStrategy {
   bool CanMulOpQuantized(const CNodePtr &node) const;
   bool CanOpPostQuantized(AnfNodePtr &node) const;
 
- private:
   size_t mWeightSize;
   size_t mConvWeightQuantChannelThreshold;
+
+ private:
   static const std::vector<schema::PrimitiveType> conv_types;
   static const std::vector<schema::PrimitiveType> mul_types;
 };
@@ -356,5 +357,8 @@ STATUS CopyInputDataToTensor(size_t input_index, size_t image_index,
                              const std::vector<std::vector<std::string>> &images, mindspore::tensor::MSTensor *tensor);
 
 FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &);
+
+void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, ParamValueLitePtr *param_value);
+
 }  // namespace mindspore::lite::quant
 #endif
