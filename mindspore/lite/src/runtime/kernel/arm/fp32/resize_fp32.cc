@@ -31,16 +31,19 @@ namespace mindspore::kernel {
 int ResizeCPUKernel::Init() {
   auto ret = ResizeBaseCPUKernel::Init();
   switch (coordinate_transform_mode_) {
+    case schema::CoordinateTransformMode_COMMON:
     case schema::CoordinateTransformMode_ASYMMETRIC:
       calculate_ = CalculateAsymmetric;
       break;
     case schema::CoordinateTransformMode_ALIGN_CORNERS:
       calculate_ = CalculateAlignCorners;
       break;
+    case schema::CoordinateTransformMode_PYTORCH_HALF_PIXEL:
+    case schema::CoordinateTransformMode_TF_HALF_PIXEL:
     case schema::CoordinateTransformMode_HALF_PIXEL:
       calculate_ = CalculateHalfPixel;
       break;
-    case schema::CoordinateTransformMode_CROP_AND_RESIZE:
+    case schema::CoordinateTransformMode_TF_CROP_AND_RESIZE:
       break;
     default:
       MS_LOG(ERROR) << "Do not support coordinate transform mode. Mode is"
@@ -72,7 +75,7 @@ int ResizeCPUKernel::ReSize() {
 
     auto input = in_tensors_.at(0);
     auto input_shape = input->shape();
-    if (coordinate_transform_mode_ == schema::CoordinateTransformMode_CROP_AND_RESIZE) {
+    if (coordinate_transform_mode_ == schema::CoordinateTransformMode_TF_CROP_AND_RESIZE) {
       auto boxes = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
       auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
       ret = PrepareCropAndResizeBilinear(input_shape.data(), boxes, box_idx, out_tensors_.at(0)->shape().data(),
@@ -92,7 +95,7 @@ int ResizeCPUKernel::MallocTmpBuffer() {
   int b = in_tensors_.at(0)->Batch();
   // Malloc buffer to save coordinate. For mode CROP_AND_RESIZE, different batches require different cache coordinates.
   // For other modes, different batches have different cache coordinates.
-  if (coordinate_transform_mode_ != schema::CoordinateTransformMode_CROP_AND_RESIZE) {
+  if (coordinate_transform_mode_ != schema::CoordinateTransformMode_TF_CROP_AND_RESIZE) {
     b = 1;
   }
   int c = in_tensors_.at(0)->Channel();
@@ -203,7 +206,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
       float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
       float *line1 = line0 + new_width_ * c;
 
-      bool is_crop = coordinate_transform_mode_ == schema::CoordinateTransformMode_CROP_AND_RESIZE;
+      bool is_crop = coordinate_transform_mode_ == schema::CoordinateTransformMode_TF_CROP_AND_RESIZE;
       ret = ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(), y_bottoms_,
                            y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0, line1, h_begin,
                            h_end, is_crop);

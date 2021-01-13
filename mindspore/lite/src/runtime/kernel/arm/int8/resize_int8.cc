@@ -138,7 +138,7 @@ int ResizeInt8CPUKernel::CalRatio() {
   auto out_height = out_tensor->Height();
   resize_quant_arg_.ratio_x_ = ((1 << 10) * in_width + out_width / 2) / out_width;
   resize_quant_arg_.ratio_y_ = ((1 << 10) * in_height + out_height / 2) / out_height;
-  bool align_corners = coordinate_transform_mode_ == 1;
+  bool align_corners = coordinate_transform_mode_ == schema::CoordinateTransformMode_ALIGN_CORNERS;
   if (align_corners && out_width > 1) {
     resize_quant_arg_.ratio_x_ = ((1 << 10) * (in_width - 1) + (out_width - 1) / 2) / (out_width - 1);
   }
@@ -208,7 +208,7 @@ int ResizeInt8CPUKernel::CalFloatRatio() {
   auto out_height = out_tensor->Height();
   resize_float_quant_arg_.ratio_x_ = static_cast<float>(in_width) / out_width;
   resize_float_quant_arg_.ratio_y_ = static_cast<float>(in_height) / out_height;
-  bool align_corners = coordinate_transform_mode_ == 1;
+  bool align_corners = coordinate_transform_mode_ == schema::CoordinateTransformMode_ALIGN_CORNERS;
   if (align_corners && out_width > 1) {
     resize_float_quant_arg_.ratio_x_ = static_cast<float>(in_width - 1) / (out_width - 1);
   }
@@ -337,7 +337,7 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
     case static_cast<int>(schema::ResizeMethod_NEAREST): {
       bool same_zp = quant_in_->zp_ == quant_out_->zp_;
       bool same_scale = abs(quant_out_->scale_ - quant_in_->scale_) < 1e-6;
-      bool align_corners = coordinate_transform_mode_ == 1;
+      bool align_corners = coordinate_transform_mode_ == schema::CoordinateTransformMode_ALIGN_CORNERS;
       if (same_zp && same_scale) {
         ret =
           ResizeNearestNeighborInt8Simple(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),

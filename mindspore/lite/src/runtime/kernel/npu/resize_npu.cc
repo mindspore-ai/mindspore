@@ -50,7 +50,8 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
       MS_LOG(ERROR) << " op is nullptr.";
       return RET_ERROR;
     }
-    op->set_attr_align_corners(resize_parameter_->coordinate_transform_mode_ == 1);
+    op->set_attr_align_corners(resize_parameter_->coordinate_transform_mode_ ==
+                               schema::CoordinateTransformMode_ALIGN_CORNERS);
     op->set_input_x(*npu_inputs[0]);
     op->set_input_size(*out_size);
     op->set_attr_half_pixel_centers(resize_parameter_->preserve_aspect_ratio_);
@@ -61,7 +62,8 @@ int ResizeNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
       MS_LOG(ERROR) << " op is nullptr.";
       return RET_ERROR;
     }
-    op->set_attr_align_corners(resize_parameter_->coordinate_transform_mode_ == 1);
+    op->set_attr_align_corners(resize_parameter_->coordinate_transform_mode_ ==
+                               schema::CoordinateTransformMode_ALIGN_CORNERS);
     op->set_input_x(*npu_inputs[0]);
     op->set_input_size(*out_size);
     op_ = op;

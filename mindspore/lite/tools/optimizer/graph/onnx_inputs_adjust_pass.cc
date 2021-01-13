@@ -326,7 +326,8 @@ STATUS OnnxInputAdjustOpPass::AdjustResize(const CNodePtr &cnode) {
     return lite::RET_ERROR;
   }
   auto attr = reinterpret_cast<schema::ResizeT *>(value);
-  if (cnode->inputs().size() > 3 && attr->coordinateTransformMode == schema::CoordinateTransformMode_CROP_AND_RESIZE) {
+  if (cnode->inputs().size() > 3 &&
+      attr->coordinateTransformMode == schema::CoordinateTransformMode_TF_CROP_AND_RESIZE) {
     auto new_resize_inputs = cnode->inputs();
     new_resize_inputs.erase(new_resize_inputs.begin() + 1);
     cnode->set_inputs(new_resize_inputs);

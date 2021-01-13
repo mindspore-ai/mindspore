@@ -44,7 +44,7 @@ STATUS TFCropAndResizeParser::Parse(const tensorflow::NodeDef &tf_op,
   tensorflow::AttrValue attr_value;
   attr->format = schema::Format_NHWC;
 
-  attr->coordinateTransformMode = schema::CoordinateTransformMode_CROP_AND_RESIZE;
+  attr->coordinateTransformMode = schema::CoordinateTransformMode_TF_CROP_AND_RESIZE;
 
   // align_corners
   if (TensorFlowUtils::FindAttrValue(tf_op, "align_corners", &attr_value)) {
