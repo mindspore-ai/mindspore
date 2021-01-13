@@ -522,6 +522,7 @@ class DataType:
     """
 
     None_None = ("", "")
+    None_Default = ("", "DefaultFormat")
     BOOL_None = ("bool", "")
     BOOL_Default = ("bool", "DefaultFormat")
     BOOL_5HD = ("bool", "NC1HWC0")
