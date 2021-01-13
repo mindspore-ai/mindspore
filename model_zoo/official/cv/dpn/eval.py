@@ -68,8 +68,8 @@ def dpn_evaluate(args):
     # create network
     net = dpns[args.backbone](num_classes=args.num_classes)
     # load checkpoint
-    if os.path.isfile(args.pretrained):
-        load_param_into_net(net, load_checkpoint(args.pretrained))
+    load_param_into_net(net, load_checkpoint(args.pretrained))
+    print("load checkpoint from [{}].".format(args.pretrained))
     # loss
     if args.dataset == "imagenet-1K":
         loss = SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
