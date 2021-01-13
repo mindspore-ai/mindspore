@@ -92,6 +92,24 @@ class DynamicBitSet {
 
   bool IsBitTrue(size_t index) const { return (bit_[GetIndex(index)] & GetBitMask(index)) != 0x0; }
 
+  size_t CountOnesNum() const {
+    size_t ret = 0;
+    static char ones_num_in_hex[] = "\0\1\1\2\1\2\2\3\1\2\2\3\2\3\3\4";
+    for (size_t i = 0; i < bit_size_; i++) {
+      auto value = bit_[i];
+      if (value == 0) {
+        continue;
+      }
+      char *char_value = reinterpret_cast<char *>(&value);
+      for (size_t j = 0; j < bit_width_ / CHAR_BIT; j++) {
+        ret += ones_num_in_hex[char_value[j] & 0xF];
+        char_value[j] >>= 4;
+        ret += ones_num_in_hex[char_value[j] & 0xF];
+      }
+    }
+    return ret;
+  }
+
   void Log() {
     std::cout << "Start Print Bitset ";
     for (size_t i = 0; i < bit_size_; i++) {
