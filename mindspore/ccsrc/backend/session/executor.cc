@@ -358,13 +358,6 @@ void Executor::WaitTaskGraphAvailable(const SessionPtr &session, const std::shar
   for (auto &tensor : task->input_need_lock_tensors_) {
     tensor->SetNeedWait(true);
   }
-  auto graph = session->GetGraph(task->graph_id_);
-  if (graph != nullptr && !graph->IsPostGraphFinished()) {
-    mindspore::ScopedLongRunning long_running;
-    std::unique_lock<std::mutex> lock(reenter_mutex_);
-    reenter_cond_var_.wait(lock, [&graph] { return graph->IsPostGraphFinished(); });
-    MsException::Instance().CheckException();
-  }
 }
 
 void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
@@ -376,6 +369,13 @@ void Executor::RunGraphAsync(const SessionPtr &session, const GraphId &graph_id,
   task->graph_id_ = graph_id;
   task->input_tensors_ = inputs;
   task->input_need_lock_tensors_ = session->GetInputNeedLockTensors(graph_id, inputs);
+  auto graph = session->GetGraph(task->graph_id_);
+  if (graph != nullptr && !graph->IsPostGraphFinished()) {
+    mindspore::ScopedLongRunning long_running;
+    std::unique_lock<std::mutex> lock(reenter_mutex_);
+    reenter_cond_var_.wait(lock, [&graph] { return graph->IsPostGraphFinished(); });
+    MsException::Instance().CheckException();
+  }
   session->CreateOutputTensors(graph_id, inputs, outputs, &task->tensor_to_node_);
   // maintain a copy of output vector
   task->outputs_ = *outputs;
