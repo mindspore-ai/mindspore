@@ -54,7 +54,7 @@ PYBIND_REGISTER(SentencePieceVocab, 0, ([](const py::module *m) {
                   (void)py::class_<SentencePieceVocab, std::shared_ptr<SentencePieceVocab>>(*m, "SentencePieceVocab")
                     .def(py::init<>())
                     .def_static("from_file",
-                                [](const py::list &paths, const int vocab_size, const float character_coverage,
+                                [](const py::list &paths, const int32_t vocab_size, const float character_coverage,
                                    const SentencePieceModel model_type, const py::dict &params) {
                                   std::shared_ptr<SentencePieceVocab> v;
                                   std::vector<std::string> path_list;

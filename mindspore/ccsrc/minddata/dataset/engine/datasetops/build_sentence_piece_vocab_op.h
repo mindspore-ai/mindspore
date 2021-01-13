@@ -134,7 +134,7 @@ class BuildSentencePieceVocabOp : public PipelineOp {
   };
 
   BuildSentencePieceVocabOp(std::shared_ptr<SentencePieceVocab> vocab, std::vector<std::string> col_names,
-                            uint32_t vocab_size, float character_coverage, SentencePieceModel model_type,
+                            int32_t vocab_size, float character_coverage, SentencePieceModel model_type,
                             const std::unordered_map<std::string, std::string> &params, int32_t op_conn_size);
 
   ~BuildSentencePieceVocabOp() = default;
@@ -174,7 +174,7 @@ class BuildSentencePieceVocabOp : public PipelineOp {
  private:
   bool read_done_;
   Status ret_status_;
-  uint32_t vocab_size_;
+  int32_t vocab_size_;
   float character_coverage_;
   SentencePieceModel model_type_;
   std::unordered_map<std::string, std::string> params_;

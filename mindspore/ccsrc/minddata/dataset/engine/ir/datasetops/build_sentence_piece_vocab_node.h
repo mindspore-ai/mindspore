@@ -33,7 +33,7 @@ class BuildSentenceVocabNode : public DatasetNode {
  public:
   /// \brief Constructor
   BuildSentenceVocabNode(std::shared_ptr<DatasetNode> child, std::shared_ptr<SentencePieceVocab> vocab,
-                         const std::vector<std::string> &col_names, uint32_t vocab_size, float character_coverage,
+                         const std::vector<std::string> &col_names, int32_t vocab_size, float character_coverage,
                          SentencePieceModel model_type, const std::unordered_map<std::string, std::string> &params);
 
   /// \brief Destructor
@@ -75,7 +75,7 @@ class BuildSentenceVocabNode : public DatasetNode {
  private:
   std::shared_ptr<SentencePieceVocab> vocab_;
   std::vector<std::string> col_names_;
-  uint32_t vocab_size_;
+  int32_t vocab_size_;
   float character_coverage_;
   SentencePieceModel model_type_;
   std::unordered_map<std::string, std::string> params_;

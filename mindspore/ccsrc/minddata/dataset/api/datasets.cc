@@ -569,7 +569,7 @@ std::shared_ptr<Dataset> Dataset::SetNumWorkers(int32_t num_workers) {
 
 #ifndef ENABLE_ANDROID
 std::shared_ptr<SentencePieceVocab> Dataset::BuildSentencePieceVocab(
-  const std::vector<std::string> &col_names, uint32_t vocab_size, float character_coverage,
+  const std::vector<std::string> &col_names, int32_t vocab_size, float character_coverage,
   SentencePieceModel model_type, const std::unordered_map<std::string, std::string> &params) {
   auto vocab = std::make_shared<SentencePieceVocab>();
   auto ds = std::make_shared<BuildSentenceVocabNode>(IRNode(), vocab, col_names, vocab_size, character_coverage,

@@ -225,7 +225,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \brief Function to create a SentencePieceVocab from source dataset
   /// \notes Build a SentencePieceVocab from a dataset.
   /// \param[in] col_names Column names to get words from. It can be a vector of column names
-  /// \param[in] vocab_size Vocabulary size. The type is uint32
+  /// \param[in] vocab_size Vocabulary size.
   /// \param[in] character_coverage Percentage of characters covered by the model, must be between
   ///     0.98 and 1.0 Good defaults are: 0.9995 for languages with rich character sets like
   ///     Japanese or Chinese character sets, and 1.0 for other languages with small character sets.
@@ -233,7 +233,7 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   ///     The input sentence must be pretokenized when using word type.
   /// \param[in] params A vector contains more option parameters of sentencepiece library
   std::shared_ptr<SentencePieceVocab> BuildSentencePieceVocab(
-    const std::vector<std::string> &col_names, uint32_t vocab_size, float character_coverage,
+    const std::vector<std::string> &col_names, int32_t vocab_size, float character_coverage,
     SentencePieceModel model_type, const std::unordered_map<std::string, std::string> &params);
 
   /// \brief Function to create a Vocab from source dataset
