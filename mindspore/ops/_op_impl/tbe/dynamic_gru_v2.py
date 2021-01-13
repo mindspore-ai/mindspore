@@ -47,6 +47,38 @@ dynamic_gru_v2_op_info = TBERegOp("DynamicGRUV2") \
     .output(4, "new", False, "optional", "all") \
     .output(5, "hidden_new", False, "optional", "all") \
     .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.F32_Default,
+                  DataType.F32_Default, DataType.None_Default, DataType.F32_FracNZ, DataType.F32_FracNZ,
+                  DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
+                  DataType.F32_FracNZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.F32_Default,
+                  DataType.None_Default, DataType.None_Default, DataType.F32_FracNZ, DataType.F32_FracNZ,
+                  DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
+                  DataType.F32_FracNZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.None_Default,
+                  DataType.F32_Default, DataType.None_Default, DataType.F32_FracNZ, DataType.F32_FracNZ,
+                  DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
+                  DataType.F32_FracNZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.None_Default,
+                  DataType.None_Default, DataType.None_Default, DataType.F32_FracNZ, DataType.F32_FracNZ,
+                  DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
+                  DataType.F32_FracNZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_Default,
+                  DataType.F16_Default, DataType.None_Default, DataType.F16_FracNZ, DataType.F16_FracNZ,
+                  DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
+                  DataType.F16_FracNZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.F16_Default,
+                  DataType.None_Default, DataType.None_Default, DataType.F16_FracNZ, DataType.F16_FracNZ,
+                  DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
+                  DataType.F16_FracNZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.None_Default,
+                  DataType.F16_Default, DataType.None_Default, DataType.F16_FracNZ, DataType.F16_FracNZ,
+                  DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
+                  DataType.F16_FracNZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.None_Default,
+                  DataType.None_Default, DataType.None_Default, DataType.F16_FracNZ, DataType.F16_FracNZ,
+                  DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ, DataType.F16_FracNZ,
+                  DataType.F16_FracNZ) \
+    .dtype_format(DataType.F16_FracNZ, DataType.F16_FracZ, DataType.F16_FracZ, DataType.F32_Default,
                   DataType.F32_Default, DataType.I32_Default, DataType.F32_FracNZ, DataType.F32_FracNZ,
                   DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ, DataType.F32_FracNZ,
                   DataType.F32_FracNZ) \
