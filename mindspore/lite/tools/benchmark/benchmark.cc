@@ -345,6 +345,10 @@ int Benchmark::CompareDataGetTotalBiasAndSize(const std::string &name, tensor::M
       bias = CompareData<int32_t>(name, tensor->shape(), mutableData);
       break;
     }
+    case TypeId::kNumberTypeInt16: {
+      bias = CompareData<int16_t>(name, tensor->shape(), mutableData);
+      break;
+    }
     default:
       MS_LOG(ERROR) << "Datatype " << msCalibDataType << " is not supported.";
       return RET_ERROR;
