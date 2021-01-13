@@ -34,7 +34,7 @@ const std::unordered_map<std::string, TypeId> type_str_id_maps = {
   {"int64", TypeId::kNumberTypeInt64},     {"uint", TypeId::kNumberTypeUInt},
   {"uint8", TypeId::kNumberTypeUInt8},     {"uint16", TypeId::kNumberTypeUInt16},
   {"uint32", TypeId::kNumberTypeUInt32},   {"uint64", TypeId::kNumberTypeUInt64},
-  {"bool", TypeId::kNumberTypeBool},
+  {"bool", TypeId::kNumberTypeBool},       {"", TypeId::kMetaTypeNone},
 };
 
 const std::map<TypeId, std::string> type_id_str_maps = {
@@ -45,7 +45,7 @@ const std::map<TypeId, std::string> type_id_str_maps = {
   {TypeId::kNumberTypeInt64, "int64"},     {TypeId::kNumberTypeUInt, "uint"},
   {TypeId::kNumberTypeUInt8, "uint8"},     {TypeId::kNumberTypeUInt16, "uint16"},
   {TypeId::kNumberTypeUInt32, "uint32"},   {TypeId::kNumberTypeUInt64, "uint64"},
-  {TypeId::kNumberTypeBool, "int8"},
+  {TypeId::kNumberTypeBool, "int8"},       {TypeId::kMetaTypeNone, ""},
 };
 
 const std::map<std::string, std::string> type_str_maps = {
