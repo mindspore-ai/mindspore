@@ -81,8 +81,7 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
     MS_LOG(ERROR) << "get matrix g from CookToomFilter failed.";
     return ret;
   }
-  auto weight_data = reinterpret_cast<float *>(filter_tensor->MutableData());
-  ret = WinogradFilterTransform(weight_data, matrix_g, matrix_gt, oc_block);
+  ret = WinogradFilterTransform(origin_weight_, matrix_g, matrix_gt, oc_block);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "winograd filter transfrom failed.";
     return ret;
@@ -97,8 +96,7 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
   }
   memset(bias_data_, 0, new_bias_size);
   if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias_addr = reinterpret_cast<float *>(in_tensors_.at(kBiasIndex)->MutableData());
-    memcpy(bias_data_, ori_bias_addr, out_channel * sizeof(float));
+    memcpy(bias_data_, origin_bias_, out_channel * sizeof(float));
   } else {
     MS_ASSERT(in_tensors_.size() == kInputSize1);
   }
@@ -171,10 +169,7 @@ int ConvolutionWinogradCPUKernel::Init() {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return RET_ERROR;
   }
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-  return ReSize();
+  return RET_OK;
 }
 
 int ConvolutionWinogradCPUKernel::ReSize() {
@@ -183,18 +178,11 @@ int ConvolutionWinogradCPUKernel::ReSize() {
     MS_LOG(ERROR) << "Resize is invalid.";
     return ret;
   }
-
   ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "ConvolutionBase init failed.";
-    return RET_ERROR;
+    MS_LOG(ERROR) << "conv base init failed.";
+    return ret;
   }
-
-  kernel_unit_ = conv_param_->kernel_h_;
-  input_unit_ = output_unit_ + kernel_unit_ - 1;
-  conv_param_->input_unit_ = input_unit_;
-  conv_param_->output_unit_ = output_unit_;
-
   ret = ConfigInputOutput();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConfigInputOutput failed.";

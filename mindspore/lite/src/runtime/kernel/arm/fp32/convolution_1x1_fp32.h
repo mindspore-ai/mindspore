@@ -34,8 +34,10 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
  public:
   Convolution1x1CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                           const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                          const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                          const mindspore::lite::PrimitiveC *primitive, float *origin_weight, float *origin_bias)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive),
+        origin_weight_(origin_weight),
+        origin_bias_(origin_bias) {}
   ~Convolution1x1CPUKernel();
   int Init() override;
   int Run() override;
@@ -58,6 +60,8 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   bool multi_thread_by_hw_ = false;
   int thread_count_ = 0;
   int thread_stride_ = 0;
+  float *origin_weight_;  // do not free
+  float *origin_bias_;    // do not free
   float *weight_ptr_ = nullptr;
   float *pack_input_ = nullptr;
   float *input_ptr_ = nullptr;

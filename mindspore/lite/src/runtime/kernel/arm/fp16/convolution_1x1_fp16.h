@@ -30,8 +30,11 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
   Convolution1x1FP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                              const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                              const mindspore::lite::PrimitiveC *primitive, float16_t *fp16_weight,
+                              float16_t *fp16_bias)
+      : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive),
+        fp16_weight_(fp16_weight),
+        fp16_bias_(fp16_bias) {}
   ~Convolution1x1FP16CPUKernel() override;
 
   int Init() override;
@@ -53,6 +56,8 @@ class Convolution1x1FP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   bool multi_thread_by_hw_ = false;
   int thread_count_ = 1;
   int thread_stride_ = 0;
+  float16_t *fp16_weight_;  // do not free
+  float16_t *fp16_bias_;    // do not free
   float16_t *weight_ptr_ = nullptr;
   float16_t *input_ptr_ = nullptr;
   float16_t *pack_input_ = nullptr;

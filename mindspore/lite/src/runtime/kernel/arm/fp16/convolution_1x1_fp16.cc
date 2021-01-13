@@ -93,13 +93,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
       MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
       return RET_ERROR;
     }
-    auto bias_tensor = in_tensors_.at(kBiasIndex);
-    if (bias_tensor->data_type() == kNumberTypeFloat16) {
-      memcpy(bias_data_, bias_tensor->MutableData(), output_channel * sizeof(float16_t));
-    } else {
-      Float32ToFloat16(reinterpret_cast<float *>(bias_tensor->MutableData()), reinterpret_cast<float16_t *>(bias_data_),
-                       output_channel);
-    }
+    memcpy(bias_data_, fp16_bias_, output_channel * sizeof(float16_t));
     memset(reinterpret_cast<char *>(bias_data_) + weight_size, 0, size - weight_size);
   }
 
@@ -111,8 +105,7 @@ int Convolution1x1FP16CPUKernel::InitWeightBias() {
     return RET_ERROR;
   }
   memset(reinterpret_cast<char *>(weight_ptr_) + down_size, 0, size - down_size);
-  ColMajor2Row8MajorFp16(weight_tensor->MutableData(), weight_ptr_, input_channel, output_channel,
-                         weight_tensor->data_type() == kNumberTypeFloat16);
+  ColMajor2Row8MajorFp16(fp16_weight_, weight_ptr_, input_channel, output_channel, true);
   return RET_OK;
 }
 
@@ -127,10 +120,7 @@ int Convolution1x1FP16CPUKernel::Init() {
     MS_LOG(ERROR) << "Init weight bias failed.";
     return ret;
   }
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-  return ReSize();
+  return RET_OK;
 }
 
 void Convolution1x1FP16CPUKernel::FreeTmpBuffer() {
@@ -143,7 +133,6 @@ void Convolution1x1FP16CPUKernel::FreeTmpBuffer() {
 
 int Convolution1x1FP16CPUKernel::ReSize() {
   FreeTmpBuffer();
-
   auto ret = ConvolutionBaseCPUKernel::Init();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ConvolutionBase init failed.";

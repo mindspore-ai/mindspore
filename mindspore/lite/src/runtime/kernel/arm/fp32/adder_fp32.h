@@ -29,10 +29,12 @@ class AdderCPUKernel : public ConvolutionCPUKernel {
   AdderCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                  const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : ConvolutionCPUKernel(parameter, inputs, outputs, ctx, primitive, nullptr, nullptr) {}
   ~AdderCPUKernel() override = default;
 
   int InitWeightBias() override;
+  int Init() override;
+  int ReSize() override;
   int Run() override;
   int RunImpl(int task_id) override;
 };

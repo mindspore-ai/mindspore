@@ -44,10 +44,13 @@ void Convolution1x1CPUKernel::FreeTmpBuffer() {
 
 int Convolution1x1CPUKernel::ReSize() {
   FreeTmpBuffer();
-  ConvolutionBaseCPUKernel::Init();
+  auto error_code = ConvolutionBaseCPUKernel::Init();
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "conv base init failed.";
+    return error_code;
+  }
   InitConv1x1MatmulParam();
-
-  int error_code = InitConv1x1Param();
+  error_code = InitConv1x1Param();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Convolution base init failed.";
     return error_code;
@@ -95,7 +98,7 @@ int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
       MS_LOG(ERROR) << "Conv1x1 Malloc bias_ptr_ error!";
       return RET_ERROR;
     }
-    memcpy(bias_data_, in_tensors_[kBiasIndex]->MutableData(), weight_size);
+    memcpy(bias_data_, origin_bias_, weight_size);
     memset(reinterpret_cast<char *>(bias_data_) + weight_size, 0, size - weight_size);
   }
 
@@ -108,14 +111,11 @@ int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
   }
   memset(reinterpret_cast<char *>(weight_ptr_) + down_size, 0, size - down_size);
 #ifdef ENABLE_AVX
-  RowMajor2Col16Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
-                      input_channel);
+  RowMajor2Col16Major(origin_weight_, weight_ptr_, output_channel, input_channel);
 #elif defined(ENABLE_ARM32)
-  RowMajor2Col4Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
-                     input_channel);
+  RowMajor2Col4Major(origin_weight_, weight_ptr_, output_channel, input_channel);
 #else
-  RowMajor2Col8Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
-                     input_channel);
+  RowMajor2Col8Major(origin_weight_, weight_ptr_, output_channel, input_channel);
 #endif
   return RET_OK;
 }
@@ -153,13 +153,10 @@ int Convolution1x1CPUKernel::Init() {
   }
   int error_code = InitConv1x1BiasWeight();
   if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "Convolution base init failed.";
+    MS_LOG(ERROR) << "Convolution1x1 init weight and bias failed.";
     return error_code;
   }
-  if (!InferShapeDone()) {
-    return RET_OK;
-  }
-  return ReSize();
+  return RET_OK;
 }
 
 void Convolution1x1CPUKernel::PackMatmulInput(const float *src_ptr, float *dst_ptr, int row, int col) {
