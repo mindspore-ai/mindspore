@@ -259,11 +259,13 @@ py::tuple TensorPy::GetPyTupleShape(const Tensor &tensor) {
 }
 
 py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
-  if (tensor.NeedWait()) {
+  {
     py::gil_scoped_release gil_release;
-    tensor.Wait();
+    if (tensor.NeedWait()) {
+      tensor.Wait();
+    }
+    tensor.data_sync();
   }
-  tensor.data_sync();
   return AsNumpy(tensor);
 }
 
