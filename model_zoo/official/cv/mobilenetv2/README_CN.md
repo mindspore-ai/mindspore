@@ -222,7 +222,7 @@ python export.py --platform [PLATFORM] --ckpt_file [CKPT_PATH] --file_format [EX
 
 # 随机情况说明
 
-<!-- [dataset.py](http://dataset.py/)中设置了“create_dataset”函数内的种子，同时还使用了train.py中的随机种子。-->
+<!-- dataset.py中设置了“create_dataset”函数内的种子，同时还使用了train.py中的随机种子。-->
 在train.py中，设置了numpy.random、minspore.common.Initializer、minspore.ops.composite.random_ops和minspore.nn.probability.distribution所使用的种子。
 
 # ModelZoo主页

@@ -1,4 +1,5 @@
 # 目录
+
 <!-- TOC -->
 
 - [目录](#目录)
@@ -6,7 +7,7 @@
     - [模型架构](#模型架构)
     - [数据集](#数据集)
     - [特性](#特性)
-    - [混合精度](#混合精度)
+        - [混合精度](#混合精度)
 - [环境要求](#环境要求)
     - [脚本说明](#脚本说明)
     - [脚本和样例代码](#脚本和样例代码)
@@ -24,7 +25,7 @@
         - [训练性能](#训练性能)
         - [评估性能](#评估性能)
     - [随机情况说明](#随机情况说明)
-    - [ModelZoo主页](#modelzoo主页)
+- [ModelZoo主页](#modelzoo主页)
 
 <!-- /TOC -->
 
@@ -35,6 +36,7 @@ ResNet-50是一个50层的卷积神经网络，可以将ImageNet图像分成1000
 [论文](https://arxiv.org/abs/1512.03385)： Kaiming He, Xiangyu Zhang, Shaoqing Ren, Jian Sun."Deep Residual Learning for Image Recognition."： He, Kaiming , et al. "Deep Residual Learning for Image Recognition." IEEE Conference on Computer Vision & Pattern Recognition IEEE Computer Society, 2016.
 
 此为ResNet-50的量化分析网络。
+
 ## 模型架构
 
 ResNet-50总体网络架构如下：
@@ -45,32 +47,33 @@ ResNet-50总体网络架构如下：
 
 使用的数据集：[imagenet](http://www.image-net.org/)
 
--数据集大小：125G，共1000个类、1.2万张彩色图像
-	- 训练集：120G，共1.2万张图像
-	- 测试集：5G，共5万张图像
--数据格式：RGB
-	* 注：数据在src/dataset.py中处理。
+- 数据集大小：125G，共1000个类、1.2万张彩色图像
+    - 训练集：120G，共1.2万张图像
+    - 测试集：5G，共5万张图像
 
+- 数据格式：RGB
+    - 注：数据在src/dataset.py中处理。
 
 ## 特性
 
 ## 混合精度
 
-采用[混合精度](https://www.mindspore.cn/tutorial/training/en/master/advanced_use/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
+采用[混合精度](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/enable_mixed_precision.html)的训练方法使用支持单精度和半精度数据来提高深度学习神经网络的训练速度，同时保持单精度训练所能达到的网络精度。混合精度训练提高计算速度、减少内存使用的同时，支持在特定硬件上训练更大的模型或实现更大批次的训练。
 以FP16算子为例，如果输入数据类型为FP32，MindSpore后台会自动降低精度来处理数据。用户可打开INFO日志，搜索“reduce precision”查看精度降低的算子。
 
 # 环境要求
 
 - 硬件：昇腾处理器（Ascend）
-  - 使用昇腾处理器来搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
+    - 使用昇腾处理器来搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
 
 - 框架
-  - [MindSpore](https://www.mindspore.cn/install)
+    - [MindSpore](https://www.mindspore.cn/install)
 
--如需查看详情，请参见如下资源：
-  - [MindSpore教程](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+- 如需查看详情，请参见如下资源：
 
+    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
+
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
 ## 脚本说明
 
@@ -127,18 +130,19 @@ ResNet-50总体网络架构如下：
 ### 用法
 
 - 晟腾（Ascend）: sh run_train.sh Ascend [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\（可选）
+
 ### 启动
 
-```
+```python
   # 训练示例
-  Ascend:bash run_train.sh Ascend ~/hccl_4p_0123_x.x.x.json ~/imagenet/train/ 
+  Ascend:bash run_train.sh Ascend ~/hccl_4p_0123_x.x.x.json ~/imagenet/train/
 ```
 
 ### 结果
 
-训练结果保存在示例路径中。检查点默认保存在`./train/device$i/`，训练日志重定向到`./train/device$i/train.log`，内容如下： 
+训练结果保存在示例路径中。检查点默认保存在`./train/device$i/`，训练日志重定向到`./train/device$i/train.log`，内容如下：
 
-```
+```python
 epoch: 1 step: 5004, loss is 4.8995576
 epoch: 2 step: 5004, loss is 3.9235563
 epoch: 3 step: 5004, loss is 3.833077
@@ -156,7 +160,7 @@ epoch: 5 step: 5004, loss is 3.1978393
 
 ### 启动
 
-```
+```shell
 # 推理示例
   shell:
       Ascend: sh run_infer.sh Ascend ~/imagenet/val/ ~/train/Resnet50-30_5004.ckpt
@@ -168,7 +172,7 @@ epoch: 5 step: 5004, loss is 3.1978393
 
 推理结果保存在示例路径中，可以在`./eval/infer.log`中找到如下结果：
 
-```
+```python
 result:{'acc'：0.76576314102564111}
 ```
 
@@ -193,8 +197,8 @@ result:{'acc'：0.76576314102564111}
 | 准确率 |
 | 总时长 | 16h |
 | 参数(M) | batch_size=32, epoch=30 |
-| 微调检查点 | 
-| 推理模型 | 
+| 微调检查点 |
+| 推理模型 |
 
 ### 评估性能
 
@@ -214,9 +218,8 @@ result:{'acc'：0.76576314102564111}
 
 ## 随机情况说明
 
-[dataset.py](http://dataset.py/)中设置了“create_dataset”函数内的种子，同时还使用了train.py中的随机种子
+dataset.py中设置了“create_dataset”函数内的种子，同时还使用了train.py中的随机种子。
 
 ## ModelZoo主页
 
 请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。
-
