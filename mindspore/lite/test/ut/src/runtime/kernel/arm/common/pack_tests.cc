@@ -20,6 +20,9 @@
 #include "common/common_test.h"
 #include "mindspore/lite/src/common/file_utils.h"
 #include "mindspore/lite/nnacl/pack.h"
+#ifdef ENABLE_FP16
+#include "mindspore/lite/nnacl/fp16/pack_fp16.h"
+#endif
 
 namespace mindspore {
 class TestPack : public mindspore::CommonTest {

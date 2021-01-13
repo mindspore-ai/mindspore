@@ -157,6 +157,7 @@ class CpuFp32SubGraph : public CpuSubGraph {
   int PostProcess() override { return CpuSubGraph::PostProcess(); }
 };
 
+#ifdef ENABLE_FP16
 class CpuFp16SubGraph : public CpuSubGraph {
  public:
   CpuFp16SubGraph(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -182,5 +183,6 @@ class CpuFp16SubGraph : public CpuSubGraph {
  private:
   std::vector<DataStore *> origin_input_data_{};
 };
+#endif
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_SUB_GRAPH_H

@@ -288,15 +288,19 @@ if (SUPPORT_GPU)
 endif()
 
 if (ENABLE_FP16)
+    file(GLOB_RECURSE TEST_CASE_KERNEL_FP16_SRC
+            ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16/*.cc
+            )
     set(TEST_SRC
             ${TEST_SRC}
-            ${TEST_DIR}/ut/src/runtime/kernel/arm/fp16/convolution_fp16_tests.cc)
+            ${TEST_CASE_KERNEL_FP16_SRC}
+            )
 endif ()
 
 add_executable(lite-test ${TEST_SRC})
 add_dependencies(lite-test fbs_src)
 target_link_libraries(lite-test dl mindspore::gtest)
-if (PLATFORM_ARM64)
+if (PLATFORM_ARM64 AND ENABLE_FP16)
     target_link_libraries(lite-test nnacl_fp16_mid nnacl_optimize_mid)
 endif()
 

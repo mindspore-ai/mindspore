@@ -16,8 +16,7 @@
 
 #include "src/sub_graph_kernel.h"
 #include "src/tensor.h"
-#ifdef ENABLE_ARM64
-#include "src/common/utils.h"
+#if defined(ENABLE_ARM64) && defined(ENABLE_FP16)
 #include "src/runtime/kernel/arm/fp16/fp16_op_handler.h"
 #endif
 
@@ -175,6 +174,7 @@ int CpuSubGraph::Prepare() {
   return RET_OK;
 }
 
+#ifdef ENABLE_FP16
 void CpuFp16SubGraph::FreeOriginInputData() {
   for (auto *data_store : this->origin_input_data_) {
     if (data_store == nullptr) {
@@ -300,4 +300,5 @@ int CpuFp16SubGraph::PostProcess() {
   return RET_OK;
 #endif
 }
+#endif
 }  // namespace mindspore::kernel
