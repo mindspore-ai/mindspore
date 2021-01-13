@@ -1017,5 +1017,22 @@ CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &
   func_graph->AddNode(cnode);
   return cnode;
 }
+
+bool HasDataUser(const AnfNodeIndexSet &users, const FuncGraphManagerPtr &mng) {
+  MS_EXCEPTION_IF_NULL(mng);
+  for (const auto &user : users) {
+    if ((IsPrimitiveCNode(user.first, prim::kPrimDepend) && user.second == kDependAttachNodeIndex) ||
+        IsPrimitiveCNode(user.first, prim::kPrimControlDepend)) {
+      continue;
+    }
+    if ((IsPrimitiveCNode(user.first, prim::kPrimMakeTuple) || IsPrimitiveCNode(user.first, prim::kPrimTupleGetItem) ||
+         IsPrimitiveCNode(user.first, prim::kPrimDepend)) &&
+        !HasDataUser(mng->node_users()[user.first], mng)) {
+      continue;
+    }
+    return true;
+  }
+  return false;
+}
 }  // namespace opt
 }  // namespace mindspore

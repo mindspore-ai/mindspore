@@ -52,6 +52,7 @@
 #include "backend/optimizer/graph_kernel/graph_kernel_cse.h"
 #include "backend/optimizer/graph_kernel/shape_ops_splitter.h"
 #include "backend/optimizer/graph_kernel/value_graph_binder.h"
+#include "backend/optimizer/graph_kernel/optimize_assign.h"
 #include "backend/optimizer/pass/communication_op_fusion.h"
 #include "backend/optimizer/pass/getitem_tuple.h"
 #include "common/trans.h"
@@ -182,6 +183,8 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   std::vector<PrimitivePtr> duplicated_ops = {prim::kPrimReshape, prim::kPrimExpandDims, prim::kPrimCast};
   pm->AddPass(std::make_shared<opt::GraphKernelExpander>());
   pm->AddPass(std::make_shared<opt::BasicOpsFusion>());
+  pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
+  pm->AddPass(std::make_shared<opt::OptimizeAssign>());
   pm->AddPass(std::make_shared<opt::EliminateRedundantOutput>());
   pm->AddPass(std::make_shared<opt::GraphKernelCSE>());
   pm->AddPass(std::make_shared<opt::ArithmeticSimplify>());
