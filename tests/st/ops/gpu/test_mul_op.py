@@ -20,7 +20,7 @@ import mindspore.context as context
 import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.ops import operations as P
-
+from mindspore.ops.operations import _inner_ops as inner
 
 class NetMul(nn.Cell):
     def __init__(self):
@@ -130,3 +130,46 @@ def test_mul():
     error4 = np.ones(shape=expect4.shape) * 1.0e-5
     assert np.all(diff4 < error4)
     assert output4.shape == expect4.shape
+
+class NetMul_dynamic(nn.Cell):
+    def __init__(self):
+        super(NetMul_dynamic, self).__init__()
+        self.mul = P.Mul()
+        self.test_dynamic = inner.GpuConvertToDynamicShape()
+
+    def construct(self, x, y):
+        x = self.test_dynamic(x)
+        y = self.test_dynamic(y)
+        out = self.mul(x, y)
+        return out
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_mul_dynamic():
+    x1_np = np.array([768]).astype(np.float32)
+    y1_np = np.array([3072.5]).astype(np.float32)
+    x2_np = np.random.uniform(-2, 2, (2, 1, 1, 4)).astype(np.float32)
+    y2_np = np.random.uniform(-2, 2, (2, 3, 4, 4)).astype(np.float32)
+
+    x1 = Tensor(x1_np)
+    y1 = Tensor(y1_np)
+    x2 = Tensor(x2_np)
+    y2 = Tensor(y2_np)
+
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+
+    mul = NetMul_dynamic()
+
+    output1 = mul(x1, y1)
+    output2 = mul(x2, y2)
+    expect1 = np.multiply(x1_np, y1_np)
+    expect2 = np.multiply(x2_np, y2_np)
+    diff1 = output1.asnumpy() - expect1
+    diff2 = output2.asnumpy() - expect2
+    error1 = np.ones(shape=expect1.shape) * 1.0e-5
+    assert np.all(diff1 < error1)
+    assert output1.shape == expect1.shape
+    error2 = np.ones(shape=expect2.shape) * 1.0e-5
+    assert np.all(diff2 < error2)
+    assert output2.shape == expect2.shape
