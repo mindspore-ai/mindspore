@@ -26,10 +26,8 @@ prelu_op_info = TBERegOp("PReLU") \
     .input(0, "x", False, "required", "all") \
     .input(1, "weight", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
-    .dtype_format(DataType.F16_NCHW, DataType.F16_Default, DataType.F16_NCHW) \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD, DataType.F16_5HD) \
     .dtype_format(DataType.F16_Default, DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F32_NCHW, DataType.F32_Default, DataType.F32_NCHW) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default) \
     .get_op_info()

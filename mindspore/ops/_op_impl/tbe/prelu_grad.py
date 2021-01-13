@@ -28,8 +28,6 @@ prelu_grad_op_info = TBERegOp("PReLUGrad") \
     .input(2, "weights", False, "required", "all") \
     .output(0, "dx", False, "required", "all") \
     .output(0, "da", False, "required", "all") \
-    .dtype_format(DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_Default,
-                  DataType.F32_NCHW, DataType.F32_Default) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F32_5HD) \
     .dtype_format(DataType.F32_Default, DataType.F32_Default, DataType.F32_Default,
