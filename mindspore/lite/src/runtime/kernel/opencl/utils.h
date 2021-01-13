@@ -62,19 +62,20 @@ std::vector<int> GetNHWCShape(const std::vector<int> &tensor_shape);
 std::vector<size_t> GetImage2dShapeFromNHWC(const std::vector<int> &tensor_shape, schema::Format format);
 
 template <class T1, class T2>
-void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane, int channel, const std::function<T2(T1)> &to_dtype) {
+void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane_in, int plane_out, int channel,
+                      const std::function<T2(T1)> &to_dtype) {
   MS_ASSERT(src);
   MS_ASSERT(dst);
   int c4 = UP_DIV(channel, C4NUM);
   for (int b = 0; b < batch; b++) {
-    int src_offset = b * plane * channel;
-    int dst_offset = b * plane * c4 * C4NUM;
+    int src_offset = b * plane_in * channel;
+    int dst_offset = b * plane_out * c4;
     for (int c = 0; c < channel; c++) {
       int c4_block_num = c / C4NUM;
       int c4_block_rem = c % C4NUM;
-      int src_c_offset = src_offset + c * plane;
-      int dst_c_offset = dst_offset + c4_block_num * plane * C4NUM;
-      for (int k = 0; k < plane; k++) {
+      int src_c_offset = src_offset + c * plane_in;
+      int dst_c_offset = dst_offset + c4_block_num * plane_out;
+      for (int k = 0; k < plane_in; k++) {
         int src_kernel_offset = src_c_offset + k;
         int dst_kernel_offset = dst_c_offset + C4NUM * k + c4_block_rem;
         (static_cast<T2 *>(dst) + dst_kernel_offset)[0] = to_dtype((static_cast<T1 *>(src) + src_kernel_offset)[0]);

@@ -81,7 +81,7 @@ TEST_F(TestOpenCL_DepthwiseConv2d, NoPad) {
     TestMain({{input_shape, input_data, VAR},
               {weight_shape, weight_data, CONST_TENSOR},
               {bias_shape, bias_data, CONST_TENSOR}},
-             {output_shape, output_data}, param, fp16_enable, fp16_enable ? 1e-2 : 1e-5);
+             {output_shape, output_data}, param, fp16_enable, fp16_enable ? 1e-2 : 1e-5, 1e-1, true);
   }
 }
 
@@ -128,7 +128,7 @@ TEST_F(TestOpenCL_DepthwiseConv2d, Pad) {
     TestMain({{input_shape, input_data, VAR},
               {weight_shape, weight_data, CONST_TENSOR},
               {bias_shape, bias_data, CONST_TENSOR}},
-             {output_shape, output_data}, param, fp16_enable, fp16_enable ? 1e-2 : 1e-5);
+             {output_shape, output_data}, param, fp16_enable, fp16_enable ? 1e-2 : 1e-5, 1e-1, true);
   }
 }
 
