@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,18 @@
 namespace mindspore {
 namespace kernel {
 namespace {
+void SetParallelValueToJson(const std::string &processor, const std::map<size_t, size_t> &dim_infos,
+                            nlohmann::json *sub_fusion_json) {
+  if (processor == kProcessorCuda) {
+    std::vector<size_t> cnums;
+    std::transform(dim_infos.cbegin(), dim_infos.cend(), std::back_insert_iterator(cnums),
+                   [](const std::pair<size_t, size_t> &dim) { return dim.second; });
+    (*sub_fusion_json)[kJsonKeyCoreNum] = cnums;
+  } else {
+    MS_LOG(EXCEPTION) << "Parallel fusion not support " << processor << " now.";
+  }
+}
+
 std::vector<int> GetDynInputSize(const AnfNodePtr &anf_node) {
   std::vector<int> dyn_input_sizes;
   auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
@@ -204,7 +216,8 @@ bool AkgKernelJsonGenerator::CreateInputDescJson(const AnfNodePtr &anf_node, con
       input_desc_json[kJsonKeyName] = input_ptr->name();
       input_desc_json[kJsonKeyTensorName] = "input_" + std::to_string(GetInputTensorIdxInc(anf_node, real_input_index));
       auto input_shape = this->GetInputShape(anf_node, real_input_index);
-      if (AnfAlgo::IsNodeInGraphKernel(anf_node) && GetInputTensorValue(anf_node, real_input_index, &input_desc_json)) {
+      if ((AnfAlgo::IsNodeInGraphKernel(anf_node) || dump_option_.is_always_fold_const) &&
+          GetInputTensorValue(anf_node, real_input_index, &input_desc_json)) {
         MS_LOG(DEBUG) << "Take input[" << real_input_index << "] of [" << anf_node->DebugString(2)
                       << "] as const tensor, shape: [" << Vector2Str(input_shape)
                       << "], value: " << input_desc_json[kJsonKeyValue];
@@ -582,6 +595,17 @@ void AkgKernelJsonGenerator::GenStitchJson(const std::vector<AnfNodePtr> &anf_no
   }
 }
 
+void AkgKernelJsonGenerator::AddParalleFusionJsonInfo(const std::string &processor, nlohmann::json *kernel_json) {
+  nlohmann::json parallel_fusion_json;
+  parallel_fusion_json[kJsonKeyFusionType] = "block_fusion";
+  std::vector<std::vector<std::string>> sgraphs;
+  std::transform(sub_graphs_.cbegin(), sub_graphs_.cend(), std::back_insert_iterator(sgraphs),
+                 [](const std::pair<int, std::vector<std::string>> &sg) { return sg.second; });
+  parallel_fusion_json[kJsonKeySubGraph] = sgraphs;
+  SetParallelValueToJson(processor, dim_infos_, &parallel_fusion_json);
+  (*kernel_json)[kJsonKeyParallelFusion] = parallel_fusion_json;
+}
+
 bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
                                               const std::vector<AnfNodePtr> &input_list,
                                               const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json) {
@@ -608,6 +632,13 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyOutputDesc] =
     CreateOutputsJson(anf_nodes, input_list, output_list, inputs_json, node_json_map);
 
+  auto processor = GetProcessorStr(anf_nodes[0]);
+
+  // Add parallel fusion informations.
+  if (!sub_graphs_.empty()) {
+    AddParalleFusionJsonInfo(processor, kernel_json);
+  }
+
   size_t hash_id = std::hash<std::string>()(kernel_json->dump());
   kernel_name_ = "Fused_";
   auto fg = anf_nodes[0]->func_graph();
@@ -628,7 +659,7 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyId] = GetOpCntInc();
   (*kernel_json)[kJsonKeyOp] = kernel_name_;
   (*kernel_json)[kJsonKeyPlatform] = "AKG";
-  (*kernel_json)[kJsonKeyProcess] = GetProcessorStr(anf_nodes[0]);
+  (*kernel_json)[kJsonKeyProcess] = processor;
   (*kernel_json)[kJsonKeyComposite] = true;
   (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString() + "." + fg->debug_info()->get_id();
 
@@ -753,6 +784,17 @@ nlohmann::json AkgKernelJsonGenerator::CreateOutputsJson(const std::vector<AnfNo
         output_shape.push_back(1);
       }
       output_desc_json[kJsonKeyShape] = output_shape;
+      if (auto tcnode = tmp_output.first->cast<CNodePtr>();
+          tcnode && AnfAlgo::HasNodeAttr(kAttrParallelDimInfo, tcnode)) {
+        auto info = AnfAlgo::GetNodeAttr<std::vector<size_t>>(tcnode, kAttrParallelDimInfo);
+        if (info.size() != 2) {
+          MS_LOG(EXCEPTION) << "Parallel dim info is invalid!";
+        }
+        sub_graphs_[info[0]].push_back(output_desc_json[kJsonKeyTensorName]);
+        if (dim_infos_.find(info[0]) == dim_infos_.end()) {
+          dim_infos_[info[0]] = info[1];
+        }
+      }
     }
     outputs_json.emplace_back(output_desc_json);
   }
