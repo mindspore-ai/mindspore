@@ -30,10 +30,6 @@ ctcloss_op_info = AiCPURegOp("CTCLoss") \
                   DataType.F32_Default, DataType.F32_Default) \
     .dtype_format(DataType.F64_Default, DataType.I64_Default, DataType.I32_Default, DataType.I32_Default,
                   DataType.F64_Default, DataType.F64_Default) \
-    .dtype_format(DataType.F32_NCHW, DataType.I64_NCHW, DataType.I32_NCHW, DataType.I32_NCHW,
-                  DataType.F32_NCHW, DataType.F32_NCHW) \
-    .dtype_format(DataType.F64_NCHW, DataType.I64_NCHW, DataType.I32_NCHW, DataType.I32_NCHW,
-                  DataType.F64_NCHW, DataType.F64_NCHW) \
     .get_op_info()
 
 @op_info_register(ctcloss_op_info)

@@ -32,18 +32,6 @@ is_finite_op_info = AiCPURegOp("IsFinite") \
     .dtype_format(DataType.F16_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.F32_Default, DataType.BOOL_Default) \
     .dtype_format(DataType.F64_Default, DataType.BOOL_Default) \
-    .dtype_format(DataType.BOOL_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.I8_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.I16_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.I32_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.I64_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.U8_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.U16_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.U32_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.U64_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.F16_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.F32_NCHW, DataType.BOOL_NCHW) \
-    .dtype_format(DataType.F64_NCHW, DataType.BOOL_NCHW) \
     .get_op_info()
 
 @op_info_register(is_finite_op_info)

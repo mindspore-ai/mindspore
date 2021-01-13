@@ -24,7 +24,6 @@ random_choice_with_mask_op_info = AiCPURegOp("RandomChoiceWithMask") \
     .attr("count", "int") \
     .attr("seed", "int") \
     .attr("seed2", "int") \
-    .dtype_format(DataType.BOOL_NCHW, DataType.I32_NCHW, DataType.BOOL_NCHW) \
     .dtype_format(DataType.BOOL_Default, DataType.I32_Default, DataType.BOOL_Default) \
     .get_op_info()
 
