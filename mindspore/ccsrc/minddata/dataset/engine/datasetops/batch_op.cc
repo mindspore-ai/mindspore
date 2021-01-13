@@ -74,7 +74,9 @@ BatchOp::BatchOp(int32_t batch_size, bool drop, bool pad, int32_t op_queue_size,
       out_col_names_(out_col),
       batch_size_func_(batch_size_func),
       batch_map_func_(batch_map_func),
-      pad_info_(pad_map) {
+      pad_info_(pad_map),
+      batch_num_(0),
+      batch_cnt_(0) {
   worker_queues_.Init(num_workers, op_queue_size);
 }
 // if PYTHON is disabled. per_batch_map can't be used
@@ -558,6 +560,36 @@ int64_t BatchOp::GetTreeBatchSize() {
   }
 #endif
   return start_batch_size_;
+}
+
+Status BatchOp::GetNextRow(TensorRow *row) {
+  std::unique_ptr<TensorQTable> table = std::make_unique<TensorQTable>();
+  child_iterator_ = std::make_unique<ChildIterator>(this, 0, 0);
+  int32_t cur_batch_size = 0;
+  RETURN_IF_NOT_OK(GetBatchSize(&cur_batch_size, CBatchInfo(0, batch_num_, batch_cnt_)));
+  for (int i = 0; i < cur_batch_size; i++) {
+    TensorRow new_row;
+    RETURN_IF_NOT_OK(child_[0]->GetNextRow(&new_row));
+    if (!new_row.empty()) {
+      table->emplace_back(new_row);
+      if (table->size() == static_cast<size_t>(cur_batch_size)) break;
+    } else {
+      if (drop_ || table->empty()) {
+        table = std::make_unique<TensorQTable>();  // this drops when drop == true
+      }
+    }
+  }
+  std::unique_ptr<TensorQTable> out = std::make_unique<TensorQTable>();
+  RETURN_UNEXPECTED_IF_NULL(table);
+  if (pad_) RETURN_IF_NOT_OK(PadColumns(&table, pad_info_, column_name_id_map_));  // do padding if needed
+  if (!table->empty()) {
+    RETURN_IF_NOT_OK(BatchRows(&table, &out, table->size()));
+    CHECK_FAIL_RETURN_UNEXPECTED(out->size() == 1, "Batch returned 2 rows while 1 row was expected.");
+    *row = out->back();
+    batch_cnt_++;
+    batch_num_++;
+  }
+  return Status::OK();
 }
 
 }  // namespace dataset

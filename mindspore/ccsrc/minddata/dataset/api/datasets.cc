@@ -129,6 +129,23 @@ std::shared_ptr<Iterator> Dataset::CreateIteratorCharIF(std::vector<std::vector<
   return iter;
 }
 
+// Function to create the iterator, which will build and launch the execution tree.
+std::shared_ptr<PullIterator> Dataset::CreatePullBasedIterator(std::vector<std::vector<char>> columns) {
+  // The specified columns will be selected from the dataset and passed down the pipeline
+  // in the order specified, other columns will be discarded.
+  // This code is not in a try/catch block because there is no execution tree class that will be created.
+  auto ds = shared_from_this();
+  if (!VectorCharToString(columns).empty()) {
+    ds = ds->Project(VectorCharToString(columns));
+  }
+
+  std::shared_ptr<PullIterator> iter = std::make_shared<PullIterator>();
+  Status rc = iter->BuildAndLaunchTree(ds);
+  if (rc.IsError()) MS_LOG(ERROR) << "CreateIterator: Iterator exception caught: " << rc;
+  RETURN_SECOND_IF_ERROR(rc, nullptr);
+  return iter;
+}
+
 #ifndef ENABLE_ANDROID
 // Function to return a transferred Node that transfers data through a device.
 bool Dataset::DeviceQueueCharIF(const std::vector<char> &queue_name, const std::vector<char> &device_type,

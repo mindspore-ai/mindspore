@@ -36,6 +36,7 @@
 #include "minddata/dataset/include/tensor.h"
 #include "minddata/dataset/include/text.h"
 #include "minddata/dataset/include/type_id.h"
+#include "minddata/dataset/engine/consumers/pull_based_tree_consumer.h"
 
 namespace mindspore {
 namespace dataset {
@@ -44,6 +45,7 @@ class Tensor;
 class TensorRow;
 class TensorShape;
 class TreeAdapter;
+class TreeAdapterLite;
 class TreeGetters;
 class Vocab;
 
@@ -51,6 +53,7 @@ class DatasetCache;
 class DatasetNode;
 
 class Iterator;
+class PullBasedIteratorConsumer;
 
 class TensorOperation;
 class SchemaObj;
@@ -133,6 +136,11 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] num_workers The number of threads in this operator
   /// \return Shared pointer to the original object
   std::shared_ptr<Dataset> SetNumWorkers(int32_t num_workers);
+
+  /// \brief Function to create an PullBasedIterator over the Dataset
+  /// \param[in] columns List of columns to be used to specify the order of columns
+  /// \return Shared pointer to the Iterator
+  std::shared_ptr<PullIterator> CreatePullBasedIterator(std::vector<std::vector<char>> columns = {});
 
   /// \brief Function to create an Iterator over the Dataset pipeline
   /// \param[in] columns List of columns to be used to specify the order of columns

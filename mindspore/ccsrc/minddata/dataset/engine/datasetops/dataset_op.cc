@@ -252,6 +252,11 @@ void DatasetOp::Print(std::ostream &out, bool show_all) const {
   }
 }
 
+Status DatasetOp::GetNextRow(TensorRow *row) {
+  RETURN_UNEXPECTED_IF_NULL(child_[0]);
+  return child_[0]->GetNextRow(row);
+}
+
 // Gets the next buffer from the given child
 Status DatasetOp::GetNextBuffer(std::unique_ptr<DataBuffer> *p_buffer, int32_t worker_id, bool retry_if_eoe) {
   // pop is a blocked call and will throw an interruption if the whole group shuts down.
