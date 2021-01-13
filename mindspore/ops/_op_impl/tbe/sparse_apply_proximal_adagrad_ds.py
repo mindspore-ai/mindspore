@@ -34,9 +34,6 @@ sparse_apply_proximal_adagrad_d_ds_op_info = TBERegOp("SparseApplyProximalAdagra
     .input(6, "indices", False, "required", "all") \
     .output(0, "var", False, "required", "all") \
     .output(1, "accum", False, "required", "all") \
-    .dtype_format(DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW,
-                  DataType.F32_NCHW, DataType.F32_NCHW, DataType.I32_NCHW, DataType.F32_NCHW,
-                  DataType.F32_NCHW) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F32_5HD, DataType.I32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD) \
@@ -49,9 +46,6 @@ sparse_apply_proximal_adagrad_d_ds_op_info = TBERegOp("SparseApplyProximalAdagra
     .dtype_format(DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_FracZ, DataType.F32_FracZ,
                   DataType.F32_FracZ, DataType.F32_FracZ, DataType.I32_FracZ, DataType.F32_FracZ,
                   DataType.F32_FracZ) \
-    .dtype_format(DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW, DataType.F32_NCHW,
-                  DataType.F32_NCHW, DataType.F32_NCHW, DataType.I64_NCHW, DataType.F32_NCHW,
-                  DataType.F32_NCHW) \
     .dtype_format(DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD, DataType.F32_5HD,
                   DataType.F32_5HD, DataType.F32_5HD, DataType.I64_5HD, DataType.F32_5HD,
                   DataType.F32_5HD) \
