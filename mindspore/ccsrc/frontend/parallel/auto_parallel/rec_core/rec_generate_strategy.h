@@ -30,7 +30,7 @@ namespace parallel {
 void GenerateStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                       const std::shared_ptr<std::vector<std::vector<size_t>>> &eli_list,
                       const std::vector<std::vector<std::string>> &input_tensor_names,
-                      const std::shared_ptr<std::vector<size_t>> &index_list);
+                      const std::shared_ptr<std::vector<size_t>> &index_list, bool is_training);
 Strategys PrepareMatMul(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                         const size_t iter_graph, const size_t iter_ops);
 Strategys PrepareBiasAdd(const std::shared_ptr<Dimensions> &s);
@@ -55,6 +55,7 @@ Strategys CheckDivisible(const std::vector<std::shared_ptr<OperatorInfo>> &ops, 
 Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
                                    const std::vector<std::shared_ptr<OperatorInfo>> &ops, const size_t iter_graph,
                                    const size_t iter_ops);
+void SetBackToRawStrategy(const std::shared_ptr<OperatorInfo> &op);
 Strategys PrepareStrategy(const std::shared_ptr<Graph> &graph, const std::vector<std::shared_ptr<OperatorInfo>> &ops,
                           const size_t iter_graph, const size_t iter_ops);
 void GeneratePartitionedOperatorStrategy(const std::shared_ptr<Graph> &graph,
