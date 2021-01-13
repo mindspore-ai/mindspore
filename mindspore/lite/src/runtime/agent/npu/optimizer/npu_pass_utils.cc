@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/agent/npu/optimizer/npu_pass_utils.h"
+#include "src/runtime/agent/npu/npu_manager.h"
 #include "src/ops/transpose.h"
 #include "nnacl/transpose.h"
 #include "src/ops/populate/populate_register.h"
@@ -120,76 +121,80 @@ void NPUPassUtils::UpdateKernel(kernel::LiteKernel *kernel, const std::vector<ke
 
 void NPUPassUtils::UpdateNH2NCTransNodePreKernel(kernel::LiteKernel *pre_kernel, kernel::LiteKernel *trans_kernel,
                                                  kernel::LiteKernel *kernel) {
-  std::vector<kernel::LiteKernel *> out_kernels;
-
-  for (auto out_kernel : pre_kernel->out_kernels()) {
-    if (out_kernel == kernel) {
-      out_kernels.push_back(trans_kernel);
-    } else {
-      out_kernels.push_back(out_kernel);
+  // For kernel before trans, update the out_kernels; the output tensor of kernel is the input tensor of trans.
+  std::vector<kernel::LiteKernel *> out_kernels = pre_kernel->out_kernels();
+  for (size_t i = 0; i < out_kernels.size(); i++) {
+    if (out_kernels[i] == kernel) {
+      out_kernels[i] = trans_kernel;
+      break;
     }
   }
   pre_kernel->set_out_kernels(out_kernels);
 }
 
-void NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                                 kernel::LiteKernel *post_kernel) {
-  std::vector<kernel::LiteKernel *> cur_out_kernels;
-  for (auto out_kernel : kernel->out_kernels()) {
-    if (out_kernel == post_kernel) {
-      cur_out_kernels.push_back(trans_kernel);
-    } else {
-      cur_out_kernels.push_back(out_kernel);
+void NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel::LiteKernel *pre_kernel, kernel::LiteKernel *trans_kernel,
+                                                 std::vector<kernel::LiteKernel *> kernels) {
+  // For kernel before trans, there may be multiple outputs.
+  auto cur_out_kernels = pre_kernel->out_kernels();
+  for (size_t i = 0; i < kernels.size(); i++) {
+    auto itr = find(cur_out_kernels.begin(), cur_out_kernels.end(), kernels[i]);
+    if (itr != cur_out_kernels.end()) {
+      cur_out_kernels.erase(itr);
     }
   }
-  auto kernel_out_tensor = kernel->out_tensors()[0];
-  // Change format the output of the current kernel nhwc->nchw
-  auto nhwc_shape = kernel_out_tensor->shape();
-  std::vector<int> nchw_shape = {nhwc_shape[0], nhwc_shape[3], nhwc_shape[1], nhwc_shape[2]};
-  kernel_out_tensor->set_format(schema::Format_NCHW);
-  kernel_out_tensor->set_shape(nchw_shape);
-  kernel->set_out_kernels(cur_out_kernels);
-  kernel->set_out_tensors({kernel_out_tensor});
+  cur_out_kernels.push_back(trans_kernel);
+  pre_kernel->set_out_kernels(cur_out_kernels);
+  // For kernel before trans, the output tensor is used for output tensor of trans, so replace the output tensor with
+  // the input tensor of trans.
+  pre_kernel->set_out_tensors(trans_kernel->in_tensors());
 }
 
-void NPUPassUtils::UpdateNH2NCTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                                   kernel::LiteKernel *pre_kernel) {
-  std::vector<lite::Tensor *> cur_kernel_in_tensors = {trans_kernel->out_tensors()[0]};
-  for (int i = 1; i < kernel->in_tensors().size(); i++) {
-    cur_kernel_in_tensors.push_back(kernel->in_tensors()[i]);
-  }
-  std::vector<kernel::LiteKernel *> cur_in_kernels = {trans_kernel};
-  for (int i = 1; i < kernel->in_kernels().size(); i++) {
-    auto in_kernel = kernel->in_kernels()[i];
-    if (in_kernel != kernel) {
-      cur_in_kernels.push_back(in_kernel);
-    }
-  }
-  kernel->set_in_kernels(cur_in_kernels);
-  kernel->set_in_tensors({cur_kernel_in_tensors});
+void NPUPassUtils::UpdateNH2NCTransNodePostKernel(kernel::LiteKernel *trans_kernel, kernel::LiteKernel *post_kernel) {
+  auto cur_in_tensors = post_kernel->in_tensors();
+  cur_in_tensors[0] = trans_kernel->out_tensors()[0];
+  post_kernel->set_in_tensors(cur_in_tensors);
+  post_kernel->set_in_kernels({trans_kernel});
 }
 
-void NPUPassUtils::UpdateNC2NHTransNodeAfterKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
-                                                   kernel::LiteKernel *post_kernel) {
-  std::vector<Tensor *> post_in_tensors;
-  for (auto post_in_tensor : post_kernel->in_tensors()) {
-    if (post_in_tensor != kernel->out_tensors()[0]) {
-      post_in_tensors.push_back(post_in_tensor);
-    } else {
-      post_in_tensors.push_back(trans_kernel->out_tensors()[0]);
+void NPUPassUtils::UpdateNC2NHPostKernelInTensors(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
+                                                  kernel::LiteKernel *post_kernel) {
+  // For post_kernel that doesn't require insert trans kernel, because the output tensor of kernel(input tensor of
+  // trans_kernel) is updated, replace the input tensor of post_kernel.
+  auto post_in_tensors = post_kernel->in_tensors();
+  for (size_t i = 0; i < post_in_tensors.size(); i++) {
+    if (post_in_tensors[i] == kernel->out_tensors()[0]) {
+      post_in_tensors[i] = trans_kernel->in_tensors()[0];
+      break;
     }
   }
   post_kernel->set_in_tensors(post_in_tensors);
-  std::vector<kernel::LiteKernel *> post_in_kernels;
-  for (auto in_kernel : post_kernel->in_kernels()) {
-    if (in_kernel == kernel) {
-      post_in_kernels.push_back(trans_kernel);
-    } else {
-      post_in_kernels.push_back(in_kernel);
+}
+
+void NPUPassUtils::UpdateNC2NHTransNodePostKernel(kernel::LiteKernel *kernel, kernel::LiteKernel *trans_kernel,
+                                                  kernel::LiteKernel *post_kernel) {
+  // For post_kernel after trans, kernel should be replaced with trans_kernel.
+  auto post_in_tensors = post_kernel->in_tensors();
+  if (kernel == nullptr) {
+    post_in_tensors[0] = trans_kernel->out_tensors()[0];
+  } else {
+    for (size_t i = 0; i < post_in_tensors.size(); i++) {
+      if (post_in_tensors[i] == kernel->out_tensors()[0]) {
+        post_in_tensors[i] = trans_kernel->out_tensors()[0];
+        break;
+      }
+    }
+  }
+  post_kernel->set_in_tensors(post_in_tensors);
+
+  // The input tensor should be replaced with the output tensor of trans_kernel.
+  std::vector<kernel::LiteKernel *> post_in_kernels = post_kernel->in_kernels();
+  for (size_t i = 0; i < post_in_kernels.size(); i++) {
+    if (post_in_kernels[i] == kernel) {
+      post_in_kernels[i] = trans_kernel;
+      break;
     }
   }
   post_kernel->set_in_kernels(post_in_kernels);
-  post_kernel->set_in_tensors({post_in_tensors});
 }
 
 bool NPUPassUtils::IsNhwc2Nchw(const kernel::LiteKernel *kernel) {
