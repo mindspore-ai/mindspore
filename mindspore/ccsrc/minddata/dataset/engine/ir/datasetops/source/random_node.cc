@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/source/random_data_op.h"
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/random.h"
 #include "minddata/dataset/util/status.h"
 
@@ -105,17 +106,9 @@ Status RandomNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
     }
   }
 
-  // RandomOp by itself is a non-mappable dataset that does not support sampling.
-  // However, if a cache operator is injected at some other place higher in the tree, that cache can
-  // inherit this sampler from the leaf, providing sampling support from the caching layer.
-  // That is why we save the sampler here in a leaf node that does not use sampling.
-  // RandomOp doesn't support sampler, should not support sharding, select sampler should just be sequential.
-  std::shared_ptr<SamplerObj> sampler_ = SelectSampler(total_rows_, false, 1, 0);
-
   std::shared_ptr<RandomDataOp> op;
   op = std::make_shared<RandomDataOp>(num_workers_, connector_que_size_, rows_per_buffer_, total_rows_,
-                                      std::move(data_schema_), std::move(sampler_->SamplerBuild()));
-  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
+                                      std::move(data_schema_));
 
   node_ops->push_back(op);
 
@@ -141,6 +134,28 @@ Status RandomNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   *dataset_size = num_rows;
   dataset_size_ = *dataset_size;
   return Status::OK();
+}
+
+// RandomDataset by itself is a non-mappable dataset that does not support sampling.
+// However, if a cache operator is injected at some other place higher in the tree, that cache can
+// inherit this sampler from the leaf, providing sampling support from the caching layer.
+// That is why we setup the sampler for a leaf node that does not use sampling.
+Status RandomNode::SetupSamplerForCache(std::shared_ptr<SamplerObj> *sampler) {
+  // RandomOp doesn't support sampler, should not support sharding, select sampler should just be sequential.
+  *sampler = SelectSampler(total_rows_, false, 1, 0);
+  return Status::OK();
+}
+
+// Visitor accepting method for IRNodePass
+Status RandomNode::Accept(IRNodePass *p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<RandomNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status RandomNode::AcceptAfter(IRNodePass *p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<RandomNode>(), modified);
 }
 }  // namespace dataset
 }  // namespace mindspore

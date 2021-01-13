@@ -44,11 +44,7 @@
 namespace mindspore {
 namespace dataset {
 TFReaderOp::Builder::Builder()
-    : builder_device_id_(0),
-      builder_num_devices_(1),
-      builder_total_rows_(0),
-      builder_equal_rows_per_shard_(false),
-      builder_sampler_(nullptr) {
+    : builder_device_id_(0), builder_num_devices_(1), builder_total_rows_(0), builder_equal_rows_per_shard_(false) {
   std::shared_ptr<ConfigManager> config_manager = GlobalContext::config_manager();
   builder_num_workers_ = config_manager->num_parallel_workers();
   builder_worker_connector_size_ = config_manager->worker_connector_size();
@@ -122,8 +118,7 @@ Status TFReaderOp::Builder::Build(std::shared_ptr<TFReaderOp> *out_tf_reader_op)
   std::shared_ptr<TFReaderOp> new_tf_reader_op = std::make_shared<TFReaderOp>(
     builder_num_workers_, builder_worker_connector_size_, builder_rows_per_buffer_, builder_total_rows_,
     builder_dataset_files_list_, std::move(builder_data_schema_), builder_op_connector_size_, builder_columns_to_load_,
-    builder_shuffle_files_, builder_num_devices_, builder_device_id_, builder_equal_rows_per_shard_,
-    std::move(builder_sampler_));
+    builder_shuffle_files_, builder_num_devices_, builder_device_id_, builder_equal_rows_per_shard_);
 
   RETURN_IF_NOT_OK(new_tf_reader_op->Init());
   *out_tf_reader_op = std::move(new_tf_reader_op);
@@ -134,8 +129,8 @@ TFReaderOp::TFReaderOp(int32_t num_workers, int32_t worker_connector_size, int64
                        int64_t total_num_rows, std::vector<std::string> dataset_files_list,
                        std::unique_ptr<DataSchema> data_schema, int32_t op_connector_size,
                        std::vector<std::string> columns_to_load, bool shuffle_files, int32_t num_device,
-                       int32_t device_id, bool equal_rows_per_shard, std::shared_ptr<SamplerRT> sampler)
-    : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
+                       int32_t device_id, bool equal_rows_per_shard)
+    : ParallelOp(num_workers, op_connector_size),
       device_id_(device_id),
       num_devices_(num_device),
       rows_per_buffer_(rows_per_buffer),
@@ -1041,17 +1036,6 @@ Status TFReaderOp::ComputeColMap() {
     MS_LOG(WARNING) << "Column name map is already set!";
   }
   return Status::OK();
-}
-
-// Brief If a cache has been added into the ascendant tree over this tf reader, then the cache will be executing
-// a sampler for fetching the data.  As such, any options in the tf reader need to be reset to its defaults so
-// that this tf reader will produce the full set of data into the cache.
-void TFReaderOp::MakeSimpleProducer() {
-  device_id_ = 0;
-  num_devices_ = 1;
-  total_rows_ = 0;
-  shuffle_files_ = false;
-  equal_rows_per_shard_ = false;
 }
 
 // During tree prepare phase, operators may have specific post-operations to perform depending on

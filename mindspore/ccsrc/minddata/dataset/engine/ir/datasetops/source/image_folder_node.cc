@@ -70,8 +70,6 @@ Status ImageFolderNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const nod
   RETURN_IF_NOT_OK(
     schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_INT32), TensorImpl::kFlexible, 0, &scalar)));
 
-  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
-
   node_ops->push_back(std::make_shared<ImageFolderOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
                                                       recursive_, decode_, exts_, class_indexing_, std::move(schema),
                                                       std::move(sampler_->SamplerBuild())));

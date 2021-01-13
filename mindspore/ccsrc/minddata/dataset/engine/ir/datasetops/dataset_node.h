@@ -53,6 +53,9 @@ constexpr char kBatchNode[] = "Batch";
 constexpr char kBucketBatchByLengthNode[] = "BucketBatchByLength";
 constexpr char kBuildSentencePieceVocabNode[] = "BuildSentencePieceVocab";
 constexpr char kBuildVocabNode[] = "BuildVocab";
+constexpr char kCacheLookupNode[] = "CacheLookup";
+constexpr char kCacheMergeNode[] = "CacheMerge";
+constexpr char kCacheNode[] = "Cache";
 constexpr char kConcatNode[] = "Concat";
 constexpr char kEpochCtrlNode[] = "EpochCtrl";
 constexpr char kFilterNode[] = "Filter";
@@ -248,6 +251,9 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \brief Getter of the number of workers
   int32_t num_workers() { return num_workers_; }
 
+  /// \brief Getter of dataset cache
+  std::shared_ptr<DatasetCache> GetDatasetCache() { return cache_; }
+
   /// \brief Setter function for runtime number of workers
   /// \param[in] num_workers The number of threads in this operator
   /// \return Shared pointer to the original object
@@ -299,7 +305,6 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   // Used only in the constructor of the class and its derived classes.
   void AddChild(std::shared_ptr<DatasetNode> child);
   std::string PrintColumns(const std::vector<std::string> &columns) const;
-  Status AddCacheOp(std::vector<std::shared_ptr<DatasetOp>> *node_ops);
   void PrintNode(std::ostream &out, int *level) const;
   enum DataSource { kNotADataSource = 0, kNonMappableSource = 1, kMappableSource = 2 };
   enum DataSource mappable_;
@@ -360,6 +365,20 @@ class NonMappableSourceNode : public DatasetNode {
   /// \brief Node name getter
   /// \return Name of the current node
   virtual std::string Name() const = 0;
+
+  /// \brief By default non-mappable dataset does not support sampling. However, if a cache operator
+  ///     is injected at some other place higher in the tree, that cache can inherit this sampler
+  ///     from the leaf, providing sampling support from the caching layer.
+  ///     This function sets up the sampler for a leaf node that does not use sampling.
+  /// \param[in] sampler The sampler to setup
+  /// \return Status of the function
+  virtual Status SetupSamplerForCache(std::shared_ptr<SamplerObj> *sampler) = 0;
+
+  /// \brief If a cache has been added into the ascendant tree over this non-mappable source node, then the cache will
+  ///     be executing a sampler for fetching the data. As such, any options in the source node need to be reset to its
+  ///     defaults so that this source node will produce the full set of data into the cache.
+  /// \return Status of the function
+  virtual Status MakeSimpleProducer() = 0;
 };
 }  // namespace dataset
 }  // namespace mindspore

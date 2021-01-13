@@ -216,7 +216,7 @@ def test_cache_map_failure1():
           |
         Cache
           |
-      ImageFolder
+        Coco
 
     """
     logger.info("Test cache failure 1")
@@ -227,8 +227,9 @@ def test_cache_map_failure1():
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
-    # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
+    # This DATA_DIR has 6 images in it
+    ds1 = ds.CocoDataset(COCO_DATA_DIR, annotation_file=COCO_ANNOTATION_FILE, task="Detection", decode=True,
+                         cache=some_cache)
     decode_op = c_vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
     ds1 = ds1.repeat(4)
@@ -302,7 +303,7 @@ def test_cache_map_failure3():
                   |
                 Batch
                   |
-             ImageFolder
+                Mnist
     """
     logger.info("Test cache failure 3")
     if "SESSION_ID" in os.environ:
@@ -312,8 +313,7 @@ def test_cache_map_failure3():
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
-    # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
+    ds1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=10)
     ds1 = ds1.batch(2)
     resize_op = c_vision.Resize((224, 224))
     ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
@@ -342,7 +342,7 @@ def test_cache_map_failure4():
                   |
                 Filter
                   |
-             ImageFolder
+               CelebA
 
     """
     logger.info("Test cache failure 4")
@@ -353,8 +353,8 @@ def test_cache_map_failure4():
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
-    # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
+    # This dataset has 4 records
+    ds1 = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False, decode=True)
     ds1 = ds1.filter(predicate=lambda data: data < 11, input_columns=["label"])
 
     decode_op = c_vision.Decode()
@@ -382,7 +382,7 @@ def test_cache_map_failure5():
                   |
              Map(decode, randomCrop)
                   |
-             ImageFolder
+              Manifest
 
     """
     logger.info("Test cache failure 5")
@@ -393,8 +393,8 @@ def test_cache_map_failure5():
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
-    # This DATA_DIR only has 2 images in it
-    data = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
+    # This dataset has 4 records
+    data = ds.ManifestDataset(MANIFEST_DATA_FILE, decode=True)
     random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
     decode_op = c_vision.Decode()
 
@@ -505,7 +505,7 @@ def test_cache_map_failure8():
           |
         Repeat
           |
-      ImageFolder
+       Cifar10
     """
 
     logger.info("Test cache failure 8")
@@ -516,8 +516,7 @@ def test_cache_map_failure8():
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
-    # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
+    ds1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=10)
     decode_op = c_vision.Decode()
     ds1 = ds1.repeat(4)
     ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
@@ -545,7 +544,7 @@ def test_cache_map_failure9():
                   |
                 Take
                   |
-             ImageFolder
+             Cifar100
 
     """
     logger.info("Test cache failure 9")
@@ -556,8 +555,7 @@ def test_cache_map_failure9():
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
-    # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
+    ds1 = ds.Cifar100Dataset(CIFAR100_DATA_DIR, num_samples=10)
     ds1 = ds1.take(2)
 
     decode_op = c_vision.Decode()
@@ -587,7 +585,7 @@ def test_cache_map_failure10():
                   |
                 Skip
                   |
-             ImageFolder
+                VOC
 
     """
     logger.info("Test cache failure 10")
@@ -598,8 +596,8 @@ def test_cache_map_failure10():
 
     some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
-    # This DATA_DIR only has 2 images in it
-    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
+    # This dataset has 9 records
+    ds1 = ds.VOCDataset(VOC_DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
     ds1 = ds1.skip(1)
 
     decode_op = c_vision.Decode()

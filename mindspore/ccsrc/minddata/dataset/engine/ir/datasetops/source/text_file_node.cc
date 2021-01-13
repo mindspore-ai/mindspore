@@ -73,12 +73,6 @@ Status TextFileNode::ValidateParams() {
 Status TextFileNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
-  // TextFileOp by itself is a non-mappable dataset that does not support sampling.
-  // However, if a cache operator is injected at some other place higher in the tree, that cache can
-  // inherit this sampler from the leaf, providing sampling support from the caching layer.
-  // That is why we save the sampler here in a leaf node that does not use sampling.
-  std::shared_ptr<SamplerObj> sampler_ = SelectSampler(num_samples_, shuffle_files, num_shards_, shard_id_);
-
   // Sort the dataset files in a lexicographical order
   std::vector<std::string> sorted_dataset_files = dataset_files_;
   std::sort(sorted_dataset_files.begin(), sorted_dataset_files.end());
@@ -87,10 +81,10 @@ Status TextFileNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   auto schema = std::make_unique<DataSchema>();
   RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("text", DataType(DataType::DE_UINT8), TensorImpl::kFlexible, 1)));
 
-  // Create and initalize TextFileOp
+  // Create and initialize TextFileOp
   std::shared_ptr<TextFileOp> text_file_op = std::make_shared<TextFileOp>(
     num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, std::move(schema), sorted_dataset_files,
-    connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(sampler_->SamplerBuild()));
+    connector_que_size_, shuffle_files, num_shards_, shard_id_);
   RETURN_IF_NOT_OK(text_file_op->Init());
 
   if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal && !IsDescendantOfCache()) {
@@ -106,7 +100,6 @@ Status TextFileNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
                                   rows_per_buffer_, &shuffle_op));
     node_ops->push_back(shuffle_op);
   }
-  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
   // Add TextFileOp
   node_ops->push_back(text_file_op);
@@ -150,6 +143,28 @@ Status TextFileNode::to_json(nlohmann::json *out_json) {
     args["cache"] = cache_args;
   }
   *out_json = args;
+  return Status::OK();
+}
+
+// Note: The following two functions are common among NonMappableSourceNode and should be promoted to its parent class.
+// TextFile by itself is a non-mappable dataset that does not support sampling.
+// However, if a cache operator is injected at some other place higher in the tree, that cache can
+// inherit this sampler from the leaf, providing sampling support from the caching layer.
+// That is why we setup the sampler for a leaf node that does not use sampling.
+Status TextFileNode::SetupSamplerForCache(std::shared_ptr<SamplerObj> *sampler) {
+  bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
+  *sampler = SelectSampler(num_samples_, shuffle_files, num_shards_, shard_id_);
+  return Status::OK();
+}
+
+// If a cache has been added into the ascendant tree over this TextFile node, then the cache will be executing
+// a sampler for fetching the data.  As such, any options in the TextFile node need to be reset to its defaults so
+// that this TextFile node will produce the full set of data into the cache.
+Status TextFileNode::MakeSimpleProducer() {
+  shard_id_ = 0;
+  num_shards_ = 1;
+  shuffle_ = ShuffleMode::kFalse;
+  num_samples_ = 0;
   return Status::OK();
 }
 }  // namespace dataset

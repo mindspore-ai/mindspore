@@ -237,8 +237,11 @@ Status CacheOp::Accept(NodePass *p, bool *const modified) {
   return p->RunOnNode(shared_from_base<CacheOp>(), modified);
 }
 
-// A public wrapper for creating the cache through the client
-Status CacheOp::CreateCache(uint32_t cache_crc) {
+Status CacheOp::PrepareNodePostAction() {
+  // Run any common code from super class first before adding our own
+  RETURN_IF_NOT_OK(ParallelOp::PrepareNodePostAction());
+  // Get the computed check sum from all ops in our cache path below us and ask the cache op to create it's cache
+  uint32_t cache_crc = DatasetOp::GenerateCRC(shared_from_this());
   // This is a non-mappable cache op so the id's need to be generated.
   // Construct the cache
   const bool generate_ids = true;

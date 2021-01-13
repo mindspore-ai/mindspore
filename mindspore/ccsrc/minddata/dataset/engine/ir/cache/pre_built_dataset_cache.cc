@@ -16,6 +16,8 @@
 #include <memory>
 
 #include "minddata/dataset/engine/ir/cache/pre_built_dataset_cache.h"
+#include "minddata/dataset/engine/datasetops/cache_lookup_op.h"
+#include "minddata/dataset/engine/datasetops/cache_merge_op.h"
 #include "minddata/dataset/engine/datasetops/cache_op.h"
 
 namespace mindspore {
@@ -46,5 +48,29 @@ Status PreBuiltDatasetCache::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+Status PreBuiltDatasetCache::CreateCacheLookupOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds,
+                                                 std::shared_ptr<SamplerObj> sampler) {
+  CHECK_FAIL_RETURN_UNEXPECTED(cache_client_ != nullptr, "Cache client has not been created yet.");
+  std::shared_ptr<CacheLookupOp> lookup_op = nullptr;
+  RETURN_IF_NOT_OK(CacheLookupOp::Builder()
+                     .SetNumWorkers(num_workers)
+                     .SetClient(cache_client_)
+                     .SetSampler(sampler->SamplerBuild())
+                     .Build(&lookup_op));
+  *ds = lookup_op;
+
+  return Status::OK();
+}
+
+Status PreBuiltDatasetCache::CreateCacheMergeOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) {
+  CHECK_FAIL_RETURN_UNEXPECTED(cache_client_ != nullptr, "Cache client has not been created yet.");
+  std::shared_ptr<CacheMergeOp> merge_op = nullptr;
+  RETURN_IF_NOT_OK(CacheMergeOp::Builder().SetNumWorkers(num_workers).SetClient(cache_client_).Build(&merge_op));
+  *ds = merge_op;
+
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

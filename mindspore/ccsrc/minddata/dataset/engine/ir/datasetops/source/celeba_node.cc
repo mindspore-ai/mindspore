@@ -67,8 +67,6 @@ Status CelebANode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   // label is like this:0 1 0 0 1......
   RETURN_IF_NOT_OK(schema->AddColumn(ColDescriptor("attr", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
 
-  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
-
   node_ops->push_back(std::make_shared<CelebAOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
                                                  decode_, usage_, extensions_, std::move(schema),
                                                  std::move(sampler_->SamplerBuild())));

@@ -62,8 +62,6 @@ Status Cifar10Node::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_op
   RETURN_IF_NOT_OK(
     schema->AddColumn(ColDescriptor("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 0, &scalar)));
 
-  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
-
   node_ops->push_back(std::make_shared<CifarOp>(CifarOp::CifarType::kCifar10, usage_, num_workers_, rows_per_buffer_,
                                                 dataset_dir_, connector_que_size_, std::move(schema),
                                                 std::move(sampler_->SamplerBuild())));

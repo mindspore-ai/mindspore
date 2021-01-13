@@ -23,8 +23,9 @@
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/source/mindrecord_op.h"
-
+#include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/util/status.h"
+
 namespace mindspore {
 namespace dataset {
 
@@ -203,5 +204,16 @@ Status MindDataNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
   return Status::OK();
 }
 
+// Visitor accepting method for IRNodePass
+Status MindDataNode::Accept(IRNodePass *const p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<MindDataNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status MindDataNode::AcceptAfter(IRNodePass *p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<MindDataNode>(), modified);
+}
 }  // namespace dataset
 }  // namespace mindspore

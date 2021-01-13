@@ -1913,6 +1913,217 @@ def test_cache_nomap_long_file_list():
     logger.info("test_cache_nomap_long_file_list Ended.\n")
 
 
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_failure1():
+    """
+    Test nested cache (failure)
+
+        Repeat
+          |
+        Cache
+          |
+      Map(decode)
+          |
+        Cache
+          |
+      TFRecord
+
+    """
+    logger.info("Test cache nomap failure 1")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    # This dataset has 3 records in it only
+    ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
+    decode_op = c_vision.Decode()
+    ds1 = ds1.map(operations=decode_op, input_columns=["image"], cache=some_cache)
+    ds1 = ds1.repeat(4)
+
+    with pytest.raises(RuntimeError) as e:
+        ds1.get_batch_size()
+    assert "Nested cache operations" in str(e.value)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in ds1.create_dict_iterator(num_epochs=1):
+            num_iter += 1
+    assert "Nested cache operations" in str(e.value)
+
+    assert num_iter == 0
+    logger.info('test_cache_nomap_failure1 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_failure2():
+    """
+    Test zip under cache (failure)
+
+               repeat
+                  |
+                Cache
+                  |
+             Map(decode)
+                  |
+                 Zip
+                |    |
+           Random    Random
+
+    """
+    logger.info("Test cache nomap failure 2")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    schema = ds.Schema()
+    schema.add_column('image', de_type=mstype.uint8,
+                      shape=[640, 480, 3])  # 921600 bytes (a bit less than 1 MB per image)
+    schema.add_column('label', de_type=mstype.uint8, shape=[1])
+
+    ds1 = ds.RandomDataset(schema=schema)
+    ds2 = ds.RandomDataset(schema=schema)
+    dsz = ds.zip((ds1, ds2))
+    decode_op = c_vision.Decode()
+    dsz = dsz.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    dsz = dsz.repeat(4)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in dsz.create_dict_iterator():
+            num_iter += 1
+    assert "ZipNode is not supported as a descendant operator under a cache" in str(e.value)
+
+    assert num_iter == 0
+    logger.info('test_cache_nomap_failure2 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_failure3():
+    """
+    Test batch under cache (failure)
+
+               repeat
+                  |
+                Cache
+                  |
+             Map(resize)
+                  |
+                Batch
+                  |
+                Clue
+    """
+    logger.info("Test cache nomap failure 3")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    ds1 = ds.CLUEDataset(CLUE_DATA_DIR, task='AFQMC', usage='train')
+    ds1 = ds1.batch(2)
+    resize_op = c_vision.Resize((224, 224))
+    ds1 = ds1.map(input_columns=["image"], operations=resize_op, cache=some_cache)
+    ds1 = ds1.repeat(4)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in ds1.create_dict_iterator():
+            num_iter += 1
+    assert "BatchNode is not supported as a descendant operator under a cache" in str(e.value)
+
+    assert num_iter == 0
+    logger.info('test_cache_nomap_failure3 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_failure4():
+    """
+    Test filter under cache (failure)
+
+               repeat
+                  |
+                Cache
+                  |
+             Map(decode)
+                  |
+                Filter
+                  |
+                 CSV
+
+    """
+    logger.info("Test cache nomap failure 4")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    ds1 = ds.CSVDataset(CSV_DATA_DIR, column_defaults=["1", "2", "3", "4"],
+                        column_names=['col1', 'col2', 'col3', 'col4'])
+    ds1 = ds1.filter(predicate=lambda data: data < 11, input_columns=["label"])
+
+    decode_op = c_vision.Decode()
+    ds1 = ds1.map(input_columns=["image"], operations=decode_op, cache=some_cache)
+    ds1 = ds1.repeat(4)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in ds1.create_dict_iterator():
+            num_iter += 1
+    assert "FilterNode is not supported as a descendant operator under a cache" in str(e.value)
+
+    assert num_iter == 0
+    logger.info('test_cache_nomap_failure4 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_nomap_failure5():
+    """
+    Test Map with non-deterministic TensorOps under cache (failure)
+
+               repeat
+                  |
+                Cache
+                  |
+             Map(decode, randomCrop)
+                  |
+              TextFile
+
+    """
+    logger.info("Test cache nomap failure 5")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
+
+    data = ds.TextFileDataset(TEXT_FILE_DATA_DIR)
+    random_crop_op = c_vision.RandomCrop([512, 512], [200, 200, 200, 200])
+    decode_op = c_vision.Decode()
+
+    data = data.map(input_columns=["image"], operations=decode_op)
+    data = data.map(input_columns=["image"], operations=random_crop_op, cache=some_cache)
+    data = data.repeat(4)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in data.create_dict_iterator():
+            num_iter += 1
+    assert "MapNode with non-deterministic operations is not supported as a descendant of cache" in str(e.value)
+
+    assert num_iter == 0
+    logger.info('test_cache_nomap_failure5 Ended.\n')
+
+
 if __name__ == '__main__':
     test_cache_nomap_basic1()
     test_cache_nomap_basic2()

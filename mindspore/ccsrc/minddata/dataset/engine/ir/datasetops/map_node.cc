@@ -76,7 +76,6 @@ Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
     auto project_op = std::make_shared<ProjectOp>(project_columns_);
     node_ops->push_back(project_op);
   }
-  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
   node_ops->push_back(map_op);
   return Status::OK();

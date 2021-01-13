@@ -35,7 +35,7 @@ namespace dataset {
 // Internal Sampler class forward declaration
 class SamplerRT;
 
-class SamplerObj : public std::enable_shared_from_this<SamplerObj> {
+class SamplerObj {
  public:
   /// \brief Constructor
   SamplerObj();
@@ -122,7 +122,7 @@ std::shared_ptr<RandomSamplerObj> RandomSampler(bool replacement = false, int64_
 
 /// Function to create a Sequential Sampler.
 /// \notes Samples the dataset elements sequentially, same as not having a sampler.
-/// \param[in] start_index - Index to start sampling at (dafault to start at first id).
+/// \param[in] start_index - Index to start sampling at (default to start at first id).
 /// \param[in] num_samples - The number of samples to draw (default to all elements).
 /// \return Shared pointer to the current Sampler.
 std::shared_ptr<SequentialSamplerObj> SequentialSampler(int64_t start_index = 0, int64_t num_samples = 0);
