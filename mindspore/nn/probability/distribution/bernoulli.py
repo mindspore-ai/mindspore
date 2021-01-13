@@ -84,6 +84,7 @@ class Bernoulli(Distribution):
         (3,)
         >>> # `probs` must be passed in during function calls.
         >>> ans = b2.mean(probs_a)
+        >>> print(ans.shape)
         (1,)
         >>> print(ans.shape)
         >>> # Interfaces of `kl_loss` and `cross_entropy` are the same as follows:

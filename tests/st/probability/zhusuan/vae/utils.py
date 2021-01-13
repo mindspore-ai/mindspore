@@ -43,20 +43,29 @@ def create_dataset(data_path, batch_size=32, repeat_size=1,
     shift = 0.0
 
     # define map operations
-    resize_op = CV.Resize((resize_height, resize_width), interpolation=Inter.LINEAR)  # resize images to (32, 32)
+    # resize images to (32, 32)
+    resize_op = CV.Resize((resize_height, resize_width),
+                          interpolation=Inter.LINEAR)
     rescale_op = CV.Rescale(rescale, shift)  # rescale images
-    hwc2chw_op = CV.HWC2CHW()  # change shape from (height, width, channel) to (channel, height, width) to fit network.
-    type_cast_op = C.TypeCast(mstype.int32)  # change data type of label to int32 to fit network
+    # change shape from (height, width, channel) to (channel, height, width) to fit network.
+    hwc2chw_op = CV.HWC2CHW()
+    # change data type of label to int32 to fit network
+    type_cast_op = C.TypeCast(mstype.int32)
 
     # apply map operations on images
-    mnist_ds = mnist_ds.map(input_columns="label", operations=type_cast_op, num_parallel_workers=num_parallel_workers)
-    mnist_ds = mnist_ds.map(input_columns="image", operations=resize_op, num_parallel_workers=num_parallel_workers)
-    mnist_ds = mnist_ds.map(input_columns="image", operations=rescale_op, num_parallel_workers=num_parallel_workers)
-    mnist_ds = mnist_ds.map(input_columns="image", operations=hwc2chw_op, num_parallel_workers=num_parallel_workers)
+    mnist_ds = mnist_ds.map(input_columns="label", operations=type_cast_op,
+                            num_parallel_workers=num_parallel_workers)
+    mnist_ds = mnist_ds.map(input_columns="image", operations=resize_op,
+                            num_parallel_workers=num_parallel_workers)
+    mnist_ds = mnist_ds.map(input_columns="image", operations=rescale_op,
+                            num_parallel_workers=num_parallel_workers)
+    mnist_ds = mnist_ds.map(input_columns="image", operations=hwc2chw_op,
+                            num_parallel_workers=num_parallel_workers)
 
     # apply DatasetOps
     buffer_size = 10000
-    mnist_ds = mnist_ds.shuffle(buffer_size=buffer_size)  # 10000 as in LeNet train script
+    # 10000 as in LeNet train script
+    mnist_ds = mnist_ds.shuffle(buffer_size=buffer_size)
     mnist_ds = mnist_ds.batch(batch_size, drop_remainder=True)
     mnist_ds = mnist_ds.repeat(repeat_size)
 
@@ -68,7 +77,7 @@ def save_img(data, name, size=32, num=32):
     Visualize data and save to target files
     Args:
         data: nparray of size (num, size, size)
-        name: ouput file name
+        name: output file name
         size: image size
         num: number of images
     """

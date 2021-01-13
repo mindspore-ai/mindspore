@@ -41,7 +41,7 @@ class Bijector(Cell):
     Note:
         `dtype` of bijector represents the type of the distributions that the bijector could operate on.
         When `dtype` is None, there is no enforcement on the type of input value except that the input value
-        has to be float type. During initilization, when `dtype` is None, there is no enforcement on the dtype
+        has to be float type. During initialization, when `dtype` is None, there is no enforcement on the dtype
         of the parameters. All parameters should have the same float type, otherwise a TypeError will be raised.
         Specifically, the parameter type will follow the dtype of the input value, i.e. parameters of the bijector
         will be casted into the same type as input value when `dtype`is None.
@@ -65,7 +65,8 @@ class Bijector(Cell):
             'is_constant_jacobian', is_constant_jacobian, [bool], name)
         validator.check_value_type('is_injective', is_injective, [bool], name)
         if dtype is not None:
-            validator.check_type_name("dtype", dtype, mstype.float_type, type(self).__name__)
+            validator.check_type_name(
+                "dtype", dtype, mstype.float_type, type(self).__name__)
         self._name = name
         self._dtype = dtype
         self._parameters = {}
@@ -76,7 +77,7 @@ class Bijector(Cell):
             if not(k == 'self' or k.startswith('_')):
                 self._parameters[k] = param[k]
 
-        # if no bijector is used as an argument during initilization
+        # if no bijector is used as an argument during initialization
         if 'bijector' not in param.keys():
             self._batch_shape = self._calc_batch_shape()
             self._is_scalar_batch = self._check_is_scalar_batch()
@@ -141,7 +142,8 @@ class Bijector(Cell):
 
     def _shape_mapping(self, shape):
         shape_tensor = self.fill_base(self.parameter_type, shape, 0.0)
-        dist_shape_tensor = self.fill_base(self.parameter_type, self.batch_shape, 0.0)
+        dist_shape_tensor = self.fill_base(
+            self.parameter_type, self.batch_shape, 0.0)
         return (shape_tensor + dist_shape_tensor).shape
 
     def shape_mapping(self, shape):
@@ -166,12 +168,15 @@ class Bijector(Cell):
             if self.common_dtype is None:
                 self.common_dtype = value_t.dtype
             elif value_t.dtype != self.common_dtype:
-                raise TypeError(f"{name} should have the same dtype as other arguments.")
+                raise TypeError(
+                    f"{name} should have the same dtype as other arguments.")
             # check if the parameters are casted into float-type tensors
-            validator.check_type_name(f"dtype of {name}", value_t.dtype, mstype.float_type, type(self).__name__)
+            validator.check_type_name(
+                f"dtype of {name}", value_t.dtype, mstype.float_type, type(self).__name__)
         # check if the dtype of the input_parameter agrees with the bijector's dtype
         elif value_t.dtype != self.dtype:
-            raise TypeError(f"{name} should have the same dtype as the bijector's dtype.")
+            raise TypeError(
+                f"{name} should have the same dtype as the bijector's dtype.")
         self.default_parameters += [value,]
         self.parameter_names += [name,]
         return value_t

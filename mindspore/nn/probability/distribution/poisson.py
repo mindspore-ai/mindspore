@@ -89,7 +89,7 @@ class Poisson(Distribution):
         >>> # `rate` must be passed in during function calls.
         >>> ans = p2.mean(rate_a)
         >>> print(ans.shape)
-        (1,)
+        ()
         >>> # Examples of `sample`.
         >>> # Args:
         >>> #     shape (tuple): the shape of the sample. Default: ()

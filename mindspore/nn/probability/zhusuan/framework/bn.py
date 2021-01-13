@@ -20,11 +20,13 @@ import mindspore.nn.probability.distribution as msd
 from mindspore.common import dtype as mstype
 from mindspore.ops import operations as P
 
+
 class BayesianNet(nn.Cell):
     """
     We currently support 3 types of variables: x = observation, z = latent, y = condition.
-    A Bayeisian Network models a generative process for certain varaiables: p(x,z|y) or p(z|x,y) or p(x|z,y)
+    A Bayeisian Network models a generative process for certain variables: p(x,z|y) or p(z|x,y) or p(x|z,y)
     """
+
     def __init__(self):
         super().__init__()
         self.normal_dist = msd.Normal(dtype=mstype.float32)
@@ -49,14 +51,16 @@ class BayesianNet(nn.Cell):
 
         if observation is None:
             if reparameterize:
-                epsilon = self.normal_dist('sample', shape, self.zeros(mean.shape), self.ones(std.shape))
+                epsilon = self.normal_dist('sample', shape, self.zeros(
+                    mean.shape), self.ones(std.shape))
                 sample = mean + std * epsilon
             else:
                 sample = self.normal_dist('sample', shape, mean, std)
         else:
             sample = observation
 
-        log_prob = self.reduce_sum(self.normal_dist('log_prob', sample, mean, std), 1)
+        log_prob = self.reduce_sum(self.normal_dist(
+            'log_prob', sample, mean, std), 1)
         return sample, log_prob
 
     def Bernoulli(self,
@@ -77,7 +81,8 @@ class BayesianNet(nn.Cell):
         else:
             sample = observation
 
-        log_prob = self.reduce_sum(self.bernoulli_dist('log_prob', sample, probs), 1)
+        log_prob = self.reduce_sum(
+            self.bernoulli_dist('log_prob', sample, probs), 1)
         return sample, log_prob
 
     def construct(self, *inputs, **kwargs):
