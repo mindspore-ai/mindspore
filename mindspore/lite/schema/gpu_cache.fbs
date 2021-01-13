@@ -23,8 +23,9 @@ table TuneParam {
     opPara: [int];
 }
 
-table KernelBin {
-    name: string;
+table ProgramBinary {
+    program_name: string;
+    build_option: string;
     tune: TuneParam;
     data: [ubyte];
 }
@@ -32,7 +33,7 @@ table KernelBin {
 table GpuCache {
     name: string;
     version: string;
-    allBins: [KernelBin];
+    allBins: [ProgramBinary];
 }
 
 root_type GpuCache;

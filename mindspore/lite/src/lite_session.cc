@@ -547,6 +547,9 @@ LiteSession::~LiteSession() {
   mindspore::lite::NPUPassManager::GetInstance()->Clear();
   mindspore::lite::NPUManager::GetInstance()->Reset();
 #endif
+#if SUPPORT_GPU && !SUPPORT_TRAIN
+  delete opencl_runtime_wrapper_;
+#endif
   delete (model_);
   is_running_.store(false);
 }
@@ -676,8 +679,13 @@ int LiteSession::Resize(const std::vector<mindspore::tensor::MSTensor *> &inputs
 int LiteSession::InitGPURuntime() {
 #if SUPPORT_GPU && !SUPPORT_TRAIN
   if (this->context_->IsGpuEnabled()) {
+    opencl_runtime_wrapper_ = new (std::nothrow) opencl::OpenCLRuntimeWrapper();
+    if (opencl_runtime_wrapper_ == nullptr) {
+      MS_LOG(ERROR) << "create OpenCLRuntimeWrapper failed";
+      return RET_ERROR;
+    }
     auto gpu_device_info = this->context_->GetGpuInfo();
-    auto opencl_runtime = ocl_runtime_wrap_.GetInstance();
+    auto opencl_runtime = opencl_runtime_wrapper_->GetInstance();
     opencl_runtime->SetFp16Enable(gpu_device_info.enable_float16_);
     if (opencl_runtime->Init() != RET_OK) {
       this->context_->device_list_ = {{DT_CPU, {gpu_device_info.enable_float16_, MID_CPU}}};

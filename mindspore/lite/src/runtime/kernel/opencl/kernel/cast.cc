@@ -94,11 +94,10 @@ int CastOpenCLKernel::Prepare() {
   std::string kernel_name = "Cast";
   GetKernelName(&kernel_name, param);
   kernel_name += "_NHWC4";
-  std::set<std::string> build_options;
   std::string source = cast_source;
   std::string program_name = "cast";
   ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name, build_options);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
   SetConstArgs();
   SetGlobalLocal();

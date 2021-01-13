@@ -20,25 +20,13 @@
 #include <memory>
 #include <string>
 #include <algorithm>
-
-// support opencl min version is 1.1
-#ifndef CL_TARGET_OPENCL_VERSION
-#define CL_TARGET_OPENCL_VERSION 210
-#endif
-#ifndef CL_HPP_TARGET_OPENCL_VERSION
-#define CL_HPP_TARGET_OPENCL_VERSION 210
-#endif
-#ifndef CL_HPP_MINIMUM_OPENCL_VERSION
-#define CL_HPP_MINIMUM_OPENCL_VERSION 110
-#endif
-
 #include "CL/cl2.hpp"
 
 #ifdef USE_OPENCL_WRAPPER
 
 namespace mindspore::lite::opencl {
 // This is a opencl function wrapper.
-bool LoadOpenCLLibrary(void *handle);
+bool LoadOpenCLLibrary(void **handle_ptr);
 bool UnLoadOpenCLLibrary(void *handle);
 
 // get platfrom id

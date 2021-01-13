@@ -37,11 +37,11 @@ using mindspore::kernel::CLErrorCode;
 
 namespace mindspore::lite::opencl {
 
-static std::map<std::string, std::string> g_opencl_program_map;
+static std::map<std::string, std::string> g_source_map;
 static std::mutex g_mtx;
 static std::mutex g_init_mtx;
 
-bool OpenCLRuntime::init_done_ = false;
+InitState OpenCLRuntime::init_state_ = UnInit;
 OpenCLRuntime *OpenCLRuntime::ocl_runtime_instance_ = nullptr;
 size_t OpenCLRuntime::instance_count_ = 0;
 
@@ -60,14 +60,13 @@ void OpenCLRuntime::DeleteInstance() {
   std::unique_lock<std::mutex> lck(g_mtx);
   if (instance_count_ == 0) {
     MS_LOG(ERROR) << "No OpenCLRuntime instance could delete!";
+    return;
   }
   instance_count_--;
   if (instance_count_ == 0) {
     ocl_runtime_instance_->Uninit();
   }
 }
-
-OpenCLRuntime::OpenCLRuntime() { default_build_opts_ = " -cl-mad-enable -cl-fast-relaxed-math -Werror"; }
 
 void printf_callback(const char *buffer, size_t length, size_t final, void *user_data) {
   fwrite(buffer, 1, length, stdout);
@@ -76,16 +75,19 @@ void printf_callback(const char *buffer, size_t length, size_t final, void *user
 // Init will get platforms info, get devices info, create opencl context.
 int OpenCLRuntime::Init() {
   std::unique_lock<std::mutex> lck(g_init_mtx);
-
-  if (init_done_) {
+  if (init_state_ == InitSuccess) {
     return RET_OK;
+  } else if (init_state_ == InitFailed) {
+    return RET_ERROR;
   }
+  init_state_ = InitFailed;
+
   MS_LOG(INFO) << "OpenCL version: CL_TARGET_OPENCL_VERSION " << CL_TARGET_OPENCL_VERSION;
   MS_LOG(INFO) << "CL_HPP_TARGET_OPENCL_VERSION " << CL_HPP_TARGET_OPENCL_VERSION;
   MS_LOG(INFO) << "CL_HPP_MINIMUM_OPENCL_VERSION " << CL_HPP_MINIMUM_OPENCL_VERSION;
 
 #ifdef USE_OPENCL_WRAPPER
-  if (lite::opencl::LoadOpenCLLibrary(handle_) == false) {
+  if (!lite::opencl::LoadOpenCLLibrary(&handle_)) {
     MS_LOG(ERROR) << "Load OpenCL symbols failed!";
     return RET_ERROR;
   }
@@ -93,35 +95,35 @@ int OpenCLRuntime::Init() {
 
   std::vector<cl::Platform> platforms;
   cl_int ret = cl::Platform::get(&platforms);
-  if (platforms.size() == 0) {
+  if (platforms.empty()) {
     MS_LOG(ERROR) << "OpenCL Platform not found!" << CLErrorCode(ret);
     return RET_ERROR;
   }
 
   // search GPU
   std::vector<cl::Device> devices;
-  for (auto it = platforms.begin(); it != platforms.end(); ++it) {
+  for (auto &platform : platforms) {
     std::string platform_name;
-    ret = it->getInfo(CL_PLATFORM_NAME, &platform_name);
+    ret = platform.getInfo(CL_PLATFORM_NAME, &platform_name);
     if (ret != CL_SUCCESS) {
       MS_LOG(WARNING) << CLErrorCode(ret);
     }
-    ret = it->getDevices(CL_DEVICE_TYPE_GPU, &devices);
+    ret = platform.getDevices(CL_DEVICE_TYPE_GPU, &devices);
     if (ret != CL_SUCCESS) {
       MS_LOG(WARNING) << CLErrorCode(ret);
     }
     MS_LOG(INFO) << "Platform (" << platform_name << ") has " << devices.size() << " GPUs";
 
-    if (devices.size() > 0) {
+    if (!devices.empty()) {
       std::string device_name = devices[0].getInfo<CL_DEVICE_NAME>();
       MS_LOG(INFO) << "Find GPU: " << device_name.c_str();
-      cl::Platform::setDefault(*it);
+      cl::Platform::setDefault(platform);
       break;
     }
   }
 
   // not found, return error code.
-  if (devices.size() == 0) {
+  if (devices.empty()) {
     MS_LOG(ERROR) << "OpenCL Device not found!";
     return RET_ERROR;
   }
@@ -264,23 +266,18 @@ int OpenCLRuntime::Init() {
   std::string flag = "";
   binary_program_ = CreateProgramFromIL(g_program_binary, flag);
 #endif
-  if (enable_cache_) {
-    InitGpuCache();
-  }
-  init_done_ = true;
+  LoadCache();
+  init_state_ = InitSuccess;
   MS_LOG(INFO) << "OpenCLRuntime init done!";
-
   return RET_OK;
 }
 
 int OpenCLRuntime::Uninit() {
-  if (!init_done_) {
+  std::unique_lock<std::mutex> lck(g_init_mtx);
+  if (init_state_ != InitSuccess) {
     return RET_OK;
   }
-  if (enable_cache_ && !binary_map_.empty()) {
-    StoreCache();
-  }
-  binary_map_.clear();
+  StoreCache();
   program_map_.clear();
   delete allocator_;
   delete default_command_queue_;
@@ -296,7 +293,7 @@ int OpenCLRuntime::Uninit() {
   lite::opencl::UnLoadOpenCLLibrary(handle_);
   handle_ = nullptr;
 #endif
-  init_done_ = false;
+  init_state_ = UnInit;
   return RET_OK;
 }
 
@@ -355,54 +352,39 @@ bool OpenCLRuntime::SetFp16Enable(bool enable) {
 }
 
 int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_name, const std::string &kernel_name,
-                               const std::set<std::string> &build_options) {
-  std::string build_options_str;
-  // set default macro
+                               const std::vector<std::string> &build_options_ext) {
+  std::string build_option = default_build_option_;
   if (fp16_enable_) {
-    // fp16 enable, kernel will use half and read_imageh and write_imageh.
-    build_options_str =
-      "-DFLT=half -DFLT4=half4 -DFLT16=half16 -DAS_FLT4=as_half4 -DAS_UINT4=as_ushort4 -DUINT4=ushort4 "
-      "-DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh -DTO_FLT=convert_half  -DTO_FLT4=convert_half4 ";
+    build_option +=
+      " -DFLT=half -DFLT4=half4 -DFLT16=half16 -DAS_FLT4=as_half4 -DAS_UINT4=as_ushort4 -DUINT4=ushort4 "
+      "-DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh -DTO_FLT=convert_half -DTO_FLT4=convert_half4";
   } else {
-    // fp16 not enable, kernel will use float and read_imagef and write_imagef.
-    build_options_str =
-      "-DFLT=float -DFLT4=float4 -DFLT16=float16 -DAS_FLT4=as_float4  -DAS_UINT4=as_uint4 -DUINT4=uint4 "
-      "-DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef -DTO_FLT=convert_float  -DTO_FLT4=convert_float4 ";
+    build_option +=
+      " -DFLT=float -DFLT4=float4 -DFLT16=float16 -DAS_FLT4=as_float4  -DAS_UINT4=as_uint4 -DUINT4=uint4 "
+      "-DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef -DTO_FLT=convert_float -DTO_FLT4=convert_float4";
   }
+  build_option =
+    std::accumulate(build_options_ext.begin(), build_options_ext.end(), build_option,
+                    [](const std::string &options, const std::string &option) { return options + " " + option; });
 
-  auto build_options_ext = std::accumulate(build_options.begin(), build_options.end(), std::string(""),
-                                           [](const std::string &options, const std::string &option) -> std::string {
-                                             auto res = options + " " + option;
-                                             return res;
-                                           });
-  build_options_str += default_build_opts_;
-  // program identifier = program_name + build_options
-  std::string build_program_key = program_name + build_options_str + build_options_ext;
-
-  auto build_program_it = program_map_.find(build_program_key);
   cl::Program program;
-  // if search program identifier exist, then use it.
-  if (build_program_it != program_map_.end()) {
-    program = build_program_it->second;
+  auto program_key = std::make_pair(program_name, build_option);
+  auto iter = program_map_.find(program_key);
+  if (iter != program_map_.end()) {
+    program = iter->second;
   } else {
-    // load program and build program
+    flush_cache_ = true;
     auto status = this->LoadProgram(program_name, &program);
     if (!status) {
       MS_LOG(ERROR) << "load program (" << program_name << ") failed!";
       return RET_ERROR;
     }
-    status = this->BuildProgram(build_options_str, program);
+    status = this->BuildProgram(build_option, program);
     if (!status) {
       MS_LOG(ERROR) << program_name << " build failed!";
       return RET_ERROR;
     }
-    if (enable_cache_) {
-      need_write_ = true;
-      auto bin = GetProgramBinaries(program);
-      MS_ASSERT(bin.size() >= 1);
-      binary_map_.emplace(build_program_key, bin[0]);
-    }
-    program_map_.emplace(build_program_key, program);
+    program_map_.emplace(program_key, program);
   }
 
   cl_int ret;
@@ -446,6 +428,7 @@ int OpenCLRuntime::RunKernel(const cl::Kernel &kernel, const cl::NDRange &global
   }
   return RET_OK;
 }
+
 // get gpu divce type
 GpuInfo OpenCLRuntime::ParseGpuInfo(std::string device_name, std::string device_version) {
   GpuInfo info;
@@ -472,17 +455,17 @@ GpuInfo OpenCLRuntime::ParseGpuInfo(std::string device_name, std::string device_
 }
 
 bool OpenCLRuntime::LoadSource(const std::string &program_name, const std::string &source) {
-  auto it_source = g_opencl_program_map.find(program_name);
-  if (it_source == g_opencl_program_map.end()) {
-    g_opencl_program_map.emplace(program_name, source);
+  auto it_source = g_source_map.find(program_name);
+  if (it_source == g_source_map.end()) {
+    g_source_map.emplace(program_name, source);
   }
   return true;
 }
 
 // load program with program name.
 bool OpenCLRuntime::LoadProgram(const std::string &program_name, cl::Program *program) {
-  auto it_source = g_opencl_program_map.find(program_name);
-  if (it_source != g_opencl_program_map.end()) {
+  auto it_source = g_source_map.find(program_name);
+  if (it_source != g_source_map.end()) {
     cl::Program::Sources sources;
     sources.push_back(it_source->second);
     *program = cl::Program(*context_, sources);
@@ -494,8 +477,8 @@ bool OpenCLRuntime::LoadProgram(const std::string &program_name, cl::Program *pr
 }
 
 // build program with build options
-bool OpenCLRuntime::BuildProgram(const std::string &build_options, const cl::Program &program) {
-  cl_int ret = program.build({*device_}, build_options.c_str());
+bool OpenCLRuntime::BuildProgram(const std::string &build_option, const cl::Program &program) {
+  cl_int ret = program.build({*device_}, build_option.c_str());
   if (ret != CL_SUCCESS) {
     if (program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(*device_) == CL_BUILD_ERROR) {
       std::string build_log = program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(*device_);
@@ -658,92 +641,103 @@ cl::Program OpenCLRuntime::CreateProgramFromIL(const std::vector<char> &binary, 
 }
 
 // build program with binary
-cl::Program OpenCLRuntime::CreateProgramFromBinary(const std::vector<unsigned char> &binary, const std::string &flag) {
+cl::Program OpenCLRuntime::CreateProgramFromBinary(const std::vector<unsigned char> &binary,
+                                                   const std::string &build_option) {
   cl::Program program = cl::Program(*context_, {*device_}, {binary});
-  bool status = BuildProgram(default_build_opts_, program);
+  bool status = BuildProgram(build_option, program);
   if (!status) {
     MS_LOG(ERROR) << "Build program with binary failed!";
   }
   return program;
 }
 
-std::vector<std::vector<unsigned char>> OpenCLRuntime::GetProgramBinaries(const cl::Program &program) {
+std::vector<unsigned char> OpenCLRuntime::GetProgramBinary(const cl::Program &program) {
   cl_int ret = CL_SUCCESS;
-  auto binary = program.getInfo<CL_PROGRAM_BINARIES>(&ret);
+  auto binarys = program.getInfo<CL_PROGRAM_BINARIES>(&ret);
   if (ret != CL_SUCCESS) {
     MS_LOG(ERROR) << "Get program binary failed: " << CLErrorCode(ret);
   }
-  return binary;
+  if (binarys.empty()) {
+    MS_LOG(ERROR) << "binarys is empty";
+    return {};
+  }
+  return binarys.front();
 }
-void OpenCLRuntime::InitGpuCache() {
+
+void OpenCLRuntime::LoadCache() {
+  if (!enable_cache_) {
+    return;
+  }
   size_t len;
-  char *buf = lite::ReadFile(cache_path_.c_str(), &len);
-  if (LoadCache(buf) != RET_OK) {
-    MS_LOG(ERROR) << "Load opencl cache fail";
-  }
-  delete buf;
-  MS_LOG(INFO) << "Init opencl cache success";
-}
-int OpenCLRuntime::LoadCache(const void *buf) {
+  std::unique_ptr<char[]> buf(lite::ReadFile(cache_path_.c_str(), &len));
   if (buf == nullptr) {
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Load opencl cache fail: buf == nullptr";
+    return;
   }
-  auto gpu_cache = schema::GetGpuCache(buf);
+  auto gpu_cache = schema::GetGpuCache(buf.get());
   if (gpu_cache == nullptr) {
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Load opencl cache fail: gpu_cache == nullptr";
+    return;
   }
   auto *bins = gpu_cache->allBins();
   if (bins == nullptr) {
-    return RET_ERROR;
+    MS_LOG(ERROR) << "Load opencl cache fail: bins == nullptr";
+    return;
   }
-  auto n = bins->size();
-  for (auto i = 0; i < n; ++i) {
-    auto *kernel_bin = bins->template GetAs<schema::KernelBin>(i);
-    if (kernel_bin == nullptr) {
+  for (auto i = 0; i < bins->size(); ++i) {
+    auto *bin = bins->template GetAs<schema::ProgramBinary>(i);
+    if (bin == nullptr) {
       MS_LOG(ERROR) << "kernel_bin[" << i << "] null";
-      return RET_ERROR;
+      return;
     }
-    auto *pdata = kernel_bin->data();
+    auto *pdata = bin->data();
     MS_ASSERT(pdata);
     if (pdata->size() == 0) {
       continue;
     }
-    std::vector<unsigned char> bin(pdata->begin(), pdata->end());
-    auto program = CreateProgramFromBinary(bin, kernel_bin->name()->str());
-    program_map_.emplace(kernel_bin->name()->str(), program);
-    binary_map_.emplace(kernel_bin->name()->str(), bin);
-    MS_LOG(INFO) << "LoadCache " << kernel_bin->name()->str() << " success, size=" << pdata->size();
+    std::vector<unsigned char> binary(pdata->begin(), pdata->end());
+    auto program = CreateProgramFromBinary(binary, bin->build_option()->str());
+    program_map_.emplace(std::make_pair(bin->program_name()->str(), bin->build_option()->str()), program);
+    MS_LOG(INFO) << "LoadCache " << bin->program_name() << " success, size=" << binary.size();
   }
-  return RET_OK;
+  MS_LOG(INFO) << "Init opencl cache success";
 }
-void OpenCLRuntime::StoreCache() {
-  if (need_write_) {
-    auto fbb_ = new (std::nothrow) flatbuffers::FlatBufferBuilder;
-    if (fbb_ == nullptr) {
-      MS_LOG(ERROR) << "new opencl FlatBufferBuilder fail";
-      return;
-    }
-    std::vector<flatbuffers::Offset<schema::KernelBin>> vec_kernel_bin;
-    for (auto iv : binary_map_) {
-      auto name = fbb_->CreateString(iv.first);
-      auto data = fbb_->CreateVector<uint8_t>(iv.second);
-      std::vector<int32_t> shape;
-      auto tune = schema::CreateTuneParam(*fbb_, fbb_->CreateVector<int32_t>(shape), fbb_->CreateVector<int32_t>(shape),
-                                          fbb_->CreateVector<int32_t>(shape), fbb_->CreateVector<int32_t>(shape));
-      auto kbin = schema::CreateKernelBin(*fbb_, name, tune, data);
-      vec_kernel_bin.emplace_back(kbin);
-      MS_LOG(INFO) << "StoreCache " << iv.first << " success, size=" << iv.second.size();
-    }
 
-    auto data = fbb_->CreateVector<flatbuffers::Offset<schema::KernelBin>>(vec_kernel_bin);
-    auto name = fbb_->CreateString("OpenCLCache");
-    auto version = fbb_->CreateString(version_);
-    auto gpu_cache = schema::CreateGpuCache(*fbb_, name, version, data);
-    fbb_->Finish(gpu_cache);
-    uint8_t *buf = fbb_->GetBufferPointer();
-    lite::WriteToBin(cache_path_, reinterpret_cast<void *>(buf), fbb_->GetSize());
-    MS_LOG(INFO) << "store opencl cache ok, size=" << fbb_->GetSize();
-    delete fbb_;
+void OpenCLRuntime::StoreCache() {
+  if (!enable_cache_) {
+    return;
   }
+  if (!flush_cache_) {
+    return;
+  }
+  auto fbb = std::make_unique<flatbuffers::FlatBufferBuilder>();
+  if (fbb == nullptr) {
+    MS_LOG(ERROR) << "new opencl FlatBufferBuilder fail";
+    return;
+  }
+  std::vector<flatbuffers::Offset<schema::ProgramBinary>> program_binarys;
+  for (const auto &kv : program_map_) {
+    auto program_name = kv.first.first;
+    auto build_option = kv.first.second;
+    cl::Program program = kv.second;
+    auto binary = this->GetProgramBinary(program);
+    std::vector<int32_t> shape;
+    auto tune = schema::CreateTuneParam(*fbb, fbb->CreateVector<int32_t>(shape), fbb->CreateVector<int32_t>(shape),
+                                        fbb->CreateVector<int32_t>(shape), fbb->CreateVector<int32_t>(shape));
+    auto program_binary = schema::CreateProgramBinary(
+      *fbb, fbb->CreateString(program_name), fbb->CreateString(build_option), tune, fbb->CreateVector<uint8_t>(binary));
+    program_binarys.emplace_back(program_binary);
+    MS_LOG(INFO) << "StoreCache " << program_name << " success, size=" << binary.size();
+  }
+
+  auto data = fbb->CreateVector<flatbuffers::Offset<schema::ProgramBinary>>(program_binarys);
+  auto name = fbb->CreateString("OpenCLCache");
+  auto version = fbb->CreateString(cache_version_);
+  auto gpu_cache = schema::CreateGpuCache(*fbb, name, version, data);
+  fbb->Finish(gpu_cache);
+  uint8_t *buf = fbb->GetBufferPointer();
+  lite::WriteToBin(cache_path_, reinterpret_cast<void *>(buf), fbb->GetSize());
+  MS_LOG(INFO) << "store opencl cache ok, size=" << fbb->GetSize();
 }
+
 }  // namespace mindspore::lite::opencl

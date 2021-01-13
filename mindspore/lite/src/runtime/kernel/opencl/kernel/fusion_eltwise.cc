@@ -145,7 +145,6 @@ int FusionEltwiseOpenCLKernel::Prepare() {
   static std::set<std::string> code_map;
   std::string source = Codegen();
   code_map.insert(source);
-  //  std::cout << name() << "\n" << source;
 
   std::string program_name = "FusionEltwise" + std::to_string(code_map.size());
   std::string kernel_name = "FusionEltwise";
@@ -182,7 +181,6 @@ int FusionEltwiseOpenCLKernel::InitWeights() {
       if (IsScalar(tensor->shape())) {
         float value = (tensor->data_type() == kNumberTypeFloat16) ? *(reinterpret_cast<float16_t *>(tensor->data_c()))
                                                                   : *(reinterpret_cast<float32_t *>(tensor->data_c()));
-        //        std::cout << "value=" << value << std::endl;
         scalar_weights_.push_back(value);
       } else {
         auto tensor_info = GpuTensorInfo(tensor);
