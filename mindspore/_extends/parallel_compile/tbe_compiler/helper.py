@@ -81,6 +81,7 @@ def _check_supported(kernel_info):
     try:
         op_name = kernel_info['op_info']['name']
         is_dynamic_shape = kernel_info['op_info']['is_dynamic_shape']
+        te_set_version(kernel_info["op_info"]["socVersion"])
         impl_path = build_in_impl_path
         custom_flag = False
         if 'impl_path' in kernel_info and kernel_info['impl_path'] is not None:
