@@ -1,51 +1,66 @@
-## Demo of Image Classification
+# Demo of Image Classification
 
 The following describes how to use the MindSpore Lite C++ APIs (Android JNIs) and MindSpore Lite image classification models to perform on-device inference, classify the content captured by a device camera, and display the most possible classification result on the application's image preview screen.
 
-### Running Dependencies
+## Running Dependencies
 
 - Android Studio 3.2 or later (Android 4.0 or later is recommended.)
-- Native development kit (NDK) 21.3
-- CMake 3.10.2 [CMake](https://cmake.org/download)
-- Android software development kit (SDK) 26 or later
-- JDK 1.8 or later
 
-### Building and Running
+## Building and Running
 
-1. Load the sample source code to Android Studio and install the corresponding SDK. (After the SDK version is specified, Android Studio automatically installs the SDK.)
+1. Load the sample source code to Android Studio.
 
     ![start_home](images/home.png)
 
-    Start Android Studio, click `File > Settings > System Settings > Android SDK`, and select the corresponding SDK. As shown in the following figure, select an SDK and click `OK`. Android Studio automatically installs the SDK.
+    Start Android Studio, click `File > Settings > System Settings > Android SDK`, and select the corresponding `SDK Tools`. As shown in the following figure, select an SDK and click `OK`. Android Studio automatically installs the SDK.
 
-    ![start_sdk](images/sdk_management.png)
+    ![start_sdk](images/sdk_management.jpg)
 
-    If you have any Android Studio configuration problem when trying this demo, please refer to item 4 to resolve it.
+    > Android SDK Tools is the default installation. You can see this by unchecking the `Hide Obsolete Packages`box.
+    >
+    > If you have any Android Studio configuration problem when trying this demo, please refer to item 4 to resolve it.
 
-2. Connect to an Android device and runs the image classification application.
+2. Connect to an Android device and runs this application.
 
     Connect to the Android device through a USB cable for debugging. Click `Run 'app'` to run the sample project on your device.
 
     ![run_app](images/run_app.PNG)
 
-    For details about how to connect the Android Studio to a device for debugging, see <https://developer.android.com/studio/run/device?hl=zh-cn>.
-
-    The mobile phone needs to be turn on "USB debugging mode" before Android Studio can recognize the mobile phone. Huawei mobile phones generally turn on "USB debugging model" in Settings > system and update > developer Options > USB debugging.
+    > Android Studio will automatically download MindSpore Lite, model files and other dependencies during the compilation process. Please be patient during this process.
+    >
+    > For details about how to connect the Android Studio to a device for debugging, see <https://developer.android.com/studio/run/device?hl=zh-cn>.
+    >
+    > The mobile phone needs to be turn on "USB debugging mode" before Android Studio can recognize the mobile phone. Huawei mobile phones generally turn on "USB debugging model" in Settings -> system and update -> developer Options -> USB debugging.
 
 3. Continue the installation on the Android device. After the installation is complete, you can view the content captured by a camera and the inference result.
 
     ![result](images/app_result.jpg)
 
-4. The solutions of Android Studio configuration problems:
+4. The solutions of configuration problems:
 
-    |      | Warning                                                         | Solution                                                     |
-    | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-    | 1    | Gradle sync failed: NDK not configured.                      | Specify the installed ndk directory in local.properties：ndk.dir={ndk的安装目录} |
-    | 2    | Requested NDK version did not match the version requested by ndk.dir | Manually download corresponding [NDK Version](https://developer.android.com/ndk/downloads)，and specify the sdk directory in Project Structure - Android NDK location.（You can refer to the figure below.） |
-    | 3    | This version of Android Studio cannot open this project, please retry with Android Studio or newer. | Update Android Studio Version in Tools - help - Checkout for Updates.                 |
-    | 4    | SSL peer shut down incorrectly                               | Run this demo again.                                                     |
+    4.1 Problems of NDK, CMake, JDK Tools:
+
+    If the tools installed in Android Studio are not recognized, you can re-download and install them from the corresponding official website, and configure the path.
+
+    - NDK >= 21.3 [NDK](https://developer.android.google.cn/ndk/downloads?hl=zh-cn)
+    - CMake >= 3.10.2   [CMake](https://cmake.org/download)
+    - Android SDK >= 26 [SDK](https://developer.microsoft.com/zh-cn/windows/downloads/windows-10-sdk/)
+    - JDK >= 1.8 [JDK](https://www.oracle.com/cn/java/technologies/javase/javase-jdk8-downloads.html)
 
     ![project_structure](images/project_structure.png)
+
+    4.2 NDK version does not match:
+
+    Open `Android SDK`, click `Show Package Details`, and select the appropriate NDK version according to the error message.
+    ![NDK_version](images/NDK_version.jpg)
+
+    4.3 Problem of Android Studio version:
+
+    Update the Android Studio version in `Toolbar - Help - Checkout for Updates`.
+
+    4.4 Gradle dependencies installed too slowly:
+
+    As shown in the picture, open the Demo root directory `build. Gradle` file, then add huawei mirror source address: `maven {url 'https://developer.huawei.com/repo/'}`, modify the classpath to 4.0.0 and click ` sync ` . Once the download is complete, restore the classpath version and synchronize it again.
 
 ## Detailed Description of the Sample Program  
 

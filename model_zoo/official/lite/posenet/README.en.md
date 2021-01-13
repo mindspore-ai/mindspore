@@ -5,51 +5,64 @@ This sample application demonstrates how to use the MindSpore Lite API and skele
 ## Running Dependencies
 
 - Android Studio 3.2 or later (Android 4.0 or later is recommended.)
-- NDK 21.3
-- CMake 3.10
-- Android software development kit (SDK) 26 or later
 
 ## Building and Running
 
-1. Load the sample source code to Android Studio and install the corresponding SDK. (After the SDK version is specified, Android Studio automatically installs the SDK.)
+1. Load the sample source code to Android Studio.
 
     ![start_home](images/home.png)
 
-    Start Android Studio, click `File > Settings > System Settings > Android SDK`, and select the corresponding SDK. As shown in the following figure, select an SDK and click `OK`. Android Studio automatically installs the SDK.
+    Start Android Studio, click `File > Settings > System Settings > Android SDK`, and select the corresponding `SDK Tools`. As shown in the following figure, select an SDK and click `OK`. Android Studio automatically installs the SDK.
 
-    ![start_sdk](images/sdk_management.png)
+    ![start_sdk](images/sdk_management.jpg)
 
-    If an Android Studio configuration error occurs, solve it by referring to the following solution table in item 4.
+    > Android SDK Tools is the default installation. You can see this by unchecking the `Hide Obsolete Packages`box.
+    >
+    > If you have any Android Studio configuration problem when trying this demo, please refer to item 4 to resolve it.
 
-2. Connect to an Android device and run the skeleton detection sample application.
+2. Connect to an Android device and runs this application.
 
     Connect to the Android device through a USB cable for debugging. Click `Run 'app'` to run the sample project on your device.
-    > During the building, Android Studio automatically downloads dependencies related to MindSpore Lite and model files. Please wait.
 
     ![run_app](images/run_app.PNG)
 
-    For details about how to connect the Android Studio to a device for debugging, see <https://developer.android.com/studio/run/device>.
+    > Android Studio will automatically download MindSpore Lite, model files and other dependencies during the compilation process. Please be patient during this process.
+    >
+    > For details about how to connect the Android Studio to a device for debugging, see <https://developer.android.com/studio/run/device?hl=zh-cn>.
+    >
+    > The mobile phone needs to be turn on "USB debugging mode" before Android Studio can recognize the mobile phone. Huawei mobile phones generally turn on "USB debugging model" in Settings -> system and update -> developer Options -> USB debugging.
 
 3. Continue the installation on the Android device. After the installation is complete, you can view the content captured by a camera and the inference result.
 
-    ![install](images/install.jpg)
+    ![result](images/app_result.jpg)
 
-    The following figure shows the output of the skeletal detection model.
+4. The solutions of configuration problems:
 
-    The blue points are used to detect facial features and limb bone movement trends. The confidence score of this inference is 0.98/1, and the inference delay is 66.77 ms.
+    4.1 Problems of NDK, CMake, JDK Tools:
 
-    ![sult](images/posenet_detection.png)
+    If the tools installed in Android Studio are not recognized, you can re-download and install them from the corresponding official website, and configure the path.
 
-4. The following table lists solutions to Android Studio configuration errors.
-
-    | | Error | Solution |
-    | ---- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-    | 1    | Gradle sync failed: NDK not configured.                      | Specify the NDK installation directory in the local.properties file: ndk.dir={NDK installation directory} |
-    | 2    | Requested NDK version did not match the version requested by ndk.dir | Manually download the corresponding [NDK version](https://developer.android.com/ndk/downloads) and specify the SDK location in the `Android NDK location` field (see the following figure). |
-    | 3    | This version of Android Studio cannot open this project, please retry with Android Studio or newer. | Choose `Help` > `Checkout for Updates` on the toolbar to update the version. |
-    | 4    | SSL peer shut down incorrectly                               | Rebuild. |
+    - NDK >= 21.3 [NDK](https://developer.android.google.cn/ndk/downloads?hl=zh-cn)
+    - CMake >= 3.10.2   [CMake](https://cmake.org/download)
+    - Android SDK >= 26 [SDK](https://developer.microsoft.com/zh-cn/windows/downloads/windows-10-sdk/)
+    - JDK >= 1.8 [JDK](https://www.oracle.com/cn/java/technologies/javase/javase-jdk8-downloads.html)
 
     ![project_structure](images/project_structure.png)
+
+    4.2 NDK version does not match:
+
+    Open `Android SDK`, click `Show Package Details`, and select the appropriate NDK version according to the error message.
+    ![NDK_version](images/NDK_version.jpg)
+
+    4.3 Problem of Android Studio version:
+
+    Update the Android Studio version in `Toolbar - Help - Checkout for Updates`.
+
+    4.4 Gradle dependencies installed too slowly:
+
+    As shown in the picture, open the Demo root directory `build. Gradle` file, then add huawei mirror source address: `maven {url 'https://developer.huawei.com/repo/'}`, modify the classpath to 4.0.0 and click ` sync ` . Once the download is complete, restore the classpath version and synchronize it again.
+
+    ![maven](images/maven.jpg)
 
 ## Detailed Description of the Sample Application  
 
