@@ -141,13 +141,14 @@ class ExpandDims(PrimitiveWithInfer):
 
     Inputs:
         - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+          The data type should be one of the following types: int32, float16, float32.
         - **axis** (int) - Specifies the dimension index at which to expand
           the shape of `input_x`. The value of axis must be in the range
           `[-input_x.ndim-1, input_x.ndim]`. Only constant value is allowed.
 
     Outputs:
         Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
-        value of `axis` is 0.
+        value of `axis` is 0. It has the same type as `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4425,6 +4426,9 @@ class EditDistance(PrimitiveWithInfer):
 
     Outputs:
         Tensor, a dense tensor with rank `R-1` and float32 data type.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import numpy as np

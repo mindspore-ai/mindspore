@@ -1751,6 +1751,10 @@ class Erf(PrimitiveWithInfer):
     r"""
     Computes the Gauss error function of `input_x` element-wise.
 
+    .. math::
+
+        \text{erf}(x) = \frac{2}{\sqrt{\pi}}$\int$_{0}^{x}\exp(-t**2)dt
+
     Inputs:
         - **input_x** (Tensor) - The input tensor. The data type must be float16 or float32.
 
@@ -2370,13 +2374,14 @@ class Acosh(PrimitiveWithInfer):
         out_i = cosh^{-1}(input_i)
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type should be one of
+          the following types: float16, float32.
 
     Outputs:
-        Tensor, has the same shape as `input_x`.
+        Tensor, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> acosh = ops.Acosh()
@@ -2440,13 +2445,14 @@ class Asinh(PrimitiveWithInfer):
         out_i = sinh^{-1}(input_i)
 
     Inputs:
-        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`.
+        - **input_x** (Tensor) - The shape of tensor is :math:`(x_1, x_2, ..., x_R)`. The data type should be one of
+          the following types: float16, float32.
 
     Outputs:
-        Tensor, has the same shape as `input_x`.
+        Tensor, has the same shape and type as `input_x`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> asinh = ops.Asinh()
@@ -2530,6 +2536,7 @@ class Equal(_LogicBinaryOp):
           a tensor whose data type is number.
         - **input_y** (Union[Tensor, Number]) - The second input is a number
           when the first input is a tensor or a tensor whose data type is number.
+          The data type is the same as the first input.
 
     Outputs:
         Tensor, the shape is the same as the one after broadcasting,and the data type is bool.
@@ -3578,23 +3585,25 @@ class Atan(PrimitiveWithInfer):
     """
     Computes the trigonometric inverse tangent of the input element-wise.
 
+    .. math::
+
+        out_i = tan^{-1}(input_i)
+
     Inputs:
-        - **input_x** (Tensor): The input tensor.
+        - **input_x** (Tensor): The input tensor. The data type should be one of the following types: float16, float32.
 
     Outputs:
         A Tensor, has the same type as the input.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
-        >>> input_x = Tensor(np.array([1.047, 0.785]), mindspore.float32)
-        >>> tan = ops.Tan()
-        >>> output_y = tan(input_x)
+        >>> input_x = Tensor(np.array([1.0, 0.0]), mindspore.float32)
         >>> atan = ops.Atan()
-        >>> output = atan(output_y)
+        >>> output = atan(input_x)
         >>> print(output)
-        [1.047     0.7850001]
+        [0.7853982 0.       ]
     """
 
     @prim_attr_register
