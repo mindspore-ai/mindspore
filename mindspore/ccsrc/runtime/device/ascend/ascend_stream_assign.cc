@@ -31,6 +31,39 @@
 namespace mindspore {
 namespace device {
 namespace ascend {
+namespace {
+CNodePtr GetHcomAndOverflowMarker(const NotNull<KernelGraphPtr> &graph_ptr, vector<CNodePtr> *hcom_nodes) {
+  auto cnode_ptr_list = graph_ptr->execution_order();
+  CNodePtr overflow_marker = nullptr;
+  std::string kNPUGetFloatStatusOpName = "NPUGetFloatStatus";
+  for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
+    auto cur_cnode_ptr = cnode_ptr_list[i];
+    MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
+    if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kNPUGetFloatStatusOpName) {
+      overflow_marker = cur_cnode_ptr;
+    } else if (AnfAlgo::GetKernelType(cur_cnode_ptr) == HCCL_KERNEL) {
+      hcom_nodes->emplace_back(cur_cnode_ptr);
+    } else if (i > 0 && AnfAlgo::GetCNodeName(cnode_ptr_list[i - 1]) == kAtomicAddrCleanOpName) {
+      auto graph_id = AnfAlgo::GetGraphId(cur_cnode_ptr.get());
+      AnfAlgo::SetGraphId(graph_id, cnode_ptr_list[i - 1].get());
+    }
+  }
+  return overflow_marker;
+}
+
+bool HasRefNodes(const vector<CNodePtr> &moved_backward_cnodes) {
+  for (auto &cnode : moved_backward_cnodes) {
+    std::string op_name = AnfAlgo::GetCNodeName(cnode);
+    auto op_info = mindspore::kernel::OpLib::FindOp(op_name, kernel::kTBE);
+    if (op_info != nullptr && op_info->is_ref()) {
+      MS_LOG(INFO) << "Find RefNode: " << op_name << ", full name: " << cnode->fullname_with_scope();
+      return true;
+    }
+  }
+  return false;
+}
+}  // namespace
+
 const uint32_t kHcomMaxTask = 5;
 const uint32_t kCommonMaxTask = 350;
 
@@ -134,22 +167,7 @@ void AscendStreamAssign::CheckScenario(const NotNull<KernelGraphPtr> &graph_ptr,
                                        vector<CNodePtr> *last_grad_and_status) {
   auto cnode_ptr_list = graph_ptr->execution_order();
   vector<CNodePtr> hcom_nodes;
-  CNodePtr cur_cnode_ptr = nullptr;
-  CNodePtr overflow_marker = nullptr;
-  std::string kNPUGetFloatStatusOpName = "NPUGetFloatStatus";
-  for (size_t i = 0; i < cnode_ptr_list.size(); ++i) {
-    cur_cnode_ptr = cnode_ptr_list[i];
-    MS_EXCEPTION_IF_NULL(cur_cnode_ptr);
-    if (AnfAlgo::GetCNodeName(cur_cnode_ptr) == kNPUGetFloatStatusOpName) {
-      overflow_marker = cur_cnode_ptr;
-    } else if (IsHcom(cur_cnode_ptr)) {
-      hcom_nodes.emplace_back(cur_cnode_ptr);
-    } else if (i > 0 && AnfAlgo::GetCNodeName(cnode_ptr_list[i - 1]) == kAtomicAddrCleanOpName) {
-      auto graph_id = AnfAlgo::GetGraphId(cur_cnode_ptr.get());
-      AnfAlgo::SetGraphId(graph_id, cnode_ptr_list[i - 1].get());
-    }
-  }
-
+  auto overflow_marker = GetHcomAndOverflowMarker(graph_ptr, &hcom_nodes);
   if (hcom_nodes.size() < 2 || overflow_marker == nullptr) {
     MS_LOG(INFO) << "Current model isn't in distribute or mix-precision mode, no optimization needed";
     last_grad_and_status->clear();
@@ -210,8 +228,6 @@ CNodePtr AscendStreamAssign::GetCNodesNeededMoved(vector<CNodePtr> *moved_backwa
   auto last_grad_pos = find(cnode_ptr_list.begin(), cnode_ptr_list.end(), last_grad_ptr);
   auto float_status_pos = find(cnode_ptr_list.begin(), cnode_ptr_list.end(), float_status_ptr);
   if (last_grad_pos == cnode_ptr_list.end() || float_status_pos == cnode_ptr_list.end()) {
-    moved_backward_cnodes->clear();
-    moved_forward_cnodes->clear();
     return nullptr;
   }
   auto graph_id = AnfAlgo::GetGraphId(last_grad_ptr.get());
@@ -244,36 +260,30 @@ CNodePtr AscendStreamAssign::GetCNodesNeededMoved(vector<CNodePtr> *moved_backwa
     }
     it++;
   }
-  // check ref nodes
-  for (auto &cnode : *moved_backward_cnodes) {
-    std::string op_name = AnfAlgo::GetCNodeName(cnode);
-    auto op_info = mindspore::kernel::OpLib::FindOp(op_name, kernel::kTBE);
-    if (op_info != nullptr && op_info->is_ref()) {
-      MS_LOG(INFO) << "Find RefNode: " << op_name << ", full name: " << cnode->fullname_with_scope();
-      moved_backward_cnodes->clear();
-      moved_forward_cnodes->clear();
-      return nullptr;
-    }
-  }
 
   size_t total_moved_size = it - last_grad_pos - 1;
-  if (moved_backward_cnodes->size() + moved_forward_cnodes->size() != total_moved_size) {
-    MS_LOG(DEBUG) << "Total number inconsistent, total cnode number: " << total_moved_size
-                  << ", while move forward size: " << moved_forward_cnodes->size()
-                  << ", moved backward size: " << moved_backward_cnodes->size();
-    moved_forward_cnodes->clear();
-    moved_backward_cnodes->clear();
+  if (HasRefNodes(*moved_backward_cnodes) ||
+      moved_backward_cnodes->size() + moved_forward_cnodes->size() != total_moved_size) {
+    MS_LOG(INFO) << "Ref node was found or invalid number of moved nodes, give up optimization";
     return nullptr;
   }
+  return GetTargetOutputNode(*moved_backward_cnodes, *it, graph_ptr);
+}
 
+CNodePtr AscendStreamAssign::GetTargetOutputNode(const vector<CNodePtr> &moved_backward_cnodes,
+                                                 const CNodePtr first_node, const NotNull<KernelGraphPtr> &graph_ptr) {
+  auto cnode_ptr_list = graph_ptr->execution_order();
+  if (moved_backward_cnodes.empty() || !first_node) {
+    return nullptr;
+  }
   uint32_t subgraph_id = 0;
   bool get_subgraph_id = false;
+  auto it = find(cnode_ptr_list.begin(), cnode_ptr_list.end(), first_node);
   CNodePtr first_output_node_ptr = nullptr;
   while (!get_subgraph_id && it < cnode_ptr_list.end()) {
     auto inputs = GetInputKernels(*it);
     for (auto &input : inputs) {
-      if (find(moved_backward_cnodes->begin(), moved_backward_cnodes->end(), input) != moved_backward_cnodes->end()) {
-        MS_LOG(DEBUG) << "get subgraph id: " << AnfAlgo::GetGraphId((*it).get());
+      if (find(moved_backward_cnodes.begin(), moved_backward_cnodes.end(), input) != moved_backward_cnodes.end()) {
         get_subgraph_id = true;
         subgraph_id = AnfAlgo::GetGraphId((*it).get());
         first_output_node_ptr = *it;
@@ -284,18 +294,14 @@ CNodePtr AscendStreamAssign::GetCNodesNeededMoved(vector<CNodePtr> *moved_backwa
   }
   if (subgraph_id == 0) {
     MS_LOG(INFO) << "The nodes moved backward were not used by any other nodes, no need moved";
-    moved_forward_cnodes->clear();
-    moved_backward_cnodes->clear();
     return nullptr;
   }
 
   for (; it < cnode_ptr_list.end() && AnfAlgo::GetGraphId((*it).get()) != subgraph_id; it++) {
     auto inputs = GetInputKernels(*it);
     for (auto &input : inputs) {
-      if (find(moved_backward_cnodes->begin(), moved_backward_cnodes->end(), input) != moved_backward_cnodes->end()) {
+      if (find(moved_backward_cnodes.begin(), moved_backward_cnodes.end(), input) != moved_backward_cnodes.end()) {
         MS_LOG(INFO) << "The nodes moved backward were used by nodes on different subgraphs, no need moved";
-        moved_forward_cnodes->clear();
-        moved_backward_cnodes->clear();
         return nullptr;
       }
     }
@@ -303,13 +309,12 @@ CNodePtr AscendStreamAssign::GetCNodesNeededMoved(vector<CNodePtr> *moved_backwa
   return first_output_node_ptr;
 }
 
-void AscendStreamAssign::FinetuneSubgraphExecOrder(vector<CNodePtr> *cnodes) {
+bool AscendStreamAssign::FinetuneSubgraphExecOrder(vector<CNodePtr> *cnodes) {
   MS_EXCEPTION_IF_NULL(cnodes);
   auto hcom_pos = find_if(cnodes->begin(), cnodes->end(),
                           [](CNodePtr &node_ptr) -> bool { return AnfAlgo::GetCNodeName(node_ptr) == "AllReduce"; });
   if (hcom_pos == cnodes->end()) {
-    cnodes->clear();
-    return;
+    return false;
   }
   CNodePtr hcom_ptr = *hcom_pos;
 
@@ -321,9 +326,8 @@ void AscendStreamAssign::FinetuneSubgraphExecOrder(vector<CNodePtr> *cnodes) {
       atomic_addr_clean.emplace_back(*iter);
       continue;
     }
-    auto inputs = GetInputKernels(*iter);
     auto last_input_pos = cnodes->end();
-    for (auto &input : inputs) {
+    for (auto &input : GetInputKernels(*iter)) {
       auto pos = find(cnodes->begin(), cnodes->end(), input);
       if (pos != cnodes->end()) {
         last_input_pos = (last_input_pos == cnodes->end() || last_input_pos < pos) ? pos : last_input_pos;
@@ -343,32 +347,23 @@ void AscendStreamAssign::FinetuneSubgraphExecOrder(vector<CNodePtr> *cnodes) {
   }
 
   for (auto &node : atomic_addr_clean) {
-    auto inputs = GetInputKernels(node);
     auto first_input_pos = cnodes->end();
-    for (auto &input : inputs) {
+    for (auto &input : GetInputKernels(node)) {
       auto pos = find(cnodes->begin(), cnodes->end(), input);
       first_input_pos = (first_input_pos == cnodes->end() || first_input_pos > pos) ? pos : first_input_pos;
     }
     if (first_input_pos == cnodes->end()) {
-      MS_LOG(DEBUG) << "node: " << node->fullname_with_scope() << " 's input was not found";
-      cnodes->clear();
-      return;
+      return false;
     } else {
       cnodes->insert(first_input_pos, node);
     }
   }
-  if (cnodes->size() != ori_cnodes.size()) {
-    MS_LOG(DEBUG) << "Total number inconsistent, original node size: " << ori_cnodes.size()
-                  << ", while the new size after finetune order is: " << cnodes->size();
-    cnodes->clear();
-    return;
-  }
+  return cnodes->size() == ori_cnodes.size();
 }
 
 // performance optimization for trailing time in distribute mode
 // allreduce of the last batch of gradients and the optimizer can be done parallel
 void AscendStreamAssign::TrailingTimeOptimizationByReorder(const NotNull<KernelGraphPtr> &graph_ptr) {
-  MS_LOG(INFO) << "Trailing time optimization begin";
   vector<CNodePtr> last_grad_and_status;
   CheckScenario(graph_ptr, &last_grad_and_status);
   if (last_grad_and_status.empty()) {
@@ -408,8 +403,7 @@ void AscendStreamAssign::TrailingTimeOptimizationByReorder(const NotNull<KernelG
     pos++;
   }
 
-  FinetuneSubgraphExecOrder(&subgraph_cnodes);
-  if (subgraph_cnodes.empty()) {
+  if (!FinetuneSubgraphExecOrder(&subgraph_cnodes) || subgraph_cnodes.empty()) {
     MS_LOG(INFO) << "Finetune subgraph execute order failed, no optimization needed";
     return;
   }
@@ -417,8 +411,6 @@ void AscendStreamAssign::TrailingTimeOptimizationByReorder(const NotNull<KernelG
   cnodes.insert(cnodes.end(), subgraph_cnodes.begin(), subgraph_cnodes.end());
   cnodes.insert(cnodes.end(), pos, cnode_ptr_list.end());
   if (cnodes.size() != cnode_ptr_list.size()) {
-    MS_LOG(INFO) << "Inconsistent cnodes number. Original size: " << cnode_ptr_list.size()
-                 << ", while new order cnodes size: " << cnodes.size();
     return;
   }
   for (auto &node : subgraph_cnodes) {
@@ -426,7 +418,6 @@ void AscendStreamAssign::TrailingTimeOptimizationByReorder(const NotNull<KernelG
   }
 
   graph_ptr->set_execution_order(cnodes);
-  MS_LOG(INFO) << "Trailing time optimization end";
 }
 
 // section 2
