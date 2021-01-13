@@ -371,34 +371,34 @@ The ckpt_file parameter is required.
 
 #### Evaluation Performance
 
-| Parameters                 | Ascend                                                       | GPU                                                          |
-| -------------------------- | -------------------------------------------------------------| -------------------------------------------------------------|
-| Model Version              | SSD V1                                                       | SSD V1                                                       |
-| Resource                   | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G             | NV SMX2 V100-16G                                             |
-| uploaded Date              | 09/15/2020 (month/day/year)                                  | 09/24/2020 (month/day/year)                                  |
-| MindSpore Version          | 1.0.0                                                        | 1.0.0                                                        |
-| Dataset                    | COCO2017                                                     | COCO2017                                                     |
-| Training Parameters        | epoch = 500,  batch_size = 32                                | epoch = 800,  batch_size = 32                                |
-| Optimizer                  | Momentum                                                     | Momentum                                                     |
-| Loss Function              | Sigmoid Cross Entropy,SmoothL1Loss                           | Sigmoid Cross Entropy,SmoothL1Loss                           |
-| Speed                      | 8pcs: 90ms/step                                              | 8pcs: 121ms/step                                             |
-| Total time                 | 8pcs: 4.81hours                                              | 8pcs: 12.31hours                                             |
-| Parameters (M)             | 34                                                           | 34                                                           |
-| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> |
+| Parameters          | Ascend                                                                        | GPU                                                                           | Ascend                                                                        |
+| ------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Model Version       | SSD V1                                                                        | SSD V1                                                                        | SSD-Mobilenet-V1-Fpn                                                          |
+| Resource            | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G                              | NV SMX2 V100-16G                                                              | Ascend 910 ；CPU 2.60GHz，192cores；Memory，755G                              |
+| uploaded Date       | 09/15/2020 (month/day/year)                                                   | 09/24/2020 (month/day/year)                                                   | 01/13/2021 (month/day/year)                                                   |
+| MindSpore Version   | 1.0.0                                                                         | 1.0.0                                                                         | 1.1.0                                                                         |
+| Dataset             | COCO2017                                                                      | COCO2017                                                                      | COCO2017                                                                      |
+| Training Parameters | epoch = 500,  batch_size = 32                                                 | epoch = 800,  batch_size = 32                                                 | epoch = 60,  batch_size = 32                                                  |
+| Optimizer           | Momentum                                                                      | Momentum                                                                      | Momentum                                                                      |
+| Loss Function       | Sigmoid Cross Entropy,SmoothL1Loss                                            | Sigmoid Cross Entropy,SmoothL1Loss                                            | Sigmoid Cross Entropy,SmoothL1Loss                                            |
+| Speed               | 8pcs: 90ms/step                                                               | 8pcs: 121ms/step                                                              | 8pcs: 547ms/step                                                              |
+| Total time          | 8pcs: 4.81hours                                                               | 8pcs: 12.31hours                                                              | 8pcs: 4.22hours                                                               |
+| Parameters (M)      | 34                                                                            | 34                                                                            | 48M                                                                           |
+| Scripts             | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ssd> |
 
 #### Inference Performance
 
-| Parameters          | Ascend                      | GPU                         |
-| ------------------- | ----------------------------| ----------------------------|
-| Model Version       | SSD V1                      | SSD V1                      |
-| Resource            | Ascend 910                  | GPU                         |
-| Uploaded Date       | 09/15/2020 (month/day/year) | 09/24/2020 (month/day/year) |
-| MindSpore Version   | 1.0.0                       | 1.0.0                       |
-| Dataset             | COCO2017                    | COCO2017                    |
-| batch_size          | 1                           | 1                           |
-| outputs             | mAP                         | mAP                         |
-| Accuracy            | IoU=0.50: 23.8%             | IoU=0.50: 22.4%             |
-| Model for inference | 34M(.ckpt file)             | 34M(.ckpt file)             |
+| Parameters          | Ascend                      | GPU                         | Ascend                      |
+| ------------------- | --------------------------- | --------------------------- | --------------------------- |
+| Model Version       | SSD V1                      | SSD V1                      | SSD-Mobilenet-V1-Fpn        |
+| Resource            | Ascend 910                  | GPU                         | Ascend 910                  |
+| Uploaded Date       | 09/15/2020 (month/day/year) | 09/24/2020 (month/day/year) | 09/24/2020 (month/day/year) |
+| MindSpore Version   | 1.0.0                       | 1.0.0                       | 1.1.0                       |
+| Dataset             | COCO2017                    | COCO2017                    | COCO2017                    |
+| batch_size          | 1                           | 1                           | 1                           |
+| outputs             | mAP                         | mAP                         | mAP                         |
+| Accuracy            | IoU=0.50: 23.8%             | IoU=0.50: 22.4%             | Iout=0.50: 30%              |
+| Model for inference | 34M(.ckpt file)             | 34M(.ckpt file)             | 48M(.ckpt file)             |
 
 ## [Description of Random Situation](#contents)
 
