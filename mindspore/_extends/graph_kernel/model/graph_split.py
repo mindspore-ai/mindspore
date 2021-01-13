@@ -253,6 +253,8 @@ class GraphSplitGpu(GraphSplitByPattern):
     REDUCE_FUSE_DEPTH = 20
 
     def get_default_mode(self, op):
+        if op.prim == "BatchMatMul":
+            return self.Area.MODE_COMPOSITE if op.inputs[0].dtype == "float16" else self.Area.MODE_BASIC
         pattern = PrimLib.iter_type(op)
         return self.Area.MODE_BASIC if pattern == PrimLib.RESHAPE else self.Area.MODE_COMPOSITE
 
