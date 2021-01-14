@@ -408,7 +408,7 @@ TEST_F(MindDataImageProcess, TestPadd) {
   size_t total_size = makeborder.height_ * makeborder.width_ * makeborder.channel_;
   double distance = 0.0f;
   for (size_t i = 0; i < total_size; i++) {
-    distance += pow((uint8_t)b_image.data[i] - ((uint8_t*)makeborder)[i], 2);
+    distance += pow((uint8_t)b_image.data[i] - ((uint8_t *)makeborder)[i], 2);
   }
   distance = sqrt(distance / total_size);
   EXPECT_EQ(distance, 0.0f);
@@ -439,7 +439,7 @@ TEST_F(MindDataImageProcess, TestPadZero) {
   size_t total_size = makeborder.height_ * makeborder.width_ * makeborder.channel_;
   double distance = 0.0f;
   for (size_t i = 0; i < total_size; i++) {
-    distance += pow((uint8_t)b_image.data[i] - ((uint8_t*)makeborder)[i], 2);
+    distance += pow((uint8_t)b_image.data[i] - ((uint8_t *)makeborder)[i], 2);
   }
   distance = sqrt(distance / total_size);
   EXPECT_EQ(distance, 0.0f);
@@ -878,4 +878,12 @@ TEST_F(MindDataImageProcess, TestMultiplyFloat) {
     EXPECT_FLOAT_EQ(static_cast<FLOAT32_C1 *>(expect_float.data_ptr_)[i].c1,
                     static_cast<FLOAT32_C1 *>(dst_float.data_ptr_)[i].c1);
   }
+}
+
+TEST_F(MindDataImageProcess, TestExtractChannel) {
+  LiteMat lite_single;
+  LiteMat lite_mat = LiteMat(1, 4, 3, LDataType::UINT16);
+
+  EXPECT_FALSE(ExtractChannel(lite_mat, lite_single, 0));
+  EXPECT_TRUE(lite_single.IsEmpty());
 }
