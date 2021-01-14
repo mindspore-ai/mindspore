@@ -73,7 +73,7 @@ std::vector<std::shared_ptr<CsvBase>> toCSVBase(py::list csv_bases);
 
 std::shared_ptr<TensorOp> toPyFuncOp(py::object func, DataType::Type data_type);
 
-Status ToJson(const py::handle &padded_sample, nlohmann::json *padded_sample_json,
+Status ToJson(const py::handle &padded_sample, nlohmann::json *const padded_sample_json,
               std::map<std::string, std::string> *sample_bytes);
 
 Status toPadInfo(py::dict value, std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> *pad_info);

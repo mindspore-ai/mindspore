@@ -53,16 +53,19 @@ class PythonBuildVocabConsumer : public BuildVocabConsumer {
 class PythonSaveToDisk : public SaveToDisk {
  public:
   PythonSaveToDisk(const std::string &datasetPath, int32_t numFiles, const std::string &datasetType);
+  ~PythonSaveToDisk() = default;
   Status Save() override;
 };
 
 class PythonTreeGetters : public TreeGetters {
  public:
-  Status GetRow(TensorRow *r) override;
+  Status GetRow(TensorRow *const r) override;
+  ~PythonTreeGetters() = default;
 };
 class PythonDatasetSizeGetter : public DatasetSizeGetter {
  public:
   Status GetRow(const std::shared_ptr<TreeAdapter> &tree_adapter, TensorRow *r) override;
+  ~PythonDatasetSizeGetter() = default;
 };
 }  // namespace mindspore::dataset
 #endif  // MINDSPORE_CCSRC_MINDDATA_DATASET_ENGINE_CONSUMERS_PYTHON_TREE_CONSUMER_H_

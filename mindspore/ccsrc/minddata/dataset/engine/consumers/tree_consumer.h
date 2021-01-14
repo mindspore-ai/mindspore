@@ -72,12 +72,12 @@ class IteratorConsumer : public TreeConsumer {
   /// Returns the next row in as a map
   /// \param[out] out std::map of string to Tensor
   /// \return Status error code
-  Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *out);
+  Status GetNextAsMap(std::unordered_map<std::string, TensorPtr> *const out);
 
   /// Returns the next row in as a vector
   /// \param[out] out std::vector of pairs of string to Tensor
   /// \return Status error code
-  Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *vec);
+  Status GetNextAsOrderedPair(std::vector<std::pair<std::string, std::shared_ptr<Tensor>>> *const vec);
 
  protected:
   /// Method to return the name of the consumer
@@ -161,7 +161,7 @@ class ToDevice : public TreeConsumer {
 
   /// Get data info from TDT
   /// \return  Status error code
-  virtual Status GetDataInfo(std::vector<DataType> *types, std::vector<TensorShape> *shapes);
+  virtual Status GetDataInfo(std::vector<DataType> *const types, std::vector<TensorShape> *const shapes);
 
  protected:
   /// Method to return the name of the consumer

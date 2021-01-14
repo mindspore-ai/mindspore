@@ -220,7 +220,7 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
     }
     if (cinfo->out_color_space == JCS_CMYK && num_lines_read > 0) {
       for (int i = 0; i < crop_w; ++i) {
-        int cmyk_pixel = 4 * i + offset;
+        const int cmyk_pixel = 4 * i + offset;
         const int c = scanline_ptr[cmyk_pixel];
         const int m = scanline_ptr[cmyk_pixel + 1];
         const int y = scanline_ptr[cmyk_pixel + 2];
