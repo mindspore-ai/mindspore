@@ -187,13 +187,20 @@ class OpenCLRuntime {
   std::vector<size_t> max_work_item_sizes_;
   void *handle_{nullptr};
   TuningMode tuning_mode_{TuningMode::DEFAULT};
+#if MS_OPENCL_PROFILE
+  bool profiling_{true};
+#else
   bool profiling_{false};
-
+#endif
   // for cache
  private:
   void LoadCache();
   void StoreCache();
+#ifdef MS_OPENCL_BINARY_CACHE
+  bool enable_cache_{true};
+#else
   bool enable_cache_{false};
+#endif
   bool flush_cache_{false};
   std::string cache_path_{"/data/local/tmp/.opencl_cache"};
   const std::string cache_version_{"V0.1"};

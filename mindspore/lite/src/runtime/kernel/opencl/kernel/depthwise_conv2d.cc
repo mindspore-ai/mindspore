@@ -73,7 +73,11 @@ int DepthwiseConv2dOpenCLKernel::Prepare() {
   if (parameter->kernel_h_ == 1 && parameter->kernel_w_ == 1) {
     kernel_name += "_1x1";
   }
-  kernel_name += "_b" + std::to_string(block_size_.H) + std::to_string(block_size_.W) + std::to_string(block_size_.C);
+  if (filter_type_ == lite::opencl::MemType::BUF) {
+    kernel_name += "_b" + std::to_string(block_size_.H) + std::to_string(block_size_.W) + std::to_string(block_size_.C);
+  } else {
+    block_size_.C = block_size_.H = block_size_.W = 1;
+  }
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
@@ -107,32 +111,42 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   int CO4 = UP_DIV(out_info.C, C4NUM * block_size_.C);
   int pack_weight_size = C4NUM * CO4 * parameter->kernel_h_ * parameter->kernel_w_;
 
-  int plane = parameter->kernel_h_ * parameter->kernel_w_;
+  int plane_in = parameter->kernel_h_ * parameter->kernel_w_;
+  int plane_out = plane_in * C4NUM;
+  std::vector<size_t> img_size;
+  if (filter_type_ == MemType::IMG) {
+    int alignment = ocl_runtime_->GetImagePitchAlignment();
+    plane_out = UP_ROUND(plane_out, alignment) * C4NUM;
+    pack_weight_size = plane_out * CO4;
+    auto shape = in_tensors_[1]->shape();
+    size_t img_dtype = ocl_runtime_->GetFp16Enable() ? CL_HALF_FLOAT : CL_FLOAT;
+    img_size = {(size_t)plane_out / C4NUM, (size_t)shape[0] * CO4, img_dtype};
+  }
   if (is_fp16) {
-    packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(int16_t));
+    packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(int16_t), img_size);
     packed_weight_ = allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true);
     if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16) {
       std::function<int16_t(int16_t)> to_dtype = [](int16_t x) -> int16_t { return x; };
-      PackNCHWToNC4HW4<int16_t, int16_t>(origin_weight, packed_weight_, 1, plane, out_info.C, to_dtype);
+      PackNCHWToNC4HW4<int16_t, int16_t>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
     } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat32) {
       std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
-      PackNCHWToNC4HW4<float, float16_t>(origin_weight, packed_weight_, 1, plane, out_info.C, to_dtype);
+      PackNCHWToNC4HW4<float, float16_t>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
     } else {  // int8 or int16
       std::function<int16_t(int16_t)> to_dtype = [](int16_t x) -> int16_t { return x; };
-      PackNCHWToNC4HW4<int16_t, int16_t>(origin_weight, packed_weight_, 1, plane, out_info.C, to_dtype);
+      PackNCHWToNC4HW4<int16_t, int16_t>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
     }
   } else {
-    packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(float));
+    packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(float), img_size);
     packed_weight_ = allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true);
     if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat32) {
       std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-      PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane, out_info.C, to_dtype);
+      PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
     } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16) {
       std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
-      PackNCHWToNC4HW4<float16_t, float>(origin_weight, packed_weight_, 1, plane, out_info.C, to_dtype);
+      PackNCHWToNC4HW4<float16_t, float>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
     } else {  // int8 or int16
       std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-      PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane, out_info.C, to_dtype);
+      PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
     }
   }
   allocator->UnmapBuffer(packed_weight_);
@@ -184,7 +198,7 @@ void DepthwiseConv2dOpenCLKernel::SetConstArgs() {
   cl_int4 dst_size = {(cl_int)out_info.W, (cl_int)out_info.H, (cl_int)CO4, (cl_int)out_info.N};
 
   int arg_cnt = 2;
-  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, packed_weight_, lite::opencl::MemType::BUF);
+  ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, packed_weight_, filter_type_);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, bias_data_, lite::opencl::MemType::BUF);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, kernel_size);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, stride);
