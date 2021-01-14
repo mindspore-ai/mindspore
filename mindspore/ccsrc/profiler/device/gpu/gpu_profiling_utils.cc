@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ constexpr auto kInitDatasetQueueOpName = "InitDataSetQueue";
 
 bool ProfilingUtils::have_communication_op = false;
 ProfilingTraceInfo ProfilingUtils::profiling_trace = {"", "", ""};
+std::unordered_map<uint32_t, bool> ProfilingUtils::is_first_step_map_ = {};
 
 ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<const session::KernelGraph *> graph_ptr) {
   MS_LOG(INFO) << "get current subgraph op name start.";
@@ -45,6 +46,7 @@ ProfilingTraceInfo ProfilingUtils::GetProfilingTraceFromEnv(NotNull<const sessio
   GetTraceHccl(cnode_exec_order);
 
   OutputStepTraceOpNameStatus();
+  is_first_step_map_[graph_ptr->graph_id()] = false;
   return profiling_trace;
 }
 
@@ -169,6 +171,14 @@ std::string ProfilingUtils::GetGraphSecondLastKernelName(const std::vector<CNode
   }
 
   return second_last_kernel_name;
+}
+
+bool ProfilingUtils::IsFirstStep(const uint32_t graph_id) {
+  auto iter = is_first_step_map_.find(graph_id);
+  if (iter != is_first_step_map_.end()) {
+    is_first_step_map_[graph_id] = true;
+  }
+  return is_first_step_map_[graph_id];
 }
 }  // namespace gpu
 }  // namespace profiler
