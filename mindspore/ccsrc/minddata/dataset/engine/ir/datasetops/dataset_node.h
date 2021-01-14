@@ -156,7 +156,7 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
 
   /// \brief Pure virtual function for derived class to get the shard id of specific node
   /// \return Status Status::OK() if get shard id successfully
-  virtual Status GetShardId(int32_t *shard_id);
+  virtual Status GetShardId(int32_t *const shard_id);
 
   /// \brief Gets the dataset size
   /// \param[in] size_getter Shared pointer to DatasetSizeGetter
