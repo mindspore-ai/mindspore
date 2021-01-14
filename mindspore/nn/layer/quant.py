@@ -426,15 +426,14 @@ class Conv2dBnFoldQuantOneConv(Cell):
         self.quant_dtype = quant_dtype
         data_format = 'NCHW'
         self.format = Validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.cls_name)
-        self.is_gpu = context.get_context('device_target') == "GPU"
-        self.is_ascend = context.get_context('device_target') == "Ascend"
+        self._target = context.get_context("device_target")
         self.is_graph_mode = context.get_context("mode") == context.GRAPH_MODE
         if context.get_context("enable_ge"):
             self.is_ge_backend = True
         else:
             self.is_ge_backend = False
         self.enable_default_train = self.is_graph_mode and \
-                                    (self.is_ge_backend or self.is_ascend)
+                                    (self.is_ge_backend or self._target == "Ascend")
 
         # initialize convolution op and Parameter
         self.conv = P.Conv2D(out_channel=out_channels,
@@ -468,15 +467,16 @@ class Conv2dBnFoldQuantOneConv(Cell):
                                                      channel_axis=channel_axis,
                                                      num_channels=out_channels,
                                                      quant_dtype=quant_dtype)
-        if self.is_graph_mode and (self.is_ge_backend or self.is_ascend):
+        if self._target == "Ascend":
             self.bn_train = P.BatchNorm(is_training=True,
-                                        epsilon=self.eps)
-        elif self.is_gpu:
+                                        epsilon=self.eps,
+                                        momentum=self.momentum)
+        if self._target == "GPU":
             self.bn_train = P.FusedBatchNormEx(mode=1,
                                                epsilon=self.eps,
                                                momentum=self.momentum,
                                                data_format=self.format)
-        else:
+        if self._target == "CPU":
             self.bn_train = P.FusedBatchNorm(mode=1,
                                              epsilon=self.eps,
                                              momentum=self.momentum)
@@ -520,21 +520,6 @@ class Conv2dBnFoldQuantOneConv(Cell):
         else:
             conv_orig = conv / scale_factor
         if self.training:
-            if self.enable_default_train:
-                out, batch_mean, batch_var, _, _ = self.bn_train(conv_orig,
-                                                                 self.gamma,
-                                                                 self.beta,
-                                                                 None,
-                                                                 None)
-
-                mean_sub = self.sub_mean(self.moving_mean, batch_mean)
-                temp_mean = self.mul_mean(mean_sub, self.momentum)
-                mean_sub2 = self.sub_var(self.moving_variance, batch_var)
-                temp_variance = self.mul_var(mean_sub2, self.momentum)
-                out = F.depend(out, self.assign_sub_mean(self.moving_mean, temp_mean))
-                out = F.depend(out, self.assign_sub_var(self.moving_variance, temp_variance))
-                return out
-
             return self.bn_train(conv_orig,
                                  self.gamma,
                                  self.beta,

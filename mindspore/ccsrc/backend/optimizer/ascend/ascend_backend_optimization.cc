@@ -155,7 +155,6 @@ void AddAscendIRFusionRulesPass(PassManager *ir_fusion_pm) {
 
 void AddAscendIRFusionPass(PassManager *ir_fusion_pm) {
   MS_EXCEPTION_IF_NULL(ir_fusion_pm);
-  ir_fusion_pm->AddPass(std::make_shared<BatchNormBertFission>());
   ir_fusion_pm->AddPass(std::make_shared<SingleBatchNormFission>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNorm2BNInfer>());
   ir_fusion_pm->AddPass(std::make_shared<BatchNormGrad2BNInferGrad>());
@@ -270,15 +269,8 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   }
   auto optimizer = std::make_shared<GraphOptimizer>();
   auto ir_fusion_pm = std::make_shared<PassManager>("ir_fusion_pm");
-  if (context_ptr->get_param<int>(MS_CTX_EXECUTION_MODE) == kPynativeMode) {
-    ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
-    ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
-  } else {
-    ir_fusion_pm->AddPass(std::make_shared<BatchNormGradSplit>());
-    ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormFusion>());
-    ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion0>());
-    ir_fusion_pm->AddPass(std::make_shared<FusedBatchNormMixPrecisionFusion1>());
-  }
+  ir_fusion_pm->AddPass(std::make_shared<BnSplit>());
+  ir_fusion_pm->AddPass(std::make_shared<BnGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<LayerNormGradSplit>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPadForNMSWithMask>());
   ir_fusion_pm->AddPass(std::make_shared<InsertPlaceholderForDynamicGRUV2>());

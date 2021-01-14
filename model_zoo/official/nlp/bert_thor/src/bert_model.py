@@ -28,7 +28,6 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from .config import cfg
-from .fused_layer_norm import FusedLayerNorm
 from .lr_generator import get_bert_damping
 from .thor_layer import Dense_Thor, Embedding_Thor
 
@@ -277,11 +276,7 @@ class BertOutput(nn.Cell):
         self.dropout = nn.Dropout(1 - dropout_prob)
         self.dropout_prob = dropout_prob
         self.add = P.TensorAdd()
-        if compute_type == mstype.float16:
-            self.layernorm = FusedLayerNorm((out_channels,),
-                                            use_batch_norm=enable_fused_layernorm).to_float(compute_type)
-        else:
-            self.layernorm = nn.LayerNorm((out_channels,)).to_float(compute_type)
+        self.layernorm = nn.LayerNorm((out_channels,)).to_float(compute_type)
         self.cast = P.Cast()
 
     def construct(self, hidden_status, input_tensor):

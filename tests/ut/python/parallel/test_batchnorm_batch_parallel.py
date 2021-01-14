@@ -32,7 +32,7 @@ from tests.dataset_mock import MindData
 
 dev_num = 8
 strategy_weight = ((dev_num, 1, 1, 1), (1, 1, 1, 1))
-strategy_bn = ((dev_num, 1, 1, 1), (1,), (1,))
+strategy_bn = ((dev_num, 1, 1, 1), (1,), (1,), (1,), (1,))
 strategy_fc_weight_bias = ((dev_num, 1), (1, 1), (1,))
 
 

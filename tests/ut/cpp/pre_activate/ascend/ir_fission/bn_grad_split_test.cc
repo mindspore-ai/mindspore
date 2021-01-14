@@ -81,10 +81,12 @@ TEST_F(TestHWBnGradSplit, test_bn_grad_split_tbe) {
   kernel::KernelBuildInfo::KernelBuildInfoBuilder builder1;
   builder1.SetInputsFormat(
     {kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0});
-  builder1.SetOutputsFormat({kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0});
+  builder1.SetOutputsFormat(
+    {kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0, kOpFormat_NC1HWC0});
   builder1.SetInputsDeviceType(
     {kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32});
-  builder1.SetOutputsDeviceType({kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32});
+  builder1.SetOutputsDeviceType(
+    {kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32, kNumberTypeFloat32});
   builder1.SetKernelType(TBE_KERNEL);
   AnfAlgo::SetSelectKernelBuildInfo(builder1.Build(), bn_grad.get());
   // do bn_grad_split pass

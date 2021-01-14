@@ -37,7 +37,7 @@ dev_num = 8
 strategy_no_weight = ((dev_num, 1, 1, 1),)
 strategy_weight = ((dev_num, 1, 1, 1), (1, 1, 1, 1))
 strategy_add = ((dev_num, 1, 1, 1), (dev_num, 1, 1, 1))
-strategy_bn = ((dev_num, 1, 1, 1), (1,), (1,))
+strategy_bn = ((dev_num, 1, 1, 1), (1,), (1,), (1,), (1,))
 
 strategy_fc_weight_nobias = ((1, dev_num), (1, dev_num))
 strategy_tensor_add = ((1, dev_num), (dev_num,))
