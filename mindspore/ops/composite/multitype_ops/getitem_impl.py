@@ -194,7 +194,7 @@ def _tensor_getitem_by_slice(data, slice_index):
 @getitem.register("Tensor", "Tensor")
 def _tensor_getitem_by_tensor(data, tensor_index):
     """
-    Getting item of tensor by tensor indice.
+    Getting item of tensor by tensor indices.
 
     Inputs:
         data (Tensor): A tensor.

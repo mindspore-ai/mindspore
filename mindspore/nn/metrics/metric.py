@@ -59,7 +59,7 @@ class Metric(metaclass=ABCMeta):
             data (numpy.array): Input data.
 
         Returns:
-            bool, return trun, if input data are one-hot encoding.
+            bool, return true, if input data are one-hot encoding.
         """
         if data.ndim > 1 and np.equal(data ** 2, data).all():
             shp = (data.shape[0],) + data.shape[2:]

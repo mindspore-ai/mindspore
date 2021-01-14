@@ -26,8 +26,9 @@ from ._utils.custom_ops import exp_generic, log_generic
 class Geometric(Distribution):
     """
     Geometric Distribution.
-    It represents that there are k failures before the first sucess, namely taht there are in total k+1 Bernoulli trials
-    when the first success is achieved.
+
+    It represents that there are k failures before the first success, namely that there are in total k+1 Bernoulli
+    trials when the first success is achieved.
 
     Args:
         probs (float, list, numpy.ndarray, Tensor): The probability of success.

@@ -260,7 +260,7 @@ class Optimizer(Cell):
         return gradients
 
     def _grad_sparse_indices_deduplicate(self, gradients):
-        """ In the case of using big operators, de duplicate the 'indexes' in gradients."""
+        """ In the case of using big operators, deduplicate the 'indexes' in gradients."""
         if self._target != 'CPU' and self._unique:
             gradients = self.map_(F.partial(_indices_deduplicate), gradients)
         return gradients

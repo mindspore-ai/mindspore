@@ -273,7 +273,7 @@ def load_nonquant_param_into_quant_net(quant_model, params_dict, quant_new_param
     Args:
         quant_model: quantization model.
         params_dict: parameter dict that stores fp32 parameters.
-        quant_new_params: parameters that exist in quantative network but not in unquantative network.
+        quant_new_params: parameters that exist in quantitative network but not in unquantitative network.
 
     Returns:
         None
