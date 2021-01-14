@@ -99,15 +99,17 @@ extern ValuePtr kCompositeHyperMap;
 
 class Tail : public MetaFuncGraph {
  public:
-  explicit Tail(const std::string &name) : MetaFuncGraph(name) {}
+  explicit Tail(const std::string &name, bool do_grad = false) : MetaFuncGraph(name), do_grad_(do_grad) {}
   ~Tail() override = default;
   MS_DECLARE_PARENT(Tail, MetaFuncGraph)
 
   FuncGraphPtr GenerateFuncGraph(const AbstractBasePtrList &args_spec_list) override;
-  FuncGraphPtr GenerateTupleFuncGraph(const abstract::AbstractTuplePtr &a_tuple);
-  FuncGraphPtr GenerateListFuncGraph(const abstract::AbstractListPtr &a_list);
+  FuncGraphPtr GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue);
 
   friend bool operator==(const Tail &lhs, const Tail &rhs) { return lhs.name_ == rhs.name_; }
+
+ private:
+  bool do_grad_;
 };
 using TailPtr = std::shared_ptr<Tail>;
 

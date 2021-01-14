@@ -18,7 +18,6 @@
 from ...composite import base
 from ... import functional as F
 
-
 zeros_like_leaf = base.MultitypeFuncGraph('zeros_like_leaf', True)
 """
 `zeros_like_leaf` is a metafuncgraph object which will generate a tensor filled with one according to its input type
@@ -31,10 +30,12 @@ def _zeros_like_scala(x):
     """Returns 0 which has the same dtype as x where x is a scalar."""
     return 0
 
+
 @zeros_like_leaf.register("Bool")
 def _zeros_like_bool(x):
     """Returns False if x is a bool."""
     return False
+
 
 newenv = base.EnvInstance_()
 
@@ -98,6 +99,25 @@ def _zeros_like_abstract_error(x):
         x.
     """
     return x
+
+
+@zeros_like_leaf.register("Dictionary")
+def _zeros_like_dict(x):
+    """
+    Derivation of a AbstractError.
+
+    Args:
+        x (dict): the input
+
+    Returns:
+        dict, keys are same as input's keys, and value are same as zeros_like of input'value.
+    """
+    keys = x.keys()
+    values = x.values()
+    new_values = ()
+    for ele in values:
+        new_values += (zeros_like_leaf(ele),)
+    return F.make_dict(keys, new_values)
 
 
 # zeros_like is an object that will generate graph of zero_like operation for different type

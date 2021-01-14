@@ -446,10 +446,28 @@ bool TransformTopGraphPass(const ResourcePtr &res) {
 
 bool PipelineSplitPass(const ResourcePtr &res) { return PipelineSplit(res); }
 
+void UpdateFuncGraphParameter(const FuncGraphPtr &func_graph) {
+  MS_EXCEPTION_IF_NULL(func_graph);
+  std::vector<AnfNodePtr> new_paras;
+  for (const auto &param : func_graph->parameters()) {
+    auto param_node = param->cast<ParameterPtr>();
+    if (param_node->has_default()) {
+      new_paras.push_back(param_node);
+      continue;
+    }
+    AbstractBasePtr par_abs = param_node->abstract();
+    if (par_abs->isa<abstract::AbstractUndetermined>()) {
+      new_paras.push_back(param_node);
+    }
+  }
+  func_graph->set_parameters(new_paras);
+}
+
 bool ValidatePass(const ResourcePtr &res) {
   MS_EXCEPTION_IF_NULL(res->func_graph());
   FuncGraphPtr func_graph = res->func_graph();
   Validate(func_graph);
+  UpdateFuncGraphParameter(func_graph);
   return true;
 }
 

@@ -20,8 +20,8 @@ import mindspore.ops.operations as P
 from mindspore import Tensor, context
 from mindspore.common.api import ms_function
 from mindspore.ops import composite as C
-from mindspore.ops import functional as F
 from ...ut_filter import non_graph_engine
+
 
 # pylint: disable=unused-argument
 def setup_module(module):
@@ -84,24 +84,6 @@ def test_cast_grad():
     gout = gfn(*args)
     expect = np.ones((2, 3), dtype=np.float32)
     assert np.all(gout[0].asnumpy() == expect)
-
-
-def test_scalar_cast_grad():
-    """ test_scalar_cast_grad """
-    input_x = 255.5
-    input_t = ms.int8
-
-    def fx_cast(x):
-        output = F.scalar_cast(x, input_t)
-        return output
-
-    @ms_function
-    def grad_fx_cast(input_x):
-        return grad(fx_cast)(input_x)
-
-    gfn = grad_fx_cast(input_x)
-    expect_dx = 1
-    assert gfn == expect_dx
 
 
 @non_graph_engine

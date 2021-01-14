@@ -325,7 +325,7 @@ def invoke_dataclass2(x, y):
 def test_access_attr_error():
     """ test_access """
     with pytest.raises(AttributeError):
-        invoke_dataclass2(1, 2)
+        invoke_dataclass2(2, 1)
 
 
 def myfunc(x):

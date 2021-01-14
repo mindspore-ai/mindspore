@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test outermost net pass scalar tuple list dict"""
-import pytest
+""" test outermost net pass non_tensor inputs"""
 import numpy as np
 
 import mindspore.nn as nn
@@ -28,7 +27,7 @@ def test_outermost_net_pass_scalar_tuple_list_dict():
     class TestNet(nn.Cell):
         def __init__(self):
             super(TestNet, self).__init__()
-            self.support_non_tensor_inputs = True
+            self.support_non_tensor_inputs = False
 
         def construct(self, tuple_a, z, list_m, w, s, dict_n):
             return z - tuple_a[2] + list_m[1][1]["x"] - w + s - dict_n["y"]
@@ -58,12 +57,5 @@ def test_outermost_net_pass_scalar_tuple_list_dict():
     forward_net(arg_t1, z, arg_l1, x, 6, args_d1)
 
     grad_net = GradNet(forward_net)
-    with pytest.raises(TypeError) as err:
-        grad_net(arg_t0, z, arg_l0, w, 6, args_d0)
-    assert "For 'graph mode', the 0th arg" in str(err.value)
-
-    grad_net.support_non_tensor_inputs = True
-    with pytest.raises(ValueError) as err:
-        grad_net(arg_t0, z, arg_l0, w, 6, args_d0)
-    assert  "Not support set 'support_non_tensor_inputs' to the 'True' for grad net, only support forward net." \
-            in str(err.value)
+    grad_net(arg_t0, z, arg_l0, w, 6, args_d0)
+    grad_net(arg_t1, z, arg_l1, x, 6, args_d1)
