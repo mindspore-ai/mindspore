@@ -36,6 +36,7 @@ from .bleu_score import BleuScore
 from .cosine_similarity import CosineSimilarity
 from .occlusion_sensitivity import OcclusionSensitivity
 from .perplexity import Perplexity
+from .confusion_matrix import ConfusionMatrixMetric, ConfusionMatrix
 
 __all__ = [
     "names",
@@ -61,6 +62,8 @@ __all__ = [
     "MeanSurfaceDistance",
     "RootMeanSquareDistance",
     "Perplexity",
+    "ConfusionMatrix",
+    "ConfusionMatrixMetric",
 ]
 
 __factory__ = {
@@ -85,6 +88,8 @@ __factory__ = {
     'mean_surface_distance': MeanSurfaceDistance,
     'root_mean_square_distance': RootMeanSquareDistance,
     'perplexity': Perplexity,
+    'confusion_matrix': ConfusionMatrix,
+    'confusion_matrix_metric': ConfusionMatrixMetric,
 }
 
 
