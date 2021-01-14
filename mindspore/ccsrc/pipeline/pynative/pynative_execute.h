@@ -97,6 +97,7 @@ class TopCellInfo {
       : is_topest(topest), resource(std::move(r)), df_builder(std::move(df)), cell_id(std::move(cellid)) {}
 
   bool is_topest{false};
+  bool do_vm_compiled{false};
   ResourcePtr resource{nullptr};
   FuncGraphPtr df_builder{nullptr};
   FuncGraphPtr bg{nullptr};  // Backward graph
@@ -216,7 +217,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void UpdateAbstractAndDeviceAddress(const OpExecInfoPtr &op_exec_info, const py::object &out_real);
   void SaveTensorsInValueNode(const ResourcePtr &resource);
   void SaveAllValueNodeTensors(const FuncGraphPtr &graph);
-  void CleanPreMemoryInValueNode(const std::string &cell_id);
+  void CleanPreMemoryInValueNode();
 
   // Construct grad graph
   void PushCurrentGraphToStack();
@@ -241,13 +242,15 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool CheckRealDynamicCell(const std::string &cell_id);
   void UpdateCellGraph(const py::object &cell, const FuncGraphPtr &g, const std::string &cell_id,
                        bool need_cloned = false, bool is_grad = false);
-  void ClearCnodeRes(const AnfNodePtr &node);
+  void ClearCnodeRes(const AnfNodePtr &node, std::unordered_set<AnfNodePtr> *node_set);
   void UpdateCellDynamic(const std::string &cell_id);
   bool CheckCellChanged(const std::string &cell_id);
+  void UpdateTopCellInfo(const std::string &cell_id, bool vm_compiled);
   void ClearResidualRes(const std::string &cell_id);
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   void NewGraphInner(const py::object &cell, const py::args &args);
   void MakeNewTopGraph(const string &cell_id, const py::args &args);
+  std::string GetTopCell(const string &cell_id);
   void EndGraphInner(const py::object &cell, const py::object &out, const py::args &args);
   void EndGraphByOutId(const py::object &cell, const std::string &cell_id, const py::object &out,
                        const std::string &out_id, const py::args &args);
@@ -304,6 +307,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   size_t grad_order_{0};
   std::string top_cell_id_;
   bool grad_flag_{false};
+  bool in_grad_process_{false};
   bool has_dynamic_cell_{false};
   bool grad_is_running_{false};
   bool need_replace_forward_{true};
