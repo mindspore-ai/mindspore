@@ -165,6 +165,7 @@
 #include "src/ops/gelu.h"
 #include "src/ops/gru.h"
 #include "src/ops/size.h"
+#include "src/ops/random_standard_normal.h"
 #include "src/ops/invert_permutation.h"
 
 #ifdef SUPPORT_TRAIN
@@ -1012,6 +1013,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) Size(primitive);
     case schema::PrimitiveType_InvertPermutation:
       return new (std::nothrow) InvertPermutation(primitive);
+    case schema::PrimitiveType_RandomStandardNormal:
+      return new (std::nothrow) RandomStandardNormal(primitive);
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
       return new (std::nothrow) ActivationGrad(primitive);
