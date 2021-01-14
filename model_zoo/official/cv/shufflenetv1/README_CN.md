@@ -167,7 +167,7 @@ result:{'Loss': 2.0479587888106323, 'Top_1_Acc': 0.7385817307692307, 'Top_5_Acc'
 | 训练总时间 (8p)             | 7.0h                                    |
 | 评估总时间                  | 99s                                    |
 | 参数量 (M)                 | 44M                                   |
-| 脚本                       | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/ShuffleNetV1) |
+| 脚本                       | [链接](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/shufflenetv1) |
 
 # 随机情况的描述
 
