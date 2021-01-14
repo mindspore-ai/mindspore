@@ -76,7 +76,7 @@ size_t AscendMemoryPool::AlignMemorySize(size_t size) const {
   return size;
 }
 
-size_t AscendMemoryPool::mem_alloc_unit_size() const { return DYNAMIC_MEM_ALLOC_UNIT_SIZE / 2; }
+size_t AscendMemoryPool::mem_alloc_unit_size() const { return DYNAMIC_MEM_ALLOC_UNIT_SIZE / 4; }
 
 void AscendMemoryPool::set_device_mem_pool_base(uint8_t *device_mem_pool_base) {
   MS_EXCEPTION_IF_NULL(device_mem_pool_base);
