@@ -27,9 +27,7 @@ class StackFp16CPUKernel : public StackCPUKernel {
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
       : StackCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-
   ~StackFp16CPUKernel() = default;
-
   int Init() override;
   int Run() override;
 

@@ -189,7 +189,6 @@ int DeConvolutionFp16CPUKernel::Run() {
   int error_code = InitRunBuf();
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "deconv fp16 InitRunBuf error! error_code[" << error_code << "]";
-    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
     FreeRunBuf();
     return RET_ERROR;
   }
@@ -206,8 +205,6 @@ int DeConvolutionFp16CPUKernel::Run() {
     }
   }
 
-  ConvolutionBaseFP16CPUKernel::IfCastOutput();
-  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
   FreeRunBuf();
   return error_code;
 }

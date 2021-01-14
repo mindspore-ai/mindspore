@@ -128,17 +128,11 @@ static int ConvolutionFp16Impl(void *cdata, int task_id) {
 }
 
 int ConvolutionFP16CPUKernel::Run() {
-  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get Execute tensor failed.";
-    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
-    return ret;
-  }
+  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
 
-  ret = InitTmpBuffer();
+  auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
-    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
     FreeTmpBuffer();
     return RET_ERROR;
   }
@@ -147,8 +141,7 @@ int ConvolutionFP16CPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "conv fp16 error ret[" << ret << "]";
   }
-  ConvolutionBaseFP16CPUKernel::IfCastOutput();
-  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
+
   FreeTmpBuffer();
   return ret;
 }

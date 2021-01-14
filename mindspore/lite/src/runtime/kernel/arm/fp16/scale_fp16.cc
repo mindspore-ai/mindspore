@@ -33,9 +33,6 @@ using mindspore::schema::PrimitiveType_Scale;
 namespace mindspore::kernel {
 
 int ScaleFp16CPUKernel::InitScaleOffset() {
-  auto input_tensor = in_tensors_.at(0);
-  malloc_input_ = input_tensor->data_type() == kNumberTypeFloat32;
-
   auto scale_tensor = in_tensors_.at(1);
   malloc_scale_ = scale_tensor->data_type() == kNumberTypeFloat32;
 
@@ -45,9 +42,6 @@ int ScaleFp16CPUKernel::InitScaleOffset() {
     auto offset_tensor = in_tensors_.at(2);
     malloc_offset_ = offset_tensor->data_type() == kNumberTypeFloat32;
   }
-
-  auto output_tensor = out_tensors_.at(0);
-  malloc_output_ = output_tensor->data_type() == kNumberTypeFloat32;
   return RET_OK;
 }
 
@@ -103,6 +97,11 @@ int ScaleFp16Run(void *cdata, int task_id) {
 }
 
 int ScaleFp16CPUKernel::Run() {
+  auto input_tensor = in_tensors_.at(0);
+  auto output_tensor = out_tensors_.at(0);
+  input_ = reinterpret_cast<float16_t *>(input_tensor->MutableData());
+  output_ = reinterpret_cast<float16_t *>(output_tensor->MutableData());
+
   auto ret = InitScaleOffset();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale fp16 InitScaleOffset failed.";
@@ -123,20 +122,11 @@ int ScaleFp16CPUKernel::Run() {
     return RET_ERROR;
   }
 
-  // if output tensor is fp32, we need to transform
-  if (malloc_output_) {
-    auto out_tensor = out_tensors_.at(0);
-    Float16ToFloat32(output_, reinterpret_cast<float *>(out_tensor->MutableData()), out_tensor->ElementsNum());
-  }
   FreeTmpBuffer();
   return RET_OK;
 }
 
 int ScaleFp16CPUKernel::MallocAssignTmpBuffer() {
-  input_ = ConvertInputFp32toFp16(in_tensors_.at(0), context_);
-  if (input_ == nullptr) {
-    return RET_ERROR;
-  }
   scale_ = ConvertInputFp32toFp16(in_tensors_.at(1), context_);
   if (scale_ == nullptr) {
     return RET_ERROR;
@@ -155,18 +145,10 @@ int ScaleFp16CPUKernel::MallocAssignTmpBuffer() {
     }
     memset(offset_, 0, in_tensors_.at(1)->ElementsNum() * sizeof(float16_t));
   }
-  output_ = MallocOutputFp16(out_tensors_.at(0), context_);
-  if (output_ == nullptr) {
-    return RET_ERROR;
-  }
   return RET_OK;
 }
 
 void ScaleFp16CPUKernel::FreeTmpBuffer() {
-  if (malloc_input_ && input_ != nullptr) {
-    context_->allocator->Free(input_);
-    input_ = nullptr;
-  }
   if (malloc_scale_ && scale_ != nullptr) {
     context_->allocator->Free(scale_);
     scale_ = nullptr;
@@ -174,10 +156,6 @@ void ScaleFp16CPUKernel::FreeTmpBuffer() {
   if (malloc_offset_ && offset_ != nullptr) {
     context_->allocator->Free(offset_);
     offset_ = nullptr;
-  }
-  if (malloc_output_ && output_ != nullptr) {
-    context_->allocator->Free(output_);
-    output_ = nullptr;
   }
 }
 
