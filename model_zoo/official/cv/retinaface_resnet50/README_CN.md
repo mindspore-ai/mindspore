@@ -257,7 +257,7 @@ RetinaFace使用ResNet50骨干提取图像特征进行检测。从ModelZoo获取
 | 总时长 | 3卡：8.2小时 |
 | 参数 (M) | 27.29M            |
 | 调优检查点 | 336.3M （.ckpt 文件） |
-| 脚本                    | [RetinaFace脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/retinaface) |
+| 脚本                    | [RetinaFace脚本](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/retinaface_resnet50) |
 
 ## 用法
 
