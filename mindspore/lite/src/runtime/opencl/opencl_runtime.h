@@ -83,7 +83,7 @@ class OpenCLRuntime {
         auto svm_capabilities = GetSVMCapabilities();
         if (svm_capabilities) {
           MS_LOG(DEBUG) << "Set kernel arg[" << index << "] SVM pointer " << value;
-          return kernel.setArg(index, value);
+          return clSetKernelArgSVMPointer(kernel.get(), index, value);
         }
         cl::Buffer *buffer = reinterpret_cast<cl::Buffer *>(allocator_->GetBuffer(value));
         MS_LOG(DEBUG) << "Set kernel arg[" << index << "] OpenCL Buffer " << buffer << ", host_ptr: " << value;

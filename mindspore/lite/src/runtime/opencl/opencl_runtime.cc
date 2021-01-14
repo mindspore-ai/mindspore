@@ -562,7 +562,7 @@ int OpenCLRuntime::MapBuffer(void *host_ptr, int flags, size_t size, cl::Command
   if (command_queue == nullptr) {
     command_queue = default_command_queue_;
   }
-  return command_queue->enqueueMapSVM(host_ptr, sync, flags, size);
+  return clEnqueueSVMMap(command_queue->get(), sync, flags, host_ptr, size, 0, nullptr, nullptr);
 }
 
 void *OpenCLRuntime::MapBuffer(const cl::Image2D &buffer, bool sync, int flags, const std::vector<size_t> &region,
@@ -591,7 +591,7 @@ int OpenCLRuntime::UnmapBuffer(void *host_ptr, cl::CommandQueue *command_queue) 
   if (command_queue == nullptr) {
     command_queue = default_command_queue_;
   }
-  return command_queue->enqueueUnmapSVM(host_ptr);
+  return clEnqueueSVMUnmap(command_queue->get(), host_ptr, 0, nullptr, nullptr);
 }
 
 bool OpenCLRuntime::SyncCommandQueue(cl::CommandQueue *command_queue) {

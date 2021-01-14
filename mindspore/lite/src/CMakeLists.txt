@@ -1,23 +1,20 @@
 add_compile_definitions(USE_ANDROID_LOG)
-if (ENABLE_V0)
-  add_definitions(-DENABLE_V0)
+if(ENABLE_V0)
+    add_definitions(-DENABLE_V0)
 endif()
 set(LITE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/..)
 include_directories(${LITE_DIR}/nnacl/)
 include_directories(${LITE_DIR}/nnacl/optimize)
 
-if (PLATFORM_ARM32 OR PLATFORM_ARM64)
+if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     #for performance
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-        if (SUPPORT_GPU)
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math -fno-rtti")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math -fno-rtti")
-        else ()
-            set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
-        endif ()
-    endif ()
-endif ()
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections \
+        -fdata-sections -ffast-math -fno-rtti -fno-exceptions")
+    endif()
+endif()
 
 set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/file_utils.cc
@@ -42,7 +39,7 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/dequant.cc
         )
 
-if (SUPPORT_GPU)
+if(SUPPORT_GPU)
     set(LITE_SRC
             ${LITE_SRC}
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/kernel/opencl/opencl_kernel.cc
@@ -54,10 +51,10 @@ if (SUPPORT_GPU)
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_runtime.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/runtime/opencl/opencl_wrapper.cc
             )
-endif ()
+endif()
 
 
-if (SUPPORT_TRAIN)
+if(SUPPORT_TRAIN)
     set(ANF_SRC
             ${ANF_SRC}
             )
@@ -70,7 +67,7 @@ if (SUPPORT_TRAIN)
             ${CMAKE_CURRENT_SOURCE_DIR}/train/train_model.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
             )
-endif ()
+endif()
 
 add_subdirectory(ops)
 add_subdirectory(runtime/kernel/arm)
@@ -85,53 +82,54 @@ set_target_properties(mindspore-lite_static PROPERTIES OUTPUT_NAME "mindspore-li
 set_target_properties(mindspore-lite_static PROPERTIES CLEAN_DIRECT_OUTPUT 1)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-private-field")
-if (SUPPORT_GPU)
+if(SUPPORT_GPU)
     add_subdirectory(runtime/kernel/opencl)
     target_link_libraries(mindspore-lite cpu_kernel_mid opencl_kernel_mid nnacl cpu_ops_mid)
     target_link_libraries(mindspore-lite_static cpu_kernel_mid opencl_kernel_mid nnacl_mid cpu_ops_mid)
-else ()
+else()
     target_link_libraries(mindspore-lite cpu_kernel_mid nnacl cpu_ops_mid)
     target_link_libraries(mindspore-lite_static cpu_kernel_mid nnacl_mid cpu_ops_mid)
-endif ()
-if (SUPPORT_NPU)
+endif()
+if(SUPPORT_NPU)
     add_subdirectory(runtime/agent/npu)
     include_directories(${DDK_PATH})
     target_link_libraries(mindspore-lite npu_kernel_mid)
     target_link_libraries(mindspore-lite_static npu_kernel_mid)
-endif ()
-if (PLATFORM_ARM32 OR PLATFORM_ARM64)
+endif()
+if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     target_link_libraries(mindspore-lite log)
     target_link_libraries(mindspore-lite_static log)
-endif ()
-if (BUILD_MINDDATA STREQUAL "lite")
+endif()
+if(BUILD_MINDDATA STREQUAL "lite")
     target_link_libraries(mindspore-lite minddata_eager_mid minddata-lite)
     target_link_libraries(mindspore-lite_static minddata_eager_mid)
-endif ()
+endif()
 
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND PLATFORM_ARM)
-    add_custom_command(TARGET mindspore-lite POST_BUILD
-            COMMAND ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
+if(PLATFORM_ARM)
+    set(NDK_STRIP
+            "${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip")
+endif()
+
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release" AND PLATFORM_ARM)
+    add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND ${NDK_STRIP}
             ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
-endif ()
+endif()
 
-if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-    if (PLATFORM_ARM)
-        add_custom_command(TARGET mindspore-lite POST_BUILD
-                COMMAND ${ANDROID_NDK}/toolchains/aarch64-linux-android-4.9/prebuilt/linux-x86_64/aarch64-linux-android/bin/strip
+if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    if(PLATFORM_ARM)
+        add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND ${NDK_STRIP}
                 ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
-    elseif (NOT WIN32)
-        add_custom_command(TARGET mindspore-lite POST_BUILD
-                COMMAND strip ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
-    endif ()
-endif ()
+    elseif(NOT WIN32)
+        add_custom_command(TARGET mindspore-lite POST_BUILD COMMAND strip ${CMAKE_BINARY_DIR}/src/libmindspore-lite.so)
+    endif()
+endif()
 
-########################## build optimize and float16 library #################################3
-if (PLATFORM_ARM64)
+########################## build optimize and float16 library #################################
+if(PLATFORM_ARM64)
     target_link_libraries(mindspore-lite cpu_opt_kernel_mid nnacl_optimize_mid)
     target_link_libraries(mindspore-lite_static cpu_opt_kernel_mid nnacl_optimize_mid)
-    if (ENABLE_FP16)
+    if(ENABLE_FP16)
         target_link_libraries(mindspore-lite cpu_fp16_kernel_mid nnacl_fp16_mid)
         target_link_libraries(mindspore-lite_static cpu_fp16_kernel_mid nnacl_fp16_mid)
-    endif ()
-endif ()
-
+    endif()
+endif()
