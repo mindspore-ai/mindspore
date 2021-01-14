@@ -306,14 +306,14 @@ class DiGamma(Cell):
 
         digamma(x) = digamma(1 - x) - pi * cot(pi * x)
 
-    Supported Platforms:
-        ``Ascend`` ``GPU``
-
     Inputs:
         - **x** (Tensor[Number]) - The input tensor. Only float16, float32 are supported.
 
     Outputs:
         Tensor, has the same shape and dtype as the `x`.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> input_x = Tensor(np.array([2, 3, 4]).astype(np.float32))
