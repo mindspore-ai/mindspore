@@ -374,12 +374,12 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, 
 
   auto context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context);
-  TaskDescReporter task_reporter(context->get_param<uint32_t>(MS_CTX_DEVICE_ID), "vm.task_desc_info", ret->second);
+  TaskDescReporter task_reporter(context->get_param<uint32_t>(MS_CTX_DEVICE_ID), "vm_task_desc_info", ret->second);
   task_reporter.set_task_ids(task_ids);
   task_reporter.set_stream_ids(stream_ids);
   task_reporter.ReportData();
 
-  GraphDescReporter graph_reporter(context->get_param<uint32_t>(MS_CTX_DEVICE_ID), "vm.graph_desc_info", ret->second);
+  GraphDescReporter graph_reporter(context->get_param<uint32_t>(MS_CTX_DEVICE_ID), "vm_graph_desc_info", ret->second);
   graph_profiling_cnode_.erase(ret);
   graph_reporter.ReportData();
 
@@ -389,7 +389,7 @@ void ProfilingUtils::ReportProfilingData(const std::vector<uint32_t> &task_ids, 
     MS_LOG(ERROR) << "Graph id not found in graph_point";
     return;
   }
-  PointReporter point_reporter(context->get_param<uint32_t>(MS_CTX_DEVICE_ID), "vm.point");
+  PointReporter point_reporter(context->get_param<uint32_t>(MS_CTX_DEVICE_ID), "vm_point");
   for (const auto &point : point_iter->second) {
     point_reporter.AddReportData(point);
   }
