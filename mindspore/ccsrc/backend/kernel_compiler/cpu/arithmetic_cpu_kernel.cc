@@ -103,6 +103,29 @@ void ArithmeticCPUKernel::Div(const T *input1, const T *input2, T *out, size_t s
 }
 
 template <typename T>
+void ArithmeticCPUKernel::FloorDiv(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    auto dividend = input1[idx[0]];
+    auto divisor = input2[idx[1]];
+    if (divisor == 0) {
+      if (dividend == 0) {
+        out[i] = std::numeric_limits<T>::quiet_NaN();
+        continue;
+      }
+      if (std::numeric_limits<T>::has_infinity) {
+        out[i] = dividend > 0 ? std::numeric_limits<T>::infinity() : -std::numeric_limits<T>::infinity();
+      } else {
+        out[i] = dividend > 0 ? std::numeric_limits<T>::max() : std::numeric_limits<T>::min();
+      }
+      continue;
+    }
+    out[i] = floor(dividend / divisor);
+  }
+}
+
+template <typename T>
 void ArithmeticCPUKernel::Mod(const T *input1, const T *input2, T *out, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
     std::vector<size_t> idx;
@@ -207,6 +230,8 @@ void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = REALDIV;
   } else if (kernel_name == prim::kPrimDiv->name()) {
     operate_type_ = DIV;
+  } else if (kernel_name == prim::kPrimFloorDiv->name()) {
+    operate_type_ = FLOORDIV;
   } else if (kernel_name == prim::kPrimMod->name()) {
     operate_type_ = MOD;
   } else if (kernel_name == prim::kPrimPow->name()) {
@@ -389,6 +414,8 @@ void ArithmeticCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, co
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::RealDiv<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == DIV) {
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::Div<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == FLOORDIV) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::FloorDiv<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == MOD) {
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::Mod<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == POW) {
