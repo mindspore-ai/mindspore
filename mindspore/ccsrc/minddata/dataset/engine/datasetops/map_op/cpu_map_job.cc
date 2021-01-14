@@ -39,7 +39,14 @@ Status CpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) {
     TensorRow result_row;
     for (size_t i = 0; i < ops_.size(); i++) {
       // Call compute function for cpu
-      RETURN_IF_NOT_OK(ops_[i]->Compute(input_row, &result_row));
+      Status rc = ops_[i]->Compute(input_row, &result_row);
+      if (rc.IsError()) {
+        if (input_row.getId() >= 0) {
+          MS_LOG(ERROR) << "The TensorRow with id=" + std::to_string(input_row.getId()) + " failed on " +
+                             std::to_string(i) + " TensorOp in Map: " + ops_[i]->Name();
+        }
+        return rc;
+      }
 
       // Assign result_row to to_process for the next TensorOp processing, except for the last TensorOp in the list.
       if (i + 1 < ops_.size()) {
@@ -48,7 +55,6 @@ Status CpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) {
     }
     out->push_back(std::move(result_row));
   }
-
   return Status::OK();
 }
 

@@ -287,6 +287,7 @@ Status MapOp::WorkerCompute(DataBuffer *in_buffer, TensorQTable *new_tensor_tabl
     // From the current row, select the Tensor that need to be passed to TensorOp
     (void)std::transform(to_process_indices_.begin(), to_process_indices_.end(), std::back_inserter(to_process),
                          [&cur_row](const auto &it) { return std::move(cur_row[it]); });
+    to_process.setId(cur_row.getId());
     job_input_table.push_back(std::move(to_process));
     original_table.push_back(std::move(cur_row));
   }

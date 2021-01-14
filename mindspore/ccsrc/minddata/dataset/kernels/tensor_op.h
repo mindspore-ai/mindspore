@@ -135,7 +135,7 @@ constexpr char kCFuncOp[] = "CFuncOp";
 constexpr char kPyFuncOp[] = "PyFuncOp";
 constexpr char kNoOp[] = "NoOp";
 
-// A class that does a computation on  a Tensor
+// A class that does a computation on a Tensor
 class TensorOp {
  public:
   TensorOp() = default;

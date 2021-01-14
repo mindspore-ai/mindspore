@@ -27,7 +27,7 @@ GpuMapJob::GpuMapJob(std::vector<std::shared_ptr<TensorOp>> operations) : MapJob
 // Destructor
 GpuMapJob::~GpuMapJob() = default;
 
-// A function to execute a cpu map job
+// A function to execute a gpu map job
 Status GpuMapJob::Run(std::vector<TensorRow> in, std::vector<TensorRow> *out) {
   // Do nothing for now
   return Status::OK();
