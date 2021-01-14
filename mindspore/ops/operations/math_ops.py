@@ -689,7 +689,7 @@ class CumProd(PrimitiveWithInfer):
             raise ValueError(f"For {self.name}, axis must be const.")
 
 
-class MatMul(PrimitiveWithInfer):
+class MatMul(PrimitiveWithCheck):
     """
     Multiplies matrix `a` and matrix `b`.
 
@@ -730,10 +730,10 @@ class MatMul(PrimitiveWithInfer):
 
     def check_shape_size(self, x1, x2):
         if len(x1) != 2 or len(x2) != 2:
-            raise ValueError('P.MatMul inputs x1, x2 should has the same dimension size and '
+            raise ValueError('P.MatMul inputs x1, x2 should have the same dimension size and '
                              + f'equal to 2, while x1 size is ({len(x1)}) and x2 size is ({len(x2)}).')
 
-    def infer_shape(self, x1, x2):
+    def check_shape(self, x1, x2):
         self.check_shape_size(x1, x2)
         cls_name = self.name
         # expected dimension of x, y, x:[...,a,b] y:[..., c,d], the dim size should be the same except the last two
@@ -747,23 +747,18 @@ class MatMul(PrimitiveWithInfer):
         x2_last = x2[-2:]
         x1_col = x1_last[not self.transpose_a]
         x2_row = x2_last[self.transpose_b]
-        if x1_col != x2_row:
-            raise ValueError(f'For \'{cls_name}\' evaluator shapes of inputs can not do this operator,'
-                             + f' got {x1_col} and {x2_row}, with x1 shape {x1}(transpose_a={self.transpose_a})'
-                             + f', x2 shape {x2}(transpose_b={self.transpose_b}).')
+        if np.all(np.array(x1) != -1) and np.all(np.array(x2) != -1):
+            if x1_col != x2_row:
+                raise ValueError(f'For \'{cls_name}\' evaluator shapes of inputs can not do this operator,'
+                                 + f' got {x1_col} and {x2_row}, with x1 shape {x1}(transpose_a={self.transpose_a})'
+                                 + f', x2 shape {x2}(transpose_b={self.transpose_b}).')
         # set attribute
         self.add_prim_attr('transpose_x1', self.transpose_a)
         self.add_prim_attr('transpose_x2', self.transpose_b)
 
-        ret_dims = x1[: -2] + [x1_last[self.transpose_a], x2_last[not self.transpose_b]]
-        return ret_dims
-
-    def infer_dtype(self, x1, x2):
+    def check_dtype(self, x1, x2):
         args = {"x1": x1, "x2": x2}
         validator.check_tensors_dtypes_same_and_valid(args, mstype.float_type + mstype.int_type, self.name)
-        if x1.element_type() == mstype.int8:
-            return mstype.tensor_type(mstype.int32)
-        return x1
 
 
 class BatchMatMul(MatMul):

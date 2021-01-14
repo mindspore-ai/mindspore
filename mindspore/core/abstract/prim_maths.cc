@@ -317,6 +317,7 @@ AbstractBasePtr InferImplLinSpace(const AnalysisEnginePtr &, const PrimitivePtr 
     std::make_shared<AbstractTensor>(start->element(), std::make_shared<Shape>(shape, min_shape, max_shape));
   return ret;
 }
+
 AbstractBasePtr InferImplAddN(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                               const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
@@ -325,6 +326,94 @@ AbstractBasePtr InferImplAddN(const AnalysisEnginePtr &, const PrimitivePtr &pri
   }
   auto input = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
   return input->Broaden();
+}
+
+AbstractBasePtr InferImplMatMul(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  auto y = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(y);
+  MS_EXCEPTION_IF_NULL(y->shape());
+  if (x->shape()->shape().size() != 2 || y->shape()->shape().size() != 2) {
+    MS_LOG(EXCEPTION) << "MatMul inputs should have the same dimension size and equal to 2.";
+  }
+  ValuePtr TAptr = primitive->GetAttr("transpose_a");
+  ValuePtr TBptr = primitive->GetAttr("transpose_b");
+  bool TA = GetValue<bool>(TAptr);
+  bool TB = GetValue<bool>(TBptr);
+  ShapeVector x_min_shape = x->shape()->min_shape();
+  ShapeVector x_max_shape = x->shape()->max_shape();
+  ShapeVector y_min_shape = y->shape()->min_shape();
+  ShapeVector y_max_shape = y->shape()->max_shape();
+  (void)CheckMinMaxShape(x->shape()->shape(), &x_min_shape, &x_max_shape);
+  (void)CheckMinMaxShape(y->shape()->shape(), &y_min_shape, &y_max_shape);
+  ShapeVector ret_shape;
+  ShapeVector ret_min_shape;
+  ShapeVector ret_max_shape;
+  auto make_shape = [&TA, &TB](ShapeVector &output, const ShapeVector xshp, const ShapeVector yshp) -> void {
+    output.push_back(xshp[(TA ? 1 : 0)]);
+    output.push_back(yshp[(TB ? 0 : 1)]);
+    return;
+  };
+  make_shape(ret_shape, x->shape()->shape(), y->shape()->shape());
+  make_shape(ret_min_shape, x_min_shape, y_min_shape);
+  make_shape(ret_max_shape, x_max_shape, y_max_shape);
+  return std::make_shared<AbstractTensor>(x->element(),
+                                          std::make_shared<Shape>(ret_shape, ret_min_shape, ret_max_shape));
+}
+
+AbstractBasePtr InferImplBatchMatMul(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                     const AbstractBasePtrList &args_spec_list) {
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 2);
+  auto x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(x);
+  MS_EXCEPTION_IF_NULL(x->shape());
+  auto y = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  MS_EXCEPTION_IF_NULL(y);
+  MS_EXCEPTION_IF_NULL(y->shape());
+  if (x->shape()->shape().size() != y->shape()->shape().size() || x->shape()->shape().size() < 3) {
+    MS_LOG(EXCEPTION)
+      << "BatchMatMul input x, y should have the same dimension size and should be greater or equal to 3.";
+  }
+  ValuePtr TAptr = primitive->GetAttr("transpose_a");
+  ValuePtr TBptr = primitive->GetAttr("transpose_b");
+  bool TA = GetValue<bool>(TAptr);
+  bool TB = GetValue<bool>(TBptr);
+  ShapeVector x_min_shape = x->shape()->min_shape();
+  ShapeVector x_max_shape = x->shape()->max_shape();
+  ShapeVector y_min_shape = y->shape()->min_shape();
+  ShapeVector y_max_shape = y->shape()->max_shape();
+  (void)CheckMinMaxShape(x->shape()->shape(), &x_min_shape, &x_max_shape);
+  (void)CheckMinMaxShape(y->shape()->shape(), &y_min_shape, &y_max_shape);
+  ShapeVector ret_shape;
+  ShapeVector ret_min_shape;
+  ShapeVector ret_max_shape;
+  auto make_shape = [&TA, &TB](ShapeVector &output, const ShapeVector xshp, const ShapeVector yshp) -> void {
+    for (size_t i = 0; i < xshp.size() - 2; i++) {
+      if (xshp[i] != yshp[i]) {
+        if (xshp[i] > 0 && yshp[i] > 0) {
+          MS_LOG(EXCEPTION) << "BatchMatMul input x, y are different at index " << i << ".";
+        }
+        output.push_back(Shape::SHP_ANY);
+      } else {
+        output.push_back(xshp[i]);
+      }
+    }
+    size_t offset = xshp.size() - 2;
+    output.push_back(xshp[offset + (TA ? 1 : 0)]);
+    output.push_back(yshp[offset + (TB ? 0 : 1)]);
+    return;
+  };
+  make_shape(ret_shape, x->shape()->shape(), y->shape()->shape());
+  make_shape(ret_min_shape, x_min_shape, y_min_shape);
+  make_shape(ret_max_shape, x_max_shape, y_max_shape);
+  return std::make_shared<AbstractTensor>(x->element(),
+                                          std::make_shared<Shape>(ret_shape, ret_min_shape, ret_max_shape));
 }
 }  // namespace abstract
 }  // namespace mindspore

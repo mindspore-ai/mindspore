@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_MATMUL_GPU_KERNEL_H
-#define MINDSPORE_MATMUL_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_MATMUL_GPU_KERNEL_H
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_MATMUL_GPU_KERNEL_H
 
 #include <cublas_v2.h>
 #include <cuda_runtime_api.h>
@@ -30,19 +30,7 @@ namespace kernel {
 template <typename T>
 class MatMulGpuKernel : public GpuKernel {
  public:
-  MatMulGpuKernel()
-      : batch_(0),
-        m_(0),
-        n_(0),
-        k_(0),
-        is_null_input_(false),
-        transpose_x1_(CUBLAS_OP_N),
-        transpose_x2_(CUBLAS_OP_N),
-        handle_(nullptr),
-        dtype_a_(CUDA_R_32F),
-        dtype_b_(CUDA_R_32F),
-        dtype_c_(CUDA_R_32F),
-        algo_(CUBLAS_GEMM_DEFAULT) {}
+  MatMulGpuKernel() { ResetResource(); }
   ~MatMulGpuKernel() = default;
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
   const std::vector<size_t> &GetOutputSizeList() const override { return output_size_list_; }
@@ -122,6 +110,24 @@ class MatMulGpuKernel : public GpuKernel {
     return true;
   }
 
+  void ResetResource() noexcept override {
+    batch_ = 0;
+    m_ = 0;
+    n_ = 0;
+    k_ = 0;
+    is_null_input_ = false;
+    transpose_x1_ = CUBLAS_OP_N;
+    transpose_x2_ = CUBLAS_OP_N;
+    handle_ = nullptr;
+    dtype_a_ = CUDA_R_32F;
+    dtype_b_ = CUDA_R_32F;
+    dtype_c_ = CUDA_R_32F;
+    algo_ = CUBLAS_GEMM_DEFAULT;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
  protected:
   void InitSizeLists() override {
     size_t unit_size = sizeof(T);
@@ -158,4 +164,4 @@ class MatMulGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_MATH_MATMUL_GPU_KERNEL_H
