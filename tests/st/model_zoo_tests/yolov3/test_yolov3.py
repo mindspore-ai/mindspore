@@ -139,7 +139,7 @@ def test_yolov3():
         # assertion occurs while the loss value, overflow state or loss_scale value is wrong
         loss_value = np.array(model_callback.loss_list)
 
-        expect_loss_value = [6800, 4200, 2700]
+        expect_loss_value = [6850, 4250, 2750]
         print("loss value: {}".format(loss_value))
         assert loss_value[0] < expect_loss_value[0]
         assert loss_value[1] < expect_loss_value[1]
