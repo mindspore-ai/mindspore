@@ -73,7 +73,7 @@ __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE |
     int coordinate_x = Y * input_shape0.w + Z;                                 \
     int coordinate_y = X;                                                      \
     result = READ_IMAGE(input0, smp_none, (int2)(coordinate_x, coordinate_y)); \
-  } else {                                                                     \
+  } else if (Y < boundary1) {                                                  \
     int coordinate_x = (Y - boundary0) * input_shape1.w + Z;                   \
     int coordinate_y = X;                                                      \
     result = READ_IMAGE(input1, smp_none, (int2)(coordinate_x, coordinate_y)); \
@@ -123,7 +123,7 @@ __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE |
     int coordinate_x = Y * input_shape0.w + Z;                                 \
     int coordinate_y = X;                                                      \
     result = READ_IMAGE(input0, smp_none, (int2)(coordinate_x, coordinate_y)); \
-  } else {                                                                     \
+  } else if (Z < boundary1) {                                                  \
     int coordinate_x = Y * input_shape1.w + Z - boundary0;                     \
     int coordinate_y = X;                                                      \
     result = READ_IMAGE(input1, smp_none, (int2)(coordinate_x, coordinate_y)); \

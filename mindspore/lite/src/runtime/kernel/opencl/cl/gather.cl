@@ -1,5 +1,5 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
-
+#define C4NUM 4
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
 
 __kernel void gather(__write_only image2d_t dst_data, __read_only image2d_t src_data, __global int *indices,

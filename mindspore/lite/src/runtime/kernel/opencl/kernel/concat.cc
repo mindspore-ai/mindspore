@@ -161,6 +161,14 @@ void ConcatOpenCLKernel::SetGlobalLocal() {
 }
 
 int ConcatOpenCLKernel::Prepare() {
+  if (axis_ == 0) {
+    for (int i = 0; i < in_tensors_.size(); ++i) {
+      if (in_tensors_.at(0)->shape().size() != 1) {
+        return RET_OK;
+      }
+    }
+    axis_ = 3;
+  }
   for (int i = 0; i < in_tensors_.size(); ++i) {
     int length = in_tensors_[0]->shape().size();
     if (in_tensors_[i]->shape()[length - 1] % C4NUM != 0) {

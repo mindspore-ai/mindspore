@@ -99,6 +99,9 @@ void GatherOpenCLKernel::SetGlobalLocal() {
 
 int GatherOpenCLKernel::Prepare() {
   std::string kernel_name = "gather";
+  if (in_tensors_.at(0)->shape().size() == 1 && axis_ == 0) {
+    axis_ = 3;
+  }
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
 #else
@@ -106,17 +109,13 @@ int GatherOpenCLKernel::Prepare() {
   ocl_runtime_->LoadSource(program_name, gather_source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
-  if (!in_tensors_.at(1)->IsConst()) {
-    intensor1_is_tensor = true;
-  }
-
-  if (!intensor1_is_tensor) {
+  if (in_tensors_.at(1)->IsConst()) {
+    intensor1_is_tensor = false;
     int ret = InitWeights();
     if (ret != RET_OK) {
       return ret;
     }
   }
-
   SetGlobalLocal();
   SetConstArgs();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
@@ -125,7 +124,6 @@ int GatherOpenCLKernel::Prepare() {
 
 int GatherOpenCLKernel::ConvertTensorToweight() {
   auto allocator = ocl_runtime_->GetAllocator();
-  GpuTensorInfo img_info(in_tensors_[1]);
   auto indices_tensor = in_tensors_.at(1);
   auto indices_num = indices_tensor->ElementsNum();
   indices_data_ = reinterpret_cast<int32_t *>(allocator->Malloc(sizeof(int32_t) * indices_num));

@@ -14,38 +14,47 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_GATHER_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_GATHER_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SPLIT_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_OPENCL_KERNEL_SPLIT_H_
 
 #include <vector>
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
-#include "nnacl/gather_parameter.h"
+#include "nnacl/split_parameter.h"
 
 namespace mindspore::kernel {
 
-class GatherOpenCLKernel : public OpenCLKernel {
+class SplitOpenCLKernel : public OpenCLKernel {
  public:
-  GatherOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs)
+  SplitOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                    const std::vector<lite::Tensor *> &outputs)
       : OpenCLKernel(parameter, inputs, outputs) {}
 
-  ~GatherOpenCLKernel() override = default;
+  ~SplitOpenCLKernel() override = default;
 
-  int Run() override;
-  int InitWeights() override;
   int Prepare() override;
 
   int CheckSpecs() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
-  int Tune() override { return lite::RET_OK; }
-  int ConvertTensorToweight();
+  int Run() override;
 
  private:
-  int32_t *indices_data_{nullptr};
-  int axis_ = {0};
-  bool intensor1_is_tensor{true};
+  void AlignSplitSizes(SplitParameter *param, const std::vector<int> &in_shape);
+  int RunAxis0();
+
+ private:
+  cl_int4 in_shape_{};
+  cl_int4 out_shape_ = {};
+  bool Align_{true};
   bool enable_fp16_{false};
+  size_t num_split_ = 1;
+  int *split_sizes_{nullptr};
+  int split_dim_ = 0;
+  cl_int stride_w{1};
+  uint32_t OH = {1};
+  uint32_t OW = {1};
+  uint32_t OC = {1};
 };
+
 }  // namespace mindspore::kernel
 #endif
