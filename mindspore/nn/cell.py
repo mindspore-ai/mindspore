@@ -107,7 +107,6 @@ class Cell(Cell_):
         self._bprop_debug = False
         self.cell_type = None
         self._auto_parallel_compile_and_run = False
-        self._support_non_tensor_inputs = False
 
     def __getstate__(self):
         base = Cell_.__getstate__(self)
@@ -118,27 +117,6 @@ class Cell(Cell_):
         Cell_.__setstate__(self, base)
         self.__dict__ = dict_
         self._attr_synced = False
-
-    @property
-    def support_non_tensor_inputs(self):
-        """
-        Whether support non tensor inputs in outermost net in GRAPH MODE.
-        This property only used in forward net, and is not supported in grad net.
-        The default value of the property is the `False`, that is,
-        it does not support passing non tensor inputs to the outermost net.
-        If you want to support, set the property to the `True`.
-
-        """
-        return self._support_non_tensor_inputs
-
-    @support_non_tensor_inputs.setter
-    def support_non_tensor_inputs(self, value):
-        """
-        Set attr 'support_non_tensor_inputs'.
-        """
-        if not isinstance(value, bool):
-            raise ValueError("When set 'support_non_tensor_inputs' for cell, the value should be bool.")
-        self._support_non_tensor_inputs = value
 
     @property
     def _cell_tag(self):
@@ -665,11 +643,6 @@ class Cell(Cell_):
     def construct(self, *inputs, **kwargs):
         """
         Defines the computation to be performed. This method must be overridden by all subclasses.
-
-        Note:
-            The outermost net only supports tensor inputs by default.
-            If want to support non tensor inputs, set the property `support_non_tensor_inputs` to the `True`.
-            Refer to the property `support_non_tensor_inputs` description.
 
         Returns:
             Tensor, returns the computed result.

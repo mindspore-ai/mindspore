@@ -27,7 +27,6 @@ def test_outermost_net_pass_scalar_tuple_list_dict():
     class TestNet(nn.Cell):
         def __init__(self):
             super(TestNet, self).__init__()
-            self.support_non_tensor_inputs = False
 
         def construct(self, tuple_a, z, list_m, w, s, dict_n):
             return z - tuple_a[2] + list_m[1][1]["x"] - w + s - dict_n["y"]
