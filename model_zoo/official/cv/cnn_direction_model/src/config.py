@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,11 +17,24 @@ network config setting, will be used in train.py and eval.py
 """
 from easydict import EasyDict as ed
 
+
 config1 = ed({
+    # dataset metadata
+    "dataset_name": "fsns",
+    # annotation files paths
+    "train_annotation_file": "path-to-file",
+    "test_annotation_file": "path-to-file",
+    # dataset root paths
+    "data_root_train": "path-to-dir",
+    "data_root_test": "path-to-dir",
+    # mindrecord target locations
+    "mindrecord_dir": "path-to-dir",
+    # training and testing params
     "batch_size": 8,
     "epoch_size": 5,
     "pretrain_epoch_size": 0,
     "save_checkpoint": True,
+    "save_checkpoint_steps": 2500,
     "save_checkpoint_epochs": 10,
     "keep_checkpoint_max": 20,
     "save_checkpoint_path": "./",

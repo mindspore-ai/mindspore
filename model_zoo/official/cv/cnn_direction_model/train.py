@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -38,7 +38,6 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 parser = argparse.ArgumentParser(description='Image classification')
 parser.add_argument('--run_distribute', type=bool, default=False, help='Run distribute')
 parser.add_argument('--device_num', type=int, default=1, help='Device num.')
-
 parser.add_argument('--dataset_path', type=str, default=None, help='Dataset path')
 parser.add_argument('--device_target', type=str, default='Ascend', help='Device target')
 parser.add_argument('--pre_trained', type=str, default=None, help='Pretrained checkpoint path')
@@ -72,7 +71,9 @@ if __name__ == '__main__':
         init()
 
     # create dataset
-    dataset = create_dataset_train(args_opt.dataset_path + "/ocr_pos.mindrecord0", config=config)
+    dataset_name = config.dataset_name
+    dataset = create_dataset_train(args_opt.dataset_path +  "/" + dataset_name +
+                                   ".mindrecord0", config=config, dataset_name=dataset_name)
     step_size = dataset.get_dataset_size()
 
     # define net
@@ -99,7 +100,7 @@ if __name__ == '__main__':
     loss_cb = LossMonitor()
     cb = [time_cb, loss_cb]
     if config.save_checkpoint:
-        config_ck = CheckpointConfig(save_checkpoint_steps=2500,
+        config_ck = CheckpointConfig(save_checkpoint_steps=config.save_checkpoint_steps,
                                      keep_checkpoint_max=config.keep_checkpoint_max)
         ckpt_cb = ModelCheckpoint(prefix="cnn_direction_model", directory=ckpt_save_dir, config=config_ck)
         cb += [ckpt_cb]

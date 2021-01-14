@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-"""train resnet."""
+"""test direction model."""
 import argparse
 import os
 import random
@@ -45,8 +45,10 @@ if __name__ == '__main__':
     context.set_context(device_id=device_id)
 
     # create dataset
-    dataset = create_dataset_eval(args_opt.dataset_path + "/ocr_eval_pos.mindrecord", config=config)
-    step_size = dataset.get_dataset_size()
+    dataset_name = config.dataset_name
+    dataset_lr, dataset_rl = create_dataset_eval(args_opt.dataset_path +  "/" + dataset_name +
+                                                 ".mindrecord0", config=config, dataset_name=dataset_name)
+    step_size = dataset_lr.get_dataset_size()
 
     print("step_size ", step_size)
 
@@ -65,5 +67,7 @@ if __name__ == '__main__':
     model = Model(net, loss_fn=loss, metrics={'top_1_accuracy'})
 
     # eval model
-    res = model.eval(dataset, dataset_sink_mode=False)
-    print("result:", res, "ckpt=", args_opt.checkpoint_path)
+    res_lr = model.eval(dataset_lr, dataset_sink_mode=False)
+    res_rl = model.eval(dataset_rl, dataset_sink_mode=False)
+    print("result on upright images:", res_lr, "ckpt=", args_opt.checkpoint_path)
+    print("result on 180 degrees rotated images:", res_rl, "ckpt=", args_opt.checkpoint_path)
