@@ -27,7 +27,7 @@ Specifically, the TextRCNN is mainly composed of three parts: a recurrent struct
 
 ## [Dataset](#contents)
 
-Dataset used: [Sentence polarity dataset v1.0](<http://www.cs.cornell.edu/people/pabo/movie-review-data/>)
+Dataset used: [Sentence polarity dataset v1.0](http://www.cs.cornell.edu/people/pabo/movie-review-data/)
 
 - Dataset size：10662 movie comments in 2 classes, 9596 comments for train set, 1066 comments for test set.
 - Data format：text files. The processed data is in ```./data/```
@@ -36,7 +36,7 @@ Dataset used: [Sentence polarity dataset v1.0](<http://www.cs.cornell.edu/people
 
 - Hardware: Ascend
 - Framework: [MindSpore](https://www.mindspore.cn/install/en)
-- For more information, please check the resources below：[MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html), [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html).
+- For more information, please check the resources below：[MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html), [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html).
 
 ## [Quick Start](#contents)
 

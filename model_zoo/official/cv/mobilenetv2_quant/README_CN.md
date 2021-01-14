@@ -1,4 +1,5 @@
 # 目录
+
 <!-- TOC -->
 
 - [目录](#目录)
@@ -30,7 +31,6 @@
 
 # MobileNetV2描述
 
-
 MobileNetV2结合硬件感知神经网络架构搜索（NAS）和NetAdapt算法，已经可以移植到手机CPU上运行，后续随新架构进一步优化改进。（2019年11月20日）
 
 [论文](https://arxiv.org/pdf/1905.02244)：Howard, Andrew, Mark Sandler, Grace Chu, Liang-Chieh Chen, Bo Chen, Mingxing Tan, Weijun Wang et al."Searching for MobileNetV2."In Proceedings of the IEEE International Conference on Computer Vision, pp. 1314-1324.2019.
@@ -47,12 +47,13 @@ MobileNetV2总体网络架构如下：
 
 使用的数据集：[imagenet](http://www.image-net.org/)
 
--数据集大小：125G，共1000个类、1.2万张彩色图像
-	- 训练集: 120G，共1.2万张图像
-	- 测试集：5G，共5万张图像
-- 数据格式：RGB
-	- 注：数据在src/dataset.py中处理。
+- 数据集大小：125G，共1000个类、1.2万张彩色图像
 
+    - 训练集: 120G，共1.2万张图像
+    - 测试集：5G，共5万张图像
+
+- 数据格式：RGB
+    - 注：数据在src/dataset.py中处理。
 
 # 特性
 
@@ -64,13 +65,12 @@ MobileNetV2总体网络架构如下：
 # 环境要求
 
 - 硬件：昇腾处理器（Ascend）
-  - 使用昇腾处理器来搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
+    - 使用昇腾处理器来搭建硬件环境。如需试用昇腾处理器，请发送[申请表](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx)至ascend@huawei.com，审核通过即可获得资源。
 - 框架
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install)
 - 如需查看详情，请参见如下资源
-  - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
-
+    - [MindSpore教程](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
 
 # 脚本说明
 
@@ -93,7 +93,6 @@ MobileNetV2总体网络架构如下：
   ├── eval.py       # 评估脚本
   ├── export.py     # 导出检查点文件到air/onnx中
 ```
-
 
 ## 脚本参数
 
@@ -123,12 +122,10 @@ MobileNetV2总体网络架构如下：
 
 ### 用法
 
-
 使用python或shell脚本开始训练。shell脚本的使用方法如下：
 
 - bash run_train.sh [Ascend] [RANK_TABLE_FILE] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\（可选）
 - bash run_train.sh [GPU] [DEVICE_ID_LIST] [DATASET_PATH] [PRETRAINED_CKPT_PATH]\（可选）
-
 
 ### 启动
 
@@ -143,7 +140,7 @@ MobileNetV2总体网络架构如下：
 训练结果保存在示例路径中。`Ascend`处理器训练的检查点默认保存在`./train/device$i/checkpoint`，训练日志重定向到`./train/device$i/train.log`。`GPU`处理器训练的检查点默认保存在`./train/checkpointckpt_$i`中，训练日志重定向到`./train/train.log`中。  
 `train.log`内容如下：
 
-```
+```text
 epoch:[  0/200], step:[  624/  625], loss:[5.258/5.258], time:[140412.236], lr:[0.100]
 epoch time:140522.500, per step time:224.836, avg loss:5.258
 epoch:[  1/200], step:[  624/  625], loss:[3.917/3.917], time:[138221.250], lr:[0.200]
@@ -160,7 +157,7 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 
 ### 启动
 
-```
+```bash
 # 推理示例
   shell:
       Ascend: sh run_infer_quant.sh Ascend ~/imagenet/val/ ~/train/mobilenet-60_1601.ckpt
@@ -172,7 +169,7 @@ epoch time:138331.250, per step time:221.330, avg loss:3.917
 
 推理结果保存在示例路径，可以在`./val/infer.log`中找到如下结果：
 
-```
+```text
 result:{'acc':0.71976314102564111}
 ```
 
@@ -218,7 +215,7 @@ result:{'acc':0.71976314102564111}
 
 # 随机情况说明
 
-[dataset.py](http://dataset.py/)中设置了“create_dataset”函数内的种子，同时还使用了train.py中的随机种子。
+`dataset.py`中设置了“create_dataset”函数内的种子，同时还使用了train.py中的随机种子。
 
 # ModelZoo主页
 

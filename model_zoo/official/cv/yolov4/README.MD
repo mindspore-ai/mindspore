@@ -20,10 +20,10 @@
         - [Inference Performance](#inference-performance)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-
 # [YOLOv4 Description](#contents)
+
 YOLOv4 is a state-of-the-art detector which is faster (FPS) and more accurate (MS COCO AP50...95 and AP50) than all available alternative detectors.
-YOLOv4 has verified a large number of features, and selected for use such of them for improving the accuracy of both the classifier and the detector. 
+YOLOv4 has verified a large number of features, and selected for use such of them for improving the accuracy of both the classifier and the detector.
 These features can be used as best-practice for future studies and developments.
 
 [Paper](https://arxiv.org/pdf/2004.10934.pdf):
@@ -39,7 +39,8 @@ Dataset support: [MS COCO] or datasetd with the same format as MS COCO
 Annotation support: [MS COCO] or annotation as the same format as MS COCO
 
 - The directory structure is as follows, the name of directory and file is user define:
-    ```
+
+    ```text
         ├── dataset
             ├── YOLOv4
                 ├── annotations
@@ -55,23 +56,25 @@ Annotation support: [MS COCO] or annotation as the same format as MS COCO
                         └─picturen.jpg
                 
     ```
+
 we suggest user to use MS COCO dataset to experience our model,
 other datasets need to use the same format as MS COCO.
 
 # [Environment Requirements](#contents)
 
 - Hardware（Ascend）
-  - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
+    - Prepare hardware environment with Ascend processor. If you want to try Ascend, please send the [application form](https://obs-9be7.obs.cn-east-2.myhuaweicloud.com/file/other/Ascend%20Model%20Zoo%E4%BD%93%E9%AA%8C%E8%B5%84%E6%BA%90%E7%94%B3%E8%AF%B7%E8%A1%A8.docx) to ascend@huawei.com. Once approved, you can get the resources.
 - Framework
-  - [MindSpore](https://www.mindspore.cn/)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
-  - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/zh-CN/master/index.html)
-  - [MindSpore API](https://www.mindspore.cn/doc/api_python/zh-CN/master/index.html)
+    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Quick Start](#contents)
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
-```
+
+```text
 # The cspdarknet53_backbone.ckpt in the follow script is got from cspdarknet53 training like paper. 
 # The parameter of training_shape define image shape for network, default is 
                    [416, 416],
@@ -88,7 +91,7 @@ After installing MindSpore via the official website, you can start training and 
 # It means use 11 kinds of shape as input shape, or it can be set some kind of shape.
 ```
 
-```
+```bash
 #run training example(1p) by python command
 python train.py \
     --data_dir=./dataset/xxx \
@@ -102,17 +105,17 @@ python train.py \
     --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 ```
 
-```
+```bash
 # standalone training example(1p) by shell script
 sh run_standalone_train.sh dataset/xxx cspdarknet53_backbone.ckpt
 ```
 
-```
+```bash
 # For Ascend device, distributed training example(8p) by shell script
 sh run_distribute_train.sh dataset/xxx cspdarknet53_backbone.ckpt rank_table_8p.json
 ```
 
-```
+```bash
 # run evaluation by python command
 python eval.py \
     --data_dir=./dataset/xxx \
@@ -120,7 +123,7 @@ python eval.py \
     --testing_shape=416 > log.txt 2>&1 &
 ```
 
-```
+```bash
 # run evaluation by shell script
 sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
 ```
@@ -128,11 +131,12 @@ sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
 # [Script Description](#contents)
 
 ## [Script and Sample Code](#contents)
-```
-└─yolov4      
+
+```text
+└─yolov4
   ├─README.md
   ├─mindspore_hub_conf.py             # config for mindspore hub
-  ├─scripts      
+  ├─scripts
     ├─run_standalone_train.sh         # launch standalone training(1p) in ascend
     ├─run_distribute_train.sh         # launch distributed training(8p) in ascend
     └─run_eval.sh                     # launch evaluating in ascend
@@ -151,15 +155,17 @@ sh run_eval.sh dataset/xxx checkpoint/xxx.ckpt
     ├─util.py                         # util function
     ├─yolo.py                         # yolov4 network
     ├─yolo_dataset.py                 # create dataset for YOLOV4
-	
+
   ├─eval.py                           # evaluate val results 
   ├─test.py#                          # evaluate test results
   └─train.py                          # train net
 ```
 
 ## [Script Parameters](#contents)
+
 Major parameters train.py as follows:
-```
+
+```text
 optional arguments:
   -h, --help            show this help message and exit
   --device_target       device where the code will be implemented: "Ascend", default is "Ascend"
@@ -219,16 +225,21 @@ optional arguments:
 ```
 
 ## [Training Process](#contents)
-YOLOv4 can be trained from the scratch or with the backbone named cspdarknet53. 
+
+YOLOv4 can be trained from the scratch or with the backbone named cspdarknet53.
 Cspdarknet53 is a classifier which can be trained on some dataset like ImageNet(ILSVRC2012).
-It is easy for users to train Cspdarknet53. Just replace the backbone of Classifier Resnet50 with cspdarknet53. 
+It is easy for users to train Cspdarknet53. Just replace the backbone of Classifier Resnet50 with cspdarknet53.
 Resnet50 is easy to get in mindspore model zoo.
+
 ### Training
+
 For Ascend device, standalone training example(1p) by shell script
-```
+
+```bash
 sh run_standalone_train.sh dataset/coco2017 cspdarknet53_backbone.ckpt
 ```
-```
+
+```text
 python train.py \
     --data_dir=/dataset/xxx \
     --pretrained_backbone=cspdarknet53_backbone.ckpt \
@@ -240,10 +251,12 @@ python train.py \
     --training_shape=416 \
     --lr_scheduler=cosine_annealing > log.txt 2>&1 &
 ```
+
 The python command above will run in the background, you can view the results through the file log.txt.
 
 After training, you'll get some checkpoint files under the outputs folder by default. The loss value will be achieved as follows:
-```
+
+```text
 
 # grep "loss:" train/log.txt
 2020-10-16 15:00:37,483:INFO:epoch[0], iter[0], loss:8248.610352, 0.03 imgs/sec, lr:2.0466639227834094e-07
@@ -259,13 +272,16 @@ After training, you'll get some checkpoint files under the outputs folder by def
 ```
 
 ### Distributed Training
+
 For Ascend device, distributed training example(8p) by shell script
-```
+
+```bash
 sh run_distribute_train.sh dataset/coco2017 cspdarknet53_backbone.ckpt rank_table_8p.json
 ```
 
 The above shell script will run distribute training in the background. You can view the results through the file train_parallel[X]/log.txt. The loss value will be achieved as follows:
-```
+
+```text
 # distribute training result(8p, shape=416)
 ...
 2020-10-16 14:58:25,142:INFO:epoch[0], iter[1000], loss:242.509259, 388.73 imgs/sec, lr:0.00032783843926154077
@@ -286,7 +302,7 @@ The above shell script will run distribute training in the background. You can v
 
 ```
 
-```
+```text
 # distribute training result(8p, dynamic shape)
 ...
 2020-10-16 20:40:17,148:INFO:epoch[0], iter[800], loss:283.765033, 248.93 imgs/sec, lr:0.00026233625249005854
@@ -305,12 +321,11 @@ The above shell script will run distribute training in the background. You can v
 ...
 ```
 
-
 ## [Evaluation Process](#contents)
 
 ### Valid
 
-```
+```bash
 python eval.py \
     --data_dir=./dataset/coco2017 \
     --pretrained=yolov4.ckpt \
@@ -320,7 +335,8 @@ sh run_eval.sh dataset/coco2017 checkpoint/yolov4.ckpt
 ```
 
 The above python command will run in the background. You can view the results through the file "log.txt". The mAP of the test dataset will be as follows:
-```
+
+```text
 # log.txt
 =============coco eval reulst=========
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.442
@@ -336,8 +352,10 @@ The above python command will run in the background. You can view the results th
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.638
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.717
 ```
+
 ### Test-dev
-```
+
+```bash
 python test.py \
     --data_dir=./dataset/coco2017 \
     --pretrained=yolov4.ckpt \
@@ -345,11 +363,13 @@ python test.py \
 OR
 sh run_test.sh dataset/coco2017 checkpoint/yolov4.ckpt 
 ```
+
 The predict_xxx.json will be found in test/outputs/%Y-%m-%d_time_%H_%M_%S/.
 Rename the file predict_xxx.json to detections_test-dev2017_yolov4_results.json and compress it to detections_test-dev2017_yolov4_results.zip
-Submit file detections_test-dev2017_yolov4_results.zip to the MS COCO evaluation server for the test-dev2019 (bbox) https://competitions.codalab.org/competitions/20794#participate
+Submit file detections_test-dev2017_yolov4_results.zip to the MS COCO evaluation server for the test-dev2019 (bbox) <https://competitions.codalab.org/competitions/20794#participate>
 You will get such results in the end of file View scoring output log.
-```
+
+```text
 overall performance
  Average Precision  (AP) @[ IoU=0.50:0.95 | area=   all | maxDets=100 ] = 0.447
  Average Precision  (AP) @[ IoU=0.50      | area=   all | maxDets=100 ] = 0.642
@@ -364,9 +384,11 @@ overall performance
  Average Recall     (AR) @[ IoU=0.50:0.95 | area=medium | maxDets=100 ] = 0.627
  Average Recall     (AR) @[ IoU=0.50:0.95 | area= large | maxDets=100 ] = 0.711
 ```
+
 ## [Convert Process](#contents)
 
 ### Convert
+
 If you want to infer the network on Ascend 310, you should convert the model to AIR:
 
 ```python
@@ -378,6 +400,7 @@ python src/export.py --pretrained=[PRETRAINED_BACKBONE] --batch_size=[BATCH_SIZE
 ## [Performance](#contents)
 
 ### Evaluation Performance
+
 YOLOv4 on 118K images(The annotation and data format must be the same as coco2017)
 
 | Parameters                 | YOLOv4                                                      |
@@ -394,9 +417,10 @@ YOLOv4 on 118K images(The annotation and data format must be the same as coco201
 | Speed                      | 1p 53FPS 8p 390FPS(shape=416) 220FPS(dynamic shape)         |
 | Total time                 | 48h(dynamic shape)                                          |
 | Checkpoint for Fine tuning | about 500M (.ckpt file)                                     |
-| Scripts                    | https://gitee.com/mindspore/mindspore/tree/master/model_zoo/ |
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/> |
 
 ### Inference Performance
+
 YOLOv4 on 20K images(The annotation and data format must be the same as coco test2017 )
 
 | Parameters                 | YOLOv4                                                      |
@@ -416,4 +440,5 @@ In dataset.py, we set the seed inside ```create_dataset``` function.
 In var_init.py, we set seed for weight initilization
 
 # [ModelZoo Homepage](#contents)
+
  Please check the official [homepage](https://gitee.com/mindspore/mindspore/tree/master/model_zoo).
