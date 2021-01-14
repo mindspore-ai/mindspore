@@ -206,6 +206,16 @@ bool SubstitutionList::operator()(const FuncGraphPtr &func_graph, const Optimize
       loop = loop || change;
 
       // record the status of each transform
+      static const auto enable_dump_pass_ir = (common::GetEnv("ENV_DUMP_PASS_IR") == "1");
+      if (enable_dump_pass_ir && MsContext::GetInstance()->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG)) {
+        auto fg_name = optimizer->name() + "_" + std::to_string(optimizer->CurPass_.counter) + "_" +
+                       optimizer->CurPass_.name + "_" + list_[i]->name_;
+        DumpIR(fg_name + ".ir", func_graph);
+        if (MsContext::GetInstance()->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode) {
+          func_graph->DumpFuncGraph(fg_name);
+          ExportIR(fg_name + ".dat", "", func_graph);
+        }
+      }
       if (optimizer->is_on_debug_) {
         status[list_[i]->name_ + std::to_string(i)].push_back(change);
         space = std::max(list_[i]->name_.size(), space);
