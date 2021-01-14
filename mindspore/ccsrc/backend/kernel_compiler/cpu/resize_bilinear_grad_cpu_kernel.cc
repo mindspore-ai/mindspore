@@ -54,6 +54,11 @@ void ResizeBilinearGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &in
   auto dloss_addr = reinterpret_cast<T *>(inputs[0]->addr);
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
 
+  auto ret = memset_s(output_addr, outputs[0]->size, 0, outputs[0]->size);
+  if (ret != EOK) {
+    MS_LOG(ERROR) << "Output buffer memset failed, ret:" << ret;
+  }
+
   size_t batch_size = shape_[0];
   size_t channel = shape_[1];
   size_t in_height = shape_[2];
