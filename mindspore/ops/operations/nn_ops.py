@@ -6242,6 +6242,58 @@ class Dropout(PrimitiveWithInfer):
         return x_dtype, x_dtype
 
 
+class Dropout3d(PrimitiveWithInfer):
+    """
+    During training, randomly zeroes some of the channels of the input tensor
+      with probability keep_prob from a Bernoulli distribution.
+
+    Args:
+        keep_prob (float): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
+            means dropping out %20 of channels. Default: 0.5.
+        inplace (bool): When `inplace` is True, this operation will be done in-place. Default: False.
+
+    Inputs:
+        - **input** (Tensor) - A 5-D tensor with shape :math:`(N, C, D, H, W)`.
+            When `inplace` is True, `input` should be Parameter.
+
+    Outputs:
+        - **output** (Tensor) - with the same shape as the input tensor.
+
+    Raises:
+        TypeError: If the data type of `keep_prob` is not float.
+        ValueError: If `keep_prob` is out of the range [0.0, 1.0];
+                    or if the dim of input is not 5-D.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Examples:
+        >>> dropout = ops.Dropout3d(keep_prob=0.5)
+        >>> x = Tensor(np.random.randn(2, 1, 2, 1, 2), mindspore.float32)
+        >>> output = dropout(x)
+        >>> print(output)
+        [[[[[0. 0.]]
+           [[0. 0.]]]]
+         [[[[-2.98 -0.01]]
+           [[-0.34 1.57]]]]]
+    """
+
+    @prim_attr_register
+    def __init__(self, keep_prob=0.5, inplace=False):
+        self.inplace = validator.check_value_type("inplace", inplace, [bool], self.name)
+        self.keep_prob = validator.check_value_type("keep_prob", keep_prob, [float], self.name)
+        self.keep_prob = validator.check_float_range(keep_prob, 0.0, 1.0, Rel.INC_BOTH, "keep_prob", self.name)
+
+    def infer_shape(self, x_shape):
+        validator.check_int(len(x_shape), 5, Rel.GE, "dim of input", self.name)
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        valid_dtypes = mstype.number_type + (mstype.bool_,)
+        validator.check_tensor_dtype_valid("x", x_dtype, valid_dtypes, self.name)
+        return x_dtype
+
+
 class CTCLoss(PrimitiveWithInfer):
     """
     Calculates the CTC (Connectionist Temporal Classification) loss and the gradient.
