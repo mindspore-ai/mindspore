@@ -388,7 +388,7 @@ PYBIND_REGISTER(BuildSentenceVocabNode, 2, ([](const py::module *m) {
                   (void)py::class_<BuildSentenceVocabNode, DatasetNode, std::shared_ptr<BuildSentenceVocabNode>>(
                     *m, "BuildSentenceVocabNode", "to create a BuildSentenceVocabNode")
                     .def(py::init([](std::shared_ptr<DatasetNode> self, std::shared_ptr<SentencePieceVocab> vocab,
-                                     const std::vector<std::string> &col_names, uint32_t vocab_size,
+                                     const std::vector<std::string> &col_names, int32_t vocab_size,
                                      float character_coverage, SentencePieceModel model_type,
                                      const std::unordered_map<std::string, std::string> &params) {
                       auto build_sentence_vocab = std::make_shared<BuildSentenceVocabNode>(

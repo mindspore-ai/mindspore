@@ -225,7 +225,7 @@ TEST_F(MindDataTestVocab, TestVocabFromFileFail2) {
   std::string vocab_dir = datasets_root_path_ + "/testVocab/vocab_list.txt";
   std::shared_ptr<Vocab> vocab = std::make_shared<Vocab>();
 
-  // Expected failure: vocab_size shoule be either -1 or positive integer
+  // Expected failure: vocab_size should be either -1 or positive integer
   Status s = Vocab::BuildFromFileCpp(vocab_dir, ",", -2, {}, true, &vocab);
   EXPECT_NE(s, Status::OK());
 }

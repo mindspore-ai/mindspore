@@ -29,7 +29,7 @@ namespace dataset {
 
 class SentencePieceVocab {
  public:
-  static Status BuildFromFile(const std::vector<std::string> &path_list, const int vocab_size,
+  static Status BuildFromFile(const std::vector<std::string> &path_list, const int32_t vocab_size,
                               const float character_coverage, const SentencePieceModel model_type,
                               const std::unordered_map<std::string, std::string> &params,
                               std::shared_ptr<SentencePieceVocab> *vocab);

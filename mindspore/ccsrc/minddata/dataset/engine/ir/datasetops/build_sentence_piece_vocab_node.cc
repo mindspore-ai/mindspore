@@ -30,7 +30,7 @@ namespace dataset {
 
 BuildSentenceVocabNode::BuildSentenceVocabNode(std::shared_ptr<DatasetNode> child,
                                                std::shared_ptr<SentencePieceVocab> vocab,
-                                               const std::vector<std::string> &col_names, uint32_t vocab_size,
+                                               const std::vector<std::string> &col_names, int32_t vocab_size,
                                                float character_coverage, SentencePieceModel model_type,
                                                const std::unordered_map<std::string, std::string> &params)
     : vocab_(vocab),

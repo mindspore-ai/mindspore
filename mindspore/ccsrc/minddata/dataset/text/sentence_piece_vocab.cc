@@ -28,7 +28,7 @@ namespace dataset {
 
 SentencePieceVocab::SentencePieceVocab() : model_proto_("") {}
 
-Status SentencePieceVocab::BuildFromFile(const std::vector<std::string> &path_list, const int vocab_size,
+Status SentencePieceVocab::BuildFromFile(const std::vector<std::string> &path_list, const int32_t vocab_size,
                                          const float character_coverage, const SentencePieceModel model_type,
                                          const std::unordered_map<std::string, std::string> &params,
                                          std::shared_ptr<SentencePieceVocab> *vocab) {

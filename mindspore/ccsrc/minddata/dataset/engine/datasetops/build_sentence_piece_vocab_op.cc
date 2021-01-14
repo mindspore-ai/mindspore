@@ -23,7 +23,7 @@
 namespace mindspore {
 namespace dataset {
 BuildSentencePieceVocabOp::BuildSentencePieceVocabOp(std::shared_ptr<SentencePieceVocab> vocab,
-                                                     std::vector<std::string> col_names, uint32_t vocab_size,
+                                                     std::vector<std::string> col_names, int32_t vocab_size,
                                                      float character_coverage, SentencePieceModel model_type,
                                                      const std::unordered_map<std::string, std::string> &params,
                                                      int32_t op_conn_size)
