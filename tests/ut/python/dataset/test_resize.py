@@ -128,7 +128,7 @@ def test_resize_op_invalid_input():
     test_invalid_input("invalid size parameter shape", (2, 3, 4), Inter.LINEAR, TypeError,
                        "Size should be a single integer or a list/tuple (h, w) of length 2.")
     test_invalid_input("invalid size parameter type in a tuple", (2.3, 3), Inter.LINEAR, TypeError,
-                       "incompatible constructor arguments.")
+                       "Argument size at dim 0 with value 2.3 is not of type (<class 'int'>,)")
     test_invalid_input("invalid Interpolation value", (2.3, 3), None, KeyError, "None")
 
 

@@ -31,7 +31,7 @@ from mindspore import log as logger
 from mindspore.dataset.vision import Inter
 
 
-def test_imagefolder(remove_json_files=True):
+def skip_test_imagefolder(remove_json_files=True):
     """
     Test simulating resnet50 dataset pipeline.
     """
@@ -185,7 +185,7 @@ def test_zip_dataset(remove_json_files=True):
         delete_json_files()
 
 
-def test_random_crop():
+def skip_test_random_crop():
     """
     Test serdes on RandomCrop pipeline.
     """
