@@ -163,10 +163,6 @@ class ExportWriter(BaseWriter):
         if disk_usage(path).free < required_length * FREE_DISK_SPACE_TIMES:
             raise RuntimeError(f"The disk space may be soon exhausted by the '{path}'.")
 
-        if max_file_size is not None and max_file_size < required_length:
-            raise RuntimeWarning(f"'max_file_size' reached: There are {max_file_size} bytes remaining, "
-                                 f"but the '{path}' requires to write {required_length} bytes.")
-
         np_path = "{}/{}_{}.npy".format(path, tag, step)
         np.save(np_path, np_value)
         os.chmod(np_path, FILE_MODE)

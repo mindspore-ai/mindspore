@@ -108,6 +108,7 @@ class SummaryRecord:
             in recording data. Default: False, this means that error logs are printed and no exception is thrown.
         export_options (Union[None, dict]): Perform custom operations on the export data.
             Default: None, it means there is no export data.
+            Note that the size of export files is not limited by the max_file_size.
             You can customize the export data with a dictionary. For example, you can set {'tensor_format': 'npy'}
             to export tensor as npy file. The data that supports control is shown below.
 
@@ -158,19 +159,19 @@ class SummaryRecord:
         self.network = network
         self.has_graph = False
 
-        seconds = str(int(time.time()))
+        time_second = str(int(time.time()))
         # create the summary writer file
-        self.event_file_name = get_event_file_name(self.prefix, self.suffix, seconds)
+        self.event_file_name = get_event_file_name(self.prefix, self.suffix, time_second)
         self.full_file_name = os.path.join(self.log_path, self.event_file_name)
 
         self._export_options = process_export_options(export_options)
         export_dir = ''
         if self._export_options is not None:
-            export_dir = "export_{}".format(seconds)
+            export_dir = "export_{}".format(time_second)
 
         filename_dict = dict(summary=self.full_file_name,
-                             lineage=get_event_file_name(self.prefix, '_lineage'),
-                             explainer=get_event_file_name(self.prefix, '_explain'),
+                             lineage=get_event_file_name(self.prefix, '_lineage', time_second),
+                             explainer=get_event_file_name(self.prefix, '_explain', time_second),
                              exporter=export_dir)
         self._event_writer = WriterPool(log_dir,
                                         max_file_size,
