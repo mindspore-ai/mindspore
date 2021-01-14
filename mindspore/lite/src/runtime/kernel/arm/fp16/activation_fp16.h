@@ -37,8 +37,6 @@ class ActivationFp16CPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int DoActivation(int task_id);
-  int MallocTmpBuffer();
-  void FreeTmpBuffer();
 
  private:
   int thread_count_;

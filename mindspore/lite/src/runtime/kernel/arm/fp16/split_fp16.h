@@ -39,7 +39,6 @@ class SplitFp16CPUKernel : public SplitBaseCPUKernel {
  private:
   float16_t *input_ptr_ = nullptr;
   std::vector<float16_t *> output_ptr_;
-  void FreeInputAndOutput();
 };
 }  // namespace mindspore::kernel
 

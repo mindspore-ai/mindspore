@@ -16,7 +16,6 @@
 #include "src/runtime/kernel/arm/fp16/slice_fp16.h"
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
 #include "src/kernel_registry.h"
-#include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/slice_fp16.h"
 
 using mindspore::lite::KernelRegistrar;
@@ -31,13 +30,12 @@ int SliceFp16CPUKernel::SliceParallelRun(int thread_id) {
 }
 
 int SliceFp16CPUKernel::Run() {
-  input_fp16_ = ConvertInputFp32toFp16(in_tensors_.at(0), context_);
-  output_fp16_ = MallocOutputFp16(out_tensors_.at(0), context_);
-  if (input_fp16_ == nullptr || output_fp16_ == nullptr) {
-    FreeInputAndOutput();
-    MS_LOG(ERROR) << "input or output is nullptr";
-    return RET_ERROR;
-  }
+  auto input_tensor = in_tensors_.at(0);
+  auto output_tensor = out_tensors_.at(0);
+
+  input_fp16_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
+  output_fp16_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
+
   if (param_->size_[1] < op_parameter_->thread_num_) {
     DoSliceFp16NoParallel(input_fp16_, output_fp16_, param_);
     return RET_OK;
@@ -46,23 +44,7 @@ int SliceFp16CPUKernel::Run() {
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "slice launch fail!ret: " << ret;
   }
-  if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    Float16ToFloat32(output_fp16_, reinterpret_cast<float *>(out_tensors_.at(0)->MutableData()),
-                     out_tensors_.at(0)->ElementsNum());
-  }
-  FreeInputAndOutput();
   return ret;
-}
-
-void SliceFp16CPUKernel::FreeInputAndOutput() {
-  if (in_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    context_->allocator->Free(input_fp16_);
-    input_fp16_ = nullptr;
-  }
-  if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    context_->allocator->Free(output_fp16_);
-    output_fp16_ = nullptr;
-  }
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Slice, LiteKernelCreator<SliceFp16CPUKernel>)

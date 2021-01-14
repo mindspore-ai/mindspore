@@ -41,12 +41,6 @@ int GatherCPUKernel::DoGather(int task_id) {
   auto indices_tensor = in_tensors_.at(1);
   auto out_tensor = out_tensors_.at(0);
 
-  auto input_ptr = reinterpret_cast<float *>(input_tensor->MutableData());
-  auto output_ptr = reinterpret_cast<float *>(out_tensor->MutableData());
-
-  auto input_int32 = reinterpret_cast<int32_t *>(input_tensor->MutableData());
-  auto output_int32 = reinterpret_cast<int32_t *>(out_tensor->MutableData());
-
   auto in_shape = input_tensor->shape();
   int in_rank = in_shape.size();
   int indices_element_size = indices_tensor->ElementsNum();
@@ -65,16 +59,15 @@ int GatherCPUKernel::DoGather(int task_id) {
   int count = MSMIN(stride, outer_size - stride * task_id);
   auto thread_stride = stride * task_id;
 
-  int error_code;
-  if (input_tensor->data_type() == kNumberTypeInt32) {
-    input_int32 += thread_stride * limit;
-    output_int32 += thread_stride * indices_element_size;
-    error_code = GatherInt32(input_int32, count, inner_size, limit, indices_data_, indices_element_size, output_int32);
-  } else {
-    input_ptr += thread_stride * limit;
-    output_ptr += thread_stride * indices_element_size;
-    error_code = GatherFp32(input_ptr, count, inner_size, limit, indices_data_, indices_element_size, output_ptr);
-  }
+  int8_t *int8_in = reinterpret_cast<int8_t *>(input_tensor->data_c());
+  int8_t *int8_out = reinterpret_cast<int8_t *>(out_tensor->data_c());
+
+  int data_size = lite::DataTypeSize(input_tensor->data_type());
+  int8_in += thread_stride * limit * data_size;
+  int8_out += thread_stride * indices_element_size * data_size;
+
+  int error_code = Gather(int8_in, count, inner_size, limit, indices_data_, indices_element_size, int8_out, data_size);
+
   return error_code;
 }
 

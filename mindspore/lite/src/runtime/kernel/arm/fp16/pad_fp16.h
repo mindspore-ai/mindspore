@@ -35,9 +35,6 @@ class PadFp16CPUKernel : public PadCPUKernel {
   int RunMirrorPadImpl(int task_id) override;
 
  private:
-  void FreeInputAndOutput();
-  bool is_input_fp32_ = false;
-  bool is_output_fp32_ = false;
   float16_t *input_ = nullptr;
   float16_t *output_ = nullptr;
 };

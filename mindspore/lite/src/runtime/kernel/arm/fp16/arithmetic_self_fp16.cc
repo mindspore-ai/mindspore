@@ -16,7 +16,6 @@
 #include "src/runtime/kernel/arm/fp16/arithmetic_self_fp16.h"
 #include "src/runtime/kernel/arm/fp16/common_fp16.h"
 #include "src/kernel_registry.h"
-#include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/arithmetic_self_fp16.h"
 
 using mindspore::lite::KernelRegistrar;
@@ -72,36 +71,17 @@ int ArithmeticSelfFp16CPUKernel::DoExecute(int task_id) {
   return ret;
 }
 
-void ArithmeticSelfFp16CPUKernel::FreeInputAndOutput() {
-  if (in_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    context_->allocator->Free(input_fp16_ptr_);
-    input_fp16_ptr_ = nullptr;
-  }
-  if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    context_->allocator->Free(output_fp16_ptr_);
-    output_fp16_ptr_ = nullptr;
-  }
-}
-
 int ArithmeticSelfFp16CPUKernel::Run() {
   auto input_tensor = in_tensors_.at(0);
   auto output_tensor = out_tensors_.at(0);
-  input_fp16_ptr_ = ConvertInputFp32toFp16(input_tensor, context_);
-  output_fp16_ptr_ = MallocOutputFp16(output_tensor, context_);
-  if (input_fp16_ptr_ == nullptr || output_fp16_ptr_ == nullptr) {
-    FreeInputAndOutput();
-    MS_LOG(ERROR) << "input or output is nullptr";
-    return RET_ERROR;
-  }
+
+  input_fp16_ptr_ = reinterpret_cast<float16_t *>(input_tensor->data_c());
+  output_fp16_ptr_ = reinterpret_cast<float16_t *>(output_tensor->data_c());
+
   auto ret = ParallelLaunch(this->context_->thread_pool_, ArithmeticSelfRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ArithmeticSelfRun error error_code[" << ret << "]";
   }
-  if (out_tensors_.at(0)->data_type() == kNumberTypeFloat32) {
-    Float16ToFloat32(output_fp16_ptr_, reinterpret_cast<float *>(output_tensor->MutableData()),
-                     output_tensor->ElementsNum());
-  }
-  FreeInputAndOutput();
   return ret;
 }
 
