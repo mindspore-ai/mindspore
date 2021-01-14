@@ -143,7 +143,12 @@ CNodePtr DealRefTransAndCast::AddAdditionalToRefOutput(const FuncGraphPtr &func_
   }
   // insert depend
   if (origin_format != cur_format || origin_type != cur_type) {
-    std::vector<AnfNodePtr> depend_nodes{NewValueNode(prim::kPrimDepend), cnode, final_node};
+    std::vector<AnfNodePtr> depend_nodes;
+    if (get_item.get() != nullptr) {
+      depend_nodes = std::vector<AnfNodePtr>{NewValueNode(prim::kPrimDepend), get_item, final_node};
+    } else {
+      depend_nodes = std::vector<AnfNodePtr>{NewValueNode(prim::kPrimDepend), cnode, final_node};
+    }
     final_node = func_graph->NewCNode(depend_nodes);
     MS_LOG(INFO) << "DealRefTranshwAndCast add denpend, op debug info is " << final_node->DebugString();
   }

@@ -58,8 +58,8 @@ AnfNodePtr InsertCastForMultipleOutput(const FuncGraphPtr &func_graph, const CNo
       origin_type = origin_type == kTypeUnknown ? infer_type : origin_type;
       const auto device_type = AnfAlgo::GetOutputDeviceDataType(cnode, output_idx);
       if (origin_type != device_type) {
-        replace_node =
-          AddCastOpNodeToGraph(func_graph, getitem, dev_fmt, device_type, origin_type, origin_shape, infer_type);
+        replace_node = AddCastOpNodeToGraph(func_graph, getitem, dev_fmt, device_type, origin_type, origin_shape,
+                                            infer_type, AnfAlgo::GetOutputReshapeType(getitem, 0));
         MS_EXCEPTION_IF_NULL(replace_node);
         replace_node->set_scope(cnode->scope());
         AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), replace_node);
@@ -107,8 +107,8 @@ AnfNodePtr InsertCastForOutput(const FuncGraphPtr &func_graph, const CNodePtr &c
     const TypeId device_type = AnfAlgo::GetOutputDeviceDataType(cnode, 0);
     AnfNodePtr replace_node = cnode;
     if (origin_type != device_type) {
-      replace_node =
-        AddCastOpNodeToGraph(func_graph, cnode, dev_fmt, device_type, origin_type, origin_shape, infer_type);
+      replace_node = AddCastOpNodeToGraph(func_graph, cnode, dev_fmt, device_type, origin_type, origin_shape,
+                                          infer_type, AnfAlgo::GetOutputReshapeType(cnode, 0));
       MS_EXCEPTION_IF_NULL(replace_node);
       replace_node->set_scope(cnode->scope());
       AnfAlgo::SetNodeAttr(kAttrVisited, MakeValue(true), replace_node);

@@ -483,6 +483,9 @@ KernelWithIndex AnfRuntimeAlgorithm::GetPrevNodeOutput(const AnfNodePtr &anf_nod
     MS_LOG(EXCEPTION) << anf_node->DebugString() << "anf_node is not CNode."
                       << " trace: " << trace::DumpSourceLines(anf_node);
   }
+  if (CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
+    return VisitKernelWithReturnType(anf_node, 0, visit_nop_node);
+  }
   auto input_node = AnfAlgo::GetInputNode(anf_node->cast<CNodePtr>(), input_idx);
   MS_EXCEPTION_IF_NULL(input_node);
   return VisitKernelWithReturnType(input_node, 0, visit_nop_node);

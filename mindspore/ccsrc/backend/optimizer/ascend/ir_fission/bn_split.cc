@@ -96,7 +96,7 @@ AnfNodePtr CreateOutputsOfBNTrainingUpdate(const FuncGraphPtr &graph, const CNod
   return bn_training_update;
 }
 
-AnfNodePtr SplitFusedBatchNormForTBE(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
+AnfNodePtr SplitBatchNormForTBE(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(node);
 
@@ -125,11 +125,15 @@ AnfNodePtr SplitFusedBatchNormForTBE(const FuncGraphPtr &func_graph, const AnfNo
 const BaseRef BnSplit::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
   MS_EXCEPTION_IF_NULL(Xs);
-  return VectorRef({prim::kPrimFusedBatchNorm, Xs});
+  return VectorRef({prim::kPrimBatchNorm, Xs});
 }
 
 const AnfNodePtr BnSplit::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node, const EquivPtr &) const {
-  return SplitFusedBatchNormForTBE(func_graph, node);
+  if (!GetBoolAttr(node, kAttrIsTraining)) {
+    MS_LOG(INFO) << "is training should be true if do fusion";
+    return nullptr;
+  }
+  return SplitBatchNormForTBE(func_graph, node);
 }
 }  // namespace opt
 }  // namespace mindspore
