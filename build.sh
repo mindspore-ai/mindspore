@@ -509,6 +509,11 @@ get_version() {
     VERSION_STR=${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_REVISION}
 }
 
+write_commit_file() {
+    COMMIT_STR=$(git log -1 | grep commit)
+    echo ${COMMIT_STR} > "${BASEPATH}/mindspore/lite/build/.commit_id"
+}
+
 build_lite()
 {
     get_version
@@ -541,6 +546,7 @@ build_lite()
     fi
     mkdir -pv build
     cd build
+    write_commit_file
     BUILD_TYPE="Release"
     if [[ "${DEBUG_MODE}" == "on" ]]; then
       BUILD_TYPE="Debug"
