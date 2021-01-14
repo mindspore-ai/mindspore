@@ -26,9 +26,7 @@ namespace mindspore::kernel {
 
 class FullConnectionOpenCLKernel : public OpenCLKernel {
  public:
-  FullConnectionOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                             const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
   ~FullConnectionOpenCLKernel() override = default;
 
   int Run() override;

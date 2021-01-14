@@ -25,9 +25,7 @@ namespace mindspore::kernel {
 
 class PowerOpenCLKernel : public OpenCLKernel {
  public:
-  PowerOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
 
   ~PowerOpenCLKernel() override = default;
 

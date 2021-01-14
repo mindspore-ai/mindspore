@@ -25,9 +25,7 @@
 namespace mindspore::kernel {
 class ReshapeOpenCLKernel : public OpenCLKernel {
  public:
-  ReshapeOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
   ~ReshapeOpenCLKernel() override = default;
 
   int Run() override;
@@ -35,6 +33,7 @@ class ReshapeOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
+  int PreProcess() override;
 
  private:
 };

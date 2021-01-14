@@ -25,9 +25,7 @@ namespace mindspore::kernel {
 
 class StrassenOpenCLKernel : public MatMulOpenCLKernel {
  public:
-  StrassenOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs)
-      : MatMulOpenCLKernel(parameter, inputs, outputs) {}
+  using MatMulOpenCLKernel::MatMulOpenCLKernel;
   ~StrassenOpenCLKernel() override = default;
 
  public:

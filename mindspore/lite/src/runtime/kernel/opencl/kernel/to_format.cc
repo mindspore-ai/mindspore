@@ -106,6 +106,19 @@ int ToFormatOpenCLKernel::Run() {
   return RET_OK;
 }
 
+int ToFormatOpenCLKernel::InferShape() {
+  if (infer_shape_flag_) {
+    return RET_OK;
+  }
+  if (in_tensors_[0]->shape().size() == 0 || in_tensors_[0]->ElementsNum() < 0) {
+    MS_LOG(ERROR) << "to_format op in tensor shape is 0, infer shape failed!";
+    return RET_ERROR;
+  }
+  out_tensors_[0]->set_shape(in_tensors_[0]->shape());
+  infer_shape_flag_ = true;
+  return RET_OK;
+}
+
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ToFormat, OpenCLKernelCreator<ToFormatOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ToFormat, OpenCLKernelCreator<ToFormatOpenCLKernel>)
 }  // namespace mindspore::kernel

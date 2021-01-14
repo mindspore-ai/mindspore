@@ -26,9 +26,7 @@
 namespace mindspore::kernel {
 class OneHotOpenCLKernel : public OpenCLKernel {
  public:
-  OneHotOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
   ~OneHotOpenCLKernel() override = default;
 
   int Run() override;

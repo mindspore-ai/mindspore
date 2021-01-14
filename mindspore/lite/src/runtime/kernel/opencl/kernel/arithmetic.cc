@@ -34,6 +34,7 @@ using mindspore::lite::opencl::MemType;
 using mindspore::schema::ActivationType_NO_ACTIVATION;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
+using mindspore::schema::PrimitiveType_BiasAdd;
 using mindspore::schema::PrimitiveType_Eltwise;
 
 namespace mindspore::kernel {
@@ -180,6 +181,9 @@ int ArithmeticOpenCLKernel::Prepare() {
 #else
 
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
+  if (Type() == PrimitiveType_BiasAdd) {
+    const_cast<ArithmeticParameter *>(param)->broadcasting_ = true;
+  }
   element_flag_ = !param->broadcasting_;
   kernel_name_ = param->broadcasting_ ? "BroadcastNHWC4" : "Element";
   kernel_name_ += schema::EnumNamePrimitiveType(Type());
@@ -237,6 +241,7 @@ REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LessEqual, OpenCLKernelCreato
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Greater, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_GreaterEqual, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Eltwise, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_BiasAdd, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Mul, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Add, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Sub, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
@@ -255,4 +260,5 @@ REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LessEqual, OpenCLKernelCreato
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Greater, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_GreaterEqual, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Eltwise, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_BiasAdd, OpenCLKernelCreator<ArithmeticOpenCLKernel>)
 }  // namespace mindspore::kernel

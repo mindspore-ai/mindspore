@@ -26,9 +26,7 @@
 namespace mindspore::kernel {
 class ResizeOpenCLKernel : public OpenCLKernel {
  public:
-  ResizeOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
   ~ResizeOpenCLKernel() override = default;
 
   int Run() override;

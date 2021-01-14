@@ -215,16 +215,33 @@ kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> 
                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                               const mindspore::lite::PrimitiveC *primitive) {
   kernel::OpenCLKernel *kernel;
-  if (IsUseStrassenMatmul(inputs)) {
-    MS_LOG(DEBUG) << "use_matmul_strassen";
-    kernel = new (std::nothrow) StrassenOpenCLKernel(opParameter, inputs, outputs);
+  bool infer_shape_done;
+  if (primitive != nullptr) {
+    infer_shape_done = primitive->infer_flag();
   } else {
-    kernel = new (std::nothrow) MatMulOpenCLKernel(opParameter, inputs, outputs);
+    bool output_shape_setted = true;
+    for (auto output : outputs) {
+      if (output->shape().empty() || output->ElementsNum() < 0) {
+        output_shape_setted = false;
+        break;
+      }
+    }
+    infer_shape_done = output_shape_setted;
+  }
+  if (infer_shape_done && IsUseStrassenMatmul(inputs)) {
+    MS_LOG(DEBUG) << "use_matmul_strassen";
+    kernel = new (std::nothrow) StrassenOpenCLKernel(opParameter, inputs, outputs, ctx, primitive);
+  } else {
+    kernel = new (std::nothrow) MatMulOpenCLKernel(opParameter, inputs, outputs, ctx, primitive);
   }
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
     free(opParameter);
     return nullptr;
+  }
+  if (!infer_shape_done) {
+    MS_LOG(WARNING) << "kernel don't infer shape yet!";
+    return kernel;
   }
   auto ret = kernel->CheckSpecs();
   if (ret != mindspore::lite::RET_OK) {

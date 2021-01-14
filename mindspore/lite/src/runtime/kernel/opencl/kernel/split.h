@@ -25,9 +25,7 @@ namespace mindspore::kernel {
 
 class SplitOpenCLKernel : public OpenCLKernel {
  public:
-  SplitOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
 
   ~SplitOpenCLKernel() override = default;
 

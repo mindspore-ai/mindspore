@@ -25,9 +25,7 @@ namespace mindspore::kernel {
 
 class StridedSliceOpenCLKernel : public OpenCLKernel {
  public:
-  StridedSliceOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                           const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
 
   ~StridedSliceOpenCLKernel() override = default;
 

@@ -26,9 +26,7 @@
 namespace mindspore::kernel {
 class SpaceToDepthOpenCLKernel : public OpenCLKernel {
  public:
-  SpaceToDepthOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                           const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
   ~SpaceToDepthOpenCLKernel() override = default;
 
   int Run() override;

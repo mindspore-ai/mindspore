@@ -28,9 +28,7 @@ namespace mindspore::kernel {
 
 class MatMulOpenCLKernel : public OpenCLKernel {
  public:
-  MatMulOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
   ~MatMulOpenCLKernel() override = default;
 
   int Run() override;

@@ -26,9 +26,7 @@
 namespace mindspore::kernel {
 class ReduceOpenCLKernel : public OpenCLKernel {
  public:
-  ReduceOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
   ~ReduceOpenCLKernel() override = default;
 
   int Run() override;

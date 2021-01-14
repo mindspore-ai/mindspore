@@ -29,9 +29,7 @@ extern std::set<schema::PrimitiveType> SupportedOpenCLArithmetics;
 
 class ArithmeticOpenCLKernel : public OpenCLKernel {
  public:
-  ArithmeticOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                         const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
   ~ArithmeticOpenCLKernel() override = default;
 
   int Run() override;

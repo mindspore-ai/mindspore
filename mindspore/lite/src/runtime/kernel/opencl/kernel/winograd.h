@@ -26,8 +26,9 @@ namespace mindspore::kernel {
 class WinogradOpenCLKernel : public Conv2DOpenCLKernel {
  public:
   WinogradOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs)
-      : Conv2DOpenCLKernel(parameter, inputs, outputs) {
+                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                       const mindspore::lite::PrimitiveC *primitive)
+      : Conv2DOpenCLKernel(parameter, inputs, outputs, ctx, primitive) {
     filter_type_ = MemType::BUF;
   }
 

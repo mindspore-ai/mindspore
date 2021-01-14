@@ -40,9 +40,8 @@ int Conv2dTransposeOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   ConvParameter *param = reinterpret_cast<ConvParameter *>(op_parameter_);
-  if (param->pad_l_ != param->pad_r_ || param->kernel_h_ - param->stride_h_ != 2 * param->pad_l_ ||
-      param->pad_u_ != param->pad_d_ || param->kernel_w_ - param->stride_w_ != 2 * param->pad_u_) {
-    MS_LOG(ERROR) << "only support kernel - stride == 2 * pad";
+  if (param->pad_l_ != param->pad_r_ || param->pad_u_ != param->pad_d_) {
+    MS_LOG(ERROR) << "only support symmetric padding";
     return RET_ERROR;
   }
   if (param->act_type_ != ActType_No && param->act_type_ != ActType_Relu && param->act_type_ != ActType_Relu6) {

@@ -25,9 +25,7 @@ namespace mindspore::kernel {
 
 class GatherOpenCLKernel : public OpenCLKernel {
  public:
-  GatherOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
 
   ~GatherOpenCLKernel() override = default;
 
