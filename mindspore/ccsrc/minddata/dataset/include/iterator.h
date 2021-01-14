@@ -51,8 +51,9 @@ class Iterator {
 
   /// \brief Method for building and launching the pipeline.
   /// \param[in] ops - a vector of DatasetOp in the data pipeline.
+  /// \param[in] num_epochs Number of epochs passed down to EpochCtrlNode, default -1, infinite epochs
   /// \return - a Status error code, returns OK if no error encountered.
-  Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds);
+  Status BuildAndLaunchTree(std::shared_ptr<Dataset> ds, int32_t num_epochs);
 
   /// \brief Function to get the next row from the data pipeline.
   /// \note Type of return data is a map(with column name).

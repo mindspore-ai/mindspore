@@ -141,8 +141,10 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
 
   /// \brief Function to create an Iterator over the Dataset pipeline
   /// \param[in] columns List of columns to be used to specify the order of columns
+  /// \param[in] num_epochs Number of epochs to run through the pipeline, default -1 which means infinite epochs.
+  ///     An empty row is returned at the end of each epoch
   /// \return Shared pointer to the Iterator
-  std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {});
+  std::shared_ptr<Iterator> CreateIterator(std::vector<std::string> columns = {}, int32_t num_epochs = -1);
 
 #ifndef ENABLE_ANDROID
   /// \brief Function to transfer data through a device.
