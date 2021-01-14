@@ -236,6 +236,9 @@ const AnfNodePtr ConstFoldPass::Process(const FuncGraphPtr &func_graph, const An
     }
     lite_primitive->InferShape(input_tensors, output_tensors);
     auto primitive = lite_primitive.get();
+    if (primitive->Type() == schema::PrimitiveType_RandomStandardNormal) {
+      return nullptr;
+    }
     MS_ASSERT(primitive != nullptr);
     MS_ASSERT(primitive->Type() != nullptr);
     auto func_pointer =

@@ -1250,3 +1250,8 @@ table InvertPermutation {
 
 table Size {
 }
+
+table RandomStandardNormal {
+    seed : int;
+    seed2 : int;
+}
