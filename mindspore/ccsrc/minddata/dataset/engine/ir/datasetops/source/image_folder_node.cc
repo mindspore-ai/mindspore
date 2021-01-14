@@ -61,7 +61,7 @@ Status ImageFolderNode::ValidateParams() {
   return Status::OK();
 }
 
-Status ImageFolderNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status ImageFolderNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   // Do internal Schema generation.
   // This arg is exist in ImageFolderOp, but not externalized (in Python API).
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();

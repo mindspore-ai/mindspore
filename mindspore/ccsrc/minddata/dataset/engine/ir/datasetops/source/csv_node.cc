@@ -92,7 +92,7 @@ Status CSVNode::ValidateParams() {
 }
 
 // Function to build CSVNode
-Status CSVNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status CSVNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
   // CSVOp by itself is a non-mappable dataset that does not support sampling.

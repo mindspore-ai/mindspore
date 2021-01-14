@@ -39,7 +39,7 @@ std::shared_ptr<DatasetNode> TakeNode::Copy() {
 void TakeNode::Print(std::ostream &out) const { out << Name() + "(num_rows:" + std::to_string(take_count_) + ")"; }
 
 // Function to build the TakeOp
-Status TakeNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status TakeNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   node_ops->push_back(std::make_shared<TakeOp>(take_count_, connector_que_size_));
   return Status::OK();
 }

@@ -54,7 +54,7 @@ void MapNode::Print(std::ostream &out) const {
       << operations_.size() << ",...)";
 }
 
-Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status MapNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   std::vector<std::shared_ptr<TensorOp>> tensor_ops;
 
   // Build tensorOp from tensorOperation vector

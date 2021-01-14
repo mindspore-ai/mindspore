@@ -42,7 +42,7 @@ void SyncWaitNode::Print(std::ostream &out) const {
 }
 
 // Function to build the BarrierOp
-Status SyncWaitNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status SyncWaitNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   // Right now barrier should only take num_rows_per_buffer = 1
   // The reason for this is because having it otherwise can lead to blocking issues
   // See barrier_op.h for more details

@@ -72,7 +72,7 @@ Status ConcatNode::ValidateParams() {
   return Status::OK();
 }
 
-Status ConcatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
+Status ConcatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   if (children_flag_and_nums_.empty() || children_start_end_index_.empty()) {
     node_ops->push_back(std::make_shared<ConcatOp>(connector_que_size_));
   } else {
