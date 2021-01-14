@@ -36,7 +36,7 @@ Please follow this style to make MindSpore easy to review, maintain and develop.
 
 * Unittest guidelines
 
-    The *Python* unittest style suggested by [pytest](http://www.pytest.org/en/latest/) and *C++* unittest style suggested by [Googletest Primer](https://github.com/google/googletest/blob/master/googletest/docs/primer.md) are used in MindSpore community.
+    The *Python* unittest style suggested by [pytest](http://www.pytest.org/en/latest/) and *C++* unittest style suggested by [Googletest Primer](https://github.com/google/googletest/blob/master/docs/primer.md) are used in MindSpore community.
 
 ### Fork-Pull development model
 
