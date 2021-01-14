@@ -22,6 +22,7 @@
 #include <string>
 #include <memory>
 #include <unordered_map>
+#include <sstream>
 #include <algorithm>
 #include "pipeline/jit/parse/resolve.h"
 #include "frontend/operator/ops.h"
@@ -1192,6 +1193,21 @@ FunctionBlockPtr Parser::GenerateBlockInFor(const TraceInfoPtr &trace_info) {
   return body_block;
 }
 
+int64_t GetForTransToWhileLoop() {
+  static const auto loop_str = common::GetEnv("ENV_FOR_TO_WHILE_LOOP");
+  // int64 support 63bits positive num mostly.
+  if (loop_str.size() > 63 || loop_str.empty()) {
+    return MAX_FOR_LOOP_COUNT;
+  }
+  if (std::any_of(loop_str.begin(), loop_str.end(), [](char c) { return c < '0' || c > '9'; })) {
+    return MAX_FOR_LOOP_COUNT;
+  }
+  int64_t loop_count;
+  std::stringstream ss;
+  ss << loop_str;
+  ss >> loop_count;
+  return loop_count;
+}
 // A for loop will generate 3 functions :the test, the body, and the continuation
 // for x in xs:
 //    body
@@ -1208,8 +1224,8 @@ FunctionBlockPtr Parser::ParseFor(const FunctionBlockPtr &block, const py::objec
   py::object iter_obj = python_adapter::GetPyObjAttr(node, NAMED_PRIMITIVE_ITER);
   AnfNodePtr iter_node = ParseExprNode(block, iter_obj);
   CNodePtr len_iter = block->func_graph()->NewCNode({op_len, iter_node});
-  CNodePtr bool_node =
-    block->func_graph()->NewCNode({NewValueNode(prim::kPrimScalarLt), len_iter, NewValueNode(MAX_FOR_LOOP_COUNT)});
+  CNodePtr bool_node = block->func_graph()->NewCNode(
+    {NewValueNode(prim::kPrimScalarLt), len_iter, NewValueNode(GetForTransToWhileLoop())});
 
   // create statement 'if len(xs) < prim::MAX_FOR_LOOP_COUNT then ParseForIter else ParseForLoop'
   FunctionBlockPtr true_block = nullptr;
