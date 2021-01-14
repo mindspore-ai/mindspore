@@ -340,11 +340,11 @@ class FrameworkParser:
 
             data_type = attrs.get('data_type')
             data_type = data_type.replace("host.", "")
-            if data_type.startswith('vm.'):
+            if data_type.startswith('vm_'):
                 if self._backend_type and self._backend_type != 'vm':
                     raise ProfilerRawFileException('Backend type is inconsistent.')
                 self._backend_type = 'vm'
-                data_type = data_type.split('.')[1]
+                _, data_type = data_type.split('_', 1)
             else:
                 if self._backend_type and self._backend_type != 'ge':
                     raise ProfilerRawFileException('Backend type is inconsistent.')
@@ -398,11 +398,11 @@ class FrameworkParser:
 
             data_type = attrs.get('data_type')
             data_type = data_type.replace("host.", "")
-            if data_type.startswith('vm.'):
+            if data_type.startswith('vm_'):
                 if self._backend_type and self._backend_type != 'vm':
                     raise ProfilerRawFileException('Backend type is inconsistent.')
                 self._backend_type = 'vm'
-                data_type = data_type.split('.')[1]
+                _, data_type = data_type.split('_', 1)
             else:
                 if self._backend_type and self._backend_type != 'ge':
                     raise ProfilerRawFileException('Backend type is inconsistent.')
