@@ -141,11 +141,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     // init old node indecies
     auto old_nodes = GetGraphNodes();
     Optimizer formatTransOptimizer;
-    auto formatTransPass = new (std::nothrow) FormatTransPass();
-    if (formatTransPass == nullptr) {
-      MS_LOG(ERROR) << "new formatTransPass failed";
-      return RET_MEMORY_FAILED;
-    }
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
     formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     formatTransOptimizer.AddPass(new (std::nothrow) TransOpRemovePass());
@@ -164,11 +159,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     // init old node indecies
     auto old_nodes = GetGraphNodes();
     Optimizer formatTransOptimizer;
-    auto formatTransPass = new (std::nothrow) FormatTransPass();
-    if (formatTransPass == nullptr) {
-      MS_LOG(ERROR) << "new formatTransPass failed";
-      return RET_MEMORY_FAILED;
-    }
     if (!ctx.trainModel && ctx.fmk != converter::FmkType_ONNX) {
       formatTransOptimizer.AddPass(new (std::nothrow) GlobalFormatTransformPass());
       formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());

@@ -57,7 +57,13 @@ struct PostQuantConfig {
   bool bias_correction{false};
   bool mixed{false};
   float mean_error_threshold{0.04};
+  std::vector<std::vector<std::vector<int>>> input_shapes;  // different input
   bool inited{false};
+};
+
+struct SessionModel {
+  session::LiteSession *session{nullptr};
+  Model *model{nullptr};
 };
 
 /**
@@ -96,6 +102,8 @@ STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, doubl
 std::pair<float, float> OutlierMethod(std::vector<float> min_datas, std::vector<float> max_datas);
 
 std::vector<int8_t> KMeans(float *data, size_t elem_count, size_t k, size_t epochs, schema::QuantParamT *quantParam);
+
+STATUS UpdateTensorDataAndSize(ParamValueLitePtr weight, void *quant_datas, int new_size);
 
 template <typename T>
 T QuantizeData(const float originData, const schema::QuantParamT *quantParam) {
@@ -148,27 +156,17 @@ T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quan
     return static_cast<T>(quant_data);
   }();
 }
+
 template <typename T>
 STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<PrimitiveC> &primitive_c, QuantType quantType,
-                   int quant_max, int quant_min, size_t bitNum, bool per_channel, bool k_means = false) {
+                   int quant_max, int quant_min, size_t bitNum, bool per_channel, int index = 1, bool k_means = false) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive_c != nullptr);
   auto dims = weight->tensor_shape();
-  auto op_type = (schema::PrimitiveType)primitive_c->Type();
   if (per_channel) {
-    if (dims.size() != 4 && dims.size() != 2 && op_type != schema::PrimitiveType_MatMul) {
-      MS_LOG(INFO) << "weight dims size: " << dims.size() << " switch to per-layer quant mode.";
+    if (dims.size() <= 1) {
+      MS_LOG(WARNING) << "dims is " << dims.size() << " can not per_channel";
       per_channel = false;
-    } else {
-      if (dims.size() == 2 && op_type != schema::PrimitiveType_FullConnection) {
-        MS_LOG(INFO) << "weight dims size is 2 but op_type is not FullConnection, switch to per-layer quant mode.";
-        per_channel = false;
-      }
-      uint32_t channels = dims[0];
-      if (channels == 0) {
-        MS_LOG(ERROR) << "channels is 0";
-        return RET_ERROR;
-      }
     }
   }
 
@@ -261,12 +259,11 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
       }
       quant_params.emplace_back(quant_param);
     }
-    auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(T));
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy error: " << ret;
+    auto status = UpdateTensorDataAndSize(weight, quant_datas.data(), quant_datas.size() * sizeof(T));
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
       return RET_ERROR;
     }
-    weight->set_tensor_size(elem_count * sizeof(T));
   } else {
     // per layer
     float min = FLT_MAX;
@@ -294,12 +291,11 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
         quant_datas[i] = quant_data;
       }
     }
-    auto ret = memcpy_s(raw_datas, weight->tensor_size(), quant_datas.data(), elem_count * sizeof(T));
-    if (ret != EOK) {
-      MS_LOG(ERROR) << "memcpy error: " << ret;
+    auto status = UpdateTensorDataAndSize(weight, quant_datas.data(), quant_datas.size() * sizeof(T));
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
       return RET_ERROR;
     }
-    weight->set_tensor_size(elem_count * sizeof(T));
   }
 
   // do bit pack
@@ -311,21 +307,19 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
     if (bitNum > 0 && bitNum < 8) {
       std::vector<uint8_t> pack_data{};
       BitPack::BitPacking<T, uint8_t>(bitNum, data, &pack_data);
-      auto ret = memcpy_s(raw_datas, weight->tensor_size(), pack_data.data(), pack_data.size() * sizeof(uint8_t));
-      if (ret != EOK) {
-        MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas_packed failed";
+      auto status = UpdateTensorDataAndSize(weight, pack_data.data(), pack_data.size() * sizeof(uint8_t));
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
         return RET_ERROR;
       }
-      weight->set_tensor_size(pack_data.size() * sizeof(uint8_t));
     } else if (bitNum > 8 && bitNum < 16) {
       std::vector<uint16_t> pack_data{};
       BitPack::BitPacking<T, uint16_t>(bitNum, data, &pack_data);
-      auto ret = memcpy_s(raw_datas, weight->tensor_size(), pack_data.data(), pack_data.size() * sizeof(uint16_t));
-      if (ret != EOK) {
-        MS_LOG(ERROR) << "PostBitPack memcpy_s qDatas_packed failed";
+      auto status = UpdateTensorDataAndSize(weight, pack_data.data(), pack_data.size() * sizeof(uint16_t));
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "UpdateTensorDataAndSize error";
         return RET_ERROR;
       }
-      weight->set_tensor_size(pack_data.size() * sizeof(uint16_t));
     }
   }
 
@@ -336,7 +330,7 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
   if (quantType == QuantType_PostTraining) {
     primitive_c->AddInputQuantParam(quant_params);
   } else {
-    primitive_c->set_input_quant_param(WEIGHT_INDEX, quant_params);
+    primitive_c->set_input_quant_param(index, quant_params);
   }
   return RET_OK;
 }
@@ -347,8 +341,7 @@ schema::PrimitiveType NodePrimitiveType(const CNodePtr &cnode);
 
 STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_config);
 
-session::LiteSession *CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags,
-                                               int thread_num);
+SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num);
 
 STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t count_limited,
                           std::vector<std::vector<std::string>> *inputs);
@@ -359,6 +352,5 @@ STATUS CopyInputDataToTensor(size_t input_index, size_t image_index,
 FuncGraphPtr CopyFuncGraph(const FuncGraphPtr &);
 
 void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, ParamValueLitePtr *param_value);
-
 }  // namespace mindspore::lite::quant
 #endif

@@ -418,6 +418,13 @@ PostTrainingQuantizer::PostTrainingQuantizer(FuncGraphPtr graph, string path, in
   }
 }
 
+PostTrainingQuantizer::~PostTrainingQuantizer() {
+  delete fp32_session_;
+  delete fp32_model_;
+  delete int8_session_;
+  delete int8_model_;
+}
+
 STATUS PostTrainingQuantizer::DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min,
                                            const std::shared_ptr<PrimitiveC> &lite_primitive) const {
   MS_ASSERT(max_min != nullptr);
@@ -1435,8 +1442,10 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
   // anf -- fb
   flags.quantType = schema::QuantType_QUANT_NONE;
   MS_LOG(INFO) << "start create session";
-  fp32_session_ = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum());
-  if (fp32_session_ == nullptr) {
+  auto sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum());
+  fp32_session_ = sm.session;
+  fp32_model_ = sm.model;
+  if (fp32_session_ == nullptr || fp32_model_ == nullptr) {
     MS_LOG(ERROR) << "create session failed!";
     return RET_ERROR;
   }
@@ -1481,8 +1490,10 @@ STATUS PostTrainingQuantizer::DoQuantize(FuncGraphPtr func_graph) {
     // init in8 session
     MS_LOG(INFO) << "create quant session";
     flags.quantType = schema::QuantType_PostTraining;
-    int8_session_ = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum());
-    if (int8_session_ == nullptr) {
+    auto int8_sm = CreateSessionByFuncGraph(func_graph, flags, calibrator_->GetThreadNum());
+    int8_session_ = int8_sm.session;
+    int8_model_ = int8_sm.model;
+    if (int8_session_ == nullptr || int8_model_ == nullptr) {
       MS_LOG(ERROR) << "create session failed!";
       return RET_ERROR;
     }

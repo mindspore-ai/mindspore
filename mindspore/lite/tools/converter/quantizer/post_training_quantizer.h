@@ -46,7 +46,7 @@ class PostTrainingQuantizer : public Quantizer {
  public:
   PostTrainingQuantizer(FuncGraphPtr graph, std::string path, int bit_num, TypeId target_type = kNumberTypeInt8,
                         bool per_channel = true);
-  ~PostTrainingQuantizer() = default;
+  ~PostTrainingQuantizer();
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
 
@@ -64,7 +64,9 @@ class PostTrainingQuantizer : public Quantizer {
   std::unique_ptr<Calibrator> calibrator_;
 
   session::LiteSession *fp32_session_{nullptr};
+  Model *fp32_model_{nullptr};
   session::LiteSession *int8_session_{nullptr};
+  Model *int8_model_{nullptr};
 
   std::map<std::string, std::vector<float>> fp32_op_input_map;           // concurency
   std::map<std::string, std::vector<float>> fp32_op_output_ch_mean_map;  // concurency
