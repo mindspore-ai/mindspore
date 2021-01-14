@@ -68,7 +68,7 @@ class HcclKernelFactory {
 
  public:
   static HcclKernelFactory &Get();
-  void Registe(const string &name, HcclKernelCreater &&fun);
+  void Register(const string &name, HcclKernelCreater &&fun);
   static std::shared_ptr<HcclKernel> Get(const string &name);
 
  private:
@@ -78,7 +78,7 @@ class HcclKernelFactory {
 class _HcclKernelRegister {
  public:
   _HcclKernelRegister(const string &name, HcclKernelCreater &&fun) {
-    HcclKernelFactory::Get().Registe(name, std::move(fun));
+    HcclKernelFactory::Get().Register(name, std::move(fun));
   }
   ~_HcclKernelRegister() = default;
 };

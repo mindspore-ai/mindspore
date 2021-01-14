@@ -99,7 +99,7 @@ bool FinalizeHccl() {
   if (ops_kernel_info_store != nullptr) {
     auto ret = ops_kernel_info_store->Finalize();
     if (ret != ge::SUCCESS) {
-      MS_LOG(ERROR) << "Destory info store failed, ret = " << ret;
+      MS_LOG(ERROR) << "Destroy info store failed, ret = " << ret;
       return false;
     }
   }
@@ -107,7 +107,7 @@ bool FinalizeHccl() {
   if (ops_kernel_builder != nullptr) {
     auto ret = ops_kernel_builder->Finalize();
     if (ret != ge::SUCCESS) {
-      MS_LOG(ERROR) << "Destory builder failed, ret = " << ret;
+      MS_LOG(ERROR) << "Destroy builder failed, ret = " << ret;
       return false;
     }
   }
@@ -151,7 +151,30 @@ bool GenTask(const AnfNodePtr &node, HcclDataType datatype, std::vector<HcclTask
   return true;
 }
 
-bool CalcOpRunningParam(const AnfNodePtr &node) { return true; }
+int64_t CalcWorkspaceSize(const AnfNodePtr &node, HcclDataType datatype) {
+  MS_EXCEPTION_IF_NULL(ops_kernel_builder);
+  MS_LOG(INFO) << "Start calc workspace size for hccl node " << node->DebugString() << " ,dtype is " << datatype;
+  auto [ge_node, ge_graph] = GenerateStubGeNode(node, datatype);
+  MS_EXCEPTION_IF_NULL(ge_node);
+  auto op = ge_node->GetOpDesc();
+  MS_EXCEPTION_IF_NULL(op);
+
+  MS_LOG(INFO) << "Start to call CalcOpRunningParam";
+  ge::Status ret = ops_kernel_builder->CalcOpRunningParam(*ge_node);
+  if (ret != ge::SUCCESS) {
+    MS_LOG(ERROR) << "OpsKernelBuilder CalcOpRunningParam failed, ret = " << ret;
+    return false;
+  }
+
+  auto workspace_sizes = op->GetWorkspaceBytes();
+  if (workspace_sizes.size() != 1) {
+    MS_LOG(EXCEPTION) << "Unexpected workspace size " << workspace_sizes.size();
+  }
+  int64_t workspace_size = workspace_sizes[0];
+  MS_LOG(INFO) << "Node " << node->DebugString() << " workspace size is " << workspace_size;
+  ge_graph.reset();
+  return workspace_size;
+}
 
 void *GetHcclOpsKernelInfoStore() { return ops_kernel_info_store.get(); }
 

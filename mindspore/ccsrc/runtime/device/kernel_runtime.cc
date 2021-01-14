@@ -433,6 +433,7 @@ void KernelRuntime::UpdateRefNodeOutputMem(const session::KernelGraph *graph) {
 void KernelRuntime::AssignCommunicationNodeMem(MemType type, const AnfNodePtr &node) {
   AssignCommunicationNodeInputMem(type, node);
   AssignCommunicationNodeOutputMem(type, node);
+  AssignWorkSpaceMem(type, node);
 }
 
 void KernelRuntime::AssignCommunicationNodeOutputMem(MemType type, const AnfNodePtr &node) {
