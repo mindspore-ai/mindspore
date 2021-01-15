@@ -83,7 +83,7 @@ class ResNetFea(nn.Cell):
         self.conv1 = _conv(3, 64, kernel_size=7, stride=2, padding=3, pad_mode='pad')
         self.bn1 = _BatchNorm2dInit(64, affine=bn_training, use_batch_statistics=bn_training)
         self.relu = P.ReLU()
-        self.maxpool = P.MaxPool(ksize=3, strides=2, padding="SAME")
+        self.maxpool = P.MaxPool(kernel_size=3, strides=2, pad_mode="SAME")
         self.weights_update = weights_update
 
         if not self.weights_update:

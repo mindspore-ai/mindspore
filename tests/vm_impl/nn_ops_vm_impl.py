@@ -156,7 +156,7 @@ def vm_impl_max_pool_grad_with_argmax(self):
         dout = dout.asnumpy()
         arg_max = argmax.asnumpy()
         dx = vm.max_pool_grad_with_argmax(x, dout, arg_max,
-                                          self.ksize[1], self.ksize[2], self.strides[1])
+                                          self.kernel_size[1], self.kernel_size[2], self.strides[1])
         return Tensor(dx)
 
     return vm_impl
@@ -168,7 +168,7 @@ def vm_impl_max_pool_with_argmax(self):
 
     def vm_impl(x):
         x = x.asnumpy()
-        out, out_argmax = vm.max_pool_with_argmax(x, self.ksize[1], self.ksize[2], self.strides[1])
+        out, out_argmax = vm.max_pool_with_argmax(x, self.kernel_size[1], self.kernel_size[2], self.strides[1])
         return Tensor(out), Tensor(out_argmax)
 
     return vm_impl
@@ -180,7 +180,7 @@ def vm_impl_max_pool(self):
 
     def vm_impl(x):
         x = x.asnumpy()
-        out = vm.max_pooling(x, self.ksize[-2], self.ksize[-1], self.strides[-2])
+        out = vm.max_pooling(x, self.kernel_size[-2], self.kernel_size[-1], self.strides[-2])
         return Tensor(out)
 
     return vm_impl
@@ -193,7 +193,7 @@ def vm_impl_max_pool_grad(self):
     def vm_impl(x, out, dout):
         x = x.asnumpy()
         dout = dout.asnumpy()
-        out = vm.max_pool_grad(x, dout, self.ksize[-2], self.ksize[-1], self.strides[-2])
+        out = vm.max_pool_grad(x, dout, self.kernel_size[-2], self.kernel_size[-1], self.strides[-2])
         return Tensor(out)
 
     return vm_impl
@@ -205,7 +205,7 @@ def vm_impl_avg_pool(self):
 
     def vm_impl(x):
         x = x.asnumpy()
-        out = vm.avg_pooling(x, self.ksize[-2], self.ksize[-1], self.strides[-2])
+        out = vm.avg_pooling(x, self.kernel_size[-2], self.kernel_size[-1], self.strides[-2])
         return Tensor(out)
 
     return vm_impl
@@ -217,7 +217,7 @@ def vm_impl_avg_pool_grad(self):
 
     def vm_impl(dout, origin_shape):
         dout = dout.asnumpy()
-        out = vm.avg_pool_grad(dout, origin_shape, self.ksize[-2], self.ksize[-1], self.strides[-2])
+        out = vm.avg_pool_grad(dout, origin_shape, self.kernel_size[-2], self.kernel_size[-1], self.strides[-2])
         return Tensor(out)
 
     return vm_impl

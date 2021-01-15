@@ -30,7 +30,7 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   dnnl::memory::desc dst_desc = GetDefaultMemDesc(dst_shape);
   std::vector<int> origin_kernel_sizes;
   std::vector<int> strides;
-  std::vector<int64_t> kernel_sizes_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KSIZE);
+  std::vector<int64_t> kernel_sizes_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, KERNEL_SIZE);
   std::vector<int64_t> strides_me = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(kernel_node, STRIDES);
   (void)std::transform(kernel_sizes_me.begin(), kernel_sizes_me.end(), std::back_inserter(origin_kernel_sizes),
                        [](const int64_t &value) { return static_cast<int>(value); });
@@ -41,7 +41,7 @@ void PoolingCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   }
   dnnl::memory::dims strides_dims{strides[2], strides[3]};
   dnnl::memory::dims kernels_dims{origin_kernel_sizes[2], origin_kernel_sizes[3]};
-  const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PADDING);
+  const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
   std::vector<size_t> kernel_size({IntToSize(origin_kernel_sizes[2]), IntToSize(origin_kernel_sizes[3])});

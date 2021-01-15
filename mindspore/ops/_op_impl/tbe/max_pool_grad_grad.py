@@ -23,9 +23,9 @@ max_pool_grad_grad_op_info = TBERegOp("MaxPoolGradGrad") \
     .compute_cost(10) \
     .kernel_name("max_pool_grad_grad") \
     .partial_flag(True) \
-    .attr("ksize", "required", "listInt", "all") \
+    .attr("kernel_size", "required", "listInt", "all") \
     .attr("strides", "required", "listInt", "all") \
-    .attr("padding", "required", "str", "all") \
+    .attr("pad_mode", "required", "str", "all") \
     .attr("data_format", "optional", "str", "all") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \

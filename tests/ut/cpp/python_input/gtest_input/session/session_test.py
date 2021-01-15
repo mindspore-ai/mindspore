@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-import mindspore as ms
+import mindspore.common.dtype as mstype
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 
@@ -21,12 +21,12 @@ add = P.TensorAdd()
 reshape = P.Reshape()
 cast = P.Cast()
 tuple_getitem = Primitive('tuple_getitem')
-max_pool = P.MaxPoolWithArgmax(padding="same", ksize=3, strides=2)
+max_pool = P.MaxPoolWithArgmax(pad_mode="same", kernel_size=3, strides=2)
 
 
 def test_addn_cast(x, y, z):
     mysum = addn((x, y, z))
-    res = cast(mysum, ms.float16)
+    res = cast(mysum, mstype.float16)
     return res
 
 

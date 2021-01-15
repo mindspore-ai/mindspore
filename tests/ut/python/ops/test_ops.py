@@ -1635,20 +1635,20 @@ test_case_nn_ops = [
         'desc_inputs': [[1, 3, 4, 4]],
         'desc_bprop': [[1, 3, 4, 4]]}),
     ('MaxPool', {
-        'block': P.MaxPool(ksize=(2, 2), strides=(2, 2), padding="VALID"),
+        'block': P.MaxPool(kernel_size=(2, 2), strides=(2, 2), pad_mode="VALID"),
         'desc_inputs': [[100, 3, 28, 28]],
         'desc_bprop': [[100, 3, 14, 14]]}),
     ('MaxPoolGrad', {
-        'block': G.MaxPoolGrad(ksize=(2, 2), strides=(2, 2), padding="VALID"),
+        'block': G.MaxPoolGrad(kernel_size=(2, 2), strides=(2, 2), pad_mode="VALID"),
         'desc_inputs': [[3, 4, 6, 6], [3, 4, 3, 3], [3, 4, 3, 3]],
         'desc_bprop': [[3, 4, 6, 6]],
         'skip': ['backward']}),
     ('AvgPool', {
-        'block': P.AvgPool(ksize=(2, 2), strides=(2, 2), padding="VALID"),
+        'block': P.AvgPool(kernel_size=(2, 2), strides=(2, 2), pad_mode="VALID"),
         'desc_inputs': [[100, 3, 28, 28]],
         'desc_bprop': [[100, 3, 14, 14]]}),
     ('MaxPoolWithArgmax', {
-        'block': P.MaxPoolWithArgmax(ksize=2, strides=2),
+        'block': P.MaxPoolWithArgmax(kernel_size=2, strides=2),
         'desc_inputs': [[128, 32, 32, 64]],
         'desc_bprop': [[128, 32, 16, 32], ([128, 32, 16, 32], {'dtype': np.int32})]}),
     ('SoftmaxCrossEntropyWithLogits', {
@@ -2218,7 +2218,7 @@ test_case_array_ops = [
         'desc_inputs': [Tensor(np.array([1], np.float32)),
                         Tensor(np.array([1], np.float32)),
                         Tensor(np.array([1], np.float32))],
-        'desc_bprop': [[3, ]]}),
+        'desc_bprop': [[3,]]}),
     ('Pack_0', {
         'block': NetForPackInput(P.Pack()),
         'desc_inputs': [[2, 2], [2, 2], [2, 2]],
@@ -2640,7 +2640,7 @@ test_case_other_ops = [
                         Tensor(np.random.rand(1, 64).astype(np.float16)),
                         Tensor(np.random.rand(1, 64).astype(np.float16)),
                         Tensor(np.random.rand(96, 256).astype(np.float16)),
-                        Tensor(np.random.rand(256, ).astype(np.float16))],
+                        Tensor(np.random.rand(256,).astype(np.float16))],
         'desc_bprop': [Tensor(np.random.rand(1, 64).astype(np.float16)),
                        Tensor(np.random.rand(1, 64).astype(np.float16)),
                        Tensor(np.random.rand(1, 64).astype(np.float16)),

@@ -109,7 +109,7 @@ class DefinedNet(nn.Cell):
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=0, weight_init="zeros")
         self.bn1 = nn.BatchNorm2d(64)
         self.relu = nn.ReLU()
-        self.maxpool = P.MaxPoolWithArgmax(padding="same", ksize=2, strides=2)
+        self.maxpool = P.MaxPoolWithArgmax(pad_mode="same", kernel_size=2, strides=2)
         self.flatten = nn.Flatten()
         self.fc = nn.Dense(int(56 * 56 * 64), num_classes)
 

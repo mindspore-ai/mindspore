@@ -61,7 +61,7 @@ const AnfNodePtr MaxPoolWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &graph
   MS_EXCEPTION_IF_NULL(maxpool_with_argmax);
 
   TypeId argmax_dtype = kNumberTypeUInt16;
-  auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_with_argmax, kAttrKsize);
+  auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_with_argmax, kAttrKernelSize);
   auto output_shape = AnfAlgo::GetOutputInferShape(maxpool_with_argmax, 0);
   auto argmax_shape = output_shape;
   if (argmax_shape.size() != 4) {
@@ -96,7 +96,7 @@ const AnfNodePtr MaxPoolGradWithArgmaxUnifyMindIR::Process(const FuncGraphPtr &g
   MS_EXCEPTION_IF_NULL(tuple_getitem0_anf);
 
   TypeId argmax_dtype = kNumberTypeUInt16;
-  auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_grad_with_argmax, kAttrKsize);
+  auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool_grad_with_argmax, kAttrKernelSize);
   auto argmax_shape = AnfAlgo::GetOutputInferShape(tuple_getitem0_anf, 0);
   if (argmax_shape.size() != 4) {
     MS_LOG(DEBUG) << "argmax's infer shape size not equal 4";
