@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,582 +13,23 @@
 # limitations under the License.
 # ============================================================================
 """array operations, the function docs are adapted from Numpy API."""
-from copy import copy as py_copy
 
-import numpy as onp
-
-from ..common import Tensor
 from ..common import dtype as mstype
 from ..ops import operations as P
 from ..ops import functional as F
 from ..ops.primitive import constexpr
+from ..nn import Cell
 
-from .utils import _check_shape, _check_shape_compile, _check_dtype, _check_is_int, \
-    _check_axes_range, _check_start_normalize, _check_shape_contain_zero, _check_is_tensor, \
-    _check_input_for_asarray, _deep_list, _deep_tensor_to_nparray, _check_is_list, \
-    _covert_list_tensor_to_tuple_tensor
+from .utils import _covert_list_tensor_to_tuple_tensor, _expand, _broadcast_to, \
+    _is_empty
+from .utils_const import _check_is_int, _check_axes_range, _check_start_normalize, \
+    _check_is_tensor, _check_is_tuple, _check_is_list, _raise_type_error, _raise_value_error, \
+    _infer_out_shape, _get_index_for_unique, _get_counts_for_unique, _empty, _promote, \
+    _min, _check_same_type, _check_input_tensor
 
-DEFAULT_FLOAT_DTYPE = mstype.float32
-DEFAULT_INT_DTYPE = mstype.int32
 # According to official numpy reference, the dimension of a numpy array must be less
 # than 32
 MAX_NUMPY_DIMS = 32
-
-def array(obj, dtype=None, copy=True, ndmin=0):
-    """
-    Creates a tensor.
-
-    This function creates tensors from an array-like object.
-
-    Args:
-        obj (Union[int, float, bool, list, tuple, numpy.ndarray]): Input data, in
-        any form that can be converted to a tensor. This includes lists, lists of
-        tuples, tuples, tuples of tuples, tuples of lists and numpy.ndarray.
-        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
-            be in format of np.int32, or `int32`. If dtype is None, the data type
-            of the new tensor will be inferred from obj. Default is None.
-        copy (bool): If true, then the object is copied. Otherwise, a copy will
-            only be made if necessary. Default: True.
-        ndmin (int): Specifies the minimum number of dimensions that the resulting
-            tensor should have. Ones will be pre-pended to the shape as needed to
-            meet this requirement. Default: 0
-
-    Returns:
-        Tensor, generated tensor with the specified dtype.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.array([1,2,3]))
-        [1 2 3]
-    """
-    if ndmin > 0:
-        # Fall back to original numpy creation.
-        if isinstance(obj, Tensor):
-            obj = obj.asnumpy()
-        return asarray(onp.array(obj, dtype, copy=copy, ndmin=ndmin))
-
-    if not copy:
-        return asarray(obj, dtype=dtype)
-
-    obj = py_copy(obj)
-    return asarray(obj, dtype=dtype)
-
-
-def asarray(a, dtype=None):
-    """
-    Converts the input to tensor.
-
-    This function converts tensors from an array-like object.
-
-    Args:
-        a (Union[int, float, bool, list, tuple, numpy.ndarray]): Input data, in
-        any form that can be converted to a tensor. This includes lists, lists of
-        tuples, tuples, tuples of tuples, tuples of lists and ndarrays.
-        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
-            be in format of np.int32, or `int32`. If dtype is None, the data type
-            of the new tensor will be inferred from a. Default is None.
-
-    Returns:
-        Tensor, generated tensor with the specified dtype.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.asarray([1,2,3]))
-        [1 2 3]
-    """
-
-    if dtype is not None:
-        dtype = _check_dtype(dtype)
-
-    _ = _check_input_for_asarray(a)
-
-    if isinstance(a, float) and (dtype is None):
-        dtype = DEFAULT_FLOAT_DTYPE
-
-    if isinstance(a, int) and not isinstance(a, bool) and (dtype is None):
-        dtype = DEFAULT_INT_DTYPE
-
-    if isinstance(a, bool) and (dtype is None):
-        dtype = mstype.bool_
-
-    if isinstance(a, (list, tuple)):
-        # Convert all tuple/nested tuples to lists
-        a = _deep_list(a)
-        # Convert all tensor sub-elements to numpy arrays
-        a = _deep_tensor_to_nparray(a)
-        a = onp.asarray(a)
-        # If dtype is not specified, we keep consistent with numpy decision
-        # only exceptions are: we use int/float32
-        if dtype is None:
-            if a.dtype is onp.dtype('int64'):
-                dtype = DEFAULT_INT_DTYPE
-            elif a.dtype is onp.dtype('float64'):
-                dtype = DEFAULT_FLOAT_DTYPE
-
-    if isinstance(a, onp.ndarray) and dtype is None:
-        if a.dtype is onp.dtype('bool'):
-            dtype = mstype.bool_
-        elif a.dtype is onp.dtype('int'):
-            dtype = DEFAULT_INT_DTYPE
-        elif a.dtype is onp.dtype('float'):
-            dtype = DEFAULT_FLOAT_DTYPE
-        a = Tensor.from_numpy(a)
-
-    # If a is already a tensor and we don't need to cast dtype, return a
-    if isinstance(a, Tensor):
-        if dtype is None:
-            return a
-        dtype = _check_dtype(dtype)
-        if dtype == a.dtype:
-            return a
-
-    return Tensor(a, dtype=dtype)
-
-
-def asfarray(a, dtype=DEFAULT_FLOAT_DTYPE):
-    """
-    Similar to asarray, converts the input to a float tensor.
-
-    If non-float dtype is defined, this function will return a float32 tensor instead.
-
-    Args:
-        a (Union[int, float, bool, list, tuple, numpy.ndarray]): Input data, in
-        any form that can be converted to a tensor. This includes lists, lists of
-        tuples, tuples, tuples of tuples, tuples of lists and numpy.ndarray.
-        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
-            be in format of np.float32, or `float32`. Default is mstype.float32.
-
-    Returns:
-        Tensor, generated tensor with the specified float dtype.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.asfarray([1,2,3]))
-        [1. 2. 3.]
-    """
-    dtype = _check_dtype(dtype)
-    _ = _check_input_for_asarray(a)
-
-    if dtype not in (mstype.float16, mstype.float32, mstype.float64):
-        dtype = DEFAULT_FLOAT_DTYPE
-
-    if isinstance(a, (list, tuple)):
-        # Convert all tuple/nested tuples to lists
-        a = _deep_list(a)
-        # Convert all tensor sub-elements to numpy arrays
-        a = _deep_tensor_to_nparray(a)
-        a = onp.asarray(a)
-
-    if isinstance(a, onp.ndarray):
-        a = Tensor.from_numpy(a)
-
-    return Tensor(a, dtype)
-
-
-def copy_(a):
-    """
-    Returns a tensor copy of the given object.
-
-    Args:
-        a (Tensor): Input tensor.
-
-    Returns:
-        Tensor, has the same data as `a`.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> x = np.ones((2,2))
-        >>> print(np.copy(x))
-        [[1. 1.]
-         [1. 1.]]
-    """
-    return py_copy(a)
-
-
-def ones(shape, dtype=DEFAULT_FLOAT_DTYPE):
-    """
-    Returns a new tensor of given shape and type, filled with ones.
-
-    Args:
-        shape (Union[int, tuple, list]): the shape of the new tensor.
-        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
-            be in format of np.float32, or `float32`. Default is mstype.float32.
-
-    Returns:
-        Tensor, with the designated shape and dtype, filled with ones.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.ones((2,2)))
-        [[1. 1.]
-        [1. 1.]]
-    """
-    if _check_shape_contain_zero(shape):
-        return asarray(onp.ones(shape), dtype=dtype)
-    shape = _check_shape(shape)
-    dtype = _check_dtype(dtype)
-    fill = P.Fill()
-    output = fill(dtype, shape, 1)
-    return output
-
-
-def zeros(shape, dtype=DEFAULT_FLOAT_DTYPE):
-    """
-    Returns a new tensor of given shape and type, filled with zeros.
-
-    Args:
-        shape (Union[int, tuple, list]): the shape of the new tensor.
-        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
-            be in format of np.float32, or `float32`. Default is mstype.float32.
-
-    Returns:
-        Tensor, with the designated shape and dtype, filled with zeros.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.zeros((2,2)))
-        [[0. 0.]
-        [0. 0.]]
-    """
-    if _check_shape_contain_zero(shape):
-        return asarray(onp.zeros(shape), dtype=dtype)
-    shape = _check_shape(shape)
-    dtype = _check_dtype(dtype)
-    fill = P.Fill()
-    output = fill(dtype, shape, 0)
-    return output
-
-
-def full(shape, fill_value, dtype=None):
-    """
-    Returns a new tensor of given shape and type, filled with fill_value.
-
-    Args:
-        shape (Union[int, tuple(int), list(int)]): Shape of the new tensor, e.g.,
-            (2, 3) or 2.
-        fill_value (Union[int, float, bool, list, tuple]): scalar or array_like
-            fill value.
-        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
-            be in format of np.float32, or `float32`, if dtype is None, the data type
-            of the new tensor will be inferred from fill_value. Default is None.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Returns:
-        Tensor, with the designated shape and dtype, filled with `fill_value`.
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.full((2,2), True))
-        [[True True]
-        [True True]]
-    """
-    if dtype is None:
-        dtype = array(fill_value).dtype
-
-    shape = _check_shape(shape)
-    _ = _check_input_for_asarray(fill_value)
-    dtype = _check_dtype(dtype)
-
-    if isinstance(fill_value, (int, float, bool)) and not _check_shape_contain_zero(shape):
-        return P.Fill()(dtype, shape, fill_value)
-
-    # if fill_value is array_like or shape contains zero. fall back to original
-    # numpy creation
-    return Tensor(onp.full(shape, fill_value, mstype.dtype_to_nptype(dtype)))
-
-
-def arange(*args, **kwargs):
-    """
-    Returns evenly spaced values within a given interval.
-
-    Returns `num` evenly spaced samples, calculated over the interval [`start`, `stop`].
-    The endpoint of the interval can optionally be excluded.
-    The current implementation is a direct wrapper on top of numpy.arange, except that
-    the default dtype is float32 and int32, compare to float64 and int64 for numpy
-    implementation.
-
-    Args:
-        start(Union[int, float]): Start of interval. The interval includes this value.
-            When stop is provided as a position argument, start must be given, when stop
-            is a normal argument, start can be optional, and default is 0.
-            Please see additional examples below.
-        stop(Union[int, float], optional): End of interval. The interval does not
-            include this value, except in some cases where step is not an integer
-            and floating point round-off affects the length of out.
-        step(Union[int, float], optional): Spacing between values. For any output
-            out, this is the distance between two adjacent values, out[i+1] - out[i].
-            The default step size is 1. If step is specified as a position argument,
-            start must also be given.
-        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
-            be in format of np.float32, or `float32`. If dtype is None, the data type
-            of the new tensor will be inferred from start, stop and step. Default is None.
-
-    Returns:
-        arangend tensor of evenly spaced values.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.arange(0, 5, 1))
-        [0 1 2 3 4]
-        >>> print(np.arange(3))
-        [0 1 2]
-        >>> print(np.arange(start=0, stop=3))
-        [0 1 2]
-        >>> print(np.arange(0, stop=3, step=0.5))
-        [0.  0.5 1.  1.5 2.  2.5]
-        >>> print(np.arange(stop=3)) # This will lead to TypeError
-    """
-    # infer the dtype, if either of start, end, step is float, default dtype is
-    # float32, else int32.
-    int_flag = True
-    final_dtype = None
-
-    if args:
-        for item in args:
-            if isinstance(item, float):
-                int_flag = False
-    if kwargs:
-        if ('start' in kwargs and isinstance(kwargs['start'], float)) or \
-           ('stop' in kwargs and isinstance(kwargs['stop'], float)) or \
-           ('step' in kwargs and isinstance(kwargs['step'], float)):
-            int_flag = False
-
-    if int_flag:
-        final_dtype = onp.int32
-    else:
-        final_dtype = onp.float32
-
-    if 'dtype' in kwargs and kwargs['dtype'] is not None:
-        final_dtype = _check_dtype(kwargs['dtype'])
-        final_dtype = mstype.dtype_to_nptype(final_dtype)
-    kwargs['dtype'] = final_dtype
-    out = onp.arange(*args, **kwargs)
-    out = Tensor.from_numpy(out)
-    return out
-
-
-def linspace(start, stop, num=50, endpoint=True, retstep=False, dtype=None, axis=0):
-    """
-    Returns evenly spaced values within a given interval.
-
-    The current implementation is a direct wrapper on top of numpy.linspace, except
-    the default dtype is float32, compare to float64 for numpy,
-
-    Args:
-        start (Union[int, list(int), tuple(int),tensor]):The starting value of the sequence.
-        stop (Union[int, list(int), tuple(int),tensor]):The end value of the sequence,
-            unless `endpoint` is set to False. In that case, the sequence consists
-            of all but the last of ``num + 1` evenly spaced samples, so that `stop`
-            is excluded.  Note that the step size changes when `endpoint` is False.
-        num (int, optional): Number of samples to generate. Default is 50.
-        endpoint (bool, optional): If True, `stop` is the last sample. Otherwise, it is
-            not included. Default is True.
-        retstep (bool, optional): If True, return (`samples`, `step`), where `step` is
-            the spacing between samples.
-        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
-            be in format of np.float32, or `float32`.If `dtype` is None, infer the data
-            type from other input arguments. Default is None.
-        axis (int, optional): The axis in the result to store the samples. Relevant
-            only if start or stop are array-like.  By default (0), the samples will
-            be along a new axis inserted at the beginning. Use -1 to get an axis at the end.
-            Default is 0.
-
-    Returns:
-        samples (Tensor): There are `num` equally spaced samples in the closed interval
-            ``[start, stop]`` or the half-open interval ``[start, stop)``
-            (depending on whether `endpoint` is True or False).
-
-        step (float, optional): Only returned if `retstep` is True.
-            Size of spacing between samples.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.linspace(0, 5, 6))
-        [0. 1. 2. 3. 4. 5.]
-    """
-
-    if isinstance(start, Tensor):
-        start = start.asnumpy()
-
-    if isinstance(stop, Tensor):
-        stop = stop.asnumpy()
-
-    if not isinstance(num, int):
-        raise TypeError(f"num should be an integer, but got {type(num)}")
-
-    final_dtype = None
-    if dtype is not None:
-        final_dtype = _check_dtype(dtype)
-        final_dtype = mstype.dtype_to_nptype(final_dtype)
-    else:
-        final_dtype = onp.float32
-
-    dtype = final_dtype
-    out = onp.linspace(start, stop, num, endpoint, retstep, dtype, axis)
-
-    if retstep:
-        array_out, step_out = out[0], out[1]
-        tensor_out = Tensor(array_out)
-        return tensor_out, step_out
-
-    tensor_out = Tensor(out)
-    return tensor_out
-
-
-def logspace(start, stop, num=50, endpoint=True, base=10.0, dtype=None, axis=0):
-    """
-    Returns numbers spaced evenly on a log scale.
-
-    In linear space, the sequence starts at base ** start (base to the power of
-    start) and ends with base ** stop (see endpoint below).
-    The current implementation is a direct wrapper on top of numpy.logspace, except
-    the default dtype is float32, compare to float64 for numpy,
-
-    Args:
-        start (Union[int, list(int), tuple(int), tensor]):The starting value of the sequence.
-        stop (Union[int, list(int), tuple(int), tensor]):The end value of the sequence,
-            unless `endpoint` is set to False. In that case, the sequence consists
-            of all but the last of ``num + 1` evenly spaced samples, so that `stop`
-            is excluded.  Note that the step size changes when `endpoint` is False.
-        num (int, optional): Number of samples to generate. Default is 50.
-        endpoint (bool, optional): If True, `stop` is the last sample. Otherwise, it is
-            not included. Default is True.
-        base (Union[int, float], optional): The base of the log space. The step size
-            between the elements in ln(samples) / ln(base) (or log_base(samples))
-            is uniform. Default is 10.0.
-        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
-            be in format of np.float32, or `float32`.If `dtype` is None, infer the data
-            type from other input arguments. Default is None.
-        axis (int, optional): The axis in the result to store the samples. Relevant
-            only if start or stop is array-like.  By default (0), the samples will
-            be along a new axis inserted at the beginning. Use -1 to get an axis at the end.
-            Default is 0.
-
-    Returns:
-        samples (Tensor): num samples, equally spaced on a log scale.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.logspace(0, 5, 6, base=2.0))
-        [ 1.  2.  4.  8. 16. 32.]
-    """
-
-    if isinstance(start, Tensor):
-        start = start.asnumpy()
-
-    if isinstance(stop, Tensor):
-        stop = stop.asnumpy()
-
-    final_dtype = None
-    if dtype is not None:
-        final_dtype = _check_dtype(dtype)
-        final_dtype = mstype.dtype_to_nptype(final_dtype)
-    else:
-        final_dtype = onp.float32
-
-    dtype = final_dtype
-    out = onp.logspace(start, stop, num, endpoint, base, dtype, axis)
-
-    tensor_out = Tensor.from_numpy(out)
-    return tensor_out
-
-
-def eye(N, M=None, k=0, dtype=DEFAULT_FLOAT_DTYPE):
-    """
-    Returns a 2-D tensor with ones on the diagnoal and zeros elsewhere.
-
-    Args:
-        N (int): Number of rows in the output, must be larger than 0.
-        M (int, optional): Number of columns in the output. If None, defaults to N,
-            if defined, must be larger than 0. Deault is None.
-        k (int, optional): Index of the diagonal: 0 (the default) refers to the main
-            diagonal, a positive value refers to an upper diagonal, and a negative value
-            to a lower diagonal. Default is 0.
-        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
-            be in format of np.float32, or `float32`. Default is mstype.float32.
-
-    Returns:
-        result (Tensor): A tensor of shape (N,M). A tensor where all elements
-        are equal to zero, except for the k-th diagonal, whose values are equal to one.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.eye(2, 2))
-        [[1. 0.]
-        [0. 1.]]
-    """
-    dtype = _check_dtype(dtype)
-    make_eye = P.Eye()
-    if M is None:
-        M = N
-    M = int(M)
-    N = int(N)
-    k = int(k)
-    out = None
-    if k != 0 or N == 0 or M == 0:
-        # Fall back to original numpy creation method
-        out = onp.eye(N, M, k)
-    else:
-        out = make_eye(N, M, dtype)
-    return asarray(out, dtype=dtype)
-
-
-def identity(n, dtype=DEFAULT_FLOAT_DTYPE):
-    """
-    Returns the identity tensor.
-
-    Args:
-        n (int): Number of rows and columns in the output, must be larger than 0.
-        dtype (Union[mstype.dtype, str], optional): Designated tensor dtype, can
-            be in format of np.float32, or `float32`. Default is mstype.float32.
-
-    Returns:
-        result (Tensor): A tensor of shape (n,n). A tensor where all elements
-        are equal to zero, except for the diagonal, whose values are equal to one.
-
-    Supported Platforms:
-        ``Ascend`` ``GPU`` ``CPU``
-
-    Examples:
-        >>> import mindspore.numpy as np
-        >>> print(np.identity(2))
-        [[1. 0.]
-        [0. 1.]]
-    """
-    dtype = _check_dtype(dtype)
-    return eye(n, dtype=dtype)
 
 
 @constexpr
@@ -612,21 +53,18 @@ def _prepare_shape_for_expand_dims(shape, axes):
     if isinstance(axes, int):
         new_shape_length += 1
         if axes >= new_shape_length or axes < -new_shape_length:
-            raise ValueError(
-                f"axis {axes} is out of bounds for tensor of dimension {new_shape_length}")
+            raise ValueError(f"axis {axes} is out of bounds for tensor of dimension {new_shape_length}")
         axes = {axes}
 
     elif isinstance(axes, (list, tuple)):
         new_shape_length += len(axes)
         for axis in axes:
             if axis >= new_shape_length or axis < -new_shape_length:
-                raise ValueError(
-                    f"axis {axis} is out of bounds for tensor of dimension {new_shape_length}")
+                raise ValueError(f"axis {axis} is out of bounds for tensor of dimension {new_shape_length}")
         axes = set(axes)
 
     else:
-        raise TypeError(
-            f"only int, tuple and list are allowed for axes, but got {type(axes)}")
+        raise TypeError(f"only int, tuple and list are allowed for axes, but got {type(axes)}")
 
     for new_shape_idx in range(new_shape_length):
         if new_shape_idx in axes or new_shape_idx - new_shape_length in axes:
@@ -651,6 +89,10 @@ def expand_dims(a, axis):
     Returns:
         Tensor, view of a tensor with the number of dimensions increased.
 
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If axis exceeds a.ndim.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -661,64 +103,17 @@ def expand_dims(a, axis):
         >>> print(x.shape)
         (1, 2, 2)
     """
+    if not _check_is_tensor(F.typeof(a)):
+        _raise_type_error("Input is not Tensor.")
     shape = F.shape(a)
     # yield expanded shape based on the axes
     new_shape = _prepare_shape_for_expand_dims(shape, axis)
-    return P.Reshape()(a, new_shape)
-
-
-@constexpr
-def _prepare_shape_for_squeeze(shape, axes):
-    """
-    Creates the squeezed new shape based on the tensor and given axes.
-
-    Args:
-        shape (tuple): the shape of the tensor
-        axes Union[None, int, tuple(int), list(int)]: the axes with dimensions squeezed.
-
-    Returns:
-        new_shape(tuple): the shape with dimensions squeezed.
-    """
-    new_shape = []
-    ndim = len(shape)
-
-    # Convert to set
-    if isinstance(axes, int):
-        if axes >= ndim or axes < -ndim:
-            raise ValueError(
-                f"axis {axes} is out of bounds for tensor of dimension {ndim}")
-        axes = {axes}
-
-    elif isinstance(axes, (list, tuple)):
-        for axis in axes:
-            if axis >= ndim or axis < -ndim:
-                raise ValueError(
-                    f"axis {axis} is out of bounds for tensor of dimension {ndim}")
-        axes = set(axes)
-
-    elif axes is not None:
-        raise TypeError(
-            f"only int, tuple and list are allowed for axes, but got {type(axes)}")
-
-    if axes is None:
-        new_shape = [s for s in shape if s != 1]
-    else:
-        for idx, s in enumerate(shape):
-            if s != 1 or (idx not in axes) and (idx - ndim not in axes):
-                new_shape.append(s)
-            # if an axis is selected with shape entry greater than one, an error is raised.
-            if s != 1 and ((idx in axes) or (idx - ndim in axes)):
-                raise ValueError(
-                    f"axis {axes} has shape entry {s} > 1, cannot be squeezed.")
-    return tuple(new_shape)
+    return F.reshape(a, new_shape)
 
 
 def squeeze(a, axis=None):
     """
     Removes single-dimensional entries from the shape of an tensor.
-
-    This is a temporary solution to support CPU backend. Will be changed
-    once CPU backend supports P.Squeeze().
 
     Args:
         a (Tensor): Input tensor array.
@@ -726,6 +121,10 @@ def squeeze(a, axis=None):
 
     Returns:
         Tensor, with all or a subset of the dimensions of length 1 removed.
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If specified axis has shape entry > 1.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -737,10 +136,9 @@ def squeeze(a, axis=None):
         >>> print(x.shape)
         (2, 2)
     """
-    shape = F.shape(a)
-    # yield squeezed shape based on the axes
-    new_shape = _prepare_shape_for_squeeze(shape, axis)
-    return P.Reshape()(a, new_shape)
+    if not _check_is_tensor(F.typeof(a)):
+        _raise_type_error("Input is not Tensor.")
+    return a.squeeze(axis)
 
 
 def transpose(a, axes=None):
@@ -755,6 +153,10 @@ def transpose(a, axes=None):
     Returns:
         Tensor, the transposed tensor array.
 
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If the number of axes is not euqal to a.ndim.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -765,15 +167,9 @@ def transpose(a, axes=None):
         >>> print(x.shape)
         (3, 2, 1)
     """
-    if axes is None:
-        shape = F.shape(a)
-        length = F.tuple_len(shape)
-        perm = F.make_range(0, length)
-        new_order = F.tuple_reversed(perm)
-        return P.Transpose()(a, new_order)
-
-    axes = _check_shape_compile(axes)
-    return P.Transpose()(a, axes)
+    if not _check_is_tensor(F.typeof(a)):
+        _raise_type_error("Input is not Tensor.")
+    return a.transpose(axes)
 
 
 def rollaxis(x, axis, start=0):
@@ -808,7 +204,7 @@ def rollaxis(x, axis, start=0):
         ``Ascend`` ``GPU`` ``CPU``
 
     Raises:
-        TypeError: If axis or start is not integer.
+        TypeError: If axis or start is not integer, or x is not tensor.
         ValueError: If axis is not in the range from -ndim to ndim-1 or
             start is not in the range from -ndim to ndim.
 
@@ -819,8 +215,12 @@ def rollaxis(x, axis, start=0):
         >>> print(output.shape)
         (3, 2, 4)
     """
-    _check_is_int(axis)
-    _check_is_int(start)
+    if not _check_is_tensor(F.typeof(x)):
+        _raise_type_error("Input is not Tensor.")
+    if not _check_is_int(axis):
+        _raise_type_error("integer argument expected, but got ", axis)
+    if not _check_is_int(start):
+        _raise_type_error("integer argument expected, but got ", start)
 
     shape = F.shape(x)
     ndim = F.tuple_len(shape)
@@ -845,7 +245,7 @@ def rollaxis(x, axis, start=0):
             new_perm = perm[0:axis] + perm[axis+1:start] + \
                 perm[axis:axis+1]
 
-    return P.Transpose()(x, new_perm)
+    return F.transpose(x, new_perm)
 
 
 def swapaxes(x, axis1, axis2):
@@ -861,7 +261,7 @@ def swapaxes(x, axis1, axis2):
         Transposed tensor, has the same data type as the original tensor x.
 
     Raises:
-        TypeError: If axis1 or axis2 is not integer.
+        TypeError: If axis1 or axis2 is not integer, or x is not tensor.
         ValueError: If axis1 or axis2 is not in the range from -ndim to ndim-1.
 
     Supported Platforms:
@@ -874,30 +274,9 @@ def swapaxes(x, axis1, axis2):
         >>> print(output.shape)
         (4,3,2)
     """
-    _check_is_int(axis1)
-    _check_is_int(axis2)
-
-    shape = F.shape(x)
-    ndim = F.tuple_len(shape)
-
-    axes = _check_axes_range((axis1, axis2), ndim)
-    axis1, axis2 = axes[0], axes[1]
-
-    if axis1 == axis2:
-        return x
-    if axis1 > axis2:
-        axis1, axis2 = axis2, axis1
-
-    perm = F.make_range(0, ndim)
-    new_perm = None
-    if axis2 + 1 < ndim:
-        new_perm = perm[0:axis1] + perm[axis2:axis2+1] + \
-            perm[axis1+1:axis2] + perm[axis1:axis1+1] + perm[axis2+1:]
-    else:
-        new_perm = perm[0:axis1] + perm[axis2:axis2+1] + \
-            perm[axis1+1:axis2] + perm[axis1:axis1+1]
-
-    return P.Transpose()(x, new_perm)
+    if not _check_is_tensor(F.typeof(x)):
+        _raise_type_error("Input is not Tensor.")
+    return x.swapaxes(axis1, axis2)
 
 
 def reshape(x, new_shape):
@@ -916,7 +295,7 @@ def reshape(x, new_shape):
         Reshaped Tensor. Has the same data type as the original tensor x.
 
     Raises:
-        TypeError: If new_shape is not integer, list or tuple.
+        TypeError: If new_shape is not integer, list or tuple, or x is not tensor.
         ValueError: If new_shape does not compatible with the original shape.
 
     Supported Platforms:
@@ -939,8 +318,9 @@ def reshape(x, new_shape):
         >>> print(output)
         [-0.1  0.3  3.6  0.4  0.5 -3.2]
     """
-    new_shape = _check_shape_compile(new_shape)
-    return P.Reshape()(x, new_shape)
+    if not _check_is_tensor(F.typeof(x)):
+        _raise_type_error("Input is not Tensor.")
+    return x.reshape(new_shape)
 
 
 def ravel(x):
@@ -955,6 +335,9 @@ def ravel(x):
     Returns:
         Flattened tensor, has the same data type as the original tensor x.
 
+    Raises:
+        If x is not tensor.
+
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
 
@@ -965,13 +348,15 @@ def ravel(x):
         >>> print(output.shape)
         (24,)
     """
-    return reshape(x, (-1,))
+    if not _check_is_tensor(F.typeof(x)):
+        _raise_type_error("Input is not Tensor.")
+    return x.ravel()
 
 
 @constexpr
 def _move_axes_for_concatenate(arr_shape, axis):
     """
-    Moves axis 0 to the disiganated position, while keeps other axes' relative
+    Moves axis 0 to the desiganated position, while keeps other axes' relative
     positions unchanged, only used if a single tensor is concatenated.
     """
 
@@ -980,6 +365,34 @@ def _move_axes_for_concatenate(arr_shape, axis):
     new_shape = arr_shape[1:axis+1] + (arr_shape[0] * arr_shape[axis+1],) + \
         arr_shape[axis+2:]
     return new_axes, new_shape
+
+
+def _promote_type_for_concatenate(tuple_of_tensors):
+    """
+    Checks dtype for all tensors in the tuple. If dtypes are not the same, promote
+    them to the `highest` dtype in the tuple, so that they are ready for the concat
+    operator.
+
+    Args:
+        tuple_of_tensors(tuple(tensor)): A tuple of tensors
+
+    Returns:
+        tuple of tensors, with each tensor promoted to ths same dtype.
+    """
+    need_cast = False
+    final_type = tuple_of_tensors[0].dtype
+
+    for tensor in tuple_of_tensors:
+        if not _check_same_type(final_type, tensor.dtype):
+            need_cast = True
+        final_type = _promote(final_type, tensor.dtype)
+
+    if not need_cast:
+        return tuple_of_tensors
+    tuple_of_casted_tensors = ()
+    for tensor in tuple_of_tensors:
+        tuple_of_casted_tensors += (tensor.astype(final_type, copy=False),)
+    return tuple_of_casted_tensors
 
 
 def concatenate(arrays, axis=0):
@@ -995,6 +408,10 @@ def concatenate(arrays, axis=0):
 
     Returns:
         Tensor, a tensor concatenated from a tensor or a list of tensors.
+
+    Raises:
+        TypeError: If input arguments have types not specified above.
+        ValueError: If specified axis < 0, and exceeds tensor.ndim.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -1029,11 +446,11 @@ def concatenate(arrays, axis=0):
         for arr in arrays:
             flattened_arrays += (ravel(arr),)
         axis = -1
+        flattened_arrays = _promote_type_for_concatenate(flattened_arrays)
         return P.Concat(axis)(flattened_arrays)
 
     # convert a list of tensor to a tuple of tensor
-    if _check_is_list(array_type):
-        arrays = _covert_list_tensor_to_tuple_tensor(arrays)
+    arrays = _covert_list_tensor_to_tuple_tensor(arrays)
 
     arr_shape = F.shape(arrays[0])
     _check_axes_range((axis,), len(arr_shape))
@@ -1042,4 +459,570 @@ def concatenate(arrays, axis=0):
     if len(arrays) == 1:
         return arrays[0]
 
+    arrays = _promote_type_for_concatenate(arrays)
     return P.Concat(axis)(arrays)
+
+
+def column_stack(tup):
+    """
+    Stacks 1-D tensors as columns into a 2-D tensor. 2-D tensors are stacked as-is,
+    like np.hstack.
+
+    Args:
+        tup (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. All
+            of them must have the same shape except the axis to be concatenated.
+
+    Returns:
+        2-D Tensor, formed by stacking the given tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If tup is not Tensor, list or tuple.
+        ValueError: If tup is empty.
+
+    Examples:
+        >>> import mindspore.numpy as mnp
+        >>> import numpy as onp
+        >>> from mindspore import Tensor
+        >>> x1 = Tensor(onp.array([1, 2, 3]).astype('int32'))
+        >>> x2 = Tensor(onp.array([4, 5, 6]).astype('int32'))
+        >>> output = mnp.column_stack((x1, x2))
+        >>> print(output)
+        [[1, 4],
+         [2, 5],
+         [3, 6]]
+    """
+    if _check_is_tensor(F.typeof(tup)):
+        return tup
+    if not _check_is_list(tup) and not _check_is_tuple(tup):
+        _raise_type_error("Tensor or, list or tuple of tensors are required, but got ", tup)
+    if not tup:
+        _raise_value_error("Need at least one tensor to concatenate.")
+
+    trans_tup = ()
+    for tensor in tup:
+        shape = F.shape(tensor)
+        if F.tuple_len(shape) == 1:
+            reshape_tensor = F.reshape(tensor, shape+(1,))
+            trans_tup += (reshape_tensor,)
+        else:
+            trans_tup += (tensor,)
+    return P.Concat(axis=1)(trans_tup)
+
+
+def vstack(tup):
+    """
+    Stacks tensors in sequence vertically.
+    This is equivalent to concatenation along the first axis. 1-D tensors should firstly be reshaped to (1, N),
+        and then be concatenated along the first axis.
+
+    Args:
+        tup (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. The tensors must have the same shape
+            along all but the first axis. 1-D tensors must have the same shape.
+
+    Returns:
+        Stacked Tensor, formed by stacking the given tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If tup is not Tensor, list or tuple.
+        ValueError: If tup is empty.
+
+    Examples:
+        >>> import mindspore.numpy as mnp
+        >>> import numpy as onp
+        >>> from mindspore import Tensor
+        >>> x1 = Tensor(onp.array([1, 2, 3]).astype('int32'))
+        >>> x2 = Tensor(onp.array([4, 5, 6]).astype('int32'))
+        >>> output = mnp.vstack((x1, x2))
+        >>> print(output)
+        [[1, 2, 3],
+         [4, 5, 6]]
+    """
+    if _check_is_tensor(F.typeof(tup)):
+        return tup
+    if not _check_is_list(tup) and not _check_is_tuple(tup):
+        _raise_type_error("Tensor or, list or tuple of tensors are required, but got", tup)
+    if not tup:
+        _raise_value_error("Need at least one tensor to concatenate.")
+
+    trans_tup = ()
+    for tensor in tup:
+        shape = F.shape(tensor)
+        if F.tuple_len(shape) == 1:
+            reshape_tensor = F.reshape(tensor, (1,)+shape)
+            trans_tup += (reshape_tensor,)
+        else:
+            trans_tup += (tensor,)
+    return P.Concat(axis=0)(trans_tup)
+
+
+def hstack(tup):
+    """
+    Stacks tensors in sequence horizontally.
+    This is equivalent to concatenation along the second axis, except for 1-D tensors
+        where it concatenates along the first axis.
+
+    Args:
+        tup (Union[Tensor, tuple, list]): A sequence of 1-D or 2-D tensors. The
+            tensors must have the same shape along all but the second axis, except
+            1-D tensors which can be any length.
+
+    Returns:
+        Stacked Tensor, formed by stacking the given tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If tup is not Tensor, list or tuple.
+        ValueError: If tup is empty.
+
+    Examples:
+        >>> import mindspore.numpy as mnp
+        >>> import numpy as onp
+        >>> from mindspore import Tensor
+        >>> x1 = Tensor(onp.array([1, 2, 3]).astype('int32'))
+        >>> x2 = Tensor(onp.array([4, 5, 6]).astype('int32'))
+        >>> output = mnp.hstack((x1, x2))
+        >>> print(output)
+        [1, 2, 3, 4, 5, 6]
+    """
+    if _check_is_tensor(F.typeof(tup)):
+        return tup
+    if not _check_is_list(tup) and not _check_is_tuple(tup):
+        _raise_type_error(f"Tensor or, list or tuple of tensors are required, but got", tup)
+    if not tup:
+        _raise_value_error("Need at least one tensor to concatenate.")
+
+    tuple_of_tensor = ()
+    if _check_is_list(tup):
+        for tensor in tup:
+            tuple_of_tensor += (tensor,)
+    else:
+        tuple_of_tensor = tup
+
+    if F.tuple_len(F.shape(tup[0])) == 1:
+        return P.Concat(axis=0)(tuple_of_tensor)
+    return P.Concat(axis=1)(tuple_of_tensor)
+
+
+def dstack(tup):
+    """
+    Stacks tensors in sequence depth wise (along the third axis).
+    This is equivalent to concatenation along the third axis. 1-D tensors (N,) should be reshaped to (1,N,1).
+        2-D tensors (M,N) should be reshaped to (M,N,1) before concatenation.
+
+    Args:
+        tup (Union[Tensor, tuple, list]): A sequence of tensors. The tensors must have the same shape along all but
+            the third axis. 1-D or 2-D tensors must have the same shape.
+
+    Returns:
+        Stacked Tensor, formed by stacking the given tensors.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If tup is not Tensor, list or tuple.
+        ValueError: If tup is empty.
+
+    Examples:
+        >>> import mindspore.numpy as mnp
+        >>> import numpy as onp
+        >>> from mindspore import Tensor
+        >>> x1 = Tensor(onp.array([1, 2, 3]).astype('int32'))
+        >>> x2 = Tensor(onp.array([4, 5, 6]).astype('int32'))
+        >>> output = mnp.dstack((x1, x2))
+        >>> print(output)
+        [[[1, 4],
+           [2, 5],
+           [3, 6]]]
+    """
+    if _check_is_tensor(F.typeof(tup)):
+        return tup
+    if not _check_is_list(tup) and not _check_is_tuple(tup):
+        _raise_type_error("Tensor or, list or tuple of tensors are required, but got", tup)
+    if not tup:
+        _raise_value_error("Need at least one tensor to concatenate.")
+
+    trans_tup = ()
+    for tensor in tup:
+        shape = F.shape(tensor)
+        if F.tuple_len(shape) == 1:
+            reshape_tensor = F.reshape(tensor, (1,)+shape+(1,))
+            trans_tup += (reshape_tensor,)
+        elif F.tuple_len(shape) == 2:
+            reshape_tensor = F.reshape(tensor, shape+(1,))
+            trans_tup += (reshape_tensor,)
+        else:
+            trans_tup += (tensor,)
+    return P.Concat(axis=2)(trans_tup)
+
+
+def where(condition, x=None, y=None):
+    """
+    Returns elements chosen from x or y depending on condition.
+
+    Note:
+        As nonzero is not supported, neither x or y can be None.
+        On CPU, the supported dtypes are np.float16, np.float32, np.int16,
+        and np.int32.
+        On GPU, the supported dtypes are np.float16, np.float32, np.int16,
+        and np.int32.
+
+    Args:
+        condition (Tensor): where True, yield x, otherwise yield y.
+        x, y (Tensor): Values from which to choose. x, y and condition need
+                        to be broadcastable to some shape.
+
+    Returns:
+        Tensor or scalar, with elements from x where condition is True, and
+        elements from y elsewhere.
+
+    Raises:
+        ValueError: if operands cannot be broadcast.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> import mindspore.numpy as np
+        >>> condition = np.full((1, 1, 2), [False, True])
+        >>> x = np.full((1, 3, 2), 5)
+        >>> y = np.full((2, 1, 1), 7)
+        >>> output = np.where(condition, x, y)
+        >>> print(output)
+        [[[7, 5],
+        [7, 5],
+        [7, 5]],
+
+       [[7, 5],
+        [7, 5],
+        [7, 5]]]
+    """
+    # type promotes input tensors
+    dtype1 = F.dtype(x)
+    dtype2 = F.dtype(y)
+    dtype = _promote(dtype1, dtype2)
+    if not _check_same_type(dtype1, dtype):
+        x = F.cast(x, dtype)
+    if not _check_same_type(dtype2, dtype):
+        y = F.cast(y, dtype)
+    is_bool = _check_same_type(dtype1, mstype.bool_) and _check_same_type(
+        dtype2, mstype.bool_)
+    if is_bool:
+        # select does not support bool type for x or y
+        x = F.cast(x, mstype.float32)
+        y = F.cast(y, mstype.float32)
+
+    # broadcasts input tensors
+    shape_out = _infer_out_shape(F.shape(condition),
+                                 F.shape(x), F.shape(y))
+    ndim_out = len(shape_out)
+    condition = _expand(condition, ndim_out)
+    x = _expand(x, ndim_out)
+    y = _expand(y, ndim_out)
+    condition = _broadcast_to(
+        condition, F.shape(condition), shape_out, ndim_out)
+    x = _broadcast_to(x, F.shape(x), shape_out, ndim_out)
+    y = _broadcast_to(y, F.shape(y), shape_out, ndim_out)
+    if not _check_same_type(F.dtype(condition), mstype.bool_):
+        condition = F.cast(condition, mstype.bool_)
+    res = F.select(condition, x, y)
+    if is_bool:
+        res = F.cast(res, mstype.bool_)
+    return res
+
+
+def _expand_atleast(arr, ndim):
+    """Expands arr to at least ndim."""
+    arr = _expand(arr, _min(ndim, 2))
+    if ndim > 2:
+        arr = _expand(arr, ndim, axis=-1)
+    return arr
+
+
+def _atleast_xd(ndim, arys):
+    """Returns arys with at least ndim."""
+    for arr in arys:
+        _check_input_tensor(F.typeof(arr))
+
+    if F.tuple_len(arys) == 1:
+        return _expand_atleast(*arys, ndim)
+    res = []
+    for arr in res:
+        res.append(_expand_atleast(arr, ndim))
+    return res
+
+
+def atleast_1d(*arys):
+    """
+    Converts inputs to arrays with at least one dimension.
+
+    Scalar inputs are converted to 1-dimensional arrays, whilst
+    higher-dimensional inputs are preserved.
+
+    Note:
+        In graph mode, returns a tuple of tensor instead of a list of
+        tensors.
+        On CPU, the supported dtypes are np.float16, np.float32, np.int16,
+        and np.int32.
+        On GPU, the supported dtypes are np.float16, np.float32, np.int16,
+        and np.int32.
+    Args:
+        arys1, arys2, … (Tensor): one or more input tensors.
+
+    Returns:
+        Tensor, or list of tensors, each with a.ndim >= 1.
+
+    Raises:
+        TypeError: if the input is not a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> a = np.ones((2, 3))
+        >>> b = np.ones(0)
+        >>> c = np.ones(5)
+        >>> output = np.atleast_1d(a, b, c)
+        >>> print(output)
+            (Tensor(shape=[2, 3], dtype=Float32, value=
+            [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000],
+            [1.00000000e+000, 1.00000000e+000, 1.00000000e+000]]),
+            Tensor(shape=[1], dtype=Float32, value= [1.00000000e+000]),
+            Tensor(shape=[5], dtype=Float32,
+            value= [1.00000000e+000, 1.00000000e+000, 1.00000000e+000,
+            1.00000000e+000, 1.00000000e+000]))
+    """
+    return _atleast_xd(1, arys)
+
+
+def atleast_2d(*arys):
+    """
+    Views inputs as arrays with at least two dimensions.
+
+    Note:
+        In graph mode, returns a tuple of tensor instead of a list of
+        tensors.
+        On CPU, the supported dtypes are np.float16, np.float32, np.int16,
+        and np.int32.
+        On GPU, the supported dtypes are np.float16, np.float32, np.int16,
+        and np.int32.
+    Args:
+        arys1, arys2, … (Tensor): one or more input tensors.
+
+    Returns:
+        Tensor, or list of tensors, each with a.ndim >= 2.
+
+    Raises:
+        TypeError: if the input is not a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> a = np.ones((2, 3))
+        >>> b = np.ones(0)
+        >>> c = np.ones(5)
+        >>> output = np.atleast_2d(a, b, c)
+        >>> print(output)
+            (Tensor(shape=[2, 3], dtype=Float32, value=
+            [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000],
+            [1.00000000e+000, 1.00000000e+000, 1.00000000e+000]]),
+            Tensor(shape=[1, 1], dtype=Float32, value= [[1.00000000e+000]]),
+            Tensor(shape=[1, 5], dtype=Float32,
+            value= [[1.00000000e+000, 1.00000000e+000, 1.00000000e+000,
+            1.00000000e+000, 1.00000000e+000]]))
+    """
+    return _atleast_xd(2, arys)
+
+
+def atleast_3d(*arys):
+    """
+    Views inputs as arrays with at least three dimensions.
+
+    Note:
+        In graph mode, returns a tuple of tensor instead of a list of
+        tensors.
+        On CPU, the supported dtypes are np.float16, np.float32, np.int16,
+        and np.int32.
+        On GPU, the supported dtypes are np.float16, np.float32, np.int16,
+        and np.int32.
+    Args:
+        arys1, arys2, … (Tensor): one or more input tensors.
+
+    Returns:
+        Tensor, or list of tensors, each with a.ndim >= 3. For example,
+        a 1-D array of shape (N,) becomes a view of shape (1, N, 1), and
+        a 2-D array of shape (M, N) becomes a view of shape (M, N, 1).
+
+    Raises:
+        TypeError: if the input is not a tensor.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> a = np.ones((2, 3))
+        >>> b = np.ones(0)
+        >>> c = np.ones(5)
+        >>> output = np.atleast_3d(a, b, c)
+        >>> print(output)
+            (Tensor(shape=[2, 3, 1], dtype=Float32, value=
+            [[[1.00000000e+000], [1.00000000e+000], [1.00000000e+000]],
+            [[1.00000000e+000], [1.00000000e+000], [1.00000000e+000]]]),
+            Tensor(shape=[1, 1, 1], dtype=Float32, value= [[[1.00000000e+000]]]),
+            Tensor(shape=[1, 5, 1], dtype=Float32,
+            value= [[[1.00000000e+000], [1.00000000e+000], [1.00000000e+000],
+            [1.00000000e+000], [1.00000000e+000]]]))
+    """
+    return _atleast_xd(3, arys)
+
+
+def stack(arrays, axis=0):
+    """
+    Joins a sequence of arrays along a new axis.
+
+    The axis parameter specifies the index of the new axis in the
+    dimensions of the result. For example, if axis=0 it will be the
+    first dimension and if axis=-1 it will be the last dimension.
+
+
+    Note:
+        Numpy argument out is not supported.
+
+    Args:
+        arrays (sequence of Tensor): Each array must have the same shape.
+        axis (int): optional. The axis in the result array along which the
+            input arrays are stacked.
+
+    Returns:
+        Tensor, The stacked array has one more dimension than the input
+        arrays.
+
+    Raises:
+        ValueError: if input is not Tensor, tuple, or list.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Examples:
+        >>> arrays = [np.ones((3, 4)) for _ in range(10)]
+        >>> output = np.stack(arrays, axis=0)
+        >>> print(output.shape)
+        (10, 3, 4)
+        >>> output = np.stack(arrays, axis=1)
+        >>> print(output.shape)
+        (3, 10, 4)
+        >>> output = np.stack(arrays, axis=2)
+        >>> print(output.shape)
+        (3, 4, 10)
+    """
+    arr_type = F.typeof(arrays)
+
+    if _check_is_tensor(arr_type):
+        shape = F.shape(arrays)
+        ndim = F.rank(arrays)
+        axis = axis % ndim
+        axes = F.make_range(ndim)
+        perm = axes[1:axis+1] + (0,) + axes[axis+1:]
+        if _is_empty(shape):
+            return _empty(mstype.float32, shape[1:axis+1] + (shape[0],) + shape[axis+1:])
+        return transpose(arrays, perm)
+
+    if _check_is_tuple(arr_type) or _check_is_list(arr_type):
+        shape = (len(arrays),) + F.shape(arrays[0])
+        ndim = len(shape)
+        axis = axis % ndim
+        if _is_empty(shape):
+            return _empty(mstype.float32, shape[1:axis+1] + (shape[0],) + shape[axis+1:])
+        seq = ()
+        for arr in arrays:
+            seq += (F.expand_dims(arr, axis),)
+        return concatenate(seq, axis)
+    return _raise_value_error('input arrays must be Tensor, tuple, or list')
+
+
+class UniqueNet(Cell):
+    """The operation `mindspore.ops.Unique` must be wrapped inside a model and executed in graph mode. """
+
+    def __init__(self):
+        super(UniqueNet, self).__init__()
+        self.unique = P.Unique()
+
+    def construct(self, x):
+        return self.unique(x)
+
+
+def unique(x, return_index=False, return_inverse=False, return_counts=False):
+    """
+    Finds the unique elements of a tensor. The input tensor will be flattened first
+    when it has more than one dimension.
+
+    Note:
+        The operation is derived from mindspore.ops.Unique.
+        Numpy arguments `axis` is not supported.
+
+    Args:
+        x (Tensor): The input tensor to be processed.
+        return_index (bool): If True, also return the indices of tensor x (along
+            the specified axis, if provided, or in the flattened tensor) that result
+            in the unique tensor. Default: False.
+        return_inverse (bool): If True, also return the indices of the unique tensor.
+            Default: False.
+        return_counts (bool): If True, also return the number of times each unique
+            item appears in input tensor `x`. Default: False.
+
+    Returns:
+        Tensor or tuple of Tensors.
+        - If all of the three bool arguments (`return_index`, `return_inverse`, `return_counts`)
+            are False, just return the unique tensor.
+        - If parts of the three bool arguments are True, the corresponding results (Tensor)
+            will be added in the tuple.
+
+    Supported Platforms:
+        ``Ascend`` ``GPU`` ``CPU``
+
+    Raises:
+        TypeError: If x is not tensor.
+
+    Examples:
+        >>> import mindspore.numpy as mnp
+        >>> import numpy as onp
+        >>> input_x = mnp.asarray(onp.array([1, 2, 2, 2, 3, 4, 5]).astype('float32'))
+        >>> output_x = mnp.unique(input_x)
+        >>> print(output_x)
+        [1. 2. 3. 4. 5.]
+        >>> output_x = mnp.unique(input_x, return_index=True)
+        >>> print(output_x)
+        (Tensor(shape=[5], dtype=Float32, value= [ 1. 2. 3. 4. 5.]), Tensor(shape=[5], dtype=Float32,
+            value= [ 0. 1. 4. 5. 6.]))
+        >>> output_x = mnp.unique(input_x, return_inverse=True)
+        >>> print(output_x)
+        (Tensor(shape=[5], dtype=Float32, value= [ 1. 2. 3. 4. 5.]), Tensor(shape=[7], dtype=Int32,
+            value= [0, 1, 1, 1, 2, 3, 4]))
+    """
+    if not _check_is_tensor(F.typeof(x)):
+        _raise_type_error("Tensor is expected, but got", x)
+    if F.tuple_len(F.shape(x)) > 1:
+        x = ravel(x)
+    uniq = UniqueNet()
+    unique_x, inverse_index = uniq(x)
+    if not return_index and not return_inverse and not return_counts:
+        return unique_x
+    res_tup = (unique_x,)
+    if return_index:
+        res_index = _get_index_for_unique(x, unique_x)
+        res_tup += (res_index,)
+    if return_inverse:
+        res_tup += (inverse_index,)
+    if return_counts:
+        res_counts = _get_counts_for_unique(x, unique_x)
+        res_tup += (res_counts,)
+    return res_tup

@@ -109,6 +109,12 @@ class TensorPy {
   static py::array AsNumpy(const Tensor &tensor);
 
   static py::tuple GetPyTupleShape(const Tensor &tensor);
+
+  static py::tuple GetPyTupleStrides(const Tensor &tensor);
+
+  static py::int_ GetPyItemSize(const Tensor &tensor);
+
+  static py::int_ GetPyNBytes(const Tensor &tensor);
 };
 }  // namespace tensor
 }  // namespace mindspore

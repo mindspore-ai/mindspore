@@ -178,6 +178,12 @@ BuiltInTypeMap &GetMethodMap() {
                                          {"__ms_to_array__", prim::kPrimIdentity},        // P.identity,
                                          {"item", prim::kPrimArrayToScalar},              // P.array_to_scalar,
                                          {"transpose", std::string("transpose")},         // P.transpose
+                                         {"flatten", std::string("flatten")},             // P.reshape(,-1)
+                                         {"reshape", std::string("reshape")},             // P.reshape()
+                                         {"ravel", std::string("ravel")},                 // P.reshape(,(-1,))
+                                         {"swapaxes", std::string("swapaxes")},           // P.transpose()
+                                         {"squeeze", std::string("squeeze")},             // P.squeeze()
+                                         {"astype", std::string("astype")},               // P.cast()
                                          {"__bool__", std::string("tensor_bool")},        // C.tensor_bool
                                        }},
                                       {kObjectTypeJTagged, {}},
@@ -190,10 +196,14 @@ BuiltInTypeMap &GetAttrMap() {
   static BuiltInTypeMap attr_map = {
     {kObjectTypeTensorType,
      {
-       {"shape", std::string("shape_")},  // C.shape_
-       {"dtype", std::string("dtype_")},  // C.dtype_
-       {"size", std::string("size_")},    // C.size_
-       {"ndim", std::string("ndim_")},    // C.ndim_
+       {"shape", std::string("shape_")},        // C.shape_
+       {"dtype", std::string("dtype_")},        // C.dtype_
+       {"size", std::string("size_")},          // C.size_
+       {"ndim", std::string("ndim_")},          // C.ndim_
+       {"T", std::string("T_")},                // C.T_
+       {"itemsize", std::string("itemsize_")},  // C.itemsize_
+       {"nbytes", std::string("nbytes_")},      // C.nbytes_
+       {"strides", std::string("strides_")},    // C.strides_
      }},
     {kObjectTypeRowTensorType,
      {

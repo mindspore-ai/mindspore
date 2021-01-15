@@ -1,6 +1,6 @@
 # This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
 #
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ isconstant.set_const_prim(True)
 
 issubclass_ = P.IsSubClass()
 isinstance_ = P.IsInstance()
+eye = P.Eye()
 fill = P.Fill()
 tile = P.Tile()
 select = P.Select()
@@ -45,6 +46,7 @@ control_depend = P.ControlDepend()
 merge = P.Merge()
 geswitch = P.GeSwitch()
 addn = P.AddN()
+absolute = P.Abs()
 tensor_add = P.TensorAdd()
 neg_tensor = P.Neg()
 tensor_lt = P.Less()
@@ -67,6 +69,8 @@ assign_add = P.AssignAdd()
 assign = P.Assign()
 square = P.Square()
 sqrt = P.Sqrt()
+reduce_sum = P.ReduceSum()
+tensor_slice = P.Slice()
 
 scalar_to_array = P.ScalarToArray()
 scalar_to_tensor = P.ScalarToTensor()
@@ -74,6 +78,8 @@ tuple_to_array = P.TupleToArray()
 scalar_cast = P.ScalarCast()
 print_ = P.Print()
 expand_dims = P.ExpandDims()
+transpose = P.Transpose()
+squeeze = P.Squeeze()
 scatter_nd = P.ScatterNd()
 gather = P.GatherV2()
 gather_nd = P.GatherNd()
@@ -177,6 +183,7 @@ tensor_operator_registry.register('any', P.ReduceAny)
 tensor_operator_registry.register('abs', P.Abs)
 tensor_operator_registry.register('mean', P.ReduceMean)
 tensor_operator_registry.register('reshape', P.Reshape)
+tensor_operator_registry.register('transpose', P.Transpose)
 tensor_operator_registry.register('broadcast_to', P.BroadcastTo)
 # ms cannot support Tensor(True) compare
 tensor_operator_registry.register('__eq__', equal)
@@ -187,6 +194,7 @@ tensor_operator_registry.register('__le__', tensor_le)
 tensor_operator_registry.register('__gt__', tensor_gt)
 tensor_operator_registry.register('__ge__', tensor_ge)
 tensor_operator_registry.register('shape', shape)
+tensor_operator_registry.register('squeeze', squeeze)
 # support GE backend for no compare operators
 tensor_operator_registry.register('cast', cast)
 

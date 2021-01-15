@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -268,6 +268,26 @@ class Tensor(Tensor_):
         return self.init is not None
 
     @property
+    def itemsize(self):
+        """The length of one tensor element in bytes."""
+        return self._itemsize
+
+    @property
+    def strides(self):
+        """The tuple of bytes to step in each dimension when traversing a tensor."""
+        return self._strides
+
+    @property
+    def nbytes(self):
+        """The total number of bytes taken by the tensor."""
+        return self._nbytes
+
+    @property
+    def T(self):
+        """The transposed tensor."""
+        return self.transpose()
+
+    @property
     def virtual_flag(self):
         """Mark tensor is virtual."""
         return self._virtual_flag
@@ -383,6 +403,145 @@ class Tensor(Tensor_):
         if axis is None:
             axis = ()
         return tensor_operator_registry.get('mean')(keep_dims)(self, axis)
+
+    def transpose(self, *axes):
+        """
+        Returns a view of the array with axes transposed.
+
+        For a 1-D array this has no effect, as a transposed vector is simply the
+        same vector. For a 2-D array, this is a standard matrix transpose. For an
+        n-D array, if axes are given, their order indicates how the axes are permuted
+        (see Examples). If axes are not provided and a.shape = (i[0], i[1],...
+        i[n-2], i[n-1]), then a.transpose().shape = (i[n-1], i[n-2], ... i[1], i[0]).
+
+        Args:
+            axes(Union[None, tuple(int), list(int), n ints], optional):
+                None or no argument: reverses the order of the axes.
+                Tuple of ints: i in the j-th place in the tuple means a’s i-th
+                    axis becomes a.transpose()’s j-th axis.
+                n ints: this form is intended simply as a `convenience alternative
+                    to the tuple form.
+
+        Returns:
+            Tensor, has the same dimension as input tensor, with axes suitably permuted.
+        """
+        perm = validator.check_transpose_axis(axes, self.ndim)
+        return tensor_operator_registry.get('transpose')()(self, perm)
+
+    def reshape(self, *shape):
+        """
+        Gives a new shape to an array without changing its data.
+
+        Args:
+            shape(Union[int, tuple(int), list(int)]): The new shape should be compatible
+            with the original shape. If an integer, then the result will be a 1-D
+            array of that length. One shape dimension can be -1. In this case, the
+            value is inferred from the length of the array and remaining dimensions.
+
+        Returns:
+            reshaped_tensor(Tensor): This will be a new view object if possible;
+            otherwise, it will be a copy.
+        """
+        new_shape = validator.check_reshape_shp(shape)
+        return tensor_operator_registry.get('reshape')()(self, new_shape)
+
+    def ravel(self):
+        """
+        Returns a contiguous flattened tensor.
+        A 1-D tensor, containing the elements of the input, is returned.
+
+        Returns:
+            Tensor, has the same data type as x.
+        """
+        reshape_op = tensor_operator_registry.get('reshape')()
+        return reshape_op(self, (-1,))
+
+    def flatten(self, order='C'):
+        """
+        Returns a copy of the array collapsed into one dimension.
+
+        Args:
+            order (str, optional): Can choose between `C` and `F`. `C` means to
+            flatten in row-major (C-style) order. ‘F’ means to flatten in column-major
+            (Fortran- style) order. Only `C` and `F` are supported.
+
+        Returns:
+            Tensor, has the same data type as x.
+        """
+        reshape_op = tensor_operator_registry.get('reshape')()
+        trans_op = tensor_operator_registry.get('transpose')()
+
+        order = validator.check_flatten_order(order)
+        if order == 'C':
+            return reshape_op(self, (-1,))
+
+        perm = tuple(range(self.ndim-1, -1, -1))
+        return reshape_op(trans_op(self, perm), (-1,))
+
+    def swapaxes(self, axis1, axis2):
+        """
+        Interchanges two axes of a tensor.
+
+        Args:
+            axis1 (int): First axis.
+            axis2 (int): Second axis.
+
+        Returns:
+            Transposed tensor, has the same data type as the original tensor x.
+        """
+        axis1, axis2 = validator.check_swapaxes_axis((axis1, axis2), self.ndim)
+
+        if axis1 == axis2:
+            return self
+        if axis1 > axis2:
+            axis1, axis2 = axis2, axis1
+
+        perm = tuple(range(0, self.ndim))
+        new_perm = None
+        if axis2 + 1 < self.ndim:
+            new_perm = perm[0:axis1] + perm[axis2:axis2+1] + \
+                perm[axis1+1:axis2] + perm[axis1:axis1+1] + perm[axis2+1:]
+        else:
+            new_perm = perm[0:axis1] + perm[axis2:axis2+1] + \
+                perm[axis1+1:axis2] + perm[axis1:axis1+1]
+
+        return tensor_operator_registry.get('transpose')()(self, new_perm)
+
+    def squeeze(self, axis=None):
+        """
+        Removes single-dimensional entries from the shape of an tensor.
+
+        Args:
+            axis: Union[None, int, list(int), tuple(list)]. Default is None.
+
+        Returns:
+            Tensor, with all or a subset of the dimensions of length 1 removed.
+        """
+        if axis is None:
+            return tensor_operator_registry.get('squeeze')(self)
+        new_shape = validator.prepare_shape_for_squeeze(self.shape, axis)
+        return tensor_operator_registry.get('reshape')()(self, new_shape)
+
+    def astype(self, dtype, copy=True):
+        """
+        Returns a copy of the array, cast to a specified type.
+
+        Args:
+            dtype(Union[mstype.dtype, numpy.dtype, str]): Designated tensor dtype,
+            can be in format of np.float32, mstype.float32 or `float32`. Default
+            is mstype.float32.
+
+            copy(bool, optional): By default, astype always returns a newly allocated
+                tensor. If this is set to false, the input tensor is returned instead
+                of a copy if possible.
+
+        Returns:
+            Tensor, with the designated dtype.
+        """
+        dtype = validator.check_astype_dtype(dtype)
+        if not copy and dtype == self.dtype:
+            return self
+        return tensor_operator_registry.get('cast')(self, dtype)
 
 
     def init_data(self, slice_index=None, shape=None, opt_shard_group=None):

@@ -258,6 +258,20 @@ py::tuple TensorPy::GetPyTupleShape(const Tensor &tensor) {
   return dims;
 }
 
+py::tuple TensorPy::GetPyTupleStrides(const Tensor &tensor) {
+  std::vector<ssize_t> shape(tensor.shape().begin(), tensor.shape().end());
+  std::vector<ssize_t> strides = GetStrides(shape, tensor.data().itemsize());
+  py::tuple py_strides(strides.size());
+  for (size_t i = 0; i < strides.size(); ++i) {
+    py_strides[i] = py::int_(strides[i]);
+  }
+  return py_strides;
+}
+
+py::int_ TensorPy::GetPyItemSize(const Tensor &tensor) { return tensor.data().itemsize(); }
+
+py::int_ TensorPy::GetPyNBytes(const Tensor &tensor) { return tensor.data().nbytes(); }
+
 py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
   {
     py::gil_scoped_release gil_release;
@@ -382,6 +396,40 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> data = mindspore.Tensor(np.ones((2, 3)))
                                  >>> data.size
                                  6
+                             )mydelimiter")
+                           .def_property_readonly("_itemsize", TensorPy::GetPyItemSize, R"mydelimiter(
+                             Get the tensor's length of one element in bytes.
+
+                             Returns:
+                                 itemsize, length of one element in bytes.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2, 1), np.int32))
+                                 >>> data.itemsize
+                                 4
+                             )mydelimiter")
+                           .def_property_readonly("_nbytes", TensorPy::GetPyNBytes, R"mydelimiter(
+                             Get the tensor's total number of bytes.
+
+                             Returns:
+                                 nbytes, total number of bytes taken by the tensor.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2, 1), np.int32))
+                                 >>> data.nbytes
+                                 4
+                             )mydelimiter")
+                           .def_property_readonly("_strides", TensorPy::GetPyTupleStrides, R"mydelimiter(
+                             Get the tensor's tuple of bytes to step in each dimension
+                             when traversing an array.
+
+                             Returns:
+                                 tuple[int], the strides of the tensor.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2, 1), np.int32))
+                                 >>> data.strides
+                                 (4, 4)
                              )mydelimiter")
                            .def("from_numpy", TensorPy::MakeTensorNoCopy, R"mydelimiter(
                              Creates a Tensor from a numpy.ndarray without copy.
