@@ -62,6 +62,10 @@ def _init_device_info():
             rank_id = int(env_rank_id.strip())
             if rank_size > 1:
                 _config.set_rank_id(rank_id)
+            # Now single process under ascend mode doesn't support numa bind for performance consideration.
+            if _config.get_numa_enable() is True and rank_size == 1:
+                raise ValueError("single process under Ascend mode doesn't support numa bind for "
+                                 "performance consideration.")
 
 
 def set_seed(seed):
@@ -161,6 +165,37 @@ def get_num_parallel_workers():
         Int, number of parallel workers to be used as a default for each operation
     """
     return _config.get_num_parallel_workers()
+
+
+def set_numa_enable(numa_enable):
+    """
+    Set the default state of numa enabled.
+
+    Args:
+        numa_enable (bool): Whether to use numa bind feature.
+
+    Raises:
+        TypeError: If numa_enable is not a boolean data type.
+
+    Examples:
+        >>> # Set a new global configuration value for the state of numa enabled.
+        >>> # Now parallel dataset operators will run with numa bind function
+        >>> ds.config.set_numa_enable(True)
+    """
+    if not isinstance(numa_enable, bool):
+        raise TypeError("numa_enable must be a boolean dtype.")
+    _config.set_numa_enable(numa_enable)
+
+
+def get_numa_enable():
+    """
+    Get the default state of numa enabled.
+    This is the DEFAULT numa enabled value used for the all process.
+
+    Returns:
+        boolean, the default state of numa enabled
+    """
+    return _config.get_numa_enable()
 
 
 def set_monitor_sampling_interval(interval):

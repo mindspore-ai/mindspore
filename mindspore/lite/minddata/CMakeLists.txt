@@ -254,6 +254,10 @@ if (BUILD_MINDDATA STREQUAL "full")
     list(REMOVE_ITEM MINDDATA_KERNELS_DATA_SRC_FILES
             "${MINDDATA_DIR}/kernels/data/unique_op.cc"
             )
+
+    list(REMOVE_ITEM MINDDATA_UTIL_SRC_FILES
+            "${MINDDATA_DIR}/util/numa_interface.cc"
+            )
     include_directories("${CMAKE_BINARY_DIR}/minddata/dataset/engine/cache")
 
     if (BUILD_MINDDATA_EXAMPLE AND (PLATFORM_ARM32 OR PLATFORM_ARM64))

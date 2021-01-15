@@ -89,6 +89,8 @@ def create_dataset_imagenet(dataset_path, batch_size=32, repeat_num=1, training=
     if device_num == 1:
         num_parallel_workers = 48
         ds.config.set_prefetch_size(8)
+    else:
+        ds.config.set_numa_enable(True)
     data_set = ds.ImageFolderDataset(dataset_path, num_parallel_workers=4,
                                      shuffle=shuffle, sampler=sampler, class_indexing=class_indexing,
                                      num_shards=device_num, shard_id=rank_id)
