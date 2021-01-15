@@ -38,7 +38,7 @@ class ApplyAdagradCPUKernel : public CPUKernel {
   template <typename T>
   void LaunchKernel(const std::vector<AddressPtr> &inputs);
   template <typename T>
-  void LaunchApplyAdagrad(T var, T accum, T lr, T gradient, size_t start, size_t end);
+  void LaunchApplyAdagrad(T const var, T const accum, const T lr, const T gradient, size_t start, size_t end);
   bool update_slots_{true};
   TypeId dtype_{kTypeUnknown};
 };
