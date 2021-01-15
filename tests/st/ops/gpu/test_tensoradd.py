@@ -23,6 +23,7 @@ from mindspore.common.api import ms_function
 from mindspore.common.initializer import initializer
 from mindspore.common.parameter import Parameter
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 
 context.set_context(device_target='GPU')
 
@@ -129,3 +130,62 @@ def test_TensorAdd():
     assert (output[1].asnumpy() == expect1).all()
     assert (output[2].asnumpy() == expect2).all()
     assert (output[3].asnumpy() == expect3).all()
+
+class Tensoradd_d(nn.Cell):
+    def __init__(self):
+        super(Tensoradd_d, self).__init__()
+        self.test_dynamic = inner.GpuConvertToDynamicShape()
+        self.add = P.TensorAdd()
+
+    def construct(self, x, y):
+        x = self.test_dynamic(x)
+        y = self.test_dynamic(y)
+        return self.add(x, y)
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_TensorAdd_dynamic():
+    context.set_context(device_target='GPU', mode=context.GRAPH_MODE)
+    net = Tensoradd_d()
+
+    x1 = Tensor(np.arange(3).reshape(3).astype(np.float32))
+    y1 = Tensor(np.array([2]).astype(np.float32))
+
+    x2 = Tensor(np.arange(3 * 3 * 3 * 3).reshape(3, 3, 3, 3).astype(np.float32))
+    y2 = Tensor(np.arange(3 * 3 * 3 * 3).reshape(3, 3, 3, 3).astype(np.float32))
+
+    expect1 = np.array([2, 3, 4])
+    expect2 = np.array(
+        [[[[0., 2., 4.],
+           [6., 8., 10.],
+           [12., 14., 16.]],
+          [[18., 20., 22.],
+           [24., 26., 28.],
+           [30., 32., 34.]],
+          [[36., 38., 40.],
+           [42., 44., 46.],
+           [48., 50., 52.]]],
+         [[[54., 56., 58.],
+           [60., 62., 64.],
+           [66., 68., 70.]],
+          [[72., 74., 76.],
+           [78., 80., 82.],
+           [84., 86., 88.]],
+          [[90., 92., 94.],
+           [96., 98., 100.],
+           [102., 104., 106.]]],
+         [[[108., 110., 112.],
+           [114., 116., 118.],
+           [120., 122., 124.]],
+          [[126., 128., 130.],
+           [132., 134., 136.],
+           [138., 140., 142.]],
+          [[144., 146., 148.],
+           [150., 152., 154.],
+           [156., 158., 160.]]]])
+
+    output1 = net(x1, y1)
+    output2 = net(x2, y2)
+    assert (output1.asnumpy() == expect1).all()
+    assert (output2.asnumpy() == expect2).all()
