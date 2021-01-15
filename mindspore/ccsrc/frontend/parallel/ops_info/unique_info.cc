@@ -23,9 +23,13 @@
 
 #include "ir/value.h"
 #include "frontend/parallel/device_matrix.h"
+#include "frontend/parallel/graph_util/generate_graph.h"
 #include "frontend/parallel/strategy.h"
 #include "frontend/parallel/context.h"
 #include "frontend/parallel/tensor_layout/tensor_redistribution.h"
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#include "ps/ps_cache/ps_cache_manager.h"
+#endif
 
 namespace mindspore {
 namespace parallel {
@@ -185,6 +189,64 @@ Status UniqueInfo::GenerateStrategies(int64_t stage_id) {
     }
   }
   return SUCCESS;
+}
+
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+Status UniqueInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
+  GenerateGraph gen_g = GenerateGraph();
+  if (gen_g.Init(cnode) != SUCCESS) {
+    MS_LOG(ERROR) << "GenerateGraph Init failed";
+    return FAILED;
+  }
+  auto bias = static_cast<int64_t>(ps::PsCacheManager::GetInstance().cache_indices_lower_bound());
+  auto slice_size = SizeToLong(ps::PsCacheManager::GetInstance().vocab_cache_size());
+
+  auto sub = gen_g.PushBack({gen_g.NewOpInst(SUB), gen_g.virtual_input_node(), CreateInt32Tensor(bias)});
+  auto relu = gen_g.PushBack({gen_g.NewOpInst(RELU), sub});
+  auto minimum = gen_g.PushBack({gen_g.NewOpInst(MINIMUM), relu, CreateInt32Tensor(slice_size - 1)});
+  auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), sub, minimum});
+  auto unique = gen_g.PushBack({gen_g.NewOpInst(replace_op_name_), gen_g.virtual_input_node()});
+  auto tuple_getitem_0 = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), unique, CreatInt64Imm(0)});
+  auto tuple_getitem_1 = gen_g.PushBack({gen_g.NewOpInst(TUPLE_GETITEM), unique, CreatInt64Imm(1)});
+  auto dtype = gen_g.PushBack({gen_g.NewOpInst(DTYPE), tuple_getitem_1});
+  auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, dtype});
+  auto mul = gen_g.PushBack({gen_g.NewOpInst(MUL), tuple_getitem_1, cast});
+
+  Attr attr_op = std::make_pair(OP, MakeValue(REDUCE_OP_SUM));
+  OperatorAttrs attrs = {attr_op};
+  AnfNodePtr reduce_op;
+  reduce_op = gen_g.PushBack({gen_g.NewOpInst(ALL_REDUCE, attrs), mul});
+  auto make_tuple = gen_g.PushBack({gen_g.NewOpInst(MAKE_TUPLE), tuple_getitem_0, reduce_op});
+  std::vector<std::pair<AnfNodePtr, int64_t>> input_nodes = {std::make_pair(sub, 1), std::make_pair(unique, 1)};
+  replace_graph_ = std::make_shared<std::pair<std::vector<std::pair<AnfNodePtr, int64_t>>, AnfNodePtr>>(
+    std::make_pair(input_nodes, make_tuple));
+  return SUCCESS;
+}
+#endif
+
+ReplaceGraphPtr UniqueInfo::replace_graph(const CNodePtr &cnode) {
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
+    auto inputs = cnode->inputs();
+    if (inputs.empty()) {
+      MS_LOG(EXCEPTION) << "Invalid inputs";
+    }
+    const auto &primitive = GetValueNode<PrimitivePtr>(inputs[0]);
+    const auto &attr = primitive->GetAttr("cache_enable");
+    if (attr == nullptr) {
+      return nullptr;
+    }
+    auto need_mask = GetValue<bool>(attr);
+    if (!need_mask) {
+      return nullptr;
+    }
+    if (ComputeReplaceGraph(cnode) != SUCCESS) {
+      MS_LOG(EXCEPTION) << name_ << ": ComputeReplaceGraph failed.";
+    }
+    return replace_graph_;
+  }
+#endif
+  return nullptr;
 }
 }  // namespace parallel
 }  // namespace mindspore

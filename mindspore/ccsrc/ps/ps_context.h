@@ -52,6 +52,7 @@ class PSContext {
   void InsertAccumuInitInfo(const std::string &param_name, float init_val) const;
   void CloneHashTable(const std::string &dest_param_name, const std::string &src_param_name) const;
   void set_cache_enable(bool cache_enable) const;
+  void set_rank_id(int rank_id) const;
 
  private:
   PSContext() : ps_enabled_(false), is_worker_(false), is_pserver_(false), is_sched_(false), rank_id_(-1) {}

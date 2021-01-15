@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -115,11 +115,8 @@ class EvalCallBack(Callback):
         if parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL,
                              ParallelMode.DATA_PARALLEL):
             rank_id = get_rank()
-        enable_data_sink = not self.sparse
-        if bool(self.config.parameter_server):
-            enable_data_sink = True
         start_time = time.time()
-        out = self.model.eval(self.eval_dataset, dataset_sink_mode=enable_data_sink)
+        out = self.model.eval(self.eval_dataset, dataset_sink_mode=(not self.sparse))
         end_time = time.time()
         eval_time = int(end_time - start_time)
 

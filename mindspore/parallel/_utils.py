@@ -190,7 +190,10 @@ def _get_python_op(op_name, op_path, instance_name, arglist):
     """Get python operator."""
     module = __import__(op_path, fromlist=["None"])
     cls = getattr(module, op_name)
-    op = cls(*arglist)
+    if op_path != "mindspore.ops.functional":
+        op = cls(*arglist)
+    else:
+        op = cls
     op.set_prim_instance_name(instance_name)
     return op
 

@@ -202,7 +202,7 @@ class WideDeepModel(nn.Cell):
         self.unique = P.Unique().shard(((1,),))
         self.wide_gatherv2 = P.GatherV2()
         self.deep_gatherv2 = P.GatherV2()
-        if is_auto_parallel and sparse and not is_field_slice:
+        if is_auto_parallel and sparse and not is_field_slice and not parameter_server:
             target = 'DEVICE'
             if host_device_mix:
                 target = 'CPU'
@@ -376,12 +376,12 @@ class TrainStepWrap(nn.Cell):
         self.weights_w = ParameterTuple(weights_w)
         self.weights_d = ParameterTuple(weights_d)
 
-        if (sparse and is_auto_parallel) or (parameter_server and not cache_enable):
+        if (sparse and is_auto_parallel) or (sparse and parameter_server):
             self.optimizer_d = LazyAdam(
                 self.weights_d, learning_rate=3.5e-4, eps=1e-8, loss_scale=sens)
             self.optimizer_w = FTRL(learning_rate=5e-2, params=self.weights_w,
                                     l1=1e-8, l2=1e-8, initial_accum=1.0, loss_scale=sens)
-            if host_device_mix or parameter_server:
+            if host_device_mix or (parameter_server and not cache_enable):
                 self.optimizer_w.target = "CPU"
                 self.optimizer_d.target = "CPU"
         else:

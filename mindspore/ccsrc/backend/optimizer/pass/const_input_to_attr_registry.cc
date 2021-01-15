@@ -53,7 +53,7 @@ ConstInputToAttrInfoRegistry::ConstInputToAttrInfoRegistry() {
   Register(prim::kPrimReduceAny->name(), {1});
   Register(prim::kPrimUnsortedSegmentMin->name(), {2});
   Register(prim::kPrimUnsortedSegmentMax->name(), {2});
-  Register(kSparseGatherV2, {2});
+  Register(kSparseGatherV2OpName, {2});
   Register(kUnsortedSegmentProdOpName, {2});
   Register(kSimpleMeanGradOpName, {1});
   Register(kMeanGradOpName, {1});
@@ -109,7 +109,7 @@ bool ConstInputToAttrInfoRegistry::GetRegisterByOpName(const std::string &op_nam
                                                        ConstInputToAttrInfoRegister *reg) const {
   if (op_input_to_attr_map_.find(op_name) != op_input_to_attr_map_.end()) {
     *reg = op_input_to_attr_map_.at(op_name);
-    MS_LOG(DEBUG) << op_name << " const2attr find in registery.";
+    MS_LOG(DEBUG) << op_name << " const2attr find in registry.";
     return true;
   }
   return false;

@@ -391,7 +391,7 @@ bool AscendKernelRuntime::GenDynamicKernel(const session::KernelGraph *graph) {
 bool AscendKernelRuntime::GenTask(const session::KernelGraph *graph) {
   InnerSetContext();
   if (graph->is_dynamic_shape()) {
-    if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE) {
+    if (ConfigManager::GetInstance().dataset_mode() == DS_SINK_MODE && (ConfigManager::GetInstance().iter_num() > 1)) {
       MS_LOG(EXCEPTION) << "Dynamic shape is not supported with sink mode.";
     }
     if (DumpJsonParser::GetInstance().async_dump_enabled()) {

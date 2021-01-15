@@ -773,12 +773,14 @@ void ParameterServer<T>::GetEmbeddingTableParamPtr() {
   for (auto cnode : cnodes) {
     MS_EXCEPTION_IF_NULL(cnode);
     std::string cnode_name = AnfAlgo::GetCNodeName(cnode);
-    if (cnode_name == kEmbeddingLookupOpName || cnode_name == kGatherV2OpName) {
+    if (cnode_name == kEmbeddingLookupOpName || cnode_name == kGatherV2OpName || cnode_name == kSparseGatherV2OpName) {
       auto embedding_table = AnfAlgo::GetInputNode(cnode, 0);
       MS_EXCEPTION_IF_NULL(embedding_table);
-      MS_LOG(INFO) << "Embedding table name is " << embedding_table->fullname_with_scope() << ", key is " << count;
-      embedding_tables_.insert(std::make_pair(count, embedding_table->cast<ParameterPtr>()));
-      count++;
+      if (embedding_table->isa<Parameter>()) {
+        MS_LOG(INFO) << "Embedding table name is " << embedding_table->fullname_with_scope() << ", key is " << count;
+        embedding_tables_.insert(std::make_pair(count, embedding_table->cast<ParameterPtr>()));
+        count++;
+      }
     }
   }
 }

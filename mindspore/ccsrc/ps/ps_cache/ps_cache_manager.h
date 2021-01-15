@@ -125,7 +125,10 @@ class PsCacheManager {
   const size_t &QueryHashTableSize(const std::string &param_name) const;
   bool IsHashTable(const std::string &param_name) { return hash_tables_.count(param_name) != 0; }
   void set_batch_elements(size_t batch_elements) { batch_elements_ = batch_elements; }
+  void set_rank_id(int rank_id) { rank_id_ = rank_id; }
   bool initialized_ps_cache() const { return initialized_ps_cache_; }
+  size_t vocab_cache_size() const { return vocab_cache_size_; }
+  int cache_indices_lower_bound() const;
   void DoProcessData(uint32_t device_id, void *context);
   void IncreaseGraphStep(const std::string &channel_name);
   void SyncEmbeddingTable();
@@ -170,10 +173,12 @@ class PsCacheManager {
   void DumpStatisticsInfo(size_t each_print_step = 1000);
   bool SyncHostEmbeddingTable();
   bool SyncDeviceEmbeddingTable();
-  bool CheckIDInDeviceTask(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *in_device,
-                           size_t *hash_hit_count);
-  bool CheckIDInDevice(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *in_device);
+  bool CheckCacheHitOrOutRangeTask(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *in_device,
+                                   bool *out_range, size_t *hash_hit_count);
+  bool CheckCacheHitOrOutRange(const int *batch_ids, const size_t batch_ids_len, int *hash_index, bool *in_device,
+                               bool *out_range);
   bool ResetEmbeddingHashMap();
+
   bool initialized_ps_cache_{false};
   std::string channel_name_;
   std::mutex channel_mutex_;
@@ -190,11 +195,14 @@ class PsCacheManager {
   std::shared_ptr<EmbeddingHostCache> embedding_host_cache_;
 
   size_t vocab_size_{0};
-  size_t cache_vocab_size_{0};
-  size_t host_cache_vocab_size_{0};
+  size_t vocab_cache_size_{0};
+  size_t host_vocab_cache_size_{0};
   size_t batch_elements_{0};
   PsCacheStatisticsInfo statistics_info_;
-  std::pair<size_t, size_t> range_bound_;
+  std::pair<int, int> emb_table_slice_bounds_;
+  std::pair<int, int> cache_indices_bounds_;
+  int vocab_cache_size_diff_{0};
+  int rank_id_{0};
   std::atomic_bool finish_insert_init_info_{false};
   std::atomic_bool finish_init_parameter_server_{false};
   std::atomic_bool running_{false};

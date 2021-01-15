@@ -138,6 +138,7 @@ class KernelRuntime {
   void GetFirstPSEmbeddingCache(const session::KernelGraph *graph, AnfNodePtr *first_cache_input_index,
                                 size_t *first_cache_size);
   void CheckIfSupportPSEmbeddingCache(const session::KernelGraph *graph);
+  void CheckSparsePSEmbeddingCache(const CNodePtr &node);
 #endif
 
  protected:

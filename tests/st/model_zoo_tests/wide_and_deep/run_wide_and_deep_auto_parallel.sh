@@ -34,6 +34,7 @@ cp -r ${CODE_DIR}  ${BASE_PATH}/wide_and_deep
 cp -f ${BASE_PATH}/python_file_for_ci/train_and_test_multinpu_ci.py ${BASE_PATH}/wide_and_deep/train_and_test_multinpu_ci.py
 cp -f ${BASE_PATH}/python_file_for_ci/__init__.py ${BASE_PATH}/wide_and_deep/__init__.py
 cp -f ${BASE_PATH}/python_file_for_ci/config.py ${BASE_PATH}/wide_and_deep/src/config.py
+cp -f ${BASE_PATH}/python_file_for_ci/callbacks.py ${BASE_PATH}/wide_and_deep/src/callbacks.py
 cp -f ${BASE_PATH}/python_file_for_ci/datasets.py ${BASE_PATH}/wide_and_deep/src/datasets.py
 cp -f ${BASE_PATH}/python_file_for_ci/wide_and_deep.py ${BASE_PATH}/wide_and_deep/src/wide_and_deep.py
 source ${BASE_PATH}/env.sh
@@ -55,7 +56,7 @@ for((i=0; i<${DEVICE_NUM}; i++)); do
     wait ${process_pid[i]}
     status=`echo $?`
     if [ "${status}" != "0" ]; then
-	    echo "[ERROR] test wide_and_deep semi auto parallel failed. status: ${status}"
+        echo "[ERROR] test wide_and_deep semi auto parallel failed. status: ${status}"
         exit 1
     else
         echo "[INFO] test wide_and_deep semi auto parallel success."
