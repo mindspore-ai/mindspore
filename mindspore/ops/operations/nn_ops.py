@@ -2304,8 +2304,8 @@ class SGD(PrimitiveWithCheck):
     """
     Computes the stochastic gradient descent. Momentum is optional.
 
-    Nesterov momentum is based on the formula from paper 'On the importance of
-    initialization and momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>'_.
+    Nesterov momentum is based on the formula from paper `On the importance of
+    initialization and momentum in deep learning <http://proceedings.mlr.press/v28/sutskever13.html>`_.
 
     Note:
         For details, please refer to `nn.SGD` source code.

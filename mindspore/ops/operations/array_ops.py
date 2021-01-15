@@ -147,7 +147,7 @@ class ExpandDims(PrimitiveWithInfer):
 
     Outputs:
         Tensor, the shape of tensor is :math:`(1, x_1, x_2, ..., x_R)` if the
-        value of `axis` is 0.
+        value of `axis` is 0. It has the same type as `input_x`.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -4424,6 +4424,9 @@ class EditDistance(PrimitiveWithInfer):
 
     Outputs:
         Tensor, a dense tensor with rank `R-1` and float32 data type.
+
+    Supported Platforms:
+        ``Ascend``
 
     Examples:
         >>> import numpy as np
