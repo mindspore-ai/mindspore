@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# != 4 ]
+if [ $# != 5 ]
 then 
-    echo "Usage: sh run_eval_ascend.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARSER_PATH]"
+    echo "Usage: sh run_eval_ascend.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARSER_PATH] [DEVICE_ID]"
 exit 1
 fi
 
@@ -52,7 +52,7 @@ fi
 ulimit -u unlimited
 export DEVICE_NUM=1
 export RANK_SIZE=$DEVICE_NUM
-export DEVICE_ID=0
+export DEVICE_ID=$5
 export RANK_ID=0
 cp $PATH4 ../src/
 if [ -d "eval" ];

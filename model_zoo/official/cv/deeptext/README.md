@@ -41,7 +41,7 @@ Here we used 4 datasets for training, and 1 datasets for Evaluation.
     - Train: 27.7MB, 410 images
 - Dataset3: SCUT-FORU: Flickr OCR Universal Database
     - Train: 388MB, 1715 images
-- Dataset4: CocoText v2(Subset of MSCOCO2014):
+- Dataset4: CocoText v2(Subset of MSCOCO2017):
     - Train: 13GB, 63686 images
 
 # [Features](#contents)
@@ -100,9 +100,9 @@ Here we used 4 datasets for training, and 1 datasets for Evaluation.
 # distribute training example(8p)
 sh run_distribute_train_ascend.sh [IMGS_PATH] [ANNOS_PATH] [RANK_TABLE_FILE] [PRETRAINED_PATH] [COCO_TEXT_PARSER_PATH]
 # standalone training
-sh run_standalone_train_ascend.sh [IMGS_PATH] [ANNOS_PATH] [PRETRAINED_PATH] [COCO_TEXT_PARSER_PATH]
+sh run_standalone_train_ascend.sh [IMGS_PATH] [ANNOS_PATH] [PRETRAINED_PATH] [COCO_TEXT_PARSER_PATH] [DEVICE_ID]
 # evaluation:
-sh run_eval_ascend.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARSER_PATH]
+sh run_eval_ascend.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARSER_PATH] [DEVICE_ID]
 ```
 
 > Notes:
@@ -122,7 +122,7 @@ sh run_eval_ascend.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARS
       # distribute training example(8p)
       sh run_distribute_train_ascend.sh [IMGS_PATH] [ANNOS_PATH] [RANK_TABLE_FILE] [PRETRAINED_PATH] [COCO_TEXT_PARSER_PATH]
       # standalone training
-      sh run_standalone_train_ascend.sh [IMGS_PATH] [ANNOS_PATH] [PRETRAINED_PATH] [COCO_TEXT_PARSER_PATH]
+      sh run_standalone_train_ascend.sh [IMGS_PATH] [ANNOS_PATH] [PRETRAINED_PATH] [COCO_TEXT_PARSER_PATH] [DEVICE_ID]
 ```
 
 ### Result
@@ -144,7 +144,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 - Ascend:
 
 ```bash
-  sh run_eval_ascend.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARSER_PATH]
+  sh run_eval_ascend.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARSER_PATH] [DEVICE_ID]
 ```
 
 ### Launch
@@ -153,7 +153,7 @@ You can start training using python or shell scripts. The usage of shell scripts
 # eval example
   shell:
       Ascend:
-            sh run_eval_ascend.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARSER_PATH]
+            sh run_eval_ascend.sh [IMGS_PATH] [ANNOS_PATH] [CHECKPOINT_PATH] [COCO_TEXT_PARSER_PATH] [DEVICE_ID]
 ```
 
 > checkpoint can be produced in training process.
@@ -186,7 +186,6 @@ class 1 precision is 88.01%, recall is 82.77%
 | Optimizer                  | Momentum                                                     |
 | Loss Function              | SoftmaxCrossEntropyWithLogits for classification, SmoothL2Loss for bbox regression|
 | Loss                       | ~0.008                                                       |
-| Accuracy (8p)              | precision=0.8854, recall=0.8024                              |
 | Total time (8p)            | 4h                                                           |
 | Scripts                    | [deeptext script](https://gitee.com/mindspore/mindspore/tree/r1.1/mindspore/official/cv/deeptext) |
 
@@ -200,7 +199,7 @@ class 1 precision is 88.01%, recall is 82.77%
 | MindSpore Version   | 1.1.0              |
 | Dataset             | 229 images                  |
 | Batch_size          | 2                         |
-| Accuracy            | precision=0.8854, recall=0.8024 |
+| Accuracy            | precision=0.8801, recall=0.8277 |
 | Total time          | 1 min                      |
 | Model for inference | 3492M (.ckpt file)   |
 
@@ -208,11 +207,11 @@ class 1 precision is 88.01%, recall is 82.77%
 
 | **Ascend** | train performance |
 | :--------: | :---------------: |
-|     1p     |     42 img/s      |
+|     1p     |     14 img/s      |
 
 | **Ascend** | train performance |
 | :--------: | :---------------: |
-|     8p     |     330 img/s     |
+|     8p     |     50 img/s     |
 
 # [Description of Random Situation](#contents)
 
