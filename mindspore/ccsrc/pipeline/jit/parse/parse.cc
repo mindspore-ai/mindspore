@@ -346,7 +346,6 @@ FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr fn_block, const py::ob
   MS_LOG(DEBUG) << "The nodes count is " << count;
   for (size_t i = 0; i < count; i++) {
     auto node = py::cast<py::list>(nodes)[i];
-    TraceGuard guard(GetLocation(node));
     fn_block = ParseStatement(fn_block, node);
     // insert appropriate depended items for the function block if it has a return node
     if (fn_block->func_graph()->get_return() != nullptr) {
@@ -359,6 +358,7 @@ FunctionBlockPtr Parser::ParseStatements(FunctionBlockPtr fn_block, const py::ob
 }
 
 FunctionBlockPtr Parser::ParseStatement(const FunctionBlockPtr &block, const py::object &node) {
+  TraceGuard trace_guard(GetLocation(node));
   auto node_type = ast_->GetNodeType(node);
 
   // check the node type
@@ -371,27 +371,17 @@ FunctionBlockPtr Parser::ParseStatement(const FunctionBlockPtr &block, const py:
   std::string node_name = node_type->node_name();
   MS_LOG(DEBUG) << "Ast node is " << node_name;
   if (stmt_method_map_.count(node_name)) {
-    TraceGuard trace_guard(GetLocation(node));
     auto stmt_block = (this->*stmt_method_map_[node_name])(block, node);
     return stmt_block;
   } else {
     errcode_ = PARSE_NODE_METHOD_UNSUPPORTED;
-    py::list location = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
-    if (location.size() < 2) {
-      MS_LOG(EXCEPTION) << "List size should not be less than 2.";
-    }
-    auto filename = location[0].cast<std::string>();
-    auto line_no = location[1].cast<int64_t>();
-    auto fn_loc = block->func_graph()->debug_info()->location();
-    py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
-                                               fn_loc->file_name(), fn_loc->line());
-    MS_LOG(EXCEPTION) << "Unsupported syntax '" << node_name << "' at " << filename << ":" << line_no << " in "
-                      << desc.cast<std::string>() << ".";
+    MS_LOG(EXCEPTION) << "Unsupported syntax '" << node_name << "'.";
   }
 }
 
 AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast expr";
+  TraceGuard trace_guard(GetLocation(node));
   auto node_type = ast_->GetNodeType(node);
   // check the node type
   AstMainType node_main_type = node_type->main_type();
@@ -404,19 +394,11 @@ AnfNodePtr Parser::ParseExprNode(const FunctionBlockPtr &block, const py::object
   std::string node_name = node_type->node_name();
   MS_LOG(DEBUG) << "Ast node is " << node_name;
   if (expr_method_map_.count(node_name)) {
-    TraceGuard trace_guard(GetLocation(node));
     auto expr_node = (this->*expr_method_map_[node_name])(block, node);
     return expr_node;
   } else {
     errcode_ = PARSE_NODE_METHOD_UNSUPPORTED;
-    py::list ret = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
-    auto filename = ret[0].cast<std::string>();
-    auto line_no = ret[1].cast<int64_t>();
-    auto fn_loc = block->func_graph()->debug_info()->location();
-    py::str desc = python_adapter::CallPyModFn(ast_->module(), PYTHON_MOD_GET_OBJECT_DESCRIPTION, ast_->function(),
-                                               fn_loc->file_name(), fn_loc->line());
-    MS_LOG(EXCEPTION) << "Unsupported syntax '" << node_name << "' at " << filename << ":" << line_no << " in "
-                      << desc.cast<std::string>() << ".";
+    MS_LOG(EXCEPTION) << "Unsupported syntax '" << node_name << "'.";
   }
 }
 
@@ -515,7 +497,6 @@ AnfNodePtr Parser::ParseName(const FunctionBlockPtr &block, const py::object &no
   MS_LOG(DEBUG) << "Process ast Name";
   auto name_id = py::cast<std::string>(python_adapter::GetPyObjAttr(node, "id"));
   MS_LOG(DEBUG) << "The Name id is " << name_id;
-  TraceGuard trace_guard(GetLocation(node));
   if (block->IsGlobalVar(name_id)) {
     return block->MakeResolveSymbol(name_id);
   }
@@ -535,7 +516,6 @@ AnfNodePtr Parser::ParseEllipsis(const FunctionBlockPtr &, const py::object &) {
 AnfNodePtr Parser::ParseNum(const FunctionBlockPtr &, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Num";
   py::object obj = python_adapter::GetPyObjAttr(node, "n");
-  TraceGuard trace_guard(GetLocation(node));
   if (py::isinstance<py::int_>(obj)) {
     MS_LOG(INFO) << "The Num is int64_t:" << (std::string)py::str(obj);
     auto data = py::cast<int64_t>(obj);
@@ -546,7 +526,7 @@ AnfNodePtr Parser::ParseNum(const FunctionBlockPtr &, const py::object &node) {
     return NewValueNode(data);
   } else {
     // no else actually
-    MS_LOG(ERROR) << "Unsupported Num type : " << (std::string)py::str(obj) << GetLocation(node)->ToString();
+    MS_LOG(ERROR) << "Unsupported Num type : " << (std::string)py::str(obj);
     errcode_ = PARSE_NODE_TYPE_UNKOWN;
     return nullptr;
   }
@@ -561,7 +541,6 @@ AnfNodePtr Parser::ParseStr(const FunctionBlockPtr &, const py::object &node) {
 AnfNodePtr Parser::ParseConstant(const FunctionBlockPtr &, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast Constant";
   py::object obj = python_adapter::GetPyObjAttr(node, "value");
-  TraceGuard trace_guard(GetLocation(node));
   if (py::isinstance<py::bool_>(obj)) {
     MS_LOG(INFO) << "The Constant is bool:" << (std::string)py::str(obj);
     auto data = py::cast<bool>(obj);
@@ -583,15 +562,13 @@ AnfNodePtr Parser::ParseConstant(const FunctionBlockPtr &, const py::object &nod
     return NewValueNode(kNone);
   } else {
     // no else actually
-    MS_EXCEPTION(TypeError) << "Unsupported Constant type : " << (std::string)py::str(obj)
-                            << GetLocation(node)->ToString();
+    MS_EXCEPTION(TypeError) << "Unsupported Constant type : " << (std::string)py::str(obj);
   }
 }
 
 AnfNodePtr Parser::ParseNameConstant(const FunctionBlockPtr &, const py::object &node) {
   MS_LOG(DEBUG) << "Process ast NameConstant";
   py::object obj = python_adapter::GetPyObjAttr(node, "value");
-  TraceGuard trace_guard(GetLocation(node));
   if (py::isinstance<py::bool_>(obj)) {
     MS_LOG(INFO) << "The NameConstant is bool:" << (std::string)py::str(obj);
     auto data = py::cast<bool>(obj);
@@ -601,7 +578,7 @@ AnfNodePtr Parser::ParseNameConstant(const FunctionBlockPtr &, const py::object 
     return NewValueNode(kNone);
   } else {
     // no else actually
-    MS_LOG(ERROR) << "Unsupported NameConstant type: " << (std::string)py::str(obj) << GetLocation(node)->ToString();
+    MS_LOG(ERROR) << "Unsupported NameConstant type: " << (std::string)py::str(obj);
     errcode_ = PARSE_NODE_TYPE_UNKOWN;
     return nullptr;
   }
@@ -1518,24 +1495,16 @@ void Parser::HandleAssignClassMember(const FunctionBlockPtr &block, const py::ob
   (void)var_name.append(attr_name);
   MS_LOG(DEBUG) << "assign " << var_name;
 
-  // Get targ location info for error printing
-  py::list location = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, targ);
-  if (location.size() < 2) {
-    MS_LOG(EXCEPTION) << "List size should not be less than 2.";
-  }
-  auto filename = location[0].cast<std::string>();
-  auto line_no = location[1].cast<int64_t>();
   // Now only support the self.xxx = yyy, where self.xxx must be a defined Parameter type
   if (!py::hasattr(ast()->obj(), common::SafeCStr(attr_name))) {
-    MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but not defined, at " << filename << ":"
-                            << line_no;
+    MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but not defined.";
   }
   auto obj = ast()->obj().attr(common::SafeCStr(attr_name));
   auto obj_type = obj.attr("__class__").attr("__name__");
   if (!py::hasattr(obj, "__parameter__")) {
     MS_EXCEPTION(TypeError) << "'" << var_name << "' should be a Parameter, but got '"
                             << py::str(obj).cast<std::string>() << "' with type '"
-                            << py::str(obj_type).cast<std::string>() << "' at " << filename << ":" << line_no;
+                            << py::str(obj_type).cast<std::string>() << ".";
   }
 
   MS_EXCEPTION_IF_NULL(block);
@@ -1621,13 +1590,7 @@ FunctionBlockPtr Parser::ParseAssign(const FunctionBlockPtr &block, const py::ob
 FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::object &node) {
   if (loops_.empty()) {
     // Report error if loop context not set for the 'break' statement.
-    py::list location = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
-    if (location.size() < 2) {
-      MS_LOG(EXCEPTION) << "List size should not be less than 2.";
-    }
-    auto filename = location[0].cast<std::string>();
-    auto line_no = location[1].cast<int64_t>();
-    MS_LOG(EXCEPTION) << "Unexpected 'break' at " << filename << ":" << line_no;
+    MS_LOG(EXCEPTION) << "Unexpected 'break'.";
   }
   // Get current loop.
   Loop &loop = loops_.top();
@@ -1644,13 +1607,7 @@ FunctionBlockPtr Parser::ParseBreak(const FunctionBlockPtr &block, const py::obj
 FunctionBlockPtr Parser::ParseContinue(const FunctionBlockPtr &block, const py::object &node) {
   if (loops_.empty()) {
     // Report error if loop context not set for the 'continue' statement.
-    py::list location = ast_->CallParserObjMethod(PYTHON_PARSE_GET_LOCATION, node);
-    if (location.size() < 2) {
-      MS_LOG(EXCEPTION) << "List size should not be less than 2.";
-    }
-    auto filename = location[0].cast<std::string>();
-    auto line_no = location[1].cast<int64_t>();
-    MS_LOG(EXCEPTION) << "Unexpected 'continue' at " << filename << ":" << line_no;
+    MS_LOG(EXCEPTION) << "Unexpected 'continue.";
   }
   // Jump to the header of the loop with iterator called.
   Loop &loop = loops_.top();

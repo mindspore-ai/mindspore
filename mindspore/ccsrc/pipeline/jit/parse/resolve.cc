@@ -221,10 +221,9 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
                                         const AnfNodePtr &node) {
   ScopeGuard scope_guard(node->scope());
   AnfNodePtr resolved_node = nullptr;
-  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
   bool success = ResolveObjectToNode(node->func_graph(), obj, &resolved_node);
   if (!success) {
-    MS_LOG(EXCEPTION) << "Parse Resolve covert failed NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+    MS_LOG(EXCEPTION) << "Parse Resolve covert failed NodeInfo.";
   }
   if (IsValueNode<FuncGraph>(resolved_node)) {
     auto new_fg = GetValueNode<FuncGraphPtr>(resolved_node);
@@ -242,12 +241,14 @@ AnfNodePtr ResolveObjectAndAddToManager(const FuncGraphManagerPtr &manager, cons
 
 AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space, const SymbolPtr &symbol,
                          const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
   if (node->func_graph() == nullptr || manager == nullptr) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph or manager is nullptr";
   }
   SymbolResolver symbol_resolver(name_space, symbol, node);
   if (!symbol_resolver.Resolve()) {
-    MS_EXCEPTION(TypeError) << "Parse Resolve node failed NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+    MS_EXCEPTION(TypeError) << "Parse Resolve node failed NodeInfo.";
   }
 
   py::object obj = symbol_resolver.result();
@@ -259,12 +260,14 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
 
 AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpacePtr &name_space,
                                const SymbolPtr &symbol, const AnfNodePtr &node, const std::string &attr) {
+  MS_EXCEPTION_IF_NULL(node);
+  TraceGuard trace_guard(std::make_shared<TraceResolve>(node->debug_info()));
   if (node->func_graph() == nullptr || manager == nullptr) {
     MS_LOG(EXCEPTION) << "Node " << node->DebugString() << " graph or manager is nullptr";
   }
   SymbolResolver symbol_resolver(name_space, symbol, node);
   if (!symbol_resolver.Resolve()) {
-    MS_LOG(EXCEPTION) << "Parse Resolve node failed NodeInfo: " << trace::GetDebugInfo(node->debug_info());
+    MS_LOG(EXCEPTION) << "Parse Resolve node failed NodeInfo.";
   }
 
   py::object obj = symbol_resolver.result();
