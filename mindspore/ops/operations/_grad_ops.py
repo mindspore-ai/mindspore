@@ -1776,7 +1776,10 @@ class NLLLossGrad(PrimitiveWithInfer):
         validator.check_int(len(t_shape), 1, Rel.EQ, "target rank", self.name)
         validator.check_int(len(w_shape), 1, Rel.EQ, "weight rank", self.name)
         validator.check(f"input_shape[0]", x_shape[0], "target_shape", t_shape[0], Rel.EQ, self.name)
-        validator.check(f"input_shape[1]", x_shape[1], "weight_shape", w_shape[0], Rel.EQ, self.name)
+        if len(x_shape) == 1:
+            validator.check(f"input_shape[0]", x_shape[0], "weight_shape", w_shape[0], Rel.EQ, self.name)
+        else:
+            validator.check(f"input_shape[1]", x_shape[1], "weight_shape", w_shape[0], Rel.EQ, self.name)
         return x_shape
 
     def infer_dtype(self, x_dtype, y_grad_dtype, t_dtype, w_dtype, tw_dtype):
