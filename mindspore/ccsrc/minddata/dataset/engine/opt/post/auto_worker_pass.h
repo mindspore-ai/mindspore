@@ -47,6 +47,9 @@ class AutoWorkerPass : public IRTreePass {
         max_num_workers_(8),
         thread_cnt_(GlobalContext::Instance()->config_manager()->num_cpu_threads()) {}
 
+  /// \brief destructor, by doing "= default", compiler will automatically generate the correct destructor
+  ~AutoWorkerPass() = default;
+
   Status RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *) override;
 
  private:
@@ -54,6 +57,10 @@ class AutoWorkerPass : public IRTreePass {
    public:
     explicit OpWeightPass(const std::map<std::string, float> &weight_profile)
         : IRNodePass(), weight_sum_(0), weight_profile_(weight_profile) {}
+
+    /// \brief destructor, by doing "= default", compiler will automatically generate the correct destructor
+    ~OpWeightPass() = default;
+
     // this is the base class function which contains the logic to handle most of the pipeline ops
     // pipeline ops although can't config num_workers it still runs 1 thread they need to be factored into weight
     Status Visit(std::shared_ptr<DatasetNode> node, bool *const modified) override;
