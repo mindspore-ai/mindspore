@@ -47,7 +47,6 @@ class RuntimeContext {
 
   virtual ~RuntimeContext() = default;
 
- protected:
   std::shared_ptr<TreeConsumer> tree_consumer_;
 };
 
