@@ -463,7 +463,7 @@ TEST_F(TestMatmulInfo, GetMirrorOPs4) {
   matmul1->Init(strategy);
   MirrorOps mirror_ops = matmul1->mirror_ops();
 
-  ASSERT_EQ(mirror_ops.size(), 0);  // all reduce only in -3 dim (strategy is 1);
+  ASSERT_EQ(mirror_ops.size(), 2);
 }
 
 TEST_F(TestMatmulInfo, InitTwice) {

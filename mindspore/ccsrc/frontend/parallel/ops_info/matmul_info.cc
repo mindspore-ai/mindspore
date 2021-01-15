@@ -209,32 +209,6 @@ Status MatMulBase::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-// all-reduce weight's grad
-Status MatMulBase::InferMirrorOps() {
-  mirror_ops_.clear();
-
-  Shape mat_b_tensor_map = inputs_tensor_map_[1];
-  std::vector<Group> mat_b_group;
-  if (CreateGroupByTensorMap(mat_b_tensor_map, &mat_b_group) != SUCCESS) {
-    return FAILED;
-  }
-
-  OperatorVector op_for_inputs;  // op_for_inputs is empty
-  OperatorVector op_for_weight;
-
-  if (mat_b_group.empty()) {
-    MS_LOG(INFO) << name_ << " : The mirror ops is empty.";
-    return SUCCESS;
-  } else {
-    op_for_weight = CreateMirrorOps(mat_b_group[0].name(), mat_b_group[0].GetDevNum());
-    mirror_ops_.push_back(op_for_inputs);
-    mirror_ops_.push_back(op_for_weight);
-    MS_LOG(INFO) << name_ << " : Create the mirror ops for weight success, group is " << mat_b_group[0].name();
-  }
-
-  return SUCCESS;
-}
-
 Status MatMulBase::InferForwardCommunication() {
   forward_op_.clear();
   size_t dimension = origin_dev_matrix_shape_.size();

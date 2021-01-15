@@ -48,7 +48,6 @@ class SoftmaxCrossEntropyWithLogitsInfo : public OperatorInfo {
  protected:
   Status CheckStrategy(const StrategyPtr &strategy) override;
   Status GetAttrs() override;
-  Status InferMirrorOps() override { return SUCCESS; }
   Status InferForwardCommunication() override { return SUCCESS; }
   Status InferTensorMap() override;
   Status InferTensorInfo() override;
