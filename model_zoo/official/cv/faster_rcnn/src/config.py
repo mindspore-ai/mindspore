@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -113,8 +113,6 @@ config = ed({
 
     # LR
     "base_lr": 0.02,
-    "base_step": 58633,
-    "total_epoch": 13,
     "warmup_step": 500,
     "warmup_ratio": 1/3.0,
     "sgd_step": [8, 11],
