@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ class UncertaintyEvaluation:
 
     def __init__(self, model, train_dataset, task_type, num_classes=None, epochs=1,
                  epi_uncer_model_path=None, ale_uncer_model_path=None, save_model=False):
-        self.epi_model = model
+        self.epi_model = deepcopy(model)
         self.ale_model = deepcopy(model)
         self.epi_train_dataset = train_dataset
         self.ale_train_dataset = train_dataset

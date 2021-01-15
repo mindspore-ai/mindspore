@@ -15,9 +15,11 @@
 """Image Classification Runner."""
 import os
 import re
+import json
 from time import time
 
 import numpy as np
+from scipy.stats import beta
 from PIL import Image
 
 import mindspore as ms
@@ -30,10 +32,15 @@ from mindspore.train._utils import check_value_type
 from mindspore.train.summary._summary_adapter import _convert_image_format
 from mindspore.train.summary.summary_record import SummaryRecord
 from mindspore.train.summary_pb2 import Explain
-from .benchmark import Localization
-from .explanation import RISE
-from .benchmark._attribution.metric import AttributionMetric, LabelSensitiveMetric, LabelAgnosticMetric
-from .explanation._attribution.attribution import Attribution
+from mindspore.nn.probability.toolbox.uncertainty_evaluation import UncertaintyEvaluation
+from mindspore.explainer.benchmark import Localization
+from mindspore.explainer.benchmark._attribution.metric import AttributionMetric
+from mindspore.explainer.benchmark._attribution.metric import LabelSensitiveMetric
+from mindspore.explainer.benchmark._attribution.metric import LabelAgnosticMetric
+from mindspore.explainer.explanation import RISE
+from mindspore.explainer.explanation._attribution.attribution import Attribution
+from mindspore.explainer.explanation._counterfactual import hierarchical_occlusion as hoc
+
 
 _EXPAND_DIMS = ExpandDims()
 
@@ -97,6 +104,8 @@ class ImageClassificationRunner:
     _DATAFILE_DIRNAME_PREFIX = "_explain_"
     _ORIGINAL_IMAGE_DIRNAME = "origin_images"
     _HEATMAP_DIRNAME = "heatmap"
+    # specfial filenames
+    _MANIFEST_FILENAME = "manifest.json"
     # max. no. of sample per directory
     _SAMPLE_PER_DIR = 1000
     # seed for fixing the iterating order of the dataset
@@ -132,10 +141,14 @@ class ImageClassificationRunner:
         self._network = network
         self._explainers = None
         self._benchmarkers = None
+        self._uncertainty = None
+        self._hoc_searcher = None
         self._summary_timestamp = None
         self._sample_index = -1
 
         self._full_network = SequentialCell([self._network, activation_fn])
+
+        self._manifest = None
 
         self._verify_data_n_settings(check_data_n_network=True)
 
@@ -185,6 +198,50 @@ class ImageClassificationRunner:
             self._benchmarkers = None
             raise
 
+    def register_hierarchical_occlusion(self):
+        """
+        Register hierarchical occlusion instances.
+
+        Notes:
+            Input images are required to be in 3 channels formats and the length of side short must be equals to or
+            greater than 56 pixels.
+
+        Raises:
+            ValueError: Be raised for any data or settings' value problem.
+            RuntimeError: Be raised if the function was called already.
+        """
+        if self._hoc_searcher is not None:
+            raise RuntimeError("Function register_hierarchical_occlusion() was invoked already.")
+
+        self._hoc_searcher = hoc.Searcher(self._full_network)
+
+        try:
+            self._verify_data_n_settings(check_hoc=True)
+        except ValueError:
+            self._hoc_searcher = None
+            raise
+
+    def register_uncertainty(self):
+        """
+        Register uncertainty instance to compute the epistemic uncertainty base on the Bayes' theorem.
+
+        Notes:
+            Please refer to the documentation of mindspore.nn.probability.toolbox.uncertainty_evaluation for the
+            details. The actual output is standard deviation of the classification predictions and the corresponding
+            95% confidence intervals. Users have to invoke register_saliency() as well for the uncertainty results are
+            going to be shown on the saliency map page in MindInsight.
+
+        Raises:
+            RuntimeError: Be raised if the function was called already.
+        """
+        if self._uncertainty is not None:
+            raise RuntimeError("Function register_uncertainty() was invoked already.")
+
+        self._uncertainty = UncertaintyEvaluation(model=self._full_network,
+                                                  train_dataset=None,
+                                                  task_type='classification',
+                                                  num_classes=len(self._labels))
+
     def run(self):
         """
         Run the explain job and save the result as a summary in summary_dir.
@@ -198,7 +255,10 @@ class ImageClassificationRunner:
             RuntimeError: Be raised for any runtime problem.
         """
         self._verify_data_n_settings(check_all=True)
-
+        self._manifest = {"saliency_map": False,
+                          "benchmark": False,
+                          "uncertainty": False,
+                          "hierarchical_occlusion": False}
         with SummaryRecord(self._summary_dir, raise_exception=True) as summary:
             print("Start running and writing......")
             begin = time()
@@ -214,12 +274,24 @@ class ImageClassificationRunner:
             if self._is_saliency_registered:
                 self._run_saliency(summary, imageid_labels)
 
+            self._save_manifest()
+
             print("Finish running and writing. Total time elapsed: {:.3f} s".format(time() - begin))
+
+    @property
+    def _is_hoc_registered(self):
+        """Check if HOC module is registered."""
+        return self._hoc_searcher is not None
 
     @property
     def _is_saliency_registered(self):
         """Check if saliency module is registered."""
         return bool(self._explainers)
+
+    @property
+    def _is_uncertainty_registered(self):
+        """Check if uncertainty module is registered."""
+        return self._uncertainty is not None
 
     def _save_metadata(self, summary):
         """Save metadata of the explain job to summary."""
@@ -245,12 +317,13 @@ class ImageClassificationRunner:
         Run inference for the dataset and write the inference related data into summary.
 
         Args:
-            summary (SummaryRecord): The summary object to store the data
+            summary (SummaryRecord): The summary object to store the data.
             threshold (float): The threshold for prediction.
 
         Returns:
             dict, The map of sample d to the union of its ground truth and predicted labels.
         """
+        has_uncertainty_rec = False
         sample_id_labels = {}
         self._sample_index = 0
         ds.config.set_seed(self._DATASET_SEED)
@@ -259,9 +332,19 @@ class ImageClassificationRunner:
             inputs, labels, _ = self._unpack_next_element(next_element)
             prob = self._full_network(inputs).asnumpy()
 
+            if self._uncertainty is not None:
+                prob_var = self._uncertainty.eval_epistemic_uncertainty(inputs)
+            else:
+                prob_var = None
+
             for idx, inp in enumerate(inputs):
                 gt_labels = labels[idx]
                 gt_probs = [float(prob[idx][i]) for i in gt_labels]
+
+                if prob_var is not None:
+                    gt_prob_vars = [float(prob_var[idx][i]) for i in gt_labels]
+                    gt_itl_lows, gt_itl_his, gt_prob_sds = \
+                        self._calc_beta_intervals(gt_probs, gt_prob_vars)
 
                 data_np = _convert_image_format(np.expand_dims(inp.asnumpy(), 0), 'NCHW')
                 original_image = _np_to_image(_normalize(data_np), mode='RGB')
@@ -269,6 +352,11 @@ class ImageClassificationRunner:
 
                 predicted_labels = [int(i) for i in (prob[idx] > threshold).nonzero()[0]]
                 predicted_probs = [float(prob[idx][i]) for i in predicted_labels]
+
+                if prob_var is not None:
+                    predicted_prob_vars = [float(prob_var[idx][i]) for i in predicted_labels]
+                    predicted_itl_lows, predicted_itl_his, predicted_prob_sds = \
+                        self._calc_beta_intervals(predicted_probs, predicted_prob_vars)
 
                 union_labs = list(set(gt_labels + predicted_labels))
                 sample_id_labels[str(self._sample_index)] = union_labs
@@ -285,14 +373,29 @@ class ImageClassificationRunner:
                 explain.inference.predicted_label.extend(predicted_labels)
                 explain.inference.predicted_prob.extend(predicted_probs)
 
-                summary.add_value("explainer", "inference", explain)
+                if prob_var is not None:
+                    explain.inference.ground_truth_prob_sd.extend(gt_prob_sds)
+                    explain.inference.ground_truth_prob_itl95_low.extend(gt_itl_lows)
+                    explain.inference.ground_truth_prob_itl95_hi.extend(gt_itl_his)
+                    explain.inference.predicted_prob_sd.extend(predicted_prob_sds)
+                    explain.inference.predicted_prob_itl95_low.extend(predicted_itl_lows)
+                    explain.inference.predicted_prob_itl95_hi.extend(predicted_itl_his)
 
+                    has_uncertainty_rec = True
+
+                summary.add_value("explainer", "inference", explain)
                 summary.record(1)
+
+                if self._is_hoc_registered:
+                    self._run_hoc(summary, self._sample_index, inputs[idx], prob[idx])
 
                 self._sample_index += 1
             self._spaced_print("Finish running and writing {}-th batch inference data."
-                               " Time elapsed: {:.3f} s".format(j, time() - now),
-                               end='')
+                               " Time elapsed: {:.3f} s".format(j, time() - now))
+
+        if has_uncertainty_rec:
+            self._manifest["uncertainty"] = True
+
         return sample_id_labels
 
     def _run_saliency(self, summary, sample_id_labels):
@@ -306,10 +409,10 @@ class ImageClassificationRunner:
                 for idx, next_element in enumerate(self._dataset):
                     now = time()
                     self._spaced_print("Start running {}-th explanation data for {}......".format(
-                        idx, exp.__class__.__name__), end='')
+                        idx, exp.__class__.__name__))
                     self._run_exp_step(next_element, exp, sample_id_labels, summary)
                     self._spaced_print("Finish writing {}-th explanation data for {}. Time elapsed: "
-                                       "{:.3f} s".format(idx, exp.__class__.__name__, time() - now), end='')
+                                       "{:.3f} s".format(idx, exp.__class__.__name__, time() - now))
                 self._spaced_print(
                     "Finish running and writing explanation data for {}. Time elapsed: {:.3f} s".format(
                         exp.__class__.__name__, time() - start))
@@ -326,20 +429,20 @@ class ImageClassificationRunner:
                 for idx, next_element in enumerate(self._dataset):
                     now = time()
                     self._spaced_print("Start running {}-th explanation data for {}......".format(
-                        idx, exp.__class__.__name__), end='')
+                        idx, exp.__class__.__name__))
                     saliency_dict_lst = self._run_exp_step(next_element, exp, sample_id_labels, summary)
                     self._spaced_print(
                         "Finish writing {}-th batch explanation data for {}. Time elapsed: {:.3f} s".format(
-                            idx, exp.__class__.__name__, time() - now), end='')
+                            idx, exp.__class__.__name__, time() - now))
                     for bench in self._benchmarkers:
                         now = time()
                         self._spaced_print(
                             "Start running {}-th batch {} data for {}......".format(
-                                idx, bench.__class__.__name__, exp.__class__.__name__), end='')
+                                idx, bench.__class__.__name__, exp.__class__.__name__))
                         self._run_exp_benchmark_step(next_element, exp, bench, saliency_dict_lst)
                         self._spaced_print(
                             "Finish running {}-th batch {} data for {}. Time elapsed: {:.3f} s".format(
-                                idx, bench.__class__.__name__, exp.__class__.__name__, time() - now), end='')
+                                idx, bench.__class__.__name__, exp.__class__.__name__, time() - now))
 
                 for bench in self._benchmarkers:
                     benchmark = explain.benchmark.add()
@@ -355,6 +458,52 @@ class ImageClassificationRunner:
                 summary.add_value('explainer', 'benchmark', explain)
                 summary.record(1)
 
+    def _run_hoc(self, summary, sample_id, sample_input, prob):
+        """
+        Run HOC search for a sample image, and then save the result to summary.
+
+        Args:
+            summary (SummaryRecord): The summary object to store the data.
+            sample_id (int): The sample ID.
+            sample_input (Union[Tensor, np.ndarray]): Sample image tensor in CHW or NCWH(N=1).
+            prob (Union[Tensor, np.ndarray]): List of sample's classification prediction output, HOC will run for
+                labels with prediction output strictly larger then HOC searcher's threshold(0.5 by default).
+        """
+        if isinstance(sample_input, ms.Tensor):
+            sample_input = sample_input.asnumpy()
+        if len(sample_input.shape) == 3:
+            sample_input = np.expand_dims(sample_input, axis=0)
+        has_rec = False
+        explain = Explain()
+        explain.sample_id = sample_id
+        str_mask = hoc.auto_str_mask(sample_input)
+        compiled_mask = None
+        for label_idx, label_prob in enumerate(prob):
+            if label_prob > self._hoc_searcher.threshold:
+                if compiled_mask is None:
+                    compiled_mask = hoc.compile_mask(str_mask, sample_input)
+                try:
+                    edit_tree, layer_outputs = self._hoc_searcher.search(sample_input, label_idx, compiled_mask)
+                except hoc.NoValidResultError as ex:
+                    log.error(f"HOC cannot find result for sample:{sample_id} error:{ex}")
+                    continue
+                has_rec = True
+                hoc_rec = explain.hoc.add()
+                hoc_rec.label = label_idx
+                hoc_rec.mask = str_mask
+                layer_count = edit_tree.max_layer + 1
+                for layer in range(layer_count):
+                    steps = edit_tree.get_layer_or_leaf_steps(layer)
+                    layer_output = layer_outputs[layer]
+                    hoc_layer = hoc_rec.layer.add()
+                    hoc_layer.prob = layer_output
+                    for step in steps:
+                        hoc_layer.box.extend(list(step.box))
+        if has_rec:
+            summary.add_value("explainer", "hoc", explain)
+            summary.record(1)
+            self._manifest['hierarchical_occlusion'] = True
+
     def _run_exp_step(self, next_element, explainer, sample_id_labels, summary):
         """
         Run the explanation for each step and write explanation results into summary.
@@ -368,6 +517,7 @@ class ImageClassificationRunner:
         Returns:
             list, List of dict that maps label to its corresponding saliency map.
         """
+        has_saliency_rec = False
         inputs, labels, _ = self._unpack_next_element(next_element)
         sample_index = self._sample_index
         unions = []
@@ -406,11 +556,17 @@ class ImageClassificationRunner:
                 explanation.heatmap_path = heatmap_path
                 explanation.label = lab
 
+                has_saliency_rec = True
+
             summary.add_value("explainer", "explanation", explain)
             summary.record(1)
 
             self._sample_index += 1
             saliency_dict_lst.append(saliency_dict)
+
+        if has_saliency_rec:
+            self._manifest['saliency_map'] = True
+
         return saliency_dict_lst
 
     def _run_exp_benchmark_step(self, next_element, explainer, benchmarker, saliency_dict_lst):
@@ -436,6 +592,26 @@ class ImageClassificationRunner:
                     else:
                         raise TypeError('Benchmarker must be one of LabelSensitiveMetric or LabelAgnosticMetric, but'
                                         'receive {}'.format(type(benchmarker)))
+            self._manifest['benchmark'] = True
+
+    @staticmethod
+    def _calc_beta_intervals(means, variances, prob=0.95):
+        """Calculate confidence interval of beta distributions."""
+        if not isinstance(means, np.ndarray):
+            means = np.array(means)
+        if not isinstance(variances, np.ndarray):
+            variances = np.array(variances)
+        with np.errstate(divide='ignore'):
+            coef_a = ((means ** 2) * (1 - means) / variances) - means
+            coef_b = (coef_a * (1 - means)) / means
+            itl_lows, itl_his = beta.interval(prob, coef_a, coef_b)
+            sds = np.sqrt(variances)
+        for i in range(itl_lows.shape[0]):
+            if not np.isfinite(sds[i]) or not np.isfinite(itl_lows[i]) or not np.isfinite(itl_his[i]):
+                itl_lows[i] = means[i]
+                itl_his[i] = means[i]
+                sds[i] = 0
+        return itl_lows, itl_his, sds
 
     def _verify_data(self):
         """Verify dataset and labels."""
@@ -473,6 +649,17 @@ class ImageClassificationRunner:
                 raise ValueError(
                     "Labels shape {} is unrecognizable: outputs should not have more than two dimensions"
                     " with length greater than 1.".format(labels.shape))
+
+        if self._is_hoc_registered:
+            if inputs.shape[-3] != 3:
+                raise ValueError(
+                    "Hierarchical occlusion is registered, images must be in 3 channels format, but "
+                    "{} channels is encountered.".format(inputs.shape[-3]))
+            short_side = min(inputs.shape[-2:])
+            if short_side < hoc.AUTO_IMAGE_SHORT_SIDE_MIN:
+                raise ValueError(
+                    "Hierarchical occlusion is registered, images' short side must be equals to or greater then "
+                    "{}, but {} is encountered.".format(hoc.AUTO_IMAGE_SHORT_SIDE_MIN, short_side))
 
     def _verify_network(self):
         """Verify the network."""
@@ -521,7 +708,8 @@ class ImageClassificationRunner:
                                 check_all=False,
                                 check_registration=False,
                                 check_data_n_network=False,
-                                check_saliency=False):
+                                check_saliency=False,
+                                check_hoc=False):
         """
         Verify the validity of dataset and other settings.
 
@@ -530,6 +718,7 @@ class ImageClassificationRunner:
             check_registration (bool): Set it True for checking registrations, check if it is enough to invoke run().
             check_data_n_network (bool): Set it True for checking data and network.
             check_saliency (bool): Set it True for checking saliency related settings.
+            check_hoc (bool): Set it True for checking HOC related settings.
 
         Raises:
             ValueError: Be raised for any data or settings' value problem.
@@ -539,13 +728,16 @@ class ImageClassificationRunner:
             check_registration = True
             check_data_n_network = True
             check_saliency = True
+            check_hoc = True
 
         if check_registration:
-            if not self._is_saliency_registered:
-                raise ValueError("No explanation module was registered, user should at least call register_saliency()"
-                                 " once with proper explanation instances")
+            if not self._is_saliency_registered and not self._is_hoc_registered:
+                raise ValueError("No explanation module was registered, user should at least call register_saliency() "
+                                 "or register_hierarchical_occlusion() once with proper arguments")
+            if self._is_uncertainty_registered and not self._is_saliency_registered:
+                raise ValueError("Function register_uncertainty() is invoked but register_saliency() is not.")
 
-        if check_data_n_network or check_saliency:
+        if check_data_n_network or check_saliency or check_hoc:
             self._verify_data()
 
         if check_data_n_network:
@@ -658,6 +850,18 @@ class ImageClassificationRunner:
 
         return ms.Tensor(batch_labels, ms.int32)
 
+    def _save_manifest(self):
+        """Save manifest.json underneath datafile directory."""
+        if self._manifest is None:
+            raise RuntimeError("Manifest not yet be initialized.")
+        path_tokens = [self._summary_dir,
+                       self._DATAFILE_DIRNAME_PREFIX + str(self._summary_timestamp)]
+        abs_dir_path = self._create_subdir(*path_tokens)
+        save_path = os.path.join(abs_dir_path, self._MANIFEST_FILENAME)
+        with open(save_path, 'w') as file:
+            json.dump(self._manifest, file, indent=4)
+        os.chmod(save_path, self._FILE_MODE)
+
     def _save_original_image(self, sample_id, image):
         """Save an image to summary directory."""
         id_dirname = self._get_sample_dirname(sample_id)
@@ -720,7 +924,7 @@ class ImageClassificationRunner:
         return None
 
     @classmethod
-    def _spaced_print(cls, message, *args, **kwargs):
+    def _spaced_print(cls, message):
         """Spaced message printing."""
         # workaround to print logs starting new line in case line width mismatch.
         print(cls._SPACER.format(message))

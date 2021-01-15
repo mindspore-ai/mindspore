@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,7 +121,7 @@ message Explain {
         optional string explain_method = 1;
         optional int32 label = 2;
         optional string heatmap_path = 3;
-	}
+    }
 
     message Benchmark{
         optional string benchmark_method = 1;
@@ -131,10 +131,21 @@ message Explain {
     }
 
     message Metadata{
-		repeated string label = 1;
-		repeated string explain_method = 2;
-		repeated string benchmark_method = 3;
-	}
+        repeated string label = 1;
+        repeated string explain_method = 2;
+        repeated string benchmark_method = 3;
+    }
+
+    message HocLayer {
+        optional float prob = 1;
+        repeated int32 box = 2;  // List of repeated x, y, w, h
+    }
+
+    message Hoc {
+        optional int32 label = 1;
+        optional string mask = 2;
+        repeated HocLayer layer = 3;
+    }
 
     optional int32 sample_id = 1;
     optional string image_path = 2;  // The Metadata and image path must have one fill in
@@ -146,4 +157,6 @@ message Explain {
 
     optional Metadata metadata = 7;
     optional string status = 8;  // enum value: run, end
+
+    repeated Hoc hoc = 9; // hierarchical occlusion counterfactual
 }
