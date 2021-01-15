@@ -229,6 +229,7 @@ DatasetNode::DatasetNode() : cache_(nullptr), parent_(nullptr), children_({}), d
   connector_que_size_ = cfg->op_connector_size();
   worker_connector_size_ = cfg->worker_connector_size();
   mappable_ = kNotADataSource;
+  descendant_of_cache_ = false;
 }
 
 std::string DatasetNode::PrintColumns(const std::vector<std::string> &columns) const {
