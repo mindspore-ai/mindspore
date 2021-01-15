@@ -52,12 +52,12 @@ SamplerObj::SamplerObj() {}
 
 void SamplerObj::BuildChildren(std::shared_ptr<SamplerRT> sampler) {
   for (auto child : children_) {
-    auto sampler_rt = child->Build();
+    auto sampler_rt = child->SamplerBuild();
     sampler->AddChild(sampler_rt);
   }
 }
 
-Status SamplerObj::AddChild(std::shared_ptr<SamplerObj> child) {
+Status SamplerObj::AddChildSampler(std::shared_ptr<SamplerObj> child) {
   if (child == nullptr) {
     return Status::OK();
   }
@@ -183,7 +183,7 @@ Status DistributedSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> DistributedSamplerObj::Build() {
+std::shared_ptr<SamplerRT> DistributedSamplerObj::SamplerBuild() {
   // runtime sampler object
   auto sampler = std::make_shared<dataset::DistributedSamplerRT>(num_samples_, num_shards_, shard_id_, shuffle_, seed_,
                                                                  offset_, even_dist_);
@@ -215,7 +215,7 @@ Status PKSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> PKSamplerObj::Build() {
+std::shared_ptr<SamplerRT> PKSamplerObj::SamplerBuild() {
   // runtime sampler object
   auto sampler = std::make_shared<dataset::PKSamplerRT>(num_samples_, num_val_, shuffle_);
   BuildChildren(sampler);
@@ -232,7 +232,7 @@ PreBuiltSamplerObj::PreBuiltSamplerObj(std::shared_ptr<mindrecord::ShardOperator
 
 Status PreBuiltSamplerObj::ValidateParams() { return Status::OK(); }
 
-std::shared_ptr<SamplerRT> PreBuiltSamplerObj::Build() {
+std::shared_ptr<SamplerRT> PreBuiltSamplerObj::SamplerBuild() {
   BuildChildren(sp_);
   return sp_;
 }
@@ -241,19 +241,19 @@ std::shared_ptr<SamplerRT> PreBuiltSamplerObj::Build() {
 std::shared_ptr<mindrecord::ShardOperator> PreBuiltSamplerObj::BuildForMindDataset() { return sp_minddataset_; }
 #endif
 
-std::shared_ptr<SamplerObj> PreBuiltSamplerObj::Copy() {
+std::shared_ptr<SamplerObj> PreBuiltSamplerObj::SamplerCopy() {
 #ifndef ENABLE_ANDROID
   if (sp_minddataset_ != nullptr) {
     auto sampler = std::make_shared<PreBuiltSamplerObj>(sp_minddataset_);
     for (auto child : children_) {
-      sampler->AddChild(child);
+      sampler->AddChildSampler(child);
     }
     return sampler;
   }
 #endif
   auto sampler = std::make_shared<PreBuiltSamplerObj>(sp_);
   for (auto child : children_) {
-    sampler->AddChild(child);
+    sampler->AddChildSampler(child);
   }
   return sampler;
 }
@@ -289,7 +289,7 @@ Status RandomSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> RandomSamplerObj::Build() {
+std::shared_ptr<SamplerRT> RandomSamplerObj::SamplerBuild() {
   // runtime sampler object
   bool reshuffle_each_epoch = true;
   auto sampler = std::make_shared<dataset::RandomSamplerRT>(num_samples_, replacement_, reshuffle_each_epoch);
@@ -324,7 +324,7 @@ Status SequentialSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> SequentialSamplerObj::Build() {
+std::shared_ptr<SamplerRT> SequentialSamplerObj::SamplerBuild() {
   // runtime sampler object
   auto sampler = std::make_shared<dataset::SequentialSamplerRT>(num_samples_, start_index_);
   BuildChildren(sampler);
@@ -352,7 +352,7 @@ Status SubsetRandomSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> SubsetRandomSamplerObj::Build() {
+std::shared_ptr<SamplerRT> SubsetRandomSamplerObj::SamplerBuild() {
   // runtime sampler object
   auto sampler = std::make_shared<dataset::SubsetRandomSamplerRT>(num_samples_, indices_);
   BuildChildren(sampler);
@@ -395,7 +395,7 @@ Status WeightedRandomSamplerObj::ValidateParams() {
   return Status::OK();
 }
 
-std::shared_ptr<SamplerRT> WeightedRandomSamplerObj::Build() {
+std::shared_ptr<SamplerRT> WeightedRandomSamplerObj::SamplerBuild() {
   auto sampler = std::make_shared<dataset::WeightedRandomSamplerRT>(num_samples_, weights_, replacement_);
   BuildChildren(sampler);
   return sampler;

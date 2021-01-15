@@ -79,7 +79,6 @@ class ImageFolderNode : public MappableSourceNode {
   const std::string &DatasetDir() const { return dataset_dir_; }
   bool Decode() const { return decode_; }
   bool Recursive() const { return recursive_; }
-  const std::shared_ptr<SamplerObj> &Sampler() const { return sampler_; }
   const std::map<std::string, int32_t> &ClassIndexing() const { return class_indexing_; }
   const std::set<std::string> &Exts() const { return exts_; }
 
@@ -87,6 +86,13 @@ class ImageFolderNode : public MappableSourceNode {
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
   Status to_json(nlohmann::json *out_json) override;
+
+  /// \brief Sampler getter
+  /// \return SamplerObj of the current node
+  std::shared_ptr<SamplerObj> Sampler() override { return sampler_; }
+
+  /// \brief Sampler setter
+  void SetSampler(std::shared_ptr<SamplerObj> sampler) override { sampler_ = sampler; }
 
  private:
   std::string dataset_dir_;

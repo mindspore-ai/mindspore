@@ -205,7 +205,7 @@ Status CLUENode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
 
   std::shared_ptr<ClueOp> clue_op = std::make_shared<ClueOp>(
     num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, ck_map, sorted_dataset_files,
-    connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(sampler_->Build()));
+    connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(sampler_->SamplerBuild()));
 
   RETURN_IF_NOT_OK(clue_op->Init());
 

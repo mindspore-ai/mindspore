@@ -40,7 +40,7 @@ ConcatNode::ConcatNode(const std::vector<std::shared_ptr<DatasetNode>> &datasets
 }
 
 std::shared_ptr<DatasetNode> ConcatNode::Copy() {
-  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->Copy();
+  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   // create an empty vector to copy a concat
   auto node = std::make_shared<ConcatNode>(std::vector<std::shared_ptr<DatasetNode>>(), sampler,
                                            children_flag_and_nums_, children_start_end_index_);
@@ -77,8 +77,8 @@ Status ConcatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
   if (children_flag_and_nums_.empty() || children_start_end_index_.empty()) {
     node_ops->push_back(std::make_shared<ConcatOp>(connector_que_size_));
   } else {
-    node_ops->push_back(std::make_shared<ConcatOp>(connector_que_size_, sampler_->Build(), children_flag_and_nums_,
-                                                   children_start_end_index_));
+    node_ops->push_back(std::make_shared<ConcatOp>(connector_que_size_, sampler_->SamplerBuild(),
+                                                   children_flag_and_nums_, children_start_end_index_));
   }
 
   return Status::OK();

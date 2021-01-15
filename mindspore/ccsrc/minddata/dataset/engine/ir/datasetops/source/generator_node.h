@@ -89,6 +89,13 @@ class GeneratorNode : public MappableSourceNode {
   const std::vector<DataType> &ColumnTypes() const { return column_types_; }
   const std::shared_ptr<SchemaObj> &Schema() const { return schema_; }
 
+  /// \brief Sampler getter
+  /// \return SamplerObj of the current node
+  std::shared_ptr<SamplerObj> Sampler() override { return nullptr; }
+
+  /// \brief Sampler setter
+  void SetSampler(std::shared_ptr<SamplerObj> sampler) override {}
+
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;

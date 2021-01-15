@@ -114,7 +114,7 @@ Status RandomNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
 
   std::shared_ptr<RandomDataOp> op;
   op = std::make_shared<RandomDataOp>(num_workers_, connector_que_size_, rows_per_buffer_, total_rows_,
-                                      std::move(data_schema_), std::move(sampler_->Build()));
+                                      std::move(data_schema_), std::move(sampler_->SamplerBuild()));
   RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
   node_ops->push_back(op);
@@ -124,8 +124,8 @@ Status RandomNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
 
 // Get the shard id of node
 Status RandomNode::GetShardId(int32_t *shard_id) {
-  *shard_id = sampler_->ShardId();
-
+  // RandomDataset doesn't support multiple shards
+  *shard_id = 0;
   return Status::OK();
 }
 
@@ -138,13 +138,7 @@ Status RandomNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
   }
   int64_t num_rows;
   num_rows = total_rows_ != 0 ? total_rows_ : data_schema_->num_rows();
-  if (sampler_ != nullptr) {
-    int64_t sample_size;
-    sample_size = sampler_->Build()->CalculateNumSamples(num_rows);
-    *dataset_size = sample_size;
-  } else {
-    *dataset_size = num_rows;
-  }
+  *dataset_size = num_rows;
   dataset_size_ = *dataset_size;
   return Status::OK();
 }

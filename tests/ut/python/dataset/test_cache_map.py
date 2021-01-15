@@ -406,7 +406,7 @@ def test_cache_map_failure5():
         num_iter = 0
         for _ in data.create_dict_iterator():
             num_iter += 1
-    assert "MapOp with non-deterministic TensorOps is currently not supported as a descendant" in str(e.value)
+    assert "MapNode with non-deterministic operations is not supported as a descendant of cache" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_failure5 Ended.\n')

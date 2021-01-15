@@ -85,6 +85,13 @@ class MindDataNode : public MappableSourceNode {
   Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
                         int64_t *dataset_size) override;
 
+  /// \brief Sampler getter
+  /// \return SamplerObj of the current node
+  std::shared_ptr<SamplerObj> Sampler() override { return sampler_; }
+
+  /// \brief Sampler setter
+  void SetSampler(std::shared_ptr<SamplerObj> sampler) override { sampler_ = sampler; }
+
  private:
   std::string dataset_file_;                // search_for_pattern_ will be true in this mode
   std::vector<std::string> dataset_files_;  // search_for_pattern_ will be false in this mode

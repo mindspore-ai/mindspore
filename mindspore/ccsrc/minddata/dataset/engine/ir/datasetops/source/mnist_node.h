@@ -72,12 +72,18 @@ class MnistNode : public MappableSourceNode {
   /// \brief Getter functions
   const std::string &DatasetDir() const { return dataset_dir_; }
   const std::string &Usage() const { return usage_; }
-  const std::shared_ptr<SamplerObj> &Sampler() const { return sampler_; }
 
   /// \brief Get the arguments of node
   /// \param[out] out_json JSON string of all attributes
   /// \return Status of the function
   Status to_json(nlohmann::json *out_json) override;
+
+  /// \brief Sampler getter
+  /// \return SamplerObj of the current node
+  std::shared_ptr<SamplerObj> Sampler() override { return sampler_; }
+
+  /// \brief Sampler setter
+  void SetSampler(std::shared_ptr<SamplerObj> sampler) override { sampler_ = sampler; }
 
  private:
   std::string dataset_dir_;

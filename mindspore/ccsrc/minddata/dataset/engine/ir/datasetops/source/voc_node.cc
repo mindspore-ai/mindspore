@@ -41,7 +41,7 @@ VOCNode::VOCNode(const std::string &dataset_dir, const std::string &task, const 
       sampler_(sampler) {}
 
 std::shared_ptr<DatasetNode> VOCNode::Copy() {
-  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->Copy();
+  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<VOCNode>(dataset_dir_, task_, usage_, class_index_, decode_, sampler, cache_);
   return node;
 }
@@ -110,8 +110,9 @@ Status VOCNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   }
 
   std::shared_ptr<VOCOp> voc_op;
-  voc_op = std::make_shared<VOCOp>(task_type_, usage_, dataset_dir_, class_index_, num_workers_, rows_per_buffer_,
-                                   connector_que_size_, decode_, std::move(schema), std::move(sampler_->Build()));
+  voc_op =
+    std::make_shared<VOCOp>(task_type_, usage_, dataset_dir_, class_index_, num_workers_, rows_per_buffer_,
+                            connector_que_size_, decode_, std::move(schema), std::move(sampler_->SamplerBuild()));
   RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
   node_ops->push_back(voc_op);
@@ -134,7 +135,7 @@ Status VOCNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_ge
   }
   int64_t num_rows = 0, sample_size;
   RETURN_IF_NOT_OK(VOCOp::CountTotalRows(dataset_dir_, task_, usage_, class_index_, &num_rows));
-  sample_size = sampler_->Build()->CalculateNumSamples(num_rows);
+  sample_size = sampler_->SamplerBuild()->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
   dataset_size_ = *dataset_size;
   return Status::OK();

@@ -110,7 +110,6 @@ class RandomNode : public NonMappableSourceNode {
   std::string schema_path_;
   std::shared_ptr<SchemaObj> schema_;
   std::vector<std::string> columns_list_;
-  std::shared_ptr<SamplerObj> sampler_;
   std::mt19937 rand_gen_;
   std::unique_ptr<DataSchema> data_schema_;
 };

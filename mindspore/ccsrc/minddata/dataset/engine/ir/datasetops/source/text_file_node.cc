@@ -90,7 +90,7 @@ Status TextFileNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   // Create and initalize TextFileOp
   std::shared_ptr<TextFileOp> text_file_op = std::make_shared<TextFileOp>(
     num_workers_, rows_per_buffer_, num_samples_, worker_connector_size_, std::move(schema), sorted_dataset_files,
-    connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(sampler_->Build()));
+    connector_que_size_, shuffle_files, num_shards_, shard_id_, std::move(sampler_->SamplerBuild()));
   RETURN_IF_NOT_OK(text_file_op->Init());
 
   if (cache_ == nullptr && shuffle_ == ShuffleMode::kGlobal && !IsDescendantOfCache()) {

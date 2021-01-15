@@ -131,7 +131,7 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
   std::shared_ptr<TFReaderOp> tf_reader_op =
     std::make_shared<TFReaderOp>(num_workers_, worker_connector_size_, rows_per_buffer_, num_samples_, sorted_dir_files,
                                  std::move(data_schema), connector_que_size_, columns_list_, shuffle_files, num_shards_,
-                                 shard_id_, shard_equal_rows_, std::move(sampler_->Build()));
+                                 shard_id_, shard_equal_rows_, std::move(sampler_->SamplerBuild()));
 
   RETURN_IF_NOT_OK(tf_reader_op->Init());
 
