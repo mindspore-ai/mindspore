@@ -49,6 +49,9 @@ constexpr auto kJsonKeyPtrAddress = "ptr_address";
 constexpr auto kJsonKeyCompositeGraph = "composite_graph";
 constexpr auto kJsonKeyPlatform = "platform";
 constexpr auto kJsonKeyOpFullName = "op_full_name";
+constexpr auto kJsonKeyBufferStitch = "buffer_stitch";
+constexpr auto kJsonKeyStitchOp = "stitch_op";
+constexpr auto kJsonKeyStitchWithAtomic = "stitch_with_atomic";
 
 constexpr auto kAttrInputNames = "input_names";
 
@@ -91,6 +94,8 @@ class AkgKernelJsonGenerator {
   void GetAttrJson(const AnfNodePtr &anf_node, const std::vector<int> &dyn_input_sizes, const OpAttrPtr &op_attr,
                    nlohmann::json *attr_json, const ValuePtr &attr_value);
   bool CreateAttrDescJson(const AnfNodePtr &anf_node, const OpInfoPtr &op_info, nlohmann::json *attrs_json);
+  void GenStitchJson(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map,
+                     nlohmann::json *kernel_json);
   bool GetIOSize(const nlohmann::json &node_json, std::vector<size_t> *input_size, std::vector<size_t> *output_size);
   bool GenSingleJsons(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);
   void UpdateTensorName(const std::vector<AnfNodePtr> &anf_nodes, std::map<AnfNodePtr, nlohmann::json> *node_json_map);

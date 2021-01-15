@@ -40,6 +40,7 @@
 #include "backend/optimizer/gpu/add_relu_v2_fusion.h"
 #include "backend/optimizer/gpu/add_relu_grad_v2_fusion.h"
 #include "backend/optimizer/graph_kernel/add_atomic_clean_gpu.h"
+#include "backend/optimizer/graph_kernel/add_stitch_atomic_clean_gpu.h"
 #include "backend/optimizer/graph_kernel/arithmetic_simplify.h"
 #include "backend/optimizer/graph_kernel/basic_ops_fusion.h"
 #include "backend/optimizer/graph_kernel/clean_all_in_once.h"
@@ -196,6 +197,7 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   // will be exposed, use GetitemTuple Pass to delete them.
   pm->AddPass(std::make_shared<opt::GetitemTuple>());
   pm->AddPass(std::make_shared<opt::AtomicCleanInsertter>());
+  pm->AddPass(std::make_shared<opt::StitchAtomicCleanInsertter>());
   pm->AddPass(std::make_shared<opt::CleanAllInOnce>());
   pm->AddPass(std::make_shared<opt::BindValueToGraph>());
   optimizer->AddPassManager(pm);

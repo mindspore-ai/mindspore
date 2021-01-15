@@ -555,6 +555,33 @@ bool AkgKernelJsonGenerator::CollectJson(const AnfNodePtr &anf_node, nlohmann::j
   return true;
 }
 
+void AkgKernelJsonGenerator::GenStitchJson(const std::vector<AnfNodePtr> &anf_nodes,
+                                           std::map<AnfNodePtr, nlohmann::json> *node_json_map,
+                                           nlohmann::json *kernel_json) {
+  std::vector<std::string> stitchs;
+  for (auto const &anf_node : anf_nodes) {
+    auto primitive = AnfAlgo::GetCNodePrimitive(anf_node);
+    MS_EXCEPTION_IF_NULL(primitive);
+    if (primitive->GetAttr(kAttrStitch) != nullptr) {
+      auto name = GetTensorName((*node_json_map)[anf_node], kJsonKeyOutputDesc, {0, 0});
+      if (std::find(stitchs.begin(), stitchs.end(), name) == stitchs.end()) {
+        stitchs.emplace_back(name);
+      }
+    }
+  }
+  if (!stitchs.empty()) {
+    std::vector<nlohmann::json> v;
+    for (auto &s : stitchs) {
+      std::vector<std::string> t;
+      t.emplace_back(s);
+      v.emplace_back(t);
+    }
+    nlohmann::json stitch_json;
+    stitch_json[kJsonKeyStitchOp] = v;
+    (*kernel_json)[kJsonKeyBufferStitch] = stitch_json;
+  }
+}
+
 bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf_nodes,
                                               const std::vector<AnfNodePtr> &input_list,
                                               const std::vector<AnfNodePtr> &output_list, nlohmann::json *kernel_json) {
@@ -604,6 +631,8 @@ bool AkgKernelJsonGenerator::CollectFusedJson(const std::vector<AnfNodePtr> &anf
   (*kernel_json)[kJsonKeyProcess] = GetProcessorStr(anf_nodes[0]);
   (*kernel_json)[kJsonKeyComposite] = true;
   (*kernel_json)[kJsonKeyCompositeGraph] = fg->ToString() + "." + fg->debug_info()->get_id();
+
+  GenStitchJson(anf_nodes, &node_json_map, kernel_json);
 
   if (!GetIOSize(*kernel_json, &input_size_list_, &output_size_list_)) {
     MS_LOG(ERROR) << "Cal mem size failed.";
