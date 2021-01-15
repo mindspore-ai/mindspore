@@ -94,11 +94,14 @@ void *OpenCLAllocator::CreateImage2D(size_t size, const std::vector<size_t> &img
   MS_ASSERT(buffer);
   MS_ASSERT(image);
   MS_ASSERT(img_size.size() == 3);
-  cl::ImageFormat image_format(CL_RGBA, img_size[2]);
   if (data == nullptr) {
-    *image = new (std::nothrow)
-      cl::Image2D(*ocl_runtime_->Context(), image_format, **buffer, img_size[0], img_size[1], 0, &ret);
+    // copy from cl2.hpp
+    cl_image_desc desc = {CL_MEM_OBJECT_IMAGE2D, img_size[0], img_size[1], 0, 0, 0, 0, 0, 0, (**buffer).get()};
+    const cl::Context &context = *ocl_runtime_->Context();
+    cl_image_format image_format{CL_RGBA, static_cast<uint32_t>(img_size[2])};
+    *image = new (std::nothrow) cl::Image2D(clCreateImage(context.get(), 0, &image_format, &desc, nullptr, &ret));
   } else {
+    cl::ImageFormat image_format(CL_RGBA, img_size[2]);
     *image = new (std::nothrow) cl::Image2D(*ocl_runtime_->Context(), CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                                             image_format, img_size[0], img_size[1], 0, data, &ret);
   }

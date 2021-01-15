@@ -110,7 +110,7 @@ using clEnqueueCopyBufferToImageFunc = cl_int(CL_API_CALL *)(cl_command_queue, c
 using clEnqueueCopyImageToBufferFunc = cl_int(CL_API_CALL *)(cl_command_queue, cl_mem, cl_mem, const size_t *,
                                                              const size_t *, size_t, cl_uint, const cl_event *,
                                                              cl_event *);
-#if CL_HPP_TARGET_OPENCL_VERSION >= 120
+#if CL_TARGET_OPENCL_VERSION >= 120
 using clRetainDeviceFunc = cl_int (*)(cl_device_id);
 using clReleaseDeviceFunc = cl_int (*)(cl_device_id);
 using clCreateImageFunc = cl_mem (*)(cl_context, cl_mem_flags, const cl_image_format *, const cl_image_desc *, void *,
@@ -118,7 +118,7 @@ using clCreateImageFunc = cl_mem (*)(cl_context, cl_mem_flags, const cl_image_fo
 using clEnqueueFillImageFunc = cl_int (*)(cl_command_queue, cl_mem, const void *, const size_t *, const size_t *,
                                           cl_uint, const cl_event *, cl_event *);
 #endif
-#if CL_HPP_TARGET_OPENCL_VERSION >= 200
+#if CL_TARGET_OPENCL_VERSION >= 200
 using clCreateProgramWithILFunc = cl_program (*)(cl_context, const void *, size_t, cl_int *);
 using clSVMAllocFunc = void *(*)(cl_context, cl_mem_flags, size_t size, cl_uint);
 using clSVMFreeFunc = void (*)(cl_context, void *);
@@ -185,13 +185,13 @@ CL_DECLARE_FUNC_PTR(clGetEventProfilingInfo);
 CL_DECLARE_FUNC_PTR(clGetImageInfo);
 CL_DECLARE_FUNC_PTR(clEnqueueCopyBufferToImage);
 CL_DECLARE_FUNC_PTR(clEnqueueCopyImageToBuffer);
-#if CL_HPP_TARGET_OPENCL_VERSION >= 120
+#if CL_TARGET_OPENCL_VERSION >= 120
 CL_DECLARE_FUNC_PTR(clRetainDevice);
 CL_DECLARE_FUNC_PTR(clReleaseDevice);
 CL_DECLARE_FUNC_PTR(clCreateImage);
 CL_DECLARE_FUNC_PTR(clEnqueueFillImage);
 #endif
-#if CL_HPP_TARGET_OPENCL_VERSION >= 200
+#if CL_TARGET_OPENCL_VERSION >= 200
 CL_DECLARE_FUNC_PTR(clGetKernelSubGroupInfoKHR);
 CL_DECLARE_FUNC_PTR(clCreateCommandQueueWithProperties);
 CL_DECLARE_FUNC_PTR(clGetExtensionFunctionAddress);

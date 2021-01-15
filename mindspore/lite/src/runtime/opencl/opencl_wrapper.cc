@@ -142,13 +142,13 @@ bool LoadLibraryFromPath(const std::string &library_path, void **handle_ptr) {
   LOAD_OPENCL_FUNCTION_PTR(clEnqueueCopyImage);
   LOAD_OPENCL_FUNCTION_PTR(clEnqueueCopyBufferToImage);
   LOAD_OPENCL_FUNCTION_PTR(clEnqueueCopyImageToBuffer);
-#if CL_HPP_TARGET_OPENCL_VERSION >= 120
+#if CL_TARGET_OPENCL_VERSION >= 120
   LOAD_OPENCL_FUNCTION_PTR(clRetainDevice);
   LOAD_OPENCL_FUNCTION_PTR(clReleaseDevice);
   LOAD_OPENCL_FUNCTION_PTR(clCreateImage);
   LOAD_OPENCL_FUNCTION_PTR(clEnqueueFillImage);
 #endif
-#if CL_HPP_TARGET_OPENCL_VERSION >= 200
+#if CL_TARGET_OPENCL_VERSION >= 200
   LOAD_OPENCL_FUNCTION_PTR(clCreateCommandQueueWithProperties);
   LOAD_OPENCL_FUNCTION_PTR(clGetExtensionFunctionAddress);
   LOAD_OPENCL_FUNCTION_PTR(clSVMAlloc);
@@ -232,13 +232,13 @@ CL_DEFINE_FUNC_PTR(clGetEventProfilingInfo);
 CL_DEFINE_FUNC_PTR(clGetImageInfo);
 CL_DEFINE_FUNC_PTR(clEnqueueCopyBufferToImage);
 CL_DEFINE_FUNC_PTR(clEnqueueCopyImageToBuffer);
-#if CL_HPP_TARGET_OPENCL_VERSION >= 120
+#if CL_TARGET_OPENCL_VERSION >= 120
 CL_DEFINE_FUNC_PTR(clRetainDevice);
 CL_DEFINE_FUNC_PTR(clReleaseDevice);
 CL_DEFINE_FUNC_PTR(clCreateImage);
 CL_DEFINE_FUNC_PTR(clEnqueueFillImage);
 #endif
-#if CL_HPP_TARGET_OPENCL_VERSION >= 200
+#if CL_TARGET_OPENCL_VERSION >= 200
 CL_DEFINE_FUNC_PTR(clGetKernelSubGroupInfoKHR);
 CL_DEFINE_FUNC_PTR(clCreateCommandQueueWithProperties);
 CL_DEFINE_FUNC_PTR(clGetExtensionFunctionAddress);
@@ -651,7 +651,7 @@ cl_int clEnqueueCopyImageToBuffer(cl_command_queue command_queue, cl_mem src_ima
               event_wait_list, event);
 }
 
-#if CL_HPP_TARGET_OPENCL_VERSION >= 120
+#if CL_TARGET_OPENCL_VERSION >= 120
 
 // clRetainDevice wrapper, use OpenCLWrapper function.
 cl_int clRetainDevice(cl_device_id device) {
@@ -685,7 +685,7 @@ cl_int clEnqueueFillImage(cl_command_queue command_queue, cl_mem image, const vo
 
 #endif
 
-#if CL_HPP_TARGET_OPENCL_VERSION >= 200
+#if CL_TARGET_OPENCL_VERSION >= 200
 
 // clCreateCommandQueueWithProperties wrapper, use OpenCLWrapper function.
 cl_command_queue clCreateCommandQueueWithProperties(cl_context context, cl_device_id device,
