@@ -359,7 +359,9 @@ int StridedSlice::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
   MS_ASSERT(input != nullptr);
   auto input_shape = input->shape();
   auto inferflag = infer_flag();
-
+  if (!infer_flag()) {
+    return RET_INFER_INVALID;
+  }
   in_shape_.clear();
   if (inferflag) {
     in_shape_.assign(input_shape.begin(), input_shape.end());
