@@ -236,17 +236,17 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
-    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutAndDropoutGradUnifyMindIR>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR0>());
     unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
     unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
     unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
   } else {
-    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIRPynative>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIRPynative>());
     unify_mindir_pm->AddPass(std::make_shared<opt::PynativeSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
     unify_mindir_pm->AddPass(std::make_shared<opt::PynativeGradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
   }
+  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR1>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
 
   optimizer->AddPassManager(unify_mindir_pm);
   (void)optimizer->Optimize(graph);
