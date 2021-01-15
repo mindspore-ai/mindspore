@@ -74,7 +74,7 @@ def make_empty_slice():
 
 
 @constexpr
-def make_tensor(data, data_type, data_shape=None):
+def make_tensor(data, data_type=mstype.int64, data_shape=None):
     if data_shape:
         return Tensor(np.zeros(data_shape), data_type)
     return Tensor(data, data_type)
@@ -156,6 +156,15 @@ def check_index_type_valid(dtype, target_type, op_name):
     if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
         raise IndexError(
             f"The '{op_name}' doesn't supoort {dtype}' and expecte to receive {target_type}.")
+
+
+@constexpr
+def judge_indexes_types(dtypes, target_type):
+    """Check a tuple of tensor data type."""
+    for dtype in dtypes:
+        if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
+            return False
+    return True
 
 
 @constexpr
@@ -476,15 +485,6 @@ def compute_new_shape(origin_shape, indexes_shapes_info):
 
 
 @constexpr
-def check_sequence_index_type(sequence_index, op_name):
-    """check if the item's type of list_index is bool or int"""
-    for index in sequence_index:
-        if not isinstance(index, int):
-            raise IndexError(f"In the {op_name} operation, only support 'inter' or 'boolean' array(list/tuple), "
-                             f"but got {type(index)} in array.")
-
-
-@constexpr
 def convert_int_to_slice(tuple_index):
     tuple_index_new = tuple(slice(i, i+1, 1) for i in tuple_index)
     return tuple_index_new
@@ -503,19 +503,16 @@ def check_and_transform_int_index(index, shape, op_name):
 @constexpr
 def transform_sequence_index(sequence_index, shape, op_name):
     """transform list or tuple with integer and boolean to tuple with integer index"""
-    bool_count = len(
-        list(filter(lambda index: isinstance(index, bool), sequence_index)))
-    int_count = len(
-        list(filter(lambda index: isinstance(index, int), sequence_index)))-bool_count
-    if int_count == 0:
+    bool_count = len(list(filter(lambda index: isinstance(index, bool), sequence_index)))
+    int_count = len(list(filter(lambda index: isinstance(index, int), sequence_index)))-bool_count
+    if int_count == 0 and bool_count != 0:
         if bool_count == shape:
-            list_index = list(
-                filter(lambda i: sequence_index[i], range(bool_count)))
+            list_index = list(filter(lambda i: sequence_index[i], range(bool_count)))
         else:
-            raise IndexError(
-                "The boolean array should have the same length with the corresponding dimensiton")
+            raise IndexError("The boolean array should have the same length with the corresponding dimensiton")
     else:
         list_index = [int(index) for index in sequence_index]
+
     for i, index in enumerate(list_index):
         list_index[i] = check_and_transform_int_index(index, shape, op_name)
     sub_tuple_index = tuple(list_index)
