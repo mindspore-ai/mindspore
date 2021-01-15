@@ -130,6 +130,46 @@ Status OperatorInfo::InferAttrs() {
   return SUCCESS;
 }
 
+Status OperatorInfo::InferMirrorOps() {
+  mirror_ops_.clear();
+  if (inputs_shape_.empty()) {
+    MS_LOG(INFO) << name_ << ": The inputs size is empty";
+    return SUCCESS;
+  }
+
+  if (inputs_tensor_map_.size() != inputs_shape_.size()) {
+    MS_LOG(ERROR) << name_ << ": The size of inputs tensor map is not equal to the size of inputs shape";
+    return FAILED;
+  }
+
+  bool group_is_empty = true;
+  for (size_t i = 0; i < inputs_tensor_map_.size(); ++i) {
+    std::vector<Group> group;
+    if (CreateGroupByTensorMap(inputs_tensor_map_[i], &group) != SUCCESS) {
+      MS_LOG(ERROR) << name_ << ": Create group failed, the input index is " << i;
+      mirror_ops_.clear();
+      return FAILED;
+    }
+
+    OperatorVector mirror_op;
+    if (group.empty()) {
+      MS_LOG(INFO) << name_ << ": The mirror group is empty, the input index is " << i;
+      mirror_ops_.push_back(mirror_op);
+      continue;
+    }
+
+    group_is_empty = false;
+    mirror_op = CreateMirrorOps(group[0].name(), group[0].GetDevNum());
+    mirror_ops_.push_back(mirror_op);
+  }
+
+  if (group_is_empty) {
+    mirror_ops_.clear();
+    MS_LOG(INFO) << name_ << ": No need to insert mirror ops";
+  }
+  return SUCCESS;
+}
+
 Status OperatorInfo::InferRepeatedCalcInfo() {
   int64_t g_dev_list_size = stage_device_size_;
   int64_t dev_matrix_size =

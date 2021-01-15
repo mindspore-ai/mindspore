@@ -57,22 +57,6 @@ Status BatchParallelInfo::InferDevMatrixShape() {
   return SUCCESS;
 }
 
-Status BatchParallelInfo::InferMirrorOps() {
-  mirror_ops_.clear();
-  if (g_device_manager->DeviceNum() == 1) {
-    MS_LOG(INFO) << name_ << " : The device num is 1, no need to create mirror ops.";
-    return SUCCESS;
-  }
-
-  MS_LOG(INFO) << name_ << " : Batch parallel input number " << strategy_->GetInputNumber();
-  for (size_t i = 0; i < input_value_.size(); i++) {
-    MS_EXCEPTION_IF_NULL(g_device_manager);
-    OperatorVector op_vec = CreateMirrorOps(g_device_manager->world_group(), g_device_manager->DeviceNum());
-    mirror_ops_.push_back(op_vec);
-  }
-  return SUCCESS;
-}
-
 Status BatchParallelInfo::InferForwardCommunication() { return SUCCESS; }
 
 Status BatchParallelInfo::InferTensorMap() {

@@ -49,7 +49,6 @@ class MatMulBase : public OperatorInfo {
   Status SwapLastTwoElements(Shape *shape);
 
  protected:
-  Status InferMirrorOps() override;
   Status InferForwardCommunication() override;
   Status InferTensorInfo() override;
   Status InferDevMatrixShape() override;
