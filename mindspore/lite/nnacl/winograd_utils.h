@@ -23,8 +23,6 @@
 #include "nnacl/conv_parameter.h"
 #include "nnacl/op_base.h"
 
-#define MAX_LEN 256
-
 #ifdef __cplusplus
 extern "C" {
 #endif

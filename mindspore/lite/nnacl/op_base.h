@@ -60,6 +60,7 @@
 #define kNHWC_C 3
 #define kInputSize1 2
 #define kInputSize2 3
+#define MAX_LEN 256
 
 typedef enum LiteDataType {
   kDataTypeFloat,

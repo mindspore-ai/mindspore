@@ -114,7 +114,7 @@ int ConvolutionDelegateCPUKernel::Init() {
 }
 
 int ConvolutionDelegateCPUKernel::ReSize() {
-  // Updata shape info of input and output
+  // Update shape info of input and output
   SetInputOutputShapeInfo(reinterpret_cast<ConvParameter *>(op_parameter_), in_tensors_.front(), out_tensors_.front(),
                           context_);
   if (conv_kernel_ == nullptr) {
