@@ -15,18 +15,19 @@
  */
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
+#include "nnacl/where.h"
 
 namespace mindspore {
 namespace lite {
 
 OpParameter *PopulateWhereParameter(const mindspore::lite::PrimitiveC *primitive) {
-  OpParameter *where_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
+  WhereParameter *where_parameter = reinterpret_cast<WhereParameter *>(malloc(sizeof(WhereParameter)));
   if (where_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc Where parameter failed.";
     return nullptr;
   }
   memset(where_parameter, 0, sizeof(OpParameter));
-  where_parameter->type_ = primitive->Type();
+  where_parameter->op_parameter_.type_ = primitive->Type();
   return reinterpret_cast<OpParameter *>(where_parameter);
 }
 Registry WhereParameterRegistry(schema::PrimitiveType_Where, PopulateWhereParameter);

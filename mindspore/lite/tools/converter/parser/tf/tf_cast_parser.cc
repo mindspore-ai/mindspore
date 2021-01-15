@@ -41,18 +41,11 @@ STATUS TFCastParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "new attr failed";
     return RET_NULL_PTR;
   }
-
-  auto src_type = TensorFlowUtils::ParseAttrDataType(tf_op, "SrcT");
-  if (src_type == kTypeUnknown) {
-    MS_LOG(ERROR) << "Get attr SrcT failed";
-    return RET_ERROR;
-  }
   auto dst_type = TensorFlowUtils::ParseAttrDataType(tf_op, "DstT");
   if (dst_type == kTypeUnknown) {
     MS_LOG(ERROR) << "Get attr DstT failed";
     return RET_ERROR;
   }
-  attr->srcT = src_type;
   attr->dstT = dst_type;
 
   primitive->value.type = schema::PrimitiveType_Cast;

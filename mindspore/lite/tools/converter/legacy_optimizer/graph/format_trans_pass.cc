@@ -30,9 +30,6 @@ namespace lite {
 #define kOutputNum 1
 
 STATUS FormatTransPass::Run(schema::MetaGraphT *graph) {
-  if (fmkType == converter::FmkType_TF) {
-    return RET_OK;
-  }
   MS_ASSERT(graph != nullptr);
   auto status = DoModelInputFormatTrans(graph);
   if (status != RET_OK) {
@@ -124,6 +121,14 @@ STATUS FormatTransPass::DoNodeInoutFormatTrans(schema::MetaGraphT *graph) {
       }
       beforeNodeType = kNCHW2NHWC;
       afterNodeType = kNHWC2NCHW;
+    } else if (fmkType == converter::FmkType_TF) {
+      auto &node = *iter;
+      if (IsContain(GetNhwcOpList(), GetCNodeTType(**iter)) && GetFormat(node) == schema::Format_NCHW) {
+        beforeNodeType = kNCHW2NHWC;
+        afterNodeType = kNHWC2NCHW;
+      } else {
+        continue;
+      }
     } else {
       MS_LOG(ERROR) << "Unsupported fmk: " << fmkType;
       return RET_ERROR;
@@ -244,5 +249,23 @@ NodeIter FormatTransPass::InsertFormatTransNode(schema::MetaGraphT *graph, NodeI
 void FormatTransPass::SetQuantType(QuantType quantType) { this->quantType = quantType; }
 
 void FormatTransPass::SetFmk(converter::FmkType fmkType) { this->fmkType = fmkType; }
+
+int FormatTransPass::GetFormat(const std::unique_ptr<CNodeT> &node) {
+  switch (node->primitive->value.type) {
+    case schema::PrimitiveType_Conv2D:
+      return node->primitive->value.AsConv2D()->format;
+    case schema::PrimitiveType_DeConv2D:
+      return node->primitive->value.AsDeConv2D()->format;
+    case schema::PrimitiveType_DeDepthwiseConv2D:
+      return node->primitive->value.AsDeDepthwiseConv2D()->format;
+    case schema::PrimitiveType_DepthwiseConv2D:
+      return node->primitive->value.AsDepthwiseConv2D()->format;
+    case schema::PrimitiveType_Pooling:
+      return node->primitive->value.AsPooling()->format;
+    default:
+      return schema::Format_NHWC;
+  }
+}
+
 }  // namespace lite
 }  // namespace mindspore

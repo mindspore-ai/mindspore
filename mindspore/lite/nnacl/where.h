@@ -23,18 +23,20 @@ typedef struct WhereParameter {
   OpParameter op_parameter_;
 
   // other parameter
-  int num_;
-  int num1_;
-  int num2_;
-  int number_;
+  int condition_num_;
+  int x_num_;
+  int y_num_;
+  int max_num_;
+
+  int rank_;
   int thread_num_;
 } WhereParameter;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Where(bool *input, const float *input1, const float *input2, float *output, WhereParameter *where_param_,
-           int task_id);
+void WhereWithTripleInputs(const bool *condition, const float *x, const float *y, float *output,
+                           WhereParameter *where_param_, int task_id);
 #ifdef __cplusplus
 }
 #endif

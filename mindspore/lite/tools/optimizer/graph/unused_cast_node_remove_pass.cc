@@ -54,7 +54,7 @@ bool RemoveUnusedCastOpPass::Run(const FuncGraphPtr &func_graph) {
     MS_ASSERT(input_type != nullptr);
     auto input_type_value = input_type->type_id();
 
-    if (cast_cnode->inputs().size() != lite::kMultiNum || !utils::isa<ValueNodePtr>(cast_cnode->input(2))) {
+    if (cast_cnode->inputs().size() != lite::kTripleNum || !utils::isa<ValueNodePtr>(cast_cnode->input(2))) {
       MS_LOG(ERROR) << "Second input of cast should be a ValueNode";
       return RET_ERROR;
     }

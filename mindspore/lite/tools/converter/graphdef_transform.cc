@@ -92,7 +92,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
 
   // postconvert pass
   {
-    // init old node indecies
+    // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer fusionOptimizer;
     if (!ctx.trainModel) {
@@ -113,9 +113,9 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     }
   }
 
-  if (ctx.fmk != converter::FmkType_TF) {
+  {
     // format transform
-    // init old node indecies
+    // init old node indices
     auto old_nodes = GetGraphNodes();
 
     Optimizer formatTransOptimizer;
@@ -126,19 +126,20 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     }
     formatTransPass->SetQuantType(ctx.quantType);
     formatTransPass->SetFmk(ctx.fmk);
-    formatTransOptimizer.AddPass(formatTransPass);
-    formatTransOptimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
-    formatTransOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
-    formatTransOptimizer.AddPass(new (std::nothrow) InferShapePass());
+    if (ctx.fmk != converter::FmkType_TF) {
+      formatTransOptimizer.AddPass(formatTransPass);
+      formatTransOptimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
+      formatTransOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
+      formatTransOptimizer.AddPass(new (std::nothrow) InferShapePass());
+    }
     status = formatTransOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE && status != RET_INFER_INVALID) {
       MS_LOG(ERROR) << "Run formatTransOptimizer graphPasses Failed";
       return status;
     }
   }
-
   {
-    // init old node indecies
+    // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer formatTransOptimizer;
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
@@ -156,7 +157,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   }
 
   {
-    // init old node indecies
+    // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer formatTransOptimizer;
     if (!ctx.trainModel && ctx.fmk != converter::FmkType_ONNX) {
@@ -172,7 +173,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   }
 
   {
-    // init old node indecies
+    // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer fusionOptimizer;
     fusionOptimizer.AddPass(new (std::nothrow) MulAddFusionPass());
@@ -187,7 +188,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
 
   // do quantization
   if (ctx.fmk != converter::FmkType_TF) {
-    // init old node indecies
+    // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer tensorQuantOptimizer;
     tensorQuantOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
@@ -203,7 +204,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
 
   // insert quantNode and deQuantNode
   if (ctx.fmk != converter::FmkType_TF) {
-    // init old node indecies
+    // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer quantNodeOptimizer;
     auto dTypeTransPass = new (std::nothrow) DTypeTransPass();
@@ -236,7 +237,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
 
   // switch pass
   {
-    // init old node indecies
+    // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer switchOptimizer;
     switchOptimizer.AddPass(new (std::nothrow) SwitchPass());
@@ -262,7 +263,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
 
   // tensor name
   {
-    // init old node indecies
+    // init old node indices
     auto old_nodes = GetGraphNodes();
     Optimizer nameOptimizer;
     nameOptimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));

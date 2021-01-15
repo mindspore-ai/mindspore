@@ -71,7 +71,7 @@ STATUS TFCropAndResizeParser::Parse(const tensorflow::NodeDef &tf_op,
     MS_LOG(ERROR) << "Do not support method: " << attr_value.s();
   }
 
-  primitive->value.type = schema::PrimitiveType_Resize;
+  primitive->value.type = schema::PrimitiveType_CropAndResize;
   primitive->value.value = attr.release();
   *primitiveC = PrimitiveC::Create(primitive.release());
   if (*primitiveC == nullptr) {

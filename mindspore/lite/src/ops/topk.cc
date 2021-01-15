@@ -91,7 +91,7 @@ int TopK::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> output
   }
   auto input = inputs_.front();
   MS_ASSERT(input != nullptr);
-  if (input->shape().size() == kDimension_4d && input->format() != schema::Format::Format_NHWC) {
+  if (input->shape().size() == kQuadrupleNum && input->format() != schema::Format::Format_NHWC) {
     MS_LOG(ERROR) << "topk only support NHWC now!";
     return RET_FORMAT_ERR;
   }

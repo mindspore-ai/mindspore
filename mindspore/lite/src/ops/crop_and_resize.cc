@@ -93,8 +93,13 @@ int CropAndResize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<l
   }
 
   std::vector<int> output_shape;
-  auto boxes_tensor = inputs_[1];
-  output_shape.push_back(boxes_tensor->shape()[0]);
+  if (inputs_[1]->data_c() != nullptr) {
+    auto boxes_tensor = inputs_[1];
+    output_shape.push_back(boxes_tensor->shape()[0]);
+  } else {
+    output_shape.push_back(input->Batch());
+  }
+
   auto shape_tensor = inputs_[3];
   auto data = reinterpret_cast<int32_t *>(shape_tensor->data_c());
   if (data == nullptr) {

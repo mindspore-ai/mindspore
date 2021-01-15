@@ -101,8 +101,8 @@ int BatchToSpace::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
     return RET_INFER_INVALID;
   }
   auto input_shape = input->shape();
-  if (input_shape.size() != kDimension_4d) {
-    MS_LOG(ERROR) << "input shape dimension size should == " << kDimension_4d;
+  if (input_shape.size() != kQuadrupleNum) {
+    MS_LOG(ERROR) << "input shape dimension size should == " << kQuadrupleNum;
     return RET_PARAM_INVALID;
   }
 

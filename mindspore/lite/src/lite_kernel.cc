@@ -145,10 +145,22 @@ int LiteKernel::Run(const KernelCallBack &before, const KernelCallBack &after) {
       MS_LOG(WARNING) << "run kernel before_callback failed, name: " << this->name_;
     }
   }
-  auto ret = Run();
-  if (RET_OK != ret) {
-    MS_LOG(ERROR) << "run kernel failed, name: " << this->name_;
-    return ret;
+  // Support ZeroShape
+  size_t zero_shape_num = 0;
+  for (auto tensor : this->out_tensors_) {
+    for (auto dim : tensor->shape()) {
+      if (dim == 0) {
+        zero_shape_num++;
+        continue;
+      }
+    }
+  }
+  if (zero_shape_num != this->out_tensors_.size()) {
+    auto ret = Run();
+    if (RET_OK != ret) {
+      MS_LOG(ERROR) << "run kernel failed, name: " << this->name_;
+      return ret;
+    }
   }
   if (after != nullptr) {
     if (!after(TensorVectorCast(this->in_tensors_), TensorVectorCast(this->out_tensors_),

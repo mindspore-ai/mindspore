@@ -31,6 +31,8 @@ OpParameter *PopulateCommonParameter(const mindspore::lite::PrimitiveC *primitiv
 }
 
 Registry ZerosLikeParameterRegistry(schema::PrimitiveType_ZerosLike, PopulateCommonParameter);
+Registry SizeParameterRegistry(schema::PrimitiveType_Size, PopulateCommonParameter);
+Registry InvertPermutationParameterRegistry(schema::PrimitiveType_InvertPermutation, PopulateCommonParameter);
 
 }  // namespace lite
 }  // namespace mindspore

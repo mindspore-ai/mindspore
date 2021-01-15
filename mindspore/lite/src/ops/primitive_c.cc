@@ -167,6 +167,7 @@
 #include "src/ops/size.h"
 #include "src/ops/random_standard_normal.h"
 #include "src/ops/invert_permutation.h"
+#include "src/ops/crop_and_resize.h"
 
 #ifdef SUPPORT_TRAIN
 #include "src/ops/neg_grad.h"
@@ -1018,6 +1019,8 @@ PrimitiveC *PrimitiveC::Create(mindspore::schema::PrimitiveT *primitive) {
       return new (std::nothrow) InvertPermutation(primitive);
     case schema::PrimitiveType_RandomStandardNormal:
       return new (std::nothrow) RandomStandardNormal(primitive);
+    case schema::PrimitiveType_CropAndResize:
+      return new (std::nothrow) CropAndResize(primitive);
 #ifdef SUPPORT_TRAIN
     case schema::PrimitiveType_ActivationGrad:
       return new (std::nothrow) ActivationGrad(primitive);

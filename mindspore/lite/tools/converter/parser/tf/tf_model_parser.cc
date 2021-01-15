@@ -195,6 +195,7 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::NodeDef &node_def, co
     MS_LOG(ERROR) << "param_value is nullptr";
     return RET_ERROR;
   }
+  param_value->set_tensor_type(type);
   if (type == kNumberTypeFloat32 || type == kNumberTypeFloat) {
     auto tensor_data = new (std::nothrow) float[shape_size];
     if (tensor_proto.float_val_size() == 1) {
@@ -266,24 +267,35 @@ STATUS TFModelParser::ConvertConstTensor(const tensorflow::NodeDef &node_def, co
       MS_LOG(ERROR) << "new data failed";
       return RET_ERROR;
     }
-    const auto origin_data = reinterpret_cast<const int64_t *>(tensor_proto.tensor_content().data());
-    for (int i = 0; i < shape_size; ++i) {
-      if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
-        MS_LOG(WARNING) << "int64 data " << origin_data[i] << "too big to fit into int32";
-        tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
-      } else {
-        tensor_data[i] = static_cast<int>(origin_data[i]);
+    if (tensor_shape.dim_size() == 0) {  // scalar
+      const auto &origin_data = tensor_proto.int64_val();
+      for (int i = 0; i < tensor_proto.int64_val_size(); ++i) {
+        if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
+          MS_LOG(ERROR) << "int64 data " << origin_data[i] << "too big to fit into int32";
+          return RET_ERROR;
+        } else {
+          tensor_data[i] = static_cast<int>(origin_data[i]);
+        }
+      }
+    } else {
+      const auto origin_data = reinterpret_cast<const int64_t *>(tensor_proto.tensor_content().data());
+      for (int i = 0; i < shape_size; ++i) {
+        if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
+          MS_LOG(WARNING) << "int64 data " << origin_data[i] << "too big to fit into int32";
+          tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
+        } else {
+          tensor_data[i] = static_cast<int>(origin_data[i]);
+        }
       }
     }
     param_value->SetTensorData(tensor_data, shape_size * sizeof(int32_t));
   } else {
-    MS_LOG(ERROR) << "Unsupport dataType: " << type;
+    MS_LOG(ERROR) << "Unsupported dataType: " << type;
     return RET_ERROR;
   }
 
   std::vector<int> param_shape(shape_vector->begin(), shape_vector->end());
   param_value->set_tensor_shape(param_shape);
-  param_value->set_tensor_type(type);
   if (TensorFlowUtils::FindAttrValue(node_def, "data_format", const_cast<tensorflow::AttrValue *>(&attr_value))) {
     auto format = mindspore::lite::TensorFlowUtils::ParseNodeFormat(node_def);
     if (format == schema::Format_NUM_OF_FORMAT) {
@@ -307,7 +319,6 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
   if (TensorFlowUtils::FindAttrValue(node, "dtype", &attr_value)) {
     type = TensorFlowUtils::GetTFDataType(attr_value.type());
   }
-  auto type_ptr = TypeIdToType(type);
 
   std::vector<int> shape;
   if (TensorFlowUtils::FindAttrValue(node, "shape", &attr_value)) {
@@ -327,7 +338,10 @@ STATUS TFModelParser::ConvertParameter(const tensorflow::NodeDef &node, const Pa
   } else {
     graph_input_names_.emplace_back(node.name());  // only root graph need set graph input names
   }
-
+  if (type == kNumberTypeInt64) {
+    type = kNumberTypeInt32;
+  }
+  auto type_ptr = TypeIdToType(type);
   auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
   if (abstract_tensor == nullptr) {
     MS_LOG(ERROR) << "abstract_tensor is nullptr";
@@ -474,16 +488,16 @@ STATUS TFModelParser::ConvertSubgraph() {
     std::vector<ParameterPtr> sub_graph_inputs;
     for (int j = 0; j < input_arg_size; j++) {
       auto &input_arg = tf_sub_signature.input_arg(j);
-      auto paramter = sub_func_graph->add_parameter();
-      paramter->set_name(input_arg.name());
-      anf_sub_node_map[input_arg.name()] = paramter;
+      auto parameter = sub_func_graph->add_parameter();
+      parameter->set_name(input_arg.name());
+      anf_sub_node_map[input_arg.name()] = parameter;
       auto root_inputs = cnode->inputs();
       if (op_type == schema::PrimitiveType_While) {
-        paramter->set_abstract(root_inputs[j + 1]->abstract());
+        parameter->set_abstract(root_inputs[j + 1]->abstract());
       } else {
-        paramter->set_abstract(root_inputs[j + 2]->abstract());
+        parameter->set_abstract(root_inputs[j + 2]->abstract());
       }
-      sub_graph_inputs.emplace_back(paramter);
+      sub_graph_inputs.emplace_back(parameter);
     }
     std::map<std::string, const tensorflow::NodeDef *> tf_sub_node_map;
     for (int j = 0; j < tf_sub_fuction.node_def_size(); j++) {

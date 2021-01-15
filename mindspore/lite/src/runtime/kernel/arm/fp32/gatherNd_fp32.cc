@@ -67,7 +67,9 @@ int GatherNdCPUKernel::ReSize() {
   }
   (void)memset(in_offset_, 0, count_ * sizeof(int));
   thread_sz_count_ = MSMIN(thread_count_, count_);
-  thread_sz_stride_ = UP_DIV(count_, thread_sz_count_);
+  if (thread_sz_count_ != 0) {
+    thread_sz_stride_ = UP_DIV(count_, thread_sz_count_);
+  }
   return RET_OK;
 }
 

@@ -105,7 +105,7 @@ Registry LayerNormRegistry(schema::PrimitiveType_LayerNorm, LayerNormCreator);
 
 #endif
 int LayerNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) {
-  if (outputs_.size() != kSingleNum || (inputs_.size() != kSingleNum && inputs_.size() != kMultiNum)) {
+  if (outputs_.size() != kSingleNum || (inputs_.size() != kSingleNum && inputs_.size() != kTripleNum)) {
     MS_LOG(ERROR) << "Invalid output/input size! output size: " << outputs_.size() << ",input size: " << inputs_.size();
     return RET_PARAM_INVALID;
   }
@@ -116,7 +116,7 @@ int LayerNorm::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite:
   output->set_format(input->format());
   output->set_data_type(input->data_type());
 
-  if (GetElementwiseAffine() && inputs_.size() != kMultiNum) {
+  if (GetElementwiseAffine() && inputs_.size() != kTripleNum) {
     MS_LOG(INFO) << "input tensor amount error";
     return RET_INPUT_TENSOR_ERROR;
   }

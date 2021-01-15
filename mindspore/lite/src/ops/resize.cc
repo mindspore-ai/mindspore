@@ -153,7 +153,7 @@ int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
     }
     size_t shape_size = shape_tensor->ElementsNum();
     switch (shape_size) {
-      case kDimension_4d: {
+      case kInputRank: {
         if (shape_tensor->data_type() == kNumberTypeInt32) {
           auto data = reinterpret_cast<int32_t *>(shape_tensor->data_c());
           if (data == nullptr) {
@@ -212,6 +212,12 @@ int Resize::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Te
     auto new_width = GetNewWidth();
     output_shape.push_back(new_height);
     output_shape.push_back(new_width);
+  } else if (inputs_.size() == kQuadrupleNum) {
+    if (inputs_[3]->data_c() == nullptr) {
+      return RET_INFER_INVALID;
+    }
+    output_shape.push_back(static_cast<int *>(inputs_.at(3)->data_c())[0]);
+    output_shape.push_back(static_cast<int *>(inputs_.at(3)->data_c())[1]);
   } else {
     MS_LOG(ERROR) << "inputs tensor size invalid.";
     return RET_INFER_ERR;

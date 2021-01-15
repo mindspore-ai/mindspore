@@ -66,26 +66,12 @@ int Where::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outpu
   MS_ASSERT(input != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
+  // Need to dynamically allocate at runtime.
   if (inputs_.size() == kSingleNum) {
-    auto input0 = inputs_.at(0);
-    if (input0->data_c() == nullptr) {
-      MS_LOG(ERROR) << "input0 is empty, tensor cannot be inferred yet";
-      return RET_INFER_INVALID;
-    }
-    int dim_size = input0->shape().size();
-    auto data_ptr = reinterpret_cast<bool *>(input0->data_c());
-    int true_num = 0;
-    for (int i = 0; i < input0->ElementsNum(); i++) {
-      if (*data_ptr) {
-        true_num++;
-      }
-    }
-    std::vector<int> output_shape = {true_num, dim_size};
-    outputs_.at(0)->set_shape(output_shape);
-    return RET_OK;
+    return RET_INFER_INVALID;
   }
 
-  if (inputs_.size() < kMultiNum || outputs_.size() != kSingleNum) {
+  if (inputs_.size() < kTripleNum || outputs_.size() != kSingleNum) {
     MS_LOG(ERROR) << "where input or output number invalid, Input size:" << inputs_.size()
                   << ", output size: " << outputs_.size();
     return RET_INPUT_TENSOR_ERROR;

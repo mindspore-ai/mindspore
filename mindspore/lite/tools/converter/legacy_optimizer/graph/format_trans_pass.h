@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_PREDICT_FORMAT_TRANS_PASS_H
 #define MINDSPORE_PREDICT_FORMAT_TRANS_PASS_H
 
+#include <memory>
 #include "tools/converter/optimizer.h"
 #include "tools/common/graph_util.h"
 #include "tools/converter/converter_flags.h"
@@ -45,6 +46,8 @@ class FormatTransPass : public GraphPass {
   STATUS DoModelInputFormatTrans(schema::MetaGraphT *graph);
 
   STATUS DoNodeInoutFormatTrans(schema::MetaGraphT *graph);
+
+  int GetFormat(const std::unique_ptr<CNodeT> &node);
 
  protected:
   size_t id = 0;

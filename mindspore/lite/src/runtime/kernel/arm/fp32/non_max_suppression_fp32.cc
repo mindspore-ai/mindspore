@@ -97,15 +97,23 @@ int NonMaxSuppressionCPUKernel::GetParams() {
 
 int NonMaxSuppressionCPUKernel::PreProcess() { return GetParams(); }
 
+void ExpandDims(std::vector<int> *shape, size_t size) {
+  for (size_t i = 0; i < size; i++) {
+    shape->insert(shape->begin(), 1);
+  }
+}
+
 int NonMaxSuppressionCPUKernel::Run() {
   auto box_tensor = in_tensors_.at(kBoxTensorIndex);
   if (box_tensor == nullptr) {
     return RET_ERROR;
   }
+  bool simple_out = false;
   auto box_dims = box_tensor->shape();  // batch, box_num, 4
   constexpr size_t kBoxTensorDims = 3;
   if (box_dims.size() != kBoxTensorDims) {
-    return RET_ERROR;
+    ExpandDims(&box_dims, kBoxTensorDims - box_dims.size());
+    simple_out = true;
   }
   constexpr size_t kBoxCoordIndex = 2;
   if (box_dims[kBoxCoordIndex] != kBoxPointNum) {
@@ -119,7 +127,7 @@ int NonMaxSuppressionCPUKernel::Run() {
   auto score_dims = score_tensor->shape();  // batch, class, box_num
   constexpr size_t kScoreTensorDims = 3;
   if (score_dims.size() != kScoreTensorDims) {
-    return RET_ERROR;
+    ExpandDims(&score_dims, kScoreTensorDims - score_dims.size());
   }
   constexpr size_t kBatchIndex = 0;
   if (score_dims.at(kBatchIndex) != box_dims.at(kBatchIndex)) {
@@ -206,11 +214,29 @@ int NonMaxSuppressionCPUKernel::Run() {
   }
   auto output = out_tensors_.at(0);
   int selected_num = static_cast<int>(selected_index.size());
-  const int output_last_dim = 3;
-  output->set_shape({selected_num, output_last_dim});
-  MS_ASSERT(output_last_dim * sizeof(int32_t) == sizeof(NMSIndex));
-  int32_t *out_data = reinterpret_cast<int32_t *>(output->MutableData());
-  memcpy(out_data, selected_index.data(), selected_index.size() * sizeof(NMSIndex));
+  if (!simple_out) {
+    const int output_last_dim = 3;
+    output->set_shape({selected_num, output_last_dim});
+    MS_ASSERT(output_last_dim * sizeof(int32_t) == sizeof(NMSIndex));
+    auto *out_data = reinterpret_cast<int32_t *>(output->MutableData());
+    if (out_data == nullptr) {
+      MS_LOG(ERROR) << "out_data is nullptr.";
+      return RET_ERROR;
+    }
+    memcpy(out_data, selected_index.data(), selected_index.size() * sizeof(NMSIndex));
+  } else {
+    output->set_shape({selected_num});
+    std::vector<int> result;
+    for (size_t i = 0; i < selected_index.size(); i++) {
+      result.push_back(selected_index[i].box_index_);
+    }
+    auto *out_data = reinterpret_cast<int32_t *>(output->MutableData());
+    if (out_data == nullptr) {
+      MS_LOG(ERROR) << "out_data is nullptr.";
+      return RET_ERROR;
+    }
+    memcpy(out_data, result.data(), result.size() * sizeof(int));
+  }
   return RET_OK;
 }
 
