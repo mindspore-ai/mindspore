@@ -674,16 +674,16 @@ bool ExtractChannel(LiteMat &src, LiteMat &dst, int col) {
     return false;
   }
 
-  if (dst.data_type_ == LDataType::FLOAT32 || dst.data_type_ == LDataType::UINT8) {
+  if (src.data_type_ == LDataType::FLOAT32 || src.data_type_ == LDataType::UINT8) {
     if (dst.IsEmpty() || dst.width_ != src.width_ || dst.height_ != src.height_ || dst.channel_ != 1 ||
         dst.data_type_ != src.data_type_) {
       dst.Init(src.width_, src.height_, 1, src.data_type_);
     }
   }
 
-  if (dst.data_type_ == LDataType::FLOAT32) {
+  if (src.data_type_ == LDataType::FLOAT32) {
     ExtractChannelImpl<float>(src, dst, src.height_, src.width_, src.channel_, col);
-  } else if (dst.data_type_ == LDataType::UINT8) {
+  } else if (src.data_type_ == LDataType::UINT8) {
     ExtractChannelImpl<uint8_t>(src, dst, src.height_, src.width_, src.channel_, col);
   } else {
     return false;
