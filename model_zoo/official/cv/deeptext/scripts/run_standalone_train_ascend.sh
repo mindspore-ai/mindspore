@@ -14,9 +14,9 @@
 # limitations under the License.
 # ============================================================================
 
-if [ $# -ne 4 ]
+if [ $# -ne 5 ]
 then 
-    echo "Usage: sh run_standalone_train_ascend.sh [IMGS_PATH] [ANNOS_PATH] [PRETRAINED_PATH] [COCO_TEXT_PARSER_PATH]"
+    echo "Usage: sh run_standalone_train_ascend.sh [IMGS_PATH] [ANNOS_PATH] [PRETRAINED_PATH] [COCO_TEXT_PARSER_PATH] [DEVICE_ID]"
 exit 1
 fi
 
@@ -51,7 +51,7 @@ fi
 
 ulimit -u unlimited
 export DEVICE_NUM=1
-export DEVICE_ID=0
+export DEVICE_ID=$5
 export RANK_ID=0
 export RANK_SIZE=1
 cp $PATH4 ../src/
