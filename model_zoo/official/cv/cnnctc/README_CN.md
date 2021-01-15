@@ -294,7 +294,7 @@ bash scripts/run_eval_ascend.sh $TRAINED_CKPT
 
 ### 推理
 
-如果您需要在GPU、Ascend 910、Ascend 310等多个硬件平台上使用训练好的模型进行推理，请参考此[链接](https://www.mindspore.cn/tutory/zh-CN/master/advanced_use/network_migration.html)。以下为简单示例：
+如果您需要在GPU、Ascend 910、Ascend 310等多个硬件平台上使用训练好的模型进行推理，请参考此[链接](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/migrate_3rd_scripts.html)。以下为简单示例：
 
 - Ascend处理器环境运行
 

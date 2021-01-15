@@ -59,8 +59,8 @@ Dataset used: [LibriSpeech](<http://www.openslr.org/12>)
 - Framework
     - [MindSpore](https://cmc-szv.clouddragon.huawei.com/cmcversion/index/search?searchKey=Do-MindSpore%20V100R001C00B622)
 - For more information, please check the resources below：
-    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/zh-CN/master/index.html)
-    - [MindSpore API](https://www.mindspore.cn/api/zh-CN/master/index.html)
+    - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Script Description](#contents)
 
@@ -192,7 +192,7 @@ dataset directory structure is as follows:
 ```
 
 The three *.csv file stores the absolute path of the corresponding
-data. The three *.csv files will be used in training and evaluation process.
+data. The three*.csv files will be used in training and evaluation process.
 After installing MindSpore via the official website and finishing dataset processing, you can start training as follows:
 
 ```shell

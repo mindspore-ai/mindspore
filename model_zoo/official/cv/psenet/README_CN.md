@@ -213,7 +213,7 @@ Calculated!{"precision": 0.8147966668299853，"recall"：0.8006740491092923，"h
 
 ### 推理
 
-如果您需要使用已训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考[此处](https://www.mindspore.cn/tutory/training/en/master/advanced_use/migrate_3rd_scripts.html)。操作示例如下：
+如果您需要使用已训练模型在GPU、Ascend 910、Ascend 310等多个硬件平台上进行推理，可参考[此处](https://www.mindspore.cn/tutorial/training/zh-CN/master/advanced_use/migrate_3rd_scripts.html)。操作示例如下：
 
 ```python
 # 加载未知数据集进行推理
