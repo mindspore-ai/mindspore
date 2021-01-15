@@ -131,13 +131,14 @@ SET(DE_UT_SRCS
         to_float16_op_test.cc
         tokenizer_op_test.cc
         treap_test.cc
+        tree_modifying_function_test.cc
         trucate_pair_test.cc
         type_cast_op_test.cc
         weighted_random_sampler_test.cc
         zip_op_test.cc
         )
 
-if (ENABLE_PYTHON)
+if(ENABLE_PYTHON)
     set(DE_UT_SRCS
             ${DE_UT_SRCS}
             filter_op_test.cc
@@ -145,13 +146,18 @@ if (ENABLE_PYTHON)
             voc_op_test.cc
             sentence_piece_vocab_op_test.cc
             )
-endif ()
+endif()
 
 add_executable(de_ut_tests ${DE_UT_SRCS})
 
 set_target_properties(de_ut_tests PROPERTIES INSTALL_RPATH "$ORIGIN/../lib:$ORIGIN/../lib64")
 
-target_link_libraries(de_ut_tests PRIVATE _c_dataengine pybind11::embed ${GTEST_LIBRARY} ${SECUREC_LIBRARY} ${SLOG_LIBRARY})
+target_link_libraries(de_ut_tests PRIVATE
+        _c_dataengine pybind11::embed
+        ${GTEST_LIBRARY}
+        ${SECUREC_LIBRARY}
+        ${SLOG_LIBRARY}
+        )
 
 gtest_discover_tests(de_ut_tests WORKING_DIRECTORY ${Project_DIR}/tests/dataset)
 

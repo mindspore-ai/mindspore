@@ -31,7 +31,7 @@ class DatasetOp;
 ///     nodes should be removed, and then removes them.
 class NodeRemovalPass : public IRTreePass {
   /// \class RemovalNodes
-  /// \brief This is a NodePass who's job is to identify which nodes should be removed.
+  /// \brief This is a NodePass whose job is to identify which nodes should be removed.
   ///     It works in conjunction with the removal_pass.
   class RemovalNodes : public IRNodePass {
    public:
@@ -42,29 +42,11 @@ class NodeRemovalPass : public IRTreePass {
     /// \brief Destructor
     ~RemovalNodes() = default;
 
-    /// \brief Identifies the subtree below this node as a cached descendant tree.
-    /// \param[in] node The node being visited
-    /// \param[inout] modified Indicator if the node was changed at all
-    /// \return Status The status code returned
-    Status Visit(std::shared_ptr<DatasetNode> node, bool *const modified) override;
-
-    /// \brief Resets the tracking of the cache within the tree
-    /// \param[in] node The node being visited
-    /// \param[inout] modified Indicator if the node was changed at all
-    /// \return Status The status code returned
-    Status VisitAfter(std::shared_ptr<DatasetNode> node, bool *const modified) override;
-
     /// \brief Perform RepeatNode removal check
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
     Status Visit(std::shared_ptr<RepeatNode> node, bool *const modified) override;
-
-    /// \brief Perform ShuffleNode removal check
-    /// \param[in] node The node being visited
-    /// \param[inout] modified Indicator if the node was changed at all
-    /// \return Status The status code returned
-    Status Visit(std::shared_ptr<ShuffleNode> node, bool *const modified) override;
 
     /// \brief Perform SkipNode removal check
     /// \param[in] node The node being visited
@@ -83,7 +65,6 @@ class NodeRemovalPass : public IRTreePass {
     std::vector<std::shared_ptr<DatasetNode>> nodes_to_remove() { return nodes_to_remove_; }
 
    private:
-    bool is_caching_;
     std::vector<std::shared_ptr<DatasetNode>> nodes_to_remove_;
   };
 

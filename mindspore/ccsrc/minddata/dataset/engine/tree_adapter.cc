@@ -187,8 +187,10 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_e
 
   tree_state_ = kCompileStateOptimized;
   MS_LOG(INFO) << "Plan after optimization:" << '\n' << *root_ir << '\n';
+  // Remember the root node
+  root_ir_ = root_ir;
 
-  RETURN_IF_NOT_OK(Build(root_ir, num_epochs));
+  RETURN_IF_NOT_OK(Build(root_ir_, num_epochs));
   tree_state_ = kCompileStateReady;
 
   return Status::OK();
