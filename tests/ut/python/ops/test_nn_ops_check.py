@@ -288,7 +288,8 @@ raise_set = [
         'skip': ['backward']}),
     # kernel size is invalid(very large)
     ('MaxPoolWithArgmax3', {
-        'block': (P.MaxPoolWithArgmax(ksize=50), {'exception': ValueError, 'error_keywords': ['MaxPoolWithArgmax']}),
+        'block': (P.MaxPoolWithArgmax(kernel_size=50),
+                  {'exception': ValueError, 'error_keywords': ['MaxPoolWithArgmax']}),
         'desc_inputs': [Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))],
         'skip': ['backward']}),
 
@@ -304,7 +305,7 @@ raise_set = [
         'skip': ['backward']}),
     # rank of x is not 4
     ('MaxPool2', {
-        'block': (P.MaxPool(ksize=50, strides=1), {'exception': ValueError, 'error_keywords': ['MaxPool']}),
+        'block': (P.MaxPool(kernel_size=50, strides=1), {'exception': ValueError, 'error_keywords': ['MaxPool']}),
         'desc_inputs': [Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))],
         'skip': ['backward']}),
 
@@ -320,7 +321,7 @@ raise_set = [
         'skip': ['backward']}),
     # rank of x is not 4
     ('AvgPool2', {
-        'block': (P.AvgPool(ksize=50, strides=1), {'exception': ValueError, 'error_keywords': ['AvgPool']}),
+        'block': (P.AvgPool(kernel_size=50, strides=1), {'exception': ValueError, 'error_keywords': ['AvgPool']}),
         'desc_inputs': [Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))],
         'skip': ['backward']}),
 

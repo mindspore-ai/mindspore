@@ -39,8 +39,8 @@ class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
 
-        self.maxpool = P.MaxPoolWithArgmax(padding="same",
-                                           ksize=3,
+        self.maxpool = P.MaxPoolWithArgmax(pad_mode="same",
+                                           kernel_size=3,
                                            strides=2)
 
     @ms_function

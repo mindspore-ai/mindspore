@@ -29,8 +29,8 @@ context.set_context(mode=context.GRAPH_MODE, device_target='CPU')
 class Net_Pool_Grad(nn.Cell):
     def __init__(self):
         super(Net_Pool_Grad, self).__init__()
-        self.maxpool_grad_fun = G.MaxPoolGrad(padding="VALID",
-                                              ksize=2,
+        self.maxpool_grad_fun = G.MaxPoolGrad(pad_mode="VALID",
+                                              kernel_size=2,
                                               strides=2)
 
         self.x = Parameter(initializer(
