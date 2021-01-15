@@ -84,13 +84,13 @@ Status ConcatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
 }
 
 // Visitor accepting method for IRNodePass
-Status ConcatNode::Accept(IRNodePass *p, bool *modified) {
+Status ConcatNode::Accept(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<ConcatNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status ConcatNode::AcceptAfter(IRNodePass *p, bool *modified) {
+Status ConcatNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<ConcatNode>(), modified);
 }

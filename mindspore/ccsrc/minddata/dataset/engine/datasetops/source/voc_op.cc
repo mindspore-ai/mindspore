@@ -493,7 +493,7 @@ Status VOCOp::GetClassIndexing(const std::string &dir, const std::string &task_t
 #endif
 
 // Visitor accept method for NodePass
-Status VOCOp::Accept(NodePass *p, bool *modified) {
+Status VOCOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<VOCOp>(), modified);
 }

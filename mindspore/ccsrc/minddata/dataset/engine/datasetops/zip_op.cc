@@ -237,13 +237,13 @@ Status ZipOp::EoeReceived(int32_t) {
 }
 
 // Visitor pre-accept method for NodePass
-Status ZipOp::PreAccept(NodePass *p, bool *modified) {
+Status ZipOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->PreRunOnNode(shared_from_base<ZipOp>(), modified);
 }
 
 // Visitor accept method for NodePass
-Status ZipOp::Accept(NodePass *p, bool *modified) {
+Status ZipOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<ZipOp>(), modified);
 }

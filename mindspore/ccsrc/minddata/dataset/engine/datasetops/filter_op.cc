@@ -248,13 +248,13 @@ Status FilterOp::InvokePredicateFunc(const TensorRow &input, bool *out_predicate
 }
 
 // Visitor accept method for NodePass
-Status FilterOp::Accept(NodePass *p, bool *modified) {
+Status FilterOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<FilterOp>(), modified);
 }
 
 // Visitor pre-accept method for NodePass
-Status FilterOp::PreAccept(NodePass *p, bool *modified) {
+Status FilterOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->PreRunOnNode(shared_from_base<FilterOp>(), modified);
 }

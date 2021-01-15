@@ -47,20 +47,20 @@ class EpochInjectionPass : public TreePass {
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *modified) override;
+    Status PreRunOnNode(std::shared_ptr<BuildVocabOp> node, bool *const modified) override;
 
     /// \brief Performs finder work for BuildSentencePieceVocabOp that has special rules about epoch control injection.
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *modified) override;
+    Status PreRunOnNode(std::shared_ptr<BuildSentencePieceVocabOp> node, bool *const modified) override;
 #endif
 
     /// \brief Register the DeviceQueueOp for further action.
     /// \param[in] node The node being visited
     /// \param[inout] modified Indicator if the node was changed at all
     /// \return Status The status code returned
-    Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<DeviceQueueOp> node, bool *const modified) override;
 
     /// \brief Getter
     std::shared_ptr<DatasetOp> injection_point() { return injection_point_; }
@@ -80,7 +80,7 @@ class EpochInjectionPass : public TreePass {
   /// \param[inout] tree The tree to operate on.
   /// \param[inout] Indicate of the tree was modified.
   /// \return Status The status code returned
-  Status RunOnTree(ExecutionTree *tree, bool *modified) override;
+  Status RunOnTree(ExecutionTree *tree, bool *const modified) override;
 };
 }  // namespace dataset
 }  // namespace mindspore

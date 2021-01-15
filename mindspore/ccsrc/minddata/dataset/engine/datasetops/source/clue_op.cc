@@ -560,7 +560,7 @@ void ClueOp::MakeSimpleProducer() {
 }
 
 // Visitor accept method for NodePass
-Status ClueOp::Accept(NodePass *p, bool *modified) {
+Status ClueOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<ClueOp>(), modified);
 }

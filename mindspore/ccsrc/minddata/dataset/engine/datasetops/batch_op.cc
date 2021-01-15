@@ -498,13 +498,13 @@ Status BatchOp::UnpackPadInfo(const PadInfo &pad_info,
 }
 
 // Visitor accept method for NodePass
-Status BatchOp::Accept(NodePass *p, bool *modified) {
+Status BatchOp::Accept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->RunOnNode(shared_from_base<BatchOp>(), modified);
 }
 
 // Visitor pre-accept method for NodePass
-Status BatchOp::PreAccept(NodePass *p, bool *modified) {
+Status BatchOp::PreAccept(NodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->PreRunOnNode(shared_from_base<BatchOp>(), modified);
 }

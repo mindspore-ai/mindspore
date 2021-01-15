@@ -41,7 +41,7 @@ class GetterPass : public TreePass {
   /// \brief Destructor
   ~GetterPass() = default;
 
-  Status RunOnTree(ExecutionTree *tree, bool *modified) override;
+  Status RunOnTree(ExecutionTree *tree, bool *const modified) override;
 
  private:
   /// \class GetterNodes, this is a nested class which is owned via composition by the outter class to identify nodes
@@ -53,15 +53,15 @@ class GetterPass : public TreePass {
 
     ~GetterNodes() = default;
 
-    Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *modified) override;
-    Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *modified) override;
-    Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *modified) override { return Status::OK(); }
-    Status RunOnNode(std::shared_ptr<SkipOp> node, bool *modified) override;
-    Status RunOnNode(std::shared_ptr<TakeOp> node, bool *modified) override;
-    Status RunOnNode(std::shared_ptr<MapOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<ShuffleOp> node, bool *const modified) override;
+    Status RunOnNode(std::shared_ptr<RepeatOp> node, bool *const modified) override;
+    Status RunOnNode(std::shared_ptr<EpochCtrlOp> node, bool *const modified) override { return Status::OK(); }
+    Status RunOnNode(std::shared_ptr<SkipOp> node, bool *const modified) override;
+    Status RunOnNode(std::shared_ptr<TakeOp> node, bool *const modified) override;
+    Status RunOnNode(std::shared_ptr<MapOp> node, bool *const modified) override;
 
 #ifdef ENABLE_PYTHON
-    Status RunOnNode(std::shared_ptr<FilterOp> node, bool *modified) override;
+    Status RunOnNode(std::shared_ptr<FilterOp> node, bool *const modified) override;
 #endif
 
     GetterType type_;

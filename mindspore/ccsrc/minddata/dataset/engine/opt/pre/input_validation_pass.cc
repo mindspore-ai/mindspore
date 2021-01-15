@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace dataset {
 
-Status InputValidationPass::Visit(std::shared_ptr<DatasetNode> node, bool *modified) {
+Status InputValidationPass::Visit(std::shared_ptr<DatasetNode> node, bool *const modified) {
   *modified = false;
   RETURN_IF_NOT_OK(node->ValidateParams());
 

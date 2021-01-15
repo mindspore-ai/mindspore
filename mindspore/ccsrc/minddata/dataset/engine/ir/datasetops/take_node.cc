@@ -71,13 +71,13 @@ Status TakeNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
 }
 
 // Visitor accepting method for IRNodePass
-Status TakeNode::Accept(IRNodePass *p, bool *modified) {
+Status TakeNode::Accept(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<TakeNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status TakeNode::AcceptAfter(IRNodePass *p, bool *modified) {
+Status TakeNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<TakeNode>(), modified);
 }

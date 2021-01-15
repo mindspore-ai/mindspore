@@ -92,13 +92,13 @@ Status BuildSentenceVocabNode::ValidateParams() {
 }
 
 // Visitor accepting method for IRNodePass
-Status BuildSentenceVocabNode::Accept(IRNodePass *p, bool *modified) {
+Status BuildSentenceVocabNode::Accept(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->Visit(shared_from_base<BuildSentenceVocabNode>(), modified);
 }
 
 // Visitor accepting method for IRNodePass
-Status BuildSentenceVocabNode::AcceptAfter(IRNodePass *p, bool *modified) {
+Status BuildSentenceVocabNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<BuildSentenceVocabNode>(), modified);
 }
