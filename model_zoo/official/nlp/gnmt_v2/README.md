@@ -1,4 +1,4 @@
-![](https://www.mindspore.cn/static/img/logo.a3e472c9.png)
+![](https://www.mindspore.cn/static/img/logo_black.6a5c850d.png)
 
 <!-- TOC -->
 

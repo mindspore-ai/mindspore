@@ -188,7 +188,7 @@ class 1 precision is 88.01%, recall is 82.77%
 | Loss                       | ~0.008                                                       |
 | Accuracy (8p)              | precision=0.8854, recall=0.8024                              |
 | Total time (8p)            | 4h                                                           |
-| Scripts                    | [deeptext script](https://gitee.com/mindspore/mindspore/tree/r1.1/mindspore/official/cv/deeptext) |
+| Scripts                    | [deeptext script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeptext) |
 
 #### Inference Performance
 
