@@ -23,6 +23,7 @@ import numpy
 
 from mindspore import log as logger
 from mindspore.common.parameter import PARAMETER_NAME_DEFAULT
+from mindspore.context import ParallelMode
 from .. import context
 from .._c_expression import init_pipeline, Cell_
 from .._checkparam import Validator
@@ -90,6 +91,7 @@ class Cell(Cell_):
         self._parameter_layout_dict = {}
         self._create_time = int(time.time() * 1e9)
         self.phase_prefix = ""
+        self.parameter_broadcast_done = False
         init_pipeline()
 
         # call gc to release GE session resources used by non-used cell objects
@@ -299,6 +301,11 @@ class Cell(Cell_):
                 raise ValueError("The graph mode does not support hook function.")
             out = self.compile_and_run(*inputs)
             return out
+
+        if context.get_auto_parallel_context("parallel_mode") == ParallelMode.DATA_PARALLEL:
+            if not self.parameter_broadcast_done:
+                _pynative_exec.parameter_broadcast(self, self.phase, self._auto_parallel_mode)
+                self.parameter_broadcast_done = True
 
         for item in inputs:
             if isinstance(item, numpy.ndarray):
