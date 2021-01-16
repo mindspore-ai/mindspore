@@ -392,7 +392,7 @@ class GELU(Cell):
 
 class FastGelu(Cell):
     r"""
-    fast Gaussian error linear unit activation function.
+    Fast Gaussian error linear unit activation function.
 
     Applies FastGelu function to each element of the input. The input is a Tensor with any valid shape.
 
