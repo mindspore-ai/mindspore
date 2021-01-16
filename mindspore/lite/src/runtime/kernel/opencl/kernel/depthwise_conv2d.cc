@@ -118,67 +118,77 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     int alignment = ocl_runtime_->GetImagePitchAlignment();
     plane_out = UP_ROUND(plane_out, alignment) * C4NUM;
     pack_weight_size = plane_out * CO4;
-    auto shape = in_tensors_[1]->shape();
     size_t img_dtype = ocl_runtime_->GetFp16Enable() ? CL_HALF_FLOAT : CL_FLOAT;
-    img_size = {(size_t)plane_out / C4NUM, (size_t)shape[0] * CO4, img_dtype};
+    img_size = {(size_t)plane_out / C4NUM, (size_t)out_info.N * CO4, img_dtype};
   }
-  if (is_fp16) {
-    packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(int16_t), img_size);
-    packed_weight_ = allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true);
-    if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16) {
-      std::function<int16_t(int16_t)> to_dtype = [](int16_t x) -> int16_t { return x; };
-      PackNCHWToNC4HW4<int16_t, int16_t>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
-    } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat32) {
-      std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
-      PackNCHWToNC4HW4<float, float16_t>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
-    } else {  // int8 or int16
-      std::function<int16_t(int16_t)> to_dtype = [](int16_t x) -> int16_t { return x; };
-      PackNCHWToNC4HW4<int16_t, int16_t>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
+  pack_weight_size = is_fp16 ? pack_weight_size * sizeof(int16_t) : pack_weight_size * sizeof(float);
+  auto ConvertFilter = [](void *src, void *dst, TypeId src_type, TypeId dst_type, size_t plane_in, size_t plane_out,
+                          size_t channel) {
+    if (dst_type == kNumberTypeFloat16) {
+      if (src_type == kNumberTypeFloat16) {
+        std::function<int16_t(int16_t)> to_dtype = [](int16_t x) -> int16_t { return x; };
+        PackNCHWToNC4HW4<int16_t, int16_t>(src, dst, 1, plane_in, plane_out, channel, to_dtype);
+      } else if (src_type == kNumberTypeFloat32) {
+        std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
+        PackNCHWToNC4HW4<float, float16_t>(src, dst, 1, plane_in, plane_out, channel, to_dtype);
+      } else {  // int8 or int16
+        std::function<int16_t(int16_t)> to_dtype = [](int16_t x) -> int16_t { return x; };
+        PackNCHWToNC4HW4<int16_t, int16_t>(src, dst, 1, plane_in, plane_out, channel, to_dtype);
+      }
+    } else {
+      if (src_type == kNumberTypeFloat32) {
+        std::function<float(float)> to_dtype = [](float x) -> float { return x; };
+        PackNCHWToNC4HW4<float, float>(src, dst, 1, plane_in, plane_out, channel, to_dtype);
+      } else if (src_type == kNumberTypeFloat16) {
+        std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
+        PackNCHWToNC4HW4<float16_t, float>(src, dst, 1, plane_in, plane_out, channel, to_dtype);
+      } else {  // int8 or int16
+        std::function<float(float)> to_dtype = [](float x) -> float { return x; };
+        PackNCHWToNC4HW4<float, float>(src, dst, 1, plane_in, plane_out, channel, to_dtype);
+      }
     }
-  } else {
-    packed_weight_ = allocator->Malloc(pack_weight_size * sizeof(float), img_size);
-    packed_weight_ = allocator->MapBuffer(packed_weight_, CL_MAP_WRITE, nullptr, true);
-    if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat32) {
-      std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-      PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
-    } else if (in_tensors_.at(kWeightIndex)->data_type() == kNumberTypeFloat16) {
-      std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
-      PackNCHWToNC4HW4<float16_t, float>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
-    } else {  // int8 or int16
-      std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-      PackNCHWToNC4HW4<float, float>(origin_weight, packed_weight_, 1, plane_in, plane_out, out_info.C, to_dtype);
-    }
-  }
-  allocator->UnmapBuffer(packed_weight_);
+  };
+  std::vector<char> temp_filter(pack_weight_size);
+  auto src_type = in_tensors_.at(kWeightIndex)->data_type();
+  auto dst_type = is_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32;
+  ConvertFilter(origin_weight, temp_filter.data(), src_type, dst_type, plane_in, plane_out, out_info.C);
+  packed_weight_ = allocator->Malloc(pack_weight_size, img_size, temp_filter.data());
   FreeDequantedWeight();
+  if (packed_weight_ == nullptr) {
+    return RET_ERROR;
+  }
 
+  auto ConvertBias = [](void *src, void *dst, size_t size, size_t dtype_size, TypeId src_type, TypeId dst_type) {
+    if (dst_type == kNumberTypeFloat16 && src_type == kNumberTypeFloat32) {
+      float16_t *bias_ptr = static_cast<float16_t *>(dst);
+      for (size_t i = 0; i < size; ++i) {
+        bias_ptr[i] = static_cast<float16_t>(static_cast<float *>(src)[i]);
+      }
+    } else if (dst_type == kNumberTypeFloat32 && src_type == kNumberTypeFloat16) {
+      float32_t *bias_ptr = static_cast<float32_t *>(dst);
+      for (size_t i = 0; i < size; ++i) {
+        bias_ptr[i] = static_cast<float32_t>(static_cast<float16_t *>(src)[i]);
+      }
+    } else {
+      memcpy(dst, src, size * dtype_size);
+    }
+  };
   size_t dtype_size = sizeof(float);
   if (is_fp16 && in_tensors_.at(kBiasIndex)->data_type() == kNumberTypeFloat16) {
     dtype_size = sizeof(int16_t);
   }
-  bias_data_ = allocator->Malloc(C4NUM * CO4 * dtype_size);
-  bias_data_ = allocator->MapBuffer(bias_data_, CL_MAP_WRITE, nullptr, true);
-  size_t up_co_size = C4NUM * CO4 * dtype_size;
-  memset(bias_data_, 0, up_co_size);
-  if (in_tensors_.size() == kInputSize2) {
-    auto ori_bias = in_tensors_.at(kBiasIndex)->data_c();
-    if (is_fp16 && in_tensors_.at(kBiasIndex)->data_type() == kNumberTypeFloat32) {
-      float16_t *bias_ptr = static_cast<float16_t *>(bias_data_);
-      for (size_t i = 0; i < in_tensors_.at(kBiasIndex)->ElementsNum(); ++i) {
-        bias_ptr[i] = static_cast<float16_t>(static_cast<float *>(ori_bias)[i]);
-      }
-    } else if (!is_fp16 && in_tensors_.at(kBiasIndex)->data_type() == kNumberTypeFloat16) {
-      float32_t *bias_ptr = static_cast<float32_t *>(bias_data_);
-      for (size_t i = 0; i < in_tensors_.at(kBiasIndex)->ElementsNum(); ++i) {
-        bias_ptr[i] = static_cast<float32_t>(static_cast<float16_t *>(ori_bias)[i]);
-      }
-    } else {
-      memcpy(bias_data_, ori_bias, out_info.C * dtype_size);
-    }
-  } else {
-    MS_ASSERT(in_tensors_.size() == kInputSize1);
+  std::vector<char> temp_bias(pack_weight_size, 0);
+  if (in_tensors_.size() == 3) {
+    src_type = in_tensors_.at(kBiasIndex)->data_type();
+    dst_type = is_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32;
+    auto element_size = in_tensors_.at(kBiasIndex)->ElementsNum();
+    ConvertBias(in_tensors_.at(kBiasIndex)->data_c(), temp_bias.data(), element_size, dtype_size, src_type, dst_type);
   }
-  allocator->UnmapBuffer(bias_data_);
+  size_t bias_size = C4NUM * CO4 * dtype_size;
+  bias_data_ = allocator->Malloc(bias_size, {}, temp_bias.data());
+  if (bias_data_ == nullptr) {
+    return RET_ERROR;
+  }
   return mindspore::lite::RET_OK;
 }
 void DepthwiseConv2dOpenCLKernel::SetConstArgs() {

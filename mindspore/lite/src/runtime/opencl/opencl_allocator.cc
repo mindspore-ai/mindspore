@@ -107,14 +107,20 @@ void *OpenCLAllocator::CreateImage2D(size_t size, const std::vector<size_t> &img
   }
   if (*image == nullptr) {
     delete *buffer;
-    MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << ret << ")";
+    MS_LOG(ERROR) << "Create OpenCL Image2D failed! (ERROR CODE: " << mindspore::kernel::CLErrorCode(ret) << ")";
+    return nullptr;
+  }
+  if (ret != CL_SUCCESS) {
+    delete *buffer;
+    delete *image;
+    MS_LOG(ERROR) << "Create OpenCL Image2D  (ERROR CODE: " << mindspore::kernel::CLErrorCode(ret) << ")";
     return nullptr;
   }
   MS_LOG(DEBUG) << "Malloc a new Image2D, width=" << img_size[0] << ", height=" << img_size[1];
   void *host_ptr = nullptr;
   if (is_map) {
     std::vector<size_t> region{img_size[0], img_size[1], 1};
-    host_ptr = ocl_runtime_->MapBuffer(**image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
+    host_ptr = ocl_runtime_->MapBuffer(**image, true, CL_MAP_READ | CL_MAP_WRITE, region);
     if (host_ptr == nullptr) {
       delete *buffer;
       delete *image;
@@ -340,7 +346,7 @@ void *OpenCLAllocator::MapBuffer(void *host_ptr, int flags, void *command_queue,
     std::vector<size_t> region{mem_buf->img_size[0], mem_buf->img_size[1], 1};
     cl::Image2D *image = static_cast<cl::Image2D *>(mem_buf->image_ptr_);
     MS_ASSERT(image);
-    new_host_ptr = ocl_runtime_->MapBuffer(*image, 0, CL_MAP_READ | CL_MAP_WRITE, region);
+    new_host_ptr = ocl_runtime_->MapBuffer(*image, sync, CL_MAP_READ | CL_MAP_WRITE, region);
   }
   if (new_host_ptr == nullptr) {
     UnLock();
