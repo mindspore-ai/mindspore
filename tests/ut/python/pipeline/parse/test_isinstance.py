@@ -20,7 +20,7 @@ import mindspore.nn as nn
 from mindspore import Tensor, Parameter
 from mindspore import context
 
-context.set_context(mode=context.GRAPH_MODE, save_graphs=True)
+context.set_context(mode=context.GRAPH_MODE)
 
 
 def test_isinstance():
@@ -35,6 +35,7 @@ def test_isinstance():
             self.tuple_member = (1, 1.0, True, "abcd", self.tensor_member)
             self.list_member = list(self.tuple_member)
             self.weight = Parameter(1.0)
+            self.empty_list = []
 
         def construct(self, x, y):
             is_int = isinstance(self.int_member, int)
@@ -54,7 +55,9 @@ def test_isinstance():
             bool_is_string = isinstance(self.bool_member, str)
             tensor_is_tuple = isinstance(x, tuple)
             tuple_is_list = isinstance(self.tuple_member, list)
-            return is_int, is_float, is_bool, is_string, is_parameter, is_tensor_const, is_tensor_var, \
+            is_empty_list = isinstance(self.empty_list, list)
+            return is_int, is_float, is_bool, is_string, \
+                   is_empty_list, is_parameter, is_tensor_const, is_tensor_var, \
                    is_tuple_const, is_tuple_var, is_list_const, is_list_var, \
                    is_int_or_float_or_tensor_or_tuple, is_list_or_tensor, \
                    float_is_int, bool_is_string, tensor_is_tuple, tuple_is_list
@@ -62,7 +65,7 @@ def test_isinstance():
     net = Net()
     x = Tensor(np.arange(4))
     y = Tensor(np.arange(5))
-    assert net(x, y) == (True,) * 13 + (False,) * 4
+    assert net(x, y) == (True,) * 14 + (False,) * 4
 
 
 def test_isinstance_not_supported():
@@ -77,7 +80,8 @@ def test_isinstance_not_supported():
     net = Net()
     with pytest.raises(TypeError) as err:
         net()
-    assert "The type 'None' is not supported for 'isinstance'" in str(err.value)
+    assert "The second arg of 'isinstance' should be bool, int, float, str, list, tuple, Tensor, Parameter, " \
+           "or a tuple only including these types, but got None" in str(err.value)
 
 
 def test_isinstance_second_arg_is_list():
