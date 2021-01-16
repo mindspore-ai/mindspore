@@ -256,7 +256,6 @@ class _Context:
 
     setters = {
         'mode': set_mode,
-        'backend_policy': set_backend_policy,
         'save_graphs_path': set_save_graphs_path,
         'device_target': set_device_target,
         'device_id': set_device_id,
