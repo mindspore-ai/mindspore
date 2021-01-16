@@ -310,10 +310,12 @@ class Cell(Cell_):
         for item in inputs:
             if isinstance(item, numpy.ndarray):
                 raise TypeError("cell inputs should not be numpy array.")
+        origin_grad = []
         if self.requires_grad is True:
             _pynative_exec.set_grad_flag(True)
             _pynative_exec.new_graph(self, *inputs, **kwargs)
             for cell in self.cells():
+                origin_grad.append(cell.requires_grad)
                 cell.set_grad(True)
         else:
             _pynative_exec.set_grad_flag(False)
@@ -337,6 +339,8 @@ class Cell(Cell_):
             output = output.data
         if self.requires_grad is True:
             _pynative_exec.end_graph(self, output, *inputs, **kwargs)
+            for i, cell in enumerate(self.cells()):
+                cell.set_grad(origin_grad[i])
         return output
 
     def _add_attr(self, name, value):
@@ -750,7 +754,7 @@ class Cell(Cell_):
         """
         Returns all trainable parameters.
 
-        Returns a list of all trainable parmeters.
+        Returns a list of all trainable parameters.
 
         Args:
             recurse (bool): Whether contains the trainable parameters of subcells. Default: True.
@@ -1031,7 +1035,7 @@ class Cell(Cell_):
         Note:
             fn must be defined as the following code. `cell_name` is the name of registered cell.
             `grad_input` is gradient passed to the cell. `grad_output` is the gradient computed and passed to the
-            next cell or primitve, which may be modified and returned.
+            next cell or primitive, which may be modified and returned.
             hook_fn(cell_name, grad_input, grad_output) -> Tensor or None.
 
         Args:
