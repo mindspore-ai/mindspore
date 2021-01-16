@@ -98,6 +98,7 @@ class TopCellInfo {
 
   bool is_topest{false};
   bool do_vm_compiled{false};
+  bool forward_already_run{false};
   ResourcePtr resource{nullptr};
   FuncGraphPtr df_builder{nullptr};
   FuncGraphPtr bg{nullptr};  // Backward graph
@@ -250,7 +251,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   void DumpGraphIR(const std::string &filename, const FuncGraphPtr &graph);
   void NewGraphInner(const py::object &cell, const py::args &args);
   void MakeNewTopGraph(const string &cell_id, const py::args &args);
-  std::string GetTopCell(const string &cell_id);
+  TopCellInfoPtr GetTopCell(const string &cell_id, bool find_nearest = false);
   void EndGraphInner(const py::object &cell, const py::object &out, const py::args &args);
   void EndGraphByOutId(const py::object &cell, const std::string &cell_id, const py::object &out,
                        const std::string &out_id, const py::args &args);
