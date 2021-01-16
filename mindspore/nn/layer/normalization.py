@@ -267,7 +267,7 @@ class BatchNorm1d(_BatchNorm):
         Tensor, the normalized, scaled, offset tensor, of shape :math:`(N, C_{out})`.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> net = nn.BatchNorm1d(num_features=4)
