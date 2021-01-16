@@ -567,7 +567,16 @@ struct TraceProviderRegister {
   TraceProviderRegister() {
     LogWriter::set_trace_provider([](std::ostringstream &oss) {
       TraceGraphEval();
-      GetEvalStackInfo(oss);
+      std::ostringstream trace_info;
+      GetEvalStackInfo(trace_info);
+      if (trace_info.str().empty()) {
+        DebugInfoPtr debug_info = TraceManager::GetDebugInfoPtr();
+        if (debug_info != nullptr) {
+          oss << "\n\n# " << trace::GetDebugInfo(debug_info);
+        }
+      } else {
+        oss << trace_info.str();
+      }
     });
   }
   ~TraceProviderRegister() = default;
