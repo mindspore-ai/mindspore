@@ -84,7 +84,7 @@ def test_net_with_raise():
     inp = Tensor(np.ones([1, 1, 32, 32]).astype(np.float32))
     with pytest.raises(RuntimeError) as err:
         _executor.compile(net, inp)
-    assert "Unsupported syntax 'Raise' at " in str(err.value)
+    assert "Unsupported syntax 'Raise'." in str(err.value)
 
 
 class NetAddN(nn.Cell):

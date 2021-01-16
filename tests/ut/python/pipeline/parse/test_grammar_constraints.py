@@ -118,7 +118,7 @@ def test_raise_in_method():
     z = Tensor(2, mstype.int32)
     with pytest.raises(RuntimeError) as er:
         net(x, y, z)
-    assert "Unsupported syntax 'Raise' at" in str(er.value)
+    assert "Unsupported syntax 'Raise'." in str(er.value)
 
 
 def test_raise_in_nested_function():
@@ -145,7 +145,7 @@ def test_raise_in_nested_function():
     z = Tensor(2, mstype.int32)
     with pytest.raises(RuntimeError) as er:
         net(x, y, z)
-    assert "Unsupported syntax 'Raise' at " in str(er.value)
+    assert "Unsupported syntax 'Raise'." in str(er.value)
 
 
 def test_nest_branch_with_return():
