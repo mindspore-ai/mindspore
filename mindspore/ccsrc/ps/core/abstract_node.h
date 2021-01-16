@@ -34,23 +34,25 @@ class AbstractNode : public Node {
   AbstractNode() : heart_beat_thread_(nullptr), client_to_scheduler_thread_(nullptr), client_to_scheduler_(nullptr) {}
   ~AbstractNode() override = default;
 
-  bool Broadcast(const enum NodeRole &node_role, const std::string &message,
+  typedef void (AbstractNode::*ResponseHandler)(const CommMessage &message);
+
+  bool Broadcast(const enum NodeRole &node_role, const CommMessage &message,
                  const uint32_t &timeout = kCommTimeoutInSeconds);
   void set_event_callback(const OnNodeEventMessage &on_node_event_message);
 
-  bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const std::string &message,
+  bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const CommMessage &message,
             const uint32_t &timeout = kCommTimeoutInSeconds);
-  bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<std::string> &data,
+  bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<CommMessage> &data,
             const uint32_t &timeout = kCommTimeoutInSeconds);
-  bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const std::string &message, std::string *output,
+  bool Send(const enum NodeRole &node_role, const uint32_t &rank_id, const CommMessage &message, CommMessage *output,
             const uint32_t &timeout = kCommTimeoutInSeconds);
-  bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<std::string> &data,
-            std::vector<std::string> *output, const uint32_t &timeout = kCommTimeoutInSeconds);
+  bool Send(const NodeRole &node_role, const std::vector<uint32_t> &rank_ids, const std::vector<CommMessage> &data,
+            std::vector<CommMessage> *output, const uint32_t &timeout = kCommTimeoutInSeconds);
   bool Wait(uint64_t request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
-  uint64_t CollectiveSendAsync(const enum NodeRole &node_role, const uint32_t &rank_id, const std::string &message);
+  uint64_t CollectiveSendAsync(const enum NodeRole &node_role, const uint32_t &rank_id, const CommMessage &message);
   std::pair<uint32_t, uint64_t> CollectiveReceiveAsync(const enum NodeRole &node_role, const uint32_t &rank_id,
-                                                       std::string *output);
+                                                       CommMessage *output);
   bool CollectiveWait(std::pair<uint32_t, uint64_t> request_id, const uint32_t &timeout = kCommTimeoutInSeconds);
 
  protected:
@@ -78,6 +80,7 @@ class AbstractNode : public Node {
   void RunReceiveCallback(const CommMessage &message);
   uint64_t NextExpectedRankRequestId(const uint32_t &rank_id);
   uint64_t NextActualRankRequestId(const uint32_t &rank_id);
+  void InitCommandHandler();
 
   std::unique_ptr<std::thread> heart_beat_thread_;
   std::unique_ptr<std::thread> client_to_scheduler_thread_;
@@ -115,6 +118,7 @@ class AbstractNode : public Node {
   std::unordered_map<uint32_t, uint64_t> actual_rank_request_ids_;
   std::mutex rank_request_ids_mutex;
   timeval scheduler_time_;
+  std::unordered_map<NodeCommand, ResponseHandler> handlers_;
 };
 }  // namespace core
 }  // namespace ps

@@ -25,22 +25,24 @@
 #include <vector>
 #include <thread>
 #include <mutex>
+#include <unordered_map>
 
 #include "ps/core/cluster_config.h"
 #include "ps/core/tcp_client.h"
 #include "ps/core/tcp_server.h"
 #include "ps/core/node_manager.h"
 #include "ps/core/node.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
-
 class SchedulerNode : public Node {
  public:
   SchedulerNode() : server_(nullptr), scheduler_thread_(nullptr), update_state_thread_(nullptr) {}
   ~SchedulerNode() override;
+
+  typedef void (SchedulerNode::*ResponseHandler)(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
+                                                 std::shared_ptr<CommMessage> message);
 
   bool Start(const uint32_t &timeout = ClusterConfig::cluster_available_timeout()) override;
   bool Stop() override;
@@ -48,6 +50,7 @@ class SchedulerNode : public Node {
 
  private:
   void Initialize();
+  void InitCommandHandler();
   void CreateTcpServer();
   void ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
                         std::shared_ptr<CommMessage> message);
@@ -62,6 +65,7 @@ class SchedulerNode : public Node {
   std::shared_ptr<TcpServer> server_;
   std::unique_ptr<std::thread> scheduler_thread_;
   std::unique_ptr<std::thread> update_state_thread_;
+  std::unordered_map<NodeCommand, ResponseHandler> handlers_;
 
   NodeManager node_manager_;
 };

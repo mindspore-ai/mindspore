@@ -50,6 +50,7 @@ void WorkerNode::Initialize() {
   node_info_.node_role_ = NodeRole::WORKER;
   MS_LOG(INFO) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << ", the node id is:" << node_info_.node_id_;
+  InitCommandHandler();
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Worker node init client timeout!";
   }

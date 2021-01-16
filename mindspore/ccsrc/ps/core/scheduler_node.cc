@@ -67,12 +67,20 @@ void SchedulerNode::ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::sha
 }
 
 void SchedulerNode::Initialize() {
+  InitCommandHandler();
   CreateTcpServer();
   is_already_stopped_ = false;
   node_info_.node_id_ = CommUtil::GenerateUUID();
   node_info_.node_role_ = NodeRole::SCHEDULER;
   MS_LOG(INFO) << "The node role is:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << ", the node id is:" << node_info_.node_id_;
+}
+
+void SchedulerNode::InitCommandHandler() {
+  handlers_[NodeCommand::HEARTBEAT] = &SchedulerNode::ProcessHeartbeat;
+  handlers_[NodeCommand::REGISTER] = &SchedulerNode::ProcessRegister;
+  handlers_[NodeCommand::FINISH] = &SchedulerNode::ProcessFinish;
+  handlers_[NodeCommand::FETCH_SERVER] = &SchedulerNode::ProcessFetchServers;
 }
 
 void SchedulerNode::CreateTcpServer() {
@@ -82,22 +90,11 @@ void SchedulerNode::CreateTcpServer() {
   uint32_t scheduler_port = ClusterConfig::scheduler_port();
   server_ = std::make_shared<TcpServer>(scheduler_host, scheduler_port);
   server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message) {
-    switch (message->pb_meta().cmd()) {
-      case NodeCommand::HEARTBEAT:
-        ProcessHeartbeat(server_, conn, message);
-        break;
-      case NodeCommand::REGISTER:
-        ProcessRegister(server_, conn, message);
-        break;
-      case NodeCommand::FINISH:
-        ProcessFinish(server_, conn, message);
-        break;
-      case NodeCommand::FETCH_SERVER:
-        ProcessFetchServers(server_, conn, message);
-        break;
-      default:
-        MS_LOG(EXCEPTION) << "The cmd:" << message->pb_meta().cmd() << " is not supported!";
+    if (handlers_.count(message->pb_meta().cmd()) == 0) {
+      MS_LOG(EXCEPTION) << "The cmd:" << message->pb_meta().cmd() << " is not supported!";
     }
+    const auto &handler_ptr = handlers_[message->pb_meta().cmd()];
+    (this->*handler_ptr)(server_, conn, message);
   });
 
   server_->Init();

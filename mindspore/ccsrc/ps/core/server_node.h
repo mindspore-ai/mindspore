@@ -24,13 +24,10 @@
 #include <thread>
 #include <utility>
 
-#include "proto/comm.pb.h"
-#include "proto/ps.pb.h"
 #include "ps/core/cluster_config.h"
 #include "ps/core/tcp_client.h"
 #include "ps/core/tcp_server.h"
 #include "ps/core/abstract_node.h"
-#include "utils/log_adapter.h"
 
 namespace mindspore {
 namespace ps {

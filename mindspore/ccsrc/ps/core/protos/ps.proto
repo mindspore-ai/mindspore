@@ -14,17 +14,42 @@
  * limitations under the License.
  */
 syntax = "proto3";
-package mindspore.ps.core;
+package mindspore.ps;
 option optimize_for = LITE_RUNTIME;
 
-enum PSCommand {
+message Command {
+  CommandCode cmd = 1;
+}
+
+enum CommandCode {
   PUSH = 0;
   PULL = 1;
   INIT_EMBEDDING_TABLE = 2;
+  INIT_WEIGHT = 3;
+  INIT_WEIGHT_TO_OPTIM_ID = 4;
+  INIT_INPUTS_SHAPE = 5;
+  CHECK_READY_FOR_PUSH = 6;
+  CHECK_READY_FOR_PULL = 7;
+  EMBEDDING_LOOKUP = 8;
+  UPDATE_EMBEDDING = 9;
+  FINALIZE = 10;
 }
 
 message KVMessage {
-  PSCommand command = 1;
   repeated int32 keys = 2;
   repeated float values = 3;
+  repeated int32 len = 4;
+}
+
+message EmbeddingTableMeta {
+  uint64 key = 1;
+  repeated uint64 input_shape = 2;
+  repeated uint64 indices_shape = 3;
+  repeated uint64 output_shape = 4;
+}
+
+message EmbeddingTableLookup {
+  uint64 key = 2;
+  repeated int32 keys = 3;
+  repeated float values = 4;
 }

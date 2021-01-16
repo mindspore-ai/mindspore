@@ -95,5 +95,6 @@ message FinishMessage {
 message CommMessage {
   MessageMeta pb_meta = 1;
   bytes data = 2;
+  // User-defined commands
+  bytes user_cmd = 3;
 }
-
