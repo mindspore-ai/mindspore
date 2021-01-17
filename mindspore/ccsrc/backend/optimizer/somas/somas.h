@@ -114,6 +114,7 @@ class Somas {
   void IndependentNodeOutputProcess(const session::KernelGraph *graph);
   void SummaryInputProcess(const session::KernelGraph *graph);
   void RefNodeProcess(const session::KernelGraph *graph);
+  void NonTaskSplitProcess(const session::KernelGraph *graph);
   void UnReuseNodeProcess(const session::KernelGraph *graph);
   SomasTensorPtr CreateGapTensor(size_t gap_tensor_id);
   void GenContiguousList(const session::KernelGraph *graph);
