@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_TOOLS_NET_TRAIN_NET_TRAIN_H_
-#define MINDSPORE_LITE_TOOLS_NET_TRAIN_NET_TRAIN_H_
+#ifndef MINDSPORE_LITE_TOOLS_BENCHMARK_TRAIN_NET_TRAIN_H_
+#define MINDSPORE_LITE_TOOLS_BENCHMARK_TRAIN_NET_TRAIN_H_
 
 #include <getopt.h>
 #include <signal.h>
@@ -59,6 +59,7 @@ class MS_API NetTrainFlags : public virtual FlagParser {
     AddFlag(&NetTrainFlags::warm_up_loop_count_, "warmUpLoopCount", "Run warm up loop", 0);
     AddFlag(&NetTrainFlags::time_profiling_, "timeProfiling", "Run time profiling", false);
     AddFlag(&NetTrainFlags::epochs_, "epochs", "Number of training epochs to run", 1);
+    AddFlag(&NetTrainFlags::num_threads_, "numThreads", "Run threads number", 1);
     // MarkAccuracy
     AddFlag(&NetTrainFlags::data_file_, "expectedDataFile", "Expected results data file path", "");
     AddFlag(&NetTrainFlags::export_file_, "exportFile", "MS File to export trained model into", "");
@@ -239,4 +240,4 @@ class MS_API NetTrain {
 
 int MS_API RunNetTrain(int argc, const char **argv);
 }  // namespace mindspore::lite
-#endif  // MINDSPORE_LITE_TOOLS_NET_TRAIN_NET_TRAIN_H_
+#endif  // MINDSPORE_LITE_TOOLS_BENCHMARK_TRAIN_NET_TRAIN_H_

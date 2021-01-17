@@ -21,32 +21,48 @@
 #include "nnacl/errorcode.h"
 
 inline int ReluGrad(float *src0, float *src1, size_t length, float *dst) {
-  for (size_t i = 0; i < length; ++i) {
-    if (src1[i] > 0) {
-      dst[i] = src0[i];
-    } else {
-      dst[i] = 0;
-    }
+  int i = 0;
+#ifdef ENABLE_ARM
+  float32x4_t zero_4 = vdupq_n_f32(0.0f);
+  for (; i < length - 4; i += 4) {
+    float32x4_t src1_4 = vld1q_f32(src1 + i);
+    float32x4_t src0_4 = vld1q_f32(src0 + i);
+    uint32x4_t mask_4 = vcgtq_f32(src1_4, zero_4);
+    float32x4_t dst_4 = vbslq_f32(mask_4, src0_4, zero_4);
+    vst1q_f32(dst + i, dst_4);
+  }
+#endif
+  for (; i < length; ++i) {
+    dst[i] = (src1[i] > 0.0f) ? src0[i] : 0.0f;
   }
   return NNACL_OK;
 }
 
 int Relu6Grad(float *src0, float *src1, size_t length, float *dst) {
-  for (size_t i = 0; i < length; ++i) {
-    if (src1[i] > 0.0f && src1[i] <= 6.0f) {
-      dst[i] = src0[i];
-    } else {
-      dst[i] = 0.0f;
-    }
+  int i = 0;
+#ifdef ENABLE_ARM
+  float32x4_t zero_4 = vdupq_n_f32(0.0f);
+  float32x4_t six_4 = vdupq_n_f32(6.0f);
+  for (; i < length - 4; i += 4) {
+    float32x4_t src1_4 = vld1q_f32(src1 + i);
+    float32x4_t src0_4 = vld1q_f32(src0 + i);
+    float32x4_t max_4 = vmaxq_f32(src1_4, zero_4);
+    float32x4_t min_max_4 = vminq_f32(max_4, six_4);
+    uint32x4_t mask_4 = vceqq_f32(min_max_4, src1_4);
+    float32x4_t dst_4 = vbslq_f32(mask_4, src0_4, zero_4);
+    vst1q_f32(dst + i, dst_4);
+  }
+#endif
+  for (; i < length; ++i) {
+    dst[i] = (src1[i] > 0.0f && src1[i] <= 6.0f) ? src0[i] : 0.0f;
   }
   return NNACL_OK;
 }
 
 int LReluGrad(float *src0, float *src1, size_t length, float *dst, float alpha) {
   for (size_t i = 0; i < length; ++i) {
-    dst[i] = src1[i] > 0.0f ? 1.0f : alpha;
+    dst[i] = src1[i] > 0.0f ? src0[i] : alpha * src0[i];
   }
-  ElementMul(src0, dst, dst, length);
   return NNACL_OK;
 }
 

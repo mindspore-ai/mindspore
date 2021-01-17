@@ -17,55 +17,36 @@
 #include <string.h>
 #include "nnacl/fp32_grad/batch_norm.h"
 
-void sumSpatialBatch(const float *in, size_t size, int ch, float *out) {
-  memset(out, 0, ch * sizeof(float));
-  for (size_t i = 0; i < size; i++) {
-    const float *ptr = in + (i * ch);
-    for (size_t c = 0; c < ch; c++) {
-      out[c] += ptr[c];
-    }
-  }
-}
-
-void backwardX(const float *in, const float *dout, const float *scale, const size_t size, int channels, float *mean,
-               float *invar, float *dxhathat_sum, float *dxhat_sum, float *out) {
-  const float N = (size);
-  for (size_t i = 0; i < size; i++) {
-    for (size_t f = 0; f < channels; f++) {
-      size_t ix = i * channels + f;
-      float x_hat = (in[ix] - mean[f]) * invar[f];
-      float dx_hat = dout[ix] * scale[f];
-      dxhat_sum[f] += dx_hat;
-      dxhathat_sum[f] += dx_hat * x_hat;
-    }
-  }
-  for (size_t i = 0; i < size; i++) {
-    for (size_t f = 0; f < channels; f++) {
-      size_t ix = i * channels + f;
-      float x_hat = (in[ix] - mean[f]) * invar[f];
-      float dx_hat = dout[ix] * scale[f];
-      out[ix] = 1.0f / N * (invar[f]) * (N * dx_hat - dxhat_sum[f] - x_hat * dxhathat_sum[f]);
-    }
-  }
-}
-
-void backwardScale(const float *x, const float *mean, const float *invar, const float *delta, int batch, int n,
-                   int size, float *scale_updates) {
-  size_t i, b, f;
-  memset(scale_updates, 0, n * sizeof(float));
-  for (b = 0; b < batch; ++b) {
-    for (i = 0; i < size; ++i) {
-      for (f = 0; f < n; ++f) {
-        int index = (b * size + i) * n + f;
-        float x_norm = (x[index] - mean[f]) * invar[f];
-        scale_updates[f] += (delta[index] * x_norm);
-      }
-    }
-  }
-}
-
-void var2Invar(float *save_var, size_t size, float eps) {
-  for (size_t i = 0; i < size; i++) {
+void var2Invar(float *save_var, int size, float eps) {
+  for (int i = 0; i < size; i++) {
     save_var[i] = 1.0f / sqrt(save_var[i] + eps);
+  }
+}
+
+void backwardAll(const float *restrict in, const float *restrict yt, const float *restrict mean,
+                 const float *restrict invar, const float *restrict scale, int size, int ch, float *restrict dxhat_sum,
+                 float *restrict dxhathat_sum, float *restrict dbias, float *restrict dscale, float *restrict dx) {
+  float N = (float)size;
+  for (int i = 0; i < size; i++) {
+    for (int c = 0; c < ch; c++) {
+      int ix = i * ch + c;
+      dbias[c] += yt[ix];
+      // dscale
+      float x_hat = (in[ix] - mean[c]) * invar[c];
+      dscale[c] += (yt[ix] * x_hat);
+      // dx_1
+      float dx_hat = yt[ix] * scale[c];
+      dxhat_sum[c] += dx_hat;
+      dxhathat_sum[c] += dx_hat * x_hat;
+    }
+  }
+  for (int i = 0; i < size; i++) {
+    for (int c = 0; c < ch; c++) {
+      // dx_2
+      int ix = i * ch + c;
+      float x_hat = (in[ix] - mean[c]) * invar[c];
+      float dx_hat = yt[ix] * scale[c];
+      dx[ix] = 1.0f / N * (invar[c]) * (N * dx_hat - dxhat_sum[c] - x_hat * dxhathat_sum[c]);
+    }
   }
 }

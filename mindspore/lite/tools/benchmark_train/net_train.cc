@@ -135,6 +135,7 @@ int NetTrain::ReadCalibData() {
 
   MS_LOG(INFO) << "Start reading calibData file";
   std::string tensor_name;
+
   while (!in_file.eof()) {
     getline(in_file, line);
     std::stringstream string_line1(line);
@@ -189,7 +190,6 @@ int NetTrain::CompareOutput() {
     MS_ASSERT(tensor->MutableData() != nullptr);
     auto outputs = tensor->MutableData();
     float bias = CompareData<float>(node_or_tensor_name, tensor->shape(), reinterpret_cast<float *>(outputs));
-
     if (bias >= 0) {
       total_bias += bias;
       total_size++;
@@ -228,7 +228,7 @@ int NetTrain::CompareOutput() {
 int NetTrain::MarkPerformance() {
   MS_LOG(INFO) << "Running train loops...";
   std::cout << "Running train loops..." << std::endl;
-  uint64_t time_min = 1000000;
+  uint64_t time_min = 0xFFFFFFFFFFFFFFFF;
   uint64_t time_max = 0;
   uint64_t time_avg = 0;
 

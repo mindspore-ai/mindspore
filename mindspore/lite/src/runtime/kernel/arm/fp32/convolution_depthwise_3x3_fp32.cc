@@ -127,6 +127,10 @@ int ConvolutionDepthwise3x3CPUKernel::Run() {
     return ret;
   }
 
+  if (IsTrain()) {
+    PackWeight();
+  }
+
   auto input_tensor = in_tensors_.at(kInputIndex);
   input_ptr_ = reinterpret_cast<float *>(input_tensor->data_c());
 
@@ -146,4 +150,18 @@ int ConvolutionDepthwise3x3CPUKernel::Run() {
   context_->allocator->Free(buffer_);
   return RET_OK;
 }
+
+void ConvolutionDepthwise3x3CPUKernel::PackWeight() {
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
+  PackWeightKHWToHWKFp32(origin_weight, packed_weight_, weight_tensor->Height() * weight_tensor->Width(),
+                         weight_tensor->Batch());
+}
+
+int ConvolutionDepthwise3x3CPUKernel::Eval() {
+  LiteKernel::Eval();
+  PackWeight();
+  return RET_OK;
+}
+
 }  // namespace mindspore::kernel

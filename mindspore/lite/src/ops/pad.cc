@@ -19,6 +19,9 @@
 #ifndef PRIMITIVE_WRITEABLE
 #include "src/ops/ops_register.h"
 #endif
+#ifdef SUPPORT_TRAIN
+#include <tuple>
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -53,12 +56,20 @@ int Pad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
     }
     string paddingmode = "REFLECT";
     if (prim.GetAttr("mode") == nullptr) {
-      MS_LOG(ERROR) << "get mode failed!";
-      delete this->primitive_;
-      delete attr;
-      this->primitive_ = nullptr;
-      attr = nullptr;
-      return RET_ERROR;
+#ifdef SUPPORT_TRAIN
+      if (prim.name() == "Pad") {
+        paddingmode = "CONSTANT";
+      } else {
+#endif
+        MS_LOG(ERROR) << "get mode failed!";
+        delete this->primitive_;
+        delete attr;
+        this->primitive_ = nullptr;
+        attr = nullptr;
+        return RET_ERROR;
+#ifdef SUPPORT_TRAIN
+      }
+#endif
     } else {
       paddingmode = GetValue<string>(prim.GetAttr("mode"));
     }
@@ -66,6 +77,21 @@ int Pad::UnPackAttr(const Primitive &prim, const std::vector<AnfNodePtr> &inputs
       attr->paddingMode = schema::PaddingMode_REFLECT;
     } else if (paddingmode == "SYMMETRIC") {
       attr->paddingMode = schema::PaddingMode_SYMMETRIC;
+#ifdef SUPPORT_TRAIN
+    } else if (paddingmode == "CONSTANT") {
+      attr->paddingMode = schema::PaddingMode_CONSTANT;
+      if (prim.GetAttr("paddings") != nullptr) {
+        auto paddings = prim.GetAttr("paddings");
+        auto str = (*paddings).ToString();
+        std::replace(str.begin(), str.end(), ',', ' ');
+        std::replace(str.begin(), str.end(), ')', ' ');
+        std::replace(str.begin(), str.end(), '(', ' ');
+        std::stringstream ss(str);
+        for (int i; ss >> i;) {
+          attr->paddings.push_back(i);
+        }
+      }
+#endif
     } else {
       MS_LOG(ERROR) << "model type not supported!";
       delete this->primitive_;

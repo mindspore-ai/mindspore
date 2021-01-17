@@ -21,7 +21,7 @@
 #endif
 #include "nnacl/fp32/matmul_fp32.h"
 
-static void addv(const float *restrict v1, float *restrict v2, float beta, int row, int col, int stride) {
+void AddMatrix(const float *restrict v1, float *restrict v2, float beta, int row, int col, int stride) {
   const float *src_ptr = v1;
   float *dst_ptr = v2;
   for (int r = 0; r < row; r++) {
@@ -86,7 +86,8 @@ static void RowMajor2Row12MajorStride(const float *src_ptr, float *dst_ptr, int 
   return;
 }
 
-static void RowMajor2Col12MajorStride(const float *src_ptr, float *dst_ptr, size_t row, size_t col, int lead) {
+static void RowMajor2Col12MajorStride(const float *restrict src_ptr, float *restrict dst_ptr, size_t row, size_t col,
+                                      int lead) {
   size_t row_up_12 = UP_ROUND(row, C12NUM);
   size_t row12 = row / C12NUM * C12NUM;
   size_t col4 = col / C4NUM * C4NUM;
@@ -549,7 +550,7 @@ void GemmMatmulPlus(int ta, int tb, int M, int N, int K, float alpha, const floa
 #else
   MatMulOpt(mat_a_input, mat_b_input, output, gcb->bias, gcb->atype, K, M, N, ldc, OutType_Nhwc);
 #endif
-  if (incremental) addv(output, mat_c, beta, M, N, ldc);
+  if (incremental) AddMatrix(output, mat_c, beta, M, N, ldc);
   gcb->mat_a = mat_a_input;
   gcb->mat_b = mat_b_input;
 }

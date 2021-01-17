@@ -3,7 +3,7 @@ APP:=bin/net_runner
 MSLIB:=mindspore-lite
 MSDIR:=$(realpath package-$(TARGET)/lib)
 
-SRC:=src/net_runner.cc  src/dataset.cc
+SRC:=src/net_runner.cc src/dataset.cc src/data_callbacks.cc
 OBJ:=$(SRC:.cc=.o)
 
 CFLAGS := -Ofast -std=c++17  \

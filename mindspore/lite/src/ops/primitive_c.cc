@@ -674,7 +674,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
   } else if ((op_type == "ReluGrad" || op_type == "ReLU6Grad" || op_type == "SigmoidGrad" ||
               op_type == "HSigmoidGrad" || op_type == "HSwishGrad")) {
     return NewPrimitiveC<ActivationGrad>(prim, inputs, quantType);
-  } else if ((op_type == "MaxPoolGrad") || (op_type == "AvgPoolGrad") || (op_type == "AvgPoolGradGpu")) {
+  } else if ((op_type == "MaxPoolGrad") || (op_type == "AvgPoolGrad") || (op_type == "AvgPoolGradGpu") ||
+             (op_type == "AvgPoolGradCpu")) {
     return NewPrimitiveC<PoolingGrad>(prim, inputs, quantType);
   } else if (op_type == "Conv2DBackpropFilter") {
     return NewPrimitiveC<Conv2DGradFilter>(prim, inputs, quantType);
@@ -684,7 +685,7 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
   } else if (op_type == "FlattenGrad") {
     return NewPrimitiveC<FlattenGrad>(prim, inputs, quantType);
-  } else if (op_type == "FusedBatchNormGrad") {
+  } else if ((op_type == "FusedBatchNormGrad") || (op_type == "FusedBatchNormGradCpu")) {
     return NewPrimitiveC<BNGrad>(prim, inputs, quantType);
   } else if (op_type == "PowerGrad") {
     return NewPrimitiveC<PowerGrad>(prim, inputs, quantType);
@@ -714,6 +715,8 @@ std::shared_ptr<PrimitiveC> PrimitiveC::Create(const Primitive &prim, const std:
     return NewPrimitiveC<SigmoidCrossEntropyWithLogits>(prim, inputs, quantType);
   } else if (op_type == "SigmoidCrossEntropyWithLogitsGrad") {
     return NewPrimitiveC<SigmoidCrossEntropyWithLogitsGrad>(prim, inputs, quantType);
+  } else if (op_type == "Pad") {
+    return NewPrimitiveC<Pad>(prim, inputs, quantType);
 #else
   } else if (op_type == "Conv2DBackpropInput") {
     return NewPrimitiveC<DeConv2D>(prim, inputs, quantType);

@@ -36,10 +36,17 @@ int SmoothL1LossGradCPUKernel::Execute(int task_id) {
   auto d_loss = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
   auto *out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
-  const size_t tensor_len = in_tensors_.at(0)->ElementsNum();
+  const size_t length = in_tensors_.at(0)->ElementsNum();
+
+  size_t stride = UP_DIV(length, thread_count_);
+  size_t count = MSMIN(stride, length - stride * task_id);
+
+  size_t start = stride * task_id;
+  size_t end = start + count;
+
   const float beta = smooth_l1_loss_param->beta_;
 
-  for (uint64_t i = 0; i < tensor_len; ++i) {
+  for (uint64_t i = start; i < end; ++i) {
     float diff = predict[i] - target[i];
     if (diff > beta) {
       out[i] = d_loss[i];
@@ -63,7 +70,7 @@ int SmoothL1LossGradRun(void *cdata, int task_id) {
 }
 
 int SmoothL1LossGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, SmoothL1LossGradRun, this, 1);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, SmoothL1LossGradRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "SmoothL1LossGrad function error error_code[" << error_code << "]";
     return RET_ERROR;

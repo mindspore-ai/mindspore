@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_fp32.h"
+#include <limits>
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_slidewindow_fp32.h"
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
 #include "schema/model_generated.h"
@@ -104,6 +105,10 @@ int ConvDwRun(void *cdata, int task_id) {
 }
 
 int ConvolutionDepthwiseCPUKernel::Run() {
+  if (IsTrain()) {
+    PackWeight();
+  }
+
   auto input_tensor = in_tensors_.at(kInputIndex);
   input_ptr_ = reinterpret_cast<float *>(input_tensor->MutableData());
 
@@ -115,6 +120,19 @@ int ConvolutionDepthwiseCPUKernel::Run() {
     MS_LOG(ERROR) << "ConvDwRun error: error_code[" << ret << "]";
     return RET_ERROR;
   }
+  return RET_OK;
+}
+
+void ConvolutionDepthwiseCPUKernel::PackWeight() {
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
+  PackWeightKHWToHWKFp32(origin_weight, packed_weight_, weight_tensor->Height() * weight_tensor->Width(),
+                         weight_tensor->Batch());
+}
+
+int ConvolutionDepthwiseCPUKernel::Eval() {
+  LiteKernel::Eval();
+  PackWeight();
   return RET_OK;
 }
 

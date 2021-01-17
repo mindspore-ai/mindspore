@@ -83,7 +83,7 @@ function Run_x86() {
         --inDataFile=${train_io_path}/${model_name}_input1.bin,${train_io_path}/${model_name}_input2.bin \
         --expectedDataFile=${train_io_path}/${model_name}_outputs.bin \
         --exportFile=${ms_models_path}/${model_name}_train_exported.ms >> "${run_x86_log_file}" \
-        --epochs=${epoch_num}
+        --epochs=${epoch_num} --numThreads=${threads}
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}'_train pass'; echo ${run_result} >> ${run_benchmark_train_result_file}
         else
@@ -178,7 +178,8 @@ function Run_arm() {
         --modelFile=${model_name}_train.ms \
         --inDataFile=${tmp_dir}/${model_name}_input1.bin,${tmp_dir}/${model_name}_input2.bin \
         --expectedDataFile=${tmp_dir}/${model_name}_outputs.bin \
-        --exportFile=${tmp_dir}/${model_name}_train_exported.ms 
+        --exportFile=${tmp_dir}/${model_name}_train_exported.ms \
+        --numThreads=${threads}
 ENDM
         )
         echo "${adb_cmd}" >> ${run_arm_log_file}
@@ -221,8 +222,9 @@ echo ${basepath}
 # Example:run_benchmark_train.sh -r /home/emir/Work/TestingEnv/release -m /home/emir/Work/TestingEnv/train_models -i /home/emir/Work/TestingEnv/train_io -d "8KE5T19620002408"
 # For running on arm64, use -t to set platform tools path (for using adb commands)
 epoch_num=1
+threads=1
 train_io_path=""
-while getopts "r:m:d:i:e:vt:" opt; do
+while getopts "r:m:d:i:e:vt:q:" opt; do
     case ${opt} in
         r)
            release_path=${OPTARG}
@@ -249,9 +251,13 @@ while getopts "r:m:d:i:e:vt:" opt; do
             run_valgrind="valgrind --log-file=valgrind.log "
             echo "Run x86 with valgrind"
             ;;
+        q)
+           threads=${OPTARG}
+           echo "threads=${threads}"
+           ;;
         t)
             epoch_num=${OPTARG}
-            echo "train epoch num is ${OPTARG}"
+            echo "train epoch num is ${epoch_num}"
             ;;                          
         ?)
             echo "unknown para"

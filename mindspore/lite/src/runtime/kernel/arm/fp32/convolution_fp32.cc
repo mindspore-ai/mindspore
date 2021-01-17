@@ -150,6 +150,9 @@ int ConvolutionCPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
+  if (IsTrain()) {
+    PackWeight();
+  }
 
   ret = ParallelLaunch(this->context_->thread_pool_, ConvolutionImpl, this, thread_count_);
   if (ret != RET_OK) {
@@ -158,4 +161,37 @@ int ConvolutionCPUKernel::Run() {
   FreeTmpBuffer();
   return ret;
 }
+
+void ConvolutionCPUKernel::PackWeight() {
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  int in_channel = filter_tensor->Channel();
+  int out_channel = filter_tensor->Batch();
+  int kernel_plane = filter_tensor->Height() * filter_tensor->Width();
+#ifdef ENABLE_AVX
+  const int oc_block = C16NUM;
+#elif ENABLE_ARM32
+  const int oc_block = C4NUM;
+#else
+  const int oc_block = C8NUM;
+#endif
+  int oc_block_num = UP_ROUND(out_channel, oc_block);
+  int pack_weight_size = oc_block_num * in_channel * kernel_plane;
+
+  auto origin_weight = reinterpret_cast<float *>(filter_tensor->data_c());
+  memset(packed_weight_, 0, pack_weight_size * sizeof(float));
+#ifdef ENABLE_AVX
+  RowMajor2Col16Major(origin_weight, packed_weight_, out_channel, in_channel * kernel_plane);
+#elif ENABLE_ARM32
+  RowMajor2Col4Major(origin_weight, packed_weight_, out_channel, in_channel * kernel_plane);
+#else
+  RowMajor2Col8Major(origin_weight, packed_weight_, out_channel, in_channel * kernel_plane);
+#endif
+}
+
+int ConvolutionCPUKernel::Eval() {
+  LiteKernel::Eval();
+  PackWeight();
+  return RET_OK;
+}
+
 }  // namespace mindspore::kernel

@@ -190,6 +190,10 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
     packed_input_ = input_ptr;
   }
 
+  if (IsTrain()) {
+    PackWeight();
+  }
+
   auto output_tensor = out_tensors_.at(kOutputIndex);
   output_ptr_ = reinterpret_cast<float *>(output_tensor->data_c());
 
@@ -205,4 +209,23 @@ int ConvolutionDepthwiseIndirectCPUKernel::Run() {
   }
   return RET_OK;
 }
+
+void ConvolutionDepthwiseIndirectCPUKernel::PackWeight() {
+  auto weight_tensor = in_tensors_[kWeightIndex];
+  auto origin_weight = reinterpret_cast<float *>(weight_tensor->MutableData());
+#ifdef ENABLE_AVX
+  PackDepthwiseIndirectWeightC8Fp32(origin_weight, packed_weight_, weight_tensor->Height(), weight_tensor->Width(),
+                                    weight_tensor->Batch());
+#else
+  PackDepthwiseIndirectWeightC4Fp32(origin_weight, packed_weight_, weight_tensor->Height(), weight_tensor->Width(),
+                                    weight_tensor->Batch());
+#endif
+}
+
+int ConvolutionDepthwiseIndirectCPUKernel::Eval() {
+  LiteKernel::Eval();
+  PackWeight();
+  return RET_OK;
+}
+
 }  // namespace mindspore::kernel

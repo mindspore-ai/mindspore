@@ -18,16 +18,18 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRAD_SGD_H_
 
 #include <vector>
-#include "src/lite_kernel.h"
+#include "src/train/optimizer_kernel.h"
 #include "nnacl/fp32_grad/optimizer.h"
 
 namespace mindspore::kernel {
-class SgdCPUKernel : public LiteKernel {
+class SgdCPUKernel : public OptimizerKernel {
  public:
   explicit SgdCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                         const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), sgd_param_(nullptr) {
+      : OptimizerKernel(parameter, inputs, outputs, ctx, primitive),
+        thread_count_(ctx->thread_num_),
+        sgd_param_(nullptr) {
     sgd_param_ = reinterpret_cast<SgdParameter *>(parameter);
   }
   ~SgdCPUKernel() override {}
@@ -35,8 +37,11 @@ class SgdCPUKernel : public LiteKernel {
   int ReSize() override;
   int Run() override;
   int Execute(int task_id);
+  int SetLearningRate(float lr) override;
+  float GetLearningRate() override;
 
  private:
+  int thread_count_;
   SgdParameter *sgd_param_;
 };
 }  // namespace mindspore::kernel

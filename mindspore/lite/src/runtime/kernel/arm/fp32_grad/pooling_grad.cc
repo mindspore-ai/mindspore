@@ -29,7 +29,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_PoolingGrad;
 
 namespace mindspore::kernel {
-int PoolingGradCPUKernel::Init() {
+int PoolingGradCPUKernel::ReSize() {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);
 
   auto in_shape = in_tensors_.at(0)->shape();
@@ -59,7 +59,7 @@ int PoolingGradCPUKernel::Init() {
   return RET_OK;
 }
 
-int PoolingGradCPUKernel::ReSize() { return RET_OK; }
+int PoolingGradCPUKernel::Init() { return ReSize(); }
 
 int PoolingGradCPUKernel::Execute(int task_id) {
   PoolingParameter *pool_param = reinterpret_cast<PoolingParameter *>(op_parameter_);

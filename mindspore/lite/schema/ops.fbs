@@ -308,7 +308,7 @@ table SoftmaxCrossEntropy {
 }
 
 table SparseSoftmaxCrossEntropy {
-    isGrad: int;
+    isGrad: bool;
 }
 
 table make_tuple {
@@ -1225,11 +1225,9 @@ table SmoothL1LossGrad {
 }
 
 table SigmoidCrossEntropyWithLogits {
-    beta : float;
 }
 
 table SigmoidCrossEntropyWithLogitsGrad {
-    beta : float;
 }
 
 table Reciprocal {

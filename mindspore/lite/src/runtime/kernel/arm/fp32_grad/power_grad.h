@@ -27,7 +27,7 @@ class PowerGradCPUKernel : public LiteKernel {
   PowerGradCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(param, inputs, outputs, ctx, primitive) {
+      : LiteKernel(param, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
     PowerParameter *power_param = reinterpret_cast<PowerParameter *>(param);
     power_ = power_param->power_;
     scale_ = power_param->scale_;
@@ -41,6 +41,7 @@ class PowerGradCPUKernel : public LiteKernel {
   int Execute(int task_id);
 
  private:
+  int thread_count_;
   float power_;
   float scale_;
   float shift_;

@@ -46,7 +46,10 @@ class ConvolutionCPUKernel : public ConvolutionBaseCPUKernel {
   int Run() override;
   virtual int RunImpl(int task_id);
 
+  int Eval() override;
+
  protected:
+  void PackWeight();
   void FreeTmpBuffer() {
     if (packed_input_ != nullptr) {
       ctx_->allocator->Free(packed_input_);

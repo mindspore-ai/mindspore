@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_INDIRECT_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_INDIRECT_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_INDIRECT_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_INDIRECT_FP32_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -37,10 +37,12 @@ class ConvolutionDepthwiseIndirectCPUKernel : public ConvolutionBaseCPUKernel {
 
   int InitWeightBias();
   int Execute(int task_id);
+  int Eval() override;
 
  private:
   int MallocIndirectBuffer();
   int MallocPackedInput();
+  void PackWeight();
   int step_w = 0;
   int step_h = 0;
   float **indirect_buffer_ = nullptr;
@@ -51,4 +53,4 @@ class ConvolutionDepthwiseIndirectCPUKernel : public ConvolutionBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_INDIRECT_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_INDIRECT_FP32_H_

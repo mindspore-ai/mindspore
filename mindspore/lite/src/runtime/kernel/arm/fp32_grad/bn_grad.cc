@@ -31,17 +31,16 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BNGrad;
 
 namespace mindspore::kernel {
-int BNGradCPUKernel::Init() {
+int BNGradCPUKernel::ReSize() {
   auto *input_x = in_tensors_.at(1);
   int channels = input_x->shape().at(kNHWC_C);
   set_workspace_size(2 * channels * sizeof(float));
   return RET_OK;
 }
 
-int BNGradCPUKernel::ReSize() { return RET_OK; }
+int BNGradCPUKernel::Init() { return ReSize(); }
 
 int BNGradCPUKernel::Execute(int task_id) {
-  auto bn_param = reinterpret_cast<BNGradParameter *>(op_parameter_);
   auto *input_yt = in_tensors_.at(0);
   auto *input_x = in_tensors_.at(1);
   auto *input_scale = in_tensors_.at(2);
@@ -54,10 +53,9 @@ int BNGradCPUKernel::Execute(int task_id) {
   auto *output_dx = out_tensors_.at(0);
   auto *output_scale = out_tensors_.at(1);
   auto *output_bias = out_tensors_.at(2);
-  size_t batch = input_x->Batch();
-  size_t channels = input_x->Channel();
-  size_t spatial = input_x->Height() * input_x->Width();
-  float eps = bn_param->epsilon_;
+  int32_t batch = input_x->Batch();
+  int32_t channels = input_x->Channel();
+  int32_t spatial = input_x->Height() * input_x->Width();
 
   float *workspace_temp = static_cast<float *>(workspace());
   std::fill(workspace_temp, workspace_temp + workspace_size() / sizeof(*workspace_temp), 0.f);
@@ -68,34 +66,32 @@ int BNGradCPUKernel::Execute(int task_id) {
   float *yt = reinterpret_cast<float *>(input_yt->MutableData());
   float *scale = reinterpret_cast<float *>(input_scale->MutableData());
   float *dx = reinterpret_cast<float *>(output_dx->MutableData());
-  float *dscale = reinterpret_cast<float *>(output_scale->MutableData());
   float *dbias = reinterpret_cast<float *>(output_bias->MutableData());
-
-  var2Invar(save_var, input_var->ElementsNum(), eps);
-  // dx
-  backwardX(x, yt, scale, batch * spatial, channels, save_mean, save_var, dxhat_sum, dxhathat_sum, dx);
-  // dbias
-  sumSpatialBatch(yt, batch * spatial, channels, dbias);
-  // dscale
-  backwardScale(x, save_mean, save_var, yt, batch, channels, spatial, dscale);
-
+  float *dscale = reinterpret_cast<float *>(output_scale->MutableData());
+  std::fill(dbias, dbias + channels, 0.f);
+  std::fill(dscale, dscale + channels, 0.f);
+  backwardAll(x, yt, save_mean, save_var, scale, batch * spatial, channels, dxhat_sum, dxhathat_sum, dbias, dscale, dx);
   return RET_OK;
 }
 
 int BNGradRun(void *cdata, int task_id) {
   MS_ASSERT(cdata != nullptr);
   auto bn_kernel = reinterpret_cast<BNGradCPUKernel *>(cdata);
-  if (task_id == 0) {
-    auto error_code = bn_kernel->Execute(task_id);
-    if (error_code != RET_OK) {
-      MS_LOG(ERROR) << "BNGradRun error task_id[" << task_id << "] error_code[" << error_code << "]";
-      return RET_ERROR;
-    }
+
+  auto error_code = bn_kernel->Execute(task_id);
+  if (error_code != RET_OK) {
+    MS_LOG(ERROR) << "BNGradRun error task_id[" << task_id << "] error_code[" << error_code << "]";
+    return RET_ERROR;
   }
   return RET_OK;
 }
 
 int BNGradCPUKernel::Run() {
+  auto *input_var = in_tensors_.at(4);
+  float *save_var = reinterpret_cast<float *>(input_var->MutableData());
+  auto bn_param = reinterpret_cast<BNGradParameter *>(op_parameter_);
+  float eps = bn_param->epsilon_;
+  var2Invar(save_var, input_var->ElementsNum(), eps);
   int error_code = ParallelLaunch(this->context_->thread_pool_, BNGradRun, this, 1);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "BN function error error_code[" << error_code << "]";

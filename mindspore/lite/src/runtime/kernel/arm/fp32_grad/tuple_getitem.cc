@@ -15,6 +15,7 @@
  */
 
 #include <vector>
+#include <algorithm>
 #include "src/runtime/kernel/arm/fp32_grad/tuple_getitem.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
@@ -47,7 +48,15 @@ int TupleGetItemCPUKernel::Execute(int task_id) {
   auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto out = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
 
-  memcpy(out, in, in_tensors_.at(0)->Size());
+  size_t length = in_tensors_.at(0)->ElementsNum();
+
+  size_t stride = UP_DIV(length, thread_count_);
+  size_t count = MSMIN(stride, length - stride * task_id);
+
+  size_t start = stride * task_id;
+  size_t end = start + count;
+
+  std::copy(&(in[start]), &(in[end]), &(out[start]));
   return RET_OK;
 }
 
@@ -62,7 +71,7 @@ int TupleRun(void *cdata, int task_id) {
 }
 
 int TupleGetItemCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, TupleRun, this, 1);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, TupleRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "tuple function error error_code[" << error_code << "]";
     return RET_ERROR;

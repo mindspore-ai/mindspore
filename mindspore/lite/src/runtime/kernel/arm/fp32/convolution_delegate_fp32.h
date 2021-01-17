@@ -47,6 +47,15 @@ class ConvolutionDelegateCPUKernel : public LiteKernel {
   static float *CopyData(lite::Tensor *tensor);
   void FreeCopiedData();
 
+  int Eval() override {
+    LiteKernel::Eval();
+    return conv_kernel_->Eval();
+  }
+  int Train() override {
+    LiteKernel::Train();
+    return conv_kernel_->Train();
+  }
+
  protected:
   bool need_free_weight_ = false;
   bool need_free_bias_ = false;

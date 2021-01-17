@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_SoftmaxCrossEntropy;
 
 namespace mindspore::kernel {
 
-int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() { return RET_OK; }
+int SoftmaxCrossEntropyWithLogitsCPUKernel::Init() { return ReSize(); }
 
 void SoftmaxCrossEntropyWithLogitsCPUKernel::ForwardPostExecute(const float *labels, const float *logits, float *grads,
                                                                 float *output2) const {
@@ -100,7 +100,7 @@ int SoftmaxCrossEntropyWithLogitsCPUKernel::Run() {
   return RET_OK;
 }
 
-int SoftmaxCrossEntropyWithLogitsCPUKernel::Init() {
+int SoftmaxCrossEntropyWithLogitsCPUKernel::ReSize() {
   auto dims = in_tensors_.at(0)->shape();
   param_->n_dim_ = 2;
   param_->number_of_classes_ = dims.at(1);

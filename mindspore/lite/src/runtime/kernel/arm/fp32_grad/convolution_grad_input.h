@@ -35,11 +35,12 @@ class ConvolutionGradInputCPUKernel : public LiteKernel {
   int Execute(int task_id);
 
  private:
-  size_t ws_size = 0;
+  size_t ws_size_ = 0;
+  size_t mat_alloc_ = 0;
 #ifdef ENABLE_ARM32
-  const int chunk = C4NUM;
+  const int chunk_ = C4NUM;
 #else
-  const int chunk = C12NUM;
+  const int chunk_ = C12NUM;
 #endif
 };
 }  // namespace mindspore::kernel

@@ -395,6 +395,7 @@ if [[ "X$ENABLE_AKG" = "Xon" ]] && [[ "X$ENABLE_D" = "Xon" || "X$ENABLE_GPU" = "
     git submodule update --init --recursive akg
 fi
 
+
 build_exit()
 {
     echo "$@" >&2
@@ -596,33 +597,40 @@ build_lite()
 
 build_lite_java_arm64() {
     # build mindspore-lite arm64
-    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-inference-android-aarch64.tar.gz" ]]; then
+    JTARBALL=mindspore-lite-${VERSION_STR}-inference-android-aarch64
+    if [[ "X$SUPPORT_TRAIN" = "Xon" ]]; then
+        JTARBALL=mindspore-lite-${VERSION_STR}-train-android-aarch64
+    fi
+    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/${JTARBALL}.tar.gz" ]]; then
       build_lite "arm64" "off"
     fi
     # copy arm64 so
     cd ${BASEPATH}/output/
-    rm -rf mindspore-lite-${VERSION_STR}-inference-android-aarch64
-    tar -zxvf mindspore-lite-${VERSION_STR}-inference-android-aarch64.tar.gz
+    rm -rf ${JTARBALL}
+    tar -zxvf ${JTARBALL}.tar.gz
     [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/arm64-v8a/
     mkdir -p ${JAVA_PATH}/java/app/libs/arm64-v8a/
-    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-inference-android-aarch64/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
-    echo mindspore-lite-${VERSION_STR}-inference-android-aarch64
-    [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-inference-android-aarch64
+    cp ${BASEPATH}/output/${JTARBALL}/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/arm64-v8a/
+    [ -n "${VERSION_STR}" ] && rm -rf ${JTARBALL}
 }
 
 build_lite_java_arm32() {
     # build mindspore-lite arm32
-    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/mindspore-lite-${VERSION_STR}-inference-android-aarch32.tar.gz" ]]; then
+    JTARBALL=mindspore-lite-${VERSION_STR}-inference-android-aarch32
+    if [[ "X$SUPPORT_TRAIN" = "Xon" ]]; then
+        JTARBALL=mindspore-lite-${VERSION_STR}-train-android-aarch32
+    fi
+    if [[ "X$INC_BUILD" = "Xoff" ]] || [[ ! -f "${BASEPATH}/output/${JTARBALL}.tar.gz" ]]; then
       build_lite  "arm32" "off"
     fi
     # copy arm32 so
     cd ${BASEPATH}/output/
-    rm -rf mindspore-lite-${VERSION_STR}-inference-android-aarch32
-    tar -zxvf mindspore-lite-${VERSION_STR}-inference-android-aarch32.tar.gz
+    rm -rf ${JTARBALL}
+    tar -zxvf ${JTARBALL}.tar.gz
     [ -n "${JAVA_PATH}" ] && rm -rf ${JAVA_PATH}/java/app/libs/armeabi-v7a/
     mkdir -p ${JAVA_PATH}/java/app/libs/armeabi-v7a/
-    cp ${BASEPATH}/output/mindspore-lite-${VERSION_STR}-inference-android-aarch32/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
-    [ -n "${VERSION_STR}" ] && rm -rf mindspore-lite-${VERSION_STR}-inference-android-aarch32
+    cp ${BASEPATH}/output/${JTARBALL}/lib/libmindspore-lite.so ${JAVA_PATH}/java/app/libs/armeabi-v7a/
+    [ -n "${VERSION_STR}" ] && rm -rf ${JTARBALL}
 }
 
 build_jni_arm64() {
@@ -635,7 +643,7 @@ build_jni_arm64() {
           -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="arm64-v8a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
           -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
           -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
-          -DPLATFORM_ARM64=on "${JAVA_PATH}/java/app/src/main/native"
+          -DSUPPORT_TRAIN=${SUPPORT_TRAIN} -DPLATFORM_ARM64=on "${JAVA_PATH}/java/app/src/main/native"
     make -j$THREAD_NUM
     if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build jni arm64 failed----------------"
@@ -655,7 +663,7 @@ build_jni_arm32() {
           -DANDROID_NDK="${ANDROID_NDK}" -DANDROID_ABI="armeabi-v7a" -DANDROID_TOOLCHAIN_NAME="aarch64-linux-android-clang"  \
           -DMS_VERSION_MAJOR=${VERSION_MAJOR} -DMS_VERSION_MINOR=${VERSION_MINOR} -DMS_VERSION_REVISION=${VERSION_REVISION} \
           -DANDROID_STL="c++_static" -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DENABLE_VERBOSE=${ENABLE_VERBOSE} \
-          -DPLATFORM_ARM32=on "${JAVA_PATH}/java/app/src/main/native"
+          -DSUPPORT_TRAIN=${SUPPORT_TRAIN} -DPLATFORM_ARM32=on "${JAVA_PATH}/java/app/src/main/native"
     make -j$THREAD_NUM
     if [[ $? -ne 0 ]]; then
         echo "---------------- mindspore lite: build jni arm32 failed----------------"

@@ -42,7 +42,6 @@
 
 namespace mindspore {
 namespace lite {
-
 using CreatorOp = std::tuple<mindspore::kernel::KernelKey, mindspore::kernel::KernelCreator>;
 class TrainSession : virtual public session::TrainSession, virtual public lite::LiteSession {
  public:
@@ -59,6 +58,8 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
 
   int Train() override;
   int Eval() override;
+  int SetLearningRate(float learning_rate) override;
+  float GetLearningRate() override;
 
   void BindThread(bool if_bind) override { return lite::LiteSession::BindThread(if_bind); }
   std::vector<tensor::MSTensor *> GetInputs() const override { return lite::LiteSession::GetInputs(); }
@@ -78,6 +79,10 @@ class TrainSession : virtual public session::TrainSession, virtual public lite::
   }
   int Resize(const std::vector<tensor::MSTensor *> &inputs, const std::vector<std::vector<int>> &dims) override {
     return lite::RET_ERROR;
+  }
+
+  std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetPredictions() const override {
+    return eval_output_tensor_map_;
   }
 
  protected:

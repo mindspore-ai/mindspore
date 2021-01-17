@@ -31,20 +31,26 @@ namespace mindspore::kernel {
 int ApplyMomentumCPUKernel::ReSize() { return RET_OK; }
 
 int ApplyMomentumCPUKernel::Execute(int task_id) {
-  auto weight = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
-  auto accumulate = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
-  float learning_rate = reinterpret_cast<float *>(in_tensors_[2]->MutableData())[0];
-  auto gradient = reinterpret_cast<float *>(in_tensors_[3]->MutableData());
-  float moment = reinterpret_cast<float *>(in_tensors_[4]->MutableData())[0];
-  size_t elem_num = in_tensors_[0]->ElementsNum();
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto accumulate = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  float learning_rate = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData())[0];
+  auto gradient = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData());
+  float moment = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
+  size_t length = in_tensors_.at(0)->ElementsNum();
+
+  size_t stride = UP_DIV(length, thread_count_);
+  size_t count = MSMIN(stride, length - stride * task_id);
+
+  size_t start = stride * task_id;
+  size_t end = start + count;
 
   if (apply_momentum_param_->use_nesterov_) {
-    for (size_t i = 0; i < elem_num; ++i) {
+    for (size_t i = start; i < end; ++i) {
       accumulate[i] = accumulate[i] * moment + gradient[i];
       weight[i] -= (accumulate[i] * moment + gradient[i]) * learning_rate;
     }
   } else {
-    for (size_t i = 0; i < elem_num; ++i) {
+    for (size_t i = start; i < end; ++i) {
       accumulate[i] = accumulate[i] * moment + gradient[i];
       weight[i] -= accumulate[i] * learning_rate;
     }
@@ -64,7 +70,7 @@ int ApplyMomentumRun(void *cdata, int task_id) {
 }
 
 int ApplyMomentumCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ApplyMomentumRun, this, 1);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ApplyMomentumRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Apply Momentum function error error_code[" << error_code << "]";
     return RET_ERROR;
@@ -73,6 +79,17 @@ int ApplyMomentumCPUKernel::Run() {
 }
 
 int ApplyMomentumCPUKernel::Init() { return RET_OK; }
+
+int ApplyMomentumCPUKernel::SetLearningRate(float lr) {
+  auto learning_rate_tensor = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+  learning_rate_tensor[0] = lr;
+  return RET_OK;
+}
+
+float ApplyMomentumCPUKernel::GetLearningRate() {
+  auto learning_rate_tensor = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+  return learning_rate_tensor[0];
+}
 
 kernel::LiteKernel *CpuApplyMomentumFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                       const std::vector<lite::Tensor *> &outputs,

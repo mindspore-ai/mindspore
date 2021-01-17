@@ -27,7 +27,9 @@ class SmoothL1LossCPUKernel : public LiteKernel {
   explicit SmoothL1LossCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                  const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), smooth_l1_param_(nullptr) {
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive),
+        smooth_l1_param_(nullptr),
+        thread_count_(ctx->thread_num_) {
     smooth_l1_param_ = reinterpret_cast<SmoothL1LossParameter *>(parameter);
   }
   ~SmoothL1LossCPUKernel() override {}
@@ -38,6 +40,7 @@ class SmoothL1LossCPUKernel : public LiteKernel {
 
  private:
   SmoothL1LossParameter *smooth_l1_param_;
+  int thread_count_ = 1;
 };
 }  // namespace mindspore::kernel
 

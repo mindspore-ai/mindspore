@@ -27,12 +27,15 @@ class AssignCPUKernel : public LiteKernel {
   explicit AssignCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                            const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
   ~AssignCPUKernel() override {}
   int Init() override;
   int ReSize() override;
   int Run() override;
   int Execute(int task_id);
+
+ protected:
+  int thread_count_ = 1;
 };
 }  // namespace mindspore::kernel
 

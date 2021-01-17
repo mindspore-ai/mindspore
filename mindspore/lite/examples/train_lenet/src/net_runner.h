@@ -23,6 +23,7 @@
 #include <vector>
 #include <string>
 #include "include/train_session.h"
+#include "include/train/train_loop.h"
 #include "include/ms_tensor.h"
 #include "src/dataset.h"
 
@@ -38,12 +39,13 @@ class NetRunner {
   int InitDB();
   int TrainLoop();
   std::vector<int> FillInputData(const std::vector<DataLabelTuple> &dataset, bool is_train_set = false) const;
-  float CalculateAccuracy(int max_tests = -1) const;
+  float CalculateAccuracy(int max_tests = -1);
   float GetLoss() const;
   mindspore::tensor::MSTensor *SearchOutputsForSize(size_t size) const;
 
   DataSet ds_;
   mindspore::session::TrainSession *session_ = nullptr;
+  mindspore::session::TrainLoop *loop_ = nullptr;
 
   std::string ms_file_ = "";
   std::string data_dir_ = "";
