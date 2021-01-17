@@ -1207,7 +1207,7 @@ class BatchNorm(PrimitiveWithInfer):
         return (input_x, scale, bias, input_x, input_x)
 
 
-class Conv2D(PrimitiveWithInfer):
+class Conv2D(PrimitiveWithCheck):
     r"""
     2D convolution layer.
 
@@ -1314,65 +1314,16 @@ class Conv2D(PrimitiveWithInfer):
         self.add_prim_attr('groups', self.group)
         self.add_prim_attr('offset_a', 0)
 
-    def infer_shape(self, x_shape, w_shape, b_shape=None):
+    def check_shape(self, x_shape, w_shape, b_shape=None):
         x_shape_norm = x_shape if self.format == "NCHW" else (x_shape[0], x_shape[3], x_shape[1], x_shape[2])
         w_shape_norm = w_shape if self.format == "NCHW" else (w_shape[0], w_shape[3], w_shape[1], w_shape[2])
-
         validator.check_equal_int(len(w_shape_norm), 4, "weight rank", self.name)
         validator.check_equal_int(len(x_shape_norm), 4, "x rank", self.name)
-        validator.check(f"x_shape[1] / group", x_shape_norm[1] // self.group, "w_shape[1]", w_shape_norm[1], \
-                        Rel.EQ, self.name)
-        validator.check('out_channel', self.out_channel, 'w_shape[0]', w_shape_norm[0], Rel.EQ, self.name)
-        validator.check('kernel_size', self.kernel_size, 'w_shape[2:4]', tuple(w_shape_norm[2:4]), Rel.EQ, self.name)
 
-        kernel_size_h = w_shape_norm[2]
-        kernel_size_w = w_shape_norm[3]
-
-        stride_h = self.stride[2]
-        stride_w = self.stride[3]
-        dilation_h = self.dilation[2]
-        dilation_w = self.dilation[3]
-
-        if self.pad_mode == "valid":
-            h_out = math.ceil((x_shape_norm[2] - dilation_h * (kernel_size_h - 1)) / stride_h)
-            w_out = math.ceil((x_shape_norm[3] - dilation_w * (kernel_size_w - 1)) / stride_w)
-            pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
-        elif self.pad_mode == "same":
-            h_out = math.ceil(x_shape_norm[2] / stride_h)
-            w_out = math.ceil(x_shape_norm[3] / stride_w)
-
-            pad_needed_h = max(0, (h_out - 1) * stride_h + dilation_h * (kernel_size_h - 1) + 1 - x_shape_norm[2])
-            pad_top = math.floor(pad_needed_h / 2)
-            pad_bottom = pad_needed_h - pad_top
-
-            pad_needed_w = max(0, (w_out - 1) * stride_w + dilation_w * (kernel_size_w - 1) + 1 - x_shape_norm[3])
-            pad_left = math.floor(pad_needed_w / 2)
-            pad_right = pad_needed_w - pad_left
-        elif self.pad_mode == 'pad':
-            pad_top, pad_bottom, pad_left, pad_right = self.padding
-
-            h_out = 1 + (x_shape_norm[2] + pad_top + pad_bottom - kernel_size_h - (kernel_size_h - 1) \
-                         * (dilation_h - 1)) / stride_h
-            w_out = 1 + (x_shape_norm[3] + pad_left + pad_right - kernel_size_w - (kernel_size_w - 1) \
-                         * (dilation_w - 1)) / stride_w
-            h_out = math.floor(h_out)
-            w_out = math.floor(w_out)
-
-        self.pad_list = [pad_top, pad_bottom, pad_left, pad_right]
-        self.add_prim_attr('pad_list', (pad_top, pad_bottom, pad_left, pad_right))
-        out_channel = self.out_channel
-        out_shape = [x_shape_norm[0], out_channel, h_out, w_out] if self.format == "NCHW" else \
-            [x_shape_norm[0], h_out, w_out, out_channel]
-        _check_shape('output', out_shape, self.name)
-        return out_shape
-
-    def infer_dtype(self, x_dtype, w_dtype, b_dtype=None):
+    def check_dtype(self, x_dtype, w_dtype, b_dtype=None):
         args = {'x': x_dtype, 'w': w_dtype}
         valid_dtypes = [mstype.int8, mstype.int32, mstype.float16, mstype.float32]
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        if x_dtype.element_type() == mstype.int8:
-            return mstype.tensor_type(mstype.int32)
-        return x_dtype
 
 
 class DepthwiseConv2dNative(PrimitiveWithInfer):

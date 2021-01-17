@@ -111,6 +111,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimFusedBatchNormGrad, {InferImplFusedBatchNormGrad, true}},
     {prim::kPrimBatchNormGrad, {InferImplBatchNormGrad, true}},
     {prim::kPrimReluGrad, {InferImplReluGrad, true}},
+    {prim::kPrimConv2D, {InferImplConv2D, true}},
     {prim::kPrimConv2DBackpropInput, {InferImplConv2DBackpropInput, true}},
     {prim::kPrimConv2DBackpropFilter, {InferImplConv2DBackpropFilter, true}},
     {prim::kPrimBiasAddGrad, {InferImplBiasAddGrad, true}},
