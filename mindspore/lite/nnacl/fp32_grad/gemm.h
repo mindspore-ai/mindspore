@@ -37,6 +37,7 @@ void GemmMatmul(int ta, int tb, int M, int N, int K, float alpha, const float *m
                 int ldb, float beta, float *mat_c, int ldc, float *workspace);
 int MatSize(int row, int col, int round);
 int MatSizeTotal(int row, int col, int deep, int inc);
+void AddMatrix(const float *v1, float *v2, float beta, int row, int col, int stride);
 #ifdef __cplusplus
 }
 #endif

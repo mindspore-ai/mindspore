@@ -800,8 +800,8 @@ int ElementSubRelu6(const float *in0, const float *in1, float *out, int size) {
 
 int BroadcastDiv(const float *in0, const float *in1, float *tile_in0, float *tile_in1, float *out, int size,
                  ArithmeticParameter *param) {
-  TileDimensionsFp32(in0, in1, tile_in0, tile_in0, param);
-  return ElementDiv(tile_in0, tile_in0, out, size);
+  TileDimensionsFp32(in0, in1, tile_in0, tile_in1, param);
+  return ElementDiv(tile_in0, tile_in1, out, size);
 }
 
 int ElementDiv(const float *in0, const float *in1, float *out, int size) {

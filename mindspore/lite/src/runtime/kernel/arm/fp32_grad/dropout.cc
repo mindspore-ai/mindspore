@@ -61,19 +61,26 @@ int DropoutCPUKernel::Execute(int task_id) {
   auto input_ptr = reinterpret_cast<float *>(in_tensors_.at(kInputIndex)->MutableData());
   auto output_ptr = reinterpret_cast<float *>(out_tensors_.at(kOutputIndex)->MutableData());
   auto mask = reinterpret_cast<float *>(out_tensors_.at(1)->MutableData());
-  auto length = in_tensors_.at(kInputIndex)->ElementsNum();
   auto param = reinterpret_cast<DropoutParameter *>(op_parameter_);
+  auto length = in_tensors_.at(kInputIndex)->ElementsNum();
+
+  int stride = UP_DIV(length, thread_count_);
+  int count = MSMIN(stride, length - stride * task_id);
+
+  size_t start = stride * task_id;
+  size_t end = start + count;
+
   if (param == nullptr) {
     MS_LOG(ERROR) << "Dropout op_parameter_ nullptr";
     return RET_NULL_PTR;
   }
   if (IsEval()) {
-    std::copy(input_ptr, input_ptr + length, output_ptr);
+    std::copy(&(input_ptr[start]), &(input_ptr[end]), &(output_ptr[start]));
   } else {
     std::default_random_engine generator;
     std::bernoulli_distribution distribution(param->ratio_);
 
-    for (int i = 0; i < length; i++) {
+    for (size_t i = start; i < end; i++) {
       mask[i] = distribution(generator);
       output_ptr[i] = input_ptr[i] * mask[i] * scale_;
     }
@@ -92,7 +99,7 @@ int RunDropout(void *cdata, int task_id) {
 }
 
 int DropoutCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, RunDropout, this, 1);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, RunDropout, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Dropout function error error_code[" << error_code << "]";
     return RET_ERROR;

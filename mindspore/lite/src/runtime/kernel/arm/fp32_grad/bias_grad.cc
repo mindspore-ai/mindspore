@@ -29,7 +29,7 @@ using mindspore::schema::PrimitiveType_BiasGrad;
 
 namespace mindspore::kernel {
 
-int BiasGradCPUKernel::Init() {
+int BiasGradCPUKernel::ReSize() {
   auto dims = in_tensors_[0]->shape();
   bias_param->ndim_ = dims.size();
   for (unsigned int i = 0; i < bias_param->ndim_; i++) {
@@ -44,7 +44,12 @@ int BiasGradCPUKernel::Init() {
   return RET_OK;
 }
 
-int BiasGradCPUKernel::ReSize() { return RET_OK; }
+int BiasGradCPUKernel::Init() {
+  if (!InferShapeDone()) {
+    return RET_OK;
+  }
+  return ReSize();
+}
 
 int BiasGradCPUKernel::Execute(int task_id) {
   auto in = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());

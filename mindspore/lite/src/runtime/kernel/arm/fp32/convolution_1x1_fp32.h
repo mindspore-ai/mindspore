@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_1X1_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_1X1_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_1X1_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_1X1_FP32_H_
 
 #include <float.h>
 #include <vector>
@@ -42,6 +42,7 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   int Init() override;
   int Run() override;
   int ReSize() override;
+  int Eval() override;
 
  public:
   int DoConv1x1(int task_id);
@@ -53,6 +54,7 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   void InitConv1x1MatmulParam();
   void FreeTmpBuffer();
   void PackMatmulInput(const float *src_ptr, float *dst_ptr, int row, int col);
+  void PackWeight();
 
  private:
   MatMulParameter *matmul_param_ = nullptr;
@@ -70,4 +72,4 @@ class Convolution1x1CPUKernel : public ConvolutionBaseCPUKernel {
   int col_tile_ = 0;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_1X1_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_1X1_FP32_H_

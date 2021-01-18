@@ -26,6 +26,7 @@
 #include "src/common/utils.h"
 #include "src/tensor.h"
 #include "src/train/loss_kernel.h"
+#include "src/train/optimizer_kernel.h"
 #include "src/sub_graph_kernel.h"
 #include "src/train/train_populate_parameter.h"
 #include "src/runtime/runtime_api.h"
@@ -49,10 +50,8 @@ TrainSession::TrainSession() { kernel::PopulateTrainParameters(); }
 
 std::vector<CreatorOp> TrainSession::ReplaceOps() {
   const std::vector<CreatorOp> replace = {
-    {{mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, mindspore::schema::PrimitiveType_Conv2D},
-     mindspore::kernel::CpuConvTrainFp32KernelCreator},
-    {{mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, mindspore::schema::PrimitiveType_DepthwiseConv2D},
-     mindspore::kernel::CpuConvTrainFp32KernelCreator}};
+    // currently no ops are Hijacked by TrainSession
+  };
   mindspore::lite::KernelRegistry *reg = mindspore::lite::KernelRegistry::GetInstance();
   std::vector<CreatorOp> results;
   for (auto v : replace) {
@@ -98,7 +97,7 @@ int TrainSession::CompileTrainGraph(mindspore::lite::TrainModel *model) {
   RestoreOps(restore);
   CompileTrainKernels();      // Prepare a list of train kernels
   CompileInferenceKernels();  // Prepare a list of eval kernels
-  CompileOptimizedKernels();  // Prepare a list of kenels which are optimized (weight update step)
+  CompileOptimizedKernels();  // Prepare a list of kernels which are optimized (weight update step)
   CompileTrainOutputs();      // prepare outputs in train mode
   CompileEvalOutputs();       // prepare outputs in eval mode
   AllocWorkSpace();
@@ -300,6 +299,30 @@ void TrainSession::CompileOptimizedKernels() {
       }
     }
   }
+}
+
+int TrainSession::SetLearningRate(float learning_rate) {
+  for (auto kernel : this->train_kernels_) {
+    if (IsOptimizer(kernel)) {
+      auto optimizer = reinterpret_cast<kernel::OptimizerKernel *>(kernel);
+      auto ret = optimizer->SetLearningRate(learning_rate);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << kernel->name() << " failed to set learning rate";
+        return RET_ERROR;
+      }
+    }
+  }
+  return RET_OK;
+}
+
+float TrainSession::GetLearningRate() {
+  for (auto kernel : this->train_kernels_) {
+    if (IsOptimizer(kernel)) {
+      auto optimizer = reinterpret_cast<kernel::OptimizerKernel *>(kernel);
+      return optimizer->GetLearningRate();
+    }
+  }
+  return 0.0;
 }
 
 bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {

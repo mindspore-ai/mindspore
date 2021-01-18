@@ -27,7 +27,7 @@ class TupleGetItemCPUKernel : public LiteKernel {
   explicit TupleGetItemCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                                  const lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
     param = parameter;
   }
   ~TupleGetItemCPUKernel() override = default;
@@ -38,6 +38,7 @@ class TupleGetItemCPUKernel : public LiteKernel {
   int Execute(int task_id);
 
  private:
+  int thread_count_ = 1;
   OpParameter *param;
 };
 }  // namespace mindspore::kernel

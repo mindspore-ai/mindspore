@@ -83,6 +83,23 @@ class TrainSession : public session::LiteSession {
   /// \return boolean indication if model is in eval mode
   bool IsEval() { return train_mode_ == false; }
 
+  /// \brief Sets the Learning Rate of the training
+  ///
+  /// \param[in] learning_rate to set
+  ///
+  /// \return STATUS as an error code of the set operation, STATUS is defined in errorcode.h
+  virtual int SetLearningRate(float learning_rate) = 0;
+
+  /// \brief Gets the Learning Rate of the training
+  ///
+  /// \return learning rate. 0.0 if no optimizer was found
+  virtual float GetLearningRate() = 0;
+
+  /// \brief Get output MindSpore Lite MSTensors of Training model prediction
+  ///
+  /// \return The map of output tensor name and MindSpore Lite MSTensor.
+  virtual std::unordered_map<std::string, mindspore::tensor::MSTensor *> GetPredictions() const = 0;
+
  protected:
   bool train_mode_ = false;
 };

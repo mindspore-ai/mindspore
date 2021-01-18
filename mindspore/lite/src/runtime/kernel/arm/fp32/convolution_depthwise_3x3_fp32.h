@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP32_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP32_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -37,8 +37,10 @@ class ConvolutionDepthwise3x3CPUKernel : public ConvolutionBaseCPUKernel {
 
   int InitWeightBias();
   int Execute(int task_id);
+  int Eval() override;
 
  private:
+  void PackWeight();
   int InitBuffer();
   SlidingWindowParam *sliding_ = nullptr;
   float *packed_weight_ = nullptr;
@@ -48,4 +50,4 @@ class ConvolutionDepthwise3x3CPUKernel : public ConvolutionBaseCPUKernel {
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_CONVOLUTION_DEPTHWISE_3X3_FP32_H_

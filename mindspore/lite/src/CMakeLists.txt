@@ -65,7 +65,10 @@ if(SUPPORT_TRAIN)
             ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/train_session.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/train/train_model.cc
-            ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/train_loop.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/loss_monitor.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/lr_scheduler.cc
+            ${CMAKE_CURRENT_SOURCE_DIR}/train/classification_train_accuracy_monitor.cc
             )
 endif()
 

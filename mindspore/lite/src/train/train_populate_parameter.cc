@@ -15,6 +15,7 @@
  */
 
 #include "src/train/train_populate_parameter.h"
+#include <algorithm>
 #include "src/ops/populate/populate_register.h"
 #include "src/ops/pooling_grad.h"
 #include "nnacl/pooling_parameter.h"
@@ -517,12 +518,15 @@ OpParameter *PopulateArithmeticGradParameter(const mindspore::lite::PrimitiveC *
   arithmetic_param->broadcasting_ = ((lite::ArithmeticGrad *)primitive)->Broadcasting();
   arithmetic_param->ndim_ = ((lite::ArithmeticGrad *)primitive)->NDims();
 
-  auto tmp_shape = ((lite::ArithmeticGrad *)primitive)->x1Shape();
-  memcpy(arithmetic_param->in_shape0_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  tmp_shape = ((lite::ArithmeticGrad *)primitive)->x2Shape();
-  memcpy(arithmetic_param->in_shape1_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
-  tmp_shape = ((lite::ArithmeticGrad *)primitive)->dyShape();
-  memcpy(arithmetic_param->out_shape_, static_cast<void *>(tmp_shape.data()), tmp_shape.size() * sizeof(int));
+  auto shape = ((lite::ArithmeticGrad *)primitive)->x1Shape();
+  auto source = static_cast<int *>(shape.data());
+  std::copy(source, source + shape.size(), arithmetic_param->in_shape0_);
+  shape = ((lite::ArithmeticGrad *)primitive)->x2Shape();
+  source = static_cast<int *>(shape.data());
+  std::copy(source, source + shape.size(), arithmetic_param->in_shape1_);
+  shape = ((lite::ArithmeticGrad *)primitive)->dyShape();
+  source = static_cast<int *>(shape.data());
+  std::copy(source, source + shape.size(), arithmetic_param->out_shape_);
   return reinterpret_cast<OpParameter *>(arithmetic_param);
 }
 

@@ -29,7 +29,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Conv2DGradFilter;
 
 namespace mindspore::kernel {
-int ConvolutionGradFilterCPUKernel::Init() {
+int ConvolutionGradFilterCPUKernel::ReSize() {
   // dy is in input 0
   // x is in input 1
   // dw is output 0
@@ -51,16 +51,25 @@ int ConvolutionGradFilterCPUKernel::Init() {
   conv_param->output_h_ = dy_tensor->shape()[kNHWC_H];
   conv_param->output_w_ = dy_tensor->shape()[kNHWC_W];
 
-  ws_size = chunk * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
+  ws_size_ = chunk_ * conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
 
   int n = conv_param->kernel_h_ * conv_param->kernel_w_ * conv_param->input_channel_ / conv_param->group_;
   int k = conv_param->output_channel_ / conv_param->group_;
-  size_t mat_alloc = MatSizeTotal(k, n, chunk, n);
-  set_workspace_size((ws_size + mat_alloc) * sizeof(float));
+  int thread_num = context_->thread_num_;
+  mat_alloc_ = MatSizeTotal(k, n, chunk_, 0);
+  set_workspace_size((ws_size_ + mat_alloc_ + (k * n)) * thread_num * sizeof(float));
+
+  do_img2col_ = (conv_param->kernel_h_ == 1) && (conv_param->kernel_w_ == 1) && (conv_param->pad_d_ == 0) &&
+                    (conv_param->pad_u_ == 0) && (conv_param->pad_l_ == 0) && (conv_param->pad_r_ == 0) &&
+                    (conv_param->dilation_h_ == 1) && (conv_param->dilation_w_ == 1) && (conv_param->stride_h_ == 1) &&
+                    (conv_param->stride_w_ == 1) && (conv_param->group_ == 1)
+                  ? false
+                  : true;
+
   return RET_OK;
 }
 
-int ConvolutionGradFilterCPUKernel::ReSize() { return RET_OK; }
+int ConvolutionGradFilterCPUKernel::Init() { return ReSize(); }
 
 int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter_);
@@ -72,7 +81,6 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   auto dy_addr = reinterpret_cast<float *>(input_dy->MutableData());
   auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
 
-  int i, j;
   int nweights = out_dw->ElementsNum();
   int in_ch = conv_param->input_channel_;
   int in_h = conv_param->input_h_;
@@ -88,22 +96,45 @@ int ConvolutionGradFilterCPUKernel::Execute(int task_id) {
   int m = out_h * out_w;
   int n = k_h * k_w * in_ch / groups;
   int k = out_ch / groups;
-
+  int thread_num = context_->thread_num_;
   float *workspace_temp = reinterpret_cast<float *>(workspace());
-  float *mat_workspace = workspace_temp + ws_size;
-  // zero out pointer
-  memset(dw_addr, 0, out_dw->Size());
-  for (i = 0; i < batch; ++i) {
-    for (j = 0; j < groups; ++j) {
-      for (int ci = 0; ci < m; ci += chunk) {
-        int real_chunk = MSMIN(m - ci, chunk);
-        float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
-        float *mat_b = workspace_temp;
-        float *mat_c = dw_addr + j * nweights / groups;
-        float *im = x_addr + (i * in_ch * in_h * in_w) + j * (in_ch / groups);
-        memset(mat_b, 0, n * real_chunk * sizeof(float));
-        RollingIm2ColPackUnitFp32(im, conv_param, mat_b, real_chunk, ci);
-        GemmMatmul(1, 0, k, n, real_chunk, 1, mat_a, out_ch, mat_b, n, 1, mat_c, n, mat_workspace);
+  float *mat_workspace = workspace_temp + ws_size_ * thread_num + task_id * (mat_alloc_ + k * n);
+  float *mat_tmp = mat_workspace + mat_alloc_;
+  int stride = UP_DIV(batch, thread_num);
+  int count = MSMIN(stride, batch - stride * task_id);
+  int start = stride * task_id;
+  int end = start + count;
+
+  if (do_img2col_) {
+    for (int i = start; i < end; ++i) {
+      for (int j = 0; j < groups; ++j) {
+        for (int ci = 0; ci < m; ci += chunk_) {
+          int real_chunk = MSMIN(m - ci, chunk_);
+          float *mat_a = dy_addr + (i * groups) * m * k + j * (out_ch / groups) + ci * out_ch;
+          float *mat_b = workspace_temp + task_id * ws_size_;
+          float *mat_c = dw_addr + j * nweights / groups;
+          float *im = x_addr + (i * in_ch * in_h * in_w) + j * (in_ch / groups);
+          RollingIm2ColPackUnitFp32(im, conv_param, mat_b, real_chunk, ci);
+          GemmMatmul(1, 0, k, n, real_chunk, 1, mat_a, out_ch, mat_b, n, 0, mat_tmp, n, mat_workspace);
+          std::unique_lock<std::mutex> merge_lock(lock_);
+          AddMatrix(mat_tmp, mat_c, 1, k, n, n);
+        }
+      }
+    }
+  } else {
+    float *mat_c = dw_addr;
+    const size_t in_plane_size = in_ch * in_h * in_w;
+    for (int i = start; i < end; ++i) {
+      for (int ci = 0; ci < m; ci += chunk_) {
+        int real_chunk = MSMIN(m - ci, chunk_);
+        float *mat_a = dy_addr + i * m * k + ci * out_ch;
+        float *im = x_addr + i * in_plane_size;
+        int input_h = ci / out_w * conv_param->stride_h_;
+        int input_w = ci % out_w * conv_param->stride_w_;
+        int offset = (input_h * in_w + input_w) * in_ch;
+        GemmMatmul(1, 0, k, n, real_chunk, 1, mat_a, out_ch, im + offset, n, 0, mat_tmp, n, mat_workspace);
+        std::unique_lock<std::mutex> merge_lock(lock_);
+        AddMatrix(mat_tmp, mat_c, 1, k, n, n);
       }
     }
   }
@@ -122,7 +153,10 @@ int ConvolutionGradFilterRun(void *cdata, int task_id) {
 }
 
 int ConvolutionGradFilterCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionGradFilterRun, this, 1);
+  auto *out_dw = out_tensors_.at(0);
+  auto dw_addr = reinterpret_cast<float *>(out_dw->MutableData());
+  memset(dw_addr, 0, out_dw->Size());
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ConvolutionGradFilterRun, this, context_->thread_num_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "conv filter function error error_code[" << error_code << "]";
     return RET_ERROR;

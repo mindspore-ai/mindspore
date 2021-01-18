@@ -237,6 +237,9 @@ int Convolution1x1CPUKernel::Run() {
     MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
     return RET_MEMORY_FAILED;
   }
+  if (IsTrain()) {
+    PackWeight();
+  }
 
   for (int batch_index = 0; batch_index < conv_param_->input_batch_; batch_index++) {
     output_ptr_ = src_out + batch_index * matmul_param_->row_ * matmul_param_->col_;
@@ -261,4 +264,45 @@ int Convolution1x1CPUKernel::Run() {
   }
   return RET_OK;
 }
+
+void Convolution1x1CPUKernel::PackWeight() {
+  auto filter_tensor = in_tensors_.at(kWeightIndex);
+  auto input_channel = filter_tensor->Channel();
+  auto output_channel = filter_tensor->Batch();
+
+#ifdef ENABLE_AVX
+  row_tile_ = C6NUM;
+  col_tile_ = C16NUM;
+#elif defined(ENABLE_SSE)
+  row_tile_ = C4NUM;
+  col_tile_ = C8NUM;
+#elif defined(ENABLE_ARM32)
+  row_tile_ = C12NUM;
+  col_tile_ = C4NUM;
+#else
+  row_tile_ = C12NUM;
+  col_tile_ = C8NUM;
+#endif
+
+  int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
+  int down_size = input_channel * DOWN_DIV(output_channel, col_tile_) * col_tile_ * sizeof(float);
+  memset(reinterpret_cast<char *>(weight_ptr_) + down_size, 0, size - down_size);
+#ifdef ENABLE_AVX
+  RowMajor2Col16Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
+                      input_channel);
+#elif defined(ENABLE_ARM32)
+  RowMajor2Col4Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
+                     input_channel);
+#else
+  RowMajor2Col8Major(reinterpret_cast<float *>(filter_tensor->MutableData()), weight_ptr_, output_channel,
+                     input_channel);
+#endif
+}
+
+int Convolution1x1CPUKernel::Eval() {
+  LiteKernel::Eval();
+  PackWeight();
+  return RET_OK;
+}
+
 }  // namespace mindspore::kernel

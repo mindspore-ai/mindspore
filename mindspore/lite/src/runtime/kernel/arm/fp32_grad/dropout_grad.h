@@ -25,7 +25,7 @@ class DropoutGradCPUKernel : public LiteKernel {
   DropoutGradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {}
 
   ~DropoutGradCPUKernel() override = default;
 
@@ -36,6 +36,7 @@ class DropoutGradCPUKernel : public LiteKernel {
 
  private:
   float scale_;
+  int thread_count_ = 1;
 };
 
 }  // namespace mindspore::kernel

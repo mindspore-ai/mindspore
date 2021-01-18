@@ -45,13 +45,20 @@ int PowerGradCPUKernel::Execute(int task_id) {
   auto dy_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
   auto x_addr = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
   auto dx_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  auto size = in_tensors_.at(0)->ElementsNum();
+
+  size_t length = in_tensors_.at(0)->ElementsNum();
+
+  size_t stride = UP_DIV(length, thread_count_);
+  size_t count = MSMIN(stride, length - stride * task_id);
+
+  size_t start = stride * task_id;
+  size_t end = start + count;
 
   float exp = power_ - 1;
-  Power(x_addr, &exp, dx_addr, size, scale_, shift_, true);
-  ElementMul(dx_addr, dy_addr, dx_addr, size);
+  Power(&(x_addr[start]), &exp, &(dx_addr[start]), count, scale_, shift_, true);
+  ElementMul(&(dx_addr[start]), &(dy_addr[start]), &(dx_addr[start]), count);
   float scale = scale_ * power_;
-  for (int i = 0; i < size; i++) {
+  for (size_t i = start; i < end; i++) {
     dx_addr[i] *= scale;
   }
 
@@ -69,7 +76,7 @@ int PowerGradRun(void *cdata, int task_id) {
 }
 
 int PowerGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, PowerGradRun, this, 1);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, PowerGradRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "power grad function error error_code[" << error_code << "]";
     return RET_ERROR;

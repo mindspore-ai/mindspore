@@ -29,36 +29,34 @@ using mindspore::schema::PrimitiveType_NegGrad;
 
 namespace mindspore::kernel {
 namespace {
-int NegGradRun(void *cdata, int thread_id) {
+int NegGradRun(void *cdata, int task_id) {
   MS_ASSERT(cdata != nullptr);
   auto kernel = reinterpret_cast<NegGradCPUKernel *>(cdata);
   MS_ASSERT(kernel != nullptr);
-  return kernel->DoNegGrad(thread_id);
+  return kernel->DoNegGrad(task_id);
 }
 }  // namespace
 
 int NegGradCPUKernel::Init() { return RET_OK; }
 
-int NegGradCPUKernel::DoNegGrad(int thread_id) {
-  auto dy = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
-  auto dx = reinterpret_cast<float *>(out_tensors_[0]->MutableData());
-  int dy_size = in_tensors_.at(0)->ElementsNum();
-  int size = MSMIN(thread_stride_, static_cast<int>(dy_size - thread_id * thread_stride_));
-  if (size <= 0) {
-    return RET_OK;
-  }
-  int offset = thread_id * thread_stride_;
-  ElementNegative(dy + offset, dx + offset, size);
+int NegGradCPUKernel::DoNegGrad(int task_id) {
+  auto dy = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto dx = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  size_t length = in_tensors_.at(0)->ElementsNum();
+
+  size_t stride = UP_DIV(length, thread_count_);
+  size_t count = MSMIN(stride, length - stride * task_id);
+
+  size_t start = stride * task_id;
+
+  ElementNegative(dy + start, dx + start, count);
   return RET_OK;
 }
 
 int NegGradCPUKernel::ReSize() { return RET_OK; }
 
 int NegGradCPUKernel::Run() {
-  int dy_size = in_tensors_.at(0)->ElementsNum();
-  op_parameter_->thread_num_ = MSMIN(op_parameter_->thread_num_, static_cast<int>(dy_size));
-  thread_stride_ = UP_DIV(dy_size, op_parameter_->thread_num_);
-  auto ret = ParallelLaunch(this->context_->thread_pool_, NegGradRun, this, op_parameter_->thread_num_);
+  auto ret = ParallelLaunch(this->context_->thread_pool_, NegGradRun, this, thread_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "parallel launch fail!ret: " << ret;
     return ret;

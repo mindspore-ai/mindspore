@@ -58,10 +58,12 @@ int ConvolutionWinogradCPUKernel::InitWeightBias() {
 
   // set data
   auto trans_matrix_data_size = input_unit_ * input_unit_ * in_channel * oc_block_num * oc_block * sizeof(float);
-  trans_weight_ = reinterpret_cast<float *>(malloc(trans_matrix_data_size));
   if (trans_weight_ == nullptr) {
-    MS_LOG(ERROR) << "malloc matrix_buffer failed.";
-    return RET_MEMORY_FAILED;
+    trans_weight_ = reinterpret_cast<float *>(malloc(trans_matrix_data_size));
+    if (trans_weight_ == nullptr) {
+      MS_LOG(ERROR) << "malloc matrix_buffer failed.";
+      return RET_MEMORY_FAILED;
+    }
   }
   memset(trans_weight_, 0, trans_matrix_data_size);
 
@@ -217,6 +219,9 @@ int ConvolutionWinogradCPUKernel::Run() {
     FreeTmpBuffer();
     return RET_ERROR;
   }
+  if (IsTrain()) {
+    InitWeightBias();
+  }
 
   ret = ParallelLaunch(this->context_->thread_pool_, ConvolutionWinogradImpl, this, thread_count_);
   if (ret != RET_OK) {
@@ -226,4 +231,11 @@ int ConvolutionWinogradCPUKernel::Run() {
   FreeTmpBuffer();
   return ret;
 }
+
+int ConvolutionWinogradCPUKernel::Eval() {
+  LiteKernel::Eval();
+  InitWeightBias();
+  return RET_OK;
+}
+
 }  // namespace mindspore::kernel

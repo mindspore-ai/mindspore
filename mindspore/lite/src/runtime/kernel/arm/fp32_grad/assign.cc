@@ -32,11 +32,16 @@ namespace mindspore::kernel {
 int AssignCPUKernel::ReSize() { return RET_OK; }
 
 int AssignCPUKernel::Execute(int task_id) {
-  auto x = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
-  auto y = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
-  size_t size = in_tensors_[0]->Size();
+  auto x = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto y = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  size_t length = in_tensors_.at(0)->ElementsNum();
 
-  memcpy(x, y, size);
+  size_t stride = UP_DIV(length, thread_count_);
+  size_t count = MSMIN(stride, length - stride * task_id);
+
+  size_t start = stride * task_id;
+
+  memcpy(&(x[start]), &(y[start]), count * sizeof(float));
   return RET_OK;
 }
 
@@ -52,7 +57,7 @@ int AssignRun(void *cdata, int task_id) {
 }
 
 int AssignCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, AssignRun, this, 1);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, AssignRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Assign function error error_code[" << error_code << "]";
     return RET_ERROR;

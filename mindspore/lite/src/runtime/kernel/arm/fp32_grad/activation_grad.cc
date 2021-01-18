@@ -48,33 +48,27 @@ int ActivationGradCPUKernel::DoActivation(int task_id) {
   auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   int length = in_tensors_.at(0)->ElementsNum();
 
-  int stride = UP_DIV(length, 1);
+  int stride = UP_DIV(length, thread_count_);
   int count = MSMIN(stride, length - stride * task_id);
+  size_t start = stride * task_id;
 
   auto error_code = RET_OK;
 
   if (param_act_grad_->type_ == schema::ActivationType_RELU) {
-    error_code =
-      ReluGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
+    error_code = ReluGrad(yt_addr + start, input_addr + start, count, output_addr + start);
   } else if (param_act_grad_->type_ == schema::ActivationType_RELU6) {
-    error_code =
-      Relu6Grad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
+    error_code = Relu6Grad(yt_addr + start, input_addr + start, count, output_addr + start);
   } else if (param_act_grad_->type_ == schema::ActivationType_LEAKY_RELU) {
-    error_code = LReluGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count,
-                           output_addr + stride * task_id, param_act_grad_->alpha_);
+    error_code = LReluGrad(yt_addr + start, input_addr + start, count, output_addr + start, param_act_grad_->alpha_);
   } else if (param_act_grad_->type_ == schema::ActivationType_SIGMOID) {
     // Sigmoid gets the input tensors in reverse order!
-    error_code =
-      SigmoidGrad(input_addr + stride * task_id, yt_addr + stride * task_id, count, output_addr + stride * task_id);
+    error_code = SigmoidGrad(input_addr + start, yt_addr + start, count, output_addr + start);
   } else if (param_act_grad_->type_ == schema::ActivationType_TANH) {
-    error_code =
-      TanhGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
+    error_code = TanhGrad(yt_addr + start, input_addr + start, count, output_addr + start);
   } else if (param_act_grad_->type_ == schema::ActivationType_HSWISH) {
-    error_code =
-      HSwishGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
+    error_code = HSwishGrad(yt_addr + start, input_addr + start, count, output_addr + start);
   } else if (param_act_grad_->type_ == schema::ActivationType_HSIGMOID) {
-    error_code =
-      HSigmoidGrad(yt_addr + stride * task_id, input_addr + stride * task_id, count, output_addr + stride * task_id);
+    error_code = HSigmoidGrad(yt_addr + start, input_addr + start, count, output_addr + start);
   } else {
     MS_LOG(ERROR) << "Activation type error";
     return RET_ERROR;
@@ -97,7 +91,7 @@ int ActivationGradRun(void *cdata, int task_id) {
 }
 
 int ActivationGradCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ActivationGradRun, this, 1);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ActivationGradRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Activation Grad function error error_code[" << error_code << "]";
     return RET_ERROR;

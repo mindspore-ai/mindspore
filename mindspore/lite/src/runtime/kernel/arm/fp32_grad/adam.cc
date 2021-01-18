@@ -33,17 +33,23 @@ namespace mindspore::kernel {
 int AdamCPUKernel::ReSize() { return RET_OK; }
 
 int AdamCPUKernel::Execute(int task_id) {
-  auto weight = reinterpret_cast<float *>(in_tensors_[0]->MutableData());
-  auto m = reinterpret_cast<float *>(in_tensors_[1]->MutableData());
-  auto v = reinterpret_cast<float *>(in_tensors_[2]->MutableData());
-  auto beta1_power = reinterpret_cast<float *>(in_tensors_[3]->MutableData())[0];
-  auto beta2_power = reinterpret_cast<float *>(in_tensors_[4]->MutableData())[0];
-  auto learning_rate = reinterpret_cast<float *>(in_tensors_[5]->MutableData())[0];
-  auto beta1 = reinterpret_cast<float *>(in_tensors_[6]->MutableData())[0];
-  auto beta2 = reinterpret_cast<float *>(in_tensors_[7]->MutableData())[0];
-  auto eps = reinterpret_cast<float *>(in_tensors_[8]->MutableData())[0];
-  auto gradient = reinterpret_cast<float *>(in_tensors_[9]->MutableData());
-  size_t elem_num = in_tensors_[0]->ElementsNum();
+  auto weight = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
+  auto m = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  auto v = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
+  auto beta1_power = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData())[0];
+  auto beta2_power = reinterpret_cast<float *>(in_tensors_.at(4)->MutableData())[0];
+  auto learning_rate = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData())[0];
+  auto beta1 = reinterpret_cast<float *>(in_tensors_.at(6)->MutableData())[0];
+  auto beta2 = reinterpret_cast<float *>(in_tensors_.at(7)->MutableData())[0];
+  auto eps = reinterpret_cast<float *>(in_tensors_.at(8)->MutableData())[0];
+  auto gradient = reinterpret_cast<float *>(in_tensors_.at(9)->MutableData());
+  size_t length = in_tensors_.at(0)->ElementsNum();
+
+  size_t stride = UP_DIV(length, thread_count_);
+  size_t count = MSMIN(stride, length - stride * task_id);
+
+  size_t start = stride * task_id;
+  size_t end = start + count;
 
   if ((1.f - beta1_power) <= 0.0f) {
     MS_LOG(ERROR) << "divisor cannot be 0 or below";
@@ -55,17 +61,19 @@ int AdamCPUKernel::Execute(int task_id) {
   }
 
   auto update_lr = learning_rate * std::sqrt(1.f - beta2_power) / (1.f - beta1_power);
+  const float one_minus_beta1 = 1.f - beta1;
+  const float one_minus_beta2 = 1.f - beta2;
 
   if (adam_param_->use_nesterov_) {  // Nadam
-    for (size_t i = 0; i < elem_num; ++i) {
-      m[i] += (gradient[i] - m[i]) * (1.f - beta1);
-      v[i] += (gradient[i] * gradient[i] - v[i]) * (1.f - beta2);
-      weight[i] -= update_lr * (m[i] * beta1 + (1.f - beta1) * gradient[i]) / (std::sqrt(v[i]) + eps);
+    for (size_t i = start; i < end; ++i) {
+      m[i] += (gradient[i] - m[i]) * one_minus_beta1;
+      v[i] += (gradient[i] * gradient[i] - v[i]) * one_minus_beta2;
+      weight[i] -= update_lr * (m[i] * beta1 + one_minus_beta1 * gradient[i]) / (std::sqrt(v[i]) + eps);
     }
   } else {
-    for (size_t i = 0; i < elem_num; ++i) {
-      m[i] += (gradient[i] - m[i]) * (1.f - beta1);
-      v[i] += (gradient[i] * gradient[i] - v[i]) * (1.f - beta2);
+    for (size_t i = start; i < end; ++i) {
+      m[i] += (gradient[i] - m[i]) * one_minus_beta1;
+      v[i] += (gradient[i] * gradient[i] - v[i]) * one_minus_beta2;
       weight[i] -= update_lr * m[i] / (std::sqrt(v[i]) + eps);
     }
   }
@@ -84,12 +92,23 @@ int AdamRun(void *cdata, int task_id) {
 }
 
 int AdamCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, AdamRun, this, 1);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, AdamRun, this, thread_count_);
   if (error_code != RET_OK) {
     MS_LOG(ERROR) << "Adam function error error_code[" << error_code << "]";
     return RET_ERROR;
   }
   return RET_OK;
+}
+
+int AdamCPUKernel::SetLearningRate(float lr) {
+  auto learning_rate_tensor = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
+  learning_rate_tensor[0] = lr;
+  return RET_OK;
+}
+
+float AdamCPUKernel::GetLearningRate() {
+  auto learning_rate_tensor = reinterpret_cast<float *>(in_tensors_.at(5)->MutableData());
+  return learning_rate_tensor[0];
 }
 
 int AdamCPUKernel::Init() { return RET_OK; }
