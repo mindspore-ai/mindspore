@@ -237,6 +237,12 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \return True if a cache-enabled operator is an ancestor of this node
   const bool IsDescendantOfCache() const { return descendant_of_cache_; }
 
+  /// \brief Check if this node is an orphan node
+  /// \return True if this node isn't nullptr nor does it have any children and a parent
+  static bool IsOrphanNode(std::shared_ptr<DatasetNode> node) {
+    return node != nullptr && node->parent_ == nullptr && node->Children().empty();
+  }
+
   /// \brief Mark to indicate this node is a descendant of an operator with cache. Currently used in leaf nodes
   void HasCacheAbove() { descendant_of_cache_ = true; }
 
