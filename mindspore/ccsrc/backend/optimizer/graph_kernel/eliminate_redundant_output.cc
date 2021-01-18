@@ -95,6 +95,12 @@ AnfNodePtrList FindGraphKernelsWithMultiOutput(const FuncGraphPtr &func_graph) {
   return result;
 }
 
+bool IsSideEffectNode(const AnfNodePtr &node) {
+  std::vector<PrimitivePtr> side_effect_nodes = {prim::kPrimAssign, prim::kPrimInplaceAssign};
+  return std::any_of(side_effect_nodes.begin(), side_effect_nodes.end(),
+                     [&node](const PrimitivePtr &p) { return IsPrimitiveCNode(node, p); });
+}
+
 /* Unify the repeated output in a func_graph.
  *   %1 = call @graph_kernel(p1, p2)
  *   %2 = tuple_getitem(%1, 0)
@@ -265,7 +271,7 @@ class EliminateGetitemForControlDepend : public Pass {
     std::vector<size_t> result;
     for (auto i : indexes_) {
       auto real_output = maketuple->input(i + 1);
-      if (users[real_output].size() > 1) {
+      if (!IsSideEffectNode(real_output) && users[real_output].size() > 1) {
         result.push_back(i);
       }
     }
@@ -318,6 +324,7 @@ bool EliminateRedundantOutput::Run(const FuncGraphPtr &func_graph) {
   return changed;
 }
 
+// update the GetItem(node, i) to GetItem(node, i - offset)
 void EliminateRedundantOutput::UpdateGetitemIndex(const AnfNodePtr &getitem, size_t offset) {
   if (offset == 0) return;
   MS_EXCEPTION_IF_NULL(getitem);
@@ -338,12 +345,15 @@ AnfNodePtr EliminateRedundantOutput::ReplaceMakeTuple(const AnfNodePtr &node, co
   AbstractBasePtrList abstract_list;
   size_t offset = 0;
   for (size_t i = 0; i < getitems.size(); ++i) {
-    if (getitems[i] == nullptr) {
+    // If a node has no user, it should be elminated, but except for side-effect node.
+    if (getitems[i] == nullptr && !IsSideEffectNode(old_maketuple->input(i + 1))) {
       offset++;
     } else {
       new_maketuple_inputs.push_back(old_maketuple->input(i + 1));
       abstract_list.push_back(old_maketuple->input(i + 1)->abstract());
-      UpdateGetitemIndex(getitems[i], offset);
+      if (getitems[i] != nullptr) {
+        UpdateGetitemIndex(getitems[i], offset);
+      }
     }
   }
   if (offset == 0) return nullptr;

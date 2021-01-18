@@ -413,6 +413,36 @@ std::vector<std::string> AnfRuntimeAlgorithm::GetAllInputFormats(const AnfNodePt
   return format;
 }
 
+std::vector<TypeId> AnfRuntimeAlgorithm::GetAllInputDeviceTypes(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!AnfAlgo::IsRealKernel(node)) {
+    MS_LOG(EXCEPTION) << "Not real kernel:"
+                      << "#node [" << node->DebugString() << "]"
+                      << " trace: " << trace::DumpSourceLines(node);
+  }
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(build_info);
+  auto types = build_info->GetAllInputDeviceTypes();
+  return types;
+}
+
+std::vector<TypeId> AnfRuntimeAlgorithm::GetAllOutputDeviceTypes(const AnfNodePtr &node) {
+  MS_EXCEPTION_IF_NULL(node);
+  if (!AnfAlgo::IsRealKernel(node)) {
+    MS_LOG(EXCEPTION) << "Not real kernel:"
+                      << "#node [" << node->DebugString() << "]"
+                      << " trace: " << trace::DumpSourceLines(node);
+  }
+  auto kernel_info = static_cast<device::KernelInfo *>(node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  auto build_info = kernel_info->select_kernel_build_info();
+  MS_EXCEPTION_IF_NULL(build_info);
+  auto types = build_info->GetAllOutputDeviceTypes();
+  return types;
+}
+
 std::string AnfRuntimeAlgorithm::GetOriginDataFormat(const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(node);
   if (!AnfAlgo::IsRealKernel(node)) {

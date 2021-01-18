@@ -81,7 +81,7 @@ void InitDependPrior(const std::vector<AnfNodePtr> &todos,
                      std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior);
 void ReplaceNewFuseCNodeForDependPrior(std::multimap<AnfNodePtr, std::pair<AnfNodePtr, AnfNodePtr>> *depend_prior,
                                        const AnfNodePtr &new_fuse_cnode, const AnfNodePtrList &outputs);
-
+bool HasDataUser(const AnfNodeIndexSet &users, const FuncGraphManagerPtr &mng);
 std::string GetFormat(const AnfNodePtr &node);
 TypePtr GetType(const AnfNodePtr &node);
 ShapeVector GetShape(const AnfNodePtr &node);
