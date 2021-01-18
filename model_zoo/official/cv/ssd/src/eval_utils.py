@@ -17,7 +17,6 @@
 import json
 import numpy as np
 from .config import config
-from .box_utils import ssd_bboxes_decode
 
 
 def apply_nms(all_boxes, all_scores, thres, max_boxes):
@@ -81,7 +80,6 @@ def metrics(pred_data, anno_json):
         img_id = sample['img_id']
         h, w = sample['image_shape']
 
-        pred_boxes = ssd_bboxes_decode(pred_boxes)
         final_boxes = []
         final_label = []
         final_score = []

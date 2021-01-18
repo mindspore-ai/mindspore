@@ -21,10 +21,11 @@ import time
 import numpy as np
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from src.ssd import SSD300, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn
+from src.ssd import SSD300, SsdInferWithDecoder, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn
 from src.dataset import create_ssd_dataset, create_mindrecord
 from src.config import config
 from src.eval_utils import metrics
+from src.box_utils import default_boxes
 
 def ssd_eval(dataset_path, ckpt_path, anno_json):
     """SSD evaluation."""
@@ -35,6 +36,8 @@ def ssd_eval(dataset_path, ckpt_path, anno_json):
         net = SSD300(ssd_mobilenet_v2(), config, is_training=False)
     else:
         net = ssd_mobilenet_v1_fpn(config=config)
+    net = SsdInferWithDecoder(net, Tensor(default_boxes), config)
+
     print("Load Checkpoint!")
     param_dict = load_checkpoint(ckpt_path)
     net.init_parameters_data()

@@ -31,7 +31,7 @@ fi
 # Before start distribute train, first create mindrecord files.
 BASE_PATH=$(cd "`dirname $0`" || exit; pwd)
 cd $BASE_PATH/../ || exit
-python train.py --only_create_dataset=True --run_platform="GPU"
+python train.py --only_create_dataset=True --run_platform="GPU" --dataset=$4
 
 echo "After running the scipt, the network runs in the background. The log will be generated in LOG/log.txt"
 

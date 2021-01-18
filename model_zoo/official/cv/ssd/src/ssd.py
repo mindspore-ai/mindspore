@@ -569,6 +569,42 @@ class SSDWithMobileNetV2(nn.Cell):
         return self.last_channel
 
 
+class SsdInferWithDecoder(nn.Cell):
+    """
+    SSD Infer wrapper to decode the bbox locations.
+
+    Args:
+        network (Cell): the origin ssd infer network without bbox decoder.
+        default_boxes (Tensor): the default_boxes from anchor generator
+        config (dict): ssd config
+    Returns:
+        Tensor, the locations for bbox after decoder representing (y0,x0,y1,x1)
+        Tensor, the prediction labels.
+
+    """
+    def __init__(self, network, default_boxes, config):
+        super(SsdInferWithDecoder, self).__init__()
+        self.network = network
+        self.default_boxes = default_boxes
+        self.prior_scaling_xy = config.prior_scaling[0]
+        self.prior_scaling_wh = config.prior_scaling[1]
+
+    def construct(self, x):
+        pred_loc, pred_label = self.network(x)
+
+        default_bbox_xy = self.default_boxes[..., :2]
+        default_bbox_wh = self.default_boxes[..., 2:]
+        pred_xy = pred_loc[..., :2] * self.prior_scaling_xy * default_bbox_wh + default_bbox_xy
+        pred_wh = P.Exp()(pred_loc[..., 2:] * self.prior_scaling_wh) * default_bbox_wh
+
+        pred_xy_0 = pred_xy - pred_wh / 2.0
+        pred_xy_1 = pred_xy + pred_wh / 2.0
+        pred_xy = P.Concat(-1)((pred_xy_0, pred_xy_1))
+        pred_xy = P.Maximum()(pred_xy, 0)
+        pred_xy = P.Minimum()(pred_xy, 1)
+        return pred_xy, pred_label
+
+
 def ssd_mobilenet_v1_fpn(**kwargs):
     return SsdMobilenetV1Fpn(**kwargs)
 
