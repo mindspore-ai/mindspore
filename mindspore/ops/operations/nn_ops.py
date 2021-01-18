@@ -1338,7 +1338,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
     :math:`\text{in_channels} * \text{channel_multiplier}` channels.
 
     Args:
-        channel_multiplier (int): The multipiler for the original output convolution. Its value must be greater than 0.
+        channel_multiplier (int): The multiplier for the original output convolution. Its value must be greater than 0.
         kernel_size (Union[int, tuple[int]]): The size of the convolution kernel.
         mode (int): Modes for different convolutions. 0 Math convolution, 1 cross-correlation convolution ,
                        2 deconvolution, 3 depthwise convolution. Default: 3.
@@ -2272,7 +2272,6 @@ class SmoothL1Loss(PrimitiveWithInfer):
         validator.check_value_type('beta', beta, [float], self.name)
         validator.check('beta', beta, '', 0, Rel.GT, self.name)
         self.init_prim_io_names(inputs=['prediction', 'target'], outputs=['output'])
-        self.add_prim_attr('sigma', beta)
 
     def infer_shape(self, prediction, target):
         validator.check('prediction shape', prediction, 'target shape', target, Rel.EQ, self.name)

@@ -26,7 +26,7 @@ max_pool_op_info = TBERegOp("MaxPool") \
     .attr("kernel_size", "required", "listInt", "all") \
     .attr("strides", "required", "listInt", "all") \
     .attr("pad_mode", "required", "str", "all") \
-    .attr("data_format", "required", "str", "all") \
+    .attr("format", "required", "str", "all") \
     .input(0, "input_data", False, "required", "all") \
     .output(0, "output_data", False, "required", "all") \
     .dtype_format(DataType.F16_5HD, DataType.F16_5HD) \

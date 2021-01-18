@@ -20,7 +20,7 @@
 namespace mindspore::transform {
 // BiasAddGrad
 INPUT_MAP(BiasAddGrad) = {{1, INPUT_DESC(x)}};
-ATTR_MAP(BiasAddGrad) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+ATTR_MAP(BiasAddGrad) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(BiasAddGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BiasAddGrad, prim::kPrimBiasAddGrad->name(), ADPT_DESC(BiasAddGrad))
 
@@ -30,7 +30,7 @@ ATTR_MAP(Conv2D) = {
   {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
   {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
 };
 OUTPUT_MAP(Conv2D) = {{0, OUTPUT_DESC(y)}};
@@ -44,7 +44,7 @@ ATTR_MAP(Conv2DBackpropInputD) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
   {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
   {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
 };
 OUTPUT_MAP(Conv2DBackpropInputD) = {{0, OUTPUT_DESC(y)}};
@@ -58,7 +58,7 @@ ATTR_MAP(Conv2DBackpropFilterD) = {
   {"pad_list", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"stride", ATTR_DESC(strides, "pad", AnyTraits<std::vector<int64_t>>())},
   {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
   {"group", ATTR_DESC(groups, AnyTraits<int64_t>())},
 };
 OUTPUT_MAP(Conv2DBackpropFilterD) = {{0, OUTPUT_DESC(y)}};
@@ -70,7 +70,7 @@ ATTR_MAP(DepthwiseConv2D) = {
   {"stride", ATTR_DESC(strides, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"pads", ATTR_DESC(pads, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
   {"dilation", ATTR_DESC(dilations, AnyTraits<std::vector<int64_t>>(), AnyTraits<std::vector<int64_t>>())},
-  {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+  {"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
 };
 OUTPUT_MAP(DepthwiseConv2D) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(DepthwiseConv2D, prim::kPrimDepthwiseConv2dNative->name(), ADPT_DESC(DepthwiseConv2D))

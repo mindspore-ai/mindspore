@@ -97,7 +97,7 @@ void ReplaceOutput(const FuncGraphPtr &graph, const AnfNodePtr &bn_grad, const A
     return;
   }
 
-  // Replace orignal output
+  // Replace original output
   auto manager = graph->manager();
   MS_EXCEPTION_IF_NULL(manager);
   sort(bn_outputs.begin(), bn_outputs.end(), CompareTupleGetitem);
@@ -114,7 +114,7 @@ void ReplaceOutput(const FuncGraphPtr &graph, const AnfNodePtr &bn_grad, const A
 bool PatternCheck(const FuncGraphPtr &graph, const AnfNodePtr &node) {
   MS_EXCEPTION_IF_NULL(graph);
   MS_EXCEPTION_IF_NULL(node);
-  auto format_attr = AnfAlgo::GetCNodePrimitive(node)->GetAttr("data_format");
+  auto format_attr = AnfAlgo::GetCNodePrimitive(node)->GetAttr("format");
   MS_EXCEPTION_IF_NULL(format_attr);
   auto format = GetValue<std::string>(format_attr);
   if (AnfAlgo::GetInputFormat(node, 0) != kOpFormat_NHWC && format != "NHWC") {

@@ -32,7 +32,7 @@ batch_norm_op_info = TBERegOp("BatchNormFoldD") \
     .attr("epsilon", "optional", "float", "all") \
     .attr("is_training", "optional", "bool", "all") \
     .attr("freeze_bn", "optional", "int", "all") \
-    .attr("data_format", "optional", "str", "all") \
+    .attr("format", "optional", "str", "all") \
     .input(0, "x", False, "required", "all") \
     .input(1, "x_sum", False, "required", "all") \
     .input(2, "x_square_sum", False, "required", "all") \

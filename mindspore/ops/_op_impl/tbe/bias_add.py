@@ -23,7 +23,7 @@ bias_add_grad_op_info = TBERegOp("BiasAdd") \
     .compute_cost(10) \
     .kernel_name("bias_add") \
     .partial_flag(True) \
-    .attr("data_format", "required", "str", "all") \
+    .attr("format", "required", "str", "all") \
     .input(0, "x", False, "required", "all") \
     .input(1, "bias", False, "required", "all") \
     .output(0, "y", False, "required", "all") \

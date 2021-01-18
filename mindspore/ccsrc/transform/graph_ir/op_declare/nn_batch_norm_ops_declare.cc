@@ -24,7 +24,7 @@ INPUT_MAP(BatchNorm) = {{1, INPUT_DESC(x)},
                         {3, INPUT_DESC(offset)},
                         {4, INPUT_DESC(mean)},
                         {5, INPUT_DESC(variance)}};
-ATTR_MAP(BatchNorm) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+ATTR_MAP(BatchNorm) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
                        {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
                        {"is_training", ATTR_DESC(is_training, AnyTraits<bool>())}};
 OUTPUT_MAP(BatchNorm) = {{0, OUTPUT_DESC(y)},
@@ -40,7 +40,7 @@ INPUT_MAP(BatchNormGrad) = {{1, INPUT_DESC(y_backprop)},
                             {3, INPUT_DESC(scale)},
                             {4, INPUT_DESC(reserve_space_1)},
                             {5, INPUT_DESC(reserve_space_2)}};
-ATTR_MAP(BatchNormGrad) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())},
+ATTR_MAP(BatchNormGrad) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())},
                            {"epsilon", ATTR_DESC(epsilon, AnyTraits<float>())},
                            {"is_training", ATTR_DESC(is_training, AnyTraits<bool>())}};
 OUTPUT_MAP(BatchNormGrad) = {{0, OUTPUT_DESC(x_backprop)},

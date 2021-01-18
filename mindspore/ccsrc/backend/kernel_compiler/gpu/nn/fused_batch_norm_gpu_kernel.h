@@ -104,7 +104,7 @@ class FusedBatchNormGpuKernel : public GpuKernel {
     }
     cudnnTensorFormat_t cudnn_format = CUDNN_TENSOR_NCHW;
     auto format = AnfAlgo::GetInputFormat(kernel_node, 0);
-    auto format_attr = GetAttr<std::string>(kernel_node, "data_format");
+    auto format_attr = GetAttr<std::string>(kernel_node, "format");
     if (format_attr == kOpFormat_NHWC) {
       format = kOpFormat_NHWC;
       cudnn_format = CUDNN_TENSOR_NHWC;
