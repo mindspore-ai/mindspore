@@ -517,7 +517,63 @@ TEST_F(MindDataTestTreeModifying, Drop04) {
 TEST_F(MindDataTestTreeModifying, Drop05) {
   MS_LOG(INFO) << "Doing MindDataTestTreeModifying-Drop05";
   /*
-   * Case 5: When the node has more than one child and more than one sibling, Drop() will raise an error.
+   * Case 5: When the node has only one child but has siblings, Drop() detaches the node from its tree and the node's
+   *         children become its parent's children.
+   *
+   * Input tree:
+   *       ds10
+   *      /    \
+   *    ds9    ds6
+   *     |   /  |  \
+   *    ds8 ds5 ds4 ds1
+   *     |      |
+   *    ds7    ds3
+   *
+   *   ds4->Drop() yields the tree below:
+   *
+   *       ds10
+   *      /    \
+   *    ds9    ds6
+   *     |   /  |  \
+   *    ds8 ds5 ds3 ds1
+   *     |
+   *    ds7
+   *
+   */
+  std::string folder_path = datasets_root_path_ + "/testPK/data/";
+  std::shared_ptr<Dataset> ds7 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds8 = ds7->Take(20);
+  std::shared_ptr<Dataset> ds9 = ds8->Skip(1);
+  std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds4 = ds3->Skip(1);
+  std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
+  std::shared_ptr<Dataset> ds6 = ds1->Concat({ds5, ds4});  // ds1 is put after (ds5, ds4)!!!
+  std::shared_ptr<Dataset> ds10 = ds6 + ds9;
+  Status rc;
+
+  std::shared_ptr<DatasetNode> root = ds10->IRNode();
+  auto ir_tree = std::make_shared<TreeAdapter>();
+  rc = ir_tree->Compile(root);  // Compile adds a new RootNode to the top of the tree
+  EXPECT_EQ(rc, Status::OK());
+  // Descend two levels as Compile adds the root node and the epochctrl node on top of ds4
+  std::shared_ptr<DatasetNode> ds10_node = ir_tree->RootIRNode()->Children()[0]->Children()[0];
+  std::shared_ptr<DatasetNode> ds6_node = ds10_node->Children()[1];
+  std::shared_ptr<DatasetNode> ds4_node = ds6_node->Children()[1];
+  std::shared_ptr<DatasetNode> ds3_node = ds4_node->Children()[0];
+  rc = ds4_node->Drop();
+  EXPECT_EQ(rc, Status::OK());
+  EXPECT_TRUE(ds6_node->Children().size() == 3);
+  EXPECT_TRUE(ds6_node->Children()[1] == ds3_node);
+  EXPECT_TRUE(ds3_node->Parent() == ds6_node.get());
+  EXPECT_TRUE(ds4_node->Parent() == nullptr);
+  EXPECT_TRUE(ds4_node->Children().empty());
+}
+
+TEST_F(MindDataTestTreeModifying, Drop06) {
+  MS_LOG(INFO) << "Doing MindDataTestTreeModifying-Drop06";
+  /*
+   * Case 6: When the node has more than one child and more than one sibling, Drop() will raise an error.
    *         If we want to drop ds4 from the input tree, ds4->Drop() will not work. We will have to do it
    *         with a combination of Drop(), InsertChildAt()
    *
