@@ -90,6 +90,7 @@ constexpr auto kReshapeOpName = "Reshape";
 constexpr auto kTransposeOpName = "Transpose";
 constexpr auto kSplitOpName = "Split";
 constexpr auto kSplitVOpName = "SplitV";
+constexpr auto kConcatOpName = "Concat";
 constexpr auto kSparseApplyAdagradOpName = "SparseApplyAdagrad";
 constexpr auto kMomentumOpName = "Momentum";
 constexpr auto kApplyMomentumOpName = "ApplyMomentum";
@@ -376,6 +377,7 @@ constexpr auto kAttrIsGrad = "is_grad";
 constexpr auto kAttrStitch = "stitch";
 constexpr auto kAttrStitchWithAtomic = "stitch_with_atomic";
 constexpr auto kAttrParallelDimInfo = "parallel_dim_info";
+constexpr auto kAttrNonTask = "non_task";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
