@@ -79,7 +79,7 @@ class ExponentialDecayLR(LearningRateSchedule):
     Inputs:
         Tensor. The current step number.
 
-    Returns:
+    Outputs:
         Tensor. The learning rate value for the current step.
 
     Examples:
@@ -137,7 +137,7 @@ class NaturalExpDecayLR(LearningRateSchedule):
     Inputs:
         Tensor. The current step number.
 
-    Returns:
+    Outputs:
         Tensor. The learning rate value for the current step.
 
     Examples:
@@ -196,7 +196,7 @@ class InverseDecayLR(LearningRateSchedule):
     Inputs:
         Tensor. The current step number.
 
-    Returns:
+    Outputs:
         Tensor. The learning rate value for the current step.
 
     Examples:
@@ -244,7 +244,7 @@ class CosineDecayLR(LearningRateSchedule):
     Inputs:
         Tensor. The current step number.
 
-    Returns:
+    Outputs:
         Tensor. The learning rate value for the current step.
 
     Examples:
@@ -311,7 +311,7 @@ class PolynomialDecayLR(LearningRateSchedule):
     Inputs:
         Tensor. The current step number.
 
-    Returns:
+    Outputs:
         Tensor. The learning rate value for the current step.
 
     Examples:
@@ -381,7 +381,7 @@ class WarmUpLR(LearningRateSchedule):
     Inputs:
         Tensor. The current step number.
 
-    Returns:
+    Outputs:
         Tensor. The learning rate value for the current step.
 
     Examples:
