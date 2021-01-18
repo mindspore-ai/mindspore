@@ -57,17 +57,17 @@ class LARS(Optimizer):
 
     .. math::
 
-    \begin{array}\\
-        \lambda  = \frac{\theta  \text{ * } || \omega  ||  }{|| g_{t} || \text{ + } \delta \text{ * } || \omega  || }  \\
-        \lambda  =
-        \begin{cases}
-            \min(\frac{\lambda}{\alpha }, 1)
-                & \text{ if } clip = True \\
-            \lambda
-                & \text{ otherwise }
-        \end{cases}\\
-        g_{t+1} = \lambda * (g_{t} + \delta * \omega)
-    \end{array}
+        \begin{array}{ll} \\
+            \lambda  = \frac{\theta  \text{ * } || \omega  ||  }{|| g_{t} || \text{ + } \delta \text{ * } || \omega  || }  \\
+            \lambda  =
+            \begin{cases}
+                \min(\frac{\lambda}{\alpha }, 1)
+                    & \text{ if } clip = True \\
+                \lambda
+                    & \text{ otherwise }
+            \end{cases}\\
+            g_{t+1} = \lambda * (g_{t} + \delta * \omega)
+        \end{array}
 
     :math:`\theta` represents `coefficient`, :math:`\omega` represents `parameters`, :math:`g` represents `gradients`,
     :math:`t` represents updateing step, :math:`\delta` represents `weight_decay`,

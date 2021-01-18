@@ -212,26 +212,26 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
     r"""
     Quantization aware operation which provides the fake quantization observer function on data with min and max.
 
-    The running min/max :math:`x_\text{min}` and :math:`x_\text{max}` are computed as:
+    The running min/max :math:`x_{min}` and :math:`x_{max}` are computed as:
 
     .. math::
 
-    \begin{array}{ll} \\
-        x_\text{min} =
-        \begin{cases}
-            \min(\min(X), 0)
-              & \text{ if } ema = \text{False} \\
-            \min((1 - c) \min(X) + \text{c } x_\text{min}, 0)
-              & \text{ if } \text{otherwise}
-        \end{cases}\\
-        x_\text{max} =
-        \begin{cases}
-            \max(\max(X), 0)
-              & \text{ if } ema = \text{False} \\
-            \max((1 - c) \max(X) + \text{c } x_\text{max}, 0)
-              & \text{ if } \text{otherwise}
-        \end{cases}
-    \end{array}
+        \begin{array}{ll} \\
+            x_{min} =
+            \begin{cases}
+                \min(\min(X), 0)
+                  & \text{ if } ema = \text{False} \\
+                \min((1 - c) \min(X) + \text{c } x_{min}, 0)
+                  & \text{ if } \text{otherwise}
+            \end{cases}\\
+            x_{max} =
+            \begin{cases}
+                \max(\max(X), 0)
+                  & \text{ if } ema = \text{False} \\
+                \max((1 - c) \max(X) + \text{c } x_{max}, 0)
+                  & \text{ if } \text{otherwise}
+            \end{cases}
+        \end{array}
 
     where X is the input tensor, and :math:`c` is the `ema_decay`.
 
@@ -239,32 +239,32 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
 
     .. math::
 
-    \begin{array}{ll} \\
-        s =
-        \begin{cases}
-            \frac{x_\text{max} - x_\text{min}}{Q_\text{max} - Q_\text{min}}
-              & \text{ if } symmetric = \text{False} \\
-            \frac{2\max(x_\text{max}, \left | x_\text{min} \right |) }{Q_\text{max} - Q_\text{min}}
-              & \text{ if } \text{otherwise}
-        \end{cases}\\
-        zp\_min = Q_\text{min} - \frac{x_\text{min}}{scale} \\
-        zp = \left \lfloor \min(Q_\text{max}, \max(Q_\text{min}, zp\_min)) + 0.5 \right \rfloor
-    \end{array}
+        \begin{array}{ll} \\
+            s =
+            \begin{cases}
+                \frac{x_{max} - x_{min}}{Q_{max} - Q_{min}}
+                  & \text{ if } symmetric = \text{False} \\
+                \frac{2\max(x_{max}, \left | x_{min} \right |) }{Q_{max} - Q_{min}}
+                  & \text{ if } \text{otherwise}
+            \end{cases}\\
+            zp\_min = Q_{min} - \frac{x_{min}}{scale} \\
+            zp = \left \lfloor \min(Q_{max}, \max(Q_{min}, zp\_min)) + 0.5 \right \rfloor
+        \end{array}
 
-    where :math:`Q_\text{max}` and :math:`Q_\text{min}` is decided by quant_dtype, for example, if quant_dtype=INT8,
-    then :math:`Q_\text{max}`=127 and :math:`Q_\text{min}`=-128.
+    where :math:`Q_{max}` and :math:`Q_{min}` is decided by quant_dtype, for example, if quant_dtype=INT8,
+    then :math:`Q_{max} = 127` and :math:`Q_{min} = -128`.
 
     The fake quant output is computed as:
 
     .. math::
 
-    \begin{array}{ll} \\
-        u_\text{min} = (Q_\text{min} - zp) * scale \\
-        u_\text{max} = (Q_\text{max} - zp) * scale \\
-        u_X = \left \lfloor \frac{\min(u_\text{max}, \max(u_\text{min}, X)) - u_\text{min}}{scale}
-        + 0.5 \right \rfloor \\
-        output = u_X * scale + u_\text{min}
-    \end{array}
+        \begin{array}{ll} \\
+            u_{min} = (Q_{min} - zp) * scale \\
+            u_{max} = (Q_{max} - zp) * scale \\
+            u_X = \left \lfloor \frac{\min(u_{max}, \max(u_{min}, X)) - u_{min}}{scale}
+            + 0.5 \right \rfloor \\
+            output = u_X * scale + u_{min}
+        \end{array}
 
 
     Args:
@@ -393,7 +393,7 @@ class Conv2dBnFoldQuantOneConv(Cell):
     2D convolution which use the convolution layer statistics once to calculate BatchNormal operation folded construct.
 
     This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
-    please refer to :class`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -594,7 +594,7 @@ class Conv2dBnFoldQuant(Cell):
     2D convolution with BatchNormal operation folded construct.
 
     This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
-    please refer to :class`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -783,7 +783,7 @@ class Conv2dBnWithoutFoldQuant(Cell):
     2D convolution and batchnorm without fold with fake quantized construct.
 
     This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
-    please refer to :class`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -899,7 +899,7 @@ class Conv2dQuant(Cell):
     2D convolution with fake quantized operation layer.
 
     This part is a more detailed overview of Conv2d operation. For more detials about Quantilization,
-    please refer to :class`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         in_channels (int): The number of input channel :math:`C_{in}`.
@@ -1010,7 +1010,7 @@ class DenseQuant(Cell):
     The fully connected layer with fake quantized operation.
 
     This part is a more detailed overview of Dense operation. For more detials about Quantilization,
-    please refer to :class`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         in_channels (int): The dimension of the input space.
@@ -1127,7 +1127,7 @@ class ActQuant(_QuantActivation):
 
     Add the fake quantized operation to the end of activation operation, by which the output of activation operation
     will be truncated. For more detials about Quantilization,
-    please refer to :class`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         activation (Cell): Activation cell.
@@ -1196,7 +1196,7 @@ class TensorAddQuant(Cell):
     Add fake quantized operation after TensorAdd operation.
 
     This part is a more detailed overview of TensorAdd operation. For more detials about Quantilization,
-    please refer to :class`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.
@@ -1249,7 +1249,7 @@ class MulQuant(Cell):
     Add fake quantized operation after `Mul` operation.
 
     This part is a more detailed overview of `Mul` operation. For more detials about Quantilization,
-    please refer to :class`mindspore.nn.FakeQuantWithMinMaxObserver`.
+    please refer to :class:`mindspore.nn.FakeQuantWithMinMaxObserver`.
 
     Args:
         ema_decay (float): Exponential Moving Average algorithm parameter. Default: 0.999.

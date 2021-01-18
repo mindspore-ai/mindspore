@@ -105,7 +105,7 @@ class Range(Cell):
     r"""
     Creates a sequence of numbers in range [start, limit) with step size delta.
 
-    The size of output is \left \lfloor \frac{limit-start}{delta}  \right \rfloor + 1 and `delta` is the gap
+    The size of output is :math:`\left \lfloor \frac{limit-start}{delta}  \right \rfloor + 1` and `delta` is the gap
     between two values in the tensor.
 
     .. math::
@@ -827,7 +827,7 @@ def matmul_op_select(x1_shape, x2_shape, transpose_x1, transpose_x2):
 
 
 class MatMul(Cell):
-    """
+    r"""
     Multiplies matrix `x1` by matrix `x2`.
 
     - If both x1 and x2 are 1-dimensional, the dot product is returned.

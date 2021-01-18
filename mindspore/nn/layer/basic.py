@@ -481,28 +481,32 @@ class OneHot(Cell):
     """
     Returns a one-hot tensor.
 
-    The locations represented by indices in argument 'indices' take value on_value,
+    The locations represented by indices in argument `indices` take value on_value,
     while all other locations take value off_value.
 
     Note:
         If the input indices is rank :math:`N`, the output will have rank :math:`N+1`. The new
         axis is created at dimension `axis`.
 
-    If :math:`indices` is a scalar, the output shape will be a vector of length :math:`depth`.
+    If `indices` is a scalar, the output shape will be a vector of length `depth`.
 
-    If :math:`indices` is a vector of length :math:`features`, the output shape will be:
+    If `indices` is a vector of length `features`, the output shape will be:
 
-    :math:`features * depth if axis == -1`
+    .. code-block::
 
-    :math:`depth * features if axis == 0`
+        features * depth if axis == -1
 
-    If :math:`indices` is a matrix with shape :math:`[batch, features]`, the output shape will be:
+        depth * features if axis == 0
 
-    :math:`batch * features * depth if axis == -1`
+    If `indices` is a matrix with shape `[batch, features]`, the output shape will be:
 
-    :math:`batch * depth * features if axis == 1`
+    .. code-block::
 
-    :math:`depth * batch * features if axis == 0`
+        batch * features * depth if axis == -1
+
+        batch * depth * features if axis == 1
+
+        depth * batch * features if axis == 0
 
     Args:
         axis (int): Features x depth if axis is -1, depth x features
@@ -519,7 +523,7 @@ class OneHot(Cell):
         - **indices** (Tensor) - A tensor of indices of data type mindspore.int32 and arbitrary shape.
 
     Outputs:
-        Tensor, the one-hot tensor of data type 'dtype' with dimension at 'axis' expanded to 'depth' and filled with
+        Tensor, the one-hot tensor of data type `dtype` with dimension at `axis` expanded to `depth` and filled with
         on_value and off_value.
 
     Supported Platforms:
@@ -563,7 +567,9 @@ class Pad(Cell):
             be extended behind of the `D` th dimension of the input tensor. The padded size of each dimension D of the
             output is:
 
-            :math:`paddings[D, 0]` + input_x.dim_size(D) + paddings[D, 1]`.
+            .. code-block::
+
+                paddings[D, 0] + input_x.dim_size(D) + paddings[D, 1]
 
         mode (str): Specifies padding mode. The optional values are "CONSTANT", "REFLECT", "SYMMETRIC".
             Default: "CONSTANT".
@@ -723,9 +729,14 @@ class Unfold(Cell):
     Outputs:
         Tensor, a 4-D tensor whose data type is same as `input_x`,
         and the shape is [out_batch, out_depth, out_row, out_col] where `out_batch` is the same as the `in_batch`.
-        :math:`out_depth = ksize_row * ksize_col * in_depth`,
-        :math:`out_row = (in_row - (ksize_row + (ksize_row - 1) * (rate_row - 1))) // stride_row + 1`,
-        :math:`out_col = (in_col - (ksize_col + (ksize_col - 1) * (rate_col - 1))) // stride_col + 1`.
+
+        .. code-block::
+
+            out_depth = ksize_row * ksize_col * in_depth
+
+            out_row = (in_row - (ksize_row + (ksize_row - 1) * (rate_row - 1))) // stride_row + 1
+
+            out_col = (in_col - (ksize_col + (ksize_col - 1) * (rate_col - 1))) // stride_col + 1
 
     Supported Platforms:
         ``Ascend``
@@ -867,13 +878,15 @@ def _get_matrix_diag_part_assist(x_shape, x_dtype):
 
 
 class MatrixDiag(Cell):
-    """
+    r"""
     Returns a batched diagonal tensor with a given batched diagonal values.
 
     Assume :math:`x` has :math:`k` dimensions :math:`[I, J, K, ..., N]`, then the output is a tensor of rank
     :math:`k+1` with dimensions :math:`[I, J, K, ..., N, N]` where:
 
-    :math:`output[i, j, k, ..., m, n] = 1{m=n} * x[i, j, k, ..., n]`.
+    .. code-block::
+
+        output[i, j, k, ..., m, n] = 1{m=n} * x[i, j, k, ..., n]
 
     Inputs:
         - **x** (Tensor) - The diagonal values. It can be one of the following data types:
@@ -911,10 +924,12 @@ class MatrixDiagPart(Cell):
     r"""
     Returns the batched diagonal part of a batched tensor.
 
-    Assume :math:`x` has :math:`k` dimensions :math:`[I, J, K, ..., M, N]`, then the output is a tensor of rank
+    Assume `x` has :math:`k` dimensions :math:`[I, J, K, ..., M, N]`, then the output is a tensor of rank
     :math:`k-1` with dimensions :math:`[I, J, K, ..., min(M, N]` where:
 
-    :math:`output[i, j, k, ..., n] = x[i, j, k, ..., n, n]`.
+    .. code-block::
+
+        output[i, j, k, ..., n] = x[i, j, k, ..., n, n]
 
     Inputs:
         - **x** (Tensor) - The batched tensor. It can be one of the following data types:
@@ -953,13 +968,15 @@ class MatrixSetDiag(Cell):
     r"""
     Modifies the batched diagonal part of a batched tensor.
 
-    Assume :math:`x` has :math:`k+1` dimensions :math:`[I, J, K, ..., M, N]` and :math:`diagonal` has :math:`k`
+    Assume `x` has :math:`k+1` dimensions :math:`[I, J, K, ..., M, N]` and `diagonal` has :math:`k`
     dimensions :math:`[I, J, K, ..., min(M, N)]`. Then the output is a tensor of rank :math:`k+1` with dimensions
     :math:`[I, J, K, ..., M, N]` where:
 
-        :math:`output[i, j, k, ..., m, n] = diagnoal[i, j, k, ..., n]` for :math:`m == n`.
+    .. code-block::
 
-        :math:`output[i, j, k, ..., m, n] = x[i, j, k, ..., m, n]` for :math:`m != n`.
+        output[i, j, k, ..., m, n] = diagnoal[i, j, k, ..., n] for m == n
+
+        output[i, j, k, ..., m, n] = x[i, j, k, ..., m, n] for m != n
 
     Inputs:
         - **x** (Tensor) - The batched tensor. Rank k+1, where k >= 1. It can be one of the following data types:
