@@ -41,6 +41,11 @@ struct InputTensorInfo {
   std::set<KernelWithIndex> input_kernel;
 };
 
+struct OutputTensorInfo {
+  tensor::TensorPtr output_stub_tensor;
+  bool is_weight;
+};
+
 class AscendSession : public SessionBasic {
  public:
   AscendSession() { final_graph_id_ = kInvalidGraphId; }
@@ -79,6 +84,7 @@ class AscendSession : public SessionBasic {
   void RunOpAdjustKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void AssignStream(NotNull<KernelGraphPtr> kernel_graph) const;
   void BuildKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
+  void BuildKernel(const std::vector<CNodePtr> &kernels) const;
   void BuildDynamicKernel(const std::shared_ptr<KernelGraph> &kernel_graph) const;
   void MemoryAlloc(KernelGraph *kernel_graph) const;
   void RunOpMemoryAlloc(const std::vector<tensor::TensorPtr> &input_tensors, KernelGraph *kernel_graph) const;
@@ -119,7 +125,11 @@ class AscendSession : public SessionBasic {
   void LoadGraphsToDbg(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
   void AssignStaticMemory(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
   void UpdateRefOutputMap(const NotNull<KernelGraphPtr> graph, NotNull<std::set<KernelGraphPtr> *> memo) const;
-
+  KernelGraphPtr PreBuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
+                            const std::vector<tensor::TensorPtr> &input_tensors,
+                            const std::vector<int64_t> &tensors_mask);
+  void BuildOpsInGraph(KernelGraph *graph, const std::map<AnfNodePtr, size_t> &parameter_index,
+                       const std::vector<tensor::TensorPtr> &graph_inputs);
   // key is final_graph_id,value is child graph execute order of final graph
   std::unordered_map<GraphId, std::vector<GraphId>> graph_execute_orders_;
   // key is final_graph_id,value is the graph types of child graphs
@@ -128,6 +138,8 @@ class AscendSession : public SessionBasic {
   std::map<std::pair<GraphId, size_t>, tensor::TensorPtr> initial_tenosrs_;
   // final_graph_id is used in every root graph has it's own session situation
   GraphId final_graph_id_;
+  // record graph ids of bp graphs that has been built in PyNative mode
+  std::set<GraphId> built_graph_id_;
 };
 MS_REG_SESSION(kAscendDevice, AscendSession);
 }  // namespace session

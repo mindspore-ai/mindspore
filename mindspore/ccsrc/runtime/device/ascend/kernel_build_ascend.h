@@ -17,6 +17,8 @@
 #ifndef MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_BUILD_ASCEND_H_
 #define MINDSPORE_CCSRC_RUNTIME_DEVICE_ASCEND_KERNEL_BUILD_ASCEND_H_
 
+#include <vector>
+
 #include "backend/session/kernel_graph.h"
 
 namespace mindspore {
@@ -25,7 +27,7 @@ namespace ascend {
 /**
  * @brief kernel build for ascend.
  */
-bool KernelBuild(const mindspore::session::KernelGraph *kernel_graph_ptr);
+bool KernelBuild(const std::vector<CNodePtr> &kernels);
 /**
  * @brief preporcess of kernel build for ascend, e.g. inserting clear_zero node for maxpool, bn.
  * Must DO these changes just before kernel build, and after all of other optimizations on AnfGraph

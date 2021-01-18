@@ -67,12 +67,11 @@ static kernel::KernelModPtr SerialCompileImpl(const AnfNodePtr &anf_node) {
   return kernel_mod_ptr;
 }
 
-static bool KernelBuildParallelCompile(const mindspore::session::KernelGraph *kernel_graph_ptr) {
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+static bool KernelBuildParallelCompile(const std::vector<CNodePtr> &kernels) {
   std::vector<AnfNodePtr> tbe_nodes;
   std::vector<AnfNodePtr> akg_nodes;
   std::vector<AnfNodePtr> other_nodes;
-  for (const auto &anf_node : kernel_graph_ptr->execution_order()) {
+  for (const auto &anf_node : kernels) {
     MS_EXCEPTION_IF_NULL(anf_node);
     if (!AnfAlgo::IsRealKernel(anf_node)) {
       continue;
@@ -217,12 +216,9 @@ static bool IsAtomicNode(const CNodePtr &kernel_node) {
   return !(workspace_indexs.empty() && output_indexs.empty());
 }
 
-bool KernelBuild(const mindspore::session::KernelGraph *kernel_graph_ptr) {
-  MS_EXCEPTION_IF_NULL(kernel_graph_ptr);
+bool KernelBuild(const std::vector<CNodePtr> &kernels) {
   TbeUtils::LoadCache();
-  bool ret;
-  ret = device::ascend::KernelBuildParallelCompile(kernel_graph_ptr);
-  return ret;
+  return device::ascend::KernelBuildParallelCompile(kernels);
 }
 
 std::map<AnfNodePtr, std::vector<size_t>> GetCommunicationOpInputInfo(
