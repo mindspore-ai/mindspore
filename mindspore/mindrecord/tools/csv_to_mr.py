@@ -29,6 +29,7 @@ except ModuleNotFoundError:
 
 __all__ = ['CsvToMR']
 
+
 class CsvToMR:
     """
     A class to transform from csv to MindRecord.
@@ -121,7 +122,7 @@ class CsvToMR:
         Executes transformation from csv to MindRecord.
 
         Returns:
-            SUCCESS or FAILED, whether csv is successfully transformed to MindRecord.
+            MSRStatus, whether csv is successfully transformed to MindRecord.
         """
         if not os.path.exists(self.source):
             raise IOError("Csv file {} do not exist.".format(self.source))
