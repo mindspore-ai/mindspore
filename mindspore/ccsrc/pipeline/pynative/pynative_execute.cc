@@ -1877,15 +1877,15 @@ void PynativeExecutor::NewGraphInner(const py::object &cell, const py::args &arg
   if (graph_stack_.empty() && !top_cell_list_.empty() && CheckCellGraph(cell_id) && !CheckDynamicCell(cell_id)) {
     // Clear previous step resource
     if (IsTopestGraph(cell_id) && cell_op_info_stack_.empty()) {
-      top_cell_id_ = cell_id;
-      CleanPreMemoryInValueNode();
       op_index_map_.clear();
+      CleanPreMemoryInValueNode();
+      top_cell_id_ = cell_id;
       in_grad_process_ = true;
     }
     if (!in_grad_process_ && cell_op_info_stack_.empty()) {
-      top_cell_id_ = GetTopCell(cell_id);
-      CleanPreMemoryInValueNode();
       op_index_map_.clear();
+      CleanPreMemoryInValueNode();
+      top_cell_id_ = GetTopCell(cell_id);
       in_grad_process_ = true;
       MS_LOG(DEBUG) << "Top cell id " << top_cell_id_;
     }
@@ -1933,8 +1933,8 @@ void PynativeExecutor::MakeNewTopGraph(const string &cell_id, const py::args &ar
   if (CheckRealDynamicCell(cell_id)) {
     VectorClear<std::vector<TopCellInfoPtr>>(&top_cell_list_, cell_id);
   }
-  CleanPreMemoryInValueNode();
   op_index_map_.clear();
+  CleanPreMemoryInValueNode();
 
   // Init resource for new top cell
   if (!CheckCellGraph(cell_id)) {
@@ -2240,9 +2240,9 @@ void PynativeExecutor::ClearCnodeRes(const AnfNodePtr &node, std::unordered_set<
   (*node_set).insert(node);
   auto cnode = node->cast<CNodePtr>();
   cnode->clear_inputs_value();
+  cnode->set_forward(nullptr, "");
   for (size_t i = 0; i < cnode->size(); ++i) {
     auto n = cnode->input(i);
-    cnode->set_forward(nullptr, "");
     ClearCnodeRes(n, node_set);
   }
 }
@@ -2912,20 +2912,25 @@ void PynativeExecutor::ClearRes() {
   graph_id_ = 0;
   grad_order_ = 0;
   grad_flag_ = false;
+  in_grad_process_ = false;
   has_dynamic_cell_ = false;
   grad_is_running_ = false;
   need_replace_forward_ = true;
   curr_g_ = nullptr;
 
-  graph_info_map_.clear();
-  replace_weights_map_.clear();
+  top_cell_id_.clear();
   cell_graph_list_.clear();
   top_cell_list_.clear();
+  cell_input_args_.clear();
+  graph_info_map_.clear();
+  replace_weights_map_.clear();
   op_index_map_.clear();
   cell_op_index_with_tensor_id_.clear();
   cell_tensor_id_with_tensor_.clear();
   prim_abs_list_.clear();
+  all_value_node_tensors_.clear();
   std::stack<FuncGraphPtr>().swap(graph_stack_);
+  std::stack<std::string>().swap(cell_op_info_stack_);
 }
 
 void PynativeExecutor::NewGraph(const py::object &cell, const py::args &args) {
