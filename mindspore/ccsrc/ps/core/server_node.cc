@@ -92,6 +92,7 @@ void ServerNode::Initialize() {
   node_info_.port_ = server_->BoundPort();
   MS_LOG(INFO) << "The node role:" << CommUtil::NodeRoleToString(node_info_.node_role_)
                << " is generate uuid is:" << node_info_.node_id_;
+  InitCommandHandler();
   if (!InitClientToScheduler()) {
     MS_LOG(EXCEPTION) << "Server node init client timeout!";
   }
