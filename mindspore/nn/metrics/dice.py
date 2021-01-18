@@ -26,7 +26,7 @@ class Dice(Metric):
         The function is shown as follows:
 
         .. math::
-            \text{dice} = \frac{2 * (\text{pred} \bigcap \text{true})}{\text{pred} \bigcup \text{true}}
+            dice = \frac{2 * (pred \bigcap true)}{pred \bigcup true}
 
         Args:
             smooth (float): A term added to the denominator to improve numerical stability. Should be greater than 0.
@@ -58,7 +58,7 @@ class Dice(Metric):
 
     def update(self, *inputs):
         """
-        Updates the internal evaluation result :math:`y_{pred}` and :math:`y`.
+        Updates the internal evaluation result :math:`y_pred` and :math:`y`.
 
         Args:
             inputs: Input `y_pred` and `y`. `y_pred` and `y` are Tensor, list or numpy.ndarray. `y_pred` is the

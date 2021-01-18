@@ -85,6 +85,7 @@ class dice_coeff(nn.Metric):
             raise RuntimeError('Total samples num must not be 0.')
         return self._dice_coeff_sum / float(self._samples_num)
 
+
 def test_net(data_dir,
              ckpt_path,
              cross_valid_ind=1,
@@ -101,6 +102,7 @@ def test_net(data_dir,
     print("============== Starting Evaluating ============")
     dice_score = model.eval(valid_dataset, dataset_sink_mode=False)
     print("============== Cross valid dice coeff is:", dice_score)
+
 
 def get_args():
     parser = argparse.ArgumentParser(description='Test the UNet on images and target masks',
