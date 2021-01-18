@@ -936,7 +936,7 @@ class Moments(Cell):
         self.squeeze = P.Squeeze(self.axis)
 
     def construct(self, x):
-        tensor_dtype = x.dtype
+        tensor_dtype = F.dtype(x)
         _check_input_dtype("input x", tensor_dtype, [mstype.float16, mstype.float32], self.cls_name)
         if tensor_dtype == mstype.float16:
             x = self.cast(x, mstype.float32)

@@ -25,6 +25,12 @@ from mindspore._checkparam import Validator as validator
 from mindspore.ops.primitive import constexpr
 
 
+@constexpr
+def _check_shape(input_shape, out_shape):
+    if input_shape != out_shape:
+        raise ValueError("Cannot broadcast the shape of x to the shape of clip_value_min or clip_value_max.")
+
+
 def clip_by_value(x, clip_value_min, clip_value_max):
     """
     Clips tensor values to a specified min and max.
@@ -63,6 +69,7 @@ def clip_by_value(x, clip_value_min, clip_value_max):
     max_op = P.Maximum()
     x_min = min_op(x, clip_value_max)
     x_max = max_op(x_min, clip_value_min)
+    _check_shape(F.shape(x), F.shape(x_max))
     return x_max
 
 
