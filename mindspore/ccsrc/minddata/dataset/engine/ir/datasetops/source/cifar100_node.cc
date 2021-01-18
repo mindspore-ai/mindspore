@@ -33,7 +33,7 @@ Cifar100Node::Cifar100Node(const std::string &dataset_dir, const std::string &us
     : MappableSourceNode(std::move(cache)), dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
 
 std::shared_ptr<DatasetNode> Cifar100Node::Copy() {
-  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->Copy();
+  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<Cifar100Node>(dataset_dir_, usage_, sampler, cache_);
   return node;
 }
@@ -68,7 +68,7 @@ Status Cifar100Node::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
 
   node_ops->push_back(std::make_shared<CifarOp>(CifarOp::CifarType::kCifar100, usage_, num_workers_, rows_per_buffer_,
                                                 dataset_dir_, connector_que_size_, std::move(schema),
-                                                std::move(sampler_->Build())));
+                                                std::move(sampler_->SamplerBuild())));
 
   return Status::OK();
 }
@@ -89,7 +89,7 @@ Status Cifar100Node::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &si
   }
   int64_t num_rows, sample_size;
   RETURN_IF_NOT_OK(CifarOp::CountTotalRows(dataset_dir_, usage_, false, &num_rows));
-  sample_size = sampler_->Build()->CalculateNumSamples(num_rows);
+  sample_size = sampler_->SamplerBuild()->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
   dataset_size_ = *dataset_size;
   return Status::OK();

@@ -40,7 +40,7 @@ AlbumNode::AlbumNode(const std::string &dataset_dir, const std::string &data_sch
       sampler_(sampler) {}
 
 std::shared_ptr<DatasetNode> AlbumNode::Copy() {
-  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->Copy();
+  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<AlbumNode>(dataset_dir_, schema_path_, column_names_, decode_, sampler, cache_);
   return node;
 }
@@ -75,7 +75,8 @@ Status AlbumNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
   RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
   node_ops->push_back(std::make_shared<AlbumOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
-                                                decode_, extensions, std::move(schema), std::move(sampler_->Build())));
+                                                decode_, extensions, std::move(schema),
+                                                std::move(sampler_->SamplerBuild())));
   return Status::OK();
 }
 

@@ -330,6 +330,13 @@ class MappableSourceNode : public DatasetNode {
   /// \brief Node name getter
   /// \return Name of the current node
   virtual std::string Name() const = 0;
+
+  /// \brief Sampler getter
+  /// \return SamplerObj of the current node
+  virtual std::shared_ptr<SamplerObj> Sampler() = 0;
+
+  /// \brief Sampler setter
+  virtual void SetSampler(std::shared_ptr<SamplerObj> sampler) = 0;
 };
 
 // NonMappableSourceNode represents the leaf nodes that can not be randomly accessed.

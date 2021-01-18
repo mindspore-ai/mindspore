@@ -101,7 +101,7 @@ Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<MappableSourceNode> n
 }
 
 Status AutoWorkerPass::OpWeightPass::Visit(std::shared_ptr<NonMappableSourceNode> node, bool *const modified) {
-  auto itr = weight_profile_.find("NonMappableSourceNode");
+  auto itr = weight_profile_.find("NonMappableSource");
   CHECK_FAIL_RETURN_UNEXPECTED(itr != weight_profile_.end(),
                                "NonLeafSource::" + node->Name() + "'s weight doesn't exist.");
   int32_t weight = itr->second;

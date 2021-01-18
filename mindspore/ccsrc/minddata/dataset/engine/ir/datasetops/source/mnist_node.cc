@@ -32,7 +32,7 @@ MnistNode::MnistNode(std::string dataset_dir, std::string usage, std::shared_ptr
     : MappableSourceNode(std::move(cache)), dataset_dir_(dataset_dir), usage_(usage), sampler_(sampler) {}
 
 std::shared_ptr<DatasetNode> MnistNode::Copy() {
-  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->Copy();
+  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<MnistNode>(dataset_dir_, usage_, sampler, cache_);
   return node;
 }
@@ -60,7 +60,8 @@ Status MnistNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops)
   RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
   node_ops->push_back(std::make_shared<MnistOp>(usage_, num_workers_, rows_per_buffer_, dataset_dir_,
-                                                connector_que_size_, std::move(schema), std::move(sampler_->Build())));
+                                                connector_que_size_, std::move(schema),
+                                                std::move(sampler_->SamplerBuild())));
 
   return Status::OK();
 }
@@ -81,7 +82,7 @@ Status MnistNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_
   }
   int64_t num_rows, sample_size;
   RETURN_IF_NOT_OK(MnistOp::CountTotalRows(dataset_dir_, usage_, &num_rows));
-  sample_size = sampler_->Build()->CalculateNumSamples(num_rows);
+  sample_size = sampler_->SamplerBuild()->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
   dataset_size_ = *dataset_size;
   return Status::OK();

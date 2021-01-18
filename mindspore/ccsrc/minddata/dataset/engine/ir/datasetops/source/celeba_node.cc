@@ -40,7 +40,7 @@ CelebANode::CelebANode(const std::string &dataset_dir, const std::string &usage,
       extensions_(extensions) {}
 
 std::shared_ptr<DatasetNode> CelebANode::Copy() {
-  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->Copy();
+  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<CelebANode>(dataset_dir_, usage_, sampler, decode_, extensions_, cache_);
   return node;
 }
@@ -71,7 +71,7 @@ Status CelebANode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops
 
   node_ops->push_back(std::make_shared<CelebAOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
                                                  decode_, usage_, extensions_, std::move(schema),
-                                                 std::move(sampler_->Build())));
+                                                 std::move(sampler_->SamplerBuild())));
 
   return Status::OK();
 }
@@ -139,7 +139,7 @@ Status CelebANode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
     num_rows = std::min(num_rows, partition_num);
   }
 
-  sample_size = sampler_->Build()->CalculateNumSamples(num_rows);
+  sample_size = sampler_->SamplerBuild()->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
   return Status::OK();
 }

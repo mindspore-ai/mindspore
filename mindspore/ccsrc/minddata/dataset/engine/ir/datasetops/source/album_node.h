@@ -66,6 +66,12 @@ class AlbumNode : public MappableSourceNode {
   const std::string &SchemaPath() const { return schema_path_; }
   const std::vector<std::string> &ColumnNames() const { return column_names_; }
   bool Decode() const { return decode_; }
+  /// \brief Sampler getter
+  /// \return SamplerObj of the current node
+  std::shared_ptr<SamplerObj> Sampler() override { return sampler_; }
+
+  /// \brief Sampler setter
+  void SetSampler(std::shared_ptr<SamplerObj> sampler) override { sampler_ = sampler; }
 
  private:
   std::string dataset_dir_;

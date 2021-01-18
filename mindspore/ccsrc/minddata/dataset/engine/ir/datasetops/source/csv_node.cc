@@ -122,7 +122,7 @@ Status CSVNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   std::shared_ptr<CsvOp> csv_op =
     std::make_shared<CsvOp>(sorted_dataset_files, field_delim_, column_default_list, column_names_, num_workers_,
                             rows_per_buffer_, num_samples_, worker_connector_size_, connector_que_size_, shuffle_files,
-                            num_shards_, shard_id_, std::move(sampler_->Build()));
+                            num_shards_, shard_id_, std::move(sampler_->SamplerBuild()));
 
   RETURN_IF_NOT_OK(csv_op->Init());
 

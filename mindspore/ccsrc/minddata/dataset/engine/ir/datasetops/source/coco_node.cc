@@ -38,7 +38,7 @@ CocoNode::CocoNode(const std::string &dataset_dir, const std::string &annotation
       sampler_(sampler) {}
 
 std::shared_ptr<DatasetNode> CocoNode::Copy() {
-  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->Copy();
+  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node = std::make_shared<CocoNode>(dataset_dir_, annotation_file_, task_, decode_, sampler, cache_);
   return node;
 }
@@ -121,7 +121,7 @@ Status CocoNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
   }
   std::shared_ptr<CocoOp> op =
     std::make_shared<CocoOp>(task_type, dataset_dir_, annotation_file_, num_workers_, rows_per_buffer_,
-                             connector_que_size_, decode_, std::move(schema), std::move(sampler_->Build()));
+                             connector_que_size_, decode_, std::move(schema), std::move(sampler_->SamplerBuild()));
   RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
   node_ops->push_back(op);
@@ -145,7 +145,7 @@ Status CocoNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_g
   }
   int64_t num_rows = 0, sample_size;
   RETURN_IF_NOT_OK(CocoOp::CountTotalRows(dataset_dir_, annotation_file_, task_, &num_rows));
-  sample_size = sampler_->Build()->CalculateNumSamples(num_rows);
+  sample_size = sampler_->SamplerBuild()->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
   dataset_size_ = *dataset_size;
   return Status::OK();

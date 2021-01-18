@@ -42,7 +42,7 @@ ImageFolderNode::ImageFolderNode(std::string dataset_dir, bool decode, std::shar
       exts_(extensions) {}
 
 std::shared_ptr<DatasetNode> ImageFolderNode::Copy() {
-  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->Copy();
+  std::shared_ptr<SamplerObj> sampler = (sampler_ == nullptr) ? nullptr : sampler_->SamplerCopy();
   auto node =
     std::make_shared<ImageFolderNode>(dataset_dir_, decode_, sampler, recursive_, exts_, class_indexing_, cache_);
   return node;
@@ -74,7 +74,7 @@ Status ImageFolderNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const nod
 
   node_ops->push_back(std::make_shared<ImageFolderOp>(num_workers_, rows_per_buffer_, dataset_dir_, connector_que_size_,
                                                       recursive_, decode_, exts_, class_indexing_, std::move(schema),
-                                                      std::move(sampler_->Build())));
+                                                      std::move(sampler_->SamplerBuild())));
   return Status::OK();
 }
 
@@ -94,7 +94,7 @@ Status ImageFolderNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> 
   }
   int64_t sample_size, num_rows;
   RETURN_IF_NOT_OK(ImageFolderOp::CountRowsAndClasses(dataset_dir_, exts_, &num_rows, nullptr, {}));
-  sample_size = sampler_->Build()->CalculateNumSamples(num_rows);
+  sample_size = sampler_->SamplerBuild()->CalculateNumSamples(num_rows);
   *dataset_size = sample_size;
   dataset_size_ = *dataset_size;
   return Status::OK();

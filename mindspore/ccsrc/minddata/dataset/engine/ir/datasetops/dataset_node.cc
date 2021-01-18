@@ -594,9 +594,14 @@ Status DatasetNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
 }
 
 Status DatasetNode::GetShardId(int32_t *const shard_id) {
-  if (!Children().empty()) {
+  if (children_.size() == 1) {
     // Get shard id from the child node
-    return Children()[0]->GetShardId(shard_id);
+    return children_[0]->GetShardId(shard_id);
+  } else if (children_.size() > 1) {
+    // It is okay for dataset to have more than 1 child, GetShardId shouldn't fail in this case.
+    // This is done mostly for cache, which injects cache lookup/merge operators. Cache path will
+    // always be in front of the child_ structure, so we get the dataset size from the last child.
+    return children_.back()->GetShardId(shard_id);
   } else {
     RETURN_STATUS_SYNTAX_ERROR("Get Shard Id failed at source node: " + Name() + "\n");
   }
@@ -648,7 +653,7 @@ Status MappableSourceNode::Accept(IRNodePass *const p, bool *const modified) {
 }
 
 Status NonMappableSourceNode::Accept(IRNodePass *const p, bool *const modified) {
-  return p->Visit(shared_from_base<MappableSourceNode>(), modified);
+  return p->Visit(shared_from_base<NonMappableSourceNode>(), modified);
 }
 
 }  // namespace dataset

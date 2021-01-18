@@ -82,6 +82,13 @@ class CelebANode : public MappableSourceNode {
   /// \return Status of the function
   Status to_json(nlohmann::json *out_json) override;
 
+  /// \brief Sampler getter
+  /// \return SamplerObj of the current node
+  std::shared_ptr<SamplerObj> Sampler() override { return sampler_; }
+
+  /// \brief Sampler setter
+  void SetSampler(std::shared_ptr<SamplerObj> sampler) override { sampler_ = sampler; }
+
  private:
   std::string dataset_dir_;
   std::string usage_;
