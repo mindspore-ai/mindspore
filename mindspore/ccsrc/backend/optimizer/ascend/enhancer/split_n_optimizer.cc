@@ -135,7 +135,7 @@ bool OutputCheck(const FuncGraphPtr &func_graph, const AnfNodePtr &node) {
       MS_LOG(INFO) << "Next node is not a AICore node, can not optimizer.";
       return false;
     }
-    if (func_graph->output() == item || AnfAlgo::CheckPrimitiveType(node, prim::kPrimReturn)) {
+    if (func_graph->output() == item || AnfAlgo::CheckPrimitiveType(item, prim::kPrimReturn)) {
       MS_LOG(INFO) << "Next node is graph output or return, can not optimizer.";
       return false;
     }
