@@ -114,7 +114,7 @@ REG_ADPT_DESC(Exp, kNameExp, ADPT_DESC(Exp))
 
 // BiasAdd
 INPUT_MAP(BiasAdd) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(bias)}};
-ATTR_MAP(BiasAdd) = {{"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+ATTR_MAP(BiasAdd) = {{"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(BiasAdd) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(BiasAdd, kNameBiasAdd, ADPT_DESC(BiasAdd))
 

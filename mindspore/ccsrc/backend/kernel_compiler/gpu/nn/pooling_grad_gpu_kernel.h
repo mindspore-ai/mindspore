@@ -85,7 +85,7 @@ class PoolingGradGpuKernel : public GpuKernel {
     auto dout_shape = AnfAlgo::GetInputDeviceShape(kernel_node, 2);
     auto output_shape = AnfAlgo::GetOutputDeviceShape(kernel_node, 0);
     auto data_format = AnfAlgo::GetInputFormat(kernel_node, 0);
-    format_attr_ = GetAttr<std::string>(kernel_node, "data_format");
+    format_attr_ = GetAttr<std::string>(kernel_node, "format");
     if (format_attr_ == kOpFormat_NHWC) {
       data_format = kOpFormat_NHWC;
     }

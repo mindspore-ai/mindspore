@@ -109,7 +109,7 @@ class ConvGradInputGpuBkwKernel : public GpuKernel {
     }
     cudnn_data_type_ = GetCudnnDataType(TypeIdLabel(AnfAlgo::GetInputDeviceDataType(kernel_node, 0)));
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
-    auto format_attr = GetAttr<std::string>(kernel_node, "data_format");
+    auto format_attr = GetAttr<std::string>(kernel_node, "format");
     if (format_attr == kOpFormat_NHWC) {
       data_format_ = kOpFormat_NHWC;
     }

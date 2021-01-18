@@ -23,7 +23,7 @@ INPUT_MAP(MaxPool) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(MaxPool) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                      {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                      {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())},
-                     {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+                     {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(MaxPool) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPool, kNameMaxPool, ADPT_DESC(MaxPool))
 
@@ -32,7 +32,7 @@ INPUT_MAP(AvgPool) = {{1, INPUT_DESC(x)}};
 ATTR_MAP(AvgPool) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                      {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                      {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())},
-                     {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+                     {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(AvgPool) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(AvgPool, kNameAvgPool, ADPT_DESC(AvgPool))
 
@@ -41,7 +41,7 @@ INPUT_MAP(MaxPoolGrad) = {{1, INPUT_DESC(x1)}, {2, INPUT_DESC(x2)}, {3, INPUT_DE
 ATTR_MAP(MaxPoolGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                          {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                          {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())},
-                         {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+                         {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(MaxPoolGrad) = {{0, OUTPUT_DESC(y)}};
 REG_ADPT_DESC(MaxPoolGrad, kNameMaxPoolGrad, ADPT_DESC(MaxPoolGrad))
 
@@ -50,7 +50,7 @@ INPUT_MAP(AvgPoolGrad) = {{1, INPUT_DESC(orig_input_shape)}, {2, INPUT_DESC(inpu
 ATTR_MAP(AvgPoolGrad) = {{"kernel_size", ATTR_DESC(ksize, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                          {"strides", ATTR_DESC(strides, AnyTraits<int64_t>(), AnyTraits<std::vector<int64_t>>())},
                          {"pad_mode", ATTR_DESC(padding, AnyTraits<std::string>())},
-                         {"data_format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
+                         {"format", ATTR_DESC(data_format, AnyTraits<std::string>())}};
 OUTPUT_MAP(AvgPoolGrad) = {{0, OUTPUT_DESC(out_grad)}};
 REG_ADPT_DESC(AvgPoolGrad, kNameAvgPoolGrad, ADPT_DESC(AvgPoolGrad))
 

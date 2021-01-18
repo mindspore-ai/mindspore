@@ -26,7 +26,7 @@ avg_pool_op_info = TBERegOp("AvgPool") \
     .attr("kernel_size", "required", "listInt", "all") \
     .attr("strides", "required", "listInt", "all") \
     .attr("pad_mode", "required", "str", "all") \
-    .attr("data_format", "optional", "str", "all") \
+    .attr("format", "optional", "str", "all") \
     .input(0, "x", False, "required", "all") \
     .input(1, "filter", False, "optional", "all") \
     .input(2, "bias", False, "optional", "all") \

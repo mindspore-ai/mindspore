@@ -143,7 +143,7 @@ class FusedBatchNormGradExGpuKernel : public GpuKernel {
       return true;
     }
     std::string format = AnfAlgo::GetInputFormat(kernel_node, 0);
-    auto format_attr = GetAttr<std::string>(kernel_node, "data_format");
+    auto format_attr = GetAttr<std::string>(kernel_node, "format");
     if (format_attr == kOpFormat_NHWC) {
       format = kOpFormat_NHWC;
     }

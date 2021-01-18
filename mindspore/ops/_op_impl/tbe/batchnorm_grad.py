@@ -24,7 +24,7 @@ batch_norm_grad_op_info = TBERegOp("BatchNormGrad") \
     .kernel_name("batch_norm_grad") \
     .partial_flag(True) \
     .attr("epsilon", "optional", "float", "all") \
-    .attr("data_format", "optional", "str", "all") \
+    .attr("format", "optional", "str", "all") \
     .attr("is_training", "optional", "bool", "all") \
     .input(0, "y_backprop", False, "required", "all") \
     .input(1, "x", False, "required", "all") \

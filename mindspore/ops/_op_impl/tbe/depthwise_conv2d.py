@@ -26,7 +26,7 @@ depthwise_conv2d_op_info = TBERegOp("DepthwiseConv2dNative") \
     .attr("stride", "required", "listInt", "all") \
     .attr("dilation", "required", "listInt", "all") \
     .attr("pads", "required", "listInt", "all") \
-    .attr("data_format", "required", "str", "all") \
+    .attr("format", "required", "str", "all") \
     .attr("offset_a", "optional", "int", "all") \
     .input(0, "x", False, "required", "all") \
     .input(1, "filter", False, "required", "all") \

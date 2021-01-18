@@ -276,7 +276,6 @@ TEST_F(TestConvert, TestConvertBiasAdd) {
   auto prim = std::make_shared<Primitive>("BiasAdd");
   prim->AddAttr("alpha", MakeValue(0.0f));
   prim->AddAttr("beta", MakeValue(1.0f));
-  prim->AddAttr("format", MakeValue(static_cast<int64_t>(1)));
 
   auto func_graph = MakeFuncGraph(prim, 2);
   ASSERT_NE(func_graph, nullptr);
@@ -301,7 +300,6 @@ TEST_F(TestConvert, TestConvertBiasAddGrad) {
   auto prim = prim::kPrimBiasAddGrad;
   prim->AddAttr("alpha", MakeValue(0.0f));
   prim->AddAttr("beta", MakeValue(1.0f));
-  prim->AddAttr("format", MakeValue(static_cast<int64_t>(1)));
 
   auto func_graph = MakeFuncGraph(prim, 2);
   ASSERT_NE(func_graph, nullptr);
