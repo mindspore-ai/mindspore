@@ -29,7 +29,6 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Stack;
 
 namespace mindspore::kernel {
-
 int StackFp16CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
