@@ -26,7 +26,7 @@ using ".register" decorator.
 
 
 @zeros_like_leaf.register("Number")
-def _zeros_like_scala(x):
+def _zeros_like_scalar(x):
     """Returns 0 which has the same dtype as x where x is a scalar."""
     return 0
 

@@ -111,6 +111,7 @@ none_type = typing.TypeNone
 env_type_type = typing.EnvType
 tensor_type = typing.TensorType
 anything_type = typing.TypeAnything
+ref_type = typing.RefType
 
 number_type = (int8,
                int16,
