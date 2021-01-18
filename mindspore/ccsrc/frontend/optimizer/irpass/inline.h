@@ -141,15 +141,6 @@ class InlinerBase : public AnfVisitor {
     }
 
     if (IsUniqueUse(nullptr, fg, nullptr)) {
-      // The other branch calling the last after block.
-      if (fg->has_flag(FUNC_GRAPH_FLAG_AFTER_BLOCK)) {
-        // Check if parameters' changed.
-        auto param_simplified_caller = SimplifyAfterParameter(fg, node, args);
-        if (param_simplified_caller != nullptr) {
-          return param_simplified_caller;
-        }
-      }
-
       // For the single used fg, including non-after and after not matched above,
       // we move the whole fg nodes.
       if (use_move_) {
@@ -159,6 +150,15 @@ class InlinerBase : public AnfVisitor {
         auto out_node = fg->output();
         mng->MoveAllCNodeDropGraph(fg, node->func_graph(), inputs[0]->scope());
         return out_node;
+      }
+
+      // The other branch calling the last after block.
+      if (fg->has_flag(FUNC_GRAPH_FLAG_AFTER_BLOCK)) {
+        // Check if parameters' changed.
+        auto param_simplified_caller = SimplifyAfterParameter(fg, node, args);
+        if (param_simplified_caller != nullptr) {
+          return param_simplified_caller;
+        }
       }
     } else {
       // We don't expand the middle multiple used after block, except the last one.
