@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,10 +16,10 @@
 """GradCAM."""
 
 from mindspore.ops import operations as op
+from mindspore.explainer._utils import ForwardProbe, retrieve_layer, unify_inputs, unify_targets
 
-from .backprop_utils import compute_gradients
+from .backprop_utils import get_bp_weights, GradNet
 from .intermediate_layer import IntermediateLayerAttribution
-from ...._utils import ForwardProbe, retrieve_layer, unify_inputs, unify_targets
 
 
 def _gradcam_aggregation(attributions):
@@ -123,8 +123,9 @@ class GradCAM(IntermediateLayerAttribution):
             inputs = unify_inputs(inputs)
             targets = unify_targets(targets)
 
-            gradients = compute_gradients(self._backward_model, *inputs, targets)
-
+            weights = get_bp_weights(self._backward_model, *inputs, targets)
+            grad_net = GradNet(self._backward_model)
+            gradients = grad_net(*inputs, weights)
             # get intermediate activation
             activation = (probe.value,)
 
