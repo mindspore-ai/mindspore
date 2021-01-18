@@ -23,6 +23,7 @@ fill_d_op_info = TBERegOp("Fill") \
     .compute_cost(10) \
     .kernel_name("fill_d") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("dims", "required", "listInt", "all") \
     .input(0, "value", False, "required", "all") \
     .output(0, "y", False, "required", "all") \

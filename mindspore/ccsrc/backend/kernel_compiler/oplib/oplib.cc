@@ -36,6 +36,7 @@ constexpr auto kReshapeType = "reshape_type";
 constexpr auto kOpPattern = "op_pattern";
 constexpr auto kDynamicFormat = "dynamicFormat";
 constexpr auto kFormatAgnostic = "formatAgnostic";
+constexpr auto kNeedCheckSupported = "need_check_supported";
 constexpr auto kBroadcast = "broadcast";
 constexpr auto kReduce = "reduce";
 constexpr auto kDynamicShape = "dynamic_shape";
@@ -111,6 +112,7 @@ void OpLib::DecodeTBESpecificInfo(const nlohmann::json &obj, const std::shared_p
   op_info->set_compute_cost(obj.at(kComputeCost));
   op_info->set_kernel_name(obj.at(kKernelName));
   op_info->set_partial_flag(obj.at(kPartialFlag));
+  op_info->set_need_check_supported(obj.at(kNeedCheckSupported));
 
   if (obj.find(kDynamicShape) != obj.end()) {
     op_info->set_dynamic_shape(obj.at(kDynamicShape));

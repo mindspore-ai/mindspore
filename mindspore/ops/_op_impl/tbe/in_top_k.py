@@ -23,6 +23,7 @@ in_top_k_op_info = TBERegOp("InTopK") \
     .compute_cost(10) \
     .kernel_name("in_top_k") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("k", "required", "int", "all") \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
