@@ -89,6 +89,8 @@ enum OperateType {
   GREATER,
   GREATEREQUAL,
   RECIPROCAL,
+  GELU,
+  GELUGRAD,
 };
 
 class CPUKernel : public kernel::KernelMod {
