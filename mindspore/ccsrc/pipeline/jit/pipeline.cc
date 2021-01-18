@@ -102,6 +102,20 @@ AbstractBasePtr ArgsToAbstract(const ValuePtr &value) {
   bool broaden = value->isa<MetaTensor>();
   return abstract::FromValue(value, broaden);
 }
+
+std::string GetCompileExceptionInfo() {
+  std::ostringstream oss;
+  trace::TraceGraphEval();
+  trace::GetEvalStackInfo(oss);
+  if (oss.str().empty()) {
+    DebugInfoPtr debug_info = TraceManager::GetParseOrResolveDebugInfo();
+    if (debug_info != nullptr) {
+      oss << "\n\n# " << trace::GetDebugInfo(debug_info);
+    }
+  }
+  return oss.str();
+}
+
 }  // namespace
 
 py::tuple GenerateKey(const std::string &name, const std::unordered_map<std::string, py::object> &defaults) {
@@ -540,16 +554,10 @@ bool ExecutorPy::Compile(const py::object &obj, const py::tuple &args, const py:
     ret_value = CompileInner(obj, args, phase, use_vm);
   } catch (const py::error_already_set &ex) {
     // print function call stack info before release
-    std::ostringstream oss;
-    trace::TraceGraphEval();
-    trace::GetEvalStackInfo(oss);
-    if (oss.str().empty()) {
-      DebugInfoPtr debug_info = TraceManager::GetDebugInfoPtr();
-      if (debug_info != nullptr) {
-        oss << "\n\n# " << trace::GetDebugInfo(debug_info);
-      }
+    std::string exception_info = GetCompileExceptionInfo();
+    if (!exception_info.empty()) {
+      MS_LOG(ERROR) << exception_info;
     }
-    MS_LOG(ERROR) << oss.str();
     ReleaseResource(phase);
 
     // re-throw this exception to Python interpreter to handle it
