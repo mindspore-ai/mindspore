@@ -19,8 +19,9 @@ import numpy as np
 import mindspore
 from mindspore import context, Tensor
 from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
-from src.ssd import SSD300, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn
+from src.ssd import SSD300, SsdInferWithDecoder, ssd_mobilenet_v2, ssd_mobilenet_v1_fpn
 from src.config import config
+from src.box_utils import default_boxes
 
 parser = argparse.ArgumentParser(description='SSD export')
 parser.add_argument("--device_id", type=int, default=0, help="Device id")
@@ -41,6 +42,7 @@ if __name__ == '__main__':
         net = SSD300(ssd_mobilenet_v2(), config, is_training=False)
     else:
         net = ssd_mobilenet_v1_fpn(config=config)
+    net = SsdInferWithDecoder(net, Tensor(default_boxes), config)
 
     param_dict = load_checkpoint(args.ckpt_file)
     net.init_parameters_data()
