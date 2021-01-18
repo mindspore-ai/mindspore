@@ -73,13 +73,33 @@ def _check_param(initial_accum, lr_power, l1, l2, use_locking, prim_name=None):
 
 
 class FTRL(Optimizer):
-    """
+    r"""
     Implements the FTRL algorithm with ApplyFtrl Operator.
 
     FTRL is an online convex optimization algorithm that adaptively chooses its regularization function
     based on the loss functions. Refer to paper `Adaptive Bound Optimization for Online Convex Optimization
     <https://arxiv.org/abs/1002.4908>`_. Refer to paper `Ad Click Prediction: a View from the Trenches
     <https://www.eecs.tufts.edu/~dsculley/papers/ad-click-prediction.pdf>`_ for engineering document.
+
+    The updating formulas are as follows,
+
+    .. math::
+
+        \begin{array}{ll} \\
+            m_{t+1} = m_{t} + g^2 \\
+            u_{t+1} = u_{t} + g  - \frac{m_{t+1}^\text{-p} - m_{t}^\text{-p}}{\alpha } * \omega_{t} \\
+            \omega_{t+1} =
+            \begin{cases}
+                \frac{(sign(u_{t+1}) * l1 - u_{t+1})}{\frac{m_{t+1}^\text{-p}}{\alpha } + 2 * l2 }
+                    & \text{ if } |u_{t+1}| > l1 \\
+                0.0
+                    & \text{ otherwise }
+            \end{cases}\\
+        \end{array}
+
+    :math:`m` represents `accum`, :math:`g` represents `grads`, :math:`t` represents updateing step,
+    :math:`u` represents `linear`, :math:`p` represents `lr_power`, :math:`\alpha` represents `learning_rate`,
+    :math:`\omega` represents `params`.
 
     Note:
         When separating parameter groups, the weight decay in each group will be applied on the parameters if the

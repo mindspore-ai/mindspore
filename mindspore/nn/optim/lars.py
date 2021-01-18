@@ -47,11 +47,31 @@ def _check_param_value(optimizer, epsilon, coefficient, use_clip, prim_name):
 
 
 class LARS(Optimizer):
-    """
+    r"""
     Implements the LARS algorithm with LARSUpdate Operator.
 
     LARS is an optimization algorithm employing a large batch optimization technique. Refer to paper `LARGE BATCH
     TRAINING OF CONVOLUTIONAL NETWORKS <https://arxiv.org/abs/1708.03888>`_.
+
+    The updating formulas are as follows,
+
+    .. math::
+
+        \begin{array}{ll} \\
+            \lambda  = \frac{\theta  \text{ * } || \omega  ||  }{|| g_{t} || \text{ + } \delta \text{ * } || \omega  || }  \\
+            \lambda  =
+            \begin{cases}
+                \min(\frac{\lambda}{\alpha }, 1)
+                    & \text{ if } clip = True \\
+                \lambda
+                    & \text{ otherwise }
+            \end{cases}\\
+            g_{t+1} = \lambda * (g_{t} + \delta * \omega)
+        \end{array}
+
+    :math:`\theta` represents `coefficient`, :math:`\omega` represents `parameters`, :math:`g` represents `gradients`,
+    :math:`t` represents updateing step, :math:`\delta` represents `weight_decay`,
+    :math:`\alpha` represents `learning_rate`, :math:`clip` represents `use_clip`.
 
     Args:
         optimizer (Optimizer): MindSpore optimizer for which to wrap and modify gradients.
