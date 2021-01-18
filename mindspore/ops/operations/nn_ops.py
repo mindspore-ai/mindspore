@@ -1993,6 +1993,26 @@ class NLLLoss(PrimitiveWithInfer):
     r"""
     Gets the negative log likelihood loss between logits and labels.
 
+    The nll loss with reduction=none can be described as:
+
+    .. math::
+
+        \ell(x, t)=L=\left\{l_{1}, \ldots, l_{N}\right\}^{\top},
+        \quad l_{n}=-w_{t_{n}} x_{n, t_{n}},
+        \quad w_{c}=\text { weight }[c] \cdot 1
+
+    where x is the input, t is the target. w is the weight. and N is the batch size. c belonging [0, C-1] is
+    class index, where C is the number of classes.
+
+    If reduction is not 'none' (default 'mean'), then
+
+    .. math::
+
+        \ell(x, t)=\left\{\begin{array}{ll}
+        \sum_{n=1}^{N} \frac{1}{\sum_{n=1}^{N} w_{t n}} l_{n}, & \text { if reduction }=\text { 'mean'; } \\
+        \sum_{n=1}^{N} l_{n}, & \text { if reduction }=\text { 'sum' }
+        \end{array}\right.
+
     Args:
         reduction (string): Apply specific reduction method to the output: 'none', 'mean', 'sum'. Default: "mean".
 
@@ -2000,15 +2020,26 @@ class NLLLoss(PrimitiveWithInfer):
         - **input** (Tensor) - Input logits, with shape :math:`(N, C)`. Data type only support float32 or float16.
         - **target** (Tensor) - Ground truth labels, with shape :math:`(N)`. Data type only support int32.
         - **weight** (Tensor) - The rescaling weight to each class, with shape :math:`(C)` and data type only
-                                support float32 or float16`.
+          support float32 or float16`.
 
     Outputs:
-        Tuple of 2 tensors composed with `loss` and `total_weight`. when `reduction` is `none` and `input` is 2D
-        tensor, the `loss` shape is `(N,)`. Otherwise, the `loss` and the `total_weight` is a scalar. The data type
-        of `loss` and `total_weight` are same with `input's` and `weight's` respectively.
+        Tuple of 2 tensors composed with `loss` and `total_weight`.
+
+        - **loss** (Tensor) - when `reduction` is `none` and `input` is 2D tensor, the `loss` shape is `(N,)`.
+          Otherwise, the `loss` is a scalar. The data type is same with `input's`.
+        - **total_weight** (Tensor) - the `total_weight` is a scalar. The data type is same with `weight's`.
+
+    Raises:
+        TypeError: If x and weight data type are not float16 or float32 tensor, target data type is not int32 tensor.
+        ValueError: If x is not a one or two dimension tensor, target and weight not a one dimension tensor.
+                    When x is a two dimension tensor, the first dimension of x is not equal to target, and second
+                    dimension of x is not equal to weight.
+                    When x is a one dimension tensor, the dimensions of x, target and weight should be equal to
+                    each other.
 
     Supported Platforms:
         ``Ascend``
+
 
     Examples:
         >>> input = Tensor(np.array([[0.5488135, 0.71518934],
@@ -6246,7 +6277,7 @@ class Dropout(PrimitiveWithInfer):
 class Dropout3d(PrimitiveWithInfer):
     """
     During training, randomly zeroes some of the channels of the input tensor
-      with probability keep_prob from a Bernoulli distribution.
+    with probability keep_prob from a Bernoulli distribution.
 
     Args:
         keep_prob (float): The keep probability of a channel, between 0 and 1, e.g. `keep_prob` = 0.8,
