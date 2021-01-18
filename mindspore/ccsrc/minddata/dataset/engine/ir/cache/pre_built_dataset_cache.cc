@@ -36,5 +36,15 @@ Status PreBuiltDatasetCache::CreateCacheOp(int32_t num_workers, std::shared_ptr<
   return Status::OK();
 }
 
+Status PreBuiltDatasetCache::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["session_id"] = cache_client_->session_id();
+  args["cache_memory_size"] = cache_client_->GetCacheMemSz();
+  args["spill"] = cache_client_->isSpill();
+  args["num_connections"] = cache_client_->GetNumConnections();
+  args["prefetch_size"] = cache_client_->GetPrefetchSize();
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

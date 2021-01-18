@@ -83,6 +83,12 @@ class GeneratorNode : public MappableSourceNode {
     return Status::OK();
   }
 
+  /// \brief Getter functions
+  const py::function &GeneratorFunction() const { return generator_function_; }
+  const std::vector<std::string> &ColumnNames() const { return column_names_; }
+  const std::vector<DataType> &ColumnTypes() const { return column_types_; }
+  const std::shared_ptr<SchemaObj> &Schema() const { return schema_; }
+
  private:
   py::function generator_function_;
   std::vector<std::string> column_names_;

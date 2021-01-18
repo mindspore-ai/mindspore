@@ -668,6 +668,8 @@ class PadOperation : public TensorOperation {
 
   std::string Name() const override { return kPadOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<int32_t> padding_;
   std::vector<uint8_t> fill_value_;
@@ -729,6 +731,8 @@ class RandomColorAdjustOperation : public TensorOperation {
 
   std::string Name() const override { return kRandomColorAdjustOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<float> brightness_;
   std::vector<float> contrast_;
@@ -749,6 +753,8 @@ class RandomCropOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kRandomCropOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   std::vector<int32_t> size_;
@@ -936,6 +942,8 @@ class RandomRotationOperation : public TensorOperation {
 
   std::string Name() const override { return kRandomRotationOperation; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<float> degrees_;
   InterpolationMode interpolation_mode_;
@@ -1036,6 +1044,8 @@ class RescaleOperation : public TensorOperation {
   Status ValidateParams() override;
 
   std::string Name() const override { return kRescaleOperation; }
+
+  Status to_json(nlohmann::json *out_json) override;
 
  private:
   float rescale_;

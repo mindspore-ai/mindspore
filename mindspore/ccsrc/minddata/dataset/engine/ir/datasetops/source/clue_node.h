@@ -71,6 +71,20 @@ class CLUENode : public NonMappableSourceNode {
   Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
                         int64_t *dataset_size) override;
 
+  /// \brief Getter functions
+  const std::vector<std::string> &DatasetFiles() const { return dataset_files_; }
+  const std::string &Task() const { return task_; }
+  const std::string &Usage() const { return usage_; }
+  int64_t NumSamples() const { return num_samples_; }
+  ShuffleMode Shuffle() const { return shuffle_; }
+  int32_t NumShards() const { return num_shards_; }
+  int32_t ShardId() const { return shard_id_; }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   /// \brief Split string based on a character delimiter
   /// \return A string vector

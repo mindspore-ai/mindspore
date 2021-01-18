@@ -80,6 +80,14 @@ class SkipNode : public DatasetNode {
   /// \return Status of the node visit
   Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
 
+  /// \brief Getter functions
+  int32_t SkipCount() const { return skip_count_; }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   int32_t skip_count_;
 };

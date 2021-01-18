@@ -526,6 +526,11 @@ std::shared_ptr<TensorOp> CenterCropOperation::Build() {
   return tensor_op;
 }
 
+Status CenterCropOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["size"] = size_;
+  return Status::OK();
+}
+
 // CropOperation.
 CropOperation::CropOperation(std::vector<int32_t> coordinates, std::vector<int32_t> size)
     : coordinates_(coordinates), size_(size) {}
@@ -637,6 +642,11 @@ DecodeOperation::DecodeOperation(bool rgb) : rgb_(rgb) {}
 Status DecodeOperation::ValidateParams() { return Status::OK(); }
 
 std::shared_ptr<TensorOp> DecodeOperation::Build() { return std::make_shared<DecodeOp>(rgb_); }
+
+Status DecodeOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["rgb"] = rgb_;
+  return Status::OK();
+}
 
 // EqualizeOperation
 Status EqualizeOperation::ValidateParams() { return Status::OK(); }
@@ -801,6 +811,14 @@ std::shared_ptr<TensorOp> NormalizeOperation::Build() {
   return std::make_shared<NormalizeOp>(mean_[0], mean_[1], mean_[2], std_[0], std_[1], std_[2]);
 }
 
+Status NormalizeOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["mean"] = mean_;
+  args["std"] = std_;
+  *out_json = args;
+  return Status::OK();
+}
+
 #ifndef ENABLE_ANDROID
 // NormalizePadOperation
 NormalizePadOperation::NormalizePadOperation(const std::vector<float> &mean, const std::vector<float> &std,
@@ -891,6 +909,15 @@ std::shared_ptr<TensorOp> PadOperation::Build() {
   std::shared_ptr<PadOp> tensor_op =
     std::make_shared<PadOp>(pad_top, pad_bottom, pad_left, pad_right, padding_mode_, fill_r, fill_g, fill_b);
   return tensor_op;
+}
+
+Status PadOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["padding"] = padding_;
+  args["fill_value"] = fill_value_;
+  args["padding_mode"] = padding_mode_;
+  *out_json = args;
+  return Status::OK();
 }
 
 // RandomAffineOperation
@@ -1188,6 +1215,16 @@ std::shared_ptr<TensorOp> RandomColorAdjustOperation::Build() {
   return tensor_op;
 }
 
+Status RandomColorAdjustOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["brightness"] = brightness_;
+  args["contrast"] = contrast_;
+  args["saturation"] = saturation_;
+  args["hue"] = hue_;
+  *out_json = args;
+  return Status::OK();
+}
+
 // RandomCropOperation
 RandomCropOperation::RandomCropOperation(std::vector<int32_t> size, std::vector<int32_t> padding, bool pad_if_needed,
                                          std::vector<uint8_t> fill_value, BorderType padding_mode)
@@ -1259,6 +1296,17 @@ std::shared_ptr<TensorOp> RandomCropOperation::Build() {
   auto tensor_op = std::make_shared<RandomCropOp>(crop_height, crop_width, pad_top, pad_bottom, pad_left, pad_right,
                                                   padding_mode_, pad_if_needed_, fill_r, fill_g, fill_b);
   return tensor_op;
+}
+
+Status RandomCropOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["size"] = size_;
+  args["padding"] = padding_;
+  args["pad_if_needed"] = pad_if_needed_;
+  args["fill_value"] = fill_value_;
+  args["padding_mode"] = padding_mode_;
+  *out_json = args;
+  return Status::OK();
 }
 
 // RandomCropDecodeResizeOperation
@@ -1735,6 +1783,17 @@ std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
   return tensor_op;
 }
 
+Status RandomRotationOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["degrees"] = degrees_;
+  args["interpolation_mode"] = interpolation_mode_;
+  args["expand"] = expand_;
+  args["center"] = center_;
+  args["fill_value"] = fill_value_;
+  *out_json = args;
+  return Status::OK();
+}
+
 // RandomSelectSubpolicyOperation.
 RandomSelectSubpolicyOperation::RandomSelectSubpolicyOperation(
   std::vector<std::vector<std::pair<std::shared_ptr<TensorOperation>, double>>> policy)
@@ -1889,6 +1948,14 @@ std::shared_ptr<TensorOp> RescaleOperation::Build() {
   return tensor_op;
 }
 
+Status RescaleOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["rescale"] = rescale_;
+  args["shift"] = shift_;
+  *out_json = args;
+  return Status::OK();
+}
+
 #endif
 // ResizeOperation
 ResizeOperation::ResizeOperation(std::vector<int32_t> size, InterpolationMode interpolation)
@@ -1918,6 +1985,14 @@ std::shared_ptr<TensorOp> ResizeOperation::Build() {
   }
 
   return std::make_shared<ResizeOp>(height, width, interpolation_);
+}
+
+Status ResizeOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["size"] = size_;
+  args["interpolation"] = interpolation_;
+  *out_json = args;
+  return Status::OK();
 }
 
 // RotateOperation

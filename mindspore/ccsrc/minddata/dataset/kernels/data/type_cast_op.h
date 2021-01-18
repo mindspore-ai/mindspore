@@ -43,6 +43,8 @@ class TypeCastOp : public TensorOp {
 
   std::string Name() const override { return kTypeCastOp; }
 
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   DataType type_;
 };

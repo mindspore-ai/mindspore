@@ -70,6 +70,14 @@ class BuildVocabNode : public DatasetNode {
   /// \return Status of the node visit
   Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
 
+  /// \brief Getter functions
+  const std::shared_ptr<Vocab> &GetVocab() const { return vocab_; }
+  const std::vector<std::string> &Columns() const { return columns_; }
+  const std::pair<int64_t, int64_t> &FreqRange() const { return freq_range_; }
+  int64_t TopK() const { return top_k_; }
+  const std::vector<std::string> &SpecialTokens() const { return special_tokens_; }
+  bool SpecialFirst() const { return special_first_; }
+
  private:
   std::shared_ptr<Vocab> vocab_;
   std::vector<std::string> columns_;

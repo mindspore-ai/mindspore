@@ -70,6 +70,20 @@ class TransferNode : public DatasetNode {
   /// \return Status of the node visit
   Status AcceptAfter(IRNodePass *const p, bool *const modified) override;
 
+  /// \brief Getter functions
+  const std::string &QueueName() const { return queue_name_; }
+  int32_t DeviceId() const { return device_id_; }
+  const std::string &DeviceType() const { return device_type_; }
+  int32_t PrefetchSize() const { return prefetch_size_; }
+  bool SendEpochEnd() const { return send_epoch_end_; }
+  int32_t TotalBatch() const { return total_batch_; }
+  bool CreateDataInfoQueue() const { return create_data_info_queue_; }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::string queue_name_;
   int32_t device_id_;

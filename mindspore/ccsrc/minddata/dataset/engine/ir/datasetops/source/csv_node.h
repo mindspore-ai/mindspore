@@ -92,6 +92,21 @@ class CSVNode : public NonMappableSourceNode {
   Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
                         int64_t *dataset_size) override;
 
+  /// \brief Getter functions
+  const std::vector<std::string> &DatasetFiles() const { return dataset_files_; }
+  char FieldDelim() const { return field_delim_; }
+  const std::vector<std::shared_ptr<CsvBase>> &ColumnDefaults() const { return column_defaults_; }
+  const std::vector<std::string> &ColumnNames() const { return column_names_; }
+  int64_t NumSamples() const { return num_samples_; }
+  ShuffleMode Shuffle() const { return shuffle_; }
+  int32_t NumShards() const { return num_shards_; }
+  int32_t ShardId() const { return shard_id_; }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::vector<std::string> dataset_files_;
   char field_delim_;

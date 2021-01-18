@@ -71,6 +71,17 @@ class CelebANode : public MappableSourceNode {
   Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
                         int64_t *dataset_size) override;
 
+  /// \brief Getter functions
+  const std::string &DatasetDir() const { return dataset_dir_; }
+  const std::string &Usage() const { return usage_; }
+  bool Decode() const { return decode_; }
+  const std::set<std::string> &Extensions() const { return extensions_; }
+
+  /// \brief Get the arguments of node
+  /// \param[out] out_json JSON string of all attributes
+  /// \return Status of the function
+  Status to_json(nlohmann::json *out_json) override;
+
  private:
   std::string dataset_dir_;
   std::string usage_;

@@ -81,5 +81,12 @@ Status TakeNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<TakeNode>(), modified);
 }
+
+Status TakeNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["count"] = take_count_;
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

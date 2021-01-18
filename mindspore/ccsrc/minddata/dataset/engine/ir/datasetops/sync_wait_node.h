@@ -57,6 +57,10 @@ class SyncWaitNode : public DatasetNode {
   /// \return Status Status::OK() if all the parameters are valid
   Status ValidateParams() override;
 
+  /// \brief Getter functions
+  const std::string &ConditionName() const { return condition_name_; }
+  const py::function &Callback() const { return callback_; }
+
  private:
   std::string condition_name_;
   py::function callback_;

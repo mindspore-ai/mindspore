@@ -63,6 +63,15 @@ class BucketBatchByLengthNode : public DatasetNode {
 
   bool IsSizeDefined() override { return false; };
 
+  /// \brief Getter functions
+  const std::vector<std::string> &ColumnNames() const { return column_names_; }
+  const std::vector<int32_t> &BucketBoundaries() const { return bucket_boundaries_; }
+  const std::vector<int32_t> &BucketBatchSizes() const { return bucket_batch_sizes_; }
+  const std::shared_ptr<TensorOp> &ElementLengthFunction() const { return element_length_function_; }
+  const std::map<std::string, std::pair<TensorShape, std::shared_ptr<Tensor>>> &PadInfo() const { return pad_info_; }
+  bool PadToBucketBoundary() const { return pad_to_bucket_boundary_; }
+  bool DropRemainder() const { return drop_remainder_; }
+
  private:
   std::vector<std::string> column_names_;
   std::vector<int32_t> bucket_boundaries_;

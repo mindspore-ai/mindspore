@@ -57,5 +57,11 @@ Status ProjectNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_op
   return Status::OK();
 }
 
+Status ProjectNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["columns"] = columns_;
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

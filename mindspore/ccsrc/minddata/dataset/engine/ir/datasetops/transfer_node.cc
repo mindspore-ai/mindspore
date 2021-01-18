@@ -116,5 +116,14 @@ Status TransferNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<TransferNode>(), modified);
 }
+
+Status TransferNode::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["send_epoch_end"] = send_epoch_end_;
+  args["total_batch"] = total_batch_;
+  args["create_data_info_queue"] = create_data_info_queue_;
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore
