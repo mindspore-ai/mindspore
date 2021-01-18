@@ -18,7 +18,7 @@
 
 from dataclasses import dataclass
 
-from mindspore import Tensor
+from mindspore import Tensor, Parameter
 from mindspore import dtype as mstype
 
 from ..._checkparam import Validator as validator
@@ -361,10 +361,13 @@ def check_type_same(x_type, base_type):
         str: mstype.String,
         list: mstype.List,
         tuple: mstype.Tuple,
-        Tensor: mstype.tensor_type
+        Tensor: mstype.tensor_type,
+        Parameter: mstype.ref_type
     }
     try:
-        if isinstance(base_type, (tuple, list)):
+        if isinstance(base_type, list):
+            raise TypeError("The second arg of 'isinstance' must be a type or a tuple of types, but got a list")
+        if isinstance(base_type, tuple):
             target_type = tuple(pytype_to_mstype[i] for i in base_type)
         else:
             target_type = pytype_to_mstype[base_type]
