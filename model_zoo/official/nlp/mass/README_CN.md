@@ -47,7 +47,7 @@ BERT（Devlin等人，2018年）采用有屏蔽的语料丰富文本预训练Tra
 
 受BERT、GPT及其他语言模型的启发，微软致力于在此基础上研究[掩式序列到序列（MASS）预训练语言生成](https://www.microsoft.com/en-us/research/uploads/prod/2019/06/MASS-paper-updated-002.pdf)。MASS的参数k很重要，用来控制屏蔽后的分片长度。BERT和GPT属于特例，k等于1或者句长。
 
-[MASS介绍 — 序列对序列语言生成任务中性能优于BERT和GPT的预训练方法](https://www.microsoft.com/en-us/research/blog/introduction-mass-a-pre-training-method-thing-forts-bert-and-gpt-in-sequence-to-sequence-language-generate-tasks/)
+[MASS介绍 — 序列对序列语言生成任务中性能优于BERT和GPT的预训练方法](https://www.microsoft.com/en-us/research/blog/introducing-mass-a-pre-training-method-that-outperforms-bert-and-gpt-in-sequence-to-sequence-language-generation-tasks/)
 
 [论文](https://www.microsoft.com/en-us/research/uploads/prod/2019/06/MASS-paper-updated-002.pdf): Song, Kaitao, Xu Tan, Tao Qin, Jianfeng Lu and Tie-Yan Liu.“MASS: Masked Sequence to Sequence Pre-training for Language Generation.”ICML (2019).
 
