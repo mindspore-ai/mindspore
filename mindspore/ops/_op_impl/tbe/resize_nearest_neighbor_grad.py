@@ -23,6 +23,7 @@ resize_nearest_neighbor_grad_op_info = TBERegOp("ResizeNearestNeighborGrad") \
     .compute_cost(10) \
     .kernel_name("resize_nearest_neighbor_v2_grad_d") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("size", "required", "listInt", "all") \
     .attr("align_corners", "optional", "bool", "all") \
     .input(0, "grads", False, "required", "all") \

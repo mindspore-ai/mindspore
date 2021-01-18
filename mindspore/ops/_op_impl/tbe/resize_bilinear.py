@@ -23,6 +23,7 @@ resize_bilinear_op_info = TBERegOp("ResizeBilinear") \
     .compute_cost(10) \
     .kernel_name("resize_bilinear_v2_d") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("size", "required", "listInt", "all") \
     .attr("align_corners", "optional", "bool", "all") \
     .attr("half_pixel_centers", "optional", "bool", "all") \

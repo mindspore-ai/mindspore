@@ -25,6 +25,7 @@ batch_matmul_op_info = TBERegOp("BatchMatMul") \
     .attr("transpose_x1", "required", "bool", "all") \
     .attr("transpose_x2", "required", "bool", "all") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .input(0, "x1", False, "required", "all") \
     .input(1, "x2", False, "required", "all") \
     .input(2, "bias", False, "optional", "all") \

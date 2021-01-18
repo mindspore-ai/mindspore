@@ -23,6 +23,7 @@ resize_nearest_neighbor_op_info = TBERegOp("ResizeNearestNeighbor") \
     .compute_cost(10) \
     .kernel_name("resize_nearest_neighbor_v2_d") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("size", "required", "listInt", "all") \
     .attr("align_corners", "optional", "bool", "all") \
     .input(0, "images", False, "required", "all") \

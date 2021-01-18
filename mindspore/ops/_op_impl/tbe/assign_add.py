@@ -23,6 +23,7 @@ assign_add_op_info = TBERegOp("AssignAdd") \
     .compute_cost(10) \
     .kernel_name("assign_add") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .input(0, "ref", False, "required", "all") \
     .input(1, "value", False, "required", "all") \
     .output(0, "ref", False, "required", "all") \
