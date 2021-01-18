@@ -134,14 +134,14 @@ bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
   }
 
   if (node->size() < 3) {
-    MS_LOG(INFO) << "input size less!";
+    MS_LOG(INFO) << node->fullname_with_scope() << " input size less!";
     return false;
   }
 
   auto inputNode1 = node->input(1);
   auto inputNode2 = node->input(2);
   if (inputNode1 == nullptr || inputNode2 == nullptr) {
-    MS_LOG(INFO) << "mul input is nullptr!";
+    MS_LOG(INFO) << node->fullname_with_scope() << " mul input is nullptr!";
     return false;
   }
 
@@ -153,7 +153,7 @@ bool QuantStrategy::CanMulOpQuantized(const CNodePtr &node) const {
   }
 
   if (paramNode == nullptr) {
-    MS_LOG(INFO) << "invalid paramNode!";
+    MS_LOG(INFO) << node->fullname_with_scope() << " invalid paramNode!";
     return false;
   }
 
@@ -480,6 +480,48 @@ schema::PrimitiveType NodePrimitiveType(const CNodePtr &cnode) {
   return (schema::PrimitiveType)primitive_c->Type();
 }
 
+std::vector<int> DataToVector(const string &str) {
+  std::vector<int> result;
+  auto raw_datas = str;
+  auto ind = raw_datas.find(',');
+  while (ind != std::string::npos) {
+    auto data = raw_datas.substr(0, ind);
+    Trim(&data);
+    result.push_back(std::stoul(data));
+    raw_datas = raw_datas.substr(ind + 1);
+    Trim(&raw_datas);
+    ind = raw_datas.find(',');
+  }
+  if (!raw_datas.empty()) {
+    result.push_back(std::stoul(raw_datas));
+  }
+  if (result.empty()) {
+    MS_LOG(ERROR) << "result is empty";
+  }
+  return result;
+}
+
+std::vector<std::vector<int>> DataToVectors(const string &str) {
+  std::vector<std::vector<int>> result;
+  auto raw_datas = str;
+  auto ind = raw_datas.find(';');
+  while (ind != std::string::npos) {
+    auto data = raw_datas.substr(0, ind);
+    Trim(&data);
+    result.push_back(DataToVector(data));
+    raw_datas = raw_datas.substr(ind + 1);
+    Trim(&raw_datas);
+    ind = raw_datas.find(';');
+  }
+  if (!raw_datas.empty()) {
+    result.push_back(DataToVector(raw_datas));
+  }
+  if (result.empty()) {
+    MS_LOG(ERROR) << "result is empty";
+  }
+  return result;
+}
+
 STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_config) {
   if (post_quant_config == nullptr) {
     MS_LOG(ERROR) << "post_quant_config is null.";
@@ -559,6 +601,20 @@ STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_conf
       }
     } else if (key == "mean_error_threshold") {
       post_quant_config->mean_error_threshold = std::stof(value);
+    } else if (key == "input_shapes") {
+      auto &raw_shape = value;
+      auto ind = raw_shape.find('/');
+      while (ind != std::string::npos) {
+        auto shape = raw_shape.substr(0, ind);
+        Trim(&shape);
+        post_quant_config->input_shapes.push_back(DataToVectors(shape));
+        raw_shape = raw_shape.substr(ind + 1);
+        Trim(&raw_shape);
+        ind = raw_shape.find('/');
+      }
+      if (!raw_shape.empty()) {
+        post_quant_config->input_shapes.push_back(DataToVectors(raw_shape));
+      }
     } else {
       MS_LOG(WARNING) << "unsupported parameter: " << key;
     }
@@ -578,12 +634,12 @@ STATUS ParseConfigFile(std::string config_file, PostQuantConfig *post_quant_conf
   return RET_OK;
 }
 
-session::LiteSession *CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags,
-                                               int thread_num) {
+SessionModel CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, const converter::Flags &flags, int thread_num) {
+  SessionModel sm;
   auto meta_graph = Export(func_graph, true, true);
   if (meta_graph == nullptr) {
     MS_LOG(ERROR) << "Export to meta_graph failed";
-    return nullptr;
+    return sm;
   }
 
   // transform
@@ -592,7 +648,7 @@ session::LiteSession *CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, c
   auto status = fb_transform.Transform(flags);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "FBTransform model failed";
-    return nullptr;
+    return sm;
   }
   meta_graph->version = Version();
 
@@ -604,12 +660,12 @@ session::LiteSession *CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, c
   auto *content = reinterpret_cast<const char *>(builder.GetBufferPointer());
   if (content == nullptr) {
     MS_LOG(ERROR) << "GetBufferPointer return null";
-    return nullptr;
+    return sm;
   }
   auto model = lite::Model::Import(content, size);
   if (model == nullptr) {
     MS_LOG(ERROR) << "Import model failed";
-    return nullptr;
+    return sm;
   }
 
   Context ctx;
@@ -618,16 +674,19 @@ session::LiteSession *CreateSessionByFuncGraph(const FuncGraphPtr &func_graph, c
   auto session = session::LiteSession::CreateSession(&ctx);
   if (session == nullptr) {
     MS_LOG(ERROR) << "create session failed.";
-    return nullptr;
+    return sm;
   }
 
   status = session->CompileGraph(model);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "CompileGraph error";
-    return nullptr;
+    return sm;
   }
   model->Free();
-  return session;
+  delete meta_graph;
+  sm.session = session;
+  sm.model = model;
+  return sm;
 }
 
 STATUS CollectCalibInputs(const std::vector<std::string> &input_dirs, size_t count_limited,
@@ -805,4 +864,21 @@ void GetLiteParameter(const AnfNodePtr &node, ParameterPtr *param_node, ParamVal
     return;
   }
 }
+
+STATUS UpdateTensorDataAndSize(ParamValueLitePtr weight, void *quant_datas, int new_size) {
+  MS_ASSERT(weight != nullptr);
+  MS_ASSERT(new_size > 0);
+  delete[] reinterpret_cast<char *>(weight->tensor_addr());
+  char *new_tensor_data = new (std::nothrow) char[new_size];
+  if (new_tensor_data == nullptr) {
+    MS_LOG(ERROR) << "new data error";
+    return RET_ERROR;
+  }
+  memcpy(new_tensor_data, quant_datas, new_size);
+
+  weight->set_tensor_size(new_size);
+  weight->set_tensor_addr(new_tensor_data);
+  return RET_OK;
+}
+
 }  // namespace mindspore::lite::quant

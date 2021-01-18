@@ -19,6 +19,7 @@
 
 #include <future>
 #include <memory>
+#include <unordered_map>
 #include <map>
 #include <list>
 #include <string>
@@ -59,11 +60,12 @@ class WeightQuantizer : public Quantizer {
   std::string config_file_;
   PostQuantConfig config_param_;
   std::vector<std::vector<std::string>> images_;  // multi_input, [[mode_input_0], [model_input_1]...]
-  session::LiteSession *fp32_session_ = nullptr;
+  std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
 
   STATUS DoMiexedQuant(FuncGraphPtr);
   STATUS SetAbstract(ParamValueLitePtr param_value, ParameterPtr param_node, std::shared_ptr<PrimitiveC> primitive_c);
   STATUS DoFixedQuant(FuncGraphPtr);
+  STATUS RunFp32Graph(FuncGraphPtr);
 };
 }  // namespace mindspore::lite::quant
 #endif

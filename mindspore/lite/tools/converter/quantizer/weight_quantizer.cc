@@ -84,7 +84,13 @@ WeightQuantizer::WeightQuantizer(FuncGraphPtr graph, const std::string &config_f
   }
 }
 
-WeightQuantizer::~WeightQuantizer() { delete fp32_session_; }
+WeightQuantizer::~WeightQuantizer() {
+  for (const auto &fp32_output_tensor : fp32_output_tensors_) {
+    for (const auto &kv : fp32_output_tensor) {
+      delete kv.second;
+    }
+  }
+}
 
 STATUS WeightQuantizer::SetAbstract(ParamValueLitePtr param_value, ParameterPtr param_node,
                                     std::shared_ptr<PrimitiveC> primitive_c) {
@@ -278,11 +284,11 @@ STATUS WeightQuantizer::DoLstmQuntize(CNodePtr cnode) {
     }
     auto status = RET_ERROR;
     if (type_id_ == kNumberTypeInt8) {
-      status =
-        QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, false);
+      status = QuantFilter<int8_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_,
+                                   false, 2);
     } else if (type_id_ == kNumberTypeInt16) {
-      status =
-        QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_, false);
+      status = QuantFilter<int16_t>(param_value, primitive_c, QuantType_WeightQuant, quant_max_, quant_min_, bit_num_,
+                                    false, 2);
     }
     if (status != RET_OK) {
       MS_LOG(ERROR) << "QuantFilter failed : " << status;
@@ -438,19 +444,83 @@ float CompareOutputData(const std::unordered_map<std::string, mindspore::tensor:
   return total_mean_error / tensor_cnt;
 }
 
-STATUS WeightQuantizer::DoMiexedQuant(FuncGraphPtr func_graph) {
+STATUS WeightQuantizer::RunFp32Graph(FuncGraphPtr func_graph) {
+  auto image_cnt = images_.at(0).size();
+  if (!config_param_.input_shapes.empty()) {
+    if (config_param_.input_shapes.size() != image_cnt) {
+      MS_LOG(ERROR) << "input_shapes size: " << config_param_.input_shapes.size() << " image_cnt: " << image_cnt;
+      return RET_ERROR;
+    }
+  }
   // 0.1 Create Fp32 Session
   flags.quantType = schema::QuantType_QUANT_NONE;
-  fp32_session_ = CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num);
-  if (fp32_session_ == nullptr) {
+  auto fp32_sm = CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num);
+  auto fp32_session = fp32_sm.session;
+  auto fp32_model = fp32_sm.model;
+  if (fp32_session == nullptr || fp32_model == nullptr) {
     MS_LOG(ERROR) << "CreateSessoin fail";
+    delete fp32_model;
     return RET_ERROR;
   }
-  auto fp32_inputs = fp32_session_->GetInputs();
+  auto fp32_inputs = fp32_session->GetInputs();
+  fp32_output_tensors_.resize(image_cnt);
+  // 0.3 save fp32 output
+  for (size_t i = 0; i < image_cnt; i++) {
+    if (!config_param_.input_shapes.empty()) {
+      auto status = fp32_session->Resize(fp32_inputs, {config_param_.input_shapes[i]});
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "session Resize fail";
+        delete fp32_sm.session;
+        delete fp32_sm.model;
+        return RET_ERROR;
+      }
+    }
+    for (size_t input_index = 0; input_index < fp32_inputs.size(); input_index++) {
+      auto status = CopyInputDataToTensor(input_index, i, images_, fp32_inputs[input_index]);
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "generate input data from images failed!";
+        delete fp32_sm.session;
+        delete fp32_sm.model;
+        return RET_ERROR;
+      }
+    }
+    auto status = fp32_session->RunGraph();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "RunGraph fail";
+      delete fp32_sm.session;
+      delete fp32_sm.model;
+      return RET_ERROR;
+    }
+    auto fp32_outputs = fp32_session->GetOutputs();
+    for (const auto &kv : fp32_outputs) {
+      auto *tensor = kv.second;
+      auto *lite_tensor = reinterpret_cast<lite::Tensor *>(tensor);
+      if (lite_tensor == nullptr) {
+        MS_LOG(ERROR) << "not lite tensor";
+        delete fp32_sm.session;
+        delete fp32_sm.model;
+        return RET_ERROR;
+      }
+      auto *new_tensor = Tensor::CopyTensor(*lite_tensor, true);
+      fp32_output_tensors_[i][kv.first] = new_tensor;
+    }
+  }
+  delete fp32_sm.session;
+  delete fp32_sm.model;
+  return RET_OK;
+}
+
+STATUS WeightQuantizer::DoMiexedQuant(FuncGraphPtr func_graph) {
   // 0.2 Parse input calib files
   auto status = CollectCalibInputs(config_param_.image_paths, config_param_.batch_count, &images_);
   if (status != RET_OK) {
     MS_LOG(ERROR) << "CollectCalibInputs fail";
+    return RET_ERROR;
+  }
+
+  MS_LOG(DEBUG) << "run fp32 model";
+  status = RunFp32Graph(func_graph);
+  if (status != RET_OK) {
     return RET_ERROR;
   }
 
@@ -469,6 +539,13 @@ STATUS WeightQuantizer::DoMiexedQuant(FuncGraphPtr func_graph) {
         MS_LOG(ERROR) << "DoGatherQuntize error";
         return RET_ERROR;
       }
+    }
+  }
+  auto image_cnt = images_.at(0).size();
+  if (!config_param_.input_shapes.empty()) {
+    if (config_param_.input_shapes.size() != image_cnt) {
+      MS_LOG(ERROR) << "input_shapes size: " << config_param_.input_shapes.size() << " image_cnt: " << image_cnt;
+      return RET_ERROR;
     }
   }
 
@@ -540,66 +617,58 @@ STATUS WeightQuantizer::DoMiexedQuant(FuncGraphPtr func_graph) {
         // 2. evaluate the quant
         // 2.1 create quant session, get input, output tensor
         flags.quantType = schema::QuantType_WeightQuant;
-        auto quant_session =
-          std::unique_ptr<session::LiteSession>(CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num));
+        auto quant_sm = CreateSessionByFuncGraph(func_graph, flags, config_param_.thread_num);
+        auto quant_session = std::unique_ptr<session::LiteSession>(quant_sm.session);
         if (quant_session == nullptr) {
           MS_LOG(ERROR) << "create session error: " << status;
+          delete quant_sm.model;
           return RET_ERROR;
         }
         auto quant_inputs = quant_session->GetInputs();
 
         auto mean_error = 0.0f;
-        if (fp32_inputs.size() != images_.size()) {
-          MS_LOG(ERROR) << "model's input tensor cnt: " << fp32_inputs.size() << " != " << images_.size();
-          return RET_ERROR;
-        }
-        auto image_cnt = images_.at(0).size();
         for (size_t i = 0; i < image_cnt; i++) {
-          // set multi-input data
-          for (size_t input_index = 0; input_index < fp32_inputs.size(); input_index++) {
-            status = CopyInputDataToTensor(input_index, i, images_, fp32_inputs[input_index]);
+          if (!config_param_.input_shapes.empty()) {
+            status = quant_session->Resize(quant_inputs, {config_param_.input_shapes[i]});
             if (status != RET_OK) {
-              MS_LOG(ERROR) << "generate input data from images failed!";
+              MS_LOG(ERROR) << "session Resize fail";
+              delete quant_sm.model;
               return RET_ERROR;
             }
+          }
+
+          // set multi-input data
+          for (size_t input_index = 0; input_index < quant_inputs.size(); input_index++) {
             status = CopyInputDataToTensor(input_index, i, images_, quant_inputs[input_index]);
             if (status != RET_OK) {
               MS_LOG(ERROR) << "generate input data from images failed!";
+              delete quant_sm.model;
               return RET_ERROR;
             }
           }
-          std::future<STATUS> fp32_inference = std::async(
-            std::launch::async, [](session::LiteSession *fp32_session) -> STATUS { return fp32_session->RunGraph(); },
-            fp32_session_);
-
           status = quant_session->RunGraph();
           if (status != RET_OK) {
             MS_LOG(ERROR) << "quant session run error";
-            return RET_ERROR;
-          }
-          status = fp32_inference.get();
-          if (status != RET_OK) {
-            MS_LOG(ERROR) << "fp32 session run error";
+            delete quant_sm.model;
             return RET_ERROR;
           }
           // 3. compare betwen quant and fp32
-          auto fp32_outputs = fp32_session_->GetOutputs();
           auto quant_outputs = quant_session->GetOutputs();
-          mean_error += CompareOutputData<float>(fp32_outputs, quant_outputs);
+          mean_error += CompareOutputData<float>(fp32_output_tensors_[i], quant_outputs);
         }  // end_for: calib data loop
+        delete quant_sm.model;
         mean_error = mean_error / image_cnt;
-
         if (mean_error <= config_param_.mean_error_threshold) {
           MS_LOG(DEBUG) << "op: " << op_name << " got mixed bit: " << bit_num_t << " mean_error: " << mean_error;
           opname_bit_[op_name] = bit_num_t;
           break;
         } else if (bit_num_t != 8) {
+          MS_LOG(DEBUG) << "op: " << op_name << " intermediate bit: " << bit_num_t << " mean_error: " << mean_error
+                        << " [recover]";
           // recover
-          param_value->set_tensor_size(sizeof(float) * elem_count);
-          ret = memcpy_s(raw_data, param_value->tensor_size(), origin_data, sizeof(float) * elem_count);
-          if (ret != EOK) {
-            MS_LOG(ERROR) << "memcpy fail: "
-                          << " src size: " << sizeof(float) * elem_count << " dst size: " << param_value->tensor_size();
+          status = UpdateTensorDataAndSize(param_value, origin_data, sizeof(float) * elem_count);
+          if (status != RET_OK) {
+            MS_LOG(ERROR) << "UpdateTensorDataAndSize fail";
             return RET_ERROR;
           }
         } else {
@@ -610,6 +679,9 @@ STATUS WeightQuantizer::DoMiexedQuant(FuncGraphPtr func_graph) {
       free(origin_data);
     }  //  if: conv and matmul
   }    // end loop: all cnode
+  for (const auto &kv : opname_bit_) {
+    MS_LOG(INFO) << "op: " << kv.first << " bit:" << kv.second;
+  }
   return RET_OK;
 }
 
