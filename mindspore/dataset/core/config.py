@@ -104,7 +104,7 @@ def get_seed():
     Get the seed.
 
     Returns:
-        Int, seed.
+        int, seed.
     """
     return _config.get_seed()
 
@@ -135,7 +135,7 @@ def get_prefetch_size():
     Get the prefetch size in number of rows.
 
     Returns:
-        Size, total number of rows to be prefetched.
+        int, total number of rows to be prefetched.
     """
     return _config.get_op_connector_size()
 
@@ -168,7 +168,7 @@ def get_num_parallel_workers():
     This is the DEFAULT num_parallel_workers value used for each op, it is not related to AutoNumWorker feature.
 
     Returns:
-        Int, number of parallel workers to be used as a default for each operation
+        int, number of parallel workers to be used as a default for each operation.
     """
     return _config.get_num_parallel_workers()
 
@@ -199,7 +199,7 @@ def get_numa_enable():
     This is the DEFAULT numa enabled value used for the all process.
 
     Returns:
-        boolean, the default state of numa enabled
+        bool, the default state of numa enabled.
     """
     return _config.get_numa_enable()
 
@@ -230,7 +230,7 @@ def get_monitor_sampling_interval():
     Get the default interval of performance monitor sampling.
 
     Returns:
-        Int, interval (in milliseconds) for performance monitor sampling.
+        int, interval (in milliseconds) for performance monitor sampling.
     """
     return _config.get_monitor_sampling_interval()
 
@@ -290,7 +290,8 @@ def get_auto_num_workers():
     Get the setting (turned on or off) automatic number of workers.
 
     Returns:
-        Bool, whether auto num worker feature is turned on
+        bool, whether auto num worker feature is turned on.
+
     Examples:
         >>> ds.config.get_auto_num_workers()
     """
@@ -325,7 +326,7 @@ def get_callback_timeout():
     In case of a deadlock, the wait function will exit after the timeout period.
 
     Returns:
-        Int, the duration in seconds
+        int, the duration in seconds.
     """
     return _config.get_callback_timeout()
 
@@ -335,7 +336,7 @@ def __str__():
     String representation of the configurations.
 
     Returns:
-        Str, configurations.
+        str, configurations.
     """
     return str(_config)
 

@@ -30,6 +30,7 @@ from .common.exceptions import ParamValueError, ParamTypeError, MRMInvalidSchema
 
 __all__ = ['FileWriter']
 
+
 class FileWriter:
     """
     Class to write user defined raw data into MindRecord File series.
@@ -45,6 +46,7 @@ class FileWriter:
     Raises:
         ParamValueError: If `file_name` or `shard_num` is invalid.
     """
+
     def __init__(self, file_name, shard_num=1):
         check_filename(file_name)
         self._file_name = file_name
@@ -84,7 +86,7 @@ class FileWriter:
             file_name (str): String of MindRecord file name.
 
         Returns:
-            Instance of FileWriter.
+            FileWriter, file writer for the opened MindRecord file.
 
         Raises:
             ParamValueError: If file_name is invalid.
@@ -118,7 +120,7 @@ class FileWriter:
             desc (str, optional): String of schema description (default=None).
 
         Returns:
-            An integer, schema id.
+            int, schema id.
 
         Raises:
             MRMInvalidSchemaError: If schema is invalid.
@@ -175,17 +177,17 @@ class FileWriter:
 
                 if field not in v:
                     error_data_dic[i] = "for schema, {} th data is wrong, " \
-                    "there is not '{}' object in the raw data.".format(i, field)
+                                        "there is not '{}' object in the raw data.".format(i, field)
                     continue
                 field_type = type(v[field]).__name__
                 if field_type not in VALUE_TYPE_MAP:
                     error_data_dic[i] = "for schema, {} th data is wrong, " \
-                    "data type for '{}' is not matched.".format(i, field)
+                                        "data type for '{}' is not matched.".format(i, field)
                     continue
 
                 if schema_content[field]["type"] not in VALUE_TYPE_MAP[field_type]:
                     error_data_dic[i] = "for schema, {} th data is wrong, " \
-                    "data type for '{}' is not matched.".format(i, field)
+                                        "data type for '{}' is not matched.".format(i, field)
                     continue
 
                 if field_type == 'ndarray':
@@ -206,7 +208,6 @@ class FileWriter:
     def open_and_set_header(self):
         """
         Open writer and set header.
-
         """
         if not self._writer.is_open:
             self._writer.open(self._paths)
@@ -221,6 +222,9 @@ class FileWriter:
         Args:
            raw_data (list[dict]): List of raw data.
            parallel_writer (bool, optional): Load data parallel if it equals to True (default=False).
+
+        Returns:
+            MSRStatus, SUCCESS or FAILED.
 
         Raises:
             ParamTypeError: If index field is invalid.
@@ -330,7 +334,7 @@ class FileWriter:
            v (dict): Sub dict in schema
 
         Returns:
-            bool, True or False.
+            bool, whether the array item is valid.
             str, error message.
         """
         if v['type'] not in VALID_ARRAY_ATTRIBUTES:
@@ -355,7 +359,7 @@ class FileWriter:
            content (dict): Dict of raw schema.
 
         Returns:
-            bool, True or False.
+            bool, whether the schema is valid.
             str, error message.
         """
         error = ''

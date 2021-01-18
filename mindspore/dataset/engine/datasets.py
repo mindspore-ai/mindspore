@@ -80,7 +80,7 @@ def zip(datasets):
             The number of datasets must be more than 1.
 
     Returns:
-        Dataset, ZipDataset.
+        ZipDataset, dataset zipped.
 
     Raises:
         ValueError: If the number of datasets is 1.
@@ -149,8 +149,8 @@ class Dataset:
         Internal method to create an IR tree.
 
         Returns:
-            ir_tree, The onject of the IR tree.
-            dataset, the root dataset of the IR tree.
+            DatasetNode, the root node of the IR tree.
+            Dataset, the root dataset of the IR tree.
         """
         parent = self.parent
         self.parent = []
@@ -165,7 +165,7 @@ class Dataset:
         Internal method to parse the API tree into an IR tree.
 
         Returns:
-            DatasetNode, The root of the IR tree.
+            DatasetNode, the root node of the IR tree.
         """
         if len(self.parent) > 1:
             raise ValueError("The data pipeline is not a tree (i.e., one node has 2 consumers)")
@@ -197,7 +197,7 @@ class Dataset:
         Args:
 
         Returns:
-            Python dictionary.
+            dict, attributes related to the current class.
         """
         args = dict()
         args["num_parallel_workers"] = self.num_parallel_workers
@@ -245,6 +245,9 @@ class Dataset:
                 (default=False).
             drop_remainder (bool, optional): If True, will drop the last batch for each
                 bucket if it is not a full batch (default=False).
+
+        Returns:
+            BucketBatchByLengthDataset, dataset bucketed and batched by length.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -359,6 +362,9 @@ class Dataset:
             num_batch (int): the number of batches without blocking at the start of each epoch.
             callback (function): The callback funciton that will be invoked when sync_update is called.
 
+        Returns:
+            SyncWaitDataset, dataset added a blocking condition.
+
         Raises:
             RuntimeError: If condition name already exists.
 
@@ -422,7 +428,7 @@ class Dataset:
                 return a 'Dataset'.
 
         Returns:
-            Dataset, applied by the function.
+            Dataset, dataset applied by the function.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -638,7 +644,7 @@ class Dataset:
                 in parallel (default=None).
 
         Returns:
-            FilterDataset, dataset filter.
+            FilterDataset, dataset filtered.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -736,6 +742,9 @@ class Dataset:
         """
         Internal method called by split to calculate absolute split sizes and to
         do some error checking after calculating absolute split sizes.
+
+        Returns:
+            int, absolute split sizes of the dataset.
         """
         # Call get_dataset_size here and check input here because
         # don't want to call this once in check_split and another time in
@@ -1003,7 +1012,7 @@ class Dataset:
                 is specified and special_first is set to default, special_tokens will be prepended
 
         Returns:
-            Vocab node
+            Vocab, vocab built from dataset.
 
         Example:
             >>> import mindspore.dataset as ds
@@ -1062,7 +1071,7 @@ class Dataset:
             params(dict): contains more optional parameters of sentencepiece library
 
         Returns:
-            SentencePieceVocab node
+            SentencePieceVocab, vocab built from the dataset.
 
         Example:
             >>> import mindspore.dataset as ds
@@ -1103,7 +1112,7 @@ class Dataset:
                                    return a preprogressing 'Dataset'.
 
         Returns:
-            Dataset, applied by the function.
+            Dataset, dataset applied by the function.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1147,7 +1156,7 @@ class Dataset:
             If device is Ascend, features of data will be transferred one by one. The limitation
             of data transmission per time is 256M.
 
-        Return:
+        Returns:
             TransferDataset, dataset for transferring.
         """
         return self.to_device(send_epoch_end=send_epoch_end, create_data_info_queue=create_data_info_queue)
@@ -1275,7 +1284,7 @@ class Dataset:
                 use this param to select the conversion method, only take False for better performance (default=True).
 
         Returns:
-            Iterator, list of ndarrays.
+            TupleIterator, tuple iterator over the dataset.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1310,7 +1319,7 @@ class Dataset:
                 if output_numpy=False, iterator will output MSTensor (default=False).
 
         Returns:
-            Iterator, dictionary of column name-ndarray pair.
+            DictIterator, dictionary iterator over the dataset.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1339,6 +1348,9 @@ class Dataset:
     def input_indexs(self):
         """
         Get Input Index Information
+
+        Returns:
+            tuple, tuple of the input index information.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1397,6 +1409,9 @@ class Dataset:
     def get_col_names(self):
         """
         Get names of the columns in the dataset
+
+        Returns:
+            list, list of column names in the dataset.
         """
         if self._col_names is None:
             runtime_getter = self._init_tree_getters()
@@ -1407,8 +1422,8 @@ class Dataset:
         """
         Get the shapes of output data.
 
-        Return:
-            List, list of shapes of each column.
+        Returns:
+            list, list of shapes of each column.
         """
         if self.saved_output_shapes is None:
             runtime_getter = self._init_tree_getters()
@@ -1420,8 +1435,8 @@ class Dataset:
         """
         Get the types of output data.
 
-        Return:
-            List of data types.
+        Returns:
+            list, list of data types.
         """
         if self.saved_output_types is None:
             runtime_getter = self._init_tree_getters()
@@ -1433,8 +1448,8 @@ class Dataset:
         """
         Get the number of batches in an epoch.
 
-        Return:
-            Number, number of batches.
+        Returns:
+            int, number of batches.
         """
         if self.dataset_size is None:
             runtime_getter = self._init_size_getter()
@@ -1445,8 +1460,8 @@ class Dataset:
         """
         Get the number of classes in a dataset.
 
-        Return:
-            Number, number of classes.
+        Returns:
+            int, number of classes.
         """
         if self._num_classes is None:
             runtime_getter = self._init_tree_getters()
@@ -1499,8 +1514,8 @@ class Dataset:
         """
         Get the size of a batch.
 
-        Return:
-            Number, the number of data in a batch.
+        Returns:
+            int, the number of data in a batch.
         """
         if self._batch_size is None:
             runtime_getter = self._init_tree_getters()
@@ -1513,8 +1528,8 @@ class Dataset:
         """
         Get the replication times in RepeatDataset else 1.
 
-        Return:
-            Number, the count of repeat.
+        Returns:
+            int, the count of repeat.
         """
         if self._repeat_count is None:
             runtime_getter = self._init_tree_getters()
@@ -1528,8 +1543,8 @@ class Dataset:
         Get the class index.
 
         Returns:
-            Dict, A str-to-int mapping from label name to index.
-            Dict, A str-to-list<int> mapping from label name to index for Coco ONLY. The second number
+            dict, a str-to-int mapping from label name to index.
+            dict, a str-to-list<int> mapping from label name to index for Coco ONLY. The second number
             in the list is used to indicate the super category
         """
         if self.children:
@@ -1576,7 +1591,7 @@ class SourceDataset(Dataset):
             patterns (Union[str, list[str]]): String or list of patterns to be searched.
 
         Returns:
-            List, files.
+            list, list of files.
         """
 
         if not isinstance(patterns, list):
@@ -1633,9 +1648,6 @@ class MappableDataset(SourceDataset):
 
         Args:
             new_sampler (Sampler): The sampler to use for the current dataset.
-
-        Returns:
-            Dataset, that uses new_sampler.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -1897,8 +1909,9 @@ class BatchDataset(Dataset):
 
         Args:
              dataset (Dataset): Dataset to be checked.
-        Return:
-            True or False.
+
+        Returns:
+            bool, whether repeat is used before batch.
         """
         if isinstance(dataset, RepeatDataset):
             return True
@@ -1983,18 +1996,12 @@ class BatchInfo(cde.CBatchInfo):
     def get_batch_num(self):
         """
         Return the batch number of the current batch.
-
-        Return:
-            Number, number of the current batch.
         """
         return
 
     def get_epoch_num(self):
         """
         Return the epoch number of the current batch.
-
-        Return:
-            Number, number of the current epoch.
         """
         return
 
@@ -2043,8 +2050,8 @@ class BlockReleasePair:
         """
         Function for handing blocking condition.
 
-        Return:
-            True
+        Returns:
+            bool, True.
         """
         with self.cv:
             # if disable is true, the always evaluate to true
@@ -2133,8 +2140,9 @@ class SyncWaitDataset(Dataset):
 
         Args:
              dataset (Dataset): Dataset to be checked.
-        Return:
-            True or False.
+
+        Returns:
+            bool, whether sync_wait is used before batch.
         """
         if isinstance(dataset, BatchDataset):
             return True
@@ -2914,6 +2922,9 @@ def _select_sampler(num_samples, input_sampler, shuffle, num_shards, shard_id, n
         num_shards (int): Number of shard for sharding.
         shard_id (int): Shard ID.
         non_mappable (bool, optional): Indicate if caller is non-mappable dataset for special handling (default=False).
+
+    Returns:
+        Sampler, sampler selected based on user input.
     """
     if non_mappable is True and all(arg is None for arg in [num_samples, shuffle, num_shards, shard_id, input_sampler]):
         return None
@@ -4160,7 +4171,7 @@ class ManifestDataset(MappableDataset):
         Get the class index.
 
         Returns:
-            Dict, A str-to-int mapping from label name to index.
+            dict, a str-to-int mapping from label name to index.
         """
         if self.class_indexing is None:
             if self._class_indexing is None:
@@ -4559,7 +4570,7 @@ class Schema:
     Args:
         schema_file(str): Path of schema file (default=None).
 
-    Return:
+    Returns:
         Schema object, schema info about dataset.
 
     Raises:
@@ -4634,7 +4645,7 @@ class Schema:
         Get a JSON string of the schema.
 
         Returns:
-            Str, JSON string of the schema.
+            str, JSON string of the schema.
         """
         return self.cpp_schema.to_json()
 
@@ -4820,7 +4831,7 @@ class VOCDataset(MappableDataset):
         Get the class index.
 
         Returns:
-            Dict, A str-to-int mapping from label name to index.
+            dict, a str-to-int mapping from label name to index.
         """
         if self.task != "Detection":
             raise NotImplementedError("Only 'Detection' support get_class_indexing.")
@@ -5012,7 +5023,7 @@ class CocoDataset(MappableDataset):
         Get the class index.
 
         Returns:
-            Dict, A str-to-list<int> mapping from label name to index
+            dict, a str-to-list<int> mapping from label name to index
         """
         if self.task not in {"Detection", "Panoptic"}:
             raise NotImplementedError("Only 'Detection' and 'Panoptic' support get_class_indexing.")

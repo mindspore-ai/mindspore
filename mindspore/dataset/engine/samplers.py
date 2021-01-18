@@ -128,6 +128,7 @@ class BuiltinSampler:
 
     User should not extend this class.
     """
+
     def __init__(self, num_samples=None):
         self.child_sampler = None
         self.num_samples = num_samples
@@ -201,7 +202,7 @@ class BuiltinSampler:
              - None
 
         Returns:
-            int, The number of samples, or None
+            int, the number of samples, or None
         """
         if self.child_sampler is not None:
             child_samples = self.child_sampler.get_num_samples()
