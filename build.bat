@@ -78,6 +78,7 @@ IF NOT EXIST "%BUILD_PATH%/mindspore" (
 
 cd %BUILD_PATH%/mindspore
 IF "%1%" == "lite" (
+    (git log -1 | findstr "^commit") > %BUILD_PATH%\.commit_id
     cmake -DPLATFORM_ARM64=off -DSUPPORT_TRAIN=off ^
     -DENABLE_TOOLS=on -DENABLE_CONVERTER=on -DBUILD_TESTCASES=off ^
     -DCMAKE_BUILD_TYPE=Release -DSUPPORT_GPU=off -DBUILD_MINDDATA=off -DOFFLINE_COMPILE=off ^

@@ -48,13 +48,12 @@ int ArgMinMaxOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   auto *param = reinterpret_cast<ArgMinMaxParameter *>(this->op_parameter_);
-  param->dims_size_ = in_tensors_[0]->shape().size();
-  param->axis_ = (param->axis_ + param->dims_size_) % param->dims_size_;
-  if (param->axis_ < 0 || param->axis_ >= param->dims_size_) {
-    MS_LOG(ERROR) << "Invalid axis " << param->axis_;
+  auto dims_size = in_tensors_[0]->shape().size();
+  auto axis = (param->axis_ + dims_size) % dims_size;
+  if (axis < 0 || axis >= dims_size) {
+    MS_LOG(ERROR) << "Invalid axis " << axis;
     return RET_ERROR;
   }
-  param->get_max_ = (Type() == PrimitiveType_ArgMax);
   return RET_OK;
 }
 
@@ -77,10 +76,10 @@ void ArgMinMaxOpenCLKernel::SetConstArgs() {
 
 void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
-  auto in_shape = in_tensors_[0]->shape();
+  im_in_ = GpuTensorInfo(in_tensors_[0]);
+  std::vector<size_t> in_shape = {im_in_.N, im_in_.H, im_in_.W, im_in_.C};
   auto in_shape_align = in_shape;
   in_shape_align[3] = UP_ROUND(in_shape[3], C4NUM);
-  im_in_ = GpuTensorInfo(in_tensors_[0]);
   auto out_shape_align = in_shape_align;
   out_shape_align.at(param->axis_) = param->axis_ == 3 ? UP_ROUND(param->topk_, C4NUM) : param->topk_;
   int reduce_len = GetUpPow2(in_shape.at(param->axis_));
@@ -92,7 +91,7 @@ void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
   src_size_ = {std::accumulate(in_shape.begin() + param->axis_ + 1, in_shape.end(), 1, std::multiplies<int>()),
                std::accumulate(in_shape.begin(), in_shape.begin() + param->axis_, 1, std::multiplies<int>()),
                std::accumulate(in_shape.begin() + param->axis_, in_shape.end(), 1, std::multiplies<int>()),
-               in_shape.at(param->axis_)};
+               static_cast<int>(in_shape.at(param->axis_))};
   strides_ = {
     std::accumulate(in_shape_align.begin() + param->axis_ + 1, in_shape_align.end(), 1, std::multiplies<int>()),
     std::accumulate(in_shape_align.begin() + param->axis_, in_shape_align.end(), 1, std::multiplies<int>()),
@@ -144,6 +143,12 @@ int ArgMinMaxOpenCLKernel::Prepare() {
   ocl_runtime_->LoadSource(program_name, source);
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 #endif
+
+  auto *param = reinterpret_cast<ArgMinMaxParameter *>(this->op_parameter_);
+  param->dims_size_ = in_tensors_[0]->shape().size();
+  param->axis_ = (param->axis_ + param->dims_size_) % param->dims_size_;
+  param->axis_ = (4 - param->dims_size_) + param->axis_;
+  param->get_max_ = (Type() == PrimitiveType_ArgMax);
 
   InitWeights();
   SetGlobalLocal();

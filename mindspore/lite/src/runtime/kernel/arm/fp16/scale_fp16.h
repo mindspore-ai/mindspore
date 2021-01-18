@@ -43,10 +43,8 @@ class ScaleFp16CPUKernel : public ScaleCPUKernel {
   void FreeTmpBuffer();
 
  private:
-  bool malloc_input_ = false;
   bool malloc_scale_ = false;
   bool malloc_offset_ = false;
-  bool malloc_output_ = false;
 
   float16_t *input_ = nullptr;
   float16_t *scale_ = nullptr;

@@ -405,9 +405,6 @@ int DeConvWinogradFp16CPUKernel::Run() {
     ParallelLaunch(this->context_->thread_pool_, DeConvWgPostFp16Run, this, thread_num_hw_);
   }
 
-  ConvolutionBaseFP16CPUKernel::IfCastOutput();
-  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
-
   return RET_OK;
 }
 }  // namespace mindspore::kernel

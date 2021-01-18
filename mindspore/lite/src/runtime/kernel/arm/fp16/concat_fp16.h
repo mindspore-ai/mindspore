@@ -36,13 +36,9 @@ class ConcatFp16CPUKernel : public LiteKernel {
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     concat_param_ = reinterpret_cast<ConcatParameter *>(op_parameter_);
   }
-
   ~ConcatFp16CPUKernel() = default;
-
   int Init() override;
-
   int ReSize() override;
-
   int Run() override;
 
  private:

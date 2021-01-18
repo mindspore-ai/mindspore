@@ -195,17 +195,11 @@ static int ConvolutionWinogradFp16Impl(void *cdata, int task_id) {
 }
 
 int ConvolutionWinogradFP16CPUKernel::Run() {
-  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get Execute tensor failed.";
-    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
-    return ret;
-  }
+  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
 
-  ret = InitTmpBuffer();
+  auto ret = InitTmpBuffer();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Init tmp buffer failed.";
-    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
     FreeTmpBuffer();
     return RET_ERROR;
   }
@@ -215,8 +209,6 @@ int ConvolutionWinogradFP16CPUKernel::Run() {
     MS_LOG(ERROR) << "conv winograd error error_code[" << ret << "]";
   }
 
-  ConvolutionBaseFP16CPUKernel::IfCastOutput();
-  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
   FreeTmpBuffer();
   return ret;
 }

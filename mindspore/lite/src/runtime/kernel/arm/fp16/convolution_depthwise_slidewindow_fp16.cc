@@ -149,13 +149,8 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
     return ret;
   }
 
-  ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get Execute tensor failed.";
-    FreePackedInputOutput();
-    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
-    return ret;
-  }
+  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
+
   if (need_align_) {
     PackNHWCToNHWC8Fp16(execute_input_, packed_input_, conv_param_->input_batch_,
                         conv_param_->input_h_ * conv_param_->input_w_, conv_param_->input_channel_);
@@ -172,8 +167,7 @@ int ConvolutionDepthwiseSWFp16CPUKernel::Run() {
     PackNHWC8ToNHWCFp16(packed_output_, execute_output_, conv_param_->output_batch_,
                         conv_param_->output_h_ * conv_param_->output_w_, conv_param_->output_channel_);
   }
-  ConvolutionBaseFP16CPUKernel::IfCastOutput();
-  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
+
   FreePackedInputOutput();
   return ret;
 }

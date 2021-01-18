@@ -197,7 +197,7 @@ Calculated!{"precision": 0.814796668299853, "recall": 0.8006740491092923, "hmean
 | Total time                 | 1pc: 75.48 h;  8pcs: 10.01 h                                |
 | Parameters (M)             | 27.36                                                       |
 | Checkpoint for Fine tuning | 109.44M (.ckpt file)                                        |
-| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/psenet> |
+| Scripts                    | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/psenet> |
 
 ### Inference Performance
 

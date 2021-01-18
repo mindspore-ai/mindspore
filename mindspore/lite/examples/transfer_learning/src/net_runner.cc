@@ -114,7 +114,7 @@ std::vector<int> NetRunner::FillInputData(const std::vector<DataLabelTuple> &dat
     int label = 0;
     char *data = nullptr;
     std::tie(data, label) = dataset[idx];
-    std::copy(data, data + data_size, input_data + i * data_size);
+    std::copy(data, data + data_size_, input_data + i * data_size_);
     labels[i * num_of_classes_ + label] = 1.0;  // Model expects labels in onehot representation
     labels_vec.push_back(label);
   }

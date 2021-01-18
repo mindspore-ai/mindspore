@@ -207,18 +207,12 @@ static int Convolution1x1Fp16RunHw(void *cdata, int task_id) {
 }
 
 int Convolution1x1FP16CPUKernel::Run() {
-  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get executor tensor failed.";
-    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
-    return ret;
-  }
+  ConvolutionBaseFP16CPUKernel::GetExecuteTensor();
 
   pack_input_ = reinterpret_cast<float16_t *>(
     ctx_->allocator->Malloc(matmul_param_->row_16_ * matmul_param_->deep_ * sizeof(float16_t)));
   if (pack_input_ == nullptr) {
     MS_LOG(ERROR) << "Conv1x1 Malloc pack_input_ error!";
-    ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
     return RET_MEMORY_FAILED;
   }
 
@@ -232,6 +226,7 @@ int Convolution1x1FP16CPUKernel::Run() {
       input_ptr_ = batch_in;
     }
 
+    int ret = RET_ERROR;
     if (multi_thread_by_hw_) {
       ret = ParallelLaunch(this->context_->thread_pool_, Convolution1x1Fp16RunHw, this, thread_count_);
     } else {
@@ -240,15 +235,11 @@ int Convolution1x1FP16CPUKernel::Run() {
     }
     if (ret != RET_OK) {
       MS_LOG(ERROR) << "ParallelLaunch failed.";
-      ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
       ctx_->allocator->Free(pack_input_);
       pack_input_ = nullptr;
       return ret;
     }
   }
-
-  ConvolutionBaseFP16CPUKernel::IfCastOutput();
-  ConvolutionBaseFP16CPUKernel::FreeTmpBuffer();
 
   ctx_->allocator->Free(pack_input_);
   pack_input_ = nullptr;

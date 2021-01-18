@@ -47,7 +47,6 @@ std::pair<bool, FusionEltwiseParameter *> CheckSupportOrCreateParam(
   LiteKernel *node, bool create_param = false,
   const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map = {}) {
   MS_ASSERT(node);
-  MS_ASSERT(param);
   PrimitiveType node_type = node->Type();
   auto operator_ = static_cast<const EltwiseOperator>(node_type);
   auto *op_parameter = reinterpret_cast<OpenCLKernel *>(node)->GetParameter();

@@ -53,6 +53,9 @@ void BnupdateEltwiseEltwiseFusionPass::MatchBnupdateAddRelu(const CNodePtr &cnod
   auto add = relu_input->cast<CNodePtr>();
   MS_EXCEPTION_IF_NULL(add);
   auto tuple_getitem = add->input(1);
+  std::vector<int64_t> add_output_used_num;
+  add_output_used_num.emplace_back(SizeToLong(manager->node_users()[add].size()));
+  AnfAlgo::SetNodeAttr(kAttrOutputUsedNum, MakeValue(add_output_used_num), add);
   MS_EXCEPTION_IF_NULL(tuple_getitem);
   if (tuple_getitem->isa<CNode>() && AnfAlgo::GetCNodeName(tuple_getitem) == prim::kPrimTupleGetItem->name()) {
     auto getitem = tuple_getitem->cast<CNodePtr>();

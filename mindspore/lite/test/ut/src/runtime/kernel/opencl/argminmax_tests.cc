@@ -185,4 +185,19 @@ TEST_F(TestOpenCL_ArgMinMax, axis3topk2value) {
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
 }
+TEST_F(TestOpenCL_ArgMinMax, axis1topk1index) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 1;
+  int topk = 1;
+  bool out_value = false;
+  std::vector<int> input_shape = {1, 2, 14};
+  std::vector<int> output_shape = {1, 14};
+  float input_data[] = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50,
+                        30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25};
+  float output_data[] = {1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable, 1e-1, 1e-1, true);
+  }
+}
 }  // namespace mindspore::lite::opencl::test

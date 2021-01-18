@@ -47,6 +47,8 @@ class EltWiseGradCPUKernel : public CPUKernel {
   void SqrtGrad(const T *input1, const T *input2, T *out, size_t start, size_t end);
   template <typename T>
   void TanhGrad(const T *input1, const T *input2, T *out, size_t start, size_t end);
+  template <typename T>
+  void GeluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end);
   std::vector<size_t> input_shape0_;
   std::vector<size_t> input_shape1_;
   std::vector<size_t> input_element_num0_;
@@ -81,6 +83,13 @@ MS_REG_CPU_KERNEL(
   TanhGrad,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
   EltWiseGradCPUKernel);
+MS_REG_CPU_KERNEL(GeluGrad,
+                  KernelAttr()
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddInputAttr(kNumberTypeFloat32)
+                    .AddOutputAttr(kNumberTypeFloat32),
+                  EltWiseGradCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
 

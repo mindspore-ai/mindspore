@@ -78,6 +78,18 @@ void EltWiseGradCPUKernel::TanhGrad(const T *input1, const T *input2, T *out, si
   }
 }
 
+template <typename T>
+void EltWiseGradCPUKernel::GeluGrad(const T *input1, const T *input2, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    T x = input2[i];
+    auto double_x = static_cast<T>(x);
+    T tanh_res = (T)std::tanh(0.7978845608 * (double_x + 0.044715 * double_x * double_x * double_x));
+    T mul_right = (T)(0.7978845608 + 0.1070322244 * double_x * double_x);
+    T y_res = (((T)1.0 + tanh_res) + x * ((T)1.0 - tanh_res * tanh_res) * mul_right) / (T)2.0;
+    out[i] = input1[i] * y_res;
+  }
+}
+
 void EltWiseGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
@@ -93,6 +105,8 @@ void EltWiseGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = TANHGRAD;
   } else if (kernel_name == "SqrtGrad") {
     operate_type_ = SQRTGRAD;
+  } else if (kernel_name == "GeluGrad") {
+    operate_type_ = GELUGRAD;
   } else {
     MS_LOG(EXCEPTION) << "Not support " << kernel_name;
   }
@@ -172,6 +186,8 @@ void EltWiseGradCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs, c
       threads.emplace_back(std::thread(&EltWiseGradCPUKernel::TanhGrad<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == SQRTGRAD) {
       threads.emplace_back(std::thread(&EltWiseGradCPUKernel::SqrtGrad<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == GELUGRAD) {
+      threads.emplace_back(std::thread(&EltWiseGradCPUKernel::GeluGrad<T>, this, input1, input2, output, start, end));
     } else {
       MS_LOG(EXCEPTION) << "Not support " << operate_type_;
     }
