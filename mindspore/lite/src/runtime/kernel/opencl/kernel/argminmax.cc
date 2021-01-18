@@ -61,8 +61,6 @@ void ArgMinMaxOpenCLKernel::SetConstArgs() {
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   cl_int4 in_shape{static_cast<int>(im_in_.N), static_cast<int>(im_in_.H), static_cast<int>(im_in_.W),
                    static_cast<int>(im_in_.C)};
-  in_shape.s[0] = UP_ROUND(im_in_.C, C4NUM) - im_in_.C;
-  in_shape.s[1] = im_in_.W * im_in_.C;
   cl_int4 flags = {param->out_value_, param->get_max_, param->axis_, param->topk_};
   int arg_cnt = 2;
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, buff_, lite::opencl::MemType::BUF);
@@ -77,17 +75,20 @@ void ArgMinMaxOpenCLKernel::SetConstArgs() {
 void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
   auto param = reinterpret_cast<ArgMinMaxParameter *>(op_parameter_);
   im_in_ = GpuTensorInfo(in_tensors_[0]);
+  im_out_ = GpuTensorInfo(out_tensors_[0]);
   std::vector<size_t> in_shape = {im_in_.N, im_in_.H, im_in_.W, im_in_.C};
   auto in_shape_align = in_shape;
   in_shape_align[3] = UP_ROUND(in_shape[3], C4NUM);
-  auto out_shape_align = in_shape_align;
-  out_shape_align.at(param->axis_) = param->axis_ == 3 ? UP_ROUND(param->topk_, C4NUM) : param->topk_;
+  std::vector<size_t> out_shape = {im_out_.N, im_out_.H, im_out_.W, im_out_.C};
+  auto out_shape_align = out_shape;
+  out_shape_align[3] = UP_ROUND(out_shape[3], C4NUM);
   int reduce_len = GetUpPow2(in_shape.at(param->axis_));
   int dtype_size = in_tensors_[0]->data_type() == kNumberTypeFloat16 ? sizeof(int16_t) : sizeof(float);
-  cus_size_ = {reduce_len, static_cast<int>(im_in_.RowPitch() / dtype_size), 1, 1};
-  cus_size_.s[2] = UP_ROUND(im_in_.width * C4NUM, cus_size_.s[1]) - im_in_.width * C4NUM;
-  cus_size_.s[3] = im_in_.W * UP_ROUND(param->topk_, C4NUM);
-  cus_size_.s[3] = UP_ROUND(cus_size_.s[3], cus_size_.s[1]) - cus_size_.s[3];
+  int in_pitch = im_in_.RowPitch() / dtype_size;
+  int out_pitch = im_out_.RowPitch() / dtype_size;
+  cus_size_ = {reduce_len, param->keep_dims_, 1, 1};
+  cus_size_.s[2] = in_pitch - im_in_.width * C4NUM;
+  cus_size_.s[3] = out_pitch - im_out_.width * C4NUM;
   src_size_ = {std::accumulate(in_shape.begin() + param->axis_ + 1, in_shape.end(), 1, std::multiplies<int>()),
                std::accumulate(in_shape.begin(), in_shape.begin() + param->axis_, 1, std::multiplies<int>()),
                std::accumulate(in_shape.begin() + param->axis_, in_shape.end(), 1, std::multiplies<int>()),
@@ -100,22 +101,25 @@ void ArgMinMaxOpenCLKernel::SetGlobalLocal() {
   };
   switch (param->axis_) {
     case 0:
-      strides_.s[0] = UP_ROUND(strides_.s[0] / im_in_.H, cus_size_.s[1]) * im_in_.H;
+      strides_.s[0] = UP_ROUND(strides_.s[0] / im_in_.H, in_pitch) * im_in_.H;
       strides_.s[1] = strides_.s[0] * im_in_.N;
-      strides_.s[2] = UP_ROUND(strides_.s[2] / im_in_.H, cus_size_.s[1]) * im_in_.H;
+      strides_.s[2] = UP_ROUND(strides_.s[2] / im_in_.H, out_pitch) * im_in_.H;
       strides_.s[3] = strides_.s[2] * param->topk_;
       break;
     case 1:
-      strides_.s[0] = UP_ROUND(strides_.s[0], cus_size_.s[1]);
-      strides_.s[1] = UP_ROUND(strides_.s[1] / im_in_.H, cus_size_.s[1]) * im_in_.H;
-      strides_.s[2] = UP_ROUND(strides_.s[2], cus_size_.s[1]);
-      strides_.s[3] = UP_ROUND(strides_.s[3] / param->topk_, cus_size_.s[1]) * param->topk_;
+      strides_.s[0] = UP_ROUND(strides_.s[0], in_pitch);
+      strides_.s[1] = UP_ROUND(strides_.s[1] / im_in_.H, in_pitch) * im_in_.H;
+      // org dim(4,3) org axis(1,0)
+      strides_.s[2] = UP_ROUND(strides_.s[2], out_pitch);
+      strides_.s[3] = UP_ROUND(strides_.s[3] / param->topk_, out_pitch) * param->topk_;
       break;
     case 2:
-      strides_.s[1] = UP_ROUND(strides_.s[1], cus_size_.s[1]);
-      strides_.s[3] = UP_ROUND(strides_.s[3], cus_size_.s[1]);
+      strides_.s[1] = UP_ROUND(strides_.s[1], in_pitch);
+      // org dim(4,3,2) org axis(2,1,0)
+      strides_.s[3] = param->keep_dims_ ? UP_ROUND(strides_.s[3], out_pitch) : strides_.s[2];
       break;
     default:  // 3
+      // org dim(4,3,2,1) org axis(3,2,1,0)
       break;
   }
   local_size_ = {1, 1, 1};
@@ -147,8 +151,10 @@ int ArgMinMaxOpenCLKernel::Prepare() {
   auto *param = reinterpret_cast<ArgMinMaxParameter *>(this->op_parameter_);
   param->dims_size_ = in_tensors_[0]->shape().size();
   param->axis_ = (param->axis_ + param->dims_size_) % param->dims_size_;
-  param->axis_ = (4 - param->dims_size_) + param->axis_;
+  param->axis_ = GetBroadcastGpuAxis(param->dims_size_, param->axis_);
   param->get_max_ = (Type() == PrimitiveType_ArgMax);
+  param->keep_dims_ =
+    param->keep_dims_ || param->topk_ > 1 || in_tensors_[0]->shape().size() == out_tensors_[0]->shape().size();
 
   InitWeights();
   SetGlobalLocal();

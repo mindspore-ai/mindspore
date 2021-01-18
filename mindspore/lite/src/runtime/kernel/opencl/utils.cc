@@ -330,4 +330,22 @@ std::vector<size_t> GetImage2dShapeFromNHWC(const std::vector<int> &tensor_shape
   }
   return {image_x, image_y};
 }
+int GetBroadcastGpuAxis(int ndim, int ori_axis) {
+  if (ori_axis >= ndim) {
+    return ndim - 1;
+  }
+  int axis = 0;
+  if (ndim == 1) {
+    axis = 3;
+  } else if (ndim == 2) {
+    axis = ori_axis == 0 ? 0 : 3;
+  } else if (ndim == 3) {
+    axis = ori_axis == 0 ? 0 : ori_axis == 1 ? 2 : 3;
+  } else if (ndim == 4) {
+    axis = ori_axis;
+  } else if (ndim > 4) {
+    MS_LOG(ERROR) << "GPU doesn't support ndim>=" << ndim;
+  }
+  return axis;
+}
 }  // namespace mindspore::kernel

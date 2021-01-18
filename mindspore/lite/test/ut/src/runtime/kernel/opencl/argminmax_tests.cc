@@ -185,7 +185,7 @@ TEST_F(TestOpenCL_ArgMinMax, axis3topk2value) {
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable);
   }
 }
-TEST_F(TestOpenCL_ArgMinMax, axis1topk1index) {
+TEST_F(TestOpenCL_ArgMinMax, dim32axis1topk1index) {
   schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
   int axis = 1;
   int topk = 1;
@@ -195,6 +195,54 @@ TEST_F(TestOpenCL_ArgMinMax, axis1topk1index) {
   float input_data[] = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50,
                         30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25};
   float output_data[] = {1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable, 1e-1, 1e-1, true);
+  }
+}
+TEST_F(TestOpenCL_ArgMinMax, dim43axis2topk1index) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 2;
+  int topk = 1;
+  bool out_value = false;
+  std::vector<int> input_shape = {2, 2, 2, 14};
+  std::vector<int> output_shape = {2, 2, 14};
+  float input_data[] = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15,
+                        1,  50, 30, 45, 25, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50, 30, 10, 20, 30,
+                        40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25,
+                        50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 10, 20, 30, 40, 90, 20, 11, 15,
+                        1,  50, 30, 45, 25, 50, 30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25};
+  float output_data[] = {1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0,
+                         1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable, 1e-1, 1e-1, true);
+  }
+}
+TEST_F(TestOpenCL_ArgMinMax, dim21axis2topk1index) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 0;
+  int topk = 1;
+  bool out_value = false;
+  std::vector<int> input_shape = {2, 14};
+  std::vector<int> output_shape = {14};
+  float input_data[] = {10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25, 50,
+                        30, 10, 20, 30, 40, 90, 20, 11, 15, 1,  50, 30, 45, 25};
+  float output_data[] = {1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0};
+  for (auto fp16_enable : {false, true}) {
+    auto *param = CreateParameter(type, axis, topk, out_value);
+    TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable, 1e-1, 1e-1, true);
+  }
+}
+TEST_F(TestOpenCL_ArgMinMax, dim10axis2topk1index) {
+  schema::PrimitiveType type = schema::PrimitiveType_ArgMax;
+  int axis = 0;
+  int topk = 1;
+  bool out_value = false;
+  std::vector<int> input_shape = {14};
+  std::vector<int> output_shape = {1};
+  float input_data[] = {10, 20, 30, 40, 90, 20, 11, 15, 1, 50, 30, 45, 25, 50};
+  float output_data[] = {4};
   for (auto fp16_enable : {false, true}) {
     auto *param = CreateParameter(type, axis, topk, out_value);
     TestMain({{input_shape, input_data, VAR}}, {output_shape, output_data}, param, fp16_enable, 1e-1, 1e-1, true);
