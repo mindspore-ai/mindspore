@@ -10,7 +10,7 @@ aux_source_directory(common DIR_LIB_SRCS)
 
 # set(CMAKE_CXX_COMPILER "g++")
 # set(CMAKE_CXX_FLAGS "-Wall -fvisibility=hidden")
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-unused-command-line-argument")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wl,-rpath,$ORIGIN:$ORIGIN/lib")
@@ -31,18 +31,21 @@ set_target_properties(_c_mindrecord PROPERTIES
     )
 
 # add link library
-if (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite mindspore mindspore_gvar mindspore::protobuf)
 else()
-    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite ${PYTHON_LIB} ${SECUREC_LIBRARY} mindspore mindspore_gvar mindspore::protobuf)
+    target_link_libraries(_c_mindrecord PRIVATE mindspore::sqlite ${PYTHON_LIB} ${SECUREC_LIBRARY} mindspore
+                                                mindspore_gvar mindspore::protobuf)
 endif()
 
-if (USE_GLOG)
+if(USE_GLOG)
     target_link_libraries(_c_mindrecord PRIVATE mindspore::glog)
 else()
-    if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    if(CMAKE_SYSTEM_NAME MATCHES "Linux")
         target_link_options(_c_mindrecord PRIVATE -Wl,-init,mindspore_log_init)
-    elseif (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    elseif(CMAKE_SYSTEM_NAME MATCHES "Darwin")
         set_target_properties(_c_mindrecord PROPERTIES MACOSX_RPATH ON)
-    endif ()
+    endif()
 endif()
+
+set_target_properties(_c_mindrecord PROPERTIES INSTALL_RPATH ${MINDSPORE_RPATH})
