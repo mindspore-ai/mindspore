@@ -18,8 +18,9 @@ import mindspore.nn as nn
 from mindspore.ops import Primitive
 from mindspore.ops import functional as F
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
-scala_add = Primitive('scalar_add')
+scala_add = Primitive(Constants.kScalarAdd)
 
 
 @dataclass

@@ -28,6 +28,7 @@
 #include <vector>
 #include <unordered_set>
 
+#include "base/core_ops.h"
 #include "frontend/optimizer/opt.h"
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/parallel/auto_parallel/dp_algo_costmodel.h"
@@ -597,8 +598,8 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
       PrimitivePtr prev_prim = prev_prim_anf_node->value()->cast<PrimitivePtr>();
       size_t output_index = 0;
 
-      bool bool_result =
-        (IsAutoParallelCareNode(prev_cnode)) || (prev_prim->name() == TUPLE_GETITEM) || (prev_prim->name() == DEPEND);
+      bool bool_result = (IsAutoParallelCareNode(prev_cnode)) || (prev_prim->name() == prim::kTupleGetitem) ||
+                         (prev_prim->name() == DEPEND);
       while (bool_result) {
         if (IsAutoParallelCareNode(prev_cnode)) {
           auto prev_op_info = prev_cnode->user_data<OperatorInfo>();
@@ -637,7 +638,7 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
           edge_count++;
 
           break;
-        } else if (prev_prim->name() == TUPLE_GETITEM) {
+        } else if (prev_prim->name() == prim::kTupleGetitem) {
           // In this case, 'prev_anf_node' is 'tuple_getitem', the actual precursor node is node before
           // this 'tuple_getitem'
           MS_LOG(INFO) << "Jumping the 'tuple_getitem' operator.";
@@ -670,8 +671,8 @@ void ConstructCostGraphEdges(const std::vector<AnfNodePtr> &all_nodes) {
                        << "and creating an edge between the Operator before "
                        << "'depend' and the Operator after 'depend'.";
         }
-        bool_result =
-          (IsAutoParallelCareNode(prev_cnode)) || (prev_prim->name() == TUPLE_GETITEM) || (prev_prim->name() == DEPEND);
+        bool_result = (IsAutoParallelCareNode(prev_cnode)) || (prev_prim->name() == prim::kTupleGetitem) ||
+                      (prev_prim->name() == DEPEND);
       }
     }
     MS_LOG(INFO) << "Successfully created " << edge_count << " edges for: " << node_op_info->name();
@@ -958,13 +959,13 @@ std::vector<std::vector<std::string>> RecInputTensorNames(const std::map<std::st
 
 CNodePtr GetInternalOperatorInfo(const CNodePtr &cnode, const ValueNodePtr &prim_anf_node) {
   PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-  if (prim->name() == TUPLE_GETITEM || prim->name() == DEPEND) {
+  if (prim->name() == prim::kTupleGetitem || prim->name() == DEPEND) {
     auto prev_cnode = cnode->input(1)->cast<CNodePtr>();
     if (prev_cnode == nullptr || !IsValueNode<Primitive>(prev_cnode->input(0))) {
       return nullptr;
     }
     auto prev_prim = prev_cnode->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
-    while (prev_prim->name() == TUPLE_GETITEM || prev_prim->name() == DEPEND) {
+    while (prev_prim->name() == prim::kTupleGetitem || prev_prim->name() == DEPEND) {
       prev_cnode = prev_cnode->input(1)->cast<CNodePtr>();
       if (prev_cnode == nullptr || !IsValueNode<Primitive>(prev_cnode->input(0))) {
         return nullptr;

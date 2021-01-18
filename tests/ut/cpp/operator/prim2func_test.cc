@@ -22,6 +22,7 @@
 #include "ir/anf.h"
 #include "ir/dtype.h"
 #include "frontend/operator/prim_to_function.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace prim {
@@ -33,7 +34,7 @@ class TestPrimFunc : public UT::Common {
 };
 
 TEST_F(TestPrimFunc, ScalarAddTest) {
-  auto prim = std::make_shared<Primitive>("scalar_add");
+  auto prim = std::make_shared<Primitive>(prim::kScalarAdd);
   FunctionPtr func = nullptr;
   PrimToFunction::GetInstance().GetFunction(prim, &func);
 
