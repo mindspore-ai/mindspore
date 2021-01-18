@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -194,7 +194,7 @@ def match_all_arrays(mnp_res, onp_res, error=0):
 
 
 def match_meta(actual, expected):
-    # float64 and int64 are not supported, and the defualt type for
+    # float64 and int64 are not supported, and the default type for
     # float and int are float32 and int32, respectively
     if expected.dtype == onp.float64:
         expected = expected.astype(onp.float32)

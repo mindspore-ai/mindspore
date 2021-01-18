@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -146,6 +146,9 @@ promotion_rule = {
     (int32, float16): float16,
     (int32, float32): float32,
     (int32, float64): float64,
+    (int64, float16): float16,
+    (int64, float32): float32,
+    (int64, float64): float64,
     (float16, float32): float32,
     (float16, float64): float64,
     (float32, float64): float64,

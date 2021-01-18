@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -19,10 +19,10 @@ Examples:
     >>> import mindspore.numpy as np
 
 Note:
-    - array_ops.py define all the array generation and operation interfaces.
-    - math_ops.py define all the math operations on tensors.
-    - dtypes.py define all the mindspore.numpy dtypes (mainly redirected from mindspore)
-    - random/ defines all the random operations.
+    - array_ops.py defines all the array operation interfaces.
+    - array_creations.py defines all the array generation interfaces.
+    - math_ops.py defines all the math operations on tensors.
+    - dtypes.py defines all the mindspore.numpy dtypes (mainly redirected from mindspore)
 """
 
 from .array_ops import (transpose, expand_dims, squeeze, rollaxis, swapaxes, reshape,

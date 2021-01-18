@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,12 +20,11 @@ from ..ops import functional as F
 from ..ops.primitive import constexpr
 from ..nn import Cell
 
-from .utils import _covert_list_tensor_to_tuple_tensor, _expand, _broadcast_to, \
+from .utils import _convert_list_tensor_to_tuple_tensor, _expand, _broadcast_to, \
     _is_empty
 from .utils_const import _check_is_int, _check_axes_range, _check_start_normalize, \
     _check_is_tensor, _check_is_tuple, _check_is_list, _raise_type_error, _raise_value_error, \
-    _infer_out_shape, _get_index_for_unique, _get_counts_for_unique, _empty, _promote, \
-    _min, _check_same_type, _check_input_tensor
+    _infer_out_shape, _empty, _promote, _check_same_type, _check_input_tensor
 
 # According to official numpy reference, the dimension of a numpy array must be less
 # than 32
@@ -336,7 +335,7 @@ def ravel(x):
         Flattened tensor, has the same data type as the original tensor x.
 
     Raises:
-        If x is not tensor.
+        TypeError: If x is not tensor.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -450,7 +449,7 @@ def concatenate(arrays, axis=0):
         return P.Concat(axis)(flattened_arrays)
 
     # convert a list of tensor to a tuple of tensor
-    arrays = _covert_list_tensor_to_tuple_tensor(arrays)
+    arrays = _convert_list_tensor_to_tuple_tensor(arrays)
 
     arr_shape = F.shape(arrays[0])
     _check_axes_range((axis,), len(arr_shape))
@@ -503,12 +502,11 @@ def column_stack(tup):
 
     trans_tup = ()
     for tensor in tup:
-        shape = F.shape(tensor)
-        if F.tuple_len(shape) == 1:
-            reshape_tensor = F.reshape(tensor, shape+(1,))
-            trans_tup += (reshape_tensor,)
-        else:
-            trans_tup += (tensor,)
+        if tensor.ndim < 1:
+            tensor = F.expand_dims(tensor, 0)
+        if tensor.ndim == 1:
+            tensor = F.expand_dims(tensor, 1)
+        trans_tup += (tensor,)
     return P.Concat(axis=1)(trans_tup)
 
 
@@ -552,12 +550,9 @@ def vstack(tup):
 
     trans_tup = ()
     for tensor in tup:
-        shape = F.shape(tensor)
-        if F.tuple_len(shape) == 1:
-            reshape_tensor = F.reshape(tensor, (1,)+shape)
-            trans_tup += (reshape_tensor,)
-        else:
-            trans_tup += (tensor,)
+        if tensor.ndim <= 1:
+            tensor = _expand(tensor, 2, 0)
+        trans_tup += (tensor,)
     return P.Concat(axis=0)(trans_tup)
 
 
@@ -600,13 +595,12 @@ def hstack(tup):
         _raise_value_error("Need at least one tensor to concatenate.")
 
     tuple_of_tensor = ()
-    if _check_is_list(tup):
-        for tensor in tup:
-            tuple_of_tensor += (tensor,)
-    else:
-        tuple_of_tensor = tup
+    for tensor in tup:
+        if tensor.ndim < 1:
+            tensor = F.expand_dims(tensor, 0)
+        tuple_of_tensor += (tensor,)
 
-    if F.tuple_len(F.shape(tup[0])) == 1:
+    if tuple_of_tensor[0].ndim <= 1:
         return P.Concat(axis=0)(tuple_of_tensor)
     return P.Concat(axis=1)(tuple_of_tensor)
 
@@ -652,15 +646,11 @@ def dstack(tup):
 
     trans_tup = ()
     for tensor in tup:
-        shape = F.shape(tensor)
-        if F.tuple_len(shape) == 1:
-            reshape_tensor = F.reshape(tensor, (1,)+shape+(1,))
-            trans_tup += (reshape_tensor,)
-        elif F.tuple_len(shape) == 2:
-            reshape_tensor = F.reshape(tensor, shape+(1,))
-            trans_tup += (reshape_tensor,)
-        else:
-            trans_tup += (tensor,)
+        if tensor.ndim <= 1:
+            tensor = _expand(tensor, 2, 0)
+        if tensor.ndim == 2:
+            tensor = F.expand_dims(tensor, 2)
+        trans_tup += (tensor,)
     return P.Concat(axis=2)(trans_tup)
 
 
@@ -670,10 +660,6 @@ def where(condition, x=None, y=None):
 
     Note:
         As nonzero is not supported, neither x or y can be None.
-        On CPU, the supported dtypes are np.float16, np.float32, np.int16,
-        and np.int32.
-        On GPU, the supported dtypes are np.float16, np.float32, np.int16,
-        and np.int32.
 
     Args:
         condition (Tensor): where True, yield x, otherwise yield y.
@@ -724,6 +710,9 @@ def where(condition, x=None, y=None):
     shape_out = _infer_out_shape(F.shape(condition),
                                  F.shape(x), F.shape(y))
     ndim_out = len(shape_out)
+    if not _check_same_type(F.dtype(condition), mstype.float32):
+        # tiling with bool is not supported on GPU
+        condition = F.cast(condition, mstype.float32)
     condition = _expand(condition, ndim_out)
     x = _expand(x, ndim_out)
     y = _expand(y, ndim_out)
@@ -739,24 +728,16 @@ def where(condition, x=None, y=None):
     return res
 
 
-def _expand_atleast(arr, ndim):
-    """Expands arr to at least ndim."""
-    arr = _expand(arr, _min(ndim, 2))
-    if ndim > 2:
-        arr = _expand(arr, ndim, axis=-1)
-    return arr
-
-
 def _atleast_xd(ndim, arys):
     """Returns arys with at least ndim."""
     for arr in arys:
         _check_input_tensor(F.typeof(arr))
-
-    if F.tuple_len(arys) == 1:
-        return _expand_atleast(*arys, ndim)
     res = []
-    for arr in res:
-        res.append(_expand_atleast(arr, ndim))
+    for arr in arys:
+        arr = _expand(arr, ndim)
+        res.append(arr)
+    if len(res) == 1:
+        return res[0]
     return res
 
 
@@ -770,10 +751,6 @@ def atleast_1d(*arys):
     Note:
         In graph mode, returns a tuple of tensor instead of a list of
         tensors.
-        On CPU, the supported dtypes are np.float16, np.float32, np.int16,
-        and np.int32.
-        On GPU, the supported dtypes are np.float16, np.float32, np.int16,
-        and np.int32.
     Args:
         arys1, arys2, … (Tensor): one or more input tensors.
 
@@ -810,10 +787,6 @@ def atleast_2d(*arys):
     Note:
         In graph mode, returns a tuple of tensor instead of a list of
         tensors.
-        On CPU, the supported dtypes are np.float16, np.float32, np.int16,
-        and np.int32.
-        On GPU, the supported dtypes are np.float16, np.float32, np.int16,
-        and np.int32.
     Args:
         arys1, arys2, … (Tensor): one or more input tensors.
 
@@ -850,10 +823,7 @@ def atleast_3d(*arys):
     Note:
         In graph mode, returns a tuple of tensor instead of a list of
         tensors.
-        On CPU, the supported dtypes are np.float16, np.float32, np.int16,
-        and np.int32.
-        On GPU, the supported dtypes are np.float16, np.float32, np.int16,
-        and np.int32.
+
     Args:
         arys1, arys2, … (Tensor): one or more input tensors.
 
@@ -882,7 +852,19 @@ def atleast_3d(*arys):
             value= [[[1.00000000e+000], [1.00000000e+000], [1.00000000e+000],
             [1.00000000e+000], [1.00000000e+000]]]))
     """
-    return _atleast_xd(3, arys)
+    res = []
+    for arr in arys:
+        ndim = F.rank(arr)
+        if ndim == 0:
+            arr = F.reshape(arr, (1, 1, 1))
+        elif ndim == 1:
+            arr = F.reshape(arr, (1, F.size(arr), 1))
+        elif ndim == 2:
+            arr = F.reshape(arr, F.shape(arr) + (1,))
+        res.append(arr)
+    if len(res) == 1:
+        return res[0]
+    return res
 
 
 def stack(arrays, axis=0):
@@ -960,31 +942,24 @@ class UniqueNet(Cell):
         return self.unique(x)
 
 
-def unique(x, return_index=False, return_inverse=False, return_counts=False):
+def unique(x, return_inverse=False):
     """
     Finds the unique elements of a tensor. The input tensor will be flattened first
     when it has more than one dimension.
 
     Note:
-        The operation is derived from mindspore.ops.Unique.
-        Numpy arguments `axis` is not supported.
+        Numpy arguments `axis`, `return_index` and `return_counts` are not supported.
+        This operator must be executed in graph mode.
 
     Args:
         x (Tensor): The input tensor to be processed.
-        return_index (bool): If True, also return the indices of tensor x (along
-            the specified axis, if provided, or in the flattened tensor) that result
-            in the unique tensor. Default: False.
         return_inverse (bool): If True, also return the indices of the unique tensor.
             Default: False.
-        return_counts (bool): If True, also return the number of times each unique
-            item appears in input tensor `x`. Default: False.
 
     Returns:
         Tensor or tuple of Tensors.
-        - If all of the three bool arguments (`return_index`, `return_inverse`, `return_counts`)
-            are False, just return the unique tensor.
-        - If parts of the three bool arguments are True, the corresponding results (Tensor)
-            will be added in the tuple.
+        - If `return_inverse` is False, just return the unique tensor.
+        - If `return_inverse` is True, return tuple of tensors.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
@@ -995,14 +970,12 @@ def unique(x, return_index=False, return_inverse=False, return_counts=False):
     Examples:
         >>> import mindspore.numpy as mnp
         >>> import numpy as onp
+        >>> from mindspore import context
+        >>> context.set_context(mode=context.GRAPH_MODE)
         >>> input_x = mnp.asarray(onp.array([1, 2, 2, 2, 3, 4, 5]).astype('float32'))
         >>> output_x = mnp.unique(input_x)
         >>> print(output_x)
         [1. 2. 3. 4. 5.]
-        >>> output_x = mnp.unique(input_x, return_index=True)
-        >>> print(output_x)
-        (Tensor(shape=[5], dtype=Float32, value= [ 1. 2. 3. 4. 5.]), Tensor(shape=[5], dtype=Float32,
-            value= [ 0. 1. 4. 5. 6.]))
         >>> output_x = mnp.unique(input_x, return_inverse=True)
         >>> print(output_x)
         (Tensor(shape=[5], dtype=Float32, value= [ 1. 2. 3. 4. 5.]), Tensor(shape=[7], dtype=Int32,
@@ -1013,16 +986,7 @@ def unique(x, return_index=False, return_inverse=False, return_counts=False):
     if F.tuple_len(F.shape(x)) > 1:
         x = ravel(x)
     uniq = UniqueNet()
-    unique_x, inverse_index = uniq(x)
-    if not return_index and not return_inverse and not return_counts:
-        return unique_x
-    res_tup = (unique_x,)
-    if return_index:
-        res_index = _get_index_for_unique(x, unique_x)
-        res_tup += (res_index,)
-    if return_inverse:
-        res_tup += (inverse_index,)
-    if return_counts:
-        res_counts = _get_counts_for_unique(x, unique_x)
-        res_tup += (res_counts,)
-    return res_tup
+    res = uniq(x)
+    if not return_inverse:
+        return res[0]
+    return res
