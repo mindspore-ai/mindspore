@@ -749,12 +749,12 @@ std::vector<PrimitivePtr> GetFusibleOpList() {
     prim::kPrimCast,       prim::kPrimRealDiv};
 #elif ENABLE_GPU
   std::vector<PrimitivePtr> fusible_basic_ops = {
-    prim::kPrimAbs,     prim::kPrimRound,      prim::kPrimNeg,       prim::kPrimExp,     prim::kPrimTensorAdd,
-    prim::kPrimRealDiv, prim::kPrimMul,        prim::kPrimMinimum,   prim::kPrimMaximum, prim::kPrimLog,
-    prim::kPrimPow,     prim::kPrimSub,        prim::kPrimRsqrt,     prim::kPrimSqrt,    prim::kPrimAddN,
-    prim::kPrimEqual,   prim::kPrimReciprocal, prim::KPrimTransData, prim::kPrimSelect,  prim::kPrimGreater,
-    prim::kPrimAssign,  prim::kPrimReduceSum,  prim::kPrimTanh,      prim::kPrimReshape, prim::kPrimTranspose,
-    prim::kPrimCast,    prim::kPrimExpandDims};
+    prim::kPrimAbs,     prim::kPrimRound,      prim::kPrimNeg,        prim::kPrimExp,     prim::kPrimTensorAdd,
+    prim::kPrimRealDiv, prim::kPrimMul,        prim::kPrimMinimum,    prim::kPrimMaximum, prim::kPrimLog,
+    prim::kPrimPow,     prim::kPrimSub,        prim::kPrimRsqrt,      prim::kPrimSqrt,    prim::kPrimAddN,
+    prim::kPrimEqual,   prim::kPrimReciprocal, prim::KPrimTransData,  prim::kPrimSelect,  prim::kPrimGreater,
+    prim::kPrimAssign,  prim::kPrimReduceSum,  prim::kPrimTanh,       prim::kPrimReshape, prim::kPrimTranspose,
+    prim::kPrimCast,    prim::kPrimExpandDims, prim::kPrimBatchMatMul};
 #else
   std::vector<PrimitivePtr> fusible_basic_ops;
 #endif

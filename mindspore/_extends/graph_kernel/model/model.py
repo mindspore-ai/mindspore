@@ -71,6 +71,7 @@ class PrimLib:
     REDUCE = 4
     TRANSFORM = 5
     CONTROL = 6
+    CONV = 7
 
     class Prim:
         """Prim"""
@@ -128,6 +129,7 @@ class PrimLib:
             default_reduce_relation,
             unknown_relation,
             unknown_relation,
+            unknown_relation,
         ]
 
     primtives = {
@@ -171,6 +173,7 @@ class PrimLib:
         'Transpose': Prim(TRANSFORM),
         'Tile': Prim(BROADCAST),
         'BroadcastTo': Prim(BROADCAST),
+        'BatchMatMul': Prim(CONV),
     }
 
     default_primtive = Prim(UNKNOWN)
