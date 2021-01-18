@@ -192,7 +192,7 @@ Parameters for both training and evaluation can be set in config.py
 | Speed                      | 1pc: 160 samples/sec;                                       |
 | Total time                 | 1pc: 20 mins;                                               |
 | Checkpoint for Fine tuning | 198.73M(.ckpt file)                                         |
-| Scripts                    | [music_auto_tagging script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/audio/fcn-4) |
+| Scripts                    | [music_auto_tagging script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/audio/fcn-4) |
 
 ## [ModelZoo Homepage](#contents)  
 

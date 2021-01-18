@@ -195,7 +195,7 @@ Calculated!{"precision": 0.8147966668299853，"recall"：0.8006740491092923，"h
 | 总时间 | 1卡：75.48小时；4卡：18.87小时|
 | 参数(M) | 27.36 |
 | 微调检查点 | 109.44M （.ckpt file） |
-| 脚本 | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/psenet> |
+| 脚本 | <https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/psenet> |
 
 ### 推理性能
 

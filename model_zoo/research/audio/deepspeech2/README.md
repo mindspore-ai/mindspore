@@ -57,7 +57,7 @@ Dataset used: [LibriSpeech](<http://www.openslr.org/12>)
 - Hardware（GPU）
     - Prepare hardware environment with GPU processor.
 - Framework
-    - [MindSpore](https://cmc-szv.clouddragon.huawei.com/cmcversion/index/search?searchKey=Do-MindSpore%20V100R001C00B622)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below：
     - [MindSpore tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
@@ -241,7 +241,7 @@ python export.py --pre_trained_model_path='ckpt_path'
 | Speed                      | 2p 2.139s/step                                   |
 | Total time: training       | 2p: around 1 week;                                  |
 | Checkpoint                 | 991M (.ckpt file)                                              |
-| Scripts                    | [DeepSpeech script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/audio/deepspeech) |
+| Scripts                    | [DeepSpeech script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/research/audio/deepspeech2) |
 
 ### Inference Performance
 

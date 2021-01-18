@@ -159,7 +159,7 @@ In this example, the  download.gradle File configuration auto download `deeplabv
 
 Note: if the automatic download fails, please manually download the relevant library files and put them in the corresponding location.
 
-deeplabv3.ms [deeplabv3.ms]( https://download.mindspore.cn/model_zoo/official/lite/deeplabv3_openimage_lite/deeplabv3.ms)
+deeplabv3.ms [deeplabv3.ms](https://download.mindspore.cn/model_zoo/official/lite/deeplabv3_lite/deeplabv3.ms)
 
 ### Compiling On-Device Inference Code
 
@@ -208,7 +208,7 @@ The inference code process is as follows. For details about the complete code, s
       model.freeBuffer();
       return;
     }
-    // Note: when use model.freeBuffer(), the model can not be complile graph again.
+    // Note: when use model.freeBuffer(), the model can not be compile graph again.
     model.freeBuffer();
     ```
 
@@ -266,7 +266,7 @@ The inference code process is as follows. For details about the complete code, s
     dstBitmap = scaleBitmapAndKeepRatio(dstBitmap, (int) resource_height, (int) resource_weight);
     ```
 
-4. The process of image and output data can refer to methods showing bellow.
+4. The process of image and output data can refer to methods showing below.
 
     ```Java
     Bitmap scaleBitmapAndKeepRatio(Bitmap targetBmp, int reqHeightInPixels, int reqWidthInPixels) {
@@ -323,7 +323,7 @@ The inference code process is as follows. For details about the complete code, s
             float value = inputBuffer.getFloat((y * imageWidth * NUM_CLASSES + x * NUM_CLASSES + i) * 4);
             if (i == 0 || value > maxVal) {
               maxVal = value;
-              // Check wether a pixel belongs to a person whose label is 15.
+              // Check whether a pixel belongs to a person whose label is 15.
               if (i == 15) {
                 mSegmentBits[x][y] = i;
               } else {

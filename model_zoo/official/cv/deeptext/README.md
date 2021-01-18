@@ -20,7 +20,7 @@
 
 # [DeepText Description](#contents)
 
-DeepText is a convolutional neural network architecture for text detection in non-specific scenarios. The DeepText system is based on the elegant framwork of Faster R-CNN. This idea was proposed in the paper "DeepText: A new approach for text proposal generation and text detection in natural images.", published in 2017.
+DeepText is a convolutional neural network architecture for text detection in non-specific scenarios. The DeepText system is based on the elegant framework of Faster R-CNN. This idea was proposed in the paper "DeepText: A new approach for text proposal generation and text detection in natural images.", published in 2017.
 
 [Paper](https://arxiv.org/pdf/1605.07314v1.pdf) Zhuoyao Zhong, Lianwen Jin, Shuangping Huang, South China University of Technology (SCUT), Published in ICASSP 2017.
 
@@ -74,7 +74,7 @@ Here we used 4 datasets for training, and 1 datasets for Evaluation.
       ├─anchor_genrator.py              # anchor generator
       ├─bbox_assign_sample.py           # proposal layer for stage 1
       ├─bbox_assign_sample_stage2.py    # proposal layer for stage 2
-      ├─deeptext_vgg16.py               # main network defination
+      ├─deeptext_vgg16.py               # main network definition
       ├─proposal_generator.py           # proposal generator
       ├─rcnn.py                         # rcnn
       ├─roi_align.py                    # roi_align cell wrapper
@@ -83,7 +83,7 @@ Here we used 4 datasets for training, and 1 datasets for Evaluation.
     ├─config.py                       # training configuration
     ├─dataset.py                      # data proprocessing
     ├─lr_schedule.py                  # learning rate scheduler
-    ├─network_define.py               # network defination
+    ├─network_define.py               # network definition
     └─utils.py                        # some functions which is commonly used
   ├─eval.py                           # eval net
   ├─export.py                         # export checkpoint, surpport .onnx, .air, .mindir convert
@@ -187,7 +187,7 @@ class 1 precision is 88.01%, recall is 82.77%
 | Loss Function              | SoftmaxCrossEntropyWithLogits for classification, SmoothL2Loss for bbox regression|
 | Loss                       | ~0.008                                                       |
 | Total time (8p)            | 4h                                                           |
-| Scripts                    | [deeptext script](https://gitee.com/mindspore/mindspore/tree/r1.1/mindspore/official/cv/deeptext) |
+| Scripts                    | [deeptext script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/deeptext) |
 
 #### Inference Performance
 
