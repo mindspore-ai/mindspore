@@ -26,4 +26,11 @@ typedef struct ResizeParameter {
   int coordinate_transform_mode_;
   bool preserve_aspect_ratio_;
 } ResizeParameter;
+
+typedef struct CropAndResizeParameter {
+  // primitive parameter
+  OpParameter op_parameter_;
+  int method_;
+  float extrapolation_value_;
+} CropAndResizeParameter;
 #endif  // MINDSPORE_LITE_NNACL_RESIZE_PARAMETER_H_

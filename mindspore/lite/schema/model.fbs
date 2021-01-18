@@ -270,6 +270,7 @@ union PrimitiveType {
     InvertPermutation,
     Size,
     RandomStandardNormal,
+    CropAndResize,
 }
 
 enum QuantType: int {
