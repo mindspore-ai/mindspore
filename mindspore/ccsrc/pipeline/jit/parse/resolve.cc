@@ -252,9 +252,8 @@ AnfNodePtr ResolveSymbol(const FuncGraphManagerPtr &manager, const NameSpacePtr 
   }
 
   py::object obj = symbol_resolver.result();
-
   AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj, node);
-
+  TraceManager::ClearParseOrResolveDebugInfo();
   return resolved_node;
 }
 
@@ -275,9 +274,8 @@ AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpa
     return nullptr;
   }
   py::object obj_attr = obj.attr(attr.c_str());
-
   AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj_attr, node);
-
+  TraceManager::ClearParseOrResolveDebugInfo();
   return resolved_node;
 }
 

@@ -570,7 +570,7 @@ struct TraceProviderRegister {
       std::ostringstream trace_info;
       GetEvalStackInfo(trace_info);
       if (trace_info.str().empty()) {
-        DebugInfoPtr debug_info = TraceManager::GetDebugInfoPtr();
+        DebugInfoPtr debug_info = TraceManager::GetParseOrResolveDebugInfo();
         if (debug_info != nullptr) {
           oss << "\n\n# " << trace::GetDebugInfo(debug_info);
         }
