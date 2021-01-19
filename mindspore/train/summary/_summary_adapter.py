@@ -36,14 +36,14 @@ EVENT_FILE_INIT_VERSION = 1
 F32_MIN, F32_MAX = np.finfo(np.float32).min, np.finfo(np.float32).max
 
 
-def get_event_file_name(prefix, suffix, seconds=None):
+def get_event_file_name(prefix, suffix, time_second):
     """
     Create file name: file_prefix + EVENT_FILE_NAME_MARK + time(seconds) + "." + Hostname + file_suffix.
 
     Args:
         prefix (str): The prefix of file name.
         suffix (str): The suffix of file name.
-        seconds (str): The time stamp of file name.
+        time_second (str): The time stamp of file name.
 
     Returns:
         String, the name of event log file.
@@ -51,9 +51,6 @@ def get_event_file_name(prefix, suffix, seconds=None):
     Validator.check_str_by_regular(prefix)
     Validator.check_str_by_regular(suffix)
     file_name = ""
-    time_second = str(int(time.time()))
-    if seconds is not None:
-        time_second = seconds
     hostname = platform.node()
 
     if prefix is not None:
