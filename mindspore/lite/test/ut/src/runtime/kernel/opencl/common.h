@@ -31,6 +31,7 @@
 
 using Tensor = mindspore::lite::Tensor;
 using ArgsTuple = std::tuple<std::vector<int>, void *, Tensor::Category>;
+using ArgsTupleOut = std::tuple<std::vector<int>, void *>;
 using ArgsTupleWithDtype = std::tuple<std::vector<int>, void *, Tensor::Category, mindspore::TypeId>;
 constexpr Tensor::Category VAR = Tensor::VAR;
 constexpr Tensor::Category CONST_TENSOR = Tensor::Category::CONST_TENSOR;
@@ -89,10 +90,17 @@ T *CreateParameter(schema::PrimitiveType type) {
   return param;
 }
 
-void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std::vector<int>, float *> output_info,
+void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, const std::vector<ArgsTupleOut> &output_info,
               OpParameter *op_parameter, bool fp16_enable = false, float atol = 1e-9, float rtol = 1e-9,
               bool print_output = false);
 
+void TestMain(const std::vector<ArgsTuple> &input_infos, const std::vector<ArgsTupleOut> &output_info,
+              OpParameter *op_parameter, bool fp16_enable = false, float atol = 1e-9, float rtol = 1e-9,
+              bool print_output = false);
+
+void TestMain(const std::vector<ArgsTupleWithDtype> &input_infos, std::tuple<std::vector<int>, float *> output_info,
+              OpParameter *op_parameter, bool fp16_enable = false, float atol = 1e-9, float rtol = 1e-9,
+              bool print_output = false);
 void TestMain(const std::vector<ArgsTuple> &input_infos, std::tuple<std::vector<int>, float *> output_info,
               OpParameter *op_parameter, bool fp16_enable = false, float atol = 1e-9, float rtol = 1e-9,
               bool print_output = false);

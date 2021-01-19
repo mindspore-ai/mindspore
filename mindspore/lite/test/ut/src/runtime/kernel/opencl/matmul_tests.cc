@@ -45,7 +45,7 @@ TEST_F(TestOpenCL_MatMul, 2Dfile) {
   auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
 
   for (auto fp16_enable : {false}) {
-    auto *param = CreateParameter();
+    auto *param = CreateParameter(false, false);
     TestMain({{input_shape, input_data, VAR}, {weight_shape, weight_data, CONST_TENSOR}}, {output_shape, output_data},
              param, fp16_enable, fp16_enable ? 1e-3 : 1e-3);
   }

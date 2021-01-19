@@ -41,7 +41,7 @@ class MatMulOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
   int Tune() override { return lite::RET_OK; }
 
- private:
+ protected:
   void *padWeight_{nullptr};
   bool enable_fp16_{false};
   bool transposeA{false};
@@ -51,43 +51,6 @@ class MatMulOpenCLKernel : public OpenCLKernel {
   bool act_weight_{false};
   std::vector<int> inShape{std::vector<int>(MAX_DIMS, 1)};
   std::vector<int> outShape{std::vector<int>(MAX_DIMS, 1)};
-
-  // strassen
- private:
-  void AllocatorMemoryForStrassen(int NumA, int NumB);
-  void DoStrassen(void *data, void *weight, void *result, const int size, const int depth, const int threshold);
-  void StrassenSetGlobalLocal(size_t strassen_size, int type_flag);
-  void StrassenSetConstArgs(cl::Kernel *kernel, int index, int strassen_size, bool is_matmul_kernel);
-  void StrassenDataFilled(cl::Kernel *kernel, void *input, void *output, const int size, cl_int2 offset,
-                          lite::opencl::MemType mem_type);
-  void StrassenAddSub(cl::Kernel *kernel, void *input, void *output, const int size, cl_int4 offset, int flag,
-                      lite::opencl::MemType mem_type);
-  void StrassenBackResult(cl::Kernel *kernel, void *input1, void *input2, void *input3, void *input4, void *input5,
-                          void *input6, void *input7, void *output, const int size);
-  void StrassenRunMmatmul(void *input, void *weight, void *output, const int size);
-  void PrintImage2d(void *IMGData, size_t typesize, size_t width, size_t size);
-  bool use_strassen{false};
-  cl::Kernel kernel_IMG_add_sub_2;
-  cl::Kernel MatMul_StrassenBUFFilled;
-  cl::Kernel MatMul_StrassenIMGFilled;
-  cl::Kernel kernel_BUF_add_sub_2;
-  cl::Kernel kernel_back_result;
-  cl::NDRange global_add_sub_, local_add_sub_;
-  std::vector<size_t> global_size_add_sub;
-  std::vector<size_t> local_size_add_sub;
-  // image 2d
-  void *A_temp[MAXDEPTH] = {nullptr};
-
-  void *M1[MAXDEPTH] = {nullptr};
-  void *M2[MAXDEPTH] = {nullptr};
-  void *M3[MAXDEPTH] = {nullptr};
-  void *M4[MAXDEPTH] = {nullptr};
-  void *M5[MAXDEPTH] = {nullptr};
-  void *M6[MAXDEPTH] = {nullptr};
-  void *M7[MAXDEPTH] = {nullptr};
-
-  // buffer
-  void *B_temp[MAXDEPTH] = {nullptr};
 };
 }  // namespace mindspore::kernel
 

@@ -44,6 +44,21 @@ TEST_F(TestOpenCL_Concat, input2_axis0) {
   }
 }
 
+TEST_F(TestOpenCL_Concat, input2_axis0_shape1) {
+  std::vector<int> input0_shape = {1};
+  std::vector<int> input1_shape = {1};
+  std::vector<int> output_shape = {2};
+  int axis = 0;
+  float input0_data[] = {0.75};
+  float input1_data[] = {0.5};
+  float output_data[] = {0.75, 0.5};
+  for (auto fp16_enable : {false}) {
+    auto *param = CreateParameter(axis);
+    TestMain({{input0_shape, input0_data, VAR}, {input1_shape, input1_data, VAR}}, {output_shape, output_data}, param,
+             fp16_enable, fp16_enable ? 1e-3 : 1e-9);
+  }
+}
+
 TEST_F(TestOpenCL_Concat, input2_axis1_Align) {
   std::vector<int> input0_shape = {2, 2, 2, 8};
   std::vector<int> input1_shape = {2, 2, 2, 8};
