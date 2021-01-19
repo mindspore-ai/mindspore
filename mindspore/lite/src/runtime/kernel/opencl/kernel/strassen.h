@@ -50,7 +50,6 @@ class StrassenOpenCLKernel : public MatMulOpenCLKernel {
   void StrassenBackResult(cl::Kernel *kernel, void *input1, void *input2, void *input3, void *input4, void *input5,
                           void *input6, void *input7, void *output, const int size);
   void StrassenRunMmatmul(void *input, void *weight, void *output, const int size);
-  void PrintImage2d(void *IMGData, size_t typesize, size_t width, size_t size);
   cl::Kernel kernel_IMG_add_sub_2;
   cl::Kernel MatMul_StrassenBUFFilled;
   cl::Kernel MatMul_StrassenIMGFilled;

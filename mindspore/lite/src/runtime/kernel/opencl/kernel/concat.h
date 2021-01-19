@@ -45,6 +45,7 @@ class ConcatOpenCLKernel : public OpenCLKernel {
   uint32_t OC = {1};
   std::vector<size_t> global;
   bool Align_{true};
+  std::vector<void *> inputs_weight_ptrs_;
   bool enable_fp16_{false};
   cl_int stride_w{1};
   cl_int4 in_shape_{};
@@ -53,6 +54,8 @@ class ConcatOpenCLKernel : public OpenCLKernel {
 
  private:
   int RunAxis0();
+  int ConvertWeightToTensor(const std::vector<lite::Tensor *> &in_tensors, std::vector<void *> *inputs_weight_ptrs,
+                            bool fp16_enable, size_t data_size);
 };
 
 }  // namespace mindspore::kernel

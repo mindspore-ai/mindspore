@@ -38,7 +38,7 @@ int ConcatOpenCLKernel::RunAxis0() {
   auto dst_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
   for (int i = 0; i < in_tensors_.size(); i++) {
-    auto src_data = in_tensors_[i]->data_c();
+    auto src_data = inputs_weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data_c() : inputs_weight_ptrs_.at(i);
     allocator_->GetImageSize(src_data, &img_size);
     auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
     auto region = cl::array<cl::size_type, 3U>{img_size[0], img_size[1], 1};
@@ -160,10 +160,76 @@ void ConcatOpenCLKernel::SetGlobalLocal() {
   OpenCLKernel::AlignGlobalLocal(global_size_, local_size_);
 }
 
+int ConcatOpenCLKernel::ConvertWeightToTensor(const std::vector<lite::Tensor *> &in_tensors,
+                                              std::vector<void *> *inputs_weight_ptrs, bool fp16_enable,
+                                              size_t data_size) {
+  for (auto in_tensor_ : in_tensors) {
+    auto nhwc_shape = GetNHWCShape(in_tensor_->shape());
+    if (!in_tensor_->IsConst()) {
+      (*inputs_weight_ptrs).push_back(nullptr);
+    } else {
+      auto allocator = ocl_runtime_->GetAllocator();
+      std::vector<size_t> img_size = GetImage2dShapeFromNHWC(nhwc_shape, schema::Format_NHWC4);
+      int pack_weight_size = img_size[0] * img_size[1] * C4NUM;
+      int plane = nhwc_shape[1] * nhwc_shape[2];
+      int channel = nhwc_shape[3];
+      int batch = nhwc_shape[0];
+      img_size.push_back(fp16_enable ? CL_HALF_FLOAT : CL_FLOAT);
+      if (!fp16_enable) {
+        float *weight = new (std::nothrow) float[pack_weight_size];
+        if (weight == nullptr) {
+          MS_LOG(ERROR) << "Malloc buffer failed!";
+          return RET_ERROR;
+        }
+        memset(weight, 0x00, pack_weight_size * data_size);
+        if (in_tensor_->data_type() == kNumberTypeFloat32) {
+          std::function<float(float)> to_dtype = [](float x) -> float { return x; };
+          PackNHWCToNHWC4<float, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+        } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
+          std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
+          PackNHWCToNHWC4<float16_t, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+        }
+        if (batch * plane * channel == 1) {
+          // scalar
+          weight[3] = weight[2] = weight[1] = weight[0];
+        }
+        auto weight_ptr_ = allocator->Malloc(pack_weight_size, img_size, weight);
+        (*inputs_weight_ptrs).push_back(weight_ptr_);
+        delete[] weight;
+      } else {
+        float16_t *weight = new (std::nothrow) float16_t[pack_weight_size];
+        if (weight == nullptr) {
+          MS_LOG(ERROR) << "Malloc buffer failed!";
+          return RET_ERROR;
+        }
+        memset(weight, 0x00, pack_weight_size * data_size);
+        if (in_tensor_->data_type() == kNumberTypeFloat32) {
+          std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
+          PackNHWCToNHWC4<float, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+        } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
+          std::function<float16_t(float16_t)> to_dtype = [](float16_t x) -> float16_t { return x; };
+          PackNHWCToNHWC4<float16_t, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
+        }
+        if (batch * plane * channel == 1) {
+          // scalar
+          weight[3] = weight[2] = weight[1] = weight[0];
+        }
+        auto weight_ptr_ = allocator->Malloc(pack_weight_size, img_size, weight);
+        (*inputs_weight_ptrs).push_back(weight_ptr_);
+        delete[] weight;
+      }
+    }
+  }
+  return RET_OK;
+}
+
 int ConcatOpenCLKernel::Prepare() {
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
+  auto data_size = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
+  ConvertWeightToTensor(in_tensors_, &inputs_weight_ptrs_, enable_fp16_, data_size);
   if (axis_ == 0) {
     for (int i = 0; i < in_tensors_.size(); ++i) {
-      if (in_tensors_.at(0)->shape().size() != 1) {
+      if (in_tensors_.at(i)->shape().size() != 1) {
         return RET_OK;
       }
     }
@@ -175,7 +241,7 @@ int ConcatOpenCLKernel::Prepare() {
       Align_ = false;
     }
   }
-  enable_fp16_ = ocl_runtime_->GetFp16Enable();
+
   std::string kernel_name = "Concat";
   if (axis_ == 3 && !Align_) {
     kernel_name += "Input" + std::to_string(in_tensors_.size()) + "UnAlign";
@@ -202,7 +268,8 @@ int ConcatOpenCLKernel::Run() {
   }
   int arg_cn = 0;
   for (int i = 0; i < in_tensors_.size(); ++i) {
-    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, in_tensors_[i]->data_c());
+    auto input_ptr = inputs_weight_ptrs_.at(i) == nullptr ? in_tensors_[i]->data_c() : inputs_weight_ptrs_.at(i);
+    ocl_runtime_->SetKernelArg(kernel_, arg_cn++, input_ptr);
   }
   if (axis_ == 3 && !Align_) {
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_tensors_[0]->data_c(), lite::opencl::MemType::BUF);

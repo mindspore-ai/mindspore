@@ -60,7 +60,7 @@ void StrassenOpenCLKernel::AllocatorMemoryForStrassen(int NumA, int NumB) {
   img_size.push_back(UP_DIV(NumA, C4NUM));
   img_size.push_back(NumA);
   size_t img_dtype = enable_fp16_ ? CL_HALF_FLOAT : CL_FLOAT;
-  size_t dtype_size = enable_fp16_ ? sizeof(CL_HALF_FLOAT) : sizeof(CL_FLOAT);
+  size_t dtype_size = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
   img_size.push_back(img_dtype);
   auto allocator = ocl_runtime_->GetAllocator();
   size_t memA = NumA * NumA;
@@ -176,29 +176,6 @@ void StrassenOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, out_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_count++, shape_offset);
-}
-
-// OriginSize = N*H*W*C  typesize = sizeof(type data)  width = W * UP_DIV(C,C4NUM)  size = N
-void StrassenOpenCLKernel::PrintImage2d(void *IMGData, size_t typesize, size_t width, size_t size) {
-  auto runtime_wrapper = lite::opencl::OpenCLRuntimeWrapper();
-  int alignment = runtime_wrapper.GetInstance()->GetImagePitchAlignment();
-  auto runtime = runtime_wrapper.GetInstance();
-  runtime->SyncCommandQueue();
-  MS_ASSERT(alignment);
-  size_t row_pitch = UP_ROUND(width, alignment) * typesize * C4NUM;
-  size_t OriginSize = size * size * typesize;
-  std::vector<char> data(OriginSize);
-  auto row_size = width * typesize * C4NUM;
-
-  for (int i = 0; i < size; ++i) {
-    memcpy(reinterpret_cast<char *>(data.data()) + i * row_size, static_cast<char *>(IMGData) + i * row_pitch,
-           row_size);
-  }
-  for (int i = 0; i < size * size; ++i) {
-    if ((i + 1) % size == 0) {
-      std::cout << std::endl;
-    }
-  }
 }
 
 void StrassenOpenCLKernel::StrassenDataFilled(cl::Kernel *kernel, void *input, void *output, const int size,
@@ -344,7 +321,7 @@ void StrassenOpenCLKernel::DoStrassen(void *data, void *weight, void *result, co
 
 int StrassenOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-  int threshold = 0;
+  int threshold;
   const int up_bound = 1024;
   const int down_bound = 256;
   if (in_tensors_.at(0)->shape()[0] >= up_bound) {
