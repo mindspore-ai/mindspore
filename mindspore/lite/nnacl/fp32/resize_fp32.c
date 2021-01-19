@@ -57,13 +57,13 @@ int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, con
       x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
     return NNACL_NULL_PTR;
   }
-  int in_b = input_shape[0];
   int in_h = input_shape[1];
   int in_w = input_shape[2];
+  int batch = output_shape[0];
   int new_height = output_shape[1];
   int new_width = output_shape[2];
 
-  for (int i = 0; i < in_b; i++) {
+  for (int i = 0; i < batch; i++) {
     int b = box_idx[i];
     const float *box = boxes + b * 4;
     int start_h = box[0] * (in_h - 1);
@@ -145,10 +145,63 @@ int InterpCol(const float *bottom_line, const float *top_line, float *output, in
   return 0;
 }
 
+void Bilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
+              const int *y_bottom, const int *y_top, const int *x_left, const int *x_right,
+              const float *y_bottom_weight, const float *x_left_weight, float *line0, float *line1, const int h_begin,
+              const int h_end) {
+  int in_w = input_shape[2];
+  int in_c = input_shape[3];
+  int new_width = output_shape[2];
+  int h_stride = new_width * in_c;
+
+  bool cache_line_used[2] = {false, false};
+  int cache_line_num[2] = {-1, -1};
+  float *const cache_line_ptr[2] = {line0, line1};
+  float *current_line_ptr[2] = {line0, line1};
+  int current_line_num[2] = {-1, -1};
+
+  for (int h = h_begin; h < h_end; h++) {
+    current_line_num[0] = y_bottom[h];
+    current_line_num[1] = y_top[h];
+
+    for (int i = 0; i < 2; i++) {
+      cache_line_used[i] = false;
+    }
+    // search if we cached
+    for (int j = 0; j < 2; j++) {
+      bool find = false;
+      for (int k = 0; k < 2; k++) {
+        if (current_line_num[j] == cache_line_num[k]) {
+          cache_line_used[k] = true;
+          current_line_ptr[j] = cache_line_ptr[k];
+          find = true;
+          break;
+        }
+      }
+
+      if (!find) {
+        const float *line = input_data + current_line_num[j] * in_w * in_c;
+        for (int k = 0; k < 2; k++) {
+          if (!cache_line_used[k]) {
+            cache_line_num[k] = current_line_num[j];
+            cache_line_used[k] = true;
+            current_line_ptr[j] = cache_line_ptr[k];
+            InterpRow(line, current_line_ptr[j], new_width, x_left_weight, x_left, x_right, in_c);
+            break;
+          }
+        }
+      }
+    }
+    // do col interp
+    InterpCol(current_line_ptr[0], current_line_ptr[1], output_data + h * h_stride, new_width, y_bottom_weight[h],
+              in_c);
+  }
+}
+
 int ResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
                    const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
                    const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
-                   const int h_begin, const int h_end, bool is_crop) {
+                   const int h_begin, const int h_end) {
   if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_bottoms == NULL ||
       y_tops == NULL || x_lefts == NULL || x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
     return NNACL_NULL_PTR;
@@ -158,71 +211,44 @@ int ResizeBilinear(const float *input_data, float *output_data, const int *input
   int in_h = input_shape[1];
   int in_w = input_shape[2];
   int in_c = input_shape[3];
-
   int new_height = output_shape[1];
   int new_width = output_shape[2];
-  int h_stride = new_width * in_c;
-
-  const int *y_bottom = y_bottoms;
-  const int *y_top = y_tops;
-  const float *y_bottom_weight = y_bottom_weights;
-  const int *x_left = x_lefts;
-  const int *x_right = x_rights;
-  const float *x_left_weight = x_left_weights;
 
   for (int b = 0; b < in_b; b++) {
-    if (is_crop) {
-      y_bottom = y_bottoms + b * new_height;
-      y_top = y_tops + b * new_height;
-      y_bottom_weight = y_bottom_weights + b * new_height;
-      x_left = x_lefts + b * new_width;
-      x_right = x_rights + b * new_width;
-      x_left_weight = x_left_weights + b * new_width;
-    }
     const float *input = input_data + b * in_h * in_w * in_c;
     float *output = output_data + b * new_height * new_width * in_c;
-    bool cache_line_used[2] = {false, false};
-    int cache_line_num[2] = {-1, -1};
-    float *const cache_line_ptr[2] = {line0, line1};
-    float *current_line_ptr[2] = {line0, line1};
-    int current_line_num[2] = {-1, -1};
-
     for (int h = h_begin; h < h_end; h++) {
-      current_line_num[0] = y_bottom[h];
-      current_line_num[1] = y_top[h];
-
-      for (int i = 0; i < 2; i++) {
-        cache_line_used[i] = false;
-      }
-      // search if we cached
-      for (int j = 0; j < 2; j++) {
-        bool find = false;
-        for (int k = 0; k < 2; k++) {
-          if (current_line_num[j] == cache_line_num[k]) {
-            cache_line_used[k] = true;
-            current_line_ptr[j] = cache_line_ptr[k];
-            find = true;
-            break;
-          }
-        }
-
-        if (!find) {
-          const float *line = input + current_line_num[j] * in_w * in_c;
-          for (int k = 0; k < 2; k++) {
-            if (!cache_line_used[k]) {
-              cache_line_num[k] = current_line_num[j];
-              cache_line_used[k] = true;
-              current_line_ptr[j] = cache_line_ptr[k];
-              InterpRow(line, current_line_ptr[j], new_width, x_left_weight, x_left, x_right, in_c);
-              break;
-            }
-          }
-        }
-      }
-
-      // do col interp
-      InterpCol(current_line_ptr[0], current_line_ptr[1], output + h * h_stride, new_width, y_bottom_weight[h], in_c);
+      Bilinear(input, output, input_shape, output_shape, y_bottoms, y_tops, x_lefts, x_rights, y_bottom_weights,
+               x_left_weights, line0, line1, h_begin, h_end);
     }
+  }
+  return NNACL_OK;
+}
+
+int CropAndResizeBilinear(const float *input_data, float *output_data, const int *input_shape, const int *output_shape,
+                          const int *y_bottoms, const int *y_tops, const int *x_lefts, const int *x_rights,
+                          const float *y_bottom_weights, const float *x_left_weights, float *line0, float *line1,
+                          const int h_begin, const int h_end) {
+  if (input_data == NULL || output_data == NULL || input_shape == NULL || output_shape == NULL || y_bottoms == NULL ||
+      y_tops == NULL || x_lefts == NULL || x_rights == NULL || y_bottom_weights == NULL || x_left_weights == NULL) {
+    return NNACL_NULL_PTR;
+  }
+  int batch = output_shape[0];
+  int new_height = output_shape[1];
+  int new_width = output_shape[2];
+  int new_channel = output_shape[3];
+
+  for (int b = 0; b < batch; b++) {
+    const int *y_bottom = y_bottoms + b * new_height;
+    const int *y_top = y_tops + b * new_height;
+    const float *y_bottom_weight = y_bottom_weights + b * new_height;
+    const int *x_left = x_lefts + b * new_width;
+    const int *x_right = x_rights + b * new_width;
+    const float *x_left_weight = x_left_weights + b * new_width;
+    float *output = output_data + b * new_height * new_width * new_channel;
+
+    Bilinear(input_data, output, input_shape, output_shape, y_bottom, y_top, x_left, x_right, y_bottom_weight,
+             x_left_weight, line0, line1, h_begin, h_end);
   }
   return NNACL_OK;
 }

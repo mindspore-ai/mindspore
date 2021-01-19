@@ -1253,3 +1253,8 @@ table RandomStandardNormal {
     seed : int;
     seed2 : int;
 }
+
+table CropAndResize {
+    method : ResizeMethod;
+    extrapolation_value : float;
+}
