@@ -1295,6 +1295,7 @@ class Conv2D(PrimitiveWithCheck):
             pad = (pad,) * 4
         else:
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
+        self.add_prim_attr("pad", pad)
         self.padding = pad
         self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
 
@@ -1400,6 +1401,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             pad = (pad,) * 4
         else:
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
+        self.add_prim_attr("pad", pad)
         self.padding = pad
         self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
@@ -1450,7 +1452,7 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
             w_out = math.floor(w_out)
 
         self.pad_list = (pad_top, pad_bottom, pad_left, pad_right)
-        self.add_prim_attr('pads', self.pad_list)
+        self.add_prim_attr('pad_list', self.pad_list)
 
         out_channel = self.channel_multiplier * x_shape[1]
         out_shape = [x_shape[0], out_channel, h_out, w_out]
@@ -1817,12 +1819,12 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         self.add_prim_attr('stride', self.stride)
         self.dilation = _check_positive_int_or_tuple('dilation', dilation, self.name, allow_four=True, ret_four=True)
         self.add_prim_attr('dilation', self.dilation)
-
         validator.check_value_type('pad', pad, (int, tuple), self.name)
         if isinstance(pad, int):
             pad = (pad,) * 4
         else:
             validator.check_equal_int(len(pad), 4, 'pad size', self.name)
+        self.add_prim_attr("pad", pad)
         self.padding = pad
         self.pad_mode = validator.check_string(pad_mode, ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if pad_mode != 'pad' and pad != (0, 0, 0, 0):
@@ -7039,6 +7041,7 @@ class Conv3D(PrimitiveWithInfer):
         if isinstance(pad, int):
             pad = (pad,) * 6
         validator.check_equal_int(len(pad), 6, 'pad size', self.name)
+        self.add_prim_attr("pad", pad)
         self.padding = pad
         validator.check_int_range(self.padding[0], 0, kernel_size[0], Rel.INC_LEFT,
                                   'pad_d belonging [0, kernel_size_d)', self.name)
@@ -7128,7 +7131,7 @@ class Conv3D(PrimitiveWithInfer):
             w_out = math.floor(w_out)
 
         self.pad_list = [pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right]
-        self.add_prim_attr('pads', (pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right))
+        self.add_prim_attr('pad_list', (pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right))
         out_channel = self.out_channel
         out_shape = [x_shape[0], out_channel, d_out, h_out, w_out]
         _check_shape('output', out_shape, self.name)
@@ -7206,6 +7209,7 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         if isinstance(pad, int):
             pad = (pad,) * 6
         validator.check_equal_int(len(pad), 6, 'pad size', self.name)
+        self.add_prim_attr("pad", pad)
         self.pad_list = pad
 
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
@@ -7264,7 +7268,7 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
             pad_right = pad_needed_w - pad_left
             self.pad_list = (pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right)
 
-        self.add_prim_attr('pads', self.pad_list)
+        self.add_prim_attr('pad_list', self.pad_list)
         out = {
             'value': None,
             'shape': x_size_v,
@@ -7385,7 +7389,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
         # infer shape
         x_shape = x['shape']
         w_shape = w['shape']
-        self.add_prim_attr('pads', self.pad_list)
+        self.add_prim_attr('pad_list', self.pad_list)
         pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right = self.pad_list
         d_out = (x_shape[2] - 1) * self.stride[2] - (pad_head + pad_tail) + self.dilation[2] * \
                 (self.kernel_size[0] - 1) + self.output_padding[2] + 1

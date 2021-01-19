@@ -843,7 +843,7 @@ void OnnxExporter::ExportPrimDepthwiseConv2d(const FuncGraphPtr & /*func_graph*/
     onnx_attr_proto->set_s("SAME_UPPER");
   } else {
     onnx_attr_proto->set_name("pads");
-    SetAttrTupleValueToProto(prim->GetAttr("pads"), onnx::AttributeProto_AttributeType_INTS, onnx_attr_proto, prim);
+    SetAttrTupleValueToProto(prim->GetAttr("pad_list"), onnx::AttributeProto_AttributeType_INTS, onnx_attr_proto, prim);
   }
   // set strides
   onnx_attr_proto = node_proto->add_attribute();

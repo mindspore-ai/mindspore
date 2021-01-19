@@ -320,7 +320,7 @@ AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &p
   int64_t c_axis = 1;
   int64_t h_axis = 2;
   int64_t w_axis = 3;
-  auto data_format_ptr = primitive->GetAttr("data_format");
+  auto data_format_ptr = primitive->GetAttr("format");
   std::string data_format = "NCHW";
   if ((data_format_ptr != nullptr) && data_format_ptr->isa<StringImm>()) {
     data_format = data_format_ptr->cast<StringImmPtr>()->value();
