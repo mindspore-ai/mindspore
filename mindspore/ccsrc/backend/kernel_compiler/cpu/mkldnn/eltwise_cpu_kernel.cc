@@ -43,6 +43,8 @@ dnnl::eltwise_forward::desc EltWiseCPUKernel::GetForwardEltwiseDesc(const CNodeP
     return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_square, src_desc);
   } else if (kernel_name == "Tanh") {
     return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_tanh, src_desc);
+  } else if (kernel_name == "Elu") {
+    return dnnl::eltwise_forward::desc(DnnlForward, dnnl::algorithm::eltwise_elu, src_desc, 1.0);
   } else {
     MS_LOG(EXCEPTION) << "Eltwise operators don't support " << kernel_name;
   }
