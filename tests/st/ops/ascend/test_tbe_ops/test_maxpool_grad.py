@@ -38,7 +38,7 @@ class Grad(nn.Cell):
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.maxpool = P.MaxPool(padding="SAME", ksize=3, strides=2)
+        self.maxpool = P.MaxPool(pad_mode="SAME", kernel_size=3, strides=2)
 
     @ms_function
     def construct(self, x):

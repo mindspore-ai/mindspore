@@ -33,8 +33,8 @@ class Conv2dBpropInputInplace(nn.Cell):
         self.conv2d_2 = P.Conv2DBackpropInput(out_channel=256, kernel_size=1)
         self.w2 = Parameter(initializer(w2, w2.shape), name='w2')
         self.add = P.TensorAdd()
-        self.maxpool = P.MaxPool(ksize=3, strides=2, padding='SAME')
-        self.maxpool_grad = G.MaxPoolGrad(ksize=3, strides=2, padding='SAME')
+        self.maxpool = P.MaxPool(kernel_size=3, strides=2, pad_mode='SAME')
+        self.maxpool_grad = G.MaxPoolGrad(kernel_size=3, strides=2, pad_mode='SAME')
         self.shape = (32, 64, 56, 56)
 
     def construct(self, x1, x2, x3):

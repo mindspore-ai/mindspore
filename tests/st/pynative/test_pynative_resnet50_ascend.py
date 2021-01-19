@@ -271,7 +271,7 @@ class ResNet(nn.Cell):
 
         self.bn1 = bn_with_initialize(64)
         self.relu = P.ReLU()
-        self.maxpool = P.MaxPoolWithArgmax(ksize=3, strides=2, padding="SAME")
+        self.maxpool = P.MaxPoolWithArgmax(kernel_size=3, strides=2, pad_mode="SAME")
 
         self.layer1 = MakeLayer0(block, in_channels=64, out_channels=256, stride=1)
         self.layer2 = MakeLayer1(block, in_channels=256, out_channels=512, stride=2)

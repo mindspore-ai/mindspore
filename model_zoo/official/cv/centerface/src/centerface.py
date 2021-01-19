@@ -295,7 +295,7 @@ class CenterFaceWithNms(nn.Cell):
         self.centerface_network = network
         self.config = ConfigCenterface()
         # two type of maxpool self.maxpool2d = nn.MaxPool2d(kernel_size=3, stride=1, pad_mode='same')
-        self.maxpool2d = P.MaxPoolWithArgmax(ksize=3, strides=1, padding='same')
+        self.maxpool2d = P.MaxPoolWithArgmax(kernel_size=3, strides=1, pad_mode='same')
         self.topk = P.TopK(sorted=True)
         self.reshape = P.Reshape()
         self.print = P.Print()

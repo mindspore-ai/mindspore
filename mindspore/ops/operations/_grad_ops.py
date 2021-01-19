@@ -810,13 +810,13 @@ class _PoolGrad(PrimitiveWithInfer):
     """Gradients of the max/avg pool operation."""
 
     @prim_attr_register
-    def __init__(self, ksize, strides, padding="VALID", data_format="NCHW"):
+    def __init__(self, kernel_size, strides, pad_mode="VALID", data_format="NCHW"):
         self.init_prim_io_names(inputs=['x_origin', 'out_origin', 'grad'], outputs=['output'])
 
-        validator.check_value_type('ksize', ksize, [int, tuple], self.name)
+        validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
-        self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
-        self.add_prim_attr("padding", self.padding)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode)
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
             raise ValueError("NHWC format only support in GPU target.")
@@ -842,9 +842,10 @@ class _PoolGrad(PrimitiveWithInfer):
                     raise error_msg
             return ret
 
-        ksize = _grad_check_int_or_tuple("ksize", ksize, self.is_maxpoolgradwithargmax)
-        self.ksize = ksize if self.format == "NCHW" else [ksize[0], ksize[2], ksize[3], ksize[1]]
-        self.add_prim_attr("ksize", self.ksize)
+        kernel_size = _grad_check_int_or_tuple("kernel_size", kernel_size, self.is_maxpoolgradwithargmax)
+        self.kernel_size = kernel_size if self.format == "NCHW" else [kernel_size[0], kernel_size[2],
+                                                                      kernel_size[3], kernel_size[1]]
+        self.add_prim_attr("kernel_size", self.kernel_size)
 
         strides = _grad_check_int_or_tuple("strides", strides, self.is_maxpoolgradwithargmax)
         self.strides = strides if self.format == "NCHW" else [strides[0], strides[2], strides[3], strides[1]]
@@ -855,8 +856,8 @@ class AvgPoolGrad(_PoolGrad):
     """Gradients of the avg pool operation for ge."""
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID"):
-        super(AvgPoolGrad, self).__init__(ksize, strides, padding)
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID"):
+        super(AvgPoolGrad, self).__init__(kernel_size, strides, pad_mode)
 
     def __infer__(self, origin_input, dout):
         out = {
@@ -872,8 +873,8 @@ class AvgPoolGradVm(_PoolGrad):
     """Gradients of the avg pool operation for vm."""
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID"):
-        super(AvgPoolGradVm, self).__init__(ksize, strides, padding)
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID"):
+        super(AvgPoolGradVm, self).__init__(kernel_size, strides, pad_mode)
         self.init_prim_io_names(inputs=['x_origin', 'grad', 'mean_matrix', 'kernel_matrix'], outputs=['output'])
 
     def __infer__(self, origin_input, dout, mean_matrix, kernel_matrix):
@@ -890,8 +891,8 @@ class AvgPoolGradGpu(_PoolGrad):
     """Gradients of the avg pool operation for gpu."""
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID", data_format="NCHW"):
-        super(AvgPoolGradGpu, self).__init__(ksize, strides, padding, data_format)
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
+        super(AvgPoolGradGpu, self).__init__(kernel_size, strides, pad_mode, data_format)
 
     def infer_shape(self, x1_shape, x2_shape, grad_shape):
         return x1_shape
@@ -904,8 +905,8 @@ class AvgPoolGradCpu(_PoolGrad):
     """Gradients of the avg pool operation for cpu."""
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID", data_format="NCHW"):
-        super(AvgPoolGradCpu, self).__init__(ksize, strides, padding, data_format)
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
+        super(AvgPoolGradCpu, self).__init__(kernel_size, strides, pad_mode, data_format)
 
     def infer_shape(self, x1_shape, x2_shape, grad_shape):
         return x1_shape
@@ -918,8 +919,8 @@ class MaxPoolGrad(_PoolGrad):
     """Performs gradients of the max pool operation."""
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID", data_format="NCHW"):
-        super(MaxPoolGrad, self).__init__(ksize, strides, padding, data_format)
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID", data_format="NCHW"):
+        super(MaxPoolGrad, self).__init__(kernel_size, strides, pad_mode, data_format)
 
     def infer_shape(self, x1_shape, x2_shape, grad_shape):
         return x1_shape
@@ -933,13 +934,13 @@ class MaxPoolGradGrad(_PoolGrad):
     Performs gradients of the MaxPoolGrad operation.
 
     Args:
-        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
-            is an int number that represents height and width are both ksize, or a tuple
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents height and width are both kernel_size, or a tuple
             of two int numbers that represent height and width respectively. Default: 1.
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
@@ -961,8 +962,8 @@ class MaxPoolGradGrad(_PoolGrad):
     """
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID"):
-        super(MaxPoolGradGrad, self).__init__(ksize, strides, padding)
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID"):
+        super(MaxPoolGradGrad, self).__init__(kernel_size, strides, pad_mode)
 
     def infer_shape(self, x1_shape, x2_shape, grad_shape):
         return x1_shape
@@ -985,9 +986,9 @@ class MaxPoolGradWithArgmax(_PoolGrad):
     """Computes the gradients of MaxPoolWithArgmax."""
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID"):
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID"):
         self.init_prim_io_names(inputs=['x', 'grad', 'argmax'], outputs=['output'])
-        super(MaxPoolGradWithArgmax, self).__init__(ksize, strides, padding)
+        super(MaxPoolGradWithArgmax, self).__init__(kernel_size, strides, pad_mode)
 
     def infer_shape(self, x_shape, grad_shape, argmax_shape):
         if not grad_shape:
@@ -1003,13 +1004,13 @@ class MaxPoolGradGradWithArgmax(_PoolGrad):
     Computes the gradients of MaxPoolGradWithArgmax.
 
     Args:
-        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
-            is an int number that represents height and width are both ksize, or a tuple
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents height and width are both kernel_size, or a tuple
             of two int numbers that represent height and width respectively. Default: 1.
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
@@ -1031,9 +1032,9 @@ class MaxPoolGradGradWithArgmax(_PoolGrad):
     """
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="VALID"):
+    def __init__(self, kernel_size=1, strides=1, pad_mode="VALID"):
         self.init_prim_io_names(inputs=['x', 'grad', 'argmax'], outputs=['output'])
-        super(MaxPoolGradGradWithArgmax, self).__init__(ksize, strides, padding)
+        super(MaxPoolGradGradWithArgmax, self).__init__(kernel_size, strides, pad_mode)
 
     def infer_shape(self, x_shape, grad_shape, argmax_shape):
         if not grad_shape:
