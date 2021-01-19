@@ -71,8 +71,8 @@ const BaseRef BiDirectionTfGruCellFusion::DefinePattern() const {
 
   auto fw_shape =
     VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Shape)), transpose_input_});
-  auto fw_stride =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_StridedSlice)), fw_shape});
+  auto fw_stride = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_StridedSlice)),
+                              fw_shape, std::make_shared<SeqVar>()});
   auto fw_min =
     VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Minimum)), fw_stride, fw_max2});
 
@@ -106,8 +106,8 @@ const BaseRef BiDirectionTfGruCellFusion::DefinePattern() const {
                              bw_reverse_seq, std::make_shared<Var>()});
   auto bw_shape =
     VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Shape)), bw_trans});
-  auto bw_stride =
-    VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_StridedSlice)), bw_shape});
+  auto bw_stride = VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_StridedSlice)),
+                              bw_shape, std::make_shared<SeqVar>()});
   auto bw_min =
     VectorRef({std::make_shared<CondVar>(std::bind(IsOpType, p1, schema::PrimitiveType_Minimum)), bw_stride, bw_max2});
   auto bw_reserve =
