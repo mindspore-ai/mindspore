@@ -22,18 +22,41 @@ namespace mindspore {
 namespace lite {
 PrimitiveC *CaffeReduceParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
                                                   const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::PReLUT> attr = std::make_unique<schema::PReLUT>();
+  auto attr = std::make_unique<schema::ReduceT>();
   if (attr == nullptr) {
     MS_LOG(ERROR) << "new op failed";
     return nullptr;
   }
 
-  const caffe::PReLUParameter &pReluParam = proto.prelu_param();
-  if (pReluParam.has_channel_shared()) {
-    attr->channelShared = pReluParam.channel_shared();
+  attr->keepDims = false;
+
+  const caffe::ReductionParameter &reduce_param = proto.reduction_param();
+  if (reduce_param.has_operation()) {
+    if (reduce_param.operation() == caffe::ReductionParameter_ReductionOp_MEAN) {
+      attr->mode = schema::ReduceMode_ReduceMean;
+    } else if (reduce_param.operation() == caffe::ReductionParameter_ReductionOp_SUM) {
+      attr->mode = schema::ReduceMode_ReduceSum;
+    } else if (reduce_param.operation() == caffe::ReductionParameter_ReductionOp_SUMSQ) {
+      attr->mode = schema::ReduceMode_ReduceSumSquare;
+    } else if (reduce_param.operation() == caffe::ReductionParameter_ReductionOp_ASUM) {
+      attr->mode = schema::ReduceMode_ReduceASum;
+    } else {
+      MS_LOG(ERROR) << "nsupported reduce mode: " << reduce_param.operation();
+      return nullptr;
+    }
   } else {
-    attr->channelShared = false;
+    attr->mode = schema::ReduceMode_ReduceSum;
   }
+
+  std::vector<int32_t> axes;
+  if (reduce_param.has_axis()) {
+    axes.push_back(1);
+    axes.push_back(reduce_param.axis());
+  } else {
+    axes.push_back(1);
+    axes.push_back(0);
+  }
+  attr->axes = axes;
 
   auto primitive = std::make_unique<schema::PrimitiveT>();
   primitive->value.type = schema::PrimitiveType_Reduce;
