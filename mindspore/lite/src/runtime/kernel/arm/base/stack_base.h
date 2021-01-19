@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_STACK_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_STACK_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_STACK_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_STACK_BASE_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
+#include "nnacl/stack_parameter.h"
 
+using mindspore::lite::InnerContext;
 namespace mindspore::kernel {
-class StackCPUKernel : public LiteKernel {
+class StackBaseCPUKernel : public LiteKernel {
  public:
-  StackCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                 const mindspore::lite::PrimitiveC *primitive)
+  StackBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
+                     const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
-
-  ~StackCPUKernel() = default;
+  ~StackBaseCPUKernel() override = default;
 
   int Init() override;
   int ReSize() override;
@@ -35,7 +36,9 @@ class StackCPUKernel : public LiteKernel {
 
  protected:
   int axis_ = 0;
+  size_t data_type_size_ = 0;
+  size_t copy_size_ = 0;
+  size_t outter_size_ = 1;
 };
 }  // namespace mindspore::kernel
-
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_STACK_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_STACK_BASE_H_

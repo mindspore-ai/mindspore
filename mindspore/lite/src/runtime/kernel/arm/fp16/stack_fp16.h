@@ -18,16 +18,16 @@
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/runtime/kernel/arm/fp32/stack_fp32.h"
+#include "src/runtime/kernel/arm/base/stack_base.h"
 
 namespace mindspore::kernel {
-class StackFp16CPUKernel : public StackCPUKernel {
+class StackFp16CPUKernel : public StackBaseCPUKernel {
  public:
   StackFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                      const mindspore::lite::PrimitiveC *primitive)
-      : StackCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~StackFp16CPUKernel() = default;
+      : StackBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~StackFp16CPUKernel() override = default;
   int Init() override;
   int Run() override;
 
@@ -38,9 +38,9 @@ class StackFp16CPUKernel : public StackCPUKernel {
 
  private:
   std::vector<bool> malloc_buffers_;
-  std::vector<float16_t *> buffers_;
+  std::vector<char *> buffers_;
   float16_t *out_buffer_;
-  bool malloc_out;
+  bool malloc_out_;
 };
 }  // namespace mindspore::kernel
 

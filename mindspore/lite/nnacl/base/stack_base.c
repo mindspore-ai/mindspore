@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_FP16_STACK_FP16_H_
-#define MINDSPORE_LITE_NNACL_FP16_STACK_FP16_H_
+#include "nnacl/base/stack_base.h"
 
-#include "nnacl/op_base.h"
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-void DoStackFp16(const float16_t *const *inputs, size_t input_num, int *in_shape, size_t shape_size, int axis,
-                 float16_t *output);
-#ifdef __cplusplus
+void Stack(char **inputs, char *output, size_t input_num, size_t copy_size, size_t outter_size) {
+  size_t in_offset = 0;
+  size_t out_offset = 0;
+  for (size_t i = 0; i < outter_size; ++i) {
+    for (size_t j = 0; j < input_num; ++j) {
+      memcpy(output + out_offset, inputs[j] + in_offset, copy_size);
+      out_offset += copy_size;
+    }
+    in_offset += copy_size;
+  }
 }
-#endif
-
-#endif  // MINDSPORE_LITE_NNACL_FP16_STACK_FP16_H_
