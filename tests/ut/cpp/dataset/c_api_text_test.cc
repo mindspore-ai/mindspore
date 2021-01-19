@@ -877,6 +877,229 @@ TEST_F(MindDataTestPipeline, TestJiebaTokenizerFail) {
   EXPECT_EQ(jieba_tokenizer3, nullptr);
 }
 
+TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord) {
+  // Testing the parameter AddWord of JiebaTokenizer when the freq is not provided (default 0).
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddWord.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testJiebaDataset/4.txt";
+  std::string hmm_path = datasets_root_path_ + "/jiebadict/hmm_model.utf8";
+  std::string mp_path = datasets_root_path_ + "/jiebadict/jieba.dict.utf8";
+  std::shared_ptr<Dataset> ds = TextFile({data_file});
+  EXPECT_NE(ds, nullptr);
+
+  // Create jieba_tokenizer operation on ds
+  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer =
+    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer, nullptr);
+
+  // Add word with freq not provided (default 0)
+  jieba_tokenizer->AddWord("男默女泪");
+
+  // Create Map operation on ds
+  ds = ds->Map({jieba_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"男默女泪", "市", "长江大桥"};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected, &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord1) {
+  // Testing the parameter AddWord of JiebaTokenizer when the freq is set explicitly to 0.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddWord1.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testJiebaDataset/4.txt";
+  std::string hmm_path = datasets_root_path_ + "/jiebadict/hmm_model.utf8";
+  std::string mp_path = datasets_root_path_ + "/jiebadict/jieba.dict.utf8";
+  std::shared_ptr<Dataset> ds = TextFile({data_file});
+  EXPECT_NE(ds, nullptr);
+
+  // Create jieba_tokenizer operation on ds
+  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer =
+    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer, nullptr);
+
+  // Add word with freq is set explicitly to 0
+  jieba_tokenizer->AddWord("男默女泪", 0);
+
+  // Create Map operation on ds
+  ds = ds->Map({jieba_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"男默女泪", "市", "长江大桥"};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected, &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord2) {
+  // Testing the parameter AddWord of JiebaTokenizer when the freq is 10.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddWord2.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testJiebaDataset/4.txt";
+  std::string hmm_path = datasets_root_path_ + "/jiebadict/hmm_model.utf8";
+  std::string mp_path = datasets_root_path_ + "/jiebadict/jieba.dict.utf8";
+  std::shared_ptr<Dataset> ds = TextFile({data_file});
+  EXPECT_NE(ds, nullptr);
+
+  // Create jieba_tokenizer operation on ds
+  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer =
+    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer, nullptr);
+
+  // Add word with freq 10
+  jieba_tokenizer->AddWord("男默女泪", 10);
+
+  // Create Map operation on ds
+  ds = ds->Map({jieba_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"男默女泪", "市", "长江大桥"};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected, &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWord3) {
+  // Testing the parameter AddWord of JiebaTokenizer when the freq is 20000 which affects the result of segmentation.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddWord3.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testJiebaDataset/6.txt";
+  std::string hmm_path = datasets_root_path_ + "/jiebadict/hmm_model.utf8";
+  std::string mp_path = datasets_root_path_ + "/jiebadict/jieba.dict.utf8";
+  std::shared_ptr<Dataset> ds = TextFile({data_file});
+  EXPECT_NE(ds, nullptr);
+
+  // Create jieba_tokenizer operation on ds
+  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer =
+    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer, nullptr);
+
+  // Add word with freq 20000
+  jieba_tokenizer->AddWord("江大桥", 20000);
+
+  // Create Map operation on ds
+  ds = ds->Map({jieba_tokenizer}, {"text"});
+  EXPECT_NE(ds, nullptr);
+
+  // Create an iterator over the result of the above dataset
+  // This will trigger the creation of the Execution Tree and launch it.
+  std::shared_ptr<Iterator> iter = ds->CreateIterator();
+  EXPECT_NE(iter, nullptr);
+
+  // Iterate the dataset and get each row
+  std::unordered_map<std::string, std::shared_ptr<Tensor>> row;
+  iter->GetNextRow(&row);
+
+  std::vector<std::string> expected = {"江州", "市长", "江大桥", "参加", "了", "长江大桥", "的", "通车", "仪式"};
+
+  uint64_t i = 0;
+  while (row.size() != 0) {
+    auto ind = row["text"];
+    std::shared_ptr<Tensor> expected_tensor;
+    Tensor::CreateFromVector(expected, &expected_tensor);
+    EXPECT_EQ(*ind, *expected_tensor);
+    iter->GetNextRow(&row);
+    i++;
+  }
+
+  EXPECT_EQ(i, 1);
+
+  // Manually terminate the pipeline
+  iter->Stop();
+}
+
+TEST_F(MindDataTestPipeline, TestJiebaTokenizerAddWordFail) {
+  // Testing the incorrect parameter of AddWord in JiebaTokenizer.
+  MS_LOG(INFO) << "Doing MindDataTestPipeline-TestJiebaTokenizerAddWordFail.";
+
+  // Create a TextFile dataset
+  std::string data_file = datasets_root_path_ + "/testJiebaDataset/3.txt";
+  std::string hmm_path = datasets_root_path_ + "/jiebadict/hmm_model.utf8";
+  std::string mp_path = datasets_root_path_ + "/jiebadict/jieba.dict.utf8";
+  std::shared_ptr<Dataset> ds = TextFile({data_file}, 0, ShuffleMode::kFalse);
+  EXPECT_NE(ds, nullptr);
+
+  // Testing the parameter word of AddWord is empty
+  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer =
+    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer, nullptr);
+  EXPECT_NE(jieba_tokenizer->AddWord("", 10), Status::OK());
+  // Testing the parameter freq of AddWord is negative
+  std::shared_ptr<text::JiebaTokenizerOperation> jieba_tokenizer1 =
+    text::JiebaTokenizer(hmm_path, mp_path, JiebaMode::kMp);
+  EXPECT_NE(jieba_tokenizer1, nullptr);
+  EXPECT_NE(jieba_tokenizer1->AddWord("我们", -1), Status::OK());
+}
+
 TEST_F(MindDataTestPipeline, TestSlidingWindowSuccess) {
   // Testing the parameter of SlidingWindow interface when the axis is 0.
   MS_LOG(INFO) << "Doing MindDataTestPipeline-TestSlidingWindowSuccess.";

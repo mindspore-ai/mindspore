@@ -331,11 +331,14 @@ class JiebaTokenizerOperation : public TensorOperation {
 
   std::string Name() const override { return kJiebaTokenizerOperation; }
 
+  Status AddWord(const std::string &word, int64_t freq = 0);
+
  private:
   std::string hmm_path_;
   std::string mp_path_;
   JiebaMode mode_;
   bool with_offsets_;
+  std::vector<std::pair<std::string, int64_t>> words_list_;
 };
 
 class LookupOperation : public TensorOperation {

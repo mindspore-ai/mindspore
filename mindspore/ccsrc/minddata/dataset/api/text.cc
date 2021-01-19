@@ -314,7 +314,29 @@ Status JiebaTokenizerOperation::ValidateParams() {
 std::shared_ptr<TensorOp> JiebaTokenizerOperation::Build() {
   std::shared_ptr<JiebaTokenizerOp> tensor_op =
     std::make_shared<JiebaTokenizerOp>(hmm_path_, mp_path_, mode_, with_offsets_);
+  for (auto &word : words_list_) {
+    Status rc = tensor_op->AddWord(word.first, word.second);
+    if (rc.IsError()) {
+      MS_LOG(ERROR) << rc;
+      return {};
+    }
+  }
   return tensor_op;
+}
+
+Status JiebaTokenizerOperation::AddWord(const std::string &word, int64_t freq) {
+  if (word.empty()) {
+    std::string err_msg = "JiebaTokenizer : The parameter word is empty or not provided.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  if (freq < 0) {
+    std::string err_msg = "JiebaTokenizer : The parameter freq must be greater than or equal to 0.";
+    MS_LOG(ERROR) << err_msg;
+    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  }
+  words_list_.emplace_back(word, freq);
+  return Status::OK();
 }
 
 // LookupOperation
@@ -330,12 +352,13 @@ Status LookupOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
-
-  default_id_ = vocab_->Lookup(unknown_token_);
-  if (default_id_ == Vocab::kNoTokenExists) {
-    std::string err_msg = "Lookup: \"" + unknown_token_ + "\" doesn't exist in vocab.";
-    MS_LOG(ERROR) << err_msg;
-    RETURN_STATUS_SYNTAX_ERROR(err_msg);
+  if (!unknown_token_.empty()) {
+    default_id_ = vocab_->Lookup(unknown_token_);
+    if (default_id_ == Vocab::kNoTokenExists) {
+      std::string err_msg = "Lookup: \"" + unknown_token_ + "\" doesn't exist in vocab.";
+      MS_LOG(ERROR) << err_msg;
+      RETURN_STATUS_SYNTAX_ERROR(err_msg);
+    }
   }
 
   if (!IsTypeNumeric(data_type_)) {

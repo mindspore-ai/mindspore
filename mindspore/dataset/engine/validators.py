@@ -1323,7 +1323,3 @@ def check_to_device_send(method):
         return method(self, *args, **kwargs)
 
     return new_method
-
-
-def replace_none(value, default):
-    return value if value is not None else default

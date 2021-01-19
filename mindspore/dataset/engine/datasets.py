@@ -55,9 +55,10 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
     check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, \
-    check_paddeddataset, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, replace_none
+    check_paddeddataset, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
 from ..core.config import get_callback_timeout, _init_device_info
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
+from ..core.validator_helpers import replace_none
 
 try:
     context = import_module("mindspore.context")
@@ -372,7 +373,7 @@ class Dataset:
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.
             num_batch (int): the number of batches without blocking at the start of each epoch.
-            callback (function): The callback funciton that will be invoked when sync_update is called.
+            callback (function): The callback function that will be invoked when sync_update is called.
 
         Returns:
             SyncWaitDataset, dataset added a blocking condition.
@@ -398,7 +399,7 @@ class Dataset:
 
         1. Make a shuffle buffer that contains the first buffer_size rows.
         2. Randomly select an element from the shuffle buffer to be the next row
-           propogated to the child node.
+           propagated to the child node.
         3. Get the next row (if any) from the parent node and put it in the shuffle buffer.
         4. Repeat steps 2 and 3 until there are no more rows left in the shuffle buffer.
 
@@ -1718,7 +1719,7 @@ class MappableDataset(SourceDataset):
                     - The sum of split sizes < K, the difference will be added to the first split.
 
                     - The sum of split sizes > K, the difference will be removed from the first large
-                      enough split such that it will have atleast 1 row after removing the difference.
+                      enough split such that it will have at least 1 row after removing the difference.
 
             randomize (bool, optional): Determines whether or not to split the data randomly (default=True).
                 If True, the data will be randomly split. Otherwise, each split will be created with
