@@ -383,7 +383,7 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
 
   if (save_graphs) {
     std::string file_name = "hwopt_d_end_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
-    DumpIR(file_name, kernel_graph, true);
+    DumpIR(file_name, kernel_graph, true, kTopStack);
     DumpIRProto(kernel_graph, "after_hwopt_" + std::to_string(kernel_graph->graph_id()));
     kernel_graph->DumpFuncGraph("hwopt_d_end");
   }
