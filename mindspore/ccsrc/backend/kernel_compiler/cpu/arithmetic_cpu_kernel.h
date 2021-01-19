@@ -71,6 +71,10 @@ class ArithmeticCPUKernel : public CPUKernel {
   void GreaterEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end);
   template <typename T>
   void LessEqual(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  template <typename T>
+  void LogicalAnd(const T *input1, const T *input2, bool *out, size_t start, size_t end);
+  template <typename T>
+  void LogicalOr(const T *input1, const T *input2, bool *out, size_t start, size_t end);
   std::vector<size_t> input_shape0_;
   std::vector<size_t> input_shape1_;
   std::vector<size_t> input_element_num0_;
@@ -268,6 +272,12 @@ MS_REG_CPU_KERNEL(
 MS_REG_CPU_KERNEL(
   LessEqual,
   KernelAttr().AddInputAttr(kNumberTypeFloat32).AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LogicalAnd, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
+  ArithmeticCPUKernel);
+MS_REG_CPU_KERNEL(
+  LogicalOr, KernelAttr().AddInputAttr(kNumberTypeBool).AddInputAttr(kNumberTypeBool).AddOutputAttr(kNumberTypeBool),
   ArithmeticCPUKernel);
 }  // namespace kernel
 }  // namespace mindspore
