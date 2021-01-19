@@ -429,7 +429,8 @@ class GraphSplitGpu(GraphSplitByPattern):
             fused = []
             for a, r in dom.out_relations.items():
                 if a.pattern <= PrimLib.REDUCE and r <= PrimLib.BROADCAST and dom.check_circle(a):
-                    if len(a.ops) > 4 and len(a.ops[0].inputs[0].shape) == 4 and _reduce_nums(a.ops) < 2:
+                    if len(a.ops) > 4 and len(a.ops[0].inputs[0].shape) == 4 and _reduce_nums(a.ops) < 2 \
+                            and _tensor_size(dom.ops[0].inputs[0]) > 1024 * 2:
                         dom.stitch_info.add(dom.ops[0].output.name)
                         if 0 and _reduce_nums(a.ops) == 1 and _tensor_size(dom.ops[0].inputs[0]) > 1024 * 2:
                             dom.stitch_with_atomic.add(_reduce_output_name(a.ops))
