@@ -400,7 +400,7 @@ def test_max_pool_with_arg_max():
         def __init__(self):
             """ ComparisonNet definition """
             super(NetMaxPoolWithArgMax, self).__init__()
-            self.max_pool_with_arg_max = P.MaxPoolWithArgmax(padding="valid", ksize=2, strides=1)
+            self.max_pool_with_arg_max = P.MaxPoolWithArgmax(pad_mode="valid", kernel_size=2, strides=1)
 
         def construct(self, x):
             ret = self.max_pool_with_arg_max(x)
@@ -675,15 +675,15 @@ test_cases_for_verify_exception = [
         'desc_inputs': [0],
     }),
     ('MaxPoolWithArgmax_ValueError_1', {
-        'block': (lambda _: P.MaxPoolWithArgmax(padding='sane'), {'exception': ValueError}),
+        'block': (lambda _: P.MaxPoolWithArgmax(pad_mode='sane'), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('MaxPoolWithArgmax_ValueError_2', {
-        'block': (lambda _: P.MaxPoolWithArgmax(ksize='1'), {'exception': TypeError}),
+        'block': (lambda _: P.MaxPoolWithArgmax(kernel_size='1'), {'exception': TypeError}),
         'desc_inputs': [0],
     }),
     ('MaxPoolWithArgmax_ValueError_3', {
-        'block': (lambda _: P.MaxPoolWithArgmax(ksize=-2), {'exception': ValueError}),
+        'block': (lambda _: P.MaxPoolWithArgmax(kernel_size=-2), {'exception': ValueError}),
         'desc_inputs': [0],
     }),
     ('MaxPoolWithArgmax_ValueError_4', {

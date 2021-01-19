@@ -89,7 +89,7 @@ CNodePtr CreateMaxPoolGradWithArgmax(const FuncGraphPtr &graph, const CNodePtr &
 void SetNodeAttrs(const CNodePtr &maxpool, const CNodePtr &maxpool_grad, const CNodePtr &maxpool_argmax,
                   const CNodePtr &maxpool_grad_argmax) {
   auto strides = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool, kAttrStrides);
-  auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool, kAttrKsize);
+  auto ksize = AnfAlgo::GetNodeAttr<std::vector<int64_t>>(maxpool, kAttrKernelSize);
   if (strides.size() != kMaxPoolAttrAxisNum) {
     MS_LOG(EXCEPTION) << "MaxPool's attr strides has wrong axis number, should be " << kMaxPoolAttrAxisNum
                       << ", but got " << strides.size();
@@ -110,8 +110,8 @@ void SetNodeAttrs(const CNodePtr &maxpool, const CNodePtr &maxpool_grad, const C
   AnfAlgo::CopyNodeAttrs(maxpool_grad, maxpool_grad_argmax);
   AnfAlgo::SetNodeAttr(kAttrStrides, MakeValue(strides), maxpool_argmax);
   AnfAlgo::SetNodeAttr(kAttrStrides, MakeValue(strides), maxpool_grad_argmax);
-  AnfAlgo::SetNodeAttr(kAttrKsize, MakeValue(ksize), maxpool_argmax);
-  AnfAlgo::SetNodeAttr(kAttrKsize, MakeValue(ksize), maxpool_grad_argmax);
+  AnfAlgo::SetNodeAttr(kAttrKernelSize, MakeValue(ksize), maxpool_argmax);
+  AnfAlgo::SetNodeAttr(kAttrKernelSize, MakeValue(ksize), maxpool_grad_argmax);
 }
 }  // namespace
 

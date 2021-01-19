@@ -25,8 +25,8 @@ from mindspore.ops.operations import _grad_ops as G
 class Net_Pool_Grad(nn.Cell):
     def __init__(self):
         super(Net_Pool_Grad, self).__init__()
-        self.maxpool_grad_fun = G.MaxPoolGrad(padding="VALID",
-                                              ksize=2,
+        self.maxpool_grad_fun = G.MaxPoolGrad(pad_mode="VALID",
+                                              kernel_size=2,
                                               strides=2)
 
     def construct(self, x, a, d):

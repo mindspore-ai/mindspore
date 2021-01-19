@@ -117,9 +117,9 @@ class MaxPool2d(_PoolNd):
 
     def __init__(self, kernel_size=1, stride=1, pad_mode="valid", data_format="NCHW"):
         super(MaxPool2d, self).__init__(kernel_size, stride, pad_mode, data_format)
-        self.max_pool = P.MaxPool(ksize=self.kernel_size,
+        self.max_pool = P.MaxPool(kernel_size=self.kernel_size,
                                   strides=self.stride,
-                                  padding=self.pad_mode,
+                                  pad_mode=self.pad_mode,
                                   data_format=self.format)
 
     def construct(self, x):
@@ -185,9 +185,9 @@ class MaxPool1d(_PoolNd):
         validator.check_int(stride, 1, Rel.GE, "stride", self.cls_name)
         self.kernel_size = (1, kernel_size)
         self.stride = (1, stride)
-        self.max_pool = P.MaxPool(ksize=self.kernel_size,
+        self.max_pool = P.MaxPool(kernel_size=self.kernel_size,
                                   strides=self.stride,
-                                  padding=self.pad_mode)
+                                  pad_mode=self.pad_mode)
         self.shape = F.shape
         self.reduce_mean = P.ReduceMean(keep_dims=True)
         self.expand = P.ExpandDims()
@@ -263,9 +263,9 @@ class AvgPool2d(_PoolNd):
                  pad_mode="valid",
                  data_format="NCHW"):
         super(AvgPool2d, self).__init__(kernel_size, stride, pad_mode, data_format)
-        self.avg_pool = P.AvgPool(ksize=self.kernel_size,
+        self.avg_pool = P.AvgPool(kernel_size=self.kernel_size,
                                   strides=self.stride,
-                                  padding=self.pad_mode,
+                                  pad_mode=self.pad_mode,
                                   data_format=self.format)
 
     def construct(self, x):
@@ -335,9 +335,9 @@ class AvgPool1d(_PoolNd):
         super(AvgPool1d, self).__init__(kernel_size, stride, pad_mode)
         self.kernel_size = (1, kernel_size)
         self.stride = (1, stride)
-        self.avg_pool = P.AvgPool(ksize=self.kernel_size,
+        self.avg_pool = P.AvgPool(kernel_size=self.kernel_size,
                                   strides=self.stride,
-                                  padding=self.pad_mode)
+                                  pad_mode=self.pad_mode)
         self.shape = F.shape
         self.reduce_mean = P.ReduceMean(keep_dims=True)
         self.slice = P.Slice()

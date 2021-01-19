@@ -23,9 +23,9 @@ max_pool_with_argmax_op_info = TBERegOp("MaxPoolWithArgmax") \
     .compute_cost(10) \
     .kernel_name("max_pool_with_argmax") \
     .partial_flag(True) \
-    .attr("ksize", "required", "listInt", "all") \
+    .attr("kernel_size", "required", "listInt", "all") \
     .attr("strides", "required", "listInt", "all") \
-    .attr("padding", "required", "str", "all") \
+    .attr("pad_mode", "required", "str", "all") \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .output(1, "argmax", False, "required", "all") \

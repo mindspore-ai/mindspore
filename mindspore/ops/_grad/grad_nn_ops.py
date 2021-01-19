@@ -189,9 +189,9 @@ def get_bprop_depthwise_conv2d_native(self):
 def get_bprop_max_pool_with_argmax(self):
     """Grad definition for `MaxPoolWithArgmax` operation."""
     maxpool_grad = G.MaxPoolGradWithArgmax(
-        ksize=self.ksize,
+        kernel_size=self.kernel_size,
         strides=self.strides,
-        padding=self.padding)
+        pad_mode=self.pad_mode)
 
     def bprop(x, out, dout):
         dx = maxpool_grad(x, dout[0], out[1])
@@ -204,9 +204,9 @@ def get_bprop_max_pool_with_argmax(self):
 def get_bprop_max_pool_grad_grad(self):
     """Grad definition for `MaxPoolGrad` operation."""
     maxpool_grad_grad = G.MaxPoolGradGrad(
-        ksize=self.ksize,
+        kernel_size=self.kernel_size,
         strides=self.strides,
-        padding=self.padding)
+        pad_mode=self.pad_mode)
 
     def bprop(x1, x2, grad, out, dout):
         dx1 = zeros_like(x1)
@@ -221,9 +221,9 @@ def get_bprop_max_pool_grad_grad(self):
 def get_bprop_max_pool_grad_grad_grad(self):
     """Grad definition for `MaxPoolGradGrad` operation."""
     maxpool_grad = G.MaxPoolGrad(
-        ksize=self.ksize,
+        kernel_size=self.kernel_size,
         strides=self.strides,
-        padding=self.padding)
+        pad_mode=self.pad_mode)
 
     def bprop(x1, x2, grad, out, dout):
         dx1 = zeros_like(x1)
@@ -238,9 +238,9 @@ def get_bprop_max_pool_grad_grad_grad(self):
 def get_bprop_max_pool_grad(self):
     """Grad definition for `MaxPool` operation."""
     maxpool_grad = G.MaxPoolGrad(
-        ksize=self.ksize,
+        kernel_size=self.kernel_size,
         strides=self.strides,
-        padding=self.padding,
+        pad_mode=self.pad_mode,
         data_format=self.format)
 
     def bprop(x, out, dout):
@@ -250,7 +250,7 @@ def get_bprop_max_pool_grad(self):
     return bprop
 
 
-def _windowed_output_size(input_size, ksize, stride, padding):
+def _windowed_output_size(input_size, ksize, stride, pad_mode):
     """
     helper func for AvgPoolGrad
     """
@@ -259,11 +259,11 @@ def _windowed_output_size(input_size, ksize, stride, padding):
     tmp_pad_need = 0
     tmp_pad_before = 0
     tmp_pad_after = 0
-    if padding == 'VALID':
+    if pad_mode == 'VALID':
         tmp_output = (input_size - ksize + stride) // stride
         tmp_pad_before = 0
         tmp_pad_after = 0
-    elif padding == 'SAME':
+    elif pad_mode == 'SAME':
         tmp_output = (input_size + stride - 1) // stride
         tmp_pad_need = max(0, (tmp_output - 1) * stride + ksize - input_size)
         tmp_pad_before = tmp_pad_need // 2
@@ -272,7 +272,7 @@ def _windowed_output_size(input_size, ksize, stride, padding):
 
 
 @constexpr
-def _get_mean_matrix(x_shape, ksize, stride, padding, x_dtype):
+def _get_mean_matrix(x_shape, ksize, stride, pad_mode, x_dtype):
     """
     helper func for AvgPoolGrad.
 
@@ -291,9 +291,9 @@ def _get_mean_matrix(x_shape, ksize, stride, padding, x_dtype):
     h_output, w_output = 0, 0
     pad_top, pad_bottom, pad_left, pad_right = 0, 0, 0, 0
     h_output, pad_top, pad_bottom = _windowed_output_size(h_input, h_ksize,
-                                                          h_stride, padding)
+                                                          h_stride, pad_mode)
     w_output, pad_left, pad_right = _windowed_output_size(w_input, w_ksize,
-                                                          w_stride, padding)
+                                                          w_stride, pad_mode)
 
     output_size = n_output * c_output * h_output * w_output
     output_shape = (n_output, c_output, h_output, w_output)
@@ -321,7 +321,7 @@ def _get_mean_matrix(x_shape, ksize, stride, padding, x_dtype):
 
 
 @constexpr
-def _get_kernel_matrix(x_shape_nchw, kernel_matrix_shape, padding, x_dtype):
+def _get_kernel_matrix(x_shape_nchw, kernel_matrix_shape, pad_mode, x_dtype):
     kernel_matrix = np.ones(kernel_matrix_shape)
     return Tensor(kernel_matrix, x_dtype)
 
@@ -333,9 +333,9 @@ def get_bprop_avg_pool_grad(self):
     # the parameter of AvgPoolGrad in GPU and TBE/CPU is not same
     if self.target == "GPU":
         avgpool_grad_gpu = G.AvgPoolGradGpu(
-                        ksize=self.ksize,
+                        kernel_size=self.kernel_size,
                         strides=self.strides,
-                        padding=self.padding,
+                        pad_mode=self.pad_mode,
                         data_format=self.format)
 
         def bprop_gpu(x, out, dout):
@@ -346,9 +346,9 @@ def get_bprop_avg_pool_grad(self):
 
     elif self.target == "CPU":
         avgpool_grad_cpu = G.AvgPoolGradCpu(
-            ksize=self.ksize,
+            kernel_size=self.kernel_size,
             strides=self.strides,
-            padding=self.padding,
+            pad_mode=self.pad_mode,
             data_format=self.format)
 
         def bprop_cpu(x, out, dout):
@@ -359,9 +359,9 @@ def get_bprop_avg_pool_grad(self):
 
     elif self.target == "GE":
         avgpool_grad_ge = G.AvgPoolGrad(
-                        ksize=self.ksize,
+                        kernel_size=self.kernel_size,
                         strides=self.strides,
-                        padding=self.padding)
+                        pad_mode=self.pad_mode)
         shape_op = P.Shape()
 
         def bprop_ge(x, out, dout):
@@ -372,12 +372,12 @@ def get_bprop_avg_pool_grad(self):
 
     else:
         avgpool_grad_vm = G.AvgPoolGradVm(
-                        ksize=self.ksize,
+                        kernel_size=self.kernel_size,
                         strides=self.strides,
-                        padding=self.padding)
-        k_size_nchw = avgpool_grad_vm.ksize
+                        pad_mode=self.pad_mode)
+        k_size_nchw = avgpool_grad_vm.kernel_size
         stride_nchw = avgpool_grad_vm.strides
-        padding = self.padding
+        pad_mode = self.pad_mode
 
         def bprop_vm(x, out, dout):
             x_shape_nchw = F.shape(x)
@@ -385,8 +385,8 @@ def get_bprop_avg_pool_grad(self):
             kernel_matrix_shape = (1, x_shape_nchw[1],
                                    k_size_nchw[2],
                                    k_size_nchw[3])
-            mean_matrix = _get_mean_matrix(x_shape_nchw, k_size_nchw, stride_nchw, padding, x_dtype)
-            kernel_matrix = _get_kernel_matrix(x_shape_nchw, kernel_matrix_shape, padding, x_dtype)
+            mean_matrix = _get_mean_matrix(x_shape_nchw, k_size_nchw, stride_nchw, pad_mode, x_dtype)
+            kernel_matrix = _get_kernel_matrix(x_shape_nchw, kernel_matrix_shape, pad_mode, x_dtype)
             dx = avgpool_grad_vm(x_shape_nchw, dout, mean_matrix, kernel_matrix)
             return (dx,)
 

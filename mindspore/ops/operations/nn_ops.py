@@ -1405,23 +1405,23 @@ class _Pool(PrimitiveWithInfer):
     Performs max/avg pooling operation.
 
     Args:
-        ksize (Union[int, tuple[int]]): The size of the kernel, that must be a tuple
+        kernel_size (Union[int, tuple[int]]): The size of the kernel, that must be a tuple
            of two `int` for height and width. Default: 1.
         strides (Union[int, tuple[int]]): The stride of the window, that must be
             a tuple of two `int` for height and width. Default: 1.
-        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
         data_format (str): The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: "NCHW".
     """
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="valid", data_format="NCHW"):
+    def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
         self.init_prim_io_names(inputs=['x'], outputs=['output'])
-        validator.check_value_type('ksize', ksize, [int, tuple], self.name)
+        validator.check_value_type('kernel_size', kernel_size, [int, tuple], self.name)
         validator.check_value_type('strides', strides, [int, tuple], self.name)
-        self.padding = validator.check_string(padding.upper(), ['VALID', 'SAME'], 'padding', self.name)
-        self.add_prim_attr("padding", self.padding)
+        self.pad_mode = validator.check_string(pad_mode.upper(), ['VALID', 'SAME'], 'pad_mode', self.name)
+        self.add_prim_attr("pad_mode", self.pad_mode)
         self.is_maxpoolwithargmax = (self.name == "MaxPoolWithArgmax")
         self.format = validator.check_string(data_format, ['NCHW', 'NHWC'], 'format', self.name)
         if context.get_context("device_target") != "GPU" and self.format == "NHWC":
@@ -1429,10 +1429,11 @@ class _Pool(PrimitiveWithInfer):
         if not self.is_maxpoolwithargmax:
             self.add_prim_attr('data_format', self.format)
 
-        self.ksize = _check_positive_int_or_tuple("ksize", ksize, self.name, allow_four=False, ret_four=True)
+        self.kernel_size = _check_positive_int_or_tuple(
+            "kernel_size", kernel_size, self.name, allow_four=False, ret_four=True)
         if self.is_maxpoolwithargmax:
-            self.ksize = (1, self.ksize[-2], self.ksize[-1], 1)
-        self.add_prim_attr("ksize", self.ksize)
+            self.kernel_size = (1, self.kernel_size[-2], self.kernel_size[-1], 1)
+        self.add_prim_attr("kernel_size", self.kernel_size)
 
         self.strides = _check_positive_int_or_tuple("strides", strides, self.name, allow_four=False, ret_four=True)
         if self.is_maxpoolwithargmax:
@@ -1444,16 +1445,16 @@ class _Pool(PrimitiveWithInfer):
         validator.check_equal_int(len(x_shape_norm), 4, "x rank", self.name)
         batch, channel, input_h, input_w = x_shape_norm
         if self.is_maxpoolwithargmax:
-            _, kernel_h, kernel_w, _ = self.ksize
+            _, kernel_h, kernel_w, _ = self.kernel_size
             _, stride_h, stride_w, _ = self.strides
         else:
-            _, _, kernel_h, kernel_w = self.ksize
+            _, _, kernel_h, kernel_w = self.kernel_size
             _, _, stride_h, stride_w = self.strides
 
-        if self.padding == "VALID":
+        if self.pad_mode == "VALID":
             out_h = math.ceil((input_h - (kernel_h - 1)) / stride_h)
             out_w = math.ceil((input_w - (kernel_w - 1)) / stride_w)
-        elif self.padding == "SAME":
+        elif self.pad_mode == "SAME":
             out_h = math.ceil(input_h / stride_h)
             out_w = math.ceil(input_w / stride_w)
         out_shape = [batch, channel, out_h, out_w] if self.format == "NCHW" else [batch, out_h, out_w, channel]
@@ -1484,13 +1485,13 @@ class MaxPool(_Pool):
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     Args:
-        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
-            is an int number that represents height and width are both ksize, or a tuple
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value,
+            is an int number that represents height and width are both kernel_size, or a tuple
             of two int numbers that represent height and width respectively. Default: 1.
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
         format (str) : The optional value for data format, is 'NHWC' or 'NCHW'.
             Default: 'NCHW'.
@@ -1514,7 +1515,7 @@ class MaxPool(_Pool):
 
     Examples:
         >>> input_tensor = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
-        >>> maxpool_op = ops.MaxPool(padding="VALID", ksize=2, strides=1)
+        >>> maxpool_op = ops.MaxPool(pad_mode="VALID", kernel_size=2, strides=1)
         >>> output = maxpool_op(input_tensor)
         >>> print(output)
         [[[[ 5.  6.  7.]
@@ -1526,8 +1527,8 @@ class MaxPool(_Pool):
     """
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="valid", data_format="NCHW"):
-        super(MaxPool, self).__init__(ksize, strides, padding, data_format)
+    def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
+        super(MaxPool, self).__init__(kernel_size, strides, pad_mode, data_format)
 
 
 class MaxPoolWithArgmax(_Pool):
@@ -1543,13 +1544,13 @@ class MaxPoolWithArgmax(_Pool):
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     Args:
-        ksize (Union[int, tuple[int]]): The size of kernel used to take the maximum value and arg value,
-            is an int number that represents height and width are both ksize, or a tuple of
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the maximum value and arg
+            value, is an int number that represents height and width are both kernel_size, or a tuple of
             two int numbers that represent height and width respectively. Default: 1.
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
@@ -1580,7 +1581,7 @@ class MaxPoolWithArgmax(_Pool):
 
     Examples:
         >>> input_tensor = Tensor(np.arange(1 * 3 * 3 * 4).reshape((1, 3, 3, 4)), mindspore.float32)
-        >>> maxpool_arg_op = ops.MaxPoolWithArgmax(padding="VALID", ksize=2, strides=1)
+        >>> maxpool_arg_op = ops.MaxPoolWithArgmax(pad_mode="VALID", kernel_size=2, strides=1)
         >>> output_tensor, argmax = maxpool_arg_op(input_tensor)
         >>> print(output_tensor)
         [[[[ 5.  6.  7.]
@@ -1591,8 +1592,8 @@ class MaxPoolWithArgmax(_Pool):
            [33. 34. 35.]]]]
     """
 
-    def __init__(self, ksize=1, strides=1, padding="valid", data_format="NCHW"):
-        super(MaxPoolWithArgmax, self).__init__(ksize, strides, padding, data_format)
+    def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
+        super(MaxPoolWithArgmax, self).__init__(kernel_size, strides, pad_mode, data_format)
         self.is_tbe = context.get_context("device_target") == "Ascend"
         self.is_gpu = context.get_context("device_target") == "GPU"
 
@@ -1620,13 +1621,13 @@ class AvgPool(_Pool):
         \text{input}(N_i, C_j, s_0 \times h + m, s_1 \times w + n)
 
     Args:
-        ksize (Union[int, tuple[int]]): The size of kernel used to take the average value,
-            is an int number that represents height and width are both ksize, or a tuple
+        kernel_size (Union[int, tuple[int]]): The size of kernel used to take the average value,
+            is an int number that represents height and width are both kernel_size, or a tuple
             of two int numbers that represent height and width respectively. Default: 1.
         strides (Union[int, tuple[int]]): The distance of kernel moving, an int number that represents
             the height and width of movement are both strides, or a tuple of two int numbers that
             represent height and width of movement respectively. Default: 1.
-        padding (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
+        pad_mode (str): The optional value for pad mode, is "same" or "valid", not case sensitive.
             Default: "valid".
 
             - same: Adopts the way of completion. The height and width of the output will be the same as
@@ -1657,7 +1658,7 @@ class AvgPool(_Pool):
         >>> class Net(nn.Cell):
         ...     def __init__(self):
         ...         super(Net, self).__init__()
-        ...         self.avgpool_op = ops.AvgPool(padding="VALID", ksize=2, strides=1)
+        ...         self.avgpool_op = ops.AvgPool(pad_mode="VALID", kernel_size=2, strides=1)
         ...
         ...     def construct(self, x):
         ...         result = self.avgpool_op(x)
@@ -1676,7 +1677,7 @@ class AvgPool(_Pool):
     """
 
     @prim_attr_register
-    def __init__(self, ksize=1, strides=1, padding="valid", data_format="NCHW"):
+    def __init__(self, kernel_size=1, strides=1, pad_mode="valid", data_format="NCHW"):
         if context.get_context("device_target") == "GPU":
             self.target = "GPU"
         elif context.get_context("device_target") == "CPU":
@@ -1685,7 +1686,7 @@ class AvgPool(_Pool):
             self.target = "GE"
         else:
             self.target = "OTHER"
-        super(AvgPool, self).__init__(ksize, strides, padding, data_format)
+        super(AvgPool, self).__init__(kernel_size, strides, pad_mode, data_format)
 
 
 class Conv2DBackpropInput(PrimitiveWithInfer):

@@ -87,7 +87,7 @@ class FeatPyramidNeck(nn.Cell):
         self.interpolate1 = P.ResizeNearestNeighbor((48, 80))
         self.interpolate2 = P.ResizeNearestNeighbor((96, 160))
         self.interpolate3 = P.ResizeNearestNeighbor((192, 320))
-        self.maxpool = P.MaxPool(ksize=1, strides=2, padding="same")
+        self.maxpool = P.MaxPool(kernel_size=1, strides=2, pad_mode="same")
 
     def construct(self, inputs):
         x = ()

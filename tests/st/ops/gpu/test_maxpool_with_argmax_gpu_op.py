@@ -25,7 +25,7 @@ from mindspore.ops import composite as C
 class MaxPoolWithArgMax_Net(Cell):
     def __init__(self, padding, ksize, strides):
         super(MaxPoolWithArgMax_Net, self).__init__()
-        self.maxpool_with_argmax = P.MaxPoolWithArgmax(padding=padding, ksize=ksize, strides=strides)
+        self.maxpool_with_argmax = P.MaxPoolWithArgmax(pad_mode=padding, kernel_size=ksize, strides=strides)
 
     def construct(self, input_data):
         output, argmax = self.maxpool_with_argmax(input_data)
