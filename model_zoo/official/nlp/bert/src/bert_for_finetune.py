@@ -50,6 +50,16 @@ def _tensor_grad_overflow(grad):
 class BertFinetuneCell(nn.Cell):
     """
     Especifically defined for finetuning where only four inputs tensor are needed.
+
+    Append an optimizer to the training network after that the construct
+    function can be called to create the backward graph.
+
+    Different from the builtin loss_scale wrapper cell, we apply grad_clip before the optimization.
+
+    Args:
+        network (Cell): The training network. Note that loss function should have been added.
+        optimizer (Optimizer): Optimizer for updating the weights.
+        scale_update_cell (Cell): Cell to do the loss scale. Default: None.
     """
     def __init__(self, network, optimizer, scale_update_cell=None):
 
