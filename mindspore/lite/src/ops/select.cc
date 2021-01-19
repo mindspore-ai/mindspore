@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,9 +90,7 @@ int Select::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
     output->set_shape(input->shape());
     output->set_format(input->format());
     auto data_type = input->data_type();
-    if (data_type != kObjectTypeTensorType) {
-      continue;
-    } else {
+    if (data_type == kObjectTypeTensorType) {
       auto input_tensorlist = reinterpret_cast<TensorList *>(input);
       auto output_tensorlist = reinterpret_cast<TensorList *>(output);
       output_tensorlist->set_element_shape(input_tensorlist->element_shape());
