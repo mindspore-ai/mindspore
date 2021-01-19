@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">PetClassification</string>
+    <string name="action_settings">设置</string>
+
+    <string name="request_permission">This sample needs camera permission.</string>
+    <string name="camera_error">This device doesn\'t support Camera2 API.</string>
+    <string name="intro_message">使用的google的camera2demo.</string>
+    <string name="appwidget_text">EXAMPLE</string>
+    <string name="add_widget">Add widget</string>
+
+    <string name="image_invalid">The image path you selected is not valid. Please choose again</string>
+    <string name="train_invalid">Sorry, there is no object identified in this picture. Try another picture</string>
+
+    <string name="ms_ic_app_name" translation_description="Image Classification demo app [CHAR_LIMIT=40]">TFL Classify</string>
+    <string name="ms_ic_camera_error" translation_description="Error regarding camera support[CHAR_LIMIT=40]">This device doesn\'t support Camera2 API.</string>
+    <string name="ms_ic_gpu_quant_error" translation_description="Error regarding GPU support for Quant models[CHAR_LIMIT=60]">GPU does not yet supported quantized models.</string>
+    <string name="ms_ic_model" translatable="false">Model:</string>
+    <string-array name="ms_ic_models" translatable="false">
+        <item>Quantized_EfficientNet</item>
+        <item>Float_EfficientNet</item>
+        <item>Quantized_MobileNet</item>
+        <item>Float_MobileNet</item>
+    </string-array>
+
+    <string name="ms_ic_device" translatable="false">Device:</string>
+    <string-array name="ms_ic_devices" translatable="false">
+        <item>CPU</item>
+        <item>GPU</item>
+        <item>NNAPI</item>
+    </string-array>
+
+</resources>
