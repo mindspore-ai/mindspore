@@ -158,7 +158,7 @@ class Dropout(Cell):
         return out
 
     def extend_repr(self):
-        return 'keep_prob={}, dtype={}'.format(self.keep_prob, self.dtype)
+        return 'keep_prob={}'.format(self.keep_prob)
 
 
 class Flatten(Cell):
