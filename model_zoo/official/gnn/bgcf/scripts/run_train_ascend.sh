@@ -17,7 +17,6 @@
 ulimit -u unlimited
 export DEVICE_NUM=1
 export RANK_SIZE=$DEVICE_NUM
-export DEVICE_ID=0
 export RANK_ID=0
 
 if [ -d "train" ];
@@ -37,7 +36,7 @@ cp *.sh ./train
 cp -r ../src ./train
 cd ./train || exit
 env > env.log
-echo "start training for device $DEVICE_ID"
+echo "start training"
 
 python train.py --datapath=../data_mr --ckptpath=../ckpts &> log &
 

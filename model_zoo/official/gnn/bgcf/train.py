@@ -105,7 +105,7 @@ if __name__ == "__main__":
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend",
                         save_graphs=False,
-                        device_id=parser.device)
+                        device_id=int(parser.device))
 
     train_graph, _, sampled_graph_list = load_graph(parser.datapath)
     train_ds = create_dataset(train_graph, sampled_graph_list, parser.workers, batch_size=parser.batch_pairs,
