@@ -23,6 +23,7 @@ reduce_prod_op_info = TBERegOp("ReduceProd") \
     .compute_cost(10) \
     .kernel_name("reduce_prod_d") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("axis", "required", "listInt", "all") \
     .attr("keep_dims", "optional", "bool", "all") \
     .input(0, "x", False, "required", "all") \

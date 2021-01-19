@@ -43,7 +43,7 @@ class TbeKernelSelect {
   void GetAgnosticPatternKernelInfo(const OpInfo &op_info);
   void GetBroadcastPatternKernelInfo(const OpInfo &op_info);
   void GetReducePatternKernelInfo(const OpInfo &op_info);
-  void FilterInVaildKernelInfo();
+  void FilterInVaildKernelInfo(const OpInfo &op_info);
   bool FilterInVaildShape(const KernelBuildInfoIter &kernel_build_info_iter);
   static bool IsShapeMatchFormat(const std::vector<size_t> &shape, const std::string &format);
   bool TbeCheckSupported(const KernelBuildInfoIter &kernel_build_info_iter);

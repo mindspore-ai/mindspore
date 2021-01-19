@@ -23,6 +23,7 @@ cast_ds_op_info = TBERegOp("Cast") \
     .compute_cost(10) \
     .kernel_name("cast") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("dst_type", "required", "int", "all") \
     .dynamic_shape(True)\
     .input(0, "x", False, "required", "all") \

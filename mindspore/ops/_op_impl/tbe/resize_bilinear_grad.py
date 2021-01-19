@@ -23,6 +23,7 @@ resize_bilinear_grad_op_info = TBERegOp("ResizeBilinearGrad") \
     .compute_cost(10) \
     .kernel_name("resize_bilinear_v2_grad") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("align_corners", "optional", "bool", "all") \
     .attr("half_pixel_centers", "optional", "bool", "all")\
     .input(0, "grads", False, "required", "all") \

@@ -24,6 +24,7 @@ cast_op_info = TBERegOp("Cast") \
     .kernel_name("cast") \
     .partial_flag(True) \
     .attr("dst_type", "required", "int", "all") \
+    .need_check_supported(True) \
     .input(0, "x", False, "required", "all") \
     .output(0, "y", False, "required", "all") \
     .op_pattern("formatAgnostic") \

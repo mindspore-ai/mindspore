@@ -23,6 +23,7 @@ unsorted_segment_max_op_info = TBERegOp("UnsortedSegmentMax") \
     .compute_cost(10) \
     .kernel_name("unsorted_segment_max_d") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("num_segments", "required", "int", "all") \
     .input(0, "data", False, "required", "all") \
     .input(1, "segment_ids", False, "required", "all") \
