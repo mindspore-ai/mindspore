@@ -23,6 +23,7 @@ from .common.exceptions import ParamValueError, ParamTypeError, MRMDefineCategor
 
 __all__ = ['MindPage']
 
+
 class MindPage:
     """
     Class to read MindRecord File series in pagination.
@@ -36,6 +37,7 @@ class MindPage:
         ParamValueError: If `file_name`, `num_consumer` or columns is invalid.
         MRMInitSegmentError: If failed to initialize ShardSegment.
     """
+
     def __init__(self, file_name, num_consumer=4):
         if isinstance(file_name, list):
             for f in file_name:
@@ -69,7 +71,12 @@ class MindPage:
         return self._candidate_fields
 
     def get_category_fields(self):
-        """Return candidate category fields."""
+        """
+        Return candidate category fields.
+
+        Returns:
+            list[str], by which data could be grouped.
+        """
         logger.warning("WARN_DEPRECATED: The usage of get_category_fields is deprecated."
                        " Please use candidate_fields")
         return self.candidate_fields
@@ -97,12 +104,22 @@ class MindPage:
 
     @property
     def category_field(self):
-        """Getter function for category fields."""
+        """
+        Getter function for category fields.
+
+        Returns:
+            list[str], by which data could be grouped.
+        """
         return self._category_field
 
     @category_field.setter
     def category_field(self, category_field):
-        """Setter function for category field"""
+        """
+        Setter function for category field.
+
+        Returns:
+            MSRStatus, SUCCESS or FAILED.
+        """
         if not category_field or not isinstance(category_field, str):
             raise ParamTypeError('category_fields', 'str')
         if category_field not in self._candidate_fields:
@@ -132,7 +149,7 @@ class MindPage:
              num_row (int): Number of rows in a page.
 
         Returns:
-            List, list[dict].
+            list[dict], data queried by category id.
 
         Raises:
             ParamValueError: If any parameter is invalid.
@@ -158,7 +175,7 @@ class MindPage:
             num_row (int): Number of row in a page.
 
         Returns:
-            str, read at page.
+            list[dict], data queried by category name.
         """
         if not isinstance(category_name, str):
             raise ParamValueError("Category name should be str.")

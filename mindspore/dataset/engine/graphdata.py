@@ -100,7 +100,7 @@ class GraphData:
             node_type (int): Specify the type of node.
 
         Returns:
-            numpy.ndarray: Array of nodes.
+            numpy.ndarray, array of nodes.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -124,7 +124,7 @@ class GraphData:
             edge_type (int): Specify the type of edge.
 
         Returns:
-            numpy.ndarray: array of edges.
+            numpy.ndarray, array of edges.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -148,7 +148,7 @@ class GraphData:
             edge_list (Union[list, numpy.ndarray]): The given list of edges.
 
         Returns:
-            numpy.ndarray: Array of nodes.
+            numpy.ndarray, array of nodes.
 
         Raises:
             TypeError: If `edge_list` is not list or ndarray.
@@ -167,7 +167,7 @@ class GraphData:
             neighbor_type (int): Specify the type of neighbor.
 
         Returns:
-            numpy.ndarray: Array of nodes.
+            numpy.ndarray, array of neighbors.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -201,7 +201,7 @@ class GraphData:
             neighbor_types (Union[list, numpy.ndarray]): Neighbor type sampled per hop.
 
         Returns:
-            numpy.ndarray: Array of nodes.
+            numpy.ndarray, array of neighbors.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -231,7 +231,7 @@ class GraphData:
             neg_neighbor_type (int): Specify the type of negative neighbor.
 
         Returns:
-            numpy.ndarray: Array of nodes.
+            numpy.ndarray, array of neighbors.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -260,7 +260,7 @@ class GraphData:
             feature_types (Union[list, numpy.ndarray]): The given list of feature types.
 
         Returns:
-            numpy.ndarray: array of features.
+            numpy.ndarray, array of features.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -292,7 +292,7 @@ class GraphData:
             feature_types (Union[list, numpy.ndarray]): The given list of feature types.
 
         Returns:
-            numpy.ndarray: array of features.
+            numpy.ndarray, array of features.
 
         Examples:
             >>> import mindspore.dataset as ds
@@ -320,7 +320,7 @@ class GraphData:
         the feature information of nodes, the number of edges, the type of edges, and the feature information of edges.
 
         Returns:
-            dict: Meta information of the graph. The key is node_type, edge_type, node_num, edge_num,
+            dict, meta information of the graph. The key is node_type, edge_type, node_num, edge_num,
             node_feature_type and edge_feature_type.
         """
         if self._working_mode == 'server':
@@ -347,7 +347,7 @@ class GraphData:
                 A default value of -1 indicates that no node is given.
 
         Returns:
-            numpy.ndarray: Array of nodes.
+            numpy.ndarray, array of nodes.
 
         Examples:
             >>> import mindspore.dataset as ds

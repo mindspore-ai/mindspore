@@ -23,7 +23,6 @@ from mindspore import log as logger
 from ..filewriter import FileWriter
 from ..shardutils import check_filename, ExceptionThread
 
-
 __all__ = ['TFRecordToMR']
 
 SupportedTensorFlowVersion = '1.13.0-rc1'
@@ -86,9 +85,10 @@ class TFRecordToMR:
         ValueError: If parameter is invalid.
         Exception: when tensorflow module is not found or version is not correct.
     """
+
     def __init__(self, source, destination, feature_dict, bytes_fields=None):
         try:
-            self.tf = import_module("tensorflow")    # just used to convert tfrecord to mindrecord
+            self.tf = import_module("tensorflow")  # just used to convert tfrecord to mindrecord
         except ModuleNotFoundError:
             self.tf = None
         if not self.tf:
@@ -265,7 +265,7 @@ class TFRecordToMR:
         Execute transformation from TFRecord to MindRecord.
 
         Returns:
-            SUCCESS or FAILED, whether TFRecord is successfuly transformed to MindRecord.
+            MSRStatus, whether TFRecord is successfuly transformed to MindRecord.
         """
         writer = FileWriter(self.destination)
         logger.info("Transformed MindRecord schema is: {}, TFRecord feature dict is: {}"

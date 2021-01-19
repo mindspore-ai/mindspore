@@ -33,6 +33,7 @@ except ModuleNotFoundError:
 
 __all__ = ['Cifar100ToMR']
 
+
 class Cifar100ToMR:
     """
     A class to transform from cifar100 to MindRecord.
@@ -44,6 +45,7 @@ class Cifar100ToMR:
     Raises:
         ValueError: If source or destination is invalid.
     """
+
     def __init__(self, source, destination):
         check_filename(source)
         self.source = source
@@ -74,7 +76,7 @@ class Cifar100ToMR:
             fields (list[str]): A list of index field, e.g.["fine_label", "coarse_label"].
 
         Returns:
-            SUCCESS or FAILED, whether cifar100 is successfully transformed to MindRecord.
+            MSRStatus, whether cifar100 is successfully transformed to MindRecord.
         """
         if fields and not isinstance(fields, list):
             raise ValueError("The parameter fields should be None or list")
@@ -114,6 +116,7 @@ class Cifar100ToMR:
             raise t.exception
         return t.res
 
+
 def _construct_raw_data(images, fine_labels, coarse_labels):
     """
     Construct raw data from cifar100 data.
@@ -124,7 +127,7 @@ def _construct_raw_data(images, fine_labels, coarse_labels):
         coarse_labels (list): coarse label list from cifar100.
 
     Returns:
-        SUCCESS/FAILED, whether successfully written into MindRecord.
+        list[dict], data dictionary constructed from cifar100.
     """
     if not cv2:
         raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
@@ -141,6 +144,7 @@ def _construct_raw_data(images, fine_labels, coarse_labels):
         raw_data.append(row_data)
     return raw_data
 
+
 def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
     """
     Generate MindRecord file from raw data.
@@ -153,7 +157,7 @@ def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
         schema_desc (str): String of schema description.
 
     Returns:
-        SUCCESS/FAILED, whether successfully written into MindRecord.
+        MSRStatus, whether successfully written into MindRecord.
     """
     schema = {"id": {"type": "int64"}, "fine_label": {"type": "int64"},
               "coarse_label": {"type": "int64"}, "data": {"type": "bytes"}}

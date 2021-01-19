@@ -32,6 +32,7 @@ except ModuleNotFoundError:
 
 __all__ = ['MnistToMR']
 
+
 class MnistToMR:
     """
     A class to transform from Mnist to MindRecord.
@@ -125,7 +126,7 @@ class MnistToMR:
         Executes transformation from Mnist train part to MindRecord.
 
         Returns:
-            SUCCESS/FAILED, whether successfully written into MindRecord.
+            MSRStatus, whether successfully written into MindRecord.
         """
         t0_total = time.time()
 
@@ -173,7 +174,7 @@ class MnistToMR:
         Executes transformation from Mnist test part to MindRecord.
 
         Returns:
-            SUCCESS or FAILED, whether Mnist is successfully transformed to MindRecord.
+            MSRStatus, whether Mnist is successfully transformed to MindRecord.
         """
         t0_total = time.time()
 
@@ -222,7 +223,7 @@ class MnistToMR:
         Executes transformation from Mnist to MindRecord.
 
         Returns:
-            SUCCESS/FAILED, whether successfully written into MindRecord.
+            MSRStatus, whether successfully written into MindRecord.
         """
         if not cv2:
             raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
