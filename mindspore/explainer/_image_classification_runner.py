@@ -23,7 +23,7 @@ from PIL import Image
 import mindspore as ms
 import mindspore.dataset as ds
 from mindspore import log
-from mindspore.dataset.engine.datasets import Dataset
+from mindspore.dataset import Dataset
 from mindspore.nn import Cell, SequentialCell
 from mindspore.ops.operations import ExpandDims
 from mindspore.train._utils import check_value_type

@@ -1036,8 +1036,9 @@ class LinearTransformation:
     the dot product with the transformation matrix, and reshapes it back to its original shape.
 
     Args:
-        transformation_matrix (numpy.ndarray): a square transformation matrix of shape (D, D), D = C x H x W.
-        mean_vector (numpy.ndarray): a NumPy ndarray of shape (D,) where D = C x H x W.
+        transformation_matrix (numpy.ndarray): a square transformation matrix of shape (D, D), where
+            :math:`D = C \times H \times W`.
+        mean_vector (numpy.ndarray): a NumPy ndarray of shape (D,) where :math:`D = C \times H \times W`.
 
     Examples:
         >>> import mindspore.dataset.vision.py_transforms as py_vision

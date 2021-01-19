@@ -25,12 +25,14 @@ from .cifar10 import Cifar10
 from ..common.exceptions import PathNotExistsError
 from ..filewriter import FileWriter
 from ..shardutils import check_filename, ExceptionThread, SUCCESS, FAILED
+
 try:
     cv2 = import_module("cv2")
 except ModuleNotFoundError:
     cv2 = None
 
 __all__ = ['Cifar10ToMR']
+
 
 class Cifar10ToMR:
     """
@@ -43,6 +45,7 @@ class Cifar10ToMR:
     Raises:
         ValueError: If source or destination is invalid.
     """
+
     def __init__(self, source, destination):
         check_filename(source)
         self.source = source
@@ -73,7 +76,7 @@ class Cifar10ToMR:
             fields (list[str], optional): A list of index fields, e.g.["label"] (default=None).
 
         Returns:
-            SUCCESS or FAILED, whether cifar10 is successfully transformed to MindRecord.
+            MSRStatus, whether cifar10 is successfully transformed to MindRecord.
         """
         if fields and not isinstance(fields, list):
             raise ValueError("The parameter fields should be None or list")
@@ -109,6 +112,7 @@ class Cifar10ToMR:
             raise t.exception
         return t.res
 
+
 def _construct_raw_data(images, labels):
     """
     Construct raw data from cifar10 data.
@@ -118,7 +122,7 @@ def _construct_raw_data(images, labels):
         labels (list): label list from cifar10.
 
     Returns:
-        SUCCESS/FAILED, whether successfully written into MindRecord.
+        list[dict], data dictionary constructed from cifar10.
     """
     if not cv2:
         raise ModuleNotFoundError("opencv-python module not found, please use pip install it.")
@@ -133,6 +137,7 @@ def _construct_raw_data(images, labels):
         raw_data.append(row_data)
     return raw_data
 
+
 def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
     """
     Generate MindRecord file from raw data.
@@ -145,7 +150,7 @@ def _generate_mindrecord(file_name, raw_data, fields, schema_desc):
         schema_desc (str): String of schema description.
 
     Returns:
-        SUCCESS/FAILED, whether successfully written into MindRecord.
+        MSRStatus, whether successfully written into MindRecord.
     """
     schema = {"id": {"type": "int64"}, "label": {"type": "int64"},
               "data": {"type": "bytes"}}

@@ -47,6 +47,7 @@ class ImageNetToMR:
     Raises:
         ValueError: If `map_file`, `image_dir` or `destination` is invalid.
     """
+
     def __init__(self, map_file, image_dir, destination, partition_number=1):
         check_filename(map_file)
         self.map_file = map_file
@@ -122,7 +123,7 @@ class ImageNetToMR:
         Executes transformation from imagenet to MindRecord.
 
         Returns:
-            SUCCESS or FAILED, whether imagenet is successfully transformed to MindRecord.
+            MSRStatus, whether imagenet is successfully transformed to MindRecord.
         """
         t0_total = time.time()
 
@@ -133,10 +134,10 @@ class ImageNetToMR:
         logger.info("transformed MindRecord schema is: {}".format(imagenet_schema_json))
 
         # set the header size
-        self.writer.set_header_size(1<<24)
+        self.writer.set_header_size(1 << 24)
 
         # set the page size
-        self.writer.set_page_size(1<<26)
+        self.writer.set_page_size(1 << 26)
 
         # create the schema
         self.writer.add_schema(imagenet_schema_json, "imagenet_schema")
