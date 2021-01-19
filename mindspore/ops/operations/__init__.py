@@ -130,7 +130,6 @@ __all__ = [
     'MaxPoolWithArgmax',
     'FusedBatchNorm',
     'FusedBatchNormEx',
-    'InstanceNorm',
     'BNTrainingReduce',
     'BNTrainingUpdate',
     'BatchNorm',
