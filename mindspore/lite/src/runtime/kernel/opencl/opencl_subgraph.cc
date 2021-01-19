@@ -16,6 +16,8 @@
 
 #include "src/runtime/kernel/opencl/opencl_subgraph.h"
 #include <set>
+#include <map>
+#include <string>
 #include "src/runtime/opencl/opencl_executor.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "include/errorcode.h"
@@ -189,19 +191,7 @@ int OpenCLSubGraph::GenToFormatOp(const std::vector<lite::Tensor *> &in_tensors,
   }
   return RET_OK;
 }
-
-int OpenCLSubGraph::Init() {
-  allocator_ = ocl_runtime_->GetAllocator();
-  MS_LOG(DEBUG) << "input num=" << in_tensors_.size() << ", output num=" << out_tensors_.size();
-  for (const auto tensor : in_tensors_) {
-    MS_ASSERT(tensor);
-    tensor->set_allocator(allocator_);
-  }
-  for (const auto tensor : out_tensors_) {
-    MS_ASSERT(tensor);
-    tensor->set_allocator(allocator_);
-  }
-
+int OpenCLSubGraph::InsertOpsPass() {
   GetInOutNodes();
 
   std::vector<std::vector<kernel::LiteKernel *>> from_kernels_;
@@ -222,12 +212,34 @@ int OpenCLSubGraph::Init() {
   }
   nodes_.insert(nodes_.end(), out_convert_ops_.begin(), out_convert_ops_.end());
   GetInOutNodes();
-  UpdateTensorDataType();
-  Fusion();
+  return RET_OK;
+}
+int OpenCLSubGraph::Init() {
+  allocator_ = ocl_runtime_->GetAllocator();
+  MS_LOG(DEBUG) << "input num=" << in_tensors_.size() << ", output num=" << out_tensors_.size();
+  for (const auto tensor : in_tensors_) {
+    MS_ASSERT(tensor);
+    tensor->set_allocator(allocator_);
+  }
+  for (const auto tensor : out_tensors_) {
+    MS_ASSERT(tensor);
+    tensor->set_allocator(allocator_);
+  }
+  std::map<std::string, std::function<int(void)>> pass_manager{
+    {"InsertOpsPass", std::bind(&OpenCLSubGraph::InsertOpsPass, this)},
+    {"UpdateTensorDataTypePass", std::bind(&OpenCLSubGraph::UpdateTensorDataTypePass, this)},
+    {"FusionPass", std::bind(&OpenCLSubGraph::FusionPass, this)}};
+  for (auto iv : pass_manager) {
+    auto ret = iv.second();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Run Pass: " << iv.first << " failed.";
+      return RET_ERROR;
+    }
+  }
   return RET_OK;
 }
 
-void OpenCLSubGraph::UpdateTensorDataType() {
+int OpenCLSubGraph::UpdateTensorDataTypePass() {
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
   MS_ASSERT(in_tensors_[0]);
   if (is_fp16 && (in_tensors_[0]->data_type() == kNumberTypeFloat32)) {
@@ -245,6 +257,7 @@ void OpenCLSubGraph::UpdateTensorDataType() {
       }
     }
   }
+  return RET_OK;
 }
 
 void OpenCLSubGraph::GetKernelFromToTensor(const std::vector<lite::Tensor *> &in_tensors,

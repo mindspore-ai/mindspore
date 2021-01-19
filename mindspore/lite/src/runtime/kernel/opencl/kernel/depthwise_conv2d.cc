@@ -105,6 +105,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   bool is_fp16 = ocl_runtime_->GetFp16Enable();
 
+  size_t dtype_size = is_fp16 ? sizeof(int16_t) : sizeof(float);
   auto out_info = GpuTensorInfo(out_tensors_[0]);
   // weight: o, h, w, i; o == group, i == 1
   void *origin_weight = in_tensors_.at(kWeightIndex)->data_c();
@@ -121,7 +122,7 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     size_t img_dtype = ocl_runtime_->GetFp16Enable() ? CL_HALF_FLOAT : CL_FLOAT;
     img_size = {(size_t)plane_out / C4NUM, (size_t)out_info.N * CO4, img_dtype};
   }
-  pack_weight_size = is_fp16 ? pack_weight_size * sizeof(int16_t) : pack_weight_size * sizeof(float);
+  pack_weight_size = pack_weight_size * dtype_size;
   auto ConvertFilter = [](void *src, void *dst, TypeId src_type, TypeId dst_type, size_t plane_in, size_t plane_out,
                           size_t channel) {
     if (dst_type == kNumberTypeFloat16) {
@@ -173,18 +174,14 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
       memcpy(dst, src, size * dtype_size);
     }
   };
-  size_t dtype_size = sizeof(float);
-  if (is_fp16 && in_tensors_.at(kBiasIndex)->data_type() == kNumberTypeFloat16) {
-    dtype_size = sizeof(int16_t);
-  }
-  std::vector<char> temp_bias(pack_weight_size, 0);
+  size_t bias_size = C4NUM * CO4 * dtype_size;
+  std::vector<char> temp_bias(bias_size, 0);
   if (in_tensors_.size() == 3) {
     src_type = in_tensors_.at(kBiasIndex)->data_type();
     dst_type = is_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32;
     auto element_size = in_tensors_.at(kBiasIndex)->ElementsNum();
     ConvertBias(in_tensors_.at(kBiasIndex)->data_c(), temp_bias.data(), element_size, dtype_size, src_type, dst_type);
   }
-  size_t bias_size = C4NUM * CO4 * dtype_size;
   bias_data_ = allocator->Malloc(bias_size, {}, temp_bias.data());
   if (bias_data_ == nullptr) {
     return RET_ERROR;

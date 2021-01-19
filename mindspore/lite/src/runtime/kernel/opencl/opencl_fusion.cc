@@ -538,7 +538,7 @@ int TryMergeEltwiseEltwise(LiteKernel *node, std::vector<LiteKernel *> *nodes, s
 
 }  // namespace
 
-void OpenCLSubGraph::Fusion() {
+int OpenCLSubGraph::FusionPass() {
   MS_LOG(DEBUG) << "start Fusion";
 
   std::vector<LiteKernel *> input_nodes;
@@ -657,6 +657,7 @@ void OpenCLSubGraph::Fusion() {
     std::remove_if(nodes_.begin(), nodes_.end(), [&](LiteKernel *node) { return AIsInB(node, &removed_set); }),
     nodes_.end());
   MS_LOG(DEBUG) << "number of kernels(after fusion) : " << nodes_.size();
+  return RET_OK;
 }
 
 }  // namespace mindspore::kernel

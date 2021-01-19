@@ -61,6 +61,8 @@ std::vector<int> GetNHWCShape(const std::vector<int> &tensor_shape);
 
 std::vector<size_t> GetImage2dShapeFromNHWC(const std::vector<int> &tensor_shape, schema::Format format);
 
+int GetBroadcastGpuAxis(int ndim, int ori_axis);
+
 template <class T1, class T2>
 void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane_in, int plane_out, int channel,
                       const std::function<T2(T1)> &to_dtype) {
