@@ -15,7 +15,6 @@
 """
 BGCF evaluation script.
 """
-import os
 import datetime
 
 import mindspore.context as context
@@ -78,12 +77,11 @@ def evaluation():
 
 
 if __name__ == "__main__":
+    parser = parser_args()
     context.set_context(mode=context.GRAPH_MODE,
                         device_target="Ascend",
-                        save_graphs=False)
-
-    parser = parser_args()
-    os.environ['DEVICE_ID'] = parser.device
+                        save_graphs=False,
+                        device_id=int(parser.device))
 
     train_graph, test_graph, sampled_graph_list = load_graph(parser.datapath)
     test_graph_dataset = TestGraphDataset(train_graph, sampled_graph_list, num_samples=parser.raw_neighs,
