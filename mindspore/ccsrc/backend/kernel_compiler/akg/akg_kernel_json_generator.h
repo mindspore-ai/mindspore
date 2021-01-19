@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,11 @@ constexpr auto kJsonKeyOpFullName = "op_full_name";
 constexpr auto kJsonKeyBufferStitch = "buffer_stitch";
 constexpr auto kJsonKeyStitchOp = "stitch_op";
 constexpr auto kJsonKeyStitchWithAtomic = "stitch_with_atomic";
+constexpr auto kJsonKeyFusion = "fusion";
+constexpr auto kJsonKeyParallelFusion = "parallel_fusion";
+constexpr auto kJsonKeyFusionType = "fusion_type";
+constexpr auto kJsonKeySubGraph = "sub_graph";
+constexpr auto kJsonKeyCoreNum = "core_num";
 
 constexpr auto kAttrInputNames = "input_names";
 
@@ -60,6 +65,7 @@ struct DumpOption {
   bool is_before_select_kernel = false;
   bool save_ptr_address = false;
   bool extract_opinfo_from_anfnode = false;
+  bool is_always_fold_const = false;
 };
 
 class AkgKernelJsonGenerator {
@@ -84,6 +90,8 @@ class AkgKernelJsonGenerator {
     input_tensor_idx_.clear();
     address_node_map_.clear();
     output_tensor_idx_ = 0;
+    sub_graphs_.clear();
+    dim_infos_.clear();
   }
   void set_dump_option(DumpOption dump_option) { dump_option_ = dump_option; }
   std::map<std::string, AnfNodePtr> address_node_map() { return address_node_map_; }
@@ -120,6 +128,7 @@ class AkgKernelJsonGenerator {
   std::string GetOutputFormat(const AnfNodePtr &anf_node, size_t index);
   void SaveNodeAddress(const AnfNodePtr &anf_node, nlohmann::json *node_json);
   OpInfoPtr ExtractOpInfo(const AnfNodePtr &anf_node);
+  void AddParalleFusionJsonInfo(const std::string &processor, nlohmann::json *kernel_json);
 
   DumpOption dump_option_;
   static int op_cnt_;
@@ -132,6 +141,8 @@ class AkgKernelJsonGenerator {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::map<std::string, AnfNodePtr> address_node_map_;
+  std::map<size_t, std::vector<std::string>> sub_graphs_;
+  std::map<size_t, size_t> dim_infos_;
 };
 }  // namespace kernel
 }  // namespace mindspore

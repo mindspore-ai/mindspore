@@ -274,7 +274,7 @@ bool ConvertNonscalarTensorToParameter(const FuncGraphPtr &fg, AnfNodePtrList *i
   MS_EXCEPTION_IF_NULL(inputs_ptr);
   auto nodes = TopoSort(fg->get_return());
 
-  std::map<ValuePtr, AnfNodePtrList> vmap;
+  OrderedMap<ValuePtr, AnfNodePtrList> vmap;
   for (const auto &node : nodes) {
     if (!node->isa<CNode>()) {
       continue;
@@ -1033,6 +1033,17 @@ bool HasDataUser(const AnfNodeIndexSet &users, const FuncGraphManagerPtr &mng) {
     return true;
   }
   return false;
+}
+
+void MakeCNodeSafeForAttr(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  if (cnode == nullptr) {
+    return;
+  }
+  AnfNodePtrList new_inputs = {NewValueNode(AnfAlgo::GetCNodePrimitive(cnode)->Clone())};
+  auto inputs = cnode->inputs();
+  new_inputs.insert(new_inputs.end(), inputs.begin() + 1, inputs.end());
+  cnode->set_inputs(new_inputs);
 }
 }  // namespace opt
 }  // namespace mindspore

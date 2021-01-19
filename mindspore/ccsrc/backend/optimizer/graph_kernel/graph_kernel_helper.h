@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,8 @@ using kernel::DumpOption;
 constexpr auto kIsFeatureMapOutput = "IsFeatureMapOutput";
 constexpr auto kIsFeatureMapInputList = "IsFeatureMapInputList";
 constexpr auto kGraphKernelModule = "mindspore._extends.graph_kernel";
+constexpr auto kGraphKernelEstimateOps = "estimate_ops";
+constexpr auto kGraphKernelGetNodeCalAmount = "estimate_calulation_amount";
 constexpr auto kGraphKernelSplitFunc = "split_with_json";
 constexpr auto kGetGraphKernelOpExpander = "get_op_expander";
 constexpr auto kJsonKeyMultiGraph = "multi_graph";
@@ -88,6 +90,7 @@ ShapeVector GetShape(const AnfNodePtr &node);
 std::vector<int64_t> GetReduceAxis(const AnfNodePtr &node);
 
 CNodePtr CreateCNode(const std::vector<AnfNodePtr> &inputs, const FuncGraphPtr &func_graph, const DataInfo &out_info);
+void MakeCNodeSafeForAttr(const AnfNodePtr &node);
 
 template <typename T>
 ValueNodePtr CreateScalarTensorValueNode(const DataInfo &info, T value, size_t data_length) {
