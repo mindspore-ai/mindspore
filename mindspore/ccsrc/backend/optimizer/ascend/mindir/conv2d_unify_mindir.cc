@@ -34,7 +34,6 @@ constexpr size_t kConv2DBackpropInputNum = 4;
 constexpr size_t kConv2DAxisNum = 4;
 constexpr auto kAttrOffsetA = "offset_a";
 constexpr auto kAttrPadList = "pad_list";
-constexpr auto kAttrPads = "pads";
 constexpr auto kAttrMode = "mode";
 constexpr auto kAttrChannelMultiplier = "channel_multiplier";
 constexpr auto kAttrPerm = "perm";
@@ -200,9 +199,8 @@ void SetCommonAttrs(const CNodePtr &conv2d, const CNodePtr &depth_conv) {
   AnfAlgo::CopyNodeAttr(kAttrKernelSize, conv2d, depth_conv);
   AnfAlgo::CopyNodeAttr(kAttrDilation, conv2d, depth_conv);
   AnfAlgo::CopyNodeAttr(kAttrFormat, conv2d, depth_conv);
-  AnfAlgo::CopyNodeAttr(kAttrPadList, kAttrPads, conv2d, depth_conv);
+  AnfAlgo::CopyNodeAttr(kAttrPadList, conv2d, depth_conv);
   AnfAlgo::CopyNodeAttr(kAttrPadMode, conv2d, depth_conv);
-  AnfAlgo::CopyNodeAttr(kAttrPad, conv2d, depth_conv);
   AnfAlgo::SetNodeAttr(kAttrMode, MakeValue(3), depth_conv);
   AnfAlgo::SetNodeAttr(kAttrChannelMultiplier, MakeValue(1), depth_conv);
 }
