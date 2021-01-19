@@ -73,8 +73,8 @@ TEST_F(TestCastSelfOpenCL, Castfp32tofp16) {
   std::vector<lite::Tensor *> inputs{input_tensor};
   std::vector<lite::Tensor *> outputs{output_tensor};
 
-  auto *cast_kernel =
-    new (std::nothrow) kernel::CastOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  auto *cast_kernel = new (std::nothrow)
+    kernel::CastOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr, nullptr);
   if (cast_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {
@@ -159,8 +159,8 @@ TEST_F(TestCastSelfOpenCL, Castfp16tofp32) {
   std::vector<lite::Tensor *> inputs{input_tensor};
   std::vector<lite::Tensor *> outputs{output_tensor};
 
-  auto *cast_kernel =
-    new (std::nothrow) kernel::CastOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs);
+  auto *cast_kernel = new (std::nothrow)
+    kernel::CastOpenCLKernel(reinterpret_cast<OpParameter *>(param), inputs, outputs, nullptr, nullptr);
   if (cast_kernel == nullptr) {
     MS_LOG(INFO) << " new kernel::CastOpenCLKernel failed ";
     for (auto tensor : inputs) {

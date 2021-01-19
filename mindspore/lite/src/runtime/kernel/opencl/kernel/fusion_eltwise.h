@@ -153,9 +153,7 @@ bool IsEltwiseAndOperatorSupported(LiteKernel *node);
 
 class FusionEltwiseOpenCLKernel : public OpenCLKernel {
  public:
-  FusionEltwiseOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                            const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
 
   ~FusionEltwiseOpenCLKernel() override {
     if (op_parameter_ != nullptr) {

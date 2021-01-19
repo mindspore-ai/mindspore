@@ -463,8 +463,8 @@ void CreateEltwiseKernelReplaceOld(FusionEltwiseParameter *param, LiteKernel *ol
   MS_ASSERT(old);
   MS_ASSERT(nodes);
   MS_ASSERT(removed_set);
-  auto *eltwise = new (std::nothrow)
-    FusionEltwiseOpenCLKernel(reinterpret_cast<OpParameter *>(param), old->in_tensors(), old->out_tensors());
+  auto *eltwise = new (std::nothrow) FusionEltwiseOpenCLKernel(reinterpret_cast<OpParameter *>(param),
+                                                               old->in_tensors(), old->out_tensors(), nullptr, nullptr);
   if (eltwise == nullptr) {
     MS_LOG(ERROR) << "create FusionEltwiseOpenCLKernel error.";
     return;
@@ -539,6 +539,9 @@ int TryMergeEltwiseEltwise(LiteKernel *node, std::vector<LiteKernel *> *nodes, s
 }  // namespace
 
 int OpenCLSubGraph::FusionPass() {
+  if (!this->IsSubGraphInferShapeDone()) {
+    return RET_OK;
+  }
   MS_LOG(DEBUG) << "start Fusion";
 
   std::vector<LiteKernel *> input_nodes;

@@ -27,9 +27,7 @@ namespace mindspore::kernel {
 
 class PReluOpenCLKernel : public OpenCLKernel {
  public:
-  PReluOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
   ~PReluOpenCLKernel() override = default;
 
   int Prepare() override;

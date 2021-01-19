@@ -47,41 +47,21 @@ int OpenCLExecutor::RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor 
       }
     }
     auto *op_kernel = reinterpret_cast<kernel::OpenCLKernel *>(kernel);
-    auto cur_outputs = kernel->out_tensors();
-    for (auto i = 0; i < cur_outputs.size(); ++i) {
-      auto *output = cur_outputs.at(i);
-      MS_ASSERT(output);
-      if (op_kernel->GetMemType() == lite::opencl::MemType::IMG) {
-        std::vector<size_t> img_size;
-        ret = op_kernel->GetImageSize(i, &img_size);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "GetImageSize failed";
-          return ret;
-        }
-        auto data_ptr = allocator_->Malloc(output->Size(), img_size);
-        if (data_ptr == nullptr) {
-          MS_LOG(ERROR) << "Malloc data failed";
-          return RET_ERROR;
-        }
-        output->set_data(data_ptr);
+    ret = kernel->PreProcess();
+    if (RET_OK != ret) {
+      if (is_tune) {
+        MS_LOG(WARNING) << "PreProcess kernel failed, name: " << kernel->name() << " in tuning";
+        opencl_runtime_ins->SetProfiling(profiling_tmp);
+        return RET_OK;
       } else {
-        ret = output->MallocData(allocator_);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "MallocData failed";
-          return ret;
-        }
+        MS_LOG(ERROR) << "PreProcess kernel failed, name: " << kernel->name();
+        return ret;
       }
-      output->set_allocator(allocator_);
     }
     if (is_tune) {
       ret = op_kernel->Tune();
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "tuning kernel failed, name: " << kernel->name();
-        return ret;
-      }
-      ret = kernel->PostProcess();
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel->name();
         return ret;
       }
     } else {
@@ -90,15 +70,14 @@ int OpenCLExecutor::RunOrTune(std::vector<Tensor *> &inputs, std::vector<Tensor 
         MS_LOG(ERROR) << "run kernel failed, name: " << kernel->name();
         return ret;
       }
-      ret = kernel->PostProcess();
-      if (ret != RET_OK) {
-        MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel->name();
-        return ret;
-      }
-      if (profiling_tmp) {
+      if (profiling_tmp)
         MS_LOG(INFO) << "OpenCl kernel " << kernel->name() << "(" << kernel->type_str()
                      << ") execute time is: " << op_kernel->GetProfilingTimeMs() << "ms";
-      }
+    }
+    ret = kernel->PostProcess();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "PostProcess kernel failed, name: " << kernel->name();
+      return ret;
     }
     if (after != nullptr) {
       if (!after(TensorVectorCast(kernel->in_tensors()), TensorVectorCast(kernel->out_tensors()), callbackParam)) {

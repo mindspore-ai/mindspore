@@ -122,12 +122,86 @@ void OpenCLKernel::PrintOutput(int print_num, const std::string &out_file) {
   }
 }
 
+int OpenCLKernel::PreProcess() {
+  auto ret = RET_OK;
+  ret = ReSize();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  auto allocator = ocl_runtime_->GetAllocator();
+  for (auto i = 0; i < out_tensors_.size(); ++i) {
+    auto *output = out_tensors_.at(i);
+    MS_ASSERT(output);
+    if (GetMemType() == lite::opencl::MemType::IMG) {
+      std::vector<size_t> img_size;
+      ret = GetImageSize(i, &img_size);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "GetImageSize failed";
+        return ret;
+      }
+      auto data_ptr = allocator->Malloc(output->Size(), img_size);
+      if (data_ptr == nullptr) {
+        MS_LOG(ERROR) << "Malloc data failed";
+        return RET_ERROR;
+      }
+      output->set_data(data_ptr);
+    } else {
+      ret = output->MallocData(allocator);
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "MallocData failed";
+        return ret;
+      }
+    }
+    output->set_allocator(allocator);
+  }
+  return RET_OK;
+}
+
 int OpenCLKernel::PostProcess() {
   for (auto *output : this->out_tensors()) {
     MS_ASSERT(output != nullptr);
     output->ResetRefCount();
   }
   return FreeInWorkTensor();
+}
+
+int OpenCLKernel::InferShape() {
+  if (infer_shape_flag_) {
+    return RET_OK;
+  }
+  if (primitive_ == nullptr) {
+    return RET_ERROR;
+  }
+  (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
+  auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
+  if (ret != RET_OK) {
+    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(false);
+    MS_LOG(ERROR) << "InferShape fail!";
+    return ret;
+  }
+  infer_shape_flag_ = true;
+  return RET_OK;
+}
+
+int OpenCLKernel::ReSize() {
+  if (infer_shape_flag_) {
+    return RET_OK;
+  }
+  auto ret = InferShape();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  ret = CheckSpecs();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ReSize failed for check kernel specs!";
+    return ret;
+  }
+  ret = Prepare();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "ReSize failed for kernel prepare!";
+    return ret;
+  }
+  return RET_OK;
 }
 
 std::vector<BaseTuningParameter> OpenCLKernel::GenerateTuningParam() {

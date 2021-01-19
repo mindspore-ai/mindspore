@@ -32,6 +32,9 @@
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
 #endif
+#if SUPPORT_GPU
+#include "src/runtime/kernel/opencl/opencl_subgraph.h"
+#endif
 
 namespace mindspore {
 namespace lite {
@@ -629,8 +632,16 @@ int LiteSession::ReSizeKernels(const std::vector<kernel::LiteKernel *> &kernels)
       MS_LOG(ERROR) << "All node in graph should be sub_graph";
       return RET_ERROR;
     }
-    auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
-    auto ret = sub_graph->ReSize(infer_shape_interrupt);
+    auto ret = RET_OK;
+    if (kernel->subgraph_type() == kernel::kGpuSubGraph) {
+#if SUPPORT_GPU
+      auto sub_graph = reinterpret_cast<kernel::OpenCLSubGraph *>(kernel);
+      ret = sub_graph->ReSize(false);
+#endif
+    } else {
+      auto sub_graph = reinterpret_cast<kernel::SubGraphKernel *>(kernel);
+      ret = sub_graph->ReSize(infer_shape_interrupt);
+    }
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape is interrupted";
       infer_shape_interrupt = true;

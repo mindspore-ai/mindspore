@@ -289,6 +289,35 @@ __kernel void BroadcastNHWC4Add(__read_only image2d_t input_a, __read_only image
   WRITE_IMAGE(output, (int2)(Y * output_shape.w + X, Z), result);
 }
 
+__kernel void BroadcastNHWC4BiasAdd(__read_only image2d_t input_a, __read_only image2d_t input_b,
+                                    __write_only image2d_t output, const int4 a_shape, const int4 b_shape,
+                                    const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
+  int X = get_global_id(0);  // C4
+  int Y = get_global_id(1);  // W
+  int Z = get_global_id(2);  // H
+  if (X >= output_shape.w || Y >= output_shape.z || Z >= output_shape.y) {
+    return;
+  }
+  int a_c = X < a_shape.w ? X : a_shape.w - 1;
+  int a_w = Y < a_shape.z ? Y : a_shape.z - 1;
+  int a_h = Z < a_shape.y ? Z : a_shape.y - 1;
+  FLT4 a = READ_IMAGE(input_a, smp_none, (int2)(a_w * a_shape.w + a_c, a_h));
+  int b_c = X < b_shape.w ? X : b_shape.w - 1;
+  int b_w = Y < b_shape.z ? Y : b_shape.z - 1;
+  int b_h = Z < b_shape.y ? Z : b_shape.y - 1;
+  FLT4 b = READ_IMAGE(input_b, smp_none, (int2)(b_w * b_shape.w + b_c, b_h));
+  FLT4 result;
+  if (broadcastC_flag == 0) {
+    result = a + b;
+  } else if (broadcastC_flag == 1) {
+    result = a.x + b;
+  } else {
+    result = a + b.x;
+  }
+  result = clamp(result, (FLT)(act_min), (FLT)(act_max));
+  WRITE_IMAGE(output, (int2)(Y * output_shape.w + X, Z), result);
+}
+
 __kernel void BroadcastNHWC4Sub(__read_only image2d_t input_a, __read_only image2d_t input_b,
                                 __write_only image2d_t output, const int4 a_shape, const int4 b_shape,
                                 const int4 output_shape, const int broadcastC_flag, float act_min, float act_max) {
@@ -463,9 +492,9 @@ __kernel void BroadcastNHWC4FloorMod(__read_only image2d_t input_a, __read_only 
 }
 
 __kernel void BroadcastNHWC4SquaredDifference(__read_only image2d_t input_a, __read_only image2d_t input_b,
-                                         __write_only image2d_t output, const int4 a_shape, const int4 b_shape,
-                                         const int4 output_shape, const int broadcastC_flag, float act_min,
-                                         float act_max) {
+                                              __write_only image2d_t output, const int4 a_shape, const int4 b_shape,
+                                              const int4 output_shape, const int broadcastC_flag, float act_min,
+                                              float act_max) {
   int X = get_global_id(0);  // C4
   int Y = get_global_id(1);  // w
   int Z = get_global_id(2);  // H

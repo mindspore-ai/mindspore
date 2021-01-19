@@ -25,9 +25,7 @@ namespace mindspore::kernel {
 
 class SpaceToBatchNDOpenCLKernel : public OpenCLKernel {
  public:
-  SpaceToBatchNDOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                             const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
 
   ~SpaceToBatchNDOpenCLKernel() override = default;
 

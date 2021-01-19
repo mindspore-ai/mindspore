@@ -44,8 +44,9 @@ void ConvertFilter(void *src, void *dst, TypeId src_dtype, TypeId dst_dtype, Fil
 class Conv2DOpenCLKernel : public OpenCLKernel {
  public:
   Conv2DOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs), param_(reinterpret_cast<ConvParameter *>(parameter)) {
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                     const mindspore::lite::PrimitiveC *primitive)
+      : OpenCLKernel(parameter, inputs, outputs, ctx, primitive), param_(reinterpret_cast<ConvParameter *>(parameter)) {
     bool is_adreno = ocl_runtime_->GetGpuInfo().type == lite::opencl::GpuType::ADRENO;
     filter_type_ = is_adreno ? MemType::IMG : MemType::BUF;
   }

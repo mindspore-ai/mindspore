@@ -483,9 +483,22 @@ kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::Tenso
   kernel::OpenCLKernel *kernel;
   OpParameter *real_param;
   auto *conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-  if (UseFcReplaceConv(inputs, outputs, conv_param)) {
+  bool infer_shape_done;
+  if (primitive != nullptr) {
+    infer_shape_done = primitive->infer_flag();
+  } else {
+    bool output_shape_setted = true;
+    for (auto output : outputs) {
+      if (output->shape().empty() || output->ElementsNum() < 0) {
+        output_shape_setted = false;
+        break;
+      }
+    }
+    infer_shape_done = output_shape_setted;
+  }
+  if (infer_shape_done && UseFcReplaceConv(inputs, outputs, conv_param)) {
     auto *fc_param = CreateFcParam(conv_param);
-    kernel = new (std::nothrow) FullConnectionOpenCLKernel(fc_param, inputs, outputs);
+    kernel = new (std::nothrow) FullConnectionOpenCLKernel(fc_param, inputs, outputs, ctx, primitive);
     real_param = fc_param;
     if (kernel == nullptr) {
       MS_LOG(ERROR) << "Create FullConnection kernel failed.";
@@ -497,11 +510,13 @@ kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::Tenso
       MS_LOG(INFO) << "use FullConnection to replace Convolution.";
     }
   } else {
-    if (UseWinograd4x4To6x6(conv_param, inputs, outputs)) {
+    if (infer_shape_done && UseWinograd4x4To6x6(conv_param, inputs, outputs)) {
       MS_LOG(DEBUG) << "use Winograd algorithm.";
-      kernel = new (std::nothrow) WinogradOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs);
+      kernel = new (std::nothrow)
+        WinogradOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs, ctx, primitive);
     } else {
-      kernel = new (std::nothrow) Conv2DOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs);
+      kernel = new (std::nothrow)
+        Conv2DOpenCLKernel(reinterpret_cast<OpParameter *>(conv_param), inputs, outputs, ctx, primitive);
     }
     real_param = reinterpret_cast<OpParameter *>(conv_param);
     if (kernel == nullptr) {
@@ -510,7 +525,10 @@ kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::Tenso
       return nullptr;
     }
   }
-
+  if (!infer_shape_done) {
+    MS_LOG(WARNING) << "kernel don't infer shape yet!";
+    return kernel;
+  }
   int ret = kernel->CheckSpecs();
   if (ret != mindspore::lite::RET_OK) {
     MS_LOG(ERROR) << "Init Convolution kernel failed.";

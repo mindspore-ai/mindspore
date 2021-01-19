@@ -50,7 +50,7 @@ int GatherOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   int indices_ndim = in_tensors_.at(1)->shape().size();
-  if (indices_ndim != 1) {
+  if (indices_ndim > 1) {
     MS_LOG(ERROR) << "GatherOpenCLKernel only supports 1D indices Tensor but get " << indices_ndim << "D.";
     return RET_ERROR;
   }

@@ -156,17 +156,30 @@ struct BaseTuningParameter {
 class OpenCLKernel : public LiteKernel {
  public:
   OpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-               const std::vector<lite::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {
+               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+               const mindspore::lite::PrimitiveC *primitive)
+      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
+    if (primitive != nullptr) {
+      infer_shape_flag_ = primitive->infer_flag();
+    } else {
+      bool output_shape_setted = true;
+      for (auto output : outputs) {
+        if (output->shape().empty() || output->ElementsNum() < 0) {
+          output_shape_setted = false;
+          break;
+        }
+      }
+      infer_shape_flag_ = output_shape_setted;
+    }
   }
   ~OpenCLKernel() override = default;
   int AlignGlobalLocal(const std::vector<size_t> &global, const std::vector<size_t> &local);
 
   int Prepare() override { return RET_OK; }
-  int PreProcess() override { return RET_ERROR; }
+  int PreProcess() override;
   int PostProcess() override;
-  int ReSize() override { return RET_ERROR; }
+  int ReSize() override;
   int Run() override { return RET_ERROR; }
 
   virtual int CheckSpecs() { return RET_ERROR; }
@@ -189,6 +202,9 @@ class OpenCLKernel : public LiteKernel {
   double GetProfilingTimeMs();
   int DequantWeight();
   void FreeDequantedWeight();
+  virtual int InferShape();
+  bool GetInferShapeFlag() { return infer_shape_flag_; }
+  void SetInferShapeFlag(bool flag) { infer_shape_flag_ = flag; }
 
  protected:
   static std::set<size_t> GenerateLocalByGlobal(size_t global_i);
@@ -213,6 +229,7 @@ class OpenCLKernel : public LiteKernel {
   cl::Event event_;
   void *restore_quant_data_{nullptr};
   bool dequant_flag_{false};
+  bool infer_shape_flag_{false};
 
  private:
   lite::opencl::OpenCLRuntimeWrapper ocl_runtime_wrap_;
@@ -223,11 +240,15 @@ kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &input
                                         const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
                                         const lite::InnerContext *ctx, const kernel::KernelKey &desc,
                                         const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) T(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
+  auto *kernel = new (std::nothrow) T(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs, ctx, primitive);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";
     free(opParameter);
     return nullptr;
+  }
+  if (!reinterpret_cast<kernel::OpenCLKernel *>(kernel)->GetInferShapeFlag()) {
+    MS_LOG(WARNING) << "kernel don't infer shape yet!";
+    return kernel;
   }
   auto ret = kernel->CheckSpecs();
   if (ret != mindspore::lite::RET_OK) {

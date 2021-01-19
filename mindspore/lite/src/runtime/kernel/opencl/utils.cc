@@ -58,7 +58,8 @@ const std::set<schema::PrimitiveType> ArithmeticPrimitives = {schema::PrimitiveT
                                                               schema::PrimitiveType_LessEqual,
                                                               schema::PrimitiveType_Greater,
                                                               schema::PrimitiveType_GreaterEqual,
-                                                              schema::PrimitiveType_Eltwise};
+                                                              schema::PrimitiveType_Eltwise,
+                                                              schema::PrimitiveType_BiasAdd};
 
 const std::set<schema::PrimitiveType> ArithmeticSelfPrimitives = {
   schema::PrimitiveType_Abs,        schema::PrimitiveType_Ceil,  schema::PrimitiveType_Cos,

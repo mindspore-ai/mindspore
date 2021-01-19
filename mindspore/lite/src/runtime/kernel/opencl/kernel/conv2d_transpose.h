@@ -27,9 +27,7 @@ namespace mindspore::kernel {
 
 class Conv2dTransposeOpenCLKernel : public OpenCLKernel {
  public:
-  Conv2dTransposeOpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs)
-      : OpenCLKernel(parameter, inputs, outputs) {}
+  using OpenCLKernel::OpenCLKernel;
   ~Conv2dTransposeOpenCLKernel() override = default;
 
   int Run() override;
