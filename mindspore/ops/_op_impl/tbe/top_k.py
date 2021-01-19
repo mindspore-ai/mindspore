@@ -23,6 +23,7 @@ top_k_op_info = TBERegOp("TopK") \
     .compute_cost(10) \
     .kernel_name("top_k_d") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("dim", "optional", "int", "all") \
     .attr("k", "required", "int", "all") \
     .attr("largest", "optional", "bool", "all") \

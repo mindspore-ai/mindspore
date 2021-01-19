@@ -355,6 +355,7 @@ class TBERegOp(RegOp):
         self.reshape_type_ = ''
         self.dynamic_format_ = False
         self.dynamic_shape_ = False
+        self.need_check_supported_ = False
         self.op_pattern_ = ""
 
     def async_flag(self, async_flag):
@@ -443,6 +444,17 @@ class TBERegOp(RegOp):
         """
         self._is_bool(dynamic_shape)
         self.dynamic_shape_ = dynamic_shape
+        return self
+
+    def need_check_supported(self, need_check_supported):
+        """
+        Whether the operator need check supports.
+
+        Args:
+            :param need_check_supported: (bool): Value of need_check_supported. Default: false.
+        """
+        self._is_bool(need_check_supported)
+        self.need_check_supported_ = need_check_supported
         return self
 
     def op_pattern(self, pattern=None):

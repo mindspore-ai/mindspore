@@ -23,6 +23,7 @@ unsorted_segment_min_op_info = TBERegOp("UnsortedSegmentMin") \
     .compute_cost(10) \
     .kernel_name("unsorted_segment_min_d") \
     .partial_flag(True) \
+    .need_check_supported(True) \
     .attr("num_segments", "required", "int", "all") \
     .input(0, "data", False, "required", "all") \
     .input(1, "segment_ids", False, "required", "all") \
