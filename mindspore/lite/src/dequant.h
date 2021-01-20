@@ -34,7 +34,7 @@ class DequantUtil {
   static void UnPackToInt(const schema::Tensor *input_tensor, void *weight_unpack_data);
 
   static std::map<Tensor *, std::pair<TypeId, void *>> DequantTensor(const std::vector<Tensor *> &in_tensors,
-                                                                     TypeId data_type);
+                                                                     TypeId data_type, bool need_restore = true);
 
   static void RestoreTensorData(const std::map<Tensor *, std::pair<TypeId, void *>> &tensor_origin_data_map);
 
@@ -79,7 +79,7 @@ class DequantUtil {
         auto var_corr = param.var_corr;
         auto mean_corr = param.mean_corr;
         if (var_corr < 0 || var_corr > 10) {
-          MS_LOG(WARNING) << "unexpeted var_corr: " << var_corr;
+          MS_LOG(WARNING) << "unexpected var_corr: " << var_corr;
           var_corr = 1;
         }
         for (size_t j = 0; j < per_channel_size; j++) {

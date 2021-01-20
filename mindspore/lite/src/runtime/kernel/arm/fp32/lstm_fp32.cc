@@ -107,8 +107,10 @@ int LstmCPUKernel::InitWeightBias() {
   }
   memcpy(weight_h_ptr_, weight_h->MutableData(), weight_h->ElementsNum() * sizeof(float));
 
+  std::vector<int> w_shape = weight_i->shape();
+  auto hidden_size = w_shape.at(1) / 4;
   // init bias
-  int bias_num = lstm_parm_->bidirectional_ ? 2 * 4 * lstm_parm_->hidden_size_ : 4 * lstm_parm_->hidden_size_;
+  int bias_num = lstm_parm_->bidirectional_ ? 2 * 4 * hidden_size : 4 * hidden_size;
   bias_ptr_ = reinterpret_cast<float *>(malloc(bias_num * sizeof(float)));
   if (bias_ptr_ == nullptr) {
     MS_LOG(ERROR) << "LstmCPUKernel malloc bias_ptr_ error.";
@@ -116,13 +118,13 @@ int LstmCPUKernel::InitWeightBias() {
   }
 
   auto bias_data = reinterpret_cast<float *>(in_tensors_.at(3)->MutableData());
-  const int state_bias_offset = 4 * lstm_parm_->hidden_size_;
+  const int state_bias_offset = 4 * hidden_size;
   for (int i = 0; i < state_bias_offset; i++) {
     bias_ptr_[i] = bias_data[i] + bias_data[i + state_bias_offset];
   }
   if (lstm_parm_->bidirectional_) {
-    bias_data += 4 * lstm_parm_->hidden_size_ * 2;
-    auto backward_bias = bias_ptr_ + 4 * lstm_parm_->hidden_size_;
+    bias_data += 4 * hidden_size * 2;
+    auto backward_bias = bias_ptr_ + 4 * hidden_size;
     for (int i = 0; i < state_bias_offset; i++) {
       backward_bias[i] = bias_data[i] + bias_data[i + state_bias_offset];
     }
@@ -131,6 +133,14 @@ int LstmCPUKernel::InitWeightBias() {
 }
 
 int LstmCPUKernel::Init() {
+  FreeTmpBuffer();
+  auto ret = InitWeightBias();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "LstmCPUKernel InitWeightBias error.";
+    FreeTmpBuffer();
+    return RET_ERROR;
+  }
+
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -138,17 +148,9 @@ int LstmCPUKernel::Init() {
 }
 
 int LstmCPUKernel::ReSize() {
-  FreeTmpBuffer();
   auto ret = InitParam();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "LstmCPUKernel InitParam error.";
-    return RET_ERROR;
-  }
-
-  ret = InitWeightBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LstmCPUKernel InitWeightBias error.";
-    FreeTmpBuffer();
     return RET_ERROR;
   }
 

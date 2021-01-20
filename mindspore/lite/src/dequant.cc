@@ -51,7 +51,7 @@ void DequantUtil::UnPackToInt(const schema::Tensor *input_tensor, void *unpack_i
 }
 
 std::map<Tensor *, std::pair<TypeId, void *>> DequantUtil::DequantTensor(const std::vector<Tensor *> &in_tensors,
-                                                                         TypeId data_type) {
+                                                                         TypeId data_type, bool need_restore) {
   std::map<Tensor *, std::pair<TypeId, void *>> tensor_origin_data;
   if (data_type == TypeId::kNumberTypeFloat32 || data_type == TypeId::kNumberTypeFloat16) {
     for (auto weight_tensor : in_tensors) {
@@ -59,16 +59,21 @@ std::map<Tensor *, std::pair<TypeId, void *>> DequantUtil::DequantTensor(const s
       auto *restore_data = weight_tensor->data_c();
       auto restore_type = weight_tensor->data_type();
       bool dequant_flag = !weight_tensor->quant_params().empty() && weight_tensor->quant_params().front().inited &&
-                          restore_data != nullptr;
+                          restore_data != nullptr &&
+                          (restore_type == kNumberTypeInt8 || restore_type == kNumberTypeInt16);
       if (dequant_flag) {
         auto *dequant_weight = DequantUtil::DequantWeight(weight_tensor);
         if (dequant_weight == nullptr) {
           MS_LOG(ERROR) << "dequant data is nullptr.";
           return tensor_origin_data;
         }
+        if (need_restore) {
+          tensor_origin_data[weight_tensor] = {restore_type, restore_data};
+        } else {
+          weight_tensor->FreeData();
+        }
         weight_tensor->set_data(dequant_weight);
         weight_tensor->set_data_type(kNumberTypeFloat32);
-        tensor_origin_data[weight_tensor] = {restore_type, restore_data};
       }
     }
   }

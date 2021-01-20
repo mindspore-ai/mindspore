@@ -38,10 +38,6 @@
 
 namespace mindspore {
 namespace lite {
-static std::vector<schema::PrimitiveType> packed_op = {
-  schema::PrimitiveType_Conv2D, schema::PrimitiveType_DeConv2D, schema::PrimitiveType_DepthwiseConv2D,
-  schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_MatMul};
-
 // this method will not check whether tensor_idx is a weight tensor index, caller should ensure this.
 static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor_idx) {
 #ifdef SUPPORT_TRAIN
@@ -92,8 +88,13 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
                                     lite::Tensor *dst_tensor) {
   MS_ASSERT(src_tensor != nullptr);
   MS_ASSERT(dst_tensor != nullptr);
+  auto NeedUnPack = [&src_tensor, &dst_tensor]() -> bool {
+    auto data_type = src_tensor->dataType();
+    int pack_size = src_tensor->data()->size();
+    int org_size = dst_tensor->Size();
+    return (pack_size != org_size) && (data_type == kNumberTypeInt8 || data_type == kNumberTypeInt16);
+  };
   auto src_category = TensorCategory(src_tensor);
-  auto data_type = src_tensor->dataType();
   if ((src_category == Tensor::Category::CONST_TENSOR || src_category == Tensor::Category::CONST_SCALAR) &&
       src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
     if (src_tensor->dataType() == kObjectTypeTensorType) {
@@ -112,18 +113,20 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
           MS_LOG(ERROR) << "Data from tensor is nullptr";
           return RET_NULL_PTR;
         }
-        memcpy(dst_data, src_tensor->data()->data(), dst_tensor->Size());
+        if (NeedUnPack()) {
+          DequantUtil::UnPackToInt(src_tensor, dst_data);
+        } else {
+          memcpy(dst_data, src_tensor->data()->data(), dst_tensor->Size());
+        }
         copyed_tensor_idxes_.emplace_back(tensor_index);
       } else {
-        int pack_size = src_tensor->data()->size();
-        int org_size = dst_tensor->Size();
-        if (pack_size != org_size && (data_type == kNumberTypeInt8 || data_type == kNumberTypeInt16)) {
-          auto ret = dst_tensor->MallocData();
-          if (ret != RET_OK) {
-            MS_LOG(ERROR) << "Malloc data for tensor failed ";
-            return RET_ERROR;
+        if (NeedUnPack()) {
+          auto dst_data = dst_tensor->MutableData();
+          if (dst_data == nullptr) {
+            MS_LOG(ERROR) << "Data from tensor is nullptr";
+            return RET_NULL_PTR;
           }
-          DequantUtil::UnPackToInt(src_tensor, dst_tensor->MutableData());
+          DequantUtil::UnPackToInt(src_tensor, dst_data);
           copyed_tensor_idxes_.emplace_back(tensor_index);
         } else {
           dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
@@ -713,12 +716,12 @@ int LiteSession::InitGPURuntime() {
 session::LiteSession *session::LiteSession::CreateSession(const lite::Context *context) {
   auto session = new (std::nothrow) lite::LiteSession();
   if (session == nullptr) {
-    MS_LOG(ERROR) << "create sesssion failed";
+    MS_LOG(ERROR) << "create session failed";
     return nullptr;
   }
   auto ret = session->Init(context);
   if (ret != mindspore::lite::RET_OK) {
-    MS_LOG(ERROR) << "init sesssion failed";
+    MS_LOG(ERROR) << "init session failed";
     delete session;
     return nullptr;
   }
@@ -729,7 +732,7 @@ session::LiteSession *session::LiteSession::CreateSession(const char *model_buf,
                                                           const lite::Context *context) {
   auto *session = LiteSession::CreateSession(context);
   if (session == nullptr) {
-    MS_LOG(ERROR) << "Create sesssion failed";
+    MS_LOG(ERROR) << "Create session failed";
     return nullptr;
   }
   auto *model = lite::ImportFromBuffer(model_buf, size, true);
