@@ -24,14 +24,15 @@ from mindspore.mindrecord import FileWriter
 from .imdb import ImdbParser
 
 
-def lstm_create_dataset(data_home, batch_size, repeat_num=1, training=True):
+def lstm_create_dataset(data_home, batch_size, repeat_num=1, training=True, device_num=1, rank=0):
     """Data operations."""
     ds.config.set_seed(1)
     data_dir = os.path.join(data_home, "aclImdb_train.mindrecord0")
     if not training:
         data_dir = os.path.join(data_home, "aclImdb_test.mindrecord0")
 
-    data_set = ds.MindDataset(data_dir, columns_list=["feature", "label"], num_parallel_workers=4)
+    data_set = ds.MindDataset(data_dir, columns_list=["feature", "label"], num_parallel_workers=4,
+                              num_shards=device_num, shard_id=rank)
 
     # apply map operations on images
     data_set = data_set.shuffle(buffer_size=data_set.get_dataset_size())

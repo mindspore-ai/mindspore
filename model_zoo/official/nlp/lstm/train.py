@@ -20,7 +20,7 @@ import os
 
 import numpy as np
 
-from src.config import lstm_cfg, lstm_cfg_ascend
+from src.config import lstm_cfg, lstm_cfg_ascend, lstm_cfg_ascend_8p
 from src.dataset import convert_to_mindrecord
 from src.dataset import lstm_create_dataset
 from src.lr_schedule import get_lr
@@ -29,6 +29,8 @@ from mindspore import Tensor, nn, Model, context
 from mindspore.nn import Accuracy
 from mindspore.train.callback import LossMonitor, CheckpointConfig, ModelCheckpoint, TimeMonitor
 from mindspore.train.serialization import load_param_into_net, load_checkpoint
+from mindspore.communication.management import init, get_rank
+from mindspore.context import ParallelMode
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='MindSpore LSTM Example')
@@ -46,6 +48,9 @@ if __name__ == '__main__':
                         help='the pretrained checkpoint file path.')
     parser.add_argument('--device_target', type=str, default="Ascend", choices=['GPU', 'CPU', 'Ascend'],
                         help='the target device to run, support "GPU", "CPU". Default: "Ascend".')
+    parser.add_argument("--device_num", type=int, default=1, help="Use device nums, default is 1.")
+    parser.add_argument("--distribute", type=str, default="false", choices=["true", "false"],
+                        help="Run distribute, default is false.")
     args = parser.parse_args()
 
     context.set_context(
@@ -53,8 +58,20 @@ if __name__ == '__main__':
         save_graphs=False,
         device_target=args.device_target)
 
+    rank = 0
+    device_num = 1
+
     if args.device_target == 'Ascend':
         cfg = lstm_cfg_ascend
+        if args.distribute == "true":
+            cfg = lstm_cfg_ascend_8p
+            init()
+            device_num = args.device_num
+            rank = get_rank()
+
+            context.reset_auto_parallel_context()
+            context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL, gradients_mean=True,
+                                              device_num=device_num)
     else:
         cfg = lstm_cfg
 
@@ -82,7 +99,7 @@ if __name__ == '__main__':
     if args.pre_trained:
         load_param_into_net(network, load_checkpoint(args.pre_trained))
 
-    ds_train = lstm_create_dataset(args.preprocess_path, cfg.batch_size, 1)
+    ds_train = lstm_create_dataset(args.preprocess_path, cfg.batch_size, 1, device_num=device_num, rank=rank)
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     if cfg.dynamic_lr:

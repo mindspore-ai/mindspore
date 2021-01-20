@@ -33,7 +33,7 @@ lstm_cfg = edict({
     'keep_checkpoint_max': 10
 })
 
-# LSTM CONFIG IN ASCEND
+# LSTM CONFIG IN ASCEND for 1p training
 lstm_cfg_ascend = edict({
     'num_classes': 2,
     'momentum': 0.9,
@@ -51,5 +51,26 @@ lstm_cfg_ascend = edict({
     'lr_max': 0.1,
     'lr_adjust_epoch': 6,
     'warmup_epochs': 1,
+    'global_step': 0
+})
+
+# LSTM CONFIG IN ASCEND for 8p training
+lstm_cfg_ascend_8p = edict({
+    'num_classes': 2,
+    'momentum': 0.9,
+    'num_epochs': 20,
+    'batch_size': 64,
+    'embed_size': 300,
+    'num_hiddens': 128,
+    'num_layers': 2,
+    'bidirectional': True,
+    'save_checkpoint_steps': 7800,
+    'keep_checkpoint_max': 10,
+    'dynamic_lr': True,
+    'lr_init': 0.05,
+    'lr_end': 0.01,
+    'lr_max': 0.3,
+    'lr_adjust_epoch': 20,
+    'warmup_epochs': 2,
     'global_step': 0
 })

@@ -22,11 +22,9 @@ import numpy as np
 
 from src.config import lstm_cfg, lstm_cfg_ascend
 from src.dataset import lstm_create_dataset, convert_to_mindrecord
-from src.lr_schedule import get_lr
 from src.lstm import SentimentNet
 from mindspore import Tensor, nn, Model, context
-from mindspore.nn import Accuracy
-from mindspore.train.callback import LossMonitor
+from mindspore.nn import Accuracy, Recall, F1
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
 
 if __name__ == '__main__':
@@ -79,20 +77,8 @@ if __name__ == '__main__':
 
     loss = nn.SoftmaxCrossEntropyWithLogits(sparse=True, reduction='mean')
     ds_eval = lstm_create_dataset(args.preprocess_path, cfg.batch_size, training=False)
-    if cfg.dynamic_lr:
-        lr = Tensor(get_lr(global_step=cfg.global_step,
-                           lr_init=cfg.lr_init, lr_end=cfg.lr_end, lr_max=cfg.lr_max,
-                           warmup_epochs=cfg.warmup_epochs,
-                           total_epochs=cfg.num_epochs,
-                           steps_per_epoch=ds_eval.get_dataset_size(),
-                           lr_adjust_epoch=cfg.lr_adjust_epoch))
-    else:
-        lr = cfg.learning_rate
 
-    opt = nn.Momentum(network.trainable_params(), lr, cfg.momentum)
-    loss_cb = LossMonitor()
-
-    model = Model(network, loss, opt, {'acc': Accuracy()})
+    model = Model(network, loss, metrics={'acc': Accuracy(), 'recall': Recall(), 'f1': F1()})
 
     print("============== Starting Testing ==============")
     param_dict = load_checkpoint(args.ckpt_path)
