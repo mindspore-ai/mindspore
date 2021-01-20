@@ -13,8 +13,6 @@
 # limitations under the License.
 # ============================================================================
 """The container of metadata used in profiler parser."""
-import heapq
-
 GIGABYTES = 1024 * 1024 * 1024
 
 
@@ -131,6 +129,7 @@ class MemoryGraph:
         self.bp_end = None
         self.lines = []
         self.nodes = {}
+        self.breakdowns = []
 
     def to_dict(self):
         """Convert Graph to dict."""
@@ -140,7 +139,8 @@ class MemoryGraph:
             'nodes': self.nodes,
             'fp_start': self.fp_start,
             'bp_end': self.bp_end,
-            'lines': self.lines
+            'lines': self.lines,
+            'breakdowns': self.breakdowns
         }
 
         return graph
@@ -152,17 +152,15 @@ class MemoryNode:
 
     Args:
         node_proto (proto): Node proto.
-        graph_id (int): Graph id.
     """
-    def __init__(self, node_proto, graph_id):
+    def __init__(self, node_proto):
         self._node_proto = node_proto
-        self.graph_id = graph_id
         self.node_id = node_proto.node_id
         self.name = node_proto.node_name
         self.fullname = ""
-        self.input_ids = [t_id for t_id in node_proto.input_tensor_id]
-        self.output_ids = [t_id for t_id in node_proto.output_tensor_id]
-        self.workspace_ids = [t_id for t_id in node_proto.workspace_tensor_id]
+        self.input_ids = list(node_proto.input_tensor_id)
+        self.output_ids = list(node_proto.output_tensor_id)
+        self.workspace_ids = list(node_proto.workspace_tensor_id)
         self.inputs = []
         self.outputs = []
         self.workspaces = []
@@ -181,8 +179,7 @@ class MemoryNode:
             'size': self.size,
             'allocated': self.mem_change,
             'inputs': self.inputs,
-            'outputs': self.outputs,
-            'workspaces': self.workspaces
+            'outputs': self.outputs
         }
 
         return node
@@ -194,9 +191,8 @@ class MemoryTensor:
 
     Args:
         tensor_proto (proto): Tensor proto.
-        graph_id (int): Graph id.
     """
-    def __init__(self, tensor_proto, graph_id):
+    def __init__(self, tensor_proto):
         self._tensor_proto = tensor_proto
         self.tensor_id = tensor_proto.tensor_id
         self.life_long = tensor_proto.life_long
@@ -204,48 +200,25 @@ class MemoryTensor:
         self.life_end = tensor_proto.life_end
         self.size = tensor_proto.size / GIGABYTES
         self.type = tensor_proto.type
-        self.graph_id = graph_id
+        self.shape = ""
+        self.format = ""
+        self.dtype = ""
+        self.source_node = ""
+        self.name = ""
 
     def to_dict(self):
         """Convert Tensor to a dict."""
         tensor = {
+            'tensor_name': self.name,
             'tensor_id': self.tensor_id,
             'size': self.size,
             'type': self.type,
+            'shape': self.shape,
+            'format': self.format,
+            'data_type': self.dtype,
             'life_long': self.life_long,
             'life_start': self.life_start,
             'life_end': self.life_end
         }
 
         return tensor
-
-
-class MemoryQueue:
-    """
-    A priority queue to keep specified number of active nodes in memory activities.
-
-    Args:
-        size (int): The upper limit of nodes to be saved.
-    """
-    def __init__(self, size):
-        self._queue = []
-        self._index = 0
-        self._size = size
-
-    def push(self, item, priority):
-        """
-        Push a node into MemoryQueue.
-
-        Args:
-            item (tuple): Node item including id, name, etc.
-            priority (int): The priority of the item.
-        """
-        if self._index < self._size:
-            heapq.heappush(self._queue, (-priority, item))
-            self._index += 1
-        else:
-            heapq.heappushpop(self._queue, (-priority, item))
-
-    def get_items(self):
-        """Get the elements in MemoryQueue."""
-        return self._queue
