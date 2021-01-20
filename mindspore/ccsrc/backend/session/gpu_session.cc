@@ -205,7 +205,7 @@ void GPUSession::GraphKernelOptimize(const std::shared_ptr<KernelGraph> &kernel_
   pm->AddPass(std::make_shared<opt::AtomicCleanInsertter>());
   pm->AddPass(std::make_shared<opt::StitchAtomicCleanInsertter>());
   pm->AddPass(std::make_shared<opt::DependFormater>());  // Prevent fake loop in parallel fusion.
-  pm->AddPass(std::make_shared<opt::ParallelOpFusion>(kGPUDevice, opt::ParallelConfig()));
+  pm->AddPass(std::make_shared<opt::ParallelOpFusion>(kGPUDevice, opt::ParallelConfig(7)));
   pm->AddPass(std::make_shared<opt::BindValueToGraph>());
   optimizer->AddPassManager(pm);
   (void)optimizer->Optimize(kernel_graph);
