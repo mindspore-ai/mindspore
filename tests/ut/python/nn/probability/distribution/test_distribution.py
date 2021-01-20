@@ -29,19 +29,23 @@ func_name_list = ['prob', 'log_prob', 'cdf', 'log_cdf',
                   'entropy', 'kl_loss', 'cross_entropy',
                   'sample']
 
+
 class MyExponential(msd.Distribution):
     """
-    Test distirbution class: no function is implemented.
+    Test distribution class: no function is implemented.
     """
+
     def __init__(self, rate=None, seed=None, dtype=mstype.float32, name="MyExponential"):
         param = dict(locals())
         param['param_dict'] = {'rate': rate}
         super(MyExponential, self).__init__(seed, dtype, name, param)
 
+
 class Net(nn.Cell):
     """
     Test Net: function called through construct.
     """
+
     def __init__(self, func_name):
         super(Net, self).__init__()
         self.dist = MyExponential()
@@ -61,6 +65,7 @@ def test_raise_not_implemented_error_construct():
             net = Net(func_name)
             net(value)
 
+
 def test_raise_not_implemented_error_construct_graph_mode():
     """
     test raise not implemented error in graph mode.
@@ -72,10 +77,12 @@ def test_raise_not_implemented_error_construct_graph_mode():
             net = Net(func_name)
             net(value)
 
+
 class Net1(nn.Cell):
     """
     Test Net: function called directly.
     """
+
     def __init__(self, func_name):
         super(Net1, self).__init__()
         self.dist = MyExponential()
@@ -83,6 +90,7 @@ class Net1(nn.Cell):
 
     def construct(self, *args, **kwargs):
         return self.func(*args, **kwargs)
+
 
 def test_raise_not_implemented_error():
     """
@@ -93,6 +101,7 @@ def test_raise_not_implemented_error():
         with pytest.raises(NotImplementedError):
             net = Net1(func_name)
             net(value)
+
 
 def test_raise_not_implemented_error_graph_mode():
     """

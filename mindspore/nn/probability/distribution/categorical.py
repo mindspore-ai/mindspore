@@ -105,22 +105,6 @@ class Categorical(Distribution):
         >>> ans = ca2.kl_loss('Categorical', probs_b, probs_a)
         >>> print(ans.shape)
         ()
-        >>> # Examples of `sample`.
-        >>> # Args:
-        >>> #     shape (tuple): the shape of the sample. Default: ().
-        >>> #     probs (Tensor): event probabilities. Default: self.probs.
-        >>> ans = ca1.sample()
-        >>> print(ans.shape)
-        ()
-        >>> ans = ca1.sample((2,3))
-        >>> print(ans.shape)
-        (2, 3)
-        >>> ans = ca1.sample((2,3), probs_b)
-        >>> print(ans.shape)
-        (2, 3)
-        >>> ans = ca2.sample((2,3), probs_a)
-        >>> print(ans.shape)
-        (2, 3)
     """
 
     def __init__(self,

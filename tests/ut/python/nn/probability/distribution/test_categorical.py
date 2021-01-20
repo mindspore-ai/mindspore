@@ -62,14 +62,16 @@ def test_prob():
     with pytest.raises(ValueError):
         msd.Categorical([1.0], dtype=dtype.int32)
 
+
 def test_categorical_sum():
     """
-    Invaild probabilities.
+    Invalid probabilities.
     """
     with pytest.raises(ValueError):
         msd.Categorical([[0.1, 0.2], [0.4, 0.6]], dtype=dtype.int32)
     with pytest.raises(ValueError):
         msd.Categorical([[0.5, 0.7], [0.6, 0.6]], dtype=dtype.int32)
+
 
 def rank():
     """
@@ -80,7 +82,9 @@ def rank():
     with pytest.raises(ValueError):
         msd.Categorical(np.array(0.3).astype(np.float32), dtype=dtype.int32)
     with pytest.raises(ValueError):
-        msd.Categorical(Tensor(np.array(0.3).astype(np.float32)), dtype=dtype.int32)
+        msd.Categorical(
+            Tensor(np.array(0.3).astype(np.float32)), dtype=dtype.int32)
+
 
 class CategoricalProb(nn.Cell):
     """
@@ -211,6 +215,7 @@ class CategoricalConstruct(nn.Cell):
         prob2 = self.c1('prob', value, probs)
         return prob + prob1 + prob2
 
+
 def test_categorical_construct():
     """
     Test probability function going through construct.
@@ -235,7 +240,7 @@ class CategoricalBasics(nn.Cell):
     def construct(self, probs):
         basics1 = self.c.mean() + self.c.var() + self.c.mode() + self.c.entropy()
         basics2 = self.c1.mean(probs) + self.c1.var(probs) +\
-                  self.c1.mode(probs) + self.c1.entropy(probs)
+            self.c1.mode(probs) + self.c1.entropy(probs)
         return basics1 + basics2
 
 

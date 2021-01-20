@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.nn.cell import Cell
 from mindspore._checkparam import Validator as validator
 from ._utils.utils import raise_none_error, cast_to_tensor, set_param_type, cast_type_for_device,\
-                          raise_not_implemented_util
+    raise_not_implemented_util
 from ._utils.utils import CheckTuple, CheckTensor
 from ._utils.custom_ops import broadcast_to, exp_generic, log_generic
 
@@ -77,7 +77,8 @@ class Distribution(Cell):
 
         # if not a transformed distribution, set the following attribute
         if 'distribution' not in self.parameters.keys():
-            self.parameter_type = set_param_type(self.parameters['param_dict'], dtype)
+            self.parameter_type = set_param_type(
+                self.parameters['param_dict'], dtype)
             self._batch_shape = self._calc_batch_shape()
             self._is_scalar_batch = self._check_is_scalar_batch()
             self._broadcast_shape = self._batch_shape
@@ -152,7 +153,8 @@ class Distribution(Cell):
             self.default_parameters = []
             self.parameter_names = []
         # cast value to a tensor if it is not None
-        value_t = None if value is None else cast_to_tensor(value, self.parameter_type)
+        value_t = None if value is None else cast_to_tensor(
+            value, self.parameter_type)
         self.default_parameters += [value_t,]
         self.parameter_names += [name,]
         return value_t
@@ -180,10 +182,12 @@ class Distribution(Cell):
             if broadcast_shape is None:
                 broadcast_shape = self.shape_base(arg)
                 common_dtype = self.dtype_base(arg)
-                broadcast_shape_tensor = self.fill_base(common_dtype, broadcast_shape, 1.0)
+                broadcast_shape_tensor = self.fill_base(
+                    common_dtype, broadcast_shape, 1.0)
             else:
                 broadcast_shape = self.shape_base(arg + broadcast_shape_tensor)
-                broadcast_shape_tensor = self.fill_base(common_dtype, broadcast_shape, 1.0)
+                broadcast_shape_tensor = self.fill_base(
+                    common_dtype, broadcast_shape, 1.0)
                 arg = self.broadcast(arg, broadcast_shape_tensor)
                 # check if the arguments have the same dtype
                 self.sametypeshape_base(arg, broadcast_shape_tensor)
@@ -240,7 +244,7 @@ class Distribution(Cell):
 
     def _set_prob(self):
         """
-        Set probability funtion based on the availability of `_prob` and `_log_likehood`.
+        Set probability function based on the availability of `_prob` and `_log_likehood`.
         """
         if hasattr(self, '_prob'):
             self._call_prob = self._prob
@@ -303,9 +307,10 @@ class Distribution(Cell):
         Set survival function based on the availability of _survival function and `_log_survival`
         and `_call_cdf`.
         """
-        if not (hasattr(self, '_survival_function') or hasattr(self, '_log_survival') or \
+        if not (hasattr(self, '_survival_function') or hasattr(self, '_log_survival') or
                 hasattr(self, '_cdf') or hasattr(self, '_log_cdf')):
-            self._call_survival = self._raise_not_implemented_error('survival_function')
+            self._call_survival = self._raise_not_implemented_error(
+                'survival_function')
         elif hasattr(self, '_survival_function'):
             self._call_survival = self._survival_function
         elif hasattr(self, '_log_survival'):
@@ -317,7 +322,7 @@ class Distribution(Cell):
         """
         Set log cdf based on the availability of `_log_cdf` and `_call_cdf`.
         """
-        if not (hasattr(self, '_log_cdf') or hasattr(self, '_cdf') or \
+        if not (hasattr(self, '_log_cdf') or hasattr(self, '_cdf') or
                 hasattr(self, '_survival_function') or hasattr(self, '_log_survival')):
             self._call_log_cdf = self._raise_not_implemented_error('log_cdf')
         elif hasattr(self, '_log_cdf'):
@@ -329,9 +334,10 @@ class Distribution(Cell):
         """
         Set log survival based on the availability of `_log_survival` and `_call_survival`.
         """
-        if not (hasattr(self, '_log_survival') or hasattr(self, '_survival_function') or \
+        if not (hasattr(self, '_log_survival') or hasattr(self, '_survival_function') or
                 hasattr(self, '_log_cdf') or hasattr(self, '_cdf')):
-            self._call_log_survival = self._raise_not_implemented_error('log_cdf')
+            self._call_log_survival = self._raise_not_implemented_error(
+                'log_cdf')
         elif hasattr(self, '_log_survival'):
             self._call_log_survival = self._log_survival
         elif hasattr(self, '_call_survival'):
@@ -344,7 +350,8 @@ class Distribution(Cell):
         if hasattr(self, '_cross_entropy'):
             self._call_cross_entropy = self._cross_entropy
         else:
-            self._call_cross_entropy = self._raise_not_implemented_error('cross_entropy')
+            self._call_cross_entropy = self._raise_not_implemented_error(
+                'cross_entropy')
 
     def _get_dist_args(self, *args, **kwargs):
         return raise_not_implemented_util('get_dist_args', self.name, *args, **kwargs)
@@ -375,6 +382,7 @@ class Distribution(Cell):
 
     def _raise_not_implemented_error(self, func_name):
         name = self.name
+
         def raise_error(*args, **kwargs):
             return raise_not_implemented_util(func_name, name, *args, **kwargs)
         return raise_error

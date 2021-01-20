@@ -53,25 +53,28 @@ class TransformedDistribution(Distribution):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.context as context
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
         >>> import mindspore.nn.probability.bijector as msb
         >>> from mindspore import Tensor
-        >>> context.set_context(mode=1)
-        >>>
-        >>> # To initialize a transformed distribution
-        >>> # using a Normal distribution as the base distribution,
-        >>> # and an Exp bijector as the bijector function.
-        >>> trans_dist = msd.TransformedDistribution(msb.Exp(), msd.Normal(0.0, 1.0))
-        >>>
-        >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
-        >>> prob = trans_dist.prob(value)
-        >>> print(prob.shape)
-        (3,)
-        >>> sample = trans_dist.sample(shape=(2, 3))
-        >>> print(sample.shape)
-        (2, 3)
+        >>> class Net(nn.Cell):
+        ...     def __init__(self, shape, dtype=dtype.float32, seed=0, name='transformed_distribution'):
+        ...         super(Net, self).__init__()
+        ...         # create TransformedDistribution distribution
+        ...         self.exp = msb.Exp()
+        ...         self.normal = msd.Normal(0.0, 1.0, dtype=dtype)
+        ...         self.lognormal = msd.TransformedDistribution(self.exp, self.normal, seed=seed, name=name)
+        ...         self.shape = shape
+        ...
+        ...     def construct(self, value):
+        ...         cdf = self.lognormal.cdf(value)
+        ...         sample = self.lognormal.sample(self.shape)
+        ...         return cdf, sample
+        >>> shape = (2, 3)
+        >>> net = Net(shape=shape, name="LogNormal")
+        >>> x = np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32)
+        >>> tx = Tensor(x, dtype=dtype.float32)
+        >>> cdf, sample = net(tx)
     """
 
     def __init__(self,

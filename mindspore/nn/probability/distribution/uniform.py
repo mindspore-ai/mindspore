@@ -38,7 +38,7 @@ class Uniform(Distribution):
         ``Ascend`` ``GPU``
 
     Note:
-        `low` must be stricly less than `high`.
+        `low` must be strictly less than `high`.
         `dist_spec_args` are `high` and `low`.
         `dtype` must be float type because Uniform distributions are continuous.
 
@@ -143,14 +143,14 @@ class Uniform(Distribution):
         param = dict(locals())
         param['param_dict'] = {'low': low, 'high': high}
         valid_dtype = mstype.float_type
-        Validator.check_type_name("dtype", dtype, valid_dtype, type(self).__name__)
+        Validator.check_type_name(
+            "dtype", dtype, valid_dtype, type(self).__name__)
         super(Uniform, self).__init__(seed, dtype, name, param)
 
         self._low = self._add_parameter(low, 'low')
         self._high = self._add_parameter(high, 'high')
         if self.low is not None and self.high is not None:
             check_greater(self.low, self.high, 'low', 'high')
-
 
         # ops needed for the class
         self.exp = exp_generic

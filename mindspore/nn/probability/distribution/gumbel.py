@@ -46,48 +46,19 @@ class Gumbel(TransformedDistribution):
 
     Examples:
         >>> import mindspore
-        >>> import mindspore.context as context
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.distribution as msd
         >>> from mindspore import Tensor
-        >>> context.set_context(mode=1)
-        >>> # To initialize a Gumbel distribution of `loc` 3.0 and `scale` 4.0.
-        >>> gumbel = msd.Gumbel(3.0, 4.0, dtype=mindspore.float32)
-        >>> # Private interfaces of probability functions corresponding to public interfaces, including
-        >>> # `prob`, `log_prob`, `cdf`, `log_cdf`, `survival_function`, and `log_survival`, have the same
-        >>> # arguments as follows.
-        >>> # Args:
-        >>> #     value (Tensor): the value to be evaluated.
-        >>> # Examples of `prob`.
-        >>> # Similar calls can be made to other probability functions
-        >>> # by replacing 'prob' by the name of the function.
-        >>> value = Tensor([1.0, 2.0, 3.0], dtype=mindspore.float32)
-        >>> ans = gumbel.prob(value)
-        >>> print(ans.shape)
-        (3,)
-        >>> # Functions `mean`, `mode`, sd`, `var`, and `entropy` do not take in any argument.
-        >>> ans = gumbel.mean()
-        >>> print(ans.shape)
-        ()
-        >>> # Interfaces of 'kl_loss' and 'cross_entropy' are the same:
-        >>> # Args:
-        >>> #     dist (str): the type of the distributions. Only "Gumbel" is supported.
-        >>> #     loc_b (Tensor): the loc of distribution b.
-        >>> #     scale_b (Tensor): the scale distribution b.
-        >>> # Examples of `kl_loss`. `cross_entropy` is similar.
-        >>> loc_b = Tensor([1.0], dtype=mindspore.float32)
-        >>> scale_b = Tensor([1.0, 1.5, 2.0], dtype=mindspore.float32)
-        >>> ans = gumbel.kl_loss('Gumbel', loc_b, scale_b)
-        >>> print(ans.shape)
-        (3,)
-        >>> # Examples of `sample`.
-        >>> # Args:
-        >>> #     shape (tuple): the shape of the sample. Default: ()
-        >>> ans = gumbel.sample()
-        >>> print(ans.shape)
-        ()
-        >>> ans = gumbel.sample((2,3))
-        >>> print(ans.shape)
+        >>> class Prob(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Prob, self).__init__()
+        ...         self.gum = msd.Gumbel(np.array([0.0]), np.array([[1.0], [2.0]]), dtype=dtype.float32)
+        ...
+        ...     def construct(self, x_):
+        ...         return self.gum.prob(x_)
+        >>> value = np.array([1.0, 2.0]).astype(np.float32)
+        >>> pdf = Prob()
+        >>> output = pdf(Tensor(value, dtype=dtype.float32))
     """
 
     def __init__(self,

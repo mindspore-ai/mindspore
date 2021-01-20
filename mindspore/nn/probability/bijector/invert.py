@@ -33,24 +33,17 @@ class Invert(Bijector):
         >>> import mindspore.nn as nn
         >>> import mindspore.nn.probability.bijector as msb
         >>> from mindspore import Tensor
-        >>> import mindspore.context as context
-        >>> context.set_context(mode=1)
-        >>>
-        >>> # To initialize an inverse Exp bijector.
-        >>> inv_exp = msb.Invert(msb.Exp())
-        >>> value = Tensor([1, 2, 3], dtype=mindspore.float32)
-        >>> ans1 = inv_exp.forward(value)
-        >>> print(ans1.shape)
-        (3,)
-        >>> ans2 = inv_exp.inverse(value)
-        >>> print(ans2.shape)
-        (3,)
-        >>> ans3 = inv_exp.forward_log_jacobian(value)
-        >>> print(ans3.shape)
-        (3,)
-        >>> ans4 = inv_exp.inverse_log_jacobian(value)
-        >>> print(ans4.shape)
-        (3,)
+        >>> class Net(nn.Cell):
+        ...     def __init__(self):
+        ...         super(Net, self).__init__()
+        ...         self.origin = msb.ScalarAffine(scale=2.0, shift=1.0)
+        ...         self.invert = msb.Invert(self.origin)
+        ...
+        ...     def construct(self, x_):
+        ...         return self.invert.forward(x_)
+        >>> forward = Net()
+        >>> x = np.array([2.0, 3.0, 4.0, 5.0]).astype(np.float32)
+        >>> ans = forward(Tensor(x, dtype=dtype.float32))
     """
 
     def __init__(self,
