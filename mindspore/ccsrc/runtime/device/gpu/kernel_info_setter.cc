@@ -247,8 +247,8 @@ void UpdateKernelFormatInfo(const CNodePtr &kernel_node, const std::vector<TypeI
   }
   auto prim = AnfAlgo::GetCNodePrimitive(kernel_node);
   MS_EXCEPTION_IF_NULL(prim);
-  if (prim->HasAttr("data_format")) {
-    *origin_data_format = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "data_format");
+  if (prim->HasAttr("format")) {
+    *origin_data_format = AnfAlgo::GetNodeAttr<std::string>(kernel_node, "format");
   }
 }
 
@@ -342,8 +342,8 @@ void FormatTransformChecker::CheckSupportFormatTransform(const std::shared_ptr<s
       return;
     }
     auto value = AnfAlgo::GetCNodePrimitive(kernel);
-    if (value != nullptr && value->GetAttr("data_format") != nullptr &&
-        GetValue<std::string>(value->GetAttr("data_format")) == kOpFormat_NHWC) {
+    if (value != nullptr && value->GetAttr("format") != nullptr &&
+        GetValue<std::string>(value->GetAttr("format")) == kOpFormat_NHWC) {
       format_transform_ = false;
       return;
     }

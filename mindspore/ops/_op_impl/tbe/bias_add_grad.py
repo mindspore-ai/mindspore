@@ -23,7 +23,7 @@ bias_add_grad_op_info = TBERegOp("BiasAddGrad") \
     .compute_cost(10) \
     .kernel_name("bias_add_grad") \
     .partial_flag(True) \
-    .attr("data_format", "required", "str", "all") \
+    .attr("format", "required", "str", "all") \
     .input(0, "output_backprop", False, "required", "all") \
     .output(0, "output", False, "required", "all") \
     .dtype_format(DataType.F16_Default, DataType.F16_Default) \

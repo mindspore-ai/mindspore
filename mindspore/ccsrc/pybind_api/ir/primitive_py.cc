@@ -17,6 +17,7 @@
 #include "pybind_api/ir/primitive_py.h"
 
 #include <mutex>
+#include <map>
 #include "ir/signature.h"
 #include "pipeline/jit/parse/data_converter.h"
 #include "pipeline/jit/parse/python_adapter.h"
@@ -36,6 +37,9 @@ namespace {
 constexpr auto kBpropAttrName = "bprop";
 constexpr auto kCellHookAttrName = "cell_hook";
 constexpr auto kCellIDAttrName = "cell_id";
+std::map<std::string, std::string> kOpAttrNameReplaceMap = {
+  {"data_format", "format"},
+};
 
 void SyncData(const py::object &arg) {
   if (py::isinstance<py::tuple>(arg)) {
@@ -272,6 +276,9 @@ void PrimitivePy::AddPyAttr(const py::str &name, const py::object &obj) {
   bool converted = parse::ConvertData(obj, &converted_ret);
   if (!converted) {
     MS_LOG(EXCEPTION) << "Attribute convert error with type: " << std::string(py::str(obj));
+  }
+  if (kOpAttrNameReplaceMap.find(attr_name) != kOpAttrNameReplaceMap.end()) {
+    attr_name = kOpAttrNameReplaceMap[attr_name];
   }
   (void)this->AddAttr(attr_name, converted_ret);
 }

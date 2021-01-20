@@ -46,7 +46,7 @@ const AnfNodePtr BatchNormAddReluFusion::Process(const FuncGraphPtr &graph, cons
   MS_EXCEPTION_IF_NULL(tuple_get_item);
   auto batch_norm_ex = AnfAlgo::GetInputNode(utils::cast<CNodePtr>(tuple_get_item), 0);
   MS_EXCEPTION_IF_NULL(batch_norm_ex);
-  auto format_attr = AnfAlgo::GetCNodePrimitive(batch_norm_ex)->GetAttr("data_format");
+  auto format_attr = AnfAlgo::GetCNodePrimitive(batch_norm_ex)->GetAttr("format");
   MS_EXCEPTION_IF_NULL(format_attr);
   auto format = GetValue<std::string>(format_attr);
   if (AnfAlgo::GetInputFormat(batch_norm_ex, 0) != kOpFormat_NHWC && format != "NHWC") {

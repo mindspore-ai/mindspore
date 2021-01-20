@@ -45,7 +45,7 @@ bool NeedUpdate(const CNodePtr &conv2d, std::vector<size_t> in_shape, std::vecto
   if (group == 1) {
     return false;
   }
-  auto data_format = AnfAlgo::GetNodeAttr<std::string>(conv2d, kAttrDataFormat);
+  auto data_format = AnfAlgo::GetNodeAttr<std::string>(conv2d, kAttrFormat);
   if (data_format != "NCHW") {
     MS_LOG(EXCEPTION) << "Conv2D only supports NCHW when group > 1, but got " << data_format;
   }
@@ -199,7 +199,7 @@ CNodePtr CreateDepthwiseConv2DBackpropFilter(const FuncGraphPtr &graph, const CN
 void SetCommonAttrs(const CNodePtr &conv2d, const CNodePtr &depth_conv) {
   AnfAlgo::CopyNodeAttr(kAttrKernelSize, conv2d, depth_conv);
   AnfAlgo::CopyNodeAttr(kAttrDilation, conv2d, depth_conv);
-  AnfAlgo::CopyNodeAttr(kAttrDataFormat, conv2d, depth_conv);
+  AnfAlgo::CopyNodeAttr(kAttrFormat, conv2d, depth_conv);
   AnfAlgo::CopyNodeAttr(kAttrPadList, kAttrPads, conv2d, depth_conv);
   AnfAlgo::CopyNodeAttr(kAttrPadMode, conv2d, depth_conv);
   AnfAlgo::CopyNodeAttr(kAttrPad, conv2d, depth_conv);

@@ -41,13 +41,13 @@ REG_ADPT_DESC(SoftmaxCrossEntropyWithLogits, prim::kPrimSoftmaxCrossEntropyWithL
 
 // SmoothL1Loss
 INPUT_MAP(SmoothL1Loss) = {{1, INPUT_DESC(predict)}, {2, INPUT_DESC(label)}};
-ATTR_MAP(SmoothL1Loss) = {{"sigma", ATTR_DESC(sigma, AnyTraits<float>())}};
+ATTR_MAP(SmoothL1Loss) = {{"beta", ATTR_DESC(sigma, AnyTraits<float>())}};
 OUTPUT_MAP(SmoothL1Loss) = {{0, OUTPUT_DESC(loss)}};
 REG_ADPT_DESC(SmoothL1Loss, kNameSmoothL1Loss, ADPT_DESC(SmoothL1Loss))
 
 // SmoothL1LossGrad
 INPUT_MAP(SmoothL1LossGrad) = {{1, INPUT_DESC(predict)}, {2, INPUT_DESC(label)}, {3, INPUT_DESC(dout)}};
-ATTR_MAP(SmoothL1LossGrad) = {{"sigma", ATTR_DESC(sigma, AnyTraits<float>())}};
+ATTR_MAP(SmoothL1LossGrad) = {{"beta", ATTR_DESC(sigma, AnyTraits<float>())}};
 OUTPUT_MAP(SmoothL1LossGrad) = {{0, OUTPUT_DESC(gradient)}};
 REG_ADPT_DESC(SmoothL1LossGrad, kNameSmoothL1LossGrad, ADPT_DESC(SmoothL1LossGrad))
 

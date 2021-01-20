@@ -119,7 +119,7 @@ class ConvGradFilterGpuBkwKernel : public GpuKernel {
       return true;
     }
     data_format_ = AnfAlgo::GetInputFormat(kernel_node, 0);
-    format_attr_ = GetAttr<std::string>(kernel_node, "data_format");
+    format_attr_ = GetAttr<std::string>(kernel_node, "format");
     if (format_attr_ == kOpFormat_NHWC) {
       data_format_ = kOpFormat_NHWC;
     }

@@ -23,7 +23,7 @@ smooth_l1_loss_op_info = TBERegOp("SmoothL1Loss") \
     .compute_cost(10) \
     .kernel_name("smooth_l1_loss") \
     .partial_flag(True) \
-    .attr("sigma", "required", "float", "all") \
+    .attr("beta", "required", "float", "all") \
     .input(0, "predict", False, "required", "all") \
     .input(1, "label", False, "required", "all") \
     .output(0, "loss", False, "required", "all") \
