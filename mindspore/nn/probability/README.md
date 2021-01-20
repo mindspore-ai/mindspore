@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
 4. Train the Network
 
-The process of Bayesian network training is basically the same as that of DNN, the only differance is that WithLossCell is replaced with WithBNNLossCell suitable for BNN.
+The process of Bayesian network training is basically the same as that of DNN, the only difference is that WithLossCell is replaced with WithBNNLossCell suitable for BNN.
 Based on the two parameters `backbone` and `loss_fn` in WithLossCell, WithBNNLossCell adds two parameters of `dnn_factor` and `bnn_factor`. Those two parameters are used to trade off backbone's loss and kl loss to prevent kl loss from being too large to cover backbone's loss.
 
 ```python
