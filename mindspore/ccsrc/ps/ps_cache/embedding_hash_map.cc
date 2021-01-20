@@ -19,36 +19,66 @@
 namespace mindspore {
 namespace ps {
 int EmbeddingHashMap::ParseData(const int id, int *swap_out_index, int *swap_out_ids, const size_t data_step,
-                                const size_t graph_running_step, size_t *swap_out_size) {
+                                const size_t graph_running_step, size_t *swap_out_size, bool *need_wait_graph) {
   MS_EXCEPTION_IF_NULL(swap_out_index);
   MS_EXCEPTION_IF_NULL(swap_out_ids);
   MS_EXCEPTION_IF_NULL(swap_out_size);
-  auto hash_index = Hash(id);
-  auto need_swap = NeedSwap();
-  size_t loop = 0;
-  while (true) {
-    if (loop++ == hash_capacity_) {
-      return INVALID_INDEX_VALUE;
-    }
-    if (hash_map_elements_[hash_index].IsEmpty()) {
-      hash_count_++;
-      (void)hash_id_to_index_.emplace(id, hash_index);
-      hash_map_elements_[hash_index].set_id(id);
-      hash_map_elements_[hash_index].set_step(data_step);
-      return hash_index;
-    } else if (need_swap && hash_map_elements_[hash_index].IsExpired(graph_running_step)) {
-      // Need swap out from the hash table.
-      swap_out_index[*swap_out_size] = hash_index;
-      swap_out_ids[*swap_out_size] = hash_map_elements_[hash_index].id_;
-      (*swap_out_size)++;
-      (void)hash_id_to_index_.erase(hash_map_elements_[hash_index].id_);
-      (void)hash_id_to_index_.emplace(id, hash_index);
-      hash_map_elements_[hash_index].set_id(id);
-      hash_map_elements_[hash_index].set_step(data_step);
-      return hash_index;
-    }
-    hash_index = (hash_index + 1) % hash_capacity_;
+  bool need_swap = false;
+  auto hash_index = FindInsertionPos(data_step, graph_running_step, &need_swap, need_wait_graph);
+  if (hash_index == INVALID_INDEX_VALUE) {
+    return hash_index;
   }
+
+  if (!need_swap) {
+    hash_count_++;
+    (void)hash_id_to_index_.emplace(id, hash_index);
+    hash_map_elements_[hash_index].set_id(id);
+    hash_map_elements_[hash_index].set_step(data_step);
+    return hash_index;
+  }
+
+  swap_out_index[*swap_out_size] = hash_index;
+  swap_out_ids[*swap_out_size] = hash_map_elements_[hash_index].id_;
+  (*swap_out_size)++;
+  (void)hash_id_to_index_.erase(hash_map_elements_[hash_index].id_);
+  (void)hash_id_to_index_.emplace(id, hash_index);
+  hash_map_elements_[hash_index].set_id(id);
+  hash_map_elements_[hash_index].set_step(data_step);
+  return hash_index;
+}
+
+int EmbeddingHashMap::FindInsertionPos(const size_t data_step, const size_t graph_running_step, bool *need_swap,
+                                       bool *need_wait_graph) {
+  MS_EXCEPTION_IF_NULL(need_swap);
+  MS_EXCEPTION_IF_NULL(need_wait_graph);
+  int hash_index = INVALID_INDEX_VALUE;
+  while (!expired_element_full_) {
+    if (hash_map_elements_[current_pos_].IsEmpty()) {
+      hash_index = current_pos_;
+      hash_count_++;
+    } else if (hash_map_elements_[current_pos_].IsExpired(graph_running_step)) {
+      hash_index = current_pos_;
+      *need_swap = true;
+    } else if (hash_map_elements_[current_pos_].IsStep(graph_running_step)) {
+      graph_running_index_[graph_running_index_num_++] = current_pos_;
+    }
+    current_pos_ = (current_pos_ + 1) % hash_capacity_;
+    if (hash_index != INVALID_INDEX_VALUE) {
+      return hash_index;
+    }
+    if (current_pos_ == current_batch_start_pos_) {
+      expired_element_full_ = true;
+      MS_LOG(INFO) << "Running step:" << graph_running_step << "(num:" << graph_running_index_num_
+                   << ") will be used, index swap will wait until the graph completed.";
+    }
+  }
+
+  if (graph_running_index_pos_ != graph_running_index_num_) {
+    *need_swap = true;
+    *need_wait_graph = true;
+    return graph_running_index_[graph_running_index_pos_++];
+  }
+  return INVALID_INDEX_VALUE;
 }
 
 void EmbeddingHashMap::DumpHashMap() {
@@ -65,6 +95,13 @@ void EmbeddingHashMap::DumpHashMap() {
     }
   }
   MS_LOG(INFO) << "Dump hash map info end.";
+}
+
+void EmbeddingHashMap::Reset() {
+  current_batch_start_pos_ = current_pos_;
+  graph_running_index_num_ = 0;
+  graph_running_index_pos_ = 0;
+  expired_element_full_ = false;
 }
 }  // namespace ps
 }  // namespace mindspore
