@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <cstdint>
 
 #include "backend/kernel_compiler/gpu/arrays/one_hot_gpu_kernel.h"
 
@@ -32,5 +33,19 @@ MS_REG_GPU_KERNEL_TWO(OneHot,
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddOutputAttr(kNumberTypeFloat16),
                       OneHotGpuFwdKernel, half, int)
+MS_REG_GPU_KERNEL_TWO(OneHot,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddInputAttr(kNumberTypeFloat32)
+                        .AddOutputAttr(kNumberTypeFloat32),
+                      OneHotGpuFwdKernel, float, int64_t)
+MS_REG_GPU_KERNEL_TWO(OneHot,
+                      KernelAttr()
+                        .AddInputAttr(kNumberTypeInt64)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddInputAttr(kNumberTypeFloat16)
+                        .AddOutputAttr(kNumberTypeFloat16),
+                      OneHotGpuFwdKernel, half, int64_t)
 }  // namespace kernel
 }  // namespace mindspore

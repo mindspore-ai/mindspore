@@ -49,3 +49,9 @@ template void OneHot<float, int>(const int *indices, size_t depth, const float *
                                  size_t left_dim_size, size_t right_dim_size, float *output, cudaStream_t cuda_stream);
 template void OneHot<half, int>(const int *indices, size_t depth, const half *on_value, const half *off_value,
                                 size_t left_dim_size, size_t right_dim_size, half *output, cudaStream_t cuda_stream);
+template void OneHot<float, int64_t>(const int64_t *indices, size_t depth, const float *on_value,
+                                     const float *off_value, size_t left_dim_size, size_t right_dim_size, float *output,
+                                     cudaStream_t cuda_stream);
+template void OneHot<half, int64_t>(const int64_t *indices, size_t depth, const half *on_value, const half *off_value,
+                                    size_t left_dim_size, size_t right_dim_size, half *output,
+                                    cudaStream_t cuda_stream);

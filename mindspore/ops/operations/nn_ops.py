@@ -2985,7 +2985,7 @@ class OneHot(PrimitiveWithInfer):
 
     Inputs:
         - **indices** (Tensor) - A tensor of indices. Tensor of shape :math:`(X_0, \ldots, X_n)`.
-          Data type must be int32.
+          Data type must be int32 or int64.
         - **depth** (int) - A scalar defining the depth of the one hot dimension.
         - **on_value** (Tensor) - A value to fill in output when `indices[j] = i`. With data type of float16 or float32.
         - **off_value** (Tensor) - A value to fill in output when `indices[j] != i`.
@@ -3015,7 +3015,7 @@ class OneHot(PrimitiveWithInfer):
 
     def __infer__(self, indices, depth, on_value, off_value):
         # check type
-        validator.check_tensor_dtype_valid("indices", indices['dtype'], (mstype.int32,), self.name)
+        validator.check_tensor_dtype_valid("indices", indices['dtype'], (mstype.int32, mstype.int64), self.name)
         validator.check_type_name("depth", depth['dtype'], mstype.int_type, self.name)
         args = {"on_value": on_value['dtype'], "off_value": off_value['dtype']}
         validator.check_tensors_dtypes_same_and_valid(args, (mstype.float16, mstype.float32), self.name)
