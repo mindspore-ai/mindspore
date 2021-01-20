@@ -28,6 +28,7 @@ using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_PARAM_INVALID;
+using mindspore::schema::PrimitiveType_DepthToSpace;
 using mindspore::schema::PrimitiveType_SpaceToDepth;
 
 namespace mindspore::kernel {
@@ -43,10 +44,13 @@ int SpaceToDepthOpenCLKernel::Prepare() {
   std::string kernel_name;
   in_shape_ = GpuTensorInfo(in_tensors_[0]);
   out_shape_ = GpuTensorInfo(out_tensors_[0]);
-  if (in_shape_.C % C4NUM != 0) {
-    kernel_name = "SpaceToDepth";
+  if (Type() == PrimitiveType_DepthToSpace) {
+    kernel_name = "DepthToSpace";
   } else {
-    kernel_name = "SpaceToDepthAlign";
+    kernel_name = "SpaceToDepth";
+  }
+  if (in_shape_.C % C4NUM == 0 && out_shape_.C % C4NUM == 0) {
+    kernel_name += "Align";
   }
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
@@ -71,8 +75,13 @@ void SpaceToDepthOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_in_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, cl_out_shape);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, param->block_size_);
-  int ci_size = in_shape_.C;
-  ocl_runtime_->SetKernelArg(kernel_, arg_idx++, ci_size);
+  if (Type() == PrimitiveType_DepthToSpace) {
+    int co_size = out_shape_.C;
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, co_size);
+  } else {
+    int ci_size = in_shape_.C;
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, ci_size);
+  }
 }
 void SpaceToDepthOpenCLKernel::SetGlobalLocal() {
   local_size_ = {};
@@ -91,4 +100,6 @@ int SpaceToDepthOpenCLKernel::Run() {
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SpaceToDepth, OpenCLKernelCreator<SpaceToDepthOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SpaceToDepth, OpenCLKernelCreator<SpaceToDepthOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_DepthToSpace, OpenCLKernelCreator<SpaceToDepthOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_DepthToSpace, OpenCLKernelCreator<SpaceToDepthOpenCLKernel>)
 }  // namespace mindspore::kernel
