@@ -123,29 +123,6 @@ int GetMaxDivisorStrategy1(int x, int divisor) {
   }
 }
 
-std::vector<size_t> GetCommonGlobalSize(const std::vector<size_t> &local, const std::vector<size_t> &global) {
-  MS_ASSERT(local.size() == global.size() && local.size() == 3);
-  std::vector<size_t> result(3);
-  for (int i = 0; i < 3; ++i) {
-    result[i] = UP_ROUND(global[i], local[i]);
-  }
-  return result;
-}
-
-std::vector<size_t> GetCommonLocalSize(const std::vector<size_t> &global, int max_size) {
-  MS_ASSERT(global.size() == 3);
-  size_t local_z = GetMaxDivisorStrategy0(global[2], 8);
-  if (local_z == 0) {
-    MS_LOG(ERROR) << "Divide by zero";
-    return {};
-  }
-  size_t local_xy = max_size / local_z;
-  size_t local_x = std::min(UP_DIV(global[0], 2), local_xy);
-  size_t local_y = std::min(local_xy / local_x, global[1]);
-  std::vector<size_t> local = {local_x, local_y, local_z};
-  return local;
-}
-
 std::string CLErrorCode(cl_int error_code) {
   switch (error_code) {
     case CL_SUCCESS:
@@ -295,42 +272,6 @@ int WriteToBin(const std::string &file_path, void *data, size_t size) {
   return 0;
 }
 
-std::vector<int> GetNHWCShape(const std::vector<int> &tensor_shape) {
-  int n, h, w, c;
-  n = h = w = c = 1;
-  if (tensor_shape.size() == 1) {
-    c = tensor_shape[0];
-  } else if (tensor_shape.size() == 2) {
-    n = tensor_shape[0];
-    c = tensor_shape[1];
-  } else if (tensor_shape.size() == 3) {
-    n = tensor_shape[0];
-    h = tensor_shape[1];
-    c = tensor_shape[2];
-  } else if (tensor_shape.size() == 4) {
-    n = tensor_shape[0];
-    h = tensor_shape[1];
-    w = tensor_shape[2];
-    c = tensor_shape[3];
-  }
-  return {n, h, w, c};
-}
-
-std::vector<size_t> GetImage2dShapeFromNHWC(const std::vector<int> &tensor_shape, schema::Format format) {
-  if (tensor_shape.size() != 4) {
-    return {1, 1};
-  }
-  size_t image_x, image_y;
-  image_x = image_y = 1;
-  if (format == schema::Format_NHWC4) {
-    image_x = tensor_shape[2] * UP_DIV(tensor_shape[3], C4NUM);
-    image_y = tensor_shape[0] * tensor_shape[1];
-  } else if (format == schema::Format_NC4HW4) {
-    image_x = tensor_shape[2];
-    image_y = tensor_shape[0] * tensor_shape[1] * UP_DIV(tensor_shape[3], C4NUM);
-  }
-  return {image_x, image_y};
-}
 int GetBroadcastGpuAxis(int ndim, int ori_axis) {
   if (ori_axis >= ndim) {
     return ndim - 1;
@@ -349,4 +290,36 @@ int GetBroadcastGpuAxis(int ndim, int ori_axis) {
   }
   return axis;
 }
+
+void PackNHWCToNHWC4(void *src, void *dst, bool src_is_fp16, bool dst_is_fp16, const GpuTensorInfo &tensor) {
+  MS_ASSERT(src);
+  MS_ASSERT(dst);
+  auto src_fp16 = reinterpret_cast<float16_t *>(src);
+  auto src_fp32 = reinterpret_cast<float32_t *>(src);
+  auto dst_fp16 = reinterpret_cast<float16_t *>(dst);
+  auto dst_fp32 = reinterpret_cast<float32_t *>(dst);
+  for (int n = 0, src_idx = 0; n < tensor.N; n++) {
+    for (int h = 0; h < tensor.H; ++h) {
+      for (int w = 0; w < tensor.W; ++w) {
+        for (int c = 0; c < tensor.C; ++c, ++src_idx) {
+          int dst_idx = ((n * tensor.H + h) * tensor.W + w) * tensor.Slice * C4NUM + c;
+          if (dst_is_fp16) {
+            dst_fp16[dst_idx] = src_is_fp16 ? src_fp16[src_idx] : static_cast<float16_t>(src_fp32[src_idx]);
+          } else {
+            dst_fp32[dst_idx] = src_is_fp16 ? static_cast<float32_t>(src_fp16[src_idx]) : src_fp32[src_idx];
+          }
+        }
+      }
+    }
+  }
+  // scalar
+  if (tensor.ElementsNum == 1) {
+    if (dst_is_fp16) {
+      dst_fp16[3] = dst_fp16[2] = dst_fp16[1] = dst_fp16[0];
+    } else {
+      dst_fp32[3] = dst_fp32[2] = dst_fp32[1] = dst_fp32[0];
+    }
+  }
+}
+
 }  // namespace mindspore::kernel

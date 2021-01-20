@@ -22,7 +22,6 @@
 #include "src/runtime/kernel/opencl/opencl_kernel.h"
 #include "src/common/utils.h"
 #include "nnacl/matmul_parameter.h"
-#define MAXDEPTH 5
 
 namespace mindspore::kernel {
 

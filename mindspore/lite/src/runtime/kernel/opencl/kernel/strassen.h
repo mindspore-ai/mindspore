@@ -21,6 +21,8 @@
 #include <vector>
 #include "src/runtime/kernel/opencl/kernel/matmul.h"
 
+#define MAXDEPTH 5
+
 namespace mindspore::kernel {
 
 class StrassenOpenCLKernel : public MatMulOpenCLKernel {

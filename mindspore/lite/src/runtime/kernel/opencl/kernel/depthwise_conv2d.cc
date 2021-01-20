@@ -37,6 +37,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::ImageSize;
 using mindspore::lite::opencl::MemType;
 using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
@@ -61,6 +62,7 @@ int DepthwiseConv2dOpenCLKernel::CheckSpecs() {
   }
   return RET_OK;
 }
+
 int DepthwiseConv2dOpenCLKernel::Prepare() {
   std::string kernel_name = "DepthwiseConv2d";
   if (out_mem_type_ == MemType::BUF) {
@@ -114,13 +116,10 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
 
   int plane_in = parameter->kernel_h_ * parameter->kernel_w_;
   int plane_out = plane_in * C4NUM;
-  std::vector<size_t> img_size;
   if (filter_type_ == MemType::IMG) {
     int alignment = ocl_runtime_->GetImagePitchAlignment();
     plane_out = UP_ROUND(plane_out, alignment) * C4NUM;
     pack_weight_size = plane_out * CO4;
-    size_t img_dtype = ocl_runtime_->GetFp16Enable() ? CL_HALF_FLOAT : CL_FLOAT;
-    img_size = {(size_t)plane_out / C4NUM, (size_t)out_info.N * CO4, img_dtype};
   }
   pack_weight_size = pack_weight_size * dtype_size;
   auto ConvertFilter = [](void *src, void *dst, TypeId src_type, TypeId dst_type, size_t plane_in, size_t plane_out,
@@ -153,7 +152,13 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
   auto src_type = in_tensors_.at(kWeightIndex)->data_type();
   auto dst_type = is_fp16 ? kNumberTypeFloat16 : kNumberTypeFloat32;
   ConvertFilter(origin_weight, temp_filter.data(), src_type, dst_type, plane_in, plane_out, out_info.C);
-  packed_weight_ = allocator->Malloc(pack_weight_size, img_size, temp_filter.data());
+  if (filter_type_ == MemType::IMG) {
+    size_t img_dtype = ocl_runtime_->GetFp16Enable() ? CL_HALF_FLOAT : CL_FLOAT;
+    ImageSize img_size{(size_t)plane_out / C4NUM, (size_t)out_info.N * CO4, img_dtype};
+    packed_weight_ = allocator->Malloc(img_size, temp_filter.data());
+  } else {
+    packed_weight_ = allocator->Malloc(pack_weight_size, temp_filter.data());
+  }
   FreeDequantedWeight();
   if (packed_weight_ == nullptr) {
     return RET_ERROR;
@@ -182,12 +187,13 @@ int DepthwiseConv2dOpenCLKernel::InitWeights() {
     auto element_size = in_tensors_.at(kBiasIndex)->ElementsNum();
     ConvertBias(in_tensors_.at(kBiasIndex)->data_c(), temp_bias.data(), element_size, dtype_size, src_type, dst_type);
   }
-  bias_data_ = allocator->Malloc(bias_size, {}, temp_bias.data());
+  bias_data_ = allocator->Malloc(bias_size, temp_bias.data());
   if (bias_data_ == nullptr) {
     return RET_ERROR;
   }
   return mindspore::lite::RET_OK;
 }
+
 void DepthwiseConv2dOpenCLKernel::SetConstArgs() {
   auto parameter = reinterpret_cast<ConvParameter *>(op_parameter_);
   auto in_info = GpuTensorInfo(in_tensors_[0]);
@@ -216,6 +222,7 @@ void DepthwiseConv2dOpenCLKernel::SetConstArgs() {
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].first);
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, relu_clips[parameter->act_type_].second);
 }
+
 void DepthwiseConv2dOpenCLKernel::SetGlobalLocal() {
   auto out_info = GpuTensorInfo(out_tensors_[0]);
   // set global

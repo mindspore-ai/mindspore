@@ -63,7 +63,7 @@ __kernel void DepthToSpace(__read_only image2d_t src_data, __write_only image2d_
   int Y = get_global_id(1);  // W
   int Z = get_global_id(2);  // H * N
   if (X >= out_shape.w || Y >= out_shape.z || Z >= out_shape.x * out_shape.y) return;
-  if (out_shape.y == 0 || co_size == 0) return;
+  if (out_shape.y == 0 || block_size == 0) return;
   int N = Z / out_shape.y;
   int H = Z % out_shape.y;
   int co_base = X * C4NUM;

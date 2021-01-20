@@ -30,6 +30,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::ImageSize;
 using mindspore::lite::opencl::MemType;
 using mindspore::schema::PrimitiveType_Scale;
 
@@ -64,87 +65,55 @@ void ScaleOpenCLKernel::Image2dGetWorkGroupSize() {
 }
 
 int ScaleOpenCLKernel::InitWeights() {
-  if (!weight_vector_flag_) {
+  auto *in_tensor = in_tensors_[0];
+  auto *scale_tensor = in_tensors_[1];
+  auto *offset_tensor = in_tensors_[2];
+  auto scale_dtype = scale_tensor->data_type();
+  if (!weight_vector_flag_ || !scale_tensor->IsConst()) {
     return RET_OK;
   }
-  if (in_tensors_[1]->IsConst()) {
-    auto allocator = ocl_runtime_->GetAllocator();
-    std::vector<size_t> img_size;
-    GetImageSize(0, &img_size);
-    img_size[2] = in_tensors_[1]->data_type() == kNumberTypeFloat16 ? CL_HALF_FLOAT : CL_FLOAT;
-    if (broadcast_flag_) {
-      img_size[1] = 1;
-      img_size[0] = UP_DIV(in_tensors_[1]->shape()[0], C4NUM);
-      scale_ptr_ = allocator->Malloc(in_tensors_[1]->ElementsNum(), img_size, in_tensors_[1]->data_c());
-      offset_ptr_ = allocator->Malloc(in_tensors_[2]->ElementsNum(), img_size, in_tensors_[2]->data_c());
-      return RET_OK;
-    }
-    auto image2d_info = GpuTensorInfo(in_tensors_[1]);
-    int pack_weight_size = image2d_info.ElementsC4Num;
-    int plane = image2d_info.H * image2d_info.W;
-    int channel = image2d_info.C;
-    int batch = image2d_info.N;
-    if (in_tensors_[0]->format() == in_tensors_[1]->format()) {
-      if (in_tensors_[0]->data_type() == in_tensors_[1]->data_type()) {
-        scale_ptr_ = allocator->Malloc(in_tensors_[1]->ElementsNum(), img_size, in_tensors_[1]->data_c());
-        offset_ptr_ = allocator->Malloc(in_tensors_[2]->ElementsNum(), img_size, in_tensors_[2]->data_c());
-      } else {
-        MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
-                      << in_tensors_[0]->data_type();
-        return RET_ERROR;
-      }
-    } else if (in_tensors_[0]->format() == schema::Format_NHWC) {
-      if (in_tensors_[1]->format() == schema::Format_NHWC) {
-        if (in_tensors_[0]->data_type() == kNumberTypeFloat32) {
-          auto *scale = new (std::nothrow) float[pack_weight_size];
-          if (scale == nullptr) {
-            MS_LOG(ERROR) << "Malloc buffer failed!";
-            return RET_ERROR;
-          }
-          auto *offset = new (std::nothrow) float[pack_weight_size];
-          if (offset == nullptr) {
-            MS_LOG(ERROR) << "Malloc buffer failed!";
-            delete[] scale;
-            return RET_ERROR;
-          }
-          std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-          PackNHWCToNHWC4<float, float>(in_tensors_[1]->data_c(), scale, batch, plane, channel, to_dtype);
-          PackNHWCToNHWC4<float, float>(in_tensors_[2]->data_c(), offset, batch, plane, channel, to_dtype);
-          scale_ptr_ = allocator->Malloc(in_tensors_[1]->ElementsNum(), img_size, scale);
-          offset_ptr_ = allocator->Malloc(in_tensors_[2]->ElementsNum(), img_size, offset);
-          delete[] scale;
-          delete[] offset;
-        } else if (in_tensors_[0]->data_type() == kNumberTypeFloat16) {
-          auto *scale = new (std::nothrow) float16_t[pack_weight_size];
-          if (scale == nullptr) {
-            MS_LOG(ERROR) << "Malloc buffer failed!";
-            return RET_ERROR;
-          }
-          auto *offset = new (std::nothrow) float16_t[pack_weight_size];
-          if (offset == nullptr) {
-            MS_LOG(ERROR) << "Malloc buffer failed!";
-            delete[] scale;
-            return RET_ERROR;
-          }
-          std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
-          PackNHWCToNHWC4<float, float16_t>(in_tensors_[1]->data_c(), scale, batch, plane, channel, to_dtype);
-          PackNHWCToNHWC4<float, float16_t>(in_tensors_[2]->data_c(), offset, batch, plane, channel, to_dtype);
-          scale_ptr_ = allocator->Malloc(in_tensors_[1]->ElementsNum(), img_size, scale);
-          offset_ptr_ = allocator->Malloc(in_tensors_[2]->ElementsNum(), img_size, offset);
-          delete[] scale;
-          delete[] offset;
-        } else {
-          MS_LOG(ERROR) << "Unsupport data type transpose from " << in_tensors_[1]->data_type() << "to "
-                        << in_tensors_[0]->data_type();
-          return RET_ERROR;
-        }
-      } else {
-        MS_LOG(ERROR) << "Unsupport format transpose from " << in_tensors_[1]->format() << "to "
-                      << in_tensors_[0]->format();
-        return RET_ERROR;
-      }
-    }
+  auto allocator = ocl_runtime_->GetAllocator();
+  auto fp16_enable = ocl_runtime_->GetFp16Enable();
+  ImageSize img_size;
+  GetImageSize(0, &img_size);
+  img_size.dtype = scale_dtype == kNumberTypeFloat16 ? CL_HALF_FLOAT : CL_FLOAT;
+
+  if (broadcast_flag_) {
+    img_size.height = 1;
+    img_size.width = UP_DIV(scale_tensor->shape()[0], C4NUM);
+    scale_ptr_ = allocator->Malloc(img_size, scale_tensor->data_c());
+    offset_ptr_ = allocator->Malloc(img_size, offset_tensor->data_c());
     return RET_OK;
+  }
+
+  if (in_tensor->format() == scale_tensor->format()) {
+    if (in_tensor->data_type() == scale_tensor->data_type()) {
+      scale_ptr_ = allocator->Malloc(img_size, scale_tensor->data_c());
+      offset_ptr_ = allocator->Malloc(img_size, offset_tensor->data_c());
+    } else {
+      MS_LOG(ERROR) << "Unsupported data type transpose from " << scale_tensor->data_type() << "to "
+                    << in_tensor->data_type();
+      return RET_ERROR;
+    }
+  } else if (in_tensor->format() == schema::Format_NHWC && scale_tensor->format() == schema::Format_NHWC) {
+    if (scale_dtype == kNumberTypeFloat32 || scale_dtype == kNumberTypeFloat16) {
+      auto image2d_info = GpuTensorInfo(scale_tensor);
+      int pack_weight_size = image2d_info.ElementsC4Num;
+      std::vector<char> scale(pack_weight_size, 0);
+      std::vector<char> offset(pack_weight_size, 0);
+      bool src_is_fp16 = scale_dtype == kNumberTypeFloat16;
+      PackNHWCToNHWC4(scale_tensor->data_c(), scale.data(), src_is_fp16, fp16_enable, image2d_info);
+      PackNHWCToNHWC4(offset_tensor->data_c(), offset.data(), src_is_fp16, fp16_enable, image2d_info);
+      scale_ptr_ = allocator->Malloc(img_size, scale.data());
+      offset_ptr_ = allocator->Malloc(img_size, offset.data());
+    } else {
+      MS_LOG(ERROR) << "Unsupported data type transpose from " << scale_tensor->data_type() << "to "
+                    << in_tensor->data_type();
+      return RET_ERROR;
+    }
+  } else {
+    MS_LOG(ERROR) << "Unsupported format transpose from " << scale_tensor->format() << "to " << in_tensor->format();
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -231,7 +200,7 @@ int ScaleOpenCLKernel::Run() {
       ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float>(scale));
       ocl_runtime_->SetKernelArg(kernel_, arg_idx++, static_cast<float>(offset));
     } else {
-      MS_LOG(ERROR) << "Unsupport data type " << in_tensors_[1]->data_type();
+      MS_LOG(ERROR) << "Unsupported data type " << in_tensors_[1]->data_type();
       return RET_ERROR;
     }
   }

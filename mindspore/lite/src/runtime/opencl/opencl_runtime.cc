@@ -497,14 +497,14 @@ int OpenCLRuntime::ReadOrWriteImage(void *buffer, void *data, bool is_read) {
     MS_LOG(WARNING) << "Can't get Image2D for " << buffer;
     return RET_ERROR;
   }
-  std::vector<size_t> img_size;
+  ImageSize img_size;
   int ret = allocator_->GetImageSize(buffer, &img_size);
   if (ret != RET_OK) {
     MS_LOG(WARNING) << "Can't get GetImageSize for " << buffer;
     return RET_ERROR;
   }
   cl::array<size_t, 3> origin = {0, 0, 0};
-  cl::array<size_t, 3> region = {img_size[0], img_size[1], 1};
+  cl::array<size_t, 3> region = {img_size.width, img_size.height, 1};
   if (is_read) {
     ret = command_queue->enqueueReadImage(*image, true, origin, region, 0, 0, data, nullptr, nullptr);
   } else {
