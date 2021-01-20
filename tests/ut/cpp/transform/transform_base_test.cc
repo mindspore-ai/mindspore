@@ -18,6 +18,7 @@
 #include "transform/transform_base_test.h"
 #include "pybind_api/ir/tensor_py.h"
 #include "pipeline/jit/parse/resolve.h"
+#include "base/core_ops.h"
 
 using mindspore::tensor::TensorPy;
 
@@ -90,7 +91,7 @@ FuncGraphPtr MakeFuncGraph(const PrimitivePtr prim, unsigned int nparam) {
   }
   CNodePtr cnode_prim = func_graph->NewCNode(inputs);
   inputs.clear();
-  inputs.push_back(NewValueNode(std::make_shared<Primitive>("return")));
+  inputs.push_back(NewValueNode(std::make_shared<Primitive>(prim::kReturn)));
   inputs.push_back(cnode_prim);
   CNodePtr cnode_return = func_graph->NewCNode(inputs);
   func_graph->set_return(cnode_return);

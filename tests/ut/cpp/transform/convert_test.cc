@@ -16,6 +16,7 @@
 #include <iostream>
 #include <unordered_map>
 
+#include "base/core_ops.h"
 #include "pybind11/pybind11.h"
 
 #include "transform/transform_base_test.h"
@@ -32,6 +33,7 @@
 #include "transform/graph_ir/convert.h"
 #include "securec/include/securec.h"
 #include "utils/utils.h"
+#include "base/core_ops.h"
 using std::cout;
 using std::endl;
 using std::string;
@@ -171,7 +173,7 @@ TEST_F(TestConvert, TestConvertBatchNorm) {
   CNodePtr cnode_relu = anf_graph->NewCNode(inputs);
   inputs.clear();
 
-  inputs.push_back(NewValueNode(std::make_shared<Primitive>("return")));
+  inputs.push_back(NewValueNode(std::make_shared<Primitive>(prim::kReturn)));
   inputs.push_back(cnode_relu);
   CNodePtr cnode_return = anf_graph->NewCNode(inputs);
   anf_graph->set_return(cnode_return);
@@ -803,7 +805,7 @@ TEST_F(TestConvert, TestConvertGeTensor) {
 TEST_F(TestConvert, TestConvertMakeTuple) {
   FuncGraphPtr func_graph = std::make_shared<FuncGraph>();
   std::vector<AnfNodePtr> inputs;
-  inputs.push_back(NewValueNode(std::make_shared<Primitive>("make_tuple")));
+  inputs.push_back(NewValueNode(std::make_shared<Primitive>(prim::kMakeTuple)));
   for (int i = 0; i < 3; i++) {
     auto input = func_graph->add_parameter();
     input->set_name("x" + std::to_string(i));
@@ -811,7 +813,7 @@ TEST_F(TestConvert, TestConvertMakeTuple) {
   }
   CNodePtr cnode_prim = func_graph->NewCNode(inputs);
   inputs.clear();
-  inputs.push_back(NewValueNode(std::make_shared<Primitive>("return")));
+  inputs.push_back(NewValueNode(std::make_shared<Primitive>(prim::kReturn)));
   inputs.push_back(cnode_prim);
   CNodePtr cnode_return = func_graph->NewCNode(inputs);
   func_graph->set_return(cnode_return);

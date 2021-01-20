@@ -13,14 +13,14 @@
 # limitations under the License.
 # ============================================================================
 from mindspore.ops import Primitive
-from mindspore.ops import _constants as Constants
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
 mul = P.Mul()
 reduce_sum = P.ReduceSum(keep_dims=True)
 sub = P.Sub()
 confusion_softmax_grad = Primitive('ConfusionSoftmaxGrad')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive(Constants.kMakeTuple)
 tuple_getitem = Primitive(Constants.kTupleGetitem)
 axis = 2
 

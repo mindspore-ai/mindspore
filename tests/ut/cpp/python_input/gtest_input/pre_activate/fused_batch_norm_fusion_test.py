@@ -22,7 +22,7 @@ from mindspore.ops import _constants as Constants
 AssignSub = P.AssignSub()
 Mul = P.Mul()
 Sub = P.Sub()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive(Constants.kMakeTuple)
 tuple_getitem = Primitive(Constants.kTupleGetitem)
 BatchNorm = P.BatchNorm()
 Cast = P.Cast()

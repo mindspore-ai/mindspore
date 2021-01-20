@@ -15,10 +15,11 @@
 
 from mindspore.ops import operations as P
 from mindspore.ops import Primitive
+from mindspore.ops import _constants as Constants
 
 pack = P.Pack()
 concat = P.Concat()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive(Constants.kMakeTuple)
 
 
 class FnDict:

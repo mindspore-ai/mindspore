@@ -19,7 +19,7 @@ from mindspore.ops import _constants as Constants
 add = P.TensorAdd()
 mul = P.Mul()
 fused_mul_add = Primitive('FusedMulAdd')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive(Constants.kMakeTuple)
 tuple_getitem = Primitive(Constants.kTupleGetitem)
 
 

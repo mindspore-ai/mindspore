@@ -17,6 +17,7 @@
 #include <memory>
 #include <vector>
 
+#include "base/core_ops.h"
 #include "common/common_test.h"
 #include "ir/value.h"
 #include "pybind_api/ir/primitive_py.h"
@@ -173,7 +174,7 @@ TEST_F(TestOps, HasTypeTest) {
 
 // Data structures
 TEST_F(TestOps, MakeTupleTest) {
-  auto prim = std::make_shared<Primitive>("make_tuple");
+  auto prim = std::make_shared<Primitive>(prim::kMakeTuple);
   ASSERT_EQ(prim->name(), kPrimMakeTuple->name());
 }
 
@@ -320,7 +321,7 @@ TEST_F(TestOps, SwitchTest) {
 }
 
 TEST_F(TestOps, ReturnTest) {
-  auto prim = std::make_shared<Primitive>("return");
+  auto prim = std::make_shared<Primitive>(kReturn);
   ASSERT_EQ(prim->name(), kPrimReturn->name());
 }
 

@@ -20,7 +20,7 @@ from mindspore.ops import _constants as Constants
 all_reduce = P.AllReduce()
 broadcast = P.Broadcast(1)
 memcpy_async = Primitive('memcpy_async')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive(Constants.kMakeTuple)
 tuple_getitem = Primitive(Constants.kTupleGetitem)
 apply_momentun = P.ApplyMomentum()
 control_depend = P.ControlDepend()

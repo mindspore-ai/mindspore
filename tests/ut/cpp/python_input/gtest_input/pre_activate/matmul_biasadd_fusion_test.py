@@ -14,10 +14,11 @@
 # ============================================================================
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
 MatMul = P.MatMul()
 BiasAdd = P.BiasAdd()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive(Constants.kMakeTuple)
 
 
 class FnDict:

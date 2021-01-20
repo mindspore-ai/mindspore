@@ -20,7 +20,7 @@ addn = P.AddN()
 mul = P.Mul()
 reduce_sum = P.ReduceSum()
 confusion_mul_grad = Primitive('ConfusionMulGrad')
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive(Constants.kMakeTuple)
 tuple_getitem = Primitive(Constants.kTupleGetitem)
 axis = 1
 

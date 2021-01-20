@@ -21,8 +21,8 @@ from mindspore.ops import _constants as Constants
 Mul = P.Mul()
 ApplyMomentum = P.ApplyMomentum()
 FusedMulApplyMomentum = Primitive('FusedMulApplyMomentum')
+make_tuple = Primitive(Constants.kMakeTuple)
 tuple_getitem = Primitive(Constants.kTupleGetitem)
-make_tuple = Primitive('make_tuple')
 constant = Tensor(1.0, mstype.float32)
 
 

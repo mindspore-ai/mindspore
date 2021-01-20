@@ -39,6 +39,7 @@
 #include "utils/ms_context.h"
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/base.h"
+#include "base/core_ops.h"
 
 using mindspore::tensor::TensorPy;
 
@@ -1275,7 +1276,7 @@ class IrParser {
       return nullptr;
     }
 
-    PrimitivePtr prim = std::make_shared<Primitive>("return");
+    PrimitivePtr prim = std::make_shared<Primitive>(prim::kReturn);
     ValueNodePtr input0 = std::make_shared<ValueNode>(prim);
     std::vector<AnfNodePtr> inputs;
     inputs.push_back(input0);
@@ -2134,7 +2135,7 @@ class IrParser {
 
     std::vector<ValuePtr> elems;
     std::vector<AnfNodePtr> nodes;
-    nodes.push_back(std::make_shared<ValueNode>(std::make_shared<Primitive>("make_tuple")));
+    nodes.push_back(std::make_shared<ValueNode>(std::make_shared<Primitive>(prim::kMakeTuple)));
     ValuePtr elem = nullptr;
     AnfNodePtr node = nullptr;
     bool node_is_valid = false;
