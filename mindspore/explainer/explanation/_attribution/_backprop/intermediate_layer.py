@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,8 +15,9 @@
 
 """Base class IntermediateLayerAttribution"""
 
+from mindspore.explainer._utils import resize as resize_fn
+
 from .gradient import Gradient
-from ...._utils import resize as resize_fn
 
 
 class IntermediateLayerAttribution(Gradient):

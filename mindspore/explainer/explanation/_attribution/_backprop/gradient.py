@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,10 +17,11 @@ from copy import deepcopy
 
 from mindspore import nn
 from mindspore.train._utils import check_value_type
-from ...._operators import reshape, sqrt, Tensor
-from ..attribution import Attribution
-from .backprop_utils import compute_gradients
-from ...._utils import abs_max, unify_inputs, unify_targets
+from mindspore.explainer._operators import reshape, sqrt, Tensor
+from mindspore.explainer._utils import abs_max, unify_inputs, unify_targets
+
+from .. import Attribution
+from .backprop_utils import get_bp_weights, GradNet
 
 
 def _get_hook(bntype, cache):
@@ -88,7 +89,7 @@ class Gradient(Attribution):
         self._backward_model.set_train(False)
         self._backward_model.set_grad(False)
         self._hook_bn()
-        self._grad_op = compute_gradients
+        self._grad_net = GradNet(self._backward_model)
         self._aggregation_fn = abs_max
 
     def __call__(self, inputs, targets):
@@ -97,7 +98,8 @@ class Gradient(Attribution):
         inputs = unify_inputs(inputs)
         targets = unify_targets(targets)
 
-        gradient = self._grad_op(self._backward_model, *inputs, targets)
+        weights = get_bp_weights(self._backward_model, *inputs, targets)
+        gradient = self._grad_net(*inputs, weights)
         saliency = self._aggregation_fn(gradient)
         return saliency
 
