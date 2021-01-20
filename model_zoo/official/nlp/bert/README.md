@@ -12,8 +12,8 @@
         - [Pre-Training](#pre-training)
         - [Fine-Tuning and Evaluation](#fine-tuning-and-evaluation)
     - [Options and Parameters](#options-and-parameters)
-        - [Options:](#options)
-        - [Parameters:](#parameters)
+        - [Options](#options)
+        - [Parameters](#parameters)
     - [Training Process](#training-process)
         - [Training](#training)
             - [Running on Ascend](#running-on-ascend)
@@ -380,7 +380,8 @@ config for lossscale and etc.
 ```text
 Parameters for dataset and network (Pre-Training/Fine-Tuning/Evaluation):
     seq_length                      length of input sequence: N, default is 128
-    vocab_size                      size of each embedding vector: N, must be consistant with the dataset you use. Default is 21136
+    vocab_size                      size of each embedding vector: N, must be consistant with the dataset you use. Default is 21128.
+                                    Usually, we use 21128 for CN vocabs and 30522 for EN vocabs according to the origin paper.
     hidden_size                     size of bert encoder layers: N, default is 768
     num_hidden_layers               number of hidden layers: N, default is 12
     num_attention_heads             number of attention heads: N, default is 12
