@@ -35,7 +35,7 @@ Dataset used: [FSNS (French Street Name Signs)](https://arxiv.org/abs/1702.03970
 - Data format：binary files
     - Note：Data will be processed in dataset.py
 
-- Download the dataset, the recommened directory structure to have is as follows:
+- Download the dataset, the recommended directory structure to have is as follows:
 
 Annotations for training and testing should be in test_annot and train_annot.
 Training and Testing images should be in train and test.
@@ -152,7 +152,7 @@ Results of evaluation will be printed after evaluation process is completed.
 | Parameters                 | Ascend                                                      |
 | -------------------------- | ------------------------------------------------------------|
 | Resource                   | Ascend 910; CPU 2.60GHz, 192cores; Memory, 755G              |
-| uploaded Date              | 01/15/2020 (month/day/year)                                 |
+| uploaded Date              | 01/15/2021 (month/day/year)                                 |
 | MindSpore Version          | 1.1                                                  |
 | Dataset                    | FSNS                                                   |
 | Training Parameters        | epoch=1, steps=104,477, batch_size = 20, lr=1e-07             |
