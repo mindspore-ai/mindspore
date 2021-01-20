@@ -75,7 +75,7 @@ class MS_API BenchmarkFlags : public virtual FlagParser {
     AddFlag(&BenchmarkFlags::in_data_file_, "inDataFile", "Input data file, if not set, use random input", "");
     AddFlag(&BenchmarkFlags::device_, "device", "CPU | GPU | NPU", "CPU");
     AddFlag(&BenchmarkFlags::cpu_bind_mode_, "cpuBindMode",
-            "Input 0 for NO_BIND, 1 for HIGHER_CPU, 2 for MID_CPU, defalut value: 1", 1);
+            "Input 0 for NO_BIND, 1 for HIGHER_CPU, 2 for MID_CPU, default value: 1", 1);
     // MarkPerformance
     AddFlag(&BenchmarkFlags::loop_count_, "loopCount", "Run loop count", 10);
     AddFlag(&BenchmarkFlags::num_threads_, "numThreads", "Run threads number", 2);
@@ -153,7 +153,9 @@ class MS_API Benchmark {
 
   int CompareOutput();
 
-  tensor::MSTensor *GetTensorByNodeOrTensorName(const std::string &node_or_tensor_name);
+  tensor::MSTensor *GetTensorByNameOrShape(const std::string &node_or_tensor_name, const std::vector<size_t> &dims);
+
+  tensor::MSTensor *GetTensorByNodeShape(const std::vector<size_t> &node_shape);
 
   int CompareStringData(const std::string &name, tensor::MSTensor *tensor);
 

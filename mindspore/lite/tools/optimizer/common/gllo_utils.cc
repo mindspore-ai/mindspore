@@ -480,7 +480,8 @@ bool IsParamNode(const BaseRef &n) {
 bool IsConvNode(const BaseRef &n) {
   if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
     auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Conv2D || type == schema::PrimitiveType_DepthwiseConv2D;
+    return type == schema::PrimitiveType_Conv2D || type == schema::PrimitiveType_DepthwiseConv2D ||
+           type == schema::PrimitiveType_DeConv2D;
   }
   return false;
 }

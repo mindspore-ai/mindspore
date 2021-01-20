@@ -18,6 +18,7 @@
 #include <memory>
 #include "src/ops/primitive_c.h"
 #include "src/ops/conv2d.h"
+#include "src/ops/deconv2d.h"
 #include "src/ops/depthwise_conv2d.h"
 #include "src/ops/activation.h"
 #include "schema/inner/model_generated.h"
@@ -77,6 +78,14 @@ const AnfNodePtr ConvActivationFusion::Process(const FuncGraphPtr &func_graph, c
     } else if (node_type == schema::PrimitiveType_DepthwiseConv2D) {
       MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c));
       auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive_c);
+      MS_ASSERT(primc != nullptr);
+      if (primc->GetActivationType() == schema::ActivationType_NO_ACTIVATION) {
+        primc->SetActivationType(act_primitivec->GetType());
+        return pre_node;
+      }
+    } else if (node_type == schema::PrimitiveType_DeConv2D) {
+      MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DeConv2D>>(primitive_c));
+      auto primc = utils::cast<std::shared_ptr<mindspore::lite::DeConv2D>>(primitive_c);
       MS_ASSERT(primc != nullptr);
       if (primc->GetActivationType() == schema::ActivationType_NO_ACTIVATION) {
         primc->SetActivationType(act_primitivec->GetType());
