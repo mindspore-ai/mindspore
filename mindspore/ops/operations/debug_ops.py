@@ -335,7 +335,7 @@ class Print(PrimitiveWithInfer):
           The input supports multiple strings and tensors which are separated by ','.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> class PrintDemo(nn.Cell):
