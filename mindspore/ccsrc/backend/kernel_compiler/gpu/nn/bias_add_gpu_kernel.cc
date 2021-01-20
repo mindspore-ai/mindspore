@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-#include "backend/kernel_compiler/gpu/math/bias_add_gpu_kernel.h"
+#include "backend/kernel_compiler/gpu/nn/bias_add_gpu_kernel.h"
 
 namespace mindspore {
 namespace kernel {

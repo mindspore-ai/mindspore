@@ -115,6 +115,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimConv2D, {InferImplConv2D, true}},
     {prim::kPrimConv2DBackpropInput, {InferImplConv2DBackpropInput, true}},
     {prim::kPrimConv2DBackpropFilter, {InferImplConv2DBackpropFilter, true}},
+    {prim::kPrimBiasAdd, {InferImplBiasAdd, true}},
     {prim::kPrimBiasAddGrad, {InferImplBiasAddGrad, true}},
     {prim::kPrimRelu, {InferImplRelu, true}},
     {prim::kPrimZerosLike, {InferImplZerosLike, true}},

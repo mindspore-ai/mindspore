@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_BIAS_ADD_GPU_KERNEL_H
-#define MINDSPORE_BIAS_ADD_GPU_KERNEL_H
+#ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BIAS_ADD_GPU_KERNEL_H_
+#define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BIAS_ADD_GPU_KERNEL_H_
 #include <cuda_runtime_api.h>
 #include <string>
 #include <algorithm>
@@ -30,13 +30,7 @@ namespace kernel {
 template <typename T>
 class BiasAddGpuKernel : public GpuKernel {
  public:
-  BiasAddGpuKernel()
-      : cudnn_handle_(nullptr),
-        cudnn_data_type_(CUDNN_DATA_FLOAT),
-        x_desc_(nullptr),
-        b_desc_(nullptr),
-        op_desc_(nullptr),
-        is_null_input_(false) {}
+  BiasAddGpuKernel() { ResetResource(); }
   ~BiasAddGpuKernel() override { DestroyResource(); }
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -117,6 +111,18 @@ class BiasAddGpuKernel : public GpuKernel {
     return true;
   }
 
+  void ResetResource() noexcept override {
+    cudnn_handle_ = nullptr;
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    x_desc_ = nullptr;
+    b_desc_ = nullptr;
+    op_desc_ = nullptr;
+    is_null_input_ = false;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
+  }
+
   void DestroyResource() noexcept override {
     CHECK_CUDNN_RET_WITH_ERROR(kernel_node_, cudnnDestroyOpTensorDescriptor(op_desc_),
                                "cudnnDestroyTensorDescriptor failed");
@@ -136,6 +142,7 @@ class BiasAddGpuKernel : public GpuKernel {
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnCreateOpTensorDescriptor(&op_desc_),
                                 "cudnnCreateOpTensorDescriptor failed");
   }
+
   void InitSizeLists() override {
     size_t x_size, b_size;
     CHECK_CUDNN_RET_WITH_EXCEPT(kernel_node_, cudnnGetTensorSizeInBytes(x_desc_, &x_size),
@@ -161,4 +168,4 @@ class BiasAddGpuKernel : public GpuKernel {
 }  // namespace kernel
 }  // namespace mindspore
 
-#endif  // MINDSPORE_BIAS_ADD_GPU_KERNEL_H
+#endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_NN_BIAS_ADD_GPU_KERNEL_H_
