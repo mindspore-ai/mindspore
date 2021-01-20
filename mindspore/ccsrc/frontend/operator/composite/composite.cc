@@ -382,7 +382,7 @@ REGISTER_PYBIND_DEFINE(HyperMap_, ([](const py::module *m) {
                            .def(py::init<>());
                        }));
 
-FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue) {
+FuncGraphPtr Tail::GenerateSequeueFuncGraph(const abstract::AbstractSequeuePtr &sequeue) const {
   MS_EXCEPTION_IF_NULL(sequeue);
 
   FuncGraphPtr ret = std::make_shared<FuncGraph>();

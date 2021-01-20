@@ -42,6 +42,7 @@ itemsize_map = {mstype.bool_: 1, mstype.int8: 1, mstype.uint8: 1,
                 mstype.float32: 4, mstype.int32: 4, mstype.uint32: 4,
                 mstype.float64: 8, mstype.int64: 8, mstype.uint64: 8}
 
+
 def mean(x, axis=(), keep_dims=False):
     """
     Reduces a dimension of a tensor by averaging all elements in the dimension.
@@ -218,11 +219,11 @@ def swapaxes(x, axis1, axis2):
     perm = F.make_range(0, x.ndim)
     new_perm = None
     if axis2 + 1 < x.ndim:
-        new_perm = perm[0:axis1] + perm[axis2:axis2+1] + \
-            perm[axis1+1:axis2] + perm[axis1:axis1+1] + perm[axis2+1:]
+        new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
+                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1] + perm[axis2 + 1:]
     else:
-        new_perm = perm[0:axis1] + perm[axis2:axis2+1] + \
-            perm[axis1+1:axis2] + perm[axis1:axis1+1]
+        new_perm = perm[0:axis1] + perm[axis2:axis2 + 1] + \
+                   perm[axis1 + 1:axis2] + perm[axis1:axis1 + 1]
 
     return F.transpose(x, new_perm)
 
@@ -343,7 +344,7 @@ def isinstance_(x, base_type):
 
 
 def while_cond(x):
-    """For while condtion, if the condition is a tensor, the loop will not be unrolled"""
+    """For while condition, if the condition is a tensor, the loop will not be unrolled"""
     if F.issubclass_(F.typeof(x), F.typeof(mstype.tensor)):
         is_cond = check_is_tensor_bool_cond(F.shape(x))
         if is_cond:
@@ -373,7 +374,8 @@ def check_type_same(x_type, base_type):
             target_type = pytype_to_mstype[base_type]
         return isinstance(x_type, target_type)
     except KeyError:
-        raise TypeError(f"The type '{base_type}' is not supported for 'isinstance'")
+        raise TypeError(f"The second arg of 'isinstance' should be bool, int, float, str, list, tuple, "
+                        f"Tensor, Parameter, or a tuple only including these types, but got {base_type}")
 
 
 @constexpr
@@ -441,7 +443,7 @@ def check_view_shape(x):
     return x
 
 
-# convert noraml param_check functions to constexpr functions
+# convert normal param_check functions to constexpr functions
 check_astype_dtype_const = constexpr(validator.check_astype_dtype)
 check_transpose_axis_const = constexpr(validator.check_transpose_axis)
 check_reshape_shp_const = constexpr(validator.check_reshape_shp)
@@ -449,8 +451,9 @@ check_flatten_order_const = constexpr(validator.check_flatten_order)
 check_swapaxes_axis_const = constexpr(validator.check_swapaxes_axis)
 prepare_shape_for_squeeze_const = constexpr(validator.prepare_shape_for_squeeze)
 
+
 def tensor_bool(x):
-    """tensor as conditon, if is constant, return immediate bool value"""
+    """tensor as condition, if is constant, return immediate bool value"""
     is_cond = check_is_tensor_bool_cond(F.shape(x))
     if is_cond and F.isconstant(x):
         return const_tensor_to_bool(x)

@@ -156,9 +156,12 @@ bool ResolveObjectToNode(const FuncGraphPtr &func_graph, const py::object &obj, 
 }
 
 bool IsAllFuncInValueSequence(const std::vector<ValuePtr> &value_vec) {
+  if (value_vec.empty()) {
+    return false;
+  }
   for (auto &elem : value_vec) {
     if (elem->isa<ValueTuple>() || elem->isa<ValueList>()) {
-      const auto &vec = GetValue<std::vector<ValuePtr>>(elem);
+      const auto &vec = GetValue<ValuePtrList>(elem);
       auto is_graph = IsAllFuncInValueSequence(vec);
       if (!is_graph) {
         return false;
@@ -194,20 +197,20 @@ AnfNodePtr TransformToMakeTupleNodes(const FuncGraphManagerPtr &manager, const F
   return cnode;
 }
 
-// transform the ValueTuple or ValueList of graph/primitve node to make tuple of const graph/primitve node
+// transform the ValueTuple or ValueList of graph/primitive node to make tuple of const graph/primitive node
 bool TransformVectorFuncValueNode(const FuncGraphManagerPtr &manager, const FuncGraphPtr &func_graph,
                                   const ValueNodePtr &value_node, AnfNodePtr *const transformed) {
   MS_EXCEPTION_IF_NULL(value_node);
-  const auto &value_vec = GetValue<std::vector<ValuePtr>>(value_node->value());
+  const auto &value_vec = GetValue<ValuePtrList>(value_node->value());
   if (!IsAllFuncInValueSequence(value_vec)) {
     return false;
   }
 
   // (1) The celllist or ordered_cell will be parsed as valuetuple of const graph in it,
   // So if has graph in list, try to replace the node with make tuple of graph value node.
-  // we do this because the graphmanger won't investigate the graph inside valuetuple,
+  // we do this because the graph manager won't investigate the graph inside valuetuple,
   // change the vector of graph to be make_tuple of graph value node.
-  // (2) the primitve valuetuple or valuelist may encounter to abstract error, make it all
+  // (2) the primitive valuetuple or valuelist may encounter to abstract error, make it all
   // independent nodes.
   auto node_tuple_graphs = TransformToMakeTupleNodes(manager, func_graph, value_vec);
   // replace the ret ptr to be make tuple of graph value node

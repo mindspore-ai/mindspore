@@ -69,10 +69,6 @@ namespace pipeline {
 using Tensor = mindspore::tensor::Tensor;
 using MetaTensor = mindspore::tensor::MetaTensor;
 using TensorOrderMap = std::map<std::string, std::shared_ptr<Tensor>>;
-using mindspore::abstract::AbstractDictionary;
-using mindspore::abstract::AbstractDictionaryPtr;
-using mindspore::abstract::AbstractList;
-using mindspore::abstract::AbstractListPtr;
 using mindspore::abstract::AbstractTensor;
 using mindspore::abstract::AbstractTensorPtr;
 using mindspore::abstract::AbstractTuple;
@@ -101,6 +97,33 @@ AbstractBasePtr ArgsToAbstract(const ValuePtr &value) {
   MS_EXCEPTION_IF_NULL(value);
   bool broaden = value->isa<MetaTensor>();
   return abstract::FromValue(value, broaden);
+}
+
+bool CheckArgValid(const py::handle &arg) {
+  if (py::isinstance<py::list>(arg) || py::isinstance<py::tuple>(arg)) {
+    auto vector_arg = py::cast<py::list>(arg);
+    return std::all_of(vector_arg.begin(), vector_arg.end(), CheckArgValid);
+  }
+
+  if (py::isinstance<py::dict>(arg)) {
+    auto dict_arg = py::cast<py::dict>(arg);
+    return std::all_of(dict_arg.begin(), dict_arg.end(), [](const auto &pair) { return CheckArgValid(pair.second); });
+  }
+
+  return py::isinstance<py::int_>(arg) || py::isinstance<py::float_>(arg) || py::isinstance<Number>(arg) ||
+         (py::isinstance<Tensor>(arg) && !py::hasattr(arg, "__parameter__"));
+}
+
+void CheckArgsValid(const py::tuple &args) {
+  for (size_t i = 0; i < args.size(); i++) {
+    if (!CheckArgValid(args[i])) {
+      MS_EXCEPTION(TypeError)
+        << "The inputs types of the outermost network support bool, int, float, tensor, "
+           "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), "
+           "and tuple or list containing only these types, and dict whose values are these types, but got "
+        << i << "th arg is " << py::str(args[i]);
+    }
+  }
 }
 
 std::string GetCompileExceptionInfo() {
@@ -470,11 +493,13 @@ bool ExecutorPy::CompileInner(const py::object &obj, const py::tuple &args, cons
     MS_LOG(ERROR) << "Arg phase must be string.";
     return false;
   }
-  // check the arg valid?
+  // check the function or net is valid
   if (py::isinstance<py::none>(obj)) {
     MS_LOG(ERROR) << "Find error: parse obj is None.";
     return false;
   }
+  // check the args of function or net is valid
+  CheckArgsValid(args);
 #ifdef ENABLE_GE
   GetGeBackendPolicy();
 #endif

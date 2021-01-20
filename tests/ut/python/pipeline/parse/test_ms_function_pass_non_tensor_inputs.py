@@ -15,7 +15,7 @@
 """ test ms_function pass non_tensor inputs"""
 import numpy as np
 
-from mindspore import Tensor, ms_function, Parameter
+from mindspore import Tensor, ms_function
 from mindspore import context
 from mindspore.ops import operations as P
 
@@ -56,5 +56,5 @@ def tensor_reduce(tensor_x, axis, tensor_y):
 def test_tensor_reduce():
     tensor_x = Tensor(np.ones((2, 3, 4, 5), np.float32))
     axis = (0, 1)
-    tensor_y = Parameter(Tensor(np.ones((4, 5), np.float32) * 2))
+    tensor_y = Tensor(np.ones((4, 5), np.float32) * 2)
     tensor_reduce(tensor_x, axis, tensor_y)

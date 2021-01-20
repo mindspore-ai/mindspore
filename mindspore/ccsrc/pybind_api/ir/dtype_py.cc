@@ -52,7 +52,7 @@ REGISTER_PYBIND_DEFINE(
         return t->DeepCopy();
       });
     (void)py::class_<Number, Type, std::shared_ptr<Number>>(m_sub, "Number").def(py::init());
-    (void)py::class_<Bool, Type, std::shared_ptr<Bool>>(m_sub, "Bool")
+    (void)py::class_<Bool, Number, std::shared_ptr<Bool>>(m_sub, "Bool")
       .def(py::init())
       .def(py::pickle(
         [](const Bool &) {  // __getstate__
@@ -61,7 +61,7 @@ REGISTER_PYBIND_DEFINE(
         [](const py::tuple &) {  // __setstate__
           return std::make_shared<Bool>();
         }));
-    (void)py::class_<Int, Type, std::shared_ptr<Int>>(m_sub, "Int")
+    (void)py::class_<Int, Number, std::shared_ptr<Int>>(m_sub, "Int")
       .def(py::init())
       .def(py::init<int>(), py::arg("nbits"))
       .def(py::pickle(
@@ -77,7 +77,7 @@ REGISTER_PYBIND_DEFINE(
           Int data(t[0].cast<py::int_>());
           return data;
         }));
-    (void)py::class_<UInt, Type, std::shared_ptr<UInt>>(m_sub, "UInt")
+    (void)py::class_<UInt, Number, std::shared_ptr<UInt>>(m_sub, "UInt")
       .def(py::init())
       .def(py::init<int>(), py::arg("nbits"))
       .def(py::pickle(
@@ -93,7 +93,7 @@ REGISTER_PYBIND_DEFINE(
           UInt data(t[0].cast<py::int_>());
           return data;
         }));
-    (void)py::class_<Float, Type, std::shared_ptr<Float>>(m_sub, "Float")
+    (void)py::class_<Float, Number, std::shared_ptr<Float>>(m_sub, "Float")
       .def(py::init())
       .def(py::init<int>(), py::arg("nbits"))
       .def(py::pickle(
