@@ -474,6 +474,10 @@ void ConvertAttrToUnifyMindIR(const OpExecInfoPtr &op_run_info) {
     if (converted) {
       op_prim->set_attr(attr.first, attr.second);
     }
+    bool converted_ir_attr = CheckAndConvertUtils::CheckIrAttrtoOpAttr(op_name, attr.first, &attr.second);
+    if (converted_ir_attr) {
+      op_prim->set_attr(attr.first, attr.second);
+    }
   }
 }
 

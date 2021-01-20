@@ -54,7 +54,7 @@ void TestL2NormalizeInfo::SetUp() {
   g_device_manager = std::make_shared<DeviceManager>();
   g_device_manager->Init(dev_list, local_dev, stage_map, "hccl");
 
-  ValuePtr axis = MakeValue(static_cast<int64_t>(1));
+  ValuePtr axis = MakeValue(std::vector<int64_t>{1});
   std::unordered_map<std::string, ValuePtr> attr = {{AXIS, axis}};
 
   Shapes inputs_shape = {{32, 64, 96}};

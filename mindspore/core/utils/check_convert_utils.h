@@ -284,6 +284,7 @@ class CheckAndConvertUtils {
   static AttrConverterPair GetAttrConvertPair(const std::string &op_type, const std::string &attr_name);
   static int64_t GetDataFormatEnumValue(const std::string &value);
   static int64_t GetPadModEnumValue(const std::string &value, bool is_upper = false);
+  static bool CheckIrAttrtoOpAttr(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
 
  private:
   static bool IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2);
