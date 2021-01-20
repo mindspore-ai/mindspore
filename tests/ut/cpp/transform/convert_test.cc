@@ -59,9 +59,9 @@ AnfGraphPtr createAnfGraph() { return std::make_shared<AnfGraph>(); }
 
 TEST_F(TestConvert, TestConstruct) {
   AnfGraphPtr func_graph = std::make_shared<AnfGraph>();
-  DfGraphConvertor convertor(func_graph);
-  convertor.ConvertAllNode().GetComputeGraph();
-  ASSERT_NE(convertor.ErrCode(), SUCCESS);
+  DfGraphConvertor converter(func_graph);
+  converter.ConvertAllNode().GetComputeGraph();
+  ASSERT_NE(converter.ErrCode(), SUCCESS);
 }
 
 #if (!defined ENABLE_GE)
@@ -75,11 +75,11 @@ bool MakeDfGraph(PrimitivePtr prim, unsigned int nparam) {
   draw::Draw("ut_prim_" + prim->name() + ".dot", anf_graph);
   DumpIR("ut_prim_" + prim->name() + ".ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph(prim->name() + ".dot");
-  if (convertor.ErrCode() != 0) {
-    MS_LOG(ERROR) << "DfGraphConvertor convert " << prim->name() << " error, error code is: " << convertor.ErrCode();
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph(prim->name() + ".dot");
+  if (converter.ErrCode() != 0) {
+    MS_LOG(ERROR) << "DfGraphConvertor convert " << prim->name() << " error, error code is: " << converter.ErrCode();
     return false;
   }
   if (df_graph == nullptr) {
@@ -103,10 +103,10 @@ TEST_F(TestConvert, TestConvertConv2d) {
   draw::Draw("ut_prim_conv2d1.dot", anf_graph);
   DumpIR("ut_prim_conv2d1.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("conv2d.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("conv2d.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -118,10 +118,10 @@ TEST_F(TestConvert, TestConvertMaxpooling) {
   draw::Draw("ut_prim_maxpooling.dot", anf_graph);
   DumpIR("ut_prim_maxpooling.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("maxpooling.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("maxpooling.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -141,9 +141,9 @@ TEST_F(TestConvert, TestReluOps) {
 
   // draw graph
   auto anfGraph = *(manager->func_graphs().begin());
-  DfGraphConvertor convertor(anfGraph);
-  convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anfGraph);
+  converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  ASSERT_EQ(converter.ErrCode(), 0);
 }
 
 TEST_F(TestConvert, TestConvertBatchNorm) {
@@ -180,10 +180,10 @@ TEST_F(TestConvert, TestConvertBatchNorm) {
   draw::Draw("ut_prim_batchnorm.dot", anf_graph);
   DumpIR("ut_prim_batchnorm.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("batchnrom.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("batchnrom.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -209,11 +209,11 @@ TEST_F(TestConvert, TestConvertConvBackpropInput) {
 
   // draw graph
   auto anf_graph = *(manager->func_graphs().begin());
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
 
-  convertor.DrawComputeGraph("Conv2DBackpropInput.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  converter.DrawComputeGraph("Conv2DBackpropInput.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -239,11 +239,11 @@ TEST_F(TestConvert, TestConvertConvBackpropFilter) {
 
   // draw graph
   auto anf_graph = *(manager->func_graphs().begin());
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
 
-  convertor.DrawComputeGraph("Conv2DBackpropFilter.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  converter.DrawComputeGraph("Conv2DBackpropFilter.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -264,11 +264,11 @@ TEST_F(TestConvert, TestConvertReluGrad) {
 
   // draw graph
   auto anf_graph = *(manager->func_graphs().begin());
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
 
-  convertor.DrawComputeGraph("ReluGrad.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  converter.DrawComputeGraph("ReluGrad.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -276,7 +276,6 @@ TEST_F(TestConvert, TestConvertBiasAdd) {
   auto prim = std::make_shared<Primitive>("BiasAdd");
   prim->AddAttr("alpha", MakeValue(0.0f));
   prim->AddAttr("beta", MakeValue(1.0f));
-  prim->AddAttr("format", MakeValue(static_cast<int64_t>(1)));
 
   auto func_graph = MakeFuncGraph(prim, 2);
   ASSERT_NE(func_graph, nullptr);
@@ -289,11 +288,11 @@ TEST_F(TestConvert, TestConvertBiasAdd) {
 
   // draw graph
   auto anf_graph = *(manager->func_graphs().begin());
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
 
-  convertor.DrawComputeGraph("BiasAdd.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  converter.DrawComputeGraph("BiasAdd.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -301,7 +300,6 @@ TEST_F(TestConvert, TestConvertBiasAddGrad) {
   auto prim = prim::kPrimBiasAddGrad;
   prim->AddAttr("alpha", MakeValue(0.0f));
   prim->AddAttr("beta", MakeValue(1.0f));
-  prim->AddAttr("format", MakeValue(static_cast<int64_t>(1)));
 
   auto func_graph = MakeFuncGraph(prim, 2);
   ASSERT_NE(func_graph, nullptr);
@@ -314,11 +312,11 @@ TEST_F(TestConvert, TestConvertBiasAddGrad) {
 
   // draw graph
   auto anf_graph = *(manager->func_graphs().begin());
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
 
-  convertor.DrawComputeGraph("BiasAddGrad.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  converter.DrawComputeGraph("BiasAddGrad.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -344,11 +342,11 @@ TEST_F(TestConvert, TestConvertMaxPoolGradWithArgmax) {
 
   // draw graph
   auto anf_graph = *(manager->func_graphs().begin());
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
 
-  convertor.DrawComputeGraph("MaxPoolGradWithArgmax.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  converter.DrawComputeGraph("MaxPoolGradWithArgmax.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -361,10 +359,10 @@ TEST_F(TestConvert, TestConcat) {
   draw::Draw("ut_prim_concat.dot", anf_graph);
   DumpIR("ut_prim_concat.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("concat.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("concat.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -377,10 +375,10 @@ TEST_F(TestConvert, TestGatherV2) {
   draw::Draw("ut_prim_gatherv2.dot", anf_graph);
   DumpIR("ut_prim_gatherv2.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("gatherv2.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("gatherv2.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -393,10 +391,10 @@ TEST_F(TestConvert, TestCast) {
   draw::Draw("ut_prim_cast.dot", anf_graph);
   DumpIR("ut_prim_cast.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("cast.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("cast.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -409,10 +407,10 @@ TEST_F(TestConvert, TestExp) {
   draw::Draw("ut_prim_exp.dot", anf_graph);
   DumpIR("ut_prim_exp.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("exp.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("exp.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -425,10 +423,10 @@ TEST_F(TestConvert, TestFloor) {
   draw::Draw("ut_prim_floor.dot", anf_graph);
   DumpIR("ut_prim_floor.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("floor.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("floor.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -441,10 +439,10 @@ TEST_F(TestConvert, TestGreaterEqual) {
   draw::Draw("ut_prim_greater_equal.dot", anf_graph);
   DumpIR("ut_prim_greater_equal.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("greater_equal.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("greater_equal.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -458,10 +456,10 @@ TEST_F(TestConvert, TestLess) {
   draw::Draw("ut_prim_less.dot", anf_graph);
   DumpIR("ut_prim_less.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("less.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("less.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -474,10 +472,10 @@ TEST_F(TestConvert, TestLessEqual) {
   draw::Draw("ut_prim_less_equal.dot", anf_graph);
   DumpIR("ut_prim_less_equal.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("less_equal.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("less_equal.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -490,10 +488,10 @@ TEST_F(TestConvert, TestLogicalNot) {
   draw::Draw("ut_prim_logical_not.dot", anf_graph);
   DumpIR("ut_prim_logical_not.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("logical_not.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("logical_not.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -507,10 +505,10 @@ TEST_F(TestConvert, TestAssignAdd) {
   draw::Draw("ut_prim_assign_add.dot", anf_graph);
   DumpIR("ut_prim_assign_add.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("assign_add.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("assign_add.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -524,10 +522,10 @@ TEST_F(TestConvert, LogSoftmax) {
   draw::Draw("ut_prim_log_softmax.dot", anf_graph);
   DumpIR("ut_prim_log_softmax.ir", anf_graph);
 
-  DfGraphConvertor convertor(anf_graph);
-  auto df_graph = convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  convertor.DrawComputeGraph("log_softmax.dot");
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anf_graph);
+  auto df_graph = converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  converter.DrawComputeGraph("log_softmax.dot");
+  ASSERT_EQ(converter.ErrCode(), 0);
   ASSERT_NE(df_graph, nullptr);
 }
 
@@ -693,9 +691,9 @@ TEST_F(TestConvert, TestAddOps) {
 
   // draw graph
   auto anfGraph = *(manager->func_graphs().begin());
-  DfGraphConvertor convertor(anfGraph);
-  convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anfGraph);
+  converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  ASSERT_EQ(converter.ErrCode(), 0);
 }
 
 TEST_F(TestConvert, TestConvertTensor) {
@@ -827,9 +825,9 @@ TEST_F(TestConvert, TestConvertMakeTuple) {
 
   // draw graph
   auto anfGraph = *(manager->func_graphs().begin());
-  DfGraphConvertor convertor(anfGraph);
-  convertor.ConvertAllNode().BuildGraph().GetComputeGraph();
-  ASSERT_EQ(convertor.ErrCode(), 0);
+  DfGraphConvertor converter(anfGraph);
+  converter.ConvertAllNode().BuildGraph().GetComputeGraph();
+  ASSERT_EQ(converter.ErrCode(), 0);
 }
 
 TEST_F(TestConvert, TestConvertInputTensors) {

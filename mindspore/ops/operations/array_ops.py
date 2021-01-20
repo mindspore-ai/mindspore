@@ -986,6 +986,8 @@ class Split(PrimitiveWithCheck):
             if output_valid_check != 0:
                 raise ValueError(f"x_shape[{self.axis}] {x_shape[self.axis]} must be divide exactly by"
                                  f" output_num {self.output_num}")
+        size_splits = [x_shape[self.axis] / self.output_num] * self.output_num
+        self.add_prim_attr('size_splits', size_splits)
 
 
 class Rank(PrimitiveWithInfer):
@@ -2403,7 +2405,7 @@ class Slice(PrimitiveWithInfer):
             validator.check_positive_int(size_v[i], f'input size[{i}]')
             if x_shape[i] < begin_v[i] + size_v[i]:
                 y = begin_v[i] + size_v[i]
-                raise ValueError("For '%s' slice shape can not bigger than orign shape %d, %d." %
+                raise ValueError("For '%s' slice shape can not bigger than origin shape %d, %d." %
                                  (self.name, x_shape[i], y))
         return {'shape': size_v,
                 'dtype': x['dtype'],
@@ -3658,6 +3660,7 @@ class SpaceToDepth(PrimitiveWithInfer):
         validator.check_value_type('block_size', block_size, [int], self.name)
         validator.check('block_size', block_size, '', 2, Rel.GE)
         self.block_size = block_size
+        self.add_prim_attr("data_format", "NCHW")
 
     def infer_shape(self, x_shape):
         validator.check('x dimension', len(x_shape), '', 4, Rel.EQ)
@@ -3719,6 +3722,7 @@ class DepthToSpace(PrimitiveWithInfer):
         validator.check_value_type('block_size', block_size, [int], self.name)
         validator.check('block_size', block_size, '', 2, Rel.GE, self.name)
         self.block_size = block_size
+        self.add_prim_attr("data_format", "NCHW")
 
     def infer_shape(self, x_shape):
         validator.check('x dimension', len(x_shape), '', 4, Rel.EQ)
@@ -4118,7 +4122,7 @@ class BroadcastTo(PrimitiveWithInfer):
     Raises:
         ValueError: Given a shape tuple, if it has several -1; or if the -1 is in an invalid position
             such as one that does not have a opposing dimension in an input tensor; or if the target and
-            input shapes are incompatiable.
+            input shapes are incompatible.
 
     Supported Platforms:
         ``Ascend`` ``GPU``

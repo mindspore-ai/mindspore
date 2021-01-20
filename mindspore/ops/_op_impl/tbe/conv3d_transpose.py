@@ -28,7 +28,7 @@ conv3d_transpose_op_info = TBERegOp("Conv3DTranspose") \
     .attr("pads", "required", "listInt", "all") \
     .attr("dilations", "optional", "listInt", "all") \
     .attr("groups", "optional", "int", "all") \
-    .attr("data_format", "optional", "str", "all") \
+    .attr("format", "optional", "str", "all") \
     .attr("output_padding", "optional", "listInt", "all") \
     .input(0, "x", False, "required", "all") \
     .input(1, "filter", False, "required", "all") \

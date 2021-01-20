@@ -501,10 +501,10 @@ class DepthwiseConv2dNativeBackpropFilter(PrimitiveWithInfer):
     Refer to class DepthwiseConv2dNative for more details.
 
     Args:
-        channel_multiplier (int): The multipiler for the original output conv.
+        channel_multiplier (int): The multiplier for the original output conv.
         kernel_size (int or tuple): The size of the conv kernel.
         mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution,
-                       2 deconvolution,3 depthwise convolution. Defaul: 3.
+                       2 deconvolution,3 depthwise convolution. Default: 3.
         pad_mode (str): The mode to fill padding which can be: "valid", "same" or "pad". Default: "valid".
         pad (int): The pad value to be filled. Default: 0.
         pads (tuple): The pad list like (top, bottom, left, right). Default: (0, 0, 0, 0).
@@ -562,7 +562,7 @@ class DepthwiseConv2dNativeBackpropInput(PrimitiveWithInfer):
     Applies depthwise conv2d for the input, which will generate more channels with channel_multiplier.
 
     Args:
-        channel_multiplier (int): The multipiler for the original output conv.
+        channel_multiplier (int): The multiplier for the original output conv.
         kernel_size (int or tuple): The size of the conv kernel.
         mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
                     2 deconvolution,3 depthwise convolution. Default: 3.
@@ -1799,7 +1799,7 @@ class SmoothL1LossGrad(PrimitiveWithInfer):
 
     @prim_attr_register
     def __init__(self, beta=1.0):
-        self.add_prim_attr('sigma', beta)
+        pass
 
     def infer_shape(self, prediction, target, dloss):
         validator.check('prediction shape', prediction, 'target shape', target, Rel.EQ, self.name)

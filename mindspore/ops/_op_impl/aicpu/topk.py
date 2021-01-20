@@ -19,7 +19,7 @@ from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataTyp
 top_k_op_info = AiCPURegOp("TopK") \
     .fusion_type("OPAQUE") \
     .attr("sorted", "bool")\
-    .input(0, "intput", "required") \
+    .input(0, "input", "required") \
     .input(1, "k", "required") \
     .output(0, "values", "required") \
     .output(1, "indices", "required") \

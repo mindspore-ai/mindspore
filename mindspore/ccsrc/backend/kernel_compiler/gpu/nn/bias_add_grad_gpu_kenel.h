@@ -78,7 +78,7 @@ class BiasAddGradGpuKernel : public GpuKernel {
       MS_LOG(EXCEPTION) << "input dims must be at least 2, but got " << num_dims;
     }
 
-    std::string format = GetAttr<std::string>(kernel_node, "data_format");
+    std::string format = GetAttr<std::string>(kernel_node, "format");
     string::size_type pos = format.find("C");
     if (pos == std::string::npos || pos >= num_dims) {
       MS_LOG(EXCEPTION) << "format '" << format << "' invalid";
