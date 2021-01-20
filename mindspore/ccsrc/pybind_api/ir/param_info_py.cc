@@ -32,6 +32,8 @@ REGISTER_PYBIND_DEFINE(ParamInfo, ([](const py::module *m) {
                            .def_property("parallel_optimizer", &ParamInfo::parallel_optimizer,
                                          &ParamInfo::set_parallel_optimizer)
                            .def_property("comm_fusion", &ParamInfo::comm_fusion, &ParamInfo::set_comm_fusion)
+                           .def_property("cache_enable", &ParamInfo::cache_enable, &ParamInfo::set_cache_enable)
+                           .def_property("cache_shape", &ParamInfo::cache_shape, &ParamInfo::set_cache_shape)
                            .def(py::pickle(
                              [](const ParamInfo &p) {  // __getstate__
                                return py::make_tuple(p.name(), p.requires_grad(), p.layerwise_parallel());

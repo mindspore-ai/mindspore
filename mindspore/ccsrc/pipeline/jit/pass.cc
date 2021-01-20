@@ -36,11 +36,14 @@
 #include "frontend/optimizer/graph_transform.h"
 #include "frontend/parallel/step_parallel.h"
 #include "frontend/parallel/step_auto_parallel.h"
+#include "frontend/parallel/cache_embedding/cache_embedding.h"
 #include "frontend/parallel/allreduce_fusion/step_allreduce_fusion.h"
 #include "frontend/optimizer/recompute.h"
 #include "utils/log_adapter.h"
 #include "pipeline/jit/pipeline_split.h"
-
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+#include "ps/util.h"
+#endif
 namespace mindspore {
 namespace pipeline {
 using OptPassGroupMap = opt::OptPassGroupMap;
@@ -391,6 +394,26 @@ bool AddRecomputationPass(const ResourcePtr &res) {
   return true;
 }
 
+bool AddCacheEmbeddingPass(const ResourcePtr &res) {
+#if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
+  if (ps::Util::IsParamServerMode()) {
+    return true;
+  }
+#endif
+  FuncGraphPtr func_graph = res->func_graph();
+  MS_EXCEPTION_IF_NULL(func_graph);
+
+  parallel::AddCacheEmbedding(func_graph);
+  if (func_graph->has_flag(GRAPH_FLAG_CACHE_ENABLE)) {
+    auto params = func_graph->parameters();
+    AbstractBasePtrList args_spec_list;
+    std::for_each(params.begin(), params.end(),
+                  [&args_spec_list](const AnfNodePtr &node) { args_spec_list.push_back(node->abstract()); });
+    func_graph = pipeline::Renormalize(res, func_graph, args_spec_list);
+  }
+  return true;
+}
+
 bool MergeDupGraphPass(const ResourcePtr &res) {
   FuncGraphPtr func_graph = res->func_graph();
   MS_EXCEPTION_IF_NULL(func_graph);
@@ -500,6 +523,7 @@ std::vector<PassItem> kVmPasses = {{"simplify_data_structures", SimplifyDataStru
                                    {"tuple_transform", OptPassTransformGraphGroup},
                                    {"opt_graph_kernel_a", OptPassGraphKernelGroupA},
                                    {"opt_graph_kernel_b", OptPassGraphKernelGroupB},
+                                   {"add_cache_embedding", AddCacheEmbeddingPass},
                                    {"add_control_depend", AddControlDependPass},
                                    {"add_recomputation", AddRecomputationPass}};
 

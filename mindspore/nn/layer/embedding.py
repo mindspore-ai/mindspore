@@ -172,8 +172,8 @@ class EmbeddingLookup(Cell):
                                        or None. Default: None
         sparse (bool): Using sparse mode. When 'target' is set to 'CPU', 'sparse' has to be true. Default: True.
         vocab_cache_size (int): Cache size of the dictionary of embeddings. Default: 0. It is valid only in
-            parameter server trainning mode and 'DEVICE' target. And the moment parameter of corresponding
-            optimizer will also be set to the cache size. In addition, it should be noted that it will cost the 'DEVICE'
+            'DEVICE' target. And the moment parameter of corresponding optimizer will also be set to the cache size.
+            In addition, it should be noted that it will cost the 'DEVICE'
             memory, so suggests setting a reasonable value to avoid insufficient memory.
 
     Inputs:
@@ -205,7 +205,12 @@ class EmbeddingLookup(Cell):
                  max_norm=None, sparse=True, vocab_cache_size=0):
         super(EmbeddingLookup, self).__init__()
         validator.check_value_type('sparse', sparse, [bool], self.cls_name)
+        self.vocab_size = validator.check_positive_int(vocab_size, 'vocab_size')
+        self.vocab_cache_size = validator.check_non_negative_int(vocab_cache_size, 'vocab_cache_size')
         self.target = target
+        self.sparse = sparse
+        self.cache_enable = self.vocab_cache_size > 0
+        self.forward_unique = False
         if target not in ('CPU', 'DEVICE'):
             raise ValueError('Attr \'target\' of \'EmbeddingLookup\' Op passed '
                              + str(target) + ', should be one of values in \'CPU\', \'DEVICE\'.')
@@ -216,21 +221,23 @@ class EmbeddingLookup(Cell):
         else:
             self.gatherv2 = P.GatherV2()
         self.embeddinglookup = P.EmbeddingLookup().add_prim_attr('primitive_target', 'CPU')
-        self.vocab_size = validator.check_positive_int(vocab_size, 'vocab_size')
-        self.vocab_cache_size = validator.check_non_negative_int(vocab_cache_size, 'vocab_cache_size')
-        self._process_vocab_cache(slice_mode)
+        enable_ps = _get_ps_context("enable_ps")
+        if enable_ps:
+            self._process_vocab_cache(slice_mode)
         self.embedding_size = validator.check_positive_int(embedding_size, 'embedding_size')
         self.embedding_table = Parameter(initializer(param_init, [self.vocab_size, self.embedding_size]),
                                          name='embedding_table')
-        if self.cache_enable:
-            self._set_voacb_cache_enable(vocab_cache_size, embedding_size, vocab_size)
+        if self.cache_enable and enable_ps:
+            self._set_voacb_cache_enable_for_ps(vocab_cache_size, embedding_size, vocab_size)
         parallel_mode = _get_parallel_mode()
         is_auto_parallel = parallel_mode in (ParallelMode.SEMI_AUTO_PARALLEL, ParallelMode.AUTO_PARALLEL)
-        self.forward_unique = False
         self.gather_revert = P.GatherV2()
-        self.unique = P.Unique().shard(((1,),))
+        self.reshape_first = P.Reshape()
         self.reshape = P.Reshape()
+        self.unique = P.Unique()
         self.shape = P.Shape()
+        if is_auto_parallel:
+            self.unique = P.Unique().shard(((1,),))
         indices_shape_size = 2
         if slice_mode == "field_slice" and is_auto_parallel:
             if not manual_shapes:
@@ -270,11 +277,33 @@ class EmbeddingLookup(Cell):
             if is_auto_parallel:
                 raise ValueError("slice_mode should support mode in nn.EmbeddingLookup, but get "
                                  + str(slice_mode))
+        if self.cache_enable and not enable_ps:
+            if is_auto_parallel:
+                raise ValueError("parallel mode haven't supported cache enable yet.")
+            self._set_cache_enable()
         self.embedding_table.unique = self.forward_unique
         self.max_norm = max_norm
         if self.max_norm is not None:
             self.max_norm = validator.check_positive_float(self.max_norm, 'max_norm', self.cls_name)
             self.max_norm = Tensor(self.max_norm, dtype=mstype.float32)
+
+    def _set_cache_enable(self):
+        """EmbeddingLookup cache check for not ps env."""
+        if self.target != 'DEVICE':
+            logger.warning("The configuration of 'vocab_cache_size' is valid only in 'DEVICE' target, "
+                           "so it will be ignored.")
+            return
+        if not self.sparse:
+            logger.warning("The configuration of 'vocab_cache_size' is valid only 'sparse' is true, "
+                           "so it will be ignored.")
+            return
+        logger.info("EmbeddingLookup cache enable takes effect.")
+        self.forward_unique = True
+        self.unique = P.Unique().add_prim_attr('primitive_target', 'CPU')
+        self.unique.add_prim_attr('cache_enable', True)
+        self.embedding_table.cache_enable = self.cache_enable
+        self.embedding_table.cache_shape = (self.vocab_cache_size, self.embedding_size)
+        self.reshape_first = P.Reshape().add_prim_attr('primitive_target', 'CPU')
 
     def _process_vocab_cache(self, slice_mode):
         """PS embeddingLookup cache check and process."""
@@ -302,7 +331,7 @@ class EmbeddingLookup(Cell):
             if _is_role_worker():
                 self.vocab_size = self.vocab_cache_size
 
-    def _set_voacb_cache_enable(self, vocab_cache_size, embedding_size, vocab_size):
+    def _set_voacb_cache_enable_for_ps(self, vocab_cache_size, embedding_size, vocab_size):
         """PS embeddingLookup cache enable set."""
         self.embedding_table.cache_enable = True
         self.embedding_table.is_param_ps = True
@@ -316,7 +345,7 @@ class EmbeddingLookup(Cell):
         else:
             if self.forward_unique:
                 shp = self.shape(indices) + (self.embedding_size,)
-                indices_flatten = self.reshape(indices, (-1,))
+                indices_flatten = self.reshape_first(indices, (-1,))
                 unique_id, unique_idx = self.unique(indices_flatten)
                 weight_unique = self.gatherv2(self.embedding_table, unique_id, 0)
                 weight_flatten = self.gather_revert(weight_unique, unique_idx, 0)

@@ -23,8 +23,6 @@
 #include "backend/kernel_compiler/cpu/cpu_kernel.h"
 #include "backend/kernel_compiler/cpu/cpu_kernel_factory.h"
 
-#define NULLTAG 0
-
 namespace mindspore {
 namespace kernel {
 class MapCacheIdxCPUKernel : public CPUKernel {

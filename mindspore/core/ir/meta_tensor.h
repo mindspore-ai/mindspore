@@ -167,7 +167,6 @@ class MetaTensor : public Value {
   // Get tensor's param_info info.
   ParamInfoPtr param_info() const { return param_info_; }
   bool is_parameter() const { return is_parameter_; }
-
   // Set tensor's param_info info.
   void set_param_info(const ParamInfoPtr &param_info) {
     is_parameter_ = true;

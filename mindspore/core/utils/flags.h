@@ -21,6 +21,7 @@ extern const char GRAPH_FLAG_MIX_PRECISION_FP16[];
 extern const char GRAPH_FLAG_MIX_PRECISION_FP32[];
 extern const char GRAPH_FLAG_HAS_EFFECT[];
 extern const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[];
+extern const char GRAPH_FLAG_CACHE_ENABLE[];
 extern const char GRAPH_FLAG_RANDOM_EFFECT[];
 extern const char GRAPH_FLAG_SIDE_EFFECT[];
 

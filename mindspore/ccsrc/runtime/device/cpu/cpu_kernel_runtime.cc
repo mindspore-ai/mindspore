@@ -268,7 +268,7 @@ void CPUKernelRuntime::CreateOutputTensors(session::KernelGraph *kernel_graph,
   bound_addresses_.clear();
   auto output_nodes = kernel_graph->outputs();
   for (const auto &item : output_nodes) {
-    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(item, 0, true);
+    auto item_with_index = AnfAlgo::VisitKernelWithReturnType(item, 0, false);
     auto out = CreatTensorForOutput(kernel_graph, item_with_index, tensor_to_node);
     outputs->push_back(std::move(out));
   }

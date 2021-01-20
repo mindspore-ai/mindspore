@@ -274,6 +274,10 @@ tensor::TensorPtr CreateTupleTensor(const ValueTuplePtr &value_tuple) {
 bool IsNopNode(const AnfNodePtr &node) {
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
+  auto target = GetCNodeTarget(node);
+  if (target == kCPUDevice) {
+    return false;
+  }
   if (context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kAscendDevice &&
       context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET) != kGPUDevice) {
     return false;

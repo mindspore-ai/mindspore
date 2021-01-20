@@ -156,8 +156,8 @@ class Optimizer(Cell):
                 break
         ps_filter = lambda x: x.is_param_ps
         self.ps_parameters = tuple(ps_filter(x) for x in self.parameters)
-        ps_cache_filter = lambda x: x.cache_enable
-        self.cache_enable = tuple(ps_cache_filter(x) for x in self.parameters)
+        cache_filter = lambda x: x.cache_enable
+        self.cache_enable = tuple(cache_filter(x) for x in self.parameters)
         self.reciprocal_scale = Tensor(1.0 / loss_scale, mstype.float32)
         self.need_scale = loss_scale != 1.0
         self.global_step_increase_tensor = Tensor(1, mstype.int32)

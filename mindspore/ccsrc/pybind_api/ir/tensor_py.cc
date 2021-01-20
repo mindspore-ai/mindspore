@@ -24,6 +24,7 @@
 #include "pybind_api/api_register.h"
 #include "abstract/abstract_value.h"
 #include "utils/shape_utils.h"
+#include "utils/cache_embedding_hashmap_struct.h"
 
 namespace mindspore {
 namespace tensor {
@@ -272,6 +273,68 @@ py::int_ TensorPy::GetPyItemSize(const Tensor &tensor) { return tensor.data().it
 
 py::int_ TensorPy::GetPyNBytes(const Tensor &tensor) { return tensor.data().nbytes(); }
 
+template <typename T>
+void MemCopyFromCacheToHost(void *hashmap_addr, void *host_addr, void *cache_addr, size_t host_max, size_t cache_max,
+                            size_t hashmap_size, size_t col_size) {
+  auto host_data = static_cast<char *>(host_addr);
+  auto cache_data = static_cast<char *>(cache_addr);
+  auto hashmap_data = static_cast<HashmapEntry<T> *>(hashmap_addr);
+  // default param type float
+  size_t param_type_size = 4;
+  size_t single_col_bytes = param_type_size * col_size;
+  for (size_t i = 0; i < hashmap_size; ++i) {
+    if (!hashmap_data[i].IsEmpty()) {
+      size_t host_offset = single_col_bytes * hashmap_data[i].key_;
+      size_t cache_offset = single_col_bytes * hashmap_data[i].value_;
+      if (cache_offset + single_col_bytes <= cache_max) {
+        auto ret =
+          memcpy_s(host_data + host_offset, host_max - host_offset, cache_data + cache_offset, single_col_bytes);
+        if (ret != 0) {
+          MS_LOG(EXCEPTION) << "Memcpy failed.";
+        }
+      }
+    }
+  }
+  MS_LOG(INFO) << "Memcpy from cache to host success!";
+}
+
+void TensorPy::FlushFromCache(const Tensor &tensor) {
+  py::gil_scoped_release gil_release;
+  if (tensor.NeedWait()) {
+    tensor.Wait();
+  }
+  tensor.data_sync();
+
+  if (tensor.cache_enable()) {
+    MS_LOG(INFO) << tensor.ToString() << " is cache enable.";
+    auto hashmap_tensor_ptr = tensor.hashmap_tensor_ptr();
+    auto cache_tensor_ptr = tensor.cache_tensor_ptr();
+    if (hashmap_tensor_ptr != nullptr && cache_tensor_ptr != nullptr) {
+      hashmap_tensor_ptr->data_sync();
+      cache_tensor_ptr->data_sync();
+      auto hashmap_size = hashmap_tensor_ptr->shape_c()[0];
+      auto host_shape = tensor.shape_c();
+      auto cache_shape = cache_tensor_ptr->shape_c();
+      if (host_shape.size() != 2 && host_shape.size() != 2 && host_shape[1] != cache_shape[1]) {
+        MS_LOG(EXCEPTION) << "Got host shape and cache shape invalid."
+                          << "host shape:" << host_shape << ", cache shape:" << cache_shape;
+      }
+      auto host_data_max_size = tensor.Size();
+      auto cache_data_max_size = cache_tensor_ptr->Size();
+      auto hashmap_data_type = hashmap_tensor_ptr->data_type();
+      if (hashmap_data_type == TypeId::kNumberTypeInt32) {
+        MemCopyFromCacheToHost<int32_t>(hashmap_tensor_ptr->data_c(), tensor.data_c(), cache_tensor_ptr->data_c(),
+                                        host_data_max_size, cache_data_max_size, hashmap_size, host_shape[1]);
+      } else if (hashmap_data_type == TypeId::kNumberTypeInt64) {
+        MemCopyFromCacheToHost<int32_t>(hashmap_tensor_ptr->data_c(), tensor.data_c(), cache_tensor_ptr->data_c(),
+                                        host_data_max_size, cache_data_max_size, hashmap_size, host_shape[1]);
+      } else {
+        MS_LOG(ERROR) << "Hashmap dtype only suppotr int32, in64.";
+      }
+    }
+  }
+}
+
 py::array TensorPy::SyncAsNumpy(const Tensor &tensor) {
   {
     py::gil_scoped_release gil_release;
@@ -456,6 +519,16 @@ REGISTER_PYBIND_DEFINE(Tensor, ([](const py::module *m) {
                                  >>> array
                                  array([[1., 1., 1.],
                                         [1., 1., 1.]])
+                             )mydelimiter")
+                           .def("_flush_from_cache", TensorPy::FlushFromCache, R"mydelimiter(
+                             Flush Cache data to Host if tensor is cache enable.
+
+                             Returns:
+                                 None.
+
+                             Examples:
+                                 >>> data = mindspore.Tensor(np.ones((2, 3)))
+                                 >>> data._flush_from_cache()
                              )mydelimiter")
                            .def("is_init", &Tensor::is_init, R"mydelimiter(
                              Get tensor init_flag.

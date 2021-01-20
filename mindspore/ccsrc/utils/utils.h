@@ -350,6 +350,7 @@ constexpr auto kAttrPrimitiveTarget = "primitive_target";
 constexpr auto kAttrUseLocking = "use_locking";
 constexpr auto kAttrReduceScatterFlag = "reduce_scatter_flag";
 constexpr auto kAttrOffset = "offset";
+constexpr auto kAttrCacheEnable = "cache_enable";
 constexpr auto kAttrPsKey = "ps_key";
 constexpr auto kAttrOptimizerType = "optim_type";
 constexpr auto kAttrChildGraph = "child_graph";

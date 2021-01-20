@@ -57,8 +57,8 @@ def init_var_dict(init_args, in_vars):
     """
     var_map = {}
     _, _max_val = init_args
-    for _, iterm in enumerate(in_vars):
-        key, shape, method = iterm
+    for _, item in enumerate(in_vars):
+        key, shape, method = item
         if key not in var_map.keys():
             if method in ['random', 'uniform']:
                 var_map[key] = Parameter(initializer(Uniform(_max_val), shape,

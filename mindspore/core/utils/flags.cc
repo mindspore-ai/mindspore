@@ -21,6 +21,7 @@ const char GRAPH_FLAG_MIX_PRECISION_FP16[] = "fp16";
 const char GRAPH_FLAG_MIX_PRECISION_FP32[] = "fp32";
 const char GRAPH_FLAG_HAS_EFFECT[] = "has_effect";
 const char GRAPH_FLAG_EFFECT_PATIAL_ORDER[] = "_effect_patial_order";
+const char GRAPH_FLAG_CACHE_ENABLE[] = "cache_enable";
 const char GRAPH_FLAG_RANDOM_EFFECT[] = "_random_effect";
 const char GRAPH_FLAG_SIDE_EFFECT[] = "_side_effect";
 

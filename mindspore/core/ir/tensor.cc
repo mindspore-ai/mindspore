@@ -449,6 +449,9 @@ Tensor::Tensor(const Tensor &tensor)
       event_(tensor.event_),
       sync_status_(tensor.sync_status_),
       device_sync_(tensor.device_sync_),
+      cache_enable_(tensor.cache_enable_),
+      cache_tensor_ptr_(tensor.cache_tensor_ptr_),
+      hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       padding_type_(tensor.padding_type()) {}
 
 Tensor::Tensor(const Tensor &tensor, TypeId data_type)
@@ -459,6 +462,9 @@ Tensor::Tensor(const Tensor &tensor, TypeId data_type)
       event_(tensor.event_),
       sync_status_(tensor.sync_status_),
       device_sync_(tensor.device_sync_),
+      cache_enable_(tensor.cache_enable_),
+      cache_tensor_ptr_(tensor.cache_tensor_ptr_),
+      hashmap_tensor_ptr_(tensor.hashmap_tensor_ptr_),
       padding_type_(tensor.padding_type()) {}
 
 Tensor::Tensor(TypeId data_type, const ShapeVector &shape, TensorDataPtr data)
@@ -511,7 +517,7 @@ bool Tensor::ValueEqual(const Tensor &tensor) const {
   return (&tensor == this || (MetaTensor::operator==(tensor) && data_->equals(*tensor.data_)));
 }
 
-// assgin value to this tensor
+// assign value to this tensor
 Tensor &Tensor::AssignValue(const Tensor &tensor) {
   if (this != &tensor) {
     MetaTensor::operator=(tensor);
