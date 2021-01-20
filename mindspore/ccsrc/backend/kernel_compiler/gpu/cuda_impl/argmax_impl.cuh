@@ -16,8 +16,8 @@
 
 #ifndef MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_ARGMAX_IMPL_CUH_
 #define MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_ARGMAX_IMPL_CUH_
-template <typename T>
-void CalArgmax(const T *input, const int batch_size, const int channel_size, const int64_t axis, int *output,
+template <typename T, typename S>
+void CalArgmax(const T *input, const S bound, const size_t outer_size, const size_t inner_size, S *output,
                cudaStream_t cuda_stream);
 
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_GPU_CUDA_IMPL_ARGMAX_IMPL_CUH_

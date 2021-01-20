@@ -23,11 +23,10 @@
 #include "backend/kernel_compiler/gpu/cuda_impl/argmax_impl.cuh"
 namespace mindspore {
 namespace kernel {
-#define ARGMAX_MAX_DIMENSION 2
-template <typename T>
+template <typename T, typename S>
 class ArgmaxGpuKernel : public GpuKernel {
  public:
-  ArgmaxGpuKernel() : input_size_(0), output_size_(0), workspace_size_(0), batch_size_(0), channel_size_(0), axis_(0) {}
+  ArgmaxGpuKernel() : input_size_(0), output_size_(0), workspace_size_(0), bound_(0), outer_size_(0), inner_size_(0) {}
   ~ArgmaxGpuKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -37,47 +36,38 @@ class ArgmaxGpuKernel : public GpuKernel {
   bool Launch(const std::vector<AddressPtr> &inputs, const std::vector<AddressPtr> &,
               const std::vector<AddressPtr> &outputs, void *stream_ptr) override {
     T *input = GetDeviceAddress<T>(inputs, 0);
-    int *output = GetDeviceAddress<int>(outputs, 0);
-    CalArgmax(input, SizeToInt(batch_size_), SizeToInt(channel_size_), axis_, output,
-              reinterpret_cast<cudaStream_t>(stream_ptr));
+    S *output = GetDeviceAddress<S>(outputs, 0);
+    CalArgmax(input, bound_, outer_size_, inner_size_, output, reinterpret_cast<cudaStream_t>(stream_ptr));
     return true;
   }
 
   bool Init(const CNodePtr &kernel_node) override {
-    size_t input_num = AnfAlgo::GetInputTensorNum(kernel_node);
-    if (input_num != 1) {
-      MS_LOG(ERROR) << "Input number is " << input_num << ", but argmax needs 1 input.";
-      return false;
+    auto shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
+    auto output_shape = AnfAlgo::GetOutputInferShape(kernel_node, 0);
+    int64_t dims = shape.size();
+    int64_t axis = GetAttr<int64_t>(kernel_node, "axis");
+    if (axis < 0) {
+      axis += dims;
     }
-    size_t output_num = AnfAlgo::GetOutputTensorNum(kernel_node);
-    if (output_num != 1) {
-      MS_LOG(ERROR) << "Output number is " << output_num << ", but argmax needs 1 output.";
-      return false;
+    input_size_ = sizeof(T);
+    for (auto x : shape) {
+      input_size_ *= x;
     }
-    auto output_type = GetValue<TypePtr>(AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr("output_type"));
-    if (output_type->type_id() != TypeId::kNumberTypeInt32) {
-      MS_LOG(EXCEPTION) << "Argmax only supports int32 output type.";
+    output_size_ = sizeof(S);
+    for (auto x : output_shape) {
+      output_size_ *= x;
     }
-    auto input_shape = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, 0);
-    if (input_shape.size() > ARGMAX_MAX_DIMENSION) {
-      MS_LOG(EXCEPTION) << "Input is " << input_shape.size() << "-D, but Argmax supports max " << ARGMAX_MAX_DIMENSION
-                        << "-D inputs.";
+    bound_ = static_cast<S>(shape[axis]);
+    if (shape[axis] != static_cast<size_t>(bound_)) {
+      MS_LOG(EXCEPTION) << "Bound's shape is larger than index type and overflows when casting.";
     }
-
-    axis_ = GetAttr<int64_t>(kernel_node, "axis");
-    if (axis_ < 0) {
-      axis_ += static_cast<int64_t>(input_shape.size());
+    outer_size_ = 1;
+    for (int64_t i = axis - 1; i >= 0; i--) {
+      outer_size_ *= shape[i];
     }
-    if (input_shape.size() == 1) {
-      batch_size_ = 0;
-      channel_size_ = input_shape[0];
-      input_size_ = sizeof(T) * channel_size_;
-      output_size_ = sizeof(int);
-    } else {
-      batch_size_ = input_shape[0];
-      channel_size_ = input_shape[1];
-      input_size_ = sizeof(T) * batch_size_ * channel_size_;
-      output_size_ = (axis_ == 1) ? sizeof(int) * batch_size_ : sizeof(int) * channel_size_;
+    inner_size_ = 1;
+    for (int64_t i = axis + 1; i < dims; i++) {
+      inner_size_ *= shape[i];
     }
     InitSizeLists();
     return true;
@@ -96,9 +86,9 @@ class ArgmaxGpuKernel : public GpuKernel {
   std::vector<size_t> input_size_list_;
   std::vector<size_t> output_size_list_;
   std::vector<size_t> workspace_size_list_;
-  size_t batch_size_;
-  size_t channel_size_;
-  int64_t axis_;
+  S bound_;
+  size_t outer_size_;
+  size_t inner_size_;
 };
 }  // namespace kernel
 }  // namespace mindspore

@@ -18,9 +18,9 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(Argmax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
-                      ArgmaxGpuKernel, float)
-MS_REG_GPU_KERNEL_ONE(Argmax, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
-                      ArgmaxGpuKernel, half)
+MS_REG_GPU_KERNEL_TWO(Argmax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeInt32),
+                      ArgmaxGpuKernel, float, int)
+MS_REG_GPU_KERNEL_TWO(Argmax, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeInt32),
+                      ArgmaxGpuKernel, half, int)
 }  // namespace kernel
 }  // namespace mindspore
