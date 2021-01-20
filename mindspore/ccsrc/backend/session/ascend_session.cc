@@ -30,6 +30,7 @@
 #include "runtime/device/ascend/kernel_select_ascend.h"
 #include "runtime/device/ascend/kernel_build_ascend.h"
 #include "runtime/device/ascend/ascend_kernel_runtime.h"
+#include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
 #include "backend/optimizer/ascend/mindir/dropout_unify_mindir.h"
@@ -65,6 +66,11 @@
 #include "ps/util.h"
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
+#include "profiler/device/common/memory_profiling.h"
+
+using mindspore::device::ascend::ProfilingManager;
+using mindspore::profiler::MemoryProfiling;
+
 static constexpr uint32_t kLabelSwitchLabelId = 2;
 namespace mindspore {
 namespace session {
@@ -779,6 +785,15 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   root_graph->SetInputNodes();
   root_graph->SetOptimizerFlag();
   DumpAllGraphs(all_graphs);
+  // Save memory profiling data to proto file
+  if (ProfilingManager::GetInstance().IsProfiling()) {
+    auto runtime_instance = device::KernelRuntimeManager::Instance().GetKernelRuntime(kAscendDevice, device_id_);
+    MS_EXCEPTION_IF_NULL(runtime_instance);
+    uint64_t mem_size = runtime_instance->GetAvailableMemMaxSize();
+    auto instance = MemoryProfiling::GetInstance();
+    instance.SetDeviceMemSize(mem_size);
+    instance.SaveMemoryProfiling();
+  }
   // return the root_graph id to backend
   auto graph_id = root_graph->graph_id();
   return graph_id;

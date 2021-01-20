@@ -18,8 +18,10 @@
 #include <string>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "utils/ms_context.h"
+
 using mindspore::memreuse::BestFitMemReuse;
 using mindspore::memreuse::MemReuseUtilPtr;
+
 namespace mindspore {
 namespace device {
 size_t MemoryManager::GetCommonAlignSize(size_t input_size) const {
@@ -139,11 +141,11 @@ uint8_t *MemoryManager::MallocWorkSpaceMem(const AnfNodePtr &node, size_t index,
   return MallocDynamicMem(size, false);
 }
 
-uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddressPtr &address) {
+uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddressPtr &address, uint32_t graph_id) {
   MS_EXCEPTION_IF_NULL(address);
   uint8_t *ptr = nullptr;
   if (type == kStaticMem) {
-    ptr = MallocStaticMem(size, false);
+    ptr = MallocStaticMem(size, false, graph_id);
     address->from_mem_pool_ = true;
   } else if (type == kDynamicMem) {
     ptr = MallocDynamicMem(size, false);
@@ -152,7 +154,7 @@ uint8_t *MemoryManager::MallocMem(MemType type, size_t size, const DeviceAddress
   return ptr;
 }
 
-uint8_t *MemoryManager::MallocStaticMem(size_t size, bool communication_mem) {
+uint8_t *MemoryManager::MallocStaticMem(size_t size, bool communication_mem, uint32_t graph_id) {
   size_t align_size = 0;
   if (communication_mem) {
     align_size = GetCommunicationAlignSize(size);

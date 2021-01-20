@@ -94,8 +94,8 @@ REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                            .value("save_graphs_path", MsCtxParam::MS_CTX_SAVE_GRAPHS_PATH)
                            .value("variable_memory_max_size", MsCtxParam::MS_CTX_VARIABLE_MEMORY_MAX_SIZE)
                            .value("device_id", MsCtxParam::MS_CTX_DEVICE_ID)
-                           .value("max_call_depth", MsCtxParam::MS_CTX_MAX_CALL_DEPTH);
-
+                           .value("max_call_depth", MsCtxParam::MS_CTX_MAX_CALL_DEPTH)
+                           .value("profiling_dir_path", MsCtxParam::MS_CTX_PROFILING_DIR_PATH);
                          (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
                            .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
                            .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified paramter.")

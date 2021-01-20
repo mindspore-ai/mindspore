@@ -360,7 +360,7 @@ void KernelRuntime::AssignStaticMemoryInput(const session::KernelGraph *graph) {
       auto tensor_size = CountNodeDeviceMemorySize(item, index);
       device_address = CreateDeviceAddress(nullptr, tensor_size, AnfAlgo::GetOutputFormat(item, index), output_type_id);
       MS_LOG(DEBUG) << "Malloc static memory for " << item->fullname_with_scope();
-      if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address) == nullptr) {
+      if (mem_manager_->MallocMem(kStaticMem, tensor_size, device_address, graph->graph_id()) == nullptr) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
       }
       MS_LOG(INFO) << "Malloc Input for graph " << graph->graph_id() << ", node: " << item->fullname_with_scope()
@@ -629,6 +629,10 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
   MS_EXCEPTION_IF_NULL(ms_context);
   std::vector<tensor::TensorPtr> tensors;
   TensorValueToTensor(node_value, &tensors);
+  // Graph id should be passed to record static memory if profiling is enabled.
+  auto kernel_info = static_cast<device::KernelInfo *>(value_node->kernel_info());
+  MS_EXCEPTION_IF_NULL(kernel_info);
+  uint32_t graph_id = kernel_info->graph_id();
   for (const auto &tensor : tensors) {
     if (tensor == nullptr) {
       MS_LOG(WARNING) << "Tensor is null";
@@ -651,7 +655,7 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
     if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
         !mem_manager_->MallocMemFromMemPool(address, node_size)) {
       MS_LOG(EXCEPTION) << "Cannot alloc address from memory pool when tensor size is: " << node_size;
-    } else if (mem_manager_->MallocMem(kStaticMem, node_size, address) == nullptr) {
+    } else if (mem_manager_->MallocMem(kStaticMem, node_size, address, graph_id) == nullptr) {
       MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << node_size;
     }
     AnfAlgo::SetOutputAddr(address, output_idx, value_node.get());
@@ -662,6 +666,8 @@ void KernelRuntime::AssignValueNodeTensor(const ValueNodePtr &value_node, const 
                                    << "node dtype is " << AnfAlgo::GetOutputInferDataType(value_node, output_idx);
     }
   }
+
+  return;
 }
 
 void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
@@ -690,7 +696,7 @@ void KernelRuntime::AssignStaticMemoryValueNode(session::KernelGraph *graph) {
       if (ms_context->get_param<bool>(MS_CTX_ENABLE_PYNATIVE_INFER) &&
           !mem_manager_->MallocMemFromMemPool(address, tensor_size)) {
         MS_LOG(EXCEPTION) << "Cannot alloc address from memory pool when tensor size is: " << tensor_size;
-      } else if (mem_manager_->MallocMem(kStaticMem, tensor_size, address) == nullptr) {
+      } else if (mem_manager_->MallocMem(kStaticMem, tensor_size, address, graph->graph_id()) == nullptr) {
         MS_LOG(EXCEPTION) << "Cannot alloc address when flag is: " << kStaticMem << ", tensor size is: " << tensor_size;
       }
       AnfAlgo::SetOutputAddr(address, 0, value_node.get());
