@@ -14,9 +14,10 @@
 # ============================================================================
 """ Test for GraphCloner """
 from mindspore.ops import Primitive
+from mindspore.ops import _constants as Constants
 
-scala_add = Primitive('scalar_add')
-scalar_mul = Primitive('scalar_mul')
+scala_add = Primitive(Constants.kScalarAdd)
+scalar_mul = Primitive(Constants.kScalarMul)
 
 
 def test_clone_simple():

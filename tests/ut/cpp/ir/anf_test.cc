@@ -21,6 +21,7 @@
 #include "ir/anf.h"
 #include "ir/func_graph.h"
 #include "frontend/operator/ops.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 
@@ -32,7 +33,7 @@ class TestAnf : public UT::Common {
 };
 
 TEST_F(TestAnf, test_ValueNode) {
-  auto prim = std::make_shared<Primitive>("scalar_add");
+  auto prim = std::make_shared<Primitive>(prim::kScalarAdd);
   ValueNodePtr c = NewValueNode(prim);
   ASSERT_EQ(c->isa<ValueNode>(), true);
   ASSERT_EQ(IsValueNode<Primitive>(c), true);

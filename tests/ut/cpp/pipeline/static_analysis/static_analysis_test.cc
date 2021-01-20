@@ -28,6 +28,7 @@
 #include "pipeline/jit/resource.h"
 #include "debug/draw.h"
 #include "utils/log_adapter.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace abstract {
@@ -96,7 +97,7 @@ class MetaScalarAdd : public MetaFuncGraph {
     FuncGraphPtr fg = std::make_shared<FuncGraph>();
     ParameterPtr x = fg->add_parameter();
     ParameterPtr y = fg->add_parameter();
-    auto prim_scalar_add = std::make_shared<Primitive>("scalar_add");
+    auto prim_scalar_add = std::make_shared<Primitive>(prim::kScalarAdd);
     std::vector<AnfNodePtr> inputs;
     inputs.push_back(NewValueNode(prim_scalar_add));
     inputs.push_back(x);
@@ -161,7 +162,7 @@ TEST_F(TestInfer, test_inferred_scalar_add) {
   args_spec_list.push_back(abstract_v1);
   args_spec_list.push_back(abstract_v2);
 
-  auto prim_scalar_add = std::make_shared<Primitive>("scalar_add");
+  auto prim_scalar_add = std::make_shared<Primitive>(prim::kScalarAdd);
   FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_add);
   AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec_list).inferred->abstract();
   ASSERT_TRUE(abs_base_got.get() == abstract_v1.get());
@@ -388,7 +389,7 @@ TEST_F(TestInferUniform, test_inferred_scalar_add) {
   args_spec.push_back(abstract_v1);
   args_spec.push_back(abstract_v2);
 
-  auto prim_scalar_add = std::make_shared<Primitive>("scalar_add");
+  auto prim_scalar_add = std::make_shared<Primitive>(prim::kScalarAdd);
   FuncGraphPtr func_graph = MakeFuncGraph(prim_scalar_add);
   AbstractBasePtr abs_base_got = engine_->Run(func_graph, args_spec).inferred->abstract();
   ASSERT_TRUE(*(abs_base_got->GetTypeTrack()) == *(abstract_v1->GetTypeTrack()));
@@ -418,7 +419,7 @@ TEST_F(TestEvalOnePrim, test_scalar_add) {
   AbstractBasePtr base1 = FromValue(x1, false);
   AbstractBasePtr base2 = FromValue(x2, false);
   AbstractBasePtrList base_list = {base1, base2};
-  auto res = EvalOnePrim(std::make_shared<Primitive>("scalar_add"), base_list)->abstract();
+  auto res = EvalOnePrim(std::make_shared<Primitive>(prim::kScalarAdd), base_list)->abstract();
   MS_LOG(INFO) << "result spec: " << res->ToString();
   AbstractBasePtr exp = FromValue(x3, false);
   MS_LOG(INFO) << "result exp: " << exp->ToString();

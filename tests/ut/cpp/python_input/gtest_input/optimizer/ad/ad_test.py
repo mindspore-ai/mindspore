@@ -18,9 +18,11 @@ import numpy as np
 import mindspore as ms
 from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive
+from mindspore.ops import _constants as Constants
 from tests.ut.python.model.resnet import resnet50
 
-scala_add = Primitive('scalar_add')
+
+scala_add = Primitive(Constants.kScalarAdd)
 
 
 @dataclass

@@ -1,4 +1,6 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# This is the Python adaptation and derivative work of Myia (https://github.com/mila-iqia/myia/).
+#
+# Copyright 2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,26 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" vm_test """
-from mindspore.ops import Primitive
-from mindspore.ops import _constants as Constants
 
-scala_add = Primitive(Constants.kScalarAdd)
-scala_mul = Primitive(Constants.kScalarMul)
-scalar_gt = Primitive('scalar_gt')
+""" Define constants"""
 
+# Arithmetic
+kScalarAdd = "ScalarAdd"
+kScalarSub = "ScalarSub"
+kScalarMul = "ScalarMul"
+kScalarDiv = "ScalarDiv"
+kScalarFloordiv = "ScalarFloordiv"
+kScalarMod = "ScalarMod"
+kScalarPow = "ScalarPow"
+kScalarTrunc = "ScalarTrunc"
+kScalarFloor = "ScalarFloor"
+kScalarUadd = "ScalarUadd"
+kScalarUsub = "ScalarUsub"
 
-def ScalarAdd(x, y):
-    """Implement `scalar_add`."""
-    return scala_add(x, y)
-
-
-def ScalarMul(x, y):
-    """Implement `scalar_mul`."""
-    return scala_mul(x, y)
-
-
-def test_if(x, y):
-    if scalar_gt(x, y):
-        return x
-    return y
+kTupleGetitem = "TupleGetitem"

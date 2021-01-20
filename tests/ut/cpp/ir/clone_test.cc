@@ -24,6 +24,7 @@
 #include "pipeline/jit/parse/parse.h"
 #include "ir/graph_utils.h"
 #include "debug/draw.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 class TestCloner : public UT::Common {
@@ -89,7 +90,7 @@ TEST_F(TestCloner, test_clone_simple) {
   Cloner cl2(gs);
   auto g3 = cl2[g];
 
-  std::vector<Primitive> results = {Primitive("scalar_add"), Primitive("scalar_mul"), Primitive("return")};
+  std::vector<Primitive> results = {Primitive(prim::kScalarAdd), Primitive(prim::kScalarMul), Primitive("return")};
   AnfNodeSet d3 = AnfNodeSet(DeepScopedGraphSearch(g3->get_return()));
   common = d1 & d3;
   for (auto& x : common) {

@@ -27,6 +27,7 @@
 #include "debug/draw.h"
 #include "ir/tensor.h"
 #include "utils/symbolic.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace abstract {
@@ -154,7 +155,7 @@ TEST_F(TestPrim, test_list_map) {
   AbstractBasePtr abstract_v2 = FromValue(static_cast<int64_t>(2), false);
   AbstractBasePtr abstract_u2 = FromValue(static_cast<int64_t>(2), false);
   auto abstract_list2 = std::make_shared<AbstractList>(AbstractBasePtrList({abstract_v2, abstract_u2}));
-  auto prim_scalar_add = std::make_shared<Primitive>("scalar_add");
+  auto prim_scalar_add = std::make_shared<Primitive>(prim::kScalarAdd);
   AbstractBasePtr abstract_func = ToAbstract(prim_scalar_add);
 
   args_spec_list.push_back(abstract_func);
@@ -179,7 +180,7 @@ TEST_F(TestPrim, test_list_reduce) {
   AbstractBasePtr abstract_v1 = FromValue(v1, false);
   AbstractBasePtr abstract_v2 = FromValue(v1, false);
   auto abstract_list = std::make_shared<AbstractList>(AbstractBasePtrList({abstract_v1, abstract_v2}));
-  auto prim_scalar_add = std::make_shared<Primitive>("scalar_add");
+  auto prim_scalar_add = std::make_shared<Primitive>(prim::kScalarAdd);
   AbstractBasePtr abstract_func = ToAbstract(prim_scalar_add);
 
   args_spec_list.push_back(abstract_func);
