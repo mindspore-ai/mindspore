@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash scripts/run_standalone_gd.sh"
 echo "for example: bash scripts/run_standalone_gd.sh"
 echo "running....... please see details by log.txt"

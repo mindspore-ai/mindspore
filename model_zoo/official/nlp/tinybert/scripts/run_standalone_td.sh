@@ -15,9 +15,9 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
-echo "bash scipts/run_standalone_td.sh"
-echo "for example: bash scipts/run_standalone_td.sh"
+echo "Please run the script as: "
+echo "bash scripts/run_standalone_td.sh"
+echo "for example: bash scripts/run_standalone_td.sh"
 echo "=============================================================================================================="
 
 mkdir -p ms_log
@@ -32,7 +32,6 @@ python ${PROJECT_DIR}/../run_task_distill.py \
     --do_eval="true" \
     --td_phase1_epoch_size=10 \
     --td_phase2_epoch_size=3 \
-    --task_name="" \
     --do_shuffle="true" \
     --enable_data_sink="true" \
     --data_sink_steps=100 \
@@ -44,5 +43,7 @@ python ${PROJECT_DIR}/../run_task_distill.py \
     --train_data_dir="" \
     --eval_data_dir="" \
     --schema_dir="" \
-    --dataset_type="tfrecord" > log.txt 2>&1 &
-
+    --dataset_type="tfrecord" \
+    --task_type="classification" \
+    --task_name="" \
+    --assessment_method="accuracy" > log.txt 2>&1 &
