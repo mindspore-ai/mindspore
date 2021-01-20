@@ -1887,19 +1887,21 @@ class Conv2DBackpropInput(PrimitiveWithInfer):
         return out
 
 
-class BiasAdd(PrimitiveWithInfer):
+class BiasAdd(PrimitiveWithCheck):
     r"""
     Returns sum of input and bias tensor.
 
     Adds the 1-D bias tensor to the input tensor, and broadcasts the shape on all axis
     except for the channel axis.
 
+    Args:
+        data_format (str): The format of input and output data. It should be 'NHWC' or 'NCHW'，
+            default is 'NCHW'.
+
     Inputs:
         - **input_x** (Tensor) - The input tensor. The shape can be 2-4 dimensions.
-        - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`.
-        - **data_format** (str) - The format of input and output data. It should be 'NHWC' or 'NCHW'，\
-          default is 'NCHW'.
-          The shape of `bias` must be the same as `input_x` in the second dimension.
+        - **bias** (Tensor) - The bias tensor, with shape :math:`(C)`. The shape of
+          `bias` must be the same as `input_x`'s channel dimension.
 
     Outputs:
         Tensor, with the same shape and type as `input_x`.
@@ -1924,17 +1926,16 @@ class BiasAdd(PrimitiveWithInfer):
             raise ValueError("NHWC format only support in GPU target.")
         self.add_prim_attr('data_format', self.format)
 
-    def infer_shape(self, x_shape, b_shape):
+    def check_shape(self, x_shape, b_shape):
         validator.check_int(len(x_shape), 2, Rel.GE, "x rank", self.name)
         validator.check_equal_int(len(b_shape), 1, "bias rank", self.name)
         x_channel = x_shape[1] if self.format == "NCHW" else x_shape[-1]
-        validator.check("b_shape[0]", b_shape[0], "x_shape[1]", x_channel, Rel.EQ, self.name)
-        return x_shape
+        if np.all(np.array(x_shape) != -1):
+            validator.check("b_shape[0]", b_shape[0], "x_channel", x_channel, Rel.EQ, self.name)
 
-    def infer_dtype(self, x_type, b_type):
+    def check_dtype(self, x_type, b_type):
         args = {"input_x": x_type, "bias": b_type}
         validator.check_tensors_dtypes_same_and_valid(args, mstype.number_type, self.name)
-        return x_type
 
 
 class TopK(PrimitiveWithInfer):

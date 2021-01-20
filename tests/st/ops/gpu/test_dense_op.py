@@ -23,7 +23,7 @@ from mindspore.common.parameter import ParameterTuple
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
 from mindspore.ops.composite import GradOperation
-
+from mindspore.ops.operations import _inner_ops as inner
 
 class BiasAdd(nn.Cell):
     def __init__(self):
@@ -442,3 +442,66 @@ def test_biasadd_4d():
     error = np.ones(shape=[3]) * 1.0e-6
     assert np.all(diff < error)
     assert np.all(-diff < error)
+
+
+class BiasAddDynamic(nn.Cell):
+    def __init__(self):
+        super(BiasAddDynamic, self).__init__()
+        self.ba = P.BiasAdd()
+        self.test_dynamic = inner.GpuConvertToDynamicShape()
+
+    def construct(self, x, b):
+        x = self.test_dynamic(x)
+        output = self.ba(x, b)
+        return output
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_bias_add_dynamic_two_inputs():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = BiasAddDynamic()
+
+    x_1 = Tensor(np.array([[0.1, 0.2, 0.3, 0.4],
+                           [0.5, 0.6, 0.7, 0.8],
+                           [0.9, 1.0, 1.1, 1.2]]).astype(np.float32))
+    b_1 = Tensor(np.array([0.1, 0.2, 0.3, 0.4]).astype(np.float32))
+    expect_1 = np.array([[0.2, 0.4, 0.6, 0.8],
+                         [0.6, 0.8, 1.0, 1.2],
+                         [1.0, 1.2, 1.4, 1.6]])
+    error_1 = np.ones(shape=[3, 4]) * 1.0e-6
+    result_1 = net(x_1, b_1)
+    diff_1 = result_1.asnumpy() - expect_1
+    assert np.all(diff_1 < error_1)
+    assert np.all(-diff_1 < error_1)
+
+    x_2 = Tensor(np.array([[[1, 2, 3, 4, 5, 6, 7, 8],
+                            [9, 10, 11, 12, 13, 14, 15, 16],
+                            [17, 18, 19, 20, 21, 22, 23, 24],
+                            [25, 26, 27, 28, 29, 30, 31, 32]],
+                           [[33, 34, 35, 36, 37, 38, 39, 40],
+                            [41, 42, 43, 44, 45, 46, 47, 48],
+                            [49, 50, 51, 52, 53, 54, 55, 56],
+                            [57, 58, 59, 60, 61, 62, 63, 64]],
+                           [[65, 66, 67, 68, 69, 70, 71, 72],
+                            [73, 74, 75, 76, 77, 78, 79, 80],
+                            [81, 82, 83, 84, 85, 86, 87, 88],
+                            [89, 90, 91, 92, 93, 94, 95, 96]]]).astype(np.float32))
+    b_2 = Tensor(np.array([1, 2, 3, 4]).astype(np.float32))
+    expect_2 = np.array([[[2, 3, 4, 5, 6, 7, 8, 9],
+                          [11, 12, 13, 14, 15, 16, 17, 18],
+                          [20, 21, 22, 23, 24, 25, 26, 27],
+                          [29, 30, 31, 32, 33, 34, 35, 36]],
+                         [[34, 35, 36, 37, 38, 39, 40, 41],
+                          [43, 44, 45, 46, 47, 48, 49, 50],
+                          [52, 53, 54, 55, 56, 57, 58, 59],
+                          [61, 62, 63, 64, 65, 66, 67, 68]],
+                         [[66, 67, 68, 69, 70, 71, 72, 73],
+                          [75, 76, 77, 78, 79, 80, 81, 82],
+                          [84, 85, 86, 87, 88, 89, 90, 91],
+                          [93, 94, 95, 96, 97, 98, 99, 100]]])
+    error_2 = np.ones(shape=[3, 4, 8]) * 1.0e-6
+    result_2 = net(x_2, b_2)
+    diff_2 = result_2.asnumpy() - expect_2
+    assert np.all(diff_2 < error_2)
+    assert np.all(-diff_2 < error_2)
