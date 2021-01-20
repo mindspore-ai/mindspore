@@ -416,13 +416,13 @@ class ReLUV2(PrimitiveWithInfer):
                              f"but got a {len(input_shape)}-D tensor whose shape is {input_shape}")
         for i in enumerate(input_shape):
             if i[0] == 1:
-                if input_dtype == mstype.uint8 and input_dtype == mstype.int8:
+                if input_dtype in (mstype.uint8, mstype.int8):
                     mask_shape.append((input_shape[1] + 31) // 32)
                 else:
                     mask_shape.append((input_shape[1] + 15) // 16)
             else:
                 mask_shape.append(i[1])
-        if input_dtype == mstype.uint8 and input_dtype == mstype.int8:
+        if input_dtype in (mstype.uint8, mstype.int8):
             mask_shape.append(4)
         else:
             mask_shape.append(2)
