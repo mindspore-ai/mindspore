@@ -1028,7 +1028,7 @@ class Cutout:
 
 
 class LinearTransformation:
-    """
+    r"""
     Apply linear transformation to the input NumPy image array, given a square transformation matrix and
     a mean vector.
 
