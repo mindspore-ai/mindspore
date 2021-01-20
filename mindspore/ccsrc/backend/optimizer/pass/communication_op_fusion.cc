@@ -60,7 +60,9 @@ kernel::KernelBuildInfoPtr GenerateKernelBuildInfo(const CommunicationOpInfo &co
         outputs_device_format.push_back(AnfAlgo::GetOutputFormat(cnode, output_index));
         outputs_device_type.push_back(AnfAlgo::GetOutputDeviceDataType(cnode, output_index));
         std::vector<size_t> shape = AnfAlgo::GetOutputInferShape(cnode, output_index);
-        shape[0] /= rank_size;
+        if (!shape.empty()) {
+          shape[0] /= rank_size;
+        }
         outputs_shape.push_back(AnfAlgo::GetOutputInferShape(cnode, output_index));
       }
     }
