@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -13,6 +13,9 @@
 # limitations under the License.
 # ============================================================================
 """The container of metadata used in profiler parser."""
+import heapq
+
+GIGABYTES = 1024 * 1024 * 1024
 
 
 class HWTSContainer:
@@ -111,3 +114,138 @@ class TimelineContainer:
     def pid(self):
         """Get the pid of the operator execution."""
         return self._pid
+
+
+class MemoryGraph:
+    """
+    A container for graph.
+
+    Args:
+        graph_proto (proto): Graph proto, defined in profiler module.
+    """
+    def __init__(self, graph_proto):
+        self._graph_proto = graph_proto
+        self.graph_id = graph_proto.graph_id
+        self.static_mem = graph_proto.static_mem / GIGABYTES
+        self.fp_start = None
+        self.bp_end = None
+        self.lines = []
+        self.nodes = {}
+
+    def to_dict(self):
+        """Convert Graph to dict."""
+        graph = {
+            'graph_id': self.graph_id,
+            'static_mem': self.static_mem,
+            'nodes': self.nodes,
+            'fp_start': self.fp_start,
+            'bp_end': self.bp_end,
+            'lines': self.lines
+        }
+
+        return graph
+
+
+class MemoryNode:
+    """
+    A container for node.
+
+    Args:
+        node_proto (proto): Node proto.
+        graph_id (int): Graph id.
+    """
+    def __init__(self, node_proto, graph_id):
+        self._node_proto = node_proto
+        self.graph_id = graph_id
+        self.node_id = node_proto.node_id
+        self.name = node_proto.node_name
+        self.fullname = ""
+        self.input_ids = [t_id for t_id in node_proto.input_tensor_id]
+        self.output_ids = [t_id for t_id in node_proto.output_tensor_id]
+        self.workspace_ids = [t_id for t_id in node_proto.workspace_tensor_id]
+        self.inputs = []
+        self.outputs = []
+        self.workspaces = []
+        self.allocations = 0
+        self.deallocations = 0
+        self.size = 0
+        self.mem_change = 0
+
+    def to_dict(self):
+        """Convert Node to dict."""
+        node = {
+            'name': self.name,
+            'fullname': self.fullname,
+            'node_id': self.node_id,
+            'allocations': self.allocations,
+            'size': self.size,
+            'allocated': self.mem_change,
+            'inputs': self.inputs,
+            'outputs': self.outputs,
+            'workspaces': self.workspaces
+        }
+
+        return node
+
+
+class MemoryTensor:
+    """
+    A container for tensor.
+
+    Args:
+        tensor_proto (proto): Tensor proto.
+        graph_id (int): Graph id.
+    """
+    def __init__(self, tensor_proto, graph_id):
+        self._tensor_proto = tensor_proto
+        self.tensor_id = tensor_proto.tensor_id
+        self.life_long = tensor_proto.life_long
+        self.life_start = tensor_proto.life_start
+        self.life_end = tensor_proto.life_end
+        self.size = tensor_proto.size / GIGABYTES
+        self.type = tensor_proto.type
+        self.graph_id = graph_id
+
+    def to_dict(self):
+        """Convert Tensor to a dict."""
+        tensor = {
+            'tensor_id': self.tensor_id,
+            'size': self.size,
+            'type': self.type,
+            'life_long': self.life_long,
+            'life_start': self.life_start,
+            'life_end': self.life_end
+        }
+
+        return tensor
+
+
+class MemoryQueue:
+    """
+    A priority queue to keep specified number of active nodes in memory activities.
+
+    Args:
+        size (int): The upper limit of nodes to be saved.
+    """
+    def __init__(self, size):
+        self._queue = []
+        self._index = 0
+        self._size = size
+
+    def push(self, item, priority):
+        """
+        Push a node into MemoryQueue.
+
+        Args:
+            item (tuple): Node item including id, name, etc.
+            priority (int): The priority of the item.
+        """
+        if self._index < self._size:
+            heapq.heappush(self._queue, (-priority, item))
+            self._index += 1
+        else:
+            heapq.heappushpop(self._queue, (-priority, item))
+
+    def get_items(self):
+        """Get the elements in MemoryQueue."""
+        return self._queue
