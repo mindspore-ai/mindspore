@@ -33,14 +33,10 @@ from src.utils import LossCallBack, ModelSaveCkpt, BertLearningRate
 from src.gd_config import common_cfg, bert_teacher_net_cfg, bert_student_net_cfg
 from src.tinybert_for_gd_td import BertTrainWithLossScaleCell, BertNetworkWithLoss_gd, BertTrainCell
 
-
-
-def run_general_distill():
-    """
-    run general distill
-    """
+def get_argument():
+    """Tinybert general distill argument parser."""
     parser = argparse.ArgumentParser(description='tinybert general distill')
-    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU'],
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=['Ascend', 'GPU', 'CPU'],
                         help='device where the code will be implemented. (Default: Ascend)')
     parser.add_argument("--distribute", type=str, default="false", choices=["true", "false"],
                         help="Run distribute, default is false.")
@@ -61,19 +57,20 @@ def run_general_distill():
     parser.add_argument("--dataset_type", type=str, default="tfrecord",
                         help="dataset type tfrecord/mindrecord, default is tfrecord")
     args_opt = parser.parse_args()
+    return args_opt
 
+def run_general_distill():
+    """
+    run general distill
+    """
+    args_opt = get_argument()
+    context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target,
+                        reserve_class_name_in_scope=False)
     if args_opt.device_target == "Ascend":
-        context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target, device_id=args_opt.device_id)
-    elif args_opt.device_target == "GPU":
-        context.set_context(mode=context.GRAPH_MODE, device_target=args_opt.device_target)
-    else:
-        raise Exception("Target error, GPU or Ascend is supported.")
-
-    context.set_context(reserve_class_name_in_scope=False)
+        context.set_context(device_id=args_opt.device_id)
 
     save_ckpt_dir = os.path.join(args_opt.save_ckpt_path,
                                  datetime.datetime.now().strftime('%Y-%m-%d_time_%H_%M_%S'))
-
 
     if args_opt.distribute == "true":
         if args_opt.device_target == 'Ascend':
@@ -102,6 +99,14 @@ def run_general_distill():
             bert_student_net_cfg.compute_type = mstype.float32
         # Backward of the network are calculated using fp32,
         # and the loss scale is not necessary
+        enable_loss_scale = False
+
+    if args_opt.device_target == "CPU":
+        logger.warning('CPU only support float32 temporarily, run with float32.')
+        bert_teacher_net_cfg.dtype = mstype.float32
+        bert_teacher_net_cfg.compute_type = mstype.float32
+        bert_student_net_cfg.dtype = mstype.float32
+        bert_student_net_cfg.compute_type = mstype.float32
         enable_loss_scale = False
 
     netwithloss = BertNetworkWithLoss_gd(teacher_config=bert_teacher_net_cfg,

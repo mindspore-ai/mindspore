@@ -28,7 +28,7 @@ from mindspore.communication.management import get_group_size
 from mindspore.nn.wrap.grad_reducer import DistributedGradReducer
 from mindspore.context import ParallelMode
 from mindspore.train.serialization import load_checkpoint, load_param_into_net
-from .tinybert_model import BertModel, TinyBertModel, BertModelCLS
+from .tinybert_model import BertModel, TinyBertModel, BertModelCLS, BertModelNER
 
 
 GRADIENT_CLIP_TYPE = 1
@@ -362,8 +362,18 @@ class BertNetworkWithLoss_td(nn.Cell):
                  temperature=1.0, dropout_prob=0.1):
         super(BertNetworkWithLoss_td, self).__init__()
         # load teacher model
-        self.teacher = BertModelCLS(teacher_config, False, num_labels, dropout_prob,
-                                    use_one_hot_embeddings, "teacher")
+        if task_type == "classification":
+            self.teacher = BertModelCLS(teacher_config, False, num_labels, dropout_prob,
+                                        use_one_hot_embeddings, "teacher")
+            self.bert = BertModelCLS(student_config, is_training, num_labels, dropout_prob,
+                                     use_one_hot_embeddings, "student")
+        elif task_type == "ner":
+            self.teacher = BertModelNER(teacher_config, False, num_labels, dropout_prob,
+                                        use_one_hot_embeddings, "teacher")
+            self.bert = BertModelNER(student_config, is_training, num_labels, dropout_prob,
+                                     use_one_hot_embeddings, "student")
+        else:
+            raise ValueError(f"Not support task type: {task_type}")
         param_dict = load_checkpoint(teacher_ckpt)
         new_param_dict = {}
         for key, value in param_dict.items():
@@ -377,8 +387,6 @@ class BertNetworkWithLoss_td(nn.Cell):
         for param in params:
             param.requires_grad = False
         # load student model
-        self.bert = BertModelCLS(student_config, is_training, num_labels, dropout_prob,
-                                 use_one_hot_embeddings, "student")
         param_dict = load_checkpoint(student_ckpt)
         if is_predistill:
             new_param_dict = {}
@@ -401,7 +409,7 @@ class BertNetworkWithLoss_td(nn.Cell):
         self.is_predistill = is_predistill
         self.is_att_fit = is_att_fit
         self.is_rep_fit = is_rep_fit
-        self.task_type = task_type
+        self.use_soft_cross_entropy = task_type in ["classification", "ner"]
         self.temperature = temperature
         self.loss_mse = nn.MSELoss()
         self.select = P.Select()
@@ -456,7 +464,7 @@ class BertNetworkWithLoss_td(nn.Cell):
                     rep_loss += self.loss_mse(student_rep, teacher_rep)
                 total_loss += rep_loss
         else:
-            if self.task_type == "classification":
+            if self.use_soft_cross_entropy:
                 cls_loss = self.soft_cross_entropy(student_logits / self.temperature, teacher_logits / self.temperature)
             else:
                 cls_loss = self.loss_mse(student_logits[len(student_logits) - 1], label_ids[len(label_ids) - 1])
