@@ -27,7 +27,7 @@ from .._c_expression import generate_key, Executor_, Tensor, MetaTensor, Pynativ
 from .._c_expression import verify_inputs_signature, init_exec_dataset, _set_dataset_mode_config, init_pipeline
 from ..parallel._ps_context import _is_role_pserver
 from ..parallel._utils import _get_device_num, _get_global_rank, _need_to_full, _check_full_batch, _to_full_tensor, \
-    _get_parameter_broadcast
+    _get_parameter_broadcast, _get_pipeline_stages
 
 # store ms_function class compiled pipeline cache
 ms_compile_cache = {}
@@ -501,6 +501,9 @@ class _Executor:
 
         if auto_parallel_mode:
             obj.parameter_layout_dict = self._executor.get_parameter_layout(phase)
+            if _get_pipeline_stages() > 1:
+                obj.parallel_parameter_name_list = self._executor.get_parallel_parameter_name_list(phase)
+                obj.remove_redundant_parameters()
         replace = obj.init_parameters_data(auto_parallel_mode=auto_parallel_mode)
         if not enable_debug_runtime or enable_ge:
             if auto_parallel_mode:

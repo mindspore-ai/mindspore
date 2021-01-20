@@ -26,6 +26,7 @@ namespace mindspore {
 namespace parallel {
 py::dict GetParameterLayout(const FuncGraphPtr &graph);
 py::dict GetAllreduceFusion(const FuncGraphPtr &graph);
+py::list GetParallelParameterNameList(const FuncGraphPtr &graph);
 }  // namespace parallel
 }  // namespace mindspore
 

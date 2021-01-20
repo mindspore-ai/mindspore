@@ -120,7 +120,9 @@ def test_pipeline_split_stage0():
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
-
+    for _, param in model._train_network.parameters_and_names():
+        assert param.name != "cell.block.1.param"
+        assert param.name != "cell.block.1.param1"
 
 def test_pipeline_split_stage1():
     context.set_auto_parallel_context(device_num=8, global_rank=4, pipeline_stages=2)
@@ -135,6 +137,9 @@ def test_pipeline_split_stage1():
     optimizer = nn.Lamb(params, learning_rate=0.01)
     model = Model(net, optimizer=optimizer)
     model.train(2, dataset, dataset_sink_mode=False)
+    for _, param in model._train_network.parameters_and_names():
+        assert param.name != "cell.block.0.param"
+        assert param.name != "cell.block.0.param1"
 
 
 def test_pipeline_split_shared_parameter_stage0():

@@ -80,6 +80,8 @@ PYBIND11_MODULE(_c_expression, m) {
          py::arg("params"), "Fetch the inputs of Conv or Matmul for quant export.")
     .def("get_parameter_layout", &ExecutorPy::GetParameterLayout, py::arg("phase") = py::str("train"),
          "Get Parameter Tensor Layout Dictionary.")
+    .def("get_parallel_parameter_name_list", &ExecutorPy::GetParallelParameterNameList,
+         py::arg("phase") = py::str("train"), "Get Parallel Parameter Name List.")
     .def("get_strategy", &ExecutorPy::GetCNodeStrategy, py::arg("phase") = py::str("train"),
          "Get CNode Strategy Dictionary.")
     .def("get_num_parallel_ops", &ExecutorPy::GetNumOpsInfo, py::arg("phase") = py::str("train"),
