@@ -17,12 +17,13 @@ from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
+from mindspore.ops import _constants as Constants
 
 AssignSub = P.AssignSub()
 Mul = P.Mul()
 Sub = P.Sub()
 make_tuple = Primitive('make_tuple')
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 BatchNorm = P.BatchNorm()
 Cast = P.Cast()
 BNTrainingReduce = Primitive('BNTrainingReduce')

@@ -14,6 +14,7 @@
 # ============================================================================
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
 Add = P.Add()
 Mul = P.Mul()
@@ -21,7 +22,7 @@ RealDiv = P.RealDiv()
 Rsqrt = P.Rsqrt()
 Sqrt = P.Sqrt()
 make_tuple = Primitive('make_tuple')
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 LambNextMV = Primitive('LambNextMV')
 
 class FnDict:

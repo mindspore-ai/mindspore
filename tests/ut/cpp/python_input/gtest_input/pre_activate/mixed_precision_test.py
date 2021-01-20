@@ -14,8 +14,9 @@
 # ============================================================================
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 depend = P.Depend()
 addn = P.AddN()
 add = P.Add()

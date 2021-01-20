@@ -21,6 +21,7 @@
 #include <stack>
 #include "utils/utils.h"
 
+#include "base/core_ops.h"
 #include "frontend/operator/ops.h"
 #include "utils/log_adapter.h"
 #include "ir/graph_utils.h"
@@ -631,7 +632,7 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
       MS_LOG(EXCEPTION) << "length of inputs is " << c->inputs().size() << ", which is less than 3";
     }
     TraceOutput(c->input(1));
-  } else if (name == "tuple_getitem") {
+  } else if (name == prim::kTupleGetItem) {
     TraceOutputFromTupleGetItem(anf_out);
   } else {
     // add outputs;
@@ -1014,7 +1015,7 @@ void DfGraphConvertor::SetOpInput(const OpAdapterPtr &adpt, const CNodePtr &node
     if (it != out_handle_cache_.end()) {
       int ret = adpt->setInput(src, SizeToInt(i), it->second);
       if (ret == 0) {
-        if (pred->isa<CNode>() && GetCNodeTargetFuncName(pred->cast<CNodePtr>()) == "tuple_getitem") {
+        if (pred->isa<CNode>() && GetCNodeTargetFuncName(pred->cast<CNodePtr>()) == prim::kTupleGetItem) {
           compute_sout_ << op_draw_name_[pred->cast<CNodePtr>()->input(1).get()] << " -> " << op_draw_name_[node.get()]
                         << ":" << i << endl;
         } else if (pred->isa<Parameter>()) {
@@ -1538,7 +1539,7 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
   }
 
   // As for nodes with multi outputs, convert tuple_getitem to OutHandle
-  if (name == "tuple_getitem") {
+  if (name == prim::kTupleGetItem) {
     ConvertTupleGetItem(node);
     return false;
   }

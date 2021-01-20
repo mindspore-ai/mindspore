@@ -19,6 +19,7 @@ import mindspore.nn as nn
 from mindspore import context
 from mindspore.common.tensor import Tensor
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 from mindspore.graph_utils.python_pass import registe_pass, unregiste_pass, set_renorm, gen_new_parameter,\
     cancel_new_parameter, set_reopt
 from mindspore.common.api import _generate_pip_args
@@ -296,12 +297,12 @@ def test_imm_target():
         pattern = Call(P.Softmax(), [x])
         imm = Imm(0)
         target_0 = Call("make_tuple", [pattern])
-        target = Call("tuple_getitem", [target_0, imm])
+        target = Call(Constants.kTupleGetItem, [target_0, imm])
         return pattern, target
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(5)
     unregiste_pass(softmax_pass)
     assert "make_tuple" in transformed_repr
-    assert "tuple_getitem" in transformed_repr
+    assert Constants.kTupleGetItem in transformed_repr
     assert "Softmax" in transformed_repr
 
 def test_gen_new_parameter():

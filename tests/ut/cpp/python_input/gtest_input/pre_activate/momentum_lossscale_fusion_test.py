@@ -16,11 +16,12 @@ import mindspore.common.dtype as mstype
 from mindspore.common.tensor import Tensor
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
 Mul = P.Mul()
 ApplyMomentum = P.ApplyMomentum()
 FusedMulApplyMomentum = Primitive('FusedMulApplyMomentum')
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 make_tuple = Primitive('make_tuple')
 constant = Tensor(1.0, mstype.float32)
 

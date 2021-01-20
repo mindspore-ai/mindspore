@@ -19,9 +19,11 @@
 #include <set>
 #include <string>
 
+#include "base/core_ops.h"
+
 namespace mindspore {
 // clang-format off
-static const std::set<std::string> PARALLEL_BLACK_LIST_ = {"tuple_getitem", "J", "list_getitem",
+static const std::set<std::string> PARALLEL_BLACK_LIST_ = {prim::kTupleGetItem, "J", "list_getitem",
   "array_getitem", "tuple_setitem", "Depend", "list_setitem", "array_setitem", "dict_getitem",
   "list_append", "list_map", "list_reduce", "tuple_reversed", "tile_shape", "tuple_div", "tuple_to_array",
   "make_dict", "make_slice", "make_record", "string_equal", "VirtualLoss", "return", "env_getitem",

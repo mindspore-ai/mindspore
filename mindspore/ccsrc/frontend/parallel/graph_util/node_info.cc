@@ -18,6 +18,7 @@
 
 #include <string>
 
+#include "base/core_ops.h"
 #include "ir/param_info.h"
 #include "ir/meta_tensor.h"
 #include "pipeline/jit/parse/python_adapter.h"
@@ -306,7 +307,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
   }
   ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
-  if (prim->name() == TUPLE_GETITEM) {
+  if (prim->name() == prim::kTupleGetItem) {
     *out_index = GetTupleGetItemIndex(cnode);
     // find tuple_get_item's previous node
     auto pre_node = cnode->input(1);

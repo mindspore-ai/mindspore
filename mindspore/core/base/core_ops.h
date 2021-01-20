@@ -26,19 +26,33 @@
 namespace mindspore {
 namespace prim {
 constexpr auto kGather = "Gather";
+// Arithmetic
+constexpr auto kScalarAdd = "ScalarAdd";
+constexpr auto kScalarSub = "ScalarSub";
+constexpr auto kScalarMul = "ScalarMul";
+constexpr auto kScalarDiv = "ScalarDiv";
+constexpr auto kScalarFloordiv = "ScalarFloordiv";
+constexpr auto kScalarMod = "ScalarMod";
+constexpr auto kScalarPow = "ScalarPow";
+constexpr auto kScalarTrunc = "ScalarTrunc";
+constexpr auto kScalarFloor = "ScalarFloor";
+constexpr auto kScalarUadd = "ScalarUadd";
+constexpr auto kScalarUsub = "ScalarUsub";
+constexpr auto kTupleGetItem = "TupleGetItem";
+
 // Here list all primitives used in backend or some special primitives used by core.
 // Arithmetic
-inline const PrimitivePtr kPrimScalarAdd = std::make_shared<Primitive>("scalar_add");
-inline const PrimitivePtr kPrimScalarSub = std::make_shared<Primitive>("scalar_sub");
-inline const PrimitivePtr kPrimScalarMul = std::make_shared<Primitive>("scalar_mul");
-inline const PrimitivePtr kPrimScalarDiv = std::make_shared<Primitive>("scalar_div");
-inline const PrimitivePtr kPrimScalarFloordiv = std::make_shared<Primitive>("scalar_floordiv");
-inline const PrimitivePtr kPrimScalarMod = std::make_shared<Primitive>("scalar_mod");
-inline const PrimitivePtr kPrimScalarPow = std::make_shared<Primitive>("scalar_pow");
-inline const PrimitivePtr kPrimScalarTrunc = std::make_shared<Primitive>("scalar_trunc");
-inline const PrimitivePtr kPrimScalarFloor = std::make_shared<Primitive>("scalar_floor");
-inline const PrimitivePtr kPrimScalarUadd = std::make_shared<Primitive>("scalar_uadd");
-inline const PrimitivePtr kPrimScalarUsub = std::make_shared<Primitive>("scalar_usub");
+inline const PrimitivePtr kPrimScalarAdd = std::make_shared<Primitive>(kScalarAdd);
+inline const PrimitivePtr kPrimScalarSub = std::make_shared<Primitive>(kScalarSub);
+inline const PrimitivePtr kPrimScalarMul = std::make_shared<Primitive>(kScalarMul);
+inline const PrimitivePtr kPrimScalarDiv = std::make_shared<Primitive>(kScalarDiv);
+inline const PrimitivePtr kPrimScalarFloordiv = std::make_shared<Primitive>(kScalarFloordiv);
+inline const PrimitivePtr kPrimScalarMod = std::make_shared<Primitive>(kScalarMod);
+inline const PrimitivePtr kPrimScalarPow = std::make_shared<Primitive>(kScalarPow);
+inline const PrimitivePtr kPrimScalarTrunc = std::make_shared<Primitive>(kScalarTrunc);
+inline const PrimitivePtr kPrimScalarFloor = std::make_shared<Primitive>(kScalarFloor);
+inline const PrimitivePtr kPrimScalarUadd = std::make_shared<Primitive>(kScalarUadd);
+inline const PrimitivePtr kPrimScalarUsub = std::make_shared<Primitive>(kScalarUsub);
 inline const PrimitivePtr kPrimScalarExp = std::make_shared<Primitive>("scalar_exp");
 inline const PrimitivePtr kPrimScalarLog = std::make_shared<Primitive>("scalar_log");
 inline const PrimitivePtr kPrimScalarSin = std::make_shared<Primitive>("scalar_sin");
@@ -295,7 +309,7 @@ inline const PrimitivePtr kPrimCall = std::make_shared<Primitive>("call");
 
 inline const PrimitivePtr kPrimMakeTuple = std::make_shared<Primitive>("make_tuple");
 inline const PrimitivePtr kPrimMakeSlice = std::make_shared<Primitive>("make_slice");
-inline const PrimitivePtr kPrimTupleGetItem = std::make_shared<Primitive>("tuple_getitem");
+inline const PrimitivePtr kPrimTupleGetItem = std::make_shared<Primitive>(kTupleGetItem);
 inline const PrimitivePtr kPrimArrayGetItem = std::make_shared<Primitive>("array_getitem");
 inline const PrimitivePtr kPrimTupleSetItem = std::make_shared<Primitive>("tuple_setitem");
 inline const PrimitivePtr kPrimArraySetItem = std::make_shared<Primitive>("array_setitem");

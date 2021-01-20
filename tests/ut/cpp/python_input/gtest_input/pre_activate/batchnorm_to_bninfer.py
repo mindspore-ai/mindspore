@@ -15,11 +15,12 @@
 
 from mindspore.ops import Primitive
 from mindspore.ops import operations as P
+from mindspore.ops import _constants as Constants
 
 batch_norm = P.BatchNorm(is_training=False)
 bn_infer = Primitive('BNInfer')
 make_tuple = Primitive('make_tuple')
-tuple_getitem = Primitive('tuple_getitem')
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:
