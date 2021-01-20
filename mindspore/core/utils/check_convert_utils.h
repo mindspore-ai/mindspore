@@ -27,6 +27,8 @@
 #include "ir/dtype/type_id.h"
 #include "utils/log_adapter.h"
 namespace mindspore {
+typedef std::pair<std::map<std::string, int64_t>, std::map<int64_t, std::string>> AttrConverterPair;
+
 enum CompareEnum : int64_t {
   kEqual = 1,         // ==
   kNotEqual = 2,      // !=
@@ -277,6 +279,11 @@ class CheckAndConvertUtils {
                                            bool allow_mix = false);
   static TypeId CheckTypeSame(const std::string &arg_name, const TypePtr arg_type, const std::set<TypeId> &valid_type,
                               const std::string &prim_name);
+  static bool ConvertAttrValueToInt(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
+  static bool ConvertAttrValueToString(const std::string &op_type, const std::string &attr_name, ValuePtr *const value);
+  static AttrConverterPair GetAttrConvertPair(const std::string &op_type, const std::string &attr_name);
+  static int64_t GetDataFormatEnumValue(const std::string &value);
+  static int64_t GetPadModEnumValue(const std::string &value, bool is_upper = false);
 
  private:
   static bool IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2);

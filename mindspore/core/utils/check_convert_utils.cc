@@ -18,13 +18,214 @@
 #include <vector>
 #include <algorithm>
 #include <typeinfo>
-#include "abstract/abstract_value.h"
+
 #include "utils/check_convert_utils.h"
+#include "abstract/abstract_value.h"
 #include "ir/dtype/type.h"
 #include "ir/dtype/tensor_type.h"
 #include "ir/dtype.h"
 
 namespace mindspore {
+static std::map<std::string, int64_t> DataFormatToEnumMap = {
+  {"NCHW", Format::NCHW}, {"NHWC", Format::NHWC},     {"NHWC4", Format::NHWC4},
+  {"HWKC", Format::HWKC}, {"HWCK", Format::HWCK},     {"KCHW", Format::KCHW},
+  {"CKHW", Format::CKHW}, {"KHWC", Format::KHWC},     {"CHWK", Format::CHWK},
+  {"HW", Format::HW},     {"HW4", Format::HW4},       {"NC", Format::NC},
+  {"NC4", Format::NC4},   {"NC4HW4", Format::NC4HW4}, {"NUM_OF_FORMAT", Format::NUM_OF_FORMAT},
+};
+
+static std::map<int64_t, std::string> DataFormatToStrMap = {
+  {Format::NCHW, "NCHW"}, {Format::NHWC, "NHWC"},     {Format::NHWC4, "NHWC4"},
+  {Format::HWKC, "HWKC"}, {Format::HWCK, "HWCK"},     {Format::KCHW, "KCHW"},
+  {Format::CKHW, "CKHW"}, {Format::KHWC, "KHWC"},     {Format::CHWK, "CHWK"},
+  {Format::HW, "HW"},     {Format::HW4, "HW4"},       {Format::NC, "NC"},
+  {Format::NC4, "NC4"},   {Format::NC4HW4, "NC4HW4"}, {Format::NUM_OF_FORMAT, "NUM_OF_FORMAT"},
+};
+
+static std::map<std::string, int64_t> ReductionToEnumMap = {
+  {"sum", Reduction::REDUCTION_SUM},
+  {"mean", Reduction::MEAN},
+  {"none", Reduction::NONE},
+};
+
+static std::map<int64_t, std::string> ReductionToStrMap = {
+  {Reduction::REDUCTION_SUM, "sum"},
+  {Reduction::MEAN, "mean"},
+  {Reduction::NONE, "none"},
+};
+
+static std::map<std::string, int64_t> PadModToEnumMap = {
+  {"pad", PadMode::PAD},
+  {"same", PadMode::SAME},
+  {"valid", PadMode::VALID},
+};
+
+static std::map<int64_t, std::string> PadModToStrMap = {
+  {PadMode::PAD, "pad"},
+  {PadMode::SAME, "same"},
+  {PadMode::VALID, "valid"},
+};
+
+static std::map<std::string, int64_t> PadModToEnumUpperMap = {
+  {"PAD", PadMode::PAD},
+  {"SAME", PadMode::SAME},
+  {"VALID", PadMode::VALID},
+};
+
+static std::map<int64_t, std::string> PadModToStrUpperMap = {
+  {PadMode::PAD, "PAD"},
+  {PadMode::SAME, "SAME"},
+  {PadMode::VALID, "VALID"},
+};
+
+AttrConverterPair DataFormatConverter(DataFormatToEnumMap, DataFormatToStrMap);
+AttrConverterPair PadModeConverter(PadModToEnumMap, PadModToStrMap);
+AttrConverterPair PadModeUpperConverter(PadModToEnumUpperMap, PadModToStrUpperMap);
+AttrConverterPair ReductionConverter(ReductionToEnumMap, ReductionToStrMap);
+
+static std::map<std::string, AttrConverterPair> FormatAndPadAttrMap = {
+  {"format", DataFormatConverter},
+  {"pad_mode", PadModeConverter},
+};
+
+static std::map<std::string, AttrConverterPair> FormatAndPadUpperAttrMap = {
+  {"format", DataFormatConverter},
+  {"pad_mode", PadModeUpperConverter},
+};
+
+static std::map<std::string, AttrConverterPair> DataFormatMap = {
+  {"format", DataFormatConverter},
+};
+
+static std::map<std::string, AttrConverterPair> ReductionMap = {
+  {"reduction", ReductionConverter},
+};
+
+static std::map<std::string, std::map<std::string, AttrConverterPair>> PrimAttrConvertMap = {
+  {"Conv2D", FormatAndPadAttrMap},
+  {"Conv2DBackpropInput", FormatAndPadUpperAttrMap},
+  {"Conv2DBackpropFilter", FormatAndPadUpperAttrMap},
+  {"Conv3D", FormatAndPadAttrMap},
+  {"Conv3DBackpropInput", FormatAndPadAttrMap},
+  {"Conv3DBackpropFilter", FormatAndPadAttrMap},
+  {"Conv3DTranspose", DataFormatMap},
+  {"DepthwiseConv2dNative", FormatAndPadAttrMap},
+  {"DepthwiseConv2dNativeBackpropInput", FormatAndPadAttrMap},
+  {"DepthwiseConv2dNativeBackpropFilter", FormatAndPadAttrMap},
+  {"AvgPool", FormatAndPadUpperAttrMap},
+  {"MaxPool", FormatAndPadUpperAttrMap},
+  {"MaxPoolWithArgmax", FormatAndPadUpperAttrMap},
+  {"AvgPoolGrad", FormatAndPadUpperAttrMap},
+  {"AvgPoolGradVm", FormatAndPadUpperAttrMap},
+  {"AvgPoolGradGpu", FormatAndPadUpperAttrMap},
+  {"AvgPoolGradCpu", FormatAndPadUpperAttrMap},
+  {"MaxPoolGrad", FormatAndPadUpperAttrMap},
+  {"MaxPoolGradGrad", FormatAndPadUpperAttrMap},
+  {"MaxPoolGradWithArgmax", FormatAndPadUpperAttrMap},
+  {"MaxPoolGradGradWithArgmax", FormatAndPadUpperAttrMap},
+  {"BatchNorm", DataFormatMap},
+  {"BatchNormGrad", DataFormatMap},
+  {"FusedBatchNormEx", DataFormatMap},
+  {"FusedBatchNormGradEx", DataFormatMap},
+  {"BiasAdd", DataFormatMap},
+  {"BiasAddGrad", DataFormatMap},
+  {"BinaryCrossEntropy", ReductionMap},
+  {"BinaryCrossEntropyGrad", ReductionMap},
+  {"NLLLoss", ReductionMap},
+};
+
+int64_t CheckAndConvertUtils::GetDataFormatEnumValue(const std::string &value) {
+  if (DataFormatToEnumMap.find(value) == DataFormatToEnumMap.end()) {
+    MS_LOG(ERROR) << "Can not convert data format " << value << "to enum";
+  }
+  return DataFormatToEnumMap[value];
+}
+
+int64_t CheckAndConvertUtils::GetPadModEnumValue(const std::string &value, bool is_upper) {
+  std::map<std::string, int64_t> pad_map = PadModToEnumMap;
+  if (is_upper) {
+    pad_map = PadModToEnumUpperMap;
+  }
+  if (pad_map.find(value) == pad_map.end()) {
+    MS_LOG(ERROR) << "Can not convert pad mode " << value << "to enum";
+  }
+  return pad_map[value];
+}
+
+AttrConverterPair CheckAndConvertUtils::GetAttrConvertPair(const std::string &op_type, const std::string &attr_name) {
+  AttrConverterPair attr_pair;
+  if (op_type.empty() || attr_name.empty()) {
+    return attr_pair;
+  }
+  auto op_attr_map_it = PrimAttrConvertMap.find(op_type);
+  if (op_attr_map_it == PrimAttrConvertMap.end()) {
+    return attr_pair;
+  }
+  auto op_attr_map = op_attr_map_it->second;
+  auto attr_pair_it = op_attr_map.find(attr_name);
+  if (attr_pair_it == op_attr_map.end()) {
+    return attr_pair;
+  }
+
+  return attr_pair_it->second;
+}
+
+bool CheckAndConvertUtils::ConvertAttrValueToInt(const std::string &op_type, const std::string &attr_name,
+                                                 ValuePtr *const value) {
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return false;
+  }
+  if (!(*value)->isa<StringImm>()) {
+    return false;
+  }
+  auto attr_map_pair = GetAttrConvertPair(op_type, attr_name);
+  if (attr_map_pair.first.size() == 0) {
+    return false;
+  }
+
+  std::string real_value = std::dynamic_pointer_cast<StringImm>(*value)->value();
+  bool do_convert = false;
+  if (attr_map_pair.first.find(real_value) != attr_map_pair.first.end()) {
+    do_convert = true;
+  }
+  if (!do_convert) {
+    transform(real_value.begin(), real_value.end(), real_value.begin(), ::toupper);
+    if (attr_map_pair.first.find(real_value) == attr_map_pair.first.end()) {
+      MS_LOG(DEBUG) << "Can not convert " << op_type << " attr " << attr_name << ": " << real_value << " to int";
+      return false;
+    }
+  }
+
+  *value = MakeValue<int64_t>(attr_map_pair.first[real_value]);
+  MS_LOG(DEBUG) << "convert str to int, name: " << op_type << ", attr: " << attr_name;
+  return true;
+}
+
+bool CheckAndConvertUtils::ConvertAttrValueToString(const std::string &op_type, const std::string &attr_name,
+                                                    ValuePtr *const value) {
+  if (value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return false;
+  }
+  if (!(*value)->isa<Int64Imm>()) {
+    return false;
+  }
+  auto attr_map_pair = GetAttrConvertPair(op_type, attr_name);
+  if (attr_map_pair.second.size() == 0) {
+    return false;
+  }
+
+  int64_t real_value = std::dynamic_pointer_cast<Int64Imm>(*value)->value();
+  if (attr_map_pair.second.find(real_value) == attr_map_pair.second.end()) {
+    MS_LOG(DEBUG) << "Can not convert " << op_type << " attr " << attr_name << ": " << real_value << " to string";
+    return false;
+  }
+  *value = MakeValue<std::string>(attr_map_pair.second[real_value]);
+  MS_LOG(DEBUG) << "convert int to str, name: " << op_type << ", attr: " << attr_name;
+  return true;
+}
+
 bool CheckAndConvertUtils::IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2) {
   if (vec_1.size() != vec_2.size()) {
     return false;

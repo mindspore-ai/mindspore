@@ -58,16 +58,16 @@ AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &
     MS_LOG(EXCEPTION) << "Invalid ceil_mode value: " << ceil_mode << ", should be 0";
   }
 
-  std::set<std::string> available_pad_mode{"pad", "same", "valid"};
+  std::set<std::string> available_pad_mode{"PAD", "SAME", "VALID"};
   auto pad_mode_ptr = primitive->GetAttr("pad_mode");
   if ((pad_mode_ptr != nullptr) && pad_mode_ptr->isa<StringImm>()) {
     auto pad_mode = pad_mode_ptr->cast<StringImmPtr>()->value();
     if (available_pad_mode.find(pad_mode) == available_pad_mode.end()) {
       MS_LOG(EXCEPTION) << "Unsupported pad mode: " << pad_mode << ". use pad, same, valid";
     }
-    if (pad_mode == "valid") {
+    if (pad_mode == "VALID") {
       padding = 0;
-    } else if (pad_mode == "same") {
+    } else if (pad_mode == "SAME") {
       padding = (window - 1) / 2;
     }
   }
