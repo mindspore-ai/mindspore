@@ -283,6 +283,11 @@ void PrimitivePy::AddPyAttr(const py::str &name, const py::object &obj) {
   (void)this->AddAttr(attr_name, converted_ret);
 }
 
+void PrimitivePy::DelPyAttr(const py::str &name) {
+  std::string attr_name = name;
+  (void)this->DelAttr(attr_name);
+}
+
 py::dict PrimitivePy::GetAttrDict() {
   py::dict attr_dict;
   for (auto &attr : attrs_) {
@@ -378,6 +383,7 @@ REGISTER_PYBIND_DEFINE(Primitive_, ([](const py::module *m) {
                            .def_readonly(PYTHON_PRIMITIVE_FLAG, &PrimitivePy::parse_info_)
                            .def(py::init<py::str &, py::object>())
                            .def("add_attr", &PrimitivePy::AddPyAttr, "add primitive attr")
+                           .def("del_attr", &PrimitivePy::DelPyAttr, "del primitive attr")
                            .def("get_attr_dict", &PrimitivePy::GetAttrDict, "get primitive attr")
                            .def("set_prim_type", &PrimitivePy::set_prim_type, "Set primitive type.")
                            .def("set_const_prim", &PrimitivePy::set_const_prim, "Set primitive is const.")

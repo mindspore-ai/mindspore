@@ -60,6 +60,11 @@ class Primitive : public Named {
     return *this;
   }
 
+  Primitive &DelAttr(const std::string &name) {
+    attrs_.erase(name);
+    return *this;
+  }
+
   Primitive &SetAttrs(const std::unordered_map<std::string, ValuePtr> &attrs) {
     for (auto &attr : attrs) {
       attrs_[attr.first] = attr.second;
