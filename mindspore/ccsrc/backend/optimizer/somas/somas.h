@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -49,6 +49,8 @@ class Somas {
   uint8_t *GetNodeOutputPtr(const AnfNodePtr &node, size_t index) const;
   uint8_t *GetNodeWorkSpacePtr(const AnfNodePtr &node, size_t index) const;
 
+  std::string SomasInfo();
+  std::string SomasMemory();
   void DumpSomasInfoIR(const string filename);
   void DumpSomasMemoryIR(const string filename);
 
@@ -121,8 +123,8 @@ class Somas {
 
   bool Assign(const session::KernelGraph *graph);
 
+  std::string Offline();
   void DumpOfflineIR(const string filename);
-  void DumpSomasMemoryPoolInfoIR(const string filename);
   std::string GetSplitName(const string &scope_name) const;
   size_t CalcLowerBound() const;
   void GenGraphStatisticInfo();
@@ -143,9 +145,9 @@ class Somas {
   void UpdateRefOverlapTensorsConflicts();
   void UpdateRefTensorsOffset();
   void UpdateContiguousTensorsOffset(const std::map<size_t, size_t> &contiguous_ref_list_map);
-  void DumpParameters(std::ofstream &ofs) const;
-  void DumpTensors(std::ofstream &ofs) const;
-  void DumpNodes(std::ofstream &ofs) const;
+  void DumpParameters(std::ostringstream &oss) const;
+  void DumpTensors(std::ostringstream &oss) const;
+  void DumpNodes(std::ostringstream &oss) const;
   std::map<size_t, size_t> GetContiguousListContainRefTensor();
   std::map<size_t, size_t> GetRefTensorsInContiguousList();
 };

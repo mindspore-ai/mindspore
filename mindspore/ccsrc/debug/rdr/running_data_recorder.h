@@ -13,28 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RUNNING_DATA_RECORDER_H_
-#define RUNNING_DATA_RECORDER_H_
+#ifndef MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_
+#define MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_
 
 #include <vector>
 #include <string>
 #include <memory>
 
-#include "backend/optimizer/somas/somas.h"
 #include "mindspore/core/utils/log_adapter.h"
 namespace mindspore {
 class FuncGraph;
 class CNode;
 using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 using CNodePtr = std::shared_ptr<CNode>;
-using SomasPtr = std::shared_ptr<somas::Somas>;
 namespace RDR {
 bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph,
                     const std::string &file_type = ".ir;.pb;.dat", int graph_id = 0);
 bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
                           const std::vector<CNodePtr> &&final_exec_order);
-bool RecordSomasInfo(const SubModuleId module, const std::string &tag, const SomasPtr &somas_ptr, int graph_id);
+bool RecordString(SubModuleId module, const std::string &tag, const std::string &data,
+                  const std::string &filename = "");
 void TriggerAll();
 }  // namespace RDR
 }  // namespace mindspore
-#endif  // RUNNING_DATA_RECORDER_H_
+#endif  // MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_
