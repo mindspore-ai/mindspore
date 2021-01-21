@@ -2,7 +2,7 @@
 
 # Run converter on x86 platform:
 function Run_Converter() {
-    # Unzip x86 runtime and convertor
+    # Unzip x86 runtime and converter
     cd ${x86_path} || exit 1
     tar -zxf mindspore-lite-${version}-inference-linux-x64.tar.gz || exit 1
     tar -zxf mindspore-lite-${version}-inference-linux-x64-sse.tar.gz || exit 1
