@@ -81,6 +81,13 @@ def make_tensor(data, data_type=mstype.int64, data_shape=None):
 
 
 @constexpr
+def judge_data_rank(data_rank, min_data_rank=0, max_data_rank=8):
+    if data_rank < min_data_rank or data_rank > max_data_rank:
+        raise ValueError(f"The input data's rank should in the range of[{min_data_rank}, "
+                         f"{max_data_rank}], bug actually is '{data_rank}'")
+
+
+@constexpr
 def check_ellipsis_shape_size(data_shape, value_shape, data_size, value_size):
     """Checks the shape and size of the sensor and value."""
     if data_shape == value_shape or data_size == value_size or value_size == 1:
@@ -148,14 +155,14 @@ def judge_index_type(index_type, target_type):
 def check_type_valid(dtype, target_type, op_name):
     if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
         raise TypeError(
-            f"The '{op_name}' doesn't supoort {dtype}' and expecte to receive {target_type}.")
+            f"The '{op_name}' doesn't supoort {dtype}' and expect to receive {target_type}.")
 
 
 @constexpr
 def check_index_type_valid(dtype, target_type, op_name):
     if dtype != target_type and (isinstance(target_type, (list, tuple)) and dtype not in target_type):
         raise IndexError(
-            f"The '{op_name}' doesn't supoort {dtype}' and expecte to receive {target_type}.")
+            f"The '{op_name}' doesn't supoort {dtype}' and expect to receive {target_type}.")
 
 
 @constexpr
@@ -330,12 +337,12 @@ def integer_to_indices(index, shape):
 
 
 @constexpr
-def tuple_element_is_int(indexs):
+def tuple_element_is_int(indexes):
     """Judges tuple element type."""
-    if not indexs:
+    if not indexes:
         raise IndexError("Tensor's index cannot be empty.")
-    if isinstance(indexs, tuple):
-        for _, ele in enumerate(indexs):
+    if isinstance(indexes, tuple):
+        for _, ele in enumerate(indexes):
             if not isinstance(ele, int):
                 return False
         return True
@@ -509,7 +516,7 @@ def transform_sequence_index(sequence_index, shape, op_name):
         if bool_count == shape:
             list_index = list(filter(lambda i: sequence_index[i], range(bool_count)))
         else:
-            raise IndexError("The boolean array should have the same length with the corresponding dimensiton")
+            raise IndexError("The boolean array should have the same length with the corresponding dimension")
     else:
         list_index = [int(index) for index in sequence_index]
 
