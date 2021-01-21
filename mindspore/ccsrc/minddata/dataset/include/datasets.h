@@ -261,8 +261,8 @@ class Dataset : public std::enable_shared_from_this<Dataset> {
   /// \param[in] datasets List of shared pointers to the dataset that should be concatenated together
   /// \return Shared pointer to the current ConcatDataset
   std::shared_ptr<ConcatDataset> Concat(const std::vector<std::shared_ptr<Dataset>> &datasets) {
-    std::vector<std::shared_ptr<Dataset>> all_datasets = datasets;
-    all_datasets.push_back(shared_from_this());
+    std::vector<std::shared_ptr<Dataset>> all_datasets{shared_from_this()};
+    all_datasets.insert(std::end(all_datasets), std::begin(datasets), std::end(datasets));
     return std::make_shared<ConcatDataset>(all_datasets);
   }
 

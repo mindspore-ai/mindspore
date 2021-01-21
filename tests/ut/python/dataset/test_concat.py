@@ -33,9 +33,16 @@ def generator_10():
     for i in range(3, 10):
         yield (np.array([i]),)
 
+
 # In generator_20 dataset: Number of rows is 10; its values are 10, 11, 12 ... 19
 def generator_20():
     for i in range(10, 20):
+        yield (np.array([i]),)
+
+
+# In generator_29 dataset: Number of rows is 9; its values are 20, 21, 22 ... 28
+def generator_29():
+    for i in range(20, 29):
         yield (np.array([i]),)
 
 
@@ -316,7 +323,7 @@ def test_concat_13():
 
 def test_concat_14():
     """
-    Test concat: create dataset with different dataset folder, and do diffrent operation then concat
+    Test concat: Testing concat on two different source datasets with different dataset operations.
     """
     logger.info("test_concat_14")
     DATA_DIR = "../data/dataset/testPK/data"
@@ -365,6 +372,63 @@ def test_concat_15():
     assert sum([1 for _ in data3]) == 47
 
 
+def test_concat_16():
+    """
+    Test concat: test get_dataset_size on nested concats
+    """
+    logger.info("test_concat_16")
+    DATA_DIR = "../data/dataset/testPK/data"
+    DATA_DIR2 = ["../data/dataset/test_tf_file_3_images/train-0000-of-0001.data"]
+
+    data1 = ds.ImageFolderDataset(DATA_DIR)
+    data2 = ds.TFRecordDataset(DATA_DIR2, columns_list=["image"])
+
+    data3 = ds.GeneratorDataset(generator, ["col1"])
+    data4 = ds.GeneratorDataset(generator_10, ["col1"])
+
+    data5 = data1 + data2
+    data6 = data3 + data4
+    data7 = data5 + data6
+
+    ds.config.set_seed(1)
+
+    # 57 is the total size of all 4 leaf datasets
+    assert data7.get_dataset_size() == 57
+
+
+def test_concat_17():
+    """
+    Test concat: test get_dataset_size on nested concats (with sampler)
+    """
+    logger.info("test_concat_17")
+
+    data1 = ds.GeneratorDataset(generator, ["col1"])
+    data2 = ds.GeneratorDataset(generator_10, ["col1"])
+
+    data3 = ds.GeneratorDataset(generator_20, ["col1"])
+    data4 = ds.GeneratorDataset(generator_29, ["col1"])
+
+    data5 = data1 + data2
+    data6 = data3 + data4
+    data7 = data5 + data6
+
+    ds.config.set_seed(1)
+    shard_num = 10
+    counter = 0
+
+    for i in range(shard_num):
+        distributed_sampler = ds.DistributedSampler(num_shards=shard_num, shard_id=i, shuffle=False, num_samples=None)
+        data7.use_sampler(distributed_sampler)
+        iter_counter = 0
+        for _ in data7.create_dict_iterator(num_epochs=1, output_numpy=True):
+            counter += 1
+            iter_counter += 1
+        assert data7.get_dataset_size() == iter_counter
+
+    # 29 is the total size of all 4 leaf datasets
+    assert counter == 29
+
+
 if __name__ == "__main__":
     test_concat_01()
     test_concat_02()
@@ -381,3 +445,5 @@ if __name__ == "__main__":
     test_concat_13()
     test_concat_14()
     test_concat_15()
+    test_concat_16()
+    test_concat_17()
