@@ -24,24 +24,20 @@
 #include <vector>
 
 #include "utils/log_adapter.h"
+#include "ps/core/message.h"
 #include "proto/comm.pb.h"
 #include "proto/ps.pb.h"
 
 namespace mindspore {
 namespace ps {
 namespace core {
-using messageReceive = std::function<void(std::shared_ptr<CommMessage>)>;
-constexpr int kHeaderLen = 8;
+using messageReceive = std::function<void(std::shared_ptr<MessageMeta>, const Protos &, const void *, size_t size)>;
+constexpr int kHeaderLen = 16;
 
 class TcpMessageHandler {
  public:
   TcpMessageHandler()
-      : is_parsed_(false),
-        message_buffer_(nullptr),
-        message_length_(0),
-        remaining_length_(0),
-        header_index_(-1),
-        last_copy_len_(0) {}
+      : is_parsed_(false), message_buffer_(nullptr), remaining_length_(0), header_index_(-1), last_copy_len_(0) {}
   virtual ~TcpMessageHandler() = default;
 
   void SetCallback(const messageReceive &cb);
@@ -51,11 +47,12 @@ class TcpMessageHandler {
   messageReceive message_callback_;
   bool is_parsed_;
   std::unique_ptr<unsigned char> message_buffer_;
-  size_t message_length_;
   size_t remaining_length_;
-  char header_[8];
+  char header_[16];
   int header_index_;
   size_t last_copy_len_;
+  MessageHeader message_header_;
+  std::string mBuffer;
 };
 }  // namespace core
 }  // namespace ps
