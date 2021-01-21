@@ -170,7 +170,7 @@ target_link_libraries(
 
 从MindSpore Model Hub中下载模型文件，本示例程序中使用的终端图像分割模型文件为`deeplabv3.ms`，同样通过download.gradle脚本在APP构建时自动下载，并放置在`app/src/main/assets`工程目录下。
 
-> 若下载失败请手动下载模型文件，deeplabv3.ms [下载链接](https://download.mindspore.cn/model_zoo/official/lite/deeplabv3_openimage_lite/deeplabv3.ms)。
+> 若下载失败请手动下载模型文件，deeplabv3.ms [下载链接](https://download.mindspore.cn/model_zoo/official/lite/deeplabv3_lite/deeplabv3.ms)。
 
 ### 编写端侧推理代码
 
@@ -219,7 +219,7 @@ target_link_libraries(
       model.freeBuffer();
       return;
     }
-    // Note: when use model.freeBuffer(), the model can not be complile graph again.
+    // Note: when use model.freeBuffer(), the model can not be compile graph again.
     model.freeBuffer();
     ```
 
@@ -334,7 +334,7 @@ target_link_libraries(
             float value = inputBuffer.getFloat((y * imageWidth * NUM_CLASSES + x * NUM_CLASSES + i) * 4);
             if (i == 0 || value > maxVal) {
               maxVal = value;
-              // Check wether a pixel belongs to a person whose label is 15.
+              // Check whether a pixel belongs to a person whose label is 15.
               if (i == 15) {
                 mSegmentBits[x][y] = i;
               } else {
