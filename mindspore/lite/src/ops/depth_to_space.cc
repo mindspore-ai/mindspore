@@ -76,14 +76,14 @@ int DepthToSpace::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
     return RET_INFER_INVALID;
   }
   auto input_shape = input->shape();
-  if (input_shape.size() != kDimension_4d) {
-    MS_LOG(ERROR) << "input shape dimension size should == " << kDimension_4d;
+  if (input_shape.size() != kQuadrupleNum) {
+    MS_LOG(ERROR) << "input shape dimension size should == " << kQuadrupleNum;
     return RET_PARAM_INVALID;
   }
 
   int32_t block_size = GetBlockSize();
   if (input_shape[NHWC_C] % (block_size * block_size) != 0 || input_shape[NHWC_C] == 0) {
-    MS_LOG(ERROR) << "input dimension c size " << input_shape[NHWC_C] << " should be mulitple of block_size("
+    MS_LOG(ERROR) << "input dimension c size " << input_shape[NHWC_C] << " should be multiple of block_size("
                   << block_size << ") * block_size)!";
     return RET_PARAM_INVALID;
   }

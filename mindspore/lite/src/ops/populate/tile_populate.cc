@@ -40,7 +40,7 @@ OpParameter *PopulateTileParameter(const mindspore::lite::PrimitiveC *primitive)
 #else
   auto dims = param->GetDims();
   auto multiples = param->GetMultiples();
-  for (size_t i = 0; i < kDimension_4d; ++i) {
+  for (size_t i = 0; i < kQuadrupleNum; ++i) {
     tile_param->multiples_[i] = 1;
   }
   if (!dims.empty() && !multiples.empty()) {

@@ -20,8 +20,12 @@ void CalcMultiplesAndStrides(ArithmeticParameter *param) {
   NNACL_ASSERT(param->in_shape0_[i] != 0);
   NNACL_ASSERT(param->in_shape1_[i] != 0);
   for (size_t i = 0; i < param->ndim_; i++) {
-    param->multiples0_[i] = param->out_shape_[i] / param->in_shape0_[i];
-    param->multiples1_[i] = param->out_shape_[i] / param->in_shape1_[i];
+    if (param->in_shape0_[i] != 0) {
+      param->multiples0_[i] = param->out_shape_[i] / param->in_shape0_[i];
+    }
+    if (param->in_shape1_[i] != 0) {
+      param->multiples1_[i] = param->out_shape_[i] / param->in_shape1_[i];
+    }
   }
   // cal strides
   ComputeStrides(param->in_shape0_, param->in_strides0_, param->ndim_);

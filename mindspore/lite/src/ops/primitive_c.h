@@ -36,8 +36,8 @@ namespace mindspore {
 namespace lite {
 constexpr uint32_t kSingleNum = 1;
 constexpr uint32_t kDoubleNum = 2;
-constexpr uint32_t kMultiNum = 3;
-constexpr uint32_t kDimension_4d = 4;
+constexpr uint32_t kTripleNum = 3;
+constexpr uint32_t kQuadrupleNum = 4;
 
 const std::set<int> kSupportDataType = {kNumberTypeBool,  kNumberTypeUInt8,   kNumberTypeInt8,
                                         kNumberTypeInt32, kNumberTypeFloat32, kNumberTypeFloat16};

@@ -37,8 +37,11 @@ class WhereCPUKernel : public LiteKernel {
   ~WhereCPUKernel() = default;
 
   int Init() override;
+  int PreProcess() override;
   int ReSize() override { return 0; }
   int Run() override;
+  int RunWithSingleInput();
+  int RunWithTripleInputs();
   int DoExcute(int task_id);
 
  protected:
@@ -47,10 +50,10 @@ class WhereCPUKernel : public LiteKernel {
   WhereParameter *where_param_;
 
  private:
-  bool *input_data;
-  float *input_data1;
-  float *input_data2;
-  float *output_data;
+  bool *condition_;
+  float *x_;
+  float *y_;
+  float *output_data_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_WHERE_H_

@@ -29,7 +29,8 @@ using mindspore::schema::PrimitiveType_Pad;
 namespace mindspore::kernel {
 namespace {
 constexpr size_t kMirrorPadInputSize = 2;
-}
+constexpr size_t kPadMaxInputSize = 2;
+}  // namespace
 int PadCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -381,6 +382,9 @@ int PadCPUKernel::HandleMirrorPad() {
 int PadCPUKernel::Run() {
   int error_code;
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
+    if (in_tensors_.size() == kPadMaxInputSize) {
+      CopyPaddingFromInput();
+    }
     auto output = out_tensors_.at(0);
     int output_size = output->ElementsNum();
     auto output_data = reinterpret_cast<float *>(output->data_c());

@@ -122,7 +122,7 @@ int ResizeBaseCPUKernel::CalculateNewHeightWidth() {
 }
 
 int ResizeBaseCPUKernel::CheckInputsOuputs() {
-  if (in_tensors_.size() <= lite::kDoubleNum) {
+  if (in_tensors_.size() <= lite::kQuadrupleNum) {
     for (size_t i = 0; i < in_tensors_.size(); i++) {
       auto input = in_tensors_.at(i);
       if (input == nullptr) {

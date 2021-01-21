@@ -138,6 +138,30 @@ PrimitiveC *PadCreator(const schema::Primitive *primitive) { return PrimitiveC::
 Registry PadRegistry(schema::PrimitiveType_Pad, PadCreator);
 #endif
 
+int GetPaddingFromInput(const std::vector<Tensor *> &inputs, std::vector<int> *paddings) {
+  auto paddings_tensor = inputs.at(1);
+  int rank = static_cast<int>(inputs.front()->shape().size());
+  MS_ASSERT(paddings_tensor->ElementsNum() == 2 * rank);
+  if (paddings_tensor->data_c() == nullptr) {
+    return RET_INFER_ERR;
+  }
+  paddings->clear();
+  if (paddings_tensor->data_type() == mindspore::kNumberTypeInt64) {
+    auto paddings_data = reinterpret_cast<int64_t *>(paddings_tensor->data_c());
+    for (auto i = 0; i < rank; ++i) {
+      paddings->emplace_back(paddings_data[i * 2]);
+      paddings->emplace_back(paddings_data[i * 2 + 1]);
+    }
+  } else if (paddings_tensor->data_type() == mindspore::kNumberTypeInt32) {
+    auto paddings_data = reinterpret_cast<int32_t *>(paddings_tensor->data_c());
+    for (auto i = 0; i < rank; ++i) {
+      paddings->emplace_back(paddings_data[i * 2]);
+      paddings->emplace_back(paddings_data[i * 2 + 1]);
+    }
+  }
+  return RET_OK;
+}
+
 int Pad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs) {
   MS_ASSERT(this->primitive_ != nullptr);
   if (this->primitive_ == nullptr) {
@@ -162,29 +186,12 @@ int Pad::InferShape(std::vector<Tensor *> inputs, std::vector<Tensor *> outputs)
   if (inputs.size() == 1) {
     paddings = GetPaddings();
   } else {
-    // mirror pad
-    auto paddings_tensor = inputs.at(1);
-    int rank = static_cast<int>(inputs.front()->shape().size());
-    MS_ASSERT(paddings_tensor->ElementsNum() == 2 * rank);
-    if (paddings_tensor->MutableData() == nullptr) {
-      return RET_INFER_ERR;
-    }
-    paddings.clear();
-    if (paddings_tensor->data_type() == mindspore::kNumberTypeInt64) {
-      auto paddings_data = reinterpret_cast<int64_t *>(paddings_tensor->MutableData());
-      for (auto i = 0; i < rank; ++i) {
-        paddings.emplace_back(paddings_data[i * 2]);
-        paddings.emplace_back(paddings_data[i * 2 + 1]);
-      }
-    } else if (paddings_tensor->data_type() == mindspore::kNumberTypeInt32) {
-      auto paddings_data = reinterpret_cast<int32_t *>(paddings_tensor->MutableData());
-      for (auto i = 0; i < rank; ++i) {
-        paddings.emplace_back(paddings_data[i * 2]);
-        paddings.emplace_back(paddings_data[i * 2 + 1]);
-      }
-    }
+    GetPaddingFromInput(inputs, &paddings);
   }
 
+  if (paddings.empty()) {
+    return RET_INFER_INVALID;
+  }
   auto input_shape = input->shape();
   std::vector<int> output_shape;
   MS_ASSERT(input->shape().size() <= 4);

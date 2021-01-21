@@ -136,4 +136,5 @@ int ReverseCPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reverse, LiteKernelCreator<ReverseCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Reverse, LiteKernelCreator<ReverseCPUKernel>)
 }  // namespace mindspore::kernel

@@ -71,8 +71,9 @@ int SplitBaseCPUKernel::ReSize() {
 
   num_unit_ = param->split_count_ * param->num_split_;
   thread_n_num_ = MSMIN(thread_count_, num_unit_);
-  MS_ASSERT(thread_n_num_);
-  thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
+  if (thread_n_num_ != 0) {
+    thread_n_stride_ = UP_DIV(num_unit_, thread_n_num_);
+  }
   return RET_OK;
 }
 }  // namespace mindspore::kernel

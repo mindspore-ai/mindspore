@@ -100,9 +100,9 @@ int SpaceToBatch::InferShape(std::vector<lite::Tensor *> inputs, std::vector<lit
     return RET_INFER_INVALID;
   }
   auto input_shape = input->shape();
-  if (input_shape.size() != kDimension_4d) {
+  if (input_shape.size() != kQuadrupleNum) {
     MS_LOG(ERROR) << "Space_to_batch op only support 4D input currently. But got %d dimensionality input."
-                  << kDimension_4d;
+                  << kQuadrupleNum;
     return RET_ERROR;
   }
 

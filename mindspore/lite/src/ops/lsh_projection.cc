@@ -49,7 +49,7 @@ Registry LshProjectionRegistry(schema::PrimitiveType_LshProjection, LshProjectio
 #endif
 
 int LshProjection::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
-  if (inputs_.size() != kDoubleNum && inputs_.size() != kMultiNum) {
+  if (inputs_.size() != kDoubleNum && inputs_.size() != kTripleNum) {
     MS_LOG(ERROR) << "inputs to LshProjection operator should be 2 or 3, but " << inputs_.size() << " is given.";
     return RET_ERROR;
   }
@@ -63,7 +63,7 @@ int LshProjection::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor 
   MS_ASSERT(in_hash->DimensionSize(1) <= 32);
   MS_ASSERT(inputs_.at(1)->shape().size() >= 1);
 
-  if (inputs_.size() == kMultiNum) {
+  if (inputs_.size() == kTripleNum) {
     MS_ASSERT(inputs_.at(2)->shape().size() == 1);
     MS_ASSERT(inputs_.at(2)->DimensionSize(0) == inputs_.at(1)->DimensionSize(0));
   }

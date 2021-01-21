@@ -43,6 +43,7 @@ int CropAndResizeCPUKernel::ReSize() {
 }
 
 int CropAndResizeCPUKernel::MallocTmpBuffer() {
+  batch_ = out_tensors_[0]->Batch();
   // Malloc buffer to save coordinate.
   // For mode CROP_AND_RESIZE, different output batches require different cache coordinates.
   int c = in_tensors_.at(0)->Channel();
@@ -153,7 +154,6 @@ int CropAndResizeCPUKernel::Run() {
     ret = PrepareResizeBilinear(input_shape.data(), out_tensors_.at(0)->shape().data(), CalculateAlignCorners,
                                 y_bottoms_, y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
   } else {
-    batch_ = out_tensors_[0]->Batch();
     auto boxes = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
     auto box_idx = reinterpret_cast<int32_t *>(in_tensors_.at(2)->data_c());
     ret = PrepareCropAndResizeBilinear(input_shape.data(), boxes, box_idx, out_tensors_.at(0)->shape().data(),

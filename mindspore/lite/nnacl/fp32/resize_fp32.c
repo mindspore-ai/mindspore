@@ -63,14 +63,13 @@ int PrepareCropAndResizeBilinear(const int *input_shape, const float *boxes, con
   int new_height = output_shape[1];
   int new_width = output_shape[2];
 
-  for (int i = 0; i < batch; i++) {
-    int b = box_idx[i];
+  for (int b = 0; b < batch; b++) {
     const float *box = boxes + b * 4;
-    int start_h = box[0] * (in_h - 1);
-    int end_h = box[2] * (in_h - 1);
-    int start_w = box[1] * (in_w - 1);
-    int end_w = box[3] * (in_w - 1);
-    if (start_h >= end_h || start_w >= end_w || end_h >= in_h || end_w >= in_w) {
+    float start_h = box[0];
+    float end_h = box[2];
+    float start_w = box[1];
+    float end_w = box[3];
+    if (start_h > end_h || start_w > end_w || end_h > 1 || end_w > 1) {
       return NNACL_PARAM_INVALID;
     }
 

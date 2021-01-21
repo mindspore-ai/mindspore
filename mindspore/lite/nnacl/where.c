@@ -14,14 +14,15 @@
  * limitations under the License.
  */
 #include "nnacl/where.h"
+#include "nnacl/common_func.h"
 
-void Where(bool *input, const float *input1, const float *input2, float *output, WhereParameter *where_param_,
-           int task_id) {
-  for (int i = task_id; i < where_param_->number_; i += where_param_->op_parameter_.thread_num_) {
-    if (input[where_param_->num_ > 1 ? i : 0] == true) {
-      output[i] = input1[where_param_->num1_ > 1 ? i : 0];
+void WhereWithTripleInputs(const bool *condition, const float *x, const float *y, float *output,
+                           WhereParameter *where_param_, int task_id) {
+  for (int i = task_id; i < where_param_->max_num_; i += where_param_->op_parameter_.thread_num_) {
+    if (condition[where_param_->condition_num_ > 1 ? i : 0] == true) {
+      output[i] = x[where_param_->x_num_ > 1 ? i : 0];
     } else {
-      output[i] = input2[where_param_->num2_ > 1 ? i : 0];
+      output[i] = y[where_param_->y_num_ > 1 ? i : 0];
     }
   }
 }
