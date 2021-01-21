@@ -35,18 +35,24 @@ class NetArgmaxWithValue(nn.Cell):
         return (self.argmax1(x), self.argmax2(x), self.argmax3(x))
 
 
-@pytest.mark.level0
-@pytest.mark.platform_x86_gpu_training
-@pytest.mark.env_onecard
-def test_argmaxwithvalue():
+class NetArgmaxWithValueBig(nn.Cell):
+    def __init__(self, axis=0):
+        super(NetArgmaxWithValueBig, self).__init__()
+        self.argmax = P.ArgMaxWithValue(axis)
+
+    def construct(self, x):
+        return self.argmax(x)
+
+
+def argmaxwithvalue_base(data_type):
     x = Tensor(np.array([[1., 20., 5.],
                          [67., 8., 9.],
                          [130., 24., 15.],
-                         [0.3, -0.4, -15.]]).astype(np.float32))
-    expect1 = np.array([2, 2, 2]).astype(np.float32)
-    expect2 = np.array([1, 0, 0, 0]).astype(np.float32)
-    expect11 = np.array([130, 24, 15]).astype(np.float32)
-    expect22 = np.array([20, 67, 130, 0.3]).astype(np.float32)
+                         [0.3, -0.4, -15.]]).astype(data_type))
+    expect1 = np.array([2, 2, 2]).astype(data_type)
+    expect2 = np.array([1, 0, 0, 0]).astype(data_type)
+    expect11 = np.array([130, 24, 15]).astype(data_type)
+    expect22 = np.array([20, 67, 130, 0.3]).astype(data_type)
     context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
     argmax = NetArgmaxWithValue()
     output = argmax(x)
@@ -66,3 +72,75 @@ def test_argmaxwithvalue():
     assert (output[1][1].asnumpy() == expect22).all()
     assert (output[2][0].asnumpy() == expect1).all()
     assert (output[2][1].asnumpy() == expect11).all()
+
+
+def argmaxwithvalue_3d(data_type, shape_x):
+    np.random.seed(876)
+    x_np = np.random.random(shape_x).astype(data_type)
+    x = Tensor(x_np)
+
+    argmax = NetArgmaxWithValueBig(0)
+    output = argmax(x)
+    expect1 = np.argmax(x_np, axis=0)
+    expect2 = np.maximum.reduce(x_np, 0)
+    assert (output[0].asnumpy() == expect1).all()
+    assert (output[1].asnumpy() == expect2).all()
+
+    argmax = NetArgmaxWithValueBig(1)
+    output = argmax(x)
+    expect1 = np.argmax(x_np, axis=1)
+    expect2 = np.maximum.reduce(x_np, 1)
+    assert (output[0].asnumpy() == expect1).all()
+    assert (output[1].asnumpy() == expect2).all()
+
+    argmax = NetArgmaxWithValueBig(2)
+    output = argmax(x)
+    expect1 = np.argmax(x_np, axis=2)
+    expect2 = np.maximum.reduce(x_np, 2)
+    assert (output[0].asnumpy() == expect1).all()
+    assert (output[1].asnumpy() == expect2).all()
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_argmaxwithvalue_base_float32():
+    argmaxwithvalue_base(np.float32)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_argmaxwithvalue_base_float16():
+    argmaxwithvalue_base(np.float16)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_argmaxwithvalue_3d_float32():
+    shape_x = (2, 32, 256)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    argmaxwithvalue_3d(np.float32, shape_x)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    argmaxwithvalue_3d(np.float32, shape_x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_argmaxwithvalue_3d_float16():
+    shape_x = (2, 32, 16)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    argmaxwithvalue_3d(np.float16, shape_x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_argmaxwithvalue_3d_big_float32():
+    shape_x = (128, 1024, 1)
+    context.set_context(mode=context.PYNATIVE_MODE, device_target="GPU")
+    argmaxwithvalue_3d(np.float32, shape_x)
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    argmaxwithvalue_3d(np.float32, shape_x)
