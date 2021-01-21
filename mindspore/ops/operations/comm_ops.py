@@ -149,7 +149,7 @@ class AllGather(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> # This example should be run with two devices. Refer to the tutorial > Distirbuted Training on mindspore.cn.
+        >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn.
         >>> import numpy as np
         >>> import mindspore.ops.operations as ops
         >>> import mindspore.nn as nn
@@ -272,7 +272,7 @@ class ReduceScatter(PrimitiveWithInfer):
         ``Ascend`` ``GPU``
 
     Examples:
-        >>> # This example should be run with two devices. Refer to the tutorial > Distirbuted Training on mindspore.cn.
+        >>> # This example should be run with two devices. Refer to the tutorial > Distributed Training on mindspore.cn.
         >>> from mindspore import Tensor, context
         >>> from mindspore.communication import init
         >>> from mindspore.ops.operations.comm_ops import ReduceOp
@@ -396,15 +396,19 @@ class Broadcast(PrimitiveWithInfer):
         TypeError: If root_rank is not a integer or group is not a string.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend``, ``GPU``
 
     Examples:
+        >>> # This example should be run with multiple processes.
+        >>> # Please refer to the tutorial > Distributed Training on mindspore.cn.
         >>> from mindspore import Tensor
+        >>> from mindspore import context
         >>> from mindspore.communication import init
         >>> import mindspore.nn as nn
         >>> import mindspore.ops.operations as ops
         >>> import numpy as np
         >>>
+        >>> context.set_context(mode=context.GRAPH_MODE)
         >>> init()
         >>> class Net(nn.Cell):
         ...     def __init__(self):

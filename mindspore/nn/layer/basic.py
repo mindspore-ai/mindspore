@@ -878,7 +878,7 @@ class MatrixDiag(Cell):
     r"""
     Returns a batched diagonal tensor with a given batched diagonal values.
 
-    Assume :math:`x` has :math:`k` dimensions :math:`[I, J, K, ..., N]`, then the output is a tensor of rank
+    Assume `x` has :math:`k` dimensions :math:`[I, J, K, ..., N]`, then the output is a tensor of rank
     :math:`k+1` with dimensions :math:`[I, J, K, ..., N, N]` where:
 
     .. code-block::
@@ -922,7 +922,7 @@ class MatrixDiagPart(Cell):
     Returns the batched diagonal part of a batched tensor.
 
     Assume `x` has :math:`k` dimensions :math:`[I, J, K, ..., M, N]`, then the output is a tensor of rank
-    :math:`k-1` with dimensions :math:`[I, J, K, ..., min(M, N]` where:
+    :math:`k-1` with dimensions :math:`[I, J, K, ..., min(M, N)]` where:
 
     .. code-block::
 
