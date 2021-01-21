@@ -283,6 +283,15 @@ class _AutoParallelContext:
         self.check_context_handle()
         return self._context_handle.get_strategy_ckpt_save_file()
 
+    def set_group_ckpt_save_file(self, group_ckpt_save_file):
+        """Set group checkpoint save path."""
+        self.check_context_handle()
+        import os
+        dir_path = os.path.dirname(group_ckpt_save_file)
+        if dir_path and not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        self._context_handle.set_group_ckpt_save_file(group_ckpt_save_file)
+
     def get_parameter_broadcast_is_set(self):
         """Get parameter broadcast is set or not."""
         self.check_context_handle()
@@ -505,6 +514,7 @@ _set_auto_parallel_context_func_map = {
     "parameter_broadcast": auto_parallel_context().set_parameter_broadcast,
     "strategy_ckpt_load_file": auto_parallel_context().set_strategy_ckpt_load_file,
     "strategy_ckpt_save_file": auto_parallel_context().set_strategy_ckpt_save_file,
+    "group_ckpt_save_file": auto_parallel_context().set_group_ckpt_save_file,
     "full_batch": auto_parallel_context().set_full_batch,
     "enable_parallel_optimizer": auto_parallel_context().set_enable_parallel_optimizer,
     "grad_accumulation_step": auto_parallel_context().set_grad_accumulation_step,
@@ -533,7 +543,7 @@ _get_auto_parallel_context_func_map = {
                  loss_repeated_mean=bool, parallel_mode=str, auto_parallel_search_mode=str,
                  parameter_broadcast=bool, strategy_ckpt_load_file=str,
                  strategy_ckpt_save_file=str, full_batch=bool, enable_parallel_optimizer=bool,
-                 grad_accumulation_step=int, all_reduce_fusion_config=list)
+                 grad_accumulation_step=int, all_reduce_fusion_config=list, group_ckpt_save_file=str)
 
 def _set_auto_parallel_context(**kwargs):
     """
@@ -574,6 +584,7 @@ def _set_auto_parallel_context(**kwargs):
                        broadcast. Default: False.
         strategy_ckpt_load_file (str): The path to load parallel strategy checkpoint. Default: ''
         strategy_ckpt_save_file (str): The path to save parallel strategy checkpoint. Default: ''
+        group_ckpt_save_file (str): The path to save parallel group checkpoint. Default: ''
         full_batch (bool): Whether to load the whole batch on each device. Default: False.
         enable_parallel_optimizer (bool): Enable using optimizer segmentation or not. Default: False.
         all_reduce_fusion_config (list): Set allreduce fusion strategy by parameters indices.

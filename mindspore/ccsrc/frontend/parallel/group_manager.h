@@ -21,6 +21,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "frontend/parallel/device.h"
 #include "frontend/parallel/status.h"
@@ -62,6 +63,7 @@ class GroupManager {
   Status FindGroup(const std::string &name, Group **group);
   std::string world_group() const { return world_group_; }
   void set_world_group(const std::string &name) { world_group_ = name; }
+  std::vector<std::pair<std::string, std::vector<uint32_t>>> group_info() const { return group_info_; }
   void Clear();
 
  private:
@@ -69,7 +71,10 @@ class GroupManager {
   // the key is group name (name_)
   std::map<std::string, Group> groups_;
   std::string world_group_;
+  std::vector<std::pair<std::string, std::vector<uint32_t>>> group_info_;
 };
+
+Status CreateGroups(const std::vector<std::pair<std::string, std::vector<uint32_t>>> &group_info);
 }  // namespace parallel
 }  // namespace mindspore
 

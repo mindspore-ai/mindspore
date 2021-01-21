@@ -109,7 +109,7 @@ void CoverSliceShape(const FuncGraphPtr &root);
 
 void SetVirtualDatasetStrategy(const CNodePtr &node);
 
-// Creat parallel operator for primitive node(has strategy)
+// Create parallel operator for primitive node(has strategy)
 void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_training = true);
 
 TensorLayout GetInputLayoutFromCNode(const std::pair<AnfNodePtr, int64_t> &node_pair);
@@ -162,6 +162,8 @@ void ApplyParallelOptOnParam(TensorLayout *tensor_layout, const OperatorInfoPtr 
                              const CNodePtr &cnode, const AnfNodePtr &parameter, size_t index);
 
 void SetLastNodeStrategy(const StrategyPtr strategyPtr);
+
+bool CreateGroupsByCkptFile(const std::string &file);
 
 void FindLastNodesUniqueId(const std::vector<AnfNodePtr> &all_nodes, std::vector<std::string> *unique_ids);
 }  // namespace parallel

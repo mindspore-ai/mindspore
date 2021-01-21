@@ -17,6 +17,7 @@
 #include "frontend/parallel/group_manager.h"
 #include <algorithm>
 #include <vector>
+#include <utility>
 #include "backend/session/executor_manager.h"
 #include "frontend/parallel/device_manager.h"
 #include "utils/comm_manager.h"
@@ -109,6 +110,9 @@ Status GroupManager::CreateGroup(const std::string &group_name, const std::vecto
       return Status::FAILED;
     }
 
+    std::pair<std::string, std::vector<uint32_t>> group_info = std::make_pair(group_name, ranks);
+    group_info_.push_back(group_info);
+
     MS_LOG(INFO) << "Create group success, group name is " << group_name;
     return Status::SUCCESS;
   }
@@ -187,5 +191,27 @@ Status GroupManager::FindGroup(const std::string &name, mindspore::parallel::Gro
 }
 
 void GroupManager::Clear() { (void)DestroyAllGroups(); }
+
+Status CreateGroups(const std::vector<std::pair<std::string, std::vector<uint32_t>>> &group_info) {
+  // Create group through the executor
+  auto context_ptr = MsContext::GetInstance();
+  MS_EXCEPTION_IF_NULL(context_ptr);
+  std::string device_name = context_ptr->get_param<std::string>(MS_CTX_DEVICE_TARGET);
+  uint32_t device_id = context_ptr->get_param<uint32_t>(MS_CTX_DEVICE_ID);
+  auto executor = session::ExecutorManager::Instance().GetExecutor(device_name, device_id);
+  MS_EXCEPTION_IF_NULL(executor);
+
+  for (auto &group : group_info) {
+    bool ret = executor->CreateCommGroup(group.first, group.second);
+    if (!ret) {
+      MS_LOG(ERROR) << "Create group failed, group name is " << group.first << ", ranks is " << group.second;
+      return FAILED;
+    }
+    MS_LOG(INFO) << "Create group success, group name is " << group.first << ", ranks is " << group.second;
+  }
+
+  return SUCCESS;
+}
+
 }  // namespace parallel
 }  // namespace mindspore

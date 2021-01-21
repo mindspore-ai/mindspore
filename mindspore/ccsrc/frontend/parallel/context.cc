@@ -124,6 +124,10 @@ void ParallelContext::set_strategy_ckpt_save_file(const std::string &strategy_ck
   strategy_ckpt_save_file_ = strategy_ckpt_save_file;
 }
 
+void ParallelContext::set_group_ckpt_save_file(const std::string &group_ckpt_save_file) {
+  group_ckpt_save_file_ = group_ckpt_save_file;
+}
+
 void ParallelContext::SetAllReduceFusionSplitIndices(const std::vector<uint32_t> indices, const std::string &group) {
   all_reduce_fusion_split_indices_[group] = indices;
 }

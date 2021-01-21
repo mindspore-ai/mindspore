@@ -83,6 +83,7 @@ class DeviceManager {
 
   void Clear();
   std::string world_group() const { return gm_.world_group(); }
+  std::vector<std::pair<std::string, std::vector<uint32_t>>> group_info() const { return gm_.group_info(); }
   std::string FindRankListNameByHashName(const std::string &hash_name);
 
  private:

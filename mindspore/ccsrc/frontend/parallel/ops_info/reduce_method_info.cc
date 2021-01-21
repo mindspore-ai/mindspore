@@ -160,7 +160,7 @@ Status ReduceMethod::InferForwardCommunication() {
   Shape group_creat_map;
 
   // if repeated calculation and the repeated_calc_num_ insert to the first dimension of dev matrix,
-  // it need to handle the first dimention of map.
+  // it need to handle the first dimension of map.
   if ((dev_matrix_shape_.size() > size) && !repeated_num_in_dev_matrix_right_) {
     group_creat_map.push_back(SizeToInt(dev_matrix_shape_.size() - size_t(1)));
   }
@@ -200,12 +200,12 @@ Status ReduceMethod::InferForwardCommunication() {
 }
 
 ForwardOp CreateReduceMeanForwardOp(const std::vector<Group> &forward_group, const TypePtr &dtype) {
-  // Creat AllReduceSum op
+  // Create AllReduceSum op
   Operator op0 = CreateAllReduceOp(REDUCE_OP_SUM, forward_group[0].name());
   std::string group_name = forward_group[0].name();
   MS_LOG(INFO) << "The group of forward all reduce is " << group_name;
 
-  // Creat RealDiv op
+  // Create RealDiv op
   OperatorName operator1_name = REAL_DIV;
   std::vector<Device> device_list = forward_group[0].GetDevicesList();
   auto divisor = static_cast<float>(device_list.size());
@@ -237,7 +237,7 @@ Status ReduceMeanInfo::InferForwardCommunication() {
   Shape group_creat_map;
 
   // if repeated calculation and the repeated_calc_num_ insert to the first dimension of dev matrix,
-  // it need to handle the first dimention of map.
+  // it need to handle the first dimension of map.
   if ((dev_matrix_shape_.size() > size) && !repeated_num_in_dev_matrix_right_) {
     group_creat_map.push_back(SizeToInt(dev_matrix_shape_.size() - size_t(1)));
   }
