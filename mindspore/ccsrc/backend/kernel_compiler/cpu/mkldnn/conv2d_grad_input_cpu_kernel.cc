@@ -51,19 +51,18 @@ void Conv2dGradInputCPUKernel::InitKernel(const CNodePtr &kernel_node) {
                        [](const int64_t &value) { return static_cast<int>(value); });
   (void)std::transform(dilation_me.begin(), dilation_me.end(), std::back_inserter(dilation_ori),
                        [](const int64_t &value) { return static_cast<int>(value); });
-  if (stride_ori.size() != 2 || stride_ori[0] != stride_ori[1]) {
-    MS_LOG(EXCEPTION) << "Conv2dGradInputCPUKernel only support equal stride, and stride must be 2d!";
-  }
+
   if (dilation_ori.size() != 4) {
     MS_LOG(EXCEPTION) << "Conv2dGradInputCPUKernel dilation must be 4d!";
   }
   if (dilation_ori[0] != 1 || dilation_ori[1] != 1) {
     MS_LOG(EXCEPTION) << "Conv2dGradInputCPUKernel dilation only support 1 in N axis and C axis!";
   }
-  int stride = stride_ori[0];
-  int dilation = dilation_ori[2];
-  dnnl::memory::dims strides{stride, stride};
-  dnnl::memory::dims dilates{dilation - 1, dilation - 1};
+
+  std::vector<int> stride{stride_ori[0], stride_ori[1]};
+
+  dnnl::memory::dims strides{stride_ori[0], stride_ori[1]};
+  dnnl::memory::dims dilates{dilation_ori[2] - 1, dilation_ori[3] - 1};
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);

@@ -40,13 +40,14 @@ void AvgPoolingGradCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   if (origin_kernel_sizes.size() != 4 || strides.size() != 4) {
     MS_LOG(EXCEPTION) << "Invalid kernel size " << origin_kernel_sizes.size() << " or stride size " << strides.size();
   }
+  std::vector<int> stride{strides[2], strides[3]};
   dnnl::memory::dims strides_dims{strides[2], strides[3]};
   dnnl::memory::dims kernels_dims{origin_kernel_sizes[2], origin_kernel_sizes[3]};
   const std::string pad_mode = AnfAlgo::GetNodeAttr<std::string>(kernel_node, PAD_MODE);
   std::vector<int> int_padding_l;
   std::vector<int> int_padding_r;
   std::vector<size_t> kernel_size({IntToSize(origin_kernel_sizes[2]), IntToSize(origin_kernel_sizes[3])});
-  GetPadding(kernel_node, pad_mode, src_shape, kernel_size, strides[3], &int_padding_l, &int_padding_r);
+  GetPadding(kernel_node, pad_mode, src_shape, kernel_size, stride, &int_padding_l, &int_padding_r);
   if (int_padding_l.size() != 2 || int_padding_r.size() != 2) {
     MS_LOG(EXCEPTION) << "Pooling avg get padding failed";
   }
