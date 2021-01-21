@@ -141,6 +141,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimFusedBatchNorm, {InferImplFusedBatchNorm, true}},
     {prim::kPrimFusedSparseAdam, {InferImplFusedSparseAdam, true}},
     {prim::kPrimFusedBatchNormGrad, {InferImplFusedBatchNormGrad, true}},
+    {prim::kPrimFusedBatchNormEx, {InferImplFusedBatchNormEx, true}},
     {prim::kPrimBatchNormGrad, {InferImplBatchNormGrad, true}},
     {prim::kPrimReluGrad, {InferImplReluGrad, true}},
     {prim::kPrimConv2D, {InferImplConv2D, true}},

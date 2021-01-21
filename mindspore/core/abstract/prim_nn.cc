@@ -23,6 +23,15 @@
 
 namespace mindspore {
 namespace abstract {
+int64_t GetAndCheckFormat(const ValuePtr &value) {
+  int64_t data_format;
+  bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
+  if (!result || (data_format != Format::NHWC && data_format != Format::NCHW)) {
+    MS_LOG(EXCEPTION) << "data format is invalid, only support NCHW and NHWC";
+  }
+  return data_format;
+}
+
 AbstractBasePtr InferImplPooling(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                  const AbstractBasePtrList &args_spec_list) {
   // Inputs: a tensor.
@@ -235,6 +244,54 @@ AbstractBasePtr InferImplFusedBatchNormGrad(const AnalysisEnginePtr &, const Pri
   return std::make_shared<AbstractTuple>(rets);
 }
 
+AbstractBasePtr InferImplFusedBatchNormEx(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                          const AbstractBasePtrList &args_spec_list) {
+  // Inputs: five tensors(x, gamma, beta, mean, variance).
+  const std::string op_name = primitive->name();
+  CheckArgsSize(op_name, args_spec_list, 5);
+  AbstractTensorPtr input_x = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  MS_EXCEPTION_IF_NULL(input_x);
+  MS_EXCEPTION_IF_NULL(input_x->shape());
+  ShapeVector x_shape = input_x->shape()->shape();
+  ShapeVector x_min_shape = input_x->shape()->min_shape();
+  ShapeVector x_max_shape = input_x->shape()->max_shape();
+  CheckMinMaxShape(x_shape, &x_min_shape, &x_max_shape);
+  if (x_shape.size() != 4) {
+    MS_LOG(EXCEPTION) << "Input rank should 4.";
+  }
+  auto data_format_ptr = primitive->GetAttr("format");
+  MS_EXCEPTION_IF_NULL(data_format_ptr);
+  int64_t data_format = GetAndCheckFormat(data_format_ptr);
+  int64_t c_axis = 1;
+  if (data_format == Format::NHWC) {
+    c_axis = 3;
+  }
+  for (size_t i = 1; i < args_spec_list.size(); ++i) {
+    AbstractTensorPtr arg_spec = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
+    MS_EXCEPTION_IF_NULL(arg_spec);
+    MS_EXCEPTION_IF_NULL(arg_spec->shape());
+    ShapeVector arg_shape = arg_spec->shape()->shape();
+    if (arg_shape.size() != 1) {
+      MS_LOG(EXCEPTION) << "Arg " << i << " rank should be 1, but got " << arg_shape.size();
+    }
+    if ((x_shape[c_axis] != Shape::SHP_ANY) && (arg_shape[0] != x_shape[c_axis])) {
+      MS_LOG(EXCEPTION) << "Arg " << i << " shape[0] should equal to x_shape[" << c_axis << "]=" << x_shape[c_axis]
+                        << ", but got " << arg_shape[0];
+    }
+  }
+  AbstractTensorPtr input_gamma = CheckArg<AbstractTensor>(op_name, args_spec_list, 1);
+  ShapeVector gamma_shape = input_gamma->shape()->shape();
+  ShapeVector gamma_min_shape = input_gamma->shape()->min_shape();
+  ShapeVector gamma_max_shape = input_gamma->shape()->max_shape();
+  CheckMinMaxShape(gamma_shape, &gamma_min_shape, &gamma_max_shape);
+  ShapePtr output_shape_ptr = std::make_shared<Shape>(x_shape, x_min_shape, x_max_shape);
+  AbstractTensorPtr output = std::make_shared<AbstractTensor>(input_x->element(), output_shape_ptr);
+  ShapePtr gamma_shape_ptr = std::make_shared<Shape>(gamma_shape, gamma_min_shape, gamma_max_shape);
+  AbstractTensorPtr output_gamma = std::make_shared<AbstractTensor>(input_gamma->element(), gamma_shape_ptr);
+  AbstractBasePtrList rets = {output, output_gamma, output_gamma, output_gamma, output_gamma, output_gamma};
+  return std::make_shared<AbstractTuple>(rets);
+}
+
 AbstractBasePtr InferImplBatchNormGrad(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                        const AbstractBasePtrList &args_spec_list) {
   // Inputs: five tensors(y_backprop, x, scale, save_mean, save_inv_variance).
@@ -309,15 +366,6 @@ void Conv2DPadFunction(std::vector<int64_t> *output_hw, std::vector<int64_t> *pa
       1 +
       ((x_w * 1.0) + pad_list->at(2) + pad_list->at(3) - kernel[1] - (kernel[1] - 1) * (dilation[1] - 1)) / stride[1]));
   }
-}
-
-int64_t GetAndCheckFormat(const ValuePtr &value) {
-  int64_t data_format;
-  bool result = CheckAndConvertUtils::GetDataFormatEnumValue(value, &data_format);
-  if (!result || (data_format != Format::NHWC && data_format != Format::NCHW)) {
-    MS_LOG(EXCEPTION) << "data format is invalid, only support NCHW and NHWC";
-  }
-  return data_format;
 }
 
 AbstractBasePtr InferImplConv2D(const AnalysisEnginePtr &, const PrimitivePtr &primitive,

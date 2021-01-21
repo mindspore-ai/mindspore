@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,25 +29,7 @@ namespace kernel {
 template <typename T>
 class FusedBatchNormExGpuKernel : public GpuKernel {
  public:
-  FusedBatchNormExGpuKernel()
-      : input_x_size_(0),
-        input_z_size_(0),
-        para_size_(0),
-        output_size_(0),
-        workspace_size_(0),
-        reserve_size_(0),
-        mode_(CUDNN_BATCHNORM_SPATIAL),
-        bn_ops_(CUDNN_BATCHNORM_OPS_BN),
-        epsilon_(10e-5),
-        exp_avg_factor_(0.1),
-        is_null_input_(false),
-        x_desc_(nullptr),
-        y_desc_(nullptr),
-        z_desc_(nullptr),
-        scale_bias_mean_var_desc_(nullptr),
-        activation_desc_(nullptr),
-        handle_(nullptr),
-        cudnn_data_type_(CUDNN_DATA_FLOAT) {}
+  FusedBatchNormExGpuKernel() { ResetResource(); }
   ~FusedBatchNormExGpuKernel() override { DestroyResource(); }
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -140,6 +122,30 @@ class FusedBatchNormExGpuKernel : public GpuKernel {
     SetTensorDescriptor(format, shape);
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    input_x_size_ = 0;
+    input_z_size_ = 0;
+    para_size_ = 0;
+    output_size_ = 0;
+    workspace_size_ = 0;
+    reserve_size_ = 0;
+    mode_ = CUDNN_BATCHNORM_SPATIAL;
+    bn_ops_ = CUDNN_BATCHNORM_OPS_BN;
+    epsilon_ = 10e-5;
+    exp_avg_factor_ = 0.1;
+    is_null_input_ = false;
+    x_desc_ = nullptr;
+    y_desc_ = nullptr;
+    z_desc_ = nullptr;
+    scale_bias_mean_var_desc_ = nullptr;
+    activation_desc_ = nullptr;
+    handle_ = nullptr;
+    cudnn_data_type_ = CUDNN_DATA_FLOAT;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
   void DestroyResource() noexcept override {
