@@ -24,6 +24,7 @@ namespace mindspore {
 namespace dataset {
 
 #define ALIGN 16
+#define MAX_DIMS 3
 
 template <typename T>
 struct Chn1 {
@@ -121,6 +122,8 @@ enum LPixelType {
   NV122BGR = 7,
 };
 
+enum WARP_BORDER_MODE { WARP_BORDER_MODE_CONSTANT };
+
 class LDataType {
  public:
   enum Type : uint8_t {
@@ -137,6 +140,7 @@ class LDataType {
     FLOAT16,
     FLOAT32,
     FLOAT64,
+    DOUBLE,
     NUM_OF_TYPES
   };
 
@@ -179,6 +183,7 @@ class LDataType {
     2,  // FLOAT16
     4,  // FLOAT32
     8,  // FLOAT64
+    8,  // DOUBLE
   };
 
   Type type_;
@@ -213,6 +218,8 @@ class LiteMat {
 
   void Init(int width, int height, int channel, void *p_data, LDataType data_type = LDataType::UINT8);
 
+  bool GetROI(int x, int y, int w, int h, LiteMat &dst);  // NOLINT
+
   bool IsEmpty() const;
 
   void Release();
@@ -229,6 +236,14 @@ class LiteMat {
     return reinterpret_cast<const T *>(data_ptr_);
   }
 
+  template <typename T>
+  inline T *ptr(int w) const {
+    if (IsEmpty()) {
+      return nullptr;
+    }
+    return reinterpret_cast<T *>(reinterpret_cast<unsigned char *>(data_ptr_) + steps_[0] * w);
+  }
+
  private:
   /// \brief apply for memory alignment
   void *AlignMalloc(unsigned int size);
@@ -241,6 +256,8 @@ class LiteMat {
   /// \brief add reference
   int addRef(int *p, int value);
 
+  void setSteps(int c0, int c1, int c2);
+
  public:
   void *data_ptr_ = nullptr;
   int elem_size_;
@@ -252,6 +269,7 @@ class LiteMat {
   size_t size_;
   LDataType data_type_;
   int *ref_count_;
+  size_t steps_[MAX_DIMS];
 };
 
 /// \brief Calculates the difference between the two images for each element

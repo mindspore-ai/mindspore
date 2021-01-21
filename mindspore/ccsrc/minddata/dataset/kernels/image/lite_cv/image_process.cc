@@ -28,10 +28,33 @@
 #endif
 #endif
 
+#ifdef PLATFORM_ARM64
+#define R2GRAY 9798
+#define G2GRAY 19235
+#define B2GRAY 3735
+#define GRAYSHIFT 15
+#define GRAYSHIFT_DELTA (1 << (GRAYSHIFT - 1))
+#else
+#define R2GRAY 77
+#define G2GRAY 150
+#define B2GRAY 29
+#define GRAYSHIFT 8
+#endif
+
+#define YSCALE 0x0101
+#define UTOB (-128)
+#define UTOG 25
+#define VTOR (-102)
+#define VTOG 52
+#define YTOG 18997
+#define YTOGB (-1160)
+#define BTOB (UTOB * 128 + YTOGB)
+#define BTOG (UTOG * 128 + VTOG * 128 + YTOGB)
+#define BTOR (VTOR * 128 + YTOGB)
+#define Equ(a, b) ((std::fabs((a) - (b)) < 1e-6))
+
 namespace mindspore {
 namespace dataset {
-
-#define Equ(a, b) ((std::fabs((a) - (b)) < 1e-6))
 
 static inline void InitBilinearWeight(int *data_ptr, int16_t *weight_ptr, double scale, int dst_length, int src_length,
                                       int a) {
@@ -374,6 +397,79 @@ static bool ConvertYUV420SPToBGR(const uint8_t *data, LDataType data_type, bool 
   return true;
 }
 
+#ifdef PLATFORM_ARM64
+static uint8x8_t RGBToGray(const uint16x8_t &r_value, const uint16x8_t &g_value, const uint16x8_t &b_value,
+                           const uint16x4_t &r2y_value, const uint16x4_t &g2y_value, const uint16x4_t &b2y_value) {
+  uint32x4_t dst0_value = vmull_u16(vget_low_u16(g_value), g2y_value);
+  uint32x4_t dst1_value = vmull_u16(vget_high_u16(g_value), g2y_value);
+
+  dst0_value = vmlal_u16(dst0_value, vget_low_u16(r_value), r2y_value);
+  dst1_value = vmlal_u16(dst1_value, vget_high_u16(r_value), r2y_value);
+
+  dst0_value = vmlal_u16(dst0_value, vget_low_u16(b_value), b2y_value);
+  dst1_value = vmlal_u16(dst1_value, vget_high_u16(b_value), b2y_value);
+
+  uint8x8_t v_gray = vqmovn_u16(vcombine_u16(vrshrn_n_u32(dst0_value, GRAYSHIFT), vrshrn_n_u32(dst1_value, GRAYSHIFT)));
+
+  return v_gray;
+}
+
+static bool ConvertRGBAToGRAY_Neon(const uint8_t *srcBase, uint8_t *dstBase, int w, int h) {
+  const uint32_t r_to_gray = R2GRAY;
+  const uint32_t g_to_gray = G2GRAY;
+  const uint32_t b_to_gray = B2GRAY;
+
+  uint16x4_t r2y_value = vdup_n_u16(R2GRAY);
+  uint16x4_t g2y_value = vdup_n_u16(G2GRAY);
+  uint16x4_t b2y_value = vdup_n_u16(B2GRAY);
+
+  size_t w16b = w >= 15 ? w - 15 : 0;
+  size_t w8b = w >= 7 ? w - 7 : 0;
+
+  for (size_t i = 0; i < h; ++i) {
+    const uint8_t *src_ptr = srcBase + w * i * 4;
+    uint8_t *dst_ptr = dstBase + w * i * 4;
+    size_t src_j = 0u;
+    size_t dst_j = 0u;
+
+    for (; dst_j < w16b; src_j += 64, dst_j += 16) {
+      uint8x16x4_t src_value0 = vld4q_u8(src_ptr + src_j);
+
+      // 0
+      uint16x8_t r_value = vmovl_u8(vget_low_u8(src_value0.val[0]));
+      uint16x8_t g_value = vmovl_u8(vget_low_u8(src_value0.val[1]));
+      uint16x8_t b_value = vmovl_u8(vget_low_u8(src_value0.val[2]));
+      uint8x8_t gray_value0 = RGBToGray(r_value, g_value, b_value, r2y_value, g2y_value, b2y_value);
+
+      r_value = vmovl_u8(vget_high_u8(src_value0.val[0]));
+      g_value = vmovl_u8(vget_high_u8(src_value0.val[1]));
+      b_value = vmovl_u8(vget_high_u8(src_value0.val[2]));
+      uint8x8_t gray_value1 = RGBToGray(r_value, g_value, b_value, r2y_value, g2y_value, b2y_value);
+
+      vst1q_u8(dst_ptr + dst_j, vcombine_u8(gray_value0, gray_value1));
+    }
+
+    if (dst_j < w8b) {
+      uint8x8x4_t v_src = vld4_u8(src_ptr + src_j);
+      uint16x8_t r_value = vmovl_u8(v_src.val[0]);
+      uint16x8_t g_value = vmovl_u8(v_src.val[1]);
+      uint16x8_t b_value = vmovl_u8(v_src.val[2]);
+      uint8x8_t gray_value = RGBToGray(r_value, g_value, b_value, r2y_value, g2y_value, b2y_value);
+
+      vst1_u8(dst_ptr + dst_j, gray_value);
+      src_j += 32;
+      dst_j += 8;
+    }
+
+    for (; dst_j < w; src_j += 4, dst_j++) {
+      uint32_t val = src_ptr[src_j] * r_to_gray + src_ptr[src_j + 1] * g_to_gray + src_ptr[src_j + 2] * b_to_gray;
+      dst_ptr[dst_j] = U32TOU8CAST((val + GRAYSHIFT_DELTA) >> GRAYSHIFT);
+    }
+  }
+  return true;
+}
+#endif
+
 static bool ConvertRGBAToGRAY(const unsigned char *data, LDataType data_type, int w, int h, LiteMat &mat) {
   if (data_type == LDataType::UINT8) {
     mat.Init(w, h, 1, LDataType::UINT8);
@@ -382,6 +478,9 @@ static bool ConvertRGBAToGRAY(const unsigned char *data, LDataType data_type, in
     }
     unsigned char *ptr = mat;
     const unsigned char *data_ptr = data;
+#ifdef PLATFORM_ARM64
+    ConvertRGBAToGRAY_Neon(data_ptr, ptr, w, h);
+#else
     for (int y = 0; y < h; y++) {
       for (int x = 0; x < w; x++) {
         *ptr = (data_ptr[2] * B2GRAY + data_ptr[1] * G2GRAY + data_ptr[0] * R2GRAY) >> GRAYSHIFT;
@@ -389,6 +488,7 @@ static bool ConvertRGBAToGRAY(const unsigned char *data, LDataType data_type, in
         data_ptr += 4;
       }
     }
+#endif
   } else {
     return false;
   }
