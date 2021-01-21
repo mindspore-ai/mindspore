@@ -99,7 +99,7 @@ def _get_optimizer(args_opt, network):
 def _auto_enable_graph_kernel(device_target, graph_kernel_mode):
     """Judge whether is suitable to enable graph kernel."""
     return graph_kernel_mode in ("auto", "true") and device_target == 'GPU' and \
-        cfg.bert_network == 'base' and (cfg.batch_size == 32 or cfg.batch_size == 64) and \
+        cfg.bert_network == 'base' and (cfg.batch_size == 32 or cfg.batch_size == 64 or cfg.batch_size == 160) and \
         cfg.optimizer == 'AdamWeightDecay'
 
 
@@ -164,9 +164,12 @@ def run_pretrain():
 
     if args_opt.device_target == 'GPU' and bert_net_cfg.compute_type != mstype.float32 and \
         not is_auto_enable_graph_kernel:
-        logger.warning('Gpu only support fp32 temporarily, run with fp32.')
+        warning_message = 'Gpu only support fp32 temporarily, run with fp32.'
         bert_net_cfg.compute_type = mstype.float32
-
+        if args_opt.enable_lossscale == "true":
+            args_opt.enable_lossscale = "false"
+            warning_message = 'Gpu only support fp32 temporarily, run with fp32 and disable lossscale.'
+        logger.warning(warning_message)
 
     if args_opt.accumulation_steps > 1:
         logger.info("accumulation steps: {}".format(args_opt.accumulation_steps))

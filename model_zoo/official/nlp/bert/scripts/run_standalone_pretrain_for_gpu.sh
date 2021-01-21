@@ -36,7 +36,7 @@ python run_pretrain.py  \
     --distribute="false" \
     --epoch_size=$EPOCH_SIZE \
     --enable_save_ckpt="true" \
-    --enable_lossscale="false" \
+    --enable_lossscale="true" \
     --do_shuffle="true" \
     --enable_data_sink="true" \
     --data_sink_steps=20 \
