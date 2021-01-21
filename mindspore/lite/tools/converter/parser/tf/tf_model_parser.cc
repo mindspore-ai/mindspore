@@ -431,6 +431,16 @@ FuncGraphPtr TFModelParser::Parse(const std::string &modelFile, const std::strin
     MS_LOG(ERROR) << "Convert ops failed.";
     return nullptr;
   }
+
+  if (!nodes_with_null_input_.empty()) {
+    status = ConnectNullInput();
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Connect null inputs failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+      return nullptr;
+    }
+  }
+
   status = ConvertRootGraphOutputs();
   if (status != RET_OK) {
     MS_LOG(ERROR) << "Convert graph outputs failed.";
@@ -657,7 +667,8 @@ STATUS TFModelParser::ConvertInputNodes(const tensorflow::NodeDef &node_def,
                                         const std::vector<std::string> &input_names,
                                         const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
                                         const std::unordered_map<std::string, AnfNodePtr> &anf_node_map,
-                                        std::vector<AnfNodePtr> *inputs) {
+                                        std::vector<AnfNodePtr> *inputs,
+                                        std::vector<std::string> *input_name_not_found) {
   MS_ASSERT(node_def != nullptr);
   // parse inputs
   for (size_t j = 0; j < input_names.size(); j++) {
@@ -670,8 +681,8 @@ STATUS TFModelParser::ConvertInputNodes(const tensorflow::NodeDef &node_def,
     }
     auto input = GetAnfNode(flatten_input_name, anf_node_map);
     if (input == nullptr) {
-      MS_LOG(ERROR) << node_def.name() << " input " << j << ": " << input_name << " can't find parsed in_nodes";
-      return RET_ERROR;
+      MS_LOG(WARNING) << node_def.name() << " input " << j << ": " << input_name << " can't find parsed in_nodes";
+      (*input_name_not_found).push_back(flatten_input_name);
     }
     inputs->emplace_back(input);
   }
@@ -732,6 +743,27 @@ STATUS TFModelParser::ConvertOutputTensor(const tensorflow::NodeDef &op, const C
   return RET_OK;
 }
 
+STATUS TFModelParser::RecordNullInput(const CNodePtr &node, const std::vector<std::string> &input_name_not_found) {
+  nodes_with_null_input_.emplace_back(node, input_name_not_found);
+  return RET_OK;
+}
+
+STATUS TFModelParser::ConnectNullInput() {
+  for (auto &it : nodes_with_null_input_) {
+    auto &cnode = it.first;
+    auto &input_name_not_found = it.second;
+    auto &inputs = cnode->inputs();
+    int i = 0;
+    for (size_t j = 0; j < inputs.size(); ++j) {
+      if (inputs[j] == nullptr) {
+        cnode->set_input(j, GetAnfNode(input_name_not_found[i], anf_root_node_map_));
+        ++i;
+      }
+    }
+  }
+  return RET_OK;
+}
+
 STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
                                  const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
                                  const FuncGraphPtr &func_graph_ptr,
@@ -766,7 +798,8 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
     return RET_ERROR;
   }
   std::vector<AnfNodePtr> inputs = {value_node};
-  status = ConvertInputNodes(node_def, input_names, tf_node_map, *anf_node_map, &inputs);
+  std::vector<std::string> input_name_not_found{};
+  status = ConvertInputNodes(node_def, input_names, tf_node_map, *anf_node_map, &inputs, &input_name_not_found);
   if (status != RET_OK) {
     return status;
   }
@@ -799,6 +832,10 @@ STATUS TFModelParser::ConvertOps(const tensorflow::NodeDef &node_def,
       function_if_map_[else_name] = anf_node;
       MS_LOG(DEBUG) << "parse else name:" << else_name;
     }
+  }
+
+  if (!input_name_not_found.empty()) {
+    RecordNullInput(anf_node, input_name_not_found);
   }
 
   status = ConvertOutputTensor(node_def, anf_node, anf_node_map, func_graph_ptr, output_size);

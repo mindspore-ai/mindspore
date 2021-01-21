@@ -22,6 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <utility>
 #include "proto/graph.pb.h"
 #include "proto/node_def.pb.h"
 #include "schema/inner/model_generated.h"
@@ -55,7 +56,7 @@ class TFModelParser : public ModelParser {
   STATUS ConvertInputNodes(const tensorflow::NodeDef &node_def, const std::vector<std::string> &input_names,
                            const std::map<std::string, const tensorflow::NodeDef *> &tf_node_map,
                            const std::unordered_map<std::string, AnfNodePtr> &anf_node_map,
-                           std::vector<AnfNodePtr> *inputs);
+                           std::vector<AnfNodePtr> *inputs, std::vector<std::string> *input_name_not_found);
   STATUS ConvertOutputTensor(const tensorflow::NodeDef &op, const CNodePtr &anf_node,
                              std::unordered_map<std::string, AnfNodePtr> *anf_node_map, const FuncGraphPtr &anf_graph,
                              int output_size);
@@ -71,6 +72,10 @@ class TFModelParser : public ModelParser {
 
   STATUS MakeAnfGraphOutputs(std::vector<AnfNodePtr> *output_nodes, const FuncGraphPtr &anf_graph);
 
+  STATUS RecordNullInput(const CNodePtr &node, const std::vector<std::string> &input_name_not_found);
+
+  STATUS ConnectNullInput();
+
   FuncGraphPtr anf_root_graph_;
   std::unique_ptr<tensorflow::GraphDef> tf_root_graph_;                     // tf root graph def
   std::map<std::string, const tensorflow::NodeDef *> tf_root_graph_nodes_;  // tf root graph node map
@@ -79,6 +84,7 @@ class TFModelParser : public ModelParser {
   std::vector<std::string> graph_output_names_;
   std::map<std::string, AnfNodePtr> function_while_map_;  // tf function name->while_node_name
   std::map<std::string, AnfNodePtr> function_if_map_;     // tf function name->if_node
+  std::vector<std::pair<CNodePtr, std::vector<std::string>>> nodes_with_null_input_{};
 };
 }  // namespace lite
 }  // namespace mindspore

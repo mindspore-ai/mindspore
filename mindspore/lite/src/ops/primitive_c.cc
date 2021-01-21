@@ -1106,10 +1106,13 @@ schema::QuantType PrimitiveC::quant_type() const { return quant_type_; }
 #endif
 
 int PrimitiveC::Type() const {
-  if (this->primitive_ == nullptr) {
+  if (this->primitive_ == nullptr && this->op_type_ == OP_TYPE_NOT_SET) {
     return schema::PrimitiveType_NONE;
   }
 #ifdef PRIMITIVE_WRITEABLE
+  if (op_type_ != OP_TYPE_NOT_SET) {
+    return op_type_;
+  }
   return this->primitive_->value.type;
 #else
   return this->primitive_->value_type();

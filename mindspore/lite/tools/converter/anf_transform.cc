@@ -48,6 +48,7 @@
 #include "tools/optimizer/graph/slice_prepose_pass.h"
 #include "tools/optimizer/graph/while_pass.h"
 #include "tools/optimizer/graph/if_pass.h"
+#include "tools/optimizer/graph/functionalize_control_op_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
@@ -100,6 +101,15 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
     }
   }
 
+  if (config->fmk == lite::converter::FmkType_TF) {
+    auto functionalize_control_op_pass = std::make_shared<opt::FunctionalizeControlOpPass>();
+    if (!functionalize_control_op_pass->Run(old_graph)) {
+      MS_LOG(ERROR) << "functionalize control op pass failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return nullptr;
+    }
+  }
+
   if (config->fmk == lite::converter::FmkType_TFLITE || config->fmk == lite::converter::FmkType_TF ||
       config->fmk == lite::converter::FmkType_ONNX) {
     graph_pm->AddPass(std::make_shared<opt::WhilePass>());
@@ -145,7 +155,7 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
   if (config->fmk == lite::converter::FmkType_MS) {
     auto remove_unused_cast_pass = std::make_shared<opt::RemoveUnusedCastOpPass>();
     if (remove_unused_cast_pass == nullptr) {
-      MS_LOG(ERROR) << "RemoveUnusedCastOpPass shoud be specified";
+      MS_LOG(ERROR) << "RemoveUnusedCastOpPass should be specified";
       return nullptr;
     }
     remove_unused_cast_pass->SetFmkType(config->fmk);
@@ -154,7 +164,7 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
   if (config->fmk == lite::converter::FmkType_ONNX) {
     auto remove_unused_transpose_pass = std::make_shared<opt::RemoveUnusedTransposeOpPass>();
     if (remove_unused_transpose_pass == nullptr) {
-      MS_LOG(ERROR) << "RemoveUnusedTransposeOpPass shoud be specified";
+      MS_LOG(ERROR) << "RemoveUnusedTransposeOpPass should be specified";
       return nullptr;
     }
     remove_unused_transpose_pass->SetFmkType(config->fmk);

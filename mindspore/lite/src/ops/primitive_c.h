@@ -24,6 +24,9 @@
 #ifdef PRIMITIVE_WRITEABLE
 #include "ir/primitive.h"
 #include "schema/inner/model_generated.h"
+#include "schema/inner/ops_generated.h"
+#include "schema/ops_generated.h"
+#include "tools/converter/ops/ops_def.h"
 #else
 #include "schema/model_generated.h"
 #endif
@@ -34,6 +37,7 @@
 
 namespace mindspore {
 namespace lite {
+constexpr const int OP_TYPE_NOT_SET = -1;
 constexpr uint32_t kSingleNum = 1;
 constexpr uint32_t kDoubleNum = 2;
 constexpr uint32_t kTripleNum = 3;
@@ -149,6 +153,7 @@ class PrimitiveC : public mindspore::Primitive {
   std::vector<std::vector<schema::QuantParamT>> output_quant_param_;
   schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
   bool infer_flag_ = true;
+  int op_type_ = OP_TYPE_NOT_SET;
 };
 std::shared_ptr<PrimitiveC> GetReturnPrim();
 
@@ -227,6 +232,7 @@ class PrimitiveC {
   char *primitive_buf_ = nullptr;
   bool infer_flag_ = true;
   schema::QuantType quant_type_{schema::QuantType_QUANT_NONE};
+  int op_type_ = OP_TYPE_NOT_SET;
 };
 using PrimitiveCPtr = std::shared_ptr<PrimitiveC>;
 typedef PrimitiveC *(*PrimitiveCCreator)(const schema::Primitive *primitive);
