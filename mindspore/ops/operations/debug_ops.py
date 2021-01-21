@@ -329,10 +329,12 @@ class Print(PrimitiveWithInfer):
 
     Note:
         In pynative mode, please use python print function.
+        In graph mode, the bool, int, float, tuple, and list would be converted into Tensor to print,
+        str remains unchanged.
 
     Inputs:
         - **input_x** (Union[Tensor, bool, int, float, str, tuple, list]) - The graph node to attach to.
-          The input supports multiple strings and tensors which are separated by ','.
+          Supports multiple inputs which are separated by ','.
 
     Supported Platforms:
         ``Ascend``
