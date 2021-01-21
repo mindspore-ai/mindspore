@@ -362,6 +362,7 @@ def check_type_same(x_type, base_type):
         str: mstype.String,
         list: mstype.List,
         tuple: mstype.Tuple,
+        dict: mstype.Dict,
         Tensor: mstype.tensor_type,
         Parameter: mstype.ref_type
     }
@@ -371,11 +372,14 @@ def check_type_same(x_type, base_type):
         if isinstance(base_type, tuple):
             target_type = tuple(pytype_to_mstype[i] for i in base_type)
         else:
-            target_type = pytype_to_mstype[base_type]
+            target_type = (pytype_to_mstype[base_type],)
+        if (isinstance(x_type, mstype.Bool) and mstype.Int in target_type) or \
+           (isinstance(x_type, mstype.ref_type) and mstype.tensor_type in target_type):
+            return True
         return isinstance(x_type, target_type)
     except KeyError:
         raise TypeError(f"The second arg of 'isinstance' should be bool, int, float, str, list, tuple, "
-                        f"Tensor, Parameter, or a tuple only including these types, but got {base_type}")
+                        f"Tensor, Parameter, or a tuple containing only these types, but got {base_type}")
 
 
 @constexpr

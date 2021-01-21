@@ -104,6 +104,7 @@ Bool = typing.Bool
 String = typing.String
 List = typing.List
 Tuple = typing.Tuple
+Dict = typing.Dict
 Slice = typing.Slice
 function_type = typing.Function
 Ellipsis_ = typing.TypeEllipsis

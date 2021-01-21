@@ -36,19 +36,26 @@ def test_isinstance():
             self.list_member = list(self.tuple_member)
             self.weight = Parameter(1.0)
             self.empty_list = []
+            self.dict_member = {"x": Tensor(np.arange(4)), "y": Tensor(np.arange(5))}
+            self.empty_dict = {}
 
         def construct(self, x, y):
             is_int = isinstance(self.int_member, int)
             is_float = isinstance(self.float_member, float)
             is_bool = isinstance(self.bool_member, bool)
+            bool_is_int = isinstance(self.bool_member, int)
             is_string = isinstance(self.string_member, str)
             is_parameter = isinstance(self.weight, Parameter)
+            parameter_is_tensor = isinstance(self.weight, Tensor)
             is_tensor_const = isinstance(self.tensor_member, Tensor)
             is_tensor_var = isinstance(x, Tensor)
             is_tuple_const = isinstance(self.tuple_member, tuple)
             is_tuple_var = isinstance((x, 1, 1.0, y), tuple)
             is_list_const = isinstance(self.list_member, list)
             is_list_var = isinstance([x, 1, 1.0, y], list)
+            is_dict_const = isinstance(self.dict_member, dict)
+            is_dict_var = isinstance({"x": x, "y": y}, dict)
+            is_empty_dic = isinstance(self.empty_dict, dict)
             is_list_or_tensor = isinstance([x, y], (Tensor, list))
             is_int_or_float_or_tensor_or_tuple = isinstance(x, (Tensor, tuple, int, float))
             float_is_int = isinstance(self.float_member, int)
@@ -56,16 +63,17 @@ def test_isinstance():
             tensor_is_tuple = isinstance(x, tuple)
             tuple_is_list = isinstance(self.tuple_member, list)
             is_empty_list = isinstance(self.empty_list, list)
-            return is_int, is_float, is_bool, is_string, \
-                   is_empty_list, is_parameter, is_tensor_const, is_tensor_var, \
-                   is_tuple_const, is_tuple_var, is_list_const, is_list_var, \
+            return is_int, is_float, is_bool, bool_is_int, is_string, is_parameter, \
+                   parameter_is_tensor, is_tensor_const, is_tensor_var, \
+                   is_tuple_const, is_tuple_var, is_list_const, is_list_var, is_empty_list, \
+                   is_dict_const, is_dict_var, is_empty_dic, \
                    is_int_or_float_or_tensor_or_tuple, is_list_or_tensor, \
                    float_is_int, bool_is_string, tensor_is_tuple, tuple_is_list
 
     net = Net()
     x = Tensor(np.arange(4))
     y = Tensor(np.arange(5))
-    assert net(x, y) == (True,) * 14 + (False,) * 4
+    assert net(x, y) == (True,) * 19 + (False,) * 4
 
 
 def test_isinstance_not_supported():
@@ -81,7 +89,7 @@ def test_isinstance_not_supported():
     with pytest.raises(TypeError) as err:
         net()
     assert "The second arg of 'isinstance' should be bool, int, float, str, list, tuple, Tensor, Parameter, " \
-           "or a tuple only including these types, but got None" in str(err.value)
+           "or a tuple containing only these types, but got None" in str(err.value)
 
 
 def test_isinstance_second_arg_is_list():
