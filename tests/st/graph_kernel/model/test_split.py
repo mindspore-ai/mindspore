@@ -16,6 +16,7 @@
 import model
 from model import model as estimate
 from model import graph_split as split
+from mindspore.ops import _constants as Constants
 
 
 def get_nodes(sp, ops):
@@ -245,7 +246,7 @@ def graph_pat_7():
         a1 = gb.tensor([1024, 1024], "float32", name="a1")
         a = gb.emit("Abs", a0, 'a')
         b = gb.emit("Abs", a1, 'b')
-        c = gb.emit("make_tuple", [a, b], 'c')
+        c = gb.emit(Constants.kMakeTuple, [a, b], 'c')
         d = gb.tensor([1024, 1024], "float32", name="d")
         gb.op("AddN", d, [c])
         gb.emit("Abs", d, 'f')

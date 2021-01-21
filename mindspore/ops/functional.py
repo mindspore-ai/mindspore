@@ -17,8 +17,8 @@
 
 """The names of functional part are summarized here."""
 
+from mindspore.ops import _constants as Constants
 from mindspore.common._register_for_tensor import tensor_operator_registry
-from mindspore.ops import _constants
 from .primitive import Primitive
 from . import operations as P
 from .operations import _grad_ops
@@ -86,7 +86,7 @@ depend = P.Depend()
 identity = P.identity()
 
 tuple_setitem = Primitive('tuple_setitem')
-tuple_getitem = Primitive(_constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetitem)
 list_getitem = Primitive('list_getitem')
 list_setitem = Primitive('list_setitem')
 dict_getitem = Primitive('dict_getitem')
@@ -96,7 +96,7 @@ tuple_len = Primitive("tuple_len")
 list_len = Primitive("list_len")
 tuple_reversed = Primitive("tuple_reversed")
 make_range = Primitive("make_range")
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive(Constants.kMakeTuple)
 make_dict = Primitive('make_dict')
 make_list = Primitive('make_list')
 make_slice = Primitive('make_slice')
@@ -104,22 +104,22 @@ tuple_equal = Primitive("tuple_equal")
 list_equal = Primitive("list_equal")
 make_ref = Primitive("make_ref")
 
-scalar_add = Primitive(_constants.kScalarAdd)
-scalar_mul = Primitive(_constants.kScalarMul)
-scalar_sub = Primitive(_constants.kScalarSub)
-scalar_div = Primitive(_constants.kScalarDiv)
-scalar_floordiv = Primitive(_constants.kScalarFloordiv)
+scalar_add = Primitive(Constants.kScalarAdd)
+scalar_mul = Primitive(Constants.kScalarMul)
+scalar_sub = Primitive(Constants.kScalarSub)
+scalar_div = Primitive(Constants.kScalarDiv)
+scalar_floordiv = Primitive(Constants.kScalarFloordiv)
 scalar_log = Primitive('scalar_log')
-scalar_pow = Primitive(_constants.kScalarPow)
+scalar_pow = Primitive(Constants.kScalarPow)
 scalar_gt = Primitive('scalar_gt')
 scalar_ge = Primitive('scalar_ge')
 scalar_le = Primitive('scalar_le')
 scalar_lt = Primitive('scalar_lt')
 scalar_eq = Primitive('scalar_eq')
 scalar_ne = Primitive('scalar_ne')
-scalar_uadd = Primitive(_constants.kScalarUadd)
-scalar_usub = Primitive(_constants.kScalarUsub)
-scalar_mod = Primitive(_constants.kScalarMod)
+scalar_uadd = Primitive(Constants.kScalarUadd)
+scalar_usub = Primitive(Constants.kScalarUsub)
+scalar_mod = Primitive(Constants.kScalarMod)
 string_eq = Primitive('string_equal')
 string_concat = Primitive('string_concat')
 bool_not = Primitive("bool_not")

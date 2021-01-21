@@ -90,7 +90,6 @@ constexpr const char kNameNMSWithMask[] = "NMSWithMask";
 constexpr const char kNameCheckValid[] = "CheckValid";
 constexpr const char kNameSmoothL1Loss[] = "SmoothL1Loss";
 constexpr const char kNameSmoothL1LossGrad[] = "SmoothL1LossGrad";
-constexpr const char kNameSGD[] = "SGD";
 constexpr const char kNameSigmoidCrossEntropyWithLogits[] = "SigmoidCrossEntropyWithLogits";
 constexpr const char kNameSigmoidCrossEntropyWithLogitsGrad[] = "SigmoidCrossEntropyWithLogitsGrad";
 constexpr const char kNameScatterNdD[] = "ScatterNd";

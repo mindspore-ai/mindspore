@@ -17,7 +17,6 @@ from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import _constants as Constants
 
-
 Add = P.TensorAdd()
 Sub = P.Sub()
 Mul = P.Mul()
@@ -25,7 +24,7 @@ RealDiv = P.RealDiv()
 Sqrt = P.Sqrt()
 Square = P.Square()
 Assign = P.Assign()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive(Constants.kMakeTuple)
 tuple_getitem = Primitive(Constants.kTupleGetitem)
 AdamApplyOne = Primitive('AdamApplyOne')
 AdamApplyOneAssign = Primitive('AdamApplyOneAssign')

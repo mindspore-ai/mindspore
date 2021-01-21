@@ -27,6 +27,7 @@
 
 #include "utils/log_adapter.h"
 #include "ir/dtype/type.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 // op name. Op which not exists in operator/ops.h, so define it's name here
@@ -178,7 +179,7 @@ constexpr auto kBNInferGradOpName = "BNInferGrad";
 constexpr auto kCallOpName = "call";
 constexpr auto kPartialOpName = "partial";
 constexpr auto kSwitchOpName = "switch";
-constexpr auto kReturnOpName = "return";
+constexpr auto kReturnOpName = prim::kReturn;
 constexpr auto kLarsV2OpName = "LarsV2";
 constexpr auto kLarsV2UpdateOpName = "LarsV2Update";
 constexpr auto kSquareSumAllOpName = "SquareSumAll";
@@ -251,7 +252,6 @@ constexpr auto kFusedSparseProximalAdagradName = "FusedSparseProximalAdagrad";
 constexpr auto kFusedSparseLazyAdamName = "FusedSparseLazyAdam";
 constexpr auto kSparseApplyFtrlName = "SparseApplyFtrl";
 constexpr auto kSparseApplyFtrlV2Name = "SparseApplyFtrlV2";
-constexpr auto kSGDName = "SGD";
 constexpr auto kLARSUpdateName = "LARSUpdate";
 constexpr auto kBasicLSTMCellCStateGradOpName = "BasicLSTMCellCStateGrad";
 constexpr auto kBasicLSTMCellCStateGradV2OpName = "BasicLSTMCellCStateGradV2";
@@ -471,7 +471,7 @@ const std::set<std::string> kOptOperatorSet = {kMomentumOpName,
                                                kFusedSparseLazyAdamName,
                                                kSparseApplyFtrlName,
                                                kSparseApplyFtrlV2Name,
-                                               kSGDName,
+                                               prim::kSGD,
                                                kLARSUpdateName,
                                                kPullOpName,
                                                kCombineMomentumWeightOpName,

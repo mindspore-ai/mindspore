@@ -319,7 +319,6 @@ constexpr char UNIQUE[] = "Unique";
 
 // Parallel don't care
 constexpr char STRING_EQUAL[] = "string_equal";
-constexpr char MAKE_TUPLE[] = "make_tuple";
 constexpr char MAKE_LIST[] = "make_list";
 constexpr char MAKE_DICT[] = "make_dict";
 constexpr char MAKE_SLICE[] = "make_slice";
@@ -339,7 +338,6 @@ constexpr char REDUCED_SHAPE[] = "reduced_shape";
 constexpr char TUPLE_DIV[] = "tuple_div";
 constexpr char TUPLE_TO_ARRAY[] = "tuple_to_array";
 constexpr char VIRTUALLOSS[] = "VirtualLoss";
-constexpr char RETURN[] = "return";
 constexpr char ENV_GETITEM[] = "env_getitem";
 constexpr char IDENTITY[] = "identity";
 constexpr char PARTIAL[] = "partial";

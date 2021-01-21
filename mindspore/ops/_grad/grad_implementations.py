@@ -14,7 +14,7 @@
 # ============================================================================
 
 """bprop primitives"""
-from mindspore.ops import _constants
+from mindspore.ops import _constants as Constants
 from ..operations import _grad_ops as G
 from .. import functional as F
 from .. import operations as P
@@ -51,31 +51,31 @@ def bprop_relu_grad_grad(x, y, out, dout):
     return dy, F.zeros_like(y)
 
 
-@bprops.register(_constants.kScalarAdd)
+@bprops.register(Constants.kScalarAdd)
 def bprop_scalar_add(x, y, out, dout):
     """Backpropagator for primitive `scalar_add`."""
     return dout, dout
 
 
-@bprops.register(_constants.kScalarMul)
+@bprops.register(Constants.kScalarMul)
 def bprop_scalar_mul(x, y, out, dout):
     """Backpropagator for primitive `scalar_mul`."""
     return dout*y, dout*x
 
 
-@bprops.register(_constants.kScalarSub)
+@bprops.register(Constants.kScalarSub)
 def bprop_scalar_sub(x, y, out, dout):
     """Backpropagator for primitive `scalar_sub`."""
     return dout, -dout
 
 
-@bprops.register(_constants.kScalarDiv)
+@bprops.register(Constants.kScalarDiv)
 def bprop_scalar_div(x, y, out, dout):
     """Backpropagator for primitive `scalar_div`."""
     return dout/y, (-dout) * (out/y)
 
 
-@bprops.register(_constants.kScalarPow)
+@bprops.register(Constants.kScalarPow)
 def bprop_scalar_pow(x, y, out, dout):
     """Backpropagator for primitive `scalar_pow`."""
     return dout * (y * (x ** (y-1))), dout * (F.scalar_log(x) * out)
@@ -87,13 +87,13 @@ def bprop_scalar_exp(x, out, dout):
     return (dout * out,)
 
 
-@bprops.register(_constants.kScalarUadd)
+@bprops.register(Constants.kScalarUadd)
 def bprop_scalar_uadd(x, out, dout):
     """Backpropagator for primitive `scalar_uadd`."""
     return (dout,)
 
 
-@bprops.register(_constants.kScalarUsub)
+@bprops.register(Constants.kScalarUsub)
 def bprop_scalar_usub(x, out, dout):
     """Backpropagator for primitive `scalar_usub`."""
     return (-dout,)
@@ -141,7 +141,7 @@ def bprop_scalar_cast(x, t, out, dout):
     return F.scalar_cast(dout, F.typeof(x)), t
 
 
-@bprops.register(_constants.kTupleGetitem)
+@bprops.register(Constants.kTupleGetitem)
 def bprop_tuple_getitem(data, idx, out, dout):
     """Backpropagator for primitive `tuple_getitem`."""
     return F.tuple_setitem(C.zeros_like(data), idx, dout), C.zeros_like(idx)

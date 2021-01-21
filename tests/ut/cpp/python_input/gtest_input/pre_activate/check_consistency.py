@@ -14,8 +14,9 @@
 # ============================================================================
 
 from mindspore.ops import Primitive
+from mindspore.ops import _constants as Constants
 
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive(Constants.kMakeTuple)
 cast = Primitive('Cast')
 
 

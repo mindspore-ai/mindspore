@@ -21,13 +21,13 @@ from mindspore.common.parameter import Parameter
 from mindspore.ops import Primitive
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from mindspore.ops import _constants
+from mindspore.ops import _constants as Constants
 from mindspore import dtype as mstype
 from ...ut_filter import non_graph_engine
 
 tensor_add = P.TensorAdd()
 op_add = P.AddN()
-scala_add = Primitive(_constants.kScalarAdd)
+scala_add = Primitive(Constants.kScalarAdd)
 add = C.MultitypeFuncGraph('add')
 
 
@@ -67,6 +67,8 @@ def test_multitype_scalar():
 
 
 add2 = C.MultitypeFuncGraph('add2')
+
+
 @add2.register(mstype.number, mstype.number)
 def add_scala2(x, y):
     return scala_add(x, y)

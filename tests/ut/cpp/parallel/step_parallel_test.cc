@@ -21,6 +21,7 @@
 #include "frontend/operator/ops.h"
 #include "pipeline/jit/static_analysis/static_analysis.h"
 #include "utils/convert_utils_py.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace parallel {
@@ -435,7 +436,7 @@ TEST_F(TestStepParallel, ForwardCommunication1) {
     }
     auto &inputs = node->cast<CNodePtr>()->inputs();
     PrimitivePtr prim = inputs[0]->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();
-    if (prim->name() == "return" || prim->name() == "MatMul") {
+    if (prim->name() == prim::kReturn || prim->name() == "MatMul") {
       if (!inputs[1]->isa<Parameter>()) {
         CNodePtr pre_node = inputs[1]->cast<CNodePtr>();
         PrimitivePtr pre_prim = pre_node->input(0)->cast<ValueNodePtr>()->value()->cast<PrimitivePtr>();

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-#include "utils/parallel_node_check.h"
-
 #include <set>
 #include <string>
 
+#include "utils/parallel_node_check.h"
 #include "base/core_ops.h"
 
 namespace mindspore {
@@ -26,7 +25,7 @@ namespace mindspore {
 static const std::set<std::string> PARALLEL_BLACK_LIST_ = {prim::kTupleGetitem, "J", "list_getitem",
   "array_getitem", "tuple_setitem", "Depend", "list_setitem", "array_setitem", "dict_getitem",
   "list_append", "list_map", "list_reduce", "tuple_reversed", "tile_shape", "tuple_div", "tuple_to_array",
-  "make_dict", "make_slice", "make_record", "string_equal", "VirtualLoss", "return", "env_getitem",
+  "make_dict", "make_slice", "make_record", "string_equal", "VirtualLoss", prim::kReturn, "env_getitem",
   "identity", "partial", "env_setitem", "env_getitem", "env_add", "MakeRefKey", "make_ref", "get_ref_key",
   "get_ref_value", "get_ref_origin", "dot", "im2col", "col2im", "im2col_v1", "state_setitem", "ScalarSummary",
   "ImageSummary", "TensorSummary", "Debug", "HistogramSummary", "col2im_v1", "resolve", "BroadcastGradientArgs",

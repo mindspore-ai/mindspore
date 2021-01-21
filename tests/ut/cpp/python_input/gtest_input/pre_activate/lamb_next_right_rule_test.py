@@ -20,7 +20,7 @@ Add = P.TensorAdd()
 Mul = P.Mul()
 Sqrt = P.Sqrt()
 Square = P.Square()
-make_tuple = Primitive('make_tuple')
+make_tuple = Primitive(Constants.kMakeTuple)
 tuple_getitem = Primitive(Constants.kTupleGetitem)
 LambNextRight = Primitive('LambNextRight')
 

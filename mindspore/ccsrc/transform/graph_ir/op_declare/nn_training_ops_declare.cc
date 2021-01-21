@@ -15,6 +15,7 @@
  */
 
 #include "transform/graph_ir/op_declare/nn_training_ops_declare.h"
+#include "base/core_ops.h"
 
 namespace mindspore::transform {
 // ApplyMomentum
@@ -68,7 +69,7 @@ ATTR_MAP(SGD) = {{"dampening", ATTR_DESC(dampening, AnyTraits<float>())},
                  {"weight_decay", ATTR_DESC(weight_decay, AnyTraits<float>())},
                  {"nesterov", ATTR_DESC(nesterov, AnyTraits<bool>())}};
 OUTPUT_MAP(SGD) = {{0, OUTPUT_DESC(parameters)}};
-REG_ADPT_DESC(SGD, kNameSGD, ADPT_DESC(SGD))
+REG_ADPT_DESC(SGD, prim::kSGD, ADPT_DESC(SGD))
 
 // SparseApplyAdagradD
 INPUT_MAP(SparseApplyAdagradD) = {

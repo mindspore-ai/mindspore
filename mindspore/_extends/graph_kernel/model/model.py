@@ -13,10 +13,12 @@
 # limitations under the License.
 # ===========================================================================
 """GraphKernel cost model"""
+from mindspore.ops import _constants as Constants
 
 
 class Utils:
     """Model utils"""
+
     @staticmethod
     def get_attr_type(attr):
         """Get attr type"""
@@ -159,7 +161,7 @@ class PrimLib:
         'ReduceSum': Prim(REDUCE),
         'ReduceMax': Prim(REDUCE),
         'ReduceMin': Prim(REDUCE),
-        'make_tuple': Prim(CONTROL),
+        Constants.kMakeTuple: Prim(CONTROL),
         'ControlDepend': Prim(CONTROL),
         'Assign': Prim(ELEMWISE),
         'Tanh': Prim(ELEMWISE),

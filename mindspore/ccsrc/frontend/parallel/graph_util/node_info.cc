@@ -66,7 +66,7 @@ std::vector<bool> ExtractInputParameterByNode(const CNodePtr &node) {
     return std::vector<bool>(inputs_seq.size(), false);
   }
   if ((node_inputs.size() == 2) &&
-      (AnfNodeIsPrimitive(node_inputs[1], MAKE_TUPLE) || AnfNodeIsPrimitive(node_inputs[1], MAKE_LIST))) {
+      (AnfNodeIsPrimitive(node_inputs[1], prim::kMakeTuple) || AnfNodeIsPrimitive(node_inputs[1], MAKE_LIST))) {
     node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
   }
   for (size_t i = 1; i < node_inputs.size(); ++i) {
@@ -160,7 +160,7 @@ std::vector<size_t> ExtractInputTypeLengthByNode(const CNodePtr &node) {
   }
 
   if ((node_inputs.size() == 2) &&
-      (AnfNodeIsPrimitive(node_inputs[1], MAKE_TUPLE) || AnfNodeIsPrimitive(node_inputs[1], MAKE_LIST))) {
+      (AnfNodeIsPrimitive(node_inputs[1], prim::kMakeTuple) || AnfNodeIsPrimitive(node_inputs[1], MAKE_LIST))) {
     node_inputs = node_inputs[1]->cast<CNodePtr>()->inputs();
   }
 

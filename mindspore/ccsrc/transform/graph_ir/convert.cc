@@ -623,7 +623,7 @@ void DfGraphConvertor::TraceOutput(const AnfNodePtr node) {
     name = GetCNodeTargetFuncName(c);
   }
 
-  if (name == "make_tuple") {
+  if (name == prim::kMakeTuple) {
     for (unsigned int i = 1; i < c->inputs().size(); i++) {
       TraceOutput(c->input(i));
     }
@@ -1520,7 +1520,7 @@ void DfGraphConvertor::ConvertControlDependNode(const CNodePtr node) {
 
 bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) {
   // ignore apply node of return
-  if (name == "return" || name == "Depend") {
+  if (name == prim::kReturn || name == "Depend") {
     return false;
   }
 
@@ -1533,7 +1533,7 @@ bool DfGraphConvertor::CheckCNode(const std::string &name, const CNodePtr node) 
   }
 
   // make_tuple is used for a dynamic_input, convert it to a vector of OutHandlers
-  if (name == "make_tuple") {
+  if (name == prim::kMakeTuple) {
     ConvertMakeTuple(node);
     return false;
   }

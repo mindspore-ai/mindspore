@@ -32,6 +32,7 @@
 
 #include "common/common_test.h"
 #include "common/py_func_graph_fetcher.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace memreuse {
@@ -133,7 +134,7 @@ static KernelGraphPtr CreateKernelGraph() {
   next_cnode_ptr = kernelptr_floor;
 
   // return res
-  auto p_return = std::make_shared<Primitive>("return");
+  auto p_return = std::make_shared<Primitive>(prim::kReturn);
   inputs.clear();
   inputs.push_back(NewValueNode(p_return));
   inputs.push_back(next_cnode_ptr);

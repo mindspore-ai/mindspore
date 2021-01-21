@@ -41,12 +41,13 @@
 #include "abstract/param_validator.h"
 #include "utils/ms_utils.h"
 #include "utils/shape_utils.h"
+#include "base/core_ops.h"
 
 namespace mindspore {
 namespace abstract {
 using mindspore::parse::PyObjectWrapper;
 
-std::unordered_set<std::string> prims_to_skip_undetermined_infer{"make_tuple", "make_list", "switch", "env_setitem",
+std::unordered_set<std::string> prims_to_skip_undetermined_infer{prim::kMakeTuple, "make_list", "switch", "env_setitem",
                                                                  "env_getitem"};
 
 EvalResultPtr DoSignatureEvaluator::Run(AnalysisEnginePtr engine, const ConfigPtrList &args_conf_list,

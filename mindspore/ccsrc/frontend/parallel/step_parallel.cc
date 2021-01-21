@@ -464,7 +464,7 @@ void StepRedistribution(const CNodePtr &node, const OperatorInfoPtr &distribute_
   AnfNodeIndexSet node_set = manager->node_users()[node];
   CNodePtr insert_node_new;
 
-  if (AnfNodeIsPrimitive(node, MAKE_TUPLE) || AnfNodeIsPrimitive(node, MAKE_LIST)) {
+  if (AnfNodeIsPrimitive(node, prim::kMakeTuple) || AnfNodeIsPrimitive(node, MAKE_LIST)) {
     MS_LOG(INFO) << "No need to insert redistribution op betweend make_tuple node and the next node";
     return;
   }
@@ -957,7 +957,7 @@ void InsertMirrorOps(const MirrorOps &mirror_ops, const CNodePtr &node) {
   }
 
   if ((node->inputs().size() == 2) &&
-      (AnfNodeIsPrimitive(node->input(1), MAKE_TUPLE) || AnfNodeIsPrimitive(node->input(1), MAKE_LIST))) {
+      (AnfNodeIsPrimitive(node->input(1), prim::kMakeTuple) || AnfNodeIsPrimitive(node->input(1), MAKE_LIST))) {
     MS_LOG(INFO) << "The mirror for " << GetPrimName(node) << " has handle by make_tuple node";
     return;
   }
@@ -1622,7 +1622,7 @@ bool FindPreNodes(const AnfNodePtr &node, vector<std::string> *unique_ids) {
   }
   ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
-  if (IsParallelCareNode(cnode) && prim->name() != MAKE_TUPLE && prim->name() != MAKE_LIST) {
+  if (IsParallelCareNode(cnode) && prim->name() != prim::kMakeTuple && prim->name() != MAKE_LIST) {
     unique_ids->push_back(cnode->UniqueId());
     return true;
   }
@@ -1648,7 +1648,7 @@ void FindLastNodesUniqueId(const std::vector<AnfNodePtr> &all_nodes, std::vector
     }
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-    if (prim->name() == RETURN) {
+    if (prim->name() == prim::kReturn) {
       if (!FindPreNodes(cnode, unique_ids)) {
         MS_LOG(WARNING) << "cannot find the last parallel care node in eval graph";
       }
@@ -1708,7 +1708,7 @@ void ExtractInformation(const std::vector<AnfNodePtr> &all_nodes, bool is_traini
     SetVirtualDatasetStrategy(cnode);
     ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
     PrimitivePtr prim = GetValueNode<PrimitivePtr>(prim_anf_node);
-    if (prim->name() == MAKE_TUPLE || prim->name() == MAKE_LIST || prim->name() == RECEIVE) {
+    if (prim->name() == prim::kMakeTuple || prim->name() == MAKE_LIST || prim->name() == RECEIVE) {
       continue;
     }
     auto attrs = prim->attrs();
@@ -2094,7 +2094,7 @@ LossNodeInfo FindLossCNode(const FuncGraphPtr &func_graph) {
   }
 
   // return -> make_tuple
-  if (current_prim->name() == MAKE_TUPLE) {
+  if (current_prim->name() == prim::kMakeTuple) {
     MS_LOG(WARNING) << "The loss have make_tuple, it is not supported";
     return loss_node_info;
   }
@@ -2796,7 +2796,7 @@ Status ParallelInit() {
 
 void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all_nodes) {
   for (auto &node : all_nodes) {
-    if (!AnfNodeIsPrimitive(node, MAKE_TUPLE) && !AnfNodeIsPrimitive(node, MAKE_LIST)) {
+    if (!AnfNodeIsPrimitive(node, prim::kMakeTuple) && !AnfNodeIsPrimitive(node, MAKE_LIST)) {
       continue;
     }
 
@@ -2808,7 +2808,7 @@ void HandleForwardMakeTupleAndMakeList(const std::vector<AnfNodePtr> &all_nodes)
 
     FuncGraphManagerPtr manager = cnode->func_graph()->manager();
     MS_EXCEPTION_IF_NULL(manager);
-    std::string op_type = AnfNodeIsPrimitive(node, MAKE_TUPLE) ? MAKE_TUPLE : MAKE_LIST;
+    std::string op_type = AnfNodeIsPrimitive(node, prim::kMakeTuple) ? prim::kMakeTuple : MAKE_LIST;
 
     auto make_tuple_list_user = manager->node_users()[cnode];
     if (make_tuple_list_user.size() != 1) {
