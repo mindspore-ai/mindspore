@@ -15,6 +15,8 @@
  */
 #include "backend/optimizer/graph_kernel/depend_formater.h"
 #include <tuple>
+#include <utility>
+#include <vector>
 #include "backend/session/anf_runtime_algorithm.h"
 #include "backend/kernel_compiler/common_utils.h"
 #include "backend/optimizer/graph_kernel/graph_kernel_helper.h"
@@ -22,7 +24,47 @@
 namespace mindspore {
 namespace opt {
 namespace {
-std::tuple<AnfNodePtr, AnfNodePtr, int> FindPatronNode(const FuncGraphPtr &main_graph, const FuncGraphManagerPtr &mng) {
+bool RemoveRedundantDepend(const AnfNodePtr &node, const FuncGraphManagerPtr &mng) {
+  const auto &users = mng->node_users()[node];
+  std::vector<std::pair<AnfNodePtr, int>> sons;
+  for (const auto &[user, index] : users) {
+    if (!IsPrimitiveCNode(user, prim::kPrimTupleGetItem)) {
+      sons.emplace_back(user, index);
+      continue;
+    }
+    auto &[fake_first_grad_son, grad_index] = *((mng->node_users()[user]).begin());
+    sons.emplace_back(fake_first_grad_son, grad_index);
+  }
+
+  AnfNodePtrList latter_to_delete;
+  for (const auto &[son, index] : sons) {
+    if (!IsPrimitiveCNode(son, prim::kPrimDepend) || index != kDependAttachNodeIndex) {
+      continue;
+    }
+
+    latter_to_delete.push_back(son);
+  }
+
+  if (latter_to_delete.empty()) {
+    return false;
+  }
+
+  std::vector<AnfNodePtr>::iterator delete_begin = latter_to_delete.begin();
+  if (latter_to_delete.size() == sons.size()) {
+    // Left one Depend node relation and delete others!
+    ++delete_begin;
+  }
+  for (; delete_begin != latter_to_delete.end(); ++delete_begin) {
+    auto depend_anfnode = *delete_begin;
+    auto depend_cnode = depend_anfnode->cast<CNodePtr>();
+    MS_EXCEPTION_IF_NULL(depend_cnode);
+    auto depend_prior_node = depend_cnode->input(kRealInputIndexInDepend);
+    mng->Replace(depend_anfnode, depend_prior_node);
+  }
+  return true;
+}
+
+AnfNodePtr FindPatronNode(const FuncGraphPtr &main_graph, const FuncGraphManagerPtr &mng) {
   AnfNodePtr patron_node;
 
   auto return_cnode = main_graph->get_return()->cast<CNodePtr>();
@@ -36,9 +78,7 @@ std::tuple<AnfNodePtr, AnfNodePtr, int> FindPatronNode(const FuncGraphPtr &main_
     patron_node = output_node;
   }
 
-  auto &user_nodes = mng->node_users()[patron_node];
-  auto user = user_nodes.begin();
-  return std::make_tuple(patron_node, user->first, user->second);
+  return patron_node;
 }
 
 void AddDepends(const AnfNodePtr &stable_node, const AnfNodePtrList &free_nodes, const FuncGraphPtr &main_graph,
@@ -66,7 +106,21 @@ bool DependFormater::Run(const FuncGraphPtr &func_graph) {
     func_graph->set_manager(mng);
   }
 
+  // 1. Try to remove redundant depend.
+  bool changed = false;
   auto nodes = TopoSort(func_graph->get_return());
+  std::for_each(nodes.rbegin(), nodes.rend(), [&changed, &mng](const AnfNodePtr &node) {
+    if (RemoveRedundantDepend(node, mng)) {
+      changed = true;
+    }
+  });
+
+  // Should re-toposort for changed graph.
+  if (changed) {
+    nodes = TopoSort(func_graph->get_return());
+  }
+
+  // 2. Move depend to tail of graph.
   AnfNodePtrList old_depends;
   AnfNodePtrList free_nodes;
 
@@ -81,7 +135,7 @@ bool DependFormater::Run(const FuncGraphPtr &func_graph) {
   }
 
   if (old_depends.empty()) {
-    return false;
+    return changed;
   }
 
   // Delete old depend.
@@ -93,10 +147,8 @@ bool DependFormater::Run(const FuncGraphPtr &func_graph) {
   }
 
   // Add new depend node in tail.
-  AnfNodePtr patron_node;
-  std::tie(patron_node, std::ignore, std::ignore) = FindPatronNode(func_graph, mng);
+  AnfNodePtr patron_node = FindPatronNode(func_graph, mng);
   AddDepends(patron_node, free_nodes, func_graph, mng);
-
   return true;
 }
 }  // namespace opt
