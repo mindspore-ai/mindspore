@@ -41,7 +41,7 @@ In the currently provided training script, the coco2017 data set is used as an e
  ````bash
      wget http://images.cocodataset.org/zips/train2017.zip
      wget http://images.cocodataset.org/zips/val2017.zip
-     wget http://images.cocodataset.org/annotations/annotations2017.zip
+     wget http://images.cocodataset.org/annotations/annotations_trainval2017.zip
 ````
 
 - Create the mask dataset.

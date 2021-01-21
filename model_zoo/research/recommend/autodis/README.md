@@ -32,7 +32,7 @@ AutoDis leverages a set of meta-embeddings for each numerical field, which are s
 
 # [Dataset](#contents)
 
-- [1] A dataset [Criteo](https://s3-eu-west-1.amazonaws.com/kaggle-display-advertising-challenge-dataset/dac.tar.gz) used in  Huifeng Guo, Ruiming Tang, Yunming Ye, Zhenguo Li, Xiuqiang He. DeepFM: A Factorization-Machine based Neural Network for CTR Prediction[J]. 2017.
+- [1] A dataset Criteo used in  Huifeng Guo, Ruiming Tang, Yunming Ye, Zhenguo Li, Xiuqiang He. DeepFM: A Factorization-Machine based Neural Network for CTR Prediction[J]. 2017.
 
 # [Environment Requirements](#contents)
 
@@ -48,7 +48,7 @@ AutoDis leverages a set of meta-embeddings for each numerical field, which are s
 
 After installing MindSpore via the official website, you can start training and evaluation as follows:
 
-- runing on Ascend
+- running on Ascend
 
   ```python
   # run training example
