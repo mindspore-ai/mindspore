@@ -126,10 +126,10 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     }
     formatTransPass->SetQuantType(ctx.quantType);
     formatTransPass->SetFmk(ctx.fmk);
+    formatTransOptimizer.AddPass(formatTransPass);
+    formatTransOptimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
+    formatTransOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
     if (ctx.fmk != converter::FmkType_TF) {
-      formatTransOptimizer.AddPass(formatTransPass);
-      formatTransOptimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
-      formatTransOptimizer.AddPass(new (std::nothrow) TopologicalSortPass());
       formatTransOptimizer.AddPass(new (std::nothrow) InferShapePass());
     }
     status = formatTransOptimizer.Run(graphDefT);
