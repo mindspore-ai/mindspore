@@ -52,13 +52,13 @@ Dataset used:
 
 在通过官方网站安装MindSpore之后，你可以通过如下步骤开始训练以及评估：
 
-- runing on Ascend with default paramaters
+- running on Ascend with default parameters
 
   ```python
   # run training example
   python train.py --device_id device_id
 
-  # run evaluation example with default paramaters
+  # run evaluation example with default parameters
   python eval.py --device_id device_id
   ```
 
@@ -202,7 +202,7 @@ Dataset used:
 | outputs                    | probability
 | Loss                       | 0.038
 | Speed                      | 1pc: 564.652 ms/step;
-| Scripts                    | [FCN script](https://gitee.com/mindspore/mindspore/tree/r1.0/model_zoo/official/cv/FCN)
+| Scripts                    | [FCN script](https://gitee.com/mindspore/mindspore/tree/master/model_zoo/official/cv/FCN8s)
 
 ### Inference Performance
 
