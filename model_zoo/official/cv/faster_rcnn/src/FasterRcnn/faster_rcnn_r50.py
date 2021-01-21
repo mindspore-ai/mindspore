@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ from mindspore.ops import operations as P
 from mindspore.common.tensor import Tensor
 import mindspore.common.dtype as mstype
 from mindspore.ops import functional as F
+from mindspore import context
 from .resnet50 import ResNetFea, ResidualBlockUsing
 from .bbox_assign_sample_stage2 import BboxAssignSampleForRcnn
 from .fpn_neck import FeatPyramidNeck
@@ -50,6 +51,9 @@ class Faster_Rcnn_Resnet50(nn.Cell):
     """
     def __init__(self, config):
         super(Faster_Rcnn_Resnet50, self).__init__()
+        _mode_16 = bool(context.get_context("device_target") == "Ascend")
+        self.dtype = np.float16 if _mode_16 else np.float32
+        self.ms_type = mstype.float16 if _mode_16 else mstype.float32
         self.train_batch_size = config.batch_size
         self.num_classes = config.num_classes
         self.anchor_scales = config.anchor_scales
@@ -157,7 +161,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
 
         self.rpn_max_num = config.rpn_max_num
 
-        self.zeros_for_nms = Tensor(np.zeros((self.rpn_max_num, 3)).astype(np.float16))
+        self.zeros_for_nms = Tensor(np.zeros((self.rpn_max_num, 3)).astype(self.dtype))
         self.ones_mask = np.ones((self.rpn_max_num, 1)).astype(np.bool)
         self.zeros_mask = np.zeros((self.rpn_max_num, 1)).astype(np.bool)
         self.bbox_mask = Tensor(np.concatenate((self.ones_mask, self.zeros_mask,
@@ -165,10 +169,10 @@ class Faster_Rcnn_Resnet50(nn.Cell):
         self.nms_pad_mask = Tensor(np.concatenate((self.ones_mask, self.ones_mask,
                                                    self.ones_mask, self.ones_mask, self.zeros_mask), axis=1))
 
-        self.test_score_thresh = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * config.test_score_thr)
-        self.test_score_zeros = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * 0)
-        self.test_box_zeros = Tensor(np.ones((self.rpn_max_num, 4)).astype(np.float16) * -1)
-        self.test_iou_thr = Tensor(np.ones((self.rpn_max_num, 1)).astype(np.float16) * config.test_iou_thr)
+        self.test_score_thresh = Tensor(np.ones((self.rpn_max_num, 1)).astype(self.dtype) * config.test_score_thr)
+        self.test_score_zeros = Tensor(np.ones((self.rpn_max_num, 1)).astype(self.dtype) * 0)
+        self.test_box_zeros = Tensor(np.ones((self.rpn_max_num, 4)).astype(self.dtype) * -1)
+        self.test_iou_thr = Tensor(np.ones((self.rpn_max_num, 1)).astype(self.dtype) * config.test_iou_thr)
         self.test_max_per_img = config.test_max_per_img
         self.nms_test = P.NMSWithMask(config.test_iou_thr)
         self.softmax = P.Softmax(axis=1)
@@ -183,9 +187,9 @@ class Faster_Rcnn_Resnet50(nn.Cell):
 
         # Init tensor
         roi_align_index = [np.array(np.ones((config.num_expected_pos_stage2 + config.num_expected_neg_stage2, 1)) * i,
-                                    dtype=np.float16) for i in range(self.train_batch_size)]
+                                    dtype=self.dtype) for i in range(self.train_batch_size)]
 
-        roi_align_index_test = [np.array(np.ones((config.rpn_max_num, 1)) * i, dtype=np.float16) \
+        roi_align_index_test = [np.array(np.ones((config.rpn_max_num, 1)) * i, dtype=self.dtype) \
                                 for i in range(self.test_batch_size)]
 
         self.roi_align_index_tensor = Tensor(np.concatenate(roi_align_index))
@@ -276,7 +280,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
                                             self.cast(x[3], mstype.float32))
 
 
-        roi_feats = self.cast(roi_feats, mstype.float16)
+        roi_feats = self.cast(roi_feats, self.ms_type)
         rcnn_masks = self.concat(mask_tuple)
         rcnn_masks = F.stop_gradient(rcnn_masks)
         rcnn_mask_squeeze = self.squeeze(self.cast(rcnn_masks, mstype.bool_))
@@ -420,7 +424,7 @@ class Faster_Rcnn_Resnet50(nn.Cell):
         for i in range(num_levels):
             anchors = self.anchor_generators[i].grid_anchors(
                 featmap_sizes[i], self.anchor_strides[i])
-            multi_level_anchors += (Tensor(anchors.astype(np.float16)),)
+            multi_level_anchors += (Tensor(anchors.astype(self.dtype)),)
 
         return multi_level_anchors
 

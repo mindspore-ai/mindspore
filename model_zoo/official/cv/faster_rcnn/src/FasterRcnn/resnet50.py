@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,12 +22,11 @@ from mindspore.ops import functional as F
 from mindspore import context
 
 
-context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
-
-
 def weight_init_ones(shape):
     """Weight init."""
-    return Tensor(np.array(np.ones(shape).astype(np.float32) * 0.01).astype(np.float16))
+    if context.get_context("device_target") == "Ascend":
+        return Tensor(np.array(np.ones(shape).astype(np.float32) * 0.01).astype(np.float16))
+    return Tensor(np.array(np.ones(shape).astype(np.float32) * 0.01))
 
 
 def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mode='pad'):
@@ -41,11 +40,12 @@ def _conv(in_channels, out_channels, kernel_size=3, stride=1, padding=0, pad_mod
 
 def _BatchNorm2dInit(out_chls, momentum=0.1, affine=True, use_batch_statistics=True):
     """Batchnorm2D wrapper."""
-    gamma_init = Tensor(np.array(np.ones(out_chls)).astype(np.float16))
-    beta_init = Tensor(np.array(np.ones(out_chls) * 0).astype(np.float16))
-    moving_mean_init = Tensor(np.array(np.ones(out_chls) * 0).astype(np.float16))
-    moving_var_init = Tensor(np.array(np.ones(out_chls)).astype(np.float16))
-
+    _mode_16 = bool(context.get_context("device_target") == "Ascend")
+    dtype = np.float16 if _mode_16 else np.float32
+    gamma_init = Tensor(np.array(np.ones(out_chls)).astype(dtype))
+    beta_init = Tensor(np.array(np.ones(out_chls) * 0).astype(dtype))
+    moving_mean_init = Tensor(np.array(np.ones(out_chls) * 0).astype(dtype))
+    moving_var_init = Tensor(np.array(np.ones(out_chls)).astype(dtype))
     return nn.BatchNorm2d(out_chls, momentum=momentum, affine=affine, gamma_init=gamma_init,
                           beta_init=beta_init, moving_mean_init=moving_mean_init,
                           moving_var_init=moving_var_init, use_batch_statistics=use_batch_statistics)
