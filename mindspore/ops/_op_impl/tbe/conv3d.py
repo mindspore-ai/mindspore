@@ -24,7 +24,7 @@ conv3d_op_info = TBERegOp("Conv3D") \
     .kernel_name("conv3d") \
     .partial_flag(True) \
     .attr("strides", "required", "listInt", "all") \
-    .attr("pads", "required", "listInt", "all") \
+    .attr("pad_list", "required", "listInt", "all") \
     .attr("dilations", "required", "listInt", "all") \
     .attr("groups", "optional", "int", "all") \
     .attr("format", "optional", "str", "all") \

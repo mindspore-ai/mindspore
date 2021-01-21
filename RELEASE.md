@@ -1,3 +1,47 @@
+# MindSpore 1.1.1 Release Notes
+
+## MindSpore
+
+### API Change
+
+#### Backwards Incompatible Change
+
+##### Python API
+
+###### `ops.AvgPool`, `ops.MaxPool`, `ops.MaxPoolWithArgmax` change attr name from 'ksize', 'padding' to 'kernel_size', 'pad_mode' ([!11350](https://gitee.com/mindspore/mindspore/pulls/11350))
+
+Previously the kernel size and pad mode attrs of pooling ops are named "ksize" and "padding", which is a little puzzling and inconsistent with convolution ops. So they are rename to "kernel_size" and "pad_mode".
+
+<table>
+<tr>
+<td style="text-align:center"> 1.1.0 </td> <td style="text-align:center"> 1.1.1 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> from mindspore.ops import operations as P
+>>>
+>>> avg_pool = P.AvgPool(ksize=2, padding='same')
+>>> max_pool = P.MaxPool(ksize=2, padding='same')
+>>> max_pool_with_argmax = P.MaxPoolWithArgmax(ksize=2, padding='same')
+```
+
+</td>
+<td>
+
+```python
+>>> from mindspore.ops import operations as P
+>>>
+>>> avg_pool = P.AvgPool(kernel_size=2, pad_mode='same')
+>>> max_pool = P.MaxPool(kernel_size=2, pad_mode='same')
+>>> max_pool_with_argmax = P.MaxPoolWithArgmax(kernel_size=2, pad_mode='same')
+```
+
+</td>
+</tr>
+</table>
+
 # MindSpore 1.1.0 Release Notes
 
 ## MindSpore
@@ -12,7 +56,7 @@
 - [STABLE] Openpose: proposes a bottom-up human attitude estimation algorithm using Part Affinity Fields on COCO2017 dataset.(Ascend)
 - [STABLE] CNN-CTC: proposes three major contributions to addresses scene text recognition (STR) on MJSynth and SynthText dataset.(Ascend)
 - [STABLE] CenterFace: a practical anchor-free face detection and alignment method for edge devices on WiderFace dataset.(Ascend)
-- [STABLE] ShuffleNetV2:  a much faster and more accurate netowrk than the previous networks on ImageNet 2012 dataset.(GPU)
+- [STABLE] ShuffleNetV2:  a much faster and more accurate network than the previous networks on ImageNet 2012 dataset.(GPU)
 - [STABLE] EfficientNet-B0: a new scaling method that uniformly scales all dimensions of depth/width/resolution using a simple yet highly effective compound coefficient on ImageNet 2012 dataset.(GPU)
 - [BETA] SSD-GhostNet: based on an Ghost module structure which generate more features from cheap operations on Oxford-IIIT Pet dataset.(Ascend)
 - [BETA] DS-CNN:  Depthwise separable convolutional neural network on Speech commands dataset.(Ascend)
@@ -329,7 +373,7 @@ dtype is removed from GumbelCDF and is no longer an argument of the class.
 
 ###### `nn.layer.combined.Conv2dBnAct`, `nn.layer.combined.DenseBnAct` move from nn.layer.quant to nn.layer.combined ([!8187](https://gitee.com/mindspore/mindspore/pulls/8187))
 
-Previously Conv2dBnAct and DenseBnAct are in nn.layer.quant, since they are not quant cells, now they are moved to nn.layer.combined. If you import Conv2dBnAct, DenseBnAct from mindspore.nn, then your code dosen't need any change.
+Previously Conv2dBnAct and DenseBnAct are in nn.layer.quant, since they are not quant cells, now they are moved to nn.layer.combined. If you import Conv2dBnAct, DenseBnAct from mindspore.nn, then your code doesn't need any change.
 
 <table>
 <tr>
@@ -414,7 +458,7 @@ In Ascend platform, if group > 1, the weight shape of Conv2D change from [in_cha
 3. Add Online Graph optimzation: by fusion Convolution/Matmul/Fullconnection and add/mul/pad/reshape, improve performance up to 50+% for some networks;
 4. Add auto tuning: by online tuning in the graph compilation phase, optimize performance up to 10%;
 5. Add weight quant: support weight quant
-6. Add opencl kernel binary cache: improve Initilization time .
+6. Add opencl kernel binary cache: improve Initialization time .
 
 #### Post quantization
 
@@ -461,7 +505,7 @@ The MindSpore Lite ToD framework is already in use in the newest Huawei Smart TV
 
 ##### Java API
 
-- [Add] Implament JNI layer and add Java api for CPU and GPU backend
+- [Add] Implement JNI layer and add Java api for CPU and GPU backend
 
 #### Deprecations
 
@@ -686,7 +730,7 @@ Contributions of any kind are welcome!
 - Python API
     - improve interface '__bool__' for tensor([!4000](https://gitee.com/mindspore/mindspore/pulls/4000))
     - fix GPU-ResizeNearestNeighbor([!3760](https://gitee.com/mindspore/mindspore/pulls/3760))
-    - fix topK multi dimention grad func([!3711](https://gitee.com/mindspore/mindspore/pulls/3711))
+    - fix topK multi dimension grad func([!3711](https://gitee.com/mindspore/mindspore/pulls/3711))
     - fix scatterop error msg([!3699](https://gitee.com/mindspore/mindspore/pulls/3699))
     - fix bug of cast dtype when using mix_presion in pynative mode([!3730](https://gitee.com/mindspore/mindspore/pulls/3730))
 - Executor
@@ -773,7 +817,7 @@ Contributions of any kind are welcome!
     - Fixing type check mistakes of InplaceAdd and Inplace Sub ops([!2744](https://gitee.com/mindspore/mindspore/pulls/2744]))
     - Change order param only equal to group param([!2748](https://gitee.com/mindspore/mindspore/pulls/2748))
 - Executor
-    - The performance of graph whith control flow is optimized([!2931](https://gitee.com/mindspore/mindspore/pulls/2931))
+    - The performance of graph with control flow is optimized([!2931](https://gitee.com/mindspore/mindspore/pulls/2931))
     - Fix bug of wrong number of tuple layers([!3390](https://gitee.com/mindspore/mindspore/pulls/3390))
     - Fix cpu multi graph memory exception([!3631](https://gitee.com/mindspore/mindspore/pulls/3631))
     - Enable data sync when calling operator without defining a cell([!3081](https://gitee.com/mindspore/mindspore/pulls/3081))
@@ -968,7 +1012,7 @@ Contributions of any kind are welcome!
     - Fix dropout，topK and addn errors in PyNative mode ([!1285](https://gitee.com/mindspore/mindspore/pulls/1285), [!1138](https://gitee.com/mindspore/mindspore/pulls/1138), [!1033](https://gitee.com/mindspore/mindspore/pulls/1033)).
     - Fix memory leaks after execution in PyNatvie mode ([!1201](https://gitee.com/mindspore/mindspore/pulls/1201)).
     - Fix HCCL failure in some special scenes ([!1204](https://gitee.com/mindspore/mindspore/pulls/1204), [!1252](https://gitee.com/mindspore/mindspore/pulls/1252)).
-    - Fix SSD network when Select failed, cann't find kernel info([!1449](https://gitee.com/mindspore/mindspore/pulls/1449)).
+    - Fix SSD network when Select failed, can't find kernel info([!1449](https://gitee.com/mindspore/mindspore/pulls/1449)).
     - Fix Topk operator selection strategy bug between aicore and aicpu([!1367](https://gitee.com/mindspore/mindspore/pulls/1367)).
     - Fix input memory size of 'assign' op unequal in control sink mode when assigning a data from one child graph to another child graph([!802](https://gitee.com/mindspore/mindspore/pulls/802)).
     - Fix allreduce ir inconsistency([!989](https://gitee.com/mindspore/mindspore/pulls/989)).

@@ -166,11 +166,11 @@ def get_bprop_extract_image_patches(self):
 def get_bprop_depthwise_conv2d_native(self):
     """Grad definition for `DepthwiseConv2dNative` operation."""
     input_grad = G.DepthwiseConv2dNativeBackpropInput(
-        self.channel_multiplier, self.kernel_size, self.pad_mode, self.pad, self.pads, self.mode, self.stride,
+        self.channel_multiplier, self.kernel_size, self.pad_mode, self.pad, self.pad_list, self.mode, self.stride,
         self.dilation, self.group
     )
     filter_grad = G.DepthwiseConv2dNativeBackpropFilter(
-        self.channel_multiplier, self.kernel_size, self.pad_mode, self.pad, self.pads, self.mode, self.stride,
+        self.channel_multiplier, self.kernel_size, self.pad_mode, self.pad, self.pad_list, self.mode, self.stride,
         self.dilation, self.group
     )
     get_shape = P.Shape()
@@ -280,7 +280,7 @@ def _get_mean_matrix(x_shape, ksize, stride, pad_mode, x_dtype):
     the value of element which is padded is 0, else are 1.
     For each element of output, it is mapped for slide window: `[h*h_stride : h*h_stride + h_ksize,
     w*w_stride : w*w_stride + w_ksize]` of `assist_input_matrix`, so the sum of slide window is the
-    number of input that assosiate with output element.
+    number of input that associate with output element.
     """
 
     n_input, c_input, h_input, w_input = x_shape
