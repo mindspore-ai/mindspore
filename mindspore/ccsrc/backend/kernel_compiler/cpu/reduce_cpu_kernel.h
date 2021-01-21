@@ -23,6 +23,7 @@
 
 namespace mindspore {
 namespace kernel {
+template <typename T>
 class ReduceCPUKernel : public CPUKernel {
  public:
   ReduceCPUKernel() = default;
@@ -32,9 +33,9 @@ class ReduceCPUKernel : public CPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  void Transpose(const int size, const float *input, const std::vector<size_t> &input_shape,
-                 const std::vector<size_t> &input_axis, const int shape_size, float *output);
-  void ConvertDataToOutput(const float *input, float *output);
+  void Transpose(const int size, const T *input, const std::vector<size_t> &input_shape,
+                 const std::vector<size_t> &input_axis, const int shape_size, T *output);
+  void ConvertDataToOutput(const T *input, T *output);
   void CheckAxis(const CNodePtr &kernel_node);
   size_t reduce_type_ = 0;
   std::vector<size_t> axis_;
@@ -43,14 +44,41 @@ class ReduceCPUKernel : public CPUKernel {
   size_t stride_ = 1;
 };
 
-MS_REG_CPU_KERNEL(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ReduceCPUKernel);
-MS_REG_CPU_KERNEL(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ReduceCPUKernel);
-MS_REG_CPU_KERNEL(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ReduceCPUKernel);
-MS_REG_CPU_KERNEL(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
-                  ReduceCPUKernel);
+MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                    ReduceCPUKernel, float);
+MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                    ReduceCPUKernel, double);
+MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                    ReduceCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(ReduceMean, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                    ReduceCPUKernel, int64_t);
+
+MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                    ReduceCPUKernel, float);
+MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                    ReduceCPUKernel, double);
+MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                    ReduceCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(ReduceMax, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                    ReduceCPUKernel, int64_t);
+
+MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                    ReduceCPUKernel, float);
+MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                    ReduceCPUKernel, double);
+MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                    ReduceCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(ReduceSum, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                    ReduceCPUKernel, int64_t);
+
+MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                    ReduceCPUKernel, float);
+MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeFloat64).AddOutputAttr(kNumberTypeFloat64),
+                    ReduceCPUKernel, double);
+MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeInt32).AddOutputAttr(kNumberTypeInt32),
+                    ReduceCPUKernel, int32_t);
+MS_REG_CPU_KERNEL_T(ReduceMin, KernelAttr().AddInputAttr(kNumberTypeInt64).AddOutputAttr(kNumberTypeInt64),
+                    ReduceCPUKernel, int64_t);
 }  // namespace kernel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_BACKEND_KERNEL_COMPILER_CPU_REDUCE_CPU_KERNEL_H_
