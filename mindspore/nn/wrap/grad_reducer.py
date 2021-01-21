@@ -244,11 +244,11 @@ class DistributedGradReducer(Cell):
         ValueError: If degree is not a int or less than 0.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend``, ``GPU``
 
     Examples:
-        >>> # This example should be run with multiple processes. Refer to the run_distribute_train.sh
-        >>> import os
+        >>> # This example should be run with multiple processes.
+        >>> # Please refer to the tutorial > Distributed Training on mindspore.cn.
         >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore.ops import composite as C
@@ -261,9 +261,7 @@ class DistributedGradReducer(Cell):
         >>> from mindspore.nn.wrap.cell_wrapper import WithLossCell
         >>> from mindspore.parallel._utils import (_get_device_num, _get_gradients_mean)
         >>>
-        >>> device_id = int(os.environ["DEVICE_ID"])
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True,
-        ...                     device_id=int(device_id))
+        >>> context.set_context(mode=context.GRAPH_MODE)
         >>> init()
         >>> context.reset_auto_parallel_context()
         >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
