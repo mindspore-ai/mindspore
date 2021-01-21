@@ -250,7 +250,7 @@ py::bytes ExecutorPy::GetFuncGraphProto(const std::string &phase, const std::str
   if (ir_type == IR_TYPE_ANF) {
     std::string proto_str = GetFuncGraphProtoString(fg_ptr);
     if (proto_str.empty()) {
-      MS_LOG(EXCEPTION) << "Graph proto is empty.";
+      MS_LOG(EXCEPTION) << "Export ANF format model failed.";
     }
     return proto_str;
   }
@@ -258,7 +258,7 @@ py::bytes ExecutorPy::GetFuncGraphProto(const std::string &phase, const std::str
   if (ir_type == IR_TYPE_ONNX) {
     std::string proto_str = GetOnnxProtoString(fg_ptr);
     if (proto_str.empty()) {
-      MS_LOG(EXCEPTION) << "Graph proto is empty.";
+      MS_LOG(EXCEPTION) << "Export ONNX format model failed.";
     }
     return proto_str;
   }
@@ -266,7 +266,7 @@ py::bytes ExecutorPy::GetFuncGraphProto(const std::string &phase, const std::str
   if (ir_type == IR_TYPE_MINDIR) {
     std::string proto_str = GetBinaryProtoString(fg_ptr);
     if (proto_str.empty()) {
-      MS_LOG(EXCEPTION) << "Graph proto is empty.";
+      MS_LOG(EXCEPTION) << "Export MINDIR format model failed.";
     }
     return proto_str;
   }
