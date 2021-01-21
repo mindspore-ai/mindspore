@@ -590,7 +590,7 @@ bool AnfToJsonDesc(const AnfNodePtrList &nodes, const DumpOption &dump_option, n
     op_nodes = nodes;
   } else {
     // When there are basic and composite ops, the composite ops should be inline to the basic ones' graph,
-    // so a new graph generation should be done (beacuse they may in the main graph!).
+    // so a new graph generation should be done (because they may in the main graph!).
     // If address_node_map is wanted, we should map the new node in new graph to the old nodes. But... not support now.
     MS_LOG(EXCEPTION) << "No support mixed with basic and composite ops now!";
   }
@@ -717,7 +717,7 @@ std::unordered_set<PrimitivePtr> GetExpandOps() {
     prim::kPrimMinimumGrad,
     prim::kPrimGkDropout,
     prim::kPrimDropoutGrad,
-    prim::kPrimSoftMax,
+    prim::kPrimSoftmax,
     prim::kPrimLayerNorm,
     prim::kPrimLayerNormGrad,
 #endif
