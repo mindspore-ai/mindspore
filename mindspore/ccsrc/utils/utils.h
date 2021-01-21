@@ -30,6 +30,7 @@
 
 namespace mindspore {
 // op name. Op which not exists in operator/ops.h, so define it's name here
+constexpr auto kConcatOpName = "Concat";
 constexpr auto kUniqueOpName = "Unique";
 constexpr auto kComputeAccidentalHitsOpName = "ComputeAccidentalHits";
 constexpr auto kCTCGreedyDecoderOpName = "CTCGreedyDecoder";
@@ -492,7 +493,8 @@ const std::set<std::string> kComputeDepend = {kUniqueOpName, kComputeAccidentalH
 const std::set<std::string> k3DFormatSet = {kOpFormat_NCDHW, kOpFormat_NDC1HWC0, kOpFormat_FRACTAL_Z_3D};
 
 const std::set<std::string> DynamicShapeConstInputToAttr = {
-  kCastOpName, kExpandDimsOpName, kReshapeOpName, kEmbeddingLookupOpName, kTransposeOpName, kReduceSumOpName};
+  kCastOpName,      kExpandDimsOpName, kReshapeOpName, kEmbeddingLookupOpName,
+  kTransposeOpName, kReduceSumOpName,  kConcatOpName};
 
 static inline void ChangeFileMode(const std::string &file_name, mode_t mode) {
   try {

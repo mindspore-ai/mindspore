@@ -954,6 +954,90 @@ AbstractBasePtr InferImplSequenceMask(const AnalysisEnginePtr &, const Primitive
   return std::make_shared<AbstractTensor>(kBool, output_shape);
 }
 
+AbstractBasePtr InferImplConcat(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                                const AbstractBasePtrList &args_spec_list) {
+  MS_EXCEPTION_IF_NULL(primitive);
+  const std::string op_name = primitive->name();
+  if (args_spec_list.empty()) {
+    MS_LOG(EXCEPTION) << "args_spec_list is empty.";
+  }
+
+  AbstractTuplePtr arg = nullptr;
+  AbstractTensorPtr tensor_base = nullptr;
+  size_t tuple_len = 0;
+  MS_EXCEPTION_IF_NULL(args_spec_list[0]);
+  if (args_spec_list[0]->isa<AbstractTuple>()) {
+    CheckArgsSize(op_name, args_spec_list, 1);
+    arg = CheckArg<AbstractTuple>(op_name, args_spec_list, 0);
+    tuple_len = arg->elements().size();
+    tensor_base = CheckArg<AbstractTensor>(op_name, arg->elements(), 0);
+  } else if (args_spec_list[0]->isa<AbstractTensor>()) {
+    tuple_len = args_spec_list.size();
+    tensor_base = CheckArg<AbstractTensor>(op_name, args_spec_list, 0);
+  }
+
+  MS_EXCEPTION_IF_NULL(tensor_base);
+  ShapeVector shape_base = tensor_base->shape()->shape();
+  int64_t rank_base = SizeToLong(shape_base.size());
+  ShapeVector min_shape_base = tensor_base->shape()->min_shape();
+  ShapeVector max_shape_base = tensor_base->shape()->max_shape();
+  (void)CheckMinMaxShape(shape_base, &min_shape_base, &max_shape_base);
+
+  primitive->set_attr("T", tensor_base->element()->BuildType());
+  primitive->set_attr("inputNums", MakeValue(SizeToLong(tuple_len)));
+
+  ValuePtr axis = primitive->GetAttr("axis");
+  // Axis value should be in [-(rank_base + 1), rank_base).
+  int64_t axis_value = CheckAxis(op_name, axis, -(rank_base + 1), rank_base);
+  // If axis is negative, add offset(rank_base) to turn it to positive.
+  axis_value = GetPositiveAxis(axis_value, LongToSize(rank_base));
+
+  int64_t all_shp = shape_base[axis_value];
+  int64_t min_all_shp = min_shape_base[axis_value];
+  int64_t max_all_shp = max_shape_base[axis_value];
+  for (size_t i = 1; i < tuple_len; ++i) {
+    AbstractTensorPtr tensor = nullptr;
+    if (args_spec_list[0]->isa<AbstractTuple>()) {
+      tensor = CheckArg<AbstractTensor>(op_name, arg->elements(), i);
+    } else if (args_spec_list[0]->isa<AbstractTensor>()) {
+      tensor = CheckArg<AbstractTensor>(op_name, args_spec_list, i);
+    }
+    ShapeVector shape_tensor = tensor->shape()->shape();
+    int64_t rank_tensor = SizeToLong(shape_tensor.size());
+    ShapeVector min_shape_tensor = tensor->shape()->min_shape();
+    ShapeVector max_shape_tensor = tensor->shape()->max_shape();
+    (void)CheckMinMaxShape(shape_tensor, &min_shape_tensor, &max_shape_tensor);
+    (void)CheckDtypeSame(op_name, tensor_base, tensor);
+    if (rank_tensor != rank_base) {
+      MS_LOG(EXCEPTION) << op_name << " can not concat element " << i << " with the first element: Wrong Rank";
+    }
+    for (int j = 0; j < rank_base; ++j) {
+      if (j != axis_value && shape_tensor[j] != shape_base[j]) {
+        MS_LOG(EXCEPTION) << op_name << " can not concat element " << i << " with the first element: Wrong Size";
+      }
+    }
+    if (all_shp == -1 || shape_base[axis_value] == -1) {
+      all_shp = -1;
+    } else {
+      all_shp += shape_tensor[axis_value];
+    }
+    min_all_shp += min_shape_tensor[axis_value];
+    max_all_shp += max_shape_tensor[axis_value];
+  }
+
+  AbstractTensorPtr ret = dyn_cast<AbstractTensor>(tensor_base->Broaden());
+  MS_EXCEPTION_IF_NULL(ret);
+  auto shape = ret->shape()->shape();
+  auto min_shape = ret->shape()->min_shape();
+  auto max_shape = ret->shape()->max_shape();
+  (void)CheckMinMaxShape(shape, &min_shape, &max_shape);
+  shape[axis_value] = all_shp;
+  min_shape[axis_value] = min_all_shp;
+  max_shape[axis_value] = max_all_shp;
+  ret->set_shape(std::make_shared<Shape>(shape, min_shape, max_shape));
+  return ret;
+}
+
 AbstractBasePtr InferImplRange(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                const AbstractBasePtrList &args_spec_list) {
   const std::string &op_name = primitive->name();

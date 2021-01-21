@@ -2148,6 +2148,19 @@ class Concat(PrimitiveWithInfer):
         out = {'shape': ret_shp,
                'dtype': x_type[0],
                'value': value}
+        if -1 in x_shp[0]:
+            x_min_shp = input_x['min_shape']
+            ret_min_shp = x_min_shp[0].copy()
+            ret_min_shp[axis] = 0
+            for all_min_shp in x_min_shp:
+                ret_min_shp[axis] += all_min_shp[axis]
+            out['min_shape'] = ret_min_shp
+            x_max_shp = input_x['max_shape']
+            ret_max_shp = x_max_shp[0].copy()
+            ret_max_shp[axis] = 0
+            for all_max_shp in x_max_shp:
+                ret_max_shp[axis] += all_max_shp[axis]
+            out['max_shape'] = ret_max_shp
         return out
 
 
@@ -2789,7 +2802,7 @@ class StridedSlice(PrimitiveWithInfer):
         if has_ellipsis:
             # When there is ellipsis, handle the second half of the ellipsis split.
             ellipsis_occupied_dims = x_rank - i - (slice_len - (j + 1)) + \
-                len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
+                                     len(tuple(filter(lambda x: x == '1', new_axis_pos[j + 1:slice_len])))
             ret_shape.extend(x_shape[i:i + ellipsis_occupied_dims])
             j += 1
             i += ellipsis_occupied_dims
@@ -3985,7 +3998,7 @@ class SpaceToBatchND(PrimitiveWithInfer):
             offset = 1
         for i in range(len(self.block_shape)):
             padded = out_shape[i + offset] + self.paddings[i][0] + \
-                self.paddings[i][1]
+                     self.paddings[i][1]
             if padded % self.block_shape[i] != 0:
                 raise ValueError(f'For \'{self.name}\' padded[{i}] {padded} should be divisible by '
                                  f'block_shape[{i}] {self.block_shape[i]}')

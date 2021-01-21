@@ -140,7 +140,7 @@ void OpTilingCalculater::Init() {
   tiling_func_map_ = optiling::OpTilingRegistryInterf::RegisteredOpInterf();
   MS_LOG(INFO) << "tiling_func_map_ size:" << tiling_func_map_.size();
   for (const auto &iter : tiling_func_map_) {
-    MS_LOG(INFO) << "Regist tiling func:" << iter.first;
+    MS_LOG(INFO) << "Register tiling func:" << iter.first;
   }
 }
 
@@ -150,6 +150,7 @@ std::string GetRealOpType(const std::string &op_type) {
     {"SparseApplyProximalAdagrad", "SparseApplyProximalAdagradD"},
     {"SparseGatherV2", "GatherV2"},
     {"Pad", "PadD"},
+    {"Concat", "ConcatD"},
   };
   auto iter = kOpTypeMap.find(op_type);
   if (iter == kOpTypeMap.end()) {
