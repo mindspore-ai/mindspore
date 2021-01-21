@@ -79,5 +79,21 @@ py::dict GetAllreduceFusion(const FuncGraphPtr &graph) {
   }
   return dict;
 }
+
+// In pipeline parallel mode, many parameters are not used and need to be deleted
+py::list GetParallelParameterNameList(const FuncGraphPtr &graph) {
+  MS_EXCEPTION_IF_NULL(graph);
+
+  py::list parallel_parameter_name_list;
+  std::vector<AnfNodePtr> graph_params = graph->parameters();
+
+  for (auto param : graph_params) {
+    auto param_ptr = std::static_pointer_cast<Parameter>(param);
+    MS_EXCEPTION_IF_NULL(param_ptr);
+    std::string name = param_ptr->name();
+    parallel_parameter_name_list.append(name);
+  }
+  return parallel_parameter_name_list;
+}
 }  // namespace parallel
 }  // namespace mindspore

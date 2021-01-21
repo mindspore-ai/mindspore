@@ -93,6 +93,7 @@ class ExecutorPy : public std::enable_shared_from_this<ExecutorPy> {
   void PyExePath(const py::object &phase);
   py::dict GetParameterLayout(const std::string &phase);
   py::dict GetCNodeStrategy(const std::string &phase);
+  py::list GetParallelParameterNameList(const std::string &phase);
   void SetCNodeStrategy(const std::string &name, const parallel::Strategys &strategy);
   size_t GetNumOpsInfo(const std::string &phase);
   void SetNumOpsInfo(size_t);

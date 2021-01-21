@@ -286,6 +286,12 @@ py::dict ExecutorPy::GetCNodeStrategy(const std::string &phase) {
   return stra_dict_[phase];
 }
 
+py::list ExecutorPy::GetParallelParameterNameList(const std::string &phase) {
+  std::string param_graph = phase + kStepParallelGraph;
+  auto graph = GetFuncGraph(param_graph);
+  return mindspore::parallel::GetParallelParameterNameList(graph);
+}
+
 void ExecutorPy::SetCNodeStrategy(const std::string &name, const parallel::Strategys &strategy) {
   MS_LOG(DEBUG) << "SetCNodeStrategy!";
   stra_dict_[phase_][py::str(name)] = strategy;

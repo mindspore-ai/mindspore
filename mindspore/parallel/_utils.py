@@ -35,6 +35,10 @@ def _get_full_batch():
     """Get whether to use full_batch."""
     return auto_parallel_context().get_full_batch()
 
+def _get_pipeline_stages():
+    """Get pipeline stages"""
+    return auto_parallel_context().get_pipeline_stages()
+
 def _check_full_batch():
     """
     full_batch could only be used under semi_auto_parallel or auto_parallel, check it.
