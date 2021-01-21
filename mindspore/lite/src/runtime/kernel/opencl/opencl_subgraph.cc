@@ -254,7 +254,10 @@ int OpenCLSubGraph::UpdateTensorDataTypePass() {
       for (auto jv : cur_outs) {
         if (out_set.count(jv) == 0) {
           MS_ASSERT(jv);
-          jv->set_data_type(kNumberTypeFloat16);
+          // if Fp16Enable, only change fp32 to fp16, other dtype is reserved
+          if (jv->data_type() == kNumberTypeFloat32) {
+            jv->set_data_type(kNumberTypeFloat16);
+          }
         }
       }
     }

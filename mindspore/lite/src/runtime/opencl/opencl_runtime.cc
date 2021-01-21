@@ -360,7 +360,7 @@ int OpenCLRuntime::BuildKernel(cl::Kernel &kernel, const std::string &program_na
       "-DWRITE_IMAGE=write_imageh -DREAD_IMAGE=read_imageh -DTO_FLT=convert_half -DTO_FLT4=convert_half4";
   } else {
     build_option +=
-      " -DFLT=float -DFLT4=float4 -DFLT16=float16 -DAS_FLT4=as_float4  -DAS_UINT4=as_uint4 -DUINT4=uint4 "
+      " -DFLT=float -DFLT4=float4 -DFLT16=float16 -DAS_FLT4=as_float4 -DAS_UINT4=as_uint4 -DUINT4=uint4 "
       "-DWRITE_IMAGE=write_imagef -DREAD_IMAGE=read_imagef -DTO_FLT=convert_float -DTO_FLT4=convert_float4";
   }
   build_option =
