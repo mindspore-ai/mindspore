@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -122,7 +122,9 @@
 #include "utils/config_manager.h"
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
-
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 namespace mindspore {
 namespace opt {
 namespace {
@@ -262,6 +264,10 @@ void AscendBackendIRFusionOptimization(const std::shared_ptr<session::KernelGrap
   auto context_ptr = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(context_ptr);
   bool save_graphs = context_ptr->get_param<bool>(MS_CTX_SAVE_GRAPHS_FLAG);
+#ifdef ENABLE_DUMP_IR
+  std::string tag = "before_hwopt";
+  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_OPTIMIZER, tag, kernel_graph);
+#endif
   if (save_graphs) {
     std::string file_name = "hwopt_d_ir_fusion_before_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph);
@@ -380,7 +386,13 @@ void AscendBackendOptimization(const std::shared_ptr<session::KernelGraph> &kern
   optimizer2->AddPassManager(other2_pm);
   (void)optimizer2->Optimize(kernel_graph);
   kernel_graph->SetExecOrderByDefault();
-
+#ifdef ENABLE_DUMP_IR
+  std::string tag = "hwopt_d_end";
+  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_OPTIMIZER, tag, kernel_graph);
+  const std::vector<CNodePtr> &exec_order = kernel_graph->execution_order();
+  tag = "graph_exec_order";
+  mindspore::RDR::RecordGraphExecOrder(SubModuleId::SM_OPTIMIZER, tag, std::move(exec_order));
+#endif
   if (save_graphs) {
     std::string file_name = "hwopt_d_end_graph_" + std::to_string(kernel_graph->graph_id()) + ".ir";
     DumpIR(file_name, kernel_graph, true, kTopStack);

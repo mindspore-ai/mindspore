@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,9 @@
 #include "debug/anf_ir_dump.h"
 #include "debug/dump_proto.h"
 #include "toolchain/adx_datadump_server.h"
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 #if ENABLE_CPU && ENABLE_D
 #include "ps/util.h"
 #include "ps/ps_cache/ps_cache_manager.h"
@@ -129,7 +132,6 @@ std::vector<CNodePtr> GetCNodes(const std::vector<AnfNodePtr> &anf_nodes) {
   }
   return cnodes;
 }
-
 void InsertMakeTupleForOutput(NotNull<KernelGraphPtr> root_graph) {
   auto return_node = root_graph->get_return();
   MS_EXCEPTION_IF_NULL(return_node);
@@ -715,7 +717,6 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
     InitRuntimeResource();
     return root_graph->graph_id();
   }
-
   // create parameter for multiple branch
   std::set<KernelGraphPtr> memo;
   CreateMultiBranchOutput(NOT_NULL(root_graph), NOT_NULL(&memo));
@@ -726,10 +727,8 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
   MultiCallGraphOptimize(NOT_NULL(root_graph));
   // resource initialize
   InitRuntimeResource();
-
   IrFusionPass(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
-
   SelectKernel(NOT_NULL(root_graph));
   memo.clear();
 
@@ -740,7 +739,6 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
     LoadGraphsToDbg(NOT_NULL(root_graph), NOT_NULL(&memo));
   }
   memo.clear();
-
   UpdateRefOutputMap(NOT_NULL(root_graph), NOT_NULL(&memo));
   memo.clear();
   // add make_tuple to the output graph
@@ -757,7 +755,6 @@ GraphId AscendSession::CompileGraphImpl(NotNull<FuncGraphPtr> func_graph) {
 
   // adjust kernel
   AdjustKernel(root_graph);
-
   // reorder send/recv
   auto execution_order = root_graph->execution_order();
   ReorderSendRecv(&execution_order);
@@ -1333,6 +1330,9 @@ void AscendSession::Execute(const std::shared_ptr<KernelGraph> &kernel_graph, bo
   bool ret_ok = runtime_instance->Run(kernel_graph.get(), is_task_sink);
   Dump(kernel_graph);
   if (!ret_ok) {
+#ifdef ENABLE_DUMP_IR
+    mindspore::RDR::TriggerAll();
+#endif
     MS_LOG(EXCEPTION) << "run task error!";
   }
   MS_LOG(INFO) << "Finish!";
