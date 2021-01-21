@@ -20,19 +20,14 @@
 #include "src/runtime/kernel/opencl/kernel/matmul.h"
 #include "src/runtime/kernel/opencl/kernel/strassen.h"
 #include "src/common/utils.h"
-
-#ifndef PROGRAM_WITH_IL
-
 #include "src/runtime/kernel/opencl/cl/strassen.cl.inc"
 
-#endif
+using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::ImageSize;
 
 namespace mindspore::kernel {
 
 int StrassenOpenCLKernel::Prepare() {
-#ifdef PROGRAM_WITH_IL
-  kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name);
-#else
   std::string kernel_name = "MatMul_Strassen_NHWC4_2d";
   std::string source = strassen_source;
   std::string program_name = "MatMul";
@@ -43,8 +38,6 @@ int StrassenOpenCLKernel::Prepare() {
   ocl_runtime_->BuildKernel(kernel_back_result, program_name, "Strassen_Back_Result");
   ocl_runtime_->BuildKernel(MatMul_StrassenBUFFilled, program_name, "MatMul_BUF_Filled");
   ocl_runtime_->BuildKernel(MatMul_StrassenIMGFilled, program_name, "MatMul_IMG_Filled");
-
-#endif
   auto ret = InitWeights();
   if (ret != RET_OK) {
     return ret;
@@ -52,31 +45,25 @@ int StrassenOpenCLKernel::Prepare() {
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 void StrassenOpenCLKernel::AllocatorMemoryForStrassen(int NumA, int NumB) {
-  std::vector<size_t> img_size;
-  img_size.push_back(UP_DIV(NumA, C4NUM));
-  img_size.push_back(NumA);
-  size_t img_dtype = enable_fp16_ ? CL_HALF_FLOAT : CL_FLOAT;
-  size_t dtype_size = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
-  img_size.push_back(img_dtype);
   auto allocator = ocl_runtime_->GetAllocator();
-  size_t memA = NumA * NumA;
-
+  size_t img_dtype = enable_fp16_ ? CL_HALF_FLOAT : CL_FLOAT;
+  ImageSize img_size{static_cast<size_t>(UP_DIV(NumA, C4NUM)), static_cast<size_t>(NumA), img_dtype};
+  size_t dtype_size = enable_fp16_ ? sizeof(cl_half) : sizeof(cl_float);
   size_t memB = NumB * NumB * dtype_size;
   for (int depth = 0; depth < MAXDEPTH; depth++) {
     B_temp[depth] = allocator->Malloc(memB);
-    A_temp[depth] = allocator->Malloc(memA, img_size);
-
-    M1[depth] = allocator->Malloc(memA, img_size);
-    M2[depth] = allocator->Malloc(memA, img_size);
-    M3[depth] = allocator->Malloc(memA, img_size);
-    M4[depth] = allocator->Malloc(memA, img_size);
-    M5[depth] = allocator->Malloc(memA, img_size);
-    M6[depth] = allocator->Malloc(memA, img_size);
-    M7[depth] = allocator->Malloc(memA, img_size);
+    A_temp[depth] = allocator->Malloc(img_size);
+    M1[depth] = allocator->Malloc(img_size);
+    M2[depth] = allocator->Malloc(img_size);
+    M3[depth] = allocator->Malloc(img_size);
+    M4[depth] = allocator->Malloc(img_size);
+    M5[depth] = allocator->Malloc(img_size);
+    M6[depth] = allocator->Malloc(img_size);
+    M7[depth] = allocator->Malloc(img_size);
   }
 }
 
@@ -333,6 +320,6 @@ int StrassenOpenCLKernel::Run() {
   }
   DoStrassen(in_tensors_.at(0)->data_c(), padWeight_, out_tensors_.at(0)->data_c(), in_tensors_.at(0)->shape()[0], 0,
              threshold);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 }  // namespace mindspore::kernel

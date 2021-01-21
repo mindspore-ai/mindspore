@@ -26,12 +26,13 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::ImageSize;
 using mindspore::schema::PrimitiveType_Split;
+
 namespace mindspore::kernel {
 
 int SplitOpenCLKernel::RunAxis0() {
   auto allocator_ = ocl_runtime_->GetAllocator();
-  std::vector<size_t> img_size;
   auto src_data = in_tensors_[0]->data_c();
   cl::Image2D *in_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
   if (in_image == nullptr) {
@@ -41,9 +42,10 @@ int SplitOpenCLKernel::RunAxis0() {
   auto src_area = cl::array<cl::size_type, 3U>{0, 0, 0};
   for (int i = 0; i < out_tensors_.size(); i++) {
     auto dst_data = out_tensors_[i]->data_c();
+    ImageSize img_size;
     allocator_->GetImageSize(dst_data, &img_size);
     auto dst_area = cl::array<cl::size_type, 3U>{0, 0, 0};
-    auto region = cl::array<cl::size_type, 3U>{img_size[0], img_size[1], 1};
+    auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
     cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(dst_data));
     if (out_image == nullptr) {
       MS_LOG(ERROR) << "RunAxis0 out_image can not be nullptr";

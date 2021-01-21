@@ -28,6 +28,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::ImageSize;
 using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::PrimitiveType_DeConv2D;
@@ -193,8 +194,8 @@ int Conv2dTransposeOpenCLKernel::InitWeights() {
   if (enable_fp16_) {
     img_dtype = CL_HALF_FLOAT;
   }
-  std::vector<size_t> img_size{im_dst_x, im_dst_y, img_dtype};
-  bias_ = allocator->Malloc(im_dst_x * im_dst_y * C4NUM * data_size, img_size);
+  ImageSize img_size{im_dst_x, im_dst_y, img_dtype};
+  bias_ = allocator->Malloc(img_size);
   bias_ = allocator->MapBuffer(bias_, CL_MAP_WRITE, nullptr, true);
   memset(bias_, 0x00, div_co * C4NUM * data_size);
   if (in_tensors_.size() == 3) {

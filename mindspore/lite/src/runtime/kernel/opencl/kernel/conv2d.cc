@@ -255,7 +255,7 @@ void Conv2DOpenCLKernel::InitFilter() {
     size_t height = KH_ * KW_ * UP_ROUND(CI_, CI_TILE);
     size_t dtype = use_fp16_ ? CL_HALF_FLOAT : CL_FLOAT;
     size = width * height * CO_TILE * sizeof_FLT_;
-    packed_filter_ = allocator->Malloc(size, {width, height, dtype});
+    packed_filter_ = allocator->Malloc({width, height, dtype});
   } else {
     size = UP_DIV(CO_SLICES_, Ogroup) * KH_ * KW_ * CI_SLICES_ * Ogroup * CI_TILE * CO_TILE * sizeof_FLT_;
     packed_filter_ = allocator->Malloc(size);

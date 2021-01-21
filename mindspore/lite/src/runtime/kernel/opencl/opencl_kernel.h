@@ -78,6 +78,7 @@ void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num, DstT default_va
 }
 
 struct GpuTensorInfo {
+  GpuTensorInfo() = default;
   explicit GpuTensorInfo(const lite::Tensor *tensor) {
     if (tensor == nullptr) {
       return;
@@ -194,7 +195,7 @@ class OpenCLKernel : public LiteKernel {
   virtual int AssignTuningParam(const BaseTuningParameter &param);
   virtual int Tune();
 
-  int GetImageSize(size_t idx, std::vector<size_t> *img_size);
+  int GetImageSize(size_t idx, lite::opencl::ImageSize *img_size);
   void PrintOutput(int print_num = 10, const std::string &out_file = "");
   lite::opencl::MemType GetMemType() { return out_mem_type_; }
   void SetMemType(lite::opencl::MemType mem_type) { out_mem_type_ = mem_type; }

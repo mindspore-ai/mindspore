@@ -26,6 +26,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::ImageSize;
 using mindspore::schema::PrimitiveType_Fill;
 using mindspore::schema::PrimitiveType_Shape;
 
@@ -35,13 +36,13 @@ int FillOpenCLKernel::RunFill() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   auto param = reinterpret_cast<FillParameter *>(this->op_parameter_);
   default_ = param->num_dims_;
-  std::vector<size_t> img_size;
+  ImageSize img_size;
   cl_float4 fill_value = {};
   fill_value.s[0] = fill_value.s[1] = fill_value.s[2] = fill_value.s[3] = default_;
   auto src_data = out_tensors_[0]->data_c();
   allocator_->GetImageSize(src_data, &img_size);
   auto src_origin = cl::array<cl::size_type, 3U>{0, 0, 0};
-  auto region = cl::array<cl::size_type, 3U>{img_size[0], img_size[1], 1};
+  auto region = cl::array<cl::size_type, 3U>{img_size.width, img_size.height, 1};
   cl::Image2D *out_image = reinterpret_cast<cl::Image2D *>(allocator_->GetImage(src_data));
   ocl_runtime_->GetDefaultCommandQueue()->enqueueFillImage(*out_image, fill_value, src_origin, region);
   return RET_OK;

@@ -19,6 +19,7 @@
 
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::ImageSize;
 
 namespace mindspore::kernel {
 
@@ -60,7 +61,7 @@ int OpenCLKernel::AlignGlobalLocal(const std::vector<size_t> &global, const std:
   return RET_OK;
 }
 
-int OpenCLKernel::GetImageSize(size_t idx, std::vector<size_t> *img_size) {
+int OpenCLKernel::GetImageSize(size_t idx, lite::opencl::ImageSize *img_size) {
   MS_ASSERT(img_size);
   if (idx >= out_tensors_.size()) {
     return RET_ERROR;
@@ -133,13 +134,13 @@ int OpenCLKernel::PreProcess() {
     auto *output = out_tensors_.at(i);
     MS_ASSERT(output);
     if (GetMemType() == lite::opencl::MemType::IMG) {
-      std::vector<size_t> img_size;
+      ImageSize img_size;
       ret = GetImageSize(i, &img_size);
       if (ret != RET_OK) {
         MS_LOG(ERROR) << "GetImageSize failed";
         return ret;
       }
-      auto data_ptr = allocator->Malloc(output->Size(), img_size);
+      auto data_ptr = allocator->Malloc(img_size);
       if (data_ptr == nullptr) {
         MS_LOG(ERROR) << "Malloc data failed";
         return RET_ERROR;

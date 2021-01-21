@@ -30,6 +30,7 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
+using mindspore::lite::opencl::ImageSize;
 using mindspore::lite::opencl::MemType;
 using mindspore::schema::ActivationType_NO_ACTIVATION;
 using mindspore::schema::ActivationType_RELU;
@@ -45,7 +46,7 @@ int ArithmeticOpenCLKernel::CheckSpecs() {
     return RET_ERROR;
   }
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
-  if (param->broadcasting_ && out_tensors_[0]->shape()[0] > 1) {
+  if (param->broadcasting_ && out_tensors_.front()->DimensionSize(0) > 1) {
     MS_LOG(ERROR) << "Broadcasting don't support  N > 1";
     return RET_ERROR;
   }
@@ -63,85 +64,29 @@ int ArithmeticOpenCLKernel::CheckSpecs() {
 
 void ArithmeticOpenCLKernel::SetGlobalLocal() {
   if (element_flag_) {
-    local_size_ = {};
-    auto out_shape = out_tensors_[0]->shape();
-    if (out_shape.size() == 2) {
-      size_t H = out_shape[0];
-      size_t W = UP_DIV(out_shape[1], C4NUM);
-      global_size_ = {W, H};
-    } else {
-      size_t H = out_shape[0] * out_shape[1];
-      size_t W = out_shape[2] * UP_DIV(out_shape[3], C4NUM);
-      global_size_ = {W, H};
-    }
+    global_size_ = {out_shape_.width, out_shape_.height};
   } else {
-    local_size_ = {};
-    auto out_shape = GetNHWCShape(out_tensors_[0]->shape());
-    global_size_ = {static_cast<size_t>(UP_DIV(out_shape[3], C4NUM)), static_cast<size_t>(out_shape[2]),
-                    static_cast<size_t>(out_shape[1] * out_shape[0])};
+    global_size_ = {out_shape_.Slice, out_shape_.W, out_shape_.H * out_shape_.N};
   }
-  AlignGlobalLocal(global_size_, local_size_);
+  AlignGlobalLocal(global_size_, {});
 }
 
 int ArithmeticOpenCLKernel::InitWeights() {
+  auto allocator = ocl_runtime_->GetAllocator();
   auto fp16_enable = ocl_runtime_->GetFp16Enable();
-  auto data_size = fp16_enable ? sizeof(float16_t) : sizeof(float);
-  for (auto in_tensor_ : in_tensors_) {
-    auto nhwc_shape = GetNHWCShape(in_tensor_->shape());
-    inputs_nhwc_shapes_.push_back(nhwc_shape);
-    if (!in_tensor_->IsConst()) {
-      inputs_weight_ptrs_.push_back(nullptr);
+  for (int i = 0; i < 2; ++i) {
+    const auto &in_tensor = in_tensors_.at(i);
+    GpuTensorInfo *in_shape = (i == 0) ? &in0_shape_ : &in1_shape_;
+    if (in_tensor->IsConst()) {
+      std::vector<char> weight(in_shape->Image2DSize, 0);
+      bool src_is_fp16 = in_tensor->data_type() == kNumberTypeFloat16;
+      PackNHWCToNHWC4(in_tensor->data_c(), weight.data(), src_is_fp16, fp16_enable, *in_shape);
+      size_t dtype = fp16_enable ? CL_HALF_FLOAT : CL_FLOAT;
+      ImageSize img_size{in_shape->width, in_shape->height, dtype};
+      auto weight_ptr_ = allocator->Malloc(img_size, weight.data());
+      weight_ptrs_.push_back(weight_ptr_);
     } else {
-      auto allocator = ocl_runtime_->GetAllocator();
-      std::vector<size_t> img_size = GetImage2dShapeFromNHWC(nhwc_shape, schema::Format_NHWC4);
-      int pack_weight_size = img_size[0] * img_size[1] * C4NUM;
-      int plane = nhwc_shape[1] * nhwc_shape[2];
-      int channel = nhwc_shape[3];
-      int batch = nhwc_shape[0];
-      img_size.push_back(fp16_enable ? CL_HALF_FLOAT : CL_FLOAT);
-      if (!fp16_enable) {
-        float *weight = new (std::nothrow) float[pack_weight_size];
-        if (weight == nullptr) {
-          MS_LOG(ERROR) << "Malloc buffer failed!";
-          return RET_ERROR;
-        }
-        memset(weight, 0x00, pack_weight_size * data_size);
-        if (in_tensor_->data_type() == kNumberTypeFloat32) {
-          std::function<float(float)> to_dtype = [](float x) -> float { return x; };
-          PackNHWCToNHWC4<float, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-        } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
-          std::function<float(float16_t)> to_dtype = [](float16_t x) -> float { return static_cast<float>(x); };
-          PackNHWCToNHWC4<float16_t, float>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-        }
-        if (batch * plane * channel == 1) {
-          // scalar
-          weight[3] = weight[2] = weight[1] = weight[0];
-        }
-        auto weight_ptr_ = allocator->Malloc(pack_weight_size, img_size, weight);
-        inputs_weight_ptrs_.push_back(weight_ptr_);
-        delete[] weight;
-      } else {
-        float16_t *weight = new (std::nothrow) float16_t[pack_weight_size];
-        if (weight == nullptr) {
-          MS_LOG(ERROR) << "Malloc buffer failed!";
-          return RET_ERROR;
-        }
-        memset(weight, 0x00, pack_weight_size * data_size);
-        if (in_tensor_->data_type() == kNumberTypeFloat32) {
-          std::function<float16_t(float)> to_dtype = [](float x) -> float16_t { return static_cast<float16_t>(x); };
-          PackNHWCToNHWC4<float, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-        } else if (in_tensor_->data_type() == kNumberTypeFloat16) {
-          std::function<float16_t(float16_t)> to_dtype = [](float16_t x) -> float16_t { return x; };
-          PackNHWCToNHWC4<float16_t, float16_t>(in_tensor_->data_c(), weight, batch, plane, channel, to_dtype);
-        }
-        if (batch * plane * channel == 1) {
-          // scalar
-          weight[3] = weight[2] = weight[1] = weight[0];
-        }
-        auto weight_ptr_ = allocator->Malloc(pack_weight_size, img_size, weight);
-        inputs_weight_ptrs_.push_back(weight_ptr_);
-        delete[] weight;
-      }
+      weight_ptrs_.push_back(nullptr);
     }
   }
   return RET_OK;
@@ -150,21 +95,21 @@ int ArithmeticOpenCLKernel::InitWeights() {
 void ArithmeticOpenCLKernel::SetConstArgs() {
   int arg_idx = 3;
   if (!element_flag_) {
-    cl_int4 input0_shape = {inputs_nhwc_shapes_[0][0], inputs_nhwc_shapes_[0][1], inputs_nhwc_shapes_[0][2],
-                            UP_DIV(inputs_nhwc_shapes_[0][3], C4NUM)};
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input0_shape);
-    cl_int4 input1_shape = {inputs_nhwc_shapes_[1][0], inputs_nhwc_shapes_[1][1], inputs_nhwc_shapes_[1][2],
-                            UP_DIV(inputs_nhwc_shapes_[1][3], C4NUM)};
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input1_shape);
-    auto out_shape = GetNHWCShape(out_tensors_[0]->shape());
-    cl_int4 output_shape{out_shape[0], out_shape[1], out_shape[2], UP_DIV(out_shape[3], C4NUM)};
-    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, output_shape);
+    cl_int4 in0_shape = {static_cast<int>(in0_shape_.N), static_cast<int>(in0_shape_.H), static_cast<int>(in0_shape_.W),
+                         static_cast<int>(in0_shape_.Slice)};
+    cl_int4 in1_shape = {static_cast<int>(in1_shape_.N), static_cast<int>(in1_shape_.H), static_cast<int>(in1_shape_.W),
+                         static_cast<int>(in1_shape_.Slice)};
+    cl_int4 out_shape = {static_cast<int>(out_shape_.N), static_cast<int>(out_shape_.H), static_cast<int>(out_shape_.W),
+                         static_cast<int>(out_shape_.Slice)};
     int broadcastC_flag = 0;  // do not need broadcast in C4
-    if (inputs_nhwc_shapes_[0][3] == 1 && inputs_nhwc_shapes_[1][3] != 1) {
+    if (in0_shape_.C == 1 && in1_shape_.C != 1) {
       broadcastC_flag = 1;  // BroadCast C4 in input0
-    } else if (inputs_nhwc_shapes_[0][3] != 1 && inputs_nhwc_shapes_[1][3] == 1) {
+    } else if (in0_shape_.C != 1 && in1_shape_.C == 1) {
       broadcastC_flag = 2;  // BroadCast C4 in input1
     }
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in0_shape);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in1_shape);
+    ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_shape);
     ocl_runtime_->SetKernelArg(kernel_, arg_idx++, broadcastC_flag);
   } else {
     cl_int2 output_shape{static_cast<int>(global_range_[0]), static_cast<int>(global_range_[1])};
@@ -175,10 +120,13 @@ void ArithmeticOpenCLKernel::SetConstArgs() {
 }
 
 int ArithmeticOpenCLKernel::Prepare() {
-  lite::STATUS error_code = RET_OK;
 #ifdef PROGRAM_WITH_IL
   kernel_ = ocl_runtime_->GetKernelFromBinary(kernel_name_);
 #else
+
+  in0_shape_ = GpuTensorInfo(in_tensors_[0]);
+  in1_shape_ = GpuTensorInfo(in_tensors_[1]);
+  out_shape_ = GpuTensorInfo(out_tensors_[0]);
 
   auto *param = reinterpret_cast<const ArithmeticParameter *>(op_parameter_);
   if (Type() == PrimitiveType_BiasAdd) {
@@ -197,7 +145,7 @@ int ArithmeticOpenCLKernel::Prepare() {
   std::string program_name = "Arithmetic";
   std::string source = arithmetic_source;
   ocl_runtime_->LoadSource(program_name, source);
-  error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name_);
+  int error_code = ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name_);
 #endif
   if (error_code != RET_OK) {
     return error_code;
@@ -212,11 +160,10 @@ int ArithmeticOpenCLKernel::Prepare() {
 
 int ArithmeticOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
-
+  auto input_0_ptr = weight_ptrs_[0] == nullptr ? in_tensors_[0]->data_c() : weight_ptrs_[0];
+  auto input_1_ptr = weight_ptrs_[1] == nullptr ? in_tensors_[1]->data_c() : weight_ptrs_[1];
   int arg_idx = 0;
-  auto input_0_ptr = inputs_weight_ptrs_[0] == nullptr ? in_tensors_[0]->data_c() : inputs_weight_ptrs_[0];
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_0_ptr);
-  auto input_1_ptr = inputs_weight_ptrs_[1] == nullptr ? in_tensors_[1]->data_c() : inputs_weight_ptrs_[1];
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, input_1_ptr);
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, out_tensors_[0]->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);

@@ -27,6 +27,8 @@
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_MatMul;
 
 namespace mindspore::kernel {
@@ -55,7 +57,7 @@ int MatMulOpenCLKernel::CheckSpecs() {
   transposeA = param->a_transpose_;
   if (transposeA) {
     MS_LOG(ERROR) << "matmul only support a_transpose_=false yet.";
-    return mindspore::lite::RET_ERROR;
+    return RET_ERROR;
   }
   transposeB = param->b_transpose_;
   act_weight_ = !in_tensors_[1]->IsConst();
@@ -63,7 +65,7 @@ int MatMulOpenCLKernel::CheckSpecs() {
   if (in_tensors_[0]->shape().size() != out_tensors_[0]->shape().size() || in_tensors_[0]->shape().size() < 2 ||
       in_tensors_[0]->shape().size() > 4) {
     MS_LOG(ERROR) << "matmul only support input shape size= 2, 3 or 4.";
-    return mindspore::lite::RET_ERROR;
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -100,7 +102,7 @@ int MatMulOpenCLKernel::Prepare() {
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 int MatMulOpenCLKernel::InitWeights() {
@@ -207,7 +209,7 @@ int MatMulOpenCLKernel::Run() {
     ocl_runtime_->SetKernelArg(kernel_, arg_count++, in_tensors_[1]->data_c());
   }
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
-  return mindspore::lite::RET_OK;
+  return RET_OK;
 }
 
 kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> &inputs,
@@ -244,7 +246,7 @@ kernel::LiteKernel *OpenCLMatMulKernelCreator(const std::vector<lite::Tensor *> 
     return kernel;
   }
   auto ret = kernel->CheckSpecs();
-  if (ret != mindspore::lite::RET_OK) {
+  if (ret != RET_OK) {
     MS_LOG(ERROR) << "Check " << opParameter->name_ << " specification failed!";
     delete kernel;
     return nullptr;

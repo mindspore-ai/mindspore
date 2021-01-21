@@ -31,14 +31,25 @@ namespace mindspore::lite::opencl {
 
 class OpenCLRuntime;
 enum class MemType : char { BUF, IMG };
+struct ImageSize {
+  size_t width = 0;
+  size_t height = 0;
+  size_t dtype = CL_FLOAT;
+  bool operator==(const struct ImageSize &other) const {
+    return width == other.width && height == other.height && dtype == other.dtype;
+  }
+};
 
 class OpenCLAllocator : public Allocator {
  public:
   explicit OpenCLAllocator(OpenCLRuntime *ocl_runtime);
   ~OpenCLAllocator() override;
   void SetContext(const AllocatorContext &ctx) override;
-  void *Malloc(size_t size) override;
-  void *Malloc(size_t size, const std::vector<size_t> &img_size, void *data = nullptr);
+  // malloc buffer
+  void *Malloc(size_t size) override { return _Malloc(MemType::BUF, nullptr, size); }
+  void *Malloc(size_t size, void *data) { return _Malloc(MemType::BUF, data, size); }
+  // malloc image
+  void *Malloc(const ImageSize &img_size, void *data = nullptr) { return _Malloc(MemType::IMG, data, 0, img_size); }
   void Free(void *ptr) override;
   size_t total_size() override;
 
@@ -48,7 +59,7 @@ class OpenCLAllocator : public Allocator {
   void *MapBuffer(void *host_ptr, int flags, void *command_queue = nullptr, bool sync = true);
   int UnmapBuffer(void *host_ptr, void *command_queue = nullptr);
   MemType GetMemType(void *host_ptr);
-  int GetImageSize(void *host_ptr, std::vector<size_t> *img_size);
+  int GetImageSize(void *host_ptr, ImageSize *img_size);
   void *Prepare(void *ptr) override {
     if (ptr != nullptr) {
       ptr = MapBuffer(ptr, CL_MAP_READ | CL_MAP_WRITE, nullptr, true);
@@ -59,9 +70,10 @@ class OpenCLAllocator : public Allocator {
  private:
   void Lock();
   void UnLock();
-  void *MinimumFit(size_t size, const std::vector<size_t> &img_size);
+  void *MinimumFit(MemType mem_type, size_t size, const ImageSize &img_size);
+  void *_Malloc(MemType mem_type, void *data, size_t size = 0, const ImageSize &img_size = ImageSize());
   void *CreateBuffer(size_t size, void *data, size_t flags, cl::Buffer **buffer);
-  void *CreateImage2D(size_t size, const std::vector<size_t> &img_size, void *data, size_t flags, bool is_map,
+  void *CreateImage2D(size_t size, const ImageSize &img_size, void *data, size_t flags, bool is_map,
                       cl::Buffer **buffer, cl::Image2D **image);
   template <typename T>
   void ClearMemList(T *list);
@@ -70,12 +82,13 @@ class OpenCLAllocator : public Allocator {
   OpenCLRuntime *ocl_runtime_{nullptr};
   std::mutex lock;
   struct MemBuf {
-    size_t size_;
-    void *device_ptr_;
-    void *host_ptr_;
-    void *image_ptr_;
-    std::vector<size_t> img_size;
-    bool map_flags{false};
+    size_t size_{0};
+    void *device_ptr_{nullptr};
+    void *host_ptr_{nullptr};
+    void *image_ptr_{nullptr};
+    MemType mem_type_{MemType::BUF};
+    ImageSize img_size_;
+    bool map_flags_{false};
   };
 
   // <membuf->buf, membuf>
