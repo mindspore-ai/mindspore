@@ -100,6 +100,7 @@ set(LITE_SRC
         ${SRC_DIR}/lite_model.cc
         ${SRC_DIR}/errorcode.cc
         ${SRC_DIR}/dequant.cc
+        ${SRC_DIR}/huffman_decode.cc
         )
 if(SUPPORT_TRAIN)
     set(LITE_SRC

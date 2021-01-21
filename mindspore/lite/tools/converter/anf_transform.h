@@ -58,6 +58,8 @@ class AnfTransform {
   int RunTFAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
 
   int DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config, const FuncGraphPtr &new_graph);
+
+  int DoHuffmanEncode(const converter::Flags *config, const FuncGraphPtr &new_graph);
 };
 }  // namespace lite
 }  // namespace mindspore

@@ -57,6 +57,7 @@ table Tensor {
     quantParams: [QuantParam];
     quantClusters: [float];
     name: string;
+    enableHuffmanCode: bool = false;
 }
 
 union PrimitiveType {
