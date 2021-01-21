@@ -140,9 +140,19 @@ void *OpenCLAllocator::_Malloc(MemType mem_type, void *data, size_t size, const 
   auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
   MS_ASSERT(img_size.size() == 0 || img_size.size() == 3);
   if (mem_type == MemType::IMG) {
-    size_t dtype_size = img_size.dtype == CL_FLOAT ? sizeof(cl_float4) : sizeof(cl_half4);
+    size_t dtype_size = 0;
+    if (img_size.dtype == CL_FLOAT) {
+      dtype_size = sizeof(cl_float);
+    } else if (img_size.dtype == CL_HALF_FLOAT) {
+      dtype_size = sizeof(cl_half);
+    } else if (img_size.dtype == CL_UNSIGNED_INT8) {
+      dtype_size = sizeof(cl_uchar);
+    } else {
+      MS_LOG(ERROR) << "Unsupported dtype " << img_size.dtype;
+      return nullptr;
+    }
     uint32_t image_alignment = ocl_runtime_->GetImagePitchAlignment();
-    size = UP_ROUND(img_size.width, image_alignment) * img_size.height * dtype_size;
+    size = UP_ROUND(img_size.width, image_alignment) * img_size.height * C4NUM * dtype_size;
   }
   if (size > ocl_runtime_->GetMaxAllocSize()) {
     MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;
