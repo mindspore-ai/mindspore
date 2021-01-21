@@ -349,7 +349,7 @@ int ResizeInt8CPUKernel::RunImpl(int task_id) {
       }
       break;
     }
-    case schema::ResizeMethod_UNKNOW:
+    case schema::ResizeMethod_UNKNOWN:
     default: {
       MS_LOG(ERROR) << "Resize unknown method " << method_;
       ret = RET_ERROR;

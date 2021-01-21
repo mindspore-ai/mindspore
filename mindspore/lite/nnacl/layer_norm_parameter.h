@@ -24,10 +24,15 @@ typedef struct LayerNormParameter {
   // Primitive parameter
   OpParameter op_parameter_;
   float epsilon_;
-  enum ElementwiseMode elementwise_mode_;
+  int begin_norm_axis_;
+  int begin_params_axis_;
   // shape correlative
-  int normalized_shape_[8];
+  int norm_inner_size_;
+  int norm_outer_size_;
+  int params_inner_size_;
+  int params_outer_size_;
   int normalized_dims_;
+  int normalized_shape_[8];
   // other parameter
   int thread_count_;
   int thread_outsize_;

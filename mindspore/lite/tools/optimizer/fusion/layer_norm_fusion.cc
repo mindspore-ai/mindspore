@@ -114,9 +114,7 @@ CNodePtr LayerNormFusion::CreateLayerNormNode(const FuncGraphPtr &func_graph, co
   MS_EXCEPTION_IF_NULL(func_graph);
   auto layer_norm_primitive = std::make_unique<schema::PrimitiveT>();
   std::unique_ptr<schema::LayerNormT> attr = std::make_unique<schema::LayerNormT>();
-  attr->normalizedShape = shape;
   attr->epsilon = epsilon;
-  attr->elementwiseAffine = true;
   layer_norm_primitive->value.type = schema::PrimitiveType_LayerNorm;
   layer_norm_primitive->value.value = attr.release();
   auto layer_norm_cvalue = lite::PrimitiveC::Create(layer_norm_primitive.release());

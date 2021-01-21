@@ -57,7 +57,7 @@ STATUS TFResizeParser::Parse(const tensorflow::NodeDef &tf_op,
   } else if (tf_op.op() == "ResizeNearestNeighbor") {
     attr->method = schema::ResizeMethod_NEAREST;
   } else {
-    attr->method = schema::ResizeMethod_UNKNOW;
+    attr->method = schema::ResizeMethod_UNKNOWN;
   }
   auto size_node = tf_node_map.at(tf_op.input(1));
   if (size_node == nullptr) {

@@ -18,7 +18,6 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "src/ops/populate/layer_norm_populate.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -35,29 +34,37 @@ int LayerNormCPUKernel::Init() {
 }
 
 int LayerNormCPUKernel::ReSize() {
-  if (op_parameter_ != nullptr) {
-    free(op_parameter_);
-    op_parameter_ = nullptr;
-  }
-  op_parameter_ = PopulateLayerNormParameter(primitive_);
-  op_parameter_->thread_num_ = context_->thread_num_;
-  param_ = reinterpret_cast<LayerNormParameter *>(op_parameter_);
+  param_->begin_norm_axis_ = -1;
+  param_->begin_params_axis_ = -1;
+
   auto shape = in_tensors_.front()->shape();
-  outer_size_ = 1;
-  inner_size_ = 1;
-  for (size_t i = 0; i < shape.size(); ++i) {
-    if (i + param_->normalized_dims_ < shape.size()) {
-      outer_size_ *= shape.at(i);
-    } else {
-      inner_size_ *= shape.at(i);
-    }
+  param_->begin_norm_axis_ =
+    param_->begin_norm_axis_ > 0 ? param_->begin_norm_axis_ : param_->begin_norm_axis_ + shape.size();
+  param_->begin_params_axis_ =
+    param_->begin_params_axis_ > 0 ? param_->begin_params_axis_ : param_->begin_params_axis_ + shape.size();
+
+  param_->norm_outer_size_ = 1;
+  for (int i = 0; i < param_->begin_norm_axis_; ++i) {
+    param_->norm_outer_size_ *= shape.at(i);
   }
+  param_->norm_inner_size_ = 1;
+  for (size_t i = param_->begin_norm_axis_; i < shape.size(); ++i) {
+    param_->norm_inner_size_ *= shape.at(i);
+  }
+  param_->params_outer_size_ = 1;
+  for (int i = 0; i < param_->begin_params_axis_; ++i) {
+    param_->params_outer_size_ *= shape.at(i);
+  }
+  param_->params_inner_size_ = 1;
+  for (size_t i = param_->begin_params_axis_; i < shape.size(); ++i) {
+    param_->params_inner_size_ *= shape.at(i);
+  }
+  param_->op_parameter_.thread_num_ = MSMIN(param_->norm_outer_size_, context_->thread_num_);
   return RET_OK;
 }
 
 int LayerNormCPUKernel::DoLayerNorm(int thread_id) {
-  int ret = LayerNorm(outer_size_, inner_size_, src_data_, gamma_data_, beta_data_, param_->elementwise_mode_,
-                      param_->epsilon_, dst_data_, thread_id, op_parameter_->thread_num_);
+  int ret = LayerNorm(src_data_, gamma_data_, beta_data_, dst_data_, param_, thread_id);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "DoLayerNorm error error_code[" << ret << "]";
     return ret;
@@ -77,10 +84,8 @@ int LayerNormRun(void *cdata, int task_id) {
 
 int LayerNormCPUKernel::Run() {
   src_data_ = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  if (param_->elementwise_mode_ != 0) {
-    gamma_data_ = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
-    beta_data_ = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
-  }
+  gamma_data_ = reinterpret_cast<float *>(in_tensors_.at(1)->MutableData());
+  beta_data_ = reinterpret_cast<float *>(in_tensors_.at(2)->MutableData());
   dst_data_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
   auto ret = ParallelLaunch(this->context_->thread_pool_, LayerNormRun, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
