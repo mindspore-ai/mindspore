@@ -5,15 +5,14 @@ add_subdirectory(gvar)
 message("************ build core ***************")
 
 
-
 file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "abstract/*.cc"
         "base/*.cc"
-        "c_ops/*.cc"
+        "ops/*.cc"
         "ir/*.cc"
         "utils/*.cc"
         "load_mindir/*.cc"
-)
+        )
 if (CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-attributes -DHAVE_SNPRINTF")
     add_compile_definitions(BUILDING_DLL)

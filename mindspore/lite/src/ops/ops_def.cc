@@ -15,7 +15,7 @@
  */
 #include "src/ops/schema_def.h"
 #ifdef PRIMITIVE_WRITEABLE
-#include "c_ops/conv2d.h"
+#include "ops/conv2d.h"
 #endif
 
 OP_SCHEMA_DEF(Conv2D)

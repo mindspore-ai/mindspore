@@ -18,7 +18,7 @@
 #include <string>
 #include "src/ops/schema_register.h"
 #ifdef PRIMITIVE_WRITEABLE
-#include "c_ops/conv2d.h"
+#include "ops/conv2d.h"
 #include "schema/inner/model_generated.h"
 #endif
 
@@ -30,9 +30,9 @@
     op_def.append(#OP);            \
     op_def.append(" {\n");
 #elif PRIMITIVE_WRITEABLE
-#define OP_SCHEMA_DEF(OP)                                                   \
-  namespace mindspore::lite::ops {                                          \
-  mindspore::schema::OP##T *PrimitiveOp2SchemaOp(const mindspore::OP *op) { \
+#define OP_SCHEMA_DEF(OP)                                                        \
+  namespace mindspore::lite::ops {                                               \
+  mindspore::schema::OP##T *PrimitiveOp2SchemaOp(const mindspore::ops::OP *op) { \
     mindspore::schema::OP##T *result_op = new (std::nothrow) mindspore::schema::OP##T();
 #else
 #define OP_SCHEMA_DEF(OP)

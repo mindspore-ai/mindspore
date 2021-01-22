@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "c_ops/primitive_c.h"
+#include "ops/primitive_c.h"
 #include "ir/manager.h"
 #include "abstract/utils.h"
 #include "backend/kernel_compiler/common_utils.h"
@@ -148,7 +148,7 @@ tensor::TensorPtr CreateCNodeOutputTensor(const session::KernelWithIndex &node_o
     }
   }
   tensor->set_padding_type(AnfAlgo::GetOutputReshapeType(node, output_index));
-  // if in paynative mode,data only copyed to host when user want to print data
+  // if in paynative mode,data only copied to host when user want to print data
   auto ms_context = MsContext::GetInstance();
   MS_EXCEPTION_IF_NULL(ms_context);
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) != kPynativeMode &&
@@ -1313,8 +1313,8 @@ void SessionBasic::RunInfer(NotNull<FuncGraphPtr> func_graph, const std::vector<
         input_abstracts.emplace_back(abstract);
       }
       auto prim = AnfAlgo::GetCNodePrimitive(node);
-      if (prim->isa<PrimitiveC>()) {
-        auto prim_c = prim->cast<std::shared_ptr<PrimitiveC>>();
+      if (prim->isa<ops::PrimitiveC>()) {
+        auto prim_c = prim->cast<std::shared_ptr<ops::PrimitiveC>>();
         MS_EXCEPTION_IF_NULL(prim_c);
         auto abstract = prim_c->Infer(input_abstracts);
         node->set_abstract(abstract);
@@ -1835,7 +1835,7 @@ void SessionBasic::AssignParamKey(const KernelGraphPtr &kernel_graph) {
   MS_EXCEPTION_IF_NULL(kernel_graph);
   // PS embeddingLookup cache check.
   if (ps::PsDataPrefetch::GetInstance().cache_enable()) {
-    MS_LOG(EXCEPTION) << "The other parameter cann't set ps mode when the embeddingLookup cache is enabled in "
+    MS_LOG(EXCEPTION) << "The other parameter can't set ps mode when the embeddingLookup cache is enabled in "
                          "parameter server training mode.";
   }
   std::vector<AnfNodePtr> node_list = TopoSort(kernel_graph->get_return());
