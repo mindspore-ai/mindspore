@@ -283,6 +283,9 @@ function Run_Converter() {
         model_name=${line%%;*}
         model_type=${model_name##*.}
         case $model_type in
+          pb)
+            model_fmk="TF"
+            ;;
           tflite)
             model_fmk="TFLITE"
             ;;
