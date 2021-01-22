@@ -2152,53 +2152,22 @@ void GradExecutor::MakeNewTopGraph(const string &cell_id, const py::args &args) 
     }
   }
 
-  CleanPreMemoryInValueNode();
   std::string input_args_id;
   for (size_t i = 0; i < args.size(); ++i) {
     input_args_id = input_args_id + GetId(args[i]) + "_";
   }
-  auto pre_dynamic_top_cell = GetTopCell(cell_id);
-  bool is_real_dynamic = false;
-  // Dynamic top cell is not nullptr
-  if (pre_dynamic_top_cell != nullptr) {
-    has_dynamic_cell_ = true;
-    // Clear top cell
-    if (pre_dynamic_top_cell->is_real_dynamic()) {
-      ClearCellRes(cell_id);
-      is_real_dynamic = true;
-      pre_dynamic_top_cell = nullptr;
-    } else {
-      pre_dynamic_top_cell->set_forward_already_run(true);
-      pre_dynamic_top_cell->set_input_args_id(input_args_id);
-    }
-  } else {
-    has_dynamic_cell_ = false;
-  }
-  op_index_map_.clear();
-  in_grad_process_ = true;
 
+  in_grad_process_ = true;
+  curr_g_ = std::make_shared<FuncGraph>();
+  PushGraphStack();
   // Init resource for new top cell
   auto df_builder = std::make_shared<FuncGraph>();
-  auto graph_info = std::make_shared<GraphInfo>(cell_id);
   auto resource = std::make_shared<pipeline::Resource>();
-  auto new_top_cell = std::make_shared<TopCellInfo>(true, resource, df_builder, cell_id);
-  new_top_cell->graph_info_map()[df_builder] = graph_info;
-  new_top_cell->set_forward_already_run(true);
-  new_top_cell->set_input_args_id(input_args_id);
-  if (pre_dynamic_top_cell != nullptr) {
-    MS_LOG(DEBUG) << "Get dynamic top cell";
-    if (pre_dynamic_top_cell->is_grad()) {
-      new_top_cell->set_is_grad(true);
-    }
-    new_top_cell->set_cell_graph_list(pre_dynamic_top_cell->cell_graph_list());
-    new_top_cell->set_graph_info_map(pre_dynamic_top_cell->graph_info_map());
-  }
-  if (is_real_dynamic) {
-    MS_LOG(DEBUG) << "Get real dynamic";
-    new_top_cell->set_is_real_dynamic(true);
-  }
-  set_top_cell(new_top_cell);
-  top_cell_list_.emplace_back(new_top_cell);
+  auto top_cell = std::make_shared<TopCellInfo>(is_topest, resource, df_builder, cell_id);
+  top_cell->set_forward_already_run(true);
+  top_cell->set_input_args_id(input_args_id);
+  top_cell_list_.emplace_back(top_cell);
+  set_top_cell(top_cell);
   MS_LOG(DEBUG) << "New top graph, df_builder ptr " << df_builder.get() << " resource ptr " << resource.get();
 }
 
@@ -2309,7 +2278,7 @@ void GradExecutor::EndGraphByOutId(const py::object &cell, const std::string &ce
   FuncGraphPtr newfg = nullptr;
   // Cell no Change
   if (CheckDynamicCell(cell_id) && !CheckCellChanged(cell_id)) {
-    MS_LOG(DEBUG) << "Cell is fake dynamic, no need make ad grad";
+    MS_LOG(DEBUG) << "Cell is not dynamic, No need make ad grad";
     top_cell()->set_need_grad(false);
     ClearCnodeRes(curr_g_->output());
   } else {
@@ -2668,6 +2637,9 @@ void GradExecutor::GradNetInner(py::object *ret, const GradOperationPtr &grad, c
 }
 
 void GradExecutor::ClearDynamicTopRes(const std::string &cell_id) {
+  if (IsTopestGraph(cell_id)) {
+    op_index_map_.clear();
+  }
   // Delete unused top cell resource
   if (!CheckDynamicCell(cell_id)) {
     return;
