@@ -32,6 +32,7 @@
 #include "runtime/device/ascend/ascend_kernel_runtime.h"
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
+#include "backend/optimizer/ascend/mindir/space_batch_nd_attr_update.h"
 #include "backend/optimizer/ascend/mindir/dropout_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/maxpool_to_maxpool_with_argmax.h"
 #include "backend/optimizer/ascend/mindir/maxpool_with_argmax_unify_mindir.h"
@@ -435,6 +436,8 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
+  unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());
@@ -638,7 +641,7 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
     // generate and load task info to device if it is sink mode
     Load(graph);
   }
-  // sync the inital const tensor to device
+  // sync the initial const tensor to device
   SyncInitialTenosrToDevice();
   DumpAllGraphs({graph});
   MS_LOG(INFO) << "End";
