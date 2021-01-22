@@ -129,6 +129,8 @@ inline const PrimitivePtr kPrimMapUniform = std::make_shared<Primitive>("MapUnif
 inline const PrimitivePtr kPrimSplit = std::make_shared<Primitive>("Split");
 inline const PrimitivePtr kPrimSequenceMask = std::make_shared<Primitive>("SequenceMask");
 inline const PrimitivePtr kPrimRange = std::make_shared<Primitive>("Range");
+inline const PrimitivePtr kPrimSpaceToBatchND = std::make_shared<Primitive>("SpaceToBatchND");
+inline const PrimitivePtr kPrimBatchToSpaceND = std::make_shared<Primitive>("BatchToSpaceND");
 
 // NN
 inline const PrimitivePtr kPrimFlatten = std::make_shared<Primitive>("Flatten");

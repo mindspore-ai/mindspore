@@ -33,6 +33,7 @@
 #include "runtime/device/ascend/profiling/profiling_manager.h"
 #include "backend/optimizer/ascend/ascend_backend_optimization.h"
 #include "backend/optimizer/common/common_backend_optimization.h"
+#include "backend/optimizer/ascend/mindir/space_batch_nd_attr_update.h"
 #include "backend/optimizer/ascend/mindir/dropout_unify_mindir.h"
 #include "backend/optimizer/ascend/mindir/maxpool_to_maxpool_with_argmax.h"
 #include "backend/optimizer/ascend/mindir/maxpool_with_argmax_unify_mindir.h"
@@ -209,6 +210,8 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   }
   auto optimizer = std::make_shared<opt::GraphOptimizer>();
   auto unify_mindir_pm = std::make_shared<opt::PassManager>("unify_mindir_pm");
+  unify_mindir_pm->AddPass(std::make_shared<opt::SpaceToBatchNDAttrUpdate>());
+  unify_mindir_pm->AddPass(std::make_shared<opt::BatchToSpaceNDAttrUpdate>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPool2MaxPoolWithArgmax>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolWithArgmaxUnifyMindIR>());
   unify_mindir_pm->AddPass(std::make_shared<opt::MaxPoolGradWithArgmaxUnifyMindIR>());

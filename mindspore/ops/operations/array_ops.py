@@ -992,7 +992,7 @@ class Split(PrimitiveWithCheck):
             if output_valid_check != 0:
                 raise ValueError(f"x_shape[{self.axis}] {x_shape[self.axis]} must be divide exactly by"
                                  f" output_num {self.output_num}")
-        size_splits = [x_shape[self.axis] / self.output_num] * self.output_num
+        size_splits = [x_shape[self.axis] // self.output_num] * self.output_num
         self.add_prim_attr('size_splits', size_splits)
 
 
@@ -3893,6 +3893,8 @@ class SpaceToBatch(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, block_size, paddings):
         """Initialize SpaceToBatch"""
+        logger.warning("WARN_DEPRECATED: The usage of SpaceToBatch is deprecated."
+                       " Please use SpaceToBatchND.")
         validator.check_value_type('block_size', block_size, [int], self.name)
         validator.check('block_size', block_size, '', 2, Rel.GE, self.name)
         self.block_size = block_size
@@ -3969,6 +3971,8 @@ class BatchToSpace(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, block_size, crops):
         """Initialize BatchToSpace"""
+        logger.warning("WARN_DEPRECATED: The usage of BatchToSpace is deprecated."
+                       " Please use BatchToSpaceND.")
         validator.check_value_type('block_size', block_size, [int], self.name)
         validator.check('block_size', block_size, '', 2, Rel.GE, self.name)
         self.block_size = block_size
@@ -4009,8 +4013,10 @@ class SpaceToBatchND(PrimitiveWithInfer):
     the spatial dimensions of the input are zero padded according to paddings if necessary.
 
     Args:
-        block_shape (Union[list(int), tuple(int)]): The block shape of dividing block with all value greater than 1.
-            The length of `block_shape` is M corresponding to the number of spatial dimensions. M must be 2.
+        block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
+            than 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding to the
+            number of spatial dimensions. If `block_shape` is a int, the block size of M dimendions are the same,
+            equal to `block_shape`. M must be 2.
         paddings (Union[tuple, list]): The padding values for H and W dimension, containing 2 subtraction list.
             Each contains 2 integer value. All values must be greater than 0.
             `paddings[i]` specifies the paddings for the spatial dimension i,
@@ -4051,8 +4057,9 @@ class SpaceToBatchND(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, block_shape, paddings):
         """Initialize SpaceToBatchND"""
-        self.ori_block_shape = block_shape
-        self.ori_paddings = paddings
+        if isinstance(block_shape, int):
+            block_shape = (block_shape,) * 2
+        self.add_prim_attr("block_shape", block_shape)
         validator.check_value_type('block_shape type', block_shape, [list, tuple], self.name)
         validator.check('block_shape shape', len(np.array(block_shape).shape), '', 1, Rel.EQ, self.name)
         block_rank = len(block_shape)
@@ -4069,10 +4076,6 @@ class SpaceToBatchND(PrimitiveWithInfer):
             validator.check_non_negative_int(elem, 'paddings element', self.name)
             validator.check_value_type('paddings element', elem, [int], self.name)
         self.paddings = paddings
-        block_shape_append = [1] + list(self.block_shape)
-        self.add_prim_attr("block_shape", block_shape_append)
-        paddings_append = [[0, 0]] + list(self.paddings)
-        self.add_prim_attr("paddings", paddings_append)
 
     def infer_dtype(self, x_dtype):
         validator.check_tensor_dtype_valid('input_x', x_dtype, mstype.number_type, self.name)
@@ -4085,8 +4088,6 @@ class SpaceToBatchND(PrimitiveWithInfer):
 
         block_shape_prod = 1
         offset = 2
-        if x_rank <= 4:
-            offset = 1
         for i in range(len(self.block_shape)):
             padded = out_shape[i + offset] + self.paddings[i][0] + \
                      self.paddings[i][1]
@@ -4108,8 +4109,10 @@ class BatchToSpaceND(PrimitiveWithInfer):
     dimension and block_shape with given amount to crop from dimension, respectively.
 
     Args:
-        block_shape (Union[list(int), tuple(int)]): The block shape of dividing block with all value >= 1.
-            The length of block_shape is M corresponding to the number of spatial dimensions. M must be 2.
+        block_shape (Union[list(int), tuple(int), int]): The block shape of dividing block with all value greater
+            than 1. If `block_shape` is a tuple or list, the length of `block_shape` is M corresponding to the
+            number of spatial dimensions. If `block_shape` is a int, the block size of M dimendions are the same,
+            equal to `block_shape`. M must be 2.
         crops (Union[list(int), tuple(int)]): The crop value for H and W dimension, containing 2 subtraction list,
             each containing 2 int value.
             All values must be >= 0. crops[i] specifies the crop values for spatial dimension i, which corresponds to
@@ -4149,8 +4152,9 @@ class BatchToSpaceND(PrimitiveWithInfer):
     @prim_attr_register
     def __init__(self, block_shape, crops):
         """Initialize BatchToSpaceND"""
-        self.ori_block_shape = block_shape
-        self.ori_crops = crops
+        if isinstance(block_shape, int):
+            block_shape = (block_shape,) * 2
+        self.add_prim_attr("block_shape", block_shape)
         validator.check_value_type('block_shape type', block_shape, [list, tuple], self.name)
         validator.check('block_shape shape', len(np.array(block_shape).shape), '', 1, Rel.EQ, self.name)
         block_rank = len(block_shape)
@@ -4167,10 +4171,6 @@ class BatchToSpaceND(PrimitiveWithInfer):
             validator.check_non_negative_int(elem, 'crops element', self.name)
             validator.check_value_type('crops element', elem, [int], self.name)
         self.crops = crops
-        block_shape_append = [1] + list(self.block_shape)
-        self.add_prim_attr("block_shape", block_shape_append)
-        crops_append = [[0, 0]] + list(self.crops)
-        self.add_prim_attr("crops", crops_append)
 
     def infer_dtype(self, x_dtype):
         validator.check_tensor_dtype_valid('input_x', x_dtype, mstype.number_type, self.name)
@@ -4183,8 +4183,6 @@ class BatchToSpaceND(PrimitiveWithInfer):
 
         block_shape_prod = 1
         offset = 2
-        if x_rank <= 4:
-            offset = 1
         for i in range(len(self.block_shape)):
             block_shape_prod = block_shape_prod * self.block_shape[i]
             x_block_prod = out_shape[i + offset] * self.block_shape[i]
