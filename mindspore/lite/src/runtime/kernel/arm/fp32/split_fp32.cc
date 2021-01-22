@@ -75,42 +75,16 @@ int SplitRun(void *cdata, int task_id) {
 
 int SplitCPUKernel::Run() {
   auto in_tensor = in_tensors_.front();
-  input_ptr_ = reinterpret_cast<float *>(in_tensor->MutableData());
+  input_ptr_ = reinterpret_cast<float *>(in_tensor->data_c());
   for (int i = 0; i < param->num_split_; i++) {
-    output_ptr_.at(i) = reinterpret_cast<float *>(out_tensors_.at(i)->MutableData());
+    output_ptr_.at(i) = reinterpret_cast<float *>(out_tensors_.at(i)->data_c());
   }
   auto ret = ParallelLaunch(this->context_->thread_pool_, SplitRun, this, thread_n_num_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Scale error error_code[" << ret << "]";
     return RET_ERROR;
   }
-
   return RET_OK;
-}
-
-kernel::LiteKernel *CpuSplitInt32KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const InnerContext *ctx, const kernel::KernelKey &desc,
-                                               const mindspore::lite::PrimitiveC *primitive) {
-  if (opParameter == nullptr) {
-    MS_LOG(ERROR) << "Input opParameter is nullptr!";
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == schema::PrimitiveType_Split);
-  auto *kernel = new (std::nothrow) SplitCPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "new SplitCPUKernel fail!";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    delete kernel;
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    return nullptr;
-  }
-  return kernel;
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Split, LiteKernelCreator<SplitCPUKernel>)

@@ -64,6 +64,7 @@
 
 typedef enum LiteDataType {
   kDataTypeFloat,
+  kDataTypeFloat16,
   kDataTypeInt,
   kDataTypeInt8,
   KDataTypeBool,

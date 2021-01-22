@@ -26,6 +26,7 @@ OpParameter *PopulateExpandDimsParameter(const mindspore::lite::PrimitiveC *prim
     MS_LOG(ERROR) << "malloc ExpandDimsParameter failed.";
     return nullptr;
   }
+  expand_dims_param->type_ = primitive->Type();
   memset(expand_dims_param, 0, sizeof(OpParameter));
   return reinterpret_cast<OpParameter *>(expand_dims_param);
 }

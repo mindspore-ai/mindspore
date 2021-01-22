@@ -82,8 +82,8 @@ int ExpandDimsRun(void *cdata, int task_id) {
 }
 
 int ExpandDimsCPUKernel::Run() {
-  in_ptr_ = in_tensors_.at(0)->MutableData();
-  out_ptr_ = out_tensors_.at(0)->MutableData();
+  in_ptr_ = in_tensors_.at(0)->data_c();
+  out_ptr_ = out_tensors_.at(0)->data_c();
   auto ret = ParallelLaunch(this->context_->thread_pool_, ExpandDimsRun, this, thread_sz_count_);
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "ExpandDimsRun error error_code[" << ret << "]";

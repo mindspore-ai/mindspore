@@ -39,6 +39,9 @@ typedef struct StridedSliceParameter {
 extern "C" {
 #endif
 int DoStridedSlice(const void *inputs, void *output, StridedSliceParameter *param);
+
+void FastStride(const uint8_t *input, uint8_t *output, int split_len, int stride, size_t outer, size_t inner_size,
+                size_t in_offset);
 #ifdef __cplusplus
 }
 #endif

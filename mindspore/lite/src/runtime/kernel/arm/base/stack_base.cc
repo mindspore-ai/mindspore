@@ -27,7 +27,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Stack;
 
 namespace mindspore::kernel {
-static int GetCopyNum(const std::vector<int> &in_shape, int axis, int n_dim) {
+static inline int GetCopyNum(const std::vector<int> &in_shape, int axis, int n_dim) {
   int copy_num = 1;
   if (axis > 0) {
     for (int j = n_dim - 1; j > axis - 1; j--) {
@@ -41,12 +41,12 @@ static int GetCopyNum(const std::vector<int> &in_shape, int axis, int n_dim) {
   return copy_num;
 }
 
-static size_t GetOutterSize(const std::vector<int> &in_shape, int axis) {
-  size_t outter_size = 1;
+static inline size_t GetOuterSize(const std::vector<int> &in_shape, int axis) {
+  size_t outer_size = 1;
   for (int i = 0; i < axis; ++i) {
-    outter_size *= in_shape[i];
+    outer_size *= in_shape[i];
   }
-  return outter_size;
+  return outer_size;
 }
 
 int StackBaseCPUKernel::ReSize() {
@@ -59,14 +59,13 @@ int StackBaseCPUKernel::ReSize() {
   } else {
     MS_ASSERT(input_nums > 1);
     copy_size_ = GetCopyNum(input0_shape, axis_, input0_shape.size()) * data_type_size_;
-    outter_size_ = GetOutterSize(input0_shape, axis_);
+    outer_size_ = GetOuterSize(input0_shape, axis_);
   }
   return RET_OK;
 }
 
 int StackBaseCPUKernel::Init() {
-  auto input0_tensor = in_tensors_.front();
-  data_type_size_ = input0_tensor->Size() / input0_tensor->ElementsNum();
+  data_type_size_ = sizeof(float);
   if (!InferShapeDone()) {
     return RET_OK;
   }
@@ -74,13 +73,21 @@ int StackBaseCPUKernel::Init() {
 }
 
 int StackBaseCPUKernel::Run() {
+  // malloc temporary memory to store all the inputs
   size_t inputs_num = in_tensors_.size();
   char **all_inputs = static_cast<char **>(context_->allocator->Malloc(inputs_num * sizeof(char *)));
+  if (all_inputs == nullptr) {
+    MS_LOG(ERROR) << "malloc all_inputs failed.";
+    return RET_ERROR;
+  }
   for (size_t j = 0; j < inputs_num; ++j) {
     all_inputs[j] = reinterpret_cast<char *>(in_tensors_.at(j)->data_c());
   }
+  // run stack
   auto output_data = reinterpret_cast<char *>(out_tensors_.at(0)->data_c());
-  Stack(all_inputs, output_data, in_tensors_.size(), copy_size_, outter_size_);
+  Stack(all_inputs, output_data, in_tensors_.size(), copy_size_, outer_size_);
+
+  // free temporary variable all_inputs
   context_->allocator->Free(all_inputs);
   return RET_OK;
 }
