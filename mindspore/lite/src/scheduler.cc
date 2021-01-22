@@ -188,7 +188,7 @@ kernel::LiteKernel *Scheduler::FindBackendKernel(const std::vector<Tensor *> &in
   if (primitive->quant_type() == schema::QuantType_WeightQuant) {
     data_type = kNumberTypeFloat32;
   }
-  if (!IsContain(packed_op, (schema::PrimitiveType)primitive->Type())) {
+  if (!IsPackedOp((schema::PrimitiveType)primitive->Type())) {
     need_restore = false;
   }
   kernel::KernelKey desc{kCPU, data_type, static_cast<schema::PrimitiveType>(primitive->Type())};

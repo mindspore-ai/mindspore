@@ -49,7 +49,7 @@ static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor
   return std::none_of(post_node_idxes.begin(), post_node_idxes.end(), [&](const size_t &post_node_idx) {
     auto node = model->all_nodes_[post_node_idx];
     MS_ASSERT(node != nullptr);
-    return IsContain(packed_op, static_cast<schema::PrimitiveType>(node->primitive_->Type()));
+    return IsPackedOp(static_cast<schema::PrimitiveType>(node->primitive_->Type()));
   });
 }
 

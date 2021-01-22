@@ -36,6 +36,8 @@ std::vector<size_t> GetGraphInputNodes(const lite::Model *model);
 std::vector<size_t> GetGraphOutputNodes(const lite::Model *model);
 
 std::vector<size_t> GetLinkedPostNodeIdx(const lite::Model *model, size_t tensor_idx);
+
+bool IsPackedOp(schema::PrimitiveType op_type);
 }  // namespace lite
 }  // namespace mindspore
 
