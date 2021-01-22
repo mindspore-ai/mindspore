@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#include "src/runtime/kernel/arm/fp32/lstm_fp32.h"
-#include <float.h>
+#include "src/runtime/kernel/arm/fp16/lstm_fp16.h"
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "nnacl/fp16/lstm_fp16.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -28,7 +28,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Lstm;
 
 namespace mindspore::kernel {
-void LstmCPUKernel::FreeTmpBuffer() {
+void LstmFp16CPUKernel::FreeTmpBuffer() {
   if (gate_buffer_ != nullptr) {
     free(gate_buffer_);
     gate_buffer_ = nullptr;
@@ -51,7 +51,7 @@ void LstmCPUKernel::FreeTmpBuffer() {
   }
 }
 
-int LstmCPUKernel::InitParam() {
+int LstmFp16CPUKernel::InitParam() {
   auto input = in_tensors_.front();
   MS_ASSERT(input != nullptr);
   std::vector<int> in_shape = input->shape();
@@ -70,73 +70,80 @@ int LstmCPUKernel::InitParam() {
   return RET_OK;
 }
 
-int LstmCPUKernel::InitBuffer() {
-  gate_buffer_ = reinterpret_cast<float *>(malloc(4 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float)));
+int LstmFp16CPUKernel::InitBuffer() {
+  gate_buffer_ =
+    reinterpret_cast<float16_t *>(malloc(4 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t)));
   if (gate_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "LstmCPUKernel malloc gate_buffer error.";
+    MS_LOG(ERROR) << "Lstm fp16 malloc gate_buffer error.";
     return RET_ERROR;
   }
   if (!(lstm_param_->smooth_ >= -FLT_EPSILON && lstm_param_->smooth_ <= FLT_EPSILON)) {
-    int buffer_size = 2 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float);
-    state_buffer_ = reinterpret_cast<float *>(malloc(buffer_size));
+    int buffer_size = 2 * lstm_param_->batch_ * lstm_param_->hidden_size_ * sizeof(float16_t);
+    state_buffer_ = reinterpret_cast<float16_t *>(malloc(buffer_size));
     if (state_buffer_ == nullptr) {
-      MS_LOG(ERROR) << "LstmCPUKernel malloc state_buffer error.";
+      MS_LOG(ERROR) << "Lstm fp16 malloc state_buffer error.";
       return RET_ERROR;
     }
   }
   return RET_OK;
 }
 
-int LstmCPUKernel::InitWeightBias() {
+int LstmFp16CPUKernel::InitWeightBias() {
   // copy weight_i and weight_h
   auto weight_i = in_tensors_.at(1);
   MS_ASSERT(weight_i != nullptr);
-  weight_i_ptr_ = reinterpret_cast<float *>(malloc(weight_i->ElementsNum() * sizeof(float)));
+  weight_i_ptr_ = reinterpret_cast<float16_t *>(malloc(weight_i->ElementsNum() * sizeof(float16_t)));
   if (weight_i_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "LstmCPUKernel malloc weight_i_ptr_ error.";
+    MS_LOG(ERROR) << "Lstm fp16 malloc weight_i_ptr_ error.";
     return RET_ERROR;
   }
-  memcpy(weight_i_ptr_, weight_i->data_c(), weight_i->ElementsNum() * sizeof(float));
+  auto weight_i_data = reinterpret_cast<float *>(weight_i->data_c());
+  for (size_t i = 0; i < weight_i->ElementsNum(); i++) {
+    weight_i_ptr_[i] = (float16_t)weight_i_data[i];
+  }
 
   auto weight_h = in_tensors_.at(2);
   MS_ASSERT(weight_h != nullptr);
-  weight_h_ptr_ = reinterpret_cast<float *>(malloc(weight_h->ElementsNum() * sizeof(float)));
+  weight_h_ptr_ = reinterpret_cast<float16_t *>(malloc(weight_h->ElementsNum() * sizeof(float16_t)));
   if (weight_h_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "LstmCPUKernel malloc weight_h_ error.";
+    MS_LOG(ERROR) << "Lstm fp16 malloc weight_h_ error.";
     return RET_ERROR;
   }
-  memcpy(weight_h_ptr_, weight_h->data_c(), weight_h->ElementsNum() * sizeof(float));
+  auto weight_h_data = reinterpret_cast<float *>(weight_h->data_c());
+  for (size_t i = 0; i < weight_h->ElementsNum(); i++) {
+    weight_h_ptr_[i] = (float16_t)weight_h_data[i];
+  }
 
   std::vector<int> w_shape = weight_i->shape();
   auto hidden_size = w_shape.at(1) / 4;
   // init bias
   int bias_num = lstm_param_->bidirectional_ ? 2 * 4 * hidden_size : 4 * hidden_size;
-  bias_ptr_ = reinterpret_cast<float *>(malloc(bias_num * sizeof(float)));
+  bias_ptr_ = reinterpret_cast<float16_t *>(malloc(bias_num * sizeof(float16_t)));
   if (bias_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "LstmCPUKernel malloc bias_ptr_ error.";
+    MS_LOG(ERROR) << "Lstm fp16 malloc bias_ptr_ error.";
     return RET_ERROR;
   }
 
   auto bias_data = reinterpret_cast<float *>(in_tensors_.at(3)->data_c());
   const int state_bias_offset = 4 * hidden_size;
   for (int i = 0; i < state_bias_offset; i++) {
-    bias_ptr_[i] = bias_data[i] + bias_data[i + state_bias_offset];
+    bias_ptr_[i] = (float16_t)(bias_data[i] + bias_data[i + state_bias_offset]);
   }
   if (lstm_param_->bidirectional_) {
     bias_data += 4 * hidden_size * 2;
     auto backward_bias = bias_ptr_ + 4 * hidden_size;
     for (int i = 0; i < state_bias_offset; i++) {
-      backward_bias[i] = bias_data[i] + bias_data[i + state_bias_offset];
+      backward_bias[i] = (float16_t)(bias_data[i] + bias_data[i + state_bias_offset]);
     }
   }
   return RET_OK;
 }
 
-int LstmCPUKernel::Init() {
+int LstmFp16CPUKernel::Init() {
   FreeTmpBuffer();
   auto ret = InitWeightBias();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LstmCPUKernel InitWeightBias error.";
+    MS_LOG(ERROR) << "Lstm fp16 InitWeightBias error.";
     FreeTmpBuffer();
     return RET_ERROR;
   }
@@ -147,23 +154,23 @@ int LstmCPUKernel::Init() {
   return ReSize();
 }
 
-int LstmCPUKernel::ReSize() {
+int LstmFp16CPUKernel::ReSize() {
   auto ret = InitParam();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LstmCPUKernel InitParam error.";
+    MS_LOG(ERROR) << "Lstm fp16 InitParam error.";
     return RET_ERROR;
   }
 
   ret = InitBuffer();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "LstmCPUKernel InitBuffer error.";
+    MS_LOG(ERROR) << "Lstm fp16 InitBuffer error.";
     FreeTmpBuffer();
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int LstmCPUKernel::Run() {
+int LstmFp16CPUKernel::Run() {
   auto input = in_tensors_.at(kInputIndex);
   MS_ASSERT(input != nullptr);
   auto hidden_state = in_tensors_.at(4);
@@ -173,24 +180,24 @@ int LstmCPUKernel::Run() {
   auto output = out_tensors_.at(0);
   MS_ASSERT(output != nullptr);
 
-  auto input_ptr = reinterpret_cast<float *>(input->data_c());
+  auto input_ptr = reinterpret_cast<float16_t *>(input->data_c());
   MS_ASSERT(input_ptr);
-  auto output_ptr = reinterpret_cast<float *>(output->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(output->data_c());
   MS_ASSERT(output_ptr);
   auto output_hidden_state = out_tensors_[1];
-  memcpy(output_hidden_state->data_c(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float));
+  memcpy(output_hidden_state->data_c(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float16_t));
   auto output_cell_state = out_tensors_[2];
-  memcpy(output_cell_state->data_c(), cell_state->data_c(), cell_state->ElementsNum() * sizeof(float));
+  memcpy(output_cell_state->data_c(), cell_state->data_c(), cell_state->ElementsNum() * sizeof(float16_t));
 
   MS_ASSERT(weight_h_ptr_);
   MS_ASSERT(weight_i_ptr_);
   MS_ASSERT(bias_ptr_);
   MS_ASSERT(gate_buffer_);
-  Lstm(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, bias_ptr_,
-       reinterpret_cast<float *>(output_hidden_state->data_c()), reinterpret_cast<float *>(output_cell_state->data_c()),
-       gate_buffer_, state_buffer_, lstm_param_);
+  LstmFp16(output_ptr, input_ptr, weight_i_ptr_, weight_h_ptr_, bias_ptr_,
+           reinterpret_cast<float16_t *>(output_hidden_state->data_c()),
+           reinterpret_cast<float16_t *>(output_cell_state->data_c()), gate_buffer_, state_buffer_, lstm_param_);
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Lstm, LiteKernelCreator<LstmCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Lstm, LiteKernelCreator<LstmFp16CPUKernel>)
 }  // namespace mindspore::kernel

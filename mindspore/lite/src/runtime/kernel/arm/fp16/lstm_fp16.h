@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,24 +14,24 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_LSTM_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_LSTM_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
-#include "nnacl/fp32/lstm_fp32.h"
+#include "nnacl/lstm_parameter.h"
 
 namespace mindspore::kernel {
-class LstmCPUKernel : public LiteKernel {
+class LstmFp16CPUKernel : public LiteKernel {
  public:
-  LstmCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                const mindspore::lite::PrimitiveC *primitive)
+  LstmFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                    const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     lstm_param_ = reinterpret_cast<LstmParameter *>(op_parameter_);
   }
 
-  ~LstmCPUKernel() override { FreeTmpBuffer(); }
+  ~LstmFp16CPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -43,13 +43,13 @@ class LstmCPUKernel : public LiteKernel {
   int InitBuffer();
   int InitWeightBias();
 
-  float *gate_buffer_ = nullptr;
-  float *state_buffer_ = nullptr;
-  float *weight_i_ptr_ = nullptr;
-  float *weight_h_ptr_ = nullptr;
-  float *bias_ptr_ = nullptr;
+  float16_t *gate_buffer_ = nullptr;
+  float16_t *state_buffer_ = nullptr;
+  float16_t *weight_i_ptr_ = nullptr;
+  float16_t *weight_h_ptr_ = nullptr;
+  float16_t *bias_ptr_ = nullptr;
   LstmParameter *lstm_param_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_LSTM_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_LSTM_H_
