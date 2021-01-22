@@ -367,8 +367,11 @@ class _PynativeExecutor:
     def grad(self, grad, obj, weights, *args, **kwargs):
         self._executor.grad_net(grad, obj, weights, *args, *(kwargs.values()))
 
-    def clear(self, cell_id=""):
-        self._executor.clear(cell_id)
+    def del_cell(self, cell_id=""):
+        self._executor.clear_cell(cell_id)
+
+    def clear_grad(self, obj, *args, **kwargs):
+        self._executor.clear_grad(obj, *args, *(kwargs.values()))
 
     def sync(self):
         self._executor.sync()
