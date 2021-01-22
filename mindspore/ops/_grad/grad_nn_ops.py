@@ -166,11 +166,11 @@ def get_bprop_extract_image_patches(self):
 def get_bprop_depthwise_conv2d_native(self):
     """Grad definition for `DepthwiseConv2dNative` operation."""
     input_grad = G.DepthwiseConv2dNativeBackpropInput(
-        self.channel_multiplier, self.kernel_size, self.pad_mode, self.pad, self.pads, self.mode, self.stride,
+        self.channel_multiplier, self.kernel_size, self.pad_mode, self.pad, self.pad_list, self.mode, self.stride,
         self.dilation, self.group
     )
     filter_grad = G.DepthwiseConv2dNativeBackpropFilter(
-        self.channel_multiplier, self.kernel_size, self.pad_mode, self.pad, self.pads, self.mode, self.stride,
+        self.channel_multiplier, self.kernel_size, self.pad_mode, self.pad, self.pad_list, self.mode, self.stride,
         self.dilation, self.group
     )
     get_shape = P.Shape()

@@ -354,8 +354,9 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
         if isinstance(pad, int):
             pad = (pad,) * 6
         validator.check_equal_int(len(pad), 6, 'pad size', self.name)
+        self.add_prim_attr('pad', self.pad)
         self.pad_list = pad
-        self.add_prim_attr('pads', self.pad_list)
+        self.add_prim_attr('pad_list', self.pad_list)
 
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         if self.pad_mode != 'pad' and self.pad_list != (0, 0, 0, 0, 0, 0):
@@ -415,7 +416,7 @@ class Conv3DBackpropFilter(PrimitiveWithInfer):
             pad_right = pad_needed_w - pad_left
             self.pad_list = (pad_head, pad_tail, pad_top, pad_bottom, pad_left, pad_right)
 
-        self.add_prim_attr('pads', self.pad_list)
+        self.add_prim_attr('pad_list', self.pad_list)
         out = {
             'value': None,
             'shape': w_size_v,
@@ -432,7 +433,10 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
         out_channel (int): The dimensionality of the output space.
         kernel_size (Union[int, tuple[int]]): The size of the convolution window.
         pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
-        pad (int): The pad value to be filled. Default: 0.
+        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
+                    top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
+                    padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
+        pad_list (tuple): The pad list like (top, bottom, left, right). Default: (0, 0, 0, 0).
         mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
                     2 deconvolution, 3 depthwise convolution. Default: 1.
         stride (tuple): The stride to be applied to the convolution filter. Default: (1, 1).
@@ -464,7 +468,11 @@ class Conv2DBackpropFilter(PrimitiveWithInfer):
         self.mode = mode
         pad_mode = pad_mode.upper()
         self.add_prim_attr('pad_mode', pad_mode)
-        self.pad = pad
+        if isinstance(pad, int):
+            pad = (pad,) * 4
+        else:
+            validator.check_equal_int(len(pad), 4, 'pad size', self.name)
+        self.add_prim_attr("pad", pad)
         if isinstance(stride, tuple) and len(stride) == 4:
             self.stride = (stride[2], stride[3])
             self.add_prim_attr('stride', self.stride)
@@ -506,8 +514,10 @@ class DepthwiseConv2dNativeBackpropFilter(PrimitiveWithInfer):
         mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution,
                        2 deconvolution,3 depthwise convolution. Defaul: 3.
         pad_mode (str): The mode to fill padding which can be: "valid", "same" or "pad". Default: "valid".
-        pad (int): The pad value to be filled. Default: 0.
-        pads (tuple): The pad list like (top, bottom, left, right). Default: (0, 0, 0, 0).
+        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
+                    top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
+                    padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
+        pad_list (tuple): The pad list like (top, bottom, left, right). Default: (0, 0, 0, 0).
         stride (int): The stride to be applied to the convolution filter. Default: 1.
         dilation (int): Specifies the space to use between kernel elements. Default: 1.
         group (int): Splits input into groups. Default: 1.
@@ -522,7 +532,7 @@ class DepthwiseConv2dNativeBackpropFilter(PrimitiveWithInfer):
                  kernel_size,
                  pad_mode="valid",
                  pad=0,
-                 pads=(0, 0, 0, 0),
+                 pad_list=(0, 0, 0, 0),
                  mode=3,
                  stride=1,
                  dilation=1,
@@ -533,8 +543,12 @@ class DepthwiseConv2dNativeBackpropFilter(PrimitiveWithInfer):
         self.kernel_size = kernel_size
         self.mode = mode
         self.pad_mode = pad_mode
-        self.pad = pad
-        self.pads = pads
+        if isinstance(pad, int):
+            pad = (pad,) * 4
+        else:
+            validator.check_equal_int(len(pad), 4, 'pad size', self.name)
+        self.add_prim_attr("pad", pad)
+        self.pad_list = pad_list
         self.stride = stride
         self.dilation = dilation
         self.group = group
@@ -567,8 +581,10 @@ class DepthwiseConv2dNativeBackpropInput(PrimitiveWithInfer):
         mode (int): Modes for different convolutions. 0 Math convolutiuon, 1 cross-correlation convolution ,
                     2 deconvolution,3 depthwise convolution. Default: 3.
         pad_mode (str):  Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
-        pad (int): The pad value to be filled. Default: 0.
-        pads (tuple): The pad list like (top, bottom, left, right). Default: (0, 0, 0, 0).
+        pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
+                    top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers, the
+                    padding of top, bottom, left and right equal to pad[0], pad[1], pad[2], and pad[3] correspondingly.
+        pad_list (tuple): The pad list like (top, bottom, left, right). Default: (0, 0, 0, 0).
         stride (int): The stride to be applied to the convolution filter. Default: 1.
         dilation (int): Specifies the space to use between kernel elements. Default: 1.
         group (int): Splits input into groups. Default: 1.
@@ -583,7 +599,7 @@ class DepthwiseConv2dNativeBackpropInput(PrimitiveWithInfer):
                  kernel_size,
                  pad_mode="valid",
                  pad=0,
-                 pads=(0, 0, 0, 0),
+                 pad_list=(0, 0, 0, 0),
                  mode=3,
                  stride=1,
                  dilation=1,
@@ -594,8 +610,12 @@ class DepthwiseConv2dNativeBackpropInput(PrimitiveWithInfer):
         self.kernel_size = kernel_size
         self.mode = mode
         self.pad_mode = pad_mode
-        self.pad = pad
-        self.pads = pads
+        if isinstance(pad, int):
+            pad = (pad,) * 4
+        else:
+            validator.check_equal_int(len(pad), 4, 'pad size', self.name)
+        self.add_prim_attr("pad", pad)
+        self.pad_list = pad_list
         self.stride = stride
         self.dilation = dilation
         self.group = group
