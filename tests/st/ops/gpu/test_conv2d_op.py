@@ -232,3 +232,36 @@ def test_conv2d_dynamic():
     assert (output1.asnumpy() == expect1).all()
     output2 = conv2d(x2, w2)
     assert (output2.asnumpy() == expect2).all()
+
+
+class NetConvNHWC(nn.Cell):
+    def __init__(self, weight, x):
+        super(NetConvNHWC, self).__init__()
+        self.conv = nn.Conv2d(in_channels=1,
+                              out_channels=3,
+                              kernel_size=2,
+                              stride=2,
+                              pad_mode="valid",
+                              weight_init=Tensor(weight),
+                              data_format='NHWC'
+                              )
+        self.x = Parameter(initializer(Tensor(x), [1, 4, 4, 1]), name="x")
+
+    def construct(self):
+        return self.conv(self.x)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_conv_NHWC():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    x1 = Tensor(np.arange(1 * 4 * 4 * 1).reshape(1, 4, 4, 1).astype(np.float32))
+    w1 = Tensor(np.arange(3 * 2 * 2 * 1).reshape(3, 2, 2, 1).astype(np.float32))
+    expected = np.array([[[[24., 64., 104.],
+                           [36., 108., 180.]],
+                          [[72., 240., 408.],
+                           [84., 284., 484.]]]]).astype(np.float32)
+    conv2d = NetConvNHWC(w1, x1)
+    output = conv2d()
+    assert (output.asnumpy() == expected).all()
