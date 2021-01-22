@@ -36,6 +36,7 @@ void Concat(void **input, int input_num, int axis, int **inputs_output_shape, si
     int offset = UP_DIV(input_stride, thread_num);
     int count = input_stride - offset * task_id;
     if (count <= 0) {
+      axis_offset += inputs_output_shape[i][axis];
       continue;
     }
     count = MSMIN(offset, count);
