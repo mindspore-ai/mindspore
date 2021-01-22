@@ -402,7 +402,7 @@ std::shared_ptr<MnistDataset> Mnist(const std::string &dataset_dir, const std::s
 // Function to overload "+" operator to concat two datasets
 std::shared_ptr<ConcatDataset> operator+(const std::shared_ptr<Dataset> &datasets1,
                                          const std::shared_ptr<Dataset> &datasets2) {
-  return std::make_shared<ConcatDataset>(std::vector({datasets2, datasets1}));
+  return std::make_shared<ConcatDataset>(std::vector({datasets1, datasets2}));
 }
 
 // Function to create a TextFileDataset.

@@ -53,7 +53,7 @@ TEST_F(MindDataTestTreeModifying, AppendChild) {
   std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds6 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
-  std::shared_ptr<Dataset> ds4 = ds2->Concat({ds3}); // ds2 is the second child and ds3 is the first child!!!
+  std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   Status rc;
 
   std::shared_ptr<DatasetNode> root = ds4->IRNode();
@@ -110,7 +110,7 @@ TEST_F(MindDataTestTreeModifying, InsertChildAt01) {
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
   std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds2 = ds5->Repeat(4);
-  std::shared_ptr<Dataset> ds4 = ds2->Concat({ds3}); // ds2 is the second child and ds3 is the first child!!!
+  std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   Status rc;
   std::shared_ptr<DatasetNode> root = ds4->IRNode();
   auto ir_tree = std::make_shared<TreeAdapter>();
@@ -173,7 +173,7 @@ TEST_F(MindDataTestTreeModifying, InsertChildAt04) {
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
   std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds2 = ds5->Repeat(4);
-  std::shared_ptr<Dataset> ds4 = ds2->Concat({ds3}); // ds2 is the second child and ds3 is the first child!!!
+  std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   Status rc;
   std::shared_ptr<DatasetNode> root = ds4->IRNode();
   auto ir_tree = std::make_shared<TreeAdapter>();
@@ -253,7 +253,7 @@ TEST_F(MindDataTestTreeModifying, InsertAbove01) {
   std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
-  std::shared_ptr<Dataset> ds4 = ds2->Concat({ds3}); // ds2 is the second child and ds3 is the first child!!!
+  std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   Status rc;
 
   std::shared_ptr<DatasetNode> root = ds4->IRNode();
@@ -280,7 +280,7 @@ TEST_F(MindDataTestTreeModifying, InsertAbove02) {
   std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
-  std::shared_ptr<Dataset> ds4 = ds2 + ds3; // ds2 is the second child and ds3 is the first child!!!
+  std::shared_ptr<Dataset> ds4 = ds3 + ds2;
   Status rc;
 
   std::shared_ptr<DatasetNode> root = ds4->IRNode();
@@ -307,7 +307,7 @@ TEST_F(MindDataTestTreeModifying, InsertAbove03) {
   std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds3 = ds1->Take(10);
-  std::shared_ptr<Dataset> ds4 = ds2->Concat({ds3}); // ds2 is the second child and ds3 is the first child!!!
+  std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   Status rc;
 
   std::shared_ptr<DatasetNode> root = ds4->IRNode();
@@ -372,9 +372,9 @@ TEST_F(MindDataTestTreeModifying, Drop01) {
   std::shared_ptr<Dataset> ds9 = ds8->Skip(1);
   std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds4 = ds2->Concat({ds3}); // ds2 is the second child and ds3 is the first child!!!
+  std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   std::shared_ptr<Dataset> ds6 = ds4->Take(13);
-  std::shared_ptr<Dataset> ds10 = ds6 + ds9;
+  std::shared_ptr<Dataset> ds10 = ds9 + ds6;
   Status rc;
 
   std::shared_ptr<DatasetNode> root = ds10->IRNode();
@@ -437,9 +437,9 @@ TEST_F(MindDataTestTreeModifying, Drop03) {
   std::shared_ptr<Dataset> ds9 = ds8->Skip(1);
   std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds4 = ds2->Concat({ds3}); // ds2 is the second child and ds3 is the first child!!!
+  std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   std::shared_ptr<Dataset> ds6 = ds4->Take(13);
-  std::shared_ptr<Dataset> ds10 = ds6 + ds9;
+  std::shared_ptr<Dataset> ds10 = ds9 + ds6;
   Status rc;
 
   std::shared_ptr<DatasetNode> root = ds10->IRNode();
@@ -487,11 +487,11 @@ TEST_F(MindDataTestTreeModifying, Drop04) {
   std::shared_ptr<Dataset> ds9 = ds8->Skip(1);
   std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds4 = ds2->Concat({ds3}); // ds2 is the second child and ds3 is the first child!!!
+  std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds6 = ds1->Concat({ds5, ds4});  // ds1 is put after (ds5, ds4)!!!
-  std::shared_ptr<Dataset> ds10 = ds6 + ds9;
+  std::shared_ptr<Dataset> ds6 = ds5->Concat({ds4, ds1});
+  std::shared_ptr<Dataset> ds10 = ds9 + ds6;
   Status rc;
 
   std::shared_ptr<DatasetNode> root = ds10->IRNode();
@@ -548,8 +548,8 @@ TEST_F(MindDataTestTreeModifying, Drop05) {
   std::shared_ptr<Dataset> ds4 = ds3->Skip(1);
   std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds6 = ds1->Concat({ds5, ds4});  // ds1 is put after (ds5, ds4)!!!
-  std::shared_ptr<Dataset> ds10 = ds6 + ds9;
+  std::shared_ptr<Dataset> ds6 = ds5->Concat({ds4, ds1});
+  std::shared_ptr<Dataset> ds10 = ds9 + ds6;
   Status rc;
 
   std::shared_ptr<DatasetNode> root = ds10->IRNode();
@@ -603,11 +603,11 @@ TEST_F(MindDataTestTreeModifying, Drop06) {
   std::shared_ptr<Dataset> ds9 = ds8->Skip(1);
   std::shared_ptr<Dataset> ds3 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds2 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds4 = ds2->Concat({ds3}); // ds2 is the second child and ds3 is the first child!!!
+  std::shared_ptr<Dataset> ds4 = ds3->Concat({ds2});
   std::shared_ptr<Dataset> ds5 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
   std::shared_ptr<Dataset> ds1 = ImageFolder(folder_path, false, SequentialSampler(0, 11));
-  std::shared_ptr<Dataset> ds6 = ds1->Concat({ds5, ds4});  // ds1 is put after (ds5, ds4)!!!
-  std::shared_ptr<Dataset> ds10 = ds6 + ds9;
+  std::shared_ptr<Dataset> ds6 = ds5->Concat({ds4, ds1});  // ds1 is put after (ds5, ds4)!!!
+  std::shared_ptr<Dataset> ds10 = ds9 + ds6;
   Status rc;
 
   std::shared_ptr<DatasetNode> root = ds10->IRNode();

@@ -73,6 +73,51 @@ Status ConcatNode::ValidateParams() {
   return Status::OK();
 }
 
+// Get Dataset size
+Status ConcatNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                  int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+
+  // calculate the total size of all nodes
+  int64_t total_dataset_size = 0;
+  int64_t child_dataset_size = 0;
+  for (int idx = 0; idx < children_.size(); idx++) {
+    if (children_flag_and_nums_.empty() || children_flag_and_nums_[idx].second == 0) {
+      children_[idx]->GetDatasetSize(size_getter, false, &child_dataset_size);
+      total_dataset_size += child_dataset_size;
+    } else {
+      total_dataset_size += children_flag_and_nums_[idx].second;
+    }
+  }
+
+  // calculate the size of the shard
+  int64_t shard_dataset_size = 0;
+  if (sampler_ != nullptr) {
+    std::shared_ptr<DistributedSamplerRT> sampler_rt =
+      std::static_pointer_cast<DistributedSamplerRT>(sampler_->SamplerBuild());
+    sampler_rt->SetNumRowsInDataset(total_dataset_size);
+    sampler_rt->InitSampler();
+
+    // (total_size % num_shards != 0) & shard_id >= (remainder) ? CalculateNumSamples()-1 : CalculateNumSamples()
+    // example: 23 rows, 10 shards --> shard sizes = {3,3,3,2,2,2,2,2,2,2}
+    if ((sampler_rt->GetNumSamples() % sampler_rt->GetDeviceNum()) > 0 &&
+        sampler_rt->GetDeviceID() >= (sampler_rt->GetNumSamples() % sampler_rt->GetDeviceNum())) {
+      shard_dataset_size = sampler_rt->CalculateNumSamples(sampler_rt->GetNumSamples()) - 1;
+    } else {
+      shard_dataset_size = sampler_rt->CalculateNumSamples(sampler_rt->GetNumSamples());
+    }
+  } else {
+    shard_dataset_size = total_dataset_size;
+  }
+
+  *dataset_size = shard_dataset_size;
+  dataset_size_ = *dataset_size;
+  return Status::OK();
+}
+
 Status ConcatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   if (children_flag_and_nums_.empty() || children_start_end_index_.empty()) {
     node_ops->push_back(std::make_shared<ConcatOp>(connector_que_size_));

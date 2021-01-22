@@ -372,7 +372,7 @@ class Dataset:
         Args:
             condition_name (str): The condition name that is used to toggle sending next row.
             num_batch (int): the number of batches without blocking at the start of each epoch.
-            callback (function): The callback funciton that will be invoked when sync_update is called.
+            callback (function): The callback function that will be invoked when sync_update is called.
 
         Returns:
             SyncWaitDataset, dataset added a blocking condition.
@@ -398,7 +398,7 @@ class Dataset:
 
         1. Make a shuffle buffer that contains the first buffer_size rows.
         2. Randomly select an element from the shuffle buffer to be the next row
-           propogated to the child node.
+           propagated to the child node.
         3. Get the next row (if any) from the parent node and put it in the shuffle buffer.
         4. Repeat steps 2 and 3 until there are no more rows left in the shuffle buffer.
 
@@ -1649,8 +1649,7 @@ class MappableDataset(SourceDataset):
     def add_sampler(self, new_sampler):
         # note: By adding a sampler, the sampled IDs will flow to new_sampler
         # after first passing through the current samplers attached to this dataset.
-        if self.dataset_size is not None:
-            self.dataset_size = None
+        self.dataset_size = None
         new_sampler.add_child(self.sampler)
         self.sampler = new_sampler
 
@@ -1676,8 +1675,7 @@ class MappableDataset(SourceDataset):
             raise TypeError("Input sampler can not be None.")
         if not isinstance(new_sampler, (samplers.BuiltinSampler, samplers.Sampler)):
             raise TypeError("Input sampler is not an instance of a sampler.")
-        if self.dataset_size is not None:
-            self.dataset_size = None
+        self.dataset_size = None
 
         self.sampler = self.sampler.child_sampler
         self.add_sampler(new_sampler)
@@ -1718,7 +1716,7 @@ class MappableDataset(SourceDataset):
                     - The sum of split sizes < K, the difference will be added to the first split.
 
                     - The sum of split sizes > K, the difference will be removed from the first large
-                      enough split such that it will have atleast 1 row after removing the difference.
+                      enough split such that it will have at least 1 row after removing the difference.
 
             randomize (bool, optional): Determines whether or not to split the data randomly (default=True).
                 If True, the data will be randomly split. Otherwise, each split will be created with
@@ -2646,6 +2644,8 @@ class ConcatDataset(Dataset):
 
         if sampler.get_num_samples() is not None:
             raise ValueError("The parameter num_samples of DistributedSampler is not support to be set!")
+
+        self.dataset_size = None
 
         self._sampler = _select_sampler(None, sampler, None, None, None)
         cumulative_samples_nums = 0
