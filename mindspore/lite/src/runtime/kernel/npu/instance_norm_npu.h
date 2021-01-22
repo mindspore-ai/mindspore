@@ -14,22 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_LAYER_NORM_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_LAYER_NORM_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_INSTANCE_NORM_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_INSTANCE_NORM_NPU_H_
 #include <vector>
-#include "nnacl/layer_norm_parameter.h"
+#include "nnacl/instance_norm_parameter.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
-class LayerNormNPUKernel : public NPUKernel {
+class InstanceNormNPUKernel : public NPUKernel {
  public:
-  LayerNormNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
+  InstanceNormNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                        const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    layer_norm_param_ = reinterpret_cast<LayerNormParameter *>(parameter);
+    instance_norm_param_ = reinterpret_cast<InstanceNormParameter *>(parameter);
   }
-  ~LayerNormNPUKernel() override;
+  ~InstanceNormNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
@@ -39,7 +39,7 @@ class LayerNormNPUKernel : public NPUKernel {
 
  private:
   hiai::op::InstanceNorm *op_ = nullptr;
-  LayerNormParameter *layer_norm_param_;
+  InstanceNormParameter *instance_norm_param_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_LAYER_NORM_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_INSTANCE_NORM_NPU_H_

@@ -24,17 +24,17 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::schema::PrimitiveType_InstanceNorm;
 
 namespace mindspore::kernel {
-int LayerNormNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
-                                  OpParameter *opParameter) {
+int InstanceNormNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
+                                     const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
   return RET_OK;
 }
 
-int LayerNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
-                                     const std::vector<lite::Tensor *> &outputs,
-                                     const std::vector<ge::Operator *> &npu_inputs) {
+int InstanceNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
+                                        const std::vector<lite::Tensor *> &outputs,
+                                        const std::vector<ge::Operator *> &npu_inputs) {
   op_ = new (std::nothrow) hiai::op::InstanceNorm(name_);
   if (op_ == nullptr) {
-    MS_LOG(ERROR) << "New layer norm npu operator for op " << name_ << " failed.";
+    MS_LOG(ERROR) << "New instance norm npu operator for op " << name_ << " failed.";
     return RET_ERROR;
   }
   op_->set_input_x(*npu_inputs[0]);
@@ -72,18 +72,18 @@ int LayerNormNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
   beta_tensor->SetTensorDesc(beta_tensor_desc);
   beta_tensor->SetData(reinterpret_cast<const uint8_t *>(inputs.data()), inputs[1]->Size());
   op_->set_input_beta(*beta);
-  op_->set_attr_epsilon(layer_norm_param_->epsilon_);
+  op_->set_attr_epsilon(instance_norm_param_->epsilon_);
   return RET_OK;
 }
 
-ge::Operator *mindspore::kernel::LayerNormNPUKernel::GetNPUOp() { return this->op_; }
+ge::Operator *mindspore::kernel::InstanceNormNPUKernel::GetNPUOp() { return this->op_; }
 
-LayerNormNPUKernel::~LayerNormNPUKernel() {
+InstanceNormNPUKernel::~InstanceNormNPUKernel() {
   if (op_ != nullptr) {
     delete op_;
     op_ = nullptr;
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_InstanceNorm, NPUKernelCreator<LayerNormNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_InstanceNorm, NPUKernelCreator<InstanceNormNPUKernel>)
 }  // namespace mindspore::kernel
