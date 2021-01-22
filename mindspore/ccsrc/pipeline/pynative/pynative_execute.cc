@@ -36,6 +36,7 @@
 #include "utils/context/context_extends.h"
 #include "utils/config_manager.h"
 #include "utils/convert_utils_py.h"
+#include "utils/check_convert_utils.h"
 #include "frontend/operator/ops.h"
 #include "frontend/operator/composite/do_signature.h"
 #include "pipeline/jit/parse/data_converter.h"
@@ -459,6 +460,21 @@ void ConstructInputTensor(const OpExecInfoPtr &op_run_info, std::vector<int64_t>
     tensors_mask->insert(tensors_mask->end(), new_mask.begin(), new_mask.end());
   }
   op_prim->EndRecordAddAttr();
+}
+
+void ConvertAttrToUnifyMindIR(const OpExecInfoPtr &op_run_info) {
+  MS_EXCEPTION_IF_NULL(op_run_info);
+  PrimitivePtr op_prim = op_run_info->py_primitive;
+  MS_EXCEPTION_IF_NULL(op_prim);
+
+  std::string op_name = op_run_info->op_name;
+  auto attrs = op_prim->attrs();
+  for (auto attr : attrs) {
+    bool converted = CheckAndConvertUtils::ConvertAttrValueToString(op_name, attr.first, &attr.second);
+    if (converted) {
+      op_prim->set_attr(attr.first, attr.second);
+    }
+  }
 }
 
 BaseRef TransformBaseRefListToTuple(const BaseRef &base_ref) {
@@ -1335,7 +1351,7 @@ py::object PynativeExecutor::RunOpWithBackendPolicy(MsBackendPolicy backend_poli
       break;
     }
     case kMsBackendMsPrior: {
-      // use Ms fisrt,use others when ms failed
+      // use Ms first,use others when ms failed
       MS_LOG(INFO) << "RunOp use Ms first backend";
       result = RunOpInMs(op_exec_info, status);
       if (*status != PYNATIVE_SUCCESS) {
@@ -1416,6 +1432,7 @@ py::object PynativeExecutor::RunOpInMs(const OpExecInfoPtr &op_exec_info, Pynati
   std::vector<tensor::TensorPtr> input_tensors;
   std::vector<int64_t> tensors_mask;
   ConstructInputTensor(op_exec_info, &tensors_mask, &input_tensors);
+  ConvertAttrToUnifyMindIR(op_exec_info);
   // get graph info for checking it whether existing in the cache
   std::string graph_info = GetSingleOpGraphInfo(op_exec_info, input_tensors);
 #if defined(__APPLE__)
@@ -1704,7 +1721,7 @@ bool PynativeExecutor::ParseIfWhileExprNode(const std::shared_ptr<parse::ParseAs
     py::object left_node = parse::python_adapter::GetPyObjAttr(test_node, parse::NAMED_PRIMITIVE_LEFT);
     py::list comparators_node = parse::python_adapter::GetPyObjAttr(test_node, parse::NAMED_PRIMITIVE_COMPARATORS);
     if (comparators_node.empty()) {
-      MS_LOG(DEBUG) << "Get comparators node falied!";
+      MS_LOG(DEBUG) << "Get comparators node failed!";
       return false;
     }
     auto left = ParseNodeName(ast, left_node, parse::AST_MAIN_TYPE_EXPR);
