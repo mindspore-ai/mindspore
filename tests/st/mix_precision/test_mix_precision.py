@@ -13,14 +13,31 @@
 # limitations under the License.
 """Test network turn on mix_precision."""
 
+import os
+import re
 import pytest
 import numpy as np
+from mindspore.common import dtype
 from mindspore import nn
 from mindspore import ops
 from mindspore import amp
 from mindspore import Tensor
 from mindspore import context
 from mindspore.train.loss_scale_manager import FixedLossScaleManager
+from mindspore.train.model import Model
+from utils import FakeData
+from utils import allclose_nparray
+from utils import FakeDataInitMode
+from utils import find_newest_validateir_file
+from utils import clean_all_ir_files
+
+
+def read_validateir_file(path_folder):
+    filename = find_newest_validateir_file(path_folder)
+    with open(os.path.join(filename), 'r') as f:
+        contend = f.read()
+    clean_all_ir_files(path_folder)
+    return contend
 
 
 class Net(nn.Cell):
@@ -62,7 +79,7 @@ class Net(nn.Cell):
 @pytest.mark.platform_x86_ascend_training
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_auto_mix_precision():
+def test_sit_auto_mix_precision_train_o3():
     input_data = np.random.randn(32, 3, 224, 224).astype(np.float64)
     label_data = np.random.randn(32, 10).astype(np.float32)
     # graph mode
@@ -87,3 +104,74 @@ def test_auto_mix_precision():
                                                          drop_overflow_update=False))
     out_pynative = train_network_pynative(Tensor(input_data), Tensor(label_data))
     assert np.allclose(out.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.env_onecard
+def test_sit_auto_mix_precision_model_o0():
+    input_data = np.random.randn(32, 3, 224, 224).astype(np.float32)
+    dataset1 = FakeData(size=32,
+                        batch_size=32,
+                        image_size=(3, 224, 224),
+                        num_classes=10,
+                        fakedata_mode=FakeDataInitMode.OnesInit)
+    dataset1.set_label_data_type(np.float16)
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(save_graphs=True, save_graphs_path='./test_amp_o0')
+    net = Net(3, 10)
+    net.to_float(dtype.float16)
+    opt = nn.Momentum(params=net.trainable_params(), learning_rate=0.001, momentum=0.0009)
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
+    model = Model(net, loss, opt, amp_level="O0")
+    model.train(1, dataset1, dataset_sink_mode=False)
+    contend = read_validateir_file('./test_amp_o0')
+    castnum = re.findall("Cast", contend)
+    assert len(castnum) == 17
+    model.predict(Tensor(input_data))
+    contend = read_validateir_file('./test_amp_o0')
+    castnum = re.findall("Cast", contend)
+    assert len(castnum) == 11
+
+
+@pytest.mark.level0
+@pytest.mark.platform_arm_ascend_training
+@pytest.mark.platform_x86_ascend_training
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_sit_auto_mix_precision_model_o2():
+    input_data = np.random.randn(32, 3, 224, 224).astype(np.float32)
+    dataset1 = FakeData(size=32,
+                        batch_size=32,
+                        image_size=(3, 224, 224),
+                        num_classes=10,
+                        fakedata_mode=FakeDataInitMode.OnesInit)
+    dataset2 = FakeData(size=32,
+                        batch_size=32,
+                        image_size=(3, 224, 224),
+                        num_classes=10,
+                        fakedata_mode=FakeDataInitMode.OnesInit)
+    # graph mode
+    context.set_context(mode=context.GRAPH_MODE)
+    context.set_context(save_graphs=True, save_graphs_path='./test_amp_o2')
+    net = Net(3, 10)
+    opt = nn.Momentum(params=net.trainable_params(), learning_rate=0.001, momentum=0.0009)
+    loss = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
+    model = Model(net, loss, opt, amp_level="O2")
+    model.train(1, dataset1, dataset_sink_mode=False)
+    contend = read_validateir_file('./test_amp_o2')
+    castnum = re.findall("Cast", contend)
+    assert len(castnum) == 14
+    out_graph = model.predict(Tensor(input_data))
+
+    # pynative mode
+    context.set_context(mode=context.PYNATIVE_MODE)
+    net_pynative = Net(3, 10)
+    opt_pynative = nn.Momentum(params=net_pynative.trainable_params(), learning_rate=0.001, momentum=0.0009)
+    loss_pynative = nn.SoftmaxCrossEntropyWithLogits(sparse=False)
+    model_pynative = Model(net_pynative, loss_pynative, opt_pynative, amp_level="O2")
+    model_pynative.train(1, dataset2, dataset_sink_mode=False)
+    out_pynative = model_pynative.predict(Tensor(input_data))
+    allclose_nparray(out_graph.asnumpy(), out_pynative.asnumpy(), 0.001, 0.001)
