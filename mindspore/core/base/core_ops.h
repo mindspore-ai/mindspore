@@ -278,6 +278,10 @@ inline const PrimitivePtr kPrimSplitV = std::make_shared<Primitive>("SplitV");
 inline const PrimitivePtr kPrimLinSpace = std::make_shared<Primitive>("LinSpace");
 inline const PrimitivePtr kPrimSign = std::make_shared<Primitive>("Sign");
 inline const PrimitivePtr kPrimSquaredDifference = std::make_shared<Primitive>("SquaredDifference");
+inline const PrimitivePtr kPrimAsin = std::make_shared<Primitive>("Asin");
+inline const PrimitivePtr kPrimACos = std::make_shared<Primitive>("ACos");
+inline const PrimitivePtr kPrimAsinGrad = std::make_shared<Primitive>("AsinGrad");
+inline const PrimitivePtr kPrimACosGrad = std::make_shared<Primitive>("ACosGrad");
 
 // Statements
 inline const PrimitivePtr kPrimReturn = std::make_shared<Primitive>("return");
@@ -351,7 +355,7 @@ inline const PrimitivePtr kPrimGetRefKey = std::make_shared<Primitive>("get_ref_
 inline const PrimitivePtr kPrimMakeRef = std::make_shared<Primitive>("make_ref");
 inline const PrimitivePtr kPrimGetRefValue = std::make_shared<Primitive>("get_ref_value");
 
-// Other primitve not used by backend but used in core;
+// Other primitive not used by backend but used in core;
 inline const PrimitivePtr kPrimStateSetItem = std::make_shared<Primitive>("state_setitem");
 inline const PrimitivePtr kPrimJ = std::make_shared<Primitive>("J");
 
