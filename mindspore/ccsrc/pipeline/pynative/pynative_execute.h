@@ -227,6 +227,7 @@ class GradExecutor {
 
   FuncGraphPtr curr_g() const;
   TopCellInfoPtr top_cell() const;
+  TopCellInfoPtr top_cell_direct() const { return top_cell_; }
   bool TopCellIsDynamic();
   void set_top_cell(TopCellInfoPtr top_cell) { top_cell_ = std::move(top_cell); }
   bool grad_flag() const { return grad_flag_; }
