@@ -109,7 +109,7 @@ def build_dependencies():
 build_dependencies()
 
 required_package = [
-    'numpy >= 1.17.0',
+    'numpy >= 1.17.0, <= 1.17.5',
     'protobuf >= 3.8.0',
     'asttokens >= 1.1.13',
     'pillow >= 6.2.0',
