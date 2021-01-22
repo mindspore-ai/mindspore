@@ -105,6 +105,7 @@ class Momentum(Optimizer):
 
     Raises:
         ValueError: If the momentum is less than 0.0.
+        TypeError: If the momentum is not a float or use_nesterov is not a bool.
 
     Supported Platforms:
         ``Ascend`` ``GPU`` ``CPU``
