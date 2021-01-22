@@ -13,9 +13,9 @@
 # limitations under the License.
 # ============================================================================
 
-"""Dropout3D op"""
+"""Dropout2D op"""
 from mindspore.ops.op_info_register import op_info_register, AiCPURegOp, DataType
-dropout3d_op_info = AiCPURegOp("Dropout3D") \
+dropout2d_op_info = AiCPURegOp("Dropout2D") \
     .fusion_type("OPAQUE") \
     .input(0, "x", "required") \
     .output(0, "y", "required") \
@@ -36,7 +36,7 @@ dropout3d_op_info = AiCPURegOp("Dropout3D") \
     .get_op_info()
 
 
-@op_info_register(dropout3d_op_info)
-def _dropout3d_aicpu():
-    """Dropout3D AiCPU register"""
+@op_info_register(dropout2d_op_info)
+def _dropout2d_aicpu():
+    """Dropout2D AiCPU register"""
     return

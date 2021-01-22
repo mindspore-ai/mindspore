@@ -64,7 +64,7 @@ from .random_ops import (RandomChoiceWithMask, StandardNormal, Gamma, Poisson, U
 from .nn_ops import (LSTM, SGD, Adam, FusedSparseAdam, FusedSparseLazyAdam, AdamNoUpdateParam, ApplyMomentum, BatchNorm,
                      BiasAdd, Conv2D,
                      DepthwiseConv2dNative,
-                     DropoutDoMask, Dropout, Dropout3d, DropoutGenMask, Flatten,
+                     DropoutDoMask, Dropout, Dropout2D, Dropout3D, DropoutGenMask, Flatten,
                      FusedBatchNorm, FusedBatchNormEx, InstanceNorm, BNTrainingReduce, BNTrainingUpdate,
                      GeLU, Gelu, FastGeLU, FastGelu, Elu,
 
@@ -243,6 +243,8 @@ __all__ = [
     'DropoutDoMask',
     'DropoutGenMask',
     'Dropout',
+    'Dropout2D',
+    'Dropout3D',
     'Neg',
     'InplaceAdd',
     'InplaceSub',
