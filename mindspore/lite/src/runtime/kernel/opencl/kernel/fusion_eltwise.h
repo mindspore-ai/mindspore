@@ -180,7 +180,8 @@ class FusionEltwiseOpenCLKernel : public OpenCLKernel {
     return shape.empty() || (shape.size() == 1 && shape.front() == 1);
   }
 
-  std::set<std::string> var_names_;
+  std::map<std::string, std::string> var_names_;  // origin name -> simplified name
+  const bool simplify_var_name_{true};
   std::vector<float> scalar_weights_;
   std::vector<void *> buffer_weights_;
 };
