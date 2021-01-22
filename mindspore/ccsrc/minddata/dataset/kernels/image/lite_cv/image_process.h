@@ -32,7 +32,12 @@ namespace dataset {
 #define INT16_CAST(X) \
   static_cast<int16_t>(::std::min(::std::max(static_cast<int>(X + (X >= 0.f ? 0.5f : -0.5f)), -32768), 32767));
 
-enum PaddBorderType { PADD_BORDER_CONSTANT = 0, PADD_BORDER_REPLICATE = 1 };
+enum PaddBorderType {
+  PADD_BORDER_CONSTANT = 0,
+  PADD_BORDER_REPLICATE = 1,
+  PADD_BORDER_REFLECT_101 = 4,
+  PADD_BORDER_DEFAULT = PADD_BORDER_REFLECT_101
+};
 
 struct BoxesConfig {
  public:
@@ -65,7 +70,7 @@ bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<
 
 /// \brief padd image, the channel supports is 3 and 1
 bool Pad(const LiteMat &src, LiteMat &dst, int top, int bottom, int left, int right, PaddBorderType pad_type,
-         uint8_t fill_b_or_gray, uint8_t fill_g, uint8_t fill_r);
+         uint8_t fill_b_or_gray = 0, uint8_t fill_g = 0, uint8_t fill_r = 0);
 
 /// \brief Extract image channel by index
 bool ExtractChannel(LiteMat &src, LiteMat &dst, int col);
@@ -112,6 +117,25 @@ bool GetAffineTransform(std::vector<Point> src_point, std::vector<Point> dst_poi
 
 /// \brief Matrix transpose
 bool Transpose(LiteMat &src, LiteMat &dst);
+
+/// \brief Filter the image by a Gaussian kernel
+bool GaussianBlur(const LiteMat &src, LiteMat &dst, const std::vector<int> &ksize, double sigmaX, double sigmaY = 0.f,
+                  PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
+
+/// \brief Detect edges in an image
+bool Canny(const LiteMat &src, LiteMat &dst, double low_thresh, double high_thresh, int ksize = 3,
+           bool L2gradient = false);
+
+/// \brief Apply a 2D convolution over the image
+bool Conv2D(const LiteMat &src, const LiteMat &kernel, LiteMat &dst, LDataType dst_type,
+            PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
+
+/// \brief Applies a separable linear convolution over the image
+bool ConvRowCol(const LiteMat &src, const LiteMat &kx, const LiteMat &ky, LiteMat &dst, LDataType dst_type,
+                PaddBorderType pad_type = PaddBorderType::PADD_BORDER_DEFAULT);
+
+/// \brief Filter the image by a Sobel kernel
+bool Sobel(const LiteMat &src, LiteMat &dst, int flag_x, int flag_y, int ksize, PaddBorderType pad_type);
 
 }  // namespace dataset
 }  // namespace mindspore

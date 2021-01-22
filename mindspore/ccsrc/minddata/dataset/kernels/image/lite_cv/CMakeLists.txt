@@ -3,4 +3,6 @@ set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE
 add_library(lite-cv OBJECT
             image_process.cc
             warp_affine.cc
+            gaussian_blur.cc
+            canny.cc
             lite_mat.cc)
