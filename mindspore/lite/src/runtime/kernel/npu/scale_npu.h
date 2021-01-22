@@ -42,4 +42,4 @@ class ScaleNPUKernel : public NPUKernel {
   ScaleParameter *scale_parameter_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_Scale_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SCALE_NPU_H_

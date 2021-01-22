@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SQUEEZE_NPU_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SQUEEZE_NPU_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_LAYER_NORM_NPU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_LAYER_NORM_NPU_H_
 #include <vector>
-#include "src/ops/squeeze.h"
+#include "nnacl/layer_norm_parameter.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
-class SqueezeNPUKernel : public NPUKernel {
+class LayerNormNPUKernel : public NPUKernel {
  public:
-  SqueezeNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                   const mindspore::lite::PrimitiveC *primitive)
+  LayerNormNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                     const mindspore::lite::PrimitiveC *primitive)
       : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto squeeze = reinterpret_cast<const mindspore::lite::Squeeze *>(primitive);
-    axes_ = squeeze->GetAxis();
+    layer_norm_param_ = reinterpret_cast<LayerNormParameter *>(parameter);
   }
-  ~SqueezeNPUKernel() override;
+  ~LayerNormNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                 OpParameter *opParameter) override;
@@ -39,8 +38,8 @@ class SqueezeNPUKernel : public NPUKernel {
   ge::Operator *GetNPUOp() override;
 
  private:
-  hiai::op::Squeeze *op_ = nullptr;
-  vector<int> axes_;
+  hiai::op::InstanceNorm *op_ = nullptr;
+  LayerNormParameter *layer_norm_param_;
 };
 }  // namespace mindspore::kernel
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SQUEEZE_NPU_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_LAYER_NORM_NPU_H_
