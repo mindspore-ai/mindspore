@@ -38,8 +38,8 @@ class CastFp16CPUKernel : public LiteKernel {
   int DoCast(int thread_id);
 
  private:
-  uint32_t stride_;
-  uint32_t data_num_;
+  int stride_;
+  int data_num_;
 };
 }  // namespace mindspore::kernel
 
