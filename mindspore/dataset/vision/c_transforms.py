@@ -81,11 +81,11 @@ def parse_padding(padding):
         padding = tuple(padding)
     return padding
 
-class TensorOperation:
+class ImageTensorOperation:
     def parse(self):
-        raise NotImplementedError("TensorOperation has to implement parse method.")
+        raise NotImplementedError("ImageTensorOperation has to implement parse method.")
 
-class AutoContrast(TensorOperation):
+class AutoContrast(ImageTensorOperation):
     """
     Apply automatic contrast on input image.
 
@@ -112,7 +112,7 @@ class AutoContrast(TensorOperation):
         return cde.AutoContrastOperation(self.cutoff, self.ignore)
 
 
-class RandomSharpness(TensorOperation):
+class RandomSharpness(ImageTensorOperation):
     """
     Adjust the sharpness of the input image by a fixed or random degree. Degree of 0.0 gives a blurred image,
     degree of 1.0 gives the original image, and degree of 2.0 gives a sharpened image.
@@ -140,7 +140,7 @@ class RandomSharpness(TensorOperation):
         return cde.RandomSharpnessOperation(self.degrees)
 
 
-class Equalize(TensorOperation):
+class Equalize(ImageTensorOperation):
     """
     Apply histogram equalization on input image.
 
@@ -153,7 +153,7 @@ class Equalize(TensorOperation):
         return cde.EqualizeOperation()
 
 
-class Invert(TensorOperation):
+class Invert(ImageTensorOperation):
     """
     Apply invert on input image in RGB mode.
 
@@ -166,7 +166,7 @@ class Invert(TensorOperation):
         return cde.InvertOperation()
 
 
-class Decode(TensorOperation):
+class Decode(ImageTensorOperation):
     """
     Decode the input image in RGB mode.
 
@@ -203,7 +203,7 @@ class Decode(TensorOperation):
         return cde.DecodeOperation(self.rgb)
 
 
-class CutMixBatch(TensorOperation):
+class CutMixBatch(ImageTensorOperation):
     """
     Apply CutMix transformation on input batch of images and labels.
     Note that you need to make labels into one-hot format and batch before calling this function.
@@ -235,7 +235,7 @@ class CutMixBatch(TensorOperation):
         return cde.CutMixBatchOperation(DE_C_IMAGE_BATCH_FORMAT[self.image_batch_format], self.alpha, self.prob)
 
 
-class CutOut(TensorOperation):
+class CutOut(ImageTensorOperation):
     """
     Randomly cut (mask) out a given number of square patches from the input NumPy image array.
 
@@ -258,7 +258,7 @@ class CutOut(TensorOperation):
         return cde.CutOutOperation(self.length, self.num_patches)
 
 
-class MixUpBatch(TensorOperation):
+class MixUpBatch(ImageTensorOperation):
     """
     Apply MixUp transformation on input batch of images and labels. Each image is multiplied by a random weight (lambda)
     and then added to a randomly selected image from the batch multiplied by (1 - lambda). The same formula is also
@@ -286,7 +286,7 @@ class MixUpBatch(TensorOperation):
         return cde.MixUpBatchOperation(self.alpha)
 
 
-class Normalize(TensorOperation):
+class Normalize(ImageTensorOperation):
     """
     Normalize the input image with respect to mean and standard deviation.
 
@@ -333,7 +333,7 @@ class Normalize(TensorOperation):
         return cde.NormalizeOperation(self.mean, self.std)
 
 
-class NormalizePad(TensorOperation):
+class NormalizePad(ImageTensorOperation):
     """
     Normalize the input image with respect to mean and standard deviation then pad an extra channel with value zero.
 
@@ -380,7 +380,7 @@ class NormalizePad(TensorOperation):
         return cde.NormalizePadOperation(self.mean, self.std, self.dtype)
 
 
-class RandomAffine(TensorOperation):
+class RandomAffine(ImageTensorOperation):
     """
     Apply Random affine transformation to the input image.
 
@@ -486,7 +486,7 @@ class RandomAffine(TensorOperation):
                                          self.fill_value)
 
 
-class RandomCrop(TensorOperation):
+class RandomCrop(ImageTensorOperation):
     """
     Crop the input image at a random location.
 
@@ -551,7 +551,7 @@ class RandomCrop(TensorOperation):
         return cde.RandomCropOperation(self.size, self.padding, self.pad_if_needed, self.fill_value, border_type)
 
 
-class RandomCropWithBBox(TensorOperation):
+class RandomCropWithBBox(ImageTensorOperation):
     """
     Crop the input image at a random location and adjust bounding boxes accordingly.
 
@@ -615,7 +615,7 @@ class RandomCropWithBBox(TensorOperation):
                                                border_type)
 
 
-class RandomHorizontalFlip(TensorOperation):
+class RandomHorizontalFlip(ImageTensorOperation):
     """
     Flip the input image horizontally, randomly with a given probability.
 
@@ -636,7 +636,7 @@ class RandomHorizontalFlip(TensorOperation):
         return cde.RandomHorizontalFlipOperation(self.prob)
 
 
-class RandomHorizontalFlipWithBBox(TensorOperation):
+class RandomHorizontalFlipWithBBox(ImageTensorOperation):
     """
     Flip the input image horizontally, randomly with a given probability and adjust bounding boxes accordingly.
 
@@ -657,7 +657,7 @@ class RandomHorizontalFlipWithBBox(TensorOperation):
         return cde.RandomHorizontalFlipWithBBoxOperation(self.prob)
 
 
-class RandomPosterize(TensorOperation):
+class RandomPosterize(ImageTensorOperation):
     """
     Reduce the number of bits for each color channel.
 
@@ -685,7 +685,7 @@ class RandomPosterize(TensorOperation):
         return cde.RandomPosterizeOperation(bits)
 
 
-class RandomVerticalFlip(TensorOperation):
+class RandomVerticalFlip(ImageTensorOperation):
     """
     Flip the input image vertically, randomly with a given probability.
 
@@ -706,7 +706,7 @@ class RandomVerticalFlip(TensorOperation):
         return cde.RandomVerticalFlipOperation(self.prob)
 
 
-class RandomVerticalFlipWithBBox(TensorOperation):
+class RandomVerticalFlipWithBBox(ImageTensorOperation):
     """
     Flip the input image vertically, randomly with a given probability and adjust bounding boxes accordingly.
 
@@ -727,7 +727,7 @@ class RandomVerticalFlipWithBBox(TensorOperation):
         return cde.RandomVerticalFlipWithBBoxOperation(self.prob)
 
 
-class BoundingBoxAugment(TensorOperation):
+class BoundingBoxAugment(ImageTensorOperation):
     """
     Apply a given image transform on a random selection of bounding box regions of a given image.
 
@@ -760,7 +760,7 @@ class BoundingBoxAugment(TensorOperation):
         return cde.BoundingBoxAugmentOperation(transform, self.ratio)
 
 
-class Resize(TensorOperation):
+class Resize(ImageTensorOperation):
     """
     Resize the input image to the given size.
 
@@ -816,7 +816,7 @@ class Resize(TensorOperation):
         return cde.ResizeOperation(self.size, DE_C_INTER_MODE[self.interpolation])
 
 
-class ResizeWithBBox(TensorOperation):
+class ResizeWithBBox(ImageTensorOperation):
     """
     Resize the input image to the given size and adjust bounding boxes accordingly.
 
@@ -855,7 +855,7 @@ class ResizeWithBBox(TensorOperation):
         return cde.ResizeWithBBoxOperation(size, DE_C_INTER_MODE[self.interpolation])
 
 
-class RandomResizedCropWithBBox(TensorOperation):
+class RandomResizedCropWithBBox(ImageTensorOperation):
     """
     Crop the input image to a random size and aspect ratio and adjust bounding boxes accordingly.
 
@@ -904,7 +904,7 @@ class RandomResizedCropWithBBox(TensorOperation):
                                                       DE_C_INTER_MODE[self.interpolation], self.max_attempts)
 
 
-class RandomResizedCrop(TensorOperation):
+class RandomResizedCrop(ImageTensorOperation):
     """
     Crop the input image to a random size and aspect ratio.
 
@@ -954,7 +954,7 @@ class RandomResizedCrop(TensorOperation):
                                               self.max_attempts)
 
 
-class CenterCrop(TensorOperation):
+class CenterCrop(ImageTensorOperation):
     """
     Crops the input image at the center to the given size.
 
@@ -984,7 +984,7 @@ class CenterCrop(TensorOperation):
         return cde.CenterCropOperation(self.size)
 
 
-class RandomColor(TensorOperation):
+class RandomColor(ImageTensorOperation):
     """
     Adjust the color of the input image by a fixed or random degree.
     This operation works only with 3-channel color images.
@@ -1008,7 +1008,7 @@ class RandomColor(TensorOperation):
         return cde.RandomColorOperation(*self.degrees)
 
 
-class RandomColorAdjust(TensorOperation):
+class RandomColorAdjust(ImageTensorOperation):
     """
     Randomly adjust the brightness, contrast, saturation, and hue of the input image.
 
@@ -1060,7 +1060,7 @@ class RandomColorAdjust(TensorOperation):
         return cde.RandomColorAdjustOperation(self.brightness, self.contrast, self.saturation, self.hue)
 
 
-class RandomRotation(TensorOperation):
+class RandomRotation(ImageTensorOperation):
     """
     Rotate the input image by a random angle.
 
@@ -1116,7 +1116,7 @@ class RandomRotation(TensorOperation):
         return cde.RandomRotationOperation(degrees, interpolation, expand, center, fill_value)
 
 
-class Rescale(TensorOperation):
+class Rescale(ImageTensorOperation):
     """
     Tensor operation to rescale the input image.
 
@@ -1155,7 +1155,7 @@ class Rescale(TensorOperation):
         return cde.RescaleOperation(self.rescale, self.shift)
 
 
-class RandomResize(TensorOperation):
+class RandomResize(ImageTensorOperation):
     """
     Tensor operation to resize the input image using a randomly selected interpolation mode.
 
@@ -1187,7 +1187,7 @@ class RandomResize(TensorOperation):
         return cde.RandomResizeOperation(size)
 
 
-class RandomResizeWithBBox(TensorOperation):
+class RandomResizeWithBBox(ImageTensorOperation):
     """
     Tensor operation to resize the input image using a randomly selected interpolation mode and adjust
     bounding boxes accordingly.
@@ -1220,7 +1220,7 @@ class RandomResizeWithBBox(TensorOperation):
         return cde.RandomResizeWithBBoxOperation(size)
 
 
-class HWC2CHW(TensorOperation):
+class HWC2CHW(ImageTensorOperation):
     """
     Transpose the input image; shape (H, W, C) to shape (C, H, W).
 
@@ -1253,7 +1253,7 @@ class HWC2CHW(TensorOperation):
         return cde.HwcToChwOperation()
 
 
-class RandomCropDecodeResize(TensorOperation):
+class RandomCropDecodeResize(ImageTensorOperation):
     """
     Equivalent to RandomResizedCrop, but crops before decodes.
 
@@ -1305,7 +1305,7 @@ class RandomCropDecodeResize(TensorOperation):
                                                    self.max_attempts)
 
 
-class Pad(TensorOperation):
+class Pad(ImageTensorOperation):
     """
     Pads the image according to padding parameters.
 
@@ -1370,7 +1370,7 @@ class Pad(TensorOperation):
         return img.as_array()
 
 
-class UniformAugment(TensorOperation):
+class UniformAugment(ImageTensorOperation):
     """
     Tensor operation to perform randomly selected augmentation.
 
@@ -1407,7 +1407,7 @@ class UniformAugment(TensorOperation):
         return cde.UniformAugOperation(transforms, self.num_ops)
 
 
-class RandomSelectSubpolicy(TensorOperation):
+class RandomSelectSubpolicy(ImageTensorOperation):
     """
     Choose a random sub-policy from a list to be applied on the input image. A sub-policy is a list of tuples
     (op, prob), where op is a TensorOp operation and prob is the probability that this op will be applied. Once
@@ -1446,7 +1446,7 @@ class RandomSelectSubpolicy(TensorOperation):
         return cde.RandomSelectSubpolicyOperation(policy)
 
 
-class SoftDvppDecodeResizeJpeg(TensorOperation):
+class SoftDvppDecodeResizeJpeg(ImageTensorOperation):
     """
     Tensor operation to decode and resize JPEG image using the simulation algorithm of
     Ascend series chip DVPP module.
@@ -1486,7 +1486,7 @@ class SoftDvppDecodeResizeJpeg(TensorOperation):
         return cde.SoftDvppDecodeResizeJpegOperation(self.size)
 
 
-class SoftDvppDecodeRandomCropResizeJpeg(TensorOperation):
+class SoftDvppDecodeRandomCropResizeJpeg(ImageTensorOperation):
     """
     Tensor operation to decode, random crop and resize JPEG image using the simulation algorithm of
     Ascend series chip DVPP module.
@@ -1531,7 +1531,7 @@ class SoftDvppDecodeRandomCropResizeJpeg(TensorOperation):
         return cde.SoftDvppDecodeRandomCropResizeJpegOperation(self.size, self.scale, self.ratio, self.max_attempts)
 
 
-class RandomSolarize(TensorOperation):
+class RandomSolarize(ImageTensorOperation):
     """
     Invert all pixel values above a threshold.
 

@@ -55,9 +55,10 @@ from .validators import check_batch, check_shuffle, check_map, check_filter, che
     check_tfrecorddataset, check_vocdataset, check_cocodataset, check_celebadataset, check_minddataset, \
     check_generatordataset, check_sync_wait, check_zip_dataset, check_add_column, check_textfiledataset, check_concat, \
     check_random_dataset, check_split, check_bucket_batch_by_length, check_cluedataset, check_save, check_csvdataset, \
-    check_paddeddataset, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send, replace_none
+    check_paddeddataset, check_tuple_iterator, check_dict_iterator, check_schema, check_to_device_send
 from ..core.config import get_callback_timeout, _init_device_info
 from ..core.datatypes import mstype_to_detype, mstypelist_to_detypelist
+from ..core.validator_helpers import replace_none
 
 try:
     context = import_module("mindspore.context")

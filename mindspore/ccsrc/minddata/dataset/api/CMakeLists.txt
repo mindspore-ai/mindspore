@@ -18,7 +18,7 @@ if(ENABLE_PYTHON)
             python/bindings/dataset/kernels/ir/bindings.cc
             python/bindings/dataset/kernels/ir/image/bindings.cc
             python/bindings/dataset/text/bindings.cc
-            python/bindings/dataset/text/kernels/bindings.cc
+            python/bindings/dataset/text/kernels/ir/bindings.cc
             python/bindings/mindrecord/include/bindings.cc
             python/pybind_conversion.cc
             python/pybind_register.cc

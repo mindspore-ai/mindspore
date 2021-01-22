@@ -58,9 +58,13 @@ from .validators import check_lookup, check_jieba_add_dict, \
     check_wordpiece_tokenizer, check_regex_tokenizer, check_basic_tokenizer, check_ngram, check_pair_truncate, \
     check_to_number, check_bert_tokenizer, check_python_tokenizer, check_slidingwindow
 from ..core.datatypes import mstype_to_detype
+from ..core.validator_helpers import replace_none
 
+class TextTensorOperation:
+    def parse(self):
+        raise NotImplementedError("TextTensorOperation has to implement parse method.")
 
-class Lookup(cde.LookupOp):
+class Lookup(TextTensorOperation):
     """
     Lookup operator that looks up a word to an id.
 
@@ -82,10 +86,15 @@ class Lookup(cde.LookupOp):
 
     @check_lookup
     def __init__(self, vocab, unknown_token=None, data_type=mstype.int32):
-        super().__init__(vocab, unknown_token, mstype_to_detype(data_type))
+        self.vocab = vocab
+        self.unknown_token = replace_none(unknown_token, '')
+        self.data_type = data_type
+
+    def parse(self):
+        return cde.LookupOperation(self.vocab, self.unknown_token, str(mstype_to_detype(self.data_type)))
 
 
-class SlidingWindow(cde.SlidingWindowOp):
+class SlidingWindow(TextTensorOperation):
     """
     TensorOp to construct a tensor from data (only 1-D for now), where each element in the dimension axis
     is a slice of data starting at the corresponding position, with a specified width.
@@ -114,10 +123,14 @@ class SlidingWindow(cde.SlidingWindowOp):
 
     @check_slidingwindow
     def __init__(self, width, axis=0):
-        super().__init__(width, axis)
+        self.width = width
+        self.axis = axis
+
+    def parse(self):
+        return cde.SlidingWindowOperation(self.width, self.axis)
 
 
-class Ngram(cde.NgramOp):
+class Ngram(TextTensorOperation):
     """
     TensorOp to generate n-gram from a 1-D string Tensor.
 
@@ -145,7 +158,13 @@ class Ngram(cde.NgramOp):
 
     @check_ngram
     def __init__(self, n, left_pad=("", 0), right_pad=("", 0), separator=" "):
-        super().__init__(n, left_pad[1], right_pad[1], left_pad[0], right_pad[0], separator)
+        self.ngrams = n
+        self.left_pad = left_pad
+        self.right_pad = right_pad
+        self.separator = separator
+
+    def parse(self):
+        return cde.NgramOperation(self.ngrams, self.left_pad, self.right_pad, self.separator)
 
 
 DE_C_INTER_JIEBA_MODE = {
@@ -155,7 +174,7 @@ DE_C_INTER_JIEBA_MODE = {
 }
 
 
-class JiebaTokenizer(cde.JiebaTokenizerOp):
+class JiebaTokenizer(TextTensorOperation):
     """
     Tokenize Chinese string into words based on dictionary.
 
@@ -196,11 +215,19 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
 
         self.mode = mode
         self.__check_path__(hmm_path)
+        self.hmm_path = hmm_path
         self.__check_path__(mp_path)
+        self.mp_path = mp_path
         self.with_offsets = with_offsets
-        super().__init__(hmm_path, mp_path,
-                         DE_C_INTER_JIEBA_MODE[mode],
-                         self.with_offsets)
+        self.words = []
+
+    def parse(self):
+        jieba_tokenizer = cde.JiebaTokenizerOperation(self.hmm_path, self.mp_path,
+                                                      DE_C_INTER_JIEBA_MODE[self.mode],
+                                                      self.with_offsets)
+        for word in self.words:
+            jieba_tokenizer.add_word(word[0], word[1])
+        return jieba_tokenizer
 
     @check_jieba_add_word
     def add_word(self, word, freq=None):
@@ -225,9 +252,9 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
         """
 
         if freq is None:
-            super().add_word(word, 0)
+            self.words.append((word, 0))
         else:
-            super().add_word(word, freq)
+            self.words.append((word, freq))
 
     @check_jieba_add_dict
     def add_dict(self, user_dict):
@@ -308,7 +335,7 @@ class JiebaTokenizer(cde.JiebaTokenizerOp):
                 " jieba mode file {} is not exist.".format(model_path))
 
 
-class UnicodeCharTokenizer(cde.UnicodeCharTokenizerOp):
+class UnicodeCharTokenizer(TextTensorOperation):
     """
     Tokenize a scalar tensor of UTF-8 string to Unicode characters.
 
@@ -332,9 +359,12 @@ class UnicodeCharTokenizer(cde.UnicodeCharTokenizerOp):
     @check_with_offsets
     def __init__(self, with_offsets=False):
         self.with_offsets = with_offsets
-        super().__init__(self.with_offsets)
+
+    def parse(self):
+        return cde.UnicodeCharTokenizerOperation(self.with_offsets)
 
 
+# TODO(alexyuyue): Need to decouple WordpieceTokenizerOp to WordpieceTokenizerOperation after it's supported in C++
 class WordpieceTokenizer(cde.WordpieceTokenizerOp):
     """
     Tokenize scalar token or 1-D tokens to 1-D subword tokens.
@@ -386,7 +416,7 @@ DE_C_INTER_SENTENCEPIECE_OUTTYPE = {
 }
 
 
-class SentencePieceTokenizer(cde.SentencePieceTokenizerOp):
+class SentencePieceTokenizer(TextTensorOperation):
     """
     Tokenize scalar token or 1-D tokens to tokens by sentencepiece.
 
@@ -404,19 +434,15 @@ class SentencePieceTokenizer(cde.SentencePieceTokenizerOp):
     """
 
     def __init__(self, mode, out_type):
+        self.mode = mode
         self.out_type = out_type
-        if isinstance(mode, str):
-            model_path, model_filename = os.path.split(mode)
-            super().__init__(model_path, model_filename,
-                             DE_C_INTER_SENTENCEPIECE_LOADTYPE[SPieceTokenizerLoadType.FILE],
-                             DE_C_INTER_SENTENCEPIECE_OUTTYPE[out_type])
-        elif isinstance(mode, cde.SentencePieceVocab):
-            super().__init__(mode, DE_C_INTER_SENTENCEPIECE_LOADTYPE[SPieceTokenizerLoadType.MODEL],
-                             DE_C_INTER_SENTENCEPIECE_OUTTYPE[out_type])
+
+    def parse(self):
+        return cde.SentencePieceTokenizerOperation(self.mode, DE_C_INTER_SENTENCEPIECE_OUTTYPE[self.out_type])
 
 
 if platform.system().lower() != 'windows':
-    class WhitespaceTokenizer(cde.WhitespaceTokenizerOp):
+    class WhitespaceTokenizer(TextTensorOperation):
         """
         Tokenize a scalar tensor of UTF-8 string on ICU4C defined whitespaces, such as: ' ', '\\\\t', '\\\\r', '\\\\n'.
 
@@ -444,10 +470,12 @@ if platform.system().lower() != 'windows':
         @check_with_offsets
         def __init__(self, with_offsets=False):
             self.with_offsets = with_offsets
-            super().__init__(self.with_offsets)
+
+        def parse(self):
+            return cde.WhitespaceTokenizerOperation(self.with_offsets)
 
 
-    class UnicodeScriptTokenizer(cde.UnicodeScriptTokenizerOp):
+    class UnicodeScriptTokenizer(TextTensorOperation):
         """
         Tokenize a scalar tensor of UTF-8 string on Unicode script boundaries.
 
@@ -475,12 +503,16 @@ if platform.system().lower() != 'windows':
 
         @check_unicode_script_tokenizer
         def __init__(self, keep_whitespace=False, with_offsets=False):
+            keep_whitespace = replace_none(keep_whitespace, False)
+            with_offsets = replace_none(with_offsets, False)
             self.keep_whitespace = keep_whitespace
             self.with_offsets = with_offsets
-            super().__init__(self.keep_whitespace, self.with_offsets)
+
+        def parse(self):
+            return cde.UnicodeScriptTokenizerOperation(self.keep_whitespace, self.with_offsets)
 
 
-    class CaseFold(cde.CaseFoldOp):
+    class CaseFold(TextTensorOperation):
         """
         Apply case fold operation on UTF-8 string tensor.
 
@@ -494,6 +526,9 @@ if platform.system().lower() != 'windows':
             >>> data1 = data1.map(operations=case_op)
         """
 
+        def parse(self):
+            return cde.CaseFoldOperation()
+
 
     DE_C_INTER_NORMALIZE_FORM = {
         NormalizeForm.NONE: cde.NormalizeForm.DE_NORMALIZE_NONE,
@@ -504,7 +539,7 @@ if platform.system().lower() != 'windows':
     }
 
 
-    class NormalizeUTF8(cde.NormalizeUTF8Op):
+    class NormalizeUTF8(TextTensorOperation):
         """
         Apply normalize operation on UTF-8 string tensor.
 
@@ -534,11 +569,14 @@ if platform.system().lower() != 'windows':
             if not isinstance(normalize_form, NormalizeForm):
                 raise TypeError("Wrong input type for normalization_form, should be enum of 'NormalizeForm'.")
 
+            normalize_form = replace_none(normalize_form, NormalizeForm.NFKC)
             self.normalize_form = DE_C_INTER_NORMALIZE_FORM[normalize_form]
-            super().__init__(self.normalize_form)
+
+        def parse(self):
+            return cde.NormalizeUTF8Operation(self.normalize_form)
 
 
-    class RegexReplace(cde.RegexReplaceOp):
+    class RegexReplace(TextTensorOperation):
         """
         Replace UTF-8 string tensor with 'replace' according to regular expression 'pattern'.
 
@@ -566,10 +604,12 @@ if platform.system().lower() != 'windows':
             self.pattern = pattern
             self.replace = replace
             self.replace_all = replace_all
-            super().__init__(self.pattern, self.replace, self.replace_all)
+
+        def parse(self):
+            return cde.RegexReplaceOperation(self.pattern, self.replace, self.replace_all)
 
 
-    class RegexTokenizer(cde.RegexTokenizerOp):
+    class RegexTokenizer(TextTensorOperation):
         """
         Tokenize a scalar tensor of UTF-8 string by regex expression pattern.
 
@@ -606,10 +646,12 @@ if platform.system().lower() != 'windows':
             self.delim_pattern = delim_pattern
             self.keep_delim_pattern = keep_delim_pattern
             self.with_offsets = with_offsets
-            super().__init__(self.delim_pattern, self.keep_delim_pattern, self.with_offsets)
+
+        def parse(self):
+            return cde.RegexTokenizerOperation(self.delim_pattern, self.keep_delim_pattern, self.with_offsets)
 
 
-    class BasicTokenizer(cde.BasicTokenizerOp):
+    class BasicTokenizer(TextTensorOperation):
         """
         Tokenize a scalar tensor of UTF-8 string by specific rules.
 
@@ -661,11 +703,13 @@ if platform.system().lower() != 'windows':
             self.normalization_form = DE_C_INTER_NORMALIZE_FORM[normalization_form]
             self.preserve_unused_token = preserve_unused_token
             self.with_offsets = with_offsets
-            super().__init__(self.lower_case, self.keep_whitespace, self.normalization_form,
-                             self.preserve_unused_token, self.with_offsets)
+
+        def parse(self):
+            return cde.BasicTokenizerOperation(self.lower_case, self.keep_whitespace, self.normalization_form,
+                                               self.preserve_unused_token, self.with_offsets)
 
 
-    class BertTokenizer(cde.BertTokenizerOp):
+    class BertTokenizer(TextTensorOperation):
         """
         Tokenizer used for Bert text process.
 
@@ -725,12 +769,14 @@ if platform.system().lower() != 'windows':
             self.normalization_form = DE_C_INTER_NORMALIZE_FORM[normalization_form]
             self.preserve_unused_token = preserve_unused_token
             self.with_offsets = with_offsets
-            super().__init__(self.vocab, self.suffix_indicator, self.max_bytes_per_token, self.unknown_token,
-                             self.lower_case, self.keep_whitespace, self.normalization_form,
-                             self.preserve_unused_token, self.with_offsets)
+
+        def parse(self):
+            return cde.BertTokenizerOperation(self.vocab, self.suffix_indicator, self.max_bytes_per_token,
+                                              self.unknown_token, self.lower_case, self.keep_whitespace,
+                                              self.normalization_form, self.preserve_unused_token, self.with_offsets)
 
 
-class TruncateSequencePair(cde.TruncateSequencePairOp):
+class TruncateSequencePair(TextTensorOperation):
     """
     Truncate a pair of rank-1 tensors such that the total length is less than max_length.
 
@@ -757,10 +803,13 @@ class TruncateSequencePair(cde.TruncateSequencePairOp):
 
     @check_pair_truncate
     def __init__(self, max_length):
-        super().__init__(max_length)
+        self.max_length = max_length
+
+    def parse(self):
+        return cde.TruncateSequencePairOperation(self.max_length)
 
 
-class ToNumber(cde.ToNumberOp):
+class ToNumber(TextTensorOperation):
     """
     Tensor operation to convert every element of a string tensor to a number.
 
@@ -789,7 +838,9 @@ class ToNumber(cde.ToNumberOp):
     def __init__(self, data_type):
         data_type = mstype_to_detype(data_type)
         self.data_type = str(data_type)
-        super().__init__(data_type)
+
+    def parse(self):
+        return cde.ToNumberOperation(self.data_type)
 
 
 class PythonTokenizer:
