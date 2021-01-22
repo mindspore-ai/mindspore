@@ -17,7 +17,8 @@ import argparse
 import numpy as np
 
 import mindspore as ms
-from mindspore import Tensor, load_checkpoint, load_param_into_net, export
+from mindspore import Tensor
+from mindspore.train.serialization import load_checkpoint, load_param_into_net, export
 
 from src.FasterRcnn.faster_rcnn_r50 import Faster_Rcnn_Resnet50
 from src.config import config
@@ -25,7 +26,7 @@ from src.config import config
 parser = argparse.ArgumentParser(description='fasterrcnn_export')
 parser.add_argument('--ckpt_file', type=str, default='', help='fasterrcnn ckpt file.')
 parser.add_argument('--output_file', type=str, default='', help='fasterrcnn output air name.')
-parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX", "MINDIR"], default='AIR', help='file format')
+parser.add_argument('--file_format', type=str, choices=["AIR", "ONNX"], default='AIR', help='file format')
 args = parser.parse_args()
 
 if __name__ == '__main__':
