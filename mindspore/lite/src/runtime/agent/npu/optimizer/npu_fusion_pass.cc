@@ -226,7 +226,16 @@ int NPUFusionPass::FormatFusion(kernel::LiteKernel *kernel) {
     }
     RemoveAndFreeKernel(trans_kernel);
   }
-  pre_kernel->set_out_kernels(pre_insert_kernels);
+  auto pre_out_kernels = pre_kernel->out_kernels();
+  size_t index = 0;
+  for (; index < pre_out_kernels.size(); index++) {
+    if (pre_out_kernels[index] == kernel) {
+      pre_out_kernels.erase(pre_out_kernels.begin() + index);
+      break;
+    }
+  }
+  pre_out_kernels.insert(pre_out_kernels.begin() + index, pre_insert_kernels.begin(), pre_insert_kernels.end());
+  pre_kernel->set_out_kernels(pre_out_kernels);
   RemoveAndFreeKernel(kernel);
   return RET_OK;
 }

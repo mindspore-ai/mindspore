@@ -123,8 +123,8 @@ int LayerNormInt8Run(void *cdata, int task_id) {
 }
 
 int LayerNormInt8CPUKernel::Run() {
-  src_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->MutableData());
-  dst_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->MutableData());
+  src_ptr_ = reinterpret_cast<int8_t *>(in_tensors_.at(0)->data_c());
+  dst_ptr_ = reinterpret_cast<int8_t *>(out_tensors_.at(0)->data_c());
 
   auto ret = ParallelLaunch(this->context_->thread_pool_, LayerNormInt8Run, this, op_parameter_->thread_num_);
   if (ret != RET_OK) {
