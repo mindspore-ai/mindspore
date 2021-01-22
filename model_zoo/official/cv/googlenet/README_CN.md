@@ -1,5 +1,7 @@
 # 目录
 
+[View English](./README.md)
+
 <!-- TOC -->
 
 - [目录](#目录)
@@ -513,4 +515,3 @@ GoogleNet由多个inception模块串联起来，可以更加深入。  降维的
 # ModelZoo主页  
 
  请浏览官网[主页](https://gitee.com/mindspore/mindspore/tree/master/model_zoo)。
-
