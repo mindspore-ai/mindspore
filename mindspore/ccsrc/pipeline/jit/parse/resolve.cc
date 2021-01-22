@@ -276,8 +276,15 @@ AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpa
   if (!data_converter::IsCellInstance(obj)) {
     return nullptr;
   }
-  py::object obj_attr = obj.attr(attr.c_str());
-  AnfNodePtr resolved_node = ResolveObjectAndAddToManager(manager, obj_attr, node);
+
+  const std::string fn = PYTHON_MOD_GET_MEMBER_NAMESPACE_SYMBOL;
+  const std::string module = "mindspore._extends.parse.parser";
+  py::object namespace_obj = parse::python_adapter::GetPyFn(module, fn)(obj);
+  auto new_namespace = std::make_shared<NameSpace>(RESOLVE_NAMESPACE_NAME_CLASS_MEMBER, namespace_obj);
+  auto new_symbol = std::make_shared<Symbol>(attr);
+
+  AnfNodePtrList inputs = {NewValueNode(prim::kPrimResolve), NewValueNode(new_namespace), NewValueNode(new_symbol)};
+  AnfNodePtr resolved_node = node->func_graph()->NewCNode(inputs);
   TraceManager::ClearParseOrResolveDebugInfo();
   return resolved_node;
 }
@@ -285,16 +292,10 @@ AnfNodePtr ResolveCellwithAttr(const FuncGraphManagerPtr &manager, const NameSpa
 namespace {
 opt::OptPassGroupMap GetOptResolvePasses(const opt::irpass::ResolveIRPassLib &irpass) {
   opt::OptPassGroupMap map({
-    {"resolve_attr",
-     {
-       // for resolve primitive;
-       irpass.resolver_resolve_attr_,
-     }},
     {"resolve",
      {
        // for resolve and getattr primitive;
-       irpass.resolver_resolve_,
-       irpass.resolver_getattr_,
+       irpass.resolver_resolve_and_getattr_,
      }},
   });
   return map;
