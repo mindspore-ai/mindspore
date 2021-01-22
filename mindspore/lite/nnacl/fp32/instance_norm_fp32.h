@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_LAYER_NORM_POPULATE_H_
-#define MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_LAYER_NORM_POPULATE_H_
+#ifndef MINDSPORE_LITE_NNACL_FP32_INSTANCE_NORM_H_
+#define MINDSPORE_LITE_NNACL_FP32_INSTANCE_NORM_H_
 
-#include "src/ops/arithmetic.h"
+#include "nnacl/op_base.h"
+#include "nnacl/instance_norm_parameter.h"
 
-namespace mindspore {
-namespace lite {
-OpParameter *PopulateLayerNormParameter(const mindspore::lite::PrimitiveC *primitive);
-}  // namespace lite
-}  // namespace mindspore
-#endif  // MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_LAYER_NORM_POPULATE_H_
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int InstanceNorm(const float *src_data, float *dst_data, const float *gamma_data, const float *beta_data,
+                 const InstanceNormParameter *param, size_t task_id);
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // MINDSPORE_LITE_NNACL_FP32_INSTANCE_NORM_H_

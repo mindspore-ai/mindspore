@@ -23,9 +23,8 @@
 extern "C" {
 #endif
 
-int LayerNorm(size_t outer_size, size_t inner_size, const float *src_data, const float *gamma_data,
-              const float *beta_data, enum ElementwiseMode elementwise_mode, float epsilon, float *dst_data,
-              size_t task_id, size_t thread_num);
+int LayerNorm(const float *src_data, const float *gamma_data, const float *beta_data, float *dst_data,
+              LayerNormParameter *param, size_t task_id);
 #ifdef __cplusplus
 }
 #endif

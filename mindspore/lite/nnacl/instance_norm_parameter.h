@@ -23,9 +23,10 @@ typedef struct InstanceNormParameter {
   // Primitive parameter
   OpParameter op_parameter_;
   float epsilon_;
-  float momentum_;
   // shape correlative
+  int batch_;
   int channel_;
+  int inner_size_;
 } InstanceNormParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_INSTANCE_NORM_PARAMETER_H_

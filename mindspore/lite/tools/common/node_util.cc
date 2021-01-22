@@ -48,7 +48,6 @@ static const std::vector<schema::PrimitiveType> nhwcOpList = {
   schema::PrimitiveType_FusedBatchNorm,
   schema::PrimitiveType_PReLU,
   schema::PrimitiveType_BiasAdd,
-  schema::PrimitiveType_InstanceNorm,
   schema::PrimitiveType_SpaceToDepth,
   schema::PrimitiveType_DepthToSpace,
   schema::PrimitiveType_TopK};

@@ -14,9 +14,7 @@
  * limitations under the License.
  */
 
-#include "src/ops/populate/layer_norm_populate.h"
 #include "nnacl/layer_norm_parameter.h"
-#include <cstdint>
 #include "src/ops/layer_norm.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
@@ -32,20 +30,15 @@ OpParameter *PopulateLayerNormParameter(const mindspore::lite::PrimitiveC *primi
   memset(layer_norm_parameter, 0, sizeof(LayerNormParameter));
   layer_norm_parameter->op_parameter_.type_ = primitive->Type();
   auto param = reinterpret_cast<mindspore::lite::LayerNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  auto normalized_shape = param->normlized_shape();
+  auto normalized_shape = param->GetNormlizedShape();
   layer_norm_parameter->normalized_dims_ = normalized_shape.size();
-  if (normalized_shape.size() > SIZE_MAX / sizeof(int)) {
-    MS_LOG(ERROR) << "normalized_shape size too big";
-    free(layer_norm_parameter);
-    return nullptr;
-  }
   MS_ASSERT(normalized_shape.size() < 8);
   for (size_t i = 0; i < normalized_shape.size(); i++) {
     layer_norm_parameter->normalized_shape_[i] = normalized_shape[i];
   }
   layer_norm_parameter->epsilon_ = param->GetEpsilon();
-  layer_norm_parameter->elementwise_mode_ = static_cast<ElementwiseMode>(param->elementwise_mode());
-
+  layer_norm_parameter->begin_norm_axis_ = param->GetBeginNormAxis();
+  layer_norm_parameter->begin_params_axis_ = param->GetBeginParamsAxis();
   return reinterpret_cast<OpParameter *>(layer_norm_parameter);
 }
 
