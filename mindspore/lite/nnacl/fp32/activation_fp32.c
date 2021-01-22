@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "nnacl/fp32/activation_fp32.h"
 #include <float.h>
+#include "nnacl/fp32/activation_fp32.h"
+#include "nnacl/fp32/exp_fp32.h"
 #include "nnacl/errorcode.h"
 
 int Fp32Relu(const float *src, int length, float *dst) {
@@ -72,19 +72,17 @@ int LRelu(const float *src, int length, float *dst, float alpha) {
 }
 
 int Sigmoid(const float *src, int length, float *dst) {
-  const float upper_bound = 16.619047164916992188f;
-  const float lower_bound = -9.0f;
-  for (int i = 0; i < length; ++i) {
-    float input_val = src[i];
-    float result;
-    if (input_val > upper_bound) {
-      result = 1.0f;
-    } else if (input_val < lower_bound) {
-      result = exp(input_val);
-    } else {
-      result = 1.0f / (1.0f + exp(-input_val));
-    }
-    dst[i] = result;
+  int i = 0;
+#ifdef ENABLE_ARM64
+  int count = (length / C4NUM) * C4NUM;
+  for (; i < count; i += C4NUM) {
+    simd_exp(vnegq_f32(vld1q_f32(src + i)), dst + i);
+    vst1q_f32(dst + i, vdivq_f32(vdupq_n_f32(1.0f), vaddq_f32(vdupq_n_f32(1.0f), vld1q_f32(dst + i))));
+  }
+#endif
+  for (; i < length; ++i) {
+    single_exp(-src[i], dst + i);
+    dst[i] = 1.0f / (1.0f + dst[i]);
   }
   return NNACL_OK;
 }
@@ -103,8 +101,33 @@ float TanhOpt(float src) {
 }
 
 int Tanh(const float *src, int length, float *dst) {
-  for (int i = 0; i < length; ++i) {
-    dst[i] = TanhOpt(src[i]);
+  int i = 0;
+#ifdef ENABLE_ARM64
+  static float32x4_t paramv[] = {{378.0f, 378.0f, 378.0f, 378.0f},
+                                 {17325.0f, 17325.0f, 17325.0f, 17325.0f},
+                                 {135135.0f, 135135.0f, 135135.0f, 135135.0f},
+                                 {28.0f, 28.0f, 28.0f, 28.0f},
+                                 {3150.0f, 3150.0f, 3150.0f, 3150.0f},
+                                 {62370.0f, 62370.0f, 62370.0f, 62370.0f}};
+  int count = (length / C4NUM) * C4NUM;
+  for (; i < count; i += C4NUM) {
+    float32x4_t input = vld1q_f32(src + i);
+    float32x4_t square = vmulq_f32(input, input);
+    float32x4_t a = vmulq_f32(
+      vaddq_f32(vmulq_f32(vaddq_f32(vmulq_f32(vaddq_f32(square, paramv[0]), square), paramv[1]), square), paramv[2]),
+      input);
+    float32x4_t b = vaddq_f32(
+      vmulq_f32(vaddq_f32(vmulq_f32(vaddq_f32(vmulq_f32(paramv[3], square), paramv[4]), square), paramv[5]), square),
+      paramv[2]);
+    vst1q_f32(dst + i, vdivq_f32(a, b));
+  }
+#endif
+  for (; i < length; ++i) {
+    float input = src[i];
+    float square = input * input;
+    float a = (((square + 378.0f) * square + 17325.0f) * square + 135135.0f) * input;
+    float b = ((28.0f * square + 3150.0f) * square + 62370.0f) * square + 135135.0f;
+    dst[i] = a / b;
   }
   return NNACL_OK;
 }
