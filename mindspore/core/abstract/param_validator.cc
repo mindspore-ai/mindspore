@@ -16,6 +16,8 @@
 
 #include "abstract/param_validator.h"
 
+#include <algorithm>
+#include <set>
 #include <string>
 #include <sstream>
 #include <memory>
@@ -142,6 +144,69 @@ void CheckArgsSize(const std::string &op, const mindspore::abstract::AbstractBas
   for (size_t i = 0; i < size_expect; i++) {
     MS_EXCEPTION_IF_NULL(args_spec_list[i]);
   }
+}
+
+void CheckShapeAllPositive(const std::string &op, const ShapeVector &shape) {
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if (shape[i] < 0) {
+      MS_LOG(EXCEPTION) << op << " shape element [" << i << "] must be positive integer, but got " << shape[i];
+    }
+  }
+}
+
+void CheckShapeAnyAndPositive(const std::string &op, const ShapeVector &shape) {
+  for (size_t i = 0; i < shape.size(); ++i) {
+    if ((shape[i] < 0) && (shape[i] != Shape::SHP_ANY)) {
+      MS_LOG(EXCEPTION) << op << " shape element [" << i << "] must be positive integer or SHP_ANY, but got "
+                        << shape[i];
+    }
+  }
+}
+
+int64_t CheckAttrPositiveInt64(const std::string &op, const ValuePtr &attr, const std::string &attr_name) {
+  int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
+  if (attr_val <= 0) {
+    MS_LOG(EXCEPTION) << "Invalid " << attr_name << " value: " << attr_val << ", should be greater then 0";
+  }
+  return attr_val;
+}
+
+std::vector<int64_t> CheckAttrIntOrTuple(const std::string &op, const ValuePtr &attr, const size_t start_idx,
+                                         const size_t num_element) {
+  std::vector<int64_t> result;
+  MS_EXCEPTION_IF_NULL(attr);
+  if (attr->isa<ValueTuple>()) {
+    std::vector<ValuePtr> attr_vec = attr->cast<ValueTuplePtr>()->value();
+    auto it_start = attr_vec.begin() + start_idx;
+    (void)std::transform(it_start, it_start + num_element, std::back_inserter(result),
+                         [](const ValuePtr &e) -> int64_t { return GetValue<int64_t>(e); });
+  } else {
+    int64_t attr_val = attr->cast<Int64ImmPtr>()->value();
+    result.insert(result.begin(), num_element, attr_val);
+  }
+  return result;
+}
+
+std::string CheckAttrStringSet(const std::string &op, const ValuePtr &attr, const std::string &attr_name,
+                               const std::set<std::string> &val_set) {
+  MS_EXCEPTION_IF_NULL(attr);
+  std::string attr_val = attr->cast<StringImmPtr>()->value();
+  if (val_set.find(attr_val) == val_set.end()) {
+    std::ostringstream buffer;
+    bool f_begin = true;
+    buffer << "{";
+    for (auto &x : val_set) {
+      if (!f_begin) {
+        buffer << ", ";
+      } else {
+        f_begin = false;
+      }
+      buffer << x;
+    }
+    buffer << "}";
+    MS_LOG(EXCEPTION) << op << "Unsupported " << attr_name << ": " << attr_val << ". use " << buffer.str();
+  }
+  return attr_val;
 }
 }  // namespace abstract
 }  // namespace mindspore
