@@ -48,7 +48,7 @@ CacheAdminArgHandler::CacheAdminArgHandler()
       log_level_(kDefaultLogLevel),
       memory_cap_ratio_(kMemoryCapRatio),
       hostname_(kCfgDefaultCacheHost),
-      spill_dir_(DefaultSpillDir()),
+      spill_dir_(""),
       command_id_(CommandId::kCmdUnknown) {
   // Initialize the command mappings
   arg_map_["-h"] = ArgValue::kArgHost;
@@ -334,32 +334,7 @@ Status CacheAdminArgHandler::RunCommand() {
       break;
     }
     case CommandId::kCmdStop: {
-      CacheClientGreeter comm(hostname_, port_, 1);
-      RETURN_IF_NOT_OK(comm.ServiceStart());
-      SharedMessage msg;
-      RETURN_IF_NOT_OK(msg.Create());
-      auto rq = std::make_shared<ServerStopRequest>(msg.GetMsgQueueId());
-      RETURN_IF_NOT_OK(comm.HandleRequest(rq));
-      Status rc = rq->Wait();
-      if (rc.IsError()) {
-        msg.RemoveResourcesOnExit();
-        if (rc.IsNetWorkError()) {
-          std::string errMsg = "Server on port " + std::to_string(port_) + " is not up or has been shutdown already.";
-          return Status(StatusCode::kNetWorkError, errMsg);
-        }
-        return rc;
-      }
-      // OK return code only means the server acknowledge our request but we still
-      // have to wait for its complete shutdown because the server will shutdown
-      // the comm layer as soon as the request is received, and we need to wait
-      // on the message queue instead.
-      // The server will send a message back and remove the queue and we will then wake up. But on the safe
-      // side, we will also set up an alarm and kill this process if we hang on
-      // the message queue.
-      alarm(60);
-      Status dummy_rc;
-      (void)msg.ReceiveStatus(&dummy_rc);
-      std::cout << "Cache server on port " << std::to_string(port_) << " has been stopped successfully." << std::endl;
+      RETURN_IF_NOT_OK(StopServer(command_id_));
       break;
     }
     case CommandId::kCmdGenerateSession: {
@@ -430,6 +405,36 @@ Status CacheAdminArgHandler::RunCommand() {
   return Status::OK();
 }
 
+Status CacheAdminArgHandler::StopServer(CommandId command_id) {
+  CacheClientGreeter comm(hostname_, port_, 1);
+  RETURN_IF_NOT_OK(comm.ServiceStart());
+  SharedMessage msg;
+  RETURN_IF_NOT_OK(msg.Create());
+  auto rq = std::make_shared<ServerStopRequest>(msg.GetMsgQueueId());
+  RETURN_IF_NOT_OK(comm.HandleRequest(rq));
+  Status rc = rq->Wait();
+  if (rc.IsError()) {
+    msg.RemoveResourcesOnExit();
+    if (rc.IsNetWorkError()) {
+      std::string errMsg = "Server on port " + std::to_string(port_) + " is not up or has been shutdown already.";
+      return Status(StatusCode::kNetWorkError, errMsg);
+    }
+    return rc;
+  }
+  // OK return code only means the server acknowledge our request but we still
+  // have to wait for its complete shutdown because the server will shutdown
+  // the comm layer as soon as the request is received, and we need to wait
+  // on the message queue instead.
+  // The server will send a message back and remove the queue and we will then wake up. But on the safe
+  // side, we will also set up an alarm and kill this process if we hang on
+  // the message queue.
+  alarm(60);
+  Status dummy_rc;
+  (void)msg.ReceiveStatus(&dummy_rc);
+  std::cout << "Cache server on port " << std::to_string(port_) << " has been stopped successfully." << std::endl;
+  return Status::OK();
+}
+
 Status CacheAdminArgHandler::StartServer(CommandId command_id) {
   // There currently does not exist any "install path" or method to identify which path the installed binaries will
   // exist in. As a temporary approach, we will assume that the server binary shall exist in the same path as the
@@ -462,7 +467,6 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
   // fork the child process to become the daemon
   pid_t pid;
   pid = fork();
-
   // failed to fork
   if (pid < 0) {
     std::string err_msg = "Failed to fork process for cache server: " + std::to_string(errno);
@@ -538,7 +542,7 @@ void CacheAdminArgHandler::Help() {
   std::cerr << "                [[-h | --hostname] <hostname>]            Default is " << kCfgDefaultCacheHost << ".\n";
   std::cerr << "                [[-p | --port] <port number>]             Default is " << kCfgDefaultCachePort << ".\n";
   std::cerr << "                [[-w | --workers] <number of workers>]    Default is " << kDefaultNumWorkers << ".\n";
-  std::cerr << "                [[-s | --spilldir] <spilling directory>]  Default is " << DefaultSpillDir() << ".\n";
+  std::cerr << "                [[-s | --spilldir] <spilling directory>]  Default is no spilling.\n";
   std::cerr << "                [[-l | --loglevel] <log level>]           Default is 1 (warning level).\n";
   std::cerr << "            [--destroy_session  | -d] <session id>\n";
   std::cerr << "                [[-p | --port] <port number>]\n";

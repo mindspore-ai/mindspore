@@ -15,7 +15,8 @@
 # ============================================================================
 
 # source the globals and functions for use with cache testing
-SKIP_ADMIN_COUNTER=true
+export SKIP_ADMIN_COUNTER=true
+declare session_id failed_tests
 . cachetest_lib.sh
 echo
 
@@ -28,8 +29,10 @@ UT_TEST_DIR="${BUILD_PATH}/mindspore/tests/ut/cpp"
 DateStamp=$(date +%Y%m%d_%H%M%S);
 CPP_TEST_LOG_OUTPUT="/tmp/ut_tests_cache_${DateStamp}.log"
 
-# Start a basic cache server to be used for all tests
-StartServer
+# start cache server with a spilling path to be used for all tests
+cmd="${CACHE_ADMIN} --start -s /tmp"
+CacheAdminCmd "${cmd}" 0
+sleep 1
 HandleRcExit $? 1 1
 
 # Set the environment variable to enable these pytests

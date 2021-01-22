@@ -79,6 +79,8 @@ class CacheAdminArgHandler {
 
   Status StartServer(CommandId command_id);
 
+  Status StopServer(CommandId command_id);
+
   Status AssignArg(std::string option, int32_t *out_arg, std::stringstream *arg_stream,
                    CommandId command_id = CommandId::kCmdUnknown);
 
