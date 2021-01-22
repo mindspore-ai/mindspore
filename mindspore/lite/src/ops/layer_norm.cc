@@ -81,7 +81,7 @@ int LayerNorm::UnPackToFlatBuilder(const schema::Primitive *primitive, flatbuffe
     return RET_ERROR;
   }
 
-  auto val_offset = schema::CreateLayerNorm(*fbb, attr->epsilon(), attr->begin_norm_axis(), attr->begin_params_axis());
+  auto val_offset = schema::CreateLayerNorm(*fbb, attr->begin_norm_axis(), attr->begin_params_axis(), attr->epsilon());
   auto prim_offset = schema::CreatePrimitive(*fbb, schema::PrimitiveType_LayerNorm, val_offset.o);
   fbb->Finish(prim_offset);
   return RET_OK;
