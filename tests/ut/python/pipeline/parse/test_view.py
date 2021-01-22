@@ -15,7 +15,9 @@
 """ test view"""
 import pytest
 
+import mindspore as ms
 import mindspore.nn as nn
+import mindspore.common.initializer as init
 from mindspore import Tensor
 from mindspore import context
 
@@ -27,6 +29,19 @@ def test_view():
         def __init__(self):
             super(Net, self).__init__()
             self.value = Tensor([[1, 2, 3], [4, 5, 6]])
+
+        def construct(self):
+            return self.value.view(-1)
+
+    net = Net()
+    net()
+
+
+def test_view_initializer():
+    class Net(nn.Cell):
+        def __init__(self):
+            super(Net, self).__init__()
+            self.value = init.initializer('normal', [2, 3], ms.float32)
 
         def construct(self):
             return self.value.view(-1)
