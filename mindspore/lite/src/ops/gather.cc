@@ -112,6 +112,9 @@ int Gather::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outp
   auto output = outputs_.front();
   MS_ASSERT(input != nullptr);
   output->set_data_type(input->data_type());
+  if (this->quant_type() == schema::QuantType_WeightQuant) {
+    output->set_data_type(kNumberTypeFloat32);
+  }
   output->set_format(input->format());
   if (!infer_flag()) {
     return RET_INFER_INVALID;
