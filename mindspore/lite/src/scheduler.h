@@ -26,6 +26,12 @@
 #include "src/ops/primitive_c.h"
 
 namespace mindspore::lite {
+
+static std::vector<schema::PrimitiveType> packed_op = {
+  schema::PrimitiveType_Conv2D,          schema::PrimitiveType_DeConv2D,
+  schema::PrimitiveType_DepthwiseConv2D, schema::PrimitiveType_DeDepthwiseConv2D,
+  schema::PrimitiveType_MatMul,          schema::PrimitiveType_Lstm};
+
 class Scheduler {
  public:
   Scheduler(const InnerContext *ctx, Model *src_model, std::vector<Tensor *> *src_tensors)

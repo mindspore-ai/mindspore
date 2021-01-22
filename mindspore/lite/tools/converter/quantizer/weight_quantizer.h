@@ -62,7 +62,7 @@ class WeightQuantizer : public Quantizer {
   std::vector<std::vector<std::string>> images_;  // multi_input, [[mode_input_0], [model_input_1]...]
   std::vector<std::unordered_map<std::string, mindspore::tensor::MSTensor *>> fp32_output_tensors_;
 
-  STATUS DoMiexedQuant(FuncGraphPtr);
+  STATUS DoMixedQuant(FuncGraphPtr);
   STATUS SetAbstract(ParamValueLitePtr param_value, ParameterPtr param_node, std::shared_ptr<PrimitiveC> primitive_c);
   STATUS DoFixedQuant(FuncGraphPtr);
   STATUS RunFp32Graph(FuncGraphPtr);
