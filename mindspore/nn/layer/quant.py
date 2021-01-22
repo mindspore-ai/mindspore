@@ -235,12 +235,12 @@ class FakeQuantWithMinMaxObserver(UniformQuantObserver):
 
     where X is the input tensor, and :math:`c` is the `ema_decay`.
 
-    The scale s and zero point zp is computed as:
+    The scale and zero point zp is computed as:
 
     .. math::
 
         \begin{array}{ll} \\
-            s =
+            scale =
             \begin{cases}
                 \frac{x_{max} - x_{min}}{Q_{max} - Q_{min}}
                   & \text{ if } symmetric = \text{False} \\
@@ -1375,7 +1375,7 @@ class QuantMindirBlock(Cell):
 
        Args:
         core_op (Cell): The operation cell.
-        weight (Tensor): The weigth of the cell.
+        weight (Tensor): The weight of the cell.
         bias (Tensor): The bias of the cell. Default: None.
         activation (str): The regularization function applied to the output of the layer, eg. 'relu'. Default: None.
         param_dict (dict): The information of the cell.

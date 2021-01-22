@@ -454,8 +454,8 @@ class GlobalBatchNorm(_BatchNorm):
         ``Ascend``
 
     Examples:
-        >>> # This example should be run with multiple processes. Refer to the run_distribute_train.sh
-        >>> import os
+        >>> # This example should be run with multiple processes.
+        >>> # Please refer to the tutorial > Distributed Training on mindspore.cn.
         >>> import numpy as np
         >>> from mindspore.communication import init
         >>> from mindspore import context
@@ -463,9 +463,7 @@ class GlobalBatchNorm(_BatchNorm):
         >>> from mindspore import nn, Tensor
         >>> from mindspore.common import dtype as mstype
         >>>
-        >>> device_id = int(os.environ["DEVICE_ID"])
-        >>> context.set_context(mode=context.GRAPH_MODE, device_target="Ascend", save_graphs=True,
-        ...                     device_id=int(device_id))
+        >>> context.set_context(mode=context.GRAPH_MODE)
         >>> init()
         >>> context.reset_auto_parallel_context()
         >>> context.set_auto_parallel_context(parallel_mode=ParallelMode.DATA_PARALLEL)
