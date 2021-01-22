@@ -29,7 +29,7 @@ RandomCropDecodeResizeOp::RandomCropDecodeResizeOp(int32_t target_height, int32_
 
 Status RandomCropDecodeResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   if (input == nullptr) {
-    RETURN_STATUS_UNEXPECTED("input tensor is null");
+    RETURN_STATUS_UNEXPECTED("RandomCropDecodeResize: input image is empty.");
   }
   if (!IsNonEmptyJPEG(input)) {
     DecodeOp op(true);

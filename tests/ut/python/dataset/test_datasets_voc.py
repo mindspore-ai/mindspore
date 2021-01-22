@@ -181,6 +181,93 @@ def test_voc_exception():
     except RuntimeError:
         pass
 
+    def exception_func(item):
+        raise Exception("Error occur!")
+
+    try:
+        data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
+        data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["bbox"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["difficult"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["truncate"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
+        data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
+        data = data.map(operations=exception_func, input_columns=["target"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.VOCDataset(DATA_DIR, task="Segmentation", usage="train", shuffle=False)
+        data = data.map(operations=vision.Decode(), input_columns=["target"], num_parallel_workers=1)
+        data = data.map(operations=exception_func, input_columns=["target"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
 
 def test_voc_num_classes():
     data1 = ds.VOCDataset(DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)

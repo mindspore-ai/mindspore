@@ -58,13 +58,20 @@ void Task::operator()() {
     }
     // Some error codes are ignored, e.g. interrupt. Others we just shutdown the group.
     if (rc_.IsError() && !rc_.IsInterrupted()) {
+      if (rc_.get_code() == StatusCode::kNetWorkError) {
+        MS_LOG(WARNING) << rc_;
+      } else {
+        MS_LOG(ERROR) << rc_;
+      }
       ShutdownGroup();
     }
   } catch (const std::bad_alloc &e) {
     rc_ = Status(StatusCode::kOutOfMemory, __LINE__, __FILE__, e.what());
+    MS_LOG(ERROR) << rc_;
     ShutdownGroup();
   } catch (const std::exception &e) {
     rc_ = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, e.what());
+    MS_LOG(ERROR) << rc_;
     ShutdownGroup();
   }
 }
@@ -152,19 +159,19 @@ Status Task::Join(WaitFlag blocking) {
           // Because hostPush hung in DeviceQueueOp, wait 5 seconds and destroy the tdt
           if (wait_times > 5 && my_name_.find("DeviceQueueOp") != std::string::npos) {
             MS_LOG(WARNING) << "Wait " << wait_times << " seconds, "
-                            << "the task: " << my_name_ << " will be destoryed by TdtHostDestory.";
+                            << "the task: " << my_name_ << " will be destroyed by TdtHostDestory.";
             int32_t destory_status = tdt::TdtHostDestroy();
             if (destory_status != TDT_OK_CODE) {
-              MS_LOG(WARNING) << "Destory tsd failed, status = " << destory_status << ".";
+              MS_LOG(WARNING) << "Destroy tsd failed, status = " << destory_status << ".";
             } else {
-              MS_LOG(INFO) << "Destory tsd success.";
+              MS_LOG(INFO) << "Destroy tsd success.";
             }
 
             // just wait 30 seconds
-            // case1: cpu usage 100%, DeviceQueueOp thread may destory without thrd_ future
+            // case1: cpu usage 100%, DeviceQueueOp thread may destroy without thrd_ future
             if (wait_times > 30) {
               MS_LOG(WARNING) << MyName() << " Thread ID " << ss.str()
-                              << " is not responding. Maybe it's destoryed, task stop.";
+                              << " is not responding. Maybe it's destroyed, task stop.";
               break;
             }
           }

@@ -64,7 +64,7 @@ class CsvOp : public ParallelOp {
     CsvParser() = delete;
 
     CsvParser(int32_t worker_id, std::shared_ptr<JaggedConnector> connector, int64_t rows_per_buffer, char field_delim,
-              std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default);
+              std::vector<std::shared_ptr<CsvOp::BaseRecord>> column_default, std::string file_path);
 
     ~CsvParser() = default;
 
@@ -142,6 +142,7 @@ class CsvOp : public ParallelOp {
     std::unique_ptr<TensorQTable> tensor_table_;
     std::unique_ptr<DataBuffer> cur_buffer_;
     std::string err_message_;
+    std::string file_path_;
   };
 
   class Builder {

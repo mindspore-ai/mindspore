@@ -37,7 +37,7 @@ ToNumberOp::ToNumberOp(const DataType &cast_to_type) : cast_to_type_(cast_to_typ
 ToNumberOp::ToNumberOp(const std::string &cast_to_type) : cast_to_type_(DataType(cast_to_type)) {}
 
 Status ToNumberOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "Input tenosrs should have type string.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "ToNumber: input should be string datatype.");
 
   switch (cast_to_type_.value()) {
     case DataType::DE_INT8:
@@ -74,7 +74,10 @@ Status ToNumberOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr
       RETURN_IF_NOT_OK(ToDouble(input, output));
       break;
     default:
-      RETURN_STATUS_UNEXPECTED("Unsupported cast type: " + cast_to_type_.ToString());
+      RETURN_STATUS_UNEXPECTED(
+        "ToNumber: "
+        "unsupported cast type: " +
+        cast_to_type_.ToString());
   }
 
   return Status::OK();
@@ -100,14 +103,18 @@ Status ToNumberOp::ToSignedIntegral(const std::shared_ptr<Tensor> &input, std::s
     } catch (const std::out_of_range &) {
       is_cast_out_of_range = true;
     } catch (const std::invalid_argument &) {
-      RETURN_STATUS_UNEXPECTED("It is invalid to convert " + std::string(*it) + " to a number.");
+      RETURN_STATUS_UNEXPECTED(
+        "ToNumber: "
+        "it is invalid to convert \"" +
+        std::string(*it) + "\" to a number.");
     }
 
     if (result > std::numeric_limits<T>::max() || result < std::numeric_limits<T>::min() || is_cast_out_of_range) {
-      std::string error_message = "String input " + std::string(*it) + " will be out of bounds if casted to " +
-                                  cast_to_type_.ToString() + ". The valid range is: [" +
-                                  std::to_string(std::numeric_limits<T>::min()) + ", " +
-                                  std::to_string(std::numeric_limits<T>::max()) + "].";
+      std::string error_message =
+        "ToNumber: "
+        "string input " +
+        std::string(*it) + " will be out of bounds if cast to " + cast_to_type_.ToString() + ". The valid range is: [" +
+        std::to_string(std::numeric_limits<T>::min()) + ", " + std::to_string(std::numeric_limits<T>::max()) + "].";
 
       RETURN_STATUS_UNEXPECTED(error_message);
     }
@@ -143,14 +150,18 @@ Status ToNumberOp::ToUnsignedIntegral(const std::shared_ptr<Tensor> &input, std:
     } catch (const std::out_of_range &) {
       is_cast_out_of_range = true;
     } catch (const std::invalid_argument &) {
-      RETURN_STATUS_UNEXPECTED("It is invalid to convert " + std::string(*it) + " to an unsigned integer.");
+      RETURN_STATUS_UNEXPECTED(
+        "ToNumber: "
+        "It is invalid to convert \"" +
+        std::string(*it) + "\" to an unsigned integer.");
     }
 
     if (result > std::numeric_limits<T>::max() || result < std::numeric_limits<T>::min() || is_cast_out_of_range) {
-      std::string error_message = "String input " + std::string(*it) + " will be out of bounds if casted to " +
-                                  cast_to_type_.ToString() + ". The valid range is: [" +
-                                  std::to_string(std::numeric_limits<T>::min()) + ", " +
-                                  std::to_string(std::numeric_limits<T>::max()) + "].";
+      std::string error_message =
+        "ToNumber: "
+        "string input " +
+        std::string(*it) + " will be out of bounds if cast to " + cast_to_type_.ToString() + ". The valid range is: [" +
+        std::to_string(std::numeric_limits<T>::min()) + ", " + std::to_string(std::numeric_limits<T>::max()) + "].";
 
       RETURN_STATUS_UNEXPECTED(error_message);
     }
@@ -185,15 +196,20 @@ Status ToNumberOp::ToFloat(const std::shared_ptr<Tensor> &input, std::shared_ptr
     } catch (const std::out_of_range &) {
       is_cast_out_of_range = true;
     } catch (const std::invalid_argument &) {
-      RETURN_STATUS_UNEXPECTED("It is invalid to convert " + std::string(*it) + " to an unsigned integer.");
+      RETURN_STATUS_UNEXPECTED(
+        "ToNumber: "
+        "it is invalid to convert \"" +
+        std::string(*it) + "\" to an unsigned integer.");
     }
 
     if (result > std::numeric_limits<float>::max() || result < std::numeric_limits<float>::lowest() ||
         is_cast_out_of_range) {
-      std::string error_message = "String input " + std::string(*it) + " will be out of bounds if casted to " +
-                                  cast_to_type_.ToString() + ". The valid range is: [" +
-                                  std::to_string(std::numeric_limits<float>::lowest()) + ", " +
-                                  std::to_string(std::numeric_limits<float>::max()) + "].";
+      std::string error_message =
+        "ToNumber: "
+        "string input " +
+        std::string(*it) + " will be out of bounds if cast to " + cast_to_type_.ToString() + ". The valid range is: [" +
+        std::to_string(std::numeric_limits<float>::lowest()) + ", " +
+        std::to_string(std::numeric_limits<float>::max()) + "].";
 
       RETURN_STATUS_UNEXPECTED(error_message);
     }
@@ -218,15 +234,20 @@ Status ToNumberOp::ToDouble(const std::shared_ptr<Tensor> &input, std::shared_pt
     } catch (const std::out_of_range &) {
       is_cast_out_of_range = true;
     } catch (const std::invalid_argument &) {
-      RETURN_STATUS_UNEXPECTED("It is invalid to convert " + std::string(*it) + " to an unsigned integer.");
+      RETURN_STATUS_UNEXPECTED(
+        "ToNumber: "
+        "it is invalid to convert \"" +
+        std::string(*it) + "\" to an unsigned integer.");
     }
 
     if (result > std::numeric_limits<double>::max() || result < std::numeric_limits<double>::lowest() ||
         is_cast_out_of_range) {
-      std::string error_message = "String input " + std::string(*it) + " will be out of bounds if casted to " +
-                                  cast_to_type_.ToString() + ". The valid range is: [" +
-                                  std::to_string(std::numeric_limits<double>::lowest()) + ", " +
-                                  std::to_string(std::numeric_limits<double>::max()) + "].";
+      std::string error_message =
+        "ToNumber: "
+        "string input " +
+        std::string(*it) + " will be out of bounds if cast to " + cast_to_type_.ToString() + ". The valid range is: [" +
+        std::to_string(std::numeric_limits<double>::lowest()) + ", " +
+        std::to_string(std::numeric_limits<double>::max()) + "].";
 
       RETURN_STATUS_UNEXPECTED(error_message);
     }

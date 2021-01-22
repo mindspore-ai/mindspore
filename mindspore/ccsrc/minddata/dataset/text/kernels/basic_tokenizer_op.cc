@@ -79,11 +79,11 @@ BasicTokenizerOp::BasicTokenizerOp(const bool &lower_case, const bool &keep_whit
 
 Status BasicTokenizerOp::CaseFoldWithoutUnusedWords(const std::string_view &text,
                                                     const std::unordered_set<std::string> &unused_words,
-                                                    std::string *outupt) {
+                                                    std::string *output) {
   icu::ErrorCode error;
   const icu::Normalizer2 *nfkc_case_fold = icu::Normalizer2::getNFKCCasefoldInstance(error);
-  CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "getNFKCCasefoldInstance failed.");
-  outupt->clear();
+  CHECK_FAIL_RETURN_UNEXPECTED(error.isSuccess(), "BasicTokenizer: getNFKCCasefoldInstance failed.");
+  output->clear();
 
   // 1. get start and end offsets of not case fold strs
   std::queue<std::pair<int, int>> offsets;  // offsets of not used words
@@ -123,7 +123,7 @@ Status BasicTokenizerOp::CaseFoldWithoutUnusedWords(const std::string_view &text
     std::string temp;
     icu::StringByteSink<std::string> sink(&temp);
     nfkc_case_fold->normalizeUTF8(0, icu::StringPiece(process_text.data(), process_text.size()), sink, nullptr, error);
-    *outupt += temp + preserve_token;
+    *output += temp + preserve_token;
   }
   return Status::OK();
 }
@@ -131,7 +131,7 @@ Status BasicTokenizerOp::CaseFoldWithoutUnusedWords(const std::string_view &text
 Status BasicTokenizerOp::CaseFoldWithoutUnusedWords(const std::shared_ptr<Tensor> &input,
                                                     std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "Input tensor not of type string.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "BasicTokenizer: input is not string datatype.");
   std::vector<std::string> strs(input->Size());
   int i = 0;
   for (auto iter = input->begin<std::string_view>(); iter != input->end<std::string_view>(); iter++) {
@@ -142,9 +142,9 @@ Status BasicTokenizerOp::CaseFoldWithoutUnusedWords(const std::shared_ptr<Tensor
 
 Status BasicTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor");
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "BasicTokenizer: input only support one column data.");
   if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("The input tensor should be scalar string tensor");
+    RETURN_STATUS_UNEXPECTED("BasicTokenizer: the input should be scalar with string datatype");
   }
   std::shared_ptr<Tensor> cur_input;
   std::shared_ptr<Tensor> processed_tensor;

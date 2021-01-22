@@ -261,7 +261,7 @@ def test_random_crop_04_c():
         data.create_dict_iterator(num_epochs=1).__next__()
     except RuntimeError as e:
         logger.info("Got an exception in DE: {}".format(str(e)))
-        assert "Crop size is greater than the image dim" in str(e)
+        assert "crop size is greater than the image dimensions or is zero" in str(e)
 
 def test_random_crop_04_py():
     """

@@ -29,11 +29,11 @@ namespace dataset {
 NormalizeOp::NormalizeOp(float mean_r, float mean_g, float mean_b, float std_r, float std_g, float std_b) {
   Status s = Tensor::CreateFromVector<float>({mean_r, mean_g, mean_b}, &mean_);
   if (s.IsError()) {
-    MS_LOG(ERROR) << "Could not create mean tensor.";
+    MS_LOG(ERROR) << "Normalize: invalid mean value.";
   }
   s = Tensor::CreateFromVector<float>({std_r, std_g, std_b}, &std_);
   if (s.IsError()) {
-    MS_LOG(ERROR) << "Could not create std tensor.";
+    MS_LOG(ERROR) << "Normalize: invalid std value.";
   }
 }
 

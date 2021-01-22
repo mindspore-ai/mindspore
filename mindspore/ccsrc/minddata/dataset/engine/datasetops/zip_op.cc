@@ -159,6 +159,8 @@ Status ZipOp::fillBuffer(TensorQTable *const table) {
       return Status::OK();
     }
     // else we got a row so pack it into the tensor table.
+    // Currently we don't support printing error info after zip
+    new_row.setPath({});
     table->push_back(std::move(new_row));
   }
   return Status::OK();

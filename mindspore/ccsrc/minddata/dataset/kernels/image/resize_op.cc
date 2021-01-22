@@ -29,18 +29,19 @@ const InterpolationMode ResizeOp::kDefInterpolation = InterpolationMode::kLinear
 
 Status ResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "The shape size " + std::to_string(input->shape().Size()) +
-                                                             " of input tensor is invalid");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input->shape().Size() >= 2,
+    "Resize: image shape " + std::to_string(input->shape().Size()) + " is not <H,W,C> or <H,W>.");
   int32_t output_h, output_w = 0;
   int32_t input_h = static_cast<int>(input->shape()[0]);
   int32_t input_w = static_cast<int>(input->shape()[1]);
   if (size2_ == 0) {
     if (input_h < input_w) {
-      CHECK_FAIL_RETURN_UNEXPECTED(input_h != 0, "The input height is 0");
+      CHECK_FAIL_RETURN_UNEXPECTED(input_h != 0, "Resize: the input height is 0.");
       output_h = size1_;
       output_w = static_cast<int>(std::lround(static_cast<float>(input_w) / input_h * output_h));
     } else {
-      CHECK_FAIL_RETURN_UNEXPECTED(input_w != 0, "The input width is 0");
+      CHECK_FAIL_RETURN_UNEXPECTED(input_w != 0, "Resize: the input width is 0.");
       output_w = size1_;
       output_h = static_cast<int>(std::lround(static_cast<float>(input_h) / input_w * output_w));
     }
@@ -65,7 +66,7 @@ Status ResizeOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   if (inputs[0].Rank() == 2) outputs.emplace_back(out);
   if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
+  return Status(StatusCode::kUnexpectedError, "Resize: invalid input wrong shape.");
 }
 }  // namespace dataset
 }  // namespace mindspore

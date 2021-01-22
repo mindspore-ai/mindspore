@@ -20,6 +20,7 @@ import pytest
 import numpy as np
 import matplotlib.pyplot as plt
 import mindspore.dataset as ds
+import mindspore.dataset.vision.c_transforms as vision
 from mindspore import log as logger
 
 DATA_DIR = "../data/dataset/testMnistData"
@@ -196,13 +197,34 @@ def test_mnist_exception():
     with pytest.raises(ValueError, match=error_msg_6):
         ds.MnistDataset(DATA_DIR, shuffle=False, num_parallel_workers=0)
     with pytest.raises(ValueError, match=error_msg_6):
-        ds.MnistDataset(DATA_DIR, shuffle=False, num_parallel_workers=65)
+        ds.MnistDataset(DATA_DIR, shuffle=False, num_parallel_workers=256)
     with pytest.raises(ValueError, match=error_msg_6):
         ds.MnistDataset(DATA_DIR, shuffle=False, num_parallel_workers=-2)
 
     error_msg_7 = "Argument shard_id"
     with pytest.raises(TypeError, match=error_msg_7):
         ds.MnistDataset(DATA_DIR, num_shards=2, shard_id="0")
+
+    def exception_func(item):
+        raise Exception("Error occur!")
+
+    error_msg_8 = "The corresponding data files"
+    with pytest.raises(RuntimeError, match=error_msg_8):
+        data = ds.MnistDataset(DATA_DIR)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+    with pytest.raises(RuntimeError, match=error_msg_8):
+        data = ds.MnistDataset(DATA_DIR)
+        data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+    with pytest.raises(RuntimeError, match=error_msg_8):
+        data = ds.MnistDataset(DATA_DIR)
+        data = data.map(operations=exception_func, input_columns=["label"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
 
 
 def test_mnist_visualize(plot=False):

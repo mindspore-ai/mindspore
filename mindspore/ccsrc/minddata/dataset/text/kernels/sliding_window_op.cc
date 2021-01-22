@@ -19,8 +19,9 @@ namespace mindspore {
 namespace dataset {
 Status SlidingWindowOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Rank() == 1, "SlidingWindosOp supports 1D Tensors only for now.");
-  CHECK_FAIL_RETURN_UNEXPECTED(axis_ == 0 || axis_ == -1, "axis supports 0 or -1 only for now.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Rank() == 1,
+                               "SlidingWindow: SlidingWindow supports 1D input only for now.");
+  CHECK_FAIL_RETURN_UNEXPECTED(axis_ == 0 || axis_ == -1, "SlidingWindow: axis supports 0 or -1 only for now.");
 
   std::vector<TensorShape> input_shape = {input->shape()};
   std::vector<TensorShape> output_shape = {TensorShape({})};
@@ -31,7 +32,7 @@ Status SlidingWindowOp::Compute(const std::shared_ptr<Tensor> &input, std::share
 }
 
 Status SlidingWindowOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
-  CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() == NumInput(), "incorrect num of inputs\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() == NumInput(), "SlidingWindow: incorrect number of inputs\n");
   int32_t axis = Tensor::HandleNeg(axis_, inputs[0].Size());
   TensorShape input_shape = inputs[0];
   std::vector<dsize_t> output_shape_initializer;
@@ -50,7 +51,7 @@ Status SlidingWindowOp::OutputShape(const std::vector<TensorShape> &inputs, std:
 
   outputs.pop_back();
   outputs.emplace_back(TensorShape(output_shape_initializer));
-  CHECK_FAIL_RETURN_UNEXPECTED(outputs.size() == NumOutput(), "incorrect num of outputs\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(outputs.size() == NumOutput(), "SlidingWindow: incorrect number of outputs\n");
   return Status::OK();
 }
 }  // namespace dataset

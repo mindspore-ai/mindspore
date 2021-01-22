@@ -35,7 +35,8 @@ NgramOp::NgramOp(const std::vector<int32_t> &ngrams, int32_t l_len, int32_t r_le
 
 Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING && input->Rank() == 1, "Not a 1-D str Tensor.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING && input->Rank() == 1,
+                               "Ngram: input is not a 1D data with string datatype.");
   std::vector<int32_t> offsets;                 // offsets for each str
   std::vector<std::string> res;                 // holds the result of ngrams
   std::string str_buffer;                       // concat all pad tokens with string interleaved with separators
@@ -54,13 +55,13 @@ Status NgramOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Te
   for (int i = 0; i < r_len_; i++) offsets.push_back((str_buffer += r_pad_with_sp_).size());
 
   for (auto n : ngrams_) {
-    CHECK_FAIL_RETURN_UNEXPECTED(n > 0, "n gram needs to be a positive number.\n");
+    CHECK_FAIL_RETURN_UNEXPECTED(n > 0, "Ngram: ngrams needs to be a positive number.\n");
     int32_t start_ind = l_len_ - std::min(l_len_, n - 1);
     int32_t end_ind = offsets.size() - r_len_ + std::min(r_len_, n - 1);
     if (end_ind - start_ind <= n) {
       res.emplace_back(std::string());  // push back empty string
     } else {
-      CHECK_FAIL_RETURN_UNEXPECTED(end_ind - n >= 0, "Incorrect loop condition.");
+      CHECK_FAIL_RETURN_UNEXPECTED(end_ind - n >= 0, "Ngram: get offsets failed.");
 
       for (int i = start_ind; i < end_ind - n; i++) {
         res.emplace_back(str_buffer.substr(offsets[i], offsets[i + n] - offsets[i] - separator_.size()));
@@ -79,8 +80,8 @@ void NgramOp::Print(std::ostream &out) const {
 }
 
 Status NgramOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
-  CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() == NumInput(), "incorrect num of inputs\n");
-  CHECK_FAIL_RETURN_UNEXPECTED(inputs[0].Rank() == 1, "ngram only works with 1-dim data\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(inputs.size() == NumInput(), "Ngram: incorrect num of inputs\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(inputs[0].Rank() == 1, "Ngram: ngram only works with 1-dim data\n");
   dsize_t num_elements = ngrams_.size();
   for (int32_t n : ngrams_) {
     // here since rank == 1, NumOfElements == shape[0]. add padding length to string
@@ -89,7 +90,7 @@ Status NgramOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<
     num_elements += std::max(len_with_padding - n, 0);
   }
   outputs.emplace_back(TensorShape({num_elements}));
-  CHECK_FAIL_RETURN_UNEXPECTED(outputs.size() == NumOutput(), "incorrect num of outputs\n");
+  CHECK_FAIL_RETURN_UNEXPECTED(outputs.size() == NumOutput(), "Ngram: incorrect num of outputs\n");
   return Status::OK();
 }
 }  // namespace dataset

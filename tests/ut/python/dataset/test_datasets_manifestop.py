@@ -15,6 +15,7 @@
 import numpy as np
 
 import mindspore.dataset as ds
+import mindspore.dataset.vision.c_transforms as vision
 import mindspore.dataset.transforms.c_transforms as data_trans
 from mindspore import log as logger
 
@@ -127,6 +128,39 @@ def test_manifest_dataset_get_num_class():
     assert data1.num_classes() == 3
 
 
+def test_manifest_dataset_exception():
+    def exception_func(item):
+        raise Exception("Error occur!")
+
+    try:
+        data = ds.ManifestDataset(DATA_FILE)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.ManifestDataset(DATA_FILE)
+        data = data.map(operations=vision.Decode(), input_columns=["image"], num_parallel_workers=1)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.ManifestDataset(DATA_FILE)
+        data = data.map(operations=exception_func, input_columns=["label"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+
 if __name__ == '__main__':
     test_manifest_dataset_train()
     test_manifest_dataset_eval()
@@ -135,3 +169,4 @@ if __name__ == '__main__':
     test_manifest_dataset_multi_label()
     test_manifest_dataset_multi_label_onehot()
     test_manifest_dataset_get_num_class()
+    test_manifest_dataset_exception()

@@ -73,7 +73,8 @@ Status SentencePieceVocab::BuildFromFile(const std::vector<std::string> &path_li
   std::string model_proto;
   sentencepiece::util::Status s_status = sentencepiece::SentencePieceTrainer::Train(unorder_map, nullptr, &model_proto);
   if (!s_status.ok()) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, s_status.message());
+    std::string err_msg = "SentencePieceVocab: " + std::string(s_status.message());
+    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
   }
   vocab->get()->set_model_proto(model_proto);
 
@@ -85,15 +86,20 @@ Status SentencePieceVocab::SaveModel(const std::shared_ptr<SentencePieceVocab> *
   char real_path[PATH_MAX] = {0};
 
   if (path.size() >= PATH_MAX) {
-    RETURN_STATUS_UNEXPECTED("sentence model path is invalid.");
+    RETURN_STATUS_UNEXPECTED(
+      "SentencePieceVocab: sentence model path is invalid for "
+      "path length longer than 4096.");
   }
 #if defined(_WIN32) || defined(_WIN64)
   if (_fullpath(real_path, common::SafeCStr(path), PATH_MAX) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("sentence model path is invalid.");
+    RETURN_STATUS_UNEXPECTED(
+      "SentencePieceVocab: sentence model path is invalid for "
+      "path length longer than 4096.");
   }
 #else
   if (realpath(common::SafeCStr(path), real_path) == nullptr) {
-    RETURN_STATUS_UNEXPECTED("sentence model path is invalid.");
+    RETURN_STATUS_UNEXPECTED("SentencePieceVocab: sentence model path: " + path +
+                             " is not existed or permission denied.");
   }
 #endif
 

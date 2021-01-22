@@ -141,6 +141,12 @@ class Status {
 
   StatusCode get_code() const;
 
+  int GetLineOfCode() const { return line_of_code_; }
+
+  std::string SetErrDescription(const std::string &err_description);
+
+  std::string GetErrDescription() const { return err_description_; }
+
   friend std::ostream &operator<<(std::ostream &os, const Status &s);
 
   explicit operator bool() const { return (get_code() == StatusCode::kOK); }
@@ -165,6 +171,9 @@ class Status {
 
  private:
   StatusCode code_;
+  int line_of_code_;
+  std::string file_name_;
+  std::string err_description_;
   std::string err_msg_;
 };
 

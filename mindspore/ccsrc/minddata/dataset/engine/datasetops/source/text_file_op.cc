@@ -147,9 +147,6 @@ Status TextFileOp::Reset() {
 }
 
 Status TextFileOp::LoadTensor(const std::string &line, std::unique_ptr<TensorQTable> *tensor_table, int64_t row) {
-  TensorRow tRow(1, nullptr);
-  (*tensor_table)->push_back(std::move(tRow));
-
   std::shared_ptr<Tensor> tensor;
   RETURN_IF_NOT_OK(Tensor::CreateScalar(line, &tensor));
   (**tensor_table)[row][0] = std::move(tensor);
@@ -183,6 +180,9 @@ Status TextFileOp::LoadFile(const std::string &file, const int64_t start_offset,
       continue;
     }
 
+    TensorRow tRow(1, nullptr);
+    tRow.setPath({file});
+    tensor_table->push_back(std::move(tRow));
     RETURN_IF_NOT_OK(LoadTensor(line, &tensor_table, rows_each_buffer));
     rows_each_buffer++;
     rows_total++;

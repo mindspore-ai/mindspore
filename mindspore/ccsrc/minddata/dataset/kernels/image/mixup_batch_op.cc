@@ -29,7 +29,7 @@ MixUpBatchOp::MixUpBatchOp(float alpha) : alpha_(alpha) { rnd_.seed(GetSeed()); 
 
 Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   if (input.size() < 2) {
-    RETURN_STATUS_UNEXPECTED("Both images and labels columns are required for this operation.");
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: input lack of images or labels");
   }
 
   std::vector<std::shared_ptr<CVTensor>> images;
@@ -39,19 +39,23 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
   // Check inputs
   if (image_shape.size() != 4 || image_shape[0] != label_shape[0]) {
     RETURN_STATUS_UNEXPECTED(
-      "MixUpBatch:You must make sure images are HWC or CHW and batched before calling MixUpBatch.");
+      "MixUpBatch: "
+      "please make sure images are HWC or CHW and batched before calling MixUpBatch.");
   }
   if (!input.at(1)->type().IsInt()) {
-    RETURN_STATUS_UNEXPECTED("MixUpBatch: Wrong labels type. The second column (labels) must only include int types.");
+    RETURN_STATUS_UNEXPECTED(
+      "MixUpBatch: wrong labels type. "
+      "The second column (labels) must only include int types.");
   }
   if (label_shape.size() != 2 && label_shape.size() != 3) {
     RETURN_STATUS_UNEXPECTED(
-      "MixUpBatch: Wrong labels shape. The second column (labels) must have a shape of NC or NLC where N is the batch "
-      "size, L is the number of labels in each row, "
-      "and C is the number of classes. labels must be in one-hot format and in a batch.");
+      "MixUpBatch: wrong labels shape. "
+      "The second column (labels) must have a shape of NC or NLC where N is the batch size, "
+      "L is the number of labels in each row, and C is the number of classes. "
+      "labels must be in one-hot format and in a batch.");
   }
   if ((image_shape[1] != 1 && image_shape[1] != 3) && (image_shape[3] != 1 && image_shape[3] != 3)) {
-    RETURN_STATUS_UNEXPECTED("MixUpBatch: Images must be in the shape of HWC or CHW.");
+    RETURN_STATUS_UNEXPECTED("MixUpBatch: images must be in the shape of HWC or CHW.");
   }
 
   // Move images into a vector of CVTensors
@@ -107,7 +111,7 @@ Status MixUpBatchOp::Compute(const TensorRow &input, TensorRow *output) {
                                                    input.at(0)->type(), start_addr_of_index, &out));
     std::shared_ptr<CVTensor> rand_image = CVTensor::AsCVTensor(std::move(out));
     if (!rand_image->mat().data) {
-      RETURN_STATUS_UNEXPECTED("Could not convert to CV Tensor");
+      RETURN_STATUS_UNEXPECTED("MixUpBatch: allocate memory failed.");
     }
     images[i]->mat() = lam * images[i]->mat() + (1 - lam) * rand_image->mat();
   }

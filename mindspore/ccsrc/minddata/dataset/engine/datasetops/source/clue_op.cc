@@ -202,6 +202,9 @@ Status ClueOp::LoadFile(const std::string &file, const int64_t start_offset, con
     }
     int cols_count = cols_to_keyword_.size();
     TensorRow tRow(cols_count, nullptr);
+    // Add file path info
+    std::vector<std::string> file_path(cols_count, file);
+    tRow.setPath(file_path);
     tensor_table->push_back(std::move(tRow));
     int cout = 0;
     for (auto &p : cols_to_keyword_) {

@@ -80,8 +80,7 @@ Status Vocab::BuildFromUnorderedMap(const std::unordered_map<WordType, WordIdTyp
   std::unordered_map<WordType, WordIdType> word2id;
   for (auto p : words) {
     if (p.second < 0) {
-      MS_LOG(ERROR) << "index can not be negetive, but got " << p.second;
-      RETURN_STATUS_UNEXPECTED("index can not be negetive, but got " + std::to_string(p.second));
+      RETURN_STATUS_UNEXPECTED("from_dict: index can not be negetive, but got " + std::to_string(p.second));
     }
     word2id[p.first] = p.second;
   }
@@ -97,8 +96,7 @@ Status Vocab::BuildFromVector(const std::vector<WordType> &words, const std::vec
   WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
   for (auto word : words) {
     if (word2id.find(word) != word2id.end()) {
-      MS_LOG(ERROR) << "word_list contains duplicate word: " + word + ".";
-      RETURN_STATUS_UNEXPECTED("word_list contains duplicate word: " + word + ".");
+      RETURN_STATUS_UNEXPECTED("from_list: word_list contains duplicate word: " + word + ".");
     }
     word2id[word] = word_id++;
   }
@@ -107,8 +105,10 @@ Status Vocab::BuildFromVector(const std::vector<WordType> &words, const std::vec
 
   for (auto special_token : special_tokens) {
     if (word2id.find(special_token) != word2id.end()) {
-      MS_LOG(ERROR) << "special_tokens and word_list contain duplicate word: " + special_token + ".";
-      RETURN_STATUS_UNEXPECTED("special_tokens and word_list contain duplicate word: " + special_token + ".");
+      RETURN_STATUS_UNEXPECTED(
+        "from_list: "
+        "special_tokens and word_list contain duplicate word: " +
+        special_token + ".");
     }
     word2id[special_token] = word_id++;
   }
@@ -122,14 +122,14 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
                                std::shared_ptr<Vocab> *vocab) {
   // Validate parameters
   if (path.empty()) {
-    MS_LOG(ERROR) << "vocab file path is not set!";
-    RETURN_STATUS_UNEXPECTED("vocab file path is not set!");
+    RETURN_STATUS_UNEXPECTED("from_file: vocab file path is not set!");
   }
 
   if (vocab_size < 0 && vocab_size != -1) {
-    MS_LOG(ERROR) << "vocab_size shoule be either -1 or positive integer, but got " << vocab_size;
-    RETURN_STATUS_UNEXPECTED("vocab_size shoule be either -1 or positive integer, but got " +
-                             std::to_string(vocab_size));
+    RETURN_STATUS_UNEXPECTED(
+      "from_file: "
+      "vocab_size should be either -1 or positive integer, but got " +
+      std::to_string(vocab_size));
   }
 
   std::string duplicate_sp;
@@ -141,8 +141,10 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
     }
   }
   if (!duplicate_sp.empty()) {
-    MS_LOG(ERROR) << "special_tokens contains duplicate word: " << duplicate_sp;
-    RETURN_STATUS_UNEXPECTED("special_tokens contains duplicate word: " + duplicate_sp);
+    RETURN_STATUS_UNEXPECTED(
+      "from_file: "
+      "special_tokens contains duplicate word: " +
+      duplicate_sp);
   }
 
   std::unordered_set<std::string> specials;
@@ -154,8 +156,7 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
   std::unordered_map<WordType, WordIdType> word2id;
   std::fstream handle(path, std::ios::in);
   if (!handle.good() || !handle.is_open()) {
-    MS_LOG(ERROR) << "fail to open:" + path;
-    RETURN_STATUS_UNEXPECTED("fail to open:" + path);
+    RETURN_STATUS_UNEXPECTED("from_file: fail to open: " + path);
   }
   std::string word;
   while (std::getline(handle, word)) {
@@ -164,12 +165,13 @@ Status Vocab::BuildFromFileCpp(const std::string &path, const std::string &delim
       word = word.substr(0, word.find_first_of(delimiter));
     }
     if (word2id.find(word) != word2id.end()) {
-      MS_LOG(ERROR) << "word_list contains duplicate word:" + word + ".";
-      RETURN_STATUS_UNEXPECTED("word_list contains duplicate word:" + word + ".");
+      RETURN_STATUS_UNEXPECTED("from_file: word_list contains duplicate word:" + word + ".");
     }
     if (specials.find(word) != specials.end()) {
-      MS_LOG(ERROR) << "special_tokens and word_list contain duplicate word: " << word;
-      RETURN_STATUS_UNEXPECTED("special_tokens and word_list contain duplicate word: " + word);
+      RETURN_STATUS_UNEXPECTED(
+        "from_file: "
+        "special_tokens and word_list contain duplicate word: " +
+        word);
     }
     word2id[word] = word_id++;
     // break if enough row is read, if vocab_size is smaller than 0
@@ -197,15 +199,16 @@ Status Vocab::BuildFromFile(const std::string &path, const std::string &delimite
   WordIdType word_id = prepend_special ? static_cast<WordIdType>(special_tokens.size()) : 0;
   std::unordered_map<WordType, WordIdType> word2id;
   std::fstream handle(path, std::ios::in);
-  CHECK_FAIL_RETURN_UNEXPECTED(handle.good() && handle.is_open(), "fail to open:" + path);
+  CHECK_FAIL_RETURN_UNEXPECTED(handle.good() && handle.is_open(), "from_file: fail to open:" + path);
   std::string word;
   while (std::getline(handle, word)) {
     if (!delimiter.empty()) {
       // if delimiter is not found, find_first_of would return std::string::npos which is -1
       word = word.substr(0, word.find_first_of(delimiter));
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(word2id.find(word) == word2id.end(), "duplicate word:" + word + ".");
-    CHECK_FAIL_RETURN_UNEXPECTED(specials.find(word) == specials.end(), word + " is already in special_tokens.");
+    CHECK_FAIL_RETURN_UNEXPECTED(word2id.find(word) == word2id.end(), "from_file: duplicate word:" + word + ".");
+    CHECK_FAIL_RETURN_UNEXPECTED(specials.find(word) == specials.end(),
+                                 "from_file: " + word + " is already in special_tokens.");
     word2id[word] = word_id++;
     // break if enough row is read, if vocab_size is smaller than 0
     if (word2id.size() == vocab_size) break;

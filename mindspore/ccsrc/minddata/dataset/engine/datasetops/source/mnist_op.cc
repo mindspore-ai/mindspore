@@ -82,6 +82,8 @@ MnistOp::MnistOp(const std::string &usage, int32_t num_workers, int32_t rows_per
       row_cnt_(0),
       folder_path_(folder_path),
       rows_per_buffer_(rows_per_buffer),
+      image_path_({}),
+      label_path_({}),
       data_schema_(std::move(data_schema)) {
   io_block_queues_.Init(num_workers, queue_size);
 }
@@ -191,6 +193,7 @@ Status MnistOp::LoadTensorRow(row_id_type row_id, const MnistLabelPair &mnist_pa
   RETURN_IF_NOT_OK(Tensor::CreateScalar(mnist_pair.second, &label));
 
   (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
+  trow->setPath({image_path_[row_id], label_path_[row_id]});
   return Status::OK();
 }
 
@@ -346,6 +349,8 @@ Status MnistOp::ReadImageAndLabel(std::ifstream *image_reader, std::ifstream *la
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(img_tensor_shape, data_schema_->column(0).type(),
                                               reinterpret_cast<unsigned char *>(pixels), &image));
     image_label_pairs_.emplace_back(std::make_pair(image, labels_buf[j]));
+    image_path_.push_back(image_names_[index]);
+    label_path_.push_back(label_names_[index]);
   }
   return Status::OK();
 }

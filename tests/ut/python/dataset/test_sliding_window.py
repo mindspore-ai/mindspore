@@ -100,7 +100,7 @@ def test_sliding_window_exception():
             pass
         assert False
     except RuntimeError as e:
-        assert "SlidingWindosOp supports 1D Tensors only for now." in str(e)
+        assert "SlidingWindow supports 1D input only for now." in str(e)
 
 
 if __name__ == '__main__':

@@ -599,6 +599,11 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
         std::string errMsg = "Invalid file, failed to parse tfrecord file : " + serialized_example;
         RETURN_STATUS_UNEXPECTED(errMsg);
       }
+      int32_t num_columns = data_schema_->NumColumns();
+      TensorRow newRow(num_columns, nullptr);
+      std::vector<std::string> file_path(num_columns, filename);
+      newRow.setPath(file_path);
+      new_tensor_table->push_back(std::move(newRow));
       RETURN_IF_NOT_OK(LoadExample(&tf_file, &new_tensor_table, rows_read));
       rows_read++;
     }
@@ -629,9 +634,6 @@ Status TFReaderOp::LoadFile(const std::string &filename, const int64_t start_off
 Status TFReaderOp::LoadExample(const dataengine::Example *tf_file, std::unique_ptr<TensorQTable> *tensor_table,
                                int64_t row) {
   int32_t num_columns = data_schema_->NumColumns();
-  TensorRow newRow(num_columns, nullptr);
-  (*tensor_table)->push_back(std::move(newRow));
-
   for (int32_t col = 0; col < num_columns; ++col) {
     const ColDescriptor current_col = data_schema_->column(col);
     const dataengine::Features &example_features = tf_file->features();

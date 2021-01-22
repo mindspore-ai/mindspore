@@ -219,6 +219,7 @@ Status ManifestOp::LoadTensorRow(row_id_type row_id, const std::pair<std::string
     }
   }
   (*trow) = TensorRow(row_id, {std::move(image), std::move(label)});
+  trow->setPath({data.first, file_});
   return Status::OK();
 }
 

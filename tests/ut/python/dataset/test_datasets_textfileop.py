@@ -205,6 +205,15 @@ def test_textline_dataset_exceptions():
         _ = ds.TextFileDataset("")
     assert "The following patterns did not match any files" in str(error_info.value)
 
+    def exception_func(item):
+        raise Exception("Error occur!")
+    with pytest.raises(RuntimeError) as error_info:
+        data = ds.TextFileDataset(DATA_FILE)
+        data = data.map(operations=exception_func, input_columns=["text"], num_parallel_workers=1)
+        for _ in data.__iter__():
+            pass
+    assert "map operation: [PyFunc] failed. The corresponding data files" in str(error_info.value)
+
 
 if __name__ == "__main__":
     test_textline_dataset_one_file()

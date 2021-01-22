@@ -25,7 +25,7 @@ namespace dataset {
 Status MaskOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   std::shared_ptr<Tensor> temp_output;
-  CHECK_FAIL_RETURN_UNEXPECTED(type_.IsNumeric(), "Cannot generate a string mask. Type should be numeric.");
+  CHECK_FAIL_RETURN_UNEXPECTED(type_.IsNumeric(), "Mask: only support numeric datatype of input.");
 
   RETURN_IF_NOT_OK(Mask(input, &temp_output, value_, op_));
 

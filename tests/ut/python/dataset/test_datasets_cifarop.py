@@ -208,7 +208,7 @@ def test_cifar10_exception():
     with pytest.raises(ValueError, match=error_msg_6):
         ds.Cifar10Dataset(DATA_DIR_10, shuffle=False, num_parallel_workers=0)
     with pytest.raises(ValueError, match=error_msg_6):
-        ds.Cifar10Dataset(DATA_DIR_10, shuffle=False, num_parallel_workers=88)
+        ds.Cifar10Dataset(DATA_DIR_10, shuffle=False, num_parallel_workers=256)
 
     error_msg_7 = "no .bin files found"
     with pytest.raises(RuntimeError, match=error_msg_7):
@@ -358,7 +358,7 @@ def test_cifar100_exception():
     with pytest.raises(ValueError, match=error_msg_6):
         ds.Cifar100Dataset(DATA_DIR_100, shuffle=False, num_parallel_workers=0)
     with pytest.raises(ValueError, match=error_msg_6):
-        ds.Cifar100Dataset(DATA_DIR_100, shuffle=False, num_parallel_workers=88)
+        ds.Cifar100Dataset(DATA_DIR_100, shuffle=False, num_parallel_workers=256)
 
     error_msg_7 = "no .bin files found"
     with pytest.raises(RuntimeError, match=error_msg_7):
@@ -446,6 +446,61 @@ def test_cifar_usage():
         assert ds.Cifar100Dataset(all_cifar100, usage="all").get_dataset_size() == 60000
 
 
+def test_cifar_exception_file_path():
+    def exception_func(item):
+        raise Exception("Error occur!")
+
+    try:
+        data = ds.Cifar10Dataset(DATA_DIR_10)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        num_rows = 0
+        for _ in data.create_dict_iterator():
+            num_rows += 1
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.Cifar10Dataset(DATA_DIR_10)
+        data = data.map(operations=exception_func, input_columns=["label"], num_parallel_workers=1)
+        num_rows = 0
+        for _ in data.create_dict_iterator():
+            num_rows += 1
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.Cifar100Dataset(DATA_DIR_100)
+        data = data.map(operations=exception_func, input_columns=["image"], num_parallel_workers=1)
+        num_rows = 0
+        for _ in data.create_dict_iterator():
+            num_rows += 1
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.Cifar100Dataset(DATA_DIR_100)
+        data = data.map(operations=exception_func, input_columns=["coarse_label"], num_parallel_workers=1)
+        num_rows = 0
+        for _ in data.create_dict_iterator():
+            num_rows += 1
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+    try:
+        data = ds.Cifar100Dataset(DATA_DIR_100)
+        data = data.map(operations=exception_func, input_columns=["fine_label"], num_parallel_workers=1)
+        num_rows = 0
+        for _ in data.create_dict_iterator():
+            num_rows += 1
+        assert False
+    except RuntimeError as e:
+        assert "map operation: [PyFunc] failed. The corresponding data files" in str(e)
+
+
 if __name__ == '__main__':
     test_cifar10_content_check()
     test_cifar10_basic()
@@ -461,3 +516,4 @@ if __name__ == '__main__':
     test_cifar100_visualize(plot=False)
 
     test_cifar_usage()
+    test_cifar_exception_file_path()

@@ -29,7 +29,8 @@ namespace dataset {
 Status RandomCropAndResizeWithBBoxOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
   RETURN_IF_NOT_OK(BoundingBox::ValidateBoundingBoxes(input));
-  CHECK_FAIL_RETURN_UNEXPECTED(input[0]->shape().Size() >= 2, "The shape of input is not >= 2");
+  CHECK_FAIL_RETURN_UNEXPECTED(input[0]->shape().Size() >= 2,
+                               "RandomCropAndResizeWithBBox: image shape is not <H,W,C> or <H,W>.");
 
   output->resize(2);
   (*output)[1] = std::move(input[1]);  // move boxes over to output

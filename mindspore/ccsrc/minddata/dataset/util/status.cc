@@ -76,13 +76,20 @@ std::string CodeAsString(const StatusCode c) {
   return std::string(s);
 }
 
-Status::Status(StatusCode c) noexcept : code_(c), err_msg_(CodeAsString(c)) {}
+Status::Status(StatusCode c) noexcept
+    : code_(c), err_msg_(CodeAsString(c)), line_of_code_(-1), file_name_(""), err_description_("") {}
 
-Status::Status() noexcept : code_(StatusCode::kOK), err_msg_("") {}
+Status::Status() noexcept
+    : code_(StatusCode::kOK), err_msg_(""), line_of_code_(-1), file_name_(""), err_description_("") {}
 
 Status::~Status() noexcept {}
 
-Status::Status(const Status &s) : code_(s.code_), err_msg_(s.err_msg_) {}
+Status::Status(const Status &s)
+    : code_(s.code_),
+      err_msg_(s.err_msg_),
+      line_of_code_(s.line_of_code_),
+      file_name_(s.file_name_),
+      err_description_(s.err_description_) {}
 
 Status &Status::operator=(const Status &s) {
   if (this == &s) {
@@ -90,12 +97,19 @@ Status &Status::operator=(const Status &s) {
   }
   code_ = s.code_;
   err_msg_ = s.err_msg_;
+  line_of_code_ = s.line_of_code_;
+  file_name_ = s.file_name_;
+  err_description_ = s.err_description_;
   return *this;
 }
 
 Status::Status(Status &&s) noexcept {
   code_ = s.code_;
   s.code_ = StatusCode::kOK;
+  line_of_code_ = s.line_of_code_;
+  s.line_of_code_ = -1;
+  file_name_ = std::move(s.file_name_);
+  err_description_ = std::move(s.err_description_);
   err_msg_ = std::move(s.err_msg_);
 }
 
@@ -105,14 +119,22 @@ Status &Status::operator=(Status &&s) noexcept {
   }
   code_ = s.code_;
   s.code_ = StatusCode::kOK;
+  line_of_code_ = s.line_of_code_;
+  s.line_of_code_ = -1;
+  file_name_ = std::move(s.file_name_);
+  err_description_ = std::move(s.err_description_);
   err_msg_ = std::move(s.err_msg_);
   return *this;
 }
 
-Status::Status(const StatusCode code, const std::string &msg) : code_(code), err_msg_(msg) {}
+Status::Status(const StatusCode code, const std::string &msg)
+    : code_(code), err_msg_(msg), line_of_code_(-1), file_name_(""), err_description_(msg) {}
 
 Status::Status(const StatusCode code, int line_of_code, const char *file_name, const std::string &extra) {
   code_ = code;
+  line_of_code_ = line_of_code;
+  file_name_ = std::string(file_name);
+  err_description_ = extra;
   std::ostringstream ss;
 #ifndef ENABLE_ANDROID
   ss << "Thread ID " << this_thread::get_id() << " " << CodeAsString(code) << ". ";
@@ -127,18 +149,30 @@ Status::Status(const StatusCode code, int line_of_code, const char *file_name, c
     ss << "File         : " << file_name << "\n";
   }
   err_msg_ = ss.str();
-  if (code == StatusCode::kUnexpectedError) {
-    MS_LOG(ERROR) << err_msg_;
-  } else if (code == StatusCode::kNetWorkError) {
-    MS_LOG(WARNING) << err_msg_;
-  } else {
-    MS_LOG(INFO) << err_msg_;
-  }
 }
 
 std::ostream &operator<<(std::ostream &os, const Status &s) {
   os << s.ToString();
   return os;
+}
+
+std::string Status::SetErrDescription(const std::string &err_description) {
+  err_description_ = err_description;
+  std::ostringstream ss;
+#ifndef ENABLE_ANDROID
+  ss << "Thread ID " << this_thread::get_id() << " " << CodeAsString(code_) << ". ";
+  if (!err_description_.empty()) {
+    ss << err_description_;
+  }
+  ss << "\n";
+#endif
+
+  if (line_of_code_ > 0 && !file_name_.empty()) {
+    ss << "Line of code : " << line_of_code_ << "\n";
+    ss << "File         : " << file_name_ << "\n";
+  }
+  err_msg_ = ss.str();
+  return err_msg_;
 }
 
 std::string Status::ToString() const { return err_msg_; }

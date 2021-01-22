@@ -27,10 +27,11 @@ const bool RegexTokenizerOp::kDefWithOffsets = false;
 
 Status RegexTokenizerOp::GetUnicodeSubstr(const icu::UnicodeString &input, const int &start, const int &len,
                                           std::string *out_utf8, icu::UnicodeString *out_unicode) const {
-  CHECK_FAIL_RETURN_UNEXPECTED((out_utf8 != nullptr || out_unicode != nullptr), "Wrong input");
+  CHECK_FAIL_RETURN_UNEXPECTED((out_utf8 != nullptr || out_unicode != nullptr), "RegexTokenizer: get token failed.");
   int total_len = input.length();
   int end = start + len;
-  CHECK_FAIL_RETURN_UNEXPECTED((start >= 0 && len > 0 && end <= total_len), "Out of range");
+  CHECK_FAIL_RETURN_UNEXPECTED((start >= 0 && len > 0 && end <= total_len),
+                               "RegexTokenizer: token offsets is out of range");
   icu::UnicodeString temp;
   input.extract(start, len, temp);
   if (out_utf8 != nullptr) {
@@ -48,9 +49,11 @@ Status RegexTokenizerOp::GetRegexTokens(const std::string &text, std::vector<std
   UErrorCode status = U_ZERO_ERROR;
   out_tokens->clear();
   icu::RegexMatcher token_matcher(delim_pattern_, 0, status);
-  CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(status), "Create icu RegexMatcher failed, you may input one error pattern");
+  CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(status),
+                               "RegexTokenizer: create ICU RegexMatcher failed, you may input one error pattern");
   icu::RegexMatcher delim_matcher(keep_delim_pattern_, 0, status);
-  CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(status), "Create icu RegexMatcher failed, you may input one error pattern");
+  CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(status),
+                               "RegexTokenizer: create ICU RegexMatcher failed, you may input one error pattern");
 
   icu::UnicodeString utext(icu::UnicodeString::fromUTF8(text));
   token_matcher.reset(utext);
@@ -60,9 +63,9 @@ Status RegexTokenizerOp::GetRegexTokens(const std::string &text, std::vector<std
   status = U_ZERO_ERROR;
   while (token_matcher.find(status) && U_SUCCESS(status)) {
     int deli_start_index = token_matcher.start(status);
-    CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(status), "Get RegexMatcher matched start index failed");
+    CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(status), "RegexTokenizer: get RegexMatcher matched start index failed");
     int deli_end_index = token_matcher.end(status);
-    CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(status), "Get RegexMatcher matched start index failed");
+    CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(status), "RegexTokenizer: get RegexMatcher matched start index failed");
 
     // Add non-empty token
     int token_len = deli_start_index - token_start_index;
@@ -109,9 +112,11 @@ Status RegexTokenizerOp::GetRegexTokens(const std::string &text, std::vector<std
 
 Status RegexTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor");
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "RegexTokenizer: input should be one column data");
   if (input[0]->Rank() != 0 || input[0]->type() != DataType::DE_STRING) {
-    RETURN_STATUS_UNEXPECTED("The input tensor should be scalar string tensor");
+    RETURN_STATUS_UNEXPECTED(
+      "RegexTokenizer: the input shape should be scalar and "
+      "the input datatype should be string.");
   }
   std::string_view text;
   std::vector<std::string> tokens;

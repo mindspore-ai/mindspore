@@ -25,7 +25,7 @@ namespace dataset {
 
 Status RegexReplaceOp::RegexReplace(icu::RegexMatcher *const matcher, const std::string_view &text,
                                     std::string *out) const {
-  CHECK_FAIL_RETURN_UNEXPECTED((matcher != nullptr && out != nullptr), "Input is null.");
+  CHECK_FAIL_RETURN_UNEXPECTED((matcher != nullptr && out != nullptr), "RegexReplace: icu init failed.");
   UErrorCode icu_error = U_ZERO_ERROR;
   icu::UnicodeString unicode_text = icu::UnicodeString::fromUTF8(text);
   matcher->reset(unicode_text);
@@ -35,18 +35,19 @@ Status RegexReplaceOp::RegexReplace(icu::RegexMatcher *const matcher, const std:
   } else {
     unicode_out = matcher->replaceFirst(replace_, icu_error);
   }
-  CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(icu_error), "RegexReplace failed.");
+  CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(icu_error), "RegexReplace: RegexReplace failed.");
   unicode_out.toUTF8String(*out);
   return Status::OK();
 }
 
 Status RegexReplaceOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "Input tensor not of type string.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->type() == DataType::DE_STRING, "RegexReplace: input is not string datatype.");
   UErrorCode icu_error = U_ZERO_ERROR;
   icu::RegexMatcher matcher(pattern_, 0, icu_error);
   CHECK_FAIL_RETURN_UNEXPECTED(U_SUCCESS(icu_error),
-                               "Create icu RegexMatcher failed, you may input one error pattern.");
+                               "RegexReplace: create icu RegexMatcher failed, "
+                               "you may input one error pattern.");
   std::vector<std::string> strs(input->Size());
   int i = 0;
   for (auto iter = input->begin<std::string_view>(); iter != input->end<std::string_view>(); iter++) {

@@ -32,18 +32,19 @@ const int32_t CenterCropOp::kDefWidth = 0;
 Status CenterCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   std::string err_msg;
+  std::string err_head = "CenterCrop: ";
   dsize_t rank = input->shape().Rank();
-  err_msg += (rank < 2 || rank > 3) ? "Rank received::" + std::to_string(rank) + " Expected: 2 or 3 \t" : "";
+  err_msg += (rank < 2 || rank > 3) ? "rank received::" + std::to_string(rank) + " Expected: 2 or 3 \t" : "";
   err_msg += (crop_het_ <= 0 || crop_wid_ <= 0) ? "crop size needs to be positive integers\t" : "";
 
-  if (err_msg.length() != 0) RETURN_STATUS_UNEXPECTED(common::SafeCStr(err_msg));
+  if (err_msg.length() != 0) RETURN_STATUS_UNEXPECTED(err_head + err_msg);
 
   int32_t top = crop_het_ - input->shape()[0];  // number of pixels to pad (top and bottom)
   int32_t left = crop_wid_ - input->shape()[1];
   std::shared_ptr<Tensor> pad_image;
 
   CHECK_FAIL_RETURN_UNEXPECTED((top < input->shape()[0] * 3 && left < input->shape()[1] * 3),
-                               "CenterCropOp padding size is too big, it's more than 3 times the original size.");
+                               "CenterCrop: CenterCropOp padding size is more than 3 times the original size.");
 
   if (top > 0 && left > 0) {  // padding only
     return Pad(input, output, top / 2 + top % 2, top / 2, left / 2 + left % 2, left / 2, BorderType::kConstant);
@@ -71,7 +72,7 @@ Status CenterCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
   if (inputs[0].Rank() == 2) outputs.emplace_back(out);
   if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
+  return Status(StatusCode::kUnexpectedError, "CenterCrop: invalid input shape.");
 }
 }  // namespace dataset
 }  // namespace mindspore

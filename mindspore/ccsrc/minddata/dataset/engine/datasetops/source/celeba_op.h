@@ -232,6 +232,7 @@ class CelebAOp : public ParallelOp, RandomAccessOp {
   std::vector<std::pair<std::string, std::vector<int32_t>>> image_labels_vec_;
   std::string usage_;
   std::ifstream partition_file_;
+  std::string attr_file_;
 };
 }  // namespace dataset
 }  // namespace mindspore

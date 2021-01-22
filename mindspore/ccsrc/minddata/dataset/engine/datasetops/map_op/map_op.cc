@@ -288,6 +288,13 @@ Status MapOp::WorkerCompute(DataBuffer *in_buffer, TensorQTable *new_tensor_tabl
     (void)std::transform(to_process_indices_.begin(), to_process_indices_.end(), std::back_inserter(to_process),
                          [&cur_row](const auto &it) { return std::move(cur_row[it]); });
     to_process.setId(cur_row.getId());
+    std::vector<std::string> cur_row_path = cur_row.getPath();
+    if (cur_row_path.size() > 0) {
+      std::vector<std::string> to_process_path;
+      (void)std::transform(to_process_indices_.begin(), to_process_indices_.end(), std::back_inserter(to_process_path),
+                           [&cur_row_path](const auto &it) { return cur_row_path[it]; });
+      to_process.setPath(to_process_path);
+    }
     job_input_table.push_back(std::move(to_process));
     original_table.push_back(std::move(cur_row));
   }

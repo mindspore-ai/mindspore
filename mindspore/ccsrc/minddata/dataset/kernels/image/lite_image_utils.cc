@@ -95,7 +95,7 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
     try {
       num_lines_read = jpeg_read_scanlines(cinfo, &scanline_ptr, 1);
     } catch (std::runtime_error &e) {
-      RETURN_STATUS_UNEXPECTED("jpeg_read_scanlines error.");
+      RETURN_STATUS_UNEXPECTED("Decode: jpeg_read_scanlines error.");
     }
     if (cinfo->out_color_space == JCS_CMYK && num_lines_read > 0) {
       for (int i = 0; i < crop_w; ++i) {
@@ -122,11 +122,11 @@ static Status JpegReadScanlines(jpeg_decompress_struct *const cinfo, int max_sca
       auto copy_status = memcpy_s(buffer, buffer_size, scanline_ptr + offset, stride);
       if (copy_status != 0) {
         jpeg_destroy_decompress(cinfo);
-        RETURN_STATUS_UNEXPECTED("memcpy failed");
+        RETURN_STATUS_UNEXPECTED("Decode: memcpy_s failed");
       }
     } else {
       jpeg_destroy_decompress(cinfo);
-      std::string err_msg = "failed to read scanline";
+      std::string err_msg = "Decode: failed to decompress image.";
       RETURN_STATUS_UNEXPECTED(err_msg);
     }
     buffer += stride;
@@ -150,7 +150,7 @@ static Status JpegSetColorSpace(jpeg_decompress_struct *cinfo) {
       return Status::OK();
     default:
       jpeg_destroy_decompress(cinfo);
-      std::string err_msg = "wrong number of components";
+      std::string err_msg = "Decode: failed to decompress image.";
       RETURN_STATUS_UNEXPECTED(err_msg);
   }
 }
@@ -185,7 +185,7 @@ Status JpegCropAndDecode(const std::shared_ptr<Tensor> &input, std::shared_ptr<T
     crop_h = cinfo.output_height;
   } else if (crop_w == 0 || static_cast<unsigned int>(crop_w + crop_x) > cinfo.output_width || crop_h == 0 ||
              static_cast<unsigned int>(crop_h + crop_y) > cinfo.output_height) {
-    return DestroyDecompressAndReturnError("Crop window is not valid");
+    return DestroyDecompressAndReturnError("Decode: invalid crop size");
   }
   const int mcu_size = cinfo.min_DCT_scaled_size;
   unsigned int crop_x_aligned = (crop_x / mcu_size) * mcu_size;
@@ -231,26 +231,26 @@ Status Decode(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
   if (IsNonEmptyJPEG(input)) {
     return JpegCropAndDecode(input, output);
   } else {
-    RETURN_STATUS_UNEXPECTED("Decode only supports jpeg for android");
+    RETURN_STATUS_UNEXPECTED("Decode: Decode only supports jpeg for android");
   }
 }
 
 Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int x, int y, int w, int h) {
   if (input->Rank() != 3 && input->Rank() != 2) {
-    RETURN_STATUS_UNEXPECTED("Shape not <H,W,C> or <H,W>");
+    RETURN_STATUS_UNEXPECTED("Crop: image shape is not <H,W,C> or <H,W>");
   }
 
   if (input->type() != DataType::DE_FLOAT32 && input->type() != DataType::DE_UINT8) {
-    RETURN_STATUS_UNEXPECTED("Only float32, uint8 support in Crop");
+    RETURN_STATUS_UNEXPECTED("Crop: image datatype is not float32 or uint8");
   }
 
   // account for integer overflow
   if (y < 0 || (y + h) > input->shape()[0] || (y + h) < 0) {
-    RETURN_STATUS_UNEXPECTED("Invalid y coordinate value for crop");
+    RETURN_STATUS_UNEXPECTED("Crop: invalid y coordinate value for crop");
   }
   // account for integer overflow
   if (x < 0 || (x + w) > input->shape()[1] || (x + w) < 0) {
-    RETURN_STATUS_UNEXPECTED("Invalid x coordinate value for crop");
+    RETURN_STATUS_UNEXPECTED("Crop: invalid x coordinate value for crop");
   }
 
   try {
@@ -277,12 +277,12 @@ Status Crop(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *outpu
     lite_mat_cut.Init(w, h, lite_mat_rgb.channel_, reinterpret_cast<void *>(buffer), GetLiteCVDataType(input->type()));
 
     bool ret = Crop(lite_mat_rgb, lite_mat_cut, x, y, w, h);
-    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Crop failed in lite cv");
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Crop: image crop failed.");
 
     *output = output_tensor;
     return Status::OK();
   } catch (std::runtime_error &e) {
-    RETURN_STATUS_UNEXPECTED("Unexpected error in crop.");
+    RETURN_STATUS_UNEXPECTED("Crop: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -310,21 +310,21 @@ Status GetJpegImageInfo(const std::shared_ptr<Tensor> &input, int *img_width, in
 Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output,
                  const std::shared_ptr<Tensor> &mean, const std::shared_ptr<Tensor> &std) {
   if (input->Rank() != 3) {
-    RETURN_STATUS_UNEXPECTED("Input tensor rank isn't 3");
+    RETURN_STATUS_UNEXPECTED("Normalize: image shape is not <H,W,C>.");
   }
 
   if (input->type() != DataType::DE_UINT8 && input->type() != DataType::DE_FLOAT32) {
-    RETURN_STATUS_UNEXPECTED("Only uint8, float32 support in Normalize");
+    RETURN_STATUS_UNEXPECTED("Normalize: image datatype is not uint8 or float32.");
   }
 
   mean->Squeeze();
   if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != 3) {
-    std::string err_msg = "Mean tensor should be of size 3 and type float.";
+    std::string err_msg = "Normalize: mean should be of size 3 and type float.";
     return Status(StatusCode::kShapeMisMatch, err_msg);
   }
   std->Squeeze();
   if (std->type() != DataType::DE_FLOAT32 || std->Rank() != 1 || std->shape()[0] != 3) {
-    std::string err_msg = "Std tensor should be of size 3 and type float.";
+    std::string err_msg = "Normalize: std should be of size 3 and type float.";
     return Status(StatusCode::kShapeMisMatch, err_msg);
   }
   // convert mean, std back to vector
@@ -357,16 +357,16 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
       LiteMat lite_mat_float;
       // change input to float
       ret = ConvertTo(lite_mat_rgb, lite_mat_float, 1.0);
-      CHECK_FAIL_RETURN_UNEXPECTED(ret, "Conversion of lite cv to float failed");
+      CHECK_FAIL_RETURN_UNEXPECTED(ret, "Normalize: convert to float datatype failed.");
       ret = SubStractMeanNormalize(lite_mat_float, lite_mat_norm, vec_mean, vec_std);
     } else {  // float32
       ret = SubStractMeanNormalize(lite_mat_rgb, lite_mat_norm, vec_mean, vec_std);
     }
-    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Normalize in lite cv failed");
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Normalize: normalize failed.");
 
     *output = output_tensor;
   } catch (std::runtime_error &e) {
-    RETURN_STATUS_UNEXPECTED("Unexpected error in normalize.");
+    RETURN_STATUS_UNEXPECTED("Normalize: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -374,16 +374,16 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
 Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, int32_t output_height,
               int32_t output_width, double fx, double fy, InterpolationMode mode) {
   if (input->Rank() != 3 && input->Rank() != 2) {
-    RETURN_STATUS_UNEXPECTED("Input Tensor is not in shape of <H,W,C> or <H,W>");
+    RETURN_STATUS_UNEXPECTED("Resize: input image is not in shape of <H,W,C> or <H,W>");
   }
   if (input->type() != DataType::DE_UINT8) {
-    RETURN_STATUS_UNEXPECTED("Only uint8 support in Resize");
+    RETURN_STATUS_UNEXPECTED("Resize: image datatype is not uint8.");
   }
   // resize image too large or too small
   if (output_height == 0 || output_height > input->shape()[0] * 1000 || output_width == 0 ||
       output_width > input->shape()[1] * 1000) {
     std::string err_msg =
-      "The resizing width or height 1) is too big, it's up to "
+      "Resize: the resizing width or height 1) is too big, it's up to "
       "1000 times the original image; 2) can not be 0.";
     return Status(StatusCode::kShapeMisMatch, err_msg);
   }
@@ -412,11 +412,11 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
                          GetLiteCVDataType(input->type()));
 
     bool ret = ResizeBilinear(lite_mat_rgb, lite_mat_resize, output_width, output_height);
-    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Resize failed in lite cv");
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Resize: bilinear resize failed.");
 
     *output = output_tensor;
   } catch (std::runtime_error &e) {
-    RETURN_STATUS_UNEXPECTED("Error in image resize.");
+    RETURN_STATUS_UNEXPECTED("Resize: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -425,15 +425,17 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
            const int32_t &pad_bottom, const int32_t &pad_left, const int32_t &pad_right, const BorderType &border_types,
            uint8_t fill_r, uint8_t fill_g, uint8_t fill_b) {
   if (input->Rank() != 3) {
-    RETURN_STATUS_UNEXPECTED("Input Tensor is not in shape of <H,W,C>");
+    RETURN_STATUS_UNEXPECTED("Pad: input image is not in shape of <H,W,C>");
   }
 
   if (input->type() != DataType::DE_FLOAT32 && input->type() != DataType::DE_UINT8) {
-    RETURN_STATUS_UNEXPECTED("Only float32, uint8 support in Pad");
+    RETURN_STATUS_UNEXPECTED("Pad: image datatype is not uint8 or float32.");
   }
 
   if (pad_top < 0 || pad_bottom < 0 || pad_left < 0 || pad_right < 0) {
-    RETURN_STATUS_UNEXPECTED("The pad, top, bottom, left, right must be greater than 0");
+    RETURN_STATUS_UNEXPECTED(
+      "Pad: "
+      "the top, bottom, left, right of pad must be greater than 0.");
   }
 
   try {
@@ -456,11 +458,11 @@ Status Pad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output
 
     bool ret = Pad(lite_mat_rgb, lite_mat_pad, pad_top, pad_bottom, pad_left, pad_right,
                    PaddBorderType::PADD_BORDER_CONSTANT, fill_r, fill_g, fill_b);
-    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Pad failed in lite cv");
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Pad: pad failed.");
 
     *output = output_tensor;
   } catch (std::runtime_error &e) {
-    RETURN_STATUS_UNEXPECTED("Error in image Pad.");
+    RETURN_STATUS_UNEXPECTED("Pad: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -518,11 +520,11 @@ static Status RotateAngleWithOutMirror(const std::shared_ptr<Tensor> &input, std
                          GetLiteCVDataType(input->type()));
 
     bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize, UINT8_C3(0, 0, 0));
-    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate failed in lite cv");
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate: rotate failed.");
 
     *output = output_tensor;
   } catch (std::runtime_error &e) {
-    RETURN_STATUS_UNEXPECTED("Error in image Rotate.");
+    RETURN_STATUS_UNEXPECTED("Rotate: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -588,11 +590,11 @@ static Status RotateAngleWithMirror(const std::shared_ptr<Tensor> &input, std::s
                          GetLiteCVDataType(input->type()));
 
     bool ret = Affine(lite_mat_rgb, lite_mat_affine, M, dsize, UINT8_C3(0, 0, 0));
-    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate failed in lite cv");
+    CHECK_FAIL_RETURN_UNEXPECTED(ret, "Rotate: rotate failed.");
 
     *output = output_tensor;
   } catch (std::runtime_error &e) {
-    RETURN_STATUS_UNEXPECTED("Error in image Rotate.");
+    RETURN_STATUS_UNEXPECTED("Rotate: " + std::string(e.what()));
   }
   return Status::OK();
 }
@@ -606,11 +608,11 @@ static bool IsMirror(int orientation) {
 // rotate the image by EXIF orientation
 Status Rotate(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output, const uint64_t orientation) {
   if (input->Rank() != 3) {
-    RETURN_STATUS_UNEXPECTED("Input Tensor is not in shape of <H,W,C>");
+    RETURN_STATUS_UNEXPECTED("Rotate: input image is not in shape of <H,W,C>");
   }
 
   if (input->type() != DataType::DE_FLOAT32 && input->type() != DataType::DE_UINT8) {
-    RETURN_STATUS_UNEXPECTED("Only float32, uint8 support in Pad");
+    RETURN_STATUS_UNEXPECTED("Rotate: image datatype is not float32 or uint8.");
   }
 
   if (!IsMirror(orientation)) {

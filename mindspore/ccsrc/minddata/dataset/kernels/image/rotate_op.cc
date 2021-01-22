@@ -26,8 +26,9 @@ RotateOp::RotateOp(int angle_id) : angle_id_(angle_id) {}
 
 Status RotateOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "The shape size " + std::to_string(input->shape().Size()) +
-                                                             " of input tensor is invalid");
+  CHECK_FAIL_RETURN_UNEXPECTED(
+    input->shape().Size() >= 2,
+    "Rotate: image shape " + std::to_string(input->shape().Size()) + " is not <H,W,C> or <H,W>.");
 #ifdef ENABLE_ANDROID
   Rotate(input, output, angle_id_);
 #endif

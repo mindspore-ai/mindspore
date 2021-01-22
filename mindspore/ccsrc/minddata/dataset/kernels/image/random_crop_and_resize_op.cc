@@ -46,7 +46,7 @@ RandomCropAndResizeOp::RandomCropAndResizeOp(int32_t target_height, int32_t targ
 
 Status RandomCropAndResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "The shape of input is abnormal");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "RandomCropAndResize: the image is not <H,W,C> or <H,W>");
 
   int h_in = input->shape()[0];
   int w_in = input->shape()[1];
@@ -64,14 +64,14 @@ Status RandomCropAndResizeOp::OutputShape(const std::vector<TensorShape> &inputs
   if (inputs[0].Rank() == 2) outputs.emplace_back(out);
   if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
+  return Status(StatusCode::kUnexpectedError, "RandomCropAndResize: invalid input shape");
 }
 Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int *crop_height, int *crop_width) {
   *crop_width = w_in;
   *crop_height = h_in;
-  CHECK_FAIL_RETURN_UNEXPECTED(w_in != 0, "Width is 0");
-  CHECK_FAIL_RETURN_UNEXPECTED(h_in != 0, "Height is 0");
-  CHECK_FAIL_RETURN_UNEXPECTED(aspect_lb_ > 0, "Aspect lower bound must be greater than zero");
+  CHECK_FAIL_RETURN_UNEXPECTED(w_in != 0, "RandomCropAndResize: Width is 0");
+  CHECK_FAIL_RETURN_UNEXPECTED(h_in != 0, "RandomCropAndResize: Height is 0");
+  CHECK_FAIL_RETURN_UNEXPECTED(aspect_lb_ > 0, "RandomCropAndResize: aspect lower bound must be greater than zero");
   for (int32_t i = 0; i < max_iter_; i++) {
     double const sample_scale = rnd_scale_(rnd_);
     // In case of non-symmetrical aspect ratios, use uniform distribution on a logarithmic sample_scale.

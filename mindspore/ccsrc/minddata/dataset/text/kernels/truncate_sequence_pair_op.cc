@@ -25,11 +25,11 @@ namespace dataset {
 
 Status TruncateSequencePairOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 2, "Number of inputs should be two.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 2, "TruncateSequencePair: Expected two inputs.");
   std::shared_ptr<Tensor> seq1 = input[0];
   std::shared_ptr<Tensor> seq2 = input[1];
   CHECK_FAIL_RETURN_UNEXPECTED(seq1->shape().Rank() == 1 && seq2->shape().Rank() == 1,
-                               "Both sequences should be of rank 1.");
+                               "TruncateSequencePair: both data column should be of rank 1.");
   dsize_t length1 = seq1->shape()[0];
   dsize_t length2 = seq2->shape()[0];
   dsize_t outLength1 = length1;

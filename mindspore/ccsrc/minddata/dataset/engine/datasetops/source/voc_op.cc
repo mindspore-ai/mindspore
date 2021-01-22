@@ -213,6 +213,7 @@ Status VOCOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, Ten
     RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
     RETURN_IF_NOT_OK(ReadImageToTensor(kTargetFile, data_schema_->column(1), &target));
     (*trow) = TensorRow(row_id, {std::move(image), std::move(target)});
+    trow->setPath({kImageFile, kTargetFile});
   } else if (task_type_ == TaskType::Detection) {
     std::shared_ptr<Tensor> image;
     TensorRow annotation;
@@ -223,6 +224,7 @@ Status VOCOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, Ten
     RETURN_IF_NOT_OK(ReadImageToTensor(kImageFile, data_schema_->column(0), &image));
     RETURN_IF_NOT_OK(ReadAnnotationToTensor(kAnnotationFile, &annotation));
     trow->setId(row_id);
+    trow->setPath({kImageFile, kAnnotationFile, kAnnotationFile, kAnnotationFile, kAnnotationFile});
     trow->push_back(std::move(image));
     trow->insert(trow->end(), annotation.begin(), annotation.end());
   }

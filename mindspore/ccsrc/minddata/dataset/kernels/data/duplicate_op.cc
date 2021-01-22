@@ -24,7 +24,7 @@ namespace dataset {
 
 Status DuplicateOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Input should be one tensor");
+  CHECK_FAIL_RETURN_UNEXPECTED(input.size() == 1, "Duplicate: only support one input.");
   std::shared_ptr<Tensor> out;
   RETURN_IF_NOT_OK(Tensor::CreateFromTensor(input[0], &out));
   output->push_back(input[0]);

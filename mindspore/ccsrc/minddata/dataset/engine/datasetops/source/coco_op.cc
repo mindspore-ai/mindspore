@@ -97,7 +97,7 @@ Status CocoOp::Builder::Build(std::shared_ptr<CocoOp> *ptr) {
         ColDescriptor(std::string(kJsonAnnoArea), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
       break;
     default:
-      RETURN_STATUS_UNEXPECTED("Invalid parameter, task type shoule be Detection, Stuff, Keypoint or Panoptic.");
+      RETURN_STATUS_UNEXPECTED("Invalid parameter, task type should be Detection, Stuff, Keypoint or Panoptic.");
   }
   *ptr = std::make_shared<CocoOp>(builder_task_type_, builder_dir_, builder_file_, builder_num_workers_,
                                   builder_rows_per_buffer_, builder_op_connector_size_, builder_decode_,
@@ -263,7 +263,7 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, Te
   } else if (task_type_ == TaskType::Panoptic) {
     RETURN_IF_NOT_OK(LoadMixTensorRow(row_id, image_id, image, coordinate, trow));
   } else {
-    RETURN_STATUS_UNEXPECTED("Invalid parameter, task type shoule be Detection, Stuff or Panoptic.");
+    RETURN_STATUS_UNEXPECTED("Invalid parameter, task type should be Detection, Stuff or Panoptic.");
   }
 
   return Status::OK();
@@ -302,6 +302,8 @@ Status CocoOp::LoadDetectionTensorRow(row_id_type row_id, const std::string &ima
     Tensor::CreateFromVector(iscrowd_row, TensorShape({static_cast<dsize_t>(iscrowd_row.size()), 1}), &iscrowd));
 
   (*trow) = TensorRow(row_id, {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd)});
+  std::string image_full_path = image_folder_path_ + std::string("/") + image_id;
+  trow->setPath({image_full_path, annotation_path_, annotation_path_, annotation_path_});
   return Status::OK();
 }
 
@@ -324,6 +326,8 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
   RETURN_IF_NOT_OK(Tensor::CreateFromVector(item_queue, TensorShape(bbox_dim), &item));
 
   (*trow) = TensorRow(row_id, {std::move(image), std::move(coordinate), std::move(item)});
+  std::string image_full_path = image_folder_path_ + std::string("/") + image_id;
+  trow->setPath({image_full_path, annotation_path_, annotation_path_});
   return Status::OK();
 }
 
@@ -332,7 +336,7 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
 // column ["bbox"] with datatype=float32
 // column ["category_id"] with datatype=uint32
 // column ["iscrowd"] with datatype=uint32
-// column ["area"] with datattype=uint32
+// column ["area"] with datatype=uint32
 Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                 std::shared_ptr<Tensor> coordinate, TensorRow *trow) {
   std::shared_ptr<Tensor> category_id, iscrowd, area;
@@ -365,6 +369,8 @@ Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id,
 
   (*trow) = TensorRow(
     row_id, {std::move(image), std::move(coordinate), std::move(category_id), std::move(iscrowd), std::move(area)});
+  std::string image_full_path = image_folder_path_ + std::string("/") + image_id;
+  trow->setPath({image_full_path, annotation_path_, annotation_path_, annotation_path_, annotation_path_});
   return Status::OK();
 }
 
@@ -461,7 +467,7 @@ Status CocoOp::ParseAnnotationIds() {
         RETURN_IF_NOT_OK(PanopticColumnLoad(annotation, file_name, image_id));
         break;
       default:
-        RETURN_STATUS_UNEXPECTED("Invalid parameter, task type shoule be Detection, Stuff, Keypoint or Panoptic.");
+        RETURN_STATUS_UNEXPECTED("Invalid parameter, task type should be Detection, Stuff, Keypoint or Panoptic.");
     }
   }
   for (auto img : image_que) {
