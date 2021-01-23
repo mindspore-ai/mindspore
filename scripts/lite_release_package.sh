@@ -70,23 +70,23 @@ function android_release_package()
         mkdir -p ${dst_android_pkg_name}/lib/aarch32/
         mkdir -p ${dst_android_pkg_name}/minddata/lib/aarch64/
         mkdir -p ${dst_android_pkg_name}/minddata/lib/aarch32/
-        mkdir -p ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch64/
-        mkdir -p ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch32/
         cp ${src_arm64_pkg_name}/benchmark/* ${dst_android_pkg_name}/benchmark/aarch64/
         cp ${src_arm32_pkg_name}/benchmark/* ${dst_android_pkg_name}/benchmark/aarch32/
         cp ${src_arm64_pkg_name}/lib/* ${dst_android_pkg_name}/lib/aarch64/
         cp ${src_arm32_pkg_name}/lib/* ${dst_android_pkg_name}/lib/aarch32/
         cp ${src_arm64_pkg_name}/minddata/lib/* ${dst_android_pkg_name}/minddata/lib/aarch64/
         cp ${src_arm32_pkg_name}/minddata/lib/* ${dst_android_pkg_name}/minddata/lib/aarch32/
-        cp ${src_arm64_pkg_name}/minddata/third_party/libjpeg-turbo/lib/* ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch64/
-        cp ${src_arm32_pkg_name}/minddata/third_party/libjpeg-turbo/lib/* ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch32/
 
         if [ ${name} == "train" ]
         then
             mkdir -p ${dst_android_pkg_name}/benchmark_train/aarch64/
             mkdir -p ${dst_android_pkg_name}/benchmark_train/aarch32/
+            mkdir -p ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch64/
+            mkdir -p ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch32/
             cp ${src_arm64_pkg_name}/benchmark_train/* ${dst_android_pkg_name}/benchmark_train/aarch64/
             cp ${src_arm32_pkg_name}/benchmark_train/* ${dst_android_pkg_name}/benchmark_train/aarch32/
+            cp ${src_arm64_pkg_name}/minddata/third_party/libjpeg-turbo/lib/* ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch64/
+            cp ${src_arm32_pkg_name}/minddata/third_party/libjpeg-turbo/lib/* ${dst_android_pkg_name}/minddata/third_party/libjpeg-turbo/lib/aarch32/
         fi
         mkdir -p ${dst_android_pkg_name}/third_party/hiai_ddk/lib/aarch64/
         cp -r ${src_arm64_pkg_name}/third_party/hiai_ddk/lib/* ${dst_android_pkg_name}/third_party/hiai_ddk/lib/aarch64/
