@@ -96,9 +96,11 @@ class TopCellInfo {
   TopCellInfo(bool topest, ResourcePtr r, FuncGraphPtr df, std::string cellid)
       : is_topest(topest), resource(std::move(r)), df_builder(std::move(df)), cell_id(std::move(cellid)) {}
 
+  bool need_grad{true};
   bool is_topest{false};
   bool do_vm_compiled{false};
   bool forward_already_run{false};
+  size_t top_cell_index{0};
   ResourcePtr resource{nullptr};
   FuncGraphPtr df_builder{nullptr};
   FuncGraphPtr bg{nullptr};  // Backward graph
@@ -306,6 +308,7 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   static std::mutex instance_lock_;
   static int64_t graph_id_;
   size_t grad_order_{0};
+  size_t top_cell_index_{0};
   std::string top_cell_id_;
   bool grad_flag_{false};
   bool in_grad_process_{false};
