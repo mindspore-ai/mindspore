@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_BASE_RECORDER_H_
-#define MINDSPORE_BASE_RECORDER_H_
+#ifndef MINDSPORE_CCSRC_DEBUG_RDR_BASE_RECORDER_H_
+#define MINDSPORE_CCSRC_DEBUG_RDR_BASE_RECORDER_H_
 
 #include <memory>
 #include <string>
+#include "debug/env_config_parser.h"
 
 namespace mindspore {
 class BaseRecorder {
  public:
-  BaseRecorder() : module_(""), tag_(""), directory_("./rdr/"), filename_(""), timestamp_("") {}
+  BaseRecorder() : module_(""), tag_(""), directory_(""), filename_(""), timestamp_("") {}
   BaseRecorder(const std::string &module, const std::string &tag)
-      : module_(module), tag_(tag), directory_("./rdr/"), filename_(""), timestamp_("") {}
+      : module_(module), tag_(tag), directory_(""), filename_(""), timestamp_("") {
+    auto &config_parser_ptr = mindspore::EnvConfigParser::GetInstance();
+    config_parser_ptr.Parse();
+    directory_ = config_parser_ptr.rdr_path();
+  }
   ~BaseRecorder() {}
 
   std::string GetModule() { return module_; }
@@ -44,4 +49,4 @@ class BaseRecorder {
 
 using BaseRecorderPtr = std::shared_ptr<BaseRecorder>;
 }  // namespace mindspore
-#endif  // MINDSPORE_BASE_RECORDER_H_
+#endif  // MINDSPORE_CCSRC_DEBUG_RDR_BASE_RECORDER_H_

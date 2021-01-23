@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_GRAPH_RECORDER_H_
-#define MINDSPORE_GRAPH_RECORDER_H_
+#ifndef MINDSPORE_CCSRC_DEBUG_RDR_GRAPH_RECORDER_H_
+#define MINDSPORE_CCSRC_DEBUG_RDR_GRAPH_RECORDER_H_
 
 #include <vector>
 #include <string>
 #include <memory>
 
+#include "debug/anf_ir_utils.h"
 #include "debug/rdr/base_recorder.h"
 namespace mindspore {
 class FuncGraph;
@@ -44,4 +45,4 @@ class GraphRecorder : public BaseRecorder {
 };
 using GraphRecorderPtr = std::shared_ptr<GraphRecorder>;
 }  // namespace mindspore
-#endif  // MINDSPORE_GRAPH_RECORDER_H_
+#endif  // MINDSPORE_CCSRC_DEBUG_RDR_GRAPH_RECORDER_H_

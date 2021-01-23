@@ -16,6 +16,7 @@
 #include "debug/rdr/recorder_manager.h"
 #include <utility>
 #include "debug/rdr/base_recorder.h"
+#include "debug/env_config_parser.h"
 #include "mindspore/core/base/base.h"
 #include "mindspore/core/ir/func_graph.h"
 
@@ -32,6 +33,13 @@ bool RecorderManager::RecordObject(const BaseRecorderPtr &recorder) {
 }
 
 void RecorderManager::TriggerAll() {
+  auto &config_parser_ptr = mindspore::EnvConfigParser::GetInstance();
+  config_parser_ptr.Parse();
+  if (!config_parser_ptr.rdr_enabled()) {
+    MS_LOG(INFO) << "RDR is not enable.";
+    return;
+  }
+
   bool trigger = false;
   std::lock_guard<std::mutex> lock(mtx_);
   for (auto iter = recorder_container_.begin(); iter != recorder_container_.end(); ++iter) {

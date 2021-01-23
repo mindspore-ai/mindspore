@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ py::object MsCtxGetParameter(const std::shared_ptr<MsContext> &ctx, MsCtxParam p
 }
 }  // namespace
 
-// Note: exported python enum variables begining with '_' are for internal use
+// Note: exported python enum variables beginning with '_' are for internal use
 REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                          (void)py::enum_<MsCtxParam>(*m, "ms_ctx_param", py::arithmetic())
                            .value("enable_auto_mixed_precision", MsCtxParam::MS_CTX_ENABLE_AUTO_MIXED_PRECISION)
@@ -95,11 +95,12 @@ REGISTER_PYBIND_DEFINE(MsContextPy, ([](const py::module *m) {
                            .value("variable_memory_max_size", MsCtxParam::MS_CTX_VARIABLE_MEMORY_MAX_SIZE)
                            .value("device_id", MsCtxParam::MS_CTX_DEVICE_ID)
                            .value("max_call_depth", MsCtxParam::MS_CTX_MAX_CALL_DEPTH)
-                           .value("profiling_dir_path", MsCtxParam::MS_CTX_PROFILING_DIR_PATH);
+                           .value("profiling_dir_path", MsCtxParam::MS_CTX_PROFILING_DIR_PATH)
+                           .value("env_config_path", MsCtxParam::MS_CTX_ENV_CONFIG_PATH);
                          (void)py::class_<mindspore::MsContext, std::shared_ptr<mindspore::MsContext>>(*m, "MSContext")
                            .def_static("get_instance", &mindspore::MsContext::GetInstance, "Get ms context instance.")
-                           .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified paramter.")
-                           .def("set_param", &mindspore::MsCtxSetParameter, "Set value for specified paramter.")
+                           .def("get_param", &mindspore::MsCtxGetParameter, "Get value of specified parameter.")
+                           .def("set_param", &mindspore::MsCtxSetParameter, "Set value for specified parameter.")
                            .def("get_backend_policy", &mindspore::MsContext::backend_policy, "Get backend policy.")
                            .def("set_backend_policy", &mindspore::MsContext::set_backend_policy, "Set backend policy.");
                        }));
