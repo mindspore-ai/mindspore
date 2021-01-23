@@ -121,7 +121,6 @@ TypePtr Conv2dInferType(const PrimitivePtr &prim, const std::vector<AbstractBase
 void Conv2D::Init(int64_t out_channel, const std::vector<int64_t> &kernel_size, int64_t mode, const PadMode &pad_mode,
                   const std::vector<int64_t> &pad, const std::vector<int64_t> &stride,
                   const std::vector<int64_t> &dilation, int64_t group, const Format &format) {
-  AddAttr(kOffsetA, MakeValue(static_cast<int64_t>(0)));
   set_kernel_size(kernel_size);
   set_stride(stride);
   set_dilation(dilation);
