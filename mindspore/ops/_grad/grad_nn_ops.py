@@ -416,6 +416,58 @@ def get_bprop_dropout_do_mask(self):
     return bprop
 
 
+@bprop_getters.register(P.Mish)
+def get_bprop_mish(self):
+    """Grad definition for `Mish` operation."""
+    tanh = P.Tanh()
+    tanh_grad = SG.TanhGrad()
+    softplus = P.Softplus()
+    softplus_grad = G.SoftplusGrad()
+
+    def bprop(x, out, dout):
+        dx1 = tanh(softplus(x))
+        dx2 = softplus_grad(tanh_grad(dx1, x * dout), x)
+        dx = (dx1 * dout + dx2)
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.SeLU)
+def get_bprop_selu(self):
+    """Grad definition for `SeLU` operation."""
+    scale = 1.0507009873554804934193349852946
+    elu_grad = G.EluGrad()
+
+    def bprop(x, out, dout):
+        dx = elu_grad(dout, out) * scale
+        return (dx,)
+
+    return bprop
+
+
+@bprop_getters.register(P.MulNoNan)
+def get_bprop_mul_no_nan(self):
+    """Grad definition for `MulNoNan` operation."""
+    mul_no_nan = P.MulNoNan()
+    reduce_sum = P.ReduceSum()
+    reshape = P.Reshape()
+
+    def bprop(x, y, out, dout):
+        x_shape = F.shape(x)
+        y_shape = F.shape(y)
+        dx = mul_no_nan(dout, y)
+        dy = mul_no_nan(x, dout)
+        broadcast_x, broadcast_y = F.broadcast_gradient_args(x_shape, y_shape)
+        if broadcast_x != ():
+            dx = reshape(reduce_sum(dx, broadcast_x), x_shape)
+        if broadcast_y != ():
+            dy = reshape(reduce_sum(dy, broadcast_y), y_shape)
+        return dx, dy
+
+    return bprop
+
+
 @bprop_getters.register(P.ReLU)
 def get_bprop_relu(self):
     """Grad definition for `ReLU` operation."""

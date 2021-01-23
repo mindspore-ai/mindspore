@@ -320,6 +320,42 @@ class CountNonZero(nn.Cell):
         return nonzero_num
 
 
+class Mish(nn.Cell):
+    """Mish net definition"""
+
+    def __init__(self):
+        super(Mish, self).__init__()
+        self.mish = P.Mish()
+
+    def construct(self, input_x):
+        out = self.mish(input_x)
+        return out
+
+
+class SeLU(nn.Cell):
+    """Selu net definition"""
+
+    def __init__(self):
+        super(SeLU, self).__init__()
+        self.selu = P.SeLU()
+
+    def construct(self, input_x):
+        out = self.selu(input_x)
+        return out
+
+
+class MulNoNan(nn.Cell):
+    """MulNoNan net definition"""
+
+    def __init__(self):
+        super(MulNoNan, self).__init__()
+        self.mul_no_nan = P.MulNoNan()
+
+    def construct(self, input_x, input_y):
+        out = self.mul_no_nan(input_x, input_y)
+        return out
+
+
 class ScatterUpdate(nn.Cell):
     """ScatterUpdate net definition"""
 
@@ -1315,6 +1351,19 @@ test_case_math_ops = [
                         Tensor(np.array([-6, -1, -2, -3]), mstype.float32),
                         Tensor(np.array([6, 1, 2, 3]), mstype.float32)],
         'desc_bprop': [Tensor(np.random.rand(3, 16, 5, 4), mstype.float32)]}),
+    ('Mish', {
+        'block': Mish(),
+        'desc_inputs': [Tensor(np.random.rand(3, 6, 16, 16), mstype.float32)],
+        'desc_bprop': [Tensor(np.random.rand(3, 6, 16, 16), mstype.float32)]}),
+    ('SeLU', {
+        'block': SeLU(),
+        'desc_inputs': [Tensor(np.random.rand(3, 6, 16, 16), mstype.float32)],
+        'desc_bprop': [Tensor(np.random.rand(3, 6, 16, 16), mstype.float32)]}),
+    ('MulNoNan', {
+        'block': MulNoNan(),
+        'desc_inputs': [Tensor(np.random.rand(3, 6, 16, 16), mstype.float32),
+                        Tensor(np.random.rand(3, 6, 16, 16), mstype.float32)],
+        'desc_bprop': [Tensor(np.random.rand(3, 6, 16, 16), mstype.float32)]}),
     ('Rank', {
         'block': P.Rank(),
         'desc_inputs': [[2, 3]],

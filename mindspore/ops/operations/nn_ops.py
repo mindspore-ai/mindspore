@@ -329,6 +329,99 @@ class ReLU(PrimitiveWithCheck):
         validator.check_tensor_dtype_valid('input_x', input_x, mstype.number_type, self.name)
 
 
+class Mish(PrimitiveWithInfer):
+    r"""
+    Computes MISH of input tensors element-wise.
+
+    The function is shown as follows:
+
+    .. math::
+
+        \text{output} = x * \tan(\log(1 + \exp(\text{x})))
+
+    Inputs:
+        - **x** (Tensor) - The input tensor. Only support float16 and float32.
+
+    Outputs:
+        Tensor, with the same type and shape as the `x`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Raise:
+        TypeError: If num_features data type not float16 and float32 Tensor.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> mish = ops.Mish()
+        >>> output = mish(input_x)
+        >>> print(output)
+        [[-3.034014e-01 3.997413e+00 -2.682209e-03]
+        [ 1.943959e+00 -3.357619e-02 8.999999e+00]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize Mish"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        validator.check_tensor_dtype_valid('x', x_dtype, [mstype.float16, mstype.float32], self.name)
+        return x_dtype
+
+
+class SeLU(PrimitiveWithInfer):
+    r"""
+    Computes SeLU (scaled exponential Linear Unit) of input tensors element-wise.
+
+    The activation function is defined as:
+
+    .. math::
+        E_{i} =
+        scale *
+        \begin{cases}
+        x, &\text{if } x \geq 0; \cr
+        \text{alpha} * (\exp(x_i) - 1), &\text{otherwise.}
+        \end{cases}
+
+    Inputs:
+        - **input_x** (Tensor) - The input tensor.
+
+    Outputs:
+        Tensor, with the same type and shape as the `input_x`.
+
+    Supported Platforms:
+        ``Ascend``
+
+    Raise:
+        TypeError: If num_features data type not int8, int32, float16 and float32 Tensor.
+
+    Examples:
+        >>> input_x = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
+        >>> selu = ops.SeLU()
+        >>> output = selu(input_x)
+        >>> print(output)
+        [[-1.1113307 4.202804 -1.7575096]
+        [ 2.101402 -1.7462534 9.456309 ]]
+    """
+
+    @prim_attr_register
+    def __init__(self):
+        """Initialize SeLU"""
+        self.init_prim_io_names(inputs=['x'], outputs=['output'])
+
+    def infer_shape(self, x_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype):
+        valid_dtypes = [mstype.int8, mstype.int32, mstype.float16, mstype.float32]
+        validator.check_tensor_dtype_valid('x', x_dtype, valid_dtypes, self.name)
+        return x_dtype
+
+
 class ReLU6(PrimitiveWithInfer):
     r"""
     Computes ReLU (Rectified Linear Unit) upper bounded by 6 of input tensors element-wise.
