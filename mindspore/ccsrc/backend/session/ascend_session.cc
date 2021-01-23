@@ -875,7 +875,7 @@ void AscendSession::BuildGraphImpl(GraphId graph_id) {
     // generate and load task info to device if it is sink mode
     Load(graph);
   }
-  // sync the inital const tensor to device
+  // sync the initial const tensor to device
   SyncInitialTenosrToDevice();
   DumpAllGraphs({graph});
   MS_LOG(INFO) << "End";
@@ -1634,7 +1634,8 @@ void AscendSession::CreateMultiBranchOutput(NotNull<KernelGraphPtr> graph, NotNu
   std::map<AnfNodePtr, AnfNodePtr> need_replace_list;
   auto node_list = GetCNodes(TopoSort(graph->get_return()));
   for (auto &node : node_list) {
-    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch)) {
+    if (AnfAlgo::CheckPrimitiveType(node, prim::kPrimCall) || AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitch) ||
+        AnfAlgo::CheckPrimitiveType(node, prim::kPrimSwitchLayer)) {
       // create a parameter to store the output of multiple branch and set the parameter as the condition graph's output
       auto output_param = graph->TransTupleToMakeTuple(graph->NewParameter(node->abstract()));
       MS_EXCEPTION_IF_NULL(graph->MutableInputs());

@@ -1186,8 +1186,9 @@ bool KernelGraph::IsUniqueTargetInternalOutput(const AnfNodePtr &node, int outpu
 void KernelGraph::UpdateChildGraphOrder() {
   MS_LOG(INFO) << "Update " << ToString() << " child graph order.";
   SetExecOrderByDefault();
-  auto call_nodes = FindNodeByPrimitive(
-    {std::make_shared<Primitive>(prim::kPrimCall->name()), std::make_shared<Primitive>(prim::kPrimSwitch->name())});
+  auto call_nodes = FindNodeByPrimitive({std::make_shared<Primitive>(prim::kPrimCall->name()),
+                                         std::make_shared<Primitive>(prim::kPrimSwitch->name()),
+                                         std::make_shared<Primitive>(prim::kPrimSwitchLayer->name())});
   std::vector<std::weak_ptr<KernelGraph>> child_graph_order;
   for (auto &call_node : call_nodes) {
     MS_EXCEPTION_IF_NULL(call_node);

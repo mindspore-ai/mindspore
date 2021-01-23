@@ -407,6 +407,7 @@ constexpr auto kFirstBranchInSwitch = 2;
 constexpr auto kCallKernelGraphIndex = 1;
 constexpr auto kSwitchTrueKernelGraphIndex = 2;
 constexpr auto kSwitchFalseKernelGraphIndex = 3;
+constexpr auto kMakeTupleInSwitchLayerIndex = 2;
 // index define of control depend
 constexpr auto kControlDependPriorIndex = 1;
 constexpr auto kControlDependBehindIndex = 2;
