@@ -16,14 +16,14 @@
  * limitations under the License.
  */
 
+#include "src/runtime/kernel/opencl/kernel/prelu.h"
+#include <mindspore/lite/nnacl/prelu_parameter.h>
 #include <set>
 #include <vector>
-
+#include "src/runtime/kernel/opencl/cl/prelu.cl.inc"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/fp32/common_func_fp32.h"
-#include "src/runtime/kernel/opencl/kernel/prelu.h"
-#include "src/runtime/kernel/opencl/cl/prelu.cl.inc"
 
 using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
@@ -36,7 +36,6 @@ namespace mindspore::kernel {
 int PReluOpenCLKernel::InitWeights() {
   auto allocator = ocl_runtime_->GetAllocator();
   auto weight_tensor = in_tensors_.at(1);
-  int C_ = weight_shape_.s[3];
   if (weight_is_scalar) {
     if (weight_tensor->data_type() == kNumberTypeFloat16) {
       weight_scalar_ = static_cast<float>(*reinterpret_cast<float16_t *>(weight_tensor->data_c()));
@@ -44,6 +43,7 @@ int PReluOpenCLKernel::InitWeights() {
       weight_scalar_ = *reinterpret_cast<float *>(weight_tensor->data_c());
     }
   } else {
+    int C_ = weight_tensor->ElementsNum();
     auto sizeof_FLT = enable_fp16_ ? sizeof(float16_t) : sizeof(float);
     size_t weight_size = UP_ROUND(C_, C4NUM) * sizeof_FLT;
     weight_vector_ = allocator->Malloc(weight_size);
@@ -123,7 +123,8 @@ int PReluOpenCLKernel::Prepare() {
   }
   Broadcast2GpuShape(out_shape_.s, output_shape.s, out_tensors_.at(0)->shape().size(), 1);
   Broadcast2GpuShape(weight_shape_.s, weight_shape.s, in_tensors_.at(1)->shape().size(), 1);
-  weight_is_scalar = weight_shape_.s[3] == 1;
+  auto param = reinterpret_cast<PReluParameter *>(op_parameter_);
+  weight_is_scalar = param->channelShared;
   enable_fp16_ = ocl_runtime_->GetFp16Enable();
   std::string source = prelu_source;
   std::string program_name = "PRelu";
