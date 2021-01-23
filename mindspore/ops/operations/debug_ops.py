@@ -337,7 +337,7 @@ class Print(PrimitiveWithInfer):
           Supports multiple inputs which are separated by ','.
 
     Supported Platforms:
-        ``Ascend``
+        ``Ascend`` ``GPU``
 
     Examples:
         >>> class PrintDemo(nn.Cell):
