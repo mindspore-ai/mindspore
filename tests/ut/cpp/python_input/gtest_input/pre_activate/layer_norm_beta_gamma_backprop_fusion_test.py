@@ -19,7 +19,7 @@ from mindspore.ops import _constants as Constants
 Add = P.TensorAdd()
 Cast = P.Cast()
 LayerNormBetaGammaBackprop = Primitive('LayerNormBetaGammaBackprop')
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

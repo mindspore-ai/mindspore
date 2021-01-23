@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
 
 TopK = P.TopK()
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

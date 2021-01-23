@@ -26,7 +26,7 @@ real_div = P.RealDiv()
 sub = P.Sub()
 Assign = P.Assign()
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 adam_apply_one_with_decay = Primitive('AdamApplyOneWithDecay')
 adam_apply_one_with_decay_assign = Primitive('AdamApplyOneWithDecayAssign')
 

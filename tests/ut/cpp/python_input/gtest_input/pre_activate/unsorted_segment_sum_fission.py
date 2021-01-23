@@ -17,7 +17,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
 
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 unsorted_segment_sum = P.UnsortedSegmentSum()
 num_segments = 4
 padding = Primitive('Padding')

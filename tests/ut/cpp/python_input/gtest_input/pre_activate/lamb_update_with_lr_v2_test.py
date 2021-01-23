@@ -22,7 +22,7 @@ RealDiv = P.RealDiv()
 Select = P.Select()
 Greater = P.Greater()
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 LambUpdateWithLrV2 = Primitive('LambUpdateWithLrV2')
 
 

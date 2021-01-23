@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
 
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 bn = P.BatchNorm(is_training=True)
 fused_bn1 = Primitive('FusedBN1')
 fused_bn2 = Primitive('FusedBN2')

@@ -37,7 +37,7 @@ constexpr auto kScalarTrunc = "ScalarTrunc";
 constexpr auto kScalarFloor = "ScalarFloor";
 constexpr auto kScalarUadd = "ScalarUadd";
 constexpr auto kScalarUsub = "ScalarUsub";
-constexpr auto kTupleGetitem = "TupleGetitem";
+constexpr auto kTupleGetItem = "TupleGetitem";
 constexpr auto kMakeTuple = "MakeTuple";
 constexpr auto kReturn = "Return";
 constexpr auto kSGD = "SGD";
@@ -379,7 +379,7 @@ inline const PrimitivePtr kPrimCall = std::make_shared<Primitive>("call");
 
 inline const PrimitivePtr kPrimMakeTuple = std::make_shared<Primitive>(kMakeTuple);
 inline const PrimitivePtr kPrimMakeSlice = std::make_shared<Primitive>("make_slice");
-inline const PrimitivePtr kPrimTupleGetItem = std::make_shared<Primitive>(kTupleGetitem);
+inline const PrimitivePtr kPrimTupleGetItem = std::make_shared<Primitive>(kTupleGetItem);
 inline const PrimitivePtr kPrimArrayGetItem = std::make_shared<Primitive>("array_getitem");
 inline const PrimitivePtr kPrimTupleSetItem = std::make_shared<Primitive>("tuple_setitem");
 inline const PrimitivePtr kPrimArraySetItem = std::make_shared<Primitive>("array_setitem");

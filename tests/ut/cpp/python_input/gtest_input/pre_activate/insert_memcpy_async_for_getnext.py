@@ -21,7 +21,7 @@ from mindspore.ops import _constants as Constants
 get_next = P.GetNext([ms.float32, ms.int32], [[32, 64], [32]], 2, "")
 memcpy_async = Primitive('memcpy_async')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

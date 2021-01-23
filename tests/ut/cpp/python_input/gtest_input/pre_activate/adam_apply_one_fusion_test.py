@@ -25,7 +25,7 @@ Sqrt = P.Sqrt()
 Square = P.Square()
 Assign = P.Assign()
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 AdamApplyOne = Primitive('AdamApplyOne')
 AdamApplyOneAssign = Primitive('AdamApplyOneAssign')
 

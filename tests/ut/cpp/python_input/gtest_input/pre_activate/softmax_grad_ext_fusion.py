@@ -21,7 +21,7 @@ ReduceSum = P.ReduceSum(keep_dims=True)
 Sub = P.Sub()
 SoftmaxGradExt = Primitive('SoftmaxGradExt')
 MakeTuple = Primitive(Constants.kMakeTuple)
-TupleGetItem = Primitive(Constants.kTupleGetitem)
+TupleGetItem = Primitive(Constants.kTupleGetItem)
 axes = (2, 3)
 
 

@@ -21,7 +21,7 @@ reduce_sum = P.ReduceSum(keep_dims=True)
 sub = P.Sub()
 confusion_softmax_grad = Primitive('ConfusionSoftmaxGrad')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 axis = 2
 
 

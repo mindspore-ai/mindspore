@@ -86,7 +86,7 @@ depend = P.Depend()
 identity = P.identity()
 
 tuple_setitem = Primitive('tuple_setitem')
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 list_getitem = Primitive('list_getitem')
 list_setitem = Primitive('list_setitem')
 dict_getitem = Primitive('dict_getitem')

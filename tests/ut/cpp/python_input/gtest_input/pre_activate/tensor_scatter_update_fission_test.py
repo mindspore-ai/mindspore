@@ -20,7 +20,7 @@ tensor_scatter_update = P.TensorScatterUpdate()
 tensor_move = Primitive('TensorMove')
 scatter_nd_update = Primitive('ScatterNdUpdate')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

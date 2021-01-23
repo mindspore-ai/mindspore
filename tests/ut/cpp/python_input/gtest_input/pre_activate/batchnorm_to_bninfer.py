@@ -20,7 +20,7 @@ from mindspore.ops import _constants as Constants
 batch_norm = P.BatchNorm(is_training=False)
 bn_infer = Primitive('BNInfer')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:
