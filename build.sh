@@ -487,7 +487,7 @@ build_mindspore()
 
 checkndk() {
     if [ "${ANDROID_NDK}" ]; then
-        echo -e "\e[31mANDROID_NDK_PATH=$ANDROID_NDK  \e[0m"
+        echo -e "\e[31mANDROID_NDK=$ANDROID_NDK  \e[0m"
     else
         echo -e "\e[31mplease set ANDROID_NDK in environment variable for example: export ANDROID_NDK=/root/usr/android-ndk-r20b/ \e[0m"
         exit 1
@@ -707,7 +707,7 @@ build_java() {
 
 make_clean()
 {
-  echo "enbale make clean"
+  echo "enable make clean"
   cd "${BUILD_PATH}/mindspore"
   cmake --build . --target clean
 }
