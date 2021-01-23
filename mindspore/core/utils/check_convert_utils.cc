@@ -18,7 +18,7 @@
 #include <vector>
 #include <algorithm>
 #include <typeinfo>
-
+#include <functional>
 #include "utils/check_convert_utils.h"
 #include "abstract/abstract_value.h"
 #include "ir/dtype/type.h"
@@ -225,6 +225,18 @@ bool CheckAndConvertUtils::ConvertAttrValueToString(const std::string &op_type, 
   MS_LOG(DEBUG) << "convert int to str, name: " << op_type << ", attr: " << attr_name;
   return true;
 }
+
+namespace {
+typedef std::map<std::string, std::function<ValuePtr(ValuePtr)>> AttrFunction;
+
+ValuePtr L2NormalizeAttrConversion(ValuePtr attr) {
+  auto attr_value = GetValue<std::vector<int64_t>>(attr);
+  return MakeValue<int64_t>(attr_value[0]);
+}
+
+std::map<std::string, AttrFunction> kIrAttrToOpAttr = {{"L2Normalize", {{"axis", L2NormalizeAttrConversion}}},
+                                                       {"L2NormalizeGrad", {{"axis", L2NormalizeAttrConversion}}}};
+}  // namespace
 
 bool CheckAndConvertUtils::IsEqualVector(const std::vector<int64_t> &vec_1, const std::vector<int64_t> &vec_2) {
   if (vec_1.size() != vec_2.size()) {
@@ -540,5 +552,27 @@ TypeId CheckAndConvertUtils::CheckTypeSame(const std::string &arg_name, const Ty
     MS_EXCEPTION(TypeError) << buffer.str();
   }
   return arg_type_;
+}
+
+bool CheckAndConvertUtils::CheckIrAttrtoOpAttr(const std::string &op_type, const std::string &attr_name,
+                                               ValuePtr *const value) {
+  if (*value == nullptr) {
+    MS_LOG(ERROR) << "value is nullptr";
+    return false;
+  }
+  if (op_type.empty() || attr_name.empty()) {
+    return false;
+  }
+  auto op_map = kIrAttrToOpAttr.find(op_type);
+  if (op_map == kIrAttrToOpAttr.end()) {
+    return false;
+  }
+  auto attr_func = op_map->second.find(attr_name);
+  if (attr_func == op_map->second.end()) {
+    return false;
+  }
+  *value = attr_func->second(*value);
+  MS_LOG(DEBUG) << "convert ir attr to op attr, name: " << op_type << ", attr: " << attr_name;
+  return true;
 }
 }  // namespace mindspore

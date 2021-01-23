@@ -51,6 +51,10 @@ const AnfNodePtr ConvertAttrToUnifyMindIR::Process(const FuncGraphPtr &, const A
         if (converted) {
           prim->set_attr(attr.first, attr.second);
         }
+        bool converted_ir_attr = CheckAndConvertUtils::CheckIrAttrtoOpAttr(type_name, attr.first, &attr.second);
+        if (converted_ir_attr) {
+          prim->set_attr(attr.first, attr.second);
+        }
       }
     }
   }

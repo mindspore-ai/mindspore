@@ -568,8 +568,9 @@ int OpAdapterImpl::SetNormalOpAttr(const OperatorPtr &op, const PrimitivePtr &pr
   for (auto &it : attr_map_) {
     auto value = prim->GetAttr(it.first);
     if (value != nullptr) {
-      // convert parts of attr to str eg. data_format
+      // convert parts of attr to str eg. data_format or change ir attr to op attr eg. axis[0]
       CheckAndConvertUtils::ConvertAttrValueToString(prim->name(), it.first, &value);
+      CheckAndConvertUtils::CheckIrAttrtoOpAttr(prim->name(), it.first, &value);
       // set attr from primitive
       int ret = setAttr(op, it.first, value);
       if (ret) {
