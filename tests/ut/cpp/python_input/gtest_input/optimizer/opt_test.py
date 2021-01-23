@@ -29,7 +29,7 @@ from mindspore.ops.operations import _grad_ops as G
 
 scalar_add = Primitive(Constants.kScalarAdd)
 scalar_mul = Primitive(Constants.kScalarMul)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 switch = Primitive('switch')
 
 
@@ -923,7 +923,7 @@ def test_convert_switch_ops(tag):
     merge = Primitive('Merge')
     add = Primitive(Constants.kScalarAdd)
     neg = Primitive('Neg')
-    tuple_getitem = Primitive(Constants.kTupleGetitem)
+    tuple_getitem = Primitive(Constants.kTupleGetItem)
     make_tuple = Primitive(Constants.kMakeTuple)
 
     @fns

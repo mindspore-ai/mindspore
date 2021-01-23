@@ -22,7 +22,7 @@ addn = P.AddN()
 mul = P.Mul()
 fused_mul_addn = Primitive('FusedMulAddN')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 scalar = Tensor(1.0, mstype.float32)
 
 

@@ -19,7 +19,7 @@ from mindspore.ops import _constants as Constants
 
 split = P.Split(0, 8)
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 splitv = Primitive('SplitV')
 
 

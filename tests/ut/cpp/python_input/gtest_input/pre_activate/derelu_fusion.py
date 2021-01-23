@@ -21,7 +21,7 @@ relu_grad = Primitive('ReluGrad')
 relu_v2 = Primitive('ReLUV2')
 relu_grad_v2 = Primitive('ReluGradV2')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

@@ -21,7 +21,7 @@ addn = P.AddN()
 add = P.TensorAdd()
 reshape = P.Reshape()
 cast = P.Cast()
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 max_pool = P.MaxPoolWithArgmax(pad_mode="same", kernel_size=3, strides=2)
 
 

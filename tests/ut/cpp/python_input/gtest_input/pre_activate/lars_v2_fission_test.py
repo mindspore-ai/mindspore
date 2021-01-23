@@ -20,7 +20,7 @@ lars_v2 = Primitive('LarsV2')
 square_sum_all = Primitive('SquareSumAll')
 lars_v2_update = Primitive('LarsV2Update')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

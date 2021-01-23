@@ -21,7 +21,7 @@ batch_norm_grad = G.BatchNormGrad(is_training=True)
 bn_training_update_grad = Primitive('BNTrainingUpdateGrad')
 bn_training_reduce_grad = Primitive('BNTrainingReduceGrad')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

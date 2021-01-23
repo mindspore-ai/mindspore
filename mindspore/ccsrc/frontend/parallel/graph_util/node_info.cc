@@ -307,7 +307,7 @@ bool FindReshapePreNodeStraCosts(const AnfNodePtr &node, OperatorInfoPtr *pre_op
   }
   ValueNodePtr prim_anf_node = cnode->input(0)->cast<ValueNodePtr>();
   PrimitivePtr prim = prim_anf_node->value()->cast<PrimitivePtr>();
-  if (prim->name() == prim::kTupleGetitem) {
+  if (prim->name() == prim::kTupleGetItem) {
     *out_index = GetTupleGetItemIndex(cnode);
     // find tuple_get_item's previous node
     auto pre_node = cnode->input(1);

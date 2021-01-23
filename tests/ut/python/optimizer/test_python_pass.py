@@ -297,12 +297,12 @@ def test_imm_target():
         pattern = Call(P.Softmax(), [x])
         imm = Imm(0)
         target_0 = Call(Constants.kMakeTuple, [pattern])
-        target = Call(Constants.kTupleGetitem, [target_0, imm])
+        target = Call(Constants.kTupleGetItem, [target_0, imm])
         return pattern, target
     transformed_repr = get_func_graph(softmax_model, inputs).get_return().expanded_str(5)
     unregiste_pass(softmax_pass)
     assert Constants.kMakeTuple in transformed_repr
-    assert Constants.kTupleGetitem in transformed_repr
+    assert Constants.kTupleGetItem in transformed_repr
     assert "Softmax" in transformed_repr
 
 def test_gen_new_parameter():

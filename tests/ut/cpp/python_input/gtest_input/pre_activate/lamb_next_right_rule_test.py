@@ -21,7 +21,7 @@ Mul = P.Mul()
 Sqrt = P.Sqrt()
 Square = P.Square()
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 LambNextRight = Primitive('LambNextRight')
 
 

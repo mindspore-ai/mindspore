@@ -141,7 +141,7 @@ def bprop_scalar_cast(x, t, out, dout):
     return F.scalar_cast(dout, F.typeof(x)), t
 
 
-@bprops.register(Constants.kTupleGetitem)
+@bprops.register(Constants.kTupleGetItem)
 def bprop_tuple_getitem(data, idx, out, dout):
     """Backpropagator for primitive `tuple_getitem`."""
     return F.tuple_setitem(C.zeros_like(data), idx, dout), C.zeros_like(idx)

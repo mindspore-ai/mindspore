@@ -20,7 +20,7 @@ maximum = P.Maximum()
 minimum = P.Minimum()
 clip_by_value = Primitive('ClipByValue')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

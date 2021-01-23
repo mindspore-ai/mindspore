@@ -17,7 +17,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
 
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_get_item = Primitive(Constants.kTupleGetitem)
+tuple_get_item = Primitive(Constants.kTupleGetItem)
 LSTM = P.LSTM(input_size=10, hidden_size=2, num_layers=1, has_bias=True, bidirectional=False, dropout=0.0)
 add = P.TensorAdd()
 

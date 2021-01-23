@@ -22,7 +22,7 @@ sqrt = P.Sqrt()
 greater = P.Greater()
 clip_by_norm_no_div_square_sum = Primitive('ClipByNormNoDivSum')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

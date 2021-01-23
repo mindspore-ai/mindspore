@@ -22,7 +22,7 @@ Mul = P.Mul()
 ApplyMomentum = P.ApplyMomentum()
 FusedMulApplyMomentum = Primitive('FusedMulApplyMomentum')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 constant = Tensor(1.0, mstype.float32)
 
 

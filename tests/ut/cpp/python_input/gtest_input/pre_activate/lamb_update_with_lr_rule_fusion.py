@@ -25,7 +25,7 @@ mul = P.Mul()
 sub = P.Sub()
 lamb_update_with_lr = Primitive('LambUpdateWithLR')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

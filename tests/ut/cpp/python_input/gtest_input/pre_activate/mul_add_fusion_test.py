@@ -20,7 +20,7 @@ add = P.TensorAdd()
 mul = P.Mul()
 fused_mul_add = Primitive('FusedMulAdd')
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 
 
 class FnDict:

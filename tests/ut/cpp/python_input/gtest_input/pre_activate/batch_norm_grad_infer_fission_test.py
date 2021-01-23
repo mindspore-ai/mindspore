@@ -17,7 +17,7 @@ from mindspore.ops.operations import _grad_ops as G
 from mindspore.ops import _constants as Constants
 
 make_tuple = Primitive(Constants.kMakeTuple)
-tuple_getitem = Primitive(Constants.kTupleGetitem)
+tuple_getitem = Primitive(Constants.kTupleGetItem)
 BatchNormGradTraining = G.BatchNormGrad(is_training=True)
 BatchNormGradInfer = G.BatchNormGrad(is_training=False)
 BNInferGrad = Primitive('BNInferGrad')
