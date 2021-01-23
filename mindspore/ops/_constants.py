@@ -30,5 +30,5 @@ kScalarFloor = "ScalarFloor"
 kScalarUadd = "ScalarUadd"
 kScalarUsub = "ScalarUsub"
 
-kTupleGetItem = "TupleGetitem"
+kTupleGetItem = "TupleGetItem"
 kMakeTuple = "MakeTuple"
