@@ -4,8 +4,8 @@ set(gtest_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 set(CMAKE_OPTION
         -DBUILD_TESTING=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON -DBUILD_SHARED_LIBS=ON
         -DCMAKE_MACOSX_RPATH=TRUE -Dgtest_disable_pthreads=ON)
-if (BUILD_LITE)
-    if (PLATFORM_ARM64)
+if(BUILD_LITE)
+    if(PLATFORM_ARM64)
         set(CMAKE_OPTION -DCMAKE_TOOLCHAIN_FILE=$ENV{ANDROID_NDK}/build/cmake/android.toolchain.cmake
                 -DANDROID_NATIVE_API_LEVEL=19
                 -DANDROID_NDK=$ENV{ANDROID_NDK}
@@ -14,7 +14,7 @@ if (BUILD_LITE)
                 -DANDROID_STL=c++_shared -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE}
                 ${CMAKE_OPTION})
     endif()
-    if (PLATFORM_ARM32)
+    if(PLATFORM_ARM32)
         set(CMAKE_OPTION -DCMAKE_TOOLCHAIN_FILE=$ENV{ANDROID_NDK}/build/cmake/android.toolchain.cmake
                 -DANDROID_NATIVE_API_LEVEL=19
                 -DANDROID_NDK=$ENV{ANDROID_NDK}
@@ -25,15 +25,15 @@ if (BUILD_LITE)
     endif()
 else()
     set(gtest_CXXFLAGS "${gtest_CXXFLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
-endif ()
+endif()
 
-if (ENABLE_GITEE)
+if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/googletest/repository/archive/release-1.8.0.tar.gz")
     set(MD5 "89e13ca1aa48d370719d58010b83f62c")
 else()
     set(REQ_URL "https://github.com/google/googletest/archive/release-1.8.0.tar.gz")
     set(MD5 "16877098823401d1bf2ed7891d7dce36")
-endif ()
+endif()
 
 mindspore_add_pkg(gtest
         VER 1.8.0

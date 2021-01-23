@@ -11,7 +11,7 @@ set(DATASET_ENGINE_GNN_SRC_FILES
     feature.cc
 )
 
-if (CMAKE_SYSTEM_NAME MATCHES "Windows")
+if(CMAKE_SYSTEM_NAME MATCHES "Windows")
     add_library(engine-gnn OBJECT ${DATASET_ENGINE_GNN_SRC_FILES})
 else()
     set(DATASET_ENGINE_GNN_SRC_FILES

@@ -12,7 +12,7 @@ add_executable(benchmark
 
 add_dependencies(benchmark fbs_src)
 
-if (PLATFORM_ARM32 OR PLATFORM_ARM64)
+if(PLATFORM_ARM32 OR PLATFORM_ARM64)
     target_link_libraries(benchmark mindspore-lite)
 else()
     target_link_libraries(benchmark mindspore-lite pthread)

@@ -19,11 +19,11 @@ set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
         voc_node.cc
         )
 
-if (ENABLE_PYTHON)
+if(ENABLE_PYTHON)
     set(DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES
             ${DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES}
             generator_node.cc
             )
-endif ()
+endif()
 
 add_library(engine-ir-datasetops-source OBJECT ${DATASET_ENGINE_IR_DATASETOPS_SOURCE_SRC_FILES})

@@ -3,7 +3,7 @@
 #
 # PROTOBUF_LIBRARY - Link this to use protobuf
 #
-if (NOT TARGET protobuf::libprotobuf)
+if(NOT TARGET protobuf::libprotobuf)
     set(protobuf_BUILD_TESTS OFF CACHE BOOL "Disable protobuf test")
     set(protobuf_BUILD_SHARED_LIBS OFF CACHE BOOL "Gen shared library")
     set(_ms_tmp_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -14,7 +14,7 @@ if (NOT TARGET protobuf::libprotobuf)
     add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/../third_party/protobuf/cmake ${CMAKE_BINARY_DIR}/protobuf)
 
     set(CMAKE_CXX_FLAGS ${_ms_tmp_CMAKE_CXX_FLAGS})
-endif ()
+endif()
 
 include_directories(${CMAKE_CURRENT_LIST_DIR}/../third_party/protobuf/src)
 
@@ -47,7 +47,7 @@ function(ms_protobuf_generate c_var h_var)
                 COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${rel_path}"
                 COMMAND protobuf::protoc -I${file_dir} --cpp_out=${CMAKE_BINARY_DIR}/${rel_path} ${abs_file}
                 DEPENDS protobuf::protoc ${abs_file}
-                COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM )
+                COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM)
     endforeach()
 
     set_source_files_properties(${${c_var}} ${${h_var}} PROPERTIES GENERATED TRUE)
@@ -89,7 +89,7 @@ function(ms_protobuf_generate_py c_var h_var py_var)
                 COMMAND perl -pi -e "s/import (.+_pb2.*)/from . import \\1/"  "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py"
                 COMMAND cp "${CMAKE_BINARY_DIR}/${rel_path}/${file_name}_pb2.py" "${PROJECT_SOURCE_DIR}/mindspore/train/"
                 DEPENDS protobuf::protoc ${abs_file}
-                COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM )
+                COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM)
     endforeach()
 
     set_source_files_properties(${${c_var}} ${${h_var}} ${${py_var}} PROPERTIES GENERATED TRUE)

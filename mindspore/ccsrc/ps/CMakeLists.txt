@@ -1,6 +1,6 @@
 file(GLOB_RECURSE _PS_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 
-if (NOT (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU)))
+if(NOT (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU)))
     list(REMOVE_ITEM _PS_SRC_FILES "optimizer_info_builder.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "optimizer_info.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "scheduler.cc")
@@ -20,13 +20,13 @@ if (NOT (ENABLE_CPU AND (ENABLE_D OR ENABLE_GPU)))
     list(REMOVE_ITEM _PS_SRC_FILES "core/server_node.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "core/abstract_node.cc")
     list(REMOVE_ITEM _PS_SRC_FILES "core/scheduler_node.cc")
-endif ()
+endif()
 
-if (NOT ENABLE_D)
+if(NOT ENABLE_D)
     list(REMOVE_ITEM _PS_SRC_FILES "ps_cache/ascend/ascend_ps_cache.cc")
 endif()
 
-if (NOT ENABLE_GPU)
+if(NOT ENABLE_GPU)
     list(REMOVE_ITEM _PS_SRC_FILES "ps_cache/gpu/gpu_ps_cache.cc")
 endif()
 
