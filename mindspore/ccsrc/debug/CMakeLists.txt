@@ -7,17 +7,17 @@ set(_DEBUG_SRC_LIST
     "${CMAKE_CURRENT_SOURCE_DIR}/common.cc"
 )
 
-if (ENABLE_DEBUGGER)
-    list(APPEND _DEBUG_SRC_LIST 
+if(ENABLE_DEBUGGER)
+    list(APPEND _DEBUG_SRC_LIST
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/debugger.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/grpc_client.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/proto_exporter.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debugger/tensor_summary.cc"
         "${CMAKE_CURRENT_SOURCE_DIR}/debug_services.cc"
         )
-endif (ENABLE_DEBUGGER)
+endif()
 
-if (NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
+if(NOT CMAKE_SYSTEM_NAME MATCHES "Windows")
     list(APPEND _DEBUG_SRC_LIST "${CMAKE_CURRENT_SOURCE_DIR}/common.cc")
     list(APPEND _DEBUG_SRC_LIST "data_dump/dump_json_parser.cc")
     list(APPEND _DEBUG_SRC_LIST "data_dump/e2e_dump_util.cc")

@@ -1,10 +1,10 @@
-if (ENABLE_GITEE)
+if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/nccl/repository/archive/v2.7.6-1.tar.gz")
     set(MD5 "220d232b30cb9bff2e54219399b9f6fb")
 else()
     set(REQ_URL "https://github.com/NVIDIA/nccl/archive/v2.7.6-1.tar.gz")
     set(MD5 "073b19899f374c5ba07d2db02dc38f9f")
-endif ()
+endif()
 
 set(nccl_CFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 mindspore_add_pkg(nccl

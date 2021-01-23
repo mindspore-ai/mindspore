@@ -6,7 +6,7 @@ add_library(soft-dvpp-utils OBJECT
             soft_jpegd.cc
             soft_vpc.cc
             yuv_scaler_para_set.cc)
-if (USE_GLOG)
+if(USE_GLOG)
     message("Soft dvpp use glog to print message.")
 else()
     add_compile_definitions(DVPP_UTST)

@@ -7,7 +7,7 @@ function(find_submodule_lib module name path)
     find_library(${module}_LIBRARY_DIR NAMES ${name} NAMES_PER_DIR PATHS ${path}
             PATH_SUFFIXES lib
             )
-    if ("${${module}_LIBRARY_DIR}" STREQUAL "${module}_LIBRARY_DIR-NOTFOUND")
+    if("${${module}_LIBRARY_DIR}" STREQUAL "${module}_LIBRARY_DIR-NOTFOUND")
         message(FATAL_ERROR "${name} not found in any of following paths: ${path}")
     endif()
     add_library(${module} SHARED IMPORTED)
@@ -16,13 +16,13 @@ function(find_submodule_lib module name path)
             )
 endfunction()
 
-if (ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
+if(ENABLE_D OR ENABLE_ACL OR ENABLE_TESTCASES)
     set(_ge_tmp_CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
     set(_ge_tmp_ENABLE_GITEE ${ENABLE_GITEE})
     set(ENABLE_GITEE ON)
     set(CMAKE_INSTALL_PREFIX ${BUILD_PATH}/graphengine)
 
-    if (ENABLE_TESTCASES)
+    if(ENABLE_TESTCASES)
         # use slog, error manager, mmpa in non ascend mode, e.g. tests
         set(GE_PREBUILD_PATH ${GE_SOURCE_DIR}/third_party/prebuild/${CMAKE_HOST_SYSTEM_PROCESSOR})
         set(ENABLE_MS_TESTCASES TRUE)

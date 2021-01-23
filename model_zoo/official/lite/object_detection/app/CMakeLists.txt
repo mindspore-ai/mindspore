@@ -22,9 +22,9 @@ include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/mi
 
 #include_directories(${CMAKE_SOURCE_DIR}/src/main/cpp/include/ModelUtil)
 
-add_library(mindspore-lite SHARED IMPORTED )
-add_library(minddata-lite SHARED IMPORTED )
-add_library(libmindspore-lite-fp16 SHARED IMPORTED )
+add_library(mindspore-lite SHARED IMPORTED)
+add_library(minddata-lite SHARED IMPORTED)
+add_library(libmindspore-lite-fp16 SHARED IMPORTED)
 
 set_target_properties(mindspore-lite PROPERTIES IMPORTED_LOCATION
         ${CMAKE_SOURCE_DIR}/src/main/cpp/${MINDSPORELITE_VERSION}/lib/libmindspore-lite.so)

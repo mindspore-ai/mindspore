@@ -11,11 +11,11 @@ set(DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SRC_FILES
         weighted_random_sampler.cc
         )
 
-if (ENABLE_PYTHON)
+if(ENABLE_PYTHON)
     set(DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SRC_FILES
             ${DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SRC_FILES}
             python_sampler.cc
             )
-endif ()
+endif()
 
 add_library(engine-datasetops-source-sampler OBJECT ${DATASET_ENGINE_DATASETOPS_SOURCE_SAMPLER_SRC_FILES})

@@ -1,10 +1,10 @@
-if (ENABLE_GITEE)
+if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/abseil-cpp/repository/archive/20200225.2.tar.gz")
     set(MD5 "7e84ac40ee4541f645f5b9c90c9c98e6")
 else()
     set(REQ_URL "https://github.com/abseil/abseil-cpp/archive/20200225.2.tar.gz")
     set(MD5 "73f2b6e72f1599a9139170c29482ddc4")
-endif ()
+endif()
 
 mindspore_add_pkg(absl
         VER 20200225.2

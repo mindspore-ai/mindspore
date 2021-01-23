@@ -17,6 +17,6 @@ ms_protobuf_generate(FEATURE_SRCS FEATURE_HDRS feature.proto)
 add_library(core OBJECT ${DATASET_CORE_SRC_FILES} ${EXAMPLE_SRCS} ${FEATURE_SRCS})
 add_dependencies(core mindspore::protobuf)
 
-if (ENABLE_PYTHON)
+if(ENABLE_PYTHON)
   target_include_directories(core PRIVATE ${pybind11_INCLUDE_DIRS})
 endif()

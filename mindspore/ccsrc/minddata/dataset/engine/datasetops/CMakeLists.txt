@@ -25,7 +25,7 @@ set(DATASET_ENGINE_DATASETOPS_SRC_FILES
     cache_merge_op.cc
     )
 
-if (ENABLE_PYTHON)
+if(ENABLE_PYTHON)
     set(DATASET_ENGINE_DATASETOPS_SRC_FILES
         ${DATASET_ENGINE_DATASETOPS_SRC_FILES}
         bucket_batch_by_length_op.cc

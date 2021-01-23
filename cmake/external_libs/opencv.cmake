@@ -1,8 +1,8 @@
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     set(opencv_CXXFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
     set(opencv_CFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
     set(opencv_LDFLAGS "-Wl")
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
     set(opencv_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
     set(opencv_CFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -D_FORTIFY_SOURCE=2 -O2")
     set(opencv_CXXFLAGS "${opencv_CXXFLAGS} -Wno-attributes -Wno-unknown-pragmas")
@@ -13,15 +13,15 @@ else()
     set(opencv_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 endif()
 
-if (ENABLE_GITEE)
+if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/opencv/repository/archive/4.2.0.tar.gz")
     set(MD5 "00424c7c4acde1e26ebf17aaa155bf23")
 else()
     set(REQ_URL "https://github.com/opencv/opencv/archive/4.2.0.tar.gz")
     set(MD5 "e8cb208ce2723481408b604b480183b6")
-endif ()
+endif()
 
-if (WIN32)
+if(WIN32)
     mindspore_add_pkg(opencv
             VER 4.2.0
             LIBS libopencv_core420.dll.a libopencv_imgcodecs420.dll.a libopencv_imgproc420.dll.a
@@ -71,7 +71,7 @@ else()
             -DTIFF_LIBRARY=${tiff_LIB})
 endif()
 
-if (WIN32)
+if(WIN32)
     include_directories(${opencv_INC})
     add_library(mindspore::opencv_core ALIAS opencv::libopencv_core420.dll.a)
     add_library(mindspore::opencv_imgcodecs ALIAS opencv::libopencv_imgcodecs420.dll.a)

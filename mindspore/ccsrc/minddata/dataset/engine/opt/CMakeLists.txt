@@ -25,7 +25,7 @@ set(DATASET_ENGINE_OPT_SRC_FILES
     pre/removal_pass.cc
     )
 
-if (ENABLE_PYTHON)
+if(ENABLE_PYTHON)
     set(DATASET_ENGINE_OPT_SRC_FILES
         ${DATASET_ENGINE_OPT_SRC_FILES}
         post/generator_node_pass.cc

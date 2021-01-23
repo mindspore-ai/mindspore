@@ -1,10 +1,10 @@
-if (ENABLE_GITEE)
+if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/ompi/repository/archive/v4.0.3.tar.gz")
     set(MD5 "f76abc92ae870feff186d790f40ae762")
 else()
     set(REQ_URL "https://github.com/open-mpi/ompi/archive/v4.0.3.tar.gz")
     set(MD5 "86cb724e8fe71741ad3be4e7927928a2")
-endif ()
+endif()
 
 set(ompi_CXXFLAGS "-D_FORTIFY_SOURCE=2 -O2")
 mindspore_add_pkg(ompi

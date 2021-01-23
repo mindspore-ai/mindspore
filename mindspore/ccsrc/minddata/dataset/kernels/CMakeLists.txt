@@ -2,7 +2,7 @@ add_subdirectory(image)
 add_subdirectory(data)
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
-if (ENABLE_PYTHON)
+if(ENABLE_PYTHON)
     add_library(kernels OBJECT
             data/compose_op.cc
             data/random_apply_op.cc

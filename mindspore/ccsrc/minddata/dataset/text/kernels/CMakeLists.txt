@@ -1,6 +1,6 @@
 file(GLOB_RECURSE _CURRENT_SRC_FILES RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "*.cc")
 set_property(SOURCE ${_CURRENT_SRC_FILES} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_MD)
-if (NOT (CMAKE_SYSTEM_NAME MATCHES "Windows"))
+if(NOT (CMAKE_SYSTEM_NAME MATCHES "Windows"))
         set(ICU_DEPEND_FILES
                 basic_tokenizer_op.cc
                 bert_tokenizer_op.cc

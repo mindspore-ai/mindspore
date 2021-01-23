@@ -1,15 +1,15 @@
 set(protobuf_USE_STATIC_LIBS ON)
-if (BUILD_LITE)
+if(BUILD_LITE)
     set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
-else(BUILD_LITE)
-    if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+else()
+    if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
         set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
-    elseif (${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+    elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
         set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -O2")
     else()
         set(protobuf_CXXFLAGS "-fstack-protector-all -Wno-maybe-uninitialized -Wno-unused-parameter -fPIC -fvisibility=hidden -D_FORTIFY_SOURCE=2 -D_GLIBCXX_USE_CXX11_ABI=0 -O2")
     endif()
-endif(BUILD_LITE)
+endif()
 
 set(protobuf_LDFLAGS "-Wl,-z,relro,-z,now,-z,noexecstack")
 set(_ms_tmp_CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS})
@@ -17,13 +17,13 @@ set(CMAKE_CXX_FLAGS ${_ms_tmp_CMAKE_CXX_FLAGS})
 string(REPLACE " -Wall" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 string(REPLACE " -Werror" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
-if (ENABLE_GITEE)
+if(ENABLE_GITEE)
     set(REQ_URL "https://gitee.com/mirrors/protobuf_source/repository/archive/v3.8.0.tar.gz")
     set(MD5 "eba86ae9f07ba5cfbaf8af3bc4e84236")
 else()
     set(REQ_URL "https://github.com/protocolbuffers/protobuf/archive/v3.8.0.tar.gz")
     set(MD5 "3d9e32700639618a4d2d342c99d4507a")
-endif ()
+endif()
 
 mindspore_add_pkg(protobuf
         VER 3.8.0
@@ -90,7 +90,7 @@ function(ms_protobuf_generate_py c_var h_var py_var)
         list(APPEND ${c_var} "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.cc")
         list(APPEND ${h_var} "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.h")
         list(APPEND ${py_var} "${CMAKE_BINARY_DIR}/proto/${file_name}_pb2.py")
-        if (WIN32)
+        if(WIN32)
             add_custom_command(
                     OUTPUT "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.cc"
                     "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.h"
@@ -103,7 +103,7 @@ function(ms_protobuf_generate_py c_var h_var py_var)
                     COMMAND perl -pi.bak -e "s/import (.+_pb2.*)/from . import \\1/"  "${CMAKE_BINARY_DIR}/proto/${file_name}_pb2.py"
                     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_BINARY_DIR}/proto/${file_name}_pb2.py" "${PROJECT_SOURCE_DIR}/mindspore/train/"
                     DEPENDS protobuf::protoc ${abs_file}
-                    COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM )
+                    COMMENT "Running C++ protocol buffer compiler on ${file}" VERBATIM)
         else()
             add_custom_command(
                     OUTPUT "${CMAKE_BINARY_DIR}/proto/${file_name}.pb.cc"

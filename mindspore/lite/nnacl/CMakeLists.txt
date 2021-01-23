@@ -3,16 +3,16 @@ project(nnacl)
 set(NNACL_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(NNACL_DIR)
 
-if (PLATFORM_ARM32 OR PLATFORM_ARM64)
-    if ("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+if(PLATFORM_ARM32 OR PLATFORM_ARM64)
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math")
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -fomit-frame-pointer -fstrict-aliasing -ffunction-sections -fdata-sections -ffast-math")
     endif()
-endif ()
-if ("${X86_64_SIMD}" STREQUAL "avx")
+endif()
+if("${X86_64_SIMD}" STREQUAL "avx")
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -msse4.1 -mavx -mavx2")
     set(CMAKE_C_FLAGS  "${CMAKE_C_FLAGS} -msse4.1 -mavx -mavx2")
-endif ()
+endif()
 
 ########################### files ###########################
 file(GLOB KERNEL_SRC
@@ -22,29 +22,29 @@ file(GLOB KERNEL_SRC
     ${NNACL_DIR}/base/*.c
 )
 
-if (SUPPORT_TRAIN)
-    file (GLOB TRAIN_SRC ${NNACL_DIR}/fp32_grad/*.c)
+if(SUPPORT_TRAIN)
+    file(GLOB TRAIN_SRC ${NNACL_DIR}/fp32_grad/*.c)
 endif()
 
-if (PLATFORM_ARM64)
+if(PLATFORM_ARM64)
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm64/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 
-if (PLATFORM_ARM32)
+if(PLATFORM_ARM32)
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/assembly/arm32/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 
-if ("${X86_64_SIMD}" STREQUAL "sse")
+if("${X86_64_SIMD}" STREQUAL "sse")
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/x86_64_sse/*.c)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 
-if ("${X86_64_SIMD}" STREQUAL "avx")
+if("${X86_64_SIMD}" STREQUAL "avx")
     file(GLOB ASSEMBLY_SRC ${NNACL_DIR}/x86_64_sse/*.c
-         ${NNACL_DIR}/x86_64_avx/*.c
-         ${NNACL_DIR}/assembly/avx/*.S)
+        ${NNACL_DIR}/x86_64_avx/*.c
+        ${NNACL_DIR}/assembly/avx/*.S)
     set_property(SOURCE ${ASSEMBLY_SRC} PROPERTY LANGUAGE C)
 endif()
 
@@ -56,6 +56,6 @@ add_dependencies(nnacl fbs_src)
 add_dependencies(nnacl_mid fbs_src)
 
 ########################### arm64 build optimize library ########################
-if (PLATFORM_ARM64)
+if(PLATFORM_ARM64)
     add_subdirectory(${NNACL_DIR}/optimize)
 endif()
