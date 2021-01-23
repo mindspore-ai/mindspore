@@ -137,7 +137,7 @@ typedef struct TensorListC {
   TensorC *tensors_[MAX_PTR_ELEMENT];
   size_t element_num_;
 
-  TypeIdC tensors_data_type_;  // note: element_data_type_ ?
+  int tensors_data_type_;  // note: element_data_type_ ?
   int element_shape_[MAX_SHAPE_SIZE];
   size_t element_shape_size_;
 

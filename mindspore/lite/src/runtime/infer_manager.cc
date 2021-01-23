@@ -129,6 +129,19 @@
 namespace mindspore {
 namespace lite {
 
+TensorC *NewTensorC() {
+  auto *tensor_c = static_cast<TensorC *>(malloc(sizeof(TensorC)));
+  if (tensor_c == nullptr) {
+    MS_LOG(ERROR) << "malloc tensor fail!";
+    return nullptr;
+  }
+  tensor_c->data_type_ = kNumberTypeFloat32;
+  tensor_c->format_ = schema::Format::Format_NCHW;
+  tensor_c->data_ = nullptr;
+  tensor_c->shape_size_ = 0;
+  return tensor_c;
+}
+
 void Tensor2TensorC(Tensor *src, TensorC *dst) {
   dst->format_ = src->format();
   dst->data_ = src->data_c();
@@ -147,7 +160,7 @@ void TensorC2Tensor(TensorC *src, Tensor *dst) {
 }
 
 void TensorList2TensorListC(TensorList *src, TensorListC *dst) {
-  dst->data_type_ = static_cast<TypeIdC>(src->data_type());
+  dst->data_type_ = src->data_type();
   dst->format_ = src->format();
   dst->element_num_ = src->shape().empty() ? 0 : src->shape().at(0);
 
@@ -158,7 +171,7 @@ void TensorList2TensorListC(TensorList *src, TensorListC *dst) {
     Tensor2TensorC(src->tensors().at(i), dst->tensors_[i]);  // note: use pushback?
   }
 
-  dst->tensors_data_type_ = static_cast<TypeIdC>(src->tensors_data_type());
+  dst->tensors_data_type_ = src->tensors_data_type();
   dst->element_shape_size_ = src->element_shape().size();
   for (size_t i = 0; i < dst->element_shape_size_; i++) {
     dst->element_shape_[i] = src->element_shape().at(i);
@@ -181,6 +194,95 @@ void TensorListC2TensorList(TensorListC *src, TensorList *dst) {
 
   dst->set_element_shape(std::vector<int>(src->element_shape_, src->element_shape_ + src->element_shape_size_));
   dst->set_max_elements_num(src->max_elements_num_);
+}
+
+int GenerateMergeOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
+                            std::vector<TensorC *> *out_tensor_c) {
+  int ret = RET_OK;
+  for (size_t i = 0; i < outputs->size(); i++) {
+    if (inputs.at(i)->data_type() == kObjectTypeTensorType) {
+      auto *output_tensorlist = malloc(sizeof(TensorListC));
+      if (output_tensorlist == nullptr) {
+        MS_LOG(ERROR) << "malloc tensorlist_c failed";
+        ret = RET_ERROR;
+        break;
+      }
+      out_tensor_c->push_back(reinterpret_cast<TensorC *const>(output_tensorlist));
+    } else {
+      auto *output_tensor = NewTensorC();
+      if (output_tensor == nullptr) {
+        MS_LOG(ERROR) << "malloc tensor_c failed";
+        ret = RET_ERROR;
+        break;
+      }
+      out_tensor_c->push_back(reinterpret_cast<TensorC *const>(output_tensor));
+    }
+  }
+  return ret;
+}
+
+int GenerateSwitchOutTensorC(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
+                             std::vector<TensorC *> *out_tensor_c) {
+  int ret = RET_OK;
+  MS_ASSERT(inputs.size() == outputs->size() / 2 + 1);
+  out_tensor_c->resize(outputs->size());
+  for (size_t i = 0; i < outputs->size() / 2; i++) {
+    if (inputs.at(i + 1)->data_type() == kObjectTypeTensorType) {
+      auto *output_tensorlist1 = malloc(sizeof(TensorListC));
+      if (output_tensorlist1 == nullptr) {
+        MS_LOG(ERROR) << "malloc tensorlist_c failed";
+        ret = RET_ERROR;
+        break;
+      }
+      out_tensor_c->at(i) = reinterpret_cast<TensorC *const>(output_tensorlist1);
+      auto *output_tensorlist2 = malloc(sizeof(TensorListC));
+      if (output_tensorlist2 == nullptr) {
+        MS_LOG(ERROR) << "malloc tensorlist_c failed";
+        ret = RET_ERROR;
+        break;
+      }
+      out_tensor_c->at(i + outputs->size() / 2) = reinterpret_cast<TensorC *const>(output_tensorlist2);
+    } else {
+      auto *output_tensor1 = NewTensorC();
+      if (output_tensor1 == nullptr) {
+        MS_LOG(ERROR) << "malloc tensor_c failed";
+        ret = RET_ERROR;
+        break;
+      }
+      out_tensor_c->at(i) = reinterpret_cast<TensorC *const>(output_tensor1);
+      auto *output_tensor2 = NewTensorC();
+      if (output_tensor2 == nullptr) {
+        MS_LOG(ERROR) << "malloc tensor_c failed";
+        ret = RET_ERROR;
+        break;
+      }
+      out_tensor_c->at(i + outputs->size() / 2) = reinterpret_cast<TensorC *const>(output_tensor2);
+    }
+  }
+  return ret;
+}
+
+int GenerateOutTensorC(const OpParameter *const parameter, const std::vector<lite::Tensor *> &inputs,
+                       std::vector<lite::Tensor *> *outputs, std::vector<TensorC *> *out_tensor_c) {
+  int ret = RET_OK;
+  if (parameter->type_ == mindspore::schema::PrimitiveType_TensorListFromTensor ||
+      parameter->type_ == mindspore::schema::PrimitiveType_TensorListReserve ||
+      parameter->type_ == mindspore::schema::PrimitiveType_TensorListSetItem) {
+    // TensorListC ->TensorC
+    auto *tensor_list_c = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));  // note: malloc or new ?
+    if (tensor_list_c == nullptr) {
+      ret = RET_ERROR;
+    } else {
+      out_tensor_c->push_back(reinterpret_cast<TensorC *const>(tensor_list_c));
+    }
+  } else if (parameter->type_ == mindspore::schema::PrimitiveType_Merge) {
+    ret = GenerateMergeOutTensorC(inputs, outputs, out_tensor_c);
+  } else if (parameter->type_ == mindspore::schema::PrimitiveType_Switch) {
+    ret = GenerateSwitchOutTensorC(inputs, outputs, out_tensor_c);
+  } else {
+    ret = OutputTensor2TensorC(*outputs, out_tensor_c);
+  }
+  return ret;
 }
 
 int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite::Tensor *> *outputs,
@@ -218,19 +320,7 @@ int KernelInferShape(const std::vector<lite::Tensor *> &inputs, std::vector<lite
     return RET_ERROR;
   }
 
-  if (parameter->type_ == mindspore::schema::PrimitiveType_TensorListFromTensor ||
-      parameter->type_ == mindspore::schema::PrimitiveType_TensorListReserve ||
-      parameter->type_ == mindspore::schema::PrimitiveType_TensorListSetItem) {
-    // TensorListC ->TensorC
-    auto *tmp0 = reinterpret_cast<TensorListC *>(malloc(sizeof(TensorListC)));  // note: malloc or new ?
-    if (tmp0 == nullptr) {
-      ret = RET_ERROR;
-    } else {
-      out_tensors.push_back(reinterpret_cast<TensorC *const>(tmp0));
-    }
-  } else {
-    ret = OutputTensor2TensorC(*outputs, &out_tensors);
-  }
+  ret = GenerateOutTensorC(parameter, inputs, outputs, &out_tensors);
 
   if (ret != RET_OK) {
     FreeAllTensorC(&in_tensors);

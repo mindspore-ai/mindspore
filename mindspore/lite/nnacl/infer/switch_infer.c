@@ -32,13 +32,11 @@ int SwitchInferShape(const TensorC *const *inputs, size_t inputs_size, TensorC *
   for (size_t i = 0; i < outputs_size / 2; i++) {
     if (((TensorListC *)inputs[i + 1])->data_type_ == kObjectTypeTensorType) {
       TensorListC *input_tensorlist = (TensorListC *)inputs[i + 1];
-      free(outputs[i]);
-      TensorListC *output_tensorlist1 = (TensorListC *)malloc(sizeof(TensorListC));
+      TensorListC *output_tensorlist1 = (TensorListC *)outputs[i];
       memcpy(output_tensorlist1, input_tensorlist, sizeof(TensorListC));
       outputs[i] = (TensorC *)output_tensorlist1;
 
-      free(outputs[i + outputs_size / 2]);
-      TensorListC *output_tensorlist2 = (TensorListC *)malloc(sizeof(TensorListC));
+      TensorListC *output_tensorlist2 = (TensorListC *)outputs[i + outputs_size / 2];
       memcpy(output_tensorlist2, input_tensorlist, sizeof(TensorListC));
       outputs[i + outputs_size / 2] = (TensorC *)output_tensorlist2;
       continue;
