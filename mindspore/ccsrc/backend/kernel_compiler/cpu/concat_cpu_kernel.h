@@ -36,8 +36,7 @@ class ConcatCPUKernel : public CPUKernel {
  private:
   void CheckParam(const CNodePtr &kernel_node);
   int axis_ = 0;
-  size_t input_num_ = 1;
-  std::vector<std::vector<size_t>> input_flat_shape_list_;
+  CNodePtr node_ = nullptr;
 };
 
 MS_REG_CPU_KERNEL_T(

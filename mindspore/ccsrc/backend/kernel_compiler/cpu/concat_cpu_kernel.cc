@@ -21,6 +21,7 @@ namespace mindspore {
 namespace kernel {
 template <typename T>
 void ConcatCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
+  node_ = kernel_node;
   CheckParam(kernel_node);
 
   axis_ = LongToInt(AnfAlgo::GetNodeAttr<int64_t>(kernel_node, AXIS));
@@ -28,27 +29,28 @@ void ConcatCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   if (axis_ < 0) {
     axis_ = axis_ + SizeToInt(input_1_shape.size());
   }
-
-  input_num_ = AnfAlgo::GetInputTensorNum(kernel_node);
-  for (size_t i = 0; i < input_num_; i++) {
-    auto input_shape_i = AnfAlgo::GetPrevNodeOutputInferShape(kernel_node, i);
-    auto flat_shape = CPUKernelUtils::FlatShapeByAxis(input_shape_i, axis_);
-    input_flat_shape_list_.push_back(flat_shape);
-  }
 }
 
 template <typename T>
 bool ConcatCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
                                 const std::vector<kernel::AddressPtr> & /*workspace*/,
                                 const std::vector<kernel::AddressPtr> &outputs) {
+  size_t input_num = AnfAlgo::GetInputTensorNum(node_);
+  std::vector<std::vector<size_t>> input_flat_shape_list;
+  for (size_t i = 0; i < input_num; i++) {
+    auto input_shape_i = AnfAlgo::GetPrevNodeOutputInferShape(node_, i);
+    auto flat_shape = CPUKernelUtils::FlatShapeByAxis(input_shape_i, axis_);
+    input_flat_shape_list.push_back(flat_shape);
+  }
+
   auto output_addr = reinterpret_cast<T *>(outputs[0]->addr);
   auto buff_size = outputs[0]->size;
   // each input's row of shape after flat are same
-  auto before_axis = input_flat_shape_list_[0][0];
+  auto before_axis = input_flat_shape_list[0][0];
   for (size_t i = 0; i < before_axis; ++i) {
-    for (size_t j = 0; j < input_num_; ++j) {
+    for (size_t j = 0; j < input_num; ++j) {
       auto input_j_addr = reinterpret_cast<T *>(inputs[j]->addr);
-      auto copy_num = input_flat_shape_list_[j][1];
+      auto copy_num = input_flat_shape_list[j][1];
       auto offset = copy_num * i;
       auto ret = memcpy_s(output_addr, buff_size, input_j_addr + offset, copy_num * sizeof(T));
       if (ret != EOK) {

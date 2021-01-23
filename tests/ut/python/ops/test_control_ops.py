@@ -835,14 +835,14 @@ def test_mixed_precision_cast():
     assert z.dtype == mstype.float16
 
 
-def test_while_concat():
+def test_while_add():
     class Net(nn.Cell):
         def __init__(self, data):
             super(Net, self).__init__()
             self.start = Tensor(0, dtype=mstype.int32)
             self.end = Tensor(2, dtype=mstype.int32)
             self.out = Tensor(np.zeros([2, 3], dtype=np.float32))
-            self.concat = P.Concat()
+            self.add = P.TensorAdd()
 
         def construct(self, inputs):
             idx = self.start
@@ -850,7 +850,7 @@ def test_while_concat():
             out = self.out
             while idx < end:
                 xi = inputs[idx, :, :]
-                out = self.concat((out, xi))
+                out = self.add(out, xi)
                 idx = idx + 1
             return out
 

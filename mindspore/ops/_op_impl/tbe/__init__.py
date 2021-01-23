@@ -170,6 +170,7 @@ from .minimum_ds import _minimum_ds_tbe
 from .minimum_grad import _minimum_grad_tbe
 from .maximum_grad import _maximum_grad_tbe
 from .concat import _concat_tbe
+from .concat_ds import _concat_ds_tbe
 from .slice import _slice_tbe
 from .sign import _sign_tbe
 from .greater import _greater_tbe

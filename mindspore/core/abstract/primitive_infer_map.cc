@@ -84,6 +84,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimMapUniform, {InferImplMapUniform, true}},
     {prim::kPrimSplit, {InferImplSplit, true}},
     {prim::kPrimSequenceMask, {InferImplSequenceMask, true}},
+    {prim::kPrimConcat, {InferImplConcat, true}},
     {prim::kPrimRange, {InferImplRange, true}},
     // Structure
     {prim::kPrimMakeTuple, {InferImplMakeTuple, true}},
