@@ -36,9 +36,6 @@ abstract::ShapePtr InferShape(const PrimitivePtr &primitive, const std::vector<A
   auto out_shape = x_shape;
   int64_t block_shape_prod = 1;
   int64_t offset = 2;
-  if (x_shape.size() <= 4) {
-    offset = 1;
-  }
   auto block_shape = batch_prim->get_block_shape();
   auto crops = batch_prim->get_crops();
   int64_t size = block_shape.size();
