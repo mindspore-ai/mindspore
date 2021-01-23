@@ -62,7 +62,7 @@ Status DeepCopyPass::Visit(std::shared_ptr<DatasetNode> node, bool *const modifi
 Status DeepCopyPass::VisitAfter(std::shared_ptr<DatasetNode> node, bool *const modified) {
   *modified = true;
   // After visit the node, move up to its parent
-  parent_ = parent_->Parent();
+  parent_ = parent_->parent_;
   return Status::OK();
 }
 }  // namespace dataset
