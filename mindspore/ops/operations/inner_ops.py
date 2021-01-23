@@ -65,7 +65,8 @@ class ScalarCast(PrimitiveWithInfer):
 
 class Randperm(PrimitiveWithInfer):
     """
-    Generates random samples from 0 to n-1.
+    Generates n random samples from 0 to n-1 without repeating. If `max_length` > n,
+    the last `max_length-n` elements will be filled with `pad`.
 
     Args:
         max_length (int): Number of items expected to get and the number must be greater than 0. Default: 1.
@@ -118,6 +119,12 @@ class Randperm(PrimitiveWithInfer):
 class NoRepeatNGram(PrimitiveWithInfer):
     """
     Update log_probs with repeat n-grams.
+
+    During beam search, if consecutive `ngram_size` words exist in the generated word sequence,
+    the consecutive `ngram_size` words will be avoided during subsequent prediction.
+    For example, when `ngram_size` is 3, the generated word sequence is [1, 2, 3, 2, 3],
+    the next predicted word will not be 2 and the value of `log_probs` will be replaced with -FLOAT_MAX.
+    Because 3 consecutive words [2, 3, 2] do not appear twice in the word sequence.
 
     Args:
         ngram_size (int): Size of n-grams, must be greater than 0. Default: 1.
@@ -211,7 +218,7 @@ class LambApplyOptimizerAssign(PrimitiveWithInfer):
         - **epsilon** (Tensor) - Term added to the denominator, has the same type as `beta1`.
         - **steps** (Tensor) - :math:`t` in the updating formula, global step, has the same type as `beta1`.
         - **lr** (Tensor) - :math:`l` in the updating formula, learning rate, has the same type as `beta1`.
-        - **decay_flag** (Tensor) -Specify whether param upadte with weight decay, has the same type as `beta1`.
+        - **decay_flag** (Tensor) -Specify whether param update with weight decay, has the same type as `beta1`.
         - **weight_decay** (Tensor) - :math:`\lambda` in the updating formula, has the same type as `beta1`.
 
     Outputs:
