@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -77,7 +77,7 @@ def _get_device():
     return context.get_context('device_target')
 
 
-def _covert_list_tensor_to_tuple_tensor(list_of_tensor):
+def _convert_list_tensor_to_tuple_tensor(list_of_tensor):
     """Convert a list of tensor to a tuple of tensor"""
     if isinstance(list_of_tensor, list):
         tuple_of_tensor = ()

@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
 """internal graph-compatible utility functions"""
 from functools import partial
 
-import numpy as onp
-
 import mindspore.context as context
-from ..common import Tensor
 from ..ops import functional as F
 from ..ops.primitive import constexpr
 from ..common import dtype as mstype
@@ -262,65 +259,6 @@ def _empty(dtype, shape):
     return Tensor_(dtype, shape)
 
 
-def _get_index_for_unique(input_x, unique_x):
-    """
-    Return the indices of the first occurrences of the unique values in the original array.
-
-    Args:
-        input_x (Tensor): The flattened input tensor of `mindspore.numpy.unique`.
-        unique_x (Tensor): The tensor contains the unique elements in `input_x`, sorted in ascending order.
-
-    Returns:
-        Tensor. The indices of the unique values in the original array. Has the same shape as `unique_x`.
-    """
-    o_array = input_x.asnumpy()
-    dic = {}
-    for idx in range(o_array.size):
-        val = o_array[idx]
-        if val not in dic:
-            dic[val] = idx
-
-    index_lst = []
-    u_array = unique_x.asnumpy()
-    for idx in range(u_array.size):
-        index_lst.append(dic[u_array[idx]])
-
-    return Tensor(onp.array(index_lst), input_x.dtype)
-
-
-@constexpr
-def _get_counts_for_unique(input_x, unique_x):
-    """
-    Return the number of times each of the unique values comes up in the original tensor.
-
-    Args:
-        input_x (Tensor): The flattened input tensor of `mindspore.numpy.unique`.
-        unique_x (Tensor): The tensor contains the unique elements in `input_x`, sorted in ascending order.
-
-    Returns:
-        Tensor. The number of times each of the unique values comes up in the original tensor.
-    """
-    dic = {}
-    o_array = input_x.asnumpy()
-    for idx in range(o_array.size):
-        val = o_array[idx]
-        if val not in dic:
-            dic[val] = 1
-        else:
-            dic[val] += 1
-
-    u_array = unique_x.asnumpy()
-    counts_lst = [dic[val] for val in u_array]
-
-    return Tensor(onp.array(counts_lst), input_x.dtype)
-
-
-@constexpr
-def _get_max_value(x):
-    """Returns the maximum value of the input tensor `x`. """
-    return int(max(x.asnumpy()))
-
-
 @constexpr
 def _promote(dtype1, dtype2):
     if dtype1 == dtype2:
@@ -355,7 +293,8 @@ def _check_same_type(dtype1, dtype2):
 
 @constexpr
 def _check_is_float(dtype):
-    return dtype in mstype.float_type
+    """Returns whether dtype is float16 or float32."""
+    return dtype in (mstype.float16, mstype.float32)
 
 
 @constexpr

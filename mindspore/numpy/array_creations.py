@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -153,7 +153,7 @@ def asarray(a, dtype=None):
         elif a.dtype is onp.dtype('float'):
             dtype = mstype.float32
         elif a.dtype is onp.dtype('object'):
-            raise TypeError(f"For Tensor convertion, the input_data is {a} that contains unsupported element.")
+            raise TypeError(f"For Tensor conversion, the input_data is {a} that contains unsupported element.")
         a = Tensor.from_numpy(a)
 
     # If a is already a tensor and we don't need to cast dtype, return a
@@ -208,7 +208,7 @@ def asfarray(a, dtype=mstype.float32):
         a = _deep_tensor_to_nparray(a)
         a = onp.asarray(a)
         if a.dtype is onp.dtype('object'):
-            raise TypeError(f"For Tensor convertion, the input_data is {a} that contains unsupported element.")
+            raise TypeError(f"For Tensor conversion, the input_data is {a} that contains unsupported element.")
     if isinstance(a, onp.ndarray):
         a = Tensor.from_numpy(a)
 
@@ -952,7 +952,7 @@ def tril(m, k=0):
     Returns a copy of an array with elements above the k-th diagonal zeroed.
 
     Args:
-        m(array_like): The shape and data-type of a define these same
+        m(array_like): The shape and data-type of m define these same
             attributes of the returned array.
         k(int, optional): Diagonal above which to zero elements. k = 0 (the default)
             is the main diagonal, k < 0 is below it and k > 0 is above.
@@ -987,16 +987,16 @@ def triu(m, k=0):
     """
     Returns an upper triangle of an array.
 
-    Returns a copy of an array with elements above the k-th diagonal zeroed.
+    Returns a copy of an array with elements below the k-th diagonal zeroed.
 
     Args:
-        m(array_like): The shape and data-type of a define these same
+        m(array_like): The shape and data-type of m define these same
             attributes of the returned array.
-        k(int, optional): Diagonal above which to zero elements. k = 0 (the default)
+        k(int, optional): Diagonal below which to zero elements. k = 0 (the default)
             is the main diagonal, k < 0 is below it and k > 0 is above.
 
     Returns:
-        triu(Tensor): Lower triangle of m, of same shape and data-type as m.
+        triu(Tensor): Upper triangle of m, of same shape and data-type as m.
 
     Raises:
         TypeError: If input arguments have types not specified above.
@@ -1175,7 +1175,7 @@ def trace(a, offset=0, axis1=0, axis2=1):
         >>> print(output)
         [6 8]
         >>> a = np.arange(24).reshape((2,2,2,3))
-        >>> output = np.trace.shape
+        >>> output = np.trace(a).shape
         >>> print(output)
         (2, 3)
     """

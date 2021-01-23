@@ -1,4 +1,4 @@
-# Copyright 2021 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -72,7 +72,8 @@ def absolute(x, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x = np.asarray([1, 2, 3, -4, -5], np.float64)
+        >>> import mindspore.numpy as np
+        >>> x = np.asarray([1, 2, 3, -4, -5], np.float32)
         >>> output = np.absolute(x)
         >>> print(output)
         [1. 2. 3. 4. 5.]
@@ -97,10 +98,6 @@ def add(x1, x2, out=None, where=True, dtype=None):
         Argument out is not supported for storing the result, however it can be
         used in combination with argument where to set the value at indices for
         which where is set to False.
-        On GPU, the supported dtypes are np.float16, np.float32, np.int32,
-        and np.int64.
-        On CPU, the supported dtypes are np.float16, np.float32, np.float64,
-        np.int16, np.int32, and np.int64.
 
     Args:
         x1 (Tensor): input to be added.
@@ -154,10 +151,6 @@ def subtract(x1, x2, out=None, where=True, dtype=None):
         Argument out is not supported for storing the result, however it can be
         used in combination with argument where to set the value at indices for
         which where is set to False.
-        On GPU, the supported dtypes are np.float16, np.float32, np.int32,
-        and np.int64.
-        On CPU, the supported dtypes are np.float16, np.float32, np.float64,
-        np.int16, np.int32, and np.int64.
 
     Args:
         x1 (Tensor): the input to be subtracted from.
@@ -207,10 +200,6 @@ def multiply(x1, x2, out=None, where=True, dtype=None):
         Argument out is not supported for storing the result, however it can be
         used in combination with argument where to set the value at indices for
         which where is set to False.
-        On GPU, the supported dtypes are np.float16, np.float32, np.int32,
-        and np.int64.
-        On CPU, the supported dtypes are np.float16, np.float32, np.float64,
-        np.int16, np.int32, and np.int64.
 
     Args:
         x1 (Tensor): input tensor to be multiplied.
@@ -273,8 +262,6 @@ def divide(x1, x2, out=None, where=True, dtype=None):
         used in combination with argument where to set the value at indices for
         which where is set to False.
         On GPU, the supported dtypes are np.float16, and np.float32.
-        On CPU, the supported dtypes are np.float16, np.float32, np.float64,
-        np.int16, np.int32, and np.int64.
 
     Args:
         x1 (Tensor): the divident.
@@ -325,12 +312,10 @@ def power(x1, x2, out=None, where=True, dtype=None):
         Numpy arguments casting, order, dtype, subok, signature, and extobj are
         not supported.
         On GPU, the supported dtypes are np.float16, and np.float32.
-        On CPU, the supported dtypes are np.float16, np.float32, np.float64,
-        np.int16, np.int32, and np.int64.
 
     Args:
         x1 (Tensor): the bases.
-        x2 (Tensor): the exponenets.
+        x2 (Tensor): the exponents.
         out (Tensor or None): optional, defaults to None.
         where (Tensor or None): optional. For any non-default value of type other
             than Tensor or None, the output retains its original value.
@@ -345,7 +330,7 @@ def power(x1, x2, out=None, where=True, dtype=None):
 
     Returns:
         Tensor or scalar, the bases in x1 raised to the exponents in x2. This
-        is a scalarif both x1 and x2 are scalars.
+        is a scalar if both x1 and x2 are scalars.
 
     Raises:
         TypeError: if the input is not a tensor.
@@ -354,8 +339,8 @@ def power(x1, x2, out=None, where=True, dtype=None):
         ``Ascend`` ``GPU`` ``CPU``
 
     Examples:
-        >>> x1 = np.full((3, 2), [1, 2])
-        >>> x2 = np.full((3, 2), [3, 4])
+        >>> x1 = np.full((3, 2), [1, 2]).astype('float32')
+        >>> x2 = np.full((3, 2), [3, 4]).astype('float32')
         >>> output = np.power(x1, x2)
         >>> print(output)
         [[ 1, 16],
@@ -548,8 +533,8 @@ def dot(a, b):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = np.full((1, 3), 7)
-        >>> b = np.full((2, 3, 4), 5)
+        >>> a = np.full((1, 3), 7).astype('float32')
+        >>> b = np.full((2, 3, 4), 5).astype('float32')
         >>> output = np.dot(a, b)
         >>> print(output)
         [[[105, 105, 105, 105],
@@ -597,8 +582,8 @@ def outer(a, b):
 
     Examples:
         >>> import mindspore.numpy as np
-        >>> a = np.full(7, 2)
-        >>> b = np.full(4, 3)
+        >>> a = np.full(7, 2).astype('float32')
+        >>> b = np.full(4, 3).astype('float32')
         >>> output = np.outer(a, b)
         >>> print(output)
         [[6, 6, 6, 6],
