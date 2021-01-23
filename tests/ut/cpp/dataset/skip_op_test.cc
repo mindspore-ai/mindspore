@@ -35,10 +35,7 @@ TEST_F(MindDataTestSkipOp, TestSkipOpFuntions) {
 
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   TFReaderOp::Builder builder;
-  builder.SetDatasetFilesList({dataset_path})
-    .SetRowsPerBuffer(16)
-    .SetWorkerConnectorSize(16)
-    .SetNumWorkers(16);
+  builder.SetDatasetFilesList({dataset_path}).SetRowsPerBuffer(16).SetWorkerConnectorSize(16);
   std::unique_ptr<DataSchema> schema = std::make_unique<DataSchema>();
   schema->LoadSchemaFile(datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json", {});
   builder.SetDataSchema(std::move(schema));

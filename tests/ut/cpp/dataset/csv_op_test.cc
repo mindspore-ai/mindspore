@@ -52,11 +52,10 @@ TEST_F(MindDataTestCSVOp, TestCSVBasic) {
   std::shared_ptr<CsvOp> op;
   CsvOp::Builder builder;
   builder.SetCsvFilesList({dataset_path})
-      .SetRowsPerBuffer(16)
-      .SetNumWorkers(16)
-      .SetShuffleFiles(false)
-      .SetOpConnectorSize(2)
-      .SetFieldDelim(',')
+    .SetRowsPerBuffer(16)
+    .SetShuffleFiles(false)
+    .SetOpConnectorSize(2)
+    .SetFieldDelim(',')
       .SetColumDefault(column_default_list)
       .SetColumName({"col1", "col2", "col3", "col4"});
 
