@@ -51,8 +51,8 @@ Status L2NormalizeInfo::GetAttrs() {
   auto iter = attrs_.find(AXIS);
   if (iter != attrs_.end()) {
     MS_EXCEPTION_IF_NULL(iter->second);
-    if (iter->second->isa<Int64Imm>()) {
-      axis_ = iter->second->cast<Int64ImmPtr>()->value();
+    if (iter->second->isa<ValueSequeue>()) {
+      axis_ = GetValue<std::vector<int64_t>>(iter->second)[0];
     } else {
       MS_LOG(ERROR) << name_ << " : The value of axis is not int64_t.";
       return FAILED;
