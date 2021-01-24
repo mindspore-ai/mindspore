@@ -46,7 +46,7 @@ def ScalarUsub(x):
     return -x
 
 
-def TupleGetitem(x, index):
+def TupleGetItem(x, index):
     """Implement `tuple_getitem`."""
     if isinstance(x, Tensor):
         x = x.asnumpy()
