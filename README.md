@@ -1,5 +1,8 @@
 ![MindSpore Logo](docs/MindSpore-logo.png "MindSpore logo")
 
+Pull request for Hackathon Community Contribution HexCambridge 2021
+
+
 [查看中文](./README_CN.md)
 
 <!-- TOC -->
