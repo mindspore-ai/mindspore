@@ -21,8 +21,10 @@ from .cell_wrapper import TrainOneStepCell, WithLossCell, WithGradCell, WithEval
      ParameterUpdate, GetNextSingleOp, VirtualDatasetCellTriple
 from .loss_scale import TrainOneStepWithLossScaleCell, DynamicLossScaleUpdateCell, FixedLossScaleUpdateCell
 from .grad_reducer import DistributedGradReducer
+from ..layer.timedistributed import TimeDistributed
 
 __all__ = [
+    "TimeDistributed",
     "TrainOneStepCell",
     "WithLossCell",
     "WithGradCell",
