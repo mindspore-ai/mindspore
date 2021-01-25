@@ -42,6 +42,9 @@ TEST_F(MindDataTestPipeline, TestImageFolderWithSamplers) {
   EXPECT_NE(sampl, nullptr);
 
   std::vector<int64_t> indices = {1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23};
+  sampl = SubsetSampler(indices);
+  EXPECT_NE(sampl, nullptr);
+
   sampl = SubsetRandomSampler(indices);
   EXPECT_NE(sampl, nullptr);
 
@@ -138,7 +141,7 @@ TEST_F(MindDataTestPipeline, TestCalculateNumSamples) {
   EXPECT_NE(sampl4, nullptr);
   std::shared_ptr<SamplerRT> sampler_rt4 = sampl4->SamplerBuild();
   sampler_rt4->AddChild(sampler_rt3);
-  EXPECT_EQ(sampler_rt4->CalculateNumSamples(num_rows), 12);
+  EXPECT_EQ(sampler_rt4->CalculateNumSamples(num_rows), 11);
 
   // Child doesn't have num_samples
   std::shared_ptr<SamplerObj> sampl5 = RandomSampler(false);

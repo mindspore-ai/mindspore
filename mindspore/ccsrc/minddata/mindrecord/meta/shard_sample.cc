@@ -49,13 +49,16 @@ ShardSample::ShardSample(int num, int den, int par, int no_of_samples, int offse
       sampler_type_(kCustomTopPercentSampler),
       offset_(offset) {}
 
-ShardSample::ShardSample(const std::vector<int64_t> &indices, uint32_t seed)
+ShardSample::ShardSample(const std::vector<int64_t> &indices)
     : numerator_(0),
       denominator_(0),
       partition_id_(0),
       no_of_samples_(0),
       indices_(indices),
-      sampler_type_(kSubsetRandomSampler) {
+      sampler_type_(kSubsetSampler) {}
+
+ShardSample::ShardSample(const std::vector<int64_t> &indices, uint32_t seed) : ShardSample(indices) {
+  sampler_type_ = kSubsetRandomSampler;
   shuffle_op_ = std::make_shared<ShardShuffle>(seed);
 }
 
@@ -71,55 +74,17 @@ int64_t ShardSample::GetNumSamples(int64_t dataset_size, int64_t num_classes) {
       return dataset_size / denominator_ * numerator_ + 1;
     }
   }
-  if (sampler_type_ == kSubsetRandomSampler) {
+  if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
     return indices_.size();
   }
   return 0;
 }
 
-MSRStatus ShardSample::Execute(ShardTask &tasks) {
-  if (offset_ != -1) {
-    int64_t old_v = 0;
-    int num_rows_ = static_cast<int>(tasks.Size());
-    for (int x = 0; x < denominator_; x++) {
-      int samples_per_buffer_ = (num_rows_ + offset_) / denominator_;
-      int remainder = (num_rows_ + offset_) % denominator_;
-      if (x < remainder) samples_per_buffer_++;
-      if (x < offset_) samples_per_buffer_--;
-      old_v += samples_per_buffer_;
-      // nums_per_shard_ is used to save the current shard's ending index
-      nums_per_shard_.push_back(old_v);
-    }
-  }
-  int no_of_categories = static_cast<int>(tasks.categories);
-  int total_no = static_cast<int>(tasks.Size());  // make sure task_size
-
-  int taking = 0;
-  if (sampler_type_ == kCustomTopNSampler) {  // non sharding case constructor #1
-    no_of_samples_ = std::min(no_of_samples_, total_no);
-    taking = no_of_samples_ - no_of_samples_ % no_of_categories;
-  } else if (sampler_type_ == kSubsetRandomSampler) {
-    if (indices_.size() > total_no) {
-      MS_LOG(ERROR) << "parameter indices's size is greater than dataset size.";
-      return FAILED;
-    }
-  } else {  // constructor TopPercent
-    if (numerator_ > 0 && denominator_ > 0 && numerator_ <= denominator_) {
-      if (numerator_ == 1 && denominator_ > 1) {  // sharding
-        taking = (total_no + denominator_ - 1) / denominator_;
-      } else {  // non sharding
-        taking = total_no * numerator_ / denominator_;
-        taking -= (taking % no_of_categories);
-      }
-    } else {
-      MS_LOG(ERROR) << "parameter numerator or denominator is illegal";
-      return FAILED;
-    }
-  }
+MSRStatus ShardSample::UpdateTasks(ShardTask &tasks, int taking) {
   if (tasks.permutation_.empty()) {
     ShardTask new_tasks;
-    total_no = static_cast<int>(tasks.Size());
-    if (sampler_type_ == kSubsetRandomSampler) {
+    int total_no = static_cast<int>(tasks.Size());
+    if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
       for (int i = 0; i < indices_.size(); ++i) {
         int index = ((indices_[i] % total_no) + total_no) % total_no;
         new_tasks.InsertTask(tasks.GetTaskByID(index));  // different mod result between c and python
@@ -148,7 +113,7 @@ MSRStatus ShardSample::Execute(ShardTask &tasks) {
     if (taking > static_cast<int>(tasks.permutation_.size())) {
       return FAILED;
     }
-    total_no = static_cast<int>(tasks.permutation_.size());
+    int total_no = static_cast<int>(tasks.permutation_.size());
     int count = 0;
     for (size_t i = partition_id_ * taking; i < (partition_id_ + 1) * taking; i++) {
       if (no_of_samples_ != 0 && count == no_of_samples_) break;
@@ -158,6 +123,48 @@ MSRStatus ShardSample::Execute(ShardTask &tasks) {
     std::swap(tasks, new_tasks);
   }
   return SUCCESS;
+}
+
+MSRStatus ShardSample::Execute(ShardTask &tasks) {
+  if (offset_ != -1) {
+    int64_t old_v = 0;
+    int num_rows_ = static_cast<int>(tasks.Size());
+    for (int x = 0; x < denominator_; x++) {
+      int samples_per_buffer_ = (num_rows_ + offset_) / denominator_;
+      int remainder = (num_rows_ + offset_) % denominator_;
+      if (x < remainder) samples_per_buffer_++;
+      if (x < offset_) samples_per_buffer_--;
+      old_v += samples_per_buffer_;
+      // nums_per_shard_ is used to save the current shard's ending index
+      nums_per_shard_.push_back(old_v);
+    }
+  }
+  int no_of_categories = static_cast<int>(tasks.categories);
+  int total_no = static_cast<int>(tasks.Size());  // make sure task_size
+
+  int taking = 0;
+  if (sampler_type_ == kCustomTopNSampler) {  // non sharding case constructor #1
+    no_of_samples_ = std::min(no_of_samples_, total_no);
+    taking = no_of_samples_ - no_of_samples_ % no_of_categories;
+  } else if (sampler_type_ == kSubsetRandomSampler || sampler_type_ == kSubsetSampler) {
+    if (indices_.size() > total_no) {
+      MS_LOG(ERROR) << "parameter indices's size is greater than dataset size.";
+      return FAILED;
+    }
+  } else {  // constructor TopPercent
+    if (numerator_ > 0 && denominator_ > 0 && numerator_ <= denominator_) {
+      if (numerator_ == 1 && denominator_ > 1) {  // sharding
+        taking = (total_no + denominator_ - 1) / denominator_;
+      } else {  // non sharding
+        taking = total_no * numerator_ / denominator_;
+        taking -= (taking % no_of_categories);
+      }
+    } else {
+      MS_LOG(ERROR) << "parameter numerator or denominator is illegal";
+      return FAILED;
+    }
+  }
+  return UpdateTasks(tasks, taking);
 }
 
 MSRStatus ShardSample::SufExecute(ShardTask &tasks) {

@@ -77,7 +77,7 @@ enum TaskType {
   kCommonTask = 0,
   kPaddedTask = 1,
 };
-enum SamplerType { kCustomTopNSampler, kCustomTopPercentSampler, kSubsetRandomSampler, kPKSampler };
+enum SamplerType { kCustomTopNSampler, kCustomTopPercentSampler, kSubsetRandomSampler, kPKSampler, kSubsetSampler };
 
 enum ShuffleType { kShuffleCategory, kShuffleSample };
 
@@ -144,7 +144,7 @@ const std::unordered_map<std::string, std::string> kTypesMap = {
   {"float16", "float32"}, {"float32", "float32"}, {"float64", "float64"}, {"string", "string"}};
 /// \brief split a string using a character
 /// \param[in] field target string
-/// \param[in] separator a character for spliting
+/// \param[in] separator a character for splitting
 /// \return vector type result
 std::vector<std::string> StringSplit(const std::string &field, char separator);
 

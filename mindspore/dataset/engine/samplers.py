@@ -25,103 +25,6 @@ import mindspore._c_dataengine as cde
 import mindspore.dataset as ds
 
 
-class Sampler:
-    """
-    Base class for user defined sampler.
-    A user defined sampler can be used with any existing dataset with sampler support.
-
-    A required  _iter_() method should by overridden by the user for sample index generation.
-    An optional reset() method can be overridden for per repeat reset,
-
-    dataset_size and num_samples will be set by dataset once a dataset iterator is created.
-
-    Examples:
-        >>> import mindspore.dataset as ds
-        >>>
-        >>> class ReverseSampler(ds,Sampler):
-        >>>     def __iter__(self):
-        >>>         for i in range(self.dataset_size - 1, -1, -1):
-        >>>             yield i
-        >>>
-        >>> ds = ds.ImageFolderDataset(path, sampler=ReverseSampler())
-    """
-
-    def __init__(self, num_samples=None):
-        self.dataset_size = 0
-        self.child_sampler = None
-        self.num_samples = num_samples
-
-    def __iter__(self):
-        """
-        User defined iterator, must be overridden.
-        _handshake is guaranteed to be called prior to iterator construction.
-        """
-        raise NotImplementedError
-
-    def reset(self):
-        """
-        Per repeat reset callback, override this method if necessary
-        """
-
-    # Initialization handshake callback
-    # Do not override this method!
-    def _handshake(self, ds_size, num_samples):
-        self.dataset_size = ds_size
-        self.num_samples = num_samples
-
-    # Indices fetcher
-    # Do not override this method!
-    def _get_indices(self):
-        sampler_iter = iter(self)
-        ret = []
-        for _ in range(self.num_samples):
-            try:
-                idx = next(sampler_iter)
-                ret.append(idx)
-            except StopIteration:
-                break
-        return np.array(ret)
-
-    # Instance fetcher
-    # Do not override this method!
-    def create(self):
-        num_samples = self.num_samples if self.num_samples is not None else 0
-        c_sampler = cde.PythonSampler(num_samples, self)
-        c_child_sampler = self.create_child()
-        c_sampler.add_child(c_child_sampler)
-        return c_sampler
-
-    def add_child(self, sampler):
-        self.child_sampler = sampler
-
-    def get_child(self):
-        return self.child_sampler
-
-    def create_child(self):
-        c_child_sampler = None
-        if self.child_sampler is not None:
-            c_child_sampler = self.child_sampler.create()
-
-        return c_child_sampler
-
-    def is_shuffled(self):
-        if self.child_sampler is None:
-            return False
-
-        return self.child_sampler.is_shuffled()
-
-    def is_sharded(self):
-        if self.child_sampler is None:
-            return False
-
-        return self.child_sampler.is_sharded()
-
-    def get_num_samples(self):
-        if self.num_samples is None:
-            return None
-        return self._get_indices().size
-
-
 class BuiltinSampler:
     """
     Base class for BuiltinSampler.
@@ -229,6 +132,89 @@ class BuiltinSampler:
             return child_samples
 
         return self.num_samples
+
+
+class Sampler(BuiltinSampler):
+    """
+    Base class for user defined sampler.
+    A user defined sampler can be used with any existing dataset with sampler support.
+
+    A required  _iter_() method should by overridden by the user for sample index generation.
+    An optional reset() method can be overridden for per repeat reset,
+
+    dataset_size and num_samples will be set by dataset once a dataset iterator is created.
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>>
+        >>> class ReverseSampler(ds,Sampler):
+        >>>     def __iter__(self):
+        >>>         for i in range(self.dataset_size - 1, -1, -1):
+        >>>             yield i
+        >>>
+        >>> ds = ds.ImageFolderDataset(path, sampler=ReverseSampler())
+    """
+
+    def __init__(self, num_samples=None):
+        super().__init__(num_samples)
+        self.dataset_size = 0
+
+    def __iter__(self):
+        """
+        User defined iterator, must be overridden.
+        _handshake is guaranteed to be called prior to iterator construction.
+        """
+        raise NotImplementedError
+
+    def reset(self):
+        """
+        Per repeat reset callback, override this method if necessary
+        """
+
+    # Initialization handshake callback
+    # Do not override this method!
+    def _handshake(self, ds_size, num_samples):
+        self.dataset_size = ds_size
+        self.num_samples = num_samples
+
+    # Indices fetcher
+    # Do not override this method!
+    def _get_indices(self):
+        sampler_iter = iter(self)
+        ret = []
+        for _ in range(self.num_samples):
+            try:
+                idx = next(sampler_iter)
+                ret.append(idx)
+            except StopIteration:
+                break
+        return np.array(ret)
+
+    # Instance fetcher
+    # Do not override this method!
+    def create(self):
+        num_samples = self.num_samples if self.num_samples is not None else 0
+        c_sampler = cde.PythonSampler(num_samples, self)
+        c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def is_shuffled(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_shuffled()
+
+    def is_sharded(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_sharded()
+
+    def get_num_samples(self):
+        if self.num_samples is None:
+            return None
+        return self._get_indices().size
 
 
 class DistributedSampler(BuiltinSampler):
@@ -518,7 +504,69 @@ class SequentialSampler(BuiltinSampler):
         return self.child_sampler.is_sharded()
 
 
-class SubsetRandomSampler(BuiltinSampler):
+class SubsetSampler(BuiltinSampler):
+    """
+    Samples the elements from a sequence of indices.
+
+    Args:
+        indices (list[int]): A sequence of indices.
+        num_samples (int, optional): Number of elements to sample (default=None, all elements).
+
+    Examples:
+        >>> import mindspore.dataset as ds
+        >>>
+        >>> dataset_dir = "path/to/imagefolder_directory"
+        >>>
+        >>> indices = [0, 1, 2, 3, 7, 88, 119]
+        >>>
+        >>> # creates a SubsetSampler, will sample from the provided indices
+        >>> sampler = ds.SubsetSampler(indices)
+        >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
+    """
+
+    def __init__(self, indices, num_samples=None):
+        if num_samples is not None:
+            if num_samples <= 0:
+                raise ValueError("num_samples should be a positive integer "
+                                 "value, but got num_samples: {}.".format(num_samples))
+
+        if not isinstance(indices, list):
+            indices = [indices]
+
+        self.indices = indices
+        super().__init__(num_samples)
+
+    def create(self):
+        num_samples = self.num_samples if self.num_samples is not None else 0
+        c_sampler = cde.SubsetSampler(num_samples, self.indices)
+        c_child_sampler = self.create_child()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def is_shuffled(self):
+        return False
+
+    def is_sharded(self):
+        if self.child_sampler is None:
+            return False
+
+        return self.child_sampler.is_sharded()
+
+    def create_for_minddataset(self):
+        c_sampler = cde.MindrecordSubsetSampler(self.indices)
+        c_child_sampler = self.create_child_for_minddataset()
+        c_sampler.add_child(c_child_sampler)
+        return c_sampler
+
+    def get_num_samples(self):
+        num_samples = super().get_num_samples()
+        if num_samples is None:
+            return len(self.indices)
+
+        return min(len(self.indices), num_samples)
+
+
+class SubsetRandomSampler(SubsetSampler):
     """
     Samples the elements randomly from a sequence of indices.
 
@@ -538,18 +586,6 @@ class SubsetRandomSampler(BuiltinSampler):
         >>> data = ds.ImageFolderDataset(dataset_dir, num_parallel_workers=8, sampler=sampler)
     """
 
-    def __init__(self, indices, num_samples=None):
-        if num_samples is not None:
-            if num_samples <= 0:
-                raise ValueError("num_samples should be a positive integer "
-                                 "value, but got num_samples: {}.".format(num_samples))
-
-        if not isinstance(indices, list):
-            indices = [indices]
-
-        self.indices = indices
-        super().__init__(num_samples)
-
     def create(self):
         num_samples = self.num_samples if self.num_samples is not None else 0
         c_sampler = cde.SubsetRandomSampler(num_samples, self.indices)
@@ -560,24 +596,11 @@ class SubsetRandomSampler(BuiltinSampler):
     def is_shuffled(self):
         return True
 
-    def is_sharded(self):
-        if self.child_sampler is None:
-            return False
-
-        return self.child_sampler.is_sharded()
-
     def create_for_minddataset(self):
-        c_sampler = cde.MindrecordSubsetRandomSampler(self.indices, ds.config.get_seed())
+        c_sampler = cde.MindrecordSubsetSampler(self.indices, ds.config.get_seed())
         c_child_sampler = self.create_child_for_minddataset()
         c_sampler.add_child(c_child_sampler)
         return c_sampler
-
-    def get_num_samples(self):
-        num_samples = super().get_num_samples()
-        if num_samples is None:
-            return len(self.indices)
-
-        return min(len(self.indices), num_samples)
 
 
 class WeightedRandomSampler(BuiltinSampler):

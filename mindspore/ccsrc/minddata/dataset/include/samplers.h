@@ -86,6 +86,7 @@ class PKSamplerObj;
 class PreBuiltSamplerObj;
 class RandomSamplerObj;
 class SequentialSamplerObj;
+class SubsetSamplerObj;
 class SubsetRandomSamplerObj;
 class WeightedRandomSamplerObj;
 
@@ -126,6 +127,13 @@ std::shared_ptr<RandomSamplerObj> RandomSampler(bool replacement = false, int64_
 /// \param[in] num_samples - The number of samples to draw (default to all elements).
 /// \return Shared pointer to the current Sampler.
 std::shared_ptr<SequentialSamplerObj> SequentialSampler(int64_t start_index = 0, int64_t num_samples = 0);
+
+/// Function to create a Subset  Sampler.
+/// \notes Samples the elements from a sequence of indices.
+/// \param[in] indices - A vector sequence of indices.
+/// \param[in] num_samples - The number of samples to draw (default to all elements).
+/// \return Shared pointer to the current Sampler.
+std::shared_ptr<SubsetSamplerObj> SubsetSampler(std::vector<int64_t> indices, int64_t num_samples = 0);
 
 /// Function to create a Subset Random Sampler.
 /// \notes Samples the elements randomly from a sequence of indices.
@@ -293,7 +301,34 @@ class SequentialSamplerObj : public SamplerObj {
   int64_t num_samples_;
 };
 
-class SubsetRandomSamplerObj : public SamplerObj {
+class SubsetSamplerObj : public SamplerObj {
+ public:
+  SubsetSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
+
+  ~SubsetSamplerObj() = default;
+
+  std::shared_ptr<SamplerRT> SamplerBuild() override;
+
+  std::shared_ptr<SamplerObj> SamplerCopy() override {
+    auto sampler = std::make_shared<SubsetSamplerObj>(indices_, num_samples_);
+    for (auto child : children_) {
+      sampler->AddChildSampler(child);
+    }
+    return sampler;
+  }
+
+#ifndef ENABLE_ANDROID
+  std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
+#endif
+
+  Status ValidateParams() override;
+
+ protected:
+  const std::vector<int64_t> indices_;
+  int64_t num_samples_;
+};
+
+class SubsetRandomSamplerObj : public SubsetSamplerObj {
  public:
   SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples);
 
@@ -313,11 +348,7 @@ class SubsetRandomSamplerObj : public SamplerObj {
   std::shared_ptr<mindrecord::ShardOperator> BuildForMindDataset() override;
 #endif
 
-  Status ValidateParams() override;
-
  private:
-  const std::vector<int64_t> indices_;
-  int64_t num_samples_;
 };
 
 class WeightedRandomSamplerObj : public SamplerObj {

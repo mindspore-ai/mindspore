@@ -3321,7 +3321,7 @@ class MindDataset(MappableDataset):
             logger.warning("WARN: global shuffle is not used.")
 
         if sampler is not None:
-            if isinstance(sampler, (samplers.SubsetRandomSampler, samplers.PKSampler,
+            if isinstance(sampler, (samplers.SubsetRandomSampler, samplers.SubsetSampler, samplers.PKSampler,
                                     samplers.DistributedSampler, samplers.RandomSampler,
                                     samplers.SequentialSampler)) is False:
                 raise ValueError("The sampler is not supported yet.")
@@ -3849,9 +3849,7 @@ class GeneratorDataset(MappableDataset):
         if hasattr(self, "__total_batch__"):
             new_op.__total_batch__ = self.__total_batch__
         if new_op.sampler is not None and hasattr(self.source, "__getitem__"):
-            if isinstance(new_op.sampler, (samplers.SequentialSampler, samplers.DistributedSampler,
-                                           samplers.RandomSampler, samplers.SubsetRandomSampler,
-                                           samplers.WeightedRandomSampler, samplers.Sampler)):
+            if isinstance(new_op.sampler, samplers.BuiltinSampler):
                 if new_op.num_parallel_workers > 1:
                     sample_fn = SamplerFn(self.source, new_op.num_parallel_workers, self.python_multiprocessing)
                     new_op.source = (lambda sample_ids: _cpp_sampler_fn_mp(sample_ids, sample_fn))

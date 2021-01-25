@@ -20,6 +20,7 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/random_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
+#include "minddata/dataset/engine/datasetops/source/sampler/subset_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/pk_sampler.h"
 
@@ -114,6 +115,16 @@ std::shared_ptr<RandomSamplerObj> RandomSampler(bool replacement, int64_t num_sa
 /// Function to create a Sequential Sampler.
 std::shared_ptr<SequentialSamplerObj> SequentialSampler(int64_t start_index, int64_t num_samples) {
   auto sampler = std::make_shared<SequentialSamplerObj>(start_index, num_samples);
+  // Input validation
+  if (sampler->ValidateParams().IsError()) {
+    return nullptr;
+  }
+  return sampler;
+}
+
+/// Function to create a Subset Random Sampler.
+std::shared_ptr<SubsetSamplerObj> SubsetSampler(std::vector<int64_t> indices, int64_t num_samples) {
+  auto sampler = std::make_shared<SubsetSamplerObj>(std::move(indices), num_samples);
   // Input validation
   if (sampler->ValidateParams().IsError()) {
     return nullptr;
@@ -340,17 +351,37 @@ std::shared_ptr<mindrecord::ShardOperator> SequentialSamplerObj::BuildForMindDat
 }
 #endif
 
-// SubsetRandomSampler
-SubsetRandomSamplerObj::SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples)
+// SubsetSampler
+SubsetSamplerObj::SubsetSamplerObj(std::vector<int64_t> indices, int64_t num_samples)
     : indices_(std::move(indices)), num_samples_(num_samples) {}
 
-Status SubsetRandomSamplerObj::ValidateParams() {
+Status SubsetSamplerObj::ValidateParams() {
   if (num_samples_ < 0) {
     RETURN_STATUS_UNEXPECTED("SubsetRandomSampler: invalid num_samples: " + std::to_string(num_samples_));
   }
 
   return Status::OK();
 }
+
+std::shared_ptr<SamplerRT> SubsetSamplerObj::SamplerBuild() {
+  // runtime sampler object
+  auto sampler = std::make_shared<dataset::SubsetSamplerRT>(num_samples_, indices_);
+  BuildChildren(sampler);
+  return sampler;
+}
+
+#ifndef ENABLE_ANDROID
+std::shared_ptr<mindrecord::ShardOperator> SubsetSamplerObj::BuildForMindDataset() {
+  // runtime mindrecord sampler object
+  auto mind_sampler = std::make_shared<mindrecord::ShardSample>(indices_);
+
+  return mind_sampler;
+}
+#endif
+
+// SubsetRandomSampler
+SubsetRandomSamplerObj::SubsetRandomSamplerObj(std::vector<int64_t> indices, int64_t num_samples)
+    : SubsetSamplerObj(std::move(indices), num_samples) {}
 
 std::shared_ptr<SamplerRT> SubsetRandomSamplerObj::SamplerBuild() {
   // runtime sampler object
