@@ -1,6 +1,8 @@
 # Contents
 
-- [Transfomer Description](#transformer-description)
+[查看中文](./README_CN.md)
+
+- [Transformer Description](#transformer-description)
 - [Model Architecture](#model-architecture)
 - [Dataset](#dataset)
 - [Environment Requirements](#environment-requirements)
@@ -18,7 +20,7 @@
 - [Description of Random Situation](#description-of-random-situation)
 - [ModelZoo Homepage](#modelzoo-homepage)
 
-## [Transfomer Description](#contents)
+## [Transformer Description](#contents)
 
 Transformer was proposed in 2017 and designed to process sequential data. It is adopted mainly in the field of natural language processing(NLP), for tasks like machine translation or text summarization. Unlike traditional recurrent neural network(RNN) which processes data in order, Transformer adopts attention mechanism and improve the parallelism, therefore reduced training times and made training on larger datasets possible. Since Transformer model was introduced, it has been used to tackle many problems in NLP and derives many network models, such as BERT(Bidirectional Encoder Representations from Transformers) and GPT(Generative Pre-trained Transformer).
 
@@ -103,7 +105,7 @@ usage: train.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_num N] [
                  [--data_path DATA_PATH] [--bucket_boundaries BUCKET_LENGTH]
 
 options:
-    --distribute               pre_training by serveral devices: "true"(training by more than 1 device) | "false", default is "false"
+    --distribute               pre_training by several devices: "true"(training by more than 1 device) | "false", default is "false"
     --epoch_size               epoch size: N, default is 52
     --device_num               number of used devices: N, default is 1
     --device_id                device id: N, default is 0
@@ -204,7 +206,7 @@ Parameters for learning rate:
     sh scripts/run_distribute_train_ascend.sh DEVICE_NUM EPOCH_SIZE DATA_PATH RANK_TABLE_FILE
     ```
 
-**Attention**: data sink mode can not be used in transformer since the input datas have different sequence lengths.
+**Attention**: data sink mode can not be used in transformer since the input data have different sequence lengths.
 
 ## [Evaluation Process](#contents)
 
