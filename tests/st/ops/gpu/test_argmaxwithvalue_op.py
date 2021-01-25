@@ -75,7 +75,7 @@ def argmaxwithvalue_base(data_type):
 
 
 def argmaxwithvalue_3d(data_type, shape_x):
-    np.random.seed(876)
+    np.random.seed(2)
     x_np = np.random.random(shape_x).astype(data_type)
     x = Tensor(x_np)
 
@@ -130,7 +130,7 @@ def test_argmaxwithvalue_3d_float32():
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
 def test_argmaxwithvalue_3d_float16():
-    shape_x = (2, 32, 16)
+    shape_x = (2, 64, 128)
     context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
     argmaxwithvalue_3d(np.float16, shape_x)
 
