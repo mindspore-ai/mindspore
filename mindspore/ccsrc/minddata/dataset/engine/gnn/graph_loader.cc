@@ -39,7 +39,9 @@ GraphLoader::GraphLoader(GraphDataImpl *graph_impl, std::string mr_filepath, int
       row_id_(0),
       shard_reader_(nullptr),
       graph_feature_parser_(nullptr),
-      keys_({"first_id", "second_id", "third_id", "attribute", "type", "node_feature_index", "edge_feature_index"}) {}
+      required_key_(
+        {"first_id", "second_id", "third_id", "attribute", "type", "node_feature_index", "edge_feature_index"}),
+      optional_key_({{"weight", false}}) {}
 
 Status GraphLoader::GetNodesAndEdges() {
   NodeIdMap *n_id_map = &graph_impl_->node_id_map_;
@@ -62,7 +64,7 @@ Status GraphLoader::GetNodesAndEdges() {
       CHECK_FAIL_RETURN_UNEXPECTED(src_itr != n_id_map->end(), "invalid src_id:" + std::to_string(src_itr->first));
       CHECK_FAIL_RETURN_UNEXPECTED(dst_itr != n_id_map->end(), "invalid src_id:" + std::to_string(dst_itr->first));
       RETURN_IF_NOT_OK(edge_ptr->SetNode({src_itr->second, dst_itr->second}));
-      RETURN_IF_NOT_OK(src_itr->second->AddNeighbor(dst_itr->second));
+      RETURN_IF_NOT_OK(src_itr->second->AddNeighbor(dst_itr->second, edge_ptr->weight()));
       e_id_map->insert({edge_ptr->id(), edge_ptr});  // add edge to edge_id_map_
       graph_impl_->edge_type_map_[edge_ptr->type()].push_back(edge_ptr->id());
       dq.pop_front();
@@ -95,9 +97,15 @@ Status GraphLoader::InitAndLoad() {
 
   graph_impl_->data_schema_ = (shard_reader_->GetShardHeader()->GetSchemas()[0]->GetSchema());
   mindrecord::json schema = graph_impl_->data_schema_["schema"];
-  for (const std::string &key : keys_) {
+  for (const std::string &key : required_key_) {
     if (schema.find(key) == schema.end()) {
       RETURN_STATUS_UNEXPECTED(key + ":doesn't exist in schema:" + schema.dump());
+    }
+  }
+
+  for (auto op_key : optional_key_) {
+    if (schema.find(op_key.first) != schema.end()) {
+      optional_key_[op_key.first] = true;
     }
   }
 
@@ -128,7 +136,11 @@ Status GraphLoader::LoadNode(const std::vector<uint8_t> &col_blob, const mindrec
                              DefaultNodeFeatureMap *default_feature) {
   NodeIdType node_id = col_jsn["first_id"];
   NodeType node_type = static_cast<NodeType>(col_jsn["type"]);
-  (*node) = std::make_shared<LocalNode>(node_id, node_type);
+  WeightType weight = 1;
+  if (optional_key_["weight"]) {
+    weight = col_jsn["weight"];
+  }
+  (*node) = std::make_shared<LocalNode>(node_id, node_type, weight);
   std::vector<int32_t> indices;
   RETURN_IF_NOT_OK(graph_feature_parser_->LoadFeatureIndex("node_feature_index", col_blob, &indices));
   if (graph_impl_->server_mode_) {
@@ -174,9 +186,13 @@ Status GraphLoader::LoadEdge(const std::vector<uint8_t> &col_blob, const mindrec
   EdgeIdType edge_id = col_jsn["first_id"];
   EdgeType edge_type = static_cast<EdgeType>(col_jsn["type"]);
   NodeIdType src_id = col_jsn["second_id"], dst_id = col_jsn["third_id"];
-  std::shared_ptr<Node> src = std::make_shared<LocalNode>(src_id, -1);
-  std::shared_ptr<Node> dst = std::make_shared<LocalNode>(dst_id, -1);
-  (*edge) = std::make_shared<LocalEdge>(edge_id, edge_type, src, dst);
+  WeightType edge_weight = 1;
+  if (optional_key_["weight"]) {
+    edge_weight = col_jsn["weight"];
+  }
+  std::shared_ptr<Node> src = std::make_shared<LocalNode>(src_id, -1, 1);
+  std::shared_ptr<Node> dst = std::make_shared<LocalNode>(dst_id, -1, 1);
+  (*edge) = std::make_shared<LocalEdge>(edge_id, edge_type, edge_weight, src, dst);
   std::vector<int32_t> indices;
   RETURN_IF_NOT_OK(graph_feature_parser_->LoadFeatureIndex("edge_feature_index", col_blob, &indices));
   if (graph_impl_->server_mode_) {

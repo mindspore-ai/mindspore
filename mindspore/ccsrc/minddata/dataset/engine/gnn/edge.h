@@ -35,10 +35,11 @@ class Edge {
   // Constructor
   // @param EdgeIdType id - edge id
   // @param EdgeType type - edge type
+  // @param WeightType weight - edge weight
   // @param std::shared_ptr<Node> src_node - source node
   // @param std::shared_ptr<Node> dst_node - destination node
-  Edge(EdgeIdType id, EdgeType type, std::shared_ptr<Node> src_node, std::shared_ptr<Node> dst_node)
-      : id_(id), type_(type), src_node_(src_node), dst_node_(dst_node) {}
+  Edge(EdgeIdType id, EdgeType type, WeightType weight, std::shared_ptr<Node> src_node, std::shared_ptr<Node> dst_node)
+      : id_(id), type_(type), weight_(weight), src_node_(src_node), dst_node_(dst_node) {}
 
   virtual ~Edge() = default;
 
@@ -47,6 +48,9 @@ class Edge {
 
   // @return NodeIdType - Returned edge type
   EdgeType type() const { return type_; }
+
+  // @return WeightType - Returned edge weight
+  WeightType weight() const { return weight_; }
 
   // Get the feature of a edge
   // @param FeatureType feature_type - type of feature
@@ -77,6 +81,7 @@ class Edge {
  protected:
   EdgeIdType id_;
   EdgeType type_;
+  WeightType weight_;
   std::shared_ptr<Node> src_node_;
   std::shared_ptr<Node> dst_node_;
 };

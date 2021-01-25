@@ -110,7 +110,8 @@ class GraphLoader {
   std::vector<EdgeFeatureMap> e_feature_maps_;
   std::vector<DefaultNodeFeatureMap> default_node_feature_maps_;
   std::vector<DefaultEdgeFeatureMap> default_edge_feature_maps_;
-  const std::vector<std::string> keys_;
+  const std::vector<std::string> required_key_;
+  std::unordered_map<std::string, bool> optional_key_;
 };
 }  // namespace gnn
 }  // namespace dataset

@@ -171,7 +171,8 @@ Status GraphDataImpl::CheckNeighborType(NodeType neighbor_type) {
 
 Status GraphDataImpl::GetSampledNeighbors(const std::vector<NodeIdType> &node_list,
                                           const std::vector<NodeIdType> &neighbor_nums,
-                                          const std::vector<NodeType> &neighbor_types, std::shared_ptr<Tensor> *out) {
+                                          const std::vector<NodeType> &neighbor_types, SamplingStrategy strategy,
+                                          std::shared_ptr<Tensor> *out) {
   CHECK_FAIL_RETURN_UNEXPECTED(!node_list.empty(), "Input node_list is empty.");
   CHECK_FAIL_RETURN_UNEXPECTED(neighbor_nums.size() == neighbor_types.size(),
                                "The sizes of neighbor_nums and neighbor_types are inconsistent.");
@@ -199,7 +200,7 @@ Status GraphDataImpl::GetSampledNeighbors(const std::vector<NodeIdType> &node_li
           std::shared_ptr<Node> node;
           RETURN_IF_NOT_OK(GetNodeByNodeId(node_id, &node));
           std::vector<NodeIdType> out;
-          RETURN_IF_NOT_OK(node->GetSampledNeighbors(neighbor_types[i], neighbor_nums[i], &out));
+          RETURN_IF_NOT_OK(node->GetSampledNeighbors(neighbor_types[i], neighbor_nums[i], strategy, &out));
           neighbors.insert(neighbors.end(), out.begin(), out.end());
         }
       }

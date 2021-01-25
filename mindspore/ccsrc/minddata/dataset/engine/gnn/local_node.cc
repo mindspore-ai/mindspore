@@ -16,6 +16,7 @@
 #include "minddata/dataset/engine/gnn/local_node.h"
 
 #include <algorithm>
+#include <random>
 #include <string>
 #include <utility>
 
@@ -26,7 +27,10 @@ namespace mindspore {
 namespace dataset {
 namespace gnn {
 
-LocalNode::LocalNode(NodeIdType id, NodeType type) : Node(id, type), rnd_(GetRandomDevice()) { rnd_.seed(GetSeed()); }
+LocalNode::LocalNode(NodeIdType id, NodeType type, WeightType weight)
+    : Node(id, type, weight), rnd_(GetRandomDevice()) {
+  rnd_.seed(GetSeed());
+}
 
 Status LocalNode::GetFeatures(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) {
   auto itr = features_.find(feature_type);
@@ -44,13 +48,13 @@ Status LocalNode::GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType
   auto itr = neighbor_nodes_.find(neighbor_type);
   if (itr != neighbor_nodes_.end()) {
     if (exclude_itself) {
-      neighbors.resize(itr->second.size());
-      std::transform(itr->second.begin(), itr->second.end(), neighbors.begin(),
+      neighbors.resize(itr->second.first.size());
+      std::transform(itr->second.first.begin(), itr->second.first.end(), neighbors.begin(),
                      [](const std::shared_ptr<Node> node) { return node->id(); });
     } else {
-      neighbors.resize(itr->second.size() + 1);
+      neighbors.resize(itr->second.first.size() + 1);
       neighbors[0] = id_;
-      std::transform(itr->second.begin(), itr->second.end(), neighbors.begin() + 1,
+      std::transform(itr->second.first.begin(), itr->second.first.end(), neighbors.begin() + 1,
                      [](const std::shared_ptr<Node> node) { return node->id(); });
     }
   } else {
@@ -63,8 +67,8 @@ Status LocalNode::GetAllNeighbors(NodeType neighbor_type, std::vector<NodeIdType
   return Status::OK();
 }
 
-Status LocalNode::GetSampledNeighbors(const std::vector<std::shared_ptr<Node>> &neighbors, int32_t samples_num,
-                                      std::vector<NodeIdType> *out) {
+Status LocalNode::GetRandomSampledNeighbors(const std::vector<std::shared_ptr<Node>> &neighbors, int32_t samples_num,
+                                            std::vector<NodeIdType> *out) {
   std::vector<NodeIdType> shuffled_id(neighbors.size());
   std::iota(shuffled_id.begin(), shuffled_id.end(), 0);
   std::shuffle(shuffled_id.begin(), shuffled_id.end(), rnd_);
@@ -75,14 +79,33 @@ Status LocalNode::GetSampledNeighbors(const std::vector<std::shared_ptr<Node>> &
   return Status::OK();
 }
 
-Status LocalNode::GetSampledNeighbors(NodeType neighbor_type, int32_t samples_num,
+Status LocalNode::GetWeightSampledNeighbors(const std::vector<std::shared_ptr<Node>> &neighbors,
+                                            const std::vector<WeightType> &weights, int32_t samples_num,
+                                            std::vector<NodeIdType> *out) {
+  CHECK_FAIL_RETURN_UNEXPECTED(neighbors.size() == weights.size(),
+                               "The number of neighbors does not match the weight.");
+  std::discrete_distribution<NodeIdType> discrete_dist(weights.begin(), weights.end());
+  for (int32_t i = 0; i < samples_num; ++i) {
+    NodeIdType index = discrete_dist(rnd_);
+    out->emplace_back(neighbors[index]->id());
+  }
+  return Status::OK();
+}
+
+Status LocalNode::GetSampledNeighbors(NodeType neighbor_type, int32_t samples_num, SamplingStrategy strategy,
                                       std::vector<NodeIdType> *out_neighbors) {
   std::vector<NodeIdType> neighbors;
   neighbors.reserve(samples_num);
   auto itr = neighbor_nodes_.find(neighbor_type);
   if (itr != neighbor_nodes_.end()) {
-    while (neighbors.size() < samples_num) {
-      RETURN_IF_NOT_OK(GetSampledNeighbors(itr->second, samples_num - neighbors.size(), &neighbors));
+    if (strategy == SamplingStrategy::kRandom) {
+      while (neighbors.size() < samples_num) {
+        RETURN_IF_NOT_OK(GetRandomSampledNeighbors(itr->second.first, samples_num - neighbors.size(), &neighbors));
+      }
+    } else if (strategy == SamplingStrategy::kEdgeWeight) {
+      RETURN_IF_NOT_OK(GetWeightSampledNeighbors(itr->second.first, itr->second.second, samples_num, &neighbors));
+    } else {
+      RETURN_STATUS_UNEXPECTED("Invalid strategy");
     }
   } else {
     MS_LOG(DEBUG) << "There are no neighbors. node_id:" << id_ << " neighbor_type:" << neighbor_type;
@@ -95,12 +118,15 @@ Status LocalNode::GetSampledNeighbors(NodeType neighbor_type, int32_t samples_nu
   return Status::OK();
 }
 
-Status LocalNode::AddNeighbor(const std::shared_ptr<Node> &node) {
+Status LocalNode::AddNeighbor(const std::shared_ptr<Node> &node, const WeightType &weight) {
   auto itr = neighbor_nodes_.find(node->type());
   if (itr != neighbor_nodes_.end()) {
-    itr->second.push_back(node);
+    itr->second.first.push_back(node);
+    itr->second.second.push_back(weight);
   } else {
-    neighbor_nodes_[node->type()] = {node};
+    std::vector<std::shared_ptr<Node>> nodes = {node};
+    std::vector<WeightType> weights = {weight};
+    neighbor_nodes_[node->type()] = std::make_pair(std::move(nodes), std::move(weights));
   }
   return Status::OK();
 }

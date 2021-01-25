@@ -137,7 +137,8 @@ Status GraphDataClient::GetAllNeighbors(const std::vector<NodeIdType> &node_list
 
 Status GraphDataClient::GetSampledNeighbors(const std::vector<NodeIdType> &node_list,
                                             const std::vector<NodeIdType> &neighbor_nums,
-                                            const std::vector<NodeType> &neighbor_types, std::shared_ptr<Tensor> *out) {
+                                            const std::vector<NodeType> &neighbor_types, SamplingStrategy strategy,
+                                            std::shared_ptr<Tensor> *out) {
 #if !defined(_WIN32) && !defined(_WIN64)
   GnnGraphDataRequestPb request;
   GnnGraphDataResponsePb response;
@@ -151,6 +152,7 @@ Status GraphDataClient::GetSampledNeighbors(const std::vector<NodeIdType> &node_
   for (const auto &type : neighbor_types) {
     request.add_type(static_cast<google::protobuf::int32>(type));
   }
+  request.set_strategy(static_cast<google::protobuf::int32>(strategy));
   RETURN_IF_NOT_OK(GetGraphDataTensor(request, &response, out));
 #endif
   return Status::OK();

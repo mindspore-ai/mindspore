@@ -50,7 +50,7 @@ class GraphDataServer {
 
   enum ServerState state() { return state_; }
 
-  bool IsStoped() {
+  bool IsStopped() {
     if (state_ == kGdsStopped) {
       return true;
     } else {

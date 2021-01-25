@@ -15,6 +15,7 @@
  */
 #include <algorithm>
 #include <string>
+#include <map>
 #include <memory>
 #include <unordered_set>
 
@@ -38,6 +39,60 @@ using namespace mindspore::dataset::gnn;
 class MindDataTestGNNGraph : public UT::Common {
  protected:
   MindDataTestGNNGraph() = default;
+
+  using NumNeighborsMap = std::map<NodeIdType, uint32_t>;
+  using NodeNeighborsMap = std::map<NodeIdType, NumNeighborsMap>;
+  void ParsingNeighbors(const std::shared_ptr<Tensor> &neighbors, NodeNeighborsMap &node_neighbors) {
+    auto shape_vec = neighbors->shape().AsVector();
+    uint32_t num_members = 1;
+    for (size_t i = 1; i < shape_vec.size(); ++i) {
+      num_members *= shape_vec[i];
+    }
+    uint32_t index = 0;
+    NodeIdType src_node = 0;
+    for (auto node_itr = neighbors->begin<NodeIdType>(); node_itr != neighbors->end<NodeIdType>();
+         ++node_itr, ++index) {
+      if (index % num_members == 0) {
+        src_node = *node_itr;
+        continue;
+      }
+      auto src_node_itr = node_neighbors.find(src_node);
+      if (src_node_itr == node_neighbors.end()) {
+        node_neighbors[src_node] = {{*node_itr, 1}};
+      } else {
+        auto nei_itr = src_node_itr->second.find(*node_itr);
+        if (nei_itr == src_node_itr->second.end()) {
+          src_node_itr->second[*node_itr] = 1;
+        } else {
+          src_node_itr->second[*node_itr] += 1;
+        }
+      }
+    }
+  }
+
+  void CheckNeighborsRatio(const NumNeighborsMap &number_neighbors, const std::vector<WeightType> &weights,
+                           float deviation_ratio = 0.1) {
+    EXPECT_EQ(number_neighbors.size(), weights.size());
+    int index = 0;
+    uint32_t pre_num = 0;
+    WeightType pre_weight = 1;
+    for (auto neighbor : number_neighbors) {
+      if (pre_num != 0) {
+        float target_ratio = static_cast<float>(pre_weight) / static_cast<float>(weights[index]);
+        float current_ratio = static_cast<float>(pre_num) / static_cast<float>(neighbor.second);
+        float target_upper = target_ratio * (1 + deviation_ratio);
+        float target_lower = target_ratio * (1 - deviation_ratio);
+        MS_LOG(INFO) << "current_ratio:" << std::to_string(current_ratio)
+                     << " target_upper:" << std::to_string(target_upper)
+                     << " target_lower:" << std::to_string(target_lower);
+        EXPECT_LE(current_ratio, target_upper);
+        EXPECT_GE(current_ratio, target_lower);
+      }
+      pre_num = neighbor.second;
+      pre_weight = weights[index];
+      ++index;
+    }
+  }
 };
 
 TEST_F(MindDataTestGNNGraph, TestGetAllNeighbors) {
@@ -131,44 +186,75 @@ TEST_F(MindDataTestGNNGraph, TestGetSampledNeighbors) {
   std::transform(node_set.begin(), node_set.end(), node_list.begin(), [](const NodeIdType node) { return node; });
 
   std::shared_ptr<Tensor> neighbors;
-  s = graph.GetSampledNeighbors(node_list, {10}, {meta_info.node_type[1]}, &neighbors);
-  EXPECT_TRUE(s.IsOk());
-  EXPECT_TRUE(neighbors->shape().ToString() == "<5,11>");
+  {
+    MS_LOG(INFO) << "Test random sampling.";
+    NodeNeighborsMap number_neighbors;
+    int count = 0;
+    while (count < 1000) {
+      neighbors.reset();
+      s = graph.GetSampledNeighbors(node_list, {10}, {meta_info.node_type[1]}, SamplingStrategy::kRandom, &neighbors);
+      EXPECT_TRUE(s.IsOk());
+      EXPECT_TRUE(neighbors->shape().ToString() == "<5,11>");
+      ParsingNeighbors(neighbors, number_neighbors);
+      ++count;
+    }
+    CheckNeighborsRatio(number_neighbors[103], {1, 1, 1, 1, 1});
+  }
+
+  {
+    MS_LOG(INFO) << "Test edge weight sampling.";
+    NodeNeighborsMap number_neighbors;
+    int count = 0;
+    while (count < 1000) {
+      neighbors.reset();
+      s =
+        graph.GetSampledNeighbors(node_list, {10}, {meta_info.node_type[1]}, SamplingStrategy::kEdgeWeight, &neighbors);
+      EXPECT_TRUE(s.IsOk());
+      EXPECT_TRUE(neighbors->shape().ToString() == "<5,11>");
+      ParsingNeighbors(neighbors, number_neighbors);
+      ++count;
+    }
+    CheckNeighborsRatio(number_neighbors[103], {3, 5, 6, 7, 8});
+  }
 
   neighbors.reset();
-  s = graph.GetSampledNeighbors(node_list, {2, 3}, {meta_info.node_type[1], meta_info.node_type[0]}, &neighbors);
+  s = graph.GetSampledNeighbors(node_list, {2, 3}, {meta_info.node_type[1], meta_info.node_type[0]},
+                                SamplingStrategy::kRandom, &neighbors);
   EXPECT_TRUE(s.IsOk());
   EXPECT_TRUE(neighbors->shape().ToString() == "<5,9>");
 
   neighbors.reset();
   s = graph.GetSampledNeighbors(node_list, {2, 3, 4},
-                                {meta_info.node_type[1], meta_info.node_type[0], meta_info.node_type[1]}, &neighbors);
+                                {meta_info.node_type[1], meta_info.node_type[0], meta_info.node_type[1]},
+                                SamplingStrategy::kRandom, &neighbors);
   EXPECT_TRUE(s.IsOk());
   EXPECT_TRUE(neighbors->shape().ToString() == "<5,33>");
 
   neighbors.reset();
-  s = graph.GetSampledNeighbors({}, {10}, {meta_info.node_type[1]}, &neighbors);
+  s = graph.GetSampledNeighbors({}, {10}, {meta_info.node_type[1]}, SamplingStrategy::kRandom, &neighbors);
   EXPECT_TRUE(s.ToString().find("Input node_list is empty.") != std::string::npos);
 
   neighbors.reset();
-  s = graph.GetSampledNeighbors({-1, 1}, {10}, {meta_info.node_type[1]}, &neighbors);
+  s = graph.GetSampledNeighbors({-1, 1}, {10}, {meta_info.node_type[1]}, SamplingStrategy::kRandom, &neighbors);
   EXPECT_TRUE(s.ToString().find("Invalid node id") != std::string::npos);
 
   neighbors.reset();
-  s = graph.GetSampledNeighbors(node_list, {2, 50}, {meta_info.node_type[0], meta_info.node_type[1]}, &neighbors);
+  s = graph.GetSampledNeighbors(node_list, {2, 50}, {meta_info.node_type[0], meta_info.node_type[1]},
+                                SamplingStrategy::kRandom, &neighbors);
   EXPECT_TRUE(s.ToString().find("Wrong samples number") != std::string::npos);
 
   neighbors.reset();
-  s = graph.GetSampledNeighbors(node_list, {2}, {5}, &neighbors);
+  s = graph.GetSampledNeighbors(node_list, {2}, {5}, SamplingStrategy::kRandom, &neighbors);
   EXPECT_TRUE(s.ToString().find("Invalid neighbor type") != std::string::npos);
 
   neighbors.reset();
-  s = graph.GetSampledNeighbors(node_list, {2, 3, 4}, {meta_info.node_type[1], meta_info.node_type[0]}, &neighbors);
+  s = graph.GetSampledNeighbors(node_list, {2, 3, 4}, {meta_info.node_type[1], meta_info.node_type[0]},
+                                SamplingStrategy::kRandom, &neighbors);
   EXPECT_TRUE(s.ToString().find("The sizes of neighbor_nums and neighbor_types are inconsistent.") !=
               std::string::npos);
 
   neighbors.reset();
-  s = graph.GetSampledNeighbors({301}, {10}, {meta_info.node_type[1]}, &neighbors);
+  s = graph.GetSampledNeighbors({301}, {10}, {meta_info.node_type[1]}, SamplingStrategy::kRandom, &neighbors);
   EXPECT_TRUE(s.ToString().find("Invalid node id:301") != std::string::npos);
 }
 

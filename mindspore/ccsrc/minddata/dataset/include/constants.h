@@ -71,6 +71,9 @@ enum class NormalizeForm {
   kNfkd,
 };
 
+// Possible values for SamplingStrategy
+enum class SamplingStrategy { kRandom = 0, kEdgeWeight = 1 };
+
 // convenience functions for 32bit int bitmask
 inline bool BitTest(uint32_t bits, uint32_t bitMask) { return (bits & bitMask) == bitMask; }
 

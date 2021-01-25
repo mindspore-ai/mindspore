@@ -1114,7 +1114,7 @@ def check_gnn_get_sampled_neighbors(method):
 
     @wraps(method)
     def new_method(self, *args, **kwargs):
-        [node_list, neighbor_nums, neighbor_types], _ = parse_user_args(method, *args, **kwargs)
+        [node_list, neighbor_nums, neighbor_types, _], _ = parse_user_args(method, *args, **kwargs)
 
         check_gnn_list_or_ndarray(node_list, 'node_list')
 

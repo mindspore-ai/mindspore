@@ -17,6 +17,7 @@ import pytest
 import numpy as np
 import mindspore.dataset as ds
 from mindspore import log as logger
+from mindspore.dataset.engine import SamplingStrategy
 
 DATASET_FILE = "../data/mindrecord/testGraphData/testdata"
 SOCIAL_DATA_FILE = "../data/mindrecord/testGraphData/sns"
@@ -97,7 +98,10 @@ def test_graphdata_getsampledneighbors():
     nodes = g.get_nodes_from_edges(edges)
     assert len(nodes) == 40
     neighbor = g.get_sampled_neighbors(
-        np.unique(nodes[0:21, 0]), [2, 3], [2, 1])
+        np.unique(nodes[0:21, 0]), [2, 3], [2, 1], SamplingStrategy.RANDOM)
+    assert neighbor.shape == (10, 9)
+    neighbor = g.get_sampled_neighbors(
+        np.unique(nodes[0:21, 0]), [2, 3], [2, 1], SamplingStrategy.EDGE_WEIGHT)
     assert neighbor.shape == (10, 9)
 
 

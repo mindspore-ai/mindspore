@@ -21,8 +21,9 @@ namespace mindspore {
 namespace dataset {
 namespace gnn {
 
-LocalEdge::LocalEdge(EdgeIdType id, EdgeType type, std::shared_ptr<Node> src_node, std::shared_ptr<Node> dst_node)
-    : Edge(id, type, src_node, dst_node) {}
+LocalEdge::LocalEdge(EdgeIdType id, EdgeType type, WeightType weight, std::shared_ptr<Node> src_node,
+                     std::shared_ptr<Node> dst_node)
+    : Edge(id, type, weight, src_node, dst_node) {}
 
 Status LocalEdge::GetFeatures(FeatureType feature_type, std::shared_ptr<Feature> *out_feature) {
   auto itr = features_.find(feature_type);

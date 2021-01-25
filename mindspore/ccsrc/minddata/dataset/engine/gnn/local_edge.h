@@ -34,9 +34,11 @@ class LocalEdge : public Edge {
   // Constructor
   // @param EdgeIdType id - edge id
   // @param EdgeType type - edge type
+  // @param WeightType weight - edge weight
   // @param std::shared_ptr<Node> src_node - source node
   // @param std::shared_ptr<Node> dst_node - destination node
-  LocalEdge(EdgeIdType id, EdgeType type, std::shared_ptr<Node> src_node, std::shared_ptr<Node> dst_node);
+  LocalEdge(EdgeIdType id, EdgeType type, WeightType weight, std::shared_ptr<Node> src_node,
+            std::shared_ptr<Node> dst_node);
 
   ~LocalEdge() = default;
 

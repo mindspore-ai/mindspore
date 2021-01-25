@@ -78,7 +78,7 @@ grpc::Status GraphDataServiceImpl::ClientRegister(grpc::ServerContext *context,
         }
         break;
       case GraphDataServer::kGdsStopped:
-        response->set_error_msg("Stoped");
+        response->set_error_msg("Stopped");
         break;
     }
   } else {
@@ -222,8 +222,9 @@ Status GraphDataServiceImpl::GetSampledNeighbors(const GnnGraphDataRequestPb *re
   neighbor_types.resize(request->type().size());
   std::transform(request->type().begin(), request->type().end(), neighbor_types.begin(),
                  [](const google::protobuf::int32 type) { return static_cast<NodeType>(type); });
+  SamplingStrategy strategy = static_cast<SamplingStrategy>(request->strategy());
   std::shared_ptr<Tensor> tensor;
-  RETURN_IF_NOT_OK(graph_data_impl_->GetSampledNeighbors(node_list, neighbor_nums, neighbor_types, &tensor));
+  RETURN_IF_NOT_OK(graph_data_impl_->GetSampledNeighbors(node_list, neighbor_nums, neighbor_types, strategy, &tensor));
   TensorPb *result = response->add_result_data();
   RETURN_IF_NOT_OK(TensorToPb(tensor, result));
   return Status::OK();
