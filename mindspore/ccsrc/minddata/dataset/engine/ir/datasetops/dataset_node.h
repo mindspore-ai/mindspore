@@ -108,6 +108,9 @@ std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int
 
 // The base class of all IR nodes
 class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
+  // Allow DeepCopyPass to access internal members
+  friend class DeepCopyPass;
+
  public:
   /// \brief Constructor
   DatasetNode();
@@ -169,10 +172,6 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \brief Getter function for child nodes
   /// \return Child nodes
   const std::vector<std::shared_ptr<DatasetNode>> Children() const { return children_; }
-
-  /// \brief Getter function for the parent node
-  /// \return The parent node (of a node from a cloned IR tree)
-  DatasetNode *const Parent() const { return parent_; }
 
   /// \brief Establish a parent-child relationship between this node and the input node.
   ///    Used when building the IR tree.
