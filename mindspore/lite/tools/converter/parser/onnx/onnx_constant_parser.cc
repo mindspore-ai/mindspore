@@ -20,6 +20,7 @@
 #include <algorithm>
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
 #include "ops/constant.h"
+#include "src/param_value_lite.h"
 
 namespace mindspore {
 namespace lite {

@@ -64,7 +64,6 @@ file(GLOB_RECURSE CONVERTER_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         ../optimizer/graph/primitive_adjust_pass.cc
         )
 
-add_subdirectory(../anf_importer anf_importer)
 add_subdirectory(../anf_exporter anf_exporter)
 add_subdirectory(parser/caffe)
 add_subdirectory(parser/tflite)
@@ -158,7 +157,6 @@ target_link_libraries(converter_lite PRIVATE
         tf_parser_mid
         caffe_parser_mid
         onnx_parser_mid
-        anf_importer_mid
         anf_exporter_mid
         graph_pass_mid
         fusion_mid

@@ -37,7 +37,6 @@ using schema::QuantParamT;
 using schema::TensorT;
 using schema::Format::Format_NCHW;
 using schema::Format::Format_NHWC;
-using STATUS = int;
 
 std::unique_ptr<QuantParamT> GetTensorQuantParam(const std::unique_ptr<TensorT> &tensor);
 

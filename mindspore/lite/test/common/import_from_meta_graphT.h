@@ -19,24 +19,26 @@
 
 #include <utility>
 #include <memory>
+#include <unordered_map>
 #include "schema/inner/model_generated.h"
-#include "tools/anf_importer/anf_importer.h"
 #include "abstract/abstract_value.h"
+#include "ir/func_graph.h"
 
 namespace mindspore::lite {
-class AnfImporterFromMetaGraphT : public AnfImporter {
+class AnfImporterFromMetaGraphT {
  public:
-  AnfImporterFromMetaGraphT(schema::MetaGraphT *meta_graph, FuncGraphPtr func_graph)
-      : meta_graph_(meta_graph), func_graph_(std::move(func_graph)) {}
+  virtual ~AnfImporterFromMetaGraphT() = default;
 
-  ~AnfImporterFromMetaGraphT() override = default;
-
-  FuncGraphPtr GetResult() override;
+  static FuncGraphPtr Fb2Anf(schema::MetaGraphT *meta_graph);
 
  private:
-  int ConverterConstTensor() override;
+  explicit AnfImporterFromMetaGraphT(schema::MetaGraphT *meta_graph) : meta_graph_(meta_graph) {
+    this->func_graph_ = std::make_shared<FuncGraph>();
+  }
 
-  int ConverterCNode() override;
+  int ConverterConstTensor();
+
+  int ConverterCNode();
 
   ValueNodePtr ConvertPrimitive(const std::unique_ptr<schema::CNodeT> &cNode);
 
@@ -44,9 +46,14 @@ class AnfImporterFromMetaGraphT : public AnfImporter {
 
   int ConvertAbstract(const std::unique_ptr<schema::CNodeT> &src_cnode, const CNodePtr &dst_cnode);
 
-  int AddReturnCNode() override;
+  int AddReturnCNode();
+
+  AnfNodePtr GetNode(int tensor_id);
+
+  void AddNode(int tensor_id, AnfNodePtr node);
 
  private:
+  std::unordered_map<int, AnfNodePtr> nodes_;
   schema::MetaGraphT *meta_graph_;
   FuncGraphPtr func_graph_;
 };

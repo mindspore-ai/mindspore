@@ -34,8 +34,6 @@ class TfliteModelParser : public ModelParser {
 
   FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file,
                      const QuantType &quant_type) override;
-  MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
-                        const QuantType &quant_type) override;
 
  private:
   std::unordered_map<int, AnfNodePtr> nodes_;

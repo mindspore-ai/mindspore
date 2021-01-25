@@ -30,6 +30,7 @@
 #include "ops/tuple_get_item.h"
 #include "ops/while.h"
 #include "ir/anf.h"
+#include "tools/converter/converter_flags.h"
 
 namespace mindspore {
 namespace lite {
@@ -633,12 +634,6 @@ STATUS TFModelParser::ControlFlowNodePostProcess(const std::map<CNodePtr, FuncGr
     }
   }
   return RET_OK;
-}
-
-schema::MetaGraphT *TFModelParser::ParseToFb(const std::string &modelFile, const std::string &weightFile,
-                                             const QuantType &quantType) {
-  MS_LOG(ERROR) << "TF Model Parser not return MetaGraph, use TFModelParser::Parse instead";
-  return nullptr;
 }
 
 STATUS TFModelParser::ConvertInputNodes(const tensorflow::NodeDef &node_def,

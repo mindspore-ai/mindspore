@@ -41,16 +41,10 @@ class OnnxModelParser : public ModelParser {
 
   ~OnnxModelParser() override = default;
 
-  MetaGraphT *ParseToFb(const std::string &model_file, const std::string &weight_file,
-                        const QuantType &quant_type) override {
-    return nullptr;
-  }
-
   FuncGraphPtr Parse(const std::string &model_file, const std::string &weight_file,
                      const QuantType &quant_type) override;
   static TypeId GetDataTypeFromOnnx(onnx::TensorProto_DataType onnx_type);
-  static STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_const_value,
-                                   const ParamValueLitePtr &param_value_lite);
+  static STATUS CopyOnnxTensorData(const onnx::TensorProto &onnx_const_value, const ParamValueLitePtr &param_value);
 
  private:
   STATUS InitOriginModel(const std::string &model_file);

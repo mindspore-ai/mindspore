@@ -21,13 +21,20 @@
 #include <memory>
 #include "tools/converter/converter.h"
 #include "tools/converter/graphdef_transform.h"
+#include "tools/converter/parser/caffe/caffe_model_parser.h"
 
 namespace mindspore::lite {
 class CaffeConverter : public Converter {
  public:
-  CaffeConverter();
+  CaffeConverter() = default;
 
   ~CaffeConverter() override = default;
+
+  FuncGraphPtr BuildFuncGraph(const std::string &model_file, const std::string &weight_file,
+                              schema::QuantType quant_type) override {
+    CaffeModelParser parser;
+    return parser.Parse(model_file, weight_file, quant_type);
+  }
 };
 }  // namespace mindspore::lite
 

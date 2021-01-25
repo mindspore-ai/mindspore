@@ -26,6 +26,8 @@
 #include "ops/return.h"
 #include "ops/make_tuple.h"
 #include "ops/tuple_get_item.h"
+#include "ir/func_graph.h"
+#include "tools/converter/converter_flags.h"
 
 namespace mindspore::lite {
 CaffeModelParser::CaffeModelParser() = default;
@@ -426,10 +428,4 @@ bool CaffeModelParser::IsSkipedLayer(const caffe::LayerParameter &layer) {
   }
   return layer.include_size() == 1 && layer.include(0).phase() == caffe::TRAIN;
 }
-
-MetaGraphT *CaffeModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,
-                                        const QuantType &quant_type) {
-  return nullptr;
-}
-
 }  // namespace mindspore::lite

@@ -254,12 +254,12 @@ if (ENABLE_CONVERTER)
             ${TEST_DIR}/st/converter_test.cc
             ${TEST_DIR}/st/control_flow_test.cc
             ${TEST_DIR}/st/sub_graph_test.cc
+            ${TEST_DIR}/common/import_from_meta_graphT.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_biasadd_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_bn_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_scale_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_activation_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/constant_folding_fusion_test.cc
-            ${TEST_DIR}/ut/tools/optimizer/fusion/import_from_meta_graphT.cc
             )
 endif()
 
@@ -301,6 +301,8 @@ endif()
 
 if (PLATFORM_ARM)
     target_link_libraries(lite-test log)
+else()
+    target_link_libraries(lite-test ${SECUREC_LIBRARY} pthread)
 endif()
 
 if (SUPPORT_NPU)
@@ -310,7 +312,6 @@ endif ()
 if (ENABLE_CONVERTER)
     add_dependencies(lite-test fbs_inner_src)
     target_link_libraries(lite-test
-            anf_importer_mid
             anf_exporter_mid
             tflite_parser_mid
             caffe_parser_mid
@@ -320,12 +321,10 @@ if (ENABLE_CONVERTER)
             fusion_mid
             quantizer_mid
             proto_mid
-            pthread
             mindspore::protobuf
             mindspore::eigen
             mindspore::json
             -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
             mindspore::glog
-            ${SECUREC_LIBRARY}
             )
 endif()
