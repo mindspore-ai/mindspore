@@ -96,6 +96,8 @@ class OnnxModelParser : public ModelParser {
   STATUS AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::vector<AnfNodePtr> *return_new_inputs,
                             const std::string &loop_node_name, std::vector<AnfNodePtr> *body_graph_inputs,
                             int act_output_num);
+  STATUS AddTensorListStackNode(const AnfNodePtr &root_while_node, const onnx::NodeProto &onnx_node, int act_output_num,
+                                int body_output_size);
   STATUS BuildCondGraph(const FuncGraphPtr &cond_graph, const AnfNodePtr &root_while_node, int inputs_num,
                         const std::string &cond_graph_name);
   STATUS ConvertIfSubgraph(const onnx::GraphProto &onnx_graph, const FuncGraphPtr &anf_graph,

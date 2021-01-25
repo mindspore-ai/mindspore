@@ -50,6 +50,7 @@ class SingleSwitchPass {
   STATUS ConcatBodySubgraphInputAndOutput();
   bool IsLoop();
   STATUS InsertMerge();
+  std::unique_ptr<schema::CNodeT> MakeMergeNode(const std::string &name, const std::vector<size_t> &const_in);
 
   // function for if
   STATUS InsertPartialAndMergeAfterSwitch();

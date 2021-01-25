@@ -152,7 +152,9 @@ int TensorListSetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
       }
     }
   }
-
+  if (input0->tensors_data_type() == kTypeUnknown) {
+    input0->set_tensors_data_type(value_tensor->data_type());
+  }
   out_shape[index] = value_tensor->shape();
   output0->MallocTensorListData(input0->tensors_data_type(), out_shape);
   return RET_OK;

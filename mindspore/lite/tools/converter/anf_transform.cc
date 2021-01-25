@@ -119,7 +119,6 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
   // for now - training is not supporting fuse operations
   if (!config->trainModel) {
     // remove quantdtype when awaretraining
-    fusion_pm->AddPass(std::make_shared<opt::RemoveIdentityOpPass>());
     fusion_pm->AddPass(std::make_shared<opt::ConvBiasaddFusion>());
     auto conv_bn_pass = std::make_shared<opt::ConvBatchNormFusion>();
     conv_bn_pass->SetFmkType(config->fmk);
@@ -171,6 +170,7 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
     fusion_pm->AddPass(remove_unused_transpose_pass);
   }
   auto const_fold_pm = std::make_shared<opt::PassManager>("const fold fusion pass manager", false);
+  const_fold_pm->AddPass(std::make_shared<opt::RemoveIdentityOpPass>());
   if (!config->trainModel) {
     auto inne_context_ptr = std::make_shared<lite::InnerContext>();
     inne_context_ptr->Init();

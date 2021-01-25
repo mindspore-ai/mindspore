@@ -165,56 +165,25 @@ STATUS SingleSwitchPass::BodyGraphVariableInput(std::vector<size_t> *variable_in
   return RET_OK;
 }
 
-STATUS SingleSwitchPass::InsertMerge() {
-  // update body graph output
-  auto &body_fg = graph_->subGraph.at(second_subgraph_index_);
-  body_fg->outputIndices.assign(body_to_cond_partial_node_->inputIndex.begin(),
-                                body_to_cond_partial_node_->inputIndex.end());
-
-  // remove body_to_cond_partial_node_ from second_graph_nodes_
-  for (auto it = second_graph_nodes_.begin(); it != second_graph_nodes_.end();) {
-    if (*it == body_to_cond_partial_node_) {
-      it = second_graph_nodes_.erase(it);
-    } else {
-      it++;
-    }
-  }
-
-  // isolate body_to_cond_partial_node_
-  IsolateUselessNode(body_to_cond_partial_node_, graph_);
-
-  std::vector<size_t> variable_input{};
-  int ret = BodyGraphVariableInput(&variable_input);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "get body graph variable input failed, ret: " << ret;
-    return ret;
-  }
-
-  std::vector<size_t> const_input{};
-  for (size_t i = 0; i < second_partial_node_->inputIndex.size(); i++) {
-    if (IsContain(variable_input, i)) {
-      continue;
-    }
-    const_input.push_back(i);
-  }
-
+std::unique_ptr<schema::CNodeT> SingleSwitchPass::MakeMergeNode(const std::string &name,
+                                                                const std::vector<size_t> &const_input) {
   auto merge_node = std::make_unique<schema::CNodeT>();
   if (merge_node == nullptr) {
     MS_LOG(ERROR) << "new CNodeT failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
   merge_node->primitive = std::make_unique<PrimitiveT>();
   if (merge_node->primitive == nullptr) {
     MS_LOG(ERROR) << "new PrimitiveT failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
-  merge_node->name = switch_node_->name + "-merge";
+  merge_node->name = name;
   merge_node->primitive->value.type = schema::PrimitiveType_Merge;
   merge_node->primitive->value.value = new (std::nothrow) MergeT();
   if (merge_node->primitive->value.value == nullptr) {
     MS_LOG(ERROR) << "new MergeT failed";
-    return RET_NULL_PTR;
+    return nullptr;
   }
 
   // merge node output is same as switch
@@ -251,7 +220,46 @@ STATUS SingleSwitchPass::InsertMerge() {
       merge_node->inputIndex.push_back(graph_->allTensors.size() - 1);
     }
   }
+  return merge_node;
+}
 
+STATUS SingleSwitchPass::InsertMerge() {
+  // update body graph output
+  auto &body_fg = graph_->subGraph.at(second_subgraph_index_);
+  body_fg->outputIndices.assign(body_to_cond_partial_node_->inputIndex.begin(),
+                                body_to_cond_partial_node_->inputIndex.end());
+
+  // remove body_to_cond_partial_node_ from second_graph_nodes_
+  for (auto it = second_graph_nodes_.begin(); it != second_graph_nodes_.end();) {
+    if (*it == body_to_cond_partial_node_) {
+      it = second_graph_nodes_.erase(it);
+    } else {
+      it++;
+    }
+  }
+
+  // isolate body_to_cond_partial_node_
+  IsolateUselessNode(body_to_cond_partial_node_, graph_);
+
+  std::vector<size_t> variable_input{};
+  int ret = BodyGraphVariableInput(&variable_input);
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "get body graph variable input failed, ret: " << ret;
+    return ret;
+  }
+
+  std::vector<size_t> const_input{};
+  for (size_t i = 0; i < second_partial_node_->inputIndex.size(); i++) {
+    if (IsContain(variable_input, i)) {
+      continue;
+    }
+    const_input.push_back(i);
+  }
+  auto merge_node = MakeMergeNode(switch_node_->name + "-merge", const_input);
+  if (merge_node == nullptr) {
+    MS_LOG(ERROR) << "make merge node failed";
+    return ret;
+  }
   // insert merge node before the cond graph
   std::map<int, int> cond_input_update_map{};
   for (size_t i = 0; i < first_partial_node_->inputIndex.size(); i++) {
@@ -589,6 +597,11 @@ STATUS SingleSwitchPass::UpdateSubgraphOutput(const size_t &subgraph_index, sche
     for (auto &output : subgraph_node->outputIndex) {
       if (subgraph_output_map.find(output) != subgraph_output_map.end()) {
         output = subgraph_output_map.at(output);
+      }
+    }
+    for (auto &input : subgraph_node->inputIndex) {
+      if (subgraph_output_map.find(input) != subgraph_output_map.end()) {
+        input = subgraph_output_map.at(input);
       }
     }
   }

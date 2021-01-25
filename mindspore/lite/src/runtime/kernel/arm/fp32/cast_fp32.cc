@@ -88,6 +88,9 @@ int CastCPUKernel::DoCast(int thread_id) {
     } else if (input_data_type == kNumberTypeFloat32 && output_data_type == kNumberTypeInt16) {
       Float32ToInt16(reinterpret_cast<float *>(input->data_c()) + offset,
                      reinterpret_cast<int16_t *>(output_data) + offset, data_num);
+    } else if (input_data_type == kNumberTypeBool && output_data_type == kNumberTypeInt32) {
+      BoolToInt32(reinterpret_cast<bool *>(input->data_c()) + offset, reinterpret_cast<int32_t *>(output_data) + offset,
+                  data_num);
     } else {
       MS_LOG(ERROR) << "Unsupported datatype from " << input_data_type << " to " << output_data_type;
       return RET_ERROR;

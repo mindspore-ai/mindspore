@@ -76,6 +76,12 @@ inline void Float32ToInt16(const float *input, int16_t *output, int number) {
     output[i] = (int16_t)input[i];
   }
 }
+
+inline void BoolToInt32(const bool *input, int32_t *output, int number) {
+  for (int i = 0; i < number; ++i) {
+    output[i] = (int32_t)input[i];
+  }
+}
 #ifdef __cplusplus
 }
 #endif

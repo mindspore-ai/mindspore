@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 #include "tools/optimizer/graph/onnx_inputs_adjust_pass.h"
-#include <vector>
-#include <string>
+#include <algorithm>
 #include <functional>
 #include <memory>
-#include <algorithm>
+#include <string>
+#include <vector>
 #include "mindspore/lite/include/errorcode.h"
 #include "src/ops/primitive_c.h"
 
@@ -266,11 +266,11 @@ STATUS OnnxInputAdjustOpPass::AdjustStridedSlice(const FuncGraphPtr &func_graph,
   auto inputs = cnode->inputs();
   switch (cnode->inputs().size()) {
     case 4: {
-      std::vector<int> axises;
+      std::vector<int> axes;
       for (int i = 0; i < size; ++i) {
-        axises.push_back(i);
+        axes.push_back(i);
       }
-      auto new_param_node = BuildParameterNode(func_graph, axises, cnode->fullname_with_scope() + "_axises");
+      auto new_param_node = BuildParameterNode(func_graph, axes, cnode->fullname_with_scope() + "_axes");
       if (new_param_node == nullptr) {
         MS_LOG(ERROR) << "new a parameter node failed.";
       }
@@ -327,9 +327,9 @@ STATUS OnnxInputAdjustOpPass::AdjustResize(const CNodePtr &cnode) {
   }
   auto attr = reinterpret_cast<schema::ResizeT *>(value);
   if (cnode->inputs().size() > 3 &&
-      attr->coordinateTransformMode == schema::CoordinateTransformMode_TF_CROP_AND_RESIZE) {
+      attr->coordinateTransformMode != schema::CoordinateTransformMode_TF_CROP_AND_RESIZE) {
     auto new_resize_inputs = cnode->inputs();
-    new_resize_inputs.erase(new_resize_inputs.begin() + 1);
+    new_resize_inputs.erase(new_resize_inputs.begin() + 2);
     cnode->set_inputs(new_resize_inputs);
   }
   if (cnode->inputs().size() > 3 && attr->coordinateTransformMode == schema::CoordinateTransformMode_HALF_PIXEL) {
@@ -597,6 +597,8 @@ bool OnnxInputAdjustOpPass::Run(const FuncGraphPtr &func_graph) {
       status = ReplaceTransposeWithGraphInput(func_graph, cnode);
     } else if (type == schema::PrimitiveType_Resize) {
       status = AdjustResize(cnode);
+    } else {
+      continue;
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "adjust input pass is failed.";

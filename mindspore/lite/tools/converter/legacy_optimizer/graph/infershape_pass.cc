@@ -143,6 +143,13 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       }
     }
   }
+  for (auto g_input_idx : graph->inputIndex) {
+    auto g_input_shape = graph->allTensors.at(g_input_idx)->dims;
+    if (std::find(g_input_shape.begin(), g_input_shape.end(), -1) != g_input_shape.end()) {
+      MS_LOG(INFO) << "InferShape shouldn't be done before runtime";
+      return RET_OK;
+    }
+  }
   for (auto iter = graph->nodes.begin(); iter != graph->nodes.end(); iter++) {
     auto &node = *iter;
     auto input_tensors = ConvertTensorToLiteTensor(graph, node->inputIndex, node->primitive->value.type);
