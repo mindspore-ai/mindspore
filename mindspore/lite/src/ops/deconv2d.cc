@@ -47,6 +47,8 @@ int DeConv2D::GetPadRight() const { return this->primitive_->value.AsDeConv2D()-
 int DeConv2D::GetDilateW() const { return this->primitive_->value.AsDeConv2D()->dilateW; }
 int DeConv2D::GetDilateH() const { return this->primitive_->value.AsDeConv2D()->dilateH; }
 int DeConv2D::GetActivationType() const { return this->primitive_->value.AsDeConv2D()->activationType; }
+int DeConv2D::GetOutputPaddingW() const { return this->primitive_->value.AsDeConv2D()->outputPaddingW; }
+int DeConv2D::GetOutputPaddingH() const { return this->primitive_->value.AsDeConv2D()->outputPaddingH; }
 
 void DeConv2D::SetFormat(int format) { this->primitive_->value.AsDeConv2D()->format = (schema::Format)format; }
 void DeConv2D::SetGroup(int group) { this->primitive_->value.AsDeConv2D()->group = group; }
@@ -295,6 +297,8 @@ int DeConv2D::GetPadRight() const { return this->primitive_->value_as_DeConv2D()
 int DeConv2D::GetDilateW() const { return this->primitive_->value_as_DeConv2D()->dilateW(); }
 int DeConv2D::GetDilateH() const { return this->primitive_->value_as_DeConv2D()->dilateH(); }
 int DeConv2D::GetActivationType() const { return this->primitive_->value_as_DeConv2D()->activationType(); }
+int DeConv2D::GetOutputPaddingW() const { return this->primitive_->value_as_DeConv2D()->outputPaddingW(); }
+int DeConv2D::GetOutputPaddingH() const { return this->primitive_->value_as_DeConv2D()->outputPaddingH(); }
 
 PrimitiveC *DeConv2DCreator(const schema::Primitive *primitive) {
   return PrimitiveC::NewPrimitiveC<DeConv2D>(primitive);
@@ -347,6 +351,8 @@ int DeConv2D::InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::
     MS_LOG(ERROR) << "unsupported pad mode for deconv";
     return RET_ERROR;
   }
+  output_h += GetOutputPaddingH();
+  output_w += GetOutputPaddingW();
   std::vector<int> out_shape = {output_n, output_h, output_w, output_c};
   output->set_shape(out_shape);
 

@@ -71,7 +71,8 @@ class DeConv2D : public PrimitiveC {
   int GetDilateW() const;
   int GetDilateH() const;
   int GetActivationType() const;
-
+  int GetOutputPaddingW() const;
+  int GetOutputPaddingH() const;
   int PadUp() const { return this->pad_u_; }
   int PadDown() const { return this->pad_d_; }
   int PadLeft() const { return this->pad_l_; }

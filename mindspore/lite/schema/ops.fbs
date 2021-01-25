@@ -480,6 +480,8 @@ table DeConv2D {
     dilateH: int;
     hasBias: bool = false;  // DEPRECATED
     activationType: ActivationType = 0;
+    outputPaddingW: int;
+    outputPaddingH: int;
 }
 
 table DeConv2DGradFilter {
