@@ -28,6 +28,8 @@
 using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {
 
+constexpr const int POS_INVALID = -1;
+
 class FunctionalizeWhile {
  public:
   FunctionalizeWhile(std::vector<AnfNodePtr> node_cluster, const CNodePtr &loop_cond_node, FuncGraphPtr fg)
@@ -36,10 +38,12 @@ class FunctionalizeWhile {
   // while
   STATUS BuildWhileNode();
   STATUS IdentifyWhileNodeInput();
+  STATUS IdentifyWhileNodeExternalInput();
   STATUS IdentifyWhileNodeOutput();
   STATUS UpdateExitNodeUser();
   STATUS NewWhileNode();
   STATUS InsertFuncGraphToWhileInput();
+  bool WhileNodeExternalInputIsContain(const AnfNodePtr &node);
 
   // cond subgraph
   STATUS BuildCondGraph();
@@ -56,6 +60,7 @@ class FunctionalizeWhile {
   CNodePtr BlongToWhichSwitch(const CNodePtr &node);
   CNodePtr BlongToWhichMerge(const CNodePtr &node);
   CNodePtr BlongToWhichEnter(const CNodePtr &node);
+  CNodePtr BlongToWhichExternalEnter(const CNodePtr &node);
   int PosInInputEnterNodes(const CNodePtr &node);
   STATUS DropUselessNodesInMainGraph();
 
@@ -75,6 +80,7 @@ class FunctionalizeWhile {
 
   // while
   std::vector<CNodePtr> input_enter_nodes_{};
+  std::vector<CNodePtr> external_input_enter_nodes_{};
   std::vector<CNodePtr> output_exit_nodes_{};
 
   // pair (next iteration node, next iteration node input)

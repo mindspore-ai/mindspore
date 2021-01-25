@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <deque>
 #include "tools/optimizer/graph/functionalize_control_op_pass.h"
 #include "tools/optimizer/graph/functionalize_while.h"
@@ -25,7 +26,7 @@ namespace mindspore::opt {
 FuncGraphPtr FunctionalizeControlOpPass::NewFuncGraph(const std::string &subgraph_name, const FmkType &fmk_type) {
   auto fg = std::make_shared<FuncGraph>();
   if (fg == nullptr) {
-    MS_LOG(ERROR) << "new func)graph failed.";
+    MS_LOG(ERROR) << "new func_graph failed.";
     return nullptr;
   }
   fg->set_attr("graph_name", MakeValue(subgraph_name));
@@ -57,6 +58,15 @@ void FunctionalizeControlOpPass::InitNodeClusters(const FuncGraphPtr &func_graph
       node_clusters_[cluster_pos].second.push_back(node);
     }
   }
+  // sort node_clusters_
+  std::sort(node_clusters_.begin(), node_clusters_.end(),
+            [](std::pair<std::string, std::vector<AnfNodePtr>> a, std::pair<std::string, std::vector<AnfNodePtr>> b) {
+              if (a.first.size() != b.first.size()) {
+                return a.first.size() > b.first.size();
+              } else {
+                return a.first > b.first;
+              }
+            });
 }
 
 size_t FunctionalizeControlOpPass::WhichCluster(const std::string &cluster_name) {
@@ -96,18 +106,20 @@ bool FunctionalizeControlOpPass::Run(const FuncGraphPtr &func_graph) {
   }
   return true;
 }
-CNodePtr FunctionalizeControlOpPass::BelongToWhichNode(const CNodePtr &node, const FilterFunc &func) {
+
+CNodePtr FunctionalizeControlOpPass::BelongToWhichNode(const CNodePtr &node, const AimFunc &aim_func,
+                                                       const FilterFunc &filter_func) {
   if (node == nullptr) {
     return nullptr;
   }
-  if (func(node)) {
+  if (aim_func(node)) {
     return node;
   }
   CNodePtr aim_node = nullptr;
   std::deque<AnfNodePtr> todo(256);
   todo.clear();
   for (auto &input_node : node->inputs()) {
-    if (func(input_node)) {
+    if (aim_func(input_node)) {
       aim_node = utils::cast<CNodePtr>(input_node);
       todo.clear();
       break;
@@ -118,10 +130,16 @@ CNodePtr FunctionalizeControlOpPass::BelongToWhichNode(const CNodePtr &node, con
   while (!todo.empty()) {
     AnfNodePtr todo_node = todo.front();
     todo.pop_front();
-    if (func(todo_node)) {
-      aim_node = utils::cast<CNodePtr>(todo_node);
-      todo.clear();
-      break;
+    if (aim_func(todo_node)) {
+      if (filter_func == nullptr) {
+        aim_node = utils::cast<CNodePtr>(todo_node);
+        todo.clear();
+        break;
+      } else if (filter_func(todo_node)) {
+        aim_node = utils::cast<CNodePtr>(todo_node);
+        todo.clear();
+        break;
+      }
     }
     if (utils::isa<CNodePtr>(todo_node)) {
       auto cnode = utils::cast<CNodePtr>(todo_node);

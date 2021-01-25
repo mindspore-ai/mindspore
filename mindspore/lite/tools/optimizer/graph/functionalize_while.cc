@@ -60,11 +60,52 @@ CNodePtr FunctionalizeWhile::BlongToWhichEnter(const CNodePtr &node) {
   return FunctionalizeControlOpPass::BelongToWhichNode(node, FunctionalizeControlOpPass::IsEnter);
 }
 
+CNodePtr FunctionalizeWhile::BlongToWhichExternalEnter(const CNodePtr &node) {
+  if (node == nullptr) {
+    return nullptr;
+  }
+  if (FunctionalizeControlOpPass::IsEnter(node)) {
+    return node;
+  }
+  CNodePtr aim_node = nullptr;
+  std::deque<AnfNodePtr> todo(256);
+  todo.clear();
+  for (auto &input_node : node->inputs()) {
+    if (FunctionalizeControlOpPass::IsEnter(input_node) && WhileNodeExternalInputIsContain(input_node)) {
+      aim_node = utils::cast<CNodePtr>(input_node);
+      todo.clear();
+      break;
+    }
+    todo.push_back(input_node);
+  }
+
+  while (!todo.empty()) {
+    AnfNodePtr todo_node = todo.front();
+    todo.pop_front();
+    if (FunctionalizeControlOpPass::IsEnter(todo_node) && WhileNodeExternalInputIsContain(todo_node)) {
+      aim_node = utils::cast<CNodePtr>(todo_node);
+      todo.clear();
+      break;
+    }
+    if (utils::isa<CNodePtr>(todo_node)) {
+      auto cnode = utils::cast<CNodePtr>(todo_node);
+      for (size_t i = 0; i < cnode->inputs().size(); i++) {
+        todo.push_back(cnode->input(i));
+      }
+    }
+  }
+  if (aim_node == nullptr) {
+    MS_LOG(WARNING) << "not found belonging enter node.";
+    return nullptr;
+  }
+
+  return aim_node;
+}
+
 int FunctionalizeWhile::PosInInputEnterNodes(const CNodePtr &node) {
   auto index = std::find(input_enter_nodes_.begin(), input_enter_nodes_.end(), node);
   if (index == input_enter_nodes_.end()) {
-    MS_LOG(WARNING) << node->fullname_with_scope() << " is not in input_enter_nodes_";
-    return -1;
+    return POS_INVALID;
   }
   return index - input_enter_nodes_.begin();
 }
@@ -98,15 +139,49 @@ STATUS FunctionalizeWhile::IdentifyWhileNodeInput() {
   return RET_OK;
 }
 
+STATUS FunctionalizeWhile::IdentifyWhileNodeExternalInput() {
+  std::deque<AnfNodePtr> todo(128);
+  std::vector<CNodePtr> merge_nodes{};
+  todo.clear();
+  for (size_t i = 1; i < loop_cond_node_->inputs().size(); i++) {
+    todo.push_back(loop_cond_node_->input(i));
+  }
+  while (!todo.empty()) {
+    AnfNodePtr node = todo.front();
+    todo.pop_front();
+    if (FunctionalizeControlOpPass::IsMerge(node)) {
+      merge_nodes.push_back(node->cast<CNodePtr>());
+      continue;
+    }
+    if (utils::isa<CNodePtr>(node)) {
+      auto cnode = utils::cast<CNodePtr>(node);
+      for (size_t i = 1; i < cnode->inputs().size(); i++) {
+        todo.push_back(cnode->input(i));
+      }
+    }
+  }
+
+  for (auto &node : merge_nodes) {
+    external_input_enter_nodes_.push_back(node->input(1)->cast<CNodePtr>());
+  }
+  return RET_OK;
+}
+
+bool FunctionalizeWhile::WhileNodeExternalInputIsContain(const AnfNodePtr &node) {
+  auto cnode = node->cast<CNodePtr>();
+  return std::find(external_input_enter_nodes_.begin(), external_input_enter_nodes_.end(), cnode) !=
+         external_input_enter_nodes_.end();
+}
+
 STATUS FunctionalizeWhile::IdentifyWhileNodeOutput() {
-  output_exit_nodes_.resize(input_enter_nodes_.size());
+  output_exit_nodes_.resize(external_input_enter_nodes_.size());
   for (auto &node : node_cluster_) {
     // exit ->switch->merge->enter
     if (FunctionalizeControlOpPass::IsExit(node)) {
       auto exit_node = node->cast<CNodePtr>();
       auto switch_node = BlongToWhichSwitch(exit_node);
       auto merge_node = BlongToWhichMerge(switch_node);
-      auto enter_node = BlongToWhichEnter(merge_node);
+      auto enter_node = BlongToWhichExternalEnter(merge_node);
       int pos = PosInInputEnterNodes(enter_node);
       if (pos == -1) {
         MS_LOG(ERROR) << "not find in input enter nodes.";
@@ -155,7 +230,7 @@ STATUS FunctionalizeWhile::UpdateExitNodeUser() {
         const auto &exit_node = node;
         auto switch_node = BlongToWhichSwitch(exit_node);
         auto merge_node = BlongToWhichMerge(switch_node);
-        auto enter_node = BlongToWhichEnter(merge_node);
+        auto enter_node = BlongToWhichExternalEnter(merge_node);
         int output_idx = PosInInputEnterNodes(enter_node);
         auto getItemValue = NewValueNode(MakeValue<int>(output_idx));
         std::vector<AnfNodePtr> inputs{tuple_get_item_prim, while_node_, getItemValue};
@@ -187,6 +262,11 @@ STATUS FunctionalizeWhile::BuildWhileNode() {
   ret = IdentifyWhileNodeInput();
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "identify while node input failed, ret:" << ret;
+    return ret;
+  }
+  ret = IdentifyWhileNodeExternalInput();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "identify while node external input failed, ret:" << ret;
     return ret;
   }
   ret = IdentifyWhileNodeOutput();
@@ -364,6 +444,9 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphInput() {
         auto merge_node = BlongToWhichMerge(switch_node);
         auto enter_node = BlongToWhichEnter(merge_node);
         int pos = PosInInputEnterNodes(enter_node);
+        if (pos == POS_INVALID) {
+          continue;
+        }
         nodes_need_drop.push_back(cnode);
 
         // set parameter
@@ -394,13 +477,16 @@ STATUS FunctionalizeWhile::IdentifyBodySubgraphInput() {
 STATUS FunctionalizeWhile::IdentifyBodySubgraphOutput() {
   std::vector<AnfNodePtr> tmp_output{};
   tmp_output.resize(input_enter_nodes_.size());
-  // next_iteration -> switch -> merge -> enter
+
   for (auto &node_pair : body_subgraph_output_map_) {
     auto next_iteration_cnode = utils::cast<CNodePtr>(node_pair.first);
     auto switch_node = BlongToWhichSwitch(next_iteration_cnode);
     auto merge_node = BlongToWhichMerge(switch_node);
     auto enter_node = BlongToWhichEnter(merge_node);
     int pos = PosInInputEnterNodes(enter_node);
+    if (pos == POS_INVALID) {
+      continue;
+    }
 
     tmp_output[pos] = node_pair.second;
     // hard code. set cnode output name
@@ -495,13 +581,13 @@ STATUS FunctionalizeWhile::Process() {
 
   ret = BuildCondGraph();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "build while node failed, ret:" << ret;
+    MS_LOG(ERROR) << "build condition graph failed, ret:" << ret;
     return ret;
   }
 
   ret = BuildBodyGraph();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "build while node failed, ret:" << ret;
+    MS_LOG(ERROR) << "build body graph failed, ret:" << ret;
     return ret;
   }
 
