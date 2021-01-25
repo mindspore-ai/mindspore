@@ -27,6 +27,7 @@
 
 using mindspore::lite::converter::FmkType;
 namespace mindspore::opt {
+using AimFunc = std::function<bool(const AnfNodePtr &)>;
 class FunctionalizeControlOpPass : public Pass {
  public:
   FunctionalizeControlOpPass() : Pass("functionalize_control_op_pass") {}
@@ -51,7 +52,8 @@ class FunctionalizeControlOpPass : public Pass {
     return IsLoopCond(node) || IsEnter(node) || IsMerge(node) || IsSwitch(node) || IsExit(node) ||
            IsNextIteration(node);
   }
-  static CNodePtr BelongToWhichNode(const CNodePtr &node, const FilterFunc &func);
+  static CNodePtr BelongToWhichNode(const CNodePtr &node, const AimFunc &aim_func,
+                                    const FilterFunc &filter_func = nullptr);
   static int GetSubgraphIndex() {
     static int subgraph_index = 1;
     return subgraph_index++;
