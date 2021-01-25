@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/fp32/gru_fp32.h"
+#include "src/runtime/kernel/arm/fp16/gru_fp16.h"
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "nnacl/fp32/gru_fp32.h"
+#include "nnacl/fp16/gru_fp16.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -27,7 +27,7 @@ using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_Gru;
 
 namespace mindspore::kernel {
-void GruCPUKernel::FreeTmpBuffer() {
+void GruFp16CPUKernel::FreeTmpBuffer() {
   if (gate_buffer_ != nullptr) {
     free(gate_buffer_);
     gate_buffer_ = nullptr;
@@ -36,11 +36,17 @@ void GruCPUKernel::FreeTmpBuffer() {
     free(bias_ptr_);
     bias_ptr_ = nullptr;
   }
-  weight_g_ptr_ = nullptr;
-  weight_r_ptr_ = nullptr;
+  if (weight_g_ptr_ != nullptr) {
+    free(weight_g_ptr_);
+    weight_g_ptr_ = nullptr;
+  }
+  if (weight_r_ptr_ != nullptr) {
+    free(weight_r_ptr_);
+    weight_r_ptr_ = nullptr;
+  }
 }
 
-int GruCPUKernel::InitParam() {
+int GruFp16CPUKernel::InitParam() {
   auto input = in_tensors_.front();
   MS_ASSERT(input != nullptr);
   std::vector<int> in_shape = input->shape();
@@ -59,100 +65,107 @@ int GruCPUKernel::InitParam() {
   return RET_OK;
 }
 
-int GruCPUKernel::InitBuffer() {
-  gate_buffer_ = reinterpret_cast<float *>(malloc(3 * gru_parm_->batch_ * gru_parm_->hidden_size_ * sizeof(float)));
+int GruFp16CPUKernel::InitBuffer() {
+  gate_buffer_ =
+    reinterpret_cast<float16_t *>(malloc(3 * gru_parm_->batch_ * gru_parm_->hidden_size_ * sizeof(float16_t)));
   if (gate_buffer_ == nullptr) {
-    MS_LOG(ERROR) << "GruCPUKernel malloc gate_buffer error.";
+    MS_LOG(ERROR) << "GruFp16CPUKernel malloc gate_buffer error.";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int GruCPUKernel::InitWeightBias() {
+int GruFp16CPUKernel::InitWeightBias() {
   auto weight_gate = in_tensors_.at(1);
   MS_ASSERT(weight_gate != nullptr);
-  weight_g_ptr_ = reinterpret_cast<float *>(malloc(weight_gate->ElementsNum() * sizeof(float)));
+  weight_g_ptr_ = reinterpret_cast<float16_t *>(malloc(weight_gate->ElementsNum() * sizeof(float16_t)));
   if (weight_g_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "GruCPUKernel malloc weight_g_ptr_ error.";
+    MS_LOG(ERROR) << "GruFp16CPUKernel malloc weight_g_ptr_ error.";
     return RET_ERROR;
   }
-  memcpy(weight_g_ptr_, weight_gate->data_c(), weight_gate->ElementsNum() * sizeof(float));
+  auto weight_g_data = reinterpret_cast<float *>(weight_gate->data_c());
+  for (size_t i = 0; i < weight_gate->ElementsNum(); i++) {
+    weight_g_ptr_[i] = (float16_t)weight_g_data[i];
+  }
 
   auto weight_recu = in_tensors_.at(2);
   MS_ASSERT(weight_recu != nullptr);
-  weight_r_ptr_ = reinterpret_cast<float *>(malloc(weight_recu->ElementsNum() * sizeof(float)));
+  weight_r_ptr_ = reinterpret_cast<float16_t *>(malloc(weight_recu->ElementsNum() * sizeof(float16_t)));
   if (weight_r_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "GruCPUKernel malloc weight_r_ptr_ error.";
+    MS_LOG(ERROR) << "GruFp16CPUKernel malloc weight_r_ptr_ error.";
     return RET_ERROR;
   }
-  memcpy(weight_r_ptr_, weight_recu->data_c(), weight_recu->ElementsNum() * sizeof(float));
+  auto weight_r_data = reinterpret_cast<float *>(weight_recu->data_c());
+  for (size_t i = 0; i < weight_recu->ElementsNum(); i++) {
+    weight_r_ptr_[i] = (float16_t)weight_r_data[i];
+  }
 
   int bias_num = gru_parm_->bidirectional_ ? 2 * 3 * gru_parm_->hidden_size_ : 3 * gru_parm_->hidden_size_;
-  bias_ptr_ = reinterpret_cast<float *>(malloc(bias_num * sizeof(float)));
+  bias_ptr_ = reinterpret_cast<float16_t *>(malloc(bias_num * sizeof(float16_t)));
   if (bias_ptr_ == nullptr) {
-    MS_LOG(ERROR) << "GruCPUKernel malloc bias_ptr_ error.";
+    MS_LOG(ERROR) << "GruFp16CPUKernel malloc bias_ptr_ error.";
     return RET_ERROR;
   }
 
   auto bias_data = reinterpret_cast<float *>(in_tensors_.at(3)->data_c());
   const int state_bias_offset = 3 * gru_parm_->hidden_size_;
   for (int i = 0; i < state_bias_offset; i++) {
-    bias_ptr_[i] = bias_data[i] + bias_data[i + state_bias_offset];
+    bias_ptr_[i] = (float16_t)(bias_data[i] + bias_data[i + state_bias_offset]);
   }
   if (gru_parm_->bidirectional_) {
     bias_data += 3 * gru_parm_->hidden_size_ * 2;
     auto backward_bias = bias_ptr_ + 3 * gru_parm_->hidden_size_;
     for (int i = 0; i < state_bias_offset; i++) {
-      backward_bias[i] = bias_data[i] + bias_data[i + state_bias_offset];
+      backward_bias[i] = (float16_t)(bias_data[i] + bias_data[i + state_bias_offset]);
     }
   }
   return RET_OK;
 }
 
-int GruCPUKernel::Init() {
+int GruFp16CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
   }
   return ReSize();
 }
 
-int GruCPUKernel::ReSize() {
+int GruFp16CPUKernel::ReSize() {
   FreeTmpBuffer();
   auto ret = InitParam();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "GruCPUKernel InitParam error.";
+    MS_LOG(ERROR) << "GruFp16CPUKernel InitParam error.";
     return RET_ERROR;
   }
 
   ret = InitWeightBias();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "GruCPUKernel InitWeightBias error.";
+    MS_LOG(ERROR) << "GruFp16CPUKernel InitWeightBias error.";
     FreeTmpBuffer();
     return RET_ERROR;
   }
 
   ret = InitBuffer();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "GruCPUKernel InitBuffer error.";
+    MS_LOG(ERROR) << "GruFp16CPUKernel InitBuffer error.";
     FreeTmpBuffer();
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int GruCPUKernel::Run() {
+int GruFp16CPUKernel::Run() {
   auto input = in_tensors_.at(kInputIndex);
   MS_ASSERT(input != nullptr);
   auto hidden_state = in_tensors_.at(4);
   MS_ASSERT(hidden_state != nullptr);
   auto output = out_tensors_.at(0);
   MS_ASSERT(output != nullptr);
-  auto input_ptr = reinterpret_cast<float *>(input->data_c());
+  auto input_ptr = reinterpret_cast<float16_t *>(input->data_c());
   MS_ASSERT(input_ptr);
-  auto output_ptr = reinterpret_cast<float *>(output->data_c());
+  auto output_ptr = reinterpret_cast<float16_t *>(output->data_c());
   MS_ASSERT(output_ptr);
   auto output_hidden_state = out_tensors_[1];
-  memcpy(output_hidden_state->data_c(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float));
+  memcpy(output_hidden_state->data_c(), hidden_state->data_c(), hidden_state->ElementsNum() * sizeof(float16_t));
   int check_seq_len = gru_parm_->seq_len_;
   if (in_tensors_.size() == 6) {
     auto seq_len = reinterpret_cast<int *>(in_tensors_.at(5)->data_c());
@@ -167,10 +180,10 @@ int GruCPUKernel::Run() {
   MS_ASSERT(weight_r_ptr_ != nullptr);
   MS_ASSERT(bias_ptr_ != nullptr);
   MS_ASSERT(gate_buffer_ != nullptr);
-  Gru(output_ptr, input_ptr, weight_g_ptr_, weight_r_ptr_, bias_ptr_,
-      reinterpret_cast<float *>(output_hidden_state->data_c()), gate_buffer_, check_seq_len, gru_parm_);
+  GruFp16(output_ptr, input_ptr, weight_g_ptr_, weight_r_ptr_, bias_ptr_,
+          reinterpret_cast<float16_t *>(output_hidden_state->data_c()), gate_buffer_, check_seq_len, gru_parm_);
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Gru, LiteKernelCreator<GruCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Gru, LiteKernelCreator<GruFp16CPUKernel>)
 }  // namespace mindspore::kernel

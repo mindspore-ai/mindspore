@@ -13,17 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_FP32_GRU_FP32_H_
-#define MINDSPORE_LITE_NNACL_FP32_GRU_FP32_H_
+#ifndef MINDSPORE_LITE_NNACL_FP16_GRU_H_
+#define MINDSPORE_LITE_NNACL_FP16_GRU_H_
 #include "nnacl/gru_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Gru(float *output, const float *input, const float *weight_g, const float *weight_r, const float *bias,
-         float *hidden_state, float *gate_buffer, int check_seq_len, const GruParameter *gru_parm);
+void GruFp16(float16_t *output, const float16_t *input, const float16_t *weight_g, const float16_t *weight_r,
+             const float16_t *bias, float16_t *hidden_state, float16_t *gate_buffer, int check_seq_len,
+             const GruParameter *gru_parm);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP32_GRU_FP32_H_
+#endif  // MINDSPORE_LITE_NNACL_FP16_GRU_H_
