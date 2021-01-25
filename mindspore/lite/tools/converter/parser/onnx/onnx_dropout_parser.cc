@@ -16,32 +16,25 @@
 
 #include "tools/converter/parser/onnx/onnx_dropout_parser.h"
 #include <memory>
+#include "ops/dropout.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxDropoutParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                        const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx DropoutParser";
-  auto attr = std::make_unique<schema::DropoutT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *OnnxDropoutParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto primitive_c = new (std::nothrow) ops::Dropout;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Dropout failed";
     return nullptr;
   }
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "ratio") {
-      attr->ratio = static_cast<float>(onnx_node_attr.f());
+      primitive_c->set_ratio(onnx_node_attr.f());
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Dropout;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return primitive_c;
 }
 
 OnnxNodeRegistrar g_onnxDropoutParser("Dropout", new OnnxDropoutParser());

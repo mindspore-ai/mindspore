@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,18 +14,19 @@
  * limitations under the License.
  */
 
+#include "schema/model_v0_generated.h"
 #include "src/ops/compat/attr_transfer_common.h"
 
 namespace mindspore {
 namespace lite {
-int TransferStridedSliceAttr(const void *primitive, Model::Node *node, std::vector<schema::Tensor *> *dst_tensors,
+int TransferStridedSliceAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_tensors,
                              std::vector<char *> *tensor_bufs) {
-  if (primitive == nullptr || node == nullptr || dst_tensors == nullptr || tensor_bufs == nullptr) {
+  if (node == nullptr || node->primitive_ == nullptr || dst_tensors == nullptr || tensor_bufs == nullptr) {
     MS_LOG(ERROR) << "the parameter of this function is nullptr.";
     return RET_ERROR;
   }
   dst_tensors->clear();
-  auto prim = reinterpret_cast<const schema::v0::Primitive *>(primitive);
+  auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
   int inputs_size = node->input_indices_.size();
   switch (inputs_size) {
     case 1: {

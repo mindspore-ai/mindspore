@@ -28,9 +28,8 @@ class GroupConvolutionInt8CPUKernel : public GroupConvolutionCPUKernel {
  public:
   GroupConvolutionInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                const mindspore::lite::PrimitiveC *primitive,
                                 std::vector<kernel::LiteKernel *> group_convs, const int group_num)
-      : GroupConvolutionCPUKernel(parameter, inputs, outputs, ctx, primitive, group_convs, group_num) {
+      : GroupConvolutionCPUKernel(parameter, inputs, outputs, ctx, group_convs, group_num) {
   }  // opParameter(in channel, out channel) in this kernel has been split to groups, if
   // you want to get real params, multiply in channel / out channel with group num
 

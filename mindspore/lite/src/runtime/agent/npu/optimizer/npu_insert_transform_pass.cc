@@ -21,9 +21,9 @@ namespace mindspore::lite {
 using kernel::KERNEL_ARCH::kNPU;
 enum InsertState { InsertNone, PreInsert, PostInsert };
 
-std::set<mindspore::schema::PrimitiveType> npu_insert_nodes = {schema::PrimitiveType_Concat, schema::PrimitiveType_Add,
-                                                               schema::PrimitiveType_Eltwise,
-                                                               schema::PrimitiveType_Activation};
+std::set<mindspore::schema::PrimitiveType> npu_insert_nodes = {
+  schema::PrimitiveType_Concat, schema::PrimitiveType_AddFusion, schema::PrimitiveType_Eltwise,
+  schema::PrimitiveType_Activation};
 
 int GetInsertState(kernel::LiteKernel *kernel) {
   if (npu_insert_nodes.find(kernel->Type()) == npu_insert_nodes.end()) {
@@ -65,12 +65,12 @@ int NPUInsertTransformPass::InsertPreNode(const InnerContext *context, kernel::L
     auto *nh2nc_kernel =
       NPUPassUtils::CreateNhwc2NchwKernel(in_kernel->out_tensors(), nh2nc_tensors, context, nh2nc_name);
     trans_kernels->push_back(nh2nc_kernel);
-    insert_primitive_.push_back(nh2nc_kernel->GetPrimitive());
+    // insert_primitive_.push_back(nh2nc_kernel->GetPrimitive());
 
     auto nc2nh_name = in_kernel->name() + "_nc2nh_" + std::to_string(total++);
     auto *nc2nh_kernel = NPUPassUtils::CreateNchw2NhwcKernel(nh2nc_tensors, nc2nh_tensors, context, nc2nh_name);
     trans_kernels->push_back(nc2nh_kernel);
-    insert_primitive_.push_back(nc2nh_kernel->GetPrimitive());
+    // insert_primitive_.push_back(nc2nh_kernel->GetPrimitive());
 
     NPUPassUtils::UpdateKernel(nh2nc_kernel, {in_kernel}, {nc2nh_kernel}, in_kernel->out_tensors(), nh2nc_tensors);
     NPUPassUtils::UpdateKernel(nc2nh_kernel, {nh2nc_kernel}, {kernel}, nh2nc_tensors, nc2nh_tensors);
@@ -101,12 +101,12 @@ int NPUInsertTransformPass::InsertPostNode(const InnerContext *context, kernel::
     auto nh2nc_name = kernel->name() + "_nh2nc_" + std::to_string(total++);
     auto *nh2nc_kernel = NPUPassUtils::CreateNhwc2NchwKernel(kernel->out_tensors(), nh2nc_tensors, context, nh2nc_name);
     trans_kernels->push_back(nh2nc_kernel);
-    insert_primitive_.push_back(nh2nc_kernel->GetPrimitive());
+    // insert_primitive_.push_back(nh2nc_kernel->GetPrimitive());
 
     auto nc2nh_name = kernel->name() + "_nc2nh_" + std::to_string(total++);
     auto *nc2nh_kernel = NPUPassUtils::CreateNchw2NhwcKernel(nh2nc_tensors, nc2nh_tensors, context, nc2nh_name);
     trans_kernels->push_back(nc2nh_kernel);
-    insert_primitive_.push_back(nc2nh_kernel->GetPrimitive());
+    // insert_primitive_.push_back(nc2nh_kernel->GetPrimitive());
 
     NPUPassUtils::UpdateKernel(nh2nc_kernel, {kernel}, {nc2nh_kernel}, kernel->out_tensors(), nh2nc_tensors);
     NPUPassUtils::UpdateKernel(nc2nh_kernel, {nh2nc_kernel}, {out_kernel}, nh2nc_tensors, nc2nh_tensors);

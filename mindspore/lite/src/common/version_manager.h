@@ -18,8 +18,7 @@
 #define MINDSPORE_LITE_SRC_COMMON_VERSION_MANAGER_H_
 
 #include <string>
-#include "src/lite_model.h"
-
+#include "src/common/common.h"
 namespace mindspore {
 namespace lite {
 class VersionManager {
@@ -32,6 +31,7 @@ class VersionManager {
 
   void SetSchemaVersion(const int schema_version) { schema_version_ = schema_version; }
   int GetSchemaVersion() const { return schema_version_; }
+  bool CheckV0Schema() const { return schema_version_ == SCHEMA_VERSION::SCHEMA_V0; }
 
  private:
   VersionManager() = default;

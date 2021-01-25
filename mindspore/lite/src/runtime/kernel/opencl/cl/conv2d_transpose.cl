@@ -1,8 +1,10 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
+
 __constant sampler_t smp_zero = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_CLAMP | CLK_FILTER_NEAREST;
-__kernel void conv2d_transpose_NHWC4(__read_only image2d_t src_data, __write_only image2d_t dst_data,
-                                     __global FLT16 *weight, __read_only image2d_t biases, int2 kernel_size,
-                                     int2 stride, int2 padding, int4 src_size, int4 dst_size, int act_type) {
+
+__kernel void conv2d_transpose(__read_only image2d_t src_data, __write_only image2d_t dst_data, __global FLT16 *weight,
+                               __read_only image2d_t biases, int2 kernel_size, int2 stride, int2 padding, int4 src_size,
+                               int4 dst_size, int act_type) {
   int dst_h = get_global_id(0);
   int rem_h = dst_h % stride.x;
   int ceil_h = dst_h / stride.x;

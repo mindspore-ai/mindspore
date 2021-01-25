@@ -28,10 +28,8 @@ class ConvolutionWinogradCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   ConvolutionWinogradCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                               const mindspore::lite::PrimitiveC *primitive, int output_unit)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive),
-        output_unit_(output_unit),
-        trans_weight_(nullptr) {}
+                               int output_unit)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx), output_unit_(output_unit), trans_weight_(nullptr) {}
   ~ConvolutionWinogradCPUKernel() override {
     if (trans_weight_ != nullptr) {
       free(trans_weight_);

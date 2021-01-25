@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,29 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/expand_dims.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/expandDims_fp32.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateExpandDimsParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = reinterpret_cast<mindspore::lite::ExpandDims *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  ExpandDimsParameter *expand_dims_param = reinterpret_cast<ExpandDimsParameter *>(malloc(sizeof(ExpandDimsParameter)));
-  if (expand_dims_param == nullptr) {
+namespace {
+OpParameter *PopulateExpandDimsParameter(const void *prim) {
+  ExpandDimsParameter *expand_param = reinterpret_cast<ExpandDimsParameter *>(malloc(sizeof(ExpandDimsParameter)));
+  if (expand_param == nullptr) {
     MS_LOG(ERROR) << "malloc ExpandDimsParameter failed.";
     return nullptr;
   }
-  memset(expand_dims_param, 0, sizeof(ExpandDimsParameter));
-  expand_dims_param->op_parameter_.type_ = primitive->Type();
-  expand_dims_param->dim_ = param->GetDim();
-  return reinterpret_cast<OpParameter *>(expand_dims_param);
+  memset(expand_param, 0, sizeof(ExpandDimsParameter));
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  expand_param->op_parameter_.type_ = primitive->value_type();
+  return reinterpret_cast<OpParameter *>(expand_param);
 }
+}  // namespace
 
-Registry ExpandDimsParameterRegistry(schema::PrimitiveType_ExpandDims, PopulateExpandDimsParameter);
-
+Registry g_expandDimsParameterRegistry(schema::PrimitiveType_ExpandDims, PopulateExpandDimsParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

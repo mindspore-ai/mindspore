@@ -62,6 +62,13 @@ int ExpandDimsCPUKernel::DoExpandDims(int task_id) {
       MS_LOG(ERROR) << "ExpandDimsRun error task_id[" << task_id << "] error_code[" << ret << "]";
       return ret;
     }
+  } else if (this->in_tensors_.at(0)->data_type() == kNumberTypeInt32) {
+    int ret = ExpandDims(reinterpret_cast<int32_t *>(in_ptr_) + offset, reinterpret_cast<int32_t *>(out_ptr_) + offset,
+                         size * sizeof(int32_t));
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "ExpandDimsRun error task_id[" << task_id << "] error_code[" << ret << "]";
+      return ret;
+    }
   }
   return RET_OK;
 }
@@ -87,6 +94,7 @@ int ExpandDimsCPUKernel::Run() {
   return RET_OK;
 }
 
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_ExpandDims, LiteKernelCreator<ExpandDimsCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ExpandDims, LiteKernelCreator<ExpandDimsCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ExpandDims, LiteKernelCreator<ExpandDimsCPUKernel>)
 }  // namespace mindspore::kernel

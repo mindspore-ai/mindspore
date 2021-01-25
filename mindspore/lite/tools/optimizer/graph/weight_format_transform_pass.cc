@@ -42,12 +42,12 @@ lite::STATUS WeightFormatTransformPass::ConvWeightFormatTrans(const FuncGraphPtr
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
-    auto type = opt::GetCNodeType(node);
-    if (type != schema::PrimitiveType_Conv2D && type != schema::PrimitiveType_DepthwiseConv2D
+    if (!CheckPrimitiveType(node, prim::kPrimConv2DFusion) &&
 #ifdef SUPPORT_TRAIN
-        && type != schema::PrimitiveType_Conv2DGradInput && type != schema::PrimitiveType_GroupConv2DGradInput
+        !CheckPrimitiveType(node, prim::kPrimConv2DBackpropInput) &&
+        !CheckPrimitiveType(node, prim::kPrimGroupConv2DGradInput) &&
 #endif
-        && type != schema::PrimitiveType_DeConv2D && type != schema::PrimitiveType_DeDepthwiseConv2D) {
+        !CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
       continue;
     }
     auto conv_cnode = node->cast<CNodePtr>();

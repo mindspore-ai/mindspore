@@ -18,7 +18,6 @@
 
 #include <vector>
 #include "include/errorcode.h"
-#include "nnacl/arithmetic_common.h"
 #include "nnacl/depth_to_space.h"
 #include "src/runtime/kernel/arm/base/depth_to_space_base.h"
 
@@ -26,9 +25,8 @@ namespace mindspore::kernel {
 class DepthToSpaceCPUKernel : public DepthToSpaceBaseCPUKernel {
  public:
   DepthToSpaceCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                        const mindspore::lite::PrimitiveC *primitive)
-      : DepthToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : DepthToSpaceBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~DepthToSpaceCPUKernel() = default;
 
   int Init() override;

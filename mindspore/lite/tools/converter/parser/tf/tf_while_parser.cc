@@ -19,43 +19,30 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/while.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFWhileParser::Parse(const tensorflow::NodeDef &tf_op,
-                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                            std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF WhileParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::WhileT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
-
-  primitive->value.type = schema::PrimitiveType_While;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
+ops::PrimitiveC *TFWhileParser::Parse(const tensorflow::NodeDef &tf_op,
+                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                      std::vector<std::string> *inputs, int *output_size) {
+  auto primitive_c = new (std::nothrow) ops::While;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new While failed";
+    return nullptr;
   }
 
   *output_size = tf_op.input_size();
-  for (int i = 0; i < tf_op.input_size(); i++) {
-    inputs->emplace_back(tf_op.input(i));
+  for (int i = 0; i < tf_op.input_size(); ++i) {
+    if (AddOpInput(tf_op, i, inputs) != RET_OK) {
+      MS_LOG(ERROR) << "add op input failed";
+      return nullptr;
+    }
   }
-  return RET_OK;
+
+  return primitive_c;
 }
+
 TFNodeRegistrar g_tfStatelessWhileParser("StatelessWhile", new TFWhileParser());
 TFNodeRegistrar g_tfWhileParser("While", new TFWhileParser());
 }  // namespace lite

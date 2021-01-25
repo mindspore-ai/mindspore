@@ -29,9 +29,8 @@ namespace mindspore::kernel {
 class WhereCPUKernel : public LiteKernel {
  public:
   WhereCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                 const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx->thread_num_) {
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx->thread_num_) {
     where_param_ = reinterpret_cast<WhereParameter *>(op_parameter_);
   }
   ~WhereCPUKernel() = default;

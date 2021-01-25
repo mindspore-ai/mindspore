@@ -16,26 +16,20 @@
 
 #include "tools/converter/parser/onnx/onnx_range_parser.h"
 #include <memory>
+#include "ops/range.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxRangeParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                      const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx RangeParser";
-  auto attr = std::make_unique<schema::RangeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *OnnxRangeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto primitive_c = new (std::nothrow) ops::Range;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Range failed";
     return nullptr;
   }
-  attr->dType = 0;
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Range;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  primitive_c->set_d_type(0);
+
+  return primitive_c;
 }
 
 OnnxNodeRegistrar g_onnxRangeParser("Range", new OnnxRangeParser());

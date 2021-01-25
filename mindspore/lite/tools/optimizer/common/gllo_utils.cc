@@ -16,8 +16,9 @@
 #include "tools/optimizer/common/gllo_utils.h"
 #include <vector>
 #include <algorithm>
+#include <functional>
+#include <string>
 #include <utility>
-#include "src/ops/primitive_c.h"
 #include "src/common/common.h"
 #include "frontend/operator/ops.h"
 #include "backend/optimizer/common/helper.h"
@@ -120,20 +121,56 @@ AnfNodePtr HandleSexpVector(const BaseRef &sexp, const BaseRef &graph, Primitive
 }
 }  // namespace
 
+bool CheckInputs(const CNodePtr &cnode) {
+  if (cnode == nullptr) {
+    MS_LOG(ERROR) << "cnode is nullptr.";
+    return false;
+  }
+  if (std::any_of(cnode->inputs().begin(), cnode->inputs().end(),
+                  [](const AnfNodePtr &anf_node) { return anf_node == nullptr; })) {
+    MS_LOG(ERROR) << "input is nullptr.";
+    return false;
+  }
+  return true;
+}
+
+std::vector<int> CastToInt(const ValuePtr &value) {
+  if (value == nullptr) {
+    MS_LOG(WARNING) << "valueptr is nullptr.";
+    return {};
+  }
+  std::vector<int> cur_value;
+  if (utils::isa<ValueSequeuePtr>(value)) {
+    if (value->cast<ValueSequeuePtr>()->value().front()->type()->number_type() == kNumberTypeInt64) {
+      auto origin_value = GetValue<std::vector<int64_t>>(value);
+      for (size_t index = 0; index < origin_value.size(); ++index) {
+        cur_value.push_back(static_cast<int>(origin_value[index]));
+      }
+    } else {
+      cur_value = GetValue<std::vector<int>>(value);
+    }
+  } else {
+    if (value->type()->number_type() == kNumberTypeInt64) {
+      cur_value.push_back(static_cast<int>(GetValue<int64_t>(value)));
+    } else {
+      cur_value.push_back(GetValue<int>(value));
+    }
+  }
+  return cur_value;
+}
+
 bool CheckPrimitiveType(const AnfNodePtr &node, const PrimitivePtr &primitive_type) {
   if (node == nullptr) {
     lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
     return false;
   }
-  if (!node->isa<CNode>()) {
-    return false;
+  if (node->isa<CNode>()) {
+    auto cnode = node->cast<CNodePtr>();
+    return IsPrimitive(cnode->input(kAnfPrimitiveIndex), primitive_type);
+  } else if (node->isa<ValueNode>()) {
+    return IsPrimitive(node, primitive_type);
   }
-  auto cnode = node->cast<CNodePtr>();
-  if (cnode == nullptr) {
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return false;
-  }
-  return IsPrimitive(cnode->input(kAnfPrimitiveIndex), primitive_type);
+  return false;
 }
 
 bool AnfEqual(const BaseRef &a, const BaseRef &b) {
@@ -165,7 +202,7 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;
       }
-      return a_prim->cast<PrimitiveCPtr>()->Type() == b_prim->cast<PrimitiveCPtr>()->Type();
+      return a_prim->name() == b_prim->name();
     } else if (a_node->isa<ValueNode>() && b_node->isa<ValueNode>()) {
       auto a_value_node_ptr = a_node->cast<ValueNodePtr>();
       auto b_value_node_ptr = b_node->cast<ValueNodePtr>();
@@ -181,19 +218,19 @@ bool AnfEqual(const BaseRef &a, const BaseRef &b) {
         lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
         return false;
       }
-      if (utils::isa<lite::PrimitiveC>(a_value_ptr) && utils::isa<lite::PrimitiveC>(b_value_ptr)) {
-        auto a_obj = (lite::PrimitiveC *)(a_value_ptr.get());
-        auto b_obj = (lite::PrimitiveC *)(b_value_ptr.get());
+      if (utils::isa<mindspore::ops::PrimitiveC>(a_value_ptr) && utils::isa<mindspore::ops::PrimitiveC>(b_value_ptr)) {
+        auto a_obj = (mindspore::ops::PrimitiveC *)(a_value_ptr.get());
+        auto b_obj = (mindspore::ops::PrimitiveC *)(b_value_ptr.get());
         return (*a_obj) == (*b_obj);
       } else {
         return (*a_value_ptr) == (*b_value_ptr);
       }
     }
   }
-  if (a.m_ptr->isa<lite::PrimitiveC>() && b.m_ptr->isa<lite::PrimitiveC>()) {
+  if (a.m_ptr->isa<mindspore::ops::PrimitiveC>() && b.m_ptr->isa<mindspore::ops::PrimitiveC>()) {
     auto a_value_node_ptr = a.m_ptr->cast<PrimitiveCPtr>();
     auto b_value_node_ptr = b.m_ptr->cast<PrimitiveCPtr>();
-    return a_value_node_ptr->Type() == b_value_node_ptr->Type();
+    return a_value_node_ptr->name() == b_value_node_ptr->name();
   }
 
   return a == b;
@@ -369,35 +406,6 @@ ParameterPtr AddNewBiasNode(float *bias_data, const FuncGraphPtr &func_graph, in
   return bias_parameter;
 }
 
-schema::PrimitiveType GetCNodeType(const BaseRef &n) {
-  ValueNodePtr value_node;
-  if (utils::isa<CNodePtr>(n)) {
-    auto in = utils::cast<CNodePtr>(n);
-    value_node = in->input(0)->cast<ValueNodePtr>();
-  } else if (utils::isa<ValueNodePtr>(n)) {
-    value_node = utils::cast<ValueNodePtr>(n);
-  } else {
-    MS_LOG(INFO) << "only value node or cnode has type";
-    return schema::PrimitiveType_NONE;
-  }
-  if (value_node == nullptr) {
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
-    return schema::PrimitiveType_NONE;
-  }
-  auto value = value_node->value();
-  MS_ASSERT(value != nullptr);
-  if (utils::isa<PrimitiveCPtr>(value)) {
-    auto primitive = value->cast<PrimitiveCPtr>();
-    MS_ASSERT(primitive != nullptr);
-    return (schema::PrimitiveType)primitive->Type();
-  } else if (utils::isa<Primitive>(value)) {
-    auto primitive = value->cast<PrimitivePtr>();
-    MS_ASSERT(primitive != nullptr);
-    MS_LOG(INFO) << "anf primitive node type:" << primitive->name();
-    return schema::PrimitiveType_NONE;
-  }
-  return schema::PrimitiveType_NONE;
-}
 ParamValueLitePtr GetLiteParamValue(const AnfNodePtr &node) {
   MS_ASSERT(node != nullptr);
   if (!utils::isa<ParameterPtr>(node)) {
@@ -438,7 +446,7 @@ AbstractBasePtr GetCNodeInputAbstract(const CNodePtr &cnode, size_t index) {
     abstract = parameter->abstract();
   } else if (utils::isa<CNodePtr>(input)) {
     auto input_cnode = input->cast<CNodePtr>();
-    if (GetCNodeType(input_cnode) == schema::PrimitiveType_TupleGetItem) {
+    if (CheckPrimitiveType(input_cnode, prim::kPrimTupleGetItem)) {
       auto tuple_inputs = input_cnode->inputs();
       MS_ASSERT(tuple_inputs.size() == kTupleGetItemInputSize);
       auto get_item_input_cnode = tuple_inputs.at(1);
@@ -478,33 +486,32 @@ bool IsParamNode(const BaseRef &n) {
 }
 
 bool IsConvNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Conv2D || type == schema::PrimitiveType_DepthwiseConv2D;
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim::kPrimConv2DFusion);
   }
   return false;
 }
 
 bool IsPoolingNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Pooling;
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim::kPrimAvgPoolFusion) ||
+           CheckPrimitiveType(anf_node, prim::kPrimMaxPoolFusion);
   }
   return false;
 }
 
 bool IsActivationNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Activation;
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimActivation);
   }
   return false;
 }
 
 bool IsQuantNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_QuantDTypeCast;
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimQuantDTypeCast);
   }
   return false;
 }
@@ -600,7 +607,7 @@ size_t GetTupleGetItemOutIndex(const CNodePtr &tuple_get_item) {
   MS_ASSERT(output_index_value_node != nullptr);
   auto value_node = output_index_value_node->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
-  return IntToSize(lite::CastToInt(value_node->value()).front());
+  return IntToSize(CastToInt(value_node->value()).front());
 }
 std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOutputIdx(const FuncGraphPtr &graph,
                                                                                         const AnfNodePtr &node,
@@ -618,9 +625,9 @@ std::shared_ptr<std::vector<std::pair<AnfNodePtr, int>>> GetRealNodeUsedListByOu
   auto output_info_list = iter->second;
   for (const auto &output_info : output_info_list) {
     size_t used_output_index;
-    if (GetCNodeType(output_info.first) == schema::PrimitiveType_TupleGetItem) {
+    if (CheckPrimitiveType(output_info.first, prim::kPrimTupleGetItem)) {
       used_output_index = GetTupleGetItemOutIndex(utils::cast<CNodePtr>(output_info.first));
-    } else if (GetCNodeType(node) == schema::PrimitiveType_TupleGetItem) {
+    } else if (CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
       used_output_index = output_index;
     } else {
       if (output_index != 0) {
@@ -1239,6 +1246,191 @@ STATUS TransFilterFormat(const ParamValueLitePtr &tensor, schema::Format dst_for
     return status;
   }
   return RET_OK;
+}
+
+ParameterPtr BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
+                                const ParamValueLitePtr &param_value) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(cnode != nullptr);
+  MS_ASSERT(param_value != nullptr);
+  auto param_node = func_graph->add_parameter();
+  auto shape = param_value->tensor_shape();
+  std::vector<int64_t> shape_vector;
+  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
+                 [](const int &val) { return static_cast<int64_t>(val); });
+  auto data_type = param_value->tensor_type() == kNumberTypeInt64 ? kNumberTypeInt32 : param_value->tensor_type();
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(data_type), shape_vector);
+  param_node->set_abstract(abstract_tensor);
+  if (utils::isa<CNodePtr>(node)) {
+    param_node->set_name(node->cast<CNodePtr>()->fullname_with_scope());
+  } else if (utils::isa<ParameterPtr>(node)) {
+    param_node->set_name(node->cast<ParameterPtr>()->name());
+  }
+  ParamValueLitePtr param_value_new = std::make_shared<ParamValueLite>();
+  param_value_new->set_format(param_value->format());
+  param_value_new->set_tensor_shape(shape);
+  size_t data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+  if (param_value->tensor_size() == 0) {
+    if (param_value->tensor_type() == kNumberTypeInt64) {
+      param_value_new->set_tensor_type(kNumberTypeInt32);
+    }
+    param_node->set_default_param(param_value_new);
+    return param_node;
+  }
+  if (param_value->tensor_type() == kNumberTypeInt64) {
+    param_value_new->set_tensor_type(kNumberTypeInt32);
+    auto *tensor_data = new (std::nothrow) int[data_count];
+    if (tensor_data == nullptr) {
+      MS_LOG(ERROR) << "new data failed";
+      return nullptr;
+    }
+    auto *origin_data = reinterpret_cast<int64_t *>(param_value->tensor_addr());
+    for (size_t i = 0; i < data_count; ++i) {
+      if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
+        MS_LOG(WARNING) << "int64 data " << origin_data[i] << "too big to fit into int32";
+        tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
+      } else {
+        tensor_data[i] = static_cast<int>(origin_data[i]);
+      }
+    }
+    param_value_new->SetTensorData(tensor_data, data_count * sizeof(int32_t));
+  } else {
+    param_value_new->set_tensor_type(param_value->tensor_type());
+    char *tensor_data = new (std::nothrow) char[param_value->tensor_size()];
+    if (tensor_data == nullptr) {
+      MS_LOG(ERROR) << "new data failed";
+      return nullptr;
+    }
+    if (memcpy_s(tensor_data, param_value->tensor_size(), param_value->tensor_addr(), param_value->tensor_size()) !=
+        lite::RET_OK) {
+      MS_LOG(ERROR) << "memcpy data failed.";
+      delete[] tensor_data;
+      return nullptr;
+    }
+    param_value_new->SetTensorData(tensor_data, param_value->tensor_size());
+  }
+  param_node->set_default_param(param_value_new);
+  return param_node;
+}
+
+ParameterPtr BuildIntValueParameterNode(const FuncGraphPtr &func_graph, const int32_t &data,
+                                        const std::string &node_name) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(data.size() != 0);
+  auto param_node = func_graph->add_parameter();
+
+  auto type_ptr = TypeIdToType(kNumberTypeInt32);
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr);
+  param_node->set_abstract(abstract_tensor);
+  param_node->set_name(node_name);
+
+  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
+  MS_ASSERT(param_value != nullptr);
+  param_value->set_tensor_shape({1});
+  param_value->set_tensor_type(kNumberTypeInt32);
+
+  char *default_data = new (std::nothrow) char[sizeof(int32_t)];
+  *(reinterpret_cast<int32_t *>(default_data)) = data;
+  param_value->SetTensorData(default_data, sizeof(int32_t));
+  param_node->set_default_param(param_value);
+  return param_node;
+}
+
+ParameterPtr BuildIntVecParameterNode(const FuncGraphPtr &func_graph, const std::vector<int32_t> &data,
+                                      const std::string &node_name) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(data.size() != 0);
+  auto param_node = func_graph->add_parameter();
+
+  auto type_ptr = TypeIdToType(kNumberTypeInt32);
+  std::vector<int64_t> shape_vector{static_cast<int64_t>(data.size())};
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  param_node->set_abstract(abstract_tensor);
+  param_node->set_name(node_name);
+
+  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
+  MS_ASSERT(param_value != nullptr);
+  std::vector<int32_t> shape{static_cast<int32_t>(data.size())};
+  param_value->set_tensor_shape(shape);
+  param_value->set_tensor_type(kNumberTypeInt32);
+  char *default_data = new (std::nothrow) char[data.size() * sizeof(int32_t)];
+  if (memcpy_s(default_data, data.size() * sizeof(int32_t), data.data(), data.size() * sizeof(int32_t)) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
+    delete[] default_data;
+    return nullptr;
+  }
+  param_value->SetTensorData(default_data, data.size() * sizeof(int32_t));
+  param_node->set_default_param(param_value);
+  return param_node;
+}
+
+ParameterPtr BuildIntVec2DParameterNode(const FuncGraphPtr &func_graph, const std::vector<std::vector<int32_t>> &data,
+                                        const std::string &node_name) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(data.size() != 0);
+  auto param_node = func_graph->add_parameter();
+
+  auto type_ptr = TypeIdToType(kNumberTypeInt32);
+  std::vector<int64_t> shape_vector;
+  shape_vector.push_back(data.size());
+  shape_vector.push_back(2);
+
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  param_node->set_abstract(abstract_tensor);
+  param_node->set_name(node_name);
+
+  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
+
+  MS_ASSERT(param_value != nullptr);
+  std::vector<int32_t> shape;
+  shape.push_back(data.size());
+  shape.push_back(2);
+  param_value->set_tensor_shape(shape);
+  param_value->set_tensor_type(kNumberTypeInt32);
+
+  std::vector<int32_t> data_1d;
+  for (auto pair : data) {
+    data_1d.insert(data_1d.end(), pair.begin(), pair.end());
+  }
+
+  auto size = data_1d.size() * sizeof(int32_t);
+  char *default_data = new (std::nothrow) char[size];
+  if (memcpy_s(default_data, size, data_1d.data(), size) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
+    delete[] default_data;
+    return nullptr;
+  }
+  param_value->SetTensorData(default_data, size);
+  param_node->set_default_param(param_value);
+  return param_node;
+}
+
+ParameterPtr BuildFloatValueParameterNode(const FuncGraphPtr &func_graph, const float &data,
+                                          const std::string &node_name) {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(data.size() != 0);
+  auto param_node = func_graph->add_parameter();
+
+  auto type_ptr = TypeIdToType(kNumberTypeFloat32);
+  std::vector<int64_t> shape_vector = {1};
+  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
+  param_node->set_abstract(abstract_tensor);
+  param_node->set_name(node_name);
+
+  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
+  MS_ASSERT(param_value != nullptr);
+  param_value->set_tensor_shape({1});
+  param_value->set_tensor_type(kNumberTypeFloat32);
+
+  char *default_data = new (std::nothrow) char[sizeof(float)];
+  if (memcpy_s(default_data, sizeof(float), &data, sizeof(float)) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
+    delete[] default_data;
+    return nullptr;
+  }
+  param_value->SetTensorData(default_data, sizeof(float));
+  param_node->set_default_param(param_value);
+  return param_node;
 }
 }  // namespace opt
 }  // namespace mindspore

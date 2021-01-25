@@ -22,13 +22,12 @@
 #include <unordered_map>
 #include <vector>
 #include <algorithm>
-
-#include "src/ops/primitive_c.h"
+#include "ops/make_tuple.h"
+#include "ops/return.h"
 #include "frontend/operator/ops.h"
 #include "include/errorcode.h"
 #include "ir/anf.h"
 #include "ir/func_graph.h"
-#include "schema/inner/model_generated.h"
 #include "securec/include/securec.h"
 #include "src/tensor.h"
 #include "src/param_value_lite.h"
@@ -616,13 +615,20 @@ CNodePtr AnfImporterFromMindir::BuildCNodeForFuncGraph(const FuncGraphPtr &outpu
   }
   const std::string &node_name = node_proto.output(0);
   const std::string &fullname_with_scope = node_proto.domain();
-  const std::string &node_type = node_proto.op_type();
-  PrimitivePtr prim = std::make_shared<mindspore::Primitive>(node_type);
+  //  const std::string &node_type = node_proto.op_type();
+  PrimitivePtr prim;
+  // NOTE: can not find OpPrimCRegister
+  //  auto op_primc_fns = OpPrimCRegister::GetInstance().GetPrimCMap();
+  //  if (op_primc_fns.find(node_type) != op_primc_fns.end()) {
+  //    prim = op_primc_fns[node_type]();
+  //  } else {
+  //    prim = std::make_shared<Primitive>(node_type);
+  //    prim->set_instance_name(node_type);
+  //  }
   if (prim == nullptr) {
     MS_LOG(ERROR) << "new primitive failed";
     return nullptr;
   }
-  prim->set_instance_name(node_type);
   std::unordered_map<std::string, abstract::AbstractTensorPtr> kv;
   string shape_ref_attr_name;
   for (int i = 0; i < node_proto.attribute_size(); ++i) {
@@ -652,16 +658,7 @@ CNodePtr AnfImporterFromMindir::BuildCNodeForFuncGraph(const FuncGraphPtr &outpu
       inputs.push_back(anfnode_build_map_[input_name]);
     }
   }
-  auto primitivec_ptr = PrimitiveC::Create(*prim, inputs, quantType);
-  if (primitivec_ptr == nullptr || interrupt) {
-    interrupt = true;
-    if (primitivec_ptr == nullptr) {
-      NoSupportOp::GetInstance()->InsertOp(prim->name());
-    }
-    return nullptr;
-  }
-  inputs.insert(inputs.begin(), NewValueNode(primitivec_ptr));
-  CNodePtr cnode_ptr = outputFuncGraph->NewCNode(inputs);
+  CNodePtr cnode_ptr = outputFuncGraph->NewCNode(prim, inputs);
   if (cnode_ptr == nullptr) {
     interrupt = true;
     MS_LOG(ERROR) << "funcgraph new cnode failed";
@@ -695,12 +692,8 @@ bool AnfImporterFromMindir::BuildReturnForFuncGraph(const FuncGraphPtr &outputFu
   std::vector<AnfNodePtr> inputs;
   if (importProto.output_size() > 1) {
     inputs.clear();
-    auto primitiveT = std::make_unique<schema::PrimitiveT>();
-    MS_ASSERT(primitiveT != nullptr);
-    primitiveT->value.type = schema::PrimitiveType_MakeTuple;
-    std::shared_ptr<PrimitiveC> primitivec_ptr = std::make_shared<PrimitiveC>(primitiveT.release());
-    MS_ASSERT(primitivec_ptr != nullptr);
-    inputs.push_back(NewValueNode(primitivec_ptr));
+    auto make_tuple_prim = std::make_shared<ops::MakeTuple>();
+    inputs.push_back(NewValueNode(make_tuple_prim));
     AbstractBasePtrList elem;
     for (int out_size = 0; out_size < importProto.output_size(); ++out_size) {
       const onnx::ValueInfoProto &output_node = importProto.output(out_size);
@@ -719,12 +712,8 @@ bool AnfImporterFromMindir::BuildReturnForFuncGraph(const FuncGraphPtr &outputFu
     }
     maketuple_ptr->set_abstract(std::make_shared<abstract::AbstractTuple>(elem));
     inputs.clear();
-    auto primReturn = std::make_unique<schema::PrimitiveT>();
-    MS_ASSERT(primReturn != nullptr);
-    primReturn->value.type = schema::PrimitiveType_Return;
-    std::shared_ptr<PrimitiveC> primitive_return_value_ptr = std::make_shared<PrimitiveC>(primReturn.release());
-    MS_ASSERT(primitive_return_value_ptr != nullptr);
-    inputs.push_back(NewValueNode(primitive_return_value_ptr));
+    auto return_prim = std::make_shared<ops::Return>();
+    inputs.push_back(NewValueNode(return_prim));
     inputs.push_back(maketuple_ptr);
     auto return_node = outputFuncGraph->NewCNode(inputs);
     if (return_node == nullptr) {
@@ -747,12 +736,8 @@ bool AnfImporterFromMindir::BuildReturnForFuncGraph(const FuncGraphPtr &outputFu
     auto type_ptr = TypeIdToType(kDefaultValueSwitchMap[output_type]);
     auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
     inputs.clear();
-    auto primReturn = std::make_unique<schema::PrimitiveT>();
-    MS_ASSERT(primReturn != nullptr);
-    primReturn->value.type = schema::PrimitiveType_Return;
-    std::shared_ptr<PrimitiveC> primitiveTReturnValuePtr = std::make_shared<PrimitiveC>(primReturn.release());
-    MS_ASSERT(primitiveTReturnValuePtr != nullptr);
-    inputs.push_back(NewValueNode(primitiveTReturnValuePtr));
+    auto return_prim = std::make_shared<ops::Return>();
+    inputs.push_back(NewValueNode(return_prim));
     inputs.push_back(cnode_ptr);
     auto return_node = outputFuncGraph->NewCNode(inputs);
     if (return_node == nullptr) {
@@ -780,6 +765,7 @@ int AnfImporterFromMindir::ImportNodesForGraph(const FuncGraphPtr &outputFuncGra
   for (int i = 0; i < importProto.node_size(); ++i) {
     const onnx::NodeProto &node_proto = importProto.node(i);
     const std::string &node_type = node_proto.op_type();
+    MS_LOG(INFO) << "parse op : " << node_type;
     if (node_type == kConstantValueNode) {
       if (status == RET_OK && !BuildValueNodeForFuncGraph(node_proto)) {
         MS_LOG(ERROR) << "Build ValueNode for funcgraph fail at index: : " << i;
@@ -793,7 +779,7 @@ int AnfImporterFromMindir::ImportNodesForGraph(const FuncGraphPtr &outputFuncGra
       return RET_ERROR;
     }
 
-    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode_ptr->input(0));
+    auto primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode_ptr->input(0));
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "primitive_c is nullptr";
       return RET_ERROR;

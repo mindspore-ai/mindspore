@@ -21,7 +21,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_TopK;
+using mindspore::schema::PrimitiveType_TopKFusion;
 
 namespace mindspore::kernel {
 int TopKInt8CPUKernel::Init() {
@@ -64,5 +64,5 @@ int TopKInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_TopK, LiteKernelCreator<TopKInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_TopKFusion, LiteKernelCreator<TopKInt8CPUKernel>)
 }  // namespace mindspore::kernel

@@ -26,9 +26,8 @@ namespace mindspore::kernel {
 class BatchnormNPUKernel : public NPUKernel {
  public:
   BatchnormNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
     batchnorm_param_ = reinterpret_cast<BatchNormParameter *>(parameter);
   }
   ~BatchnormNPUKernel() override;

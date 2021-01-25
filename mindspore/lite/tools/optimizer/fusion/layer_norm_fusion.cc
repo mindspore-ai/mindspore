@@ -15,17 +15,16 @@
  */
 #include "tools/optimizer/fusion/layer_norm_fusion.h"
 #include <memory>
-#include "src/ops/primitive_c.h"
+#include "ops/fusion/add_fusion.h"
+#include "ops/fusion/layer_norm_fusion.h"
+#include "ops/fusion/mul_fusion.h"
+#include "ops/fusion/reduce_fusion.h"
+#include "ops/fusion/sub_fusion.h"
+#include "ops/rsqrt.h"
 #include "src/param_value_lite.h"
-#include "schema/inner/model_generated.h"
 #include "utils/utils.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
-#include "src/ops/add.h"
-#include "src/ops/mul.h"
-#include "src/ops/rsqrt.h"
-#include "src/ops/reduce.h"
-#include "src/ops/sub.h"
 
 namespace mindspore {
 namespace opt {
@@ -34,65 +33,81 @@ constexpr size_t kAddInputsLength = 3;
 constexpr size_t kSubInputsLength = 3;
 constexpr size_t kMulInputsLength = 3;
 constexpr size_t kRsqrtInputsLength = 2;
-constexpr size_t kReduceInputsLength = 2;
+constexpr size_t kReduceInputsLength = 3;
 
 bool IsAddNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Add;
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimAddFusion);
   }
   return false;
 }
 
 bool IsSquaredDifferenceNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_SquaredDifference;
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSquaredDifference);
   }
   return false;
 }
 
 bool IsReduceNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Reduce;
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimReduceFusion);
   }
   return false;
 }
 
 bool IsRsqrtNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Rsqrt;
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimRsqrt);
   }
   return false;
 }
 
 bool IsMulNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Mul;
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimMulFusion);
   }
   return false;
 }
 
 bool IsSubNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Sub;
+  if (utils::isa<AnfNodePtr>(n)) {
+    return CheckPrimitiveType(utils::cast<AnfNodePtr>(n), prim::kPrimSubFusion);
   }
   return false;
+}
+
+std::vector<int32_t> GetReduceAxes(const CNodePtr &c_node) {
+  MS_ASSERT(c_node != nullptr);
+  std::vector<int32_t> axes;
+  if (c_node->size() < 3) {
+    return axes;
+  }
+  auto axes_param_node = c_node->input(2)->cast<ParameterPtr>();
+  if (axes_param_node == nullptr || !axes_param_node->has_default() || axes_param_node->default_param() == nullptr) {
+    return axes;
+  }
+  auto axes_param = axes_param_node->default_param()->cast<ParamValueLitePtr>();
+  if (axes_param == nullptr) {
+    return axes;
+  }
+  for (int i = 0; i < axes_param->tensor_shape()[0]; ++i) {
+    axes.push_back(reinterpret_cast<int32_t *>(axes_param->tensor_addr())[i]);
+  }
+  return axes;
 }
 }  // namespace
 
 const BaseRef LayerNormFusion::DefinePattern() const {
   auto mean1 = std::make_shared<CondVar>(IsReduceNode);
-  VectorRef mean1_ref = VectorRef({mean1, input_});
+  auto mean1_param = std::make_shared<CondVar>(IsParamNode);
+  VectorRef mean1_ref = VectorRef({mean1, input_, mean1_param});
   auto squared_diffference1 = std::make_shared<CondVar>(IsSquaredDifferenceNode);
   VectorRef squared_diffference1_ref = VectorRef({squared_diffference1, input_, mean1_ref});
   auto mul1 = std::make_shared<CondVar>(IsMulNode);
   auto mean2 = std::make_shared<CondVar>(IsReduceNode);
-  VectorRef mean2_ref = VectorRef({mean2, squared_diffference1_ref});
+  auto mean2_param = std::make_shared<CondVar>(IsParamNode);
+  VectorRef mean2_ref = VectorRef({mean2, squared_diffference1_ref, mean2_param});
   auto add1 = std::make_shared<CondVar>(IsAddNode);
   VectorRef add1_ref = VectorRef({add1, mean2_ref, epsilon_});
   auto rsqrt1 = std::make_shared<CondVar>(IsRsqrtNode);
@@ -112,15 +127,11 @@ const BaseRef LayerNormFusion::DefinePattern() const {
 CNodePtr LayerNormFusion::CreateLayerNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
                                               const std::vector<int> &shape, const float epsilon) const {
   MS_EXCEPTION_IF_NULL(func_graph);
-  auto layer_norm_primitive = std::make_unique<schema::PrimitiveT>();
-  std::unique_ptr<schema::LayerNormT> attr = std::make_unique<schema::LayerNormT>();
-  attr->normalizedShape = shape;
-  attr->epsilon = epsilon;
-  attr->elementwiseAffine = true;
-  layer_norm_primitive->value.type = schema::PrimitiveType_LayerNorm;
-  layer_norm_primitive->value.value = attr.release();
-  auto layer_norm_cvalue = lite::PrimitiveC::Create(layer_norm_primitive.release());
-  auto value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(layer_norm_cvalue));
+  auto layer_norm_cvalue = std::make_shared<mindspore::ops::LayerNormFusion>();
+  layer_norm_cvalue->set_begin_norm_axis(0 - shape.size());
+  layer_norm_cvalue->set_epsilon(epsilon);
+  layer_norm_cvalue->set_elementwise_affine(true);
+  auto value_node = NewValueNode(layer_norm_cvalue);
   std::vector<AnfNodePtr> new_node_inputs = {value_node};
   auto input_node = utils::cast<AnfNodePtr>((*equiv)[input_]);
   MS_EXCEPTION_IF_NULL(input_node);
@@ -150,9 +161,9 @@ const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const 
   if (CheckIfCNodeIsNull(add2_cnode) != lite::RET_OK || CheckInputSize(add2_cnode, kAddInputsLength) != lite::RET_OK) {
     return nullptr;
   }
-  auto add2_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(add2_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Add>>(add2_primitivec));
-  auto add2_op = utils::cast<std::shared_ptr<mindspore::lite::Add>>(add2_primitivec);
+  auto add2_primitivec = GetValueNode<PrimitiveCPtr>(add2_cnode->input(0));
+  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::AddFusion>>(add2_primitivec));
+  auto add2_op = utils::cast<std::shared_ptr<mindspore::ops::AddFusion>>(add2_primitivec);
   MS_ASSERT(add2_op != nullptr);
   AnfNodePtr sub1_node = add2_cnode->input(2);
   if (CheckIfAnfNodeIsNull(sub1_node) != lite::RET_OK) {
@@ -164,9 +175,9 @@ const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const 
   if (CheckIfCNodeIsNull(sub1_cnode) != lite::RET_OK || CheckInputSize(sub1_cnode, kSubInputsLength) != lite::RET_OK) {
     return nullptr;
   }
-  auto sub1_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(sub1_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Sub>>(sub1_primitivec));
-  auto sub1_op = utils::cast<std::shared_ptr<mindspore::lite::Sub>>(sub1_primitivec);
+  auto sub1_primitivec = GetValueNode<PrimitiveCPtr>(sub1_cnode->input(0));
+  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::SubFusion>>(sub1_primitivec));
+  auto sub1_op = utils::cast<std::shared_ptr<mindspore::ops::SubFusion>>(sub1_primitivec);
   MS_ASSERT(sub1_op != nullptr);
   AnfNodePtr beta_node = sub1_cnode->input(1);
   AnfNodePtr mul3_node = sub1_cnode->input(2);
@@ -187,9 +198,9 @@ const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const 
   if (CheckIfCNodeIsNull(mul3_cnode) != lite::RET_OK || CheckInputSize(mul3_cnode, kMulInputsLength) != lite::RET_OK) {
     return nullptr;
   }
-  auto mul3_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(mul3_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Mul>>(mul3_primitivec));
-  auto mul3_op = utils::cast<std::shared_ptr<mindspore::lite::Mul>>(mul3_primitivec);
+  auto mul3_primitivec = GetValueNode<PrimitiveCPtr>(mul3_cnode->input(0));
+  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::MulFusion>>(mul3_primitivec));
+  auto mul3_op = utils::cast<std::shared_ptr<mindspore::ops::MulFusion>>(mul3_primitivec);
   MS_ASSERT(mul3_op != nullptr);
   AnfNodePtr mean1_node = mul3_cnode->input(1);
   AnfNodePtr mul2_node = mul3_cnode->input(2);
@@ -202,9 +213,9 @@ const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const 
   if (CheckIfCNodeIsNull(mul2_cnode) != lite::RET_OK || CheckInputSize(mul2_cnode, kMulInputsLength) != lite::RET_OK) {
     return nullptr;
   }
-  auto mul2_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(mul2_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Mul>>(mul2_primitivec));
-  auto mul2_op = utils::cast<std::shared_ptr<mindspore::lite::Mul>>(mul2_primitivec);
+  auto mul2_primitivec = GetValueNode<PrimitiveCPtr>(mul2_cnode->input(0));
+  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::MulFusion>>(mul2_primitivec));
+  auto mul2_op = utils::cast<std::shared_ptr<mindspore::ops::MulFusion>>(mul2_primitivec);
   MS_ASSERT(mul2_op != nullptr);
   AnfNodePtr rsqrt_node = mul2_cnode->input(1);
   AnfNodePtr gamma_node = mul2_cnode->input(2);
@@ -226,9 +237,9 @@ const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const 
       CheckInputSize(rsqrt_cnode, kRsqrtInputsLength) != lite::RET_OK) {
     return nullptr;
   }
-  auto rsqrt_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(rsqrt_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Rsqrt>>(rsqrt_primitivec));
-  auto rsqrt_op = utils::cast<std::shared_ptr<mindspore::lite::Rsqrt>>(rsqrt_primitivec);
+  auto rsqrt_primitivec = GetValueNode<PrimitiveCPtr>(rsqrt_cnode->input(0));
+  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::Rsqrt>>(rsqrt_primitivec));
+  auto rsqrt_op = utils::cast<std::shared_ptr<mindspore::ops::Rsqrt>>(rsqrt_primitivec);
   MS_ASSERT(rsqrt_op != nullptr);
   AnfNodePtr add1_node = rsqrt_cnode->input(1);
   if (CheckIfAnfNodeIsNull(add1_node) != lite::RET_OK) {
@@ -240,9 +251,9 @@ const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const 
   if (CheckIfCNodeIsNull(add1_cnode) != lite::RET_OK || CheckInputSize(add1_cnode, kAddInputsLength) != lite::RET_OK) {
     return nullptr;
   }
-  auto add1_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(add1_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Add>>(add1_primitivec));
-  auto add1_op = utils::cast<std::shared_ptr<mindspore::lite::Add>>(add1_primitivec);
+  auto add1_primitivec = GetValueNode<PrimitiveCPtr>(add1_cnode->input(0));
+  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::AddFusion>>(add1_primitivec));
+  auto add1_op = utils::cast<std::shared_ptr<mindspore::ops::AddFusion>>(add1_primitivec);
   MS_ASSERT(add1_op != nullptr);
   AnfNodePtr mean2_node = add1_cnode->input(1);
   AnfNodePtr epsilon_node = add1_cnode->input(2);
@@ -266,14 +277,17 @@ const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const 
       CheckInputSize(mean2_cnode, kReduceInputsLength) != lite::RET_OK) {
     return nullptr;
   }
-  auto mean2_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(mean2_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Reduce>>(mean2_primitivec));
-  auto mean2_op = utils::cast<std::shared_ptr<mindspore::lite::Reduce>>(mean2_primitivec);
+  auto mean2_primitivec = GetValueNode<PrimitiveCPtr>(mean2_cnode->input(0));
+  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::ReduceFusion>>(mean2_primitivec));
+  auto mean2_op = utils::cast<std::shared_ptr<mindspore::ops::ReduceFusion>>(mean2_primitivec);
   MS_ASSERT(mean2_op != nullptr);
-  if (mean2_op->GetMode() != schema::ReduceMode_ReduceMean) {
+  if (mean2_op->GetAttr(ops::kMode) != nullptr && mean2_op->get_mode() != mindspore::Reduce_Mean) {
     return nullptr;
   }
-  auto mean2_axes = mean2_op->GetAxes();
+  auto mean2_axes = GetReduceAxes(mean2_cnode);
+  if (mean2_axes.empty()) {
+    return nullptr;
+  }
   AnfNodePtr squared_difference_node = mean2_cnode->input(1);
   if (CheckIfAnfNodeIsNull(squared_difference_node) != lite::RET_OK) {
     return nullptr;
@@ -285,15 +299,18 @@ const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const 
       CheckInputSize(mean1_cnode, kReduceInputsLength) != lite::RET_OK) {
     return nullptr;
   }
-  auto mean1_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(mean1_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Reduce>>(mean1_primitivec));
-  auto mean1_op = utils::cast<std::shared_ptr<mindspore::lite::Reduce>>(mean1_primitivec);
+  auto mean1_primitivec = GetValueNode<PrimitiveCPtr>(mean1_cnode->input(0));
+  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::ReduceFusion>>(mean1_primitivec));
+  auto mean1_op = utils::cast<std::shared_ptr<mindspore::ops::ReduceFusion>>(mean1_primitivec);
   MS_ASSERT(mean1_op != nullptr);
-  if (mean1_op->GetMode() != schema::ReduceMode_ReduceMean) {
+  if (mean1_op->GetAttr(ops::kMode) != nullptr && mean1_op->get_mode() != mindspore::Reduce_Mean) {
     return nullptr;
   }
   AnfNodePtr input3_node = mean1_cnode->input(1);
-  auto mean1_axes = mean1_op->GetAxes();
+  auto mean1_axes = GetReduceAxes(mean1_cnode);
+  if (mean1_axes.empty()) {
+    return nullptr;
+  }
   if (CheckIfAnfNodeIsNull(input3_node) != lite::RET_OK) {
     return nullptr;
   }

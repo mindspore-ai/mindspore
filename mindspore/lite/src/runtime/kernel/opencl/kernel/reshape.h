@@ -35,8 +35,6 @@ class ReshapeOpenCLKernel : public OpenCLKernel {
   int CheckSpecs() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
-
- private:
 };
 }  // namespace mindspore::kernel
 

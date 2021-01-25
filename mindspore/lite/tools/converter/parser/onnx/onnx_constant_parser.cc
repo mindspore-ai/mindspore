@@ -15,14 +15,15 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_constant_parser.h"
-#include <memory>
 #include <vector>
+#include <memory>
 #include <algorithm>
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
+#include "ops/constant.h"
 
 namespace mindspore {
 namespace lite {
-STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, lite::PrimitiveC *primitive_c) {
+STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_tensor, ops::PrimitiveC *primitive_c) {
   ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
   if (param_value == nullptr) {
     MS_LOG(ERROR) << "new a paramValueLite failed.";
@@ -50,20 +51,13 @@ STATUS OnnxConstantParser::AddDataInfoAttr(const onnx::TensorProto &onnx_const_t
   return RET_OK;
 }
 
-lite::PrimitiveC *OnnxConstantParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                         const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx ConstantParser";
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Constant;
-  auto primitive_c = PrimitiveC::Create(primitive.release());
+ops::PrimitiveC *OnnxConstantParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto primitive_c = new (std::nothrow) ops::Constant;
   if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "create primitiveC failed.";
+    MS_LOG(ERROR) << "new Constant failed";
     return nullptr;
   }
+
   for (const auto &attr : onnx_node.attribute()) {
     if (attr.name() == "sparse_value") {
       MS_LOG(WARNING) << "sparse_value";

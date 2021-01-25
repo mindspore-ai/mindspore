@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/ops/primitive_c.h"
 #include "src/train/train_model.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"

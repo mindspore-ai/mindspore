@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,30 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/clip.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/clip.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateClipParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateClipParameter(const void *prim) {
   ClipParameter *act_param = reinterpret_cast<ClipParameter *>(malloc(sizeof(ClipParameter)));
   if (act_param == nullptr) {
     MS_LOG(ERROR) << "malloc ClipParameter failed.";
     return nullptr;
   }
   memset(act_param, 0, sizeof(ClipParameter));
-  act_param->op_parameter_.type_ = primitive->Type();
-  auto activation = reinterpret_cast<mindspore::lite::Clip *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  act_param->min_val_ = activation->GetMin();
-  act_param->max_val_ = activation->GetMax();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  act_param->op_parameter_.type_ = primitive->value_type();
+  auto activation = primitive->value_as_Clip();
+  act_param->min_val_ = activation->min();
+  act_param->max_val_ = activation->max();
   return reinterpret_cast<OpParameter *>(act_param);
 }
+}  // namespace
 
-Registry ClipParameterRegistry(schema::PrimitiveType_Clip, PopulateClipParameter);
+Registry g_clipParameterRegistry(schema::PrimitiveType_Clip, PopulateClipParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

@@ -19,45 +19,30 @@
 #include <string>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/logical_and.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFLogicalParser::Parse(const tensorflow::NodeDef &tf_op,
-                              const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                              std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF LogicalParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
-    return RET_NULL_PTR;
-  }
+ops::PrimitiveC *TFLogicalParser::Parse(const tensorflow::NodeDef &tf_op,
+                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                        std::vector<std::string> *inputs, int *output_size) {
   if (tf_op.op() == "LogicalAnd") {
-    auto attr = std::make_unique<schema::LogicalAndT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::LogicalAnd;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new LogicalAnd failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_LogicalAnd;
-    primitive->value.value = attr.release();
-    *primitiveC = PrimitiveC::Create(primitive.release());
+    *output_size = 1;
+    for (int i = 0; i < tf_op.input_size(); i++) {
+      inputs->emplace_back(tf_op.input(i));
+    }
+    return primitive_c;
+  } else {
+    MS_LOG(ERROR) << "only LogicalAnd is supported now";
+    return nullptr;
   }
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
-
-  *output_size = 1;
-  for (int i = 0; i < tf_op.input_size(); i++) {
-    inputs->emplace_back(tf_op.input(i));
-  }
-
-  return RET_OK;
 }
+
 TFNodeRegistrar g_tfLogicalAndParser("LogicalAnd", new TFLogicalParser());
 }  // namespace lite
 }  // namespace mindspore

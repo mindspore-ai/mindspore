@@ -19,6 +19,8 @@
 #include "src/runtime/kernel/arm/fp16/convolution_winograd_fp16.h"
 #include "src/runtime/kernel/arm/fp16/convolution_1x1_fp16.h"
 #include "src/runtime/kernel/arm/fp16/group_convolution_fp16.h"
+#include "src/runtime/kernel/arm/fp16/convolution_depthwise_fp16.h"
+#include "src/runtime/kernel/arm/fp16/convolution_depthwise_slidewindow_fp16.h"
 #include "nnacl/fp16/conv_fp16.h"
 #include "nnacl/fp16/cast_fp16.h"
 #include "nnacl/fp16/pack_fp16.h"
@@ -34,7 +36,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Conv2D;
+using mindspore::schema::PrimitiveType_Conv2DFusion;
 using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
@@ -64,6 +66,7 @@ int ConvolutionFP16CPUKernel::InitWeightBias() {
   if (fp16_weight_ != nullptr) {
     free(fp16_weight_);
     fp16_weight_ = nullptr;
+    execute_weight_ = nullptr;
   }
 
   // init bias
@@ -185,16 +188,14 @@ ConvParameter *CreateNewConvParameterFp16(ConvParameter *parameter) {
 
 kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                            const InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
-                                            bool use_winograd, int out_unit) {
+                                            const InnerContext *ctx, bool use_winograd, int out_unit) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
-    return new (std::nothrow) kernel::Convolution1x1FP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+    return new (std::nothrow) kernel::Convolution1x1FP16CPUKernel(op_parameter, inputs, outputs, ctx);
   } else if (use_winograd) {
-    return new (std::nothrow)
-      kernel::ConvolutionWinogradFP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive, out_unit);
+    return new (std::nothrow) kernel::ConvolutionWinogradFP16CPUKernel(op_parameter, inputs, outputs, ctx, out_unit);
   } else {
-    return new (std::nothrow) kernel::ConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+    return new (std::nothrow) kernel::ConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx);
   }
   return nullptr;
 }
@@ -303,12 +304,11 @@ lite::Tensor *CreateOutputTensorFp16(std::vector<int> out_shape, const std::vect
 
 kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
-                                                  const InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
-                                                  int group) {
+                                                  const InnerContext *ctx, int group) {
   int out_unit;
   bool has_bias = inputs.size() == 3;
   bool use_winograd = false;
-  bool infered_flag = (primitive != nullptr && primitive->infer_flag());
+  bool infered_flag = (op_parameter != nullptr && op_parameter->infer_flag_);
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
 
   // update new shape info for each sub kernel
@@ -394,21 +394,31 @@ kernel::LiteKernel *CpuGroupConvFp16KernelCreator(const std::vector<lite::Tensor
       }
       new_outputs.emplace_back(out_tensor);
     }
-    group_convs.emplace_back(CpuConvFp16KernelSelect(new_inputs, new_outputs,
-                                                     reinterpret_cast<OpParameter *>(new_conv_parameter), ctx,
-                                                     primitive, use_winograd, out_unit));
+    group_convs.emplace_back(CpuConvFp16KernelSelect(
+      new_inputs, new_outputs, reinterpret_cast<OpParameter *>(new_conv_parameter), ctx, use_winograd, out_unit));
   }
 
-  return new (std::nothrow)
-    GroupConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive, group_convs, group);
+  return new (std::nothrow) GroupConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, group_convs, group);
+}
+
+kernel::LiteKernel *CpuConvDwFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                               const InnerContext *ctx, const kernel::KernelKey &desc) {
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
+  kernel::LiteKernel *kernel;
+  if (conv_param->input_channel_ < 32) {
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseSWFp16CPUKernel(op_parameter, inputs, outputs, ctx);
+  } else {
+    kernel = new (std::nothrow) kernel::ConvolutionDepthwiseFp16CPUKernel(op_parameter, inputs, outputs, ctx);
+  }
+  return kernel;
 }
 
 kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                             const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                             const InnerContext *ctx, const kernel::KernelKey &desc,
-                                             const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2D);
+                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                             const InnerContext *ctx, const kernel::KernelKey &desc) {
+  MS_ASSERT(op_parameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2DFusion);
 
   auto *weight_tensor = inputs.at(kWeightIndex);
   auto *restore_data = weight_tensor->data_c();
@@ -419,32 +429,28 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &
     auto *dequant_weight = kernel::DequantUtil::DequantWeight(weight_tensor);
     if (dequant_weight == nullptr) {
       MS_LOG(ERROR) << "dequant data is nullptr.";
-      free(opParameter);
+      free(op_parameter);
       return nullptr;
     }
     weight_tensor->set_data_type(kNumberTypeFloat32);
     weight_tensor->set_data(dequant_weight);
   }
 
-  auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   bool use_winograd = false;
   int out_unit;
-  if (primitive != nullptr && primitive->infer_flag()) {
-    conv_param->input_h_ = inputs.front()->Height();
-    conv_param->input_w_ = inputs.front()->Width();
-    conv_param->input_channel_ = inputs.front()->Channel();
-    conv_param->output_h_ = outputs.front()->Height();
-    conv_param->output_w_ = outputs.front()->Width();
-    conv_param->output_channel_ = outputs.front()->Channel();
+  if (op_parameter != nullptr && op_parameter->infer_flag_) {
     conv_param->op_parameter_.thread_num_ = ctx->thread_num_;
     CheckIfUseWinogradFp16(&use_winograd, &out_unit, conv_param);
   }
-  int group = conv_param->group_;
+
   kernel::LiteKernel *kernel = nullptr;
-  if (group == 1) {
-    kernel = CpuConvFp16KernelSelect(inputs, outputs, opParameter, ctx, primitive, use_winograd, out_unit);
+  if (conv_param->group_ == 1) {
+    kernel = CpuConvFp16KernelSelect(inputs, outputs, op_parameter, ctx, use_winograd, out_unit);
+  } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
+    kernel = CpuConvDwFp16KernelCreator(inputs, outputs, op_parameter, ctx, desc);
   } else {
-    kernel = CpuGroupConvFp16KernelCreator(inputs, outputs, opParameter, ctx, primitive, group);
+    kernel = CpuGroupConvFp16KernelCreator(inputs, outputs, op_parameter, ctx, conv_param->group_);
   }
 
   if (kernel == nullptr) {
@@ -454,13 +460,13 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &
       weight_tensor->set_data(restore_data);
       weight_tensor->set_data_type(restore_type);
     }
-    free(opParameter);
+    free(op_parameter);
     return nullptr;
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(INFO) << "Init fp16 kernel failed, name: " << opParameter->name_
-                 << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(INFO) << "Init fp16 kernel failed, name: " << op_parameter->name_ << ", type: "
+                 << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
     if (dequant_flag) {
       weight_tensor->FreeData();
       weight_tensor->set_data(restore_data);
@@ -476,5 +482,6 @@ kernel::LiteKernel *CpuConvFp16KernelCreator(const std::vector<lite::Tensor *> &
   }
   return kernel;
 }
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Conv2D, CpuConvFp16KernelCreator)
+
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Conv2DFusion, CpuConvFp16KernelCreator)
 }  // namespace mindspore::kernel

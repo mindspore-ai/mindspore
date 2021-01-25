@@ -17,6 +17,7 @@
 #include "src/runtime/kernel/arm/fp32/gatherNd_fp32.h"
 #include <string.h>
 #include <vector>
+#include <limits>
 #include "schema/model_generated.h"
 #include "include/errorcode.h"
 #include "src/kernel_registry.h"

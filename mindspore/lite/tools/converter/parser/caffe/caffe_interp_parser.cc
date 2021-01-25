@@ -16,14 +16,14 @@
 
 #include "tools/converter/parser/caffe/caffe_interp_parser.h"
 #include <memory>
+#include "ops/resize.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeInterpParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                  const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::ResizeT> attr = std::make_unique<schema::ResizeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeInterpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::Resize();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Resize failed";
     return nullptr;
   }
 
@@ -34,7 +34,7 @@ PrimitiveC *CaffeInterpParser::ParseLitePrimitive(const caffe::LayerParameter &p
       MS_LOG(ERROR) << "Interp height must be > 0";
       return nullptr;
     }
-    attr->newHeight = height;
+    primitive_c->set_new_height(height);
   }
 
   if (interpParam.has_width()) {
@@ -43,14 +43,12 @@ PrimitiveC *CaffeInterpParser::ParseLitePrimitive(const caffe::LayerParameter &p
       MS_LOG(ERROR) << "Interp width must be > 0";
       return nullptr;
     }
-    attr->newWidth = width;
+    primitive_c->set_new_width(width);
   }
-  attr->alignCorners = true;
-  attr->method = schema::ResizeMethod_LINEAR;
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Resize;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  primitive_c->set_method(mindspore::ResizeMethod::LINEAR);
+  primitive_c->set_coordinate_transform_mode(mindspore::CoordinateTransformMode::ALIGN_CORNERS);
+
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeInterpParser("Interp", new CaffeInterpParser());

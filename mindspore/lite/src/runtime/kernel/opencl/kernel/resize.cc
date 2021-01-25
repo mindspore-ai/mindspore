@@ -53,7 +53,7 @@ int ResizeOpenCLKernel::CheckSpecs() {
 
 int ResizeOpenCLKernel::Prepare() {
   auto resize_param = reinterpret_cast<ResizeParameter *>(op_parameter_);
-  alignCorner = resize_param->align_corners_;
+  alignCorner = resize_param->coordinate_transform_mode_ == 1;
   preserveAspectRatio = resize_param->preserve_aspect_ratio_;
   auto in_shape = in_tensors_[0]->shape();
   auto out_shape = out_tensors_[0]->shape();

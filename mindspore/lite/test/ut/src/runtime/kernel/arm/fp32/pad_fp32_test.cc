@@ -45,7 +45,7 @@ class TestPadFp32 : public mindspore::CommonTest {
   PadParameter param_;
   std::vector<lite::Tensor *> inputs_{&in_tensor_};
   std::vector<lite::Tensor *> outputs_{&out_tensor_};
-  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Pad};
+  kernel::KernelKey desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_PadFusion};
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::KernelCreator creator_ = nullptr;
   kernel::LiteKernel *kernel_ = nullptr;
@@ -82,13 +82,13 @@ void TestPadFp32::Prepare(const std::vector<int> &input_shape, const std::vector
     inputs_.emplace_back(&paddings_tensor_);
   }
 
-  desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Pad};
+  desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_PadFusion};
   ctx_ = lite::InnerContext();
   ctx_.thread_num_ = thread_num;
   ctx_.Init();
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator_, nullptr);
-  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc, nullptr);
+  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc);
   ASSERT_NE(kernel_, nullptr);
 }
 

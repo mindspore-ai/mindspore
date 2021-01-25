@@ -24,9 +24,10 @@ namespace mindspore::kernel {
 class TopKCPUKernel : public LiteKernel {
  public:
   explicit TopKCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                         const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
+    topk_param_ = reinterpret_cast<TopkParameter *>(op_parameter_);
+  }
   ~TopKCPUKernel() override {}
 
   int Init() override;
@@ -34,6 +35,7 @@ class TopKCPUKernel : public LiteKernel {
   int Run() override;
 
  private:
+  TopkParameter *topk_param_;
 };
 }  // namespace mindspore::kernel
 

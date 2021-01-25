@@ -37,7 +37,8 @@ int EltwiseNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
     MS_LOG(ERROR) << name_ << " op is nullptr";
     return RET_ERROR;
   }
-  op_->set_attr_mode(lite::ConverterToNPUEltwiseMode(mode_));
+  ArithmeticParameter *param = reinterpret_cast<ArithmeticParameter *>(op_parameter_);
+  op_->set_attr_mode(lite::ConverterToNPUEltwiseMode(static_cast<schema::EltwiseMode>(param->eltwise_mode_)));
   int size = npu_inputs.size();
   op_->create_dynamic_input_x(size);
   op_->set_attr_N(size);

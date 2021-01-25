@@ -29,9 +29,8 @@ namespace mindspore::kernel {
 class ReshapeFp16CPUKernel : public ReshapeCPUKernel {
  public:
   ReshapeFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                       const mindspore::lite::PrimitiveC *primitive)
-      : ReshapeCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
+      : ReshapeCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ReshapeFp16CPUKernel() = default;
 
   int Run() override;

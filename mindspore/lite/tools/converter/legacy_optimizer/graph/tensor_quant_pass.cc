@@ -32,15 +32,15 @@ STATUS TensorQuantPass::Run(schema::MetaGraphT *graph) {
     if (node->primitive->value.type == PrimitiveType_QuantDTypeCast) {
       auto attr = node->primitive->value.AsQuantDTypeCast();
       auto &inputTensor = graph->allTensors.at(node->inputIndex.front());
-      inputTensor->dataType = attr->srcT;
+      inputTensor->dataType = attr->src_t;
       auto &outputTensor = graph->allTensors.at(node->outputIndex.front());
-      outputTensor->dataType = attr->dstT;
+      outputTensor->dataType = attr->dst_t;
 
-      if (attr->srcT == TypeId::kNumberTypeUInt8) {
-        attr->srcT = TypeId::kNumberTypeInt8;
+      if (attr->src_t == TypeId::kNumberTypeUInt8) {
+        attr->src_t = TypeId::kNumberTypeInt8;
       }
-      if (attr->dstT == TypeId::kNumberTypeUInt8) {
-        attr->dstT = TypeId::kNumberTypeInt8;
+      if (attr->dst_t == TypeId::kNumberTypeUInt8) {
+        attr->dst_t = TypeId::kNumberTypeInt8;
       }
     }
   }

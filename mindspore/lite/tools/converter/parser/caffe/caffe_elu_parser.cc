@@ -16,27 +16,25 @@
 
 #include "tools/converter/parser/caffe/caffe_elu_parser.h"
 #include <memory>
+#include "ops/elu.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeEluParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                               const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::EluT> attr = std::make_unique<schema::EluT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeEluParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::Elu();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Elu failed";
     return nullptr;
   }
 
   if (proto.has_elu_param()) {
     const caffe::ELUParameter &eluParameter = proto.elu_param();
     if (eluParameter.has_alpha()) {
-      attr->alpha = eluParameter.alpha();
+      primitive_c->set_alpha(eluParameter.alpha());
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Elu;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeEluParser("ELU", new CaffeEluParser());

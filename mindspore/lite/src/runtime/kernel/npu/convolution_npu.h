@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class ConvolutionNPUKernel : public ConvolutionBaseNPUKernel {
  public:
   ConvolutionNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                       const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseNPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ConvolutionBaseNPUKernel(parameter, inputs, outputs, ctx) {
     conv_param_ = reinterpret_cast<ConvParameter *>(parameter);
   }
   ~ConvolutionNPUKernel() override;

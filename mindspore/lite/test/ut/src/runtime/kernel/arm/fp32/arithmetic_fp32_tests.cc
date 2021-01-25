@@ -78,7 +78,7 @@ void TestArithmeticTestFp32::PrepareInt(const std::vector<int> &input0_shape, co
   ASSERT_NE(creator, nullptr);
   ctx_.thread_num_ = thread_num;
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
-  kernel_ = creator(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_, nullptr);
+  kernel_ = creator(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
   ASSERT_NE(kernel_, nullptr);
 }
 
@@ -521,7 +521,7 @@ TEST_F(TestArithmeticTestFp32, MulFp32) {
 
   ArithmeticParameter mul_param;
   mul_param.broadcasting_ = true;
-  mul_param.op_parameter_.type_ = schema::PrimitiveType_Mul;
+  mul_param.op_parameter_.type_ = schema::PrimitiveType_MulFusion;
   mul_param.ndim_ = 4;
   mul_param.in_shape0_[0] = 1;
   mul_param.in_shape0_[1] = 2;
@@ -570,7 +570,7 @@ TEST_F(TestArithmeticTestFp32, MulFp32) {
   ctx.thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&mul_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&mul_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
@@ -594,7 +594,7 @@ TEST_F(TestArithmeticTestFp32, MulReluFp32) {
 
   ArithmeticParameter mul_param;
   mul_param.broadcasting_ = true;
-  mul_param.op_parameter_.type_ = schema::PrimitiveType_Mul;
+  mul_param.op_parameter_.type_ = schema::PrimitiveType_MulFusion;
   mul_param.ndim_ = 4;
   mul_param.activation_type_ = schema::ActivationType_RELU;
   mul_param.in_shape0_[0] = 1;
@@ -644,7 +644,7 @@ TEST_F(TestArithmeticTestFp32, MulReluFp32) {
   ctx.thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&mul_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&mul_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
@@ -668,7 +668,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
 
   ArithmeticParameter mul_param;
   mul_param.broadcasting_ = true;
-  mul_param.op_parameter_.type_ = schema::PrimitiveType_Mul;
+  mul_param.op_parameter_.type_ = schema::PrimitiveType_MulFusion;
   mul_param.ndim_ = 4;
   mul_param.activation_type_ = schema::ActivationType_RELU6;
   mul_param.in_shape0_[0] = 1;
@@ -718,7 +718,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Fp32) {
   ctx.thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&mul_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&mul_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
@@ -743,7 +743,7 @@ TEST_F(TestArithmeticTestFp32, MulInt0) {
   int in0_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
   int in1_data[3] = {3, 2, 1};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_NO_ACTIVATION;
   int thread_num = 2;
   desc_.type = type;
@@ -764,7 +764,7 @@ TEST_F(TestArithmeticTestFp32, MulInt1) {
   int in0_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
   int in1_data[1] = {2};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_NO_ACTIVATION;
   int thread_num = 2;
   desc_.type = type;
@@ -785,7 +785,7 @@ TEST_F(TestArithmeticTestFp32, MulInt2) {
   int in0_data[1] = {2};
   int in1_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_NO_ACTIVATION;
   int thread_num = 2;
   desc_.type = type;
@@ -806,7 +806,7 @@ TEST_F(TestArithmeticTestFp32, MulInt3) {
   int in0_data[12] = {2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
   int in1_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_NO_ACTIVATION;
   int thread_num = 2;
   desc_.type = type;
@@ -827,7 +827,7 @@ TEST_F(TestArithmeticTestFp32, MulReluInt0) {
   int in0_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
   int in1_data[3] = {-1, 1, 1};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_RELU;
   int thread_num = 2;
   desc_.type = type;
@@ -848,7 +848,7 @@ TEST_F(TestArithmeticTestFp32, MulReluInt1) {
   int in0_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
   int in1_data[1] = {1};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_RELU;
   int thread_num = 2;
   desc_.type = type;
@@ -869,7 +869,7 @@ TEST_F(TestArithmeticTestFp32, MulReluInt2) {
   int in0_data[1] = {1};
   int in1_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_RELU;
   int thread_num = 2;
   desc_.type = type;
@@ -890,7 +890,7 @@ TEST_F(TestArithmeticTestFp32, MulReluInt3) {
   int in0_data[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
   int in1_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_RELU;
   int thread_num = 2;
   desc_.type = type;
@@ -911,7 +911,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Int0) {
   int in0_data[12] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
   int in1_data[3] = {-1, 1, 1};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_RELU6;
   int thread_num = 2;
   desc_.type = type;
@@ -932,7 +932,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Int1) {
   int in0_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
   int in1_data[1] = {1};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_RELU6;
   int thread_num = 2;
   desc_.type = type;
@@ -953,7 +953,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Int2) {
   int in0_data[1] = {1};
   int in1_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_RELU6;
   int thread_num = 2;
   desc_.type = type;
@@ -974,7 +974,7 @@ TEST_F(TestArithmeticTestFp32, MulRelu6Int3) {
   int in0_data[12] = {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
   int in1_data[12] = {0, -1, -2, -3, -4, -5, 6, 7, 8, 9, 10, 11};
   int out_data[12] = {0};
-  schema::PrimitiveType type = schema::PrimitiveType_Mul;
+  schema::PrimitiveType type = schema::PrimitiveType_MulFusion;
   int act_type = schema::ActivationType_RELU6;
   int thread_num = 2;
   desc_.type = type;
@@ -993,7 +993,7 @@ TEST_F(TestArithmeticTestFp32, AddReluFp32) {
 
   ArithmeticParameter add_param;
   add_param.broadcasting_ = true;
-  add_param.op_parameter_.type_ = schema::PrimitiveType_Add;
+  add_param.op_parameter_.type_ = schema::PrimitiveType_AddFusion;
   add_param.ndim_ = 4;
   add_param.activation_type_ = schema::ActivationType_RELU;
   add_param.in_shape0_[0] = 1;
@@ -1043,7 +1043,7 @@ TEST_F(TestArithmeticTestFp32, AddReluFp32) {
   ctx.thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&add_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&add_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
@@ -1066,7 +1066,7 @@ TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
 
   ArithmeticParameter add_param;
   add_param.broadcasting_ = true;
-  add_param.op_parameter_.type_ = schema::PrimitiveType_Add;
+  add_param.op_parameter_.type_ = schema::PrimitiveType_AddFusion;
   add_param.ndim_ = 4;
   add_param.activation_type_ = schema::ActivationType_RELU6;
   add_param.in_shape0_[0] = 1;
@@ -1116,7 +1116,7 @@ TEST_F(TestArithmeticTestFp32, AddRelu6Fp32) {
   ctx.thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&add_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&add_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
@@ -1138,7 +1138,7 @@ TEST_F(TestArithmeticTestFp32, DivReluFp32) {
 
   ArithmeticParameter div_param;
   div_param.broadcasting_ = true;
-  div_param.op_parameter_.type_ = schema::PrimitiveType_Div;
+  div_param.op_parameter_.type_ = schema::PrimitiveType_DivFusion;
   div_param.ndim_ = 4;
   div_param.activation_type_ = schema::ActivationType_RELU;
   div_param.in_shape0_[0] = 1;
@@ -1188,7 +1188,7 @@ TEST_F(TestArithmeticTestFp32, DivReluFp32) {
   ctx.thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&div_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&div_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
@@ -1212,7 +1212,7 @@ TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
 
   ArithmeticParameter div_param;
   div_param.broadcasting_ = true;
-  div_param.op_parameter_.type_ = schema::PrimitiveType_Div;
+  div_param.op_parameter_.type_ = schema::PrimitiveType_DivFusion;
   div_param.ndim_ = 4;
   div_param.activation_type_ = schema::ActivationType_RELU6;
   div_param.in_shape0_[0] = 1;
@@ -1262,7 +1262,7 @@ TEST_F(TestArithmeticTestFp32, DivRelu6Fp32) {
   ctx.thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&div_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&div_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();
@@ -1333,7 +1333,7 @@ TEST_F(TestArithmeticTestFp32, EqualFp32) {
   ctx.thread_num_ = 3;
   ASSERT_EQ(lite::RET_OK, ctx.Init());
   kernel::LiteKernel *kernel =
-    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&equal_param), &ctx, desc, nullptr);
+    creator(inputs_tensor, outputs_tensor, reinterpret_cast<OpParameter *>(&equal_param), &ctx, desc);
   ASSERT_NE(kernel, nullptr);
   auto output_tensor_shape = output0_tensor.shape();
   kernel->Run();

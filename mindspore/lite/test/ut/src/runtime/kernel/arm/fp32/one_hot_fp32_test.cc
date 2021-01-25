@@ -74,7 +74,7 @@ void TestOneHotFp32::Prepare(const std::vector<int> &indices_shape, int *indices
   ctx_.thread_num_ = thread_num;
   ctx_.Init();
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc);
-  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(param_), &ctx_, desc, nullptr);
+  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(param_), &ctx_, desc);
 }
 
 // 3 3 axis -1 -> 3 3 4

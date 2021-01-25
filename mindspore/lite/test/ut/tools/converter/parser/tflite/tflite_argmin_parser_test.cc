@@ -28,17 +28,16 @@ TEST_F(TestTfliteParserArgmin, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_ArgMin) << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_ArgMinFusion) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserArgmin, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsArgMin(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsArgMin();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsArgMinFusion(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsArgMinFusion();
   ASSERT_EQ(val->axis, 1);
-  ASSERT_EQ(val->topK, 1);
-  ASSERT_EQ(val->axisType, 1);
-  ASSERT_EQ(val->keepDims, false);
-  ASSERT_EQ(val->outMaxValue, false);
+  ASSERT_EQ(val->top_k, 1);
+  ASSERT_EQ(val->keep_dims, false);
+  ASSERT_EQ(val->out_max_value, false);
 }
 
 }  // namespace mindspore

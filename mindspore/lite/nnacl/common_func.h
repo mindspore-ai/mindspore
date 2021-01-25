@@ -63,6 +63,14 @@ static inline int GetStride(int *strides, const int *shape, int length) {
   return stride;
 }
 
+inline void ComputeStrides(const int *shape, int *strides, const int ndim) {
+  int stride = 1;
+  for (int i = ndim - 1; i >= 0; i--) {
+    strides[i] = stride;
+    stride *= shape[i];
+  }
+}
+
 #ifdef ENABLE_ARM64
 void BiasAdd(const float *bias, float *data, size_t oc4, size_t plan_size);
 void BiasAddRelu6(const float *bias, float *data, size_t oc4, size_t plan_size);

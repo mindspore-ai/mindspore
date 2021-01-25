@@ -22,15 +22,14 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/runtime_api.h"
 #include "include/errorcode.h"
-#include "src/ops/arithmetic.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 
-using mindspore::schema::PrimitiveType_Add;
-using mindspore::schema::PrimitiveType_Div;
+using mindspore::schema::PrimitiveType_AddFusion;
+using mindspore::schema::PrimitiveType_DivFusion;
 using mindspore::schema::PrimitiveType_Eltwise;
 using mindspore::schema::PrimitiveType_Equal;
 using mindspore::schema::PrimitiveType_FloorDiv;
@@ -43,25 +42,25 @@ using mindspore::schema::PrimitiveType_LogicalAnd;
 using mindspore::schema::PrimitiveType_LogicalOr;
 using mindspore::schema::PrimitiveType_Maximum;
 using mindspore::schema::PrimitiveType_Minimum;
-using mindspore::schema::PrimitiveType_Mul;
+using mindspore::schema::PrimitiveType_MulFusion;
 using mindspore::schema::PrimitiveType_NotEqual;
 using mindspore::schema::PrimitiveType_SquaredDifference;
-using mindspore::schema::PrimitiveType_Sub;
+using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore::kernel {
 ARITHMETIC_FUNC_INFO_FP16 arithmetic_fun_table_fp16[] = {
-  {PrimitiveType_Mul, schema::ActivationType_RELU, ElementMulReluFp16, ElementOptMulReluFp16},
-  {PrimitiveType_Mul, schema::ActivationType_RELU6, ElementMulRelu6Fp16, ElementOptMulRelu6Fp16},
-  {PrimitiveType_Mul, schema::ActivationType_NO_ACTIVATION, ElementMulFp16, ElementOptMulFp16},
-  {PrimitiveType_Add, schema::ActivationType_RELU, ElementAddReluFp16, ElementOptAddReluFp16},
-  {PrimitiveType_Add, schema::ActivationType_RELU6, ElementAddRelu6Fp16, ElementOptAddRelu6Fp16},
-  {PrimitiveType_Add, schema::ActivationType_NO_ACTIVATION, ElementAddFp16, ElementOptAddFp16},
-  {PrimitiveType_Sub, schema::ActivationType_RELU, ElementSubReluFp16, ElementOptSubReluFp16},
-  {PrimitiveType_Sub, schema::ActivationType_RELU6, ElementSubRelu6Fp16, ElementOptSubRelu6Fp16},
-  {PrimitiveType_Sub, schema::ActivationType_NO_ACTIVATION, ElementSubFp16, ElementOptSubFp16},
-  {PrimitiveType_Div, schema::ActivationType_RELU, ElementDivReluFp16, ElementOptDivReluFp16},
-  {PrimitiveType_Div, schema::ActivationType_RELU6, ElementDivRelu6Fp16, ElementOptDivRelu6Fp16},
-  {PrimitiveType_Div, schema::ActivationType_NO_ACTIVATION, ElementDivFp16, ElementOptDivFp16},
+  {PrimitiveType_MulFusion, schema::ActivationType_RELU, ElementMulReluFp16, ElementOptMulReluFp16},
+  {PrimitiveType_MulFusion, schema::ActivationType_RELU6, ElementMulRelu6Fp16, ElementOptMulRelu6Fp16},
+  {PrimitiveType_MulFusion, schema::ActivationType_NO_ACTIVATION, ElementMulFp16, ElementOptMulFp16},
+  {PrimitiveType_AddFusion, schema::ActivationType_RELU, ElementAddReluFp16, ElementOptAddReluFp16},
+  {PrimitiveType_AddFusion, schema::ActivationType_RELU6, ElementAddRelu6Fp16, ElementOptAddRelu6Fp16},
+  {PrimitiveType_AddFusion, schema::ActivationType_NO_ACTIVATION, ElementAddFp16, ElementOptAddFp16},
+  {PrimitiveType_SubFusion, schema::ActivationType_RELU, ElementSubReluFp16, ElementOptSubReluFp16},
+  {PrimitiveType_SubFusion, schema::ActivationType_RELU6, ElementSubRelu6Fp16, ElementOptSubRelu6Fp16},
+  {PrimitiveType_SubFusion, schema::ActivationType_NO_ACTIVATION, ElementSubFp16, ElementOptSubFp16},
+  {PrimitiveType_DivFusion, schema::ActivationType_RELU, ElementDivReluFp16, ElementOptDivReluFp16},
+  {PrimitiveType_DivFusion, schema::ActivationType_RELU6, ElementDivRelu6Fp16, ElementOptDivRelu6Fp16},
+  {PrimitiveType_DivFusion, schema::ActivationType_NO_ACTIVATION, ElementDivFp16, ElementOptDivFp16},
   {PrimitiveType_FloorMod, schema::ActivationType_NO_ACTIVATION, ElementFloorModFp16, ElementOptFloorModFp16},
   {PrimitiveType_FloorDiv, schema::ActivationType_NO_ACTIVATION, ElementFloorDivFp16, ElementOptFloorDivFp16},
   {PrimitiveType_LogicalAnd, schema::ActivationType_NO_ACTIVATION, ElementLogicalAndFp16, ElementOptLogicalAndFp16},
@@ -101,31 +100,47 @@ int ArithmeticFP16CPUKernel::Init() {
 }
 
 void ArithmeticFP16CPUKernel::InitParam() {
-  auto arithmetic_lite_primitive = (lite::Arithmetic *)primitive_;
-  param_->broadcasting_ = arithmetic_lite_primitive->Broadcasting();
-  param_->ndim_ = arithmetic_lite_primitive->NDims();
+  // auto arithmetic_lite_primitive = (lite::Arithmetic *)primitive_;
+  // param_->broadcasting_ = arithmetic_lite_primitive->Broadcasting();
+  // param_->ndim_ = arithmetic_lite_primitive->NDims();
 
-  param_->in_elements_num0_ = in_tensors_[0]->ElementsNum();
-  param_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
-  param_->out_elements_num_ = out_tensors_[0]->ElementsNum();
-  memcpy(param_->in_shape0_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape0().data(),
-         reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape0().size() * sizeof(int));
-  memcpy(param_->in_shape1_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape1().data(),
-         reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape1().size() * sizeof(int));
-  memcpy(param_->out_shape_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->OutputShape().data(),
-         reinterpret_cast<const lite::Arithmetic *>(primitive_)->OutputShape().size() * sizeof(int));
+  // param_->in_elements_num0_ = in_tensors_[0]->ElementsNum();
+  // param_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
+  // param_->out_elements_num_ = out_tensors_[0]->ElementsNum();
+  // memcpy(param_->in_shape0_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape0().data(),
+  //        reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape0().size() * sizeof(int));
+  // memcpy(param_->in_shape1_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape1().data(),
+  //        reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape1().size() * sizeof(int));
+  // memcpy(param_->out_shape_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->OutputShape().data(),
+  //        reinterpret_cast<const lite::Arithmetic *>(primitive_)->OutputShape().size() * sizeof(int));
 
   return;
 }
 
 int ArithmeticFP16CPUKernel::ReSize() {
   InitParam();
-
+  auto primitive_type = param_->op_parameter_.type_;
+  if (primitive_type == schema::PrimitiveType_Eltwise) {
+    switch (param_->eltwise_mode_) {
+      case schema::EltwiseMode_PROD:
+        primitive_type = schema::PrimitiveType_MulFusion;
+        break;
+      case schema::EltwiseMode_SUM:
+        primitive_type = schema::PrimitiveType_AddFusion;
+        break;
+      case schema::EltwiseMode_MAXIMUM:
+        primitive_type = schema::PrimitiveType_Maximum;
+        break;
+      default:
+        MS_LOG(ERROR) << "Eltwise mode not support, mode:" << param_->eltwise_mode_;
+        return RET_ERROR;
+    }
+  }
   if (param_->in_elements_num0_ == 1 || param_->in_elements_num1_ == 1) {
     param_->broadcasting_ = false;
-    arithmetic_opt_func_ = GetOptimizedArithmeticFun(param_->op_parameter_.type_, param_->activation_type_);
+    arithmetic_opt_func_ = GetOptimizedArithmeticFun(primitive_type, param_->activation_type_);
   } else {
-    arithmetic_func_ = GetArithmeticFun(param_->op_parameter_.type_, param_->activation_type_);
+    arithmetic_func_ = GetArithmeticFun(primitive_type, param_->activation_type_);
   }
   if (arithmetic_opt_func_ == nullptr && arithmetic_func_ == nullptr) {
     MS_LOG(ERROR) << "arithmetic_opt_func_ and arithmetic_func_ function is nullptr!";
@@ -236,10 +251,10 @@ void ArithmeticFP16CPUKernel::FreeTmpBuffer() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Mul, LiteKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Add, LiteKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Sub, LiteKernelCreator<ArithmeticFP16CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Div, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_MulFusion, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_AddFusion, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_SubFusion, LiteKernelCreator<ArithmeticFP16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_DivFusion, LiteKernelCreator<ArithmeticFP16CPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_FloorMod, LiteKernelCreator<ArithmeticFP16CPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_FloorDiv, LiteKernelCreator<ArithmeticFP16CPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_LogicalAnd, LiteKernelCreator<ArithmeticFP16CPUKernel>)

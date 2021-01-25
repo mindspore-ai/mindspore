@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class SgdCPUKernel : public LiteKernel {
  public:
   explicit SgdCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                        const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), sgd_param_(nullptr) {
+                        const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx), sgd_param_(nullptr) {
     sgd_param_ = reinterpret_cast<SgdParameter *>(parameter);
   }
   ~SgdCPUKernel() override {}

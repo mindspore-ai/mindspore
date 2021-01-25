@@ -22,7 +22,7 @@
 #include <vector>
 #include <memory>
 #include "schema/inner/model_generated.h"
-#include "src/ops/primitive_c.h"
+#include "ops/primitive_c.h"
 #include "ir/func_graph.h"
 #include "tools/converter/converter_context.h"
 
@@ -53,10 +53,9 @@ class AnfExporter {
   int SetGraphoutputIndex(const CNodePtr &cnode, const size_t subgraph_index,
                           const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                           const std::unique_ptr<schema::SubGraphT> &sub_graphT, schema::CNodeT *return_node);
-  static bool IsPrimitiveCNode(const AnfNodePtr &node, schema::PrimitiveType type);
   static bool HasPrimitiveCNode(const AnfNodePtr &node);
   static int ConvertQuantParam(const std::unique_ptr<schema::MetaGraphT> &meta_graph,
-                               const std::shared_ptr<PrimitiveC> &primitive,
+                               const std::shared_ptr<mindspore::Primitive> &primitive,
                                const std::unique_ptr<schema::CNodeT> &dst_node);
   int ExportSubgraph(const FuncGraphPtr &func_graph, const std::unique_ptr<schema::MetaGraphT> &meta_graphT,
                      const size_t &subgraph_index, bool keep_graph, bool copy_primitive,

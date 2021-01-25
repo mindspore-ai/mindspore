@@ -27,9 +27,8 @@ namespace mindspore::kernel {
 class ScaleFp16CPUKernel : public ScaleCPUKernel {
  public:
   ScaleFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
-      : ScaleCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ScaleCPUKernel(parameter, inputs, outputs, ctx) {}
   ~ScaleFp16CPUKernel() = default;
 
   int Init() override;

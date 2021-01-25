@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,32 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/argmax.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/arg_min_max_parameter.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateArgMaxParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateArgMaxParameter(const void *prim) {
   ArgMinMaxParameter *arg_param = reinterpret_cast<ArgMinMaxParameter *>(malloc(sizeof(ArgMinMaxParameter)));
   if (arg_param == nullptr) {
     MS_LOG(ERROR) << "malloc ArgMinMaxParameter failed.";
     return nullptr;
   }
   memset(arg_param, 0, sizeof(ArgMinMaxParameter));
-  arg_param->op_parameter_.type_ = primitive->Type();
-  auto param = reinterpret_cast<mindspore::lite::ArgMax *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  arg_param->axis_ = param->GetAxis();
-  arg_param->topk_ = param->GetTopK();
-  arg_param->axis_type_ = param->GetAxisType();
-  arg_param->out_value_ = param->GetOutMaxValue();
-  arg_param->keep_dims_ = param->GetKeepDims();
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  arg_param->op_parameter_.type_ = primitive->value_type();
+  auto param = primitive->value_as_ArgMaxFusion();
+  arg_param->axis_ = param->axis();
+  arg_param->topk_ = param->top_k();
+  arg_param->out_value_ = param->out_max_value();
+  arg_param->keep_dims_ = param->keep_dims();
   arg_param->get_max_ = true;
   return reinterpret_cast<OpParameter *>(arg_param);
 }
+}  // namespace
 
-Registry ArgMaxParameterRegistry(schema::PrimitiveType_ArgMax, PopulateArgMaxParameter);
+Registry g_argMaxParameterRegistry(schema::PrimitiveType_ArgMaxFusion, PopulateArgMaxParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

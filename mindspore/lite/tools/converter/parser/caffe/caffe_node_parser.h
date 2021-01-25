@@ -19,14 +19,14 @@
 
 #include <string>
 #include <vector>
-#include "src/ops/primitive_c.h"
-#include "ops/primitive_c.h"
 #include "google/protobuf/message.h"
 #include "schema/inner/model_generated.h"
 #include "proto/caffe.pb.h"
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
+#include "ops/primitive_c.h"
+#include "mindspore/core/utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -36,8 +36,7 @@ class CaffeNodeParser {
 
   virtual ~CaffeNodeParser() {}
 
-  virtual lite::PrimitiveC *ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                               const caffe::LayerParameter &weight) {
+  virtual ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
     return nullptr;
   }
 

@@ -47,7 +47,7 @@ class TestReduceInt8 : public mindspore::CommonTest {
   Tensor out_tensor_;
   std::vector<Tensor *> inputs{&in_tensor_};
   std::vector<Tensor *> outputs{&out_tensor_};
-  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_Reduce};
+  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeInt8, schema::PrimitiveType_ReduceFusion};
   kernel::KernelCreator creator_ = nullptr;
   lite::InnerContext ctx_ = lite::InnerContext();
   kernel::LiteKernel *kernel_ = nullptr;
@@ -81,7 +81,7 @@ void TestReduceInt8::Prepare(const std::vector<int> &in_shape, const std::vector
 
   ctx_.thread_num_ = thread_num_;
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
-  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_, nullptr);
+  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
 }
 
 TEST_F(TestReduceInt8, Mean) {

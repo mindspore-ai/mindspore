@@ -53,7 +53,7 @@ class TestReduceFp32 : public mindspore::CommonTest {
   Tensor out_tensor_;
   std::vector<Tensor *> inputs{&in_tensor_};
   std::vector<Tensor *> outputs{&out_tensor_};
-  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_Reduce};
+  kernel::KernelKey desc_ = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_ReduceFusion};
   kernel::KernelCreator creator_ = nullptr;
   lite::InnerContext *ctx_ = nullptr;
   kernel::LiteKernel *kernel_ = nullptr;
@@ -89,7 +89,7 @@ void TestReduceFp32::Prepare(const std::vector<int> &in_shape, const std::vector
     ctx_->allocator = Allocator::Create();
   }
   ctx_->thread_num_ = thread_num_;
-  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), ctx_, desc_, nullptr);
+  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), ctx_, desc_);
 }
 
 TEST_F(TestReduceFp32, Mean1) {

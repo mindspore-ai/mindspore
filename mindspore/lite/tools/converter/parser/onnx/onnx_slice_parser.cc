@@ -18,61 +18,64 @@
 #include <functional>
 #include <memory>
 #include <numeric>
+#include <algorithm>
 #include <vector>
 #include <string>
+#include "ops/strided_slice.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxSliceParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                      const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx SliceParser";
-  auto attr = std::make_unique<schema::StridedSliceT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *OnnxSliceParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto primitive_c = new (std::nothrow) ops::StridedSlice;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new StridedSlice failed";
     return nullptr;
   }
 
-  std::vector<int> starts;
-  std::vector<int> ends;
-  std::vector<int> axes;
-  std::vector<int> steps;
+  std::vector<int32_t> starts;
+  std::vector<int32_t> ends;
+  std::vector<int32_t> axes;
+  std::vector<int32_t> steps;
+  constexpr int64_t int_32_max = INT32_MAX;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "starts") {
       const int num = onnx_node_attr.ints_size();
       starts.clear();
       for (int i = 0; i < num; ++i) {
-        starts.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
+        starts.push_back(static_cast<int>(std::min(onnx_node_attr.ints()[i], int_32_max)));
       }
     } else if (attribute_name == "axes") {
       const int num = onnx_node_attr.ints_size();
       axes.clear();
       for (int i = 0; i < num; ++i) {
-        axes.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
+        axes.push_back(static_cast<int>(std::min(onnx_node_attr.ints()[i], int_32_max)));
       }
     } else if (attribute_name == "ends") {
       const int num = onnx_node_attr.ints_size();
       ends.clear();
       for (int i = 0; i < num; ++i) {
-        ends.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
+        ends.push_back(static_cast<int>(std::min(onnx_node_attr.ints()[i], int_32_max)));
       }
     } else if (attribute_name == "steps") {
       const int num = onnx_node_attr.ints_size();
       steps.clear();
       for (int i = 0; i < num; ++i) {
-        steps.push_back(static_cast<int>(onnx_node_attr.ints()[i]));
+        steps.push_back(static_cast<int>(std::min(onnx_node_attr.ints()[i], int_32_max)));
       }
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
+  int size = -1;
+  if (!starts.empty()) {
+    size = static_cast<int>(starts.size());
+  } else if (!ends.empty()) {
+    size = static_cast<int>(ends.size());
+  } else if (!axes.empty()) {
+    size = static_cast<int>(axes.size());
+  } else if (!steps.empty()) {
+    size = static_cast<int>(steps.size());
   }
-  primitive->value.type = schema::PrimitiveType_StridedSlice;
-  primitive->value.value = attr.release();
-  auto primitive_c = PrimitiveC::Create(primitive.release());
-  if (starts.empty()) {
+  if (size == -1) {
     return primitive_c;
   }
   if (axes.empty()) {
@@ -83,10 +86,11 @@ lite::PrimitiveC *OnnxSliceParser::ParseLitePrimitive(const onnx::GraphProto &on
   if (steps.empty()) {
     steps.assign(starts.size(), 1);
   }
-  primitive_c->set_attr("starts", MakeValue<std::vector<int>>(starts));
-  primitive_c->set_attr("ends", MakeValue<std::vector<int>>(ends));
-  primitive_c->set_attr("axes", MakeValue<std::vector<int>>(axes));
-  primitive_c->set_attr("steps", MakeValue<std::vector<int>>(steps));
+
+  primitive_c->AddAttr("starts", MakeValue(starts));
+  primitive_c->AddAttr("axes", MakeValue(axes));
+  primitive_c->AddAttr("ends", MakeValue(ends));
+  primitive_c->AddAttr("steps", MakeValue(steps));
   return primitive_c;
 }
 

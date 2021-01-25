@@ -28,8 +28,8 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_ArgMax;
-using mindspore::schema::PrimitiveType_ArgMin;
+using mindspore::schema::PrimitiveType_ArgMaxFusion;
+using mindspore::schema::PrimitiveType_ArgMinFusion;
 
 namespace mindspore::kernel {
 
@@ -54,7 +54,7 @@ int ArgMinMaxOpenCLKernel::CheckSpecs() {
     MS_LOG(ERROR) << "Invalid axis " << param->axis_;
     return RET_ERROR;
   }
-  param->get_max_ = (Type() == PrimitiveType_ArgMax);
+  param->get_max_ = (Type() == PrimitiveType_ArgMaxFusion);
   return RET_OK;
 }
 
@@ -161,8 +161,8 @@ int ArgMinMaxOpenCLKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ArgMin, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ArgMin, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ArgMax, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ArgMax, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ArgMinFusion, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ArgMinFusion, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ArgMaxFusion, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ArgMaxFusion, OpenCLKernelCreator<ArgMinMaxOpenCLKernel>);
 }  // namespace mindspore::kernel

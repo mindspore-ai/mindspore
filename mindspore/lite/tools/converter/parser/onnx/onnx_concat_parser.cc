@@ -16,32 +16,25 @@
 
 #include "tools/converter/parser/onnx/onnx_concat_parser.h"
 #include <memory>
+#include "ops/concat.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxConcatParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                       const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx ConcatParser";
-  auto attr = std::make_unique<schema::ConcatT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *OnnxConcatParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto primitive_c = new (std::nothrow) ops::Concat;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Concat failed";
     return nullptr;
   }
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
-      attr->axis = static_cast<int32_t>(onnx_node_attr.i());
+      primitive_c->set_axis(onnx_node_attr.i());
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Concat;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return primitive_c;
 }
 
 OnnxNodeRegistrar g_onnxConcatParser("Concat", new OnnxConcatParser());

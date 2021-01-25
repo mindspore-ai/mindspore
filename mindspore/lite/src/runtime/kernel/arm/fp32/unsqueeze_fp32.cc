@@ -77,6 +77,7 @@ int UnsqueezeCPUKernel::Run() {
   }
   return RET_OK;
 }
+
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unsqueeze, LiteKernelCreator<UnsqueezeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Unsqueeze, LiteKernelCreator<UnsqueezeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt64, PrimitiveType_Unsqueeze, LiteKernelCreator<UnsqueezeCPUKernel>)

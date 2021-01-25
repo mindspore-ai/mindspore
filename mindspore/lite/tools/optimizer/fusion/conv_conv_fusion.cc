@@ -17,9 +17,7 @@
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
 #include <functional>
 #include <memory>
-#include "schema/inner/model_generated.h"
-#include "src/ops/conv2d.h"
-#include "src/ops/primitive_c.h"
+#include "ops/fusion/conv2d_fusion.h"
 #include "tools/optimizer/common/gllo_utils.h"
 
 namespace mindspore::opt {
@@ -35,9 +33,22 @@ constexpr size_t kNHWC_WDim = 2;
 constexpr size_t kNHWC_CDim = 3;
 
 bool IsCommonConvNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Conv2D;
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    if (!CheckPrimitiveType(anf_node, prim::kPrimConv2DFusion)) {
+      return false;
+    }
+    std::shared_ptr<ops::Conv2DFusion> conv = nullptr;
+    if (utils::isa<CNodePtr>(anf_node)) {
+      auto c_node = anf_node->cast<CNodePtr>();
+      conv = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(c_node->input(0));
+    } else if (utils::isa<ValueNodePtr>(anf_node)) {
+      conv = GetValueNode<std::shared_ptr<ops::Conv2DFusion>>(anf_node);
+    }
+    if (conv == nullptr) {
+      return false;
+    }
+    return conv->GetAttr(ops::kIsDepthWise) == nullptr || !GetValue<bool>(conv->GetAttr(ops::kIsDepthWise));
   }
   return false;
 }
@@ -205,15 +216,17 @@ const AnfNodePtr ConvConvFusion::Process(const FuncGraphPtr &func_graph, const A
   if (IsMultiOutputTensors(func_graph, up_conv_cnode)) {
     return nullptr;
   }
-  auto down_primitive = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(down_conv_cnode->input(0));
-  auto down_conv_primitive = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(down_primitive);
-  auto up_primitive = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(up_conv_cnode->input(0));
-  auto up_conv_primitive = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(up_primitive);
+  auto down_primitive = GetValueNode<PrimitiveCPtr>(down_conv_cnode->input(0));
+  auto down_conv_primitive = utils::cast<std::shared_ptr<mindspore::ops::Conv2DFusion>>(down_primitive);
+  auto up_primitive = GetValueNode<PrimitiveCPtr>(up_conv_cnode->input(0));
+  auto up_conv_primitive = utils::cast<std::shared_ptr<mindspore::ops::Conv2DFusion>>(up_primitive);
   // up conv node must no activation
-  if (up_conv_primitive == nullptr || up_conv_primitive->GetActivationType() != schema::ActivationType_NO_ACTIVATION) {
+  if (up_conv_primitive == nullptr || (up_conv_primitive->GetAttr(ops::kActivationType) != nullptr &&
+                                       up_conv_primitive->get_activation_type() != mindspore::NO_ACTIVATION)) {
     return nullptr;
   }
-  if (up_conv_primitive->GetGroup() != 1 || down_conv_primitive->GetGroup() != 1) {
+  if ((up_conv_primitive->GetAttr(ops::kGroup) != nullptr && up_conv_primitive->get_group() != 1) ||
+      (down_conv_primitive->GetAttr(ops::kGroup) != nullptr && down_conv_primitive->get_group() != 1)) {
     return nullptr;
   }
   auto new_weight_paramter = func_graph->add_parameter();

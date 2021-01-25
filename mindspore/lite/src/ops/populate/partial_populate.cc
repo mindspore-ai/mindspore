@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,9 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/partial.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 
 namespace mindspore {
@@ -25,20 +22,20 @@ typedef struct PartialParameter {
   int sub_graph_index_;
 } PartialParameter;
 
-OpParameter *PopulatePartialParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulatePartialParameter(const void *prim) {
   PartialParameter *partial_parameter = reinterpret_cast<PartialParameter *>(malloc(sizeof(PartialParameter)));
   if (partial_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc partial parameter failed.";
     return nullptr;
   }
   memset(partial_parameter, 0, sizeof(PartialParameter));
-  partial_parameter->op_parameter_.type_ = primitive->Type();
-
-  auto param = reinterpret_cast<mindspore::lite::Partial *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  partial_parameter->sub_graph_index_ = param->GetSubGraphIndex();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_PartialFusion();
+  partial_parameter->op_parameter_.type_ = primitive->value_type();
+  partial_parameter->sub_graph_index_ = value->sub_graph_index();
 
   return reinterpret_cast<OpParameter *>(partial_parameter);
 }
-Registry PartialParameterRegistry(schema::PrimitiveType_Partial, PopulatePartialParameter);
+Registry PartialParameterRegistry(schema::PrimitiveType_PartialFusion, PopulatePartialParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

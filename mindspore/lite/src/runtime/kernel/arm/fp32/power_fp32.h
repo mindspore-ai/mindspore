@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,11 +26,9 @@ namespace mindspore::kernel {
 class PowerCPUKernel : public LiteKernel {
  public:
   PowerCPUKernel(OpParameter *param, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                 const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(param, inputs, outputs, ctx, primitive),
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(param, inputs, outputs, ctx),
         thread_count_(ctx->thread_num_),
-        power_(reinterpret_cast<PowerParameter *>(op_parameter_)->power_),
         scale_(reinterpret_cast<PowerParameter *>(op_parameter_)->scale_),
         shift_(reinterpret_cast<PowerParameter *>(op_parameter_)->shift_) {}
   ~PowerCPUKernel() override = default;
@@ -42,7 +40,6 @@ class PowerCPUKernel : public LiteKernel {
 
  private:
   int thread_count_;
-  float power_;
   float scale_;
   float shift_;
 };

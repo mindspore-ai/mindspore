@@ -55,8 +55,8 @@ int ResizeCPUKernel::ReSize() {
 
     auto input = in_tensors_.at(0);
     auto input_shape = input->shape();
-    ret = PrepareResizeBilinear(input_shape.data(), out_tensors_.at(0)->shape().data(), align_corners_, y_bottoms_,
-                                y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
+    ret = PrepareResizeBilinear(input_shape.data(), out_tensors_.at(0)->shape().data(), coordinate_transform_mode_,
+                                y_bottoms_, y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_);
     if (ret != RET_OK) {
       FreeTmpBuffer();
     }
@@ -176,14 +176,14 @@ int ResizeCPUKernel::RunImpl(int task_id) {
       int c = in_tensors_.at(0)->shape().at(3);
       float *line0 = line_buffer_ + new_width_ * c * 2 * task_id;
       float *line1 = line0 + new_width_ * c;
-      ret = ResizeBilinear2(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(), y_bottoms_,
-                            y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0, line1, n_h_begin,
-                            n_h_end);
+      ret = ResizeBilinear(input_data, output_data, input_shape.data(), out_tensors_.at(0)->shape().data(), y_bottoms_,
+                           y_tops_, x_lefts_, x_rights_, y_bottom_weights_, x_left_weights_, line0, line1, n_h_begin,
+                           n_h_end);
 
       break;
     }
     case static_cast<int>(schema::ResizeMethod_NEAREST): {
-      if (in_tensors_.size() == lite::kDoubleNum && !const_shape_) {
+      if (in_tensors_.size() == 2 && !const_shape_) {
         auto out_shape = in_tensors_.at(1);
         auto data = reinterpret_cast<int32_t *>(out_shape->MutableData());
         if (data == nullptr) {
@@ -195,7 +195,7 @@ int ResizeCPUKernel::RunImpl(int task_id) {
         }
       }
       ret = ResizeNearestNeighbor(input_data, output_data, input_shape.data(), out_tensors_[0]->shape().data(),
-                                  align_corners_, task_id, context_->thread_num_);
+                                  coordinate_transform_mode_, task_id, context_->thread_num_);
       break;
     }
     case schema::ResizeMethod_UNKNOW:

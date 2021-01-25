@@ -15,15 +15,13 @@
  */
 
 #include "src/runtime/kernel/arm/fp16/group_convolution_fp16.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "src/runtime/infer_manager.h"
+#include "src/common/tensor_util.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
+using mindspore::lite::FreeAllTensorC;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Conv2D;
 
 namespace mindspore::kernel {
 int GroupConvolutionFP16CPUKernel::Init() {
@@ -73,13 +71,35 @@ void GroupConvolutionFP16CPUKernel::FreeSubKernel() {
 
 int GroupConvolutionFP16CPUKernel::PreProcess() {
   if (!InferShapeDone()) {
-    auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
+    std::vector<TensorC *> inputs;
+    std::vector<TensorC *> outputs;
+    if (InputTensor2TensorC(in_tensors_, &inputs) != RET_OK || OutputTensor2TensorC(out_tensors_, &outputs) != RET_OK) {
+      op_parameter_->infer_flag_ = false;
+      FreeAllTensorC(&inputs);
+      FreeAllTensorC(&outputs);
+      MS_LOG(ERROR) << "InferShape fail!";
+      return RET_ERROR;
+    }
+    auto infer_shape_func = lite::InferManager::GetInstance()->GetInferShapeFunc(op_parameter_->type_);
+    if (infer_shape_func == nullptr) {
+      FreeAllTensorC(&inputs);
+      FreeAllTensorC(&outputs);
+      return RET_ERROR;
+    }
+    auto ret = infer_shape_func(static_cast<TensorC **>(inputs.data()), inputs.size(), outputs.data(), outputs.size(),
+                                op_parameter_);
+    out_tensors_.at(0)->set_format(static_cast<schema::Format>(outputs.at(0)->format_));
+    out_tensors_.at(0)->set_data_type(static_cast<TypeId>(outputs.at(0)->data_type_));
+    std::vector<int> tmp_shape(outputs.at(0)->shape_, outputs.at(0)->shape_ + outputs.at(0)->shape_size_);
+    out_tensors_.at(0)->set_shape(tmp_shape);
+    FreeAllTensorC(&inputs);
+    FreeAllTensorC(&outputs);
     if (ret != RET_OK) {
-      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(false);
+      op_parameter_->infer_flag_ = false;
       MS_LOG(ERROR) << "InferShape fail!";
       return ret;
     }
-    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
+    op_parameter_->infer_flag_ = true;
 
     // if infershape func is called in runtime stage, we should malloc memory and set shape info for outputs of sub
     // kernels here.

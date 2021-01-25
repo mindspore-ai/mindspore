@@ -138,8 +138,10 @@ int OpenCLKernel::Tune() {
   if (mode == lite::opencl::TuningMode::DEFAULT) {
     return RET_OK;
   }
-  static const std::set<int> FAST_MODE_OPS = {schema::PrimitiveType_Conv2D, schema::PrimitiveType_DepthwiseConv2D,
-                                              schema::PrimitiveType_DeConv2D};
+  //  static const std::set<int> FAST_MODE_OPS = {schema::PrimitiveType_Conv2D, schema::PrimitiveType_DepthwiseConv2D,
+  //                                              schema::PrimitiveType_DeConv2D};
+  static const std::set<int> FAST_MODE_OPS = {schema::PrimitiveType_Conv2DFusion,
+                                              schema::PrimitiveType_Conv2dTransposeFusion};
   if (mode == lite::opencl::TuningMode::FAST && FAST_MODE_OPS.find(op_parameter_->type_) == FAST_MODE_OPS.end()) {
     return RET_OK;
   }

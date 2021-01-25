@@ -19,7 +19,7 @@
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_SoftMax;
+using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::kernel {
 int SoftmaxNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -53,5 +53,5 @@ SoftmaxNPUKernel::~SoftmaxNPUKernel() {
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_SoftMax, NPUKernelCreator<SoftmaxNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Softmax, NPUKernelCreator<SoftmaxNPUKernel>)
 }  // namespace mindspore::kernel

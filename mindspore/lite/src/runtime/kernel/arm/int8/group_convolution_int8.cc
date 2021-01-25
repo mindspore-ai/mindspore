@@ -15,15 +15,10 @@
  */
 
 #include "src/runtime/kernel/arm/int8/group_convolution_int8.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Conv2D;
 
 namespace mindspore::kernel {
 void GroupConvolutionInt8CPUKernel::SeparateInput(int group_id) {

@@ -31,7 +31,6 @@
 #include "tools/converter/legacy_optimizer/graph/trans_format_insert_pass.h"
 #include "tools/converter/legacy_optimizer/graph/global_format_transform_pass.h"
 #include "tools/converter/legacy_optimizer/graph/isolated_node_remove_pass.h"
-#include "tools/converter/legacy_optimizer/graph/unused_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/dropout_node_remove_pass.h"
 #include "tools/converter/legacy_optimizer/graph/topological_sort_pass.h"
 #include "tools/converter/legacy_optimizer/graph/tensor_quant_pass.h"
@@ -64,7 +63,6 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
   {
     auto old_nodes = GetGraphNodes();
     Optimizer unusedOpRemoveOptimizer;
-    unusedOpRemoveOptimizer.AddPass(new UnusedNodeRemovePass());
     if (!ctx.trainModel) {
       unusedOpRemoveOptimizer.AddPass(new DropoutNodeRemovePass());
     }
@@ -148,7 +146,13 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
     formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     formatTransOptimizer.AddPass(new (std::nothrow) TransOpRemovePass());
-    formatTransOptimizer.AddPass(new (std::nothrow) TransOpInsertPass());
+    auto trans_op_insert = new (std::nothrow) TransOpInsertPass();
+    if (trans_op_insert == nullptr) {
+      MS_LOG(ERROR) << "new transOpInsert Pass failed.";
+      return RET_MEMORY_FAILED;
+    }
+    trans_op_insert->SetFmk(ctx.fmk);
+    formatTransOptimizer.AddPass(trans_op_insert);
     formatTransOptimizer.AddPass(new (std::nothrow) FormatTransFusionPass());
     formatTransOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());
     formatTransOptimizer.AddPass(new (std::nothrow) SubgraphNodePass(old_nodes));
@@ -231,6 +235,7 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
       return status;
     }
     auto old_nodes2 = GetGraphNodes();
+
     quantNodeOptimizer.AddPass(dTypeTransPass);
     quantNodeOptimizer.AddPass(new (std::nothrow) QuantCastFusionPass());
     quantNodeOptimizer.AddPass(new (std::nothrow) IsolatedNodeRemovePass());

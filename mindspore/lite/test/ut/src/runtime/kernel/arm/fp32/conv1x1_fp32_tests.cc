@@ -219,7 +219,7 @@ TEST_F(TestConv1x1Fp32, Conv1x1Test1) {
   float *correct;
   int total_size = Conv1x1TestInit1(&inputs_, &outputs_, conv_param, &correct);
   auto *conv1x1 =
-    new kernel::Convolution1x1CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx, nullptr);
+    new kernel::Convolution1x1CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx);
 
   conv1x1->Init();
   conv1x1->Run();
@@ -283,7 +283,7 @@ TEST_F(TestConv1x1Fp32, Conv1x1Test2) {
   float *correct;
   int total_size = Conv1x1TestInit2(&inputs_, &outputs_, conv_param, &correct);
   auto *conv1x1 =
-    new kernel::Convolution1x1CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx, nullptr);
+    new kernel::Convolution1x1CPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs_, outputs_, ctx);
 
   conv1x1->Init();
   conv1x1->Run();

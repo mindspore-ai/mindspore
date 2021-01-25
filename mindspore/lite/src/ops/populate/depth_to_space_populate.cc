@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/depth_to_space.h"
-#include "src/common/common.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/depth_to_space_parameter.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateDepthToSpaceParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateDepthToSpaceParameter(const void *prim) {
   DepthToSpaceParameter *depth_space_param =
     reinterpret_cast<DepthToSpaceParameter *>(malloc(sizeof(DepthToSpaceParameter)));
   if (depth_space_param == nullptr) {
@@ -31,14 +27,14 @@ OpParameter *PopulateDepthToSpaceParameter(const mindspore::lite::PrimitiveC *pr
     return nullptr;
   }
   memset(depth_space_param, 0, sizeof(DepthToSpaceParameter));
-  auto param = reinterpret_cast<mindspore::lite::DepthToSpace *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  depth_space_param->op_parameter_.type_ = primitive->Type();
-  depth_space_param->block_size_ = param->GetBlockSize();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto param = primitive->value_as_DepthToSpace();
+  depth_space_param->op_parameter_.type_ = primitive->value_type();
+  depth_space_param->block_size_ = param->block_size();
   return reinterpret_cast<OpParameter *>(depth_space_param);
 }
+}  // namespace
 
-Registry DepthToSpaceParameterRegistry(schema::PrimitiveType_DepthToSpace, PopulateDepthToSpaceParameter);
-
+Registry g_depthToSpaceParamRegistry(schema::PrimitiveType_DepthToSpace, PopulateDepthToSpaceParameter, SCHEMA_CUR);
 }  // namespace lite
-
 }  // namespace mindspore

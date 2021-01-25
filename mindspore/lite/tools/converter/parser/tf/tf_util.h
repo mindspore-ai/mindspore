@@ -23,6 +23,7 @@
 #include "ir/dtype/type_id.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
+#include "mindspore/core/utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -32,10 +33,10 @@ class TensorFlowUtils {
   static bool FindAttrValue(const tensorflow::NodeDef &node_def, const std::string &attr_name,
                             tensorflow::AttrValue *attr_value);
   static TypeId ParseAttrDataType(const tensorflow::NodeDef &node_def, const std::string &attr_name);
-  static schema::Format ParseNodeFormat(const tensorflow::NodeDef &node_def);
   static bool DecodeInt64(std::string_view *str_view, uint64_t *value);
   static std::string GetFlattenNodeName(const std::string &input_name);
   static std::string GetNodeName(const std::string &input_name);
+  static mindspore::Format ParseNodeFormat(const tensorflow::NodeDef &node_def);
 };
 }  // namespace lite
 }  // namespace mindspore

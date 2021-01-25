@@ -31,7 +31,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::MemType;
-using mindspore::schema::PrimitiveType_Scale;
+using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
 
@@ -250,6 +250,6 @@ int ScaleOpenCLKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Scale, OpenCLKernelCreator<ScaleOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Scale, OpenCLKernelCreator<ScaleOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ScaleFusion, OpenCLKernelCreator<ScaleOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ScaleFusion, OpenCLKernelCreator<ScaleOpenCLKernel>)
 }  // namespace mindspore::kernel

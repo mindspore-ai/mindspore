@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Tile;
+using mindspore::schema::PrimitiveType_TileFusion;
 
 namespace mindspore::kernel {
 namespace {
@@ -45,17 +45,14 @@ void TileCPUKernel::ComputeStrides(const int *shape, int *strides, int ndim) {
 int TileCPUKernel::ReSize() {
   auto tile_parameter_ = reinterpret_cast<TileParameter *>(op_parameter_);
   MS_ASSERT(tile_parameter_);
-  if (in_tensors_.size() == kDoubleInputsSize) {
-    if (in_tensors_[1]->ElementsNum() > static_cast<int>(in_tensors_[0]->shape().size())) {
-      MS_LOG(ERROR) << "tile's input1 data_num cannot be larger than input0's shape_size.";
-      return false;
-    }
-    auto input1_addr = reinterpret_cast<int *>(in_tensors_[1]->data_c());
-    for (int i = 0; i < in_tensors_[1]->ElementsNum(); ++i) {
-      tile_parameter_->dims_[i] = i;
-      tile_parameter_->multiples_[i] = input1_addr[i];
-    }
+  if (in_tensors_.size() != kDoubleInputsSize) {
+    return RET_ERROR;
   }
+  if (in_tensors_.at(1)->ElementsNum() > static_cast<int>(in_tensors_.at(0)->shape().size())) {
+    MS_LOG(ERROR) << "tile's input1 data_num cannot be larger than input0's shape_size.";
+    return false;
+  }
+
   tile_parameter_->in_dim_ = in_tensors_.at(0)->shape().size();
   for (int i = 0; i < tile_parameter_->in_dim_; ++i) {
     tile_parameter_->in_shape_[i] = in_tensors_.at(0)->shape().at(i);
@@ -75,6 +72,6 @@ int TileCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Tile, LiteKernelCreator<TileCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Tile, LiteKernelCreator<TileCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TileFusion, LiteKernelCreator<TileCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TileFusion, LiteKernelCreator<TileCPUKernel>)
 }  // namespace mindspore::kernel

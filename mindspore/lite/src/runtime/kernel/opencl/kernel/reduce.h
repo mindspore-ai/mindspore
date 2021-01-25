@@ -41,10 +41,10 @@ class ReduceOpenCLKernel : public OpenCLKernel {
  private:
   cl_float4 GenC4Mask();
   static std::string GetReduceTypeStr(int type);
-  GpuTensorInfo outShape = GpuTensorInfo(nullptr);
   bool use_local_{false};
   bool wc_reduce_{false};
   static const size_t LOCAL_CACHE_THREAD{16};
+  int axes_[REDUCE_MAX_AXES_NUM];
 };
 }  // namespace mindspore::kernel
 

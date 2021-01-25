@@ -38,10 +38,10 @@ STATUS MulAddFusionPass::Run(MetaGraphT *graph) { return FusionPass::Run(graph);
 STATUS MulAddFusionPass::DefinePattern() {
   auto mulOp = std::make_shared<PatternOp>();
   mulOp->id = MUL_NAME;
-  mulOp->types = {schema::PrimitiveType_Mul};
+  mulOp->types = {schema::PrimitiveType_MulFusion};
   auto baOp = std::make_shared<PatternOp>();
   baOp->id = ADD_NAME;
-  baOp->types = {schema::PrimitiveType_Add};
+  baOp->types = {schema::PrimitiveType_AddFusion};
   baOp->left = mulOp;
 
   std::unique_ptr<FusionPattern> fusionPattern(new (std::nothrow) FusionPattern("MulAddFusion"));
@@ -136,8 +136,8 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
   MS_ASSERT(mulNode != nullptr);
   MS_ASSERT(addNode != nullptr);
   // replace mulNode as scale
-  mulNode->primitive->value.type = schema::PrimitiveType_Scale;
-  std::unique_ptr<ScaleT> scaleParam(new (std::nothrow) ScaleT());
+  mulNode->primitive->value.type = schema::PrimitiveType_ScaleFusion;
+  std::unique_ptr<ScaleFusionT> scaleParam(new (std::nothrow) ScaleFusionT());
   if (scaleParam == nullptr) {
     MS_LOG(ERROR) << "new transposeParam failed";
     return RET_ERROR;
@@ -147,12 +147,12 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
   scaleParam->axis = 0 - shape_size;
   mulNode->inputIndex.push_back(addBiasIndex);
   MS_ASSERT(addNode->primitive != nullptr);
-  MS_ASSERT(addNode->primitive->value.AsAdd() != nullptr);
-  auto activationType = addNode->primitive->value.AsAdd()->activationType;
+  MS_ASSERT(addNode->primitive->value.AsAddFusion() != nullptr);
+  auto activationType = addNode->primitive->value.AsAddFusion()->activation_type;
   if (activationType == ActivationType_RELU || activationType == ActivationType_RELU6 ||
       activationType == ActivationType_NO_ACTIVATION) {
     // delete addnode
-    scaleParam->activationType = activationType;
+    scaleParam->activation_type = activationType;
     auto status = IsolateOneWayNode(graph, addNode);
     if (status != RET_OK) {
       MS_LOG(ERROR) << "IsolateOneWayNode failed";
@@ -162,8 +162,8 @@ STATUS MulAddFusionPass::AddNewScaleNode(MetaGraphT *graph, const std::unique_pt
     // repace addnode as activation
     std::unique_ptr<ActivationT> activationParam(new ActivationT());
     MS_ASSERT(addNode->primitive != nullptr);
-    MS_ASSERT(addNode->primitive->value.AsAdd() != nullptr);
-    activationParam->type = addNode->primitive->value.AsAdd()->activationType;
+    MS_ASSERT(addNode->primitive->value.AsAddFusion() != nullptr);
+    activationParam->activation_type = addNode->primitive->value.AsAddFusion()->activation_type;
     addNode->primitive->value.type = schema::PrimitiveType_Activation;
     addNode->primitive->value.value = activationParam.release();
     addNode->inputIndex.pop_back();

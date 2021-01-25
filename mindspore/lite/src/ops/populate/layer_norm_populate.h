@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +16,12 @@
 #ifndef MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_LAYER_NORM_POPULATE_H_
 #define MINDSPORE_LITE_SRC_OPS_POPULATE_STRIDED_LAYER_NORM_POPULATE_H_
 
-#include "src/ops/arithmetic.h"
+#include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
 
-OpParameter *PopulateLayerNormParameter(const mindspore::lite::PrimitiveC *primitive);
+OpParameter *PopulateLayerNormParameter(const void *prim);
 
 }  // namespace lite
 }  // namespace mindspore

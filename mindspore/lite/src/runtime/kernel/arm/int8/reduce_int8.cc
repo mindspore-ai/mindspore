@@ -26,7 +26,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Reduce;
+using mindspore::schema::PrimitiveType_ReduceFusion;
 using mindspore::schema::ReduceMode_ReduceMax;
 using mindspore::schema::ReduceMode_ReduceMean;
 using mindspore::schema::ReduceMode_ReduceMin;
@@ -35,7 +35,6 @@ using mindspore::schema::ReduceMode_ReduceSum;
 using mindspore::schema::ReduceMode_ReduceSumSquare;
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::schema::PrimitiveType_Reduce;
 
 namespace mindspore::kernel {
 void ReduceInt8CPUKernel::OneAxis() {
@@ -315,6 +314,7 @@ int ReduceInt8CPUKernel::CalculateQuantArgs() {
 int ReduceInt8CPUKernel::MallocTmpBuffer() {
   data_buffers_.clear();
   MS_ASSERT(static_cast<int>(buffer_sizes_.size()) == num_axes_ - 1);
+  // malloc num_axes_-1 buffers, since reduce on last axis will generate result to out_tensor, no need for buffer.
   for (auto buffer_size : buffer_sizes_) {
     int32_t *buffer = reinterpret_cast<int32_t *>(context_->allocator->Malloc(buffer_size * sizeof(int32_t)));
     if (buffer == nullptr) {
@@ -488,7 +488,7 @@ int ReduceInt8CPUKernel::Run() {
     begin_src_data_[i] = static_cast<int32_t>(input_data[i]);
   }
   src_data_ = begin_src_data_;
-  for (size_t i = 0; i < data_buffers_.size() - 1; ++i) {
+  for (size_t i = 0; i < data_buffers_.size(); ++i) {
     GetQuantArgs(i);
     dst_data_ = data_buffers_[i];
     outer_size_ = outer_sizes_[i];
@@ -531,5 +531,5 @@ int ReduceInt8CPUKernel::CallReduceUnit(int task_id) {
   return ret;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Reduce, LiteKernelCreator<ReduceInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ReduceFusion, LiteKernelCreator<ReduceInt8CPUKernel>)
 }  // namespace mindspore::kernel

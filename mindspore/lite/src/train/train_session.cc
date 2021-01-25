@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@
 #include "src/train/loss_kernel.h"
 #include "src/sub_graph_kernel.h"
 #include "src/train/train_populate_parameter.h"
+#include "src/train/train_populate_parameter_v0.h"
 #include "src/runtime/runtime_api.h"
 #include "src/executor.h"
 #include "src/kernel_registry.h"
@@ -45,13 +46,19 @@ static size_t TSFindTensor(const std::vector<lite::Tensor *> &where, const lite:
   return where.size();
 }
 
-TrainSession::TrainSession() { kernel::PopulateTrainParameters(); }
+TrainSession::TrainSession() {
+  if (VersionManager::GetInstance()->CheckV0Schema()) {
+    kernel::PopulateTrainV0Parameters();
+  } else {
+    kernel::PopulateTrainParameters();
+  }
+}
 
 std::vector<CreatorOp> TrainSession::ReplaceOps() {
   const std::vector<CreatorOp> replace = {
-    {{mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, mindspore::schema::PrimitiveType_Conv2D},
+    {{mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, mindspore::schema::PrimitiveType_Conv2DFusion},
      mindspore::kernel::CpuConvTrainFp32KernelCreator},
-    {{mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, mindspore::schema::PrimitiveType_DepthwiseConv2D},
+    {{mindspore::kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, mindspore::schema::PrimitiveType_Conv2dTransposeFusion},
      mindspore::kernel::CpuConvTrainFp32KernelCreator}};
   mindspore::lite::KernelRegistry *reg = mindspore::lite::KernelRegistry::GetInstance();
   std::vector<CreatorOp> results;
@@ -303,7 +310,7 @@ void TrainSession::CompileOptimizedKernels() {
 }
 
 bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
-  return (kernel->Type() == schema::PrimitiveType_SoftmaxCrossEntropy ||
+  return (kernel->Type() == schema::PrimitiveType_SoftmaxCrossEntropyWithLogits ||
           kernel->Type() == schema::PrimitiveType_SparseSoftmaxCrossEntropy ||
           kernel->Type() == schema::PrimitiveType_SmoothL1Loss ||
           kernel->Type() == schema::PrimitiveType_SmoothL1LossGrad ||
@@ -312,7 +319,7 @@ bool TrainSession::IsLossKernel(const kernel::LiteKernel *kernel) const {
 }
 
 bool TrainSession::IsOptimizer(kernel::LiteKernel *kernel) const {
-  return ((kernel->Type() == schema::PrimitiveType_Adam) || (kernel->Type() == schema::PrimitiveType_Sgd) ||
+  return ((kernel->Type() == schema::PrimitiveType_Adam) || (kernel->Type() == schema::PrimitiveType_SGD) ||
           (kernel->Type() == schema::PrimitiveType_ApplyMomentum));
 }
 bool TrainSession::IsMaskOutput(kernel::LiteKernel *kernel) const {

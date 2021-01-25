@@ -16,41 +16,33 @@
 
 #include "tools/converter/parser/caffe/caffe_argmax_parser.h"
 #include <memory>
+#include "ops/fusion/arg_max_fusion.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *CaffeArgMaxParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                        const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::ArgMaxT> attr = std::make_unique<schema::ArgMaxT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeArgMaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::ArgMaxFusion();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new ArgMaxFusion failed";
     return nullptr;
   }
 
-  attr->outMaxValue = false;
-  attr->topK = 1;
+  primitive_c->set_keep_dims(true);
+  primitive_c->set_out_max_value(false);
+  primitive_c->set_top_k(1);
+
   const caffe::ArgMaxParameter &argmaxParam = proto.argmax_param();
   if (argmaxParam.has_out_max_val()) {
-    attr->outMaxValue = argmaxParam.out_max_val();
+    primitive_c->set_out_max_value(argmaxParam.out_max_val());
   }
   if (argmaxParam.has_top_k()) {
-    attr->topK = argmaxParam.top_k();
+    primitive_c->set_top_k(argmaxParam.top_k());
   }
-  int32_t axisType = 0;
-  int32_t axis = 0;
-  if (!argmaxParam.has_axis()) {
-    axisType = 2;
-  } else {
-    axisType = 1;
-    axis = (int64_t)argmaxParam.axis();
+  if (argmaxParam.has_axis()) {
+    primitive_c->set_axis(argmaxParam.axis());
   }
-  attr->axis = axis;
-  attr->axisType = axisType;
-  attr->keepDims = true;
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_ArgMax;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeArgMaxParser("ArgMax", new CaffeArgMaxParser());

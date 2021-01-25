@@ -25,7 +25,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Reverse;
+using mindspore::schema::PrimitiveType_ReverseV2;
 
 namespace mindspore::kernel {
 
@@ -135,5 +135,5 @@ int ReverseCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Reverse, LiteKernelCreator<ReverseCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ReverseV2, LiteKernelCreator<ReverseCPUKernel>)
 }  // namespace mindspore::kernel

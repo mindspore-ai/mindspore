@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class PoolingNPUKernel : public ConvolutionBaseNPUKernel {
  public:
   PoolingNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                   const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseNPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ConvolutionBaseNPUKernel(parameter, inputs, outputs, ctx) {
     pooling_param_ = reinterpret_cast<PoolingParameter *>(parameter);
   }
   ~PoolingNPUKernel() override;

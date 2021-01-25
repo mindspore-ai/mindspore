@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class MatMulNPUKernel : public NPUKernel {
  public:
   MatMulNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                  const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
     matmul_parameter_ = reinterpret_cast<MatMulParameter *>(parameter);
   }
   ~MatMulNPUKernel() override;

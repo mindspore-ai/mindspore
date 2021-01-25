@@ -24,9 +24,8 @@ namespace mindspore::kernel {
 class CastNPUKernel : public NPUKernel {
  public:
   CastNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
     cast_parameter_ = reinterpret_cast<CastParameter *>(parameter);
   }
   ~CastNPUKernel() override;
@@ -40,6 +39,7 @@ class CastNPUKernel : public NPUKernel {
  private:
   hiai::op::CastT *op_ = nullptr;
   CastParameter *cast_parameter_;
+  int dst_type_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_CAST_NPU_H_

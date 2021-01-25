@@ -31,11 +31,4 @@ TEST_F(TestTfliteParserCast, OpType) {
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Cast) << "wrong Op Type";
 }
-
-TEST_F(TestTfliteParserCast, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsCast(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsCast();
-  ASSERT_EQ(val->srcT, 43);
-  ASSERT_EQ(val->dstT, 34);
-}
 }  // namespace mindspore

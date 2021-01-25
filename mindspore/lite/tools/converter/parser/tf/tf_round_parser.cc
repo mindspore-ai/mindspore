@@ -19,41 +19,28 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/round.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFRoundParser::Parse(const tensorflow::NodeDef &tf_op,
-                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                            std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF RoundParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::RoundT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
-
-  primitive->value.type = schema::PrimitiveType_Round;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
+ops::PrimitiveC *TFRoundParser::Parse(const tensorflow::NodeDef &tf_op,
+                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                      std::vector<std::string> *inputs, int *output_size) {
+  auto primitive_c = new (std::nothrow) ops::Round;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Round failed";
+    return nullptr;
   }
 
   *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  return status;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
+  }
+
+  return primitive_c;
 }
+
 TFNodeRegistrar g_tfRoundParser("Round", new TFRoundParser());
 }  // namespace lite
 }  // namespace mindspore

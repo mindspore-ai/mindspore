@@ -24,18 +24,36 @@ namespace mindspore {
 namespace lite {
 int OnnxNodeParser::opset_version_ = 0;
 
-schema::PadMode OnnxNodeParser::GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr) {
+mindspore::PadMode OnnxNodeParser::GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr) {
   if (onnx_node_attr.s() == "NOTSET") {
-    return schema::PadMode_NOTSET;
-  } else if (onnx_node_attr.s() == "SAME_UPPER") {
-    return schema::PadMode_SAME_UPPER;
-  } else if (onnx_node_attr.s() == "SAME_LOWER") {
-    return schema::PadMode_SAME_LOWER;
+    return mindspore::PadMode::PAD;
+  } else if (onnx_node_attr.s() == "SAME_UPPER" || onnx_node_attr.s() == "SAME_LOWER") {
+    return mindspore::PadMode::SAME;
   } else if (onnx_node_attr.s() == "VALID") {
-    return schema::PadMode_VALID;
+    return mindspore::PadMode::VALID;
   } else {
     MS_LOG(ERROR) << "unsupported padMode";
-    return schema::PadMode_NOTSET;
+    return mindspore::PadMode::PAD;
+  }
+}
+
+STATUS OnnxNodeParser::GetPadMode(const onnx::AttributeProto &onnx_node_attr, std::string *mode) {
+  if (onnx_node_attr.s() == "NOTSET") {
+    *mode = "NOTSET";
+    return RET_OK;
+  } else if (onnx_node_attr.s() == "SAME_UPPER") {
+    *mode = "SAME_UPPER";
+    return RET_OK;
+  } else if (onnx_node_attr.s() == "SAME_LOWER") {
+    *mode = "SAME_LOWER";
+    return RET_OK;
+  } else if (onnx_node_attr.s() == "VALID") {
+    *mode = "VALID";
+    return RET_OK;
+  } else {
+    MS_LOG(ERROR) << "unsupported padMode";
+    *mode = "NOTSET";
+    return RET_ERROR;
   }
 }
 

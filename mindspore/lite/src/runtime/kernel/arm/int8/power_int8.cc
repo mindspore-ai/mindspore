@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Power;
+using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::kernel {
 int PowerInt8CPUKernel::Init() {
@@ -65,20 +65,20 @@ int PowerInt8CPUKernel::DoPower(int task_id) {
   int8_t *exp_ptr = nullptr;
   MS_ASSERT(param_);
   param_->broadcast_ = true;
-  if (in_tensors_.size() == 2) {
-    auto exp_tensor = in_tensors_.at(1);
-    auto exp_quant_args = exp_tensor->quant_params();
-    param_->quant_arg_.exp_args_.scale_ = exp_quant_args.front().scale;
-    param_->quant_arg_.exp_args_.zp_ = exp_quant_args.front().zeroPoint;
-    exp_ptr = reinterpret_cast<int8_t *>(exp_tensor->MutableData());
-    MS_ASSERT(exp_ptr);
-    param_->broadcast_ = false;
-    if (in_tensors_[0]->Size() != in_tensors_[1]->Size()) {
-      MS_LOG(ERROR) << "Power input size  " << in_tensors_[0]->Size() << " is not equal to exponent size  "
-                    << in_tensors_[1]->Size();
-      return RET_ERROR;
-    }
+  MS_ASSERT(in_tensors_.size() == 2);
+  auto exp_tensor = in_tensors_.at(1);
+  auto exp_quant_args = exp_tensor->quant_params();
+  param_->quant_arg_.exp_args_.scale_ = exp_quant_args.front().scale;
+  param_->quant_arg_.exp_args_.zp_ = exp_quant_args.front().zeroPoint;
+  exp_ptr = reinterpret_cast<int8_t *>(exp_tensor->data_c());
+  MS_ASSERT(exp_ptr != nullptr);
+  param_->broadcast_ = false;
+  if (in_tensors_.at(0)->Size() != in_tensors_.at(1)->Size()) {
+    MS_LOG(ERROR) << "Power input size  " << in_tensors_[0]->Size() << " is not equal to exponent size  "
+                  << in_tensors_[1]->Size();
+    return RET_ERROR;
   }
+
   if (!param_->broadcast_) {
     exp_ptr = exp_ptr + stride * task_id;
   }
@@ -106,5 +106,5 @@ int PowerInt8CPUKernel::Run() {
   return ret;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Power, LiteKernelCreator<PowerInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_PowFusion, LiteKernelCreator<PowerInt8CPUKernel>)
 }  // namespace mindspore::kernel

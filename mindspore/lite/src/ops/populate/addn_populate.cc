@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/op_base.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateAddNParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateAddNParameter(const void *prim) {
   OpParameter *addn_param = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (addn_param == nullptr) {
     MS_LOG(ERROR) << "malloc OpParameter failed.";
     return nullptr;
   }
   memset(addn_param, 0, sizeof(OpParameter));
-  addn_param->type_ = primitive->Type();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  addn_param->type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(addn_param);
 }
-Registry AddNParameterRegistry(schema::PrimitiveType_AddN, PopulateAddNParameter);
+}  // namespace
+Registry g_addNParameterRegistry(schema::PrimitiveType_AddN, PopulateAddNParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_ARGMAX_PARSER_H_
 
 #include <vector>
-#include "src/ops/primitive_c.h"
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
 #include "tools/converter/parser/caffe/caffe_node_parser_registry.h"
 
@@ -29,8 +28,7 @@ class CaffeArgMaxParser : public CaffeNodeParser {
   CaffeArgMaxParser() : CaffeNodeParser("argmax") {}
   ~CaffeArgMaxParser() override = default;
 
-  lite::PrimitiveC *ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                       const caffe::LayerParameter &weight) override;
+  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
 }  // namespace lite
 }  // namespace mindspore

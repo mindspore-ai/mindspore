@@ -38,8 +38,8 @@ class SpaceToDepthOpenCLKernel : public OpenCLKernel {
   void SetGlobalLocal() override;
 
  private:
-  GpuTensorInfo in_shape_ = GpuTensorInfo(nullptr);
-  GpuTensorInfo out_shape_ = GpuTensorInfo(nullptr);
+  GpuTensorInfo in_shape_;
+  GpuTensorInfo out_shape_;
 };
 }  // namespace mindspore::kernel
 

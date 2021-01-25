@@ -25,8 +25,9 @@
 #include <algorithm>
 #include <limits>
 #include <utility>
+#include "ops/mat_mul.h"
+#include "ops/fusion/full_connection.h"
 #include "tools/converter/quantizer/quantizer.h"
-#include "src/ops/primitive_c.h"
 #include "include/errorcode.h"
 #include "ir/func_graph.h"
 #include "ir/anf.h"
@@ -58,13 +59,15 @@ class QuantStrategy {
  private:
   size_t mWeightSize;
   size_t mConvWeightQuantChannelThreshold;
-  static const std::vector<schema::PrimitiveType> conv_types;
-  static const std::vector<schema::PrimitiveType> mul_types;
+  static const std::vector<std::string> conv_types;
+  static const std::vector<std::string> mul_types;
 };
 
 constexpr float delta = 0.1;
 constexpr float ratio = 10.0;
 constexpr int percent = 10;
+
+QuantParamHolderPtr GetCNodeQuantHolder(const PrimitivePtr &primitive);
 
 STATUS CalQuantizationParams(schema::QuantParamT *quantParam, double mMin, double mMax, bool narrowRange, int quant_max,
                              int quant_min, int num_bits);
@@ -128,18 +131,18 @@ T QuantizeData(float originData, const schema::QuantParamT &quantParam, int quan
   }();
 }
 template <typename T>
-STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<PrimitiveC> &primitive_c, QuantType quantType,
-                   int quant_max, int quant_min, size_t bitNum, bool per_channel, bool k_means = false) {
+STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<mindspore::Primitive> &primitive_c,
+                   QuantType quantType, int quant_max, int quant_min, size_t bitNum, bool per_channel,
+                   bool k_means = false) {
   MS_ASSERT(weight != nullptr);
   MS_ASSERT(primitive_c != nullptr);
   auto dims = weight->tensor_shape();
-  auto op_type = (schema::PrimitiveType)primitive_c->Type();
   if (per_channel) {
-    if (dims.size() != 4 && dims.size() != 2 && op_type != schema::PrimitiveType_MatMul) {
+    if (dims.size() != 4 && dims.size() != 2 && primitive_c->name() != ops::kNameMatMul) {
       MS_LOG(INFO) << "weight dims size: " << dims.size() << " switch to per-layer quant mode.";
       per_channel = false;
     } else {
-      if (dims.size() == 2 && op_type != schema::PrimitiveType_FullConnection) {
+      if (dims.size() == 2 && primitive_c->name() != ops::kNameFullConnection) {
         MS_LOG(INFO) << "weight dims size is 2 but op_type is not FullConnection, switch to per-layer quant mode.";
         per_channel = false;
       }
@@ -312,14 +315,15 @@ STATUS QuantFilter(const ParamValueLitePtr &weight, const std::shared_ptr<Primit
     MS_LOG(ERROR) << "quant_params empty";
     return RET_ERROR;
   }
+  auto quant_param_holder = GetCNodeQuantHolder(primitive_c);
   if (quantType == QuantType_PostTraining) {
-    primitive_c->AddInputQuantParam(quant_params);
+    quant_param_holder->AddInputQuantParam(quant_params);
   } else {
-    primitive_c->set_input_quant_param(WEIGHT_INDEX, quant_params);
+    quant_param_holder->set_input_quant_param(WEIGHT_INDEX, quant_params);
   }
   return RET_OK;
 }
 
-schema::PrimitiveType NodePrimitiveType(const CNodePtr &cnode);
+std::string NodePrimitiveType(const CNodePtr &cnode);
 }  // namespace mindspore::lite::quant
 #endif

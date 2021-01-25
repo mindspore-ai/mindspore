@@ -26,9 +26,8 @@ namespace mindspore::kernel {
 class ScaleCPUKernel : public LiteKernel {
  public:
   ScaleCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                 const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     scale_param_ = reinterpret_cast<ScaleParameter *>(op_parameter_);
   }
   ~ScaleCPUKernel() override;

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@
 
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Add;
-using mindspore::schema::PrimitiveType_Div;
+using mindspore::schema::PrimitiveType_AddFusion;
+using mindspore::schema::PrimitiveType_DivFusion;
 using mindspore::schema::PrimitiveType_Equal;
 using mindspore::schema::PrimitiveType_FloorDiv;
 using mindspore::schema::PrimitiveType_FloorMod;
@@ -34,16 +34,16 @@ using mindspore::schema::PrimitiveType_LogicalAnd;
 using mindspore::schema::PrimitiveType_LogicalOr;
 using mindspore::schema::PrimitiveType_Maximum;
 using mindspore::schema::PrimitiveType_Minimum;
-using mindspore::schema::PrimitiveType_Mul;
+using mindspore::schema::PrimitiveType_MulFusion;
 using mindspore::schema::PrimitiveType_NotEqual;
 using mindspore::schema::PrimitiveType_SquaredDifference;
-using mindspore::schema::PrimitiveType_Sub;
+using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore::kernel {
 int ArithmeticNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
-  if (primitive_->Type() == PrimitiveType_Mul || primitive_->Type() == PrimitiveType_Div ||
-      primitive_->Type() == PrimitiveType_Add || primitive_->Type() == PrimitiveType_Sub) {
+  if (opParameter->type_ == PrimitiveType_MulFusion || opParameter->type_ == PrimitiveType_DivFusion ||
+      opParameter->type_ == PrimitiveType_AddFusion || opParameter->type_ == PrimitiveType_SubFusion) {
     if (inputs[0]->shape() != inputs[1]->shape()) {
       MS_LOG(WARNING) << name_ << " for the two inputs, the corresponding dimensions must have the same value."
                       << " shape 1 is:" << inputs[0]->shape() << " shape 2 is:" << inputs[1]->shape();
@@ -69,17 +69,17 @@ int ArithmeticNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
                                       const std::vector<lite::Tensor *> &outputs,
                                       const std::vector<ge::Operator *> &npu_inputs) {
   ge::Operator *op = nullptr;
-  switch (primitive_->Type()) {
-    case PrimitiveType_Mul:
+  switch (op_parameter_->type_) {
+    case PrimitiveType_MulFusion:
       op = CreateOperator<hiai::op::Mul>(npu_inputs, name_);
       break;
-    case PrimitiveType_Add:
+    case PrimitiveType_AddFusion:
       op = CreateOperator<hiai::op::Add>(npu_inputs, name_);
       break;
-    case PrimitiveType_Sub:
+    case PrimitiveType_SubFusion:
       op = CreateOperator<hiai::op::Sub>(npu_inputs, name_);
       break;
-    case PrimitiveType_Div:
+    case PrimitiveType_DivFusion:
       op = CreateOperator<hiai::op::RealDiv>(npu_inputs, name_);
       break;
     case PrimitiveType_FloorMod:
@@ -121,7 +121,7 @@ int ArithmeticNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
 
     default:
       MS_LOG(ERROR) << "Unsupported primitive type:"
-                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(primitive_->Type()));
+                    << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter_->type_));
       return RET_ERROR;
   }
   if (op == nullptr) {
@@ -141,10 +141,10 @@ ArithmeticNPUKernel::~ArithmeticNPUKernel() {
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Mul, NPUKernelCreator<ArithmeticNPUKernel>)
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Add, NPUKernelCreator<ArithmeticNPUKernel>)
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Sub, NPUKernelCreator<ArithmeticNPUKernel>)
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Div, NPUKernelCreator<ArithmeticNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_MulFusion, NPUKernelCreator<ArithmeticNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_AddFusion, NPUKernelCreator<ArithmeticNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_SubFusion, NPUKernelCreator<ArithmeticNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_DivFusion, NPUKernelCreator<ArithmeticNPUKernel>)
 REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_FloorMod, NPUKernelCreator<ArithmeticNPUKernel>)
 REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_FloorDiv, NPUKernelCreator<ArithmeticNPUKernel>)
 REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_LogicalAnd, NPUKernelCreator<ArithmeticNPUKernel>)

@@ -17,37 +17,34 @@
 #include "tools/converter/parser/caffe/caffe_exp_parser.h"
 #include <memory>
 #include <vector>
+#include "ops/fusion/exp_fusion.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeExpParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                               const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::ExpT> attr = std::make_unique<schema::ExpT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeExpParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::ExpFusion();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new ExpFusion failed";
     return nullptr;
   }
-
   const caffe::ExpParameter &exp_param = proto.exp_param();
   if (exp_param.has_base()) {
-    attr->base = exp_param.base();
+    primitive_c->set_base(exp_param.base());
   } else {
-    attr->base = -1;  // -1 represent base = e
+    primitive_c->set_base(-1);  // -1 represent base = e
   }
   if (exp_param.has_scale()) {
-    attr->scale = exp_param.scale();
+    primitive_c->set_scale(exp_param.scale());
   } else {
-    attr->scale = 1;
+    primitive_c->set_scale(1);
   }
   if (exp_param.has_shift()) {
-    attr->shift = exp_param.shift();
+    primitive_c->set_shift(exp_param.shift());
   } else {
-    attr->shift = 0;
+    primitive_c->set_shift(0);
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Exp;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeExpParser("Exp", new CaffeExpParser());

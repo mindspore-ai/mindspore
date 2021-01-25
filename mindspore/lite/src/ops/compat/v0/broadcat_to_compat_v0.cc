@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
+#include "schema/model_v0_generated.h"
 #include "src/ops/compat/attr_transfer_common.h"
 
 namespace mindspore {
 namespace lite {
-int TransferBroadcastToAttr(const void *primitive, Model::Node *node, std::vector<schema::Tensor *> *dst_tensors,
+int TransferBroadcastToAttr(Model::Node *node, std::vector<schema::Tensor *> *dst_tensors,
                             std::vector<char *> *tensor_bufs) {
-  if (primitive == nullptr || node == nullptr || dst_tensors == nullptr || tensor_bufs == nullptr) {
+  if (node == nullptr || node->primitive_ == nullptr || dst_tensors == nullptr || tensor_bufs == nullptr) {
     MS_LOG(ERROR) << "the parameter of this function is nullptr.";
     return RET_ERROR;
   }
@@ -29,7 +30,7 @@ int TransferBroadcastToAttr(const void *primitive, Model::Node *node, std::vecto
     return RET_OK;
   }
   dst_tensors->clear();
-  auto prim = reinterpret_cast<const schema::v0::Primitive *>(primitive);
+  auto prim = reinterpret_cast<const schema::v0::Primitive *>(node->primitive_);
   auto dst_shape_attr = prim->value_as_BroadcastTo()->dst_shape();
   std::vector<int> dst_shape = std::vector<int>(dst_shape_attr->begin(), dst_shape_attr->end());
   auto dst_shape_tensor = AttrToTensor(dst_shape.data(), dst_shape.size(), true, kNumberTypeInt32, tensor_bufs);

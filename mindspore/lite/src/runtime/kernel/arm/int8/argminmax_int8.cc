@@ -23,8 +23,8 @@ using mindspore::lite::RET_OK;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_FORMAT_ERR;
 using mindspore::lite::RET_PARAM_INVALID;
-using mindspore::schema::PrimitiveType_ArgMax;
-using mindspore::schema::PrimitiveType_ArgMin;
+using mindspore::schema::PrimitiveType_ArgMaxFusion;
+using mindspore::schema::PrimitiveType_ArgMinFusion;
 
 namespace mindspore::kernel {
 int ArgMinMaxInt8CPUKernel::Init() {
@@ -96,6 +96,6 @@ int ArgMinMaxInt8CPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ArgMax, LiteKernelCreator<ArgMinMaxInt8CPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ArgMin, LiteKernelCreator<ArgMinMaxInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ArgMaxFusion, LiteKernelCreator<ArgMinMaxInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_ArgMinFusion, LiteKernelCreator<ArgMinMaxInt8CPUKernel>)
 }  // namespace mindspore::kernel

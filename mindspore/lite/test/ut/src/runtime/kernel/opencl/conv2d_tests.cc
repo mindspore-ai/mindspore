@@ -23,7 +23,7 @@ class TestOpenCL_Conv2D : public CommonTest {};
 namespace {
 // PrimitiveType_Conv2D: src/ops/populate/conv2d_populate.cc
 ConvParameter *CreateParameter(const std::string &attr, ActType act_type) {
-  auto *param = test::CreateParameter<ConvParameter>(schema::PrimitiveType_Conv2D);
+  auto *param = test::CreateParameter<ConvParameter>(schema::PrimitiveType_Conv2DFusion);
   param->act_type_ = act_type;
   sscanf(attr.c_str(),
          "inputNHWC_%dx%dx%dx%d_outputNHWC_%dx%dx%dx%d_kernelHW_%dx%d_strideHW_%dx%d_padTopBottomLeftRight_%dx%dx%dx%d_"

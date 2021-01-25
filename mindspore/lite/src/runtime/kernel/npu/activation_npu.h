@@ -26,9 +26,8 @@ namespace mindspore::kernel {
 class ActivationNPUKernel : public NPUKernel {
  public:
   ActivationNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                      const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
     act_param_ = reinterpret_cast<ActivationParameter *>(parameter);
   }
   ~ActivationNPUKernel() override;

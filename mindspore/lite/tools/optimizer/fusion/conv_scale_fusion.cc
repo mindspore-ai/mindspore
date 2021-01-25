@@ -16,9 +16,7 @@
 
 #include "tools/optimizer/fusion/conv_scale_fusion.h"
 #include <memory>
-#include "src/ops/primitive_c.h"
 #include "src/param_value_lite.h"
-#include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 
@@ -29,9 +27,9 @@ constexpr size_t kScaleBiasIndex = 3;
 constexpr size_t kScaleNoBiasLen = 3;
 constexpr size_t kScaleWithBiasLen = 4;
 bool IsScaleNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Scale;
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim::kPrimScaleFusion);
   }
   return false;
 }

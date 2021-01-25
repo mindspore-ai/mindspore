@@ -31,11 +31,4 @@ TEST_F(TestTfliteParserGather, OpType) {
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Gather) << "wrong Op Type";
 }
 
-TEST_F(TestTfliteParserGather, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsGather(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsGather();
-  ASSERT_EQ(val->axis, 0);
-  ASSERT_EQ(val->batchDims, 0);
-}
-
 }  // namespace mindspore

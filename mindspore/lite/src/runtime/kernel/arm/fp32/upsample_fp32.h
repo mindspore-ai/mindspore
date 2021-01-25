@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class UpsampleCPUKernel : public ResizeCPUKernel {
  public:
   UpsampleCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                    const mindspore::lite::PrimitiveC *primitive)
-      : ResizeCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ResizeCPUKernel(parameter, inputs, outputs, ctx) {}
   ~UpsampleCPUKernel() = default;
 
   int Init() override;

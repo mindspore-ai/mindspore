@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_
 #include <vector>
 #include <string>
-#include "src/ops/primitive_c.h"
 #include "src/lite_kernel.h"
 namespace mindspore::lite {
 class NPUPassUtils {
@@ -50,9 +49,6 @@ class NPUPassUtils {
   static bool IsNhwc2Nchw(const kernel::LiteKernel *kernel);
 
   static bool IsNchw2Nhwc(const kernel::LiteKernel *kernel);
-
- private:
-  static PrimitiveC *CreateTransposePrimitive();
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_PASS_UTILS_H_

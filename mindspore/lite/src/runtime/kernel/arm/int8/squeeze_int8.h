@@ -27,9 +27,8 @@ namespace mindspore::kernel {
 class SqueezeInt8CPUKernel : public LiteKernel {
  public:
   SqueezeInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                       const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     para_ = reinterpret_cast<SqueezeParameter *>(parameter);
   }
   ~SqueezeInt8CPUKernel() override;

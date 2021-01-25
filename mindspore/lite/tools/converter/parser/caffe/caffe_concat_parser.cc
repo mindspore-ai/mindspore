@@ -16,14 +16,14 @@
 
 #include "tools/converter/parser/caffe/caffe_concat_parser.h"
 #include <memory>
+#include "ops/concat.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeConcatParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                  const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::ConcatT> attr = std::make_unique<schema::ConcatT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeConcatParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::Concat();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Concat failed";
     return nullptr;
   }
 
@@ -33,28 +33,21 @@ PrimitiveC *CaffeConcatParser::ParseLitePrimitive(const caffe::LayerParameter &p
     return nullptr;
   }
 
+  int64_t axis = 1;
   if (concatParam.has_concat_dim()) {
     MS_LOG(DEBUG) << "Concat dim , set axis: " << concatParam.concat_dim();
-    auto concat_dim_value = (int32_t)concatParam.concat_dim();
-    if (concat_dim_value < 0) {
-      MS_LOG(ERROR) << "concat_dim value in model is smaller than 0:" << concat_dim_value;
+    axis = concatParam.concat_dim();
+    if (axis < 0) {
+      MS_LOG(ERROR) << "concat_dim value in model is smaller than 0:" << axis;
       return nullptr;
     }
-    attr->axis = concat_dim_value;
   } else if (concatParam.has_axis()) {
     MS_LOG(DEBUG) << "set axis: " << concatParam.axis();
-    auto tmpInt = (int32_t)concatParam.axis();
-    attr->axis = tmpInt;
-  } else {
-    MS_LOG(DEBUG) << "by default, set axis = 1";
-    attr->axis = 1;
+    axis = concatParam.axis();
   }
-  attr->n = proto.bottom_size();
+  primitive_c->set_axis(axis);
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Concat;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeConcatParser("Concat", new CaffeConcatParser());

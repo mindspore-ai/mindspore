@@ -43,7 +43,7 @@ class ArgMinMaxOpenCLKernel : public OpenCLKernel {
  private:
   void *buff_{nullptr};
   void *ids_{nullptr};
-  GpuTensorInfo im_in_{GpuTensorInfo(nullptr)};
+  GpuTensorInfo im_in_;
   cl_int4 src_size_;
   cl_int4 cus_size_;
   cl_int4 strides_;

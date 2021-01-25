@@ -15,21 +15,23 @@
  */
 #include "tools/optimizer/graph/identity_remove_pass.h"
 #include "mindspore/lite/include/errorcode.h"
-#include "src/ops/primitive_c.h"
 
 namespace mindspore::opt {
+namespace {
+constexpr size_t InputDoubleNum = 2;
+constexpr size_t InputTripleNum = 3;
+}  // namespace
 int RemoveIdentityOpPass::ReplaceIdentity(const AnfNodePtr &anf_node, const FuncGraphManagerPtr &manager) {
   if (!utils::isa<CNodePtr>(anf_node)) {
     MS_LOG(DEBUG) << "anf node is node a cnode.";
     return lite::RET_NO_CHANGE;
   }
-  auto type = opt::GetCNodeType(anf_node);
-  if (type != schema::PrimitiveType_Identity) {
+  if (!CheckPrimitiveType(anf_node, prim::kPrimIdentity)) {
     MS_LOG(DEBUG) << "anf node is not a identity node.";
     return lite::RET_NO_CHANGE;
   }
   auto identity_cnode = anf_node->cast<CNodePtr>();
-  if (identity_cnode->inputs().size() != lite::kDoubleNum) {
+  if (identity_cnode->inputs().size() != InputDoubleNum) {
     MS_LOG(DEBUG) << "The node inputs size is bigger than 1";
     remove_cnode_.insert(anf_node);
     return lite::RET_NO_CHANGE;
@@ -48,17 +50,15 @@ int RemoveIdentityOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const 
     MS_LOG(DEBUG) << "anf node is node a cnode.";
     return lite::RET_NO_CHANGE;
   }
-  auto type = opt::GetCNodeType(anf_node);
-  if (type != schema::PrimitiveType_TupleGetItem) {
+  if (!CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem)) {
     return lite::RET_NO_CHANGE;
   }
   auto cnode = anf_node->cast<CNodePtr>();
-  if (cnode->inputs().size() != 3) {
+  if (cnode->inputs().size() != InputTripleNum) {
     MS_LOG(ERROR) << "TupleGetItem should have 3 inputs, got " << cnode->inputs().size();
     return RET_ERROR;
   }
-  type = opt::GetCNodeType(cnode->input(1));
-  if (type != schema::PrimitiveType_Identity) {
+  if (!CheckPrimitiveType(cnode->input(1), prim::kPrimIdentity)) {
     return lite::RET_NO_CHANGE;
   }
   auto get_item_input_cnode = cnode->input(1)->cast<CNodePtr>();
@@ -67,7 +67,7 @@ int RemoveIdentityOpPass::ReplaceTupleGetItem(const AnfNodePtr &anf_node, const 
     MS_LOG(ERROR) << "TupleGetItem's input 2 is not valuenode";
     return lite::RET_ERROR;
   }
-  int index = lite::CastToInt(index_vnode->cast<ValueNodePtr>()->value()).front();
+  int index = CastToInt(index_vnode->cast<ValueNodePtr>()->value()).front();
   int input_cnode_inputs_size = get_item_input_cnode->inputs().size();
   if ((index + 1) >= input_cnode_inputs_size) {
     MS_LOG(ERROR) << "value node index is out of range.";
@@ -91,11 +91,23 @@ bool RemoveIdentityOpPass::Run(const FuncGraphPtr &func_graph) {
     if (!utils::isa<CNodePtr>(node)) {
       continue;
     }
-    auto type = opt::GetCNodeType(node);
-    if (type == schema::PrimitiveType_Identity) {
+    if (CheckPrimitiveType(node, prim::kPrimIdentity)) {
       status = ReplaceIdentity(node, manager);
-    } else if (type == schema::PrimitiveType_TupleGetItem) {
+    } else if (CheckPrimitiveType(node, prim::kPrimTupleGetItem)) {
       status = ReplaceTupleGetItem(node, manager);
+    } else if (CheckPrimitiveType(node, prim::kPrimIf) || CheckPrimitiveType(node, prim::kPrimWhile)) {
+      auto sub_func_graph = GetValueNode<FuncGraphPtr>(node->cast<CNodePtr>()->input(1));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
+      (void)Run(sub_func_graph);
+      sub_func_graph = GetValueNode<FuncGraphPtr>(node->cast<CNodePtr>()->input(2));
+      if (sub_func_graph == nullptr) {
+        lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+        return false;
+      }
+      (void)Run(sub_func_graph);
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "remove identity pass is failed.";

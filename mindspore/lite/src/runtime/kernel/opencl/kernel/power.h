@@ -33,6 +33,7 @@ class PowerOpenCLKernel : public OpenCLKernel {
 
   int Prepare() override;
   int CheckSpecs() override;
+  int InitWeights() override;
   void SetConstArgs() override;
   void SetGlobalLocal() override;
   int Run() override;
@@ -40,7 +41,6 @@ class PowerOpenCLKernel : public OpenCLKernel {
  private:
   cl_int4 out_shape_{};
   bool broadcast_{false};
-  bool use_fp16_enable_{false};
   float power_{1.0};
   float scale_{0.0};
   float shift_{1.0};

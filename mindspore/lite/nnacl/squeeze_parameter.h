@@ -24,7 +24,8 @@
 typedef struct SqueezeParameter {
   // primitive parameter
   OpParameter op_parameter_;
-  int64_t axis_;
+  int axis_[8];
+  size_t axis_size_;
 
   // shape correlative
   const int *in_shape_;
@@ -33,11 +34,8 @@ typedef struct SqueezeParameter {
   int64_t offset_[SQUEEZE_OFFSET_MAX_SIZE];
   int64_t in_offset_[SQUEEZE_OFFSET_MAX_SIZE];
   int input_dim_;
-
   // other parameter
   SqueezeQuantArg quant_arg;
-  int thread_count_;
-  int thread_id_;
 } SqueezeParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_SQUEEZE_PARAMETER_H_

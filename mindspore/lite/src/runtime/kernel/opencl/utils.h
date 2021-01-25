@@ -68,6 +68,9 @@ std::vector<int> GetNHWCShape(const std::vector<int> &tensor_shape);
 
 std::vector<size_t> GetImage2dShapeFromNHWC(const std::vector<int> &tensor_shape, schema::Format format);
 
+int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tensor_name, lite::Tensor *tensor,
+                         TypeId expect_data_type, const std::vector<int> &expect_shape);
+
 template <class T1, class T2>
 void PackNCHWToNC4HW4(void *src, void *dst, int batch, int plane, int channel, const std::function<T2(T1)> &to_dtype) {
   MS_ASSERT(src);

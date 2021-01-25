@@ -19,136 +19,118 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/fusion/add_fusion.h"
+#include "ops/fusion/div_fusion.h"
+#include "ops/greater.h"
+#include "ops/greater_equal.h"
+#include "ops/less.h"
+#include "ops/less_equal.h"
+#include "ops/equal.h"
+#include "ops/maximum.h"
+#include "ops/minimum.h"
+#include "ops/fusion/mul_fusion.h"
+#include "ops/not_equal.h"
+#include "ops/fusion/sub_fusion.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFArithmeticParser::Parse(const tensorflow::NodeDef &tf_op,
-                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-                                 PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF ArithmeticParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
+ops::PrimitiveC *TFArithmeticParser::Parse(const tensorflow::NodeDef &tf_op,
+                                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                           std::vector<std::string> *inputs, int *output_size) {
+  *output_size = 1;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
   }
 
   if (tf_op.op() == "Add" || tf_op.op() == "AddV2") {
-    auto attr = std::make_unique<schema::AddT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::AddFusion;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new AddFusion failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_Add;
-    primitive->value.value = attr.release();
+    return primitive_c;
   } else if (tf_op.op() == "Sub") {
-    auto attr = std::make_unique<schema::SubT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::SubFusion;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new SubFusion failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_Sub;
-    primitive->value.value = attr.release();
+    return primitive_c;
   } else if (tf_op.op() == "Mul") {
-    auto attr = std::make_unique<schema::MulT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::MulFusion;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new MulFusion failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_Mul;
-    primitive->value.value = attr.release();
+    return primitive_c;
   } else if (tf_op.op() == "Div" || tf_op.op() == "RealDiv") {
-    auto attr = std::make_unique<schema::DivT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::DivFusion;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new DivFusion failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_Div;
-    primitive->value.value = attr.release();
+    return primitive_c;
   } else if (tf_op.op() == "Maximum") {
-    auto attr = std::make_unique<schema::MaximumT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::Maximum;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new Maximum failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_Maximum;
-    primitive->value.value = attr.release();
+    return primitive_c;
   } else if (tf_op.op() == "Minimum") {
-    auto attr = std::make_unique<schema::MinimumT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::Minimum;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new Minimum failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_Minimum;
-    primitive->value.value = attr.release();
+    return primitive_c;
   } else if (tf_op.op() == "Greater") {
-    auto attr = std::make_unique<schema::GreaterT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::Greater;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new Greater failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_Greater;
-    primitive->value.value = attr.release();
+    return primitive_c;
   } else if (tf_op.op() == "GreaterEqual") {
-    auto attr = std::make_unique<schema::GreaterEqualT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::GreaterEqual;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new GreaterEqual failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_GreaterEqual;
-    primitive->value.value = attr.release();
+    return primitive_c;
   } else if (tf_op.op() == "Less") {
-    auto attr = std::make_unique<schema::LessT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::Less;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new Less failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_Less;
-    primitive->value.value = attr.release();
+    return primitive_c;
   } else if (tf_op.op() == "LessEqual") {
-    auto attr = std::make_unique<schema::LessEqualT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::LessEqual;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new LessEqual failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_LessEqual;
-    primitive->value.value = attr.release();
+    return primitive_c;
   } else if (tf_op.op() == "Equal") {
-    auto attr = std::make_unique<schema::EqualT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::Equal;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new Equal failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_Equal;
-    primitive->value.value = attr.release();
+    return primitive_c;
   } else if (tf_op.op() == "NotEqual") {
-    auto attr = std::make_unique<schema::NotEqualT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new attr failed";
-      return RET_NULL_PTR;
+    auto primitive_c = new (std::nothrow) ops::NotEqual;
+    if (primitive_c == nullptr) {
+      MS_LOG(ERROR) << "new NotEqual failed";
+      return nullptr;
     }
-    primitive->value.type = schema::PrimitiveType_NotEqual;
-    primitive->value.value = attr.release();
+    return primitive_c;
   }
-
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
-
-  *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  if (status != RET_OK) {
-    return status;
-  }
-  status = AddOpInput(tf_op, 1, inputs);
-  return status;
+  return nullptr;
 }
+
 TFNodeRegistrar g_tfAddParser("Add", new TFArithmeticParser());
 TFNodeRegistrar g_tfAddV2Parser("AddV2", new TFArithmeticParser());
 TFNodeRegistrar g_tfSubParser("Sub", new TFArithmeticParser());

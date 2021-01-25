@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/p_relu.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/prelu_parameter.h"
 
 namespace mindspore {
 namespace lite {
 
-OpParameter *PopulatePReLUParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = reinterpret_cast<mindspore::lite::PReLU *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  PReluParameter *prelu_param = reinterpret_cast<PReluParameter *>(malloc(sizeof(PReluParameter)));
-  if (prelu_param == nullptr) {
+OpParameter *PopulatePReLUParameter(const void *prim) {
+  PReluParameter *param = reinterpret_cast<PReluParameter *>(malloc(sizeof(PReluParameter)));
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc PReluParameter failed.";
     return nullptr;
   }
-  memset(prelu_param, 0, sizeof(PReluParameter));
-  prelu_param->op_parameter_.type_ = primitive->Type();
-  prelu_param->channelShared = param->GetChannelShared();
-  return reinterpret_cast<OpParameter *>(prelu_param);
+  memset(param, 0, sizeof(PReluParameter));
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_PReLUFusion();
+  param->op_parameter_.type_ = primitive->value_type();
+  param->channelShared = value->channel_shared();
+  return reinterpret_cast<OpParameter *>(param);
 }
-Registry PReLUParameterRegistry(schema::PrimitiveType_PReLU, PopulatePReLUParameter);
-
+Registry PReLUParameterRegistry(schema::PrimitiveType_PReLUFusion, PopulatePReLUParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

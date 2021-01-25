@@ -15,17 +15,12 @@
  */
 
 #include "src/runtime/kernel/arm/fp32/convolution_depthwise_indirect_fp32.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_INFER_INVALID;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
 ConvolutionDepthwiseIndirectCPUKernel::~ConvolutionDepthwiseIndirectCPUKernel() {
@@ -68,17 +63,18 @@ int ConvolutionDepthwiseIndirectCPUKernel::InitWeightBias() {
                                     weight_tensor->Batch());
 #endif
 
-  auto bias_tensor = in_tensors_[kBiasIndex];
   bias_data_ = reinterpret_cast<float *>(malloc(batch_flag * div_flag * sizeof(float)));
   if (bias_data_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
   }
 
-  memset(bias_data_, 0, batch_flag * div_flag * sizeof(float));
   if (in_tensors_.size() == kInputSize2) {
+    auto bias_tensor = in_tensors_[kBiasIndex];
     auto ori_bias = reinterpret_cast<float *>(bias_tensor->MutableData());
     memcpy(bias_data_, ori_bias, bias_tensor->ElementsNum() * sizeof(float));
+  } else {
+    memset(bias_data_, 0, batch_flag * div_flag * sizeof(float));
   }
 
   // malloc zero ptr

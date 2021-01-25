@@ -25,12 +25,14 @@ typedef struct LayerNormParameter {
   OpParameter op_parameter_;
   float epsilon_;
   enum ElementwiseMode elementwise_mode_;
+  bool elementwise_affine_;
   // shape correlative
   int normalized_shape_[8];
   int normalized_dims_;
   // other parameter
   int thread_count_;
   int thread_outsize_;
+  int begin_norm_axis_;
 } LayerNormParameter;
 
 typedef struct LayerNormQuantArg {

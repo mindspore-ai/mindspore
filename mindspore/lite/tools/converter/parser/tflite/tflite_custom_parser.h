@@ -23,48 +23,38 @@
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
-namespace mindspore::lite {
+namespace mindspore {
+namespace lite {
 class TfliteCustomParser : public TfliteNodeParser {
  public:
   TfliteCustomParser() : TfliteNodeParser("Custom") {}
 
-  PrimitiveC *ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 
-  static STATUS DetectPostProcess(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                  const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static ops::PrimitiveC *DetectPostProcess(const std::vector<uint8_t> &custom_attr,
+                                            const std::unique_ptr<tflite::OperatorT> &tflite_op);
 
-  static STATUS AudioSpectrogram(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                 const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static ops::PrimitiveC *AudioSpectrogram(const std::vector<uint8_t> &custom_attr);
 
-  static STATUS Mfcc(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                     const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static ops::PrimitiveC *Mfcc(const std::vector<uint8_t> &custom_attr);
 
-  static STATUS Predict(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                        const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static ops::PrimitiveC *Predict(const std::vector<uint8_t> &custom_attr);
 
-  static STATUS Normalize(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                          const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static ops::PrimitiveC *Normalize();
 
-  static STATUS ExtractFeatures(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                                const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static ops::PrimitiveC *ExtractFeatures();
 
-  STATUS Rfft(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-              const std::unique_ptr<tflite::OperatorT> &tflite_op, const std::unique_ptr<tflite::ModelT> &tflite_model,
-              const std::unique_ptr<tflite::SubGraphT> &tflite_subgraph);
+  ops::PrimitiveC *Rfft(const std::vector<uint8_t> &custom_attr, const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                        const std::unique_ptr<tflite::ModelT> &tflite_model);
 
-  static STATUS FftReal(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                        const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static ops::PrimitiveC *FftReal();
 
-  static STATUS FftImag(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                        const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static ops::PrimitiveC *FftImag();
 
-  static STATUS Identity(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                         const std::unique_ptr<tflite::OperatorT> &tflite_op);
-
-  static STATUS BatchMatMul(const std::vector<uint8_t> &custom_attr, schema::CNodeT *op,
-                            const std::unique_ptr<tflite::OperatorT> &tflite_op);
+  static ops::PrimitiveC *Identity();
 };
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_CUSTOM_PARSER_H

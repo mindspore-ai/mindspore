@@ -22,8 +22,8 @@
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include "schema/model_generated.h"
 
-using mindspore::schema::PrimitiveType_Add;
-using mindspore::schema::PrimitiveType_Div;
+using mindspore::schema::PrimitiveType_AddFusion;
+using mindspore::schema::PrimitiveType_DivFusion;
 using mindspore::schema::PrimitiveType_Equal;
 using mindspore::schema::PrimitiveType_FloorDiv;
 using mindspore::schema::PrimitiveType_FloorMod;
@@ -36,11 +36,11 @@ using mindspore::schema::PrimitiveType_LogicalOr;
 using mindspore::schema::PrimitiveType_Maximum;
 using mindspore::schema::PrimitiveType_Minimum;
 using mindspore::schema::PrimitiveType_Mod;
-using mindspore::schema::PrimitiveType_Mul;
+using mindspore::schema::PrimitiveType_MulFusion;
 using mindspore::schema::PrimitiveType_NotEqual;
 using mindspore::schema::PrimitiveType_RealDiv;
 using mindspore::schema::PrimitiveType_SquaredDifference;
-using mindspore::schema::PrimitiveType_Sub;
+using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore::kernel {
 class ArithmeticCPUKernel : public LiteKernel {
@@ -54,9 +54,8 @@ class ArithmeticCPUKernel : public LiteKernel {
 
  public:
   ArithmeticCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                      const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), thread_count_(ctx->thread_num_) {
+                      const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx), thread_count_(ctx->thread_num_) {
     arithmeticParameter_ = reinterpret_cast<ArithmeticParameter *>(parameter);
     InitRunFunction();
   }

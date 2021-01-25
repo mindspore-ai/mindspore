@@ -15,6 +15,7 @@
  */
 
 #include "src/runtime/kernel/arm/int8/deconvolution_int8.h"
+#include "src/runtime/kernel/arm/int8/deconvolution_depthwise_int8.h"
 #include "src/runtime/runtime_api.h"
 #include "src/common/utils.h"
 #include "src/runtime/kernel/arm/int8/opt_op_handler.h"
@@ -24,7 +25,7 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_DeConv2D;
+using mindspore::schema::PrimitiveType_Conv2dTransposeFusion;
 
 namespace mindspore::kernel {
 DeConvInt8CPUKernel::~DeConvInt8CPUKernel() {
@@ -278,26 +279,37 @@ int DeConvInt8CPUKernel::Run() {
 }
 
 kernel::LiteKernel *CpuDeConvInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                               const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_DeConv2D);
-  auto kernel = new (std::nothrow) kernel::DeConvInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+                                               const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
+                                               const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+  MS_ASSERT(op_parameter != nullptr);
+  MS_ASSERT(desc.type == schema::PrimitiveType_Conv2dTransposeFusion);
+
+  auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
+  kernel::LiteKernel *kernel = nullptr;
+
+  if (conv_param->group_ == 1) {
+    kernel = new (std::nothrow) kernel::DeConvInt8CPUKernel(op_parameter, inputs, outputs, ctx);
+  } else if (conv_param->group_ == conv_param->input_channel_ && conv_param->group_ == conv_param->output_channel_) {
+    kernel = new (std::nothrow) kernel::DeconvolutionDepthwiseInt8CPUKernel(op_parameter, inputs, outputs, ctx);
+  } else {
+    MS_LOG(ERROR) << "deconv do not support group deconv!";
+    kernel = nullptr;
+  }
+
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
-    free(opParameter);
+    free(op_parameter);
     return nullptr;
   }
   auto ret = kernel->Init();
   if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
+    MS_LOG(ERROR) << "Init kernel failed, name: " << op_parameter->name_ << ", type: "
+                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(op_parameter->type_));
     delete kernel;
     return nullptr;
   }
   return kernel;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DeConv2D, CpuDeConvInt8KernelCreator)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Conv2dTransposeFusion, CpuDeConvInt8KernelCreator)
 }  // namespace mindspore::kernel

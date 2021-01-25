@@ -61,7 +61,7 @@ TEST_F(TestSkipGramFp32, ElTest) {
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::SkipGramCPUKernel *el =
-    new kernel::SkipGramCPUKernel(reinterpret_cast<OpParameter *>(skip_gram_param_), inputs_, outputs_, ctx, nullptr);
+    new kernel::SkipGramCPUKernel(reinterpret_cast<OpParameter *>(skip_gram_param_), inputs_, outputs_, ctx);
 
   el->Init();
   el->Run();

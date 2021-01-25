@@ -24,7 +24,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Pad;
+using mindspore::schema::PrimitiveType_PadFusion;
 
 namespace mindspore::kernel {
 int PadFp16CPUKernel::RunImpl(int task_id) {
@@ -91,5 +91,5 @@ void PadFp16CPUKernel::FreeInputAndOutput() {
   }
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Pad, LiteKernelCreator<PadFp16CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_PadFusion, LiteKernelCreator<PadFp16CPUKernel>)
 }  // namespace mindspore::kernel

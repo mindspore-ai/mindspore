@@ -27,7 +27,7 @@ class OnnxConcatParser : public OnnxNodeParser {
   OnnxConcatParser() : OnnxNodeParser("Concat") {}
   ~OnnxConcatParser() override = default;
 
-  lite::PrimitiveC *ParseLitePrimitive(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore

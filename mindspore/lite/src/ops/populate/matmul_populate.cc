@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/matmul.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/matmul_parameter.h"
 
 namespace mindspore {
 namespace lite {
 
-OpParameter *PopulateMatMulParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto param = reinterpret_cast<mindspore::lite::MatMul *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+OpParameter *PopulateMatMulParameter(const void *prim) {
   MatMulParameter *matmul_param = reinterpret_cast<MatMulParameter *>(malloc(sizeof(MatMulParameter)));
   if (matmul_param == nullptr) {
     MS_LOG(ERROR) << "malloc MatMulParameter failed.";
     return nullptr;
   }
   memset(matmul_param, 0, sizeof(MatMulParameter));
-  matmul_param->op_parameter_.type_ = primitive->Type();
-  matmul_param->b_transpose_ = param->GetTransposeB();
-  matmul_param->a_transpose_ = param->GetTransposeA();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_MatMul();
+  matmul_param->op_parameter_.type_ = primitive->value_type();
+  matmul_param->b_transpose_ = value->transpose_b();
+  matmul_param->a_transpose_ = value->transpose_a();
   matmul_param->has_bias_ = false;
   matmul_param->act_type_ = ActType_No;
   return reinterpret_cast<OpParameter *>(matmul_param);
 }
-Registry MatMulParameterRegistry(schema::PrimitiveType_MatMul, PopulateMatMulParameter);
+Registry MatMulParameterRegistry(schema::PrimitiveType_MatMul, PopulateMatMulParameter, SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

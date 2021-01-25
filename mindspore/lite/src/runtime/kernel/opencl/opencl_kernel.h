@@ -77,6 +77,7 @@ void Broadcast2GpuShape(DstT *dst, const SrcT *src, int src_num, DstT default_va
 }
 
 struct GpuTensorInfo {
+  GpuTensorInfo() = default;
   explicit GpuTensorInfo(const lite::Tensor *tensor) {
     if (tensor == nullptr) {
       return;
@@ -156,7 +157,7 @@ class OpenCLKernel : public LiteKernel {
  public:
   OpenCLKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                const std::vector<lite::Tensor *> &outputs)
-      : LiteKernel(parameter, inputs, outputs, nullptr, nullptr) {
+      : LiteKernel(parameter, inputs, outputs, nullptr) {
     ocl_runtime_ = ocl_runtime_wrap_.GetInstance();
   }
   ~OpenCLKernel() override = default;
@@ -219,8 +220,7 @@ class OpenCLKernel : public LiteKernel {
 template <class T>
 kernel::LiteKernel *OpenCLKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                         const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                        const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                        const mindspore::lite::PrimitiveC *primitive) {
+                                        const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
   auto *kernel = new (std::nothrow) T(reinterpret_cast<OpParameter *>(opParameter), inputs, outputs);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel " << opParameter->name_ << "is nullptr.";

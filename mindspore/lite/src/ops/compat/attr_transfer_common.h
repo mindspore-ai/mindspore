@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@
 #include "ir/dtype/type_id.h"
 #include "src/tensor.h"
 #include "include/errorcode.h"
-#include "schema/model_v0_generated.h"
 #include "src/common/common.h"
 #include "src/ops/compat/compat_register.h"
 

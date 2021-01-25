@@ -28,7 +28,7 @@ class MakeTupleCPUKernel : public LiteKernel {
   explicit MakeTupleCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                               const lite::Primitive *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param = parameter;
   }
   ~MakeTupleCPUKernel() override = default;

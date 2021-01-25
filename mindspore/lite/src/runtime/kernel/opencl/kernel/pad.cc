@@ -29,14 +29,14 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::schema::PaddingMode_CONSTANT;
-using mindspore::schema::PrimitiveType_Pad;
+using mindspore::schema::PrimitiveType_PadFusion;
 
 namespace mindspore::kernel {
 
 int PadOpenCLKernel::CheckSpecs() {
   auto param = reinterpret_cast<PadParameter *>(op_parameter_);
   MS_ASSERT(param);
-  if (in_tensors_.size() != 1) {
+  if (in_tensors_.size() != 2) {
     MS_LOG(ERROR) << "Pad only support 1 input Tensor.";
     return RET_ERROR;
   }
@@ -110,6 +110,6 @@ int PadOpenCLKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Pad, OpenCLKernelCreator<PadOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Pad, OpenCLKernelCreator<PadOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_PadFusion, OpenCLKernelCreator<PadOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_PadFusion, OpenCLKernelCreator<PadOpenCLKernel>)
 }  // namespace mindspore::kernel

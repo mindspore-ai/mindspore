@@ -69,20 +69,6 @@ TypeId TensorFlowUtils::ParseAttrDataType(const tensorflow::NodeDef &node_def, c
   return GetTFDataType(attr_value.type());
 }
 
-schema::Format TensorFlowUtils::ParseNodeFormat(const tensorflow::NodeDef &node_def) {
-  tensorflow::AttrValue attr_value;
-  if (!FindAttrValue(node_def, "data_format", &attr_value)) {
-    MS_LOG(ERROR) << "Find attr data_format failed";
-    return schema::Format_NUM_OF_FORMAT;
-  }
-  if (attr_value.s() == "NHWC") {
-    return schema::Format_NHWC;
-  } else if (attr_value.s() == "NCHW") {
-    return schema::Format_NCHW;
-  }
-  return schema::Format_NUM_OF_FORMAT;
-}
-
 bool TensorFlowUtils::DecodeInt64(std::string_view *str_view, uint64_t *value) {
   if (str_view == nullptr || value == nullptr) {
     *value = 0;
@@ -140,6 +126,18 @@ std::string TensorFlowUtils::GetNodeName(const std::string &input_name) {
     return input_splits[0];
   }
   return input_name;
+}
+
+mindspore::Format TensorFlowUtils::ParseNodeFormat(const tensorflow::NodeDef &node_def) {
+  tensorflow::AttrValue attr_value;
+  if (!FindAttrValue(node_def, "data_format", &attr_value)) {
+    MS_LOG(ERROR) << "Find attr data_format failed";
+    return mindspore::Format::NCHW;
+  }
+  if (attr_value.s() == "NHWC") {
+    return mindspore::Format::NHWC;
+  }
+  return mindspore::Format::NCHW;
 }
 }  // namespace lite
 }  // namespace mindspore

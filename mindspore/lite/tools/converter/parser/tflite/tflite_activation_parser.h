@@ -23,14 +23,64 @@
 #include "tools/converter/parser/tflite/tflite_node_parser.h"
 #include "tools/converter/parser/tflite/tflite_node_parser_registry.h"
 
-namespace mindspore::lite {
-class TfliteActivationParser : public TfliteNodeParser {
+namespace mindspore {
+namespace lite {
+class TfliteReluParser : public TfliteNodeParser {
  public:
-  TfliteActivationParser() : TfliteNodeParser("node_name") {}
+  TfliteReluParser() : TfliteNodeParser("Relu") {}
 
-  lite::PrimitiveC *ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                       const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
-}  // namespace mindspore::lite
+
+class TfliteRelu6Parser : public TfliteNodeParser {
+ public:
+  TfliteRelu6Parser() : TfliteNodeParser("Relu6") {}
+
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+};
+
+class TfliteLeakyReluParser : public TfliteNodeParser {
+ public:
+  TfliteLeakyReluParser() : TfliteNodeParser("LeakyRelu") {}
+
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+};
+
+class TflitePReLUParser : public TfliteNodeParser {
+ public:
+  TflitePReLUParser() : TfliteNodeParser("PReLU") {}
+
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+};
+
+class TfliteTanhParser : public TfliteNodeParser {
+ public:
+  TfliteTanhParser() : TfliteNodeParser("Tanh") {}
+
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+};
+
+class TfliteHardSwishParser : public TfliteNodeParser {
+ public:
+  TfliteHardSwishParser() : TfliteNodeParser("HardSwish") {}
+
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+};
+
+class TfliteLogisticParser : public TfliteNodeParser {
+ public:
+  TfliteLogisticParser() : TfliteNodeParser("Logistic") {}
+
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+};
+}  // namespace lite
+}  // namespace mindspore
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TFLITE_ACTIVATION_PARSER_H

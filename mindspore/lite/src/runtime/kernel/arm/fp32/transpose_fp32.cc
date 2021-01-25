@@ -24,8 +24,6 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::RET_OP_EXECUTE_FAILURE;
-using mindspore::schema::PrimitiveType_Nchw2Nhwc;
-using mindspore::schema::PrimitiveType_Nhwc2Nchw;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
@@ -39,9 +37,22 @@ int TransposeCPUKernel::Init() {
 
 int TransposeCPUKernel::ReSize() {
   TransposeParameter *param = reinterpret_cast<TransposeParameter *>(op_parameter_);
+  if (in_tensors_.size() == 2) {
+    param->num_axes_ = in_tensors_.at(1)->ElementsNum();
+  }
   if (in_tensors_.at(kInputIndex)->shape().size() != static_cast<size_t>(param->num_axes_)) {
     return RET_OK;
   }
+  // get perm data
+  MS_ASSERT(in_tensors_.size() == 2);
+  auto perm_tensor = in_tensors_.at(1);
+  int *perm_data = reinterpret_cast<int *>(perm_tensor->data_c());
+  MS_ASSERT(perm_data != nullptr);
+  for (int i = 0; i < param->num_axes_; ++i) {
+    param->perm_[i] = perm_data[i];
+  }
+
+  // stride param
   auto &inTensor = in_tensors_.front();
   auto &outTensor = out_tensors_.front();
   auto in_shape = inTensor->shape();
@@ -75,7 +86,7 @@ TransposeCPUKernel::~TransposeCPUKernel() {
 }
 
 int TransposeCPUKernel::Run() {
-  MS_ASSERT(in_tensors_.size() == 1 || in_tensors_.size() == 2);
+  MS_ASSERT(in_tensors_.size() == 2);
   MS_ASSERT(out_tensors_.size() == 1);
   auto &in_tensor = in_tensors_.front();
   auto &out_tensor = out_tensors_.front();
@@ -155,8 +166,4 @@ int TransposeCPUKernel::Run() {
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Transpose, LiteKernelCreator<TransposeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Transpose, LiteKernelCreator<TransposeCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Nchw2Nhwc, LiteKernelCreator<TransposeCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Nchw2Nhwc, LiteKernelCreator<TransposeCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Nhwc2Nchw, LiteKernelCreator<TransposeCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Nhwc2Nchw, LiteKernelCreator<TransposeCPUKernel>)
 }  // namespace mindspore::kernel

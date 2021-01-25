@@ -20,7 +20,6 @@
 #include "src/kernel_registry.h"
 #include "src/runtime/kernel/arm/int8/add_int8.h"
 #include "src/runtime/runtime_api.h"
-#include "src/ops/arithmetic.h"
 
 using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
@@ -95,8 +94,25 @@ int ArithmeticCPUKernel::InitBroadCastCase() {
 }
 
 void ArithmeticCPUKernel::InitRunFunction() {
-  switch (op_parameter_->type_) {
-    case PrimitiveType_Mul:
+  auto primitive_type = arithmeticParameter_->op_parameter_.type_;
+  if (primitive_type == schema::PrimitiveType_Eltwise) {
+    switch (arithmeticParameter_->eltwise_mode_) {
+      case schema::EltwiseMode_PROD:
+        primitive_type = schema::PrimitiveType_MulFusion;
+        break;
+      case schema::EltwiseMode_SUM:
+        primitive_type = schema::PrimitiveType_AddFusion;
+        break;
+      case schema::EltwiseMode_MAXIMUM:
+        primitive_type = schema::PrimitiveType_Maximum;
+        break;
+      default:
+        MS_LOG(ERROR) << "Eltwise mode not support, mode:" << arithmeticParameter_->eltwise_mode_;
+        return;
+    }
+  }
+  switch (primitive_type) {
+    case PrimitiveType_MulFusion:
       switch (arithmeticParameter_->activation_type_) {
         case schema::ActivationType_RELU:
           arithmetic_run_ = ElementMulRelu;
@@ -112,7 +128,7 @@ void ArithmeticCPUKernel::InitRunFunction() {
           break;
       }
       break;
-    case PrimitiveType_Add:
+    case PrimitiveType_AddFusion:
       switch (arithmeticParameter_->activation_type_) {
         case schema::ActivationType_RELU:
           arithmetic_run_ = ElementAddRelu;
@@ -126,7 +142,7 @@ void ArithmeticCPUKernel::InitRunFunction() {
           break;
       }
       break;
-    case PrimitiveType_Sub:
+    case PrimitiveType_SubFusion:
       switch (arithmeticParameter_->activation_type_) {
         case schema::ActivationType_RELU:
           arithmetic_run_ = ElementSubRelu;
@@ -140,7 +156,7 @@ void ArithmeticCPUKernel::InitRunFunction() {
           break;
       }
       break;
-    case PrimitiveType_Div:
+    case PrimitiveType_DivFusion:
     case PrimitiveType_RealDiv:
       switch (arithmeticParameter_->activation_type_) {
         case schema::ActivationType_RELU:
@@ -203,7 +219,7 @@ void ArithmeticCPUKernel::InitRunFunction() {
 void ArithmeticCPUKernel::InitOptRunFunction() {
   if (arithmeticParameter_->in_elements_num0_ == 1 || arithmeticParameter_->in_elements_num1_ == 1) {
     switch (arithmeticParameter_->op_parameter_.type_) {
-      case PrimitiveType_Mul:
+      case PrimitiveType_MulFusion:
         switch (arithmeticParameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmeticParameter_->broadcasting_ = false;
@@ -222,7 +238,7 @@ void ArithmeticCPUKernel::InitOptRunFunction() {
             break;
         }
         break;
-      case PrimitiveType_Add:
+      case PrimitiveType_AddFusion:
         switch (arithmeticParameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmeticParameter_->broadcasting_ = false;
@@ -239,7 +255,7 @@ void ArithmeticCPUKernel::InitOptRunFunction() {
             break;
         }
         break;
-      case PrimitiveType_Sub:
+      case PrimitiveType_SubFusion:
         switch (arithmeticParameter_->activation_type_) {
           case schema::ActivationType_RELU:
             arithmeticParameter_->broadcasting_ = false;
@@ -255,7 +271,7 @@ void ArithmeticCPUKernel::InitOptRunFunction() {
             break;
         }
         break;
-      case PrimitiveType_Div:
+      case PrimitiveType_DivFusion:
       case PrimitiveType_RealDiv:
         switch (arithmeticParameter_->activation_type_) {
           case schema::ActivationType_RELU:
@@ -291,9 +307,6 @@ void ArithmeticCPUKernel::InitOptRunFunction() {
 }
 
 void ArithmeticCPUKernel::InitParam() {
-  auto arithmetic_lite_primitive = (lite::Arithmetic *)primitive_;
-  arithmeticParameter_->broadcasting_ = arithmetic_lite_primitive->Broadcasting();
-  arithmeticParameter_->ndim_ = arithmetic_lite_primitive->NDims();
   if (in_tensors_[0]->data_type() == kNumberTypeFloat32 || in_tensors_[0]->data_type() == kNumberTypeFloat16) {
     data_type_ = kDataTypeFloat;
   } else if (in_tensors_[0]->data_type() == kNumberTypeBool) {
@@ -301,24 +314,21 @@ void ArithmeticCPUKernel::InitParam() {
   } else {
     data_type_ = kDataTypeInt;
   }
-
-  arithmeticParameter_->in_elements_num0_ = in_tensors_[0]->ElementsNum();
-  arithmeticParameter_->in_elements_num1_ = in_tensors_[1]->ElementsNum();
-  arithmeticParameter_->out_elements_num_ = out_tensors_[0]->ElementsNum();
-  memcpy(arithmeticParameter_->in_shape0_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape0().data(),
-         reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape0().size() * sizeof(int));
-  memcpy(arithmeticParameter_->in_shape1_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape1().data(),
-         reinterpret_cast<const lite::Arithmetic *>(primitive_)->InShape1().size() * sizeof(int));
-  memcpy(arithmeticParameter_->out_shape_, reinterpret_cast<const lite::Arithmetic *>(primitive_)->OutputShape().data(),
-         reinterpret_cast<const lite::Arithmetic *>(primitive_)->OutputShape().size() * sizeof(int));
-
   return;
 }
 
 int ArithmeticCPUKernel::ReSize() {
   InitParam();
+
   InitOptRunFunction();
-  return InitBroadCastCase();
+
+  int ret = InitBroadCastCase();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "InitBroadCastCase failed!";
+    return ret;
+  }
+
+  return RET_OK;
 }
 
 int ArithmeticCPUKernel::BroadcastRun(void *input0, void *input1, void *output, int dim, int out_count,
@@ -474,10 +484,10 @@ void ArithmeticCPUKernel::InitParamInRunTime() {
   ComputeStrides(arithmeticParameter_->in_shape1_, arithmeticParameter_->in_strides1_, arithmeticParameter_->ndim_);
   ComputeStrides(arithmeticParameter_->out_shape_, arithmeticParameter_->out_strides_, arithmeticParameter_->ndim_);
 
-  if (!input0_broadcast_) {
+  if (input0_broadcast_ == false) {
     input0_ptr_ = in_tensors_[0]->data_c();
   }
-  if (!input1_broadcast_) {
+  if (input1_broadcast_ == false) {
     input1_ptr_ = in_tensors_[1]->data_c();
   }
   return;
@@ -493,13 +503,14 @@ int ArithmeticCPUKernel::Run() {
   }
   return RET_OK;
 }
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Mul, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Mul, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Add, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Add, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Sub, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Sub, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Div, LiteKernelCreator<ArithmeticCPUKernel>)
+
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_MulFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_MulFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_AddFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_AddFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SubFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_SubFusion, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DivFusion, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_RealDiv, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Mod, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Mod, LiteKernelCreator<ArithmeticCPUKernel>)
@@ -515,5 +526,5 @@ REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_FloorDiv, LiteKernelCreator<Ari
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_FloorMod, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_SquaredDifference, LiteKernelCreator<ArithmeticCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Eltwise, LiteKernelCreator<ArithmeticCPUKernel>)
-REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Div, LiteKernelCreator<ArithmeticCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_DivFusion, LiteKernelCreator<ArithmeticCPUKernel>)
 }  // namespace mindspore::kernel

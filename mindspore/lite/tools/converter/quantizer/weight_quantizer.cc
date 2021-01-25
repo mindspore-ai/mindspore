@@ -82,7 +82,7 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
       continue;
     }
 
-    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(cnode->input(0));
+    auto primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(cnode->input(0));
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "primitive_c is nullptr";
       return RET_ERROR;
@@ -130,7 +130,9 @@ STATUS WeightQuantizer::DoConvQuantize(const std::list<CNodePtr> &nodes) {
     }
     auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
     abstractTensor->element()->set_type(TypeIdToType(type_id));
-    primitive_c->set_quant_type(schema::QuantType_WeightQuant);
+    auto quant_param_holder = GetCNodeQuantHolder(primitive_c);
+    MS_ASSERT(quant_param_holder != nullptr);
+    quant_param_holder->set_quant_type(schema::QuantType_WeightQuant);
   }
   return RET_OK;
 }
@@ -178,7 +180,7 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
       return RET_ERROR;
     }
 
-    auto primitive_c = GetValueNode<std::shared_ptr<PrimitiveC>>(node->input(0));
+    auto primitive_c = GetValueNode<std::shared_ptr<ops::PrimitiveC>>(node->input(0));
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "primitive_c is nullptr";
       return RET_ERROR;
@@ -208,7 +210,9 @@ STATUS WeightQuantizer::DoMulQuantize(const std::list<CNodePtr> &nodes) {
     }
     auto abstractTensor = utils::cast<abstract::AbstractTensorPtr>(abstractBase);
     abstractTensor->element()->set_type(TypeIdToType(type_id));
-    primitive_c->set_quant_type(schema::QuantType_WeightQuant);
+    auto quant_param_holder = GetCNodeQuantHolder(primitive_c);
+    MS_ASSERT(quant_param_holder != nullptr);
+    quant_param_holder->set_quant_type(schema::QuantType_WeightQuant);
   }
 
   return RET_OK;

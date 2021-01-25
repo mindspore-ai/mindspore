@@ -16,47 +16,52 @@
 
 #include "tools/converter/parser/onnx/onnx_pad_parser.h"
 #include <memory>
+#include <vector>
+#include "ops/fusion/pad_fusion.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxPadParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                    const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx PadParser";
-  auto attr = std::make_unique<schema::PadT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *OnnxPadParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto primitive_c = new (std::nothrow) ops::PadFusion;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new PadFusion failed";
     return nullptr;
   }
 
+  mindspore::PaddingMode paddingMode;
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "pads") {
       const int size = onnx_node_attr.ints_size();
-      attr->paddings.resize(size);
-      for (int i = 0; i < size / 2; ++i) {
-        attr->paddings[i * 2] = static_cast<int32_t>(onnx_node_attr.ints(i));
-        attr->paddings[i * 2 + 1] = static_cast<int32_t>(onnx_node_attr.ints(i + size / 2));
+      std::vector<std::vector<int64_t>> paddings(size / 2, std::vector<int64_t>(2, 0));
+      // begin1, begin2, begin3... end1, end2, end3... to
+      // begin1, end1, begin2, end2, begin3, end3...
+      for (int i = 0; i < size / 2; i++) {
+        paddings[i][0] = static_cast<int64_t>(onnx_node_attr.ints(i));
+        paddings[i][1] = static_cast<int64_t>(onnx_node_attr.ints(i + size / 2));
       }
+      primitive_c->set_paddings(paddings);
+
+      std::vector<std::vector<int32_t>> pads(size / 2, std::vector<int32_t>(2, 0));
+      for (int i = 0; i < size / 2; i++) {
+        pads[i][0] = static_cast<int32_t>(onnx_node_attr.ints(i));
+        pads[i][1] = static_cast<int32_t>(onnx_node_attr.ints(i + size / 2));
+      }
+      primitive_c->AddAttr("pads", MakeValue(pads));
     } else if (attribute_name == "mode") {
       const auto &mode = onnx_node_attr.s();
       if (mode == "constant") {
-        attr->paddingMode = schema::PaddingMode_CONSTANT;
+        paddingMode = mindspore::PaddingMode::CONSTANT;
       } else if (mode == "reflect") {
-        attr->paddingMode = schema::PaddingMode_REFLECT;
+        paddingMode = mindspore::PaddingMode::REFLECT;
       } else if (mode == "edge") {
-        attr->paddingMode = schema::PaddingMode_SYMMETRIC;
+        paddingMode = mindspore::PaddingMode::SYMMETRIC;
       }
+      primitive_c->set_padding_mode(paddingMode);
     }
   }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Pad;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return primitive_c;
 }
 
 OnnxNodeRegistrar g_onnxPadParser("Pad", new OnnxPadParser());

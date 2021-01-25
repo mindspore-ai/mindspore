@@ -15,21 +15,17 @@
  */
 
 #include "src/runtime/kernel/arm/int8/sub_int8.h"
-#include <limits>
-#include <algorithm>
-#include "nnacl/arithmetic_common.h"
-#include "nnacl/quantization/quantize.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "nnacl/arithmetic.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Sub;
+using mindspore::schema::PrimitiveType_SubFusion;
 
 namespace mindspore::kernel {
-
 int SubInt8CPUKernel::Init() {
   lite::Tensor *input0 = in_tensors_.at(0);
   lite::Tensor *input1 = in_tensors_.at(1);
@@ -142,9 +138,9 @@ int SubInt8CPUKernel::Run() {
       context_->allocator->Free(tile0_data_);
       return RET_ERROR;
     }
-    TileDimensionsUint8(static_cast<uint8_t *>(in_tensors_.at(0)->MutableData()),
-                        static_cast<uint8_t *>(in_tensors_.at(1)->MutableData()),
-                        reinterpret_cast<uint8_t *>(tile0_data_), reinterpret_cast<uint8_t *>(tile1_data_), &tile_para);
+    TileDimensionsInt8(static_cast<int8_t *>(in_tensors_.at(0)->data_c()),
+                       static_cast<int8_t *>(in_tensors_.at(1)->data_c()), reinterpret_cast<int8_t *>(tile0_data_),
+                       reinterpret_cast<int8_t *>(tile1_data_), &tile_para);
   }
   auto ret = ParallelLaunch(this->context_->thread_pool_, SubInt8Run, this, op_parameter_->thread_num_);
   if (broadcast_) {
@@ -157,35 +153,5 @@ int SubInt8CPUKernel::Run() {
   return ret;
 }
 
-kernel::LiteKernel *CpuSubInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                            const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                            const lite::InnerContext *ctx, const KernelKey &desc,
-                                            const mindspore::lite::PrimitiveC *primitive) {
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "parameter is nullptr";
-    return nullptr;
-  }
-  if (ctx == nullptr) {
-    MS_LOG(ERROR) << "ctx is nullptr";
-    free(parameter);
-    return nullptr;
-  }
-  MS_ASSERT(desc.type == PrimitiveType_Sub);
-  auto *kernel = new (std::nothrow) SubInt8CPUKernel(parameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    free(parameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << parameter->name_
-                  << ", type: " << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(parameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Sub, LiteKernelCreator<SubInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_SubFusion, LiteKernelCreator<SubInt8CPUKernel>)
 }  // namespace mindspore::kernel

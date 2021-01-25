@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,133 +14,49 @@
  * limitations under the License.
  */
 #include "tools/optimizer/graph/onnx_inputs_adjust_pass.h"
+#include <algorithm>
 #include <vector>
 #include <string>
 #include <functional>
 #include <memory>
-#include <algorithm>
-#include "mindspore/lite/include/errorcode.h"
-#include "src/ops/primitive_c.h"
+#include "ops/fusion/conv2d_fusion.h"
+#include "ops/fusion/conv2d_transpose_fusion.h"
+#include "include/errorcode.h"
 
 namespace mindspore::opt {
-bool OnnxInputAdjustOpPass::CheckInputs(const CNodePtr &cnode) {
-  if (cnode == nullptr) {
-    MS_LOG(ERROR) << "cnode is nullptr.";
-    return false;
-  }
-  if (std::any_of(cnode->inputs().begin(), cnode->inputs().end(),
-                  [](const AnfNodePtr &anf_node) { return anf_node == nullptr; })) {
-    MS_LOG(ERROR) << "input is nullptr.";
-    return false;
-  }
-  return true;
-}
 
-ParameterPtr OnnxInputAdjustOpPass::BuildParameterNode(const FuncGraphPtr &func_graph, const std::vector<int> &data,
-                                                       const std::string &node_name) {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(data.size() != 0);
-  auto param_node = func_graph->add_parameter();
-  auto type_ptr = TypeIdToType(kNumberTypeInt32);
-  std::vector<int64_t> shape_vector{static_cast<int64_t>(data.size())};
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
-  param_node->set_abstract(abstract_tensor);
-  param_node->set_name(node_name);
-  ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
-  MS_ASSERT(param_value != nullptr);
-  std::vector<int> shape{static_cast<int>(data.size())};
-  param_value->set_tensor_shape(shape);
-  param_value->set_tensor_type(kNumberTypeInt32);
-  param_value->set_format(schema::Format::Format_NCHW);
-  char *default_data = new char[data.size() * sizeof(int)];
-  if (memcpy_s(default_data, data.size() * sizeof(int), data.data(), data.size() * sizeof(int)) != EOK) {
-    MS_LOG(ERROR) << "memcpy data failed.";
-    delete[] default_data;
-    return nullptr;
-  }
-  param_value->SetTensorData(default_data, data.size() * sizeof(int));
-  param_node->set_default_param(param_value);
-  return param_node;
-}
-
-ParameterPtr OnnxInputAdjustOpPass::BuildParameterNode(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
-                                                       const ParamValueLitePtr &param_value) {
-  MS_ASSERT(func_graph != nullptr);
+STATUS OnnxInputAdjustOpPass::AddAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode, int input_num,
+                                             const std::string &attr_name) {
   MS_ASSERT(cnode != nullptr);
-  MS_ASSERT(param_value != nullptr);
-  auto param_node = func_graph->add_parameter();
-  auto shape = param_value->tensor_shape();
-  std::vector<int64_t> shape_vector;
-  std::transform(shape.begin(), shape.end(), std::back_inserter(shape_vector),
-                 [](const int &val) { return static_cast<int64_t>(val); });
-  auto data_type = param_value->tensor_type() == kNumberTypeInt64 ? kNumberTypeInt32 : param_value->tensor_type();
-  auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(TypeIdToType(data_type), shape_vector);
-  param_node->set_abstract(abstract_tensor);
-  if (utils::isa<CNodePtr>(node)) {
-    param_node->set_name(node->cast<CNodePtr>()->fullname_with_scope());
-  } else if (utils::isa<ParameterPtr>(node)) {
-    param_node->set_name(node->cast<ParameterPtr>()->name());
+  if (!CheckInputs(cnode)) {
+    MS_LOG(ERROR) << "input is invalid.";
+    return lite::RET_INPUT_TENSOR_ERROR;
   }
-  ParamValueLitePtr param_value_new = std::make_shared<ParamValueLite>();
-  param_value_new->set_format(param_value->format());
-  param_value_new->set_tensor_shape(shape);
-  size_t data_count = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
-  if (param_value->tensor_size() == 0) {
-    if (param_value->tensor_type() == kNumberTypeInt64) {
-      param_value_new->set_tensor_type(kNumberTypeInt32);
-    }
-    param_node->set_default_param(param_value_new);
-    return param_node;
-  }
-  if (param_value->tensor_type() == kNumberTypeInt64) {
-    param_value_new->set_tensor_type(kNumberTypeInt32);
-    auto *tensor_data = new (std::nothrow) int[data_count];
-    if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << "new data failed";
-      return nullptr;
-    }
-    auto *origin_data = reinterpret_cast<int64_t *>(param_value->tensor_addr());
-    for (size_t i = 0; i < data_count; ++i) {
-      if (origin_data[i] > static_cast<int64_t>(INT32_MAX) || origin_data[i] < static_cast<int64_t>(INT32_MIN)) {
-        MS_LOG(WARNING) << "int64 data " << origin_data[i] << "too big to fit into int32";
-        tensor_data[i] = origin_data[i] > 0 ? INT32_MAX : INT32_MIN;
-      } else {
-        tensor_data[i] = static_cast<int>(origin_data[i]);
-      }
-    }
-    param_value_new->SetTensorData(tensor_data, data_count * sizeof(int32_t));
-  } else {
-    param_value_new->set_tensor_type(param_value->tensor_type());
-    char *tensor_data = new (std::nothrow) char[param_value->tensor_size()];
-    if (tensor_data == nullptr) {
-      MS_LOG(ERROR) << "new data failed";
-      return nullptr;
-    }
-    if (memcpy_s(tensor_data, param_value->tensor_size(), param_value->tensor_addr(), param_value->tensor_size()) !=
-        RET_OK) {
-      MS_LOG(ERROR) << "memcpy data failed.";
-      delete[] tensor_data;
-      return nullptr;
-    }
-    param_value_new->SetTensorData(tensor_data, param_value->tensor_size());
-  }
-  param_node->set_default_param(param_value_new);
-  return param_node;
-}
-
-STATUS OnnxInputAdjustOpPass::StridedSliceAttrToInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode,
-                                                      const std::string &attr_name) {
-  MS_ASSERT(func_graph != nullptr);
-  MS_ASSERT(cnode != nullptr);
-  auto inputs = cnode->inputs();
-  auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(cnode->input(0));
+  auto primitive_c = GetValueNode<PrimitiveCPtr>(cnode->input(0));
+  MS_LOG(INFO) << "supplement " << attr_name << " attr to input";
   auto value_ptr = primitive_c->GetAttr(attr_name);
-  MS_ASSERT(value_ptr != nullptr);
-  std::vector<int> value_data = GetValue<std::vector<int>>(value_ptr);
-  auto param_node = BuildParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
-  inputs.push_back(param_node);
-  cnode->set_inputs(inputs);
-  primitive_c->EraseAttr(attr_name);
+  auto inputs = cnode->inputs();
+  if (static_cast<int>(inputs.size()) > input_num) {
+    if (value_ptr != nullptr) {
+      primitive_c->EraseAttr(attr_name);
+    }
+    MS_LOG(DEBUG) << "input num has been meet, which is " << inputs.size();
+    return lite::RET_OK;
+  } else if (static_cast<int>(inputs.size()) < input_num) {
+    MS_LOG(ERROR) << "input num is invalid.";
+    return lite::RET_ERROR;
+  }
+  if (value_ptr != nullptr) {
+    auto value_data = GetValue<std::vector<int32_t>>(value_ptr);
+    auto param_node = BuildIntVecParameterNode(func_graph, value_data, cnode->fullname_with_scope() + "_" + attr_name);
+    inputs.push_back(param_node);
+    cnode->set_inputs(inputs);
+    primitive_c->EraseAttr(attr_name);
+  } else {
+    MS_LOG(ERROR) << "there is no attr :" << attr_name;
+    return lite::RET_ERROR;
+  }
+
   return lite::RET_OK;
 }
 
@@ -187,123 +103,14 @@ STATUS OnnxInputAdjustOpPass::ReplaceInt64ParameterNode(const FuncGraphPtr &func
   return lite::RET_OK;
 }
 
-STATUS OnnxInputAdjustOpPass::AdjustPower(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  if (!CheckInputs(cnode)) {
-    MS_LOG(ERROR) << "input is invalid.";
-    return lite::RET_INPUT_TENSOR_ERROR;
-  }
-  if (cnode->inputs().size() != 3) {
-    MS_LOG(ERROR) << "onnx power inputs is 2, but now is " << cnode->inputs().size() - 1;
-    return lite::RET_ERROR;
-  }
-  auto pow_param = cnode->input(2)->cast<ParameterPtr>();
-  if (pow_param == nullptr || !pow_param->has_default()) {
-    MS_LOG(ERROR) << "pow is from other node, which hasn't been supported.";
-    return lite::RET_NOT_SUPPORT;
-  }
-  auto pow_default = pow_param->default_param()->cast<ParamValueLitePtr>();
-  if (pow_default == nullptr) {
-    MS_LOG(ERROR) << "pow is not a paramValueLite.";
-    return lite::RET_NULL_PTR;
-  }
-  if (std::accumulate(pow_default->tensor_shape().begin(), pow_default->tensor_shape().end(), 1,
-                      std::multiplies<int>()) != 1) {
-    MS_LOG(ERROR) << "the pow element num is bigger than 1, which don't support now.";
-    return lite::RET_NOT_SUPPORT;
-  }
-  if (pow_default->tensor_addr() == nullptr) {
-    MS_LOG(ERROR) << "power's attr pow can't be obtained.";
-    return lite::RET_INVALID_OP_ATTR;
-  }
-  auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(cnode->input(0));
-  if (primitive_c == nullptr || primitive_c->primitiveT() == nullptr ||
-      primitive_c->primitiveT()->value.value == nullptr) {
-    MS_LOG(ERROR) << "get primitive_c failed.";
-    return lite::RET_NULL_PTR;
-  }
-  reinterpret_cast<schema::PowerT *>(primitive_c->primitiveT()->value.value)->power =
-    *reinterpret_cast<float *>(pow_default->tensor_addr());
-  auto inputs = cnode->inputs();
-  inputs.pop_back();
-  cnode->set_inputs(inputs);
-  return lite::RET_OK;
-}
-
-STATUS OnnxInputAdjustOpPass::AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  if (!CheckInputs(cnode)) {
-    MS_LOG(ERROR) << "input is invalid.";
-    return lite::RET_INPUT_TENSOR_ERROR;
-  }
-  if (cnode->inputs().size() == 2) {
-    if (StridedSliceAttrToInput(func_graph, cnode, "starts") != lite::RET_OK ||
-        StridedSliceAttrToInput(func_graph, cnode, "ends") != lite::RET_OK ||
-        StridedSliceAttrToInput(func_graph, cnode, "axes") != lite::RET_OK ||
-        StridedSliceAttrToInput(func_graph, cnode, "steps") != lite::RET_OK) {
-      MS_LOG(ERROR) << "attr to input failed.";
-      return lite::RET_ERROR;
-    }
-  } else if (cnode->inputs().size() < 4) {
-    MS_LOG(ERROR) << "onnx slice's input size need to be larger than 2, now is " << cnode->inputs().size() - 1;
-    return lite::RET_INPUT_TENSOR_ERROR;
-  }
-  int size = 0;
-  for (size_t i = 2; i < cnode->inputs().size(); ++i) {
-    const auto &param_node = cnode->input(2)->cast<ParameterPtr>();
-    if (param_node == nullptr || !param_node->has_default()) {
-      continue;
-    }
-    const auto &default_data = param_node->default_param()->cast<ParamValueLitePtr>();
-    if (default_data == nullptr) {
-      MS_LOG(ERROR) << "this input is not a paramValueLite.";
-      return lite::RET_ERROR;
-    }
-    auto shape = default_data->tensor_shape();
-    size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
-    break;
-  }
-  auto inputs = cnode->inputs();
-  switch (cnode->inputs().size()) {
-    case 4: {
-      std::vector<int> axises;
-      for (int i = 0; i < size; ++i) {
-        axises.push_back(i);
-      }
-      auto new_param_node = BuildParameterNode(func_graph, axises, cnode->fullname_with_scope() + "_axises");
-      if (new_param_node == nullptr) {
-        MS_LOG(ERROR) << "new a parameter node failed.";
-      }
-      inputs.push_back(new_param_node);
-    }
-    case 5: {
-      std::vector<int> steps;
-      for (int i = 0; i < size; ++i) {
-        steps.push_back(1);
-      }
-      auto new_param_node = BuildParameterNode(func_graph, steps, cnode->fullname_with_scope() + "_steps");
-      if (new_param_node == nullptr) {
-        MS_LOG(ERROR) << "new a parameter node failed.";
-      }
-      inputs.push_back(new_param_node);
-      break;
-    }
-    default:
-      MS_LOG(DEBUG) << "no need to adjust.";
-      return lite::RET_NO_CHANGE;
-  }
-  cnode->set_inputs(inputs);
-  return lite::RET_OK;
-}
-
 STATUS OnnxInputAdjustOpPass::AdjustConvOrDeConv(const CNodePtr &cnode) {
   MS_ASSERT(cnode != nullptr);
   if (!CheckInputs(cnode)) {
     MS_LOG(ERROR) << "input is invalid.";
     return lite::RET_INPUT_TENSOR_ERROR;
   }
-  auto type = opt::GetCNodeType(cnode);
-  if (type != schema::PrimitiveType_Conv2D && type != schema::PrimitiveType_DeConv2D) {
+  if (!CheckPrimitiveType(cnode, prim::kPrimConv2DFusion) &&
+      !CheckPrimitiveType(cnode, prim::kPrimConv2dTransposeFusion)) {
     MS_LOG(DEBUG) << "node is not conv2d and deconv2d.";
     return lite::RET_NO_CHANGE;
   }
@@ -321,99 +128,24 @@ STATUS OnnxInputAdjustOpPass::AdjustConvOrDeConv(const CNodePtr &cnode) {
     MS_LOG(ERROR) << "weight is not a paramValueLite.";
     return lite::RET_ERROR;
   }
-  auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(cnode->input(0));
-  if (primitive_c == nullptr || primitive_c->primitiveT() == nullptr ||
-      primitive_c->primitiveT()->value.value == nullptr) {
-    MS_LOG(ERROR) << "get primitive_c failed.";
-    return lite::RET_NULL_PTR;
-  }
-  if (type == schema::PrimitiveType_Conv2D) {
-    weight_param_value->set_format(reinterpret_cast<schema::Conv2DT *>(primitive_c->primitiveT()->value.value)->format);
+  if (CheckPrimitiveType(cnode, prim::kPrimConv2DFusion)) {
+    auto conv2d_prim = GetValueNode<std::shared_ptr<mindspore::ops::Conv2DFusion>>(cnode->input(0));
+    if (conv2d_prim == nullptr) {
+      MS_LOG(ERROR) << "node is not conv2d fusion.";
+      return lite::RET_NULL_PTR;
+    }
+    int format = conv2d_prim->GetAttr(ops::kFormat) != nullptr ? static_cast<int>(conv2d_prim->get_format()) : 0;
+    weight_param_value->set_format(static_cast<schema::Format>(format));
   } else {
-    weight_param_value->set_format(
-      reinterpret_cast<schema::DeConv2DT *>(primitive_c->primitiveT()->value.value)->format);
-  }
-  return lite::RET_OK;
-}
-
-STATUS OnnxInputAdjustOpPass::AdjustTile(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  if (!CheckInputs(cnode)) {
-    MS_LOG(ERROR) << "input is invalid.";
-    return lite::RET_INPUT_TENSOR_ERROR;
-  }
-  if (cnode->inputs().size() != 3) {
-    MS_LOG(ERROR) << "x tile input size should be 2, now is " << cnode->inputs().size() - 1;
-    return lite::RET_INPUT_TENSOR_ERROR;
-  }
-  auto multiples_node = cnode->input(2)->cast<ParameterPtr>();
-  if (multiples_node == nullptr || !multiples_node->has_default()) {
-    MS_LOG(INFO) << "multiples tensor is not const tensor, which hasn't been supported.";
-    return lite::RET_NOT_SUPPORT;
-  }
-  auto multiples_param_value = multiples_node->cast<ParamValueLitePtr>();
-  if (multiples_param_value == nullptr) {
-    MS_LOG(ERROR) << "weight is not a paramValueLite.";
-    return lite::RET_ERROR;
-  }
-  size_t dims_size = multiples_param_value->tensor_size() / sizeof(int);
-  if (dims_size == 0) {
-    MS_LOG(INFO) << "multiples tensor is not const tensor, which hasn't been supported.";
-    return lite::RET_NOT_SUPPORT;
-  }
-  std::vector<int> multiples(dims_size, 0);
-  if (memcpy_s(multiples.data(), dims_size * sizeof(int), multiples_param_value->tensor_addr(),
-               dims_size * sizeof(int)) != EOK) {
-    MS_LOG(ERROR) << "memcpy_s failed.";
-    return lite::RET_ERROR;
-  }
-  std::vector<int> dims;
-  for (size_t i = 0; i < dims_size; ++i) {
-    dims.push_back(i);
-  }
-  auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(cnode->input(0));
-  if (primitive_c == nullptr || primitive_c->primitiveT() == nullptr ||
-      primitive_c->primitiveT()->value.value == nullptr) {
-    MS_LOG(ERROR) << "get primitive_c failed.";
-    return lite::RET_NULL_PTR;
-  }
-  reinterpret_cast<schema::TileT *>(primitive_c->primitiveT()->value.value)->multiples = multiples;
-  reinterpret_cast<schema::TileT *>(primitive_c->primitiveT()->value.value)->dims = dims;
-  return lite::RET_OK;
-}
-
-STATUS OnnxInputAdjustOpPass::AdjustCast(const CNodePtr &cnode) {
-  MS_ASSERT(cnode != nullptr);
-  auto node = cnode->input(0);
-  MS_ASSERT(value_node != nullptr);
-  auto value_node = node->cast<ValueNodePtr>();
-  if (value_node == nullptr) {
-    MS_LOG(ERROR) << "cnode input0 is not a valuenode.";
-    return lite::RET_ERROR;
-  }
-  MS_ASSERT(value_node->value() != nullptr);
-  auto primitive_c = value_node->value()->cast<PrimitiveCPtr>();
-  if (primitive_c == nullptr) {
-    MS_LOG(ERROR) << "cnode has no primitive_c.";
-    return lite::RET_ERROR;
-  }
-  auto primitive = primitive_c->primitiveT();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "cnode has no schema::primitive.";
-    return lite::RET_ERROR;
-  }
-  if (primitive->value.type != schema::PrimitiveType_Cast) {
-    MS_LOG(DEBUG) << "cnode is not cast node.";
-    return RET_OK;
-  }
-  auto value = primitive->value.value;
-  if (value == nullptr) {
-    MS_LOG(ERROR) << "value is nullptr.";
-    return lite::RET_ERROR;
-  }
-  auto attr = reinterpret_cast<schema::CastT *>(value);
-  if (attr->dstT == kNumberTypeInt64) {
-    attr->dstT = kNumberTypeInt32;
+    auto conv2d_transpose_prim = GetValueNode<std::shared_ptr<mindspore::ops::Conv2dTransposeFusion>>(cnode->input(0));
+    if (conv2d_transpose_prim == nullptr) {
+      MS_LOG(ERROR) << "node is not conv2d transpose.";
+      return lite::RET_NULL_PTR;
+    }
+    int format = conv2d_transpose_prim->GetAttr(ops::kFormat) != nullptr
+                   ? static_cast<int>(conv2d_transpose_prim->get_format())
+                   : 0;
+    weight_param_value->set_format(static_cast<schema::Format>(format));
   }
   return lite::RET_OK;
 }
@@ -421,7 +153,7 @@ STATUS OnnxInputAdjustOpPass::AdjustCast(const CNodePtr &cnode) {
 STATUS OnnxInputAdjustOpPass::ReplaceConstant(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(cnode != nullptr);
-  if (cnode->inputs().size() < 1 || cnode->input(0) == nullptr) {
+  if (cnode->inputs().empty() || cnode->input(0) == nullptr) {
     MS_LOG(ERROR) << "constant cnode has no primitive.";
     return lite::RET_ERROR;
   }
@@ -464,8 +196,8 @@ STATUS OnnxInputAdjustOpPass::ReplaceConstant(const FuncGraphPtr &func_graph, co
 STATUS OnnxInputAdjustOpPass::ReplaceTransposeWithGraphInput(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(cnode != nullptr);
-  if (cnode->inputs().size() != 2) {
-    MS_LOG(ERROR) << "onnx transpose input size is 1, now is " << cnode->inputs().size() - 1;
+  if (cnode->inputs().size() != 3) {
+    MS_LOG(ERROR) << "onnx transpose input size is 2, now is " << cnode->inputs().size() - 1;
     return lite::RET_ERROR;
   }
   auto anf_node = cnode->input(1);
@@ -485,21 +217,27 @@ STATUS OnnxInputAdjustOpPass::ReplaceTransposeWithGraphInput(const FuncGraphPtr 
     MS_LOG(DEBUG) << "only adjust 4 dims graph input.";
     return lite::RET_OK;
   }
-  auto prim_anf = cnode->input(0);
-  if (prim_anf == nullptr || !utils::isa<ValueNodePtr>(prim_anf)) {
-    MS_LOG(ERROR) << "cnode input0 is invalid.";
+  auto perm_anf = cnode->input(2);
+  auto perm_param = perm_anf->cast<ParameterPtr>();
+  if (perm_param == nullptr || !perm_param->has_default() ||
+      !utils::isa<ParamValueLitePtr>(perm_param->default_param())) {
+    MS_LOG(DEBUG) << "transpose second input is not parameter node.";
+    return lite::RET_OK;
+  }
+  auto perm_value = perm_param->default_param()->cast<ParamValueLitePtr>();
+  if (perm_value->tensor_shape().empty()) {
+    MS_LOG(ERROR) << "transpose second input is invalid.";
     return lite::RET_ERROR;
   }
-  auto value_node = prim_anf->cast<ValueNodePtr>();
-  MS_ASSERT(value_node->value() != nullptr);
-  auto prim = value_node->value()->cast<PrimitiveCPtr>();
-  MS_ASSERT(prim != nullptr && prim->primitiveT() != nullptr && prim->primitiveT()->value.value != nullptr);
-  auto attr = reinterpret_cast<schema::TransposeT *>(prim->primitiveT()->value.value);
-  auto perm = attr->perm;
-  std::vector<int> transpose_attr;
-  std::transform(perm.begin(), perm.end(), std::back_inserter(transpose_attr),
+  std::vector<int> perm(perm_value->tensor_shape()[0]);
+  if (memcpy_s(perm.data(), perm_value->tensor_size(), perm_value->tensor_addr(), perm_value->tensor_size()) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
+    return lite::RET_ERROR;
+  }
+  std::vector<int> transpose_perm;
+  std::transform(perm.begin(), perm.end(), std::back_inserter(transpose_perm),
                  [](const int &val) { return val < 0 ? val + 4 : val; });
-  if (transpose_attr[0] == 0 && transpose_attr[1] == 3 && transpose_attr[2] == 1) {
+  if (transpose_perm[0] == 0 && transpose_perm[1] == 3 && transpose_perm[2] == 1) {
     auto channel = shape_vector[3];
     shape_vector.pop_back();
     shape_vector.insert(shape_vector.begin() + 1, channel);
@@ -508,6 +246,72 @@ STATUS OnnxInputAdjustOpPass::ReplaceTransposeWithGraphInput(const FuncGraphPtr 
     MS_ASSERT(manager != nullptr);
     manager->Replace(cnode, param_node);
   }
+  return lite::RET_OK;
+}
+
+STATUS OnnxInputAdjustOpPass::AdjustStridedSlice(const FuncGraphPtr &func_graph, const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  if (!CheckInputs(cnode)) {
+    MS_LOG(ERROR) << "input is invalid.";
+    return lite::RET_INPUT_TENSOR_ERROR;
+  }
+  if (cnode->inputs().size() == 2) {
+    if (AddAttrToInput(func_graph, cnode, 2, "starts") != lite::RET_OK ||
+        AddAttrToInput(func_graph, cnode, 3, "ends") != lite::RET_OK ||
+        AddAttrToInput(func_graph, cnode, 4, "axes") != lite::RET_OK ||
+        AddAttrToInput(func_graph, cnode, 5, "steps") != lite::RET_OK) {
+      MS_LOG(ERROR) << "attr to input failed.";
+      return lite::RET_ERROR;
+    }
+  } else if (cnode->inputs().size() <= 3) {
+    MS_LOG(ERROR) << "onnx slice's input size need to be >2, now is " << cnode->inputs().size() - 1;
+    return lite::RET_INPUT_TENSOR_ERROR;
+  }
+  int size = 0;
+  for (size_t i = 2; i < cnode->inputs().size(); ++i) {
+    const auto &param_node = cnode->input(2)->cast<ParameterPtr>();
+    if (param_node == nullptr || !param_node->has_default()) {
+      continue;
+    }
+    const auto &default_data = param_node->default_param()->cast<ParamValueLitePtr>();
+    if (default_data == nullptr) {
+      MS_LOG(ERROR) << "this input is not a paramValueLite.";
+      return lite::RET_ERROR;
+    }
+    auto shape = default_data->tensor_shape();
+    size = std::accumulate(shape.begin(), shape.end(), 1, std::multiplies<int>());
+    break;
+  }
+  auto inputs = cnode->inputs();
+  switch (cnode->inputs().size()) {
+    case 4: {
+      std::vector<int32_t> axises;
+      for (int i = 0; i < size; ++i) {
+        axises.push_back(i);
+      }
+      auto new_param_node = BuildIntVecParameterNode(func_graph, axises, cnode->fullname_with_scope() + "_axises");
+      if (new_param_node == nullptr) {
+        MS_LOG(ERROR) << "new a parameter node failed.";
+      }
+      inputs.push_back(new_param_node);
+    }
+    case 5: {
+      std::vector<int32_t> steps;
+      for (int i = 0; i < size; ++i) {
+        steps.push_back(1);
+      }
+      auto new_param_node = BuildIntVecParameterNode(func_graph, steps, cnode->fullname_with_scope() + "_steps");
+      if (new_param_node == nullptr) {
+        MS_LOG(ERROR) << "new a parameter node failed.";
+      }
+      inputs.push_back(new_param_node);
+      break;
+    }
+    default:
+      MS_LOG(DEBUG) << "no need to adjust.";
+      return lite::RET_NO_CHANGE;
+  }
+  cnode->set_inputs(inputs);
   return lite::RET_OK;
 }
 
@@ -534,21 +338,15 @@ bool OnnxInputAdjustOpPass::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(DEBUG) << "node is not cnode.";
       continue;
     }
-    auto type = opt::GetCNodeType(node);
-    if (type == schema::PrimitiveType_Power) {
-      status = AdjustPower(cnode);
-    } else if (type == schema::PrimitiveType_StridedSlice) {
-      status = AdjustStridedSlice(func_graph, cnode);
-    } else if (type == schema::PrimitiveType_Conv2D || type == schema::PrimitiveType_DeConv2D) {
+    if (CheckPrimitiveType(node, prim::kPrimConv2DFusion) ||
+        CheckPrimitiveType(node, prim::kPrimConv2dTransposeFusion)) {
       status = AdjustConvOrDeConv(cnode);
-    } else if (type == schema::PrimitiveType_Tile) {
-      status = AdjustConvOrDeConv(cnode);
-    } else if (type == schema::PrimitiveType_Constant) {
+    } else if (CheckPrimitiveType(node, prim::kPrimConstant)) {
       status = ReplaceConstant(func_graph, cnode);
-    } else if (type == schema::PrimitiveType_Cast) {
-      status = AdjustCast(cnode);
-    } else if (type == schema::PrimitiveType_Transpose) {
+    } else if (CheckPrimitiveType(node, prim::kPrimTranspose)) {
       status = ReplaceTransposeWithGraphInput(func_graph, cnode);
+    } else if (CheckPrimitiveType(node, prim::kPrimStridedSlice)) {
+      status = AdjustStridedSlice(func_graph, cnode);
     }
     if (status != lite::RET_OK && status != lite::RET_NO_CHANGE) {
       MS_LOG(ERROR) << "adjust input pass is failed.";

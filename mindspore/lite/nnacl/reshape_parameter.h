@@ -27,6 +27,8 @@ typedef struct ReshapeParameter {
   // other parameter
   ReshapeQuantArg quant_para_;
   int thread_count_;
+  int shape_[8];
+  int shape_size_;
 } ReshapeParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_RESHAHPE_PARAMETER_H_
