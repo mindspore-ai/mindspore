@@ -38,9 +38,13 @@ bool SchedulerNode::Start(const uint32_t &timeout) {
 }
 
 void SchedulerNode::ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                     std::shared_ptr<CommMessage> message) {
+                                     std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(server);
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
   HeartbeatMessage heartbeat_message;
-  heartbeat_message.ParseFromString(message->data());
+  heartbeat_message.ParseFromArray(data, size);
 
   node_manager_.UpdateHeartbeat(heartbeat_message.node_id());
 
@@ -60,10 +64,8 @@ void SchedulerNode::ProcessHeartbeat(std::shared_ptr<TcpServer> server, std::sha
   heartbeat_resp_message.set_is_cluster_timeout(node_manager_.is_cluster_timeout());
   heartbeat_resp_message.set_is_node_timeout(node_manager_.is_node_timeout());
 
-  std::shared_ptr<CommMessage> comm_message = std::make_shared<CommMessage>();
-  *comm_message->mutable_pb_meta() = {message->pb_meta()};
-  comm_message->set_data(heartbeat_resp_message.SerializeAsString());
-  server->SendMessage(conn, comm_message);
+  server->SendMessage(conn, meta, Protos::PROTOBUF, heartbeat_resp_message.SerializeAsString().data(),
+                      heartbeat_resp_message.ByteSizeLong());
 }
 
 void SchedulerNode::Initialize() {
@@ -89,12 +91,13 @@ void SchedulerNode::CreateTcpServer() {
   std::string scheduler_host = ClusterConfig::scheduler_host();
   uint32_t scheduler_port = ClusterConfig::scheduler_port();
   server_ = std::make_shared<TcpServer>(scheduler_host, scheduler_port);
-  server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<CommMessage> message) {
-    if (handlers_.count(message->pb_meta().cmd()) == 0) {
-      MS_LOG(EXCEPTION) << "The cmd:" << message->pb_meta().cmd() << " is not supported!";
+  server_->SetMessageCallback([&](std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+                                  const Protos &protos, const void *data, size_t size) {
+    if (handlers_.count(meta->cmd()) == 0) {
+      MS_LOG(EXCEPTION) << "The cmd:" << meta->cmd() << " is not supported!";
     }
-    const auto &handler_ptr = handlers_[message->pb_meta().cmd()];
-    (this->*handler_ptr)(server_, conn, message);
+    const auto &handler_ptr = handlers_[meta->cmd()];
+    (this->*handler_ptr)(server_, conn, meta, data, size);
   });
 
   server_->Init();
@@ -106,10 +109,14 @@ void SchedulerNode::CreateTcpServer() {
 }
 
 void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                    std::shared_ptr<CommMessage> message) {
+                                    std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(server);
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
   MS_LOG(INFO) << "The scheduler process a register message!";
   RegisterMessage register_message;
-  register_message.ParseFromString(message->data());
+  register_message.ParseFromArray(data, size);
 
   // assign worker node and server node rank id
   int rank_id = node_manager_.NextRankId(register_message);
@@ -123,32 +130,32 @@ void SchedulerNode::ProcessRegister(std::shared_ptr<TcpServer> server, std::shar
   register_resp_message.set_node_id(node_id);
   register_resp_message.set_rank_id(rank_id);
 
-  std::shared_ptr<CommMessage> comm_message = std::make_shared<CommMessage>();
-  *comm_message->mutable_pb_meta() = {message->pb_meta()};
-  comm_message->set_data(register_resp_message.SerializeAsString());
-  server->SendMessage(conn, comm_message);
+  server->SendMessage(conn, meta, Protos::PROTOBUF, register_resp_message.SerializeAsString().data(),
+                      register_resp_message.ByteSizeLong());
 }
 
 void SchedulerNode::ProcessFinish(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                  std::shared_ptr<CommMessage> message) {
+                                  std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(server);
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
   FinishMessage finish_message;
-  finish_message.ParseFromString(message->data());
+  finish_message.ParseFromArray(data, size);
   node_manager_.AddFinishNode(finish_message);
   MS_LOG(INFO) << "Process finish message from node id:" << finish_message.node_id();
-  server->SendMessage(conn, message);
+  server->SendMessage(conn, meta, Protos::PROTOBUF, data, size);
 }
 
 void SchedulerNode::ProcessFetchServers(std::shared_ptr<TcpServer> server, std::shared_ptr<TcpConnection> conn,
-                                        std::shared_ptr<CommMessage> message) {
+                                        std::shared_ptr<MessageMeta> meta, const void *data, size_t size) {
   FetchServersRespMessage fetch_servers_message;
   std::vector<ServersMeta> servers_meta_list = node_manager_.FetchServersMeta();
 
   *fetch_servers_message.mutable_servers_meta() = {servers_meta_list.begin(), servers_meta_list.end()};
 
-  std::shared_ptr<CommMessage> comm_message = std::make_shared<CommMessage>();
-  *comm_message->mutable_pb_meta() = {message->pb_meta()};
-  comm_message->set_data(fetch_servers_message.SerializeAsString());
-  server->SendMessage(conn, comm_message);
+  server->SendMessage(conn, meta, Protos::PROTOBUF, fetch_servers_message.SerializeAsString().data(),
+                      fetch_servers_message.ByteSizeLong());
 }
 
 void SchedulerNode::StartUpdateClusterStateTimer() {

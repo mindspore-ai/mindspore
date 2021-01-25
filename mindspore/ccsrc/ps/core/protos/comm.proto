@@ -15,7 +15,6 @@
  */
 
 syntax = "proto3";
-import "google/protobuf/any.proto";
 package mindspore.ps.core;
 option optimize_for = LITE_RUNTIME;
 
@@ -44,6 +43,8 @@ message MessageMeta {
   NodeRole role = 3;
   // the current Node rank id,the worker node range is:[0,numOfWorker-1], the server node range is:[0, numOfServer-1]
   int32 rank_id = 4;
+  // User-defined commands
+  int32 user_cmd = 5;
 }
 
 message RegisterMessage {
@@ -76,6 +77,10 @@ message HeartbeatRespMessage {
   bool is_node_timeout = 4;
 }
 
+message FetchServersMessage {
+  string node_id = 1;
+}
+
 message FetchServersRespMessage {
   repeated ServersMeta servers_meta = 1;
 }
@@ -95,6 +100,4 @@ message FinishMessage {
 message CommMessage {
   MessageMeta pb_meta = 1;
   bytes data = 2;
-  // User-defined commands
-  bytes user_cmd = 3;
 }

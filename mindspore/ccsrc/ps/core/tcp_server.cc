@@ -54,13 +54,39 @@ bool TcpConnection::SendMessage(std::shared_ptr<CommMessage> message) const {
   bufferevent_lock(buffer_event_);
   bool res = true;
   size_t buf_size = message->ByteSizeLong();
-  std::vector<unsigned char> serialized(buf_size);
-  message->SerializeToArray(serialized.data(), SizeToInt(buf_size));
   if (bufferevent_write(buffer_event_, &buf_size, sizeof(buf_size)) == -1) {
     MS_LOG(ERROR) << "Event buffer add header failed!";
     res = false;
   }
-  if (bufferevent_write(buffer_event_, serialized.data(), buf_size) == -1) {
+  if (bufferevent_write(buffer_event_, message->SerializeAsString().data(), buf_size) == -1) {
+    MS_LOG(ERROR) << "Event buffer add protobuf data failed!";
+    res = false;
+  }
+  bufferevent_unlock(buffer_event_);
+  return res;
+}
+
+bool TcpConnection::SendMessage(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data,
+                                size_t size) const {
+  MS_EXCEPTION_IF_NULL(buffer_event_);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  bufferevent_lock(buffer_event_);
+  bool res = true;
+  Messageheader header;
+  header.message_proto_ = protos;
+  header.message_meta_length_ = SizeToUint(meta->ByteSizeLong());
+  header.message_length_ = size + header.message_meta_length_;
+
+  if (bufferevent_write(buffer_event_, &header, sizeof(header)) == -1) {
+    MS_LOG(ERROR) << "Event buffer add header failed!";
+    res = false;
+  }
+  if (bufferevent_write(buffer_event_, meta->SerializeAsString().data(), meta->ByteSizeLong()) == -1) {
+    MS_LOG(ERROR) << "Event buffer add protobuf data failed!";
+    res = false;
+  }
+  if (bufferevent_write(buffer_event_, data, size) == -1) {
     MS_LOG(ERROR) << "Event buffer add protobuf data failed!";
     res = false;
   }
@@ -158,7 +184,7 @@ void TcpServer::Start() {
   MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType)
     << "Event base dispatch failed with no events pending or active!";
   MSLOG_IF(mindspore::ERROR, ret == -1, NoExceptionType) << "Event base dispatch failed with error occurred!";
-  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base dispatch with unexpect error code!";
+  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base dispatch with unexpected error code!";
 }
 
 void TcpServer::StartWithNoBlock() {
@@ -169,7 +195,7 @@ void TcpServer::StartWithNoBlock() {
   MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base loop success!";
   MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType) << "Event base loop failed with no events pending or active!";
   MSLOG_IF(mindspore::ERROR, ret == -1, NoExceptionType) << "Event base loop failed with error occurred!";
-  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base loop with unexpect error code!";
+  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base loop with unexpected error code!";
 }
 
 void TcpServer::StartTimerOnlyOnce(const uint32_t &time) {
@@ -260,10 +286,10 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
   MS_EXCEPTION_IF_NULL(conn);
 
   server->AddConnection(fd, conn);
-  conn->InitConnection([=](std::shared_ptr<CommMessage> message) {
+  conn->InitConnection([=](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
     OnServerReceiveMessage on_server_receive = server->GetServerReceive();
     if (on_server_receive) {
-      on_server_receive(conn, message);
+      on_server_receive(conn, meta, protos, data, size);
     }
   });
   bufferevent_setcb(bev, TcpServer::ReadCallback, nullptr, TcpServer::EventCallback,
@@ -274,6 +300,7 @@ void TcpServer::ListenerCallback(struct evconnlistener *, evutil_socket_t fd, st
 }
 
 std::shared_ptr<TcpConnection> TcpServer::onCreateConnection(struct bufferevent *bev, const evutil_socket_t &fd) {
+  MS_EXCEPTION_IF_NULL(bev);
   std::shared_ptr<TcpConnection> conn = nullptr;
   if (client_accept_) {
     conn = (client_accept_(*this));
@@ -367,9 +394,17 @@ bool TcpServer::SendMessage(std::shared_ptr<TcpConnection> conn, std::shared_ptr
   return conn->SendMessage(message);
 }
 
+bool TcpServer::SendMessage(std::shared_ptr<TcpConnection> conn, std::shared_ptr<MessageMeta> meta,
+                            const Protos &protos, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(conn);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  return conn->SendMessage(meta, protos, data, size);
+}
+
 void TcpServer::SendMessage(std::shared_ptr<CommMessage> message) {
-  std::lock_guard<std::mutex> lock(connection_mutex_);
   MS_EXCEPTION_IF_NULL(message);
+  std::lock_guard<std::mutex> lock(connection_mutex_);
 
   for (auto it = connections_.begin(); it != connections_.end(); ++it) {
     SendMessage(it->second, message);

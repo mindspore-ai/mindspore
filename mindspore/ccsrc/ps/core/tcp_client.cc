@@ -46,11 +46,12 @@ TcpClient::TcpClient(const std::string &address, std::uint16_t port)
       server_port_(port),
       is_stop_(true),
       is_connected_(false) {
-  message_handler_.SetCallback([this](std::shared_ptr<CommMessage> message) {
-    if (message_callback_) {
-      message_callback_(*this, *message);
-    }
-  });
+  message_handler_.SetCallback(
+    [this](std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
+      if (message_callback_) {
+        message_callback_(meta, protos, data, size);
+      }
+    });
 }
 
 TcpClient::~TcpClient() {
@@ -189,7 +190,7 @@ void TcpClient::ReadCallback(struct bufferevent *bev, void *ctx) {
 void TcpClient::OnReadHandler(const void *buf, size_t num) {
   MS_EXCEPTION_IF_NULL(buf);
   if (read_callback_) {
-    read_callback_(*this, buf, num);
+    read_callback_(buf, num);
   }
   message_handler_.ReceiveMessage(buf, num);
 }
@@ -198,7 +199,7 @@ void TcpClient::TimerCallback(evutil_socket_t, int16_t, void *arg) {
   MS_EXCEPTION_IF_NULL(arg);
   auto tcp_client = reinterpret_cast<TcpClient *>(arg);
   if (tcp_client->on_timer_callback_) {
-    tcp_client->on_timer_callback_(*tcp_client);
+    tcp_client->on_timer_callback_();
   }
 }
 
@@ -245,7 +246,7 @@ void TcpClient::Start() {
   MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType)
     << "Event base dispatch failed with no events pending or active!";
   MSLOG_IF(mindspore::ERROR, ret == -1, NoExceptionType) << "Event base dispatch failed with error occurred!";
-  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base dispatch with unexpect error code!";
+  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base dispatch with unexpected error code!";
 }
 
 void TcpClient::StartWithNoBlock() {
@@ -256,7 +257,7 @@ void TcpClient::StartWithNoBlock() {
   MSLOG_IF(INFO, ret == 0, NoExceptionType) << "Event base loop success!";
   MSLOG_IF(mindspore::ERROR, ret == 1, NoExceptionType) << "Event base loop failed with no events pending or active!";
   MSLOG_IF(mindspore::ERROR, ret == -1, NoExceptionType) << "Event base loop failed with error occurred!";
-  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base loop with unexpect error code!";
+  MSLOG_IF(mindspore::EXCEPTION, ret < -1, AbortedError) << "Event base loop with unexpected error code!";
 }
 
 void TcpClient::SetMessageCallback(const OnMessage &cb) { message_callback_ = cb; }
@@ -265,14 +266,49 @@ bool TcpClient::SendMessage(const CommMessage &message) const {
   MS_EXCEPTION_IF_NULL(buffer_event_);
   bufferevent_lock(buffer_event_);
   bool res = true;
-  size_t buf_size = message.ByteSizeLong();
-  std::vector<unsigned char> serialized(buf_size);
-  message.SerializeToArray(serialized.data(), SizeToInt(buf_size));
-  if (bufferevent_write(buffer_event_, &buf_size, sizeof(buf_size)) == -1) {
+  size_t buf_size = IntToUint(message.ByteSizeLong());
+  uint32_t meta_size = SizeToUint(message.pb_meta().ByteSizeLong());
+  Messageheader header;
+  header.message_proto_ = Protos::PROTOBUF;
+  header.message_length_ = buf_size;
+  header.message_meta_length_ = meta_size;
+  if (bufferevent_write(buffer_event_, &header, sizeof(header)) == -1) {
     MS_LOG(ERROR) << "Event buffer add header failed!";
     res = false;
   }
-  if (bufferevent_write(buffer_event_, serialized.data(), buf_size) == -1) {
+  if (bufferevent_write(buffer_event_, message.pb_meta().SerializeAsString().data(), meta_size) == -1) {
+    MS_LOG(ERROR) << "Event buffer add protobuf data failed!";
+    res = false;
+  }
+  if (bufferevent_write(buffer_event_, message.data().data(), message.data().length()) == -1) {
+    MS_LOG(ERROR) << "Event buffer add protobuf data failed!";
+    res = false;
+  }
+  bufferevent_unlock(buffer_event_);
+  return res;
+}
+
+bool TcpClient::SendMessage(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size) {
+  MS_EXCEPTION_IF_NULL(buffer_event_);
+  MS_EXCEPTION_IF_NULL(meta);
+  MS_EXCEPTION_IF_NULL(data);
+  bufferevent_lock(buffer_event_);
+  bool res = true;
+
+  Messageheader header;
+  header.message_proto_ = protos;
+  header.message_meta_length_ = SizeToUint(meta->ByteSizeLong());
+  header.message_length_ = size + header.message_meta_length_;
+
+  if (bufferevent_write(buffer_event_, &header, sizeof(header)) == -1) {
+    MS_LOG(ERROR) << "Event buffer add header failed!";
+    res = false;
+  }
+  if (bufferevent_write(buffer_event_, meta->SerializeAsString().data(), meta->ByteSizeLong()) == -1) {
+    MS_LOG(ERROR) << "Event buffer add protobuf data failed!";
+    res = false;
+  }
+  if (bufferevent_write(buffer_event_, data, size) == -1) {
     MS_LOG(ERROR) << "Event buffer add protobuf data failed!";
     res = false;
   }

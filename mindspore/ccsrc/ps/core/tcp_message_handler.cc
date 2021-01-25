@@ -35,8 +35,12 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
         header_[++header_index_] = *(buffer_data + i);
         --num;
         if (header_index_ == kHeaderLen - 1) {
-          message_length_ = *reinterpret_cast<const size_t *>(header_);
-          remaining_length_ = message_length_;
+          message_header_.message_proto_ = *reinterpret_cast<const Protos *>(header_);
+          message_header_.message_meta_length_ =
+            *reinterpret_cast<const uint32_t *>(header_ + sizeof(message_header_.message_proto_));
+          message_header_.message_length_ = *reinterpret_cast<const size_t *>(
+            header_ + sizeof(message_header_.message_proto_) + sizeof(message_header_.message_meta_length_));
+          remaining_length_ = message_header_.message_length_;
           message_buffer_.reset(new unsigned char[remaining_length_]);
           buffer_data += (i + 1);
           break;
@@ -57,10 +61,12 @@ void TcpMessageHandler::ReceiveMessage(const void *buffer, size_t num) {
       }
 
       if (remaining_length_ == 0) {
-        std::shared_ptr<CommMessage> pb_message = std::make_shared<CommMessage>();
-        pb_message->ParseFromArray(message_buffer_.get(), message_length_);
         if (message_callback_) {
-          message_callback_(pb_message);
+          std::shared_ptr<MessageMeta> pb_message = std::make_shared<MessageMeta>();
+          pb_message->ParseFromArray(message_buffer_.get(), message_header_.message_meta_length_);
+          message_callback_(pb_message, message_header_.message_proto_,
+                            message_buffer_.get() + message_header_.message_meta_length_,
+                            message_header_.message_length_ - message_header_.message_meta_length_);
         }
         message_buffer_.reset();
         message_buffer_ = nullptr;

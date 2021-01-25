@@ -42,10 +42,10 @@ class TcpClient {
  public:
   using OnConnected = std::function<void()>;
   using OnDisconnected = std::function<void()>;
-  using OnRead = std::function<void(const TcpClient &, const void *, size_t)>;
-  using OnTimeout = std::function<void(const TcpClient &)>;
-  using OnMessage = std::function<void(const TcpClient &, const CommMessage &)>;
-  using OnTimer = std::function<void(const TcpClient &)>;
+  using OnRead = std::function<void(const void *, size_t)>;
+  using OnTimeout = std::function<void()>;
+  using OnMessage = std::function<void(std::shared_ptr<MessageMeta>, const Protos &, const void *, size_t size)>;
+  using OnTimer = std::function<void()>;
 
   explicit TcpClient(const std::string &address, std::uint16_t port);
   virtual ~TcpClient();
@@ -61,6 +61,7 @@ class TcpClient {
   void StartWithNoBlock();
   void SetMessageCallback(const OnMessage &cb);
   bool SendMessage(const CommMessage &message) const;
+  bool SendMessage(std::shared_ptr<MessageMeta> meta, const Protos &protos, const void *data, size_t size);
   void StartTimer(const uint32_t &time);
   void set_timer_callback(const OnTimer &timer);
   const event_base &eventbase();
