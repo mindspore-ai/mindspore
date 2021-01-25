@@ -25,16 +25,8 @@ l2_loss_op_info = TBERegOp("L2Loss") \
     .partial_flag(True) \
     .input(0, "x", None, "required", None) \
     .output(0, "y", True, "required", "all") \
-    .dtype_format(DataType.F16_Default, DataType.F16_Default) \
-    .dtype_format(DataType.F16_FracZ, DataType.F16_Default) \
-    .dtype_format(DataType.F16_FracNZ, DataType.F16_Default) \
-    .dtype_format(DataType.F16_5HD, DataType.F16_Default) \
-    .dtype_format(DataType.F16_C1HWNCoC0, DataType.F16_Default) \
-    .dtype_format(DataType.F32_Default, DataType.F32_Default) \
-    .dtype_format(DataType.F32_FracZ, DataType.F32_Default) \
-    .dtype_format(DataType.F32_FracNZ, DataType.F32_Default) \
-    .dtype_format(DataType.F32_5HD, DataType.F32_Default) \
-    .dtype_format(DataType.F32_C1HWNCoC0, DataType.F32_Default) \
+    .op_pattern("dynamicFormat") \
+    .dtype_format(DataType.None_None, DataType.None_None) \
     .get_op_info()
 
 
