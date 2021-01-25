@@ -765,7 +765,7 @@ def atleast_1d(*arys):
 
     Examples:
         >>> a = np.ones((2, 3))
-        >>> b = np.ones(0)
+        >>> b = np.ones(())
         >>> c = np.ones(5)
         >>> output = np.atleast_1d(a, b, c)
         >>> print(output)
@@ -801,7 +801,7 @@ def atleast_2d(*arys):
 
     Examples:
         >>> a = np.ones((2, 3))
-        >>> b = np.ones(0)
+        >>> b = np.ones(())
         >>> c = np.ones(5)
         >>> output = np.atleast_2d(a, b, c)
         >>> print(output)
@@ -840,7 +840,7 @@ def atleast_3d(*arys):
 
     Examples:
         >>> a = np.ones((2, 3))
-        >>> b = np.ones(0)
+        >>> b = np.ones(())
         >>> c = np.ones(5)
         >>> output = np.atleast_3d(a, b, c)
         >>> print(output)
@@ -972,13 +972,13 @@ def unique(x, return_inverse=False):
         >>> import numpy as onp
         >>> from mindspore import context
         >>> context.set_context(mode=context.GRAPH_MODE)
-        >>> input_x = mnp.asarray(onp.array([1, 2, 2, 2, 3, 4, 5]).astype('float32'))
+        >>> input_x = mnp.asarray(onp.array([1, 2, 2, 2, 3, 4, 5]).astype('int32'))
         >>> output_x = mnp.unique(input_x)
         >>> print(output_x)
-        [1. 2. 3. 4. 5.]
+        [1, 2, 3, 4, 5]
         >>> output_x = mnp.unique(input_x, return_inverse=True)
         >>> print(output_x)
-        (Tensor(shape=[5], dtype=Float32, value= [ 1. 2. 3. 4. 5.]), Tensor(shape=[7], dtype=Int32,
+        (Tensor(shape=[5], dtype=Int32, value= [ 1, 2, 3, 4, 5]), Tensor(shape=[7], dtype=Int32,
             value= [0, 1, 1, 1, 2, 3, 4]))
     """
     if not _check_is_tensor(F.typeof(x)):
