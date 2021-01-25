@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">MindSpore</string>
+
+    <string name="title_time">推理时间</string>
+    <string name="title_keep">正在识别</string>
+    <string name="image_invalid">您选择的图像路径无效。请再次选择</string>
+    <string name="train_invalid">对不起，此图片中没有任何物体。请尝试另一张图片</string>
+
+
+</resources>

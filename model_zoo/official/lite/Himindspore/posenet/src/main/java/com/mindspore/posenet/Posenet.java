@@ -115,14 +115,14 @@ public class Posenet {
         }
         msConfig.free();
 
-        // Complile graph.
+        // Compile graph.
         if (!session.compileGraph(model)) {
             Log.e("MS_LITE", "Compile graph failed");
             model.freeBuffer();
             return false;
         }
 
-        // Note: when use model.freeBuffer(), the model can not be complile graph again.
+        // Note: when use model.freeBuffer(), the model can not be compile graph again.
         model.freeBuffer();
 
         return true;
@@ -171,7 +171,7 @@ public class Posenet {
      * returns:
      * person: a Person object containing data about keypoint locations and confidence scores
      */
-    Person estimateSinglePose(Bitmap bitmap) {
+    public Person estimateSinglePose(Bitmap bitmap) {
         long estimationStartTimeNanos = SystemClock.elapsedRealtimeNanos();
         ByteBuffer inputArray = this.initInputArray(bitmap);
         List<MSTensor> inputs = session.getInputs();
@@ -198,60 +198,8 @@ public class Posenet {
                 String.format("Interpreter took %.2f ms", 1.0f * lastInferenceTimeNanos / 1_000_000)
         );
 
-        // Get output tensor values.
-        List<MSTensor> heatmaps_list = session.getOutputsByNodeName("Conv2D-27");
-        if (heatmaps_list == null) {
-            return null;
-        }
-        MSTensor heatmaps_tensors = heatmaps_list.get(0);
-
-        float[] heatmaps_results = heatmaps_tensors.getFloatData();
-        int[] heatmapsShape = heatmaps_tensors.getShape(); //1, 9, 9 ,17
-
-        float[][][][] heatmaps = new float[heatmapsShape[0]][][][];
-        for (int x = 0; x < heatmapsShape[0]; x++) {  // heatmapsShape[0] =1
-            float[][][] arrayThree = new float[heatmapsShape[1]][][];
-            for (int y = 0; y < heatmapsShape[1]; y++) {  // heatmapsShape[1] = 9
-                float[][] arrayTwo = new float[heatmapsShape[2]][];
-                for (int z = 0; z < heatmapsShape[2]; z++) { //heatmapsShape[2] = 9
-                    float[] arrayOne = new float[heatmapsShape[3]]; //heatmapsShape[3] = 17
-                    for (int i = 0; i < heatmapsShape[3]; i++) {
-                        int n = i + z * heatmapsShape[3] + y * heatmapsShape[2] * heatmapsShape[3] + x * heatmapsShape[1] * heatmapsShape[2] * heatmapsShape[3];
-                        arrayOne[i] = heatmaps_results[n]; //1*9*9*17  ??
-                    }
-                    arrayTwo[z] = arrayOne;
-                }
-                arrayThree[y] = arrayTwo;
-            }
-            heatmaps[x] = arrayThree;
-        }
-
-
-        List<MSTensor> offsets_list = session.getOutputsByNodeName("Conv2D-28");
-        if (offsets_list == null) {
-            return null;
-        }
-        MSTensor offsets_tensors = offsets_list.get(0);
-        float[] offsets_results = offsets_tensors.getFloatData();
-        int[] offsetsShapes = offsets_tensors.getShape();
-
-        float[][][][] offsets = new float[offsetsShapes[0]][][][];
-        for (int x = 0; x < offsetsShapes[0]; x++) {
-            float[][][] offsets_arrayThree = new float[offsetsShapes[1]][][];
-            for (int y = 0; y < offsetsShapes[1]; y++) {
-                float[][] offsets_arrayTwo = new float[offsetsShapes[2]][];
-                for (int z = 0; z < offsetsShapes[2]; z++) {
-                    float[] offsets_arrayOne = new float[offsetsShapes[3]];
-                    for (int i = 0; i < offsetsShapes[3]; i++) {
-                        int n = i + z * offsetsShapes[3] + y * offsetsShapes[2] * offsetsShapes[3] + x * offsetsShapes[1] * offsetsShapes[2] * offsetsShapes[3];
-                        offsets_arrayOne[i] = offsets_results[n];
-                    }
-                    offsets_arrayTwo[z] = offsets_arrayOne;
-                }
-                offsets_arrayThree[y] = offsets_arrayTwo;
-            }
-            offsets[x] = offsets_arrayThree;
-        }
+        float[][][][] heatmaps = runConv2Dfor27();
+        float[][][][] offsets = runConv2Dfor28();
 
         int height = ((Object[]) heatmaps[0]).length;  //9
         int width = ((Object[]) heatmaps[0][0]).length; //9
@@ -288,8 +236,8 @@ public class Posenet {
             int positionY = (int) position.first;
             int positionX = (int) position.second;
 
-            yCoords[i] =  ((float) positionY / (float) (height - 1) * bitmap.getHeight() + offsets[0][positionY][positionX][i]);
-            xCoords[i] =  ((float) positionX / (float) (width - 1) * bitmap.getWidth() + offsets[0][positionY][positionX][i + numKeypoints]);
+            yCoords[i] = ((float) positionY / (float) (height - 1) * bitmap.getHeight() + offsets[0][positionY][positionX][i]);
+            xCoords[i] = ((float) positionX / (float) (width - 1) * bitmap.getWidth() + offsets[0][positionY][positionX][i + numKeypoints]);
             confidenceScores[i] = sigmoid(heatmaps[0][positionY][positionX][i]);
         }
 
@@ -310,5 +258,66 @@ public class Posenet {
         person.score = totalScore / numKeypoints;
 
         return person;
+    }
+
+    private float[][][][] runConv2Dfor27() {
+        // Get output tensor values.
+        List<MSTensor> heatmaps_list = session.getOutputsByNodeName("Conv2D-27");
+        if (heatmaps_list == null) {
+            return null;
+        }
+        MSTensor heatmaps_tensors = heatmaps_list.get(0);
+
+        float[] heatmaps_results = heatmaps_tensors.getFloatData();
+        int[] heatmapsShape = heatmaps_tensors.getShape(); //1, 9, 9 ,17
+
+        float[][][][] heatmaps = new float[heatmapsShape[0]][][][];
+        for (int x = 0; x < heatmapsShape[0]; x++) {  // heatmapsShape[0] =1
+            float[][][] arrayThree = new float[heatmapsShape[1]][][];
+            for (int y = 0; y < heatmapsShape[1]; y++) {  // heatmapsShape[1] = 9
+                float[][] arrayTwo = new float[heatmapsShape[2]][];
+                for (int z = 0; z < heatmapsShape[2]; z++) { //heatmapsShape[2] = 9
+                    float[] arrayOne = new float[heatmapsShape[3]]; //heatmapsShape[3] = 17
+                    for (int i = 0; i < heatmapsShape[3]; i++) {
+                        int n = i + z * heatmapsShape[3] + y * heatmapsShape[2] * heatmapsShape[3] + x * heatmapsShape[1] * heatmapsShape[2] * heatmapsShape[3];
+                        arrayOne[i] = heatmaps_results[n]; //1*9*9*17  ??
+                    }
+                    arrayTwo[z] = arrayOne;
+                }
+                arrayThree[y] = arrayTwo;
+            }
+            heatmaps[x] = arrayThree;
+        }
+        return heatmaps;
+    }
+
+
+    private float[][][][] runConv2Dfor28() {
+        List<MSTensor> offsets_list = session.getOutputsByNodeName("Conv2D-28");
+        if (offsets_list == null) {
+            return null;
+        }
+        MSTensor offsets_tensors = offsets_list.get(0);
+        float[] offsets_results = offsets_tensors.getFloatData();
+        int[] offsetsShapes = offsets_tensors.getShape();
+
+        float[][][][] offsets = new float[offsetsShapes[0]][][][];
+        for (int x = 0; x < offsetsShapes[0]; x++) {
+            float[][][] offsets_arrayThree = new float[offsetsShapes[1]][][];
+            for (int y = 0; y < offsetsShapes[1]; y++) {
+                float[][] offsets_arrayTwo = new float[offsetsShapes[2]][];
+                for (int z = 0; z < offsetsShapes[2]; z++) {
+                    float[] offsets_arrayOne = new float[offsetsShapes[3]];
+                    for (int i = 0; i < offsetsShapes[3]; i++) {
+                        int n = i + z * offsetsShapes[3] + y * offsetsShapes[2] * offsetsShapes[3] + x * offsetsShapes[1] * offsetsShapes[2] * offsetsShapes[3];
+                        offsets_arrayOne[i] = offsets_results[n];
+                    }
+                    offsets_arrayTwo[z] = offsets_arrayOne;
+                }
+                offsets_arrayThree[y] = offsets_arrayTwo;
+            }
+            offsets[x] = offsets_arrayThree;
+        }
+        return offsets;
     }
 }

@@ -77,87 +77,7 @@ public class PosenetMainActivity extends AppCompatActivity  {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.posenet_activity_main);
-        requestPermissions();
-    }
-
-
-    private void requestPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            isAllGranted = checkPermissionAllGranted(PERMISSIONS);
-            if (!isAllGranted) {
-                ActivityCompat.requestPermissions(this, PERMISSIONS, REQUEST_PERMISSION);
-            } else {
-                addCameraFragment();
-            }
-        } else {
-            isAllGranted = true;
-            addCameraFragment();
-        }
-    }
-
-
-    private boolean checkPermissionAllGranted(String[] permissions) {
-        for (String permission : permissions) {
-            if (ContextCompat.checkSelfPermission(this, permission) != PackageManager.PERMISSION_GRANTED) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    /**
-     * Authority application result callback
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (REQUEST_PERMISSION == requestCode) {
-            isAllGranted = true;
-
-            for (int grant : grantResults) {
-                if (grant != PackageManager.PERMISSION_GRANTED) {
-                    isAllGranted = false;
-                    break;
-                }
-            }
-            if (!isAllGranted) {
-                openAppDetails();
-            } else {
-                addCameraFragment();
-            }
-        }
-    }
-
-    private void openAppDetails() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("PoseNet 需要访问 “相机” 和 “外部存储器”，请到 “应用信息 -> 权限” 中授予！");
-        builder.setPositiveButton("去手动授权", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                Intent intent = new Intent();
-                intent.setAction(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                intent.addCategory(Intent.CATEGORY_DEFAULT);
-                intent.setData(Uri.parse("package:" + getPackageName()));
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.addFlags(Intent.FLAG_ACTIVITY_NO_HISTORY);
-                intent.addFlags(Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-                startActivityForResult(intent, REQUEST_PERMISSION_AGAIN);
-            }
-        });
-        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int which) {
-                finish();
-            }
-        });
-        builder.show();
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (REQUEST_PERMISSION_AGAIN == requestCode) {
-            requestPermissions();
-        }
+        addCameraFragment();
     }
 
     private void addCameraFragment() {
@@ -171,6 +91,5 @@ public class PosenetMainActivity extends AppCompatActivity  {
     public void onClickSwitch(View view) {
         poseNetFragment.switchCamera();
     }
-
 
 }

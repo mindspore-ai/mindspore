@@ -24,7 +24,7 @@
             android:drawableStart="@drawable/logo2"
             android:drawablePadding="5dp"
             android:gravity="center_vertical"
-            android:text="MindSpore PoseNet"
+            android:text="@string/posenet_app_name_title"
             android:textColor="#ffffff"
             android:textSize="20sp" />
 

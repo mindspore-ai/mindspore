@@ -16,15 +16,19 @@
 package com.mindspore.imageobject.util;
 
 import android.app.Activity;
+import android.content.ContentResolver;
+import android.content.Context;
 import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
-import android.provider.MediaStore;
-import android.util.Log;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -40,112 +44,122 @@ public class BitmapUtils {
         }
     }
 
-    private static String getImagePath(Activity activity, Uri uri) {
-        String[] projection = {MediaStore.Images.Media.DATA};
-        Cursor cursor = activity.managedQuery(uri, projection, null, null, null);
-        int columnIndex = cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA);
-        cursor.moveToFirst();
-        return cursor.getString(columnIndex);
-    }
+    public static Bitmap getBitmapFormUri(Activity ac, Uri uri) {
+        Bitmap bitmap = null;
+        try {
+            InputStream input = ac.getContentResolver().openInputStream(uri);
+            BitmapFactory.Options onlyBoundsOptions = new BitmapFactory.Options();
+            onlyBoundsOptions.inJustDecodeBounds = true;
+            onlyBoundsOptions.inDither = true;//optional
+            onlyBoundsOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;//optional
+            BitmapFactory.decodeStream(input, null, onlyBoundsOptions);
+            input.close();
+            int originalWidth = onlyBoundsOptions.outWidth;
+            int originalHeight = onlyBoundsOptions.outHeight;
+            if ((originalWidth == -1) || (originalHeight == -1))
+                return null;
+            float hh = 1920f;
+            float ww = 1080f;
+            int be = 1;
+            if (originalWidth > originalHeight && originalWidth > ww) {
+                be = (int) (originalWidth / ww);
+            } else if (originalWidth < originalHeight && originalHeight > hh) {
+                be = (int) (originalHeight / hh);
+            }
+            if (be <= 0) {
+                be = 1;
+            }
+            BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+            bitmapOptions.inSampleSize = be;
+            bitmapOptions.inDither = true;//optional
+            bitmapOptions.inPreferredConfig = Bitmap.Config.ARGB_8888;//optional
+            input = ac.getContentResolver().openInputStream(uri);
+            bitmap = BitmapFactory.decodeStream(input, null, bitmapOptions);
+            input.close();
 
-    public static Bitmap loadFromPath(Activity activity, int id, int width, int height) {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-        InputStream is = activity.getResources().openRawResource(id);
-        int sampleSize = calculateInSampleSize(options, width, height);
-        options.inSampleSize = sampleSize;
-        options.inJustDecodeBounds = false;
-        return zoomImage(BitmapFactory.decodeStream(is), width, height);
-    }
 
-    public static Bitmap loadFromPath(Activity activity, Uri uri, int width, int height) {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        options.inJustDecodeBounds = true;
-
-        String path = getImagePath(activity, uri);
-        BitmapFactory.decodeFile(path, options);
-        int sampleSize = calculateInSampleSize(options, width, height);
-        options.inSampleSize = sampleSize;
-        options.inJustDecodeBounds = false;
-
-        Bitmap bitmap = zoomImage(BitmapFactory.decodeFile(path, options), width, height);
-        return rotateBitmap(bitmap, getRotationAngle(path));
-    }
-
-    private static int calculateInSampleSize(BitmapFactory.Options options, int reqWidth, int reqHeight) {
-        final int width = options.outWidth;
-        final int height = options.outHeight;
-        int inSampleSize = 1;
-
-        if (height > reqHeight || width > reqWidth) {
-            // Calculate height and required height scale.
-            final int heightRatio = Math.round((float) height / (float) reqHeight);
-            // Calculate width and required width scale.
-            final int widthRatio = Math.round((float) width / (float) reqWidth);
-            // Take the larger of the values.
-            inSampleSize = heightRatio > widthRatio ? heightRatio : widthRatio;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-        return inSampleSize;
+        return compressImage(bitmap);
     }
 
-    // Scale pictures to screen width.
-    private static Bitmap zoomImage(Bitmap imageBitmap, int targetWidth, int maxHeight) {
-        float scaleFactor =
-                Math.max(
-                        (float) imageBitmap.getWidth() / (float) targetWidth,
-                        (float) imageBitmap.getHeight() / (float) maxHeight);
-        Bitmap resizedBitmap =
-                Bitmap.createScaledBitmap(
-                        imageBitmap,
-                        (int) (imageBitmap.getWidth() / scaleFactor),
-                        (int) (imageBitmap.getHeight() / scaleFactor),
-                        true);
 
-        return resizedBitmap;
+    public static Bitmap compressImage(Bitmap image) {
+        if (image != null) {
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            image.compress(Bitmap.CompressFormat.JPEG, 100, baos);
+            int options = 100;
+            while (baos.toByteArray().length / 1024 > 100) {
+                baos.reset();
+                image.compress(Bitmap.CompressFormat.JPEG, options, baos);
+                options -= 10;
+            }
+            ByteArrayInputStream isBm = new ByteArrayInputStream(baos.toByteArray());
+            Bitmap bitmap = BitmapFactory.decodeStream(isBm, null, null);
+            return bitmap;
+        }else {
+            return null;
+        }
     }
 
-    /**
-     * Get the rotation angle of the photo.
-     *
-     * @param path photo path.
-     * @return angle.
-     */
-    public static int getRotationAngle(String path) {
-        int rotation = 0;
+    public static File getFileFromMediaUri(Context ac, Uri uri) {
+        if (uri.getScheme().toString().compareTo("content") == 0) {
+            ContentResolver cr = ac.getContentResolver();
+            Cursor cursor = cr.query(uri, null, null, null, null);
+            if (cursor != null) {
+                cursor.moveToFirst();
+                String filePath = cursor.getString(cursor.getColumnIndex("_data"));
+                cursor.close();
+                if (filePath != null) {
+                    return new File(filePath);
+                }
+            }
+        } else if (uri.getScheme().toString().compareTo("file") == 0) {
+            return new File(uri.toString().replace("file://", ""));
+        }
+        return null;
+    }
+
+    public static int getBitmapDegree(String path) {
+        int degree = 0;
         try {
             ExifInterface exifInterface = new ExifInterface(path);
-            int orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL);
+            int orientation = exifInterface.getAttributeInt(ExifInterface.TAG_ORIENTATION,
+                    ExifInterface.ORIENTATION_NORMAL);
             switch (orientation) {
                 case ExifInterface.ORIENTATION_ROTATE_90:
-                    rotation = 90;
+                    degree = 90;
                     break;
                 case ExifInterface.ORIENTATION_ROTATE_180:
-                    rotation = 180;
+                    degree = 180;
                     break;
                 case ExifInterface.ORIENTATION_ROTATE_270:
-                    rotation = 270;
-                    break;
-                default:
+                    degree = 270;
                     break;
             }
         } catch (IOException e) {
-            Log.e(TAG, "Failed to get rotation: " + e.getMessage());
+            e.printStackTrace();
         }
-        return rotation;
+        return degree;
     }
 
-    public static Bitmap rotateBitmap(Bitmap bitmap, int angle) {
+    public static Bitmap rotateBitmapByDegree(Bitmap bm, int degree) {
+        Bitmap returnBm = null;
         Matrix matrix = new Matrix();
-        matrix.postRotate(angle);
-        Bitmap result = null;
+        matrix.postRotate(degree);
         try {
-            result = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+            returnBm = Bitmap.createBitmap(bm, 0, 0, bm.getWidth(), bm.getHeight(), matrix, true);
         } catch (OutOfMemoryError e) {
-            Log.e(TAG, "Failed to rotate bitmap: " + e.getMessage());
         }
-        if (result == null) {
-            return bitmap;
+        if (returnBm == null) {
+            returnBm = bm;
         }
-        return result;
+        if (bm != returnBm) {
+            bm.recycle();
+        }
+        return returnBm;
     }
 }

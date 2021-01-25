@@ -4,13 +4,18 @@
  * The libraries can be downloaded manually.
  */
 def targetMindSporeInclude = "src/main/cpp/"
-def mindsporeLite_Version = "mindspore-lite-1.0.1-runtime-arm64-cpu"
+def mindsporeLite_Version = "mindspore-lite-1.1.0-inference-android"
+def mindsporeLite_Version_AAR = "mindspore-lite-maven-1.1.0"
 
 def targetModelFile = "src/main/assets/model/mobilenetv2.ms"
 def mindSporeLibrary_arm64 = "src/main/cpp/${mindsporeLite_Version}.tar.gz"
 
 def modelDownloadUrl = "https://download.mindspore.cn/model_zoo/official/lite/mobilenetv2_openimage_lite/mobilenetv2.ms"
-def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.0.1/lite/android_aarch64/${mindsporeLite_Version}.tar.gz"
+def mindsporeLiteDownloadUrl = "https://ms-release.obs.cn-north-4.myhuaweicloud.com/1.1.0/MindSpore/lite/release/android/${mindsporeLite_Version}.tar.gz"
+
+def mindSporeLibraryAAR = "src/main/cpp/${mindsporeLite_Version}/${mindsporeLite_Version_AAR}.zip"
+def cleantargetMindSporeIncludeAAR = "../mindsporelibrary"
+def targetMindSporeIncludeAAR = "../mindsporelibrary/"
 
 def targetObjectModelFile = "src/main/assets/model/ssd.ms"
 def targetGarbageModelFile = "src/main/assets/model/garbage_mobilenetv2.ms"
@@ -66,15 +71,29 @@ task unzipMindSporeInclude(type: Copy, dependsOn: 'downloadMindSporeLibrary') {
 }
 
 task cleanUnusedmindsporeFiles(type: Delete, dependsOn: ['unzipMindSporeInclude']) {
-    delete fileTree("${cleantargetMindSporeInclude}").matching {
+    delete fileTree("${targetMindSporeInclude}").matching {
         include "*.tar.gz"
+    }
+}
+
+task unzipMindSporeIncludeAAR(type: Copy, dependsOn: ['cleanUnusedmindsporeFiles']) {
+    doFirst {
+        println "Unzipping ${mindSporeLibraryAAR}"
+    }
+    from zipTree("${mindSporeLibraryAAR}")
+    into "${targetMindSporeIncludeAAR}"
+}
+
+task cleanUnusedmindsporeAARFiles(type: Delete, dependsOn: ['unzipMindSporeIncludeAAR']) {
+    delete fileTree("${cleantargetMindSporeIncludeAAR}").matching {
+        include "*.zip"
     }
 }
 /*
  * Using preBuild to download mindspore library and model file.
  * Run before gradle build.
  */
-if (file("src/main/cpp/${mindsporeLite_Version}/lib/libmindspore-lite.so").exists()) {
+if (file("src/main/cpp/${mindsporeLite_Version}/lib/aarch64/libmindspore-lite.so").exists()) {
     downloadMindSporeLibrary.enabled = false
     unzipMindSporeInclude.enabled = false
     cleanUnusedmindsporeFiles.enabled = false
@@ -92,13 +111,22 @@ if (file("src/main/assets/model/ssd.ms").exists()) {
     downloadObjectModelFile.enabled = false
 }
 
+
+if (file("../mindsporelibrary/mindspore/mindspore-lite/1.1.0/mindspore-lite-1.1.0.aar").exists()) {
+    downloadMindSporeLibrary.enabled = false
+    unzipMindSporeIncludeAAR.enabled = false
+    cleanUnusedmindsporeAARFiles.enabled = false
+}
+
 preBuild.dependsOn cleanCmakeCache
 preBuild.dependsOn downloadModelFile
 preBuild.dependsOn downloadObjectModelFile
 preBuild.dependsOn downloadMindSporeLibrary
 preBuild.dependsOn downloadGarbageModelFile
 preBuild.dependsOn unzipMindSporeInclude
+preBuild.dependsOn unzipMindSporeIncludeAAR
 preBuild.dependsOn cleanUnusedmindsporeFiles
+preBuild.dependsOn cleanUnusedmindsporeAARFiles
 
 class DownloadUrlTask extends DefaultTask {
     @Input

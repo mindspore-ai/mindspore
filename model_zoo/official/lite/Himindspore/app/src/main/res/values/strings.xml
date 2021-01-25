@@ -1,26 +1,29 @@
 <resources>
-    <string name="app_name">HiMindSpore</string>
-    <string name="app_name_title">MindSpore</string>
-    <string name="switch_custom">custom</string>
-
+    <string name="app_name">MindSpore</string>
+    <string name="app_need_permission">"MindSpore需要访问 “相机” 和 “外部存储器”，请到 “应用信息 -> 权限” 中授予！"</string>
+    <string name="app_permission_by_hand">"去手动授权"</string>
+    <string name="cancel">"取消"</string>
+    <string name="confirm">"确定"</string>
+    <string name="app_download_success">"下载完成"</string>
+    <string name="app_need_install">"是否安装"</string>
+    <string name="app_is_loading">"正在下载"</string>
+    <string name="app_wait">"请稍候..."</string>
+    <string name="app_load_fail">"下载失败"</string>
+    <string name="app_update_lastest">"请升级新版本"</string>
     <string name="title_image">Image Classification</string>
     <string name="title_image_garbage">Garbage Classification</string>
     <string name="title_object">Photo Detection</string>
     <string name="title_object_camera">Camera Detection</string>
     <string name="title_pose_net">PoseNet</string>
     <string name="title_style_transfer">Style Transfer</string>
+    <string name="title_segmentation">Image Segmentation</string>
+
     <string name="title_source">Code</string>
     <string name="title_scene">Scene Detection</string>
     <string name="title_help">FeedBack</string>
     <string name="title_star">Star</string>
-    <string name="title_segmentation">Image Segmentation</string>
-
-    <string name="title_photo">Photo</string>
-    <string name="title_camera">Camera</string>
-
-    <string name="title_demo">Demo</string>
-    <string name="title_custom">Custom</string>
-
-    <string name="title_time">Inference Time</string>
+    <string name="title_version">Version: </string>
+    <string name="title_share">Share</string>
+    <string name="title_share_commend">MindSpore APP：初学者的一站式协同学习、演示、体验平台\t</string>
 
 </resources>

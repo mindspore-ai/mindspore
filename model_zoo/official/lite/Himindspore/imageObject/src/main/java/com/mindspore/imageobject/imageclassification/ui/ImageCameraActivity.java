@@ -64,23 +64,20 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     int enterType;
 
     private LinearLayout bottomLayout;
-
     private List<RecognitionImageBean> recognitionObjectBeanList;
 
     private CameraPreview cameraPreview;
-
     private ImageTrackingMobile imageTrackingMobile;
     private GarbageTrackingMobile garbageTrackingMobile;
     private SceneTrackingMobile sceneTrackingMobile;
+    private RecognitionImageBean bean;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         //inject
         ARouter.getInstance().inject(this);
-
         setContentView(R.layout.activity_image_camera);
-
         cameraPreview = findViewById(R.id.image_camera_preview);
         bottomLayout = findViewById(R.id.layout_bottom_content);
         cameraPreview.setVisibility(View.VISIBLE);
@@ -172,33 +169,47 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
                 String[] resultArray = result.split(";");
                 for (String singleRecognitionResult : resultArray) {
                     String[] singleResult = singleRecognitionResult.split(":");
+                    int lableIndex = Integer.parseInt(singleResult[0]);
                     float score = Float.parseFloat(singleResult[1]);
+                    String[] IMAGEOBJECT = getResources().getStringArray(R.array.image_category);
                     if (score > 0.5) {
-                        recognitionObjectBeanList.add(new RecognitionImageBean(singleResult[0], score));
+                        recognitionObjectBeanList.add(new RecognitionImageBean(IMAGEOBJECT[lableIndex], score));
                     }
                 }
-                Collections.sort(recognitionObjectBeanList, new Comparator<RecognitionImageBean>() {
-                    @Override
-                    public int compare(RecognitionImageBean t1, RecognitionImageBean t2) {
-                        return Float.compare(t2.getScore(), t1.getScore());
-                    }
-                });
+                Collections.sort(recognitionObjectBeanList, (t1, t2) -> Float.compare(t2.getScore(), t1.getScore()));
             }
-
             runOnUiThread(() -> showResultsInBottomSheet(recognitionObjectBeanList, time));
         } else if (TYPE_GARBAGE == enterType) {
-            runOnUiThread(() -> showResultsInBottomSheetGarbage(result, time));
+            int maxIndex = Integer.parseInt(result);
+            String[] GABAGETITLE = getResources().getStringArray(R.array.grbage_sort_map);
+            StringBuilder categoryScore = new StringBuilder();
+            if (maxIndex <= 9) {
+                categoryScore.append(GABAGETITLE[0]);
+                categoryScore.append(":");
+            } else if (maxIndex > 9 && maxIndex <= 17) {
+                categoryScore.append(GABAGETITLE[1]);
+                categoryScore.append(":");
+            } else if (maxIndex > 17 && maxIndex <= 21) {
+                categoryScore.append(GABAGETITLE[2]);
+                categoryScore.append(":");
+            } else if (maxIndex > 21 && maxIndex <= 25) {
+                categoryScore.append(GABAGETITLE[3]);
+                categoryScore.append(":");
+            }
+            categoryScore.append(getResources().getStringArray(R.array.grbage_sort_detailed_map)[maxIndex]);
+            String finalCategoryScore = categoryScore.toString();
+            runOnUiThread(() -> showResultsInBottomSheetGarbage(finalCategoryScore, time));
         } else if (TYPE_SCENE == enterType) {
             if (!result.equals("") && result.contains(":")) {
                 String[] resultArray = result.split(":");
-                bean = new RecognitionImageBean(resultArray[0], Float.valueOf(resultArray[1]));
+                int lableIndex = Integer.parseInt(resultArray[0]);
+                float score = Float.parseFloat(resultArray[1]);
+                String[] SCENEOBJECT = getResources().getStringArray(R.array.scene_category);
+                bean = new RecognitionImageBean(SCENEOBJECT[lableIndex], score);
             }
             runOnUiThread(() -> showResultsInBottomSheetScene(bean, time));
         }
     }
-
-
-    RecognitionImageBean bean;
 
     @UiThread
     protected void showResultsInBottomSheet(List<RecognitionImageBean> list, String time) {
@@ -259,14 +270,14 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
             bottomLayout.addView(horTextView);
 
             HorTextView horTimeView = new HorTextView(this);
-            horTimeView.setLeftTitle("Inference Time：");
+            horTimeView.setLeftTitle(getResources().getString(R.string.title_time));
             horTimeView.setRightContent(time);
             horTimeView.setBottomLineVisible(View.INVISIBLE);
             bottomLayout.addView(horTimeView);
         } else {
             TextView textView = new TextView(this);
             textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-            textView.setText("Keep moving.");
+            textView.setText(getResources().getString(R.string.title_keep));
             textView.setGravity(Gravity.CENTER);
             textView.setTextColor(Color.BLACK);
             textView.setTextSize(30);
@@ -277,12 +288,10 @@ public class ImageCameraActivity extends AppCompatActivity implements CameraPrev
     private void showLoadView() {
         TextView textView = new TextView(this);
         textView.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        textView.setText("Keep moving.");
+        textView.setText(getResources().getString(R.string.title_keep));
         textView.setGravity(Gravity.CENTER);
         textView.setTextColor(Color.WHITE);
         textView.setTextSize(30);
         bottomLayout.addView(textView);
     }
-
-
 }

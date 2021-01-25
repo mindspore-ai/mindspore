@@ -84,7 +84,6 @@ public class ObjectTrackingMobile  {
      */
     public boolean loadModelFromBuf(AssetManager assetManager) {
         String ModelPath = "model/ssd.ms";
-
         ByteBuffer buffer = loadModelFile(ModelPath);
         netEnv = loadModel(assetManager, buffer, 2);
         return true;

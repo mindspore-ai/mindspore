@@ -1,2 +1,2 @@
 configurations.maybeCreate("default")
-artifacts.add("default", file('mindspore-lite-1.0.1.aar'))
+artifacts.add("default", file('mindspore/mindspore-lite/1.1.0/mindspore-lite-1.1.0.aar'))
