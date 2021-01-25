@@ -138,7 +138,7 @@ class WriterPool(ctx.Process):
         for writer in self._writers[:]:
             try:
                 writer.write(plugin, data)
-            except RuntimeError as exc:
+            except (RuntimeError, OSError) as exc:
                 logger.error(str(exc))
                 self._writers.remove(writer)
                 writer.close()
