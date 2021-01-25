@@ -73,7 +73,7 @@ bool TcpConnection::SendMessage(std::shared_ptr<MessageMeta> meta, const Protos 
   MS_EXCEPTION_IF_NULL(data);
   bufferevent_lock(buffer_event_);
   bool res = true;
-  Messageheader header;
+  MessageHeader header;
   header.message_proto_ = protos;
   header.message_meta_length_ = SizeToUint(meta->ByteSizeLong());
   header.message_length_ = size + header.message_meta_length_;
