@@ -184,21 +184,21 @@ PYBIND_REGISTER(CSVNode, 2, ([](const py::module *m) {
 PYBIND_REGISTER(GeneratorNode, 2, ([](const py::module *m) {
                   (void)py::class_<GeneratorNode, DatasetNode, std::shared_ptr<GeneratorNode>>(
                     *m, "GeneratorNode", "to create a GeneratorNode")
-                    .def(py::init([](py::function generator_function, const std::vector<std::string> &column_names,
-                                     const std::vector<DataType> &column_types) {
-                      auto gen = std::make_shared<GeneratorNode>(generator_function, column_names, column_types);
+                    .def(
+                      py::init([](py::function generator_function, const std::vector<std::string> &column_names,
+                                  const std::vector<DataType> &column_types, int64_t dataset_len, py::handle sampler) {
+                        auto gen = std::make_shared<GeneratorNode>(generator_function, column_names, column_types,
+                                                                   dataset_len, toSamplerObj(sampler));
+                        THROW_IF_ERROR(gen->ValidateParams());
+                        return gen;
+                      }))
+                    .def(py::init([](py::function generator_function, const std::shared_ptr<SchemaObj> schema,
+                                     int64_t dataset_len, py::handle sampler) {
+                      auto gen =
+                        std::make_shared<GeneratorNode>(generator_function, schema, dataset_len, toSamplerObj(sampler));
                       THROW_IF_ERROR(gen->ValidateParams());
                       return gen;
-                    }))
-                    .def(py::init([](py::function generator_function, const std::shared_ptr<SchemaObj> schema) {
-                      auto gen = std::make_shared<GeneratorNode>(generator_function, schema);
-                      THROW_IF_ERROR(gen->ValidateParams());
-                      return gen;
-                    }))
-                    .def("SetGeneratorDatasetSize", [](std::shared_ptr<GeneratorNode> self, int64_t sz) {
-                      self->SetGeneratorDatasetSize(sz);
-                      return self;
-                    });
+                    }));
                 }));
 
 PYBIND_REGISTER(ImageFolderNode, 2, ([](const py::module *m) {

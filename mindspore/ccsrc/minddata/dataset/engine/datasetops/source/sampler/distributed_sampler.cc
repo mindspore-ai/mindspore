@@ -177,8 +177,21 @@ int64_t DistributedSamplerRT::CalculateNumSamples(int64_t num_rows) {
     child_num_rows = child_[0]->CalculateNumSamples(num_rows);
   }
   int64_t num_samples = (num_samples_ > 0) ? std::min(child_num_rows, num_samples_) : child_num_rows;
-  int64_t num_per_shard = std::ceil(child_num_rows * 1.0 / num_devices_);
-  return std::min(num_samples, num_per_shard);
+  int64_t remainder = (child_num_rows + offset_) % num_devices_;
+  int64_t shard_size = (child_num_rows + offset_) / num_devices_;
+  if (offset_ != -1 || !even_dist_) {
+    if (offset_ == -1) offset_ = 0;
+    if (device_id_ < remainder) shard_size++;
+    if (device_id_ < offset_) shard_size--;
+  } else {
+    offset_ = 0;
+    shard_size = (child_num_rows + num_devices_ - 1) / num_devices_;
+  }
+  // add 1 to an empty shard
+  // this logic is needed to follow the logic in initSampler that is written for ConcatDataset
+  if (shard_size == 0) shard_size++;
+
+  return std::min(num_samples, shard_size);
 }
 
 void DistributedSamplerRT::SamplerPrint(std::ostream &out, bool show_all) const {

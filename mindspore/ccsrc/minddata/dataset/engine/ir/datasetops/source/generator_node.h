@@ -34,10 +34,11 @@ class GeneratorNode : public MappableSourceNode {
  public:
   /// \brief Constructor
   GeneratorNode(py::function generator_function, const std::vector<std::string> &column_names,
-                const std::vector<DataType> &column_types);
+                const std::vector<DataType> &column_types, int64_t source_len, std::shared_ptr<SamplerObj> sampler);
 
   /// \brief Constructor
-  GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema);
+  GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema, int64_t source_len,
+                std::shared_ptr<SamplerObj> sampler);
 
   /// \brief Destructor
   ~GeneratorNode() = default;
@@ -67,11 +68,6 @@ class GeneratorNode : public MappableSourceNode {
   /// \return Status Status::OK() if get shard id successfully
   Status GetShardId(int32_t *shard_id) override;
 
-  /// \brief Setter for DatasetSize in GeneratorNode
-  /// \param[in] sz dataset size to set
-  /// \return void
-  void SetGeneratorDatasetSize(int64_t sz) { dataset_size_ = sz; }
-
   bool IsSizeDefined() override { return false; }
 
   /// \brief Record the vector of Repeat/EpochCtrl nodes that are ancestors of this node
@@ -82,6 +78,14 @@ class GeneratorNode : public MappableSourceNode {
     reset_ancestor_ = src;
     return Status::OK();
   }
+  /// Returns the dataset size of GeneratorOp. If is mappable (sampler isn not null), the sampler is used.
+  /// Otherwise, a dry run is needed.
+  /// \param[in] size_getter TreeConsumer to be used for a dryrun
+  /// \param[in] estimate
+  /// \param[out] dataset_size
+  /// \return Status of the function
+  Status GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                        int64_t *dataset_size) override;
 
   /// \brief Getter functions
   const py::function &GeneratorFunction() const { return generator_function_; }
@@ -102,6 +106,8 @@ class GeneratorNode : public MappableSourceNode {
   std::vector<DataType> column_types_;
   std::shared_ptr<SchemaObj> schema_;
   std::shared_ptr<RepeatNode> reset_ancestor_;  // updated its immediate Repeat/EpochCtrl ancestor in GeneratorNodePass
+  std::shared_ptr<SamplerObj> sampler_;
+  int64_t source_len_;  // Length of the dataset source provided by the user, -1 means it's unknown
 
   /// \brief Base-class override for accepting IRNodePass visitor
   /// \param[in] p The node to visit

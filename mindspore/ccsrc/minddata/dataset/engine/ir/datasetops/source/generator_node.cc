@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "minddata/dataset/engine/datasetops/repeat_op.h"
@@ -29,24 +30,27 @@ namespace mindspore {
 namespace dataset {
 
 GeneratorNode::GeneratorNode(py::function generator_function, const std::vector<std::string> &column_names,
-                             const std::vector<DataType> &column_types)
+                             const std::vector<DataType> &column_types, int64_t source_len,
+                             std::shared_ptr<SamplerObj> sampler)
     : MappableSourceNode(),
       generator_function_(generator_function),
       column_names_(column_names),
       column_types_(column_types),
-      reset_ancestor_(nullptr) {}
+      reset_ancestor_(nullptr),
+      sampler_(std::move(sampler)),
+      source_len_(source_len) {}
 
-GeneratorNode::GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema)
+GeneratorNode::GeneratorNode(py::function generator_function, const std::shared_ptr<SchemaObj> &schema,
+                             int64_t source_len, std::shared_ptr<SamplerObj> sampler)
     : MappableSourceNode(), generator_function_(generator_function), schema_(schema), reset_ancestor_(nullptr) {}
 
 std::shared_ptr<DatasetNode> GeneratorNode::Copy() {
   std::shared_ptr<GeneratorNode> node;
   if (schema_ == nullptr) {
-    node = std::make_shared<GeneratorNode>(generator_function_, column_names_, column_types_);
+    node = std::make_shared<GeneratorNode>(generator_function_, column_names_, column_types_, source_len_, sampler_);
   } else {
-    node = std::make_shared<GeneratorNode>(generator_function_, schema_);
+    node = std::make_shared<GeneratorNode>(generator_function_, schema_, source_len_, sampler_);
   }
-  node->SetGeneratorDatasetSize(dataset_size_);
   return node;
 }
 
@@ -69,17 +73,14 @@ Status GeneratorNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_
       column_types_.push_back((col.type()));
     }
   }
+  std::shared_ptr<SamplerRT> sampler_rt = sampler_ ? sampler_->SamplerBuild() : nullptr;
 
   // GeneratorOp's constructor takes in a prefetch_size, which isn't being set by user nor is it being used by
   // GeneratorOp internally. Here it is given a zero which is the default in generator builder
   std::shared_ptr<GeneratorOp> op = std::make_shared<GeneratorOp>(generator_function_, column_names_, column_types_, 0,
-                                                                  rows_per_buffer_, connector_que_size_, dataset_size_);
-
-  // Init() is called in builder when generator is built. Here, since we are getting away from the builder class, init
-  // needs to be called when the op is built. The caveat is that Init needs to be made public (before it is private).
-  // This method can be privatized once we move Init() to Generator's functor. However, that is a bigger change which
-  // best be delivered when the test cases for this api is ready.
-  RETURN_IF_NOT_OK(op->Init());
+                                                                  rows_per_buffer_, connector_que_size_, sampler_rt);
+  // set the number of rows from source length
+  op->SetNumRows(source_len_);
 
   // Add this GeneratorOp to its RepeatOp/EpochCtrlOp ancestor's EOE list.
   // When the ancestor reaches an end-of-epoch boundary, it will send a "reset" signal to all the ops in the EOE list.
@@ -117,6 +118,27 @@ Status GeneratorNode::Accept(IRNodePass *p, bool *const modified) {
 Status GeneratorNode::AcceptAfter(IRNodePass *p, bool *const modified) {
   // Downcast shared pointer then call visitor
   return p->VisitAfter(shared_from_base<GeneratorNode>(), modified);
+}
+
+Status GeneratorNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size_getter, bool estimate,
+                                     int64_t *dataset_size) {
+  if (dataset_size_ > 0) {
+    *dataset_size = dataset_size_;
+    return Status::OK();
+  }
+  if (source_len_ == -1) {
+    RETURN_IF_NOT_OK(size_getter->DryRun(shared_from_this(), dataset_size));
+    dataset_size_ = *dataset_size;
+    return Status::OK();
+  } else {
+    int64_t sample_size;
+    int64_t num_rows;
+    num_rows = source_len_;
+    sample_size = sampler_ ? sampler_->SamplerBuild()->CalculateNumSamples(num_rows) : num_rows;
+    *dataset_size = sample_size;
+    dataset_size_ = *dataset_size;
+    return Status::OK();
+  }
 }
 }  // namespace dataset
 }  // namespace mindspore
