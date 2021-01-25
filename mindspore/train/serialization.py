@@ -560,13 +560,15 @@ def _export(net, file_name, file_format, *inputs):
     if file_format == 'AIR':
         phase_name = 'export.air'
         graph_id, _ = _executor.compile(net, *inputs, phase=phase_name)
-        file_name += ".air"
+        if not file_name.endswith('.air'):
+            file_name += ".air"
         _executor.export(file_name, graph_id)
     elif file_format == 'ONNX':
         phase_name = 'export.onnx'
         graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
         onnx_stream = _executor._get_func_graph_proto(net, graph_id)
-        file_name += ".onnx"
+        if not file_name.endswith('.onnx'):
+            file_name += ".onnx"
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
             f.write(onnx_stream)
@@ -574,7 +576,8 @@ def _export(net, file_name, file_format, *inputs):
         phase_name = 'export.mindir'
         graph_id, _ = _executor.compile(net, *inputs, phase=phase_name, do_convert=False)
         onnx_stream = _executor._get_func_graph_proto(net, graph_id, 'mind_ir')
-        file_name += ".mindir"
+        if not file_name.endswith('.mindir'):
+            file_name += ".mindir"
         with open(file_name, 'wb') as f:
             os.chmod(file_name, stat.S_IWUSR | stat.S_IRUSR)
             f.write(onnx_stream)
