@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <vector>
+#include "backend/optimizer/common/optimizer.h"
 #include "schema/inner/model_generated.h"
 #include "tools/common/storage.h"
 #include "tools/converter/converter_flags.h"
@@ -39,6 +40,24 @@ class AnfTransform {
                          std::vector<ValueNodePtr> *vnodes);
   FuncGraphPtr TransformSingleFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config = nullptr);
   std::unique_ptr<quant::Quantizer> mQuantizer = nullptr;
+
+  int AddFusionPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer, const converter::Flags *config);
+
+  int AddGraphPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer, const converter::Flags *config);
+
+  int AddConvertPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer, const converter::Flags *config);
+
+  int AddConstFoldPass(const std::shared_ptr<opt::GraphOptimizer> &optimizer, const converter::Flags *config);
+
+  int RunAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
+
+  int RunMindirAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
+
+  int RunOnnxAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
+
+  int RunTFAdjustPass(const FuncGraphPtr &old_graph, const converter::Flags *config);
+
+  int DoQuantize(const FuncGraphPtr &old_graph, const converter::Flags *config, const FuncGraphPtr &new_graph);
 };
 }  // namespace lite
 }  // namespace mindspore
