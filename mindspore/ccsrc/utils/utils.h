@@ -380,6 +380,8 @@ constexpr auto kAttrPadMode = "pad_mode";
 constexpr auto kAttrPad = "pad";
 constexpr auto kAttrPadding = "padding";
 constexpr auto kAttrIsGrad = "is_grad";
+constexpr auto kAttrRecompute = "recompute";
+constexpr auto kAttrNeedCseAfterRecompute = "need_cse_after_recompute";
 
 // attr value
 constexpr auto kValueTargetSwitch = "target_switch";
