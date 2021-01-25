@@ -218,9 +218,12 @@ inline void MergeRemoveB(LiteKernel *a, LiteKernel *b, std::set<LiteKernel *> *r
 // Pad + DeConv2D
 // Pad + Pooling
 template <typename ParamType>
-void TryMergePad(LiteKernel *node, std::set<LiteKernel *> *removed_set) {
+void TryMergePadXxx(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
   MS_ASSERT(node);
   MS_ASSERT(removed_set);
+  if (!PredIs(node, schema::PrimitiveType_Pad, nodes)) {
+    return;
+  }
   LiteKernel *pad = node->in_kernels().front();
   MS_ASSERT(pad);
   if (pad->in_tensors().front()->shape().size() != 4) {
@@ -245,9 +248,12 @@ void TryMergePad(LiteKernel *node, std::set<LiteKernel *> *removed_set) {
 }
 
 // Conv2D + Reshape(N11C->NC)
-void TryMergeConvReshape(LiteKernel *reshape, std::set<LiteKernel *> *removed_set) {
+void TryMergeConvReshape(LiteKernel *reshape, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
   MS_ASSERT(reshape);
   MS_ASSERT(removed_set);
+  if (!PredIs(reshape, schema::PrimitiveType_Conv2D, nodes)) {
+    return;
+  }
   if (N11C_NC(reshape)) {
     LiteKernel *conv = reshape->in_kernels().front();
     MS_ASSERT(conv);
@@ -257,9 +263,12 @@ void TryMergeConvReshape(LiteKernel *reshape, std::set<LiteKernel *> *removed_se
 }
 
 // FullConnection + Reshape(NC->N11C or N11C->NC)
-void TryMergeFcReshape(LiteKernel *reshape, std::set<LiteKernel *> *removed_set) {
+void TryMergeFcReshape(LiteKernel *reshape, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
   MS_ASSERT(reshape);
   MS_ASSERT(removed_set);
+  if (!PredIs(reshape, schema::PrimitiveType_FullConnection, nodes)) {
+    return;
+  }
   bool NC_N11C_flag = NC_N11C(reshape);
   if (NC_N11C_flag || N11C_NC(reshape)) {
     LiteKernel *fc = reshape->in_kernels().front();
@@ -272,9 +281,12 @@ void TryMergeFcReshape(LiteKernel *reshape, std::set<LiteKernel *> *removed_set)
 
 // Reshape(NC11->NC) + FullConnection
 // Reshape(NC->N11C) + FullConnection
-void TryMergeReshapeFc(LiteKernel *fc, std::set<LiteKernel *> *removed_set) {
+void TryMergeReshapeFc(LiteKernel *fc, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
   MS_ASSERT(fc);
   MS_ASSERT(removed_set);
+  if (!PredIs(fc, schema::PrimitiveType_Reshape, nodes)) {
+    return;
+  }
   LiteKernel *reshape = fc->in_kernels().front();
   MS_ASSERT(reshape);
   bool NC11_NC_flag = NC11_NC(reshape);
@@ -308,7 +320,7 @@ void TryMergeArithmeticAct(LiteKernel *act, std::set<LiteKernel *> *removed_set)
 // Conv2D(NO_ACTIVATION)         + Activation(RELU/RELU6/TANH)
 // FullConnection(NO_ACTIVATION) + Activation(RELU/RELU6/TANH)
 template <typename ParamType>
-void TryMergeActivation(LiteKernel *act, std::set<LiteKernel *> *removed_set) {
+void TryMergeXxxActivation(LiteKernel *act, std::set<LiteKernel *> *removed_set) {
   MS_ASSERT(node);
   MS_ASSERT(removed_set);
   auto *act_param = reinterpret_cast<ActivationParameter *>(reinterpret_cast<OpenCLKernel *>(act)->GetParameter());
@@ -316,7 +328,6 @@ void TryMergeActivation(LiteKernel *act, std::set<LiteKernel *> *removed_set) {
   auto *param = reinterpret_cast<ParamType *>(reinterpret_cast<OpenCLKernel *>(node)->GetParameter());
   MS_ASSERT(param);
   if (param->act_type_ == ActType_No) {
-    param->act_type_ = static_cast<ActType>(act_param->type_);
     std::string act_name;
     if (act_param->type_ == ActivationType_RELU) {
       act_name = "RELU";
@@ -324,16 +335,25 @@ void TryMergeActivation(LiteKernel *act, std::set<LiteKernel *> *removed_set) {
       act_name = "RELU6";
     } else if (act_param->type_ == ActivationType_TANH) {
       act_name = "TANH";
+    } else {
+      MS_LOG(DEBUG) << "Merge " + GetTypeName(node) + "(NO_ACTIVATION) and Activation(" + act_name +
+                         ") is not supported";
+      return;
     }
+    param->act_type_ = static_cast<ActType>(act_param->type_);
     MergeRemoveB(node, act, removed_set);
     MS_LOG(DEBUG) << "Merge " + GetTypeName(node) + "(NO_ACTIVATION) and Activation(" + act_name + ") success";
   }
 }
 
 // Conv2D(NO_ACTIVATION) + PReLU(weight is scalar)
-void TryMergeConvPReLU(LiteKernel *prelu, std::set<LiteKernel *> *removed_set) {
+void TryMergeConvPReLU(LiteKernel *prelu, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
   MS_ASSERT(prelu);
   MS_ASSERT(removed_set);
+  if (!PredIs(prelu, schema::PrimitiveType_Conv2D, nodes)) {
+    return;
+  }
+
   if (prelu->in_tensors().size() != 2) {
     return;
   }
@@ -409,7 +429,7 @@ int TryFusionConvScaleWeight(LiteKernel *conv_kernel, LiteKernel *scale_kernel) 
       bias_data[co] *= scale_data[co];
       bias_data[co] += offset_data[co];
     }
-  } else {  // if deconv dont't have bias, let scale's offset be deconv's bias
+  } else {  // if deconv don't have bias, let scale's offset be deconv's bias
     auto tmp = conv_kernel->in_tensors();
     tmp.push_back(offset);
     conv_kernel->set_in_tensors(tmp);
@@ -418,9 +438,12 @@ int TryFusionConvScaleWeight(LiteKernel *conv_kernel, LiteKernel *scale_kernel) 
 }
 
 // DeConv2D + Scale (can't both has activation)
-void TryMergeDeconvScale(LiteKernel *scale, std::set<LiteKernel *> *removed_set) {
+void TryMergeDeconvScale(LiteKernel *scale, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
   MS_ASSERT(scale);
   MS_ASSERT(removed_set);
+  if (!PredIs(scale, schema::PrimitiveType_DeConv2D, nodes)) {
+    return;
+  }
   LiteKernel *deconv = scale->in_kernels().front();
   MS_ASSERT(deconv);
 
@@ -493,7 +516,7 @@ void CreateEltwiseKernelReplaceOld(FusionEltwiseParameter *param, LiteKernel *ol
 }
 
 // Eltwise + Eltwise
-int TryMergeEltwiseEltwise(LiteKernel *node, std::vector<LiteKernel *> *nodes, std::set<LiteKernel *> *removed_set) {
+int TryMergeEltwiseEltwise(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
   MS_ASSERT(node);
   MS_ASSERT(nodes);
   MS_ASSERT(removed_set);
@@ -536,12 +559,56 @@ int TryMergeEltwiseEltwise(LiteKernel *node, std::vector<LiteKernel *> *nodes, s
   return RET_OK;
 }
 
+void DoSpecificFusion(LiteKernel *node, std::set<LiteKernel *> *removed_set, std::vector<LiteKernel *> *nodes) {
+  switch (node->Type()) {
+    case schema::PrimitiveType_Conv2D:
+    case schema::PrimitiveType_DepthwiseConv2D:
+    case schema::PrimitiveType_DeConv2D: {
+      TryMergePadXxx<ConvParameter>(node, removed_set, nodes);
+      break;
+    }
+    case schema::PrimitiveType_Pooling: {
+      TryMergePadXxx<PoolingParameter>(node, removed_set, nodes);
+      break;
+    }
+    case schema::PrimitiveType_Reshape: {
+      TryMergeFcReshape(node, removed_set, nodes);
+      TryMergeConvReshape(node, removed_set, nodes);
+      break;
+    }
+    case schema::PrimitiveType_FullConnection: {
+      TryMergeReshapeFc(node, removed_set, nodes);
+      break;
+    }
+    case schema::PrimitiveType_Activation: {
+      // try merge Conv2D/FC(without act)  + RELU/RELU6/TANH
+      // try merge Arithmetic(without act) + RELU/RELU6
+      if (PredIs(node, schema::PrimitiveType_Conv2D, nodes)) {
+        TryMergeXxxActivation<ConvParameter>(node, removed_set);
+      } else if (PredIs(node, schema::PrimitiveType_FullConnection, nodes)) {
+        TryMergeXxxActivation<MatMulParameter>(node, removed_set);
+      } else if (std::any_of(ArithmeticPrimitives.begin(), ArithmeticPrimitives.end(),
+                             [&](schema::PrimitiveType type) { return PredIs(node, type, nodes); })) {
+        TryMergeArithmeticAct(node, removed_set);
+      }
+      break;
+    }
+    case schema::PrimitiveType_PReLU: {
+      TryMergeConvPReLU(node, removed_set, nodes);
+      break;
+    }
+    case schema::PrimitiveType_Scale: {
+      TryMergeDeconvScale(node, removed_set, nodes);
+      break;
+    }
+    default:
+      break;
+  }
+}  // namespace
+
 }  // namespace
 
 int OpenCLSubGraph::FusionPass() {
-  if (!this->IsSubGraphInferShapeDone()) {
-    return RET_OK;
-  }
   MS_LOG(DEBUG) << "start Fusion";
 
   std::vector<LiteKernel *> input_nodes;
@@ -579,77 +646,12 @@ int OpenCLSubGraph::FusionPass() {
     }
 
     // do element-wise fusion, like mul+add, mul+add+relu
-    if (TryMergeEltwiseEltwise(node, &nodes_, &removed_set) == RET_OK) {
+    if (TryMergeEltwiseEltwise(node, &removed_set, &nodes_) == RET_OK) {
       continue;
     }
 
-    // do special fusion, like pad+conv2d, fc+reshape
-    switch (node->Type()) {
-      case schema::PrimitiveType_Conv2D:
-      case schema::PrimitiveType_DepthwiseConv2D:
-      case schema::PrimitiveType_DeConv2D: {
-        if (PredIs(node, schema::PrimitiveType_Pad, &nodes_)) {
-          TryMergePad<ConvParameter>(node, &removed_set);
-        }
-        break;
-      }
-      case schema::PrimitiveType_Pooling: {
-        if (PredIs(node, schema::PrimitiveType_Pad, &nodes_)) {
-          TryMergePad<PoolingParameter>(node, &removed_set);
-        }
-        break;
-      }
-      case schema::PrimitiveType_Reshape: {
-        if (PredIs(node, schema::PrimitiveType_FullConnection, &nodes_)) {
-          TryMergeFcReshape(node, &removed_set);
-        } else if (PredIs(node, schema::PrimitiveType_Conv2D, &nodes_)) {
-          TryMergeConvReshape(node, &removed_set);
-        }
-        break;
-      }
-      case schema::PrimitiveType_FullConnection: {
-        if (PredIs(node, schema::PrimitiveType_Reshape, &nodes_)) {
-          TryMergeReshapeFc(node, &removed_set);
-        }
-        break;
-      }
-      case schema::PrimitiveType_Activation: {
-        // try merge Conv2D/FC(without act) + RELU/RELU6/TANH
-        auto *param = reinterpret_cast<ActivationParameter *>(reinterpret_cast<OpenCLKernel *>(node)->GetParameter());
-        MS_ASSERT(param);
-        if (param->type_ == ActivationType_RELU || param->type_ == ActivationType_RELU6 ||
-            param->type_ == ActivationType_TANH) {
-          if (PredIs(node, schema::PrimitiveType_Conv2D, &nodes_)) {
-            TryMergeActivation<ConvParameter>(node, &removed_set);
-            break;
-          } else if (PredIs(node, schema::PrimitiveType_FullConnection, &nodes_)) {
-            TryMergeActivation<MatMulParameter>(node, &removed_set);
-            break;
-          }
-        }
-        if (std::any_of(ArithmeticPrimitives.begin(), ArithmeticPrimitives.end(),
-                        [&](schema::PrimitiveType type) { return PredIs(node, type, &nodes_); })) {
-          TryMergeArithmeticAct(node, &removed_set);
-        }
-        break;
-      }
-      case schema::PrimitiveType_PReLU: {
-        if (PredIs(node, schema::PrimitiveType_Conv2D, &nodes_)) {
-          TryMergeConvPReLU(node, &removed_set);
-          break;
-        }
-        break;
-      }
-      case schema::PrimitiveType_Scale: {
-        if (PredIs(node, schema::PrimitiveType_DeConv2D, &nodes_)) {
-          TryMergeDeconvScale(node, &removed_set);
-          break;
-        }
-        break;
-      }
-      default:
-        break;
-    }
+    // do specific fusion, like pad+conv2d, fc+reshape, etc.
+    DoSpecificFusion(node, &removed_set, &nodes_);
   }
 
   for (auto kernel : removed_set) {

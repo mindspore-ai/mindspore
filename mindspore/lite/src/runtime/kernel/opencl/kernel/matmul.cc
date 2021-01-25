@@ -95,10 +95,6 @@ int MatMulOpenCLKernel::Prepare() {
   ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
 
 #endif
-  auto ret = InitWeights();
-  if (ret != RET_OK) {
-    return ret;
-  }
   SetConstArgs();
   SetGlobalLocal();
   MS_LOG(DEBUG) << kernel_name << " Init Done!";
@@ -106,7 +102,7 @@ int MatMulOpenCLKernel::Prepare() {
 }
 
 int MatMulOpenCLKernel::InitWeights() {
-  if (act_weight_) {
+  if (!in_tensors_[1]->IsConst()) {
     return RET_OK;
   }
   // ABMCI @ ABCICO = ABMCO
@@ -115,12 +111,27 @@ int MatMulOpenCLKernel::InitWeights() {
     return ret;
   }
   auto allocator = ocl_runtime_->GetAllocator();
-  int ci = inShape[3];
+  auto weight_shape = in_tensors_[1]->shape();
+  int weight_ndim = weight_shape.size();
+  std::vector<int> weight_shape_4d(MAX_DIMS, 1);
+  for (int i = 0; i < weight_ndim; i++) {
+    weight_shape_4d[MAX_DIMS - weight_ndim + i] = weight_shape[i];
+  }
+  auto param = reinterpret_cast<MatMulParameter *>(op_parameter_);
+  transposeB = param->b_transpose_;
+  enable_fp16_ = ocl_runtime_->GetFp16Enable();
+  int ci, co;
+  if (transposeB) {
+    ci = weight_shape_4d[3];
+    co = weight_shape_4d[2];
+  } else {
+    ci = weight_shape_4d[2];
+    co = weight_shape_4d[3];
+  }
   int ci4 = UP_DIV(ci, C4NUM);
-  int co = outShape[3];
   int co4 = UP_DIV(co, C4NUM);
-  int a = inShape[0];
-  int b = inShape[1];
+  int a = weight_shape_4d[0];
+  int b = weight_shape_4d[1];
 
   size_t dtype_size = enable_fp16_ ? sizeof(uint16_t) : sizeof(float);
   padWeight_ = allocator->Malloc(a * b * ci4 * co4 * C4NUM * C4NUM * dtype_size);

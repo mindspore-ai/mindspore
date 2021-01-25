@@ -34,8 +34,11 @@ class Conv2dTransposeOpenCLKernel : public OpenCLKernel {
   int Prepare() override;
   int CheckSpecs() override;
   int InitWeights() override;
+  int InitFilter();
+  int InitBias();
   void SetConstArgs() override;
   void SetGlobalLocal() override;
+  int InferShape() override;
 
  private:
   void *padWeight_{nullptr};

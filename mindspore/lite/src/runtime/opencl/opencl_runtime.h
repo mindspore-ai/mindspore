@@ -56,7 +56,7 @@ class OpenCLRuntime {
   cl::Context *Context();
   cl::Device *Device();
   OpenCLAllocator *GetAllocator() { return allocator_; }
-  cl::CommandQueue *GetDefaultCommandQueue() { return default_command_queue_; }
+  cl::CommandQueue *GetDefaultCommandQueue() { return profiling_ ? profiling_command_queue_ : default_command_queue_; }
   uint64_t DeviceGlobalMemoryCacheSize() const;
   int DeviceMaxWorkGroupSize() const;
   uint32_t DeviceComputeUnits() const;
@@ -101,7 +101,7 @@ class OpenCLRuntime {
         return kernel.setArg(index, *image);
       }
       default:
-        MS_LOG(ERROR) << "Unsupport opencl memory type: " << static_cast<int>(mem_type);
+        MS_LOG(ERROR) << "Unsupported opencl memory type: " << static_cast<int>(mem_type);
         return CL_IMAGE_FORMAT_NOT_SUPPORTED;
     }
   }
@@ -159,6 +159,8 @@ class OpenCLRuntime {
 
   bool LoadProgram(const std::string &program_name, cl::Program *program);
   bool BuildProgram(const std::string &build_options, const cl::Program &program);
+  int InitGPUDevice(std::vector<cl::Platform> &platforms);
+  int InitQueue(std::vector<cl::Platform> &platforms);
 
  private:
   static InitState init_state_;
