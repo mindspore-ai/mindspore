@@ -36,7 +36,6 @@ class TensorListSetItemCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  int IncrementOutputSize(int origin_size);
 
  private:
   lite::TensorList *input0_ = nullptr;
