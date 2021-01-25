@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@
 #include "runtime/device/kernel_runtime_manager.h"
 #include "utils/comm_manager.h"
 #include "utils/scoped_long_running.h"
+#ifdef ENABLE_DUMP_IR
+#include "debug/rdr/running_data_recorder.h"
+#endif
 #if (ENABLE_CPU && (ENABLE_D || ENABLE_GPU))
 #include "ps/ps_cache/ps_cache_manager.h"
 #endif
@@ -114,6 +117,11 @@ void RunGraphTask::Run() {
     MS_LOG(ERROR) << "Invalid graph id " << graph_id_;
     return;
   }
+#ifdef ENABLE_DUMP_IR
+  std::string tag = "run_graph";
+  std::string file_type = ".ir;.pb";
+  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, tag, graph, file_type);
+#endif
   graph->ResetGraphRunningStatus();
   try {
     session_->RunGraphImpl(graph_id_, input_tensors_, &outputs_);
