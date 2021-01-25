@@ -181,6 +181,24 @@ void ArithmeticCPUKernel::NotEqual(const T *input1, const T *input2, bool *out, 
 }
 
 template <typename T>
+void ArithmeticCPUKernel::LogicalAnd(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    out[i] = input1[idx[0]] && input2[idx[1]];
+  }
+}
+
+template <typename T>
+void ArithmeticCPUKernel::LogicalOr(const T *input1, const T *input2, bool *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    std::vector<size_t> idx;
+    GenIndex(i, &idx);
+    out[i] = input1[idx[0]] || input2[idx[1]];
+  }
+}
+
+template <typename T>
 void ArithmeticCPUKernel::SquaredDifference(const T *input1, const T *input2, T *out, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
     std::vector<size_t> idx;
@@ -248,6 +266,10 @@ void ArithmeticCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = GREATEREQUAL;
   } else if (kernel_name == prim::kPrimLessEqual->name()) {
     operate_type_ = LESSEQUAL;
+  } else if (kernel_name == prim::kPrimLogicalAnd->name()) {
+    operate_type_ = LOGICALAND;
+  } else if (kernel_name == prim::kPrimLogicalOr->name()) {
+    operate_type_ = LOGICALOR;
   } else if (kernel_name == prim::kPrimAssignAdd->name()) {
     operate_type_ = ASSIGNADD;
   } else if (kernel_name == prim::kPrimSquaredDifference->name()) {
@@ -366,6 +388,10 @@ void ArithmeticCPUKernel::LaunchKernelLogic(const std::vector<AddressPtr> &input
         std::thread(&ArithmeticCPUKernel::GreaterEqual<T>, this, input1, input2, output, start, end));
     } else if (operate_type_ == LESSEQUAL) {
       threads.emplace_back(std::thread(&ArithmeticCPUKernel::LessEqual<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == LOGICALAND) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::LogicalAnd<T>, this, input1, input2, output, start, end));
+    } else if (operate_type_ == LOGICALOR) {
+      threads.emplace_back(std::thread(&ArithmeticCPUKernel::LogicalOr<T>, this, input1, input2, output, start, end));
     } else {
       MS_LOG(EXCEPTION) << "Not support " << operate_type_;
     }

@@ -50,6 +50,13 @@ void Neg(const T *in, T *out, size_t start, size_t end) {
 }
 
 template <typename T>
+void LogicalNot(const T *in, T *out, size_t start, size_t end) {
+  for (size_t i = start; i < end; i++) {
+    out[i] = !in[i];
+  }
+}
+
+template <typename T>
 void OnesLike(const T *in, T *out, size_t start, size_t end) {
   for (size_t i = start; i < end; i++) {
     out[i] = static_cast<T>(1);
@@ -99,6 +106,8 @@ void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = ZEROSLIKE;
   } else if (kernel_name == prim::kPrimNeg->name()) {
     operate_type_ = NEG;
+  } else if (kernel_name == prim::kPrimLogicalNot->name()) {
+    operate_type_ = LOGICALNOT;
   } else if (kernel_name == prim::kPrimSign->name()) {
     operate_type_ = SIGN;
   } else if (kernel_name == prim::kPrimFloor->name()) {
@@ -109,6 +118,7 @@ void ArithmeticSelfCPUKernel::InitKernel(const CNodePtr &kernel_node) {
     operate_type_ = GELU;
   }
   dtype_ = AnfAlgo::GetPrevNodeOutputInferDataType(kernel_node, 0);
+  target_dtype_ = AnfAlgo::GetOutputInferDataType(kernel_node, 0);
 }
 
 bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
@@ -118,6 +128,8 @@ bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
     LaunchKernel<float>(inputs, outputs);
   } else if (dtype_ == kNumberTypeInt32 || dtype_ == kNumberTypeInt16 || dtype_ == kNumberTypeInt64) {
     LaunchKernel<int>(inputs, outputs);
+  } else if (dtype_ == kNumberTypeBool) {
+    LaunchKernelLogic<bool>(inputs, outputs);
   } else {
     MS_LOG(EXCEPTION) << "Data type is " << TypeIdLabel(dtype_) << "is not support.";
   }
@@ -125,8 +137,46 @@ bool ArithmeticSelfCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inpu
 }
 
 template <typename T>
+void ArithmeticSelfCPUKernel::LaunchKernelLogic(const std::vector<AddressPtr> &inputs,
+                                                const std::vector<AddressPtr> &outputs) {
+  T *input = reinterpret_cast<T *>(inputs[0]->addr);
+  T *output = reinterpret_cast<T *>(outputs[0]->addr);
+  size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
+
+  auto max_thread_num = std::thread::hardware_concurrency();
+  size_t thread_num = lens < 128 * max_thread_num ? std::ceil(lens / 128.0) : max_thread_num;
+  MS_LOG(INFO) << "Lens=" << lens << "; use thread_num=" << thread_num << "; max_thread_num: " << max_thread_num;
+  std::vector<std::thread> threads;
+  if (thread_num < 1) {
+    MS_LOG(ERROR) << "Invalid value: thread_num " << thread_num;
+    return;
+  }
+  threads.reserve(thread_num);
+  size_t start = 0;
+  size_t once_compute_size = (lens + thread_num - 1) / thread_num;
+  if (once_compute_size < 1) {
+    MS_LOG(ERROR) << "Invalid value: once_compute_size " << once_compute_size;
+    return;
+  }
+  while (start < lens) {
+    size_t end = (start + once_compute_size) > lens ? lens : (start + once_compute_size);
+    if (operate_type_ == LOGICALNOT) {
+      threads.emplace_back(std::thread(LogicalNot<T>, input, output, start, end));
+    }
+    start += once_compute_size;
+  }
+  for (size_t i = 0; i < threads.size(); ++i) {
+    threads[i].join();
+  }
+}
+
+template <typename T>
 void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs,
                                            const std::vector<AddressPtr> &outputs) {
+  if (target_dtype_ == kNumberTypeBool) {
+    LaunchKernelLogic<T>(inputs, outputs);
+    return;
+  }
   T *input = reinterpret_cast<T *>(inputs[0]->addr);
   T *output = reinterpret_cast<T *>(outputs[0]->addr);
   size_t lens = outputs[0]->size > 0 ? static_cast<size_t>(outputs[0]->size / sizeof(T)) : 1;
@@ -152,6 +202,8 @@ void ArithmeticSelfCPUKernel::LaunchKernel(const std::vector<AddressPtr> &inputs
       threads.emplace_back(std::thread(Square<T>, input, output, start, end));
     } else if (operate_type_ == NEG) {
       threads.emplace_back(std::thread(Neg<T>, input, output, start, end));
+    } else if (operate_type_ == LOGICALNOT) {
+      threads.emplace_back(std::thread(LogicalNot<T>, input, output, start, end));
     } else if (operate_type_ == ONESLIKE) {
       threads.emplace_back(std::thread(OnesLike<T>, input, output, start, end));
     } else if (operate_type_ == ZEROSLIKE) {
