@@ -268,7 +268,7 @@ bool TcpClient::SendMessage(const CommMessage &message) const {
   bool res = true;
   size_t buf_size = IntToUint(message.ByteSizeLong());
   uint32_t meta_size = SizeToUint(message.pb_meta().ByteSizeLong());
-  Messageheader header;
+  MessageHeader header;
   header.message_proto_ = Protos::PROTOBUF;
   header.message_length_ = buf_size;
   header.message_meta_length_ = meta_size;
@@ -295,7 +295,7 @@ bool TcpClient::SendMessage(std::shared_ptr<MessageMeta> meta, const Protos &pro
   bufferevent_lock(buffer_event_);
   bool res = true;
 
-  Messageheader header;
+  MessageHeader header;
   header.message_proto_ = protos;
   header.message_meta_length_ = SizeToUint(meta->ByteSizeLong());
   header.message_length_ = size + header.message_meta_length_;
