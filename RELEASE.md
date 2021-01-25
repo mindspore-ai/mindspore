@@ -80,6 +80,46 @@
 
 ##### Python API
 
+###### `nn.LinSpace` ([!9494](https://gitee.com/mindspore/mindspore/pulls/9494)) has been removed and modify `ops.LinSpace` ([!8920](https://gitee.com/mindspore/mindspore/pulls/8920))
+
+The `nn.LinSpace` interface only support passing the value by args previously. For the convenience, we provided enhancive `ops.LinSpace` interface, which support passing the value by the inputs at the latest version. So there is no need for `nn.LinSpace`.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.0.1 </td> <td style="text-align:center"> 1.1.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> from mindspore import nn
+>>>
+>>> start = 1
+>>> stop = 10
+>>> num = 5
+>>> linspace = nn.LinSpace(start, stop, num)
+>>> output = linspace()
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore
+>>> from mindspore import Tensor
+>>> from mindspore import ops
+>>>
+>>> linspace = ops.LinSpace()
+>>> start = Tensor(1, mindspore.float32)
+>>> stop = Tensor(10, mindspore.float32)
+>>> num = 5
+>>> output = linspace(start, stop, num)
+```
+
+</td>
+</tr>
+</table>
+
 ###### Parts of `Optimizer` add target interface ([!6760](https://gitee.com/mindspore/mindspore/pulls/6760/files))
 
 The usage of the sparse optimizer is changed.
