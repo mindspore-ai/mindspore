@@ -25,6 +25,13 @@
 #include "src/param_value_lite.h"
 
 namespace mindspore::lite {
+bool IsSkipedLayer(const caffe::LayerParameter &layer) {
+  if (layer.type() == "Input" || layer.type() == "Dropout" || layer.type() == "Split") {
+    return true;
+  }
+  return layer.include_size() == 1 && layer.include(0).phase() == caffe::TRAIN;
+}
+
 CaffeModelParser::CaffeModelParser() = default;
 
 CaffeModelParser::~CaffeModelParser() = default;
@@ -68,6 +75,11 @@ STATUS CaffeModelParser::ConvertLayers() {
   }
   for (int i = 0; i < caffe_model_.layer_size(); i++) {
     auto layer = caffe_model_.layer(i);
+
+    // save caffe layers
+    for (int top_idx = 0; top_idx < layer.top_size(); top_idx++) {
+      caffe_layers_[layer.top(top_idx)] = layer;
+    }
     caffe::LayerParameter weight;
     if (weight_layers.find(layer.name()) != weight_layers.end()) {
       weight = weight_layers.find(layer.name())->second;
@@ -385,11 +397,17 @@ STATUS CaffeModelParser::ConvertBottom(const caffe::LayerParameter &layer, std::
     return RET_NULL_PTR;
   }
   for (int i = 0; i < layer.bottom_size(); i++) {
-    if (nodes_.find(layer.bottom(i)) == nodes_.end()) {
+    string origin_layer = GetOriginLayerName(layer.bottom(i));
+    if (origin_layer.empty()) {
+      MS_LOG(ERROR) << "layer not found";
+      return RET_ERROR;
+    }
+
+    if (nodes_.find(origin_layer) == nodes_.end()) {
       MS_LOG(ERROR) << "layer bottom " << layer.bottom(i) << " is not found";
       return RET_NOT_FIND_OP;
     }
-    input_nodes->emplace_back(nodes_.find(layer.bottom(i))->second);
+    input_nodes->emplace_back(nodes_.find(origin_layer)->second);
   }
   return RET_OK;
 }
@@ -422,11 +440,22 @@ STATUS CaffeModelParser::ConvertTop(const caffe::LayerParameter &layer, const CN
   return RET_OK;
 }
 
-bool CaffeModelParser::IsSkipedLayer(const caffe::LayerParameter &layer) {
-  if (layer.type() == "Input" || layer.type() == "Dropout") {
-    return true;
+std::string CaffeModelParser::GetOriginLayerName(const std::string &layer_name) {
+  if (caffe_layers_.find(layer_name) == caffe_layers_.end()) {
+    return layer_name;
   }
-  return layer.include_size() == 1 && layer.include(0).phase() == caffe::TRAIN;
+  auto layer = caffe_layers_.at(layer_name);
+  if (layer.type() != "Split") {
+    return layer_name;
+  }
+  while (layer.type() == "Split") {
+    string input_name = layer.bottom(0);
+    if (caffe_layers_.find(input_name) == caffe_layers_.end()) {
+      return input_name;
+    }
+    layer = caffe_layers_.at(input_name);
+  }
+  return layer.name();
 }
 
 MetaGraphT *CaffeModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,

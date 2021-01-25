@@ -50,11 +50,9 @@ PrimitiveC *CaffeReduceParser::ParseLitePrimitive(const caffe::LayerParameter &p
 
   std::vector<int32_t> axes;
   if (reduce_param.has_axis()) {
-    axes.push_back(1);
-    axes.push_back(reduce_param.axis());
+    axes = std::vector<int>(1, reduce_param.axis());
   } else {
-    axes.push_back(1);
-    axes.push_back(0);
+    axes = std::vector<int>(1, 0);
   }
   attr->axes = axes;
 
