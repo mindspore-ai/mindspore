@@ -493,6 +493,7 @@ inline const PrimitivePtr kPrimActivation = std::make_shared<Primitive>("Activat
 inline const PrimitivePtr kPrimTopKFusion = std::make_shared<Primitive>("TopKFusion");
 inline const PrimitivePtr kPrimTileFusion = std::make_shared<Primitive>("TileFusion");
 inline const PrimitivePtr kPrimReduceFusion = std::make_shared<Primitive>("ReduceFusion");
+inline const PrimitivePtr kPrimLayerNormFusion = std::make_shared<Primitive>("LayerNormFusion");
 
 class DoSignaturePrimitive : public Primitive {
  public:
