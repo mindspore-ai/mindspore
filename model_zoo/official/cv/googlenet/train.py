@@ -98,7 +98,7 @@ if __name__ == '__main__':
     elif args_opt.dataset_name == "imagenet":
         cfg = imagenet_cfg
     else:
-        raise ValueError("Unsupport dataset.")
+        raise ValueError("Unsupported dataset.")
 
     # set context
     device_target = cfg.device_target
@@ -120,9 +120,8 @@ if __name__ == '__main__':
             init()
             rank = get_rank()
     elif device_target == "GPU":
-        init()
-
         if device_num > 1:
+            init()
             context.reset_auto_parallel_context()
             context.set_auto_parallel_context(device_num=device_num, parallel_mode=ParallelMode.DATA_PARALLEL,
                                               gradients_mean=True)
@@ -135,7 +134,7 @@ if __name__ == '__main__':
     elif args_opt.dataset_name == "imagenet":
         dataset = create_dataset_imagenet(cfg.data_path, 1)
     else:
-        raise ValueError("Unsupport dataset.")
+        raise ValueError("Unsupported dataset.")
 
     batch_num = dataset.get_dataset_size()
 
