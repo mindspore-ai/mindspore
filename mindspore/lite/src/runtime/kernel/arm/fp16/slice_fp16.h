@@ -23,9 +23,8 @@ namespace mindspore::kernel {
 class SliceFp16CPUKernel : public SliceCPUKernel {
  public:
   SliceFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
-      : SliceCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : SliceCPUKernel(parameter, inputs, outputs, ctx) {}
   ~SliceFp16CPUKernel() = default;
 
   int Run() override;

@@ -16,6 +16,9 @@
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/ops/populate/populate_register.h"
+#include "src/common/version_manager.h"
+#include "src/common/prim_util.h"
+#include "nnacl/pooling_parameter.h"
 #ifdef ENABLE_ARM64
 #include <asm/hwcap.h>
 #include "common/utils.h"
@@ -71,12 +74,11 @@ kernel::KernelCreator KernelRegistry::GetCreator(const KernelKey &desc) {
   }
   return nullptr;
 }
-
 int KernelRegistry::GetCreatorFuncIndex(const kernel::KernelKey desc) {
   int index;
   int device_index = static_cast<int>(desc.arch) - kKernelArch_MIN;
   int dType_index = static_cast<int>(desc.data_type) - kNumberTypeBegin;
-  int op_index = static_cast<int>(desc.type) - PrimitiveType_MIN;
+  int op_index = static_cast<int>(desc.type);
   index = device_index * data_type_length_ * op_type_length_ + dType_index * op_type_length_ + op_index;
   return index;
 }
@@ -91,8 +93,7 @@ void KernelRegistry::RegKernel(const KernelKey desc, const kernel::KernelCreator
   creator_arrays_[index] = creator;
 }
 
-void KernelRegistry::RegKernel(const KERNEL_ARCH arch, const TypeId data_type, const schema::PrimitiveType op_type,
-                               kernel::KernelCreator creator) {
+void KernelRegistry::RegKernel(KERNEL_ARCH arch, TypeId data_type, int op_type, kernel::KernelCreator creator) {
   KernelKey desc = {arch, data_type, op_type};
   int index = GetCreatorFuncIndex(desc);
   if (index >= array_size_) {
@@ -105,36 +106,6 @@ void KernelRegistry::RegKernel(const KERNEL_ARCH arch, const TypeId data_type, c
 
 bool KernelRegistry::Merge(const std::unordered_map<KernelKey, KernelCreator> &new_creators) { return false; }
 
-kernel::LiteKernel *KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors,
-                                              const std::vector<Tensor *> &out_tensors, const PrimitiveC *primitive,
-                                              const InnerContext *ctx, const kernel::KernelKey &key) {
-  MS_ASSERT(nullptr != primitive);
-  MS_ASSERT(nullptr != ctx);
-  auto func_pointer = PopulateRegistry::GetInstance()->GetParameterCreator(schema::PrimitiveType(primitive->Type()));
-  if (func_pointer == nullptr) {
-    MS_LOG(ERROR) << "ParameterCreator function pointer is nullptr, type: "
-                  << schema::EnumNamePrimitiveType((schema::PrimitiveType)primitive->Type());
-    return nullptr;
-  }
-  auto parameter = func_pointer(primitive);
-  if (parameter == nullptr) {
-    MS_LOG(ERROR) << "PopulateParameter return nullptr, type: "
-                  << schema::EnumNamePrimitiveType((schema::PrimitiveType)primitive->Type());
-    return nullptr;
-  }
-  auto creator = GetCreator(key);
-  if (creator != nullptr) {
-    auto kernel = creator(in_tensors, out_tensors, parameter, ctx, key, primitive);
-    if (kernel != nullptr) {
-      kernel->set_desc(key);
-    }
-    return kernel;
-  } else {
-    free(parameter);
-  }
-  return nullptr;
-}
-
 KernelRegistry::~KernelRegistry() {
   KernelRegistry *instance = GetInstance();
   std::unique_lock<std::mutex> malloc_creator_array(instance->lock_);
@@ -142,5 +113,22 @@ KernelRegistry::~KernelRegistry() {
     free(instance->creator_arrays_);
     instance->creator_arrays_ = nullptr;
   }
+}
+
+int KernelRegistry::GetKernel(const std::vector<Tensor *> &in_tensors, const std::vector<Tensor *> &out_tensors,
+                              const InnerContext *ctx, const kernel::KernelKey &key, OpParameter *parameter,
+                              kernel::LiteKernel **kernel) {
+  MS_ASSERT(ctx != nullptr);
+  MS_ASSERT(kernel != nullptr);
+  auto creator = GetCreator(key);
+  if (creator != nullptr) {
+    *kernel = creator(in_tensors, out_tensors, parameter, ctx, key);
+    if (*kernel != nullptr) {
+      (*kernel)->set_desc(key);
+      return RET_OK;
+    }
+    return RET_ERROR;
+  }
+  return RET_NOT_SUPPORT;
 }
 }  // namespace mindspore::lite

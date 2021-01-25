@@ -38,7 +38,6 @@ using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
 using mindspore::lite::opencl::MemType;
-using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
 
@@ -224,6 +223,4 @@ int DepthwiseConv2dOpenCLKernel::Run() {
   return mindspore::lite::RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_DepthwiseConv2D, OpenCLKernelCreator<DepthwiseConv2dOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_DepthwiseConv2D, OpenCLKernelCreator<DepthwiseConv2dOpenCLKernel>)
 }  // namespace mindspore::kernel

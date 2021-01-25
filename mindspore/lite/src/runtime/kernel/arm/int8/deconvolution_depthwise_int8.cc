@@ -15,17 +15,12 @@
  */
 
 #include "src/runtime/kernel/arm/int8/deconvolution_depthwise_int8.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/int8/conv_depthwise_int8.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_DeDepthwiseConv2D;
 
 namespace mindspore::kernel {
 DeconvolutionDepthwiseInt8CPUKernel::~DeconvolutionDepthwiseInt8CPUKernel() {
@@ -211,29 +206,4 @@ int DeconvolutionDepthwiseInt8CPUKernel::Run() {
   output_buffer_ = nullptr;
   return ret;
 }
-
-kernel::LiteKernel *CpuDeconvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                 const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                 const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                                 const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_DeDepthwiseConv2D);
-  auto kernel =
-    new (std::nothrow) kernel::DeconvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DeDepthwiseConv2D, CpuDeconvDwInt8KernelCreator)
 }  // namespace mindspore::kernel

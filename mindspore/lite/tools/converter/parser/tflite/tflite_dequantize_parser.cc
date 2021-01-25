@@ -16,46 +16,52 @@
 #include "tools/converter/parser/tflite/tflite_dequantize_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/quant_dtype_cast.h"
+#include "ops/cast.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteDequantizeParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                       const std::unique_ptr<tflite::ModelT> &tflite_model) {
+ops::PrimitiveC *TfliteDequantizeParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                               const std::unique_ptr<tflite::ModelT> &tflite_model) {
   auto &tflite_subgraph = tflite_model->subgraphs.front();
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  const auto &in_tensor = tflite_subgraph->tensors[tflite_op->inputs[0]];
+  if (tflite_subgraph == nullptr) {
+    MS_LOG(ERROR) << "tflite_subgraph is nullptr";
+    return nullptr;
+  }
+  const auto &in_tensor = tflite_subgraph->tensors[tflite_op->inputs.at(0)];
   if (in_tensor == nullptr) {
     MS_LOG(ERROR) << "input tensor is null";
     return nullptr;
   }
-  const auto &out_tensor = tflite_subgraph->tensors[tflite_op->outputs[0]];
+  const auto &out_tensor = tflite_subgraph->tensors[tflite_op->outputs.at(0)];
   if (out_tensor == nullptr) {
     MS_LOG(ERROR) << "output tensor is null";
     return nullptr;
   }
   if ((GetTfliteDataType(in_tensor->type) == kNumberTypeInt8 ||
        GetTfliteDataType(in_tensor->type) == kNumberTypeUInt8)) {
-    std::unique_ptr<schema::QuantDTypeCastT> attr = std::make_unique<schema::QuantDTypeCastT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
+    auto prim = new (std::nothrow) ops::QuantDTypeCast();
+    if (prim == nullptr) {
+      MS_LOG(ERROR) << "new Cast failed";
       return nullptr;
     }
-    attr->srcT = GetTfliteDataType(in_tensor->type);
-    attr->dstT = GetTfliteDataType(out_tensor->type);
-    primitive->value.value = attr.release();
-    primitive->value.type = schema::PrimitiveType_QuantDTypeCast;
+
+    prim->set_src_t(GetTfliteDataType(in_tensor->type));
+    prim->set_dst_t(GetTfliteDataType(out_tensor->type));
+
+    return prim;
   } else {
-    std::unique_ptr<schema::CastT> attr = std::make_unique<schema::CastT>();
-    if (attr == nullptr) {
-      MS_LOG(ERROR) << "new op failed";
+    auto prim = new (std::nothrow) ops::Cast();
+    if (prim == nullptr) {
+      MS_LOG(ERROR) << "new Cast failed";
       return nullptr;
     }
-    attr->srcT = GetTfliteDataType(in_tensor->type);
-    attr->dstT = GetTfliteDataType(out_tensor->type);
-    primitive->value.value = attr.release();
-    primitive->value.type = schema::PrimitiveType_Cast;
+
+    auto dstT = GetTfliteDataType(out_tensor->type);
+    prim->AddAttr("to", MakeValue(static_cast<int32_t>(dstT)));
+
+    return prim;
   }
-  return PrimitiveC::Create(primitive.release());
 }
 
 TfliteNodeRegister g_tfliteDequantizeParser(tflite::BuiltinOperator_DEQUANTIZE, new TfliteDequantizeParser());

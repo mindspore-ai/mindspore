@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/switch.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateSwitchParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateSwitchParameter(const void *prim) {
   OpParameter *switch_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (switch_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc SwitchParameter failed.";
     return nullptr;
   }
   memset(switch_parameter, 0, sizeof(OpParameter));
-  switch_parameter->type_ = primitive->Type();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  switch_parameter->type_ = primitive->value_type();
 
   return reinterpret_cast<OpParameter *>(switch_parameter);
 }
-Registry SwitchParameterRegistry(schema::PrimitiveType_Switch, PopulateSwitchParameter);
+Registry SwitchParameterRegistry(schema::PrimitiveType_Switch, PopulateSwitchParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

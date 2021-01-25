@@ -21,16 +21,15 @@
 #include "src/lite_kernel.h"
 #include "nnacl/scale.h"
 #include "nnacl/quantization/quantize.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic.h"
 
 namespace mindspore::kernel {
 
 class ScaleInt8CPUKernel : public LiteKernel {
  public:
   ScaleInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx), thread_count_(ctx_->thread_num_) {
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx), thread_count_(ctx_->thread_num_) {
     scale_param_ = reinterpret_cast<ScaleParameter *>(op_parameter_);
   }
   ~ScaleInt8CPUKernel() override;

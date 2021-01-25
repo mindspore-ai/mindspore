@@ -31,6 +31,8 @@ class TransOpInsertPass : public FormatTransPass {
 
   ~TransOpInsertPass() override = default;
 
+  void SetFmk(converter::FmkType fmk_type) { fmk_type_ = fmk_type; }
+
   STATUS Run(schema::MetaGraphT *graph) override;
 
  private:
@@ -49,6 +51,7 @@ class TransOpInsertPass : public FormatTransPass {
   std::vector<int> pre_perm_;
   FormatTransNodeType post_type_ = kNONE;
   std::vector<int> post_perm_;
+  converter::FmkType fmk_type_ = converter::FmkType_CAFFE;
 };
 }  // namespace lite
 }  // namespace mindspore

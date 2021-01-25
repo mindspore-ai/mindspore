@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,20 +31,25 @@ class SchemaRegisterImpl {
 
   void OpPush(GetSchemaDef func) { op_def_funcs_.push_back(func); }
 
-  void TypePush(GetSchemaDef func) { type_def_funcs_.push_back(func); }
-
   const std::vector<GetSchemaDef> &GetAllOpDefCreateFuncs() const { return op_def_funcs_; }
 
-  const std::vector<GetSchemaDef> &GetAllTypeDefCreateFuncs() const { return type_def_funcs_; }
+  void SetPrimTypeGenFunc(GetSchemaDef func) { prim_type_gen_ = func; }
+
+  GetSchemaDef GetPrimTypeGenFunc() const { return prim_type_gen_; }
 
  private:
   std::vector<GetSchemaDef> op_def_funcs_;
-  std::vector<GetSchemaDef> type_def_funcs_;
+  GetSchemaDef prim_type_gen_;
 };
 
 class SchemaOpRegister {
  public:
   explicit SchemaOpRegister(GetSchemaDef func) { SchemaRegisterImpl::Instance()->OpPush(func); }
+};
+
+class PrimitiveTypeRegister {
+ public:
+  explicit PrimitiveTypeRegister(GetSchemaDef func) { SchemaRegisterImpl::Instance()->SetPrimTypeGenFunc(func); }
 };
 }  // namespace mindspore::lite::ops
 

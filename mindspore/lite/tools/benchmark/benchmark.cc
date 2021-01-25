@@ -467,6 +467,8 @@ int Benchmark::PrintInputData() {
         std::cout << static_cast<const int8_t *>(in_data)[j] << " ";
       } else if (tensor_data_type == TypeId::kNumberTypeUInt8) {
         std::cout << static_cast<const uint8_t *>(in_data)[j] << " ";
+      } else if (tensor_data_type == TypeId::kNumberTypeBool) {
+        std::cout << static_cast<const bool *>(in_data)[j] << " ";
       } else if (tensor_data_type == TypeId::kNumberTypeInt32) {
         std::cout << static_cast<const int32_t *>(in_data)[j] << " ";
       } else if (tensor_data_type == TypeId::kNumberTypeInt64) {

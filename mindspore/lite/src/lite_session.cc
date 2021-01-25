@@ -28,17 +28,22 @@
 #include "src/kernel_registry.h"
 #include "src/lite_model.h"
 #include "src/runtime/kernel/arm/base/dequant.h"
+#include "src/common/prim_util.h"
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
 #endif
-
 namespace mindspore {
 namespace lite {
-static std::vector<schema::PrimitiveType> packed_op = {
-  schema::PrimitiveType_Conv2D, schema::PrimitiveType_DeConv2D, schema::PrimitiveType_DepthwiseConv2D,
-  schema::PrimitiveType_DeDepthwiseConv2D, schema::PrimitiveType_MatMul};
-
+namespace {
+static std::vector<int> packed_op = {schema::PrimitiveType_Conv2DFusion, schema::PrimitiveType_Conv2dTransposeFusion,
+                                     schema::PrimitiveType_MatMul};
+#ifdef ENABLE_V0
+static std::vector<int> v0_packed_op = {schema::v0::PrimitiveType_Conv2D, schema::v0::PrimitiveType_DeConv2D,
+                                        schema::v0::PrimitiveType_DepthwiseConv2D,
+                                        schema::v0::PrimitiveType_DeDepthwiseConv2D, schema::v0::PrimitiveType_MatMul};
+#endif
+}  // namespace
 // this method will not check whether tensor_idx is a weight tensor index, caller should ensure this.
 static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor_idx) {
 #ifdef SUPPORT_TRAIN
@@ -50,7 +55,12 @@ static bool WeightTensorNeedCopy(const lite::Model *model, const uint32_t tensor
   return std::none_of(post_node_idxes.begin(), post_node_idxes.end(), [&](const size_t &post_node_idx) {
     auto node = model->all_nodes_[post_node_idx];
     MS_ASSERT(node != nullptr);
-    return IsContain(packed_op, static_cast<schema::PrimitiveType>(node->primitive_->Type()));
+#ifdef ENABLE_V0
+    if (VersionManager::GetInstance()->CheckV0Schema()) {
+      return IsContain(v0_packed_op, GetPrimitiveType(node->primitive_));
+    }
+#endif
+    return IsContain(packed_op, GetPrimitiveType(node->primitive_));
   });
 }
 

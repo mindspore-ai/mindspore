@@ -114,10 +114,10 @@ TEST_F(TestConvolutionGradFp32, ConvFp32FilterGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradFilter};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DBackpropFilterFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
   // warm up loop
@@ -191,10 +191,10 @@ TEST_F(TestConvolutionGradFp32, ConvFp32InputGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradInput};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DBackpropInputFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
 
@@ -267,10 +267,10 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupFilterGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradFilter};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DBackpropFilterFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
   kernel->Run();
@@ -340,10 +340,10 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupInputGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradInput};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DBackpropInputFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
   // warm up loop
@@ -415,10 +415,10 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationFilterGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradFilter};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DBackpropFilterFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
 
@@ -491,10 +491,10 @@ TEST_F(TestConvolutionGradFp32, ConvFp32GroupDilationInputGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradInput};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DBackpropInputFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
 
@@ -563,7 +563,7 @@ TEST_F(TestConvolutionGradFp32, ConvGroupDilation) {
   ASSERT_EQ(lite::RET_OK, context.Init());
 
   auto *kernel = new mindspore::kernel::ConvolutionTrainCPUKernel(reinterpret_cast<OpParameter *>(conv_param), inputs,
-                                                                  outputs, &context, 0);
+                                                                  outputs, &context);
   ASSERT_NE(kernel, nullptr);
   kernel->Init();
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
@@ -668,10 +668,10 @@ TEST_F(TestConvolutionGradFp32, ConvFp32Dilation2Group2Stride2FilterGrad) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradFilter};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DBackpropFilterFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
 
@@ -775,10 +775,10 @@ TEST_F(TestConvolutionGradFp32, ConvGroup2Dilation2Stride2) {
   context.thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, context.Init());
 
-  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DGradInput};
+  kernel::KernelKey desc = {kernel::kCPU, TypeId::kNumberTypeFloat32, schema::PrimitiveType_Conv2DBackpropInputFusion};
   auto creator = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator, nullptr);
-  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc, nullptr);
+  auto kernel = creator(inputs, outputs, reinterpret_cast<OpParameter *>(conv_param), &context, desc);
   ASSERT_NE(kernel, nullptr);
   mindspore::kernel::LiteKernel::AllocWorkspace(kernel->workspace_size());
 

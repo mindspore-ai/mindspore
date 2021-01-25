@@ -16,7 +16,7 @@
 
 #include <vector>
 #include "src/runtime/kernel/arm/fp32_grad/tuple_getitem.h"
-#include "schema/model_generated.h"
+#include "schema/model_v0_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
@@ -25,10 +25,9 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_TupleGetItem;
 
 namespace mindspore::kernel {
-
+constexpr int PrimitiveType_TupleGetItem = 1000;
 int TupleGetItemCPUKernel::Init() {
   if (in_tensors_.size() != 1) {
     MS_LOG(ERROR) << "Tuple Grad Filter should have one input";
@@ -73,10 +72,10 @@ int TupleGetItemCPUKernel::Run() {
 kernel::LiteKernel *CpuTupleGetItemFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                      const std::vector<lite::Tensor *> &outputs,
                                                      OpParameter *opParameter, const lite::InnerContext *ctx,
-                                                     const kernel::KernelKey &desc, const lite::PrimitiveC *primitive) {
+                                                     const kernel::KernelKey &desc) {
   MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_TupleGetItem);
-  auto *kernel = new (std::nothrow) TupleGetItemCPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  MS_ASSERT(desc.type == schema::v0::PrimitiveType_TupleGetItem);
+  auto *kernel = new (std::nothrow) TupleGetItemCPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new TupleGetItemCPUKernel failed!";
     free(opParameter);

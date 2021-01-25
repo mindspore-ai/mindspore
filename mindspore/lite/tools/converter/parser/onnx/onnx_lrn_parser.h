@@ -27,7 +27,7 @@ class OnnxLrnParser : public OnnxNodeParser {
   OnnxLrnParser() : OnnxNodeParser("Lrn") {}
   ~OnnxLrnParser() override = default;
 
-  lite::PrimitiveC *ParseLitePrimitive(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore

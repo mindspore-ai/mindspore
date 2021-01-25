@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include "tools/converter/model_parser.h"
 #include "proto/caffe.pb.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore::lite {
 class CaffeModelParser : public ModelParser {
@@ -46,8 +47,8 @@ class CaffeModelParser : public ModelParser {
 
   STATUS ConvertLayers();
 
-  STATUS ConvertLayerQuantParams(const caffe::LayerParameter &layer, const caffe::LayerParameter &weight,
-                                 lite::PrimitiveC *primitive_c);
+  static STATUS ConvertLayerQuantParams(const caffe::LayerParameter &layer, const caffe::LayerParameter &weight,
+                                        ops::PrimitiveC *primitive_c);
 
   STATUS ConvertBlobs(const caffe::LayerParameter &layer, std::vector<ParameterPtr> *const_parameters);
 
@@ -55,7 +56,7 @@ class CaffeModelParser : public ModelParser {
 
   STATUS ConvertTop(const caffe::LayerParameter &layer, const CNodePtr &cnode);
 
-  bool IsSkipedLayer(const caffe::LayerParameter &layer);
+  static bool IsSkipedLayer(const caffe::LayerParameter &layer);
 
   caffe::NetParameter caffe_model_;
   caffe::NetParameter caffe_weight_;

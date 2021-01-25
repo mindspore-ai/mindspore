@@ -17,16 +17,14 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SLICE_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_SLICE_NPU_H_
 #include <vector>
-#include "src/ops/slice.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
 class SliceNPUKernel : public NPUKernel {
  public:
   SliceNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                 const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {}
   ~SliceNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,

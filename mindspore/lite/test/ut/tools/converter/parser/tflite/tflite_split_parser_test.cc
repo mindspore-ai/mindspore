@@ -35,10 +35,10 @@ TEST_F(TestTfliteParserSplit, OpType) {
 TEST_F(TestTfliteParserSplit, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSplit(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsSplit();
-  ASSERT_EQ(val->splitDim, 2);
-  ASSERT_EQ(val->numberSplit, 2);
-  const std::vector<int> sizeSplits = {2, 2};
-  ASSERT_EQ(val->sizeSplits, sizeSplits);
+  ASSERT_EQ(val->axis, 2);
+  ASSERT_EQ(val->output_num, 2);
+  const std::vector<int64_t> sizeSplits = {2, 2};
+  ASSERT_EQ(val->size_splits, sizeSplits);
 }
 
 }  // namespace mindspore

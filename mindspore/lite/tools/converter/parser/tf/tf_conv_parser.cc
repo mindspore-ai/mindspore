@@ -20,88 +20,74 @@
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
 #include "tools/converter/parser/tf/tf_util.h"
+#include "ops/fusion/conv2d_fusion.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
-                           const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                           std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF ConvParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
+ops::PrimitiveC *TFConvParser::Parse(const tensorflow::NodeDef &tf_op,
+                                     const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                     std::vector<std::string> *inputs, int *output_size) {
+  auto primitive_c = new (std::nothrow) ops::Conv2DFusion;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Conv2DFusion failed";
+    return nullptr;
   }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::Conv2DT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
+  primitive_c->set_pad({0, 0, 0, 0});
+  primitive_c->set_group(1);
 
-  attr->group = 1;
-  attr->format = TensorFlowUtils::ParseNodeFormat(tf_op);
-  if (attr->format == schema::Format_NCHW) {
+  // parse format
+  auto format = TensorFlowUtils::ParseNodeFormat(tf_op);
+  if (format == mindspore::Format::NCHW) {
     MS_LOG(ERROR) << "TF Conv2D with data_format=NCHW is not supported now";
-    return RET_ERROR;
+    return nullptr;
   }
+  primitive_c->set_format(format);
 
-  std::vector<int64_t> dilations(2);
-  auto status = ParseDilations(tf_op, attr->format, &dilations);
-  if (status != RET_OK) {
-    return status;
-  }
-  attr->dilateH = dilations[0];
-  attr->dilateW = dilations[1];
-
-  std::vector<int64_t> strides(2);
-  status = ParseStrides(tf_op, attr->format, &strides);
-  if (status != RET_OK) {
-    return status;
-  }
-  attr->strideH = strides[0];
-  attr->strideW = strides[1];
-
+  // parse kernel
   auto weight_node = GetConstInputNode(tf_node_map, tf_op.input(1));
   if (weight_node == nullptr) {
     MS_LOG(ERROR) << "Find Conv2D input weights failed";
-    return RET_ERROR;
+    return nullptr;
   }
   std::vector<int64_t> kernels(4);
-  status = ParseKernels(*weight_node, attr->format, &kernels);
-  if (status != RET_OK) {
-    return status;
+  if (ParseKernels(*weight_node, format, &kernels) != RET_OK) {
+    MS_LOG(ERROR) << "parse kernels failed";
+    return nullptr;
   }
-  attr->kernelH = kernels[0];
-  attr->kernelW = kernels[1];
-  attr->channelIn = kernels[2];
-  attr->channelOut = kernels[3];
+  primitive_c->set_kernel_size({kernels[0], kernels[1]});
+  primitive_c->set_out_channel(kernels[3]);
+  primitive_c->set_in_channel(kernels[2]);
 
-  status = ParsePadMode(tf_op, &attr->padMode);
-  if (status != RET_OK) {
-    return status;
+  // parse stride
+  std::vector<int64_t> strides(2);
+  if (ParseStrides(tf_op, format, &strides) != RET_OK) {
+    MS_LOG(ERROR) << "parse strides failed";
+    return nullptr;
   }
+  primitive_c->set_stride(strides);
 
-  primitive->value.type = schema::PrimitiveType_Conv2D;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
+  // parse dilation
+  std::vector<int64_t> dilations(2);
+  if (ParseDilations(tf_op, format, &dilations) != RET_OK) {
+    MS_LOG(ERROR) << "parse dilations failed";
+    return nullptr;
   }
+  primitive_c->set_dilation(dilations);
+
+  // parse pad
+  auto padMode = ParsePadMode(tf_op);
+  primitive_c->set_pad_mode(padMode);
 
   *output_size = 1;
-  status = AddOpInput(tf_op, 0, inputs);
-  if (status != RET_OK) {
-    return status;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
   }
-  status = AddOpInput(tf_op, 1, inputs);  // weights
-  return status;
+
+  return primitive_c;
 }
+
 TFNodeRegistrar g_tfConvParser("Conv2D", new TFConvParser());
 }  // namespace lite
 }  // namespace mindspore

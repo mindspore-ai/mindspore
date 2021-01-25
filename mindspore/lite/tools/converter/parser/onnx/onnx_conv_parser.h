@@ -20,6 +20,7 @@
 #include <memory>
 #include "tools/converter/parser/onnx/onnx_node_parser.h"
 #include "tools/converter/parser/onnx/onnx_node_parser_registry.h"
+#include "ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
@@ -28,10 +29,7 @@ class OnnxConvParser : public OnnxNodeParser {
   OnnxConvParser() : OnnxNodeParser("Conv") {}
   ~OnnxConvParser() override = default;
 
-  lite::PrimitiveC *ParseLitePrimitive(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
-
- private:
-  static bool ParseGroupConvolution(const std::unique_ptr<schema::Conv2DT> &attr, schema::PrimitiveT *primitive);
+  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore

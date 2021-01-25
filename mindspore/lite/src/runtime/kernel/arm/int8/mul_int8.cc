@@ -15,18 +15,15 @@
  */
 
 #include "src/runtime/kernel/arm/int8/mul_int8.h"
-#include <limits>
-#include <algorithm>
-#include "nnacl/arithmetic_common.h"
-#include "nnacl/int8/mul_int8.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "nnacl/arithmetic.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Mul;
+using mindspore::schema::PrimitiveType_MulFusion;
 
 namespace mindspore::kernel {
 int MulInt8CPUKernel::Init() {
@@ -221,5 +218,5 @@ int MulInt8CPUKernel::DoExecute(int task_id) {
   return lite::RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Mul, LiteKernelCreator<MulInt8CPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_MulFusion, LiteKernelCreator<MulInt8CPUKernel>)
 }  // namespace mindspore::kernel

@@ -19,6 +19,7 @@
 #include <algorithm>
 #include "src/common/utils.h"
 #include "src/runtime/kernel/opencl/kernel/conv2d.h"
+#include "src/runtime/kernel/opencl/kernel/depthwise_conv2d.h"
 #include "src/runtime/kernel/opencl/kernel/fullconnection.h"
 #include "src/runtime/kernel/opencl/utils.h"
 #include "src/kernel_registry.h"
@@ -36,7 +37,7 @@ using mindspore::schema::ActivationType_RELU;
 using mindspore::schema::ActivationType_RELU6;
 using mindspore::schema::ActivationType_SIGMOID;
 using mindspore::schema::ActivationType_TANH;
-using mindspore::schema::PrimitiveType_Conv2D;
+using mindspore::schema::PrimitiveType_Conv2DFusion;
 using mindspore::schema::PrimitiveType_FullConnection;
 
 namespace mindspore::kernel {
@@ -501,14 +502,10 @@ int Conv2DOpenCLKernel::Run() {
 
 bool UseFcReplaceConv(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
                       ConvParameter *param) {
-  MS_ASSERT(param);
-  MS_ASSERT(!inputs.empty());
-  MS_ASSERT(!outputs.empty());
   auto input_shape = inputs.front()->shape();
   auto output_shape = inputs.front()->shape();
   // IH=1 IW=1 OH=1 OW=1
-  bool hw_is_1 = input_shape.size() == 4 && input_shape[1] == 1 && input_shape[2] == 1 && output_shape.size() == 4 &&
-                 output_shape[1] == 1 && output_shape[2] == 1;
+  bool hw_is_1 = input_shape[1] == 1 && input_shape[2] == 1 && output_shape[1] == 1 && output_shape[2] == 1;
   bool attr_valid = param->kernel_h_ == 1 && param->kernel_w_ == 1 && param->stride_h_ == 1 && param->stride_w_ == 1 &&
                     param->pad_u_ == 0 && param->pad_d_ == 0 && param->pad_l_ == 0 && param->pad_r_ == 0 &&
                     param->dilation_h_ == 1 && param->dilation_w_ == 1;
@@ -528,13 +525,34 @@ OpParameter *CreateFcParam(const ConvParameter *conv_param) {
   return reinterpret_cast<OpParameter *>(fc_param);
 }
 
-kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                                   const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                                   const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                                   const mindspore::lite::PrimitiveC *primitive) {
+kernel::LiteKernel *OpenCLConv2DCreator(const std::vector<lite::Tensor *> &inputs,
+                                        const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
+                                        const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+  MS_ASSERT(!inputs.empty());
+  MS_ASSERT(!outputs.empty());
+  MS_ASSERT(opParameter);
+  MS_ASSERT(inputs.front()->shape().size() == 4);
+  MS_ASSERT(outputs.front()->shape().size() == 4);
+  auto *conv_param = reinterpret_cast<ConvParameter *>(opParameter);
+  int input_channel = inputs.front()->shape().at(3);
+  int output_channel = outputs.front()->shape().at(3);
+  int group = conv_param->group_;
+
+  // case 1: depthwise conv2d
+  if (group == input_channel && group == output_channel) {
+    return OpenCLKernelCreator<DepthwiseConv2dOpenCLKernel>(inputs, outputs, opParameter, ctx, desc);
+  }
+
+  // case 2: group conv2d
+  if (group != 1) {
+    MS_LOG(ERROR) << "OpenCL doesn't support group conv2d.";
+    free(conv_param);
+    return nullptr;
+  }
+
+  // case 3: common conv2d
   kernel::OpenCLKernel *kernel;
   OpParameter *real_param;
-  auto *conv_param = reinterpret_cast<ConvParameter *>(opParameter);
   if (UseFcReplaceConv(inputs, outputs, conv_param)) {
     auto *fc_param = CreateFcParam(conv_param);
     kernel = new (std::nothrow) FullConnectionOpenCLKernel(fc_param, inputs, outputs);
@@ -568,6 +586,6 @@ kernel::LiteKernel *OpenCLConvolutionKernelCreator(const std::vector<lite::Tenso
   return kernel;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Conv2D, OpenCLConvolutionKernelCreator)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Conv2D, OpenCLConvolutionKernelCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Conv2DFusion, OpenCLConv2DCreator)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Conv2DFusion, OpenCLConv2DCreator)
 }  // namespace mindspore::kernel

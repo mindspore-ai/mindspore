@@ -24,9 +24,8 @@ namespace mindspore::kernel {
 class StackFp16CPUKernel : public StackCPUKernel {
  public:
   StackFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
-      : StackCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : StackCPUKernel(parameter, inputs, outputs, ctx) {}
 
   ~StackFp16CPUKernel() = default;
 

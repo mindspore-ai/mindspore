@@ -20,7 +20,7 @@
 #include <arm_neon.h>
 #endif
 #include "nnacl/op_base.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic.h"
 #include "nnacl/errorcode.h"
 
 #ifdef __cplusplus

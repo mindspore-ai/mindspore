@@ -26,7 +26,9 @@ OpParameter *CreateParameter(schema::ResizeMethod method, int new_height, int ne
   auto *param = test::CreateParameter<ResizeParameter>(schema::PrimitiveType_Resize);
   param->new_height_ = new_height;
   param->new_width_ = new_width;
-  param->align_corners_ = align_corners;
+  if (align_corners) {
+    param->coordinate_transform_mode_ = 1;
+  }
   param->method_ = method;
   param->preserve_aspect_ratio_ = false;
   return reinterpret_cast<OpParameter *>(param);

@@ -28,6 +28,12 @@ int GatherNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const 
     MS_LOG(WARNING) << "Gather indices only support Int32";
     return RET_ERROR;
   }
+  if (inputs.size() >= 3 && inputs[2]->ElementsNum() == 1) {
+    axis_ = static_cast<int *>(inputs[2]->data_c())[0];
+  } else {
+    MS_LOG(WARNING) << "NPU axis is attribute.";
+    return RET_ERROR;
+  }
   return RET_OK;
 }
 
@@ -41,7 +47,7 @@ int GatherNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs, con
 
   op_->set_input_x(*npu_inputs[0]);
   op_->set_input_indices(*npu_inputs[1]);
-  op_->set_attr_axis(gather_parameter_->axis_);
+  op_->set_attr_axis(axis_);
   return RET_OK;
 }
 

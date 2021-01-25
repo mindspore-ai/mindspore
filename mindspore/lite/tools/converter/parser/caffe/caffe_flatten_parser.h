@@ -21,16 +21,14 @@
 #include "tools/converter/parser/caffe/caffe_node_parser.h"
 #include "tools/converter/parser/caffe/caffe_node_parser_registry.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 class CaffeFlattenParser : public CaffeNodeParser {
  public:
   CaffeFlattenParser() : CaffeNodeParser("flatten") {}
   ~CaffeFlattenParser() override = default;
 
-  PrimitiveC *ParseLitePrimitive(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
+  ops::PrimitiveC *Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) override;
 };
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite
 
 #endif  // MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_CAFFE_CAFFE_FLATTEN_PARSER_H_

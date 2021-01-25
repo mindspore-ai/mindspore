@@ -22,7 +22,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_EmbeddingLookup;
+using mindspore::schema::PrimitiveType_EmbeddingLookupFusion;
 
 namespace mindspore::kernel {
 int EmbeddingLookupCPUKernel::Init() {
@@ -102,5 +102,5 @@ void EmbeddingLookupCPUKernel::FreeRunBuff() {
   param_->is_regulated_ = nullptr;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_EmbeddingLookup, LiteKernelCreator<EmbeddingLookupCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_EmbeddingLookupFusion, LiteKernelCreator<EmbeddingLookupCPUKernel>)
 }  // namespace mindspore::kernel

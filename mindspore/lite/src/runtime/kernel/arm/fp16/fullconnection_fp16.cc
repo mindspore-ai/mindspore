@@ -232,8 +232,7 @@ int FullconnectionFP16CPUKernel::Run() {
 kernel::LiteKernel *CpuFullConnectionFp16KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                        const std::vector<lite::Tensor *> &outputs,
                                                        OpParameter *opParameter, const lite::InnerContext *ctx,
-                                                       const kernel::KernelKey &desc,
-                                                       const mindspore::lite::PrimitiveC *primitive) {
+                                                       const kernel::KernelKey &desc) {
   auto *weight_tensor = inputs.at(kWeightIndex);
   // data of second tensor of fc may be nullptr
   auto *restore_data = weight_tensor->data_c();
@@ -250,7 +249,7 @@ kernel::LiteKernel *CpuFullConnectionFp16KernelCreator(const std::vector<lite::T
     weight_tensor->set_data_type(kNumberTypeFloat32);
     weight_tensor->set_data(dequant_weight);
   }
-  auto *kernel = new (std::nothrow) FullconnectionFP16CPUKernel(opParameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) FullconnectionFP16CPUKernel(opParameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel is nullptr.";
     if (dequant_flag) {

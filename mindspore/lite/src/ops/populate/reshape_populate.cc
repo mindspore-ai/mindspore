@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "src/common/log_adapter.h"
-#include "src/tensor.h"
 #include "nnacl/reshape_parameter.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateReshapeParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateReshapeParameter(const void *prim) {
   ReshapeParameter *reshape_param = reinterpret_cast<ReshapeParameter *>(malloc(sizeof(ReshapeParameter)));
   if (reshape_param == nullptr) {
     MS_LOG(ERROR) << "malloc ReshapeParameter failed.";
     return nullptr;
   }
   memset(reshape_param, 0, sizeof(ReshapeParameter));
-  reshape_param->op_parameter_.type_ = primitive->Type();
+  auto *primitive = static_cast<const schema::Primitive *>(prim);
+  reshape_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(reshape_param);
 }
+}  // namespace
 
-Registry ReshapeParameterRegistry(schema::PrimitiveType_Reshape, PopulateReshapeParameter);
-
+Registry g_reshapeParameterRegistry(schema::PrimitiveType_Reshape, PopulateReshapeParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

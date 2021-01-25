@@ -25,9 +25,12 @@ set(LITE_SRC
         ${CMAKE_CURRENT_SOURCE_DIR}/common/graph_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/log_adapter.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/common/string_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/prim_util.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/common/tensor_util.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/allocator.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/runtime_api.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/runtime/thread_pool.c
+        ${CMAKE_CURRENT_SOURCE_DIR}/runtime/infer_manager.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensor.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/tensorlist.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/executor.cc
@@ -69,6 +72,12 @@ if (SUPPORT_TRAIN)
             ${CMAKE_CURRENT_SOURCE_DIR}/train/train_model.cc
             ${CMAKE_CURRENT_SOURCE_DIR}/lite_session.cc
             )
+    if (ENABLE_V0)
+      set(LITE_SRC
+              ${LITE_SRC}
+              ${CMAKE_CURRENT_SOURCE_DIR}/train/train_populate_parameter_v0.cc
+              )
+    endif()
 endif ()
 
 add_subdirectory(ops)

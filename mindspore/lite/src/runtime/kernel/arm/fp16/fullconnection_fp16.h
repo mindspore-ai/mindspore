@@ -30,11 +30,11 @@ namespace mindspore::kernel {
 class FullconnectionFP16CPUKernel : public LiteKernel {
  public:
   explicit FullconnectionFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                       const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     fc_param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }
+
   ~FullconnectionFP16CPUKernel() override;
   int Init() override;
   int ReSize() override;

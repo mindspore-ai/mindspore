@@ -22,6 +22,7 @@
 #include <string>
 #include <unordered_map>
 #include "schema/inner/model_generated.h"
+#include "schema/inner/model_v0_generated.h"
 #include "src/common/common.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
@@ -55,6 +56,8 @@ std::vector<schema::PrimitiveType> Getfp32FullOpList();
 std::vector<schema::PrimitiveType> GetUint8NhwcOpList();
 
 std::vector<schema::PrimitiveType> GetInt8OpList();
+
+const schema::Primitive *ConvertToPrimitive(schema::PrimitiveT *primitive_t, flatbuffers::FlatBufferBuilder *fbb);
 
 class NodeUtils {
  public:
@@ -284,7 +287,8 @@ static STATUS TransFilterData(schema::TensorT *tensor, kTransFilterType type, in
     }
   }
 
-  auto ret = ::memcpy_s(tensor->data.data(), count * sizeof(T), buf.get(), count * sizeof(T));
+  // auto ret = ::memcpy_s(tensor->data.data(), count * sizeof(T), buf.get(), count * sizeof(T));
+  auto ret = ::memcpy(tensor->data.data(), buf.get(), count * sizeof(T));
   if (ret != EOK) {
     MS_LOG(ERROR) << "memcpy_s failed: " << ret;
     return RET_ERROR;

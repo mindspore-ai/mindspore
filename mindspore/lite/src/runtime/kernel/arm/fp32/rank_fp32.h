@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class RankCPUKernel : public LiteKernel {
  public:
   explicit RankCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                         const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+                         const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~RankCPUKernel() override = default;
 
   int Init() override;

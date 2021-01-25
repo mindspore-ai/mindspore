@@ -16,11 +16,8 @@
 
 #include "tools/optimizer/fusion/conv_transform_fusion.h"
 #include <memory>
-#include "src/ops/primitive_c.h"
-#include "src/ops/conv2d.h"
-#include "src/ops/depthwise_conv2d.h"
+#include "ops/fusion/conv2d_fusion.h"
 #include "src/param_value_lite.h"
-#include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 
@@ -40,20 +37,14 @@ int Get_Kenrnel_nums(const CNodePtr &conv_node) {
   MS_ASSERT(value != nullptr);
   auto primitive = value->cast<PrimitiveCPtr>();
   MS_ASSERT(primitive != nullptr);
-  auto type = (schema::PrimitiveType)primitive->Type();
 
-  if (type == schema::PrimitiveType_Conv2D) {
-    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Conv2D>>(primitive));
-    auto primc = utils::cast<std::shared_ptr<mindspore::lite::Conv2D>>(primitive);
+  if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
+    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::Conv2DFusion>>(primitive));
+    auto primc = utils::cast<std::shared_ptr<mindspore::ops::Conv2DFusion>>(primitive);
     MS_ASSERT(primc != nullptr);
-    return primc->GetChannelOut();
-  } else if (type == schema::PrimitiveType_DepthwiseConv2D) {
-    MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive));
-    auto primc = utils::cast<std::shared_ptr<mindspore::lite::DepthwiseConv2D>>(primitive);
-    MS_ASSERT(primc != nullptr);
-    return primc->GetChannelMultiplier() * primc->GetChannelIn();
+    return primc->get_out_channel();
   } else {
-    MS_LOG(ERROR) << "Unsupported opType, " << type;
+    MS_LOG(ERROR) << "Unsupported opType, " << primitive->name();
     return 0;
   }
 }

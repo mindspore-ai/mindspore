@@ -47,7 +47,7 @@ TEST_F(TestUniqueFp32, Unique) {
 
   auto ctx = std::make_shared<lite::InnerContext>();
   ASSERT_EQ(lite::RET_OK, ctx->Init());
-  auto kernel = creator(inputs, outputs, &parameter, ctx.get(), desc, nullptr);
+  auto kernel = creator(inputs, outputs, &parameter, ctx.get(), desc);
   EXPECT_NE(kernel, nullptr);
 
   auto ret = kernel->Run();

@@ -27,22 +27,23 @@
 #include "schema/inner/ops_generated.h"
 #include "ir/dtype/type_id.h"
 #include "include/errorcode.h"
+#include "mindspore/core/utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace lite {
-schema::PadMode GetPadMode(tflite::Padding tflite_padmode);
-
 std::string GetPadModeStr(tflite::Padding tflite_padmode);
+
+mindspore::PadMode GetPadMode(tflite::Padding tflite_padmode);
 
 size_t GetDataTypeSize(const TypeId &data_type);
 
-schema::ActivationType GetActivationFunctionType(tflite::ActivationFunctionType tfliteAFType);
+mindspore::ActivationType GetActivationFunctionType(tflite::ActivationFunctionType tfliteAFType);
 
 std::string GetMSOpType(tflite::BuiltinOperator tfliteOpType);
 
 TypeId GetTfliteDataType(const tflite::TensorType &tflite_data_type);
 
-STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, schema::PadMode pad_mode, int strideH,
+STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore::PadMode pad_mode, int strideH,
                        int strideW, int windowH, int windowW, std::vector<int64_t> *params);
 
 void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);

@@ -17,20 +17,15 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ELTWISE_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ELTWISE_NPU_H_
 #include <vector>
-#include "src/ops/eltwise.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
 class EltwiseNPUKernel : public NPUKernel {
  public:
   EltwiseNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                   const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto eltwise = reinterpret_cast<const mindspore::lite::Eltwise *>(primitive);
-    mode_ = static_cast<schema::EltwiseMode>(eltwise->GetMode());
-  }
+                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {}
   ~EltwiseNPUKernel() override;
 
   int IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -42,7 +37,6 @@ class EltwiseNPUKernel : public NPUKernel {
 
  private:
   hiai::op::Eltwise *op_ = nullptr;
-  schema::EltwiseMode mode_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_ELTWISE_NPU_H_

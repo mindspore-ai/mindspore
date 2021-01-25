@@ -15,19 +15,17 @@
  */
 
 #include "src/runtime/kernel/arm/int8/add_int8.h"
-#include <limits>
-#include <algorithm>
-#include "nnacl/arithmetic_common.h"
 #include "nnacl/quantization/quantize.h"
 #include "src/runtime/runtime_api.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "src/common/file_utils.h"
+#include "nnacl/arithmetic.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Add;
+using mindspore::schema::PrimitiveType_AddFusion;
 
 namespace mindspore::kernel {
 int QuantizedAddCPUKernel::Init() {
@@ -201,5 +199,5 @@ int QuantizedAddCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Add, LiteKernelCreator<QuantizedAddCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_AddFusion, LiteKernelCreator<QuantizedAddCPUKernel>)
 }  // namespace mindspore::kernel

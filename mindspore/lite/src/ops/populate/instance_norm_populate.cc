@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "src/ops/instance_norm.h"
 #include "nnacl/instance_norm_parameter.h"
 
 namespace mindspore {
 namespace lite {
-OpParameter *PopulateInstanceNormParameter(const mindspore::lite::PrimitiveC *primitive) {
-  const auto param =
-    reinterpret_cast<mindspore::lite::InstanceNorm *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
+OpParameter *PopulateInstanceNormParameter(const void *prim) {
   InstanceNormParameter *instance_norm_param =
     reinterpret_cast<InstanceNormParameter *>(malloc(sizeof(InstanceNormParameter)));
   if (instance_norm_param == nullptr) {
@@ -31,11 +26,14 @@ OpParameter *PopulateInstanceNormParameter(const mindspore::lite::PrimitiveC *pr
     return nullptr;
   }
   memset(instance_norm_param, 0, sizeof(InstanceNormParameter));
-  instance_norm_param->op_parameter_.type_ = primitive->Type();
-  instance_norm_param->epsilon_ = param->GetEpsilon();
+
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_InstanceNorm();
+  instance_norm_param->op_parameter_.type_ = primitive->value_type();
+  instance_norm_param->epsilon_ = value->epsilon();
   return reinterpret_cast<OpParameter *>(instance_norm_param);
 }
 
-Registry InstanceNormParameterRegistry(schema::PrimitiveType_InstanceNorm, PopulateInstanceNormParameter);
+Registry InstanceNormParameterRegistry(schema::PrimitiveType_InstanceNorm, PopulateInstanceNormParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

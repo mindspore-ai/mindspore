@@ -16,19 +16,23 @@
 
 #include "tools/converter/legacy_optimizer/graph/infershape_pass.h"
 #include <vector>
+#include "src/common/common.h"
 #include "src/common/log_adapter.h"
 #include "include/errorcode.h"
 #include "src/tensor.h"
 #include "src/tensorlist.h"
-#include "src/ops/primitive_c.h"
+#include "src/common/prim_util.h"
+#include "src/ops/populate/populate_register.h"
+#include "src/runtime/infer_manager.h"
+#include "tools/common/node_util.h"
 
-using mindspore::lite::PrimitiveC;
 using mindspore::lite::Tensor;
 namespace mindspore {
 namespace lite {
 namespace {
 constexpr int DEFAULT_DIM_VALUE = -1;
-}
+constexpr size_t INITIAL_SIZE = 1024;
+}  // namespace
 namespace {
 void FreeTensors(std::vector<Tensor *> input_tensors, std::vector<Tensor *> output_tensors) {
   for (auto &tensor : input_tensors) {
@@ -136,6 +140,14 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
   MS_ASSERT(graph != nullptr);
   for (auto idx : graph->inputIndex) {
     auto input_tensor = graph->allTensors[idx].get();
+    if (input_tensor->dims.empty()) {
+      MS_LOG(DEBUG) << "Input's shape is null, so inferShape is unnecessary";
+      return RET_INFER_INVALID;
+    }
+  }
+
+  for (auto idx : graph->inputIndex) {
+    auto input_tensor = graph->allTensors[idx].get();
     for (auto &dim : input_tensor->dims) {
       if (dim == 0) {
         MS_LOG(WARNING) << "One dimension of the input shape is 0, which would be set to -1 as a default value.";
@@ -158,19 +170,38 @@ STATUS InferShapePass::Run(MetaGraphT *graph) {
       FreeTensors(input_tensors, output_tensors);
       return RET_INFER_ERR;
     }
-    std::unique_ptr<PrimitiveT> primitiveT(new (std::nothrow) PrimitiveT(*node->primitive));
-    if (primitiveT == nullptr) {
-      MS_LOG(ERROR) << "copy primitiveT error";
-      FreeTensors(input_tensors, output_tensors);
+
+    bool infer_shape_interrupt = false;
+    bool infer_valid = std::all_of(input_tensors.begin(), input_tensors.end(), [](const Tensor *tensor) {
+      auto shape = tensor->shape();
+      return std::all_of(shape.begin(), shape.end(), [](const int dim) { return dim != -1; });
+    });
+    if (!infer_valid) {
+      infer_shape_interrupt = true;
+    }
+    flatbuffers::FlatBufferBuilder fbb(INITIAL_SIZE);
+    auto prim = ConvertToPrimitive(node->primitive.get(), &fbb);
+    if (prim == nullptr) {
+      MS_LOG(ERROR) << "get primitive failed.";
+      fbb.Clear();
       return RET_ERROR;
     }
-    auto primitiveC = std::shared_ptr<PrimitiveC>(PrimitiveC::Create(primitiveT.release()));
-    if (primitiveC == nullptr) {
-      MS_LOG(ERROR) << "unpack primitiveT error";
-      FreeTensors(input_tensors, output_tensors);
+    auto parameter_gen = lite::PopulateRegistry::GetInstance()->GetParameterCreator(prim->value_type(), SCHEMA_CUR);
+    if (parameter_gen == nullptr) {
+      fbb.Clear();
+      MS_LOG(ERROR) << "PopulateParameter return nullptr, type: " << schema::EnumNamePrimitiveType(prim->value_type());
       return RET_ERROR;
     }
-    auto ret = primitiveC->InferShape(input_tensors, output_tensors);
+    auto parameter = parameter_gen(prim);
+    if (parameter == nullptr) {
+      fbb.Clear();
+      MS_LOG(ERROR) << "paramter is nullptr.";
+      return RET_ERROR;
+    }
+    parameter->infer_flag_ = !infer_shape_interrupt;
+    auto ret = KernelInferShape(input_tensors, &output_tensors, parameter);
+    fbb.Clear();
+    free(parameter);
     MS_LOG(DEBUG) << "cur node:" << node->name;
     if (ret == RET_INFER_INVALID) {
       MS_LOG(INFO) << "InferShape shouldn't be done before runtime, name: " << node->name

@@ -16,33 +16,25 @@
 
 #include "tools/converter/parser/onnx/onnx_onehot_parser.h"
 #include <memory>
+#include "ops/one_hot.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxOneHotParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                       const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx OneHotParser";
-  auto attr = std::make_unique<schema::OneHotT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *OnnxOneHotParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto primitive_c = new (std::nothrow) ops::OneHot;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new OneHot failed";
     return nullptr;
   }
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
-      attr->axis = static_cast<int32_t>(onnx_node_attr.i());
+      primitive_c->set_axis(onnx_node_attr.i());
     }
   }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_OneHot;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return primitive_c;
 }
 
 OnnxNodeRegistrar g_onnxOneHotParser("OneHot", new OnnxOneHotParser());

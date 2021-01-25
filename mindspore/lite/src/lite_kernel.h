@@ -20,7 +20,6 @@
 #include <vector>
 #include <memory>
 #include <utility>
-#include "src/ops/primitive_c.h"
 #include "src/common/utils.h"
 #ifdef ENABLE_ARM
 #include <arm_neon.h>
@@ -29,6 +28,7 @@
 #include "src/inner_context.h"
 #include "src/tensor.h"
 #include "include/errorcode.h"
+#include "schema/model_generated.h"
 
 static constexpr int kPerTensor = 1;
 static constexpr size_t kPerBatch = 3;
@@ -38,7 +38,7 @@ enum KERNEL_ARCH { kCPU, kGPU, kAPU, kNPU, kKernelArch_MIN = kCPU, kKernelArch_M
 struct KernelKey {
   KERNEL_ARCH arch;
   TypeId data_type;
-  schema::PrimitiveType type;
+  int type;
 
   bool operator<(const KernelKey &dst) const {
     if (arch != dst.arch) {
@@ -57,11 +57,10 @@ class LiteKernel {
  public:
   LiteKernel() = default;
   LiteKernel(OpParameter *parameter, std::vector<lite::Tensor *> in_tensors, std::vector<lite::Tensor *> out_tensors,
-             const lite::InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive)
+             const lite::InnerContext *ctx)
       : op_parameter_(parameter),
         in_tensors_(std::move(in_tensors)),
         out_tensors_(std::move(out_tensors)),
-        primitive_(primitive),
         context_(ctx) {
     if (op_parameter_ != nullptr && ctx != nullptr) {
       op_parameter_->thread_num_ = ctx->thread_num_;
@@ -169,8 +168,6 @@ class LiteKernel {
 
   void set_desc(const KernelKey kernel_key) { desc_ = kernel_key; }
 
-  const mindspore::lite::PrimitiveC *GetPrimitive() const { return primitive_; }
-
   SubGraphType subgraph_type() const { return this->subgraph_type_; }
 
   virtual std::string ToString() const;
@@ -184,7 +181,12 @@ class LiteKernel {
 #endif
 
  protected:
-  bool InferShapeDone() { return !(primitive_ != nullptr && !primitive_->infer_flag()); }
+  bool InferShapeDone() {
+    if (op_parameter_ != nullptr) {
+      return op_parameter_->infer_flag_;
+    }
+    return false;
+  }
 
   KernelKey desc_{};
   std::string name_;
@@ -192,7 +194,6 @@ class LiteKernel {
   // tensor will free in ~lite_session()
   std::vector<lite::Tensor *> in_tensors_;
   std::vector<lite::Tensor *> out_tensors_;
-  const mindspore::lite::PrimitiveC *primitive_ = nullptr;
   const lite::InnerContext *context_ = nullptr;
   std::vector<LiteKernel *> in_kernels_;
   std::vector<LiteKernel *> out_kernels_;
@@ -208,8 +209,7 @@ class LiteKernel {
 
 typedef LiteKernel *(*KernelCreator)(const std::vector<lite::Tensor *> &inputs,
                                      const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                     const lite::InnerContext *ctx, const KernelKey &desc,
-                                     const mindspore::lite::PrimitiveC *primitive);
+                                     const lite::InnerContext *ctx, const KernelKey &desc);
 
 class LiteKernelUtil {
  public:
@@ -231,9 +231,8 @@ class LiteKernelUtil {
 template <class T>
 kernel::LiteKernel *LiteKernelCreator(const std::vector<lite::Tensor *> &inputs,
                                       const std::vector<lite::Tensor *> &outputs, OpParameter *parameter,
-                                      const lite::InnerContext *ctx, const kernel::KernelKey &desc,
-                                      const mindspore::lite::PrimitiveC *primitive) {
-  auto *kernel = new (std::nothrow) T(parameter, inputs, outputs, ctx, primitive);
+                                      const lite::InnerContext *ctx, const kernel::KernelKey &desc) {
+  auto *kernel = new (std::nothrow) T(parameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "kernel: " << parameter->name_ << "is nullptr.";
     free(parameter);

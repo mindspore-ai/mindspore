@@ -25,7 +25,7 @@ namespace {
 OpParameter *CreateParameter(PoolMode pool_mode, int window_h, int window_w, int stride_h, int stride_w, int pad_u,
                              int pad_d, int pad_l, int pad_r, RoundMode round_mode = RoundMode_No,
                              ActType act_type = ActType_No) {
-  auto *param = test::CreateParameter<PoolingParameter>(schema::PrimitiveType_Pooling);
+  auto *param = test::CreateParameter<PoolingParameter>(schema::PrimitiveType_MaxPoolFusion);
   param->global_ = false;
   param->window_w_ = window_w;
   param->window_h_ = window_h;

@@ -15,34 +15,38 @@
  */
 
 #include "tools/converter/parser/caffe/caffe_power_parser.h"
-#include <memory>
 #include <vector>
+#include "ops/fusion/pow_fusion.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffePowerParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                 const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::PowerT> attr = std::make_unique<schema::PowerT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffePowerParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::PowFusion();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new PowFusion failed";
     return nullptr;
   }
 
   const caffe::PowerParameter &powerParam = proto.power_param();
+  float power = 1.0;
+  float scale = 1.0;
+  float shift = 0.0;
   if (proto.has_power_param()) {
-    attr->power = powerParam.has_power() ? powerParam.power() : 1.0;
-    attr->scale = powerParam.has_scale() ? powerParam.scale() : 1.0;
-    attr->shift = powerParam.has_shift() ? powerParam.shift() : 0.0;
-  } else {
-    attr->power = 1.0;
-    attr->scale = 1.0;
-    attr->shift = 0.0;
+    if (powerParam.has_power()) {
+      power = powerParam.power();
+    }
+    if (powerParam.has_scale()) {
+      scale = powerParam.scale();
+    }
+    if (powerParam.has_shift()) {
+      shift = powerParam.shift();
+    }
   }
+  primitive_c->AddAttr("power", MakeValue(power));
+  primitive_c->set_scale(scale);
+  primitive_c->set_shift(shift);
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Power;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffePowerParser("Power", new CaffePowerParser());

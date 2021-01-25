@@ -361,7 +361,7 @@ echo "Push files to benchmark_train_test folder and run benchmark_train"
 benchmark_train_test_path=${basepath}/benchmark_train_test
 rm -rf ${benchmark_train_test_path}
 mkdir -p ${benchmark_train_test_path}
-cp -a ${ms_models_path}/*.ms ${benchmark_train_test_path} || exit 1
+cp -a ${ms_models_path}/*.ms ${benchmark_train_test_path}
 
 # Run on x86
 echo "start Run x86 ..."

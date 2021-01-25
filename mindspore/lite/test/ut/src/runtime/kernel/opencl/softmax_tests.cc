@@ -23,7 +23,7 @@ class TestOpenCL_SoftMax : public CommonTest {};
 namespace {
 // PrimitiveType_SoftMax: src/ops/populate/softmax_populate.cc
 OpParameter *CreateParameter(int axis) {
-  auto *param = test::CreateParameter<SoftmaxParameter>(schema::PrimitiveType_SoftMax);
+  auto *param = test::CreateParameter<SoftmaxParameter>(schema::PrimitiveType_Softmax);
   param->axis_ = axis;
   return reinterpret_cast<OpParameter *>(param);
 }

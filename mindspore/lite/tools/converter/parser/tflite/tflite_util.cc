@@ -126,11 +126,11 @@ std::map<tflite::BuiltinOperator, std::string> tfMsOpTypeMap{
   {tflite::BuiltinOperator_WHILE, "While"},
 };
 
-std::map<tflite::ActivationFunctionType, schema::ActivationType> tfMsActivationFunctionMap{
-  {tflite::ActivationFunctionType_NONE, schema::ActivationType_NO_ACTIVATION},
-  {tflite::ActivationFunctionType_RELU, schema::ActivationType_RELU},
-  {tflite::ActivationFunctionType_RELU6, schema::ActivationType_RELU6},
-  {tflite::ActivationFunctionType_TANH, schema::ActivationType_TANH},
+std::map<tflite::ActivationFunctionType, mindspore::ActivationType> tfMsActivationFunctionMap{
+  {tflite::ActivationFunctionType_NONE, mindspore::ActivationType::NO_ACTIVATION},
+  {tflite::ActivationFunctionType_RELU, mindspore::ActivationType::RELU},
+  {tflite::ActivationFunctionType_RELU6, mindspore::ActivationType::RELU6},
+  {tflite::ActivationFunctionType_TANH, mindspore::ActivationType::TANH},
 };
 
 std::map<int, TypeId> type_map = {
@@ -141,7 +141,7 @@ std::map<int, TypeId> type_map = {
   {tflite::TensorType_BOOL, TypeId::kNumberTypeBool},          {tflite::TensorType_STRING, TypeId::kObjectTypeString},
   {tflite::TensorType_COMPLEX64, TypeId::kNumberTypeComplex64}};
 
-schema::ActivationType GetActivationFunctionType(tflite::ActivationFunctionType tfliteAFType) {
+mindspore::ActivationType GetActivationFunctionType(tflite::ActivationFunctionType tfliteAFType) {
   return tfMsActivationFunctionMap.at(tfliteAFType);
 }
 
@@ -161,16 +161,6 @@ TypeId GetTfliteDataType(const tflite::TensorType &tflite_data_type) {
   return iter->second;
 }
 
-schema::PadMode GetPadMode(tflite::Padding tflite_padmode) {
-  if (tflite_padmode == tflite::Padding_SAME) {
-    return schema::PadMode_SAME_UPPER;
-  } else if (tflite_padmode == tflite::Padding_VALID) {
-    return schema::PadMode_VALID;
-  } else {
-    return schema::PadMode_NOTSET;
-  }
-}
-
 std::string GetPadModeStr(tflite::Padding tflite_padmode) {
   if (tflite_padmode == tflite::Padding_SAME) {
     return "same";
@@ -178,6 +168,16 @@ std::string GetPadModeStr(tflite::Padding tflite_padmode) {
     return "valid";
   } else {
     return "pad";
+  }
+}
+
+mindspore::PadMode GetPadMode(tflite::Padding tflite_padmode) {
+  if (tflite_padmode == tflite::Padding_SAME) {
+    return mindspore::PadMode::SAME;
+  } else if (tflite_padmode == tflite::Padding_VALID) {
+    return mindspore::PadMode::VALID;
+  } else {
+    return mindspore::PadMode::PAD;
   }
 }
 
@@ -203,7 +203,7 @@ size_t GetDataTypeSize(const TypeId &data_type) {
   }
 }
 
-STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, schema::PadMode pad_mode, int strideH,
+STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, mindspore::PadMode pad_mode, int strideH,
                        int strideW, int windowH, int windowW, std::vector<int64_t> *params) {
   if (tensor == nullptr) {
     MS_LOG(ERROR) << "the input tensor is null";
@@ -217,7 +217,7 @@ STATUS getPaddingParam(const std::unique_ptr<tflite::TensorT> &tensor, schema::P
   int padDown = 0;
   int padLeft = 0;
   int padRight = 0;
-  if (pad_mode == schema::PadMode_SAME_UPPER) {
+  if (pad_mode == mindspore::PadMode::SAME) {
     auto shape = tensor->shape;
     int H_input = shape.at(1);
     int W_input = shape.at(2);

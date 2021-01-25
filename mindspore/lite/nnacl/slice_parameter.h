@@ -25,16 +25,15 @@
 typedef struct SliceParameter {
   // primitive parameter
   OpParameter op_parameter_;
-
-  // shape correlative
-  int32_t shape_[SLICE_SHAPE_MAX_SIZE];
   int32_t begin_[SLICE_SHAPE_MAX_SIZE];
-  int32_t end_[SLICE_SHAPE_MAX_SIZE];
   int32_t size_[SLICE_SHAPE_MAX_SIZE];
+  int32_t axis_[SLICE_SHAPE_MAX_SIZE];
 
   // other parameter
   SliceQuantArg quant_arg_;
   int32_t param_length_;
+  int32_t shape_[SLICE_SHAPE_MAX_SIZE];
+  int32_t end_[SLICE_SHAPE_MAX_SIZE];
 } SliceParameter;
 
 #endif  // MINDSPORE_LITE_NNACL_SLICE_PARAMETER_H_

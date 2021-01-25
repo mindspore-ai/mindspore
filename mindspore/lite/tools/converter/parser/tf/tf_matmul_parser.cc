@@ -19,52 +19,36 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/mat_mul.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
-                             const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                             std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF MatMulParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
+ops::PrimitiveC *TFMatMulParser::Parse(const tensorflow::NodeDef &tf_op,
+                                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                       std::vector<std::string> *inputs, int *output_size) {
+  auto primitive_c = new (std::nothrow) ops::MatMul;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new MatMul failed";
+    return nullptr;
   }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is nullptr";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::MatMulT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return RET_NULL_PTR;
-  }
   tensorflow::AttrValue attr_value;
   if (TensorFlowUtils::FindAttrValue(tf_op, "transpose_a", &attr_value)) {
-    attr->transposeA = attr_value.b();
+    primitive_c->set_transpose_a(attr_value.b());
   }
   if (TensorFlowUtils::FindAttrValue(tf_op, "transpose_b", &attr_value)) {
-    attr->transposeB = attr_value.b();
-  }
-
-  primitive->value.type = schema::PrimitiveType_MatMul;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
+    primitive_c->set_transpose_b(attr_value.b());
   }
 
   *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  if (status != RET_OK) {
-    return status;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK || AddOpInput(tf_op, 1, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
   }
-  status = AddOpInput(tf_op, 1, inputs);
-  return status;
+
+  return primitive_c;
 }
+
 TFNodeRegistrar g_tfMatMulParser("MatMul", new TFMatMulParser());
 }  // namespace lite
 }  // namespace mindspore

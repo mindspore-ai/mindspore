@@ -16,7 +16,7 @@
 #include "src/common/log_adapter.h"
 #include "common/common_test.h"
 #include "mindspore/lite/nnacl/depth_to_space.h"
-#include "mindspore/lite/nnacl/arithmetic_common.h"
+#include "mindspore/lite/nnacl/arithmetic.h"
 
 namespace mindspore {
 

@@ -28,13 +28,12 @@ TEST_F(TestTfliteParserLRN, OpType) {
   ASSERT_NE(meta_graph, nullptr);
   ASSERT_GT(meta_graph->nodes.size(), 0);
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
-  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_LocalResponseNormalization)
-    << "wrong Op Type";
+  ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Lrn) << "wrong Op Type";
 }
 
 TEST_F(TestTfliteParserLRN, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsLocalResponseNormalization(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsLocalResponseNormalization();
+  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsLrn(), nullptr);
+  auto val = meta_graph->nodes.front()->primitive->value.AsLrn();
   ASSERT_EQ(val->alpha, 1);
   ASSERT_EQ(val->beta, 0.5);
   ASSERT_EQ(val->bias, 1);

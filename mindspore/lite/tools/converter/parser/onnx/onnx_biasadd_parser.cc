@@ -16,28 +16,18 @@
 
 #include "tools/converter/parser/onnx/onnx_biasadd_parser.h"
 #include <memory>
+#include "ops/bias_add.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxBiasAddParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                        const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx BiasAddParser";
-  auto attr = std::make_unique<schema::BiasAddT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *OnnxBiasAddParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto primitive_c = new (std::nothrow) ops::BiasAdd;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new BiasAdd failed";
     return nullptr;
   }
 
-  attr->axis = {1};
-
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_BiasAdd;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return primitive_c;
 }
 
 OnnxNodeRegistrar g_onnxBiasAddParser("BiasAdd", new OnnxBiasAddParser());

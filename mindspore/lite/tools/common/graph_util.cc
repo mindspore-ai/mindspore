@@ -389,7 +389,8 @@ STATUS ReplaceTensorOfNode(schema::MetaGraphT *graphT, uint32_t nodeIdx, uint32_
 }
 
 NodeIter InsertNode(schema::MetaGraphT *graphT, uint32_t existNodeIdx, InsertPlace place, size_t inoutIndex,
-                    std::unique_ptr<CNodeT> toAddNode, STATUS *errorCode, const OpDefCopyer &opDefCopyer) {
+                    std::unique_ptr<CNodeT> toAddNode, STATUS *errorCode, int *insert_num,
+                    const OpDefCopyer &opDefCopyer) {
   MS_ASSERT(graphT != nullptr);
   MS_ASSERT(errorCode != nullptr);
   if (existNodeIdx >= graphT->nodes.size()) {
@@ -399,17 +400,20 @@ NodeIter InsertNode(schema::MetaGraphT *graphT, uint32_t existNodeIdx, InsertPla
   auto node_iter = graphT->nodes.begin() + existNodeIdx;
   MS_ASSERT(node_iter != graphT->nodes.begin());
   MS_ASSERT((*node_iter) != nullptr);
-  return InsertNode(graphT, node_iter, place, inoutIndex, std::move(toAddNode), errorCode);
+  return InsertNode(graphT, node_iter, place, inoutIndex, std::move(toAddNode), errorCode, insert_num);
 }
 
 NodeIter InsertNode(schema::MetaGraphT *graphT, NodeIter existNodeIter, InsertPlace place, size_t inoutIndexIdx,
-                    std::unique_ptr<CNodeT> toAddNode, STATUS *errorCode, const OpDefCopyer &opDefCopyer) {
+                    std::unique_ptr<CNodeT> toAddNode, STATUS *errorCode, int *insert_num,
+                    const OpDefCopyer &opDefCopyer) {
   MS_ASSERT(graphT != nullptr);
   MS_ASSERT(errorCode != nullptr);
   if (place == kBefore) {
-    return InsertNodeBefore(graphT, existNodeIter, inoutIndexIdx, std::move(toAddNode), errorCode, opDefCopyer);
+    return InsertNodeBefore(graphT, existNodeIter, inoutIndexIdx, std::move(toAddNode), errorCode, insert_num,
+                            opDefCopyer);
   } else if (place == kAfter) {
-    return InsertNodeAfter(graphT, existNodeIter, inoutIndexIdx, std::move(toAddNode), errorCode, opDefCopyer);
+    return InsertNodeAfter(graphT, existNodeIter, inoutIndexIdx, std::move(toAddNode), errorCode, insert_num,
+                           opDefCopyer);
   } else {
     MS_LOG(ERROR) << "Invalid InsertPlace : " << place;
     return graphT->nodes.end();
@@ -417,7 +421,8 @@ NodeIter InsertNode(schema::MetaGraphT *graphT, NodeIter existNodeIter, InsertPl
 }
 
 NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, size_t inputIndexIdx,
-                          std::unique_ptr<CNodeT> toAddNodeIn, STATUS *errorCode, const OpDefCopyer &opDefCopyer) {
+                          std::unique_ptr<CNodeT> toAddNodeIn, STATUS *errorCode, int *insert_num,
+                          const OpDefCopyer &opDefCopyer) {
   MS_ASSERT(graphT != nullptr);
   MS_ASSERT(errorCode != nullptr);
   auto &existNode = *existNodeIter;
@@ -444,11 +449,11 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
     if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
       auto prim = toAddNodeIn->primitive->value.AsQuantDTypeCast();
       MS_ASSERT(prim != nullptr);
-      preTensor->dataType = prim->srcT;
-      toAddTensor->dataType = prim->dstT;
-      if (prim->srcT == TypeId::kNumberTypeUInt8 && prim->dstT == TypeId::kNumberTypeInt8) {
+      preTensor->dataType = prim->src_t;
+      toAddTensor->dataType = prim->dst_t;
+      if (prim->src_t == TypeId::kNumberTypeUInt8 && prim->dst_t == TypeId::kNumberTypeInt8) {
         preTensor->quantParams.front()->zeroPoint += 128;
-      } else if (prim->srcT == TypeId::kNumberTypeInt8 && prim->dstT == TypeId::kNumberTypeUInt8) {
+      } else if (prim->src_t == TypeId::kNumberTypeInt8 && prim->dst_t == TypeId::kNumberTypeUInt8) {
         toAddTensor->quantParams.front()->zeroPoint += 128;
       }
     }
@@ -472,6 +477,7 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
     }
     existNodeIter = graphT->nodes.insert(existNodeIter, std::move(toAddNode));
     existNodeIter++;
+    *insert_num = 1;
   } else {
     std::vector<std::unique_ptr<CNodeT>> toAddNodes;
     for (size_t i = 0; i < preNodeIdxes.size(); i++) {
@@ -489,11 +495,11 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
       if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
         auto prim = toAddNodeIn->primitive->value.AsQuantDTypeCast();
         MS_ASSERT(prim != nullptr);
-        preTensor->dataType = prim->srcT;
-        toAddTensor->dataType = prim->dstT;
-        if (prim->srcT == TypeId::kNumberTypeUInt8 && prim->dstT == TypeId::kNumberTypeInt8) {
+        preTensor->dataType = prim->src_t;
+        toAddTensor->dataType = prim->dst_t;
+        if (prim->src_t == TypeId::kNumberTypeUInt8 && prim->dst_t == TypeId::kNumberTypeInt8) {
           preTensor->quantParams.front()->zeroPoint += 128;
-        } else if (prim->srcT == TypeId::kNumberTypeInt8 && prim->dstT == TypeId::kNumberTypeUInt8) {
+        } else if (prim->src_t == TypeId::kNumberTypeInt8 && prim->dst_t == TypeId::kNumberTypeUInt8) {
           toAddTensor->quantParams.front()->zeroPoint += 128;
         }
       }
@@ -521,6 +527,7 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
     for (auto &toAddNode : toAddNodes) {
       existNodeIter = graphT->nodes.insert(existNodeIter, std::move(toAddNode));
       existNodeIter++;
+      *insert_num += 1;
     }
   }
   *errorCode = RET_OK;
@@ -528,7 +535,7 @@ NodeIter InsertNodeBefore(schema::MetaGraphT *graphT, NodeIter existNodeIter, si
 }
 
 NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, size_t outputIndexIdx,
-                         std::unique_ptr<schema::CNodeT> toAddNodeIn, STATUS *errorCode,
+                         std::unique_ptr<schema::CNodeT> toAddNodeIn, STATUS *errorCode, int *insert_num,
                          const OpDefCopyer &opDefCopyer) {
   MS_ASSERT(graphT != nullptr);
   MS_ASSERT(errorCode != nullptr);
@@ -554,11 +561,11 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
     if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
       auto prim = toAddNodeIn->primitive->value.AsQuantDTypeCast();
       MS_ASSERT(prim != nullptr);
-      postTensor->dataType = prim->srcT;
-      toAddTensor->dataType = prim->dstT;
-      if (prim->srcT == TypeId::kNumberTypeInt8 && prim->dstT == TypeId::kNumberTypeUInt8) {
+      postTensor->dataType = prim->src_t;
+      toAddTensor->dataType = prim->dst_t;
+      if (prim->src_t == TypeId::kNumberTypeInt8 && prim->dst_t == TypeId::kNumberTypeUInt8) {
         toAddTensor->quantParams.front()->zeroPoint += 128;
-      } else if (prim->srcT == TypeId::kNumberTypeUInt8 && prim->dstT == TypeId::kNumberTypeInt8) {
+      } else if (prim->src_t == TypeId::kNumberTypeUInt8 && prim->dst_t == TypeId::kNumberTypeInt8) {
         postTensor->quantParams.front()->zeroPoint += 128;
       }
     }
@@ -582,6 +589,7 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
     }
     existNodeIter = graphT->nodes.insert(existNodeIter, std::move(toAddNode));
     existNodeIter++;
+    *insert_num = 1;
   } else {
     std::vector<std::unique_ptr<schema::CNodeT>> toAddNodes;
     int i = 0;
@@ -626,11 +634,11 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
       if (toAddNodeIn->primitive->value.type == schema::PrimitiveType_QuantDTypeCast) {
         auto prim = toAddNodeIn->primitive->value.AsQuantDTypeCast();
         MS_ASSERT(prim != nullptr);
-        postTensor->dataType = prim->srcT;
-        toAddTensor->dataType = prim->dstT;
-        if (prim->dstT == TypeId::kNumberTypeUInt8 && prim->srcT == TypeId::kNumberTypeInt8) {
+        postTensor->dataType = prim->src_t;
+        toAddTensor->dataType = prim->dst_t;
+        if (prim->dst_t == TypeId::kNumberTypeUInt8 && prim->src_t == TypeId::kNumberTypeInt8) {
           toAddTensor->quantParams.front()->zeroPoint += 128;
-        } else if (prim->srcT == TypeId::kNumberTypeUInt8 && prim->dstT == TypeId::kNumberTypeInt8) {
+        } else if (prim->src_t == TypeId::kNumberTypeUInt8 && prim->dst_t == TypeId::kNumberTypeInt8) {
           postTensor->quantParams.front()->zeroPoint += 128;
         }
       }
@@ -659,6 +667,7 @@ NodeIter InsertNodeAfter(schema::MetaGraphT *graphT, NodeIter existNodeIter, siz
     for (auto &toAddNode : toAddNodes) {
       existNodeIter = graphT->nodes.insert(existNodeIter, std::move(toAddNode));
       existNodeIter++;
+      *insert_num += 1;
     }
   }
   *errorCode = RET_OK;
@@ -712,27 +721,27 @@ STATUS ChangeOpAttrForSlice(schema::MetaGraphT *graph, const std::unique_ptr<sch
       }
     }
   }
-  if (type == schema::PrimitiveType_Slice) {
-    auto attr = node->primitive->value.AsSlice();
+  if (type == schema::PrimitiveType_SliceFusion) {
+    auto attr = node->primitive->value.AsSliceFusion();
     if (attr == nullptr) {
-      MS_LOG(ERROR) << "node->primitive->value.AsSlice() is nullptr.";
+      MS_LOG(ERROR) << "node->primitive->value.AsSliceFusion() is nullptr.";
       return RET_NULL_PTR;
     }
-    // transform attr
-    attr->format = schema::Format_NHWC;
-    if (attr->begin.empty() || attr->size.empty()) {
-      MS_LOG(INFO) << "Here don't consider these attr are from other nodes.";
-      return RET_NOT_SUPPORT;
-    }
-    int element_num = attr->begin.size();
-    if (attr->axes.empty()) {
-      for (int index = 0; index < element_num; ++index) {
-        attr->axes.push_back(index);
-      }
-    }
-    TransformAttrByAxes(attr->begin.data(), attr->axes.data(), element_num);
-    TransformAttrByAxes(attr->size.data(), attr->axes.data(), element_num);
-    TransformAttrByAxes(attr->axes.data(), attr->axes.data(), element_num);
+    // // transform attr
+    // attr->format = schema::Format_NHWC;
+    // if (attr->begin.empty() || attr->size.empty()) {
+    //   MS_LOG(INFO) << "Here don't consider these attr are from other nodes.";
+    //   return RET_NOT_SUPPORT;
+    // }
+    // int element_num = attr->begin.size();
+    // if (attr->axes.empty()) {
+    //   for (int index = 0; index < element_num; ++index) {
+    //     attr->axes.push_back(index);
+    //   }
+    // }
+    // TransformAttrByAxes(attr->begin.data(), attr->axes.data(), element_num);
+    // TransformAttrByAxes(attr->size.data(), attr->axes.data(), element_num);
+    // TransformAttrByAxes(attr->axes.data(), attr->axes.data(), element_num);
   }
   return RET_OK;
 }
@@ -765,13 +774,13 @@ STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNo
   }
   if (type == schema::PrimitiveType_Split) {
     MS_ASSERT(node->primitive->value.AsSplit() != nullptr);
-    auto origin_axis = node->primitive->value.AsSplit()->splitDim;
+    auto origin_axis = node->primitive->value.AsSplit()->axis;
     auto axis_map = GetNc2NhAxisMap();
     if (node->primitive->value.AsSplit() == nullptr) {
       MS_LOG(ERROR) << "node->primitive->value.AsSplit() is nullptr";
       return RET_NULL_PTR;
     }
-    node->primitive->value.AsSplit()->splitDim = axis_map[origin_axis];
+    node->primitive->value.AsSplit()->axis = axis_map[origin_axis];
   }
   if (type == schema::PrimitiveType_Crop) {
     MS_ASSERT(node->primitive->value.AsCrop() != nullptr);
@@ -798,7 +807,7 @@ STATUS ChangeOpAxis(schema::MetaGraphT *graph, const std::unique_ptr<schema::CNo
     }
     node->primitive->value.AsCrop()->offsets = offsets;
   }
-  if (type == schema::PrimitiveType_Slice || type == schema::PrimitiveType_StridedSlice) {
+  if (type == schema::PrimitiveType_SliceFusion || type == schema::PrimitiveType_StridedSlice) {
     return ChangeOpAttrForSlice(graph, node);
   }
   return RET_OK;
@@ -834,6 +843,31 @@ int SetSubgraphTensorIndices(schema::MetaGraphT *meta_graphT) {
     subgraph->tensorIndices.assign(subgraph_indices.begin(), subgraph_indices.end());
   }
   return RET_OK;
+}
+
+std::vector<int> GetTransposePerm(MetaGraphT *graph, const std::unique_ptr<CNodeT> &cnode) {
+  MS_ASSERT(graph != nullptr && cnode != nullptr);
+  std::vector<int> perm;
+  if (cnode->primitive->value.type != schema::PrimitiveType_Transpose) {
+    return perm;
+  }
+  if (cnode->inputIndex.size() < 2) {
+    MS_LOG(ERROR) << "transpose node input size is less than 2.";
+    return perm;
+  }
+  MS_ASSERT(cnode->outputIndex.at(1) < graph->allTensors.size());
+  auto &perm_tensor = graph->allTensors.at(cnode->inputIndex.at(1));
+  if (perm_tensor->data.empty()) {
+    return perm;
+  }
+  MS_ASSERT(perm_tensor->dims.size() != 0);
+  perm.resize(perm_tensor->dims[0]);
+  if (memcpy_s(perm.data(), perm_tensor->dims[0] * sizeof(int), perm_tensor->data.data(),
+               perm_tensor->dims[0] * sizeof(int)) != EOK) {
+    MS_LOG(ERROR) << "memcpy data failed.";
+    return {};
+  }
+  return perm;
 }
 }  // namespace lite
 }  // namespace mindspore

@@ -16,33 +16,30 @@
 
 #include "tools/converter/parser/caffe/caffe_reshape_parser.h"
 #include <memory>
+#include "ops/reshape.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeReshapeParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                   const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::ReshapeT> attr = std::make_unique<schema::ReshapeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeReshapeParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::Reshape();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Reshape failed";
     return nullptr;
   }
-
-  attr->format = schema::Format::Format_NCHW;
 
   const caffe::ReshapeParameter &reshapeParam = proto.reshape_param();
   if (!reshapeParam.has_shape()) {
     MS_LOG(ERROR) << "Reshape has no shape info, ret fail";
     return nullptr;
   }
-
+  std::vector<int32_t> shape;
   const caffe::BlobShape &blob_shape = reshapeParam.shape();
   for (int i = 0; i < blob_shape.dim_size(); i++) {
-    attr->shape.push_back(blob_shape.dim(i));
+    shape.push_back(blob_shape.dim(i));
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Reshape;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  primitive_c->AddAttr("shape", MakeValue(shape));
+
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeReshapeParser("Reshape", new CaffeReshapeParser());

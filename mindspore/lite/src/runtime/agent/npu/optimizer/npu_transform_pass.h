@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_TRANSFORM_PASS_H_
 #include <vector>
 #include "src/lite_kernel.h"
-#include "src/ops/primitive_c.h"
 #include "src/runtime/agent/npu/optimizer/npu_base_pass.h"
 
 namespace mindspore::lite {
@@ -35,10 +34,10 @@ class NPUTransformPass : public NPUBasePass {
   }
 
   ~NPUTransformPass() override {
-    for (auto primitive : insert_primitive_) {
-      delete primitive;
-    }
-    insert_primitive_.clear();
+    // for (auto primitive : insert_primitive_) {
+    //   delete primitive;
+    // }
+    // insert_primitive_.clear();
   }
 
  private:
@@ -53,7 +52,7 @@ class NPUTransformPass : public NPUBasePass {
   const InnerContext *context_;
   std::vector<kernel::LiteKernel *> *all_kernels_;
   std::vector<Tensor *> *all_tensors_;
-  std::vector<const PrimitiveC *> insert_primitive_;
+  // std::vector<const PrimitiveC *> insert_primitive_;
 };
 }  // namespace mindspore::lite
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_AGENT_NPU_OPTIMIZER_NPU_TRANSFORM_PASS_H_

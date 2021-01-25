@@ -27,11 +27,14 @@ class TFConvBaseParser : public TFNodeParser {
  public:
   TFConvBaseParser() = default;
   ~TFConvBaseParser() override = default;
-  STATUS ParseStrides(const tensorflow::NodeDef &node_def, const schema::Format &format, std::vector<int64_t> *strides);
-  STATUS ParseDilations(const tensorflow::NodeDef &node_def, const schema::Format &format,
-                        std::vector<int64_t> *dilations);
-  STATUS ParseKernels(const tensorflow::NodeDef &node_def, const schema::Format &format, std::vector<int64_t> *kernel);
-  STATUS ParsePadMode(const tensorflow::NodeDef &node_def, schema::PadMode *pad_mode);
+
+  static STATUS ParseStrides(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
+                             std::vector<int64_t> *stridstatices);
+  static STATUS ParseDilations(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
+                               std::vector<int64_t> *dilations);
+  static STATUS ParseKernels(const tensorflow::NodeDef &node_def, const mindspore::Format &format,
+                             std::vector<int64_t> *kernel);
+  static mindspore::PadMode ParsePadMode(const tensorflow::NodeDef &node_def);
 };
 }  // namespace lite
 }  // namespace mindspore

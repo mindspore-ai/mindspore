@@ -16,34 +16,29 @@
 
 #include "tools/converter/parser/onnx/onnx_lp_norm_parser.h"
 #include <memory>
+#include "ops/lp_normalization.h"
 
-namespace mindspore::lite {
-lite::PrimitiveC *OnnxLpNormParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                       const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx LpNormParser";
-  auto attr = std::make_unique<schema::LpNormalizationT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *OnnxLpNormParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto primitive_c = new (std::nothrow) ops::LpNormalization;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new LpNormalization failed";
     return nullptr;
   }
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
     if (attribute_name == "axis") {
-      attr->axis = onnx_node_attr.i();
+      primitive_c->set_axis(onnx_node_attr.i());
     } else if (attribute_name == "p") {
-      attr->p = onnx_node_attr.i();
+      primitive_c->set_p(onnx_node_attr.i());
     }
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_LpNormalization;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return primitive_c;
 }
 
 OnnxNodeRegistrar g_onnxLpNormParser("LpNormalization", new OnnxLpNormParser());
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

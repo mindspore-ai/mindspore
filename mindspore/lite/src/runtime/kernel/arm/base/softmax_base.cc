@@ -21,15 +21,14 @@
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
 #include "include/errorcode.h"
+#include "nnacl/errorcode.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_NULL_PTR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_SoftMax;
 
 namespace mindspore::kernel {
-
 int SoftmaxBaseCPUKernel::Init() {
   if (softmax_param_ == nullptr) {
     MS_LOG(ERROR) << "SoftmaxParameter nullptr";

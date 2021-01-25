@@ -24,9 +24,8 @@ namespace mindspore::kernel {
 class FusedBatchnormCPUKernel : public BatchnormCPUKernel {
  public:
   FusedBatchnormCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                          const mindspore::lite::PrimitiveC *primitive)
-      : BatchnormCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : BatchnormCPUKernel(parameter, inputs, outputs, ctx) {}
   ~FusedBatchnormCPUKernel() { FreeScaleAndOffset(); }
 
   int Eval() override;

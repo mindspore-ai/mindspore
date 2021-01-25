@@ -27,6 +27,7 @@
 #include "base/base.h"
 #include "src/param_value_lite.h"
 #include "tools/converter/converter_flags.h"
+#include "tools/converter/quant_param_holder.h"
 
 namespace mindspore::lite::quant {
 using STATUS = int;

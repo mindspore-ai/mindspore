@@ -19,7 +19,6 @@
 
 #include <string>
 #include "backend/optimizer/common/optimizer.h"
-#include "schema/inner/model_generated.h"
 
 namespace mindspore {
 namespace opt {

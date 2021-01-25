@@ -26,9 +26,8 @@ namespace mindspore::kernel {
 class TensorListFromTensorCPUKernel : public LiteKernel {
  public:
   TensorListFromTensorCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {}
+                                const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {}
   ~TensorListFromTensorCPUKernel() = default;
 
   int Init() override;

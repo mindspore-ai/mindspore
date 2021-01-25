@@ -29,24 +29,25 @@
 #include "tools/optimizer/fusion/batchmatmul_fusion.h"
 #include "tools/optimizer/fusion/sigmoid_mul_fusion.h"
 #include "tools/optimizer/fusion/conv_conv_fusion.h"
+#include "tools/optimizer/graph/primitive_adjust_pass.h"
 #include "tools/optimizer/graph/mindir_adjust_pass.h"
-#include "tools/optimizer/graph/mindir_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/identity_remove_pass.h"
 #include "tools/optimizer/graph/weight_format_hardcode_pass.h"
 #include "tools/optimizer/graph/weight_format_transform_pass.h"
 #include "tools/optimizer/graph/clip_convert_activation_pass.h"
 #include "tools/optimizer/graph/group_depthwise_op_convert_pass.h"
-#include "tools/optimizer/graph/tflite_inputs_order_exchange_pass.h"
+#include "tools/optimizer/graph/tflite_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/onnx_inputs_adjust_pass.h"
 #include "tools/optimizer/graph/update_conv2d_param_pass.h"
 #include "tools/optimizer/graph/unused_cast_node_remove_pass.h"
-#include "tools/optimizer/graph/unused_transpose_node_remove_pass.h"
 #include "tools/optimizer/graph/infershape_pass.h"
 #include "tools/optimizer/graph/slice_prepose_pass.h"
+#include "tools/optimizer/graph/unused_transpose_node_remove_pass.h"
 #include "tools/optimizer/graph/while_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
+#include "tools/optimizer/graph/inputs_adjust_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -70,6 +71,13 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
   auto convert_pm = std::make_shared<opt::PassManager>("anf graph convert pass manager", true);
 
   if (config->fmk == converter::FmkType_MS) {
+    auto primitive_adjust_pass = std::make_shared<opt::PrimitiveAdjustPass>();
+    primitive_adjust_pass->SetFmkType(config->fmk);
+    if (!primitive_adjust_pass->Run(old_graph)) {
+      MS_LOG(ERROR) << "primitive adjust failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+      return nullptr;
+    }
     auto mindir_adjust_pass = std::make_shared<opt::MindirAdjustPass>();
     mindir_adjust_pass->SetFmkType(config->fmk);
     mindir_adjust_pass->SetQuantType(config->quantType);
@@ -78,12 +86,14 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
       ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
       return nullptr;
     }
-    auto mindir_inputs_adjust_pass = std::make_shared<opt::MindirInputAdjustOpPass>();
-    if (!mindir_inputs_adjust_pass->Run(old_graph)) {
-      MS_LOG(ERROR) << "mindir inputs adjust failed.";
-      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
-      return nullptr;
-    }
+  }
+
+  // input pre adjustment
+  auto input_adjust_pass = std::make_shared<opt::InputAdjustPass>();
+  if (!input_adjust_pass->Run(old_graph)) {
+    MS_LOG(ERROR) << "inputs adjust failed.";
+    ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_ERROR);
+    return nullptr;
   }
 
   // onnx pre adjustment
@@ -125,7 +135,9 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
   graph_pm->AddPass(weight_format_transform_pass);
   auto infershape_pass = std::make_shared<opt::InferShapePass>();
   infershape_pass->SetFmkType(config->fmk);
-  graph_pm->AddPass(infershape_pass);
+  if (config->fmk != converter::FmkType_TF) {
+    graph_pm->AddPass(infershape_pass);
+  }
   auto slice_prepose_pass = std::make_shared<opt::SlicePreposePass>();
   slice_prepose_pass->SetFmkType(config->fmk);
   graph_pm->AddPass(slice_prepose_pass);
@@ -159,7 +171,7 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
   convert_pm->AddPass(std::make_shared<opt::ClipConvertActivationPass>());
   if (config->fmk == lite::converter::FmkType_TFLITE) {
     convert_pm->AddPass(std::make_shared<opt::GroupDepthwiseOpConvertPass>());
-    convert_pm->AddPass(std::make_shared<opt::TfliteInputsOrderExchangePass>());
+    convert_pm->AddPass(std::make_shared<opt::TfliteInputsAdjustPass>());
   }
   optimizer->AddPassManager(const_fold_pm);
   optimizer->AddPassManager(convert_pm);

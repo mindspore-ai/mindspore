@@ -70,7 +70,7 @@ TEST_F(TestPadInt8, PadInt8Test1) {
   int8_t *correct;
   int total_size = PadInt8TestInit1(&inputs_, &outputs_, pad_param, &correct);
   kernel::PadInt8CPUKernel *pad =
-    new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx, nullptr);
+    new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx);
 
   pad->Init();
   pad->Run();
@@ -123,7 +123,7 @@ TEST_F(TestPadInt8, PadInt8Test2) {
   int8_t *correct;
   int total_size = PadInt8TestInit2(&inputs_, &outputs_, pad_param, &correct);
   kernel::PadInt8CPUKernel *pad =
-    new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx, nullptr);
+    new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx);
 
   pad->Init();
   pad->Run();
@@ -191,7 +191,7 @@ TEST_F(TestPadInt8, PadInt8TestInit4) {
   int8_t *correct;
   int total_size = PadInt8TestInit2(&inputs_, &outputs_, pad_param, &correct);
   kernel::PadInt8CPUKernel *pad =
-    new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx, nullptr);
+    new kernel::PadInt8CPUKernel(reinterpret_cast<OpParameter *>(pad_param), inputs_, outputs_, ctx);
 
   pad->Init();
   pad->Run();

@@ -19,7 +19,7 @@
 #include "src/runtime/agent/npu/npu_converter_utils.h"
 using mindspore::kernel::KERNEL_ARCH::kNPU;
 using mindspore::lite::KernelRegistrar;
-using mindspore::schema::PrimitiveType_Slice;
+using mindspore::schema::PrimitiveType_SliceFusion;
 
 namespace mindspore::kernel {
 int SliceNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs, const std::vector<lite::Tensor *> &outputs,
@@ -50,5 +50,5 @@ SliceNPUKernel::~SliceNPUKernel() {
   }
 }
 
-REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_Slice, NPUKernelCreator<SliceNPUKernel>)
+REG_KERNEL(kNPU, kNumberTypeFloat32, PrimitiveType_SliceFusion, NPUKernelCreator<SliceNPUKernel>)
 }  // namespace mindspore::kernel

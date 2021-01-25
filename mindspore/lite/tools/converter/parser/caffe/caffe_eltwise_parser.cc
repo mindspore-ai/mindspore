@@ -17,14 +17,14 @@
 #include "tools/converter/parser/caffe/caffe_eltwise_parser.h"
 #include <cmath>
 #include <memory>
+#include "ops/eltwise.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeEltwiseParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                   const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::EltwiseT> attr = std::make_unique<schema::EltwiseT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeEltwiseParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::Eltwise();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Eltwise failed";
     return nullptr;
   }
 
@@ -55,25 +55,23 @@ PrimitiveC *CaffeEltwiseParser::ParseLitePrimitive(const caffe::LayerParameter &
   if (proto.has_eltwise_param() && eltwiseParam.has_operation()) {
     switch (eltwiseParam.operation()) {
       case caffe::EltwiseParameter::PROD:
-        attr->mode = schema::EltwiseMode_PROD;
+        primitive_c->set_mode(mindspore::EltwiseMode::PROD);
         break;
       case caffe::EltwiseParameter::SUM:
-        attr->mode = schema::EltwiseMode_SUM;
+        primitive_c->set_mode(mindspore::EltwiseMode::SUM);
         break;
       case caffe::EltwiseParameter::MAX:
-        attr->mode = schema::EltwiseMode_MAXIMUM;
+        primitive_c->set_mode(mindspore::EltwiseMode::MAXIMUM);
         break;
       default:
-        MS_LOG(ERROR) << "Eltwise parse params fail, unsupported opration: " << eltwiseParam.operation();
+        MS_LOG(ERROR) << "Eltwise parse params fail, unsupported operation: " << eltwiseParam.operation();
         return nullptr;
     }
   } else {
-    attr->mode = schema::EltwiseMode_SUM;
+    primitive_c->set_mode(mindspore::EltwiseMode::SUM);
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Eltwise;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeEltwiseParser("Eltwise", new CaffeEltwiseParser());

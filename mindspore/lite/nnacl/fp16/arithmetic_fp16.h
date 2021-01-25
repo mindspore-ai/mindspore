@@ -20,7 +20,7 @@
 #include <arm_neon.h>
 #endif
 #include "nnacl/op_base.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic.h"
 #include "nnacl/errorcode.h"
 
 #ifdef __cplusplus
@@ -107,7 +107,7 @@ int ElementMinimumFp16(float16_t *input0, float16_t *input1, float16_t *output, 
 int ElementNotEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
 int ElementEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
 int ElementLessFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
-int ElementLessEqual(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
+int ElementLessEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
 int ElementGreaterFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
 int ElementGreaterEqualFp16(float16_t *input0, float16_t *input1, uint8_t *output, int element_size);
 

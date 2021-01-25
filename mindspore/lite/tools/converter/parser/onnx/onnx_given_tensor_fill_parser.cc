@@ -20,11 +20,12 @@
 #include <vector>
 #include <algorithm>
 #include "src/param_value_lite.h"
+#include "ops/constant.h"
 
 namespace mindspore {
 namespace lite {
 STATUS OnnxGivenTensorFillParser::ParseInt8GivenIntTensorFill(const onnx::NodeProto &onnx_node,
-                                                              lite::PrimitiveC *primitive_c,
+                                                              ops::PrimitiveC *primitive_c,
                                                               const std::vector<int> &shape) {
   ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
   if (param_value == nullptr) {
@@ -43,6 +44,10 @@ STATUS OnnxGivenTensorFillParser::ParseInt8GivenIntTensorFill(const onnx::NodePr
     MS_LOG(ERROR) << "new char[] failed";
     return RET_MEMORY_FAILED;
   }
+  if (iter->ints().data() == nullptr) {
+    MS_LOG(ERROR) << "origin ints data in onnx is nullptr";
+    return RET_NULL_PTR;
+  }
   if (memcpy_s(param_data, data_size, iter->ints().data(), data_size) != EOK) {
     MS_LOG(ERROR) << "memcpy data failed.";
     delete[] param_data;
@@ -57,7 +62,7 @@ STATUS OnnxGivenTensorFillParser::ParseInt8GivenIntTensorFill(const onnx::NodePr
 }
 
 STATUS OnnxGivenTensorFillParser::ParseInt8GivenTensorFill(const onnx::NodeProto &onnx_node,
-                                                           lite::PrimitiveC *primitive_c,
+                                                           ops::PrimitiveC *primitive_c,
                                                            const std::vector<int> &shape) {
   ParamValueLitePtr param_value = std::make_shared<ParamValueLite>();
   if (param_value == nullptr) {
@@ -87,17 +92,14 @@ STATUS OnnxGivenTensorFillParser::ParseInt8GivenTensorFill(const onnx::NodeProto
   primitive_c->set_attr("const_data", param_value);
   return RET_OK;
 }
-
-lite::PrimitiveC *OnnxGivenTensorFillParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                                const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx GivenTensorFillParser";
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
+ops::PrimitiveC *OnnxGivenTensorFillParser::Parse(const onnx::GraphProto &onnx_graph,
+                                                  const onnx::NodeProto &onnx_node) {
+  auto primitive_c = new (std::nothrow) ops::Constant;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Constant failed";
     return nullptr;
   }
-  primitive->value.type = schema::PrimitiveType_Constant;
-  auto primitive_c = PrimitiveC::Create(primitive.release());
+
   std::vector<int64_t> shape_vector;
   auto iter = std::find_if(onnx_node.attribute().begin(), onnx_node.attribute().end(),
                            [](const onnx::AttributeProto &attr) { return attr.name() == "shape"; });
@@ -118,6 +120,7 @@ lite::PrimitiveC *OnnxGivenTensorFillParser::ParseLitePrimitive(const onnx::Grap
       return nullptr;
     }
   }
+
   return primitive_c;
 }
 

@@ -15,74 +15,72 @@
  */
 
 #include "tools/converter/parser/onnx/onnx_resize_parser.h"
-#include <map>
-#include <memory>
 #include <string>
 #include <vector>
+#include <map>
+#include "ops/resize.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxResizeParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                       const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx ResizeParser";
-  auto attr = std::make_unique<schema::ResizeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
-  attr->format = schema::Format_NCHW;
-  attr->nearestMode = schema::NearestMode_ROUND_HALF_DOWN;
+ops::PrimitiveC *OnnxResizeParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     const auto &attribute_name = onnx_node_attr.name();
-    if (attribute_name == "coordinate_transformation_mode") {
-      attr->coordinateTransformMode = [&]() {
-        std::map<std::string, schema::CoordinateTransformMode> transform_map = {
-          {"half_pixel", schema::CoordinateTransformMode_HALF_PIXEL},
-          {"pytorch_half_pixel", schema::CoordinateTransformMode_PYTORCH_HALF_PIXEL},
-          {"align_corners", schema::CoordinateTransformMode_ALIGN_CORNERS},
-          {"asymmetric", schema::CoordinateTransformMode_ASYMMETRIC},
-          {"tf_half_pixel_for_nn", schema::CoordinateTransformMode_TF_HALF_PIXEL},
-          {"tf_crop_and_resize", schema::CoordinateTransformMode_TF_CROP_AND_RESIZE},
-        };
-        return transform_map[onnx_node_attr.s()];
-      }();
-    } else if (attribute_name == "cubic_coeff_a") {
-      attr->cubicCoeff = onnx_node_attr.f();
-    } else if (attribute_name == "exclude_outside") {
-      attr->excludeOutside = onnx_node_attr.i();
-    } else if (attribute_name == "extrapolation_value") {
-      attr->extrapolationValue = onnx_node_attr.f();
-    } else if (attribute_name == "mode") {
-      attr->method = [&]() {
-        std::map<std::string, schema::ResizeMethod> resize_mode = {
-          {"nearest", schema::ResizeMethod_NEAREST},
-          {"linear", schema::ResizeMethod_LINEAR},
-          {"cubic", schema::ResizeMethod_CUBIC},
-        };
-        return resize_mode[onnx_node_attr.s()];
-      }();
-    } else if (attribute_name == "nearest_mode") {
-      attr->nearestMode = [&]() {
-        std::map<std::string, schema::NearestMode> nearest_mode = {
-          {"round_prefer_floor", schema::NearestMode_ROUND_HALF_DOWN},
-          {"round_prefer_ceil", schema::NearestMode_ROUND_HALF_UP},
-          {"floor", schema::NearestMode_FLOOR},
-          {"ceil", schema::NearestMode_CEIL},
-        };
-        return nearest_mode[onnx_node_attr.s()];
-      }();
+    if (attribute_name == "mode") {
+      if (onnx_node_attr.s() != "linear") {
+        MS_LOG(ERROR) << "nearest and cubic methods are not supported now.";
+        return nullptr;
+      }
     }
   }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
+  // use bilinear method
+  auto primitive_c = new (std::nothrow) ops::Resize;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Resize failed";
     return nullptr;
   }
-  primitive->value.type = schema::PrimitiveType_Resize;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  primitive_c->set_format(mindspore::Format::NCHW);
+  primitive_c->set_nearest_mode(mindspore::NearestMode::ROUND_HALF_DOWN);
+  for (const auto &onnx_node_attr : onnx_node.attribute()) {
+    const auto &attribute_name = onnx_node_attr.name();
+    if (attribute_name == "coordinate_transformation_mode") {
+      std::map<std::string, mindspore::CoordinateTransformMode> transform_map = {
+        {"half_pixel", mindspore::CoordinateTransformMode::HALF_PIXEL},
+        {"pytorch_half_pixel", mindspore::CoordinateTransformMode::HALF_PIXEL},
+        {"align_corners", mindspore::CoordinateTransformMode::ALIGN_CORNERS},
+        {"asymmetric", mindspore::CoordinateTransformMode::ASYMMETRIC}};
+      if (transform_map.find(onnx_node_attr.s()) != transform_map.end()) {
+        primitive_c->set_coordinate_transform_mode(transform_map[onnx_node_attr.s()]);
+      } else {
+        MS_LOG(ERROR) << "Unsupport coordinate transform mode: " << attribute_name;
+        return nullptr;
+      }
+    } else if (attribute_name == "cubic_coeff_a") {
+      primitive_c->set_cubic_coeff(onnx_node_attr.f());
+    } else if (attribute_name == "exclude_outside") {
+      primitive_c->set_exclude_outside(onnx_node_attr.i());
+    } else if (attribute_name == "extrapolation_value") {
+      primitive_c->set_extrapolation_value(onnx_node_attr.f());
+    } else if (attribute_name == "mode") {
+      std::map<std::string, mindspore::ResizeMethod> resize_mode = {
+        {"nearest", mindspore::ResizeMethod::NEAREST},
+        {"linear", mindspore::ResizeMethod::LINEAR},
+        {"cubic", mindspore::ResizeMethod::CUBIC},
+      };
+      primitive_c->set_method(resize_mode[onnx_node_attr.s()]);
+    } else if (attribute_name == "nearest_mode") {
+      std::map<std::string, mindspore::NearestMode> nearest_mode = {
+        {"round_prefer_floor", mindspore::NearestMode::ROUND_HALF_DOWN},
+        {"round_prefer_ceil", mindspore::NearestMode::ROUND_HALF_UP},
+        {"floor", mindspore::NearestMode::FLOOR},
+        {"ceil", mindspore::NearestMode::CEIL},
+      };
+      primitive_c->set_nearest_mode(nearest_mode[onnx_node_attr.s()]);
+    }
+  }
+
+  return primitive_c;
 }
 
 OnnxNodeRegistrar g_onnxResizeParser("Resize", new OnnxResizeParser());

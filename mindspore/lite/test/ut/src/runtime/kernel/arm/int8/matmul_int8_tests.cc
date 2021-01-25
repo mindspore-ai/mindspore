@@ -178,7 +178,7 @@ TEST_F(TestMatmulInt8, mmtest1) {
   ctx->thread_num_ = 1;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::MatmulInt8CPUKernel *mm =
-    new kernel::MatmulInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs, outputs, ctx, nullptr);
+    new kernel::MatmulInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs, outputs, ctx);
 
   mm->Init();
   mm->Run();
@@ -295,7 +295,7 @@ TEST_F(TestMatmulInt8, mmtest2) {
   ctx->thread_num_ = 2;
   ASSERT_EQ(lite::RET_OK, ctx->Init());
   kernel::MatmulInt8CPUKernel *mm =
-    new kernel::MatmulInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs, outputs, ctx, nullptr);
+    new kernel::MatmulInt8CPUKernel(reinterpret_cast<OpParameter *>(matmul_param), inputs, outputs, ctx);
 
   mm->Init();
   mm->Run();

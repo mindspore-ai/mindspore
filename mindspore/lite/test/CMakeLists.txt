@@ -8,7 +8,6 @@ include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/external_libs/gtest.cmake)
 
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
 STRING(REPLACE " -fvisibility=hidden " " -fvisibility=default " CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-
 if(ENABLE_CONVERTER)
 set(CCSRC_SRC
         ## ccsrc
@@ -30,6 +29,7 @@ file(GLOB KERNEL_OP_SRC
         ${LITE_DIR}/nnacl/*.c
         ${LITE_DIR}/nnacl/fp32/*.c
         ${LITE_DIR}/nnacl/int8/*.c
+        ${LITE_DIR}/nnacl/infer/*.c
         ${LITE_DIR}/nnacl/quantization/*.c
         )
 
@@ -116,6 +116,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/runtime/runtime_api.cc
         ${LITE_DIR}/src/runtime/thread_pool.c
         ${LITE_DIR}/src/runtime/parallel_executor.cc
+        ${LITE_DIR}/src/runtime/infer_manager.cc
         ${LITE_DIR}/src/tensor.cc
         ${LITE_DIR}/src/tensorlist.cc
         ${LITE_DIR}/src/executor.cc
@@ -127,6 +128,8 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/lite_model.cc
         ${LITE_DIR}/src/scheduler.cc
         ${LITE_DIR}/src/common/graph_util.cc
+        ${LITE_DIR}/src/common/prim_util.cc
+        ${LITE_DIR}/src/common/tensor_util.cc
         ${LITE_DIR}/src/common/file_utils.cc
         ${LITE_DIR}/src/common/utils.cc
         ${LITE_DIR}/src/common/string_util.cc
@@ -164,7 +167,6 @@ if(ENABLE_CONVERTER)
     set(TEST_LITE_SRC
             ${TEST_LITE_SRC}
             ${TEST_CASE_TFLITE_PARSERS_SRC}
-            ${TOP_DIR}/mindspore/core/utils/flags.cc
             ${LITE_DIR}/tools/common/protobuf_utils.cc
             ${LITE_DIR}/tools/converter/optimizer.cc
             ${LITE_DIR}/tools/converter/anf_transform.cc
@@ -191,7 +193,7 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/weight_format_hardcode_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/clip_convert_activation_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/group_depthwise_op_convert_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/tflite_inputs_order_exchange_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/tflite_inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/update_conv2d_param_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_cast_node_remove_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/unused_transpose_node_remove_pass.cc
@@ -199,9 +201,10 @@ if(ENABLE_CONVERTER)
             ${LITE_DIR}/tools/optimizer/graph/infershape_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/slice_prepose_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/mindir_adjust_pass.cc
-            ${LITE_DIR}/tools/optimizer/graph/mindir_inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/onnx_inputs_adjust_pass.cc
             ${LITE_DIR}/tools/optimizer/graph/while_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/inputs_adjust_pass.cc
+            ${LITE_DIR}/tools/optimizer/graph/primitive_adjust_pass.cc
             )
 endif()
 ### train
@@ -210,6 +213,7 @@ if (SUPPORT_TRAIN)
             ${TEST_LITE_SRC}
            # ${LITE_DIR}/src/train/ops/train_ops.cc
             ${LITE_DIR}/src/train/train_populate_parameter.cc
+            ${LITE_DIR}/src/train/train_populate_parameter_v0.cc
             ${LITE_DIR}/src/train/train_session.cc
             ${LITE_DIR}/src/train/train_model.cc
             ${LITE_DIR}/src/lite_session.cc
@@ -226,6 +230,7 @@ file(GLOB_RECURSE TEST_CASE_KERNEL_SRC
     ${TEST_DIR}/ut/src/runtime/kernel/arm/fp32/*.cc
     ${TEST_DIR}/ut/src/runtime/kernel/arm/int8/*.cc
     ${TEST_DIR}/ut/src/runtime/kernel/arm/string/*.cc
+    ${TEST_DIR}/ut/nnacl/infer/*.cc
 )
 
 file(GLOB_RECURSE TEST_CASE_KERNEL_TRAIN_SRC
@@ -254,6 +259,7 @@ if (ENABLE_CONVERTER)
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_scale_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/conv_activation_fusion_test.cc
             ${TEST_DIR}/ut/tools/optimizer/fusion/constant_folding_fusion_test.cc
+            ${TEST_DIR}/ut/tools/optimizer/fusion/import_from_meta_graphT.cc
             )
 endif()
 
@@ -318,7 +324,7 @@ if (ENABLE_CONVERTER)
             mindspore::protobuf
             mindspore::eigen
             mindspore::json
-            mindspore_core
+            -Wl,--whole-archive mindspore_core -Wl,--no-whole-archive
             mindspore::glog
             ${SECUREC_LIBRARY}
             )

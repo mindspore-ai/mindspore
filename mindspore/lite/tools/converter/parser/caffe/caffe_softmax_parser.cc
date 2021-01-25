@@ -16,14 +16,14 @@
 
 #include "tools/converter/parser/caffe/caffe_softmax_parser.h"
 #include <memory>
+#include "ops/softmax.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeSoftmaxParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                   const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::SoftMaxT> attr = std::make_unique<schema::SoftMaxT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeSoftmaxParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::Softmax();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Softmax failed";
     return nullptr;
   }
 
@@ -31,14 +31,12 @@ PrimitiveC *CaffeSoftmaxParser::ParseLitePrimitive(const caffe::LayerParameter &
     if (proto.softmax_param().axis() == -1) {
       MS_LOG(DEBUG) << "axis with -1 may lead to calculation errors when input less than 4 dims.";
     }
-    attr->axis = proto.softmax_param().axis();
+    primitive_c->set_axis({proto.softmax_param().axis()});
   } else {
-    attr->axis = 1;
+    primitive_c->set_axis({1});
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_SoftMax;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeSoftmaxParser("Softmax", new CaffeSoftmaxParser());

@@ -59,9 +59,9 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   sub_graph_0_node_0->inputIndex = {0, 1};
   sub_graph_0_node_0->outputIndex = {2};
   sub_graph_0_node_0->primitive = std::make_unique<schema::PrimitiveT>();
-  sub_graph_0_node_0->primitive->value.type = schema::PrimitiveType_Add;
-  auto primitive_sub_graph_0_node_0 = new schema::AddT;
-  primitive_sub_graph_0_node_0->activationType = schema::ActivationType_NO_ACTIVATION;
+  sub_graph_0_node_0->primitive->value.type = schema::PrimitiveType_AddFusion;
+  auto primitive_sub_graph_0_node_0 = new schema::AddFusionT;
+  primitive_sub_graph_0_node_0->activation_type = schema::ActivationType_NO_ACTIVATION;
   sub_graph_0_node_0->primitive->value.value = primitive_sub_graph_0_node_0;
   sub_graph_0_node_0->name = "before_Add_1";
   meta_graph->nodes.emplace_back(std::move(sub_graph_0_node_0));
@@ -73,9 +73,9 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   sub_graph_0_node_1->inputIndex = {2, 3};
   sub_graph_0_node_1->outputIndex = {4};
   sub_graph_0_node_1->primitive = std::make_unique<schema::PrimitiveT>();
-  sub_graph_0_node_1->primitive->value.type = schema::PrimitiveType_Add;
-  auto primitive_sub_graph_0_node_1 = new schema::AddT;
-  primitive_sub_graph_0_node_1->activationType = schema::ActivationType_NO_ACTIVATION;
+  sub_graph_0_node_1->primitive->value.type = schema::PrimitiveType_AddFusion;
+  auto primitive_sub_graph_0_node_1 = new schema::AddFusionT;
+  primitive_sub_graph_0_node_1->activation_type = schema::ActivationType_NO_ACTIVATION;
   sub_graph_0_node_1->primitive->value.value = primitive_sub_graph_0_node_1;
   sub_graph_0_node_1->name = "before_Add_2";
   meta_graph->nodes.emplace_back(std::move(sub_graph_0_node_1));
@@ -100,9 +100,9 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   sub_graph_0_node_3->inputIndex = {16};
   sub_graph_0_node_3->outputIndex = {5};  // 5 : bool
   sub_graph_0_node_3->primitive = std::make_unique<schema::PrimitiveT>();
-  sub_graph_0_node_3->primitive->value.type = schema::PrimitiveType_Partial;
-  auto primitive_sub_graph_0_node_3 = new schema::PartialT;
-  primitive_sub_graph_0_node_3->subGraphIndex = 1;
+  sub_graph_0_node_3->primitive->value.type = schema::PrimitiveType_PartialFusion;
+  auto primitive_sub_graph_0_node_3 = new schema::PartialFusionT;
+  primitive_sub_graph_0_node_3->sub_graph_index = 1;
   sub_graph_0_node_3->primitive->value.value = primitive_sub_graph_0_node_3;
   sub_graph_0_node_3->name = "Partial_cond";
   meta_graph->nodes.emplace_back(std::move(sub_graph_0_node_3));
@@ -127,9 +127,9 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   sub_graph_0_node_5->inputIndex = {6};
   sub_graph_0_node_5->outputIndex = {17};
   sub_graph_0_node_5->primitive = std::make_unique<schema::PrimitiveT>();
-  sub_graph_0_node_5->primitive->value.type = schema::PrimitiveType_Partial;
-  auto primitive_sub_graph_0_node_5 = new schema::PartialT;
-  primitive_sub_graph_0_node_5->subGraphIndex = 2;
+  sub_graph_0_node_5->primitive->value.type = schema::PrimitiveType_PartialFusion;
+  auto primitive_sub_graph_0_node_5 = new schema::PartialFusionT;
+  primitive_sub_graph_0_node_5->sub_graph_index = 2;
   sub_graph_0_node_5->primitive->value.value = primitive_sub_graph_0_node_5;
   sub_graph_0_node_5->name = "Partial_body";
   meta_graph->nodes.emplace_back(std::move(sub_graph_0_node_5));
@@ -141,8 +141,8 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   sub_graph_0_node_6->inputIndex = {7, 8};
   sub_graph_0_node_6->outputIndex = {9};
   sub_graph_0_node_6->primitive = std::make_unique<schema::PrimitiveT>();
-  sub_graph_0_node_6->primitive->value.type = schema::PrimitiveType_Add;
-  auto primitive_sub_graph_0_node_6 = new schema::AddT;
+  sub_graph_0_node_6->primitive->value.type = schema::PrimitiveType_AddFusion;
+  auto primitive_sub_graph_0_node_6 = new schema::AddFusionT;
   sub_graph_0_node_6->primitive->value.value = primitive_sub_graph_0_node_6;
   sub_graph_0_node_6->name = "Add-after";
   meta_graph->nodes.emplace_back(std::move(sub_graph_0_node_6));
@@ -160,8 +160,8 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   sub_graph_1_node_0->inputIndex = {16, 10};
   sub_graph_1_node_0->outputIndex = {11};
   sub_graph_1_node_0->primitive = std::make_unique<schema::PrimitiveT>();
-  sub_graph_1_node_0->primitive->value.type = schema::PrimitiveType_Add;
-  auto primitive_sub_graph_1_node_0 = new schema::AddT;
+  sub_graph_1_node_0->primitive->value.type = schema::PrimitiveType_AddFusion;
+  auto primitive_sub_graph_1_node_0 = new schema::AddFusionT;
   sub_graph_1_node_0->primitive->value.value = primitive_sub_graph_1_node_0;
   sub_graph_1_node_0->name = "cond_add";
   meta_graph->nodes.emplace_back(std::move(sub_graph_1_node_0));
@@ -191,8 +191,8 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   sub_graph_2_node_0->inputIndex = {6, 13};
   sub_graph_2_node_0->outputIndex = {14};
   sub_graph_2_node_0->primitive = std::make_unique<schema::PrimitiveT>();
-  sub_graph_2_node_0->primitive->value.type = schema::PrimitiveType_Add;
-  auto primitive_sub_graph_2_node_0 = new schema::AddT;
+  sub_graph_2_node_0->primitive->value.type = schema::PrimitiveType_AddFusion;
+  auto primitive_sub_graph_2_node_0 = new schema::AddFusionT;
   sub_graph_2_node_0->primitive->value.value = primitive_sub_graph_2_node_0;
   sub_graph_2_node_0->name = "body_add_1";
   meta_graph->nodes.emplace_back(std::move(sub_graph_2_node_0));
@@ -204,8 +204,8 @@ TEST_F(ControlFlowTest, TestMergeWhileModel) {
   sub_graph_2_node_1->inputIndex = {14, 15};
   sub_graph_2_node_1->outputIndex = {17};
   sub_graph_2_node_1->primitive = std::make_unique<schema::PrimitiveT>();
-  sub_graph_2_node_1->primitive->value.type = schema::PrimitiveType_Add;
-  auto primitive_sub_graph_2_node_1 = new schema::AddT;
+  sub_graph_2_node_1->primitive->value.type = schema::PrimitiveType_AddFusion;
+  auto primitive_sub_graph_2_node_1 = new schema::AddFusionT;
   sub_graph_2_node_1->primitive->value.value = primitive_sub_graph_2_node_1;
   sub_graph_2_node_1->name = "body_add_2";
   meta_graph->nodes.emplace_back(std::move(sub_graph_2_node_1));

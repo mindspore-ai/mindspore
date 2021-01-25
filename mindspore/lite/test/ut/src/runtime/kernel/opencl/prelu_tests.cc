@@ -23,7 +23,7 @@ class TestOpenCL_PRrelu : public CommonTest {};
 namespace {
 // PrimitiveType_PReLU: src/ops/populate/p_relu_populate.cc
 OpParameter *CreateParameter() {
-  auto *param = test::CreateParameter<PReluParameter>(schema::PrimitiveType_PReLU);
+  auto *param = test::CreateParameter<PReluParameter>(schema::PrimitiveType_PReLUFusion);
   return reinterpret_cast<OpParameter *>(param);
 }
 }  // namespace

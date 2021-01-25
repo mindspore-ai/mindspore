@@ -26,9 +26,8 @@ namespace mindspore::kernel {
 class ReluXInt8CPUKernel : public LiteKernel {
  public:
   ReluXInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     type_ = (reinterpret_cast<ActivationParameter *>(parameter))->type_;
   }
   ~ReluXInt8CPUKernel() override = default;
@@ -47,9 +46,8 @@ class ReluXInt8CPUKernel : public LiteKernel {
 class ReluInt8CPUKernel : public ReluXInt8CPUKernel {
  public:
   ReluInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                    const mindspore::lite::PrimitiveC *primitive)
-      : ReluXInt8CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                    const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ReluXInt8CPUKernel(parameter, inputs, outputs, ctx) {}
 
   ~ReluInt8CPUKernel() override = default;
 
@@ -64,9 +62,8 @@ class ReluInt8CPUKernel : public ReluXInt8CPUKernel {
 class Relu6Int8CPUKernel : public ReluXInt8CPUKernel {
  public:
   Relu6Int8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
-      : ReluXInt8CPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ReluXInt8CPUKernel(parameter, inputs, outputs, ctx) {}
 
   ~Relu6Int8CPUKernel() override = default;
 

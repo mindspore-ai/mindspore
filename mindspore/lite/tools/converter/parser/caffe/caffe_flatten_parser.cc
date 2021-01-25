@@ -16,20 +16,18 @@
 
 #include "tools/converter/parser/caffe/caffe_flatten_parser.h"
 #include <memory>
+#include "ops/flatten.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeFlattenParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                   const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::FlattenT> attr = std::make_unique<schema::FlattenT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeFlattenParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::Flatten();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Flatten failed";
     return nullptr;
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Flatten;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_CaffeFlattenParser("Flatten", new CaffeFlattenParser());

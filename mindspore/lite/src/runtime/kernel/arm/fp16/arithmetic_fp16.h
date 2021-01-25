@@ -36,9 +36,8 @@ typedef struct {
 class ArithmeticFP16CPUKernel : public LiteKernel {
  public:
   ArithmeticFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                          const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                          const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<ArithmeticParameter *>(parameter);
   }
   ~ArithmeticFP16CPUKernel() = default;

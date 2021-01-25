@@ -17,18 +17,17 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_UNSQUEEZE_NPU_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_UNSQUEEZE_NPU_H_
 #include <vector>
-#include "src/ops/unsqueeze.h"
+#include "nnacl/fp32/unsqueeze_fp32.h"
 #include "src/runtime/kernel/npu/npu_kernel.h"
 #include "include/graph/op/all_ops.h"
 namespace mindspore::kernel {
 class UnsqueezeNPUKernel : public NPUKernel {
  public:
   UnsqueezeNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                     const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
-    auto unsqueeze = reinterpret_cast<const mindspore::lite::Unsqueeze *>(primitive);
-    axis_ = unsqueeze->GetAxis();
+                     const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
+    UnsqueezeParameter *param = reinterpret_cast<UnsqueezeParameter *>(parameter);
+    axis_.insert(axis_.begin(), param->dims_, param->dims_ + param->num_dim_);
   }
   ~UnsqueezeNPUKernel() override;
 

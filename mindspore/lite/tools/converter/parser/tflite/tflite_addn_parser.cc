@@ -18,22 +18,21 @@
 #include "tools/converter/parser/tflite/tflite_addn_parser.h"
 #include <vector>
 #include <memory>
-#include <map>
-#include "src/ops/addn.h"
+#include "ops/addn.h"
 
-namespace mindspore::lite {
-lite::PrimitiveC *TfliteAddNParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                       const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto attr = std::make_unique<schema::AddNT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+namespace mindspore {
+namespace lite {
+ops::PrimitiveC *TfliteAddNParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                         const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = new (std::nothrow) ops::AddN();
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "new AddN failed";
     return nullptr;
   }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_AddN;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  return prim;
 }
 
 TfliteNodeRegister g_tfliteAddNParser(tflite::BuiltinOperator_ADD_N, new TfliteAddNParser());
-}  // namespace mindspore::lite
+}  // namespace lite
+}  // namespace mindspore

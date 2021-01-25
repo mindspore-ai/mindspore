@@ -65,7 +65,7 @@ TEST_F(TestNormalize, TestSentence) {
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc_);
   ASSERT_NE(creator_, nullptr);
-  kernel_ = creator_(inputs_, outputs_, &parameter_, &ctx_, desc_, nullptr);
+  kernel_ = creator_(inputs_, outputs_, &parameter_, &ctx_, desc_);
   ASSERT_NE(kernel_, nullptr);
   auto ret = kernel_->Init();
   ASSERT_EQ(ret, 0);

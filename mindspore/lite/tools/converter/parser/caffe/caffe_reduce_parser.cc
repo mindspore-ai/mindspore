@@ -17,28 +17,48 @@
 #include "tools/converter/parser/caffe/caffe_reduce_parser.h"
 #include <memory>
 #include <vector>
+#include "ops/fusion/reduce_fusion.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeReduceParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                  const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::PReLUT> attr = std::make_unique<schema::PReLUT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeReduceParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::ReduceFusion();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new ReduceFusion failed";
     return nullptr;
   }
 
-  const caffe::PReLUParameter &pReluParam = proto.prelu_param();
-  if (pReluParam.has_channel_shared()) {
-    attr->channelShared = pReluParam.channel_shared();
+  primitive_c->set_keep_dims(false);
+
+  const caffe::ReductionParameter &reduce_param = proto.reduction_param();
+  if (reduce_param.has_operation()) {
+    if (reduce_param.operation() == caffe::ReductionParameter_ReductionOp_MEAN) {
+      primitive_c->set_mode(mindspore::ReduceMode::Reduce_Mean);
+    } else if (reduce_param.operation() == caffe::ReductionParameter_ReductionOp_SUM) {
+      primitive_c->set_mode(mindspore::ReduceMode::Reduce_Sum);
+    } else if (reduce_param.operation() == caffe::ReductionParameter_ReductionOp_SUMSQ) {
+      primitive_c->set_mode(mindspore::ReduceMode::Reduce_Sum_Square);
+    } else if (reduce_param.operation() == caffe::ReductionParameter_ReductionOp_ASUM) {
+      primitive_c->set_mode(mindspore::ReduceMode::Reduce_ASum);
+    } else {
+      MS_LOG(ERROR) << "nsupported reduce mode: " << reduce_param.operation();
+      return nullptr;
+    }
   } else {
-    attr->channelShared = false;
+    primitive_c->set_mode(mindspore::ReduceMode::Reduce_Sum);
   }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Reduce;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  std::vector<int32_t> axes;
+  if (reduce_param.has_axis()) {
+    axes.push_back(1);
+    axes.push_back(reduce_param.axis());
+  } else {
+    axes.push_back(1);
+    axes.push_back(0);
+  }
+  primitive_c->AddAttr("axes", MakeValue(axes));
+
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeReduceParser("Reduction", new CaffeReduceParser());

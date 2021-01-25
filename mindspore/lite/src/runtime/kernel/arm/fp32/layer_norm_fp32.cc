@@ -24,7 +24,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_LayerNorm;
+using mindspore::schema::PrimitiveType_LayerNormFusion;
 
 namespace mindspore::kernel {
 int LayerNormCPUKernel::Init() {
@@ -35,11 +35,6 @@ int LayerNormCPUKernel::Init() {
 }
 
 int LayerNormCPUKernel::ReSize() {
-  if (op_parameter_ != nullptr) {
-    free(op_parameter_);
-    op_parameter_ = nullptr;
-  }
-  op_parameter_ = PopulateLayerNormParameter(primitive_);
   op_parameter_->thread_num_ = context_->thread_num_;
   param_ = reinterpret_cast<LayerNormParameter *>(op_parameter_);
   auto shape = in_tensors_.front()->shape();
@@ -90,5 +85,5 @@ int LayerNormCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LayerNorm, LiteKernelCreator<LayerNormCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LayerNormFusion, LiteKernelCreator<LayerNormCPUKernel>)
 }  // namespace mindspore::kernel

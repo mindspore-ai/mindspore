@@ -105,8 +105,7 @@ int TensorListFromTensorCPUKernel::Run() {
 kernel::LiteKernel *CpuTensorListFromTensorFp32KernelCreator(const std::vector<lite::Tensor *> &inputs,
                                                              const std::vector<lite::Tensor *> &outputs,
                                                              OpParameter *op_parameter, const lite::InnerContext *ctx,
-                                                             const kernel::KernelKey &desc,
-                                                             const mindspore::lite::PrimitiveC *primitive) {
+                                                             const kernel::KernelKey &desc) {
   if (op_parameter == nullptr) {
     MS_LOG(ERROR) << "Input op_parameter is nullptr!";
     return nullptr;
@@ -118,7 +117,7 @@ kernel::LiteKernel *CpuTensorListFromTensorFp32KernelCreator(const std::vector<l
   }
   MS_ASSERT(desc.type == schema::PrimitiveType_TensorListFromTensor);
   op_parameter->thread_num_ = ctx->thread_num_;
-  auto *kernel = new (std::nothrow) TensorListFromTensorCPUKernel(op_parameter, inputs, outputs, ctx, primitive);
+  auto *kernel = new (std::nothrow) TensorListFromTensorCPUKernel(op_parameter, inputs, outputs, ctx);
   if (kernel == nullptr) {
     MS_LOG(ERROR) << "new TensorListFromTensorCPUKernel fail!";
     free(op_parameter);
@@ -127,5 +126,6 @@ kernel::LiteKernel *CpuTensorListFromTensorFp32KernelCreator(const std::vector<l
   return kernel;
 }
 
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_TensorListFromTensor, CpuTensorListFromTensorFp32KernelCreator)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_TensorListFromTensor, CpuTensorListFromTensorFp32KernelCreator)
 }  // namespace mindspore::kernel

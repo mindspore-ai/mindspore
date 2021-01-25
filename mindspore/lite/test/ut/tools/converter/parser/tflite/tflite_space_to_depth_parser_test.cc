@@ -35,7 +35,7 @@ TEST_F(TestTfliteParserSpaceToDepth, OpType) {
 TEST_F(TestTfliteParserSpaceToDepth, AttrValue) {
   ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsSpaceToDepth(), nullptr);
   auto val = meta_graph->nodes.front()->primitive->value.AsSpaceToDepth();
-  ASSERT_EQ(val->blockSize, 2);
+  ASSERT_EQ(val->block_size, 2);
   ASSERT_EQ(val->format, schema::Format_NHWC);
 }
 }  // namespace mindspore

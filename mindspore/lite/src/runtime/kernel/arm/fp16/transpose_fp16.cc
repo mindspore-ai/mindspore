@@ -38,7 +38,7 @@ int TransposeFp16CPUKernel::Init() {
 }
 
 int TransposeFp16CPUKernel::Run() {
-  MS_ASSERT(in_tensors_.size() == 1);
+  MS_ASSERT(in_tensors_.size() == 2);
   MS_ASSERT(out_tensors_.size() == 1);
   auto &in_tensor = in_tensors_.front();
   auto &out_tensor = out_tensors_.front();

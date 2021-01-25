@@ -63,13 +63,13 @@ void TestL2NormFp32::Init(const std::vector<int> &input_shape, const std::vector
   param_.epsilon_ = 1e-6;
   param_.act_type_ = activation_type;
 
-  desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_L2Norm};
+  desc = {kernel::KERNEL_ARCH::kCPU, kNumberTypeFloat32, schema::PrimitiveType_L2NormalizeFusion};
   ctx_ = lite::InnerContext();
   ctx_.thread_num_ = thread_num;
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc);
   ASSERT_NE(creator_, nullptr);
-  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc, nullptr);
+  kernel_ = creator_(inputs_, outputs_, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc);
   ASSERT_NE(kernel_, nullptr);
 }
 

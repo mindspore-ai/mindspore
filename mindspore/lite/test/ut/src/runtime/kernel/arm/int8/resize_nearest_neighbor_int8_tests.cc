@@ -66,13 +66,15 @@ void TestResizeNearestNeighborInt8::Prepare(const std::vector<int> &in_shape, co
   param_.method_ = static_cast<int>(schema::ResizeMethod_NEAREST);
   param_.new_width_ = out_shape[2];
   param_.new_height_ = out_shape[1];
-  param_.align_corners_ = align_corners;
+  if (align_corners) {
+    param_.coordinate_transform_mode_ = 1;
+  }
 
   creator_ = lite::KernelRegistry::GetInstance()->GetCreator(desc_);
 
   ctx_.thread_num_ = thread_num;
   ASSERT_EQ(lite::RET_OK, ctx_.Init());
-  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_, nullptr);
+  kernel_ = creator_(inputs, outputs, reinterpret_cast<OpParameter *>(&param_), &ctx_, desc_);
 }
 
 void TestResizeNearestNeighborInt8::TearDown() {

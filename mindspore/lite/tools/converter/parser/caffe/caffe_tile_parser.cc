@@ -17,39 +17,36 @@
 #include "tools/converter/parser/caffe/caffe_tile_parser.h"
 #include <memory>
 #include <vector>
+#include "ops/fusion/tile_fusion.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeTileParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::TileT> attr = std::make_unique<schema::TileT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeTileParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::TileFusion();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new TileFusion failed";
     return nullptr;
   }
-
   const caffe::TileParameter &tile_param = proto.tile_param();
-  std::vector<int> dims;
-  std::vector<int> multiples;
+  std::vector<int64_t> dims;
   dims.clear();
-  multiples.clear();
   if (tile_param.has_axis()) {
     dims.push_back(tile_param.axis());
   } else {
     dims.push_back(1);
   }
+  primitive_c->set_dims(dims);
+
+  std::vector<int32_t> multiples;
+  multiples.clear();
   if (tile_param.has_tiles()) {
     multiples.push_back(tile_param.tiles());
   } else {
     multiples.push_back(1);
   }
+  primitive_c->AddAttr("multiples", MakeValue(multiples));
 
-  attr->dims = dims;
-  attr->multiples = multiples;
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_Tile;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeTileParser("Tile", new CaffeTileParser());

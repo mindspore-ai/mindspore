@@ -80,7 +80,12 @@ void ArithmeticSelfOpenCLKernel::SetGlobalLocal() {
 }
 
 int ArithmeticSelfOpenCLKernel::Prepare() {
-  std::string kernel_name = "ArithmeticSelf_Element" + std::string(schema::EnumNamePrimitiveType(Type())) + "_NHWC4";
+  std::string kernel_name = "ArithmeticSelf_Element";
+  if (Type() == schema::PrimitiveType_ExpFusion) {
+    kernel_name += "Exp_NHWC4";
+  } else {
+    kernel_name += std::string(schema::EnumNamePrimitiveType(Type())) + "_NHWC4";
+  }
   MS_LOG(DEBUG) << "execute kernel name : " << kernel_name;
   std::string program_name = "ArithmeticSelf";
   ocl_runtime_->LoadSource(program_name, arithmeticself_source);
@@ -101,7 +106,7 @@ int ArithmeticSelfOpenCLKernel::Run() {
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Abs, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Ceil, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Cos, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Exp, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_ExpFusion, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Floor, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Log, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_LogicalNot, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
@@ -114,7 +119,7 @@ REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Square, OpenCLKernelCreator<A
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Abs, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Ceil, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Cos, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Exp, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_ExpFusion, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Floor, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Log, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)
 REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_LogicalNot, OpenCLKernelCreator<ArithmeticSelfOpenCLKernel>)

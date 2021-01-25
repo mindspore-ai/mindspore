@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,37 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/embedding_lookup.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/fp32/embedding_lookup_fp32.h"
 
 namespace mindspore {
 namespace lite {
 
-OpParameter *PopulateEmbeddingLookupParameter(const mindspore::lite::PrimitiveC *primitive) {
-  EmbeddingLookupParameter *embedding_lookup_parameter =
+OpParameter *PopulateEmbeddingLookupParameter(const void *prim) {
+  EmbeddingLookupParameter *param =
     reinterpret_cast<EmbeddingLookupParameter *>(malloc(sizeof(EmbeddingLookupParameter)));
-  if (embedding_lookup_parameter == nullptr) {
+  if (param == nullptr) {
     MS_LOG(ERROR) << "malloc EmbeddingLookupParameter failed.";
     return nullptr;
   }
-  memset(embedding_lookup_parameter, 0, sizeof(EmbeddingLookupParameter));
-  embedding_lookup_parameter->op_parameter_.type_ = primitive->Type();
-  auto param =
-    reinterpret_cast<mindspore::lite::EmbeddingLookup *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  embedding_lookup_parameter->max_norm_ = param->GetMaxNorm();
-  if (embedding_lookup_parameter->max_norm_ < 0) {
-    MS_LOG(ERROR) << "Embedding lookup max norm should be positive number, got "
-                  << embedding_lookup_parameter->max_norm_;
-    free(embedding_lookup_parameter);
+  memset(param, 0, sizeof(EmbeddingLookupParameter));
+
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  auto value = primitive->value_as_EmbeddingLookupFusion();
+  param->op_parameter_.type_ = primitive->value_type();
+  param->max_norm_ = value->max_norm();
+  if (param->max_norm_ < 0) {
+    MS_LOG(ERROR) << "Embedding lookup max norm should be positive number, got " << param->max_norm_;
+    free(param);
     return nullptr;
   }
-  return reinterpret_cast<OpParameter *>(embedding_lookup_parameter);
+  return reinterpret_cast<OpParameter *>(param);
 }
 
-Registry EmbeddingLookupParameterRegistry(schema::PrimitiveType_EmbeddingLookup, PopulateEmbeddingLookupParameter);
+Registry EmbeddingLookupParameterRegistry(schema::PrimitiveType_EmbeddingLookupFusion, PopulateEmbeddingLookupParameter,
+                                          SCHEMA_CUR);
 
 }  // namespace lite
 }  // namespace mindspore

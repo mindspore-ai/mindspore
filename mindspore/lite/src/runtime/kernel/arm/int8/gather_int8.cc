@@ -32,8 +32,7 @@ using mindspore::schema::PrimitiveType_Gather;
 namespace mindspore::kernel {
 
 int GatherInt8CPUKernel::Init() {
-  axis_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->axis_;
-  batchDims_ = (reinterpret_cast<GatherParameter *>(op_parameter_))->batchDims_;
+  axis_ = *(reinterpret_cast<int *>(in_tensors_.at(2)->data_c()));
   auto in_quant_args = in_tensors_.at(0)->quant_params();
   auto out_quant_args = out_tensors_.at(0)->quant_params();
   param_.alpha_ = in_quant_args.front().scale / out_quant_args.front().scale;

@@ -25,7 +25,7 @@
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Scale;
+using mindspore::schema::PrimitiveType_ScaleFusion;
 
 namespace mindspore::kernel {
 ScaleCPUKernel::~ScaleCPUKernel() {
@@ -196,5 +196,5 @@ int ScaleCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Scale, LiteKernelCreator<ScaleCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_ScaleFusion, LiteKernelCreator<ScaleCPUKernel>)
 }  // namespace mindspore::kernel

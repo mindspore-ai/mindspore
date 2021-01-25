@@ -18,34 +18,28 @@
 #include "tools/converter/parser/tflite/tflite_reverse_sequence_parser.h"
 #include <vector>
 #include <memory>
+#include "ops/reverse_sequence.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *TfliteReverseSequenceParser::ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                                            const std::unique_ptr<tflite::ModelT> &tflite_model) {
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "primitive is null";
+ops::PrimitiveC *TfliteReverseSequenceParser::Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                                                    const std::unique_ptr<tflite::ModelT> &tflite_model) {
+  auto prim = new (std::nothrow) ops::ReverseSequence();
+  if (prim == nullptr) {
+    MS_LOG(ERROR) << "new ReverseSequence failed";
     return nullptr;
   }
 
-  std::unique_ptr<schema::ReverseSequenceT> attr = std::make_unique<schema::ReverseSequenceT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
-    return nullptr;
-  }
-
+  MS_ASSERT(tflite_op != nullptr);
   const auto &tflite_attr = tflite_op->builtin_options.AsReverseSequenceOptions();
   if (tflite_attr == nullptr) {
     MS_LOG(ERROR) << "get op reverse attr failed";
     return nullptr;
   }
-  attr->seqAxis = tflite_attr->seq_dim;
-  attr->batchAxis = tflite_attr->batch_dim;
+  prim->set_seq_dim(tflite_attr->seq_dim);
+  prim->set_batch_dim(tflite_attr->batch_dim);
 
-  primitive->value.type = schema::PrimitiveType_ReverseSequence;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return prim;
 }
 
 TfliteNodeRegister g_tfliteReverseSequenceParser(tflite::BuiltinOperator_REVERSE_SEQUENCE,

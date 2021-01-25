@@ -18,13 +18,12 @@
 #define MINDSPORE_LITE_NNACL_TENSORLIST_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#include "ir/dtype/type_id.h"
 
 typedef struct TensorListParameter {
   // primitive parameter
   OpParameter op_parameter_;
-  mindspore::TypeId shape_type_;
-  mindspore::TypeId element_dtype_;
+  int shape_type_;
+  int element_dtype_;
 
   // other parameter
   int num_element_;

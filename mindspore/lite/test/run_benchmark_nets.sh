@@ -21,7 +21,7 @@ function Run_Converter() {
     # Convert tf models:
     while read line; do
         tf_line_info=${line}
-        if [[ $model_name == \#* ]]; then
+        if [[ $tf_line_info == \#* ]]; then
           continue
         fi
         model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
@@ -38,7 +38,7 @@ function Run_Converter() {
 
     # Convert tflite models:
     while read line; do
-        model_name=${line}
+        model_name=${line%;*}
         if [[ $model_name == \#* ]]; then
           continue
         fi
@@ -312,7 +312,7 @@ function Run_x86() {
     # Run tf converted models:
     while read line; do
         tf_line_info=${line}
-        if [[ $model_name == \#* ]]; then
+        if [[ $tf_line_info == \#* ]]; then
           continue
         fi
         model_name=`echo ${tf_line_info}|awk -F ' ' '{print $1}'`
@@ -1325,6 +1325,9 @@ function Run_arm64() {
     # Run npu converted models:
     while read line; do
         model_name=`echo ${line}|awk -F ' ' '{print $1}'`
+        if [[ $model_name == \#* ]]; then
+          continue
+        fi
         accuracy_limit=`echo ${line}|awk -F ' ' '{print $2}'`
         input_num=`echo ${line}|awk -F ' ' '{print $3}'`
         data_path="/data/local/tmp/input_output/"

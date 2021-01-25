@@ -21,7 +21,7 @@
 #endif
 #include "nnacl/op_base.h"
 
-#define BROADCAST_TO_SHAPE_MAX_SIZE 4
+#define BROADCAST_TO_SHAPE_MAX_SIZE 8
 
 typedef struct BroadcastToParameter {
   OpParameter op_parameter_;

@@ -71,8 +71,8 @@ class DTypeTransPass : public GraphPass {
       MS_LOG(ERROR) << "new QuantDTypeCast failed";
       return nullptr;
     }
-    QuantDTypeCastParam->srcT = oldQuantDTypeCastParam->srcT;
-    QuantDTypeCastParam->dstT = oldQuantDTypeCastParam->dstT;
+    QuantDTypeCastParam->src_t = oldQuantDTypeCastParam->src_t;
+    QuantDTypeCastParam->dst_t = oldQuantDTypeCastParam->dst_t;
     newCNode->primitive->value.value = QuantDTypeCastParam;
     return newCNode;
   };

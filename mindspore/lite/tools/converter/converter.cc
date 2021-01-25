@@ -82,12 +82,14 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     MS_LOG(ERROR) << "Parser/Import model return nullptr";
     return nullptr;
   }
+  MS_LOG(INFO) << "import success";
 
   graph = anfTransform->Transform(graph, flag);
   if (graph == nullptr) {
     MS_LOG(ERROR) << "Transform anf graph return nullptr";
     return nullptr;
   }
+  MS_LOG(INFO) << "Run anfTransform success";
 
   // anf -- fb
   auto meta_graph = Export(graph);
@@ -95,6 +97,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     MS_LOG(ERROR) << "Export to meta graph return nullptr";
     return nullptr;
   }
+  MS_LOG(INFO) << "export success";
 
   // transform
   transform->SetGraphDef(meta_graph);
@@ -104,6 +107,7 @@ MetaGraphT *Converter::Convert(const converter::Flags *flag) {
     ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
     return nullptr;
   }
+  MS_LOG(INFO) << "run fbTransform success";
 
   return meta_graph;
 }
@@ -128,7 +132,7 @@ int RunConverter(int argc, const char **argv) {
   std::string modelName = flags->modelFile.substr(flags->modelFile.find_last_of(DELIM_SLASH) + 1);
   MS_LOG(INFO) << "start reading model file";
 
-  MetaGraphT *fb_graph = nullptr;
+  auto fb_graph = new (std::nothrow) MetaGraphT;
   switch (flags->fmk) {
     case FmkType::FmkType_MS: {
       MindsporeImporter mindsporeImporter;

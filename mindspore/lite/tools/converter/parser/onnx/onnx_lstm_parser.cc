@@ -16,33 +16,37 @@
 
 #include "tools/converter/parser/onnx/onnx_lstm_parser.h"
 #include <memory>
+#include "ops/lstm.h"
 
 namespace mindspore {
 namespace lite {
-lite::PrimitiveC *OnnxLstmParser::ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                                     const onnx::NodeProto &onnx_node) {
-  MS_LOG(DEBUG) << "onnx LstmParser";
-  auto attr = std::make_unique<schema::LstmT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *OnnxLstmParser::Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+  auto primitive_c = new (std::nothrow) ops::LSTM;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new LSTM failed";
     return nullptr;
   }
 
   for (const auto &onnx_node_attr : onnx_node.attribute()) {
     if (onnx_node_attr.name() == "direction") {
       const auto &direction = onnx_node_attr.s();
-      attr->bidirection = direction == "bidirectional";
+      bool bidirectional = direction == "bidirectional";
+      primitive_c->set_bidirectional(bidirectional);
+      if (bidirectional) {
+        primitive_c->set_num_directions(2);
+      } else {
+        primitive_c->set_num_directions(1);
+      }
+    } else if (onnx_node_attr.name() == "hidden_size") {
+      primitive_c->set_hidden_size(onnx_node_attr.i());
+    } else if (onnx_node_attr.name() == "clip") {
+      primitive_c->set_dropout(onnx_node_attr.f());
+    } else if (onnx_node_attr.name() == "activations") {
+      primitive_c->set_has_bias(true);
     }
   }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "new primitive failed";
-    return nullptr;
-  }
-  primitive->value.type = schema::PrimitiveType_Lstm;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  return primitive_c;
 }
 
 OnnxNodeRegistrar g_onnxLstmParser("LSTM", new OnnxLstmParser());

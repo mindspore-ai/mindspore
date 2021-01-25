@@ -18,16 +18,15 @@
 #include <cmath>
 #include <memory>
 #include "tools/common/tensor_util.h"
+#include "ops/batch_norm.h"
 
 namespace mindspore {
 namespace lite {
 using STATUS = int;
-
-PrimitiveC *CaffeBatchNormParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                     const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::BatchNormT> attr = std::make_unique<schema::BatchNormT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeBatchNormParser::Parse(const caffe::LayerParameter &proto, const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::BatchNorm();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new BatchNorm failed";
     return nullptr;
   }
 
@@ -43,21 +42,16 @@ PrimitiveC *CaffeBatchNormParser::ParseLitePrimitive(const caffe::LayerParameter
     return nullptr;
   }
 
-  if (batchNormParam.has_eps()) {
-    if (std::fabs(1e-5 - batchNormParam.eps()) < 1e-9) {
-      attr->epsilon = 1e-5;
-    } else {
-      auto tmpAuto = batchNormParam.eps();
-      attr->epsilon = tmpAuto;
-    }
-  } else {
-    attr->epsilon = 1e-5;
+  float epsilon = 1e-5;
+  if (batchNormParam.has_eps() && std::fabs(1e-5 - batchNormParam.eps()) >= 1e-9) {
+    epsilon = batchNormParam.eps();
   }
+  primitive_c->set_epsilon(epsilon);
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_BatchNorm;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+  primitive_c->set_is_training(false);
+  primitive_c->set_format(mindspore::NCHW);
+
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeBatchNormParser("BatchNorm", new CaffeBatchNormParser());

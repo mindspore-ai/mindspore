@@ -19,51 +19,41 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/squeeze.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFSqueezeParser::Parse(const tensorflow::NodeDef &tf_op,
-                              const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                              std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF SqueezeParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
+
+ops::PrimitiveC *TFSqueezeParser::Parse(const tensorflow::NodeDef &tf_op,
+                                        const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                        std::vector<std::string> *inputs, int *output_size) {
+  auto primitive_c = new (std::nothrow) ops::Squeeze;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Squeeze failed";
+    return nullptr;
   }
 
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::SqueezeT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
-  }
-
+  std::vector<int64_t> axis;
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "squeeze_dims", &attr_value)) {
     MS_LOG(ERROR) << "Find Squeeze input squeeze_dims attr failed";
-    return RET_ERROR;
+    return nullptr;
   }
   auto dims = attr_value.list();
   for (int i = 0; i < dims.i_size(); ++i) {
-    attr->axis.push_back(dims.i(i));
+    axis.push_back(dims.i(i));
   }
-
-  primitive->value.type = schema::PrimitiveType_Squeeze;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
-  }
+  primitive_c->set_axis(axis);
 
   *output_size = 1;
-  auto status = AddOpInput(tf_op, 0, inputs);
-  return status;
+  if (AddOpInput(tf_op, 0, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
+  }
+
+  return primitive_c;
 }
+
 TFNodeRegistrar g_tfSqueezeParser("Squeeze", new TFSqueezeParser());
 }  // namespace lite
 }  // namespace mindspore

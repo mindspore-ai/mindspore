@@ -24,7 +24,7 @@ using mindspore::kernel::KERNEL_ARCH::kCPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Lstm;
+using mindspore::schema::PrimitiveType_LSTM;
 
 namespace mindspore::kernel {
 void LstmCPUKernel::FreeTmpBuffer() {
@@ -177,5 +177,5 @@ int LstmCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Lstm, LiteKernelCreator<LstmCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_LSTM, LiteKernelCreator<LstmCPUKernel>)
 }  // namespace mindspore::kernel

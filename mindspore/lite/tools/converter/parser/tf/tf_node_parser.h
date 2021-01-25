@@ -23,7 +23,8 @@
 #include <memory>
 #include "tools/converter/parser/tf/tf_util.h"
 #include "proto/graph.pb.h"
-#include "src/ops/primitive_c.h"
+#include "ops/primitive_c.h"
+#include "mindspore/core/utils/check_convert_utils.h"
 
 namespace mindspore {
 namespace lite {
@@ -33,10 +34,10 @@ class TFNodeParser {
 
   virtual ~TFNodeParser() = default;
 
-  virtual STATUS Parse(const tensorflow::NodeDef &tf_op,
-                       const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                       std::vector<std::string> *inputs, int *output_size) {
-    return RET_OK;
+  virtual ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
+                                 const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                 std::vector<std::string> *inputs, int *output_size) {
+    return nullptr;
   }
 
   STATUS AddOpInput(const tensorflow::NodeDef &tf_op, const int idx, std::vector<std::string> *inputs);

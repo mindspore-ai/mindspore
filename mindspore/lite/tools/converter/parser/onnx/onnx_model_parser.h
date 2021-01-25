@@ -61,12 +61,12 @@ class OnnxModelParser : public ModelParser {
   STATUS BuildReturnNode(const std::vector<AnfNodePtr> &return_inputs);
   STATUS BuildParameterNode(const ParameterPtr &parameter_node, const onnx::TensorProto &tensor);
   STATUS BuildParameterNodeForQuantParam(void *data, const std::string &name, TypeId type);
-  STATUS BuildCNode(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c);
+  STATUS BuildCNode(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c);
   STATUS BuildOpOutputs(const onnx::NodeProto &onnx_node, const CNodePtr &cnode);
-  STATUS ConvertSpecialOnnxNode(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c);
-  STATUS ConvertOnnxGemmNode(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c);
-  STATUS BuildCNodeForGemm(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c, const std::string &name);
-  STATUS ConvertOpQuantParams(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c);
+  STATUS ConvertSpecialOnnxNode(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c);
+  STATUS ConvertOnnxGemmNode(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c);
+  STATUS BuildCNodeForGemm(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c, const std::string &name);
+  STATUS ConvertOpQuantParams(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c);
   STATUS ParseQuantParam(const onnx::NodeProto &onnx_node);
   STATUS SetTensorQuantParam(const std::string &tensor_name, std::vector<QuantParamT> *quant_params);
   STATUS SetTensorQuantParamFromNode(const std::string &tensor_name, std::vector<QuantParamT> *quant_params);

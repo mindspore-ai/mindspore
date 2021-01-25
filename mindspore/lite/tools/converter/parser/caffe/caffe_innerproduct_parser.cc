@@ -16,14 +16,15 @@
 
 #include "tools/converter/parser/caffe/caffe_innerproduct_parser.h"
 #include <memory>
+#include "ops/fusion/full_connection.h"
 
 namespace mindspore {
 namespace lite {
-PrimitiveC *CaffeInnerProductParser::ParseLitePrimitive(const caffe::LayerParameter &proto,
-                                                        const caffe::LayerParameter &weight) {
-  std::unique_ptr<schema::FullConnectionT> attr = std::make_unique<schema::FullConnectionT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new op failed";
+ops::PrimitiveC *CaffeInnerProductParser::Parse(const caffe::LayerParameter &proto,
+                                                const caffe::LayerParameter &weight) {
+  auto primitive_c = new (std::nothrow) ops::FullConnection();
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new FullConnection failed";
     return nullptr;
   }
 
@@ -34,21 +35,19 @@ PrimitiveC *CaffeInnerProductParser::ParseLitePrimitive(const caffe::LayerParame
   }
 
   if (innerProductParam.axis() == 1) {
-    attr->axis = 1;
-    attr->useAxis = true;
+    primitive_c->set_axis(1);
+    primitive_c->set_use_axis(true);
   } else {
     MS_LOG(ERROR) << "InnerProduct Parse axis only support default 1, but actually " << innerProductParam.axis();
     return nullptr;
   }
-
   if (innerProductParam.bias_term()) {
-    attr->hasBias = true;
+    primitive_c->set_has_bias(true);
   }
-  attr->activationType = schema::ActivationType_NO_ACTIVATION;
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  primitive->value.type = schema::PrimitiveType_FullConnection;
-  primitive->value.value = attr.release();
-  return PrimitiveC::Create(primitive.release());
+
+  primitive_c->set_activation_type(mindspore::ActivationType::NO_ACTIVATION);
+
+  return primitive_c;
 }
 
 CaffeNodeRegistrar g_caffeInnerProductParser("InnerProduct", new CaffeInnerProductParser());

@@ -23,7 +23,7 @@ class TestOpenCL_LayerNorm : public CommonTest {};
 namespace {
 // PrimitiveType_Stack: src/ops/populate/stack_populate.cc
 OpParameter *CreateParameter(float epsilon, int normalized_dims_, std::vector<int> normalizedShape) {
-  auto *param = test::CreateParameter<LayerNormParameter>(schema::PrimitiveType_LayerNorm);
+  auto *param = test::CreateParameter<LayerNormParameter>(schema::PrimitiveType_LayerNormFusion);
   param->elementwise_mode_ = ELEMENTWISE_PER_CHANNEL;
   param->epsilon_ = epsilon;
   param->normalized_dims_ = normalized_dims_;

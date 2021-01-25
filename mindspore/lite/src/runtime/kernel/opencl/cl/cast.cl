@@ -1,46 +1,43 @@
 #pragma OPENCL EXTENSION cl_khr_fp16 : enable
+
 __constant sampler_t smp_none = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
 
-__kernel void Cast_Fp32ToFp16_NHWC4(__read_only image2d_t input0, __write_only image2d_t output, int4 output_shape) {
-  int X = get_global_id(0);  // N*H
-  int Y = get_global_id(1);  // W
-  int Z = get_global_id(2);  // c/4
-  if (X >= output_shape.x * output_shape.y || Y >= output_shape.z || Z >= output_shape.w) {
+__kernel void Cast_fp32_to_fp16(__read_only image2d_t input, __write_only image2d_t output, int2 XY) {
+  int x = get_global_id(0);
+  int y = get_global_id(1);
+  if (x >= XY.x || y >= XY.y) {
     return;
   }
-  half4 result = convert_half4(READ_IMAGE(input0, smp_none, (int2)((Y)*output_shape.w + Z, (X))));
-  write_imageh(output, (int2)((Y)*output_shape.w + Z, (X)), result);
+  half4 result = convert_half4(READ_IMAGE(input, smp_none, (int2)(x, y)));
+  write_imageh(output, (int2)(x, y), result);
 }
 
-__kernel void Cast_Fp32ToFp16_NC4HW4(__read_only image2d_t input0, __write_only image2d_t output, int4 output_shape) {
-  int X = get_global_id(0);  // N*H
-  int Y = get_global_id(1);  // W
-  int Z = get_global_id(2);  // c/4
-  if (X >= output_shape.x * output_shape.y || Y >= output_shape.z || Z >= output_shape.w) {
+__kernel void Cast_fp32_to_fp32(__read_only image2d_t input, __write_only image2d_t output, int2 XY) {
+  int x = get_global_id(0);
+  int y = get_global_id(1);
+  if (x >= XY.x || y >= XY.y) {
     return;
   }
-  half4 result = convert_half4(READ_IMAGE(input0, smp_none, (int2)((Y), (Z * output_shape.y + X))));
-  write_imageh(output, (int2)((Y), (Z * output_shape.y + X)), result);
+  float4 result = READ_IMAGE(input, smp_none, (int2)(x, y));
+  write_imageh(output, (int2)(x, y), result);
 }
 
-__kernel void Cast_Fp16ToFp32_NHWC4(__read_only image2d_t input0, __write_only image2d_t output, int4 output_shape) {
-  int X = get_global_id(0);  // N*H
-  int Y = get_global_id(1);  // W
-  int Z = get_global_id(2);  // c/4
-  if (X >= output_shape.x * output_shape.y || Y >= output_shape.z || Z >= output_shape.w) {
+__kernel void Cast_fp16_to_fp16(__read_only image2d_t input, __write_only image2d_t output, int2 XY) {
+  int x = get_global_id(0);
+  int y = get_global_id(1);
+  if (x >= XY.x || y >= XY.y) {
     return;
   }
-  float4 result = convert_float4(READ_IMAGE(input0, smp_none, (int2)((Y)*output_shape.w + Z, (X))));
-  WRITE_IMAGE(output, (int2)((Y)*output_shape.w + Z, (X)), result);
+  half4 result = READ_IMAGE(input, smp_none, (int2)(x, y));
+  write_imageh(output, (int2)(x, y), result);
 }
 
-__kernel void Cast_Fp16ToFp32_NC4HW4(__read_only image2d_t input0, __write_only image2d_t output, int4 output_shape) {
-  int X = get_global_id(0);  // N*H
-  int Y = get_global_id(1);  // W
-  int Z = get_global_id(2);  // c/4
-  if (X >= output_shape.x * output_shape.y || Y >= output_shape.z || Z >= output_shape.w) {
+__kernel void Cast_fp16_to_fp32(__read_only image2d_t input, __write_only image2d_t output, int2 XY) {
+  int x = get_global_id(0);
+  int y = get_global_id(1);
+  if (x >= XY.x || y >= XY.y) {
     return;
   }
-  float4 result = convert_float4(READ_IMAGE(input0, smp_none, (int2)((Y), (Z * output_shape.y + X))));
-  WRITE_IMAGE(output, (int2)((Y), (Z * output_shape.y + X)), result);
+  float4 result = convert_float4(READ_IMAGE(input, smp_none, (int2)(x, y)));
+  write_imageh(output, (int2)(x, y), result);
 }

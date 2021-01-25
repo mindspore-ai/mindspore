@@ -29,7 +29,6 @@
 #include "tools/common/graph_util.h"
 #include "include/errorcode.h"
 #include "schema/inner/model_generated.h"
-#include "src/ops/primitive_c.h"
 
 namespace mindspore {
 namespace lite {
@@ -267,8 +266,7 @@ bool FusionPass::MatchTree(schema::MetaGraphT *graph, size_t nodeIdx, const std:
   for (auto preNodeIdx : preNodeIdxes) {
     MS_ASSERT(graph->nodes.size() > preNodeIdx);
     // Case of multiple outputs is not supported.
-    if (GetInputNodeIdx(*graph, preNodeIdx).size() > kDoubleNum ||
-        GetOutputNodeIdx(*graph, preNodeIdx).size() > kSingleNum) {
+    if (GetInputNodeIdx(*graph, preNodeIdx).size() > 2 || GetOutputNodeIdx(*graph, preNodeIdx).size() > 1) {
       sinkIdes.erase((sinkIdes.end() - 1));
       pathSinkIdes.erase((pathSinkIdes.end() - 1));
       target->UnSetPath();

@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/assert_op.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 
 namespace mindspore {
 namespace lite {
 
-OpParameter *PopulateAssertParameter(const mindspore::lite::PrimitiveC *primitive) {
+OpParameter *PopulateAssertParameter(const void *prim) {
   OpParameter *assert_parameter = reinterpret_cast<OpParameter *>(malloc(sizeof(OpParameter)));
   if (assert_parameter == nullptr) {
     MS_LOG(ERROR) << "malloc AssertParameter failed.";
     return nullptr;
   }
   memset(assert_parameter, 0, sizeof(OpParameter));
-  assert_parameter->type_ = primitive->Type();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  assert_parameter->type_ = primitive->value_type();
 
   return reinterpret_cast<OpParameter *>(assert_parameter);
 }
-Registry AssertParameterRegistry(schema::PrimitiveType_Assert, PopulateAssertParameter);
+Registry AssertParameterRegistry(schema::PrimitiveType_Assert, PopulateAssertParameter, SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

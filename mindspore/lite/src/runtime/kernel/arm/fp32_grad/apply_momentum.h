@@ -25,9 +25,8 @@ namespace mindspore::kernel {
 class ApplyMomentumCPUKernel : public LiteKernel {
  public:
   explicit ApplyMomentumCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                  const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), apply_momentum_param_(nullptr) {
+                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx), apply_momentum_param_(nullptr) {
     apply_momentum_param_ = reinterpret_cast<ApplyMomentumParameter *>(parameter);
   }
   ~ApplyMomentumCPUKernel() override {}

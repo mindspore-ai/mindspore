@@ -29,8 +29,8 @@ class TfliteRankParser : public TfliteNodeParser {
  public:
   TfliteRankParser() : TfliteNodeParser("Rank") {}
 
-  PrimitiveC *ParseLitePrimitive(const std::unique_ptr<tflite::OperatorT> &tflite_op,
-                                 const std::unique_ptr<tflite::ModelT> &tflite_model) override;
+  ops::PrimitiveC *Parse(const std::unique_ptr<tflite::OperatorT> &tflite_op,
+                         const std::unique_ptr<tflite::ModelT> &tflite_model) override;
 };
 }  // namespace lite
 }  // namespace mindspore

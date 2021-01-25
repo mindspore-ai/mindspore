@@ -103,7 +103,6 @@ getCommonFile() {
   while IFS='' read -r line; do runtime_files_h+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/src/runtime/*.h)
   others_files_h=(
     "${MINDSPORE_HOME}"/mindspore/lite/src/populate/populate_register.h
-    "${MINDSPORE_HOME}"/mindspore/lite/src/ops/primitive_c.h
     "${MINDSPORE_HOME}"/mindspore/lite/nnacl/nnacl_utils.h
     "${MINDSPORE_HOME}"/mindspore/lite/nnacl/pack.h
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.h
@@ -129,7 +128,6 @@ getCommonFile() {
   assembly_files=()
   while IFS='' read -r line; do assembly_files+=("$line"); done < <(ls ${MINDSPORE_HOME}/mindspore/lite/nnacl/assembly/*/*.S)
   others_files_c=(
-    "${MINDSPORE_HOME}"/mindspore/lite/src/ops/primitive_c.cc
     "${MINDSPORE_HOME}"/mindspore/lite/nnacl/nnacl_utils.c
     "${MINDSPORE_HOME}"/mindspore/lite/nnacl/pack.c
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.cc

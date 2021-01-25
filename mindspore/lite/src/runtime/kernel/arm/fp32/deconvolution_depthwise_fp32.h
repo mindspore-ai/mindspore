@@ -26,9 +26,8 @@ namespace mindspore::kernel {
 class DeconvolutionDepthwiseCPUKernel : public ConvolutionBaseCPUKernel {
  public:
   DeconvolutionDepthwiseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                                  const mindspore::lite::PrimitiveC *primitive)
-      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : ConvolutionBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~DeconvolutionDepthwiseCPUKernel() override;
 
   int Init() override;

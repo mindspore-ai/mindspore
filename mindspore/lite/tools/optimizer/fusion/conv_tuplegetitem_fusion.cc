@@ -15,9 +15,7 @@
  */
 #include "tools/optimizer/fusion/conv_tuplegetitem_fusion.h"
 #include <memory>
-#include "src/ops/primitive_c.h"
 #include "src/param_value_lite.h"
-#include "schema/inner/model_generated.h"
 #include "tools/optimizer/common/gllo_utils.h"
 #include "securec/include/securec.h"
 
@@ -25,9 +23,9 @@ namespace mindspore::opt {
 namespace {
 constexpr size_t kTupleGetItemLen = 3;
 bool IsTupleGetItemNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_TupleGetItem;
+  if (utils::isa<AnfNodePtr>(n)) {
+    auto anf_node = utils::cast<AnfNodePtr>(n);
+    return CheckPrimitiveType(anf_node, prim::kPrimTupleGetItem);
   }
   return false;
 }

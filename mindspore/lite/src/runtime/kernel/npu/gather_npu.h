@@ -24,9 +24,8 @@ namespace mindspore::kernel {
 class GatherNPUKernel : public NPUKernel {
  public:
   GatherNPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                  const mindspore::lite::PrimitiveC *primitive)
-      : NPUKernel(parameter, inputs, outputs, ctx, primitive) {
+                  const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : NPUKernel(parameter, inputs, outputs, ctx) {
     gather_parameter_ = reinterpret_cast<GatherParameter *>(parameter);
   }
   ~GatherNPUKernel() override;
@@ -40,6 +39,7 @@ class GatherNPUKernel : public NPUKernel {
  private:
   hiai::op::GatherV2D *op_ = nullptr;
   GatherParameter *gather_parameter_;
+  int axis_;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_NPU_GATHER_NPU_H_

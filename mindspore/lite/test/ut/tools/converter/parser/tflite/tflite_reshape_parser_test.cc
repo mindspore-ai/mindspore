@@ -31,11 +31,4 @@ TEST_F(TestTfliteParserReshape, OpType) {
   ASSERT_NE(meta_graph->nodes.front()->primitive.get(), nullptr);
   ASSERT_EQ(meta_graph->nodes.front()->primitive->value.type, schema::PrimitiveType_Reshape) << "wrong Op Type";
 }
-
-TEST_F(TestTfliteParserReshape, AttrValue) {
-  ASSERT_NE(meta_graph->nodes.front()->primitive->value.AsReshape(), nullptr);
-  auto val = meta_graph->nodes.front()->primitive->value.AsReshape();
-  std::vector<int64_t> shape = {3, 5, 20};
-  ASSERT_EQ(val->shape, shape);
-}
 }  // namespace mindspore

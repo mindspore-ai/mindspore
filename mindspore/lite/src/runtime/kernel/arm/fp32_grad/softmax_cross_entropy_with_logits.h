@@ -29,9 +29,8 @@ class SoftmaxCrossEntropyWithLogitsCPUKernel : public LossKernel {
  public:
   explicit SoftmaxCrossEntropyWithLogitsCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                                   const std::vector<lite::Tensor *> &outputs,
-                                                  const lite::InnerContext *ctx,
-                                                  const mindspore::lite::PrimitiveC *primitive)
-      : LossKernel(parameter, inputs, outputs, ctx, primitive) {
+                                                  const lite::InnerContext *ctx)
+      : LossKernel(parameter, inputs, outputs, ctx) {
     param_ = reinterpret_cast<SoftmaxCrossEntropyParameter *>(parameter);
   }
   ~SoftmaxCrossEntropyWithLogitsCPUKernel() override {}

@@ -29,9 +29,8 @@ namespace mindspore::kernel {
 class FullconnectionInt8CPUKernel : public LiteKernel {
  public:
   FullconnectionInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                              const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx,
-                              const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
+                              const std::vector<lite::Tensor *> &outputs, const mindspore::lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx) {
     fc_param_ = reinterpret_cast<MatMulParameter *>(op_parameter_);
   }
   ~FullconnectionInt8CPUKernel() override {

@@ -19,15 +19,14 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/fp32/unique_fp32.h"
-#include "nnacl/arithmetic_common.h"
+#include "nnacl/arithmetic.h"
 
 namespace mindspore::kernel {
 class BiasAddInt8CPUKernel : public LiteKernel {
  public:
   BiasAddInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                       const mindspore::lite::PrimitiveC *primitive)
-      : LiteKernel(parameter, inputs, outputs, ctx, primitive), ctx_(ctx) {}
+                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : LiteKernel(parameter, inputs, outputs, ctx), ctx_(ctx) {}
   ~BiasAddInt8CPUKernel() = default;
 
   int Init() override;

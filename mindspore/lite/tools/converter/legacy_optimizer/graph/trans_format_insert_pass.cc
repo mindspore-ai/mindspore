@@ -44,9 +44,10 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
     MS_ASSERT(pre_node->primitive->value != nullptr);
     if (pre_type_ == kNONE) {
       if (pre_node->primitive->value.type == schema::PrimitiveType_Transpose) {
-        if (pre_node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm) {
+        auto perm = GetTransposePerm(graph, pre_node);
+        if (perm == nchw2nhwc_perm) {
           pre_type_ = kNCHW2NHWC;
-        } else if (pre_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
+        } else if (perm == nhwc2nchw_perm) {
           pre_type_ = kNHWC2NCHW;
         } else {
           return false;
@@ -56,9 +57,10 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
     } else {
       if (pre_node->primitive->value.type == schema::PrimitiveType_Transpose) {
         auto cur_type = kNONE;
-        if (pre_node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm) {
+        auto perm = GetTransposePerm(graph, pre_node);
+        if (perm == nchw2nhwc_perm) {
           cur_type = kNCHW2NHWC;
-        } else if (pre_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
+        } else if (perm == nhwc2nchw_perm) {
           cur_type = kNHWC2NCHW;
         } else {
           return false;
@@ -85,9 +87,10 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
     MS_ASSERT(post_node->primitive->value != nullptr);
     if (post_type_ == kNONE) {
       if (post_node->primitive->value.type == schema::PrimitiveType_Transpose) {
-        if (post_node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm) {
+        auto perm = GetTransposePerm(graph, post_node);
+        if (perm == nchw2nhwc_perm) {
           post_type_ = kNCHW2NHWC;
-        } else if (post_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
+        } else if (perm == nhwc2nchw_perm) {
           post_type_ = kNHWC2NCHW;
         } else {
           return false;
@@ -97,9 +100,10 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
     } else {
       if (post_node->primitive->value.type == schema::PrimitiveType_Transpose) {
         auto cur_type = kNONE;
-        if (post_node->primitive->value.AsTranspose()->perm == nchw2nhwc_perm) {
+        auto perm = GetTransposePerm(graph, post_node);
+        if (perm == nchw2nhwc_perm) {
           cur_type = kNCHW2NHWC;
-        } else if (post_node->primitive->value.AsTranspose()->perm == nhwc2nchw_perm) {
+        } else if (perm == nhwc2nchw_perm) {
           cur_type = kNHWC2NCHW;
         } else {
           return false;
@@ -128,7 +132,7 @@ bool TransOpInsertPass::CanFusion(schema::MetaGraphT *graph, const std::unique_p
     MS_ASSERT(node->primitive->value != nullptr);
     MS_ASSERT(node->primitive->value.AsActivation() != nullptr);
     if (node->primitive->value.AsActivation() != nullptr &&
-        node->primitive->value.AsActivation()->type == schema::ActivationType_LEAKY_RELU) {
+        node->primitive->value.AsActivation()->activation_type == schema::ActivationType_LEAKY_RELU) {
       return has_trans_count >= half_count;
     }
   }
@@ -212,7 +216,11 @@ STATUS TransOpInsertPass::Run(schema::MetaGraphT *graph) {
           return status;
         }
         if ((*iter)->primitive->value.type == schema::PrimitiveType_StridedSlice ||
-            (*iter)->primitive->value.type == schema::PrimitiveType_Slice) {
+            (*iter)->primitive->value.type == schema::PrimitiveType_SliceFusion) {
+          break;
+        }
+        if ((*iter)->primitive->value.type == schema::PrimitiveType_PowFusion &&
+            fmk_type_ == converter::FmkType_CAFFE) {
           break;
         }
       }

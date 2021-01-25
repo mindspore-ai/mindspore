@@ -29,11 +29,11 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_SoftMax;
+using mindspore::schema::PrimitiveType_Softmax;
 
 namespace mindspore::kernel {
 
-std::vector<float> SoftmaxOpenCLKernel::GetMaskForLastChannel(int channels) {
+std::vector<float> SoftMaxOpenCLKernel::GetMaskForLastChannel(int channels) {
   std::vector<float> mask{0.0f, 0.0f, 0.0f, 0.0f};
   const int reminder = channels % 4 == 0 ? 4 : channels % 4;
   for (int i = 0; i < reminder; ++i) {
@@ -42,7 +42,7 @@ std::vector<float> SoftmaxOpenCLKernel::GetMaskForLastChannel(int channels) {
   return mask;
 }
 
-int SoftmaxOpenCLKernel::CheckSpecs() {
+int SoftMaxOpenCLKernel::CheckSpecs() {
   if (in_tensors_.size() != 1 || out_tensors_.size() != 1) {
     MS_LOG(ERROR) << "in size: " << in_tensors_.size() << ", out size: " << out_tensors_.size();
     return RET_ERROR;
@@ -50,11 +50,11 @@ int SoftmaxOpenCLKernel::CheckSpecs() {
   axis_ = parameter_->axis_;
   auto in_shape = in_tensors_[0]->shape();
   if (in_shape.size() > 4) {
-    MS_LOG(ERROR) << "Init `Softmax` kernel failed: Unsupported shape size: " << in_shape.size();
+    MS_LOG(ERROR) << "Init SoftMax kernel failed: Unsupported shape size: " << in_shape.size();
     return RET_ERROR;
   }
   if (in_shape[0] > 1) {
-    MS_LOG(ERROR) << "Init `Softmax` kernel failed: Unsupported multi-batch.";
+    MS_LOG(ERROR) << "Init SoftMax kernel failed: Unsupported multi-batch.";
     return RET_ERROR;
   }
   if (axis_ < 0) {
@@ -62,18 +62,18 @@ int SoftmaxOpenCLKernel::CheckSpecs() {
   }
   axis_ += 4 - in_shape.size();
   if (axis_ != 1 && axis_ != 2 && axis_ != 3) {
-    MS_LOG(ERROR) << "Init `Softmax` kernel failed: softmax axis should be H W or C";
+    MS_LOG(ERROR) << "Init SoftMax kernel failed: softmax axis should be H W or C";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
-int SoftmaxOpenCLKernel::Prepare() {
+int SoftMaxOpenCLKernel::Prepare() {
   std::string kernel_name = "SoftMax";
 
-  out_shape = GpuTensorInfo(out_tensors_[0]);
+  out_shape_ = GpuTensorInfo(out_tensors_[0]);
   std::string source = softmax_source;
-  if (out_shape.H == 1 && out_shape.W == 1 && axis_ == 3) {
+  if (out_shape_.H == 1 && out_shape_.W == 1 && axis_ == 3) {
     // support 4d tensor
     onexone_flag_ = true;
     kernel_name += "1x1";
@@ -95,21 +95,21 @@ int SoftmaxOpenCLKernel::Prepare() {
   return lite::RET_OK;
 }
 
-void SoftmaxOpenCLKernel::SetGlobalLocal() {
+void SoftMaxOpenCLKernel::SetGlobalLocal() {
   if (onexone_flag_) {
     local_size_ = {32};
     global_size_ = {32};
   } else {
     size_t global_x, global_y;
     if (axis_ == 1) {
-      global_x = out_shape.Slice;
-      global_y = out_shape.W;
+      global_x = out_shape_.Slice;
+      global_y = out_shape_.W;
     } else if (axis_ == 2) {
-      global_x = out_shape.Slice;
-      global_y = out_shape.H;
+      global_x = out_shape_.Slice;
+      global_y = out_shape_.H;
     } else if (axis_ == 3) {
-      global_x = out_shape.W;
-      global_y = out_shape.H;
+      global_x = out_shape_.W;
+      global_y = out_shape_.H;
     } else {
       global_x = 1;
       global_y = 1;
@@ -120,26 +120,26 @@ void SoftmaxOpenCLKernel::SetGlobalLocal() {
   AlignGlobalLocal(global_size_, local_size_);
 }
 
-int SoftmaxOpenCLKernel::Tune() {
+int SoftMaxOpenCLKernel::Tune() {
   if (onexone_flag_) {
     return RET_OK;
   }
   return OpenCLKernel::Tune();
 }
 
-void SoftmaxOpenCLKernel::SetConstArgs() {
+void SoftMaxOpenCLKernel::SetConstArgs() {
   int arg_idx = 2;
-  int channel = out_shape.C;
-  int c4 = out_shape.Slice;
+  int channel = out_shape_.C;
+  int c4 = out_shape_.Slice;
   auto mask_ = GetMaskForLastChannel(channel);
   cl_float4 mask = {mask_[0], mask_[1], mask_[2], mask_[3]};
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, mask);
-  cl_int4 input_shape = {static_cast<int>(out_shape.N), static_cast<int>(out_shape.H), static_cast<int>(out_shape.W),
+  cl_int4 input_shape = {static_cast<int>(out_shape_.N), static_cast<int>(out_shape_.H), static_cast<int>(out_shape_.W),
                          c4};
   ocl_runtime_->SetKernelArg(kernel_, arg_idx, input_shape);
 }
 
-int SoftmaxOpenCLKernel::Run() {
+int SoftMaxOpenCLKernel::Run() {
   MS_LOG(DEBUG) << this->name() << " Running!";
   int arg_idx = 0;
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, in_tensors_[0]->data_c());
@@ -148,6 +148,6 @@ int SoftmaxOpenCLKernel::Run() {
   return lite::RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_SoftMax, OpenCLKernelCreator<SoftmaxOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_SoftMax, OpenCLKernelCreator<SoftmaxOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Softmax, OpenCLKernelCreator<SoftMaxOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Softmax, OpenCLKernelCreator<SoftMaxOpenCLKernel>)
 }  // namespace mindspore::kernel

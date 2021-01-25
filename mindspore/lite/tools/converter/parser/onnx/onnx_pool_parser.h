@@ -22,12 +22,20 @@
 
 namespace mindspore {
 namespace lite {
-class OnnxPoolParser : public OnnxNodeParser {
+class OnnxAvgPoolParser : public OnnxNodeParser {
  public:
-  OnnxPoolParser() : OnnxNodeParser("Pool") {}
-  ~OnnxPoolParser() override = default;
+  OnnxAvgPoolParser() : OnnxNodeParser("AvgPool") {}
+  ~OnnxAvgPoolParser() override = default;
 
-  lite::PrimitiveC *ParseLitePrimitive(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
+};
+
+class OnnxMaxPoolParser : public OnnxNodeParser {
+ public:
+  OnnxMaxPoolParser() : OnnxNodeParser("MaxPool") {}
+  ~OnnxMaxPoolParser() override = default;
+
+  ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) override;
 };
 }  // namespace lite
 }  // namespace mindspore

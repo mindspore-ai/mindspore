@@ -44,7 +44,7 @@ int NPUTransformPass::InsertPreNode(const InnerContext *context, kernel::LiteKer
       NPUPassUtils::CreateNhwc2NchwKernel({kernel->in_tensors()[0]}, pre_trans_out_tensors, context, name);
 
     trans_kernels->push_back(trans_kernel);
-    insert_primitive_.push_back(trans_kernel->GetPrimitive());
+    // insert_primitive_.push_back(trans_kernel->GetPrimitive());
 
     // Set in_kernels, out_kernels, in_tensors,out_tensors for transform kernel
     std::vector<kernel::LiteKernel *> pre_trans_in_kernel;
@@ -92,7 +92,7 @@ int NPUTransformPass::InsertPostNode(const InnerContext *context, kernel::LiteKe
     // Set in_kernels, out_kernels, in_tensors,out_tensors for transform kernel
     NPUPassUtils::UpdateKernel(post_trans_kernel, {kernel}, {post_kernel}, kernel->out_tensors(),
                                post_trans_out_tensors);
-    insert_primitive_.push_back(post_trans_kernel->GetPrimitive());
+    // insert_primitive_.push_back(post_trans_kernel->GetPrimitive());
 
     trans_kernels->push_back(post_trans_kernel);
     NPUPassUtils::UpdateNC2NHTransNodePreKernel(kernel, post_trans_kernel, post_kernel);

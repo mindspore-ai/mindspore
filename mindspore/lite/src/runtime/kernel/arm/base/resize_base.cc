@@ -45,7 +45,7 @@ int ResizeBaseCPUKernel::CheckParameters() {
     MS_LOG(ERROR) << "Resize method should be bilinear or nearest_neighbor, but got " << method_;
     return RET_INVALID_OP_ATTR;
   }
-  if (this->in_tensors_.size() == lite::kSingleNum) {
+  if (this->in_tensors_.size() == 1) {
     new_height_ = parameter->new_height_;
     if (new_height_ < 1) {
       MS_LOG(ERROR) << "Resize new_height should >= 1, but got " << new_height_;
@@ -56,7 +56,7 @@ int ResizeBaseCPUKernel::CheckParameters() {
       MS_LOG(ERROR) << "Resize new_width should >= 1, but got " << new_width_;
       return RET_INVALID_OP_ATTR;
     }
-  } else if (this->in_tensors_.size() == lite::kDoubleNum) {
+  } else if (this->in_tensors_.size() == 2) {
     auto out_shape = this->in_tensors_.at(1)->data_c();
     if (out_shape == nullptr) {
       MS_LOG(INFO) << "Out shape is not assigned";
@@ -75,9 +75,9 @@ int ResizeBaseCPUKernel::CheckParameters() {
       const_shape_ = true;
     }
   }
-  align_corners_ = parameter->align_corners_;
-  preserve_aspect_ratio = parameter->preserve_aspect_ratio_;
-  if (preserve_aspect_ratio) {
+  coordinate_transform_mode_ = parameter->coordinate_transform_mode_;
+  preserve_aspect_ratio_ = parameter->preserve_aspect_ratio_;
+  if (preserve_aspect_ratio_) {
     MS_LOG(ERROR) << "Resize currently not support preserve_aspect_ratio true";
     return RET_ERROR;
   }
@@ -85,7 +85,7 @@ int ResizeBaseCPUKernel::CheckParameters() {
 }
 
 int ResizeBaseCPUKernel::CheckInputsOuputs() {
-  if (in_tensors_.size() <= lite::kDoubleNum) {
+  if (in_tensors_.size() <= 2) {
     for (size_t i = 0; i < in_tensors_.size(); i++) {
       auto input = in_tensors_.at(i);
       if (input == nullptr) {

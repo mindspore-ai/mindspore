@@ -36,6 +36,7 @@ int DetectionPostProcessCPUKernel::GetInputData() {
   input_scores_ = reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
   return RET_OK;
 }
+
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_DetectionPostProcess,
            LiteKernelCreator<DetectionPostProcessCPUKernel>)
 }  // namespace mindspore::kernel

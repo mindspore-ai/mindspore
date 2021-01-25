@@ -15,6 +15,7 @@
  */
 #ifndef MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_ARITHMETIC_PARSER_H_
 #define MINDSPORE_LITE_TOOLS_CONVERTER_PARSER_TF_TF_ARITHMETIC_PARSER_H_
+
 #include <string>
 #include <memory>
 #include <map>
@@ -28,8 +29,9 @@ class TFArithmeticParser : public TFNodeParser {
   TFArithmeticParser() = default;
   ~TFArithmeticParser() override = default;
 
-  STATUS Parse(const tensorflow::NodeDef &tf_op, const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
-               PrimitiveC **primitiveC, std::vector<std::string> *inputs, int *output_size) override;
+  ops::PrimitiveC *Parse(const tensorflow::NodeDef &tf_op,
+                         const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                         std::vector<std::string> *inputs, int *output_size) override;
 };
 }  // namespace lite
 }  // namespace mindspore

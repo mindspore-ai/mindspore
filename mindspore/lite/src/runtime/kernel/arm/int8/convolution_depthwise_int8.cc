@@ -15,19 +15,12 @@
  */
 
 #include "src/runtime/kernel/arm/int8/convolution_depthwise_int8.h"
-#include "src/runtime/kernel/arm/int8/convolution_depthwise_3x3_int8.h"
-#include "src/runtime/kernel/arm/int8/convolution_depthwise_slidewindow_int8.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
 #include "nnacl/int8/conv_depthwise_int8.h"
 #include "src/runtime/runtime_api.h"
 
-using mindspore::kernel::KERNEL_ARCH::kCPU;
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_DepthwiseConv2D;
 
 namespace mindspore::kernel {
 ConvolutionDepthwiseInt8CPUKernel::~ConvolutionDepthwiseInt8CPUKernel() {
@@ -163,54 +156,4 @@ int ConvolutionDepthwiseInt8CPUKernel::Run() {
   row_buffer_ = nullptr;
   return ret;
 }
-
-kernel::LiteKernel *CpuConvDwInt8KernelCreator(const std::vector<lite::Tensor *> &inputs,
-                                               const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter,
-                                               const InnerContext *ctx, const kernel::KernelKey &desc,
-                                               const mindspore::lite::PrimitiveC *primitive) {
-  MS_ASSERT(opParameter != nullptr);
-  MS_ASSERT(desc.type == schema::PrimitiveType_DepthwiseConv2D);
-  kernel::LiteKernel *kernel = nullptr;
-  auto act_quant_size =
-    MSMAX(inputs.at(kInputIndex)->quant_params().size(), outputs.at(kOutputIndex)->quant_params().size());
-  if (act_quant_size == 1) {  // per tensor
-    auto conv_param = reinterpret_cast<ConvParameter *>(opParameter);
-    if (primitive != nullptr && primitive->infer_flag()) {
-      conv_param->input_h_ = inputs[kInputIndex]->Height();
-      conv_param->input_w_ = inputs[kInputIndex]->Width();
-      conv_param->input_channel_ = inputs[kInputIndex]->Channel();
-      conv_param->output_h_ = outputs[kOutputIndex]->Height();
-      conv_param->output_w_ = outputs[kOutputIndex]->Width();
-    }
-    if (CheckConvDwUse3X3(conv_param) && conv_param->input_channel_ % C8NUM == 0) {
-#ifdef ENABLE_ARM64
-      kernel =
-        new (std::nothrow) kernel::ConvolutionDepthwise3x3Int8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-#endif
-    }
-    if (kernel == nullptr) {
-      kernel =
-        new (std::nothrow) kernel::ConvolutionDepthwiseInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-    }
-  } else {  // per channel
-    kernel =
-      new (std::nothrow) kernel::ConvolutionDepthwiseSWInt8CPUKernel(opParameter, inputs, outputs, ctx, primitive);
-  }
-
-  if (kernel == nullptr) {
-    MS_LOG(ERROR) << "kernel is nullptr.";
-    free(opParameter);
-    return nullptr;
-  }
-  auto ret = kernel->Init();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Init kernel failed, name: " << opParameter->name_ << ", type: "
-                  << schema::EnumNamePrimitiveType(static_cast<schema::PrimitiveType>(opParameter->type_));
-    delete kernel;
-    return nullptr;
-  }
-  return kernel;
-}
-
-REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_DepthwiseConv2D, CpuConvDwInt8KernelCreator)
 }  // namespace mindspore::kernel

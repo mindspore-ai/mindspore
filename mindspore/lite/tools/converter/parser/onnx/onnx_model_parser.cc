@@ -16,12 +16,16 @@
 
 #include "tools/converter/parser/onnx/onnx_model_parser.h"
 #include <algorithm>
+#include <memory>
 #include <set>
-#include <utility>
 #include <unordered_map>
+#include <utility>
 #include "src/common/utils.h"
 #include "tools/common/graph_util.h"
 #include "tools/common/protobuf_utils.h"
+#include "ops/return.h"
+#include "ops/make_tuple.h"
+#include "ops/tuple_get_item.h"
 
 namespace mindspore {
 namespace lite {
@@ -157,7 +161,8 @@ STATUS OnnxModelParser::ConvertNodes() {
     if (status != RET_OK) {
       continue;
     }
-    auto primitive_c = node_parser->ParseLitePrimitive(onnx_graph_, onnx_node);
+    auto primitive_c = node_parser->Parse(onnx_graph_, onnx_node);
+    MS_LOG(INFO) << "parse op:" << onnx_node.op_type();
     if (primitive_c == nullptr) {
       MS_LOG(ERROR) << "parse node " << onnx_node.op_type() << " failed.";
       status = RET_ERROR;
@@ -186,9 +191,9 @@ STATUS OnnxModelParser::ConvertGraphOutputs() {
   std::vector<AnfNodePtr> return_inputs;
   if (onnx_graph_.output_size() > 1) {
     std::vector<AnfNodePtr> make_tuple_inputs;
-    auto make_tuple_prim_ptr = GetMakeTuplePrim();
+    auto make_tuple_prim_ptr = std::make_shared<ops::MakeTuple>();
     if (make_tuple_prim_ptr == nullptr) {
-      MS_LOG(ERROR) << "GetMakeTuplePrim return nullptr";
+      MS_LOG(ERROR) << "new return nullptr";
       return RET_NULL_PTR;
     }
     for (const auto &graph_out : onnx_graph_.output()) {
@@ -227,9 +232,9 @@ STATUS OnnxModelParser::ConvertGraphOutputs() {
 }
 
 STATUS OnnxModelParser::BuildReturnNode(const std::vector<AnfNodePtr> &return_inputs) {
-  auto returnPrim = GetReturnPrim();
+  auto returnPrim = std::make_shared<ops::Return>();
   if (returnPrim == nullptr) {
-    MS_LOG(ERROR) << "GetReturnPrim return nullptr";
+    MS_LOG(ERROR) << "new return nullptr";
     return RET_NULL_PTR;
   }
   auto returnCnode = func_graph_ptr_->NewCNode(returnPrim, return_inputs);
@@ -238,7 +243,7 @@ STATUS OnnxModelParser::BuildReturnNode(const std::vector<AnfNodePtr> &return_in
   return RET_OK;
 }
 
-STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c) {
+STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c) {
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is nullptr.";
     return RET_NULL_PTR;
@@ -255,7 +260,7 @@ STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, lite::Primi
       op_inputs.push_back(nodes_[input_name]);
     }
   }
-  auto new_cnode = func_graph_ptr_->NewCNode(std::shared_ptr<lite::PrimitiveC>(primitive_c), op_inputs);
+  auto new_cnode = func_graph_ptr_->NewCNode(std::shared_ptr<ops::PrimitiveC>(primitive_c), op_inputs);
   new_cnode->set_fullname_with_scope(onnx_node.op_type() + "_" + onnx_node.output(0));
   auto status = BuildOpOutputs(onnx_node, new_cnode);
   return status;
@@ -278,9 +283,9 @@ STATUS OnnxModelParser::BuildOpOutputs(const onnx::NodeProto &onnx_node, const C
       std::vector<int64_t> shape_vector;
       auto type_ptr = TypeIdToType(kTypeUnknown);
       abstract_list.emplace_back(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
-      auto tuple_get_item_prim_ptr = GetTupleGetItemPrim();
+      auto tuple_get_item_prim_ptr = std::make_shared<ops::TupleGetItem>();
       if (tuple_get_item_prim_ptr == nullptr) {
-        MS_LOG(ERROR) << "GetTupleGetItemPrim return nullptr";
+        MS_LOG(ERROR) << "new return nullptr";
         return RET_NULL_PTR;
       }
       auto tuple_get_item_prim = NewValueNode(tuple_get_item_prim_ptr);
@@ -296,7 +301,7 @@ STATUS OnnxModelParser::BuildOpOutputs(const onnx::NodeProto &onnx_node, const C
   return RET_OK;
 }
 
-STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c) {
+STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c) {
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is null, get quant params failed.";
     return RET_NULL_PTR;
@@ -307,6 +312,7 @@ STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, l
     return RET_ERROR;
   }
   // set input tensors
+  auto quant_params_holder = std::make_shared<QuantParamHolder>();
   for (int i = 0; i < onnx_node.input_size(); ++i) {
     const auto &input_name = onnx_node.input(i);
     std::vector<schema::QuantParamT> quant_params;
@@ -315,7 +321,7 @@ STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, l
       MS_LOG(ERROR) << "set input tensor quant param failed.";
       return status;
     }
-    primitive_c->AddInputQuantParam(quant_params);
+    quant_params_holder->AddInputQuantParam(quant_params);
   }
   // set out tensors
   for (int i = 0; i < onnx_node.output_size(); ++i) {
@@ -326,8 +332,9 @@ STATUS OnnxModelParser::ConvertOpQuantParams(const onnx::NodeProto &onnx_node, l
       MS_LOG(ERROR) << "set output tensor quant param failed.";
       return status;
     }
-    primitive_c->AddOutputQuantParam(quant_params);
+    quant_params_holder->AddOutputQuantParam(quant_params);
   }
+  primitive_c->AddAttr("quant_params", quant_params_holder);
   return RET_OK;
 }
 
@@ -452,7 +459,7 @@ STATUS OnnxModelParser::CopyTensorQuantParam(const std::string &tensor_name, Qua
   return RET_OK;
 }
 
-STATUS OnnxModelParser::ConvertSpecialOnnxNode(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c) {
+STATUS OnnxModelParser::ConvertSpecialOnnxNode(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c) {
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "imitive_c is nullptr.";
     return RET_NULL_PTR;
@@ -471,7 +478,7 @@ STATUS OnnxModelParser::ConvertSpecialOnnxNode(const onnx::NodeProto &onnx_node,
   return status;
 }
 
-STATUS OnnxModelParser::ConvertOnnxGemmNode(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c) {
+STATUS OnnxModelParser::ConvertOnnxGemmNode(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c) {
   if (onnx_node.op_type() != "Gemm") {
     MS_LOG(ERROR) << "this op is not gemm, it is " << onnx_node.op_type();
     return RET_ERROR;
@@ -493,7 +500,7 @@ STATUS OnnxModelParser::ConvertOnnxGemmNode(const onnx::NodeProto &onnx_node, li
   return RET_OK;
 }
 
-STATUS OnnxModelParser::BuildCNodeForGemm(const onnx::NodeProto &onnx_node, lite::PrimitiveC *primitive_c,
+STATUS OnnxModelParser::BuildCNodeForGemm(const onnx::NodeProto &onnx_node, ops::PrimitiveC *primitive_c,
                                           const std::string &name) {
   if (primitive_c == nullptr) {
     MS_LOG(ERROR) << "primitive_c is nullptr.";
@@ -505,7 +512,7 @@ STATUS OnnxModelParser::BuildCNodeForGemm(const onnx::NodeProto &onnx_node, lite
     MS_LOG(ERROR) << "op parse failed.";
     return RET_NULL_PTR;
   }
-  auto prim_ptr = value->cast<std::shared_ptr<lite::PrimitiveC>>();
+  auto prim_ptr = value->cast<std::shared_ptr<ops::PrimitiveC>>();
   if (prim_ptr == nullptr) {
     MS_LOG(ERROR) << "p parse failed.";
     return RET_NULL_PTR;
@@ -513,6 +520,8 @@ STATUS OnnxModelParser::BuildCNodeForGemm(const onnx::NodeProto &onnx_node, lite
   auto type_ptr = TypeIdToType(kTypeUnknown);
   std::vector<int64_t> shape_vector;
   std::vector<AnfNodePtr> op_inputs;
+  auto quant_params_holder = std::make_shared<QuantParamHolder>();
+  auto quant_params_holder_origin = primitive_c->GetAttr("quant_params")->cast<QuantParamHolderPtr>();
   if (name == "MatMul") {
     for (int i = 0; i < 2; ++i) {
       if (nodes_.find(onnx_node.input(i)) == nodes_.end()) {
@@ -520,10 +529,11 @@ STATUS OnnxModelParser::BuildCNodeForGemm(const onnx::NodeProto &onnx_node, lite
         return RET_ERROR;
       } else {
         op_inputs.push_back(nodes_[onnx_node.input(i)]);
-        prim_ptr->AddInputQuantParam(primitive_c->input_quant_params().at(i));
+        quant_params_holder->AddInputQuantParam(quant_params_holder_origin->input_quant_params().at(i));
       }
     }
-    prim_ptr->AddOutputQuantParam(std::vector<schema::QuantParamT>(1));
+    quant_params_holder->AddOutputQuantParam(std::vector<schema::QuantParamT>(1));
+    prim_ptr->AddAttr("quant_params", quant_params_holder);
     auto new_cnode = func_graph_ptr_->NewCNode(prim_ptr, op_inputs);
     new_cnode->set_fullname_with_scope("Gemm_MatMul_" + onnx_node.output(0));
     new_cnode->set_abstract(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));
@@ -536,9 +546,10 @@ STATUS OnnxModelParser::BuildCNodeForGemm(const onnx::NodeProto &onnx_node, lite
     }
     op_inputs.push_back(nodes_["Gemm_MatMul_" + onnx_node.output(0)]);
     op_inputs.push_back(nodes_[onnx_node.input(2)]);
-    prim_ptr->AddInputQuantParam(std::vector<schema::QuantParamT>(1));
-    prim_ptr->AddInputQuantParam(primitive_c->input_quant_params().at(2));
-    prim_ptr->AddOutputQuantParam(primitive_c->output_quant_params().front());
+    quant_params_holder->AddInputQuantParam(std::vector<schema::QuantParamT>(1));
+    quant_params_holder->AddInputQuantParam(quant_params_holder_origin->input_quant_params().at(2));
+    quant_params_holder->AddOutputQuantParam(quant_params_holder_origin->output_quant_params().front());
+    prim_ptr->AddAttr("quant_params", quant_params_holder);
     auto new_cnode = func_graph_ptr_->NewCNode(prim_ptr, op_inputs);
     new_cnode->set_fullname_with_scope("Gemm_BiasAdd_" + onnx_node.output(0));
     new_cnode->set_abstract(std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector));

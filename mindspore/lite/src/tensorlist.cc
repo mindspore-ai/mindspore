@@ -277,6 +277,21 @@ STATUS TensorList::Decode(const int *data) {
   for (int j = 0; j < data[1]; ++j) {
     element_shape_.push_back(data[2 + j]);
   }
+  int tensors_num = data[2 + data[1]];
+  tensors_.resize(tensors_num);
+  int tensor_index = 2 + data[1] + 1;
+  for (int i = 0; i < tensors_num; i++) {
+    int tensor_dims_size = data[tensor_index++];
+    std::vector<int> shape(tensor_dims_size);
+    for (int j = 0; j < tensor_dims_size; j++) {
+      shape[j] = data[tensor_index++];
+    }
+    tensors_[i] = new (std::nothrow) Tensor(tensors_data_type_, shape);
+    if (tensors_[i] == nullptr) {
+      MS_LOG(ERROR) << "new Tensor failed";
+      return RET_NULL_PTR;
+    }
+  }
   return RET_OK;
 }
 

@@ -20,13 +20,15 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "src/ops/primitive_c.h"
 #include "google/protobuf/message.h"
 #include "proto/onnx.pb.h"
 #include "include/errorcode.h"
 #include "src/common/log_adapter.h"
 #include "schema/inner/model_generated.h"
 #include "ir/dtype/type_id.h"
+#include "ops/primitive_c.h"
+#include "mindspore/core/utils/check_convert_utils.h"
+
 namespace mindspore {
 namespace lite {
 class OnnxNodeParser {
@@ -35,10 +37,9 @@ class OnnxNodeParser {
 
   virtual ~OnnxNodeParser() = default;
 
-  virtual lite::PrimitiveC *ParseLitePrimitive(const onnx::GraphProto &onnx_graph,
-                                               const onnx::NodeProto &onnx_node) = 0;
-
-  static STATUS GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, int *type);
+  virtual ops::PrimitiveC *Parse(const onnx::GraphProto &onnx_graph, const onnx::NodeProto &onnx_node) {
+    return nullptr;
+  }
 
   static STATUS set_opset_version(int version) {
     opset_version_ = version;
@@ -47,7 +48,11 @@ class OnnxNodeParser {
   static int opset_version() { return opset_version_; }
 
  protected:
-  static schema::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
+  static mindspore::PadMode GetOnnxPadMode(const onnx::AttributeProto &onnx_node_attr);
+
+  static STATUS GetPadMode(const onnx::AttributeProto &onnx_node_attr, std::string *mode);
+
+  STATUS GetTensorDataFromOnnx(const onnx::TensorProto &onnx_tensor, std::vector<float> *value, int *type);
 
   static void Split(const std::string &src_str, std::vector<std::string> *dst_str, const std::string &chr);
 

@@ -44,7 +44,7 @@ class ActivationOpenCLKernel : public OpenCLKernel {
   static std::string GetActTypeString(int act_type);
   int type_;
   float alpha_;
-  GpuTensorInfo outShape = GpuTensorInfo(nullptr);
+  GpuTensorInfo outShape;
 };
 
 }  // namespace mindspore::kernel

@@ -19,90 +19,79 @@
 #include <map>
 #include <vector>
 #include "tools/converter/parser/tf/tf_node_parser_registry.h"
+#include "ops/split.h"
 
 namespace mindspore {
 namespace lite {
-STATUS TFSplitParser::Parse(const tensorflow::NodeDef &tf_op,
-                            const std::map<string, const tensorflow::NodeDef *> &tf_node_map, PrimitiveC **primitiveC,
-                            std::vector<std::string> *inputs, int *output_size) {
-  MS_LOG(INFO) << "TF SplitParser";
-  if (primitiveC == nullptr || output_size == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_NULL_PTR;
-  }
-  auto primitive = std::make_unique<schema::PrimitiveT>();
-  if (primitive == nullptr) {
-    MS_LOG(ERROR) << "New PrimitiveT failed";
-    return RET_NULL_PTR;
-  }
-  auto attr = std::make_unique<schema::SplitT>();
-  if (attr == nullptr) {
-    MS_LOG(ERROR) << "new attr failed";
-    return RET_NULL_PTR;
+ops::PrimitiveC *TFSplitParser::Parse(const tensorflow::NodeDef &tf_op,
+                                      const std::map<string, const tensorflow::NodeDef *> &tf_node_map,
+                                      std::vector<std::string> *inputs, int *output_size) {
+  auto primitive_c = new (std::nothrow) ops::Split;
+  if (primitive_c == nullptr) {
+    MS_LOG(ERROR) << "new Split failed";
+    return nullptr;
   }
 
   tensorflow::AttrValue attr_value;
   if (!TensorFlowUtils::FindAttrValue(tf_op, "num_split", &attr_value)) {
     MS_LOG(ERROR) << "The attribute num_split should be specified";
-    return RET_PARAM_INVALID;
+    return nullptr;
   }
-  attr->numberSplit = (int32_t)(attr_value.i());
+  auto numberSplit = attr_value.i();
+  primitive_c->set_output_num(numberSplit);
 
-  int split_dim_index;
-  int input_index;
+  int split_dim_index = 2;
+  int input_index = 0;
   if (tf_op.op() == "Split") {
     split_dim_index = 0;
     input_index = 1;
-  } else {
-    split_dim_index = 2;
-    input_index = 0;
   }
 
   auto split_dim_node = GetConstInputNode(tf_node_map, tf_op.input(split_dim_index));
   if (split_dim_node == nullptr) {
     MS_LOG(ERROR) << "Find Split input split_dim node failed";
-    return RET_ERROR;
+    return nullptr;
   }
   if (!TensorFlowUtils::FindAttrValue(*split_dim_node, "value", &attr_value)) {
     MS_LOG(ERROR) << "The attribute splitDim should be specified";
-    return RET_PARAM_INVALID;
+    return nullptr;
   }
-  auto split_dim_tensor = attr_value.tensor();
-  attr->splitDim = split_dim_tensor.int_val(0);
-  *output_size = attr->numberSplit;
+  auto splitDim = attr_value.tensor().int_val(0);
+  primitive_c->set_axis(splitDim);
 
   if (tf_op.op() == "SplitV") {
     auto size_splits_node = GetConstInputNode(tf_node_map, tf_op.input(1));
     if (size_splits_node == nullptr) {
       MS_LOG(ERROR) << "Find Split input size_splits failed";
-      return RET_ERROR;
+      return nullptr;
     }
     if (!TensorFlowUtils::FindAttrValue(*size_splits_node, "value", &attr_value)) {
       MS_LOG(ERROR) << "The attribute size splits should be specified";
-      return RET_PARAM_INVALID;
+      return nullptr;
     }
     auto size_splits_tensor = attr_value.tensor();
     auto size = size_splits_tensor.tensor_content().size() / sizeof(int32_t);
-    attr->sizeSplits.resize(size);
-    auto ret = memcpy_s(attr->sizeSplits.data(), size * sizeof(int32_t), size_splits_tensor.tensor_content().data(),
+
+    std::vector<int64_t> sizeSplits;
+    sizeSplits.resize(size);
+    auto ret = memcpy_s(sizeSplits.data(), size * sizeof(int32_t), size_splits_tensor.tensor_content().data(),
                         size * sizeof(int32_t));
     if (ret != EOK) {
       MS_LOG(ERROR) << "memcpy_s failed";
-      return RET_ERROR;
+      return nullptr;
     }
+    primitive_c->set_size_splits(sizeSplits);
   }
 
-  primitive->value.type = schema::PrimitiveType_Split;
-  primitive->value.value = attr.release();
-  *primitiveC = PrimitiveC::Create(primitive.release());
-  if (*primitiveC == nullptr) {
-    MS_LOG(ERROR) << "primitiveC is nullptr";
-    return RET_ERROR;
+  *output_size = numberSplit;
+  if (AddOpInput(tf_op, input_index, inputs) != RET_OK) {
+    MS_LOG(ERROR) << "add op input failed";
+    return nullptr;
   }
 
-  auto status = AddOpInput(tf_op, input_index, inputs);
-  return status;
+  return primitive_c;
 }
+
 TFNodeRegistrar g_tfSplitParser("Split", new TFSplitParser());
 TFNodeRegistrar g_tfSplitVParser("SplitV", new TFSplitParser());
 }  // namespace lite

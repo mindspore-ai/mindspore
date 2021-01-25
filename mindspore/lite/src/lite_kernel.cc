@@ -20,6 +20,8 @@
 #include <set>
 #include "src/tensor.h"
 #include "src/common/utils.h"
+#include "src/runtime/infer_manager.h"
+#include "src/common/version_manager.h"
 
 namespace mindspore::kernel {
 using mindspore::lite::RET_ERROR;
@@ -87,10 +89,10 @@ int LiteKernel::FreeInWorkTensor() const {
 
 int LiteKernel::PreProcess() {
   if (!InferShapeDone()) {
-    (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(true);
-    auto ret = (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->InferShape(in_tensors_, out_tensors_);
+    op_parameter_->infer_flag_ = true;
+    auto ret = lite::KernelInferShape(in_tensors_, &out_tensors_, op_parameter_);
     if (ret != 0) {
-      (const_cast<mindspore::lite::PrimitiveC *>(primitive_))->set_infer_flag(false);
+      op_parameter_->infer_flag_ = false;
       MS_LOG(ERROR) << "InferShape fail!";
       return ret;
     }

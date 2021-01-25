@@ -68,8 +68,8 @@ STATUS BatchNormConvertScalePass::Run(MetaGraphT *graph) {
 STATUS BatchNormConvertScalePass::ConvertBNToScale(MetaGraphT *graph, const std::unique_ptr<CNodeT> &bnNode) {
   MS_ASSERT(graph != nullptr);
   MS_ASSERT(bnNode != nullptr);
-  bnNode->primitive->value.type = schema::PrimitiveType_Scale;
-  std::unique_ptr<ScaleT> scaleParam(new (std::nothrow) ScaleT());
+  bnNode->primitive->value.type = schema::PrimitiveType_ScaleFusion;
+  std::unique_ptr<ScaleFusionT> scaleParam(new (std::nothrow) ScaleFusionT());
   if (scaleParam == nullptr) {
     MS_LOG(ERROR) << "new scaleParam failed";
     return RET_ERROR;

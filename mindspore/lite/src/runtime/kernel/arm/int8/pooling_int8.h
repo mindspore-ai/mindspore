@@ -29,9 +29,8 @@ namespace mindspore::kernel {
 class PoolingInt8CPUKernel : public PoolingBaseCPUKernel {
  public:
   PoolingInt8CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                       const mindspore::lite::PrimitiveC *primitive)
-      : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx)
+      : PoolingBaseCPUKernel(parameter, inputs, outputs, ctx) {}
   ~PoolingInt8CPUKernel() { FreeQuantParam(); }
 
   int Init() override;

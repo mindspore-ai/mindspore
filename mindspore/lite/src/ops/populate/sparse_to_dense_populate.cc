@@ -1,5 +1,5 @@
 /**
- * Copyright 2019-2020 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,26 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "src/ops/sparse_to_dense.h"
-#include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
 #include "nnacl/sparse_to_dense_parameter.h"
 
 namespace mindspore {
 namespace lite {
-
-OpParameter *PopulateSparseToDenseParameter(const mindspore::lite::PrimitiveC *primitive) {
+namespace {
+OpParameter *PopulateSparseToDenseParameter(const void *prim) {
   auto *sparse_to_dense_param = reinterpret_cast<SparseToDenseParameter *>(malloc(sizeof(SparseToDenseParameter)));
   if (sparse_to_dense_param == nullptr) {
     MS_LOG(ERROR) << "malloc SparseToDenseParameter failed.";
     return nullptr;
   }
   memset(sparse_to_dense_param, 0, sizeof(SparseToDenseParameter));
-  sparse_to_dense_param->op_parameter_.type_ = primitive->Type();
+  auto primitive = static_cast<const schema::Primitive *>(prim);
+  sparse_to_dense_param->op_parameter_.type_ = primitive->value_type();
   return reinterpret_cast<OpParameter *>(sparse_to_dense_param);
 }
+}  // namespace
 
-Registry SparseToDenseParameterRegistry(schema::PrimitiveType_SparseToDense, PopulateSparseToDenseParameter);
+Registry g_sparseToDenseParameterRegistry(schema::PrimitiveType_SparseToDense, PopulateSparseToDenseParameter,
+                                          SCHEMA_CUR);
 }  // namespace lite
 }  // namespace mindspore

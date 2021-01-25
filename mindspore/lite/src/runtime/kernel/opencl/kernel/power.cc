@@ -27,23 +27,35 @@ using mindspore::kernel::KERNEL_ARCH::kGPU;
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Power;
+using mindspore::schema::PrimitiveType_PowFusion;
 
 namespace mindspore::kernel {
 
 int PowerOpenCLKernel::CheckSpecs() {
-  if ((in_tensors_.size() != 1 && in_tensors_.size() != 2) || out_tensors_.size() != 1) {
-    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << "out size: " << out_tensors_.size();
+  if (in_tensors_.size() != 2 || out_tensors_.size() != 1) {
+    MS_LOG(ERROR) << "in size: " << in_tensors_.size() << " out size: " << out_tensors_.size();
     return RET_ERROR;
   }
-  if (in_tensors_.size() == 2 && in_tensors_.at(0)->shape().size() != in_tensors_.at(1)->shape().size()) {
-    MS_LOG(ERROR) << "Unsupported input->shape.size " << in_tensors_.at(0)->shape().size()
-                  << "!=" << in_tensors_.at(1)->shape().size();
-    return RET_ERROR;
-  }
-  if (in_tensors_.at(0)->shape().size() > 4) {
+  auto *input_tensor = in_tensors_.at(0);
+  auto *power_tensor = in_tensors_.at(1);
+  if (input_tensor->shape().size() > 4) {
     MS_LOG(ERROR) << "in_tensors_->shape.size must be less than 4";
     return RET_ERROR;
+  }
+  if (power_tensor->IsConst()) {
+    if (power_tensor->data_type() != kNumberTypeFloat32) {
+      MS_LOG(ERROR) << "power_tensor's data_type should be float32";
+      return RET_ERROR;
+    }
+    if (power_tensor->ElementsNum() != 1) {
+      MS_LOG(ERROR) << "power_tensor should be scalar while ndim=" << power_tensor->shape().size();
+      return RET_ERROR;
+    }
+  } else {
+    if (input_tensor->shape() != power_tensor->shape()) {
+      MS_LOG(ERROR) << "Unsupported power shape";
+      return RET_ERROR;
+    }
   }
   return RET_OK;
 }
@@ -72,7 +84,7 @@ void PowerOpenCLKernel::SetConstArgs() {
   } else {
     ocl_runtime_->SetKernelArg(kernel_, arg_cn++, out_shape_);
   }
-  if (use_fp16_enable_) {
+  if (ocl_runtime_->GetFp16Enable()) {
     auto x = static_cast<float16_t>(power_);
     auto y = static_cast<float16_t>(shift_);
     auto z = static_cast<float16_t>(scale_);
@@ -103,25 +115,25 @@ void PowerOpenCLKernel::SetGlobalLocal() {
 }
 
 int PowerOpenCLKernel::Prepare() {
-  if (in_tensors_.size() == 1) {
-    broadcast_ = true;
-  }
-  use_fp16_enable_ = ocl_runtime_->GetFp16Enable();
-  auto param = reinterpret_cast<PowerParameter *>(this->op_parameter_);
-  std::string kernel_name = "power";
-  std::string source = power_source;
+  broadcast_ = in_tensors_.at(1)->IsConst();
   std::string program_name = "power";
+  std::string kernel_name = broadcast_ ? "power_broadcast" : "power";
+  ocl_runtime_->LoadSource(program_name, power_source);
+  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
+  InitWeights();
+  SetGlobalLocal();
+  SetConstArgs();
+  MS_LOG(DEBUG) << kernel_name << " Init Done!";
+  return RET_OK;
+}
+
+int PowerOpenCLKernel::InitWeights() {
+  auto param = reinterpret_cast<PowerParameter *>(this->op_parameter_);
   if (broadcast_) {
-    power_ = param->power_;
-    kernel_name += "_broadcast";
+    power_ = *reinterpret_cast<float *>(in_tensors_.at(1)->data_c());
   }
   scale_ = param->scale_;
   shift_ = param->shift_;
-  ocl_runtime_->LoadSource(program_name, source);
-  ocl_runtime_->BuildKernel(kernel_, program_name, kernel_name);
-  MS_LOG(DEBUG) << kernel_name << " Init Done!";
-  SetGlobalLocal();
-  SetConstArgs();
   return RET_OK;
 }
 
@@ -139,6 +151,6 @@ int PowerOpenCLKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_Power, OpenCLKernelCreator<PowerOpenCLKernel>)
-REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_Power, OpenCLKernelCreator<PowerOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_PowFusion, OpenCLKernelCreator<PowerOpenCLKernel>)
+REG_KERNEL(kGPU, kNumberTypeFloat16, PrimitiveType_PowFusion, OpenCLKernelCreator<PowerOpenCLKernel>)
 }  // namespace mindspore::kernel

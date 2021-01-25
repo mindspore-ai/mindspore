@@ -24,6 +24,8 @@
 #include <cfloat>
 #include <map>
 #include <utility>
+#include "ops/primitive_c.h"
+#include "schema/inner/model_generated.h"
 #include "src/lite_session.h"
 #include "tools/converter/quantizer/quantizer.h"
 #include "tools/converter/converter.h"
@@ -87,10 +89,11 @@ class PostTrainingQuantizer : public Quantizer {
   bool OpInputDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
   bool OpOutputChMeanDataHandle(OperationType type, const string &op_name, std::vector<float> *data);
 
-  const std::string kTypeConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2D);
-  const std::string kTypeDepthwiseConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_DepthwiseConv2D);
+  const std::string kTypeConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2DFusion);
+  /* todo checkout */
+  const std::string kTypeDepthwiseConv2D = schema::EnumNamePrimitiveType(schema::PrimitiveType_Conv2DFusion);
   const std::string kTypeConcat = schema::EnumNamePrimitiveType(schema::PrimitiveType_Concat);
-  const std::string kTypeAdd = schema::EnumNamePrimitiveType(schema::PrimitiveType_Add);
+  const std::string kTypeAdd = schema::EnumNamePrimitiveType(schema::PrimitiveType_AddFusion);
 
   STATUS PreProcess();
 
@@ -108,13 +111,13 @@ class PostTrainingQuantizer : public Quantizer {
   STATUS QuantNode();
 
   STATUS DoQuantInput(double scale, int32_t zeropoint, struct MaxMin *max_min,
-                      const std::shared_ptr<PrimitiveC> &lite_primitive) const;
+                      const std::shared_ptr<ops::PrimitiveC> &primitive_c) const;
   STATUS DoQuantOutput(double scale, int32_t zeropoint, struct MaxMin *max_min,
-                       const std::shared_ptr<PrimitiveC> &) const;
+                       const std::shared_ptr<ops::PrimitiveC> &) const;
 
-  STATUS DoWeightQuant(const AnfNodePtr &weight, std::shared_ptr<PrimitiveC> primitive_c, bool perchannel) const;
+  STATUS DoWeightQuant(const AnfNodePtr &weight, std::shared_ptr<ops::PrimitiveC> primitive_c, bool perchannel) const;
 
-  STATUS DoBiasQuant(const AnfNodePtr &bias, const std::shared_ptr<PrimitiveC> &primitive_c);
+  STATUS DoBiasQuant(const AnfNodePtr &bias, const std::shared_ptr<ops::PrimitiveC> &primitive_c);
   STATUS Int8Inference();
   STATUS BiasCorrection(const FuncGraphPtr &func_graph);
 };

@@ -27,9 +27,8 @@ enum InputPart { UNKNOWN_INPUT_PART, LEFT_INPUT_PART, RIGHT_INPUT_PART };
 class MergeCPUKernel : public CarryDataKernel {
  public:
   MergeCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-                 const mindspore::lite::PrimitiveC *primitive)
-      : CarryDataKernel(parameter, inputs, outputs, ctx, primitive) {}
+                 const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx)
+      : CarryDataKernel(parameter, inputs, outputs, ctx) {}
   bool IsReady(const std::vector<lite::Tensor *> &scope_tensors) override;
   ~MergeCPUKernel() override = default;
   int FreeInWorkTensor() const override;

@@ -36,7 +36,7 @@ kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, con
                                     OpParameter *parameter, const InnerContext *ctx, const kernel::KernelKey &key) {
   auto creator = KernelRegistry::GetInstance()->GetCreator(key);
   if (creator != nullptr) {
-    auto kernel = creator(in_tensors, out_tensors, parameter, nullptr, key, nullptr);
+    auto kernel = creator(in_tensors, out_tensors, parameter, nullptr, key);
     return kernel;
   }
   return nullptr;
@@ -45,28 +45,20 @@ kernel::LiteKernel *GetOpenCLKernel(const std::vector<Tensor *> &in_tensors, con
 
 namespace mindspore::kernel {
 
-const std::set<schema::PrimitiveType> ArithmeticPrimitives = {schema::PrimitiveType_Mul,
-                                                              schema::PrimitiveType_Add,
-                                                              schema::PrimitiveType_Sub,
-                                                              schema::PrimitiveType_Div,
-                                                              schema::PrimitiveType_LogicalAnd,
-                                                              schema::PrimitiveType_LogicalOr,
-                                                              schema::PrimitiveType_Maximum,
-                                                              schema::PrimitiveType_Minimum,
-                                                              schema::PrimitiveType_FloorDiv,
-                                                              schema::PrimitiveType_FloorMod,
-                                                              schema::PrimitiveType_SquaredDifference,
-                                                              schema::PrimitiveType_Equal,
-                                                              schema::PrimitiveType_NotEqual,
-                                                              schema::PrimitiveType_Less,
-                                                              schema::PrimitiveType_LessEqual,
-                                                              schema::PrimitiveType_Greater,
-                                                              schema::PrimitiveType_GreaterEqual,
-                                                              schema::PrimitiveType_Eltwise};
+const std::set<schema::PrimitiveType> ArithmeticPrimitives = {
+  schema::PrimitiveType_MulFusion,         schema::PrimitiveType_AddFusion,
+  schema::PrimitiveType_SubFusion,         schema::PrimitiveType_DivFusion,
+  schema::PrimitiveType_LogicalAnd,        schema::PrimitiveType_LogicalOr,
+  schema::PrimitiveType_Maximum,           schema::PrimitiveType_Minimum,
+  schema::PrimitiveType_FloorDiv,          schema::PrimitiveType_FloorMod,
+  schema::PrimitiveType_SquaredDifference, schema::PrimitiveType_Equal,
+  schema::PrimitiveType_NotEqual,          schema::PrimitiveType_Less,
+  schema::PrimitiveType_LessEqual,         schema::PrimitiveType_Greater,
+  schema::PrimitiveType_GreaterEqual,      schema::PrimitiveType_Eltwise};
 
 const std::set<schema::PrimitiveType> ArithmeticSelfPrimitives = {
   schema::PrimitiveType_Abs,        schema::PrimitiveType_Ceil,  schema::PrimitiveType_Cos,
-  schema::PrimitiveType_Exp,        schema::PrimitiveType_Floor, schema::PrimitiveType_Log,
+  schema::PrimitiveType_ExpFusion,  schema::PrimitiveType_Floor, schema::PrimitiveType_Log,
   schema::PrimitiveType_LogicalNot, schema::PrimitiveType_Round, schema::PrimitiveType_Rsqrt,
   schema::PrimitiveType_Sin,        schema::PrimitiveType_Neg,   schema::PrimitiveType_Sqrt,
   schema::PrimitiveType_Square};
@@ -393,4 +385,36 @@ std::vector<size_t> GetImage2dShapeFromNHWC(const std::vector<int> &tensor_shape
   }
   return {image_x, image_y};
 }
+
+int CheckParamLikeTensor(const std::string &kernel_name, const std::string &tensor_name, lite::Tensor *tensor,
+                         TypeId expect_data_type, const std::vector<int> &expect_shape) {
+  if (!tensor->IsConst()) {
+    MS_LOG(ERROR) << "in " << kernel_name << ": tensor " << tensor_name << " must be Const.";
+    return RET_ERROR;
+  }
+  if (tensor->data_type() != expect_data_type) {
+    MS_LOG(ERROR) << "in " << kernel_name << ": tensor's data_type must be " << expect_data_type;
+    return RET_ERROR;
+  }
+  if (tensor->shape() != expect_shape) {
+    std::string expect_shape_str = "(";
+    for (auto i : expect_shape) {
+      expect_shape_str += std::to_string(i) + ",";
+    }
+    expect_shape_str += ")";
+
+    std::string tensor_shape_str = "(";
+    for (auto i : tensor->shape()) {
+      tensor_shape_str += std::to_string(i) + ",";
+    }
+    tensor_shape_str += ")";
+
+    MS_LOG(ERROR) << "in " << kernel_name
+                  << ": tensor's shape is error. expect_shape: " + expect_shape_str +
+                       " tensor->shape(): " + tensor_shape_str;
+    return RET_ERROR;
+  }
+  return RET_OK;
+}
+
 }  // namespace mindspore::kernel
