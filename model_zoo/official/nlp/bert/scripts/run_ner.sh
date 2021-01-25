@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash scripts/run_ner.sh"
 echo "for example: bash scripts/run_ner.sh"
 echo "assessment_method include: [F1, clue_benchmark]"

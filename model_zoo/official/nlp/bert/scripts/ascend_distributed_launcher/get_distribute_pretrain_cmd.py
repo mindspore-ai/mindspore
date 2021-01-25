@@ -57,8 +57,50 @@ def append_cmd(cmd, s):
     cmd += "\n"
     return cmd
 
+
 def append_cmd_env(cmd, key, value):
     return append_cmd(cmd, "export " + str(key) + "=" + str(value))
+
+
+def set_envs(cmd, logic_id, rank_id):
+    """
+    Set environment variables.
+    """
+    cmd = append_cmd_env(cmd, "DEVICE_ID", str(logic_id))
+    cmd = append_cmd_env(cmd, "RANK_ID", str(rank_id))
+    cmd = append_cmd_env(cmd, "DEPLOY_MODE", '0')
+    cmd = append_cmd_env(cmd, "GE_USE_STATIC_MEMORY", '1')
+    return cmd
+
+
+def make_dirs(cmd, logic_id):
+    """
+    Make directories and change path.
+    """
+    cmd = append_cmd(cmd, "rm -rf LOG" + str(logic_id))
+    cmd = append_cmd(cmd, "mkdir ./LOG" + str(logic_id))
+    cmd = append_cmd(cmd, "cp *.py ./LOG" + str(logic_id))
+    cmd = append_cmd(cmd, "mkdir -p ./LOG" + str(logic_id) + "/ms_log")
+    cmd = append_cmd(cmd, "env > ./LOG" + str(logic_id) + "/env.log")
+    cur_dir = os.getcwd()
+    cmd = append_cmd_env(cmd, "GLOG_log_dir", cur_dir + "/LOG" + str(logic_id) + "/ms_log")
+    cmd = append_cmd_env(cmd, "GLOG_logtostderr", "0")
+    cmd = append_cmd(cmd, "cd " + cur_dir + "/LOG" + str(logic_id))
+    return cmd
+
+
+def print_info(rank_id, device_id, logic_id, cmdopt, epoch_size, data_dir, cur_dir):
+    """
+    Print some information about scripts.
+    """
+    print("\nstart training for rank " + str(rank_id) + ", device " + str(device_id) + ":")
+    print("rank_id:", rank_id)
+    print("device_id:", device_id)
+    print("logic_id", logic_id)
+    print("core_nums:", cmdopt)
+    print("epoch_size:", epoch_size)
+    print("data_dir:", data_dir)
+    print("log_file_dir: " + cur_dir + "/LOG" + str(logic_id) + "/pretraining_log.txt")
 
 def distribute_pretrain():
     """
@@ -116,42 +158,22 @@ def distribute_pretrain():
 
     count = 0
     for instance in this_server["device"]:
-        # device_id is the physical id, we use logic id to sepcific the selected device.
+        # device_id is the physical id, we use logic id to specific the selected device.
         # While running on a server with 8 pcs, the logic ids are equal to the device ids.
         device_id = instance["device_id"]
         rank_id = instance["rank_id"]
         logic_id = physic_logic_ids[device_id]
-        print("\nstart training for rank " + str(rank_id) + ", device " + str(device_id) + ":")
-        print("rank_id:", rank_id)
-        print("device_id:", device_id)
-        print("logic_id", logic_id)
-
         start = count * int(avg_core_per_rank)
         count += 1
         end = start + core_gap
         cmdopt = str(start) + "-" + str(end)
-
-        cmd = append_cmd_env(cmd, "DEVICE_ID", str(logic_id))
-        cmd = append_cmd_env(cmd, "RANK_ID", str(rank_id))
-        cmd = append_cmd_env(cmd, "DEPLOY_MODE", '0')
-        cmd = append_cmd_env(cmd, "GE_USE_STATIC_MEMORY", '1')
-
-        cmd = append_cmd(cmd, "rm -rf LOG" + str(logic_id))
-        cmd = append_cmd(cmd, "mkdir ./LOG" + str(logic_id))
-        cmd = append_cmd(cmd, "cp *.py ./LOG" + str(logic_id))
-        cmd = append_cmd(cmd, "mkdir -p ./LOG" + str(logic_id) + "/ms_log")
-        cmd = append_cmd(cmd, "env > ./LOG" + str(logic_id) + "/env.log")
-
         cur_dir = os.getcwd()
-        cmd = append_cmd_env(cmd, "GLOG_log_dir", cur_dir + "/LOG" + str(logic_id) + "/ms_log")
-        cmd = append_cmd_env(cmd, "GLOG_logtostderr", "0")
 
-        print("core_nums:", cmdopt)
-        print("epoch_size:", str(cfg['epoch_size']))
-        print("data_dir:", data_dir)
-        print("log_file_dir: " + cur_dir + "/LOG" + str(logic_id) + "/pretraining_log.txt")
+        cmd = set_envs(cmd, logic_id, rank_id)
+        cmd = make_dirs(cmd, logic_id)
 
-        cmd = append_cmd(cmd, "cd " + cur_dir + "/LOG" + str(logic_id))
+        print_info(rank_id=rank_id, device_id=device_id, logic_id=logic_id, cmdopt=cmdopt, cur_dir=cur_dir,
+                   epoch_size=str(cfg['epoch_size']), data_dir=data_dir)
 
         run_cmd = 'taskset -c ' + cmdopt + ' nohup python ' + run_script + " "
         opt = " ".join(["--" + key + "=" + str(cfg[key]) for key in cfg.keys()])

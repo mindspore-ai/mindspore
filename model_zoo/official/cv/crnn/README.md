@@ -43,7 +43,7 @@ We use five datasets mentioned in the paper.For training, we use the synthetic d
 
 ### [Dataset Prepare](#content)
 
-For datset `IC03`, `IIIT5k` and `SVT`, the original dataset from the official website can not be used directly in CRNN.
+For dataset `IC03`, `IIIT5k` and `SVT`, the original dataset from the official website can not be used directly in CRNN.
 
 - `IC03`, the text need to be cropped from the original image according to the words.xml.
 - `IIIT5k`, the annotation need to be extracted from the matlib data file.
