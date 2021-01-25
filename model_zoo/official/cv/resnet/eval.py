@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,8 @@ from mindspore.train.serialization import load_checkpoint, load_param_into_net
 from src.CrossEntropySmooth import CrossEntropySmooth
 
 parser = argparse.ArgumentParser(description='Image classification')
-parser.add_argument('--net', type=str, default=None, help='Resnet Model, either resnet50 or resnet101')
+parser.add_argument('--net', type=str, default=None, help='Resnet Model, either resnet18, '
+                                                          'resnet50 or resnet101')
 parser.add_argument('--dataset', type=str, default=None, help='Dataset, either cifar10 or imagenet2012')
 
 parser.add_argument('--checkpoint_path', type=str, default=None, help='Checkpoint file path')
@@ -34,14 +35,18 @@ args_opt = parser.parse_args()
 
 set_seed(1)
 
-if args_opt.net == "resnet50":
-    from src.resnet import resnet50 as resnet
+if args_opt.net in ("resnet18", "resnet50"):
+    if args_opt.net == "resnet18":
+        from src.resnet import resnet18 as resnet
+    if args_opt.net == "resnet50":
+        from src.resnet import resnet50 as resnet
     if args_opt.dataset == "cifar10":
         from src.config import config1 as config
         from src.dataset import create_dataset1 as create_dataset
     else:
         from src.config import config2 as config
         from src.dataset import create_dataset2 as create_dataset
+
 elif args_opt.net == "resnet101":
     from src.resnet import resnet101 as resnet
     from src.config import config3 as config

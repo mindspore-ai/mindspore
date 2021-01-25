@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@ from src.CrossEntropySmooth import CrossEntropySmooth
 from src.config import cfg
 
 parser = argparse.ArgumentParser(description='Image classification')
-parser.add_argument('--net', type=str, default=None, help='Resnet Model, either resnet50 or resnet101')
+parser.add_argument('--net', type=str, default=None, help='Resnet Model, resnet18, resnet50 or resnet101')
 parser.add_argument('--dataset', type=str, default=None, help='Dataset, either cifar10 or imagenet2012')
 parser.add_argument('--run_distribute', type=ast.literal_eval, default=False, help='Run distribute')
 parser.add_argument('--device_num', type=int, default=1, help='Device num.')
@@ -50,14 +50,18 @@ args_opt = parser.parse_args()
 
 set_seed(1)
 
-if args_opt.net == "resnet50":
-    from src.resnet import resnet50 as resnet
+if args_opt.net in ("resnet18", "resnet50"):
+    if args_opt.net == "resnet18":
+        from src.resnet import resnet18 as resnet
+    if args_opt.net == "resnet50":
+        from src.resnet import resnet50 as resnet
     if args_opt.dataset == "cifar10":
         from src.config import config1 as config
         from src.dataset import create_dataset1 as create_dataset
     else:
         from src.config import config2 as config
         from src.dataset import create_dataset2 as create_dataset
+
 elif args_opt.net == "resnet101":
     from src.resnet import resnet101 as resnet
     from src.config import config3 as config
@@ -94,6 +98,8 @@ if __name__ == '__main__':
             set_algo_parameters(elementwise_op_strategy_follow=True)
             if args_opt.net == "resnet50" or args_opt.net == "se-resnet50":
                 context.set_auto_parallel_context(all_reduce_fusion_config=[85, 160])
+            elif args_opt.net == "resnet18":
+                context.set_auto_parallel_context(all_reduce_fusion_config=[40, 61])
             else:
                 context.set_auto_parallel_context(all_reduce_fusion_config=[180, 313])
             init()
@@ -136,7 +142,7 @@ if __name__ == '__main__':
         from src.lr_generator import get_thor_lr
         lr = get_thor_lr(0, config.lr_init, config.lr_decay, config.lr_end_epoch, step_size, decay_epochs=39)
     else:
-        if args_opt.net == "resnet50" or args_opt.net == "se-resnet50":
+        if args_opt.net in ("resnet18", "resnet50", "se-resnet50"):
             lr = get_lr(lr_init=config.lr_init, lr_end=config.lr_end, lr_max=config.lr_max,
                         warmup_epochs=config.warmup_epochs, total_epochs=config.epoch_size, steps_per_epoch=step_size,
                         lr_decay_mode=config.lr_decay_mode)
