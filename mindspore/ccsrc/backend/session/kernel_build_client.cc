@@ -19,15 +19,30 @@
 
 namespace mindspore {
 namespace kernel {
+inline static bool init_flag = false;
 void ReplaceStr(std::string *dest, const std::string &replace, char new_char) {
   std::string::size_type start = 0;
   while ((start = (*dest).find(replace, start)) != std::string::npos) {
     (*dest).replace(start, replace.size(), 1, new_char);
-    start++;  // Replaced 1 charactor.
+    start++;  // Replaced 1 character.
   }
 }
 
+bool AscendKernelBuildClient::TbePre() {
+  auto res = SendRequest(kTbePre);
+  if (res != kSuccess) {
+    MS_LOG(EXCEPTION) << "PRE failed, res: " << res;
+  }
+  return true;
+}
+
 int AscendKernelBuildClient::TbeStart(const std::string &json) {
+  if (!init_flag) {
+    if (!TbePre()) {
+      MS_LOG(EXCEPTION) << "START failed";
+    }
+    init_flag = true;
+  }
   // Start compiling..
   auto res = SendRequest(kTbeStart);
   if (res != kAck) {
@@ -53,7 +68,7 @@ bool AscendKernelBuildClient::TbeWait(int *task_id, std::string *task_result, st
   }
   // Request task id.
   *task_id = std::stoi(SendRequest(kContinue));
-  // Requst task result.
+  // Request task result.
   *task_result = SendRequest(kContinue);
   // Request prebuild result.
   *pre_build_result = SendRequest(kContinue);

@@ -24,6 +24,9 @@ class TbeBuilder:
     def __init__(self):
         self.tbe_builder = create_tbe_parallel_process()
 
+    def create(self):
+        return self.tbe_builder.init_process_num()
+
     def start(self, json):
         return self.tbe_builder.start_compile_op(json)
 
@@ -69,7 +72,10 @@ class AscendMessager(Messager):
         Reference protocol between them at PR#3821 and PR#3935
         """
         arg = self.get_message()
-        if arg == 'TBE/START':
+        if arg == 'TBE/PRE':
+            ans = self.tbe_builder.create()
+            self.send_res(ans)
+        elif arg == 'TBE/START':
             self.send_ack()
             json = self.get_message()
             res = self.tbe_builder.start(json)

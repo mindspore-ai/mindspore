@@ -193,6 +193,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
 
   // Send building request to server
   constexpr inline static auto kContinue = "CONTINUE";  // More transactions to be continued
+  constexpr inline static auto kTbePre = "TBE/PRE";
   constexpr inline static auto kTbeStart = "TBE/START";
   constexpr inline static auto kTbeWait = "TBE/WAIT";
   constexpr inline static auto kTbeReset = "TBE/RESET";
@@ -238,6 +239,7 @@ class AscendKernelBuildClient : public KernelBuildClient {
   AscendKernelBuildClient &operator=(AscendKernelBuildClient &&) = delete;
 
  private:
+  bool TbePre();
   AscendKernelBuildClient() { Open(); }
   ~AscendKernelBuildClient() override { Close(); }
 };
