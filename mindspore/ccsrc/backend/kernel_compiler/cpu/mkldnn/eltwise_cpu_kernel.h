@@ -36,6 +36,11 @@ class EltWiseCPUKernel : public MKLCPUKernel {
   dnnl::prop_kind DnnlForward = dnnl::prop_kind::forward_training;
 };
 
+MS_REG_CPU_KERNEL(Elu, KernelAttr().AddInputAttr(kNumberTypeFloat16).AddOutputAttr(kNumberTypeFloat16),
+                  EltWiseCPUKernel);
+MS_REG_CPU_KERNEL(Elu, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
+                  EltWiseCPUKernel);
+MS_REG_CPU_KERNEL(Elu, KernelAttr().AddInputAttr(kNumberTypeFloat).AddOutputAttr(kNumberTypeFloat), EltWiseCPUKernel);
 MS_REG_CPU_KERNEL(ReLU, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
                   EltWiseCPUKernel);
 MS_REG_CPU_KERNEL(ReLU6, KernelAttr().AddInputAttr(kNumberTypeFloat32).AddOutputAttr(kNumberTypeFloat32),
