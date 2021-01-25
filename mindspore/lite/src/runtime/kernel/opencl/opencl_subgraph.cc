@@ -330,6 +330,14 @@ int OpenCLSubGraph::Prepare() {
       return mindspore::lite::RET_NULL_PTR;
     }
     auto opencl_kernel = reinterpret_cast<kernel::OpenCLKernel *>(node);
+    std::set<int> pre_init_weight_list = {schema::PrimitiveType_MatMul, schema::PrimitiveType_BiasAdd};
+    if (pre_init_weight_list.find(opencl_kernel->Type()) != pre_init_weight_list.end()) {
+      ret = opencl_kernel->InitWeights();
+      if (ret != RET_OK) {
+        MS_LOG(ERROR) << "init weights " << node->name() << " failed";
+        return ret;
+      }
+    }
     if (opencl_kernel->GetInferShapeFlag()) {
       ret = node->Prepare();
       if (ret != RET_OK) {

@@ -97,7 +97,7 @@ int ReshapeOpenCLKernel::Run() {
 }
 
 int ReshapeOpenCLKernel::PreProcess() {
-  if (Type() == PrimitiveType_Reshape) {
+  if (Type() == PrimitiveType_Reshape && !infer_shape_flag_) {
     auto shape_tensor = in_tensors_[1];
     if (!shape_tensor->IsConst()) {
       ocl_runtime_->SyncCommandQueue();

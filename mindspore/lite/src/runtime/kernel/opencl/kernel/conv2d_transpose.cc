@@ -19,6 +19,7 @@
 #include <set>
 #include "nnacl/fp32/common_func_fp32.h"
 #include "src/kernel_registry.h"
+#include "src/ops/conv2d.h"
 #ifndef PROGRAM_WITH_IL
 #include "src/runtime/kernel/opencl/cl/conv2d_transpose.cl.inc"
 #endif
@@ -125,6 +126,14 @@ void Conv2dTransposeOpenCLKernel::SetConstArgs() {
 }
 
 int Conv2dTransposeOpenCLKernel::InitWeights() {
+  auto ret = InitFilter();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  return InitBias();
+}
+
+int Conv2dTransposeOpenCLKernel::InitFilter() {
   auto ret = DequantWeight();
   if (ret != RET_OK) {
     return ret;
@@ -185,8 +194,15 @@ int Conv2dTransposeOpenCLKernel::InitWeights() {
   }
   allocator->UnmapBuffer(padWeight_);
   FreeDequantedWeight();
+  return RET_OK;
+}
 
+int Conv2dTransposeOpenCLKernel::InitBias() {
   // init bias_(image2d mem)
+  auto allocator = ocl_runtime_->GetAllocator();
+  auto data_size = enable_fp16_ ? sizeof(int16_t) : sizeof(float);
+  int co = out_tensors_[0]->shape()[3];
+  int div_co = UP_DIV(co, C4NUM);
   size_t im_dst_x, im_dst_y;
   im_dst_x = div_co;
   im_dst_y = 1;
@@ -223,6 +239,20 @@ int Conv2dTransposeOpenCLKernel::Run() {
   ocl_runtime_->SetKernelArg(kernel_, arg_cnt++, out_tensors_[0]->data_c());
   ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return mindspore::lite::RET_OK;
+}
+
+int Conv2dTransposeOpenCLKernel::InferShape() {
+  auto ret = OpenCLKernel::InferShape();
+  if (ret != RET_OK) {
+    return ret;
+  }
+  auto param = reinterpret_cast<ConvParameter *>(op_parameter_);
+  auto conv2d_lite_primitive = (lite::Conv2D *)primitive_;
+  param->pad_u_ = conv2d_lite_primitive->PadUp();
+  param->pad_d_ = conv2d_lite_primitive->PadDown();
+  param->pad_l_ = conv2d_lite_primitive->PadLeft();
+  param->pad_r_ = conv2d_lite_primitive->PadRight();
+  return RET_OK;
 }
 
 REG_KERNEL(kGPU, kNumberTypeFloat32, PrimitiveType_DeConv2D, OpenCLKernelCreator<Conv2dTransposeOpenCLKernel>)

@@ -215,7 +215,7 @@ int ScaleOpenCLKernel::Run() {
     }
   }
   ocl_runtime_->SetKernelArg(kernel_, arg_idx++, param->activation_type_);
-  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_);
+  ocl_runtime_->RunKernel(kernel_, global_range_, local_range_, nullptr, &event_);
   return RET_OK;
 }
 

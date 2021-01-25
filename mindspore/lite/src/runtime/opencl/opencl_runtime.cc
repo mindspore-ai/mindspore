@@ -72,36 +72,10 @@ void printf_callback(const char *buffer, size_t length, size_t final, void *user
   fwrite(buffer, 1, length, stdout);
 }
 
-// Init will get platforms info, get devices info, create opencl context.
-int OpenCLRuntime::Init() {
-  std::unique_lock<std::mutex> lck(g_init_mtx);
-  if (init_state_ == InitSuccess) {
-    return RET_OK;
-  } else if (init_state_ == InitFailed) {
-    return RET_ERROR;
-  }
-  init_state_ = InitFailed;
-
-  MS_LOG(INFO) << "OpenCL version: CL_TARGET_OPENCL_VERSION " << CL_TARGET_OPENCL_VERSION;
-  MS_LOG(INFO) << "CL_HPP_TARGET_OPENCL_VERSION " << CL_HPP_TARGET_OPENCL_VERSION;
-  MS_LOG(INFO) << "CL_HPP_MINIMUM_OPENCL_VERSION " << CL_HPP_MINIMUM_OPENCL_VERSION;
-
-#ifdef USE_OPENCL_WRAPPER
-  if (!lite::opencl::LoadOpenCLLibrary(&handle_)) {
-    MS_LOG(ERROR) << "Load OpenCL symbols failed!";
-    return RET_ERROR;
-  }
-#endif  // USE_OPENCL_WRAPPER
-
-  std::vector<cl::Platform> platforms;
-  cl_int ret = cl::Platform::get(&platforms);
-  if (platforms.empty()) {
-    MS_LOG(ERROR) << "OpenCL Platform not found!" << CLErrorCode(ret);
-    return RET_ERROR;
-  }
-
+int OpenCLRuntime::InitGPUDevice(std::vector<cl::Platform> &platforms) {
   // search GPU
   std::vector<cl::Device> devices;
+  int ret = RET_OK;
   for (auto &platform : platforms) {
     std::string platform_name;
     ret = platform.getInfo(CL_PLATFORM_NAME, &platform_name);
@@ -148,45 +122,6 @@ int OpenCLRuntime::Init() {
                << max_work_item_sizes_[2];
 
   gpu_info_ = ParseGpuInfo(device_name, device_version);
-//  cl_int ret;
-#if defined(SHARING_MEM_WITH_OPENGL) && (CL_HPP_TARGET_OPENCL_VERSION >= 120)
-  // create context from glcontext
-  MS_LOG(INFO) << "Create special opencl context to share with OpenGL";
-  cl_context_properties context_prop[] = {CL_GL_CONTEXT_KHR, (cl_context_properties)eglGetCurrentContext(),
-                                          CL_EGL_DISPLAY_KHR, (cl_context_properties)eglGetCurrentDisplay(), 0};
-  context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &ret);
-
-  if (ret != CL_SUCCESS) {
-    MS_LOG(ERROR) << "Create special OpenCL context failed, Create common OpenCL context then.";
-    context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
-    if (context_ == nullptr) {
-      delete device_;
-      MS_LOG(ERROR) << "Create OpenCL context failed!";
-      return RET_ERROR;
-    }
-  }
-#else
-  MS_LOG(INFO) << "Create common opencl context";
-#ifdef Debug
-  std::vector<cl_context_properties> ctx_properties = {CL_CONTEXT_PLATFORM,
-                                                       (cl_context_properties)platforms[0](),
-                                                       CL_PRINTF_CALLBACK_ARM,
-                                                       (cl_context_properties)printf_callback,
-                                                       CL_PRINTF_BUFFERSIZE_ARM,
-                                                       0x1000000,
-                                                       0};
-  context_ =
-    new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, ctx_properties.data(), nullptr, nullptr, &ret);
-#else
-  context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
-#endif
-#endif
-  if (ret != CL_SUCCESS) {
-    delete device_;
-    MS_LOG(ERROR) << "Context create failed: " << CLErrorCode(ret);
-    return RET_ERROR;
-  }
-
   // get cache size, compute units and frequency.
   ret = device_->getInfo(CL_DEVICE_GLOBAL_MEM_CACHE_SIZE, &global_memery_cachesize_);
   if (ret != CL_SUCCESS) {
@@ -235,6 +170,48 @@ int OpenCLRuntime::Init() {
   MS_LOG(INFO) << "Max Alloc Size: " << max_alloc_size_;
   MS_LOG(INFO) << "Compute Unit: " << compute_units_;
   MS_LOG(INFO) << "Clock Frequency: " << max_freq_ << " MHz";
+  return RET_OK;
+}
+
+int OpenCLRuntime::InitQueue(std::vector<cl::Platform> &platforms) {
+  cl_int ret;
+#if defined(SHARING_MEM_WITH_OPENGL) && (CL_HPP_TARGET_OPENCL_VERSION >= 120)
+  // create context from glcontext
+  MS_LOG(INFO) << "Create special opencl context to share with OpenGL";
+  cl_context_properties context_prop[] = {CL_GL_CONTEXT_KHR, (cl_context_properties)eglGetCurrentContext(),
+                                          CL_EGL_DISPLAY_KHR, (cl_context_properties)eglGetCurrentDisplay(), 0};
+  context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, context_prop, nullptr, nullptr, &ret);
+
+  if (ret != CL_SUCCESS) {
+    MS_LOG(ERROR) << "Create special OpenCL context failed, Create common OpenCL context then.";
+    context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
+    if (context_ == nullptr) {
+      delete device_;
+      MS_LOG(ERROR) << "Create OpenCL context failed!";
+      return RET_ERROR;
+    }
+  }
+#else
+  MS_LOG(INFO) << "Create common opencl context";
+#ifdef Debug
+  std::vector<cl_context_properties> ctx_properties = {CL_CONTEXT_PLATFORM,
+                                                       (cl_context_properties)platforms[0](),
+                                                       CL_PRINTF_CALLBACK_ARM,
+                                                       (cl_context_properties)printf_callback,
+                                                       CL_PRINTF_BUFFERSIZE_ARM,
+                                                       0x1000000,
+                                                       0};
+  context_ =
+    new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, ctx_properties.data(), nullptr, nullptr, &ret);
+#else
+  context_ = new (std::nothrow) cl::Context(std::vector<cl::Device>{*device_}, nullptr, nullptr, nullptr, &ret);
+#endif
+#endif
+  if (ret != CL_SUCCESS) {
+    delete device_;
+    MS_LOG(ERROR) << "Context create failed: " << CLErrorCode(ret);
+    return RET_ERROR;
+  }
 
   default_command_queue_ = new (std::nothrow) cl::CommandQueue(*context_, *device_, 0, &ret);
   if (ret != CL_SUCCESS) {
@@ -251,6 +228,44 @@ int OpenCLRuntime::Init() {
     delete default_command_queue_;
     MS_LOG(ERROR) << "Profiling command Queue create failed: " << CLErrorCode(ret);
     return RET_ERROR;
+  }
+  return RET_OK;
+}
+
+// Init will get platforms info, get devices info, create opencl context.
+int OpenCLRuntime::Init() {
+  std::unique_lock<std::mutex> lck(g_init_mtx);
+  if (init_state_ == InitSuccess) {
+    return RET_OK;
+  } else if (init_state_ == InitFailed) {
+    return RET_ERROR;
+  }
+  init_state_ = InitFailed;
+
+  MS_LOG(INFO) << "OpenCL version: CL_TARGET_OPENCL_VERSION " << CL_TARGET_OPENCL_VERSION;
+  MS_LOG(INFO) << "CL_HPP_TARGET_OPENCL_VERSION " << CL_HPP_TARGET_OPENCL_VERSION;
+  MS_LOG(INFO) << "CL_HPP_MINIMUM_OPENCL_VERSION " << CL_HPP_MINIMUM_OPENCL_VERSION;
+
+#ifdef USE_OPENCL_WRAPPER
+  if (!lite::opencl::LoadOpenCLLibrary(&handle_)) {
+    MS_LOG(ERROR) << "Load OpenCL symbols failed!";
+    return RET_ERROR;
+  }
+#endif  // USE_OPENCL_WRAPPER
+  std::vector<cl::Platform> platforms;
+  cl_int ret = cl::Platform::get(&platforms);
+  if (platforms.empty()) {
+    MS_LOG(ERROR) << "OpenCL Platform not found!" << CLErrorCode(ret);
+    return RET_ERROR;
+  }
+  auto ms_ret = InitGPUDevice(platforms);
+  if (ms_ret != RET_OK) {
+    return ms_ret;
+  }
+
+  ms_ret = InitQueue(platforms);
+  if (ms_ret != RET_OK) {
+    return ms_ret;
   }
 
   allocator_ = new (std::nothrow) OpenCLAllocator(this);
@@ -289,10 +304,6 @@ int OpenCLRuntime::Uninit() {
   profiling_command_queue_ = nullptr;
   context_ = nullptr;
   device_ = nullptr;
-#ifdef USE_OPENCL_WRAPPER
-  lite::opencl::UnLoadOpenCLLibrary(handle_);
-  handle_ = nullptr;
-#endif
   init_state_ = UnInit;
   return RET_OK;
 }

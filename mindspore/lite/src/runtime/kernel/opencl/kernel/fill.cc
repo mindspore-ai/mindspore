@@ -52,8 +52,10 @@ int FillOpenCLKernel::RunShape() {
   auto allocator_ = ocl_runtime_->GetAllocator();
   auto src_data = out_tensors_[0]->data_c();
   cl_float4 fill_value = {default_, default_, default_, default_};
-  for (int i = 0; i < in_tensors_[0]->shape().size(); ++i) {
-    fill_value.s[0] = in_tensors_[0]->shape()[i];
+  auto tensor_shape = in_tensors_[0]->shape();
+  void *tensor_shape_data = tensor_shape.data();
+  for (int i = 0; i < tensor_shape.size(); ++i) {
+    fill_value.s[0] = reinterpret_cast<float *>(tensor_shape_data)[i];
     size_t index = static_cast<size_t>(i);
     auto src_origin = cl::array<cl::size_type, 3U>{0, index, 0};
     auto region = cl::array<cl::size_type, 3U>{1, 1, 1};

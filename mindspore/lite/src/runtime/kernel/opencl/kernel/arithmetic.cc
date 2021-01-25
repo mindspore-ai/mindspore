@@ -76,13 +76,13 @@ int ArithmeticOpenCLKernel::InitWeights() {
   auto fp16_enable = ocl_runtime_->GetFp16Enable();
   for (int i = 0; i < 2; ++i) {
     const auto &in_tensor = in_tensors_.at(i);
-    GpuTensorInfo *in_shape = (i == 0) ? &in0_shape_ : &in1_shape_;
+    GpuTensorInfo in_shape = GpuTensorInfo(in_tensor);
     if (in_tensor->IsConst()) {
-      std::vector<char> weight(in_shape->Image2DSize, 0);
+      std::vector<char> weight(in_shape.Image2DSize, 0);
       bool src_is_fp16 = in_tensor->data_type() == kNumberTypeFloat16;
-      PackNHWCToNHWC4(in_tensor->data_c(), weight.data(), src_is_fp16, fp16_enable, *in_shape);
+      PackNHWCToNHWC4(in_tensor->data_c(), weight.data(), src_is_fp16, fp16_enable, in_shape);
       size_t dtype = fp16_enable ? CL_HALF_FLOAT : CL_FLOAT;
-      ImageSize img_size{in_shape->width, in_shape->height, dtype};
+      ImageSize img_size{in_shape.width, in_shape.height, dtype};
       auto weight_ptr_ = allocator->Malloc(img_size, weight.data());
       weight_ptrs_.push_back(weight_ptr_);
     } else {
@@ -152,7 +152,10 @@ int ArithmeticOpenCLKernel::Prepare() {
   }
 
   SetGlobalLocal();
-  InitWeights();
+  // BiasAdd InitWeight will be called in opencl_subgraph prepare
+  if (Type() != PrimitiveType_BiasAdd) {
+    InitWeights();
+  }
   SetConstArgs();
   MS_LOG(DEBUG) << kernel_name_ << " Init Done!";
   return RET_OK;

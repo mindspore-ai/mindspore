@@ -53,6 +53,12 @@ int TransposeOpenCLKernel::Prepare() {
     perm_4d_[1] = 1;
     perm_4d_[2] = 2;
     perm_4d_[3] = tensor_size_.AlignAxis(param->perm_[1]);
+    if (param->num_axes_ != tensor_size_.NDim) {
+      perm_4d_[0] = 0;
+      perm_4d_[1] = 1;
+      perm_4d_[2] = 2;
+      perm_4d_[3] = 3;
+    }
   } else if (tensor_size_.NDim == 3) {
     perm_4d_[0] = tensor_size_.AlignAxis(param->perm_[0]);
     perm_4d_[1] = 1;
@@ -65,9 +71,9 @@ int TransposeOpenCLKernel::Prepare() {
     perm_4d_[3] = tensor_size_.AlignAxis(param->perm_[3]);
   } else {
     perm_4d_[0] = 0;
-    perm_4d_[0] = 1;
-    perm_4d_[0] = 2;
-    perm_4d_[0] = 3;
+    perm_4d_[1] = 1;
+    perm_4d_[2] = 2;
+    perm_4d_[3] = 3;
   }
   if (tensor_size_.N == 1 && perm_4d_[0] == 0 && perm_4d_[1] == 3 && perm_4d_[2] == 1 && perm_4d_[3] == 2) {
     type_ = TransposeType::AXIS0312;
