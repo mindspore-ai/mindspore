@@ -26,16 +26,16 @@
 namespace mindspore {
 namespace ops {
 namespace {
-abstract::ShapePtr GeluInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
+abstract::ShapePtr GeLUInferShape(const PrimitivePtr &primitive, const std::vector<AbstractBasePtr> &input_args) {
   MS_EXCEPTION_IF_NULL(primitive);
-  auto gelu_prim = primitive->cast<PrimGeluPtr>();
+  auto gelu_prim = primitive->cast<PrimGeLUPtr>();
   MS_EXCEPTION_IF_NULL(gelu_prim);
   auto prim_name = gelu_prim->name();
   auto input_shape = CheckAndConvertUtils::ConvertShapePtrToShape("input_x", input_args[0]->BuildShape(), prim_name);
   return std::make_shared<abstract::Shape>(input_shape);
 }
 
-TypePtr GeluInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
+TypePtr GeLUInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePtr> &input_args) {
   for (const auto &item : input_args) {
     MS_EXCEPTION_IF_NULL(item);
   }
@@ -46,13 +46,13 @@ TypePtr GeluInferType(const PrimitivePtr &prim, const std::vector<AbstractBasePt
   return TypeIdToType(infer_type);
 }
 }  // namespace
-AbstractBasePtr GeluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr GeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args) {
-  return std::make_shared<abstract::AbstractTensor>(GeluInferType(primitive, input_args),
-                                                    GeluInferShape(primitive, input_args)->shape());
+  return std::make_shared<abstract::AbstractTensor>(GeLUInferType(primitive, input_args),
+                                                    GeLUInferShape(primitive, input_args)->shape());
 }
 
-REGISTER_PRIMITIVE_EVAL_IMPL(Gelu, prim::kPrimGelu, GeluInfer);
-REGISTER_PRIMITIVE_C(kNameGelu, Gelu);
+REGISTER_PRIMITIVE_EVAL_IMPL(GeLU, prim::kPrimGeLU, GeLUInfer);
+REGISTER_PRIMITIVE_C(kNameGeLU, GeLU);
 }  // namespace ops
 }  // namespace mindspore

@@ -81,7 +81,7 @@ using mindspore::ops::kNameDepthWiseConv2D;
 using mindspore::ops::kNameDiv;
 using mindspore::ops::kNameElu;
 using mindspore::ops::kNameExp;
-using mindspore::ops::kNameGelu;
+using mindspore::ops::kNameGeLU;
 using mindspore::ops::kNameL2Normalize;
 using mindspore::ops::kNameLayerNorm;
 using mindspore::ops::kNameLeakyRelu;
@@ -117,7 +117,7 @@ constexpr auto kNameGatherV2 = "GatherV2";
 constexpr auto kNameTensorAdd = "TensorAdd";
 std::map<std::string, mindspore::ActivationType> activation_map = {
   {ops::kNameAbs, mindspore::ABS},         {ops::kNameElu, mindspore::ELU},
-  {ops::kNameGelu, mindspore::GELU},       {ops::kNameLeakyRelu, mindspore::LEAKY_RELU},
+  {ops::kNameGeLU, mindspore::GELU},       {ops::kNameLeakyRelu, mindspore::LEAKY_RELU},
   {ops::kNameReLU, mindspore::RELU},       {ops::kNameReLU6, mindspore::RELU6},
   {ops::kNameSigmoid, mindspore::SIGMOID}, {ops::kNameTanh, mindspore::TANH}};
 
@@ -413,7 +413,7 @@ REGIST_PRIMITIVE_ADJUST(kNameDiv, MoveAttrMapCommon<ops::DivFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameElu, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameExp, MoveAttrMapCommon<ops::ExpFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameGatherV2, MoveAttrMapCommon<ops::Gather>)
-REGIST_PRIMITIVE_ADJUST(kNameGelu, MoveAttrMapActivation)
+REGIST_PRIMITIVE_ADJUST(kNameGeLU, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameL2Normalize, MoveAttrMapCommon<ops::L2NormalizeFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameLayerNorm, MoveAttrMapLayerNorm)
 REGIST_PRIMITIVE_ADJUST(kNameLeakyRelu, MoveAttrMapActivation)

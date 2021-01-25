@@ -41,6 +41,10 @@ constexpr auto kTupleGetItem = "TupleGetItem";
 constexpr auto kMakeTuple = "MakeTuple";
 constexpr auto kReturn = "Return";
 constexpr auto kSGD = "SGD";
+constexpr auto kGeLU = "GeLU";
+constexpr auto kGeLUGrad = "GeLUGrad";
+constexpr auto kFastGeLU = "FastGeLU";
+constexpr auto kFastGeLUGrad = "FastGeLUGrad";
 
 // Here list all primitives used in backend or some special primitives used by core.
 // Arithmetic
@@ -249,10 +253,10 @@ inline const PrimitivePtr kPrimDropout = std::make_shared<Primitive>("Dropout");
 inline const PrimitivePtr kPrimUniformReal = std::make_shared<Primitive>("UniformReal");
 inline const PrimitivePtr kPrimCudnnUniformReal = std::make_shared<Primitive>("CudnnUniformReal");
 inline const PrimitivePtr kPrimOneHot = std::make_shared<Primitive>("OneHot");
-inline const PrimitivePtr kPrimGelu = std::make_shared<Primitive>("Gelu");
-inline const PrimitivePtr kPrimGeluGrad = std::make_shared<Primitive>("GeluGrad");
-inline const PrimitivePtr kPrimFastGelu = std::make_shared<Primitive>("FastGelu");
-inline const PrimitivePtr kPrimFastGeluGrad = std::make_shared<Primitive>("FastGeluGrad");
+inline const PrimitivePtr kPrimGeLU = std::make_shared<Primitive>(kGeLU);
+inline const PrimitivePtr kPrimGeLUGrad = std::make_shared<Primitive>(kGeLUGrad);
+inline const PrimitivePtr kPrimFastGeLU = std::make_shared<Primitive>(kFastGeLU);
+inline const PrimitivePtr kPrimFastGeLUGrad = std::make_shared<Primitive>(kFastGeLUGrad);
 inline const PrimitivePtr kPrimRelu = std::make_shared<Primitive>("ReLU");
 inline const PrimitivePtr kPrimElu = std::make_shared<Primitive>("ELU");
 inline const PrimitivePtr kPrimRelu6 = std::make_shared<Primitive>("ReLU6");

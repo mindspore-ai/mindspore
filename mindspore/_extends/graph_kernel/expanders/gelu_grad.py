@@ -23,7 +23,7 @@ HALF = 0.5
 
 
 def expand_gelugrad(expand_info):
-    """GeluGrad expander"""
+    """GeLUGrad expander"""
     # cal formula are:
     # gelu_grad(dy, x) is dy * y'
     # y' is 0.5 * (1.0 + tanh(tanh_para)) + 0.5 * x * (1.0 - tanh(tanh_para) * tanh(para)) * mul_right
