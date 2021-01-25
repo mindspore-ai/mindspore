@@ -16,7 +16,7 @@
 """Selu op"""
 from mindspore.ops.op_info_register import op_info_register, TBERegOp, DataType
 
-selu_op_info = TBERegOp("Selu") \
+selu_op_info = TBERegOp("SeLU") \
     .fusion_type("ELEMWISE") \
     .async_flag(False) \
     .binfile_name("selu.so") \

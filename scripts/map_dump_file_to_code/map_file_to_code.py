@@ -149,8 +149,8 @@ def start_find(dump_op, map_code_file):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Find the dump operator in the user code')
-    parser.add_argument('--graph_path', '-p', type=str.lower, default="", help='Save graph files path (option)')
-    parser.add_argument('--dump_op', '-o', type=str.lower, default="", required=True,
+    parser.add_argument('--graph_path', '-p', type=str, default="", help='Save graph files path (option)')
+    parser.add_argument('--dump_op', '-o', type=str, default="", required=True,
                         help="Dump operator id, case insensitive, such as 'op3352'.")
     args_opt = parser.parse_args()
     start_find(args_opt.dump_op, args_opt.graph_path)
