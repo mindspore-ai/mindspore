@@ -51,8 +51,8 @@ public class MainActivity extends AppCompatActivity implements OnBackgroundImage
             Manifest.permission.READ_PHONE_STATE, Manifest.permission.CAMERA};
     private static final int REQUEST_PERMISSION = 0;
 
-    private static final int[] IMAGES = {R.drawable.style0, R.drawable.style1, R.drawable.style2, R.drawable.style3, R.drawable.style4,
-            R.drawable.style5, R.drawable.style6, R.drawable.style7, R.drawable.style8, R.drawable.style9};
+    private static final int[] IMAGES = {R.drawable.style4, R.drawable.style8, R.drawable.style1, R.drawable.style6, R.drawable.style3,
+            R.drawable.style7, R.drawable.style5, R.drawable.style9, R.drawable.style0, R.drawable.style2};
 
     private static final int RC_CHOOSE_PHOTO = 1;
     private static final int RC_CHOOSE_CAMERA = 2;
