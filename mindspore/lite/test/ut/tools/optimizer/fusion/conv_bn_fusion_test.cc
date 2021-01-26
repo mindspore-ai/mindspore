@@ -21,11 +21,11 @@
 #include "include/lite_session.h"
 #include "include/context.h"
 #include "include/errorcode.h"
-#include "import_from_meta_graphT.h"
 #include "src/common/log_adapter.h"
 #include "tools/converter/model_parser.h"
 #include "tools/converter/anf_transform.h"
 #include "tools/anf_exporter/anf_exporter.h"
+#include "test/common/import_from_meta_graphT.h"
 
 namespace mindspore {
 class ConvBNFusionTest : public mindspore::CommonTest {
@@ -262,7 +262,7 @@ MetaGraphTptr BuildTFGraph(schema::PrimitiveType conv_type) {
 }  //  namespace
 TEST_F(ConvBNFusionTest, TestConvAddNode) {
   auto meta_graph = BuildCaffeGraph(schema::PrimitiveType_Conv2DFusion);
-  auto func_graph = lite::Fb2Anf(meta_graph.get());
+  auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
   auto new_graph = anf_transform->Transform(func_graph);
   ASSERT_NE(nullptr, new_graph);
@@ -272,7 +272,7 @@ TEST_F(ConvBNFusionTest, TestConvAddNode) {
 
 TEST_F(ConvBNFusionTest, TestDeptiwiseConvAddNode) {
   auto meta_graph = BuildTFGraph(schema::PrimitiveType_Conv2DFusion);
-  auto func_graph = lite::Fb2Anf(meta_graph.get());
+  auto func_graph = lite::AnfImporterFromMetaGraphT::Fb2Anf(meta_graph.get());
   auto anf_transform = new lite::AnfTransform();
   auto new_graph = anf_transform->Transform(func_graph);
   ASSERT_NE(nullptr, new_graph);

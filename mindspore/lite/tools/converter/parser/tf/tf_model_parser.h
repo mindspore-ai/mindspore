@@ -28,7 +28,7 @@
 #include "securec/include/securec.h"
 #include "tools/common/tensor_util.h"
 #include "tools/converter/model_parser.h"
-#include "mindspore/lite/src/param_value_lite.h"
+#include "src/param_value_lite.h"
 
 namespace mindspore {
 namespace lite {
@@ -38,10 +38,6 @@ class TFModelParser : public ModelParser {
   ~TFModelParser() = default;
 
   FuncGraphPtr Parse(const std::string &modelFile, const std::string &weightFile, const QuantType &quantType);
-
- protected:
-  schema::MetaGraphT *ParseToFb(const std::string &modelFile, const std::string &weightFile,
-                                const QuantType &quantType = QuantType_QUANT_NONE) override;
 
  private:
   STATUS ConvertConstVariant(const tensorflow::TensorProto &tensor_proto, const ParamValueLitePtr &param_value);

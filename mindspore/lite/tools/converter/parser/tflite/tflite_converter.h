@@ -22,13 +22,20 @@
 #include <map>
 #include "tools/converter/converter.h"
 #include "tools/converter/graphdef_transform.h"
+#include "tools/converter/parser/tflite/tflite_model_parser.h"
 
 namespace mindspore::lite {
 class TfliteConverter : public Converter {
  public:
-  TfliteConverter();
+  TfliteConverter() = default;
 
   ~TfliteConverter() override = default;
+
+  FuncGraphPtr BuildFuncGraph(const std::string &model_file, const std::string &weight_file,
+                              schema::QuantType quant_type) override {
+    TfliteModelParser parser;
+    return parser.Parse(model_file, weight_file, quant_type);
+  }
 };
 }  // namespace mindspore::lite
 

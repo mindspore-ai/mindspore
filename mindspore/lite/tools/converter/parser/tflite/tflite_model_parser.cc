@@ -19,15 +19,16 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
+#include "tools/converter/converter_flags.h"
 #include "src/param_value_lite.h"
 #include "src/common/file_utils.h"
 #include "ops/return.h"
 #include "ops/make_tuple.h"
 #include "ops/tuple_get_item.h"
 #include "ops/primitive_c.h"
+#include "ir/func_graph.h"
 
-namespace mindspore {
-namespace lite {
+namespace mindspore::lite {
 std::unique_ptr<tflite::ModelT> TfliteModelParser::ReadTfliteModel(const char *model_path) {
   size_t size = 0;
   tflite_model_buf_ = ReadFile(model_path, &size);
@@ -453,10 +454,4 @@ STATUS TfliteModelParser::ConvertOutputTensor(const tflite::OperatorT *op, const
   }
   return RET_OK;
 }
-
-MetaGraphT *TfliteModelParser::ParseToFb(const std::string &model_file, const std::string &weight_file,
-                                         const QuantType &quant_type) {
-  return nullptr;
-}
-}  // namespace lite
-}  // namespace mindspore
+}  // namespace mindspore::lite

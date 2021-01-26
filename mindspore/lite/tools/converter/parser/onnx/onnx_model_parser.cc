@@ -26,6 +26,9 @@
 #include "ops/return.h"
 #include "ops/make_tuple.h"
 #include "ops/tuple_get_item.h"
+#include "ir/func_graph.h"
+#include "src/param_value_lite.h"
+#include "tools/converter/converter_flags.h"
 
 namespace mindspore {
 namespace lite {
