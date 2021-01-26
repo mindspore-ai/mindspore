@@ -82,7 +82,7 @@ int StackFp16CPUKernel::Run() {
     FreeBuffer();
     return ret;
   }
-  Stack(buffers_.data(), reinterpret_cast<char *>(out_buffer_), in_tensors_.size(), copy_size_, outter_size_);
+  Stack(buffers_.data(), reinterpret_cast<char *>(out_buffer_), in_tensors_.size(), copy_size_, outer_size_);
   // if output tensor is fp32, we need to transform
   if (malloc_out_) {
     auto out_tensor = out_tensors_.at(0);

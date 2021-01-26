@@ -108,6 +108,10 @@ int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *p
                 *((int8_t *)out_data + out_offset) = *((int8_t *)in_data + in_offset);
               } else if (param->data_type == kDataTypeInt) {
                 *((int32_t *)out_data + out_offset) = *((int32_t *)in_data + in_offset);
+#ifdef ENABLE_ARM64
+              } else if (param->data_type == kDataTypeFloat16) {
+                *((float16_t *)out_data + out_offset) = *((float16_t *)in_data + in_offset);
+#endif
               } else {
                 return NNACL_ERR;
               }
@@ -119,4 +123,16 @@ int DoStridedSlice(const void *in_data, void *out_data, StridedSliceParameter *p
     }
   }
   return NNACL_OK;
+}
+
+void FastStride(const uint8_t *input, uint8_t *output, int split_len, int stride, size_t outer, size_t inner_size,
+                size_t in_offset) {
+  for (size_t i = 0; i < outer; ++i) {
+    const uint8_t *input_ptr = input + i * in_offset;
+    for (int j = 0; j < split_len; ++j) {
+      memcpy(output, input_ptr, inner_size);
+      output += inner_size;
+      input_ptr += inner_size * stride;
+    }
+  }
 }

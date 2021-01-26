@@ -13,32 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_RESHAPE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_RESHAPE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SQUEEZE_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SQUEEZE_BASE_H_
 
 #include <vector>
-#include "nnacl/fp16/cast_fp16.h"
-#include "nnacl/base/reshape_base.h"
-#include "src/lite_kernel.h"
-#include "include/context.h"
-#include "src/runtime/kernel/arm/fp32/reshape_fp32.h"
+#include "src/runtime/kernel/arm/base/reshape_base.h"
 
 using mindspore::lite::InnerContext;
-
 namespace mindspore::kernel {
-class ReshapeFp16CPUKernel : public ReshapeCPUKernel {
+class SqueezeBaseCPUKernel : public ReshapeBaseCPUKernel {
  public:
-  ReshapeFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-                       const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
+  SqueezeBaseCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                       const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
                        const mindspore::lite::PrimitiveC *primitive)
-      : ReshapeCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
-  ~ReshapeFp16CPUKernel() = default;
-
-  int Run() override;
-
- private:
+      : ReshapeBaseCPUKernel(parameter, inputs, outputs, ctx, primitive) {}
+  ~SqueezeBaseCPUKernel() override = default;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_RESHAPE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SQUEEZE_BASE_H_

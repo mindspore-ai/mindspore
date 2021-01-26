@@ -38,7 +38,7 @@ class StackBaseCPUKernel : public LiteKernel {
   int axis_ = 0;
   size_t data_type_size_ = 0;
   size_t copy_size_ = 0;
-  size_t outter_size_ = 1;
+  size_t outer_size_ = 1;
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_STACK_BASE_H_
