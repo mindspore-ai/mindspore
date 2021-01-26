@@ -30,20 +30,6 @@ namespace mindspore::kernel {
 
 int TensorListSetItemCPUKernel::Init() { return RET_OK; }
 
-int TensorListSetItemCPUKernel::IncrementOutputSize(int origin_size) {
-  output0_ = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
-  int new_tensors_size = origin_size + 1;
-  output0_->set_shape({new_tensors_size});
-  std::vector<std::vector<int>> out_shape;
-  out_shape.resize(new_tensors_size, in_tensors_[2]->shape());
-  auto ret = output0_->MallocTensorListData(in_tensors_[2]->data_type(), out_shape);
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "increment output size malloc tensorlist data error";
-    return ret;
-  }
-  return RET_OK;
-}
-
 int TensorListSetItemCPUKernel::Run() {
   input0_ = reinterpret_cast<lite::TensorList *>(in_tensors_[0]);
   if (dtype_ != kTypeUnknown && dtype_ != input0_->tensors_data_type()) {
@@ -61,10 +47,8 @@ int TensorListSetItemCPUKernel::Run() {
   }
   index_ = reinterpret_cast<int *>(in_tensors_[1]->data_c())[0];
   if (index_ < 0 || index_ > dim0) {
-    if (IncrementOutputSize(output0_->shape()[0]) != RET_OK) {
-      MS_LOG(ERROR) << "Resizeoutput Error ,index tensor:[" << index_ << "] must be in [0, " << dim0 << "]!";
-      return RET_ERROR;
-    }
+    MS_LOG(ERROR) << "index tensor:[" << index_ << "] must be in [0, " << dim0 << "]!";
+    return RET_ERROR;
   }
   input2_ = in_tensors_[2];
   MS_ASSERT(input2_ != nullptr);
@@ -73,13 +57,6 @@ int TensorListSetItemCPUKernel::Run() {
   }
   output0_ = reinterpret_cast<lite::TensorList *>(out_tensors_[0]);
   MS_ASSERT(output0_ != nullptr);
-  // new loop count
-  if (output0_->ElementsNum() != static_cast<int>(output0_->tensors().size()) && output0_->tensors().empty()) {
-    if (IncrementOutputSize(0) != RET_OK) {
-      MS_LOG(ERROR) << "Resizeoutput Error!";
-      return RET_ERROR;
-    }
-  }
   // copy each tensor in tensors_
   for (int i = 0; i < output0_->ElementsNum(); ++i) {
     if (i == index_) {
@@ -115,6 +92,10 @@ int TensorListSetItemCPUKernel::Run() {
       }
 
       if (src->data_type() != kTypeUnknown) {
+        if (src->Size() != dst->Size()) {
+          MS_LOG(ERROR) << "src->Size():" << src->Size() << " must be equal to dst->Size():" << dst->Size();
+          return RET_ERROR;
+        }
         auto ret = lite::Tensor::CopyTensorData(*src, dst);
         if (ret != RET_OK) {
           MS_LOG(ERROR) << "CopyTensorData[" << i << "] is failed!";
