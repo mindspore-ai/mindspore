@@ -44,14 +44,11 @@ typedef struct MatMulParameter {
   int col_;
   int row_4_;
   int row_6_;
-  int row_8_;
   int row_12_;
   int row_16_;
   int row_align_;
-  int col_2_;
   int col_4_;
   int col_8_;
-  int col_16_;
   int col_align_;
   int deep_;
   int deep_4_;
@@ -61,8 +58,6 @@ typedef struct MatMulParameter {
   bool b_transpose_; /* true  :  col-major  */
   bool a_const_;
   bool b_const_;
-  bool a_init_shape_;
-  bool b_init_shape_;
   ActType act_type_;
 } MatMulParameter;
 

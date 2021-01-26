@@ -156,12 +156,8 @@ void FullconnectionInt8CPUKernel::InitParam() {
   fc_param_->deep_ = (in_tensors_.at(1)->shape()).at(1);
 
   fc_param_->row_4_ = UP_ROUND(fc_param_->row_, C4NUM);
-  fc_param_->row_8_ = UP_ROUND(fc_param_->row_, C8NUM);
-  fc_param_->col_2_ = UP_ROUND(fc_param_->col_, C2NUM);
   fc_param_->col_4_ = UP_ROUND(fc_param_->col_, C4NUM);
   fc_param_->col_8_ = UP_ROUND(fc_param_->col_, C8NUM);
-  fc_param_->col_16_ = UP_ROUND(fc_param_->col_, C16NUM);
-  fc_param_->deep_4_ = UP_ROUND(fc_param_->deep_, C4NUM);
   fc_param_->deep_16_ = UP_ROUND(fc_param_->deep_, C16NUM);
 
   thread_count_ = MSMIN(op_parameter_->thread_num_, UP_DIV(fc_param_->col_4_, C4NUM));

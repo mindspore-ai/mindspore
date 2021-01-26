@@ -62,11 +62,8 @@ void Convolution1x1CPUKernel::InitConv1x1MatmulParam() {
   matmul_param_->row_ = conv_param_->output_h_ * conv_param_->output_w_;
   matmul_param_->col_ = conv_param_->output_channel_;
   matmul_param_->deep_ = conv_param_->input_channel_;
-  matmul_param_->row_4_ = UP_ROUND(matmul_param_->row_, C4NUM);
-  matmul_param_->row_6_ = UP_ROUND(matmul_param_->row_, C6NUM);
-  matmul_param_->row_12_ = UP_ROUND(matmul_param_->row_, C12NUM);
   matmul_param_->row_align_ = UP_ROUND(matmul_param_->row_, row_tile_);
-  matmul_param_->col_8_ = UP_ROUND(matmul_param_->col_, C8NUM);
+  matmul_param_->col_align_ = UP_ROUND(matmul_param_->col_, col_tile_);
   matmul_param_->act_type_ = conv_param_->act_type_;
   return;
 }
@@ -75,20 +72,6 @@ int Convolution1x1CPUKernel::InitConv1x1BiasWeight() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = filter_tensor->Channel();
   auto output_channel = filter_tensor->Batch();
-
-#ifdef ENABLE_AVX
-  row_tile_ = C6NUM;
-  col_tile_ = C16NUM;
-#elif defined(ENABLE_SSE)
-  row_tile_ = C4NUM;
-  col_tile_ = C8NUM;
-#elif defined(ENABLE_ARM32)
-  row_tile_ = C12NUM;
-  col_tile_ = C4NUM;
-#else
-  row_tile_ = C12NUM;
-  col_tile_ = C8NUM;
-#endif
 
   if (in_tensors_.size() == 3) {
     int size = UP_ROUND(output_channel, col_tile_) * sizeof(float);
@@ -146,6 +129,19 @@ int Convolution1x1CPUKernel::InitConv1x1Param() {
 }
 
 int Convolution1x1CPUKernel::Init() {
+#ifdef ENABLE_AVX
+  row_tile_ = C6NUM;
+  col_tile_ = C16NUM;
+#elif defined(ENABLE_SSE)
+  row_tile_ = C4NUM;
+  col_tile_ = C8NUM;
+#elif defined(ENABLE_ARM32)
+  row_tile_ = C12NUM;
+  col_tile_ = C4NUM;
+#else
+  row_tile_ = C12NUM;
+  col_tile_ = C8NUM;
+#endif
   matmul_param_ = new (std::nothrow) MatMulParameter;
   if (matmul_param_ == nullptr) {
     MS_LOG(ERROR) << "Memory allocation failed";
@@ -269,20 +265,6 @@ void Convolution1x1CPUKernel::PackWeight() {
   auto filter_tensor = in_tensors_.at(kWeightIndex);
   auto input_channel = filter_tensor->Channel();
   auto output_channel = filter_tensor->Batch();
-
-#ifdef ENABLE_AVX
-  row_tile_ = C6NUM;
-  col_tile_ = C16NUM;
-#elif defined(ENABLE_SSE)
-  row_tile_ = C4NUM;
-  col_tile_ = C8NUM;
-#elif defined(ENABLE_ARM32)
-  row_tile_ = C12NUM;
-  col_tile_ = C4NUM;
-#else
-  row_tile_ = C12NUM;
-  col_tile_ = C8NUM;
-#endif
 
   int size = input_channel * UP_ROUND(output_channel, col_tile_) * sizeof(float);
   int down_size = input_channel * DOWN_DIV(output_channel, col_tile_) * col_tile_ * sizeof(float);
