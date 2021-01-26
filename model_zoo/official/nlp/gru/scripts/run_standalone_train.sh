@@ -33,9 +33,9 @@ get_real_path(){
 
 DATASET_PATH=$(get_real_path $1)
 echo $DATASET_PATH
-if [ ! -d $DATASET_PATH ]
+if [ ! -f $DATASET_PATH ]
 then
-    echo "error: DATASET_PATH=$DATASET_PATH is not a directory"
+    echo "error: DATASET_PATH=$DATASET_PATH is not a file"
 exit 1
 fi
 

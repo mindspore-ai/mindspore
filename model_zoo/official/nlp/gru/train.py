@@ -99,8 +99,7 @@ if __name__ == '__main__':
     else:
         rank = 0
         device_num = 1
-    prefix = "multi30k_train_mindrecord_32_"
-    mindrecord_file = os.path.join(args.dataset_path, prefix+"0")
+    mindrecord_file = args.dataset_path
     if not os.path.exists(mindrecord_file):
         print("dataset file {} not exists, please check!".format(mindrecord_file))
         raise ValueError(mindrecord_file)
