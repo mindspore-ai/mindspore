@@ -449,9 +449,9 @@ void AscendSession::UnifyMindIR(const KernelGraphPtr &graph) {
   if (ms_context->get_param<int>(MS_CTX_EXECUTION_MODE) == kGraphMode) {
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIR>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIR>());
-    unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
     unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
     unify_mindir_pm->AddPass(std::make_shared<opt::GradSparseSoftmaxCrossEntropyWithLogitsUnifyMindIRV2>());
+    unify_mindir_pm->AddPass(std::make_shared<opt::SparseSoftmaxCrossEntropyWithLogitsUnifyMindIR>());
   } else {
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutUnifyMindIRPynative>());
     unify_mindir_pm->AddPass(std::make_shared<opt::DropoutGradUnifyMindIRPynative>());
