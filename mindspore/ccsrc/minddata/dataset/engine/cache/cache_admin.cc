@@ -42,14 +42,6 @@ int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
 #endif
 
-  // Create default spilling dir
-  ds::Path spill_dir = ds::Path(ds::DefaultSpillDir());
-  rc = spill_dir.CreateDirectories();
-  if (!rc.IsOk()) {
-    std::cerr << rc.ToString() << std::endl;
-    return 1;
-  }
-
   if (argc == 1) {
     args.Help();
     return 0;

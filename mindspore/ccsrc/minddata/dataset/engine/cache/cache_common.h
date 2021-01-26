@@ -91,9 +91,6 @@ using worker_id_t = int32_t;
 using numa_id_t = int32_t;
 using cpu_id_t = int32_t;
 
-/// Return the default spill dir for cache
-inline std::string DefaultSpillDir() { return kDefaultPathPrefix; }
-
 /// Return the default log dir for cache
 inline std::string DefaultLogDir() { return kDefaultPathPrefix + std::string("/log"); }
 

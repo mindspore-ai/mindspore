@@ -15,7 +15,8 @@
 # ============================================================================
 
 # source the globals and functions for use with cache testing
-SKIP_ADMIN_COUNTER=false
+export SKIP_ADMIN_COUNTER=false
+declare failed_tests
 . cachetest_lib.sh
 echo
 

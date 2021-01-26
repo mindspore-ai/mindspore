@@ -201,6 +201,22 @@ class CacheServer : public Service {
   /// \brief Return the memory cap ratio
   float GetMemoryCapRatio() const { return memory_cap_ratio_; }
 
+  /// \brief Function to handle a row request
+  /// \param[in] cache_req A row request to handle
+  /// \param[out] internal_request Indicator if the request is an internal request
+  /// \return Status object
+  Status ProcessRowRequest(CacheServerRequest *cache_req, bool *internal_request);
+
+  /// \brief Function to handle an admin request
+  /// \param[in] cache_req An admin request to handle
+  /// \return Status object
+  Status ProcessAdminRequest(CacheServerRequest *cache_req);
+
+  /// \brief Function to handle a session request
+  /// \param[in] cache_req A session request to handle
+  /// \return Status object
+  Status ProcessSessionRequest(CacheServerRequest *cache_req);
+
   /// \brief How a request is handled.
   /// \note that it can be process immediately by a grpc thread or routed to a server thread
   /// which is pinned to some numa node core.
@@ -255,6 +271,12 @@ class CacheServer : public Service {
   /// \brief Locate a cache service from connection id.
   /// \return Pointer to cache service. Null if not found
   CacheService *GetService(connection_id_type id) const;
+
+  /// \brief Going over existing cache service and calculate how much we have consumed so far, a new cache service
+  /// can only be created if there is still enough avail memory left
+  /// \param cache_mem_sz Requested memory for a new cache service
+  /// \return Status object
+  Status GlobalMemoryCheck(uint64_t cache_mem_sz);
 
   /// \brief Create a cache service. We allow multiple clients to create the same cache service.
   /// Subsequent duplicate requests are ignored. The first cache client to create the service will be given
@@ -313,6 +335,12 @@ class CacheServer : public Service {
   /// \param reply
   /// \return Status object
   Status GetStat(CacheRequest *rq, CacheReply *reply);
+
+  /// \brief Internal function to get cache state
+  /// \param rq
+  /// \param reply
+  /// \return Status object
+  Status GetCacheState(CacheRequest *rq, CacheReply *reply);
 
   /// \brief Cache a schema request
   /// \param rq
@@ -411,6 +439,9 @@ class CacheServer : public Service {
   /// \return Status object
   Status BatchFetch(const std::shared_ptr<flatbuffers::FlatBufferBuilder> &fbb, WritableSlice *out);
   Status BatchCacheRows(CacheRequest *rq);
+
+  Status InternalFetchRow(CacheRequest *rq);
+  Status InternalCacheRow(CacheRequest *rq, CacheReply *reply);
 };
 }  // namespace dataset
 }  // namespace mindspore

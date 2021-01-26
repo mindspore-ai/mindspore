@@ -62,7 +62,7 @@ def test_cache_nomap_basic1():
     schema.add_column('label', de_type=mstype.uint8, shape=[1])
 
     # create a cache.  arbitrary session_id for now
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # User-created sampler here
     ds1 = ds.RandomDataset(schema=schema, total_rows=10, num_parallel_workers=4, cache=some_cache)
@@ -96,7 +96,7 @@ def test_cache_nomap_basic2():
     schema.add_column('label', de_type=mstype.uint8, shape=[1])
 
     # create a cache.  arbitrary session_id for now
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # sampler arg not given directly, however any of these args will auto-generate an appropriate sampler:
     # num_samples, shuffle, num_shards, shard_id
@@ -134,7 +134,7 @@ def test_cache_nomap_basic3():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False, cache=some_cache)
     decode_op = c_vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=["image"])
@@ -183,7 +183,7 @@ def test_cache_nomap_basic4():
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
     # This dataset has 3 records in it only
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
     # With shuffle not being set, TF defaults to a "global" shuffle when there is no cache
     # in the picture.  This causes a shuffle-injection over the TF.  For clarify, this test will
     # explicitly give the global option, even though it's the default in python.
@@ -231,7 +231,7 @@ def test_cache_nomap_basic5():
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
     # This dataset has 3 records in it only
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], cache=some_cache)
     decode_op = c_vision.Decode()
     ds1 = ds1.map(operations=decode_op, input_columns=["image"])
@@ -270,7 +270,7 @@ def test_cache_nomap_basic6():
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
     # This dataset has 3 records in it only
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # With only 3 records shard into 3, we expect only 1 record returned for this shard
     # However, the sharding will be done by the sampler, not by the tf record leaf node
@@ -313,7 +313,7 @@ def test_cache_nomap_basic7():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=ds.Shuffle.GLOBAL, cache=some_cache)
@@ -344,7 +344,7 @@ def test_cache_nomap_basic8():
         session_id = int(os.environ['SESSION_ID'])
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
@@ -371,7 +371,7 @@ def test_cache_nomap_basic9():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # Contact the server to get the statistics, this should fail because we have not used this cache in any pipeline
     # so there will not be any cache to get stats on.
@@ -404,7 +404,7 @@ def test_cache_nomap_allowed_share1():
 
     ds.config.set_seed(1)
     # This dataset has 3 records in it only
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True, prefetch_size=32)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, prefetch_size=32)
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False, cache=some_cache)
     ds1 = ds1.repeat(4)
 
@@ -446,7 +446,7 @@ def test_cache_nomap_allowed_share2():
 
     ds.config.set_seed(1)
     # This dataset has 3 records in it only
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
     decode_op = c_vision.Decode()
 
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -488,7 +488,7 @@ def test_cache_nomap_allowed_share3():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     tf_files = ["../data/dataset/tf_file_dataset/test1.data", "../data/dataset/tf_file_dataset/test2.data"]
     ds1 = ds.TFRecordDataset(tf_files, num_shards=2, shard_id=0, num_samples=3, shuffle=False, cache=some_cache)
@@ -529,7 +529,7 @@ def test_cache_nomap_allowed_share4():
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
     # This dataset has 3 records in it only
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
     decode_op = c_vision.Decode()
 
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -572,7 +572,7 @@ def test_cache_nomap_disallowed_share1():
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
     # This dataset has 3 records in it only
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
     decode_op = c_vision.Decode()
     rescale_op = c_vision.Rescale(1.0 / 255.0, -1.0)
 
@@ -615,7 +615,7 @@ def test_cache_nomap_running_twice1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
@@ -658,7 +658,7 @@ def test_cache_nomap_running_twice2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
@@ -763,7 +763,7 @@ def test_cache_nomap_parallel_pipeline1(shard):
         session_id = int(os.environ['SESSION_ID'])
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, num_shards=3, shard_id=int(shard), cache=some_cache)
@@ -799,7 +799,7 @@ def test_cache_nomap_parallel_pipeline2(shard):
         session_id = int(os.environ['SESSION_ID'])
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, num_shards=3, shard_id=int(shard))
@@ -835,7 +835,7 @@ def test_cache_nomap_parallel_workers():
         session_id = int(os.environ['SESSION_ID'])
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, num_parallel_workers=4)
@@ -872,7 +872,7 @@ def test_cache_nomap_server_workers_1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
@@ -909,7 +909,7 @@ def test_cache_nomap_server_workers_100():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
@@ -946,7 +946,7 @@ def test_cache_nomap_num_connections_1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True, num_connections=1)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, num_connections=1)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
@@ -983,7 +983,7 @@ def test_cache_nomap_num_connections_100():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True, num_connections=100)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, num_connections=100)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
@@ -1020,7 +1020,7 @@ def test_cache_nomap_prefetch_size_1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True, prefetch_size=1)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, prefetch_size=1)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
@@ -1057,7 +1057,7 @@ def test_cache_nomap_prefetch_size_100():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True, prefetch_size=100)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, prefetch_size=100)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
@@ -1098,7 +1098,7 @@ def test_cache_nomap_to_device():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
@@ -1134,7 +1134,7 @@ def test_cache_nomap_session_destroy():
                       shape=[640, 480, 3])  # 921600 bytes (a bit less than 1 MB per image)
     schema.add_column('label', de_type=mstype.uint8, shape=[1])
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # User-created sampler here
     ds1 = ds.RandomDataset(schema=schema, num_parallel_workers=4, cache=some_cache)
@@ -1172,7 +1172,7 @@ def test_cache_nomap_server_stop():
                       shape=[640, 480, 3])  # 921600 bytes (a bit less than 1 MB per image)
     schema.add_column('label', de_type=mstype.uint8, shape=[1])
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # User-created sampler here
     ds1 = ds.RandomDataset(schema=schema, num_parallel_workers=4, cache=some_cache)
@@ -1206,7 +1206,7 @@ def test_cache_nomap_epoch_ctrl1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
@@ -1246,7 +1246,7 @@ def test_cache_nomap_epoch_ctrl2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
@@ -1292,7 +1292,7 @@ def test_cache_nomap_epoch_ctrl3():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, cache=some_cache)
@@ -1339,7 +1339,7 @@ def test_cache_nomap_epoch_ctrl4():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
@@ -1381,8 +1381,8 @@ def test_cache_nomap_multiple_cache1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    train_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
-    eval_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    train_cache = ds.DatasetCache(session_id=session_id, size=0)
+    eval_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 12 records in it
     train_dataset = ds.TFRecordDataset(TRAIN_DATA_DIR, TRAIN_SCHEMA_DIR)
@@ -1425,8 +1425,8 @@ def test_cache_nomap_multiple_cache2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    image_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
-    text_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    image_cache = ds.DatasetCache(session_id=session_id, size=0)
+    text_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     image_dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
@@ -1470,8 +1470,8 @@ def test_cache_nomap_multiple_cache3():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    tf_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
-    image_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    tf_cache = ds.DatasetCache(session_id=session_id, size=0)
+    image_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     tf_dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
@@ -1515,7 +1515,7 @@ def test_cache_nomap_multiple_cache_train():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    train_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    train_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 12 records in it
     train_dataset = ds.TFRecordDataset(TRAIN_DATA_DIR, TRAIN_SCHEMA_DIR)
@@ -1553,7 +1553,7 @@ def test_cache_nomap_multiple_cache_eval():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    eval_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    eval_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset only has 3 records in it
     eval_dataset = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
@@ -1591,7 +1591,7 @@ def test_cache_nomap_clue1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # With only 3 records shard into 3, we expect only 1 record returned for this shard
     # However, the sharding will be done by the sampler, not by the clue leaf node
@@ -1630,7 +1630,7 @@ def test_cache_nomap_clue2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     ds1 = ds.CLUEDataset(CLUE_DATA_DIR, task='AFQMC', usage='train', num_samples=2)
     ds1 = ds1.map((lambda x: x), ["label"], cache=some_cache)
@@ -1666,7 +1666,7 @@ def test_cache_nomap_csv1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # With only 3 records shard into 3, we expect only 1 record returned for this shard
     # However, the sharding will be done by the sampler, not by the clue leaf node
@@ -1706,7 +1706,7 @@ def test_cache_nomap_csv2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     ds1 = ds.CSVDataset(CSV_DATA_DIR, column_defaults=["1", "2", "3", "4"],
                         column_names=['col1', 'col2', 'col3', 'col4'], num_samples=2)
@@ -1743,7 +1743,7 @@ def test_cache_nomap_textfile1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # With only 3 records shard into 3, we expect only 1 record returned for this shard
     # However, the sharding will be done by the sampler, not by the clue leaf node
@@ -1788,7 +1788,7 @@ def test_cache_nomap_textfile2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     ds1 = ds.TextFileDataset(TEXT_FILE_DATA_DIR, num_samples=2)
     tokenizer = text.PythonTokenizer(my_tokenizer)
@@ -1828,7 +1828,7 @@ def test_cache_nomap_nested_repeat():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR)
@@ -1867,7 +1867,7 @@ def test_cache_nomap_get_repeat_count():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 3 records in it only
     ds1 = ds.TFRecordDataset(DATA_DIR, SCHEMA_DIR, columns_list=["image"], shuffle=False)
@@ -1902,7 +1902,7 @@ def test_cache_nomap_long_file_list():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=1, spilling=False)
+    some_cache = ds.DatasetCache(session_id=session_id, size=1)
 
     ds1 = ds.TFRecordDataset([DATA_DIR[0] for _ in range(0, 1000)], SCHEMA_DIR, columns_list=["image"],
                              cache=some_cache)

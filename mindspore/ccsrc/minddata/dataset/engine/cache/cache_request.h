@@ -125,6 +125,33 @@ class BaseRequest {
   /// \return Status object
   Status Wait();
 
+  /// \brief Return if the request is of row request type
+  /// \return True if the request is row-related request
+  bool IsRowRequest() const {
+    return type_ == RequestType::kBatchCacheRows || type_ == RequestType::kBatchFetchRows ||
+           type_ == RequestType::kInternalCacheRow || type_ == RequestType::kInternalFetchRow ||
+           type_ == RequestType::kCacheRow;
+  }
+
+  /// \brief Return if the request is of admin request type
+  /// \return True if the request is admin-related request
+  bool IsAdminRequest() const {
+    return type_ == RequestType::kCreateCache || type_ == RequestType::kDestroyCache ||
+           type_ == RequestType::kGetStat || type_ == RequestType::kGetCacheState ||
+           type_ == RequestType::kAllocateSharedBlock || type_ == RequestType::kFreeSharedBlock ||
+           type_ == RequestType::kCacheSchema || type_ == RequestType::kFetchSchema ||
+           type_ == RequestType::kBuildPhaseDone || type_ == RequestType::kToggleWriteMode ||
+           type_ == RequestType::kConnectReset || type_ == RequestType::kStopService ||
+           type_ == RequestType::kHeartBeat || type_ == RequestType::kGetCacheMissKeys;
+  }
+
+  /// \brief Return if the request is of session request type
+  /// \return True if the request is session-related request
+  bool IsSessionRequest() const {
+    return type_ == RequestType::kGenerateSessionId || type_ == RequestType::kDropSession ||
+           type_ == RequestType::kListSessions;
+  }
+
  protected:
   CacheRequest rq_;   // This is what we send to the server
   CacheReply reply_;  // This is what the server send back

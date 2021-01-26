@@ -57,7 +57,7 @@ def test_cache_map_basic1():
     else:
         session_id = 1
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
@@ -91,7 +91,7 @@ def test_cache_map_basic2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -115,7 +115,7 @@ def test_cache_map_basic3():
         session_id = int(os.environ['SESSION_ID'])
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
@@ -155,7 +155,7 @@ def test_cache_map_basic4():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     data = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
@@ -189,7 +189,7 @@ def test_cache_map_basic5():
         session_id = int(os.environ['SESSION_ID'])
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
@@ -225,7 +225,7 @@ def test_cache_map_failure1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
@@ -269,7 +269,7 @@ def test_cache_map_failure2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -310,7 +310,7 @@ def test_cache_map_failure3():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -351,7 +351,7 @@ def test_cache_map_failure4():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -391,7 +391,7 @@ def test_cache_map_failure5():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     data = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -432,7 +432,7 @@ def test_cache_map_failure6():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     columns_list = ["id", "file_name", "label_name", "img_data", "label_data"]
     num_readers = 1
@@ -478,7 +478,7 @@ def test_cache_map_failure7():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     data = ds.GeneratorDataset(generator_1d, ["data"])
     data = data.map((lambda x: x), ["data"], cache=some_cache)
@@ -514,7 +514,7 @@ def test_cache_map_failure8():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -554,7 +554,7 @@ def test_cache_map_failure9():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -596,7 +596,7 @@ def test_cache_map_failure10():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -614,6 +614,37 @@ def test_cache_map_failure10():
 
     assert num_iter == 0
     logger.info('test_cache_failure10 Ended.\n')
+
+
+@pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
+def test_cache_map_failure11():
+    """
+    Test set spilling=true when cache server is started without spilling support (failure)
+
+         Cache(spilling=true)
+                 |
+             ImageFolder
+
+    """
+    logger.info("Test cache failure 11")
+    if "SESSION_ID" in os.environ:
+        session_id = int(os.environ['SESSION_ID'])
+    else:
+        raise RuntimeError("Testcase requires SESSION_ID environment variable")
+
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+
+    # This DATA_DIR only has 2 images in it
+    ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
+
+    with pytest.raises(RuntimeError) as e:
+        num_iter = 0
+        for _ in ds1.create_dict_iterator():
+            num_iter += 1
+    assert "Unexpected error. Server is not set up with spill support" in str(e.value)
+
+    assert num_iter == 0
+    logger.info('test_cache_failure11 Ended.\n')
 
 
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
@@ -641,7 +672,7 @@ def test_cache_map_split1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -692,7 +723,7 @@ def test_cache_map_split2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 9 records
     ds1 = ds.VOCDataset(VOC_DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
@@ -725,27 +756,27 @@ def test_cache_map_parameter_check():
     logger.info("Test cache map parameter check")
 
     with pytest.raises(ValueError) as info:
-        ds.DatasetCache(session_id=-1, size=0, spilling=True)
+        ds.DatasetCache(session_id=-1, size=0)
     assert "Input is not within the required interval" in str(info.value)
 
     with pytest.raises(TypeError) as info:
-        ds.DatasetCache(session_id="1", size=0, spilling=True)
+        ds.DatasetCache(session_id="1", size=0)
     assert "Argument session_id with value 1 is not of type (<class 'int'>,)" in str(info.value)
 
     with pytest.raises(TypeError) as info:
-        ds.DatasetCache(session_id=None, size=0, spilling=True)
+        ds.DatasetCache(session_id=None, size=0)
     assert "Argument session_id with value None is not of type (<class 'int'>,)" in str(info.value)
 
     with pytest.raises(ValueError) as info:
-        ds.DatasetCache(session_id=1, size=-1, spilling=True)
+        ds.DatasetCache(session_id=1, size=-1)
     assert "Input size must be greater than 0" in str(info.value)
 
     with pytest.raises(TypeError) as info:
-        ds.DatasetCache(session_id=1, size="1", spilling=True)
+        ds.DatasetCache(session_id=1, size="1")
     assert "Argument size with value 1 is not of type (<class 'int'>,)" in str(info.value)
 
     with pytest.raises(TypeError) as info:
-        ds.DatasetCache(session_id=1, size=None, spilling=True)
+        ds.DatasetCache(session_id=1, size=None)
     assert "Argument size with value None is not of type (<class 'int'>,)" in str(info.value)
 
     with pytest.raises(TypeError) as info:
@@ -753,31 +784,31 @@ def test_cache_map_parameter_check():
     assert "Argument spilling with value illegal is not of type (<class 'bool'>,)" in str(info.value)
 
     with pytest.raises(TypeError) as err:
-        ds.DatasetCache(session_id=1, size=0, spilling=True, hostname=50052)
+        ds.DatasetCache(session_id=1, size=0, hostname=50052)
     assert "Argument hostname with value 50052 is not of type (<class 'str'>,)" in str(err.value)
 
     with pytest.raises(RuntimeError) as err:
-        ds.DatasetCache(session_id=1, size=0, spilling=True, hostname="illegal")
+        ds.DatasetCache(session_id=1, size=0, hostname="illegal")
     assert "now cache client has to be on the same host with cache server" in str(err.value)
 
     with pytest.raises(RuntimeError) as err:
-        ds.DatasetCache(session_id=1, size=0, spilling=True, hostname="127.0.0.2")
+        ds.DatasetCache(session_id=1, size=0, hostname="127.0.0.2")
     assert "now cache client has to be on the same host with cache server" in str(err.value)
 
     with pytest.raises(TypeError) as info:
-        ds.DatasetCache(session_id=1, size=0, spilling=True, port="illegal")
+        ds.DatasetCache(session_id=1, size=0, port="illegal")
     assert "Argument port with value illegal is not of type (<class 'int'>,)" in str(info.value)
 
     with pytest.raises(TypeError) as info:
-        ds.DatasetCache(session_id=1, size=0, spilling=True, port="50052")
+        ds.DatasetCache(session_id=1, size=0, port="50052")
     assert "Argument port with value 50052 is not of type (<class 'int'>,)" in str(info.value)
 
     with pytest.raises(ValueError) as err:
-        ds.DatasetCache(session_id=1, size=0, spilling=True, port=0)
+        ds.DatasetCache(session_id=1, size=0, port=0)
     assert "Input port is not within the required interval of (1025 to 65535)" in str(err.value)
 
     with pytest.raises(ValueError) as err:
-        ds.DatasetCache(session_id=1, size=0, spilling=True, port=65536)
+        ds.DatasetCache(session_id=1, size=0, port=65536)
     assert "Input port is not within the required interval of (1025 to 65535)" in str(err.value)
 
     with pytest.raises(TypeError) as err:
@@ -807,7 +838,7 @@ def test_cache_map_running_twice1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -850,7 +881,7 @@ def test_cache_map_running_twice2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
@@ -998,7 +1029,7 @@ def test_cache_map_parallel_pipeline1(shard):
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, num_shards=2, shard_id=int(shard), cache=some_cache)
@@ -1035,7 +1066,7 @@ def test_cache_map_parallel_pipeline2(shard):
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, num_shards=2, shard_id=int(shard))
@@ -1072,7 +1103,7 @@ def test_cache_map_parallel_workers():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, num_parallel_workers=4)
@@ -1109,7 +1140,7 @@ def test_cache_map_server_workers_1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -1146,7 +1177,7 @@ def test_cache_map_server_workers_100():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
@@ -1183,7 +1214,7 @@ def test_cache_map_num_connections_1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True, num_connections=1)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, num_connections=1)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -1220,7 +1251,7 @@ def test_cache_map_num_connections_100():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True, num_connections=100)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, num_connections=100)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
@@ -1257,7 +1288,7 @@ def test_cache_map_prefetch_size_1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True, prefetch_size=1)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, prefetch_size=1)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -1294,7 +1325,7 @@ def test_cache_map_prefetch_size_100():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True, prefetch_size=100)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0, prefetch_size=100)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
@@ -1335,7 +1366,7 @@ def test_cache_map_to_device():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -1366,7 +1397,7 @@ def test_cache_map_epoch_ctrl1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
@@ -1406,7 +1437,7 @@ def test_cache_map_epoch_ctrl2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR)
@@ -1452,7 +1483,7 @@ def test_cache_map_epoch_ctrl3():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
@@ -1495,7 +1526,7 @@ def test_cache_map_coco1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 6 records
     ds1 = ds.CocoDataset(COCO_DATA_DIR, annotation_file=COCO_ANNOTATION_FILE, task="Detection", decode=True,
@@ -1531,7 +1562,7 @@ def test_cache_map_coco2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 6 records
     ds1 = ds.CocoDataset(COCO_DATA_DIR, annotation_file=COCO_ANNOTATION_FILE, task="Detection", decode=True)
@@ -1566,7 +1597,7 @@ def test_cache_map_mnist1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
     ds1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=10, cache=some_cache)
 
     num_epoch = 4
@@ -1599,7 +1630,7 @@ def test_cache_map_mnist2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
     ds1 = ds.MnistDataset(MNIST_DATA_DIR, num_samples=10)
 
     resize_op = c_vision.Resize((224, 224))
@@ -1633,7 +1664,7 @@ def test_cache_map_celeba1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 4 records
     ds1 = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False, decode=True, cache=some_cache)
@@ -1668,7 +1699,7 @@ def test_cache_map_celeba2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 4 records
     ds1 = ds.CelebADataset(CELEBA_DATA_DIR, shuffle=False, decode=True)
@@ -1703,7 +1734,7 @@ def test_cache_map_manifest1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 4 records
     ds1 = ds.ManifestDataset(MANIFEST_DATA_FILE, decode=True, cache=some_cache)
@@ -1738,7 +1769,7 @@ def test_cache_map_manifest2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 4 records
     ds1 = ds.ManifestDataset(MANIFEST_DATA_FILE, decode=True)
@@ -1773,7 +1804,7 @@ def test_cache_map_cifar1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
     ds1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=10, cache=some_cache)
 
     num_epoch = 4
@@ -1806,7 +1837,7 @@ def test_cache_map_cifar2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     ds1 = ds.Cifar100Dataset(CIFAR100_DATA_DIR, num_samples=10)
     resize_op = c_vision.Resize((224, 224))
@@ -1841,7 +1872,7 @@ def test_cache_map_cifar3():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=1, spilling=False)
+    some_cache = ds.DatasetCache(session_id=session_id, size=1)
 
     ds1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, cache=some_cache)
 
@@ -1875,7 +1906,7 @@ def test_cache_map_cifar4():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
     ds1 = ds.Cifar10Dataset(CIFAR10_DATA_DIR, num_samples=10, cache=some_cache)
     ds1 = ds1.shuffle(10)
 
@@ -1907,7 +1938,7 @@ def test_cache_map_voc1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 9 records
     ds1 = ds.VOCDataset(VOC_DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True, cache=some_cache)
@@ -1942,7 +1973,7 @@ def test_cache_map_voc2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This dataset has 9 records
     ds1 = ds.VOCDataset(VOC_DATA_DIR, task="Detection", usage="train", shuffle=False, decode=True)
@@ -1987,7 +2018,7 @@ def test_cache_map_python_sampler1():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, sampler=ReverseSampler(), cache=some_cache)
@@ -2023,7 +2054,7 @@ def test_cache_map_python_sampler2():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, sampler=ReverseSampler())
@@ -2061,7 +2092,7 @@ def test_cache_map_nested_repeat():
     else:
         raise RuntimeError("Testcase requires SESSION_ID environment variable")
 
-    some_cache = ds.DatasetCache(session_id=session_id, size=0, spilling=True)
+    some_cache = ds.DatasetCache(session_id=session_id, size=0)
 
     # This DATA_DIR only has 2 images in it
     ds1 = ds.ImageFolderDataset(dataset_dir=DATA_DIR, cache=some_cache)
