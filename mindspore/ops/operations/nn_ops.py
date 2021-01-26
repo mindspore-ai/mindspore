@@ -19,6 +19,7 @@ import math
 import operator
 from functools import reduce, partial
 from mindspore._checkparam import _check_3d_int_or_tuple
+from mindspore import log as logger
 import numpy as np
 from ... import context
 from .. import signature as sig
@@ -2921,7 +2922,7 @@ class OneHot(PrimitiveWithInfer):
                 'value': None}
 
 
-class Gelu(PrimitiveWithInfer):
+class GeLU(PrimitiveWithInfer):
     r"""
     Gaussian Error Linear Units activation function.
 
@@ -2929,7 +2930,7 @@ class Gelu(PrimitiveWithInfer):
     And also please refer to `BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding
     <https://arxiv.org/abs/1810.04805>`_.
 
-    Gelu is defined as follows:
+    GeLU is defined as follows:
 
     .. math::
         \text{output} = 0.5 * x * (1 + erf(x / \sqrt{2})),
@@ -2937,7 +2938,7 @@ class Gelu(PrimitiveWithInfer):
     where :math:`erf` is the "Gauss error function" .
 
     Inputs:
-        - **input_x** (Tensor) - Input to compute the Gelu with data type of float16 or float32.
+        - **input_x** (Tensor) - Input to compute the GeLU with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as input.
@@ -2947,7 +2948,7 @@ class Gelu(PrimitiveWithInfer):
 
     Examples:
         >>> tensor = Tensor(np.array([1.0, 2.0, 3.0]), mindspore.float32)
-        >>> gelu = ops.Gelu()
+        >>> gelu = ops.GeLU()
         >>> result = gelu(tensor)
         >>> print(result)
         [0.841192  1.9545976  2.9963627]
@@ -2965,12 +2966,16 @@ class Gelu(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
         return input_x
 
+def Gelu():
+    logger.warning("WARN_DEPRECATED: The usage of Gelu is deprecated. Please use GeLU.")
+    return GeLU()
 
-class FastGelu(PrimitiveWithInfer):
+
+class FastGeLU(PrimitiveWithInfer):
     r"""
     Fast Gaussian Error Linear Units activation function.
 
-    FastGelu is defined as follows:
+    FastGeLU is defined as follows:
 
     .. math::
         \text{output} = \frac {x} {1 + \exp(-1.702 * \left| x \right|)} * \exp(0.851 * (x - \left| x \right|)),
@@ -2978,7 +2983,7 @@ class FastGelu(PrimitiveWithInfer):
     where :math:`x` is the element of the input.
 
     Inputs:
-        - **input_x** (Tensor) - Input to compute the FastGelu with data type of float16 or float32.
+        - **input_x** (Tensor) - Input to compute the FastGeLU with data type of float16 or float32.
 
     Outputs:
         Tensor, with the same type and shape as input.
@@ -2988,7 +2993,7 @@ class FastGelu(PrimitiveWithInfer):
 
     Examples:
         >>> tensor = Tensor(np.array([[-1.0, 4.0, -8.0], [2.0, -5.0, 9.0]]), mindspore.float32)
-        >>> fast_gelu = P.FastGelu()
+        >>> fast_gelu = P.FastGeLU()
         >>> output = fast_gelu(tensor)
         >>> print(output)
         [[-1.5420423e-01  3.9955849e+00 -9.7664278e-06]
@@ -3006,6 +3011,10 @@ class FastGelu(PrimitiveWithInfer):
     def infer_dtype(self, input_x):
         validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
         return input_x
+
+def FastGelu():
+    logger.warning("WARN_DEPRECATED: The usage of FastGelu is deprecated. Please use FastGeLU.")
+    return FastGeLU()
 
 
 class GetNext(PrimitiveWithInfer):

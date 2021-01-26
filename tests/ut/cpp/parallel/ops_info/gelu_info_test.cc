@@ -26,18 +26,18 @@
 namespace mindspore {
 namespace parallel {
 
-class GeluInfo;
-using GeluInfoPtr = std::shared_ptr<GeluInfo>;
-GeluInfoPtr gelu;
+class GeLUInfo;
+using GeLUInfoPtr = std::shared_ptr<GeLUInfo>;
+GeLUInfoPtr gelu;
 
-class TestGeluInfo : public UT::Common {
+class TestGeLUInfo : public UT::Common {
  public:
-  TestGeluInfo() {}
+  TestGeLUInfo() {}
   void SetUp();
   void TearDown() {}
 };
 
-void TestGeluInfo::SetUp() {
+void TestGeLUInfo::SetUp() {
   RankList dev_list;
 
   for (int32_t i = 0; i < 130; i++) {
@@ -59,10 +59,10 @@ void TestGeluInfo::SetUp() {
   Shapes inputs_shape = {{2, 4, 8, 16}};
   Shapes outputs_shape = {{2, 4, 8, 16}};
 
-  gelu = std::make_shared<GeluInfo>("gelu_info", inputs_shape, outputs_shape, attr);
+  gelu = std::make_shared<GeLUInfo>("gelu_info", inputs_shape, outputs_shape, attr);
 }
 
-TEST_F(TestGeluInfo, InferDevMatrixShape1) {
+TEST_F(TestGeLUInfo, InferDevMatrixShape1) {
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -73,7 +73,7 @@ TEST_F(TestGeluInfo, InferDevMatrixShape1) {
   ASSERT_EQ(dev_matrix_shape, expect);
 }
 
-TEST_F(TestGeluInfo, InferSliceShape1) {
+TEST_F(TestGeLUInfo, InferSliceShape1) {
   Strategys str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -94,7 +94,7 @@ TEST_F(TestGeluInfo, InferSliceShape1) {
   ASSERT_EQ(output_slice_shape, output_slice_shape_expect);
 }
 
-TEST_F(TestGeluInfo, GetTensorLayout1) {
+TEST_F(TestGeLUInfo, GetTensorLayout1) {
   Strategys str = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, str);
 
@@ -115,7 +115,7 @@ TEST_F(TestGeluInfo, GetTensorLayout1) {
   ASSERT_EQ(output_tensor_map.array(), output_expect);
 }
 
-TEST_F(TestGeluInfo, GetForwardOp1) {
+TEST_F(TestGeLUInfo, GetForwardOp1) {
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -126,7 +126,7 @@ TEST_F(TestGeluInfo, GetForwardOp1) {
   ASSERT_EQ(size, 0);
 }
 
-TEST_F(TestGeluInfo, GetMirrorOPs1) {
+TEST_F(TestGeLUInfo, GetMirrorOPs1) {
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);
 
@@ -138,7 +138,7 @@ TEST_F(TestGeluInfo, GetMirrorOPs1) {
   ASSERT_EQ(size, 0);
 }
 
-TEST_F(TestGeluInfo, CheckStrategy1) {
+TEST_F(TestGeLUInfo, CheckStrategy1) {
   // Success: {{2,4,1,16}}
   Strategys inputs = {{2, 2, 8, 16}, {2, 4, 16, 1}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -147,7 +147,7 @@ TEST_F(TestGeluInfo, CheckStrategy1) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestGeluInfo, CheckStrategy2) {
+TEST_F(TestGeLUInfo, CheckStrategy2) {
   // Success: {{2,4,1,16}}
   Strategys inputs = {{2, 4, 8}};
   StrategyPtr strategy = NewStrategy(0, inputs);
@@ -156,7 +156,7 @@ TEST_F(TestGeluInfo, CheckStrategy2) {
   ASSERT_EQ(ret, FAILED);
 }
 
-TEST_F(TestGeluInfo, CheckStrategy3) {
+TEST_F(TestGeLUInfo, CheckStrategy3) {
   // Success: {{2,4,1,16}}
   Strategys inputs = {{2, 4, 1, 16}};
   StrategyPtr strategy = NewStrategy(0, inputs);

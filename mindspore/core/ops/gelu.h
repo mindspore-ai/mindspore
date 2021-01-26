@@ -25,17 +25,17 @@
 
 namespace mindspore {
 namespace ops {
-constexpr auto kNameGelu = "Gelu";
-class Gelu : public PrimitiveC {
+constexpr auto kNameGeLU = "GeLU";
+class GeLU : public PrimitiveC {
  public:
-  Gelu() : PrimitiveC(kNameGelu) {}
-  ~Gelu() = default;
-  MS_DECLARE_PARENT(Gelu, PrimitiveC);
+  GeLU() : PrimitiveC(kNameGeLU) {}
+  ~GeLU() = default;
+  MS_DECLARE_PARENT(GeLU, PrimitiveC);
   void Init() {}
 };
-AbstractBasePtr GeluInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
+AbstractBasePtr GeLUInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,
                           const std::vector<AbstractBasePtr> &input_args);
-using PrimGeluPtr = std::shared_ptr<Gelu>;
+using PrimGeLUPtr = std::shared_ptr<GeLU>;
 }  // namespace ops
 }  // namespace mindspore
 

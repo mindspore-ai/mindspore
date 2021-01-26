@@ -24,15 +24,15 @@
 
 namespace mindspore {
 namespace ops {
-class TestGelu : public UT::Common {
+class TestGeLU : public UT::Common {
  public:
-  TestGelu() {}
+  TestGeLU() {}
   void SetUp() {}
   void TearDown() {}
 };
 
-TEST_F(TestGelu, test_ops_gelu1) {
-  auto gelu = std::make_shared<Gelu>();
+TEST_F(TestGeLU, test_ops_gelu1) {
+  auto gelu = std::make_shared<GeLU>();
   auto input1 = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat16, std::vector<int64_t>{1, 2});
   MS_EXCEPTION_IF_NULL(input1);
   auto abstract = gelu->Infer({input1->ToAbstract()});
@@ -56,8 +56,8 @@ TEST_F(TestGelu, test_ops_gelu1) {
   EXPECT_EQ(shape_vec[0], 1);
 }
 
-TEST_F(TestGelu, test_ops_gelu2) {
-  auto gelu = std::make_shared<Gelu>();
+TEST_F(TestGeLU, test_ops_gelu2) {
+  auto gelu = std::make_shared<GeLU>();
   auto input1 = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat32, std::vector<int64_t>{1, 2});
   MS_EXCEPTION_IF_NULL(input1);
   auto abstract = gelu->Infer({input1->ToAbstract()});

@@ -604,10 +604,10 @@ def get_bprop_tanh(self):
     return bprop
 
 
-@bprop_getters.register(P.Gelu)
+@bprop_getters.register(P.GeLU)
 def get_bprop_gelu(self):
-    """Grad definition for `Gelu` operation."""
-    input_grad = G.GeluGrad()
+    """Grad definition for `GeLU` operation."""
+    input_grad = G.GeLUGrad()
 
     def bprop(x, out, dout):
         dx = input_grad(dout, x, out)
@@ -616,10 +616,10 @@ def get_bprop_gelu(self):
     return bprop
 
 
-@bprop_getters.register(P.FastGelu)
+@bprop_getters.register(P.FastGeLU)
 def get_bprop_fast_gelu(self):
-    """Grad definition for `FastGelu` operation."""
-    input_grad = G.FastGeluGrad()
+    """Grad definition for `FastGeLU` operation."""
+    input_grad = G.FastGeLUGrad()
 
     def bprop(x, out, dout):
         dx = input_grad(dout, x)

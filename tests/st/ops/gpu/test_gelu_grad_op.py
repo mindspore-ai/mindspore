@@ -28,7 +28,7 @@ context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
 class GeluNet(nn.Cell):
     def __init__(self):
         super(GeluNet, self).__init__()
-        self.gelu = P.Gelu()
+        self.gelu = P.GeLU()
 
     def construct(self, x):
         return self.gelu(x)

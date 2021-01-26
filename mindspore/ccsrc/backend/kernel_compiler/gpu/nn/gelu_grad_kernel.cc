@@ -18,14 +18,14 @@
 
 namespace mindspore {
 namespace kernel {
-MS_REG_GPU_KERNEL_ONE(GeluGrad,
+MS_REG_GPU_KERNEL_ONE(GeLUGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddInputAttr(kNumberTypeFloat32)
                         .AddOutputAttr(kNumberTypeFloat32),
                       GeLUGpuGradKernel, float)
-MS_REG_GPU_KERNEL_ONE(GeluGrad,
+MS_REG_GPU_KERNEL_ONE(GeLUGrad,
                       KernelAttr()
                         .AddInputAttr(kNumberTypeFloat16)
                         .AddInputAttr(kNumberTypeFloat16)

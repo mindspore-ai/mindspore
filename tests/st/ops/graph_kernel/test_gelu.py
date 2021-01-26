@@ -25,7 +25,7 @@ import mindspore.ops.operations._grad_ops as G
 class GeluNet(Cell):
     def __init__(self):
         super(GeluNet, self).__init__()
-        self.gelu = P.Gelu()
+        self.gelu = P.GeLU()
 
     def construct(self, x):
         return self.gelu(x)
@@ -34,7 +34,7 @@ class GeluNet(Cell):
 class GeluGradNet(Cell):
     def __init__(self):
         super(GeluGradNet, self).__init__()
-        self.gelu_grad = G.GeluGrad()
+        self.gelu_grad = G.GeLUGrad()
 
     def construct(self, dy, x, y):
         return self.gelu_grad(dy, x, y)
