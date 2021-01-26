@@ -19,7 +19,7 @@
             android:drawablePadding="5dp"
             android:gravity="center_vertical"
             android:maxLines="1"
-            android:text="MS Pet Classification"
+            android:text="Pet Classification"
             android:textColor="#ffffff"
             android:textSize="20sp" />
     </androidx.appcompat.widget.Toolbar>
