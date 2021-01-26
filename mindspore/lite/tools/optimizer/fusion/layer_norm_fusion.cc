@@ -30,11 +30,6 @@
 namespace mindspore {
 namespace opt {
 namespace {
-constexpr size_t kAddInputsLength = 3;
-constexpr size_t kSubInputsLength = 3;
-constexpr size_t kMulInputsLength = 3;
-constexpr size_t kRsqrtInputsLength = 2;
-constexpr size_t kReduceInputsLength = 2;
 
 bool IsAddNode(const BaseRef &n) {
   if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
@@ -48,14 +43,6 @@ bool IsSquaredDifferenceNode(const BaseRef &n) {
   if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
     auto type = opt::GetCNodeType(n);
     return type == schema::PrimitiveType_SquaredDifference;
-  }
-  return false;
-}
-
-bool IsReduceNode(const BaseRef &n) {
-  if (utils::isa<CNodePtr>(n) || utils::isa<ValueNodePtr>(n)) {
-    auto type = opt::GetCNodeType(n);
-    return type == schema::PrimitiveType_Reduce;
   }
   return false;
 }
@@ -86,13 +73,11 @@ bool IsSubNode(const BaseRef &n) {
 }  // namespace
 
 const BaseRef LayerNormFusion::DefinePattern() const {
-  auto mean1 = std::make_shared<CondVar>(IsReduceNode);
-  VectorRef mean1_ref = VectorRef({mean1, input_});
+  VectorRef mean1_ref = VectorRef({mean1_, input_});
   auto squared_diffference1 = std::make_shared<CondVar>(IsSquaredDifferenceNode);
   VectorRef squared_diffference1_ref = VectorRef({squared_diffference1, input_, mean1_ref});
   auto mul1 = std::make_shared<CondVar>(IsMulNode);
-  auto mean2 = std::make_shared<CondVar>(IsReduceNode);
-  VectorRef mean2_ref = VectorRef({mean2, squared_diffference1_ref});
+  VectorRef mean2_ref = VectorRef({mean2_, squared_diffference1_ref});
   auto add1 = std::make_shared<CondVar>(IsAddNode);
   VectorRef add1_ref = VectorRef({add1, mean2_ref, epsilon_});
   auto rsqrt1 = std::make_shared<CondVar>(IsRsqrtNode);
@@ -109,221 +94,177 @@ const BaseRef LayerNormFusion::DefinePattern() const {
   return add2_ref;
 }
 
-CNodePtr LayerNormFusion::CreateLayerNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv,
-                                              const std::vector<int> &shape, const float epsilon) const {
-  MS_EXCEPTION_IF_NULL(func_graph);
+CNodePtr LayerNormFusion::CreateLayerNormNode(const FuncGraphPtr &func_graph, const EquivPtr &equiv, float epsilon,
+                                              int begin_norm_axis, int begin_params_axis) const {
+  MS_ASSERT(func_graph != nullptr);
+  MS_ASSERT(equiv != nullptr);
   auto layer_norm_primitive = std::make_unique<schema::PrimitiveT>();
   std::unique_ptr<schema::LayerNormT> attr = std::make_unique<schema::LayerNormT>();
   attr->epsilon = epsilon;
+  attr->begin_norm_axis = begin_norm_axis;
+  attr->begin_params_axis = begin_params_axis;
   layer_norm_primitive->value.type = schema::PrimitiveType_LayerNorm;
   layer_norm_primitive->value.value = attr.release();
   auto layer_norm_cvalue = lite::PrimitiveC::Create(layer_norm_primitive.release());
   auto value_node = NewValueNode(std::shared_ptr<lite::PrimitiveC>(layer_norm_cvalue));
   std::vector<AnfNodePtr> new_node_inputs = {value_node};
   auto input_node = utils::cast<AnfNodePtr>((*equiv)[input_]);
-  MS_EXCEPTION_IF_NULL(input_node);
+  MS_ASSERT(input_node != nullptr);
   new_node_inputs.push_back(input_node);
   auto gamma_node = utils::cast<AnfNodePtr>((*equiv)[gamma_]);
-  MS_EXCEPTION_IF_NULL(gamma_node);
+  MS_ASSERT(gamma_node != nullptr);
   new_node_inputs.push_back(gamma_node);
   auto beta_node = utils::cast<AnfNodePtr>((*equiv)[beta_]);
-  MS_EXCEPTION_IF_NULL(beta_node);
+  MS_ASSERT(beta_node != nullptr);
   new_node_inputs.push_back(beta_node);
   auto new_node = func_graph->NewCNode(new_node_inputs);
   return new_node;
+}
+
+bool LayerNormFusion::GetAxis(const CNodePtr &input_cnode, const std::vector<int> &mean_axes,
+                              const std::vector<int> &params_shape, int *begin_norm_axis,
+                              int *begin_params_axis) const {
+  MS_ASSERT(input_node != nullptr);
+  MS_ASSERT(begin_norm_axis != nullptr);
+  MS_ASSERT(begin_params_axis != nullptr);
+  auto abstract = input_cnode->abstract();
+  if (abstract == nullptr) {
+    MS_LOG(DEBUG) << "abstract of input is nullptr";
+    return false;
+  }
+  if (!utils::isa<abstract::AbstractTensorPtr>(abstract)) {
+    MS_LOG(DEBUG) << "Abstract should be abstract tensor";
+    return false;
+  }
+  auto abstract_tensor = utils::cast<abstract::AbstractTensorPtr>(abstract);
+  if (!utils::isa<abstract::ShapePtr>(abstract_tensor->BuildShape())) {
+    MS_LOG(DEBUG) << "Shape of Abstract should be ShapePtr";
+    return false;
+  }
+  auto shape = utils::cast<abstract::ShapePtr>(abstract_tensor->BuildShape())->shape();
+  if (mean_axes.back() + 1 != static_cast<int>(shape.size())) {
+    MS_LOG(DEBUG) << "mean node is not reduce to last axis";
+    return false;
+  }
+  for (size_t i = 1; i < mean_axes.size(); ++i) {
+    if (mean_axes[i] != mean_axes[i - 1] + 1) {
+      MS_LOG(DEBUG) << "mean axes is not continuous";
+      return false;
+    }
+  }
+  // there is no need to check params_shape
+  *begin_norm_axis = mean_axes.front();
+  *begin_params_axis = static_cast<int>(shape.size()) - static_cast<int>(params_shape.size());
+  if (*begin_params_axis < 0) {
+    MS_LOG(DEBUG) << "LayerNorm begin_params_axis illegal, not fuse";
+    return false;
+  }
+  return true;
+}
+
+bool LayerNormFusion::CheckPattern(const EquivPtr &equiv, float *epsilon, int *begin_norm_axis,
+                                   int *begin_params_axis) const {
+  MS_ASSERT(equiv != nullptr);
+  MS_ASSERT(epsilon != nullptr);
+  MS_ASSERT(begin_norm_axis != nullptr);
+  MS_ASSERT(begin_params_axis != nullptr);
+  // beta
+  auto beta_node = utils::cast<AnfNodePtr>((*equiv)[beta_]);
+  MS_ASSERT(beta_node != nullptr);
+  if (CheckIfNodeIsParam(beta_node) != lite::RET_OK) {
+    return false;
+  }
+  auto beta_param = beta_node->cast<ParameterPtr>()->default_param();
+  auto beta_tensor = std::dynamic_pointer_cast<ParamValueLite>(beta_param);
+  auto beta_shape = beta_tensor->tensor_shape();
+  // gamma
+  auto gamma_node = utils::cast<AnfNodePtr>((*equiv)[gamma_]);
+  MS_ASSERT(gamma_node != nullptr);
+  if (CheckIfNodeIsParam(gamma_node) != lite::RET_OK) {
+    return false;
+  }
+  auto gamma_param = gamma_node->cast<ParameterPtr>()->default_param();
+  auto gamma_tensor = std::dynamic_pointer_cast<ParamValueLite>(gamma_param);
+  auto gamma_shape = gamma_tensor->tensor_shape();
+  // epsilon
+  auto epsilon_node = utils::cast<AnfNodePtr>((*equiv)[epsilon_]);
+  MS_ASSERT(epsilon_node != nullptr);
+  if (CheckIfNodeIsParam(epsilon_node) != lite::RET_OK) {
+    return false;
+  }
+  auto epsilon_param = epsilon_node->cast<ParameterPtr>()->default_param();
+  auto epsilon_tensor = std::dynamic_pointer_cast<ParamValueLite>(epsilon_param);
+  auto epsilon_data = reinterpret_cast<float *>(epsilon_tensor->tensor_addr());
+  auto epsilon_shape = epsilon_tensor->tensor_shape();
+  // mean2
+  auto mean2_value = utils::cast<AnfNodePtr>((*equiv)[mean2_]);
+  MS_ASSERT(mean2_value != nullptr);
+  auto mean2_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(mean2_value);
+  if (!utils::isa<std::shared_ptr<mindspore::lite::Reduce>>(mean2_primitivec)) {
+    return false;
+  }
+  auto mean2_op = utils::cast<std::shared_ptr<mindspore::lite::Reduce>>(mean2_primitivec);
+  MS_ASSERT(mean2_op != nullptr);
+  if (mean2_op->GetMode() != schema::ReduceMode_ReduceMean) {
+    return false;
+  }
+  auto mean2_axes = mean2_op->GetAxes();
+  // mean1
+  auto mean1_value = utils::cast<AnfNodePtr>((*equiv)[mean1_]);
+  MS_ASSERT(mean1_value != nullptr);
+  auto mean1_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(mean1_value);
+  if (!utils::isa<std::shared_ptr<mindspore::lite::Reduce>>(mean1_primitivec)) {
+    return false;
+  }
+  auto mean1_op = utils::cast<std::shared_ptr<mindspore::lite::Reduce>>(mean1_primitivec);
+  MS_ASSERT(mean1_op != nullptr);
+  if (mean1_op->GetMode() != schema::ReduceMode_ReduceMean) {
+    return false;
+  }
+  auto mean1_axes = mean1_op->GetAxes();
+  auto input_node = utils::cast<AnfNodePtr>((*equiv)[input_]);
+  MS_ASSERT(input_node != nullptr);
+  if (!utils::isa<CNodePtr>(input_node)) {
+    return false;
+  }
+  auto input_cnode = input_node->cast<CNodePtr>();
+  if (mean1_axes != mean2_axes) {
+    return false;
+  }
+  if (mean1_axes.size() != gamma_shape.size() || mean1_axes.size() != beta_shape.size()) {
+    return false;
+  }
+  if (gamma_shape != beta_shape) {
+    return false;
+  }
+  if (epsilon_shape.empty() || (epsilon_shape.size() == 1 && epsilon_shape[0] == 1)) {
+    *epsilon = epsilon_data[0];
+  } else {
+    return false;
+  }
+  if (!GetAxis(input_cnode, mean1_axes, gamma_shape, begin_norm_axis, begin_params_axis)) {
+    return false;
+  }
+  return true;
 }
 
 const AnfNodePtr LayerNormFusion::Process(const FuncGraphPtr &func_graph, const AnfNodePtr &node,
                                           const EquivPtr &equiv) const {
   MS_ASSERT(func_graph != nullptr);
   MS_ASSERT(node != nullptr);
-  MS_LOG(DEBUG) << "layer_norm pass";
-  if (CheckIfFuncGraphIsNull(func_graph) != lite::RET_OK || CheckIfAnfNodeIsNull(node) != lite::RET_OK) {
-    lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(lite::RET_NULL_PTR);
+  MS_ASSERT(equiv != nullptr);
+  MS_LOG(DEBUG) << "layer_norm_fusion pass";
+  if (!utils::isa<CNodePtr>(node)) {
     return nullptr;
   }
-
-  // add2
   auto add2_cnode = node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(add2_cnode) != lite::RET_OK || CheckInputSize(add2_cnode, kAddInputsLength) != lite::RET_OK) {
+  float epsilon = 0.0f;
+  int begin_norm_axis = 0;
+  int begin_params_axis = 0;
+  if (!CheckPattern(equiv, &epsilon, &begin_norm_axis, &begin_params_axis)) {
     return nullptr;
   }
-  auto add2_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(add2_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Add>>(add2_primitivec));
-  auto add2_op = utils::cast<std::shared_ptr<mindspore::lite::Add>>(add2_primitivec);
-  MS_ASSERT(add2_op != nullptr);
-  AnfNodePtr sub1_node = add2_cnode->input(2);
-  if (CheckIfAnfNodeIsNull(sub1_node) != lite::RET_OK) {
-    return nullptr;
-  }
-
-  // sub1
-  auto sub1_cnode = sub1_node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(sub1_cnode) != lite::RET_OK || CheckInputSize(sub1_cnode, kSubInputsLength) != lite::RET_OK) {
-    return nullptr;
-  }
-  auto sub1_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(sub1_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Sub>>(sub1_primitivec));
-  auto sub1_op = utils::cast<std::shared_ptr<mindspore::lite::Sub>>(sub1_primitivec);
-  MS_ASSERT(sub1_op != nullptr);
-  AnfNodePtr beta_node = sub1_cnode->input(1);
-  AnfNodePtr mul3_node = sub1_cnode->input(2);
-  if (CheckIfAnfNodeIsNull(beta_node) != lite::RET_OK || CheckIfAnfNodeIsNull(mul3_node) != lite::RET_OK) {
-    return nullptr;
-  }
-
-  // beta
-  if (CheckIfNodeIsParam(beta_node) != lite::RET_OK) {
-    return nullptr;
-  }
-  auto beta_param = beta_node->cast<ParameterPtr>()->default_param();
-  auto beta_tensor = std::dynamic_pointer_cast<ParamValueLite>(beta_param);
-  auto beta_shape = beta_tensor->tensor_shape();
-
-  // mul3
-  auto mul3_cnode = mul3_node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(mul3_cnode) != lite::RET_OK || CheckInputSize(mul3_cnode, kMulInputsLength) != lite::RET_OK) {
-    return nullptr;
-  }
-  auto mul3_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(mul3_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Mul>>(mul3_primitivec));
-  auto mul3_op = utils::cast<std::shared_ptr<mindspore::lite::Mul>>(mul3_primitivec);
-  MS_ASSERT(mul3_op != nullptr);
-  AnfNodePtr mean1_node = mul3_cnode->input(1);
-  AnfNodePtr mul2_node = mul3_cnode->input(2);
-  if (CheckIfAnfNodeIsNull(mean1_node) != lite::RET_OK || CheckIfAnfNodeIsNull(mul2_node) != lite::RET_OK) {
-    return nullptr;
-  }
-
-  // mul2
-  auto mul2_cnode = mul2_node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(mul2_cnode) != lite::RET_OK || CheckInputSize(mul2_cnode, kMulInputsLength) != lite::RET_OK) {
-    return nullptr;
-  }
-  auto mul2_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(mul2_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Mul>>(mul2_primitivec));
-  auto mul2_op = utils::cast<std::shared_ptr<mindspore::lite::Mul>>(mul2_primitivec);
-  MS_ASSERT(mul2_op != nullptr);
-  AnfNodePtr rsqrt_node = mul2_cnode->input(1);
-  AnfNodePtr gamma_node = mul2_cnode->input(2);
-  if (CheckIfAnfNodeIsNull(rsqrt_node) != lite::RET_OK || CheckIfAnfNodeIsNull(gamma_node) != lite::RET_OK) {
-    return nullptr;
-  }
-
-  // gamma
-  if (CheckIfNodeIsParam(gamma_node) != lite::RET_OK) {
-    return nullptr;
-  }
-  auto gamma_param = gamma_node->cast<ParameterPtr>()->default_param();
-  auto gamma_tensor = std::dynamic_pointer_cast<ParamValueLite>(gamma_param);
-  auto gamma_shape = gamma_tensor->tensor_shape();
-
-  // rsqrt
-  auto rsqrt_cnode = rsqrt_node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(rsqrt_cnode) != lite::RET_OK ||
-      CheckInputSize(rsqrt_cnode, kRsqrtInputsLength) != lite::RET_OK) {
-    return nullptr;
-  }
-  auto rsqrt_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(rsqrt_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Rsqrt>>(rsqrt_primitivec));
-  auto rsqrt_op = utils::cast<std::shared_ptr<mindspore::lite::Rsqrt>>(rsqrt_primitivec);
-  MS_ASSERT(rsqrt_op != nullptr);
-  AnfNodePtr add1_node = rsqrt_cnode->input(1);
-  if (CheckIfAnfNodeIsNull(add1_node) != lite::RET_OK) {
-    return nullptr;
-  }
-
-  // add1
-  auto add1_cnode = add1_node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(add1_cnode) != lite::RET_OK || CheckInputSize(add1_cnode, kAddInputsLength) != lite::RET_OK) {
-    return nullptr;
-  }
-  auto add1_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(add1_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Add>>(add1_primitivec));
-  auto add1_op = utils::cast<std::shared_ptr<mindspore::lite::Add>>(add1_primitivec);
-  MS_ASSERT(add1_op != nullptr);
-  AnfNodePtr mean2_node = add1_cnode->input(1);
-  AnfNodePtr epsilon_node = add1_cnode->input(2);
-  if (CheckIfAnfNodeIsNull(mean2_node) != lite::RET_OK || CheckIfAnfNodeIsNull(epsilon_node) != lite::RET_OK) {
-    return nullptr;
-  }
-
-  // epsilon
-  if (CheckIfNodeIsParam(epsilon_node) != lite::RET_OK) {
-    // delete[] add_bias_data;
-    return nullptr;
-  }
-  auto epsilon_param = epsilon_node->cast<ParameterPtr>()->default_param();
-  auto epsilon_tensor = std::dynamic_pointer_cast<ParamValueLite>(epsilon_param);
-  auto epsilon_data = reinterpret_cast<float *>(epsilon_tensor->tensor_addr());
-  auto epsilon_shape = epsilon_tensor->tensor_shape();
-
-  // mean2
-  auto mean2_cnode = mean2_node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(mean2_cnode) != lite::RET_OK ||
-      CheckInputSize(mean2_cnode, kReduceInputsLength) != lite::RET_OK) {
-    return nullptr;
-  }
-  auto mean2_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(mean2_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Reduce>>(mean2_primitivec));
-  auto mean2_op = utils::cast<std::shared_ptr<mindspore::lite::Reduce>>(mean2_primitivec);
-  MS_ASSERT(mean2_op != nullptr);
-  if (mean2_op->GetMode() != schema::ReduceMode_ReduceMean) {
-    return nullptr;
-  }
-  auto mean2_axes = mean2_op->GetAxes();
-  AnfNodePtr squared_difference_node = mean2_cnode->input(1);
-  if (CheckIfAnfNodeIsNull(squared_difference_node) != lite::RET_OK) {
-    return nullptr;
-  }
-
-  // mean1
-  auto mean1_cnode = mean1_node->cast<CNodePtr>();
-  if (CheckIfCNodeIsNull(mean1_cnode) != lite::RET_OK ||
-      CheckInputSize(mean1_cnode, kReduceInputsLength) != lite::RET_OK) {
-    return nullptr;
-  }
-  auto mean1_primitivec = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(mean1_cnode->input(0));
-  MS_ASSERT(utils::isa<std::shared_ptr<mindspore::lite::Reduce>>(mean1_primitivec));
-  auto mean1_op = utils::cast<std::shared_ptr<mindspore::lite::Reduce>>(mean1_primitivec);
-  MS_ASSERT(mean1_op != nullptr);
-  if (mean1_op->GetMode() != schema::ReduceMode_ReduceMean) {
-    return nullptr;
-  }
-  AnfNodePtr input3_node = mean1_cnode->input(1);
-  auto mean1_axes = mean1_op->GetAxes();
-  if (CheckIfAnfNodeIsNull(input3_node) != lite::RET_OK) {
-    return nullptr;
-  }
-
-  // verify two mean ops have same axes
-  if (mean1_axes.size() != mean2_axes.size()) {
-    return nullptr;
-  }
-  for (size_t i = 0; i < mean1_axes.size(); ++i) {
-    if (mean1_axes[i] != mean2_axes[i]) {
-      return nullptr;
-    }
-  }
-  // verify axes size and gamma/beta size are equal
-  if (mean1_axes.size() != gamma_shape.size() || mean1_axes.size() != beta_shape.size()) {
-    return nullptr;
-  }
-  // verify gamma and beta have same shape
-  for (size_t i = 0; i < gamma_shape.size(); ++i) {
-    if (gamma_shape[i] != beta_shape[i]) {
-      return nullptr;
-    }
-  }
-  // verify epsilon has exactly one element
-  float epsilon;
-  if (epsilon_shape.empty() || (epsilon_shape.size() == 1 && epsilon_shape[0] == 1)) {
-    epsilon = epsilon_data[0];
-  } else {
-    return nullptr;
-  }
-
-  auto layer_norm_cnode = CreateLayerNormNode(func_graph, equiv, gamma_shape, epsilon);
+  auto layer_norm_cnode = CreateLayerNormNode(func_graph, equiv, epsilon, begin_norm_axis, begin_params_axis);
   layer_norm_cnode->set_abstract(add2_cnode->abstract()->Clone());
   layer_norm_cnode->set_fullname_with_scope("layer_norm_" + add2_cnode->fullname_with_scope());
   MS_LOG(INFO) << "layernorm node:" << layer_norm_cnode->fullname_with_scope() << " fusion success";

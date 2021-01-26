@@ -82,9 +82,6 @@ int LayerNormInt8CPUKernel::Init() {
 }
 
 int LayerNormInt8CPUKernel::ReSize() {
-  param_->begin_norm_axis_ = -1;
-  param_->begin_params_axis_ = -1;
-
   auto shape = in_tensors_.front()->shape();
   param_->begin_norm_axis_ =
     param_->begin_norm_axis_ > 0 ? param_->begin_norm_axis_ : param_->begin_norm_axis_ + shape.size();

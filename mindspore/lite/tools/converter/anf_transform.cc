@@ -121,9 +121,6 @@ int AnfTransform::AddGraphPass(const std::shared_ptr<opt::GraphOptimizer> &optim
   weight_format_transform_pass->SetFmkType(config->fmk);
   weight_format_transform_pass->SetQuantType(config->quantType);
   graph_pm->AddPass(weight_format_transform_pass);
-  auto infershape_pass = std::make_shared<opt::InferShapePass>();
-  infershape_pass->SetFmkType(config->fmk);
-  graph_pm->AddPass(infershape_pass);
   auto slice_prepose_pass = std::make_shared<opt::SlicePreposePass>();
   slice_prepose_pass->SetFmkType(config->fmk);
   graph_pm->AddPass(slice_prepose_pass);
@@ -155,6 +152,9 @@ int AnfTransform::AddConstFoldPass(const std::shared_ptr<opt::GraphOptimizer> &o
   auto update_conv2d_param_pass = std::make_shared<opt::UpdateConv2DParamPass>();
   update_conv2d_param_pass->SetFmkType(config->fmk);
   const_fold_pm->AddPass(update_conv2d_param_pass);
+  auto infershape_pass = std::make_shared<opt::InferShapePass>();
+  infershape_pass->SetFmkType(config->fmk);
+  const_fold_pm->AddPass(infershape_pass);
   optimizer->AddPassManager(const_fold_pm);
   return RET_OK;
 }
