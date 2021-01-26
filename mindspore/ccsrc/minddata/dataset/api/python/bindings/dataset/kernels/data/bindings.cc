@@ -84,7 +84,8 @@ PYBIND_REGISTER(SliceOption, 0, ([](const py::module *m) {
                       }
 
                       if (!c_slice.valid()) {
-                        THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Wrong slice object"));
+                        THROW_IF_ERROR(
+                          Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Wrong slice object"));
                       }
                       return SliceOption(c_slice);
                     }))

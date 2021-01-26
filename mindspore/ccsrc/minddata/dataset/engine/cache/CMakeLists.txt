@@ -73,6 +73,7 @@ if(ENABLE_CACHE)
         engine-cache-server
         _c_dataengine
         _c_mindrecord
+        mindspore
         mindspore::protobuf
         mindspore::grpc++
         mindspore_gvar
@@ -85,6 +86,7 @@ if(ENABLE_CACHE)
         engine-cache-server
         _c_dataengine
         _c_mindrecord
+        mindspore
         mindspore::protobuf
         mindspore::grpc++
         mindspore_gvar
@@ -103,6 +105,7 @@ if(ENABLE_CACHE)
 
   add_executable(cache_admin cache_admin.cc cache_admin_arg.cc)
   target_link_libraries(cache_admin _c_dataengine _c_mindrecord mindspore::protobuf ${PYTHON_LIBRARIES} pthread)
+  target_link_libraries(cache_admin mindspore mindspore_shared_lib)
 
   if(USE_GLOG)
     target_link_libraries(cache_admin mindspore::glog)

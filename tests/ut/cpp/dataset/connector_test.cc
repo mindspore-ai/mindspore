@@ -67,7 +67,7 @@ private:
 
   // This worker loop read from input_ vector that have complete list of tasks/elements.
   // The assignment from the elements in input_ to each worker is ensured in RoundRobin,
-  // i.e., tid-0 will pick input_[0], tid-1 will pick input_[1], so-on circularly.
+  // i.e., tid-0 will pick input_[0], tid-1 will pick input_[1], so-on circular.
   Status FirstWorkerPush(
                          int tid,
                          std::shared_ptr<Connector<uint32_t> > my_conn,
@@ -227,7 +227,7 @@ Status MindDataTestConnector::Run_test_1() {
                             std::bind(&MindDataTestConnector::SerialWorkerPull,
                                       this,
                                       0,  // thread id = 0, since it's the only one
-                                      conn2,  // poping the data from conn2
+                                      conn2,  // popping the data from conn2
                                       &output));
   RETURN_IF_NOT_OK(rc);
   // Wait for the threads to finish.
@@ -316,7 +316,7 @@ Status MindDataTestConnector::ValidateOutput(const std::vector<uint32_t> &output
   int prev = 0;
   for (auto el : output) {
     if (prev >= el) {
-      return Status(StatusCode::kUnexpectedError, "Output vector are not in-order.");
+      return Status(StatusCode::kMDUnexpectedError, "Output vector are not in-order.");
     }
     prev = el;
   }

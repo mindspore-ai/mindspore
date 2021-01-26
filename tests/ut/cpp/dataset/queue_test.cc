@@ -101,19 +101,19 @@ TEST_F(MindDataTestQueue, Test1) {
 TEST_F(MindDataTestQueue, Test2) {
   // Passing status object
   Queue<Status> que(3);
-  Status rc_send(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Oops");
+  Status rc_send(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Oops");
   Status rc = que.Add(rc_send);
   ASSERT_TRUE(rc.IsOk());
   Status rc_recv;
   rc = que.PopFront(&rc_recv);
   ASSERT_TRUE(rc.IsOk());
   ASSERT_EQ(rc_recv, rc_send);
-  rc = que.EmplaceBack(StatusCode::kOutOfMemory, "Test emplace");
+  rc = que.EmplaceBack(StatusCode::kMDOutOfMemory, "Test emplace");
   ASSERT_TRUE(rc.IsOk());
   Status rc_recv2;
   rc = que.PopFront(&rc_recv2);
   ASSERT_TRUE(rc.IsOk());
-  ASSERT_TRUE(rc_recv2.IsOutofMemory());
+  ASSERT_TRUE(rc_recv2 == StatusCode::kMDOutOfMemory);
 }
 
 TEST_F(MindDataTestQueue, Test3) {

@@ -80,7 +80,7 @@ PYBIND_REGISTER(RandomApplyOp, 1, ([](const py::module *m) {
                       std::vector<std::shared_ptr<TensorOp>> t_ops;
                       THROW_IF_ERROR(PyListToTensorOps(ops, &t_ops));
                       if (prob < 0 || prob > 1) {
-                        THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, "prob needs to be within [0,1]."));
+                        THROW_IF_ERROR(Status(StatusCode::kMDUnexpectedError, "prob needs to be within [0,1]."));
                       }
                       return std::make_shared<RandomApplyOp>(prob, t_ops);
                     }));

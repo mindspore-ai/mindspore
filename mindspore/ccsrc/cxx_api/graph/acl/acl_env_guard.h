@@ -20,7 +20,7 @@
 #include <mutex>
 #include "acl/acl_base.h"
 
-namespace mindspore::api {
+namespace mindspore {
 class __attribute__((visibility("default"))) AclEnvGuard {
  public:
   explicit AclEnvGuard(std::string_view cfg_file);
@@ -29,10 +29,10 @@ class __attribute__((visibility("default"))) AclEnvGuard {
   static std::shared_ptr<AclEnvGuard> GetAclEnv(std::string_view cfg_file);
 
  private:
-  static std::weak_ptr<AclEnvGuard> global_acl_env_;
+  static std::shared_ptr<AclEnvGuard> global_acl_env_;
   static std::mutex global_acl_env_mutex_;
 
   aclError errno_;
 };
-}  // namespace mindspore::api
+}  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_ACL_ACL_ENV_GUARD_H

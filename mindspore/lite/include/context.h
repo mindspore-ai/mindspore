@@ -19,17 +19,11 @@
 
 #include <string>
 #include <memory>
+#include "include/api/lite_context.h"
 #include "include/ms_tensor.h"
 #include "include/lite_utils.h"
 
 namespace mindspore::lite {
-/// \brief CpuBindMode defined for holding bind cpu strategy argument.
-typedef enum {
-  NO_BIND = 0,    /**< no bind */
-  HIGHER_CPU = 1, /**< bind higher cpu first */
-  MID_CPU = 2     /**< bind middle cpu first */
-} CpuBindMode;
-
 /// \brief DeviceType defined for holding user's preferred backend.
 typedef enum {
   DT_CPU, /**< CPU device type */

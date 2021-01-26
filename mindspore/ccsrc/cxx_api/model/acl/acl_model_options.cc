@@ -18,23 +18,31 @@
 #include "utils/log_adapter.h"
 #include "external/ge/ge_api_types.h"
 
-namespace mindspore::api {
-static std::string ParseOption(const std::map<std::string, std::string> &options, const std::string &key) {
-  auto iter = options.find(key);
-  if (iter != options.end()) {
-    return iter->second;
-  }
-  return "";
-}
+namespace mindspore {
+static const std::map<enum DataType, std::string> kSupportedDtypeOptionMap = {{DataType::kNumberTypeFloat16, "FP16"},
+                                                                              {DataType::kNumberTypeFloat32, "FP32"},
+                                                                              {DataType::kNumberTypeUInt8, "UINT8"}};
 
-AclModelOptions::AclModelOptions(const std::map<std::string, std::string> &options) {
-  // to acl
-  insert_op_cfg_path = ParseOption(options, kModelOptionInsertOpCfgPath);
-  input_format = ParseOption(options, kModelOptionInputFormat);
-  input_shape = ParseOption(options, kModelOptionInputShape);
-  output_type = ParseOption(options, kModelOptionOutputType);
-  precision_mode = ParseOption(options, kModelOptionPrecisionMode);
-  op_select_impl_mode = ParseOption(options, kModelOptionOpSelectImplMode);
+AclModelOptions::AclModelOptions(const std::shared_ptr<Context> &context) {
+  if (context == nullptr) {
+    return;
+  }
+  insert_op_cfg_path = ModelContext::GetInsertOpConfigPath(context);
+  input_format = ModelContext::GetInputFormat(context);
+  input_shape = ModelContext::GetInputShape(context);
+
+  auto out_type = ModelContext::GetOutputType(context);
+  auto iter = kSupportedDtypeOptionMap.find(out_type);
+  if (out_type == DataType::kTypeUnknown) {
+    // do nothing
+  } else if (iter == kSupportedDtypeOptionMap.end()) {
+    MS_LOG(WARNING) << "Unsupported output type " << out_type << ", use FP32 as default.";
+  } else {
+    output_type = iter->second;
+  }
+
+  precision_mode = ModelContext::GetPrecisionMode(context);
+  op_select_impl_mode = ModelContext::GetOpSelectImplMode(context);
 }
 
 std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string>> AclModelOptions::GenAclOptions()
@@ -69,4 +77,16 @@ std::tuple<std::map<std::string, std::string>, std::map<std::string, std::string
   }
   return {init_options, build_options};
 }
-}  // namespace mindspore::api
+
+std::string AclModelOptions::GenAclOptionsKey() const {
+  auto [init_options, build_options] = GenAclOptions();
+  std::string key_str;
+  for (auto &[key, value] : init_options) {
+    key_str += key + "^" + value + "^^";
+  }
+  for (auto &[key, value] : build_options) {
+    key_str += key + "^" + value + "^^";
+  }
+  return key_str;
+}
+}  // namespace mindspore

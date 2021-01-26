@@ -100,13 +100,13 @@ Status GeneratorOp::Init() {
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
     }
     // Invoke the generatorFunction to get generator object
     try {
       generator_ = generator_function_();
     } catch (const py::error_already_set &e) {
-      ret = Status(StatusCode::kPyFuncException, e.what());
+      ret = Status(StatusCode::kMDPyFuncException, e.what());
     }
   }
   return ret;
@@ -114,33 +114,33 @@ Status GeneratorOp::Init() {
 
 Status GeneratorOp::PyRowToTensorRow(py::object py_data, TensorRow *tensor_row) {
   if (!py::isinstance<py::tuple>(py_data)) {
-    return Status(StatusCode::kPyFuncException, __LINE__, __FILE__,
+    return Status(StatusCode::kMDPyFuncException, __LINE__, __FILE__,
                   "Invalid parameter, Generator should return a tuple of numpy arrays.");
   }
   py::tuple py_row = py_data.cast<py::tuple>();
   // Check if returned number of columns matches with column names
   if (py_row.size() != column_names_.size()) {
     return Status(
-      StatusCode::kPyFuncException, __LINE__, __FILE__,
+      StatusCode::kMDPyFuncException, __LINE__, __FILE__,
       "Invalid parameter, Generator should return same number of numpy arrays as specified in column names.");
   }
   // Iterate over two containers simultaneously for memory copy
   for (int i = 0; i < py_row.size(); ++i) {
     py::object ret_py_ele = py_row[i];
     if (!py::isinstance<py::array>(ret_py_ele)) {
-      return Status(StatusCode::kPyFuncException, __LINE__, __FILE__,
+      return Status(StatusCode::kMDPyFuncException, __LINE__, __FILE__,
                     "Invalid parameter, Generator should return a tuple of numpy arrays.");
     }
     std::shared_ptr<Tensor> tensor;
     RETURN_IF_NOT_OK(Tensor::CreateFromNpArray(ret_py_ele.cast<py::array>(), &tensor));
     if ((!column_types_.empty()) && (column_types_[i] != DataType::DE_UNKNOWN) &&
         (column_types_[i] != tensor->type())) {
-      return Status(StatusCode::kPyFuncException, __LINE__, __FILE__,
+      return Status(StatusCode::kMDPyFuncException, __LINE__, __FILE__,
                     "Invalid parameter, input column type is not same with output tensor type.");
     }
     tensor_row->push_back(tensor);
   }
-  return Status(StatusCode::kOK, "");
+  return Status(StatusCode::kSuccess, "");
 }
 
 Status GeneratorOp::FillBuffer(TensorQTable *tt) {
@@ -200,7 +200,7 @@ Status GeneratorOp::operator()() {
     {
       py::gil_scoped_acquire gil_acquire;
       if (Py_IsInitialized() == 0) {
-        return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
+        return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
       }
       try {
         RETURN_IF_NOT_OK(FillBuffer(fetched_table.get()));
@@ -210,14 +210,14 @@ Status GeneratorOp::operator()() {
         e.restore();
         // Pop up non StopIteration Python Exception
         if (!eoe) {
-          return Status(StatusCode::kPyFuncException, __LINE__, __FILE__, e.what());
+          return Status(StatusCode::kMDPyFuncException, __LINE__, __FILE__, e.what());
         }
         if (pre_counter_size_ != -1 && pre_counter_size_ != generator_counter_) {
           std::stringstream ss;
           ss << "The actual amount of data read from generator " << generator_counter_
              << " is different from generator.len " << pre_counter_size_
              << ", you should adjust generator.len to make them match.";
-          return Status(StatusCode::kPyFuncException, __LINE__, __FILE__, ss.str());
+          return Status(StatusCode::kMDPyFuncException, __LINE__, __FILE__, ss.str());
         }
       }
     }
@@ -265,7 +265,7 @@ Status GeneratorOp::Reset() {
     wp_.Set();
   }
   generator_counter_ = 0;
-  return Status(StatusCode::kOK, "GeneratorOp Reset Succeed");
+  return Status(StatusCode::kSuccess, "GeneratorOp Reset Succeed");
 }
 
 // Visitor accept method for NodePass

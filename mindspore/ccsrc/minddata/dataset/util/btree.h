@@ -72,11 +72,11 @@ class BPlusTree {
 
   Status IndexRc2Status(IndexRc rc) {
     if (rc == IndexRc::kOk) {
-      return Status(StatusCode::kOK);
+      return Status(StatusCode::kSuccess);
     } else if (rc == IndexRc::kOutOfMemory) {
-      return Status(StatusCode::kOutOfMemory);
+      return Status(StatusCode::kMDOutOfMemory);
     } else if (rc == IndexRc::kDuplicateKey) {
-      return Status(StatusCode::kDuplicateKey);
+      return Status(StatusCode::kMDDuplicateKey);
     } else {
       RETURN_STATUS_UNEXPECTED(std::to_string(static_cast<int>(rc)));
     }

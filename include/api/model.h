@@ -20,41 +20,36 @@
 #include <vector>
 #include <map>
 #include <memory>
+#include <utility>
 #include "include/api/status.h"
 #include "include/api/types.h"
 #include "include/api/graph.h"
 #include "include/api/cell.h"
 
 namespace mindspore {
-namespace api {
 class ModelImpl;
-// todo: minddata c++ interface
-class DataSet {};
+struct Context;
 
 class MS_API Model {
  public:
-  explicit Model(const std::vector<Output> &network);
-  explicit Model(const GraphCell &graph);
+  explicit Model(const std::vector<Output> &network, const std::shared_ptr<Context> &model_context = nullptr);
+  explicit Model(const GraphCell &graph, const std::shared_ptr<Context> &model_context = nullptr);
   ~Model();
   Model(const Model &) = delete;
   void operator=(const Model &) = delete;
 
-  Status Build(const std::map<std::string, std::string> &options);
+  Status Build();
+  Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims);
 
-  Status Train(const DataSet &dataset, bool data_sink, std::map<std::string, Buffer> *outputs);
-  Status Eval(const DataSet &dataset, bool data_sink, std::map<std::string, Buffer> *outputs);
-  Status Predict(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs);
+  Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs);
 
-  Status GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                       std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const;
-  Status GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                        std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const;
+  std::vector<MSTensor> GetInputs();
+  std::vector<MSTensor> GetOutputs();
 
   static bool CheckModelSupport(const std::string &device_type, ModelType model_type);
 
  private:
   std::shared_ptr<ModelImpl> impl_;
 };
-}  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_MODEL_H

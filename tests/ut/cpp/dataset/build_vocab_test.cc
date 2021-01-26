@@ -24,7 +24,7 @@
 #include "minddata/dataset/include/status.h"
 
 using mindspore::dataset::Tensor;
-using mindspore::dataset::Status;
+using mindspore::Status;
 using mindspore::dataset::Vocab;
 
 class MindDataTestVocab : public UT::DatasetOpTesting {

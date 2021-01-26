@@ -23,7 +23,7 @@
 #include <utility>
 #include "utils/utils.h"
 
-namespace mindspore::api {
+namespace mindspore {
 template <class T>
 class Factory {
   using U = std::function<std::shared_ptr<T>()>;
@@ -79,5 +79,5 @@ class Registrar {
 #define API_FACTORY_REG(BASE_CLASS, DEVICE_NAME, DERIVE_CLASS)                             \
   static const Registrar<BASE_CLASS> g_api_##DERIVE_CLASS##_registrar_##DEVICE_NAME##_reg( \
     #DEVICE_NAME, []() { return std::make_shared<DERIVE_CLASS>(); });
-}  // namespace mindspore::api
+}  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXX_API_FACTORY_H

@@ -43,7 +43,7 @@ MapOp::Builder::Builder() {
 // Check if the required parameters are set by the builder.
 Status MapOp::Builder::sanityCheck() const {
   if (build_tensor_funcs_.empty()) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Building a MapOp without providing any function/operation to apply");
   }
   return Status::OK();

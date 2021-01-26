@@ -29,7 +29,7 @@ namespace py = pybind11;
 static std::mutex init_mutex;
 static bool Initialized = false;
 
-namespace mindspore::api {
+namespace mindspore {
 static void RegAllOpFromPython() {
   MsContext::GetInstance()->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
   Py_Initialize();
@@ -143,4 +143,4 @@ PythonEnvGuard::~PythonEnvGuard() {
     FinalizePython();
   }
 }
-}  // namespace mindspore::api
+}  // namespace mindspore

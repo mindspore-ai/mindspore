@@ -223,7 +223,7 @@ Status CreateCacheRequest::Prepare() {
     rq_.add_buf_data(fbb.GetBufferPointer(), fbb.GetSize());
     return Status::OK();
   } catch (const std::bad_alloc &e) {
-    return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
+    return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
   }
 }
 
@@ -277,7 +277,7 @@ Status CacheSchemaRequest::SerializeCacheSchemaRequest(const std::unordered_map<
     rq_.add_buf_data(fbb.GetBufferPointer(), fbb.GetSize());
     return Status::OK();
   } catch (const std::bad_alloc &e) {
-    return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
+    return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
   }
 }
 

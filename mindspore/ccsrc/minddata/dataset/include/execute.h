@@ -19,17 +19,11 @@
 
 #include <vector>
 #include <memory>
-#include "minddata/dataset/core/constants.h"
-#ifdef ENABLE_ANDROID
-#include "minddata/dataset/include/de_tensor.h"
-#endif
-#include "minddata/dataset/include/tensor.h"
+#include "include/api/types.h"
 #include "minddata/dataset/include/transforms.h"
 
 namespace mindspore {
 namespace dataset {
-
-class TensorOp;
 
 // class to run tensor operations in eager mode
 class Execute {
@@ -37,23 +31,16 @@ class Execute {
   /// \brief Constructor
   explicit Execute(std::shared_ptr<TensorOperation> op);
 
-  /// \brief Destructor
-  ~Execute();
-
-#ifdef ENABLE_ANDROID
-  /// \brief callable function to execute the TensorOperation in eager mode
-  /// \param[inout] input - the tensor to be transformed
-  /// \return - the output tensor, nullptr if Compute fails
-  std::shared_ptr<tensor::MSTensor> operator()(std::shared_ptr<tensor::MSTensor> input);
-#endif
+  explicit Execute(std::vector<std::shared_ptr<TensorOperation>> ops);
 
   /// \brief callable function to execute the TensorOperation in eager mode
-  /// \param[inout] input - the tensor to be transformed
-  /// \return - the output tensor, nullptr if Compute fails
-  std::shared_ptr<dataset::Tensor> operator()(std::shared_ptr<dataset::Tensor> input);
+  /// \param[in] input Tensor to be transformed
+  /// \param[out] output Transformed tensor
+  /// \return Status code
+  Status operator()(const mindspore::MSTensor &input, mindspore::MSTensor *output);
 
  private:
-  std::shared_ptr<TensorOperation> op_;
+  std::vector<std::shared_ptr<TensorOperation>> ops_;
 };
 
 }  // namespace dataset

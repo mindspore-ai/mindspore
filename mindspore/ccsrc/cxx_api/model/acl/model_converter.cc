@@ -22,9 +22,8 @@
 #include "include/api/serialization.h"
 #include "graph/model.h"
 #include "cxx_api/model/model_converter_utils/multi_process.h"
-#include "cxx_api/python_utils.h"
 
-namespace mindspore::api {
+namespace mindspore {
 namespace {
 transform::TensorOrderMap GetParams(const FuncGraphPtr &anf_graph) {
   transform::TensorOrderMap res;
@@ -86,25 +85,25 @@ transform::DfGraphPtr ModelConverter::ConvertFuncGraphToAIR(const FuncGraphPtr &
     para->set_name(name);
   }
 
-  transform::DfGraphConvertor convertor(anf_graph);
+  transform::DfGraphConvertor converter(anf_graph);
   std::string net_id = "0";
   std::string init_graph = "init_subgraph." + net_id;
   std::string checkpoint_name = "save." + net_id;
 
-  convertor.set_training(false);
-  (void)convertor.ConvertAllNode().InitParam(GetParams(anf_graph)).BuildGraph();
-  (void)convertor.GenerateCheckpointGraph();
-  if (convertor.ErrCode() != 0) {
+  converter.set_training(false);
+  (void)converter.ConvertAllNode().InitParam(GetParams(anf_graph)).BuildGraph();
+  (void)converter.GenerateCheckpointGraph();
+  if (converter.ErrCode() != 0) {
     transform::DfGraphManager::GetInstance().ClearGraph();
-    MS_LOG(ERROR) << "Convert df graph failed, err:" << convertor.ErrCode();
+    MS_LOG(ERROR) << "Convert df graph failed, err:" << converter.ErrCode();
     return nullptr;
   }
-  (void)transform::DfGraphManager::GetInstance().AddGraph(anf_graph->ToString(), convertor.GetComputeGraph());
-  (void)transform::DfGraphManager::GetInstance().AddGraph(init_graph, convertor.GetInitGraph());
-  (void)transform::DfGraphManager::GetInstance().AddGraph(BROADCAST_GRAPH_NAME, convertor.GetBroadcastGraph());
+  (void)transform::DfGraphManager::GetInstance().AddGraph(anf_graph->ToString(), converter.GetComputeGraph());
+  (void)transform::DfGraphManager::GetInstance().AddGraph(init_graph, converter.GetInitGraph());
+  (void)transform::DfGraphManager::GetInstance().AddGraph(BROADCAST_GRAPH_NAME, converter.GetBroadcastGraph());
 
   transform::Status ret =
-    transform::DfGraphManager::GetInstance().AddGraph(checkpoint_name, convertor.GetSaveCheckpointGraph());
+    transform::DfGraphManager::GetInstance().AddGraph(checkpoint_name, converter.GetSaveCheckpointGraph());
   if (ret == transform::Status::SUCCESS) {
     transform::DfGraphManager::GetInstance().SetAnfGraph(checkpoint_name, anf_graph);
   }
@@ -158,7 +157,7 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     auto df_graph = ConvertFuncGraphToAIR(func_graph);
     if (df_graph == nullptr) {
       MS_LOG(ERROR) << "Convert FuncGraph to AscendIR failed.";
-      return FAILED;
+      return kMCFailed;
     }
     ge::Model model;
     ge::Buffer model_data;
@@ -166,14 +165,14 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
     auto ge_ret = model.Save(model_data);
     if (ge_ret != ge::SUCCESS) {
       MS_LOG(ERROR) << "Save ge model to buffer failed.";
-      return FAILED;
+      return kMCFailed;
     }
 
     // send original model to child
     auto status = multi_process->SendMsg(model_data.data(), model_data.size());
-    if (!status.IsSuccess()) {
+    if (status != kSuccess) {
       MS_LOG_ERROR << "Send original model to child process failed";
-      return FAILED;
+      return status;
     }
     // receive convert model result from child
     CreateBufferCall call = [&buffer_ret](size_t msg_len) -> uint8_t * {
@@ -181,11 +180,11 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
       return reinterpret_cast<uint8_t *>(buffer_ret.MutableData());
     };
     status = multi_process->ReceiveMsg(call);
-    if (!status.IsSuccess()) {
+    if (status != kSuccess) {
       MS_LOG_ERROR << "Receive result model from child process failed";
-      return FAILED;
+      return status;
     }
-    return SUCCESS;
+    return kSuccess;
   };
   auto child_process = [this](MultiProcess *multi_process) -> Status {
     MS_EXCEPTION_IF_NULL(multi_process);
@@ -196,25 +195,25 @@ Buffer ModelConverter::LoadMindIR(const FuncGraphPtr &func_graph) {
       return reinterpret_cast<uint8_t *>(model.MutableData());
     };
     auto status = multi_process->ReceiveMsg(call);
-    if (!status.IsSuccess()) {
+    if (status != kSuccess) {
       MS_LOG_ERROR << "Receive original model from parent process failed";
-      return FAILED;
+      return status;
     }
     Buffer model_result = LoadAscendIRInner(model);
     if (model_result.DataSize() == 0) {
       MS_LOG_ERROR << "Convert model from MindIR to OM failed";
-      return FAILED;
+      return kMCFailed;
     }
     // send result model to parent
     status = multi_process->SendMsg(model_result.Data(), model_result.DataSize());
-    if (!status.IsSuccess()) {
+    if (status != kSuccess) {
       MS_LOG_ERROR << "Send result model to parent process failed";
-      return FAILED;
+      return status;
     }
-    return SUCCESS;
+    return kSuccess;
   };
   auto status = multi_process.MainProcess(parent_process, child_process);
-  if (!status.IsSuccess()) {
+  if (status != kSuccess) {
     MS_LOG_ERROR << "Convert MindIR model to OM model failed";
   } else {
     MS_LOG_INFO << "Convert MindIR model to OM model success";
@@ -229,9 +228,9 @@ Buffer ModelConverter::LoadAscendIR(const Buffer &model_data) {
     MS_EXCEPTION_IF_NULL(multi_process);
     // send original model to child
     auto status = multi_process->SendMsg(model_data.Data(), model_data.DataSize());
-    if (!status.IsSuccess()) {
+    if (status != kSuccess) {
       MS_LOG_ERROR << "Send original model to child process failed";
-      return FAILED;
+      return status;
     }
     // receive convert model result from child
     CreateBufferCall call = [&buffer_ret](size_t msg_len) -> uint8_t * {
@@ -239,11 +238,11 @@ Buffer ModelConverter::LoadAscendIR(const Buffer &model_data) {
       return reinterpret_cast<uint8_t *>(buffer_ret.MutableData());
     };
     status = multi_process->ReceiveMsg(call);
-    if (!status.IsSuccess()) {
+    if (status != kSuccess) {
       MS_LOG_ERROR << "Receive result model from child process failed";
-      return FAILED;
+      return status;
     }
-    return SUCCESS;
+    return kSuccess;
   };
   auto child_process = [this](MultiProcess *multi_process) -> Status {
     MS_EXCEPTION_IF_NULL(multi_process);
@@ -254,25 +253,25 @@ Buffer ModelConverter::LoadAscendIR(const Buffer &model_data) {
       return reinterpret_cast<uint8_t *>(model.MutableData());
     };
     auto status = multi_process->ReceiveMsg(call);
-    if (!status.IsSuccess()) {
+    if (status != kSuccess) {
       MS_LOG_ERROR << "Receive original model from parent process failed";
-      return FAILED;
+      return status;
     }
     Buffer model_result = LoadAscendIRInner(model);
     if (model_result.DataSize() == 0) {
       MS_LOG_ERROR << "Convert model from AIR to OM failed";
-      return FAILED;
+      return kMCFailed;
     }
     // send result model to parent
     status = multi_process->SendMsg(model_result.Data(), model_result.DataSize());
-    if (!status.IsSuccess()) {
+    if (status != kSuccess) {
       MS_LOG_ERROR << "Send result model to parent process failed";
-      return FAILED;
+      return status;
     }
-    return SUCCESS;
+    return kSuccess;
   };
   auto status = multi_process.MainProcess(parent_process, child_process);
-  if (!status.IsSuccess()) {
+  if (status != kSuccess) {
     MS_LOG_ERROR << "Convert AIR model to OM model failed";
   } else {
     MS_LOG_INFO << "Convert AIR model to OM model success";
@@ -326,4 +325,4 @@ Buffer ModelConverter::LoadAscendIRInner(const Buffer &model_data) {
   auto om_data = BuildAirModel(df_graph, init_options, build_options);
   return om_data;
 }
-}  // namespace mindspore::api
+}  // namespace mindspore

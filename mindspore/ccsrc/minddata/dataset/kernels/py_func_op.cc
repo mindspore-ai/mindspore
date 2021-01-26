@@ -26,12 +26,12 @@ namespace mindspore {
 namespace dataset {
 Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  Status ret = Status(StatusCode::kOK, "PyFunc Call Succeed");
+  Status ret = Status(StatusCode::kSuccess, "PyFunc Call Succeed");
   {
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      ret = Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
+      ret = Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
       goto ComputeReturn;
     }
     try {
@@ -83,7 +83,7 @@ Status PyFuncOp::Compute(const TensorRow &input, TensorRow *output) {
     } catch (const py::error_already_set &e) {
       MS_LOG(ERROR) << "Pyfunc error, " << e.what() << ". Under sink mode, progress will late exit after 30s "
                     << "for resource release and thread safe";
-      ret = Status(StatusCode::kPyFuncException, e.what());
+      ret = Status(StatusCode::kMDPyFuncException, e.what());
     }
   }
 
@@ -91,11 +91,11 @@ ComputeReturn:
   return ret;
 
 ShapeMisMatch:
-  ret = Status(StatusCode::kShapeMisMatch, "PyFunc should return a numpy array or a numpy array tuple");
+  ret = Status(StatusCode::kMDShapeMisMatch, "PyFunc should return a numpy array or a numpy array tuple");
   goto ComputeReturn;
 
 TimeoutError:
-  ret = Status(StatusCode::kTimeOut, "PyFunc execute time out");
+  ret = Status(StatusCode::kMDTimeOut, "PyFunc execute time out");
   goto ComputeReturn;
 }
 
@@ -115,7 +115,7 @@ Status PyFuncOp::CastOutput(const py::object &ret_py_obj, TensorRow *output) {
     }
     output->push_back(out);
   } catch (const std::exception &e) {
-    return Status(StatusCode::kUnexpectedError, e.what());
+    return Status(StatusCode::kMDUnexpectedError, e.what());
   }
   return Status::OK();
 }

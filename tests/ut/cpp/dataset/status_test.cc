@@ -27,7 +27,7 @@ class MindDataTestStatus : public UT::Common {
 
 // This function returns Status
 Status f1() {
-  Status rc(StatusCode::kUnexpectedError, "Testing macro");
+  Status rc(StatusCode::kMDUnexpectedError, "Testing macro");
   RETURN_IF_NOT_OK(rc);
   // We shouldn't get here
   return Status::OK();
@@ -41,11 +41,11 @@ TEST_F(MindDataTestStatus, Test1) {
   // Test default constructor which should be OK
   Status rc;
   ASSERT_TRUE(rc.IsOk());
-  Status err1(StatusCode::kOutOfMemory, __LINE__, __FILE__);
+  Status err1(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
   MS_LOG(DEBUG) << err1;
-  ASSERT_TRUE(err1.IsOutofMemory());
+  ASSERT_TRUE(err1 == StatusCode::kMDOutOfMemory);
   ASSERT_TRUE(err1.IsError());
-  Status err2(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Oops");
+  Status err2(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Oops");
   MS_LOG(DEBUG) << err2;
 }
 

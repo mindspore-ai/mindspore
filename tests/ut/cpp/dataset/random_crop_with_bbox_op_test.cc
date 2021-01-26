@@ -103,7 +103,7 @@ TEST_F(MindDataTestRandomCropWithBBoxOp, TestOp3) {
   for (auto tensor_row_ : images_and_annotations_) {
     Status s = op->Compute(tensor_row_, &output_tensor_row_);
     EXPECT_TRUE(s.IsError());
-    ASSERT_TRUE(s.get_code() == StatusCode::kUnexpectedError);
+    ASSERT_TRUE(s.StatusCode() == StatusCode::kMDUnexpectedError);
   }
   MS_LOG(INFO) << "testRandomCropWithBBoxOp3 end.";
 }

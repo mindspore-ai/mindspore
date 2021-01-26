@@ -73,7 +73,7 @@ Status SentencePieceVocab::BuildFromFile(const std::vector<std::string> &path_li
   std::string model_proto;
   sentencepiece::util::Status s_status = sentencepiece::SentencePieceTrainer::Train(unorder_map, nullptr, &model_proto);
   if (!s_status.ok()) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, s_status.message());
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, s_status.message());
   }
   vocab->get()->set_model_proto(model_proto);
 

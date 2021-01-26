@@ -71,7 +71,7 @@ Status MnistOp::Builder::SanityCheck() {
   err_msg += valid.find(builder_usage_) == valid.end()
                ? "Invalid parameter, usage must be 'train','test' or 'all', but got " + builder_usage_ + ".\n"
                : "";
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
 MnistOp::MnistOp(const std::string &usage, int32_t num_workers, int32_t rows_per_buffer, std::string folder_path,

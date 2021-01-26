@@ -28,14 +28,18 @@ PYBIND_REGISTER(Execute, 0, ([](const py::module *m) {
                       auto execute = std::make_shared<Execute>(toTensorOperation(operation));
                       return execute;
                     }))
-                    .def("__call__", [](Execute &self, std::shared_ptr<Tensor> in) {
-                      std::shared_ptr<Tensor> out = self(in);
-                      if (out == nullptr) {
-                        THROW_IF_ERROR([]() {
-                          RETURN_STATUS_UNEXPECTED("Failed to execute op in eager mode, please check ERROR log above.");
-                        }());
+                    .def("__call__", [](Execute &self, std::shared_ptr<Tensor> de_tensor) {
+                      auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
+                      Status rc = self(ms_tensor, &ms_tensor);
+                      if (rc.IsError()) {
+                        THROW_IF_ERROR(
+                          [&rc]() { RETURN_STATUS_UNEXPECTED("Failed to execute transform op, " + rc.ToString()); }());
                       }
-                      return out;
+                      std::shared_ptr<dataset::Tensor> de_tensor_output;
+                      dataset::Tensor::CreateFromMemory(dataset::TensorShape(ms_tensor.Shape()),
+                                                        MSTypeToDEType(static_cast<TypeId>(ms_tensor.DataType())),
+                                                        (const uchar *)(ms_tensor.Data().get()), &de_tensor_output);
+                      return de_tensor_output;
                     });
                 }));
 }  // namespace dataset

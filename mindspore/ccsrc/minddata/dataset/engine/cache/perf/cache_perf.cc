@@ -33,7 +33,7 @@ int main(int argc, char **argv) {
     if (rc.IsError()) {
       std::cerr << rc.ToString() << std::endl;
     }
-    return static_cast<int>(rc.get_code());
+    return static_cast<int>(rc.StatusCode());
   }
   return 0;
 }

@@ -121,22 +121,23 @@ PYBIND_REGISTER(UnicodeCharTokenizerOp, 1, ([](const py::module *m) {
 
 PYBIND_REGISTER(LookupOp, 1, ([](const py::module *m) {
                   (void)py::class_<LookupOp, TensorOp, std::shared_ptr<LookupOp>>(*m, "LookupOp")
-                    .def(py::init([](std::shared_ptr<Vocab> vocab, const py::object &py_word,
-                                     const DataType &data_type) {
-                      if (vocab == nullptr) {
-                        THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, "vocab object type is incorrect or null."));
-                      }
-                      if (py_word.is_none()) {
-                        return std::make_shared<LookupOp>(vocab, Vocab::kNoTokenExists, data_type);
-                      }
-                      std::string word = py::reinterpret_borrow<py::str>(py_word);
-                      WordIdType default_id = vocab->Lookup(word);
-                      if (default_id == Vocab::kNoTokenExists) {
-                        THROW_IF_ERROR(Status(StatusCode::kUnexpectedError,
-                                              "default unknown token: " + word + " doesn't exist in vocab."));
-                      }
-                      return std::make_shared<LookupOp>(vocab, default_id, data_type);
-                    }));
+                    .def(
+                      py::init([](std::shared_ptr<Vocab> vocab, const py::object &py_word, const DataType &data_type) {
+                        if (vocab == nullptr) {
+                          THROW_IF_ERROR(
+                            Status(StatusCode::kMDUnexpectedError, "vocab object type is incorrect or null."));
+                        }
+                        if (py_word.is_none()) {
+                          return std::make_shared<LookupOp>(vocab, Vocab::kNoTokenExists, data_type);
+                        }
+                        std::string word = py::reinterpret_borrow<py::str>(py_word);
+                        WordIdType default_id = vocab->Lookup(word);
+                        if (default_id == Vocab::kNoTokenExists) {
+                          THROW_IF_ERROR(Status(StatusCode::kMDUnexpectedError,
+                                                "default unknown token: " + word + " doesn't exist in vocab."));
+                        }
+                        return std::make_shared<LookupOp>(vocab, default_id, data_type);
+                      }));
                 }));
 
 PYBIND_REGISTER(NgramOp, 1, ([](const py::module *m) {

@@ -104,7 +104,7 @@ Status Resize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *out
     std::string err_msg =
       "The resizing width or height 1) is too big, it's up to "
       "1000 times the original image; 2) can not be 0.";
-    return Status(StatusCode::kShapeMisMatch, err_msg);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   try {
     TensorShape shape{output_height, output_width};
@@ -601,12 +601,12 @@ Status Normalize(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *
   mean->Squeeze();
   if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != 3) {
     std::string err_msg = "Mean tensor should be of size 3 and type float.";
-    return Status(StatusCode::kShapeMisMatch, err_msg);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   std->Squeeze();
   if (std->type() != DataType::DE_FLOAT32 || std->Rank() != 1 || std->shape()[0] != 3) {
     std::string err_msg = "Std tensor should be of size 3 and type float.";
-    return Status(StatusCode::kShapeMisMatch, err_msg);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   try {
     // NOTE: We are assuming the input image is in RGB and the mean
@@ -651,12 +651,12 @@ Status NormalizePad(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor
   mean->Squeeze();
   if (mean->type() != DataType::DE_FLOAT32 || mean->Rank() != 1 || mean->shape()[0] != 3) {
     std::string err_msg = "Mean tensor should be of size 3 and type float.";
-    return Status(StatusCode::kShapeMisMatch, err_msg);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   std->Squeeze();
   if (std->type() != DataType::DE_FLOAT32 || std->Rank() != 1 || std->shape()[0] != 3) {
     std::string err_msg = "Std tensor should be of size 3 and type float.";
-    return Status(StatusCode::kShapeMisMatch, err_msg);
+    return Status(StatusCode::kMDShapeMisMatch, err_msg);
   }
   try {
     // NOTE: We are assuming the input image is in RGB and the mean

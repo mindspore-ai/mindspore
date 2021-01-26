@@ -20,6 +20,9 @@
 #include "minddata/dataset/util/status.h"
 #include "utils/log_adapter.h"
 
+using mindspore::Status;
+using mindspore::StatusCode;
+
 #define ASSERT_OK(_s)                          \
   do {                                         \
     Status __rc = (_s);                        \

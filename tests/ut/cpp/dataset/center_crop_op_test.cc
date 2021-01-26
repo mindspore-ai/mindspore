@@ -53,7 +53,7 @@ TEST_F(MindDataTestCenterCropOp, TestOp2) {
   std::unique_ptr<CenterCropOp> op(new CenterCropOp(het, wid));
   Status s = op->Compute(input_tensor_, &output_tensor);
   EXPECT_TRUE(s.IsError());
-  ASSERT_TRUE(s.get_code() == StatusCode::kUnexpectedError);
+  ASSERT_TRUE(s.StatusCode() == StatusCode::kMDUnexpectedError);
 }
 
 TEST_F(MindDataTestCenterCropOp, TestOp3) {

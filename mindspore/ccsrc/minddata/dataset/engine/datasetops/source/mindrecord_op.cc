@@ -63,7 +63,7 @@ Status MindRecordOp::Builder::Build(std::shared_ptr<MindRecordOp> *ptr) {
   std::shared_ptr<MindRecordOp> new_mind_record_op;
 
   if (build_dataset_file_.empty()) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid file, MindRecord path is invalid or not set.");
   }
   mindrecord::json sample_json;

@@ -140,7 +140,7 @@ Status ColDescriptor::MaterializeTensorShape(int32_t num_elements, TensorShape *
     // If we already had an unknown dimension, then we cannot have a second unknown dimension.
     // We only support the compute of a single unknown dim.
     if (requested_shape[i] == TensorShape::kDimUnknown && unknown_dim_position != TensorShape::kDimUnknown) {
-      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                     "Requested shape has more than one unknown dimension!");
     }
 
@@ -312,12 +312,12 @@ Status DataSchema::ColumnLoad(nlohmann::json column_child_tree, const std::strin
   }
   // data type is mandatory field
   if (type_str.empty())
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "json schema file for column " + col_name + " has invalid or missing column type.");
 
   // rank number is mandatory field
   if (rank_value <= -1)
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "json schema file for column " + col_name + " must define a positive rank value.");
 
   // Create the column descriptor for this column from the data we pulled from the json file
@@ -425,7 +425,7 @@ Status DataSchema::AddColumn(const ColDescriptor &cd) {
 Status DataSchema::PreLoadExceptionCheck(const nlohmann::json &js) {
   // Check if columns node exists.  It is required for building schema from file.
   if (js.find("columns") == js.end())
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "\"columns\" node is required in the schema json file.");
   return Status::OK();
 }
@@ -434,12 +434,12 @@ Status DataSchema::PreLoadExceptionCheck(const nlohmann::json &js) {
 // name to column index number.
 Status DataSchema::GetColumnNameMap(std::unordered_map<std::string, int32_t> *out_column_name_map) {
   if (out_column_name_map == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "unexpected null output column name map.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "unexpected null output column name map.");
   }
 
   for (int32_t i = 0; i < col_descs_.size(); ++i) {
     if (col_descs_[i].name().empty()) {
-      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                     "Constructing column name map from schema, but found empty column name.");
     }
     (*out_column_name_map)[col_descs_[i].name()] = i;
