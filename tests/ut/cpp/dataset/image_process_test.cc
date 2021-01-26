@@ -917,6 +917,24 @@ TEST_F(MindDataImageProcess, testROI3C) {
   cv::imwrite("./lite_roi.jpg", dst_imageR);
 }
 
+TEST_F(MindDataImageProcess, testROI3CFalse) {
+  std::string filename = "data/dataset/apple.jpg";
+  cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
+
+  cv::Mat cv_roi = cv::Mat(src_image, cv::Rect(500, 500, 3000, 1500));
+
+  cv::imwrite("./cv_roi.jpg", cv_roi);
+
+  bool ret = false;
+  LiteMat lite_mat_bgr;
+  ret = InitFromPixel(src_image.data, LPixelType::BGR, LDataType::UINT8, src_image.cols, src_image.rows, lite_mat_bgr);
+  EXPECT_TRUE(ret);
+  LiteMat lite_roi;
+
+  ret = lite_mat_bgr.GetROI(500, 500, 1200, -100, lite_roi);
+  EXPECT_FALSE(ret);
+}
+
 TEST_F(MindDataImageProcess, testROI1C) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -952,9 +970,7 @@ TEST_F(MindDataImageProcess, testROI1C) {
   cv::imwrite("./lite_roi.jpg", dst_imageR);
 }
 
-
-
-//warp 
+// warp
 TEST_F(MindDataImageProcess, testWarpAffineBGR) {
   std::string filename = "data/dataset/apple.jpg";
   cv::Mat src_image = cv::imread(filename, cv::ImreadModes::IMREAD_COLOR);
@@ -986,7 +1002,8 @@ TEST_F(MindDataImageProcess, testWarpAffineBGR) {
   borderValues.push_back(0);
   borderValues.push_back(0);
   borderValues.push_back(0);
-  ret = WarpAffineBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_, lite_mat_bgr.height_, PADD_BORDER_CONSTANT, borderValues);
+  ret = WarpAffineBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_, lite_mat_bgr.height_,
+                           PADD_BORDER_CONSTANT, borderValues);
   EXPECT_TRUE(ret);
 
   cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC3, lite_warp.data_ptr_);
@@ -1024,7 +1041,8 @@ TEST_F(MindDataImageProcess, testWarpAffineBGRScale) {
   borderValues.push_back(0);
   borderValues.push_back(0);
   borderValues.push_back(0);
-  ret = WarpAffineBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_, lite_mat_bgr.height_, PADD_BORDER_CONSTANT, borderValues);
+  ret = WarpAffineBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_, lite_mat_bgr.height_,
+                           PADD_BORDER_CONSTANT, borderValues);
   EXPECT_TRUE(ret);
 
   cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC3, lite_warp.data_ptr_);
@@ -1062,8 +1080,8 @@ TEST_F(MindDataImageProcess, testWarpAffineBGRResize) {
   borderValues.push_back(0);
   borderValues.push_back(0);
   borderValues.push_back(0);
-  ret = WarpAffineBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_ + 200, lite_mat_bgr.height_ - 300, PADD_BORDER_CONSTANT,
-                   borderValues);
+  ret = WarpAffineBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_ + 200, lite_mat_bgr.height_ - 300,
+                           PADD_BORDER_CONSTANT, borderValues);
   EXPECT_TRUE(ret);
 
   cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC3, lite_warp.data_ptr_);
@@ -1106,8 +1124,8 @@ TEST_F(MindDataImageProcess, testWarpAffineGray) {
   LiteMat lite_warp;
   std::vector<uint8_t> borderValues;
   borderValues.push_back(0);
-  ret = WarpAffineBilinear(lite_mat_gray, lite_warp, lite_M, lite_mat_gray.width_ + 200, lite_mat_gray.height_ - 300, PADD_BORDER_CONSTANT,
-                   borderValues);
+  ret = WarpAffineBilinear(lite_mat_gray, lite_warp, lite_M, lite_mat_gray.width_ + 200, lite_mat_gray.height_ - 300,
+                           PADD_BORDER_CONSTANT, borderValues);
   EXPECT_TRUE(ret);
 
   cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC1, lite_warp.data_ptr_);
@@ -1153,8 +1171,8 @@ TEST_F(MindDataImageProcess, testWarpPerspectiveBGRResize) {
   borderValues.push_back(0);
   borderValues.push_back(0);
   borderValues.push_back(0);
-  ret = WarpPerspectiveBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_ + 200, lite_mat_bgr.height_ - 300, PADD_BORDER_CONSTANT,
-                        borderValues);
+  ret = WarpPerspectiveBilinear(lite_mat_bgr, lite_warp, lite_M, lite_mat_bgr.width_ + 200, lite_mat_bgr.height_ - 300,
+                                PADD_BORDER_CONSTANT, borderValues);
   EXPECT_TRUE(ret);
 
   cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC3, lite_warp.data_ptr_);
@@ -1205,8 +1223,8 @@ TEST_F(MindDataImageProcess, testWarpPerspectiveGrayResize) {
   LiteMat lite_warp;
   std::vector<uint8_t> borderValues;
   borderValues.push_back(0);
-  ret = WarpPerspectiveBilinear(lite_mat_gray, lite_warp, lite_M, lite_mat_gray.width_ + 200, lite_mat_gray.height_ - 300, PADD_BORDER_CONSTANT,
-                        borderValues);
+  ret = WarpPerspectiveBilinear(lite_mat_gray, lite_warp, lite_M, lite_mat_gray.width_ + 200,
+                                lite_mat_gray.height_ - 300, PADD_BORDER_CONSTANT, borderValues);
   EXPECT_TRUE(ret);
 
   cv::Mat dst_imageR(lite_warp.height_, lite_warp.width_, CV_8UC1, lite_warp.data_ptr_);
