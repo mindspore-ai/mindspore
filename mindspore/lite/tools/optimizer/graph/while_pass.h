@@ -32,7 +32,6 @@ class WhilePass : public Pass {
   bool Run(const FuncGraphPtr &graph) override;
 
  private:
-  void ReplaceInput(const std::vector<AnfNodePtr> &node_list, AnfNodePtr new_input_cnode, std::string para_name);
   ValueNodePtr GetSwitchAnfPrim();
 
   const size_t kWhileMinInputSize = 3;

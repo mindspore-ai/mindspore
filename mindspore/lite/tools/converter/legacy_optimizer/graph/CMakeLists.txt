@@ -19,6 +19,7 @@ file(GLOB GRAPH_PASS
         ${CMAKE_CURRENT_SOURCE_DIR}/select_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/subgraph_node_pass.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/subgraph_tensor_pass.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/nested_loop_expand_pass.cc
         )
 set_property(SOURCE ${GRAPH_PASS} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_library(graph_pass_mid OBJECT ${GRAPH_PASS})
