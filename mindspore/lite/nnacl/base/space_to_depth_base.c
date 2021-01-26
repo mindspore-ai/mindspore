@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "nnacl/fp32/space_to_depth_fp32.h"
+
+#include "nnacl/base/space_to_depth_base.h"
 #include "nnacl/common_func.h"
 #include "nnacl/errorcode.h"
-#include "nnacl/op_base.h"
 
-int SpaceToDepthForNHWC(const float *input, float *output, const int *in_shape, const int *out_shape, int shape_size,
-                        int block_size, int h_start, int h_end) {
+int SpaceToDepthForNHWC(const void *input, void *output, const int *in_shape, const int *out_shape, int shape_size,
+                        int block_size, int h_start, int h_end, int data_size) {
   if (input == NULL || output == NULL) {
     return NNACL_NULL_PTR;
   }
@@ -29,6 +29,10 @@ int SpaceToDepthForNHWC(const float *input, float *output, const int *in_shape, 
   if (h_start < 0 || h_start >= h_end || h_end > out_shape[1]) {
     return NNACL_PARAM_INVALID;
   }
+
+  const int8_t *int8_input_ptr = (int8_t *)input;
+  int8_t *int8_outoput_ptr = (int8_t *)output;
+
   int in_strides[C4NUM];
   ComputeStrides(in_shape, in_strides, shape_size);
   int out_strides[C4NUM];
@@ -43,8 +47,9 @@ int SpaceToDepthForNHWC(const float *input, float *output, const int *in_shape, 
         size_t in_offset_w = in_offset_h + k * block_size * in_strides[2];
         size_t out_offset_w = out_offset_h + k * out_strides[2];
         for (int l = 0; l < block_size; ++l) {
-          memcpy(output + out_offset_w + l * block_size * in_strides[2], input + in_offset_w + l * in_strides[1],
-                 block_size * in_strides[2] * sizeof(float));
+          memcpy(int8_outoput_ptr + out_offset_w + l * block_size * in_strides[2] * data_size,
+                 int8_input_ptr + (in_offset_w + l * in_strides[1]) * data_size,
+                 block_size * in_strides[2] * data_size);
         }
       }
     }

@@ -19,23 +19,20 @@
 #include "src/tensor.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/unsqueeze_fp32.h"
+#include "mindspore/lite/nnacl/unsqueeze_parameter.h"
 
 namespace mindspore {
 namespace lite {
-
 OpParameter *PopulateUnsqueezeParameter(const mindspore::lite::PrimitiveC *primitive) {
-  auto unsqueeze_attr =
-    reinterpret_cast<mindspore::lite::Unsqueeze *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
-  UnsqueezeParameter *unsqueeze_param = reinterpret_cast<UnsqueezeParameter *>(malloc(sizeof(UnsqueezeParameter)));
+  auto unsqueeze_attr = reinterpret_cast<lite::Unsqueeze *>(const_cast<lite::PrimitiveC *>(primitive));
+  UnSqueezeParameter *unsqueeze_param = reinterpret_cast<UnSqueezeParameter *>(malloc(sizeof(UnSqueezeParameter)));
   if (unsqueeze_param == nullptr) {
     MS_LOG(ERROR) << "malloc UnsqueezeParameter failed.";
     return nullptr;
   }
-  memset(unsqueeze_param, 0, sizeof(UnsqueezeParameter));
+  memset(unsqueeze_param, 0, sizeof(UnSqueezeParameter));
   unsqueeze_param->op_parameter_.type_ = primitive->Type();
   auto flatAxis = unsqueeze_attr->GetAxis();
-  unsqueeze_param->num_dim_ = flatAxis.size();
   int i = 0;
   for (auto iter = flatAxis.begin(); iter != flatAxis.end(); iter++) {
     unsqueeze_param->dims_[i++] = *iter;

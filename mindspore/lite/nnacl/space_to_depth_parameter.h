@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_DEPTH_H_
-#define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_DEPTH_H_
+#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_SPACE_TO_DEPTH_PARAMETER_H_
+#define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_SPACE_TO_DEPTH_PARAMETER_H_
 #include "nnacl/op_base.h"
 
 typedef struct SpaceToDepthParameter {
@@ -22,13 +22,5 @@ typedef struct SpaceToDepthParameter {
   OpParameter op_parameter_;
   int32_t block_size_;
 } SpaceToDepthParameter;
-#ifdef __cplusplus
-extern "C" {
-#endif
-int SpaceToDepthForNHWC(const float *input, float *output, const int *in_shape, const int *out_shape, int shape_size,
-                        int block_size, int h_start, int h_end);
-#ifdef __cplusplus
-}
-#endif
 
-#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_FP32_SPACE_TO_DEPTH_H_
+#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_SPACE_TO_DEPTH_PARAMETER_H_

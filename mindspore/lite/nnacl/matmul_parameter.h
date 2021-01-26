@@ -37,6 +37,8 @@ typedef enum OutType { OutType_C8 = 0, OutType_Nhwc = 1, OutType_TileC8 = 2 } Ou
 typedef struct MatMulParameter {
   // Primitive parameter
   OpParameter op_parameter_;
+  bool has_bias_;
+
   // other parameter
   int row_;
   int col_;
@@ -54,7 +56,6 @@ typedef struct MatMulParameter {
   int deep_;
   int deep_4_;
   int deep_16_;
-  bool has_bias_;
   int batch;
   bool a_transpose_; /* false :  row-major  */
   bool b_transpose_; /* true  :  col-major  */

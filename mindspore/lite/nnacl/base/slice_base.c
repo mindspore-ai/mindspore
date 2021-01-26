@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "nnacl/fp32/slice_fp32.h"
+#include "nnacl/base/slice_base.h"
 #include <string.h>
-#include "nnacl/op_base.h"
-
 void PadSliceParameterTo4D(SliceParameter *param) {
   int32_t begin[DIMENSION_4D];
   int32_t end[DIMENSION_4D];
@@ -46,7 +43,10 @@ void PadSliceParameterTo4D(SliceParameter *param) {
   param->param_length_ = DIMENSION_4D;
 }
 
-void DoSlice(const float *input, float *output, const SliceParameter *param, int thread_id) {
+void DoSlice(const void *input, void *output, SliceParameter *param, int thread_id, int data_size) {
+  int8_t *int8_in = (int8_t *)input;
+  int8_t *int8_out = (int8_t *)output;
+
   int32_t out_dim1 = param->size_[1];
   int32_t out_dim2 = param->size_[2];
   int32_t out_dim3 = param->size_[3];
@@ -55,7 +55,7 @@ void DoSlice(const float *input, float *output, const SliceParameter *param, int
   size_t out_stride0 = out_stride1 * out_dim1;
   size_t count_per_thread = UP_DIV(out_dim1, param->op_parameter_.thread_num_);
   size_t thread_stride = thread_id * count_per_thread;
-  size_t copy_size = param->size_[3] * sizeof(float);
+  size_t copy_size = param->size_[3] * data_size;
   size_t in_stride2 = param->shape_[3];
   size_t in_stride1 = param->shape_[2] * in_stride2;
   size_t in_stride0 = param->shape_[1] * in_stride1;
@@ -72,14 +72,17 @@ void DoSlice(const float *input, float *output, const SliceParameter *param, int
       for (int l = 0; l < out_dim2; ++l) {
         size_t out_offset = out_offset1 + l * out_stride2;
         size_t in_offset = in_offset1 + (l + param->begin_[2]) * in_stride2;
-        memcpy(output + out_offset, input + in_offset, copy_size);
+        memcpy(int8_out + out_offset * data_size, int8_in + in_offset * data_size, copy_size);
       }
     }
   }
 }
 
-void DoSliceNoParallel(const float *input, float *output, const SliceParameter *param) {
-  size_t copy_size = param->size_[3] * sizeof(float);
+void DoSliceNoParallel(const void *input, void *output, SliceParameter *param, int data_size) {
+  int8_t *int8_in = (int8_t *)input;
+  int8_t *int8_out = (int8_t *)output;
+
+  size_t copy_size = param->size_[3] * data_size;
   size_t in_stride2 = param->shape_[3];
   size_t in_stride1 = param->shape_[2] * in_stride2;
   size_t in_stride0 = param->shape_[1] * in_stride1;
@@ -90,7 +93,7 @@ void DoSliceNoParallel(const float *input, float *output, const SliceParameter *
       size_t in_offset1 = dim1 * in_stride1 + in_offset0;
       for (int32_t dim2 = param->begin_[2]; dim2 < param->end_[2]; ++dim2) {
         size_t in_offset = in_offset1 + dim2 * in_stride2;
-        memcpy(output + out_offset, input + in_offset, copy_size);
+        memcpy(int8_out + out_offset * data_size, int8_in + in_offset * data_size, copy_size);
         out_offset += param->size_[3];
       }
     }

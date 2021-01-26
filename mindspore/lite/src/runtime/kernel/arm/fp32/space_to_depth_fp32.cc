@@ -19,7 +19,8 @@
 #include <vector>
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
-#include "nnacl/fp32/space_to_depth_fp32.h"
+#include "nnacl/space_to_depth_parameter.h"
+#include "nnacl/base/space_to_depth_base.h"
 #include "include/errorcode.h"
 #include "src/runtime/runtime_api.h"
 
@@ -70,7 +71,7 @@ int SpaceToDepthCPUKernel::SpaceToDepth(int task_id) {
   MS_ASSERT(input_ptr_);
   MS_ASSERT(output_ptr_);
   auto ret = SpaceToDepthForNHWC(input_ptr_, output_ptr_, in_shape.data(), out_shape.data(), in_shape.size(),
-                                 param->block_size_, thread_offset, thread_offset + num_unit_thread);
+                                 param->block_size_, thread_offset, thread_offset + num_unit_thread, sizeof(float));
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "SpaceToDepth error task_id[" << task_id << "] error_code[" << ret << "]";
     return RET_ERROR;
@@ -89,8 +90,8 @@ int SpaceToDepthRun(void *cdata, int task_id) {
 }
 
 int SpaceToDepthCPUKernel::Run() {
-  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  input_ptr_ = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  output_ptr_ = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
   if (in_tensors_.at(0)->format() == schema::Format::Format_NHWC) {
     auto ret = ParallelLaunch(this->context_->thread_pool_, SpaceToDepthRun, this, thread_h_num_);
     if (ret != RET_OK) {

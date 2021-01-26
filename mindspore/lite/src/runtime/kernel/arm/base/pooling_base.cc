@@ -14,19 +14,12 @@
  * limitations under the License.
  */
 #include "src/runtime/kernel/arm/base/pooling_base.h"
-#include <vector>
-#include "src/runtime/kernel/arm/fp32/pooling_fp32.h"
-#include "schema/model_generated.h"
-#include "src/kernel_registry.h"
 #include "include/errorcode.h"
-#include "include/context.h"
 #include "src/ops/pooling.h"
 
-using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
 using mindspore::lite::RET_MEMORY_FAILED;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Pooling;
 
 namespace mindspore::kernel {
 int PoolingBaseCPUKernel::SetQuantParam() {

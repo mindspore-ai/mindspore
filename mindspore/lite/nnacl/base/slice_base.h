@@ -13,29 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#ifndef MINDSPORE_LITE_NNACL_UNSQUEEZE_H_
-#define MINDSPORE_LITE_NNACL_UNSQUEEZE_H_
+#ifndef MINDSPORE_LITE_NNACL_BASE_SLICE_BASE_H_
+#define MINDSPORE_LITE_NNACL_BASE_SLICE_BASE_H_
 
 #include "nnacl/op_base.h"
-
-#define UNSQUEEZE_DIMS_MAX_SIZE 4
-
-typedef struct UnsqueezeParameter {
-  // primitive parameter
-  OpParameter op_parameter_;
-  int dims_[UNSQUEEZE_DIMS_MAX_SIZE];
-
-  // other parameter
-  int num_dim_;
-} UnsqueezeParameter;
+#include "nnacl/errorcode.h"
+#include "nnacl/slice_parameter.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-int Unsqueeze(const int8_t *input_ptr, int8_t *output_ptr, size_t data_size);
+void PadSliceParameterTo4D(SliceParameter *param);
+
+void DoSlice(const void *input, void *output, SliceParameter *param, int thread_id, int data_size);
+void DoSliceNoParallel(const void *input, void *output, SliceParameter *param, int data_size);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_UNSQUEEZE_H_
+#endif  // MINDSPORE_LITE_NNACL_BASE_SLICE_BASE_H_
