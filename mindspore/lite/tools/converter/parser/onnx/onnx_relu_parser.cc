@@ -78,18 +78,21 @@ lite::PrimitiveC *OnnxPReluParser::ParseLitePrimitive(const onnx::GraphProto &on
       MS_LOG(ERROR) << "input error: params[0] is null";
       return nullptr;
     }
-    const auto slope_raw_data = reinterpret_cast<const float *>(slope->raw_data().data());
-    const int64_t slope_size = slope->raw_data().size() / sizeof(float);
-    if (slope_size == 1) {
-      attr->slope.push_back(*slope_raw_data);
-      attr->channelShared = true;
+    if (slope->float_data_size() > 0) {
+      const int64_t slope_size = slope->float_data_size();
+      for (int64_t i = 0; i < slope_size; i++) {
+        attr->slope.emplace_back(slope->float_data(i));
+      }
+      attr->channelShared = slope_size == 1;
     } else {
+      const auto slope_raw_data = reinterpret_cast<const float *>(slope->raw_data().data());
+      const int64_t slope_size = slope->raw_data().size() / sizeof(float);
       attr->slope.resize(slope_size);
-      attr->channelShared = false;
       if (memcpy_s(attr->slope.data(), slope_size * sizeof(float), slope_raw_data, slope_size * sizeof(float)) != EOK) {
         MS_LOG(ERROR) << "memcpy_s failed";
         return nullptr;
       }
+      attr->channelShared = slope_size == 1;
     }
   } else {
     MS_LOG(WARNING) << "The slope pf prelu is null, which may cause errors.";

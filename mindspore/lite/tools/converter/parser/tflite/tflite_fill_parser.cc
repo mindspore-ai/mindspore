@@ -36,7 +36,10 @@ PrimitiveC *TfliteFillParser::ParseLitePrimitive(const std::unique_ptr<tflite::O
   }
 
   if (tflite_op->inputs.size() > 1) {
-    if (GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->dims)) {
+    const auto &tflite_model_buffers = tflite_model->buffers;
+    const auto &data = tflite_model_buffers.at(tflite_op->inputs[1])->data;
+    if (!data.empty() &&
+        GetTfliteData(tflite_op->inputs[1], tflite_subgraph->tensors, tflite_model->buffers, attr->dims)) {
       MS_LOG(ERROR) << "get fill -> dims failed";
       return nullptr;
     }

@@ -55,10 +55,11 @@ class CaffeModelParser : public ModelParser {
 
   STATUS ConvertTop(const caffe::LayerParameter &layer, const CNodePtr &cnode);
 
-  bool IsSkipedLayer(const caffe::LayerParameter &layer);
+  std::string GetOriginLayerName(const std::string &layer_name);
 
   caffe::NetParameter caffe_model_;
   caffe::NetParameter caffe_weight_;
+  std::unordered_map<std::string, caffe::LayerParameter> caffe_layers_;
   std::unordered_map<std::string, AnfNodePtr> nodes_;
   FuncGraphPtr func_graph_ptr_;
 };
