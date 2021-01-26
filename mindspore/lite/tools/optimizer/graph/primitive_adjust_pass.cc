@@ -114,6 +114,7 @@ constexpr auto kNameArgMaxWithValue = "ArgMaxWithValue";
 constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
 constexpr auto kNameBatchMatMul = "BatchMatMul";
 constexpr auto kNameGatherV2 = "GatherV2";
+constexpr auto kNameResizeNearestNeighbor = "ResizeNearestNeighbor";
 constexpr auto kNameTensorAdd = "TensorAdd";
 std::map<std::string, mindspore::ActivationType> activation_map = {
   {ops::kNameAbs, mindspore::ABS},         {ops::kNameElu, mindspore::ELU},
@@ -432,6 +433,7 @@ REGIST_PRIMITIVE_ADJUST(kNameReduceSumSquare, MoveAttrMapReduce)
 REGIST_PRIMITIVE_ADJUST(kNameReLU, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameReLU6, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameResizeBilinear, MoveAttrMapResize)
+REGIST_PRIMITIVE_ADJUST(kNameResizeNearestNeighbor, MoveAttrMapResize)
 REGIST_PRIMITIVE_ADJUST(kNameScale, MoveAttrMapCommon<ops::ScaleFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameSigmoid, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameSub, MoveAttrMapCommon<ops::SubFusion>)
