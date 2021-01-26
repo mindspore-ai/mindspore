@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef MINDSPORE_LITE_NNACL_TILE_H_
-#define MINDSPORE_LITE_NNACL_TILE_H_
+#ifndef MINDSPORE_LITE_NNACL_BASE_TILE_H_
+#define MINDSPORE_LITE_NNACL_BASE_TILE_H_
 
 #include "nnacl/op_base.h"
 
@@ -33,14 +33,19 @@ typedef struct TileParameter {
 
   // other parameter
   int in_dim_;
+  size_t data_size_;
+  size_t fast_outer_size_;
+  size_t fast_stride_;
+  size_t fast_multiple_;
 } TileParameter;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void Tile(float *input_data, float *output_data, TileParameter *parameter);
+void Tile(void *input_data, void *output_data, TileParameter *parameter);
+void TileSimple(void *input_data, void *output_data, size_t begin, size_t end, TileParameter *parameter);
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_TILE_H_
+#endif  // MINDSPORE_LITE_NNACL_BASE_TILE_H_

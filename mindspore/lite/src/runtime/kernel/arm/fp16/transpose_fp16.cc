@@ -38,7 +38,21 @@ int TransposeFp16CPUKernel::Init() {
 }
 
 int TransposeFp16CPUKernel::Run() {
-  MS_ASSERT(in_tensors_.size() == 1);
+  MS_ASSERT(in_tensors_.size() == 1 || in_tensors_.size() == 2);
+  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
+  if (in_tensors_.size() == 2) {
+    auto input_perm = in_tensors_.at(1);
+    MS_ASSERT(input_perm != nullptr);
+    MS_ASSERT(input_perm->data_c() != nullptr);
+    int *perm_data = reinterpret_cast<int *>(input_perm->data_c());
+    for (int i = 0; i < input_perm->ElementsNum(); ++i) {
+      param->perm_[i] = perm_data[i];
+    }
+    for (int i = input_perm->ElementsNum(); i < 8; ++i) {
+      param->perm_[i] = 0;
+    }
+    param->num_axes_ = input_perm->ElementsNum();
+  }
   MS_ASSERT(out_tensors_.size() == 1);
   auto &in_tensor = in_tensors_.front();
   auto &out_tensor = out_tensors_.front();
@@ -51,7 +65,6 @@ int TransposeFp16CPUKernel::Run() {
   MS_ASSERT(in_data_fp16_);
   MS_ASSERT(out_data_fp16_);
 
-  TransposeParameter *param = reinterpret_cast<TransposeParameter *>(this->op_parameter_);
   if (in_tensor->shape().size() != static_cast<size_t>(param->num_axes_)) {
     memcpy(out_data_fp16_, in_data_fp16_, in_tensor->ElementsNum() * sizeof(float16_t));
     return RET_OK;
