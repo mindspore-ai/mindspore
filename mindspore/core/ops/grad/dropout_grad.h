@@ -31,9 +31,11 @@ class DropoutGrad : public PrimitiveC {
   DropoutGrad() : PrimitiveC(kNameDropoutGrad) {}
   ~DropoutGrad() = default;
   MS_DECLARE_PARENT(DropoutGrad, PrimitiveC);
-  void Init(const float ratio = 0.5);
+  void Init(const float ratio = 0.5, const float keep_prob = 0.5);
   void set_ratio(const float ratio);
+  void set_keep_prob(const float keep_prob);
   float get_ratio() const;
+  float get_keep_prob() const;
 };
 
 AbstractBasePtr DropoutGradInfer(const abstract::AnalysisEnginePtr &, const PrimitivePtr &primitive,

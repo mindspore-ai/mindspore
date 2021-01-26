@@ -19,15 +19,28 @@
 
 namespace mindspore {
 namespace ops {
-void DropoutGrad::Init(const float ratio) { set_ratio(ratio); }
+void DropoutGrad::Init(const float ratio, const float keep_prob) {
+  this->set_ratio(ratio);
+  this->set_keep_prob(keep_prob);
+}
 
 void DropoutGrad::set_ratio(const float ratio) {
   CheckAndConvertUtils::CheckInRange<float>(kRatio, ratio, kIncludeRight, {0.0, 1.0}, this->name());
   this->AddAttr(kRatio, MakeValue(ratio));
 }
 
+void DropoutGrad::set_keep_prob(const float keep_prob) {
+  CheckAndConvertUtils::CheckInRange<float>(kKeepProb, keep_prob, kIncludeRight, {0.0, 1.0}, this->name());
+  this->AddAttr(kKeepProb, MakeValue(keep_prob));
+}
+
 float DropoutGrad::get_ratio() const {
   auto value_ptr = GetAttr(kRatio);
+  return GetValue<float>(value_ptr);
+}
+
+float DropoutGrad::get_keep_prob() const {
+  auto value_ptr = GetAttr(kKeepProb);
   return GetValue<float>(value_ptr);
 }
 
