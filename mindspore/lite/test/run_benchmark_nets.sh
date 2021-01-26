@@ -582,10 +582,9 @@ function Run_x86() {
         if [[ $line == \#* ]]; then
           continue
         fi
-        model_name=${line%%;*}
-        model_name_len=${#model_name}
-        input_params=${line:model_name_len+1}
-        input_num=${input_params%%;*}
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        input_num=`echo ${line} | awk -F ';' '{print $2}'`
+        input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
         input_files=''
         output_file=''
         data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
@@ -606,8 +605,8 @@ function Run_x86() {
         echo ${model_name} >> "${run_x86_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64' >> "{run_x86_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64 || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --loopCount=1 --warmUpLoopCount=0' >> "${run_x86_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --benchmarkDataFile=${output_file} --loopCount=1 --warmUpLoopCount=0 >> "${run_x86_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --loopCount=1 --warmUpLoopCount=0' >> "${run_x86_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --loopCount=1 --warmUpLoopCount=0 >> "${run_x86_log_file}"
         if [ $? = 0 ]; then
             run_result='x86: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -851,9 +850,9 @@ function Run_x86_sse() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        model_name_len=${#model_name}
-        input_params=${line:model_name_len+1}
-        input_num=${input_params%%;*}
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        input_num=`echo ${line} | awk -F ';' '{print $2}'`
+        input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
         input_files=''
         output_file=''
         data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
@@ -874,8 +873,8 @@ function Run_x86_sse() {
         echo ${model_name} >> "${run_x86_sse_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-sse' >> "{run_x86_sse_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-sse || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --loopCount=1 --warmUpLoopCount=0' >> "${run_x86_sse_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --benchmarkDataFile=${output_file} --loopCount=1 --warmUpLoopCount=0 >> "${run_x86_sse_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --loopCount=1 --warmUpLoopCount=0' >> "${run_x86_sse_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --loopCount=1 --warmUpLoopCount=0 >> "${run_x86_sse_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_sse: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1119,9 +1118,9 @@ function Run_x86_avx() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        model_name_len=${#model_name}
-        input_params=${line:model_name_len+1}
-        input_num=${input_params%%;*}
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        input_num=`echo ${line} | awk -F ';' '{print $2}'`
+        input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
         input_files=''
         output_file=''
         data_path="/home/workspace/mindspore_dataset/mslite/models/hiai/input_output/"
@@ -1142,8 +1141,8 @@ function Run_x86_avx() {
         echo ${model_name} >> "${run_x86_avx_log_file}"
         echo 'cd  '${x86_path}'/mindspore-lite-'${version}'-inference-linux-x64-avx' >> "{run_x86_avx_log_file}"
         cd ${x86_path}/mindspore-lite-${version}-inference-linux-x64-avx || return 1
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file}' --loopCount=1 --warmUpLoopCount=0' >> "${run_x86_avx_log_file}"
-        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --benchmarkDataFile=${output_file} --loopCount=1 --warmUpLoopCount=0 >> "${run_x86_avx_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile='${ms_models_path}'/'${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file}' --loopCount=1 --warmUpLoopCount=0' >> "${run_x86_avx_log_file}"
+        export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:./lib:./third_party/libjpeg-turbo/lib:./third_party/opencv/lib;./benchmark/benchmark --modelFile=${ms_models_path}/${model_name}.ms --inDataFile=${input_files} --inputShapes=${input_shapes} --benchmarkDataFile=${output_file} --loopCount=1 --warmUpLoopCount=0 >> "${run_x86_avx_log_file}"
         if [ $? = 0 ]; then
             run_result='x86_avx: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}
         else
@@ -1673,9 +1672,9 @@ function Run_arm64() {
         if [[ $model_name == \#* ]]; then
           continue
         fi
-        model_name_len=${#model_name}
-        input_params=${line:model_name_len+1}
-        input_num=${input_params%%;*}
+        model_name=`echo ${line} | awk -F ';' '{print $1}'`
+        input_num=`echo ${line} | awk -F ';' '{print $2}'`
+        input_shapes=`echo ${line} | awk -F ';' '{print $3}'`
         input_files=''
         output_file=''
         data_path="/data/local/tmp/input_output/"
@@ -1696,8 +1695,8 @@ function Run_arm64() {
         fi
         echo ${model_name} >> "${run_arm64_log_file}"
         echo 'cd  /data/local/tmp/benchmark_test' > adb_run_cmd.txt
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> "${run_arm64_log_file}"
-        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file} >> "${run_arm64_log_file}"
+        echo 'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/data/local/tmp/benchmark_test;./benchmark --modelFile='${model_name}'.ms --inDataFile='${input_files}' --inputShapes='${input_shapes}' --benchmarkDataFile='${output_file} >> adb_run_cmd.txt
         adb -s ${device_id} shell < adb_run_cmd.txt >> "${run_arm64_log_file}"
         if [ $? = 0 ]; then
             run_result='arm64: '${model_name}' pass'; echo ${run_result} >> ${run_benchmark_result_file}

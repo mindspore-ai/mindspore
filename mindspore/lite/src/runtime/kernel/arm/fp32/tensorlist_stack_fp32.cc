@@ -31,7 +31,7 @@ using mindspore::schema::PrimitiveType_TensorListStack;
 namespace mindspore::kernel {
 
 int TensorListStackCPUKernel::CheckParam() {
-  if (input0_->tensors_data_type() != dtype_) {
+  if (dtype_ != kTypeUnknown && input0_->tensors_data_type() != dtype_) {
     MS_LOG(ERROR) << "in_tensors_[0].tensors_data_type:[" << input0_->tensors_data_type() << "] must be equal "
                   << "param.data_type:[" << dtype_ << "]";
     return RET_ERROR;
@@ -113,6 +113,16 @@ int TensorListStackCPUKernel::MergeElementShape() {
 int TensorListStackCPUKernel::MergeSubShape(const std::vector<int> &shape) {
   size_t dim0 = shape.size();
   size_t dim1 = output_shape_.size();
+  // unknown shape use input element shape
+  if (dim1 != 0 && output_shape_[0] == -1) {
+    if (dim0 == 0) {
+      output_shape_.clear();
+      output_shape_.emplace_back(1);
+    } else {
+      output_shape_ = shape;
+    }
+    return RET_OK;
+  }
   if (dim1 != dim0) {
     MS_LOG(ERROR) << "shape.size():" << dim1 << " must be equal output_shape_.size():" << dim0;
     return RET_ERROR;

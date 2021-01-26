@@ -70,7 +70,7 @@ template <typename T>
 void CalShape(const T *data, const std::vector<Tensor *> &inputs, std::vector<int> *out_shape) {
   int input_count = inputs[0]->ElementsNum();
   int input_dim_size = inputs[0]->shape().empty() ? 1 : inputs[0]->shape().size();
-  (*out_shape)[0] = input_dim_size;
+  out_shape->emplace_back(input_dim_size);
   int nonzero_size = 0;
   for (int i = 0; i < input_count; i++) {
     if (static_cast<int>(data[i]) != 0) {
@@ -78,35 +78,34 @@ void CalShape(const T *data, const std::vector<Tensor *> &inputs, std::vector<in
     }
   }
   if (nonzero_size == 0) {
-    *out_shape = {};
+    return;
   } else {
-    (*out_shape)[1] = nonzero_size / input_dim_size;
+    out_shape->emplace_back(nonzero_size);
   }
 }
 int NonZero::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> outputs_) {
   MS_ASSERT(this->primitive_ != nullptr);
   MS_ASSERT(inputs_.size() == 1);
-  auto input = inputs_.front();
-  MS_ASSERT(input != nullptr);
+  auto input_tensor = inputs_.front();
+  MS_ASSERT(input_tensor != nullptr);
   auto output = outputs_.front();
   MS_ASSERT(output != nullptr);
-  output->set_data_type(input->data_type());
-  output->set_format(input->format());
+  output->set_data_type(TypeId::kNumberTypeInt32);
+  output->set_format(input_tensor->format());
   if (!infer_flag()) {
     return RET_INFER_INVALID;
   }
 
   std::vector<int> out_shape;
   if (inputs_.size() == kSingleNum) {
-    auto input_tensor = inputs_.at(0);
     if (input_tensor->data_c() == nullptr) {
       MS_LOG(INFO) << "Do infer shape in runtime.";
       return RET_INFER_INVALID;
     }
     switch (input_tensor->data_type()) {
-      case kNumberTypeFloat: {
-        auto data = reinterpret_cast<float *>(input_tensor->MutableData());
-        CalShape<float>(data, inputs_, &out_shape);
+      case kNumberTypeBool: {
+        auto data = reinterpret_cast<bool *>(input_tensor->MutableData());
+        CalShape<bool>(data, inputs_, &out_shape);
       } break;
       default: {
         MS_LOG(ERROR) << "NonZero weight tensor has unsupported dataType: " << input_tensor->data_type();

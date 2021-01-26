@@ -57,8 +57,10 @@ FuncGraphPtr OnnxModelParser::Parse(const std::string &model_file, const std::st
   static auto root_func_manager = Manage(anf_root_graph_);
   for (auto &subgraph : all_subgraphs_) {
     subgraph->set_manager(root_func_manager);
+    subgraph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
   }
   anf_root_graph_->set_attr("graph_name", MakeValue("main_graph"));
+  anf_root_graph_->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_ONNX)));
   return anf_root_graph_;
 }
 
@@ -165,6 +167,7 @@ STATUS OnnxModelParser::ConvertGraphInputs(const onnx::GraphProto &onnx_graph, c
     auto onnx_shape = input_value.type().tensor_type().shape().dim();
     std::transform(onnx_shape.begin(), onnx_shape.end(), std::back_inserter(shape_vector),
                    [](const onnx::TensorShapeProto_Dimension &val) { return static_cast<int64_t>(val.dim_value()); });
+    std::replace(shape_vector.begin(), shape_vector.end(), 0, -1);
     auto abstract_tensor = std::make_shared<abstract::AbstractTensor>(type_ptr, shape_vector);
     parameter->set_abstract(abstract_tensor);
     parameter->set_name(input_value.name());
@@ -746,6 +749,41 @@ STATUS AddIterNumsUpdateEdge(const FuncGraphPtr &anf_graph, std::vector<AnfNodeP
   return RET_OK;
 }
 
+STATUS OnnxModelParser::AddTensorListStackNode(const AnfNodePtr &root_while_node, const onnx::NodeProto &onnx_node,
+                                               int act_outputs_num, int body_output_size) {
+  auto &loop_node_name = onnx_node.name();
+  auto root_anf_graph = root_while_node->func_graph();
+  auto stack_elem_node = CreateConstParamter(root_anf_graph, -1);
+  stack_elem_node->set_name(loop_node_name + "_element_shape");
+  for (int j = 0; j < act_outputs_num; j++) {
+    auto output_size = onnx_node.output_size();
+    auto &loop_output_name = onnx_node.output(output_size - act_outputs_num + j);
+    auto &while_output_node = control_nodes_map_[loop_node_name]->at(loop_output_name);
+    auto stack_attr = std::make_unique<schema::TensorListStackT>();
+    if (stack_attr == nullptr) {
+      MS_LOG(ERROR) << "new op failed";
+      return RET_ERROR;
+    }
+    stack_attr->numElements = -1;
+    auto stack_value_node = CreateValueNode(stack_attr.release(), schema::PrimitiveType_TensorListStack);
+    std::vector<AnfNodePtr> stack_inputs = {stack_value_node, while_output_node, stack_elem_node};
+    auto tensorlist_stack_cnode = root_anf_graph->NewCNode(stack_inputs);
+    if (tensorlist_stack_cnode == nullptr) {
+      MS_LOG(ERROR) << "new cnode error";
+      return RET_ERROR;
+    }
+    tensorlist_stack_cnode->set_fullname_with_scope(loop_node_name + "_tensorlist_stack_node_" + std::to_string(j));
+    tensorlist_stack_cnode->set_abstract(stack_elem_node->abstract());
+
+    // update getitem value output index
+    auto new_get_item_value = NewValueNode(MakeValue<int>(body_output_size - act_outputs_num + j));
+    while_output_node->cast<CNodePtr>()->set_input(2, new_get_item_value);
+    // insert tensorliststack after while_output
+    (*control_nodes_map_[loop_node_name])[loop_output_name] = tensorlist_stack_cnode;
+  }
+  return RET_OK;
+}
+
 // onnx loop scan_output need through tensorlist op,while node need add new inputs
 STATUS OnnxModelParser::AddTensorArrayEdge(const FuncGraphPtr &anf_graph, std::vector<AnfNodePtr> *return_new_inputs,
                                            const std::string &loop_node_name,
@@ -874,34 +912,10 @@ STATUS OnnxModelParser::ConvertLoopOnnxNode(const onnx::NodeProto &onnx_node,
         return status;
       }
       // insert tensorliststack after while output
-
-      auto root_anf_graph = root_while_node->func_graph();
-      auto stack_elem_node = CreateConstParamter(root_anf_graph, -1);
-      stack_elem_node->set_name(loop_node_name + "_element_shape");
-      for (int j = 0; j < act_outputs_num; j++) {
-        auto output_size = onnx_node.output_size();
-        auto &loop_output_name = onnx_node.output(output_size - act_outputs_num + j);
-        auto &while_output_node = control_nodes_map_[loop_node_name]->at(loop_output_name);
-        auto stack_attr = std::make_unique<schema::TensorListStackT>();
-        if (stack_attr == nullptr) {
-          MS_LOG(ERROR) << "new op failed";
-          return RET_ERROR;
-        }
-        auto stack_value_node = CreateValueNode(stack_attr.release(), schema::PrimitiveType_TensorListStack);
-        std::vector<AnfNodePtr> stack_inputs = {stack_value_node, while_output_node, stack_elem_node};
-        auto tensorlist_stack_cnode = root_anf_graph->NewCNode(stack_inputs);
-        if (tensorlist_stack_cnode == nullptr) {
-          MS_LOG(ERROR) << "new cnode error";
-          return RET_ERROR;
-        }
-        tensorlist_stack_cnode->set_fullname_with_scope(loop_node_name + "_tensorlist_stack_node_" + std::to_string(j));
-        tensorlist_stack_cnode->set_abstract(stack_elem_node->abstract());
-
-        // update getitem value output index
-        auto new_get_item_value = NewValueNode(MakeValue<int>(body_graph_inputs.size() - act_outputs_num + i));
-        while_output_node->cast<CNodePtr>()->set_input(2, new_get_item_value);
-        // insert tensorliststack after while_output
-        (*control_nodes_map_[loop_node_name])[loop_output_name] = tensorlist_stack_cnode;
+      status = AddTensorListStackNode(root_while_node, onnx_node, act_outputs_num, body_graph_inputs.size());
+      if (status != RET_OK) {
+        MS_LOG(ERROR) << "add tensorliststack node failed";
+        return status;
       }
     }
     return_tuple_cnode->set_inputs(return_new_inputs);

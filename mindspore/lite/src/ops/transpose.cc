@@ -150,6 +150,13 @@ int Transpose::InferShape(std::vector<Tensor *> inputs_, std::vector<Tensor *> o
   for (size_t i = 0; i < perm.size(); ++i) {
     out_shape.at(i) = in_shape.at(perm.at(i));
   }
+  if (perm.empty()) {
+    auto shape_size = in_shape.size();
+    out_shape.resize(shape_size);
+    for (size_t i = 0; i < shape_size; ++i) {
+      out_shape[shape_size - i - 1] = in_shape[i];
+    }
+  }
   output->set_shape(out_shape);
   return RET_OK;
 }
