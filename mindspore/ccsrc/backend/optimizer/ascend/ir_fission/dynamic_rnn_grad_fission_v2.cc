@@ -458,8 +458,7 @@ AnfNodePtr CreateValueNode(const FuncGraphPtr &func_graph, const CNodePtr &dynam
 
   std::vector<size_t> shape = {t_size, IntToSize(1), n_size};
   std::vector<int64_t> output_shape = {SizeToLong(t_size), SizeToLong(1), SizeToLong(n_size)};
-  std::vector<int64_t> output_tensor = {(SizeToLong(n_size) + SizeToLong(15)) / SizeToLong(16) * SizeToLong(16) *
-                                        SizeToLong(16) * SizeToLong(t_size)};
+  std::vector<int64_t> output_tensor = {SizeToLong(t_size) * SizeToLong(n_size)};
   auto tensor = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat32, output_tensor);
   auto x_abstract = std::make_shared<abstract::AbstractTensor>(kFloat32, output_shape);
   auto kernel_graph = func_graph->cast<KernelGraphPtr>();
