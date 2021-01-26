@@ -51,7 +51,7 @@ class Net(nn.Cell):
         self.weight = Parameter(Tensor(np.ones([out_features, in_features]).astype(np.float32)), name="weight")
         self.bias = Parameter(Tensor(np.ones([out_features]).astype(np.float32)), name="bias")
         self.matmul = P.MatMul()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, input_):
         output = self.add(self.matmul(input_, self.weight), self.bias)
@@ -64,7 +64,7 @@ class NetFP16(nn.Cell):
         self.weight = Parameter(Tensor(np.ones([out_features, in_features]).astype(np.float32)), name="weight")
         self.bias = Parameter(Tensor(np.ones([out_features]).astype(np.float32)), name="bias")
         self.matmul = P.MatMul()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.cast = P.Cast()
 
     def construct(self, input_):

@@ -58,7 +58,7 @@ def test_two_bn():
             self.block1 = get_block()
             self.block2 = get_block()
             self.relu = P.ReLU()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.bias = Tensor(np.ones([64, 64]), dtype=ms.float32)
 
         def construct(self, x):

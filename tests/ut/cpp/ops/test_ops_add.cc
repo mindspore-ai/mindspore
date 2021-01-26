@@ -28,34 +28,5 @@ class TestAdd : public UT::Common {
   void SetUp() {}
   void TearDown() {}
 };
-
-TEST_F(TestAdd, test_ops_add) {
-  auto add = std::make_shared<Add>();
-  add->Init();
-  auto tensor_x = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat32, std::vector<int64_t>{1, 3});
-  auto tensor_y = TensorConstructUtils::CreateOnesTensor(kNumberTypeFloat32, std::vector<int64_t>{1, 3});
-  MS_EXCEPTION_IF_NULL(tensor_x);
-  MS_EXCEPTION_IF_NULL(tensor_y);
-  auto add_abstract = add->Infer({tensor_x->ToAbstract(), tensor_y->ToAbstract()});
-  MS_EXCEPTION_IF_NULL(add_abstract);
-  EXPECT_EQ(add_abstract->isa<abstract::AbstractTensor>(), true);
-  auto shape_ptr = add_abstract->BuildShape();
-  MS_EXCEPTION_IF_NULL(shape_ptr);
-  EXPECT_EQ(shape_ptr->isa<abstract::Shape>(), true);
-  auto add_shape = shape_ptr->cast<abstract::ShapePtr>();
-  MS_EXCEPTION_IF_NULL(add_shape);
-  auto shape_vec = add_shape->shape();
-  auto type = add_abstract->BuildType();
-  MS_EXCEPTION_IF_NULL(type);
-  EXPECT_EQ(type->isa<TensorType>(), true);
-  auto tensor_type = type->cast<TensorTypePtr>();
-  MS_EXCEPTION_IF_NULL(tensor_type);
-  auto elem_type = tensor_type->element();
-  EXPECT_EQ(elem_type->type_id(), kNumberTypeFloat32);
-  EXPECT_EQ(shape_vec.size(), 2);
-  EXPECT_EQ(shape_vec[0], 1);
-  EXPECT_EQ(shape_vec[1], 3);
-}
-
 }  // namespace ops
 }  // namespace mindspore

@@ -269,7 +269,7 @@ class GhostBottleneck(nn.Cell):
                 ConvUnit(num_in, num_out, kernel_size=1, stride=1,
                          padding=0, num_groups=1, use_act=False),
             ])
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         r"""construct of ghostnet"""

@@ -66,7 +66,7 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
     return false;
   }
   auto add5 = node->cast<CNodePtr>();
-  if (AnfAlgo::GetCNodeName(add5) != prim::kPrimTensorAdd->name() || add5->inputs().size() != kAddInputNum) {
+  if (AnfAlgo::GetCNodeName(add5) != prim::kPrimAdd->name() || add5->inputs().size() != kAddInputNum) {
     return false;
   }
   auto real_div4_anf = add5->input(1);
@@ -82,7 +82,7 @@ bool MatchAdd5Pattern(const AnfNodePtr &node, const AnfNodePtr &mul4, const AnfN
     return false;
   }
   auto add4 = add4_anf->cast<CNodePtr>();
-  if (AnfAlgo::GetCNodeName(add4) != prim::kPrimTensorAdd->name() || add4->inputs().size() != kAddInputNum) {
+  if (AnfAlgo::GetCNodeName(add4) != prim::kPrimAdd->name() || add4->inputs().size() != kAddInputNum) {
     return false;
   }
   auto sqrt1_anf = add4->input(1);
@@ -140,17 +140,17 @@ const BaseRef LambNextMVWithDecayV1Rule::DefinePattern() const {
   const auto prim_real_div = std::make_shared<Primitive>(kRealDivOpName);
   VectorRef mul3({prim::kPrimMul, mul3_sub1_, input0_});
   VectorRef mul2({prim::kPrimMul, mul2_x_, input1_});
-  VectorRef add1({prim::kPrimTensorAdd, mul2, mul3});
+  VectorRef add1({prim::kPrimAdd, mul2, mul3});
   VectorRef real_div1({prim_real_div, add1, input2_});
-  VectorRef add2({prim::kPrimTensorAdd, real_div1, add2_y_});
+  VectorRef add2({prim::kPrimAdd, real_div1, add2_y_});
   VectorRef mul0({prim::kPrimMul, mul0_x_, input4_});
   VectorRef mul1({prim::kPrimMul, mul1_sub_, input3_});
   VectorRef sqrt0({prim_rsqrt, add2});
-  VectorRef add0({prim::kPrimTensorAdd, mul0, mul1});
+  VectorRef add0({prim::kPrimAdd, mul0, mul1});
   VectorRef real_div0({prim_real_div, add0, input5_});
   VectorRef real_div2({prim::kPrimMul, real_div0, sqrt0});
   VectorRef mul4({prim::kPrimMul, mul4_x_, input6_});
-  VectorRef add3({prim::kPrimTensorAdd, real_div2, mul4});
+  VectorRef add3({prim::kPrimAdd, real_div2, mul4});
   return add3;
 }
 

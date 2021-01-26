@@ -32,7 +32,7 @@ class LambNextRightRule : public PatternProcessPass {
         mul3_x_(std::make_shared<Var>()),
         true_div1_recip_(std::make_shared<Var>()),
         add2_y_(std::make_shared<Var>()),
-        add1_var_(std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()))) {}
+        add1_var_(std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimAdd->name()))) {}
 
   ~LambNextRightRule() override = default;
   const BaseRef DefinePattern() const override;

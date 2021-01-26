@@ -24,7 +24,7 @@ import mindspore.ops.operations as P
 class Net(Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.sub = P.Sub()
         self.mul = P.Mul()
         self.div = P.RealDiv()

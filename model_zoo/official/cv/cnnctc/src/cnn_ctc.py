@@ -198,7 +198,7 @@ class BasicBlock(nn.Cell):
         self.bn2 = ms_fused_bn(planes)
         self.relu = P.ReLU()
         self.downsample = downsample
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         residual = x

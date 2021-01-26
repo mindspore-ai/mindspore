@@ -17,7 +17,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
 
 tuple_getitem = Primitive(Constants.kTupleGetItem)
-add = P.TensorAdd()
+add = P.Add()
 max_pool = P.MaxPoolWithArgmax(pad_mode="same", kernel_size=3, strides=2)
 make_tuple = Primitive(Constants.kMakeTuple)
 trans_data = Primitive("TransData")

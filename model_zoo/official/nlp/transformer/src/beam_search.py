@@ -35,7 +35,7 @@ class LengthPenalty(nn.Cell):
                  compute_type=mstype.float32):
         super(LengthPenalty, self).__init__()
         self.weight = weight
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.pow = P.Pow()
         self.div = P.RealDiv()
         self.cast = P.Cast()
@@ -142,7 +142,7 @@ class BeamSearchDecoder(nn.Cell):
         self.max_decode_length = max_decode_length
         self.decoder = decoder
 
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.expand = P.ExpandDims()
         self.reshape = P.Reshape()
         self.shape_flat = (-1,)

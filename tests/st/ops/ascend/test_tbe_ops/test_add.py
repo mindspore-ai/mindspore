@@ -23,7 +23,7 @@ from mindspore.ops import operations as P
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x_, y_):
         return self.add(x_, y_)

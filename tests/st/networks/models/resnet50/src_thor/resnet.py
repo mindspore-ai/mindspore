@@ -182,7 +182,7 @@ class ResidualBlock(nn.Cell):
                                                                  damping=damping, loss_scale=loss_scale,
                                                                  frequency=frequency),
                                                         _bn(out_channel)])
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         identity = x

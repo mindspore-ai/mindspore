@@ -191,7 +191,7 @@ Status OneHotInfo::ComputeReplaceGraph(const CNodePtr &cnode) {
   auto equal = gen_g.PushBack({gen_g.NewOpInst(EQUAL), floor_div, CreateInt32Tensor(mod_rank_)});
   auto cast = gen_g.PushBack({gen_g.NewOpInst(CAST), equal, CreatTypeInt(32)});
   auto mul2 = gen_g.PushBack({gen_g.NewOpInst(MUL), sub1, cast});
-  auto tensor_add = gen_g.PushBack({gen_g.NewOpInst(TENSOR_ADD), mul2, CreateInt32Tensor(1)});
+  auto tensor_add = gen_g.PushBack({gen_g.NewOpInst(ADD), mul2, CreateInt32Tensor(1)});
   auto mul3 = gen_g.PushBack({gen_g.NewOpInst(MUL), cast, tensor_add});
   auto sub2 = gen_g.PushBack({gen_g.NewOpInst(SUB), mul3, CreateInt32Tensor(1)});
   Attr attr_onehot_axis = std::make_pair(AXIS, axis_value_ptr_);

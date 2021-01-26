@@ -22,7 +22,7 @@ memcpy_async_attr = Primitive('memcpy_async')
 memcpy_async_attr.add_prim_attr("label_for_insert_stream_active", True)
 memcpy_async = Primitive('memcpy_async')
 cast = P.Cast()
-add = P.TensorAdd()
+add = P.Add()
 
 
 class FnDict:

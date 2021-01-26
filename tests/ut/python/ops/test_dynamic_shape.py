@@ -41,7 +41,7 @@ def test_sparse_apply_proximal_ada_grad():
         def __init__(self):
             super(NetWrapper, self).__init__()
             self.unq = P.Unique()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.expand_dims = P.ExpandDims()
             self.cast = P.Cast()
             self.net = Net()
@@ -75,7 +75,7 @@ def test_sparse_apply_ftrl():
         def __init__(self):
             super(NetWrapper, self).__init__()
             self.unq = P.Unique()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.expand_dims = P.ExpandDims()
             self.cast = P.Cast()
             self.net = SparseApplyFtrlNet()

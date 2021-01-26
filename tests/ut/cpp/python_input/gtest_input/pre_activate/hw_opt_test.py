@@ -19,7 +19,7 @@ from mindspore.ops import _constants as Constants
 tuple_getitem = Primitive(Constants.kTupleGetItem)
 depend = P.Depend()
 addn = P.AddN()
-add = P.TensorAdd()
+add = P.Add()
 sub = P.Sub()
 mul = P.Mul()
 max_pool = P.MaxPoolWithArgmax(pad_mode="same", kernel_size=3, strides=2)

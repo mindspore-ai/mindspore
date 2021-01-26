@@ -273,7 +273,7 @@ class Dense(Cell):
                     raise ValueError("Bias init shape error.")
             self.bias = Parameter(initializer(bias_init, [out_channels]), name="bias")
             self.bias_add = P.BiasAdd()
-            self.tensor_add = P.TensorAdd()
+            self.tensor_add = P.Add()
 
         self.matmul = P.MatMul(transpose_b=True)
         self.batch_matmul = P.BatchMatMul(transpose_b=True)

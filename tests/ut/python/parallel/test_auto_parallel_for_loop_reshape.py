@@ -54,7 +54,7 @@ class LayerNorm(nn.Cell):
         self.mean = P.ReduceMean(keep_dims=True)
         self.eps = eps
         self.sub = P.Sub()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.mul = P.Mul()
         self.div = P.RealDiv()
 

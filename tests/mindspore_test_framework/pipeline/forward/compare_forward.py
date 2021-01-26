@@ -35,8 +35,8 @@ The pipeline is suitable for configs in a case-by-case style.
 
 Example:
     verification_set = [
-        ('TensorAdd', {
-            'block': (P.TensorAdd(), {'reduce_output': False}),
+        ('Add', {
+            'block': (P.Add(), {'reduce_output': False}),
             'desc_inputs': [[1, 3, 3, 4], [1, 3, 3, 4]],
             'desc_bprop': [[1, 3, 3, 4]],
             'desc_expect': {
@@ -57,8 +57,8 @@ The pipeline is suitable for configs in a case-by-case style.
 
 Example:
     verification_set = [
-        ('TensorAdd', {
-            'block': (P.TensorAdd(), {'reduce_output': False}),
+        ('Add', {
+            'block': (P.Add(), {'reduce_output': False}),
             'desc_inputs': [[1, 3, 3, 4], [1, 3, 3, 4]],
             'desc_bprop': [[1, 3, 3, 4]],
             'desc_expect': {
@@ -83,7 +83,7 @@ Example:
             {
                 'id':'add',
                 'group':'op-test',
-                'block':(P.TensorAdd(), {'reduce_output': False}),
+                'block':(P.Add(), {'reduce_output': False}),
             }
         ],
         'inputs':  [
@@ -122,7 +122,7 @@ Example:
             {
                 'id':'add',
                 'group':'op-test',
-                'block':(P.TensorAdd(), {'reduce_output': False}),
+                'block':(P.Add(), {'reduce_output': False}),
             }
         ],
         'inputs':  [

@@ -43,7 +43,7 @@ class SummaryNet(nn.Cell):
         self.data = data
         self.summary_fn = getattr(P, summary_type)()
         self.one = Tensor(np.array([1]).astype(np.float32))
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self):
         self.summary_fn(self.tag, self.data)

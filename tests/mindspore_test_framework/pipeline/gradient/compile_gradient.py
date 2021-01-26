@@ -28,8 +28,8 @@ Check if compiling gradient anf graph is ok. This pipeline is suitable for case-
 
 Example:
     verification_set = [
-        ('TensorAdd', {
-            'block': (P.TensorAdd(), {'reduce_output': False}),
+        ('Add', {
+            'block': (P.Add(), {'reduce_output': False}),
             'desc_inputs': [[1, 3, 3, 4], [1, 3, 3, 4]],
             'desc_bprop': [[1, 3, 3, 4]]
         })
@@ -44,8 +44,8 @@ Check if compiling gradient ge graph is ok. This pipeline is suitable for case-b
 
 Example:
     verification_set = [
-        ('TensorAdd', {
-            'block': (P.TensorAdd(), {'reduce_output': False}),
+        ('Add', {
+            'block': (P.Add(), {'reduce_output': False}),
             'desc_inputs': [[1, 3, 3, 4], [1, 3, 3, 4]],
             'desc_bprop': [[1, 3, 3, 4]]
         })

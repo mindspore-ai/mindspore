@@ -16,7 +16,7 @@
 import math
 
 import mindspore.nn as nn
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.nn import Dense, Cell
@@ -76,7 +76,7 @@ class BaseBlock(Cell):
         self.relu2 = P.ReLU()
 
         self.cast = P.Cast()
-        self.add = TensorAdd()
+        self.add = Add()
 
     def construct(self, x):
         '''Construct function.'''

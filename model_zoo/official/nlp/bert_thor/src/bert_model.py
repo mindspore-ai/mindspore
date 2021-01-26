@@ -227,7 +227,7 @@ class EmbeddingPostprocessor(nn.Cell):
             frequency=frequency)
         self.position_ids = Tensor(np.arange(seq).reshape(-1, seq).astype(np.int32))
         self.layernorm = nn.LayerNorm((embedding_size,))
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, token_type_ids, word_embeddings):
         """construct of EmbeddingPostprocessor"""
@@ -275,7 +275,7 @@ class BertOutput(nn.Cell):
                                 batch_size=batch_size).to_float(compute_type)
         self.dropout = nn.Dropout(1 - dropout_prob)
         self.dropout_prob = dropout_prob
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.layernorm = nn.LayerNorm((out_channels,)).to_float(compute_type)
         self.cast = P.Cast()
 
@@ -522,7 +522,7 @@ class BertAttention(nn.Cell):
         if self.has_attention_mask:
             self.expand_dims = P.ExpandDims()
             self.sub = P.Sub()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.cast = P.Cast()
             self.get_dtype = P.DType()
         if do_return_2d_tensor:

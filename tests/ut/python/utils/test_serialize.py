@@ -75,7 +75,7 @@ def test_save_graph():
     class Net1(nn.Cell):
         def __init__(self):
             super(Net1, self).__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
 
         def construct(self, x, y):
             z = self.add(x, y)

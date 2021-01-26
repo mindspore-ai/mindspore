@@ -125,7 +125,7 @@ class InvertedResidual(nn.Cell):
                            pad_mode='pad', padding=0, group=1, has_bn=True)
         ])
         self.conv = nn.SequentialCell(layers)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         out = self.conv(x)

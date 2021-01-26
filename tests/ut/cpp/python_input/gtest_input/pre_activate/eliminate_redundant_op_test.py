@@ -16,7 +16,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
 
-add = P.TensorAdd()
+add = P.Add()
 sub = P.Sub()
 make_tuple = Primitive(Constants.kMakeTuple)
 four2five = Primitive('Four2Five')

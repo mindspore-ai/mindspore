@@ -52,7 +52,7 @@ def test_matmul_add():
         def __init__(self):
             super().__init__()
             self.matmul = P.MatMul()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
 
         def construct(self, x, y, b):
             out = self.matmul(x, y)

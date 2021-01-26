@@ -35,7 +35,7 @@ class SumOutNet(Cell):
 class SingleOutNet(Cell):
     def __init__(self):
         super(SingleOutNet, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.mul = P.Mul()
         self.sum = P.ReduceSum()
 
@@ -48,7 +48,7 @@ class SingleOutNet(Cell):
 class MultiOutNet(Cell):
     def __init__(self):
         super(MultiOutNet, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.mul = P.Mul()
         self.sum = P.ReduceSum()
 
