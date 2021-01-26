@@ -42,6 +42,7 @@
 #include "tools/converter/legacy_optimizer/graph/select_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_node_pass.h"
 #include "tools/converter/legacy_optimizer/graph/subgraph_tensor_pass.h"
+#include "tools/converter/legacy_optimizer/graph/nested_loop_expand_pass.h"
 
 using std::string;
 namespace mindspore::lite {
@@ -272,6 +273,16 @@ int GraphDefTransform::Transform(const converter::Flags &ctx) {
     status = nameOptimizer.Run(graphDefT);
     if (status != RET_OK && status != RET_NO_CHANGE) {
       MS_LOG(ERROR) << "Run nameOptimizer graphPasses Failed";
+      return status;
+    }
+  }
+
+  {
+    Optimizer nestedLoopOptimizer;
+    nestedLoopOptimizer.AddPass(new (std::nothrow) NestedLoopExpandPass());
+    status = nestedLoopOptimizer.Run(graphDefT);
+    if (status != RET_OK && status != RET_NO_CHANGE) {
+      MS_LOG(ERROR) << "Run nestedLoopOptimizer graphPasses Failed";
       return status;
     }
   }
