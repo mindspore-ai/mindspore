@@ -412,7 +412,6 @@ static RegistryInferShape g_ExpInferShape(mindspore::schema::PrimitiveType_ExpFu
 static RegistryInferShape g_FakeQuantWithMinMaxVarsInferShape(mindspore::schema::PrimitiveType_FakeQuantWithMinMaxVars,
                                                               CommonInferShape);
 static RegistryInferShape g_FloorInferShape(mindspore::schema::PrimitiveType_Floor, CommonInferShape);
-static RegistryInferShape g_IdentityInferShape(mindspore::schema::PrimitiveType_Identity, CommonInferShape);
 static RegistryInferShape g_InstanceNormInferShape(mindspore::schema::PrimitiveType_InstanceNorm, CommonInferShape);
 static RegistryInferShape g_L2NormInferShape(mindspore::schema::PrimitiveType_L2NormalizeFusion, CommonInferShape);
 static RegistryInferShape g_LeakyReluInferShape(mindspore::schema::PrimitiveType_LeakyRelu, CommonInferShape);

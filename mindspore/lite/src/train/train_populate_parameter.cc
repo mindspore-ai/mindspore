@@ -379,7 +379,7 @@ OpParameter *PopulateDropoutParameter(const void *prim) {
   auto primitive = static_cast<const schema::Primitive *>(prim);
   auto value = primitive->value_as_Dropout();
   dropout_parameter->op_parameter_.type_ = primitive->value_type();
-  dropout_parameter->ratio_ = value->ratio();
+  dropout_parameter->ratio_ = value->keep_prob();
   if (dropout_parameter->ratio_ < 0.f || dropout_parameter->ratio_ > 1.f) {
     MS_LOG(ERROR) << "Dropout ratio must be between 0 to 1, got " << dropout_parameter->ratio_;
     free(dropout_parameter);

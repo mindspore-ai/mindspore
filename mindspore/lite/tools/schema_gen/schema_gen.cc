@@ -84,7 +84,7 @@ int SchemaGen::Init() {
     return RET_ERROR;
   }
   std::string ns =
-    "/**\n *\n * Copyright 2019-2021 Huawei Technologies Co., Ltd\n"
+    "/**\n * Copyright 2019-2021 Huawei Technologies Co., Ltd\n *\n"
     " * Licensed under the Apache License, Version 2.0 (the \"License\");\n"
     " * you may not use this file except in compliance with the License.\n"
     " * You may obtain a copy of the License at\n"
