@@ -155,13 +155,23 @@ const std::vector<uint32_t> ParallelContext::GetAllReduceFusionSplitSizes(const 
 // Clear param_shapes before training in auto-parallel or semi-auto-parallel mode
 void ParallelContext::ParallelParameterContextInitShape(const FuncGraphPtr &func_graph) {
   MS_EXCEPTION_IF_NULL(func_graph);
-  if (func_graph->has_flag(AUTO_PARALLEL) &&
-      (!func_graph->has_flag(TRAINING) ||
-       (ParallelContext::GetInstance()->grad_accumulation_step() > 1 && !func_graph->has_flag(ACCUMULATION)))) {
+  if (!func_graph->has_flag(AUTO_PARALLEL)) {
+    return;
+  }
+
+  if (!func_graph->has_flag(TRAINING)) {
     init_param_shape_ = false;
+    MS_LOG(INFO) << "In parallel evaluation or prediction, may be need to restore the parameter shape";
+    return;
+  }
+
+  if ((ParallelContext::GetInstance()->grad_accumulation_step() > 1) && !func_graph->has_flag(ACCUMULATION)) {
+    init_param_shape_ = false;
+    MS_LOG(INFO) << "In parallel grad accumulation second graph, need to restore the parameter shape";
   } else {
     param_shapes.clear();
     init_param_shape_ = true;
+    MS_LOG(INFO) << "Init the parameter shape dict";
   }
 }
 
@@ -171,6 +181,10 @@ void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &f
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ptr);
+  if (!func_graph->has_flag(AUTO_PARALLEL)) {
+    return;
+  }
+
   if (init_param_shape_) {
     return;
   }
@@ -182,7 +196,7 @@ void ParallelContext::ParallelParameterContextRestoreShape(const FuncGraphPtr &f
   Shape shape = iter->second;
   std::shared_ptr<abstract::BaseShape> base_shape = std::make_shared<abstract::Shape>(shape);
   ptr->set_shape(base_shape);
-  MS_LOG(DEBUG) << "The parameter name is " << param_node->name() << ", the shape is " << shape;
+  MS_LOG(INFO) << "The parameter name is " << param_node->name() << ", the shape is " << shape;
 }
 
 // Clear param_shapes before training in auto-parallel or semi-auto-parallel mode
@@ -192,6 +206,10 @@ void ParallelContext::ParallelParameterContextCkptShape(const FuncGraphPtr &func
   MS_EXCEPTION_IF_NULL(func_graph);
   MS_EXCEPTION_IF_NULL(param_node);
   MS_EXCEPTION_IF_NULL(ptr);
+  if (!func_graph->has_flag(AUTO_PARALLEL)) {
+    return;
+  }
+
   if (!init_param_shape_) {
     return;
   }

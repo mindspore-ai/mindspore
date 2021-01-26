@@ -25,6 +25,7 @@ from mindspore.common.initializer import TruncatedNormal, initializer, Normal
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 
+
 class LayerNorm(nn.Cell):
     """
     Layer Normalization

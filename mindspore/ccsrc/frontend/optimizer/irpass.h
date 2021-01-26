@@ -52,6 +52,7 @@ class OptimizeIRPassLib {
   SubstitutionPtr depend_value_elim_;
   SubstitutionPtr all_reduce_const_elim_;
   SubstitutionPtr mirror_mini_step_elim_;
+  SubstitutionPtr virtual_add_elim_;
   SubstitutionPtr mini_step_allgather_replace_;
 
   // Env Item Eliminate

@@ -51,7 +51,7 @@
 
 namespace mindspore {
 namespace session {
-static std::shared_ptr<std::map<ValuePtr, ParameterPtr>> python_paras;
+static std::shared_ptr<std::map<ParamInfoPtr, ParameterPtr>> python_paras;
 void ClearPythonParasMap() { python_paras = nullptr; }
 namespace {
 const int kSummaryGetItem = 2;
@@ -106,7 +106,7 @@ bool CheckIfNeedCreateOutputTensor(const AnfNodePtr &node) {
   return false;
 }
 
-ValuePtr GetParamDefaultValue(const AnfNodePtr &node) {
+ParamInfoPtr GetParamDefaultValue(const AnfNodePtr &node) {
   if (node == nullptr) {
     return nullptr;
   }
@@ -114,7 +114,7 @@ ValuePtr GetParamDefaultValue(const AnfNodePtr &node) {
   if (parameter == nullptr || !parameter->has_default()) {
     return nullptr;
   }
-  return parameter->default_param();
+  return parameter->param_info();
 }
 
 tensor::TensorPtr CreateCNodeOutputTensor(const session::KernelWithIndex &node_output_pair,
@@ -747,7 +747,7 @@ ParameterPtr SessionBasic::CreateNewParameterFromParameter(const AnfNodePtr &anf
   ParameterPtr new_parameter = nullptr;
   // if parameter's python parameter has been exist a backend parameter, reuse the exist parameter
   if (python_paras == nullptr) {
-    python_paras = std::make_shared<std::map<ValuePtr, ParameterPtr>>();
+    python_paras = std::make_shared<std::map<ParamInfoPtr, ParameterPtr>>();
   }
   auto iter = python_paras->find(param_value);
   if (iter != python_paras->end()) {
@@ -1217,7 +1217,7 @@ ParameterPtr SessionBasic::CreateNewParameter(const AnfNodePtr &anf, KernelGraph
   auto param_value = GetParamDefaultValue(anf);
   ParameterPtr new_parameter = nullptr;
   if (python_paras == nullptr) {
-    python_paras = std::make_shared<std::map<ValuePtr, ParameterPtr>>();
+    python_paras = std::make_shared<std::map<ParamInfoPtr, ParameterPtr>>();
   }
   auto iter = python_paras->find(param_value);
   if (iter != python_paras->end()) {

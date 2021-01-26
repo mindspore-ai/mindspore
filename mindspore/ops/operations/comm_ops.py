@@ -653,6 +653,19 @@ class _VirtualDiv(PrimitiveWithInfer):
 virtual_div = _VirtualDiv()
 
 
+class _VirtualAdd(PrimitiveWithInfer):
+    """Auto parallel virtual operator. Do nothing in forward, do Add in backward."""
+    @prim_attr_register
+    def __init__(self):
+        """init"""
+
+    def infer_shape(self, x_shape, y_shape):
+        return x_shape
+
+    def infer_dtype(self, x_dtype, y_dtype):
+        return x_dtype
+
+
 class _VirtualDataset(PrimitiveWithInfer):
     """
     Auto parallel virtual dataset operator.
