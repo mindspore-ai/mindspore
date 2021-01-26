@@ -114,7 +114,9 @@ def Deeptext_eval_test(dataset_path='', ckpt_path=''):
     print("\n========================================\n")
     for i in range(config.num_classes - 1):
         j = i + 1
-        print("class {} precision is {:.2f}%, recall is {:.2f}%".format(j, precisions[j] * 100, recalls[j] * 100))
+        F1 = (2 *  precisions[j] * recalls[j]) / (precisions[j] + recalls[j] + 1e-6)
+        print("class {} precision is {:.2f}%, recall is {:.2f}%,"
+              "F1 is {:.2f}%".format(j, precisions[j] * 100, recalls[j] * 100, F1 * 100))
         if config.use_ambigous_sample:
             break
 
