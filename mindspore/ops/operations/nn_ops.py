@@ -2966,6 +2966,7 @@ class GeLU(PrimitiveWithInfer):
         validator.check_tensor_dtype_valid("input_x", input_x, (mstype.float16, mstype.float32), self.name)
         return input_x
 
+
 def Gelu():
     logger.warning("WARN_DEPRECATED: The usage of Gelu is deprecated. Please use GeLU.")
     return GeLU()
