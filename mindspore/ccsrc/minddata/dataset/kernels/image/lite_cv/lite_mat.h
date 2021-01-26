@@ -56,6 +56,13 @@ struct Chn4 {
   T c4;
 };
 
+struct Point {
+  float x;
+  float y;
+  Point() : x(0), y(0) {}
+  Point(float _x, float _y) : x(_x), y(_y) {}
+};
+
 using BOOL_C1 = Chn1<bool>;
 using BOOL_C2 = Chn2<bool>;
 using BOOL_C3 = Chn3<bool>;

@@ -27,6 +27,8 @@
 namespace mindspore {
 namespace dataset {
 
+#define CV_PI 3.1415926535897932384626433832795
+
 #define INT16_CAST(X) \
   static_cast<int16_t>(::std::min(::std::max(static_cast<int>(X + (X >= 0.f ? 0.5f : -0.5f)), -32768), 32767));
 
@@ -98,6 +100,15 @@ bool WarpAffineBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int 
 /// \brief perspective image by linear
 bool WarpPerspectiveBilinear(const LiteMat &src, LiteMat &dst, const LiteMat &M, int dst_w, int dst_h,
                              PaddBorderType borderType, std::vector<uint8_t> &borderValue);
+
+/// \brief Matrix rotation
+bool GetRotationMatrix2D(float x, float y, double angle, double scale, LiteMat &M);
+
+/// \brief Perspective transformation
+bool GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> dst_point, LiteMat &M);
+
+/// \brief Matrix transpose
+bool Transpose(LiteMat &src, LiteMat &dst);
 
 }  // namespace dataset
 }  // namespace mindspore

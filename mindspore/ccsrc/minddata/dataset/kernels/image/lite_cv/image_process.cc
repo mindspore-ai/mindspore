@@ -16,10 +16,14 @@
 
 #include "minddata/dataset/kernels/image/lite_cv/image_process.h"
 
+#include <float.h>
+#include <math.h>
 #include <limits.h>
 #include <string.h>
 #include <cmath>
 #include <vector>
+#include <utility>
+#include <random>
 
 #ifdef ENABLE_NEON
 #include <arm_neon.h>
@@ -1095,6 +1099,338 @@ bool Affine(LiteMat &src, LiteMat &out_img, const double M[6], std::vector<size_
   } else {
     return false;
   }
+}
+
+inline void RotationMatrix2DImpl(float x, float y, double angle, double scale, LiteMat &M) {
+  angle *= CV_PI / 180;
+  double alpha = std::cos(angle) * scale;
+  double beta = std::sin(angle) * scale;
+
+  M.ptr<double>(0)[0] = alpha;
+  M.ptr<double>(0)[1] = beta;
+  M.ptr<double>(0)[2] = (1 - alpha) * x - beta * y;
+  M.ptr<double>(1)[0] = -beta;
+  M.ptr<double>(1)[1] = alpha;
+  M.ptr<double>(1)[2] = beta * x + (1 - alpha) * y;
+}
+
+bool GetRotationMatrix2D(float x, float y, double angle, double scale, LiteMat &M) {
+  M.Init(3, 2, LDataType(LDataType::DOUBLE));
+  RotationMatrix2DImpl(x, y, angle, scale, M);
+  return true;
+}
+
+template <typename T>
+bool TransposeImpl(const LiteMat &src, LiteMat &dst) {
+  int m = src.width_;
+  int n = src.height_;
+
+  dst.Init(n, m, src.data_type_);
+  for (int i = 0; i < m; i++) {
+    for (int j = 0; j < n; j++) {
+      dst.ptr<T>(i)[j] = src.ptr<T>(j)[i];
+    }
+  }
+
+  return true;
+}
+
+bool Transpose(const LiteMat &src, LiteMat &dst) {
+  if (src.data_type_ == LDataType::DOUBLE) {
+    return TransposeImpl<double>(src, dst);
+  } else if (src.data_type_ == LDataType::FLOAT32) {
+    return TransposeImpl<float>(src, dst);
+  } else {
+    return false;
+  }
+  return true;
+}
+
+template <typename T>
+static inline T Hypot_(T a, T b) {
+  a = std::abs(a);
+  b = std::abs(b);
+  if (a > b) {
+    b /= a;
+    return a * std::sqrt(1 + b * b);
+  }
+
+  if (b > 0) {
+    a /= b;
+    return b * std::sqrt(1 + a * a);
+  }
+  return 0;
+}
+
+template <typename T>
+void Calculation(int n, int m, std::vector<double> &W, LiteMat &A, LiteMat &V, const T eps) {
+  int max_iter = std::max(m, 30);
+  for (int iter = 0; iter < max_iter; iter++) {
+    bool change = false;
+    T c;
+    T s;
+
+    for (int i = 0; i < n - 1; i++) {
+      for (int j = i + 1; j < n; j++) {
+        T *Ai = A.ptr<T>(i);
+        T *Aj = A.ptr<T>(j);
+        double a = W[i];
+        double p = 0;
+        double b = W[j];
+
+        for (int k = 0; k < m; k++) {
+          p += static_cast<double>(Ai[k] * Aj[k]);
+        }
+
+        if (std::abs(p) <= eps * std::sqrt(static_cast<double>(a * b))) {
+          continue;
+        }
+
+        p *= 2;
+        double beta = a - b;
+        double gamma = Hypot_(static_cast<double>(p), beta);
+
+        if (beta < 0) {
+          double delta = (gamma - beta) * 0.5;
+          s = (T)std::sqrt(delta / gamma);
+          c = (T)(p / (gamma * s * 2));
+        } else {
+          c = (T)std::sqrt((gamma + beta) / (gamma * 2));
+          s = (T)(p / (gamma * c * 2));
+        }
+
+        a = 0;
+        b = 0;
+        for (int k = 0; k < m; k++) {
+          T t0 = c * Ai[k] + s * Aj[k];
+          T t1 = -s * Ai[k] + c * Aj[k];
+          Ai[k] = t0;
+          Aj[k] = t1;
+          a += static_cast<double>(t0 * t0);
+          b += static_cast<double>(t1 * t1);
+        }
+        W[i] = a;
+        W[j] = b;
+        change = true;
+        T *Vi = V.ptr<T>(i);
+        T *Vj = V.ptr<T>(j);
+
+        for (int k = 0; k < n; k++) {
+          T t0 = c * Vi[k] + s * Vj[k];
+          T t1 = -s * Vi[k] + c * Vj[k];
+          Vi[k] = t0;
+          Vj[k] = t1;
+        }
+      }
+    }
+
+    if (!change) {
+      break;
+    }
+  }
+}
+
+template <typename T>
+void CalculationMatrix(int n, int m, std::vector<double> &W, LiteMat &A, LiteMat &V, const T eps) {
+  for (int i = 0; i < n; i++) {
+    double sd = 0.;
+    for (int j = 0; j < m; j++) {
+      T t = A.ptr<T>(i)[j];
+      sd += static_cast<double>(t * t);
+    }
+    W[i] = sd;
+
+    for (int k = 0; k < n; k++) {
+      V.ptr<T>(i)[k] = 0;
+    }
+    V.ptr<T>(i)[i] = 1;
+  }
+
+  Calculation<T>(n, m, W, A, V, eps);
+  for (int i = 0; i < n; i++) {
+    double sd = 0;
+    for (int k = 0; k < m; k++) {
+      T t = A.ptr<T>(i)[k];
+      sd += static_cast<double>(t * t);
+    }
+    W[i] = std::sqrt(sd);
+  }
+
+  for (int i = 0; i < n - 1; i++) {
+    int j = i;
+    for (int k = i + 1; k < n; k++) {
+      if (W[j] < W[k]) {
+        j = k;
+      }
+    }
+
+    if (i != j) {
+      std::swap(W[i], W[j]);
+      for (int k = 0; k < m; k++) {
+        std::swap(A.ptr<T>(i)[k], A.ptr<T>(j)[k]);
+      }
+
+      for (int k = 0; k < n; k++) {
+        std::swap(V.ptr<T>(i)[k], V.ptr<T>(j)[k]);
+      }
+    }
+  }
+}
+
+template <typename T>
+void JacobiSVD(LiteMat &A, LiteMat &_W, LiteMat &V) {
+  double min_val = FLT_MIN;
+  T eps = (T)(FLT_EPSILON * 2);
+  int m = A.width_;
+  int n = _W.height_;
+  int urows = m;
+  std::vector<double> W(n, 0.);
+
+  CalculationMatrix<T>(n, m, W, A, V, eps);
+  for (int i = 0; i < n; i++) {
+    _W.ptr<T>(i)[0] = (T)W[i];
+  }
+
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<unsigned int> dis(0, 4294967294);
+
+  for (int i = 0; i < urows; i++) {
+    double sd = i < n ? W[i] : 0;
+    for (int ii = 0; ii < 100 && sd <= min_val; ii++) {
+      const T val0 = (T)(1. / m);
+      for (int k = 0; k < m; k++) {
+        unsigned int rng = dis(gen);
+        T val = (rng & 256) != 0 ? val0 : -val0;
+        A.ptr<T>(i)[k] = val;
+      }
+
+      for (int iter = 0; iter < 2; iter++) {
+        for (int j = 0; j < i; j++) {
+          sd = 0;
+          for (int k = 0; k < m; k++) {
+            sd += A.ptr<T>(i)[k] * A.ptr<T>(j)[k];
+          }
+          T asum = 0;
+          for (int k = 0; k < m; k++) {
+            T t = (T)(A.ptr<T>(i)[k] - sd * A.ptr<T>(j)[k]);
+            A.ptr<T>(i)[k] = t;
+            asum += std::abs(t);
+          }
+
+          asum = asum > eps * 100 ? 1 / asum : 0;
+          for (int k = 0; k < m; k++) {
+            A.ptr<T>(i)[k] *= asum;
+          }
+        }
+      }
+
+      sd = 0;
+      for (int k = 0; k < m; k++) {
+        T t = A.ptr<T>(i)[k];
+        sd += static_cast<double>(t * t);
+      }
+      sd = std::sqrt(sd);
+    }
+
+    T s = (T)(sd > min_val ? 1 / sd : 0.);
+    for (int k = 0; k < m; k++) {
+      A.ptr<T>(i)[k] *= s;
+    }
+  }
+}
+
+template <typename T>
+void SVBkSb(int m, int n, int nb, LiteMat w, LiteMat u, LiteMat v, const LiteMat src2, LiteMat dst) {
+  T eps = DBL_EPSILON * 2;
+  double thresgold = 0;
+  int nm = std::min(m, n);
+
+  for (int i = 0; i < n; i++) {
+    for (int j = 0; j < nb; j++) {
+      dst.ptr<T>(i)[0] = 0;
+    }
+  }
+
+  for (int i = 0; i < nm; i++) {
+    for (int j = 0; j < w.width_; j++) {
+      thresgold += w.ptr<T>(i)[j];
+    }
+  }
+  thresgold *= eps;
+
+  for (int i = 0; i < nm; i++) {
+    double wi = w.ptr<T>(i)[0];
+    if (static_cast<double>(std::abs(wi)) < thresgold) {
+      continue;
+    }
+    wi = 1 / wi;
+    double s = 0;
+    for (int j = 0; j < n; j++) {
+      s += u.ptr<T>(i)[j] * src2.ptr<T>(j)[0];
+    }
+
+    s *= wi;
+    for (int j = 0; j < n; j++) {
+      dst.ptr<T>(j)[0] = dst.ptr<T>(j)[0] + s * v.ptr<T>(i)[j];
+    }
+  }
+}
+
+bool GetPerspectiveTransformImpl(const LiteMat &src1, const LiteMat &src2, LiteMat dst) {
+  LDataType type = src1.data_type_;
+  int m = src1.height_;
+  int m_ = m;
+  int n = src1.width_;
+  int nb = src2.width_;
+
+  if (m < n) {
+    return false;
+  }
+
+  double val_a[64] = {0};
+  double val_v[64] = {0};
+  double val_w[8] = {0};
+  LiteMat a(m_, n, val_a, type);
+  Transpose(src1, a);
+  LiteMat w(1, n, val_w, type);
+  LiteMat v(n, n, val_v, type);
+  LiteMat u;
+
+  JacobiSVD<double>(a, w, v);
+  u = a;
+
+  SVBkSb<double>(m_, n, nb, w, u, v, src2, dst);
+  return true;
+}
+
+bool GetPerspectiveTransform(std::vector<Point> src_point, std::vector<Point> dst_point, LiteMat &M) {
+  double m[8][8];
+  double n[8];
+  LiteMat src1(8, 8, m, LDataType(LDataType::DOUBLE));
+  LiteMat src2(1, 8, n, LDataType(LDataType::DOUBLE));
+
+  for (int i = 0; i < 4; ++i) {
+    m[i][0] = m[i + 4][3] = src_point[i].x;
+    m[i][1] = m[i + 4][4] = src_point[i].y;
+    m[i][2] = m[i + 4][5] = 1;
+    m[i][3] = m[i][4] = m[i][5] = m[i + 4][0] = m[i + 4][1] = m[i + 4][2] = 0;
+    m[i][6] = -src_point[i].x * dst_point[i].x;
+    m[i][7] = -src_point[i].y * dst_point[i].x;
+    m[i + 4][6] = -src_point[i].x * dst_point[i].y;
+    m[i + 4][7] = -src_point[i].y * dst_point[i].y;
+    n[i] = dst_point[i].x;
+    n[i + 4] = dst_point[i].y;
+  }
+
+  double x[9] = {0};
+  LiteMat dst(1, 8, x, LDataType(LDataType::DOUBLE));
+
+  GetPerspectiveTransformImpl(src1, src2, dst);
+  dst.ptr<double>(8)[0] = 1;
+  M.Init(3, 3, dst.data_ptr_, dst.data_type_);
+
+  return true;
 }
 
 }  // namespace dataset
