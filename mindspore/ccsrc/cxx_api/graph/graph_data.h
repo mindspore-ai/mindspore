@@ -24,7 +24,7 @@
 #include "include/api/types.h"
 #include "ir/func_graph.h"
 
-namespace mindspore::api {
+namespace mindspore {
 class Graph::GraphData {
  public:
   GraphData();
@@ -46,5 +46,5 @@ class Graph::GraphData {
   Buffer om_data_;
   enum ModelType model_type_;
 };
-}  // namespace mindspore::api
+}  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_GRAPH_DATA_H

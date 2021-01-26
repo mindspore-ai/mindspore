@@ -26,7 +26,7 @@
 #include "cxx_api/graph/graph_data.h"
 #include "utils/utils.h"
 
-namespace mindspore::api {
+namespace mindspore {
 class GraphCell::GraphImpl {
  public:
   GraphImpl() = default;
@@ -35,17 +35,14 @@ class GraphCell::GraphImpl {
   std::shared_ptr<Graph::GraphData> &MutableGraphData() const { return graph_->graph_data_; }
   void SetGraph(const std::shared_ptr<Graph> &graph) { graph_ = graph; }
 
-  virtual Status Run(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) = 0;
+  virtual Status Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) = 0;
   virtual Status Load() = 0;
 
-  virtual Status GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                               std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) = 0;
-  virtual Status GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                                std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) = 0;
+  virtual std::vector<MSTensor> GetInputs() = 0;
+  virtual std::vector<MSTensor> GetOutputs() = 0;
 
  protected:
   std::shared_ptr<Graph> graph_;
 };
-}  // namespace mindspore::api
-
+}  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_GRAPH_IMPL_H

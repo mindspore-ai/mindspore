@@ -73,7 +73,7 @@ class Allocator {
     Status rc = pool_->Allocate(n * sizeof(T), &p);
     if (rc.IsOk()) {
       return reinterpret_cast<pointer>(p);
-    } else if (rc.IsOutofMemory()) {
+    } else if (rc == StatusCode::kMDOutOfMemory) {
       throw std::bad_alloc();
     } else {
       throw std::exception();
@@ -97,7 +97,7 @@ Status MakeUnique(std::unique_ptr<T[], std::function<void(T *)>> *out, C alloc, 
     // Some of our implementation of allocator (e.g. NumaAllocator) don't throw std::bad_alloc.
     // So we have to catch for null ptr
     if (data == nullptr) {
-      return Status(StatusCode::kOutOfMemory);
+      return Status(StatusCode::kMDOutOfMemory);
     }
     if (!std::is_arithmetic<T>::value) {
       for (auto i = 0; i < n; i++) {
@@ -114,7 +114,7 @@ Status MakeUnique(std::unique_ptr<T[], std::function<void(T *)>> *out, C alloc, 
     };
     *out = std::unique_ptr<T[], std::function<void(T *)>>(data, std::bind(deleter, std::placeholders::_1, alloc, n));
   } catch (const std::bad_alloc &e) {
-    return Status(StatusCode::kOutOfMemory);
+    return Status(StatusCode::kMDOutOfMemory);
   } catch (const std::exception &e) {
     RETURN_STATUS_UNEXPECTED(e.what());
   }

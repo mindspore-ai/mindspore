@@ -24,7 +24,6 @@
 #include "cxx_api/model/model_converter_utils/shared_memory.h"
 
 namespace mindspore {
-namespace api {
 namespace {
 uint64_t kSharedMemorySize = 100ull << 20;  // 100 MB
 }
@@ -40,7 +39,7 @@ Status MultiProcess::MainProcess(ProcessFuncCall parent_process, ProcessFuncCall
   memory_size_ = kSharedMemorySize;  // 100 MB
   SharedMemory shared_memory;
   ret = shared_memory.Create(memory_size_);
-  if (!ret.IsSuccess()) {
+  if (ret != kSuccess) {
     MS_LOG_ERROR << "Create shared memory failed";
     return ret;
   }
@@ -48,10 +47,10 @@ Status MultiProcess::MainProcess(ProcessFuncCall parent_process, ProcessFuncCall
   if (pid < 0) {
     shared_memory.Destroy();
     MS_LOG_ERROR << "Fork process to convert model failed";
-    return FAILED;
+    return kMEFailed;
   }
   ret = shared_memory.Attach();
-  if (!ret.IsSuccess()) {
+  if (ret != kSuccess) {
     MS_LOG_ERROR << "Process attach shared memory failed, pid " << pid;
     return ret;
   }
@@ -87,12 +86,12 @@ Status MultiProcess::ParentProcess(ProcessFuncCall parent_process) {
   Status ret;
   try {
     ret = parent_process(this);
-    if (!ret.IsSuccess()) {
+    if (ret != kSuccess) {
       MS_LOG_ERROR << "Parent process process failed";
     }
   } catch (const std::runtime_error &ex) {
     MS_LOG_ERROR << "Catch parent process runtime error: " << ex.what();
-    ret = FAILED;
+    ret = kMEFailed;
   }
   stopped_ = true;
   send_msg_->stop = true;
@@ -108,7 +107,7 @@ void MultiProcess::ChildProcess(ProcessFuncCall child_process) {
   std::thread heartbeat_thread(MultiProcess::HeartbeatThreadFunc, this);
   try {
     auto ret = child_process(this);
-    if (!ret.IsSuccess()) {
+    if (ret != kSuccess) {
       MS_LOG_ERROR << "Child process process failed";
     }
   } catch (const std::runtime_error &ex) {
@@ -138,14 +137,14 @@ Status MultiProcess::SendMsg(const void *buffer, uint64_t msg_len) {
     }
     if (peer_stopped_) {
       if (!send_msg_->read_finish_flag) {
-        return FAILED;
+        return kMEFailed;
       }
       break;
     }
     MS_LOG_INFO << "Send end " << cur_offset << ", msg len " << sub_msg_len << ", total len " << msg_len;
   }
   MS_LOG_INFO << "End to send message to peer process, msg len " << msg_len;
-  return SUCCESS;
+  return kSuccess;
 }
 
 Status MultiProcess::ReceiveMsg(CreateBufferCall create_buffer_call) {
@@ -158,7 +157,7 @@ Status MultiProcess::ReceiveMsg(CreateBufferCall create_buffer_call) {
       usleep(1000);  // 1ms
     }
     if (peer_stopped_) {
-      return FAILED;
+      return kMEFailed;
     }
     if (msg_buffer == nullptr) {
       msg_len = receive_msg_->msg_total_len;
@@ -170,7 +169,7 @@ Status MultiProcess::ReceiveMsg(CreateBufferCall create_buffer_call) {
     receive_msg_->read_finish_flag = true;
     MS_LOG_INFO << "Receive end, current length " << cur_offset << ", total length " << msg_len << std::endl;
   } while (msg_len > cur_offset);
-  return SUCCESS;
+  return kSuccess;
 }
 
 void MultiProcess::HeartbeatThreadFunc(MultiProcess *multi_process) { multi_process->HeartbeatThreadFuncInner(); }
@@ -200,6 +199,4 @@ void MultiProcess::HeartbeatThreadFuncInner() {
     usleep(100000);  // sleep 100 ms
   }
 }
-
-}  // namespace api
 }  // namespace mindspore

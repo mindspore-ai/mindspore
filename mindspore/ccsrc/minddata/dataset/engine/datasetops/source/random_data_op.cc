@@ -327,7 +327,7 @@ Status RandomDataOp::PackAndSend(int32_t worker_id, std::unique_ptr<TensorQTable
 // A helper function to create random data for the row
 Status RandomDataOp::CreateRandomRow(int32_t worker_id, TensorRow *new_row) {
   if (new_row == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Missing tensor row output");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Missing tensor row output");
   }
 
   // Create a tensor for each column, then add the tensor to the row
@@ -358,7 +358,7 @@ Status RandomDataOp::CreateRandomRow(int32_t worker_id, TensorRow *new_row) {
     buf = std::make_unique<unsigned char[]>(size_in_bytes);
     int ret_code = memset_s(buf.get(), size_in_bytes, random_byte, size_in_bytes);
     if (ret_code != 0) {
-      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Failed to set random bytes for a tensor.");
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Failed to set random bytes for a tensor.");
     }
 
     RETURN_IF_NOT_OK(Tensor::CreateFromMemory(*new_shape, current_col.type(), buf.get(), &new_tensor));
@@ -377,7 +377,7 @@ Status RandomDataOp::Reset() {
 
   // Ensure all guys are in the waitpost
   if (guys_in_ != num_workers_) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Issuing a reset, but some workers are missing from epochSync!");
   }
 

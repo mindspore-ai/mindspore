@@ -67,7 +67,7 @@ Status AlbumOp::Builder::SanityCheck() {
   err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
                                            std::to_string(builder_num_workers_) + ".\n"
                                        : "";
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
 AlbumOp::AlbumOp(int32_t num_wkrs, int32_t rows_per_buffer, std::string file_dir, int32_t queue_size, bool do_decode,
@@ -577,7 +577,7 @@ Status AlbumOp::InitSampler() {
 
 Status AlbumOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
   }
   // registers QueueList and individual Queues for interrupt services
   RETURN_IF_NOT_OK(io_block_queues_.Register(tree_->AllTasks()));

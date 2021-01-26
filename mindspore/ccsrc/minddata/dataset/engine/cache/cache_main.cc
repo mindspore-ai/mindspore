@@ -25,16 +25,17 @@
 #include <chrono>
 #include "minddata/dataset/engine/cache/cache_common.h"
 #include "minddata/dataset/engine/cache/cache_ipc.h"
+namespace ms = mindspore;
 namespace ds = mindspore::dataset;
 
 /// Start the server
 /// \param argv
 /// \return Status object
-ds::Status StartServer(int argc, char **argv) {
-  ds::Status rc;
+ms::Status StartServer(int argc, char **argv) {
+  ms::Status rc;
   ds::CacheServer::Builder builder;
   if (argc != 8) {
-    return ds::Status(ds::StatusCode::kSyntaxError);
+    return ms::Status(ms::StatusCode::kMDSyntaxError);
   }
 
   int32_t port = strtol(argv[3], nullptr, 10);
@@ -53,7 +54,7 @@ ds::Status StartServer(int argc, char **argv) {
   // is called. This is a standard procedure for daemonize a process on unix.
   if (chdir("/") == -1) {
     std::string errMsg = "Unable to change directory to /. Errno = " + std::to_string(errno);
-    return ds::Status(ds::StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
+    return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
   }
 
   // A message queue for communication between parent and child (if we fork).
@@ -80,13 +81,13 @@ ds::Status StartServer(int argc, char **argv) {
     // failed to fork
     if (pid < 0) {
       std::string errMsg = "Failed to fork process for cache server. Errno = " + std::to_string(errno);
-      return ds::Status(ds::StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
+      return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
     } else if (pid > 0) {
       // Parent and will be responsible for remove the queue on exit.
       msg.RemoveResourcesOnExit();
       // Sleep one second and we attach to the msg que
       std::this_thread::sleep_for(std::chrono::seconds(1));
-      ds::Status child_rc;
+      ms::Status child_rc;
       rc = msg.ReceiveStatus(&child_rc);
       if (rc.IsError()) {
         return rc;
@@ -101,7 +102,7 @@ ds::Status StartServer(int argc, char **argv) {
                    "logs (under "
                 << ds::DefaultLogDir() << ") for any issues that may happen after startup\n";
       signal(SIGCHLD, SIG_IGN);  // ignore sig child signal.
-      return ds::Status::OK();
+      return ms::Status::OK();
     } else {
       // Child process will continue from here if daemonize and parent has already exited.
       // If we are running in the foreground, none of the code in block below will be run.
@@ -110,7 +111,7 @@ ds::Status StartServer(int argc, char **argv) {
       sid = setsid();
       if (sid < 0) {
         std::string errMsg = "Failed to setsid(). Errno = " + std::to_string(errno);
-        return ds::Status(ds::StatusCode::kUnexpectedError, __LINE__, __FILE__, errMsg);
+        return ms::Status(ms::StatusCode::kMDUnexpectedError, __LINE__, __FILE__, errMsg);
       }
       close(0);
       close(1);
@@ -137,10 +138,10 @@ ds::Status StartServer(int argc, char **argv) {
 
 int main(int argc, char **argv) {
   // This executable is not to be called directly, and should be invoked by cache_admin executable.
-  ds::Status rc = StartServer(argc, argv);
+  ms::Status rc = StartServer(argc, argv);
   // Check result
   if (rc.IsError()) {
-    auto errCode = rc.get_code();
+    auto errCode = rc.StatusCode();
     auto errMsg = rc.ToString();
     std::cerr << errMsg << std::endl;
     return static_cast<int>(errCode);

@@ -116,12 +116,12 @@ Status SamplerRT::GetAllIdsThenReset(py::array *data) {
   {
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
     }
     try {
       RETURN_IF_NOT_OK(sample_ids->GetDataAsNumpy(data));
     } catch (const std::runtime_error &e) {
-      return Status(StatusCode::kPyFuncException, e.what());
+      return Status(StatusCode::kMDPyFuncException, e.what());
     }
   }
   return Status::OK();

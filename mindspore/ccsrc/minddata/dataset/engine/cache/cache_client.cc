@@ -137,7 +137,7 @@ Status CacheClient::WriteBuffer(std::unique_ptr<DataBuffer> &&in) const {
 
 Status CacheClient::AsyncWriteRow(const TensorRow &row) {
   if (async_buffer_stream_ == nullptr) {
-    return Status(StatusCode::kNotImplementedYet);
+    return Status(StatusCode::kMDNotImplementedYet);
   }
   RETURN_IF_NOT_OK(async_buffer_stream_->AsyncWrite(row));
   return Status::OK();
@@ -145,7 +145,7 @@ Status CacheClient::AsyncWriteRow(const TensorRow &row) {
 
 Status CacheClient::AsyncWriteBuffer(std::unique_ptr<DataBuffer> &&in) {
   if (async_buffer_stream_ == nullptr) {
-    return Status(StatusCode::kNotImplementedYet);
+    return Status(StatusCode::kMDNotImplementedYet);
   } else {
     Status rc;
     std::unique_ptr<TensorQTable> tensor_table = std::make_unique<TensorQTable>();
@@ -155,7 +155,7 @@ Status CacheClient::AsyncWriteBuffer(std::unique_ptr<DataBuffer> &&in) {
         TensorRow row;
         RETURN_IF_NOT_OK(in->PopRow(&row));
         rc = AsyncWriteRow(row);
-        if (rc.get_code() == StatusCode::kNotImplementedYet) {
+        if (rc.StatusCode() == StatusCode::kMDNotImplementedYet) {
           tensor_table->push_back(row);
         } else if (rc.IsError()) {
           return rc;
@@ -165,7 +165,7 @@ Status CacheClient::AsyncWriteBuffer(std::unique_ptr<DataBuffer> &&in) {
     // If not all of them can be sent async, return what's left back to the caller.
     if (!tensor_table->empty()) {
       in->set_tensor_table(std::move(tensor_table));
-      return Status(StatusCode::kNotImplementedYet);
+      return Status(StatusCode::kMDNotImplementedYet);
     }
   }
   return Status::OK();
@@ -225,7 +225,8 @@ Status CacheClient::CreateCache(uint32_t tree_crc, bool generate_id) {
     auto cache_state = static_cast<CacheServiceState>(out);
     if (cache_state == CacheServiceState::kFetchPhase ||
         (cache_state == CacheServiceState::kBuildPhase && cookie_.empty())) {
-      return Status(StatusCode::kDuplicateKey, __LINE__, __FILE__, "Not an error and we should bypass the build phase");
+      return Status(StatusCode::kMDDuplicateKey, __LINE__, __FILE__,
+                    "Not an error and we should bypass the build phase");
     }
   } else {
     cinfo_.set_crc(tree_crc);  // It's really a new cache we're creating so save our crc in the client
@@ -243,10 +244,10 @@ Status CacheClient::CreateCache(uint32_t tree_crc, bool generate_id) {
     auto rq = std::make_shared<CreateCacheRequest>(this, cinfo_, cache_mem_sz_, createFlag);
     RETURN_IF_NOT_OK(PushRequest(rq));
     Status rc = rq->Wait();
-    bool success = (rc.IsOk() || rc.get_code() == StatusCode::kDuplicateKey);
+    bool success = (rc.IsOk() || rc.StatusCode() == StatusCode::kMDDuplicateKey);
     // If we get kDuplicateKey, it just means we aren't the first one to create the cache,
     // and we will continue to parse the result.
-    if (rc.get_code() == StatusCode::kDuplicateKey) {
+    if (rc.StatusCode() == StatusCode::kMDDuplicateKey) {
       RETURN_IF_NOT_OK(rq->PostReply());
     }
     if (success) {
@@ -443,7 +444,7 @@ Status CacheClient::AsyncBufferStream::AsyncWrite(const TensorRow &row) {
   }
   // If the size is too big, tell the user to send it directly.
   if (sz > kAsyncBufferSize) {
-    return Status(StatusCode::kNotImplementedYet);
+    return Status(StatusCode::kMDNotImplementedYet);
   }
   std::unique_lock<std::mutex> lock(mux_);
   // Check error from the server side while we have the lock;

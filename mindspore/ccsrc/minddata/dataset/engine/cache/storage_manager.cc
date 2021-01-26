@@ -96,9 +96,9 @@ Status StorageManager::Write(key_type *key, const std::vector<ReadableSlice> &bu
     cont = containers_.at(num_containers - 1);
     off64_t offset;
     Status rc = cont->Insert(buf, &offset);
-    if (rc.get_code() == StatusCode::kBuddySpaceFull) {
+    if (rc.StatusCode() == StatusCode::kMDBuddySpaceFull) {
       create_new_container = true;
-      // Remember how many containers we saw. In the next iteration we will do a comparision to see
+      // Remember how many containers we saw. In the next iteration we will do a comparison to see
       // if someone has already created it.
       last_num_container = num_containers;
     } else if (rc.IsOk()) {

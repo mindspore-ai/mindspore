@@ -191,7 +191,7 @@ Status BucketBatchByLengthOp::PadAndBatchBucket(int32_t bucket_index, int32_t ba
           if (bucket_index + 1 >= bucket_boundaries_.size()) {
             std::string error_message =
               "Invalid data, requested to pad to bucket boundary, element falls in last bucket.";
-            return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, error_message);
+            return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, error_message);
           }
 
           pad_shape[i] = bucket_boundaries_[bucket_index + 1] - 1;

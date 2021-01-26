@@ -41,12 +41,12 @@ CacheOp::Builder::Builder() : build_cache_client_(nullptr), build_sampler_(nullp
 // Check if the required parameters are set by the builder.
 Status CacheOp::Builder::SanityCheck() const {
   if (build_cache_client_ == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, CacheOp requires a CacheClient, but got nullptr.");
   }
   // Make sure the cache client has a valid session
   if (!build_cache_client_->session_id()) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, cache client for CacheOp requires a session id which is not equal to 0.");
   }
   return Status::OK();
@@ -78,7 +78,7 @@ Status CacheOp::InitCache() { return Status::OK(); }
 // This class functor will provide the master loop that drives the logic for performing the work
 Status CacheOp::operator()() {
   if (!sampler_) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, CacheOp requires a sampler before it can be executed, but got nullptr.");
   }
   RETURN_IF_NOT_OK(RegisterResources());
@@ -113,7 +113,7 @@ Status CacheOp::CacheAllRows(int32_t worker_id) {
         Status rc;
         // Do the Async write if we attach to the shared memory.
         rc = cache_client_->AsyncWriteBuffer(std::move(db_ptr));
-        if (rc.get_code() == StatusCode::kNotImplementedYet) {
+        if (rc.StatusCode() == StatusCode::kMDNotImplementedYet) {
           RETURN_IF_NOT_OK(cache_client_->WriteBuffer(std::move(db_ptr)));
         } else if (rc.IsError()) {
           return rc;
@@ -169,9 +169,9 @@ Status CacheOp::WaitForCachingAllRows() {
         BuildPhaseDone = true;
         break;
       case CacheServiceState::kOutOfMemory:
-        return Status(StatusCode::kOutOfMemory, "Cache server is running out of memory");
+        return Status(StatusCode::kMDOutOfMemory, "Cache server is running out of memory");
       case CacheServiceState::kNoSpace:
-        return Status(StatusCode::kNoSpace, "Cache server is running of out spill storage");
+        return Status(StatusCode::kMDNoSpace, "Cache server is running of out spill storage");
       case CacheServiceState::kNone:
       case CacheServiceState::kError:
       default:
@@ -246,7 +246,7 @@ Status CacheOp::PrepareNodePostAction() {
   // Construct the cache
   const bool generate_ids = true;
   Status rc = cache_client_->CreateCache(cache_crc, generate_ids);
-  if (rc.get_code() == StatusCode::kDuplicateKey) {
+  if (rc.StatusCode() == StatusCode::kMDDuplicateKey) {
     // We are told the cache has been created already. So we skip the build phase.
     phase_ = Phase::kFetchPhase;
     rc = Status::OK();

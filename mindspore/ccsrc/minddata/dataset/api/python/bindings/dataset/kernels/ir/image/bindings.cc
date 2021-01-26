@@ -354,7 +354,7 @@ PYBIND_REGISTER(
           for (auto handle : py_sub.cast<py::list>()) {
             py::tuple tp = handle.cast<py::tuple>();
             if (tp.is_none() || tp.size() != 2) {
-              THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, "Each tuple in subpolicy should be (op, prob)."));
+              THROW_IF_ERROR(Status(StatusCode::kMDUnexpectedError, "Each tuple in subpolicy should be (op, prob)."));
             }
             std::shared_ptr<TensorOperation> t_op;
             if (py::isinstance<TensorOperation>(tp[0])) {
@@ -366,11 +366,11 @@ PYBIND_REGISTER(
                 std::make_shared<PyFuncOp>((tp[0]).cast<py::function>()));
             } else {
               THROW_IF_ERROR(
-                Status(StatusCode::kUnexpectedError, "op is neither a tensorOp, tensorOperation nor a pyfunc."));
+                Status(StatusCode::kMDUnexpectedError, "op is neither a tensorOp, tensorOperation nor a pyfunc."));
             }
             double prob = (tp[1]).cast<py::float_>();
             if (prob < 0 || prob > 1) {
-              THROW_IF_ERROR(Status(StatusCode::kUnexpectedError, "prob needs to be with [0,1]."));
+              THROW_IF_ERROR(Status(StatusCode::kMDUnexpectedError, "prob needs to be with [0,1]."));
             }
             cpp_policy.back().emplace_back(std::make_pair(t_op, prob));
           }

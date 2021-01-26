@@ -66,7 +66,7 @@ enum class CacheServiceState : int8_t {
 /// \param rc[in] Status object
 /// \param reply[in/out] pointer to pre-allocated protobuf object
 inline void Status2CacheReply(const Status &rc, CacheReply *reply) {
-  reply->set_rc(static_cast<int32_t>(rc.get_code()));
+  reply->set_rc(static_cast<int32_t>(rc.StatusCode()));
   reply->set_msg(rc.ToString());
 }
 /// \brief Generate the unix socket file we use on both client/server side given a tcp/ip port number

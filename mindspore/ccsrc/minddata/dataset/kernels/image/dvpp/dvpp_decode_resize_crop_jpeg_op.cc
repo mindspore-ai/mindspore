@@ -45,7 +45,7 @@ Status DvppDecodeResizeCropJpegOp::Compute(const std::shared_ptr<Tensor> &input,
     // applied on device
     ResourceInfo resource;
     resource.aclConfigPath = "";
-    resource.deviceIds.insert(api::Context::Instance().GetDeviceID());
+    resource.deviceIds.insert(mindspore::GlobalContext::GetGlobalDeviceID());
     std::shared_ptr<ResourceManager> instance = ResourceManager::GetInstance();
     APP_ERROR ret = instance->InitResource(resource);
     if (ret != APP_ERR_OK) {
@@ -99,7 +99,7 @@ Status DvppDecodeResizeCropJpegOp::OutputShape(const std::vector<TensorShape> &i
   TensorShape out({-1, 1, 1});  // we don't know what is output image size, but we know it should be 3 channels
   if (inputs[0].Rank() == 1) outputs.emplace_back(out);
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
+  return Status(StatusCode::kMDUnexpectedError, "Input has a wrong shape");
 }
 
 }  // namespace dataset

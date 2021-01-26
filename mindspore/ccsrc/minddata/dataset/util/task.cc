@@ -57,8 +57,8 @@ void Task::operator()() {
       rc_ = fnc_obj_();
     }
     // Some error codes are ignored, e.g. interrupt. Others we just shutdown the group.
-    if (rc_.IsError() && !rc_.IsInterrupted()) {
-      if (rc_.get_code() == StatusCode::kNetWorkError) {
+    if (rc_.IsError() && rc_ != StatusCode::kMDInterrupted) {
+      if (rc_.StatusCode() == StatusCode::kMDNetWorkError) {
         MS_LOG(WARNING) << rc_;
       } else {
         MS_LOG(ERROR) << rc_;
@@ -66,11 +66,11 @@ void Task::operator()() {
       ShutdownGroup();
     }
   } catch (const std::bad_alloc &e) {
-    rc_ = Status(StatusCode::kOutOfMemory, __LINE__, __FILE__, e.what());
+    rc_ = Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, e.what());
     MS_LOG(ERROR) << rc_;
     ShutdownGroup();
   } catch (const std::exception &e) {
-    rc_ = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, e.what());
+    rc_ = Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, e.what());
     MS_LOG(ERROR) << rc_;
     ShutdownGroup();
   }
@@ -128,7 +128,7 @@ Status Task::Run() {
       running_ = true;
       caught_severe_exception_ = false;
     } catch (const std::exception &e) {
-      rc = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, e.what());
+      rc = Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, e.what());
     }
   }
   return rc;
@@ -200,7 +200,7 @@ void Task::set_task_group(TaskGroup *vg) { task_group_ = vg; }
 
 Task::~Task() { task_group_ = nullptr; }
 Status Task::OverrideInterruptRc(const Status &rc) {
-  if (rc.IsInterrupted() && this_thread::is_master_thread()) {
+  if (rc == StatusCode::kMDInterrupted && this_thread::is_master_thread()) {
     // If we are interrupted, override the return value if this is the master thread.
     // Master thread is being interrupted mostly because of some thread is reporting error.
     return TaskManager::GetMasterThreadRc();

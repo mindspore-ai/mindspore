@@ -18,6 +18,8 @@
 #define MINDSPORE_LITE_INCLUDE_ERRORCODE_H_
 
 #include <string>
+#include <map>
+#include "include/api/status.h"
 
 namespace mindspore {
 namespace lite {
@@ -67,6 +69,7 @@ constexpr int RET_INPUT_PARAM_INVALID = -600; /**< Invalid input param by user. 
 ///
 /// \return String of errorcode info.
 std::string GetErrorInfo(STATUS error_code);
+
 }  // namespace lite
 }  // namespace mindspore
 

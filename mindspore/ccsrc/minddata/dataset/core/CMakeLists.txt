@@ -5,6 +5,7 @@ set(DATASET_CORE_SRC_FILES
   config_manager.cc
   cv_tensor.cc
   data_type.cc
+  de_tensor.cc
   global_context.cc
   tensor.cc
   tensor_helpers.cc

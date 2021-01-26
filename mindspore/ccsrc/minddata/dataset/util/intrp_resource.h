@@ -39,7 +39,7 @@ class IntrpResource {
 
   virtual Status GetInterruptStatus() const {
     if (Interrupted()) {
-      return Status(StatusCode::kInterrupted);
+      return Status(StatusCode::kMDInterrupted);
     }
     return Status::OK();
   }

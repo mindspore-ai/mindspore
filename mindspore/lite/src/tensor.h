@@ -56,6 +56,8 @@ class Tensor : public mindspore::tensor::MSTensor {
   Tensor(TypeId data_type, std::vector<int> shape, const schema::Format &format = schema::Format::Format_NHWC,
          Category category = VAR);
 
+  Tensor(const std::string &name, enum TypeId type, const std::vector<int32_t> &shape, const void *data);
+
   Tensor(const Tensor &tensor) = delete;
 
   Tensor(Tensor &&other) = delete;
@@ -72,9 +74,9 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   virtual bool operator==(const Tensor &tensor);
 
-  void set_tensor_name(std::string name) { tensor_name_ = name; }
+  void set_tensor_name(std::string name) override { tensor_name_ = name; }
 
-  std::string tensor_name() const { return tensor_name_; }
+  std::string tensor_name() const override { return tensor_name_; }
 
   TypeId data_type() const override { return data_type_; }
 
@@ -117,7 +119,7 @@ class Tensor : public mindspore::tensor::MSTensor {
     return data_;
   }
 
-  virtual void set_data(void *data) { this->data_ = data; }
+  void set_data(void *data) override { this->data_ = data; }
 
   Category category() const { return this->category_; }
 

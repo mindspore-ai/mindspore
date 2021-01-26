@@ -64,7 +64,7 @@ Status RandomCropAndResizeOp::OutputShape(const std::vector<TensorShape> &inputs
   if (inputs[0].Rank() == 2) outputs.emplace_back(out);
   if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "RandomCropAndResize: invalid input shape");
+  return Status(StatusCode::kMDUnexpectedError, "RandomCropAndResize: invalid input shape");
 }
 Status RandomCropAndResizeOp::GetCropBox(int h_in, int w_in, int *x, int *y, int *crop_height, int *crop_width) {
   *crop_width = w_in;

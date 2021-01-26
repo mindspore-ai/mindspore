@@ -16,7 +16,7 @@
 #ifndef MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H
 #define MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H
 
-namespace mindspore::api {
+namespace mindspore {
 void RegAllOp();
 bool PythonIsInited();
 void InitPython();
@@ -30,5 +30,5 @@ class PythonEnvGuard {
  private:
   bool origin_init_status_;
 };
-}  // namespace mindspore::api
+}  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXXAPI_PYTHON_UTILS_H

@@ -65,7 +65,7 @@ install(
 
 install(
     TARGETS mindspore_shared_lib
-    LIBRARY DESTINATION ${INSTALL_LIB_DIR}
+    DESTINATION ${INSTALL_LIB_DIR}
     COMPONENT mindspore
 )
 
@@ -327,7 +327,7 @@ install(
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/transforms.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/vision.h
           ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/vision_lite.h
-          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/minddata_eager.h
+          ${CMAKE_SOURCE_DIR}/mindspore/ccsrc/minddata/dataset/include/execute.h
     DESTINATION ${INSTALL_BASE_DIR}/include/minddata/dataset/include
     COMPONENT mindspore
 )

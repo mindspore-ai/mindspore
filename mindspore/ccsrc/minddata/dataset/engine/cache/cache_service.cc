@@ -42,7 +42,7 @@ Status CacheService::DoServiceStart() {
       // Return an error if we use more than recommended memory.
       std::string errMsg = "Requesting cache size " + std::to_string(cache_mem_sz_) +
                            " while available system memory " + std::to_string(avail_mem);
-      return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__, errMsg);
+      return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, errMsg);
     }
     memory_cap_ratio = static_cast<float>(cache_mem_sz_) / avail_mem;
   }
@@ -79,7 +79,7 @@ Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type 
   if (st_ == CacheServiceState::kNoLocking) {
     // We ignore write this request once we turn off locking on the B+ tree. So we will just
     // return out of memory from now on.
-    return Status(StatusCode::kOutOfMemory);
+    return Status(StatusCode::kMDOutOfMemory);
   }
   try {
     // The first buffer is a flatbuffer which describes the rest of the buffers follow
@@ -119,16 +119,16 @@ Status CacheService::CacheRow(const std::vector<const void *> &buf, row_id_type 
     }
     // Now we cache the buffer.
     Status rc = cp_->Insert(*row_id_generated, all_data);
-    if (rc == Status(StatusCode::kDuplicateKey)) {
+    if (rc == Status(StatusCode::kMDDuplicateKey)) {
       MS_LOG(DEBUG) << "Ignoring duplicate key.";
     } else {
       if (HasBuildPhase()) {
         // For cache service that has a build phase, record the error in the state
         // so other clients can be aware of the new state. There is nothing one can
         // do to resume other than to drop the cache.
-        if (rc.IsNoSpace()) {
+        if (rc == StatusCode::kMDNoSpace) {
           st_ = CacheServiceState::kNoSpace;
-        } else if (rc.IsOutofMemory()) {
+        } else if (rc == StatusCode::kMDOutOfMemory) {
           st_ = CacheServiceState::kOutOfMemory;
         }
       }
@@ -152,7 +152,7 @@ Status CacheService::FastCacheRow(const ReadableSlice &src, row_id_type *row_id_
   if (st_ == CacheServiceState::kNoLocking) {
     // We ignore write this request once we turn off locking on the B+ tree. So we will just
     // return out of memory from now on.
-    return Status(StatusCode::kOutOfMemory);
+    return Status(StatusCode::kMDOutOfMemory);
   }
   try {
     // If we don't need to generate id, we need to find it from the buffer.
@@ -172,16 +172,16 @@ Status CacheService::FastCacheRow(const ReadableSlice &src, row_id_type *row_id_
     }
     // Now we cache the buffer.
     Status rc = cp_->Insert(*row_id_generated, {src});
-    if (rc == Status(StatusCode::kDuplicateKey)) {
+    if (rc == Status(StatusCode::kMDDuplicateKey)) {
       MS_LOG(DEBUG) << "Ignoring duplicate key.";
     } else {
       if (HasBuildPhase()) {
         // For cache service that has a build phase, record the error in the state
         // so other clients can be aware of the new state. There is nothing one can
         // do to resume other than to drop the cache.
-        if (rc.IsNoSpace()) {
+        if (rc == StatusCode::kMDNoSpace) {
           st_ = CacheServiceState::kNoSpace;
-        } else if (rc.IsOutofMemory()) {
+        } else if (rc == StatusCode::kMDOutOfMemory) {
           st_ = CacheServiceState::kOutOfMemory;
         }
       }
@@ -307,7 +307,7 @@ Status CacheService::FetchSchema(std::string *out) const {
   if (!mem.empty()) {
     *out = std::move(mem);
   } else {
-    return Status(StatusCode::kFileNotExist, __LINE__, __FILE__, "No schema has been cached");
+    return Status(StatusCode::kMDFileNotExist, __LINE__, __FILE__, "No schema has been cached");
   }
   return Status::OK();
 }

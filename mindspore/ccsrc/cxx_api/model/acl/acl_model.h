@@ -31,30 +31,25 @@
 #include "ir/tensor.h"
 #include "ir/anf.h"
 
-namespace mindspore::api {
+namespace mindspore {
 class AclModel : public ModelImpl {
  public:
-  AclModel() : model_converter_(), options_(nullptr), options_str_() {}
+  AclModel() : model_converter_(), options_(nullptr) {}
   ~AclModel() = default;
 
-  Status Build(const std::map<std::string, std::string> &options_map) override;
+  Status Build() override;
+  Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
 
-  Status Train(const DataSet &dataset, std::map<std::string, Buffer> *outputs) override;
-  Status Eval(const DataSet &dataset, std::map<std::string, Buffer> *outputs) override;
-  Status Predict(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) override;
+  Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
 
-  Status GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                       std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const override;
-  Status GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                        std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const override;
+  std::vector<MSTensor> GetInputs() override;
+  std::vector<MSTensor> GetOutputs() override;
 
  private:
-  static std::string GenerateOptionsStr(const std::map<std::string, std::string> &options);
-
   std::shared_ptr<GraphCell> graph_cell_;
   ModelConverter model_converter_;
   std::unique_ptr<AclModelOptions> options_;
-  std::string options_str_;
+  std::map<std::string, std::shared_ptr<Graph>> dynamic_size_graph_map_;
 };
-}  // namespace mindspore::api
+}  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXX_API_ACL_MODEL_H

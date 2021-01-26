@@ -93,7 +93,7 @@ Status CircularPool::Allocate(size_t n, void **p) {
       auto it = cirIt.Next();
       Arena *ba = it->get();
       if (ba->get_max_size() < n) {
-        return Status(StatusCode::kOutOfMemory);
+        return Status(StatusCode::kMDOutOfMemory);
       }
       // If we are asked to move forward the tail
       if (move_tail) {
@@ -105,7 +105,7 @@ Status CircularPool::Allocate(size_t n, void **p) {
       if (rc.IsOk()) {
         *p = ptr;
         break;
-      } else if (rc.IsOutofMemory()) {
+      } else if (rc == StatusCode::kMDOutOfMemory) {
         // Make the next arena a new tail and continue.
         move_tail = true;
       } else {
@@ -126,7 +126,7 @@ Status CircularPool::Allocate(size_t n, void **p) {
         // Re-acquire the shared lock and try again
         lock_s.Downgrade();
       } else {
-        return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
+        return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
       }
     }
   } while (ptr == nullptr);
@@ -164,7 +164,7 @@ Status CircularPool::Reallocate(void **pp, size_t old_sz, size_t new_sz) {
   MS_ASSERT(it != mem_segments_.end());
   Arena *ba = it->get();
   Status rc = ba->Reallocate(pp, old_sz, new_sz);
-  if (rc.IsOutofMemory()) {
+  if (rc == StatusCode::kMDOutOfMemory) {
     // The current arena has no room for the bigger size.
     // Allocate free space from another arena and copy
     // the content over.
@@ -222,7 +222,7 @@ Status CircularPool::CreateCircularPool(std::shared_ptr<MemoryPool> *out_pool, i
   }
   auto pool = new (std::nothrow) CircularPool(max_size_in_gb, arena_size, is_cuda_malloc);
   if (pool == nullptr) {
-    return Status(StatusCode::kOutOfMemory);
+    return Status(StatusCode::kMDOutOfMemory);
   }
   if (createOneArena) {
     rc = pool->AddOneArena();
@@ -243,7 +243,7 @@ Status CircularPool::CreateCircularPool(std::shared_ptr<MemoryPool> *out_pool, i
   }
   auto pool = new (std::nothrow) CircularPool(max_size_in_gb, arena_size);
   if (pool == nullptr) {
-    return Status(StatusCode::kOutOfMemory);
+    return Status(StatusCode::kMDOutOfMemory);
   }
   if (createOneArena) {
     rc = pool->AddOneArena();

@@ -15,7 +15,9 @@
  */
 #include <memory>
 #include "common/common_test.h"
+#define private public
 #include "include/api/types.h"
+#undef private
 
 namespace mindspore {
 class TestCxxApiTypes : public UT::Common {
@@ -23,116 +25,120 @@ class TestCxxApiTypes : public UT::Common {
   TestCxxApiTypes() = default;
 };
 
-TEST_F(TestCxxApiTypes, test_tensor_set_name_SUCCESS) {
-  std::string tensor_name_before = "TEST1";
-  std::string tensor_name_after = "TEST2";
-  api::Tensor tensor1(tensor_name_before, api::DataType::kMsFloat32, {}, nullptr, 0);
-  api::Tensor tensor2 = tensor1;
-  api::Tensor tensor3 = tensor1.Clone();
-
-  // name
-  ASSERT_EQ(tensor1.Name(), tensor_name_before);
-  ASSERT_EQ(tensor2.Name(), tensor_name_before);
-  ASSERT_EQ(tensor3.Name(), tensor_name_before);
-
-  tensor1.SetName(tensor_name_after);
-  ASSERT_EQ(tensor1.Name(), tensor_name_after);
-  ASSERT_EQ(tensor2.Name(), tensor_name_after);
-  ASSERT_EQ(tensor3.Name(), tensor_name_before);
+TEST_F(TestCxxApiTypes, test_tensor_default_attr_SUCCESS) {
+  MSTensor tensor;
+  ASSERT_EQ(tensor.Name(), "");
+  ASSERT_EQ(tensor.DataType(), DataType::kTypeUnknown);
+  ASSERT_EQ(tensor.Shape().size(), 0);
+  ASSERT_EQ(tensor.MutableData(), nullptr);
+  ASSERT_EQ(tensor.DataSize(), 0);
+  ASSERT_EQ(tensor.IsDevice(), false);
 }
 
-TEST_F(TestCxxApiTypes, test_tensor_set_dtype_SUCCESS) {
-  api::Tensor tensor1("", api::DataType::kMsFloat32, {}, nullptr, 0);
-  api::Tensor tensor2 = tensor1;
-  api::Tensor tensor3 = tensor1.Clone();
-
-  // dtype
-  ASSERT_EQ(tensor1.DataType(), api::DataType::kMsFloat32);
-  ASSERT_EQ(tensor2.DataType(), api::DataType::kMsFloat32);
-  ASSERT_EQ(tensor3.DataType(), api::DataType::kMsFloat32);
-
-  tensor1.SetDataType(api::DataType::kMsUint32);
-  ASSERT_EQ(tensor1.DataType(), api::DataType::kMsUint32);
-  ASSERT_EQ(tensor2.DataType(), api::DataType::kMsUint32);
-  ASSERT_EQ(tensor3.DataType(), api::DataType::kMsFloat32);
+TEST_F(TestCxxApiTypes, test_tensor_attr_SUCCESS) {
+  std::string tensor_name = "Name1";
+  auto data_type = DataType::kNumberTypeFloat16;
+  MSTensor tensor(tensor_name, data_type, {}, nullptr, 0);
+  ASSERT_EQ(tensor.Name(), tensor_name);
+  ASSERT_EQ(tensor.DataType(), data_type);
+  ASSERT_EQ(tensor.Shape().size(), 0);
+  ASSERT_EQ(tensor.MutableData(), nullptr);
+  ASSERT_EQ(tensor.DataSize(), 0);
+  ASSERT_EQ(tensor.IsDevice(), false);
 }
 
-TEST_F(TestCxxApiTypes, test_tensor_set_shape_SUCCESS) {
-  std::vector<int64_t> shape = {3, 4, 5, 6};
-  api::Tensor tensor1("", api::DataType::kMsFloat32, {}, nullptr, 0);
-  api::Tensor tensor2 = tensor1;
-  api::Tensor tensor3 = tensor1.Clone();
-
-  // shape
-  ASSERT_EQ(tensor1.Shape(), std::vector<int64_t>());
-  ASSERT_EQ(tensor2.Shape(), std::vector<int64_t>());
-  ASSERT_EQ(tensor3.Shape(), std::vector<int64_t>());
-
-  tensor1.SetShape(shape);
-  ASSERT_EQ(tensor1.Shape(), shape);
-  ASSERT_EQ(tensor2.Shape(), shape);
-  ASSERT_EQ(tensor3.Shape(), std::vector<int64_t>());
+TEST_F(TestCxxApiTypes, test_tensor_create_FAILED) {
+  MSTensor tensor(nullptr);
+  ASSERT_EQ(tensor, nullptr);
 }
 
-
-TEST_F(TestCxxApiTypes, test_tensor_util_SUCCESS) {
-  std::vector<int64_t> shape = {3, 4, 5, 6};
-  std::vector<uint32_t> data(3 * 4 * 5 * 6, 123);
-  api::Tensor tensor1("", api::DataType::kMsFloat32, shape, data.data(), data.size() * sizeof(uint32_t));
-
-  // data
-  ASSERT_EQ(api::Tensor::GetTypeSize(api::DataType::kMsUint32), sizeof(uint32_t));
-  ASSERT_EQ(tensor1.ElementNum(), 3 * 4 * 5 * 6);
+TEST_F(TestCxxApiTypes, test_tensor_data_SUCCESS) {
+  std::vector<int32_t> data = {1, 2, 3, 4};
+  MSTensor tensor("", DataType::kNumberTypeInt32, {4}, data.data(), data.size() * sizeof(int32_t));
+  auto value = tensor.Data();
+  int32_t *p = (int32_t *)value.get();
+  for (size_t i = 0; i < data.size(); ++i) {
+    ASSERT_EQ(p[i], data[i]);
+  }
 }
 
-TEST_F(TestCxxApiTypes, test_tensor_data_ref_and_copy_SUCCESS) {
-  std::vector<int64_t> shape = {3, 4, 5, 6};
-  std::vector<uint32_t> data(3 * 4 * 5 * 6, 123);
-  api::Tensor tensor1("", api::DataType::kMsFloat32, shape, data.data(), data.size() * sizeof(uint32_t));
-  api::Tensor tensor2 = tensor1;
-  api::Tensor tensor3 = tensor1.Clone();
-
-  // data
-  ASSERT_EQ(tensor1.DataSize(), tensor2.DataSize());
-  ASSERT_EQ(tensor1.DataSize(), tensor3.DataSize());
-  ASSERT_EQ(tensor1.Data(), tensor2.MutableData());
-  ASSERT_NE(tensor1.Data(), tensor3.Data());
+TEST_F(TestCxxApiTypes, test_tensor_ref_SUCCESS) {
+  std::vector<int32_t> data = {1, 2, 3, 4};
+  MSTensor tensor("", DataType::kNumberTypeInt32, {4}, data.data(), data.size() * sizeof(int32_t));
+  MSTensor tensor2 = tensor;
+  auto value = tensor2.Data();
+  int32_t *p = (int32_t *)value.get();
+  for (size_t i = 0; i < data.size(); ++i) {
+    ASSERT_EQ(p[i], data[i]);
+  }
 }
 
-TEST_F(TestCxxApiTypes, test_tensor_resize_data_SUCCESS) {
-  std::vector<int64_t> shape = {3, 4, 5, 6};
-  std::vector<uint32_t> data(3 * 4 * 5 * 6, 123);
-  api::Tensor tensor1("", api::DataType::kMsFloat32, shape, data.data(), data.size() * sizeof(uint32_t));
-
-  // data
-  ASSERT_EQ(tensor1.ResizeData(0), true);
+TEST_F(TestCxxApiTypes, test_tensor_clone_SUCCESS) {
+  std::vector<int32_t> data = {1, 2, 3, 4};
+  MSTensor tensor("", DataType::kNumberTypeInt32, {4}, data.data(), data.size() * sizeof(int32_t));
+  MSTensor tensor2 = tensor.Clone();
+  auto value = tensor2.Data();
+  int32_t *p = (int32_t *)value.get();
+  for (size_t i = 0; i < data.size(); ++i) {
+    ASSERT_EQ(p[i], data[i]);
+  }
 }
 
-TEST_F(TestCxxApiTypes, test_tensor_set_data_wrong_data_size_FAILED) {
-  std::vector<int64_t> shape = {3, 4, 5, 6};
-  std::vector<uint32_t> data(3 * 4 * 5 * 6, 123);
-  api::Tensor tensor1("", api::DataType::kMsFloat32, shape, data.data(), data.size() * sizeof(uint32_t));
-
-  // data
-  ASSERT_EQ(tensor1.SetData(nullptr, 1), false);
-  ASSERT_EQ(tensor1.SetData(data.data(), 0), false);
+TEST_F(TestCxxApiTypes, test_tensor_ref_modified_SUCCESS) {
+  std::vector<int32_t> data = {1, 2, 3, 4};
+  std::vector<int32_t> data_modified = {2, 3, 4, 5};
+  MSTensor tensor("", DataType::kNumberTypeInt32, {4}, data.data(), data.size() * sizeof(int32_t));
+  MSTensor tensor2 = tensor;
+  (void)memcpy(tensor.MutableData(), data_modified.data(), data_modified.size() * sizeof(int32_t));
+  auto value = tensor2.Data();
+  int32_t *p = (int32_t *)value.get();
+  for (size_t i = 0; i < data.size(); ++i) {
+    ASSERT_EQ(p[i], data_modified[i]);
+  }
 }
 
-TEST_F(TestCxxApiTypes, test_tensor_set_data_SUCCESS) {
-  std::vector<int64_t> shape = {3, 4, 5, 6};
-  std::vector<uint32_t> data(3 * 4 * 5 * 6, 123);
-  api::Tensor tensor1("", api::DataType::kMsFloat32, shape, data.data(), data.size() * sizeof(uint32_t));
+TEST_F(TestCxxApiTypes, test_tensor_clone_modified_SUCCESS) {
+  std::vector<int32_t> data = {1, 2, 3, 4};
+  std::vector<int32_t> data_modified = {2, 3, 4, 5};
+  MSTensor tensor("", DataType::kNumberTypeInt32, {4}, data.data(), data.size() * sizeof(int32_t));
+  MSTensor tensor2 = tensor.Clone();
+  (void)memcpy(tensor.MutableData(), data_modified.data(), data_modified.size() * sizeof(int32_t));
+  auto value = tensor2.Data();
+  int32_t *p = (int32_t *)value.get();
+  for (size_t i = 0; i < data.size(); ++i) {
+    ASSERT_EQ(p[i], data[i]);
+  }
+}
 
-  // data
-  ASSERT_EQ(tensor1.SetData(nullptr, 0), true);
-  ASSERT_EQ(tensor1.SetData(data.data(), data.size() * sizeof(uint32_t)), true);
+TEST_F(TestCxxApiTypes, test_tensor_ref_creator_function_SUCCESS) {
+  std::vector<int32_t> data = {1, 2, 3, 4};
+  MSTensor tensor =
+    MSTensor::CreateRefTensor("", DataType::kNumberTypeInt32, {4}, data.data(), data.size() * sizeof(int32_t));
+  data = {3, 4, 5, 6};
+  auto value = tensor.Data();
+  int32_t *p = (int32_t *)value.get();
+  for (size_t i = 0; i < data.size(); ++i) {
+    ASSERT_EQ(p[i], data[i]);
+  }
+}
+
+TEST_F(TestCxxApiTypes, test_tensor_creator_function_SUCCESS) {
+  std::vector<int32_t> data = {1, 2, 3, 4};
+  MSTensor tensor =
+    MSTensor::CreateTensor("", DataType::kNumberTypeInt32, {4}, data.data(), data.size() * sizeof(int32_t));
+  data = {3, 4, 5, 6};
+  auto value = tensor.Data();
+  int32_t *p = (int32_t *)value.get();
+  for (size_t i = 0; i < data.size(); ++i) {
+    ASSERT_NE(p[i], data[i]);
+  }
 }
 
 TEST_F(TestCxxApiTypes, test_buffer_data_ref_and_copy_SUCCESS) {
   std::vector<uint32_t> data(3 * 4 * 5 * 6, 123);
-  api::Buffer buffer1(data.data(), data.size() * sizeof(uint32_t));
-  api::Buffer buffer2 = buffer1;
-  api::Buffer buffer3 = buffer1.Clone();
+  Buffer buffer1(data.data(), data.size() * sizeof(uint32_t));
+  Buffer buffer2 = buffer1;
+  Buffer buffer3 = buffer1.Clone();
 
   // data
   ASSERT_EQ(buffer1.DataSize(), buffer2.DataSize());
@@ -143,7 +149,7 @@ TEST_F(TestCxxApiTypes, test_buffer_data_ref_and_copy_SUCCESS) {
 
 TEST_F(TestCxxApiTypes, test_buffer_resize_data_SUCCESS) {
   std::vector<uint32_t> data(3 * 4 * 5 * 6, 123);
-  api::Buffer buffer1(data.data(), data.size() * sizeof(uint32_t));
+  Buffer buffer1(data.data(), data.size() * sizeof(uint32_t));
 
   // data
   ASSERT_EQ(buffer1.ResizeData(0), true);
@@ -151,7 +157,7 @@ TEST_F(TestCxxApiTypes, test_buffer_resize_data_SUCCESS) {
 
 TEST_F(TestCxxApiTypes, test_buffer_set_data_wrong_data_size_FAILED) {
   std::vector<uint32_t> data(3 * 4 * 5 * 6, 123);
-  api::Buffer buffer1(data.data(), data.size() * sizeof(uint32_t));
+  Buffer buffer1(data.data(), data.size() * sizeof(uint32_t));
 
   // data
   ASSERT_EQ(buffer1.SetData(nullptr, 1), false);
@@ -160,7 +166,7 @@ TEST_F(TestCxxApiTypes, test_buffer_set_data_wrong_data_size_FAILED) {
 
 TEST_F(TestCxxApiTypes, test_buffer_set_data_SUCCESS) {
   std::vector<uint32_t> data(3 * 4 * 5 * 6, 123);
-  api::Buffer buffer1(data.data(), data.size() * sizeof(uint32_t));
+  Buffer buffer1(data.data(), data.size() * sizeof(uint32_t));
 
   // data
   ASSERT_EQ(buffer1.SetData(nullptr, 0), true);

@@ -83,7 +83,7 @@ Status JiebaTokenizerOp::Compute(const TensorRow &input, TensorRow *output) {
 Status JiebaTokenizerOp::AddWord(const std::string &word, int freq) {
   RETURN_UNEXPECTED_IF_NULL(jieba_parser_);
   if (jieba_parser_->InsertUserWord(word, freq, "") == false) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "AddWord: add word failed.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "AddWord: add word failed.");
   }
   return Status::OK();
 }

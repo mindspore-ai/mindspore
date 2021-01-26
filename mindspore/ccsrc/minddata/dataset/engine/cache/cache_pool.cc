@@ -108,7 +108,7 @@ Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlic
       bl.ptr = nullptr;
       return rc;
     }
-  } else if (rc.IsOutofMemory()) {
+  } else if (rc == StatusCode::kMDOutOfMemory) {
     // If no memory, write to disk.
     if (sm_ != nullptr) {
       MS_LOG(DEBUG) << "Spill to disk directly ... " << bl.sz << " bytes.";
@@ -116,7 +116,7 @@ Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlic
     } else {
       // If asked to spill to disk instead but there is no storage set up, simply return no memory
       // instead.
-      return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__, "No enough storage for cache server to cache data");
+      return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, "No enough storage for cache server to cache data");
     }
   } else {
     return rc;
@@ -125,7 +125,7 @@ Status CachePool::Insert(CachePool::key_type key, const std::vector<ReadableSlic
   try {
     rc = tree_->DoInsert(key, bl);
   } catch (const std::bad_alloc &e) {
-    rc = Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
+    rc = Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
   }
   // Duplicate key is treated as error and we will also free the memory.
   if (rc.IsError() && bl.ptr != nullptr) {

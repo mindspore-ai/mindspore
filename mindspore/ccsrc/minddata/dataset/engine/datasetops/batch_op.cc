@@ -61,7 +61,7 @@ Status BatchOp::Builder::SanityCheck() {
   err += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
                                        std::to_string(builder_num_workers_) + ".\n"
                                    : "";
-  return err.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, common::SafeCStr(err));
+  return err.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, common::SafeCStr(err));
 }
 
 #ifdef ENABLE_PYTHON
@@ -261,7 +261,7 @@ Status BatchOp::MakeBatchedBuffer(std::pair<std::unique_ptr<TensorQTable>, CBatc
 
 Status BatchOp::LaunchThreadsAndInitOp() {
   if (tree_ == nullptr) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Pipeline init failed, Execution tree not set.");
   }
   RETURN_IF_NOT_OK(worker_queues_.Register(tree_->AllTasks()));
   RETURN_IF_NOT_OK(
@@ -338,23 +338,23 @@ Status BatchOp::InvokeBatchSizeFunc(int32_t *batch_size, CBatchInfo info) {
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized.");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized.");
     }
     try {
       py::object size = batch_size_func_(info);
       *batch_size = size.cast<int32_t>();
       if (*batch_size <= 0) {
-        return Status(StatusCode::kPyFuncException,
+        return Status(StatusCode::kMDPyFuncException,
                       "Invalid parameter, batch size function should return an integer greater than 0.");
       }
     } catch (const py::error_already_set &e) {
-      return Status(StatusCode::kPyFuncException, e.what());
+      return Status(StatusCode::kMDPyFuncException, e.what());
     } catch (const py::cast_error &e) {
-      return Status(StatusCode::kPyFuncException,
+      return Status(StatusCode::kMDPyFuncException,
                     "Invalid parameter, batch size function should return an integer greater than 0.");
     }
   }
-  return Status(StatusCode::kOK, "Batch size func call succeed.");
+  return Status(StatusCode::kSuccess, "Batch size func call succeed.");
 }
 
 Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBatchInfo info) {
@@ -362,7 +362,7 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
     // Acquire Python GIL
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized.");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized.");
     }
     try {
       // Prepare batch map call back parameters
@@ -407,9 +407,9 @@ Status BatchOp::InvokeBatchMapFunc(TensorTable *input, TensorTable *output, CBat
         output->push_back(std::move(output_batch));
       }
     } catch (const py::error_already_set &e) {
-      return Status(StatusCode::kPyFuncException, e.what());
+      return Status(StatusCode::kMDPyFuncException, e.what());
     } catch (const py::cast_error &e) {
-      return Status(StatusCode::kPyFuncException,
+      return Status(StatusCode::kMDPyFuncException,
                     "Invalid parameter, batch map function should return a tuple of list of numpy array.");
     }
   }

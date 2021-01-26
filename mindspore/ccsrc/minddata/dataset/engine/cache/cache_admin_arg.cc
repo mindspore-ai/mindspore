@@ -89,7 +89,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, int32_t *out_arg, std
   ArgValue selected_arg = arg_map_[option];
   if (used_args_[selected_arg]) {
     std::string err_msg = "The " + option + " argument was given more than once.";
-    return Status(StatusCode::kSyntaxError, err_msg);
+    return Status(StatusCode::kMDSyntaxError, err_msg);
   }
 
   // Flag that this arg is used now
@@ -101,7 +101,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, int32_t *out_arg, std
   if (command_id != CommandId::kCmdUnknown) {
     if (command_id_ != CommandId::kCmdUnknown) {
       std::string err_msg = "Only one command at a time is allowed.  Invalid command: " + option;
-      return Status(StatusCode::kSyntaxError, err_msg);
+      return Status(StatusCode::kMDSyntaxError, err_msg);
     } else {
       command_id_ = command_id;
     }
@@ -113,7 +113,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, int32_t *out_arg, std
   *arg_stream >> value_as_string;
   if (value_as_string.empty()) {
     std::string err_msg = option + " option requires an argument field.  Syntax: " + option + " <field>";
-    return Status(StatusCode::kSyntaxError, err_msg);
+    return Status(StatusCode::kMDSyntaxError, err_msg);
   }
 
   // Now, attempt to convert the value into it's numeric format for output
@@ -121,7 +121,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, int32_t *out_arg, std
     *out_arg = std::stoul(value_as_string);
   } catch (const std::exception &e) {
     std::string err_msg = "Invalid numeric value: " + value_as_string;
-    return Status(StatusCode::kSyntaxError, err_msg);
+    return Status(StatusCode::kMDSyntaxError, err_msg);
   }
 
   return Status::OK();
@@ -133,7 +133,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, std::string *out_arg,
   ArgValue selected_arg = arg_map_[option];
   if (used_args_[selected_arg]) {
     std::string err_msg = "The " + option + " argument was given more than once.";
-    return Status(StatusCode::kSyntaxError, err_msg);
+    return Status(StatusCode::kMDSyntaxError, err_msg);
   }
 
   // Flag that this arg is used now
@@ -145,7 +145,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, std::string *out_arg,
   if (command_id != CommandId::kCmdUnknown) {
     if (command_id_ != CommandId::kCmdUnknown) {
       std::string err_msg = "Only one command at a time is allowed.  Invalid command: " + option;
-      return Status(StatusCode::kSyntaxError, err_msg);
+      return Status(StatusCode::kMDSyntaxError, err_msg);
     } else {
       command_id_ = command_id;
     }
@@ -158,12 +158,12 @@ Status CacheAdminArgHandler::AssignArg(std::string option, std::string *out_arg,
       *arg_stream >> *out_arg;
     } else {
       std::string err_msg = option + " option requires an argument field.  Syntax: " + option + " <field>";
-      return Status(StatusCode::kSyntaxError, err_msg);
+      return Status(StatusCode::kMDSyntaxError, err_msg);
     }
 
     if (out_arg->empty()) {
       std::string err_msg = option + " option requires an argument field.  Syntax: " + option + " <field>";
-      return Status(StatusCode::kSyntaxError, err_msg);
+      return Status(StatusCode::kMDSyntaxError, err_msg);
     }
   }
 
@@ -176,7 +176,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, float *out_arg, std::
   ArgValue selected_arg = arg_map_[option];
   if (used_args_[selected_arg]) {
     std::string err_msg = "The " + option + " argument was given more than once.";
-    return Status(StatusCode::kSyntaxError, err_msg);
+    return Status(StatusCode::kMDSyntaxError, err_msg);
   }
 
   // Flag that this arg is used now
@@ -188,7 +188,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, float *out_arg, std::
   if (command_id != CommandId::kCmdUnknown) {
     if (command_id_ != CommandId::kCmdUnknown) {
       std::string err_msg = "Only one command at a time is allowed.  Invalid command: " + option;
-      return Status(StatusCode::kSyntaxError, err_msg);
+      return Status(StatusCode::kMDSyntaxError, err_msg);
     } else {
       command_id_ = command_id;
     }
@@ -200,7 +200,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, float *out_arg, std::
   *arg_stream >> value_as_string;
   if (value_as_string.empty()) {
     std::string err_msg = option + " option requires an argument field.  Syntax: " + option + " <field>";
-    return Status(StatusCode::kSyntaxError, err_msg);
+    return Status(StatusCode::kMDSyntaxError, err_msg);
   }
 
   // Now, attempt to convert the value into it's string format for output
@@ -208,7 +208,7 @@ Status CacheAdminArgHandler::AssignArg(std::string option, float *out_arg, std::
     *out_arg = std::stof(value_as_string, nullptr);
   } catch (const std::exception &e) {
     std::string err_msg = "Invalid numeric value: " + value_as_string;
-    return Status(StatusCode::kSyntaxError, err_msg);
+    return Status(StatusCode::kMDSyntaxError, err_msg);
   }
 
   return Status::OK();
@@ -224,7 +224,7 @@ Status CacheAdminArgHandler::ParseArgStream(std::stringstream *arg_stream) {
         if (hostname_ != std::string(kCfgDefaultCacheHost)) {
           std::string err_msg =
             "Invalid host interface: " + hostname_ + ". Current limitation, only 127.0.0.1 can be used.";
-          return Status(StatusCode::kSyntaxError, err_msg);
+          return Status(StatusCode::kMDSyntaxError, err_msg);
         }
         break;
       }
@@ -304,7 +304,7 @@ Status CacheAdminArgHandler::Validate() {
   if (!trailing_args_.empty()) {
     std::string err_msg = "Invalid arguments provided: " + trailing_args_;
     err_msg += "\nPlease try `cache_admin --help` for more information";
-    return Status(StatusCode::kSyntaxError, err_msg);
+    return Status(StatusCode::kMDSyntaxError, err_msg);
   }
 
   // The user must pick at least one command.  i.e. it's meaningless to just give a hostname or port but no command to
@@ -312,18 +312,18 @@ Status CacheAdminArgHandler::Validate() {
   if (command_id_ == CommandId::kCmdUnknown) {
     std::string err_msg = "No command provided";
     err_msg += "\nPlease try `cache_admin --help` for more information";
-    return Status(StatusCode::kSyntaxError, err_msg);
+    return Status(StatusCode::kMDSyntaxError, err_msg);
   }
 
   // Additional checks here
   auto max_num_workers = std::max<int32_t>(std::thread::hardware_concurrency(), 100);
   if (num_workers_ < 1 || num_workers_ > max_num_workers)
-    return Status(StatusCode::kSyntaxError,
+    return Status(StatusCode::kMDSyntaxError,
                   "Number of workers must be in range of 1 and " + std::to_string(max_num_workers) + ".");
-  if (log_level_ < 0 || log_level_ > 3) return Status(StatusCode::kSyntaxError, "Log level must be in range (0..3).");
+  if (log_level_ < 0 || log_level_ > 3) return Status(StatusCode::kMDSyntaxError, "Log level must be in range (0..3).");
   if (memory_cap_ratio_ <= 0 || memory_cap_ratio_ > 1)
-    return Status(StatusCode::kSyntaxError, "Memory cap ratio should be positive and no greater than 1");
-  if (port_ < 1025 || port_ > 65535) return Status(StatusCode::kSyntaxError, "Port must be in range (1025..65535).");
+    return Status(StatusCode::kMDSyntaxError, "Memory cap ratio should be positive and no greater than 1");
+  if (port_ < 1025 || port_ > 65535) return Status(StatusCode::kMDSyntaxError, "Port must be in range (1025..65535).");
 
   return Status::OK();
 }
@@ -467,9 +467,9 @@ Status CacheAdminArgHandler::StopServer(CommandId command_id) {
   Status rc = rq->Wait();
   if (rc.IsError()) {
     msg.RemoveResourcesOnExit();
-    if (rc.IsNetWorkError()) {
+    if (rc == StatusCode::kMDNetWorkError) {
       std::string errMsg = "Server on port " + std::to_string(port_) + " is not up or has been shutdown already.";
-      return Status(StatusCode::kNetWorkError, errMsg);
+      return Status(StatusCode::kMDNetWorkError, errMsg);
     }
     return rc;
   }
@@ -544,7 +544,7 @@ Status CacheAdminArgHandler::StartServer(CommandId command_id) {
     if (WIFEXITED(status)) {
       auto exit_status = WEXITSTATUS(status);
       if (exit_status) {
-        return Status(StatusCode::kUnexpectedError, msg);
+        return Status(StatusCode::kMDUnexpectedError, msg);
       } else {
         // Not an error, some info message goes to stdout
         std::cout << msg << std::endl;

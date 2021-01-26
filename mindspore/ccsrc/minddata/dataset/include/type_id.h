@@ -17,6 +17,7 @@
 #define MINDSPORE_CCSRC_MINDDATA_DATASET_INCLUDE_TYPEID_H_
 
 #include "mindspore/core/ir/dtype/type_id.h"
+#include "minddata/dataset/core/data_type.h"
 
 namespace mindspore {
 namespace dataset {
@@ -46,6 +47,8 @@ inline dataset::DataType MSTypeToDEType(TypeId data_type) {
       return dataset::DataType(dataset::DataType::DE_FLOAT32);
     case kNumberTypeFloat64:
       return dataset::DataType(dataset::DataType::DE_FLOAT64);
+    case kObjectTypeString:
+      return dataset::DataType(dataset::DataType::DE_STRING);
     default:
       return dataset::DataType(dataset::DataType::DE_UNKNOWN);
   }
@@ -77,6 +80,8 @@ inline TypeId DETypeToMSType(dataset::DataType data_type) {
       return mindspore::TypeId::kNumberTypeFloat32;
     case dataset::DataType::DE_FLOAT64:
       return mindspore::TypeId::kNumberTypeFloat64;
+    case dataset::DataType::DE_STRING:
+      return mindspore::TypeId::kObjectTypeString;
     default:
       return kTypeUnknown;
   }

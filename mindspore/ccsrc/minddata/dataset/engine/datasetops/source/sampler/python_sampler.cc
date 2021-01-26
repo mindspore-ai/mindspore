@@ -36,7 +36,7 @@ Status PythonSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
       py::gil_scoped_acquire gil_acquire;
       (*out_buffer) = std::make_unique<DataBuffer>(0, DataBuffer::kDeBFlagNone);
       if (Py_IsInitialized() == 0) {
-        return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
+        return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
       }
       try {
         py::object py_ret = py_sampler_instance.attr("_get_indices")();
@@ -51,9 +51,9 @@ Status PythonSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
           }
         }
       } catch (const py::error_already_set &e) {
-        return Status(StatusCode::kPyFuncException, e.what());
+        return Status(StatusCode::kMDPyFuncException, e.what());
       } catch (const py::cast_error &e) {
-        return Status(StatusCode::kPyFuncException,
+        return Status(StatusCode::kMDPyFuncException,
                       "Invalid data, python sampler iterator should return an integer index.");
       }
     }
@@ -78,12 +78,12 @@ Status PythonSamplerRT::InitSampler() {
   {
     py::gil_scoped_acquire gil_acquire;
     if (Py_IsInitialized() == 0) {
-      return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
+      return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
     }
     try {
       py_sampler_instance.attr("_handshake")(num_rows_, num_samples_);
     } catch (const py::error_already_set &e) {
-      return Status(StatusCode::kPyFuncException, e.what());
+      return Status(StatusCode::kMDPyFuncException, e.what());
     }
   }
 
@@ -96,12 +96,12 @@ Status PythonSamplerRT::ResetSampler() {
   need_to_reset_ = false;
   py::gil_scoped_acquire gil_acquire;
   if (Py_IsInitialized() == 0) {
-    return Status(StatusCode::kPythonInterpreterFailure, "Python Interpreter is finalized");
+    return Status(StatusCode::kMDPythonInterpreterFailure, "Python Interpreter is finalized");
   }
   try {
     py_sampler_instance.attr("reset")();
   } catch (const py::error_already_set &e) {
-    return Status(StatusCode::kPyFuncException, e.what());
+    return Status(StatusCode::kMDPyFuncException, e.what());
   }
 
   if (HasChildSampler()) {

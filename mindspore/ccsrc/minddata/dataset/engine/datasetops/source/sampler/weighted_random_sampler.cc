@@ -54,7 +54,7 @@ Status WeightedRandomSamplerRT::InitSampler() {
                                  std::to_string(samples_per_buffer_) + ".\n");
 
   if (weights_.size() > static_cast<size_t>(num_rows_)) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, size of sample weights must be less than or equal to num of data, "
                   "otherwise might cause generated id out of bound or other errors, but got weight size: " +
                     std::to_string(weights_.size()) + ", num of data: " + std::to_string(num_rows_));
@@ -119,7 +119,7 @@ Status WeightedRandomSamplerRT::ResetSampler() {
 // Get the sample ids.
 Status WeightedRandomSamplerRT::GetNextSample(std::unique_ptr<DataBuffer> *out_buffer) {
   if (weights_.size() > static_cast<size_t>(num_rows_)) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid parameter, size of sample weights must be less than or equal to num of data, "
                   "otherwise might cause generated id out of bound or other errors, but got weight size: " +
                     std::to_string(weights_.size()) + ", num of data: " + std::to_string(num_rows_));

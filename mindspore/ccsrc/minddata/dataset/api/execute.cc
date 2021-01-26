@@ -14,12 +14,11 @@
  * limitations under the License.
  */
 
-#include "minddata/dataset/core/tensor_row.h"
-#ifdef ENABLE_ANDROID
-#include "minddata/dataset/include/de_tensor.h"
-#endif
 #include "minddata/dataset/include/execute.h"
+#include "minddata/dataset/core/de_tensor.h"
+#include "minddata/dataset/core/tensor_row.h"
 #include "minddata/dataset/include/tensor.h"
+#include "minddata/dataset/include/type_id.h"
 #include "minddata/dataset/kernels/tensor_op.h"
 #ifndef ENABLE_ANDROID
 #include "utils/log_adapter.h"
@@ -30,78 +29,85 @@
 namespace mindspore {
 namespace dataset {
 
-Execute::Execute(std::shared_ptr<TensorOperation> op) : op_(std::move(op)) {}
+Execute::Execute(std::shared_ptr<TensorOperation> op) { ops_.emplace_back(std::move(op)); }
 
-/// \brief Destructor
-Execute::~Execute() = default;
+Execute::Execute(std::vector<std::shared_ptr<TensorOperation>> ops) : ops_(std::move(ops)) {}
 
-#ifdef ENABLE_ANDROID
-std::shared_ptr<tensor::MSTensor> Execute::operator()(std::shared_ptr<tensor::MSTensor> input) {
-  // Build the op
-  if (op_ == nullptr) {
-    MS_LOG(ERROR) << "Input TensorOperation is not valid";
-    return nullptr;
+Status Execute::operator()(const mindspore::MSTensor &input, mindspore::MSTensor *output) {
+  // Validate input tensor
+  CHECK_FAIL_RETURN_UNEXPECTED(input.DataSize() > 0, "Input Tensor has no data");
+  CHECK_FAIL_RETURN_UNEXPECTED(!ops_.empty(), "Input TensorOperation should be provided");
+
+  // Validate and build runtime ops
+  std::vector<std::shared_ptr<TensorOp>> transforms;
+  for (int32_t i = 0; i < ops_.size(); i++) {
+    CHECK_FAIL_RETURN_UNEXPECTED(ops_[i] != nullptr, "Input TensorOperation[" + std::to_string(i) + "] is null");
+    RETURN_IF_NOT_OK(ops_[i]->ValidateParams());
+    transforms.emplace_back(ops_[i]->Build());
   }
 
-  std::shared_ptr<Tensor> de_input = std::dynamic_pointer_cast<tensor::DETensor>(input)->tensor();
-  if (de_input == nullptr) {
-    MS_LOG(ERROR) << "Input Tensor is not valid";
-    return nullptr;
-  }
-  std::shared_ptr<TensorOp> transform = op_->Build();
-  std::shared_ptr<Tensor> de_output;
-  Status rc = transform->Compute(de_input, &de_output);
+  // Convert mindspore::Tensor to dataset::Tensor
+  std::shared_ptr<dataset::Tensor> de_tensor;
+  Status rc = dataset::Tensor::CreateFromMemory(dataset::TensorShape(input.Shape()),
+                                                MSTypeToDEType(static_cast<TypeId>(input.DataType())),
+                                                (const uchar *)(input.Data().get()), input.DataSize(), &de_tensor);
+  RETURN_IF_NOT_OK(rc);
 
-  if (rc.IsError()) {
-    // execution failed
-    MS_LOG(ERROR) << "Operation execution failed : " << rc.ToString();
-    return nullptr;
-  }
-  return std::make_shared<tensor::DETensor>(std::move(de_output));
-}
-#endif
+  // Apply transforms on tensor
+  for (auto &t : transforms) {
+    std::shared_ptr<dataset::Tensor> de_output;
+    RETURN_IF_NOT_OK(t->Compute(de_tensor, &de_output));
 
-std::shared_ptr<dataset::Tensor> Execute::operator()(std::shared_ptr<dataset::Tensor> input) {
-  // Build the op
-  if (op_ == nullptr) {
-    MS_LOG(ERROR) << "Input TensorOperation is not valid";
-    return nullptr;
+    // For next transform
+    de_tensor = std::move(de_output);
   }
 
-  if (input == nullptr) {
-    MS_LOG(ERROR) << "Input Tensor is not valid";
-    return nullptr;
-  }
-  // will add validate params once API is set
-  std::shared_ptr<TensorOp> transform = op_->Build();
-  std::shared_ptr<Tensor> de_output;
-  Status rc = transform->Compute(input, &de_output);
-
-  if (rc.IsError()) {
-    // execution failed
-    MS_LOG(ERROR) << "Operation execution failed : " << rc.ToString();
-    return nullptr;
-  }
-  return de_output;
+  // Convert dataset::Tensor to mindspore::Tensor
+  CHECK_FAIL_RETURN_UNEXPECTED(de_tensor->HasData(), "Apply transform failed, output tensor has no data");
+  *output = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
+  return Status::OK();
 }
 
-Status Execute::operator()(const std::vector<std::shared_ptr<Tensor>> &input_tensor_list,
-                           std::vector<std::shared_ptr<Tensor>> *output_tensor_list) {
-  CHECK_FAIL_RETURN_UNEXPECTED(op_ != nullptr, "Input TensorOperation is not valid");
+Status Execute::operator()(const std::vector<MSTensor> &input_tensor_list, std::vector<MSTensor> *output_tensor_list) {
+  // Validate input tensor
   CHECK_FAIL_RETURN_UNEXPECTED(!input_tensor_list.empty(), "Input Tensor is not valid");
+  for (auto &tensor : input_tensor_list) {
+    CHECK_FAIL_RETURN_UNEXPECTED(tensor.DataSize() > 0, "Input Tensor has no data");
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!ops_.empty(), "Input TensorOperation should be provided");
 
-  TensorRow input, output;
-  std::copy(input_tensor_list.begin(), input_tensor_list.end(), std::back_inserter(input));
-  CHECK_FAIL_RETURN_UNEXPECTED(!input.empty(), "Input Tensor is not valid");
-
-  std::shared_ptr<TensorOp> transform = op_->Build();
-  Status rc = transform->Compute(input, &output);
-  if (rc.IsError()) {
-    // execution failed
-    RETURN_STATUS_UNEXPECTED("Operation execution failed : " + rc.ToString());
+  // Validate and build runtime ops
+  std::vector<std::shared_ptr<TensorOp>> transforms;
+  for (int32_t i = 0; i < ops_.size(); i++) {
+    CHECK_FAIL_RETURN_UNEXPECTED(ops_[i] != nullptr, "Input TensorOperation[" + std::to_string(i) + "] is null");
+    RETURN_IF_NOT_OK(ops_[i]->ValidateParams());
+    transforms.emplace_back(ops_[i]->Build());
   }
 
-  std::copy(output.begin(), output.end(), std::back_inserter(*output_tensor_list));
+  TensorRow de_tensor_list;
+  for (auto &tensor : input_tensor_list) {
+    std::shared_ptr<dataset::Tensor> de_tensor;
+    Status rc = dataset::Tensor::CreateFromMemory(dataset::TensorShape(tensor.Shape()),
+                                                  MSTypeToDEType(static_cast<TypeId>(tensor.DataType())),
+                                                  (const uchar *)(tensor.Data().get()), tensor.DataSize(), &de_tensor);
+    RETURN_IF_NOT_OK(rc);
+    de_tensor_list.emplace_back(std::move(de_tensor));
+  }
+
+  // Apply transforms on tensor
+  for (auto &t : transforms) {
+    TensorRow de_output_list;
+    RETURN_IF_NOT_OK(t->Compute(de_tensor_list, &de_output_list));
+    // For next transform
+    de_tensor_list = std::move(de_output_list);
+  }
+
+  for (auto &tensor : de_tensor_list) {
+    CHECK_FAIL_RETURN_UNEXPECTED(tensor->HasData(), "Apply transform failed, output tensor has no data");
+    auto ms_tensor = mindspore::MSTensor(std::make_shared<DETensor>(tensor));
+    output_tensor_list->emplace_back(ms_tensor);
+  }
+  CHECK_FAIL_RETURN_UNEXPECTED(!output_tensor_list->empty(), "Output Tensor is not valid");
   return Status::OK();
 }
 

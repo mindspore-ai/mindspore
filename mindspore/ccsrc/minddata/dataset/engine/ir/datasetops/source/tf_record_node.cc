@@ -53,7 +53,7 @@ Status TFRecordNode::ValidateParams() {
   if (dataset_files_.empty()) {
     std::string err_msg = "TFRecordNode: dataset_files is not specified.";
     MS_LOG(ERROR) << err_msg;
-    return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, err_msg);
+    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }
 
   for (const auto &f : dataset_files_) {
@@ -62,7 +62,7 @@ Status TFRecordNode::ValidateParams() {
       std::string err_msg = "TFRecordNode: dataset file: [" + f + "] is invalid or does not exist.";
       MS_LOG(ERROR) << err_msg;
 
-      return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, err_msg);
+      return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
     }
   }
 
@@ -70,14 +70,14 @@ Status TFRecordNode::ValidateParams() {
     std::string err_msg = "TFRecordNode: Invalid number of samples: " + std::to_string(num_samples_);
     MS_LOG(ERROR) << err_msg;
 
-    return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, err_msg);
+    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }
 
   if (num_shards_ <= 0) {
     std::string err_msg = "TFRecordNode: Invalid num_shards: " + std::to_string(num_shards_);
     MS_LOG(ERROR) << err_msg;
 
-    return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, err_msg);
+    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }
 
   if (shard_id_ < 0 || shard_id_ >= num_shards_) {
@@ -85,7 +85,7 @@ Status TFRecordNode::ValidateParams() {
                           ", num_shards: " + std::to_string(num_shards_);
     MS_LOG(ERROR) << err_msg;
 
-    return Status(StatusCode::kSyntaxError, __LINE__, __FILE__, err_msg);
+    return Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
   }
 
   std::vector<std::string> invalid_files(dataset_files_.size());
@@ -101,7 +101,7 @@ Status TFRecordNode::ValidateParams() {
       [](const std::string &accumulated, const std::string &next) { return accumulated + "    " + next + "\n"; });
     err_msg += accumulated_filenames;
   }
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kSyntaxError, __LINE__, __FILE__, err_msg);
+  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDSyntaxError, __LINE__, __FILE__, err_msg);
 }
 
 // Function to build TFRecordNode

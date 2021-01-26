@@ -35,7 +35,7 @@ Status OneHotOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
   if (inputs_copy[0].Rank() == 0) outputs.emplace_back(std::vector<dsize_t>{num_classes_});
   if (inputs_copy[0].Rank() == 1) outputs.emplace_back(std::vector<dsize_t>{inputs_copy[0][0], num_classes_});
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "OneHot: invalid input shape.");
+  return Status(StatusCode::kMDUnexpectedError, "OneHot: invalid input shape.");
 }
 
 Status OneHotOp::to_json(nlohmann::json *out_json) {

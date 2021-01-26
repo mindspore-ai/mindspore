@@ -95,7 +95,7 @@ Status CacheClientGreeter::HandleRequest(std::shared_ptr<BaseRequest> rq) {
     std::unique_lock<std::mutex> lck(mux_);
     auto r = req_.emplace(seqNo, std::move(tag));
     if (!r.second) {
-      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__);
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__);
     }
   }
   // Last step is to tag the request.
@@ -124,7 +124,7 @@ Status CacheClientGreeter::WorkerEntry() {
           } else {
             err_msg = rq->rc_.error_message() + ". GRPC Code " + std::to_string(error_code);
           }
-          Status remote_rc = Status(StatusCode::kNetWorkError, __LINE__, __FILE__, err_msg);
+          Status remote_rc = Status(StatusCode::kMDNetWorkError, __LINE__, __FILE__, err_msg);
           Status2CacheReply(remote_rc, &rq->base_rq_->reply_);
         }
         // Notify the waiting thread.

@@ -157,18 +157,14 @@ Status DeviceQueueOp::SendDataToAscend() {
       TensorRow currRow;
       for (int row_id = 0; row_id < current_buffer->NumRows(); row_id++) {
         RETURN_IF_NOT_OK(current_buffer->GetRow(row_id, &currRow));
-        while (stop_send_ && ascend_keep_waiting_) {
-          MS_LOG(DEBUG) << "stop_send flag is set, waiting for continue signal...";
-          std::this_thread::sleep_for(std::chrono::microseconds(100));
-        }
+        WaitContinueSignal();
         auto status = tdtInstancePtr->hostPush(currRow, true, channel_name_, isProfilingEnable, tdt_cost);
         if (status == TdtStatus::FAILED) {
           if (stop_send_) {
             MS_LOG(INFO) << "stop_send received";
             return Status::OK();
-          } else {
-            return Status(StatusCode::kTDTPushFailure, "TDT Push Failed");
           }
+          return Status(StatusCode::kMDTDTPushFailure, "TDT Push Failed");
         }
         if (create_data_info_queue_) {
           DATA_INFO data_info;
@@ -200,9 +196,8 @@ Status DeviceQueueOp::SendDataToAscend() {
         if (stop_send_) {
           MS_LOG(INFO) << "stop_send received";
           return Status::OK();
-        } else {
-          return Status(StatusCode::kTDTPushFailure, "TDT Push Failed");
         }
+        return Status(StatusCode::kMDTDTPushFailure, "TDT Push Failed");
       }
       MS_LOG(INFO) << "an epoch has already sent, now stop send data.";
       stop_send_ = true;
@@ -219,13 +214,19 @@ Status DeviceQueueOp::SendDataToAscend() {
 
   return Status::OK();
 }
+void DeviceQueueOp::WaitContinueSignal() const {
+  while (stop_send_ && ascend_keep_waiting_) {
+    MS_LOG(DEBUG) << "stop_send flag is set, waiting for continue signal...";
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+  }
+}
 
 #endif
 
 #ifdef ENABLE_TDTQUE
 Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
   if (!create_data_info_queue_) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "DataInfo queue is not created.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "DataInfo queue is not created.");
   }
   // This place has a race condition with operator(), so the first one
   // arrive here will do the initialize work.
@@ -241,7 +242,7 @@ Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
 }
 #else
 Status DeviceQueueOp::GetDataInfo(DATA_INFO *data_info) {
-  return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "GetDataInfo is not supported yet.");
+  return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "GetDataInfo is not supported yet.");
 }
 #endif
 
@@ -301,7 +302,7 @@ Status DeviceQueueOp::PushDataToGPU() {
       }
       handle = GpuBufferMgr::GetInstance().Open(0, channel_name_, data_size, release_function);
       if (handle == INVALID_HANDLE) {
-        return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Failed to open channel for sending data.");
+        return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Failed to open channel for sending data.");
       }
       is_open = true;
     }
@@ -309,14 +310,14 @@ Status DeviceQueueOp::PushDataToGPU() {
     // Data prefetch only when PS mode enables cache.
     if (items.size() > 0) {
       if (!ps::PsDataPrefetch::GetInstance().PrefetchData(channel_name_, items[0].data_ptr_, items[0].data_len_)) {
-        return Status(StatusCode::kTimeOut, __LINE__, __FILE__, "Failed to prefetch data.");
+        return Status(StatusCode::kMDTimeOut, __LINE__, __FILE__, "Failed to prefetch data.");
       }
     }
     while (!GpuBufferMgr::GetInstance().IsClosed() && !TaskManager::FindMe()->Interrupted()) {
       BlockQueueStatus_T ret = GpuBufferMgr::GetInstance().Push(handle, items, WAIT_TIME);
       if (ret) {
         if (ret == BlockQueueStatus_T::ERROR_INPUT) {
-          return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Invalid input data, please check it.");
+          return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Invalid input data, please check it.");
         } else {
           if (!stop_send_) {
             MS_LOG(DEBUG) << "Retry pushing data...";
@@ -438,13 +439,13 @@ Status DeviceQueueOp::MallocForGPUData(std::vector<device::DataItemGpu> *items, 
   for (auto &sub_item : *items) {
     RETURN_IF_NOT_OK(pool_[worker_id]->Allocate(sub_item.data_len_, &sub_item.data_ptr_));
     if (sub_item.data_ptr_ == nullptr) {
-      return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__, "Memory malloc failed.");
+      return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, "Memory malloc failed.");
     }
     const unsigned char *column_data = curr_row[i]->GetBuffer();
     if (memcpy_s(sub_item.data_ptr_, sub_item.data_len_, column_data,
                  static_cast<uint32_t>(curr_row[i++]->SizeInBytes())) != 0) {
       MS_LOG(ERROR) << "memcpy_s failed!";
-      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "memcpy_s failed.");
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "memcpy_s failed.");
     }
   }
 

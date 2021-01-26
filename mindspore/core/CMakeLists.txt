@@ -7,8 +7,6 @@ if(NOT(CMAKE_SYSTEM_NAME MATCHES "Windows"))
 endif()
 message("************ build core ***************")
 
-
-
 file(GLOB_RECURSE CORE_SRC_LIST RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}
         "abstract/*.cc"
         "base/*.cc"

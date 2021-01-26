@@ -19,49 +19,45 @@
 #include "cxx_api/factory.h"
 #include "utils/utils.h"
 
-namespace mindspore::api {
-Status Model::Build(const std::map<std::string, std::string> &options) {
+namespace mindspore {
+Status Model::Build() {
   MS_EXCEPTION_IF_NULL(impl_);
-  return impl_->Build(options);
+  return impl_->Build();
 }
 
-Status Model::Train(const DataSet &dataset, bool data_sink, std::map<std::string, Buffer> *outputs) {
+Status Model::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
   MS_EXCEPTION_IF_NULL(impl_);
-  return impl_->Train(dataset, outputs);
+  return impl_->Resize(inputs, dims);
 }
 
-Status Model::Eval(const DataSet &dataset, bool data_sink, std::map<std::string, Buffer> *outputs) {
-  MS_EXCEPTION_IF_NULL(impl_);
-  return impl_->Eval(dataset, outputs);
-}
-
-Status Model::Predict(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) {
+Status Model::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(impl_);
   return impl_->Predict(inputs, outputs);
 }
 
-Status Model::GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                            std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const {
+std::vector<MSTensor> Model::GetInputs() {
   MS_EXCEPTION_IF_NULL(impl_);
-  return impl_->GetInputsInfo(names, shapes, data_types, mem_sizes);
+  return impl_->GetInputs();
 }
 
-Status Model::GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                             std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const {
+std::vector<MSTensor> Model::GetOutputs() {
   MS_EXCEPTION_IF_NULL(impl_);
-  return impl_->GetOutputsInfo(names, shapes, data_types, mem_sizes);
+  return impl_->GetOutputs();
 }
 
-Model::Model(const GraphCell &graph_cell)
-    : impl_(Factory<ModelImpl>::Instance().Create(Context::Instance().GetDeviceTarget())) {
+Model::Model(const GraphCell &graph_cell, const std::shared_ptr<Context> &model_context)
+    : impl_(Factory<ModelImpl>::Instance().Create(mindspore::GlobalContext::GetGlobalDeviceTarget())) {
   if (impl_ == nullptr) {
-    MS_LOG(EXCEPTION) << "Create session type " << Context::Instance().GetDeviceTarget() << " failed";
+    MS_LOG(EXCEPTION) << "Create session type " << mindspore::GlobalContext::GetGlobalDeviceTarget() << " failed";
   }
   MS_EXCEPTION_IF_NULL(graph_cell.GetGraph());
   impl_->SetGraph(std::make_shared<Graph>(*graph_cell.GetGraph()));
+  impl_->SetContext(model_context);
 }
 
-Model::Model(const std::vector<Output> &network) { MS_LOG(EXCEPTION) << "Unsupported feature."; }
+Model::Model(const std::vector<Output> &network, const std::shared_ptr<Context> &model_context) {
+  MS_LOG(EXCEPTION) << "Unsupported feature.";
+}
 
 Model::~Model() {}
 
@@ -69,4 +65,4 @@ bool Model::CheckModelSupport(const std::string &device_type, ModelType) {
   return Factory<ModelImpl>::Instance().CheckModelSupport(device_type);
 }
 
-}  // namespace mindspore::api
+}  // namespace mindspore

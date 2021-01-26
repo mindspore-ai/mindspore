@@ -190,6 +190,7 @@ class DeviceQueueOp : public PipelineOp {
 
  private:
 #ifdef ENABLE_TDTQUE
+  void WaitContinueSignal() const;
   Status SendDataToAscend();
   bool ascend_keep_waiting_;
 #endif

@@ -126,7 +126,7 @@ Status ShuffleOp::AddRowToShuffleBuffer(TensorRow new_shuffle_row) {
     shuffle_last_row_idx_ = (shuffle_buffer_->size()) - 1;
   } else {
     if (!(*shuffle_buffer_)[shuffle_last_row_idx_].empty()) {
-      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                     "Last row of shuffle buffer should not be occupied!");
     }
     (*shuffle_buffer_)[shuffle_last_row_idx_] = std::move(new_shuffle_row);
@@ -245,7 +245,7 @@ Status ShuffleOp::InitShuffleBuffer() {
   // shuffle buffer to it's max size, or the dataset below us is not providing any more
   // rows.
   if (shuffle_buffer_state_ != kShuffleStateInit) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__,
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
                   "Invalid shuffle buffer state (SHUFFLE_STATE_INIT expected)");
   }
 

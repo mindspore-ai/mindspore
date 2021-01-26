@@ -25,91 +25,51 @@
 #include "backend/session/executor_manager.h"
 #include "runtime/device/kernel_runtime_manager.h"
 
-namespace mindspore::api {
+namespace mindspore {
 API_FACTORY_REG(GraphCell::GraphImpl, Ascend910, AscendGraphImpl);
 
 AscendGraphImpl::AscendGraphImpl()
     : session_impl_(nullptr),
       graph_id_(0),
       device_type_("Ascend"),
-      device_id_(Context::Instance().GetDeviceID()),
+      device_id_(GlobalContext::GetGlobalDeviceID()),
       context_(nullptr),
-      inputs_(),
-      outputs_(),
+      inputs_info_(),
+      outputs_info_(),
       input_names_(),
       output_names_(),
-      init_flag_(false),
       load_flag_(false) {}
 
-AscendGraphImpl::~AscendGraphImpl() { (void)FinalizeEnv(); }
+AscendGraphImpl::~AscendGraphImpl() {}
 
 Status AscendGraphImpl::InitEnv() {
-  if (init_flag_) {
-    return SUCCESS;
-  }
-  RegAllOp();
-  auto ms_context = MsContext::GetInstance();
-  if (ms_context == nullptr) {
-    MS_LOG(ERROR) << "Get Context failed!";
-    return FAILED;
-  }
-
-  ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
-  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id_);
-  ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
-  if (!context::OpenTsd(ms_context)) {
-    MS_LOG(ERROR) << "Session init OpenTsd failed!";
-    return FAILED;
+  MS_LOG(INFO) << "Start to init env.";
+  env_guard_ = MsEnvGuard::GetEnv(device_id_);
+  if (env_guard_ == nullptr) {
+    MS_LOG(ERROR) << "Env init failed.";
+    return kMCDeviceError;
   }
 
   session_impl_ = session::SessionFactory::Get().Create(kDavinciInferenceDevice);
   if (session_impl_ == nullptr) {
     MS_LOG(ERROR) << "Session create failed!, please make sure target device:" << kDavinciInferenceDevice
                   << " is available.";
-    return FAILED;
+    return kMCFailed;
   }
   session_impl_->Init(device_id_);
 
-  init_flag_ = true;
-  return SUCCESS;
-}
-
-Status AscendGraphImpl::FinalizeEnv() {
-  if (!init_flag_) {
-    return SUCCESS;
-  }
-
-  MS_LOG_INFO << "Start finalize env";
-  session::ExecutorManager::Instance().Clear();
-  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
-
-  auto ms_context = MsContext::GetInstance();
-  if (ms_context == nullptr) {
-    MS_LOG(ERROR) << "Get Context failed!";
-    return FAILED;
-  }
-
-  {
-    PythonEnvGuard guard;
-    if (!context::CloseTsd(ms_context)) {
-      MS_LOG(ERROR) << "CloseTsd failed!";
-      return FAILED;
-    }
-  }
-
-  init_flag_ = false;
-  MS_LOG(INFO) << "End finalize env";
-  return SUCCESS;
+  MS_LOG(INFO) << "InitEnv success.";
+  return kSuccess;
 }
 
 Status AscendGraphImpl::CompileGraph(const std::shared_ptr<FuncGraph> &funcGraphPtr) {
   MS_ASSERT(session_impl_ != nullptr);
   try {
     graph_id_ = session_impl_->CompileGraph(NOT_NULL(funcGraphPtr));
-    return SUCCESS;
+    return kSuccess;
   } catch (std::exception &e) {
     MS_LOG(ERROR) << "CompileGraph failed: " << e.what();
-    return FAILED;
+    return kMCFailed;
   }
 }
 
@@ -128,104 +88,104 @@ Status AscendGraphImpl::CheckModelInputs(const std::vector<tensor::TensorPtr> &i
   MS_ASSERT(session_impl_ != nullptr);
   std::string error_msg;
   if (!session_impl_->CheckModelInputs(graph_id_, inputs, &error_msg)) {
-    return Status(INVALID_INPUTS, error_msg);
+    return Status(kMCInvalidInput, error_msg);
   }
-  return SUCCESS;
+  return kSuccess;
 }
 
-Status AscendGraphImpl::ExecuteModel(const std::vector<Buffer> &request, std::vector<Buffer> *reply) {
+Status AscendGraphImpl::ExecuteModel(const std::vector<MSTensor> &request, std::vector<MSTensor> *reply) {
   MS_EXCEPTION_IF_NULL(reply);
   if (context_ == nullptr) {
     MS_LOG(ERROR) << "rtCtx is nullptr";
-    return FAILED;
+    return kMCDeviceError;
   }
   rtError_t rt_ret = rtCtxSetCurrent(context_);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Set Ascend rtCtx failed";
-    return FAILED;
+    return kMCDeviceError;
   }
 
   vector<tensor::TensorPtr> inputs;
   for (size_t i = 0; i < request.size(); i++) {
-    auto &item = request[i];
-    auto input = inputs_[i];
+    auto item = request[i];
+    auto input = inputs_info_[i];
     if (input->Size() != item.DataSize()) {
       MS_LOG(ERROR) << "Input " << i << " data size " << item.DataSize() << " not match model input data size "
                     << input->Size();
-      return FAILED;
+      return kMCInvalidInput;
     }
-    auto ret = memcpy_s(input->data_c(), input->Size(), item.Data(), item.DataSize());
-    if (ret != SUCCESS) {
-      MS_LOG(ERROR) << "Tensor copy failed";
-      return FAILED;
+    auto ret = memcpy_s(input->data_c(), input->Size(), item.MutableData(), item.DataSize());
+    if (ret != kSuccess) {
+      MS_LOG(ERROR) << "MSTensor copy failed";
+      return kMCFailed;
     }
     inputs.push_back(input);
   }
-  vector<tensor::TensorPtr> outputs = RunGraph(inputs);
+  last_inputs_ = inputs;
+  std::vector<tensor::TensorPtr> outputs = RunGraph(inputs);
   if (outputs.empty()) {
     MS_LOG(ERROR) << "Execute Model Failed";
-    return FAILED;
+    return kMCFailed;
   }
+  last_outputs_ = outputs;
   reply->clear();
-  std::transform(outputs.begin(), outputs.end(), std::back_inserter(*reply),
-                 [](const tensor::TensorPtr &tensor) { return Buffer(tensor->data_c(), tensor->Size()); });
-  return SUCCESS;
+  *reply = GetOutputs();
+  return kSuccess;
 }
 
-Status AscendGraphImpl::GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                                      std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) {
+std::vector<MSTensor> AscendGraphImpl::GetInputs() {
   if (!load_flag_) {
     Status ret = Load();
-    if (ret != SUCCESS) {
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
-      return ret;
+      return {};
     }
   }
 
-  GraphUtils::ClearIfNotNull(names);
-  GraphUtils::ClearIfNotNull(shapes);
-  GraphUtils::ClearIfNotNull(data_types);
-  GraphUtils::ClearIfNotNull(mem_sizes);
-  for (size_t i = 0; i < inputs_.size(); i++) {
-    auto &tensor = inputs_[i];
-    GraphUtils::PushbackIfNotNull(names, input_names_[i]);
-    GraphUtils::PushbackIfNotNull(shapes, tensor->shape());
-    GraphUtils::PushbackIfNotNull(data_types, GraphUtils::TransTypeId2InferDataType(tensor->data_type()));
-    GraphUtils::PushbackIfNotNull(mem_sizes, tensor->Size());
+  std::vector<MSTensor> result(inputs_info_.size());
+  for (size_t i = 0; i < inputs_info_.size(); ++i) {
+    auto &tensor = inputs_info_[i];
+    void *data = nullptr;
+    size_t data_size = tensor->Size();
+    if (i < last_inputs_.size()) {
+      data = last_inputs_[i]->data_c();
+      data_size = last_inputs_[i]->Size();
+    }
+    result[i] =
+      MSTensor(input_names_[i], static_cast<enum DataType>(tensor->data_type()), tensor->shape(), data, data_size);
   }
-  return SUCCESS;
+  return result;
 }
 
-Status AscendGraphImpl::GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                                       std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) {
+std::vector<MSTensor> AscendGraphImpl::GetOutputs() {
   if (!load_flag_) {
     Status ret = Load();
-    if (ret != SUCCESS) {
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
-      return ret;
+      return {};
     }
   }
 
-  GraphUtils::ClearIfNotNull(names);
-  GraphUtils::ClearIfNotNull(shapes);
-  GraphUtils::ClearIfNotNull(data_types);
-  GraphUtils::ClearIfNotNull(mem_sizes);
-  for (size_t i = 0; i < outputs_.size(); i++) {
-    auto &tensor = outputs_[i];
-    GraphUtils::PushbackIfNotNull(names, output_names_[i]);
-    GraphUtils::PushbackIfNotNull(shapes, tensor->shape());
-    GraphUtils::PushbackIfNotNull(data_types, GraphUtils::TransTypeId2InferDataType(tensor->data_type()));
-    GraphUtils::PushbackIfNotNull(mem_sizes, tensor->Size());
+  std::vector<MSTensor> result(outputs_info_.size());
+  for (size_t i = 0; i < outputs_info_.size(); ++i) {
+    auto &tensor = outputs_info_[i];
+    void *data = nullptr;
+    size_t data_size = tensor->Size();
+    if (i < last_outputs_.size()) {
+      data = last_outputs_[i]->data_c();
+      data_size = last_outputs_[i]->Size();
+    }
+    result[i] =
+      MSTensor(output_names_[i], static_cast<enum DataType>(tensor->data_type()), tensor->shape(), data, data_size);
   }
-
-  return SUCCESS;
+  return result;
 }
 
 Status AscendGraphImpl::Load() {
   // check graph type
   if (graph_->ModelType() != ModelType::kMindIR) {
     MS_LOG(ERROR) << "Unsupported model type " << graph_->ModelType();
-    return INVALID_INPUTS;
+    return kMCInvalidInput;
   }
 
   const auto &graph_data = GraphImpl::MutableGraphData();
@@ -234,34 +194,34 @@ Status AscendGraphImpl::Load() {
 
   // init
   Status ret = InitEnv();
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "InitEnv failed.";
-    return FAILED;
+    return ret;
   }
 
   // load model
   if (!load_flag_) {
     ret = CompileGraph(func_graph);
-    if (ret != SUCCESS) {
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "Compile graph model failed";
-      return FAILED;
+      return ret;
     }
-    session_impl_->GetModelInputsInfo(graph_id_, &inputs_, &input_names_);
-    session_impl_->GetModelOutputsInfo(graph_id_, &outputs_, &output_names_);
-    if (inputs_.empty() || inputs_.size() != input_names_.size()) {
+    session_impl_->GetModelInputsInfo(graph_id_, &inputs_info_, &input_names_);
+    session_impl_->GetModelOutputsInfo(graph_id_, &outputs_info_, &output_names_);
+    if (inputs_info_.empty() || inputs_info_.size() != input_names_.size()) {
       MS_LOG_ERROR << "Get model inputs info failed";
-      return FAILED;
+      return kMCInvalidInput;
     }
-    if (outputs_.empty() || outputs_.size() != output_names_.size()) {
+    if (outputs_info_.empty() || outputs_info_.size() != output_names_.size()) {
       MS_LOG_ERROR << "Get model outputs info failed";
-      return FAILED;
+      return kMCInvalidInput;
     }
 
     // save d context
     rtError_t rt_ret = rtCtxGetCurrent(&context_);
     if (rt_ret != RT_ERROR_NONE || context_ == nullptr) {
       MS_LOG(ERROR) << "the ascend device context is null";
-      return FAILED;
+      return kMCDeviceError;
     }
 
     MS_LOG(INFO) << "Load model success";
@@ -271,44 +231,112 @@ Status AscendGraphImpl::Load() {
   rtError_t rt_ret = rtCtxSetCurrent(context_);
   if (rt_ret != RT_ERROR_NONE) {
     MS_LOG(ERROR) << "Set the ascend device context failed";
-    return FAILED;
+    return kMCDeviceError;
   }
 
-  return SUCCESS;
+  return kSuccess;
 }
 
-Status AscendGraphImpl::Run(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) {
+Status AscendGraphImpl::Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   if (!load_flag_) {
     Status ret = Load();
-    if (ret != SUCCESS) {
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "PrepareModel failed.";
       return ret;
     }
   }
 
-  if (inputs.size() != inputs_.size()) {
-    MS_LOG(ERROR) << "inputs count not match, required count " << inputs_.size() << ", given count " << inputs.size();
-    return INVALID_INPUTS;
+  if (inputs.size() != inputs_info_.size()) {
+    MS_LOG(ERROR) << "inputs count not match, required count " << inputs_info_.size() << ", given count "
+                  << inputs.size();
+    return kMCInvalidInput;
   }
 
-  for (size_t i = 0; i < inputs_.size(); ++i) {
-    if (inputs[i].DataSize() != inputs_[i]->Size()) {
-      MS_LOG(ERROR) << "input " << i << " data size not match, required size " << inputs_[i]->Size() << ", given count "
-                    << inputs[i].DataSize();
-      return INVALID_INPUTS;
+  for (size_t i = 0; i < inputs_info_.size(); ++i) {
+    if (inputs[i].DataSize() != inputs_info_[i]->Size()) {
+      MS_LOG(ERROR) << "input " << i << " data size not match, required size " << inputs_info_[i]->Size()
+                    << ", given count " << inputs[i].DataSize();
+      return kMCInvalidInput;
     }
   }
-  if (ExecuteModel(inputs, outputs) != SUCCESS) {
+
+  Status ret = ExecuteModel(inputs, outputs);
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "Execute Model Failed";
-    return FAILED;
+    return ret;
   }
-  if (outputs_.size() != outputs->size()) {
+  if (outputs_info_.size() != outputs->size()) {
     MS_LOG(ERROR) << "Predict output size " << outputs->size() << " not match output size got from model info "
-                  << outputs_.size();
-    return FAILED;
+                  << outputs_info_.size();
+    return kMCFailed;
   }
 
-  return SUCCESS;
+  return kSuccess;
 }
-}  // namespace mindspore::api
+
+AscendGraphImpl::MsEnvGuard::MsEnvGuard(uint32_t device_id) {
+  MS_LOG(INFO) << "Start to init env.";
+  device_id_ = device_id;
+  RegAllOp();
+  auto ms_context = MsContext::GetInstance();
+  if (ms_context == nullptr) {
+    MS_LOG(ERROR) << "Get Context failed!";
+    errno_ = kMCFailed;
+    return;
+  }
+
+  ms_context->set_param<int>(MS_CTX_EXECUTION_MODE, kGraphMode);
+  ms_context->set_param<uint32_t>(MS_CTX_DEVICE_ID, device_id_);
+  ms_context->set_param<std::string>(MS_CTX_DEVICE_TARGET, kAscendDevice);
+  auto ret = rtSetDevice(device_id_);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Device " << device_id_ << " call rtSetDevice failed, ret[" << static_cast<int>(ret) << "]";
+  }
+
+  MS_LOG(INFO) << "InitEnv success.";
+  errno_ = kSuccess;
+}
+
+AscendGraphImpl::MsEnvGuard::~MsEnvGuard() {
+  MS_LOG(INFO) << "Start finalize env";
+  session::ExecutorManager::Instance().Clear();
+  device::KernelRuntimeManager::Instance().ClearRuntimeResource();
+
+  auto ms_context = MsContext::GetInstance();
+  if (ms_context == nullptr) {
+    MS_LOG(ERROR) << "Get Context failed!";
+    errno_ = kMCFailed;
+    return;
+  }
+
+  auto ret = rtDeviceReset(device_id_);
+  if (ret != RT_ERROR_NONE) {
+    MS_LOG(EXCEPTION) << "Device " << device_id_ << " call rtDeviceReset failed, ret[" << static_cast<int>(ret) << "]";
+  }
+
+  errno_ = kSuccess;
+  MS_LOG(INFO) << "End finalize env";
+}
+
+std::shared_ptr<AscendGraphImpl::MsEnvGuard> AscendGraphImpl::MsEnvGuard::GetEnv(uint32_t device_id) {
+  std::shared_ptr<MsEnvGuard> acl_env;
+  std::lock_guard<std::mutex> lock(global_ms_env_mutex_);
+  acl_env = global_ms_env_.lock();
+  if (acl_env != nullptr) {
+    MS_LOG(INFO) << "Env has been initialized, skip.";
+  } else {
+    acl_env = std::make_shared<MsEnvGuard>(device_id);
+    if (acl_env->GetErrno() != kSuccess) {
+      MS_LOG(ERROR) << "Execute aclInit Failed";
+      return nullptr;
+    }
+    global_ms_env_ = acl_env;
+    MS_LOG(INFO) << "Env init success";
+  }
+  return acl_env;
+}
+
+std::weak_ptr<AscendGraphImpl::MsEnvGuard> AscendGraphImpl::MsEnvGuard::global_ms_env_;
+std::mutex AscendGraphImpl::MsEnvGuard::global_ms_env_mutex_;
+}  // namespace mindspore

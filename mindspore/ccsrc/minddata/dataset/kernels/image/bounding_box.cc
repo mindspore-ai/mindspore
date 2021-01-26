@@ -43,16 +43,16 @@ Status BoundingBox::ReadFromTensor(const TensorPtr &bbox_tensor, dsize_t index_o
 
 Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
   if (image_and_bbox.size() != 2) {
-    return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,
+    return Status(StatusCode::kMDBoundingBoxInvalidShape, __LINE__, __FILE__,
                   "BoundingBox: invalid input, likely missed bounding boxes.");
   }
   if (image_and_bbox[1]->shape().Size() < 2) {
-    return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,
+    return Status(StatusCode::kMDBoundingBoxInvalidShape, __LINE__, __FILE__,
                   "BoundingBox: bounding boxes should have to be two-dimensional matrix at least.");
   }
   uint32_t num_of_features = image_and_bbox[1]->shape()[1];
   if (num_of_features < 4) {
-    return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,
+    return Status(StatusCode::kMDBoundingBoxInvalidShape, __LINE__, __FILE__,
                   "BoundingBox: bounding boxes should be have at least 4 features.");
   }
   std::vector<std::shared_ptr<BoundingBox>> bbox_list;
@@ -61,11 +61,11 @@ Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
   uint32_t img_w = image_and_bbox[0]->shape()[1];
   for (auto &bbox : bbox_list) {
     if ((bbox->x() + bbox->width() > img_w) || (bbox->y() + bbox->height() > img_h)) {
-      return Status(StatusCode::kBoundingBoxOutOfBounds, __LINE__, __FILE__,
+      return Status(StatusCode::kMDBoundingBoxOutOfBounds, __LINE__, __FILE__,
                     "BoundingBox: bounding boxes is out of bounds of the image");
     }
     if (static_cast<int>(bbox->x()) < 0 || static_cast<int>(bbox->y()) < 0) {
-      return Status(StatusCode::kBoundingBoxOutOfBounds, __LINE__, __FILE__,
+      return Status(StatusCode::kMDBoundingBoxOutOfBounds, __LINE__, __FILE__,
                     "BoundingBox: the coordinates of the bounding boxes has negative value.");
     }
   }

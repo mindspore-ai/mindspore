@@ -163,5 +163,5 @@ TEST_F(MindDataTestSolarizeOp, TestOp6) {
   EXPECT_TRUE(s.IsError());
   EXPECT_NE(s.ToString().find("Solarize: threshold_min must be smaller or equal to threshold_max."),
           std::string::npos);
-  ASSERT_TRUE(s.get_code() == StatusCode::kUnexpectedError);
+  ASSERT_TRUE(s.StatusCode() == StatusCode::kMDUnexpectedError);
 }

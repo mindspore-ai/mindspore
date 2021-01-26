@@ -290,7 +290,7 @@ Status ChildIterator::Drain() {
     RETURN_IF_NOT_OK(current_op_->GetNextInput(&curr_buffer_, worker_id_, child_idx_));
   }
   if (curr_buffer_->eof()) {
-    return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Child iterator picked up EOF in drain.");
+    return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, "Child iterator picked up EOF in drain.");
   }
   return Status::OK();
 }

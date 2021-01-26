@@ -103,7 +103,7 @@ Status TFReaderOp::Builder::ValidateInputs() const {
     err_msg += accumulated_filenames;
   }
 
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
 Status TFReaderOp::Builder::Build(std::shared_ptr<TFReaderOp> *out_tf_reader_op) {

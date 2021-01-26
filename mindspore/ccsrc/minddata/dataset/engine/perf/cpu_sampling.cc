@@ -53,7 +53,7 @@ Status DeviceCpu::ParseCpuInfo(const std::string &str) {
   uint64_t softirq = 0;
   if (std::sscanf(str.c_str(), "%*s %lu %lu %lu %lu %lu %lu %lu", &cpu_stat.user_stat_, &nice, &cpu_stat.sys_stat_,
                   &cpu_stat.idle_stat_, &cpu_stat.io_stat_, &irq, &softirq) == EOF) {
-    return Status(StatusCode::kUnexpectedError, "Get device CPU failed.");
+    return Status(StatusCode::kMDUnexpectedError, "Get device CPU failed.");
   }
 
   cpu_stat.total_stat_ =
@@ -87,7 +87,7 @@ Status DeviceCpu::ParseCpuInfo(const std::string &str) {
 Status DeviceCpu::ParseCtxt(const std::string &str) {
   uint64_t ctxt;
   if (std::sscanf(str.c_str(), "%*s %lu", &ctxt) == EOF) {
-    return Status(StatusCode::kUnexpectedError, "Get context switch count failed.");
+    return Status(StatusCode::kMDUnexpectedError, "Get context switch count failed.");
   }
   // Calculate the utilization from the second sampling
   if (!first_collect_) {
@@ -100,7 +100,7 @@ Status DeviceCpu::ParseCtxt(const std::string &str) {
 Status DeviceCpu::ParseRunningProcess(const std::string &str) {
   uint32_t running_process;
   if (std::sscanf(str.c_str(), "%*s %ud", &running_process) == EOF) {
-    return Status(StatusCode::kUnexpectedError, "Get context switch count failed.");
+    return Status(StatusCode::kMDUnexpectedError, "Get context switch count failed.");
   }
   // Drop the first value in order to collect same amount of CPU utilization
   if (!first_collect_) {
@@ -188,7 +188,7 @@ Status OperatorCpu::ParseCpuInfo(int32_t op_id, int64_t thread_id,
   if (!temp_path.Exists()) {
     (*op_stat)[op_id][thread_id].user_stat_ = 0;
     (*op_stat)[op_id][thread_id].sys_stat_ = 0;
-    return Status(StatusCode::kFileNotExist);
+    return Status(StatusCode::kMDFileNotExist);
   }
 
   std::ifstream file(stat_path);
@@ -203,7 +203,7 @@ Status OperatorCpu::ParseCpuInfo(int32_t op_id, int64_t thread_id,
   if (std::sscanf(str.c_str(), "%*d %*s %*s %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %lu %lu", &utime,
                   &stime) == EOF) {
     file.close();
-    return Status(StatusCode::kUnexpectedError, "Get device CPU failed.");
+    return Status(StatusCode::kMDUnexpectedError, "Get device CPU failed.");
   }
   file.close();
   (*op_stat)[op_id][thread_id].user_stat_ = utime;
@@ -224,7 +224,7 @@ Status OperatorCpu::GetTotalCpuTime(uint64_t *total_stat) {
   if (std::sscanf(str.c_str(), "%*s %lu %lu %lu %lu %lu %lu %lu", &user, &nice, &sys, &idle, &iowait, &irq, &softirq) ==
       EOF) {
     file.close();
-    return Status(StatusCode::kUnexpectedError, "Get device CPU failed.");
+    return Status(StatusCode::kMDUnexpectedError, "Get device CPU failed.");
   }
   file.close();
   *total_stat = user + nice + sys + idle + iowait + irq + softirq;
@@ -398,7 +398,7 @@ Status ProcessCpu::ParseCpuInfo() {
     if (std::sscanf(str.c_str(), "%*d %*s %*s %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %*lu %lu %lu", &user,
                     &sys) == EOF) {
       file.close();
-      return Status(StatusCode::kUnexpectedError, "Get device CPU failed.");
+      return Status(StatusCode::kMDUnexpectedError, "Get device CPU failed.");
     }
     file.close();
 
@@ -434,7 +434,7 @@ Status ProcessCpu::GetTotalCpuTime(uint64_t *total_stat) {
   if (std::sscanf(str.c_str(), "%*s %lu %lu %lu %lu %lu %lu %lu", &user, &nice, &sys, &idle, &iowait, &irq, &softirq) ==
       EOF) {
     file.close();
-    return Status(StatusCode::kUnexpectedError, "Get device CPU failed.");
+    return Status(StatusCode::kMDUnexpectedError, "Get device CPU failed.");
   }
   file.close();
   *total_stat = user + nice + sys + idle + iowait + irq + softirq;
@@ -559,7 +559,7 @@ Status CpuSampling::Init(const std::string &dir_path, const std::string &device_
 Status CpuSampling::ChangeFileMode() {
   if (chmod(common::SafeCStr(file_path_), S_IRUSR | S_IWUSR) == -1) {
     std::string err_str = "Change file mode failed," + file_path_;
-    return Status(StatusCode::kUnexpectedError, err_str);
+    return Status(StatusCode::kMDUnexpectedError, err_str);
   }
   return Status::OK();
 }

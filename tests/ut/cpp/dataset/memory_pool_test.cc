@@ -79,7 +79,7 @@ TEST_F(MindDataTestMemoryPool, TestMemGuard) {
   // Try some large value.
   int64_t sz = 5LL * 1024LL * 1024LL * 1024LL;
   Status rc = mem.allocate(sz);
-  ASSERT_TRUE(rc.IsOk() || rc.IsOutofMemory());
+  ASSERT_TRUE(rc.IsOk() || rc == StatusCode::kMDOutOfMemory);
   if (rc.IsOk()) {
     // Try write a character half way.
     auto *p = mem.GetMutablePointer();

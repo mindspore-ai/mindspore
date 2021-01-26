@@ -80,7 +80,7 @@ Status CacheTransformPass::CachePass::Visit(std::shared_ptr<NonMappableSourceNod
     MS_LOG(DEBUG) << "Cache transform pass: Non mappable leaf in a cache descendant tree detected";
     // If a leaf has already been assigned, then we have more than one leaf inside this cache descendant tree.
     if (leaf_node_) {
-      return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+      return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                     "There is currently no support for multiple leaf nodes under cache.");
     }
     // Set up a sampler here to be used by cache if we are a non-mappable leaf in a caching tree.
@@ -105,7 +105,7 @@ Status CacheTransformPass::CachePass::Visit(std::shared_ptr<RandomNode> node, bo
     MS_LOG(DEBUG) << "Cache transform pass: Non mappable leaf in a cache descendant tree detected";
     // If a leaf has already been assigned, then we have more than one leaf inside this cache descendant tree.
     if (leaf_node_) {
-      return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+      return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                     "There is currently no support for multiple leaf nodes under cache.");
     }
     // Set up a sampler here to be used by cache if we are a non-mappable leaf in a caching tree.
@@ -127,7 +127,7 @@ Status CacheTransformPass::CachePass::Visit(std::shared_ptr<MappableSourceNode> 
     MS_LOG(DEBUG) << "Cache transform pass: Mappable leaf in a cache descendant tree detected";
     // If a leaf has already been assigned, then we have more than one leaf inside this cache descendant tree.
     if (leaf_node_) {
-      return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+      return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                     "There is currently no support for multiple leaf nodes under cache.");
     }
     // If we are a leaf in the caching path, then save this leaf
@@ -140,7 +140,7 @@ Status CacheTransformPass::CachePass::Visit(std::shared_ptr<MappableSourceNode> 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::Visit(std::shared_ptr<MindDataNode> node, bool *const modified) {
   if (node->IsCached() || is_caching_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "There is currently no support for MindRecordOp under cache.");
   }
   return Status::OK();
@@ -151,7 +151,7 @@ Status CacheTransformPass::CachePass::Visit(std::shared_ptr<MindDataNode> node, 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::Visit(std::shared_ptr<GeneratorNode> node, bool *const modified) {
   if (node->IsCached() || is_caching_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "There is currently no support for GeneratorOp under cache.");
   }
   return Status::OK();

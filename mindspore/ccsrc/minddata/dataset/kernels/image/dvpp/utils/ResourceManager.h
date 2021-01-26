@@ -86,7 +86,7 @@ class ResourceManager {
   std::vector<int> deviceIds_;
   std::vector<aclrtContext> contexts_;
   std::unordered_map<int, int> deviceIdMap_;  // Map of device to index
-  std::shared_ptr<mindspore::api::AclEnvGuard> acl_env_;
+  std::shared_ptr<mindspore::AclEnvGuard> acl_env_;
 };
 
 #endif

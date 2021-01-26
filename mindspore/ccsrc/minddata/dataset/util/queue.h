@@ -186,7 +186,8 @@ class QueueList {
 
   Status Register(TaskGroup *vg) {
     if (vg == nullptr) {
-      return Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, "Null task group during QueueList registration.");
+      return Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__,
+                    "Null task group during QueueList registration.");
     }
     for (int i = 0; i < queue_list_.size(); ++i) {
       RETURN_IF_NOT_OK(queue_list_[i]->Register(vg));

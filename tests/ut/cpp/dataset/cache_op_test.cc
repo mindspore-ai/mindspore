@@ -43,7 +43,7 @@ Status GetSessionFromEnv(session_id_type *session_id) {
       *session_id = std::stoul(session_id_str);
     } catch (const std::exception &e) {
       std::string err_msg = "Invalid numeric value for session id in env var: " + session_id_str;
-      return Status(StatusCode::kSyntaxError, err_msg);
+      return Status(StatusCode::kMDSyntaxError, err_msg);
     }
   } else {
     RETURN_STATUS_UNEXPECTED("Test case requires a session id to be provided via SESSION_ID environment variable.");
