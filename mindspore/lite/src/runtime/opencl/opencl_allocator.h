@@ -75,6 +75,7 @@ class OpenCLAllocator : public Allocator {
   void *CreateBuffer(size_t size, void *data, size_t flags, cl::Buffer **buffer);
   void *CreateImage2D(size_t size, const ImageSize &img_size, void *data, size_t flags, bool is_map,
                       cl::Buffer **buffer, cl::Image2D **image);
+  int GetImgDtypeSize(const ImageSize &img_size);
   template <typename T>
   void ClearMemList(T *list);
 

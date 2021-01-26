@@ -93,7 +93,6 @@ void *OpenCLAllocator::CreateImage2D(size_t size, const ImageSize &img_size, voi
   cl_int ret = CL_SUCCESS;
   MS_ASSERT(buffer);
   MS_ASSERT(image);
-  MS_ASSERT(img_size.size() == 3);
   if (data == nullptr) {
     // copy from cl2.hpp
     cl_image_desc desc = {CL_MEM_OBJECT_IMAGE2D, img_size.width, img_size.height, 0, 0, 0, 0, 0, 0, (**buffer).get()};
@@ -136,23 +135,27 @@ void *OpenCLAllocator::CreateImage2D(size_t size, const ImageSize &img_size, voi
   return host_ptr;
 }
 
+int OpenCLAllocator::GetImgDtypeSize(const ImageSize &img_size) {
+  size_t dtype_size = 0;
+  if (img_size.dtype == CL_FLOAT) {
+    dtype_size = sizeof(cl_float);
+  } else if (img_size.dtype == CL_HALF_FLOAT) {
+    dtype_size = sizeof(cl_half);
+  } else if (img_size.dtype == CL_UNSIGNED_INT8) {
+    dtype_size = sizeof(cl_uchar);
+  } else {
+    MS_LOG(ERROR) << "Unsupported dtype " << img_size.dtype;
+    return RET_ERROR;
+  }
+  uint32_t image_alignment = ocl_runtime_->GetImagePitchAlignment();
+  size_t size = UP_ROUND(img_size.width, image_alignment) * img_size.height * C4NUM * dtype_size;
+  return size;
+}
+
 void *OpenCLAllocator::_Malloc(MemType mem_type, void *data, size_t size, const ImageSize &img_size) {
   auto svm_capabilities = ocl_runtime_->GetSVMCapabilities();
-  MS_ASSERT(img_size.size() == 0 || img_size.size() == 3);
   if (mem_type == MemType::IMG) {
-    size_t dtype_size = 0;
-    if (img_size.dtype == CL_FLOAT) {
-      dtype_size = sizeof(cl_float);
-    } else if (img_size.dtype == CL_HALF_FLOAT) {
-      dtype_size = sizeof(cl_half);
-    } else if (img_size.dtype == CL_UNSIGNED_INT8) {
-      dtype_size = sizeof(cl_uchar);
-    } else {
-      MS_LOG(ERROR) << "Unsupported dtype " << img_size.dtype;
-      return nullptr;
-    }
-    uint32_t image_alignment = ocl_runtime_->GetImagePitchAlignment();
-    size = UP_ROUND(img_size.width, image_alignment) * img_size.height * C4NUM * dtype_size;
+    size = GetImgDtypeSize(img_size);
   }
   if (size > ocl_runtime_->GetMaxAllocSize()) {
     MS_LOG(ERROR) << "MallocData out of max_size, size: " << size;

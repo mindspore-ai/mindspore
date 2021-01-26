@@ -321,7 +321,7 @@ void TryMergeArithmeticAct(LiteKernel *act, std::set<LiteKernel *> *removed_set)
 // FullConnection(NO_ACTIVATION) + Activation(RELU/RELU6/TANH)
 template <typename ParamType>
 void TryMergeXxxActivation(LiteKernel *act, std::set<LiteKernel *> *removed_set) {
-  MS_ASSERT(node);
+  MS_ASSERT(act);
   MS_ASSERT(removed_set);
   auto *act_param = reinterpret_cast<ActivationParameter *>(reinterpret_cast<OpenCLKernel *>(act)->GetParameter());
   LiteKernel *node = act->in_kernels().front();
@@ -534,7 +534,7 @@ int TryMergeEltwiseEltwise(LiteKernel *node, std::set<LiteKernel *> *removed_set
     if (AIsInB(pred, nodes) && IsEltwiseAndOperatorSupported(pred) && pred->out_kernels().size() == 1) {
       auto *tensor = pred->out_tensors().front();
       MS_ASSERT(pred->out_kernels().front() == node);
-      MS_ASSERT(AIsInB(tensor, node.in_tensors()));
+      MS_ASSERT(AIsInB(tensor, &node->in_tensors()));
       pred_eltwises.insert(pred);
       // create FusionEltwiseParameter for this pred eltwise
       auto param = CreateFusionEltwiseParameter(pred);
