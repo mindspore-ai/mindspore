@@ -8,10 +8,6 @@ set(RUNTIME_INC_DIR ${RUNTIME_PKG_NAME}/include)
 set(CONVERTER_LIB_DIR ${CONVERTER_PKG_NAME}/lib)
 
 set(TURBO_DIR ${RUNTIME_PKG_NAME}/minddata/third_party/libjpeg-turbo)
-set(OPENCV_DIR ${RUNTIME_PKG_NAME}/minddata/third_party/opencv)
-set(PROTOBF_DIR ${RUNTIME_PKG_NAME}/third_party/protobuf)
-set(FLATBF_DIR ${RUNTIME_PKG_NAME}/third_party/flatbuffers)
-
 set(MIND_DATA_INC_DIR ${RUNTIME_PKG_NAME}/minddata/include)
 set(MIND_DATA_LIB_DIR ${RUNTIME_PKG_NAME}/minddata/lib)
 
@@ -110,11 +106,6 @@ if(PLATFORM_ARM64)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${RUNTIME_INC_DIR}/ir/dtype
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/lite/build/schema/model_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/lite/build/schema/ops_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(DIRECTORY ${flatbuffers_INC} DESTINATION ${FLATBF_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(ENABLE_TOOLS)
         install(TARGETS benchmark RUNTIME DESTINATION ${RUNTIME_PKG_NAME}/benchmark COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
@@ -134,11 +125,6 @@ elseif(PLATFORM_ARM32)
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${RUNTIME_INC_DIR}/ir/dtype
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/lite/build/schema/model_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/lite/build/schema/ops_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(DIRECTORY ${flatbuffers_INC} DESTINATION ${FLATBF_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     if(ENABLE_TOOLS)
         install(TARGETS benchmark RUNTIME DESTINATION ${RUNTIME_PKG_NAME}/benchmark COMPONENT ${RUNTIME_COMPONENT_NAME})
     endif()
@@ -171,10 +157,6 @@ elseif(WIN32)
             install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                     COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "train*" EXCLUDE)
         endif()
-        install(FILES ${TOP_DIR}/build/mindspore/schema/model_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
-        install(FILES ${TOP_DIR}/build/mindspore/schema/ops_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
-                COMPONENT ${RUNTIME_COMPONENT_NAME})
         install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${RUNTIME_INC_DIR}/ir/dtype
                 COMPONENT ${RUNTIME_COMPONENT_NAME})
         set(WIN_LIB_DIR_RUN_X86 ${RUNTIME_PKG_NAME}/benchmark)
@@ -195,13 +177,8 @@ else()
         install(DIRECTORY ${TOP_DIR}/mindspore/lite/include/ DESTINATION ${RUNTIME_INC_DIR}
                 COMPONENT ${RUNTIME_COMPONENT_NAME} FILES_MATCHING PATTERN "*.h" PATTERN "train*" EXCLUDE)
     endif()
-    install(FILES ${TOP_DIR}/mindspore/lite/build/schema/model_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(FILES ${TOP_DIR}/mindspore/lite/build/schema/ops_generated.h DESTINATION ${RUNTIME_INC_DIR}/schema
-            COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/core/ir/dtype/type_id.h DESTINATION ${RUNTIME_INC_DIR}/ir/dtype
             COMPONENT ${RUNTIME_COMPONENT_NAME})
-    install(DIRECTORY ${flatbuffers_INC} DESTINATION ${FLATBF_DIR} COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.so DESTINATION ${RUNTIME_LIB_DIR}
             COMPONENT ${RUNTIME_COMPONENT_NAME})
     install(FILES ${TOP_DIR}/mindspore/lite/build/src/libmindspore-lite.a DESTINATION ${RUNTIME_LIB_DIR}

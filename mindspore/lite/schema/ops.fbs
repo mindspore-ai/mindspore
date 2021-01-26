@@ -305,8 +305,8 @@ table EmbeddingLookupFusion {
 
 table ExpFusion {
     base: float = -1;
-    scale: float;
-    shift: float;
+    scale: float = 1.0;
+    shift: float = 0.0;
 }
 
 table ExpandDims {

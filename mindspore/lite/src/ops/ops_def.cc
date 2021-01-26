@@ -476,8 +476,8 @@ OP_SCHEMA_DEF_END(EmbeddingLookupFusion)
 
 OP_SCHEMA_DEF(ExpFusion)
 OP_ATTR_WITH_VALUE(base, float, -1)
-OP_ATTR(scale, float)
-OP_ATTR(shift, float)
+OP_ATTR_WITH_VALUE(scale, float, 1.0)
+OP_ATTR_WITH_VALUE(shift, float, 0.0)
 OP_SCHEMA_DEF_END(ExpFusion)
 
 OP_SCHEMA_DEF(ExpandDims)
