@@ -19,7 +19,7 @@ from mindspore.ops import _constants as Constants
 depend = P.Depend()
 controldepend = Primitive("ControlDepend")
 TransData = Primitive('TransData')
-add = P.TensorAdd()
+add = P.Add()
 make_tuple = Primitive(Constants.kMakeTuple)
 
 

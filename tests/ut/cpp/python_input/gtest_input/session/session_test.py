@@ -18,7 +18,7 @@ from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
 
 addn = P.AddN()
-add = P.TensorAdd()
+add = P.Add()
 reshape = P.Reshape()
 cast = P.Cast()
 tuple_getitem = Primitive(Constants.kTupleGetItem)

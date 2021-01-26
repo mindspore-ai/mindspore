@@ -133,7 +133,7 @@ class InvertedResidual(nn.Cell):
             _bn(oup),
         ])
         self.conv = nn.SequentialCell(layers)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.cast = P.Cast()
         self.last_relu = last_relu
         self.relu = nn.ReLU6()

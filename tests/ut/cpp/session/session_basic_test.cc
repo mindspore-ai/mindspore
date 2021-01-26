@@ -52,7 +52,7 @@ TEST_F(SessionBasicTest, ConstructKernelGraph) {
   EXPECT_NE(original_y_parameter, nullptr);
   original_y_parameter->set_name("original_y_parameter");
   original_y_parameter->set_abstract(abstract);
-  std::vector<AnfNodePtr> add_inputs = {NewValueNode(prim::kPrimTensorAdd), original_x_parameter, original_y_parameter};
+  std::vector<AnfNodePtr> add_inputs = {NewValueNode(prim::kPrimAdd), original_x_parameter, original_y_parameter};
   auto original_add = anf_graph->NewCNode(add_inputs);
   EXPECT_NE(original_add, nullptr);
   original_add->set_abstract(abstract);
@@ -87,7 +87,7 @@ TEST_F(SessionBasicTest, ConstructKernelGraph) {
   kernel_graph->SetExecOrderByDefault();
   auto execution_order = kernel_graph->execution_order();
   EXPECT_EQ(execution_order.size(), 2);
-  EXPECT_EQ(AnfAlgo::GetCNodeName(execution_order[0]), prim::kPrimTensorAdd->name());
+  EXPECT_EQ(AnfAlgo::GetCNodeName(execution_order[0]), prim::kPrimAdd->name());
   EXPECT_EQ(AnfAlgo::GetCNodeName(execution_order[1]), prim::kPrimMul->name());
   auto new_outputs = kernel_graph->outputs();
   EXPECT_EQ(new_outputs.size(), 1);

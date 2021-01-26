@@ -344,7 +344,7 @@ class BottleneckV1(nn.Cell):
             self.downsample = nn.SequentialCell([conv, bn])
         else:
             self.downsample = Subsample(stride)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.relu = nn.ReLU()
         self.Reshape = P.Reshape()
 
@@ -418,7 +418,7 @@ class BottleneckV2(nn.Cell):
             self.downsample = nn.SequentialCell([conv, bn])
         else:
             self.downsample = Subsample(stride)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.relu = nn.ReLU()
 
     def construct(self, x):
@@ -478,7 +478,7 @@ class BottleneckV3(nn.Cell):
         else:
             self.downsample = Subsample(stride)
         self.downsample = Subsample(stride)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.relu = nn.ReLU()
 
     def construct(self, x):

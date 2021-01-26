@@ -318,7 +318,6 @@ inline const PrimitivePtr kPrimTensorListSetItem = std::make_shared<Primitive>("
 
 // Maths
 inline const PrimitivePtr kPrimCeil = std::make_shared<Primitive>("Ceil");
-inline const PrimitivePtr kPrimTensorAdd = std::make_shared<Primitive>("TensorAdd");
 inline const PrimitivePtr kPrimAdd = std::make_shared<Primitive>("Add");
 inline const PrimitivePtr kPrimMatMul = std::make_shared<Primitive>("MatMul");
 inline const PrimitivePtr kPrimMatrixDiag = std::make_shared<Primitive>("MatrixDiag");

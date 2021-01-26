@@ -64,7 +64,7 @@ class PositionalEmbedding(nn.Cell):
                  embedding_size,
                  max_position_embeddings=512):
         super(PositionalEmbedding, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.expand_dims = P.ExpandDims()
         self.position_embedding_table = Tensor(
             position_encoding(max_position_embeddings, embedding_size),

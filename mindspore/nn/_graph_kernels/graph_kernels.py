@@ -225,7 +225,7 @@ class LambNextMV(GraphKernel):
     def __init__(self):
         super(LambNextMV, self).__init__()
         self.mul = P.Mul()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.div = P.RealDiv()
         self.sqrt = P.Sqrt()
         self.rsqrt = P.Rsqrt()

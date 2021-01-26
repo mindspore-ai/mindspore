@@ -14,7 +14,7 @@
 # ============================================================================
 from mindspore.ops import operations as P
 
-add = P.TensorAdd()
+add = P.Add()
 reshape = P.Reshape()
 
 

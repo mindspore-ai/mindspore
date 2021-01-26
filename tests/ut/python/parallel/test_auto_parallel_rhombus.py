@@ -58,8 +58,8 @@ def test_rhombus1():
         def __init__(self):
             super().__init__()
             self.matmul = P.MatMul()
-            self.tadd1 = P.TensorAdd()
-            self.tadd2 = P.TensorAdd()
+            self.tadd1 = P.Add()
+            self.tadd2 = P.Add()
             self.weight = Parameter(Tensor(np.ones([128, 128]).astype(np.float32) * 0.01), "w", requires_grad=True)
 
         def construct(self, x, y, z):
@@ -85,9 +85,9 @@ def test_rhombus2():
             super().__init__()
             self.matmul1 = P.MatMul()
             self.matmul2 = P.MatMul()
-            self.tadd1 = P.TensorAdd()
-            self.tadd2 = P.TensorAdd()
-            self.tadd3 = P.TensorAdd()
+            self.tadd1 = P.Add()
+            self.tadd2 = P.Add()
+            self.tadd3 = P.Add()
             self.weight1 = Parameter(Tensor(np.ones([128, 128]).astype(np.float32) * 0.01), "w", requires_grad=True)
             self.weight2 = Parameter(Tensor(np.ones([128, 128]).astype(np.float32) * 0.01), "w", requires_grad=True)
 
@@ -115,10 +115,10 @@ def test_rhombus3():
         def __init__(self):
             super().__init__()
             self.matmul1 = P.MatMul()
-            self.tadd1 = P.TensorAdd()
-            self.tadd2 = P.TensorAdd()
-            self.tadd3 = P.TensorAdd()
-            self.tadd4 = P.TensorAdd()
+            self.tadd1 = P.Add()
+            self.tadd2 = P.Add()
+            self.tadd3 = P.Add()
+            self.tadd4 = P.Add()
             self.weight1 = Parameter(Tensor(np.ones([128, 128]).astype(np.float32) * 0.01), "w", requires_grad=True)
             self.t = Tensor(np.ones([128, 128]).astype(np.float32) * 0.01)
 

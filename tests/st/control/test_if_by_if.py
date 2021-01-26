@@ -17,7 +17,7 @@ def test_if_by_if_basic():
         def __init__(self):
             super().__init__()
             self.mul = P.Mul()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             a = np.full((1,), 5, dtype=np.float32)
             self.a = Parameter(Tensor(a), name='a')
             b = np.full((1,), 4, dtype=np.float32)
@@ -37,7 +37,7 @@ def test_if_by_if_basic():
             context.set_context(mode=context.GRAPH_MODE, device_target="Ascend")
             self.subnet = SubNet()
             self.relu = P.ReLU()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             a = np.full((1,), 5, dtype=np.float32)
             self.a = Parameter(Tensor(a), name='a')
             b = np.full((1,), 4, dtype=np.float32)

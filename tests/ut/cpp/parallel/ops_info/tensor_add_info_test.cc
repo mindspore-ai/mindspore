@@ -26,9 +26,9 @@
 namespace mindspore {
 namespace parallel {
 
-class TensorAddInfo;
-using TensorAddInfoPtr = std::shared_ptr<TensorAddInfo>;
-TensorAddInfoPtr tensor_add, tensor_add1;
+class AddInfo;
+using AddInfoPtr = std::shared_ptr<AddInfo>;
+AddInfoPtr tensor_add, tensor_add1;
 
 class TestTensorAddInfo : public UT::Common {
  public:
@@ -58,11 +58,11 @@ void TestTensorAddInfo::SetUp() {
 
   Shapes inputs_shape = {{32, 64, 96}, {32, 64, 96}};
   Shapes outputs_shape = {{32, 64, 96}};
-  tensor_add = std::make_shared<TensorAddInfo>("tensoradd_info", inputs_shape, outputs_shape, attr);
+  tensor_add = std::make_shared<AddInfo>("tensoradd_info", inputs_shape, outputs_shape, attr);
 
   Shapes inputs_shape1 = {{1, 48}, {48, 1}};
   Shapes outputs_shape1 = {{48, 48}};
-  tensor_add1 = std::make_shared<TensorAddInfo>("tensoradd_info", inputs_shape1, outputs_shape1, attr);
+  tensor_add1 = std::make_shared<AddInfo>("tensoradd_info", inputs_shape1, outputs_shape1, attr);
 }
 
 TEST_F(TestTensorAddInfo, InferDevMatrixShape1) {

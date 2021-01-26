@@ -58,7 +58,7 @@ def test_tensoradd_reshape_matmul():
     class Net(nn.Cell):
         def __init__(self, strategy1, strategy2):
             super().__init__()
-            self.add = P.TensorAdd().shard(strategy1)
+            self.add = P.Add().shard(strategy1)
             self.reshape = P.Reshape()
             self.matmul = P.MatMul().shard(strategy2)
 

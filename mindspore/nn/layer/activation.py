@@ -651,7 +651,7 @@ class LogSigmoid(Cell):
         super(LogSigmoid, self).__init__()
         self.mul = P.Mul()
         self.exp = P.Exp()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.rec = P.Reciprocal()
         self.log = P.Log()
 

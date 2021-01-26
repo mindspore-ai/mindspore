@@ -16,7 +16,7 @@ from mindspore.ops import Primitive
 from mindspore.ops import operations as P
 from mindspore.ops import _constants as Constants
 
-Add = P.TensorAdd()
+Add = P.Add()
 Mul = P.Mul()
 RealDiv = P.RealDiv()
 Rsqrt = P.Rsqrt()

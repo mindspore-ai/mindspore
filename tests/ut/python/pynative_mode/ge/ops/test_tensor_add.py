@@ -18,7 +18,7 @@ test pooling api
 import numpy as np
 
 from mindspore import Tensor
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add
 from ....ut_filter import non_graph_engine
 
 
@@ -27,7 +27,7 @@ def test_tensor_add():
     x = Tensor(np.ones([1, 3, 4, 4]).astype(np.float32))
     y = Tensor(np.ones([1, 3, 4, 4]).astype(np.float32))
 
-    tensor_add = TensorAdd()
+    tensor_add = Add()
     z = tensor_add(x, y)
     assert np.all(z.asnumpy() - (x.asnumpy() + y.asnumpy()) < 0.0001)
 

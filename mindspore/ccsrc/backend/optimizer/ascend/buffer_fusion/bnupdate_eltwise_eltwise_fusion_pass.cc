@@ -99,7 +99,7 @@ void BnupdateEltwiseEltwiseFusionPass::MatchSingleFusionPattern(const session::K
         AnfAlgo::GetFusionType(cnode) == kernel::FusionType::ELEMWISE && CheckEltwiseInputAndOutputSize(cnode)) {
       auto eltwise_input = cnode->input(1);
       MS_EXCEPTION_IF_NULL(eltwise_input);
-      if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimTensorAdd)) {
+      if (eltwise_input->isa<CNode>() && AnfAlgo::CheckPrimitiveType(eltwise_input, prim::kPrimAdd)) {
         MatchBnupdateAddRelu(cnode, eltwise_input, kernel_graph, candidate_fusion);
       }
     }

@@ -235,7 +235,7 @@ def test_conv2d_abnormal_kernel_truncated_normal():
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.t1 = Parameter(init.initializer('uniform', [5, 4], ms.float32), name="w1")
         self.t2 = Parameter(init.initializer(init.TruncatedNormal(), [5, 4], ms.float32), name="w2")
 

@@ -40,7 +40,7 @@ def cond_data_test(x_init, y_init):
             """"""
             super(Net, self).__init__()
             self.square = P.Square()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.value = Tensor(3, dtype=ms.float32)
             self.switch = P.GeSwitch()
             self.merge = P.Merge()
@@ -79,7 +79,7 @@ def if_compile_test(x_init, y_init):
             """"""
             super(Net, self).__init__()
             self.square = P.Square()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.value = Tensor(3, dtype=ms.float32)
             self.switch = P.GeSwitch()
             self.merge = P.Merge()
@@ -465,7 +465,7 @@ def test_parser_switch_layer_switch_in_bprop():
     class Add(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.op = P.TensorAdd()
+            self.op = P.Add()
 
         def construct(self, x, y):
             return self.op(x, y)
@@ -503,7 +503,7 @@ def test_parser_switch_layer_inputs_tuple():
     class Add(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.op = P.TensorAdd()
+            self.op = P.Add()
 
         def construct(self, x):
             y = self.op(x[0], x[1])

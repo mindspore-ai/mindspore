@@ -128,7 +128,7 @@ def test_parser_switch_layer_inputs_tuple():
     class Add(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.op = P.TensorAdd()
+            self.op = P.Add()
 
         def construct(self, x):
             y = self.op(x[0], x[1])

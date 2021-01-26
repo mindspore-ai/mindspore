@@ -62,7 +62,7 @@ class ResidualBlock(nn.Cell):
         self.conv_down_sample = conv1x1(in_channels, out_channels,
                                         stride=stride, padding=0)
         self.bn_down_sample = nn.BatchNorm2d(out_channels)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         """

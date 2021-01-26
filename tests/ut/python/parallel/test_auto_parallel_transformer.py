@@ -52,7 +52,7 @@ class CustomDense(nn.Cell):
         self.weight = Parameter(Tensor(np.ones([row, column]).astype(np.float32) * 0.01), "w", requires_grad=True)
         self.bias = Parameter(Tensor(np.zeros([row, column]).astype(np.float32)), "b", requires_grad=True)
         self.matmul1 = P.MatMul()
-        self.add2 = P.TensorAdd()
+        self.add2 = P.Add()
         self.activation3 = nn.ReLU()
 
     def construct(self, x):

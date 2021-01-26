@@ -565,7 +565,7 @@ def test_max_empty_tuple():
             super().__init__()
             self.mul = P.Mul().shard(strategy1)
             self.reduce_max = P.ReduceMax(keep_dims=False).shard(strategy2)
-            self.add = P.TensorAdd().shard(strategy3)
+            self.add = P.Add().shard(strategy3)
 
         def construct(self, x, y, b):
             out = self.mul(x, y)

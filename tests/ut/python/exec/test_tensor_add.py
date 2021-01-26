@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ============================================================================
-""" test TensorAdd """
+""" test Add """
 import numpy as np
 
 import mindspore.nn as nn
@@ -23,7 +23,7 @@ from mindspore.ops import operations as P
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, input1, input2):
         return self.add(input1, input2)
@@ -31,7 +31,7 @@ class Net(nn.Cell):
 
 def test_tensor_add():
     """test_tensor_add"""
-    add = P.TensorAdd()
+    add = P.Add()
     input1 = Tensor(np.random.rand(1, 3, 4, 4).astype(np.float32))
     input2 = Tensor(np.random.rand(1, 3, 4, 4).astype(np.float32))
     output = add(input1, input2)

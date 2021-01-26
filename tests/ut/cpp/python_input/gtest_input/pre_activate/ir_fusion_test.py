@@ -20,7 +20,7 @@ from mindspore.ops import _constants as Constants
 # pylint: disable=unused-variable
 
 tuple_getitem = Primitive(Constants.kTupleGetItem)
-add = P.TensorAdd()
+add = P.Add()
 allreduce = P.AllReduce()
 allreduce.add_prim_attr('fusion', 1)
 make_tuple = Primitive(Constants.kMakeTuple)

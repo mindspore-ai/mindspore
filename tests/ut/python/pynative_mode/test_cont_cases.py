@@ -651,7 +651,7 @@ def test_if_by_if_forward():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
@@ -687,7 +687,7 @@ def test_if_by_if_forward_control_tuple_switch():
     class Branch3Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
@@ -702,7 +702,7 @@ def test_if_by_if_forward_control_tuple_switch():
     class Branch2Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
@@ -718,7 +718,7 @@ def test_if_by_if_forward_control_tuple_switch():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
@@ -747,7 +747,7 @@ def test_if_by_if_forward_control_inside_net():
     class Branch3Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
@@ -764,7 +764,7 @@ def test_if_by_if_forward_control_inside_net():
     class Branch2Net(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
@@ -780,7 +780,7 @@ def test_if_by_if_forward_control_inside_net():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
@@ -807,7 +807,7 @@ def test_if_by_if_forward_use_namespace():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
@@ -815,7 +815,7 @@ def test_if_by_if_forward_use_namespace():
         @ms_function
         def construct(self, a, b, x):
             if a < b:
-                a = P.TensorAdd()(a, b)
+                a = P.Add()(a, b)
             else:
                 a = P.Sub()(a, b)
             if a == x:
@@ -823,9 +823,9 @@ def test_if_by_if_forward_use_namespace():
             else:
                 a = P.RealDiv()(a, b)
             if b == x:
-                b = P.TensorAdd()(a, b)
+                b = P.Add()(a, b)
             else:
-                b = P.TensorAdd()(a, x)
+                b = P.Add()(a, x)
             a = a * b
             out = a + b + x
             return out
@@ -842,14 +842,14 @@ def test_if_by_if_forward_use_global_op():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
         @ms_function
         def construct(self, a, b, x):
-            add = P.TensorAdd()
+            add = P.Add()
             sub = P.Sub()
             mul = P.Mul()
             div = P.RealDiv()
@@ -881,7 +881,7 @@ def test_for_with_if_by_if_forward():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
 
         @ms_function
@@ -907,7 +907,7 @@ def test_for_with_if_by_if_forward_namespace():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
@@ -916,7 +916,7 @@ def test_for_with_if_by_if_forward_namespace():
         def construct(self, a, b, x):
             for _ in range(0, 6):
                 if a < b:
-                    a = P.TensorAdd()(a, b)
+                    a = P.Add()(a, b)
                 else:
                     b = P.Sub()(b, x)
             a = a * b
@@ -935,14 +935,14 @@ def test_if_by_if_forward_const_branch_inner():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
         @ms_function
         def construct(self, a, b, x):
-            add = P.TensorAdd()
+            add = P.Add()
             sub = P.Sub()
             mul = P.Mul()
             div = P.RealDiv()
@@ -974,14 +974,14 @@ def test_if_by_if_forward_all_const_branch():
     class MyIfByIfNet(nn.Cell):
         def __init__(self):
             super().__init__()
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.sub = P.Sub()
             self.mul = P.Mul()
             self.div = P.RealDiv()
 
         @ms_function
         def construct(self, a, b, x):
-            add = P.TensorAdd()
+            add = P.Add()
             sub = P.Sub()
             mul = P.Mul()
             div = P.RealDiv()

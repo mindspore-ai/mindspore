@@ -77,7 +77,7 @@ def test_parser_construct():
 @pytest.mark.env_onecard
 def test_sit_parser_input_parameter():
     def tensor_add(x, y):
-        add = P.TensorAdd()
+        add = P.Add()
         z = add(x, y)
         return  z
     x = Tensor(np.ones([2, 2]).astype(np.float32))

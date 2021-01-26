@@ -113,7 +113,7 @@ class SummaryDemo(nn.Cell):
     def __init__(self,):
         super(SummaryDemo, self).__init__()
         self.s = P.TensorSummary()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x, y):
         self.s("x1", x)

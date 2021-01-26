@@ -27,7 +27,7 @@ class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
         self.softmax = P.Softmax(axis=1)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.cast = P.Cast()
         self.relu = P.ReLU()
         self.reduce_mean = P.ReduceMean()

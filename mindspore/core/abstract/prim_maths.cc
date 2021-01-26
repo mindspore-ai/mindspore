@@ -60,8 +60,8 @@ AbstractBasePtr InferImplSqrtGrad(const AnalysisEnginePtr &, const PrimitivePtr 
   return out->Broaden();
 }
 
-AbstractBasePtr InferImplTensorAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
-                                   const AbstractBasePtrList &args_spec_list) {
+AbstractBasePtr InferImplAdd(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
+                             const AbstractBasePtrList &args_spec_list) {
   // Inputs: two tensors.
   const std::string op_name = primitive->name();
   CheckArgsSize(op_name, args_spec_list, 2);

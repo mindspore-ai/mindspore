@@ -395,7 +395,7 @@ class Dense_Thor(Cell):
         self.exp = P.Exp()
         self.dampingA = Tensor(np.identity(2048), mstype.float32)
         self.dampingG = Tensor(np.identity(1024), mstype.float32)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.sqrt = P.Sqrt()
         self.getG = P.InsertGradientOf(self.save_gradient)
 

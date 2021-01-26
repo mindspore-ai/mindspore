@@ -292,7 +292,7 @@ class ReshapeNet6(nn.Cell):
         self.matmul1_2 = P.MatMul().shard(strategy0)
         self.matmul1_weight = Parameter(Tensor(np.ones([25088, 256]), dtype=ms.float32), name="weight")
         self.matmul2 = P.MatMul().shard(strategy0)
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x):
         x = self.reshape(x, (256, 25088))

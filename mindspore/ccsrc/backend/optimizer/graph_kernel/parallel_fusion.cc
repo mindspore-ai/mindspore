@@ -470,12 +470,12 @@ std::tuple<AnfNodePtrList, AnfNodePtrList, AnfNodePtrList, AnfNodePtrList> GetIn
 }
 
 bool WhiteOpsFilter(const AnfNodePtr &node) {
-  std::vector<PrimitivePtr> whiteable_ops = {prim::kPrimAbs,   prim::kPrimRound,     prim::kPrimNeg,
-                                             prim::kPrimExp,   prim::kPrimTensorAdd, prim::kPrimRealDiv,
-                                             prim::kPrimMul,   prim::kPrimMinimum,   prim::kPrimMaximum,
-                                             prim::kPrimLog,   prim::kPrimPow,       prim::kPrimSub,
-                                             prim::kPrimRsqrt, prim::kPrimSqrt,      prim::kPrimCast,
-                                             prim::kPrimAddN,  prim::kPrimEqual,     prim::kPrimReciprocal,
+  std::vector<PrimitivePtr> whiteable_ops = {prim::kPrimAbs,   prim::kPrimRound,   prim::kPrimNeg,
+                                             prim::kPrimExp,   prim::kPrimAdd,     prim::kPrimRealDiv,
+                                             prim::kPrimMul,   prim::kPrimMinimum, prim::kPrimMaximum,
+                                             prim::kPrimLog,   prim::kPrimPow,     prim::kPrimSub,
+                                             prim::kPrimRsqrt, prim::kPrimSqrt,    prim::kPrimCast,
+                                             prim::kPrimAddN,  prim::kPrimEqual,   prim::kPrimReciprocal,
                                              prim::kPrimAssign};  // Shared with change black to white.
   return session::AnfRuntimeAlgorithm::IsGraphKernel(node) || IsOneOf(node, whiteable_ops);
 }

@@ -272,7 +272,7 @@ class AddNEliminater : public AnfVisitor {
       if (tuple_inputs.size() == 3) {
         // case2: inputs size = 2, -> TensorAdd(Tensor, Tensor)
         MS_LOG(DEBUG) << "Replace AddN with two inputs with TensorAdd. " << cnode->DebugString(2);
-        ValuePtr prim_tensoradd = prim::GetPythonOps("TensorAdd", "mindspore.ops.operations");
+        ValuePtr prim_tensoradd = prim::GetPythonOps("Add", "mindspore.ops.operations");
         std::vector<AnfNodePtr> new_xs{func_graph->NewCNode({NewValueNode(prim_tensoradd)}), tuple_inputs[1],
                                        tuple_inputs[2]};
         mng->Replace(node, func_graph->NewCNode(new_xs));
@@ -299,7 +299,7 @@ class AddNEliminater : public AnfVisitor {
         ValuePtr prim_addn = prim::GetPythonOps("AddN", "mindspore.ops.operations");
         auto new_addn = func_graph->NewCNode(
           {func_graph->NewCNode({NewValueNode(prim_addn)}), func_graph->NewCNode(make_tuple_new_xs)});
-        ValuePtr prim_tensoradd = prim::GetPythonOps("TensorAdd", "mindspore.ops.operations");
+        ValuePtr prim_tensoradd = prim::GetPythonOps("Add", "mindspore.ops.operations");
         auto new_add =
           func_graph->NewCNode({func_graph->NewCNode({NewValueNode(prim_tensoradd)}), *first_valuenode, new_addn});
         (void)mng->Replace(node, new_add);

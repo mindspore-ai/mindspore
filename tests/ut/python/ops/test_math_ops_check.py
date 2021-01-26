@@ -81,7 +81,7 @@ class CumSumNet(nn.Cell):
 raise_set = [
     # input two tensors, their shapes do not match
     ('TensorAdd2', {
-        'block': (P.TensorAdd(), {'exception': ValueError, 'error_keywords': ['TensorAdd']}),
+        'block': (P.Add(), {'exception': ValueError, 'error_keywords': ['Add']}),
         'desc_inputs': [Tensor(np.ones([3, 5]).astype(np.float32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
 
@@ -573,7 +573,7 @@ raise_set = [
 test_case_math_ops = [
     # input two tensors, but element types are not same
     ('TensorAdd1', {
-        'block': P.TensorAdd(),
+        'block': P.Add(),
         'desc_inputs': [Tensor(np.ones([3, 4]).astype(np.int32)), Tensor(np.ones([3, 4]).astype(np.float32))],
         'skip': ['backward']}),
     # input two tensors, but element types are not same

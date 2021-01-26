@@ -68,7 +68,7 @@ class ShuffleV1Block(nn.Cell):
             outputs = oup
 
         self.relu = nn.ReLU()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.concat = P.Concat(1)
         self.shape = P.Shape()
         self.transpose = P.Transpose()

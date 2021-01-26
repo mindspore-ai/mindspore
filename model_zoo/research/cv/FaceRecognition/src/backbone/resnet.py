@@ -17,7 +17,7 @@ import math
 import numpy as np
 import mindspore.nn as nn
 from mindspore.nn import Cell
-from mindspore.ops.operations import TensorAdd
+from mindspore.ops.operations import Add
 from mindspore.ops import operations as P
 from mindspore.common.initializer import initializer
 from mindspore.common import dtype as mstype
@@ -96,7 +96,7 @@ class IRBlock(Cell):
         self.use_se = use_se
         if use_se == 1:
             self.se = SEBlock(planes, act_type=act_type)
-        self.add = TensorAdd()
+        self.add = Add()
         self.cast = P.Cast()
 
     def construct(self, x):

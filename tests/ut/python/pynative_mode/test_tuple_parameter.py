@@ -29,7 +29,7 @@ class Block2(nn.Cell):
     def __init__(self):
         super(Block2, self).__init__()
         self.mul = P.Mul()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     def construct(self, x, y):
         z1 = self.mul(x, y)
@@ -50,7 +50,7 @@ class Net1(nn.Cell):
 class Net2(nn.Cell):
     def __init__(self):
         super(Net2, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.block = Block2()
 
     def construct(self, x, y):

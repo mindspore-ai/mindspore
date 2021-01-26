@@ -28,7 +28,7 @@ from ...ut_filter import non_graph_engine
 # W0613: unused-argument
 
 
-tensor_add = P.TensorAdd()
+tensor_add = P.Add()
 scala_add = Primitive(Constants.kScalarAdd)
 add = C.MultitypeFuncGraph('add')
 

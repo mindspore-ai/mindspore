@@ -347,7 +347,7 @@ def test_row_tensor_model_train():
         def __init__(self, in_features, out_features):
             super(Net, self).__init__()
             self.weight = Parameter(Tensor(np.ones([out_features, in_features]).astype(np.float32)), name="weight")
-            self.add = P.TensorAdd()
+            self.add = P.Add()
             self.cast = P.Cast()
             self.flag = True
 

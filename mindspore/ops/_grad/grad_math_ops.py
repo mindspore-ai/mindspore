@@ -155,9 +155,9 @@ def bprop_batchmatmul(self):
     return bprop
 
 
-@bprop_getters.register(P.TensorAdd)
+@bprop_getters.register(P.Add)
 def get_bprop_tensor_add(self):
-    """Grad definition for `TensorAdd` operation."""
+    """Grad definition for `Add` operation."""
 
     def bprop(x, y, out, dout):
         return binop_grad_common(x, y, dout, dout)

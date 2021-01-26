@@ -83,7 +83,7 @@ class TensorAddMulNet(nn.Cell):
 
     def __init__(self):
         super(TensorAddMulNet, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     @ms_function
     def add_stage0(self, x, y):
@@ -110,7 +110,7 @@ class TensorAddNet(nn.Cell):
 
     def __init__(self):
         super(TensorAddNet, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
 
     @ms_function
     def compute(self, x, y):

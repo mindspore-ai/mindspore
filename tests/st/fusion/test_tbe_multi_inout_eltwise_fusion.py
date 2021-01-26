@@ -25,7 +25,7 @@ context.set_context(mode=context.GRAPH_MODE, device_id=4, device_target="Ascend"
 class Net(nn.Cell):
     def __init__(self):
         super(Net, self).__init__()
-        self.add = P.TensorAdd()
+        self.add = P.Add()
         self.cast = P.Cast()
         self.relu = P.ReLU()
         self.biasadd = P.BiasAdd()

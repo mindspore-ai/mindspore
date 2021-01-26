@@ -55,18 +55,18 @@ def expand_gelugrad(expand_info):
         # cal mul_right
         mul_double = graph_builder.emit('Mul', [input_x, input_x])
         mul_double_mul_tri = graph_builder.emit('Mul', [const_csvalue_tri, mul_double])
-        mul_add_one = graph_builder.emit('TensorAdd', [const_one, mul_double_mul_tri])
+        mul_add_one = graph_builder.emit('Add', [const_one, mul_double_mul_tri])
         mul_right = graph_builder.emit('Mul', [const_csvalue_sqrt_two_div_pi, mul_add_one])
 
         # cal tanh_para
         mul_triple = graph_builder.emit('Mul', [input_x, mul_double])
         mul_triple_mul_csvalue = graph_builder.emit('Mul', [const_csvalue, mul_triple])
-        mul_add_x = graph_builder.emit('TensorAdd', [input_x, mul_triple_mul_csvalue])
+        mul_add_x = graph_builder.emit('Add', [input_x, mul_triple_mul_csvalue])
         tanh_para = graph_builder.emit('Mul', [const_csvalue_sqrt_two_div_pi, mul_add_x])
 
         # cal 0.5 * (1.0 + tanh(tahn_para))
         tanh_res = graph_builder.emit('Tanh', [tanh_para])
-        tanh_res_add_one = graph_builder.emit('TensorAdd', [const_one, tanh_res])
+        tanh_res_add_one = graph_builder.emit('Add', [const_one, tanh_res])
         half_mul_tanh_res_add_one = graph_builder.emit('Mul', [const_half, tanh_res_add_one])
 
         # cal 0.5 * x * (1.0 - tanh(tanh_para) * tanh(tanh_para)) * mul_right
@@ -77,7 +77,7 @@ def expand_gelugrad(expand_info):
         mul_final = graph_builder.emit('Mul', [mul_tmp, mul_right])
 
         # cal result
-        result_tmp = graph_builder.emit('TensorAdd', [half_mul_tanh_res_add_one, mul_final])
+        result_tmp = graph_builder.emit('Add', [half_mul_tanh_res_add_one, mul_final])
         result = graph_builder.emit('Mul', [input_dy, result_tmp])
 
         # set graph output.

@@ -38,8 +38,8 @@ class AdamApplyOneWithDecayRule : public PatternProcessPass {
     mul3_x_ = std::make_shared<Var>();
     mul4_x_ = std::make_shared<Var>();
     add2_y_ = std::make_shared<Var>();
-    add0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
-    add1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimTensorAdd->name()));
+    add0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimAdd->name()));
+    add1_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimAdd->name()));
     sub0_var_ = std::make_shared<Var>(std::make_shared<Primitive>(prim::kPrimSub->name()));
   }
   ~AdamApplyOneWithDecayRule() override = default;

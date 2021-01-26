@@ -28,7 +28,7 @@ const BaseRef AdamApplyOneFusion::DefinePattern() const {
   VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[1], input_vars_[0]});
   VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[0], input_vars_[2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimTensorAdd, sqrt0, add2_y_})});
+  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
   return VectorRef({prim::kPrimSub, input_vars_[3], VectorRef({prim::kPrimMul, input_vars_[4], true_div0})});
 }
 
@@ -41,7 +41,7 @@ const BaseRef AdamApplyOneCond1Fusion::DefinePattern() const {
   VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[1], input_vars_[0]});
   VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[0], input_vars_[2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimTensorAdd, add2_y_, sqrt0})});
+  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, add2_y_, sqrt0})});
   return VectorRef({prim::kPrimSub, input_vars_[3], VectorRef({prim::kPrimMul, input_vars_[4], true_div0})});
 }
 
@@ -54,7 +54,7 @@ const BaseRef AdamApplyOneCond2Fusion::DefinePattern() const {
   VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[1], input_vars_[0]});
   VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[0], input_vars_[2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimTensorAdd, sqrt0, add2_y_})});
+  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
   return VectorRef({prim::kPrimSub, input_vars_[3], VectorRef({prim::kPrimMul, true_div0, input_vars_[4]})});
 }
 
@@ -67,7 +67,7 @@ const BaseRef AdamApplyOneCond3Fusion::DefinePattern() const {
   VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[1], input_vars_[0]});
   VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[0], input_vars_[2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimTensorAdd, sqrt0, add2_y_})});
+  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
   return VectorRef({prim::kPrimSub, input_vars_[3], VectorRef({prim::kPrimMul, true_div0, input_vars_[4]})});
 }
 
@@ -80,7 +80,7 @@ const BaseRef AdamApplyOneCond4Fusion::DefinePattern() const {
   VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[1], input_vars_[0]});
   VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[0], input_vars_[2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimTensorAdd, add2_y_, sqrt0})});
+  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, add2_y_, sqrt0})});
   return VectorRef({prim::kPrimSub, input_vars_[3], VectorRef({prim::kPrimMul, true_div0, input_vars_[4]})});
 }
 
@@ -94,7 +94,7 @@ const BaseRef AdamApplyOneAssignFusion::DefinePattern() const {
   VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[1], input_vars_[0]});
   VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[0], input_vars_[2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimTensorAdd, sqrt0, add2_y_})});
+  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
   VectorRef sub0 = VectorRef({sub0_var_, input_vars_[3], VectorRef({prim::kPrimMul, input_vars_[4], true_div0})});
   VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[3], sub0});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, sub0, assign0});
@@ -114,7 +114,7 @@ const BaseRef AdamApplyOneAssignCond1Fusion::DefinePattern() const {
   VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[1], input_vars_[0]});
   VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[0], input_vars_[2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimTensorAdd, add2_y_, sqrt0})});
+  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, add2_y_, sqrt0})});
   VectorRef sub0 = VectorRef({sub0_var_, input_vars_[3], VectorRef({prim::kPrimMul, input_vars_[4], true_div0})});
   VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[3], sub0});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, sub0, assign0});
@@ -134,7 +134,7 @@ const BaseRef AdamApplyOneAssignCond2Fusion::DefinePattern() const {
   VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[1], input_vars_[0]});
   VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[0], input_vars_[2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimTensorAdd, sqrt0, add2_y_})});
+  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
   VectorRef sub0 = VectorRef({sub0_var_, input_vars_[3], VectorRef({prim::kPrimMul, true_div0, input_vars_[4]})});
   VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[3], sub0});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, sub0, assign0});
@@ -154,7 +154,7 @@ const BaseRef AdamApplyOneAssignCond3Fusion::DefinePattern() const {
   VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[1], input_vars_[0]});
   VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[0], input_vars_[2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimTensorAdd, sqrt0, add2_y_})});
+  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, sqrt0, add2_y_})});
   VectorRef sub0 = VectorRef({sub0_var_, input_vars_[3], VectorRef({prim::kPrimMul, true_div0, input_vars_[4]})});
   VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[3], sub0});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, sub0, assign0});
@@ -174,7 +174,7 @@ const BaseRef AdamApplyOneAssignCond4Fusion::DefinePattern() const {
   VectorRef mul1 = VectorRef({prim::kPrimMul, mul_x_input_vars_[1], input_vars_[0]});
   VectorRef mul0 = VectorRef({prim::kPrimMul, mul_x_input_vars_[0], input_vars_[2]});
   VectorRef add0 = VectorRef({add0_var_, mul0, mul1});
-  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimTensorAdd, add2_y_, sqrt0})});
+  VectorRef true_div0 = VectorRef({prim_real_div, add0, VectorRef({prim::kPrimAdd, add2_y_, sqrt0})});
   VectorRef sub0 = VectorRef({sub0_var_, input_vars_[3], VectorRef({prim::kPrimMul, true_div0, input_vars_[4]})});
   VectorRef assign0 = VectorRef({prim::kPrimAssign, input_vars_[3], sub0});
   VectorRef depend0 = VectorRef({prim::kPrimDepend, sub0, assign0});
