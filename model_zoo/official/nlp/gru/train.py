@@ -99,8 +99,13 @@ if __name__ == '__main__':
     else:
         rank = 0
         device_num = 1
+    prefix = "multi30k_train_mindrecord_32_"
+    mindrecord_file = os.path.join(args.dataset_path, prefix+"0")
+    if not os.path.exists(mindrecord_file):
+        print("dataset file {} not exists, please check!".format(mindrecord_file))
+        raise ValueError(mindrecord_file)
     dataset = create_gru_dataset(epoch_count=config.num_epochs, batch_size=config.batch_size,
-                                 dataset_path=args.dataset_path, rank_size=device_num, rank_id=rank)
+                                 dataset_path=mindrecord_file, rank_size=device_num, rank_id=rank)
     dataset_size = dataset.get_dataset_size()
     print("dataset size is {}".format(dataset_size))
     network = Seq2Seq(config)

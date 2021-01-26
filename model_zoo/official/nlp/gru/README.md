@@ -1,4 +1,4 @@
-![](https://www.mindspore.cn/static/img/logo.a3e472c9.png)
+![](https://www.mindspore.cn/static/img/logo_black.6a5c850d.png)
 
 <!-- TOC -->
 
@@ -51,6 +51,26 @@ In this model, we use the Multi30K dataset as our train and test dataset.As trai
 - For more information, please check the resources below：
     - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
     - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
+
+## Requirements
+
+```txt
+nltk
+numpy
+```
+
+To install nltk, you should install nltk as follow:
+
+```bash
+pip install nltk
+```
+
+Then you should download extra packages as follow:
+
+```python
+import nltk
+nltk.download()
+```
 
 # [Quick Start](#content)
 

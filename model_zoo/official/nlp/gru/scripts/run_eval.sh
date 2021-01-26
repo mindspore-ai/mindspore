@@ -41,9 +41,9 @@ fi
 
 DATASET_PATH=$(get_real_path $2)
 echo $DATASET_PATH
-if [ ! -f $DATASET_PATH ]
+if [ ! -d $DATASET_PATH ]
 then
-    echo "error: DATASET_PATH=$DATASET_PATH is not a file"
+    echo "error: DATASET_PATH=$DATASET_PATH is not a directory"
 exit 1
 fi
 rm -rf ./eval
