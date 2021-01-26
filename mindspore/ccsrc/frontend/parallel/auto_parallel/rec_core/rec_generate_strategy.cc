@@ -487,7 +487,7 @@ Strategys MakeDataParallelStrategy(const std::shared_ptr<Graph> &graph,
   } else if (ops[iter_ops]->outputs_tensor_info()[0].shape().size() == 4) {
     graph->nodes[iter_graph].tensor_parm.tensor_str.str_n = 1.0 / std::min(max_device_num, target_tensor_batch);
   } else {
-    MS_LOG(EXCEPTION) << ops[iter_ops]->name() << " output tensor shape is unexpected.";
+    MS_LOG(INFO) << ops[iter_ops]->name() << " output tensor shape is unexpected, using default value instead.";
   }
 
   return strategies;
