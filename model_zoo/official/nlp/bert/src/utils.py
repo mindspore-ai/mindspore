@@ -63,7 +63,7 @@ def make_directory(path: str):
     """Make directory."""
     if path is None or not isinstance(path, str) or path.strip() == "":
         logger.error("The path(%r) is invalid type.", path)
-        raise TypeError("Input path is invaild type")
+        raise TypeError("Input path is invalid type")
 
     # convert the relative paths
     path = os.path.realpath(path)

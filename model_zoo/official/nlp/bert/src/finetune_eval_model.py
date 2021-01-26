@@ -26,7 +26,7 @@ class BertCLSModel(nn.Cell):
     """
     This class is responsible for classification task evaluation, i.e. XNLI(num_labels=3),
     LCQMC(num_labels=2), Chnsenti(num_labels=2). The returned output represents the final
-    logits as the results of log_softmax is propotional to that of softmax.
+    logits as the results of log_softmax is proportional to that of softmax.
     """
     def __init__(self, config, is_training, num_labels=2, dropout_prob=0.0, use_one_hot_embeddings=False,
                  assessment_method=""):
@@ -87,7 +87,7 @@ class BertSquadModel(nn.Cell):
 class BertNERModel(nn.Cell):
     """
     This class is responsible for sequence labeling task evaluation, i.e. NER(num_labels=11).
-    The returned output represents the final logits as the results of log_softmax is propotional to that of softmax.
+    The returned output represents the final logits as the results of log_softmax is proportional to that of softmax.
     """
     def __init__(self, config, is_training, num_labels=11, use_crf=False, dropout_prob=0.0,
                  use_one_hot_embeddings=False):

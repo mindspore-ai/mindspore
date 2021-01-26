@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash run_distributed_pretrain.sh DEVICE_NUM EPOCH_SIZE DATA_DIR SCHEMA_DIR"
 echo "for example: bash run_distributed_pretrain.sh 8 40 /path/zh-wiki/ /path/Schema.json"
 echo "It is better to use absolute path."

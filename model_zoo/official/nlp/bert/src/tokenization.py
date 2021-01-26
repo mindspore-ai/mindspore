@@ -289,7 +289,7 @@ class WordpieceTokenizer():
 
 def _is_whitespace(char):
     """Checks whether `chars` is a whitespace character."""
-    # \t, \n, and \r are technically contorl characters but we treat them
+    # \t, \n, and \r are technically control characters but we treat them
     # as whitespace since they are generally considered as such.
     whitespace_char = [" ", "\t", "\n", "\r"]
     if char in whitespace_char:

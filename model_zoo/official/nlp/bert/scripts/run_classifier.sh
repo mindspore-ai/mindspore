@@ -15,7 +15,7 @@
 # ============================================================================
 
 echo "=============================================================================================================="
-echo "Please run the scipt as: "
+echo "Please run the script as: "
 echo "bash scripts/run_classifier.sh"
 echo "for example: bash scripts/run_classifier.sh"
 echo "assessment_method include: [MCC, Spearman_correlation ,Accuracy]"

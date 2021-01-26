@@ -1,5 +1,7 @@
 # Contents
 
+[查看中文](./README_CN.md)
+
 - [Contents](#contents)
 - [BERT Description](#bert-description)
 - [Model Architecture](#model-architecture)
@@ -197,7 +199,7 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
   ├─scripts
     ├─ascend_distributed_launcher
         ├─__init__.py
-        ├─hyper_parameter_config.ini          # hyper paramter for distributed pretraining
+        ├─hyper_parameter_config.ini          # hyper parameter for distributed pretraining
         ├─get_distribute_pretrain_cmd.py          # script for distributed pretraining
         ├─README.md
     ├─run_classifier.sh                       # shell script for standalone classifier task on ascend or gpu
@@ -247,7 +249,7 @@ usage: run_pretrain.py  [--distribute DISTRIBUTE] [--epoch_size N] [----device_n
 
 options:
     --device_target                device where the code will be implemented: "Ascend" | "GPU", default is "Ascend"
-    --distribute                   pre_training by serveral devices: "true"(training by more than 1 device) | "false", default is "false"
+    --distribute                   pre_training by several devices: "true"(training by more than 1 device) | "false", default is "false"
     --epoch_size                   epoch size: N, default is 1
     --device_num                   number of used devices: N, default is 1
     --device_id                    device id: N, default is 0
@@ -380,7 +382,7 @@ config for lossscale and etc.
 ```text
 Parameters for dataset and network (Pre-Training/Fine-Tuning/Evaluation):
     seq_length                      length of input sequence: N, default is 128
-    vocab_size                      size of each embedding vector: N, must be consistant with the dataset you use. Default is 21128.
+    vocab_size                      size of each embedding vector: N, must be consistent with the dataset you use. Default is 21128.
                                     Usually, we use 21128 for CN vocabs and 30522 for EN vocabs according to the origin paper.
     hidden_size                     size of bert encoder layers: N, default is 768
     num_hidden_layers               number of hidden layers: N, default is 12
@@ -433,8 +435,8 @@ The command above will run in the background, you can view training logs in pret
 
 ```text
 # grep "epoch" pretraining_log.txt
-epoch: 0.0, current epoch percent: 0.000, step: 1, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.0856101e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
-epoch: 0.0, current epoch percent: 0.000, step: 2, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.0821701e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.000, step: 1, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.0856101e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.000, step: 2, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.0821701e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
 ```
 
@@ -448,8 +450,8 @@ The command above will run in the background, you can view the results the file 
 
 ```bash
 # grep "epoch" pretraining_log.txt
-epoch: 0.0, current epoch percent: 0.000, step: 1, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.0856101e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
-epoch: 0.0, current epoch percent: 0.000, step: 2, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.0821701e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.000, step: 1, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.0856101e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.000, step: 2, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.0821701e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
 ```
 
@@ -478,11 +480,11 @@ The command above will run in the background, you can view training logs in pret
 
 ```bash
 # grep "epoch" LOG*/pretraining_log.txt
-epoch: 0.0, current epoch percent: 0.001, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.08209e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
-epoch: 0.0, current epoch percent: 0.002, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.07566e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.001, step: 100, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.08209e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.002, step: 200, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.07566e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
-epoch: 0.0, current epoch percent: 0.001, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.08218e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
-epoch: 0.0, current epoch percent: 0.002, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.07770e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.001, step: 100, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.08218e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.002, step: 200, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.07770e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
 ```
 
@@ -496,11 +498,11 @@ The command above will run in the background, you can view the results the file 
 
 ```bash
 # grep "epoch" LOG*/pretraining_log.txt
-epoch: 0.0, current epoch percent: 0.001, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.08209e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
-epoch: 0.0, current epoch percent: 0.002, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.07566e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.001, step: 100, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.08209e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.002, step: 200, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.07566e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
-epoch: 0.0, current epoch percent: 0.001, step: 100, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.08218e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
-epoch: 0.0, current epoch percent: 0.002, step: 200, outpus are (Tensor(shape=[1], dtype=Float32, [ 1.07770e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.001, step: 100, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.08218e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
+epoch: 0.0, current epoch percent: 0.002, step: 200, outputs are (Tensor(shape=[1], dtype=Float32, [ 1.07770e+01]), Tensor(shape=[], dtype=Bool, False), Tensor(shape=[], dtype=Float32, 65536))
 ...
 ```
 

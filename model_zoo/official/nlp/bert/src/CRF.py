@@ -30,7 +30,7 @@ class CRF(nn.Cell):
     Args:
         tag_to_index: The dict for tag to index mapping with extra "<START>" and "<STOP>"sign.
         batch_size: Batch size, i.e., the length of the first dimension.
-        seq_length: Sequence length, i.e., the length of the second dimention.
+        seq_length: Sequence length, i.e., the length of the second dimension.
         is_training: Specifies whether to use training mode.
     Returns:
         Training mode: Tensor, total loss.

@@ -49,7 +49,7 @@ def _tensor_grad_overflow(grad):
 
 class BertFinetuneCell(nn.Cell):
     """
-    Especifically defined for finetuning where only four inputs tensor are needed.
+    Especially defined for finetuning where only four inputs tensor are needed.
 
     Append an optimizer to the training network after that the construct
     function can be called to create the backward graph.
