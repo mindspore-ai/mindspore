@@ -18,6 +18,7 @@
 import copy
 
 import numpy as np
+from mindspore import log as logger
 from ... import context
 from .. import signature as sig
 from ..._checkparam import Validator as validator
@@ -156,9 +157,12 @@ class Add(_MathBinaryOp):
             return Tensor(out)
         return None
 
+
 def TensorAdd():
     """Warning: This will be changed later"""
+    logger.warning("WARN_DEPRECATED: The usage of TensorAdd is deprecated. Please use Add.")
     return Add()
+
 
 class AssignAdd(PrimitiveWithInfer):
     """
