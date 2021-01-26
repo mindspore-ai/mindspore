@@ -42,6 +42,9 @@ int Get_Kenrnel_nums(const CNodePtr &conv_node) {
     MS_ASSERT(utils::isa<std::shared_ptr<mindspore::ops::Conv2DFusion>>(primitive));
     auto primc = utils::cast<std::shared_ptr<mindspore::ops::Conv2DFusion>>(primitive);
     MS_ASSERT(primc != nullptr);
+    if (primc->GetAttr(ops::kOutChannel) == nullptr) {
+      return 0;
+    }
     return primc->get_out_channel();
   } else {
     MS_LOG(ERROR) << "Unsupported opType, " << primitive->name();

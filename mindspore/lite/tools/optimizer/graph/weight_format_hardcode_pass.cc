@@ -115,12 +115,13 @@ lite::STATUS WeightFormatHardCodePass::HardCodeMS(const CNodePtr &conv_node,
     MS_LOG(ERROR) << "Invalid anfnode, which don't have primitive.";
     return lite::RET_ERROR;
   }
-  bool is_depth_wise = prim->GetAttr(ops::kIsDepthWise) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWise));
+  bool is_depth_wise_native =
+    prim->GetAttr(ops::kIsDepthWiseNative) != nullptr && GetValue<bool>(prim->GetAttr(ops::kIsDepthWiseNative));
   auto weight_node = conv_node->input(kConvWeightIndex);
   switch (this->quant_type) {
     case QuantType_AwareTraining: {
       if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
-        if (!is_depth_wise) {
+        if (!is_depth_wise_native) {
           param_value->set_format(schema::Format::Format_KCHW);
         } else {
           param_value->set_format(schema::Format::Format_CKHW);
@@ -134,9 +135,13 @@ lite::STATUS WeightFormatHardCodePass::HardCodeMS(const CNodePtr &conv_node,
     case QuantType_QUANT_NONE: {
       // sum up from current ms quant models
       if (CheckPrimitiveType(conv_node, prim::kPrimConv2DFusion)) {
-        param_value->set_format(schema::Format::Format_KCHW);
+        if (!is_depth_wise_native) {
+          param_value->set_format(schema::Format::Format_KCHW);
+        } else {
+          param_value->set_format(schema::Format::Format_CKHW);
+        }
       } else if (CheckPrimitiveType(conv_node, prim::kPrimConv2dTransposeFusion)) {
-        if (is_depth_wise) {
+        if (is_depth_wise_native) {
           param_value->set_format(schema::Format::Format_CKHW);
         } else {
           param_value->set_format(schema::Format::Format_KCHW);
