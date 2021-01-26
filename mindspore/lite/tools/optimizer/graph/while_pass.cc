@@ -44,27 +44,9 @@ ValueNodePtr WhilePass::GetSwitchAnfPrim() {
     return nullptr;
   }
 
-  auto partial_prim = std::make_shared<lite::Partial>(switch_primitiveT);
+  auto partial_prim = std::make_shared<lite::Switch>(switch_primitiveT);
   ValueNodePtr partial_anf_prim = NewValueNode(partial_prim);
   return partial_anf_prim;
-}
-
-void WhilePass::ReplaceInput(const std::vector<AnfNodePtr> &node_list, AnfNodePtr new_input_cnode,
-                             std::string para_name) {
-  for (auto &node : node_list) {
-    if (utils::isa<CNodePtr>(node)) {
-      auto cnode = utils::cast<CNodePtr>(node);
-      for (size_t k = 0; k < cnode->inputs().size(); k++) {
-        if (!utils::isa<ParameterPtr>(cnode->input(k))) {
-          continue;
-        }
-        auto para_input = utils::cast<ParameterPtr>(cnode->input(k));
-        if (para_input->name() == para_name) {
-          cnode->set_input(k, new_input_cnode);
-        }
-      }
-    }
-  }
 }
 
 bool WhilePass::Run(const FuncGraphPtr &graph) {
@@ -87,34 +69,23 @@ bool WhilePass::Run(const FuncGraphPtr &graph) {
     // the order is fixed.
     auto cond_vnode = while_cnode->input(kWhileCondIndex);
     auto body_vnode = while_cnode->input(kWhileBodyIndex);
-
-    // body_vnode->cast<ValueNodePtr>()->set_value()
     auto cond_fg = GetValueNode<std::shared_ptr<FuncGraph>>(cond_vnode);
     auto body_fg = GetValueNode<std::shared_ptr<FuncGraph>>(body_vnode);
-
     if (cond_fg == nullptr || body_fg == nullptr) {
       MS_LOG(ERROR) << "Get value as func_graph failed.";
       lite::ReturnCode::GetSingleReturnCode()->UpdateReturnCode(RET_FAILED);
       return false;
     }
-
-    // create cond partial cnode
     std::vector<AnfNodePtr> cond_partial_op_inputs{cond_vnode};
-
-    // create body partial cnode
     std::vector<AnfNodePtr> body_partial_op_inputs{body_vnode};
-
-    // add while op input to cond_cnode and body_cnode
     cond_partial_op_inputs.insert(cond_partial_op_inputs.end(), while_cnode->inputs().begin() + kWhileMinInputSize,
                                   while_cnode->inputs().end());
     body_partial_op_inputs.insert(body_partial_op_inputs.end(), while_cnode->inputs().begin() + kWhileMinInputSize,
                                   while_cnode->inputs().end());
-
     static int idx = 0;
     auto cond_partial_node = graph->NewCNode(cond_partial_op_inputs);
     cond_partial_node->set_fullname_with_scope("Partial-while-cond-" + std::to_string(idx));
     cond_partial_node->set_abstract(cond_fg->output()->abstract());
-
     auto body_partial_node = graph->NewCNode(body_partial_op_inputs);
     body_partial_node->set_fullname_with_scope("Partial-while-body-" + std::to_string(idx));
     idx++;
@@ -166,7 +137,6 @@ bool WhilePass::Run(const FuncGraphPtr &graph) {
       }
       abstract_list.push_back(cnode->abstract());
     }
-
     switch_cnode->set_abstract(std::make_shared<abstract::AbstractTuple>(abstract_list));
 
     // create cond partial cnode
@@ -176,7 +146,6 @@ bool WhilePass::Run(const FuncGraphPtr &graph) {
       manager->SetEdge(node_user.first, node_user.second, switch_cnode);
     }
   }
-
   return true;
 }
 }  // namespace mindspore::opt

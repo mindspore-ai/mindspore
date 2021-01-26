@@ -57,27 +57,27 @@ bool UpdateConv2DParamPass::Run(const FuncGraphPtr &func_graph) {
       auto conv2d_cnode = node->cast<CNodePtr>();
       auto primitive_c = GetValueNode<std::shared_ptr<lite::PrimitiveC>>(conv2d_cnode->input(0));
       if (primitive_c == nullptr) {
-        MS_LOG(ERROR) << "Conv2D node has no primitiveC.";
+        MS_LOG(DEBUG) << "Conv2D node has no primitiveC.";
         continue;
       }
       auto primT = primitive_c->primitiveT();
       if (primT == nullptr) {
-        MS_LOG(ERROR) << "Conv2D node has no primitiveT.";
+        MS_LOG(DEBUG) << "Conv2D node has no primitiveT.";
         continue;
       }
       auto conv2d_primt = primT->value.AsConv2D();
       auto weight_node = conv2d_cnode->input(lite::kAnfPopulaterInputNumTwo);
       if (weight_node == nullptr) {
-        MS_LOG(ERROR) << "Conv2D weight node is nullptr.";
+        MS_LOG(DEBUG) << "Conv2D weight node is nullptr.";
         continue;
       }
       if (!weight_node->isa<Parameter>()) {
-        MS_LOG(ERROR) << "Conv2D weight node is not parameter.";
+        MS_LOG(DEBUG) << "Conv2D weight node is not parameter.";
         continue;
       }
       auto weight_param = weight_node->cast<ParameterPtr>();
       if (!weight_param->has_default()) {
-        MS_LOG(ERROR) << "Conv2D weight node is not parameter.";
+        MS_LOG(DEBUG) << "Conv2D weight node is not parameter.";
         continue;
       }
       auto default_param = weight_param->default_param();
