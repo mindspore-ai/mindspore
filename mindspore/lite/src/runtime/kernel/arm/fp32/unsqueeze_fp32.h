@@ -19,7 +19,7 @@
 #include <vector>
 #include "src/lite_kernel.h"
 #include "include/context.h"
-#include "nnacl/fp32/unsqueeze_fp32.h"
+#include "nnacl/unsqueeze_parameter.h"
 
 using mindspore::lite::InnerContext;
 

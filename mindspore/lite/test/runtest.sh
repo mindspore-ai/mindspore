@@ -32,7 +32,6 @@ echo 'run common ut tests'
 # test cases of FP32 OP
 ./lite-test --gtest_filter=TestFcFp32*
 ./lite-test --gtest_filter=TestConv1x1Fp32*
-./lite-test --gtest_filter=TestStrassenFp32*
 ## ./lite-test --gtest_filter=TestDeConvolutionFp32*
 
 # test cases of INT8 OP

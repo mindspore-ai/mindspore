@@ -18,7 +18,7 @@
 #include "src/common/common.h"
 #include "src/ops/primitive_c.h"
 #include "src/ops/populate/populate_register.h"
-#include "nnacl/fp32/space_to_depth_fp32.h"
+#include "nnacl/space_to_depth_parameter.h"
 
 namespace mindspore {
 namespace lite {

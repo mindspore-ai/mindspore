@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "src/runtime/kernel/arm/fp32/slice_fp32.h"
+#include "src/runtime/kernel/arm/base/slice_base.h"
 #include "src/kernel_registry.h"
-#include "nnacl/fp32/slice_fp32.h"
+#include "nnacl/base/slice_base.h"
 #include "src/ops/slice.h"
+#include "src/tensor.h"
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_ERROR;
@@ -63,11 +64,8 @@ int SliceCPUKernel::Init() {
 }
 
 int SliceCPUKernel::SliceParallelRun(int thread_id) {
-  const float *input_data = reinterpret_cast<const float *>(in_tensors_.at(0)->MutableData());
-  float *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
-  MS_ASSERT(input_data);
-  MS_ASSERT(output_data);
-  DoSlice(input_data, output_data, param_, thread_id);
+  DoSlice(in_tensors_.at(0)->data_c(), out_tensors_.at(0)->data_c(), param_, thread_id,
+          lite::DataTypeSize(in_tensors_.at(0)->data_type()));
   return RET_OK;
 }
 
@@ -77,10 +75,10 @@ int SliceCPUKernel::Run() {
     MS_LOG(ERROR) << "PreProcess fail!ret: " << ret;
     return ret;
   }
-  const float *input_data = reinterpret_cast<const float *>(in_tensors_.at(0)->MutableData());
-  float *output_data = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+
   if (param_->size_[1] < op_parameter_->thread_num_) {
-    DoSliceNoParallel(input_data, output_data, param_);
+    DoSliceNoParallel(in_tensors_.at(0)->data_c(), out_tensors_.at(0)->data_c(), param_,
+                      lite::DataTypeSize(in_tensors_.at(0)->data_type()));
     return RET_OK;
   }
   ret = ParallelLaunch(this->context_->thread_pool_, SliceLaunch, this, op_parameter_->thread_num_);
@@ -92,5 +90,6 @@ int SliceCPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Slice, LiteKernelCreator<SliceCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat16, PrimitiveType_Slice, LiteKernelCreator<SliceCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Slice, LiteKernelCreator<SliceCPUKernel>)
 }  // namespace mindspore::kernel

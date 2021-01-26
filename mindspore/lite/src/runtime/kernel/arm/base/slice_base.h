@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SLICE_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SLICE_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SLICE_BASE_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SLICE_BASE_H_
 
 #include <vector>
 #include "src/lite_kernel.h"
@@ -34,12 +34,12 @@ class SliceCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
-  virtual int SliceParallelRun(int thread_id);
+
+ public:
+  int SliceParallelRun(int thread_id);
 
  protected:
   SliceParameter *param_;
 };
-int SliceLaunch(void *cdata, int task_id);
 }  // namespace mindspore::kernel
-
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_SLICE_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_BASE_SLICE_BASE_H_

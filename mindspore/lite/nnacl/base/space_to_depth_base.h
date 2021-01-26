@@ -13,12 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#ifndef MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_BASE_SPACE_TO_DEPTH_BASE_H_
+#define MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_BASE_SPACE_TO_DEPTH_BASE_H_
 
-#include "nnacl/fp32/unsqueeze_fp32.h"
-#include <string.h>
-#include "nnacl/errorcode.h"
+#include "nnacl/op_base.h"
 
-int Unsqueeze(const int8_t *input_ptr, int8_t *output_ptr, size_t data_size) {
-  memcpy(output_ptr, input_ptr, data_size);
-  return NNACL_OK;
+#ifdef __cplusplus
+extern "C" {
+#endif
+int SpaceToDepthForNHWC(const void *input, void *output, const int *in_shape, const int *out_shape, int shape_size,
+                        int block_size, int h_start, int h_end, int data_size);
+#ifdef __cplusplus
 }
+#endif
+
+#endif  // MINDSPORE_LITE_SRC_BACKEND_ARM_NNACL_BASE_SPACE_TO_DEPTH_BASE_H_

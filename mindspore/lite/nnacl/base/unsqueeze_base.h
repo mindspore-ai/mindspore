@@ -13,22 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_NNACL_FP16_SLICE_FP16_H_
-#define MINDSPORE_LITE_NNACL_FP16_SLICE_FP16_H_
+
+#ifndef MINDSPORE_LITE_NNACL_BASE_UNSQUEEZE_BASE_H_
+#define MINDSPORE_LITE_NNACL_BASE_UNSQUEEZE_BASE_H_
 
 #include "nnacl/op_base.h"
-#include "nnacl/slice_parameter.h"
-#ifdef ENABLE_NEON
-#include <arm_neon.h>
-#endif
+#include "nnacl/errorcode.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-void DoSliceFp16(const float16_t *input, float16_t *output, SliceParameter *param, int thread_id);
-void DoSliceFp16NoParallel(const float16_t *input, float16_t *output, SliceParameter *param);
+int Unsqueeze(const int8_t *input_ptr, int8_t *output_ptr, size_t data_size) {
+  memcpy(output_ptr, input_ptr, data_size);
+  return NNACL_OK;
+}
 #ifdef __cplusplus
 }
 #endif
 
-#endif  // MINDSPORE_LITE_NNACL_FP16_SLICE_FP16_H_
+#endif  // MINDSPORE_LITE_NNACL_BASE_UNSQUEEZE_BASE_H_
