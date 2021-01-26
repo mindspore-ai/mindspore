@@ -1606,6 +1606,7 @@ void PynativeExecutor::UpdateTopCellInfo(const std::string &cell_id, bool vm_com
     (*it)->need_grad = true;
     if ((*it)->is_topest) {
       in_grad_process_ = false;
+      top_cell_index_ = 0;
     }
   }
 }
@@ -1936,8 +1937,12 @@ void PynativeExecutor::NewGraphInner(const py::object &cell, const py::args &arg
   // Init resource for constructing forward graph and grad graph
   curr_g_ = std::make_shared<FuncGraph>();
   ClearResidualRes(cell_id);
-  if (graph_stack_.empty() && !IsBpropGraph(cell_id)) {
-    MakeNewTopGraph(cell_id, args);
+  if (graph_stack_.empty()) {
+    if (!IsBpropGraph(cell_id)) {
+      MakeNewTopGraph(cell_id, args);
+    } else {
+      top_cell_index_ = cell_graph_list_.size();
+    }
   }
   PushCurrentGraphToStack();
   PushCurrentCellOpInfoToStack();
