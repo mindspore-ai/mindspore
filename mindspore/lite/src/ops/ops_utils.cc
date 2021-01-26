@@ -298,10 +298,6 @@ schema::PrimitiveT *HashtableLookupPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::HashtableLookup>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
 }
-schema::PrimitiveT *IdentityPrimitiveCreator(const AnfNodePtr &node) {
-  auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::Identity>>(node);
-  return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
-}
 schema::PrimitiveT *InstanceNormPrimitiveCreator(const AnfNodePtr &node) {
   auto ms_primc = GetValueNode<std::shared_ptr<mindspore::ops::InstanceNorm>>(node);
   return ms_primc != nullptr ? ops::MSOp2SchemaOp(ms_primc.get()) : nullptr;
@@ -734,7 +730,6 @@ RegistryMSOps g_GatherNdPrimitiveCreatorRegistry("GatherNd", GatherNdPrimitiveCr
 RegistryMSOps g_GreaterPrimitiveCreatorRegistry("Greater", GreaterPrimitiveCreator);
 RegistryMSOps g_GreaterEqualPrimitiveCreatorRegistry("GreaterEqual", GreaterEqualPrimitiveCreator);
 RegistryMSOps g_HashtableLookupPrimitiveCreatorRegistry("HashtableLookup", HashtableLookupPrimitiveCreator);
-RegistryMSOps g_IdentityPrimitiveCreatorRegistry("Identity", IdentityPrimitiveCreator);
 RegistryMSOps g_InstanceNormPrimitiveCreatorRegistry("InstanceNorm", InstanceNormPrimitiveCreator);
 RegistryMSOps g_LayerNormPrimitiveCreatorRegistry("LayerNorm", LayerNormFusionPrimitiveCreator);
 RegistryMSOps g_LayerNormFusionPrimitiveCreatorRegistry("LayerNormFusion", LayerNormFusionPrimitiveCreator);

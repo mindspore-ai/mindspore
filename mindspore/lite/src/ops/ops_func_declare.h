@@ -81,7 +81,6 @@
 #include "ops/greater_equal.h"
 #include "ops/greater.h"
 #include "ops/hashtable_lookup.h"
-#include "ops/identity.h"
 #include "ops/instance_norm.h"
 #include "ops/l2_normalize.h"
 #include "ops/layer_norm.h"
@@ -313,7 +312,6 @@ FUNC_MSOP2SCHEMAOP_DECLARE(Greater);
 FUNC_MSOP2SCHEMAOP_DECLARE(GreaterEqual);
 FUNC_MSOP2SCHEMAOP_DECLARE(GroupConv2DGradInput);
 FUNC_MSOP2SCHEMAOP_DECLARE(HashtableLookup);
-FUNC_MSOP2SCHEMAOP_DECLARE(Identity);
 FUNC_MSOP2SCHEMAOP_DECLARE(InstanceNorm);
 FUNC_MSOP2SCHEMAOP_DECLARE(LayerNormFusion);
 FUNC_MSOP2SCHEMAOP_DECLARE(LeakyRelu);

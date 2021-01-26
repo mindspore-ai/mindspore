@@ -281,7 +281,7 @@ table DivGrad {
 }
 
 table Dropout {
-    ratio: float = 0.5;
+    keep_prob: float = 0.5;
 }
 
 table DropoutGrad {
@@ -372,9 +372,6 @@ table GreaterEqual {
 }
 
 table HashtableLookup {
-}
-
-table Identity {
 }
 
 table InstanceNorm {
