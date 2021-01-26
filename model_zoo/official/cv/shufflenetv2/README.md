@@ -18,7 +18,7 @@
 
 # [ShuffleNetV2 Description](#contents)
 
-ShuffleNetV2 is a much faster and more accurate netowrk than the previous networks on different platforms such as Ascend or GPU.
+ShuffleNetV2 is a much faster and more accurate network than the previous networks on different platforms such as Ascend or GPU.
 [Paper](https://arxiv.org/pdf/1807.11164.pdf) Ma, N., Zhang, X., Zheng, H. T., & Sun, J. (2018). Shufflenet v2: Practical guidelines for efficient cnn architecture design. In Proceedings of the European conference on computer vision (ECCV) (pp. 116-131).
 
 # [Model architecture](#contents)
@@ -32,28 +32,27 @@ The overall network architecture of ShuffleNetV2 is show below:
 Dataset used: [imagenet](http://www.image-net.org/)
 
 - Dataset size: ~125G, 1.2W colorful images in 1000 classes
-	- Train: 120G, 1.2W images
-	- Test: 5G, 50000 images
+    - Train: 120G, 1.2W images
+    - Test: 5G, 50000 images
 - Data format: RGB images.
-	- Note: Data will be processed in src/dataset.py
+    - Note: Data will be processed in src/dataset.py
 
 # [Environment Requirements](#contents)
 
 - Hardware(GPU)
-  - Prepare hardware environment with GPU processor.
+    - Prepare hardware environment with GPU processor.
 - Framework
-  - [MindSpore](https://www.mindspore.cn/install/en)
+    - [MindSpore](https://www.mindspore.cn/install/en)
 - For more information, please check the resources below:
-  - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
-  - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
-
+    - [MindSpore Tutorials](https://www.mindspore.cn/tutorial/training/en/master/index.html)
+    - [MindSpore Python API](https://www.mindspore.cn/doc/api_python/en/master/index.html)
 
 # [Script description](#contents)
 
 ## [Script and sample code](#contents)
 
 ```python
-+-- ShuffleNetV2      
++-- ShuffleNetV2
   +-- Readme.md     # descriptions about ShuffleNetV2
   +-- scripts
     +--run_distribute_train_for_gpu.sh   # shell script for distributed training
@@ -74,15 +73,14 @@ Dataset used: [imagenet](http://www.image-net.org/)
 
 ### Usage
 
-
 You can start training using python or shell scripts. The usage of shell scripts as follows:
 
-- Ditributed training on GPU: sh run_standalone_train_for_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
+- Distributed training on GPU: sh run_standalone_train_for_gpu.sh [DEVICE_NUM] [VISIABLE_DEVICES(0,1,2,3,4,5,6,7)] [DATASET_PATH]
 - Standalone training on GPU: sh run_standalone_train_for_gpu.sh [DATASET_PATH]
 
 ### Launch
 
-```
+```bash
 # training example
   python:
       GPU: mpirun --allow-run-as-root -n 8 --output-filename log_output --merge-stderr-to-stdout python train.py --is_distributed=True --platform='GPU' --dataset_path='~/imagenet/train/' > train.log 2>&1 &
@@ -105,13 +103,13 @@ You can start evaluation using python or shell scripts. The usage of shell scrip
 
 ### Launch
 
-``` 
+```bash
 # infer example
   python:
       GPU: CUDA_VISIBLE_DEVICES=0 python eval.py --platform='GPU' --dataset_path='~/imagenet/val/' > eval.log 2>&1 &
 
   shell:
-      GPU: cd scripts & sh run_eval_for_gpu.sh '~/imagenet/val/' 'checkpoint_file' 
+      GPU: cd scripts & sh run_eval_for_gpu.sh '~/imagenet/val/' 'checkpoint_file'
 ```
 
 > checkpoint can be produced in training process.
@@ -149,7 +147,6 @@ Inference result will be stored in the example path, you can find result in `eva
 | batch_size                 | 128                        |
 | outputs                    | probability               |
 | Accuracy                   | acc=69.4%(TOP1)           |
-
 
 # [ModelZoo Homepage](#contents)
 
