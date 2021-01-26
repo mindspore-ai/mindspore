@@ -58,11 +58,10 @@ function android_release_package()
         tar -xzf ${input_path}/android_aarch32/${src_arm32_pkg_name}.tar.gz
 
         # ARM32 and ARM64 have the same header file.
-        mkdir -p ${dst_android_pkg_name}/third_party
         mkdir -p ${dst_android_pkg_name}/minddata/
         cp -r ${src_arm64_pkg_name}/include/ ${dst_android_pkg_name}/
-        cp -r ${src_arm64_pkg_name}/third_party/flatbuffers/ ${dst_android_pkg_name}/third_party/
         cp -r ${src_arm64_pkg_name}/minddata/include/ ${dst_android_pkg_name}/minddata/
+        cp ${src_arm64_pkg_name}/.commit_id ${dst_android_pkg_name}/
 
         # Executable files and dynamic libraries are different in different architectures.
         mkdir -p ${dst_android_pkg_name}/benchmark/aarch64/
