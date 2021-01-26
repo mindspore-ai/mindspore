@@ -643,8 +643,12 @@ static bool CheckZero(const std::vector<size_t> &vs) {
   return false;
 }
 
-static bool CheckMeanAndStd(int channel, const std::vector<float> &mean, const std::vector<float> &std) {
+static bool CheckMeanAndStd(const LiteMat &src, LiteMat &dst, int channel, const std::vector<float> &mean,
+                            const std::vector<float> &std) {
   if (mean.size() == 0 && std.size() == 0) {
+    return false;
+  }
+  if (src.data_type_ != LDataType::FLOAT32) {
     return false;
   }
   if (mean.size() > 0) {
@@ -663,21 +667,19 @@ static bool CheckMeanAndStd(int channel, const std::vector<float> &mean, const s
       return false;
     }
   }
-  return true;
-}
-bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<float> &mean,
-                            const std::vector<float> &std) {
-  if (src.data_type_ != LDataType::FLOAT32) {
-    return false;
-  }
-  if (!CheckMeanAndStd(src.channel_, mean, std)) {
-    return false;
-  }
   if (dst.IsEmpty()) {
     dst.Init(src.width_, src.height_, src.channel_, LDataType::FLOAT32);
   } else if (dst.height_ != src.height_ || dst.width_ != src.width_ || dst.channel_ != src.channel_) {
     return false;
   } else if (dst.data_type_ != LDataType::FLOAT32) {
+    return false;
+  }
+  return true;
+}
+
+bool SubStractMeanNormalize(const LiteMat &src, LiteMat &dst, const std::vector<float> &mean,
+                            const std::vector<float> &std) {
+  if (!CheckMeanAndStd(src, dst, src.channel_, mean, std)) {
     return false;
   }
 
@@ -760,7 +762,7 @@ static void PadWithConstant(const LiteMat &src, LiteMat &dst, const int top, con
 }
 
 template <typename T>
-void ExtractChannelImpl(T *src_ptr, T *dst_ptr, int height, int width, int channel, int col) {
+void ExtractChannelImpl(const T *src_ptr, T *dst_ptr, int height, int width, int channel, int col) {
   int total = height * width;
   int i = 0;
   int src_idx = col;
