@@ -42,13 +42,130 @@ Flags::Flags() {
   AddFlag(&Flags::quantWeightSize, "quantWeightSize", "Weight quantization size threshold", "0");
   AddFlag(&Flags::quantWeightChannel, "quantWeightChannel", "Channel threshold for weight quantization", "16");
   AddFlag(&Flags::configFile, "configFile", "Configuration for post-training.", "");
+  AddFlag(&Flags::enableHuffmanCodeIn, "enableHuffmanCode",
+          "whether the weight quant model is going to use huffman code."
+          "true | false",
+          "false");
   AddFlag(&Flags::trainModelIn, "trainModel",
           "whether the model is going to be trained on device."
           "true | false",
           "false");
 }
 
+int Flags::InitInputOutputDataType() {
+  if (this->inputDataTypeIn == "FLOAT") {
+    this->inputDataType = TypeId::kNumberTypeFloat32;
+  } else if (this->inputDataTypeIn == "INT8") {
+    this->inputDataType = TypeId::kNumberTypeInt8;
+  } else if (this->inputDataTypeIn == "UINT8") {
+    this->inputDataType = TypeId::kNumberTypeUInt8;
+  } else if (this->inputDataTypeIn == "DEFAULT") {
+    this->inputDataType = TypeId::kTypeUnknown;
+  } else {
+    std::cerr << "INPUT INVALID: inputDataType is invalid: %s, supported inputDataType: FLOAT | INT8 | UINT8 | DEFAULT",
+      this->inputDataTypeIn.c_str();
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  if (this->outputDataTypeIn == "FLOAT") {
+    this->outputDataType = TypeId::kNumberTypeFloat32;
+  } else if (this->outputDataTypeIn == "INT8") {
+    this->outputDataType = TypeId::kNumberTypeInt8;
+  } else if (this->outputDataTypeIn == "UINT8") {
+    this->outputDataType = TypeId::kNumberTypeUInt8;
+  } else if (this->outputDataTypeIn == "DEFAULT") {
+    this->outputDataType = TypeId::kTypeUnknown;
+  } else {
+    std::cerr
+      << "INPUT INVALID: outputDataType is invalid: %s, supported outputDataType: FLOAT | INT8 | UINT8 | DEFAULT",
+      this->outputDataTypeIn.c_str();
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int Flags::InitFmk() {
+  if (this->fmkIn == "CAFFE") {
+    this->fmk = FmkType_CAFFE;
+  } else if (this->fmkIn == "MINDIR") {
+    this->fmk = FmkType_MS;
+  } else if (this->fmkIn == "TFLITE") {
+    this->fmk = FmkType_TFLITE;
+  } else if (this->fmkIn == "ONNX") {
+    this->fmk = FmkType_ONNX;
+  } else if (this->fmkIn == "TF") {
+    this->fmk = FmkType_TF;
+  } else {
+    std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  if (this->fmk != FmkType_CAFFE && !weightFile.empty()) {
+    std::cerr << "INPUT ILLEGAL: weightFile is not a valid flag";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int Flags::InitQuantType() {
+  if (this->quantTypeIn == "WeightQuant") {
+    this->quantType = QuantType_WeightQuant;
+  } else if (this->quantTypeIn == "PostTraining") {
+    this->quantType = QuantType_PostTraining;
+  } else if (this->quantTypeIn.empty()) {
+    this->quantType = QuantType_QUANT_NONE;
+  } else {
+    std::cerr << "INPUT ILLEGAL: quantType must be WeightQuant|PostTraining";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int Flags::InitHuffmanCode() {
+  if (this->enableHuffmanCodeIn == "true") {
+    this->enableHuffmanCode = true;
+  } else if (this->enableHuffmanCodeIn == "false") {
+    this->enableHuffmanCode = false;
+  } else {
+    std::cerr << "INPUT ILLEGAL: trainModel must be true|false ";
+    return RET_INPUT_PARAM_INVALID;
+  }
+  return RET_OK;
+}
+
+int Flags::InitTrainModel() {
+  if (this->trainModelIn == "true") {
+    this->trainModel = true;
+  } else if (this->trainModelIn == "false") {
+    this->trainModel = false;
+  } else {
+    std::cerr << "INPUT ILLEGAL: trainModel must be true|false ";
+    return RET_INPUT_PARAM_INVALID;
+  }
+
+  if (this->trainModel) {
+    if (this->fmk != FmkType_MS) {
+      std::cerr << "INPUT ILLEGAL: train model converter supporting only MINDIR format";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    if ((this->inputDataType != TypeId::kNumberTypeFloat32) && (this->inputDataType != TypeId::kTypeUnknown)) {
+      std::cerr << "INPUT ILLEGAL: train model converter supporting only FP32 input tensors";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    if ((this->outputDataType != TypeId::kNumberTypeFloat32) && (this->outputDataType != TypeId::kTypeUnknown)) {
+      std::cerr << "INPUT ILLEGAL: train model converter supporting only FP32 output tensors";
+      return RET_INPUT_PARAM_INVALID;
+    }
+    if (this->quantType != QuantType_QUANT_NONE) {
+      std::cerr << "INPUT ILLEGAL: train model converter is not supporting quantization";
+      return RET_INPUT_PARAM_INVALID;
+    }
+  }
+  return RET_OK;
+}
+
 int Flags::Init(int argc, const char **argv) {
+  int ret;
   if (argc == 1) {
     std::cout << this->Usage() << std::endl;
     return RET_SUCCESS_EXIT;
@@ -89,93 +206,36 @@ int Flags::Init(int argc, const char **argv) {
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->inputDataTypeIn == "FLOAT") {
-    this->inputDataType = TypeId::kNumberTypeFloat32;
-  } else if (this->inputDataTypeIn == "INT8") {
-    this->inputDataType = TypeId::kNumberTypeInt8;
-  } else if (this->inputDataTypeIn == "UINT8") {
-    this->inputDataType = TypeId::kNumberTypeUInt8;
-  } else if (this->inputDataTypeIn == "DEFAULT") {
-    this->inputDataType = TypeId::kTypeUnknown;
-  } else {
-    std::cerr << "INPUT INVALID: inputDataType is invalid: %s, supported inputDataType: FLOAT | INT8 | UINT8 | DEFAULT",
-      this->inputDataTypeIn.c_str();
+  ret = InitInputOutputDataType();
+  if (ret != RET_OK) {
+    std::cerr << "Init input output datatype failed.";
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->outputDataTypeIn == "FLOAT") {
-    this->outputDataType = TypeId::kNumberTypeFloat32;
-  } else if (this->outputDataTypeIn == "INT8") {
-    this->outputDataType = TypeId::kNumberTypeInt8;
-  } else if (this->outputDataTypeIn == "UINT8") {
-    this->outputDataType = TypeId::kNumberTypeUInt8;
-  } else if (this->outputDataTypeIn == "DEFAULT") {
-    this->outputDataType = TypeId::kTypeUnknown;
-  } else {
-    std::cerr
-      << "INPUT INVALID: outputDataType is invalid: %s, supported outputDataType: FLOAT | INT8 | UINT8 | DEFAULT",
-      this->outputDataTypeIn.c_str();
+  ret = InitFmk();
+  if (ret != RET_OK) {
+    std::cerr << "Init fmk failed.";
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->fmkIn == "CAFFE") {
-    this->fmk = FmkType_CAFFE;
-  } else if (this->fmkIn == "MINDIR") {
-    this->fmk = FmkType_MS;
-  } else if (this->fmkIn == "TFLITE") {
-    this->fmk = FmkType_TFLITE;
-  } else if (this->fmkIn == "ONNX") {
-    this->fmk = FmkType_ONNX;
-  } else if (this->fmkIn == "TF") {
-    this->fmk = FmkType_TF;
-  } else {
-    std::cerr << "INPUT ILLEGAL: fmk must be TF|TFLITE|CAFFE|MINDIR|ONNX";
+  ret = InitQuantType();
+  if (ret != RET_OK) {
+    std::cerr << "Init quant type failed.";
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->fmk != FmkType_CAFFE && !weightFile.empty()) {
-    std::cerr << "INPUT ILLEGAL: weightFile is not a valid flag";
+  ret = InitHuffmanCode();
+  if (ret != RET_OK) {
+    std::cerr << "Init huffman code failed.";
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->quantTypeIn == "WeightQuant") {
-    this->quantType = QuantType_WeightQuant;
-  } else if (this->quantTypeIn == "PostTraining") {
-    this->quantType = QuantType_PostTraining;
-  } else if (this->quantTypeIn.empty()) {
-    this->quantType = QuantType_QUANT_NONE;
-  } else {
-    std::cerr << "INPUT ILLEGAL: quantType must be WeightQuant|PostTraining";
+  ret = InitTrainModel();
+  if (ret != RET_OK) {
+    std::cerr << "Init train model failed.";
     return RET_INPUT_PARAM_INVALID;
   }
 
-  if (this->trainModelIn == "true") {
-    this->trainModel = true;
-  } else if (this->trainModelIn == "false") {
-    this->trainModel = false;
-  } else {
-    std::cerr << "INPUT ILLEGAL: trainModel must be true|false ";
-    return RET_INPUT_PARAM_INVALID;
-  }
-
-  if (this->trainModel) {
-    if (this->fmk != FmkType_MS) {
-      std::cerr << "INPUT ILLEGAL: train model convertor supporting only MINDIR format";
-      return RET_INPUT_PARAM_INVALID;
-    }
-    if ((this->inputDataType != TypeId::kNumberTypeFloat32) && (this->inputDataType != TypeId::kTypeUnknown)) {
-      std::cerr << "INPUT ILLEGAL: train model convertor supporting only FP32 input tensors";
-      return RET_INPUT_PARAM_INVALID;
-    }
-    if ((this->outputDataType != TypeId::kNumberTypeFloat32) && (this->outputDataType != TypeId::kTypeUnknown)) {
-      std::cerr << "INPUT ILLEGAL: train model convertor supporting only FP32 output tensors";
-      return RET_INPUT_PARAM_INVALID;
-    }
-    if (this->quantType != QuantType_QUANT_NONE) {
-      std::cerr << "INPUT ILLEGAL: train model convertor is not supporting quantization";
-      return RET_INPUT_PARAM_INVALID;
-    }
-  }
   return RET_OK;
 }
 }  // namespace converter

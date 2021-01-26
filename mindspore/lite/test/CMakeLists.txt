@@ -132,6 +132,7 @@ set(TEST_LITE_SRC
         ${LITE_DIR}/src/lite_kernel.cc
         ${LITE_DIR}/src/lite_session.cc
         ${LITE_DIR}/src/dequant.cc
+        ${LITE_DIR}/src/huffman_decode.cc
         ${LITE_DIR}/src/sub_graph_kernel.cc
         ${LITE_DIR}/src/lite_model.cc
         ${LITE_DIR}/src/scheduler.cc

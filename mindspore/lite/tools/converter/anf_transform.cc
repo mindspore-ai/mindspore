@@ -51,6 +51,7 @@
 #include "tools/optimizer/graph/functionalize_control_op_pass.h"
 #include "tools/converter/quantizer/post_training_quantizer.h"
 #include "tools/converter/quantizer/quant_cast.h"
+#include "tools/converter/quantizer/huffman_encode.h"
 #include "tools/converter/quantizer/weight_quantizer.h"
 
 using std::string;
@@ -252,6 +253,19 @@ int AnfTransform::DoQuantize(const FuncGraphPtr &old_graph, const converter::Fla
   return RET_OK;
 }
 
+int AnfTransform::DoHuffmanEncode(const converter::Flags *config, const FuncGraphPtr &new_graph) {
+  if (config->quantType == schema::QuantType_WeightQuant && config->bitNum == "8" && config->enableHuffmanCode) {
+    auto huffman_encode = std::make_unique<lite::huffman_encode>();
+    auto status = huffman_encode->DoHuffmanEncode(new_graph);
+    if (status != RET_OK) {
+      MS_LOG(ERROR) << "Huffman encode failed.";
+      ReturnCode::GetSingleReturnCode()->UpdateReturnCode(status);
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
+}
+
 FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_graph, const converter::Flags *config) {
   MS_ASSERT(nullptr != old_graph);
   if (config == nullptr) {
@@ -305,6 +319,13 @@ FuncGraphPtr AnfTransform::TransformSingleFuncGraph(const FuncGraphPtr &old_grap
     MS_LOG(ERROR) << "Do Quantize failed.";
     return nullptr;
   }
+
+  status = DoHuffmanEncode(config, new_graph);
+  if (status != RET_OK) {
+    MS_LOG(ERROR) << "Do HuffmanCode failed.";
+    return nullptr;
+  }
+
   return new_graph;
 }
 

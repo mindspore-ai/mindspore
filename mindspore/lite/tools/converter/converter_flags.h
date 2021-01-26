@@ -45,6 +45,16 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   ~Flags() override = default;
 
+  int InitInputOutputDataType();
+
+  int InitFmk();
+
+  int InitQuantType();
+
+  int InitHuffmanCode();
+
+  int InitTrainModel();
+
   int Init(int argc, const char **argv);
 
  public:
@@ -70,6 +80,8 @@ class Flags : public virtual mindspore::lite::FlagParser {
   std::string bitNum;
   std::string configFile;
   std::string quantWeightChannel;
+  std::string enableHuffmanCodeIn;
+  bool enableHuffmanCode = false;
   std::string trainModelIn;
   bool trainModel = false;
 };

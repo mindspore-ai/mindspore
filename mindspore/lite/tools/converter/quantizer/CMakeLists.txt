@@ -10,6 +10,7 @@ file(GLOB QUANTIZER
         ${CMAKE_CURRENT_SOURCE_DIR}/post_training_quantizer.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/quant_cast.cc
         ${CMAKE_CURRENT_SOURCE_DIR}/weight_quantizer.cc
+        ${CMAKE_CURRENT_SOURCE_DIR}/huffman_encode.cc
         )
 set_property(SOURCE ${QUANTIZER} PROPERTY COMPILE_DEFINITIONS SUBMODULE_ID=mindspore::SubModuleId::SM_LITE)
 add_library(quantizer_mid OBJECT ${QUANTIZER})

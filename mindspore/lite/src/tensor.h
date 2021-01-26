@@ -149,6 +149,10 @@ class Tensor : public mindspore::tensor::MSTensor {
 
   void set_quant_clusters(const std::vector<float> &clusters);
 
+  bool IsEnableHuffmanCode() const;
+
+  void SetEnableHuffmanCode(bool enableHuffmanCode);
+
   virtual bool IsConst() const {
     return (this->category_ == CONST_TENSOR || this->category_ == CONST_SCALAR) && this->data_ != nullptr;
   }
@@ -198,6 +202,7 @@ class Tensor : public mindspore::tensor::MSTensor {
   std::vector<float> quant_clusters_;
   mindspore::lite::Allocator *allocator_ = nullptr;
   Tensor *root_tensor_ = nullptr;
+  bool enableHuffmanCode = false;
 };
 
 inline size_t DataTypeSize(const TypeId type) {
