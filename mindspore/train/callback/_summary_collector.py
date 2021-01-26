@@ -99,7 +99,9 @@ class SummaryCollector(Callback):
             - collect_eval_lineage (bool): Whether to collect lineage data for the evaluation phase,
               this field will be displayed on the lineage page of Mindinsight. Optional: True/False. Default: True.
             - collect_input_data (bool): Whether to collect dataset for each training.
-              Currently only image data is supported. Optional: True/False. Default: True.
+              Currently only image data is supported.
+              If there are multiple columns of data in the dataset, the first column should be image data.
+              Optional: True/False. Default: True.
             - collect_dataset_graph (bool): Whether to collect dataset graph for the training phase.
               Optional: True/False. Default: True.
             - histogram_regular (Union[str, None]): Collect weight and bias for parameter distribution page
@@ -122,7 +124,7 @@ class SummaryCollector(Callback):
             Default: None, which means to follow the behavior as described above. For example, given `collect_freq=10`,
             when the total steps is 600, TensorSummary will be collected 20 steps, while other summary data 61 steps,
             but when the total steps is 20, both TensorSummary and other summary will be collected 3 steps.
-            Also note that when in parallel mode, the total steps will be splitted evenly, which will
+            Also note that when in parallel mode, the total steps will be split evenly, which will
             affect the number of steps TensorSummary will be collected.
         max_file_size (Optional[int]): The maximum size in bytes of each file that can be written to the disk.
             Default: None, which means no limit. For example, to write not larger than 4GB,
@@ -479,17 +481,21 @@ class SummaryCollector(Callback):
         if not self._collect_specified_data.get('collect_input_data'):
             return
 
-        if self._dataset_sink_mode and context.get_context('device_target') == 'Ascend':
+        input_data = getattr(cb_params, 'train_dataset_element', None)
+        if not isinstance(input_data, (Tensor, list, tuple)):
             self._collect_specified_data['collect_input_data'] = False
-            logger.warning('On Ascend device, SummaryCollector is not supported to record input data '
-                           'in dataset sink mode.')
+            logger.warning("The type of input data is not Tensor/list/tuple, "
+                           "so SummaryCollector will not collect input data.")
             return
 
-        input_data = getattr(cb_params, 'train_dataset_element', None)
-        if input_data is None:
+        if not isinstance(input_data, Tensor) and not input_data:
             self._collect_specified_data['collect_input_data'] = False
-            logger.info("The 'train_dataset_element' in cb_params is None, "
-                        "so 'SummaryCollector' will not record the input data.")
+            logger.warning("The 'train_dataset_element' in cb_params is empty, "
+                           "so SummaryCollector will not record the input data.")
+
+            if self._dataset_sink_mode and context.get_context('device_target') == 'Ascend':
+                logger.warning('On Ascend device, SummaryCollector is not supported to record input data '
+                               'in dataset sink mode.')
             return
 
         if isinstance(input_data, (list, tuple)) and input_data:
@@ -522,6 +528,8 @@ class SummaryCollector(Callback):
         network = cb_params.train_network if cb_params.mode == ModeEnum.TRAIN.value else cb_params.eval_network
         graph_proto = network.get_func_graph_proto()
         if graph_proto is None:
+            logger.warning("Can not get graph proto, it may not be 'GRAPH_MODE' in context currently, "
+                           "so SummaryCollector will not collect graph.")
             return
 
         self._record.add_value(PluginEnum.GRAPH.value, 'train_network/auto', graph_proto)
@@ -538,7 +546,7 @@ class SummaryCollector(Callback):
         try:
             self._record.add_value(PluginEnum.SCALAR.value, 'loss/auto', loss)
         except ValueError:
-            logger.warning("The output of network is not a scalar, so will not collect loss in SummaryCollector.")
+            logger.warning("The output of network is not a scalar, so SummaryCollector will not collect loss.")
             self._collect_specified_data['collect_metric'] = False
 
     def _get_loss(self, cb_params):
@@ -557,7 +565,7 @@ class SummaryCollector(Callback):
 
         output = cb_params.net_outputs
         if output is None:
-            logger.warning("Can not find any output by this network, so will not collect loss in SummaryCollector.")
+            logger.warning("Can not find any output by this network, so SummaryCollector will not collect loss.")
             self._is_parse_loss_success = False
             return None
 
