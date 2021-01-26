@@ -241,6 +241,8 @@ class PynativeExecutor : public std::enable_shared_from_this<PynativeExecutor> {
   bool CheckCellGraph(const std::string &cell_id, bool is_grad = false);
   bool CheckDynamicCell(const std::string &cell_id);
   bool CheckRealDynamicCell(const std::string &cell_id);
+  void UpdateBpropCellGraph(const py::object &cell, const FuncGraphPtr &g, const std::string &cell_id, bool need_cloned,
+                            bool is_grad);
   void UpdateCellGraph(const py::object &cell, const FuncGraphPtr &g, const std::string &cell_id,
                        bool need_cloned = false, bool is_grad = false);
   void ClearCnodeRes(const AnfNodePtr &node, std::unordered_set<AnfNodePtr> *node_set);

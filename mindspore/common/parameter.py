@@ -159,7 +159,7 @@ class Parameter(Tensor_):
             Tensor_.__init__(self, mstype.int64, ())
         elif isinstance(default_input, float):
             Tensor_.__init__(self, mstype.float32, ())
-        elif isinstance(default_input, np.ndarray):
+        elif isinstance(default_input, (np.ndarray, list)):
             Tensor_.__init__(self, default_input)
         else:
             raise TypeError(f"Parameter input must be [`Tensor`, `Number`]."
