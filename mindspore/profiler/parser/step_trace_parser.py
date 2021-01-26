@@ -121,7 +121,7 @@ class BaseStepTraceParser:
             name (str): The op name.
 
         Returns:
-            str, the op type.
+            str, the op type or communication op name.
         """
         tag_map = {self._fp_tag: 'fp', self._bp_tag: 'bp', self._end_tag: 'end'}
         # get solid tag type
@@ -132,11 +132,11 @@ class BaseStepTraceParser:
         if tag > self._end_tag or tag == 0:
             return 'start'
         # analyze the reduce tag
-        op_type = name.rsplit('/', 1)[-1].split('-')[0]
-        if not op_type:
+        op_name = name.rsplit('/', 1)[-1]
+        if not op_name:
             log.warning("Unexpected op name:%s", name)
 
-        return op_type
+        return op_name
 
     def _get_step_trace_files(self):
         """Get step trace files."""
@@ -412,7 +412,7 @@ class GpuStepTraceParser(BaseStepTraceParser):
                         f"Failed to parse {source_file} file. The FP_POINT/BP_POINT/ITER_END_POINT "
                         f"do not recognized correctly. Try to set the environment variable'PROFILING_FP_START' "
                         f"and 'PROFILING_BP_END' to solve this problem. For example, "
-                        f"'export PROFILING_FP_START=Defualt/xxx/Conv2d-op1' ")
+                        f"'export PROFILING_FP_START=Default/xxx/Conv2d-op1' ")
                 step_trace_info_all = [line.strip().split()[1:] for line in lines]
                 num_of_step = len(step_trace_info_all[0])
                 for step_trace_point in step_trace_info_all:
