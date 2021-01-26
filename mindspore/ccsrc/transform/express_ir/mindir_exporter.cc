@@ -593,6 +593,9 @@ void IrExportBuilder::SetScalarToAttributeProto_ir(const ValuePtr &value, mind_i
   } else if (value->isa<FP64Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_DOUBLE);
     attr_proto->set_d(GetValue<double>(value));
+  } else if (value->isa<tensor::Tensor>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSOR);
+    SetTensorToAttributeProto(value, attr_proto);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported scalar type: " << value->type_name();
   }
@@ -635,6 +638,9 @@ void IrExportBuilder::SetScalarToAttributeProto_irs(const ValuePtr &value, mind_
   } else if (value->isa<FP64Imm>()) {
     attr_proto->set_type(mind_ir::AttributeProto_AttributeType_DOUBLE);
     attr_proto->add_doubles(GetValue<double>(value));
+  } else if (value->isa<tensor::Tensor>()) {
+    attr_proto->set_type(mind_ir::AttributeProto_AttributeType_TENSOR);
+    SetTensorToAttributeProto(value, attr_proto);
   } else {
     MS_LOG(EXCEPTION) << "Unsupported scalar type: " << value->type_name();
   }
