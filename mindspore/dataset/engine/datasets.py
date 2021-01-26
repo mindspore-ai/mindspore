@@ -2653,7 +2653,7 @@ class ConcatDataset(Dataset):
 
                 tem_sampler = copy.deepcopy(sampler)
                 tem_sampler.set_offset(cumulative_samples_nums)
-                child.sampler = tem_sampler
+                child.use_sampler(tem_sampler)
 
             cumulative_samples_nums += self.children_sizes_[index]
             cumulative_samples_nums %= sampler.num_shards
@@ -3801,6 +3801,8 @@ class GeneratorDataset(MappableDataset):
                 self.dataset_size = math.ceil(len(self.source) / self.num_shards)
 
             rows_from_sampler = self._get_sampler_dataset_size()
+            if self.num_samples is not None and self.num_samples < rows_from_sampler:
+                rows_from_sampler = self.num_samples
             if rows_from_sampler is not None and rows_from_sampler < self.dataset_size:
                 self.dataset_size = rows_from_sampler
 
