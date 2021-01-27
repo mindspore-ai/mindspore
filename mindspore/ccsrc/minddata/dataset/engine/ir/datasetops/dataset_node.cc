@@ -204,15 +204,6 @@ std::shared_ptr<SamplerObj> SelectSampler(int64_t num_samples, bool shuffle, int
   return SequentialSampler(0, num_samples);
 }
 
-Status DatasetNode::AddCacheOp(std::vector<std::shared_ptr<DatasetOp>> *node_ops) {
-  if (cache_ != nullptr) {
-    RETURN_IF_NOT_OK(cache_->Build());
-    std::shared_ptr<DatasetOp> cache_op;
-    RETURN_IF_NOT_OK(cache_->CreateCacheOp(num_workers_, &cache_op));
-    node_ops->push_back(cache_op);
-  }
-  return Status::OK();
-}
 // Constructor to initialize the cache
 DatasetNode::DatasetNode(const std::shared_ptr<DatasetCache> &dataset_cache) : DatasetNode() { cache_ = dataset_cache; }
 

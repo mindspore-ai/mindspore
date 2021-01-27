@@ -121,17 +121,10 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
 
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
-  // TFReaderOp by itself is a non-mappable dataset that does not support sampling.
-  // However, if a cache operator is injected at some other place higher in the tree, that cache can
-  // inherit this sampler from the leaf, providing sampling support from the caching layer.
-  // That is why we save the sampler here in a leaf node that does not use sampling.
-  std::shared_ptr<SamplerObj> sampler_ = SelectSampler(num_samples_, shuffle_files, num_shards_, shard_id_);
-
   // Create and initialize TFReaderOp
-  std::shared_ptr<TFReaderOp> tf_reader_op =
-    std::make_shared<TFReaderOp>(num_workers_, worker_connector_size_, rows_per_buffer_, num_samples_, sorted_dir_files,
-                                 std::move(data_schema), connector_que_size_, columns_list_, shuffle_files, num_shards_,
-                                 shard_id_, shard_equal_rows_, std::move(sampler_->SamplerBuild()));
+  std::shared_ptr<TFReaderOp> tf_reader_op = std::make_shared<TFReaderOp>(
+    num_workers_, worker_connector_size_, rows_per_buffer_, num_samples_, sorted_dir_files, std::move(data_schema),
+    connector_que_size_, columns_list_, shuffle_files, num_shards_, shard_id_, shard_equal_rows_);
 
   RETURN_IF_NOT_OK(tf_reader_op->Init());
 
@@ -149,7 +142,6 @@ Status TFRecordNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_o
                                   rows_per_buffer_, &shuffle_op));
     node_ops->push_back(shuffle_op);
   }
-  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
   // Add TFReaderOp
   node_ops->push_back(tf_reader_op);
@@ -227,5 +219,29 @@ Status TFRecordNode::to_json(nlohmann::json *out_json) {
   *out_json = args;
   return Status::OK();
 }
+
+// Note: The following two functions are common among NonMappableSourceNode and should be promoted to its parent class.
+// TFRecord by itself is a non-mappable dataset that does not support sampling.
+// However, if a cache operator is injected at some other place higher in the tree, that cache can
+// inherit this sampler from the leaf, providing sampling support from the caching layer.
+// That is why we setup the sampler for a leaf node that does not use sampling.
+Status TFRecordNode::SetupSamplerForCache(std::shared_ptr<SamplerObj> *sampler) {
+  bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
+  *sampler = SelectSampler(num_samples_, shuffle_files, num_shards_, shard_id_);
+  return Status::OK();
+}
+
+// If a cache has been added into the ascendant tree over this TFRecord node, then the cache will be executing
+// a sampler for fetching the data.  As such, any options in the TFRecord node need to be reset to its defaults so
+// that this TFRecord node will produce the full set of data into the cache.
+Status TFRecordNode::MakeSimpleProducer() {
+  shard_id_ = 0;
+  num_shards_ = 1;
+  shuffle_ = ShuffleMode::kFalse;
+  num_samples_ = 0;
+  shard_equal_rows_ = false;
+  return Status::OK();
+}
+
 }  // namespace dataset
 }  // namespace mindspore

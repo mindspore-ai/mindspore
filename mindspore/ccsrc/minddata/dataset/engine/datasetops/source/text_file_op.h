@@ -112,14 +112,6 @@ class TextFileOp : public ParallelOp {
       return *this;
     }
 
-    // Setter method
-    // @param std::shared_ptr<Sampler> sampler
-    // @return Builder setter method returns reference to the builder.
-    Builder &SetSampler(std::shared_ptr<SamplerRT> sampler) {
-      builder_sampler_ = std::move(sampler);
-      return *this;
-    }
-
    private:
     int32_t builder_device_id_;
     int32_t builder_num_devices_;
@@ -131,7 +123,6 @@ class TextFileOp : public ParallelOp {
     std::vector<std::string> builder_text_files_list_;
     bool builder_shuffle_files_;
     std::unique_ptr<DataSchema> builder_schema_;
-    std::shared_ptr<SamplerRT> builder_sampler_;
   };
 
   // Constructor of TextFileOp
@@ -145,10 +136,9 @@ class TextFileOp : public ParallelOp {
   // @param columns_to_load - the names of the columns to load data from.
   // @param shuffle_files - whether or not to shuffle the files before reading data.
   // @param equal_rows_per_shard - whether or not to get equal rows for each process.
-  // @param sampler - allow a sampler.  Only valid if a cache exists in ascendent tree nodes
   TextFileOp(int32_t num_workers, int64_t rows_per_buffer, int64_t total_rows, int32_t worker_connector_size,
              std::unique_ptr<DataSchema>, std::vector<std::string> text_files_list, int32_t op_connector_size,
-             bool shuffle_files, int32_t num_devices, int32_t device_id, std::shared_ptr<SamplerRT> sampler);
+             bool shuffle_files, int32_t num_devices, int32_t device_id);
 
   // Default destructor
   ~TextFileOp() = default;
@@ -186,11 +176,6 @@ class TextFileOp : public ParallelOp {
   // File names getter
   // @return Vector of the input file names
   std::vector<std::string> FileNames() { return text_files_list_; }
-
-  /// \Brief If a cache has been added into the ascendant tree over this text file op, then the cache will be executing
-  ///     a sampler for fetching the data.  As such, any options in the text file op need to be reset to its defaults so
-  ///     that this text file op will produce the full set of data into the cache.
-  void MakeSimpleProducer();
 
   // Base-class override for NodePass visitor acceptor.
   // @param p - Pointer to the NodePass to be accepted.

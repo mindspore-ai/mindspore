@@ -24,6 +24,7 @@
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/engine/opt/post/generator_node_pass.h"
 #endif
+#include "minddata/dataset/engine/opt/pre/cache_transform_pass.h"
 #include "minddata/dataset/engine/opt/pre/cache_validation_pass.h"
 #include "minddata/dataset/engine/opt/pre/deep_copy_pass.h"
 #include "minddata/dataset/engine/opt/pre/epoch_ctrl_pass.h"
@@ -53,6 +54,7 @@ Status TreeAdapter::PrePass(std::shared_ptr<DatasetNode> ir) {
   actions.emplace_back(std::make_unique<NodeRemovalPass>());
   actions.emplace_back(std::make_unique<EpochCtrlPass>());
   if (usage_ == kDeGetter) actions.emplace_back(std::make_unique<GetterPass>());
+  actions.emplace_back(std::make_unique<CacheTransformPass>());
   // Vector of flags for each action
   std::vector<bool> modified(actions.size(), false);
   // Apply pre-pass actions

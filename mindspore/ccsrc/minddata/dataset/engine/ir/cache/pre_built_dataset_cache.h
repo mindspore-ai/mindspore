@@ -40,6 +40,11 @@ class PreBuiltDatasetCache : public DatasetCache {
 
   Status CreateCacheOp(int32_t num_workers, std::shared_ptr<DatasetOp> *const ds) override;
 
+  Status CreateCacheLookupOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds,
+                             std::shared_ptr<SamplerObj> sampler) override;
+
+  Status CreateCacheMergeOp(int32_t num_workers, std::shared_ptr<DatasetOp> *ds) override;
+
   Status ValidateParams() override { return Status::OK(); }
 
   Status to_json(nlohmann::json *out_json) override;

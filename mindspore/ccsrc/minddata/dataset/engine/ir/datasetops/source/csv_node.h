@@ -107,6 +107,22 @@ class CSVNode : public NonMappableSourceNode {
   /// \return Status of the function
   Status to_json(nlohmann::json *out_json) override;
 
+  /// \brief CSV by itself is a non-mappable dataset that does not support sampling.
+  ///     However, if a cache operator is injected at some other place higher in the tree, that cache can
+  ///     inherit this sampler from the leaf, providing sampling support from the caching layer.
+  ///     That is why we setup the sampler for a leaf node that does not use sampling.
+  ///     Note: This function is common among NonMappableSourceNode and should be promoted to its parent class.
+  /// \param[in] sampler The sampler to setup
+  /// \return Status of the function
+  Status SetupSamplerForCache(std::shared_ptr<SamplerObj> *sampler) override;
+
+  /// \brief If a cache has been added into the ascendant tree over this CSV node, then the cache will be executing
+  ///     a sampler for fetching the data.  As such, any options in the CSV node need to be reset to its defaults so
+  ///     that this CSV node will produce the full set of data into the cache.
+  ///     Note: This function is common among NonMappableSourceNode and should be promoted to its parent class.
+  /// \return Status of the function
+  Status MakeSimpleProducer() override;
+
  private:
   std::vector<std::string> dataset_files_;
   char field_delim_;

@@ -95,12 +95,6 @@ Status CSVNode::ValidateParams() {
 Status CSVNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
 
-  // CSVOp by itself is a non-mappable dataset that does not support sampling.
-  // However, if a cache operator is injected at some other place higher in the tree, that cache can
-  // inherit this sampler from the leaf, providing sampling support from the caching layer.
-  // That is why we save the sampler here in a leaf node that does not use sampling.
-  std::shared_ptr<SamplerObj> sampler_ = SelectSampler(num_samples_, shuffle_files, num_shards_, shard_id_);
-
   // Sort the dataset files in a lexicographical order
   std::vector<std::string> sorted_dataset_files = dataset_files_;
   std::sort(sorted_dataset_files.begin(), sorted_dataset_files.end());
@@ -119,10 +113,9 @@ Status CSVNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
     }
   }
 
-  std::shared_ptr<CsvOp> csv_op =
-    std::make_shared<CsvOp>(sorted_dataset_files, field_delim_, column_default_list, column_names_, num_workers_,
-                            rows_per_buffer_, num_samples_, worker_connector_size_, connector_que_size_, shuffle_files,
-                            num_shards_, shard_id_, std::move(sampler_->SamplerBuild()));
+  std::shared_ptr<CsvOp> csv_op = std::make_shared<CsvOp>(
+    sorted_dataset_files, field_delim_, column_default_list, column_names_, num_workers_, rows_per_buffer_,
+    num_samples_, worker_connector_size_, connector_que_size_, shuffle_files, num_shards_, shard_id_);
 
   RETURN_IF_NOT_OK(csv_op->Init());
 
@@ -140,7 +133,6 @@ Status CSVNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
 
     node_ops->push_back(shuffle_op);
   }
-  RETURN_IF_NOT_OK(AddCacheOp(node_ops));
 
   node_ops->push_back(csv_op);
 
@@ -186,6 +178,28 @@ Status CSVNode::to_json(nlohmann::json *out_json) {
     args["cache"] = cache_args;
   }
   *out_json = args;
+  return Status::OK();
+}
+
+// Note: The following two functions are common among NonMappableSourceNode and should be promoted to its parent class.
+// CSV by itself is a non-mappable dataset that does not support sampling.
+// However, if a cache operator is injected at some other place higher in the tree, that cache can
+// inherit this sampler from the leaf, providing sampling support from the caching layer.
+// That is why we setup the sampler for a leaf node that does not use sampling.
+Status CSVNode::SetupSamplerForCache(std::shared_ptr<SamplerObj> *sampler) {
+  bool shuffle_files = (shuffle_ == ShuffleMode::kGlobal || shuffle_ == ShuffleMode::kFiles);
+  *sampler = SelectSampler(num_samples_, shuffle_files, num_shards_, shard_id_);
+  return Status::OK();
+}
+
+// If a cache has been added into the ascendant tree over this CSV node, then the cache will be executing
+// a sampler for fetching the data.  As such, any options in the CSV node need to be reset to its defaults so
+// that this CSV node will produce the full set of data into the cache.
+Status CSVNode::MakeSimpleProducer() {
+  shard_id_ = 0;
+  num_shards_ = 1;
+  shuffle_ = ShuffleMode::kFalse;
+  num_samples_ = 0;
   return Status::OK();
 }
 }  // namespace dataset

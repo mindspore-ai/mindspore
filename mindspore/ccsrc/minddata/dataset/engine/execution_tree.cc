@@ -320,7 +320,6 @@ Status ExecutionTree::PostAction() {
   // The IR version cannot detect an invalid case of a cache on Map with random tensor operation from Python API.
   // This is because Python API binding to TensorOperation is still in progress.
   post_actions.push_back(std::make_unique<CacheErrorPass>());
-  post_actions.push_back(std::make_unique<CacheTransformPass>());
   post_actions.push_back(std::make_unique<RepeatPass>());
 #endif
 

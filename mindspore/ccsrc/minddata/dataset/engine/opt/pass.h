@@ -44,7 +44,6 @@ class TakeNode;
 class TransferNode;
 class ZipNode;
 #ifdef ENABLE_PYTHON
-class GeneratorNode;
 class SyncWaitNode;
 #endif
 #ifndef ENABLE_ANDROID
@@ -129,14 +128,14 @@ class IRPass : public std::enable_shared_from_this<IRPass> {
 class IRTreePass : public IRPass {
  public:
   /// \brief Run the transformation pass against the IR tree.
-  /// \param[inout] root_ir Pointer to the IR tree to be transformed.
-  /// \param[inout] modified Indicate if the tree was modified
+  /// \param[in,out] root_ir Pointer to the IR tree to be transformed.
+  /// \param[in,out] modified Indicate if the tree was modified
   Status Run(std::shared_ptr<DatasetNode> root_ir, bool *const modified) final;
 
   /// \brief Derived classes may implement the runOnTree function to implement tree transformation.
   ///     "modified" flag needs to be set to true if tree is modified during the pass execution.
-  /// \param[inout] tree The tree to operate on.
-  /// \param[inout] Indicate if the tree was modified.
+  /// \param[in,out] tree The tree to operate on.
+  /// \param[in,out] Indicate if the tree was modified.
   /// \return Status The status code returned
   virtual Status RunOnTree(std::shared_ptr<DatasetNode> root_ir, bool *const modified) { return Status::OK(); }
 };
@@ -164,8 +163,8 @@ class IRNodePass : public IRPass {
   ~IRNodePass() = default;
 
   /// \brief Run the transformation pass against the IR tree
-  /// \param[inout] root_ir Pointer to the IR tree to be transformed
-  /// \param[inout] modified Indicator if the tree was changed
+  /// \param[in,out] root_ir Pointer to the IR tree to be transformed
+  /// \param[in,out] modified Indicator if the tree was changed
   Status Run(std::shared_ptr<DatasetNode> root_ir, bool *const modified) final;
 
   /// \brief Derived classes may implement the Visit function to implement any initial visit work on the way down
@@ -210,8 +209,14 @@ class IRNodePass : public IRPass {
 #endif
   virtual Status Visit(std::shared_ptr<MapNode> node, bool *const modified);
   virtual Status VisitAfter(std::shared_ptr<MapNode> node, bool *const modified);
+#ifndef ENABLE_ANDROID
+  virtual Status Visit(std::shared_ptr<MindDataNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<MindDataNode> node, bool *const modified);
+#endif
   virtual Status Visit(std::shared_ptr<ProjectNode> node, bool *const modified);
   virtual Status VisitAfter(std::shared_ptr<ProjectNode> node, bool *const modified);
+  virtual Status Visit(std::shared_ptr<RandomNode> node, bool *const modified);
+  virtual Status VisitAfter(std::shared_ptr<RandomNode> node, bool *const modified);
   virtual Status Visit(std::shared_ptr<RenameNode> node, bool *const modified);
   virtual Status VisitAfter(std::shared_ptr<RenameNode> node, bool *const modified);
   virtual Status Visit(std::shared_ptr<RepeatNode> node, bool *const modified);
@@ -270,14 +275,14 @@ class Pass : public std::enable_shared_from_this<Pass> {
 class TreePass : public Pass {
  public:
   /// \brief Run the transformation pass against the execution tree.
-  /// \param[inout] tree Pointer to the execution tree to be transformed.
-  /// \param[inout] modified Indicate if the tree was modified
+  /// \param[in,out] tree Pointer to the execution tree to be transformed.
+  /// \param[in,out] modified Indicate if the tree was modified
   Status Run(ExecutionTree *tree, bool *const modified) final;
 
   /// \brief Derived classes may implement the runOnTree function to implement tree transformation.
   ///     "modified" flag needs to be set to true if tree is modified during the pass execution.
-  /// \param[inout] tree The tree to operate on.
-  /// \param[inout] Indicate of the tree was modified.
+  /// \param[in,out] tree The tree to operate on.
+  /// \param[in,out] Indicate of the tree was modified.
   /// \return Status The status code returned
   virtual Status RunOnTree(ExecutionTree *tree, bool *const modified) { return Status::OK(); }
 };
@@ -305,8 +310,8 @@ class NodePass : public Pass {
   ~NodePass() = default;
 
   /// \brief Run the transformation pass against the execution tree
-  /// \param[inout] tree Pointer to the execution tree to be transformed
-  /// \param[inout] modified Indicator if the tree was changed
+  /// \param[in,out] tree Pointer to the execution tree to be transformed
+  /// \param[in,out] modified Indicator if the tree was changed
   Status Run(ExecutionTree *tree, bool *const modified) final;
 
   /// \brief Derived classes may implement the PreRunOnNode function to implement any initial visit work on the way down

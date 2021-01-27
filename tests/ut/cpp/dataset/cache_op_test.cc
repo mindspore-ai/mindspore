@@ -465,24 +465,21 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   rc = ccbuilder.Build(&myClient);
   ASSERT_TRUE(rc.IsOk());
 
-  // In a mappable dataset, it uses a complex interactions of cache lookup op and cache merge op.
-  // Rather than manually build this, the way to do it is to choose the position of the cache in the tree by
-  // adding a CacheOp.  Then, the tree prepare code will drive a transform that will remove the CacheOp and
-  // replace it with the required tree structures for cache lookup op and cache merge op.
-
-  std::shared_ptr<CacheOp> myCacheOp;
-  rc = CacheOp::Builder().SetNumWorkers(4).SetClient(myClient).SetRowsPerBuffer(3).Build(&myCacheOp);
+  std::shared_ptr<CacheLookupOp> myLookupOp;
+  rc = CacheLookupOp::Builder().SetNumWorkers(4).SetClient(myClient).SetSampler(seq_sampler).Build(&myLookupOp);
+  std::shared_ptr<CacheMergeOp> myMergeOp;
+  rc = CacheMergeOp::Builder().SetNumWorkers(4).SetClient(myClient).Build(&myMergeOp);
 
   std::shared_ptr<ImageFolderOp> so;
   ImageFolderOp::Builder builder;
-  builder.SetSampler(std::move(seq_sampler))
-    .SetOpConnectorSize(3)
+  builder.SetOpConnectorSize(3)
     .SetNumWorkers(3)
     .SetRowsPerBuffer(2)
     .SetExtensions({".jpg", ".JPEG"})
     .SetRecursive(true)
     .SetImageFolderDir(datasets_root_path_ + "/testPK/data");
   rc = builder.Build(&so);
+  so->SetSampler(myLookupOp);
   ASSERT_TRUE(rc.IsOk());
 
   // RepeatOp
@@ -495,7 +492,9 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   rc = myTree->AssociateNode(so);
   ASSERT_TRUE(rc.IsOk());
 
-  rc = myTree->AssociateNode(myCacheOp);
+  rc = myTree->AssociateNode(myLookupOp);
+  ASSERT_TRUE(rc.IsOk());
+  rc = myTree->AssociateNode(myMergeOp);
   ASSERT_TRUE(rc.IsOk());
 
   rc = myTree->AssociateNode(myRepeatOp);
@@ -503,9 +502,11 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   rc = myTree->AssignRoot(myRepeatOp);
   ASSERT_TRUE(rc.IsOk());
 
-  rc = myRepeatOp->AddChild(myCacheOp);
+  rc = myRepeatOp->AddChild(myMergeOp);
   ASSERT_TRUE(rc.IsOk());
-  rc = myCacheOp->AddChild(so);
+  rc = myMergeOp->AddChild(myLookupOp);
+  ASSERT_TRUE(rc.IsOk());
+  rc = myMergeOp->AddChild(so);
   ASSERT_TRUE(rc.IsOk());
 
   rc = myTree->Prepare(1);
@@ -529,122 +530,6 @@ TEST_F(MindDataTestCacheOp, DISABLED_TestImageFolderCacheMerge) {
   }
   ASSERT_EQ(rowCount, 176);
   std::cout << "Row count : " << rowCount << std::endl;
-  rc = myClient->DestroyCache();
-  ASSERT_TRUE(rc.IsOk());
-}
-
-//// Simple test with a repeated cache op over random data producer.
-//// The difference in this one is that you do not add the sampler to the cache op directly.
-//// Instead, the sampler is added as part of the leaf op construction.  Then, the prepare
-//// phase will pull this up from the leaf and into the cache.
-//// It removes the sampler from the leaf op, which doesn't make sense there anyway for
-//// the RandomDataOp which doesn't support sampling without a cache.
-////
-////     RepeatOp
-////        |
-////     CacheOp
-////        |
-////   RandomDataOp
-////
-TEST_F(MindDataTestCacheOp, DISABLED_TestCacheInheritSampler) {
-  // Clear the rc of the master thread if any
-  (void)TaskManager::GetMasterThreadRc();
-  Status rc;
-  int32_t rank = 0;  // not used
-  MS_LOG(INFO) << "UT test TestCacheInheritSampler";
-
-  session_id_type env_session;
-  rc = GetSessionFromEnv(&env_session);
-  ASSERT_TRUE(rc.IsOk());
-
-  int64_t num_samples = 0;
-  int64_t start_index = 0;
-  auto seq_sampler = std::make_shared<SequentialSamplerRT>(num_samples, start_index);
-
-  // Start with an empty execution tree
-  auto myTree = std::make_shared<ExecutionTree>();
-
-  // Create a schema using the C api's
-  std::unique_ptr<DataSchema> testSchema = std::make_unique<DataSchema>();
-
-  // 2 columns. First column is an "image" 640,480,3
-  TensorShape c1Shape({640, 480, 3});
-  ColDescriptor c1("image", DataType(DataType::DE_INT8), TensorImpl::kFlexible,
-                   rank,  // not used
-                   &c1Shape);
-
-  // Column 2 will just be a scalar label number
-  TensorShape c2Shape({});  // empty shape is a 1-value scalar Tensor
-  ColDescriptor c2("label", DataType(DataType::DE_UINT32), TensorImpl::kFlexible, rank, &c2Shape);
-
-  testSchema->AddColumn(c1);
-  testSchema->AddColumn(c2);
-
-  // RandomDataOp
-  std::shared_ptr<RandomDataOp> myRandomDataOp;
-  rc = RandomDataOp::Builder()
-         .SetRowsPerBuffer(2)
-         .SetNumWorkers(4)
-         .SetDataSchema(std::move(testSchema))
-         .SetTotalRows(10)
-         .SetSampler(std::move(seq_sampler))
-         .Build(&myRandomDataOp);
-  ASSERT_TRUE(rc.IsOk());
-  rc = myTree->AssociateNode(myRandomDataOp);
-  ASSERT_TRUE(rc.IsOk());
-
-  // CacheOp
-  CacheClient::Builder ccbuilder;
-  // use arbitrary session of 1, size of 0, spilling// is true
-  ccbuilder.SetSessionId(env_session).SetCacheMemSz(4).SetSpill(true);
-  std::shared_ptr<CacheClient> myClient;
-  rc = ccbuilder.Build(&myClient);
-  ASSERT_TRUE(rc.IsOk());
-  std::shared_ptr<CacheOp> myCacheOp;
-  rc = CacheOp::Builder().SetNumWorkers(4).SetClient(myClient).SetRowsPerBuffer(3).Build(&myCacheOp);
-  ASSERT_TRUE(rc.IsOk());
-  rc = myTree->AssociateNode(myCacheOp);
-  ASSERT_TRUE(rc.IsOk());
-
-  // RepeatOp
-  uint32_t numRepeats = 4;
-  std::shared_ptr<RepeatOp> myRepeatOp;
-  rc = RepeatOp::Builder(numRepeats).Build(&myRepeatOp);
-  ASSERT_TRUE(rc.IsOk());
-  rc = myTree->AssociateNode(myRepeatOp);
-  ASSERT_TRUE(rc.IsOk());
-
-  // Assign tree relations and root
-  rc = myRepeatOp->AddChild(myCacheOp);
-  ASSERT_TRUE(rc.IsOk());
-  rc = myCacheOp->AddChild(myRandomDataOp);
-  ASSERT_TRUE(rc.IsOk());
-  rc = myTree->AssignRoot(myRepeatOp);
-  ASSERT_TRUE(rc.IsOk());
-
-  MS_LOG(INFO) << "Launching tree and begin iteration";
-  rc = myTree->Prepare(1);
-  ASSERT_TRUE(rc.IsOk());
-
-  std::cout << *myClient << std::endl;
-
-  rc = myTree->Launch();
-  ASSERT_TRUE(rc.IsOk());
-
-  // Start the loop of reading tensors from our pipeline
-  DatasetIterator dI(myTree);
-  TensorRow tensorList;
-  rc = dI.FetchNextTensorRow(&tensorList);
-  ASSERT_TRUE(rc.IsOk());
-  int rowCount = 0;
-  while (!tensorList.empty()) {
-    // Don't display these rows, just count them
-    MS_LOG(INFO) << "Row fetched #: " << rowCount;
-    rc = dI.FetchNextTensorRow(&tensorList);
-    ASSERT_TRUE(rc.IsOk());
-    rowCount++;
-  }
-  ASSERT_EQ(rowCount, 40);
   rc = myClient->DestroyCache();
   ASSERT_TRUE(rc.IsOk());
 }

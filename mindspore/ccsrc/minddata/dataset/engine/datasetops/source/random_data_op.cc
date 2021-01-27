@@ -34,8 +34,7 @@ RandomDataOp::Builder::Builder()
       builder_num_workers_(0),
       builder_op_connector_size_(0),
       builder_rows_per_buffer_(0),
-      builder_total_rows_(0),
-      builder_sampler_(nullptr) {
+      builder_total_rows_(0) {
   // Some arguments to the RandomDataOp have a default argument that is taken from the config.
   // The user may override these defaults by using the builder set methods.
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
@@ -48,9 +47,8 @@ RandomDataOp::Builder::Builder()
 Status RandomDataOp::Builder::Build(std::shared_ptr<RandomDataOp> *out_op) {
   RETURN_IF_NOT_OK(SanityCheck());
 
-  *out_op =
-    std::make_shared<RandomDataOp>(builder_num_workers_, builder_op_connector_size_, builder_rows_per_buffer_,
-                                   builder_total_rows_, std::move(builder_data_schema_), std::move(builder_sampler_));
+  *out_op = std::make_shared<RandomDataOp>(builder_num_workers_, builder_op_connector_size_, builder_rows_per_buffer_,
+                                           builder_total_rows_, std::move(builder_data_schema_));
 
   return Status::OK();
 }
@@ -65,8 +63,8 @@ Status RandomDataOp::Builder::SanityCheck() const {
 
 // Constructor for RandomDataOp
 RandomDataOp::RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64_t rows_per_buffer, int64_t total_rows,
-                           std::unique_ptr<DataSchema> data_schema, std::shared_ptr<SamplerRT> sampler)
-    : ParallelOp(num_workers, op_connector_size, std::move(sampler)),
+                           std::unique_ptr<DataSchema> data_schema)
+    : ParallelOp(num_workers, op_connector_size),
       buffer_id_(0),
       rows_per_buffer_(rows_per_buffer),
       total_rows_(total_rows),
@@ -80,8 +78,7 @@ RandomDataOp::RandomDataOp(int32_t num_workers, int32_t op_connector_size, int64
   if (total_rows_ == 0) {
     total_rows_ = GenRandomInt(1, kMaxTotalRows);
   }
-  // If the user did not provide a schema, then we will ask the op to generate a pseudo-random
-  // schema.
+  // If the user did not provide a schema, then we will ask the op to generate a pseudo-random schema.
   // See details of generateSchema function to learn what type of schema it will create.
   if (data_schema_ == nullptr) {
     GenerateSchema();
