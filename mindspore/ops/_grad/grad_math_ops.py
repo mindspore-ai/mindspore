@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -448,22 +448,11 @@ def get_bprop_rsqrt(self):
 @bprop_getters.register(P.Reciprocal)
 def get_bprop_reciprocal(self):
     """Grad definition for `Reciprocal` operation."""
-    if self.target == "GPU":
-        neg = P.Neg()
-        mul = P.Mul()
-        square = P.Square()
-        reciprocal = P.Reciprocal()
+    reciprocal_grad = G.ReciprocalGrad()
 
-        def bprop(x, out, dout):
-            g = neg(reciprocal(square(x)))
-            dx = mul(dout, g)
-            return (dx,)
-    else:
-        reciprocal_grad = G.ReciprocalGrad()
-
-        def bprop(x, out, dout):
-            dx = reciprocal_grad(out, dout)
-            return (dx,)
+    def bprop(x, out, dout):
+        dx = reciprocal_grad(out, dout)
+        return (dx,)
 
     return bprop
 
