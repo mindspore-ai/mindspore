@@ -35,16 +35,6 @@
 namespace mindspore {
 namespace session {
 enum GraphType : int { COMMON_GRAPH = 0, CONDITION_GRAPH = 1, BRANCH_START = 2, BRANCH_END = 3 };
-struct InputTensorInfo {
-  std::vector<tensor::TensorPtr> input_tensors;
-  std::vector<int64_t> input_tensors_mask;
-  std::set<KernelWithIndex> input_kernel;
-};
-
-struct OutputTensorInfo {
-  tensor::TensorPtr output_stub_tensor;
-  bool is_weight;
-};
 
 class AscendSession : public SessionBasic {
  public:
@@ -68,8 +58,8 @@ class AscendSession : public SessionBasic {
                    const std::vector<int64_t> &tensors_mask) override;
   void RunOpImpl(const GraphInfo &graph_info, OpRunInfo *op_run_info, std::vector<tensor::TensorPtr> *input_tensors,
                  VectorRef *outputs, const std::vector<int64_t> &tensors_mask) override;
-  void RunOpsInGraphImpl(const GraphId &graph_id, const std::vector<tensor::TensorPtr> &inputs,
-                         VectorRef *outputs) override;
+  void BuildOpsInGraph(const GraphId &graph_id, const std::map<AnfNodePtr, size_t> &parameter_index,
+                       const std::vector<tensor::TensorPtr> &graph_inputs) override;
 
  private:
   // compile child graph when session have multiple child graphs
@@ -112,7 +102,7 @@ class AscendSession : public SessionBasic {
   const std::vector<GraphType> &GetGraphOrderType(GraphId final_graph_id) const;
   // check if graph cache exist
   bool GraphCacheExist(const GraphInfo &graph_info) const;
-  // sync intial tensors' data to device
+  // sync initial tensors' data to device
   void SyncInitialTenosrToDevice();
   void SetFinalGraphSummaryFlag(const std::shared_ptr<KernelGraph> &kernel_graph);
   // create parameter to receive data from multiple branch output
@@ -128,8 +118,10 @@ class AscendSession : public SessionBasic {
   KernelGraphPtr PreBuildOp(const OpRunInfo &op_run_info, const GraphInfo &graph_info,
                             const std::vector<tensor::TensorPtr> &input_tensors,
                             const std::vector<int64_t> &tensors_mask);
-  void BuildOpsInGraph(KernelGraph *graph, const std::map<AnfNodePtr, size_t> &parameter_index,
-                       const std::vector<tensor::TensorPtr> &graph_inputs);
+  void GetOpInputStubTensors(const CNodePtr &cnode, const std::map<AnfNodePtr, size_t> &parameter_index,
+                             const std::vector<tensor::TensorPtr> &graph_inputs,
+                             const std::map<KernelWithIndex, OutputTensorInfo> &node_output_info,
+                             InputTensorInfo *input_tensor_info);
   // key is final_graph_id,value is child graph execute order of final graph
   std::unordered_map<GraphId, std::vector<GraphId>> graph_execute_orders_;
   // key is final_graph_id,value is the graph types of child graphs
