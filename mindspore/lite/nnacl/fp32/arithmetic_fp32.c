@@ -16,7 +16,6 @@
 
 #include "nnacl/fp32/arithmetic_fp32.h"
 #include <math.h>
-#include <float.h>
 
 #define ACCURACY_DATA 0.00000001
 

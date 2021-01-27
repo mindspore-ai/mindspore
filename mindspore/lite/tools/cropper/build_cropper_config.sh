@@ -131,7 +131,6 @@ getCommonFile() {
   others_files_c=(
     "${MINDSPORE_HOME}"/mindspore/lite/src/ops/primitive_c.cc
     "${MINDSPORE_HOME}"/mindspore/lite/nnacl/nnacl_utils.c
-    "${MINDSPORE_HOME}"/mindspore/lite/nnacl/pack.c
     "${MINDSPORE_HOME}"/mindspore/lite/src/runtime/kernel/arm/fp16/common_fp16.cc
     "${MINDSPORE_HOME}"/mindspore/lite/src/ops/populate/arithmetic_populate.cc
     "${MINDSPORE_HOME}"/mindspore/lite/src/ops/populate/arithmetic_self_populate.cc

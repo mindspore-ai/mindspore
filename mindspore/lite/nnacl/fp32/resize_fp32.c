@@ -284,17 +284,17 @@ int ResizeNearestNeighbor(const float *input_data, float *output_data, const int
 }
 
 float CalculateAsymmetric(int x_resized, int length_original, int length_resized) {
-  float scale = (float)(length_resized) / length_original;
+  float scale = (float)(length_resized) / (float)(length_original);
   return (float)(x_resized) / scale;
 }
 
 float CalculateAlignCorners(int x_resized, int length_original, int length_resized) {
-  float scale = (float)(length_resized - 1) / (length_original - 1);
+  float scale = (float)(length_resized - 1) / (float)(length_original - 1);
   return (float)(x_resized) / scale;
 }
 
 float CalculateHalfPixel(int x_resized, int length_original, int length_resized) {
-  float scale = (float)(length_resized) / length_original;
+  float scale = (float)(length_resized) / (float)(length_original);
   float actual = (float)(x_resized + 0.5) / scale - 0.5;
   return actual > 0 ? actual : 0;
 }
