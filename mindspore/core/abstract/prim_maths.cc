@@ -121,7 +121,8 @@ AbstractBasePtr InferImplEqual(const AnalysisEnginePtr &, const PrimitivePtr &pr
   return ret;
 }
 
-// To reduce code repeat, use InferImplReduceFunc. Currently registered with ReduceMean, ReduceSum.
+// To reduce code repeat, use InferImplReduceFunc. Currently registered with ReduceMean, ReduceSum,
+// ReduceAll, ReduceAny, ReduceMax, ReduceMin.
 AbstractBasePtr InferImplReduceFunc(const AnalysisEnginePtr &, const PrimitivePtr &primitive,
                                     const AbstractBasePtrList &args_spec_list) {
   const std::string op_name = primitive->name();
