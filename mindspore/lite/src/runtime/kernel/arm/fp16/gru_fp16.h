@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRU_FP32_H_
-#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRU_FP32_H_
+#ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRU_H_
+#define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRU_H_
 #include <vector>
 #include "src/lite_kernel.h"
 #include "nnacl/gru_parameter.h"
 
 namespace mindspore::kernel {
-class GruCPUKernel : public LiteKernel {
+class GruFp16CPUKernel : public LiteKernel {
  public:
-  GruCPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
-               const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
-               const mindspore::lite::PrimitiveC *primitive)
+  GruFp16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
+                   const std::vector<lite::Tensor *> &outputs, const lite::InnerContext *ctx,
+                   const mindspore::lite::PrimitiveC *primitive)
       : LiteKernel(parameter, inputs, outputs, ctx, primitive) {
     gru_parm_ = reinterpret_cast<GruParameter *>(op_parameter_);
   }
 
-  ~GruCPUKernel() override { FreeTmpBuffer(); }
+  ~GruFp16CPUKernel() override { FreeTmpBuffer(); }
 
   int Init() override;
   int ReSize() override;
@@ -41,12 +41,12 @@ class GruCPUKernel : public LiteKernel {
   int InitBuffer();
   int InitWeightBias();
 
-  float *gate_buffer_ = nullptr;
-  float *weight_g_ptr_ = nullptr;
-  float *weight_r_ptr_ = nullptr;
-  float *bias_ptr_ = nullptr;
+  float16_t *gate_buffer_ = nullptr;
+  float16_t *weight_g_ptr_ = nullptr;
+  float16_t *weight_r_ptr_ = nullptr;
+  float16_t *bias_ptr_ = nullptr;
   GruParameter *gru_parm_ = nullptr;
 };
 }  // namespace mindspore::kernel
 
-#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP32_GRU_FP32_H_
+#endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_GRU_H_
