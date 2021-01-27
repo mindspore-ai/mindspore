@@ -77,14 +77,17 @@ STATUS NestedLoopExpandPass::Run(schema::MetaGraphT *graph) {
     graph_->subGraph.at(idx) = nullptr;
   }
 
-
-
   for (auto &node_idx : main_graph->nodeIndices) {
     auto &node = graph_->nodes.at(node_idx);
     if (node->primitive->value.type == PrimitiveType_Partial) {
       auto &subgraph_idx = ((schema::PartialT *)(node->primitive->value.value))->subGraphIndex;
-      for (auto i = 0; i < subgraph_idx; ++i) {
-        if (graph_->subGraph.at(subgraph_idx) == nullptr) {
+      if (graph_->subGraph.at(subgraph_idx) == nullptr) {
+        node = nullptr;
+        continue;
+      }
+      auto tmp_subgraph_idx = subgraph_idx;
+      for (auto i = 0; i < tmp_subgraph_idx; ++i) {
+        if (graph_->subGraph.at(i) == nullptr) {
           subgraph_idx--;
         }
       }
