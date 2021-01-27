@@ -68,7 +68,7 @@ int TensorListGetItemCPUKernel::Run() {
   } else {
     // reset 0 and dtype = dtype_
     // TODO(DT_VARIANT): dtype = DT_VARIANT is not handle
-    auto out_data = out_tensors_[0]->MutableData();
+    auto out_data = out_tensors_[0]->data_c();
     if (out_data == nullptr) {
       MS_LOG(ERROR) << "data of out_tensors_[0] is nullptr";
       return RET_ERROR;
