@@ -36,15 +36,15 @@ constexpr size_t GATHER_V2_INPUTS_VALUE_SIZE = 3;
 // If the strategy corresponding to axis is more than 1, index must be evenly distributed across the axis-dimension of
 // the input.
 // If Index is a scalar or n-dimension vector(n > 1), the strategy corresponding to axis must be 1.
-class GatherV2Info : public OperatorInfo {
+class GatherInfo : public OperatorInfo {
  public:
-  GatherV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-               const PrimitiveAttrs &attrs)
+  GatherInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+             const PrimitiveAttrs &attrs)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherV2Cost>()),
         axis_(-1),
         index_size_(0),
         axis_strategy_(1) {}
-  ~GatherV2Info() override = default;
+  ~GatherInfo() override = default;
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
 

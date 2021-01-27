@@ -30,7 +30,7 @@ class CriterionsFaceAttri(nn.Cell):
         super(CriterionsFaceAttri, self).__init__()
 
         # label
-        self.gatherv2 = P.GatherV2()
+        self.gatherv2 = P.Gather()
         self.squeeze = P.Squeeze(axis=1)
         self.cast = P.Cast()
         self.reshape = P.Reshape()

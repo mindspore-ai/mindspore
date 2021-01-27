@@ -115,7 +115,7 @@ namespace {
 constexpr auto kNameArgMaxWithValue = "ArgMaxWithValue";
 constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
 constexpr auto kNameBatchMatMul = "BatchMatMul";
-constexpr auto kNameGatherV2 = "GatherV2";
+constexpr auto kNameGatherV2 = "Gather";
 constexpr auto kNameTensorAdd = "TensorAdd";
 std::map<std::string, mindspore::ActivationType> activation_map = {
   {ops::kNameAbs, mindspore::ABS},         {ops::kNameElu, mindspore::ELU},

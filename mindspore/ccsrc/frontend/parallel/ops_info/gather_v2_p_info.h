@@ -29,17 +29,17 @@
 
 namespace mindspore {
 namespace parallel {
-class GatherV2PInfo : public OperatorInfo {
+class GatherPInfo : public OperatorInfo {
  public:
-  GatherV2PInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
-                const PrimitiveAttrs &attrs, const std::string &replace_op_name = GATHERV2)
+  GatherPInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
+              const PrimitiveAttrs &attrs, const std::string &replace_op_name = GATHERV2)
       : OperatorInfo(name, inputs_shape, outputs_shape, attrs, std::make_shared<GatherV2PCost>()),
         axis_(0),
         bias_(0),
         index_offset_(0),
         slice_size_(0),
         replace_op_name_(replace_op_name) {}
-  ~GatherV2PInfo() override = default;
+  ~GatherPInfo() override = default;
   Status Init(const StrategyPtr &strategy) override;
   Status InitForCostModel(const StrategyPtr &strategy) override;
 
@@ -85,19 +85,19 @@ class GatherV2PInfo : public OperatorInfo {
   std::vector<int64_t> index_offsets_;
 };
 
-class SparseGatherV2Info : public GatherV2PInfo {
+class SparseGatherV2Info : public GatherPInfo {
  public:
   SparseGatherV2Info(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                      const PrimitiveAttrs &attrs, const std::string &replace_op_name = SPARSE_GATHERV2)
-      : GatherV2PInfo(name, inputs_shape, outputs_shape, attrs, replace_op_name) {}
+      : GatherPInfo(name, inputs_shape, outputs_shape, attrs, replace_op_name) {}
   ~SparseGatherV2Info() override = default;
 };
 
-class EmbeddingLookupInfo : public GatherV2PInfo {
+class EmbeddingLookupInfo : public GatherPInfo {
  public:
   EmbeddingLookupInfo(const std::string &name, const Shapes &inputs_shape, const Shapes &outputs_shape,
                       const PrimitiveAttrs &attrs)
-      : GatherV2PInfo(name, inputs_shape, outputs_shape, attrs) {}
+      : GatherPInfo(name, inputs_shape, outputs_shape, attrs) {}
   ~EmbeddingLookupInfo() override = default;
 };
 }  // namespace parallel

@@ -200,7 +200,7 @@ class Conv2d_Thor(_Conv):
             self.device_shape_pad_flag = True
             self.device_shape_pad = P.Pad(((0, 0), (0, C0 - self.in_channels), (0, 0), (0, C0 - self.in_channels)))
         self.slice = P.Slice()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.freq = Tensor(frequency, mstype.int32)
         self.loss_scale = Tensor(1 / loss_scale, mstype.float16)
         self.axis = 0
@@ -383,7 +383,7 @@ class Dense_Thor(Cell):
         self.pad = P.Pad(((0, 24), (0, 24)))
         self.pad1 = P.Pad(((0, 8), (0, 8)))
         self.slice = P.Slice()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.assignadd = P.AssignAdd()
         self.freq = Tensor(frequency, mstype.int32)
         self.axis = 0

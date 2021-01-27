@@ -62,7 +62,7 @@ bool InConvertWhiteList(const AnfNodePtr &node, size_t index) {
                                                                         {prim::kPrimCast, {2}},
                                                                         {prim::kPrimTranspose, {2}},
                                                                         {prim::kPrimOneHot, {2}},
-                                                                        {prim::kPrimGatherV2, {3}},
+                                                                        {prim::kPrimGather, {3}},
                                                                         {prim::kPrimReshape, {2}},
                                                                         {prim::kPrimAssign, {1}},
                                                                         {prim::kPrimAssignAdd, {1}},

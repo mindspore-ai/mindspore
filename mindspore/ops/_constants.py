@@ -32,3 +32,5 @@ kScalarUsub = "ScalarUsub"
 
 kTupleGetItem = "TupleGetItem"
 kMakeTuple = "MakeTuple"
+
+kGather = "Gather"

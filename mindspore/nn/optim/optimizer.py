@@ -537,7 +537,7 @@ class Optimizer(Cell):
 
 
 op_add = P.AddN()
-op_gather = P.GatherV2()
+op_gather = P.Gather()
 op_mul = P.Mul()
 
 _apply_decay = C.MultitypeFuncGraph("apply_decay")
@@ -625,7 +625,7 @@ class _IteratorLearningRate(LearningRateSchedule):
             raise TypeError("Learning rate should be Tensor.")
 
         self.learning_rate = Parameter(learning_rate, name)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
 
     def construct(self, global_step):
         return self.gather(self.learning_rate, global_step, 0)

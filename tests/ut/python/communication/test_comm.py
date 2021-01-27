@@ -27,7 +27,7 @@ from mindspore.nn import ReLU
 from mindspore.nn import TrainOneStepCell, WithLossCell
 from mindspore.ops.operations.comm_ops import AllReduce, AllGather, _AlltoAll, ReduceOp, ReduceScatter
 from mindspore.ops.operations.comm_ops import Broadcast, AllSwap
-from mindspore.ops.operations.array_ops import GatherV2
+from mindspore.ops.operations.array_ops import Gather
 import mindspore
 
 # pylint: disable=W0212
@@ -130,7 +130,7 @@ class AllSwapNet(nn.Cell):
         part_slice = batch_size / 2
         self.send_size = Tensor([0, part_slice*out_channel, part_slice*out_channel], mindspore.int64)
         self.recv_size = Tensor([part_slice*out_channel, part_slice*out_channel, 0], mindspore.int64)
-        self.gatherv2 = GatherV2()
+        self.gatherv2 = Gather()
         self.input = Tensor(np.ones([1]), mindspore.int32)
     def construct(self, x):
         x = self.allswap(x, self.send_size, self.recv_size)

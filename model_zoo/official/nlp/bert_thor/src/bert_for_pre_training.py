@@ -81,7 +81,7 @@ class GetMaskedLMOutput(nn.Cell):
         super(GetMaskedLMOutput, self).__init__()
         self.width = config.hidden_size
         self.reshape = P.Reshape()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
 
         weight_init = TruncatedNormal(config.initializer_range)
         self.dense = Dense_Thor(in_channels=self.width,

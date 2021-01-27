@@ -195,7 +195,7 @@ class EmbeddingLookup(nn.Cell):
         self.vocab_size = config.vocab_size
         self.embedding_size = config.embedding_size
         self.embedding_table = Parameter(initializer(TruncatedNormal(0.02), [self.vocab_size, self.embedding_size]))
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.shape = (-1, config.seq_length, config.embedding_size)
     def construct(self, input_ids):
         output = self.gather(self.embedding_table, input_ids, 0)

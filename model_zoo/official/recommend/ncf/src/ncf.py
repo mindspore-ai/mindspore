@@ -277,7 +277,7 @@ class PredictWithSigmoid(nn.Cell):
         self.squeeze = P.Squeeze()
         self.k = k
         self.num_eval_neg = num_eval_neg
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.reshape = P.Reshape()
         self.reducesum = P.ReduceSum(keep_dims=False)
         self.notequal = P.NotEqual()
