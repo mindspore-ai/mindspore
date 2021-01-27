@@ -34,7 +34,6 @@ class AvgPoolingGradCPUKernel : public MKLCPUKernel {
               const std::vector<AddressPtr> &outputs) override;
 
  private:
-  int stride_{0};
   std::vector<size_t> kernel_size_;
 };
 
