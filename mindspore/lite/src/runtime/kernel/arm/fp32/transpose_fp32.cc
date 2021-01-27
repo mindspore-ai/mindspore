@@ -79,6 +79,33 @@ TransposeCPUKernel::~TransposeCPUKernel() {
   }
 }
 
+int TransposeCPUKernel::NhNcTranspose(lite::Tensor *in_tensor, lite::Tensor *out_tensor, TransposeParameter *param) {
+  auto out_shape = out_tensor->shape();
+  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 2 && param->perm_[2] == 3 &&
+      param->perm_[3] == 1) {
+    if (in_tensor->data_type() == kNumberTypeFloat32) {
+      PackNCHWToNHWCFp32(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[1] * out_shape[2],
+                         out_shape[3]);
+    } else if (in_tensor->data_type() == kNumberTypeInt8) {
+      PackNCHWToNHWCInt8(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[1] * out_shape[2],
+                         out_shape[3]);
+    }
+    return RET_OK;
+  }
+  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 3 && param->perm_[2] == 1 &&
+      param->perm_[3] == 2) {
+    if (in_tensor->data_type() == kNumberTypeFloat32) {
+      PackNHWCToNCHWFp32(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[2] * out_shape[3],
+                         out_shape[1]);
+    } else if (in_tensor->data_type() == kNumberTypeInt8) {
+      PackNHWCToNCHWInt8(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[2] * out_shape[3],
+                         out_shape[1]);
+    }
+    return RET_OK;
+  }
+  return RET_ERROR;
+}
+
 int TransposeCPUKernel::Run() {
   MS_ASSERT(in_tensors_.size() == 1 || in_tensors_.size() == 2);
   MS_ASSERT(out_tensors_.size() == 1);
@@ -110,28 +137,9 @@ int TransposeCPUKernel::Run() {
     memcpy(out_data_, in_data_, in_tensor->ElementsNum() * sizeof(float));
     return RET_OK;
   }
-  auto out_shape = out_tensor->shape();
-  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 2 && param->perm_[2] == 3 &&
-      param->perm_[3] == 1) {
-    if (in_tensor->data_type() == kNumberTypeFloat32) {
-      PackNCHWToNHWCFp32(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[1] * out_shape[2],
-                         out_shape[3]);
-    } else if (in_tensor->data_type() == kNumberTypeInt8) {
-      PackNCHWToNHWCInt8(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[1] * out_shape[2],
-                         out_shape[3]);
-    }
-    return RET_OK;
-  }
-  if (in_tensor->shape().size() == 4 && param->perm_[0] == 0 && param->perm_[1] == 3 && param->perm_[2] == 1 &&
-      param->perm_[3] == 2) {
-    if (in_tensor->data_type() == kNumberTypeFloat32) {
-      PackNHWCToNCHWFp32(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[2] * out_shape[3],
-                         out_shape[1]);
-    } else if (in_tensor->data_type() == kNumberTypeInt8) {
-      PackNHWCToNCHWInt8(in_tensor->MutableData(), out_tensor->MutableData(), out_shape[0], out_shape[2] * out_shape[3],
-                         out_shape[1]);
-    }
-    return RET_OK;
+  auto ret = NhNcTranspose(in_tensor, out_tensor, param);
+  if (ret == RET_OK) {
+    return ret;
   }
   if (in_tensor->data_type() == kNumberTypeInt8) {
     MS_LOG(ERROR) << "not support now";
@@ -155,7 +163,7 @@ int TransposeCPUKernel::Run() {
   }
 
   MS_ASSERT(out_shape_);
-  auto ret = DoTransposeFp32(in_data_, out_data_, out_shape_, param, dim_size_, position_);
+  ret = DoTransposeFp32(in_data_, out_data_, out_shape_, param, dim_size_, position_);
   if (dims > MAX_TRANSPOSE_DIM_SIZE) {
     context_->allocator->Free(dim_size_);
     context_->allocator->Free(position_);
@@ -171,6 +179,7 @@ int TransposeCPUKernel::Run() {
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Transpose, LiteKernelCreator<TransposeCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeInt32, PrimitiveType_Transpose, LiteKernelCreator<TransposeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Transpose, LiteKernelCreator<TransposeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Nchw2Nhwc, LiteKernelCreator<TransposeCPUKernel>)
 REG_KERNEL(kCPU, kNumberTypeInt8, PrimitiveType_Nchw2Nhwc, LiteKernelCreator<TransposeCPUKernel>)

@@ -35,6 +35,7 @@ class TransposeCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  int NhNcTranspose(lite::Tensor *in_tensor, lite::Tensor *out_tensor, TransposeParameter *param);
 
  protected:
   float *in_data_ = nullptr;

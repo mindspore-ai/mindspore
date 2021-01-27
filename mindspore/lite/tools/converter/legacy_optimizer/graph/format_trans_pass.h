@@ -47,7 +47,10 @@ class FormatTransPass : public GraphPass {
 
   STATUS DoNodeInoutFormatTrans(schema::MetaGraphT *graph);
 
-  int GetFormat(const std::unique_ptr<CNodeT> &node);
+  int GetFormat(const schema::CNodeT &);
+
+  STATUS GetInsertFormatTrans(const schema::CNodeT &node, FormatTransNodeType *beforeNodeType,
+                              FormatTransNodeType *afterNodeType);
 
  protected:
   size_t id = 0;
