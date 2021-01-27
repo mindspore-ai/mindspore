@@ -39,6 +39,7 @@ class ArithmeticNPUKernel : public NPUKernel {
   ge::Operator *GetNPUOp() override;
 
  private:
+  int SetActivation();
   int activation_type_;
   ge::Operator *op_ = nullptr;
   hiai::op::Activation *act_ = nullptr;

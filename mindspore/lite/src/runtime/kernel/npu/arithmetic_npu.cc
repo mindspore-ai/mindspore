@@ -45,13 +45,10 @@ using mindspore::schema::PrimitiveType_Sub;
 namespace mindspore::kernel {
 int ArithmeticNPUKernel::IsSupport(const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, OpParameter *opParameter) {
-  if (primitive_->Type() == PrimitiveType_Mul || primitive_->Type() == PrimitiveType_Div ||
-      primitive_->Type() == PrimitiveType_Add || primitive_->Type() == PrimitiveType_Sub) {
-    if (inputs[0]->shape() != inputs[1]->shape()) {
-      MS_LOG(WARNING) << name_ << " for the two inputs, the corresponding dimensions must have the same value."
-                      << " shape 1 is:" << inputs[0]->shape() << " shape 2 is:" << inputs[1]->shape();
-      return RET_ERROR;
-    }
+  if (inputs[0]->shape() != inputs[1]->shape()) {
+    MS_LOG(WARNING) << name_ << " for the two inputs, the corresponding dimensions must have the same value."
+                    << " shape 1 is:" << inputs[0]->shape() << " shape 2 is:" << inputs[1]->shape();
+    return RET_ERROR;
   }
   return RET_OK;
 }
@@ -66,6 +63,26 @@ ge::Operator *CreateOperator(const std::vector<ge::Operator *> &npu_inputs, cons
   op->set_input_x1(*npu_inputs[0]);
   op->set_input_x2(*npu_inputs[1]);
   return op;
+}
+
+int ArithmeticNPUKernel::SetActivation() {
+  if (activation_type_ != ActivationType_NO_ACTIVATION) {
+    act_ = new (std::nothrow) hiai::op::Activation(name_ + "_act");
+    if (act_ == nullptr) {
+      MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
+      return RET_ERROR;
+    }
+    act_->set_input_x(*op_);
+    if (activation_type_ == ActivationType_RELU) {
+      act_->set_attr_mode(1);
+    } else if (activation_type_ == ActivationType_RELU6) {
+      act_->set_attr_mode(14);
+    } else {
+      MS_LOG(ERROR) << "Unsupported activation type for op " << name_;
+      return RET_ERROR;
+    }
+  }
+  return RET_OK;
 }
 
 int ArithmeticNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
@@ -100,6 +117,9 @@ int ArithmeticNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
     case PrimitiveType_Maximum:
       op = CreateOperator<hiai::op::Maximum>(npu_inputs, name_);
       break;
+    case PrimitiveType_Minimum:
+      op = CreateOperator<hiai::op::Minimum>(npu_inputs, name_);
+      break;
     case PrimitiveType_SquaredDifference:
       op = CreateOperator<hiai::op::SquaredDifference>(npu_inputs, name_);
       break;
@@ -132,21 +152,10 @@ int ArithmeticNPUKernel::SetNPUInputs(const std::vector<lite::Tensor *> &inputs,
   }
   op_ = op;
 
-  if (activation_type_ != ActivationType_NO_ACTIVATION) {
-    act_ = new (std::nothrow) hiai::op::Activation(name_ + "_act");
-    if (act_ == nullptr) {
-      MS_LOG(ERROR) << "New activation npu operator for op " << name_ << " failed.";
-      return RET_ERROR;
-    }
-    act_->set_input_x(*op_);
-    if (activation_type_ == ActivationType_RELU) {
-      act_->set_attr_mode(1);
-    } else if (activation_type_ == ActivationType_RELU6) {
-      act_->set_attr_mode(14);
-    } else {
-      MS_LOG(ERROR) << "Unsupport activation type for op " << name_;
-      return RET_ERROR;
-    }
+  auto ret = SetActivation();
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "Arithmetic npu op set activation failed.";
+    return RET_ERROR;
   }
   return RET_OK;
 }
