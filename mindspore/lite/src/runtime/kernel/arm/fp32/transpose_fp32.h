@@ -20,6 +20,7 @@
 #include <vector>
 #include "include/errorcode.h"
 #include "nnacl/fp32/transpose_fp32.h"
+#include "nnacl/transpose.h"
 #include "src/lite_kernel.h"
 #include "src/kernel_registry.h"
 

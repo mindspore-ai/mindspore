@@ -17,6 +17,7 @@
 #ifndef MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_UNSQUEEZE_INT8_H_
 #define MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_OPCLIB_INT8_UNSQUEEZE_INT8_H_
 
+#include <math.h>
 #include "nnacl/op_base.h"
 #include "nnacl/unsqueeze_parameter.h"
 

@@ -18,12 +18,10 @@
 
 #include "nnacl/op_base.h"
 
-#define FILL_DIMS_MAX_SIZE 4
-
 typedef struct FillParameter {
   // Primitive parameter
   OpParameter op_parameter_;
-  int dims_[FILL_DIMS_MAX_SIZE];
+  int dims_[COMM_SHAPE_SIZE];
   int num_dims_;
 } FillParameter;
 

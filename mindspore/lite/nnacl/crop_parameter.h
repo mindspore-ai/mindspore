@@ -20,15 +20,13 @@
 #include "nnacl/op_base.h"
 #include "mindspore/lite/nnacl/int8/quantize.h"
 
-#define CROP_OFFSET_MAX_SIZE 4
-
 typedef struct CropParameter {
   OpParameter op_parameter_;
   CropQuantArg quant_arg;
   int thread_count_;
   int offset_size_;
-  int64_t offset_[CROP_OFFSET_MAX_SIZE];
-  int64_t in_offset_[CROP_OFFSET_MAX_SIZE];
+  int64_t offset_[COMM_SHAPE_SIZE];
+  int64_t in_offset_[COMM_SHAPE_SIZE];
   int64_t axis_;
   int *in_shape_;
   int *out_shape_;

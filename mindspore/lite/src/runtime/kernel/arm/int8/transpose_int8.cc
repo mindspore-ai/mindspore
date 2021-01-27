@@ -24,7 +24,6 @@ using mindspore::lite::RET_OP_EXECUTE_FAILURE;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
-
 int TransposeInt8CPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;
@@ -94,7 +93,7 @@ int TransposeInt8CPUKernel::ReSize() {
     transpose_param_->out_strides_[i] = out_shape.at(i + 1) * transpose_param_->out_strides_[i + 1];
   }
 
-  extra_dims_ = out_shape.size() > MAX_TRANSPOSE_DIM_SIZE;
+  extra_dims_ = out_shape.size() > MAX_SHAPE_SIZE;
 
   num_unit_ = static_cast<int>(in_shape.at(transpose_param_->perm_[kNHWC_H]));
   thread_h_num_ = MSMIN(thread_num_, num_unit_);

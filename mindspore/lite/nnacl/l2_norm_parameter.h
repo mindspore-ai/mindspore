@@ -23,7 +23,7 @@ typedef struct L2NormParameter {
   // Primitive parameter
   OpParameter op_parameter_;
   float epsilon_;
-  int axis_[8];
+  int axis_[MAX_SHAPE_SIZE];
   // shape correlative
   size_t axis_num_;
   int data_num_;

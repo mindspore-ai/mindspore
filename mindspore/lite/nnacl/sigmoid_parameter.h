@@ -18,7 +18,6 @@
 #define MINDSPORE_LITE_NNACL_SIGMOID_PARAMETER_H_
 
 #include "nnacl/op_base.h"
-#define SIGMOID_OFFSET_MAX_SIZE 4
 
 typedef struct SigmoidParameter {
   // primitive parameter
@@ -32,8 +31,8 @@ typedef struct SigmoidParameter {
   SigmoidQuantArg quant_arg;
   double alpha_;
   int thread_count_;
-  int64_t offset_[PRELU_OFFSET_MAX_SIZE];
-  int64_t in_offset_[PRELU_OFFSET_MAX_SIZE];
+  int64_t offset_[MAX_SHAPE_SIZE];
+  int64_t in_offset_[MAX_SHAPE_SIZE];
   int64_t axis_;
   int input_dim_;
   int element_num;

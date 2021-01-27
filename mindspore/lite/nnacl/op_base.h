@@ -48,6 +48,9 @@
 
 #define MSVALID(left, x, right) (MSMIN((MSMAX(left, x)), right))
 
+#define COMM_SHAPE_SIZE 4
+#define MAX_SHAPE_SIZE 8
+
 #define DIMENSION_4D 4
 #define DIMENSION_6D 6
 #define kInputIndex 0

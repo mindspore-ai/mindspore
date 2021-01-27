@@ -24,12 +24,12 @@
 typedef struct TransposeParameter {
   // primitive parameter
   OpParameter op_parameter_;
-  int perm_[8];
+  int perm_[MAX_SHAPE_SIZE];
   bool conjugate_;
 
   // shape correlative
-  int strides_[8];
-  int out_strides_[8];
+  int strides_[MAX_SHAPE_SIZE];
+  int out_strides_[MAX_SHAPE_SIZE];
 
   // other parameter
   int num_axes_;
