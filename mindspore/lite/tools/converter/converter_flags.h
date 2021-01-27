@@ -49,9 +49,11 @@ class Flags : public virtual mindspore::lite::FlagParser {
 
   int InitFmk();
 
-  int InitQuantType();
+  bool IsValidNum(const std::string &str, int *num);
 
-  int InitHuffmanCode();
+  int QuantParamInputCheck();
+
+  int InitQuantParam();
 
   int InitTrainModel();
 
@@ -76,12 +78,13 @@ class Flags : public virtual mindspore::lite::FlagParser {
   TypeId inputDataType;
   TypeId outputDataType;
   // used for post-trainning-weight
-  std::string quantWeightSize;
-  std::string bitNum;
+  std::string quantWeightSizeIn;
+  int quantWeightSize;
+  std::string bitNumIn;
+  int bitNum;
   std::string configFile;
-  std::string quantWeightChannel;
-  std::string enableHuffmanCodeIn;
-  bool enableHuffmanCode = false;
+  std::string quantWeightChannelIn;
+  int quantWeightChannel;
   std::string trainModelIn;
   bool trainModel = false;
 };

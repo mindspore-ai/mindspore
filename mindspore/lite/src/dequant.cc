@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 #include <cmath>
+#include <string>
+#include <memory>
 #include "src/dequant.h"
+#include "src/huffman_decode.h"
 
 namespace mindspore::lite {
 float *DequantUtil::DequantWeight(lite::Tensor *input_tensor) {
@@ -34,13 +37,24 @@ float *DequantUtil::DequantWeight(lite::Tensor *input_tensor) {
   }
 }
 
-void DequantUtil::UnPackToInt(const schema::Tensor *input_tensor, void *unpack_int_data) {
+int DequantUtil::UnPackToInt(const schema::Tensor *input_tensor, void *unpack_int_data) {
   MS_ASSERT(input_tensor != nullptr);
   MS_ASSERT(unpack_int_data != nullptr);
   auto quant_params = input_tensor->quantParams();
   if (quant_params == nullptr) {
     MS_LOG(ERROR) << "low bits quantparams is empty.";
-    return;
+    return RET_ERROR;
+  }
+  auto enable_huffman_code = input_tensor->enableHuffmanCode();
+  if (enable_huffman_code) {
+    std::string encode_str(input_tensor->data()->begin(), input_tensor->data()->end());
+    auto huffman_decode = std::make_unique<lite::HuffmanDecode>();
+    auto ret = huffman_decode->DoHuffmanDecode(encode_str, unpack_int_data);
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "DoHuffmanDecode failed.";
+      return ret;
+    }
+    return RET_OK;
   }
   int origin_bit = quant_params->Get(0)->numBits();
   if (origin_bit < 8 && origin_bit > 0) {
@@ -48,6 +62,7 @@ void DequantUtil::UnPackToInt(const schema::Tensor *input_tensor, void *unpack_i
   } else if (origin_bit < 16 && origin_bit > 8) {
     UnPackUtil<int16_t, uint16_t>(input_tensor, origin_bit, unpack_int_data);
   }
+  return RET_OK;
 }
 
 std::map<Tensor *, std::pair<TypeId, void *>> DequantUtil::DequantTensor(const std::vector<Tensor *> &in_tensors,

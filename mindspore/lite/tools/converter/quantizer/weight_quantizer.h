@@ -36,18 +36,18 @@
 namespace mindspore::lite::quant {
 class WeightQuantizer : public Quantizer {
  public:
-  WeightQuantizer(FuncGraphPtr graph, const std::string &config_file, const std::string &weightSize,
-                  const std::string &covWeightChannelThreshold, const std::string &bitNum);
+  WeightQuantizer(FuncGraphPtr graph, const converter::Flags &config);
   WeightQuantizer(FuncGraphPtr graph, const PostQuantConfig &config);
   ~WeightQuantizer();
 
   STATUS DoQuantize(FuncGraphPtr func_graph) override;
   STATUS DoConvQuantize(CNodePtr);
   STATUS DoMulQuantize(CNodePtr);
-  STATUS DoLstmQuntize(CNodePtr cnode);
-  STATUS DoGatherQuntize(CNodePtr cnode);
-  static STATUS WeightQuantInputCheck(const converter::Flags *config);
-  static bool IsPosNum(const std::string &str);
+  STATUS DoLstmQuantize(CNodePtr cnode);
+  STATUS DoGatherQuantize(CNodePtr cnode);
+
+  STATUS ProcessLstmWeightByIndex(const CNodePtr &cnode, const std::shared_ptr<PrimitiveC> &primitive_c,
+                                  const int &index);
 
   int quant_max_{127};
   int quant_min_{-128};
@@ -66,6 +66,14 @@ class WeightQuantizer : public Quantizer {
   STATUS SetAbstract(ParamValueLitePtr param_value, ParameterPtr param_node, std::shared_ptr<PrimitiveC> primitive_c);
   STATUS DoFixedQuant(FuncGraphPtr);
   STATUS RunFp32Graph(FuncGraphPtr);
+
+  STATUS DoMixedQuantize(const FuncGraphPtr &func_graph);
+  STATUS CheckImageCnt();
+  STATUS GetParamNodeAndValue(const std::shared_ptr<AnfNode> &input_node, const std::string &op_name,
+                              ParameterPtr *param_node, ParamValueLitePtr *param_value);
+  STATUS TryQuant(const int &bit_num_t, const ParameterPtr &param_node, const ParamValueLitePtr &param_value,
+                  const std::shared_ptr<PrimitiveC> &primitive_c);
+  STATUS DoQuantSearch(const FuncGraphPtr &func_graph);
 };
 }  // namespace mindspore::lite::quant
 #endif

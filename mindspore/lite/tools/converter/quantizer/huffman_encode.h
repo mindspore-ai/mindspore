@@ -23,9 +23,12 @@
 #include <vector>
 #include <queue>
 #include <map>
+#include <memory>
 #include <fstream>
 #include "src/common/log_adapter.h"
 #include "src/ops/primitive_c.h"
+#include "securec/include/securec.h"
+#include "src/param_value_lite.h"
 #include "ir/func_graph.h"
 
 namespace mindspore {
@@ -49,13 +52,15 @@ struct cmp {
 };
 using HuffmanPriorityQueue = std::priority_queue<HuffmanNodePtr, std::vector<HuffmanNodePtr>, cmp>;
 
-class huffman_encode {
+class HuffmanEncode {
  public:
-  huffman_encode() = default;
+  HuffmanEncode() = default;
 
-  ~huffman_encode();
+  ~HuffmanEncode();
 
-  STATUS DoHuffmanEncode(const FuncGraphPtr &func_graph);
+  STATUS GetParamValueLitePtr(const std::shared_ptr<AnfNode> &input_node, ParamValueLitePtr *param_value);
+
+  STATUS DoHuffmanEncode(const FuncGraphPtr &func_graph, const int &bit_num);
 
  private:
   std::map<int, std::string> huffman_table_;

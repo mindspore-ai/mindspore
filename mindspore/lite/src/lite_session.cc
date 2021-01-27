@@ -28,7 +28,6 @@
 #include "src/kernel_registry.h"
 #include "src/lite_model.h"
 #include "src/dequant.h"
-#include "src/huffman_decode.h"
 #if SUPPORT_NPU
 #include "src/runtime/agent/npu/npu_manager.h"
 #include "src/runtime/agent/npu/optimizer/npu_pass_manager.h"
@@ -96,13 +95,6 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
     int org_size = dst_tensor->Size();
     return (pack_size != org_size) && (data_type == kNumberTypeInt8 || data_type == kNumberTypeInt16);
   };
-  auto NeedHuffmanDecode = [&src_tensor, &dst_tensor]() -> bool {
-    auto data_type = src_tensor->dataType();
-    auto enable_huffman_code = src_tensor->enableHuffmanCode();
-    int pack_size = src_tensor->data()->size();
-    int org_size = dst_tensor->Size();
-    return (pack_size != org_size) && (data_type == kNumberTypeInt8) && enable_huffman_code;
-  };
   auto src_category = TensorCategory(src_tensor);
   if ((src_category == Tensor::Category::CONST_TENSOR || src_category == Tensor::Category::CONST_SCALAR) &&
       src_tensor->data() != nullptr && src_tensor->data()->size() > 0) {
@@ -116,21 +108,6 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
         return RET_ERROR;
       }
     } else {
-      if (NeedHuffmanDecode()) {
-        auto dst_data = dst_tensor->MutableData();
-        if (dst_data == nullptr) {
-          MS_LOG(ERROR) << "Data from tensor is nullptr";
-          return RET_NULL_PTR;
-        }
-        std::string encode_str(src_tensor->data()->begin(), src_tensor->data()->end());
-        auto huffman_decode = std::make_unique<lite::huffman_decode>();
-        auto ret = huffman_decode->DoHuffmanDecode(encode_str, dst_data);
-        if (ret != RET_OK) {
-          MS_LOG(ERROR) << "DoHuffmanDecode failed.";
-          return ret;
-        }
-        copyed_tensor_idxes_.emplace_back(tensor_index);
-      }
       if (WeightTensorNeedCopy(model, tensor_index)) {
         auto dst_data = dst_tensor->MutableData();
         if (dst_data == nullptr) {
@@ -138,7 +115,11 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
           return RET_NULL_PTR;
         }
         if (NeedUnPack()) {
-          DequantUtil::UnPackToInt(src_tensor, dst_data);
+          auto ret = DequantUtil::UnPackToInt(src_tensor, dst_data);
+          if (ret != RET_OK) {
+            MS_LOG(ERROR) << "unpack to int failed.";
+            return RET_NULL_PTR;
+          }
         } else {
           memcpy(dst_data, src_tensor->data()->data(), dst_tensor->Size());
         }
@@ -148,9 +129,13 @@ int LiteSession::ConvertTensorsData(const lite::Model *model, size_t tensor_inde
           auto dst_data = dst_tensor->MutableData();
           if (dst_data == nullptr) {
             MS_LOG(ERROR) << "Data from tensor is nullptr";
-            return RET_NULL_PTR;
+            return RET_ERROR;
           }
-          DequantUtil::UnPackToInt(src_tensor, dst_data);
+          auto ret = DequantUtil::UnPackToInt(src_tensor, dst_data);
+          if (ret != RET_OK) {
+            MS_LOG(ERROR) << "unpack to int failed.";
+            return RET_ERROR;
+          }
           copyed_tensor_idxes_.emplace_back(tensor_index);
         } else {
           dst_tensor->set_data(const_cast<unsigned char *>(src_tensor->data()->data()));
