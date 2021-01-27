@@ -22,7 +22,7 @@
 namespace mindspore {
 namespace parallel {
 // Automatically adding control depend based on effect order and side effect analysis.
-void AddCacheEmbedding(const FuncGraphPtr &graph);
+void AddCacheEmbedding(const FuncGraphPtr &graph, bool is_pipe = false);
 }  // namespace parallel
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_FRONTEND_PARALLEL_CACHE_EMBEDDING_CACHE_EMBEDDING_H_
