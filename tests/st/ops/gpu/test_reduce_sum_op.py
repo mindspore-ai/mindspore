@@ -21,6 +21,7 @@ import mindspore.nn as nn
 from mindspore import Tensor
 from mindspore.common.api import ms_function
 from mindspore.ops import operations as P
+from mindspore.ops.operations import _inner_ops as inner
 
 x0 = np.random.rand(2, 3, 4, 4).astype(np.float32)
 axis0 = 3
@@ -267,3 +268,36 @@ def test_ReduceSum():
     error14 = np.ones(shape=expect14.shape) * 1.0e-5
     assert np.all(diff14 < error14)
     assert output[14].shape == expect14.shape
+
+
+class ReduceSumDynamic(nn.Cell):
+    def __init__(self):
+        super(ReduceSumDynamic, self).__init__()
+        self.reducesum = P.ReduceSum(True)
+        self.test_dynamic = inner.GpuConvertToDynamicShape()
+
+    def construct(self, x, axis):
+        x = self.test_dynamic(x)
+        return self.reducesum(x, axis)
+
+
+@pytest.mark.level0
+@pytest.mark.platform_x86_gpu_training
+@pytest.mark.env_onecard
+def test_reduce_sum_dynamic():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = ReduceSumDynamic()
+
+    x_1 = x8
+    axis_1 = 0
+    expect_1 = np.sum(x_1, axis=axis_1, keepdims=True)
+
+    x_2 = x1
+    axis_2 = 0
+    expect_2 = np.sum(x_2, axis=axis_2, keepdims=True)
+
+    output_1 = net(Tensor(x_1), axis_1)
+    output_2 = net(Tensor(x_2), axis_2)
+
+    np.testing.assert_almost_equal(output_1.asnumpy(), expect_1)
+    np.testing.assert_almost_equal(output_2.asnumpy(), expect_2)

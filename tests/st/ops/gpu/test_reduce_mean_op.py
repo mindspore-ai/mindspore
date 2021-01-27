@@ -267,9 +267,9 @@ def test_ReduceMean():
     assert np.all(diff14 < error14)
     assert output[14].shape == expect14.shape
 
-class ReduceMean_Dynamic(nn.Cell):
+class ReduceMeanDynamic(nn.Cell):
     def __init__(self, keepdims=False):
-        super(ReduceMean_Dynamic, self).__init__()
+        super(ReduceMeanDynamic, self).__init__()
         self.test_dynamic = inner.GpuConvertToDynamicShape()
         self.reducemean = P.ReduceMean(keep_dims=keepdims)
 
@@ -281,8 +281,9 @@ class ReduceMean_Dynamic(nn.Cell):
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_dynamic_reducemean_keepdims_true():
-    net = ReduceMean_Dynamic(keepdims=True)
+def test_dynamic_reduce_mean_keepdims_true():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = ReduceMeanDynamic(keepdims=True)
     x_tensor_1 = Tensor(x14)
     output_1 = net(x_tensor_1, axis14)
     x_tensor_2 = Tensor(x0)
@@ -303,8 +304,9 @@ def test_dynamic_reducemean_keepdims_true():
 @pytest.mark.level0
 @pytest.mark.platform_x86_gpu_training
 @pytest.mark.env_onecard
-def test_dynamic_reducemean_keepdims_false():
-    net = ReduceMean_Dynamic(keepdims=False)
+def test_dynamic_reduce_mean_keepdims_false():
+    context.set_context(mode=context.GRAPH_MODE, device_target="GPU")
+    net = ReduceMeanDynamic(keepdims=False)
     x_tensor = Tensor(x12)
     output = net(x_tensor, axis12)
 
