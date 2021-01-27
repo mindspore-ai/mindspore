@@ -89,7 +89,9 @@ int CarryDataKernel::MoveTensorLiteData(lite::TensorList *dst_tensor, lite::Tens
     MS_LOG(ERROR) << "input tensorlist and output tensorlist data_type or format is incompatible";
     return RET_ERROR;
   }
-  if (dst_tensor->element_shape() != src_tensor->element_shape()) {
+  if (dst_tensor->element_shape().empty()) {
+    dst_tensor->set_element_shape(src_tensor->element_shape());
+  } else if (dst_tensor->element_shape() != src_tensor->element_shape()) {
     MS_LOG(ERROR) << "input tensorlist and output tensorlist element shape is incompatible";
     return RET_ERROR;
   }

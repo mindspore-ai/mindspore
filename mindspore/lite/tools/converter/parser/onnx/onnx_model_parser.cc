@@ -439,6 +439,9 @@ STATUS OnnxModelParser::BuildCNode(const onnx::NodeProto &onnx_node, const FuncG
               MS_LOG(ERROR) << "memcpy error: " << ret;
               return RET_ERROR;
             }
+            copy_param_value->set_tensor_shape(param_value->tensor_shape());
+            copy_param_value->set_format(param_value->format());
+            copy_param_value->set_tensor_type(param_value->tensor_type());
             copy_param_value->SetTensorData(copy_data, param_value->tensor_size());
             ext_subgraph_input->set_default_param(copy_param_value);
           } else {

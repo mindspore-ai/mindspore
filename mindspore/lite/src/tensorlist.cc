@@ -240,6 +240,9 @@ Tensor *TensorList::GetTensor(int index) {
 }
 
 bool TensorList::IsCompatibleShape(const std::vector<int> &shape) {
+  if (this->tensors_.empty() && this->element_shape_.empty()) {
+    return true;
+  }
   if (shape.size() != this->element_shape_.size()) {
     return false;
   }

@@ -131,8 +131,13 @@ int TensorListSetItem::InferShape(std::vector<lite::Tensor *> inputs_, std::vect
   }
 
   output0->set_max_elements_num(input0->max_elements_num());
-  output0->set_element_shape(input0->element_shape());
 
+  if (input0->tensors().empty() && input0->element_shape().empty() && index == 0) {
+    input0->set_element_shape(value_tensor->shape());
+    output0->set_element_shape(value_tensor->shape());
+  } else {
+    output0->set_element_shape(input0->element_shape());
+  }
   std::vector<std::vector<int> > out_shape;
   if (index == 0 && input0->tensors().size() == 0) {  // uninitialized tensorlist
     out_shape.push_back(value_tensor->shape());
