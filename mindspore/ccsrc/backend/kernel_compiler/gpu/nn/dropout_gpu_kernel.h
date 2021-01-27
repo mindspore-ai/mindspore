@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,14 +28,7 @@ namespace kernel {
 template <typename T>
 class DropoutGpuFwdKernel : public GpuKernel {
  public:
-  DropoutGpuFwdKernel()
-      : cudnn_handle_(nullptr),
-        is_null_input_(false),
-        num_count_(0),
-        keep_prob_(0.0),
-        states_init_(false),
-        mask_generator_(nullptr) {}
-
+  DropoutGpuFwdKernel() { ResetResource(); }
   ~DropoutGpuFwdKernel() override = default;
 
   const std::vector<size_t> &GetInputSizeList() const override { return input_size_list_; }
@@ -94,6 +87,18 @@ class DropoutGpuFwdKernel : public GpuKernel {
 
     InitSizeLists();
     return true;
+  }
+
+  void ResetResource() noexcept override {
+    cudnn_handle_ = nullptr;
+    is_null_input_ = false;
+    num_count_ = 0;
+    keep_prob_ = 0.0;
+    states_init_ = false;
+    mask_generator_ = nullptr;
+    input_size_list_.clear();
+    output_size_list_.clear();
+    workspace_size_list_.clear();
   }
 
  protected:
