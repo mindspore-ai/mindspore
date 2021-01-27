@@ -17,12 +17,10 @@
 import mindspore.nn as nn
 from mindspore.ops import operations as P
 from mindspore.ops.operations import TensorAdd
-from mindspore import Parameter
-from mindspore.common.initializer import initializer
 
 from src.var_init import KaimingNormal
 
-__all__ = ['MobileNetV2', 'mobilenet_v2', 'DepthWiseConv']
+__all__ = ['MobileNetV2', 'mobilenet_v2']
 
 def _make_divisible(v, divisor, min_value=None):
     """
@@ -43,32 +41,6 @@ def _make_divisible(v, divisor, min_value=None):
         new_v += divisor
     return new_v
 
-class DepthWiseConv(nn.Cell):
-    """
-    Depthwise convolution
-    """
-    def __init__(self, in_planes, kernel_size, stride, pad_mode, pad, channel_multiplier=1, has_bias=False):
-        super(DepthWiseConv, self).__init__()
-        self.has_bias = has_bias
-        self.depthwise_conv = P.DepthwiseConv2dNative(channel_multiplier=channel_multiplier, kernel_size=kernel_size,
-                                                      stride=stride, pad_mode=pad_mode, pad=pad)
-        self.bias_add = P.BiasAdd()
-
-        weight_shape = [channel_multiplier, in_planes, kernel_size, kernel_size]
-        self.weight = Parameter(initializer(KaimingNormal(mode='fan_out'), weight_shape))
-
-        if has_bias:
-            bias_shape = [channel_multiplier * in_planes]
-            self.bias = Parameter(initializer('zeros', bias_shape))
-        else:
-            self.bias = None
-
-    def construct(self, x):
-        output = self.depthwise_conv(x, self.weight)
-        if self.has_bias:
-            output = self.bias_add(output, self.bias)
-        return output
-
 
 class ConvBNReLU(nn.Cell):
     """
@@ -81,7 +53,8 @@ class ConvBNReLU(nn.Cell):
             conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode="pad", padding=padding,
                              has_bias=False)
         else:
-            conv = DepthWiseConv(in_planes, kernel_size, stride, pad_mode="pad", pad=padding)
+            conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode="pad", padding=padding,
+                             has_bias=False, group=groups, weight_init=KaimingNormal(mode='fan_out'))
 
         layers = [conv, nn.BatchNorm2d(out_planes).add_flags_recursive(fp32=True), nn.ReLU6()]  #, momentum=0.9
         self.features = nn.SequentialCell(layers)

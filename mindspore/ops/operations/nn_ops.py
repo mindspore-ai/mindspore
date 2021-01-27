@@ -18,6 +18,7 @@
 import math
 import operator
 from functools import reduce, partial
+from mindspore import log as logger
 from mindspore._checkparam import _check_3d_int_or_tuple
 import numpy as np
 from ... import context
@@ -1476,6 +1477,8 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
                  dilation=1,
                  group=1):
         """Initialize DepthwiseConv2dNative"""
+        logger.warning("WARN_DEPRECATED: The usage of DepthwiseConv2dNative is deprecated."
+                       " Please use nn.Conv2D.")
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
         self.stride = _check_positive_int_or_tuple('stride', stride, self.name)

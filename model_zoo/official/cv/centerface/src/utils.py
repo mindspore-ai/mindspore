@@ -24,8 +24,6 @@ import numpy as np
 from mindspore.train.serialization import load_checkpoint
 import mindspore.nn as nn
 
-from src.mobile_v2 import DepthWiseConv
-
 def load_backbone(net, ckpt_path, args):
     """
     Load backbone
@@ -52,7 +50,7 @@ def load_backbone(net, ckpt_path, args):
     for name, cell in net.cells_and_names():
         if name.startswith(centerface_backbone_prefix):
             name = name.replace(centerface_backbone_prefix, mobilev2_backbone_prefix)
-            if isinstance(cell, (nn.Conv2d, nn.Dense, DepthWiseConv)):
+            if isinstance(cell, (nn.Conv2d, nn.Dense)):
                 name, replace_name, replace_idx = replace_names(name, replace_name, replace_idx)
                 mobilev2_weight = '{}.weight'.format(name)
                 mobilev2_bias = '{}.bias'.format(name)
