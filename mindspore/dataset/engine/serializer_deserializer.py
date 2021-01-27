@@ -1,4 +1,4 @@
-# Copyright 2019 Huawei Technologies Co., Ltd
+# Copyright 2019-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -17,12 +17,13 @@ Functions to support dataset serialize and deserialize.
 """
 import json
 import os
+import pickle
 import sys
 
 import mindspore.common.dtype as mstype
 from mindspore import log as logger
 from . import datasets as de
-from ..vision.utils import Inter, Border
+from ..vision.utils import Inter, Border, ImageBatchFormat
 
 
 def serialize(dataset, json_filepath=""):
@@ -277,7 +278,7 @@ def create_dataset_operation_node(node, dataset_op):
         tensor_ops = construct_tensor_ops(node.get('operations'))
         pyobj = de.Dataset().map(tensor_ops, node.get('input_columns'), node.get('output_columns'),
                                  node.get('column_order'), node.get('num_parallel_workers'),
-                                 True, node.get('callbacks'))
+                                 False, None, node.get('callbacks'))
 
     elif dataset_op == 'Project':
         pyobj = de.Dataset().project(node['columns'])
@@ -344,64 +345,58 @@ def construct_tensor_ops(operations):
     """Instantiate tensor op object(s) based on the information from dictionary['operations']"""
     result = []
     for op in operations:
-        op_name = op['tensor_op_name']
-        op_module_vis = sys.modules["mindspore.dataset.vision.c_transforms"]
-        op_module_trans = sys.modules["mindspore.dataset.transforms.c_transforms"]
+        op_name = op.get('tensor_op_name')
+        op_params = op.get('tensor_op_params')
 
-        if op_name == "HwcToChw": op_name = "HWC2CHW"
-        if hasattr(op_module_vis, op_name):
-            op_class = getattr(op_module_vis, op_name)
-        elif hasattr(op_module_trans, op_name[:-2]):
-            op_name = op_name[:-2]  # to remove op from the back of the name
-            op_class = getattr(op_module_trans, op_name)
+        if op.get('is_python_front_end_op'):  # check if it's a py_transform op
+            result.append(pickle.loads(op_params.encode()))
         else:
-            raise RuntimeError(op_name + " is not yet supported by deserialize().")
+            if op_name == "HwcToChw": op_name = "HWC2CHW"
+            if op_name == "UniformAug": op_name = "UniformAugment"
+            op_module_vis = sys.modules["mindspore.dataset.vision.c_transforms"]
+            op_module_trans = sys.modules["mindspore.dataset.transforms.c_transforms"]
 
-        # Transforms Ops (in alphabetical order)
-        if op_name == 'OneHot':
-            result.append(op_class(op['num_classes']))
+            if hasattr(op_module_vis, op_name):
+                op_class = getattr(op_module_vis, op_name, None)
+            elif hasattr(op_module_trans, op_name[:-2]):
+                op_name = op_name[:-2]  # to remove op from the back of the name
+                op_class = getattr(op_module_trans, op_name, None)
+            else:
+                raise RuntimeError(op_name + " is not yet supported by deserialize().")
 
-        elif op_name == 'TypeCast':
-            result.append(op_class(to_mstype(op['data_type'])))
+            if op_params is None:  # If no parameter is specified, call it directly
+                result.append(op_class())
+            else:
+                # Input parameter type cast
+                for key, val in op_params.items():
+                    if key in ['center', 'fill_value']:
+                        op_params[key] = tuple(val)
+                    elif key in ['interpolation', 'resample']:
+                        op_params[key] = Inter(to_interpolation_mode(val))
+                    elif key in ['padding_mode']:
+                        op_params[key] = Border(to_border_mode(val))
+                    elif key in ['data_type']:
+                        op_params[key] = to_mstype(val)
+                    elif key in ['image_batch_format']:
+                        op_params[key] = to_image_batch_format(val)
+                    elif key in ['policy']:
+                        op_params[key] = to_policy(val)
+                    elif key in ['transform', 'transforms']:
+                        op_params[key] = construct_tensor_ops(val)
 
-        # Vision Ops (in alphabetical order)
-        elif op_name == 'CenterCrop':
-            result.append(op_class(op['size']))
-
-        elif op_name == 'Decode':
-            result.append(op_class(op.get('rgb')))
-
-        elif op_name == 'HWC2CHW':
-            result.append(op_class())
-
-        elif op_name == 'Normalize':
-            result.append(op_class(op['mean'], op['std']))
-
-        elif op_name == 'Pad':
-            result.append(op_class(op['padding'], tuple(op['fill_value']), Border(to_border_mode(op['padding_mode']))))
-
-        elif op_name == 'RandomColorAdjust':
-            result.append(op_class(op.get('brightness'), op.get('contrast'), op.get('saturation'),
-                                   op.get('hue')))
-
-        elif op_name == 'RandomCrop':
-            result.append(op_class(op['size'], op.get('padding'), op.get('pad_if_needed'),
-                                   tuple(op.get('fill_value')), Border(to_border_mode(op.get('padding_mode')))))
-
-        elif op_name == 'RandomRotation':
-            result.append(op_class(op['degrees'], to_interpolation_mode(op.get('interpolation_mode')), op.get('expand'),
-                                   tuple(op.get('center')), tuple(op.get('fill_value'))))
-
-        elif op_name == 'Rescale':
-            result.append(op_class(op['rescale'], op['shift']))
-
-        elif op_name == 'Resize':
-            result.append(op_class(op['size'], to_interpolation_mode(op.get('interpolation'))))
-
-        else:
-            raise ValueError("Tensor op name is unknown: {}.".format(op_name))
-
+                result.append(op_class(**op_params))
     return result
+
+
+def to_policy(op_list):
+    policy_tensor_ops = []
+    for policy_list in op_list:
+        sub_policy_tensor_ops = []
+        for policy_item in policy_list:
+            sub_policy_tensor_ops.append(
+                (construct_tensor_ops(policy_item.get('tensor_op')), policy_item.get('prob')))
+        policy_tensor_ops.append(sub_policy_tensor_ops)
+    return policy_tensor_ops
 
 
 def to_shuffle_mode(shuffle):
@@ -446,7 +441,12 @@ def to_mstype(data_type):
     }[data_type]
 
 
+def to_image_batch_format(image_batch_format):
+    return {
+        0: ImageBatchFormat.NHWC,
+        1: ImageBatchFormat.NCHW
+    }[image_batch_format]
+
+
 def check_and_replace_input(input_value, expect, replace):
-    if input_value == expect:
-        return replace
-    return input_value
+    return replace if input_value == expect else input_value

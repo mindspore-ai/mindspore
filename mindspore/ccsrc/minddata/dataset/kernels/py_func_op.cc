@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,5 +119,15 @@ Status PyFuncOp::CastOutput(const py::object &ret_py_obj, TensorRow *output) {
   return Status::OK();
 }
 
+Status PyFuncOp::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  auto package = pybind11::module::import("pickle");
+  auto module = package.attr("dumps");
+  args["tensor_op_params"] = module(py_func_ptr_, 0).cast<std::string>();
+  args["tensor_op_name"] = py_func_ptr_.attr("__class__").attr("__name__").cast<std::string>();
+  args["is_python_front_end_op"] = true;
+  *out_json = args;
+  return Status::OK();
+}
 }  // namespace dataset
 }  // namespace mindspore

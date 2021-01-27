@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -472,6 +472,14 @@ std::shared_ptr<TensorOp> AutoContrastOperation::Build() {
   return tensor_op;
 }
 
+Status AutoContrastOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["cutoff"] = cutoff_;
+  args["ignore"] = ignore_;
+  *out_json = args;
+  return Status::OK();
+}
+
 // BoundingBoxAugmentOperation
 BoundingBoxAugmentOperation::BoundingBoxAugmentOperation(std::shared_ptr<TensorOperation> transform, float ratio)
     : transform_(transform), ratio_(ratio) {}
@@ -485,6 +493,15 @@ Status BoundingBoxAugmentOperation::ValidateParams() {
 std::shared_ptr<TensorOp> BoundingBoxAugmentOperation::Build() {
   std::shared_ptr<BoundingBoxAugmentOp> tensor_op = std::make_shared<BoundingBoxAugmentOp>(transform_->Build(), ratio_);
   return tensor_op;
+}
+
+Status BoundingBoxAugmentOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args, transform_args;
+  RETURN_IF_NOT_OK(transform_->to_json(&transform_args));
+  args["transform"] = transform_args;
+  args["ratio"] = ratio_;
+  *out_json = args;
+  return Status::OK();
 }
 #endif
 
@@ -565,6 +582,15 @@ std::shared_ptr<TensorOp> CutMixBatchOperation::Build() {
   return tensor_op;
 }
 
+Status CutMixBatchOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["image_batch_format"] = image_batch_format_;
+  args["alpha"] = alpha_;
+  args["prob"] = prob_;
+  *out_json = args;
+  return Status::OK();
+}
+
 // CutOutOperation
 CutOutOperation::CutOutOperation(int32_t length, int32_t num_patches) : length_(length), num_patches_(num_patches) {}
 
@@ -577,6 +603,14 @@ Status CutOutOperation::ValidateParams() {
 std::shared_ptr<TensorOp> CutOutOperation::Build() {
   std::shared_ptr<CutOutOp> tensor_op = std::make_shared<CutOutOp>(length_, length_, num_patches_, false, 0, 0, 0);
   return tensor_op;
+}
+
+Status CutOutOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["length"] = length_;
+  args["num_patches"] = num_patches_;
+  *out_json = args;
+  return Status::OK();
 }
 
 // DecodeOperation
@@ -615,6 +649,11 @@ Status MixUpBatchOperation::ValidateParams() {
 }
 
 std::shared_ptr<TensorOp> MixUpBatchOperation::Build() { return std::make_shared<MixUpBatchOp>(alpha_); }
+
+Status MixUpBatchOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["alpha"] = alpha_;
+  return Status::OK();
+}
 
 #endif
 
@@ -752,6 +791,15 @@ Status NormalizePadOperation::ValidateParams() {
 
 std::shared_ptr<TensorOp> NormalizePadOperation::Build() {
   return std::make_shared<NormalizePadOp>(mean_[0], mean_[1], mean_[2], std_[0], std_[1], std_[2], dtype_);
+}
+
+Status NormalizePadOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["mean"] = mean_;
+  args["std"] = std_;
+  args["dtype"] = dtype_;
+  *out_json = args;
+  return Status::OK();
 }
 
 // PadOperation
@@ -912,6 +960,18 @@ std::shared_ptr<TensorOp> RandomAffineOperation::Build() {
   return tensor_op;
 }
 
+Status RandomAffineOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["degrees"] = degrees_;
+  args["translate"] = translate_range_;
+  args["scale"] = scale_range_;
+  args["shear"] = shear_ranges_;
+  args["resample"] = interpolation_;
+  args["fill_value"] = fill_value_;
+  *out_json = args;
+  return Status::OK();
+}
+
 // RandomColorOperation.
 RandomColorOperation::RandomColorOperation(float t_lb, float t_ub) : t_lb_(t_lb), t_ub_(t_ub) { random_op_ = true; }
 
@@ -930,6 +990,11 @@ Status RandomColorOperation::ValidateParams() {
     MS_LOG(ERROR) << err_msg;
     RETURN_STATUS_SYNTAX_ERROR(err_msg);
   }
+  return Status::OK();
+}
+
+Status RandomColorOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["degrees"] = std::vector<float>{t_lb_, t_ub_};
   return Status::OK();
 }
 
@@ -1099,6 +1164,17 @@ std::shared_ptr<TensorOp> RandomCropDecodeResizeOperation::Build() {
 RandomCropDecodeResizeOperation::RandomCropDecodeResizeOperation(const RandomResizedCropOperation &base)
     : RandomResizedCropOperation(base) {}
 
+Status RandomCropDecodeResizeOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["size"] = size_;
+  args["scale"] = scale_;
+  args["ratio"] = ratio_;
+  args["interpolation"] = interpolation_;
+  args["max_attempts"] = max_attempts_;
+  *out_json = args;
+  return Status::OK();
+}
+
 // RandomCropWithBBoxOperation
 RandomCropWithBBoxOperation::RandomCropWithBBoxOperation(std::vector<int32_t> size, std::vector<int32_t> padding,
                                                          bool pad_if_needed, std::vector<uint8_t> fill_value,
@@ -1167,6 +1243,17 @@ std::shared_ptr<TensorOp> RandomCropWithBBoxOperation::Build() {
   return tensor_op;
 }
 
+Status RandomCropWithBBoxOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["size"] = size_;
+  args["padding"] = padding_;
+  args["pad_if_needed"] = pad_if_needed_;
+  args["fill_value"] = fill_value_;
+  args["padding_mode"] = padding_mode_;
+  *out_json = args;
+  return Status::OK();
+}
+
 // RandomHorizontalFlipOperation
 RandomHorizontalFlipOperation::RandomHorizontalFlipOperation(float probability)
     : TensorOperation(true), probability_(probability) {}
@@ -1179,6 +1266,11 @@ Status RandomHorizontalFlipOperation::ValidateParams() {
 std::shared_ptr<TensorOp> RandomHorizontalFlipOperation::Build() {
   std::shared_ptr<RandomHorizontalFlipOp> tensor_op = std::make_shared<RandomHorizontalFlipOp>(probability_);
   return tensor_op;
+}
+
+Status RandomHorizontalFlipOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["prob"] = probability_;
+  return Status::OK();
 }
 
 // RandomHorizontalFlipWithBBoxOperation
@@ -1194,6 +1286,11 @@ std::shared_ptr<TensorOp> RandomHorizontalFlipWithBBoxOperation::Build() {
   std::shared_ptr<RandomHorizontalFlipWithBBoxOp> tensor_op =
     std::make_shared<RandomHorizontalFlipWithBBoxOp>(probability_);
   return tensor_op;
+}
+
+Status RandomHorizontalFlipWithBBoxOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["prob"] = probability_;
+  return Status::OK();
 }
 
 // RandomPosterizeOperation
@@ -1231,6 +1328,11 @@ std::shared_ptr<TensorOp> RandomPosterizeOperation::Build() {
   return tensor_op;
 }
 
+Status RandomPosterizeOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["bits"] = bit_range_;
+  return Status::OK();
+}
+
 // RandomResizeOperation
 RandomResizeOperation::RandomResizeOperation(std::vector<int32_t> size) : TensorOperation(true), size_(size) {}
 
@@ -1252,6 +1354,11 @@ std::shared_ptr<TensorOp> RandomResizeOperation::Build() {
 
   std::shared_ptr<RandomResizeOp> tensor_op = std::make_shared<RandomResizeOp>(height, width);
   return tensor_op;
+}
+
+Status RandomResizeOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["size"] = size_;
+  return Status::OK();
 }
 
 // RandomResizeWithBBoxOperation
@@ -1276,6 +1383,11 @@ std::shared_ptr<TensorOp> RandomResizeWithBBoxOperation::Build() {
 
   std::shared_ptr<RandomResizeWithBBoxOp> tensor_op = std::make_shared<RandomResizeWithBBoxOp>(height, width);
   return tensor_op;
+}
+
+Status RandomResizeWithBBoxOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["size"] = size_;
+  return Status::OK();
 }
 
 // RandomResizedCropOperation
@@ -1318,6 +1430,17 @@ std::shared_ptr<TensorOp> RandomResizedCropOperation::Build() {
   return tensor_op;
 }
 
+Status RandomResizedCropOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["size"] = size_;
+  args["scale"] = scale_;
+  args["ratio"] = ratio_;
+  args["interpolation_"] = interpolation_;
+  args["max_attempts"] = max_attempts_;
+  *out_json = args;
+  return Status::OK();
+}
+
 // RandomResizedCropWithBBoxOperation
 RandomResizedCropWithBBoxOperation::RandomResizedCropWithBBoxOperation(std::vector<int32_t> size,
                                                                        std::vector<float> scale,
@@ -1353,6 +1476,17 @@ std::shared_ptr<TensorOp> RandomResizedCropWithBBoxOperation::Build() {
   std::shared_ptr<RandomCropAndResizeWithBBoxOp> tensor_op = std::make_shared<RandomCropAndResizeWithBBoxOp>(
     height, width, scale_[0], scale_[1], ratio_[0], ratio_[1], interpolation_, max_attempts_);
   return tensor_op;
+}
+
+Status RandomResizedCropWithBBoxOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["size"] = size_;
+  args["scale"] = scale_;
+  args["ratio"] = ratio_;
+  args["interpolation_"] = interpolation_;
+  args["max_attempts"] = max_attempts_;
+  *out_json = args;
+  return Status::OK();
 }
 
 // Function to create RandomRotationOperation.
@@ -1427,7 +1561,7 @@ std::shared_ptr<TensorOp> RandomRotationOperation::Build() {
 Status RandomRotationOperation::to_json(nlohmann::json *out_json) {
   nlohmann::json args;
   args["degrees"] = degrees_;
-  args["interpolation_mode"] = interpolation_mode_;
+  args["resample"] = interpolation_mode_;
   args["expand"] = expand_;
   args["center"] = center_;
   args["fill_value"] = fill_value_;
@@ -1484,6 +1618,25 @@ std::shared_ptr<TensorOp> RandomSelectSubpolicyOperation::Build() {
   return tensor_op;
 }
 
+Status RandomSelectSubpolicyOperation::to_json(nlohmann::json *out_json) {
+  auto policy_tensor_ops = nlohmann::json::array();
+  for (int32_t i = 0; i < policy_.size(); i++) {
+    auto sub_policy_tensor_ops = nlohmann::json::array();
+    for (int32_t j = 0; j < policy_[i].size(); j++) {
+      nlohmann::json policy, args;
+      auto tensor_op = policy_[i][j].first;
+      RETURN_IF_NOT_OK(tensor_op->to_json(&args));
+      policy["tensor_op"]["tensor_op_params"] = args;
+      policy["tensor_op"]["tensor_op_name"] = tensor_op->Name();
+      policy["prob"] = policy_[i][j].second;
+      sub_policy_tensor_ops.push_back(policy);
+    }
+    policy_tensor_ops.push_back(sub_policy_tensor_ops);
+  }
+  (*out_json)["policy"] = policy_tensor_ops;
+  return Status::OK();
+}
+
 // Function to create RandomSharpness.
 RandomSharpnessOperation::RandomSharpnessOperation(std::vector<float> degrees)
     : TensorOperation(true), degrees_(degrees) {}
@@ -1506,6 +1659,11 @@ Status RandomSharpnessOperation::ValidateParams() {
 std::shared_ptr<TensorOp> RandomSharpnessOperation::Build() {
   std::shared_ptr<RandomSharpnessOp> tensor_op = std::make_shared<RandomSharpnessOp>(degrees_[0], degrees_[1]);
   return tensor_op;
+}
+
+Status RandomSharpnessOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["degrees"] = degrees_;
+  return Status::OK();
 }
 
 // RandomSolarizeOperation.
@@ -1540,6 +1698,11 @@ std::shared_ptr<TensorOp> RandomSolarizeOperation::Build() {
   return tensor_op;
 }
 
+Status RandomSolarizeOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["threshold"] = threshold_;
+  return Status::OK();
+}
+
 // RandomVerticalFlipOperation
 RandomVerticalFlipOperation::RandomVerticalFlipOperation(float probability)
     : TensorOperation(true), probability_(probability) {}
@@ -1553,6 +1716,11 @@ Status RandomVerticalFlipOperation::ValidateParams() {
 std::shared_ptr<TensorOp> RandomVerticalFlipOperation::Build() {
   std::shared_ptr<RandomVerticalFlipOp> tensor_op = std::make_shared<RandomVerticalFlipOp>(probability_);
   return tensor_op;
+}
+
+Status RandomVerticalFlipOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["prob"] = probability_;
+  return Status::OK();
 }
 
 // RandomVerticalFlipWithBBoxOperation
@@ -1569,6 +1737,11 @@ std::shared_ptr<TensorOp> RandomVerticalFlipWithBBoxOperation::Build() {
   std::shared_ptr<RandomVerticalFlipWithBBoxOp> tensor_op =
     std::make_shared<RandomVerticalFlipWithBBoxOp>(probability_);
   return tensor_op;
+}
+
+Status RandomVerticalFlipWithBBoxOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["prob"] = probability_;
+  return Status::OK();
 }
 
 // RescaleOperation
@@ -1661,6 +1834,14 @@ std::shared_ptr<TensorOp> ResizeWithBBoxOperation::Build() {
   return std::make_shared<ResizeWithBBoxOp>(height, width, interpolation_);
 }
 
+Status ResizeWithBBoxOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["size"] = size_;
+  args["interpolation"] = interpolation_;
+  *out_json = args;
+  return Status::OK();
+}
+
 // RgbaToBgrOperation.
 RgbaToBgrOperation::RgbaToBgrOperation() {}
 
@@ -1718,6 +1899,16 @@ std::shared_ptr<TensorOp> SoftDvppDecodeRandomCropResizeJpegOperation::Build() {
   return tensor_op;
 }
 
+Status SoftDvppDecodeRandomCropResizeJpegOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  args["size"] = size_;
+  args["scale"] = scale_;
+  args["ratio"] = ratio_;
+  args["max_attempts"] = max_attempts_;
+  *out_json = args;
+  return Status::OK();
+}
+
 // SoftDvppDecodeResizeJpegOperation
 SoftDvppDecodeResizeJpegOperation::SoftDvppDecodeResizeJpegOperation(std::vector<int32_t> size) : size_(size) {}
 
@@ -1738,6 +1929,11 @@ std::shared_ptr<TensorOp> SoftDvppDecodeResizeJpegOperation::Build() {
   }
   std::shared_ptr<SoftDvppDecodeResizeJpegOp> tensor_op = std::make_shared<SoftDvppDecodeResizeJpegOp>(height, width);
   return tensor_op;
+}
+
+Status SoftDvppDecodeResizeJpegOperation::to_json(nlohmann::json *out_json) {
+  (*out_json)["size"] = size_;
+  return Status::OK();
 }
 
 // SwapRedBlueOperation.
@@ -1773,6 +1969,22 @@ std::shared_ptr<TensorOp> UniformAugOperation::Build() {
                        [](std::shared_ptr<TensorOperation> op) -> std::shared_ptr<TensorOp> { return op->Build(); });
   std::shared_ptr<UniformAugOp> tensor_op = std::make_shared<UniformAugOp>(tensor_ops, num_ops_);
   return tensor_op;
+}
+
+Status UniformAugOperation::to_json(nlohmann::json *out_json) {
+  nlohmann::json args;
+  std::vector<nlohmann::json> transforms;
+  for (auto op : transforms_) {
+    nlohmann::json op_item, op_args;
+    RETURN_IF_NOT_OK(op->to_json(&op_args));
+    op_item["tensor_op_params"] = op_args;
+    op_item["tensor_op_name"] = op->Name();
+    transforms.push_back(op_item);
+  }
+  args["transforms"] = transforms;
+  args["num_ops"] = num_ops_;
+  *out_json = args;
+  return Status::OK();
 }
 #endif
 
