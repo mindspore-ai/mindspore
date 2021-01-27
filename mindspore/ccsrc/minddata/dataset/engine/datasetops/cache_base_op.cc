@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -307,7 +307,7 @@ Status CacheBase::Prefetcher(int32_t worker_id) {
         if (rc == StatusCode::kMDNetWorkError && retry_count < max_retries) {
           // If we get some network error, we will attempt some retries
           retry_count++;
-        } else if (rc.IsError()) {
+        } else if (rc.IsError() && rc.StatusCode() != StatusCode::kMDInterrupted) {
           MS_LOG(WARNING) << rc.ToString();
           return rc;
         }

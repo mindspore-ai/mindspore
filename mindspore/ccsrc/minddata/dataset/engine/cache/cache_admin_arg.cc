@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,19 @@ CacheAdminArgHandler::CacheAdminArgHandler()
       hostname_(kCfgDefaultCacheHost),
       spill_dir_(""),
       command_id_(CommandId::kCmdUnknown) {
+  const char *env_cache_host = std::getenv("MS_CACHE_HOST");
+  const char *env_cache_port = std::getenv("MS_CACHE_PORT");
+  if (env_cache_host != nullptr) {
+    hostname_ = env_cache_host;
+  }
+  if (env_cache_port != nullptr) {
+    char *end = nullptr;
+    port_ = strtol(env_cache_port, &end, 10);
+    if (*end != '\0') {
+      std::cerr << "Cache port from env variable MS_CACHE_PORT is invalid\n";
+      port_ = 0;  // cause the port range validation to generate an error during the validation checks
+    }
+  }
   // Initialize the command mappings
   arg_map_["-h"] = ArgValue::kArgHost;
   arg_map_["--hostname"] = ArgValue::kArgHost;
