@@ -501,6 +501,24 @@ write_commit_file() {
     echo ${COMMIT_STR} > "${BASEPATH}/mindspore/lite/build/.commit_id"
 }
 
+gen_fbs() {
+  if [[ "${ENABLE_TOOLS}" == "on" ]]; then
+    if [[ -f ${BASEPATH}/mindspore/lite/build/tools/schema_gen/schema_gen ]]; then
+      cd ${BASEPATH}/mindspore/lite/build/tools/schema_gen
+      ./schema_gen
+      cd -
+      diff_ops=$(diff ${BASEPATH}/mindspore/lite/build/tools/schema_gen/ops.fbs ${BASEPATH}/mindspore/lite/schema/ops.fbs || true)
+      if [[ "X${diff_ops}" != "X" ]]; then
+        cp ${BASEPATH}/mindspore/lite/build/tools/schema_gen/ops.fbs ${BASEPATH}/mindspore/lite/schema/
+      fi
+      diff_types=$(diff ${BASEPATH}/mindspore/lite/build/tools/schema_gen/primitive_type.fbs ${BASEPATH}/mindspore/lite/schema/primitive_type.fbs || true)
+      if [[ "X${diff_types}" != "X" ]]; then
+        cp ${BASEPATH}/mindspore/lite/build/tools/schema_gen/primitive_type.fbs ${BASEPATH}/mindspore/lite/schema/
+      fi
+    fi
+  fi
+}
+
 build_lite()
 {
     get_version
@@ -572,6 +590,7 @@ build_lite()
         echo "---------------- mindspore lite: build failed ----------------"
         exit 1
     else
+        gen_fbs
         mv ${BASEPATH}/output/tmp/*.tar.gz* ${BASEPATH}/output/
         rm -rf ${BASEPATH}/output/tmp/
         echo "---------------- mindspore lite: build success ----------------"

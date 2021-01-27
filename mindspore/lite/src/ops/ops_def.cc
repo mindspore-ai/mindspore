@@ -455,7 +455,7 @@ OP_ATTR_WITH_VALUE(keep_prob, float, 0.5)
 OP_SCHEMA_DEF_END(Dropout)
 
 OP_SCHEMA_DEF(DropoutGrad)
-OP_ATTR(ratio, float)
+OP_ATTR(keep_prob, float)
 OP_SCHEMA_DEF_END(DropoutGrad)
 
 OP_SCHEMA_DEF(Elu)

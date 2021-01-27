@@ -285,7 +285,7 @@ table Dropout {
 }
 
 table DropoutGrad {
-    ratio: float;
+    keep_prob: float;
 }
 
 table Elu {
