@@ -213,9 +213,18 @@ def tensor_index_by_list(data, list_index):
 
 def tensor_index_by_tuple(data, tuple_index):
     """Tensor getitem by tuple of various types with None"""
+    tuple_index_len = len(tuple_index)
+    if tuple_index_len == 0:
+        return data
+
     op_name = const_utils.TENSOR_GETITEM
     tuple_index = _transform_ellipsis_to_slice(data, tuple_index, op_name)
     data, tuple_index = _expand_data_dims(data, tuple_index, op_name)
+
+    data_shape = F.shape(data)
+    data_rank = len(data_shape)
+    min_data_rank, max_data_rank = 0, 8
+    const_utils.judge_data_rank(data_rank, min_data_rank, max_data_rank)
 
     indexes_types = hyper_map(F.typeof, tuple_index)
     contain_type = const_utils.tuple_index_type_cnt(indexes_types, op_name)
@@ -280,12 +289,13 @@ def _generate_indices_from_tuple(data, tuple_index, op_name):
             tensor_positions.append(i)
         elif i in sequence_positions:
             sequence_index = const_utils.transform_sequence_index(index, dim_size, op_name)
-            tensor_index = F.tuple_to_array(sequence_index)
+            tensor_index = const_utils.make_tensor(sequence_index)
             tensor_index = F.cast(tensor_index, mstype.int64)
             tuple_index_new += (tensor_index,)
             tensor_indexes.append(tensor_index)
             tensor_positions.append(i)
         elif i in tensor_positions:
+            const_utils.check_index_type_valid(F.dtype(index), mstype.int_type, op_name)
             tensor_index = F.cast(index, mstype.int64)
             tuple_index_new += (tensor_index,)
             tensor_indexes.append(tensor_index)
