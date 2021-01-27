@@ -93,7 +93,8 @@ def test_outermost_net_pass_parameter():
     assert "The inputs types of the outermost network support bool, int, float, tensor, " \
            "mstype.Number(mstype.bool, mstype.int, mstype.float, mstype.uint), " \
            "and tuple or list containing only these types, and dict whose values are these types, " \
-           "but got 1th arg is Parameter (name=weight)" in str(err.value)
+           "but got 1th arg is Parameter (name=weight, shape=(2, 2), dtype=Float32, requires_grad=True)" \
+           in str(err.value)
 
 
 def test_outermost_net_pass_tuple_including_parameter():
