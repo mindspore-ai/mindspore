@@ -13,7 +13,7 @@
 
 ## Description
 
-Molecular Dynamics (MD) is playing an increasingly important role in the research of biology, pharmacy, chemistry, and materials science.  The architecture is based on DeePMD, which using an NN scheme for MD simulations, which overcomes the limitations associated to auxiliary quantities like the symmetry functions or the Coulomb matrix. Each environment contains a number of atoms, whose local coordinates are arranged in a symmetry preserving way following the prescription of the Deep Potential method. According to the atomic position, atomic types and box tensor to construct energy, force and virial.
+Molecular Dynamics (MD) is playing an increasingly important role in the research of biology, pharmacy, chemistry, and materials science.  The architecture is based on DeePMD, which using an NN scheme for MD simulations, which overcomes the limitations associated to auxiliary quantities like the symmetry functions or the Coulomb matrix. Each environment contains a number of atoms, whose local coordinates are arranged in a symmetry preserving way following the prescription of the Deep Potential method. According to the atomic position, atomic types and box tensor to construct energy.
 
 Thanks a lot for DeePMD team's help.
 
@@ -75,7 +75,6 @@ In `deepmodeling/deepmd-kit/source`:
     │   ├── eval.sh             # evaluation script
     ├── src
     │   ├── descriptor.py       # descriptor function
-    │   ├── virial.py           # calculating virial function
     │   └── network.py          # MD simulation architecture
     └── eval.py                 # evaluation interface
 ```
@@ -101,8 +100,6 @@ The infer result：
 ```text
 energy: -29944.03
 atom_energy: -94.38766   -94.294426  -94.39194   -94.70758   -94.51311   -94.457954 ...
-force: 1.649112 -1.0982257  0.46055675 -1.3491507 -0.3382736 -0.97184074 ...
-virial: -11.736662   -4.2862144    2.8852935  -4.286209  -10.408775   -5.6738224 ...
 ```
 
 ## ModelZoo Homepage

@@ -49,9 +49,7 @@ if __name__ == '__main__':
     param_dict = load_checkpoint(args_opt.checkpoint_path)
     load_param_into_net(net, param_dict)
     net.to_float(mstype.float32)
-    energy, atom_ener, force, virial = \
+    energy, atom_ener, _ = \
         net(d_coord_tensor, d_nlist_tensor, frames, avg_tensor, std_tensor, atype_tensor, nlist_tensor)
     print('energy:', energy)
     print('atom_energy:', atom_ener)
-    print('force:', force)
-    print('virial:', virial)

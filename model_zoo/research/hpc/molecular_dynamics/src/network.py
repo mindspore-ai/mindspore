@@ -22,7 +22,6 @@ from mindspore import Tensor
 from mindspore import nn
 from mindspore.ops import composite as C
 from mindspore.ops import operations as P
-from .virial import ProdVirialSeA
 from .descriptor import DescriptorSeA
 
 natoms = [192, 192, 64, 128]
@@ -230,12 +229,10 @@ class Network(nn.Cell):
         self.grad = Grad(self.mdnet)
         self.descrpt_se_a = DescriptorSeA()
         self.process = Processing()
-        self.prod_virial_se_a = ProdVirialSeA()
-        self.prod_force_se_a = P.ProdForceSeA()
 
     def construct(self, d_coord, d_nlist, frames, avg, std, atype, nlist):
         """construct function."""
-        rij, descrpt, descrpt_deriv = \
+        _, descrpt, _ = \
             self.descrpt_se_a(d_coord, d_nlist, frames, avg, std, atype)
         # calculate energy and atom_ener
         atom_ener = self.mdnet(descrpt)
@@ -244,10 +241,4 @@ class Network(nn.Cell):
         energy = self.sum(energy_raw, 1)
         # grad of atom_ener
         net_deriv = self.grad(descrpt)
-        net_deriv_reshape = self.reshape(net_deriv[0], (-1, natoms[0], ndescrpt))
-        descrpt_deriv_reshape = self.reshape(descrpt_deriv, (-1, natoms[0], ndescrpt, 3))
-        # calculate virial
-        virial = self.prod_virial_se_a(net_deriv_reshape, descrpt_deriv_reshape, rij, nlist)
-        # calculate force
-        force = self.prod_force_se_a(net_deriv_reshape, descrpt_deriv_reshape, nlist)
-        return energy, atom_ener, force, virial
+        return energy, atom_ener, net_deriv
