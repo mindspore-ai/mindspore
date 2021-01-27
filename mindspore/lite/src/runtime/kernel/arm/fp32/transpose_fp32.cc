@@ -129,7 +129,7 @@ int TransposeCPUKernel::Run() {
     for (int i = 0; i < input_perm->ElementsNum(); ++i) {
       param->perm_[i] = perm_data[i];
     }
-    for (int i = input_perm->ElementsNum(); i <= 8; ++i) {
+    for (int i = input_perm->ElementsNum(); i < 8; ++i) {
       param->perm_[i] = 0;
     }
   }
