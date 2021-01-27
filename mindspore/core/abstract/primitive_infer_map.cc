@@ -119,6 +119,7 @@ PrimitiveEvalImplMap &GetPrimitiveToEvalImplMap() {
     {prim::kPrimBiasAdd, {InferImplBiasAdd, true}},
     {prim::kPrimBiasAddGrad, {InferImplBiasAddGrad, true}},
     {prim::kPrimRelu, {InferImplRelu, true}},
+    {prim::kPrimRelu6, {InferImplRelu, true}},
     {prim::kPrimZerosLike, {InferImplZerosLike, true}},
     {prim::kPrimBpropCut, {InferImplBpropCut, true}},
     {prim::kPrimLayerNorm, {InferImplLayerNorm, true}},
