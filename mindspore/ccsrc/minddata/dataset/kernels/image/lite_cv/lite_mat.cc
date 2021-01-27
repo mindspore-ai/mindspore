@@ -299,7 +299,7 @@ void LiteMat::AlignFree(void *ptr) {
 inline void LiteMat::InitElemSize(LDataType data_type) { elem_size_ = data_type.SizeInBytes(); }
 
 bool LiteMat::GetROI(int x, int y, int w, int h, LiteMat &m) {
-  if (x < 0 || y < 0 || x + w > width_ || h + y > height_) {
+  if (x < 0 || y < 0 || x > width_ - w || h > height_ - y || w < 0 || h < 0) {
     return false;
   }
   if (!m.IsEmpty()) {
@@ -374,7 +374,7 @@ inline void SubtractImpl(const uint32_t *src0, const uint32_t *src1, uint32_t *d
   }
 }
 
-bool Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
+inline bool CheckSubstract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
   if (dst == NULL) {
     return false;
   }
@@ -384,6 +384,13 @@ bool Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
   }
 
   if (src_a.data_type_ != src_b.data_type_) {
+    return false;
+  }
+  return true;
+}
+
+bool Subtract(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
+  if (!CheckSubstract(src_a, src_b, dst)) {
     return false;
   }
 
@@ -534,7 +541,7 @@ inline void DivideImpl(const uint32_t *src0, const uint32_t *src1, uint32_t *dst
   }
 }
 
-bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
+inline bool CheckDivide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
   if (dst == NULL) {
     return false;
   }
@@ -545,6 +552,13 @@ bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
 
   if (src_a.data_type_ != src_b.data_type_) {
     return false;
+  }
+  return true;
+}
+
+bool Divide(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
+  if (!CheckDivide(src_a, src_b, dst)) {
+    return true;
   }
 
   if (dst->IsEmpty()) {
@@ -635,7 +649,7 @@ inline void MultiplyImpl(const uint32_t *src0, const uint32_t *src1, uint32_t *d
   }
 }
 
-bool Multiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
+inline bool CheckMultiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
   if (dst == NULL) {
     return false;
   }
@@ -647,7 +661,13 @@ bool Multiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
   if (src_a.data_type_ != src_b.data_type_) {
     return false;
   }
+  return true;
+}
 
+bool Multiply(const LiteMat &src_a, const LiteMat &src_b, LiteMat *dst) {
+  if (!CheckMultiply(src_a, src_b, dst)) {
+    return false;
+  }
   if (dst->IsEmpty()) {
     dst->Init(src_a.width_, src_a.height_, src_a.channel_, src_a.data_type_);
   } else if (src_a.width_ != dst->width_ || src_a.height_ != dst->height_ || src_a.channel_ != dst->channel_) {
