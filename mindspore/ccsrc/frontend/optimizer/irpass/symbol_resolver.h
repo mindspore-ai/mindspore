@@ -19,6 +19,7 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "frontend/optimizer/optimizer.h"
 #include "frontend/optimizer/optimizer_caller.h"
@@ -66,7 +67,7 @@ class ResolverResolve : public AnfVisitor {
 };
 
 // {prim::kPrimGetAttr, Ns, Str}
-class ResolverGetattr : public AnfVisitor {
+class ResolverGetAttr : public AnfVisitor {
  public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     Reset();
@@ -97,7 +98,7 @@ class ResolverGetattr : public AnfVisitor {
 };
 
 // {prim::kPrimGetAttr, {prim::kPrimResolve, ns_node, sym_node}, attr_node}
-class ResolveAttr : public OptimizerCaller {
+class ResolverGetAttrResolve : public OptimizerCaller {
  public:
   AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
     PatternNode<AnfNodePtr> ns_node, sym_node, attr_node;
@@ -121,6 +122,29 @@ class ResolveAttr : public OptimizerCaller {
 
     return nullptr;
   }
+};
+
+class ResolverResolveAndGetAttr : public OptimizerCaller {
+ public:
+  ResolverResolveAndGetAttr() {
+    resolver_optimizers_ = {std::make_shared<ResolverGetAttrResolve>(), std::make_shared<ResolverResolve>(),
+                            std::make_shared<ResolverGetAttr>()};
+  }
+  ~ResolverResolveAndGetAttr() = default;
+
+  AnfNodePtr operator()(const OptimizerPtr &optimizer, const AnfNodePtr &node) override {
+    AnfNodePtr new_node;
+    for (const auto &resolver_opt : resolver_optimizers_) {
+      new_node = (*resolver_opt)(optimizer, node);
+      if (new_node != nullptr) {
+        return new_node;
+      }
+    }
+    return nullptr;
+  }
+
+ private:
+  std::vector<OptimizerCallerPtr> resolver_optimizers_{};
 };
 }  // namespace irpass
 }  // namespace opt
