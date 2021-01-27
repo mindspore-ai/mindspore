@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ const size_t kMaxDim = 100;
 static std::map<std::string, int> reduce_types_map_ = {
   {"ReduceMax", 1}, {"ReduceMean", 2}, {"ReduceSum", 3}, {"ReduceMin", 4}};
 
-void ReduceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
+template <typename T>
+void ReduceCPUKernel<T>::InitKernel(const CNodePtr &kernel_node) {
   MS_EXCEPTION_IF_NULL(kernel_node);
   std::string kernel_name = AnfAlgo::GetCNodeName(kernel_node);
 
@@ -59,18 +60,19 @@ void ReduceCPUKernel::InitKernel(const CNodePtr &kernel_node) {
   left_dims_ = left_dims_ / stride_;
 }
 
-bool ReduceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
-                             const std::vector<kernel::AddressPtr> & /*workspaces*/,
-                             const std::vector<kernel::AddressPtr> &outputs) {
-  size_t out_float_size = left_dims_ * sizeof(float);
-  size_t in_float_size = stride_ * out_float_size;
-  if (inputs[0]->size != in_float_size || outputs[0]->size != out_float_size) {
+template <typename T>
+bool ReduceCPUKernel<T>::Launch(const std::vector<kernel::AddressPtr> &inputs,
+                                const std::vector<kernel::AddressPtr> & /*workspaces*/,
+                                const std::vector<kernel::AddressPtr> &outputs) {
+  size_t out_size = left_dims_ * sizeof(T);
+  size_t in_size = stride_ * out_size;
+  if (inputs[0]->size != in_size || outputs[0]->size != out_size) {
     MS_LOG(EXCEPTION) << "invalid input or output data size!";
   }
-  auto input = reinterpret_cast<float *>(inputs[0]->addr);
-  auto output = reinterpret_cast<float *>(outputs[0]->addr);
-  int size = inputs[0]->size / sizeof(float);
-  std::vector<float> new_input(IntToSize(size), 0.0);
+  auto input = reinterpret_cast<T *>(inputs[0]->addr);
+  auto output = reinterpret_cast<T *>(outputs[0]->addr);
+  int size = inputs[0]->size / sizeof(T);
+  std::vector<T> new_input(IntToSize(size), 0.0);
   std::vector<size_t> transpose_axis;
   for (size_t i = 0; i < shape_.size(); ++i) {
     bool insert = true;
@@ -90,7 +92,8 @@ bool ReduceCPUKernel::Launch(const std::vector<kernel::AddressPtr> &inputs,
   return true;
 }
 
-void ReduceCPUKernel::CheckAxis(const CNodePtr &kernel_node) {
+template <typename T>
+void ReduceCPUKernel<T>::CheckAxis(const CNodePtr &kernel_node) {
   auto axis_addr = AnfAlgo::GetCNodePrimitive(kernel_node)->GetAttr(AXIS);
   if (axis_addr->isa<ValueTuple>() || axis_addr->isa<ValueList>()) {
     std::vector<int> attr_axis;
@@ -128,10 +131,11 @@ void ReduceCPUKernel::CheckAxis(const CNodePtr &kernel_node) {
   }
 }
 
-void ReduceCPUKernel::ConvertDataToOutput(const float *new_input, float *output) {
+template <typename T>
+void ReduceCPUKernel<T>::ConvertDataToOutput(const T *new_input, T *output) {
   if (reduce_type_ == kReduceTypeMax || reduce_type_ == kReduceTypeMin) {
     for (size_t i = 0; i < left_dims_; ++i) {
-      float value = new_input[i * stride_];
+      T value = new_input[i * stride_];
       for (size_t k = 0; k < stride_; ++k) {
         if (reduce_type_ == kReduceTypeMax) {
           if (value < new_input[i * stride_ + k]) {
@@ -147,7 +151,7 @@ void ReduceCPUKernel::ConvertDataToOutput(const float *new_input, float *output)
     }
   } else if (reduce_type_ == kReduceTypeMean || reduce_type_ == kReduceTypeSum) {
     for (size_t i = 0; i < left_dims_; ++i) {
-      float value = 0.0;
+      T value = 0.0;
       for (size_t k = 0; k < stride_; ++k) {
         value += new_input[i * stride_ + k];
       }
@@ -162,8 +166,9 @@ void ReduceCPUKernel::ConvertDataToOutput(const float *new_input, float *output)
   }
 }
 
-void ReduceCPUKernel::Transpose(const int size, const float *input, const std::vector<size_t> &input_shape,
-                                const std::vector<size_t> &input_axis, const int shape_size, float *output) {
+template <typename T>
+void ReduceCPUKernel<T>::Transpose(const int size, const T *input, const std::vector<size_t> &input_shape,
+                                   const std::vector<size_t> &input_axis, const int shape_size, T *output) {
   int size_offset[kMaxDim];
   size_offset[0] = size / SizeToInt(input_shape[0]);
   for (int i = 1; i < shape_size; ++i) {
