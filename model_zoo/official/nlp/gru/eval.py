@@ -41,8 +41,7 @@ def run_gru_eval():
 
     context.set_context(mode=context.GRAPH_MODE, device_target=args.device_target, reserve_class_name_in_scope=False, \
         device_id=args.device_id, save_graphs=False)
-    prefix = "multi30k_test_mindrecord_32"
-    mindrecord_file = os.path.join(args.dataset_path, prefix)
+    mindrecord_file = args.dataset_path
     if not os.path.exists(mindrecord_file):
         print("dataset file {} not exists, please check!".format(mindrecord_file))
         raise ValueError(mindrecord_file)

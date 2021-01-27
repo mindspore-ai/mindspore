@@ -217,7 +217,7 @@ Parameters for both training and evaluation can be set in config.py. All the dat
     perl multi-bleu.perl target.txt.forbleu < output.txt.forbleu
     ```
 
-Note: The `DATASET_PATH` is path to mindrecord. eg. /dataset_path/*.mindrecord
+Note: The `DATASET_PATH` is path to mindrecord. eg. train: /dataset_path/multi30k_train_mindrecord_0  eval: /dataset_path/multi30k_test_mindrecord
 
 # [Model Description](#content)
 
