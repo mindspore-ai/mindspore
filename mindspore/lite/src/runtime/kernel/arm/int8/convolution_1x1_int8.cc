@@ -318,12 +318,7 @@ int Convolution1x1Int8CPUKernel::InitParam() {
   matmul_param_->row_ = conv_param_->output_h_ * conv_param_->output_w_;
   matmul_param_->deep_ = conv_param_->input_channel_;
   matmul_param_->col_ = conv_param_->output_channel_;
-  matmul_param_->col_2_ = UP_ROUND(matmul_param_->col_, C2NUM);
-  matmul_param_->col_4_ = UP_ROUND(matmul_param_->col_, C4NUM);
-  matmul_param_->col_8_ = UP_ROUND(matmul_param_->col_, C8NUM);
-  matmul_param_->col_16_ = UP_ROUND(matmul_param_->col_, C16NUM);
   matmul_param_->row_4_ = UP_ROUND(matmul_param_->row_, C4NUM);
-  matmul_param_->row_8_ = UP_ROUND(matmul_param_->row_, C8NUM);
   matmul_param_->deep_4_ = UP_ROUND(matmul_param_->deep_, C4NUM);
   matmul_param_->deep_16_ = UP_ROUND(matmul_param_->deep_, C16NUM);
 

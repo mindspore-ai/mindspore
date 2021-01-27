@@ -23,12 +23,23 @@
 #include "nnacl/matmul_parameter.h"
 #include "nnacl/op_base.h"
 
+#define ADD_BIAS(value, bias, c) \
+  if (bias != NULL) value = value + bias[c];
+
+#define DO_RELU(value, act_type) \
+  if (act_type == ActType_Relu) value = MSMAX(0.0f, value);
+
+#define DO_RELU6(value, act_type)                            \
+  if (act_type == ActType_Relu6) value = MSMIN(6.0f, value); \
+  if (act_type == ActType_Relu6) value = MSMAX(0.0f, value);
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 void MatMulOpt(const float *a, const float *b, float *c, const float *bias, ActType act_type, int deep, int row,
                int col, size_t stride, int out_type);
-void MatVecMul(const float *a, const float *b, float *c, const float *bias, ActType act_type, int depth, int col);
+void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col);
+
 void RowMajor2ColMajor(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row4Major(const float *src_ptr, float *dst_ptr, int row, int col);
 void RowMajor2Row6Major(const float *src_ptr, float *dst_ptr, int row, int col);
@@ -40,9 +51,7 @@ void RowMajor2Col6Major(const float *src_ptr, float *dst_ptr, size_t row, size_t
 void RowMajor2Col8Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
 void RowMajor2Col12Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
 void RowMajor2Col16Major(const float *src_ptr, float *dst_ptr, size_t row, size_t col);
-#ifdef ENABLE_ARM
-void MatVecMulFp32(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int col);
-#endif
+
 #ifdef ENABLE_ARM64
 void MatmulFloatNeon64(const float *a, const float *b, float *c, const float *bias, int act_type, int depth, int row,
                        int col, size_t stride, size_t writeNhwc, size_t WriteWino);
@@ -67,10 +76,6 @@ void MatmulFloatAvxOpt(const float *a, const float *b, float *c, const float *bi
 #endif
 #endif
 
-#ifdef ENABLE_NNACL_INFER_SHAPE
-int MatMulInferShape(int **in_shape, int in_num, size_t *dim_size, int *out_shape, int *in_format, int *out_format,
-                     int *in_datatype, int *out_datatype, OpParameter *param);
-#endif
 #ifdef __cplusplus
 }
 #endif
