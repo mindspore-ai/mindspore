@@ -49,4 +49,5 @@ def parser_args():
     parser.add_argument("-emb", "--embedded_dimension", type=int, default=64, help="output embedding dim")
     parser.add_argument('--dist_reg', type=float, default=0.003, help="distance loss coefficient")
 
+    parser.add_argument('--device_target', type=str, default='Ascend', choices=('Ascend', 'GPU'), help='device target')
     return parser.parse_args()
