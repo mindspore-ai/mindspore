@@ -80,6 +80,108 @@
 
 ##### Python API
 
+###### Delete shape and dtype of class Initializer ([!7373](https://gitee.com/mindspore/mindspore/pulls/7373/files))
+
+Delete shape and dtype attributes of Initializer class.
+
+###### Modify the return type of initializer ([!7373](https://gitee.com/mindspore/mindspore/pulls/7373/files))
+
+Previously, the return type of initializer function may be string, number, instance of class Tensor or subclass of class Initializer.
+
+After modification, initializer function will return instance of class MetaTensor, class Tensor or subclass of class Initializer.
+
+Noted that the MetaTensor is forbidden to initialize parameters, so we recommend that use str, number or subclass of Initializer for parameters initialization rather than the initializer functions.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.0.1 </td> <td style="text-align:center"> 1.1.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import mindspore.nn as nn
+>>> from mindspore.common import initializer
+>>> from mindspore import dtype as mstype
+>>>
+>>> def conv3x3(in_channels, out_channels)
+>>>   weight = initializer('XavierUniform', shape=(3, 2, 32, 32), dtype=mstype.float32)
+>>>   return nn.Conv2d(in_channels, out_channels, weight_init=weight, has_bias=False, pad_mode="same")
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore.nn as nn
+>>> from mindspore.common.initializer import XavierUniform
+>>>
+>>> #1) using string
+>>> def conv3x3(in_channels, out_channels)
+>>>   return nn.Conv2d(in_channels, out_channels, weight_init='XavierUniform', has_bias=False, pad_mode="same")
+>>>
+>>> #2) using subclass of class Initializer
+>>> def conv3x3(in_channels, out_channels)
+>>>   return nn.Conv2d(in_channels, out_channels, weight_init=XavierUniform(), has_bias=False, pad_mode="same")
+```
+
+</td>
+</tr>
+</table>
+
+Advantages:
+After modification, we can use the same instance of Initializer to initialize parameters of different shapes, which was not allowed before.
+
+<table>
+<tr>
+<td style="text-align:center"> 1.0.1 </td> <td style="text-align:center"> 1.1.0 </td>
+</tr>
+<tr>
+<td>
+
+```python
+>>> import mindspore.nn as nn
+>>> from mindspore.common import initializer
+>>> from mindspore.common.initializer import XavierUniform
+>>>
+>>> weight_init_1 = XavierUniform(gain=1.1)
+>>> conv1 = nn.Conv2d(3, 6, weight_init=weight_init_1)
+>>> weight_init_2 = XavierUniform(gain=1.1)
+>>> conv2 = nn.Conv2d(6, 10, weight_init=weight_init_2)
+```
+
+</td>
+<td>
+
+```python
+>>> import mindspore.nn as nn
+>>> from mindspore.common import initializer
+>>> from mindspore.common.initializer import XavierUniform
+>>>
+>>> weight_init = XavierUniform(gain=1.1)
+>>> conv1 = nn.Conv2d(3, 6, weight_init=weight_init)
+>>> conv2 = nn.Conv2d(6, 10, weight_init=weight_init)
+```
+
+</td>
+</tr>
+</table>
+
+###### Modify get_seed function ([!7429](https://gitee.com/mindspore/mindspore/pulls/7429/files))
+
+Modify get_seed function implementation
+
+Previously, if seed is not set, the value of seed is default, parameters initialized by the normal function are the same every time.
+
+After modification, if seed is not set, the value of seed is generated randomly, the initialized parameters change according to the random seed.
+
+If you want to fix the initial value of parameters, we suggest to set seed.
+
+```python
+>>> from mindspore.common import set_seed
+>>> set_seed(1)
+```
+
 ###### `nn.LinSpace` ([!9494](https://gitee.com/mindspore/mindspore/pulls/9494)) has been removed and modify `ops.LinSpace` ([!8920](https://gitee.com/mindspore/mindspore/pulls/8920))
 
 The `nn.LinSpace` interface only support passing the value by args previously. For the convenience, we provided enhancive `ops.LinSpace` interface, which support passing the value by the inputs at the latest version. So there is no need for `nn.LinSpace`.
