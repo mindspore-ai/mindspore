@@ -1319,6 +1319,8 @@ class DepthwiseConv2dNative(PrimitiveWithInfer):
                  dilation=1,
                  group=1):
         """Initialize DepthwiseConv2dNative"""
+        logger.warning("WARN_DEPRECATED: The usage of DepthwiseConv2dNative is deprecated."
+                       " Please use nn.Conv2D.")
         self.init_prim_io_names(inputs=['x', 'w'], outputs=['output'])
         self.kernel_size = _check_positive_int_or_tuple('kernel_size', kernel_size, self.name)
         self.stride = _check_positive_int_or_tuple('stride', stride, self.name)
