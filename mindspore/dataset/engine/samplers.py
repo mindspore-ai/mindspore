@@ -137,6 +137,20 @@ class BuiltinSampler:
         pass
 
     def add_child(self, sampler):
+        """
+        Add a sub-sampler for given sampler. The sub-sampler will receive all data from the
+        output of parent sampler and apply its sample logic to return new samples.
+
+        Args:
+            sampler (Sampler): Object used to choose samples from the dataset. Only builtin
+                samplers(DistributedSampler, PKSampler, RandomSampler, SequentialSampler,
+                SubsetRandomSampler, WeightedRandomSampler) are supported.
+
+        Examples:
+            >>> sampler = ds.SequentialSampler(start_index=0, num_samples=3)
+            >>> sampler.add_child(ds.RandomSampler(num_samples=2))
+            >>> dataset = ds.Cifar10Dataset(cifar10_dataset_dir, sampler=sampler)
+        """
         self.child_sampler = sampler
 
     def get_child(self):
@@ -448,7 +462,7 @@ class SequentialSampler(BuiltinSampler):
     Samples the dataset elements sequentially, same as not having a sampler.
 
     Args:
-        start_index (int, optional): Index to start sampling at. (dafault=None, start at first ID)
+        start_index (int, optional): Index to start sampling at. (default=None, start at first ID)
         num_samples (int, optional): Number of elements to sample (default=None, all elements).
 
     Examples:

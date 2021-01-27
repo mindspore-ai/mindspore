@@ -232,9 +232,9 @@ def test_add_sampler_invalid_input():
     assert "not an instance of a sampler" in str(info.value)
 
     sampler = ds.SequentialSampler()
-    with pytest.raises(ValueError) as info:
+    with pytest.raises(RuntimeError) as info:
         data2 = ds.ManifestDataset(manifest_file, sampler=sampler, num_samples=20)
-    assert "Conflicting arguments during sampler assignments" in str(info.value)
+    assert "sampler and num_samples cannot be specified at the same time" in str(info.value)
 
 
 def test_distributed_sampler_invalid_offset():
