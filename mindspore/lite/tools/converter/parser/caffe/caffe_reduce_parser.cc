@@ -55,6 +55,7 @@ PrimitiveC *CaffeReduceParser::ParseLitePrimitive(const caffe::LayerParameter &p
     axes = std::vector<int>(1, 0);
   }
   attr->axes = axes;
+  attr->reduceToEnd = true;
 
   auto primitive = std::make_unique<schema::PrimitiveT>();
   primitive->value.type = schema::PrimitiveType_Reduce;
