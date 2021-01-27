@@ -35,98 +35,44 @@ using mindspore::schema::Format::Format_NHWC;
 
 namespace mindspore::kernel {
 void ConvolutionDelegateFP16CPUKernel::FreeCopiedData() {
-  if ((fp16_weight_ != nullptr) && (need_free_ & WEIGHT_NEED_FREE)) {
-    free(fp16_weight_);
-    fp16_weight_ = nullptr;
+  if ((origin_weight_ != nullptr) && (need_free_ & WEIGHT_NEED_FREE)) {
+    free(origin_weight_);
+    origin_weight_ = nullptr;
   }
-  if ((fp16_bias_ != nullptr) && (need_free_ & BIAS_NEED_FREE)) {
-    free(fp16_bias_);
-    fp16_bias_ = nullptr;
+  if ((origin_bias_ != nullptr) && (need_free_ & BIAS_NEED_FREE)) {
+    free(origin_bias_);
+    origin_bias_ = nullptr;
   }
 }
 
-int ConvolutionDelegateFP16CPUKernel::GetFp16WeightAndBias() {
-  auto ret = GetFp16Weight();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get Fp16 Weight failed.";
-    return RET_ERROR;
-  }
-
-  ret = GetFp16Bias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get Fp16 Bias failed.";
-    return RET_ERROR;
-  }
-  return RET_OK;
-}
-
-int ConvolutionDelegateFP16CPUKernel::GetFp16Weight() {
-  auto weight_tensor = in_tensors_.at(kWeightIndex);
-  if (weight_tensor->data_type() == kNumberTypeFloat16 && InferShapeDone()) {
-    // do not need malloc new memory to store origin data
-    fp16_weight_ = reinterpret_cast<float16_t *>(weight_tensor->data_c());
-    return RET_OK;
-  } else {
-    fp16_weight_ = CopyData(weight_tensor);
-    if (fp16_weight_ == nullptr) {
-      MS_LOG(ERROR) << "Generate fp16_weight failed.";
-      return RET_ERROR;
-    }
-    need_free_ = need_free_ | WEIGHT_NEED_FREE;
-    return RET_OK;
-  }
-  return RET_OK;
-}
-
-int ConvolutionDelegateFP16CPUKernel::GetFp16Bias() {
-  if (in_tensors_.size() == 3) {
-    // has bias situation
-    auto bias_tensor = in_tensors_.at(kBiasIndex);
-    if (bias_tensor->data_type() == kNumberTypeFloat16 && InferShapeDone()) {
-      // do not need malloc new memory to store origin data
-      fp16_bias_ = reinterpret_cast<float16_t *>(bias_tensor->data_c());
-      return RET_OK;
-    } else {
-      fp16_bias_ = CopyData(bias_tensor);
-      if (fp16_bias_ == nullptr) {
-        MS_LOG(ERROR) << "Generate fp16_bias failed.";
-        return RET_ERROR;
-      }
-      need_free_ = need_free_ | BIAS_NEED_FREE;
-      return RET_OK;
-    }
-  }
-  return RET_OK;
-}
-
-float16_t *ConvolutionDelegateFP16CPUKernel::CopyData(lite::Tensor *tensor) {
+void *ConvolutionDelegateFP16CPUKernel::CopyData(lite::Tensor *tensor) {
   auto data_type = tensor->data_type();
-  MS_ASSERT(data_type == kNumberTypeFloat32 || data_type == kNumberTypeFloat16);
-  auto fp16_data = reinterpret_cast<float16_t *>(malloc(tensor->ElementsNum() * sizeof(float16_t)));
-  if (fp16_data == nullptr) {
-    MS_LOG(ERROR) << "Malloc fp16_data failed.";
+  if (data_type != kNumberTypeFloat32 && data_type != kNumberTypeFloat16) {
+    MS_LOG(ERROR) << "Not supported data type: " << data_type;
     return nullptr;
   }
-  if (data_type == kNumberTypeFloat32) {
-    float *origin_data = reinterpret_cast<float *>(tensor->data_c());
-    for (size_t i = 0; i < tensor->ElementsNum(); ++i) {
-      fp16_data[i] = (float16_t)origin_data[i];
-    }
-  } else {
-    auto *origin_data = reinterpret_cast<float16_t *>(tensor->data_c());
-    memcpy(fp16_data, origin_data, tensor->Size());
+  auto copied_data = malloc(tensor->Size());
+  if (copied_data == nullptr) {
+    MS_LOG(ERROR) << "Malloc copied_data failed.";
+    return nullptr;
   }
-  return fp16_data;
+  memcpy(copied_data, tensor->data_c(), tensor->Size());
+  return copied_data;
 }
 
 int ConvolutionDelegateFP16CPUKernel::Init() {
-  auto ret = GetFp16WeightAndBias();
-  if (ret != RET_OK) {
-    MS_LOG(ERROR) << "Get fp16 weight and bias failed.";
-    return ret;
-  }
   if (!InferShapeDone()) {
+    origin_weight_ = CopyData(in_tensors_.at(kWeightIndex));
+    need_free_ = need_free_ | WEIGHT_NEED_FREE;
+    if (in_tensors_.size() == 3) {
+      origin_bias_ = CopyData(in_tensors_.at(kBiasIndex));
+      need_free_ = need_free_ | BIAS_NEED_FREE;
+    }
     return RET_OK;
+  }
+  origin_weight_ = in_tensors_.at(kWeightIndex)->data_c();
+  if (in_tensors_.size() == 3) {
+    origin_bias_ = in_tensors_.at(kBiasIndex)->data_c();
   }
   return ReSize();
 }
@@ -136,8 +82,8 @@ int ConvolutionDelegateFP16CPUKernel::ReSize() {
   SetInputOutputShapeInfo(reinterpret_cast<ConvParameter *>(op_parameter_), in_tensors_.front(), out_tensors_.front(),
                           context_);
   if (fp16_conv_kernel_ == nullptr) {
-    fp16_conv_kernel_ =
-      CpuConvFp16KernelSelect(in_tensors_, out_tensors_, op_parameter_, context_, primitive_, fp16_weight_, fp16_bias_);
+    fp16_conv_kernel_ = CpuConvFp16KernelSelect(in_tensors_, out_tensors_, op_parameter_, context_, primitive_,
+                                                origin_weight_, origin_bias_);
     if (fp16_conv_kernel_ == nullptr) {
       MS_LOG(ERROR) << "Selecting execute kernel failed for conv_kernel, got a nullptr.";
       return RET_ERROR;
@@ -161,7 +107,7 @@ ConvParameter *CreateNewConvParameterFp16(ConvParameter *parameter) {
 kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                             const lite::InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
-                                            float16_t *fp16_weight, float16_t *fp16_bias) {
+                                            void *origin_weight, void *origin_bias) {
   auto conv_param = reinterpret_cast<ConvParameter *>(op_parameter);
   bool use_winograd = false;
   int out_unit;
@@ -169,13 +115,13 @@ kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &i
   kernel::LiteKernel *kernel = nullptr;
   if (conv_param->kernel_h_ == 1 && conv_param->kernel_w_ == 1) {
     kernel = new (std::nothrow)
-      kernel::Convolution1x1FP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive, fp16_weight, fp16_bias);
+      kernel::Convolution1x1FP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive, origin_weight, origin_bias);
   } else if (use_winograd) {
     kernel = new (std::nothrow) kernel::ConvolutionWinogradFP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive,
-                                                                         out_unit, fp16_weight, fp16_bias);
+                                                                         out_unit, origin_weight, origin_bias);
   } else {
     kernel = new (std::nothrow)
-      kernel::ConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive, fp16_weight, fp16_bias);
+      kernel::ConvolutionFP16CPUKernel(op_parameter, inputs, outputs, ctx, primitive, origin_weight, origin_bias);
   }
   // Once kernel is selected, init func will invoke InitWeightAndBias
   auto ret = kernel->Init();

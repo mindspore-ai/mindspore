@@ -43,12 +43,9 @@ void StridedSliceCPUKernel::InitFastRunParam() {
   for (int i = 0; i < split_axis_; ++i) {
     outer_ *= in_shape[i];
   }
-  int inner = 1;
   for (size_t i = split_axis_ + 1; i < in_shape.size(); i++) {
-    inner *= in_shape[i];
+    inner_ *= in_shape[i];
   }
-  inner_size_ = in_tensors_.front()->Size() / in_tensors_.front()->ElementsNum() * inner;
-
   // decide multi-thread launch strategy
   if (outer_ == 1) {
     parallel_on_split_axis_ = true;
@@ -142,6 +139,26 @@ int StrideRun(void *cdata, int task_id) {
 }
 
 int StridedSliceCPUKernel::FastRun() {
+  // Update length of inner size, because data type of tensor may be changed
+  // from float32 to float16 during fp16 sub-graph partition process.
+  auto input = in_tensors_.front();
+  switch (input->data_type()) {
+    case kNumberTypeInt8:
+      inner_size_ = inner_ * sizeof(int8_t);
+      break;
+    case kNumberTypeFloat32:
+      inner_size_ = inner_ * sizeof(float);
+      break;
+    case kNumberTypeFloat16:
+      inner_size_ = inner_ * sizeof(int16_t);
+      break;
+    case kNumberTypeInt32:
+      inner_size_ = inner_ * sizeof(int32_t);
+      break;
+    default:
+      MS_LOG(ERROR) << "Not supported data type: " << input->data_type();
+      return RET_ERROR;
+  }
   input_ptr_ = reinterpret_cast<uint8_t *>(in_tensors_.front()->data_c());
   output_ptr_ = reinterpret_cast<uint8_t *>(out_tensors_.front()->data_c());
   auto ret = ParallelLaunch(this->context_->thread_pool_, StrideRun, this, context_->thread_num_);

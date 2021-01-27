@@ -27,10 +27,10 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
   ConvolutionFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                            const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                           const mindspore::lite::PrimitiveC *primitive, float16_t *fp16_weight, float16_t *fp16_bias)
+                           const mindspore::lite::PrimitiveC *primitive, void *origin_weight, void *origin_bias)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive),
-        fp16_weight_(fp16_weight),
-        fp16_bias_(fp16_bias) {}
+        origin_weight_(origin_weight),
+        origin_bias_(origin_bias) {}
   ~ConvolutionFP16CPUKernel() override {
     if (packed_weight_ != nullptr) {
       free(packed_weight_);
@@ -56,8 +56,8 @@ class ConvolutionFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
       col_major_input_ = nullptr;
     }
   }
-  float16_t *fp16_weight_;  // do not free
-  float16_t *fp16_bias_;    // do not free
+  void *origin_weight_;  // do not free
+  void *origin_bias_;    // do not free
   float16_t *packed_input_ = nullptr;
   float16_t *packed_weight_ = nullptr;
   float16_t *col_major_input_ = nullptr;

@@ -40,10 +40,7 @@ class ConvolutionDelegateFP16CPUKernel : public LiteKernel {
       fp16_conv_kernel_ = nullptr;
     }
   }
-  int GetFp16WeightAndBias();
-  int GetFp16Weight();
-  int GetFp16Bias();
-  float16_t *CopyData(lite::Tensor *tensor);
+  void *CopyData(lite::Tensor *tensor);
   void FreeCopiedData();
   int Init() override;
   int ReSize() override;
@@ -51,15 +48,15 @@ class ConvolutionDelegateFP16CPUKernel : public LiteKernel {
 
  private:
   uint8_t need_free_ = 0b00;
+  void *origin_weight_ = nullptr;
+  void *origin_bias_ = nullptr;
   kernel::LiteKernel *fp16_conv_kernel_ = nullptr;
-  float16_t *fp16_weight_ = nullptr;
-  float16_t *fp16_bias_ = nullptr;
 };
 
 kernel::LiteKernel *CpuConvFp16KernelSelect(const std::vector<lite::Tensor *> &inputs,
                                             const std::vector<lite::Tensor *> &outputs, OpParameter *op_parameter,
                                             const lite::InnerContext *ctx, const mindspore::lite::PrimitiveC *primitive,
-                                            float16_t *fp16_weight, float16_t *fp16_bias);
+                                            void *origin_weight, void *origin_bias);
 }  // namespace mindspore::kernel
 
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_FP16_CONVOLUTION_DELEGATE_FP16_H_
