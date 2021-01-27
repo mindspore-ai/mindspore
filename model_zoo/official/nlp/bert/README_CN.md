@@ -28,6 +28,7 @@
         - [用法](#用法-1)
             - [Ascend处理器上运行后评估cola数据集](#ascend处理器上运行后评估cola数据集)
             - [Ascend处理器上运行后评估cluener数据集](#ascend处理器上运行后评估cluener数据集)
+            - [Ascend处理器上运行后评估msra数据集](#ascend处理器上运行后评估msra数据集)
             - [Ascend处理器上运行后评估squad v1.1数据集](#ascend处理器上运行后评估squad-v11数据集)
     - [模型描述](#模型描述)
     - [性能](#性能)
@@ -215,7 +216,7 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
     ├─bert_for_finetune.py                    # 网络骨干编码
     ├─bert_for_pre_training.py                # 网络骨干编码
     ├─bert_model.py                           # 网络骨干编码
-    ├─clue_classification_dataset_precess.py  # 数据预处理
+    ├─finetune_data_preprocess.py             # 数据预处理
     ├─cluner_evaluation.py                    # 评估线索生成工具
     ├─config.py                               # 预训练参数配置
     ├─CRF.py                                  # 线索数据集评估方法
@@ -299,6 +300,7 @@ For example, the schema file of cn-wiki-128 dataset for pretraining shows as fol
     --load_finetune_checkpoint_path   如仅执行评估，提供微调检查点保存路径
     --train_data_file_path            用于保存训练数据的TFRecord文件，如train.tfrecord文件
     --eval_data_file_path             如采用f1来评估结果，则为TFRecord文件保存预测；如采用clue_benchmark来评估结果，则为JSON文件保存预测
+    --dataset_format                  数据集格式，支持tfrecord和mindrecord格式
     --schema_file_path                模式文件保存路径
 
 用法：run_squad.py [--device_target DEVICE_TARGET] [--do_train DO_TRAIN] [----do_eval DO_EVAL]
@@ -506,6 +508,29 @@ bash scripts/ner.sh
 Precision 0.920507
 Recall 0.948683
 F1 0.920507
+```
+
+#### Ascend处理器上运行后评估msra数据集
+
+您可以采用如下方式，先将MSRA数据集的原始格式在预处理流程中转换为mindrecord格式以提升性能：
+
+```python
+python src/finetune_data_preprocess.py ----data_dir=/path/msra_dataset.txt --vocab_file=/path/vacab_file --save_path=/path/msra_dataset.mindrecord --label2id=/path/label2id_file --max_seq_len=seq_len
+```
+
+此后，您可以进行微调再训练和推理流程，
+
+```bash
+bash scripts/ner.sh
+```
+
+以上命令后台运行，您可以在ner_log.txt中查看训练日志。
+如您选择SpanF1作为评估方法并且模型结构中配置CRF模式，在微调训练10个epoch之后进行推理，可得到如下结果：
+
+```text
+Precision 0.953826
+Recall 0.957749
+F1 0.955784
 ```
 
 #### Ascend处理器上运行后评估squad v1.1数据集
