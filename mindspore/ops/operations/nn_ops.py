@@ -7106,8 +7106,17 @@ class Conv3D(PrimitiveWithInfer):
     3D convolution layer.
 
     Applies a 3D convolution over an input tensor which is typically of shape
-    :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`, where :math:`N` is batch size and :math:`C_{in}` is channel number.
-    For each batch of shape :math:`(C_{in}, D_{in}, H_{in}, W_{in})`.
+    For input shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})` and output shape
+     :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. where :math:`N` is batch size. :math:`C` is channel number.
+     the formula is defined as:
+
+    .. math::
+
+        \operatorname{out}\left(N_{i}, C_{\text {out}_j}\right)=\operatorname{bias}\left(C_{\text {out}_j}\right)+
+        \sum_{k=0}^{C_{in}-1} ccor(\text {weight}\left(C_{\text {out}_j}, k\right),
+        \operatorname{input}\left(N_{i}, k\right))
+
+    where :math:`ccor` is the cross-correlation operator.
 
     If the 'pad_mode' is set to be "valid", the output height and width will be
     :math:`\left \lfloor{1 + \frac{D_{in} + 2 \times \text{padding} - \text{ks_d} -
@@ -7123,7 +7132,7 @@ class Conv3D(PrimitiveWithInfer):
         mode (int): Modes for different convolutions. Not currently used.
         pad_mode (str): Modes to fill padding. It could be "valid", "same", or "pad". Default: "valid".
         pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
-                    head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four
+                    head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six
                     integers, the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2],
                     pad[3], pad[4] and pad[5] correspondingly.
         stride (Union(int, tuple[int])): The stride to be applied to the convolution filter. Default: 1.
@@ -7135,6 +7144,7 @@ class Conv3D(PrimitiveWithInfer):
         - **input** (Tensor) - Tensor of shape :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
         - **weight** (Tensor) - Set size of kernel is :math:`(D_in, K_h, K_w)`, then the shape is
           :math:`(C_{out}, C_{in}, D_{in}, K_h, K_w)`.
+        - **bias** (Tensor) - Tensor of shape :math:`C_{in}`. Currently, only support none or zero.
 
     Outputs:
         Tensor, the value that applied 3D convolution. The shape is :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
@@ -7143,8 +7153,8 @@ class Conv3D(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> input = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float32)
-        >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float32)
+        >>> input = Tensor(np.ones([16, 3, 10, 32, 32]), mindspore.float16)
+        >>> weight = Tensor(np.ones([32, 3, 4, 3, 3]), mindspore.float16)
         >>> conv3d = P.Conv3D(out_channel=32, kernel_size=(4, 3, 3))
         >>> output = conv3d(input, weight)
         >>> print(output.shape)
@@ -7167,7 +7177,8 @@ class Conv3D(PrimitiveWithInfer):
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
         self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=True, ret_five=True)
         self.add_prim_attr('strides', self.stride)
-        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=True, ret_five=True)
+        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=True,
+                                               ret_five=True, third_one=True)
         self.add_prim_attr('dilations', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
         if isinstance(pad, int):
@@ -7175,17 +7186,17 @@ class Conv3D(PrimitiveWithInfer):
         validator.check_equal_int(len(pad), 6, 'pad size', self.name)
         self.add_prim_attr("pad", pad)
         self.padding = pad
-        validator.check_int_range(self.padding[0], 0, kernel_size[0], Rel.INC_LEFT,
+        validator.check_int_range(self.padding[0], 0, self.kernel_size[0], Rel.INC_LEFT,
                                   'pad_d belonging [0, kernel_size_d)', self.name)
-        validator.check_int_range(self.padding[1], 0, kernel_size[0], Rel.INC_LEFT,
+        validator.check_int_range(self.padding[1], 0, self.kernel_size[0], Rel.INC_LEFT,
                                   'pad_d belonging [0, kernel_size_d)', self.name)
-        validator.check_int_range(self.padding[2], 0, kernel_size[1], Rel.INC_LEFT,
+        validator.check_int_range(self.padding[2], 0, self.kernel_size[1], Rel.INC_LEFT,
                                   'pad_h belonging [0, kernel_size_h)', self.name)
-        validator.check_int_range(self.padding[3], 0, kernel_size[1], Rel.INC_LEFT,
+        validator.check_int_range(self.padding[3], 0, self.kernel_size[1], Rel.INC_LEFT,
                                   'pad_h belonging [0, kernel_size_h)', self.name)
-        validator.check_int_range(self.padding[4], 0, kernel_size[2], Rel.INC_LEFT,
+        validator.check_int_range(self.padding[4], 0, self.kernel_size[2], Rel.INC_LEFT,
                                   'pad_w belonging [0, kernel_size_w)', self.name)
-        validator.check_int_range(self.padding[5], 0, kernel_size[2], Rel.INC_LEFT,
+        validator.check_int_range(self.padding[5], 0, self.kernel_size[2], Rel.INC_LEFT,
                                   'pad_w belonging [0, kernel_size_w)', self.name)
         self.pad_mode = validator.check_string(pad_mode.lower(), ['valid', 'same', 'pad'], 'pad_mode', self.name)
         self.add_prim_attr('pad_mode', self.pad_mode)
@@ -7309,8 +7320,8 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> dout = Tensor(np.ones([16, 32, 10, 32, 32]), mindspore.float32)
-        >>> weight = Tensor(np.ones([32, 32, 4, 6, 2]), mindspore.float32)
+        >>> dout = Tensor(np.ones([16, 32, 10, 32, 32]), mindspore.float16)
+        >>> weight = Tensor(np.ones([32, 32, 4, 6, 2]), mindspore.float16)
         >>> x = Tensor(np.ones([16, 32, 13, 37, 33]))
         >>> conv3d_backprop_input = P.Conv3DBackpropInput(out_channel=4, kernel_size=(4, 6, 2))
         >>> output = conv3d_backprop_input(dout, weight, F.shape(x))
@@ -7361,12 +7372,15 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
         self.add_prim_attr('io_format', self.format)
 
     def __infer__(self, w, doutput, x_size):
+        validator.check_equal_int(len(w['shape']), 5, 'The dimension of weight ', self.name)
+        validator.check_equal_int(len(doutput['shape']), 5, 'The dimension of dout', self.name)
+        validator.check_equal_int(len(x_size['shape']), 5, 'The dimension of input_size', self.name)
         x_size_v = x_size['value']
         validator.check_value_type('x_size', x_size_v, [tuple], self.name)
         for i, dim_len in enumerate(x_size_v):
             validator.check_value_type("x_size[%d]" % i, dim_len, [int], self.name)
         args = {'doutput': doutput['dtype'], 'w': w['dtype']}
-        valid_dtypes = [mstype.float16, mstype.float32]
+        valid_dtypes = [mstype.float16]
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
         validator.check("filter's batch", w['shape'][0], "dout's channel", doutput['shape'][1], Rel.EQ, self.name)
         validator.check("filter's channel", w['shape'][1], "input_size's channel", x_size_v[1], Rel.EQ, self.name)
@@ -7411,15 +7425,30 @@ class Conv3DBackpropInput(PrimitiveWithInfer):
 
 class Conv3DTranspose(PrimitiveWithInfer):
     """
-    Computes the gradients of convolution 3D with respect to the input.
+    Compute a 3D transposed convolution, which is also known as a deconvolution
+    (although it is not an actual deconvolution).
+
+    Input is typically of shape :math:`(N, C, D, H, W)`, where :math:`N` is batch size and :math:`C` is channel number.
+
+    If the 'pad_mode' is set to be "pad", the height and width of output are defined as:
+
+    .. math::
+        D_{out} = (D_{in} - 1) \times \text{stride_d} - 2 \times \text{padding_d} + \text{dilation_d} \times
+        (\text{kernel_size_d} - 1) + \text{output_padding_d} + 1
+
+        H_{out} = (H_{in} - 1) \times \text{stride_h} - 2 \times \text{padding_h} + \text{dilation_h} \times
+        (\text{kernel_size_h} - 1) + \text{output_padding_h} + 1
+
+        W_{out} = (W_{in} - 1) \times \text{stride_w} - 2 \times \text{padding_w} + \text{dilation_w} \times
+        (\text{kernel_size_w} - 1) + 1
 
     Args:
         in_channel (int): The channel of the input x.
         out_channel (int): The channel of the weight x.
         kernel_size (Union[int, tuple[int]]): The kernel size of the 3D convolution.
-        mode (int): Modes for different convolutions. Not currently used.
+        mode (int): Modes for different convolutions. Default is 1. Not currently used.
         pad (Union(int, tuple[int])): The pad value to be filled. Default: 0. If `pad` is an integer, the paddings of
-             head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of four integers,
+             head, tail, top, bottom, left and right are the same, equal to pad. If `pad` is a tuple of six integers,
              the padding of head, tail, top, bottom, left and right equal to pad[0], pad[1], pad[2], pad[3], pad[4]
              and pad[5] correspondingly.
         stride (Union(int, tuple[int])): The stride to be applied to the convolution filter. Default: 1.
@@ -7427,14 +7456,15 @@ class Conv3DTranspose(PrimitiveWithInfer):
         group (int): Splits input into groups. Default: 1.
         output_padding (Union(int, tuple[int])): Add extra size to each dimension of the output. Default: 0.
         data_format (str): The optional value for data format. Currently only support 'NCDHW'.
+        input_size (tuple[int]): A tuple describes the shape of the input which conforms to the format
+          :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`. Not currently used.
 
     Inputs:
         - **dout** (Tensor) - the gradients w.r.t the output of the convolution. The shape conforms to the default
-          data_format :math:`(N, C_{out}, D_{out}, H_{out}, W_{out})`.
+          data_format :math:`(N, C_{in}, D_{out}, H_{out}, W_{out})`.
         - **weight** (Tensor) - Set size of kernel is :math:`(D_in, K_h, K_w)`, then the shape is
-          :math:`(C_{out}, C_{in}, D_{in}, K_h, K_w)`.
-        - **input_size** (Tensor) - A tuple describes the shape of the input which conforms to the format
-          :math:`(N, C_{in}, D_{in}, H_{in}, W_{in})`.
+          :math:`(C_{in}//groups, C_{out}, D_{in}, K_h, K_w)`.
+        - **bias** (Tensor) - Tensor of shape :math:`C_{out}`. Currently, only support none or zero.
 
     Outputs:
         Tensor, the gradients w.r.t the input of convolution 3D. It has the same shape as the input.
@@ -7443,8 +7473,8 @@ class Conv3DTranspose(PrimitiveWithInfer):
         ``Ascend``
 
     Examples:
-        >>> input_x = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float32)
-        >>> weight = Tensor(np.ones([16, 3, 4, 6, 2]), mindspore.float32)
+        >>> input_x = Tensor(np.ones([32, 16, 10, 32, 32]), mindspore.float16)
+        >>> weight = Tensor(np.ones([16, 3, 4, 6, 2]), mindspore.float16)
         >>> conv3d_transpose = P.Conv3DTranspose(in_channel=16, out_channel=3, kernel_size=(4, 6, 2))
         >>> output = conv3d_transpose(input_x, weight)
         >>> print(output.shape)
@@ -7472,7 +7502,8 @@ class Conv3DTranspose(PrimitiveWithInfer):
         self.kernel_size = _check_3d_int_or_tuple('kernel_size', kernel_size, self.name)
         self.stride = _check_3d_int_or_tuple('stride', stride, self.name, allow_five=True, ret_five=True)
         self.add_prim_attr('strides', self.stride)
-        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name, allow_five=True, ret_five=True)
+        self.dilation = _check_3d_int_or_tuple('dilation', dilation, self.name,
+                                               allow_five=True, ret_five=True, third_one=True)
         self.add_prim_attr('dilations', self.dilation)
         validator.check_value_type('pad', pad, (int, tuple), self.name)
         if isinstance(pad, int):
@@ -7481,17 +7512,17 @@ class Conv3DTranspose(PrimitiveWithInfer):
         self.pad_list = pad
         for item in self.pad_list:
             validator.check_non_negative_int(item, 'pad item', self.name)
-        validator.check_int_range(self.pad_list[0], 0, kernel_size[0], Rel.INC_LEFT,
+        validator.check_int_range(self.pad_list[0], 0, self.kernel_size[0], Rel.INC_LEFT,
                                   'pad_d belonging [0, kernel_size_d)', self.name)
-        validator.check_int_range(self.pad_list[1], 0, kernel_size[0], Rel.INC_LEFT,
+        validator.check_int_range(self.pad_list[1], 0, self.kernel_size[0], Rel.INC_LEFT,
                                   'pad_d belonging [0, kernel_size_d)', self.name)
-        validator.check_int_range(self.pad_list[2], 0, kernel_size[1], Rel.INC_LEFT,
+        validator.check_int_range(self.pad_list[2], 0, self.kernel_size[1], Rel.INC_LEFT,
                                   'pad_h belonging [0, kernel_size_h)', self.name)
-        validator.check_int_range(self.pad_list[3], 0, kernel_size[1], Rel.INC_LEFT,
+        validator.check_int_range(self.pad_list[3], 0, self.kernel_size[1], Rel.INC_LEFT,
                                   'pad_h belonging [0, kernel_size_h)', self.name)
-        validator.check_int_range(self.pad_list[4], 0, kernel_size[2], Rel.INC_LEFT,
+        validator.check_int_range(self.pad_list[4], 0, self.kernel_size[2], Rel.INC_LEFT,
                                   'pad_w belonging [0, kernel_size_w)', self.name)
-        validator.check_int_range(self.pad_list[5], 0, kernel_size[2], Rel.INC_LEFT,
+        validator.check_int_range(self.pad_list[5], 0, self.kernel_size[2], Rel.INC_LEFT,
                                   'pad_w belonging [0, kernel_size_w)', self.name)
         self.mode = validator.check_equal_int(mode, 1, 'mode', self.name)
         self.add_prim_attr('mode', self.mode)
@@ -7517,7 +7548,8 @@ class Conv3DTranspose(PrimitiveWithInfer):
             raise ValueError("Bias currently only support None.")
         valid_dtypes = [mstype.float16, mstype.float32]
         validator.check_tensors_dtypes_same_and_valid(args, valid_dtypes, self.name)
-        validator.check("filter's batch", w['shape'][0], "input x's channel", x['shape'][1], Rel.EQ, self.name)
+        validator.check("filter's batch", w['shape'][0], "input x's channel",
+                        x['shape'][1], Rel.EQ, self.name)
         # infer shape
         x_shape = x['shape']
         w_shape = w['shape']
@@ -7529,7 +7561,7 @@ class Conv3DTranspose(PrimitiveWithInfer):
                 (self.kernel_size[1] - 1) + self.output_padding[3] + 1
         w_out = (x_shape[4] - 1) * self.stride[4] - (pad_left + pad_right) + self.dilation[4] * \
                 (self.kernel_size[2] - 1) + self.output_padding[4] + 1
-        output_shape = (x_shape[0], w_shape[1], d_out, h_out, w_out)
+        output_shape = (x_shape[0], w_shape[1]*self.group, d_out, h_out, w_out)
         self.add_prim_attr('input_size', output_shape)
         out = {
             'value': None,

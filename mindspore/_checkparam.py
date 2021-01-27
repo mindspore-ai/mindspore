@@ -93,18 +93,22 @@ rel_strs = {
 
 
 def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False,
-                           ret_five=False, greater_zero=True):
+                           ret_five=False, greater_zero=True, third_one=False):
     """
     Checks whether an argument is a positive int or tuple with 3 or 5(when allow_five is True) positive int elements.
     """
 
-    def _raise_message():
+    def _raise_message(third_one=False):
+        if third_one:
+            raise ValueError(f"For '{prim_name}' attr '{arg_name[-3]}' should be 1, but got {arg_value}")
         raise ValueError(f"For '{prim_name}' attr '{arg_name}' should be an positive int number or a tuple of three "
                          f"{'or five ' if allow_five else ''}positive int numbers, but got {arg_value}")
 
     def _get_return_value():
         if isinstance(arg_value, int):
             ret = (1, 1, arg_value, arg_value, arg_value) if ret_five else (arg_value, arg_value, arg_value)
+            if third_one:
+                ret = (1, 1, 1, arg_value, arg_value) if ret_five else (1, arg_value, arg_value)
         elif len(arg_value) == 3:
             ret = (1, 1, arg_value[0], arg_value[1], arg_value[2]) if ret_five else arg_value
         elif len(arg_value) == 5:
@@ -123,7 +127,10 @@ def _check_3d_int_or_tuple(arg_name, arg_value, prim_name, allow_five=False,
                 continue
             if not greater_zero and item >= 0:
                 continue
-        _raise_message()
+    if third_one:
+        if ret_value[-3] != 1:
+            _raise_message(third_one)
+
     return tuple(ret_value)
 
 

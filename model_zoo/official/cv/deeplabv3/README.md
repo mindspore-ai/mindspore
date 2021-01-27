@@ -116,7 +116,7 @@ run_distribute_train_s16_r1.sh
 run_distribute_train_s8_r1.sh
 ```
 
-3. Train s8 with voctrain dataset, finetuning from model in pervious step, training script is:
+3. Train s8 with voctrain dataset, finetuning from model in previous step, training script is:
 
 ```shell
 run_distribute_train_s8_r2.sh
@@ -302,7 +302,7 @@ do
 done
 ```
 
-3. Train s8 with voctrain dataset, finetuning from model in pervious step, training script is as follows:
+3. Train s8 with voctrain dataset, finetuning from model in previous step, training script is as follows:
 
 ```shell
 # run_distribute_train_s8_r2.sh
