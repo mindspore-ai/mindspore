@@ -27,7 +27,7 @@
 using mindspore::lite::converter::FmkType;
 namespace mindspore {
 namespace opt {
-typedef int (*PrimitiveAdjustCreator)(const ValueNodePtr &value_node);
+typedef int (*PrimitiveAdjustCreator)(const CNodePtr &value_node);
 class PrimitiveAdjustRegistry {
  public:
   static PrimitiveAdjustRegistry *GetInstance() {
@@ -60,7 +60,7 @@ class RegistryPrimitiveAdjust {
 };
 
 #define REGIST_PRIMITIVE_ADJUST(type, primitive_adjust_func) \
-  RegistryPrimitiveAdjust g_##type##_primitive_adjust(type, primitive_adjust_func);  // todo
+  RegistryPrimitiveAdjust g_##type##_primitive_adjust(type, primitive_adjust_func);
 
 class PrimitiveAdjustPass : public Pass {
  public:

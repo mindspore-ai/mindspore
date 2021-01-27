@@ -55,7 +55,10 @@ class MindsporeImporter : public Converter {
 
   FuncGraphPtr BuildFuncGraph(const std::string &model_file, const std::string &weight_file,
                               schema::QuantType quant_type) override {
-    return LoadMindIR(model_file);
+    auto func_graph = LoadMindIR(model_file);
+    func_graph->set_attr("graph_name", MakeValue("main_graph"));
+    func_graph->set_attr("fmk", MakeValue(static_cast<int>(converter::FmkType_MS)));
+    return func_graph;
   }
 };
 

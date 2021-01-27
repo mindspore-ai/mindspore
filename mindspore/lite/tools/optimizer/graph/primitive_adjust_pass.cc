@@ -63,6 +63,7 @@
 #include "ops/relu6.h"
 #include "ops/resize.h"
 #include "ops/resize_bilinear.h"
+#include "ops/resize_nearest_neighbor.h"
 #include "ops/sigmoid.h"
 #include "ops/tanh.h"
 
@@ -100,6 +101,7 @@ using mindspore::ops::kNameReduceSumSquare;
 using mindspore::ops::kNameReLU;
 using mindspore::ops::kNameReLU6;
 using mindspore::ops::kNameResizeBilinear;
+using mindspore::ops::kNameResizeNearestNeighbor;
 using mindspore::ops::kNameScale;
 using mindspore::ops::kNameSigmoid;
 using mindspore::ops::kNameSub;
@@ -114,7 +116,6 @@ constexpr auto kNameArgMaxWithValue = "ArgMaxWithValue";
 constexpr auto kNameArgMinWithValue = "ArgMinWithValue";
 constexpr auto kNameBatchMatMul = "BatchMatMul";
 constexpr auto kNameGatherV2 = "GatherV2";
-constexpr auto kNameResizeNearestNeighbor = "ResizeNearestNeighbor";
 constexpr auto kNameTensorAdd = "TensorAdd";
 std::map<std::string, mindspore::ActivationType> activation_map = {
   {ops::kNameAbs, mindspore::ABS},         {ops::kNameElu, mindspore::ELU},
@@ -160,8 +161,44 @@ int AttrAdjust(const PrimitivePtr &prim, const std::string &name, const std::vec
   return lite::RET_OK;
 }
 
+int64_t ComputeGroupForDepthWiseConv2D(const AnfNodePtr &anf_node) {
+  auto weight_node = anf_node->cast<ParameterPtr>();
+  if (weight_node == nullptr) {
+    MS_LOG(INFO) << "weight node is not parameter node.";
+    return 1;
+  }
+  if (!weight_node->has_default() || weight_node->default_param() == nullptr) {
+    MS_LOG(ERROR) << "weight not is not a const tensor.";
+    return lite::RET_ERROR;
+  }
+  auto weight = weight_node->default_param()->cast<tensor::TensorPtr>();
+  MS_ASSERT(weight != nullptr);
+  auto shape = weight->shape_c();
+  MS_ASSERT(shape.size() == 4);
+  return shape[1];
+}
+
+int SetAttrForDepthWiseConv2D(const CNodePtr &cnode, const PrimitivePtr &prim, int64_t *group) {
+  MS_ASSERT(cnode != nullptr && prim != nullptr);
+  if (*group == 1) {
+    *group = ComputeGroupForDepthWiseConv2D(cnode->input(2));
+  }
+  if (*group < 0) {
+    MS_LOG(ERROR) << "fail to compute group.";
+    return lite::RET_ERROR;
+  }
+  if (prim->GetAttr(ops::kOutChannel) == nullptr) {
+    prim->AddAttr(ops::kOutChannel, MakeValue(*group));
+  }
+  prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
+  prim->AddAttr(ops::kIsDepthWiseNative, MakeValue<bool>(true));
+  return lite::RET_OK;
+}
+
 template <typename T>
-int MoveAttrMapCommon(const ValueNodePtr &value_node) {
+int MoveAttrMapCommon(const CNodePtr &cnode) {
+  MS_ASSERT(cnode != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
@@ -175,7 +212,9 @@ int MoveAttrMapCommon(const ValueNodePtr &value_node) {
   return lite::RET_OK;
 }
 
-int MoveAttrMapActivation(const ValueNodePtr &value_node) {
+int MoveAttrMapActivation(const CNodePtr &cnode) {
+  MS_ASSERT(value_node != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
@@ -195,7 +234,9 @@ int MoveAttrMapActivation(const ValueNodePtr &value_node) {
   return lite::RET_OK;
 }
 
-int MoveAttrMapReduce(const ValueNodePtr &value_node) {
+int MoveAttrMapReduce(const CNodePtr &cnode) {
+  MS_ASSERT(value_node != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
@@ -216,7 +257,9 @@ int MoveAttrMapReduce(const ValueNodePtr &value_node) {
   return lite::RET_OK;
 }
 
-int MoveAttrMapConv2D(const ValueNodePtr &value_node) {
+int MoveAttrMapConv2D(const CNodePtr &cnode) {
+  MS_ASSERT(value_node != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
@@ -248,12 +291,21 @@ int MoveAttrMapConv2D(const ValueNodePtr &value_node) {
   if (group > 1) {
     dst_prim->AddAttr(ops::kIsDepthWise, MakeValue<bool>(true));
   }
+  if (src_prim->name() == kNameDepthWiseConv2D) {
+    status = SetAttrForDepthWiseConv2D(cnode, dst_prim, &group);
+    if (status != lite::RET_OK) {
+      MS_LOG(ERROR) << "set attr for depthwiseconv2D native failed.";
+      return lite::RET_ERROR;
+    }
+  }
   dst_prim->set_group(group);
   value_node->set_value(dst_prim);
   return lite::RET_OK;
 }
 
-int MoveAttrPool(const ValueNodePtr &value_node) {
+int MoveAttrPool(const CNodePtr &cnode) {
+  MS_ASSERT(value_node != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
@@ -288,7 +340,9 @@ int MoveAttrPool(const ValueNodePtr &value_node) {
   return lite::RET_OK;
 }
 
-int MoveAttrMapAdder(const ValueNodePtr &value_node) {
+int MoveAttrMapAdder(const CNodePtr &cnode) {
+  MS_ASSERT(value_node != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
@@ -317,7 +371,9 @@ int MoveAttrMapAdder(const ValueNodePtr &value_node) {
   return lite::RET_OK;
 }
 
-int MoveAttrMapLayerNorm(const ValueNodePtr &value_node) {
+int MoveAttrMapLayerNorm(const CNodePtr &cnode) {
+  MS_ASSERT(value_node != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
@@ -335,7 +391,9 @@ int MoveAttrMapLayerNorm(const ValueNodePtr &value_node) {
   return lite::RET_OK;
 }
 
-int MoveAttrMapResize(const ValueNodePtr &value_node) {
+int MoveAttrMapResize(const CNodePtr &cnode) {
+  MS_ASSERT(value_node != nullptr);
+  auto value_node = cnode->input(0)->cast<ValueNodePtr>();
   MS_ASSERT(value_node != nullptr);
   auto src_prim = GetValueNode<PrimitivePtr>(value_node);
   if (src_prim == nullptr) {
@@ -351,7 +409,7 @@ int MoveAttrMapResize(const ValueNodePtr &value_node) {
   }
   if (src_prim->name() == kNameResizeBilinear) {
     dst_prim->set_method(ResizeMethod::LINEAR);
-  } else if (src_prim->name() == "ResizeNearestNeighbor") {
+  } else if (src_prim->name() == kNameResizeNearestNeighbor) {
     dst_prim->set_method(ResizeMethod::NEAREST);
   }
   value_node->set_value(dst_prim);
@@ -386,7 +444,7 @@ bool PrimitiveAdjustPass::Run(const FuncGraphPtr &func_graph) {
       MS_LOG(DEBUG) << "dont't need to adjust.";
       continue;
     }
-    status = adjust_func(value_node);
+    status = adjust_func(cnode);
     if (status != lite::RET_OK) {
       MS_LOG(ERROR) << "convert primitive failed.";
       return false;
@@ -441,6 +499,5 @@ REGIST_PRIMITIVE_ADJUST(kNameTanh, MoveAttrMapActivation)
 REGIST_PRIMITIVE_ADJUST(kNameTensorAdd, MoveAttrMapCommon<ops::AddFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameTile, MoveAttrMapCommon<ops::TileFusion>)
 REGIST_PRIMITIVE_ADJUST(kNameTopK, MoveAttrMapCommon<ops::TopKFusion>)
-
 }  // namespace opt
 }  // namespace mindspore
