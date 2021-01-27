@@ -778,6 +778,16 @@ def get_bprop_reduce_mean(self):
     return bprop
 
 
+@bprop_getters.register(P.IsFinite)
+def get_bprop_isfinite(self):
+    """Grad definition for `IsFinite` operation."""
+
+    def bprop(x, out, dout):
+        return (zeros_like(x),)
+
+    return bprop
+
+
 @bprop_getters.register(P.Equal)
 def get_bprop_equal(self):
     """Grad definition for `Equal` operation."""

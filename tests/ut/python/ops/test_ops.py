@@ -1401,6 +1401,10 @@ test_case_math_ops = [
         'block': P.RealDiv(),
         'desc_inputs': [[4, 5], [2, 3, 4, 5]],
         'desc_bprop': [[2, 3, 4, 5]]}),
+    ('IsFinite', {
+        'block': P.IsFinite(),
+        'desc_inputs': [Tensor(np.random.random((3, 4, 5)).astype(np.float32))],
+        'desc_bprop': [Tensor(np.random.random((3, 4, 5)).astype(np.bool))]}),
     ('Div', {
         'block': P.Div(),
         'desc_inputs': [[4, 5], [2, 3, 4, 5]],
