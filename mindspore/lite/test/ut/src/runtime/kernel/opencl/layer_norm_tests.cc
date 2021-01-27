@@ -22,20 +22,19 @@ class TestOpenCL_LayerNorm : public CommonTest {};
 
 namespace {
 // PrimitiveType_Stack: src/ops/populate/stack_populate.cc
-OpParameter *CreateParameter(float epsilon, int normalized_dims_, std::vector<int> normalizedShape) {
+OpParameter *CreateParameter(float epsilon, int begin_norm_axis_, int begin_param_axis_) {
   auto *param = test::CreateParameter<LayerNormParameter>(schema::PrimitiveType_LayerNorm);
   param->epsilon_ = epsilon;
-  param->normalized_dims_ = normalized_dims_;
-  for (int i = 0; i < normalizedShape.size() && i < normalized_dims_; ++i) {
-    param->normalized_shape_[i] = normalizedShape[i];
-  }
+  param->begin_norm_axis_ = begin_norm_axis_;
+  param->begin_params_axis_ = begin_param_axis_;
   return reinterpret_cast<OpParameter *>(param);
 }
 }  // namespace
 
 TEST_F(TestOpenCL_LayerNorm, test1) {
   float epsilon = 1e-5;
-  int normalized_dims_ = 1;
+  int begin_norm_axis_ = 3;
+  int begin_param_axis_ = 3;
   std::vector<int> normalizedShape = {5};
   std::vector<int> input_shape = {2, 3, 4, 5};
   std::vector<int> gamma_shape = {1, 1, 1, 5};
@@ -51,11 +50,10 @@ TEST_F(TestOpenCL_LayerNorm, test1) {
   auto beta_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(betaPpath.c_str(), &beta_size));
   auto output_data = reinterpret_cast<float *>(mindspore::lite::ReadFile(correctOutputPath.c_str(), &output_size));
   for (auto fp16_enable : {false}) {
-    auto *param = CreateParameter(epsilon, normalized_dims_, normalizedShape);
-
+    auto *param = CreateParameter(epsilon, begin_norm_axis_, begin_param_axis_);
     TestMain(
       {{input_shape, input_data, VAR}, {gamma_shape, gamma_data, CONST_TENSOR}, {beta_shape, beta_data, CONST_TENSOR}},
-      {output_shape, output_data}, param, fp16_enable, fp16_enable ? 1e-3 : 1e-6);
+      {output_shape, output_data}, param, fp16_enable, fp16_enable ? 1e-3 : 1e-5);
   }
 }
 }  // namespace mindspore::lite::opencl::test

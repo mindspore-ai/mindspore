@@ -106,7 +106,7 @@ struct FusionEltwiseParameter {
     Node_(bool is_leaf, FusionEltwiseParameter *value, std::string value_name)
         : is_leaf_(is_leaf), value_(value), name_(std::move(value_name)) {}
   };
-  OpParameter op_parameter_{};
+  OpParameter op_parameter_{"FusionEltwiseParameter", PrimitiveType_FusionEltwise, 1};
   EltwiseOperator operator_;
   std::string name_;
   std::vector<Node_> inputs_;
@@ -115,8 +115,6 @@ struct FusionEltwiseParameter {
                          const std::vector<lite::Tensor *> &in_tensors,
                          const std::map<lite::Tensor *, FusionEltwiseParameter *> &replace_map = {})
       : operator_(operator_init), name_(std::move(kernel_name)) {
-    op_parameter_.type_ = PrimitiveType_FusionEltwise;
-    snprintf(op_parameter_.name_, strlen("FusionEltwiseParameter"), "FusionEltwiseParameter");
     for (int i = 0; i < in_tensors.size(); ++i) {
       auto *in_tensor = in_tensors[i];
       if (replace_map.count(in_tensor)) {
