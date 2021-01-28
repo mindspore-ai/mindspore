@@ -1094,7 +1094,7 @@ std::shared_ptr<KernelGraph> SessionBasic::ConstructKernelGraph(const FuncGraphP
 #ifdef ENABLE_DUMP_IR
   std::string tag = "constructed_kernel_graph";
   std::string file_type = ".ir;.pb";
-  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, tag, graph, file_type);
+  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, tag, graph, false, file_type);
 #endif
   front_backend_graph_map_[func_graph] = graph;
   MS_LOG(INFO) << "Create graph: " << graph->graph_id();

@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GRAPH_EXEC_ORDER_RENDER_H_
-#define GRAPH_EXEC_ORDER_RENDER_H_
+#ifndef MINDSPORE_CCSRC_DEBUG_RDR_GRAPH_EXEC_ORDER_RECORDER_H_
+#define MINDSPORE_CCSRC_DEBUG_RDR_GRAPH_EXEC_ORDER_RECORDER_H_
 #include <vector>
 #include <string>
 #include <memory>
@@ -39,4 +39,4 @@ class GraphExecOrderRecorder : public BaseRecorder {
 };
 using GraphExecOrderRecorderPtr = std::shared_ptr<GraphExecOrderRecorder>;
 }  // namespace mindspore
-#endif  // GRAPH_EXEC_ORDER_RENDER_H
+#endif  // MINDSPORE_CCSRC_DEBUG_RDR_GRAPH_EXEC_ORDER_RECORDER_H_

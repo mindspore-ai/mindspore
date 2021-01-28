@@ -120,7 +120,7 @@ void RunGraphTask::Run() {
 #ifdef ENABLE_DUMP_IR
   std::string tag = "run_graph";
   std::string file_type = ".ir;.pb";
-  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, tag, graph, file_type);
+  mindspore::RDR::RecordAnfGraph(SubModuleId::SM_SESSION, tag, graph, false, file_type);
 #endif
   graph->ResetGraphRunningStatus();
   try {

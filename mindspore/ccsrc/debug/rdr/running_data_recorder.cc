@@ -58,10 +58,11 @@ static const char *GetSubModuleName(SubModuleId module_id) {
 }  // namespace
 namespace RDR {
 #ifdef __linux__
-bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph,
+bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
                     const std::string &file_type, int graph_id) {
   std::string submodule_name = std::string(GetSubModuleName(module));
   GraphRecorderPtr graph_recorder = std::make_shared<GraphRecorder>(submodule_name, tag, graph, file_type, graph_id);
+  graph_recorder->SetDumpFlag(full_name);
   bool ans = mindspore::RecorderManager::Instance().RecordObject(std::move(graph_recorder));
   return ans;
 }
@@ -85,7 +86,7 @@ bool RecordSomasInfo(const SubModuleId module, const std::string &tag, const Som
 
 void TriggerAll() { mindspore::RecorderManager::Instance().TriggerAll(); }
 #else
-bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph,
+bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
                     const std::string &file_type, int graph_id) {
   static bool already_printed = false;
   std::string submodule_name = std::string(GetSubModuleName(module));

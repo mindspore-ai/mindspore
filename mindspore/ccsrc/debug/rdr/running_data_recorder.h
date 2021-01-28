@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef RUNNING_DATA_RECORDER_H_
-#define RUNNING_DATA_RECORDER_H_
+#ifndef MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_
+#define MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_
 
 #include <vector>
 #include <string>
@@ -29,7 +29,7 @@ using FuncGraphPtr = std::shared_ptr<FuncGraph>;
 using CNodePtr = std::shared_ptr<CNode>;
 using SomasPtr = std::shared_ptr<somas::Somas>;
 namespace RDR {
-bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph,
+bool RecordAnfGraph(const SubModuleId module, const std::string &tag, const FuncGraphPtr &graph, bool full_name,
                     const std::string &file_type = ".ir;.pb;.dat", int graph_id = 0);
 bool RecordGraphExecOrder(const SubModuleId module, const std::string &tag,
                           const std::vector<CNodePtr> &&final_exec_order);
@@ -37,4 +37,4 @@ bool RecordSomasInfo(const SubModuleId module, const std::string &tag, const Som
 void TriggerAll();
 }  // namespace RDR
 }  // namespace mindspore
-#endif  // RUNNING_DATA_RECORDER_H_
+#endif  // MINDSPORE_CCSRC_DEBUG_RDR_RUNNING_DATA_RECORDER_H_
