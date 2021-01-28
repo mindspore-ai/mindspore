@@ -24,7 +24,7 @@ from mindspore.ops import operations as P
 class Net(Cell):
     def __init__(self, matmul_weight, strategy1=None):
         super().__init__()
-        self.gatherv2 = P.GatherV2().shard(strategy1)
+        self.gatherv2 = P.Gather().shard(strategy1)
         self.reshape = P.Reshape().add_prim_attr("skip_redistribution", True)
         self.matmul = P.MatMul(transpose_b=False)
         self.index = Tensor(np.ones([64, 64]), dtype=ms.int32)

@@ -135,7 +135,7 @@ class NetWithSparseGatherV2(nn.Cell):
             self.gather = P.SparseGatherV2()
         else:
             self.weight = Parameter(Tensor(np.ones([8, 8]).astype(np.float32)), name="weight")
-            self.gather = P.GatherV2()
+            self.gather = P.Gather()
         if strategy is not None:
             self.gather.shard(strategy)
 

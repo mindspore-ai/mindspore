@@ -55,7 +55,7 @@ class Embedding_Thor(Cell):
         self.thor = True
         self.expand = P.ExpandDims()
         self.shape_flat = (-1,)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
@@ -75,7 +75,7 @@ class Embedding_Thor(Cell):
         self.freq = Tensor(frequency, mstype.int32)
         self.axis = 0
         self.damping = damping
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.sqrt = P.Sqrt()
         self.mul = P.Mul()
         self.cast = P.Cast()
@@ -199,7 +199,7 @@ class Dense_Thor(Cell):
         self.damping = damping
         self.loss_scale = Tensor(1 / loss_scale, mstype.float16)
         self.vector_matmul = P.CusBatchMatMul()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.assignadd = P.AssignAdd()
         self.freq = Tensor(frequency, mstype.int32)
         self.axis = 0

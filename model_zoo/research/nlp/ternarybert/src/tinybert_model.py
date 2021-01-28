@@ -89,7 +89,7 @@ class GatherV2Quant(nn.Cell):
 
     def __init__(self, activation_init=6):
         super(GatherV2Quant, self).__init__()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
 
         self.fake_quant_input = FakeQuantWithMinMax(min_init=-activation_init, max_init=activation_init, ema=True,
                                                     symmetric=False)
@@ -309,7 +309,7 @@ class EmbeddingLookup(nn.Cell):
         if do_quant:
             self.gather = GatherV2Quant(activation_init=activation_init)
         else:
-            self.gather = P.GatherV2()
+            self.gather = P.Gather()
         self.one_hot = P.OneHot()
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
@@ -376,7 +376,7 @@ class EmbeddingPostprocessor(nn.Cell):
         self.shape = tuple(embedding_shape)
         self.layernorm = nn.LayerNorm((embedding_size,))
         self.dropout = nn.Dropout(1 - dropout_prob)
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.use_relative_positions = use_relative_positions
         self.slice = P.StridedSlice()
         self.full_position_embeddings = Parameter(initializer
@@ -532,7 +532,7 @@ class RelaPosEmbeddingsGenerator(nn.Cell):
         self.on_value = Tensor(1.0, mstype.float32)
         self.off_value = Tensor(0.0, mstype.float32)
         self.shape = P.Shape()
-        self.gather = P.GatherV2()  # index_select
+        self.gather = P.Gather()  # index_select
         self.matmul = P.BatchMatMul()
 
     def construct(self):

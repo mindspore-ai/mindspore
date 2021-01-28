@@ -215,7 +215,7 @@ class AutoDisModel(nn.Cell):
         self.dense_layer_4 = DenseLayer(self.all_dim_list[3], self.all_dim_list[4],
                                         self.weight_bias_init, self.deep_layer_act, self.keep_prob)
         # FM, linear Layers
-        self.Gatherv2 = P.GatherV2()
+        self.Gatherv2 = P.Gather()
         self.Mul = P.Mul()
         self.ReduceSum = P.ReduceSum(keep_dims=False)
         self.Reshape = P.Reshape()

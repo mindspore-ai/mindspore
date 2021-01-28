@@ -85,8 +85,8 @@ CNodePtr CreateGatherV2Ds(const FuncGraphPtr &graph, const CNodePtr &origin_node
   if (origin_node->size() != 4) {
     MS_LOG(EXCEPTION) << "In dynamic shape scene, gatherv2 should have 3 inputs";
   }
-  std::vector<AnfNodePtr> gatherv2_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimGatherV2->name())),
-                                             pad, origin_node->input(2), origin_node->input(3)};
+  std::vector<AnfNodePtr> gatherv2_inputs = {NewValueNode(std::make_shared<Primitive>(prim::kPrimGather->name())), pad,
+                                             origin_node->input(2), origin_node->input(3)};
   auto gather_v2 = graph->NewCNode(gatherv2_inputs);
   MS_EXCEPTION_IF_NULL(gather_v2);
   gather_v2->set_scope(origin_node->scope());
@@ -146,7 +146,7 @@ bool CheckInputs(const CNodePtr &origin_node) {
 
 const BaseRef GatherV2DsFission::DefinePattern() const {
   VarPtr Xs = std::make_shared<SeqVar>();
-  VectorRef pattern({prim::kPrimGatherV2, Xs});
+  VectorRef pattern({prim::kPrimGather, Xs});
   return pattern;
 }
 

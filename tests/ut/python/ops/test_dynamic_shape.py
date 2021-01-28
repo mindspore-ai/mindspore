@@ -97,7 +97,7 @@ def test_gatherv2():
         def __init__(self):
             super(Net, self).__init__()
             self.unq = P.Unique()
-            self.gather = P.GatherV2()
+            self.gather = P.Gather()
             self.yy = Tensor(np.ones([8], dtype=np.int32))
 
         def construct(self, x, y):

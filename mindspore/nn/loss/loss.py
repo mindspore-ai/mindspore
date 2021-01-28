@@ -440,7 +440,7 @@ class SampledSoftmaxLoss(_Loss):
         self.log = P.Log()
         self.slice_op = P.Slice()
         self.matmul = P.MatMul(False, True)
-        self.gather_v2 = P.GatherV2()
+        self.gather_v2 = P.Gather()
         self.reduce_max_true = P.ReduceMax(True)
         self.reduce_sum = P.ReduceSum()
         self.reduce_sum_true = P.ReduceSum(True)

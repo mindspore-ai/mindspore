@@ -2699,7 +2699,7 @@ void CheckpointStrategy(const std::vector<AnfNodePtr> &all_nodes) {
       }
       if (operator_info->name().find(EMBEDDING_LOOKUP) != std::string::npos ||
           operator_info->name().find(GATHERV2) != std::string::npos) {
-        auto gatherv2_info = std::dynamic_pointer_cast<GatherV2PInfo>(operator_info);
+        auto gatherv2_info = std::dynamic_pointer_cast<GatherPInfo>(operator_info);
         auto param_split_shapes = gatherv2_info->param_split_shapes();
         auto index_offsets = gatherv2_info->index_offsets();
         if (param_split_shapes.size() != index_offsets.size()) {

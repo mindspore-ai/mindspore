@@ -70,7 +70,7 @@ INPUT_MAP(GatherV2D) = {{1, INPUT_DESC(x)}, {2, INPUT_DESC(indices)}};
 INPUT_ATTR_MAP(GatherV2D) = {{3, ATTR_DESC(axis, AnyTraits<int64_t>())}};
 ATTR_MAP(GatherV2D) = EMPTY_ATTR_MAP;
 OUTPUT_MAP(GatherV2D) = {{0, OUTPUT_DESC(y)}};
-REG_ADPT_DESC(GatherV2D, prim::kPrimGatherV2->name(), ADPT_DESC(GatherV2D))
+REG_ADPT_DESC(GatherV2D, prim::kPrimGather->name(), ADPT_DESC(GatherV2D))
 
 // ScatterNdD
 INPUT_MAP(ScatterNdD) = {{1, INPUT_DESC(indices)}, {2, INPUT_DESC(x)}};

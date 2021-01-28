@@ -426,7 +426,7 @@ AnfNodePtr FindGatherV2FromSparseGatherV2(const FuncGraphPtr &graph, const AnfNo
   AnfNodePtrList gatherv2_nodes;
   auto user_set = graph->manager()->node_users()[node];
   for (auto &ele : user_set) {
-    if (IsPrimitiveCNode(ele.first, prim::kPrimGatherV2)) {
+    if (IsPrimitiveCNode(ele.first, prim::kPrimGather)) {
       gatherv2_nodes.emplace_back(ele.first);
     }
   }

@@ -195,7 +195,7 @@ class DeepFMModel(nn.Cell):
         self.dense_layer_5 = DenseLayer(self.all_dim_list[4], self.all_dim_list[5], self.weight_bias_init,
                                         self.deep_layer_act, self.keep_prob, convert_dtype=convert_dtype, use_act=False)
         " FM, linear Layers "
-        self.Gatherv2 = P.GatherV2()
+        self.Gatherv2 = P.Gather()
         self.Mul = P.Mul()
         self.ReduceSum = P.ReduceSum(keep_dims=False)
         self.Reshape = P.Reshape()

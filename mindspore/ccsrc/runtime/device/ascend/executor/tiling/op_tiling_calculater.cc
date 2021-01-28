@@ -148,7 +148,7 @@ std::string GetRealOpType(const std::string &op_type) {
   static const std::map<std::string, std::string> kOpTypeMap = {
     {"SparseApplyFtrl", "SparseApplyFtrlD"},
     {"SparseApplyProximalAdagrad", "SparseApplyProximalAdagradD"},
-    {"SparseGatherV2", "GatherV2"},
+    {"SparseGatherV2", "Gather"},
     {"Pad", "PadD"},
     {"Concat", "ConcatD"},
   };

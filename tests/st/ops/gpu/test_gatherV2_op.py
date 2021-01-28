@@ -26,7 +26,7 @@ from mindspore.ops import operations as P
 class GatherNet(nn.Cell):
     def __init__(self):
         super(GatherNet, self).__init__()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
 
     def construct(self, x, indices):
         return self.gather(x, indices, 1)
@@ -850,7 +850,7 @@ def test_gather0():
 class GatherNet1(nn.Cell):
     def __init__(self):
         super(GatherNet1, self).__init__()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
 
     def construct(self, x, indices):
         return self.gather(x, indices, -1)
@@ -904,7 +904,7 @@ def test_gather1():
 class GatherNet2(nn.Cell):
     def __init__(self):
         super(GatherNet2, self).__init__()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
 
     def construct(self, x, indices):
         return self.gather(x, indices, 0)
@@ -944,7 +944,7 @@ def test_gather2():
 class GatherNetDynamic(nn.Cell):
     def __init__(self, axis=0, dyn_a=True, dyn_b=True):
         super(GatherNetDynamic, self).__init__()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.gpu_convert_to_dynamic_shape = inner.GpuConvertToDynamicShape()
         self.to_dyn_1 = dyn_a
         self.to_dyn_2 = dyn_b

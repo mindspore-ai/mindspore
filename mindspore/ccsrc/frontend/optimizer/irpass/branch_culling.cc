@@ -62,7 +62,7 @@ bool InConvertWhiteList(const AnfNodePtr &node, size_t index) {
                                                                         {prim::kPrimCast, {2}},
                                                                         {prim::kPrimTranspose, {2}},
                                                                         {prim::kPrimOneHot, {2}},
-                                                                        {prim::kPrimGatherV2, {3}},
+                                                                        {prim::kPrimGather, {3}},
                                                                         {prim::kPrimReshape, {2}},
                                                                         {prim::kPrimAssign, {1}},
                                                                         {prim::kPrimAssignAdd, {1}},
@@ -508,7 +508,7 @@ bool GraphOutputCompatible(const AbstractBasePtr &true_branch_abs, const Abstrac
     abstract::AbstractTuplePtr false_branch_tuple = false_branch_abs->cast<abstract::AbstractTuplePtr>();
     if (true_branch_tuple->elements().size() != false_branch_tuple->elements().size()) {
       MS_LOG(ERROR) << "true branch size:" << true_branch_tuple->elements().size()
-                    << ", not equal to false banch size:" << false_branch_tuple->elements().size() << " ";
+                    << ", not equal to false branch size:" << false_branch_tuple->elements().size() << " ";
       return false;
     }
     bool all_compatible = true;

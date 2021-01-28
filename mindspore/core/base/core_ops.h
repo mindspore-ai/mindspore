@@ -25,6 +25,7 @@
 
 namespace mindspore {
 namespace prim {
+constexpr auto kGather = "Gather";
 // Here list all primitives used in backend or some special primitives used by core.
 // Arithmetic
 inline const PrimitivePtr kPrimScalarAdd = std::make_shared<Primitive>("scalar_add");
@@ -86,8 +87,8 @@ inline const PrimitivePtr kPrimCast = std::make_shared<Primitive>("Cast");
 inline const PrimitivePtr kPrimConcat = std::make_shared<Primitive>("Concat");
 inline const PrimitivePtr kPrimSqueeze = std::make_shared<Primitive>("Squeeze");
 inline const PrimitivePtr kPrimTranspose = std::make_shared<Primitive>("Transpose");
-inline const PrimitivePtr kPrimGatherV2 = std::make_shared<Primitive>("GatherV2");
 inline const PrimitivePtr kPrimGatherD = std::make_shared<Primitive>("GatherD");
+inline const PrimitivePtr kPrimGather = std::make_shared<Primitive>(kGather);
 inline const PrimitivePtr kPrimSparseGatherV2 = std::make_shared<Primitive>("SparseGatherV2");
 inline const PrimitivePtr kPrimShape = std::make_shared<Primitive>("Shape");
 inline const PrimitivePtr kPrimDynamicShape = std::make_shared<Primitive>("DynamicShape");
@@ -351,7 +352,7 @@ inline const PrimitivePtr kPrimGetRefKey = std::make_shared<Primitive>("get_ref_
 inline const PrimitivePtr kPrimMakeRef = std::make_shared<Primitive>("make_ref");
 inline const PrimitivePtr kPrimGetRefValue = std::make_shared<Primitive>("get_ref_value");
 
-// Other primitve not used by backend but used in core;
+// Other primitive not used by backend but used in core;
 inline const PrimitivePtr kPrimStateSetItem = std::make_shared<Primitive>("state_setitem");
 inline const PrimitivePtr kPrimJ = std::make_shared<Primitive>("J");
 

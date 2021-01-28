@@ -200,8 +200,8 @@ class WideDeepModel(nn.Cell):
         self.concat = P.Concat(axis=1)
         self.cast = P.Cast()
         self.unique = P.Unique().shard(((1,),))
-        self.wide_gatherv2 = P.GatherV2()
-        self.deep_gatherv2 = P.GatherV2()
+        self.wide_gatherv2 = P.Gather()
+        self.deep_gatherv2 = P.Gather()
         if is_auto_parallel and sparse and not is_field_slice and not parameter_server:
             target = 'DEVICE'
             if host_device_mix:

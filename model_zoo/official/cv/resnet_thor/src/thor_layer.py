@@ -187,7 +187,7 @@ class Conv2d_Thor_GPU(_Conv):
         self.batch_size = Tensor(batch_size, mstype.float16)
         self.transpose = P.Transpose()
         self.cast = P.Cast()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.freq = Tensor(frequency, mstype.int32)
         self.axis = 0
         self.sqrt = P.Sqrt()
@@ -330,7 +330,7 @@ class Dense_Thor_GPU(Cell):
         self.dampingA = Tensor(np.identity(in_channels), mstype.float32)
         self.dampingG = Tensor(np.identity(out_channels), mstype.float32)
         self.cast = P.Cast()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.freq = Tensor(frequency, mstype.int32)
         self.axis = 0
         self.add = P.TensorAdd()
@@ -496,7 +496,7 @@ class Conv2d_Thor(_Conv):
             self.device_shape_pad_flag = True
             self.device_shape_pad = P.Pad(((0, 0), (0, C0 - self.in_channels), (0, 0), (0, C0 - self.in_channels)))
         self.slice = P.Slice()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.freq = Tensor(frequency, mstype.int32)
         self.loss_scale = Tensor(1 / loss_scale, mstype.float16)
         self.axis = 0
@@ -678,7 +678,7 @@ class Dense_Thor(Cell):
         self.pad = P.Pad(((0, 23), (0, 23)))
         self.pad1 = P.Pad(((0, 7), (0, 7)))
         self.slice = P.Slice()
-        self.gather = P.GatherV2()
+        self.gather = P.Gather()
         self.assignadd = P.AssignAdd()
         self.freq = Tensor(frequency, mstype.int32)
         self.axis = 0

@@ -367,7 +367,7 @@ TEST_F(TestConvert, TestConcat) {
 }
 
 TEST_F(TestConvert, TestGatherV2) {
-  auto prim = prim::kPrimGatherV2;
+  auto prim = prim::kPrimGather;
 
   std::shared_ptr<FuncGraph> anf_graph = MakeFuncGraph(prim, 3);
   std::shared_ptr<FuncGraphManager> graph_manager = MakeManager({anf_graph});

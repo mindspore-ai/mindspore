@@ -32,7 +32,7 @@ class Net(nn.Cell):
         if strategy1:
             self.sampler.shard(strategy1)
         self.embedding_table = Parameter(embedding_weight, "embedding_weight")
-        self.gatherv2 = P.GatherV2()
+        self.gatherv2 = P.Gather()
         self.reduce_sum = P.ReduceSum()
         self.reduce_sum2 = P.ReduceSum()
         self.reduce_sum3 = P.ReduceSum()
