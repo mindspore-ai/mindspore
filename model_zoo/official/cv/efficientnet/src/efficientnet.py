@@ -20,10 +20,8 @@ from copy import deepcopy
 
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import context, ms_function
-from mindspore.common.initializer import (Normal, One, Uniform, Zero,
-                                          initializer)
-from mindspore.common.parameter import Parameter
+from mindspore import ms_function
+from mindspore.common.initializer import (Normal, One, Uniform, Zero)
 from mindspore.ops import operations as P
 from mindspore.ops.composite import clip_by_value
 
@@ -224,13 +222,7 @@ def _decode_block_str(block_str, depth_multiplier=1.0):
             # activation fn
             key = op[0]
             v = op[1:]
-            if v == 're':
-                print('not support')
-            elif v == 'r6':
-                print('not support')
-            elif v == 'hs':
-                print('not support')
-            elif v == 'sw':
+            if v in ('re', 'r6', 'hs', 'sw'):
                 print('not support')
             else:
                 continue
@@ -459,28 +451,6 @@ class BlockBuilder(nn.Cell):
         return self.layer(x)
 
 
-class DepthWiseConv(nn.Cell):
-    def __init__(self, in_planes, kernel_size, stride):
-        super(DepthWiseConv, self).__init__()
-        platform = context.get_context("device_target")
-        weight_shape = [1, kernel_size, in_planes]
-        weight_init = _initialize_weight_goog(shape=weight_shape)
-        if platform == "GPU":
-            self.depthwise_conv = P.Conv2D(out_channel=in_planes * 1, kernel_size=kernel_size,
-                                           stride=stride, pad_mode="same", group=in_planes)
-            self.weight = Parameter(initializer(
-                weight_init, [in_planes * 1, 1, kernel_size, kernel_size]))
-        else:
-            self.depthwise_conv = P.DepthwiseConv2dNative(
-                channel_multiplier=1, kernel_size=kernel_size, stride=stride, pad_mode='same',)
-            self.weight = Parameter(initializer(
-                weight_init, [1, in_planes, kernel_size, kernel_size]))
-
-    def construct(self, x):
-        x = self.depthwise_conv(x, self.weight)
-        return x
-
-
 class DropConnect(nn.Cell):
     def __init__(self, drop_connect_rate=0., seed0=0, seed1=0):
         super(DropConnect, self).__init__()
@@ -540,7 +510,9 @@ class DepthwiseSeparableConv(nn.Cell):
         self.has_pw_act = pw_act
         self.act_fn = act_fn
         self.drop_connect_rate = drop_connect_rate
-        self.conv_dw = DepthWiseConv(in_chs, dw_kernel_size, stride)
+        self.conv_dw = nn.Conv2d(in_chs, in_chs, dw_kernel_size, stride, pad_mode="same",
+                                 has_bias=False, group=in_chs,
+                                 weight_init=_initialize_weight_goog(shape=[1, dw_kernel_size, in_chs]))
         self.bn1 = _fused_bn(in_chs, **bn_args)
 
         #
@@ -595,7 +567,9 @@ class InvertedResidual(nn.Cell):
         if self.shuffle_type is not None and isinstance(exp_kernel_size, list):
             self.shuffle = None
 
-        self.conv_dw = DepthWiseConv(mid_chs, dw_kernel_size, stride)
+        self.conv_dw = nn.Conv2d(mid_chs, mid_chs, dw_kernel_size, stride, pad_mode="same",
+                                 has_bias=False, group=mid_chs,
+                                 weight_init=_initialize_weight_goog(shape=[1, dw_kernel_size, mid_chs]))
         self.bn2 = _fused_bn(mid_chs, **bn_args)
 
         if self.has_se:

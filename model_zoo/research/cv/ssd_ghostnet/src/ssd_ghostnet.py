@@ -20,13 +20,12 @@ import numpy as np
 import mindspore.common.dtype as mstype
 import mindspore as ms
 import mindspore.nn as nn
-from mindspore import Parameter, context, Tensor
+from mindspore import context, Tensor
 from mindspore.parallel._auto_parallel_context import auto_parallel_context
 from mindspore.communication.management import get_group_size
 from mindspore.ops import operations as P
 from mindspore.ops import functional as F
 from mindspore.ops import composite as C
-from mindspore.common.initializer import initializer
 
 
 def _make_divisible(x, divisor=4):
@@ -44,8 +43,8 @@ def _bn(channel):
 
 
 def _last_conv2d(in_channel, out_channel, kernel_size=3, stride=1, pad_mod='same', pad=0):
-    depthwise_conv = DepthwiseConv(
-        in_channel, kernel_size, stride, pad_mode='same', pad=pad)
+    depthwise_conv = nn.Conv2d(in_channel, in_channel, kernel_size, stride, pad_mode='same', padding=pad,
+                               has_bias=False, group=in_channel, weight_init='ones')
     conv = _conv2d(in_channel, out_channel, kernel_size=1)
     return nn.SequentialCell([depthwise_conv, _bn(in_channel), nn.ReLU6(), conv])
 
@@ -75,8 +74,8 @@ class ConvBNReLU(nn.Cell):
             conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode='same',
                              padding=padding)
         else:
-            conv = DepthwiseConv(in_planes, kernel_size,
-                                 stride, pad_mode='same', pad=padding)
+            conv = nn.Conv2d(in_planes, out_planes, kernel_size, stride, pad_mode='same', padding=padding,
+                             has_bias=False, group=groups, weight_init='ones')
         layers = [conv, _bn(out_planes)]
         if use_act:
             layers.append(Activation(act_type))
@@ -84,52 +83,6 @@ class ConvBNReLU(nn.Cell):
 
     def construct(self, x):
         output = self.features(x)
-        return output
-
-
-class DepthwiseConv(nn.Cell):
-    """
-    Depthwise Convolution warpper definition.
-
-    Args:
-        in_planes (int): Input channel.
-        kernel_size (int): Input kernel size.
-        stride (int): Stride size.
-        pad_mode (str): pad mode in (pad, same, valid)
-        channel_multiplier (int): Output channel multiplier
-        has_bias (bool): has bias or not
-
-    Returns:
-        Tensor, output tensor.
-
-    Examples:
-        >>> DepthwiseConv(16, 3, 1, 'pad', 1, channel_multiplier=1)
-    """
-
-    def __init__(self, in_planes, kernel_size, stride, pad_mode, pad, channel_multiplier=1, has_bias=False):
-        super(DepthwiseConv, self).__init__()
-        self.has_bias = has_bias
-        self.in_channels = in_planes
-        self.channel_multiplier = channel_multiplier
-        self.out_channels = in_planes * channel_multiplier
-        self.kernel_size = (kernel_size, kernel_size)
-        self.depthwise_conv = P.DepthwiseConv2dNative(channel_multiplier=channel_multiplier,
-                                                      kernel_size=self.kernel_size,
-                                                      stride=stride, pad_mode=pad_mode, pad=pad)
-        self.bias_add = P.BiasAdd()
-        weight_shape = [channel_multiplier, in_planes, *self.kernel_size]
-        self.weight = Parameter(initializer('ones', weight_shape), name="weight")
-
-        if has_bias:
-            bias_shape = [channel_multiplier * in_planes]
-            self.bias = Parameter(initializer('zeros', bias_shape), name="bias")
-        else:
-            self.bias = None
-
-    def construct(self, x):
-        output = self.depthwise_conv(x, self.weight)
-        if self.has_bias:
-            output = self.bias_add(output, self.bias)
         return output
 
 

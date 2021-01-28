@@ -20,22 +20,22 @@ Previously the kernel size and pad mode attrs of pooling ops are named "ksize" a
 <td>
 
 ```python
->>> from mindspore.ops import operations as P
+>>> import mindspore.ops as ops
 >>>
->>> avg_pool = P.AvgPool(ksize=2, padding='same')
->>> max_pool = P.MaxPool(ksize=2, padding='same')
->>> max_pool_with_argmax = P.MaxPoolWithArgmax(ksize=2, padding='same')
+>>> avg_pool = ops.AvgPool(ksize=2, padding='same')
+>>> max_pool = ops.MaxPool(ksize=2, padding='same')
+>>> max_pool_with_argmax = ops.MaxPoolWithArgmax(ksize=2, padding='same')
 ```
 
 </td>
 <td>
 
 ```python
->>> from mindspore.ops import operations as P
+>>> import mindspore.ops as ops
 >>>
->>> avg_pool = P.AvgPool(kernel_size=2, pad_mode='same')
->>> max_pool = P.MaxPool(kernel_size=2, pad_mode='same')
->>> max_pool_with_argmax = P.MaxPoolWithArgmax(kernel_size=2, pad_mode='same')
+>>> avg_pool = ops.AvgPool(kernel_size=2, pad_mode='same')
+>>> max_pool = ops.MaxPool(kernel_size=2, pad_mode='same')
+>>> max_pool_with_argmax = ops.MaxPoolWithArgmax(kernel_size=2, pad_mode='same')
 ```
 
 </td>

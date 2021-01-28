@@ -16,34 +16,6 @@
 import math
 
 import mindspore.nn as nn
-from mindspore.ops import operations as P
-from mindspore.common.initializer import initializer
-from mindspore import Parameter
-
-
-class DepthWiseConv(nn.Cell):
-    '''Build DepthWise conv.'''
-    def __init__(self, in_planes, kernel_size, stride, pad_mode, pad, channel_multiplier=1, has_bias=False):
-        super(DepthWiseConv, self).__init__()
-        self.has_bias = has_bias
-        self.depthwise_conv = P.DepthwiseConv2dNative(channel_multiplier=channel_multiplier, kernel_size=kernel_size,
-                                                      stride=stride, pad_mode=pad_mode, pad=pad)
-        self.bias_add = P.BiasAdd()
-
-        weight_shape = [channel_multiplier, in_planes, kernel_size[0], kernel_size[1]]
-        self.weight = Parameter(initializer('ones', weight_shape))
-
-        if has_bias:
-            bias_shape = [channel_multiplier * in_planes]
-            self.bias = Parameter(initializer('zeros', bias_shape))
-        else:
-            self.bias = None
-
-    def construct(self, x):
-        output = self.depthwise_conv(x, self.weight)
-        if self.has_bias:
-            output = self.bias_add(output, self.bias)
-        return output
 
 
 class DSCNN(nn.Cell):
@@ -85,8 +57,9 @@ class DSCNN(nn.Cell):
                 seq_cell.append(nn.BatchNorm2d(num_features=conv_feat[layer_no], momentum=0.98))
                 in_channel = conv_feat[layer_no]
             else:
-                seq_cell.append(DepthWiseConv(in_planes=in_channel, kernel_size=(conv_kt[layer_no], conv_kf[layer_no]),
-                                              stride=(conv_st[layer_no], conv_sf[layer_no]), pad_mode='same', pad=0))
+                seq_cell.append(nn.Conv2d(in_channel, in_channel, kernel_size=(conv_kt[layer_no], conv_kf[layer_no]),
+                                          stride=(conv_st[layer_no], conv_sf[layer_no]), pad_mode='same',
+                                          has_bias=False, group=in_channel, weight_init='ones'))
                 seq_cell.append(nn.BatchNorm2d(num_features=in_channel, momentum=0.98))
                 seq_cell.append(nn.ReLU())
                 seq_cell.append(nn.Conv2d(in_channels=in_channel, out_channels=conv_feat[layer_no], kernel_size=(1, 1),
