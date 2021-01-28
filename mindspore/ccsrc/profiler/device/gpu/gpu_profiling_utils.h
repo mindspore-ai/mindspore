@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,6 +54,7 @@ class ProfilingUtils {
   // export PROFILING_ITER_END='full name of last cnode in graph to execute'
   static ProfilingTraceInfo GetProfilingTraceFromEnv(NotNull<const session::KernelGraph *> graph_ptr);
   static void OutputStepTraceOpNameStatus();
+  static bool IsFirstStep(const uint32_t graph_id);
 
   static bool have_communication_op;
   static ProfilingTraceInfo profiling_trace;
@@ -64,6 +65,7 @@ class ProfilingUtils {
   static void SetTraceIterEnd(const std::vector<CNodePtr> &cnode_exec_order);
   static std::string GetGraphSecondLastKernelName(const std::vector<CNodePtr> &cnode_exec_order);
   static void GetTraceHccl(const std::vector<CNodePtr> &cnode_exec_order);
+  static std::unordered_map<uint32_t, bool> is_first_step_map_;
 };
 }  // namespace gpu
 }  // namespace profiler
