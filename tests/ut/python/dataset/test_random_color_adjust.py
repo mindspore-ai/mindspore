@@ -58,7 +58,7 @@ def util_test_random_color_adjust_error(brightness=(1, 1), contrast=(1, 1), satu
             c_image = item1["image"]
             dataset_shape_1.append(c_image.shape)
 
-    error_msg = "number of channels does not equal 3"
+    error_msg = "image shape is not <H,W,C>"
 
     assert error_msg in str(info.value)
 

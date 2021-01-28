@@ -29,9 +29,7 @@ const InterpolationMode ResizeOp::kDefInterpolation = InterpolationMode::kLinear
 
 Status ResizeOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  CHECK_FAIL_RETURN_UNEXPECTED(
-    input->shape().Size() >= 2,
-    "Resize: image shape " + std::to_string(input->shape().Size()) + " is not <H,W,C> or <H,W>.");
+  CHECK_FAIL_RETURN_UNEXPECTED(input->shape().Size() >= 2, "Resize: image shape is not <H,W,C> or <H,W>.");
   int32_t output_h, output_w = 0;
   int32_t input_h = static_cast<int>(input->shape()[0]);
   int32_t input_w = static_cast<int>(input->shape()[1]);

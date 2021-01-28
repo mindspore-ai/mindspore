@@ -89,11 +89,12 @@ ComputeReturn:
   return ret;
 
 ShapeMisMatch:
-  ret = Status(StatusCode::kShapeMisMatch, "PyFunc should return a numpy array or a numpy array tuple");
+  ret =
+    Status(StatusCode::kShapeMisMatch, __LINE__, __FILE__, "PyFunc should return a numpy array or a numpy array tuple");
   goto ComputeReturn;
 
 TimeoutError:
-  ret = Status(StatusCode::kTimeOut, "PyFunc execute time out");
+  ret = Status(StatusCode::kTimeOut, __LINE__, __FILE__, "PyFunc execute time out");
   goto ComputeReturn;
 }
 

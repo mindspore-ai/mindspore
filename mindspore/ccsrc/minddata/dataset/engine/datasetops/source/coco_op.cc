@@ -425,9 +425,13 @@ Status CocoOp::SearchNodeInJson(const nlohmann::json &input_tree, std::string no
 }
 
 Status CocoOp::ParseAnnotationIds() {
-  std::ifstream in(annotation_path_);
   nlohmann::json js;
-  in >> js;
+  try {
+    std::ifstream in(annotation_path_);
+    in >> js;
+  } catch (const std::exception &err) {
+    RETURN_STATUS_UNEXPECTED("Invalid file, failed to open json file: " + annotation_path_);
+  }
 
   std::vector<std::string> image_que;
   nlohmann::json image_list;
@@ -615,7 +619,7 @@ Status CocoOp::CategoriesColumnLoad(const nlohmann::json &categories_tree) {
     if (task_type_ == TaskType::Panoptic) {
       auto itr_isthing = category.find(kJsonCategoriesIsthing);
       CHECK_FAIL_RETURN_UNEXPECTED(itr_isthing != category.end(),
-                                   "Invalid data, no isthing found in categories of " + annotation_path_);
+                                   "Invalid data, nothing found in categories of " + annotation_path_);
       label_info.push_back(*itr_isthing);
     }
     label_index_.emplace_back(std::make_pair(name, label_info));

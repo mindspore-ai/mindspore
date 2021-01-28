@@ -273,7 +273,7 @@ def test_random_crop_with_bbox_op_bad_padding():
             break
     except RuntimeError as err:
         logger.info("Got an exception in DE: {}".format(str(err)))
-        assert "padding size is too big, it\'s more than 3 times the original size." in str(err)
+        assert "padding size is three times bigger than the image size" in str(err)
 
 
 if __name__ == "__main__":

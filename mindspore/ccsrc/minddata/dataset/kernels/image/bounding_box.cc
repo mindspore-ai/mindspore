@@ -48,7 +48,7 @@ Status BoundingBox::ValidateBoundingBoxes(const TensorRow &image_and_bbox) {
   }
   if (image_and_bbox[1]->shape().Size() < 2) {
     return Status(StatusCode::kBoundingBoxInvalidShape, __LINE__, __FILE__,
-                  "BoundingBox: bounding boxes shape should have at least two dimensions.");
+                  "BoundingBox: bounding boxes should have to be two-dimensional matrix at least.");
   }
   uint32_t num_of_features = image_and_bbox[1]->shape()[1];
   if (num_of_features < 4) {

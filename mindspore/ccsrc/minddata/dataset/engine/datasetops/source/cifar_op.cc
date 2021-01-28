@@ -457,7 +457,7 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
     for (auto &file : op->cifar_files_) {
       Path file_path(file);
       CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
-                                   "Invalid file, failed to open cifar file: " + file);
+                                   "Invalid file, failed to open cifar10 file: " + file);
       std::string file_name = file_path.Basename();
 
       if (op->usage_ == "train") {
@@ -481,7 +481,7 @@ Status CifarOp::CountTotalRows(const std::string &dir, const std::string &usage,
       std::string file_name = file_path.Basename();
 
       CHECK_FAIL_RETURN_UNEXPECTED(file_path.Exists() && !file_path.IsDirectory(),
-                                   "Invalid file, failed to find cifar file: " + file);
+                                   "Invalid file, failed to find cifar100 file: " + file);
 
       if (op->usage_ == "train" && file_path.Basename().find("train") == std::string::npos) continue;
       if (op->usage_ == "test" && file_path.Basename().find("test") == std::string::npos) continue;

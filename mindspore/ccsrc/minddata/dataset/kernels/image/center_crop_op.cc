@@ -34,7 +34,7 @@ Status CenterCropOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_p
   std::string err_msg;
   std::string err_head = "CenterCrop: ";
   dsize_t rank = input->shape().Rank();
-  err_msg += (rank < 2 || rank > 3) ? "rank received::" + std::to_string(rank) + " Expected: 2 or 3 \t" : "";
+  err_msg += (rank < 2 || rank > 3) ? "image shape is not <H,W,C> or <H,W> \t" : "";
   err_msg += (crop_het_ <= 0 || crop_wid_ <= 0) ? "crop size needs to be positive integers\t" : "";
 
   if (err_msg.length() != 0) RETURN_STATUS_UNEXPECTED(err_head + err_msg);

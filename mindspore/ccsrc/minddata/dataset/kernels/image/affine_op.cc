@@ -45,55 +45,59 @@ AffineOp::AffineOp(float_t degrees, const std::vector<float_t> &translation, flo
 
 Status AffineOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
-  float_t translation_x = translation_[0];
-  float_t translation_y = translation_[1];
-  float_t degrees = 0.0;
-  DegreesToRadians(degrees_, &degrees);
-  float_t shear_x = shear_[0];
-  float_t shear_y = shear_[1];
-  DegreesToRadians(shear_x, &shear_x);
-  DegreesToRadians(-1 * shear_y, &shear_y);
-  std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
+  try {
+    float_t translation_x = translation_[0];
+    float_t translation_y = translation_[1];
+    float_t degrees = 0.0;
+    DegreesToRadians(degrees_, &degrees);
+    float_t shear_x = shear_[0];
+    float_t shear_y = shear_[1];
+    DegreesToRadians(shear_x, &shear_x);
+    DegreesToRadians(-1 * shear_y, &shear_y);
+    std::shared_ptr<CVTensor> input_cv = CVTensor::AsCVTensor(input);
 
-  // Apply Affine Transformation
-  //       T is translation matrix: [1, 0, tx | 0, 1, ty | 0, 0, 1]
-  //       C is translation matrix to keep center: [1, 0, cx | 0, 1, cy | 0, 0, 1]
-  //       RSS is rotation with scale and shear matrix
-  //       RSS(a, s, (sx, sy)) =
-  //       = R(a) * S(s) * SHy(sy) * SHx(sx)
-  //       = [ s*cos(a - sy)/cos(sy), s*(-cos(a - sy)*tan(x)/cos(y) - sin(a)), 0 ]
-  //         [ s*sin(a - sy)/cos(sy), s*(-sin(a - sy)*tan(x)/cos(y) + cos(a)), 0 ]
-  //         [ 0                    , 0                                      , 1 ]
-  //
-  // where R is a rotation matrix, S is a scaling matrix, and SHx and SHy are the shears:
-  // SHx(s) = [1, -tan(s)] and SHy(s) = [1      , 0]
-  //          [0, 1      ]              [-tan(s), 1]
-  //
-  // Thus, the affine matrix is M = T * C * RSS * C^-1
+    // Apply Affine Transformation
+    //       T is translation matrix: [1, 0, tx | 0, 1, ty | 0, 0, 1]
+    //       C is translation matrix to keep center: [1, 0, cx | 0, 1, cy | 0, 0, 1]
+    //       RSS is rotation with scale and shear matrix
+    //       RSS(a, s, (sx, sy)) =
+    //       = R(a) * S(s) * SHy(sy) * SHx(sx)
+    //       = [ s*cos(a - sy)/cos(sy), s*(-cos(a - sy)*tan(x)/cos(y) - sin(a)), 0 ]
+    //         [ s*sin(a - sy)/cos(sy), s*(-sin(a - sy)*tan(x)/cos(y) + cos(a)), 0 ]
+    //         [ 0                    , 0                                      , 1 ]
+    //
+    // where R is a rotation matrix, S is a scaling matrix, and SHx and SHy are the shears:
+    // SHx(s) = [1, -tan(s)] and SHy(s) = [1      , 0]
+    //          [0, 1      ]              [-tan(s), 1]
+    //
+    // Thus, the affine matrix is M = T * C * RSS * C^-1
 
-  float_t cx = ((input_cv->mat().cols - 1) / 2.0);
-  float_t cy = ((input_cv->mat().rows - 1) / 2.0);
-  // Calculate RSS
-  std::vector<float_t> matrix{
-    static_cast<float>(scale_ * cos(degrees + shear_y) / cos(shear_y)),
-    static_cast<float>(scale_ * (-1 * cos(degrees + shear_y) * tan(shear_x) / cos(shear_y) - sin(degrees))),
-    0,
-    static_cast<float>(scale_ * sin(degrees + shear_y) / cos(shear_y)),
-    static_cast<float>(scale_ * (-1 * sin(degrees + shear_y) * tan(shear_x) / cos(shear_y) + cos(degrees))),
-    0};
-  // Compute T * C * RSS * C^-1
-  matrix[2] = (1 - matrix[0]) * cx - matrix[1] * cy + translation_x;
-  matrix[5] = (1 - matrix[4]) * cy - matrix[3] * cx + translation_y;
-  cv::Mat affine_mat(matrix);
-  affine_mat = affine_mat.reshape(1, {2, 3});
+    float_t cx = ((input_cv->mat().cols - 1) / 2.0);
+    float_t cy = ((input_cv->mat().rows - 1) / 2.0);
+    // Calculate RSS
+    std::vector<float_t> matrix{
+      static_cast<float>(scale_ * cos(degrees + shear_y) / cos(shear_y)),
+      static_cast<float>(scale_ * (-1 * cos(degrees + shear_y) * tan(shear_x) / cos(shear_y) - sin(degrees))),
+      0,
+      static_cast<float>(scale_ * sin(degrees + shear_y) / cos(shear_y)),
+      static_cast<float>(scale_ * (-1 * sin(degrees + shear_y) * tan(shear_x) / cos(shear_y) + cos(degrees))),
+      0};
+    // Compute T * C * RSS * C^-1
+    matrix[2] = (1 - matrix[0]) * cx - matrix[1] * cy + translation_x;
+    matrix[5] = (1 - matrix[4]) * cy - matrix[3] * cx + translation_y;
+    cv::Mat affine_mat(matrix);
+    affine_mat = affine_mat.reshape(1, {2, 3});
 
-  std::shared_ptr<CVTensor> output_cv;
-  RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
-  RETURN_UNEXPECTED_IF_NULL(output_cv);
-  cv::warpAffine(input_cv->mat(), output_cv->mat(), affine_mat, input_cv->mat().size(),
-                 GetCVInterpolationMode(interpolation_), cv::BORDER_CONSTANT,
-                 cv::Scalar(fill_value_[0], fill_value_[1], fill_value_[2]));
-  (*output) = std::static_pointer_cast<Tensor>(output_cv);
+    std::shared_ptr<CVTensor> output_cv;
+    RETURN_IF_NOT_OK(CVTensor::CreateEmpty(input_cv->shape(), input_cv->type(), &output_cv));
+    RETURN_UNEXPECTED_IF_NULL(output_cv);
+    cv::warpAffine(input_cv->mat(), output_cv->mat(), affine_mat, input_cv->mat().size(),
+                   GetCVInterpolationMode(interpolation_), cv::BORDER_CONSTANT,
+                   cv::Scalar(fill_value_[0], fill_value_[1], fill_value_[2]));
+    (*output) = std::static_pointer_cast<Tensor>(output_cv);
+  } catch (const cv::Exception &e) {
+    RETURN_STATUS_UNEXPECTED("Affine: " + std::string(e.what()));
+  }
   return Status::OK();
 }
 }  // namespace dataset
