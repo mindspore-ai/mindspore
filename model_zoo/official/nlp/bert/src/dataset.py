@@ -52,25 +52,30 @@ def create_bert_dataset(device_num=1, rank=0, do_shuffle="true", data_dir=None, 
     return data_set
 
 
-def create_ner_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy",
-                       data_file_path=None, schema_file_path=None, do_shuffle=True):
+def create_ner_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy", data_file_path=None,
+                       dataset_format="mindrecord", schema_file_path=None, do_shuffle=True):
     """create finetune or evaluation dataset"""
     type_cast_op = C.TypeCast(mstype.int32)
-    data_set = ds.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
-                                  columns_list=["input_ids", "input_mask", "segment_ids", "label_ids"],
-                                  shuffle=do_shuffle)
+    if dataset_format == "mindrecord":
+        dataset = ds.MindDataset([data_file_path],
+                                 columns_list=["input_ids", "input_mask", "segment_ids", "label_ids"],
+                                 shuffle=do_shuffle)
+    else:
+        dataset = ds.TFRecordDataset([data_file_path], schema_file_path if schema_file_path != "" else None,
+                                     columns_list=["input_ids", "input_mask", "segment_ids", "label_ids"],
+                                     shuffle=do_shuffle)
     if assessment_method == "Spearman_correlation":
         type_cast_op_float = C.TypeCast(mstype.float32)
-        data_set = data_set.map(operations=type_cast_op_float, input_columns="label_ids")
+        dataset = dataset.map(operations=type_cast_op_float, input_columns="label_ids")
     else:
-        data_set = data_set.map(operations=type_cast_op, input_columns="label_ids")
-    data_set = data_set.map(operations=type_cast_op, input_columns="segment_ids")
-    data_set = data_set.map(operations=type_cast_op, input_columns="input_mask")
-    data_set = data_set.map(operations=type_cast_op, input_columns="input_ids")
-    data_set = data_set.repeat(repeat_count)
+        dataset = dataset.map(operations=type_cast_op, input_columns="label_ids")
+    dataset = dataset.map(operations=type_cast_op, input_columns="segment_ids")
+    dataset = dataset.map(operations=type_cast_op, input_columns="input_mask")
+    dataset = dataset.map(operations=type_cast_op, input_columns="input_ids")
+    dataset = dataset.repeat(repeat_count)
     # apply batch operations
-    data_set = data_set.batch(batch_size, drop_remainder=True)
-    return data_set
+    dataset = dataset.batch(batch_size, drop_remainder=True)
+    return dataset
 
 
 def create_classification_dataset(batch_size=1, repeat_count=1, assessment_method="accuracy",
