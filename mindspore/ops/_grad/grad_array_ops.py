@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -339,15 +339,9 @@ def get_bprop_slice(self):
     """Generate bprop for Slice"""
 
     def bprop(x, begin, size, out, dout):
-        dx = P.Pad(_slice_grad_pad(begin, size, shape_op(x)))(dout)
+        dx = G.SliceGrad()(dout, x, begin, size)
         return (dx, zeros_like(begin), zeros_like(size))
 
-    def bprop_grad(x, begin, size, out, dout):
-        dx = dx = G.SliceGrad()(dout, x, begin, size)
-        return (dx, zeros_like(begin), zeros_like(size))
-
-    if context.get_context('device_target') == "GPU" or context.get_context('device_target') == "CPU":
-        return bprop_grad
     return bprop
 
 
