@@ -38,6 +38,7 @@ class FileReader:
     Raises:
         ParamValueError: If file_name, num_consumer or columns is invalid.
     """
+
     def __init__(self, file_name, num_consumer=4, columns=None, operator=None):
         if isinstance(file_name, list):
             for f in file_name:
@@ -66,7 +67,6 @@ class FileReader:
         self._header = ShardHeader(self._reader.get_header())
         self._reader.launch()
 
-
     def get_next(self):
         """
         Yield a batch of data according to columns at a time.
@@ -85,4 +85,4 @@ class FileReader:
 
     def close(self):
         """Stop reader worker and close File."""
-        return self._reader.close()
+        self._reader.close()
