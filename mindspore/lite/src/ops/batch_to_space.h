@@ -40,6 +40,11 @@ class BatchToSpace : public PrimitiveC {
   int InferShape(std::vector<lite::Tensor *> inputs_, std::vector<lite::Tensor *> outputs_) override;
   std::vector<int> GetBlockShape() const;
   std::vector<int> GetCrops() const;
+
+ private:
+  int SetOutputShapeFromParam(const std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs);
+  int SetOutputShapeFromInput(const std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs);
+  int mul_block_shape_;
 };
 }  // namespace lite
 }  // namespace mindspore

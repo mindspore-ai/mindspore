@@ -39,6 +39,8 @@ class SpaceToBatchND : public PrimitiveC {
   std::vector<int> GetBlockShape() const;
   std::vector<int> GetPaddings() const;
   int InferShape(std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs) override;
+  int SetOutputShapeFromParam(const std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs);
+  int SetOutputShapeFromInput(const std::vector<lite::Tensor *> inputs, std::vector<lite::Tensor *> outputs);
 };
 }  // namespace lite
 }  // namespace mindspore

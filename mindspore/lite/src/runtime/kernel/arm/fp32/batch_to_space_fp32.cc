@@ -16,23 +16,46 @@
 #include "src/runtime/kernel/arm/fp32/batch_to_space_fp32.h"
 #include "schema/model_generated.h"
 #include "src/kernel_registry.h"
+#include "src/ops/batch_to_space.h"
 
 using mindspore::lite::KernelRegistrar;
+using mindspore::lite::RET_ERROR;
+using mindspore::lite::RET_OK;
 using mindspore::schema::PrimitiveType_BatchToSpace;
 using mindspore::schema::PrimitiveType_BatchToSpaceND;
 
 namespace mindspore::kernel {
+int BatchToSpaceCPUKernel::Processinput() {
+  MS_ASSERT(in_tensors_[1]->data_c() != nullptr);
+  MS_ASSERT(in_tensors_[2]->data_c() != nullptr);
+  auto block_shape_data = in_tensors_[1]->data_c();
+  auto crops_data = in_tensors_[2]->data_c();
+  auto block_shape = static_cast<int *>(block_shape_data);
+  auto crops = static_cast<int *>(crops_data);
+  for (int i = 0; i < BATCH_TO_SPACE_BLOCK_SHAPE_SIZE; ++i) {
+    block_shape_[i] = block_shape[i];
+  }
+  no_crop_ = true;
+  for (int i = 0; i < COMM_SHAPE_SIZE; ++i) {
+    crops_[i] = crops[i];
+    if (crops_[i] != 0) {
+      no_crop_ = false;
+    }
+  }
+  return RET_OK;
+}
+
 int BatchToSpaceCPUKernel::Init() {
   MS_ASSERT(in_tensors_.at(0)->format() == schema::Format::Format_NHWC);
   if (!InferShapeDone()) {
-    return lite::RET_OK;
+    return RET_OK;
   }
   return ReSize();
 }
 
 int BatchToSpaceCPUKernel::ReSize() {
   MS_ASSERT(in_tensors_.at(0)->shape().size() == 4);
-  return lite::RET_OK;
+  return RET_OK;
 }
 
 int BatchToSpaceCPUKernel::Run() {
@@ -42,17 +65,29 @@ int BatchToSpaceCPUKernel::Run() {
   float *output_data = reinterpret_cast<float *>(output->MutableData());
   auto in_shape = input->shape();
   auto out_shape = output->shape();
-  BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
-
-  if (param->no_crop_) {
-    BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
-                              sizeof(float));
-  } else {
-    BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, param->crops_,
-                        sizeof(float));
+  if (in_tensors_.size() == 1) {
+    BatchToSpaceParameter *param = reinterpret_cast<BatchToSpaceParameter *>(this->op_parameter_);
+    if (param->no_crop_) {
+      BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_,
+                                sizeof(float));
+    } else {
+      BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], param->block_shape_, param->crops_,
+                          sizeof(float));
+    }
   }
-
-  return lite::RET_OK;
+  if (in_tensors_.size() == 3) {
+    auto ret = Processinput();
+    if (ret != RET_OK) {
+      MS_LOG(ERROR) << "Processinput failed in BatchToSpace.";
+      return ret;
+    }
+    if (no_crop_) {
+      BatchToSpaceNoCropForNHWC(input_data, output_data, in_shape.data(), out_shape[0], block_shape_, sizeof(float));
+    } else {
+      BatchToSpaceForNHWC(input_data, output_data, in_shape.data(), out_shape[0], block_shape_, crops_, sizeof(float));
+    }
+  }
+  return RET_OK;
 }
 
 REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_BatchToSpace, LiteKernelCreator<BatchToSpaceCPUKernel>)

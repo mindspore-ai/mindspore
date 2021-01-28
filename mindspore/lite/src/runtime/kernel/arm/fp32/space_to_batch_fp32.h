@@ -35,6 +35,7 @@ class SpaceToBatchCPUKernel : public LiteKernel {
   int Init() override;
   int ReSize() override;
   int Run() override;
+  void ProcessInput();
 
  public:
   void DoRun(int task_id);
