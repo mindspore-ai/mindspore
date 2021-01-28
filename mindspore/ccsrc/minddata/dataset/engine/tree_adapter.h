@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ class TreeAdapter {
   Status PostPass(std::shared_ptr<DatasetNode> ir);
 
   // Build an Execution tree
-  Status Build(std::shared_ptr<DatasetNode> root_ir, int32_t num_epochs);
+  Status Build(std::shared_ptr<DatasetNode> root_ir);
 
   // This RECURSIVE function walks the (optimized) IR tree in DFS to build its corresponding Execution tree.
   Status BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std::shared_ptr<DatasetOp> *op);

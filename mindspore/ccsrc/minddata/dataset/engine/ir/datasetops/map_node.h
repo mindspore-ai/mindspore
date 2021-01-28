@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -79,6 +79,9 @@ class MapNode : public DatasetNode {
   /// \brief setter to set all tensor operations
   void setOperations(const std::vector<std::shared_ptr<TensorOperation>> &operations);
 
+  /// \brief indicate this Map will be cached
+  void Cached() { under_a_cache_ = true; }
+
   /// \brief Getter functions
   /// \brief Getter of tensor operations
   /// \return Vector of operations the Map node will process
@@ -95,12 +98,11 @@ class MapNode : public DatasetNode {
 
  private:
   std::vector<std::shared_ptr<TensorOperation>> operations_;
-
- private:
   std::vector<std::string> input_columns_;
   std::vector<std::string> output_columns_;
   std::vector<std::string> project_columns_;
   std::vector<std::shared_ptr<DSCallback>> callbacks_;
+  bool under_a_cache_;
 };
 
 }  // namespace dataset

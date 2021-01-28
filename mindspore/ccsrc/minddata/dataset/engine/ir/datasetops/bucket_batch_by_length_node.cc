@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,9 +84,12 @@ void BucketBatchByLengthNode::Print(std::ostream &out) const {
 
 Status BucketBatchByLengthNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   bucket_boundaries_.insert(bucket_boundaries_.begin(), 0);
-  node_ops->push_back(std::make_shared<BucketBatchByLengthOp>(
-    column_names_, bucket_boundaries_, bucket_batch_sizes_, element_length_function_, pad_info_,
-    pad_to_bucket_boundary_, drop_remainder_, connector_que_size_));
+  auto op = std::make_shared<BucketBatchByLengthOp>(column_names_, bucket_boundaries_, bucket_batch_sizes_,
+                                                    element_length_function_, pad_info_, pad_to_bucket_boundary_,
+                                                    drop_remainder_, connector_que_size_);
+  op->set_total_repeats(GetTotalRepeats());
+  op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  node_ops->push_back(op);
   if (bucket_boundaries_[0] == 0) {
     bucket_boundaries_.erase(bucket_boundaries_.begin());
   }

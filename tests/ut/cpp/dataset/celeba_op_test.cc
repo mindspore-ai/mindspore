@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
-#include <iostream>
 #include <memory>
 #include <string>
 
 #include "common/common.h"
 #include "minddata/dataset/core/client.h"
-#include "minddata/dataset/core/global_context.h"
 #include "minddata/dataset/engine/datasetops/source/celeba_op.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 #include "minddata/dataset/util/status.h"
@@ -98,7 +95,11 @@ TEST_F(MindDataTestCelebaDataset, TestCelebaRepeat) {
                                    {0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1},
                                    {0,1,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,1,0,0,1,0,0,1,0,0,0,1,1,0,1,0,1,0,0,1}};
   uint32_t count = 0;
-  auto tree = Build({Celeba(16, 2, 32, dir), Repeat(2)});
+  auto op1 = Celeba(16, 2, 32, dir);
+  auto op2 = Repeat(2);
+  auto tree = Build({op1, op2});
+  op1->set_total_repeats(2);
+  op1->set_num_repeats_per_epoch(2);
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {

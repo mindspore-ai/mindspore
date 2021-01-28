@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -193,9 +193,12 @@ Status CLUENode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) 
     // Add the shuffle op after this op
     RETURN_IF_NOT_OK(AddShuffleOp(sorted_dataset_files.size(), num_shards_, num_rows, 0, connector_que_size_,
                                   rows_per_buffer_, &shuffle_op));
+    shuffle_op->set_total_repeats(GetTotalRepeats());
+    shuffle_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
     node_ops->push_back(shuffle_op);
   }
-
+  clue_op->set_total_repeats(GetTotalRepeats());
+  clue_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(clue_op);
 
   return Status::OK();

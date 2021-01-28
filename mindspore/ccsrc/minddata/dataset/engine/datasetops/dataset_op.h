@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -257,10 +257,6 @@ class DatasetOp : public std::enable_shared_from_this<DatasetOp> {
   /// \brief Getter function
   /// \return The number of required repeats for the operator
   int32_t op_total_repeats() { return op_total_repeats_; }
-
-  /// \brief Getter function
-  /// \return The number of required epochs for the operator
-  int32_t op_total_epochs() { return op_total_repeats_ / op_num_repeats_per_epoch_; }
 
   /// \brief Getter function
   /// \return The number of repeats per epoch for the operator

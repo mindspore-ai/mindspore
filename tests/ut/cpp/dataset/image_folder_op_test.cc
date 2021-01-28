@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <fstream>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -29,7 +28,6 @@
 #include "minddata/dataset/engine/datasetops/source/sampler/sequential_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/subset_random_sampler.h"
 #include "minddata/dataset/engine/datasetops/source/sampler/weighted_random_sampler.h"
-#include "minddata/dataset/util/path.h"
 #include "minddata/dataset/util/status.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
@@ -82,7 +80,11 @@ class MindDataTestImageFolderSampler : public UT::DatasetOpTesting {
 
 TEST_F(MindDataTestImageFolderSampler, TestSequentialImageFolderWithRepeat) {
   std::string folder_path = datasets_root_path_ + "/testPK/data";
-  auto tree = Build({ImageFolder(16, 2, 32, folder_path, false), Repeat(2)});
+  auto op1 = ImageFolder(16, 2, 32, folder_path, false);
+  auto op2 = Repeat(2);
+  op1->set_total_repeats(2);
+  op1->set_num_repeats_per_epoch(2);
+  auto tree = Build({op1, op2});
   tree->Prepare();
   int32_t res[] = {0, 1, 2, 3};
   Status rc = tree->Launch();
@@ -166,7 +168,12 @@ TEST_F(MindDataTestImageFolderSampler, TestRandomSamplerImageFolder) {
 
 TEST_F(MindDataTestImageFolderSampler, TestSequentialImageFolderWithRepeatBatch) {
   std::string folder_path = datasets_root_path_ + "/testPK/data";
-  auto tree = Build({ImageFolder(16, 2, 32, folder_path, false), Repeat(2), Batch(11)});
+  auto op1 = ImageFolder(16, 2, 32, folder_path, false);
+  auto op2 = Repeat(2);
+  auto op3 = Batch(11);
+  op1->set_total_repeats(2);
+  op1->set_num_repeats_per_epoch(2);
+  auto tree = Build({op1, op2, op3});
   tree->Prepare();
   int32_t res[4][11] = {{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
                         {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
@@ -297,7 +304,11 @@ TEST_F(MindDataTestImageFolderSampler, TestDistributedSampler) {
   int64_t num_samples = 0;
   std::shared_ptr<SamplerRT> sampler = std::make_shared<DistributedSamplerRT>(num_samples, 11, 10, false);
   std::string folder_path = datasets_root_path_ + "/testPK/data";
-  auto tree = Build({ImageFolder(16, 2, 32, folder_path, false, std::move(sampler)), Repeat(4)});
+  auto op1 = ImageFolder(16, 2, 32, folder_path, false, std::move(sampler));
+  auto op2 = Repeat(4);
+  op1->set_total_repeats(4);
+  op1->set_num_repeats_per_epoch(4);
+  auto tree = Build({op1, op2});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {

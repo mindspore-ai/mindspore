@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@
 #include "minddata/dataset/core/client.h"
 #include "minddata/dataset/engine/data_schema.h"
 #include "common/common.h"
-#include "utils/ms_utils.h"
 #include "gtest/gtest.h"
 #include "utils/log_adapter.h"
 
@@ -330,11 +329,14 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderRepeat) {
   ASSERT_TRUE(rc.IsOk());
 
   // RepeatOp
-  std::shared_ptr<RepeatOp> my_repeat_op = std::make_shared<RepeatOp>(3);
+  uint32_t num_repeats = 3;
+  std::shared_ptr<RepeatOp> my_repeat_op = std::make_shared<RepeatOp>(num_repeats);
   rc = my_tree->AssociateNode(my_repeat_op);
   ASSERT_TRUE(rc.IsOk());
 
   // Set children/root layout.
+  my_tfreader_op->set_total_repeats(num_repeats);
+  my_tfreader_op->set_num_repeats_per_epoch(num_repeats);
   rc = my_repeat_op->AddChild(my_tfreader_op);
   ASSERT_TRUE(rc.IsOk());
   rc = my_tree->AssignRoot(my_repeat_op);
@@ -705,7 +707,7 @@ TEST_F(MindDataTestTFReaderOp, TestTFReaderInvalidFiles) {
   std::string valid_file = datasets_root_path_ + "/testTFTestAllTypes/test.data";
   std::string schema_file = datasets_root_path_ + "/testTFTestAllTypes/datasetSchema.json";
   std::string invalid_file = datasets_root_path_ + "/testTFTestAllTypes/invalidFile.txt";
-  std::string nonexistent_file = "this/file/doesnt/exist";
+  std::string nonexistent_file = "this/file/not/exist";
 
   std::shared_ptr<TFReaderOp> my_tfreader_op;
   TFReaderOp::Builder builder;

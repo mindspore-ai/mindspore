@@ -1,4 +1,4 @@
-# Copyright 2020 Huawei Technologies Co., Ltd
+# Copyright 2020-2021 Huawei Technologies Co., Ltd
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -2087,7 +2087,7 @@ def test_cache_nomap_failure4():
 @pytest.mark.skipif(os.environ.get('RUN_CACHE_TEST') != 'TRUE', reason="Require to bring up cache server")
 def test_cache_nomap_failure5():
     """
-    Test Map with non-deterministic TensorOps under cache (failure)
+    Test Map containing random operation under cache (failure)
 
                repeat
                   |
@@ -2118,7 +2118,7 @@ def test_cache_nomap_failure5():
         num_iter = 0
         for _ in data.create_dict_iterator():
             num_iter += 1
-    assert "MapNode with non-deterministic operations is not supported as a descendant of cache" in str(e.value)
+    assert "MapNode containing random operation is not supported as a descendant of cache" in str(e.value)
 
     assert num_iter == 0
     logger.info('test_cache_nomap_failure5 Ended.\n')

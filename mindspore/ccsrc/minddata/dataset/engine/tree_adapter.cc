@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include "minddata/dataset/engine/opt/optional/tensor_op_fusion_pass.h"
 #include "minddata/dataset/engine/opt/pass.h"
 #include "minddata/dataset/engine/opt/post/auto_worker_pass.h"
+#include "minddata/dataset/engine/opt/post/repeat_pass.h"
 #ifdef ENABLE_PYTHON
 #include "minddata/dataset/engine/opt/post/generator_node_pass.h"
 #endif
@@ -94,6 +95,7 @@ Status TreeAdapter::PostPass(std::shared_ptr<DatasetNode> ir) {
 #ifdef ENABLE_PYTHON
   actions.emplace_back(std::make_unique<GeneratorNodePass>());
 #endif
+  actions.emplace_back(std::make_unique<RepeatPass>());
 
   // We will gradually move RepeatPass from ExecutionTree::PrepareTreePostAction to here.
 
@@ -133,7 +135,7 @@ Status TreeAdapter::BuildExecutionTreeRecur(std::shared_ptr<DatasetNode> ir, std
   return Status::OK();
 }
 
-Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir, int32_t num_epochs) {
+Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir) {
   // This will evolve in the long run
   tree_ = std::make_unique<ExecutionTree>();
   // disable profiling if this is only a getter pass
@@ -146,7 +148,7 @@ Status TreeAdapter::Build(std::shared_ptr<DatasetNode> root_ir, int32_t num_epoc
   // Note: We will gradually move the pre pass, optimizer pass, and post pass
   //       on ExecutionTree to perform on IR tree.
   // Prepare the tree
-  RETURN_IF_NOT_OK(tree_->Prepare(num_epochs, true));
+  RETURN_IF_NOT_OK(tree_->Prepare());
 
   // After the tree is prepared, the col_name_id_map can safely be obtained
   column_name_map_ = tree_->root()->column_name_id_map();
@@ -192,7 +194,7 @@ Status TreeAdapter::Compile(std::shared_ptr<DatasetNode> input_ir, int32_t num_e
   // Remember the root node
   root_ir_ = root_ir;
 
-  RETURN_IF_NOT_OK(Build(root_ir_, num_epochs));
+  RETURN_IF_NOT_OK(Build(root_ir_));
   tree_state_ = kCompileStateReady;
 
   return Status::OK();

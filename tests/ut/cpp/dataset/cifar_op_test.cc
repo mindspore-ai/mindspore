@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,8 +38,6 @@ using namespace mindspore::dataset;
 using mindspore::MsLogLevel::ERROR;
 using mindspore::ExceptionType::NoExceptionType;
 using mindspore::LogStream;
-
-std::shared_ptr<RepeatOp> Repeat(int repeatCnt);
 
 std::shared_ptr<ExecutionTree> Build(std::vector<std::shared_ptr<DatasetOp>> ops);
 

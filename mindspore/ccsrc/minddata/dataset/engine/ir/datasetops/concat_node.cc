@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -119,12 +119,16 @@ Status ConcatNode::GetDatasetSize(const std::shared_ptr<DatasetSizeGetter> &size
 }
 
 Status ConcatNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
+  std::shared_ptr<ConcatOp> op;
   if (children_flag_and_nums_.empty() || children_start_end_index_.empty()) {
-    node_ops->push_back(std::make_shared<ConcatOp>(connector_que_size_));
+    op = std::make_shared<ConcatOp>(connector_que_size_);
   } else {
-    node_ops->push_back(std::make_shared<ConcatOp>(connector_que_size_, sampler_->SamplerBuild(),
-                                                   children_flag_and_nums_, children_start_end_index_));
+    op = std::make_shared<ConcatOp>(connector_que_size_, sampler_->SamplerBuild(), children_flag_and_nums_,
+                                    children_start_end_index_);
   }
+  op->set_total_repeats(GetTotalRepeats());
+  op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
+  node_ops->push_back(op);
 
   return Status::OK();
 }

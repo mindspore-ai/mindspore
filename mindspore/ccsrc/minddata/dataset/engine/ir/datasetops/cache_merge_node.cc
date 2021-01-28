@@ -48,8 +48,22 @@ Status CacheMergeNode::Build(std::vector<std::shared_ptr<DatasetOp>> *node_ops) 
   RETURN_IF_NOT_OK(cache_->Build());
   std::shared_ptr<DatasetOp> merge_op = nullptr;
   RETURN_IF_NOT_OK(cache_->CreateCacheMergeOp(num_workers_, &merge_op));
+  merge_op->set_total_repeats(GetTotalRepeats());
+  merge_op->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(merge_op);
   return Status::OK();
+}
+
+// Visitor accepting method for IRNodePass
+Status CacheMergeNode::Accept(IRNodePass *const p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->Visit(shared_from_base<CacheMergeNode>(), modified);
+}
+
+// Visitor accepting method for IRNodePass
+Status CacheMergeNode::AcceptAfter(IRNodePass *const p, bool *const modified) {
+  // Downcast shared pointer then call visitor
+  return p->VisitAfter(shared_from_base<CacheMergeNode>(), modified);
 }
 
 }  // namespace dataset

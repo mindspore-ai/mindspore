@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ class MindDataTestRandomDataOp : public UT::DatasetOpTesting {
 
 // Test info:
 // - Simple test with a user-provided schema generated purely from DataSchema C API
-// - has an interation loop
+// - has an interaction loop
 //
 // Tree:  single node tree with RandomDataOp
 //
@@ -213,7 +213,7 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic3) {
 
 // Test info:
 // - json schema input it's a fairly simple one
-// - has an interation loop
+// - has an interaction loop
 //
 // Tree:  RepeatOp over RandomDataOp
 //
@@ -253,6 +253,8 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic4) {
   rc = myTree->AssociateNode(myRepeatOp);
   EXPECT_TRUE(rc.IsOk());
 
+  myRandomDataOp->set_total_repeats(numRepeats);
+  myRandomDataOp->set_num_repeats_per_epoch(numRepeats);
   rc = myRepeatOp->AddChild(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
@@ -290,7 +292,7 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic4) {
 
 // Test info:
 // - json schema input it's a fairly simple one
-// - has an interation loop
+// - has an interaction loop
 // - same as MindDataTestRandomDataOpBasic4 except that this one will have parallel workers
 //
 // Tree:  RepeatOp over RandomDataOp
@@ -331,6 +333,8 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpBasic5) {
   rc = myTree->AssociateNode(myRepeatOp);
   EXPECT_TRUE(rc.IsOk());
 
+  myRandomDataOp->set_total_repeats(numRepeats);
+  myRandomDataOp->set_num_repeats_per_epoch(numRepeats);
   rc = myRepeatOp->AddChild(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 
@@ -418,9 +422,13 @@ TEST_F(MindDataTestRandomDataOp, RandomDataOpTree1) {
   rc = myTree->AssociateNode(myRepeatOp);
   EXPECT_TRUE(rc.IsOk());
 
+  myShuffleOp->set_total_repeats(numRepeats);
+  myShuffleOp->set_num_repeats_per_epoch(numRepeats);
   rc = myRepeatOp->AddChild(myShuffleOp);
   EXPECT_TRUE(rc.IsOk());
-  
+
+  myRandomDataOp->set_total_repeats(numRepeats);
+  myRandomDataOp->set_num_repeats_per_epoch(numRepeats);
   rc = myShuffleOp->AddChild(myRandomDataOp);
   EXPECT_TRUE(rc.IsOk());
 

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,6 +44,8 @@ void EpochCtrlNode::Print(std::ostream &out) const { out << Name() + "(epoch:" +
 // Function to build the EpochCtrlOp
 Status EpochCtrlNode::Build(std::vector<std::shared_ptr<DatasetOp>> *const node_ops) {
   auto new_op_ = std::make_shared<EpochCtrlOp>(repeat_count_);
+  new_op_->set_total_repeats(GetTotalRepeats());
+  new_op_->set_num_repeats_per_epoch(GetNumRepeatsPerEpoch());
   node_ops->push_back(new_op_);
   op_ = new_op_;
   return Status::OK();

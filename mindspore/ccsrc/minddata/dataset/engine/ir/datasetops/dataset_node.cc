@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -219,7 +219,9 @@ DatasetNode::DatasetNode()
       dataset_size_(-1),
       mappable_(kNotADataSource),
       nary_op_(false),
-      descendant_of_cache_(false) {
+      descendant_of_cache_(false),
+      total_repeats_(-1),
+      num_epochs_(1) {
   // Fetch some default value from config manager
   std::shared_ptr<ConfigManager> cfg = GlobalContext::config_manager();
   num_workers_ = cfg->num_parallel_workers();

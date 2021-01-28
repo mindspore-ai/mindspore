@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -169,24 +169,6 @@ class ExecutionTree {
   // @return the prepare flags
   uint32_t PrepareFlags() const { return prepare_flags_; }
 
-  // The driver of the prepare phase of the execution tree.
-  // Prepare phase consists of three sub phases
-  //
-  // 1. PreAction()
-  //    Compulsory transformation/action pre optimization.
-  //    For example, CacheOp Insertion
-  //
-  // 2. Optimize()
-  //    Optimization transformation/action, optional
-  //    For example, MapOp Fusion
-  //
-  // 3. PostAction()
-  //    Compulsory transformation/action post optimization.
-  //    For example, repeatOp inlining
-  //
-  // @return Status The status code returned
-  Status Prepare(int num_epochs = -1, bool partial = false);
-
   // Compulsory transformation/action pre optimization.
   // @return Status The status code returned
   Status PreAction();
@@ -200,7 +182,7 @@ class ExecutionTree {
   // it ready for execution.
   // @param Total number of epochs that will be run on this tree
   // @return Status The status code returned
-  Status PrepareDeprecated();
+  Status Prepare();
 
   // Recursive function used during prepare phase to visit a node and drive any pre- and post-
   // node actions during a tree walk.
@@ -239,10 +221,6 @@ class ExecutionTree {
   // Getter for profiling manager, no ownership
   ProfilingManager *GetProfilingManager() { return profiling_manager_.get(); }
 
-  // Getter function to get the total number of epochs to be run on this tree.
-  // @return total number of epochs
-  int32_t num_epochs() { return num_epochs_; }
-
  private:
   // A helper functions for doing the recursive printing
   // @param dataset_op - The dataset op to print
@@ -257,9 +235,7 @@ class ExecutionTree {
   int32_t id_count_;                                     // Counter for generating operator id's
   uint32_t prepare_flags_;                               // Flags used during tree prepare
   TreeState tree_state_;                                 // Tracking the current tree state
-  int32_t num_epochs_;                                   // Total number of epochs to run for this tree
   std::unique_ptr<ProfilingManager> profiling_manager_;  // Profiling manager
-  bool partially_prepare_;                               // Temp: during migration to IR, if true, run remaining passes.
 #if defined(ENABLE_GPUQUE) || defined(ENABLE_TDTQUE)
   // This rank_id is for numa and device_queue, one process work with only one rank_id,
   // for standalone scenario, this rank_id may come from env 'CUDA_VISIBLE_DEVICES',

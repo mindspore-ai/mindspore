@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 Huawei Technologies Co., Ltd
+ * Copyright 2020-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
 #include "minddata/dataset/core/config_manager.h"
 #include "minddata/dataset/engine/consumers/tree_consumer.h"
 #include "minddata/dataset/engine/data_schema.h"
+#include "minddata/dataset/engine/datasetops/dataset_op.h"
 #include "minddata/dataset/engine/datasetops/filter_op.h"
 #include "minddata/dataset/engine/datasetops/map_op/map_op.h"
 #include "minddata/dataset/engine/datasetops/project_op.h"
@@ -292,6 +293,24 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   /// \return Status of the function
   virtual Status to_json(nlohmann::json *out_json);
 
+  /// \brief Setter function, set the number of total repeats for the operator
+  void SetTotalRepeats(int32_t total_repeats) { total_repeats_ = total_repeats; }
+
+  /// \brief Setter function, set the number of epochs for the operator
+  void SetNumEpochs(int32_t num_epochs) { num_epochs_ = num_epochs; }
+
+  /// \brief Getter function
+  /// \return The number of required repeats for the operator
+  int32_t GetTotalRepeats() const { return total_repeats_; }
+
+  /// \brief Getter function
+  /// \return The number of epochs for the operator
+  int32_t GetNumEpochs() const { return num_epochs_; }
+
+  /// \brief Getter function
+  /// \return The number of repeats per epoch for the operator
+  int32_t GetNumRepeatsPerEpoch() const { return total_repeats_ / num_epochs_; }
+
  protected:
   std::vector<std::shared_ptr<DatasetNode>> children_;
   DatasetNode *parent_;  // used to record the only one parent of an IR node after parsing phase
@@ -301,6 +320,8 @@ class DatasetNode : public std::enable_shared_from_this<DatasetNode> {
   int32_t rows_per_buffer_;
   int32_t connector_que_size_;
   int32_t worker_connector_size_;
+  int32_t total_repeats_;  // Number of times required to run this operator
+  int32_t num_epochs_;     // Number of epochs
   // Establish a parent-child relationship between this node and the input node.
   // Used only in the constructor of the class and its derived classes.
   void AddChild(std::shared_ptr<DatasetNode> child);

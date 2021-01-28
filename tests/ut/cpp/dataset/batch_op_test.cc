@@ -1,5 +1,5 @@
 /**
- * Copyright 2019 Huawei Technologies Co., Ltd
+ * Copyright 2019-2021 Huawei Technologies Co., Ltd
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,14 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <iostream>
 #include <memory>
 #include <string>
 #include "minddata/dataset/core/client.h"
 #include "common/common.h"
-#include "utils/ms_utils.h"
 #include "gtest/gtest.h"
-#include "minddata/dataset/core/global_context.h"
 #include "utils/log_adapter.h"
 #include "securec.h"
 #include "minddata/dataset/util/status.h"
@@ -112,7 +109,12 @@ TEST_F(MindDataTestBatchOp, TestSimpleBatch) {
 TEST_F(MindDataTestBatchOp, TestRepeatBatchDropTrue) {
   std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
-  auto tree = Build({TFReader(schema_file), Repeat(2), Batch(7, true, 99)});
+  auto op1 = TFReader(schema_file);
+  auto op2 = Repeat(2);
+  auto op3 = Batch(7, true, 99);
+  op1->set_total_repeats(2);
+  op1->set_num_repeats_per_epoch(2);
+  auto tree = Build({op1, op2, op3});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
@@ -157,7 +159,12 @@ TEST_F(MindDataTestBatchOp, TestRepeatBatchDropTrue) {
 TEST_F(MindDataTestBatchOp, TestRepeatBatchDropFalse) {
   std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
-  auto tree = Build({TFReader(schema_file), Repeat(2), Batch(7, false, 99)});
+  auto op1 = TFReader(schema_file);
+  auto op2 = Repeat(2);
+  auto op3 = Batch(7, false, 99);
+  op1->set_total_repeats(2);
+  op1->set_num_repeats_per_epoch(2);
+  auto tree = Build({op1, op2, op3});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
@@ -209,7 +216,14 @@ TEST_F(MindDataTestBatchOp, TestRepeatBatchDropFalse) {
 TEST_F(MindDataTestBatchOp, TestBatchDropFalseRepeat) {
   std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
-  auto tree = Build({TFReader(schema_file), Batch(7, false, 99), Repeat(2)});
+  auto op1 = TFReader(schema_file);
+  auto op2 = Batch(7, false, 99);
+  auto op3 = Repeat(2);
+  op1->set_total_repeats(2);
+  op1->set_num_repeats_per_epoch(2);
+  op2->set_total_repeats(2);
+  op2->set_num_repeats_per_epoch(2);
+  auto tree = Build({op1, op2, op3});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
@@ -255,7 +269,14 @@ TEST_F(MindDataTestBatchOp, TestBatchDropFalseRepeat) {
 TEST_F(MindDataTestBatchOp, TestBatchDropTrueRepeat) {
   std::string schema_file = datasets_root_path_ + "/testBatchDataset/test.data";
   bool success = false;
-  auto tree = Build({TFReader(schema_file), Batch(5, true, 99), Repeat(2)});
+  auto op1 = TFReader(schema_file);
+  auto op2 = Batch(5, true, 99);
+  auto op3 = Repeat(2);
+  op1->set_total_repeats(2);
+  op1->set_num_repeats_per_epoch(2);
+  op2->set_total_repeats(2);
+  op2->set_num_repeats_per_epoch(2);
+  auto tree = Build({op1, op2, op3});
   tree->Prepare();
   Status rc = tree->Launch();
   if (rc.IsError()) {
