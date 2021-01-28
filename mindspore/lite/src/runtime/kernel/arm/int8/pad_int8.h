@@ -59,8 +59,8 @@ class PadInt8CPUKernel : public LiteKernel {
   PadParameter *pad_param_ = nullptr;
   int8_t *in_data_ = nullptr;
   int8_t *out_data_ = nullptr;
-  int in_dims_[DEFAULT_PAD_NDIMS] = {0};
-  int out_dims_[DEFAULT_PAD_NDIMS] = {0};
+  int in_dims_[COMM_SHAPE_SIZE] = {0};
+  int out_dims_[COMM_SHAPE_SIZE] = {0};
 };
 }  // namespace mindspore::kernel
 #endif  // MINDSPORE_LITE_SRC_RUNTIME_KERNEL_ARM_INT8_PAD_INT8_H_

@@ -41,30 +41,30 @@ int PadCPUKernel::Init() {
 int PadCPUKernel::ReSize() {
   auto input = in_tensors_.at(0);
   auto rank = input->shape().size();
-  if (rank > DEFAULT_PAD_NDIMS) {
-    MS_LOG(ERROR) << "Pad input rank should <= " << DEFAULT_PAD_NDIMS << ", got " << rank;
+  if (rank > COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "Pad input rank should <= " << COMM_SHAPE_SIZE << ", got " << rank;
     return RET_ERROR;
   }
   auto output = out_tensors_.at(0);
   if (pad_param_->pad_mode_ == static_cast<int>(schema::PaddingMode_CONSTANT)) {
-    auto ret = ExtendShape(in_, DEFAULT_PAD_NDIMS, input->shape().data(), rank);
+    auto ret = ExtendShape(in_, COMM_SHAPE_SIZE, input->shape().data(), rank);
     if (ret != RET_OK) {
       return ret;
     }
-    ret = ExtendShape(out_, DEFAULT_PAD_NDIMS, output->shape().data(), rank);
+    ret = ExtendShape(out_, COMM_SHAPE_SIZE, output->shape().data(), rank);
     if (ret != RET_OK) {
       return ret;
     }
-    if (pad_param_->padding_length < MAX_PAD_SIZE) {
-      int ori_paddings[MAX_PAD_SIZE];
+    if (pad_param_->padding_length < MAX_SHAPE_SIZE) {
+      int ori_paddings[MAX_SHAPE_SIZE];
       for (auto i = 0; i < pad_param_->padding_length; ++i) {
         ori_paddings[i] = pad_param_->paddings_[i];
       }
-      ret = ExtendPaddings(pad_param_->paddings_, MAX_PAD_SIZE, ori_paddings, pad_param_->padding_length);
+      ret = ExtendPaddings(pad_param_->paddings_, MAX_SHAPE_SIZE, ori_paddings, pad_param_->padding_length);
       if (ret != RET_OK) {
         return ret;
       }
-      pad_param_->padding_length = MAX_PAD_SIZE;
+      pad_param_->padding_length = MAX_SHAPE_SIZE;
     }
   }
   return RET_OK;
@@ -72,8 +72,8 @@ int PadCPUKernel::ReSize() {
 
 void PadCPUKernel::InitMirrorPadBlock() {
   mirror_pad_block_.clear();
-  std::vector<int> left_pads(DEFAULT_PAD_NDIMS);
-  for (size_t i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
+  std::vector<int> left_pads(COMM_SHAPE_SIZE);
+  for (size_t i = 0; i < COMM_SHAPE_SIZE; ++i) {
     left_pads[i] = pad_param_->paddings_[2 * i];
   }
 
@@ -84,7 +84,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
   /* init separate dims */
   int cur_input = 1;
   int cur_output = 1;
-  for (size_t i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
+  for (size_t i = 0; i < COMM_SHAPE_SIZE; ++i) {
     if (1 < cur_input) {
       input_separate_dims.emplace_back(cur_input);
       output_separate_dims.emplace_back(cur_output);
@@ -150,7 +150,7 @@ void PadCPUKernel::InitMirrorPadBlock() {
       }
 
       MirrorPadBlock block;
-      const int size_offset = DEFAULT_PAD_NDIMS - static_cast<int>(pad_region.size());
+      const int size_offset = COMM_SHAPE_SIZE - static_cast<int>(pad_region.size());
       for (size_t i = 0; i < pad_region.size(); ++i) {
         int di = size_offset + i;
         int si = remain_dim_offset + i;
@@ -328,28 +328,28 @@ int PadCPUKernel::CopyPaddingFromInput() {
     return RET_ERROR;
   }
 
-  auto ret = ExtendShape(in_, DEFAULT_PAD_NDIMS, input_shape.data(), rank);
+  auto ret = ExtendShape(in_, COMM_SHAPE_SIZE, input_shape.data(), rank);
   if (ret != RET_OK) {
     return ret;
   }
-  ret = ExtendPaddings(pad_param_->paddings_, MAX_PAD_SIZE, paddings, padding_tensor->ElementsNum());
+  ret = ExtendPaddings(pad_param_->paddings_, MAX_SHAPE_SIZE, paddings, padding_tensor->ElementsNum());
   if (ret != RET_OK) {
     return ret;
   }
-  pad_param_->padding_length = MAX_PAD_SIZE;
+  pad_param_->padding_length = MAX_SHAPE_SIZE;
   return RET_OK;
 }
 
 void PadCPUKernel::CalculateStrides() {
-  pad_param_->in_strides[DEFAULT_PAD_NDIMS - 1] = 1;
-  for (auto i = DEFAULT_PAD_NDIMS - 2; i >= 0; --i) {
+  pad_param_->in_strides[COMM_SHAPE_SIZE - 1] = 1;
+  for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
     pad_param_->in_strides[i] = in_[i + 1] * pad_param_->in_strides[i + 1];
   }
-  for (auto i = 0; i < DEFAULT_PAD_NDIMS; ++i) {
+  for (auto i = 0; i < COMM_SHAPE_SIZE; ++i) {
     out_[i] = in_[i] + pad_param_->paddings_[i * 2] + pad_param_->paddings_[i * 2 + 1];
   }
-  pad_param_->out_strides[DEFAULT_PAD_NDIMS - 1] = 1;
-  for (auto i = DEFAULT_PAD_NDIMS - 2; i >= 0; --i) {
+  pad_param_->out_strides[COMM_SHAPE_SIZE - 1] = 1;
+  for (auto i = COMM_SHAPE_SIZE - 2; i >= 0; --i) {
     pad_param_->out_strides[i] = out_[i + 1] * pad_param_->out_strides[i + 1];
   }
 }
@@ -358,7 +358,7 @@ int PadCPUKernel::HandleMirrorPad() {
   if (in_tensors_.size() == 1) {
     auto input_shape = in_tensors_.at(0)->shape();
     int rank = static_cast<int>(input_shape.size());
-    auto ret = ExtendShape(in_, DEFAULT_PAD_NDIMS, input_shape.data(), rank);
+    auto ret = ExtendShape(in_, COMM_SHAPE_SIZE, input_shape.data(), rank);
     if (ret != RET_OK) {
       return ret;
     }
@@ -368,7 +368,7 @@ int PadCPUKernel::HandleMirrorPad() {
       return ret;
     }
   }
-  auto ret = CheckPaddings(pad_param_->paddings_, DEFAULT_PAD_NDIMS, in_, pad_param_->pad_mode_);
+  auto ret = CheckPaddings(pad_param_->paddings_, COMM_SHAPE_SIZE, in_, pad_param_->pad_mode_);
   if (ret != RET_OK) {
     return ret;
   }

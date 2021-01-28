@@ -38,8 +38,8 @@ typedef struct ArgMinMaxParameter {
   int32_t axis_type_;
   int32_t dims_size_;
   int32_t data_type_;  // equals to type_id
-  int32_t in_strides_[DIMENSION_4D];
-  int32_t out_strides_[DIMENSION_4D];
+  int32_t in_strides_[COMM_SHAPE_SIZE];
+  int32_t out_strides_[COMM_SHAPE_SIZE];
   ArgElement *arg_elements_;
 } ArgMinMaxParameter;
 

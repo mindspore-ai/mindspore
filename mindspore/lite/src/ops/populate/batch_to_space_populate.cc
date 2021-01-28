@@ -41,8 +41,8 @@ OpParameter *PopulateBatchToSpaceParameter(const mindspore::lite::PrimitiveC *pr
   }
 
   auto crops = param->GetCrops();
-  if (crops.size() != BATCH_TO_SPACE_CROPS_SIZE) {
-    MS_LOG(ERROR) << "batch_to_space crops size should be " << BATCH_TO_SPACE_CROPS_SIZE;
+  if (crops.size() != COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "batch_to_space crops size should be " << COMM_SHAPE_SIZE;
     free(batch_space_param);
     return nullptr;
   }
@@ -52,7 +52,7 @@ OpParameter *PopulateBatchToSpaceParameter(const mindspore::lite::PrimitiveC *pr
   }
 
   batch_space_param->no_crop_ = true;
-  for (int i = 0; i < BATCH_TO_SPACE_CROPS_SIZE; ++i) {
+  for (int i = 0; i < COMM_SHAPE_SIZE; ++i) {
     batch_space_param->crops_[i] = crops[i];
     if (batch_space_param->crops_[i] != 0) {
       batch_space_param->no_crop_ = false;

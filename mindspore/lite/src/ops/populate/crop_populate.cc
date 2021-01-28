@@ -25,8 +25,8 @@ namespace lite {
 OpParameter *PopulateCropParameter(const mindspore::lite::PrimitiveC *primitive) {
   auto param = reinterpret_cast<mindspore::lite::Crop *>(const_cast<mindspore::lite::PrimitiveC *>(primitive));
   auto param_offset = param->GetOffsets();
-  if (param_offset.size() > CROP_OFFSET_MAX_SIZE) {
-    MS_LOG(ERROR) << "crop_param offset size(" << param_offset.size() << ") should <= " << CROP_OFFSET_MAX_SIZE;
+  if (param_offset.size() > COMM_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "crop_param offset size(" << param_offset.size() << ") should <= " << COMM_SHAPE_SIZE;
     return nullptr;
   }
   CropParameter *crop_param = reinterpret_cast<CropParameter *>(malloc(sizeof(CropParameter)));

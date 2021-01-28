@@ -39,7 +39,7 @@ class ReduceBaseCPUKernel : public LiteKernel {
   int CheckParameters();
 
  protected:
-  int axes_[REDUCE_MAX_AXES_NUM];
+  int axes_[MAX_SHAPE_SIZE];
   int num_axes_;
   int mode_;
   bool reduce_to_end_;

@@ -21,14 +21,14 @@
 typedef struct StridedSliceParameter {
   // primitive parameter
   OpParameter op_parameter_;
-  int begins_[8];
-  int ends_[8];
-  int strides_[8];
+  int begins_[MAX_SHAPE_SIZE];
+  int ends_[MAX_SHAPE_SIZE];
+  int strides_[MAX_SHAPE_SIZE];
   int isScale;
 
   // shape correlative
   int in_shape_length_;
-  int in_shape_[8];
+  int in_shape_[MAX_SHAPE_SIZE];
 
   // other parameter
   int num_axes_;

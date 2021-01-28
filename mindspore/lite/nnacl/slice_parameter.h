@@ -19,8 +19,6 @@
 
 #include "nnacl/op_base.h"
 
-#define SLICE_SHAPE_MAX_SIZE 4
-
 typedef struct SliceQuantArg {
   QuantArg in_args_;
   QuantArg out_args_;
@@ -33,10 +31,10 @@ typedef struct SliceParameter {
   OpParameter op_parameter_;
 
   // shape correlative
-  int32_t shape_[SLICE_SHAPE_MAX_SIZE];
-  int32_t begin_[SLICE_SHAPE_MAX_SIZE];
-  int32_t end_[SLICE_SHAPE_MAX_SIZE];
-  int32_t size_[SLICE_SHAPE_MAX_SIZE];
+  int32_t shape_[COMM_SHAPE_SIZE];
+  int32_t begin_[COMM_SHAPE_SIZE];
+  int32_t end_[COMM_SHAPE_SIZE];
+  int32_t size_[COMM_SHAPE_SIZE];
 
   // other parameter
   SliceQuantArg quant_arg_;

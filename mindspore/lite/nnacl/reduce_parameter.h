@@ -17,12 +17,11 @@
 #ifndef MINDSPORE_LITE_NNACL_REDUCE_PARAMETER_H_
 #define MINDSPORE_LITE_NNACL_REDUCE_PARAMETER_H_
 #include "nnacl/op_base.h"
-#define REDUCE_MAX_AXES_NUM 8
 
 typedef struct ReduceParameter {
   // primitive parameter
   OpParameter op_parameter_;
-  int axes_[REDUCE_MAX_AXES_NUM];
+  int axes_[MAX_SHAPE_SIZE];
   bool keep_dims_;
   int mode_;
   bool reduce_to_end_;

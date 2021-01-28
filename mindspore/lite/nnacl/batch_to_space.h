@@ -20,12 +20,11 @@
 #include "nnacl/op_base.h"
 
 #define BATCH_TO_SPACE_BLOCK_SHAPE_SIZE 2
-#define BATCH_TO_SPACE_CROPS_SIZE 4
 
 typedef struct BatchToSpaceParameter {
   OpParameter op_parameter_;
   int32_t block_shape_[BATCH_TO_SPACE_BLOCK_SHAPE_SIZE];
-  int32_t crops_[BATCH_TO_SPACE_CROPS_SIZE];
+  int32_t crops_[COMM_SHAPE_SIZE];
   bool no_crop_;
 } BatchToSpaceParameter;
 

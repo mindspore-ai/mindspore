@@ -29,7 +29,6 @@ using mindspore::schema::PrimitiveType_Nhwc2Nchw;
 using mindspore::schema::PrimitiveType_Transpose;
 
 namespace mindspore::kernel {
-
 int TransposeCPUKernel::Init() {
   if (!InferShapeDone()) {
     return RET_OK;

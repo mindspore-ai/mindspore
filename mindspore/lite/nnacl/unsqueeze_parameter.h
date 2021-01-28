@@ -17,11 +17,7 @@
 #ifndef MINDSPORE_LITE_NNACL_UNSQUEEZE_PARAMETER_H_
 #define MINDSPORE_LITE_NNACL_UNSQUEEZE_PARAMETER_H_
 
-#include <string.h>
-#include <math.h>
 #include "nnacl/op_base.h"
-
-#define UNSQUEEZE_MAX_SIZE 4
 
 typedef struct UnSqueezeQuantArg {
   int *output_shape_;
@@ -35,12 +31,12 @@ typedef struct UnSqueezeQuantArg {
 typedef struct UnSqueezeParameter {
   // primitive parameter
   OpParameter op_parameter_;
-  int dims_[UNSQUEEZE_MAX_SIZE];
+  int dims_[COMM_SHAPE_SIZE];
 
   // shape correlative
   const int *in_shape_;
   const int *out_shape_;
-  int64_t offset_[UNSQUEEZE_MAX_SIZE];
+  int64_t offset_[COMM_SHAPE_SIZE];
   int64_t axis_;
 
   // other parameter

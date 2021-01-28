@@ -32,7 +32,7 @@ typedef struct LayerNormParameter {
   int params_inner_size_;
   int params_outer_size_;
   int normalized_dims_;
-  int normalized_shape_[8];
+  int normalized_shape_[MAX_SHAPE_SIZE];
   // other parameter
   int thread_count_;
   int thread_outsize_;

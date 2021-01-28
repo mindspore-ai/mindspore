@@ -36,8 +36,8 @@ OpParameter *PopulateReduceParameter(const mindspore::lite::PrimitiveC *primitiv
   reduce_param->reduce_to_end_ = reduce->GetReduceToEnd();
   reduce_param->coeff = reduce->GetCoeff();
   auto axisVector = reduce->GetAxes();
-  if (axisVector.size() > REDUCE_MAX_AXES_NUM) {
-    MS_LOG(ERROR) << "Reduce axes size " << axisVector.size() << " exceed limit " << REDUCE_MAX_AXES_NUM;
+  if (axisVector.size() > MAX_SHAPE_SIZE) {
+    MS_LOG(ERROR) << "Reduce axes size " << axisVector.size() << " exceed limit " << MAX_SHAPE_SIZE;
     free(reduce_param);
     return nullptr;
   }
