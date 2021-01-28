@@ -31,12 +31,12 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
  public:
   ConvolutionWinogradFP16CPUKernel(OpParameter *parameter, const std::vector<lite::Tensor *> &inputs,
                                    const std::vector<lite::Tensor *> &outputs, const InnerContext *ctx,
-                                   const mindspore::lite::PrimitiveC *primitive, int out_unit, float16_t *fp16_weight,
-                                   float16_t *fp16_bias)
+                                   const mindspore::lite::PrimitiveC *primitive, int out_unit, void *origin_weight,
+                                   void *origin_bias)
       : ConvolutionBaseFP16CPUKernel(parameter, inputs, outputs, ctx, primitive),
         output_unit_(out_unit),
-        fp16_origin_weight_(fp16_weight),
-        fp16_bias_(fp16_bias) {}
+        origin_weight_(origin_weight),
+        origin_bias_(origin_bias) {}
   ~ConvolutionWinogradFP16CPUKernel() override {
     if (trans_weight_ != nullptr) {
       free(trans_weight_);
@@ -75,8 +75,8 @@ class ConvolutionWinogradFP16CPUKernel : public ConvolutionBaseFP16CPUKernel {
   int kernel_unit_;
   int input_unit_;
   int output_unit_;
-  float16_t *fp16_origin_weight_;  // do not free
-  float16_t *fp16_bias_;           // do not free
+  void *origin_weight_;  // do not free
+  void *origin_bias_;    // do not free
   float16_t *tmp_data_ = nullptr;
   float16_t *trans_input_ = nullptr;
   float16_t *gemm_out_ = nullptr;

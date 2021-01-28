@@ -39,8 +39,6 @@ ConvolutionDepthwiseFp16CPUKernel::~ConvolutionDepthwiseFp16CPUKernel() {
 
 int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   // init weight: o, h, w, i; o == group, i == 1
-  ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
-
   auto weight_tensor = in_tensors_.at(kWeightIndex);
   int channel = weight_tensor->Batch();
   int pack_weight_size = channel * weight_tensor->Height() * weight_tensor->Width();
@@ -49,6 +47,11 @@ int ConvolutionDepthwiseFp16CPUKernel::InitWeightBias() {
   if (packed_weight_ == nullptr) {
     MS_LOG(ERROR) << "Malloc buffer failed.";
     return RET_ERROR;
+  }
+  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter(weight_tensor, weight_tensor->data_c());
+  if (ret != RET_OK) {
+    MS_LOG(ERROR) << "get execute filter data failed.";
+    return ret;
   }
   PackNCHWToNHWCFp16(fp16_weight_, packed_weight_, 1, weight_tensor->Height() * weight_tensor->Width(),
                      weight_tensor->Batch());

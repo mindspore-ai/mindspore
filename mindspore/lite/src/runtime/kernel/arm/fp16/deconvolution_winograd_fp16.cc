@@ -319,11 +319,13 @@ int DeConvWinogradFp16CPUKernel::InitComputeParam() {
 
 int DeConvWinogradFp16CPUKernel::InitDataParam() {
   /* unit data : weight & winograd data*/
-  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter();
+  auto weight_tensor = in_tensors_.at(kWeightIndex);
+  auto ret = ConvolutionBaseFP16CPUKernel::GetExecuteFilter(weight_tensor, weight_tensor->data_c());
   if (ret != RET_OK) {
     MS_LOG(ERROR) << "Get Execute filter failed.";
     return ret;
   }
+
   for (int i = 0; i < deconv_param_->compute_size_; i++) {
     DeConvComputeUnit *unit = &deconv_param_->compute_units_[i];
     ret = PackDeConvWgDataFp16(execute_weight_, unit, conv_param_, deconv_param_);

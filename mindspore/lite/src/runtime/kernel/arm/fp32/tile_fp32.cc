@@ -67,8 +67,8 @@ int TileCPUKernel::ReSize() {
 }
 
 int TileCPUKernel::Run() {
-  auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->MutableData());
-  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->MutableData());
+  auto input_addr = reinterpret_cast<float *>(in_tensors_.at(0)->data_c());
+  auto output_addr = reinterpret_cast<float *>(out_tensors_.at(0)->data_c());
   MS_ASSERT(input_addr);
   MS_ASSERT(output_addr);
   Tile(input_addr, output_addr, reinterpret_cast<TileParameter *>(op_parameter_));

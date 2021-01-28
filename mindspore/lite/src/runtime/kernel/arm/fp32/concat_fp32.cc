@@ -45,31 +45,31 @@ int ConcatCPUKernel::DoConcat(int task_id) {
 
   std::vector<std::vector<int>> shapes;
   for (size_t i = 0; i < input_num; ++i) {
-    inputs_addr[i] = in_tensors_[i]->MutableData();
+    inputs_addr[i] = in_tensors_[i]->data_c();
     shapes.push_back(in_tensors_[i]->shape());
     inputs_output_shape[i] = shapes[i].data();
   }
   auto output_shape = out_tensors_.at(0)->shape();
   inputs_output_shape[input_num] = output_shape.data();
-  auto output_addr = out_tensors_.at(0)->MutableData();
+  auto output_addr = out_tensors_.at(0)->data_c();
 
   Concat(inputs_addr.data(), input_num, concat_param_->axis_, inputs_output_shape.data(), output_shape.size(),
          output_addr, task_id, op_parameter_->thread_num_, sizeof(float));
   return RET_OK;
 }
 
-int ConcatsRun(void *cdata, int task_id) {
+int ConcatRun(void *cdata, int task_id) {
   auto concat_kernel = reinterpret_cast<ConcatCPUKernel *>(cdata);
   auto error_code = concat_kernel->DoConcat(task_id);
   if (error_code != RET_OK) {
-    MS_LOG(ERROR) << "ConcatsRun error task_id[" << task_id << "] error_code[" << error_code << "]";
+    MS_LOG(ERROR) << "ConcatRun error task_id[" << task_id << "] error_code[" << error_code << "]";
     return RET_ERROR;
   }
   return RET_OK;
 }
 
 int ConcatCPUKernel::Run() {
-  int error_code = ParallelLaunch(this->context_->thread_pool_, ConcatsRun, this, op_parameter_->thread_num_);
+  int error_code = ParallelLaunch(this->context_->thread_pool_, ConcatRun, this, op_parameter_->thread_num_);
   return error_code;
 }
 

@@ -40,19 +40,13 @@ int ConvolutionBaseFP16CPUKernel::GetExecuteTensor() {
   return RET_OK;
 }
 
-int ConvolutionBaseFP16CPUKernel::GetExecuteFilter() {
-  auto weight_tensor = in_tensors_.at(kWeightIndex);
+int ConvolutionBaseFP16CPUKernel::GetExecuteFilter(lite::Tensor *weight_tensor, void *origin_data) {
   auto weight_data_type = weight_tensor->data_type();
-
-  auto input_channel = weight_tensor->Channel();
-  auto output_channel = weight_tensor->Batch();
-  auto kernel_h = weight_tensor->Height();
-  auto kernel_w = weight_tensor->Width();
-
   MS_ASSERT(weight_data_type == kNumberTypeFloat32 || weight_data_type == kNumberTypeFloat16);
   if (weight_data_type == kNumberTypeFloat32) {
-    float *origin_weight = reinterpret_cast<float *>(in_tensors_.at(kWeightIndex)->MutableData());
-    size_t fp16_weight_size = input_channel * output_channel * kernel_h * kernel_w * sizeof(float16_t);
+    float *origin_weight = reinterpret_cast<float *>(origin_data);
+    size_t fp16_weight_size = weight_tensor->Channel() * weight_tensor->Batch() * weight_tensor->Height() *
+                              weight_tensor->Width() * sizeof(float16_t);
     fp16_weight_ = reinterpret_cast<float16_t *>(malloc(fp16_weight_size));
     if (fp16_weight_ == nullptr) {
       MS_LOG(ERROR) << "malloc fp16_weight_ failed.";
@@ -63,8 +57,7 @@ int ConvolutionBaseFP16CPUKernel::GetExecuteFilter() {
     }
     execute_weight_ = fp16_weight_;
   } else {
-    auto *origin_weight = reinterpret_cast<float16_t *>(in_tensors_.at(kWeightIndex)->MutableData());
-    execute_weight_ = origin_weight;
+    execute_weight_ = reinterpret_cast<float16_t *>(origin_data);
     fp16_weight_ = nullptr;
   }
   return RET_OK;
