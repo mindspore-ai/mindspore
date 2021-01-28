@@ -171,7 +171,7 @@
 #include "ops/transpose.h"
 #include "ops/tuple_get_item.h"
 #include "ops/unique.h"
-#include "ops/unpack.h"
+#include "ops/unstack.h"
 #include "ops/unsqueeze.h"
 #include "ops/unsorted_segment_sum.h"
 #include "ops/where.h"
@@ -412,9 +412,9 @@ FUNC_MSOP2SCHEMAOP_DECLARE(TopKFusion);
 FUNC_MSOP2SCHEMAOP_DECLARE(Transpose);
 FUNC_MSOP2SCHEMAOP_DECLARE(TupleGetItem);
 FUNC_MSOP2SCHEMAOP_DECLARE(Unique);
-FUNC_MSOP2SCHEMAOP_DECLARE(Unpack);
 FUNC_MSOP2SCHEMAOP_DECLARE(UnsortedSegmentSum);
 FUNC_MSOP2SCHEMAOP_DECLARE(Unsqueeze);
+FUNC_MSOP2SCHEMAOP_DECLARE(Unstack);
 FUNC_MSOP2SCHEMAOP_DECLARE(While);
 FUNC_MSOP2SCHEMAOP_DECLARE(Where);
 FUNC_MSOP2SCHEMAOP_DECLARE(ZerosLike);

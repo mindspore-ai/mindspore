@@ -20,7 +20,7 @@
 
 using mindspore::lite::KernelRegistrar;
 using mindspore::lite::RET_OK;
-using mindspore::schema::PrimitiveType_Unpack;
+using mindspore::schema::PrimitiveType_Unstack;
 
 namespace mindspore::kernel {
 int UnstackCPUKernel::Init() {
@@ -78,5 +78,5 @@ int UnstackCPUKernel::Run() {
   return RET_OK;
 }
 
-REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unpack, LiteKernelCreator<UnstackCPUKernel>)
+REG_KERNEL(kCPU, kNumberTypeFloat32, PrimitiveType_Unstack, LiteKernelCreator<UnstackCPUKernel>)
 }  // namespace mindspore::kernel

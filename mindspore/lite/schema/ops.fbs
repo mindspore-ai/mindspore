@@ -251,6 +251,19 @@ table CustomPredict {
     weight_threshold: float;
 }
 
+table DeConv2DGradFilter {
+    in_channel: long;
+    out_channel: long;
+    kernel_size: [long];
+    pad_mode: PadMode;
+    pad_list: [long];
+    stride: [long];
+    dilation: [long];
+    group: long;
+    format: Format;
+    activation_type: ActivationType;
+}
+
 table Depend {
 }
 
@@ -525,19 +538,6 @@ table PartialFusion {
     sub_graph_index: long;
 }
 
-table DeConv2DGradFilter {
-    in_channel: long;
-    out_channel: long;
-    kernel_size: [long];
-    pad_mode: PadMode;
-    pad_list: [long];
-    stride: [long];
-    dilation: [long];
-    group: long;
-    format: Format;
-    activation_type: ActivationType;
-}
-
 table PoolingGrad {
     format: Format = 0;
     pool_mode: PoolMode;
@@ -800,15 +800,15 @@ table Transpose {
 table Unique {
 }
 
-table Unpack {
-    axis: long = 0;
-}
-
 table UnsortedSegmentSum {
 }
 
 table Unsqueeze {
     axis: [long];
+}
+
+table Unstack {
+    axis: long = 0;
 }
 
 table While {

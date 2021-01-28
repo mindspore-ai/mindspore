@@ -179,9 +179,9 @@ OP_TYPE(TileFusion)
 OP_TYPE(TopKFusion)
 OP_TYPE(Transpose)
 OP_TYPE(Unique)
-OP_TYPE(Unpack)
 OP_TYPE(UnsortedSegmentSum)
 OP_TYPE(Unsqueeze)
+OP_TYPE(Unstack)
 OP_TYPE(While)
 OP_TYPE(Where)
 OP_TYPE(ZerosLike)
@@ -420,6 +420,19 @@ OP_SCHEMA_DEF(CustomPredict)
 OP_ATTR(output_num, long)
 OP_ATTR(weight_threshold, float)
 OP_SCHEMA_DEF_END(CustomPredict)
+
+OP_SCHEMA_DEF(DeConv2DGradFilter)
+OP_ATTR(in_channel, long);
+OP_ATTR(out_channel, long);
+OP_ATTR(kernel_size, [long]);
+OP_ATTR_ENUM(pad_mode, PadMode);
+OP_ATTR(pad_list, [long]);
+OP_ATTR(stride, [long]);
+OP_ATTR(dilation, [long]);
+OP_ATTR(group, long);
+OP_ATTR_ENUM(format, Format);
+OP_ATTR_ENUM(activation_type, ActivationType);
+OP_SCHEMA_DEF_END(DeConv2DGradFilter)
 
 OP_SCHEMA_DEF(Depend)
 OP_SCHEMA_DEF_END(Depend)
@@ -695,19 +708,6 @@ OP_SCHEMA_DEF(PartialFusion)
 OP_ATTR(sub_graph_index, long)
 OP_SCHEMA_DEF_END(PartialFusion)
 
-OP_SCHEMA_DEF(DeConv2DGradFilter)
-OP_ATTR(in_channel, long);
-OP_ATTR(out_channel, long);
-OP_ATTR(kernel_size, [long]);
-OP_ATTR_ENUM(pad_mode, PadMode);
-OP_ATTR(pad_list, [long]);
-OP_ATTR(stride, [long]);
-OP_ATTR(dilation, [long]);
-OP_ATTR(group, long);
-OP_ATTR_ENUM(format, Format);
-OP_ATTR_ENUM(activation_type, ActivationType);
-OP_SCHEMA_DEF_END(DeConv2DGradFilter)
-
 OP_SCHEMA_DEF(PoolingGrad)
 OP_ATTR_ENUM_WITH_VALUE(format, Format, 0)
 OP_ATTR_ENUM(pool_mode, PoolMode)
@@ -910,7 +910,7 @@ OP_SCHEMA_DEF(SquaredDifference)
 OP_SCHEMA_DEF_END(SquaredDifference)
 
 OP_SCHEMA_DEF(Stack)
-OP_ATTR(axis, [long])
+OP_ATTR(axis, long)
 OP_SCHEMA_DEF_END(Stack)
 
 OP_SCHEMA_DEF(StridedSlice)
@@ -970,16 +970,16 @@ OP_SCHEMA_DEF_END(Transpose)
 OP_SCHEMA_DEF(Unique)
 OP_SCHEMA_DEF_END(Unique)
 
-OP_SCHEMA_DEF(Unpack)
-OP_ATTR_WITH_VALUE(axis, long, 0)
-OP_SCHEMA_DEF_END(Unpack)
-
 OP_SCHEMA_DEF(UnsortedSegmentSum)
 OP_SCHEMA_DEF_END(UnsortedSegmentSum)
 
 OP_SCHEMA_DEF(Unsqueeze)
 OP_ATTR(axis, [long])
 OP_SCHEMA_DEF_END(Unsqueeze)
+
+OP_SCHEMA_DEF(Unstack)
+OP_ATTR_WITH_VALUE(axis, long, 0)
+OP_SCHEMA_DEF_END(Unstack)
 
 OP_SCHEMA_DEF(While)
 OP_ATTR(cond_subgraph_index, long)
