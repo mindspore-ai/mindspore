@@ -42,6 +42,7 @@ ds::Status StartServer(int argc, char **argv) {
     .SetNumWorkers(strtol(argv[2], nullptr, 10))
     .SetPort(port)
     .SetSharedMemorySizeInGB(strtol(argv[4], nullptr, 10))
+    .SetLogLevel(strtol(argv[5], nullptr, 10))
     .SetMemoryCapRatio(strtof(argv[7], nullptr));
 
   auto daemonize_string = argv[6];
@@ -119,7 +120,6 @@ ds::Status StartServer(int argc, char **argv) {
 
   // Dump the summary
   MS_LOG(WARNING) << "Cache server has started successfully and is listening on port " << port << std::endl;
-  MS_LOG(WARNING) << "Logging services started with log level: " << argv[5];
   MS_LOG(WARNING) << builder << std::endl;
   // Create the instance with some sanity checks built in
   rc = builder.Build();
