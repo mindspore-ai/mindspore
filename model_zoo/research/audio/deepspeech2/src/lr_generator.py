@@ -31,10 +31,11 @@ def get_lr(lr_init, total_epochs, steps_per_epoch):
     """
     lr_each_step = []
     half_epoch = total_epochs // 2
-    for i in range(total_epochs * steps_per_epoch):
-        if i < half_epoch:
-            lr_each_step.append(lr_init)
-        else:
-            lr_each_step.append(lr_init / (1.1 ** (i - half_epoch)))
+    for i in range(total_epochs):
+        for _ in range(steps_per_epoch):
+            if i < half_epoch:
+                lr_each_step.append(lr_init)
+            else:
+                lr_each_step.append(lr_init / (1.1 ** (i - half_epoch)))
     learning_rate = np.array(lr_each_step).astype(np.float32)
     return learning_rate
