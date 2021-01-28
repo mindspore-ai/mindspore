@@ -4855,9 +4855,9 @@ class Range(PrimitiveWithCheck):
        A 1-D Tensor, with the same type as the inputs.
 
     Examples:
-        >>> start = Tensor(0)
-        >>> limit = Tensor(10)
-        >>> delta = Tensor(4)
+        >>> start = Tensor(0, mstype.int32)
+        >>> limit = Tensor(10, mstype.int32)
+        >>> delta = Tensor(4, mstype.int32)
         >>> output = ops.Range()(start, limit, delta)
         >>> print(output)
         [0, 4, 8]
