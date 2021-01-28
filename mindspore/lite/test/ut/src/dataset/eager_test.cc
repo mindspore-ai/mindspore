@@ -24,6 +24,7 @@
 #include "minddata/dataset/include/execute.h"
 #include "minddata/dataset/util/path.h"
 #include "mindspore/lite/src/common/log_adapter.h"
+#include "include/api/types.h"
 
 using MSTensor = mindspore::tensor::MSTensor;
 using DETensor = mindspore::tensor::DETensor;
@@ -58,16 +59,18 @@ TEST_F(MindDataTestEager, Test1) {
   while (dir_it->hasNext()) {
     Path v = dir_it->next();
     // MS_LOG(WARNING) << v.toString() << ".";
-    std::shared_ptr<MSTensor> image = std::shared_ptr<MSTensor>(DETensor::CreateTensor(v.toString()));
+    std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
+    mindspore::dataset::Tensor::CreateFromFile(v.toString(), &de_tensor);
+    auto image = mindspore::MSTensor(std::make_shared<mindspore::dataset::DETensor>(de_tensor));
 
-    image = Execute(Decode())(image);
+    (void)Execute(Decode())(image, &image);
     EXPECT_TRUE(image != nullptr);
-    image = Execute(Normalize({121.0, 115.0, 100.0}, {70.0, 68.0, 71.0}))(image);
+    (void)Execute(Normalize({121.0, 115.0, 100.0}, {70.0, 68.0, 71.0}))(image, &image);
     EXPECT_TRUE(image != nullptr);
-    image = Execute(Resize({224, 224}))(image);
+    (void)Execute(Resize({224, 224}))(image, &image);
     EXPECT_TRUE(image != nullptr);
-    EXPECT_EQ(image->DimensionSize(0), 224);
-    EXPECT_EQ(image->DimensionSize(1), 224);
+    EXPECT_EQ(image.Shape()[0], 224);
+    EXPECT_EQ(image.Shape()[1], 224);
   }
   auto t_end = std::chrono::high_resolution_clock::now();
   double elapsed_time_ms = std::chrono::duration<double, std::milli>(t_end - t_start).count();

@@ -27,18 +27,16 @@
 #include "cxx_api/graph/graph_impl.h"
 #include "cxx_api/factory.h"
 
-namespace mindspore::api {
+namespace mindspore {
 class AclGraphImpl : public GraphCell::GraphImpl {
  public:
   AclGraphImpl();
   ~AclGraphImpl() override;
 
-  Status Run(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) override;
+  Status Run(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
   Status Load() override;
-  Status GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                       std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) override;
-  Status GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                        std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) override;
+  std::vector<MSTensor> GetInputs() override;
+  std::vector<MSTensor> GetOutputs() override;
 
  private:
   Status ConvertToOM();
@@ -56,5 +54,5 @@ class AclGraphImpl : public GraphCell::GraphImpl {
 
   ModelProcess model_process_;
 };
-}  // namespace mindspore::api
+}  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXX_API_GRAPH_ACL_ACL_GRAPH_IMPL_H

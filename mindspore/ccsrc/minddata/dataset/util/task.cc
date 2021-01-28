@@ -57,14 +57,14 @@ void Task::operator()() {
       rc_ = fnc_obj_();
     }
     // Some error codes are ignored, e.g. interrupt. Others we just shutdown the group.
-    if (rc_.IsError() && !rc_.IsInterrupted()) {
+    if (rc_.IsError() && rc_ != StatusCode::kMDInterrupted) {
       ShutdownGroup();
     }
   } catch (const std::bad_alloc &e) {
-    rc_ = Status(StatusCode::kOutOfMemory, __LINE__, __FILE__, e.what());
+    rc_ = Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__, e.what());
     ShutdownGroup();
   } catch (const std::exception &e) {
-    rc_ = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, e.what());
+    rc_ = Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, e.what());
     ShutdownGroup();
   }
 }
@@ -120,7 +120,7 @@ Status Task::Run() {
       running_ = true;
       caught_severe_exception_ = false;
     } catch (const std::exception &e) {
-      rc = Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, e.what());
+      rc = Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, e.what());
     }
   }
   return rc;
@@ -152,19 +152,19 @@ Status Task::Join(WaitFlag blocking) {
           // Because hostPush hung in DeviceQueueOp, wait 5 seconds and destroy the tdt
           if (wait_times > 5 && my_name_.find("DeviceQueueOp") != std::string::npos) {
             MS_LOG(WARNING) << "Wait " << wait_times << " seconds, "
-                            << "the task: " << my_name_ << " will be destoryed by TdtHostDestory.";
+                            << "the task: " << my_name_ << " will be destroyed by TdtHostDestroy.";
             int32_t destory_status = tdt::TdtHostDestroy();
             if (destory_status != TDT_OK_CODE) {
-              MS_LOG(WARNING) << "Destory tsd failed, status = " << destory_status << ".";
+              MS_LOG(WARNING) << "Destroy tsd failed, status = " << destory_status << ".";
             } else {
-              MS_LOG(INFO) << "Destory tsd success.";
+              MS_LOG(INFO) << "Destroy tsd success.";
             }
 
             // just wait 30 seconds
-            // case1: cpu usage 100%, DeviceQueueOp thread may destory without thrd_ future
+            // case1: cpu usage 100%, DeviceQueueOp thread may destroy without thrd_ future
             if (wait_times > 30) {
               MS_LOG(WARNING) << MyName() << " Thread ID " << ss.str()
-                              << " is not responding. Maybe it's destoryed, task stop.";
+                              << " is not responding. Maybe it's destroyed, task stop.";
               break;
             }
           }
@@ -192,7 +192,7 @@ void Task::set_task_group(TaskGroup *vg) { task_group_ = vg; }
 
 Task::~Task() { task_group_ = nullptr; }
 Status Task::OverrideInterruptRc(const Status &rc) {
-  if (rc.IsInterrupted() && this_thread::is_master_thread()) {
+  if (rc == StatusCode::kMDInterrupted && this_thread::is_master_thread()) {
     // If we are interrupted, override the return value if this is the master thread.
     // Master thread is being interrupted mostly because of some thread is reporting error.
     return TaskManager::GetMasterThreadRc();

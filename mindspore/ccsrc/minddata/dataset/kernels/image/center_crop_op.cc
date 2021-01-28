@@ -71,7 +71,7 @@ Status CenterCropOp::OutputShape(const std::vector<TensorShape> &inputs, std::ve
   if (inputs[0].Rank() == 2) outputs.emplace_back(out);
   if (inputs[0].Rank() == 3) outputs.emplace_back(out.AppendDim(inputs[0][2]));
   if (!outputs.empty()) return Status::OK();
-  return Status(StatusCode::kUnexpectedError, "Input has a wrong shape");
+  return Status(StatusCode::kMDUnexpectedError, "Input has a wrong shape");
 }
 }  // namespace dataset
 }  // namespace mindspore

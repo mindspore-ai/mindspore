@@ -89,7 +89,7 @@ namespace dataset {
 // Driver method for TreePass
 Status IRTreePass::Run(std::shared_ptr<DatasetNode> root_ir, bool *const modified) {
   if (root_ir == nullptr || modified == nullptr) {
-    return Status(StatusCode::kUnexpectedError, "Null pointer passed to TreePass");
+    return Status(StatusCode::kMDUnexpectedError, "Null pointer passed to TreePass");
   }
   // Initialize modified flag
   *modified = false;
@@ -99,7 +99,7 @@ Status IRTreePass::Run(std::shared_ptr<DatasetNode> root_ir, bool *const modifie
 // Driver method for NodePass
 Status IRNodePass::Run(std::shared_ptr<DatasetNode> root_ir, bool *const modified) {
   if (root_ir == nullptr || modified == nullptr) {
-    return Status(StatusCode::kUnexpectedError, "Null pointer passed to NodePass");
+    return Status(StatusCode::kMDUnexpectedError, "Null pointer passed to NodePass");
   }
   // Initialize modified flag
   *modified = false;
@@ -276,7 +276,7 @@ Status IRNodePass::Visit(std::shared_ptr<NonMappableSourceNode> node, bool *cons
 // Driver method for TreePass
 Status TreePass::Run(ExecutionTree *tree, bool *const modified) {
   if (tree == nullptr || modified == nullptr) {
-    return Status(StatusCode::kUnexpectedError, "Null pointer passed to TreePass");
+    return Status(StatusCode::kMDUnexpectedError, "Null pointer passed to TreePass");
   }
   // Initialize modified flag
   *modified = false;
@@ -286,7 +286,7 @@ Status TreePass::Run(ExecutionTree *tree, bool *const modified) {
 // Driver method for NodePass
 Status NodePass::Run(ExecutionTree *tree, bool *const modified) {
   if (tree == nullptr || modified == nullptr) {
-    return Status(StatusCode::kUnexpectedError, "Null pointer passed to NodePass");
+    return Status(StatusCode::kMDUnexpectedError, "Null pointer passed to NodePass");
   }
   // Initialize modified flag
   *modified = false;

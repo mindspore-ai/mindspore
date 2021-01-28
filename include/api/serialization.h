@@ -26,15 +26,14 @@
 #include "include/api/graph.h"
 
 namespace mindspore {
-namespace api {
 class MS_API Serialization {
  public:
+  static Graph LoadModel(const void *model_data, size_t data_size, ModelType model_type);
   static Graph LoadModel(const std::string &file, ModelType model_type);
   static Status LoadCheckPoint(const std::string &ckpt_file, std::map<std::string, Buffer> *parameters);
   static Status SetParameters(const std::map<std::string, Buffer> &parameters, Model *model);
   static Status ExportModel(const Model &model, ModelType model_type, Buffer *model_data);
   static Status ExportModel(const Model &model, ModelType model_type, const std::string &model_file);
 };
-}  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_SERIALIZATION_H

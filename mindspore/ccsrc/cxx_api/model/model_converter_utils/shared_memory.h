@@ -20,7 +20,6 @@
 #include "include/api/status.h"
 
 namespace mindspore {
-namespace api {
 class SharedMemory {
  public:
   Status Create(uint64_t memory_size);
@@ -33,7 +32,5 @@ class SharedMemory {
   int shm_id_ = -1;
   uint8_t *shmat_addr_ = nullptr;
 };
-}  // namespace api
 }  // namespace mindspore
-
 #endif  // MINDSPORE_CCSRC_CXXAPI_SHARED_MEMORY_H

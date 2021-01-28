@@ -48,9 +48,9 @@ Status DeMalloc(std::size_t s, void **p, bool);
 }  // namespace dataset
 }  // namespace mindspore
 
-void *operator new(std::size_t, mindspore::dataset::Status *, std::shared_ptr<mindspore::dataset::MemoryPool>);
+void *operator new(std::size_t, mindspore::Status *, std::shared_ptr<mindspore::dataset::MemoryPool>);
 
-void *operator new[](std::size_t, mindspore::dataset::Status *, std::shared_ptr<mindspore::dataset::MemoryPool>);
+void *operator new[](std::size_t, mindspore::Status *, std::shared_ptr<mindspore::dataset::MemoryPool>);
 
 void operator delete(void *, std::shared_ptr<mindspore::dataset::MemoryPool>);
 

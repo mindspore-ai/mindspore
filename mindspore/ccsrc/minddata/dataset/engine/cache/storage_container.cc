@@ -104,7 +104,7 @@ Status StorageContainer::Write(const ReadableSlice &dest, off64_t offset) const 
   if (r_sz != sz) {
     errno_t err = (r_sz == 0) ? EOF : errno;
     if (errno == ENOSPC) {
-      return Status(StatusCode::kNoSpace, __LINE__, __FILE__);
+      return Status(StatusCode::kMDNoSpace, __LINE__, __FILE__);
     } else {
       RETURN_STATUS_UNEXPECTED(strerror(err));
     }
@@ -157,7 +157,7 @@ Status StorageContainer::CreateStorageContainer(std::shared_ptr<StorageContainer
   Status rc;
   auto sc = new (std::nothrow) StorageContainer(path);
   if (sc == nullptr) {
-    return Status(StatusCode::kOutOfMemory);
+    return Status(StatusCode::kMDOutOfMemory);
   }
   rc = sc->Create();
   if (rc.IsOk()) {

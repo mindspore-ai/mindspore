@@ -98,7 +98,7 @@ TEST_F(MindDataTestFillOp, ScalarFill) {
   Status s = op->Compute(input, &output);
 
   EXPECT_TRUE(s.IsError());
-  ASSERT_TRUE(s.get_code() == StatusCode::kUnexpectedError);
+  ASSERT_TRUE(s.StatusCode() == StatusCode::kMDUnexpectedError);
 
   MS_LOG(INFO) << "MindDataTestFillOp-ScalarFill end.";
 }
@@ -147,7 +147,7 @@ TEST_F(MindDataTestFillOp, NumericToString) {
   Status s = op->Compute(input, &output);
 
   EXPECT_TRUE(s.IsError());
-  ASSERT_TRUE(s.get_code() == StatusCode::kUnexpectedError);
+  ASSERT_TRUE(s.StatusCode() == StatusCode::kMDUnexpectedError);
 
   MS_LOG(INFO) << "MindDataTestFillOp-NumericToString end.";
 }
@@ -167,7 +167,7 @@ TEST_F(MindDataTestFillOp, StringToNumeric) {
   Status s = op->Compute(input, &output);
 
   EXPECT_TRUE(s.IsError());
-  ASSERT_TRUE(s.get_code() == StatusCode::kUnexpectedError);
+  ASSERT_TRUE(s.StatusCode() == StatusCode::kMDUnexpectedError);
 
   MS_LOG(INFO) << "MindDataTestFillOp-StringToNumeric end.";
 }

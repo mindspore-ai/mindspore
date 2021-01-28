@@ -36,7 +36,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<CacheOp> node, bool *const m
 // Returns an error if ZipOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ZipOp> node, bool *const modified) {
   if (is_cached_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "ZipOp is currently not supported as a descendant operator under a cache.");
   }
 
@@ -49,7 +49,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<MapOp> node, bool *const mod
     auto tfuncs = node->TFuncs();
     for (size_t i = 0; i < tfuncs.size(); i++) {
       if (!tfuncs[i]->Deterministic()) {
-        return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+        return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                       "MapOp with non-deterministic TensorOps is currently not supported as a descendant of cache.");
       }
     }
@@ -60,7 +60,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<MapOp> node, bool *const mod
 // Returns an error if ConcatOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *const modified) {
   if (is_cached_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "ConcatOp is currently not supported as a descendant operator under a cache.");
   }
 
@@ -70,7 +70,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<ConcatOp> node, bool *const 
 // Returns an error if TakeOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<TakeOp> node, bool *const modified) {
   if (is_cached_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "TakeOp/SplitOp is currently not supported as a descendant operator under a cache.");
   }
 
@@ -80,7 +80,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<TakeOp> node, bool *const mo
 // Returns an error if SkipOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<SkipOp> node, bool *const modified) {
   if (is_cached_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "SkipOp is currently not supported as a descendant operator under a cache.");
   }
 
@@ -90,7 +90,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<SkipOp> node, bool *const mo
 // Returns an error if SkipOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<BatchOp> node, bool *const modified) {
   if (is_cached_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "BatchOp is currently not supported as a descendant operator under a cache.");
   }
 
@@ -101,7 +101,7 @@ Status CacheErrorPass::PreRunOnNode(std::shared_ptr<BatchOp> node, bool *const m
 // Returns an error if FilterOp exists under a cache
 Status CacheErrorPass::PreRunOnNode(std::shared_ptr<FilterOp> node, bool *const modified) {
   if (is_cached_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "FilterOp is currently not supported as a descendant operator under a cache.");
   }
 
@@ -179,7 +179,7 @@ Status CacheErrorPass::RunOnNode(std::shared_ptr<CacheOp> node, bool *const modi
 // Because there is no operator in the cache hit stream to consume eoes, caching above repeat causes problem.
 Status CacheErrorPass::RunOnNode(std::shared_ptr<RepeatOp> node, bool *const modified) {
   if (is_cached_ && is_mappable_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "Repeat is not supported as a descendant operator under a mappable cache.");
   }
 

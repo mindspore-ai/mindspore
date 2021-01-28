@@ -136,7 +136,7 @@ Status NumaMemoryPool::Allocate(size_t n, void **p) {
           if (rc.IsOk()) {
             *p = ptr;
             break;
-          } else if (rc.IsOutofMemory()) {
+          } else if (rc == StatusCode::kMDOutOfMemory) {
             inx = (inx + 1) % num_slots;
           } else {
             return rc;
@@ -162,7 +162,7 @@ Status NumaMemoryPool::Allocate(size_t n, void **p) {
       if (rc.IsOk()) {
         *p = ptr;
         break;
-      } else if (rc.IsOutofMemory()) {
+      } else if (rc == StatusCode::kMDOutOfMemory) {
         // Make the next arena and continue.
         slot = (slot + 1) % num_segments;
       } else {
@@ -172,7 +172,7 @@ Status NumaMemoryPool::Allocate(size_t n, void **p) {
   }
   // Handle the case we have done one round robin search.
   if (ptr == nullptr) {
-    return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
+    return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
   }
   return rc;
 }

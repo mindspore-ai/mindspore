@@ -25,7 +25,7 @@ namespace mindspore {
 namespace dataset {
 Status CFuncOp::Compute(const TensorRow &input, TensorRow *output) {
   IO_CHECK_VECTOR(input, output);
-  Status ret = Status(StatusCode::kOK, "CFunc Call Succeed");
+  Status ret = Status(StatusCode::kSuccess, "CFunc Call Succeed");
   try {
     *output = c_func_ptr_(input);
   } catch (const std::exception &e) {

@@ -15,7 +15,7 @@
  */
 #include "include/api/ops/ops.h"
 
-namespace mindspore::api {
+namespace mindspore {
 Conv2D::Conv2D(int out_channel, const std::vector<int> &kernel_size, int mode, const std::string &pad_mode,
                const std::vector<int> &pad, const std::vector<int> &stride, const std::vector<int> &dilation, int group)
     : OpCell("Conv2D"),
@@ -35,4 +35,4 @@ Output Conv2D::operator()(const Input &input1, const Input &input2) const {
 std::vector<Output> Conv2D::Construct(const std::vector<Input> &inputs) {
   return {Output(shared_from_this(), inputs, 1)};
 }
-}  // namespace mindspore::api
+}  // namespace mindspore

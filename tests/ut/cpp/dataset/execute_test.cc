@@ -15,6 +15,7 @@
  */
 #include "common/common.h"
 #include "common/cvop_common.h"
+#include "minddata/dataset/core/de_tensor.h"
 #include "minddata/dataset/include/execute.h"
 #include "minddata/dataset/include/transforms.h"
 #include "minddata/dataset/include/vision.h"
@@ -32,12 +33,22 @@ class MindDataTestExecute : public UT::CVOP::CVOpCommon {
   std::shared_ptr<Tensor> output_tensor_;
 };
 
-TEST_F(MindDataTestExecute, TestOp1) {
-  MS_LOG(INFO) << "Doing testCrop.";
-  // Crop params
+TEST_F(MindDataTestExecute, TestComposeTransforms) {
+  MS_LOG(INFO) << "Doing TestComposeTransforms.";
+
+  std::shared_ptr<mindspore::dataset::Tensor> de_tensor;
+  mindspore::dataset::Tensor::CreateFromFile("data/dataset/apple.jpg", &de_tensor);
+  auto image = mindspore::MSTensor(std::make_shared<DETensor>(de_tensor));
+
+  // Transform params
+  std::shared_ptr<TensorOperation> decode = vision::Decode();
   std::shared_ptr<TensorOperation> center_crop = vision::CenterCrop({30});
-  std::shared_ptr<Tensor> out_image = Execute(std::move(center_crop))(input_tensor_);
-  EXPECT_NE(out_image, nullptr);
-  EXPECT_EQ(30, out_image->shape()[0]);
-  EXPECT_EQ(30, out_image->shape()[1]);
+  std::shared_ptr<TensorOperation> rescale = vision::Rescale(1./3, 0.5);
+
+  auto transform = Execute({decode, center_crop, rescale});
+  Status rc = transform(image, &image);
+
+  EXPECT_EQ(rc, Status::OK());
+  EXPECT_EQ(30, image.Shape()[0]);
+  EXPECT_EQ(30, image.Shape()[1]);
 }

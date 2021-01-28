@@ -16,47 +16,53 @@
 
 #include "cxx_api/model/acl/acl_model.h"
 #include <memory>
+#include "include/api/context.h"
 #include "cxx_api/factory.h"
-#include "cxx_api/python_utils.h"
 
-namespace mindspore::api {
+namespace mindspore {
 API_FACTORY_REG(ModelImpl, Ascend310, AclModel);
 
-Status AclModel::Build(const std::map<std::string, std::string> &options_map) {
+Status AclModel::Build() {
   MS_LOG(INFO) << "Start build model.";
   MS_EXCEPTION_IF_NULL(graph_);
-  std::unique_ptr<AclModelOptions> options = std::make_unique<AclModelOptions>(options_map);
-  std::string options_str = GenerateOptionsStr(options_map);
-  MS_EXCEPTION_IF_NULL(options);
-  if (graph_cell_ != nullptr && options_str == options_str_) {
+
+  if (graph_cell_ != nullptr) {
     MS_LOG(INFO) << "This model has been built, skip.";
-    return SUCCESS;
+    return kSuccess;
   }
 
   if (graph_cell_ == nullptr && graph_->ModelType() == ModelType::kOM) {
+    MS_LOG(INFO) << "Note: Load om model and all build options will be ignored.";
     graph_cell_ = std::make_shared<GraphCell>(graph_);
     MS_EXCEPTION_IF_NULL(graph_cell_);
-    if (!options_map.empty()) {
-      MS_LOG(WARNING) << "All build options will be ignored.";
+    return kSuccess;
+  }
+
+  std::unique_ptr<AclModelOptions> options = std::make_unique<AclModelOptions>(model_context_);
+  MS_EXCEPTION_IF_NULL(options);
+  std::string options_key = options->GenAclOptionsKey();
+  std::shared_ptr<Graph> graph;
+  if (auto iter = dynamic_size_graph_map_.find(options_key); iter != dynamic_size_graph_map_.end()) {
+    MS_LOG(INFO) << "This options has been built, read cache.";
+    graph = iter->second;
+  } else {
+    auto func_graph = ModelImpl::GetFuncGraph();
+    MS_EXCEPTION_IF_NULL(func_graph);
+    model_converter_.set_options(options.get());
+    auto om_data = model_converter_.LoadMindIR(func_graph);
+    if (om_data.Data() == nullptr || om_data.DataSize() == 0) {
+      MS_LOG(ERROR) << "Load MindIR failed.";
+      return kMCFailed;
     }
-    return SUCCESS;
+    graph = std::make_shared<Graph>(std::make_shared<Graph::GraphData>(om_data, ModelType::kOM));
+    dynamic_size_graph_map_[options_key] = graph;
   }
 
-  auto func_graph = ModelImpl::GetFuncGraph();
-  MS_EXCEPTION_IF_NULL(func_graph);
-  model_converter_.set_options(options.get());
-  auto om_data = model_converter_.LoadMindIR(func_graph);
-  if (om_data.Data() == nullptr || om_data.DataSize() == 0) {
-    MS_LOG(ERROR) << "Load MindIR failed.";
-    return FAILED;
-  }
-
-  auto graph = std::make_shared<Graph>(std::make_shared<Graph::GraphData>(om_data, ModelType::kOM));
   MS_EXCEPTION_IF_NULL(graph);
   auto graph_cell = std::make_shared<GraphCell>(graph);
   MS_EXCEPTION_IF_NULL(graph_cell);
   auto ret = ModelImpl::Load(graph_cell);
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "Load failed.";
     return ret;
   }
@@ -64,64 +70,97 @@ Status AclModel::Build(const std::map<std::string, std::string> &options_map) {
   // save result
   graph_cell_ = graph_cell;
   options_ = std::move(options);
-  options_str_ = options_str;
   MS_LOG(INFO) << "Build model success.";
-  return SUCCESS;
+  return kSuccess;
 }
 
-Status AclModel::Train(const DataSet &, std::map<std::string, Buffer> *) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return FAILED;
+Status AclModel::Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) {
+  MS_LOG(INFO) << "Start to resize model.";
+  MS_EXCEPTION_IF_NULL(graph_);
+  if (graph_->ModelType() == ModelType::kOM) {
+    MS_LOG(ERROR) << "OM model is not supported to resize model.";
+    return kMCFailed;
+  }
+
+  auto origin_inputs = GetInputs();
+  if (inputs.size() != origin_inputs.size()) {
+    MS_LOG(ERROR) << "Invalid inputs size " << inputs.size() << " not match model inputs size " << origin_inputs.size();
+    return kMCInvalidInput;
+  }
+
+  if (inputs.size() != dims.size()) {
+    MS_LOG(ERROR) << "Invalid dims size " << dims.size() << " not match inputs size " << inputs.size();
+    return kMCInvalidInput;
+  }
+
+  if (model_context_ == nullptr) {
+    model_context_ = std::make_shared<ModelContext>();
+  }
+
+  std::string input_shape_option;
+  for (size_t i = 0; i < inputs.size(); ++i) {
+    if (inputs[i].Name() != origin_inputs[i].Name()) {
+      MS_LOG(ERROR) << "Invalid inputs " << i << " name " << inputs[i].Name() << " not match model input name "
+                    << origin_inputs[i].Name();
+      return kMCInvalidInput;
+    }
+    input_shape_option += inputs[i].Name() + ":";
+    for (size_t j = 0; j < dims[i].size(); ++j) {
+      input_shape_option += std::to_string(dims[i][j]);
+      if (j + 1 < dims[i].size()) {
+        input_shape_option += ",";
+      }
+    }
+    if (i + 1 < inputs.size()) {
+      input_shape_option += ";";
+    }
+  }
+  MS_LOG(INFO) << "Set input size option is " << input_shape_option;
+  ModelContext::SetInputShape(model_context_, input_shape_option);
+  auto graph_cell_bak = std::move(graph_cell_);
+  auto ret = Build();
+  if (ret != kSuccess) {
+    MS_LOG(INFO) << "Resize build failed.";
+    graph_cell_ = std::move(graph_cell_bak);
+    return ret;
+  }
+  MS_LOG(INFO) << "Resize success.";
+  return kSuccess;
 }
 
-Status AclModel::Eval(const DataSet &, std::map<std::string, Buffer> *) {
-  MS_LOG(ERROR) << "Unsupported feature.";
-  return FAILED;
-}
-
-Status AclModel::Predict(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) {
+Status AclModel::Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) {
   MS_EXCEPTION_IF_NULL(outputs);
   if (graph_ == nullptr) {
     MS_LOG(ERROR) << "Invalid data, graph_ is null.";
-    return FAILED;
+    return kMCFailed;
   }
 
   if (graph_cell_ == nullptr) {
     MS_LOG(WARNING) << "Model has not been built, it will be built with default options";
-    Status ret = Build({});
-    if (ret != SUCCESS) {
+    Status ret = Build();
+    if (ret != kSuccess) {
       MS_LOG(ERROR) << "Build model failed.";
-      return FAILED;
+      return ret;
     }
   }
 
   MS_EXCEPTION_IF_NULL(graph_cell_);
   Status ret = graph_cell_->Run(inputs, outputs);
-  if (ret != SUCCESS) {
+  if (ret != kSuccess) {
     MS_LOG(ERROR) << "Run graph failed.";
-    return FAILED;
+    return ret;
   }
 
-  return SUCCESS;
+  return kSuccess;
 }
 
-Status AclModel::GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                               std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const {
+std::vector<MSTensor> AclModel::GetInputs() {
   MS_EXCEPTION_IF_NULL(graph_cell_);
-  return graph_cell_->GetInputsInfo(names, shapes, data_types, mem_sizes);
+  return graph_cell_->GetInputs();
 }
 
-Status AclModel::GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                                std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const {
+std::vector<MSTensor> AclModel::GetOutputs() {
   MS_EXCEPTION_IF_NULL(graph_cell_);
-  return graph_cell_->GetOutputsInfo(names, shapes, data_types, mem_sizes);
+  return graph_cell_->GetOutputs();
 }
-
-std::string AclModel::GenerateOptionsStr(const std::map<std::string, std::string> &options) {
-  std::string ret;
-  for (auto &[key, value] : options) {
-    ret += key + "^" + value + "^^";
-  }
-  return ret;
-}
-}  // namespace mindspore::api
+}  // namespace mindspore

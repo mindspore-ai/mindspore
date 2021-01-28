@@ -29,6 +29,11 @@ namespace lite {
 Tensor::Tensor(const TypeId data_type, std::vector<int> shape, const schema::Format &format, Category category)
     : data_type_(data_type), shape_(std::move(shape)), format_(format), category_(category) {}
 
+Tensor::Tensor(const std::string &name, enum TypeId type, const std::vector<int32_t> &shape, const void *data)
+    : tensor_name_(name), data_type_(type), shape_(std::move(shape)) {
+  data_ = const_cast<void *>(data);
+}
+
 int Tensor::CopyTensorData(const Tensor &src_tensor, Tensor *dst_tensor) {
   if (dst_tensor == nullptr) {
     MS_LOG(ERROR) << "dst_tensor is nullptr";

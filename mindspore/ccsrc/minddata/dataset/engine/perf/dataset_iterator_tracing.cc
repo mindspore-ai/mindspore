@@ -70,7 +70,7 @@ Status DatasetIteratorTracing::ChangeFileMode() {
 
   if (chmod(common::SafeCStr(file_path_), S_IRUSR | S_IWUSR) == -1) {
     std::string err_str = "Change file mode failed," + file_path_;
-    return Status(StatusCode::kUnexpectedError, err_str);
+    return Status(StatusCode::kMDUnexpectedError, err_str);
   }
   return Status::OK();
 }

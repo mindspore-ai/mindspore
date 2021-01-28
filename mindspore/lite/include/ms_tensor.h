@@ -24,10 +24,24 @@
 #include <vector>
 #include "ir/dtype/type_id.h"
 
-#ifdef _WIN32
-#define MS_API __declspec(dllexport)
+#ifndef MS_API
+#if defined _WIN32 || defined __CYGWIN__
+#ifdef BUILDING_DLL
+#ifdef __GNUC__
+#define MS_API __attribute__((dllexport))
+#else
+#define MS_API __declspec(dllexport)  // Note: actually gcc seems to also supports this syntax.
+#endif
+#else
+#ifdef __GNUC__
+#define MS_API __attribute__((dllimport))
+#else
+#define MS_API __declspec(dllimport)  // Note: actually gcc seems to also supports this syntax.
+#endif
+#endif
 #else
 #define MS_API __attribute__((visibility("default")))
+#endif
 #endif
 
 namespace mindspore {
@@ -45,7 +59,7 @@ class MS_API MSTensor {
 
   /// \brief Get data type of the MindSpore Lite MSTensor.
   ///
-  /// \note TypeId is defined in mindspore/mindspore/core/ir/dtype/type_id.h. Only number types in TypeId enum are
+  /// \note TypeId is defined in mindspore/mindspore/include/api/type_id.h. Only number types in TypeId enum are
   /// suitable for MSTensor.
   ///
   /// \return MindSpore Lite TypeId of the MindSpore Lite MSTensor.
@@ -79,6 +93,17 @@ class MS_API MSTensor {
   ///
   /// \return the pointer points to data in MSTensor.
   virtual void *MutableData() = 0;
+
+  /// \brief Get the name of MSTensor.
+  ///
+  /// \return the name of MSTensor.
+  virtual std::string tensor_name() const = 0;
+
+  /// \brief Set the name of MSTensor.
+  virtual void set_tensor_name(const std::string name) = 0;
+
+  /// \brief Set the data of MSTensor.
+  virtual void set_data(void *data) = 0;
 };
 }  // namespace tensor
 /// \brief CallBackParam defined input arguments for callBack function.

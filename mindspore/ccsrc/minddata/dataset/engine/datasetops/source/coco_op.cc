@@ -97,7 +97,7 @@ Status CocoOp::Builder::Build(std::shared_ptr<CocoOp> *ptr) {
         ColDescriptor(std::string(kJsonAnnoArea), DataType(DataType::DE_UINT32), TensorImpl::kFlexible, 1)));
       break;
     default:
-      RETURN_STATUS_UNEXPECTED("Invalid parameter, task type shoule be Detection, Stuff, Keypoint or Panoptic.");
+      RETURN_STATUS_UNEXPECTED("Invalid parameter, task type should be Detection, Stuff, Keypoint or Panoptic.");
   }
   *ptr = std::make_shared<CocoOp>(builder_task_type_, builder_dir_, builder_file_, builder_num_workers_,
                                   builder_rows_per_buffer_, builder_op_connector_size_, builder_decode_,
@@ -118,7 +118,7 @@ Status CocoOp::Builder::SanityCheck() {
   err_msg += builder_num_workers_ <= 0 ? "Invalid parameter, num_parallel_workers must be greater than 0, but got " +
                                            std::to_string(builder_num_workers_) + ".\n"
                                        : "";
-  return err_msg.empty() ? Status::OK() : Status(StatusCode::kUnexpectedError, __LINE__, __FILE__, err_msg);
+  return err_msg.empty() ? Status::OK() : Status(StatusCode::kMDUnexpectedError, __LINE__, __FILE__, err_msg);
 }
 
 CocoOp::CocoOp(const TaskType &task_type, const std::string &image_folder_path, const std::string &annotation_path,
@@ -263,7 +263,7 @@ Status CocoOp::LoadTensorRow(row_id_type row_id, const std::string &image_id, Te
   } else if (task_type_ == TaskType::Panoptic) {
     RETURN_IF_NOT_OK(LoadMixTensorRow(row_id, image_id, image, coordinate, trow));
   } else {
-    RETURN_STATUS_UNEXPECTED("Invalid parameter, task type shoule be Detection, Stuff or Panoptic.");
+    RETURN_STATUS_UNEXPECTED("Invalid parameter, task type should be Detection, Stuff or Panoptic.");
   }
 
   return Status::OK();
@@ -332,7 +332,7 @@ Status CocoOp::LoadSimpleTensorRow(row_id_type row_id, const std::string &image_
 // column ["bbox"] with datatype=float32
 // column ["category_id"] with datatype=uint32
 // column ["iscrowd"] with datatype=uint32
-// column ["area"] with datattype=uint32
+// column ["area"] with datatype=uint32
 Status CocoOp::LoadMixTensorRow(row_id_type row_id, const std::string &image_id, std::shared_ptr<Tensor> image,
                                 std::shared_ptr<Tensor> coordinate, TensorRow *trow) {
   std::shared_ptr<Tensor> category_id, iscrowd, area;
@@ -461,7 +461,7 @@ Status CocoOp::ParseAnnotationIds() {
         RETURN_IF_NOT_OK(PanopticColumnLoad(annotation, file_name, image_id));
         break;
       default:
-        RETURN_STATUS_UNEXPECTED("Invalid parameter, task type shoule be Detection, Stuff, Keypoint or Panoptic.");
+        RETURN_STATUS_UNEXPECTED("Invalid parameter, task type should be Detection, Stuff, Keypoint or Panoptic.");
     }
   }
   for (auto img : image_que) {

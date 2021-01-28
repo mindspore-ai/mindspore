@@ -21,28 +21,26 @@
 #include <vector>
 #include <memory>
 #include <utility>
+#include "include/api/context.h"
 #include "include/api/model.h"
 #include "include/api/graph.h"
 #include "cxx_api/graph/graph_data.h"
 #include "utils/utils.h"
 #include "ir/func_graph.h"
 
-namespace mindspore::api {
+namespace mindspore {
 class ModelImpl {
  public:
   ModelImpl() = default;
   virtual ~ModelImpl() = default;
 
-  virtual Status Build(const std::map<std::string, std::string> &options) = 0;
+  virtual Status Build() = 0;
+  virtual Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) = 0;
 
-  virtual Status Train(const DataSet &dataset, std::map<std::string, Buffer> *outputs) = 0;
-  virtual Status Eval(const DataSet &dataset, std::map<std::string, Buffer> *outputs) = 0;
-  virtual Status Predict(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) = 0;
+  virtual Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) = 0;
 
-  virtual Status GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                               std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const = 0;
-  virtual Status GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                                std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const = 0;
+  virtual std::vector<MSTensor> GetInputs() = 0;
+  virtual std::vector<MSTensor> GetOutputs() = 0;
 
  protected:
   Status Load(const std::shared_ptr<GraphCell> &graph_cell) {
@@ -61,11 +59,16 @@ class ModelImpl {
   }
 
   std::shared_ptr<Graph> graph_;
+  std::shared_ptr<Context> model_context_;
 
  private:
   friend class Model;
   void SetGraph(const std::shared_ptr<Graph> &graph) { graph_ = graph; }
+  void SetContext(const std::shared_ptr<Context> &model_context) {
+    if (model_context != nullptr) {
+      model_context_ = std::make_shared<Context>(*model_context);
+    }
+  }
 };
-}  // namespace mindspore::api
-
+}  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_CXX_API_MODEL_MODEL_IMPL_H

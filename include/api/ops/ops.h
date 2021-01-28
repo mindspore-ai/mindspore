@@ -25,7 +25,6 @@
 #include "include/api/cell.h"
 
 namespace mindspore {
-namespace api {
 struct MS_API Conv2D : public OpCell<Conv2D> {
   Conv2D() : OpCell("Conv2D") {}
   ~Conv2D() override = default;
@@ -45,6 +44,5 @@ struct MS_API Conv2D : public OpCell<Conv2D> {
   std::vector<int> dilation = {1, 1, 1, 1};
   int group = 1;
 };
-}  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_INCLUDE_API_OPS_OPS_H

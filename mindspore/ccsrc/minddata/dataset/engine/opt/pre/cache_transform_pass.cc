@@ -58,7 +58,7 @@ Status CacheTransformPass::CachePass::PreRunOnNode(std::shared_ptr<CacheOp> node
   *modified = false;
   MS_LOG(INFO) << "Cache transform pass: CacheOp found, identified descendant tree.";
   if (is_caching_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__, "Nested cache operations is not supported!");
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__, "Nested cache operations is not supported!");
   }
   is_caching_ = true;
   return Status::OK();
@@ -102,7 +102,7 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CacheOp> node, b
 Status CacheTransformPass::CachePass::MappableCacheLeafSetup(std::shared_ptr<DatasetOp> leaf_op) {
   // If a leaf has already been assigned, then we have more than one leaf inside this cache descendant tree.
   if (is_caching_ && leaf_op_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "There is currently no support for multiple leaf nodes under cache.");
   }
 
@@ -118,7 +118,7 @@ Status CacheTransformPass::CachePass::MappableCacheLeafSetup(std::shared_ptr<Dat
 Status CacheTransformPass::CachePass::NonMappableCacheLeafSetup(std::shared_ptr<DatasetOp> leaf_op) {
   // If a leaf has already been assigned, then we have more than one leaf inside this cache descendant tree.
   if (is_caching_ && leaf_op_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "There is currently no support for multiple leaf nodes under cache.");
   }
 
@@ -217,7 +217,7 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<CelebAOp> node, 
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MindRecordOp> node, bool *const modified) {
   if (is_caching_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "There is currently no support for MindRecordOp under cache.");
   }
   return Status::OK();
@@ -228,7 +228,7 @@ Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<MindRecordOp> no
 // Perform leaf node cache transform identification
 Status CacheTransformPass::CachePass::RunOnNode(std::shared_ptr<GeneratorOp> node, bool *const modified) {
   if (is_caching_) {
-    return Status(StatusCode::kNotImplementedYet, __LINE__, __FILE__,
+    return Status(StatusCode::kMDNotImplementedYet, __LINE__, __FILE__,
                   "There is currently no support for GeneratorOp under cache.");
   }
   return Status::OK();

@@ -33,26 +33,24 @@
 #endif
 
 namespace mindspore {
-namespace api {
 class MsModel : public ModelImpl {
  public:
   MsModel() {}
   ~MsModel() = default;
 
-  Status Build(const std::map<std::string, std::string> &options_map) override;
+  Status Build() override;
+  Status Resize(const std::vector<MSTensor> &inputs, const std::vector<std::vector<int64_t>> &dims) override;
 
-  Status Train(const DataSet &dataset, std::map<std::string, Buffer> *outputs) override;
-  Status Eval(const DataSet &dataset, std::map<std::string, Buffer> *outputs) override;
-  Status Predict(const std::vector<Buffer> &inputs, std::vector<Buffer> *outputs) override;
+  Status Predict(const std::vector<MSTensor> &inputs, std::vector<MSTensor> *outputs) override;
 
-  Status GetInputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                       std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const override;
-  Status GetOutputsInfo(std::vector<std::string> *names, std::vector<std::vector<int64_t>> *shapes,
-                        std::vector<DataType> *data_types, std::vector<size_t> *mem_sizes) const override;
+  std::vector<MSTensor> GetInputs() override;
+  std::vector<MSTensor> GetOutputs() override;
 
  private:
+  std::shared_ptr<GraphCell> GenerateGraphCell(const std::vector<std::vector<int64_t>> &dims);
+
   std::shared_ptr<GraphCell> graph_cell_;
+  std::map<std::string, std::shared_ptr<GraphCell>> dynamic_size_graph_map_;
 };
-}  // namespace api
 }  // namespace mindspore
 #endif  // MINDSPORE_CCSRC_SESSION_SESSION_BASIC_H

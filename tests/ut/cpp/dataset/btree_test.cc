@@ -101,7 +101,7 @@ TEST_F(MindDataTestBPlusTree, Test1) {
   // Test duplicate key
   {
     rc = btree.DoInsert(100, "Expect error");
-    EXPECT_EQ(rc, Status(StatusCode::kDuplicateKey));
+    EXPECT_EQ(rc, Status(StatusCode::kMDDuplicateKey));
   }
 }
 

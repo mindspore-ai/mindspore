@@ -90,14 +90,14 @@ APP_ERROR ResourceManager::InitResource(ResourceInfo &resourceInfo) {
   APP_ERROR ret;
   if (aclConfigPath.length() == 0) {
     // Init acl without aclconfig
-    acl_env_ = mindspore::api::AclEnvGuard::GetAclEnv("");
+    acl_env_ = mindspore::AclEnvGuard::GetAclEnv("");
   } else {
     ret = ExistFile(aclConfigPath);
     if (ret != APP_ERR_OK) {
       MS_LOG(ERROR) << "Acl config file not exist, ret = " << ret << ".";
       return ret;
     }
-    acl_env_ = mindspore::api::AclEnvGuard::GetAclEnv(aclConfigPath);
+    acl_env_ = mindspore::AclEnvGuard::GetAclEnv(aclConfigPath);
   }
   if (acl_env_ == nullptr) {
     MS_LOG(ERROR) << "Failed to init acl.";

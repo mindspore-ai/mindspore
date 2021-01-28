@@ -27,9 +27,9 @@ namespace dataset {
 Status TensorOp::Compute(const std::shared_ptr<Tensor> &input, std::shared_ptr<Tensor> *output) {
   IO_CHECK(input, output);
   if (!OneToOne()) {
-    return Status(StatusCode::kUnexpectedError, "Wrong Compute() function is called. This is not 1-1 TensorOp.");
+    return Status(StatusCode::kMDUnexpectedError, "Wrong Compute() function is called. This is not 1-1 TensorOp.");
   } else {
-    return Status(StatusCode::kUnexpectedError,
+    return Status(StatusCode::kMDUnexpectedError,
                   "Is this TensorOp 1-1? If yes, please implement this Compute() in the derived class.");
   }
 }
@@ -44,13 +44,13 @@ Status TensorOp::Compute(const TensorRow &input, TensorRow *output) {
     return Compute(input[0], &(*output)[0]);
   }
 
-  return Status(StatusCode::kUnexpectedError,
+  return Status(StatusCode::kMDUnexpectedError,
                 "Is this TensorOp oneToOne? If no, please implement this Compute() in the derived class.");
 }
 
 Status TensorOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector<TensorShape> &outputs) {
   if (inputs.size() != NumInput())
-    return Status(StatusCode::kUnexpectedError,
+    return Status(StatusCode::kMDUnexpectedError,
                   "The size of the input argument vector does not match the number of inputs");
   outputs = inputs;
   return Status::OK();
@@ -58,7 +58,7 @@ Status TensorOp::OutputShape(const std::vector<TensorShape> &inputs, std::vector
 
 Status TensorOp::OutputType(const std::vector<DataType> &inputs, std::vector<DataType> &outputs) {
   if (inputs.size() != NumInput())
-    return Status(StatusCode::kUnexpectedError,
+    return Status(StatusCode::kMDUnexpectedError,
                   "The size of the input argument vector does not match the number of inputs");
   outputs = inputs;
   return Status::OK();

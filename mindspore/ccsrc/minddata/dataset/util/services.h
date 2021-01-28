@@ -92,7 +92,7 @@ class Services {
       std::unique_ptr<T> svc(*out);
       hook_.push_back(std::move(svc));
     } catch (const std::bad_alloc &e) {
-      return Status(StatusCode::kOutOfMemory);
+      return Status(StatusCode::kMDOutOfMemory);
     }
     return Status::OK();
   }

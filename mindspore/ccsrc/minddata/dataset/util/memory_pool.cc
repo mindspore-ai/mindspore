@@ -24,7 +24,7 @@ Status DeMalloc(std::size_t s, void **p, bool init_to_zero = false) {
   }
   void *q = ::malloc(s);
   if (q == nullptr) {
-    return Status(StatusCode::kOutOfMemory, __LINE__, __FILE__);
+    return Status(StatusCode::kMDOutOfMemory, __LINE__, __FILE__);
   } else {
     *p = q;
     if (init_to_zero) {
@@ -36,13 +36,13 @@ Status DeMalloc(std::size_t s, void **p, bool init_to_zero = false) {
 }  // namespace dataset
 }  // namespace mindspore
 
-void *operator new(std::size_t s, mindspore::dataset::Status *rc, std::shared_ptr<mindspore::dataset::MemoryPool> b) {
+void *operator new(std::size_t s, mindspore::Status *rc, std::shared_ptr<mindspore::dataset::MemoryPool> b) {
   void *ptr = nullptr;
   *rc = b->Allocate(s, &ptr);
   return ptr;
 }
 
-void *operator new[](std::size_t s, mindspore::dataset::Status *rc, std::shared_ptr<mindspore::dataset::MemoryPool> b) {
+void *operator new[](std::size_t s, mindspore::Status *rc, std::shared_ptr<mindspore::dataset::MemoryPool> b) {
   void *ptr = nullptr;
   *rc = b->Allocate(s, &ptr);
   return ptr;

@@ -161,7 +161,7 @@ Status CachePipelineRun::Run() {
 
   Status rc = cc_->CreateCache(crc_, false);
   // Duplicate key is fine.
-  if (rc.IsError() && rc.get_code() != StatusCode::kDuplicateKey) {
+  if (rc.IsError() && rc.StatusCode() != StatusCode::kMDDuplicateKey) {
     return rc;
   }
 
@@ -282,7 +282,7 @@ Status CachePipelineRun::WriterWorkerEntry(int32_t worker_id) {
         std::shared_ptr<Tensor> element;
         RETURN_IF_NOT_OK(Tensor::CreateEmpty(shape, col_desc->type(), &element));
         row.setId(id);
-        // CreateEmpty allocates the memory but in virutal address. Let's commit the memory
+        // CreateEmpty allocates the memory but in virtual address. Let's commit the memory
         // so we can get an accurate timing.
         auto it = element->begin<int64_t>();
         for (auto i = 0; i < num_elements; ++i, ++it) {
@@ -297,7 +297,7 @@ Status CachePipelineRun::WriterWorkerEntry(int32_t worker_id) {
       rc = cc_->AsyncWriteBuffer(std::move(buffer));
       auto end_tick = std::chrono::steady_clock::now();
       if (rc.IsError()) {
-        if (rc.IsOutofMemory() || rc.IsNoSpace()) {
+        if (rc == StatusCode::kMDOutOfMemory || rc == kMDNoSpace) {
           MS_LOG(WARNING) << "Pipeline number " << my_pipeline_ + 1 << " worker id " << worker_id << ": "
                           << rc.ToString();
           resource_err = true;
