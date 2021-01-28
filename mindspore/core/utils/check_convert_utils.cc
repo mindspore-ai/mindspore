@@ -230,8 +230,11 @@ namespace {
 typedef std::map<std::string, std::function<ValuePtr(ValuePtr)>> AttrFunction;
 
 ValuePtr L2NormalizeAttrConversion(ValuePtr attr) {
+  if (attr->isa<Int64Imm>()) {
+    return attr;
+  }
   auto attr_value = GetValue<std::vector<int64_t>>(attr);
-  return MakeValue<int64_t>(attr_value[0]);
+  return MakeValue(attr_value[0]);
 }
 
 std::map<std::string, AttrFunction> kIrAttrToOpAttr = {{"L2Normalize", {{"axis", L2NormalizeAttrConversion}}},
