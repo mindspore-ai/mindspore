@@ -213,6 +213,7 @@ void Somas::InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel) {
 
   // Input Tensor
   auto input_tensor_num = AnfAlgo::GetInputTensorNum(kernel);
+  size_t real_input_index = 0;
   for (size_t i = 0; i < input_tensor_num; i++) {
     auto input_node = kernel->input(i + 1);
     session::KernelWithIndex prenode_index;
@@ -232,7 +233,8 @@ void Somas::InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel) {
         continue;
       }
       auto parameter = GetSomasParameters(prenode_index.first, prenode_index.second);
-      node->input_parameters_map_[i] = parameter;
+      node->input_parameters_map_[real_input_index] = parameter;
+      real_input_index++;
       MS_LOG(DEBUG) << "Input  [" << prenode_index.first->fullname_with_scope() << "] is not a real cnode kernel.";
       continue;
     }
@@ -251,6 +253,7 @@ void Somas::InitCommonNodeInputs(bool is_all_nop_node, const CNodePtr &kernel) {
     auto input_somas_tensor = pre_somas_node->output_tensors_[prenode_index.second];
     MS_EXCEPTION_IF_NULL(input_somas_tensor);
     node->input_tensors_.push_back(input_somas_tensor);
+    real_input_index++;
     if (input_somas_tensor->type_ == kOutputOnly) {
       input_somas_tensor->type_ = kCommon;
     }
@@ -1135,26 +1138,21 @@ void Somas::DumpNodes(std::ofstream &ofs) const {
     auto scope_name = node->scope_full_name_;
     std::string split_name = GetSplitName(scope_name);
     ofs << "$" << node->GetId() << "\t" << split_name << "\t" << static_cast<int>(node->GetType()) << "\t";
-    std::vector<std::pair<string, size_t>> input_list;
-    std::transform(
-      node->input_tensors_.begin(), node->input_tensors_.end(), std::back_inserter(input_list),
-      [](SomasTensorPtr in) -> std::pair<string, size_t> { return std::make_pair("Tensor", in->GetId()); });
-    for (const auto &param : node->input_parameters_map_) {
-      auto index = param.first;
-      auto iter = input_list.begin();
-      std::advance(iter, index);
-      input_list.insert(iter, std::make_pair("Parameter", param.second->id_));
-    }
+    auto input_num = node->input_tensors_.size() + node->input_parameters_map_.size();
     ofs << "inputs[";
-    for (const auto &in : input_list) {
-      if (in.first == "Tensor") {
-        ofs << "%" << in.second << "T"
+    size_t tensor_index = 0;
+    for (size_t input_index = 0; input_index < input_num; input_index++) {
+      auto iter = node->input_parameters_map_.find(input_index);
+      if (iter != node->input_parameters_map_.end()) {
+        ofs << "%" << iter->second->id_ << "P"
             << ", ";
-      } else if (in.first == "Parameter") {
-        ofs << "%" << in.second << "P"
+      } else {
+        ofs << "%" << node->input_tensors_[tensor_index]->GetId() << "T"
             << ", ";
+        tensor_index++;
       }
     }
+
     ofs << "]";
     ofs << "\toutputs[";
     for (const auto &out : node->output_tensors_) {
